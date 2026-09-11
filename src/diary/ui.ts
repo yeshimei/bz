@@ -543,7 +543,8 @@ export class DiaryAppController {
   private async unlockAndSelectEncrypt() {
     try {
       const { ensureSafeUnlocked } = await import('../encrypt');
-      const ok = await ensureSafeUnlocked();
+      // 同一套解锁屏骨架，按日记域口径注入文案/统计与配色（--dw-* token）
+      const ok = await ensureSafeUnlocked('diary');
       if (!ok) return; // 用户取消/密码错误：保持锁定态
       this.lockedVisible = true;
       this.selTag = '加密';

@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="tYKRCexFrKfOMvix3MZS4J">
+<head data-page-node-id="txYMWmW4YgGNGyjNwkIuij">
+<meta charset="UTF-8" data-page-node-id="mlPsS0gYmbJz1UQV7Qj5vC">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="dru5vqdWSlXftVRBhmICUI">
+<title>保险库 · 完整功能原型（密码本风格）</title>
+<style>
+  /* ===== 宿主 mock（密码本评审壳口径：暖纸浅主题 + 金色强调） ===== */
+  :root{
+    --bg-cover:#e3e0d8;
+    --primary:#fbf9f3; --secondary:#f2efe6; --hover:rgba(23,21,18,.06);
+    --line:rgba(23,21,18,.12);
+    --ink:#171512; --muted:#8b8474; --faint:#b3ab99;
+    --bad:#b3564d; --ok:#3d8f5d; --warn:#d08b2c;
+    --gold:#b8913e; --gold-soft:linear-gradient(135deg,#d3b26b,#b8913e);
+    --mono:'Cascadia Mono',Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{background:var(--bg-cover);color:var(--ink);font:14px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  input{font:inherit;border:1px solid var(--line);background:var(--secondary);color:var(--ink);border-radius:10px;padding:9px 13px;outline:none}
+  input:focus{border-color:var(--gold)}
+  svg{vertical-align:-2px}
+
+  .desk{width:1060px;max-width:calc(100vw - 48px);height:680px;max-height:calc(100vh - 48px);border-radius:14px;overflow:hidden;background:var(--primary);box-shadow:0 20px 60px rgba(0,0,0,.35);position:relative;flex-shrink:0;display:flex}
+
+  /* ===== 左导航（密码本同款 nav） ===== */
+  .nav{width:200px;flex-shrink:0;background:var(--secondary);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 12px}
+  .logo{display:flex;align-items:center;gap:10px;padding:0 10px 22px}
+  .logo .seal{width:34px;height:34px;border-radius:10px;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(184,145,62,.4);color:#fff;flex:none}
+  .logo .name{font-size:16px;font-weight:700}
+  .logo .name small{display:block;font-size:10px;font-weight:400;color:var(--muted);letter-spacing:.08em}
+  .navitem{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:10px;font-size:13.5px;color:var(--muted);width:100%;text-align:left}
+  .navitem:hover{background:var(--hover)}
+  .navitem.on{background:rgba(184,145,62,.14);color:var(--gold);font-weight:600}
+  .navitem .cnt{margin-left:auto;font-size:11px;color:var(--faint)}
+  .nav .spacer{flex:1}
+  .sess{padding:10px 14px 4px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+  .sess b{font-variant-numeric:tabular-nums;font-weight:500;color:var(--muted)}
+  .sess .idle{color:var(--warn)}
+  .lockstate{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;margin-top:6px;font-size:12px;font-weight:600;color:var(--muted);border-top:1px solid var(--line);width:100%}
+  .lockstate:hover{color:var(--bad)}
+  .lockstate .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+
+  /* ===== 主区 ===== */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .bar{display:flex;align-items:center;gap:10px;padding:13px 20px;border-bottom:1px solid var(--line)}
+  .bar .t{font-size:15px;font-weight:700}
+  .bar .sub{font-size:11.5px;color:var(--muted)}
+  .bar .sp{flex:1}
+  .icb{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--muted);border:1px solid transparent}
+  .icb:hover{background:var(--hover);color:var(--ink)}
+  .icb.gold{color:var(--gold)}
+  .btn{border:1px solid var(--line);border-radius:10px;padding:7px 15px;font-size:13px;color:var(--muted)}
+  .btn:hover{background:var(--hover);color:var(--ink)}
+  .btn.gold{background:var(--gold-soft);color:#fff;font-weight:600;border:none;box-shadow:0 4px 12px rgba(184,145,62,.35)}
+  .btn.gold:hover{opacity:.92}
+  .btn.red{color:var(--bad);border-color:rgba(179,86,77,.4)}
+  .btn.red:hover{background:rgba(179,86,77,.08)}
+  .body{flex:1;display:flex;min-height:0}
+
+  /* 列表 */
+  .listwrap{flex:1;min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--line)}
+  .listbar{padding:11px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .listbar input{flex:1}
+  .listbar .c{font-size:11px;color:var(--faint);flex:none}
+  .rows{flex:1;overflow:auto}
+  .nrow{display:flex;align-items:center;gap:13px;padding:12px 18px;border-bottom:1px solid var(--line);cursor:pointer}
+  .nrow:hover{background:var(--hover)}
+  .nrow.sel{background:rgba(184,145,62,.1)}
+  .nrow .no{width:42px;flex:none;font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .nrow .t{flex:1;min-width:0}
+  .nrow .t b{display:block;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nrow .t span{font-size:11px;color:var(--muted)}
+  .nrow .att{flex:none;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:12px;padding:2px 9px}
+  .nrow .sz{flex:none;font-family:var(--mono);font-size:11px;color:var(--faint);width:60px;text-align:right}
+  .norec{padding:40px 0;text-align:center;color:var(--faint);font-size:12.5px}
+
+  /* 详情 */
+  .detail{width:340px;flex-shrink:0;padding:20px;overflow:auto}
+  .detail .hd .no{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.15em;margin-bottom:4px}
+  .detail .hd b{font-size:17px;font-weight:700}
+  .fld{margin:13px 0}
+  .fld label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px}
+  .fld .val{display:flex;align-items:center;gap:6px;background:var(--secondary);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:12.5px}
+  .fld .val.mono{font-family:var(--mono);font-size:12px}
+  .acts{display:flex;gap:8px;margin-top:18px}
+  .acts .btn{flex:1;text-align:center}
+
+  /* 概览 */
+  .ov{flex:1;overflow:auto;padding:22px 26px}
+  .hero{display:flex;gap:12px;margin-bottom:22px}
+  .hero>div{flex:1;background:var(--secondary);border:1px solid var(--line);border-radius:12px;padding:16px 18px 12px;cursor:pointer}
+  .hero>div:hover{border-color:var(--gold)}
+  .hero b{display:block;font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+  .hero span{font-size:11.5px;color:var(--muted)}
+  .ov h3{font-size:12px;color:var(--muted);letter-spacing:.12em;font-weight:600;margin:0 0 10px}
+  .recent{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:22px}
+  .rrow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+  .rrow:last-child{border-bottom:none}
+  .rrow:hover{background:var(--hover)}
+  .rrow .ic{width:28px;height:28px;border-radius:9px;background:var(--gold-soft);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+  .rrow .t{flex:1;min-width:0}
+  .rrow .t b{display:block;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rrow .t span{font-size:11px;color:var(--muted)}
+  .rrow .tm{font-size:11px;color:var(--faint);flex:none}
+  .healthcard{border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;background:var(--secondary)}
+  .healthcard:hover{border-color:var(--gold)}
+  .healthcard .ic{color:var(--ok)}
+  .healthcard .t{flex:1}
+  .healthcard .t b{display:block;font-size:13px;font-weight:600}
+  .healthcard .t span{font-size:11px;color:var(--muted)}
+  .healthcard .go{color:var(--gold);font-size:12px;font-weight:600}
+
+  /* ===== 解锁遮罩 ===== */
+  .lock{position:absolute;inset:0;z-index:40;background:var(--primary);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
+  .lock.hide{display:none}
+  .lock .seal{width:72px;height:72px;border-radius:22px;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(184,145,62,.4);color:#fff;margin-bottom:14px}
+  .lock h2{font-size:22px;font-weight:700}
+  .lock .sub{font-size:12.5px;color:var(--muted);margin:4px 0 20px}
+  .stats{display:flex;gap:12px;margin-bottom:24px}
+  .stats div{min-width:122px;background:var(--secondary);border:1px solid var(--line);border-radius:12px;padding:12px 16px 10px}
+  .stats b{display:block;font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+  .stats span{font-size:11px;color:var(--muted)}
+  .pwrow{display:flex;gap:10px}
+  .pwrow input{width:280px;text-align:center;font-size:15px}
+  .go{background:var(--gold-soft);color:#fff;font-weight:600;padding:11px 30px;border-radius:12px;box-shadow:0 6px 18px rgba(184,145,62,.4)}
+  .go:hover{opacity:.92}
+  .go:disabled{opacity:.5;cursor:not-allowed}
+  .err{font-size:12px;color:var(--bad);min-height:18px;margin-top:10px}
+  .sec{margin-top:20px;font-size:11px;color:var(--faint);display:flex;align-items:center;gap:6px}
+  .sec .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+  .hint{margin-top:8px;font-size:11.5px;color:var(--faint)}
+
+  /* ===== 弹层（对话框/灯箱） ===== */
+  .mask{position:absolute;inset:0;z-index:50;background:rgba(30,26,18,.45);display:none;align-items:center;justify-content:center}
+  .mask.open{display:flex}
+  .dlg{background:var(--primary);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.35);width:min(440px,90%);max-height:84%;display:flex;flex-direction:column;overflow:hidden}
+  .dlg .hd{padding:16px 20px 4px}
+  .dlg .hd h3{font-size:15px;font-weight:700}
+  .dlg .hd .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .dlg .bd{padding:14px 20px;overflow:auto;flex:1}
+  .dlg .ft{padding:12px 20px 16px;display:flex;gap:8px;justify-content:flex-end;align-items:center}
+  .dlg .ft .note{flex:1;font-size:11px;color:var(--faint)}
+
+  /* 开关行（自绘 toggle） */
+  .setrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+  .setrow:last-child{border-bottom:none}
+  .setrow .t{flex:1}
+  .setrow .t b{display:block;font-size:13px;font-weight:600}
+  .setrow .t span{font-size:11px;color:var(--muted)}
+  .sw{width:38px;height:22px;border-radius:12px;background:var(--line);position:relative;flex:none;transition:background .15s}
+  .sw::after{content:"";position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .15s}
+  .sw.on{background:var(--gold)}
+  .sw.on::after{left:18px}
+
+  /* 体检 */
+  .hsec{margin-bottom:14px}
+  .hsec .h{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+  .hitem{display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:5px;font-size:12.5px}
+  .hitem .cb{width:15px;height:15px;border:1px solid var(--line);border-radius:4px;flex:none;display:flex;align-items:center;justify-content:center;color:transparent;font-size:11px}
+  .hitem.on .cb{background:var(--gold);border-color:var(--gold);color:#fff}
+  .hitem .lab{flex:1}
+  .hitem .cat{font-size:10.5px;color:var(--faint)}
+  .hitem.ro{opacity:.75}
+  .hitem.ro .cb{display:none}
+  .prog{background:var(--secondary);border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+  .prog .pbar{height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:8px}
+  .prog .pbar i{display:block;height:100%;background:var(--gold-soft);border-radius:4px;width:0%}
+  .prog .pc{font-size:11px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between}
+
+  /* 存入候选 */
+  .dep{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;cursor:pointer;font-size:13px}
+  .dep:hover{background:var(--hover)}
+  .dep .cb{width:15px;height:15px;border:1px solid var(--line);border-radius:4px;flex:none;display:flex;align-items:center;justify-content:center;color:transparent;font-size:11px}
+  .dep.on .cb{background:var(--gold);border-color:var(--gold);color:#fff}
+  .dep .p{margin-left:auto;font-size:10.5px;color:var(--faint)}
+
+  /* 灯箱（附件密文预览） */
+  .lb{position:absolute;inset:0;z-index:60;background:rgba(30,26,18,.62);display:none;align-items:center;justify-content:center}
+  .lb.open{display:flex}
+  .lb .card{background:var(--primary);border-radius:14px;width:min(480px,90%);overflow:hidden}
+  .lb .im{height:300px;display:flex;align-items:center;justify-content:center;position:relative}
+  .lb .im .ph{position:absolute;inset:0;background:linear-gradient(135deg,#e8e2d2,#d8cfba)}
+  .lb .im .ph.orig{background:linear-gradient(120deg,#efe9da,#cfc4a8 60%,#dccfb2)}
+  .lb .im .tag{position:relative;z-index:1;background:rgba(251,249,243,.9);border:1px solid var(--line);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--muted)}
+  .lb .ft{padding:12px 16px;display:flex;gap:8px;align-items:center}
+  .lb .ft .t{flex:1;font-size:12px;color:var(--muted)}
+
+  /* 右键菜单（对齐原生规范：≥180px、行高 30、1px 边框、无动效） */
+  #cmenu{position:fixed;z-index:80;display:none;min-width:180px;background:var(--primary);border:1px solid rgba(23,21,18,.22);border-radius:9px;box-shadow:0 8px 28px rgba(0,0,0,.22);padding:5px}
+  #cmenu.open{display:block}
+  #cmenu button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:6px 10px;border-radius:7px;font-size:13px;min-height:30px;color:var(--ink)}
+  #cmenu button:hover{background:var(--hover)}
+  #cmenu button.dgr{color:var(--bad)}
+  #cmenu .sep{height:1px;background:var(--line);margin:4px 6px}
+
+  /* 正文预览窗（宽一点，Markdown 阅读排版） */
+  .dlg.pv{width:min(680px,92%);max-width:680px}
+  .md{font-size:14px;line-height:1.85;color:var(--ink)}
+  .md h1{font-size:1.55em;font-weight:700;margin:.2em 0 .5em}
+  .md h2{font-size:1.25em;font-weight:700;margin:1em 0 .4em}
+  .md h3{font-size:1.08em;font-weight:600;margin:.9em 0 .35em}
+  .md p{margin:.55em 0}
+  .md ul,.md ol{padding-left:1.5em;margin:.45em 0}
+  .md li{margin:.18em 0}
+  .md blockquote{border-left:3px solid var(--gold);padding:2px 12px;color:var(--muted);margin:.7em 0}
+  .md code{font-family:var(--mono);font-size:.88em;background:var(--secondary);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+  .md hr{border:none;border-top:1px solid var(--line);margin:.9em 0}
+  .md strong{font-weight:700}
+
+  /* 通知 */
+  #toast{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);background:var(--secondary);border:1px solid var(--line);border-radius:9px;padding:8px 16px;font-size:12.5px;display:none;z-index:70;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+</style>
+</head>
+<body data-page-node-id="FWE9TfaBTGR517OsdkcYRH">
+
+<div class="desk" id="desk" data-page-node-id="KaI6RcYjcTGqH1Eo3yk2dn">
+
+  <!-- 左导航 -->
+  <nav class="nav" data-page-node-id="YHytq0ZOUWvhA5UhHI1m8x">
+    <div class="logo" data-page-node-id="zjZnNF46wffHCVUvrZQYI6">
+      <span class="seal" data-page-node-id="3AlTRq84gHcM4Lj89uwhcf"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-page-node-id="cCBPTyEJXaFLOaA1LSkV5l"><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3z" data-page-node-id="MNZ6Xy9P0nEDXApP5S50d6"/></svg></span>
+      <div class="name" data-page-node-id="zrQpTm7GkXrG3ar8SLaHux">保险库<small data-page-node-id="26YNcFFbMmqwEExYraoTFJ">ENCRYPTED NOTES</small></div>
+    </div>
+    <button class="navitem on" data-view="overview" data-page-node-id="moRM5KwvtjK2Tmf9SZISqV">概览</button>
+    <button class="navitem" data-view="notes" data-page-node-id="LV7w8NyiI1bceGn1HtWh2x">加密笔记<span class="cnt" id="navCnt" data-page-node-id="mXJfzxwSeu8mYAPYJjHVEz"></span></button>
+    <span class="spacer" data-page-node-id="6dzHH0Xo3v8DxPoLmDjZnG"></span>
+    <div class="sess" data-page-node-id="1yrV0OX82fsKKs9FyGmfQs"><span data-page-node-id="ILNd9BCDxUDUAzGtkZbu0p">已解锁</span><b id="dur" data-page-node-id="RCwfkYVWTxc8lAYKHyeSQb">00:00</b></div>
+    <div class="sess" id="idleRow" style="display:none" data-page-node-id="8Tpvq4q0B5ijt1LESoMUAe"><span data-page-node-id="4dQq7IGBna5qKS1sMuTaQB">空闲上锁</span><b class="idle" id="idle" data-page-node-id="gR2HVyiH1BHQRrAT0dmgCj">15:00</b></div>
+    <button class="lockstate" id="lockBtn" data-page-node-id="hINlgjOj8fu67b0CN8XT6J"><span class="dot" data-page-node-id="7S2q8HdzWj6ATSIALNLXh9"></span>立即上锁</button>
+  </nav>
+
+  <!-- 主区 -->
+  <div class="main" data-page-node-id="xq09kmbAOZrWf5h4q1Rvuz">
+    <div class="bar" data-page-node-id="vLNM2sjzBMEZD5Ek7EvI8V">
+      <div data-page-node-id="7fGJqH1eEDmAODijuu4LtO"><div class="t" id="hTitle" data-page-node-id="D8DVT4DhLEYpMtshANc3jO">保险库</div><div class="sub" id="hSub" data-page-node-id="JNI9481MP2pPMd9uimGRM5"></div></div>
+      <span class="sp" data-page-node-id="mrSR1f6koBkELBNT9CaS7y"></span>
+      <button class="icb gold" id="lockNoteBtn" title="存入笔记" data-page-node-id="1apvjGXHA4EOvtO1LKJuFP">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" data-page-node-id="libJsdjtPiQHBE7UfybNDx"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" data-page-node-id="NFVSfttSU3BURgVJvseyX7"/><path d="M14 2v6h6" data-page-node-id="eYR1OSI8Q8Kf7IR1IT3mn4"/><rect x="8" y="13" width="8" height="6" rx="1" data-page-node-id="XOlcDBmcPBLqZrZRvCestw"/><path d="M10.5 13v-1.5a1.5 1.5 0 0 1 3 0V13" data-page-node-id="Du3OwzuDZin9M7xgrd1IEL"/></svg>
+      </button>
+      <button class="icb" id="healthBtn" title="保险库体检" data-page-node-id="gpKrFXSQgzmcxrEE2lCX1T">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" data-page-node-id="TR0CSSv101K0c6WiNpt0WY"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" data-page-node-id="w95ESLdemrpwDNTIvcFMtE"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4" data-page-node-id="CsLyZXGCwqEyigKLGPPsYG"/><circle cx="20" cy="10" r="2" data-page-node-id="l8Fylj2nrFSyfQcED66GEx"/></svg>
+      </button>
+    </div>
+    <div class="body" id="bodyArea" data-page-node-id="8WM5J1pqEIf4yKHUkUlOrh"></div>
+  </div>
+
+  <!-- 解锁遮罩 -->
+  <div class="lock" id="lock" data-page-node-id="wIANGCg9yJgiqz1kRDox9e">
+    <div class="seal" data-page-node-id="T9jKzGYqdthlzfHY0nbMVW"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" data-page-node-id="i7yCehVcU4HyQbijVZPMRU"><rect x="4" y="11" width="16" height="10" rx="2" data-page-node-id="RPK6nMs21eFi3JC2qM21nE"/><path d="M8 11V7a4 4 0 0 1 8 0v4" data-page-node-id="ZSVtuEqIPHBT18wPgdCXM2"/></svg></div>
+    <h2 data-page-node-id="AO1mZFmS3R5RXTGglG8qnj">保险库已上锁</h2>
+    <div class="sub" data-page-node-id="5xHIH9IdmBB0TB4yYvFimL">解锁前，笔记正文与附件均以密文保存</div>
+    <div class="stats" id="lockStats" data-page-node-id="0B8GSvTQjyGren50M37JAC"></div>
+    <div class="pwrow" data-page-node-id="Hi1d3sLM4H8sYsKdg4Ok8I">
+      <input id="pw" type="password" placeholder="主密码" data-page-node-id="oOVXlQnKy8vSW1Q4cOC92S">
+      <button class="go" id="goBtn" data-page-node-id="YZuBX2b6jzAqMELDPUxR9A">解锁</button>
+    </div>
+    <div class="err" id="err" data-page-node-id="7CjB3IsE5TvUJvKwsJpLe1"></div>
+    <div class="sec" data-page-node-id="ArdUIqiPO009zdbPpPS8vt"><span class="dot" id="secDot" data-page-node-id="NcZEl2Jrv8UJGroba5OD0C"></span><span id="secText" data-page-node-id="TE5lpfATf9LCRi2YuqlpZ4">体检通过 · 镜像完整 · 上次体检 09-09</span></div>
+    <div class="hint" data-page-node-id="gXiGHlzN1kihd8h7DgZAJ3">演示密码：demo</div>
+  </div>
+
+  <!-- 正文预览窗（Markdown 渲染，关窗即清内存） -->
+  <div class="mask" id="pvMask" data-page-node-id="HODdiCc5b21zTvw2H7rRjh"><div class="dlg pv" data-page-node-id="bGYp0BqqkJU4SinjWXvsCu">
+    <div class="hd" data-page-node-id="Ev5DdWCTU5QW5f7DKk7cXw"><h3 id="pvTitle" data-page-node-id="4Eba9WvwilhBaQYu00JJ9j"></h3><div class="sub" id="pvMeta" data-page-node-id="xuuIgyGvatR7PQuyoAmnbs"></div></div>
+    <div class="bd" data-page-node-id="KI0DImvZh6HFnPEa8TGfK1"><div class="md" id="pvBody" data-page-node-id="ECCH92GJcuAEkPjdr8Zhfl"></div></div>
+    <div class="ft" data-page-node-id="IogSDrHmIBTbS38aLnrFk5"><span class="note" data-page-node-id="uRf13bR3lLHFvXpAqhyEju">明文仅存在于此窗口，关闭即从内存清除</span><button class="btn" id="pvClose" data-page-node-id="wrDCP63ONecO4oM7eoj4JF">关闭</button></div>
+  </div></div>
+
+  <!-- 通用对话框 -->
+  <div class="mask" id="dlgMask" data-page-node-id="v1nzrxidYIVOBaGPyH5lWo"><div class="dlg" id="dlg" data-page-node-id="KJ4ZkHn7npKntX6BGKSfzv"></div></div>
+  <!-- 附件灯箱 -->
+  <div class="lb" id="lb" data-page-node-id="eu4diowM6xytZuHhDz53bv"><div class="card" data-page-node-id="MZ6EPnBEwxjUX1bQineRC4">
+    <div class="im" data-page-node-id="C6GTsKoLTWUCfHRUMdthIo"><div class="ph" id="lbPh" data-page-node-id="PXkgGdtj9Lu0Jl9D8v9028"></div><span class="tag" id="lbTag" data-page-node-id="ZW1qyLWodloxrioWxFlpc4"></span></div>
+    <div class="ft" data-page-node-id="StRwRv6FzqgF73w8BMBOFE"><span class="t" id="lbTitle" data-page-node-id="SZrDEzuYIbX3ai9OFvVKtZ"></span><button class="btn" id="lbOrig" data-page-node-id="9Q0DfPEAd2whGrvFtlpGXP">载入原图</button><button class="btn" id="lbClose" data-page-node-id="HgPm6NI9DhDWEyMDL0kima">关闭</button></div>
+  </div></div>
+
+  <div id="toast" data-page-node-id="AAEx7BH2zqZ7WlQn0mInBf"></div>
+  <div id="cmenu" data-page-node-id="OGFl7Lrt21q9UyxfcomjiI"></div>
+</div>
+
+<script>
+/* ================= 数据 ================= */
+const SEED = [
+  {no:"B-01",title:"个人证件与材料扫描",path:"私密/证件材料.md",date:"2026-08-14",words:820,size:"12.4 KB",atts:[{n:"身份证-正面",t:"img"},{n:"户口本扫描",t:"doc"}]},
+  {no:"B-02",title:"银行账户与密码备忘",path:"私密/账户备忘.md",date:"2026-08-20",words:430,size:"3.1 KB",atts:[]},
+  {no:"B-03",title:"2026 上半年收入台账",path:"私密/收入台账.md",date:"2026-07-02",words:1560,size:"9.8 KB",atts:[{n:"工资流水",t:"img"}]},
+  {no:"B-04",title:"写给家里的一封信",path:"私密/信件.md",date:"2026-06-11",words:980,size:"4.2 KB",atts:[]},
+  {no:"B-05",title:"医疗记录汇总",path:"私密/医疗记录.md",date:"2026-09-01",words:2100,size:"15.6 KB",atts:[{n:"体检报告一",t:"img"},{n:"体检报告二",t:"img"},{n:"处方单",t:"img"}]},
+  {no:"B-06",title:"合同草稿 · 房屋租赁",path:"工作/合同草稿.md",date:"2026-08-28",words:3400,size:"21.0 KB",atts:[{n:"房型平面图",t:"img"}]},
+  {no:"B-07",title:"投资账户持仓明细",path:"私密/持仓明细.md",date:"2026-09-05",words:640,size:"2.7 KB",atts:[]},
+  {no:"B-08",title:"旧手机备份清单",path:"私密/备份清单.md",date:"2026-05-19",words:290,size:"1.3 KB",atts:[]},
+  {no:"B-09",title:"保险单据归档",path:"私密/保险单据.md",date:"2026-04-22",words:1120,size:"8.9 KB",atts:[{n:"保单扫描",t:"doc"}]},
+  {no:"B-10",title:"旅行证件与行程底稿",path:"私密/行程底稿.md",date:"2026-03-08",words:750,size:"3.6 KB",atts:[]},
+  {no:"B-11",title:"家庭网络与设备口令",path:"私密/设备口令.md",date:"2026-09-08",words:380,size:"1.8 KB",atts:[]},
+  {no:"B-12",title:"谈话记录 · 0903",path:"私密/谈话记录.md",date:"2026-09-03",words:1450,size:"7.2 KB",atts:[]},
+];
+const CANDIDATES = [
+  {title:"读书笔记 · 三体 III",path:"读书/三体.md"},
+  {title:"周报 09-06",path:"工作/周报.md"},
+  {title:"观影记录草稿",path:"娱乐/观影.md"},
+];
+const IC = {
+  img:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>',
+  doc:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
+  note:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
+};
+const SET = {previewSize:"384px", autoLoadOriginal:false, securityMode:false, previewEnabled:true};
+
+let notes = SEED.map((n,i)=>({...n, id:i+1, ts:Date.parse(n.date)}));
+let view = "overview", selId = null, kw = "";
+let health = {items:[], time:null};
+let unlocked = false, unlockedAt = 0, idleLeft = 900, failStreak = 0, cooldownLeft = 0, seq = 13;
+const BODY = {
+  "B-01":`# 证件材料索引\n\n所有扫描件的存放位置与说明。**原文已从文库移除**，需要复印件时取出，用完立即存回。\n\n## 清单\n\n- 身份证（正反面）—— 见附件\n- 户口本 —— 见附件\n- 护照 —— 尚未扫描\n\n## 使用原则\n\n1. 取出后当日归还\n2. 复印件加水印标注用途`,
+  "B-02":`# 银行账户备忘\n\n只记账户名、开户行与用途，**密码本体在密码管理器里**。\n\n> 这份清单的作用：密码管理器本身失效时，从这里找到恢复入口。\n\n- 工行 6222 **** 4831 —— 工资卡\n- 招行 6210 **** 7729 —— 日常消费`,
+  "B-03":`# 2026 上半年收入台账\n\n按月记录，工资流水截图见附件。\n\n## 备注\n\n- 一月 —— 年终奖入账\n- 四月 —— 调薪生效\n\n投资部分单独成篇，不在此处。`,
+  "B-04":`有些话不适合放在公开的日记里，写完就封存，等合适的时机再取出来。`,
+  "B-05":`# 医疗记录汇总\n\n三次体检的报告与处方单都在附件里。\n\n## 时间线\n\n- **03-12** 年度体检 —— 血脂偏高，建议控糖\n- **06-30** 复查 —— 指标回落，维持方案\n- **09-01** 就诊 —— 医嘱见处方单附件`,
+  "B-06":`# 合同草稿 · 房屋租赁\n\n租约谈判过程的底稿与修改记录。\n\n## 关键分歧点\n\n- 押金：房东要求押二，谈到押一\n- 租期：一年起租，续约优先权已写入\n- 维修责任：自然损耗归房东\n\n最终签署版在对方手里，这里只留完整脉络。`,
+  "B-07":`# 投资账户持仓明细\n\n只记账户与大致仓位结构，具体数字每月更新一次。\n\n- 券商主账户 —— 权益类为主\n- 指数定投 —— 每月 15 日\n- 货币基金 —— 应急流动性`,
+  "B-08":`# 旧手机备份清单\n\n旧手机照片已迁移，这篇是迁移时的核对清单。\n\n- 相册 —— 已迁移并校验张数\n- 微信记录 —— 已备份到电脑\n- 通话记录 —— 未迁移（放弃）`,
+  "B-09":`# 保险单据归档\n\n两份保单的关键条款摘录。\n\n## 要点\n\n- 重疾险 —— 缴费日每年 04-22\n- 医疗险 —— 续费日每年 10-08\n\n理赔流程写在末段：先拍照留证，48 小时内报案。`,
+  "B-10":`# 旅行证件与行程底稿\n\n护照签证的办理记录，以及一次未成行的行程规划底稿。\n\n> 行程未成行原因：签证排队超期，改期至明年。`,
+  "B-11":`# 家庭网络与设备口令\n\n只在内网环境有意义，泄露会牵连内网。\n\n- 路由器 192.168.1.1 —— 固件 v3.7\n- NAS 192.168.1.10 —— 固件 v3.7\n- 摄像头 ×2 —— 默认口令已改`,
+  "B-12":`# 谈话记录 · 0903\n\n按问与答整理。\n\n**问**：时间线是否可以提前？\n**答**：可以，但需要先确认前置条件。\n\n涉及第三方隐私，只自留。`,
+};
+
+const $ = id=>document.getElementById(id);
+const esc = s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(toast._h);toast._h=setTimeout(()=>t.style.display="none",2200)}
+function attTotal(){ return notes.reduce((s,n)=>s+n.atts.length,0); }
+function sizeTotal(){ return notes.reduce((s,n)=>s+parseFloat(n.size),0).toFixed(1)+" KB"; }
+function rel(ts){
+  const d = Math.round((Date.now()-ts)/864e5);
+  if(d<=0) return "今天"; if(d===1) return "昨天";
+  if(d<30) return d+" 天前";
+  return Math.round(d/30)+" 个月前";
+}
+function fmt(sec){ return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); }
+
+/* ================= 解锁 / 会话 ================= */
+$("lockStats").innerHTML = `<div><b>12</b><span>笔记条目</span></div><div><b>9</b><span>随库附件</span></div><div><b>486 KB</b><span>密文总量</span></div>`;
+function renderHealthSec(){
+  const ok = health.items.length===0;
+  $("secDot").style.background = ok ? "var(--ok)" : "var(--warn)";
+  $("secText").textContent = health.time
+    ? (ok ? `体检通过 · 镜像完整 · 上次体检 ${health.time}` : `体检发现 ${health.items.length} 项问题 · 上次体检 ${health.time}`)
+    : "体检通过 · 镜像完整 · 上次体检 09-09";
+}
+$("goBtn").onclick = ()=>{
+  if(cooldownLeft>0) return;
+  if($("pw").value.length < 4){
+    failStreak++;
+    if(failStreak>=3){ cooldownLeft=30; tickCooldown(); return; }
+    $("err").textContent = `主密码不符（已失败 ${failStreak} 次，连续 3 次将冷却 30 秒）`;
+    return;
+  }
+  $("pw").value=""; $("err").textContent=""; failStreak=0;
+  unlocked = true; unlockedAt = Date.now(); idleLeft = 900;
+  $("lock").classList.add("hide");
+  bumpIdle(); renderAll(); toast("保险库已解锁");
+};
+$("pw").addEventListener("keydown",e=>{ if(e.key==="Enter") $("goBtn").click(); });
+function tickCooldown(){
+  $("goBtn").disabled = true; $("pw").disabled = true;
+  $("err").textContent = `失败次数过多，冷却中：${cooldownLeft}s`;
+  const h = setInterval(()=>{
+    cooldownLeft--;
+    if(cooldownLeft<=0){ clearInterval(h); $("goBtn").disabled=false; $("pw").disabled=false; $("err").textContent=""; failStreak=0; }
+    else $("err").textContent = `失败次数过多，冷却中：${cooldownLeft}s`;
+  },1000);
+}
+$("lockBtn").onclick = ()=>{
+  unlocked = false;
+  $("lock").classList.remove("hide");
+  $("pvMask").classList.remove("open");
+  renderAll(); toast("保险库已上锁，密钥已失效");
+};
+/* 会话计时 + 安全模式空闲上锁（15 分钟，交互重置） */
+setInterval(()=>{
+  if(!unlocked) return;
+  $("dur").textContent = fmt(Math.floor((Date.now()-unlockedAt)/1000));
+  if(SET.securityMode){
+    idleLeft--;
+    $("idle").textContent = fmt(Math.max(0,idleLeft));
+    if(idleLeft<=0){ $("lockBtn").click(); toast("安全模式：15 分钟无操作，已自动上锁"); }
+  }
+},1000);
+["click","keydown"].forEach(ev=>$("desk").addEventListener(ev,()=>{
+  if(unlocked && SET.securityMode){ idleLeft = 900; $("idle").textContent = "15:00"; }
+}));
+function bumpIdle(){
+  $("idleRow").style.display = SET.securityMode ? "flex" : "none";
+  $("idle").textContent = "15:00";
+}
+
+/* ================= 渲染主体 ================= */
+function renderAll(){
+  $("navCnt").textContent = notes.length;
+  document.querySelectorAll(".navitem").forEach(el=>{
+    el.classList.toggle("on", el.dataset.view===view);
+    el.onclick = ()=>{ if(!unlocked) return; view = el.dataset.view; selId=null; renderAll(); };
+  });
+  $("hTitle").textContent = view==="overview" ? "保险库" : "加密笔记";
+  $("hSub").textContent = view==="overview"
+    ? `${notes.length} 条笔记 · ${attTotal()} 附件 · ${sizeTotal()} 密文`
+    : (kw ? `${filtered().length} 条匹配「${kw}」` : `${notes.length} 条 · 按存入时间倒序`);
+  if(view==="overview") renderOverview(); else renderNotes();
+}
+function filtered(){
+  return notes.filter(n=>!kw || n.title.includes(kw) || n.path.includes(kw))
+              .sort((a,b)=>b.ts-a.ts);
+}
+/* --- 概览 --- */
+function renderOverview(){
+  $("bodyArea").innerHTML = `<div class="ov">
+    <div class="hero">
+      <div data-go="notes"><b>${notes.length}</b><span>加密笔记</span></div>
+      <div data-go="notes"><b>${attTotal()}</b><span>随库附件</span></div>
+      <div data-go="notes"><b>${sizeTotal()}</b><span>密文总量</span></div>
+    </div>
+    <h3>最 近 存 取</h3>
+    <div class="recent">${[...notes].sort((a,b)=>b.ts-a.ts).slice(0,5).map(n=>`
+      <div class="rrow" data-no="${n.no}">
+        <span class="ic">${IC.note}</span>
+        <div class="t"><b>${esc(n.title)}</b><span>${n.atts.length?n.atts.length+" 个附件 · ":""}${esc(n.path)}</span></div>
+        <span class="tm">${rel(n.ts)}</span>
+      </div>`).join("")}</div>
+    <h3>保 险 库 体 检</h3>
+    <div class="healthcard" id="ovHealth">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <div class="t"><b>${health.time ? (health.items.length ? `上次体检发现 ${health.items.length} 项待处理` : "上次体检通过") : "尚未体检"}</b>
+      <span>${health.time ? health.time : "体检会校验清单、密文镜像与附件完整性"}</span></div>
+      <span class="go">去体检</span>
+    </div>
+  </div>`;
+  $("bodyArea").querySelectorAll("[data-go]").forEach(el=>el.onclick=()=>{ view="notes"; renderAll(); });
+  $("bodyArea").querySelectorAll(".rrow").forEach(el=>el.onclick=()=>{
+    view="notes"; selId = (notes.find(n=>n.no===el.dataset.no)||{}).id ?? null; renderAll();
+  });
+  $("ovHealth").onclick = openHealth;
+}
+/* --- 笔记 --- */
+function renderNotes(){
+  $("bodyArea").innerHTML = `
+    <div class="listwrap">
+      <div class="listbar">
+        <input id="kw" placeholder="搜索标题或路径…" value="${esc(kw)}">
+        <span class="c">${filtered().length} 条</span>
+      </div>
+      <div class="rows" id="rows"></div>
+    </div>
+    <div class="detail" id="detail"></div>`;
+  const kwIn = $("kw");
+  kwIn.oninput = ()=>{ kw = kwIn.value.trim(); clearTimeout(renderNotes._t); renderNotes._t=setTimeout(()=>{ selId=null; renderAll(); },180); };
+  kwIn.focus(); kwIn.setSelectionRange(kwIn.value.length,kwIn.value.length);
+  const list = filtered();
+  $("rows").innerHTML = list.length ? list.map(n=>`
+    <div class="nrow ${selId===n.id?"sel":""}" data-id="${n.id}">
+      <span class="no">${n.no}</span>
+      <div class="t"><b>${esc(n.title)}</b><span>${esc(n.path)} · 存入 ${n.date.slice(5)}</span></div>
+      <span class="att">${n.atts.length?IC[n.atts[0].t].replace('width="18" height="18"','width="12" height="12"'):""}${n.atts.length||"—"}</span>
+      <span class="sz">${n.size}</span>
+    </div>`).join("") : `<div class="norec">${kw?"没有匹配的条目":"库内暂无加密笔记"}</div>`;
+  $("rows").querySelectorAll(".nrow").forEach(el=>el.onclick=()=>{ selId=+el.dataset.id; renderAll(); });
+  renderDetail();
+}
+function renderDetail(){
+  const n = notes.find(x=>x.id===selId);
+  const d = $("detail");
+  if(!n){ d.innerHTML = `<div class="norec" style="padding-top:120px">左侧选择一篇<br>正文与附件均为密文<br>「解密预览」临时开窗，关窗即清</div>`; return; }
+  d.innerHTML = `
+    <div class="hd"><div class="no">柜位 ${n.no} · 存入 ${n.date}</div><b>${esc(n.title)}</b></div>
+    <div class="fld"><label>原笔记路径</label><div class="val">${esc(n.path)}</div></div>
+    <div class="fld"><label>密文镜像</label><div class="val mono">${n.size} · ${n.no.toLowerCase()}-a7f3c2.enc · SHA-256 9e41b2…</div></div>
+    <div class="fld"><label>随库附件</label><div class="val" title="${esc(n.atts.map(a=>a.n).join("、"))}">${n.atts.length} 个</div></div>
+    <div class="acts">
+      <button class="btn gold" id="peekBtn">解密预览</button>
+      <button class="btn" id="outBtn">取出还原</button>
+      <button class="btn red" id="delBtn">销毁</button>
+    </div>`;
+  $("peekBtn").onclick = ()=>openPreview(n);
+  $("outBtn").onclick = ()=>outNote(n);
+  $("delBtn").onclick = ()=>destroyNote(n);
+}
+/* 取出 / 销毁（详情按钮与右键菜单共用） */
+function outNote(n){
+  confirmDlg({
+    title:"取出还原", msg:`将「${n.title}」的正文与附件解密，还原回文库原路径？还原后该条目从保险库移除。`, ok:"还原", gold:true,
+    then:()=>runProgress(`还原 ${n.title}`, [n.path, ...n.atts.map(a=>a.n)], ()=>{
+      notes = notes.filter(x=>x.id!==n.id); if(selId===n.id) selId=null;
+      renderAll(); toast(`「${n.title}」已还原回文库`);
+    })
+  });
+}
+function destroyNote(n){
+  confirmDlg({
+    title:"销毁密文", msg:`彻底销毁「${n.title}」的全部密文（正文 + ${n.atts.length} 附件）？此操作不可恢复。`, ok:"确认销毁", danger:true, pw:true,
+    then:()=>runProgress(`销毁 ${n.title}`, [n.no.toLowerCase()+"-a7f3c2.enc"], ()=>{
+      notes = notes.filter(x=>x.id!==n.id); if(selId===n.id) selId=null;
+      renderAll(); toast("密文已销毁，不可恢复");
+    })
+  });
+}
+
+/* ================= 通用对话框 ================= */
+function openDlg(html){ $("dlg").innerHTML = html; $("dlgMask").classList.add("open"); }
+function closeDlg(){ $("dlgMask").classList.remove("open"); }
+$("dlgMask").addEventListener("click",e=>{ if(e.target===e.currentTarget) closeDlg(); });
+function confirmDlg({title,msg,ok,danger,gold,pw,then}){
+  openDlg(`<div class="hd"><h3>${esc(title)}</h3><div class="sub">${esc(msg)}</div></div>
+    ${pw?`<div class="bd"><label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px">主密码确认（销毁为高危操作）</label>
+      <input id="cPw" type="password" placeholder="再次输入主密码" style="width:100%">
+      <div id="cErr" style="font-size:12px;color:var(--bad);min-height:16px;margin-top:6px"></div></div>`:""}
+    <div class="ft"><button class="btn" id="cNo">取消</button><button class="btn ${danger?"red":gold?"gold":""}" id="cOk">${esc(ok)}</button></div>`);
+  $("cNo").onclick = closeDlg;
+  $("cOk").onclick = ()=>{
+    if(pw && $("cPw").value !== "demo"){ $("cErr").textContent = "主密码不符，未执行。"; return; }
+    closeDlg(); then();
+  };
+  if(pw) $("cPw").focus();
+}
+/* 进度（复刻逐文件进度语义：done/total/current 即时刷新） */
+function runProgress(title, files, done){
+  openDlg(`<div class="hd"><h3>${esc(title)}</h3></div><div class="bd">
+    <div class="prog"><div class="pc" style="margin:0 0 4px"><span id="pCur">准备中…</span><span id="pN"></span></div>
+    <div class="pbar"><i id="pBar"></i></div></div></div>`);
+  let i = 0;
+  const step = ()=>{
+    if(i < files.length){
+      $("pCur").textContent = files[i];
+      $("pN").textContent = `${i+1} / ${files.length}`;
+      $("pBar").style.width = Math.round((i+1)/files.length*100)+"%";
+      i++; setTimeout(step, 420);
+    }else{ closeDlg(); done(); }
+  };
+  setTimeout(step, 300);
+}
+
+/* ================= 存入笔记 ================= */
+$("lockNoteBtn").onclick = ()=>{
+  if(!unlocked) return;
+  const picked = new Set();
+  const render = ()=>{
+    openDlg(`<div class="hd"><h3>存入笔记</h3><div class="sub">从文库选择要加密存入的笔记（正文与附件一并加密，原文移除）</div></div>
+      <div class="bd">${CANDIDATES.map((c,i)=>`
+        <div class="dep ${picked.has(i)?"on":""}" data-i="${i}"><span class="cb">✓</span><span>${esc(c.title)}</span><span class="p">${esc(c.path)}</span></div>`).join("")}</div>
+      <div class="ft"><span class="note">加密逐文件进行，完成后原文件删除</span>
+      <button class="btn" id="dNo">取消</button><button class="btn gold" id="dOk">加密存入</button></div>`);
+    $("dlg").querySelectorAll(".dep").forEach(el=>el.onclick=()=>{
+      const i=+el.dataset.i; picked.has(i)?picked.delete(i):picked.add(i); render();
+    });
+    $("dNo").onclick = closeDlg;
+    $("dOk").onclick = ()=>{
+      if(!picked.size){ toast("未选择任何笔记"); return; }
+      const idx = [...picked];
+      closeDlg();
+      runProgress("加密存入", idx.map(i=>CANDIDATES[i].path), ()=>{
+        idx.forEach(i=>{
+          const c = CANDIDATES[i];
+          notes.push({id:Date.now()+Math.random(), no:"B-"+String(seq++).padStart(2,"0"), title:c.title, path:c.path, date:"2026-09-11", words:600+Math.floor(Math.random()*1500), size:(2+Math.random()*10).toFixed(1)+" KB", atts:[], ts:Date.now()});
+        });
+        view = "notes"; selId = null; renderAll();
+        toast(`已存入 ${idx.length} 篇，原文件已加密移除`);
+      });
+    };
+  };
+  render();
+};
+
+/* ================= 体检 ================= */
+$("healthBtn").onclick = ()=>{ if(unlocked) openHealth(); };
+function openHealth(){
+  const scan = ()=>{
+    const files = ["safe.enc 清单", ...notes.flatMap(n=>[n.no, ...n.atts.map(a=>a.n)])];
+    openDlg(`<div class="hd"><h3>保险库体检</h3><div class="sub">逐项校验清单、密文镜像与附件完整性</div></div>
+      <div class="bd"><div class="prog"><div class="pc" style="margin:0 0 4px"><span id="pCur">准备中…</span><span id="pN"></span></div>
+      <div class="pbar"><i id="pBar"></i></div></div></div>`);
+    let i=0;
+    const step = ()=>{
+      if(i<files.length){
+        $("pCur").textContent = files[i]; $("pN").textContent = `${i+1} / ${files.length}`;
+        $("pBar").style.width = Math.round((i+1)/files.length*100)+"%"; i++; setTimeout(step,200);
+      }else{
+        health = { time:"09-11", items:[
+          {cat:"dead-entry", lab:"B-13 · 临时草稿 0812（清单条目无镜像）", key:"entry:x1"},
+          {cat:"orphan-file", lab:"k9x2m4.enc（磁盘镜像无对应条目）", key:"file:f1"},
+          {cat:"corrupted-body", lab:"B-07 · 密文镜像校验失败", key:""},
+        ]};
+        report();
+      }
+    };
+    setTimeout(step,300);
+  };
+  const checked = new Set();
+  const report = ()=>{
+    const cleanable = health.items.filter(x=>x.cat==="dead-entry"||x.cat==="orphan-file");
+    const ro = health.items.filter(x=>!(x.cat==="dead-entry"||x.cat==="orphan-file"));
+    openDlg(`<div class="hd"><h3>体检报告 · ${health.time}</h3><div class="sub">共 ${health.items.length} 项发现；勾选项可安全清理，其余仅报告</div></div>
+      <div class="bd">
+        ${cleanable.length?`<div class="hsec"><div class="h">可 清 理（${cleanable.length}）</div>${cleanable.map(x=>`
+          <div class="hitem" data-key="${x.key}"><span class="cb">✓</span><span class="lab">${esc(x.lab)}</span><span class="cat">${x.cat==="dead-entry"?"死条目":"孤儿文件"}</span></div>`).join("")}</div>`:""}
+        ${ro.length?`<div class="hsec"><div class="h">仅 报 告（${ro.length}）</div>${ro.map(x=>`
+          <div class="hitem ro"><span class="lab">${esc(x.lab)}</span><span class="cat">${x.cat==="corrupted-body"?"密文损坏":"附件缺失"}</span></div>`).join("")}
+          <div style="font-size:11px;color:var(--faint);padding:4px 2px">损坏与缺失类请从备份恢复后重试还原，删除即真丢数据</div></div>`:""}
+        ${!health.items.length?'<div style="text-align:center;color:var(--ok);padding:20px 0">全部通过，库内无异常</div>':""}
+      </div>
+      <div class="ft"><span class="note" id="hCount"></span>
+      <button class="btn" id="hRe">重新扫描</button>
+      <button class="btn gold" id="hClean" ${cleanable.length?"":"disabled style='opacity:.5'"}>清理所选</button></div>`);
+    $("dlg").querySelectorAll(".hitem[data-key]").forEach(el=>el.onclick=()=>{
+      const k = el.dataset.key; checked.has(k)?checked.delete(k):checked.add(k);
+      el.classList.toggle("on", checked.has(k));
+      $("hCount").textContent = checked.size ? `将清理 ${checked.size} 项` : "";
+    });
+    $("hRe").onclick = scan;
+    $("hClean").onclick = ()=>{
+      if(!checked.size){ toast("未勾选任何清理项"); return; }
+      confirmDlg({title:"确认清理", msg:`将清理 ${checked.size} 项死条目 / 孤儿文件。清理不影响仍有效的笔记。`, ok:"执行清理", gold:true,
+        then:()=>runProgress("清理", [...checked], ()=>{
+          health.items = health.items.filter(x=>!checked.has(x.key));
+          if(health.items.length) report();
+          else { closeDlg(); renderHealthSec(); renderAll(); }
+          toast("清理完成");
+        })});
+    };
+  };
+  scan();
+}
+
+/* ================= 设置 ================= */
+function openSettings(){
+  const row = (k,t,d)=>`<div class="setrow"><div class="t"><b>${t}</b><span>${d}</span></div><button class="sw ${SET[k]?"on":""}" data-k="${k}"></button></div>`;
+  openDlg(`<div class="hd"><h3>保险库设置</h3><div class="sub">改动即时生效（演示）</div></div>
+    <div class="bd">
+      ${row("previewEnabled","附件预览层","存入时生成低分辨率预览，列表内不解密原图")}
+      ${row("autoLoadOriginal","自动载入原图","打开预览时自动解密全尺寸原图（暴露面更大）")}
+      ${row("securityMode","安全模式","关闭保险库窗口或 15 分钟无操作立即自动上锁")}
+    </div>
+    <div class="ft"><span class="note">预览尺寸固定 384px · 质量 0.5（已按实测固化，不做调节）</span>
+    <button class="btn gold" id="sOk">完成</button></div>`);
+  $("dlg").querySelectorAll(".sw").forEach(el=>el.onclick=()=>{
+    SET[el.dataset.k] = !SET[el.dataset.k];
+    el.classList.toggle("on", SET[el.dataset.k]);
+    bumpIdle();
+    if(el.dataset.k==="previewEnabled" && view==="notes") renderNotes();
+  });
+  $("sOk").onclick = closeDlg;
+}
+
+/* ================= 正文预览（Markdown 渲染，关窗即清） ================= */
+function mdRender(src){
+  const lines = String(src).split("\n");
+  let html = "", ul = false, ol = false;
+  const closeLists = ()=>{ if(ul){html+="</ul>";ul=false;} if(ol){html+="</ol>";ol=false;} };
+  const inline = s=>esc(s)
+    .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
+    .replace(/`([^`]+)`/g,"<code>$1</code>");
+  for(const line of lines){
+    let m;
+    if((m = line.match(/^(#{1,3})\s+(.*)$/))){ closeLists(); const l=m[1].length; html += `<h${l}>${inline(m[2])}</h${l}>`; }
+    else if(/^\s*[-*]\s+/.test(line)){ if(ol){html+="</ol>";ol=false;} if(!ul){html+="<ul>";ul=true;} html += `<li>${inline(line.replace(/^\s*[-*]\s+/,""))}</li>`; }
+    else if(/^\s*\d+\.\s+/.test(line)){ if(ul){html+="</ul>";ul=false;} if(!ol){html+="<ol>";ol=true;} html += `<li>${inline(line.replace(/^\s*\d+\.\s+/,""))}</li>`; }
+    else if(/^>\s?/.test(line)){ closeLists(); html += `<blockquote>${inline(line.replace(/^>\s?/,""))}</blockquote>`; }
+    else if(/^-{3,}$/.test(line.trim())){ closeLists(); html += "<hr>"; }
+    else if(line.trim()===""){ closeLists(); }
+    else { closeLists(); html += `<p>${inline(line)}</p>`; }
+  }
+  closeLists();
+  return html;
+}
+function openPreview(n){
+  $("pvTitle").textContent = n.title;
+  $("pvMeta").textContent = `柜位 ${n.no} · 存入 ${n.date} · ${n.words.toLocaleString()} 字 · ${n.size}`;
+  // MarkdownRenderer.render 是追加语义：渲染前容器必须为空（原型里先清空再渲染）
+  $("pvBody").innerHTML = mdRender(BODY[n.no] || "（正文密文样本）");
+  $("pvMask").classList.add("open");
+}
+$("pvClose").onclick = ()=>$("pvMask").classList.remove("open");
+$("pvMask").addEventListener("click",e=>{ if(e.target===e.currentTarget) $("pvMask").classList.remove("open"); });
+
+/* ================= 附件灯箱 ================= */
+function openLightbox(note, att){
+  if(!SET.previewEnabled){ toast("附件预览层已关闭，请还原后查看"); return; }
+  $("lbTitle").textContent = `${att.n} · 柜位 ${note.no}`;
+  $("lbTag").textContent = "预览层 · 384px 低分辨率";
+  $("lbPh").className = "ph";
+  $("lbOrig").style.display = att.t==="img" ? "" : "none";
+  if(att.t==="doc") $("lbTag").textContent = "文档类型仅存档 · 还原后可打开";
+  $("lbOrig").onclick = ()=>{
+    if(SET.autoLoadOriginal){ $("lbPh").className="ph orig"; $("lbTag").textContent="原图 · 全尺寸"; return; }
+    confirmDlg({title:"载入原图", msg:"将解密全尺寸原图（更大暴露面）。可在设置中开启「自动载入原图」。", ok:"解密载入", gold:true,
+      then:()=>{ $("lbPh").className="ph orig"; $("lbTag").textContent="原图 · 全尺寸"; }});
+  };
+  $("lb").classList.add("open");
+}
+$("lbClose").onclick = ()=>$("lb").classList.remove("open");
+$("lb").addEventListener("click",e=>{ if(e.target===e.currentTarget) $("lb").classList.remove("open"); });
+
+/* ================= 右键菜单 ================= */
+const cmenu = $("cmenu");
+function showMenu(x,y,items){
+  cmenu.innerHTML = items.map((it,i)=>`${i>0?'<div class="sep"></div>':""}<button data-i="${i}" class="${it.danger?"dgr":""}">${it.label}</button>`).join("");
+  cmenu.classList.add("open");
+  const r = cmenu.getBoundingClientRect();
+  cmenu.style.left = Math.max(4, Math.min(x, innerWidth - r.width - 8))+"px";
+  cmenu.style.top  = Math.max(4, Math.min(y, innerHeight - r.height - 8))+"px";
+  cmenu.querySelectorAll("button").forEach(btn=>btn.onclick=()=>{ hideMenu(); items[+btn.dataset.i].fn(); });
+}
+function hideMenu(){ cmenu.classList.remove("open"); }
+document.addEventListener("click", hideMenu);
+document.addEventListener("contextmenu", e=>{
+  if(!unlocked) return;
+  if(e.target.closest(".mask")||e.target.closest(".lb")||e.target.closest("#lock")) return;
+  const rowEl = e.target.closest(".nrow");
+  const detEl = e.target.closest("#detail");
+  const n = rowEl ? notes.find(x=>x.id===+rowEl.dataset.id) : (detEl ? notes.find(x=>x.id===selId) : null);
+  if(n){
+    e.preventDefault();
+    if(selId!==n.id){ selId = n.id; renderAll(); }
+    const items = [];
+    if(n.atts.length) items.push({label:`解密预览附件（${n.atts.length}）`, fn:()=>openLightbox(n, n.atts[0])});
+    // 正文开/关互斥：按状态只出一条
+    items.push({label:"解密预览正文", fn:()=>openPreview(n)});
+    items.push({label:"取出还原", fn:()=>outNote(n)});
+    items.push({label:"销毁", danger:true, fn:()=>destroyNote(n)});
+    showMenu(e.clientX, e.clientY, items);
+    return;
+  }
+  if(e.target.closest("#desk")){
+    // 空白处：只挂有内容的菜单（设置入口收在这里）
+    e.preventDefault();
+    showMenu(e.clientX, e.clientY, [{label:"保险库设置", fn:openSettings}]);
+  }
+});
+
+renderHealthSec();
+</script>
+</body>
+</html>

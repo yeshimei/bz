@@ -2222,3 +2222,206 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: var(--bz-font-meta);
   color: var(--bz-text-3);
 }
+
+/* ═══════════ 解锁屏（三域共用骨架：保险库 / 密码本 / 加密日记） ═══════════
+ * 结构同源、槽位驱动：文案与统计由调用域注入，风格由各域按 --ls-accent 等变量覆盖。
+ * 组件变量（各域可覆盖）：--ls-accent / --ls-accent-soft / --ls-seal-radius
+ */
+.bz-lockscreen {
+  /* 各域可覆盖：--ls-accent / --ls-accent-soft / --ls-seal-radius */
+  --ls-accent: var(--interactive-accent, var(--bz-brand));
+  --ls-accent-soft: var(--interactive-accent, var(--bz-brand));
+  --ls-seal-radius: 22px;
+  /* 弹层挂 body，够不着域作用域 token —— 一律引宿主主题变量并写兜底链（ADR-0122 同款教训） */
+  --ls-bg: var(--background-secondary, var(--background-primary, #1e1e1e));
+  --ls-surface: var(--background-primary, var(--background-secondary, #262626));
+  --ls-line: var(--background-modifier-border, rgba(255, 255, 255, 0.12));
+  --ls-ink: var(--text-normal, #dadada);
+  --ls-muted: var(--text-muted, #9a9aa5);
+  --ls-faint: var(--text-faint, #5f5f6b);
+  --ls-bad: var(--text-error, #e35d5d);
+  --ls-ok: var(--color-green, #5db97a);
+  --ls-warn: var(--color-orange, #d08b2c);
+}
+/* 全屏遮罩实例（挂 body；毛玻璃走 core 单源 token，与既有域遮罩同口径） */
+.bz-lockscreen--mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bz-overlay, rgba(0, 0, 0, 0.45));
+  backdrop-filter: blur(var(--bz-overlay-blur));
+}
+/* 内联实例（域内覆盖层复用，如密码本 desk/mob 双实例） */
+.bz-lockscreen--inline {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-lockscreen-box {
+  width: 380px;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 30px 28px 24px;
+  border-radius: var(--bz-radius-lg);
+  background: var(--ls-bg);
+  border: 1px solid var(--ls-line);
+  box-shadow: var(--shadow-s, 0 10px 40px rgba(0, 0, 0, 0.45));
+  text-align: center;
+}
+.bz-lockscreen--inline .bz-lockscreen-box {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.bz-lockscreen-seal {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 14px;
+  border-radius: var(--ls-seal-radius);
+  background: var(--ls-accent-soft);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-lockscreen-seal-ic {
+  width: 36px;
+  height: 36px;
+}
+.bz-lockscreen-title {
+  margin: 0;
+  font-size: var(--bz-font-title);
+  font-weight: 700;
+  color: var(--ls-ink);
+}
+.bz-lockscreen-sub {
+  margin: 4px 0 0;
+  font-size: var(--bz-font-meta);
+  color: var(--ls-muted);
+}
+.bz-lockscreen-stats {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0 4px;
+}
+.bz-lockscreen-stat {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 8px 8px;
+  border-radius: var(--bz-radius-md);
+  background: var(--ls-surface);
+  border: 1px solid var(--ls-line);
+}
+.bz-lockscreen-num {
+  display: block;
+  font-size: var(--bz-font-emphasis);
+  font-weight: 700;
+  color: var(--ls-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-lockscreen-label {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--bz-font-caption);
+  color: var(--ls-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-lockscreen-warning {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: var(--bz-radius-sm);
+  background: var(--ls-surface);
+  border: 1px solid var(--ls-line);
+  font-size: var(--bz-font-meta);
+  color: var(--ls-muted);
+  line-height: 1.7;
+  text-align: left;
+}
+.bz-lockscreen-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: var(--bz-font-meta);
+  color: var(--ls-muted);
+  line-height: 1.6;
+  text-align: left;
+}
+.bz-lockscreen-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.bz-lockscreen-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--bz-radius-sm);
+  border: 1px solid var(--ls-line);
+  background: var(--ls-surface);
+  color: var(--ls-ink);
+  font-size: var(--bz-font-label);
+  outline: none;
+}
+.bz-lockscreen-input:focus {
+  border-color: var(--ls-accent);
+}
+.bz-lockscreen-action {
+  flex: none;
+  padding: 10px 20px;
+  border-radius: var(--bz-radius-sm);
+  border: none;
+  background: var(--ls-accent-soft);
+  color: #fff;
+  font-size: var(--bz-font-label);
+  font-weight: 600;
+  cursor: pointer;
+}
+.bz-lockscreen-action:hover {
+  opacity: 0.92;
+}
+.bz-lockscreen-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.bz-lockscreen-err {
+  min-height: 18px;
+  margin-top: 8px;
+  font-size: var(--bz-font-meta);
+  color: var(--ls-bad);
+  text-align: left;
+}
+.bz-lockscreen-sec {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: var(--bz-font-caption);
+  color: var(--ls-faint);
+}
+.bz-lockscreen-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ls-ok);
+}
+.bz-lockscreen-sec--warn .bz-lockscreen-dot { background: var(--ls-warn); }
+.bz-lockscreen-sec--bad .bz-lockscreen-dot { background: var(--ls-bad); }
+.bz-lockscreen-hint {
+  margin-top: 6px;
+  font-size: var(--bz-font-caption);
+  color: var(--ls-faint);
+}

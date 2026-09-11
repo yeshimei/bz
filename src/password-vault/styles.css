@@ -1672,3 +1672,13 @@
   background: var(--pwv-bad);
   color: #fff;
 }
+
+/* ============ 解锁屏（三域共用骨架 · 密码本口径） ============
+ * 密码本锁屏是面板内覆盖层（desk/mob 双实例），用 inline 实例；token 同样自己重声明。
+ * 风格 = 金色印章（本域品牌强调色）。
+ */
+.bz-lockscreen--password-vault {
+  --ls-accent: var(--interactive-accent, #b8913e);
+  --ls-accent-soft: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent, #b8913e) 70%, white), var(--interactive-accent, #b8913e));
+  --ls-seal-radius: 22px;
+}
