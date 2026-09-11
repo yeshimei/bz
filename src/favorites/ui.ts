@@ -678,7 +678,6 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
       const changes = favoritesEditChanges(old, next);
       await dm.update(old.id, next);
       emitDomainEvent('favorites', { kind: 'edit', title: next.title, changes });
-      notice('收藏已更新', 'success');
     } else {
       const data: FavoritesItem = {
         id: Date.now().toString(),
@@ -696,7 +695,6 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
       };
       await dm.add(data);
       emitDomainEvent('favorites', { kind: 'add', item: data });
-      notice('收藏已添加', 'success');
     }
     closeForm(popup);
     await reload();

@@ -206,7 +206,6 @@ export async function updateComment(
     }
     // 原子读改写：对最新盘上内容重放替换（read→write 窗口不再吃掉他域并发写入）
     await app.vault.process(file, (latest: string) => rewriteHighlightSpan(latest, highlightId, text, applyEdit).next);
-    notice(newComment === '' ? '批注已清空' : '批注已更新', 'success');
     if (onDone) onDone();
     return true;
   } catch (e) {
@@ -247,7 +246,6 @@ export async function deleteHighlight(
       return false;
     }
     await app.vault.process(file, (latest: string) => rewriteHighlightSpan(latest, highlightId, text, () => '').next);
-    notice('已删除 1 条划线', 'success');
     done();
     return true;
   } catch (e) {

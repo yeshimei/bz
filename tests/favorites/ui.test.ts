@@ -873,7 +873,7 @@ describe('添加表单', () => {
   });
 
 
-  it('填全保存：dm.add 落盘 13 字段 + 卡片出现 + toast「收藏已添加」+ 事件 add(item)', async () => {
+  it('填全保存：dm.add 落盘 13 字段 + 卡片出现 + 表单关 + 事件 add(item)', async () => {
     const ctx = await setup();
     const events = eventCollector();
     openPanel(getApp(), ctx.dm, ctx.ai);
@@ -908,8 +908,6 @@ describe('添加表单', () => {
     expect(Object.keys(saved).length).toBe(12); // 12 必选字段，无 llmConfig（无大模型标签）
     // 卡片出现（置顶在最前）
     expect(cardTitles()).toEqual(['新收藏']);
-    // toast
-    expect(hasNotice('收藏已添加')).toBe(true);
     // 表单关
     expect(document.querySelector('.bz-fav-form')).toBeNull();
     // 事件载荷
@@ -1084,7 +1082,7 @@ describe('编辑收藏', () => {
   });
 
 
-  it('改标题保存 → dm.update + 事件 edit changes=["改了标题"] + toast「收藏已更新」+ created 保留', async () => {
+  it('改标题保存 → dm.update + 事件 edit changes=["改了标题"] + created 保留', async () => {
     const ctx = await setup();
     const events = eventCollector();
     seedVault(ctx.vault, [
@@ -1104,7 +1102,6 @@ describe('编辑收藏', () => {
     expect(saved.title).toBe('改后标题');
     expect(saved.created).toBe('2025-06-01 08:00:00'); // created 保留
     expect(saved.tags).toEqual(['GitHub', '网站']);
-    expect(hasNotice('收藏已更新')).toBe(true);
     expect(document.querySelector('.bz-fav-form')).toBeNull();
     expect(cards()[0].textContent).toContain('改后标题');
     expect(events.calls).toEqual([{ kind: 'edit', title: '改后标题', changes: ['改了标题'] }]);
@@ -1123,7 +1120,6 @@ describe('编辑收藏', () => {
     (document.querySelector('#fz-save') as HTMLButtonElement).click();
     await tick(40);
     expect(events.calls).toEqual([{ kind: 'edit', title: '原标题', changes: [] }]);
-    expect(hasNotice('收藏已更新')).toBe(true);
     events.off();
   });
 

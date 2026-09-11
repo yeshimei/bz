@@ -1369,7 +1369,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(item.current_status).toBe('闲置');
   });
 
-  it('正常保存：8 字段 items 落盘（保存结构零冗余）+ add 事件载荷 + notice + 表单关 + 列表出现', async () => {
+  it('正常保存：8 字段 items 落盘（保存结构零冗余）+ add 事件载荷 + 表单关 + 列表出现', async () => {
     await open(vault);
     openAddForm(panel()!);
     nameInp().value = '新显示器';
@@ -1393,7 +1393,6 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(events[0].kind).toBe('add');
     expect(events[0].item).toMatchObject({ name: '新显示器', purchase_price: 1299, current_status: '使用中' });
     expect(events[0].item.id).toBeTruthy();
-    expect(hasNotice('物品「新显示器」已添加')).toBe(true);
     expect(content()!.textContent).toContain('新显示器');
   });
 
@@ -1435,7 +1434,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(hasNotice('数据加载失败：设置读取失败')).toBe(true);
   });
 
-  it('编辑：菜单「编辑」→ 回填 → 改名改价保存 → 落盘 + edit 事件（belongingsEditChanges）+ notice 已更新', async () => {
+  it('编辑：菜单「编辑」→ 回填 → 改名改价保存 → 落盘 + edit 事件（belongingsEditChanges）+ 表单关', async () => {
     seed(vault, {
       item_1: makeItem({ id: 'item_1', name: '机械键盘', purchase_price: 399, description: '红轴', purchase_date: '2024-06-01' }),
     });
@@ -1463,7 +1462,6 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(saved.items.item_1.created_date).toBe('2024-06-01T10:00:00.000Z'); // created 保留
     expect(events).toHaveLength(1);
     expect(events[0]).toEqual({ kind: 'edit', title: '红轴机械键盘', changes: ['改了名称', '改了价格'] });
-    expect(hasNotice('物品「红轴机械键盘」已更新')).toBe(true);
     expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
     expect(cells()[0].textContent).toContain('红轴机械键盘');
   });
@@ -1508,7 +1506,6 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(document.querySelector('.bz-item-sheet')).toBeNull();
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items.item_1.name).toBe('改后手机');
     expect(events[0]).toEqual({ kind: 'edit', title: '改后手机', changes: ['改了名称'] });
-    expect(hasNotice('物品「改后手机」已更新')).toBe(true);
   });
 
   it('编辑表单点取消：脏表单走 confirmDiscard（放弃才关）；不改动直接关', async () => {
@@ -1540,7 +1537,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
   });
 
-  it('外部 modify 换库后表单保存：按 id 重取写入当前库（修复前弹已更新但改动落不进新库）', async () => {
+  it('外部 modify 换库后表单保存：按 id 重取写入当前库（修复前改动落不进新库）', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', description: '红轴', purchase_date: '2024-06-01' }) });
     await open(vault);
     rightClick(cells()[0]);
@@ -1561,7 +1558,6 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(saved.items.item_1.name).toBe('本地改名');
     expect(saved.items.item_1.created_date).toBe('2024-06-01T10:00:00.000Z'); // 当前库对象字段保留（非新建）
     expect(events).toEqual([{ kind: 'edit', title: '本地改名', changes: ['改了名称'] }]);
-    expect(hasNotice('物品「本地改名」已更新')).toBe(true);
   });
 });
 

@@ -73,12 +73,9 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
       : '暂未订阅 RSS 源，添加与移除在管理弹窗';
 
   return [
-    { type: 'toggle', name: '知乎日报', desc: '抓取知乎日报每日文章', binding: sourceBinding('zhihu'),
-      onChange: (v) => notice(`已${v ? '开启' : '关闭'}知乎日报`, 'success') },
-    { type: 'toggle', name: '果壳科学人', desc: '抓取果壳科学人最新文章', binding: sourceBinding('guokr'),
-      onChange: (v) => notice(`已${v ? '开启' : '关闭'}果壳科学人`, 'success') },
-    { type: 'toggle', name: 'B站 UP 主', desc: '抓取名单内 UP 主的视频投稿', binding: sourceBinding('bilibili'),
-      onChange: (v) => notice(`已${v ? '开启' : '关闭'}B站 UP 主`, 'success') },
+    { type: 'toggle', name: '知乎日报', desc: '抓取知乎日报每日文章', binding: sourceBinding('zhihu') },
+    { type: 'toggle', name: '果壳科学人', desc: '抓取果壳科学人最新文章', binding: sourceBinding('guokr') },
+    { type: 'toggle', name: 'B站 UP 主', desc: '抓取名单内 UP 主的视频投稿', binding: sourceBinding('bilibili') },
     { type: 'button', name: 'UP 主名单', desc: upListDesc(), buttonText: '管理', cta: true,
       visibleWhen: bilibiliOn,
       onClick: (ctx) => openUpManagerModal({
@@ -95,8 +92,7 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
           ctx.refreshVisibility();
         },
       }) },
-    { type: 'toggle', name: 'RSS 订阅', desc: '抓取订阅列表内 RSS 源的文章', binding: sourceBinding('rss'),
-      onChange: (v) => notice(`已${v ? '开启' : '关闭'}RSS 订阅`, 'success') },
+    { type: 'toggle', name: 'RSS 订阅', desc: '抓取订阅列表内 RSS 源的文章', binding: sourceBinding('rss') },
     { type: 'button', name: 'RSS 订阅源', desc: rssListDesc(), buttonText: '管理', cta: true,
       visibleWhen: rssOn,
       onClick: (ctx) => openRssManagerModal({
