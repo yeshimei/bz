@@ -1,4 +1,4 @@
-/* 源指纹 a51d3ecbefa3b4ed · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 940db735e4d05860 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {
@@ -27,6 +27,7 @@ var BZR_memo = (() => {
     SCENE_DOTS: () => SCENE_DOTS,
     SCENE_PSEUDO_ICONS: () => SCENE_PSEUDO_ICONS,
     cardHtml: () => cardHtml,
+    checkHtml: () => checkHtml,
     doneBarHtml: () => doneBarHtml,
     doneMoreHtml: () => doneMoreHtml,
     dueIconName: () => dueIconName,
@@ -201,12 +202,15 @@ var BZR_memo = (() => {
     }
     return tags.join("");
   }
+  function checkHtml(it) {
+    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
+  }
   function cardHtml(it, due, relTime) {
     const titleCls = it.completed ? " bz-memo-done" : "";
     const clickable = !!(it.linkedNote || it.url);
     const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
     return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}">
-      <span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check title="${it.completed ? "恢复未完成" : "标记完成"}"></span>
+      ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
         <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime)}</div>
