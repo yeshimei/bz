@@ -1,4 +1,4 @@
-/* 源指纹 6af3ae2eee50678d · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 03725b9e20dc5fa4 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/diary/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/diary/render.ts → window.BZR_diary（评审壳预览包，ADR-0104） */
 var BZR_diary = (() => {
@@ -49,6 +49,7 @@ var BZR_diary = (() => {
     add: "pen-line",
     search: "search",
     close: "x",
+    "sheet-close": "x",
     "lb-close": "x",
     "lb-prev": "chevron-left",
     "lb-next": "chevron-right"
@@ -107,6 +108,20 @@ var BZR_diary = (() => {
         <div class="bz-diary-lbmedia"></div>
         <div class="bz-diary-lbcap"></div>
         <div class="bz-diary-lbsub"></div>
+      </div>
+      <div class="bz-sheet-mask bz-diary-sheet-mask"></div>
+      <div class="bz-sheet bz-diary-sheet">
+        <div class="bz-sheet-grip"></div>
+        <div class="bz-sheet-head bz-diary-sheet-head">
+          <span class="bz-diary-sheet-emoji"></span>
+          <div class="bz-diary-sheet-info">
+            <div class="bz-sheet-title bz-diary-sheet-time"></div>
+            <div class="bz-diary-sheet-content"></div>
+            <div class="bz-diary-sheet-media"></div>
+          </div>
+          <button class="bz-diary-sheet-close" data-act="sheet-close" title="关闭"></button>
+        </div>
+        <div class="bz-sheet-body bz-sheet-actions bz-diary-sheet-actions"></div>
       </div>
     `;
   }
