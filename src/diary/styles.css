@@ -54,16 +54,7 @@
   margin: 0;
   padding: 0;
 }
-/* 隐藏滚动条（原型 scrollbar-width:none + ::-webkit-scrollbar display:none） */
-.bz-diary {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.bz-diary ::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
+/* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277），原 .bz-diary 域内声明已删 */
 /* 清 Obsidian 对 button 的默认样式（font-family 继承字体族即可；font-size 交由各组件自身声明——
    `font: inherit` shorthand 特异性 (0,1,1) 会覆盖 .bz-diary-chip 等组件的 font-size，导致字号失效） */
 .bz-diary button {

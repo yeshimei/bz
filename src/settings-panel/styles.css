@@ -276,20 +276,8 @@
   border-radius: 3px;
 }
 
-/* ═══════════ 滚动条全隐藏（面板作用域内） ═══════════ */
-.bz-sp-desk *,
-.bz-sp-mobile *,
-.bz-sp-mobile * {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.bz-sp-desk *::-webkit-scrollbar,
-.bz-sp-mobile *::-webkit-scrollbar,
-.bz-sp-mobile *::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
+/* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277），
+   原面板作用域（.bz-sp-desk / .bz-sp-mobile）域内声明已删 */
 
 /* ═══════════ 桌面壳（几何 !important 压 createOverlay 内联尺寸） ═══════════ */
 .bz-sp-desk {

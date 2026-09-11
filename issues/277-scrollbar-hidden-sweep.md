@@ -45,7 +45,7 @@
 
 - `src/knowledge/styles.css:153 / :306 / :522`：删 `scrollbar-width: thin`。
 - `src/encrypt/styles.css:50-51`：删自绘 6px `::-webkit-scrollbar` 与 thumb。
-- 删除新规则已覆盖的重复实现：cinema（:47-48、:76-77、:117-118、:125-126、:132-133、:216-217、:306-307、:323-324、:346-347、:353-354、:392-393、:404-405、:431-432、:438-439）、secondbrain（:13-17、:450-455、:513-517、:655-661、:750-756、:1125-1127、:1230-1232、:1271-1273）、home（:61-62、:95）、bookshelf（:559-563）、password-vault（:60-65）、settings-panel（:276-281）、review（:23-24）、diary（:57-66）、core（`src/core/styles.css:751-757` 的 `.bz-item-sheet-body`）。
+- 删除新规则已覆盖的重复实现：cinema（:47-48、:76-77、:117-118、:125-126、:132-133、:216-217、:306-307、:323-324、:346-347、:353-354、:392-393、:404-405、:431-432、:438-439）、secondbrain（:13-17、:450-455、:513-517、:655-661、:750-756、:1125-1127、:1230-1232、:1271-1273）、home（:61-62、:95）~~删除~~（本轮遗留：并行会话正在改该文件，避让；下轮清退）、bookshelf（:559-563）、password-vault（:60-65）、settings-panel（:276-281）、review（:23-24）、diary（:57-66）、core（`src/core/styles.css:751-757` 的 `.bz-item-sheet-body`）~~删除~~（本轮遗留：并行会话正在改该文件，避让；下轮清退）。
 - 保留 `src/diary/ui/datetime-picker.ts:66` 的行内 `scrollbar-width: none`（内联样式、与新规则同向，无冲突；删了要动 ts）。
 - `.bz-sb-scroll-y` 工具类（`src/secondbrain/styles.css:11-17`）随冗余声明一并退役——类仍在使用（`render.ts` / `reference-panel.ts` / `mobile-panel.ts`），只删其隐藏声明，类名保留为语义标记。
 
@@ -72,4 +72,6 @@
 - [ ] body 级弹层（createOverlay 通用壳 / 设置弹窗 / 路径选择器 / 模型选择器 / 归物本详情与表单 / 收藏本表单）无可见滚动条
 - [ ] 影院四种皮肤、第二大脑三界面、剪藏本、备忘录、回顾、阅读报告、保险库逐一面过目无条
 - [ ] Obsidian 文件树/编辑器/核心设置**未**受影响（滚动条照旧）
-- [ ] 全量门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 自审 + diff 审查 + 主仓 `pnpm run build` 部署
+- [ ] 全量门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 自审 + diff 审查 + 主仓 `pnpm run build` 部署（分支侧 test / tsc / 自审 / diff 审查已过；主仓 build 部署待合并后执行）
+
+> **首轮执行遗留（2026-09-11）**：`src/core/styles.css` 的 `.bz-item-sheet-body`（:751-757）与 `src/home/styles.css`（:61-62、:95）两处「已隐藏的冗余声明」本轮未删——主仓有并行会话正在改这两个文件，避让防合并冲突；新核心界面级规则已覆盖同批容器，删除纯属去重、不删不影响任何可见效果，留待下轮清退。
