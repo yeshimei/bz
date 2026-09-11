@@ -149,11 +149,13 @@ function readNewsData() {
     }
 }
 
-/** 写回 news.json 四段（调用方保证读盘后改段再整写，保留非本域段） */
+/** 写回 news.json 四段（调用方保证读盘后改段再整写，保留非本域段）；
+ *  `missing` 是读兜底标记不是数据段，落盘前剥离（防八段契约报约定外段）。 */
 function writeNewsData(data) {
+    const { missing, ...persist } = data || {};
     const dir = path.dirname(NEWS_PATH);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(NEWS_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    fs.writeFileSync(NEWS_PATH, JSON.stringify(persist, null, 2), 'utf-8');
 }
 
 /** B 站未登录 Cookie 引导：GET 主页收集 Set-Cookie（buvid3 等），规避 API 风控 412 */
