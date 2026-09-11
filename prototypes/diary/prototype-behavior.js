@@ -1,4 +1,4 @@
-/* 源指纹 993e0a239576dcf1 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 af0e4617d96f2a43 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -12509,7 +12509,7 @@ ${String(review).trim()}`;
     const plan = [Math.min(SEEK_MAX, duration * 0.1), duration * 0.25, duration * 0.5];
     return [...new Set(plan)].filter((t) => t > 0.05 && t < duration - 0.05);
   }
-  async function frameFromUrl(src) {
+  async function frameFromUrl(src, size) {
     if (typeof document === "undefined") return NO_DRAW;
     const v = document.createElement("video");
     v.muted = true;
@@ -12519,11 +12519,11 @@ ${String(review).trim()}`;
     try {
       if (!await waitMediaEvent(v, "canplay", VIDEO_TIMEOUT)) return NO_DRAW;
       const plan = seekPlan(v.duration);
-      if (!plan.length) return drawCover(v, v.videoWidth, v.videoHeight);
+      if (!plan.length) return drawCover(v, v.videoWidth, v.videoHeight, size);
       for (const t of plan) {
         v.currentTime = t;
         await waitMediaEvent(v, "seeked", SEEK_TIMEOUT);
-        const r = drawCover(v, v.videoWidth, v.videoHeight);
+        const r = drawCover(v, v.videoWidth, v.videoHeight, size);
         if (r.url || r.tainted) return r;
       }
       return NO_DRAW;
@@ -12537,7 +12537,7 @@ ${String(review).trim()}`;
       }
     }
   }
-  async function frameFromBlob(src) {
+  async function frameFromBlob(src, size) {
     var _a, _b;
     let objectUrl = null;
     try {
@@ -12547,21 +12547,21 @@ ${String(review).trim()}`;
       const blob = await res.blob();
       if (blob.size > BLOB_MAX_BYTES) return NO_DRAW;
       objectUrl = URL.createObjectURL(blob);
-      return await frameFromUrl(objectUrl);
+      return await frameFromUrl(objectUrl, size);
     } catch (e) {
       return NO_DRAW;
     } finally {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     }
   }
-  async function makeVideoThumb(src) {
+  async function makeVideoThumb(src, size = THUMB_SIZE) {
     if (!directBlocked) {
-      const r = await frameFromUrl(src);
+      const r = await frameFromUrl(src, size);
       if (r.url) return r.url;
       if (!r.tainted) return null;
       directBlocked = true;
     }
-    return (await frameFromBlob(src)).url;
+    return (await frameFromBlob(src, size)).url;
   }
 
   // src/diary/render.ts
@@ -12569,6 +12569,8 @@ ${String(review).trim()}`;
   var ACT_ICON = {
     add: "pen-line",
     search: "search",
+    close: "x",
+    "sheet-close": "x",
     "lb-close": "x",
     "lb-prev": "chevron-left",
     "lb-next": "chevron-right"
@@ -12610,6 +12612,7 @@ ${String(review).trim()}`;
         <div class="bz-diary-btns">
           <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="add" title="写日记"></button>
           <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="search" title="搜索"></button>
+          <button class="bz-diary-icon-btn bz-diary-head-close bz-touch-target--xl" data-act="close" title="关闭"></button>
         </div>
       </div>
       <div class="bz-diary-chiprow"></div>
@@ -12637,6 +12640,7 @@ ${String(review).trim()}`;
             <div class="bz-diary-sheet-content"></div>
             <div class="bz-diary-sheet-media"></div>
           </div>
+          <button class="bz-diary-sheet-close" data-act="sheet-close" title="关闭"></button>
         </div>
         <div class="bz-sheet-body bz-sheet-actions bz-diary-sheet-actions"></div>
       </div>
@@ -14103,13 +14107,14 @@ ${entry.content.trim()}`;
     }
     // ---------- 交互绑定 ----------
     bindPanel(ui) {
-      var _a, _b, _c;
+      var _a, _b, _c, _d;
       ui.head.querySelectorAll('[data-act="date-picker"]').forEach((el) => {
         el.addEventListener("click", () => this.openDatePicker());
       });
       (_a = ui.head.querySelector('[data-act="add"]')) == null ? void 0 : _a.addEventListener("click", () => this.openAddEntry());
       (_b = ui.head.querySelector('[data-act="search"]')) == null ? void 0 : _b.addEventListener("click", () => this.toggleSearch(ui));
-      (_c = ui.lb.querySelector('[data-act="lb-close"]')) == null ? void 0 : _c.addEventListener("click", (e) => {
+      (_c = ui.head.querySelector('[data-act="close"]')) == null ? void 0 : _c.addEventListener("click", () => this.hide());
+      (_d = ui.lb.querySelector('[data-act="lb-close"]')) == null ? void 0 : _d.addEventListener("click", (e) => {
         e.stopPropagation();
         this.closeLightbox();
       });
@@ -14547,7 +14552,8 @@ ${entry.content.trim()}`;
         console.warn("[bz-diary] markdown 渲染失败，已回退纯文本", e.date, err);
       }
     }
-    /** 条目级交互：移动端单击 → 抽屉；双击 → 跳转原文；右键 → 跟手上下文菜单（桌面）；加密隐藏时不弹 */
+    /** 条目级交互：双击 → 跳转原文；右键 → 跟手上下文菜单（桌面）；加密隐藏时不弹。
+     *  单击开抽屉已取消（2026-09-11 用户评审）：移动端抽屉唯一入口 = 长按（bindWallContext）。 */
     bindItem(item, e, mobile) {
       let lastClick = 0;
       item.addEventListener("click", (ev) => {
@@ -14559,7 +14565,6 @@ ${entry.content.trim()}`;
           return;
         }
         lastClick = now;
-        if (mobile) this.openSheet(e);
       });
     }
     /** 在瀑布容器上挂右键委托：正文/图片/视频任意子元素右键都能打开条目菜单（#9） */
@@ -14850,7 +14855,10 @@ ${entry.content.trim()}`;
           if (entry.noteId) v.dataset.encNote = entry.noteId;
         } else {
           const src = this.mediaSrcFor(entry, k.name);
-          if (src) v.dataset.src = src;
+          if (src) {
+            v.dataset.src = src;
+            if (mobile) this.mountWallPoster(v, src, entry, k.name);
+          }
         }
         v.onerror = () => {
           ph.style.opacity = "1";
@@ -14873,8 +14881,7 @@ ${entry.content.trim()}`;
       }
       wrap.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (mobile) this.openSheet(entry);
-        else this.openLightbox(k, entry);
+        this.openLightbox(k, entry);
       });
       wrap.addEventListener("dblclick", (e) => {
         e.stopPropagation();
@@ -15126,6 +15133,28 @@ ${entry.content.trim()}`;
         const s = Math.round(v.duration % 60);
         dur.textContent = `${m}:${String(s).padStart(2, "0")}`;
       }, { once: true });
+    }
+    /**
+     * 移动端墙内视频首帧海报（2026-09-11 评审：移动浏览器不给未播放的 <video> 绘制首帧，
+     * iOS 全黑——墙上视频卡没有预览图）。复用章节栏首帧小图管线（IndexedDB 缓存），
+     * 480px 档（墙卡 2 列 ~180css px@3x 需 ~540 设备 px），结果挂 video.poster——
+     * poster 移动端免视频解码直出。失败静默回落现状（渐变占位；桌面不走此路径，
+     * preload=metadata 本就绘真首帧，不因 480px 海报降清）。
+     */
+    mountWallPoster(v, src, entry, name) {
+      const key = `wall480|${railThumbKey(entry.date, name)}`;
+      void getRailThumb(key).then((cached) => {
+        if (!v.isConnected) return;
+        if (cached) {
+          v.poster = cached;
+          return;
+        }
+        void makeVideoThumb(src, 480).then((thumb) => {
+          if (!v.isConnected || !thumb) return;
+          v.poster = thumb;
+          void putRailThumb(key, thumb);
+        });
+      });
     }
     /** 懒加载挂载：普通媒体挂 src；加密媒体触发按需解密（增强 #8；fallback 与 IO 命中共用） */
     hydrateMediaEl(el) {
@@ -15624,6 +15653,11 @@ ${entry.content.trim()}`;
     }
     bindSheet() {
       [this.desk, this.mob].forEach((ui) => {
+        var _a;
+        (_a = ui.sheet.querySelector('[data-act="sheet-close"]')) == null ? void 0 : _a.addEventListener("click", (e) => {
+          e.stopPropagation();
+          this.closeSheet();
+        });
         ui.sheet.addEventListener("click", (e) => {
           if (e.target === ui.sheet) this.closeSheet();
         });
