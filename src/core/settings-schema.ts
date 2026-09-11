@@ -20,6 +20,7 @@ import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import { renderPathSettingRow } from './path-picker';
 import { createSettingsGroup, markSettingSplitRows, refreshSettingsGroupCounts } from './settings-modal';
 import { uiCardChoice } from './ui';
+import { notifySaveError } from './notice';
 
 /** 设置快照：visibleWhen 条件函数的入参（键直绑行的当前值；外部数据行请自行闭包捕获）。 */
 export type SettingsSnapshot = Readonly<BzSettings>;
@@ -733,9 +734,16 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
             remove.onclick = () => {
               void (async () => {
                 const remaining = readItems().map((x) => x.key).filter((k) => k !== it.key);
-                await row.onChange?.(remaining, ctx);
-                renderItems();
-                reevaluate();
+                try {
+                  await row.onChange?.(remaining, ctx);
+                } catch (e) {
+                  // C10：移除回调抛错 → 通知 + 回滚重绘（原先 unhandled rejection：
+                  // UI 停在已删假象、无提示，renderItems/reevaluate 被跳过）
+                  notifySaveError(e, row.name || '列表项');
+                } finally {
+                  renderItems();
+                  reevaluate();
+                }
               })();
             };
             item.appendChild(remove);

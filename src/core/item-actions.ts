@@ -162,10 +162,18 @@ function onClickCapture(ev: MouseEvent): void {
     return;
   }
   if (touchSettlePending) {
+    // C6：只吞落在浮层（抽屉/遮罩）内的合成 click——长按松手的补发 click 恒命中刚弹出的
+    // 遮罩/抽屉；落点在浮层外的窗口期 click 是用户真实点击（如长按弹抽屉后立刻点下一张卡），
+    // 不吞不拦（原先整窗口盲吞 400ms，下一张卡第一次点击无反应）。
+    const inPopup =
+      (popupEl != null && popupEl.contains(target)) || (sheetMask != null && sheetMask.contains(target));
     touchSettlePending = false;
-    ev.stopImmediatePropagation();
-    ev.preventDefault();
-    return;
+    if (inPopup) {
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      return;
+    }
+    // 浮层外：真实点击放行，落入下方外部点击关闭分支
   }
   if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
     closeItemMenu();
