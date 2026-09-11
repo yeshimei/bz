@@ -1,4 +1,4 @@
-/* 源指纹 d17fa577eabe9d35 · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 fa82a564b3045bee · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -5896,7 +5896,7 @@ var BZW_cinema = (() => {
   var FETCH_GAP_MS = 15e3;
   var FETCH_TIMEOUT_MS = 3 * 60 * 1e3;
   var queue = [];
-  var pending = /* @__PURE__ */ new Set();
+  var pending = /* @__PURE__ */ new Map();
   var attempted = /* @__PURE__ */ new Set();
   var failedNames = [];
   var pumping = false;
@@ -5907,6 +5907,8 @@ var BZW_cinema = (() => {
   var spawnFn = null;
   var gapMs = FETCH_GAP_MS;
   var refreshDelayMs = 1500;
+  var POLL_COMPLETE_MS = 3e3;
+  var pollCompleteMs = POLL_COMPLETE_MS;
   var activeKill = null;
   function getChildProcess() {
     const w = window;
@@ -6029,7 +6031,10 @@ var BZW_cinema = (() => {
     }
   }
   function isFetching(path) {
-    return !!(path && pending.has(path));
+    if (!path) return false;
+    const at = pending.get(path);
+    if (!at) return false;
+    return Date.now() - at < FETCH_TIMEOUT_MS + 3e4;
   }
   function enqueueDoubanFetch(file, name) {
     if (!file) return false;
@@ -6037,7 +6042,7 @@ var BZW_cinema = (() => {
     const key = file.path;
     if (attempted.has(key)) return false;
     attempted.add(key);
-    pending.add(key);
+    pending.set(key, Date.now());
     queue.push({ file, name });
     void pump();
     return true;
@@ -6053,6 +6058,25 @@ var BZW_cinema = (() => {
     }
     if (added > 0 && M.currentOverlay) (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
   }
+  async function waitCompleteOrExit(entry, running) {
+    let settled = false;
+    return new Promise((resolve) => {
+      const finish = (v) => {
+        if (settled) return;
+        settled = true;
+        clearInterval(timer);
+        resolve(v);
+      };
+      const timer = setInterval(() => {
+        void fetchComplete(M.appRef, entry.file).then((ok) => {
+          if (!ok) return;
+          activeKill == null ? void 0 : activeKill();
+          finish(true);
+        });
+      }, pollCompleteMs);
+      running.then((ok) => finish(ok), () => finish(false));
+    });
+  }
   async function pump() {
     if (pumping) return;
     pumping = true;
@@ -6062,7 +6086,7 @@ var BZW_cinema = (() => {
         const entry = queue.shift();
         if (!first) await sleep(gapMs);
         first = false;
-        const ok = await runOne(entry);
+        const ok = await waitCompleteOrExit(entry, runOne(entry));
         pending.delete(entry.file.path);
         if (!ok) failedNames.push(entry.name);
         refreshAfterFetch();
@@ -6136,7 +6160,10 @@ var BZW_cinema = (() => {
       recent: recent2
     };
   }
-  function buildRecommendPrompt(profile, recent2, allNames) {
+  var RECOMMEND_ASK = 20;
+  var RECOMMEND_TAKE = 5;
+  var FOLLOWUP_ASK = 10;
+  function buildRecommendPrompt(profile, recent2) {
     return `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~10加权统计，数值为加权分）：
 品类分布：${profile.groups.join("、") || "无"}
 类型偏好：${profile.genres.join("、") || "无"}
@@ -6145,11 +6172,55 @@ var BZW_cinema = (() => {
 地区偏好：${profile.regions.join("、") || "无"}
 最近看的10部：${recent2.join("；")}
 
-请基于画像推荐 5 部用户可能喜欢的、且不在排除清单中的影视（电影/剧集/动漫/纪录片/公开课均可）。推荐理由必须具体引用画像中的偏好信号（如"你偏爱X导演的Y风格"）。只推荐真实存在的影视，避免编造。
-
-排除清单（不要推荐这些）：${allNames.join("、")}
+请基于画像推荐 ${RECOMMEND_ASK} 部用户可能喜欢的影视（电影/剧集/动漫/纪录片/公开课均可），按与口味的匹配度从高到低排序。推荐理由必须具体引用画像中的偏好信号（如"你偏爱X导演的Y风格"）。只推荐真实存在的影视，避免编造。
 
 严格输出 JSON（不要输出其他内容）：{"recommendations":[{"title":"片名","year":"年份","director":"导演","type":"电影|剧集|动漫|纪录片|公开课","reason":"推荐理由"}]}`;
+  }
+  function buildFollowupPrompt(profile, recent2, excludeNames) {
+    return `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~10加权统计，数值为加权分）：
+品类分布：${profile.groups.join("、") || "无"}
+类型偏好：${profile.genres.join("、") || "无"}
+导演偏好：${profile.directors.join("、") || "无"}
+主演偏好：${profile.actors.join("、") || "无"}
+地区偏好：${profile.regions.join("、") || "无"}
+最近看的10部：${recent2.join("；")}
+
+刚才已经向你推荐过以下影片（不要重复推荐）：${excludeNames.join("、")}
+
+请再推荐 ${FOLLOWUP_ASK} 部用户可能喜欢的影视（电影/剧集/动漫/纪录片/公开课均可），按与口味的匹配度从高到低排序，避开上面已出现过的。推荐理由必须具体引用画像中的偏好信号（如"你偏爱X导演的Y风格"）。只推荐真实存在的影视，避免编造。
+
+严格输出 JSON（不要输出其他内容）：{"recommendations":[{"title":"片名","year":"年份","director":"导演","type":"电影|剧集|动漫|纪录片|公开课","reason":"推荐理由"}]}`;
+  }
+  function recTitle(r) {
+    return String((r == null ? void 0 : r.title) || (r == null ? void 0 : r.name) || "").trim();
+  }
+  function dedupeRecommendations(cands, taken) {
+    const out = [];
+    for (const r of cands != null ? cands : []) {
+      const name = recTitle(r);
+      if (!name || taken.has(name)) continue;
+      taken.add(name);
+      if (M.items.some((it) => it.name === name)) continue;
+      out.push(r);
+    }
+    return out;
+  }
+  async function refineRecommend(first) {
+    var _a, _b;
+    const taken = /* @__PURE__ */ new Set();
+    const picked = dedupeRecommendations(first, taken).slice(0, RECOMMEND_TAKE);
+    if (picked.length >= RECOMMEND_TAKE) return picked;
+    M.aiWaitMsg = `首轮候选在库较多，正在补充推荐…`;
+    (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
+    try {
+      const profile = buildTasteProfile();
+      const ai = createAI();
+      const raw = await ai.json(buildFollowupPrompt(profile, profile.recent, [...taken]), {});
+      const more = parseRecommendJson(raw);
+      if (more) picked.push(...dedupeRecommendations(more, taken));
+    } catch (e) {
+    }
+    return picked.slice(0, RECOMMEND_TAKE);
   }
   function parseRecommendJson(raw) {
     try {
@@ -6203,7 +6274,7 @@ tags:
     }
   }
   async function runAIPage(app, opts) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
     if (M.aiRunning) return;
     M.aiRunning = true;
     M.aiWaitMsg = opts.initWaitMsg;
@@ -6226,12 +6297,18 @@ tags:
         return;
       }
       M.aiRunning = false;
-      M.aiResult = parsed;
-      (_h = (_g = M).renderFn) == null ? void 0 : _h.call(_g);
+      const final = opts.refine ? await opts.refine(parsed) : parsed;
+      if (!final.length) {
+        M.aiError = "没有凑齐可推荐的库外新片，换一批再试";
+        (_h = (_g = M).renderFn) == null ? void 0 : _h.call(_g);
+        return;
+      }
+      M.aiResult = final;
+      (_j = (_i = M).renderFn) == null ? void 0 : _j.call(_i);
     } catch (e) {
       M.aiRunning = false;
       M.aiError = "AI 分析失败：" + (e.message || e);
-      (_j = (_i = M).renderFn) == null ? void 0 : _j.call(_i);
+      (_l = (_k = M).renderFn) == null ? void 0 : _l.call(_k);
     }
   }
   function runAIRecommend(app) {
@@ -6241,12 +6318,12 @@ tags:
       initWaitMsg: "AI 正在分析你的观影口味…",
       prepare: () => {
         const profile = buildTasteProfile();
-        const allNames = M.items.map((i) => i.name);
         return {
-          prompt: buildRecommendPrompt(profile, profile.recent, allNames),
+          prompt: buildRecommendPrompt(profile, profile.recent),
           waitMsg: `已分析 ${profile.total} 部观影历史，正在生成推荐…`
         };
-      }
+      },
+      refine: refineRecommend
     });
   }
   function runSimilarRecommend(item, app) {
@@ -6719,7 +6796,7 @@ tags:
       <div style="text-align:center;margin-top:14px"><button class="dm-btn j-ai-more" data-cinema-ai-start>${iconSpan(ICON.ai)}换一批</button></div>`;
     }
     return `<div class="ai-pref">偏好：<b>${esc(inp.pref)}</b></div>
-    <div class="ai-guide"><span class="ai-ic">${iconSpan(ICON.ai)}</span>
+    <div class="ai-guide">
       <div class="ai-title">让 AI 读懂你的片库</div>
       <div class="ai-sub">基于你的评分、影评与偏好标签生成荐片，<br>结果可直接加入想看清单</div>
       <button class="ai-start j-ai-start" data-cinema-ai-start>${iconSpan(ICON.ai)}开始推荐</button></div>`;
@@ -6767,29 +6844,31 @@ tags:
   }
   var railRow = (on, attr, color, name, n) => `<button class="rail-item${on ? " is-on" : ""}" ${attr}><span class="dot" style="background:${color}"></span>${esc(name)}<span class="n">${n}</span></button>`;
   function railHtml(items, view) {
+    const listOn = view.view === "list";
     const g = {};
     const c = { 想看: 0, 在看: 0, 已看: 0 };
     items.forEach((it) => {
       g[it.group] = (g[it.group] || 0) + 1;
       c[statusText(it.status)]++;
     });
-    let groups = railRow(!view.typeFilter && !view.statusFilter, 'data-g="全部"', "var(--gold)", "全部", items.length);
+    let groups = railRow(listOn && !view.typeFilter && !view.statusFilter, 'data-g="全部"', "var(--gold)", "全部", items.length);
     for (const name of GROUP_ORDER) {
-      groups += railRow(view.typeFilter === name && !view.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);
+      groups += railRow(listOn && view.typeFilter === name && !view.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);
     }
     let status = "";
     for (const s of ["想看", "在看", "已看"]) {
-      status += railRow(view.statusFilter === s, `data-s="${s}"`, ST_COLOR[s], s, c[s]);
+      status += railRow(listOn && view.statusFilter === s, `data-s="${s}"`, ST_COLOR[s], s, c[s]);
     }
     return { groups, status };
   }
   function chipsHtml(view) {
-    let html = `<button class="chip${!view.typeFilter && !view.statusFilter ? " is-on" : ""}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
+    const listOn = view.view === "list";
+    let html = `<button class="chip${listOn && !view.typeFilter && !view.statusFilter ? " is-on" : ""}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
     for (const name of GROUP_ORDER) {
-      html += `<button class="chip${view.typeFilter === name && !view.statusFilter ? " is-on" : ""}" data-c="${name}">${name}</button>`;
+      html += `<button class="chip${listOn && view.typeFilter === name && !view.statusFilter ? " is-on" : ""}" data-c="${name}">${name}</button>`;
     }
     for (const s of ["想看", "在看", "已看"]) {
-      html += `<button class="chip${view.statusFilter === s ? " is-on" : ""}" data-s="${s}">${s}</button>`;
+      html += `<button class="chip${listOn && view.statusFilter === s ? " is-on" : ""}" data-s="${s}">${s}</button>`;
     }
     return html;
   }
