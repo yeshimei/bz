@@ -1896,7 +1896,7 @@ export class DiaryAppController {
           notice('加密失败：原文块摘除未生效', 'error');
           return;
         }
-        notice('已加密移入保险箱', 'success');
+        // 收紧通知：加密移入成功结果立即可见（条目从墙消失），不再弹成功提示
         void this.loadAndRender();
       }
     } catch (err) {
@@ -1916,7 +1916,7 @@ export class DiaryAppController {
       const newTags = e.tags.filter((t) => t !== '加密');
       const ok = await reclassifyEntry(noteId, newTags);
       if (ok) {
-        notice('已解密还原', 'success');
+        // 收紧通知：解密还原成功结果立即可见（条目回墙），不再弹成功提示
         void this.loadAndRender();
       } else {
         notice('解密失败：主密码可能不正确，密文未受影响', 'error');
