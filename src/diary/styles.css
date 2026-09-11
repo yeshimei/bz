@@ -1498,14 +1498,6 @@
     width: 85%;
     padding: 20px;
   }
-  /* 移动端写日记弹窗去纵向滚动条（滚动保持） */
-  #add-diary-popup {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  #add-diary-popup::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 /* 标签选择器弹窗 */
@@ -1610,26 +1602,8 @@
   .diary-tag-selector-btn {
     font-size: var(--bz-font-label);
   }
-  /* 移动端弹窗去纵向滚动条（滚动保持） */
-  .diary-tag-selector-popup {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .diary-tag-selector-popup::-webkit-scrollbar {
-    display: none;
-  }
 }
 
-/* 滚轮日期时间选择器（滚轮列隐藏滚动条） */
-.diary-datetime-scroll-container::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  background: transparent;
-}
-.diary-datetime-scroll-container {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 
 /* ==================== 日记解析检测面板（ticket 121，ADR-0054；入口落设置页维护组） ==================== */
 .bz-diary-repair-progress {

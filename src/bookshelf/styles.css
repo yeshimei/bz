@@ -182,8 +182,7 @@
 }
 
 /* ==================== 借书卡详情（纸卡 + 台账 + 印章；编辑控件融卡内） ==================== */
-.bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); height: min(72vh, 600px); background: var(--bsw-paper); border: 1px solid var(--bsw-line); scrollbar-width: none; overflow: hidden; }
-.bz-bs-d-popup.bz-overlay-popup::-webkit-scrollbar { display: none; }
+.bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); height: min(72vh, 600px); background: var(--bsw-paper); border: 1px solid var(--bsw-line); overflow: hidden; }
 /* 固定高：卡不随书评拉长，内容多寡只影响内部滚动区的可滚量 */
 .bz-bs-d-popup .bz-dialog-body { flex: 1; min-height: 0; }
 .bz-bs-detail { position: relative; display: flex; flex: 1; min-height: 0; color: var(--bsw-ink); font-family: var(--bsw-sans); }
@@ -212,8 +211,7 @@
 .bz-bs-d-cover-ph .bz-ic { width: 26px; height: 26px; opacity: 0.6; }
 .bz-bs-d-info { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 /* 标题/作者固定（flex none），书评 + 台账 + 进度收进内部滚动区 */
-.bz-bs-d-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
-.bz-bs-d-body::-webkit-scrollbar { display: none; }
+.bz-bs-d-body { flex: 1; min-height: 0; overflow-y: auto; }
 .bz-bs-d-title { font-family: var(--bsw-serif); font-size: 23px; letter-spacing: 2px; color: var(--bsw-ink); }
 .bz-bs-d-sub { font-size: var(--bz-font-label); color: var(--bsw-muted); margin: var(--bz-space-xs) 0 var(--bz-space-md); }
 .bz-bs-d-quote {
