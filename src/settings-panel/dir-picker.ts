@@ -35,6 +35,8 @@ export function openDirPicker(opts: DirPickerOptions): void {
   let q = '';
   let dirsCache: string[] = [];
   let dirsLoaded = false;
+  /** 目录扫描失败态（H7：不 catch 会永远停在「正在读取目录…」，无失败提示无重试） */
+  let scanFailed = false;
 
   const mask = document.createElement('div');
   mask.className = 'bz-sp-picker-mask';
@@ -137,6 +139,21 @@ export function openDirPicker(opts: DirPickerOptions): void {
     items = items.slice().reverse();
     list.innerHTML = '';
     if (!dirsLoaded) {
+      if (scanFailed) {
+        // 扫描失败态：提示 + 重试（H7）
+        const failRow = document.createElement('div');
+        failRow.className = 'bz-sp-picker-row';
+        failRow.style.pointerEvents = 'none';
+        failRow.style.opacity = '0.55';
+        failRow.textContent = '目录读取失败';
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'bz-sp-btn';
+        retry.textContent = '重试';
+        retry.addEventListener('click', () => scanDirs());
+        list.append(failRow, retry);
+        return;
+      }
       // 目录扫描完成前的加载占位
       const loading = document.createElement('div');
       loading.className = 'bz-sp-picker-row';
@@ -201,11 +218,23 @@ export function openDirPicker(opts: DirPickerOptions): void {
 
   renderCrumb();
   renderList();
-  // 目录扫描（文件聚合 + adapter 递归补齐）完成后填充全量列表
-  void collectVaultFolders(getApp()).then((dirs) => {
-    if (settled) return;
-    dirsCache = dirs;
-    dirsLoaded = true;
-    renderList();
-  });
+  // 目录扫描（文件聚合 + adapter 递归补齐）完成后填充全量列表；
+  // 失败置失败态（H7）：提示 + 重试，不再永挂「正在读取目录…」
+  function scanDirs(): void {
+    scanFailed = false;
+    if (!dirsLoaded) renderList();
+    collectVaultFolders(getApp())
+      .then((dirs) => {
+        if (settled) return;
+        dirsCache = dirs;
+        dirsLoaded = true;
+        renderList();
+      })
+      .catch(() => {
+        if (settled) return;
+        scanFailed = true;
+        renderList();
+      });
+  }
+  scanDirs();
 }
