@@ -38,4 +38,6 @@
   70.2×155.9mm（= 真机屏幕实测尺寸）。缩放用 `transform`，绝不能改 iframe 的 `width/height`
   （会连内部视口一起改，动到 `@media ≤768` 判据）。换显示器只需改 `mob-1to1.js` 的 `RULER_MM`。
 - 测试：UI 锚用 `bz-<域>-*` 类 / `data-*` 钩子；颜色断言读 `rgb()` 计算值。
+- **假层语义必须与宿主一致**（ADR-0122）：fake 层与测试 mock 里凡是「照宿主 API 写的替身」，语义要与真机逐条对齐。已实例：`MarkdownRenderer.render` 是**追加**语义（类型定义写明 "The element to append to"，不清空容器），而 fake 渲染器（`innerHTML =`）与测试 mock（`el.textContent = md`）都实现成覆盖语义 —— 于是「纯文本预填 + 追加渲染」造成的正文双份只在真机显现，评审壳与单测两侧全绿（issue 275）。改宿主替身前先查官方类型定义的行为描述，再写替身；发现「假层语义与宿主不符且恰好掩盖缺陷」按缺陷处理。
+- **弹层隐藏滚动条不自造**（ADR-0080/0122）：bz 界面级单源在 `src/core/ui/components.css`（按 `bz-` 前缀通杀，滚动功能保留）；域内写 `scrollbar-width: thin/auto` 或 `::-webkit-scrollbar` 自绘是违规，评审壳里看见滚动条按缺陷处理。
 - 宿主差异（theme 切换 / 假数据 / 图标表 / Platform）全部收敛在 fake 层与评审壳，组件层禁止分叉。

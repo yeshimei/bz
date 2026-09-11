@@ -349,7 +349,7 @@
 | 设置面板·命令面板 | `.bz-sp-mob*`（settings-panel 域） | 移动端：主面板真全屏 + 头行（标题 + 关闭图标钮）；子面板（域设置/选择器）一律居中弹窗、遮罩点击关闭 |
 | 设置面板·图标方块 | `.bz-sp-mob-ic` / `.bz-sp-group-icon`（settings-panel 域） | lucide 图标方块：移动列表 34×34、分组卡 24×24，10/7px 圆角、品牌 tint 底 + 品牌色图标；域列表图标为裸 lucide（15px） |
 
-**滚动条**：全站隐藏滚动条（`* { scrollbar-width: none }` + `*::-webkit-scrollbar { display: none }`），滚动功能保留（ADR-0080 用户拍板）；新 UI 一律不加滚动条样式。
+**滚动条**：**bz 自有界面全量隐藏滚动条，滚动功能保留**（ADR-0080 首发、ADR-0122 收敛）——单源 = `src/core/ui/components.css` 的界面级规则（选择器按「`bz-` 前缀类/ID + 面板壳整树 + 非 bz 前缀的遗留弹层」枚举，**刻意不用 `*` 通配**：Obsidian 核心 UI 不属 bz，不被波及）。**新 UI 只做两件事**：类名带 `bz-` 前缀（自动生效）、不动 `overflow`（隐藏的是条，不是滚动）。域内一律**禁止**自造滚动条样式：`scrollbar-width: thin/auto`、`::-webkit-scrollbar { width }`、`::-webkit-scrollbar-thumb` 自绘均为违规（issue 275–278 清退对象）；既有域内隐藏声明视为冗余，删。条款由 `tests/core/ui-scrollbar.test.ts` 守卫。
 
 **设置面板的域设置内容**：不新造——点开 = 内嵌渲染各域既有 schema（review/pomodoro/secondbrain 等与 ⚙️ 完全同源，`renderPanelSchema`）；路径行 = 路径胶囊 + `openPathPicker`（ADR-0061）。设置面板的控件基线已收编进组件库（`src/core/ui`：`.bz-input/.bz-sw/.bz-select/.bz-range/.bz-chip/.bz-btn/.bz-badge/.bz-empty`），不再有面板私有控件副本。
 
