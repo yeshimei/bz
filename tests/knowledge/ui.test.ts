@@ -174,15 +174,46 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
       '文献盒/带片C.md',
       expect.anything(),
     );
-    // mock 渲染只产纯文本（无元素）→ 回退纯文本段落兜底（真 Obsidian 渲染出 <video>/排版）
+    // mock 追加语义（ADR-0122，与真机一致）渲染进空容器：标记串恰好一份——
+    // 骨架不再预填 parasHtml（预填 + 追加 = 双份，issue 275）
     const bodyEl = document.getElementById('bz-kb-preview-body')!;
-    expect(bodyEl.textContent).toContain('段落零');
-    expect(bodyEl.querySelector('p')).toBeTruthy();
+    expect(bodyEl.textContent!.split('段落零').length - 1).toBe(1);
+    // ![[…mp4]] 只出现一次：整段正文只经渲染器产出一份
+    expect(bodyEl.textContent!.split('![[CONFIG/APPENDIX/带片C.mp4]]').length - 1).toBe(1);
     // 视频 url → 「原文」可点链接（openUrl 外开）
     const link = document.querySelector('[data-lit-src-url]') as HTMLElement;
     expect(link?.getAttribute('data-lit-src-url')).toBe('https://www.bilibili.com/video/BV1demo/');
     link.click();
     await vi.waitFor(() => expect(app.openUrl).toHaveBeenCalledWith('https://www.bilibili.com/video/BV1demo/'));
+  });
+
+  it('渲染抛错 → 纯文本兜底且不叠加：兜底只写一份；再开（渲染恢复）仍恰好一份（issue 275）', async () => {
+    vault.files.set('文献盒/抛错C.md', noteMd({
+      title: '抛错C', type: 'video', domain: '物理', date: '2026-09-03 10:00:00',
+      body: '兜底段落一。\n\n兜底段落二。',
+    }));
+    ui.showMain();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-lexrow').length).toBe(1));
+    mockMarkdownRenderer.render.mockRejectedValueOnce(new Error('渲染管线失败'));
+    (document.querySelector('.bz-kb-lexrow[data-kb-act=lit-peek]') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('bz-kb-preview-body')!.textContent).toContain('兜底段落一'));
+    const bodyEl = document.getElementById('bz-kb-preview-body')!;
+    expect(bodyEl.querySelector('p')).toBeTruthy(); // 纯文本段落兜底在位
+    expect(bodyEl.textContent!.split('兜底段落一').length - 1).toBe(1); // 兜底只写一份
+    // 点遮罩关 → 再开（渲染恢复）：渲染前清空语义保证仍恰好一份
+    (document.querySelector('.bz-kb-ovl') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.querySelector('.bz-kb-ovl')).toBeNull());
+    (document.querySelector('.bz-kb-lexrow[data-kb-act=lit-peek]') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('bz-kb-preview-body')!.textContent).toContain('兜底段落一'));
+    expect(document.getElementById('bz-kb-preview-body')!.textContent!.split('兜底段落一').length - 1).toBe(1);
+  });
+
+  it('空正文笔记：预览显式「（无正文）」空态，不留全白（issue 275）', async () => {
+    vault.files.set('文献盒/无正文.md', noteMd({ title: '无正文', type: 'term', domain: '数学', date: '2026-09-03 10:00:00', body: '' }));
+    ui.showMain();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-lexrow').length).toBe(1));
+    (document.querySelector('.bz-kb-lexrow[data-kb-act=lit-peek]') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('bz-kb-preview-body')!.textContent).toContain('（无正文）'));
   });
 
   it('提炼成卡（预览按钮已移除，编辑器编程触达保行为覆盖）：候选同域优先带推荐；落卡写卡片盒 + 源文献 related 互链 + 部贰新落', async () => {
@@ -237,6 +268,8 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(document.getElementById('bz-kb-preview-body')).toBeTruthy());
     expect(document.querySelector('.bz-kb-sheet')!.textContent).toContain('主题预览');
     expect(document.getElementById('bz-kb-preview-body')!.textContent).toContain('本能脑');
+    // 同一 openPreview 的清空语义：主题正文也恰好一份（issue 275）
+    expect(document.getElementById('bz-kb-preview-body')!.textContent!.split('本能脑').length - 1).toBe(1);
   });
 
   it('三部统一预览：卡片行点击开同款弹层（卡片预览）', async () => {

@@ -1,4 +1,4 @@
-/* 源指纹 eaba0ac9660ebef2 · 仓内输入 21 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1ed8f8722c26a37c · 仓内输入 21 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -4168,7 +4168,9 @@ var BZW_knowledge = (() => {
         out.push(`<p>${inline(line)}</p>`);
       }
       closeList();
-      el.innerHTML = out.join("\n");
+      const tpl = document.createElement("template");
+      tpl.innerHTML = out.join("\n");
+      el.appendChild(tpl.content);
     }
   };
   var Component = class {
@@ -7325,19 +7327,24 @@ ${sample}`,
         <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
         <span class="bz-kb-dom">${esc(n.domain || "未分类")}</span></div>
       <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || "")}</span></div>
-      <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
+      <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
       this._previewNote = n;
       const bodyEl = this.popup ? q(this.popup, "#bz-kb-preview-body") : null;
-      if (bodyEl && body) {
-        try {
-          const comp = new Component();
-          await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
-          comp.unload();
-        } catch (e) {
-        }
-        if (!bodyEl.querySelector("*") || !((_a = bodyEl.textContent) == null ? void 0 : _a.trim())) {
+      if (bodyEl) {
+        bodyEl.textContent = "";
+        if (body) {
+          try {
+            const comp = new Component();
+            await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
+            comp.unload();
+          } catch (e) {
+          }
+          if (!bodyEl.querySelector("*") || !((_a = bodyEl.textContent) == null ? void 0 : _a.trim())) {
+            bodyEl.innerHTML = parasHtml;
+          }
+        } else {
           bodyEl.innerHTML = parasHtml;
         }
       }

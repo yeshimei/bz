@@ -134,7 +134,11 @@ export class MarkdownRenderer {
       out.push(`<p>${inline(line)}</p>`);
     }
     closeList();
-    el.innerHTML = out.join('\n');
+    // 追加语义（ADR-0122）：真 Obsidian 的 render 是「追加到容器」而非覆盖——
+    // 经 template 解析后逐节点追加，容器已有内容（如预填纯文本）时叠加，评审壳可复现真机双份（issue 275）
+    const tpl = document.createElement('template');
+    tpl.innerHTML = out.join('\n');
+    el.appendChild(tpl.content);
   }
 }
 
