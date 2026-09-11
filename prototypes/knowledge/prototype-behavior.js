@@ -1,4 +1,4 @@
-/* 源指纹 3c72f64d09e263ae · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1538117b005f9138 · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -6960,6 +6960,11 @@ ${sample}`,
 
   // src/knowledge/video-meta.ts
   var BVID_RE = /BV[0-9A-Za-z]{10}/;
+  var BILI_HOST_RE = /(^|\.)(bilibili\.com|b23\.tv)$/i;
+  function isBiliUrl(text) {
+    const m = text.match(/^https?:\/\/([^/?#]+)/i);
+    return !!m && BILI_HOST_RE.test(m[1].toLowerCase().replace(/^www\./i, ""));
+  }
   function parseBvid(input) {
     const m = String(input != null ? input : "").match(BVID_RE);
     return m ? m[0] : null;
@@ -7007,10 +7012,12 @@ ${sample}`,
     if (bvid) {
       const viaApi = await fetchFromViewApi(bvid);
       if (viaApi) return viaApi;
-      return /^https?:\/\//i.test(text) ? await fetchFromPageTitle(text) : null;
+      return isBiliUrl(text) ? await fetchFromPageTitle(text) : null;
     }
     if (!isUrlLikeSourceText(text)) return null;
-    return await fetchFromPageTitle(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+    const url = /^https?:\/\//i.test(text) ? text : `https://${text}`;
+    if (!isBiliUrl(url)) return null;
+    return await fetchFromPageTitle(url);
   }
 
   // src/knowledge/ui.ts
