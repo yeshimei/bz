@@ -2,7 +2,7 @@
 /**
  * 视频录入元信息抓取测试（src/knowledge/video-meta.ts，issue 278）：
  * parseBvid 各形态、view API 成功/风控/网络异常/超时、页面标题兜底（剔 B 站尾巴）、
- * 双失败 null、非 B 站 URL 只标题、非 URL 文本零请求。mock requestUrl 走共用 obsidian 替身。
+ * 双失败 null、非 B 站 URL 零请求（联网范围仅限 B 站域，b23.tv 短链命中）、非 URL 文本零请求。mock requestUrl 走共用 obsidian 替身。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { requestUrl } from 'obsidian';
@@ -103,15 +103,14 @@ describe('fetchVideoMeta', () => {
     }
   });
 
-  it('非 B 站 URL（含 b23.tv）→ 只标题兜底、不调 view API', async () => {
-    reqMock.mockImplementationOnce(async () => pageResp('什么是心流 - 知乎'));
-    expect(await fetchVideoMeta('https://zhuanlan.zhihu.com/p/123')).toEqual({ title: '什么是心流' });
-    expect(reqMock).toHaveBeenCalledTimes(1);
-    expect(String((reqMock.mock.calls[0][0] as any).url)).toBe('https://zhuanlan.zhihu.com/p/123');
+  it('非 B 站 URL → null 且零请求（Q4 拍板：只净化不联网）；b23.tv 短链属 B 站 → 标题兜底', async () => {
+    expect(await fetchVideoMeta('https://zhuanlan.zhihu.com/p/123')).toBeNull();
+    expect(await fetchVideoMeta('https://github.com/jwbz/bz?utm_source=x')).toBeNull();
+    expect(reqMock).not.toHaveBeenCalled();
 
     reqMock.mockImplementationOnce(async () => pageResp('短链页标题'));
     expect(await fetchVideoMeta('https://b23.tv/jL9bKaX')).toEqual({ title: '短链页标题' });
-    expect(reqMock).toHaveBeenCalledTimes(2);
+    expect(String((reqMock.mock.calls[0][0] as any).url)).toBe('https://b23.tv/jL9bKaX');
   });
 
   it('非 URL 文本 → null 且零网络请求', async () => {
