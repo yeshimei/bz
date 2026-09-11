@@ -101,6 +101,9 @@
   /* 遮罩增强：灯箱等全屏黑底（两主题同值） */
   --bz-scrim: rgba(0, 0, 0, 0.92);
 
+  /* 遮罩毛玻璃模糊半径（两主题同值；全仓遮罩 backdrop-filter 单源消费） */
+  --bz-overlay-blur: 8px;
+
   /* 媒体比例 */
   --bz-ratio-square: 1 / 1;
   --bz-ratio-4-3: 4 / 3;
