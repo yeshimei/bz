@@ -1,4 +1,4 @@
-/* 源指纹 d0572945a2b0322c · 仓内输入 20 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 09460deb3050747b · 仓内输入 20 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
@@ -4318,7 +4318,11 @@ var BZW_pomodoro = (() => {
   // src/core/z-order.ts
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
-      if (el.isConnected) el.style.zIndex = String(zCounter);
+      if (!el.isConnected) {
+        alwaysOnTop.delete(el);
+        continue;
+      }
+      el.style.zIndex = String(zCounter);
     }
   }
   function allocZBlock(n) {
@@ -4940,6 +4944,13 @@ var BZW_pomodoro = (() => {
   function defaultPomodoroData() {
     return { version: 1, state: createInitialState(), history: [] };
   }
+  function trimHistory(history2, now) {
+    const floor = new Date(now);
+    floor.setHours(0, 0, 0, 0);
+    floor.setDate(floor.getDate() - 6);
+    const t = floor.getTime();
+    return history2.filter((h) => h.ts >= t);
+  }
   function normalizeData(raw) {
     const def = defaultPomodoroData();
     if (!raw || typeof raw !== "object") return def;
@@ -5449,8 +5460,10 @@ var BZW_pomodoro = (() => {
     if (skipBtn) skipBtn.disabled = locked;
   }
   function applyAction(action) {
+    const prev = state;
     const r = transition(state, action, Date.now(), durations(), options());
     state = r.state;
+    if (!state.paused) autoPauseMain = false;
     if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
     if (r.event.type === "phase-completed") {
       if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
@@ -5460,7 +5473,7 @@ var BZW_pomodoro = (() => {
       }
     }
     if (action === "pause" && state.paused) notifyPaused();
-    if (r.event.type !== "none" || action === "pause" && state.paused) void save();
+    if (r.event.type !== "none" || action === "pause" && state.paused || action === "reset" && r.state !== prev) void save();
     ensureTick();
     render();
   }
@@ -5525,13 +5538,14 @@ var BZW_pomodoro = (() => {
     }
   }
   async function save() {
+    history = trimHistory(history, Date.now());
     if (dataManager) await dataManager.save({ version: 1, state, history });
   }
   async function initData() {
     const data = await dataManager.load();
     const r = recover(data.state, data.history, Date.now(), durations(), options());
     state = r.state;
-    history = r.history;
+    history = trimHistory(r.history, Date.now());
     const mainChanged = data.state.endTime !== null && r.state.endTime === null;
     if (mainChanged) await dataManager.save({ version: 1, state, history });
     loaded = true;

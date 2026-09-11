@@ -1,4 +1,4 @@
-/* 源指纹 540f16905257f255 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 aa3dcff3aeda4941 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -5252,7 +5252,8 @@ var BZW_clipbook = (() => {
   async function writeNewsDataMerged(intent) {
     var _a;
     const res = await readNewsData();
-    const base = res.ok ? res.data : emptyData();
+    if (!res.ok) return;
+    const base = res.data;
     const next = { ...base };
     if (intent.set.articles || ((_a = intent.removeArticleKeys) == null ? void 0 : _a.length)) {
       const patchList = intent.set.articles || [];
@@ -9516,10 +9517,16 @@ ${sample}`,
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
+      let touched = false;
+      let changed = false;
       const list = (res.data.articles || []).map((a) => {
         if (articleKeyOf(a) !== key) return a;
+        touched = true;
+        if (a.read === true) return a;
+        changed = true;
         return { ...a, read: true, state: action };
       });
+      if (!touched || !changed) return;
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       s.totalRead = (Number(s.totalRead) || 0) + 1;
       if (action === "saved") s.totalSaved = (Number(s.totalSaved) || 0) + 1;
@@ -11384,7 +11391,8 @@ ${bodyText.substring(0, 6e3)}`;
           e.stopPropagation();
           retryBtn.remove();
           errHandle.hide();
-          void processFile(app, ai, file, { force });
+          void Promise.resolve().then(() => (init_auto_summary(), auto_summary_exports)).then((m) => m.retrySummaryWithAI(app, ai, file, force)).catch(() => {
+          });
         });
         errHandle.el.appendChild(retryBtn);
         return;
@@ -11457,6 +11465,16 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/auto-summary/index.ts
+  var auto_summary_exports = {};
+  __export(auto_summary_exports, {
+    ensureAutoSummary: () => ensureAutoSummary,
+    isAutoSummaryInitialized: () => isAutoSummaryInitialized,
+    redoSummaryForActiveFile: () => redoSummaryForActiveFile,
+    regenerateSummary: () => regenerateSummary,
+    retrySummaryWithAI: () => retrySummaryWithAI,
+    stopAutoSummary: () => stopAutoSummary,
+    unloadAutoSummary: () => unloadAutoSummary
+  });
   function getWatchDir() {
     const s = tryGetSettings();
     return s && s.articleDirectory || "归档/网页剪藏";
@@ -11528,6 +11546,19 @@ ${bodyText.substring(0, 6e3)}`;
     if (!file || file.extension !== "md") return Promise.resolve();
     return enqueueJob({ app, ai: createAI(), file, force: true });
   }
+  function retrySummaryWithAI(app, ai, file, force) {
+    if (!file || file.extension !== "md") return Promise.resolve();
+    return enqueueJob({ app, ai, file, force });
+  }
+  async function redoSummaryForActiveFile(app) {
+    const ws = app && app.workspace;
+    const file = ws && typeof ws.getActiveFile === "function" ? ws.getActiveFile() : null;
+    if (!file || file.extension !== "md" || !String(file.path || "").startsWith(getWatchDir() + "/")) {
+      notify("当前打开的不是剪藏笔记，无法重新生成摘要", { type: "info" });
+      return;
+    }
+    await regenerateSummary(app, file);
+  }
   function scheduleRegister(app) {
     const ai = createAI();
     registerTimer = setTimeout(() => {
@@ -11552,6 +11583,9 @@ ${bodyText.substring(0, 6e3)}`;
     vaultRef = app.vault;
     workspaceRef = app.workspace;
     scheduleRegister(app);
+  }
+  function isAutoSummaryInitialized() {
+    return initialized2;
   }
   function stopAutoSummary() {
     if (registerTimer) {
@@ -11586,6 +11620,12 @@ ${bodyText.substring(0, 6e3)}`;
     batchTotal = 0;
     batchDone = 0;
     processingPaths.clear();
+  }
+  function unloadAutoSummary() {
+    stopAutoSummary();
+    initialized2 = false;
+    vaultRef = null;
+    workspaceRef = null;
   }
   var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
   var init_auto_summary = __esm({
@@ -12714,7 +12754,12 @@ ${bodyText.substring(0, 6e3)}`;
     let data = res.data;
     const cleaned = applyRetention(data.articles, days, days);
     const retentionChanged = cleaned.length !== data.articles.length;
-    if (retentionChanged) data = { ...data, articles: cleaned };
+    let removedKeys = [];
+    if (retentionChanged) {
+      const kept = new Set(cleaned.map((a) => articleKeyOf(a)));
+      removedKeys = (data.articles || []).map((a) => articleKeyOf(a)).filter((k) => !kept.has(k));
+      data = { ...data, articles: cleaned };
+    }
     let statsChanged = false;
     if (!statsHasData(data.stats)) {
       const migrated = await migrateLegacyStats(data);
@@ -12727,7 +12772,7 @@ ${bodyText.substring(0, 6e3)}`;
       const set = {};
       if (retentionChanged) set.articles = data.articles;
       if (statsChanged) set.stats = data.stats;
-      await enqueueNewsWrite(() => writeNewsDataMerged({ set }));
+      await enqueueNewsWrite(() => writeNewsDataMerged({ set, removeArticleKeys: removedKeys }));
     }
     const sidecar = await readClipbookData();
     const clipNotes = await scanClipDirectory(M.dir || clipDir(), {
@@ -12748,6 +12793,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_data();
       init_scan();
       init_store();
+      init_constants();
       init_settings_provider();
       init_app();
       init_state();
@@ -13220,7 +13266,10 @@ ${bodyText.substring(0, 6e3)}`;
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M.cur && M.cur.id))) M.cur = list[0];
+      if (!list.some((a) => a.id === (M.cur && M.cur.id))) {
+        M.cur = list[0];
+        if (readerEl) renderReader();
+      }
       listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs));
       M.list = list;
       bindItemMenus();
@@ -13462,6 +13511,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function doMarkRead(a) {
     if (!a || a.origin !== "news") return;
+    if (a.st !== "unread") return;
     const rawBefore = { ...a.raw || {} };
     await flowMarkRead(a);
     notifyUndo(`已将「${a.title}」标为已读`, () => void undoMarkRead(rawBefore));

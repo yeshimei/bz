@@ -1,4 +1,4 @@
-/* 源指纹 5ce0ca0fe495b0d3 · 仓内输入 49 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f80fc933c4538d68 · 仓内输入 49 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -5873,7 +5873,10 @@ var BZW_belongings = (() => {
       console.error("数据文件结构异常:", error);
       db = emptyDatabase();
     }
-    if (!db.items) db.items = {};
+    if (!db.items || typeof db.items !== "object" || Array.isArray(db.items)) {
+      console.error("数据文件 items 字段结构异常:", db.items === null ? "null" : typeof db.items);
+      db.items = {};
+    }
     for (const it of Object.values(db.items)) {
       if (!it || typeof it !== "object") continue;
       const split = splitEmojiCategory(it.category);
@@ -6986,6 +6989,7 @@ var BZW_belongings = (() => {
       '只输出 JSON 对象，格式：{"category":"分类名","icon":"清单中的标识符"}'
     ].join("\n");
   }
+  var AI_FALLBACK_ICON = "package";
   function parseCategorySuggestion(raw) {
     var _a, _b;
     let text = String(raw || "").trim();
@@ -7000,7 +7004,9 @@ var BZW_belongings = (() => {
     const category = splitEmojiCategory(String((_a = obj == null ? void 0 : obj.category) != null ? _a : "")).name.trim();
     const icon = String((_b = obj == null ? void 0 : obj.icon) != null ? _b : "").trim();
     if (!category || category.length > 16) return null;
-    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon) || !AI_ICON_MENU.includes(icon)) return null;
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon) || !AI_ICON_MENU.includes(icon)) {
+      return { category, icon: AI_FALLBACK_ICON };
+    }
     return { category, icon };
   }
   async function aiSuggestCategory(name, history) {
@@ -7211,6 +7217,10 @@ var BZW_belongings = (() => {
   function closePanel() {
     stopAutoRefresh();
     closeBelDetail();
+    if (bodyThemeObserver) {
+      bodyThemeObserver.disconnect();
+      bodyThemeObserver = null;
+    }
     if (dropDocClick) {
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
@@ -7374,18 +7384,25 @@ var BZW_belongings = (() => {
     emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
     notifyUndo(`「${cur.name}」已标记为${s}`, () => {
       void (async () => {
-        if (!M.db) M.db = await loadDatabase();
-        const now = itemById(it.id);
-        if (!now) {
-          notice("该物品已被外部变更删除，无法撤销", "warning");
-          return;
+        var _a2;
+        try {
+          if (!M.db) M.db = await loadDatabase();
+          const now = itemById(it.id);
+          if (!now) {
+            notice("该物品已被外部变更删除，无法撤销", "warning");
+            return;
+          }
+          now.current_status = prevStatus;
+          if (prevExit != null) now.exit_date = prevExit;
+          else if (now.exit_date != null) now.exit_date = null;
+          now.last_updated = (/* @__PURE__ */ new Date()).toISOString();
+          await saveAndRender();
+          notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
+        } catch (e) {
+          notifySaveError(e, "撤销状态");
+          M.db = await loadDatabase().catch(() => null);
+          (_a2 = M.renderFn) == null ? void 0 : _a2.call(M);
         }
-        now.current_status = prevStatus;
-        if (prevExit != null) now.exit_date = prevExit;
-        else if (now.exit_date != null) now.exit_date = null;
-        now.last_updated = (/* @__PURE__ */ new Date()).toISOString();
-        await saveAndRender();
-        notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
       })();
     }, { type: "restore" });
   }
@@ -7458,18 +7475,26 @@ var BZW_belongings = (() => {
     emitDomainEvent("belongings", { kind: "delete", title: it.name });
     notifyUndo(`已删除「${it.name}」`, () => {
       void (async () => {
-        if (!M.db) M.db = await loadDatabase();
-        if (M.db.items[snapshot.id]) {
-          notice(`已存在同 id 物品（${snapshot.id}），跳过恢复`, "warning");
-          return;
+        var _a2;
+        try {
+          if (!M.db) M.db = await loadDatabase();
+          if (M.db.items[snapshot.id]) {
+            notice(`已存在同 id 物品（${snapshot.id}），跳过恢复`, "warning");
+            return;
+          }
+          M.db.items[snapshot.id] = snapshot;
+          await saveAndRender();
+          notice(`已恢复「${snapshot.name}」`, "success");
+        } catch (e) {
+          notifySaveError(e, "撤销删除");
+          M.db = await loadDatabase().catch(() => null);
+          (_a2 = M.renderFn) == null ? void 0 : _a2.call(M);
         }
-        M.db.items[snapshot.id] = snapshot;
-        await saveAndRender();
-        notice(`已恢复「${snapshot.name}」`, "success");
       })();
     }, { type: "restore" });
   }
   var _belBaseline = null;
+  var _belFormTargetId = null;
   function belFormStatusNow(mask) {
     var _a;
     return ((_a = mask.querySelector("[data-status].is-on")) == null ? void 0 : _a.dataset.status) || "";
@@ -7486,6 +7511,7 @@ var BZW_belongings = (() => {
   }
   function closeBelForm(mask) {
     _belBaseline = null;
+    _belFormTargetId = null;
     unregisterSheetCompanion(mask);
     mask.remove();
   }
@@ -7494,10 +7520,15 @@ var BZW_belongings = (() => {
     else closeBelForm(mask);
   }
   function openForm(it) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e;
     const existing = document.querySelector(".bz-bel-form-mask");
     if (existing) {
-      (_a = existing.querySelector("input, textarea")) == null ? void 0 : _a.focus();
+      const targetId = (_a = it == null ? void 0 : it.id) != null ? _a : null;
+      if (_belFormTargetId === targetId) {
+        (_b = existing.querySelector("input, textarea")) == null ? void 0 : _b.focus();
+      } else {
+        notice("已有打开的表单，请先保存或关闭后再编辑其他物品", "warning");
+      }
       return;
     }
     if (!M.db) {
@@ -7514,6 +7545,7 @@ var BZW_belongings = (() => {
     const mask = document.createElement("div");
     mask.className = "bz-overlay-mask bz-bel-form-mask";
     mask.innerHTML = belFormHtml(it);
+    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
     document.body.appendChild(mask);
     topifyZ(mask);
     mountIcons(mask);
@@ -7521,7 +7553,7 @@ var BZW_belongings = (() => {
     const sheetOpen = !!document.querySelector(".bz-item-sheet-mask");
     if (it && sheetOpen) registerSheetCompanion(mask);
     _belBaseline = {
-      name: (_b = it == null ? void 0 : it.name) != null ? _b : "",
+      name: (_d = it == null ? void 0 : it.name) != null ? _d : "",
       cat: init.catVal,
       price: init.priceVal,
       date: init.dateVal,
@@ -7616,7 +7648,7 @@ var BZW_belongings = (() => {
     mask.addEventListener("mousedown", (e) => {
       if (e.target === mask) requestCloseBelForm(mask);
     });
-    (_c = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _c.addEventListener("click", () => requestCloseBelForm(mask));
+    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm(mask));
     saveBtn.addEventListener("click", () => {
       if (saving) return;
       const name = mask.querySelector("#bm-name").value.trim();
@@ -7641,6 +7673,11 @@ var BZW_belongings = (() => {
       }
       const exited = curStatus === "已转卖" || curStatus === "已丢弃";
       const exitVal = exited ? mask.querySelector("#bm-exitdate").value : "";
+      const exitDate = exited ? exitVal || todayStr() : "";
+      if (exitDate && exitDate < date) {
+        fail("出离日期不能早于购买日期");
+        return;
+      }
       const soldRaw = curStatus === "已转卖" ? mask.querySelector("#bm-soldprice").value.trim() : "";
       let soldPrice = null;
       if (soldRaw !== "") {
@@ -7664,6 +7701,7 @@ var BZW_belongings = (() => {
               notice("该物品已被外部变更删除，本次保存未写入", "warning");
               unregisterSheetCompanion(mask);
               closeItemMenu();
+              _belFormTargetId = null;
               mask.remove();
               return;
             }
@@ -7675,7 +7713,7 @@ var BZW_belongings = (() => {
             cur.purchase_date = date;
             cur.current_status = curStatus;
             cur.description = desc;
-            if (exited) cur.exit_date = exitVal || todayStr();
+            if (exited) cur.exit_date = exitDate;
             else if (cur.exit_date != null) cur.exit_date = null;
             if (curStatus === "已转卖") cur.sold_price = soldPrice;
             else if (cur.sold_price != null) cur.sold_price = null;
@@ -7685,7 +7723,8 @@ var BZW_belongings = (() => {
           } else {
             if (!M.db) throw new Error("数据库未加载");
             const newItem = {
-              id: "item_" + Date.now(),
+              // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
+              id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
               name,
               category,
               purchase_price: Math.round(price * 100) / 100,
@@ -7694,7 +7733,7 @@ var BZW_belongings = (() => {
               description: desc,
               created_date: (/* @__PURE__ */ new Date()).toISOString(),
               last_updated: (/* @__PURE__ */ new Date()).toISOString(),
-              ...exited ? { exit_date: exitVal || todayStr() } : {},
+              ...exited ? { exit_date: exitDate } : {},
               ...curStatus === "已转卖" ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
@@ -7703,6 +7742,7 @@ var BZW_belongings = (() => {
             emitDomainEvent("belongings", { kind: "add", item: newItem });
           }
           _belBaseline = null;
+          _belFormTargetId = null;
           unregisterSheetCompanion(mask);
           closeItemMenu();
           mask.remove();
