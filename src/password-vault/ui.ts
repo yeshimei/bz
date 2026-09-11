@@ -13,6 +13,8 @@ import { secureRandomPassword, armClipboardClear, copySensitiveText, cancelClipb
 import { getSafeManager } from '../encrypt';
 import { topifyZ, createSiteIcon } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
+import { uiLockScreen } from '../core/ui/lock-screen';
+import type { LockScreenHandle, LockScreenStat } from '../core/ui/lock-screen';
 import { notice } from '../core/notice';
 import { attachItemActions, openItemSheet, type ItemAction } from '../core/item-actions';
 import {
@@ -357,6 +359,8 @@ export class PasswordVaultUIManager {
   // ---------- 渲染 ----------
   renderAll() {
     if (!this.root) return;
+    // 解锁态下刷新统计快照（供下次上锁后的解锁屏显示；锁定态清单不可读）
+    if (this.dataManager.safeManager?.unlocked) this.captureLockStats();
     this.renderLock();
     this.renderDeskList();
     this.renderDeskDetail();
@@ -1027,40 +1031,61 @@ export class PasswordVaultUIManager {
   }
 
   /** 显示锁屏（未解锁态）；锁屏绑定一次 */
+  /** 锁屏句柄（desk/mob 双实例各一份；结构由 core/ui/lock-screen 提供，三域同源） */
+  private lockHandles = new WeakMap<HTMLElement, LockScreenHandle>();
+  /** 统计快照：清单是密文，锁定态读不到 —— 用解锁期间的快照，冷启动回落「—」 */
+  private pwLockStatsCache: LockScreenStat[] = [
+    { num: '—', label: '平台' },
+    { num: '—', label: '口令条目' },
+    { num: '—', label: '收藏' },
+  ];
+
+  /** 快照本域统计（解锁态调用） */
+  private captureLockStats(): void {
+    try {
+      const plats = this.dataManager.platforms();
+      this.pwLockStatsCache = [
+        { num: String(plats.length), label: '平台' },
+        { num: String(this.dataManager.pwData.length), label: '口令条目' },
+        { num: String(plats.filter((x) => this.dataManager.hasFav(x.platform)).length), label: '收藏' },
+      ];
+    } catch (e) {
+      /* 未解锁时保持上一次快照 */
+    }
+  }
+
+  /** 显示锁屏（未解锁态）：core 共享骨架 + 本域口径（平台/口令条目/收藏）与金色风格 */
   private showLock() {
-    // 由 SafeManager 判定首设：exists()
     void this.isFirstTime().then((firstTime) => {
-      this.root!.querySelectorAll('.bz-password-vault-lock').forEach((lockEl) => {
-        const lock = lockEl as HTMLElement;
-        lock.classList.add('open');
-        const title = lock.querySelector('[data-lock-title]')!;
-        const p1 = lock.querySelector('[data-lock-p1]') as HTMLInputElement;
-        const p2 = lock.querySelector('[data-lock-p2]') as HTMLInputElement;
-        const go = lock.querySelector('[data-lock-go]') as HTMLButtonElement;
-        const err = lock.querySelector('[data-lock-err]') as HTMLElement;
-        title.textContent = firstTime ? '设置主密码' : '输入主密码';
-        p1.value = '';
-        p2.value = '';
-        p2.style.display = firstTime ? 'block' : 'none';
-        err.textContent = '';
-        go.textContent = firstTime ? '设置并解锁' : '解锁保险库';
-        // 绑定（一次性）
-        if (!lock.dataset.bound) {
-          lock.dataset.bound = '1';
-          this.bindLock(lock);
+      this.root!.querySelectorAll<HTMLElement>('.bz-password-vault-lock').forEach((lockEl) => {
+        lockEl.classList.add('open');
+        let ls = this.lockHandles.get(lockEl);
+        if (!ls) {
+          ls = uiLockScreen({
+            kind: 'password-vault',
+            icon: 'key',
+            title: '',
+            sub: '',
+            stats: this.pwLockStatsCache,
+            action: '',
+            inline: true,
+          });
+          lockEl.appendChild(ls.el);
+          this.lockHandles.set(lockEl, ls);
+          this.bindLock(ls);
         }
-        // 打开输入框自动聚焦（requestAnimationFrame 确保可见后再聚焦）
-        requestAnimationFrame(() => {
-          try {
-            p1.focus();
-          } catch (e) {
-            /* 忽略 */
-          }
-        });
+        ls.setTitle(firstTime ? '设置主密码' : '密码本已上锁');
+        ls.setMessage(firstTime ? '请设置一个主密码（用于加密密码本数据）' : '解锁后可查看平台与口令');
+        ls.actionBtn.textContent = firstTime ? '设置并解锁' : '解锁';
+        ls.showSecondInput(firstTime);
+        ls.setError('');
+        ls.input.value = '';
+        ls.input2.value = '';
+        ls.setStats(this.pwLockStatsCache);
+        requestAnimationFrame(() => ls.focus());
       });
     });
   }
-
   private async isFirstTime(): Promise<boolean> {
     const safe = this.dataManager.safeManager;
     try {
@@ -1071,37 +1096,38 @@ export class PasswordVaultUIManager {
   }
 
   /** 锁屏交互（原型视觉 + 保险箱安全机制） */
-  private bindLock(lock: HTMLElement) {
-    const p1 = lock.querySelector('[data-lock-p1]') as HTMLInputElement;
-    const p2 = lock.querySelector('[data-lock-p2]') as HTMLInputElement;
-    const err = lock.querySelector('[data-lock-err]') as HTMLElement;
-    const go = lock.querySelector('[data-lock-go]') as HTMLButtonElement;
-    const title = lock.querySelector('[data-lock-title]') as HTMLElement;
+  /** 锁屏交互（首设双输入 + 冷却节流；语义留本域，结构走 core 共享组件） */
+  private bindLock(ls: LockScreenHandle) {
     const safe = this.dataManager.safeManager;
-    let busy = false; // 解锁处理中防重入
+    let busy = false;
     const showErr = (m: string) => {
-      err.textContent = m;
+      ls.setError(m);
       setTimeout(() => {
-        if (err.textContent === m) err.textContent = '';
+        if (ls.input.value) ls.setError('');
       }, 2600);
     };
-    const setMode = () => {
-      void this.isFirstTime().then((first) => {
-        title.textContent = first ? '设置主密码' : '输入主密码';
-        p2.style.display = first ? 'block' : 'none';
-        go.textContent = first ? '设置并解锁' : '解锁保险库';
+    const resetBtn = () => {
+      void this.isFirstTime().then((f) => {
+        ls.actionBtn.textContent = f ? '设置并解锁' : '解锁';
       });
     };
-    go.addEventListener('click', async () => {
+    ls.actionBtn.addEventListener('click', async () => {
       if (busy) return;
       const first = await this.isFirstTime();
-      const pw = p1.value;
+      const pw = ls.input.value;
       if (!pw) {
         showErr('请输入主密码');
         return;
       }
       if (first) {
-        if (pw !== p2.value) {
+        if (ls.input2.style.display === 'none') {
+          ls.showSecondInput(true);
+          ls.input2.value = '';
+          ls.setMessage('请再次输入主密码确认');
+          ls.focus();
+          return;
+        }
+        if (pw !== ls.input2.value) {
           showErr('两次密码不一致');
           return;
         }
@@ -1109,7 +1135,7 @@ export class PasswordVaultUIManager {
           showErr('主密码至少 4 位');
           return;
         }
-        // 首设风险确认（Q13 保留）：勾选后才能继续
+        // 首设风险确认（Q13 保留）：勾选流程确认后才能继续
         void openFlowDialog({
           title: '设置主密码',
           message:
@@ -1120,13 +1146,13 @@ export class PasswordVaultUIManager {
           ],
         }).then(async (v) => {
           if (v !== 'ok') {
-            p1.value = '';
-            p2.value = '';
+            ls.input.value = '';
+            ls.input2.value = '';
             showErr('已取消设置');
             return;
           }
           busy = true;
-          go.textContent = '处理中…';
+          ls.setBusy(true);
           try {
             const ok = await safe.unlock(pw);
             if (ok) {
@@ -1138,10 +1164,11 @@ export class PasswordVaultUIManager {
               showErr('设置失败：无法写入清单，请检查磁盘空间后重试');
             }
           } catch (e: any) {
-            showErr('设置失败：' + e.message);
+            showErr('设置失败：' + (e?.message || ''));
           } finally {
             busy = false;
-            go.textContent = first ? '设置并解锁' : '解锁保险库';
+            ls.setBusy(false);
+            resetBtn();
           }
         });
         return;
@@ -1153,7 +1180,7 @@ export class PasswordVaultUIManager {
         return;
       }
       busy = true;
-      go.textContent = '处理中…';
+      ls.setBusy(true);
       try {
         const ok = await safe.unlock(pw);
         if (ok) {
@@ -1178,8 +1205,8 @@ export class PasswordVaultUIManager {
               ],
             }).then((v) => {
               if (v === 'ok') {
-                void safe.unlock(pw, true).then(async (ok) => {
-                  if (ok) {
+                void safe.unlock(pw, true).then(async (ok2) => {
+                  if (ok2) {
                     this.security.unlockFailStreak = 0;
                     this.security.unlockCooldownUntil = 0;
                     this.closeLock();
@@ -1202,25 +1229,25 @@ export class PasswordVaultUIManager {
           const delaySec = Math.min(2 ** (this.security.unlockFailStreak - 1), 8);
           this.security.unlockCooldownUntil = Date.now() + delaySec * 1000;
           showErr(`${delaySec} 秒后可再次尝试`);
-          p1.value = '';
-          p1.focus();
+          ls.input.value = '';
+          ls.focus();
         }
       } finally {
         busy = false;
-        go.textContent = first ? '设置并解锁' : '解锁保险库';
+        ls.setBusy(false);
+        resetBtn();
       }
     });
-    p1.addEventListener('keydown', (e) => {
+    ls.input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        if (p2.style.display === 'block') p2.focus();
-        else go.click();
+        if (ls.input2.style.display === 'none') ls.actionBtn.click();
+        else ls.input2.focus();
       }
     });
-    p2.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') go.click();
+    ls.input2.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') ls.actionBtn.click();
     });
   }
-
   private closeLock() {
     this.root!.querySelectorAll('.bz-password-vault-lock').forEach((l) => l.classList.remove('open'));
   }

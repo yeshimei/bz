@@ -85,17 +85,13 @@ export function avatarHTML(platform: string, url: string | null | undefined, cls
 
 // ==================== 面板骨架（原 ui.ts deskHTML/mobHTML 及子模板平移） ====================
 
-/** 锁屏（金色印章 + 主密码输入；首设/解锁双态由 ui.ts 切换文案） */
+/**
+ * 锁屏容器（共用骨架：内容由 ui.ts 用 core/ui/lock-screen 注入，三域同源）
+ * 只留容器——印章/标题/统计卡/输入/按钮全部由共享组件渲染，本域注入口径与金色风格。
+ */
 export function lockHTML(which: 'desk' | 'mob'): string {
   return `
-      <div class="bz-password-vault-lock" data-lock="${which}">
-        <div class="seal">${ICONS.seal}</div>
-        <h2 data-lock-title>设置主密码</h2>
-        <input type="password" data-lock-p1 placeholder="主密码" autocomplete="off">
-        <input type="password" data-lock-p2 placeholder="再次输入确认" autocomplete="off" style="display:none">
-        <div class="err" data-lock-err></div>
-        <button class="go" data-lock-go>解锁保险库</button>
-      </div>`;
+      <div class="bz-password-vault-lock" data-lock="${which}"></div>`;
 }
 
 /** 添加/编辑密码条目弹窗 */

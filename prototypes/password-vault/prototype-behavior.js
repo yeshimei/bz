@@ -1,5 +1,5 @@
-/* 源指纹 9eb954d5a5fc9174 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
+/* 源指纹 a63e0ac7d4cd77d1 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
   var __create = Object.create;
@@ -8776,7 +8776,199 @@ var BZW_password_vault = (() => {
     image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'
   };
 
+  // src/core/ui/lock-screen.ts
+  function uiLockScreen(opts) {
+    const el = document.createElement("div");
+    el.className = `bz-lockscreen bz-lockscreen--${opts.kind}` + (opts.inline ? " bz-lockscreen--inline" : " bz-lockscreen--mask");
+    el.dataset.ls = opts.inline ? "box" : "mask";
+    const box = document.createElement("div");
+    box.className = "bz-lockscreen-box";
+    box.dataset.ls = "box";
+    const seal = document.createElement("div");
+    seal.className = "bz-lockscreen-seal";
+    seal.dataset.ls = "seal";
+    seal.appendChild(uiIcon(opts.icon || "lock", "bz-lockscreen-seal-ic"));
+    box.appendChild(seal);
+    const title = document.createElement("h4");
+    title.className = "bz-lockscreen-title";
+    title.dataset.ls = "title";
+    title.textContent = opts.title;
+    box.appendChild(title);
+    const sub = document.createElement("p");
+    sub.className = "bz-lockscreen-sub";
+    sub.dataset.ls = "sub";
+    sub.textContent = opts.sub || "";
+    box.appendChild(sub);
+    const statsWrap = document.createElement("div");
+    statsWrap.className = "bz-lockscreen-stats";
+    statsWrap.dataset.ls = "stats";
+    const setStats = (list) => {
+      statsWrap.innerHTML = "";
+      (list || []).forEach((s) => {
+        const card = document.createElement("div");
+        card.className = "bz-lockscreen-stat";
+        const num = document.createElement("b");
+        num.className = "bz-lockscreen-num";
+        num.textContent = s.num;
+        const lab = document.createElement("span");
+        lab.className = "bz-lockscreen-label";
+        lab.textContent = s.label;
+        card.appendChild(num);
+        card.appendChild(lab);
+        statsWrap.appendChild(card);
+      });
+      statsWrap.style.display = list && list.length ? "" : "none";
+    };
+    setStats(opts.stats || []);
+    box.appendChild(statsWrap);
+    const warning = document.createElement("div");
+    warning.className = "bz-lockscreen-warning";
+    warning.dataset.ls = "warning";
+    warning.innerHTML = opts.warningHtml || "";
+    warning.style.display = opts.firstSetup ? "" : "none";
+    box.appendChild(warning);
+    const ack = document.createElement("label");
+    ack.className = "bz-lockscreen-ack";
+    ack.dataset.ls = "ack";
+    const ackBox = document.createElement("input");
+    ackBox.type = "checkbox";
+    ack.appendChild(ackBox);
+    ack.appendChild(document.createTextNode(opts.ackText || "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复"));
+    ack.style.display = opts.firstSetup ? "" : "none";
+    box.appendChild(ack);
+    const row = document.createElement("div");
+    row.className = "bz-lockscreen-row";
+    const input = document.createElement("input");
+    input.type = "password";
+    input.className = "bz-lockscreen-input";
+    input.dataset.ls = "p1";
+    input.placeholder = opts.placeholder || "主密码";
+    input.autocomplete = "off";
+    const input2 = document.createElement("input");
+    input2.type = "password";
+    input2.className = "bz-lockscreen-input";
+    input2.dataset.ls = "p2";
+    input2.placeholder = "再次输入";
+    input2.autocomplete = "off";
+    input2.style.display = opts.firstSetup ? "" : "none";
+    const actionBtn = document.createElement("button");
+    actionBtn.className = "bz-lockscreen-action";
+    actionBtn.dataset.ls = "go";
+    actionBtn.textContent = opts.action;
+    row.appendChild(input);
+    row.appendChild(input2);
+    row.appendChild(actionBtn);
+    box.appendChild(row);
+    const err = document.createElement("div");
+    err.className = "bz-lockscreen-err";
+    err.dataset.ls = "err";
+    box.appendChild(err);
+    const sec = document.createElement("div");
+    sec.className = "bz-lockscreen-sec";
+    sec.dataset.ls = "sec";
+    const dot = document.createElement("span");
+    dot.className = "bz-lockscreen-dot";
+    sec.appendChild(dot);
+    const secText = document.createElement("span");
+    secText.textContent = opts.secText || "";
+    sec.appendChild(secText);
+    if (opts.secTone) sec.classList.add(`bz-lockscreen-sec--${opts.secTone}`);
+    sec.style.display = opts.secText ? "" : "none";
+    box.appendChild(sec);
+    const hint = document.createElement("div");
+    hint.className = "bz-lockscreen-hint";
+    hint.dataset.ls = "hint";
+    hint.textContent = opts.hint || "";
+    hint.style.display = opts.hint ? "" : "none";
+    box.appendChild(hint);
+    if (opts.inline) {
+      el.appendChild(box);
+    } else {
+      el.appendChild(box);
+      el.style.display = "flex";
+    }
+    const focus = () => {
+      try {
+        input.focus({ preventScroll: true });
+      } catch (e) {
+        input.focus();
+      }
+    };
+    return {
+      el,
+      input,
+      input2,
+      ackBox,
+      actionBtn,
+      setTitle: (t) => {
+        title.textContent = t;
+      },
+      setMessage: (t) => {
+        sub.textContent = t;
+      },
+      setError: (t) => {
+        err.textContent = t;
+      },
+      setStats,
+      setSec: (t, tone) => {
+        secText.textContent = t;
+        sec.style.display = t ? "" : "none";
+        sec.classList.remove("bz-lockscreen-sec--ok", "bz-lockscreen-sec--warn", "bz-lockscreen-sec--bad");
+        if (tone) sec.classList.add(`bz-lockscreen-sec--${tone}`);
+      },
+      setBusy: (busy) => {
+        actionBtn.disabled = !!busy;
+        input.disabled = !!busy;
+        input2.disabled = !!busy;
+        if (busy) actionBtn.dataset.busyText = actionBtn.textContent || "";
+        actionBtn.textContent = busy ? "处理中…" : actionBtn.dataset.busyText || opts.action;
+      },
+      showSecondInput: (show) => {
+        input2.style.display = show ? "" : "none";
+      },
+      focus,
+      close: () => {
+        el.remove();
+      }
+    };
+  }
+
   // src/encrypt/ui.ts
+  var LOCK_KIND_META = {
+    vault: {
+      icon: "shield",
+      title: "保险库已上锁",
+      sub: "解锁前，笔记正文与附件均以密文保存",
+      action: "解锁",
+      stats: [
+        { num: "—", label: "笔记条目" },
+        { num: "—", label: "随库附件" },
+        { num: "—", label: "附件密文" }
+      ]
+    },
+    "password-vault": {
+      icon: "key",
+      title: "密码本已上锁",
+      sub: "解锁前，平台与口令均以密文保存",
+      action: "解锁",
+      stats: [
+        { num: "—", label: "平台" },
+        { num: "—", label: "口令条目" },
+        { num: "—", label: "收藏" }
+      ]
+    },
+    diary: {
+      icon: "lock",
+      title: "加密日记已上锁",
+      sub: "解锁前，加密日记条目与附件均为密文",
+      action: "解锁",
+      stats: [
+        { num: "—", label: "加密条目" },
+        { num: "—", label: "随库附件" },
+        { num: "—", label: "附件密文" }
+      ]
+    }
+  };
   function statusbarHtml(unlocked) {
     return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
   }
@@ -9041,6 +9233,8 @@ var BZW_password_vault = (() => {
       this.sessionTimer = null;
       /** 安全模式无交互自动上锁计时器（15 分钟；面板内交互重置） */
       this.idleLockTimer = null;
+      /** 解锁屏统计快照（会话内缓存；冷启动为「—」） */
+      this.lockStatsCache = {};
       this._selNoteId = null;
       this._pwEditingId = null;
       /** 同平台+账号查重命中后的放行标志（同一弹窗会话内再点一次保存即放行） */
@@ -9553,180 +9747,136 @@ var BZW_password_vault = (() => {
      * 主密码弹窗（首设两次确认 + 损坏清单重设确认）。视觉样式已收敛至 styles.css
      * （铁律 9：.bz-encrypt-dialog-* 类）；内联仅保留功能性 zIndex/显隐（display）。
      */
-    async showPasswordDialog() {
+    /** 解锁输入类失败：行内报错 + 通知双通道（原型为行内报错，插件既有语义保留通知） */
+    rejectInput(msg, setErr, tone) {
+      setErr(msg);
+      notice(msg, tone || void 0);
+    }
+    /** 解锁屏：三域共用骨架（core/ui/lock-screen），文案与统计按域注入 */
+    async showPasswordDialog(kind = "vault") {
       const exists = await this.dataManager.exists();
+      const meta = LOCK_KIND_META[kind];
       return new Promise((resolve) => {
-        const mask = document.createElement("div");
-        mask.className = "bz-encrypt-dialog-mask";
-        topifyZ(mask);
-        mask.style.display = "flex";
-        const box = document.createElement("div");
-        box.className = "bz-encrypt-dialog-box";
-        const title = document.createElement("h4");
-        title.className = "bz-encrypt-dialog-title";
-        const message = document.createElement("p");
-        message.className = "bz-encrypt-dialog-msg";
-        const input = document.createElement("input");
-        input.type = "password";
-        input.placeholder = "输入主密码";
-        input.className = "bz-encrypt-dialog-input";
-        const input2 = document.createElement("input");
-        input2.type = "password";
-        input2.placeholder = "再次输入";
-        input2.className = "bz-encrypt-dialog-input";
-        input2.style.display = "none";
-        const warning = document.createElement("div");
-        warning.className = "bz-encrypt-dialog-warning";
-        warning.style.display = "none";
-        warning.innerHTML = `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`;
-        const ack = document.createElement("label");
-        ack.className = "bz-encrypt-dialog-ack";
-        ack.style.display = "none";
-        const ackBox = document.createElement("input");
-        ackBox.type = "checkbox";
-        ack.appendChild(ackBox);
-        ack.appendChild(document.createTextNode("我已了解：主密码无法找回，遗忘将导致密文永久无法恢复"));
-        if (exists) {
-          title.textContent = "输入主密码";
-          message.textContent = "请输入您设置的主密码以解锁保险库";
-          input2.style.display = "none";
-          warning.style.display = "none";
-          ack.style.display = "none";
-        } else {
-          title.textContent = "设置主密码";
-          message.textContent = "请设置一个主密码（用于加密所有数据）";
-          input2.style.display = "block";
-          input2.placeholder = "再次输入";
-          warning.style.display = "block";
-          ack.style.display = "block";
-        }
-        const btnContainer = document.createElement("div");
-        btnContainer.className = "bz-encrypt-dialog-btns";
-        const cancelBtn = document.createElement("button");
-        cancelBtn.textContent = "取消";
-        cancelBtn.className = "bz-encrypt-dialog-btn";
-        cancelBtn.onclick = () => {
-          document.body.removeChild(mask);
-          resolve(false);
+        const stats = this.lockStatsCache[kind] || meta.stats.map((s) => ({ ...s, num: "—" }));
+        const ls = uiLockScreen({
+          kind,
+          icon: meta.icon,
+          title: exists ? meta.title : "设置主密码",
+          sub: exists ? meta.sub : "请设置一个主密码（用于加密所有数据）",
+          stats,
+          action: exists ? meta.action : "设置并解锁",
+          firstSetup: !exists,
+          warningHtml: `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
+          ackText: "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复",
+          secText: exists ? "主密码不会存储 · 遗忘将无法恢复密文" : "",
+          secTone: "warn",
+          hint: exists ? "" : "建议使用密码本保存此密码"
+        });
+        topifyZ(ls.el);
+        document.body.appendChild(ls.el);
+        const done = (ok) => {
+          ls.close();
+          resolve(ok);
         };
-        const confirmBtn = document.createElement("button");
-        confirmBtn.textContent = "确认";
-        confirmBtn.className = "bz-encrypt-dialog-btn bz-encrypt-dialog-btn--primary";
-        confirmBtn.onclick = async () => {
-          const pw = input.value;
+        const setErr = (m) => {
+          ls.setError(m);
+          setTimeout(() => {
+            if (ls.input.value) ls.setError("");
+          }, 2600);
+        };
+        ls.actionBtn.onclick = async () => {
+          const pw = ls.input.value;
           if (!pw) {
-            notice("请输入密码");
+            this.rejectInput("请输入密码", setErr);
             return;
           }
           if (!exists) {
-            if (input2.style.display === "none") {
-              input2.style.display = "block";
-              input2.value = "";
-              this.focusUnlockInput(input2);
-              message.textContent = "请再次输入主密码确认";
-              return;
-            } else {
-              if (pw !== input2.value) {
-                notice("两次密码不一致");
-                return;
-              }
-              if (!ackBox.checked) {
-                notice("请先勾选风险确认");
-                return;
-              }
-              try {
-                const ok = await this.dataManager.unlock(pw);
-                if (ok) {
-                  document.body.removeChild(mask);
-                  resolve(true);
-                  notice("密码已设置，数据已加密", "success");
-                } else {
-                  notice("设置失败：无法写入清单，请检查磁盘空间后重试", "error");
-                  resolve(false);
-                }
-              } catch (e) {
-                notifyActionError(e, "设置主密码");
-                resolve(false);
-              }
+            if (ls.input2.style.display === "none") {
+              ls.showSecondInput(true);
+              ls.input2.value = "";
+              ls.setMessage("请再次输入主密码确认");
+              ls.focus();
               return;
             }
-          } else {
-            const remainMs = this.unlockCooldownUntil - Date.now();
-            if (remainMs > 0) {
-              notice(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1e3)} 秒`, "warning");
+            if (pw !== ls.input2.value) {
+              this.rejectInput("两次密码不一致", setErr);
               return;
             }
-            const success = await this.dataManager.unlock(pw);
-            if (success) {
-              this.resetUnlockThrottle();
-              document.body.removeChild(mask);
-              resolve(true);
-              const healMsg = this.dataManager.selfHealRolledBack > 0 ? "；上次未完成的加密已自动回滚，原文未动" : "";
-              notice("解锁成功" + healMsg, "success");
-            } else {
-              const issue = this.dataManager.manifestIssue;
-              if (issue === "empty" || issue === "corrupt") {
-                void openFlowDialog({
-                  title: "清单疑似损坏",
-                  message: "保险库清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？",
-                  actions: [
-                    { label: "暂不重设", value: "cancel" },
-                    { label: "仍要重设", value: "ok", cta: true }
-                  ]
-                }).then((v) => {
-                  if (v === "ok") {
-                    void this.dataManager.unlock(pw, true).then((ok) => {
-                      if (ok) {
-                        this.resetUnlockThrottle();
-                        document.body.removeChild(mask);
-                        resolve(true);
-                        notice("已重设主密码（旧数据不可恢复）", "warning");
-                      } else {
-                        notice("重设失败：无法写入清单", "error");
-                      }
-                    });
-                  } else {
-                    notice("未重设：请先检查或备份数据文件", "warning");
-                  }
-                });
-              } else {
-                notice("密码错误，请重试", "error");
-                const delaySec = this.registerUnlockFailure();
-                notice(`${delaySec} 秒后可再次尝试`, "warning");
-                input.value = "";
-                this.focusUnlockInput(input);
-              }
+            if (!ls.ackBox || !ls.ackBox.checked) {
+              this.rejectInput("请先勾选风险确认", setErr);
+              return;
             }
-          }
-        };
-        input.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") confirmBtn.click();
-        });
-        input2.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") confirmBtn.click();
-        });
-        btnContainer.appendChild(cancelBtn);
-        btnContainer.appendChild(confirmBtn);
-        box.appendChild(title);
-        box.appendChild(warning);
-        box.appendChild(ack);
-        box.appendChild(message);
-        box.appendChild(input);
-        box.appendChild(input2);
-        box.appendChild(btnContainer);
-        mask.appendChild(box);
-        document.body.appendChild(mask);
-        mask.onclick = (e) => {
-          if (e.target === mask) {
             try {
-              document.body.removeChild(mask);
-            } catch (err) {
+              const ok = await this.dataManager.unlock(pw);
+              if (ok) {
+                done(true);
+                notice("密码已设置，数据已加密", "success");
+              } else {
+                notice("设置失败：无法写入清单，请检查磁盘空间后重试", "error");
+                done(false);
+              }
+            } catch (e) {
+              notifyActionError(e, "设置主密码");
+              done(false);
             }
-            resolve(false);
+            return;
+          }
+          const remainMs = this.unlockCooldownUntil - Date.now();
+          if (remainMs > 0) {
+            this.rejectInput(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1e3)} 秒`, setErr, "warning");
+            return;
+          }
+          const success = await this.dataManager.unlock(pw);
+          if (success) {
+            this.resetUnlockThrottle();
+            done(true);
+            const healMsg = this.dataManager.selfHealRolledBack > 0 ? "；上次未完成的加密已自动回滚，原文未动" : "";
+            notice("解锁成功" + healMsg, "success");
+          } else {
+            const issue = this.dataManager.manifestIssue;
+            if (issue === "empty" || issue === "corrupt") {
+              void openFlowDialog({
+                title: "清单疑似损坏",
+                message: "保险库清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？",
+                actions: [
+                  { label: "暂不重设", value: "cancel" },
+                  { label: "仍要重设", value: "ok", cta: true }
+                ]
+              }).then((v) => {
+                if (v === "ok") {
+                  void this.dataManager.unlock(pw, true).then((ok) => {
+                    if (ok) {
+                      this.resetUnlockThrottle();
+                      done(true);
+                      notice("已重设主密码（旧数据不可恢复）", "warning");
+                    } else {
+                      this.rejectInput("重设失败：无法写入清单", setErr, "error");
+                    }
+                  });
+                } else {
+                  notice("未重设：请先检查或备份数据文件", "warning");
+                }
+              });
+            } else {
+              this.rejectInput("密码错误，请重试", setErr, "error");
+              const delaySec = this.registerUnlockFailure();
+              notice(`${delaySec} 秒后可再次尝试`, "warning");
+              ls.input.value = "";
+              ls.focus();
+            }
           }
         };
-        this.focusUnlockInput(input);
-        setTimeout(() => this.focusUnlockInput(input), 150);
+        ls.input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") ls.actionBtn.click();
+        });
+        ls.input2.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") ls.actionBtn.click();
+        });
+        ls.el.addEventListener("click", (e) => {
+          if (e.target === ls.el) done(false);
+        });
+        ls.focus();
+        setTimeout(() => ls.focus(), 150);
       });
     }
     /** 输入框聚焦（不滚动页面）+ 兼容性兜底；移动端靠二次聚焦触发系统键盘 */
@@ -9752,6 +9902,7 @@ var BZW_password_vault = (() => {
     /** 全量重绘：导航计数 + 概览/资产内容 + 移动端 + 健康卡 + 顶栏标题 */
     renderAll() {
       if (!this.rootVisible()) return;
+      if (this.dataManager.unlocked) this.captureLockStats();
       this.renderNav();
       this.renderDesktop();
       this.renderMobile();
@@ -9767,6 +9918,38 @@ var BZW_password_vault = (() => {
         note: notes.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault").length,
         diary: notes.filter((n) => n.kind === "diary-entry").length
       };
+    }
+    /**
+     * 快照解锁屏统计项（三域各一份）。
+     * 清单本身是密文，锁定态无法读计数 —— 故只在解锁期间快照，供下次上锁后的解锁屏显示；
+     * 冷启动（本次会话从未解锁）则回落「—」，不编造数字。
+     */
+    captureLockStats() {
+      var _a;
+      try {
+        const all = ((_a = this.dataManager.manifest) == null ? void 0 : _a.notes) || [];
+        const kb = (b) => b > 0 ? (b / 1024).toFixed(1) + " KB" : "—";
+        const stat = (list, labels) => {
+          const atts = list.reduce((s, n) => s + n.attachments.length, 0);
+          const bytes = list.reduce((s, n) => s + n.attachments.reduce((b, a) => b + (a.blobSize || 0), 0), 0);
+          return [{ num: String(list.length), label: labels[0] }, { num: String(atts), label: labels[1] }, { num: kb(bytes), label: labels[2] }];
+        };
+        this.lockStatsCache.vault = stat(
+          all.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault"),
+          ["笔记条目", "随库附件", "附件密文"]
+        );
+        this.lockStatsCache.diary = stat(
+          all.filter((n) => n.kind === "diary-entry"),
+          ["加密条目", "随库附件", "附件密文"]
+        );
+        const plats = this.pwDataManager.platforms();
+        this.lockStatsCache["password-vault"] = [
+          { num: String(plats.length), label: "平台" },
+          { num: String(this.pwDataManager.pwData.length), label: "口令条目" },
+          { num: String(plats.filter((p) => this.pwDataManager.hasFav(p.platform)).length), label: "收藏" }
+        ];
+      } catch (e) {
+      }
     }
     renderNav() {
       const c = this.counts();
@@ -11109,14 +11292,7 @@ var BZW_password_vault = (() => {
   }
   function lockHTML(which) {
     return `
-      <div class="bz-password-vault-lock" data-lock="${which}">
-        <div class="seal">${ICONS2.seal}</div>
-        <h2 data-lock-title>设置主密码</h2>
-        <input type="password" data-lock-p1 placeholder="主密码" autocomplete="off">
-        <input type="password" data-lock-p2 placeholder="再次输入确认" autocomplete="off" style="display:none">
-        <div class="err" data-lock-err></div>
-        <button class="go" data-lock-go>解锁保险库</button>
-      </div>`;
+      <div class="bz-password-vault-lock" data-lock="${which}"></div>`;
   }
   function modalHTML(which) {
     return `
@@ -11334,6 +11510,15 @@ var BZW_password_vault = (() => {
       this.escUnregister = null;
       this._initialized = false;
       this.mobPagePlatform = null;
+      /** 显示锁屏（未解锁态）；锁屏绑定一次 */
+      /** 锁屏句柄（desk/mob 双实例各一份；结构由 core/ui/lock-screen 提供，三域同源） */
+      this.lockHandles = /* @__PURE__ */ new WeakMap();
+      /** 统计快照：清单是密文，锁定态读不到 —— 用解锁期间的快照，冷启动回落「—」 */
+      this.pwLockStatsCache = [
+        { num: "—", label: "平台" },
+        { num: "—", label: "口令条目" },
+        { num: "—", label: "收藏" }
+      ];
       this.dataManager = dataManager;
       this.config = config;
     }
@@ -11526,7 +11711,9 @@ var BZW_password_vault = (() => {
     }
     // ---------- 渲染 ----------
     renderAll() {
+      var _a;
       if (!this.root) return;
+      if ((_a = this.dataManager.safeManager) == null ? void 0 : _a.unlocked) this.captureLockStats();
       this.renderLock();
       this.renderDeskList();
       this.renderDeskDetail();
@@ -12159,33 +12346,47 @@ var BZW_password_vault = (() => {
       }
       this.renderAll();
     }
-    /** 显示锁屏（未解锁态）；锁屏绑定一次 */
+    /** 快照本域统计（解锁态调用） */
+    captureLockStats() {
+      try {
+        const plats = this.dataManager.platforms();
+        this.pwLockStatsCache = [
+          { num: String(plats.length), label: "平台" },
+          { num: String(this.dataManager.pwData.length), label: "口令条目" },
+          { num: String(plats.filter((x) => this.dataManager.hasFav(x.platform)).length), label: "收藏" }
+        ];
+      } catch (e) {
+      }
+    }
+    /** 显示锁屏（未解锁态）：core 共享骨架 + 本域口径（平台/口令条目/收藏）与金色风格 */
     showLock() {
       void this.isFirstTime().then((firstTime) => {
         this.root.querySelectorAll(".bz-password-vault-lock").forEach((lockEl) => {
-          const lock = lockEl;
-          lock.classList.add("open");
-          const title = lock.querySelector("[data-lock-title]");
-          const p1 = lock.querySelector("[data-lock-p1]");
-          const p2 = lock.querySelector("[data-lock-p2]");
-          const go = lock.querySelector("[data-lock-go]");
-          const err = lock.querySelector("[data-lock-err]");
-          title.textContent = firstTime ? "设置主密码" : "输入主密码";
-          p1.value = "";
-          p2.value = "";
-          p2.style.display = firstTime ? "block" : "none";
-          err.textContent = "";
-          go.textContent = firstTime ? "设置并解锁" : "解锁保险库";
-          if (!lock.dataset.bound) {
-            lock.dataset.bound = "1";
-            this.bindLock(lock);
+          lockEl.classList.add("open");
+          let ls = this.lockHandles.get(lockEl);
+          if (!ls) {
+            ls = uiLockScreen({
+              kind: "password-vault",
+              icon: "key",
+              title: "",
+              sub: "",
+              stats: this.pwLockStatsCache,
+              action: "",
+              inline: true
+            });
+            lockEl.appendChild(ls.el);
+            this.lockHandles.set(lockEl, ls);
+            this.bindLock(ls);
           }
-          requestAnimationFrame(() => {
-            try {
-              p1.focus();
-            } catch (e) {
-            }
-          });
+          ls.setTitle(firstTime ? "设置主密码" : "密码本已上锁");
+          ls.setMessage(firstTime ? "请设置一个主密码（用于加密密码本数据）" : "解锁后可查看平台与口令");
+          ls.actionBtn.textContent = firstTime ? "设置并解锁" : "解锁";
+          ls.showSecondInput(firstTime);
+          ls.setError("");
+          ls.input.value = "";
+          ls.input2.value = "";
+          ls.setStats(this.pwLockStatsCache);
+          requestAnimationFrame(() => ls.focus());
         });
       });
     }
@@ -12198,37 +12399,38 @@ var BZW_password_vault = (() => {
       }
     }
     /** 锁屏交互（原型视觉 + 保险箱安全机制） */
-    bindLock(lock) {
-      const p1 = lock.querySelector("[data-lock-p1]");
-      const p2 = lock.querySelector("[data-lock-p2]");
-      const err = lock.querySelector("[data-lock-err]");
-      const go = lock.querySelector("[data-lock-go]");
-      const title = lock.querySelector("[data-lock-title]");
+    /** 锁屏交互（首设双输入 + 冷却节流；语义留本域，结构走 core 共享组件） */
+    bindLock(ls) {
       const safe = this.dataManager.safeManager;
       let busy = false;
       const showErr = (m) => {
-        err.textContent = m;
+        ls.setError(m);
         setTimeout(() => {
-          if (err.textContent === m) err.textContent = "";
+          if (ls.input.value) ls.setError("");
         }, 2600);
       };
-      const setMode = () => {
-        void this.isFirstTime().then((first) => {
-          title.textContent = first ? "设置主密码" : "输入主密码";
-          p2.style.display = first ? "block" : "none";
-          go.textContent = first ? "设置并解锁" : "解锁保险库";
+      const resetBtn = () => {
+        void this.isFirstTime().then((f) => {
+          ls.actionBtn.textContent = f ? "设置并解锁" : "解锁";
         });
       };
-      go.addEventListener("click", async () => {
+      ls.actionBtn.addEventListener("click", async () => {
         if (busy) return;
         const first = await this.isFirstTime();
-        const pw = p1.value;
+        const pw = ls.input.value;
         if (!pw) {
           showErr("请输入主密码");
           return;
         }
         if (first) {
-          if (pw !== p2.value) {
+          if (ls.input2.style.display === "none") {
+            ls.showSecondInput(true);
+            ls.input2.value = "";
+            ls.setMessage("请再次输入主密码确认");
+            ls.focus();
+            return;
+          }
+          if (pw !== ls.input2.value) {
             showErr("两次密码不一致");
             return;
           }
@@ -12245,13 +12447,13 @@ var BZW_password_vault = (() => {
             ]
           }).then(async (v) => {
             if (v !== "ok") {
-              p1.value = "";
-              p2.value = "";
+              ls.input.value = "";
+              ls.input2.value = "";
               showErr("已取消设置");
               return;
             }
             busy = true;
-            go.textContent = "处理中…";
+            ls.setBusy(true);
             try {
               const ok = await safe.unlock(pw);
               if (ok) {
@@ -12263,10 +12465,11 @@ var BZW_password_vault = (() => {
                 showErr("设置失败：无法写入清单，请检查磁盘空间后重试");
               }
             } catch (e) {
-              showErr("设置失败：" + e.message);
+              showErr("设置失败：" + ((e == null ? void 0 : e.message) || ""));
             } finally {
               busy = false;
-              go.textContent = first ? "设置并解锁" : "解锁保险库";
+              ls.setBusy(false);
+              resetBtn();
             }
           });
           return;
@@ -12277,7 +12480,7 @@ var BZW_password_vault = (() => {
           return;
         }
         busy = true;
-        go.textContent = "处理中…";
+        ls.setBusy(true);
         try {
           const ok = await safe.unlock(pw);
           if (ok) {
@@ -12322,22 +12525,23 @@ var BZW_password_vault = (() => {
             const delaySec = Math.min(2 ** (this.security.unlockFailStreak - 1), 8);
             this.security.unlockCooldownUntil = Date.now() + delaySec * 1e3;
             showErr(`${delaySec} 秒后可再次尝试`);
-            p1.value = "";
-            p1.focus();
+            ls.input.value = "";
+            ls.focus();
           }
         } finally {
           busy = false;
-          go.textContent = first ? "设置并解锁" : "解锁保险库";
+          ls.setBusy(false);
+          resetBtn();
         }
       });
-      p1.addEventListener("keydown", (e) => {
+      ls.input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
-          if (p2.style.display === "block") p2.focus();
-          else go.click();
+          if (ls.input2.style.display === "none") ls.actionBtn.click();
+          else ls.input2.focus();
         }
       });
-      p2.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") go.click();
+      ls.input2.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") ls.actionBtn.click();
       });
     }
     closeLock() {

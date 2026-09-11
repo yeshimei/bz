@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V1 · 门厅与柜格 — 保险库</title>
+<style>
+  :root{
+    --bg:#161616; --panel:#1e1e1e; --panel2:#262626; --border:#333; --border2:#3f3f3f;
+    --tx:#dadada; --tx2:#999; --tx3:#777; --ac:#8a7cf5; --danger:#e35d5d; --ok:#5db97a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--tx);font:14px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh}
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  svg{vertical-align:-2px}
+
+  /* ===== 门厅（锁定态） ===== */
+  #gate{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:28px}
+  .gate-panel{width:340px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:36px 32px;text-align:center}
+  .gate-panel .biglock{color:var(--tx2);margin-bottom:14px}
+  .gate-panel h1{font-size:17px;font-weight:600;letter-spacing:.35em;text-indent:.35em;margin-bottom:6px}
+  .gate-panel .sub{color:var(--tx3);font-size:12px;margin-bottom:22px}
+  .pw-wrap{display:flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;background:var(--bg)}
+  .pw-wrap input{flex:1;background:none;border:none;outline:none;color:var(--tx);padding:9px 12px;font-size:14px;letter-spacing:.2em}
+  .pw-wrap button{padding:9px 16px;color:var(--ac);font-weight:500;border-left:1px solid var(--border)}
+  .pw-wrap button:hover{background:var(--panel2)}
+  .gate-err{color:var(--danger);font-size:12px;height:18px;margin-top:8px;text-align:left}
+  .gate-meta{margin-top:18px;padding-top:16px;border-top:1px solid var(--border);color:var(--tx3);font-size:12px;text-align:left;line-height:2}
+  .gate-meta b{color:var(--tx2);font-weight:500}
+
+  /* ===== 库内 ===== */
+  #vault{display:none;min-height:100vh;flex-direction:column}
+  header{display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--panel);border-bottom:1px solid var(--border)}
+  header .logo{display:flex;align-items:center;gap:9px;font-weight:600;font-size:15px}
+  header .logo svg{color:var(--ac)}
+  .chip{font-size:11px;padding:2px 9px;border-radius:20px;border:1px solid var(--border2);color:var(--tx2)}
+  .chip.on{color:var(--ok);border-color:rgba(93,185,122,.4)}
+  header .sp{flex:1}
+  .btn{border:1px solid var(--border2);border-radius:8px;padding:6px 14px;font-size:13px;color:var(--tx2)}
+  .btn:hover{background:var(--panel2);color:var(--tx)}
+  .btn.pri{color:var(--ac);border-color:rgba(138,124,245,.45)}
+  .btn.pri:hover{background:rgba(138,124,245,.12)}
+  .btn.dgr{color:var(--danger);border-color:rgba(227,93,93,.4)}
+  .btn.dgr:hover{background:rgba(227,93,93,.1)}
+
+  .layout{flex:1;display:flex;min-height:0}
+  .grid-wrap{flex:1;padding:28px 32px;overflow:auto}
+  .grid-head{display:flex;align-items:baseline;gap:12px;margin-bottom:18px}
+  .grid-head h2{font-size:13px;font-weight:500;color:var(--tx2);letter-spacing:.1em}
+  .grid-head .cnt{color:var(--tx3);font-size:12px}
+  .boxes{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
+  .box{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 15px 13px;cursor:pointer;position:relative}
+  .box:hover{border-color:var(--border2);background:var(--panel2)}
+  .box.sel{border-color:var(--ac)}
+  .box .no{font-size:11px;color:var(--tx3);letter-spacing:.15em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .box .no .plate{width:14px;height:9px;border:1px solid var(--tx3);border-radius:2px;position:relative}
+  .box .no .plate::after{content:"";position:absolute;left:4px;top:3px;width:4px;height:2px;background:var(--tx3)}
+  .box .ttl{font-size:13px;font-weight:500;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .box .meta{font-size:11px;color:var(--tx3);display:flex;gap:10px}
+  .box .meta .att{display:flex;align-items:center;gap:3px}
+
+  /* ===== 格位抽屉 ===== */
+  #drawer{width:340px;background:var(--panel);border-left:1px solid var(--border);display:none;flex-direction:column}
+  #drawer.open{display:flex}
+  .dw-head{padding:18px 20px 14px;border-bottom:1px solid var(--border)}
+  .dw-head .no{font-size:11px;color:var(--tx3);letter-spacing:.2em;margin-bottom:6px}
+  .dw-head h3{font-size:15px;font-weight:600}
+  .dw-body{flex:1;overflow:auto;padding:16px 20px;font-size:13px}
+  .dw-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--border)}
+  .dw-row .k{color:var(--tx3)}
+  .dw-row .v{text-align:right;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .atts{margin-top:14px}
+  .atts h4{font-size:12px;color:var(--tx3);font-weight:500;margin-bottom:8px}
+  .att-item{display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg);border:1px solid var(--border);border-radius:7px;margin-bottom:6px;font-size:12px;color:var(--tx2)}
+  .att-item .thumb{width:30px;height:30px;border-radius:5px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:10px;border:1px solid var(--border)}
+  .att-item .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dw-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px}
+  .dw-foot .btn{flex:1;text-align:center}
+
+  /* ===== 存入对话框 ===== */
+  #dep{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:10}
+  #dep.open{display:flex}
+  .dep-panel{width:420px;background:var(--panel);border:1px solid var(--border2);border-radius:10px;overflow:hidden}
+  .dep-panel .hd{padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+  .dep-list{max-height:320px;overflow:auto;padding:8px}
+  .dep-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;cursor:pointer;font-size:13px}
+  .dep-item:hover{background:var(--panel2)}
+  .dep-item .cb{width:15px;height:15px;border:1px solid var(--border2);border-radius:4px;flex:none;display:flex;align-items:center;justify-content:center;color:transparent}
+  .dep-item.on .cb{background:var(--ac);border-color:var(--ac);color:#fff}
+  .dep-item .p{color:var(--tx3);font-size:11px;margin-left:auto}
+  .dep-ft{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+  /* ===== 通知条 ===== */
+  #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--border2);border-radius:8px;padding:9px 18px;font-size:13px;display:none;z-index:20;color:var(--tx)}
+</style>
+</head>
+<body>
+
+<!-- 门厅 -->
+<div id="gate">
+  <div class="gate-panel">
+    <div class="biglock"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+    <h1>保 险 库</h1>
+    <div class="sub">输入主密码，打开库门</div>
+    <div class="pw-wrap">
+      <input id="pw" type="password" placeholder="主密码" autofocus>
+      <button id="unlockBtn">开库</button>
+    </div>
+    <div class="gate-err" id="gateErr"></div>
+    <div class="gate-meta">
+      库内存有 <b>12 篇</b> 加密笔记<br>
+      最近存入 <b>09-08</b> · 密文总量 <b>486 KB</b>
+    </div>
+  </div>
+</div>
+
+<!-- 库内 -->
+<div id="vault">
+  <header>
+    <div class="logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3z"/></svg>保险库</div>
+    <span class="chip on" id="stateChip">已解锁</span>
+    <span class="sp"></span>
+    <button class="btn pri" id="depBtn">存入笔记</button>
+    <button class="btn" id="lockBtn">上锁</button>
+  </header>
+
+  <div class="layout">
+    <div class="grid-wrap">
+      <div class="grid-head"><h2>柜格墙</h2><span class="cnt" id="cnt"></span></div>
+      <div class="boxes" id="boxes"></div>
+    </div>
+    <aside id="drawer">
+      <div class="dw-head"><div class="no" id="dNo"></div><h3 id="dTitle"></h3></div>
+      <div class="dw-body">
+        <div class="dw-row"><span class="k">原笔记</span><span class="v" id="dPath"></span></div>
+        <div class="dw-row"><span class="k">存入时间</span><span class="v" id="dDate"></span></div>
+        <div class="dw-row"><span class="k">正文字数</span><span class="v" id="dWords"></span></div>
+        <div class="dw-row"><span class="k">密文大小</span><span class="v" id="dSize"></span></div>
+        <div class="atts"><h4>随库附件</h4><div id="dAtts"></div></div>
+      </div>
+      <div class="dw-foot">
+        <button class="btn pri" id="takeoutBtn">取出还原</button>
+        <button class="btn dgr" id="destroyBtn">销毁</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- 存入 -->
+<div id="dep">
+  <div class="dep-panel">
+    <div class="hd">存入笔记到保险库<button style="color:var(--tx3)" id="depClose">✕</button></div>
+    <div class="dep-list" id="depList"></div>
+    <div class="dep-ft">
+      <span style="flex:1;color:var(--tx3);font-size:12px;align-self:center">存入后原笔记从文库移除，正文与附件一并加密</span>
+      <button class="btn" id="depCancel">取消</button>
+      <button class="btn pri" id="depOk">存入</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const NOTES = [
+  {no:"B-01",title:"个人证件与材料扫描",path:"私密/证件材料.md",date:"2026-08-14",words:820,size:"12.4 KB",atts:[{n:"身份证-正面.png",t:"img"},{n:"户口本扫描.pdf",t:"doc"}]},
+  {no:"B-02",title:"银行账户与密码备忘",path:"私密/账户备忘.md",date:"2026-08-20",words:430,size:"3.1 KB",atts:[]},
+  {no:"B-03",title:"2026 上半年收入台账",path:"私密/收入台账.md",date:"2026-07-02",words:1560,size:"9.8 KB",atts:[{n:"工资流水截图.png",t:"img"}]},
+  {no:"B-04",title:"写给家里的一封信",path:"私密/信件.md",date:"2026-06-11",words:980,size:"4.2 KB",atts:[]},
+  {no:"B-05",title:"医疗记录汇总",path:"私密/医疗记录.md",date:"2026-09-01",words:2100,size:"15.6 KB",atts:[{n:"体检报告1.jpg",t:"img"},{n:"体检报告2.jpg",t:"img"},{n:"处方单.png",t:"img"}]},
+  {no:"B-06",title:"合同草稿 · 房屋租赁",path:"工作/合同草稿.md",date:"2026-08-28",words:3400,size:"21.0 KB",atts:[{n:"房型平面图.png",t:"img"}]},
+  {no:"B-07",title:"投资账户持仓明细",path:"私密/持仓明细.md",date:"2026-09-05",words:640,size:"2.7 KB",atts:[]},
+  {no:"B-08",title:"旧手机备份清单",path:"私密/备份清单.md",date:"2026-05-19",words:290,size:"1.3 KB",atts:[]},
+  {no:"B-09",title:"保险单据归档",path:"私密/保险单据.md",date:"2026-04-22",words:1120,size:"8.9 KB",atts:[{n:"保单扫描.pdf",t:"doc"}]},
+  {no:"B-10",title:"旅行证件与行程底稿",path:"私密/行程底稿.md",date:"2026-03-08",words:750,size:"3.6 KB",atts:[]},
+  {no:"B-11",title:"家庭网络与设备口令",path:"私密/设备口令.md",date:"2026-09-08",words:380,size:"1.8 KB",atts:[]},
+  {no:"B-12",title:"谈话记录 · 0903",path:"私密/谈话记录.md",date:"2026-09-03",words:1450,size:"7.2 KB",atts:[]},
+];
+const CANDIDATES = [
+  {title:"读书笔记 · 三体 III",path:"读书/三体.md"},
+  {title:"周报 09-06",path:"工作/周报.md"},
+  {title:"购物清单",path:"日常/购物.md"},
+  {title:"观影记录草稿",path:"娱乐/观影.md"},
+];
+let notes = NOTES.map(n=>({...n,atts:[...n.atts]}));
+let sel = null, picked = new Set();
+
+const $ = id=>document.getElementById(id);
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function ic(name,s=14){
+  const P={
+    img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
+    doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
+  };
+  return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${P[name]}</svg>`;
+}
+function toast(msg){
+  const t=$("toast"); t.textContent=msg; t.style.display="block";
+  clearTimeout(toast._h); toast._h=setTimeout(()=>t.style.display="none",2200);
+}
+
+/* ---- 门厅 ---- */
+$("unlockBtn").onclick = ()=>{
+  if($("pw").value.length < 4){ $("gateErr").textContent = "密码不符，重试。"; return; }
+  $("gate").style.display="none"; $("vault").style.display="flex"; $("pw").value="";
+  $("gateErr").textContent=""; sel=null; render();
+};
+$("pw").addEventListener("keydown",e=>{ if(e.key==="Enter") $("unlockBtn").click(); });
+$("lockBtn").onclick = ()=>{
+  $("vault").style.display="none"; $("gate").style.display="flex";
+  $("drawer").classList.remove("open"); toast("保险库已上锁");
+};
+
+/* ---- 柜格墙 ---- */
+function render(){
+  $("cnt").textContent = notes.length + " 格";
+  $("boxes").innerHTML = notes.map(n=>`
+    <div class="box ${sel===n.no?"sel":""}" data-no="${n.no}">
+      <div class="no"><span class="plate"></span>${n.no}</div>
+      <div class="ttl">${esc(n.title)}</div>
+      <div class="meta"><span>存入 ${n.date.slice(5)}</span><span class="att">${n.atts.length?n.atts.length+" 附":""}</span></div>
+    </div>`).join("");
+  $("boxes").querySelectorAll(".box").forEach(el=>el.onclick=()=>{ sel=el.dataset.no; render(); openDrawer(); });
+}
+function cur(){ return notes.find(n=>n.no===sel); }
+function openDrawer(){
+  const n = cur(); if(!n){ $("drawer").classList.remove("open"); return; }
+  $("dNo").textContent = "柜位 " + n.no;
+  $("dTitle").textContent = n.title;
+  $("dPath").textContent = n.path; $("dPath").title = n.path;
+  $("dDate").textContent = n.date;
+  $("dWords").textContent = n.words.toLocaleString() + " 字";
+  $("dSize").textContent = n.size;
+  $("dAtts").innerHTML = n.atts.length
+    ? n.atts.map(a=>`<div class="att-item"><span class="thumb">${ic(a.t)}</span><span class="nm">${esc(a.n)}</span></div>`).join("")
+    : `<div style="color:var(--tx3);font-size:12px">无附件</div>`;
+  $("drawer").classList.add("open");
+}
+$("takeoutBtn").onclick = ()=>{
+  const n=cur(); if(!n) return;
+  notes = notes.filter(x=>x.no!==n.no); sel=null; render();
+  $("drawer").classList.remove("open");
+  toast(`「${n.title}」已解密还原到文库`);
+};
+$("destroyBtn").onclick = ()=>{
+  const n=cur(); if(!n) return;
+  if(destroyBtn.dataset.arm !== n.no){
+    destroyBtn.dataset.arm = n.no;
+    destroyBtn.textContent = "确认销毁？";
+    setTimeout(()=>{ destroyBtn.dataset.arm=""; destroyBtn.textContent="销毁"; },2600);
+    return;
+  }
+  destroyBtn.dataset.arm=""; destroyBtn.textContent="销毁";
+  notes = notes.filter(x=>x.no!==n.no); sel=null; render();
+  $("drawer").classList.remove("open");
+  toast(`「${n.title}」密文已销毁，不可恢复`);
+};
+
+/* ---- 存入 ---- */
+$("depBtn").onclick = ()=>{
+  picked.clear(); renderDep();
+  $("dep").classList.add("open");
+};
+function renderDep(){
+  $("depList").innerHTML = CANDIDATES.map((c,i)=>`
+    <div class="dep-item ${picked.has(i)?"on":""}" data-i="${i}">
+      <span class="cb">✓</span><span>${esc(c.title)}</span><span class="p">${esc(c.path)}</span>
+    </div>`).join("");
+  $("depList").querySelectorAll(".dep-item").forEach(el=>el.onclick=()=>{
+    const i=+el.dataset.i; picked.has(i)?picked.delete(i):picked.add(i); renderDep();
+  });
+}
+$("depClose").onclick = $("depCancel").onclick = ()=>$("dep").classList.remove("open");
+$("depOk").onclick = ()=>{
+  if(!picked.size){ toast("未选择任何笔记"); return; }
+  const seq = 13 + notes.length - NOTES.length;
+  [...picked].sort((a,b)=>a-b).forEach(i=>{
+    const c = CANDIDATES[i];
+    notes.push({no:"B-"+String(seq+notes.filter(x=>x.new).length).padStart(2,"0"),title:c.title,path:c.path,date:"2026-09-11",words:600+Math.floor(Math.random()*1500),size:(2+Math.random()*10).toFixed(1)+" KB",atts:[],new:true});
+  });
+  $("dep").classList.remove("open");
+  toast(`已存入 ${picked.size} 篇笔记，原文件已加密移除`);
+  render();
+};
+</script>
+</body>
+</html>

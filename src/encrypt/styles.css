@@ -473,3 +473,13 @@
 
 /* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，模板挂类）：
    移动端关闭/返回钮 = --xl(-12px)，账户卡小钮/空态新增钮 = --lg(-8px)，域内不再复制外扩块。 */
+
+/* ============ 解锁屏（三域共用骨架 · 保险库口径） ============
+ * 弹层挂 body，够不着 .bz-encrypt-popup 作用域 —— 锁屏自己重声明一份 token 再消费。
+ * 保险库用「金纸」品牌语言（与密码本同源的暖色强调 + 渐变印章）。
+ */
+.bz-lockscreen--vault {
+  --ls-accent: var(--interactive-accent, #b8913e);
+  --ls-accent-soft: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent, #b8913e) 70%, white), var(--interactive-accent, #b8913e));
+  --ls-seal-radius: 22px;
+}

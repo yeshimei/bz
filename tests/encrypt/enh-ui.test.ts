@@ -88,10 +88,10 @@ describe('保险库增强包（UIManager / Controller）', () => {
       c.dataManager.lock();
       // 锁定 → 密码弹窗 → 解锁
       const run = c.openManager();
-      await waitFor(() => !!document.querySelector('.bz-encrypt-dialog-mask'));
-      const mask = document.querySelector('.bz-encrypt-dialog-mask') as HTMLElement;
-      (mask.querySelector('input.bz-encrypt-dialog-input') as HTMLInputElement).value = 'pw';
-      (mask.querySelector('.bz-encrypt-dialog-btn--primary') as HTMLElement).click();
+      await waitFor(() => !!document.querySelector('.bz-lockscreen--mask'));
+      const mask = document.querySelector('.bz-lockscreen--mask') as HTMLElement;
+      (mask.querySelector('input.bz-lockscreen-input') as HTMLInputElement).value = 'pw';
+      (mask.querySelector('.bz-lockscreen-action') as HTMLElement).click();
       await run;
       expect(c.uiManager.mask!.style.display).toBe('block');
       // 直落密码资产 + 搜索框聚焦
@@ -353,10 +353,10 @@ describe('保险库增强包（UIManager / Controller）', () => {
       c.dataManager.lock();
       const run = c.lockCurrentNote();
       // 先弹解锁（而非只提示）
-      await waitFor(() => !!document.querySelector('.bz-encrypt-dialog-mask'));
-      const mask = document.querySelector('.bz-encrypt-dialog-mask') as HTMLElement;
-      (mask.querySelector('input.bz-encrypt-dialog-input') as HTMLInputElement).value = 'pw';
-      (mask.querySelector('.bz-encrypt-dialog-btn--primary') as HTMLElement).click();
+      await waitFor(() => !!document.querySelector('.bz-lockscreen--mask'));
+      const mask = document.querySelector('.bz-lockscreen--mask') as HTMLElement;
+      (mask.querySelector('input.bz-lockscreen-input') as HTMLInputElement).value = 'pw';
+      (mask.querySelector('.bz-lockscreen-action') as HTMLElement).click();
       // 解锁成功 → 继续原操作：出现「加密到保险库」确认框
       await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
       expect(c.dataManager.unlocked).toBe(true);

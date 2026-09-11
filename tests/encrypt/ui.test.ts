@@ -31,7 +31,7 @@ function setup(vault: MockVault, config = CONFIG) {
 }
 
 function findDialog(): HTMLElement | null {
-  return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-encrypt-dialog-mask') && d.style.display === 'flex') as HTMLElement | null;
+  return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-lockscreen--mask') && d.style.display === 'flex') as HTMLElement | null;
 }
 
 describe('UIManager 解锁弹窗', () => {
@@ -63,8 +63,8 @@ describe('UIManager 解锁弹窗', () => {
     expect(dialog.textContent).toContain('重要提醒');
     const inputs = dialog.querySelectorAll('input[type="password"]');
     expect(inputs.length).toBe(2);
-    expect(dialog.querySelector('.bz-encrypt-dialog-ack')).toBeTruthy(); // 硬警告确认勾选（仅首设显示）
-    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    expect(dialog.querySelector('[data-ls="ack"]')).toBeTruthy(); // 硬警告确认勾选（仅首设显示）
+    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     // 两次不一致
     (inputs[0] as HTMLInputElement).value = 'pw1';
     (inputs[1] as HTMLInputElement).value = 'pw2';
@@ -78,7 +78,7 @@ describe('UIManager 解锁弹窗', () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(dm.unlocked).toBe(false);
     // 勾选后再确认 → 设置成功
-    const ackBox = dialog.querySelector('.bz-encrypt-dialog-ack input') as HTMLInputElement;
+    const ackBox = dialog.querySelector('[data-ls="ack"] input') as HTMLInputElement;
     ackBox.click();
     confirmBtn.click();
     await p;
@@ -87,16 +87,16 @@ describe('UIManager 解锁弹窗', () => {
     expect(hasNotice('密码已设置，数据已加密')).toBe(true);
   });
 
-  it('已有清单：标题「输入主密码」，错误密码失败、正确成功', async () => {
+  it('已有清单：标题「保险库已上锁」，错误密码失败、正确成功', async () => {
     await dm.unlock('master123');
     dm.lock();
     const p = ui.showPasswordDialog();
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
-    expect(dialog.textContent).toContain('输入主密码');
+    expect(dialog.textContent).toContain('保险库已上锁');
     const inputs = dialog.querySelectorAll('input[type="password"]');
     expect((inputs[1] as HTMLInputElement).style.display).toBe('none');
-    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'wrong';
     confirmBtn.click();
     await new Promise((r) => setTimeout(r, 200));
@@ -120,7 +120,7 @@ describe('UIManager 解锁弹窗', () => {
     const p2 = ui.showPasswordDialog();
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
-    expect(dialog.textContent).toContain('输入主密码');
+    expect(dialog.textContent).toContain('保险库已上锁');
     expect(dialog.textContent).not.toContain('设置主密码');
     // 二次确认输入框隐藏（解锁流程无需再次输入）
     const inputs = dialog.querySelectorAll('input[type="password"]');
@@ -138,7 +138,7 @@ describe('UIManager 解锁弹窗', () => {
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
     const inputs = dialog.querySelectorAll('input[type="password"]');
-    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'pw';
     confirmBtn.click();
     expect(await p).toBe(true);
@@ -154,7 +154,7 @@ describe('UIManager 解锁弹窗', () => {
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
     const inputs = dialog.querySelectorAll('input[type="password"]');
-    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'pw';
     confirmBtn.click();
     expect(await p).toBe(true);
@@ -462,11 +462,11 @@ describe('EncryptAppController', () => {
     // 首设两次一致 + 勾选风险确认
     const dialog = findDialog()!;
     const inputs = dialog.querySelectorAll('input[type="password"]');
-    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'pw';
     confirmBtn.click();
     (inputs[1] as HTMLInputElement).value = 'pw';
-    (dialog.querySelector('.bz-encrypt-dialog-ack input') as HTMLInputElement).click();
+    (dialog.querySelector('[data-ls="ack"] input') as HTMLInputElement).click();
     confirmBtn.click();
     await p;
     expect(c.dataManager.unlocked).toBe(true);
@@ -652,11 +652,11 @@ describe('EncryptAppController', () => {
     // 锁定态点体检 → 先弹主密码（不进入体检页）
     const p = c.uiManager.openHealthDialog();
     await waitFor(() => !!findDialog());
-    expect(findDialog()!.textContent).toContain('输入主密码');
+    expect(findDialog()!.textContent).toContain('保险库已上锁');
     const dialog = findDialog()!;
     const inputs = dialog.querySelectorAll('input[type="password"]');
     (inputs[0] as HTMLInputElement).value = 'pw';
-    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     confirmBtn.click();
     await p;
     // 解锁后进入体检：对账报告失效条目（x），完整性段补检（其余镜像完好）
@@ -1060,7 +1060,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
     const inputs = dialog.querySelectorAll('input[type="password"]');
-    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'newpw';
     confirmBtn.click();
     // 不清静默重设：先出损坏确认框
@@ -1080,7 +1080,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
     const inputs = dialog.querySelectorAll('input[type="password"]');
-    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'newpw';
     confirmBtn.click();
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
@@ -1100,7 +1100,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
     const inputs = dialog.querySelectorAll('input[type="password"]');
-    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs[0] as HTMLInputElement).value = 'wrong';
     confirmBtn.click();
     await new Promise((r) => setTimeout(r, 200));
@@ -1119,7 +1119,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
     const inputs = dialog.querySelectorAll('input[type="password"]');
-    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     const unlockSpy = vi.spyOn(dm, 'unlock');
     // 偏移时钟跳过秒级冷却等待（节流内部以 Date.now 计冷却截止）
     const realNow = Date.now;
@@ -1173,7 +1173,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     await waitFor(() => !!findDialog());
     const dialog2 = findDialog()!;
     const inputs2 = dialog2.querySelectorAll('input[type="password"]');
-    const confirmBtn2 = [...dialog2.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const confirmBtn2 = dialog2.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs2[0] as HTMLInputElement).value = 'wrong';
     confirmBtn2.click();
     await waitFor(() => hasNotice(/1 秒后可再次尝试/));
@@ -1186,7 +1186,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     const inputs = dialog.querySelectorAll('input[type="password"]');
     expect(document.activeElement).toBe(inputs[0]);
     // 取消关闭
-    const cancelBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '取消')!;
+    const cancelBtn = dialog; // 新解锁屏无取消钮：点遮罩即取消
     cancelBtn.click();
     expect(await p).toBe(false);
   });
@@ -1196,7 +1196,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     await waitFor(() => !!findDialog());
     const mask = findDialog()!;
     // 点内容区（box）不关闭
-    const box = mask.querySelector('.bz-encrypt-dialog-box') as HTMLElement;
+    const box = mask.querySelector('[data-ls="box"]') as HTMLElement;
     box.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 50));
     expect(findDialog()).toBeTruthy();
@@ -1213,11 +1213,11 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
       await waitFor(() => !!findDialog());
       const dialog = findDialog()!;
       const inputs = dialog.querySelectorAll('input[type="password"]');
-      const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+      const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
       (inputs[0] as HTMLInputElement).value = 'pw';
       confirmBtn.click();
       (inputs[1] as HTMLInputElement).value = 'pw';
-      (dialog.querySelector('.bz-encrypt-dialog-ack input') as HTMLInputElement).click();
+      (dialog.querySelector('[data-ls="ack"] input') as HTMLInputElement).click();
       confirmBtn.click();
       expect(await p).toBe(false);
       expect(hasNotice('设置失败：无法写入清单，请检查磁盘空间后重试')).toBe(true);

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V4 · 架间巡库 — 保险库</title>
+<style>
+  :root{
+    --bg:#141414; --panel:#1e1e1e; --panel2:#262626; --border:#333; --border2:#3f3f3f;
+    --tx:#dadada; --tx2:#999; --tx3:#777; --ac:#8a7cf5; --danger:#e35d5d; --wood:#3a332b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--tx);font:14px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh;display:flex;flex-direction:column}
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  svg{vertical-align:-2px}
+
+  header{display:flex;align-items:center;gap:12px;padding:13px 24px;background:var(--panel);border-bottom:1px solid var(--border)}
+  header .logo{display:flex;align-items:center;gap:9px;font-weight:600;font-size:15px}
+  header .logo svg{color:var(--ac)}
+  .chip{font-size:11px;padding:2px 9px;border-radius:20px;border:1px solid var(--border2);color:var(--tx2)}
+  .chip.on{color:var(--ok);border-color:rgba(93,185,122,.4)}
+  header .sp{flex:1}
+  .btn{border:1px solid var(--border2);border-radius:8px;padding:6px 14px;font-size:13px;color:var(--tx2)}
+  .btn:hover{background:var(--panel2);color:var(--tx)}
+  .btn.pri{color:var(--ac);border-color:rgba(138,124,245,.45)}
+  .btn.dgr{color:var(--danger);border-color:rgba(227,93,93,.4)}
+
+  /* 锁定态 */
+  #locked{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+  .rails{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:34px;padding:0 10%;opacity:.35}
+  .rail{height:14px;background:var(--wood);border-radius:3px;border-top:1px solid #4a4238;position:relative}
+  .rail::after{content:attr(data-rack);position:absolute;right:-4px;top:-22px;font-size:11px;color:var(--tx3);letter-spacing:.2em}
+  .lock-card{position:relative;z-index:2;width:330px;background:var(--panel);border:1px solid var(--border2);border-radius:12px;padding:32px 30px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+  .lock-card h2{font-size:15px;font-weight:600;margin:12px 0 4px}
+  .lock-card .sub{color:var(--tx3);font-size:12px;margin-bottom:20px}
+  .pw-wrap{display:flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;background:var(--bg)}
+  .pw-wrap input{flex:1;background:none;border:none;outline:none;color:var(--tx);padding:9px 12px}
+  .pw-wrap button{padding:9px 16px;color:var(--ac);border-left:1px solid var(--border)}
+  .lock-err{color:var(--danger);font-size:12px;height:18px;margin-top:8px;text-align:left}
+
+  /* 库房 */
+  #room{flex:1;display:none;min-height:0}
+  .room-main{flex:1;overflow:auto;padding:30px 36px 120px}
+  .rack{margin-bottom:38px}
+  .rack-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+  .rack-hd h3{font-size:13px;font-weight:600;letter-spacing:.15em}
+  .rack-hd .c{font-size:11px;color:var(--tx3)}
+  .rack-hd .bar{flex:1;height:12px;background:var(--wood);border-radius:3px;border-top:1px solid #4a4238;margin-top:8px}
+  .boxes{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;min-height:74px;padding:0 4px}
+  .b3d{background:var(--panel);border:1px solid var(--border2);border-bottom:4px solid #171717;border-radius:5px 5px 2px 2px;padding:12px 13px 8px;cursor:pointer;position:relative;min-width:96px;max-width:180px}
+  .b3d:hover{background:var(--panel2)}
+  .b3d.out{border-color:var(--ac);border-bottom-color:var(--ac);background:#2a2640}
+  .b3d .no{font-size:10px;color:var(--tx3);letter-spacing:.12em;margin-bottom:4px}
+  .b3d .ttl{font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+  .b3d .cap{height:3px;background:var(--border2);border-radius:2px;margin-top:8px}
+  .b3d .cap i{display:block;height:100%;background:var(--tx3);border-radius:2px}
+  .empty-rack{color:var(--tx3);font-size:12px;align-self:center;padding-left:6px}
+
+  /* 抽出详情 */
+  .panel{position:fixed;right:24px;bottom:24px;width:360px;background:var(--panel);border:1px solid var(--border2);border-radius:12px;z-index:10;display:none;overflow:hidden;box-shadow:0 10px 44px rgba(0,0,0,.55)}
+  .panel.open{display:block}
+  .panel .hd{padding:15px 18px 11px;border-bottom:1px solid var(--border)}
+  .panel .hd .no{font-size:11px;color:var(--tx3);letter-spacing:.2em;margin-bottom:4px}
+  .panel .hd h3{font-size:15px;font-weight:600}
+  .panel .bd{padding:13px 18px;font-size:12.5px;color:var(--tx2)}
+  .panel .bd .row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--border)}
+  .panel .bd .row .k{color:var(--tx3)}
+  .panel .ft{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center}
+  .panel .ft select{background:var(--bg);color:var(--tx);border:1px solid var(--border2);border-radius:7px;padding:6px 8px;font:inherit;font-size:12px;outline:none}
+  .panel .ft .sp{flex:1}
+  #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--border2);border-radius:8px;padding:9px 18px;font-size:13px;display:none;z-index:30}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3z"/></svg>保险库</div>
+  <span class="chip" id="chip">锁定</span>
+  <span class="sp"></span>
+  <button class="btn pri" id="depBtn" style="display:none">归架存入</button>
+  <button class="btn" id="lockBtn" style="display:none">上锁离库</button>
+</header>
+
+<!-- 锁定：空架子 -->
+<div id="locked">
+  <div class="rails">
+    <div class="rail" data-rack="架 A · 私人"></div>
+    <div class="rail" data-rack="架 B · 工作"></div>
+    <div class="rail" data-rack="架 C · 其他"></div>
+  </div>
+  <div class="lock-card">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.6"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    <h2>库房已落锁</h2>
+    <div class="sub">档案盒全部收起 · 开库后按架归位</div>
+    <div class="pw-wrap">
+      <input id="pw" type="password" placeholder="主密码">
+      <button id="unlockBtn">开库</button>
+    </div>
+    <div class="lock-err" id="err"></div>
+  </div>
+</div>
+
+<!-- 库房 -->
+<div id="room">
+  <div class="room-main" id="roomMain"></div>
+</div>
+
+<!-- 抽出面板 -->
+<div class="panel" id="panel">
+  <div class="hd"><div class="no" id="pNo"></div><h3 id="pTitle"></h3></div>
+  <div class="bd">
+    <div class="row"><span class="k">原笔记</span><span id="pPath"></span></div>
+    <div class="row"><span class="k">存入时间</span><span id="pDate"></span></div>
+    <div class="row"><span class="k">正文 / 附件</span><span id="pCap"></span></div>
+  </div>
+  <div class="ft">
+    <select id="moveSel">
+      <option value="私人">归架 A · 私人</option>
+      <option value="工作">归架 B · 工作</option>
+      <option value="其他">归架 C · 其他</option>
+    </select>
+    <span class="sp"></span>
+    <button class="btn pri" id="outBtn">取出还原</button>
+    <button class="btn dgr" id="delBtn">销毁</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SEED = [
+  {no:"A-01",rack:"私人",title:"个人证件与材料扫描",path:"私密/证件材料.md",date:"08-14",words:820,atts:2},
+  {no:"A-02",rack:"私人",title:"银行账户与密码备忘",path:"私密/账户备忘.md",date:"08-20",words:430,atts:0},
+  {no:"A-03",rack:"私人",title:"2026 上半年收入台账",path:"私密/收入台账.md",date:"07-02",words:1560,atts:1},
+  {no:"A-04",rack:"私人",title:"写给家里的一封信",path:"私密/信件.md",date:"06-11",words:980,atts:0},
+  {no:"A-05",rack:"私人",title:"医疗记录汇总",path:"私密/医疗记录.md",date:"09-01",words:2100,atts:3},
+  {no:"A-06",rack:"私人",title:"投资账户持仓明细",path:"私密/持仓明细.md",date:"09-05",words:640,atts:0},
+  {no:"A-07",rack:"私人",title:"旧手机备份清单",path:"私密/备份清单.md",date:"05-19",words:290,atts:0},
+  {no:"A-08",rack:"私人",title:"保险单据归档",path:"私密/保险单据.md",date:"04-22",words:1120,atts:1},
+  {no:"A-09",rack:"私人",title:"谈话记录 · 0903",path:"私密/谈话记录.md",date:"09-03",words:1450,atts:0},
+  {no:"B-01",rack:"工作",title:"合同草稿 · 房屋租赁",path:"工作/合同草稿.md",date:"08-28",words:3400,atts:1},
+  {no:"C-01",rack:"其他",title:"旅行证件与行程底稿",path:"私密/行程底稿.md",date:"03-08",words:750,atts:0},
+  {no:"C-02",rack:"其他",title:"家庭网络与设备口令",path:"私密/设备口令.md",date:"09-08",words:380,atts:0},
+];
+let boxes = SEED.map(b=>({...b}));
+let out = null, unlocked = false;
+const RACKS = ["私人","工作","其他"];
+const $ = id=>document.getElementById(id);
+const esc = s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(toast._h);toast._h=setTimeout(()=>t.style.display="none",2200)}
+function w(wds){ return Math.min(180, 96 + Math.round(wds/40)); }
+function cap(words){ return Math.min(100, Math.round(words/35)); }
+
+function renderRoom(){
+  $("roomMain").innerHTML = RACKS.map(r=>{
+    const list = boxes.filter(b=>b.rack===r);
+    const inner = list.length
+      ? list.map(b=>`
+        <div class="b3d ${out===b.no?"out":""}" data-no="${b.no}" style="width:${w(b.words)}px">
+          <div class="no">${b.no}</div>
+          <div class="ttl">${esc(b.title)}</div>
+          <div class="cap"><i style="width:${cap(b.words)}%"></i></div>
+        </div>`).join("")
+      : `<span class="empty-rack">本架空置</span>`;
+    return `<div class="rack">
+      <div class="rack-hd"><h3>架 ${r.slice(0,1)} · ${r}</h3><span class="c">${list.length} 盒</span></div>
+      <div class="boxes">${inner}</div>
+      <div class="bar"></div>
+    </div>`;
+  }).join("");
+  $("roomMain").querySelectorAll(".b3d").forEach(el=>el.onclick=()=>pullOut(el.dataset.no));
+}
+function pullOut(no){
+  out = no;
+  const b = boxes.find(x=>x.no===no);
+  $("pNo").textContent = "档案盒 " + b.no;
+  $("pTitle").textContent = b.title;
+  $("pPath").textContent = b.path;
+  $("pDate").textContent = b.date;
+  $("pCap").textContent = b.words.toLocaleString()+" 字 · "+(b.atts||"无")+" 附件";
+  $("moveSel").value = b.rack;
+  renderRoom(); $("panel").classList.add("open");
+}
+$("moveSel").onchange = ()=>{
+  const b = boxes.find(x=>x.no===out); if(!b) return;
+  const old = b.rack;
+  b.rack = $("moveSel").value;
+  b.no = b.rack.slice(0,1) + "-" + String(boxes.filter(x=>x.rack===b.rack).length).padStart(2,"0");
+  toast(`已从架 ${old.slice(0,1)} 归到架 ${b.rack.slice(0,1)}（${b.no}）`);
+  renderRoom(); pullOut(b.no);
+};
+$("outBtn").onclick = ()=>{
+  const b = boxes.find(x=>x.no===out); if(!b) return;
+  boxes = boxes.filter(x=>x.no!==out);
+  toast(`「${b.title}」已解密还原到文库`);
+  out=null; $("panel").classList.remove("open"); renderRoom();
+};
+$("delBtn").onclick = ()=>{
+  const b = boxes.find(x=>x.no===out); if(!b) return;
+  const btn=$("delBtn");
+  if(btn.dataset.arm!=="1"){ btn.dataset.arm="1"; btn.textContent="确认销毁？"; setTimeout(()=>{btn.dataset.arm="";btn.textContent="销毁"},2600); return; }
+  btn.dataset.arm=""; btn.textContent="销毁";
+  boxes = boxes.filter(x=>x.no!==out);
+  toast(`「${b.title}」密文已销毁，不可恢复`);
+  out=null; $("panel").classList.remove("open"); renderRoom();
+};
+
+$("unlockBtn").onclick = ()=>{
+  if($("pw").value.length<4){ $("err").textContent="密码不符，重试。"; return; }
+  $("pw").value=""; $("err").textContent="";
+  unlocked=true; out=null;
+  $("locked").style.display="none"; $("room").style.display="flex";
+  $("chip").textContent="已解锁 · 库内"; $("chip").classList.add("on");
+  $("depBtn").style.display=""; $("lockBtn").style.display="";
+  renderRoom();
+};
+$("pw").addEventListener("keydown",e=>{ if(e.key==="Enter") $("unlockBtn").click(); });
+$("lockBtn").onclick = ()=>{
+  unlocked=false; out=null;
+  $("room").style.display="none"; $("locked").style.display="flex";
+  $("chip").textContent="锁定"; $("chip").classList.remove("on");
+  $("depBtn").style.display="none"; $("lockBtn").style.display="none";
+  $("panel").classList.remove("open");
+};
+$("depBtn").onclick = ()=>{
+  const rack = "私人";
+  boxes.push({no:rack.slice(0,1)+"-"+String(boxes.filter(x=>x.rack===rack).length+1).padStart(2,"0"),rack,title:"周报 09-06",path:"工作/周报.md",date:"09-11",words:900,atts:0});
+  toast("「周报 09-06」已归架 A，原文件加密移除");
+  renderRoom();
+};
+</script>
+</body>
+</html>
