@@ -1,4 +1,4 @@
-/* 源指纹 2344309fdf507b93 · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c737a8f4c2e374ac · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -6897,7 +6897,7 @@ tags:
       out.push({ icon: ICON.play, label: "标记在看", run: () => void markStatus(it, "在看", sec, app) });
     }
     if (it.status !== STATUS_WATCHED) {
-      out.push({ icon: "check", label: "标记已看", run: () => void markStatus(it, "已看", sec, app) });
+      out.push({ icon: "check", label: "标记已看", run: () => openForm(sec, it, app, "已看") });
     }
     out.push(
       { icon: ICON.ai, label: "找同类", run: () => void runSimilarRecommend(it, app) },
@@ -7059,11 +7059,11 @@ ${item.review ? `影评: ${item.review}
       void runSimilarRecommend(it, app);
     });
   }
-  function openForm(sec, item, app) {
+  function openForm(sec, item, app, presetSt) {
     var _a, _b;
     const editing = !!item;
     const initTag = item ? item.typeTag : "电影";
-    const initSt = item ? statusText(item.status) : "想看";
+    const initSt = presetSt != null ? presetSt : item ? statusText(item.status) : "想看";
     const ratingVal = item && item.rating && item.rating > 0 ? item.rating : DEFAULT_RATING;
     const { el, close } = ovl(sec, formModalHtml({
       editing,
@@ -7164,6 +7164,15 @@ ${item.review ? `影评: ${item.review}
     item.review = p.review;
     try {
       await persistItem(item, app, { prevName: prev.name, prevTag: prev.typeTag });
+      const fromSt = prev.status === STATUS_WANT ? "want" : prev.status === STATUS_WATCHING ? "watching" : "watched";
+      if (st !== prev.status) {
+        const toSt = st === STATUS_WANT ? "want" : st === STATUS_WATCHING ? "watching" : "watched";
+        emitDomainEvent("movie", { kind: "status", name: item.name, from: fromSt, to: toSt });
+      }
+      const prevRating = prev.rating && prev.rating > 0 ? prev.rating : null;
+      if (item.rating !== null && item.rating > 0 && item.rating !== prevRating) {
+        emitDomainEvent("movie", { kind: "rated", name: item.name, fromRating: prevRating, toRating: item.rating });
+      }
       close();
       panelToast(sec, `已保存「${p.name}」`);
       renderAll(app);
