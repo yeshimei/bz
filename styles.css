@@ -803,7 +803,8 @@ button.news-close-btn {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1117,7 +1118,8 @@ button.news-close-btn {
 /* 移动端底部抽屉（长按卡片弹出，参照 B 站/网易云：遮罩 + 底部滑入 + 顶部选中条目信息） */
 .bz-item-sheet-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.4); /* z 动态发号（ADR-0067）：JS openItemSheet 创建时分配 */
+  background: var(--bz-overlay); /* z 动态发号（ADR-0067）：JS openItemSheet 创建时分配 */
+  backdrop-filter: blur(var(--bz-overlay-blur));
   animation: bz-mask-in 0.18s ease-out;
   transition: opacity var(--bz-dur-base) ease; /* 下滑关闭时同步淡出 */
 }
@@ -1558,6 +1560,9 @@ button.news-close-btn {
 
   /* 遮罩增强：灯箱等全屏黑底（两主题同值） */
   --bz-scrim: rgba(0, 0, 0, 0.92);
+
+  /* 遮罩毛玻璃模糊半径（两主题同值；全仓遮罩 backdrop-filter 单源消费） */
+  --bz-overlay-blur: 8px;
 
   /* 媒体比例 */
   --bz-ratio-square: 1 / 1;
@@ -2231,6 +2236,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   position: fixed;
   inset: 0;
   background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2385,6 +2391,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   position: fixed;
   inset: 0;
   background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3060,6 +3067,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   position: fixed;
   inset: 0;
   background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--bz-dur-base) var(--bz-ease-out);
@@ -4877,36 +4885,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   height: 100%;
   object-fit: cover;
 }
-/* 右上角关闭钮（2026-09-11 移动端评审新增，随富媒体头走 sheetHead 路径）。
-   !important 组抗 Obsidian 默认 button 样式（灰底/边框/居中）压盖——core 动作行同款防御姿势 */
-.bz-diary-sheet-close {
-  position: absolute;
-  top: 0;
-  right: 0;
-  flex-shrink: 0;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 30px;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: var(--bz-radius-xs) !important;
-  background: none !important;
-  box-shadow: none !important;
-  color: var(--text-muted) !important;
-  font-size: var(--bz-font-body) !important;
-  line-height: 1;
-  cursor: pointer;
-  transition: background var(--bz-dur-fast);
-}
-.bz-diary-sheet-close:hover {
-  background: var(--background-secondary) !important;
-}
-.bz-diary-sheet-close .bz-ic {
-  width: var(--bz-font-body);
-  height: var(--bz-font-body);
-}
 
 /* ============ 空态 ============ */
 .bz-diary-empty {
@@ -5157,7 +5135,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   position: fixed;
   inset: 0;
   z-index: 95;
-  background: var(--dw-cover);
+  background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: none;
   align-items: center;
   justify-content: center;
@@ -5392,7 +5371,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* 写日记弹窗 */
 #add-diary-mask {
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   animation: fadeIn var(--bz-dur-base) ease-out;
 }
 .add-diary-popup {
@@ -5421,7 +5400,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* 标签选择器弹窗 */
 #diary-tag-selector-mask {
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   animation: fadeIn var(--bz-dur-base) ease-out;
 }
 .diary-tag-selector-popup {
@@ -6622,36 +6601,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   height: 100%;
   object-fit: cover;
 }
-/* 右上角关闭钮（2026-09-11 移动端评审新增，随富媒体头走 sheetHead 路径）。
-   !important 组抗 Obsidian 默认 button 样式（灰底/边框/居中）压盖——core 动作行同款防御姿势 */
-.bz-diary-sheet-close {
-  position: absolute;
-  top: 0;
-  right: 0;
-  flex-shrink: 0;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 30px;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: var(--bz-radius-xs) !important;
-  background: none !important;
-  box-shadow: none !important;
-  color: var(--text-muted) !important;
-  font-size: var(--bz-font-body) !important;
-  line-height: 1;
-  cursor: pointer;
-  transition: background var(--bz-dur-fast);
-}
-.bz-diary-sheet-close:hover {
-  background: var(--background-secondary) !important;
-}
-.bz-diary-sheet-close .bz-ic {
-  width: var(--bz-font-body);
-  height: var(--bz-font-body);
-}
 
 /* ============ 空态 ============ */
 .bz-diary-empty {
@@ -6902,7 +6851,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   position: fixed;
   inset: 0;
   z-index: 95;
-  background: var(--dw-cover);
+  background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: none;
   align-items: center;
   justify-content: center;
@@ -7137,7 +7087,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* 写日记弹窗 */
 #add-diary-mask {
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   animation: fadeIn var(--bz-dur-base) ease-out;
 }
 .add-diary-popup {
@@ -7166,7 +7116,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* 标签选择器弹窗 */
 #diary-tag-selector-mask {
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   animation: fadeIn var(--bz-dur-base) ease-out;
 }
 .diary-tag-selector-popup {
@@ -7791,6 +7741,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-memo-card.bz-memo-done .bz-memo-card-title { text-decoration: line-through; color: var(--bz-text-2); }
 .bz-memo-card-title a { color: var(--bz-brand); text-decoration: underline; cursor: pointer; word-break: break-word; }
 
+/* ---- 移动抽屉头（buildSheetHead，ADR-0104 markup 单源）----
+   勾选圈复用上方 .bz-memo-check 单源规则（抽屉经 sheetClass 挂皮肤类，纸感/编辑部皮肤自动随行，
+   无需皮肤段额外覆盖）；此处只补头部横排布局与完成态——对齐列表 .bz-memo-card.bz-memo-done
+   口径（整体暗淡 0.62 + 标题划线变次级色） */
+.bz-memo-sheet-entry { flex-direction: row; align-items: flex-start; gap: 10px; }
+.bz-memo-sheet-entry .bz-memo-check { margin-top: 2px; }
+.bz-memo-sheet-entry.bz-memo-done { opacity: 0.62; }
+.bz-memo-sheet-entry .done { text-decoration: line-through; color: var(--bz-text-2); }
+
 /* meta 标签行（顺序对齐源码 buildMeta：课程→脚本→链接→位置→场景→截止→时间）。
    行内所有文字统一 18px 行高盒——标签 18px + 时间 18px，flex 居中后基线一致
    （issue 199：此前时间默认 ~13px 行高盒，与标签文字基线错位 ~2.5px） */
@@ -7892,6 +7851,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-memo-card .bz-memo-check { width: 19px; height: 19px; }
   /* 触控热区 ≥44px（设计手册 §8.2）：视觉尺寸不变，::after 外扩热区（19px + 13px×2 = 45px） */
   .bz-memo-card .bz-memo-check::after { content: ''; position: absolute; inset: -13px; }
+  /* 移动抽屉头同款口径（review P3）：抽屉是移动端高频场景，圈同 19px + 45px 热区，
+     对齐列表移动段——规则同款、层叠路径同款（checked 对勾 ::after 两侧行为一致） */
+  .bz-memo-sheet-entry .bz-memo-check { width: 19px; height: 19px; }
+  .bz-memo-sheet-entry .bz-memo-check::after { content: ''; position: absolute; inset: -13px; }
   .bz-memo-card .bz-memo-card-title { font-size: var(--bz-font-emphasis); }
   .bz-memo-composer .bz-input { height: 40px; }
 }
@@ -9296,7 +9259,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* —— 表单（原型 .mask + .form 逐字） —— */
 .bz-fav-form-mask {
   position: fixed; inset: 0; z-index: 600; /* 原型兜底值，插件端以 topifyZ 为准 */
-  background: var(--mask); display: flex; align-items: center; justify-content: center;
+  background: var(--mask); backdrop-filter: blur(var(--bz-overlay-blur)); display: flex; align-items: center; justify-content: center;
 }
 .bz-fav-form {
   width: min(430px, calc(100vw - 32px)); max-height: 86vh; overflow: auto; background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
@@ -9591,13 +9554,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-review-exclude-remove:hover { color: var(--bz-danger); background: var(--bz-surface-hover); }
 
 /* 统计弹窗 / 复习历史弹窗（既有实现，容器保留） */
-#review-stats-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); }
+#review-stats-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); }
 #review-stats-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); width: 92%; max-width: 600px; max-height: 88vh; flex-direction: column; animation: slideUp var(--bz-dur-slow) ease-out; }
 #review-stats-body { flex: 1; overflow-y: auto; }
 .bz-review-stats-head { padding: var(--bz-space-sm) 18px 6px !important; }
 .bz-review-stats-head .bz-review-title { font-size: .92rem !important; font-weight: 600 !important; margin: 0 !important; }
 .bz-review-stats-tl-row:hover { background: var(--bz-surface-hover); }
-#review-history-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); }
+#review-history-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); }
 #review-history-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); width: 92%; max-width: 480px; max-height: 80vh; flex-direction: column; overflow: hidden; animation: slideUp var(--bz-dur-slow) ease-out; }
 #review-history-body { flex: 1; overflow-y: auto; position: relative; }
 /* 排名/时间线行（issue 270：stats-ui 内联收编并入本类，值逐字搬运——
@@ -9677,11 +9640,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    --text-normal → --bz-text-1、--background-modifier-border/hover → --bz-border/--bz-surface-hover、
    --interactive-accent/--text-on-accent → --bz-brand/--bz-on-brand；
    对错硬编码绿/红 → --bz-success/--bz-danger（15% 透底改 color-mix 等价）；
-   毛玻璃按 ui-design-manual「明确不采用」去除，遮罩用 --bz-overlay；
+   遮罩用 --bz-overlay + token 毛玻璃 --bz-overlay-blur（memo item-1789106289860 推翻「明确不采用」口径）；
    弹窗壳规格对齐组件库 modal（--bz-radius-md / --bz-shadow-lg / 82vh 限高）。
    该入口现休眠（产品走 SprintSession），样式补齐不退役、不改 DOM。
    原文件尾 @keyframes spin 无消费者（旧 loading 界面随普通模式删除），不迁。 */
-#quiz-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); display: flex; align-items: center; justify-content: center; }
+#quiz-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); display: flex; align-items: center; justify-content: center; }
 #quiz-popup { background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); padding: 24px; max-width: 600px; width: 90%; max-height: 82vh; overflow-y: auto; display: flex; flex-direction: column; position: relative; transition: none; }
 .bz-quiz-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .bz-quiz-title { font-size: 15px; font-weight: 600; }
@@ -9760,7 +9723,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 
 /* ==================== 番茄钟弹窗（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
-    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--background-modifier-cover); } /* z 动态发号（ADR-0067）；遮罩色走主题 token（原写死 rgba 已对齐） */
+    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); } /* z 动态发号（ADR-0067）；遮罩色走 --bz-overlay（原写死 rgba 已对齐） */
     #pomodoro-popup { width: 320px; padding: var(--bz-space-xl); border-radius: var(--bz-radius-lg); background: var(--background-primary); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
     #pomodoro-popup:focus { outline: none; } /* Space 快捷键承载焦点，不画焦点环 */
     #pomodoro-ring-svg { width: 160px; height: 160px; margin: var(--bz-space-sm) auto; display: block; }
@@ -9857,7 +9820,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-attach-preview-badge { flex-shrink: 0; align-self: center; }
 /* ==================== 保险库域样式（src/encrypt/styles.css） ==================== */
 /* ==================== 加密保险库（encrypt，ticket NN：移出式清单容器加密） ==================== */
-/* 毛玻璃明确不采用（设计手册 §5.2：backdrop-filter 对比不可控），遮罩统一 --bz-overlay */
+/* 遮罩统一 --bz-overlay + token 毛玻璃 --bz-overlay-blur（memo item-1789106289860 拍板全仓遮罩采用毛玻璃，推翻原 §5.2「明确不采用」口径） */
 #bz-encrypt-popup { animation: slideUp var(--bz-dur-slow) ease-out; }
 #bz-encrypt-popup, #bz-encrypt-preview-popup {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -9869,6 +9832,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-encrypt-dialog-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   align-items: center; justify-content: center;
 }
 .bz-encrypt-dialog-box {
@@ -9974,6 +9938,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-encrypt-health-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   align-items: center; justify-content: center;
 }
 .bz-encrypt-health-box {
@@ -10253,7 +10218,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 密码添加/编辑/平台编辑弹窗：脱离 #bz-encrypt-popup 挂 body（ADR-0085 合并版），
    样式必须无 popup 前缀；token 用全局 --bz-* 变量（.theme-* 挂 body）保证两主题可用。
    层级走 ADR-0067 动态发号（topifyZ 显示即发号），不写死 z-index（旧 2200 已删）。 */
-.bz-vault-dlg-mask { position: fixed; inset: 0; background: var(--bz-overlay); display: flex; align-items: center; justify-content: center; }
+.bz-vault-dlg-mask { position: fixed; inset: 0; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); display: flex; align-items: center; justify-content: center; }
 .bz-vault-dlg { background: var(--bz-surface-2); border-radius: var(--bz-radius-lg); padding: 22px var(--bz-space-xl); width: min(92vw, 440px); max-height: 86vh; overflow-y: auto; box-shadow: var(--bz-shadow-lg); }
 .bz-vault-dlg h3 { margin: 0 0 var(--bz-space-xs); font-size: var(--bz-font-title); font-weight: 700; color: var(--bz-text-1); }
 .bz-vault-dlg .sub { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-bottom: 14px; }
@@ -11570,7 +11535,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   position: absolute;
   inset: 0;
   background: rgba(20, 18, 12, 0.45);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: none;
   align-items: flex-end;
   justify-content: center;
@@ -11825,7 +11790,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   display: none;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
 }
 .bz-password-vault-modal.open {
   display: flex;
@@ -11926,7 +11891,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   display: none;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
 }
 .bz-password-vault-pop2.open {
   display: flex;
@@ -12063,6 +12028,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   position: fixed;
   inset: 0;
   background: rgba(20, 15, 8, 0.4);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15627,7 +15593,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-kb-mask {
   position: fixed;
   inset: 0;
-  background: var(--background-modifier-cover);
+  background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
 }
 
 .bz-kb-window {
@@ -16589,6 +16556,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   position: fixed;
   inset: 0;
   background: #2a261e4d;
+  backdrop-filter: blur(var(--bz-overlay-blur));
   z-index: 1000;
   display: none;
 }
