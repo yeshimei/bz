@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import {
   MEMO_ICONS, iconSpan, sceneDot, sceneLabel, sceneLeadHtml,
   mainCountHtml, navBtnHtml, mobChipHtml, panelShellHtml,
-  metaTagsHtml, cardHtml, sectionLabelHtml, doneBarHtml, doneMoreHtml,
+  metaTagsHtml, cardHtml, checkHtml, sectionLabelHtml, doneBarHtml, doneMoreHtml,
 } from '../../src/memo/render';
 import type { MemoItem } from '../../src/memo/types';
 
@@ -94,6 +94,21 @@ describe('memo render 纯层（markup 口径冻结）', () => {
     expect(code).toContain('bz-memo-tag-script');
     // 无 due 包不出截止标签；无 relTime 不出时间
     expect(metaTagsHtml(item({ due: '2026-09-09 10:00:00' }), null, '')).not.toContain('bz-memo-tag-overdue');
+  });
+
+  it('checkHtml：列表卡与抽屉头共用单源（两态类名/title/锚点）', () => {
+    // 未完成态：空圈 + 「标记完成」
+    const undone = checkHtml(item());
+    expect(undone).toContain('class="bz-memo-check"');
+    expect(undone).not.toContain('bz-memo-checked');
+    expect(undone).toContain('data-memo-check');
+    expect(undone).toContain('title="标记完成"');
+    // 完成态：圈带 checked + 「恢复未完成」
+    const done = checkHtml(item({ completed: '2026-09-10 10:00:00' }));
+    expect(done).toContain('class="bz-memo-check bz-memo-checked"');
+    expect(done).toContain('title="恢复未完成"');
+    // cardHtml 与 checkHtml 同源：卡内勾选圈即单源产物
+    expect(cardHtml(item(), null, '')).toContain(checkHtml(item()));
   });
 
   it('cardHtml：完成态类、可点标题锚、勾选锚', () => {
