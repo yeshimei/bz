@@ -1,4 +1,4 @@
-/* 源指纹 616a3014bc90acbf · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d16b89c33ed2b1c3 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -4302,6 +4302,9 @@ var BZW_bookshelf = (() => {
     archive: "📁"
   };
   var SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
+  function notice(msg, type, duration) {
+    notify(msg, { type: type || "info", duration });
+  }
   function isMobileView() {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
   }
@@ -4655,19 +4658,20 @@ var BZW_bookshelf = (() => {
     const review = it.bookReview ? `<div class="bz-bs-d-quote">“${esc(it.bookReview)}”</div>` : '<div class="bz-bs-d-quote dim">——尚无书评——</div>';
     const dense = it.highlights + it.thinks;
     const seal = it.status === "已读" ? "讫" : it.status === "在读" ? "阅" : "藏";
+    const go = it.status === "在读" ? ` <button type="button" class="bz-bs-d-go" data-bs-d-continue title="继续阅读">继续</button>` : "";
     const hoursText = it.readingTimeFormat || (it.readingTimeMs > 0 ? (it.readingTimeMs / 36e5).toFixed(1) + " 小时" : "—");
     const prog = Math.round(it.progress);
     return `
     <div class="bz-bs-d-pull">已抽出这本书</div>
-    <button type="button" class="bz-bs-d-x" data-bs-d-close title="放回书架">×</button>
     <div class="bz-bs-d-card">
       <div class="bz-bs-d-cover">${cover}</div>
       <div class="bz-bs-d-info">
         <h2 class="bz-bs-d-title">${esc(it.title)}</h2>
         <div class="bz-bs-d-sub">${esc(it.author)} · ${esc(it.category || "未分类")}${it.isEpub ? " · EPUB" : ""}</div>
+        <div class="bz-bs-d-body">
         ${review}
         <table class="bz-bs-d-ledger">
-          <tr><td>状 态</td><td><span class="bz-bs-d-stdot" style="background:${statusColor(it.status)}"></span>${esc(it.status)}</td></tr>
+          <tr><td>状 态</td><td><span class="bz-bs-d-stdot" style="background:${statusColor(it.status)}"></span>${esc(it.status)}${go}</td></tr>
           <tr><td>累计时长</td><td>${esc(hoursText)}</td></tr>
           <tr><td>起读 · 读完</td><td>${esc(it.readingDate || "—")} · ${esc(it.completionDate || "—")}</td></tr>
           <tr><td>划线 / 想法</td><td>${it.highlights} 条 / ${it.thinks} 条</td></tr>
@@ -4682,8 +4686,9 @@ var BZW_bookshelf = (() => {
           <div class="cap">批注密度（划线 + 想法 = ${dense}）</div>
           <div class="bar"><i style="width:${Math.min(100, dense / Math.max(10, dense) * 100)}%"></i></div>
         </div>
+        <div class="bz-bs-d-seal">${seal}</div>
+        </div>
       </div>
-      <div class="bz-bs-d-seal">${seal}</div>
     </div>`;
   }
 
@@ -7444,6 +7449,17 @@ var BZW_bookshelf = (() => {
       detailModalClose = null;
     }
   }
+  function continueBook(app, it) {
+    var _a;
+    const target = it.isEpub ? it.epubVaultPath : (_a = it.file) == null ? void 0 : _a.path;
+    if (!target) {
+      notice("找不到这本书的文件", "warning");
+      return;
+    }
+    closeDomainModals();
+    closeOverlay();
+    void app.workspace.openLinkText(target, "", true);
+  }
   function openBookDetail(it, app) {
     var _a;
     const body = document.createElement("div");
@@ -7459,7 +7475,7 @@ var BZW_bookshelf = (() => {
       }
     });
     detailModalClose = close;
-    (_a = popup.querySelector("[data-bs-d-close]")) == null ? void 0 : _a.addEventListener("click", () => close());
+    (_a = popup.querySelector("[data-bs-d-continue]")) == null ? void 0 : _a.addEventListener("click", () => continueBook(app, it));
     bindCoverFallback(popup);
   }
   var SKIN_IDS = ["nordic", "noir", "kraft", "velvet", "mono"];

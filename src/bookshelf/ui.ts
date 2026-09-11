@@ -19,6 +19,7 @@ import { allocZ } from '../core/z-order';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { uiModal, mountIcons } from '../core/ui';
+import { notice } from '../core/notice';
 import { renderReadingReport, cancelReadingReport, handleReportInteraction } from '../reading-report';
 import { M, applyDefaultView, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
 import { rebuildItems, getDisplayItems, resolveFolderPath, resolveBookTag } from './data';
@@ -160,6 +161,16 @@ function closeDomainModals(): void {
   if (detailModalClose) { detailModalClose(); detailModalClose = null; }
 }
 
+/** 跳回原文继续读：md 书 / EPUB 都走 openLinkText（Weave 注册了 epub 处理器，落回上次阅读位置）；
+ *  原型壳的 workspace.openLinkText 是 no-op 桩，两侧同语义 */
+function continueBook(app: App, it: BookshelfItem): void {
+  const target = it.isEpub ? it.epubVaultPath : it.file?.path;
+  if (!target) { notice('找不到这本书的文件', 'warning'); return; }
+  closeDomainModals();
+  closeOverlay();
+  void app.workspace.openLinkText(target, '', true);
+}
+
 /** 借书卡（issue 223 只读版：pull-note + 纸卡双栏 + 台账 + 静态进度条 + 批注密度条 + 印章；
  *  markup 走 render.ts detailBodyHtml，本层只负责封面资源与 uiModal 壳） */
 function openBookDetail(it: BookshelfItem, app: App): void {
@@ -174,7 +185,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
     onClose: () => { detailModalClose = null; },
   });
   detailModalClose = close;
-  popup.querySelector('[data-bs-d-close]')?.addEventListener('click', () => close());
+  popup.querySelector('[data-bs-d-continue]')?.addEventListener('click', () => continueBook(app, it));
   bindCoverFallback(popup);
 }
 

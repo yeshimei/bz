@@ -1,4 +1,4 @@
-/* 源指纹 9a14634fc32a29ef · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e57020c82c171248 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/bookshelf/constants.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/bookshelf/render.ts → window.BZR_bookshelf（评审壳预览包，ADR-0104） */
 var BZR_bookshelf = (() => {
@@ -138,19 +138,20 @@ var BZR_bookshelf = (() => {
     const review = it.bookReview ? `<div class="bz-bs-d-quote">“${esc(it.bookReview)}”</div>` : '<div class="bz-bs-d-quote dim">——尚无书评——</div>';
     const dense = it.highlights + it.thinks;
     const seal = it.status === "已读" ? "讫" : it.status === "在读" ? "阅" : "藏";
+    const go = it.status === "在读" ? ` <button type="button" class="bz-bs-d-go" data-bs-d-continue title="继续阅读">继续</button>` : "";
     const hoursText = it.readingTimeFormat || (it.readingTimeMs > 0 ? (it.readingTimeMs / 36e5).toFixed(1) + " 小时" : "—");
     const prog = Math.round(it.progress);
     return `
     <div class="bz-bs-d-pull">已抽出这本书</div>
-    <button type="button" class="bz-bs-d-x" data-bs-d-close title="放回书架">×</button>
     <div class="bz-bs-d-card">
       <div class="bz-bs-d-cover">${cover}</div>
       <div class="bz-bs-d-info">
         <h2 class="bz-bs-d-title">${esc(it.title)}</h2>
         <div class="bz-bs-d-sub">${esc(it.author)} · ${esc(it.category || "未分类")}${it.isEpub ? " · EPUB" : ""}</div>
+        <div class="bz-bs-d-body">
         ${review}
         <table class="bz-bs-d-ledger">
-          <tr><td>状 态</td><td><span class="bz-bs-d-stdot" style="background:${statusColor(it.status)}"></span>${esc(it.status)}</td></tr>
+          <tr><td>状 态</td><td><span class="bz-bs-d-stdot" style="background:${statusColor(it.status)}"></span>${esc(it.status)}${go}</td></tr>
           <tr><td>累计时长</td><td>${esc(hoursText)}</td></tr>
           <tr><td>起读 · 读完</td><td>${esc(it.readingDate || "—")} · ${esc(it.completionDate || "—")}</td></tr>
           <tr><td>划线 / 想法</td><td>${it.highlights} 条 / ${it.thinks} 条</td></tr>
@@ -165,8 +166,9 @@ var BZR_bookshelf = (() => {
           <div class="cap">批注密度（划线 + 想法 = ${dense}）</div>
           <div class="bar"><i style="width:${Math.min(100, dense / Math.max(10, dense) * 100)}%"></i></div>
         </div>
+        <div class="bz-bs-d-seal">${seal}</div>
+        </div>
       </div>
-      <div class="bz-bs-d-seal">${seal}</div>
     </div>`;
   }
 
