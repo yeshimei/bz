@@ -57,13 +57,7 @@
 .bz-password-vault *::after {
   box-sizing: border-box;
 }
-.bz-password-vault ::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-.bz-password-vault {
-  scrollbar-width: none;
-}
+/* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277），原域内 ::-webkit-scrollbar/scrollbar-width 声明已删 */
 .bz-password-vault button {
   font: inherit;
   cursor: pointer;
