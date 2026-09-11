@@ -191,9 +191,6 @@
         t('rail 全部未读行', railRows[0]?.textContent.includes('全部未读'));
         t('rail 站点行（果壳科学人）', railRows.some((r) => r.textContent.includes('果壳科学人')));
         t('rail 剪藏本行', railRows.some((r) => r.textContent.includes('剪藏本')));
-        // 每日简报源（2026-09-10：种子补入真实库 briefs 段后新增）
-        const briefRow = railRows.find((r) => r.textContent.includes('每日简报'));
-        t('rail 每日简报行', !!briefRow);
         t('rail 脚注今日已读', /今日已读/.test(dt('[data-clip-rail-foot]')?.textContent || ''));
         // 选中态计数可读（2026-09-10 修复）：点站点行后「未读/总数」不应继承白字
         const siteRow = railRows.find((r) => r.textContent.includes('果壳科学人'));

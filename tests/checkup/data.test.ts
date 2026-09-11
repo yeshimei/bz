@@ -175,7 +175,7 @@ describe('检查二：字段漂移', () => {
       [`${DIR}/memo.json`]: JSON.stringify([fullMemoItem()]),
       [`${DIR}/favorites.json`]: JSON.stringify([fullFavItem()]),
       [`${DIR}/clipbook.json`]: JSON.stringify({ articleOverrides: {}, savedArchive: [], order: [] }),
-      [`${DIR}/news.json`]: JSON.stringify({ articles: [], stats: {}, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: {}, briefUps: [], briefs: [] }),
+      [`${DIR}/news.json`]: JSON.stringify({ articles: [], stats: {}, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: {}, rssFeeds: [] }),
       [`${DIR}/home.json`]: JSON.stringify({ version: 1, pinned: [] }),
     });
     const sec = await checkFieldDrift(app);

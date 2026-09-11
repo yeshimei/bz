@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import { lintTargets } from './settings-copy-lint-engine';
 import { clipbookSettingsSchema } from '../../src/clipbook/ui';
-import { upManagerSettingsSchema } from '../../src/clipbook/news-sources-group';
+import { upManagerSettingsSchema, rssManagerSettingsSchema } from '../../src/clipbook/news-sources-group';
 import { emptyDataSourceState } from '../../src/clipbook/news-source-settings';
 import { favoritesSettingsSchema } from '../../src/favorites/ui';
 
@@ -26,6 +26,8 @@ const TARGETS = [
   { source: 'clipbook', schema: clipbookSettingsSchema(emptyDataSourceState(true)) },
   // up-manager 三行全为 custom 插槽（复合控件行 + 动态 desc），无行 name/desc 可 lint
   { source: 'up-manager', schema: upManagerSettingsSchema({ ups: [], upInfo: {}, cookie: '', onChanged: () => {} }) },
+  // rss-manager（ADR-0121）：独立管理弹窗 schema，与 up-manager 同批过文案 lint
+  { source: 'rss-manager', schema: rssManagerSettingsSchema({ feeds: [], onChanged: () => {} }) },
   { source: 'favorites', schema: favoritesSettingsSchema() },
 ];
 
