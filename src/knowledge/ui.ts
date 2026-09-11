@@ -1317,7 +1317,6 @@ export class UIManager {
       } else {
         await KnowledgeData.addTask(patch);
       }
-      notice('已保存');
       this.hideAddDialog();
       await this.refreshVideoPanel();
     } catch (e: any) {

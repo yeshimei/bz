@@ -1,4 +1,4 @@
-/* 源指纹 d629cd0bd0d44be8 · 仓内输入 72 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 da7aa7cde42fa52a · 仓内输入 72 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -8512,27 +8512,9 @@ ${bodyText.substring(0, 6e3)}`;
     const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
     const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
     return [
-      {
-        type: "toggle",
-        name: "知乎日报",
-        desc: "抓取知乎日报每日文章",
-        binding: sourceBinding("zhihu"),
-        onChange: (v) => notice(`已${v ? "开启" : "关闭"}知乎日报`, "success")
-      },
-      {
-        type: "toggle",
-        name: "果壳科学人",
-        desc: "抓取果壳科学人最新文章",
-        binding: sourceBinding("guokr"),
-        onChange: (v) => notice(`已${v ? "开启" : "关闭"}果壳科学人`, "success")
-      },
-      {
-        type: "toggle",
-        name: "B站 UP 主",
-        desc: "抓取名单内 UP 主的视频投稿",
-        binding: sourceBinding("bilibili"),
-        onChange: (v) => notice(`已${v ? "开启" : "关闭"}B站 UP 主`, "success")
-      },
+      { type: "toggle", name: "知乎日报", desc: "抓取知乎日报每日文章", binding: sourceBinding("zhihu") },
+      { type: "toggle", name: "果壳科学人", desc: "抓取果壳科学人最新文章", binding: sourceBinding("guokr") },
+      { type: "toggle", name: "B站 UP 主", desc: "抓取名单内 UP 主的视频投稿", binding: sourceBinding("bilibili") },
       {
         type: "button",
         name: "UP 主名单",
@@ -8554,13 +8536,7 @@ ${bodyText.substring(0, 6e3)}`;
           }
         })
       },
-      {
-        type: "toggle",
-        name: "RSS 订阅",
-        desc: "抓取订阅列表内 RSS 源的文章",
-        binding: sourceBinding("rss"),
-        onChange: (v) => notice(`已${v ? "开启" : "关闭"}RSS 订阅`, "success")
-      },
+      { type: "toggle", name: "RSS 订阅", desc: "抓取订阅列表内 RSS 源的文章", binding: sourceBinding("rss") },
       {
         type: "button",
         name: "RSS 订阅源",
@@ -11804,7 +11780,6 @@ ${sample}`,
             } else {
               await KnowledgeData.addTask(patch);
             }
-            notice("已保存");
             this.hideAddDialog();
             await this.refreshVideoPanel();
           } catch (e) {

@@ -1,4 +1,4 @@
-/* 源指纹 cb58b1799c750263 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f281a0930b9338db · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -15962,7 +15962,6 @@ ${countsToText(s.missing)}
             cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
             await saveAndRender();
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
-            notice(`物品「${name}」已更新`, "success");
           } else {
             if (!M4.db) throw new Error("数据库未加载");
             const newItem = {
@@ -15982,7 +15981,6 @@ ${countsToText(s.missing)}
             M4.db.items[newItem.id] = newItem;
             await saveAndRender();
             emitDomainEvent("belongings", { kind: "add", item: newItem });
-            notice(`物品「${name}」已添加`, "success");
           }
           _belBaseline = null;
           unregisterSheetCompanion(mask);
@@ -16925,27 +16923,9 @@ ${bodyText.substring(0, 6e3)}`;
     const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
     const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
     return [
-      {
-        type: "toggle",
-        name: "知乎日报",
-        desc: "抓取知乎日报每日文章",
-        binding: sourceBinding("zhihu"),
-        onChange: (v) => notice(`已${v ? "开启" : "关闭"}知乎日报`, "success")
-      },
-      {
-        type: "toggle",
-        name: "果壳科学人",
-        desc: "抓取果壳科学人最新文章",
-        binding: sourceBinding("guokr"),
-        onChange: (v) => notice(`已${v ? "开启" : "关闭"}果壳科学人`, "success")
-      },
-      {
-        type: "toggle",
-        name: "B站 UP 主",
-        desc: "抓取名单内 UP 主的视频投稿",
-        binding: sourceBinding("bilibili"),
-        onChange: (v) => notice(`已${v ? "开启" : "关闭"}B站 UP 主`, "success")
-      },
+      { type: "toggle", name: "知乎日报", desc: "抓取知乎日报每日文章", binding: sourceBinding("zhihu") },
+      { type: "toggle", name: "果壳科学人", desc: "抓取果壳科学人最新文章", binding: sourceBinding("guokr") },
+      { type: "toggle", name: "B站 UP 主", desc: "抓取名单内 UP 主的视频投稿", binding: sourceBinding("bilibili") },
       {
         type: "button",
         name: "UP 主名单",
@@ -16967,13 +16947,7 @@ ${bodyText.substring(0, 6e3)}`;
           }
         })
       },
-      {
-        type: "toggle",
-        name: "RSS 订阅",
-        desc: "抓取订阅列表内 RSS 源的文章",
-        binding: sourceBinding("rss"),
-        onChange: (v) => notice(`已${v ? "开启" : "关闭"}RSS 订阅`, "success")
-      },
+      { type: "toggle", name: "RSS 订阅", desc: "抓取订阅列表内 RSS 源的文章", binding: sourceBinding("rss") },
       {
         type: "button",
         name: "RSS 订阅源",
@@ -20272,7 +20246,6 @@ ${sample}`,
             } else {
               await KnowledgeData.addTask(patch);
             }
-            notice("已保存");
             this.hideAddDialog();
             await this.refreshVideoPanel();
           } catch (e) {
@@ -22914,7 +22887,6 @@ GitHub 仓库：${ghInfo.title}
         const changes = favoritesEditChanges(old, next);
         await dm.update(old.id, next);
         emitDomainEvent("favorites", { kind: "edit", title: next.title, changes });
-        notice("收藏已更新", "success");
       } else {
         const data = {
           id: Date.now().toString(),
@@ -22932,7 +22904,6 @@ GitHub 仓库：${ghInfo.title}
         };
         await dm.add(data);
         emitDomainEvent("favorites", { kind: "add", item: data });
-        notice("收藏已添加", "success");
       }
       closeForm(popup);
       await reload();
