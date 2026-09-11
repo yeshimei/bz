@@ -21,10 +21,13 @@
  * 拖拽实现（2026-09-11 用户报 bug 后重写，两条都不再靠浏览器默认行为兜底）：
  *  - **让位动画**：被拖行只在自己那条 transform 轨道上跟手，**其余行按「谁被跨过」反向位移一格**
  *    （.bz-home-ent-shift，配 CSS transition）——此前只移动自身，其它行纹丝不动（用户看到的「没有动态效果」）。
- *  - **触屏长按**：`touch-action: pan-y` 让浏览器接管纵向手势，pointermove 会被 pointercancel 掐断，
- *    故触屏**必须**在 pointerdown 里把 `touch-action` 改成 `none`，拿到手势所有权后再进拖拽；
- *    短滑（按住窗口内位移 > TOUCH_SLOP_PX）立刻交还滚动。
- *    **长按期间禁止长按菜单**（contextmenu 抑制），否则真机先是弹出选择菜单。
+ *  - **触屏滚动仲裁（2026-09-12 补扫 E 重写，不再抢 touch-action）**：此前 pointerdown 立刻把
+ *    `touch-action` 置 `none` 想「短滑时再交还滚动」——但 touch-action 在手势起点一次性裁决，
+ *    **进行中的手势中途改它不生效**（pointerdown 置 none 确实能拿住手势，可 endDrag 里还原
+ *    对本次触摸已是马后炮）：短滑既不拖也不滚，成了死手势。现改为 pointerdown 不动
+ *    touch-action，挂非 passive `touchmove` 仲裁滚动归属：未按满长按窗口（未 armed）→ 不
+ *    preventDefault，原生滚动照常（短滑=滚列表）；armed 后 → preventDefault 拦下滚动，
+ *    浏览器不再起滚动/不发 pointercancel，第一次移动即起拖。
  *  - 触屏不用「按满 250ms 自动进拖拽」：那会让「按住想滚动」的用户突然进入拖拽态；
  *    改为「按住 ≥250ms 后，第一次移动才真正起拖」——用户看到的是「按住不动、一动就跟着走」。
  */
@@ -54,8 +57,16 @@ const DRAG_CLS = 'bz-home-ent-drag';
 /** 宿主行「右边不留内边距」标记类（挂到祖先 .bz-sp-set-row 上；样式见 styles.css） */
 const FLUSH_CLS = 'bz-home-ent-flush';
 
+/** window blur 兜底监听的信号源（D 补扫 home P3）：设置面板每次渲染首页域都会重新 mount，
+ *  blur 挂在 window 上不随 DOM 移除——裸 addEventListener 会逐次叠加（有界泄漏）。
+ *  记录最近一次 mount 的 AbortController，重建时 abort 旧的，window 上永远只有最新一份 */
+let blurController: AbortController | null = null;
+
 /** 把编辑器挂进设置面板的 custom 行插槽（域侧只调这一支） */
 export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
+  // D：重建即摘除上一次 mount 的 blur 监听（signal abort），再为本轮发新信号
+  blurController?.abort();
+  blurController = new AbortController();
   const scope: HomeOrderScope = isMobileEnv() ? 'mob' : 'desk';
   const touchMode = isMobileEnv();
   let order: HomeOrder | null = null;
@@ -110,11 +121,19 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
     total: number;
     active: boolean;
     armed: boolean;
-    /** 触屏：本次 pointerdown 是否已把 touch-action 改成 none（决定收尾要不要改回） */
-    touchLocked: boolean;
     armTimer: ReturnType<typeof setTimeout> | null;
   }
   let drag: DragCtx | null = null;
+
+  /**
+   * 触屏滚动仲裁（E 修复）：touch-action 不抢（进行中的手势中途改它不生效），
+   * 改在非 passive touchmove 里决定滚动归属——无拖拽上下文或未 armed（按住窗口内）→
+   * 放行原生滚动（短滑=滚列表）；armed 后 → preventDefault 拦下滚动，拖拽独占手势。
+   */
+  function onTouchMove(e: TouchEvent): void {
+    if (!drag || !drag.armed) return;
+    if (e.cancelable) e.preventDefault();
+  }
 
   /** 邻居让位：把除被拖行外的所有可排序行，按「是否落在被拖区间内」设定反向位移 */
   function applyShift(c: DragCtx): void {
@@ -145,7 +164,7 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', onUp);
     window.removeEventListener('pointercancel', onUp);
-    if (c.touchLocked && c.el.isConnected) c.el.style.touchAction = '';
+    window.removeEventListener('touchmove', onTouchMove);
     c.el.classList.remove(DRAG_CLS);
     c.el.style.transform = '';
     // 邻居行归位（render() 随后重建 DOM；这里覆盖「取消拖拽」路径）
@@ -162,7 +181,8 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
 
     if (!c.active) {
       if (!c.armed) {
-        // 触屏按住窗口内：位移过大 = 用户在滚列表，交还手势（不 preventDefault，让浏览器继续滚）
+        // 触屏按住窗口内：位移过大 = 用户在滚列表（touchmove 仲裁未拦截，原生滚动照常），
+        // 直接收掉本次候选拖拽，不 preventDefault
         if (Math.abs(dy) > TOUCH_SLOP_PX) endDrag();
         return;
       }
@@ -211,14 +231,14 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
       }
       const c: DragCtx = {
         el, listEl, rows, startY: e.clientY, step, from, to: from, total,
-        active: false, armed: !touchMode, touchLocked: false,
+        active: false, armed: !touchMode,
         armTimer: null as ReturnType<typeof setTimeout> | null,
       };
       drag = c;
       if (touchMode) {
-        // 触屏：立刻拿到手势所有权（否则浏览器按 pan-y 接管，pointermove 会变成 pointercancel —— 拖拽静默失效）
-        c.el.style.touchAction = 'none';
-        c.touchLocked = true;
+        // 触屏滚动仲裁（E 修复）：不动 touch-action（对手势进行中的裁决无效），改挂
+        // 非 passive touchmove——未 armed 放行原生滚动（短滑=滚列表），armed 后拦滚动起拖
+        window.addEventListener('touchmove', onTouchMove, { passive: false });
         // 按住窗口内不动 → 认定为长按（此后第一次移动即起拖）
         c.armTimer = setTimeout(() => {
           if (drag === c) c.armed = true;
@@ -269,8 +289,14 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
   root.addEventListener('contextmenu', (e) => {
     if (drag) e.preventDefault();
   });
-  // 拖拽期间的意外中断（切窗口/切端）兜底收尾
-  window.addEventListener('blur', () => { if (drag) endDrag(); });
+  // 拖拽期间的意外中断（切窗口/切端）兜底收尾（D：signal 挂钩，重建 mount 时随 abort 自动摘除）
+  window.addEventListener(
+    'blur',
+    () => {
+      if (drag) endDrag();
+    },
+    { signal: blurController.signal }
+  );
 
   root.addEventListener('click', (e) => {
     if (Date.now() < suppressClickUntil) {
