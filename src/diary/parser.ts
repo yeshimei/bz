@@ -109,12 +109,14 @@ export function parseFile(content: string, dateStr: string, onUnparsed?: (unpars
     if ((entry as any).type !== undefined) {
       entry.tags = [(entry as any).type];
       delete (entry as any).type;
+      // 旧 type 字段条目：emoji 与换算后的标签重同步
+      entry.emoji = entry.tags.map((tag) => getTagEmoji(tag)).join('');
     }
     if (!entry.tags || entry.tags.length === 0) {
       entry.tags = ['日记'];
     }
-    // 重新生成 emoji 字段（保证与 tags 同步）
-    entry.emoji = entry.tags.map((tag) => getTagEmoji(tag)).join('');
+    // D11：emoji 保留标题行原始序列——标签反解不出的 emoji（如配置外的 🐲）不再被重生成
+    // 映射值抹掉；跳转锚点/双链以 `emoji + 时间` 对准文件实际标题，改后会定位不到标题。
   }
 
   return entries;
@@ -180,8 +182,14 @@ export async function parseMovieFile(file: any, app: any): Promise<DiaryEntry | 
     else if (rawTag === '动漫') mainTag = '动漫';
 
     // 构建内容：影评 + 空行 + #《文件名》
+    // D12：无海报（或空白）跳过 `![[海报]]` 拼接——`![[undefined]]` 会拼出幽灵媒体格
+    //（统计多计一次媒体、灯箱步进黑屏）
     const fileNameWithoutExt = file.basename;
-    const content = `${review.trim()}\n\n![[${poster}]]\n\n#${fileNameWithoutExt}`;
+    let content = review.trim();
+    if (poster && String(poster).trim() !== '') {
+      content += `\n\n![[${String(poster).trim()}]]`;
+    }
+    content += `\n\n#${fileNameWithoutExt}`;
 
     // 生成日记条目
     return {

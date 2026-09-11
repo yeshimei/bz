@@ -3,11 +3,11 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import {
   applyDirectories,
   buildTagMaps,
-  BOOK_DIRECTORY,
+  bookDirectory,
   DIARY_DIRECTORY,
   emojiToTagMap,
   LETTER_DIRECTORY,
-  MOVIE_DIRECTORY,
+  movieDirectory,
   getParentPrimaryTag,
   getSortedTagsForAddDialog,
   getSubTagsOfPrimary,
@@ -87,11 +87,27 @@ describe('applyDirectories 设置应用', () => {
     expect(LETTER_DIRECTORY).toBe('我的/信');
   });
 
-  it('影视/书库目录跨域解析并回退默认（本域无独立设置键）', () => {
+  it('影视/书库目录跨域实时解析并回退默认（本域无独立设置键；D6：函数实时 resolve 非启动快照）', () => {
     applyDirectories({});
-    expect(typeof MOVIE_DIRECTORY).toBe('string');
-    expect(MOVIE_DIRECTORY.length).toBeGreaterThan(0);
-    expect(typeof BOOK_DIRECTORY).toBe('string');
-    expect(BOOK_DIRECTORY.length).toBeGreaterThan(0);
+    expect(typeof movieDirectory()).toBe('string');
+    expect(movieDirectory().length).toBeGreaterThan(0);
+    expect(typeof bookDirectory()).toBe('string');
+    expect(bookDirectory().length).toBeGreaterThan(0);
+  });
+
+  it('D6 回归：改影院目录设置后 movieDirectory 实时跟随（不再等重启/applyDirectories 快照）', async () => {
+    applyDirectories({});
+    const { setSettingsProvider } = await import('../../src/core/settings-provider');
+    setSettingsProvider(() => ({ cinemaFolderPath: '影视新家', bookshelfFolderPath: '书架新家' }) as any);
+    expect(movieDirectory()).toBe('影视新家');
+    expect(bookDirectory()).toBe('书架新家');
+    // 回落：空值/空白回默认目录
+    setSettingsProvider(() => ({ cinemaFolderPath: '  ' }) as any);
+    expect(movieDirectory()).toBe('我的/影视');
+    setSettingsProvider(() => {
+      throw new Error('设置未注入');
+    });
+    expect(bookDirectory()).toBe('书库');
+    setSettingsProvider(() => ({}) as any);
   });
 });

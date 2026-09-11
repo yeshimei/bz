@@ -1,4 +1,4 @@
-/* 源指纹 789c009ab07c2be9 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ded81fe293f62876 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -11787,9 +11787,13 @@ var BZW_diary = (() => {
 
   // src/diary/config.ts
   var DIARY_DIRECTORY = "我的/日记";
-  var MOVIE_DIRECTORY = "我的/影视";
   var LETTER_DIRECTORY = "我的/信";
-  var BOOK_DIRECTORY = "书库";
+  function movieDirectory() {
+    return safeResolve(resolveCinemaFolderPath, "我的/影视");
+  }
+  function bookDirectory() {
+    return safeResolve(resolveFolderPath, "书库");
+  }
   function safeResolve(resolver, fallback) {
     try {
       const v = resolver();
@@ -11801,8 +11805,6 @@ var BZW_diary = (() => {
   function applyDirectories(settings) {
     DIARY_DIRECTORY = settings.diaryDirectory || "我的/日记";
     LETTER_DIRECTORY = settings.letterDirectory || "我的/信";
-    MOVIE_DIRECTORY = safeResolve(resolveCinemaFolderPath, "我的/影视");
-    BOOK_DIRECTORY = safeResolve(resolveFolderPath, "书库");
   }
   var ENCRYPT_TAG = "加密";
   function getPrimaryTagsInDisplayOrder() {
@@ -12006,11 +12008,11 @@ var BZW_diary = (() => {
       if (entry.type !== void 0) {
         entry.tags = [entry.type];
         delete entry.type;
+        entry.emoji = entry.tags.map((tag) => getTagEmoji(tag)).join("");
       }
       if (!entry.tags || entry.tags.length === 0) {
         entry.tags = ["日记"];
       }
-      entry.emoji = entry.tags.map((tag) => getTagEmoji(tag)).join("");
     }
     return entries;
   }
@@ -12052,9 +12054,13 @@ var BZW_diary = (() => {
       else if (rawTag === "电视剧") mainTag = "电视剧";
       else if (rawTag === "动漫") mainTag = "动漫";
       const fileNameWithoutExt = file.basename;
-      const content = `${review.trim()}
+      let content = review.trim();
+      if (poster && String(poster).trim() !== "") {
+        content += `
 
-![[${poster}]]
+![[${String(poster).trim()}]]`;
+      }
+      content += `
 
 #${fileNameWithoutExt}`;
       return {
@@ -12304,8 +12310,9 @@ ${String(review).trim()}`;
       emoji: e.emoji,
       content: e.content,
       // 透传解析层条目的定位/标识信息：供 UI 跳转/动作区分
-      // （日记 filename=dateStr；影视/信/书 filename=完整 vault 路径）
+      // （日记 filename=dateStr + filePath=完整路径；影视/信/书 filename=完整 vault 路径）
       filename: e.filename,
+      filePath: e.filePath,
       lineNumber: e.lineNumber,
       id: e.id,
       // 加密日记条目的保险箱 SafeNote id（encrypted=true 时存在；UI 解密时用，非加密条目为 undefined）
@@ -12330,7 +12337,10 @@ ${String(review).trim()}`;
           if (!m || !isValidDateStr(m[1])) return [];
           const dateStr = m[1];
           const content = await vault.read(file);
-          return parseFile(content, dateStr).map((e) => toWallEntry(e, "diary", diaryDir));
+          return parseFile(content, dateStr).map((e) => {
+            e.filePath = file.path;
+            return toWallEntry(e, "diary", diaryDir);
+          });
         })
       );
       for (const r of batchResults) entries.push(...r);
@@ -12354,9 +12364,9 @@ ${String(review).trim()}`;
   }
   async function loadWallEntries(app) {
     const entries = await loadDiaryEntries(app, DIARY_DIRECTORY);
-    entries.push(...await loadSpecialEntries(app, MOVIE_DIRECTORY, "movie", parseMovieFile));
+    entries.push(...await loadSpecialEntries(app, movieDirectory(), "movie", parseMovieFile));
     entries.push(...await loadSpecialEntries(app, LETTER_DIRECTORY, "letter", parseLetterFile));
-    entries.push(...await loadSpecialEntries(app, BOOK_DIRECTORY, "book", parseBookFile));
+    entries.push(...await loadSpecialEntries(app, bookDirectory(), "book", parseBookFile));
     entries.sort((a, b) => {
       const dateCmp = b.date.localeCompare(a.date);
       return dateCmp !== 0 ? dateCmp : b.time.localeCompare(a.time);
@@ -12435,6 +12445,39 @@ ${String(review).trim()}`;
   }
   function railThumbKey(entryDate, mediaName) {
     return `${entryDate}|${mediaName}`;
+  }
+  function railThumbKeepKeys(entries) {
+    const keys = /* @__PURE__ */ new Set();
+    for (const e of entries || []) {
+      for (const m of e.media || []) {
+        const key = railThumbKey(e.date, m.name);
+        keys.add(key);
+        keys.add(`wall480|${key}`);
+      }
+    }
+    return keys;
+  }
+  async function pruneRailThumbs(keepKeys) {
+    try {
+      const db = await openDb();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readwrite");
+        const store = tx.objectStore(STORE);
+        const req = store.getAllKeys();
+        req.onsuccess = () => {
+          try {
+            for (const key of req.result || []) {
+              if (typeof key === "string" && !keepKeys.has(key)) store.delete(key);
+            }
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        };
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+    }
   }
   async function getRailThumb(key) {
     try {
@@ -12713,6 +12756,12 @@ ${String(review).trim()}`;
     } catch (e) {
     }
   }
+  function warnReadFailed(msg, dedupeKey) {
+    try {
+      notify(msg, { type: "error", dedupeKey });
+    } catch (e) {
+    }
+  }
   var UnparsedLineError = class extends Error {
     constructor(dateStr, count) {
       super(`「${dateStr}」有 ${count} 行内容无法解析，已拒绝处理`);
@@ -12721,31 +12770,49 @@ ${String(review).trim()}`;
       this.name = "UnparsedLineError";
     }
   };
-  async function syncDateFromDisk(dateStr) {
-    const filePath = `${DIARY_DIRECTORY}/${dateStr}.md`;
-    const file = getApp().vault.getAbstractFileByPath(filePath);
+  var DiaryFileReadError = class extends Error {
+    constructor(filePath, cause_) {
+      super(`日记文件读取失败：${filePath}`);
+      this.filePath = filePath;
+      this.cause_ = cause_;
+      this.name = "DiaryFileReadError";
+    }
+  };
+  function isDiaryReadFailure(e) {
+    return e instanceof DiaryFileReadError;
+  }
+  function resolveDateRef(dateStr, opts) {
+    return { dateStr, filePath: (opts == null ? void 0 : opts.filePath) || `${DIARY_DIRECTORY}/${dateStr}.md` };
+  }
+  async function syncDateFromDisk(ref) {
+    const file = getApp().vault.getAbstractFileByPath(ref.filePath);
     if (!file) {
-      if (diaryDataMap) diaryDataMap.delete(dateStr);
+      if (diaryDataMap) diaryDataMap.delete(ref.filePath);
       return { entries: [], exists: false };
     }
     let unparsed = 0;
     let entries = [];
     try {
       const content = await getApp().vault.read(file);
-      entries = parseFile(content, dateStr, (n) => unparsed = n);
+      entries = parseFile(content, ref.dateStr, (n) => unparsed = n);
     } catch (e) {
-      return { entries: [], exists: true };
+      warnReadFailed(
+        `「${ref.dateStr}」日记读取失败，本次修改没有执行（直接写会覆盖整篇日记）。请稍后重试。`,
+        `diary-read-failed-${ref.filePath}`
+      );
+      throw new DiaryFileReadError(ref.filePath, e);
     }
     if (unparsed > 0) {
       warnUnparsed(
-        `「${dateStr}」有 ${unparsed} 行内容无法解析，本次修改没有写入文件（直接处理会丢失这些行）。请先在日记本设置中运行「检测日记解析」修复后再试。`,
-        `diary-write-refused-${dateStr}`
+        `「${ref.dateStr}」有 ${unparsed} 行内容无法解析，本次修改没有写入文件（直接处理会丢失这些行）。请先在日记本设置中运行「检测日记解析」修复后再试。`,
+        `diary-write-refused-${ref.filePath}`
       );
-      throw new UnparsedLineError(dateStr, unparsed);
+      throw new UnparsedLineError(ref.dateStr, unparsed);
     }
     if (!diaryDataMap) setDiaryDataMap(/* @__PURE__ */ new Map());
-    if (entries.length === 0) diaryDataMap.delete(dateStr);
-    else diaryDataMap.set(dateStr, entries);
+    for (const e of entries) e.filePath = ref.filePath;
+    if (entries.length === 0) diaryDataMap.delete(ref.filePath);
+    else diaryDataMap.set(ref.filePath, entries);
     return { entries, exists: true };
   }
   function serializeDateFile(entries) {
@@ -12762,10 +12829,10 @@ ${String(review).trim()}`;
     }).flat().slice(0, -1);
     return fileLines.join("\n");
   }
-  async function withDateFile(dateStr, task) {
-    const filePath = `${DIARY_DIRECTORY}/${dateStr}.md`;
+  async function withDateFile(ref, task) {
+    const filePath = ref.filePath;
     return enqueueFileTask(filePath, async () => {
-      const { entries } = await syncDateFromDisk(dateStr);
+      const { entries } = await syncDateFromDisk(ref);
       const result = await task(entries);
       const file = getApp().vault.getAbstractFileByPath(filePath);
       if (entries.length === 0) {
@@ -12777,20 +12844,20 @@ ${String(review).trim()}`;
         if (file) await getApp().vault.modify(file, finalContent);
         else await getApp().vault.create(filePath, finalContent);
       } catch (error) {
-        console.error(`重新生成文件 ${dateStr}.md 失败:`, error);
+        console.error(`重新生成文件 ${filePath} 失败:`, error);
         throw error;
       }
       return result;
     });
   }
-  async function listDateEntries(dateStr) {
-    const filePath = `${DIARY_DIRECTORY}/${dateStr}.md`;
-    return enqueueFileTask(filePath, async () => {
-      const { entries } = await syncDateFromDisk(dateStr);
+  async function listDateEntries(dateStr, opts) {
+    const ref = resolveDateRef(dateStr, opts);
+    return enqueueFileTask(ref.filePath, async () => {
+      const { entries } = await syncDateFromDisk(ref);
       return entries.map((e) => ({ ...e }));
     });
   }
-  async function addEntry(dateStr, timeStr, tagsArray, content) {
+  async function addEntry(dateStr, timeStr, tagsArray, content, opts) {
     const [hours, minutes] = timeStr.split(":").map(Number);
     const timeValue = hours * 100 + minutes;
     const newEntry = {
@@ -12804,7 +12871,7 @@ ${String(review).trim()}`;
       lineNumber: 0
     };
     newEntry.emoji = tagsArray.map((tag) => getTagEmoji(tag)).join("");
-    await withDateFile(dateStr, (entries) => {
+    await withDateFile(resolveDateRef(dateStr, opts), (entries) => {
       let insertIndex = entries.findIndex((e) => e.timeValue > timeValue);
       if (insertIndex === -1) insertIndex = entries.length;
       entries.splice(insertIndex, 0, newEntry);
@@ -12814,10 +12881,10 @@ ${String(review).trim()}`;
     emitDomainEvent("diary:entry-added", { date: dateStr, time: timeStr, tags: tagsArray, content: content.trim() });
     return finalEntry;
   }
-  async function removeDiaryEntries(dateStr, match) {
+  async function removeDiaryEntries(dateStr, match, opts) {
     let removed = [];
     let vacated = false;
-    await withDateFile(dateStr, (entries) => {
+    await withDateFile(resolveDateRef(dateStr, opts), (entries) => {
       removed = entries.filter(match);
       if (removed.length === 0) return;
       for (const r of removed) {
@@ -12832,9 +12899,9 @@ ${String(review).trim()}`;
     }
     return removed.length;
   }
-  async function updateDiaryTags(dateStr, match, newTags) {
+  async function updateDiaryTags(dateStr, match, newTags, opts) {
     const res = { oldTags: [], changed: false, entry: null };
-    await withDateFile(dateStr, (entries) => {
+    await withDateFile(resolveDateRef(dateStr, opts), (entries) => {
       var _a;
       const hit = (_a = entries.find(match)) != null ? _a : null;
       if (!hit) return;
@@ -12859,17 +12926,18 @@ ${String(review).trim()}`;
     return res.entry;
   }
   async function findDiaryEntry(filename, lineNumber) {
-    const dateStr = filename.includes("/") ? stripMdExt(filename.split("/").pop()) : filename;
+    const filePath = filename.includes("/") ? filename : `${DIARY_DIRECTORY}/${filename}.md`;
+    const dateStr = stripMdExt(filePath.split("/").pop());
     const lookup = (map) => {
       var _a;
-      const entries = map == null ? void 0 : map.get(dateStr);
+      const entries = map == null ? void 0 : map.get(filePath);
       if (!entries) return null;
-      return (_a = entries.find((e) => e.filename === filename && e.lineNumber === lineNumber)) != null ? _a : null;
+      return (_a = entries.find((e) => e.filePath === filePath && e.lineNumber === lineNumber)) != null ? _a : null;
     };
     const hit = lookup(diaryDataMap);
     if (hit) return hit;
     try {
-      await listDateEntries(dateStr);
+      await listDateEntries(dateStr, { filePath });
     } catch (e) {
       return null;
     }
@@ -12908,16 +12976,15 @@ ${String(review).trim()}`;
     return out;
   }
   async function encryptEntry(entry) {
-    var _a;
     const safe = getSafeManager();
     if (!safe.unlocked) throw new Error("未解锁，无法加密日记");
     const tags = [.../* @__PURE__ */ new Set([...entry.tags, ENCRYPT_TAG])];
     const emojiSeq = tags.map((t) => getTagEmoji(t)).join("");
     const block = `# ${emojiSeq} ${entry.time}
 ${entry.content.trim()}`;
-    const datePath = `${DIARY_DIRECTORY}/${entry.date}.md`;
+    const datePath = entry.filePath || `${DIARY_DIRECTORY}/${entry.date}.md`;
     const attachments = await collectAttachmentsForContent(entry.content || "", datePath);
-    await safe.lockNote(
+    const note = await safe.lockNote(
       {
         path: datePath,
         title: `${entry.date} · ${entry.time} 日记`,
@@ -12931,7 +12998,7 @@ ${entry.content.trim()}`;
       tags,
       emoji: emojiSeq,
       encrypted: true,
-      noteId: (_a = safe.manifest.notes[safe.manifest.notes.length - 1]) == null ? void 0 : _a.id
+      noteId: note.id
     };
   }
   async function loadEncryptedEntries() {
@@ -12991,18 +13058,43 @@ ${entry.content.trim()}`;
     if (!safe.unlocked) throw new Error("未解锁");
     await safe.removeNote(noteId);
   }
+  async function realignRestorePath(noteId) {
+    var _a, _b, _c, _d;
+    const safe = getSafeManager();
+    const note = (_b = (_a = safe.manifest) == null ? void 0 : _a.notes) == null ? void 0 : _b.find((n) => n.id === noteId);
+    if (!note || note.kind !== "diary-entry") return;
+    const dateStr = stripMdExt(note.path.split("/").pop() || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
+    let target = null;
+    try {
+      const dirPrefix = `${DIARY_DIRECTORY}/`;
+      const app = getApp();
+      const dateFiles = (((_d = (_c = app.vault).getMarkdownFiles) == null ? void 0 : _d.call(_c)) || []).map((f) => f.path).filter((p) => p.startsWith(dirPrefix) && p.endsWith(`/${dateStr}.md`));
+      target = dateFiles.includes(`${DIARY_DIRECTORY}/${dateStr}.md`) ? `${DIARY_DIRECTORY}/${dateStr}.md` : dateFiles[0] || `${DIARY_DIRECTORY}/${dateStr}.md`;
+    } catch (e) {
+      return;
+    }
+    if (target === note.path) return;
+    note.path = target;
+    try {
+      await safe.saveManifest();
+    } catch (e) {
+    }
+  }
   async function buildRestoreBlock(noteId, newTags) {
     var _a;
     const plain = await getSafeManager().getDiaryEntryPlain(noteId);
     if (plain === null || plain === void 0) return null;
-    if (!newTags || newTags.length === 0) return plain;
     const lines = plain.replace(/\r\n/g, "\n").split("\n");
     const m = (_a = lines[0]) == null ? void 0 : _a.match(/^#\s+\S+\s+(\d{2}:\d{2})$/);
     if (!m) return null;
-    const newSeq = newTags.filter((t) => t !== ENCRYPT_TAG).map((t) => getTagEmoji(t)).join("");
+    const kept = (newTags != null ? newTags : []).filter((t) => t !== ENCRYPT_TAG);
+    const seqTags = kept.length > 0 ? kept : ["日记"];
+    const newSeq = seqTags.map((t) => getTagEmoji(t)).join("");
     return `# ${newSeq} ${m[1]}${lines.length > 1 ? "\n" + lines.slice(1).join("\n") : ""}`;
   }
   async function reclassifyEntry(noteId, newTags) {
+    await realignRestorePath(noteId);
     const block = await buildRestoreBlock(noteId, newTags);
     if (block === null) return false;
     return getSafeManager().restoreDiaryEntry(noteId, block);
@@ -13582,24 +13674,31 @@ ${entry.content.trim()}`;
   init_flow_dialog();
   init_app();
   init_domain_bus();
+  init_utils();
 
   // src/diary/ui/locator.ts
   async function buildLocatorPredicateFor(dateStr, loc) {
     let uniqueTime = true;
     try {
-      const entries = await listDateEntries(dateStr);
+      const entries = await listDateEntries(dateStr, { filePath: loc.filePath });
       uniqueTime = entries.filter((e) => e.time === loc.time).length === 1;
     } catch (e) {
     }
-    return (e) => e.time === loc.time && (uniqueTime || e.lineNumber === loc.lineNumber);
+    return (e) => (
+      // loc 未带 filePath（旧定位面/兜底调用方）：不按路径过滤，行为同旧版；
+      // 带了则严格限定来源文件（D2：同刻兜底不跨文件误命中）
+      (loc.filePath ? e.filePath === loc.filePath : true) && e.time === loc.time && (uniqueTime || e.lineNumber === loc.lineNumber)
+    );
   }
 
   // src/diary/ui/entry-actions.ts
+  function diaryEntryFilePath(entry) {
+    return entry.filePath || `${DIARY_DIRECTORY}/${entry.filename}.md`;
+  }
   async function jumpToDiaryEntry(entry) {
-    const fileName = entry.filename;
-    const filePath = `${DIARY_DIRECTORY}/${fileName}.md`;
+    const filePath = diaryEntryFilePath(entry);
     const anchor = `${entry.emoji} ${entry.time}`;
-    const link = `${DIARY_DIRECTORY}/${fileName}#${anchor}`;
+    const link = `${stripMdExt(filePath)}#${anchor}`;
     const file = getApp().vault.getAbstractFileByPath(filePath);
     if (!file) {
       notice("找不到日记文件");
@@ -13608,7 +13707,7 @@ ${entry.content.trim()}`;
     await getApp().workspace.openLinkText(link, "", false, { active: true });
   }
   async function copyDiaryLink(entry) {
-    const link = `[[${DIARY_DIRECTORY}/${entry.filename}#${entry.emoji} ${entry.time}]]`;
+    const link = `[[${stripMdExt(diaryEntryFilePath(entry))}#${entry.emoji} ${entry.time}]]`;
     await navigator.clipboard.writeText(link);
     notice(`已复制双链引用：${link}`, "success");
   }
@@ -13627,7 +13726,9 @@ ${entry.content.trim()}`;
         await deleteEncryptedEntry(loc.noteId);
         emitDomainEvent("diary:encrypted-purged", { noteId: loc.noteId });
       } else {
-        const removed = await removeDiaryEntries(loc.date, await buildLocatorPredicateFor(loc.date, loc));
+        const removed = await removeDiaryEntries(loc.date, await buildLocatorPredicateFor(loc.date, loc), {
+          filePath: loc.filePath
+        });
         if (removed === 0) {
           notice("未能在日记数据中定位该条目，没有删除", "error");
           return;
@@ -13636,7 +13737,7 @@ ${entry.content.trim()}`;
       }
       notice("日记条目已删除", "success");
     }).catch((err) => {
-      if (err && isUnparsedRefusal(err)) return;
+      if (err && (isUnparsedRefusal(err) || isDiaryReadFailure(err))) return;
       notice("删除日记失败：" + ((err == null ? void 0 : err.message) || err), "error");
     });
   }
@@ -13747,12 +13848,12 @@ ${entry.content.trim()}`;
     const dateStr = loc.date;
     const predicate = await buildLocatorPredicateFor(dateStr, loc);
     try {
-      const updated = await updateDiaryTags(dateStr, predicate, selTagNames);
+      const updated = await updateDiaryTags(dateStr, predicate, selTagNames, { filePath: loc.filePath });
       if (!updated) {
         notice("未能在日记数据中定位该条目，标签没有修改", "error");
       }
     } catch (e) {
-      if (!isUnparsedRefusal(e)) throw e;
+      if (!isUnparsedRefusal(e) && !isDiaryReadFailure(e)) throw e;
     }
   }
   function showTagPicker(loc) {
@@ -13893,7 +13994,9 @@ ${entry.content.trim()}`;
     const s = tryGetSettings();
     return (s == null ? void 0 : s.useFileDateTime) === true;
   }
+  var savingNewEntry = false;
   async function saveNewEntry() {
+    if (savingNewEntry) return;
     const datetimeInput = document.getElementById("add-diary-datetime");
     const mask = document.getElementById("add-diary-mask");
     const popup = document.getElementById("add-diary-popup");
@@ -13915,14 +14018,17 @@ ${entry.content.trim()}`;
     }
     const dateStr = targetMoment.format("YYYY-MM-DD");
     const timeStr = targetMoment.format("HH:mm");
+    savingNewEntry = true;
     try {
       await addEntry(dateStr, timeStr, selTagNames, "");
       mask.style.display = "none";
       popup.style.display = "none";
     } catch (error) {
-      if (isUnparsedRefusal(error)) return;
+      if (isUnparsedRefusal(error) || isDiaryReadFailure(error)) return;
       console.error("保存日记失败:", error);
       notice("保存日记失败：" + error.message, "error");
+    } finally {
+      savingNewEntry = false;
     }
   }
 
@@ -14637,7 +14743,7 @@ ${entry.content.trim()}`;
           this.hide();
           return;
         }
-        await jumpToDiaryEntry({ filename: e.filename || e.date, emoji: e.emoji, time: e.time });
+        await jumpToDiaryEntry({ filename: e.filename || e.date, filePath: e.filePath, emoji: e.emoji, time: e.time });
         this.hide();
       } catch (err) {
         notice("跳转失败", "error");
@@ -14803,9 +14909,9 @@ ${entry.content.trim()}`;
       return empty;
     }
     // ---------- 媒体构建（视口懒加载） ----------
-    /** 媒体 URL：带 sourcePath 解析（日记条目 → 我的/日记/日期.md；影视/信/书 → filename 完整路径），修复纯文件名全局解析失败 */
+    /** 媒体 URL：带 sourcePath 解析（日记条目 → filePath（子目录日期文件，D2）或顶层日期.md；影视/信/书 → filename 完整路径），修复纯文件名全局解析失败 */
     mediaSrcFor(entry, name) {
-      const src = entry.kind === "diary" ? `${DIARY_DIRECTORY}/${entry.date}.md` : entry.filename || "";
+      const src = entry.filePath || (entry.kind === "diary" ? `${DIARY_DIRECTORY}/${entry.date}.md` : entry.filename || "");
       return mediaSrc(this.app(), name, src);
     }
     /** 媒体块（图片/视频/音频 + 渐变占位 + 描述；无 emoji 角标——用户要求去掉） */
@@ -15387,11 +15493,12 @@ ${entry.content.trim()}`;
     fillLbMedia(box, k, entry) {
       box.innerHTML = "";
       if (entry.encrypted) {
+        const idx = this._lbIdx;
         const pend = document.createElement("div");
         pend.className = "bz-diary-lb-pending";
         box.appendChild(pend);
         void this.encMediaUrl(entry.noteId || "", k).then((url) => {
-          if (!box.isConnected) return;
+          if (!box.isConnected || this._lbIdx !== idx) return;
           box.innerHTML = "";
           if (!url) {
             box.appendChild(this.mkLbErr(k));
@@ -15443,7 +15550,7 @@ ${entry.content.trim()}`;
           notice("已复制双链引用", "success");
           return;
         }
-        await copyDiaryLink({ filename: e.filename || e.date, emoji: e.emoji, time: e.time });
+        await copyDiaryLink({ filename: e.filename || e.date, filePath: e.filePath, emoji: e.emoji, time: e.time });
       } catch (err) {
         notice("复制双链失败", "error");
       }
@@ -15456,11 +15563,12 @@ ${entry.content.trim()}`;
         notice("复制失败", "error");
       }
     }
-    /** 改标签：接本域 showTagPicker（filename+lineNumber 定位，写层守卫落盘；结果经域事件回刷本墙） */
+    /** 改标签：接本域 showTagPicker（filePath+lineNumber 定位，写层守卫落盘；结果经域事件回刷本墙） */
     async editTags(e) {
       try {
         showTagPicker({
           filename: e.filename || e.date,
+          filePath: e.filePath,
           date: e.date,
           time: e.time,
           lineNumber: e.lineNumber || 0,
@@ -15472,31 +15580,55 @@ ${entry.content.trim()}`;
         notice("改标签暂不可用", "error");
       }
     }
-    /** 加密：本域 encryptEntry（需保险箱解锁）+ 写层摘除原块；结果经域事件回刷本墙 */
+    /**
+     * 加密：本域 encryptEntry（需保险箱解锁）+ 写层摘除原块；结果经域事件回刷本墙。
+     * D5：摘除失败（返回 0 或抛错）必须回滚保险箱密文——密文已入库原文未删时，
+     * 解锁后同条出现两次且重试越积越多。
+     */
     async encryptEntryAction(e) {
+      let enc = null;
       try {
         if (this.isSpecialWallEntry(e)) return;
         const { ensureSafeUnlocked: ensureSafeUnlocked2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
         const unlocked = await ensureSafeUnlocked2();
         if (!unlocked) return;
-        const filename = e.filename || e.date;
-        const entry = await findDiaryEntry(filename, e.lineNumber || 0);
+        const entry = await findDiaryEntry(e.filePath || e.filename || e.date, e.lineNumber || 0);
         if (!entry) {
           notice("找不到原文条目，无法加密", "error");
           return;
         }
-        const enc = await encryptEntry(entry);
+        enc = await encryptEntry(entry);
         if (enc) {
-          const removed = await removeDiaryEntries(entry.date, (x) => x.time === entry.time && x.lineNumber === entry.lineNumber);
+          let removed = 0;
+          try {
+            removed = await removeDiaryEntries(
+              entry.date,
+              (x) => x.filePath === entry.filePath && x.time === entry.time && x.lineNumber === entry.lineNumber,
+              { filePath: entry.filePath }
+            );
+          } catch (e2) {
+            await this.rollbackEncryptedNote(enc);
+            throw e2;
+          }
           if (removed === 0) {
+            await this.rollbackEncryptedNote(enc);
             notice("加密失败：原文块摘除未生效", "error");
             return;
           }
           void this.loadAndRender();
         }
       } catch (err) {
-        if (err && isUnparsedRefusal(err)) return;
+        if (err && (isUnparsedRefusal(err) || isDiaryReadFailure(err))) return;
         notice("加密失败", "error");
+      }
+    }
+    /** 加密失败兜底：尽力销毁刚入库的密文（失败仅留日志，不强抛——原失败原因更要紧） */
+    async rollbackEncryptedNote(enc) {
+      if (!enc.noteId) return;
+      try {
+        await deleteEncryptedEntry(enc.noteId);
+      } catch (e) {
+        console.warn("[bz-diary] 加密回滚失败（保险箱可能残留密文，请手动删除）:", e);
       }
     }
     /** 解密：本域 reclassifyEntry 降级（还原块 merge 回 md，取出即删） */
@@ -15527,6 +15659,7 @@ ${entry.content.trim()}`;
         }
         showConfirm({
           filename: e.filename || e.date,
+          filePath: e.filePath,
           date: e.date,
           time: e.time,
           lineNumber: e.lineNumber || 0,
@@ -15750,15 +15883,15 @@ ${entry.content.trim()}`;
       this.renderAll();
     }
     /** DW3：vault modify 自动刷新（clipbook 同款模式）——墙开着时日记/影视/信/书被编辑 → 防抖重读重渲染；
-     *  只关心四个数据源目录（config 常量）；隐藏期不订阅不刷新。 */
+     *  只关心四个数据源目录（影视/书库实时解析，D6：改影院/书架目录后新目录即刻生效）；隐藏期不订阅不刷新。 */
     subscribeVaultModify() {
       if (this._modifyRef) return;
-      const dirs = [DIARY_DIRECTORY, MOVIE_DIRECTORY, LETTER_DIRECTORY, BOOK_DIRECTORY];
+      const dirs = () => [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()];
       this._modifyRef = this.app().vault.on("modify", (file) => {
         var _a;
         const p = file == null ? void 0 : file.path;
         if (!p || ((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
-        if (!dirs.some((d) => p.startsWith(d + "/") || p === d + ".md")) return;
+        if (!dirs().some((d) => p.startsWith(d + "/") || p === d + ".md")) return;
         if (this._modifyTimer !== null) clearTimeout(this._modifyTimer);
         this._modifyTimer = setTimeout(() => {
           var _a2;
@@ -15791,6 +15924,7 @@ ${entry.content.trim()}`;
       }
       await this.mergeEncryptedEntries();
       this.renderAll();
+      void pruneRailThumbs(railThumbKeepKeys(this.entries));
     }
     // ---------- 头部动作（写日记 / 搜索 / 日期选择器） ----------
     /** 写日记：本域 openAddDialog（滚轮年份动态范围取自当前数据，UX-34） */
@@ -16032,9 +16166,12 @@ ${entry.content.trim()}`;
     });
   }
   function unloadDiary() {
+    var _a, _b;
     if (controller2) controller2.cleanup();
     controller2 = null;
     initialized2 = false;
+    (_a = document.getElementById("diary-tag-selector-mask")) == null ? void 0 : _a.remove();
+    (_b = document.getElementById("add-diary-mask")) == null ? void 0 : _b.remove();
   }
 
   // prototypes/diary/fake-sim.ts

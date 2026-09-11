@@ -290,13 +290,17 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
     pomodoros: [],
   };
 
-  // 日记：当天文件解析条目（加密条目同日记本口径不可见）
+  // 日记：当天文件解析条目（加密条目同日记本口径不可见）。
+  // R1：过滤口径对齐墙（ui.ts filtered）——「加密」标签命中同样隐藏，只查正文 🔐 会把
+  // 标题带 🔐、正文无 🔐 的条目计进回顾却在墙上隐藏，摘要对不上。
   try {
     const dir = settingDir(['diaryDirectory'], '我的/日记');
     const dateStr = localDayStr(now);
     const f = fileIfExists(app, `${dir}/${dateStr}.md`);
     if (f) {
-      const entries = parseFile(await app.vault.read(f), dateStr).filter((e) => !isEncryptedEntry(e));
+      const entries = parseFile(await app.vault.read(f), dateStr).filter(
+        (e) => !isEncryptedEntry(e) && !e.tags.includes('加密')
+      );
       sources.diaryTimes = entries.map((e) => e.time);
     }
   } catch {

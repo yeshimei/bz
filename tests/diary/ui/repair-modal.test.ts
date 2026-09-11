@@ -100,4 +100,15 @@ describe('日记解析检测面板（ticket 121）', () => {
     await openAndSettle();
     expect(document.querySelector('.bz-diary-repair-summary')!.textContent).toContain('全部正常解析');
   });
+
+  it('D3 回归：子目录日记文件纳入检测（旧实现只扫顶层，子目录未解析行永久修不了）', async () => {
+    vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\n正常\n');
+    vault.files.set('我的/日记/旧/2024-01-03.md', '子目录里的游离正文\n');
+    await openAndSettle();
+    const summary = document.querySelector('.bz-diary-repair-summary')!.textContent!;
+    expect(summary).toContain('共扫描 2 个日记文件'); // 顶层 + 子目录都进了扫描
+    expect(summary).toContain('需手动处理（1 行）');
+    const body = (document.getElementById('bz-diary-repair-popup') as HTMLElement).textContent!;
+    expect(body).toContain('我的/日记/旧/2024-01-03.md'); // 列出的是子目录完整路径
+  });
 });

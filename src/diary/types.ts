@@ -21,6 +21,8 @@ export interface DiaryEntry {
   content: string;
   /** 来源文件名（日期字符串或含目录的路径） */
   filename: string;
+  /** 来源文件完整 vault 路径（子目录日期文件定位/写回依据；顶层日记与影视/信/书也填充） */
+  filePath?: string;
   /** 在文件中的行号（# 标题行） */
   lineNumber: number;
   /** 稳定 id */
@@ -71,7 +73,7 @@ export type WallSegment = { kind: 'text'; text: string } | { kind: 'media'; medi
 export interface WallEntry
   extends Pick<
     DiaryEntry,
-    'date' | 'time' | 'tags' | 'emoji' | 'content' | 'filename' | 'lineNumber' | 'id' | 'noteId' | 'encrypted'
+    'date' | 'time' | 'tags' | 'emoji' | 'content' | 'filename' | 'filePath' | 'lineNumber' | 'id' | 'noteId' | 'encrypted'
   > {
   kind: WallEntryKind;
   media: WallMedia[];
