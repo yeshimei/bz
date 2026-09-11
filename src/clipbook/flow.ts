@@ -82,10 +82,16 @@ function markHandledAndBump(raw: any, action: 'saved' | 'skipped'): Promise<void
   return enqueueNewsWrite(async () => {
     const res = await readNewsData();
     if (!res.ok || res.missing) return;
+    let touched = false; // F5：条目已被清理/删除（未命中）不加统计、不空写
+    let changed = false; // F3：已处理（read===true）条目不改写不计数——重复「标已读」不重复计统计，saved 态不被覆盖成 skipped
     const list = (res.data.articles || []).map((a: any) => {
       if (articleKeyOf(a) !== key) return a;
+      touched = true;
+      if (a.read === true) return a;
+      changed = true;
       return { ...a, read: true, state: action };
     });
+    if (!touched || !changed) return;
     const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
     s.totalRead = (Number(s.totalRead) || 0) + 1;
     if (action === 'saved') s.totalSaved = (Number(s.totalSaved) || 0) + 1;

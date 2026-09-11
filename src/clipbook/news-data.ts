@@ -238,7 +238,10 @@ export interface NewsWriteIntent {
  */
 export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<void> {
   const res = await readNewsData();
-  const base = res.ok ? res.data : emptyData();
+  // F8：损坏（ok=false）直接放弃本次写——以空库为基底落盘会把「不清盘保原文件」的
+  // 恢复现场销毁（原文件坏 JSON 被静默替换成近乎空库）
+  if (!res.ok) return;
+  const base = res.data;
   const next: NewsData = { ...base };
   if (intent.set.articles || intent.removeArticleKeys?.length) {
     const patchList = intent.set.articles || [];

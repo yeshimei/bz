@@ -419,10 +419,22 @@ function openExternal(url: string): void {
   try {
     // 不带 ?.：openUrl 缺失时抛 TypeError 落 catch 走 electron 兜底（与 memo/literature 写法对齐）
     (app as any).openUrl(url);
-  } catch (e) {
+    return;
+  } catch (e) { /* 落 electron 兜底 */ }
+  try {
     const electron = (window as any).require && (window as any).require('electron');
-    if (electron && electron.shell) electron.shell.openExternal(url);
-  }
+    if (electron && electron.shell) {
+      electron.shell.openExternal(url);
+      return;
+    }
+  } catch (e) { /* 落 window.open 兜底 */ }
+  // F14：移动端无 electron（也无 require），两层兜底都落空时不再静默——
+  // 先试 window.open（系统浏览器），仍失败给人话提示
+  try {
+    const w = window.open(url, '_blank');
+    if (w) return;
+  } catch (e) { /* 环境不支持（jsdom 等）落提示 */ }
+  notice('无法打开链接，请复制到浏览器打开', 'error');
 }
 
 // ==================== 添加 / 编辑 表单（markup 在 shared.formHtml） ====================
@@ -483,6 +495,9 @@ function inputVal(popup: HTMLElement, id: string): string {
 /** 打开添加/编辑表单（原型 1:1：标题/链接/简介/标签多选/置顶开关 + AI 整理钮；无大模型/关联笔记） */
 export function openForm(item: FavoritesItem | null): void {
   ensureFavoritesEsc(); // 命令可直开表单不经 openPanel：ESC 层随表单注册（F2）
+  // 单例守卫（F15）：已有表单先收掉——防多层叠加（ESC 一次只关一层、遮罩层叠点击错位）
+  const existing = document.querySelector('.bz-fav-form') as HTMLElement | null;
+  if (existing) closeForm(existing);
   const it = item;
   const mask = document.createElement('div');
   mask.className = 'bz-fav-form-mask bz-fav-scope';
