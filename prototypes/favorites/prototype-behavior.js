@@ -1,5 +1,5 @@
-/* 源指纹 3d6526011c81c955 · 仓内输入 50 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
+/* 源指纹 08d8a5022f3a7055 · 仓内输入 49 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
   var __create = Object.create;
@@ -5452,327 +5452,6 @@ var BZW_favorites = (() => {
     });
   }
 
-  // src/core/item-actions.ts
-  function renderIcon(container, iconId) {
-    try {
-      setIcon(container, iconId);
-    } catch (e) {
-    }
-  }
-  var VIEWPORT_PAD = 8;
-  var ANCHOR_GAP = 12;
-  var ITEM_HEIGHT = 30;
-  var MENU_PADDING = 10;
-  var TOUCH_SETTLE_MS = 400;
-  var popupEl = null;
-  var sheetMask = null;
-  var sheetBodyEl = null;
-  var sheetHeadEl = null;
-  var sheetCompanions = /* @__PURE__ */ new Set();
-  var menuEsc = null;
-  var prevFocus = null;
-  var suppressNextClick = false;
-  var residualClickArmed = false;
-  var touchSettlePending = false;
-  var touchSettleTimer = null;
-  function inSheetCompanion(target) {
-    for (const c of sheetCompanions) {
-      if (c.isConnected && c.contains(target)) return true;
-    }
-    return false;
-  }
-  function onMouseDownCapture(ev) {
-    if (touchSettlePending) return;
-    if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target) && !inSheetCompanion(ev.target)) {
-      closeItemMenu();
-    }
-  }
-  function onMouseUpCapture(ev) {
-    if (!suppressNextClick) return;
-    if (popupEl && popupEl.isConnected && popupEl.contains(ev.target)) return;
-    suppressNextClick = false;
-    residualClickArmed = true;
-  }
-  function onClickCapture(ev) {
-    const target = ev.target;
-    if (residualClickArmed) {
-      residualClickArmed = false;
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-      return;
-    }
-    if (touchSettlePending) {
-      touchSettlePending = false;
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-      return;
-    }
-    if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
-      closeItemMenu();
-    }
-  }
-  function closeItemMenu() {
-    if (menuEsc) {
-      menuEsc.unregister();
-      menuEsc = null;
-    }
-    if (touchSettleTimer) {
-      clearTimeout(touchSettleTimer);
-      touchSettleTimer = null;
-    }
-    document.removeEventListener("mousedown", onMouseDownCapture, true);
-    document.removeEventListener("mouseup", onMouseUpCapture, true);
-    document.removeEventListener("click", onClickCapture, true);
-    if (sheetMask) {
-      sheetMask.remove();
-      sheetMask = null;
-    }
-    if (popupEl) {
-      popupEl.remove();
-      popupEl = null;
-    }
-    sheetBodyEl = null;
-    sheetHeadEl = null;
-    suppressNextClick = false;
-    residualClickArmed = false;
-    touchSettlePending = false;
-    if (prevFocus && prevFocus.isConnected && document.activeElement === document.body) {
-      prevFocus.focus();
-    }
-    prevFocus = null;
-  }
-  function armTouchSettle() {
-    touchSettlePending = true;
-    if (touchSettleTimer) clearTimeout(touchSettleTimer);
-    touchSettleTimer = setTimeout(() => {
-      touchSettlePending = false;
-      touchSettleTimer = null;
-    }, TOUCH_SETTLE_MS);
-  }
-  function attachPopupListeners(id) {
-    document.addEventListener("mousedown", onMouseDownCapture, true);
-    document.addEventListener("mouseup", onMouseUpCapture, true);
-    document.addEventListener("click", onClickCapture, true);
-    menuEsc = escManager.register(id, {
-      isVisible: () => !!(popupEl && popupEl.isConnected),
-      close: closeItemMenu
-    });
-  }
-  function positionMenu(m, x, y) {
-    const mw = m.offsetWidth || 168;
-    const mh = m.offsetHeight || m.children.length * ITEM_HEIGHT + MENU_PADDING;
-    const vw = window.innerWidth || document.documentElement.clientWidth || 0;
-    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-    let left = x + ANCHOR_GAP;
-    let top = y + ANCHOR_GAP;
-    if (vw && left + mw > vw - VIEWPORT_PAD) left = Math.max(VIEWPORT_PAD, x - mw - ANCHOR_GAP);
-    if (vh && top + mh > vh - VIEWPORT_PAD) top = Math.max(VIEWPORT_PAD, y - mh - ANCHOR_GAP);
-    if (vw) left = Math.min(Math.max(left, VIEWPORT_PAD), Math.max(VIEWPORT_PAD, vw - mw - VIEWPORT_PAD));
-    if (vh) top = Math.min(Math.max(top, VIEWPORT_PAD), Math.max(VIEWPORT_PAD, vh - mh - VIEWPORT_PAD));
-    m.style.left = `${left}px`;
-    m.style.top = `${top}px`;
-  }
-  function attachItemKeyboardNav(host, scope) {
-    host.addEventListener("keydown", (e) => {
-      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
-      const items = Array.from(scope.querySelectorAll("button"));
-      if (items.length === 0) return;
-      e.preventDefault();
-      const idx = items.indexOf(document.activeElement);
-      const next = idx === -1 ? 0 : e.key === "ArrowDown" ? (idx + 1) % items.length : (idx - 1 + items.length) % items.length;
-      items[next].focus();
-    });
-  }
-  function focusMenuFirst(host, scope) {
-    prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const first = scope.querySelector("button");
-    if (first) first.focus();
-    attachItemKeyboardNav(host, scope);
-  }
-  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass) {
-    closeItemMenu();
-    const m = document.createElement("div");
-    m.className = "bz-item-menu" + (menuClass ? " " + menuClass : "");
-    m.style.visibility = "hidden";
-    for (const a of actions) {
-      const item = document.createElement("button");
-      item.type = "button";
-      if (a.title) item.title = a.title;
-      item.className = "bz-item-menu-item" + (a.kind === "danger" ? " bz-item-menu-item--danger" : "") + (a.tone === "accent" ? " bz-item-menu-item--accent" : "");
-      const itemIcon = document.createElement("span");
-      itemIcon.className = "bz-item-menu-icon";
-      renderIcon(itemIcon, a.icon);
-      const itemLabel = document.createElement("span");
-      itemLabel.className = "bz-item-menu-label";
-      itemLabel.textContent = a.label;
-      item.appendChild(itemIcon);
-      item.appendChild(itemLabel);
-      item.addEventListener("click", (ev) => {
-        ev.stopPropagation();
-        closeItemMenu();
-        a.onClick();
-      });
-      m.appendChild(item);
-    }
-    m.style.zIndex = String(allocZ());
-    document.body.appendChild(m);
-    positionMenu(m, x, y);
-    m.style.visibility = "visible";
-    popupEl = m;
-    suppressNextClick = suppressResidualClick;
-    residualClickArmed = false;
-    if (!suppressResidualClick) armTouchSettle();
-    attachPopupListeners("bz-item-menu");
-    focusMenuFirst(m, m);
-  }
-  function buildSheetItem(a) {
-    const item = document.createElement("button");
-    item.type = "button";
-    if (a.title) item.title = a.title;
-    item.className = "bz-item-sheet-item" + (a.kind === "danger" ? " bz-item-sheet-item--danger" : "") + (a.tone === "accent" ? " bz-item-sheet-item--accent" : "");
-    const itemIcon = document.createElement("span");
-    itemIcon.className = "bz-item-sheet-icon";
-    renderIcon(itemIcon, a.icon);
-    const itemLabel = document.createElement("span");
-    itemLabel.className = "bz-item-sheet-label";
-    itemLabel.textContent = a.label;
-    item.appendChild(itemIcon);
-    item.appendChild(itemLabel);
-    if (a.sub) {
-      const itemSub = document.createElement("span");
-      itemSub.className = "bz-item-sheet-item-sub";
-      itemSub.textContent = a.sub;
-      item.appendChild(itemSub);
-    }
-    item.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      if (a.keepOpen) {
-        a.onClick();
-        return;
-      }
-      closeItemMenu();
-      a.onClick();
-    });
-    return item;
-  }
-  function openItemSheet(actions, opts, suppressResidualClick = false) {
-    closeItemMenu();
-    const mask = document.createElement("div");
-    mask.className = "bz-item-sheet-mask";
-    const sheet = document.createElement("div");
-    sheet.className = "bz-item-sheet" + ((opts == null ? void 0 : opts.sheetClass) ? " " + opts.sheetClass : "");
-    if (opts == null ? void 0 : opts.sheetHead) {
-      const head = document.createElement("div");
-      head.className = "bz-item-sheet-head";
-      head.appendChild(opts.sheetHead);
-      sheet.appendChild(head);
-      sheetHeadEl = head;
-    } else if (opts == null ? void 0 : opts.sheetTitle) {
-      const head = document.createElement("div");
-      head.className = "bz-item-sheet-head";
-      const titleEl = document.createElement("div");
-      titleEl.className = "bz-item-sheet-title";
-      titleEl.textContent = opts.sheetTitle;
-      head.appendChild(titleEl);
-      if (opts.sheetSub) {
-        const subEl = document.createElement("div");
-        subEl.className = "bz-item-sheet-sub";
-        subEl.textContent = opts.sheetSub;
-        head.appendChild(subEl);
-      }
-      sheet.appendChild(head);
-      sheetHeadEl = head;
-    }
-    const body = document.createElement("div");
-    body.className = "bz-item-sheet-body";
-    for (const a of actions) {
-      body.appendChild(buildSheetItem(a));
-    }
-    sheet.appendChild(body);
-    mask.style.zIndex = String(allocZ());
-    sheet.style.zIndex = String(allocZ());
-    document.body.appendChild(mask);
-    document.body.appendChild(sheet);
-    popupEl = sheet;
-    sheetMask = mask;
-    sheetBodyEl = body;
-    suppressNextClick = suppressResidualClick;
-    residualClickArmed = false;
-    if (!suppressResidualClick) armTouchSettle();
-    attachPopupListeners("bz-item-sheet");
-    attachSheetDismiss(sheet, body);
-    focusMenuFirst(sheet, body);
-  }
-  function attachSheetDismiss(sheet, body) {
-    const CLOSE_AT = 80;
-    let startY = 0;
-    let dragging = false;
-    let dy = 0;
-    const reset = () => {
-      dragging = false;
-      dy = 0;
-      sheet.style.transform = "";
-      sheet.classList.remove("bz-item-sheet--dragging");
-    };
-    sheet.addEventListener(
-      "touchstart",
-      (e) => {
-        const t = e.touches && e.touches[0];
-        if (!t) return;
-        startY = t.clientY;
-        dragging = true;
-        dy = 0;
-      },
-      { passive: true }
-    );
-    sheet.addEventListener(
-      "touchmove",
-      (e) => {
-        if (!dragging) return;
-        const t = e.touches && e.touches[0];
-        if (!t) return;
-        const cur = t.clientY - startY;
-        if (cur <= 0) {
-          if (dy !== 0) reset();
-          return;
-        }
-        if (body.scrollTop > 0 && body.contains(e.target)) {
-          if (dy !== 0) reset();
-          return;
-        }
-        dy = cur;
-        e.preventDefault();
-        sheet.classList.add("bz-item-sheet--dragging");
-        sheet.style.transform = `translateY(${dy}px)`;
-        if (sheetMask) sheetMask.style.opacity = String(Math.max(0, 1 - dy / 400));
-      },
-      { passive: false }
-    );
-    const onTouchEnd = () => {
-      if (!dragging) return;
-      const over = dy > CLOSE_AT;
-      dragging = false;
-      if (over) {
-        sheet.classList.remove("bz-item-sheet--dragging");
-        const s = sheet;
-        s.style.transform = "translateY(100%)";
-        if (sheetMask) sheetMask.style.opacity = "0";
-        setTimeout(() => {
-          if (popupEl === s) closeItemMenu();
-        }, 180);
-      } else {
-        reset();
-        if (sheetMask) sheetMask.style.opacity = "1";
-      }
-      dy = 0;
-    };
-    sheet.addEventListener("touchend", onTouchEnd);
-    sheet.addEventListener("touchcancel", () => {
-      reset();
-      if (sheetMask) sheetMask.style.opacity = "1";
-    });
-  }
-
   // src/core/ui/icons.ts
   function uiIconSpan(name, extraClass = "") {
     const i = document.createElement("span");
@@ -5930,6 +5609,20 @@ var BZW_favorites = (() => {
     acts.push({ icon: ICON.del, label: "删除", act: "del", danger: true });
     return acts;
   }
+  function ctxMenuHtml(acts) {
+    return acts.map((a, k) => {
+      const last = k === acts.length - 1;
+      const btn = `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ""}>${iconSpan(a.icon, "bz-ic--sm")}<span>${esc(a.label)}</span></button>`;
+      return last ? `<div class="bz-fav-ctx-sep"></div>${btn}` : btn;
+    }).join("");
+  }
+  function sheetHtml(it, acts) {
+    const hue = hueOf((it.tags || [])[0] || "");
+    return `<div class="bz-fav-sh-head"><span class="bz-fav-sh-dot" style="--c:hsl(${hue} 52% 58%)"></span>
+    <div><div class="bz-fav-sh-title">${esc(it.title || "无标题")}</div>
+    <div class="bz-fav-sh-meta">${esc(relTime(it.created))}${it.pinned ? " · 已置顶" : ""}${it.archived ? " · 已归档" : ""}</div></div></div>
+  <div class="bz-fav-sh-acts">${acts.map((a, k) => `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ""}>${iconSpan(a.icon)}<span>${esc(a.label)}</span></button>`).join("")}</div>`;
+  }
   function pickChipsHtml(sel) {
     return TAGS.map(
       (t) => `<button type="button" class="${sel.has(t.label) ? "bz-fav-on" : ""}" data-tag="${esc(t.label)}">${iconSpan(t.ic, "bz-ic--xs")}<span>${esc(t.label)}</span></button>`
@@ -6011,9 +5704,13 @@ var BZW_favorites = (() => {
     if (mainEscRegistered) return;
     mainEscRegistered = true;
     escManager.register("bz-fav", {
-      isVisible: () => !!M.overlay || !!document.querySelector(".bz-fav-form"),
+      isVisible: () => !!M.overlay || !!document.querySelector(".bz-fav-form") || !!document.querySelector(".bz-fav-sheet-mask"),
       close: () => {
-        closeItemMenu();
+        if (closeMenu()) return;
+        if (document.querySelector(".bz-fav-sheet-mask")) {
+          closeSheet();
+          return;
+        }
         const form = document.querySelector(".bz-fav-form");
         if (form) requestCloseForm(form);
         else closePanel();
@@ -6190,36 +5887,65 @@ var BZW_favorites = (() => {
       });
     }
   }
-  function toItemActions(it) {
-    return actionSpecs(it).map((a) => ({
-      icon: a.icon,
-      label: a.label,
-      kind: a.danger ? "danger" : void 0,
-      onClick: () => runAction(it, a)
-    }));
+  var menuEl = null;
+  var menuOutsideHandler = null;
+  function closeMenu() {
+    if (!menuEl) return false;
+    menuEl.remove();
+    menuEl = null;
+    if (menuOutsideHandler) {
+      document.removeEventListener("click", menuOutsideHandler, true);
+      menuOutsideHandler = null;
+    }
+    return true;
   }
   function openRowMenuAt(it, x, y) {
-    openItemMenu(x, y, toItemActions(it), true);
+    closeMenu();
+    const acts = actionSpecs(it);
+    menuEl = document.createElement("div");
+    menuEl.className = "bz-fav-ctx bz-fav-scope";
+    menuEl.innerHTML = ctxMenuHtml(acts);
+    menuEl.addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      closeMenu();
+      runAction(it, acts[+b.dataset.k]);
+    });
+    document.body.appendChild(menuEl);
+    mountIcons(menuEl);
+    topifyZ(menuEl);
+    const r = menuEl.getBoundingClientRect();
+    menuEl.style.left = Math.min(x, window.innerWidth - r.width - 8) + "px";
+    menuEl.style.top = Math.min(y, window.innerHeight - r.height - 8) + "px";
+    menuOutsideHandler = (e) => {
+      if (menuEl && e.target instanceof Node && menuEl.contains(e.target)) return;
+      closeMenu();
+    };
+    document.addEventListener("click", menuOutsideHandler, true);
   }
   function openMobSheet(it) {
-    openItemSheet(toItemActions(it), { sheetHead: favSheetHead(it) });
+    closeSheet();
+    const acts = actionSpecs(it);
+    const mask = document.createElement("div");
+    mask.className = "bz-fav-sheet-mask bz-fav-scope bz-fav-show";
+    mask.innerHTML = `<div class="bz-fav-sheet">${sheetHtml(it, acts)}</div>`;
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) {
+        closeSheet();
+        return;
+      }
+      const b = e.target.closest("button");
+      if (!b) return;
+      closeSheet();
+      runAction(it, acts[+b.dataset.k]);
+    });
+    document.body.appendChild(mask);
+    mountIcons(mask);
+    topifyZ(mask);
   }
-  function favSheetHead(it) {
-    const head = document.createElement("div");
-    head.className = "bz-fav-sh-head";
-    const dot = document.createElement("span");
-    dot.className = "bz-fav-sh-dot";
-    dot.style.setProperty("--c", `hsl(${hueOf((it.tags || [])[0] || "")} 52% 58%)`);
-    const box = document.createElement("div");
-    const title = document.createElement("div");
-    title.className = "bz-fav-sh-title";
-    title.textContent = it.title || "无标题";
-    const meta = document.createElement("div");
-    meta.className = "bz-fav-sh-meta";
-    meta.textContent = `${relTime(it.created)}${it.pinned ? " · 已置顶" : ""}${it.archived ? " · 已归档" : ""}`;
-    box.append(title, meta);
-    head.append(dot, box);
-    return head;
+  function closeSheet() {
+    var _a;
+    (_a = document.querySelector(".bz-fav-sheet-mask")) == null ? void 0 : _a.remove();
   }
   async function archiveItem(it) {
     try {
@@ -6314,7 +6040,7 @@ var BZW_favorites = (() => {
     var _a;
     _baseline = null;
     _saving = false;
-    closeItemMenu();
+    closeMenu();
     ((_a = popup.closest(".bz-fav-form-mask")) != null ? _a : popup).remove();
   }
   function inputVal(popup, id) {
