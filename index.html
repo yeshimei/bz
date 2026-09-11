@@ -51,6 +51,8 @@
   .badge.behavior { background: #171512; color: #f5f2ec; }
   .badge.schema { border-color: #e8481f; color: #e8481f; }
   .card .st { font-size: 11px; color: #b3ab99; margin-left: auto; }
+  .card .st-link { font-size: 11px; font-weight: 700; color: #e8481f; margin-left: auto; text-decoration: underline; cursor: pointer; }
+  .card .st + .st-link { margin-left: 10px; }
 
   .footnote { max-width: 960px; width: 100%; font-size: 12px; color: #8b8474; line-height: 1.8;
     border-top: 1.5px solid #dcd5c4; padding-top: 14px; }
@@ -81,18 +83,28 @@
     { id: 'favorites',      name: '收藏本',   kind: 'behavior', desc: '收藏条目。C5 亚麻纸：磁贴单行横滑 + 标签工作台。' },
     { id: 'home',           name: '内容首页', kind: 'behavior', desc: '统计域卡首页。活动河七天窗口 + 周历切天。' },
     { id: 'password-vault', name: '密码本',   kind: 'behavior', desc: '密码条目工作台。v1 金色三栏：平台聚合 + 账号卡 + 金印锁屏，安全机制真码运行；演示库主密码 demo。' },
-    { id: 'pomodoro',       name: '番茄钟',   kind: 'behavior', desc: '中央弹窗计时盘。真状态机四相位（专注/暂停/休息）+ 1s tick + 落盘，⚙ 设置弹窗同源；种子=暂停中的专注。' },
+    { id: 'pomodoro',       name: '番茄钟',   kind: 'behavior', desc: '中央弹窗计时盘。真状态机四相位（专注/暂停/休息）+ 1s tick + 落盘；十套面板皮肤（亮/暗），设置入口在设置面板；种子=暂停中的专注。', link: { label: '皮肤谱系', href: 'prototypes/pomodoro/skins.html' } },
     { id: 'settings-panel', name: '设置',     kind: 'behavior', desc: '设置面板。schema 驱动 + 外观组（面板布局/面板主题）范式，全域设置一份源码两端跑（ui.ts 真理）。' },
   ];
   var KIND_LABEL = { behavior: '真行为单源' };
   document.getElementById('grid').innerHTML = DOMAINS.map(function (d) {
-    return '<a class="card" href="src/' + d.id + '/prototype.html">' +
+    return '<a class="card" href="prototypes/' + d.id + '/prototype.html">' +
       '<div><div class="name">' + d.name + '</div><div class="id">' + d.id + '</div></div>' +
       '<div class="desc">' + d.desc + '</div>' +
       '<div class="foot"><span class="badge ' + d.kind + '">' + KIND_LABEL[d.kind] + '</span>' +
-      (d.kind === 'behavior' ? '<span class="st">?selftest=1</span>' : '') + '</div>' +
+      (d.kind === 'behavior' ? '<span class="st">?selftest=1</span>' : '') +
+      // 卡片本体是 <a>（HTML 不允许嵌套 <a>），附加链接用 span 承载，点击拦冒泡后跳转
+      (d.link ? '<span class="st-link" data-href="' + d.link.href + '">' + d.link.label + '</span>' : '') + '</div>' +
     '</a>';
   }).join('');
+  document.getElementById('grid').addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.classList && t.classList.contains('st-link')) {
+      e.preventDefault();
+      e.stopPropagation();
+      location.href = t.getAttribute('data-href');
+    }
+  });
 </script>
 </body>
 </html>

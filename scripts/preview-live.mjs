@@ -224,7 +224,8 @@ http.createServer((req, res) => {
       home: ['首页', '内容首页 · 活动河'],
       knowledge: ['知识盒', '词典皮三部 · 文献 / 卡片 / 主题'],
       'password-vault': ['密码本', '密码条目 · 金印锁屏 · 演示库密码 demo'],
-      pomodoro: ['番茄钟', '中央弹窗计时盘 · 真状态机四相位 + ⚙ 设置弹窗'],
+      // 值 = [中文名, 一句话说明, 可选附加链接 [label, href]]（卡内附加链接用 span，<a> 不可嵌套）
+      pomodoro: ['番茄钟', '中央弹窗计时盘 · 真状态机四相位 + 10 套皮肤', ['皮肤谱系', '/prototypes/pomodoro/skins.html']],
       review: ['复习计划', '三区队列 + 做题冲刺'],
       secondbrain: ['第二大脑', '卡片网络 · AI 对话'],
       'settings-panel': ['设置面板', '全域设置 · 行为单源'],
@@ -232,8 +233,8 @@ http.createServer((req, res) => {
     const items = domains
       .map((d) => {
         const has = fs.existsSync(path.join(ROOT, 'prototypes', d, 'prototype.html'));
-        const [name, desc] = META[d] || [d, ''];
-        return `<a class="card${has ? '' : ' off'}" href="/prototypes/${d}/prototype.html"><b>${name}</b><span class="id">${d}</span>${desc ? `<span class="desc">${desc}</span>` : ''}</a>`;
+        const [name, desc, extra] = META[d] || [d, ''];
+        return `<a class="card${has ? '' : ' off'}" href="/prototypes/${d}/prototype.html"><b>${name}</b><span class="id">${d}</span>${desc ? `<span class="desc">${desc}</span>` : ''}${extra ? `<span class="xlink" onclick="location.href='${extra[1]}'">${extra[0]}</span>` : ''}</a>`;
       })
       .join('\n');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -248,6 +249,7 @@ a.card:hover{transform:translateY(-2px);box-shadow:0 8px 20px #00000014;border-c
 a.card b{font-size:15px}
 a.card .id{font-size:10px;color:#b0a897;font-family:Consolas,monospace;letter-spacing:.02em}
 a.card .desc{font-size:11.5px;color:#6d675c;margin-top:3px;line-height:1.5}
+a.card .xlink{font-size:10.5px;font-weight:700;color:#a33d2a;margin-top:4px;text-decoration:underline;cursor:pointer}
 a.card.off{opacity:.45}
 </style></head><body><div class="wrap"><h1>原型预览 · 行为单源域导航</h1>
 <div class="sub">SSE 热刷新已注入各评审壳：改 ${'src/<域>/** 或 prototypes/<域>/**'} 的 .ts/.css/.html 自动重出产物并刷新。快捷键返回本页：浏览器后退。</div>

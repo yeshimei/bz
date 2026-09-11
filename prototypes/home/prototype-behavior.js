@@ -1,5 +1,5 @@
-/* 源指纹 300ce09fabcda1db · 仓内输入 96 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
+/* 源指纹 46ca21360ea3f9c5 · 仓内输入 97 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -11992,6 +11992,53 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/pomodoro/render.ts
+  function normalizeSkinTheme(v) {
+    const cur = String(v != null ? v : "");
+    return POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : DEFAULT_POMODORO_SKIN_THEME;
+  }
+  function skinClassOf(v) {
+    return `pomodoro-skin-${normalizeSkinTheme(v)}`;
+  }
+  function panelShellHtml() {
+    return `
+      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
+        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
+        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
+      <div id="pomodoro-phase"></div>
+      <div id="pomodoro-task" class="pomodoro-task"></div>
+      <div id="pomodoro-time"></div>
+      <div class="pomodoro-controls">
+        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
+        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
+        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
+      </div>
+      <div class="pomodoro-stats">
+        <div id="pomodoro-today"></div>
+        <div id="pomodoro-week" class="pomodoro-week"></div>
+      </div>`;
+  }
+  var POMODORO_SKIN_THEMES, DEFAULT_POMODORO_SKIN_THEME;
+  var init_render2 = __esm({
+    "src/pomodoro/render.ts"() {
+      POMODORO_SKIN_THEMES = [
+        { value: "tomato", label: "番茄" },
+        { value: "ink", label: "墨白" },
+        { value: "grid", label: "方格纸" },
+        { value: "moss", label: "苔原" },
+        { value: "mist", label: "海雾" },
+        { value: "sand", label: "暖沙" },
+        { value: "citrus", label: "蜜柑" },
+        { value: "sakura", label: "樱粉" },
+        { value: "latte", label: "咖啡" },
+        { value: "night", label: "夜航" }
+      ];
+      DEFAULT_POMODORO_SKIN_THEME = "tomato";
+    }
+  });
+
   // src/pomodoro/sound.ts
   function playSound(kind, volume = 100) {
     const w = typeof window !== "undefined" ? window : globalThis;
@@ -12130,12 +12177,11 @@ ${n.content.slice(0, 2e3)}
 
   // src/pomodoro/ui.ts
   function applySkinClass() {
-    var _a;
     const popup = document.getElementById("pomodoro-popup");
     if (!popup) return;
-    const cur = String((_a = tryGetSettings().pomodoroSkinTheme) != null ? _a : "");
-    const skin = POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : "tomato";
-    for (const t of POMODORO_SKIN_THEMES) popup.classList.toggle(`pomodoro-skin-${t.value}`, t.value === skin);
+    const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
+    for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
+    popup.classList.add(want);
   }
   function durations() {
     const s = tryGetSettings();
@@ -12455,26 +12501,7 @@ ${n.content.slice(0, 2e3)}
     var _a;
     const mask = document.createElement("div");
     mask.id = "pomodoro-mask";
-    mask.innerHTML = `
-    <div id="pomodoro-popup" tabindex="-1">
-      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
-        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
-        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
-      </svg>
-      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
-      <div id="pomodoro-phase"></div>
-      <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
-      <div class="pomodoro-controls">
-        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
-        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
-        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
-      </div>
-      <div class="pomodoro-stats">
-        <div id="pomodoro-today"></div>
-        <div id="pomodoro-week" class="pomodoro-week"></div>
-      </div>
-    </div>`;
+    mask.innerHTML = `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
     mask.style.zIndex = String(allocZ());
     document.body.appendChild(mask);
     maskEl = mask;
@@ -12621,7 +12648,7 @@ ${n.content.slice(0, 2e3)}
     appRef = null;
     loaded = false;
   }
-  var dataManager2, state, history, loaded, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, POMODORO_SKIN_THEMES, lastStatsKey, initInflight, openInflight;
+  var dataManager2, state, history, loaded, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
   var init_ui3 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -12631,6 +12658,8 @@ ${n.content.slice(0, 2e3)}
       init_notice();
       init_settings_common();
       init_data();
+      init_render2();
+      init_render2();
       init_sound();
       init_statusbar();
       init_stats2();
@@ -12649,19 +12678,8 @@ ${n.content.slice(0, 2e3)}
       appRef = null;
       autoPauseMain = false;
       visibilityHandler = null;
-      POMODORO_SKIN_THEMES = [
-        { value: "tomato", label: "番茄" },
-        { value: "ink", label: "墨白" },
-        { value: "grid", label: "方格纸" },
-        { value: "moss", label: "苔原" },
-        { value: "mist", label: "海雾" },
-        { value: "sand", label: "暖沙" },
-        { value: "citrus", label: "蜜柑" },
-        { value: "sakura", label: "樱粉" },
-        { value: "latte", label: "咖啡" },
-        { value: "night", label: "夜航" }
-      ];
       lastStatsKey = "";
+      SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
       initInflight = null;
       openInflight = null;
     }

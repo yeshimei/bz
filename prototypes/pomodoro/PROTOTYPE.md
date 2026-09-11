@@ -10,8 +10,9 @@
 | 自检 | `prototype.html?selftest=1` |
 
 - **行为单源**：真 `src/pomodoro/ui.ts` 依赖链原样跑——中央单例弹窗、真状态机（`state.ts::transition/recover`）、
-  1s tick、jsonFileStore 落盘、⚙ 设置弹窗（core/settings-modal + schema 渲染，fake Setting 真出 DOM）、
-  提示音（Web Audio，浏览器原生可用）。
+  1s tick、jsonFileStore 落盘、提示音（Web Audio，浏览器原生可用）。
+  设置入口在设置面板（pomodoroSettingsSchema 被 settings-panel 消费；⚙ 弹窗已移除，2026-09-11 拍板）；
+  面板皮肤谱系验收页 = [skins.html](skins.html)（引 prototype-render.js 真 markup）。
 - **种子口径**（`fake-sim.ts`，自检断言依赖，改种子先改壳断言）：
   state = **暂停中的专注**（remaining 15:00、任务「周报」、cycleFocusCount 2）→ 开始钮=「继续」单条；
   history = 今日 2 轮 + 昨日 1 轮；跨天自动重灌（今日统计以「今天」为锚，同 home 壳语义）。

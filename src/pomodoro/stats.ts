@@ -2,7 +2,8 @@
  * 番茄钟历史聚合（ticket 30）：今日计数 + 近 7 天滚动窗口（含今天，最左 6 天前）。
  * ticket 63：移除读书统计（readingSecondsToday 与完整番茄口径），恢复纯计数。
  * 纯函数，无 DOM 依赖；本地时区按日聚合（ts = 完成时刻时间戳）。
- * 增强包：今日总分钟数（今日行）+ 今日 12 槽时段分布（2 小时一格小方柱）+ 近 7 天每日分钟数（柱 title）。
+ * 口径：今日总分钟数（今日行）+ 近 7 天每日计数与分钟数（柱高/柱 title）。
+ * （今日 12 槽时段分布已随弹窗降噪整行删除，2026-09-11 拍板——生产侧零消费者的 todayHourBuckets 一并退役。）
  */
 import type { HistoryEntry } from './state';
 import { localDayKey } from '../core/utils';
@@ -13,12 +14,6 @@ export interface DayCount {
   count: number;
   /** 当日专注总分钟数（HistoryEntry.duration 秒求和折分钟，四舍五入） */
   minutes: number;
-}
-
-/** 时段分布槽：2 小时一格（hour = 槽起始小时 0/2/…/22） */
-export interface HourBucket {
-  hour: number;
-  count: number;
 }
 
 function dayKey(ts: number): string {
@@ -35,18 +30,6 @@ export function todayCount(history: HistoryEntry[], now: number): number {
 export function todayMinutes(history: HistoryEntry[], now: number): number {
   const today = dayKey(now);
   return Math.round(history.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
-}
-
-/** 今日专注时段分布：12 槽每槽 2 小时（[0,2) [2,4) … [22,24)），按完成时刻落槽 */
-export function todayHourBuckets(history: HistoryEntry[], now: number): HourBucket[] {
-  const buckets: HourBucket[] = Array.from({ length: 12 }, (_, i) => ({ hour: i * 2, count: 0 }));
-  const today = dayKey(now);
-  for (const h of history) {
-    if (dayKey(h.ts) !== today) continue;
-    const hour = new Date(h.ts).getHours();
-    buckets[Math.min(11, Math.floor(hour / 2))].count += 1;
-  }
-  return buckets;
 }
 
 /** 近 7 天滚动窗口（含今天，最左 6 天前；窗口外不计），每日含计数与总分钟数 */

@@ -20,6 +20,14 @@ import { notice, notify } from '../core/notice';
 import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { PomodoroDataManager } from './data';
+// 面板主题清单 / 弹窗骨架：单源在 ./render（ui.ts 与评审壳皮肤页共用）
+import {
+  POMODORO_SKIN_THEMES,
+  skinClassOf,
+  panelShellHtml,
+} from './render';
+export { POMODORO_SKIN_THEMES } from './render';
+export type { PomodoroSkinTheme } from './render';
 import { playSound } from './sound';
 import type { SoundKind } from './sound';
 import { syncPomodoroStatusBar } from './statusbar';
@@ -46,31 +54,16 @@ let autoPauseMain = false;
 let visibilityHandler: (() => void) | null = null;
 
 /**
- * 面板主题清单（**皮肤单源**）：设置面板「外观 → 面板主题」的选项、弹窗皮肤类、
- * 预览卡的配色缩略全部出自这张表；CSS 侧按 `pomodoro-skin-<value>` 落皮（亮/暗两套，
- * 暗色走 .theme-dark 前缀，同 memo 皮肤范式）。
- * 顺序 = 默认项（番茄）在前；value 改动会牵动 CSS 类名与旧设置值，改名须留兼容。
+ * 面板主题 → 弹窗皮肤类（未知/空值回落默认）。
+ * 清单与取值类型单源 = ./render（POMODORO_SKIN_THEMES / skinClassOf）；
+ * 亮/暗两套配色单源 = styles.css 的 :root 变量表，本文件不持有色值。
  */
-export const POMODORO_SKIN_THEMES: ReadonlyArray<{ value: string; label: string }> = [
-  { value: 'tomato', label: '番茄' },
-  { value: 'ink', label: '墨白' },
-  { value: 'grid', label: '方格纸' },
-  { value: 'moss', label: '苔原' },
-  { value: 'mist', label: '海雾' },
-  { value: 'sand', label: '暖沙' },
-  { value: 'citrus', label: '蜜柑' },
-  { value: 'sakura', label: '樱粉' },
-  { value: 'latte', label: '咖啡' },
-  { value: 'night', label: '夜航' },
-];
-
-/** 面板主题 → 弹窗皮肤类（未知/空值回落默认项 tomato） */
 function applySkinClass(): void {
   const popup = document.getElementById('pomodoro-popup');
   if (!popup) return;
-  const cur = String(tryGetSettings().pomodoroSkinTheme ?? '');
-  const skin = POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : 'tomato';
-  for (const t of POMODORO_SKIN_THEMES) popup.classList.toggle(`pomodoro-skin-${t.value}`, t.value === skin);
+  const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
+  for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
+  popup.classList.add(want);
 }
 
 /** 时长：按设置预设解析（T31）；自定义/非法值回退默认（经典 25/5/15、N=4） */
@@ -451,6 +444,9 @@ async function initData(): Promise<void> {
   loaded = true;
 }
 
+/** 外观组主题行 options（issue 246）：由清单单源 map 生成；布局行的配套回落按 layout 字段判定 */
+const SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: 'default', prevClass: `bz-sp-prev-pomo-${t.value}` }));
+
 /** 番茄钟设置 schema（ticket 131；ADR-0064）：时间方案/行为/移动端三组，置于模块顶层供文案 lint 直接引用。
  *  消费方 = 设置面板全域 schema（src/settings-panel/ui.ts）——面板右上角 ⚙ 设置钮已移除
  *  （2026-09-11 用户拍板，设置入口归设置面板），其 onChange 回调仍驱动域内 render() 重绘主面板；
@@ -478,9 +474,24 @@ export function pomodoroSettingsSchema(): SettingsSchema {
         icon: 'palette',
         name: '外观',
         rows: [
-          { type: 'choiceCards', name: '面板布局', binding: { key: 'pomodoroSkin' }, options: [{ value: 'default', label: '计时盘', prevClass: 'bz-sp-prev-panel' }] },
-          // 面板主题：10 套皮（清单单源 = POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）
-          { type: 'choiceCards', name: '面板主题', binding: { key: 'pomodoroSkinTheme' }, layoutKey: 'pomodoroSkin', options: POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: 'default', prevClass: `bz-sp-prev-pomo-${t.value}` })) },
+          {
+            type: 'choiceCards', name: '面板布局', binding: { key: 'pomodoroSkin' },
+            options: [{ value: 'default', label: '计时盘', prevClass: 'bz-sp-prev-panel' }],
+            // 配套回落（issue 246 a2 口径：不建 layoutPairMap）：换布局后若当前主题不属于
+            // 新布局的配套（layout 不符）→ 回落第一个适配主题，防「布局换了主题还挂旧皮」
+            onChange: () => {
+              const s = tryGetSettings() as any;
+              const cur = String(s.pomodoroSkinTheme ?? '');
+              if (!SKIN_THEME_OPTIONS.some((o) => o.value === cur && o.layout === s.pomodoroSkin)) {
+                s.pomodoroSkinTheme = SKIN_THEME_OPTIONS[0].value;
+                saveSettings();
+              }
+              render();
+            },
+          },
+          // 面板主题：10 套皮（清单单源 = render.ts POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）；
+          // onChange 驱动 render() 重挂皮肤类——设置面板关着弹窗换肤也要即时生效（评审 c1）
+          { type: 'choiceCards', name: '面板主题', binding: { key: 'pomodoroSkinTheme' }, layoutKey: 'pomodoroSkin', options: SKIN_THEME_OPTIONS, onChange: () => render() },
         ],
       },
       {
@@ -587,28 +598,8 @@ function bindEvents(): void {
 function buildDOM(): void {
   const mask = document.createElement('div');
   mask.id = 'pomodoro-mask';
-  // 域主弹窗层级在 src/pomodoro/styles.css（#pomodoro-mask z-index: 9998，低于域设置弹窗 10030 与
-  // Obsidian 设置页，⚙️ 弹窗可正常覆盖）——e3：不再 JS 内联 z-index
-  mask.innerHTML = `
-    <div id="pomodoro-popup" tabindex="-1">
-      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
-        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
-        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
-      </svg>
-      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
-      <div id="pomodoro-phase"></div>
-      <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
-      <div class="pomodoro-controls">
-        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
-        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
-        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
-      </div>
-      <div class="pomodoro-stats">
-        <div id="pomodoro-today"></div>
-        <div id="pomodoro-week" class="pomodoro-week"></div>
-      </div>
-    </div>`;
+  // 域主弹窗层级在 src/pomodoro/styles.css（#pomodoro-mask z-index，低于域设置弹窗与 Obsidian 设置页）——不再 JS 内联 z-index
+  mask.innerHTML = `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
   mask.style.zIndex = String(allocZ()); // ADR-0067：创建即显示即发号
   document.body.appendChild(mask);
   maskEl = mask;

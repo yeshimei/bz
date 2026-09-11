@@ -1,5 +1,5 @@
-/* 源指纹 4ed3fe2fc9502419 · 仓内输入 202 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 1aec45f14b1dc7b9 · 仓内输入 204 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -15953,7 +15953,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_settings_provider();
       attemptSeq = 0;
       FIELD_DEFS = {
-        title: '"title": "生成中文标题，15-30字，完整陈述句或疑问句。禁止冒号、破折号、句中句号问号，需要连接时用逗号"',
+        title: '"title": "生成中文标题，15-30字，完整陈述句，不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢）。禁止冒号、破折号、句中句号问号，需要连接时用逗号"',
         summary: `"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`,
         tags: '"tags": ["标签1", "标签2", "标签3"]'
       };
@@ -17306,6 +17306,91 @@ ${body}`;
     }
   });
 
+  // src/knowledge/source.ts
+  function noteSourceName(path, name) {
+    const explicit = String(name != null ? name : "").trim();
+    if (explicit) return explicit;
+    const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
+    return stripMdExt(base) || String(path != null ? path : "");
+  }
+  function isUrlLikeSourceText(text) {
+    const s = String(text != null ? text : "").trim();
+    if (!s || /\s/.test(s)) return false;
+    if (/^https?:\/\/\S+$/i.test(s)) return true;
+    return URL_LIKE_RE.test(s);
+  }
+  function cleanUrlText(text) {
+    return String(text != null ? text : "").trim().replace(/[，。！？；、,;.!?…'"’”\])}>】」』]+$/, "");
+  }
+  function normalizeSourceUrl(input) {
+    const s = cleanUrlText(input);
+    const m = s.match(/^(https?:\/\/)([^/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/i);
+    if (!m) return s;
+    const [, scheme, host, path, query, hash] = m;
+    const bare = host.toLowerCase().replace(/^www\./, "");
+    if (bare === "b23.tv") return scheme + host + path;
+    if (bare.endsWith("bilibili.com") && /^\/video\//.test(path)) {
+      const keep = (query != null ? query : "").slice(1).split("&").filter((kv) => /^(p|t)=/.test(kv));
+      return scheme + host + path + (keep.length ? "?" + keep.join("&") : "");
+    }
+    if (!query) return s;
+    const kept = query.slice(1).split("&").filter(Boolean).filter((kv) => {
+      const k = kv.split("=")[0].toLowerCase();
+      return !k.startsWith("utm_") && !k.startsWith("spm_") && !TRACK_KEYS.has(k);
+    });
+    return scheme + host + path + (kept.length ? "?" + kept.join("&") : "") + (hash != null ? hash : "");
+  }
+  function decodeHtmlEntities(s) {
+    return s.replace(/&quot;/gi, '"').replace(/&#0?39;/g, "'").replace(/&apos;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&");
+  }
+  function cleanSourceTitle(raw) {
+    let t = decodeHtmlEntities(String(raw != null ? raw : "")).replace(/\s+/g, " ").trim();
+    t = t.replace(/\s*[_\-–—|｜]\s*哔哩哔哩(?:_bilibili)?\s*$/i, "");
+    t = t.replace(/\s*[_\-–—|｜]\s*bilibili\s*$/i, "");
+    t = t.replace(/\s*[-–—|｜]\s*知乎(?:日报|专栏)?\s*$/, "");
+    return t.trim();
+  }
+  function serializeTermSource(src) {
+    var _a2;
+    if (!src) return null;
+    if (src.kind === "external") {
+      const url = normalizeSourceUrl(src.url);
+      if (!url) return null;
+      const out = { source: url };
+      const title = src.title ? cleanSourceTitle(src.title) : "";
+      if (title) out.sourceTitle = title;
+      return out;
+    }
+    const path = String((_a2 = src.path) != null ? _a2 : "").trim();
+    if (!path) return null;
+    const name = noteSourceName(path, src.name);
+    return { source: `[[${path}|${name}]]` };
+  }
+  var URL_LIKE_RE, TRACK_KEYS;
+  var init_source = __esm({
+    "src/knowledge/source.ts"() {
+      init_utils();
+      URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
+      TRACK_KEYS = /* @__PURE__ */ new Set([
+        "vd_source",
+        "vd_src",
+        "seid",
+        "unique_k",
+        "from",
+        "share_source",
+        "share_medium",
+        "share_token",
+        "share_plat",
+        "share_to",
+        "share_from",
+        "share_times",
+        "gcid",
+        "refer",
+        "scene"
+      ]);
+    }
+  });
+
   // src/knowledge/data.ts
   function normalizeLooseTime(t) {
     const s = (t != null ? t : "").trim();
@@ -17321,7 +17406,7 @@ ${body}`;
     return TIME_RE.test(canon) ? canon : null;
   }
   function normalizeUrl2(raw) {
-    return raw.trim();
+    return normalizeSourceUrl(cleanUrlText(raw));
   }
   var import_moment6, TIME_RE, KnowledgeData;
   var init_data6 = __esm({
@@ -17331,6 +17416,7 @@ ${body}`;
       init_settings_provider();
       init_utils();
       init_app();
+      init_source();
       TIME_RE = /^\d{1,3}:\d{1,2}(:\d{1,2}(\.\d{1,3})?)?$/;
       KnowledgeData = {
         filePath: "",
@@ -17471,91 +17557,6 @@ ${body}`;
     }
   });
 
-  // src/knowledge/source.ts
-  function noteSourceName(path, name) {
-    const explicit = String(name != null ? name : "").trim();
-    if (explicit) return explicit;
-    const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
-    return stripMdExt(base) || String(path != null ? path : "");
-  }
-  function isUrlLikeSourceText(text) {
-    const s = String(text != null ? text : "").trim();
-    if (!s || /\s/.test(s)) return false;
-    if (/^https?:\/\/\S+$/i.test(s)) return true;
-    return URL_LIKE_RE.test(s);
-  }
-  function cleanUrlText(text) {
-    return String(text != null ? text : "").trim().replace(/[，。！？；、,;.!?…'"’”\])}>】」』]+$/, "");
-  }
-  function normalizeSourceUrl(input) {
-    const s = cleanUrlText(input);
-    const m = s.match(/^(https?:\/\/)([^/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/i);
-    if (!m) return s;
-    const [, scheme, host, path, query, hash] = m;
-    const bare = host.toLowerCase().replace(/^www\./, "");
-    if (bare === "b23.tv") return scheme + host + path;
-    if (bare.endsWith("bilibili.com") && /^\/video\//.test(path)) {
-      const keep = (query != null ? query : "").slice(1).split("&").filter((kv) => /^(p|t)=/.test(kv));
-      return scheme + host + path + (keep.length ? "?" + keep.join("&") : "");
-    }
-    if (!query) return s;
-    const kept = query.slice(1).split("&").filter(Boolean).filter((kv) => {
-      const k = kv.split("=")[0].toLowerCase();
-      return !k.startsWith("utm_") && !k.startsWith("spm_") && !TRACK_KEYS.has(k);
-    });
-    return scheme + host + path + (kept.length ? "?" + kept.join("&") : "") + (hash != null ? hash : "");
-  }
-  function decodeHtmlEntities(s) {
-    return s.replace(/&quot;/gi, '"').replace(/&#0?39;/g, "'").replace(/&apos;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&");
-  }
-  function cleanSourceTitle(raw) {
-    let t = decodeHtmlEntities(String(raw != null ? raw : "")).replace(/\s+/g, " ").trim();
-    t = t.replace(/\s*[_\-–—|｜]\s*哔哩哔哩(?:_bilibili)?\s*$/i, "");
-    t = t.replace(/\s*[_\-–—|｜]\s*bilibili\s*$/i, "");
-    t = t.replace(/\s*[-–—|｜]\s*知乎(?:日报|专栏)?\s*$/, "");
-    return t.trim();
-  }
-  function serializeTermSource(src) {
-    var _a2;
-    if (!src) return null;
-    if (src.kind === "external") {
-      const url = normalizeSourceUrl(src.url);
-      if (!url) return null;
-      const out = { source: url };
-      const title = src.title ? cleanSourceTitle(src.title) : "";
-      if (title) out.sourceTitle = title;
-      return out;
-    }
-    const path = String((_a2 = src.path) != null ? _a2 : "").trim();
-    if (!path) return null;
-    const name = noteSourceName(path, src.name);
-    return { source: `[[${path}|${name}]]` };
-  }
-  var URL_LIKE_RE, TRACK_KEYS;
-  var init_source = __esm({
-    "src/knowledge/source.ts"() {
-      init_utils();
-      URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
-      TRACK_KEYS = /* @__PURE__ */ new Set([
-        "vd_source",
-        "vd_src",
-        "seid",
-        "unique_k",
-        "from",
-        "share_source",
-        "share_medium",
-        "share_token",
-        "share_plat",
-        "share_to",
-        "share_from",
-        "share_times",
-        "gcid",
-        "refer",
-        "scene"
-      ]);
-    }
-  });
-
   // src/knowledge/note-gen.ts
   function parseDomainList(raw) {
     return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
@@ -17655,7 +17656,7 @@ ${body}`;
     const chunks = chunkTranscript(opts.transcript);
     const metaRaw = await ai.json(
       `你是文献整理助手。基于下方 B站视频《${opts.videoTitle || "未命名"}》的转写文稿片段，生成文献笔记元数据。只输出 JSON，不要任何解释：
-{"title":"15-30字的中文完整陈述句或疑问句，禁止冒号、破折号、句中句号问号，需要连接时用逗号","tags":["3-6个中文标签，每个不超过5个字，涵盖主题领域、关键概念、应用场景"],"summary":"一句话简介，不超过60字",${domainInstruction(list)}}
+{"title":"15-30字的中文完整陈述句，不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","tags":["3-6个中文标签，每个不超过5个字，涵盖主题领域、关键概念、应用场景"],"summary":"一句话简介，不超过60字",${domainInstruction(list)}}
 所有字段一律使用简体中文。
 
 【转写文稿片段】
@@ -18081,15 +18082,19 @@ ${sample}`,
                 if (m) {
                   try {
                     const info = JSON.parse(m[1]);
-                    const title = info && typeof info.title === "string" ? String(info.title).trim() : "";
-                    const uploader = info && typeof info.uploader === "string" ? String(info.uploader).trim() : "";
-                    if (title) {
-                      task.title = title;
-                      task.uploader = uploader || task.uploader;
-                      const patch = { title, uploader: task.uploader };
-                      void KnowledgeData.updateTask(task.id, patch).then(() => {
-                        events.onTaskInfo({ ...task });
-                      });
+                    const infoTitle = info && typeof info.title === "string" ? String(info.title).trim() : "";
+                    const infoUploader = info && typeof info.uploader === "string" ? String(info.uploader).trim() : "";
+                    if (infoTitle || infoUploader) {
+                      const prevTitle = task.title || "";
+                      const prevUploader = task.uploader || "";
+                      task.title = prevTitle || infoTitle;
+                      task.uploader = prevUploader || infoUploader;
+                      if (task.title !== prevTitle || task.uploader !== prevUploader) {
+                        const patch = { title: task.title || null, uploader: task.uploader || null };
+                        void KnowledgeData.updateTask(task.id, patch).then(() => {
+                          events.onTaskInfo({ ...task });
+                        });
+                      }
                     }
                   } catch (e) {
                   }
@@ -18213,6 +18218,76 @@ ${sample}`,
           onEnd(ok);
         }
       };
+    }
+  });
+
+  // src/knowledge/video-meta.ts
+  function isBiliUrl(text) {
+    const m = text.match(/^https?:\/\/([^/?#]+)/i);
+    return !!m && BILI_HOST_RE.test(m[1].toLowerCase().replace(/^www\./i, ""));
+  }
+  function parseBvid(input) {
+    const m = String(input != null ? input : "").match(BVID_RE);
+    return m ? m[0] : null;
+  }
+  async function fetchFromViewApi(bvid) {
+    try {
+      const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), VIEW_TIMEOUT_MS));
+      const req = requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: "GET" }).then(
+        (resp) => {
+          if (!resp || resp.status < 200 || resp.status >= 300) return null;
+          let json = null;
+          try {
+            json = JSON.parse(resp.text);
+          } catch (e) {
+            return null;
+          }
+          if (!json || json.code !== 0 || !json.data) return null;
+          const title = typeof json.data.title === "string" ? json.data.title.trim() : "";
+          const ownerName = json.data.owner && typeof json.data.owner.name === "string" ? json.data.owner.name.trim() : "";
+          const meta = {};
+          if (title) meta.title = title;
+          if (ownerName) meta.uploader = ownerName;
+          return title || ownerName ? meta : null;
+        }
+      );
+      return await Promise.race([req, timer]);
+    } catch (e) {
+      return null;
+    }
+  }
+  async function fetchFromPageTitle(url) {
+    try {
+      const raw = await fetchPageTitle(url);
+      const title = raw ? cleanSourceTitle(raw) : "";
+      return title ? { title } : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  async function fetchVideoMeta(input) {
+    const text = String(input != null ? input : "").trim();
+    if (!text) return null;
+    const bvid = parseBvid(text);
+    if (bvid) {
+      const viaApi = await fetchFromViewApi(bvid);
+      if (viaApi) return viaApi;
+      return isBiliUrl(text) ? await fetchFromPageTitle(text) : null;
+    }
+    if (!isUrlLikeSourceText(text)) return null;
+    const url = /^https?:\/\//i.test(text) ? text : `https://${text}`;
+    if (!isBiliUrl(url)) return null;
+    return await fetchFromPageTitle(url);
+  }
+  var BVID_RE, BILI_HOST_RE, VIEW_TIMEOUT_MS;
+  var init_video_meta = __esm({
+    "src/knowledge/video-meta.ts"() {
+      init_fake_obsidian();
+      init_utils();
+      init_source();
+      BVID_RE = /BV[0-9A-Za-z]{10}/;
+      BILI_HOST_RE = /(^|\.)(bilibili\.com|b23\.tv)$/i;
+      VIEW_TIMEOUT_MS = 1e4;
     }
   });
 
@@ -18412,6 +18487,7 @@ ${sample}`,
       init_processor2();
       init_note_gen();
       init_source();
+      init_video_meta();
       STATUS_META = {
         pending: { label: "待处理", cls: "bz-kb-pending" },
         processing: { label: "处理中", cls: "bz-kb-processing" },
@@ -18452,6 +18528,9 @@ ${sample}`,
           // ---- 添加任务弹窗 / 历史弹窗 ----
           this.addMask = null;
           this.addPopup = null;
+          /** 录入 URL 防抖定时器与解析序列号（issue 278：450ms 防抖回填 + 过期响应丢弃） */
+          this.addUrlTimer = null;
+          this.addUrlSeq = 0;
           this.historyMask = null;
           this.historyPopup = null;
           this.historyList = null;
@@ -18694,19 +18773,24 @@ ${sample}`,
         <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
         <span class="bz-kb-dom">${esc2(n.domain || "未分类")}</span></div>
       <div class="bz-kb-tail"><span class="bz-kb-meta">${esc2(n.date || "")}</span></div>
-      <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
+      <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
           this._previewNote = n;
           const bodyEl2 = this.popup ? q(this.popup, "#bz-kb-preview-body") : null;
-          if (bodyEl2 && body) {
-            try {
-              const comp = new Component();
-              await MarkdownRenderer.render(this.app, body, bodyEl2, n.path, comp);
-              comp.unload();
-            } catch (e) {
-            }
-            if (!bodyEl2.querySelector("*") || !((_a2 = bodyEl2.textContent) == null ? void 0 : _a2.trim())) {
+          if (bodyEl2) {
+            bodyEl2.textContent = "";
+            if (body) {
+              try {
+                const comp = new Component();
+                await MarkdownRenderer.render(this.app, body, bodyEl2, n.path, comp);
+                comp.unload();
+              } catch (e) {
+              }
+              if (!bodyEl2.querySelector("*") || !((_a2 = bodyEl2.textContent) == null ? void 0 : _a2.trim())) {
+                bodyEl2.innerHTML = parasHtml;
+              }
+            } else {
               bodyEl2.innerHTML = parasHtml;
             }
           }
@@ -19409,10 +19493,22 @@ ${sample}`,
               }
             });
           }
+          const addUrlInput = q(popup, "#lit-add-url");
+          if (addUrlInput) {
+            addUrlInput.addEventListener("input", () => {
+              if (this.addUrlTimer) clearTimeout(this.addUrlTimer);
+              this.addUrlSeq++;
+              this.addUrlTimer = setTimeout(() => {
+                this.addUrlTimer = null;
+                void this.addUrlResolve(addUrlInput);
+              }, 450);
+            });
+          }
         }
         showAddDialog(editItem) {
           var _a2, _b2, _c, _d, _e, _f, _g;
           if (!this.addPopup || !this.addMask) return;
+          this.addUrlReset();
           this.editingId = (_a2 = editItem == null ? void 0 : editItem.id) != null ? _a2 : null;
           const modeTag = q(this.addPopup, "#lit-add-mode");
           if (modeTag) modeTag.style.display = this.editingId ? "inline-block" : "none";
@@ -19452,11 +19548,37 @@ ${sample}`,
           if (this.addMask) this.addMask.style.display = "none";
           if (this.addPopup) this.addPopup.style.display = "none";
           this.editingId = null;
+          this.addUrlReset();
+        }
+        /** 录入 URL 解析清理：防抖定时器归零 + 序列号失效在途响应（开/关弹窗共用） */
+        addUrlReset() {
+          if (this.addUrlTimer) {
+            clearTimeout(this.addUrlTimer);
+            this.addUrlTimer = null;
+          }
+          this.addUrlSeq++;
+        }
+        /**
+         * 录入 URL 防抖触发（issue 278）：先净化写回（值有变才写，用户可见），再抓元信息。
+         * 回填只补空字段（trim 后为空才算空）；序列号 + 输入值双校验丢弃过期响应；全程静默。
+         */
+        async addUrlResolve(input) {
+          const popup = this.addPopup;
+          if (!popup) return;
+          const seq = this.addUrlSeq;
+          const cleaned = normalizeSourceUrl(input.value);
+          if (cleaned && cleaned !== input.value) input.value = cleaned;
+          const meta = await fetchVideoMeta(cleaned);
+          if (seq !== this.addUrlSeq || this.addPopup !== popup || input.value !== cleaned) return;
+          const titleEl = q(popup, "#lit-add-vtitle");
+          const upEl = q(popup, "#lit-add-uploader");
+          if ((meta == null ? void 0 : meta.title) && titleEl && !titleEl.value.trim()) titleEl.value = meta.title;
+          if ((meta == null ? void 0 : meta.uploader) && upEl && !upEl.value.trim()) upEl.value = meta.uploader;
         }
         async _handleAddSave() {
           var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
           if (!this.addPopup) return;
-          const url = ((_b2 = (_a2 = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim();
+          const url = normalizeSourceUrl(((_b2 = (_a2 = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim());
           const clipMode = ((_d = (_c = q(this.addPopup, "#lit-add-range")) == null ? void 0 : _c.querySelector("button[data-range].active")) == null ? void 0 : _d.getAttribute("data-range")) === "clip";
           const startRaw = ((_f = (_e = q(this.addPopup, "#lit-add-start")) == null ? void 0 : _e.value) != null ? _f : "").trim();
           const endRaw = ((_h = (_g = q(this.addPopup, "#lit-add-end")) == null ? void 0 : _g.value) != null ? _h : "").trim();
@@ -19999,6 +20121,7 @@ ${sample}`,
             clearTimeout(this.termSrcTimer);
             this.termSrcTimer = null;
           }
+          this.addUrlReset();
           try {
             (_a2 = this.termSrcSuggest) == null ? void 0 : _a2.detach();
           } catch (e) {
@@ -36715,6 +36838,53 @@ ${text}`;
     }
   });
 
+  // src/pomodoro/render.ts
+  function normalizeSkinTheme(v) {
+    const cur = String(v != null ? v : "");
+    return POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : DEFAULT_POMODORO_SKIN_THEME;
+  }
+  function skinClassOf(v) {
+    return `pomodoro-skin-${normalizeSkinTheme(v)}`;
+  }
+  function panelShellHtml3() {
+    return `
+      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
+        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
+        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
+      <div id="pomodoro-phase"></div>
+      <div id="pomodoro-task" class="pomodoro-task"></div>
+      <div id="pomodoro-time"></div>
+      <div class="pomodoro-controls">
+        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
+        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
+        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
+      </div>
+      <div class="pomodoro-stats">
+        <div id="pomodoro-today"></div>
+        <div id="pomodoro-week" class="pomodoro-week"></div>
+      </div>`;
+  }
+  var POMODORO_SKIN_THEMES, DEFAULT_POMODORO_SKIN_THEME;
+  var init_render13 = __esm({
+    "src/pomodoro/render.ts"() {
+      POMODORO_SKIN_THEMES = [
+        { value: "tomato", label: "番茄" },
+        { value: "ink", label: "墨白" },
+        { value: "grid", label: "方格纸" },
+        { value: "moss", label: "苔原" },
+        { value: "mist", label: "海雾" },
+        { value: "sand", label: "暖沙" },
+        { value: "citrus", label: "蜜柑" },
+        { value: "sakura", label: "樱粉" },
+        { value: "latte", label: "咖啡" },
+        { value: "night", label: "夜航" }
+      ];
+      DEFAULT_POMODORO_SKIN_THEME = "tomato";
+    }
+  });
+
   // src/pomodoro/sound.ts
   function playSound(kind, volume = 100) {
     const w = typeof window !== "undefined" ? window : globalThis;
@@ -36877,12 +37047,11 @@ ${text}`;
     unloadPomodoro: () => unloadPomodoro
   });
   function applySkinClass() {
-    var _a2;
     const popup = document.getElementById("pomodoro-popup");
     if (!popup) return;
-    const cur = String((_a2 = tryGetSettings().pomodoroSkinTheme) != null ? _a2 : "");
-    const skin = POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : "tomato";
-    for (const t of POMODORO_SKIN_THEMES) popup.classList.toggle(`pomodoro-skin-${t.value}`, t.value === skin);
+    const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
+    for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
+    popup.classList.add(want);
   }
   function durations() {
     const s = tryGetSettings();
@@ -37205,9 +37374,27 @@ ${text}`;
           icon: "palette",
           name: "外观",
           rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "pomodoroSkin" }, options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }] },
-            // 面板主题：10 套皮（清单单源 = POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）
-            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` })) }
+            {
+              type: "choiceCards",
+              name: "面板布局",
+              binding: { key: "pomodoroSkin" },
+              options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }],
+              // 配套回落（issue 246 a2 口径：不建 layoutPairMap）：换布局后若当前主题不属于
+              // 新布局的配套（layout 不符）→ 回落第一个适配主题，防「布局换了主题还挂旧皮」
+              onChange: () => {
+                var _a2;
+                const s = tryGetSettings();
+                const cur = String((_a2 = s.pomodoroSkinTheme) != null ? _a2 : "");
+                if (!SKIN_THEME_OPTIONS.some((o) => o.value === cur && o.layout === s.pomodoroSkin)) {
+                  s.pomodoroSkinTheme = SKIN_THEME_OPTIONS[0].value;
+                  saveSettings();
+                }
+                render();
+              }
+            },
+            // 面板主题：10 套皮（清单单源 = render.ts POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）；
+            // onChange 驱动 render() 重挂皮肤类——设置面板关着弹窗换肤也要即时生效（评审 c1）
+            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: SKIN_THEME_OPTIONS, onChange: () => render() }
           ]
         },
         {
@@ -37326,26 +37513,7 @@ ${text}`;
     var _a2;
     const mask = document.createElement("div");
     mask.id = "pomodoro-mask";
-    mask.innerHTML = `
-    <div id="pomodoro-popup" tabindex="-1">
-      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
-        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
-        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
-      </svg>
-      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
-      <div id="pomodoro-phase"></div>
-      <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
-      <div class="pomodoro-controls">
-        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
-        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
-        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
-      </div>
-      <div class="pomodoro-stats">
-        <div id="pomodoro-today"></div>
-        <div id="pomodoro-week" class="pomodoro-week"></div>
-      </div>
-    </div>`;
+    mask.innerHTML = `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml3()}</div>`;
     mask.style.zIndex = String(allocZ());
     document.body.appendChild(mask);
     maskEl = mask;
@@ -37492,7 +37660,7 @@ ${text}`;
     appRef2 = null;
     loaded2 = false;
   }
-  var dataManager2, state, history, loaded2, maskEl, escHandle3, timerId, appRef2, autoPauseMain, visibilityHandler, POMODORO_SKIN_THEMES, lastStatsKey, initInflight, openInflight;
+  var dataManager2, state, history, loaded2, maskEl, escHandle3, timerId, appRef2, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
   var init_ui11 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -37502,6 +37670,8 @@ ${text}`;
       init_notice();
       init_settings_common();
       init_data10();
+      init_render13();
+      init_render13();
       init_sound();
       init_statusbar();
       init_stats3();
@@ -37520,19 +37690,8 @@ ${text}`;
       appRef2 = null;
       autoPauseMain = false;
       visibilityHandler = null;
-      POMODORO_SKIN_THEMES = [
-        { value: "tomato", label: "番茄" },
-        { value: "ink", label: "墨白" },
-        { value: "grid", label: "方格纸" },
-        { value: "moss", label: "苔原" },
-        { value: "mist", label: "海雾" },
-        { value: "sand", label: "暖沙" },
-        { value: "citrus", label: "蜜柑" },
-        { value: "sakura", label: "樱粉" },
-        { value: "latte", label: "咖啡" },
-        { value: "night", label: "夜航" }
-      ];
       lastStatsKey = "";
+      SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
       initInflight = null;
       openInflight = null;
     }
