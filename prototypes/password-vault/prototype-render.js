@@ -1,4 +1,4 @@
-/* 源指纹 5233452deb6acf14 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c54a85e2760a3c33 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/password-vault/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/password-vault/render.ts → window.BZR_password_vault（评审壳预览包，ADR-0104） */
 var BZR_password_vault = (() => {
@@ -116,7 +116,7 @@ var BZR_password_vault = (() => {
   };
   var AV_BG = (platform) => `background:${colorOf(platform)}`;
   function avatarHTML(platform, url, cls = "bz-password-vault-av") {
-    const ch = (platform || "?").slice(0, 1);
+    const ch = esc((platform || "?").slice(0, 1));
     return `<div class="${cls} bz-pwv-avatar" style="${AV_BG(platform)}" data-avatar="1" data-url="${escAttr(url || "")}"><span>${ch}</span></div>`;
   }
   function lockHTML(which) {
@@ -140,7 +140,7 @@ var BZR_password_vault = (() => {
           <label>链接（可选）</label><input data-f="url" placeholder="https://…">
           <label>账号 *</label><input data-f="account" placeholder="登录账号 / 邮箱 / 手机号">
           <label>密码 *</label>
-          <div class="pwdrow"><input data-f="password" placeholder="密码"><button class="gen" data-act="gen">生成</button></div>
+          <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="mini" data-act="pw-eye" type="button" title="显示密码">${ICONS.eye}</button><button class="gen" data-act="gen">生成</button></div>
           <label>备注（可选）</label><input data-f="note" placeholder="备用信息…">
           <div class="err" data-f-err></div>
           <div class="btns"><button class="cancel" data-act="cancel">取消</button><button class="save" data-act="save">保存</button></div>
