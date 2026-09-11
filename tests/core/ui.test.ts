@@ -1171,7 +1171,8 @@ describe('bz ui 组件库', () => {
       pop.detach(); // 开着时 detach：关层 + 摘监听
       expect(wrap.querySelector('.bz-popover')).toBeNull();
       expect(rmSpy).toHaveBeenCalledWith('click', expect.any(Function));
-      expect(rmSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+      // C5：ESC 不再私挂 document 级监听（走 escManager 层，随 close 注销），document 只摘外点监听
+      expect(rmSpy).not.toHaveBeenCalledWith('keydown', expect.any(Function));
       rmSpy.mockRestore();
       // 监听已移除：外点 / Esc 后无关浮层副作用（层保持关闭、onPick 不误触）
       document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));

@@ -93,7 +93,18 @@ export function openModelPicker(opts: ModelPickerOptions): void {
       detail.textContent = m.detail || '';
       row.append(name, detail);
       row.onclick = () => {
-        void Promise.resolve(opts.onPick(m)).then(() => closeModelPicker());
+        // C11：onPick 同步抛错或 Promise reject 都必须关闭选择器——原先同步抛错在
+        // Promise.resolve 求值时直接冒泡（选择器卡死不关），reject 则 .then 不执行；
+        // finally 兜底关闭，异常通知交由调用方业务通道、此处 console 收口不静默
+        void (async () => {
+          try {
+            await opts.onPick(m);
+          } catch (e) {
+            console.error('[bz] 模型选择 onPick 失败:', e);
+          } finally {
+            closeModelPicker();
+          }
+        })();
       };
       listWrap.appendChild(row);
     }

@@ -9,6 +9,7 @@
  * ============================================================ */
 import type { BzSelectOpts } from './types';
 import { uiIcon } from './icon';
+import { escManager } from '../esc-manager';
 
 /** 下拉（.bz-select），返回容器 + setValue + detach 句柄 */
 export function uiSelect<T extends string>(opts: BzSelectOpts<T>): {
@@ -29,6 +30,8 @@ export function uiSelect<T extends string>(opts: BzSelectOpts<T>): {
 
   let current = opts.value;
   let menu: HTMLDivElement | null = null;
+  /** ESC 层句柄（C5）：菜单开着时经 escManager 注册，随 close 注销——替代私挂 document 级 ESC 监听 */
+  let escHandle: ReturnType<typeof escManager.register> | null = null;
 
   const labelOf = (v: T): string => {
     const o = opts.options.find((x) => x.value === v);
@@ -43,6 +46,10 @@ export function uiSelect<T extends string>(opts: BzSelectOpts<T>): {
     if (menu) {
       menu.remove();
       menu = null;
+    }
+    if (escHandle) {
+      escHandle.unregister();
+      escHandle = null;
     }
     el.classList.remove('open');
     el.setAttribute('aria-expanded', 'false');
@@ -101,6 +108,13 @@ export function uiSelect<T extends string>(opts: BzSelectOpts<T>): {
       m.style.right = `${over}px`;
       if (m.getBoundingClientRect().left < 2) m.style.right = '';
     }
+    // ESC 关闭走 escManager 统一层序（C5）：私挂 document 级 ESC 监听会被 escManager 命中
+    // 可见层后的 stopImmediatePropagation 抢先短路——宿主面板开着时按 ESC 整面板直关、下拉不动。
+    // 立约见 esc-manager.ts：禁止私挂 document 级 ESC 监听，一律注册层级。
+    escHandle = escManager.register('bz-ui-select', {
+      isVisible: () => !!menu && menu.isConnected,
+      close: () => close(),
+    });
   };
   const setValue = (v: T) => {
     current = v;
@@ -159,22 +173,17 @@ export function uiSelect<T extends string>(opts: BzSelectOpts<T>): {
       close();
     }
   });
-  // 点外部关闭（点 el 自身已由上方开合处理，这里只关不误开）。
+  // 点外部关闭（点 el 自身已由上方开合处理，这里只关不误开；ESC 不在此挂——走 escManager 层，C5）。
   // 句柄持有供 detach 移除，避免每次实例永久泄漏全局监听（L5）
   const onDocClick = (e: MouseEvent) => {
     if (menu && !el.contains(e.target as Node)) close();
   };
-  const onDocKey = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && menu) close();
-  };
   document.addEventListener('click', onDocClick);
-  document.addEventListener('keydown', onDocKey);
   return {
     el,
     setValue,
     detach: () => {
       document.removeEventListener('click', onDocClick);
-      document.removeEventListener('keydown', onDocKey);
       close(false);
     },
   };

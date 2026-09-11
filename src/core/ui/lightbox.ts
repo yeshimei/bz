@@ -16,6 +16,9 @@ export interface BzLightboxOpts {
 }
 
 let current: HTMLDivElement | null = null;
+/** 当前灯箱的 esc 层句柄（C9）：提为模块级，closeLightbox 直关时一并注销——
+ *  原先仅 openLightbox 内部 close 能注销，导出的 closeLightbox() 绕过它，esc 层残留栈底 */
+let currentEscHandle: ReturnType<typeof escManager.register> | null = null;
 
 /** 灯箱打开期间锁定 body 滚动（背景内容随滚轮/触摸穿透防护）；关闭时还原 */
 function lockBodyScroll(lock: boolean): void {
@@ -90,6 +93,7 @@ export function openLightbox(opts: BzLightboxOpts): { close: () => void } {
     if (current !== mask) return;
     mask.remove();
     escHandle?.unregister();
+    if (currentEscHandle === escHandle) currentEscHandle = null;
     current = null;
     lockBodyScroll(false);
   }
@@ -99,6 +103,7 @@ export function openLightbox(opts: BzLightboxOpts): { close: () => void } {
     isVisible: () => mask.isConnected,
     close,
   });
+  currentEscHandle = escHandle;
   // 点背景（非媒体/头部/底部）关闭
   mask.addEventListener('click', (e) => {
     if (!(e.target as HTMLElement).closest('.bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot')) close();
@@ -109,11 +114,13 @@ export function openLightbox(opts: BzLightboxOpts): { close: () => void } {
   return { close };
 }
 
-/** 关闭当前灯箱（幂等） */
+/** 关闭当前灯箱（幂等）；C9：一并注销 esc 层，不留死层级在 escManager 栈底 */
 export function closeLightbox(): void {
   if (current) {
     current.remove();
     current = null;
+    currentEscHandle?.unregister();
+    currentEscHandle = null;
     lockBodyScroll(false);
   }
 }

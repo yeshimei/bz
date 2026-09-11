@@ -1,4 +1,4 @@
-/* 源指纹 a3415d0b59824d1f · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 394b7fabc930f52a · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
@@ -234,6 +234,11 @@ var BZW_secondbrain = (() => {
   async function getAIProvider(override) {
     var _a2, _b2, _c;
     if (!override && _aiProviderCache) return _aiProviderCache;
+    const cacheable = !override;
+    const cachePut = (p) => {
+      if (cacheable) _aiProviderCache = p;
+      return p;
+    };
     const s = getQ3Settings();
     if (override && typeof override === "object" && override.apiKey) {
       return {
@@ -252,15 +257,14 @@ var BZW_secondbrain = (() => {
       if (!endpoint || !s.aiCustomApiKey) {
         throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
       }
-      _aiProviderCache = {
+      return cachePut({
         endpoint,
         apiKey: s.aiCustomApiKey,
         model: s.aiCustomModel || void 0,
         extraHeaders: desc.extraHeaders,
         contextWindow: desc.defaultContextWindow,
         defaultMaxTokens: desc.defaultMaxTokens
-      };
-      return _aiProviderCache;
+      });
     }
     const key = s[desc.apiKeyKey];
     if (!key && name === "deepseek") {
@@ -269,13 +273,12 @@ var BZW_secondbrain = (() => {
         const cfg = JSON.parse(raw);
         const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
         if (provider && provider.endpoint && provider.apiKey) {
-          _aiProviderCache = {
+          return cachePut({
             endpoint: String(provider.endpoint).replace(/\/+$/, ""),
             apiKey: provider.apiKey,
             contextWindow: desc.defaultContextWindow,
             defaultMaxTokens: desc.defaultMaxTokens
-          };
-          return _aiProviderCache;
+          });
         }
       } catch (e) {
       }
@@ -286,7 +289,7 @@ var BZW_secondbrain = (() => {
     const overrideModel = (_a2 = s.aiModelOverrides) == null ? void 0 : _a2[name];
     const overrideContext = (_b2 = s.aiContextOverrides) == null ? void 0 : _b2[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
-    _aiProviderCache = {
+    return cachePut({
       endpoint: desc.endpoint,
       apiKey: key || "",
       model: overrideModel || desc.model || void 0,
@@ -294,12 +297,16 @@ var BZW_secondbrain = (() => {
       extraHeaders: desc.extraHeaders,
       contextWindow: overrideContext || desc.defaultContextWindow,
       defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens
-    };
-    return _aiProviderCache;
+    });
   }
   function abortError() {
     const e = new Error("请求已取消");
     e.name = "AbortError";
+    return e;
+  }
+  function timeoutError() {
+    const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1e3} 秒无响应）`);
+    e.name = "TimeoutError";
     return e;
   }
   async function streamChatCompletions(provider, body, signal, onDelta) {
@@ -308,60 +315,85 @@ var BZW_secondbrain = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const resp = await fetch(`${provider.endpoint}/chat/completions`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-      signal
-    });
-    if (!resp.ok) {
-      let msg = `API ${resp.status}`;
-      try {
-        const err = await resp.json();
-        if (err.error && err.error.message) msg = err.error.message;
-      } catch (e) {
+    const controller = new AbortController();
+    const onOuterAbort = () => controller.abort();
+    let outerLinked = false;
+    if (signal) {
+      if (signal.aborted) controller.abort();
+      else {
+        signal.addEventListener("abort", onOuterAbort);
+        outerLinked = true;
       }
-      throw new Error(msg);
     }
-    if (!resp.body || typeof resp.body.getReader !== "function") {
-      const data = await resp.json();
-      return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
-    }
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let full = "", buf = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      let nl;
-      while ((nl = buf.indexOf("\n")) !== -1) {
-        const line = buf.slice(0, nl).trim();
-        buf = buf.slice(nl + 1);
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (payload === "[DONE]") {
-          try {
-            reader.cancel();
-          } catch (e) {
-          }
-          return full;
-        }
+    let idleTimer = null;
+    const armIdle = () => {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
+    };
+    try {
+      armIdle();
+      const resp = await fetch(`${provider.endpoint}/chat/completions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      if (!resp.ok) {
+        let msg = `API ${resp.status}`;
         try {
-          const chunk = JSON.parse(payload);
-          const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-          if (delta) {
-            full += delta;
-            try {
-              onDelta == null ? void 0 : onDelta(delta);
-            } catch (e) {
-            }
-          }
+          const err = await resp.json();
+          if (err.error && err.error.message) msg = err.error.message;
         } catch (e) {
         }
+        throw new Error(msg);
       }
+      if (!resp.body || typeof resp.body.getReader !== "function") {
+        const data = await resp.json();
+        return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
+      }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let full = "", buf = "";
+      while (true) {
+        armIdle();
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf("\n")) !== -1) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line.startsWith("data:")) continue;
+          const payload = line.slice(5).trim();
+          if (payload === "[DONE]") {
+            try {
+              reader.cancel();
+            } catch (e) {
+            }
+            return full;
+          }
+          try {
+            const chunk = JSON.parse(payload);
+            const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+            if (delta) {
+              full += delta;
+              try {
+                onDelta == null ? void 0 : onDelta(delta);
+              } catch (e) {
+              }
+            }
+          } catch (e) {
+          }
+        }
+      }
+      return full;
+    } catch (e) {
+      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
+      throw e;
+    } finally {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      if (outerLinked && signal) signal.removeEventListener("abort", onOuterAbort);
     }
-    return full;
   }
   async function chatCompletionsNonStream(provider, body, signal) {
     if (signal == null ? void 0 : signal.aborted) throw abortError();
@@ -370,11 +402,22 @@ var BZW_secondbrain = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const resp = await requestUrl({
-      url: `${provider.endpoint}/chat/completions`,
-      method: "POST",
-      headers,
-      body: JSON.stringify({ ...body, stream: false })
+    const resp = await new Promise((resolve, reject) => {
+      let timer = null;
+      const settle = (fn) => {
+        if (timer !== null) clearTimeout(timer);
+        fn();
+      };
+      timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
+      requestUrl({
+        url: `${provider.endpoint}/chat/completions`,
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ...body, stream: false })
+      }).then(
+        (r) => settle(() => resolve(r)),
+        (e) => settle(() => reject(e))
+      );
     });
     if (signal == null ? void 0 : signal.aborted) throw abortError();
     const data = JSON.parse(resp.text);
@@ -400,7 +443,7 @@ var BZW_secondbrain = (() => {
     }
     return new AIService(params, defaultModel, mergedOptions);
   }
-  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AIService;
+  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AIService;
   var init_ai = __esm({
     "src/core/ai.ts"() {
       init_fake_obsidian();
@@ -590,6 +633,7 @@ var BZW_secondbrain = (() => {
         }
       ];
       _aiProviderCache = null;
+      AI_IDLE_TIMEOUT_MS = 6e4;
       AIService = class {
         constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
           this.defaultModel = defaultModel;
@@ -693,7 +737,11 @@ var BZW_secondbrain = (() => {
   // src/core/z-order.ts
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
-      if (el.isConnected) el.style.zIndex = String(zCounter);
+      if (!el.isConnected) {
+        alwaysOnTop.delete(el);
+        continue;
+      }
+      el.style.zIndex = String(zCounter);
     }
   }
   function allocZBlock(n) {
@@ -1098,10 +1146,61 @@ var BZW_secondbrain = (() => {
     }
   });
 
+  // src/core/esc-manager.ts
+  var escManager;
+  var init_esc_manager = __esm({
+    "src/core/esc-manager.ts"() {
+      escManager = (() => {
+        const layers = [];
+        const onKeydown = (e) => {
+          if (e.key !== "Escape") return;
+          for (let i = layers.length - 1; i >= 0; i--) {
+            const L = layers[i];
+            try {
+              if (L.isVisible()) {
+                L.close();
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return;
+              }
+            } catch (err) {
+              layers.splice(i, 1);
+            }
+          }
+        };
+        if (typeof document !== "undefined") {
+          document.addEventListener("keydown", onKeydown);
+        }
+        return {
+          register(id, layer) {
+            for (let i = layers.length - 1; i >= 0; i--) {
+              if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
+            }
+            const rec = Object.assign({ id }, layer);
+            layers.push(rec);
+            return {
+              unregister: () => {
+                const i = layers.indexOf(rec);
+                if (i !== -1) layers.splice(i, 1);
+              }
+            };
+          },
+          /** 插件卸载时移除全局监听 */
+          destroy() {
+            if (typeof document !== "undefined") {
+              document.removeEventListener("keydown", onKeydown);
+            }
+          }
+        };
+      })();
+    }
+  });
+
   // src/core/ui/select.ts
   var init_select = __esm({
     "src/core/ui/select.ts"() {
       init_icon();
+      init_esc_manager();
     }
   });
 
@@ -1151,62 +1250,13 @@ var BZW_secondbrain = (() => {
   var init_popover = __esm({
     "src/core/ui/popover.ts"() {
       init_icon();
+      init_esc_manager();
     }
   });
 
   // src/core/ui/suggest.ts
   var init_suggest = __esm({
     "src/core/ui/suggest.ts"() {
-    }
-  });
-
-  // src/core/esc-manager.ts
-  var escManager;
-  var init_esc_manager = __esm({
-    "src/core/esc-manager.ts"() {
-      escManager = (() => {
-        const layers = [];
-        const onKeydown = (e) => {
-          if (e.key !== "Escape") return;
-          for (let i = layers.length - 1; i >= 0; i--) {
-            const L = layers[i];
-            try {
-              if (L.isVisible()) {
-                L.close();
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                return;
-              }
-            } catch (err) {
-              layers.splice(i, 1);
-            }
-          }
-        };
-        if (typeof document !== "undefined") {
-          document.addEventListener("keydown", onKeydown);
-        }
-        return {
-          register(id, layer) {
-            for (let i = layers.length - 1; i >= 0; i--) {
-              if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
-            }
-            const rec = Object.assign({ id }, layer);
-            layers.push(rec);
-            return {
-              unregister: () => {
-                const i = layers.indexOf(rec);
-                if (i !== -1) layers.splice(i, 1);
-              }
-            };
-          },
-          /** 插件卸载时移除全局监听 */
-          destroy() {
-            if (typeof document !== "undefined") {
-              document.removeEventListener("keydown", onKeydown);
-            }
-          }
-        };
-      })();
     }
   });
 
@@ -5459,6 +5509,7 @@ var BZW_secondbrain = (() => {
       init_path_picker();
       init_settings_modal();
       init_ui();
+      init_notice();
     }
   });
 
