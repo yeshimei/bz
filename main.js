@@ -78,7 +78,7 @@ Arguments: `+Array.prototype.slice.call(w).join("")+`
         <div class="bz-bs-d-body">
         ${i}
         <table class="bz-bs-d-ledger">
-          <tr><td>状 态</td><td><span class="bz-bs-d-stdot" style="background:${Q5(t.status)}"></span>${R(t.status)}${a}</td></tr>
+          <tr><td>状 态</td><td><span class="bz-bs-d-nowrap"><span class="bz-bs-d-stdot" style="background:${Q5(t.status)}"></span>${R(t.status)}${a}</span></td></tr>
           <tr><td>累计时长</td><td>${R(o)}</td></tr>
           <tr><td>起读 · 读完</td><td>${R(t.readingDate||"—")} · ${R(t.completionDate||"—")}</td></tr>
           <tr><td>划线 / 想法</td><td>${t.highlights} 条 / ${t.thinks} 条</td></tr>
