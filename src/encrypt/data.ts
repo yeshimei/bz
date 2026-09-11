@@ -321,9 +321,26 @@ export class SafeManager {
     }
   }
 
+  /**
+   * 校验主密码（只读，不改任何状态）：对 .safe.enc 解密成功即通过（GCM 认证，同 unlock 判据）。
+   * 供销毁等高危操作的二次确认用；绝不写 this.unlocked/manifest/password，也不触发解锁事件。
+   * @returns true = 密码正确；false = 密码错误或清单不存在/为空/不可读
+   */
+  async verifyPassword(password: string): Promise<boolean> {
+    try {
+      if (!(await this.exists())) return false;
+      const content = await this.adapter.read(this.manifestPath);
+      if (!content.trim()) return false;
+      await CryptoService.decrypt(content.trim(), password);
+      return true;
+    } catch (e) {
+      // GCM 认证失败（绝大多数为密码错误）或读文件异常：一律视为校验不通过
+      return false;
+    }
+  }
+
   /** 首设/强制重设：写空清单。写失败必须回滚解锁态（否则下次打开又误判无清单） */
-  private async firstTimeSetup(password: string): Promise<boolean> {
-    this.password = password;
+  private async firstTimeSetup(password: string): Promise<boolean> {    this.password = password;
     this.unlocked = true;
     this.onUnlockChange?.(true);
     emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });

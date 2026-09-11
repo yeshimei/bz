@@ -62,18 +62,24 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(document.querySelector('.bz-vault-desk')).toBeTruthy();
     expect(document.querySelector('.bz-vault-nav')).toBeTruthy();
     const items = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')];
-    expect(items.map((i) => i.getAttribute('data-asset'))).toEqual(['overview', 'pw', 'note', 'diary']);
+    expect(items.map((i) => i.getAttribute('data-asset'))).toEqual(['overview', 'note']);
     expect(document.querySelector('.bz-vault-listcol')).toBeTruthy();
     expect(document.querySelector('.bz-vault-detail')).toBeTruthy();
     // 滚动修复回归：pw/笔记/日记资产均有独立滚动区容器 .bz-vault-lc-body（CSS 决定滚动）
     // （jsdom 不算样式，computed overflow 恒 visible；结构上滚动区与列头分离即可）
-    // 顶栏动作
+    // 顶栏动作：设置/生成密码按钮已按原型移除（设置收进面板空白处右键菜单）
     expect(document.querySelector('[data-act="health"]')).toBeTruthy();
-    expect(document.querySelector('[data-act="settings"]')).toBeTruthy();
     expect(document.querySelector('[data-act="lock-note"]')).toBeTruthy();
     expect(document.querySelector('[data-act="close"]')).toBeTruthy();
+    expect(document.querySelector('[data-act="settings"]')).toBeNull();
+    expect(document.querySelector('[data-act="gen"]')).toBeNull();
+    // 面板空白处右键 → 面板菜单（保险库设置/体检入口）
+    ui.popup!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    const menuTexts = [...document.querySelectorAll('.bz-item-menu-item')].map((b) => b.textContent!.trim());
+    expect(menuTexts).toContain('保险库设置');
+    expect(menuTexts).toContain('保险库体检');
     // 移动端 seg
-    expect([...document.querySelectorAll('.bz-vault-mseg .sg')].map((i) => i.getAttribute('data-masset'))).toEqual(['overview', 'pw', 'note', 'diary']);
+    expect([...document.querySelectorAll('.bz-vault-mseg .sg')].map((i) => i.getAttribute('data-masset'))).toEqual(['overview', 'note']);
   });
 
   it('show 默认概览视图：hero 计数渲染（空库显示 0 项 + 概览卡）', async () => {
@@ -87,15 +93,17 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(navCnt).toBe('0');
   });
 
-  it('资产导航切换：点击「密码」进入密码资产；nav 高亮 on', async () => {
+  it('资产导航收敛：nav 无密码/日记入口；直通 pw 资产仍渲染密码视图（保留代码）', async () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'p@ss', fav: true });
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
-    pwItem.click();
+    // 入口收敛（保险库只管加密笔记）：nav/seg 均无 pw/diary 项
+    expect([...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].some((i) => i.getAttribute('data-asset') === 'pw')).toBe(false);
+    expect([...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].some((i) => i.getAttribute('data-asset') === 'diary')).toBe(false);
+    // 密码视图为保留代码：直通置资产仍可完整渲染（平台聚合行 + 收藏星）
+    ui.asset = 'pw';
+    ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
-    expect(pwItem.classList.contains('on')).toBe(true);
-    // 平台聚合行渲染（收藏星为内联 lucide svg，不再用 ★ 文本符号）
     const list = document.querySelector('.bz-vault-listcol')!;
     expect(list.textContent).toContain('GitHub');
     expect(list.querySelector('.bz-pwv-plrow .star svg')).toBeTruthy();
@@ -105,8 +113,8 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     await dm.addItem({ platform: 'GitHub', url: 'https://github.com', account: 'me', password: 'p@ss', note: '主号' });
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
-    pwItem.click();
+    ui.asset = 'pw'; // nav 入口已收敛；密码视图保留，直通置资产回归
+    ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
     const row = document.querySelector('.bz-vault-listcol .bz-pwv-plrow') as HTMLElement;
     row.click();
@@ -124,8 +132,8 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     await dm.addItem({ platform: '微信', account: 'wx', password: 'y' });
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
-    pwItem.click();
+    ui.asset = 'pw'; // nav 入口已收敛；密码视图保留，直通置资产回归
+    ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
     const search = document.querySelector('.bz-vault-search input') as HTMLInputElement;
     search.value = 'GitHub';
@@ -139,8 +147,8 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
   it('密码添加弹窗：保存后落盘 + 列表出现新平台', async () => {
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
-    pwItem.click();
+    ui.asset = 'pw'; // nav 入口已收敛；密码视图保留，直通置资产回归
+    ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
     // 列表头「新增密码」入口存在且可点（回归：pw 资产此前缺失新增入口）
     const lcAdd = document.querySelector('.bz-vault-lc-head [data-lc-add="pw"]') as HTMLElement;
@@ -169,8 +177,8 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
   it('pw 空库：中栏空态直接提供「新增密码」按钮 → 点击开添加弹窗', async () => {
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
-    pwItem.click();
+    ui.asset = 'pw'; // nav 入口已收敛；密码视图保留，直通置资产回归
+    ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
     const emptyBtn = document.querySelector('.bz-vault-listcol [data-pwv="empty-add"]') as HTMLElement;
     expect(emptyBtn).toBeTruthy();
@@ -183,8 +191,8 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
-    pwItem.click();
+    ui.asset = 'pw'; // nav 入口已收敛；密码视图保留，直通置资产回归
+    ui.renderAll();
     await new Promise((r) => setTimeout(r, 20));
     await dm.toggleFav(dm.pwData[0].id);
     ui.renderAll();
@@ -239,8 +247,8 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     });
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    const diaryItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'diary') as HTMLElement;
-    diaryItem.click();
+    ui.asset = 'diary'; // nav 日记入口已收敛；日记视图保留，直通置资产回归
+    ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
     // 移动端列表行 → 详情二级页
     const mobRow = document.querySelector('[data-mob-body] .bz-vault-row') as HTMLElement;
@@ -261,8 +269,8 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
-    pwItem.click();
+    ui.asset = 'pw'; // nav 入口已收敛；密码视图保留，直通置资产回归
+    ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
     const card = document.querySelector('[data-mob-body] .bz-pwv-mobcard') as HTMLElement;
     expect(card).toBeTruthy();
@@ -280,8 +288,8 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
   it('E7：密码添加弹窗注册独立 ESC 层——ESC 只关弹窗，主面板不被穿透关闭', async () => {
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
-    pwItem.click();
+    ui.asset = 'pw'; // nav 入口已收敛；密码视图保留，直通置资产回归
+    ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
     (document.querySelector('.bz-vault-lc-head [data-lc-add="pw"]') as HTMLElement).click();
     const mask = document.querySelector('.bz-vault-dlg-mask') as HTMLElement;
@@ -299,8 +307,8 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
-    pwItem.click();
+    ui.asset = 'pw'; // nav 入口已收敛；密码视图保留，直通置资产回归
+    ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
     (document.querySelector('.bz-vault-listcol .bz-pwv-plrow') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 20));
@@ -316,8 +324,8 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     await dm.addItem({ platform: 'GitHub', account: 'me@example', password: 'x' });
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
-    pwItem.click();
+    ui.asset = 'pw'; // nav 入口已收敛；密码视图保留，直通置资产回归
+    ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
     // 桌面三栏：先选中平台行，右侧详情区才渲染账号卡
     const plRow = document.querySelector('.bz-vault-listcol .bz-pwv-plrow') as HTMLElement;
@@ -353,8 +361,34 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     const empty = document.querySelector('.bz-empty') as HTMLElement;
     expect(empty).toBeTruthy();
     expect(empty.querySelector('.bz-empty-ic')).toBeTruthy();
-    expect(empty.querySelector('.bz-empty-title')!.textContent).toBe('还没有加密资产');
+    expect(empty.querySelector('.bz-empty-title')!.textContent).toBe('还没有加密动态');
     expect(empty.querySelector('.bz-empty-desc')!.textContent).toContain('最近动态在这里显示');
+  });
+
+  it('销毁加密笔记：重输主密码二次确认——错密码行内报错不销毁，对密码销毁并刷新', async () => {
+    await sm.lockNote({ path: '笔记/n.md', title: '机密笔记', content: '# x', attachments: [] });
+    ui.show();
+    await new Promise((r) => setTimeout(r, 30));
+    ui.asset = 'note';
+    ui.renderAll();
+    await new Promise((r) => setTimeout(r, 30));
+    // 详情卡「销毁」→ 确认窗（复用共享解锁屏骨架，挂 body 全屏遮罩）
+    (document.querySelector('[data-detail="delete"]') as HTMLElement).click();
+    const mask = document.querySelector('.bz-lockscreen--mask') as HTMLElement;
+    expect(mask).toBeTruthy();
+    expect(mask.textContent).toContain('销毁确认');
+    expect(mask.textContent).toContain('机密笔记');
+    // 错密码：行内报错（含「未销毁」），条目保留
+    const input = mask.querySelector('input.bz-lockscreen-input') as HTMLInputElement;
+    input.value = 'wrong';
+    (mask.querySelector('.bz-lockscreen-action') as HTMLElement).click();
+    await waitFor(() => (document.querySelector('.bz-lockscreen-err')?.textContent || '').includes('主密码错误'));
+    expect(sm.manifest.notes.length).toBe(1);
+    // 对密码：确认销毁，弹窗关闭 + 条目移除
+    input.value = 'pw';
+    (mask.querySelector('.bz-lockscreen-action') as HTMLElement).click();
+    await waitFor(() => sm.manifest.notes.length === 0);
+    expect(mask.isConnected).toBe(false);
   });
 });
 

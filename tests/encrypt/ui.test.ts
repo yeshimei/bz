@@ -279,8 +279,8 @@ describe('UIManager 统一保险库工作台', () => {
     ui2.mask?.remove();
   });
 
-  it('三资产分组计数：nav 上密码/笔记/日记各自计数正确（不互滤）', async () => {
-    // beforeEach 已加 1 篇普通笔记；补日记条目 + 密码整表 → 应显示在各自资产计数
+  it('nav 计数收敛：笔记计数正确，密码/日记入口随 nav 移除；概览计数只算库内加密资产', async () => {
+    // beforeEach 已加 1 篇普通笔记；补日记条目 + 密码整表（密码本移出面板口径，不进概览计数）
     await dm.lockNote({ path: '我的/日记/d.md', title: '日记d', kind: 'diary-entry', content: '# x', attachments: [] });
     // 密码整表经 pwDataManager 建立（kind=password-vault 一条镜像）
     const pwDm = new PasswordVaultDataManager(dm);
@@ -288,10 +288,11 @@ describe('UIManager 统一保险库工作台', () => {
     ui.show();
     await new Promise((r) => setTimeout(r, 40));
     expect(document.querySelector('[data-cnt="note"]')!.textContent).toBe('1');
-    expect(document.querySelector('[data-cnt="diary"]')!.textContent).toBe('1');
-    expect(document.querySelector('[data-cnt="pw"]')!.textContent).toBe('1');
-    // 概览计数 = 3
-    expect(document.querySelector('[data-cnt="overview"]')!.textContent).toBe('3');
+    // 入口收敛：nav 无 pw/diary 计数槽位
+    expect(document.querySelector('[data-cnt="pw"]')).toBeNull();
+    expect(document.querySelector('[data-cnt="diary"]')).toBeNull();
+    // 概览计数 = 库内加密资产（笔记 + 日记）= 2，不含密码本
+    expect(document.querySelector('[data-cnt="overview"]')!.textContent).toBe('2');
   });
 });
 
@@ -525,7 +526,7 @@ describe('EncryptAppController', () => {
     expect(document.getElementById('bz-encrypt-popup')!.style.display).toBe('none');
   });
 
-  it('面板顶部「加密当前笔记」按钮在设置按钮前，点击触发加密确认', async () => {
+  it('面板顶部动作收敛：存入笔记(lock-note)/体检(health)/关闭(close)，无设置与生成按钮；点击 lock-note 触发加密确认', async () => {
     const app = setup(vault, CONFIG);
     vault.create('笔记/主题.md', '正文');
     const activeFile = { path: '笔记/主题.md', basename: '主题', vault: vault as any };
@@ -535,13 +536,15 @@ describe('EncryptAppController', () => {
     await c.init();
     await c.dataManager.unlock('pw');
     c.uiManager.show();
-    // 顶栏动作：加密当前笔记(lock-note)/体检(health)/设置(settings)/关闭(close) 均在；lock-note 在 settings 前
+    // 顶栏动作按原型收敛：设置(settings)/生成密码(gen)已移除（设置收进面板空白处右键菜单）
     const barBtns = [...document.querySelectorAll('.bz-vault-bar [data-act]')].map((b) => b.getAttribute('data-act'));
-    expect(barBtns.indexOf('lock-note')).toBeGreaterThanOrEqual(0);
-    expect(barBtns.indexOf('settings')).toBeGreaterThanOrEqual(0);
-    expect(barBtns.indexOf('close')).toBeGreaterThanOrEqual(0);
-    expect(barBtns.indexOf('lock-note')).toBeLessThan(barBtns.indexOf('settings'));
-    expect(barBtns.indexOf('settings')).toBeLessThan(barBtns.indexOf('close'));
+    expect(barBtns).toContain('lock-note');
+    expect(barBtns).toContain('health');
+    expect(barBtns).toContain('close');
+    expect(barBtns).not.toContain('settings');
+    expect(barBtns).not.toContain('gen');
+    expect(barBtns.indexOf('lock-note')).toBeLessThan(barBtns.indexOf('health'));
+    expect(barBtns.indexOf('health')).toBeLessThan(barBtns.indexOf('close'));
     // 点击 → 弹加密确认（文案「加密到保险库」）
     (document.querySelector('.bz-vault-bar [data-act="lock-note"]') as HTMLButtonElement).click();
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));

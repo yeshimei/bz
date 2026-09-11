@@ -62,10 +62,9 @@ describe('保险库增强包（UIManager / Controller）', () => {
   });
 
   function gotoPwAsset() {
-    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find(
-      (i) => i.getAttribute('data-asset') === 'pw'
-    ) as HTMLElement;
-    pwItem.click();
+    // nav 密码入口已按原型收敛（保险库面板只管加密笔记）；密码视图代码保留，直通置资产供回归
+    ui.asset = 'pw';
+    ui.renderAll();
   }
 
   function openEntryDialog() {
@@ -80,7 +79,7 @@ describe('保险库增强包（UIManager / Controller）', () => {
   }
 
   // ---------- 1 快速取密路径 ----------
-  it('解锁成功后直落密码资产并聚焦搜索框；下次打开直落上次停留资产', async () => {
+  it('解锁成功后直落加密笔记资产并聚焦搜索框；下次打开直落上次停留资产', async () => {
     const c = new EncryptAppController({ ...CONFIG });
     try {
       await c.init();
@@ -94,20 +93,20 @@ describe('保险库增强包（UIManager / Controller）', () => {
       (mask.querySelector('.bz-lockscreen-action') as HTMLElement).click();
       await run;
       expect(c.uiManager.mask!.style.display).toBe('block');
-      // 直落密码资产 + 搜索框聚焦
+      // 直落加密笔记资产（面板已只管加密笔记）+ 搜索框聚焦
       const onItem = document.querySelector('.bz-vault-nav .bz-vault-item.on') as HTMLElement;
-      expect(onItem.getAttribute('data-asset')).toBe('pw');
+      expect(onItem.getAttribute('data-asset')).toBe('note');
       const search = document.querySelector('[data-vault-search]') as HTMLInputElement;
       expect(document.activeElement).toBe(search);
-      // 切到加密笔记 → 关面板 → 再开（已解锁）→ 直落上次停留资产
-      const noteItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find(
-        (i) => i.getAttribute('data-asset') === 'note'
+      // 切到概览 → 关面板 → 再开（已解锁）→ 直落上次停留资产
+      const ovItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find(
+        (i) => i.getAttribute('data-asset') === 'overview'
       ) as HTMLElement;
-      noteItem.click();
+      ovItem.click();
       c.uiManager.hide();
       await c.openManager();
       const onItem2 = document.querySelector('.bz-vault-nav .bz-vault-item.on') as HTMLElement;
-      expect(onItem2.getAttribute('data-asset')).toBe('note');
+      expect(onItem2.getAttribute('data-asset')).toBe('overview');
     } finally {
       c.cleanup();
       EncryptAppController.instance = null;
@@ -392,9 +391,9 @@ describe('保险库增强包（UIManager / Controller）', () => {
     expect(sm.manifest.notes.length).toBe(1); // 条目保留
   });
 
-  it('概览页搜索框生效：输入自动切到密码结果', async () => {
-    await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
-    await dm.addItem({ platform: '微信', account: 'wx', password: 'y' });
+  it('概览页搜索框生效：输入自动切到加密笔记结果', async () => {
+    await sm.lockNote({ path: '笔记/GitHub.md', title: 'GitHub 指南', content: '# gh', attachments: [] });
+    await sm.lockNote({ path: '笔记/随手.md', title: '随手记', content: '# x', attachments: [] });
     ui.show(); // 默认概览
     await waitFor(() => !!document.querySelector('.bz-vault-detail > .bz-vault-area'));
     expect(ui.asset).toBe('overview');
@@ -402,8 +401,8 @@ describe('保险库增强包（UIManager / Controller）', () => {
     search.value = 'GitHub';
     search.dispatchEvent(new Event('input'));
     await new Promise((r) => setTimeout(r, 250)); // 防抖
-    expect(ui.asset).toBe('pw');
-    await waitFor(() => document.querySelectorAll('.bz-vault-listcol .bz-pwv-row').length === 1);
-    expect(document.querySelector('.bz-vault-listcol .bz-pwv-row .pl')!.textContent).toContain('GitHub');
+    expect(ui.asset).toBe('note');
+    await waitFor(() => document.querySelectorAll('.bz-vault-listcol .bz-vault-row').length === 1);
+    expect(document.querySelector('.bz-vault-listcol .bz-vault-row .t1')!.textContent).toContain('GitHub 指南');
   });
 });
