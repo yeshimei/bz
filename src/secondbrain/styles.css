@@ -88,6 +88,7 @@
   position: fixed;
   inset: 0;
   background: #2a261e4d;
+  backdrop-filter: blur(var(--bz-overlay-blur));
   z-index: 1000;
   display: none;
 }

@@ -1519,7 +1519,7 @@
 
 /* 写日记弹窗 */
 #add-diary-mask {
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   animation: fadeIn var(--bz-dur-base) ease-out;
 }
 .add-diary-popup {
@@ -1548,7 +1548,7 @@
 
 /* 标签选择器弹窗 */
 #diary-tag-selector-mask {
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   animation: fadeIn var(--bz-dur-base) ease-out;
 }
 .diary-tag-selector-popup {

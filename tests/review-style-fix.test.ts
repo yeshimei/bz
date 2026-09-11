@@ -57,9 +57,9 @@ describe('issue 270-A：quiz-core 会话弹窗样式恢复', () => {
     expect(popup).toMatch(/border-radius:\s*var\(--bz-radius-md\)/);
     expect(popup).toMatch(/box-shadow:\s*var\(--bz-shadow-lg\)/);
     expect(popup).toContain('max-height: 82vh');
-    // 遮罩用 --bz-overlay，毛玻璃按设计手册明确不采用
+    // 遮罩用 --bz-overlay + token 毛玻璃（memo item-1789106289860 推翻「明确不采用」口径）
     expect(grab('#quiz-mask')).toMatch(/background:\s*var\(--bz-overlay\)/);
-    expect(grab('#quiz-mask')).not.toContain('backdrop-filter');
+    expect(grab('#quiz-mask')).toContain('backdrop-filter: blur(var(--bz-overlay-blur))');
     // 对错态语义色
     expect(grab('.quiz-option-btn.correct')).toContain('var(--bz-success)');
     expect(grab('.quiz-option-btn.wrong')).toContain('var(--bz-danger)');
@@ -70,9 +70,10 @@ describe('issue 270-A：quiz-core 会话弹窗样式恢复', () => {
     expect(submit).toMatch(/color:\s*var\(--bz-on-brand\)/);
   });
 
-  it('quiz 分节零残留：无 Obsidian 原生变量、无硬编码对错色、无毛玻璃', () => {
+  it('quiz 分节零残留：无 Obsidian 原生变量、无硬编码对错色（毛玻璃走 token）', () => {
     const section = reviewCss().slice(reviewCss().indexOf('quiz-core 会话弹窗样式恢复'));
-    expect(section).not.toContain('backdrop-filter');
+    expect(section).toContain('backdrop-filter: blur(var(--bz-overlay-blur))'); // 仅 #quiz-mask 一处
+    expect(section.match(/backdrop-filter/g)?.length).toBe(1);
     expect(section).not.toMatch(/var\(--background-/);
     expect(section).not.toMatch(/var\(--text-(normal|muted|faint|on-accent)\)/);
     expect(section).not.toMatch(/var\(--interactive-accent\)/);

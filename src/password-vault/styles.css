@@ -1240,7 +1240,7 @@
   position: absolute;
   inset: 0;
   background: rgba(20, 18, 12, 0.45);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: none;
   align-items: flex-end;
   justify-content: center;
@@ -1495,7 +1495,7 @@
   display: none;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
 }
 .bz-password-vault-modal.open {
   display: flex;
@@ -1596,7 +1596,7 @@
   display: none;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
 }
 .bz-password-vault-pop2.open {
   display: flex;

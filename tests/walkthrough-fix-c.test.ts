@@ -217,12 +217,12 @@ describe('批 C-14：clipbook rail 徽标白字对比（底色加深一档；ADR
 });
 
 describe('批 C-15/16：literature 遮罩与 B站状态徽标', () => {
-  it('遮罩去毛玻璃：纯 var(--background-modifier-cover)，无 backdrop-filter', () => {
+  it('遮罩统一 --bz-overlay + token 毛玻璃（--bz-overlay-blur 单源，memo item-1789106289860）', () => {
     const css = repo('src/knowledge/styles.css');
     const mask = rule(css, '.bz-kb-mask');
     expect(mask, '缺 .bz-kb-mask 规则').not.toBeNull();
-    expect(mask![1]).toContain('background: var(--background-modifier-cover)');
-    expect(css).not.toMatch(/backdrop-filter/);
+    expect(mask![1]).toContain('background: var(--bz-overlay)');
+    expect(mask![1]).toContain('backdrop-filter: blur(var(--bz-overlay-blur))');
   });
 
   it('状态徽标 tint 底 + 深语义字（.bz-badge--* 模式），实底白字退役', () => {
