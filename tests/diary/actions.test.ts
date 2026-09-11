@@ -9,7 +9,7 @@ import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { applyDirectories } from '../../src/diary/config';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
+import { resetObsidianMocks, clearNotices, getNoticeMessages, Platform } from '../mock-obsidian-entry';
 import { DiaryAppController } from '../../src/diary/ui';
 
 const mocks = vi.hoisted(() => ({
@@ -176,18 +176,28 @@ describe('日记本条目动作（ADR-0115 定位重构）', () => {
 
   it('底部抽屉同口径：影视条目抽屉无「加密/删除」，普通日记条目抽屉有', async () => {
     await openAndWait();
+    // 长按开抽屉（2026-09-11 评审：单击入口取消，长按 = 唯一入口）；收尾复位 Platform 防泄漏
+    Platform.isMobile = true;
+    const press = async (el: HTMLElement) => {
+      const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+      Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
+      el.dispatchEvent(ts);
+      await new Promise((r) => setTimeout(r, 550));
+      el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    };
     const mob = document.querySelector('.bz-diary-mob')!;
     // 影视条目（第 2 个）抽屉
-    (mob.querySelectorAll('.bz-diary-item')[1] as HTMLElement).click();
+    await press(mob.querySelectorAll('.bz-diary-item')[1] as HTMLElement);
     expect(mob.querySelector('.bz-sheet--show')).toBeTruthy();
     const movieActs = mob.querySelector('.bz-diary-sheet-actions') as HTMLElement;
     expect(movieActs.textContent).not.toContain('加密');
     expect(movieActs.textContent).not.toContain('删除');
     // 普通日记条目（第 1 个）抽屉
-    (mob.querySelector('.bz-diary-item') as HTMLElement).click();
+    await press(mob.querySelector('.bz-diary-item') as HTMLElement);
     const diaryActs = mob.querySelector('.bz-diary-sheet-actions') as HTMLElement;
     expect(diaryActs.textContent).toContain('加密');
     expect(diaryActs.textContent).toContain('删除');
+    Platform.isMobile = false;
   });
 
   it('特殊条目「复制双链」：按文件路径本地拼双链，不走 entry-actions', async () => {

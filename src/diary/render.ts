@@ -14,6 +14,8 @@ import type { WallEntry, WallMedia } from './types';
 export const ACT_ICON: Record<string, string> = {
   add: 'pen-line',
   search: 'search',
+  close: 'x',
+  'sheet-close': 'x',
   'lb-close': 'x',
   'lb-prev': 'chevron-left',
   'lb-next': 'chevron-right',
@@ -59,7 +61,8 @@ export function mimeOfMediaName(name: string): string {
  * 面板壳 markup：头行（品牌 + 按钮组）/ chips 行 / 二级标签行 / 搜索行 / 两栏主体
  * （章节栏 + 瀑布）/ 灯箱 / 底部抽屉。按钮全部空壳挂 data-act，图标由 ui 侧 decorateIcons 注入。
  *
- * 头行按钮组只留「写日记 / 搜索」：关闭、设置、按年月跳转三枚按钮已按用户 2026-09-10 要求移除。
+ * 头行按钮组：「写日记 / 搜索」+「关闭」（2026-09-11 移动端评审补回——全屏页无遮罩可点，
+ * 关闭钮仅移动端显示，桌面由 CSS 隐藏、维持 ESC/点遮罩口径与 2026-09-10 头行精简决定）。
  * 日期筛选入口仍由品牌行承担（点「日记本」标题即开筛选弹窗，title 已注明）。
  */
 export function wallPanelHTML(): string {
@@ -72,6 +75,7 @@ export function wallPanelHTML(): string {
         <div class="bz-diary-btns">
           <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="add" title="写日记"></button>
           <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="search" title="搜索"></button>
+          <button class="bz-diary-icon-btn bz-diary-head-close bz-touch-target--xl" data-act="close" title="关闭"></button>
         </div>
       </div>
       <div class="bz-diary-chiprow"></div>
@@ -99,6 +103,7 @@ export function wallPanelHTML(): string {
             <div class="bz-diary-sheet-content"></div>
             <div class="bz-diary-sheet-media"></div>
           </div>
+          <button class="bz-diary-sheet-close" data-act="sheet-close" title="关闭"></button>
         </div>
         <div class="bz-sheet-body bz-sheet-actions bz-diary-sheet-actions"></div>
       </div>
