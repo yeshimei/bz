@@ -10,6 +10,7 @@ import { escManager } from '../../core/esc-manager';
 import { openFlowDialog } from '../../core/flow-dialog';
 import { notice } from '../../core/notice';
 import { getApp } from '../../core/app';
+import { enqueueFileTask } from '../../core/storage';
 import { DIARY_DIRECTORY } from '../config';
 import { scanUnparsed, applyRepairs, type UnparsedScan } from '../repair';
 
@@ -284,12 +285,17 @@ export function openDiaryRepairModal(): void {
     let failed = 0;
     for (const f of repairs) {
       try {
-        const content = await app.vault.read(f.file);
-        const next = applyRepairs(content, f.scan.repairs);
-        if (next !== content) {
+        // D4（review-all-bugs 二节）：读改写包进与目标文件同路径的 core 串行队列——
+        // 与 diary 写层/encrypt mergeDiaryBlock 等同路径队列任务 FIFO 互斥，修复不再被
+        // 「旧快照全量重写」交错抹掉（也不抹掉并发方写入的内容）；不同文件各自入队，互不阻塞
+        const changed = await enqueueFileTask(f.path, async () => {
+          const content = await app.vault.read(f.file);
+          const next = applyRepairs(content, f.scan.repairs);
+          if (next === content) return 0;
           await app.vault.modify(f.file, next);
-          fixed += f.scan.repairs.length;
-        }
+          return f.scan.repairs.length;
+        });
+        fixed += changed;
       } catch (e) {
         failed += f.scan.repairs.length;
         console.warn('[diary] 修复失败', f.path, e);
