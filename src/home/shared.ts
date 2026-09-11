@@ -260,6 +260,8 @@ export interface RiverCounts {
   diaryTotal: number;
   /** 备忘录未完成条数（2026-09-10 memo 入首页入口时补） */
   memoOpen: number;
+  /** 备忘录重要未完成条数（priority==='important' && !completed；memo 彩点 hot 用，item-1789106079981） */
+  memoUrgentOpen: number;
   reviewTotal: number;
   reviewOverdue: number;
   reviewDueTomorrow: number;
@@ -275,6 +277,7 @@ export interface RiverCounts {
 export const EMPTY_COUNTS: RiverCounts = {
   diaryTotal: 0,
   memoOpen: 0,
+  memoUrgentOpen: 0,
   reviewTotal: 0,
   reviewOverdue: 0,
   reviewDueTomorrow: 0,
@@ -327,6 +330,9 @@ export interface RiverData {
   week: RiverWeekDay[];
   streak: RiverStreak;
   counts: RiverCounts;
+  /** 番茄钟正在专注（计时中或暂停中；采集层动态 import 跨域只读，失败回落 false）。
+   *  纯层不做跨域 import（渲染纯层契约），专注态只能作为数据入参进彩点规则（item-1789106079981）。 */
+  pomodoroFocusing: boolean;
 }
 
 /* ---------- 日期/文案小工具 ---------- */
@@ -432,20 +438,24 @@ export function buildPreviews(data: RiverData): RiverPreview[] {
   return out;
 }
 
-/** 入口行彩点状态：ok=今天有动静 / warn=提醒（日记连击）/ hot=逾期 / off=无动静 */
+/** 入口行彩点状态：ok=今日有动静 / warn=进行中·待处理（日记连击、专注中、剪藏未读、影院在看）/ hot=逾期·需立即关注（复习逾期、重要备忘未完成）/ off=无动静 */
 export type RiverDot = 'ok' | 'warn' | 'hot' | 'off';
 
-/** 彩点规则（node 可测；与原型 buildDots 一致，映射到 home 域 id：memo/memo 同源） */
+/** 彩点规则（node 可测；与原型 buildDots 一致，映射到 home 域 id：memo/memo 同源）。
+ *  点亮等级语义（item-1789106079981 定案）：ok=今日有动静；warn=进行中/待处理；hot=逾期/需立即关注；
+ *  同域多条件取高（off<ok<warn<hot）。 */
 export function buildDots(data: RiverData): Record<string, RiverDot> {
   const day = data.today;
   const hasEvent = (d: string): boolean => day.events.some((e) => e.domain === d);
+  const c = data.counts;
   return {
     diary: day.summary.diary > 0 ? 'ok' : data.streak.diaryStreak > 0 ? 'warn' : 'off',
-    review: data.counts.reviewOverdue > 0 ? 'hot' : 'off',
-    memo: day.summary.memoDone + day.summary.memoCreated > 0 ? 'ok' : 'off',
-    pomodoro: day.summary.pomodoros > 0 ? 'ok' : 'off',
-    cinema: hasEvent('cinema') ? 'ok' : 'off',
+    review: c.reviewOverdue > 0 ? 'hot' : 'off',
+    memo: c.memoUrgentOpen > 0 ? 'hot' : day.summary.memoDone + day.summary.memoCreated > 0 ? 'ok' : 'off',
+    pomodoro: data.pomodoroFocusing ? 'warn' : day.summary.pomodoros > 0 ? 'ok' : 'off',
+    cinema: c.cinemaWatching > 0 ? 'warn' : hasEvent('cinema') ? 'ok' : 'off',
     bookshelf: hasEvent('bookshelf') ? 'ok' : 'off',
+    clipping: c.clippingUnread > 0 ? 'warn' : 'off',
   };
 }
 
