@@ -1,4 +1,4 @@
-/* 源指纹 d2d3d9012da2dff2 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 41c865d6c08cc285 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/secondbrain/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/secondbrain/render.ts → window.BZR_secondbrain（评审壳预览包，ADR-0104） */
 var BZR_secondbrain = (() => {
@@ -170,6 +170,7 @@ var BZR_secondbrain = (() => {
     <div class="bz-sb-panel-btns">
       <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-chat" aria-label="AI 对话" title="AI 对话">${ic("message-square", 14)}</button>
       <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-ref" aria-label="灵感参考" title="灵感参考">${ic("radar", 14)}</button>
+      <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-panel-close" aria-label="关闭" title="关闭">${ic("x", 14)}</button>
     </div>
   </div>
   <div class="bz-sb-panel-body">

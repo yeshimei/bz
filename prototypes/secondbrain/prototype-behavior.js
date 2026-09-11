@@ -1,4 +1,4 @@
-/* 源指纹 774616dc7d42a517 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ac377b8e6ee1d3be · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
@@ -6156,6 +6156,7 @@ var BZW_secondbrain = (() => {
     <div class="bz-sb-panel-btns">
       <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-chat" aria-label="AI 对话" title="AI 对话">${ic("message-square", 14)}</button>
       <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-ref" aria-label="灵感参考" title="灵感参考">${ic("radar", 14)}</button>
+      <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-panel-close" aria-label="关闭" title="关闭">${ic("x", 14)}</button>
     </div>
   </div>
   <div class="bz-sb-panel-body">
@@ -6516,27 +6517,28 @@ var BZW_secondbrain = (() => {
         }
         /** 组装弹窗 DOM（markup 全部出自 render.ts；本方法只绑定事件） */
         createUI() {
-          var _a2, _b2, _c, _d, _e;
+          var _a2, _b2, _c, _d, _e, _f;
           if (this.mask && document.body.contains(this.mask)) return;
           const mask = document.createElement("div");
           mask.className = "bz-sb-panel-mask";
           mask.onclick = () => this.close();
           const popup = document.createElement("div");
-          popup.className = "bz-sb-panel";
+          popup.className = "bz-sb-panel bz-panel-mtop";
           popup.innerHTML = panelShellHtml();
-          (_a2 = popup.querySelector("#bz-sb-open-chat")) == null ? void 0 : _a2.addEventListener("click", () => {
+          (_a2 = popup.querySelector("#bz-sb-panel-close")) == null ? void 0 : _a2.addEventListener("click", () => this.close());
+          (_b2 = popup.querySelector("#bz-sb-open-chat")) == null ? void 0 : _b2.addEventListener("click", () => {
             this.close();
             this.opts.onOpenChat();
           });
-          (_b2 = popup.querySelector("#bz-sb-open-ref")) == null ? void 0 : _b2.addEventListener("click", () => {
+          (_c = popup.querySelector("#bz-sb-open-ref")) == null ? void 0 : _c.addEventListener("click", () => {
             this.close();
             this.opts.onOpenReference();
           });
-          (_c = popup.querySelector("#bz-sb-incr")) == null ? void 0 : _c.addEventListener("click", () => {
+          (_d = popup.querySelector("#bz-sb-incr")) == null ? void 0 : _d.addEventListener("click", () => {
             if (this.refreshing || this.initializing) return;
             void this.runIncremental();
           });
-          (_d = popup.querySelector("#bz-sb-rebuild")) == null ? void 0 : _d.addEventListener("click", () => {
+          (_e = popup.querySelector("#bz-sb-rebuild")) == null ? void 0 : _e.addEventListener("click", () => {
             void openFlowDialog({
               title: "重新索引",
               message: "将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？",
@@ -6550,7 +6552,7 @@ var BZW_secondbrain = (() => {
           });
           const initBtn = popup.querySelector("#bz-sb-init-btn");
           if (initBtn) initBtn.onclick = () => void this.startInitialIndex();
-          (_e = popup.querySelector("#bz-sb-dist")) == null ? void 0 : _e.addEventListener("click", (e) => {
+          (_f = popup.querySelector("#bz-sb-dist")) == null ? void 0 : _f.addEventListener("click", (e) => {
             const row = e.target.closest(".bz-sb-dist-row--dir");
             if (!row) return;
             const path = row.dataset.path;
