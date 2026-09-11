@@ -4053,6 +4053,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-diary .bz-diary-icon-btn--on:hover {
   background: var(--dw-active-hover);
 }
+/* 头行关闭钮：仅移动端显示（桌面维持 2026-09-10 头行精简口径——ESC/点遮罩关闭） */
+.bz-diary-desk .bz-diary-head-close {
+  display: none;
+}
 
 /* ============ 类型 chips 行 ============ */
 .bz-diary-chiprow {
@@ -4827,8 +4831,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-diary .bz-diary-sheet .bz-sheet-grip {
   margin: var(--bz-space-sm) auto 2px;
 }
+/* 动作行横向 padding 归零：列表内容与头部/正文/媒体缩略左缘对齐（2026-09-11 用户评审） */
 .bz-diary .bz-diary-sheet .bz-sheet-act {
-  padding: var(--bz-space-md) var(--bz-space-sm);
+  padding: var(--bz-space-md) 0;
+  text-align: left;
 }
 .bz-diary .bz-diary-sheet .bz-sheet-act-sub {
   margin-left: auto;
@@ -4878,6 +4884,29 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+/* 抽屉右上角关闭钮（2026-09-11 移动端评审新增；规格同 .bz-diary-icon-btn / datefilter-close：
+   带 .bz-diary 前缀压过 core reset 的全局按钮清零） */
+.bz-diary .bz-diary-sheet-close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: var(--bz-radius-xs);
+  background: none;
+  box-shadow: none;
+  color: var(--dw-muted);
+  font-size: var(--bz-font-body);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--bz-dur-fast);
+}
+.bz-diary .bz-diary-sheet-close:hover {
+  background: var(--dw-surface);
 }
 
 /* ============ 空态 ============ */
@@ -4965,6 +4994,165 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再垫顶 */
   .bz-diary-mob .bz-diary-chiprow {
     padding-bottom: 10px;
+  }
+  /* ---- 2026-09-11 移动端字号体系（按视觉层级定标，替代一刀切倍数） ----
+     六档层级（z 顺序 = 视觉分量）：
+       L1 页面题   书名                22px/600
+       L2 区块题   日期节头            19px/600
+       L3 卡片题   抽屉标题/弹窗题/空态题 17px/600
+       L4 正文     条目正文/markdown/抽屉正文/搜索 15.5px
+       L5 控件辅助 chips 14 · 动作行 15 · 周几/计数 13.5
+       L6 角标小字 时间戳/题注/时长/统计/计数 12px（年份角标 11.5）
+     控件尺寸跟随同级文字（图标 .bz-ic 1em 自缩放）：头行钮 42×46 盒（主界面控件，
+     触控热区另由 .bz-touch-target--xl 外扩）> 弹层关闭钮 32×36 > 播放角标 46 圆。
+     头行钮 !important 必须带：core「.bz-win-head button 统一 22×26/14px」（跨域头行
+     规范）带 !important，无 important 恒被压掉；同为 important 时 (0,3,0) > (0,1,1)。 ---- */
+  /* L1 页面题 + 头行控件 */
+  .bz-diary-mob .bz-diary-bookname {
+    font-size: 22px;
+  }
+  .bz-diary-mob .bz-diary-range {
+    font-size: 13.5px;
+  }
+  .bz-diary .bz-diary-mob .bz-diary-icon-btn {
+    width: 42px !important;
+    height: 46px !important;
+    font-size: 22px !important;
+    flex-shrink: 0;
+  }
+  /* L5 控件：类型 chips（主 14 / 子 13） */
+  .bz-diary .bz-diary-mob .bz-diary-chip {
+    padding: 7px 14px;
+    font-size: 14px;
+    gap: 5px;
+  }
+  .bz-diary-mob .bz-diary-chip-cnt {
+    font-size: 12px;
+  }
+  .bz-diary .bz-diary-mob .bz-diary-subchip {
+    padding: 5px 12px;
+    font-size: 13px;
+    gap: 4px;
+  }
+  /* L4 正文档：搜索框 */
+  .bz-diary-mob .bz-diary-searchrow .bz-input {
+    font-size: 15px;
+    height: 40px;
+  }
+  .bz-diary-mob .bz-diary-searchrow .bz-search .bz-ic {
+    width: 16px;
+    height: 16px;
+  }
+  /* L2 区块题：日期节头（题 19 / 周几 13.5 / 统计 12） */
+  .bz-diary-mob .bz-diary-day-date {
+    font-size: 19px;
+  }
+  .bz-diary-mob .bz-diary-day-week {
+    font-size: 13.5px;
+  }
+  .bz-diary-mob .bz-diary-day-stat {
+    font-size: 12px;
+  }
+  /* L4 正文 + L6 卡内小字 */
+  .bz-diary-mob .bz-diary-text-t {
+    font-size: 12px;
+  }
+  .bz-diary-mob .bz-diary-text-em {
+    font-size: 14px;
+  }
+  .bz-diary-mob .bz-diary-text-tx {
+    font-size: 15.5px;
+  }
+  .bz-diary-mob .bz-diary-md,
+  .bz-diary-mob .bz-diary-wide-md {
+    font-size: 15.5px;
+  }
+  /* 媒体块：题注/时长 = L6，播放角标 46 圆，音频矮条 62px（音符留 ui.ts 内联 28px） */
+  .bz-diary-mob .bz-diary-cap {
+    font-size: 12px;
+  }
+  .bz-diary-mob .bz-diary-dur {
+    font-size: 12px;
+  }
+  .bz-diary-mob .bz-diary-play {
+    width: 46px;
+    height: 46px;
+    font-size: 20px;
+  }
+  .bz-diary-mob .bz-diary-media--audio {
+    height: 62px;
+  }
+  /* 那年今天时光条：区块题 15 / 卡内年份角标 L6 */
+  .bz-diary-mob .bz-diary-memories-head {
+    font-size: 15px;
+  }
+  .bz-diary-mob .bz-diary-memory {
+    width: 124px;
+  }
+  .bz-diary-mob .bz-diary-memory-thumb {
+    font-size: 22px;
+  }
+  .bz-diary-mob .bz-diary-memory-year {
+    font-size: 11.5px;
+  }
+  /* 灯箱：全屏观影层，控件略大于头行钮（44/46），题注副行 L5/L6 */
+  .bz-diary-mob .bz-diary-lbclose {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+  .bz-diary-mob .bz-diary-lbnav {
+    width: 46px;
+    height: 46px;
+  }
+  .bz-diary-mob .bz-diary-lbcap {
+    font-size: 14px;
+  }
+  .bz-diary-mob .bz-diary-lbsub {
+    font-size: 13px;
+  }
+  /* 底部抽屉：题 17 / 正文 14 / 动作行 15（图标盒 24·字 20）/ 右上关闭钮 32×36 */
+  .bz-diary-mob .bz-diary-sheet-emoji {
+    font-size: 22px;
+  }
+  .bz-diary-mob .bz-diary-sheet .bz-sheet-title {
+    font-size: 17px;
+  }
+  .bz-diary-mob .bz-diary-sheet-content {
+    font-size: 14px;
+  }
+  .bz-diary-mob .bz-diary-sheet-thumb {
+    width: 54px;
+    height: 54px;
+  }
+  .bz-diary-mob .bz-diary-sheet .bz-sheet-act {
+    font-size: 15px;
+  }
+  .bz-diary-mob .bz-diary-sheet .bz-sheet-act-ic {
+    width: 24px;
+    font-size: 20px;
+  }
+  .bz-diary-mob .bz-diary-sheet .bz-sheet-act-sub {
+    font-size: 12.5px;
+  }
+  .bz-diary-mob .bz-diary-sheet-close {
+    width: 32px;
+    height: 36px;
+    font-size: 18px;
+  }
+  /* 空态：图 40 / 题 15 / 描述 13 / 按钮 14.5 */
+  .bz-diary-mob .bz-diary-empty-ic {
+    font-size: 40px;
+  }
+  .bz-diary-mob .bz-diary-empty-title {
+    font-size: 15px;
+  }
+  .bz-diary-mob .bz-diary-empty-desc {
+    font-size: 13px;
+  }
+  .bz-diary-mob .bz-diary-empty-btn {
+    font-size: 14.5px;
+    padding: 10px 24px;
   }
 }
 
@@ -5183,6 +5371,42 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
   .bz-diary-datefilter-months {
     grid-template-columns: repeat(3, 1fr);
+  }
+  /* ---- 2026-09-11 移动端字号体系对齐（弹窗挂 body、不在 .bz-diary-mob 内，
+     不能借 .bz-diary-mob 前缀——按断点直给；档位同主面板六档：题 L3 17 / 控件 L5 13~14 /
+     角标 L6 12，关闭钮 32×36 与抽屉关闭钮同规格） ---- */
+  .bz-diary-datefilter-title {
+    font-size: 17px;
+  }
+  .bz-diary-datefilter-label {
+    font-size: 12px;
+  }
+  .bz-diary-datefilter .bz-diary-datefilter-reset {
+    font-size: 13px;
+  }
+  .bz-diary-datefilter .bz-diary-datefilter-close {
+    width: 32px;
+    height: 36px;
+    font-size: 18px;
+  }
+  .bz-diary-datefilter .bz-diary-datefilter-year {
+    padding: 6px 13px;
+    font-size: 13.5px;
+  }
+  .bz-diary-datefilter-year-cnt {
+    font-size: 12px;
+  }
+  .bz-diary-datefilter .bz-diary-datefilter-month {
+    padding: 10px 12px;
+  }
+  .bz-diary-datefilter-month-name {
+    font-size: 14.5px;
+  }
+  .bz-diary-datefilter-month-cnt {
+    font-size: 12px;
+  }
+  .bz-diary-datefilter-hint {
+    font-size: 12.5px;
   }
 }
 
@@ -5601,6 +5825,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-diary .bz-diary-icon-btn--on:hover {
   background: var(--dw-active-hover);
 }
+/* 头行关闭钮：仅移动端显示（桌面维持 2026-09-10 头行精简口径——ESC/点遮罩关闭） */
+.bz-diary-desk .bz-diary-head-close {
+  display: none;
+}
 
 /* ============ 类型 chips 行 ============ */
 .bz-diary-chiprow {
@@ -6375,8 +6603,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-diary .bz-diary-sheet .bz-sheet-grip {
   margin: var(--bz-space-sm) auto 2px;
 }
+/* 动作行横向 padding 归零：列表内容与头部/正文/媒体缩略左缘对齐（2026-09-11 用户评审） */
 .bz-diary .bz-diary-sheet .bz-sheet-act {
-  padding: var(--bz-space-md) var(--bz-space-sm);
+  padding: var(--bz-space-md) 0;
+  text-align: left;
 }
 .bz-diary .bz-diary-sheet .bz-sheet-act-sub {
   margin-left: auto;
@@ -6426,6 +6656,29 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+/* 抽屉右上角关闭钮（2026-09-11 移动端评审新增；规格同 .bz-diary-icon-btn / datefilter-close：
+   带 .bz-diary 前缀压过 core reset 的全局按钮清零） */
+.bz-diary .bz-diary-sheet-close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: var(--bz-radius-xs);
+  background: none;
+  box-shadow: none;
+  color: var(--dw-muted);
+  font-size: var(--bz-font-body);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--bz-dur-fast);
+}
+.bz-diary .bz-diary-sheet-close:hover {
+  background: var(--dw-surface);
 }
 
 /* ============ 空态 ============ */
@@ -6513,6 +6766,165 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再垫顶 */
   .bz-diary-mob .bz-diary-chiprow {
     padding-bottom: 10px;
+  }
+  /* ---- 2026-09-11 移动端字号体系（按视觉层级定标，替代一刀切倍数） ----
+     六档层级（z 顺序 = 视觉分量）：
+       L1 页面题   书名                22px/600
+       L2 区块题   日期节头            19px/600
+       L3 卡片题   抽屉标题/弹窗题/空态题 17px/600
+       L4 正文     条目正文/markdown/抽屉正文/搜索 15.5px
+       L5 控件辅助 chips 14 · 动作行 15 · 周几/计数 13.5
+       L6 角标小字 时间戳/题注/时长/统计/计数 12px（年份角标 11.5）
+     控件尺寸跟随同级文字（图标 .bz-ic 1em 自缩放）：头行钮 42×46 盒（主界面控件，
+     触控热区另由 .bz-touch-target--xl 外扩）> 弹层关闭钮 32×36 > 播放角标 46 圆。
+     头行钮 !important 必须带：core「.bz-win-head button 统一 22×26/14px」（跨域头行
+     规范）带 !important，无 important 恒被压掉；同为 important 时 (0,3,0) > (0,1,1)。 ---- */
+  /* L1 页面题 + 头行控件 */
+  .bz-diary-mob .bz-diary-bookname {
+    font-size: 22px;
+  }
+  .bz-diary-mob .bz-diary-range {
+    font-size: 13.5px;
+  }
+  .bz-diary .bz-diary-mob .bz-diary-icon-btn {
+    width: 42px !important;
+    height: 46px !important;
+    font-size: 22px !important;
+    flex-shrink: 0;
+  }
+  /* L5 控件：类型 chips（主 14 / 子 13） */
+  .bz-diary .bz-diary-mob .bz-diary-chip {
+    padding: 7px 14px;
+    font-size: 14px;
+    gap: 5px;
+  }
+  .bz-diary-mob .bz-diary-chip-cnt {
+    font-size: 12px;
+  }
+  .bz-diary .bz-diary-mob .bz-diary-subchip {
+    padding: 5px 12px;
+    font-size: 13px;
+    gap: 4px;
+  }
+  /* L4 正文档：搜索框 */
+  .bz-diary-mob .bz-diary-searchrow .bz-input {
+    font-size: 15px;
+    height: 40px;
+  }
+  .bz-diary-mob .bz-diary-searchrow .bz-search .bz-ic {
+    width: 16px;
+    height: 16px;
+  }
+  /* L2 区块题：日期节头（题 19 / 周几 13.5 / 统计 12） */
+  .bz-diary-mob .bz-diary-day-date {
+    font-size: 19px;
+  }
+  .bz-diary-mob .bz-diary-day-week {
+    font-size: 13.5px;
+  }
+  .bz-diary-mob .bz-diary-day-stat {
+    font-size: 12px;
+  }
+  /* L4 正文 + L6 卡内小字 */
+  .bz-diary-mob .bz-diary-text-t {
+    font-size: 12px;
+  }
+  .bz-diary-mob .bz-diary-text-em {
+    font-size: 14px;
+  }
+  .bz-diary-mob .bz-diary-text-tx {
+    font-size: 15.5px;
+  }
+  .bz-diary-mob .bz-diary-md,
+  .bz-diary-mob .bz-diary-wide-md {
+    font-size: 15.5px;
+  }
+  /* 媒体块：题注/时长 = L6，播放角标 46 圆，音频矮条 62px（音符留 ui.ts 内联 28px） */
+  .bz-diary-mob .bz-diary-cap {
+    font-size: 12px;
+  }
+  .bz-diary-mob .bz-diary-dur {
+    font-size: 12px;
+  }
+  .bz-diary-mob .bz-diary-play {
+    width: 46px;
+    height: 46px;
+    font-size: 20px;
+  }
+  .bz-diary-mob .bz-diary-media--audio {
+    height: 62px;
+  }
+  /* 那年今天时光条：区块题 15 / 卡内年份角标 L6 */
+  .bz-diary-mob .bz-diary-memories-head {
+    font-size: 15px;
+  }
+  .bz-diary-mob .bz-diary-memory {
+    width: 124px;
+  }
+  .bz-diary-mob .bz-diary-memory-thumb {
+    font-size: 22px;
+  }
+  .bz-diary-mob .bz-diary-memory-year {
+    font-size: 11.5px;
+  }
+  /* 灯箱：全屏观影层，控件略大于头行钮（44/46），题注副行 L5/L6 */
+  .bz-diary-mob .bz-diary-lbclose {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+  .bz-diary-mob .bz-diary-lbnav {
+    width: 46px;
+    height: 46px;
+  }
+  .bz-diary-mob .bz-diary-lbcap {
+    font-size: 14px;
+  }
+  .bz-diary-mob .bz-diary-lbsub {
+    font-size: 13px;
+  }
+  /* 底部抽屉：题 17 / 正文 14 / 动作行 15（图标盒 24·字 20）/ 右上关闭钮 32×36 */
+  .bz-diary-mob .bz-diary-sheet-emoji {
+    font-size: 22px;
+  }
+  .bz-diary-mob .bz-diary-sheet .bz-sheet-title {
+    font-size: 17px;
+  }
+  .bz-diary-mob .bz-diary-sheet-content {
+    font-size: 14px;
+  }
+  .bz-diary-mob .bz-diary-sheet-thumb {
+    width: 54px;
+    height: 54px;
+  }
+  .bz-diary-mob .bz-diary-sheet .bz-sheet-act {
+    font-size: 15px;
+  }
+  .bz-diary-mob .bz-diary-sheet .bz-sheet-act-ic {
+    width: 24px;
+    font-size: 20px;
+  }
+  .bz-diary-mob .bz-diary-sheet .bz-sheet-act-sub {
+    font-size: 12.5px;
+  }
+  .bz-diary-mob .bz-diary-sheet-close {
+    width: 32px;
+    height: 36px;
+    font-size: 18px;
+  }
+  /* 空态：图 40 / 题 15 / 描述 13 / 按钮 14.5 */
+  .bz-diary-mob .bz-diary-empty-ic {
+    font-size: 40px;
+  }
+  .bz-diary-mob .bz-diary-empty-title {
+    font-size: 15px;
+  }
+  .bz-diary-mob .bz-diary-empty-desc {
+    font-size: 13px;
+  }
+  .bz-diary-mob .bz-diary-empty-btn {
+    font-size: 14.5px;
+    padding: 10px 24px;
   }
 }
 
@@ -6731,6 +7143,42 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
   .bz-diary-datefilter-months {
     grid-template-columns: repeat(3, 1fr);
+  }
+  /* ---- 2026-09-11 移动端字号体系对齐（弹窗挂 body、不在 .bz-diary-mob 内，
+     不能借 .bz-diary-mob 前缀——按断点直给；档位同主面板六档：题 L3 17 / 控件 L5 13~14 /
+     角标 L6 12，关闭钮 32×36 与抽屉关闭钮同规格） ---- */
+  .bz-diary-datefilter-title {
+    font-size: 17px;
+  }
+  .bz-diary-datefilter-label {
+    font-size: 12px;
+  }
+  .bz-diary-datefilter .bz-diary-datefilter-reset {
+    font-size: 13px;
+  }
+  .bz-diary-datefilter .bz-diary-datefilter-close {
+    width: 32px;
+    height: 36px;
+    font-size: 18px;
+  }
+  .bz-diary-datefilter .bz-diary-datefilter-year {
+    padding: 6px 13px;
+    font-size: 13.5px;
+  }
+  .bz-diary-datefilter-year-cnt {
+    font-size: 12px;
+  }
+  .bz-diary-datefilter .bz-diary-datefilter-month {
+    padding: 10px 12px;
+  }
+  .bz-diary-datefilter-month-name {
+    font-size: 14.5px;
+  }
+  .bz-diary-datefilter-month-cnt {
+    font-size: 12px;
+  }
+  .bz-diary-datefilter-hint {
+    font-size: 12.5px;
   }
 }
 
