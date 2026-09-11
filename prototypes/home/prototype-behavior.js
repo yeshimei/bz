@@ -1,5 +1,5 @@
-/* 源指纹 2e1a25a5a62fc09e · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
+/* 源指纹 300ce09fabcda1db · 仓内输入 96 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -4654,7 +4654,7 @@ var BZW_home = (() => {
     }
     return fm2;
   }
-  var import_moment2, Platform, TFile, Setting, KEY_PREFIX, FakeVault, FakeMetadataCache, FakeApp, FAKE_COMMANDS;
+  var import_moment2, Platform, TFile, KEY_PREFIX, FakeVault, FakeMetadataCache, FakeApp, FAKE_COMMANDS;
   var init_fake_obsidian = __esm({
     "prototypes/home/fake/fake-obsidian.ts"() {
       import_moment2 = __toESM(require_moment());
@@ -4664,56 +4664,6 @@ var BZW_home = (() => {
         isMobile: typeof window !== "undefined" && window.innerWidth <= 768
       };
       TFile = class {
-      };
-      Setting = class {
-        constructor(_app2, _opts) {
-        }
-        setName() {
-          return this;
-        }
-        setDesc() {
-          return this;
-        }
-        setClass() {
-          return this;
-        }
-        setTooltip() {
-          return this;
-        }
-        addText() {
-          return this;
-        }
-        addTextArea() {
-          return this;
-        }
-        addToggle() {
-          return this;
-        }
-        addDropdown() {
-          return this;
-        }
-        addButton() {
-          return this;
-        }
-        addExtraButton() {
-          return this;
-        }
-        addSlider() {
-          return this;
-        }
-        addSearch() {
-          return this;
-        }
-        addColorPicker() {
-          return this;
-        }
-        addMomentFormat() {
-          return this;
-        }
-        then(cb) {
-          if (cb) cb(this);
-          return this;
-        }
       };
       KEY_PREFIX = "bz-sim:";
       FakeVault = class _FakeVault {
@@ -6308,23 +6258,6 @@ var BZW_home = (() => {
     document.addEventListener("click", swallow, true);
     document.addEventListener("mousedown", disarm, { capture: true, once: true });
   }
-  function createOverlay(opts) {
-    const mask = document.createElement("div");
-    mask.id = opts.maskId;
-    mask.className = "bz-overlay-mask";
-    mask.style.display = "none";
-    mask.onclick = function(e) {
-      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
-    };
-    const popup = document.createElement("div");
-    popup.id = opts.popupId;
-    popup.className = "bz-overlay-popup";
-    popup.style.display = "none";
-    popup.style.width = opts.width || "90%";
-    popup.style.maxWidth = (opts.maxWidth || 400) + "px";
-    topifyZ(mask, popup);
-    return { mask, popup, topify: () => topifyZ(mask, popup) };
-  }
   var init_dom = __esm({
     "src/core/dom.ts"() {
       init_notice();
@@ -7043,6 +6976,15 @@ var BZW_home = (() => {
       residualClickArmed = false;
       touchSettlePending = false;
       touchSettleTimer = null;
+    }
+  });
+
+  // src/core/pomodoro-phase.ts
+  function isFocusingPhase(p) {
+    return p === "focusing" || p === "paused";
+  }
+  var init_pomodoro_phase = __esm({
+    "src/core/pomodoro-phase.ts"() {
     }
   });
 
@@ -12042,982 +11984,7 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
-  // src/core/path-picker.ts
-  function isExcludedPath(p) {
-    if (!p) return false;
-    for (const seg of p.split("/")) {
-      if (EXCLUDED_DIR_NAMES.has(seg)) return true;
-    }
-    return false;
-  }
-  function foldersFromFiles(paths) {
-    const out = /* @__PURE__ */ new Set([""]);
-    for (const p of paths) {
-      if (isExcludedPath(p)) continue;
-      const sep = p.lastIndexOf("/");
-      if (sep === -1) continue;
-      let dir = p.slice(0, sep);
-      while (dir) {
-        if (!isExcludedPath(dir)) out.add(dir);
-        const i = dir.lastIndexOf("/");
-        dir = i === -1 ? "" : dir.slice(0, i);
-      }
-    }
-    return [...out].sort();
-  }
-  async function collectVaultFolders(app) {
-    var _a, _b, _c, _d;
-    const out = /* @__PURE__ */ new Set([""]);
-    try {
-      const files = ((_c = (_b = (_a = app == null ? void 0 : app.vault) == null ? void 0 : _a.getFiles) == null ? void 0 : _b.call(_a)) != null ? _c : []).map((f) => f.path);
-      for (const p of foldersFromFiles(files)) out.add(p);
-    } catch (e) {
-    }
-    const adapter = (_d = app == null ? void 0 : app.vault) == null ? void 0 : _d.adapter;
-    if (adapter && typeof adapter.list === "function") {
-      const walk = async (dir, depth) => {
-        var _a2;
-        if (depth > 40) return;
-        let listed = null;
-        try {
-          listed = await adapter.list(dir);
-        } catch (e) {
-          if (dir === "") {
-            try {
-              listed = await adapter.list("/");
-            } catch (e2) {
-              return;
-            }
-          } else {
-            return;
-          }
-        }
-        for (const f of (_a2 = listed == null ? void 0 : listed.folders) != null ? _a2 : []) {
-          const p = String(f).replace(/^\/+|\/+$/g, "");
-          if (!p) continue;
-          if (isExcludedPath(p)) continue;
-          if (!out.has(p)) out.add(p);
-          await walk(p, depth + 1);
-        }
-      };
-      try {
-        await walk("", 0);
-      } catch (e) {
-      }
-    }
-    return [...out].sort();
-  }
-  function normalizePicked(list) {
-    const out = [];
-    for (const item of list) {
-      const raw = String(item);
-      if (raw === "") {
-        if (!out.includes("")) out.push("");
-        continue;
-      }
-      const trimmed = raw.trim();
-      if (trimmed === "") continue;
-      const p = trimmed.replace(/^\/+|\/+$/g, "");
-      if (p === "") {
-        if (!out.includes("")) out.push("");
-        continue;
-      }
-      if (!out.includes(p)) out.push(p);
-    }
-    return out;
-  }
-  function renderPathChips(container, selected, onChange, emptyText = "未选择", onChipClick) {
-    container.innerHTML = "";
-    container.classList.add("bz-path-picker-chips");
-    if (selected.length === 0) {
-      if (!emptyText) return;
-      const empty = document.createElement("span");
-      empty.className = "bz-path-picker-chips-empty";
-      empty.textContent = emptyText;
-      container.appendChild(empty);
-      return;
-    }
-    for (const path of selected) {
-      const label = path === "" ? "（库根目录）" : path;
-      const chip = document.createElement("span");
-      chip.className = "bz-path-picker-chip" + (onChipClick ? " bz-path-picker-chip--click" : "");
-      chip.title = label;
-      const name = document.createElement("span");
-      name.className = "bz-path-picker-chip-name";
-      name.textContent = label;
-      if (onChipClick) name.onclick = () => onChipClick(path);
-      const x = document.createElement("button");
-      x.className = "bz-path-picker-chip-x";
-      x.textContent = "✕";
-      x.setAttribute("aria-label", `移除 ${label}`);
-      x.onclick = () => onChange(selected.filter((p) => p !== path));
-      chip.appendChild(name);
-      chip.appendChild(x);
-      container.appendChild(chip);
-    }
-  }
-  function renderPathSettingRow(opts) {
-    const readValue = () => {
-      const v = opts.value;
-      return Array.isArray(v) ? [...v] : v ? [v] : [];
-    };
-    let current2 = readValue();
-    const setting = new Setting(opts.parent).setName(opts.name);
-    if (opts.desc) setting.setDesc(opts.desc);
-    setting.settingEl.classList.add("bz-path-picker-setting-row");
-    const chipsWrap = document.createElement("div");
-    chipsWrap.className = "bz-path-picker-chips--setting";
-    const apply = (list) => {
-      const res = opts.onChange(list);
-      if (res && typeof res.then === "function") {
-        return Promise.resolve(res).then((final) => {
-          current2 = Array.isArray(final) ? final : list;
-          renderAll2();
-        });
-      }
-      current2 = Array.isArray(res) ? res : list;
-      renderAll2();
-    };
-    const openPicker = () => openPathPicker({
-      title: opts.pickerTitle || opts.name,
-      desc: opts.pickerDesc,
-      mode: opts.mode,
-      selected: current2,
-      okText: opts.okText,
-      onConfirm: (list) => {
-        void apply(list);
-      }
-    });
-    const render2 = () => renderPathChips(chipsWrap, current2, (next) => {
-      void apply(next);
-    }, "", openPicker);
-    let btn = null;
-    setting.addButton((b) => {
-      b.setButtonText(opts.buttonText || (opts.mode === "multi" ? "添加…" : "选择…")).onClick(openPicker);
-      b.buttonEl.classList.add("bz-path-picker-btn--slim");
-      btn = b.buttonEl;
-    });
-    const control = setting.settingEl.querySelector(".setting-item-control");
-    if (control) control.appendChild(chipsWrap);
-    const syncBtn = () => {
-      setting.settingEl.dataset.filled = current2.length > 0 ? "1" : "0";
-      if (!btn || !control) return;
-      if (current2.length === 0) {
-        if (!btn.isConnected) control.appendChild(btn);
-      } else if (btn.isConnected) {
-        btn.remove();
-      }
-    };
-    const renderAll2 = () => {
-      syncBtn();
-      render2();
-    };
-    const refresh = () => {
-      current2 = readValue();
-      renderAll2();
-    };
-    renderAll2();
-    return { refresh, settingEl: setting.settingEl };
-  }
-  function closePathPicker() {
-    if (currentMask) {
-      currentMask.remove();
-      currentMask = null;
-    }
-    if (currentPopup) {
-      currentPopup.remove();
-      currentPopup = null;
-    }
-    if (currentHandle) {
-      currentHandle.unregister();
-      currentHandle = null;
-    }
-    if (focusTimer !== null) {
-      window.clearTimeout(focusTimer);
-      focusTimer = null;
-    }
-  }
-  function openPathPicker(opts) {
-    var _a, _b, _c;
-    closePathPicker();
-    const app = getApp();
-    const mode = opts.mode || "single";
-    const selected = new Set(normalizePicked(opts.selected || []));
-    const pinnedAtOpen = [...selected];
-    const { mask, popup } = createOverlay({
-      maskId: "bz-path-picker-mask",
-      popupId: "bz-path-picker-popup",
-      // ticket 133：桌面/移动端统一一张居中卡——左右各 16px 外边距，宽视口封顶 440px（不分两套样式）
-      width: "min(calc(100vw - 32px), 440px)",
-      maxWidth: 440,
-      onMaskClick: () => closePathPicker()
-    });
-    currentMask = mask;
-    currentPopup = popup;
-    popup.classList.add("bz-path-picker");
-    popup.style.height = "min(560px, 82vh)";
-    const head = document.createElement("div");
-    head.className = "bz-path-picker-head";
-    const title = document.createElement("h3");
-    title.className = "bz-path-picker-title";
-    title.textContent = opts.title || "选择文件夹";
-    head.appendChild(title);
-    if (opts.desc) {
-      const desc = document.createElement("div");
-      desc.className = "bz-path-picker-desc";
-      desc.textContent = opts.desc;
-      head.appendChild(desc);
-    }
-    const search = document.createElement("input");
-    search.type = "text";
-    search.className = "bz-path-picker-search";
-    search.placeholder = "搜索目录…";
-    search.spellcheck = false;
-    search.setAttribute("aria-label", "搜索目录");
-    const listEl = document.createElement("div");
-    listEl.className = "bz-path-picker-list";
-    const state2 = { folders: [], q: "" };
-    const foot = document.createElement("div");
-    foot.className = "bz-path-picker-foot";
-    const selinfo = document.createElement("span");
-    selinfo.className = "bz-path-picker-selinfo";
-    const btns = document.createElement("div");
-    btns.className = "bz-path-picker-foot-btns";
-    foot.appendChild(selinfo);
-    foot.appendChild(btns);
-    const mkBtn = (label, primary, onclick) => {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.className = "bz-path-picker-btn" + (primary ? " bz-path-picker-btn--primary" : "");
-      b.onclick = onclick;
-      btns.appendChild(b);
-      return b;
-    };
-    if (mode === "multi") mkBtn("清空", false, () => {
-      selected.clear();
-      renderList();
-      updateSel();
-    });
-    mkBtn(opts.okText || "下一步", true, () => {
-      const list = normalizePicked([...selected]);
-      closePathPicker();
-      opts.onConfirm(list);
-    });
-    function orderedList() {
-      const pinned = [];
-      const rest = [];
-      const pinSet = new Set(pinnedAtOpen);
-      for (const f of state2.folders) {
-        if (pinSet.has(f)) pinned.push(f);
-        else rest.push(f);
-      }
-      const rootIdx = rest.indexOf("");
-      const root = rootIdx >= 0 ? rest.splice(rootIdx, 1)[0] : null;
-      rest.reverse();
-      return [...pinned, ...root === null ? [] : [root], ...rest];
-    }
-    function renderList() {
-      listEl.innerHTML = "";
-      const q = state2.q.trim().toLowerCase();
-      const exact = !!q && state2.folders.includes(q);
-      const LIMIT = 300;
-      let n = 0;
-      let total = 0;
-      for (const folder of orderedList()) {
-        if (q && !exact && !folder.toLowerCase().includes(q)) continue;
-        total++;
-        if (n >= LIMIT) continue;
-        n++;
-        const on = selected.has(folder);
-        const row = document.createElement("div");
-        row.className = "bz-path-picker-row" + (on ? " bz-path-picker-row--sel" : "");
-        row.dataset.path = folder;
-        row.setAttribute("role", mode === "multi" ? "checkbox" : "option");
-        row.setAttribute("aria-checked", on ? "true" : "false");
-        const box = document.createElement("span");
-        box.className = "bz-path-picker-check";
-        box.textContent = on ? "✓" : "";
-        const name = document.createElement("span");
-        name.className = "bz-path-picker-name";
-        name.textContent = folder === "" ? "（库根目录）" : folder;
-        name.title = folder === "" ? "（库根目录）" : folder;
-        row.appendChild(box);
-        row.appendChild(name);
-        row.onclick = () => {
-          if (mode === "single") {
-            selected.clear();
-            selected.add(folder);
-          } else if (selected.has(folder)) {
-            selected.delete(folder);
-          } else {
-            selected.add(folder);
-          }
-          renderList();
-          updateSel();
-        };
-        listEl.appendChild(row);
-      }
-      if (!total) {
-        const empty = document.createElement("div");
-        empty.className = "bz-path-picker-empty";
-        empty.textContent = "没有匹配的目录";
-        listEl.appendChild(empty);
-      } else if (total > LIMIT) {
-        const more = document.createElement("div");
-        more.className = "bz-path-picker-empty";
-        more.textContent = `已显示前 ${LIMIT} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
-        listEl.appendChild(more);
-      }
-    }
-    function updateSel() {
-      if (mode === "single") {
-        const first = [...selected][0];
-        selinfo.textContent = first === void 0 ? "未选择" : first === "" ? "已选（库根目录）" : `已选 ${first}`;
-      } else {
-        selinfo.textContent = `已选 ${selected.size} 项`;
-      }
-    }
-    search.oninput = () => {
-      state2.q = search.value;
-      renderList();
-    };
-    try {
-      const files = ((_c = (_b = (_a = app == null ? void 0 : app.vault) == null ? void 0 : _a.getFiles) == null ? void 0 : _b.call(_a)) != null ? _c : []).map((f) => f.path);
-      state2.folders = foldersFromFiles(files);
-    } catch (e) {
-    }
-    void collectVaultFolders(app).then((folders) => {
-      if (!mask.isConnected) return;
-      state2.folders = folders;
-      popup.dataset.ready = "1";
-      renderList();
-    });
-    renderList();
-    updateSel();
-    popup.append(head, search, listEl, foot);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    currentHandle = escManager.register("bz-path-picker", {
-      isVisible: () => !!currentMask,
-      close: () => closePathPicker()
-    });
-    focusTimer = window.setTimeout(() => {
-      focusTimer = null;
-      if (mask.isConnected) search.focus();
-    }, 30);
-  }
-  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer;
-  var init_path_picker = __esm({
-    "src/core/path-picker.ts"() {
-      init_fake_obsidian();
-      init_app();
-      init_dom();
-      init_esc_manager();
-      EXCLUDED_DIR_NAMES = /* @__PURE__ */ new Set([".obsidian", ".trash", "node_modules", ".git"]);
-      currentMask = null;
-      currentPopup = null;
-      currentHandle = null;
-      focusTimer = null;
-    }
-  });
-
-  // src/core/settings-schema.ts
-  function bindValue(binding) {
-    if ("key" in binding) {
-      const key = binding.key;
-      return {
-        read: () => getSettings()[key],
-        write: (v) => {
-          getSettings()[key] = v;
-        },
-        persist: () => saveSettings()
-      };
-    }
-    return { read: () => binding.get(), write: (v) => binding.set(v), persist: () => binding.save() };
-  }
-  function currentSnapshot() {
-    return tryGetSettings();
-  }
-  function parseClampedNumber(raw, min, max) {
-    const trimmed = raw.trim();
-    if (trimmed === "") return null;
-    const n = Number(trimmed);
-    if (!Number.isFinite(n)) return null;
-    let out = n;
-    if (min !== void 0) out = Math.max(min, out);
-    if (max !== void 0) out = Math.min(max, out);
-    return out;
-  }
-  function renderSettingsInto(container, schema) {
-    var _a;
-    const entries = [];
-    const customRefreshes = [];
-    const reevaluate = () => {
-      const snap = currentSnapshot();
-      for (const e of entries) {
-        e.el.classList.toggle("bz-setting-hidden", e.visibleWhen ? !e.visibleWhen(snap) : false);
-      }
-      for (const fn of customRefreshes) {
-        try {
-          fn();
-        } catch (e) {
-        }
-      }
-      refreshSettingsGroupCounts(container);
-      markSettingSplitRows(container);
-    };
-    const newRowSetting = (body, row) => {
-      const setting = new Setting(body).setName(row.name);
-      if (row.desc) setting.setDesc(row.desc);
-      if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
-      return setting;
-    };
-    const renderTextualRow = (body, row) => {
-      var _a2;
-      const ctx = { rowEl: body, refreshVisibility: reevaluate };
-      const setting = newRowSetting(body, row);
-      const isNumber = row.type === "number";
-      const acc = isNumber ? bindValue(row.binding) : bindValue(row.binding);
-      const changeCb = row.onChange;
-      const initial = String((_a2 = acc.read()) != null ? _a2 : "");
-      let pending = null;
-      let last = initial;
-      let dirty = false;
-      const warn = new CommitWarn(initial, row.onCommit);
-      const commit = () => {
-        if (pending !== null) {
-          clearTimeout(pending);
-          pending = null;
-        }
-        if (!dirty) return;
-        void acc.persist();
-        warn.fire(last);
-        reevaluate();
-      };
-      let currentText = null;
-      const addInto = (t) => {
-        currentText = t;
-        t.setValue(initial);
-        const place = (snap) => typeof row.placeholder === "function" ? row.placeholder(snap) : row.placeholder;
-        const applyPlaceholder = () => {
-          if (t.setPlaceholder) {
-            const p = place(currentSnapshot());
-            if (p !== void 0) t.setPlaceholder(p);
-          }
-        };
-        applyPlaceholder();
-        t.onChange((v) => {
-          dirty = true;
-          if (isNumber) {
-            const n = parseClampedNumber(v, row.min, row.max);
-            if (n === null) return;
-            acc.write(n);
-          } else {
-            acc.write(v);
-          }
-          last = v;
-          changeCb == null ? void 0 : changeCb(isNumber ? acc.read() : v, ctx);
-          if (pending !== null) clearTimeout(pending);
-          pending = setTimeout(commit, TEXT_COMMIT_DELAY);
-        });
-        const inputEl = t.inputEl;
-        if (inputEl) {
-          if (isNumber) {
-            const num = row;
-            inputEl.type = "number";
-            if (num.min !== void 0) inputEl.min = String(num.min);
-            if (num.max !== void 0) inputEl.max = String(num.max);
-            if (num.step !== void 0) inputEl.step = String(num.step);
-          }
-          inputEl.addEventListener("blur", commit);
-          if (row.type !== "textarea") {
-            inputEl.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") commit();
-            });
-          }
-        }
-        if (typeof row.placeholder === "function") {
-          const origReevaluate = ctx.refreshVisibility;
-          ctx.refreshVisibility = () => {
-            applyPlaceholder();
-            origReevaluate();
-          };
-        }
-        if (row.refreshKey !== void 0) {
-          const ref = row.refreshKey;
-          customRefreshes.push(() => {
-            if (currentText) {
-              const snap = currentSnapshot();
-              const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
-              if (currentText.setValue) {
-                dirty = false;
-                currentText.setValue(String(fresh != null ? fresh : ""));
-              }
-            }
-          });
-        }
-      };
-      const actions = row.actions;
-      if (actions) {
-        for (const a of actions) {
-          setting.addButton((b) => {
-            if (a.cta) b.setCta();
-            b.setButtonText(a.text).onClick(() => {
-              void (async () => {
-                var _a3;
-                await a.onClick(last, ctx);
-                if (currentText && currentText.setValue) {
-                  dirty = false;
-                  currentText.setValue(String((_a3 = acc.read()) != null ? _a3 : ""));
-                }
-                reevaluate();
-              })();
-            });
-          });
-        }
-      }
-      if (row.type === "text") setting.addText(addInto);
-      else if (row.type === "textarea") setting.addTextArea(addInto);
-      else setting.addText(addInto);
-    };
-    const renderRow = (body, rowArg, parentToggleKey) => {
-      var _a2, _b, _c;
-      const ctx = { rowEl: body, refreshVisibility: reevaluate };
-      let row = rowArg;
-      if (row.isChild && parentToggleKey) {
-        row = {
-          ...row,
-          visibleWhen: (snap) => snap[parentToggleKey] === true && (rowArg.visibleWhen ? rowArg.visibleWhen(snap) : true)
-        };
-      }
-      switch (row.type) {
-        case "custom": {
-          const wrap = document.createElement("div");
-          body.appendChild(wrap);
-          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
-          row.render(wrap, { rowEl: wrap, refreshVisibility: reevaluate });
-          if (row.onRefresh) customRefreshes.push(() => row.onRefresh({ rowEl: wrap, refreshVisibility: reevaluate }));
-          return;
-        }
-        case "path": {
-          const acc = bindValue(row.binding);
-          const multi = row.mode === "multi";
-          const initialRaw = acc.read();
-          const initialKey = multi ? JSON.stringify(initialRaw != null ? initialRaw : []) : String(initialRaw != null ? initialRaw : "");
-          const warn = new CommitWarn(initialKey, row.onCommit);
-          const wrap = document.createElement("div");
-          body.appendChild(wrap);
-          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
-          renderPathSettingRow({
-            parent: wrap,
-            name: row.name,
-            desc: row.desc,
-            mode: row.mode,
-            value: multi ? Array.isArray(initialRaw) ? [...initialRaw] : [] : String(initialRaw != null ? initialRaw : ""),
-            pickerTitle: row.pickerTitle,
-            pickerDesc: row.pickerDesc,
-            buttonText: row.buttonText,
-            okText: row.okText,
-            emptyText: row.emptyText,
-            onChange: (list) => {
-              var _a3;
-              const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
-              acc.write(v);
-              void acc.persist();
-              const res = (_a3 = row.onChange) == null ? void 0 : _a3.call(row, list, ctx);
-              warn.fire(multi ? JSON.stringify(v) : String(v));
-              reevaluate();
-              if (res && typeof res.then === "function") {
-                return Promise.resolve(res).then(
-                  (final) => Array.isArray(final) ? final : list
-                );
-              }
-              return Array.isArray(res) ? res : void 0;
-            }
-          });
-          return;
-        }
-        case "toggle": {
-          const acc = bindValue(row.binding);
-          const setting = newRowSetting(body, row);
-          setting.addToggle(
-            (t) => t.setValue(acc.read() === true).onChange(async (v) => {
-              var _a3;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
-            })
-          );
-          return;
-        }
-        case "select": {
-          const acc = bindValue(row.binding);
-          const setting = newRowSetting(body, row);
-          setting.addDropdown((dd) => {
-            var _a3;
-            for (const opt of row.options) dd.addOption(opt.value, opt.label);
-            dd.setValue(String((_a3 = acc.read()) != null ? _a3 : "") || row.options[0].value);
-            dd.onChange(async (v) => {
-              var _a4;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
-            });
-          });
-          return;
-        }
-        case "choiceCards": {
-          const acc = bindValue(row.binding);
-          const setting = newRowSetting(body, row);
-          const pick = uiCardChoice({
-            value: String((_a2 = acc.read()) != null ? _a2 : "") || row.options[0].value,
-            options: row.options,
-            label: row.name,
-            onChange: async (v) => {
-              var _a3;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
-            }
-          });
-          setting.controlEl.appendChild(pick.el);
-          return;
-        }
-        case "slider": {
-          const acc = bindValue(row.binding);
-          const setting = newRowSetting(body, row);
-          setting.addSlider((sl) => {
-            var _a3;
-            sl.setLimits(row.min, row.max, (_a3 = row.step) != null ? _a3 : 1);
-            sl.setValue(Number(acc.read()) || 0);
-            sl.setDynamicTooltip();
-            sl.onChange(async (v) => {
-              var _a4;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
-            });
-          });
-          for (const a of (_b = row.actions) != null ? _b : []) {
-            setting.addButton((b) => {
-              if (a.cta) b.setCta();
-              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
-            });
-          }
-          return;
-        }
-        case "button": {
-          const setting = newRowSetting(body, row);
-          setting.addButton((b) => {
-            if (row.cta) b.setCta();
-            b.setButtonText(row.buttonText).onClick(() => row.onClick(ctx));
-          });
-          setting.settingEl.classList.add("bz-setting-action-row");
-          return;
-        }
-        case "info": {
-          const setting = newRowSetting(body, row);
-          for (const a of (_c = row.actions) != null ? _c : []) {
-            setting.addButton((b) => {
-              if (a.cta) b.setCta();
-              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
-            });
-          }
-          return;
-        }
-        case "list": {
-          const wrap = document.createElement("div");
-          wrap.className = "bz-setlist-wrap";
-          body.appendChild(wrap);
-          const setting = new Setting(wrap).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
-          const box = document.createElement("div");
-          box.className = "bz-setlist";
-          wrap.appendChild(box);
-          const readItems = () => typeof row.items === "function" ? row.items() : row.items;
-          const renderItems = () => {
-            const items = readItems();
-            box.innerHTML = "";
-            if (items.length === 0) {
-              if (row.emptyText) {
-                const empty = document.createElement("div");
-                empty.className = "bz-setlist-empty";
-                empty.textContent = row.emptyText;
-                box.appendChild(empty);
-              }
-              return;
-            }
-            for (const it of items) {
-              const item = document.createElement("div");
-              item.className = "bz-setlist-item";
-              item.dataset.key = it.key;
-              if (it.imageUrl) {
-                const img = document.createElement("img");
-                img.className = "bz-setlist-avatar";
-                img.src = it.imageUrl;
-                img.alt = "";
-                img.onerror = () => img.remove();
-                item.appendChild(img);
-              }
-              const text = document.createElement("div");
-              text.className = "bz-setlist-text";
-              const name = document.createElement("div");
-              name.className = "bz-setlist-name";
-              name.textContent = it.label;
-              text.appendChild(name);
-              if (it.sub) {
-                const sub = document.createElement("div");
-                sub.className = "bz-setlist-sub";
-                sub.textContent = it.sub;
-                text.appendChild(sub);
-              }
-              item.appendChild(text);
-              const remove = document.createElement("button");
-              remove.className = "bz-setlist-remove bz-touch-target--xl";
-              remove.textContent = row.removeLabel || "移除";
-              remove.onclick = () => {
-                void (async () => {
-                  var _a3;
-                  const remaining = readItems().map((x) => x.key).filter((k) => k !== it.key);
-                  await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, remaining, ctx));
-                  renderItems();
-                  reevaluate();
-                })();
-              };
-              item.appendChild(remove);
-              box.appendChild(item);
-            }
-          };
-          renderItems();
-          return;
-        }
-        case "text":
-        case "textarea":
-        case "number":
-          renderTextualRow(body, row);
-          return;
-      }
-    };
-    const renderGroupRows = (body, rows) => {
-      var _a2, _b;
-      const firstToggleKey = (_b = (_a2 = rows.find((r) => r.type === "toggle" && "key" in r.binding)) == null ? void 0 : _a2.binding.key) != null ? _b : null;
-      for (const row of rows) renderRow(body, row, firstToggleKey);
-    };
-    for (const group of schema.groups) {
-      if (group.icon) {
-        const body = createSettingsGroup(container, { icon: group.icon, name: group.name });
-        const groupEl = (_a = body.parentElement) != null ? _a : container;
-        if (group.visibleWhen) entries.push({ el: groupEl, visibleWhen: group.visibleWhen });
-        renderGroupRows(body, group.rows);
-      } else {
-        const title = document.createElement("div");
-        title.className = "bz-setting-section-title";
-        title.textContent = group.name;
-        container.appendChild(title);
-        if (group.visibleWhen) entries.push({ el: title, visibleWhen: group.visibleWhen });
-        renderGroupRows(container, group.rows);
-      }
-    }
-    reevaluate();
-    return { refresh: reevaluate };
-  }
-  var TEXT_COMMIT_DELAY, CommitWarn;
-  var init_settings_schema2 = __esm({
-    "src/core/settings-schema.ts"() {
-      init_fake_obsidian();
-      init_settings_provider();
-      init_path_picker();
-      init_settings_modal();
-      init_ui();
-      TEXT_COMMIT_DELAY = 800;
-      CommitWarn = class {
-        constructor(initial, onCommit) {
-          this.initial = initial;
-          this.onCommit = onCommit;
-          this.warnedInitial = null;
-        }
-        fire(current2) {
-          if (!this.onCommit) return;
-          if (current2 !== this.initial) {
-            if (this.warnedInitial !== this.initial) {
-              this.warnedInitial = this.initial;
-              this.onCommit();
-            }
-          } else {
-            this.warnedInitial = null;
-          }
-        }
-      };
-    }
-  });
-
-  // src/core/settings-modal.ts
-  function createSettingsGroup(container, opts) {
-    const group = document.createElement("div");
-    group.className = "bz-settings-group";
-    const head = document.createElement("div");
-    head.className = "bz-settings-group-head";
-    const icon2 = document.createElement("span");
-    icon2.className = "bz-settings-group-icon";
-    setIcon(icon2, opts.icon);
-    const name = document.createElement("span");
-    name.className = "bz-settings-group-name";
-    name.textContent = opts.name;
-    const count = document.createElement("span");
-    count.className = "bz-settings-group-count";
-    count.textContent = "0 项";
-    head.append(icon2, name, count);
-    const body = document.createElement("div");
-    body.className = "bz-settings-group-body";
-    group.append(head, body);
-    container.appendChild(group);
-    return body;
-  }
-  function isItemHidden(el) {
-    let cur = el;
-    while (cur && cur !== document.body) {
-      if (cur.classList.contains("bz-setting-hidden")) return true;
-      if (cur.style.display === "none") return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-  function refreshSettingsGroupCounts(content) {
-    content.querySelectorAll(".bz-settings-group").forEach((g) => {
-      const body = g.querySelector(".bz-settings-group-body");
-      const countEl = g.querySelector(".bz-settings-group-count");
-      if (!body || !countEl) return;
-      const n = [...body.querySelectorAll(".setting-item")].filter((el) => {
-        const h = el;
-        return !h.classList.contains("bz-setting-action-row") && !isItemHidden(h);
-      }).length;
-      countEl.textContent = `${n} 项`;
-      countEl.style.display = n > 0 ? "" : "none";
-    });
-  }
-  function markSettingSplitRows(container) {
-    container.querySelectorAll(".setting-item").forEach((el) => {
-      if (el.classList.contains("bz-path-picker-setting-row")) return;
-      const ctl = el.querySelector(".setting-item-control");
-      el.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
-    });
-  }
-  function closeSettingsModal() {
-    var _a;
-    if (currentModal) {
-      const m = currentModal;
-      currentModal = null;
-      m.dispose();
-      (_a = m.onClose) == null ? void 0 : _a.call(m);
-    }
-  }
-  function openSettingsModal(opts) {
-    var _a;
-    closeSettingsModal();
-    const prevActive = document.activeElement;
-    const { mask, popup } = createOverlay({
-      maskId: "bz-settings-modal-mask",
-      popupId: "bz-settings-modal-popup",
-      // z-index 动态发号（ADR-0067）：原静态层规家族表随动态层级制退役，
-      // 全站规则只有一条——谁后显示谁在上（settings-modal 每次打开新建 DOM，创建即显示）
-      maxWidth: opts.maxWidth,
-      onMaskClick: () => closeSettingsModal()
-    });
-    const header = document.createElement("div");
-    header.className = "bz-settings-header";
-    const title = document.createElement("h3");
-    title.className = "bz-settings-title";
-    title.textContent = opts.title;
-    header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    renderSettingsInto(content, (_a = opts.schema) != null ? _a : { groups: [] });
-    const hasVisibleItem = Array.from(content.querySelectorAll(".setting-item")).some(
-      (el) => !el.classList.contains("bz-setting-action-row") && !isItemHidden(el)
-    );
-    if (!hasVisibleItem) {
-      content.innerHTML = "";
-      const empty = document.createElement("div");
-      empty.className = "bz-settings-empty";
-      empty.textContent = opts.emptyText || "暂无设置项";
-      if (opts.emptyDesc) {
-        const desc = document.createElement("div");
-        desc.className = "bz-settings-empty-desc";
-        desc.textContent = opts.emptyDesc;
-        empty.appendChild(desc);
-      }
-      content.appendChild(empty);
-    }
-    popup.appendChild(header);
-    popup.appendChild(content);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-modal", "true");
-    const firstFocusable = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR)).find((el) => {
-      if (isItemHidden(el)) return false;
-      if (isMobileEnv()) {
-        const tag = el.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return false;
-      }
-      return true;
-    });
-    if (firstFocusable) firstFocusable.focus();
-    const handle = escManager.register("bz-settings-modal", {
-      isVisible: () => !!currentModal,
-      close: () => closeSettingsModal()
-    });
-    currentModal = {
-      mask,
-      popup,
-      onClose: opts.onClose,
-      dispose: () => {
-        mask.remove();
-        popup.remove();
-        handle.unregister();
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-    };
-  }
-  var FOCUSABLE_SELECTOR, currentModal;
-  var init_settings_modal = __esm({
-    "src/core/settings-modal.ts"() {
-      init_fake_obsidian();
-      init_dom();
-      init_esc_manager();
-      init_mobile();
-      init_settings_schema2();
-      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-      currentModal = null;
-    }
-  });
-
   // src/core/settings-common.ts
-  function numStrBinding(key, def) {
-    return {
-      get: () => {
-        const raw = tryGetSettings()[key];
-        if (raw === "" || raw === null || raw === void 0) return def;
-        const n = Number(raw);
-        return Number.isFinite(n) && n > 0 ? n : def;
-      },
-      set: (v) => {
-        getSettings()[key] = String(v);
-      },
-      save: () => saveSettings()
-    };
-  }
   var init_settings_common = __esm({
     "src/core/settings-common.ts"() {
       init_notice();
@@ -13109,16 +12076,6 @@ ${n.content.slice(0, 2e3)}
     const today = dayKey(now);
     return Math.round(history2.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
   }
-  function todayHourBuckets(history2, now) {
-    const buckets = Array.from({ length: 12 }, (_, i) => ({ hour: i * 2, count: 0 }));
-    const today = dayKey(now);
-    for (const h of history2) {
-      if (dayKey(h.ts) !== today) continue;
-      const hour = new Date(h.ts).getHours();
-      buckets[Math.min(11, Math.floor(hour / 2))].count += 1;
-    }
-    return buckets;
-  }
   function last7Days(history2, now) {
     const counts = /* @__PURE__ */ new Map();
     const minutes = /* @__PURE__ */ new Map();
@@ -13172,6 +12129,14 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/pomodoro/ui.ts
+  function applySkinClass() {
+    var _a;
+    const popup = document.getElementById("pomodoro-popup");
+    if (!popup) return;
+    const cur = String((_a = tryGetSettings().pomodoroSkinTheme) != null ? _a : "");
+    const skin = POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : "tomato";
+    for (const t of POMODORO_SKIN_THEMES) popup.classList.toggle(`pomodoro-skin-${t.value}`, t.value === skin);
+  }
   function durations() {
     const s = tryGetSettings();
     const num = (v, def) => {
@@ -13274,11 +12239,9 @@ ${n.content.slice(0, 2e3)}
     const todayEl = document.getElementById("pomodoro-today");
     if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
     const weekEl = document.getElementById("pomodoro-week");
-    const hoursEl = document.getElementById("pomodoro-hours");
-    if (!weekEl || !hoursEl) return;
+    if (!weekEl) return;
     const days = last7Days(history, now);
-    const buckets = todayHourBuckets(history, now);
-    const key = days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",") + "|" + buckets.map((b) => b.count).join(",");
+    const key = days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
     if (key === lastStatsKey) return;
     lastStatsKey = key;
     const max = Math.max(1, ...days.map((d) => d.count));
@@ -13295,19 +12258,10 @@ ${n.content.slice(0, 2e3)}
       col.appendChild(h);
       const label = document.createElement("span");
       label.className = "pomodoro-stat-label";
-      label.textContent = d.date.slice(5);
+      label.textContent = d.date.slice(8);
       col.appendChild(label);
       bar.appendChild(col);
       weekEl.appendChild(bar);
-    }
-    hoursEl.innerHTML = "";
-    const hmax = Math.max(1, ...buckets.map((b) => b.count));
-    for (const b of buckets) {
-      const bar = document.createElement("div");
-      bar.className = "pomodoro-hour-bar" + (b.count > 0 ? " pomodoro-hour-bar-on" : "");
-      bar.title = `${pad2(b.hour)}–${pad2(b.hour + 2)} 时 · ${b.count} 个`;
-      bar.style.height = `${Math.max(2, Math.round(b.count / hmax * 20))}px`;
-      hoursEl.appendChild(bar);
     }
   }
   function render() {
@@ -13346,6 +12300,7 @@ ${n.content.slice(0, 2e3)}
     if (timeEl) timeEl.textContent = fmt(remain);
     renderStats();
     updateButtons();
+    applySkinClass();
   }
   function renderCycleDots(d) {
     const cycleEl = document.getElementById("pomodoro-cycle");
@@ -13481,148 +12436,12 @@ ${n.content.slice(0, 2e3)}
     if (mainChanged) await dataManager2.save({ version: 1, state, history });
     loaded = true;
   }
-  function openPomodoroSettings() {
-    openSettingsModal({ title: "番茄钟设置", maxWidth: 560, schema: pomodoroSettingsSchema() });
-  }
-  function pomodoroSettingsSchema() {
-    const soundToggle = {
-      get: () => tryGetSettings().pomodoroSound !== false,
-      set: (v) => {
-        getSettings().pomodoroSound = v;
-      },
-      save: () => saveSettings()
-    };
-    const autoPauseToggle = {
-      get: () => tryGetSettings().pomodoroAutoPauseOnHide !== false,
-      set: (v) => {
-        getSettings().pomodoroAutoPauseOnHide = v;
-      },
-      save: () => saveSettings()
-    };
-    return {
-      groups: [
-        {
-          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
-          icon: "palette",
-          name: "外观",
-          rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "pomodoroSkin" }, options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }] },
-            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: [{ value: "tomato", label: "番茄", layout: "default", prevClass: "bz-sp-prev-tomato" }] }
-          ]
-        },
-        {
-          icon: "timer",
-          name: "时间方案",
-          rows: [
-            {
-              type: "select",
-              name: "预设方案",
-              desc: "选择现成的工作与休息时长组合",
-              binding: { key: "pomodoroPreset" },
-              options: [
-                ...Object.entries(PRESETS).map(([id, p]) => ({
-                  value: id,
-                  label: `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`
-                })),
-                { value: CUSTOM_PRESET_ID, label: "自定义" }
-              ],
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "工作时长",
-              desc: "自定义方案的工作阶段分钟数",
-              binding: numStrBinding("pomodoroWorkMin", 25),
-              min: 1,
-              max: 120,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "短休息时长",
-              desc: "自定义方案的短休息分钟数",
-              binding: numStrBinding("pomodoroShortBreakMin", 5),
-              min: 1,
-              max: 60,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "长休息时长",
-              desc: "自定义方案的长休息分钟数",
-              binding: numStrBinding("pomodoroLongBreakMin", 15),
-              min: 1,
-              max: 60,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            { type: "number", name: "长休息间隔", desc: "每隔几个专注进入一次长休息", binding: numStrBinding("pomodoroLongBreakInterval", 4), min: 1, max: 20, step: 1, onChange: () => render() }
-          ]
-        },
-        {
-          icon: "sliders-horizontal",
-          name: "行为",
-          rows: [
-            { type: "toggle", name: "强制专注模式", desc: "专注进行中无法暂停跳过或重置", binding: { key: "pomodoroForceFocus" }, onChange: () => render() },
-            { type: "toggle", name: "自动循环", desc: "阶段结束后自动开始下一阶段", binding: { key: "pomodoroAutoCycle" }, onChange: () => render() },
-            { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
-            { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
-            { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
-            // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
-            {
-              type: "slider",
-              name: "提示音音量",
-              desc: "提示音大小，默认最大",
-              binding: { get: () => {
-                var _a;
-                return (_a = tryGetSettings().pomodoroVolume) != null ? _a : 100;
-              }, set: (v) => {
-                getSettings().pomodoroVolume = v;
-              }, save: () => saveSettings() },
-              min: 0,
-              max: 100,
-              step: 5,
-              actions: [{ text: "试听", onClick: () => {
-                var _a;
-                return playSound("focus-start", (_a = tryGetSettings().pomodoroVolume) != null ? _a : 100);
-              } }]
-            },
-            {
-              type: "select",
-              name: "打开时恢复方式",
-              desc: "启动时正在倒计时，选择弹窗提醒或后台继续",
-              binding: { key: "pomodoroRestoreMode" },
-              options: [
-                { value: "background", label: "后台继续" },
-                { value: "popup", label: "自动弹窗" }
-              ]
-            }
-          ]
-        }
-      ]
-    };
-  }
   function bindEvents() {
     const startBtn = document.getElementById("pomodoro-btn-start");
     startBtn.addEventListener("click", () => applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start"));
     document.getElementById("pomodoro-btn-reset").addEventListener("click", () => applyAction("reset"));
     document.getElementById("pomodoro-btn-skip").addEventListener("click", () => applyAction("skip"));
-    const settingsBtn = document.getElementById("pomodoro-btn-settings");
-    settingsBtn.classList.add("pomodoro-settings-hidden");
-    setIcon(settingsBtn, "gear");
-    settingsBtn.addEventListener("click", openPomodoroSettings);
     const popup = document.getElementById("pomodoro-popup");
-    popup.addEventListener("mouseenter", () => {
-      settingsBtn.classList.remove("pomodoro-settings-hidden");
-    });
-    popup.addEventListener("mouseleave", () => {
-      settingsBtn.classList.add("pomodoro-settings-hidden");
-    });
     popup.addEventListener("keydown", (e) => {
       if (e.key !== " ") return;
       const t = e.target;
@@ -13638,7 +12457,6 @@ ${n.content.slice(0, 2e3)}
     mask.id = "pomodoro-mask";
     mask.innerHTML = `
     <div id="pomodoro-popup" tabindex="-1">
-      <button id="pomodoro-btn-settings" class="pomodoro-btn bz-touch-target" title="设置"></button>
       <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
         <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
         <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
@@ -13655,7 +12473,6 @@ ${n.content.slice(0, 2e3)}
       <div class="pomodoro-stats">
         <div id="pomodoro-today"></div>
         <div id="pomodoro-week" class="pomodoro-week"></div>
-        <div id="pomodoro-hours" class="pomodoro-hours"></div>
       </div>
     </div>`;
     mask.style.zIndex = String(allocZ());
@@ -13744,7 +12561,7 @@ ${n.content.slice(0, 2e3)}
     applyAction("start");
   }
   function isFocusing() {
-    return state.phase === "focus" && (state.endTime !== null || state.paused);
+    return isFocusingPhase(menuPhase());
   }
   async function toggleFocus(app) {
     await ensurePomodoro(app);
@@ -13804,7 +12621,7 @@ ${n.content.slice(0, 2e3)}
     appRef = null;
     loaded = false;
   }
-  var dataManager2, state, history, loaded, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, initInflight, openInflight;
+  var dataManager2, state, history, loaded, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, POMODORO_SKIN_THEMES, lastStatsKey, initInflight, openInflight;
   var init_ui3 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -13812,7 +12629,6 @@ ${n.content.slice(0, 2e3)}
       init_z_order();
       init_settings_provider();
       init_notice();
-      init_settings_modal();
       init_settings_common();
       init_data();
       init_sound();
@@ -13820,6 +12636,7 @@ ${n.content.slice(0, 2e3)}
       init_stats2();
       init_config();
       init_state();
+      init_pomodoro_phase();
       init_utils();
       init_domain_bus();
       dataManager2 = null;
@@ -13832,6 +12649,18 @@ ${n.content.slice(0, 2e3)}
       appRef = null;
       autoPauseMain = false;
       visibilityHandler = null;
+      POMODORO_SKIN_THEMES = [
+        { value: "tomato", label: "番茄" },
+        { value: "ink", label: "墨白" },
+        { value: "grid", label: "方格纸" },
+        { value: "moss", label: "苔原" },
+        { value: "mist", label: "海雾" },
+        { value: "sand", label: "暖沙" },
+        { value: "citrus", label: "蜜柑" },
+        { value: "sakura", label: "樱粉" },
+        { value: "latte", label: "咖啡" },
+        { value: "night", label: "夜航" }
+      ];
       lastStatsKey = "";
       initInflight = null;
       openInflight = null;
@@ -14219,6 +13048,9 @@ ${n.content.slice(0, 2e3)}
         return null;
     }
   }
+
+  // src/home/ui.ts
+  init_pomodoro_phase();
 
   // src/recap/aggregate.ts
   init_settings_provider();
@@ -15879,7 +14711,7 @@ ${n.content.slice(0, 2e3)}
     const hit = window2.find((d) => d.events.length > 0);
     return hit && hit.dateStr !== today ? hit.dateStr : null;
   }
-  function createOverlay2(app) {
+  function createOverlay(app) {
     const overlay = document.createElement("div");
     overlay.className = "bz-panel-overlay bz-home-overlay";
     overlay.innerHTML = panelFrameHtml();
@@ -15907,7 +14739,7 @@ ${n.content.slice(0, 2e3)}
       loadHomeOrder(H.appRef),
       readPomodoroPhase(H.appRef)
     ]);
-    const focusing = phase === "focusing" || phase === "paused";
+    const focusing = isFocusingPhase(phase);
     if (river) river.pomodoroFocusing = focusing;
     H.river = river;
     if (order) H.order = order;
@@ -16094,7 +14926,7 @@ ${n.content.slice(0, 2e3)}
       return;
     }
     registerEscapeHandler();
-    createOverlay2(app);
+    createOverlay(app);
   }
 
   // prototypes/home/fake-sim.ts

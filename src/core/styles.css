@@ -103,21 +103,6 @@
 .news-close-btn:hover {
   background: var(--background-secondary) !important;
 }
-/* 番茄钟右上角设置钮：同头行按钮规格（absolute 定位保留） */
-#pomodoro-btn-settings {
-  width: 22px !important;
-  height: 26px !important;
-  padding: 0 !important;
-  font-size: var(--bz-font-body) !important;
-  border: none !important;
-  border-radius: var(--bz-radius-xs) !important;
-  box-shadow: none !important;
-  background: none !important;
-  color: var(--text-muted) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
 /* 关闭按钮再小 2px（用户拍板）：20×24/12px（元素选择器提特异性，压过统一按钮组） */
 button.bz-icon-btn--close,
 button.bz-win-close,

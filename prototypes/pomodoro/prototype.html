@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>番茄钟 · 原型预览（真行为单源）</title>
+<!--
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 番茄钟域 UI 的评审壳（行为单源版，2026-09-11 接入，范式随 memo）。│
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
+  │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
+  │   → ./styles.css（src/pomodoro/styles.css，pomodoro-* 前缀）              │
+  │ 行为单源（ADR-0106）：交互逻辑全部是插件同款 ui.ts 依赖链——                │
+  │   经 ./prototype-behavior.js（src/pomodoro/fake-sim.ts 构建，             │
+  │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真状态机；             │
+  │   桌面 iframe 920px 宽视口；移动 iframe 412×915。数据 = localStorage       │
+  │   pomodoro.json（与插件 data 同构；跨 iframe storage 桥共享）。            │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
+  └────────────────────────────────────────────────────────────────────────┘
+-->
+<link rel="stylesheet" href="../../src/core/styles.css">
+<link rel="stylesheet" href="../../src/core/ui/tokens.css">
+<link rel="stylesheet" href="../../src/core/ui/components.css">
+<link rel="stylesheet" href="../../src/pomodoro/styles.css">
+<link rel="stylesheet" href="../mob-1to1.css">
+<script src="../mob-1to1.js"></script>
+<style>
+  /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
+    background: #e3e0d8; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  /* 模拟 Obsidian 宿主变量（core/styles.css 的弹层/通知取值用；插件内由主题提供） */
+  body {
+    --background-primary: #fbf9f3; --text-normal: #171512; --text-muted: #8b8474; --text-faint: #b3ab99;
+    --text-error: #b3564d; --background-modifier-hover: rgba(23,21,18,.06); --color-green: #3d8f5d;
+  }
+  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
+
+  /* 桌面外景（真行为 iframe：中央弹窗 append iframe body，遮罩铺满 920×640） */
+  .demo-dt { flex: none; width: 920px; height: 640px; }
+  /* 移动外景：412×915 iframe → 全屏态 100vw/100vh 即手机框尺寸 */
+  .demo-mob { width: 412px; height: 915px; border-radius: 26px; overflow: hidden; flex: none;
+    border: 1px solid #d8d1c0; box-shadow: 0 8px 30px rgba(0,0,0,.14); background: #f5f2ec; }
+  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
+
+  /* 评审徽牌（演示壳自用） */
+  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #9a917d; display: flex; gap: 10px; align-items: center;
+    background: rgba(255,255,255,.9); border: 1px solid #d8d1c0; padding: 3px 8px; z-index: 900; flex-wrap: wrap; }
+  .vbadge button { border: none; background: none; font: 11px 'Microsoft YaHei'; cursor: pointer; color: #7a7261; }
+  .vbadge button:hover { color: #b3564d; }
+  .vbadge .ok { color: #3d8f5d; }
+  .vbadge .bad { color: #b3564d; }
+</style>
+</head>
+<body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="番茄钟·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="番茄钟·移动"></iframe></div></div>
+
+  <div class="vbadge">番茄钟 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=412×915）· 种子=暂停中的专注（15:00）
+    <button id="mobToggle">隐藏移动端</button>
+    <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
+  </div>
+
+<script src="./prototype-icons.js"></script>
+<script>
+(function () {
+  /* ==================== 壳基座（仅外景）：两个真行为 iframe + 重置 ====================
+   * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
+   *  - 外景开关（隐藏移动端）
+   *  - 重置演示数据（清 localStorage 后重载 iframe；种子重灌在 fake-sim seedDatabase）
+   *  - 自检（?selftest=1）：经 iframe contentWindow 访问真 DOM，驱动真状态机
+   */
+  const LS = 'bz-sim:CONFIG/STORAGE/pomodoro.json';
+  const dtFrame = () => document.querySelector('#dtHost iframe');
+  const mobFrame = () => document.querySelector('#mobHost iframe');
+  const dtDoc = () => dtFrame().contentDocument;
+  const mobDoc = () => mobFrame().contentDocument;
+  /** 清掉 fake vault 全部键（自检重跑 / 徽牌重置共用；不依赖 iframe 内行为包就绪） */
+  const wipeSim = () => {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('bz-sim:')) localStorage.removeItem(k);
+    }
+  };
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
+  // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
+  const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const doc = getDoc();
+        if (doc && doc.querySelector(sel)) return res(doc);
+        if (Date.now() - started > 25000) return rej(new Error('iframe 弹窗超时'));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
+    };
+    tries();
+  });
+
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const m = document.querySelector('#mobHost');
+    const hidden = m.style.display === 'none';
+    m.style.display = hidden ? '' : 'none';
+    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
+  });
+
+  document.querySelector('#reset').addEventListener('click', () => {
+    // 重置 = 回到出厂评审基线：fake vault 全清（含种子标记），reload 后按今天重灌
+    wipeSim();
+    location.reload();
+  });
+
+  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
+  if (location.search.includes('selftest')) {
+    window.__st = { pass: 0, fail: [] };
+    const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    (async () => {
+      const res = document.querySelector('#stResult');
+      try {
+        // 数据基线：种子 = 暂停中的专注；若残留上次运行（非种子态）则重置重跑一次。
+        // headless 验收每次全新 profile 天然干净；浏览器手动重复跑 selftest 也能自清理。
+        const readSeed = () => {
+          try { return JSON.parse(JSON.parse(localStorage.getItem(LS) || 'null').c); } catch (e) { return null; }
+        };
+        const pre = readSeed();
+        const dirty = !pre || !pre.state || pre.state.phase !== 'focus' || pre.state.paused !== true || pre.state.remaining !== 900;
+        if (dirty) {
+          if (!location.search.includes('reset=1')) {
+            wipeSim();
+            location.search = '?selftest=1&reset=1';
+            return;
+          }
+        }
+        res.textContent = '…';
+        const dd = await waitFrame(dtDoc, '#pomodoro-popup');
+        const md = await waitFrame(mobDoc, '#pomodoro-popup');
+        const dt = (sel) => dd.querySelector(sel);
+        const mob = (sel) => md.querySelector(sel);
+        const dTxt = () => (dt('#pomodoro-time') || {}).textContent || '';
+        const dPhase = () => (dt('#pomodoro-phase') || {}).textContent || '';
+        const dStart = () => (dt('#pomodoro-btn-start') || {}).textContent || '';
+        const dTask = () => (dt('#pomodoro-task') || {}).textContent || '';
+
+        // —— 双实例初始态（种子 = 暂停中的专注；相位断言先于任何桌面操作） ——
+        t('桌面弹窗开', !!dt('#pomodoro-popup'));
+        t('移动弹窗开', !!mob('#pomodoro-popup'));
+        t('种子=暂停中的专注（15:00）', dTxt() === '15:00');
+        t('阶段文案=专注', dPhase() === '专注');
+        t('归属任务名=周报', dTask().includes('周报'));
+        t('开始钮=继续（paused 相位单条）', dStart() === '继续');
+        t('移动端同种子（15:00/继续）', (mob('#pomodoro-time') || {}).textContent === '15:00' && (mob('#pomodoro-btn-start') || {}).textContent === '继续');
+        t('相位单源 menuPhase=paused', dtFrame().contentWindow.BZW_pomodoro.phaseNow() === 'paused');
+        t('循环圆点行 4 点在场', dd.querySelectorAll('#pomodoro-cycle .pomodoro-cycle-dot').length === 4);
+        t('今日统计在场', ((dt('#pomodoro-today') || {}).textContent || '').length > 0);
+        t('近 7 天柱在场（标签=日，不折行）', dd.querySelectorAll('#pomodoro-week .pomodoro-stat-bar').length === 7
+          && [...dd.querySelectorAll('#pomodoro-week .pomodoro-stat-label')].every((l) => (l.textContent || '').length === 2));
+        t('时段分布已移除', !dt('#pomodoro-hours'));
+
+        // —— 继续（真 resume → started 落盘 → 1s tick 走秒） ——
+        dt('#pomodoro-btn-start').click();
+        await sleep(1500);
+        t('继续后开始钮=暂停', dStart() === '暂停');
+        t('继续后计时在走（<15:00）', dTxt() < '15:00');
+
+        // —— 再暂停 → 暂停态落盘（ticket 62：手动暂停持久化） ——
+        dt('#pomodoro-btn-start').click();
+        await sleep(600);
+        t('暂停后开始钮=继续', dStart() === '继续');
+        const pausedData = readSeed();
+        t('暂停态落盘（state.paused=true）', !!(pausedData && pausedData.state && pausedData.state.paused === true));
+        t('暂停剩余时长落盘（<900s）', !!(pausedData && pausedData.state && pausedData.state.remaining > 0 && pausedData.state.remaining < 900));
+
+        // —— 重置回 idle（25:00 / 开始；reset 不落盘，DOM 为准） ——
+        dt('#pomodoro-btn-reset').click();
+        await sleep(300);
+        t('重置后=开始（idle 单条）', dStart() === '开始');
+        t('重置后回 25:00', dTxt() === '25:00');
+        t('重置后相位 menuPhase=idle', dtFrame().contentWindow.BZW_pomodoro.phaseNow() === 'idle');
+
+        // —— idle 跳过 → 进短休息（05:00 未计时，skip 不自动开始 → 按钮仍是「开始」）；再跳过 → 回专注 idle ——
+        dt('#pomodoro-btn-skip').click();
+        await sleep(300);
+        t('跳过后=短休息', dPhase() === '短休息');
+        t('短休息 05:00（未计时，按钮=开始）', dTxt() === '05:00' && dStart() === '开始');
+        t('跳过后相位 menuPhase=break', dtFrame().contentWindow.BZW_pomodoro.phaseNow() === 'break');
+        dt('#pomodoro-btn-skip').click();
+        await sleep(300);
+        t('再跳过=专注 idle（25:00/开始）', dPhase() === '专注' && dStart() === '开始' && dTxt() === '25:00');
+        t('再跳过后相位 menuPhase=idle', dtFrame().contentWindow.BZW_pomodoro.phaseNow() === 'idle');
+
+        // —— ⚙ 设置按钮已移除（2026-09-11 用户拍板，设置入口归设置面板） ——
+        t('设置按钮不在场', !dt('#pomodoro-btn-settings'));
+        t('默认皮肤=番茄（单源 POMODORO_SKIN_THEMES）', dt('#pomodoro-popup').classList.contains('pomodoro-skin-tomato'));
+
+        // —— 关主弹窗（点遮罩）：计时后台继续，重开从内存渲染 ——
+        dt('#pomodoro-btn-start').click();
+        await sleep(200);
+        dt('#pomodoro-mask').click();
+        await sleep(250);
+        t('点遮罩关主弹窗', !dt('#pomodoro-popup'));
+        dtFrame().contentWindow.BZW_pomodoro.openPanel();
+        await waitFrame(dtDoc, '#pomodoro-popup');
+        t('重开弹窗计时继续（计时中）', dStart() === '暂停');
+
+        const st = window.__st;
+        res.innerHTML = st.fail.length
+          ? '<span class="bad">FAIL ' + st.fail.length + ': ' + st.fail.join(' / ') + '</span>'
+          : '<span class="ok">PASS ' + st.pass + '/' + (st.pass + st.fail.length) + '</span>';
+        // CDP 自检驱动（scripts/_selftest-cdp.mjs）按 document.title 轮询收结果
+        document.title = st.fail.length
+          ? 'SELFTEST FAIL ' + st.fail.length + ': ' + st.fail.join(' / ')
+          : `SELFTEST OK ${st.pass}/${st.pass + st.fail.length}`;
+        console.log('[pomodoro selftest]', st.pass, 'pass', st.fail.length, 'fail', st.fail);
+      } catch (e) {
+        res.innerHTML = '<span class="bad">ERR ' + (e && e.message || e) + '</span>';
+        document.title = 'SELFTEST ERR ' + (e && e.message || e);
+        console.error(e);
+      }
+    })();
+  }
+})();
+</script>
+</body>
+</html>
