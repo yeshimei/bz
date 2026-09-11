@@ -9971,6 +9971,130 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   box-shadow: none !important;
 }
 .quiz-next-btn:hover { background:var(--bz-surface-hover); }
+
+/* ==================== 移动端字号体系（≤768px，2026-09-12 评审） ====================
+   背景：域内字号沿桌面档取值（token 阶梯 11/12/13/14/15/17/20 + 少量硬编码小字），
+   手机上整体偏小。本段按**视觉层级**定标放大（先例 src/diary/styles.css 六档体系：
+   一层级一定值，不用一刀切倍数），档间保持单调、各层只差一档：
+
+     L1 面板/整屏题   复习计划 · 做题冲刺 · 本轮复习完成        20~22
+     L2 区块题/大数字 列头计数 · 结果篇名 · 结算大数字           18~26
+     L3 卡片题        队列卡标题 · 题面 · 选项文本               16~17.5
+     L4 正文/辅助     开始本轮条 · 解析 · 队列条目 · 底部信息行  14~15
+     L5 控件          面板内 .bz-btn（40px 高）· 评级条按钮       15
+     L6 角标          到期/阶段 tag · 阶段号 · 日期副题 · 统计小字 13
+
+   控件尺寸随同级文字抬档（设计手册 §8.2）：头行图标钮 40×44、选项行 ≥44、评级条
+   按钮 ≥44、面板内主钮 40。本段置于文件末尾——媒体查询不增特异性，靠「后写者赢」
+   压过上方基础规则（域内既有移动端块只改布局，字号单归本段）。
+   桌面 >768px 逐像素不变。 */
+@media (max-width: 768px) {
+  /* ---- L1 面板题 ---- */
+  #review-popup .bz-panel-head { height: 52px; padding: 0 14px; }
+  #review-popup .bz-panel-title { font-size: 20px; }
+  #review-popup .bz-panel-head-sub { font-size: 13px; }
+  #review-popup .bz-panel-brand { width: 28px; height: 28px; }
+  #review-popup .bz-panel-brand .bz-ic { width: 16px; height: 16px; }
+  #review-popup .bz-panel-head-pipe { height: 16px; }
+  .bz-sprint-title { font-size: 20px; }
+  .bz-summary-title { font-size: 22px; }
+
+  /* ---- L5 控件：面板内主钮 + 头行图标钮（唯一关闭入口，抬到触控档） ---- */
+  #review-popup .bz-btn { height: 40px; padding: 0 18px; font-size: 15px; }
+  #review-popup .bz-icon-btn { width: 40px; height: 44px; }
+  #review-popup .bz-icon-btn .bz-ic { width: 18px; height: 18px; }
+
+  /* ---- 开始本轮条：字号抬档后一行放不下 → 信息一行、主钮独占一行（满宽 40px 靶） ---- */
+  .bz-q-strip { flex-wrap: wrap; }
+  .bz-q-strip strong { font-size: 16px; }
+  .bz-q-strip-txt { font-size: 14px; }
+  .bz-q-strip .bz-btn { flex: 1 0 100%; }
+
+  /* ---- L2/L3/L6 三区队列 ---- */
+  .bz-q-col { padding: 10px; }
+  .bz-q-col-head .cnt { font-size: 19px; }
+  .bz-q-col-head .name { font-size: 15px; }
+  .bz-q-card { padding: 10px 12px; }
+  .bz-q-card-title { font-size: 16px; }
+  .bz-q-card-stage { font-size: 13px; }
+  .bz-q-tag { font-size: 13px; padding: 3px 9px; }
+  .bz-q-hint { font-size: 14px; }
+
+  /* ---- L4 底部信息行 ---- */
+  .bz-q-fitem { font-size: 14px; }
+  .bz-q-fitem .bz-q-ic { width: 14px; height: 14px; }
+
+  /* ---- 空态（core .bz-empty 在面板内的实例，尺寸随层级抬档） ---- */
+  #review-popup .bz-empty-ic { width: 40px; height: 40px; }
+  #review-popup .bz-empty-title { font-size: 17px; }
+  #review-popup .bz-empty-desc { font-size: 14px; max-width: 300px; }
+
+  /* ---- 整窗冲刺 ---- */
+  .bz-sprint-loading { font-size: 15px; }
+  .bz-sprint-progress { font-size: 14px; }
+  .bz-sprint-qtype { font-size: 13px; }
+  .bz-sprint-qtext { font-size: 17.5px; line-height: 1.65; }
+  .bz-sprint-opt { padding: 12px 14px; gap: 10px; }
+  .bz-sprint-opt .k { font-size: 14px; width: 20px; }
+  .bz-sprint-opt .t { font-size: 16px; }
+  .bz-sprint-explain { font-size: 14px; }
+  .bz-sprint-queue { max-height: 170px; }
+  .bz-sq-head b { font-size: 14px; }
+  .bz-sq-item { padding: 8px 10px; }
+  .bz-sq-item .nm { font-size: 14px; }
+
+  /* ---- 结果卡 / 结算屏 ---- */
+  .bz-result { padding: 24px 12px; }
+  .bz-result-name { font-size: 18px; }
+  .bz-result-score { font-size: 38px; }
+  .bz-result-score .sl { font-size: 20px; }
+  .bz-result-rating { font-size: 14px; }
+  .bz-mark.ok.lg, .bz-mark.bad.lg { font-size: 38px; }
+  .bz-summary { padding: 30px 12px; }
+  .bz-summary-stats .st { padding: 14px 8px; max-width: 120px; }
+  .bz-summary-stats .st b { font-size: 26px; }
+  .bz-summary-stats .st span { font-size: 13px; }
+  .bz-summary-streak { font-size: 14.5px; }
+
+  /* ---- 悬浮迷你评级条（手机主交互）：篇名/进度一行 + 评级钮一行，钮 ≥44px 热区 ----
+     宽度须给**定值**：条是 fixed + 内容收缩宽，子项 flex-basis:100% 无定值可解会塌成窄条
+     （实测按钮被压到 42px 宽、两字竖排）；定宽后两行各占满，钮按内容宽排布。 */
+  .bz-review-bar { flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px 12px; width: min(94vw, 560px); max-width: none; }
+  .bz-review-bar-info { font-size: 14px; max-width: 100%; flex: 1 0 100%; text-align: center; }
+  .bz-review-bar-act { flex: 1 1 100%; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .bz-review-bar-btn { font-size: 14.5px; padding: 10px 12px; min-height: 44px; }
+
+  /* ---- 难度弹窗（评分命令） ---- */
+  .difficulty-dialog { width: min(92vw, 320px); min-width: 0; padding: var(--bz-space-xl) var(--bz-space-lg); }
+  .difficulty-dialog h4 { font-size: 18px; }
+  .difficulty-dialog .diff-btn { font-size: 16px; padding: 13px 14px; }
+
+  /* ---- 统计弹窗 / 复习历史弹窗（底行两条入口的落点，rem 小字同档抬升） ---- */
+  #review-stats-popup .bz-review-stats-head .bz-review-title { font-size: 1.05rem !important; }
+  #review-stats-popup .bz-stats-card-val { font-size: 1.5rem; }
+  #review-stats-popup .bz-stats-card-lbl { font-size: .8rem; }
+  #review-stats-popup .bz-stats-section-head { font-size: 1.05rem; }
+  #review-stats-popup .bz-stats-empty { font-size: .9rem; }
+  #review-stats-popup .bz-stats-bar-lbl { width: 64px; font-size: .85rem; }
+  #review-stats-popup .bz-stats-bar-track { height: 12px; }
+  #review-stats-popup .bz-stats-bar-val { width: 34px; font-size: .85rem; }
+  #review-stats-popup .bz-stats-chart-bar { min-width: 26px; font-size: .8rem; }
+  #review-stats-popup .bz-stats-chart-lbl { font-size: .78rem; }
+  #review-stats-popup .bz-stats-inline-chip { font-size: .85rem; padding: 4px 10px; }
+  #review-stats-popup .bz-stats-rank-badge { width: 22px; height: 22px; font-size: .78rem; }
+  #review-stats-popup .bz-stats-rank-plain { width: 22px; font-size: .82rem; }
+  #review-stats-popup .bz-stats-rank-name { font-size: .95rem; }
+  #review-stats-popup .bz-stats-rank-sub,
+  #review-stats-popup .bz-stats-rank-meta { font-size: .8rem; }
+  #review-stats-popup .bz-stats-hint { font-size: .78rem; }
+  #review-stats-popup .bz-review-stats-tl-row { font-size: 15px; }
+  #review-history-popup .bz-review-history-name { font-size: 18px; }
+  #review-history-popup .bz-review-history-sub { font-size: 13.5px; }
+  #review-history-popup .bz-review-history-empty { font-size: 14.5px; }
+  #review-history-popup .bz-review-history-row { font-size: 14.5px; }
+  #review-history-popup .bz-review-history-time { font-size: 13.5px; min-width: 96px; }
+  #review-history-popup .bz-review-history-stage { font-size: 13.5px; }
+}
 /* ==================== 番茄钟域样式（src/pomodoro/styles.css） ==================== */
 /* ==================== 番茄钟状态栏（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
     .pomodoro-statusbar { display: inline-flex; align-items: center; gap: var(--bz-space-xs); cursor: pointer; padding: 2px var(--bz-space-xs); border-radius: var(--radius-s, var(--bz-radius-xs)); transition: background-color var(--bz-dur-fast) ease, opacity var(--bz-dur-fast) ease; }
