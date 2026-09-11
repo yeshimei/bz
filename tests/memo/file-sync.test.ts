@@ -114,18 +114,25 @@ describe('memo 引用同步', () => {
     expect(memoWrites(vault)).toBe(0); // 无人引用 → 一次盘都不写
   });
 
-  it('watchedFolders 外不动：范围外改名不处理、从未写回', async () => {
+  it('范围外改名：被 memo.json 引用的照常同步（E22），无引用的不写回', async () => {
     const { vault } = await setup();
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
       { id: 'm1', title: 'A', linkedNote: '我的/日记/2024.md' },
+      { id: 'm2', title: 'B', linkedNote: '我的/日记/无关.md' },
     ], null, 2));
 
+    // 无引用的范围外改名：不写回（引用放行口径之外）
+    emitDomainEvent('vault:md-renamed', { oldPath: '随手记/与备忘录无关.md', newPath: '随手记/改名.md' });
+    await flushQueue();
+    expect(memoWrites(vault)).toBe(0);
+
+    // 被引用的范围外改名：引用照常同步（E22：此前范围外事件整条丢弃，引用从此失联）
     emitDomainEvent('vault:md-renamed', { oldPath: '我的/日记/2024.md', newPath: '我的/日记/2025.md' });
     await flushQueue();
 
     const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
-    expect(bz[0].linkedNote).toBe('我的/日记/2024.md'); // 未变
-    expect(memoWrites(vault)).toBe(0); // 从未写回
+    expect(bz[0].linkedNote).toBe('我的/日记/2025.md');
+    expect(bz[1].linkedNote).toBe('我的/日记/无关.md'); // 无关条目不动
   });
 
   it('卸载静默：去抖窗口内卸载积压事件不再回放，卸载后新事件不受理', async () => {

@@ -293,6 +293,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   M.showDone = tryGetSettings().memoShowArchivedByDefault === true;
   M.showEarlierDone = false; // 「更早 N 条」每次打开重新收起
   M.pinnedNewId = null;
+  M.search = ''; // E8：搜索词跨开合残留——输入框是新的但列表仍被旧关键词过滤（notePath 定位在 loadData 后另行覆写）
 
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
@@ -925,11 +926,16 @@ function submitComposer(): void {
   });
 }
 
+/** composer 落盘进行中标志（E19：双击防重入——清空移到成功分支后，输入框不再是防重入屏障） */
+let composerBusy = false;
+
 function addFromComposer(): void {
+  if (composerBusy) return; // E19：落盘窗口期忽略再次提交，防同文本双条目
   const overlay = M.overlay!;
   const input = overlay.querySelector('[data-memo-composer-input]') as HTMLInputElement;
   const txt = (input.value || '').trim();
   if (!txt) { notice('请输入内容'); return; }
+  composerBusy = true;
   // 场景缺省兜底：具体场景直用，伪场景回退 memoDefaultScene/第一个（composerScene 同口径）
   const scene = composerScene();
   void (async () => {
@@ -963,11 +969,12 @@ function addFromComposer(): void {
         type: 'success',
         action: { label: '补全', onClick: () => openEditor(it) },
       });
+      input.value = ''; // E20：成功才清空——保存失败草稿留在输入框（移动端弹窗路径同口径）
     } catch (e) {
       notifySaveError(e, '保存备忘录');
       console.error(e);
     }
-    input.value = '';
+    composerBusy = false;
     await refresh();
   })();
 }
