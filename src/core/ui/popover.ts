@@ -5,10 +5,11 @@
  * 前提：anchor 须位于 position:relative 容器内（如 .bz-search 壳）——
  *   浮层绝对定位挂 anchor.parentElement，宽度随容器撑满。
  * 开合：anchor 点击开合 / 选项点击即关 / 外部点击 / Esc 关闭
- *   （交互骨架仿 uiSelect；监听随开挂、随关摘，无常驻泄漏）。
+ *   （交互骨架仿 uiSelect；外部点击监听随开挂、随关摘；Esc 走 escManager 层，C5）。
  * ============================================================ */
 import type { BzPopoverOpts } from './types';
 import { uiIcon } from './icon';
+import { escManager } from '../esc-manager';
 
 type PopoverOption = BzPopoverOpts['options'][number];
 
@@ -24,15 +25,14 @@ export function uiPopover(opts: BzPopoverOpts): {
   let current = opts.value ?? '';
   let items = opts.options;
   let layer: HTMLDivElement | null = null;
+  /** ESC 层句柄（C5）：浮层开着时经 escManager 注册，随 close 注销——替代私挂 document 级 ESC 监听 */
+  let escHandle: ReturnType<typeof escManager.register> | null = null;
 
   const onDocClick = (e: MouseEvent) => {
     if (!layer) return;
     const t = e.target as Node;
     if (anchor.contains(t)) return; // anchor 自身点击由其开合监听处理
     close();
-  };
-  const onDocKey = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && layer) close();
   };
 
   const open = () => {
@@ -69,7 +69,12 @@ export function uiPopover(opts: BzPopoverOpts): {
     (anchor.parentElement || anchor).appendChild(m);
     layer = m;
     document.addEventListener('click', onDocClick);
-    document.addEventListener('keydown', onDocKey);
+    // ESC 关闭走 escManager 统一层序（C5）：私挂 document 级 ESC 监听会被 escManager 命中
+    // 可见层后的 stopImmediatePropagation 抢先短路（面板开着时整面板直关、浮层不动）
+    escHandle = escManager.register('bz-ui-popover', {
+      isVisible: () => !!layer && layer.isConnected,
+      close: () => close(),
+    });
   };
 
   const close = () => {
@@ -77,7 +82,10 @@ export function uiPopover(opts: BzPopoverOpts): {
     layer.remove();
     layer = null;
     document.removeEventListener('click', onDocClick);
-    document.removeEventListener('keydown', onDocKey);
+    if (escHandle) {
+      escHandle.unregister();
+      escHandle = null;
+    }
   };
 
   const setValue = (id: string) => {
@@ -112,7 +120,6 @@ export function uiPopover(opts: BzPopoverOpts): {
     /** 清理：关浮层并摘除 document 监听（宿主收尾用，对齐 uiSelect.detach） */
     detach: () => {
       document.removeEventListener('click', onDocClick);
-      document.removeEventListener('keydown', onDocKey);
       close();
     },
   };

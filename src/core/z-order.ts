@@ -9,7 +9,7 @@
 let zCounter = 100000;
 
 /** 恒顶层（如 smartcat 桌宠小橘——用户拍板保持最高）：永远压过一切动态 overlay，
- *  由分配器在每次分配后自动抬到最新档之上；元素卸载后由 isConnected 兜底跳过 */
+ *  由分配器在每次分配后自动抬到最新档之上；离场元素由 sync 兜底清扫（C8） */
 const alwaysOnTop = new Set<HTMLElement>();
 
 /** 注册恒顶元素（幂等）：注册即抬到当前最高档 */
@@ -18,9 +18,20 @@ export function registerAlwaysOnTop(el: HTMLElement): void {
   syncAlwaysOnTop();
 }
 
+/** 注销恒顶元素（幂等，C8）：域卸载/元素移除时显式出队 */
+export function unregisterAlwaysOnTop(el: HTMLElement): void {
+  alwaysOnTop.delete(el);
+}
+
 function syncAlwaysOnTop(): void {
+  // C8：离场（!isConnected）元素及时出队——原先只跳过赋值，Set 只进不出，
+  // 重挂载型组件（如小橘每次重挂载）每轮滞留一棵 DOM 子树引用无法回收
   for (const el of alwaysOnTop) {
-    if (el.isConnected) el.style.zIndex = String(zCounter);
+    if (!el.isConnected) {
+      alwaysOnTop.delete(el);
+      continue;
+    }
+    el.style.zIndex = String(zCounter);
   }
 }
 

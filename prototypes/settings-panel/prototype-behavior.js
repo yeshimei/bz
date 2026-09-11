@@ -1,4 +1,4 @@
-/* 源指纹 0ee529fa5d545ef7 · 仓内输入 204 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 84b5833c9e12290f · 仓内输入 204 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -4540,7 +4540,11 @@ var BZW_settings_panel = (() => {
   }
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
-      if (el.isConnected) el.style.zIndex = String(zCounter);
+      if (!el.isConnected) {
+        alwaysOnTop.delete(el);
+        continue;
+      }
+      el.style.zIndex = String(zCounter);
     }
   }
   function allocZBlock(n) {
@@ -5972,7 +5976,13 @@ var BZW_settings_panel = (() => {
         seg.style.transition = "";
       }
     };
-    const onWinResize = () => syncSeg(false);
+    const onWinResize = () => {
+      if (!el.isConnected) {
+        window.removeEventListener("resize", onWinResize);
+        return;
+      }
+      syncSeg(false);
+    };
     if (opts.float) {
       window.addEventListener("resize", onWinResize);
     }
@@ -6138,6 +6148,7 @@ var BZW_settings_panel = (() => {
     el.appendChild(uiIcon("chevron-down", "bz-select-car"));
     let current2 = opts.value;
     let menu = null;
+    let escHandle4 = null;
     const labelOf = (v) => {
       const o = opts.options.find((x) => x.value === v);
       return o ? o.label : "";
@@ -6151,6 +6162,10 @@ var BZW_settings_panel = (() => {
       if (menu) {
         menu.remove();
         menu = null;
+      }
+      if (escHandle4) {
+        escHandle4.unregister();
+        escHandle4 = null;
       }
       el.classList.remove("open");
       el.setAttribute("aria-expanded", "false");
@@ -6203,6 +6218,10 @@ var BZW_settings_panel = (() => {
         m.style.right = `${over}px`;
         if (m.getBoundingClientRect().left < 2) m.style.right = "";
       }
+      escHandle4 = escManager.register("bz-ui-select", {
+        isVisible: () => !!menu && menu.isConnected,
+        close: () => close()
+      });
     };
     const setValue = (v) => {
       current2 = v;
@@ -6258,17 +6277,12 @@ var BZW_settings_panel = (() => {
     const onDocClick = (e) => {
       if (menu && !el.contains(e.target)) close();
     };
-    const onDocKey = (e) => {
-      if (e.key === "Escape" && menu) close();
-    };
     document.addEventListener("click", onDocClick);
-    document.addEventListener("keydown", onDocKey);
     return {
       el,
       setValue,
       detach: () => {
         document.removeEventListener("click", onDocClick);
-        document.removeEventListener("keydown", onDocKey);
         close(false);
       }
     };
@@ -6276,6 +6290,7 @@ var BZW_settings_panel = (() => {
   var init_select = __esm({
     "src/core/ui/select.ts"() {
       init_icon();
+      init_esc_manager();
     }
   });
 
@@ -6567,14 +6582,12 @@ var BZW_settings_panel = (() => {
     let current2 = (_a2 = opts.value) != null ? _a2 : "";
     let items = opts.options;
     let layer = null;
+    let escHandle4 = null;
     const onDocClick = (e) => {
       if (!layer) return;
       const t = e.target;
       if (anchor.contains(t)) return;
       close();
-    };
-    const onDocKey = (e) => {
-      if (e.key === "Escape" && layer) close();
     };
     const open = () => {
       if (layer) return;
@@ -6611,14 +6624,20 @@ var BZW_settings_panel = (() => {
       (anchor.parentElement || anchor).appendChild(m);
       layer = m;
       document.addEventListener("click", onDocClick);
-      document.addEventListener("keydown", onDocKey);
+      escHandle4 = escManager.register("bz-ui-popover", {
+        isVisible: () => !!layer && layer.isConnected,
+        close: () => close()
+      });
     };
     const close = () => {
       if (!layer) return;
       layer.remove();
       layer = null;
       document.removeEventListener("click", onDocClick);
-      document.removeEventListener("keydown", onDocKey);
+      if (escHandle4) {
+        escHandle4.unregister();
+        escHandle4 = null;
+      }
     };
     const setValue = (id) => {
       current2 = id;
@@ -6648,7 +6667,6 @@ var BZW_settings_panel = (() => {
       /** 清理：关浮层并摘除 document 监听（宿主收尾用，对齐 uiSelect.detach） */
       detach: () => {
         document.removeEventListener("click", onDocClick);
-        document.removeEventListener("keydown", onDocKey);
         close();
       }
     };
@@ -6656,6 +6674,7 @@ var BZW_settings_panel = (() => {
   var init_popover = __esm({
     "src/core/ui/popover.ts"() {
       init_icon();
+      init_esc_manager();
     }
   });
 
@@ -6851,6 +6870,7 @@ var BZW_settings_panel = (() => {
       if (current !== mask) return;
       mask.remove();
       escHandle4 == null ? void 0 : escHandle4.unregister();
+      if (currentEscHandle === escHandle4) currentEscHandle = null;
       current = null;
       lockBodyScroll(false);
     }
@@ -6858,6 +6878,7 @@ var BZW_settings_panel = (() => {
       isVisible: () => mask.isConnected,
       close
     });
+    currentEscHandle = escHandle4;
     mask.addEventListener("click", (e) => {
       if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot")) close();
     });
@@ -6869,16 +6890,19 @@ var BZW_settings_panel = (() => {
     if (current) {
       current.remove();
       current = null;
+      currentEscHandle == null ? void 0 : currentEscHandle.unregister();
+      currentEscHandle = null;
       lockBodyScroll(false);
     }
   }
-  var current;
+  var current, currentEscHandle;
   var init_lightbox = __esm({
     "src/core/ui/lightbox.ts"() {
       init_icon();
       init_esc_manager();
       init_z_order();
       current = null;
+      currentEscHandle = null;
     }
   });
 
@@ -7607,9 +7631,14 @@ var BZW_settings_panel = (() => {
                 void (async () => {
                   var _a4;
                   const remaining = readItems().map((x) => x.key).filter((k) => k !== it.key);
-                  await ((_a4 = row.onChange) == null ? void 0 : _a4.call(row, remaining, ctx));
-                  renderItems();
-                  reevaluate();
+                  try {
+                    await ((_a4 = row.onChange) == null ? void 0 : _a4.call(row, remaining, ctx));
+                  } catch (e) {
+                    notifySaveError(e, row.name || "列表项");
+                  } finally {
+                    renderItems();
+                    reevaluate();
+                  }
                 })();
               };
               item.appendChild(remove);
@@ -7657,6 +7686,7 @@ var BZW_settings_panel = (() => {
       init_path_picker();
       init_settings_modal();
       init_ui();
+      init_notice();
       TEXT_COMMIT_DELAY = 800;
       CommitWarn = class {
         constructor(initial, onCommit) {
@@ -8606,6 +8636,11 @@ var BZW_settings_panel = (() => {
   async function getAIProvider(override) {
     var _a2, _b2, _c;
     if (!override && _aiProviderCache) return _aiProviderCache;
+    const cacheable = !override;
+    const cachePut2 = (p) => {
+      if (cacheable) _aiProviderCache = p;
+      return p;
+    };
     const s = getQ3Settings();
     if (override && typeof override === "object" && override.apiKey) {
       return {
@@ -8624,15 +8659,14 @@ var BZW_settings_panel = (() => {
       if (!endpoint || !s.aiCustomApiKey) {
         throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
       }
-      _aiProviderCache = {
+      return cachePut2({
         endpoint,
         apiKey: s.aiCustomApiKey,
         model: s.aiCustomModel || void 0,
         extraHeaders: desc.extraHeaders,
         contextWindow: desc.defaultContextWindow,
         defaultMaxTokens: desc.defaultMaxTokens
-      };
-      return _aiProviderCache;
+      });
     }
     const key = s[desc.apiKeyKey];
     if (!key && name === "deepseek") {
@@ -8641,13 +8675,12 @@ var BZW_settings_panel = (() => {
         const cfg = JSON.parse(raw);
         const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
         if (provider && provider.endpoint && provider.apiKey) {
-          _aiProviderCache = {
+          return cachePut2({
             endpoint: String(provider.endpoint).replace(/\/+$/, ""),
             apiKey: provider.apiKey,
             contextWindow: desc.defaultContextWindow,
             defaultMaxTokens: desc.defaultMaxTokens
-          };
-          return _aiProviderCache;
+          });
         }
       } catch (e) {
       }
@@ -8658,7 +8691,7 @@ var BZW_settings_panel = (() => {
     const overrideModel = (_a2 = s.aiModelOverrides) == null ? void 0 : _a2[name];
     const overrideContext = (_b2 = s.aiContextOverrides) == null ? void 0 : _b2[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
-    _aiProviderCache = {
+    return cachePut2({
       endpoint: desc.endpoint,
       apiKey: key || "",
       model: overrideModel || desc.model || void 0,
@@ -8666,12 +8699,16 @@ var BZW_settings_panel = (() => {
       extraHeaders: desc.extraHeaders,
       contextWindow: overrideContext || desc.defaultContextWindow,
       defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens
-    };
-    return _aiProviderCache;
+    });
   }
   function abortError() {
     const e = new Error("请求已取消");
     e.name = "AbortError";
+    return e;
+  }
+  function timeoutError() {
+    const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1e3} 秒无响应）`);
+    e.name = "TimeoutError";
     return e;
   }
   async function streamChatCompletions(provider, body, signal, onDelta) {
@@ -8680,60 +8717,85 @@ var BZW_settings_panel = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const resp = await fetch(`${provider.endpoint}/chat/completions`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-      signal
-    });
-    if (!resp.ok) {
-      let msg = `API ${resp.status}`;
-      try {
-        const err = await resp.json();
-        if (err.error && err.error.message) msg = err.error.message;
-      } catch (e) {
+    const controller2 = new AbortController();
+    const onOuterAbort = () => controller2.abort();
+    let outerLinked = false;
+    if (signal) {
+      if (signal.aborted) controller2.abort();
+      else {
+        signal.addEventListener("abort", onOuterAbort);
+        outerLinked = true;
       }
-      throw new Error(msg);
     }
-    if (!resp.body || typeof resp.body.getReader !== "function") {
-      const data = await resp.json();
-      return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
-    }
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let full = "", buf = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      let nl;
-      while ((nl = buf.indexOf("\n")) !== -1) {
-        const line = buf.slice(0, nl).trim();
-        buf = buf.slice(nl + 1);
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (payload === "[DONE]") {
-          try {
-            reader.cancel();
-          } catch (e) {
-          }
-          return full;
-        }
+    let idleTimer = null;
+    const armIdle = () => {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => controller2.abort(), AI_IDLE_TIMEOUT_MS);
+    };
+    try {
+      armIdle();
+      const resp = await fetch(`${provider.endpoint}/chat/completions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        signal: controller2.signal
+      });
+      if (!resp.ok) {
+        let msg = `API ${resp.status}`;
         try {
-          const chunk = JSON.parse(payload);
-          const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-          if (delta) {
-            full += delta;
-            try {
-              onDelta == null ? void 0 : onDelta(delta);
-            } catch (e) {
-            }
-          }
+          const err = await resp.json();
+          if (err.error && err.error.message) msg = err.error.message;
         } catch (e) {
         }
+        throw new Error(msg);
       }
+      if (!resp.body || typeof resp.body.getReader !== "function") {
+        const data = await resp.json();
+        return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
+      }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let full = "", buf = "";
+      while (true) {
+        armIdle();
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf("\n")) !== -1) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line.startsWith("data:")) continue;
+          const payload = line.slice(5).trim();
+          if (payload === "[DONE]") {
+            try {
+              reader.cancel();
+            } catch (e) {
+            }
+            return full;
+          }
+          try {
+            const chunk = JSON.parse(payload);
+            const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+            if (delta) {
+              full += delta;
+              try {
+                onDelta == null ? void 0 : onDelta(delta);
+              } catch (e) {
+              }
+            }
+          } catch (e) {
+          }
+        }
+      }
+      return full;
+    } catch (e) {
+      if (controller2.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
+      throw e;
+    } finally {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      if (outerLinked && signal) signal.removeEventListener("abort", onOuterAbort);
     }
-    return full;
   }
   async function chatCompletionsNonStream(provider, body, signal) {
     if (signal == null ? void 0 : signal.aborted) throw abortError();
@@ -8742,11 +8804,22 @@ var BZW_settings_panel = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const resp = await requestUrl({
-      url: `${provider.endpoint}/chat/completions`,
-      method: "POST",
-      headers,
-      body: JSON.stringify({ ...body, stream: false })
+    const resp = await new Promise((resolve2, reject) => {
+      let timer = null;
+      const settle = (fn) => {
+        if (timer !== null) clearTimeout(timer);
+        fn();
+      };
+      timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
+      requestUrl({
+        url: `${provider.endpoint}/chat/completions`,
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ...body, stream: false })
+      }).then(
+        (r) => settle(() => resolve2(r)),
+        (e) => settle(() => reject(e))
+      );
     });
     if (signal == null ? void 0 : signal.aborted) throw abortError();
     const data = JSON.parse(resp.text);
@@ -8772,7 +8845,7 @@ var BZW_settings_panel = (() => {
     }
     return new AIService(params, defaultModel, mergedOptions);
   }
-  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AIService;
+  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AIService;
   var init_ai = __esm({
     "src/core/ai.ts"() {
       init_fake_obsidian();
@@ -8962,6 +9035,7 @@ var BZW_settings_panel = (() => {
         }
       ];
       _aiProviderCache = null;
+      AI_IDLE_TIMEOUT_MS = 6e4;
       AIService = class {
         constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
           this.defaultModel = defaultModel;
@@ -9241,7 +9315,15 @@ var BZW_settings_panel = (() => {
         detail.textContent = m.detail || "";
         row.append(name, detail);
         row.onclick = () => {
-          void Promise.resolve(opts.onPick(m)).then(() => closeModelPicker());
+          void (async () => {
+            try {
+              await opts.onPick(m);
+            } catch (e) {
+              console.error("[bz] 模型选择 onPick 失败:", e);
+            } finally {
+              closeModelPicker();
+            }
+          })();
         };
         listWrap.appendChild(row);
       }
@@ -12710,10 +12792,13 @@ ${countsToText(s.missing)}
       return;
     }
     if (touchSettlePending) {
+      const inPopup = popupEl != null && popupEl.contains(target) || sheetMask != null && sheetMask.contains(target);
       touchSettlePending = false;
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-      return;
+      if (inPopup) {
+        ev.stopImmediatePropagation();
+        ev.preventDefault();
+        return;
+      }
     }
     if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
       closeItemMenu();
@@ -30174,17 +30259,29 @@ ${text}`;
     }
     return btoa(bin);
   }
+  function cachePut(cacheKey, password, key) {
+    keyCache.delete(cacheKey);
+    keyCache.set(cacheKey, { pw: password, key });
+    if (keyCache.size > KEY_CACHE_MAX) {
+      const oldest = keyCache.keys().next().value;
+      if (oldest !== void 0) keyCache.delete(oldest);
+    }
+  }
   function clearCryptoKeyCache() {
     keyCache.clear();
   }
-  var CryptoService, keyCache;
+  var CryptoService, keyCache, KEY_CACHE_MAX;
   var init_crypto = __esm({
     "src/core/crypto.ts"() {
       CryptoService = class {
         static async deriveKey(password, salt) {
           const cacheKey = toBase64(salt);
           const hit = keyCache.get(cacheKey);
-          if (hit && hit.pw === password) return hit.key;
+          if (hit && hit.pw === password) {
+            keyCache.delete(cacheKey);
+            keyCache.set(cacheKey, hit);
+            return hit.key;
+          }
           const enc = new TextEncoder();
           const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, [
             "deriveKey"
@@ -30201,7 +30298,7 @@ ${text}`;
             false,
             ["encrypt", "decrypt"]
           );
-          keyCache.set(cacheKey, { pw: password, key });
+          cachePut(cacheKey, password, key);
           return key;
         }
         static async encrypt(plainText, password) {
@@ -30232,6 +30329,7 @@ ${text}`;
         }
       };
       keyCache = /* @__PURE__ */ new Map();
+      KEY_CACHE_MAX = 128;
     }
   });
 

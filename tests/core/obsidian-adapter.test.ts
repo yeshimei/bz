@@ -203,6 +203,35 @@ describe('obsidian-adapter', () => {
     rec.stop();
   });
 
+  it('C3：名为 xxx.md 的文件夹不派发任何 md 事件（TFolder 无 extension，兜底排除目录）', () => {
+    const rec = record('vault:md-created', 'vault:md-modified', 'vault:md-deleted', 'diary:file-created');
+    attachObsidianAdapter({ vault }, vi.fn());
+    // 日记目录下名为「2026-08.md」的文件夹（TFolder 形态：children 数组、无 extension）
+    vault.fire('create', { path: '我的/日记/2026-08.md', children: [] });
+    vault.fire('modify', { path: '卡片盒/notes.md', children: [] });
+    vault.fire('rename', { path: '卡片盒/notes2.md', children: [] }, '卡片盒/notes.md');
+    expect(rec.got).toHaveLength(0);
+    rec.stop();
+  });
+
+  it('C4：md → 非 md 改名仍派发通用事件（旧路径 .md 兜底）；新路径非 md 不归域，语义路不发', () => {
+    const rec = record('vault:md-renamed', 'flash:file-renamed');
+    attachObsidianAdapter({ vault }, vi.fn());
+    vault.fire('rename', { path: '卡片盒/a.txt', extension: 'txt' }, '卡片盒/a.md');
+    expect(rec.payloadsOf('vault:md-renamed')).toEqual([{ oldPath: '卡片盒/a.md', newPath: '卡片盒/a.txt' }]);
+    // classifyFilePath 只认 .md（既有契约）：文件已非 md，语义路不再归任何域，仅剩通用兜底
+    expect(rec.names()).toEqual(['vault:md-renamed']);
+    rec.stop();
+  });
+
+  it('C4：非 md → md 改名照常派发（新路径 md 判定，回归保护）', () => {
+    const rec = record('vault:md-renamed', 'flash:file-renamed');
+    attachObsidianAdapter({ vault }, vi.fn());
+    vault.fire('rename', { path: '卡片盒/a.md', extension: 'md' }, '卡片盒/a.txt');
+    expect(rec.names()).toEqual(['vault:md-renamed', 'flash:file-renamed']);
+    rec.stop();
+  });
+
   it('异常宿主（app 无 vault / vault.on 缺失）：静默不挂载，后续 attach 可重试', () => {
     expect(() => attachObsidianAdapter({}, vi.fn())).not.toThrow();
     expect(() => attachObsidianAdapter({ vault: {} }, vi.fn())).not.toThrow();

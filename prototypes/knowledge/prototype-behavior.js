@@ -1,4 +1,4 @@
-/* 源指纹 8ba6de47121b7c76 · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 66bc704342c406a3 · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -4579,6 +4579,11 @@ var BZW_knowledge = (() => {
   async function getAIProvider(override) {
     var _a, _b, _c;
     if (!override && _aiProviderCache) return _aiProviderCache;
+    const cacheable = !override;
+    const cachePut = (p) => {
+      if (cacheable) _aiProviderCache = p;
+      return p;
+    };
     const s = getQ3Settings();
     if (override && typeof override === "object" && override.apiKey) {
       return {
@@ -4597,15 +4602,14 @@ var BZW_knowledge = (() => {
       if (!endpoint || !s.aiCustomApiKey) {
         throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
       }
-      _aiProviderCache = {
+      return cachePut({
         endpoint,
         apiKey: s.aiCustomApiKey,
         model: s.aiCustomModel || void 0,
         extraHeaders: desc.extraHeaders,
         contextWindow: desc.defaultContextWindow,
         defaultMaxTokens: desc.defaultMaxTokens
-      };
-      return _aiProviderCache;
+      });
     }
     const key2 = s[desc.apiKeyKey];
     if (!key2 && name === "deepseek") {
@@ -4614,13 +4618,12 @@ var BZW_knowledge = (() => {
         const cfg = JSON.parse(raw);
         const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
         if (provider && provider.endpoint && provider.apiKey) {
-          _aiProviderCache = {
+          return cachePut({
             endpoint: String(provider.endpoint).replace(/\/+$/, ""),
             apiKey: provider.apiKey,
             contextWindow: desc.defaultContextWindow,
             defaultMaxTokens: desc.defaultMaxTokens
-          };
-          return _aiProviderCache;
+          });
         }
       } catch (e) {
       }
@@ -4631,7 +4634,7 @@ var BZW_knowledge = (() => {
     const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
     const overrideContext = (_b = s.aiContextOverrides) == null ? void 0 : _b[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
-    _aiProviderCache = {
+    return cachePut({
       endpoint: desc.endpoint,
       apiKey: key2 || "",
       model: overrideModel || desc.model || void 0,
@@ -4639,12 +4642,17 @@ var BZW_knowledge = (() => {
       extraHeaders: desc.extraHeaders,
       contextWindow: overrideContext || desc.defaultContextWindow,
       defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens
-    };
-    return _aiProviderCache;
+    });
   }
   function abortError() {
     const e = new Error("请求已取消");
     e.name = "AbortError";
+    return e;
+  }
+  var AI_IDLE_TIMEOUT_MS = 6e4;
+  function timeoutError() {
+    const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1e3} 秒无响应）`);
+    e.name = "TimeoutError";
     return e;
   }
   async function streamChatCompletions(provider, body, signal, onDelta) {
@@ -4653,60 +4661,85 @@ var BZW_knowledge = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const resp = await fetch(`${provider.endpoint}/chat/completions`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-      signal
-    });
-    if (!resp.ok) {
-      let msg = `API ${resp.status}`;
-      try {
-        const err = await resp.json();
-        if (err.error && err.error.message) msg = err.error.message;
-      } catch (e) {
+    const controller = new AbortController();
+    const onOuterAbort = () => controller.abort();
+    let outerLinked = false;
+    if (signal) {
+      if (signal.aborted) controller.abort();
+      else {
+        signal.addEventListener("abort", onOuterAbort);
+        outerLinked = true;
       }
-      throw new Error(msg);
     }
-    if (!resp.body || typeof resp.body.getReader !== "function") {
-      const data = await resp.json();
-      return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
-    }
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let full = "", buf = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      let nl;
-      while ((nl = buf.indexOf("\n")) !== -1) {
-        const line = buf.slice(0, nl).trim();
-        buf = buf.slice(nl + 1);
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (payload === "[DONE]") {
-          try {
-            reader.cancel();
-          } catch (e) {
-          }
-          return full;
-        }
+    let idleTimer = null;
+    const armIdle = () => {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
+    };
+    try {
+      armIdle();
+      const resp = await fetch(`${provider.endpoint}/chat/completions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      if (!resp.ok) {
+        let msg = `API ${resp.status}`;
         try {
-          const chunk = JSON.parse(payload);
-          const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-          if (delta) {
-            full += delta;
-            try {
-              onDelta == null ? void 0 : onDelta(delta);
-            } catch (e) {
-            }
-          }
+          const err = await resp.json();
+          if (err.error && err.error.message) msg = err.error.message;
         } catch (e) {
         }
+        throw new Error(msg);
       }
+      if (!resp.body || typeof resp.body.getReader !== "function") {
+        const data = await resp.json();
+        return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
+      }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let full = "", buf = "";
+      while (true) {
+        armIdle();
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf("\n")) !== -1) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line.startsWith("data:")) continue;
+          const payload = line.slice(5).trim();
+          if (payload === "[DONE]") {
+            try {
+              reader.cancel();
+            } catch (e) {
+            }
+            return full;
+          }
+          try {
+            const chunk = JSON.parse(payload);
+            const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+            if (delta) {
+              full += delta;
+              try {
+                onDelta == null ? void 0 : onDelta(delta);
+              } catch (e) {
+              }
+            }
+          } catch (e) {
+          }
+        }
+      }
+      return full;
+    } catch (e) {
+      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
+      throw e;
+    } finally {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      if (outerLinked && signal) signal.removeEventListener("abort", onOuterAbort);
     }
-    return full;
   }
   async function chatCompletionsNonStream(provider, body, signal) {
     if (signal == null ? void 0 : signal.aborted) throw abortError();
@@ -4715,11 +4748,22 @@ var BZW_knowledge = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const resp = await requestUrl({
-      url: `${provider.endpoint}/chat/completions`,
-      method: "POST",
-      headers,
-      body: JSON.stringify({ ...body, stream: false })
+    const resp = await new Promise((resolve, reject) => {
+      let timer = null;
+      const settle = (fn) => {
+        if (timer !== null) clearTimeout(timer);
+        fn();
+      };
+      timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
+      requestUrl({
+        url: `${provider.endpoint}/chat/completions`,
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ...body, stream: false })
+      }).then(
+        (r) => settle(() => resolve(r)),
+        (e) => settle(() => reject(e))
+      );
     });
     if (signal == null ? void 0 : signal.aborted) throw abortError();
     const data = JSON.parse(resp.text);
@@ -4851,7 +4895,11 @@ var BZW_knowledge = (() => {
   var alwaysOnTop = /* @__PURE__ */ new Set();
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
-      if (el.isConnected) el.style.zIndex = String(zCounter);
+      if (!el.isConnected) {
+        alwaysOnTop.delete(el);
+        continue;
+      }
+      el.style.zIndex = String(zCounter);
     }
   }
   function allocZBlock(n) {
@@ -5779,10 +5827,13 @@ var BZW_knowledge = (() => {
       return;
     }
     if (touchSettlePending) {
+      const inPopup = popupEl != null && popupEl.contains(target) || sheetMask != null && sheetMask.contains(target);
       touchSettlePending = false;
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-      return;
+      if (inPopup) {
+        ev.stopImmediatePropagation();
+        ev.preventDefault();
+        return;
+      }
     }
     if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
       closeItemMenu();

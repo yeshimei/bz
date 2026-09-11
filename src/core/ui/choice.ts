@@ -44,7 +44,15 @@ export function uiChoice<T extends string>(opts: BzChoiceOpts<T>): { el: HTMLDiv
     seg.style.transform = `translateX(${bb.left - tb.left}px)`;
     if (!animate) { void seg.offsetWidth; seg.style.transition = ''; }
   };
-  const onWinResize = () => syncSeg(false);
+  const onWinResize = () => {
+    // C12：元素已离场即自摘 window resize 监听——detach 契约不变，调用方忘调时
+    // 下一次 resize 自愈（原先永久滞留，float 形态监听随实例泄漏）
+    if (!el.isConnected) {
+      window.removeEventListener('resize', onWinResize);
+      return;
+    }
+    syncSeg(false);
+  };
   if (opts.float) {
     window.addEventListener('resize', onWinResize);
   }
