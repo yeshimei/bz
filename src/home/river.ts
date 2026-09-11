@@ -155,11 +155,27 @@ async function collectBelongingsCounts(app: App, c: RiverCounts): Promise<void> 
   c.belongingsTotal = Object.keys((db as { items?: Record<string, unknown> }).items ?? {}).length;
 }
 
-/** 备忘录：未完成条数（memo.json 同源直读，不依赖 DataManager 单例；文件缺失不建） */
+/** 备忘录：未完成条数 + 重要未完成条数（memo.json 同源直读，不依赖 DataManager 单例；文件缺失不建）。
+ *  「重要」判定先例 = memo/reminder.ts（priority==='important' 且未完成；item-1789106079981 彩点 hot 条件）；
+ *  memoOpen 继续全量口径（riverCountText「N 条待办」在用），两字段互不覆盖。 */
 async function collectMemoCounts(app: App, c: RiverCounts): Promise<void> {
   const raw = await readJsonIfExists(app, storageFile('memo.json'));
   const all = Array.isArray(raw) ? raw : [];
-  c.memoOpen = (all as Array<Record<string, unknown>>).filter((m) => !m?.completed).length;
+  const open = (all as Array<Record<string, unknown>>).filter((m) => !m?.completed);
+  c.memoOpen = open.length;
+  c.memoUrgentOpen = open.filter((m) => m?.priority === 'important').length;
+}
+
+/** 番茄钟是否正在专注（计时中或暂停中；item-1789106079981 彩点 warn 条件）——
+ *  跨域**只读**：isFocusing 无副作用（不加载、不恢复、不通知），动态 import 遵守 ADR-0002；
+ *  失败回落 false（同 ui.ts readPomodoroFocusing 先例；ensure 兜底留给 ui 层，本层不触发恢复副作用）。 */
+async function collectFocusing(): Promise<boolean> {
+  try {
+    const m = await import('../pomodoro');
+    return m.isFocusing();
+  } catch {
+    return false;
+  }
 }
 
 /** 日记总数（目录前缀递归 md 数，含子目录）+ 写作连击（今天未写不算断） */
@@ -194,15 +210,22 @@ export async function collectRiver(app: App, now: number = Date.now()): Promise<
     Promise.resolve()
       .then(fn)
       .catch(() => undefined);
-  await Promise.all([
-    safe(() => collectReviewCounts(app, now, counts)),
-    safe(() => collectCinemaCounts(app, counts)),
-    safe(() => collectBookshelfCounts(app, counts)),
-    safe(() => collectClippingCounts(app, counts)),
-    safe(() => collectFavoritesCounts(app, counts)),
-    safe(() => collectBelongingsCounts(app, counts)),
-    safe(() => collectMemoCounts(app, counts)),
-  ]);
+  // 专注相位与计数同一波并发（collectFocusing 自带失败回落 false）；
+  // as const 保二元组型——否则 spread 数组并入后 focusing 会被 widen 成 void | boolean
+  const [, focusing] = await Promise.all([
+    Promise.all(
+      [
+        () => collectReviewCounts(app, now, counts),
+        () => collectCinemaCounts(app, counts),
+        () => collectBookshelfCounts(app, counts),
+        () => collectClippingCounts(app, counts),
+        () => collectFavoritesCounts(app, counts),
+        () => collectBelongingsCounts(app, counts),
+        () => collectMemoCounts(app, counts),
+      ].map(safe)
+    ),
+    collectFocusing(),
+  ] as const);
   let streak: RiverStreak = { diaryStreak: 0, diaryWrittenToday: false };
   try {
     streak = collectDiary(app, now, counts);
@@ -225,5 +248,6 @@ export async function collectRiver(app: App, now: number = Date.now()): Promise<
     week,
     streak,
     counts,
+    pomodoroFocusing: focusing,
   };
 }
