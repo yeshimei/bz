@@ -651,7 +651,12 @@ function renderList(): void {
       if (readerEl) renderReader();
       return;
     }
-    if (!list.some((a) => a.id === (M.cur && M.cur.id))) M.cur = list[0];
+    if (!list.some((a) => a.id === (M.cur && M.cur.id))) {
+      M.cur = list[0];
+      // F4：重选后同步右栏——防「高亮 A 读 B」（搜索命中悄悄换选中，阅读区仍显示旧文章，
+      // j/k 从幻觉位置步进）；renderAll 路径下与外层 renderReader 重复渲染一次，幂等无害
+      if (readerEl) renderReader();
+    }
     listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs));
     M.list = list;
     bindItemMenus();
@@ -938,6 +943,9 @@ async function doSave(a: ClipArticle | null): Promise<void> {
 
 async function doMarkRead(a: ClipArticle | null): Promise<void> {
   if (!a || a.origin !== 'news') return;
+  // F3：已读/已收条目不重复标读——防统计重复计数 + 重复 news:read 事件（smartcat 三跳重复喂），
+  // 防「已收」条目 state:'saved' 被覆盖成 'skipped'（日后删除剪藏时该条从已收掉进已读，统计虚增）
+  if (a.st !== 'unread') return;
   const rawBefore = { ...(a.raw || {}) }; // 动作前快照（撤销恢复 read/state/body 用）
   await flowMarkRead(a);
   notifyUndo(`已将「${a.title}」标为已读`, () => void undoMarkRead(rawBefore));

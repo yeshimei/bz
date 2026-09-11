@@ -11,6 +11,7 @@ import { readNewsData, writeNewsDataMerged, migrateLegacyStats, applyRetention, 
 import { readClipbookData } from './data';
 import { scanClipDirectory, type ClipNote } from './scan';
 import { clipUrlSet } from './store';
+import { articleKeyOf } from './constants';
 import { tryGetSettings } from '../core/settings-provider';
 import { getApp } from '../core/app';
 import { M } from './state';
@@ -60,7 +61,14 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
   let data = res.data;
   const cleaned = applyRetention(data.articles, days, days);
   const retentionChanged = cleaned.length !== data.articles.length;
-  if (retentionChanged) data = { ...data, articles: cleaned };
+  // F1：被清理的超期条目收进 removeArticleKeys——合并写 articles 段按磁盘并集，
+  // 不声明删除意图时清理条目会被磁盘旧值复活（news.json 只增不减、retentionChanged 恒真反复空写）
+  let removedKeys: string[] = [];
+  if (retentionChanged) {
+    const kept = new Set(cleaned.map((a: any) => articleKeyOf(a)));
+    removedKeys = (data.articles || []).map((a: any) => articleKeyOf(a)).filter((k: string) => !kept.has(k));
+    data = { ...data, articles: cleaned };
+  }
   // 旧 stats 迁移（stats 段无真实数据时并入旧 news-stats.json 一次）
   let statsChanged = false;
   if (!statsHasData(data.stats)) {
@@ -76,7 +84,7 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
     const set: NewsWriteIntent['set'] = {};
     if (retentionChanged) set.articles = data.articles;
     if (statsChanged) set.stats = data.stats;
-    await enqueueNewsWrite(() => writeNewsDataMerged({ set }));
+    await enqueueNewsWrite(() => writeNewsDataMerged({ set, removeArticleKeys: removedKeys }));
   }
 
   // 侧写

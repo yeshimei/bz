@@ -132,6 +132,14 @@ export function regenerateSummary(app: any, file: any): Promise<void> {
   return enqueueJob({ app, ai: createAI(), file, force: true });
 }
 
+/** 失败通知「重试」入口（F9）：与手动重跑共用 FIFO 串行队列——processingPaths 去重，
+ *  双击/并发点按只跑一次 AI（直调 processFile 会绕过去重双倍花费）；force 语义与 AI 服务
+ *  实例由调用方（processor 失败通知）透传，重试行为不变 */
+export function retrySummaryWithAI(app: any, ai: any, file: any, force: boolean): Promise<void> {
+  if (!file || file.extension !== 'md') return Promise.resolve();
+  return enqueueJob({ app, ai, file, force });
+}
+
 /** 命令 bz-auto-summary-redo（enh 包 1）：对当前打开的笔记重跑摘要；
  *  非剪藏笔记（监听目录外）给人话提示，不触发 AI */
 export async function redoSummaryForActiveFile(app: any): Promise<void> {

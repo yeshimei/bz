@@ -27,6 +27,20 @@ export function defaultPomodoroData(): PomodoroData {
   return { version: 1, state: createInitialState(), history: [] };
 }
 
+/**
+ * 历史保留窗裁剪（F13）：统计只消费近 7 个日历日（stats.ts last7Days/today*），窗外的完成
+ * 记录在落盘前裁掉——history 永不裁剪会让 pomodoro.json 随使用线性膨胀。
+ * 窗口起点 = 今日零点 −6 天（与 last7Days 最左一天同一起点，日历日口径 DST 安全）；
+ * 未来时间戳（时钟回拨）落在窗口右侧，保守保留。
+ */
+export function trimHistory(history: HistoryEntry[], now: number): HistoryEntry[] {
+  const floor = new Date(now);
+  floor.setHours(0, 0, 0, 0);
+  floor.setDate(floor.getDate() - 6);
+  const t = floor.getTime();
+  return history.filter((h) => h.ts >= t);
+}
+
 /** 容错归一：非法字段回退默认、history 过滤非法条目 */
 function normalizeData(raw: any): PomodoroData {
   const def = defaultPomodoroData();

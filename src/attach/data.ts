@@ -63,7 +63,12 @@ export function parseLinkRefs(content: string): LinkRef[] {
   while ((m = MD_RE.exec(content)) !== null) {
     const embeds = m[1] === '!';
     const text = m[2];
-    const url = m[3].trim();
+    // F10：md 链接两种形态剥壳——尖括号包路径（`<my image.png>`，含空格）与尾标题
+    // （`path "标题"`）；原样进 resolveTarget 永远匹配不上，清单偏小漏搬附件
+    let url = m[3].trim();
+    const angled = url.match(/^<([\s\S]+)>$/);
+    if (angled) url = angled[1].trim();
+    url = url.replace(/\s+(["'])(?:(?!\1).)*\1\s*$/, '').trim();
     if (!url) continue;
     out.push({ kind: 'md', embeds, target: url, extra: text, raw: m[0] });
   }
