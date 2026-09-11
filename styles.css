@@ -4601,13 +4601,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: var(--bz-font-meta);
 }
 /* issue 217 S5：`.bz-diary-tx`（媒体下挂正文）规则已随 213/214 版式删除（死规则）；
-   正文卡允许选中复制（issue 217 小项：卡片全局 user-select:none 的文本区豁免） */
+   原随 217 加的正文可选中豁免已退役（2026-09-11 用户拍板，两端取消）：真机长按正文时系统
+   文本选择接管 → touchcancel 掐死 core/dom.longPress 的 500ms 计时 → 长按抽屉永不出
+   （用户见到的「右键菜单」即系统选择浮标）。正文选择回归 none（继承 .bz-diary-item） */
 .bz-diary-text-tx {
   font-size: var(--bz-font-label);
   line-height: 1.6;
   color: var(--dw-ink);
-  user-select: text;
-  -webkit-user-select: text;
 }
 
 /* ---- issue 217 S1：markdown 排版（域 reset 的 * {margin:0;padding:0} 会把
@@ -6373,13 +6373,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: var(--bz-font-meta);
 }
 /* issue 217 S5：`.bz-diary-tx`（媒体下挂正文）规则已随 213/214 版式删除（死规则）；
-   正文卡允许选中复制（issue 217 小项：卡片全局 user-select:none 的文本区豁免） */
+   原随 217 加的正文可选中豁免已退役（2026-09-11 用户拍板，两端取消）：真机长按正文时系统
+   文本选择接管 → touchcancel 掐死 core/dom.longPress 的 500ms 计时 → 长按抽屉永不出
+   （用户见到的「右键菜单」即系统选择浮标）。正文选择回归 none（继承 .bz-diary-item） */
 .bz-diary-text-tx {
   font-size: var(--bz-font-label);
   line-height: 1.6;
   color: var(--dw-ink);
-  user-select: text;
-  -webkit-user-select: text;
 }
 
 /* ---- issue 217 S1：markdown 排版（域 reset 的 * {margin:0;padding:0} 会把
@@ -9157,45 +9157,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_ok__:hover { background: #c2410c; }
 
 
-/* ==================== 每日简报（ADR-0119 / issue 263） ====================
-   面板内一律消费 --clip-* 编辑部纸墨变量（本域皮肤为固定纸面，不随 IDE 主题切换）。 */
-
-/* 中栏：日节头（日期 + 当日条数 + 细线拖尾） */
-.bz-clip-day {
-  display: flex; align-items: baseline; gap: var(--bz-space-sm);
-  padding: var(--bz-space-md) var(--bz-space-md) 6px;
-}
-.bz-clip-day-name {
-  font-family: var(--clip-serif); font-size: var(--bz-font-meta); letter-spacing: 2px;
-  color: var(--clip-ink-2); font-weight: 700;
-}
-.bz-clip-day-n { font-size: var(--bz-font-caption); color: var(--clip-accent); }
-.bz-clip-day-rule { flex: 1; height: 1px; background: var(--clip-rule, rgba(28,26,23,.16)); align-self: center; }
-
-/* 中栏：失败条目（原行首「字幕/转写」小标已按用户 2026-09-10 拍板退役，仅留错误色） */
-.bz-clip-item--err .bz-clip-item-t { color: #c2410c; }
-
-/* 右栏：要点正文（h3 小节 + ul 要点；不走文章首字下沉） */
-.bz-clip-brief-points { font-size: var(--bz-font-body); line-height: 1.95; color: var(--clip-body); }
-.bz-clip-brief-h {
-  font-family: var(--clip-serif); font-size: var(--bz-font-emphasis); font-weight: 700; letter-spacing: 1px;
-  color: var(--clip-ink, #1c1a17); margin: var(--bz-space-lg) 0 6px;
-  padding-left: 10px; border-left: 3px solid var(--clip-accent);
-}
-.bz-clip-brief-points > .bz-clip-brief-h:first-child { margin-top: 0; }
-.bz-clip-brief-ul { margin: 0 0 var(--bz-space-md); padding-left: 20px; }
-.bz-clip-brief-ul li { margin: 0 0 var(--bz-space-xs); }
-.bz-clip-brief-points p { margin: 0 0 var(--bz-space-md); }
-
-/* 右栏：失败态 + 重跑入口 */
-.bz-clip-brief-err {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--clip-cream); border-left: 3px solid #c2410c;
-  padding: var(--bz-space-md); font-size: var(--bz-font-meta); color: #8a3a12;
-}
-
-/* 右栏：可展开完整转录稿段已按用户 2026-09-10 拍板退役（.bz-clip-brief-tr 系列删除） */
-
 /* ==================== 暗色皮（2026-09-10 用户需求） ====================
    范式同 home / cinema：浅色为基准，暗色在 .theme-dark 下覆写同一组 --clip-* token，
    域内所有引用自动跟随；下文少数硬编码色值（细线 / 菜单阴影 / 菜单危险色）另行单项覆写。 */
@@ -9222,9 +9183,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .theme-dark .bz-item-menu.bz-clip-menu-editorial { box-shadow: 5px 5px 0 rgba(0, 0, 0, .5); }
 .theme-dark .bz-clip-menu-editorial .bz-item-menu-item--danger { color: #e8776b; }
 .theme-dark .bz-clip-menu-editorial .bz-item-menu-item--danger:hover { background: #b3261e; color: #faf8f3; }
-/* 失败态：浅底橘红在暗底不可读，提亮前景 + 暗化底 */
-.theme-dark .bz-clip-item--err .bz-clip-item-t { color: #ef7d5a; }
-.theme-dark .bz-clip-brief-err { background: #2a211b; color: #f0a077; border-left-color: #b3261e; }
 /* 删除确认弹窗皮：挂 body 无 --clip 链（值写死），暗色单项覆写 */
 .theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial { background: #1b1a17; border-color: #ece8dd; box-shadow: 6px 6px 0 rgba(0, 0, 0, .5); }
 .theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial h4 { color: #ece8dd; }
