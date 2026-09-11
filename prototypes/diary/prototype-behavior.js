@@ -1,4 +1,4 @@
-/* 源指纹 789c009ab07c2be9 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 259017821a9a0225 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -7175,7 +7175,12 @@ var BZW_diary = (() => {
               if (!forceReset) return false;
               return this.firstTimeSetup(password);
             }
-            if (!parsed || !Array.isArray(parsed.notes)) parsed.notes = [];
+            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+              this.manifestIssue = "corrupt";
+              if (!forceReset) return false;
+              return this.firstTimeSetup(password);
+            }
+            if (!Array.isArray(parsed.notes)) parsed.notes = [];
             parsed.version = parsed.version || 1;
             this.manifest = parsed;
             this.password = password;
@@ -7193,7 +7198,7 @@ var BZW_diary = (() => {
         }
         /** 首设/强制重设：写空清单。写失败必须回滚解锁态（否则下次打开又误判无清单） */
         async firstTimeSetup(password) {
-          var _a;
+          var _a, _b;
           this.password = password;
           this.unlocked = true;
           (_a = this.onUnlockChange) == null ? void 0 : _a.call(this, true);
@@ -7206,6 +7211,8 @@ var BZW_diary = (() => {
             this.unlocked = false;
             this.password = null;
             this.manifest = { version: 1, notes: [] };
+            (_b = this.onUnlockChange) == null ? void 0 : _b.call(this, false);
+            emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: false });
             return false;
           }
         }
@@ -7673,43 +7680,45 @@ var BZW_diary = (() => {
          * @returns { files: 删除的孤儿密文文件数, notes: 清除的失效条目数 }
          */
         async resolveHealth(keys) {
-          if (!this.unlocked) throw new Error("未解锁，无法清理");
-          const want = new Set(keys);
-          let notes = 0;
-          let files = 0;
-          const kept = [];
-          for (const n of this.manifest.notes) {
-            let bodyExists = false;
-            if (n.contentRef) {
+          return this.enqueueOp(async () => {
+            if (!this.unlocked) throw new Error("未解锁，无法清理");
+            const want = new Set(keys);
+            let notes = 0;
+            let files = 0;
+            const kept = [];
+            for (const n of this.manifest.notes) {
+              let bodyExists = false;
+              if (n.contentRef) {
+                try {
+                  bodyExists = await this.adapter.exists(this.resolveRef(n.contentRef));
+                } catch (e) {
+                  bodyExists = false;
+                }
+              }
+              if (want.has("entry:" + n.id) && !bodyExists) {
+                await this.deleteNoteMirrors(n);
+                notes += 1;
+              } else {
+                kept.push(n);
+              }
+            }
+            if (notes > 0) this.manifest.notes = kept;
+            for (const key of keys) {
+              if (!key.startsWith("file:")) continue;
+              const name = key.slice("file:".length);
+              if (!name.startsWith(".") || !name.endsWith(".enc")) continue;
               try {
-                bodyExists = await this.adapter.exists(this.resolveRef(n.contentRef));
+                if (await this.adapter.exists(this.resolveRef(name))) {
+                  await this.adapter.remove(this.resolveRef(name));
+                  files += 1;
+                }
               } catch (e) {
-                bodyExists = false;
               }
             }
-            if (want.has("entry:" + n.id) && !bodyExists) {
-              await this.deleteNoteMirrors(n);
-              notes += 1;
-            } else {
-              kept.push(n);
-            }
-          }
-          if (notes > 0) this.manifest.notes = kept;
-          for (const key of keys) {
-            if (!key.startsWith("file:")) continue;
-            const name = key.slice("file:".length);
-            if (!name.startsWith(".") || !name.endsWith(".enc")) continue;
-            try {
-              if (await this.adapter.exists(this.resolveRef(name))) {
-                await this.adapter.remove(this.resolveRef(name));
-                files += 1;
-              }
-            } catch (e) {
-            }
-          }
-          if (notes > 0) await this.saveManifest();
-          await this.clearStaging();
-          return { files, notes };
+            if (notes > 0) await this.saveManifest();
+            await this.clearStaging();
+            return { files, notes };
+          });
         }
         enqueueOp(op) {
           const run = this.opQueue.then(op, op);
@@ -7719,9 +7728,11 @@ var BZW_diary = (() => {
         /**
          * 加锁一篇笔记（操作级互斥入口，P1-6）：实例级 promise 链串行——
          * 并发 lockNote/restoreNote 按发起顺序排队执行，杜绝挂起标记/清单/暂存区的并发互吞。
+         * @param onSkippedStale E14：加密期间原文件被编辑过（删前重读与加密正文不一致）而
+         *   保留未删的路径列表——密文为加密时的旧内容，调用方应提示用户可重做。
          */
-        lockNote(input, onProgress, onDeleteFailed) {
-          return this.enqueueOp(() => this.lockNoteSerial(input, onProgress, onDeleteFailed));
+        lockNote(input, onProgress, onDeleteFailed, onSkippedStale) {
+          return this.enqueueOp(() => this.lockNoteSerial(input, onProgress, onDeleteFailed, onSkippedStale));
         }
         /**
          * 加锁一篇笔记：把当前笔记正文 + 双链附件移入保险库（ADR-0018 提交式加密）。
@@ -7735,7 +7746,7 @@ var BZW_diary = (() => {
          * 原文件不动；清单先行已残留的挂起态由解锁自愈兜底。
          * onProgress：按文件回调（附件逐个 + 笔记本身），UI 驱动进度通知。
          */
-        async lockNoteSerial(input, onProgress, onDeleteFailed) {
+        async lockNoteSerial(input, onProgress, onDeleteFailed, onSkippedStale) {
           if (!this.unlocked || !this.password) throw new Error("未解锁，无法加密笔记");
           await this.ensureSafeRootDir();
           await this.ensureStagingDir();
@@ -7747,6 +7758,7 @@ var BZW_diary = (() => {
           const stagedRefs = [];
           let note = null;
           let manifestSaved = false;
+          const skippedStale = [];
           try {
             const results = await mapLimit(input.attachments, BLOB_CONCURRENCY, async (a) => {
               const fp = await fingerprintOf(a.data);
@@ -7813,13 +7825,27 @@ var BZW_diary = (() => {
               }
             }
             if (input.kind !== "diary-entry" && input.kind !== "password-vault") {
+              let stale = false;
               try {
-                await this.deleteVaultFile(input.path);
+                const f = getApp().vault.getAbstractFileByPath(input.path);
+                if (f && f.isFolder !== true) {
+                  const current = await getApp().vault.read(f);
+                  stale = current.replace(/\r\n/g, "\n") !== input.content.replace(/\r\n/g, "\n");
+                }
               } catch (e) {
-                deleteFailed.push(input.path);
+              }
+              if (stale) {
+                skippedStale.push(input.path);
+              } else {
+                try {
+                  await this.deleteVaultFile(input.path);
+                } catch (e) {
+                  deleteFailed.push(input.path);
+                }
               }
             }
             onDeleteFailed == null ? void 0 : onDeleteFailed(deleteFailed);
+            onSkippedStale == null ? void 0 : onSkippedStale(skippedStale);
             return note;
           } catch (e) {
             for (const ref of stagedRefs) {
@@ -8002,7 +8028,6 @@ var BZW_diary = (() => {
          * @returns 成功写入返回 true；目标路径被占且非本系统（fingerprint 冲突）由附件层处理，正文 merge 属幂等写回。
          */
         async mergeDiaryBlock(datePath, block) {
-          var _a, _b;
           const app = getApp();
           if (!datePath || !block) return false;
           const md = block.replace(/\r\n/g, "\n");
@@ -8012,69 +8037,72 @@ var BZW_diary = (() => {
           const timeValue = time ? parseInt(time.slice(0, 2), 10) * 100 + parseInt(time.slice(3, 5), 10) : null;
           if (timeValue === null || Number.isNaN(timeValue)) return false;
           await this.ensureVaultParentFolder(datePath);
-          const existing = app.vault.getAbstractFileByPath(datePath);
-          let existingText = "";
-          if (existing && existing.isFolder !== true) {
-            existingText = await app.vault.read(existing);
-          }
-          const existingLines = existingText ? existingText.replace(/\r\n/g, "\n").split("\n") : [];
-          const blockRows = [lines[0].trim()];
-          const blockLines = [];
-          for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
-          while (blockLines.length && blockLines[blockLines.length - 1].trim() === "") blockLines.pop();
-          while (blockLines.length && blockLines[0].trim() === "") blockLines.shift();
-          if (blockLines.length) {
-            blockRows.push("");
-            blockRows.push(...blockLines);
-          }
-          const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
-          const sigLines = (ls) => ls.map((l) => l.trim()).filter((l) => l !== "");
-          const blockSig = sigLines(blockRows);
-          let alreadyMerged = false;
-          for (let i = 0; i < existingLines.length; i++) {
-            if (existingLines[i].trim() !== lines[0].trim()) continue;
-            const seg = [];
-            for (let k = i + 1; k < existingLines.length && !headingRe.test(existingLines[k]); k++) seg.push(existingLines[k]);
-            if (sigLines(seg).join("\n") === blockSig.slice(1).join("\n")) {
-              alreadyMerged = true;
-              break;
+          await enqueueFileTask(datePath, async () => {
+            var _a, _b;
+            const existing = app.vault.getAbstractFileByPath(datePath);
+            let existingText = "";
+            if (existing && existing.isFolder !== true) {
+              existingText = await app.vault.read(existing);
             }
-          }
-          if (alreadyMerged) return true;
-          let insertIdx = existingLines.length;
-          for (let i = 0; i < existingLines.length; i++) {
-            const m = existingLines[i].match(headingRe);
-            if (m) {
-              const tv = parseInt(m[1].slice(0, 2), 10) * 100 + parseInt(m[1].slice(3, 5), 10);
-              if (tv >= timeValue) {
-                insertIdx = i;
+            const existingLines = existingText ? existingText.replace(/\r\n/g, "\n").split("\n") : [];
+            const blockRows = [lines[0].trim()];
+            const blockLines = [];
+            for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
+            while (blockLines.length && blockLines[blockLines.length - 1].trim() === "") blockLines.pop();
+            while (blockLines.length && blockLines[0].trim() === "") blockLines.shift();
+            if (blockLines.length) {
+              blockRows.push("");
+              blockRows.push(...blockLines);
+            }
+            const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
+            const sigLines = (ls) => ls.map((l) => l.trim()).filter((l) => l !== "");
+            const blockSig = sigLines(blockRows);
+            let alreadyMerged = false;
+            for (let i = 0; i < existingLines.length; i++) {
+              if (existingLines[i].trim() !== lines[0].trim()) continue;
+              const seg = [];
+              for (let k = i + 1; k < existingLines.length && !headingRe.test(existingLines[k]); k++) seg.push(existingLines[k]);
+              if (sigLines(seg).join("\n") === blockSig.slice(1).join("\n")) {
+                alreadyMerged = true;
                 break;
               }
             }
-          }
-          const out = [];
-          for (let i = 0; i < insertIdx; i++) out.push(existingLines[i]);
-          if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== "") out.push("");
-          out.push(...blockRows);
-          if (insertIdx < existingLines.length && existingLines[insertIdx].trim() !== "") out.push("");
-          for (let i = insertIdx; i < existingLines.length; i++) out.push(existingLines[i]);
-          const clean = [];
-          for (const ln of out) {
-            if (ln.trim() === "") {
-              if (clean.length && clean[clean.length - 1] !== "") clean.push("");
-            } else {
-              clean.push(ln);
+            if (alreadyMerged) return;
+            let insertIdx = existingLines.length;
+            for (let i = 0; i < existingLines.length; i++) {
+              const m = existingLines[i].match(headingRe);
+              if (m) {
+                const tv = parseInt(m[1].slice(0, 2), 10) * 100 + parseInt(m[1].slice(3, 5), 10);
+                if (tv >= timeValue) {
+                  insertIdx = i;
+                  break;
+                }
+              }
             }
-          }
-          while (clean.length && clean[0] === "") clean.shift();
-          while (clean.length && clean[clean.length - 1] === "") clean.pop();
-          const finalText = clean.join("\n");
-          if (existing && existing.isFolder !== true) {
-            await app.vault.modify(existing, finalText);
-          } else {
-            const file = await app.vault.create(datePath, finalText);
-            (_b = (_a = app.metadataCache) == null ? void 0 : _a.trigger) == null ? void 0 : _b.call(_a, "changed", file);
-          }
+            const out = [];
+            for (let i = 0; i < insertIdx; i++) out.push(existingLines[i]);
+            if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== "") out.push("");
+            out.push(...blockRows);
+            if (insertIdx < existingLines.length && existingLines[insertIdx].trim() !== "") out.push("");
+            for (let i = insertIdx; i < existingLines.length; i++) out.push(existingLines[i]);
+            const clean = [];
+            for (const ln of out) {
+              if (ln.trim() === "") {
+                if (clean.length && clean[clean.length - 1] !== "") clean.push("");
+              } else {
+                clean.push(ln);
+              }
+            }
+            while (clean.length && clean[0] === "") clean.shift();
+            while (clean.length && clean[clean.length - 1] === "") clean.pop();
+            const finalText = clean.join("\n");
+            if (existing && existing.isFolder !== true) {
+              await app.vault.modify(existing, finalText);
+            } else {
+              const file = await app.vault.create(datePath, finalText);
+              (_b = (_a = app.metadataCache) == null ? void 0 : _a.trigger) == null ? void 0 : _b.call(_a, "changed", file);
+            }
+          });
           return true;
         }
         /**
@@ -8128,34 +8156,43 @@ var BZW_diary = (() => {
           (_b = (_a = app.metadataCache) == null ? void 0 : _a.trigger) == null ? void 0 : _b.call(_a, "changed", file);
           return true;
         }
-        /** 删除一条加密笔记（连同镜像文件、清单记录）。谨慎：真删除不可恢复。 */
-        async removeNote(noteId) {
-          if (!this.unlocked) throw new Error("未解锁");
-          const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
-          if (idx === -1) return;
-          const note = this.manifest.notes[idx];
-          await this.deleteNoteMirrors(note);
-          this.manifest.notes.splice(idx, 1);
-          await this.saveManifest();
+        /**
+         * 删除一条加密笔记（连同镜像文件、清单记录）。谨慎：真删除不可恢复。
+         * E13：整体入 opQueue——与 lockNote/restoreNote 同链串行，防内存清单快照互踩
+         * （此前可与其并发，后落盘的旧清单快照会抹掉并发 lockNote 新增的条目）。
+         */
+        removeNote(noteId) {
+          return this.enqueueOp(async () => {
+            if (!this.unlocked) throw new Error("未解锁");
+            const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
+            if (idx === -1) return;
+            const note = this.manifest.notes[idx];
+            await this.deleteNoteMirrors(note);
+            this.manifest.notes.splice(idx, 1);
+            await this.saveManifest();
+          });
         }
         /**
          * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像；清单同步持久化）。
          * 供密码本整表（password-vault）等高频改写载荷用：重用既有镜像名，避免每次新镜像堆积。
          * 覆盖走 replaceMirrorAtomic（P0-1）：暂存+rename 原子换入，任何写失败正式位保持旧完整密文。
+         * E13：整体入 opQueue（理由同 removeNote——清单读改写与 lockNote/restoreNote 串行互斥）。
          */
-        async updateNotePayload(noteId, plainContent) {
-          if (!this.unlocked || !this.password) throw new Error("未解锁，无法保存");
-          const note = this.manifest.notes.find((n) => n.id === noteId);
-          if (!note) throw new Error("未找到清单条目");
-          const encrypted = await CryptoService.encrypt(plainContent, this.password);
-          if (note.contentRef) {
-            await this.replaceMirrorAtomic(note.contentRef, encrypted);
-          } else {
-            const ref = flatName();
-            await this.replaceMirrorAtomic(ref, encrypted);
-            note.contentRef = ref;
-          }
-          await this.saveManifest();
+        updateNotePayload(noteId, plainContent) {
+          return this.enqueueOp(async () => {
+            if (!this.unlocked || !this.password) throw new Error("未解锁，无法保存");
+            const note = this.manifest.notes.find((n) => n.id === noteId);
+            if (!note) throw new Error("未找到清单条目");
+            const encrypted = await CryptoService.encrypt(plainContent, this.password);
+            if (note.contentRef) {
+              await this.replaceMirrorAtomic(note.contentRef, encrypted);
+            } else {
+              const ref = flatName();
+              await this.replaceMirrorAtomic(ref, encrypted);
+              note.contentRef = ref;
+            }
+            await this.saveManifest();
+          });
         }
         /** 解附件预览层 → dataUrl 明文（预览窗用；无预览层返回 null） */
         async decryptPreview(a) {
@@ -9821,7 +9858,7 @@ var BZW_diary = (() => {
           void this.renderList();
           this.startSessionTimers();
         }
-        hide() {
+        hide(suppressAutoLockNotice = false) {
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
           this.stopSessionTimers();
@@ -9831,7 +9868,7 @@ var BZW_diary = (() => {
             this.pwState = { ...DEFAULT_PW_STATE };
             this._selNoteId = null;
             this._diaryPlain = {};
-            this.noticeAutoLock();
+            if (!suppressAutoLockNotice) this.noticeAutoLock();
           }
         }
         /** 安全模式双口径（config 快照可能落后于设置实时值：单读 config 会漏，历史双键 OR） */
@@ -9881,7 +9918,7 @@ var BZW_diary = (() => {
             this.idleLockTimer = null;
             if (!this.isSecurityMode() || !this.dataManager.unlocked || !this.rootVisible()) return;
             notice("安全模式：15 分钟无操作，已自动上锁");
-            this.lockNow();
+            this.lockNow(true);
           }, _UIManager.IDLE_LOCK_MS);
         }
         clearIdleLock() {
@@ -10208,6 +10245,10 @@ var BZW_diary = (() => {
                 } else {
                   if (pw !== input2.value) {
                     notice("两次密码不一致");
+                    return;
+                  }
+                  if (pw.length < 4) {
+                    notice("主密码至少 4 位");
                     return;
                   }
                   if (!ackBox.checked) {
@@ -10577,7 +10618,7 @@ var BZW_diary = (() => {
           bind("menu", () => this.openNoteDetailMenu(note, kind));
           if (kind === "diary" && !this._diaryPlain[note.id]) {
             void this.dataManager.decryptNoteBody(note).then((t) => {
-              if (t !== null && this._selNoteId === note.id) {
+              if (t !== null && this.asset === "diary" && this._selNoteId === note.id) {
                 this._diaryPlain[note.id] = t;
                 this.renderNoteDetail(detail, note, kind);
               }
@@ -10964,8 +11005,8 @@ var BZW_diary = (() => {
           if (!this._initialized) return;
           this.setAssetFromNav(lastVisitedAsset);
         }
-        /** 立即上锁（锁屏接管） */
-        lockNow() {
+        /** 立即上锁（锁屏接管）。@param silent E11：安静上锁（触发方自带通知，如空闲自动上锁），hide 不再补一条 */
+        lockNow(silent = false) {
           this.dataManager.lock();
           this.pwDataManager.lock();
           this.pwState = { ...DEFAULT_PW_STATE };
@@ -10978,7 +11019,7 @@ var BZW_diary = (() => {
           this.stopSessionTimers();
           this.notifyUnlockUi();
           if (this.isSecurityMode()) {
-            this.hide();
+            this.hide(silent);
           }
         }
         /** 解锁态变更后 UI 同步（Controller attachStatusBar 也调；锁屏/已解锁文本 + 重绘）。未建 DOM 时静默 */
@@ -11268,9 +11309,9 @@ var BZW_diary = (() => {
             const dataUrls = /* @__PURE__ */ new Map();
             for (const r of previewResults) dataUrls.set(r.path, r.du);
             const { text, slots, inlined } = collectMediaSlots(plain != null ? plain : "", note.attachments);
-            const mdEl = document.createElement("div");
+            const { ok: rendered, el: mdElRaw } = await this.renderWithTimeout(getApp(), text, note.path);
+            const mdEl = mdElRaw;
             mdEl.className = "bz-encrypt-preview-md";
-            const rendered = await this.renderWithTimeout(getApp(), text, mdEl, note.path);
             if (rendered) {
               let html = mdEl.innerHTML;
               for (const slot of slots) {
@@ -11306,8 +11347,13 @@ var BZW_diary = (() => {
             body.appendChild(err);
           }
         }
-        /** 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关） */
-        async renderWithTimeout(app, text, el, path, timeoutMs = 3e3) {
+        /**
+         * 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关）。
+         * E9：render 渲入私有容器——超时弃用该容器（迟到 promise 追加进孤儿节点永不入 DOM），
+         * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
+         */
+        async renderWithTimeout(app, text, path, timeoutMs = 3e3) {
+          const el = document.createElement("div");
           let finished = false;
           const render = MarkdownRenderer.render(app, text, el, path, new Component()).then(
             () => {
@@ -11318,7 +11364,8 @@ var BZW_diary = (() => {
             }
           );
           await Promise.race([render, new Promise((r) => setTimeout(r, timeoutMs))]);
-          return finished;
+          if (!finished) return { ok: false, el: document.createElement("div") };
+          return { ok: true, el };
         }
         /** 预览窗内所有缩略图/占位 slot 绑定点击：只加载被点的那一张原始层 */
         bindMediaClicks(root, attachments) {
@@ -11584,6 +11631,11 @@ var BZW_diary = (() => {
                   if (failed.length) {
                     notice(failed.length + " 个原文件删除失败（已保留在原位置，可手动删除）", "warning");
                   }
+                },
+                (stale) => {
+                  if (stale.length) {
+                    notice("加密期间笔记有新的修改，原文件已保留；保险库内为加密时的内容，可删除后重新加密", "warning");
+                  }
                 }
               );
               finishProgress(h, attachments.length + 1, "加密完成");
@@ -11617,6 +11669,7 @@ var BZW_diary = (() => {
           this.uiManager._initialized = false;
           this.dataManager.onUnlockChange = null;
           this.dataManager.lock();
+          _EncryptAppController.instance = null;
         }
       };
       _EncryptAppController.instance = null;
@@ -11697,7 +11750,7 @@ var BZW_diary = (() => {
   async function lockSafe(app) {
     await ensureEncrypt(app);
     if (!getSafeManager().unlocked) return false;
-    getController().uiManager.lockNow();
+    getController().uiManager.lockNow(true);
     return true;
   }
   async function lockEncrypt(app) {

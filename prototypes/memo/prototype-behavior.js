@@ -1,4 +1,4 @@
-/* 源指纹 ce86991d66695f0e · 仓内输入 208 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 cda8a461438f878d · 仓内输入 208 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -5025,6 +5025,7 @@ var BZW_memo = (() => {
       init_app();
       init_utils();
       init_storage();
+      init_notice();
       DEFAULT_SCENARIOS = ["剪藏", "工作", "学习", "生活", "代码", "公开课"];
       MemoData = {
         memoFilePath: "",
@@ -5049,6 +5050,18 @@ var BZW_memo = (() => {
         async loadItems() {
           return enqueueFileTask(this.memoFilePath, async () => {
             const raw = await this.read();
+            if (!Array.isArray(raw)) {
+              const backup = await backupOriginal(getApp(), this.memoFilePath);
+              await this.write([]);
+              try {
+                notify(
+                  backup ? `备忘录数据文件损坏（内容不是列表），原内容已留档到 ${backup}，已重建空清单继续使用` : "备忘录数据文件损坏（内容不是列表），已重建空清单继续使用",
+                  { type: "warning", dedupeKey: "memo-loaditems-corrupt" }
+                );
+              } catch (e) {
+              }
+              return [];
+            }
             let needWrite = false;
             const items = raw.map((item) => {
               if (!item.id) {
@@ -31313,7 +31326,12 @@ ${text}`;
               if (!forceReset) return false;
               return this.firstTimeSetup(password);
             }
-            if (!parsed || !Array.isArray(parsed.notes)) parsed.notes = [];
+            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+              this.manifestIssue = "corrupt";
+              if (!forceReset) return false;
+              return this.firstTimeSetup(password);
+            }
+            if (!Array.isArray(parsed.notes)) parsed.notes = [];
             parsed.version = parsed.version || 1;
             this.manifest = parsed;
             this.password = password;
@@ -31331,7 +31349,7 @@ ${text}`;
         }
         /** 首设/强制重设：写空清单。写失败必须回滚解锁态（否则下次打开又误判无清单） */
         async firstTimeSetup(password) {
-          var _a2;
+          var _a2, _b2;
           this.password = password;
           this.unlocked = true;
           (_a2 = this.onUnlockChange) == null ? void 0 : _a2.call(this, true);
@@ -31344,6 +31362,8 @@ ${text}`;
             this.unlocked = false;
             this.password = null;
             this.manifest = { version: 1, notes: [] };
+            (_b2 = this.onUnlockChange) == null ? void 0 : _b2.call(this, false);
+            emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: false });
             return false;
           }
         }
@@ -31811,43 +31831,45 @@ ${text}`;
          * @returns { files: 删除的孤儿密文文件数, notes: 清除的失效条目数 }
          */
         async resolveHealth(keys) {
-          if (!this.unlocked) throw new Error("未解锁，无法清理");
-          const want = new Set(keys);
-          let notes = 0;
-          let files = 0;
-          const kept = [];
-          for (const n of this.manifest.notes) {
-            let bodyExists = false;
-            if (n.contentRef) {
+          return this.enqueueOp(async () => {
+            if (!this.unlocked) throw new Error("未解锁，无法清理");
+            const want = new Set(keys);
+            let notes = 0;
+            let files = 0;
+            const kept = [];
+            for (const n of this.manifest.notes) {
+              let bodyExists = false;
+              if (n.contentRef) {
+                try {
+                  bodyExists = await this.adapter.exists(this.resolveRef(n.contentRef));
+                } catch (e) {
+                  bodyExists = false;
+                }
+              }
+              if (want.has("entry:" + n.id) && !bodyExists) {
+                await this.deleteNoteMirrors(n);
+                notes += 1;
+              } else {
+                kept.push(n);
+              }
+            }
+            if (notes > 0) this.manifest.notes = kept;
+            for (const key of keys) {
+              if (!key.startsWith("file:")) continue;
+              const name = key.slice("file:".length);
+              if (!name.startsWith(".") || !name.endsWith(".enc")) continue;
               try {
-                bodyExists = await this.adapter.exists(this.resolveRef(n.contentRef));
+                if (await this.adapter.exists(this.resolveRef(name))) {
+                  await this.adapter.remove(this.resolveRef(name));
+                  files += 1;
+                }
               } catch (e) {
-                bodyExists = false;
               }
             }
-            if (want.has("entry:" + n.id) && !bodyExists) {
-              await this.deleteNoteMirrors(n);
-              notes += 1;
-            } else {
-              kept.push(n);
-            }
-          }
-          if (notes > 0) this.manifest.notes = kept;
-          for (const key of keys) {
-            if (!key.startsWith("file:")) continue;
-            const name = key.slice("file:".length);
-            if (!name.startsWith(".") || !name.endsWith(".enc")) continue;
-            try {
-              if (await this.adapter.exists(this.resolveRef(name))) {
-                await this.adapter.remove(this.resolveRef(name));
-                files += 1;
-              }
-            } catch (e) {
-            }
-          }
-          if (notes > 0) await this.saveManifest();
-          await this.clearStaging();
-          return { files, notes };
+            if (notes > 0) await this.saveManifest();
+            await this.clearStaging();
+            return { files, notes };
+          });
         }
         enqueueOp(op) {
           const run = this.opQueue.then(op, op);
@@ -31857,9 +31879,11 @@ ${text}`;
         /**
          * 加锁一篇笔记（操作级互斥入口，P1-6）：实例级 promise 链串行——
          * 并发 lockNote/restoreNote 按发起顺序排队执行，杜绝挂起标记/清单/暂存区的并发互吞。
+         * @param onSkippedStale E14：加密期间原文件被编辑过（删前重读与加密正文不一致）而
+         *   保留未删的路径列表——密文为加密时的旧内容，调用方应提示用户可重做。
          */
-        lockNote(input, onProgress, onDeleteFailed) {
-          return this.enqueueOp(() => this.lockNoteSerial(input, onProgress, onDeleteFailed));
+        lockNote(input, onProgress, onDeleteFailed, onSkippedStale) {
+          return this.enqueueOp(() => this.lockNoteSerial(input, onProgress, onDeleteFailed, onSkippedStale));
         }
         /**
          * 加锁一篇笔记：把当前笔记正文 + 双链附件移入保险库（ADR-0018 提交式加密）。
@@ -31873,7 +31897,7 @@ ${text}`;
          * 原文件不动；清单先行已残留的挂起态由解锁自愈兜底。
          * onProgress：按文件回调（附件逐个 + 笔记本身），UI 驱动进度通知。
          */
-        async lockNoteSerial(input, onProgress, onDeleteFailed) {
+        async lockNoteSerial(input, onProgress, onDeleteFailed, onSkippedStale) {
           if (!this.unlocked || !this.password) throw new Error("未解锁，无法加密笔记");
           await this.ensureSafeRootDir();
           await this.ensureStagingDir();
@@ -31885,6 +31909,7 @@ ${text}`;
           const stagedRefs = [];
           let note = null;
           let manifestSaved = false;
+          const skippedStale = [];
           try {
             const results = await mapLimit(input.attachments, BLOB_CONCURRENCY, async (a) => {
               const fp = await fingerprintOf(a.data);
@@ -31951,13 +31976,27 @@ ${text}`;
               }
             }
             if (input.kind !== "diary-entry" && input.kind !== "password-vault") {
+              let stale = false;
               try {
-                await this.deleteVaultFile(input.path);
+                const f = getApp().vault.getAbstractFileByPath(input.path);
+                if (f && f.isFolder !== true) {
+                  const current2 = await getApp().vault.read(f);
+                  stale = current2.replace(/\r\n/g, "\n") !== input.content.replace(/\r\n/g, "\n");
+                }
               } catch (e) {
-                deleteFailed.push(input.path);
+              }
+              if (stale) {
+                skippedStale.push(input.path);
+              } else {
+                try {
+                  await this.deleteVaultFile(input.path);
+                } catch (e) {
+                  deleteFailed.push(input.path);
+                }
               }
             }
             onDeleteFailed == null ? void 0 : onDeleteFailed(deleteFailed);
+            onSkippedStale == null ? void 0 : onSkippedStale(skippedStale);
             return note;
           } catch (e) {
             for (const ref of stagedRefs) {
@@ -32140,7 +32179,6 @@ ${text}`;
          * @returns 成功写入返回 true；目标路径被占且非本系统（fingerprint 冲突）由附件层处理，正文 merge 属幂等写回。
          */
         async mergeDiaryBlock(datePath, block) {
-          var _a2, _b2;
           const app = getApp();
           if (!datePath || !block) return false;
           const md = block.replace(/\r\n/g, "\n");
@@ -32150,69 +32188,72 @@ ${text}`;
           const timeValue = time ? parseInt(time.slice(0, 2), 10) * 100 + parseInt(time.slice(3, 5), 10) : null;
           if (timeValue === null || Number.isNaN(timeValue)) return false;
           await this.ensureVaultParentFolder(datePath);
-          const existing = app.vault.getAbstractFileByPath(datePath);
-          let existingText = "";
-          if (existing && existing.isFolder !== true) {
-            existingText = await app.vault.read(existing);
-          }
-          const existingLines = existingText ? existingText.replace(/\r\n/g, "\n").split("\n") : [];
-          const blockRows = [lines[0].trim()];
-          const blockLines = [];
-          for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
-          while (blockLines.length && blockLines[blockLines.length - 1].trim() === "") blockLines.pop();
-          while (blockLines.length && blockLines[0].trim() === "") blockLines.shift();
-          if (blockLines.length) {
-            blockRows.push("");
-            blockRows.push(...blockLines);
-          }
-          const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
-          const sigLines = (ls) => ls.map((l) => l.trim()).filter((l) => l !== "");
-          const blockSig = sigLines(blockRows);
-          let alreadyMerged = false;
-          for (let i = 0; i < existingLines.length; i++) {
-            if (existingLines[i].trim() !== lines[0].trim()) continue;
-            const seg = [];
-            for (let k = i + 1; k < existingLines.length && !headingRe.test(existingLines[k]); k++) seg.push(existingLines[k]);
-            if (sigLines(seg).join("\n") === blockSig.slice(1).join("\n")) {
-              alreadyMerged = true;
-              break;
+          await enqueueFileTask(datePath, async () => {
+            var _a2, _b2;
+            const existing = app.vault.getAbstractFileByPath(datePath);
+            let existingText = "";
+            if (existing && existing.isFolder !== true) {
+              existingText = await app.vault.read(existing);
             }
-          }
-          if (alreadyMerged) return true;
-          let insertIdx = existingLines.length;
-          for (let i = 0; i < existingLines.length; i++) {
-            const m = existingLines[i].match(headingRe);
-            if (m) {
-              const tv = parseInt(m[1].slice(0, 2), 10) * 100 + parseInt(m[1].slice(3, 5), 10);
-              if (tv >= timeValue) {
-                insertIdx = i;
+            const existingLines = existingText ? existingText.replace(/\r\n/g, "\n").split("\n") : [];
+            const blockRows = [lines[0].trim()];
+            const blockLines = [];
+            for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
+            while (blockLines.length && blockLines[blockLines.length - 1].trim() === "") blockLines.pop();
+            while (blockLines.length && blockLines[0].trim() === "") blockLines.shift();
+            if (blockLines.length) {
+              blockRows.push("");
+              blockRows.push(...blockLines);
+            }
+            const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
+            const sigLines = (ls) => ls.map((l) => l.trim()).filter((l) => l !== "");
+            const blockSig = sigLines(blockRows);
+            let alreadyMerged = false;
+            for (let i = 0; i < existingLines.length; i++) {
+              if (existingLines[i].trim() !== lines[0].trim()) continue;
+              const seg = [];
+              for (let k = i + 1; k < existingLines.length && !headingRe.test(existingLines[k]); k++) seg.push(existingLines[k]);
+              if (sigLines(seg).join("\n") === blockSig.slice(1).join("\n")) {
+                alreadyMerged = true;
                 break;
               }
             }
-          }
-          const out = [];
-          for (let i = 0; i < insertIdx; i++) out.push(existingLines[i]);
-          if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== "") out.push("");
-          out.push(...blockRows);
-          if (insertIdx < existingLines.length && existingLines[insertIdx].trim() !== "") out.push("");
-          for (let i = insertIdx; i < existingLines.length; i++) out.push(existingLines[i]);
-          const clean = [];
-          for (const ln of out) {
-            if (ln.trim() === "") {
-              if (clean.length && clean[clean.length - 1] !== "") clean.push("");
-            } else {
-              clean.push(ln);
+            if (alreadyMerged) return;
+            let insertIdx = existingLines.length;
+            for (let i = 0; i < existingLines.length; i++) {
+              const m = existingLines[i].match(headingRe);
+              if (m) {
+                const tv = parseInt(m[1].slice(0, 2), 10) * 100 + parseInt(m[1].slice(3, 5), 10);
+                if (tv >= timeValue) {
+                  insertIdx = i;
+                  break;
+                }
+              }
             }
-          }
-          while (clean.length && clean[0] === "") clean.shift();
-          while (clean.length && clean[clean.length - 1] === "") clean.pop();
-          const finalText = clean.join("\n");
-          if (existing && existing.isFolder !== true) {
-            await app.vault.modify(existing, finalText);
-          } else {
-            const file = await app.vault.create(datePath, finalText);
-            (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", file);
-          }
+            const out = [];
+            for (let i = 0; i < insertIdx; i++) out.push(existingLines[i]);
+            if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== "") out.push("");
+            out.push(...blockRows);
+            if (insertIdx < existingLines.length && existingLines[insertIdx].trim() !== "") out.push("");
+            for (let i = insertIdx; i < existingLines.length; i++) out.push(existingLines[i]);
+            const clean = [];
+            for (const ln of out) {
+              if (ln.trim() === "") {
+                if (clean.length && clean[clean.length - 1] !== "") clean.push("");
+              } else {
+                clean.push(ln);
+              }
+            }
+            while (clean.length && clean[0] === "") clean.shift();
+            while (clean.length && clean[clean.length - 1] === "") clean.pop();
+            const finalText = clean.join("\n");
+            if (existing && existing.isFolder !== true) {
+              await app.vault.modify(existing, finalText);
+            } else {
+              const file = await app.vault.create(datePath, finalText);
+              (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", file);
+            }
+          });
           return true;
         }
         /**
@@ -32266,34 +32307,43 @@ ${text}`;
           (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", file);
           return true;
         }
-        /** 删除一条加密笔记（连同镜像文件、清单记录）。谨慎：真删除不可恢复。 */
-        async removeNote(noteId) {
-          if (!this.unlocked) throw new Error("未解锁");
-          const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
-          if (idx === -1) return;
-          const note = this.manifest.notes[idx];
-          await this.deleteNoteMirrors(note);
-          this.manifest.notes.splice(idx, 1);
-          await this.saveManifest();
+        /**
+         * 删除一条加密笔记（连同镜像文件、清单记录）。谨慎：真删除不可恢复。
+         * E13：整体入 opQueue——与 lockNote/restoreNote 同链串行，防内存清单快照互踩
+         * （此前可与其并发，后落盘的旧清单快照会抹掉并发 lockNote 新增的条目）。
+         */
+        removeNote(noteId) {
+          return this.enqueueOp(async () => {
+            if (!this.unlocked) throw new Error("未解锁");
+            const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
+            if (idx === -1) return;
+            const note = this.manifest.notes[idx];
+            await this.deleteNoteMirrors(note);
+            this.manifest.notes.splice(idx, 1);
+            await this.saveManifest();
+          });
         }
         /**
          * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像；清单同步持久化）。
          * 供密码本整表（password-vault）等高频改写载荷用：重用既有镜像名，避免每次新镜像堆积。
          * 覆盖走 replaceMirrorAtomic（P0-1）：暂存+rename 原子换入，任何写失败正式位保持旧完整密文。
+         * E13：整体入 opQueue（理由同 removeNote——清单读改写与 lockNote/restoreNote 串行互斥）。
          */
-        async updateNotePayload(noteId, plainContent) {
-          if (!this.unlocked || !this.password) throw new Error("未解锁，无法保存");
-          const note = this.manifest.notes.find((n) => n.id === noteId);
-          if (!note) throw new Error("未找到清单条目");
-          const encrypted = await CryptoService.encrypt(plainContent, this.password);
-          if (note.contentRef) {
-            await this.replaceMirrorAtomic(note.contentRef, encrypted);
-          } else {
-            const ref = flatName();
-            await this.replaceMirrorAtomic(ref, encrypted);
-            note.contentRef = ref;
-          }
-          await this.saveManifest();
+        updateNotePayload(noteId, plainContent) {
+          return this.enqueueOp(async () => {
+            if (!this.unlocked || !this.password) throw new Error("未解锁，无法保存");
+            const note = this.manifest.notes.find((n) => n.id === noteId);
+            if (!note) throw new Error("未找到清单条目");
+            const encrypted = await CryptoService.encrypt(plainContent, this.password);
+            if (note.contentRef) {
+              await this.replaceMirrorAtomic(note.contentRef, encrypted);
+            } else {
+              const ref = flatName();
+              await this.replaceMirrorAtomic(ref, encrypted);
+              note.contentRef = ref;
+            }
+            await this.saveManifest();
+          });
         }
         /** 解附件预览层 → dataUrl 明文（预览窗用；无预览层返回 null） */
         async decryptPreview(a) {
@@ -33974,7 +34024,7 @@ ${text}`;
           void this.renderList();
           this.startSessionTimers();
         }
-        hide() {
+        hide(suppressAutoLockNotice = false) {
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
           this.stopSessionTimers();
@@ -33984,7 +34034,7 @@ ${text}`;
             this.pwState = { ...DEFAULT_PW_STATE };
             this._selNoteId = null;
             this._diaryPlain = {};
-            this.noticeAutoLock();
+            if (!suppressAutoLockNotice) this.noticeAutoLock();
           }
         }
         /** 安全模式双口径（config 快照可能落后于设置实时值：单读 config 会漏，历史双键 OR） */
@@ -34034,7 +34084,7 @@ ${text}`;
             this.idleLockTimer = null;
             if (!this.isSecurityMode() || !this.dataManager.unlocked || !this.rootVisible()) return;
             notice("安全模式：15 分钟无操作，已自动上锁");
-            this.lockNow();
+            this.lockNow(true);
           }, _UIManager.IDLE_LOCK_MS);
         }
         clearIdleLock() {
@@ -34361,6 +34411,10 @@ ${text}`;
                 } else {
                   if (pw !== input2.value) {
                     notice("两次密码不一致");
+                    return;
+                  }
+                  if (pw.length < 4) {
+                    notice("主密码至少 4 位");
                     return;
                   }
                   if (!ackBox.checked) {
@@ -34730,7 +34784,7 @@ ${text}`;
           bind("menu", () => this.openNoteDetailMenu(note, kind));
           if (kind === "diary" && !this._diaryPlain[note.id]) {
             void this.dataManager.decryptNoteBody(note).then((t) => {
-              if (t !== null && this._selNoteId === note.id) {
+              if (t !== null && this.asset === "diary" && this._selNoteId === note.id) {
                 this._diaryPlain[note.id] = t;
                 this.renderNoteDetail(detail, note, kind);
               }
@@ -35117,8 +35171,8 @@ ${text}`;
           if (!this._initialized) return;
           this.setAssetFromNav(lastVisitedAsset);
         }
-        /** 立即上锁（锁屏接管） */
-        lockNow() {
+        /** 立即上锁（锁屏接管）。@param silent E11：安静上锁（触发方自带通知，如空闲自动上锁），hide 不再补一条 */
+        lockNow(silent = false) {
           this.dataManager.lock();
           this.pwDataManager.lock();
           this.pwState = { ...DEFAULT_PW_STATE };
@@ -35131,7 +35185,7 @@ ${text}`;
           this.stopSessionTimers();
           this.notifyUnlockUi();
           if (this.isSecurityMode()) {
-            this.hide();
+            this.hide(silent);
           }
         }
         /** 解锁态变更后 UI 同步（Controller attachStatusBar 也调；锁屏/已解锁文本 + 重绘）。未建 DOM 时静默 */
@@ -35421,9 +35475,9 @@ ${text}`;
             const dataUrls = /* @__PURE__ */ new Map();
             for (const r of previewResults) dataUrls.set(r.path, r.du);
             const { text, slots, inlined } = collectMediaSlots(plain != null ? plain : "", note.attachments);
-            const mdEl = document.createElement("div");
+            const { ok: rendered, el: mdElRaw } = await this.renderWithTimeout(getApp(), text, note.path);
+            const mdEl = mdElRaw;
             mdEl.className = "bz-encrypt-preview-md";
-            const rendered = await this.renderWithTimeout(getApp(), text, mdEl, note.path);
             if (rendered) {
               let html = mdEl.innerHTML;
               for (const slot of slots) {
@@ -35459,8 +35513,13 @@ ${text}`;
             body.appendChild(err);
           }
         }
-        /** 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关） */
-        async renderWithTimeout(app, text, el, path, timeoutMs = 3e3) {
+        /**
+         * 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关）。
+         * E9：render 渲入私有容器——超时弃用该容器（迟到 promise 追加进孤儿节点永不入 DOM），
+         * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
+         */
+        async renderWithTimeout(app, text, path, timeoutMs = 3e3) {
+          const el = document.createElement("div");
           let finished = false;
           const render2 = MarkdownRenderer.render(app, text, el, path, new Component()).then(
             () => {
@@ -35471,7 +35530,8 @@ ${text}`;
             }
           );
           await Promise.race([render2, new Promise((r) => setTimeout(r, timeoutMs))]);
-          return finished;
+          if (!finished) return { ok: false, el: document.createElement("div") };
+          return { ok: true, el };
         }
         /** 预览窗内所有缩略图/占位 slot 绑定点击：只加载被点的那一张原始层 */
         bindMediaClicks(root, attachments) {
@@ -35737,6 +35797,11 @@ ${text}`;
                   if (failed.length) {
                     notice(failed.length + " 个原文件删除失败（已保留在原位置，可手动删除）", "warning");
                   }
+                },
+                (stale) => {
+                  if (stale.length) {
+                    notice("加密期间笔记有新的修改，原文件已保留；保险库内为加密时的内容，可删除后重新加密", "warning");
+                  }
                 }
               );
               finishProgress(h, attachments.length + 1, "加密完成");
@@ -35770,6 +35835,7 @@ ${text}`;
           this.uiManager._initialized = false;
           this.dataManager.onUnlockChange = null;
           this.dataManager.lock();
+          _EncryptAppController.instance = null;
         }
       };
       _EncryptAppController.instance = null;
@@ -35850,7 +35916,7 @@ ${text}`;
   async function lockSafe(app) {
     await ensureEncrypt(app);
     if (!getSafeManager().unlocked) return false;
-    getController().uiManager.lockNow();
+    getController().uiManager.lockNow(true);
     return true;
   }
   async function lockEncrypt(app) {
@@ -38958,6 +39024,7 @@ ${text}`;
     M.showDone = tryGetSettings().memoShowArchivedByDefault === true;
     M.showEarlierDone = false;
     M.pinnedNewId = null;
+    M.search = "";
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
     overlay2.innerHTML = panelShellHtml();
@@ -39515,6 +39582,7 @@ ${text}`;
     });
   }
   function addFromComposer() {
+    if (composerBusy) return;
     const overlay2 = M.overlay;
     const input = overlay2.querySelector("[data-memo-composer-input]");
     const txt = (input.value || "").trim();
@@ -39522,6 +39590,7 @@ ${text}`;
       notice("请输入内容");
       return;
     }
+    composerBusy = true;
     const scene = composerScene();
     void (async () => {
       const { url } = extractUrlAndDisplay(txt);
@@ -39552,11 +39621,12 @@ ${text}`;
           type: "success",
           action: { label: "补全", onClick: () => openEditor(it) }
         });
+        input.value = "";
       } catch (e) {
         notifySaveError(e, "保存备忘录");
         console.error(e);
       }
-      input.value = "";
+      composerBusy = false;
       await refresh();
     })();
   }
@@ -40030,7 +40100,7 @@ ${text}`;
       console.error(e);
     }
   }
-  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, DONE_WINDOW_DAYS, searchDebounceTimer2, clipTitleHint, panelResizeDetach2, sortSelectDetach;
+  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, DONE_WINDOW_DAYS, searchDebounceTimer2, clipTitleHint, panelResizeDetach2, sortSelectDetach, composerBusy;
   var init_ui13 = __esm({
     "src/memo/ui.ts"() {
       import_moment6 = __toESM(require_moment());
@@ -40055,6 +40125,7 @@ ${text}`;
       clipTitleHint = null;
       panelResizeDetach2 = null;
       sortSelectDetach = null;
+      composerBusy = false;
     }
   });
 
@@ -40185,16 +40256,18 @@ ${text}`;
   function syncRename(items, { oldPath, newPath, oldTitle, newTitle }) {
     let changed = false;
     for (const item of items) {
-      if (item.linkedNote === oldPath) {
+      const linkedHit = item.linkedNote === oldPath;
+      const noteHit = item.notePath === oldPath;
+      if (linkedHit) {
         item.linkedNote = newPath;
         changed = true;
       }
-      if (item.title === oldTitle) {
-        item.title = newTitle;
+      if (noteHit) {
+        item.notePath = newPath;
         changed = true;
       }
-      if (item.notePath === oldPath) {
-        item.notePath = newPath;
+      if ((linkedHit || noteHit) && item.title === oldTitle) {
+        item.title = newTitle;
         changed = true;
       }
     }
@@ -40286,6 +40359,15 @@ ${text}`;
       });
     }
     const isMd = (file) => file && file.extension === "md" && inFolders(file.path, getWatchedFolders());
+    const referencedByMemo = async (path) => {
+      if (!path) return false;
+      try {
+        const items = await loadJSON(app, getMemoPath());
+        return items.some((it) => (it == null ? void 0 : it.linkedNote) === path || (it == null ? void 0 : it.notePath) === path);
+      } catch (e) {
+        return false;
+      }
+    };
     const pseudoFile = (path) => ({
       path,
       basename: stripMdExt(path.split("/").pop() || ""),
@@ -40298,21 +40380,25 @@ ${text}`;
     });
     _flushers.push(flushRenames);
     _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
-      var _a2;
       const file = pseudoFile(evt.newPath);
-      if (!isMd(file)) return;
-      const oldTitle = stripMdExt(((_a2 = evt.oldPath) != null ? _a2 : "").split("/").pop());
-      flushRenames({
-        oldPath: evt.oldPath,
-        newPath: evt.newPath,
-        oldTitle,
-        newTitle: file.basename
-      });
+      void (async () => {
+        var _a2;
+        if (!(isMd(file) || await referencedByMemo(evt.oldPath) || await referencedByMemo(evt.newPath))) return;
+        const oldTitle = stripMdExt(((_a2 = evt.oldPath) != null ? _a2 : "").split("/").pop());
+        flushRenames({
+          oldPath: evt.oldPath,
+          newPath: evt.newPath,
+          oldTitle,
+          newTitle: file.basename
+        });
+      })();
     }));
     _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
       const file = pseudoFile(evt.path);
-      if (!isMd(file)) return;
-      enqueue(() => syncSource(syncDelete, evt.path));
+      void (async () => {
+        if (!(isMd(file) || await referencedByMemo(evt.path))) return;
+        enqueue(() => syncSource(syncDelete, evt.path));
+      })();
     }));
   }
   function ensureFileSync(app) {
@@ -40334,6 +40420,7 @@ ${text}`;
     );
   }
   var fileOpenRef = null;
+  var fileOpenApp = null;
   var startPopupTimer = null;
   var remindedFiles = /* @__PURE__ */ new Set();
   function openForNote(app, path) {
@@ -40359,6 +40446,7 @@ ${text}`;
   function ensureMemoReminders(app) {
     if (fileOpenRef) return;
     const s = tryGetSettings();
+    fileOpenApp = app;
     if ((s == null ? void 0 : s.autoPopupOnStart) !== false) void autoPopupOnStart(app);
     fileOpenRef = app.workspace.on("file-open", (file) => {
       void (async () => {
