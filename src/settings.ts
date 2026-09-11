@@ -448,14 +448,21 @@ const MEMO_KEY_MIGRATIONS: Array<[string, string]> = [
   ['todoLayout', 'memoLayout'],
 ];
 
-/** onload 对 loadData 原始对象就地迁移，随后才与 DEFAULT_SETTINGS 合并 */
-export function migrateMemoSettingKeys(raw: unknown): void {
-  if (!raw || typeof raw !== 'object') return;
+/** onload 对 loadData 原始对象就地迁移，随后才与 DEFAULT_SETTINGS 合并。
+ *  返回是否发生了迁移（旧键存在即算，含新键已在的场景）——C16：调用方据此调度落盘，
+ *  否则 data.json 旧键长期残留、每次启动重复迁移 */
+export function migrateMemoSettingKeys(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
   const rec = raw as Record<string, unknown>;
+  let migrated = false;
   for (const [from, to] of MEMO_KEY_MIGRATIONS) {
-    if (rec[from] !== undefined && rec[to] === undefined) rec[to] = rec[from];
-    delete rec[from];
+    if (rec[from] !== undefined) {
+      if (rec[to] === undefined) rec[to] = rec[from];
+      delete rec[from];
+      migrated = true;
+    }
   }
+  return migrated;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
