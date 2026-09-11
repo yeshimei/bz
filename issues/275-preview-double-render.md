@@ -43,8 +43,8 @@
 
 ## 验收
 
-- [ ] 真机（桌面 + 移动）打开视频文献预览：正文一份、视频在正文原位可播、关闭/ESC 正常
-- [ ] 术语文献 / 卡片预览 / 主题预览三类弹层（同一 `openPreview`）均只出一份正文
-- [ ] 渲染失败场景（mock 抛错）仍能看到纯文本兜底；空正文笔记仍显示「（无正文）」
-- [ ] `pnpm exec vitest run tests/knowledge tests/secondbrain tests/clipbook tests/diary tests/encrypt` 全绿
-- [ ] 全量门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 自审 + diff 审查 + 主仓 `pnpm run build` 部署
+- [ ] 真机（桌面 + 移动）打开视频文献预览：正文一份、视频在正文原位可播、关闭/ESC 正常（开发环境无 Obsidian 宿主，待真机复核；评审壳 selftest 已过：`prototypes/knowledge/prototype.html?selftest=1` PASS 5/FAIL 0——正文一份、mp4 字面不残留、video 在位）
+- [x] 术语文献 / 卡片预览 / 主题预览三类弹层（同一 `openPreview`）均只出一份正文（`tests/knowledge/ui.test.ts` 三类用例 + 主题用例「恰好一次」断言）
+- [x] 渲染失败场景（mock 抛错）仍能看到纯文本兜底；空正文笔记仍显示「（无正文）」（`tests/knowledge/ui.test.ts` 抛错兜底不叠加 + 空正文用例）
+- [x] `pnpm exec vitest run tests/knowledge tests/secondbrain tests/clipbook tests/diary tests/encrypt` 全绿（74 文件 1035 用例通过）
+- [ ] 全量门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 自审 + diff 审查 + 主仓 `pnpm run build` 部署（worktree 内已全绿：全量测试除 master 既有红外零新增、tsc 零错误；主仓构建部署按工作流归主仓库侧）
