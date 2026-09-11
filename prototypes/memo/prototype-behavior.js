@@ -1,4 +1,4 @@
-/* 源指纹 794f3eadf7269fea · 仓内输入 208 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 cad7d486dcc0351d · 仓内输入 208 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -5029,6 +5029,7 @@ var BZW_memo = (() => {
       init_app();
       init_utils();
       init_storage();
+      init_notice();
       DEFAULT_SCENARIOS = ["剪藏", "工作", "学习", "生活", "代码", "公开课"];
       MemoData = {
         memoFilePath: "",
@@ -5053,6 +5054,18 @@ var BZW_memo = (() => {
         async loadItems() {
           return enqueueFileTask(this.memoFilePath, async () => {
             const raw = await this.read();
+            if (!Array.isArray(raw)) {
+              const backup = await backupOriginal(getApp(), this.memoFilePath);
+              await this.write([]);
+              try {
+                notify(
+                  backup ? `备忘录数据文件损坏（内容不是列表），原内容已留档到 ${backup}，已重建空清单继续使用` : "备忘录数据文件损坏（内容不是列表），已重建空清单继续使用",
+                  { type: "warning", dedupeKey: "memo-loaditems-corrupt" }
+                );
+              } catch (e) {
+              }
+              return [];
+            }
             let needWrite = false;
             const items = raw.map((item) => {
               if (!item.id) {
@@ -7912,6 +7925,13 @@ var BZW_memo = (() => {
   function defaultPomodoroData() {
     return { version: 1, state: createInitialState(), history: [] };
   }
+  function trimHistory(history2, now) {
+    const floor = new Date(now);
+    floor.setHours(0, 0, 0, 0);
+    floor.setDate(floor.getDate() - 6);
+    const t = floor.getTime();
+    return history2.filter((h) => h.ts >= t);
+  }
   function normalizeData(raw) {
     const def = defaultPomodoroData();
     if (!raw || typeof raw !== "object") return def;
@@ -8403,8 +8423,10 @@ var BZW_memo = (() => {
     if (skipBtn) skipBtn.disabled = locked;
   }
   function applyAction(action) {
+    const prev = state;
     const r = transition(state, action, Date.now(), durations(), options());
     state = r.state;
+    if (!state.paused) autoPauseMain = false;
     if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
     if (r.event.type === "phase-completed") {
       if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
@@ -8414,7 +8436,7 @@ var BZW_memo = (() => {
       }
     }
     if (action === "pause" && state.paused) notifyPaused();
-    if (r.event.type !== "none" || action === "pause" && state.paused) void save();
+    if (r.event.type !== "none" || action === "pause" && state.paused || action === "reset" && r.state !== prev) void save();
     ensureTick();
     render();
   }
@@ -8485,13 +8507,14 @@ var BZW_memo = (() => {
     }
   }
   async function save() {
+    history = trimHistory(history, Date.now());
     if (dataManager) await dataManager.save({ version: 1, state, history });
   }
   async function initData() {
     const data = await dataManager.load();
     const r = recover(data.state, data.history, Date.now(), durations(), options());
     state = r.state;
-    history = r.history;
+    history = trimHistory(r.history, Date.now());
     const mainChanged = data.state.endTime !== null && r.state.endTime === null;
     if (mainChanged) await dataManager.save({ version: 1, state, history });
     loaded = true;
@@ -9872,6 +9895,7 @@ var BZW_memo = (() => {
     let q2 = "";
     let dirsCache = [];
     let dirsLoaded = false;
+    let scanFailed = false;
     const mask = document.createElement("div");
     mask.className = "bz-sp-picker-mask";
     const dlg = document.createElement("div");
@@ -9966,6 +9990,20 @@ var BZW_memo = (() => {
       items = items.slice().reverse();
       list.innerHTML = "";
       if (!dirsLoaded) {
+        if (scanFailed) {
+          const failRow = document.createElement("div");
+          failRow.className = "bz-sp-picker-row";
+          failRow.style.pointerEvents = "none";
+          failRow.style.opacity = "0.55";
+          failRow.textContent = "目录读取失败";
+          const retry = document.createElement("button");
+          retry.type = "button";
+          retry.className = "bz-sp-btn";
+          retry.textContent = "重试";
+          retry.addEventListener("click", () => scanDirs());
+          list.append(failRow, retry);
+          return;
+        }
         const loading2 = document.createElement("div");
         loading2.className = "bz-sp-picker-row";
         loading2.style.pointerEvents = "none";
@@ -10026,12 +10064,21 @@ var BZW_memo = (() => {
     });
     renderCrumb();
     renderList2();
-    void collectVaultFolders(getApp()).then((dirs) => {
-      if (settled) return;
-      dirsCache = dirs;
-      dirsLoaded = true;
-      renderList2();
-    });
+    function scanDirs() {
+      scanFailed = false;
+      if (!dirsLoaded) renderList2();
+      collectVaultFolders(getApp()).then((dirs) => {
+        if (settled) return;
+        dirsCache = dirs;
+        dirsLoaded = true;
+        renderList2();
+      }).catch(() => {
+        if (settled) return;
+        scanFailed = true;
+        renderList2();
+      });
+    }
+    scanDirs();
   }
   var init_dir_picker = __esm({
     "src/settings-panel/dir-picker.ts"() {
@@ -10201,6 +10248,9 @@ var BZW_memo = (() => {
   function snapshot() {
     return getSettings();
   }
+  function notifyWriteError(e) {
+    notice(`设置写入失败：${e instanceof Error ? e.message : String(e)}`, "error");
+  }
   function makeCtx(rowEl, refreshVisibility) {
     return { rowEl, refreshVisibility };
   }
@@ -10344,7 +10394,7 @@ var BZW_memo = (() => {
     }
   }
   function renderRow(row, refresh2, regRefresh) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
     const rowName = row.name;
     const bindKey = (_a2 = row.binding) == null ? void 0 : _a2.key;
     const isCustom = row.type === "custom";
@@ -10371,9 +10421,14 @@ var BZW_memo = (() => {
         sw.addEventListener("click", () => {
           var _a3;
           const v = !sw.classList.contains("on");
+          try {
+            acc.write(v);
+          } catch (e) {
+            notifyWriteError(e);
+            return;
+          }
           sw.classList.toggle("on", v);
           sw.setAttribute("aria-checked", String(v));
-          acc.write(v);
           void acc.persist();
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
           refresh2();
@@ -10383,8 +10438,9 @@ var BZW_memo = (() => {
       case "text": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
+        const warn = new SpCommitWarn(String((_b2 = acc.read()) != null ? _b2 : ""), row.onCommit);
         const input = makeInput({
-          value: (_b2 = acc.read()) != null ? _b2 : "",
+          value: (_c = acc.read()) != null ? _c : "",
           mono: !!row.mono,
           num: !!row.num,
           secret: !!row.secret,
@@ -10394,6 +10450,7 @@ var BZW_memo = (() => {
             acc.write(v);
             void acc.persist();
             (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+            warn.fire(v);
           }
         });
         mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh2);
@@ -10403,8 +10460,9 @@ var BZW_memo = (() => {
       }
       case "textarea": {
         const acc = bindValue(row.binding);
-        ctrlEl.innerHTML = textareaHtml((_c = acc.read()) != null ? _c : "", row.placeholder);
+        ctrlEl.innerHTML = textareaHtml((_d = acc.read()) != null ? _d : "", row.placeholder);
         const ta = ctrlEl.querySelector("textarea");
+        const warn = new SpCommitWarn(String((_e = acc.read()) != null ? _e : ""), row.onCommit);
         let timer = null;
         let dirty2 = false;
         const commit = () => {
@@ -10412,6 +10470,7 @@ var BZW_memo = (() => {
           if (!dirty2) return;
           acc.write(ta.value);
           void acc.persist();
+          warn.fire(ta.value);
         };
         ta.addEventListener("input", () => {
           dirty2 = true;
@@ -10434,8 +10493,9 @@ var BZW_memo = (() => {
       case "number": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
+        const warn = new SpCommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
         const input = makeInput({
-          value: String((_d = acc.read()) != null ? _d : ""),
+          value: String((_g = acc.read()) != null ? _g : ""),
           type: "number",
           num: true,
           placeholder: ph,
@@ -10451,9 +10511,10 @@ var BZW_memo = (() => {
             acc.write(v);
             void acc.persist();
             (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+            warn.fire(raw);
           }
         });
-        input.step = String((_e = row.step) != null ? _e : 1);
+        input.step = String((_h = row.step) != null ? _h : 1);
         mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh2);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
@@ -10463,7 +10524,7 @@ var BZW_memo = (() => {
         const acc = bindValue(row.binding);
         const options2 = row.options;
         const labelOf = (v) => (options2.find((o) => o.value === v) || { label: v }).label;
-        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_f = acc.read()) != null ? _f : "") || options2[0] && options2[0].value || ""));
+        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_i = acc.read()) != null ? _i : "") || options2[0] && options2[0].value || ""));
         const sel = ctrlEl.querySelector(".bz-select");
         const vspan = sel.querySelector(".bz-select-val");
         sel.addEventListener("click", () => {
@@ -10477,7 +10538,7 @@ var BZW_memo = (() => {
           const closeMenu = () => {
             var _a4;
             (_a4 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a4.remove();
-            if (group) {
+            if (group && !group.querySelector(".bz-select-menu")) {
               group.style.overflow = "";
               group.style.zIndex = "";
             }
@@ -10496,9 +10557,15 @@ var BZW_memo = (() => {
             it.addEventListener("click", (ev) => {
               var _a4;
               ev.stopPropagation();
+              try {
+                acc.write(o.value);
+              } catch (e) {
+                notifyWriteError(e);
+                closeMenu();
+                return;
+              }
               closeMenu();
               vspan.textContent = labelOf(o.value);
-              acc.write(o.value);
               void acc.persist();
               (_a4 = row.onChange) == null ? void 0 : _a4.call(row, o.value, ctx);
               refresh2();
@@ -10511,8 +10578,8 @@ var BZW_memo = (() => {
       }
       case "slider": {
         const acc = bindValue(row.binding);
-        const cur = (_h = (_g = acc.read()) != null ? _g : row.min) != null ? _h : 0;
-        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_i = row.step) != null ? _i : 1, cur);
+        const cur = (_k = (_j = acc.read()) != null ? _j : row.min) != null ? _k : 0;
+        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_l = row.step) != null ? _l : 1, cur);
         const range = ctrlEl.querySelector('input[type="range"]');
         const em = ctrlEl.querySelector(".bz-sp-slider-val");
         range.addEventListener("input", () => {
@@ -10523,7 +10590,7 @@ var BZW_memo = (() => {
           void acc.persist();
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
         });
-        for (const a of (_j = row.actions) != null ? _j : []) {
+        for (const a of (_m = row.actions) != null ? _m : []) {
           const holder2 = document.createElement("div");
           holder2.innerHTML = rowBtnHtml(a.text, a.cta);
           const btn = holder2.firstElementChild;
@@ -10536,10 +10603,16 @@ var BZW_memo = (() => {
         const acc = bindValue(row.binding);
         const multi = row.mode === "multi";
         const fallbackFn = row.fallbackValue;
+        const onCommit = row.onCommit;
+        const initRaw = acc.read();
+        const warn = new SpCommitWarn(
+          multi ? JSON.stringify(initRaw != null ? initRaw : []) : String(initRaw != null ? initRaw : ""),
+          onCommit
+        );
         ctrlEl.appendChild(makePathRowCtrl({
           name: row.name,
           mode: row.mode,
-          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_k = acc.read()) != null ? _k : ""),
+          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_n = acc.read()) != null ? _n : ""),
           pickerTitle: row.pickerTitle,
           pickerDesc: row.pickerDesc,
           buttonText: row.buttonText,
@@ -10551,6 +10624,7 @@ var BZW_memo = (() => {
             acc.write(v);
             void acc.persist();
             const res = (_a3 = row.onChange) == null ? void 0 : _a3.call(row, list, ctx);
+            warn.fire(multi ? JSON.stringify(v) : String(v));
             if (res && typeof res.then === "function") {
               return Promise.resolve(res).then(
                 (final) => Array.isArray(final) ? final : list
@@ -10569,7 +10643,7 @@ var BZW_memo = (() => {
       }
       case "info": {
         ctrlEl.innerHTML = badgeHtml(row.name);
-        for (const a of (_l = row.actions) != null ? _l : []) {
+        for (const a of (_o = row.actions) != null ? _o : []) {
           const holder2 = document.createElement("div");
           holder2.innerHTML = rowBtnHtml(a.text, a.cta);
           const btn = holder2.firstElementChild;
@@ -10602,12 +10676,13 @@ var BZW_memo = (() => {
       case "choiceCards": {
         const acc = bindValue(row.binding);
         const layoutKey = row.layoutKey;
-        const curLayout = layoutKey ? String((_m = snapshot()[layoutKey]) != null ? _m : "") : "";
-        const opts2 = row.options.filter((o) => {
+        const curLayout = layoutKey ? String((_p = snapshot()[layoutKey]) != null ? _p : "") : "";
+        let opts2 = row.options.filter((o) => {
           const lo = o.layout;
           return !lo || !layoutKey || lo === curLayout;
         });
-        const cur = String((_n = acc.read()) != null ? _n : "") || opts2[0] && opts2[0].value || "";
+        if (!opts2.length) opts2 = row.options;
+        const cur = String((_q = acc.read()) != null ? _q : "") || opts2[0] && opts2[0].value || "";
         ctrlEl.innerHTML = cardpickHtml(opts2.map((o) => ({
           value: o.value,
           label: o.label,
@@ -10618,9 +10693,14 @@ var BZW_memo = (() => {
         wrap.querySelectorAll(".bz-sp-cardpick-card").forEach((c) => {
           c.addEventListener("click", () => {
             var _a3, _b3, _c2;
+            try {
+              acc.write((_a3 = c.dataset.spCard) != null ? _a3 : "");
+            } catch (e) {
+              notifyWriteError(e);
+              return;
+            }
             wrap.querySelectorAll(".is-on").forEach((x) => x.classList.remove("is-on"));
             c.classList.add("is-on");
-            acc.write((_a3 = c.dataset.spCard) != null ? _a3 : "");
             void acc.persist();
             (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b3 = c.dataset.spCard) != null ? _b3 : "", ctx);
             refresh2();
@@ -10684,16 +10764,24 @@ var BZW_memo = (() => {
   function renderPanelSchema(container, schema) {
     const visibleConditions = /* @__PURE__ */ new WeakMap();
     const valueRefreshes = [];
+    const applyCond = (el, cond) => {
+      let visible = true;
+      try {
+        visible = cond(snapshot());
+      } catch (e) {
+      }
+      el.style.display = visible ? "" : "none";
+    };
     const refresh2 = () => {
       container.querySelectorAll("[data-sp-row]").forEach((el) => {
         const cond = visibleConditions.get(el);
         if (!cond) return;
-        el.style.display = cond(snapshot()) ? "" : "none";
+        applyCond(el, cond);
       });
       container.querySelectorAll("[data-sp-group]").forEach((el) => {
         const cond = visibleConditions.get(el);
         if (!cond) return;
-        el.style.display = cond(snapshot()) ? "" : "none";
+        applyCond(el, cond);
       });
       container.querySelectorAll(".bz-sp-group").forEach((card) => {
         var _a2;
@@ -10702,6 +10790,7 @@ var BZW_memo = (() => {
       for (const fn of valueRefreshes) fn();
     };
     schema.groups.forEach((g) => {
+      var _a2, _b2;
       const card = renderGroup(container, g, refresh2, (fn) => valueRefreshes.push(fn));
       card.dataset.spGroup = g.name;
       const groupVw = g.visibleWhen;
@@ -10710,10 +10799,21 @@ var BZW_memo = (() => {
         visibleConditions.set(card, groupVw);
         card.style.display = groupVw(snapshot()) ? "" : "none";
       }
+      const parentToggleKey = (_b2 = (_a2 = g.rows.find(
+        (pr) => {
+          var _a3;
+          return pr.type === "toggle" && typeof ((_a3 = pr.binding) == null ? void 0 : _a3.key) === "string";
+        }
+      )) == null ? void 0 : _a2.binding.key) != null ? _b2 : null;
       g.rows.forEach((r, i) => {
         const rowEl = card.querySelectorAll(".bz-sp-set-row")[i];
         if (!rowEl) return;
-        const vw = r.visibleWhen;
+        let vw = r.visibleWhen;
+        if (r.isChild && parentToggleKey) {
+          const parentKey = parentToggleKey;
+          const selfVw = vw;
+          vw = (snap) => snap[parentKey] === true && (selfVw ? selfVw(snap) : true);
+        }
         if (vw) {
           rowEl.dataset.spRow = String(i);
           visibleConditions.set(rowEl, vw);
@@ -10724,7 +10824,7 @@ var BZW_memo = (() => {
     mountIcons(container);
     return { refresh: refresh2 };
   }
-  var displaySetters, groupCountUpdaters;
+  var SpCommitWarn, displaySetters, groupCountUpdaters;
   var init_renderer = __esm({
     "src/settings-panel/renderer.ts"() {
       init_settings_provider();
@@ -10733,6 +10833,24 @@ var BZW_memo = (() => {
       init_notice();
       init_render4();
       init_ui();
+      SpCommitWarn = class {
+        constructor(initial, onCommit) {
+          this.initial = initial;
+          this.onCommit = onCommit;
+          this.warnedInitial = null;
+        }
+        fire(current2) {
+          if (!this.onCommit) return;
+          if (current2 !== this.initial) {
+            if (this.warnedInitial !== this.initial) {
+              this.warnedInitial = this.initial;
+              this.onCommit();
+            }
+          } else {
+            this.warnedInitial = null;
+          }
+        }
+      };
       displaySetters = /* @__PURE__ */ new WeakMap();
       groupCountUpdaters = /* @__PURE__ */ new WeakMap();
     }
@@ -13390,7 +13508,9 @@ ${countsToText(s.missing)}
     }
     function persist() {
       if (!order) return;
-      void saveHomeConfig(order, app).catch(() => void 0);
+      void saveHomeConfig(order, app).catch(() => {
+        notice("入口顺序保存失败，重开设置后会回到原顺序", "error");
+      });
     }
     let drag = null;
     function applyShift(c) {
@@ -13562,6 +13682,7 @@ ${countsToText(s.missing)}
   var init_entry_editor = __esm({
     "src/home/entry-editor.ts"() {
       init_mobile();
+      init_notice();
       init_ui();
       init_str();
       init_shared3();
@@ -14858,7 +14979,10 @@ ${countsToText(s.missing)}
       console.error("数据文件结构异常:", error);
       db = emptyDatabase();
     }
-    if (!db.items) db.items = {};
+    if (!db.items || typeof db.items !== "object" || Array.isArray(db.items)) {
+      console.error("数据文件 items 字段结构异常:", db.items === null ? "null" : typeof db.items);
+      db.items = {};
+    }
     for (const it of Object.values(db.items)) {
       if (!it || typeof it !== "object") continue;
       const split = splitEmojiCategory(it.category);
@@ -15373,7 +15497,9 @@ ${countsToText(s.missing)}
     const category = splitEmojiCategory(String((_a2 = obj == null ? void 0 : obj.category) != null ? _a2 : "")).name.trim();
     const icon2 = String((_b2 = obj == null ? void 0 : obj.icon) != null ? _b2 : "").trim();
     if (!category || category.length > 16) return null;
-    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon2) || !AI_ICON_MENU.includes(icon2)) return null;
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon2) || !AI_ICON_MENU.includes(icon2)) {
+      return { category, icon: AI_FALLBACK_ICON };
+    }
     return { category, icon: icon2 };
   }
   async function aiSuggestCategory(name, history2) {
@@ -15383,7 +15509,7 @@ ${countsToText(s.missing)}
     if (!parsed) throw new Error("返回格式无法解析");
     return parsed;
   }
-  var AI_ICON_MENU;
+  var AI_ICON_MENU, AI_FALLBACK_ICON;
   var init_ai2 = __esm({
     "src/belongings/ai.ts"() {
       init_ai();
@@ -15516,6 +15642,7 @@ ${countsToText(s.missing)}
         "bug",
         "shell"
       ];
+      AI_FALLBACK_ICON = "package";
     }
   });
 
@@ -15760,6 +15887,10 @@ ${countsToText(s.missing)}
   function closePanel() {
     stopAutoRefresh();
     closeBelDetail();
+    if (bodyThemeObserver) {
+      bodyThemeObserver.disconnect();
+      bodyThemeObserver = null;
+    }
     if (dropDocClick) {
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
@@ -15931,18 +16062,25 @@ ${countsToText(s.missing)}
     emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
     notifyUndo(`「${cur.name}」已标记为${s}`, () => {
       void (async () => {
-        if (!M4.db) M4.db = await loadDatabase();
-        const now = itemById(it.id);
-        if (!now) {
-          notice("该物品已被外部变更删除，无法撤销", "warning");
-          return;
+        var _a3;
+        try {
+          if (!M4.db) M4.db = await loadDatabase();
+          const now = itemById(it.id);
+          if (!now) {
+            notice("该物品已被外部变更删除，无法撤销", "warning");
+            return;
+          }
+          now.current_status = prevStatus;
+          if (prevExit != null) now.exit_date = prevExit;
+          else if (now.exit_date != null) now.exit_date = null;
+          now.last_updated = (/* @__PURE__ */ new Date()).toISOString();
+          await saveAndRender();
+          notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
+        } catch (e) {
+          notifySaveError(e, "撤销状态");
+          M4.db = await loadDatabase().catch(() => null);
+          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
         }
-        now.current_status = prevStatus;
-        if (prevExit != null) now.exit_date = prevExit;
-        else if (now.exit_date != null) now.exit_date = null;
-        now.last_updated = (/* @__PURE__ */ new Date()).toISOString();
-        await saveAndRender();
-        notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
       })();
     }, { type: "restore" });
   }
@@ -16015,14 +16153,21 @@ ${countsToText(s.missing)}
     emitDomainEvent("belongings", { kind: "delete", title: it.name });
     notifyUndo(`已删除「${it.name}」`, () => {
       void (async () => {
-        if (!M4.db) M4.db = await loadDatabase();
-        if (M4.db.items[snapshot2.id]) {
-          notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
-          return;
+        var _a3;
+        try {
+          if (!M4.db) M4.db = await loadDatabase();
+          if (M4.db.items[snapshot2.id]) {
+            notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
+            return;
+          }
+          M4.db.items[snapshot2.id] = snapshot2;
+          await saveAndRender();
+          notice(`已恢复「${snapshot2.name}」`, "success");
+        } catch (e) {
+          notifySaveError(e, "撤销删除");
+          M4.db = await loadDatabase().catch(() => null);
+          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
         }
-        M4.db.items[snapshot2.id] = snapshot2;
-        await saveAndRender();
-        notice(`已恢复「${snapshot2.name}」`, "success");
       })();
     }, { type: "restore" });
   }
@@ -16042,6 +16187,7 @@ ${countsToText(s.missing)}
   }
   function closeBelForm(mask) {
     _belBaseline = null;
+    _belFormTargetId = null;
     unregisterSheetCompanion(mask);
     mask.remove();
   }
@@ -16050,10 +16196,15 @@ ${countsToText(s.missing)}
     else closeBelForm(mask);
   }
   function openForm(it) {
-    var _a2, _b2, _c;
+    var _a2, _b2, _c, _d, _e;
     const existing = document.querySelector(".bz-bel-form-mask");
     if (existing) {
-      (_a2 = existing.querySelector("input, textarea")) == null ? void 0 : _a2.focus();
+      const targetId = (_a2 = it == null ? void 0 : it.id) != null ? _a2 : null;
+      if (_belFormTargetId === targetId) {
+        (_b2 = existing.querySelector("input, textarea")) == null ? void 0 : _b2.focus();
+      } else {
+        notice("已有打开的表单，请先保存或关闭后再编辑其他物品", "warning");
+      }
       return;
     }
     if (!M4.db) {
@@ -16070,6 +16221,7 @@ ${countsToText(s.missing)}
     const mask = document.createElement("div");
     mask.className = "bz-overlay-mask bz-bel-form-mask";
     mask.innerHTML = belFormHtml(it);
+    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
     document.body.appendChild(mask);
     topifyZ(mask);
     mountIcons(mask);
@@ -16077,7 +16229,7 @@ ${countsToText(s.missing)}
     const sheetOpen = !!document.querySelector(".bz-item-sheet-mask");
     if (it && sheetOpen) registerSheetCompanion(mask);
     _belBaseline = {
-      name: (_b2 = it == null ? void 0 : it.name) != null ? _b2 : "",
+      name: (_d = it == null ? void 0 : it.name) != null ? _d : "",
       cat: init.catVal,
       price: init.priceVal,
       date: init.dateVal,
@@ -16172,7 +16324,7 @@ ${countsToText(s.missing)}
     mask.addEventListener("mousedown", (e) => {
       if (e.target === mask) requestCloseBelForm(mask);
     });
-    (_c = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _c.addEventListener("click", () => requestCloseBelForm(mask));
+    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm(mask));
     saveBtn.addEventListener("click", () => {
       if (saving) return;
       const name = mask.querySelector("#bm-name").value.trim();
@@ -16197,6 +16349,11 @@ ${countsToText(s.missing)}
       }
       const exited = curStatus === "已转卖" || curStatus === "已丢弃";
       const exitVal = exited ? mask.querySelector("#bm-exitdate").value : "";
+      const exitDate = exited ? exitVal || todayStr() : "";
+      if (exitDate && exitDate < date) {
+        fail("出离日期不能早于购买日期");
+        return;
+      }
       const soldRaw = curStatus === "已转卖" ? mask.querySelector("#bm-soldprice").value.trim() : "";
       let soldPrice = null;
       if (soldRaw !== "") {
@@ -16220,6 +16377,7 @@ ${countsToText(s.missing)}
               notice("该物品已被外部变更删除，本次保存未写入", "warning");
               unregisterSheetCompanion(mask);
               closeItemMenu();
+              _belFormTargetId = null;
               mask.remove();
               return;
             }
@@ -16231,7 +16389,7 @@ ${countsToText(s.missing)}
             cur.purchase_date = date;
             cur.current_status = curStatus;
             cur.description = desc;
-            if (exited) cur.exit_date = exitVal || todayStr();
+            if (exited) cur.exit_date = exitDate;
             else if (cur.exit_date != null) cur.exit_date = null;
             if (curStatus === "已转卖") cur.sold_price = soldPrice;
             else if (cur.sold_price != null) cur.sold_price = null;
@@ -16241,7 +16399,8 @@ ${countsToText(s.missing)}
           } else {
             if (!M4.db) throw new Error("数据库未加载");
             const newItem = {
-              id: "item_" + Date.now(),
+              // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
+              id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
               name,
               category,
               purchase_price: Math.round(price * 100) / 100,
@@ -16250,7 +16409,7 @@ ${countsToText(s.missing)}
               description: desc,
               created_date: (/* @__PURE__ */ new Date()).toISOString(),
               last_updated: (/* @__PURE__ */ new Date()).toISOString(),
-              ...exited ? { exit_date: exitVal || todayStr() } : {},
+              ...exited ? { exit_date: exitDate } : {},
               ...curStatus === "已转卖" ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
@@ -16259,6 +16418,7 @@ ${countsToText(s.missing)}
             emitDomainEvent("belongings", { kind: "add", item: newItem });
           }
           _belBaseline = null;
+          _belFormTargetId = null;
           unregisterSheetCompanion(mask);
           closeItemMenu();
           mask.remove();
@@ -16275,7 +16435,7 @@ ${countsToText(s.missing)}
       return (_a3 = mask.querySelector("#bm-name")) == null ? void 0 : _a3.focus();
     }, 100);
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, mainEscRegistered, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, _belBaseline;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, mainEscRegistered, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, _belBaseline, _belFormTargetId;
   var init_ui4 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -16312,6 +16472,7 @@ ${countsToText(s.missing)}
       bodyThemeObserver = null;
       opening = false;
       _belBaseline = null;
+      _belFormTargetId = null;
     }
   });
 
@@ -16474,7 +16635,8 @@ ${countsToText(s.missing)}
   async function writeNewsDataMerged(intent) {
     var _a2;
     const res = await readNewsData();
-    const base = res.ok ? res.data : emptyData();
+    if (!res.ok) return;
+    const base = res.data;
     const next = { ...base };
     if (intent.set.articles || ((_a2 = intent.removeArticleKeys) == null ? void 0 : _a2.length)) {
       const patchList = intent.set.articles || [];
@@ -16940,7 +17102,8 @@ ${bodyText.substring(0, 6e3)}`;
           e.stopPropagation();
           retryBtn.remove();
           errHandle.hide();
-          void processFile(app, ai, file, { force });
+          void Promise.resolve().then(() => (init_auto_summary(), auto_summary_exports)).then((m) => m.retrySummaryWithAI(app, ai, file, force)).catch(() => {
+          });
         });
         errHandle.el.appendChild(retryBtn);
         return;
@@ -17013,6 +17176,16 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/auto-summary/index.ts
+  var auto_summary_exports = {};
+  __export(auto_summary_exports, {
+    ensureAutoSummary: () => ensureAutoSummary,
+    isAutoSummaryInitialized: () => isAutoSummaryInitialized,
+    redoSummaryForActiveFile: () => redoSummaryForActiveFile,
+    regenerateSummary: () => regenerateSummary,
+    retrySummaryWithAI: () => retrySummaryWithAI,
+    stopAutoSummary: () => stopAutoSummary,
+    unloadAutoSummary: () => unloadAutoSummary
+  });
   function getWatchDir() {
     const s = tryGetSettings();
     return s && s.articleDirectory || "归档/网页剪藏";
@@ -17084,6 +17257,19 @@ ${bodyText.substring(0, 6e3)}`;
     if (!file || file.extension !== "md") return Promise.resolve();
     return enqueueJob({ app, ai: createAI(), file, force: true });
   }
+  function retrySummaryWithAI(app, ai, file, force) {
+    if (!file || file.extension !== "md") return Promise.resolve();
+    return enqueueJob({ app, ai, file, force });
+  }
+  async function redoSummaryForActiveFile(app) {
+    const ws = app && app.workspace;
+    const file = ws && typeof ws.getActiveFile === "function" ? ws.getActiveFile() : null;
+    if (!file || file.extension !== "md" || !String(file.path || "").startsWith(getWatchDir() + "/")) {
+      notify("当前打开的不是剪藏笔记，无法重新生成摘要", { type: "info" });
+      return;
+    }
+    await regenerateSummary(app, file);
+  }
   function scheduleRegister(app) {
     const ai = createAI();
     registerTimer = setTimeout(() => {
@@ -17108,6 +17294,9 @@ ${bodyText.substring(0, 6e3)}`;
     vaultRef = app.vault;
     workspaceRef = app.workspace;
     scheduleRegister(app);
+  }
+  function isAutoSummaryInitialized() {
+    return initialized2;
   }
   function stopAutoSummary() {
     if (registerTimer) {
@@ -17142,6 +17331,12 @@ ${bodyText.substring(0, 6e3)}`;
     batchTotal = 0;
     batchDone = 0;
     processingPaths.clear();
+  }
+  function unloadAutoSummary() {
+    stopAutoSummary();
+    initialized2 = false;
+    vaultRef = null;
+    workspaceRef = null;
   }
   var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
   var init_auto_summary = __esm({
@@ -18168,7 +18363,12 @@ ${bodyText.substring(0, 6e3)}`;
     let data = res.data;
     const cleaned = applyRetention(data.articles, days, days);
     const retentionChanged = cleaned.length !== data.articles.length;
-    if (retentionChanged) data = { ...data, articles: cleaned };
+    let removedKeys = [];
+    if (retentionChanged) {
+      const kept = new Set(cleaned.map((a) => articleKeyOf(a)));
+      removedKeys = (data.articles || []).map((a) => articleKeyOf(a)).filter((k) => !kept.has(k));
+      data = { ...data, articles: cleaned };
+    }
     let statsChanged = false;
     if (!statsHasData(data.stats)) {
       const migrated = await migrateLegacyStats(data);
@@ -18181,7 +18381,7 @@ ${bodyText.substring(0, 6e3)}`;
       const set = {};
       if (retentionChanged) set.articles = data.articles;
       if (statsChanged) set.stats = data.stats;
-      await enqueueNewsWrite(() => writeNewsDataMerged({ set }));
+      await enqueueNewsWrite(() => writeNewsDataMerged({ set, removeArticleKeys: removedKeys }));
     }
     const sidecar = await readClipbookData();
     const clipNotes = await scanClipDirectory(M5.dir || clipDir(), {
@@ -18202,6 +18402,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_data6();
       init_scan();
       init_store();
+      init_constants3();
       init_settings_provider();
       init_app();
       init_state5();
@@ -21263,10 +21464,16 @@ ${sample}`,
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
+      let touched = false;
+      let changed = false;
       const list = (res.data.articles || []).map((a) => {
         if (articleKeyOf(a) !== key) return a;
+        touched = true;
+        if (a.read === true) return a;
+        changed = true;
         return { ...a, read: true, state: action };
       });
+      if (!touched || !changed) return;
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       s.totalRead = (Number(s.totalRead) || 0) + 1;
       if (action === "saved") s.totalSaved = (Number(s.totalSaved) || 0) + 1;
@@ -21890,7 +22097,10 @@ ${sample}`,
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M5.cur && M5.cur.id))) M5.cur = list[0];
+      if (!list.some((a) => a.id === (M5.cur && M5.cur.id))) {
+        M5.cur = list[0];
+        if (readerEl) renderReader();
+      }
       listEl.innerHTML = tocListHtml(list, M5.cur ? M5.cur.id : null, (a) => relTime(a.timeTs));
       M5.list = list;
       bindItemMenus();
@@ -22132,6 +22342,7 @@ ${sample}`,
   }
   async function doMarkRead(a) {
     if (!a || a.origin !== "news") return;
+    if (a.st !== "unread") return;
     const rawBefore = { ...a.raw || {} };
     await flowMarkRead(a);
     notifyUndo(`已将「${a.title}」标为已读`, () => void undoMarkRead(rawBefore));
@@ -23064,10 +23275,23 @@ ${sample}`,
     const app = appOf();
     try {
       app.openUrl(url);
+      return;
     } catch (e) {
-      const electron = window.require && window.require("electron");
-      if (electron && electron.shell) electron.shell.openExternal(url);
     }
+    try {
+      const electron = window.require && window.require("electron");
+      if (electron && electron.shell) {
+        electron.shell.openExternal(url);
+        return;
+      }
+    } catch (e) {
+    }
+    try {
+      const w = window.open(url, "_blank");
+      if (w) return;
+    } catch (e) {
+    }
+    notice("无法打开链接，请复制到浏览器打开", "error");
   }
   function formTagsNow(popup) {
     return [...popup.querySelectorAll("#fz-tags [data-tag].bz-fav-on")].map((b) => b.dataset.tag || "").sort().join("|");
@@ -23100,6 +23324,8 @@ ${sample}`,
   function openForm2(item) {
     var _a2, _b2, _c;
     ensureFavoritesEsc();
+    const existing = document.querySelector(".bz-fav-form");
+    if (existing) closeForm(existing);
     const it = item;
     const mask = document.createElement("div");
     mask.className = "bz-fav-form-mask bz-fav-scope";
@@ -24231,31 +24457,47 @@ GitHub 仓库：${ghInfo.title}
         async saveQuiz(app, quiz) {
           await jsonFileStore(getQuizFilePath(), { app }).write(quiz);
         }
+        /**
+         * G3：quiz.json 读改写事务（写路径唯一入口，纯读勿入——队列只为串行化「读→改→写」）。
+         * fn 基于队列内读出的磁盘现值改动；fn 返回 false = 无改动跳过写盘。
+         * 队列不可重入：fn 内勿再调 mutateQuiz/enqueueFileTask 同路径（死锁）。
+         * （session.ts 批量出题写回/清理非活跃键共用——AI 长耗时窗口内基于磁盘现值合并，不覆盖并发删题）
+         */
+        mutateQuiz(app, fn) {
+          return enqueueFileTask(getQuizFilePath(), async () => {
+            const quiz = await this.loadQuiz(app);
+            const result = await fn(quiz);
+            if (result !== false) await this.saveQuiz(app, quiz);
+            return result;
+          });
+        }
         /** 源码 L40-43 */
         async getQuestionsForNote(app, notePath) {
           const quiz = await this.loadQuiz(app);
           return quiz.notes[notePath] || null;
         }
-        /** 源码 L45-49 */
+        /** 源码 L45-49（G3：RMW 入队，fn 内改现值） */
         async saveQuestionsForNote(app, notePath, questions) {
-          const quiz = await this.loadQuiz(app);
-          quiz.notes[notePath] = questions.map((q2) => ({ ...q2 }));
-          await this.saveQuiz(app, quiz);
+          await this.mutateQuiz(app, (quiz) => {
+            quiz.notes[notePath] = questions.map((q2) => ({ ...q2 }));
+          });
         }
         /** 源码 L51-57 splice 语义 + P0-2 稳定定位改造：
          *  会话期 _index 是开考时的快照，题库并发变化（同笔记多题先后答对、复习重出题等）
          *  后按快照下标会删错行/漏删；改为按题目生成标识（question+options+correctIndices，
          *  correctIndices 顺序不敏感）在存储数组内定位。
          *  同内容多题：每次删除首个匹配＝按未答优先逐个消费。
-         *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功；空键仍保留（源码语义）。 */
+         *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功不写盘（fn 返回 false）；
+         *  空键仍保留（源码语义）。G3：RMW 入队，与批量出题写回互斥串行。 */
         async removeQuestion(app, notePath, target) {
-          const quiz = await this.loadQuiz(app);
-          const list = quiz.notes[notePath];
-          if (!list) return;
-          const idx = list.findIndex((q2) => sameQuestion(q2, target));
-          if (idx === -1) return;
-          list.splice(idx, 1);
-          await this.saveQuiz(app, quiz);
+          await this.mutateQuiz(app, (quiz) => {
+            const list = quiz.notes[notePath];
+            if (!list) return false;
+            const idx = list.findIndex((q2) => sameQuestion(q2, target));
+            if (idx === -1) return false;
+            list.splice(idx, 1);
+            return void 0;
+          });
         }
         /** 源码 L59-72：遍历补 notePath/_index */
         async getUncompletedQuestions(app) {
@@ -24383,25 +24625,30 @@ ${n.content.slice(0, 2e3)}
           }
           return `根据以下多篇笔记内容，为每篇笔记生成选择题。请仅返回一个合法的 JSON 对象：
 {
-  "noteId1": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0], "explain": "..." }, ... ],
-  "noteId2": [ ... ]
+  "<笔记ID>": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0], "explain": "..." }, ... ],
+  ...
 }
 规则：
 - 类型：${typeHint}，${countHint}
 - ${difficultyHint}
 - 每题必须带 explain 字段：一句话解析正确答案并附原文依据
-- 键名为笔记ID（即 "笔记ID:xxx" 中的 xxx），值为该笔记的题目数组
+- JSON 的键必须是下方「===== 笔记ID:xxx =====」中的 xxx 本身（完整笔记路径，逐字复制，不要自造编号如 noteId1），每篇笔记一个键，值为该笔记的题目数组
 - 每题4个选项，correctIndices 为正确选项索引数组
 笔记内容：${notesBlock}`;
         }
-        /** 批量生成（源码 L193-212 逐字） */
-        async generateBatch(notes, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
-          const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
-          const result = await aiService.json(prompt);
-          const parsed = this.extractJSON(result);
+        /**
+         * G5：返回键归一——AI 可能不按规则返回（照旧示例返回 noteId1、加「笔记ID:」前缀、
+         * 带首尾空白等），归一到真实笔记路径；无法映射到已知笔记的键丢弃（不写垃圾键、
+         * 不虚报「已为 N 篇生成」）。
+         */
+        normalizeBatchKeys(parsed, knownIds) {
+          const exact = new Set(knownIds);
           const out = {};
-          for (const [noteId, qs] of Object.entries(parsed)) {
+          for (const [rawKey, qs] of Object.entries(parsed)) {
             if (!Array.isArray(qs)) continue;
+            let key = rawKey.trim();
+            if (key.startsWith("笔记ID:")) key = key.slice("笔记ID:".length).trim();
+            if (!exact.has(key)) continue;
             const valid = [];
             for (const q2 of qs) {
               if (!q2.question || !Array.isArray(q2.options) || q2.options.length !== 4 || !Array.isArray(q2.correctIndices)) {
@@ -24411,9 +24658,16 @@ ${n.content.slice(0, 2e3)}
               if (!indices.length) continue;
               valid.push({ ...q2, correctIndices: indices });
             }
-            if (valid.length) out[noteId] = valid;
+            if (valid.length) out[key] = valid;
           }
           return out;
+        }
+        /** 批量生成（源码 L193-212 逐字；G5：返回键归一到真实笔记路径） */
+        async generateBatch(notes, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
+          const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
+          const result = await aiService.json(prompt);
+          const parsed = this.extractJSON(result);
+          return this.normalizeBatchKeys(parsed, notes.map((n) => n.id));
         }
       };
     }
@@ -24485,17 +24739,19 @@ ${n.content.slice(0, 2e3)}
           try {
             const activeItems = await loadActiveItems(app);
             if (!activeItems.length) {
-              await this.manager.saveQuiz(getApp(), { notes: {} });
+              await this.manager.mutateQuiz(app, (quiz) => {
+                for (const notePath of Object.keys(quiz.notes)) delete quiz.notes[notePath];
+              });
               return;
             }
-            const quiz = await this.manager.loadQuiz(app);
             const activePaths = new Set(activeItems.map((i) => i.filePath));
-            for (const notePath of Object.keys(quiz.notes)) {
-              if (!activePaths.has(notePath)) {
-                delete quiz.notes[notePath];
+            await this.manager.mutateQuiz(app, (quiz) => {
+              for (const notePath of Object.keys(quiz.notes)) {
+                if (!activePaths.has(notePath)) {
+                  delete quiz.notes[notePath];
+                }
               }
-            }
-            await this.manager.saveQuiz(app, quiz);
+            });
             const notePaths = activeItems.map((i) => i.filePath);
             await this.ensureQuestions(notePaths);
           } catch (e) {
@@ -24527,13 +24783,14 @@ ${n.content.slice(0, 2e3)}
               const h = notify(`正在为 ${missing.length} 篇笔记批量生成题目…`, { type: "progress", dedupeKey: "quiz-generate" });
               const batchResult = await this.generator.generateBatch(missing, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
               let batchOk = 0;
-              for (const [path, qs] of Object.entries(batchResult)) {
-                if (qs.length) {
-                  quiz.notes[path] = qs;
-                  batchOk++;
+              await this.manager.mutateQuiz(app, (quiz2) => {
+                for (const [path, qs] of Object.entries(batchResult)) {
+                  if (qs.length) {
+                    quiz2.notes[path] = qs;
+                    batchOk++;
+                  }
                 }
-              }
-              await this.manager.saveQuiz(app, quiz);
+              });
               h.setType("success");
               h.setMessage(`已为 ${batchOk} 篇笔记生成题目`);
               return;
@@ -24550,9 +24807,8 @@ ${n.content.slice(0, 2e3)}
               if (!_QuizMasterUI.ai) throw new Error("AI 未初始化");
               const qs = await this.generator.generate(note.content, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
               if (qs.length) {
-                quiz.notes[note.id] = qs;
+                await this.manager.saveQuestionsForNote(app, note.id, qs);
                 okCount++;
-                await this.manager.saveQuiz(app, quiz);
               } else {
                 failCount++;
               }
@@ -25204,12 +25460,12 @@ ${n.content.slice(0, 2e3)}
     }
     return `<span class="bz-q-tag is-stage">阶段 ${(_a2 = item.currentStage) != null ? _a2 : item.stage + 1}/${TOTAL_STAGES}</span>`;
   }
-  function sortColumn(items, now = Date.now()) {
+  function sortColumn(items, now = Date.now(), w = DEFAULT_W) {
     return items.slice().sort((a, b) => {
       var _a2, _b2;
       if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
-      const ra = a.phase === "fsrs" && a.stability ? (_a2 = currentRPct(a, DEFAULT_W, now)) != null ? _a2 : 999 : 999;
-      const rb = b.phase === "fsrs" && b.stability ? (_b2 = currentRPct(b, DEFAULT_W, now)) != null ? _b2 : 999 : 999;
+      const ra = a.phase === "fsrs" && a.stability ? (_a2 = currentRPct(a, w, now)) != null ? _a2 : 999 : 999;
+      const rb = b.phase === "fsrs" && b.stability ? (_b2 = currentRPct(b, w, now)) != null ? _b2 : 999 : 999;
       if (ra !== rb) return ra - rb;
       return new Date(a.nextReviewDate || 0).getTime() - new Date(b.nextReviewDate || 0).getTime();
     });
@@ -25293,10 +25549,10 @@ ${n.content.slice(0, 2e3)}
         <span class="bz-q-strip-txt">今日 ${col.today.length} 篇到期 · 逾期 ${col.overdue.length} 篇顺延</span>
         <button class="bz-btn bz-btn--primary" data-act="begin">开始本轮</button>
       </div>`;
-    const body = ctx.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${colHead(col.done.length, "已完成")}${cardsOf(sortColumn(col.done, now), full)}</div></div>` : `<div class="bz-q-cols">
-          <div class="bz-q-col danger">${colHead(col.overdue.length, "已逾期")}${cardsOf(sortColumn(col.overdue, now), full)}</div>
-          <div class="bz-q-col warn">${colHead(col.today.length, "今天到期")}${cardsOf(sortColumn(col.today, now), full)}</div>
-          <div class="bz-q-col future">${colHead(col.future.length, "未来")}${cardsOf(sortColumn(col.future, now), full)}</div>
+    const body = ctx.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${colHead(col.done.length, "已完成")}${cardsOf(sortColumn(col.done, now, w), full)}</div></div>` : `<div class="bz-q-cols">
+          <div class="bz-q-col danger">${colHead(col.overdue.length, "已逾期")}${cardsOf(sortColumn(col.overdue, now, w), full)}</div>
+          <div class="bz-q-col warn">${colHead(col.today.length, "今天到期")}${cardsOf(sortColumn(col.today, now, w), full)}</div>
+          <div class="bz-q-col future">${colHead(col.future.length, "未来")}${cardsOf(sortColumn(col.future, now, w), full)}</div>
         </div>`;
     const stats = computeStats(items);
     const archItem = ctx.showArchived ? `<span class="bz-q-fitem bz-touch-target--lg is-back" data-act="arch" title="点此返回队列">
@@ -25574,6 +25830,7 @@ ${n.content.slice(0, 2e3)}
           if (this.finished) return;
           const t = e.target;
           if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+          if (t && typeof t.closest === "function" && t.closest(".bz-sprint-opt")) return;
           if (e.ctrlKey || e.metaKey || e.altKey) return;
           if (e.key !== "Enter") {
             if (this.view !== "question" || !this.q || this.q.answered) return;
@@ -25673,7 +25930,7 @@ ${n.content.slice(0, 2e3)}
             const nextReviewAt = await this.opts.onPassed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
             if (this.finished) return;
             entry.state = "passed";
-            entry.passNote = this.nextIntervalNote(nextReviewAt || entry.item.nextReviewDate);
+            entry.passNote = this.nextIntervalNote(nextReviewAt || void 0);
           } else {
             await this.opts.onFailed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
             if (this.finished) return;
@@ -27178,7 +27435,7 @@ ${n.content.slice(0, 2e3)}
           const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : /* @__PURE__ */ new Date(0);
           if (now < nextReview) {
             const rThreshold = Number(getSettings().reviewRThreshold) || DEFAULT_R_THRESHOLD;
-            if (!isEarlyDue(item, rThreshold, this.currentW())) {
+            if (!isEarlyDue(item, rThreshold, this.currentW()) && !isDueToday(item)) {
               const diff = nextReview.getTime() - now.getTime();
               const mins = Math.ceil(diff / 6e4);
               notice(`还未到复习时间（${mins}分钟后）`);
@@ -27413,7 +27670,8 @@ ${n.content.slice(0, 2e3)}
               await this.applyReviewStyles(app);
               const fresh = await this.dataManager.loadItems();
               const updated = fresh.find((i) => i.filePath === item.filePath);
-              return (updated == null ? void 0 : updated.nextReviewDate) || void 0;
+              if (!updated || updated.lastReviewed !== item.lastReviewed) return void 0;
+              return updated.nextReviewDate || void 0;
             },
             onFailed: async (item, rating, entry) => {
               if (mode !== "redo") {
@@ -31398,7 +31656,12 @@ ${text}`;
               if (!forceReset) return false;
               return this.firstTimeSetup(password);
             }
-            if (!parsed || !Array.isArray(parsed.notes)) parsed.notes = [];
+            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+              this.manifestIssue = "corrupt";
+              if (!forceReset) return false;
+              return this.firstTimeSetup(password);
+            }
+            if (!Array.isArray(parsed.notes)) parsed.notes = [];
             parsed.version = parsed.version || 1;
             this.manifest = parsed;
             this.password = password;
@@ -31416,7 +31679,7 @@ ${text}`;
         }
         /** 首设/强制重设：写空清单。写失败必须回滚解锁态（否则下次打开又误判无清单） */
         async firstTimeSetup(password) {
-          var _a2;
+          var _a2, _b2;
           this.password = password;
           this.unlocked = true;
           (_a2 = this.onUnlockChange) == null ? void 0 : _a2.call(this, true);
@@ -31429,6 +31692,8 @@ ${text}`;
             this.unlocked = false;
             this.password = null;
             this.manifest = { version: 1, notes: [] };
+            (_b2 = this.onUnlockChange) == null ? void 0 : _b2.call(this, false);
+            emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: false });
             return false;
           }
         }
@@ -31896,43 +32161,45 @@ ${text}`;
          * @returns { files: 删除的孤儿密文文件数, notes: 清除的失效条目数 }
          */
         async resolveHealth(keys) {
-          if (!this.unlocked) throw new Error("未解锁，无法清理");
-          const want = new Set(keys);
-          let notes = 0;
-          let files = 0;
-          const kept = [];
-          for (const n of this.manifest.notes) {
-            let bodyExists = false;
-            if (n.contentRef) {
+          return this.enqueueOp(async () => {
+            if (!this.unlocked) throw new Error("未解锁，无法清理");
+            const want = new Set(keys);
+            let notes = 0;
+            let files = 0;
+            const kept = [];
+            for (const n of this.manifest.notes) {
+              let bodyExists = false;
+              if (n.contentRef) {
+                try {
+                  bodyExists = await this.adapter.exists(this.resolveRef(n.contentRef));
+                } catch (e) {
+                  bodyExists = false;
+                }
+              }
+              if (want.has("entry:" + n.id) && !bodyExists) {
+                await this.deleteNoteMirrors(n);
+                notes += 1;
+              } else {
+                kept.push(n);
+              }
+            }
+            if (notes > 0) this.manifest.notes = kept;
+            for (const key of keys) {
+              if (!key.startsWith("file:")) continue;
+              const name = key.slice("file:".length);
+              if (!name.startsWith(".") || !name.endsWith(".enc")) continue;
               try {
-                bodyExists = await this.adapter.exists(this.resolveRef(n.contentRef));
+                if (await this.adapter.exists(this.resolveRef(name))) {
+                  await this.adapter.remove(this.resolveRef(name));
+                  files += 1;
+                }
               } catch (e) {
-                bodyExists = false;
               }
             }
-            if (want.has("entry:" + n.id) && !bodyExists) {
-              await this.deleteNoteMirrors(n);
-              notes += 1;
-            } else {
-              kept.push(n);
-            }
-          }
-          if (notes > 0) this.manifest.notes = kept;
-          for (const key of keys) {
-            if (!key.startsWith("file:")) continue;
-            const name = key.slice("file:".length);
-            if (!name.startsWith(".") || !name.endsWith(".enc")) continue;
-            try {
-              if (await this.adapter.exists(this.resolveRef(name))) {
-                await this.adapter.remove(this.resolveRef(name));
-                files += 1;
-              }
-            } catch (e) {
-            }
-          }
-          if (notes > 0) await this.saveManifest();
-          await this.clearStaging();
-          return { files, notes };
+            if (notes > 0) await this.saveManifest();
+            await this.clearStaging();
+            return { files, notes };
+          });
         }
         enqueueOp(op) {
           const run = this.opQueue.then(op, op);
@@ -31942,9 +32209,11 @@ ${text}`;
         /**
          * 加锁一篇笔记（操作级互斥入口，P1-6）：实例级 promise 链串行——
          * 并发 lockNote/restoreNote 按发起顺序排队执行，杜绝挂起标记/清单/暂存区的并发互吞。
+         * @param onSkippedStale E14：加密期间原文件被编辑过（删前重读与加密正文不一致）而
+         *   保留未删的路径列表——密文为加密时的旧内容，调用方应提示用户可重做。
          */
-        lockNote(input, onProgress, onDeleteFailed) {
-          return this.enqueueOp(() => this.lockNoteSerial(input, onProgress, onDeleteFailed));
+        lockNote(input, onProgress, onDeleteFailed, onSkippedStale) {
+          return this.enqueueOp(() => this.lockNoteSerial(input, onProgress, onDeleteFailed, onSkippedStale));
         }
         /**
          * 加锁一篇笔记：把当前笔记正文 + 双链附件移入保险库（ADR-0018 提交式加密）。
@@ -31958,7 +32227,7 @@ ${text}`;
          * 原文件不动；清单先行已残留的挂起态由解锁自愈兜底。
          * onProgress：按文件回调（附件逐个 + 笔记本身），UI 驱动进度通知。
          */
-        async lockNoteSerial(input, onProgress, onDeleteFailed) {
+        async lockNoteSerial(input, onProgress, onDeleteFailed, onSkippedStale) {
           if (!this.unlocked || !this.password) throw new Error("未解锁，无法加密笔记");
           await this.ensureSafeRootDir();
           await this.ensureStagingDir();
@@ -31970,6 +32239,7 @@ ${text}`;
           const stagedRefs = [];
           let note = null;
           let manifestSaved = false;
+          const skippedStale = [];
           try {
             const results = await mapLimit(input.attachments, BLOB_CONCURRENCY, async (a) => {
               const fp = await fingerprintOf(a.data);
@@ -32036,13 +32306,27 @@ ${text}`;
               }
             }
             if (input.kind !== "diary-entry" && input.kind !== "password-vault") {
+              let stale = false;
               try {
-                await this.deleteVaultFile(input.path);
+                const f = getApp().vault.getAbstractFileByPath(input.path);
+                if (f && f.isFolder !== true) {
+                  const current2 = await getApp().vault.read(f);
+                  stale = current2.replace(/\r\n/g, "\n") !== input.content.replace(/\r\n/g, "\n");
+                }
               } catch (e) {
-                deleteFailed.push(input.path);
+              }
+              if (stale) {
+                skippedStale.push(input.path);
+              } else {
+                try {
+                  await this.deleteVaultFile(input.path);
+                } catch (e) {
+                  deleteFailed.push(input.path);
+                }
               }
             }
             onDeleteFailed == null ? void 0 : onDeleteFailed(deleteFailed);
+            onSkippedStale == null ? void 0 : onSkippedStale(skippedStale);
             return note;
           } catch (e) {
             for (const ref of stagedRefs) {
@@ -32225,7 +32509,6 @@ ${text}`;
          * @returns 成功写入返回 true；目标路径被占且非本系统（fingerprint 冲突）由附件层处理，正文 merge 属幂等写回。
          */
         async mergeDiaryBlock(datePath, block) {
-          var _a2, _b2;
           const app = getApp();
           if (!datePath || !block) return false;
           const md = block.replace(/\r\n/g, "\n");
@@ -32235,69 +32518,72 @@ ${text}`;
           const timeValue = time ? parseInt(time.slice(0, 2), 10) * 100 + parseInt(time.slice(3, 5), 10) : null;
           if (timeValue === null || Number.isNaN(timeValue)) return false;
           await this.ensureVaultParentFolder(datePath);
-          const existing = app.vault.getAbstractFileByPath(datePath);
-          let existingText = "";
-          if (existing && existing.isFolder !== true) {
-            existingText = await app.vault.read(existing);
-          }
-          const existingLines = existingText ? existingText.replace(/\r\n/g, "\n").split("\n") : [];
-          const blockRows = [lines[0].trim()];
-          const blockLines = [];
-          for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
-          while (blockLines.length && blockLines[blockLines.length - 1].trim() === "") blockLines.pop();
-          while (blockLines.length && blockLines[0].trim() === "") blockLines.shift();
-          if (blockLines.length) {
-            blockRows.push("");
-            blockRows.push(...blockLines);
-          }
-          const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
-          const sigLines = (ls) => ls.map((l) => l.trim()).filter((l) => l !== "");
-          const blockSig = sigLines(blockRows);
-          let alreadyMerged = false;
-          for (let i = 0; i < existingLines.length; i++) {
-            if (existingLines[i].trim() !== lines[0].trim()) continue;
-            const seg = [];
-            for (let k = i + 1; k < existingLines.length && !headingRe.test(existingLines[k]); k++) seg.push(existingLines[k]);
-            if (sigLines(seg).join("\n") === blockSig.slice(1).join("\n")) {
-              alreadyMerged = true;
-              break;
+          await enqueueFileTask(datePath, async () => {
+            var _a2, _b2;
+            const existing = app.vault.getAbstractFileByPath(datePath);
+            let existingText = "";
+            if (existing && existing.isFolder !== true) {
+              existingText = await app.vault.read(existing);
             }
-          }
-          if (alreadyMerged) return true;
-          let insertIdx = existingLines.length;
-          for (let i = 0; i < existingLines.length; i++) {
-            const m = existingLines[i].match(headingRe);
-            if (m) {
-              const tv = parseInt(m[1].slice(0, 2), 10) * 100 + parseInt(m[1].slice(3, 5), 10);
-              if (tv >= timeValue) {
-                insertIdx = i;
+            const existingLines = existingText ? existingText.replace(/\r\n/g, "\n").split("\n") : [];
+            const blockRows = [lines[0].trim()];
+            const blockLines = [];
+            for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
+            while (blockLines.length && blockLines[blockLines.length - 1].trim() === "") blockLines.pop();
+            while (blockLines.length && blockLines[0].trim() === "") blockLines.shift();
+            if (blockLines.length) {
+              blockRows.push("");
+              blockRows.push(...blockLines);
+            }
+            const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
+            const sigLines = (ls) => ls.map((l) => l.trim()).filter((l) => l !== "");
+            const blockSig = sigLines(blockRows);
+            let alreadyMerged = false;
+            for (let i = 0; i < existingLines.length; i++) {
+              if (existingLines[i].trim() !== lines[0].trim()) continue;
+              const seg = [];
+              for (let k = i + 1; k < existingLines.length && !headingRe.test(existingLines[k]); k++) seg.push(existingLines[k]);
+              if (sigLines(seg).join("\n") === blockSig.slice(1).join("\n")) {
+                alreadyMerged = true;
                 break;
               }
             }
-          }
-          const out = [];
-          for (let i = 0; i < insertIdx; i++) out.push(existingLines[i]);
-          if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== "") out.push("");
-          out.push(...blockRows);
-          if (insertIdx < existingLines.length && existingLines[insertIdx].trim() !== "") out.push("");
-          for (let i = insertIdx; i < existingLines.length; i++) out.push(existingLines[i]);
-          const clean = [];
-          for (const ln of out) {
-            if (ln.trim() === "") {
-              if (clean.length && clean[clean.length - 1] !== "") clean.push("");
-            } else {
-              clean.push(ln);
+            if (alreadyMerged) return;
+            let insertIdx = existingLines.length;
+            for (let i = 0; i < existingLines.length; i++) {
+              const m = existingLines[i].match(headingRe);
+              if (m) {
+                const tv = parseInt(m[1].slice(0, 2), 10) * 100 + parseInt(m[1].slice(3, 5), 10);
+                if (tv >= timeValue) {
+                  insertIdx = i;
+                  break;
+                }
+              }
             }
-          }
-          while (clean.length && clean[0] === "") clean.shift();
-          while (clean.length && clean[clean.length - 1] === "") clean.pop();
-          const finalText = clean.join("\n");
-          if (existing && existing.isFolder !== true) {
-            await app.vault.modify(existing, finalText);
-          } else {
-            const file = await app.vault.create(datePath, finalText);
-            (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", file);
-          }
+            const out = [];
+            for (let i = 0; i < insertIdx; i++) out.push(existingLines[i]);
+            if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== "") out.push("");
+            out.push(...blockRows);
+            if (insertIdx < existingLines.length && existingLines[insertIdx].trim() !== "") out.push("");
+            for (let i = insertIdx; i < existingLines.length; i++) out.push(existingLines[i]);
+            const clean = [];
+            for (const ln of out) {
+              if (ln.trim() === "") {
+                if (clean.length && clean[clean.length - 1] !== "") clean.push("");
+              } else {
+                clean.push(ln);
+              }
+            }
+            while (clean.length && clean[0] === "") clean.shift();
+            while (clean.length && clean[clean.length - 1] === "") clean.pop();
+            const finalText = clean.join("\n");
+            if (existing && existing.isFolder !== true) {
+              await app.vault.modify(existing, finalText);
+            } else {
+              const file = await app.vault.create(datePath, finalText);
+              (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", file);
+            }
+          });
           return true;
         }
         /**
@@ -32351,34 +32637,43 @@ ${text}`;
           (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", file);
           return true;
         }
-        /** 删除一条加密笔记（连同镜像文件、清单记录）。谨慎：真删除不可恢复。 */
-        async removeNote(noteId) {
-          if (!this.unlocked) throw new Error("未解锁");
-          const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
-          if (idx === -1) return;
-          const note = this.manifest.notes[idx];
-          await this.deleteNoteMirrors(note);
-          this.manifest.notes.splice(idx, 1);
-          await this.saveManifest();
+        /**
+         * 删除一条加密笔记（连同镜像文件、清单记录）。谨慎：真删除不可恢复。
+         * E13：整体入 opQueue——与 lockNote/restoreNote 同链串行，防内存清单快照互踩
+         * （此前可与其并发，后落盘的旧清单快照会抹掉并发 lockNote 新增的条目）。
+         */
+        removeNote(noteId) {
+          return this.enqueueOp(async () => {
+            if (!this.unlocked) throw new Error("未解锁");
+            const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
+            if (idx === -1) return;
+            const note = this.manifest.notes[idx];
+            await this.deleteNoteMirrors(note);
+            this.manifest.notes.splice(idx, 1);
+            await this.saveManifest();
+          });
         }
         /**
          * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像；清单同步持久化）。
          * 供密码本整表（password-vault）等高频改写载荷用：重用既有镜像名，避免每次新镜像堆积。
          * 覆盖走 replaceMirrorAtomic（P0-1）：暂存+rename 原子换入，任何写失败正式位保持旧完整密文。
+         * E13：整体入 opQueue（理由同 removeNote——清单读改写与 lockNote/restoreNote 串行互斥）。
          */
-        async updateNotePayload(noteId, plainContent) {
-          if (!this.unlocked || !this.password) throw new Error("未解锁，无法保存");
-          const note = this.manifest.notes.find((n) => n.id === noteId);
-          if (!note) throw new Error("未找到清单条目");
-          const encrypted = await CryptoService.encrypt(plainContent, this.password);
-          if (note.contentRef) {
-            await this.replaceMirrorAtomic(note.contentRef, encrypted);
-          } else {
-            const ref = flatName();
-            await this.replaceMirrorAtomic(ref, encrypted);
-            note.contentRef = ref;
-          }
-          await this.saveManifest();
+        updateNotePayload(noteId, plainContent) {
+          return this.enqueueOp(async () => {
+            if (!this.unlocked || !this.password) throw new Error("未解锁，无法保存");
+            const note = this.manifest.notes.find((n) => n.id === noteId);
+            if (!note) throw new Error("未找到清单条目");
+            const encrypted = await CryptoService.encrypt(plainContent, this.password);
+            if (note.contentRef) {
+              await this.replaceMirrorAtomic(note.contentRef, encrypted);
+            } else {
+              const ref = flatName();
+              await this.replaceMirrorAtomic(ref, encrypted);
+              note.contentRef = ref;
+            }
+            await this.saveManifest();
+          });
         }
         /** 解附件预览层 → dataUrl 明文（预览窗用；无预览层返回 null） */
         async decryptPreview(a) {
@@ -34059,7 +34354,7 @@ ${text}`;
           void this.renderList();
           this.startSessionTimers();
         }
-        hide() {
+        hide(suppressAutoLockNotice = false) {
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
           this.stopSessionTimers();
@@ -34069,7 +34364,7 @@ ${text}`;
             this.pwState = { ...DEFAULT_PW_STATE };
             this._selNoteId = null;
             this._diaryPlain = {};
-            this.noticeAutoLock();
+            if (!suppressAutoLockNotice) this.noticeAutoLock();
           }
         }
         /** 安全模式双口径（config 快照可能落后于设置实时值：单读 config 会漏，历史双键 OR） */
@@ -34119,7 +34414,7 @@ ${text}`;
             this.idleLockTimer = null;
             if (!this.isSecurityMode() || !this.dataManager.unlocked || !this.rootVisible()) return;
             notice("安全模式：15 分钟无操作，已自动上锁");
-            this.lockNow();
+            this.lockNow(true);
           }, _UIManager.IDLE_LOCK_MS);
         }
         clearIdleLock() {
@@ -34446,6 +34741,10 @@ ${text}`;
                 } else {
                   if (pw !== input2.value) {
                     notice("两次密码不一致");
+                    return;
+                  }
+                  if (pw.length < 4) {
+                    notice("主密码至少 4 位");
                     return;
                   }
                   if (!ackBox.checked) {
@@ -34815,7 +35114,7 @@ ${text}`;
           bind("menu", () => this.openNoteDetailMenu(note, kind));
           if (kind === "diary" && !this._diaryPlain[note.id]) {
             void this.dataManager.decryptNoteBody(note).then((t) => {
-              if (t !== null && this._selNoteId === note.id) {
+              if (t !== null && this.asset === "diary" && this._selNoteId === note.id) {
                 this._diaryPlain[note.id] = t;
                 this.renderNoteDetail(detail, note, kind);
               }
@@ -35202,8 +35501,8 @@ ${text}`;
           if (!this._initialized) return;
           this.setAssetFromNav(lastVisitedAsset);
         }
-        /** 立即上锁（锁屏接管） */
-        lockNow() {
+        /** 立即上锁（锁屏接管）。@param silent E11：安静上锁（触发方自带通知，如空闲自动上锁），hide 不再补一条 */
+        lockNow(silent = false) {
           this.dataManager.lock();
           this.pwDataManager.lock();
           this.pwState = { ...DEFAULT_PW_STATE };
@@ -35216,7 +35515,7 @@ ${text}`;
           this.stopSessionTimers();
           this.notifyUnlockUi();
           if (this.isSecurityMode()) {
-            this.hide();
+            this.hide(silent);
           }
         }
         /** 解锁态变更后 UI 同步（Controller attachStatusBar 也调；锁屏/已解锁文本 + 重绘）。未建 DOM 时静默 */
@@ -35506,9 +35805,9 @@ ${text}`;
             const dataUrls = /* @__PURE__ */ new Map();
             for (const r of previewResults) dataUrls.set(r.path, r.du);
             const { text, slots, inlined } = collectMediaSlots(plain != null ? plain : "", note.attachments);
-            const mdEl = document.createElement("div");
+            const { ok: rendered, el: mdElRaw } = await this.renderWithTimeout(getApp(), text, note.path);
+            const mdEl = mdElRaw;
             mdEl.className = "bz-encrypt-preview-md";
-            const rendered = await this.renderWithTimeout(getApp(), text, mdEl, note.path);
             if (rendered) {
               let html = mdEl.innerHTML;
               for (const slot of slots) {
@@ -35544,8 +35843,13 @@ ${text}`;
             body.appendChild(err);
           }
         }
-        /** 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关） */
-        async renderWithTimeout(app, text, el, path, timeoutMs = 3e3) {
+        /**
+         * 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关）。
+         * E9：render 渲入私有容器——超时弃用该容器（迟到 promise 追加进孤儿节点永不入 DOM），
+         * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
+         */
+        async renderWithTimeout(app, text, path, timeoutMs = 3e3) {
+          const el = document.createElement("div");
           let finished = false;
           const render2 = MarkdownRenderer.render(app, text, el, path, new Component()).then(
             () => {
@@ -35556,7 +35860,8 @@ ${text}`;
             }
           );
           await Promise.race([render2, new Promise((r) => setTimeout(r, timeoutMs))]);
-          return finished;
+          if (!finished) return { ok: false, el: document.createElement("div") };
+          return { ok: true, el };
         }
         /** 预览窗内所有缩略图/占位 slot 绑定点击：只加载被点的那一张原始层 */
         bindMediaClicks(root, attachments) {
@@ -35822,6 +36127,11 @@ ${text}`;
                   if (failed.length) {
                     notice(failed.length + " 个原文件删除失败（已保留在原位置，可手动删除）", "warning");
                   }
+                },
+                (stale) => {
+                  if (stale.length) {
+                    notice("加密期间笔记有新的修改，原文件已保留；保险库内为加密时的内容，可删除后重新加密", "warning");
+                  }
                 }
               );
               finishProgress(h, attachments.length + 1, "加密完成");
@@ -35855,6 +36165,7 @@ ${text}`;
           this.uiManager._initialized = false;
           this.dataManager.onUnlockChange = null;
           this.dataManager.lock();
+          _EncryptAppController.instance = null;
         }
       };
       _EncryptAppController.instance = null;
@@ -35935,7 +36246,7 @@ ${text}`;
   async function lockSafe(app) {
     await ensureEncrypt(app);
     if (!getSafeManager().unlocked) return false;
-    getController().uiManager.lockNow();
+    getController().uiManager.lockNow(true);
     return true;
   }
   async function lockEncrypt(app) {
@@ -38592,13 +38903,21 @@ ${text}`;
          * 桌面定位左栏选中域；移动端打开后直接进域设置弹窗。未知 id 忽略（回退通用）。
          */
         open(domainId) {
+          var _a2;
           const deep = domainId ? DOMAINS2.find((x) => x.id === domainId) : void 0;
           if (deep) this.activeDomainId = deep.id;
           if (this.mask && this.popup) {
             topifyZ(this.mask, this.popup);
             this.mask.style.display = "block";
             this.popup.style.display = "flex";
-            if (deep && isMobileEnv()) void this.pushDomain(deep);
+            if (deep && isMobileEnv()) {
+              void this.pushDomain(deep);
+            } else if (deep) {
+              (_a2 = this.rerenderList) == null ? void 0 : _a2.call(this);
+              const pane = this.popup.querySelector(".bz-sp-pane");
+              if (pane) void this.renderDomain(pane, deep);
+            }
+            void this.preloadAllBadges();
             return;
           }
           this.build(deep);
@@ -38759,7 +39078,7 @@ ${text}`;
             const groupEls = body.querySelectorAll(".bz-sp-group");
             const visibleGroups = [...groupEls].filter((g) => g.style.display !== "none").length;
             const count = visibleItemCount(schema);
-            navBadges.set(domain.id, count > 0 ? String(count) : "·");
+            navBadges.set(domain.id, count > 0 ? String(count) : "—");
             this.refreshNavBadges();
             if (pageHead) {
               pageHead.querySelector(".bz-sp-page-tag").textContent = `${count} 项 · ${schema.groups.length} 组`;
@@ -38830,7 +39149,7 @@ ${text}`;
                   html += mobItemHtml({ id: r.domain.id, icon: r.domain.icon, name: r.name, desc: `${r.domain.name} · ${r.desc}`, kind: "设置" });
                 });
               }
-              if (!doms.length && !rows.length) html = `<div class="bz-sp-mob-empty">没有匹配「${query}」的设置或域</div>`;
+              if (!doms.length && !rows.length) html = `<div class="bz-sp-mob-empty">没有匹配「${esc(query)}」的设置或域</div>`;
               list.innerHTML = html;
             }
             list.querySelectorAll(".bz-sp-mob-item").forEach((b) => {
@@ -39043,6 +39362,7 @@ ${text}`;
     M.showDone = tryGetSettings().memoShowArchivedByDefault === true;
     M.showEarlierDone = false;
     M.pinnedNewId = null;
+    M.search = "";
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
     overlay2.innerHTML = panelShellHtml();
@@ -39600,6 +39920,7 @@ ${text}`;
     });
   }
   function addFromComposer() {
+    if (composerBusy) return;
     const overlay2 = M.overlay;
     const input = overlay2.querySelector("[data-memo-composer-input]");
     const txt = (input.value || "").trim();
@@ -39607,6 +39928,7 @@ ${text}`;
       notice("请输入内容");
       return;
     }
+    composerBusy = true;
     const scene = composerScene();
     void (async () => {
       const { url } = extractUrlAndDisplay(txt);
@@ -39637,11 +39959,12 @@ ${text}`;
           type: "success",
           action: { label: "补全", onClick: () => openEditor(it) }
         });
+        input.value = "";
       } catch (e) {
         notifySaveError(e, "保存备忘录");
         console.error(e);
       }
-      input.value = "";
+      composerBusy = false;
       await refresh();
     })();
   }
@@ -40115,7 +40438,7 @@ ${text}`;
       console.error(e);
     }
   }
-  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, DONE_WINDOW_DAYS, searchDebounceTimer2, clipTitleHint, panelResizeDetach2, sortSelectDetach;
+  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, DONE_WINDOW_DAYS, searchDebounceTimer2, clipTitleHint, panelResizeDetach2, sortSelectDetach, composerBusy;
   var init_ui13 = __esm({
     "src/memo/ui.ts"() {
       import_moment6 = __toESM(require_moment());
@@ -40140,6 +40463,7 @@ ${text}`;
       clipTitleHint = null;
       panelResizeDetach2 = null;
       sortSelectDetach = null;
+      composerBusy = false;
     }
   });
 
@@ -40277,16 +40601,18 @@ ${text}`;
   function syncRename(items, { oldPath, newPath, oldTitle, newTitle }) {
     let changed = false;
     for (const item of items) {
-      if (item.linkedNote === oldPath) {
+      const linkedHit = item.linkedNote === oldPath;
+      const noteHit = item.notePath === oldPath;
+      if (linkedHit) {
         item.linkedNote = newPath;
         changed = true;
       }
-      if (item.title === oldTitle) {
-        item.title = newTitle;
+      if (noteHit) {
+        item.notePath = newPath;
         changed = true;
       }
-      if (item.notePath === oldPath) {
-        item.notePath = newPath;
+      if ((linkedHit || noteHit) && item.title === oldTitle) {
+        item.title = newTitle;
         changed = true;
       }
     }
@@ -40378,6 +40704,15 @@ ${text}`;
       });
     }
     const isMd = (file) => file && file.extension === "md" && inFolders(file.path, getWatchedFolders());
+    const referencedByMemo = async (path) => {
+      if (!path) return false;
+      try {
+        const items = await loadJSON(app, getMemoPath());
+        return items.some((it) => (it == null ? void 0 : it.linkedNote) === path || (it == null ? void 0 : it.notePath) === path);
+      } catch (e) {
+        return false;
+      }
+    };
     const pseudoFile = (path) => ({
       path,
       basename: stripMdExt(path.split("/").pop() || ""),
@@ -40390,21 +40725,25 @@ ${text}`;
     });
     _flushers.push(flushRenames);
     _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
-      var _a2;
       const file = pseudoFile(evt.newPath);
-      if (!isMd(file)) return;
-      const oldTitle = stripMdExt(((_a2 = evt.oldPath) != null ? _a2 : "").split("/").pop());
-      flushRenames({
-        oldPath: evt.oldPath,
-        newPath: evt.newPath,
-        oldTitle,
-        newTitle: file.basename
-      });
+      void (async () => {
+        var _a2;
+        if (!(isMd(file) || await referencedByMemo(evt.oldPath) || await referencedByMemo(evt.newPath))) return;
+        const oldTitle = stripMdExt(((_a2 = evt.oldPath) != null ? _a2 : "").split("/").pop());
+        flushRenames({
+          oldPath: evt.oldPath,
+          newPath: evt.newPath,
+          oldTitle,
+          newTitle: file.basename
+        });
+      })();
     }));
     _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
       const file = pseudoFile(evt.path);
-      if (!isMd(file)) return;
-      enqueue(() => syncSource(syncDelete, evt.path));
+      void (async () => {
+        if (!(isMd(file) || await referencedByMemo(evt.path))) return;
+        enqueue(() => syncSource(syncDelete, evt.path));
+      })();
     }));
   }
   function ensureFileSync(app) {
@@ -40426,6 +40765,7 @@ ${text}`;
     );
   }
   var fileOpenRef = null;
+  var fileOpenApp = null;
   var startPopupTimer = null;
   var remindedFiles = /* @__PURE__ */ new Set();
   function openForNote(app, path) {
@@ -40451,6 +40791,7 @@ ${text}`;
   function ensureMemoReminders(app) {
     if (fileOpenRef) return;
     const s = tryGetSettings();
+    fileOpenApp = app;
     if ((s == null ? void 0 : s.autoPopupOnStart) !== false) void autoPopupOnStart(app);
     fileOpenRef = app.workspace.on("file-open", (file) => {
       void (async () => {

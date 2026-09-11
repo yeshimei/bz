@@ -1,8 +1,11 @@
 /**
  * 做题家数据层（ticket 17 修正版：对齐源码 QuizManager，读方法每次读盘）
+ * G3：quiz.json 全部读改写事务收编 core per-path 串行队列（与 review.json D3 原语 1 同法，
+ * enqueueFileTask 键 = quiz.json 路径）——AI 批量出题长耗时窗口内的并发删题（答题出库）与
+ * 批量写回按序落盘，写回方不再用陈旧快照覆盖（答对的题复活）。纯读方法保持无锁原语。
  */
 import type { App } from 'obsidian';
-import { jsonFileStore, storageFile } from '../../core/storage';
+import { enqueueFileTask, jsonFileStore, storageFile } from '../../core/storage';
 import { tryGetSettings } from '../../core/settings-provider';
 
 /** 默认数据文件路径 */
@@ -80,17 +83,35 @@ export class QuizManager {
     await jsonFileStore<{ notes: Record<string, QuizQuestion[]> }>(getQuizFilePath(), { app }).write(quiz);
   }
 
+  /**
+   * G3：quiz.json 读改写事务（写路径唯一入口，纯读勿入——队列只为串行化「读→改→写」）。
+   * fn 基于队列内读出的磁盘现值改动；fn 返回 false = 无改动跳过写盘。
+   * 队列不可重入：fn 内勿再调 mutateQuiz/enqueueFileTask 同路径（死锁）。
+   * （session.ts 批量出题写回/清理非活跃键共用——AI 长耗时窗口内基于磁盘现值合并，不覆盖并发删题）
+   */
+  mutateQuiz<T>(
+    app: App,
+    fn: (quiz: { notes: Record<string, QuizQuestion[]> }) => T | Promise<T>
+  ): Promise<T> {
+    return enqueueFileTask(getQuizFilePath(), async () => {
+      const quiz = await this.loadQuiz(app);
+      const result = await fn(quiz);
+      if (result !== false) await this.saveQuiz(app, quiz);
+      return result;
+    });
+  }
+
   /** 源码 L40-43 */
   async getQuestionsForNote(app: App, notePath: string): Promise<QuizQuestion[] | null> {
     const quiz = await this.loadQuiz(app);
     return quiz.notes[notePath] || null;
   }
 
-  /** 源码 L45-49 */
+  /** 源码 L45-49（G3：RMW 入队，fn 内改现值） */
   async saveQuestionsForNote(app: App, notePath: string, questions: QuizQuestion[]): Promise<void> {
-    const quiz = await this.loadQuiz(app);
-    quiz.notes[notePath] = questions.map((q) => ({ ...q }));
-    await this.saveQuiz(app, quiz);
+    await this.mutateQuiz(app, (quiz) => {
+      quiz.notes[notePath] = questions.map((q) => ({ ...q }));
+    });
   }
 
   /** 源码 L51-57 splice 语义 + P0-2 稳定定位改造：
@@ -98,19 +119,21 @@ export class QuizManager {
    *  后按快照下标会删错行/漏删；改为按题目生成标识（question+options+correctIndices，
    *  correctIndices 顺序不敏感）在存储数组内定位。
    *  同内容多题：每次删除首个匹配＝按未答优先逐个消费。
-   *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功；空键仍保留（源码语义）。 */
+   *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功不写盘（fn 返回 false）；
+   *  空键仍保留（源码语义）。G3：RMW 入队，与批量出题写回互斥串行。 */
   async removeQuestion(
     app: App,
     notePath: string,
     target: Pick<QuizQuestion, 'question' | 'options' | 'correctIndices'>
   ): Promise<void> {
-    const quiz = await this.loadQuiz(app);
-    const list = quiz.notes[notePath];
-    if (!list) return;
-    const idx = list.findIndex((q) => sameQuestion(q, target));
-    if (idx === -1) return;
-    list.splice(idx, 1);
-    await this.saveQuiz(app, quiz);
+    await this.mutateQuiz(app, (quiz) => {
+      const list = quiz.notes[notePath];
+      if (!list) return false;
+      const idx = list.findIndex((q) => sameQuestion(q, target));
+      if (idx === -1) return false;
+      list.splice(idx, 1);
+      return undefined as void;
+    });
   }
 
   /** 源码 L59-72：遍历补 notePath/_index */

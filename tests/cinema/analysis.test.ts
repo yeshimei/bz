@@ -123,6 +123,23 @@ describe('cinema buildAnalysisData', () => {
   });
 });
 
+describe('cinema buildAnalysisHTML · G9 想看清单豆瓣评分', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    M.folderPath = '我的/影视';
+    const vault = new MockVault();
+    seed(vault);
+    rebuildItems(mockAppWithVault(vault));
+  });
+
+  it('G9 回归：想看清单行显示豆瓣评分（wantList 条目读 doubanRating，而非不存在的 it.douban）', () => {
+    const html = buildAnalysisHTML();
+    // YAML 数字 8.0 解析为 8 → doubanRating='8'
+    expect(html).toContain('想看片 · 豆瓣 8');
+  });
+});
+
 describe('cinema buildAnalysisHTML', () => {
   beforeEach(() => {
     resetObsidianMocks();

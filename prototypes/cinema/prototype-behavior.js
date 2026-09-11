@@ -1,4 +1,4 @@
-/* 源指纹 a78054340511a6e4 · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e31ca615f5614a76 · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -4511,11 +4511,6 @@ var BZW_cinema = (() => {
   async function getAIProvider(override) {
     var _a, _b, _c;
     if (!override && _aiProviderCache) return _aiProviderCache;
-    const cacheable = !override;
-    const cachePut = (p) => {
-      if (cacheable) _aiProviderCache = p;
-      return p;
-    };
     const s = getQ3Settings();
     if (override && typeof override === "object" && override.apiKey) {
       return {
@@ -4534,14 +4529,15 @@ var BZW_cinema = (() => {
       if (!endpoint || !s.aiCustomApiKey) {
         throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
       }
-      return cachePut({
+      _aiProviderCache = {
         endpoint,
         apiKey: s.aiCustomApiKey,
         model: s.aiCustomModel || void 0,
         extraHeaders: desc.extraHeaders,
         contextWindow: desc.defaultContextWindow,
         defaultMaxTokens: desc.defaultMaxTokens
-      });
+      };
+      return _aiProviderCache;
     }
     const key = s[desc.apiKeyKey];
     if (!key && name === "deepseek") {
@@ -4550,12 +4546,13 @@ var BZW_cinema = (() => {
         const cfg = JSON.parse(raw);
         const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
         if (provider && provider.endpoint && provider.apiKey) {
-          return cachePut({
+          _aiProviderCache = {
             endpoint: String(provider.endpoint).replace(/\/+$/, ""),
             apiKey: provider.apiKey,
             contextWindow: desc.defaultContextWindow,
             defaultMaxTokens: desc.defaultMaxTokens
-          });
+          };
+          return _aiProviderCache;
         }
       } catch (e) {
       }
@@ -4566,7 +4563,7 @@ var BZW_cinema = (() => {
     const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
     const overrideContext = (_b = s.aiContextOverrides) == null ? void 0 : _b[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
-    return cachePut({
+    _aiProviderCache = {
       endpoint: desc.endpoint,
       apiKey: key || "",
       model: overrideModel || desc.model || void 0,
@@ -4574,17 +4571,12 @@ var BZW_cinema = (() => {
       extraHeaders: desc.extraHeaders,
       contextWindow: overrideContext || desc.defaultContextWindow,
       defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens
-    });
+    };
+    return _aiProviderCache;
   }
   function abortError() {
     const e = new Error("请求已取消");
     e.name = "AbortError";
-    return e;
-  }
-  var AI_IDLE_TIMEOUT_MS = 6e4;
-  function timeoutError() {
-    const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1e3} 秒无响应）`);
-    e.name = "TimeoutError";
     return e;
   }
   async function streamChatCompletions(provider, body, signal, onDelta) {
@@ -4593,85 +4585,60 @@ var BZW_cinema = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const controller = new AbortController();
-    const onOuterAbort = () => controller.abort();
-    let outerLinked = false;
-    if (signal) {
-      if (signal.aborted) controller.abort();
-      else {
-        signal.addEventListener("abort", onOuterAbort);
-        outerLinked = true;
+    const resp = await fetch(`${provider.endpoint}/chat/completions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal
+    });
+    if (!resp.ok) {
+      let msg = `API ${resp.status}`;
+      try {
+        const err = await resp.json();
+        if (err.error && err.error.message) msg = err.error.message;
+      } catch (e) {
       }
+      throw new Error(msg);
     }
-    let idleTimer = null;
-    const armIdle = () => {
-      if (idleTimer !== null) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
-    };
-    try {
-      armIdle();
-      const resp = await fetch(`${provider.endpoint}/chat/completions`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-        signal: controller.signal
-      });
-      if (!resp.ok) {
-        let msg = `API ${resp.status}`;
-        try {
-          const err = await resp.json();
-          if (err.error && err.error.message) msg = err.error.message;
-        } catch (e) {
-        }
-        throw new Error(msg);
-      }
-      if (!resp.body || typeof resp.body.getReader !== "function") {
-        const data = await resp.json();
-        return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
-      }
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let full = "", buf = "";
-      while (true) {
-        armIdle();
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        let nl;
-        while ((nl = buf.indexOf("\n")) !== -1) {
-          const line = buf.slice(0, nl).trim();
-          buf = buf.slice(nl + 1);
-          if (!line.startsWith("data:")) continue;
-          const payload = line.slice(5).trim();
-          if (payload === "[DONE]") {
-            try {
-              reader.cancel();
-            } catch (e) {
-            }
-            return full;
-          }
+    if (!resp.body || typeof resp.body.getReader !== "function") {
+      const data = await resp.json();
+      return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let full = "", buf = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) !== -1) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (payload === "[DONE]") {
           try {
-            const chunk = JSON.parse(payload);
-            const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-            if (delta) {
-              full += delta;
-              try {
-                onDelta == null ? void 0 : onDelta(delta);
-              } catch (e) {
-              }
-            }
+            reader.cancel();
           } catch (e) {
           }
+          return full;
+        }
+        try {
+          const chunk = JSON.parse(payload);
+          const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+          if (delta) {
+            full += delta;
+            try {
+              onDelta == null ? void 0 : onDelta(delta);
+            } catch (e) {
+            }
+          }
+        } catch (e) {
         }
       }
-      return full;
-    } catch (e) {
-      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
-      throw e;
-    } finally {
-      if (idleTimer !== null) clearTimeout(idleTimer);
-      if (outerLinked && signal) signal.removeEventListener("abort", onOuterAbort);
     }
+    return full;
   }
   async function chatCompletionsNonStream(provider, body, signal) {
     if (signal == null ? void 0 : signal.aborted) throw abortError();
@@ -4680,22 +4647,11 @@ var BZW_cinema = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const resp = await new Promise((resolve, reject) => {
-      let timer = null;
-      const settle = (fn) => {
-        if (timer !== null) clearTimeout(timer);
-        fn();
-      };
-      timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
-      requestUrl({
-        url: `${provider.endpoint}/chat/completions`,
-        method: "POST",
-        headers,
-        body: JSON.stringify({ ...body, stream: false })
-      }).then(
-        (r) => settle(() => resolve(r)),
-        (e) => settle(() => reject(e))
-      );
+    const resp = await requestUrl({
+      url: `${provider.endpoint}/chat/completions`,
+      method: "POST",
+      headers,
+      body: JSON.stringify({ ...body, stream: false })
     });
     if (signal == null ? void 0 : signal.aborted) throw abortError();
     const data = JSON.parse(resp.text);
@@ -4889,7 +4845,6 @@ var BZW_cinema = (() => {
   var boundRefs = [];
   function isMarkdownFile(file, path) {
     if (file && typeof file.extension === "string") return file.extension === "md";
-    if (file && Array.isArray(file.children)) return false;
     return path.endsWith(".md");
   }
   function dispatchBasic(action, file) {
@@ -4905,15 +4860,9 @@ var BZW_cinema = (() => {
     }
     emitDomainEvent(`${kind}:file-${action}`, { path });
   }
-  function isFolder(file) {
-    return !!(file && Array.isArray(file.children));
-  }
   function dispatchRename(file, oldPath) {
     const newPath = file && typeof file.path === "string" ? file.path : void 0;
-    if (!newPath || typeof oldPath !== "string" || !oldPath) return;
-    if (isFolder(file)) return;
-    const wasMd = oldPath.endsWith(".md");
-    if (!wasMd && !isMarkdownFile(file, newPath)) return;
+    if (!newPath || typeof oldPath !== "string" || !oldPath || !isMarkdownFile(file, newPath)) return;
     emitDomainEvent("vault:md-renamed", { oldPath, newPath });
     const after = classifyFilePath(newPath);
     if (!after) return;
@@ -4949,6 +4898,14 @@ var BZW_cinema = (() => {
 
   // src/cinema/state.ts
   var DEFAULT_FOLDER = "我的/影视";
+  function resolveCinemaFolderPath() {
+    try {
+      const s = tryGetSettings();
+      return typeof s.cinemaFolderPath === "string" && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
+    } catch (e) {
+      return DEFAULT_FOLDER;
+    }
+  }
   var M = {
     currentOverlay: null,
     items: [],
@@ -5139,11 +5096,7 @@ var BZW_cinema = (() => {
   var alwaysOnTop = /* @__PURE__ */ new Set();
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
-      if (!el.isConnected) {
-        alwaysOnTop.delete(el);
-        continue;
-      }
-      el.style.zIndex = String(zCounter);
+      if (el.isConnected) el.style.zIndex = String(zCounter);
     }
   }
   function allocZBlock(n) {
@@ -5610,13 +5563,10 @@ var BZW_cinema = (() => {
       return;
     }
     if (touchSettlePending) {
-      const inPopup = popupEl != null && popupEl.contains(target) || sheetMask != null && sheetMask.contains(target);
       touchSettlePending = false;
-      if (inPopup) {
-        ev.stopImmediatePropagation();
-        ev.preventDefault();
-        return;
-      }
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      return;
     }
     if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
       closeItemMenu();
@@ -5956,6 +5906,7 @@ var BZW_cinema = (() => {
   var queue = [];
   var pending = /* @__PURE__ */ new Map();
   var attempted = /* @__PURE__ */ new Set();
+  var cancelled = /* @__PURE__ */ new Set();
   var failedNames = [];
   var pumping = false;
   var cliPath = null;
@@ -6105,6 +6056,13 @@ var BZW_cinema = (() => {
     void pump();
     return true;
   }
+  function dequeueDoubanFetch(path) {
+    if (!path) return;
+    const at = queue.findIndex((e) => e.file.path === path);
+    if (at >= 0) queue.splice(at, 1);
+    pending.delete(path);
+    cancelled.add(path);
+  }
   function sweepDoubanFetch(_app2) {
     var _a, _b;
     let added = 0;
@@ -6146,6 +6104,10 @@ var BZW_cinema = (() => {
         first = false;
         const ok = await waitCompleteOrExit(entry, runOne(entry));
         pending.delete(entry.file.path);
+        if (cancelled.delete(entry.file.path)) {
+          refreshAfterFetch();
+          continue;
+        }
         if (!ok) failedNames.push(entry.name);
         refreshAfterFetch();
       }
@@ -6681,7 +6643,7 @@ tags:
   ${secHTML("我的高分 TOP10", "bar-chart-3", data.topRated.length ? data.topRated.map((it, i) => topRow(String(i + 1), esc2(it.name), Number(it.rating).toFixed(1))).join("") : emptyHTML())}
   ${secHTML("系列追踪", "bar-chart-3", data.seriesList.length ? data.seriesList.map(([k, v], i) => topRow(String(i + 1), `《${esc2(k)}》`, `${v} 部`)).join("") : emptyHTML())}
   ${secHTML("追剧深度", "bar-chart-3", data.seasons.length ? kvInline([`平均 <b>${data.avgSeason}</b> 季`]) + data.seasons.map((s, i) => topRow(String(i + 1), `《${esc2(s.name)}》`, `${s.seasons} 季`)).join("") : emptyHTML())}
-  ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bar-chart-3", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc2(it.name) + (it.douban ? " · 豆瓣 " + esc2(it.douban) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc2(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
+  ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bar-chart-3", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc2(it.name) + (it.doubanRating ? " · 豆瓣 " + esc2(it.doubanRating) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc2(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
   }
 
   // src/cinema/shared.ts
@@ -7015,6 +6977,7 @@ tags:
   async function markStatus(item, target, sec, app) {
     const fromSt = item.status === STATUS_WANT ? "want" : item.status === STATUS_WATCHING ? "watching" : "watched";
     const prevRating = item.rating && item.rating > 0 ? item.rating : null;
+    const prev = { status: item.status, rating: item.rating, watchDate: item.watchDate };
     item.status = target === "已看" ? STATUS_WATCHED : STATUS_WATCHING;
     if (target === "在看") {
       item.rating = 0;
@@ -7032,6 +6995,7 @@ tags:
       }
       renderAll(app);
     } catch (e) {
+      Object.assign(item, prev);
       notifySaveError(e);
       console.error(e);
       renderAll(app);
@@ -7342,6 +7306,7 @@ ${item.review ? `影评: ${item.review}
           notice("删除失败：文件可能被占用，请重试", "error");
           return;
         }
+        dequeueDoubanFetch(item.file.path);
       }
       const idx = M.items.indexOf(item);
       if (idx > -1) M.items.splice(idx, 1);
@@ -7593,11 +7558,10 @@ ${item.review ? `影评: ${item.review}
     M.statusFilter = st === "想看" || st === "在看" || st === "已看" ? st : null;
   }
   function ensureCinema(app) {
+    M.folderPath = resolveCinemaFolderPath();
     if (initialized) return;
     initialized = true;
     M.appRef = app;
-    const s = tryGetSettings();
-    M.folderPath = typeof s.cinemaFolderPath === "string" && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
     registerEscapeHandler();
     registerAutoRefresh(app);
   }

@@ -284,6 +284,23 @@ describe('sprint 键盘答题（item 2）', () => {
     expect(host.querySelector('.bz-sprint-opt.is-sel')).toBeFalsy();
   });
 
+  it('G2 回归：焦点在选项上按 Enter 只作答一次——答错反馈保留，不立即结算', async () => {
+    vi.useFakeTimers();
+    const { host, events } = setup({
+      queue: [mkItem('笔记', 'n.md')],
+      questionsOf: () => [mkQ('唯一题？', [0])],
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    // Enter 派发在选项元素上：选项自身 keydown 作答后，事件冒泡到 document 层不得二次消费
+    // （旧缺陷：答错反馈/解析/「下一题」被跳过，末题答完直接结算）
+    const opt = host.querySelector<HTMLElement>('.bz-sprint-opt[data-i="1"]')!; // 错误选项
+    opt.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    await vi.advanceTimersByTimeAsync(30);
+    expect(host.querySelector('.bz-sprint-opt.is-wrong')).toBeTruthy(); // 作答生效
+    expect(events.some((e) => e.startsWith('failed:'))).toBe(false); // 未被二次消费直接结算
+    expect(host.querySelector('[data-action="note"]')).toBeTruthy(); // 「结束并结算」出口保留
+  });
+
   it('多选：数字键勾选/取消，Enter 提交判定', async () => {
     vi.useFakeTimers();
     const { host, events, done } = setup({
@@ -379,6 +396,51 @@ describe('sprint 跳过此篇（item 7）', () => {
     expect(events.some((e) => e.startsWith('passed:单篇') || e.startsWith('failed:单篇'))).toBe(false);
     host.querySelector<HTMLElement>('[data-action="done"]')!.click();
     expect(await settled(done)).toBe('done');
+  });
+});
+
+describe('sprint 通过结果卡排期展示（G1 回归）', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('onPassed 返回真实排期 → 结果卡展示「下次 N 天后」', async () => {
+    vi.useFakeTimers();
+    const future = new Date(Date.now() + 12 * 86400e3).toISOString();
+    const { host } = setup({
+      queue: [mkItem('笔记', 'n.md')],
+      questionsOf: () => [mkQ('唯一题？', [0])],
+      onPassedNextReviewAt: future,
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    host.querySelector<HTMLElement>('.bz-sprint-opt[data-i="0"]')!.click(); // 答对
+    await vi.advanceTimersByTimeAsync(CORRECT_JUMP_DELAY_MS + 60);
+    const rating = host.querySelector('.bz-result-rating')!;
+    expect(rating).toBeTruthy();
+    expect(rating.textContent).toContain('下次');
+    expect(rating.textContent).toContain('天后');
+  });
+
+  it('onPassed 返回 undefined（评级被拒未写盘）→ 不回退快照旧排期展示假「1 天后」', async () => {
+    vi.useFakeTimers();
+    // 快照排期为「今晚」（时刻未到）：旧实现 fallback 快照 → nextIntervalNote 恒 ≥1 天 → 假「1 天后」
+    const item = mkItem('笔记', 'n.md');
+    item.nextReviewDate = new Date(Date.now() + 2 * 3600e3).toISOString();
+    const { host } = setup({
+      queue: [item],
+      questionsOf: () => [mkQ('唯一题？', [0])],
+      onPassedNextReviewAt: undefined,
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    host.querySelector<HTMLElement>('.bz-sprint-opt[data-i="0"]')!.click(); // 答对
+    await vi.advanceTimersByTimeAsync(CORRECT_JUMP_DELAY_MS + 60);
+    const rating = host.querySelector('.bz-result-rating')!;
+    expect(rating).toBeTruthy();
+    expect(rating.textContent).not.toContain('1 天后');
+    expect(rating.textContent).toContain('已排期');
   });
 });
 

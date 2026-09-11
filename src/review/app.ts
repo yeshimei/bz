@@ -13,7 +13,7 @@ import { ReviewDataManager } from './data';
 import { loadFittedParams, saveFittedParams } from './data';
 import { fitFromItems, mergeFittedW } from './fit';
 import { DEFAULT_W } from './fsrs';
-import { DEFAULT_R_THRESHOLD, isEarlyDue, roundQueue } from './queue';
+import { DEFAULT_R_THRESHOLD, isDueToday, isEarlyDue, roundQueue } from './queue';
 import { computeStats } from './stats';
 import { emitDomainEvent } from '../core/domain-bus';
 
@@ -175,10 +175,12 @@ export const reviewApp = {
     const now = new Date();
     const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : new Date(0);
     if (now < nextReview) {
-      // dueItems 的 R 阈值「提前逾期」口径放行（queue.isEarlyDue 同一纯函数，item 6 口径统一）——
-      // 否则开始本轮纳入的条目评级会被此处整体拒掉（通过不刷新排期、答错不挂待重做）
+      // G1：门禁放行条件对齐 roundQueue（开始本轮同口径）——R 阈值提前（isEarlyDue）或
+      // 今日到期（isDueToday，item 9「已提前纳入本轮」的篇目）均放行评级；
+      // 否则本轮纳入的条目评级被此处拒收：普通模式评级条点了不写盘轮询卡死到中断，
+      // 做题模式显示「通过·下次 1 天后」实际不写排期。仅未来日历日才拒。
       const rThreshold = Number((getSettings() as any).reviewRThreshold) || DEFAULT_R_THRESHOLD;
-      if (!isEarlyDue(item, rThreshold, this.currentW())) {
+      if (!isEarlyDue(item, rThreshold, this.currentW()) && !isDueToday(item)) {
         const diff = nextReview.getTime() - now.getTime();
         const mins = Math.ceil(diff / 60000);
         notice(`还未到复习时间（${mins}分钟后）`);
@@ -454,10 +456,13 @@ export const reviewApp = {
         }
         await this.markReview(item.filePath, rating as Rating, { autoPending: true });
         await this.applyReviewStyles(app);
-        // 返回写盘后的真实排期（markReview 内部 updateItem 改的是新 load 的对象，item 快照不更新）
+        // 返回写盘后的真实排期（markReview 内部 updateItem 改的是新 load 的对象，item 快照不更新）。
+        // G1：检测是否真正写盘——markReview 被拒（条目并发删除/已完成/时间门禁）时 lastReviewed
+        // 不更新，返回 undefined 让会话不展示假间隔（不落回快照旧排期）
         const fresh = await this.dataManager!.loadItems();
         const updated = fresh.find((i) => i.filePath === item.filePath);
-        return updated?.nextReviewDate || undefined;
+        if (!updated || updated.lastReviewed !== item.lastReviewed) return undefined;
+        return updated.nextReviewDate || undefined;
       },
       onFailed: async (item, rating, entry) => {
         if (mode !== 'redo') {

@@ -5,7 +5,7 @@
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
-import { M, resetCinemaState, DEFAULT_FOLDER } from './state';
+import { M, resetCinemaState, resolveCinemaFolderPath, DEFAULT_FOLDER } from './state';
 import { rebuildItems } from './data';
 import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, openAddModalDirect, openRandomMovie } from './ui';
 import { shutdownDoubanQueue, sweepDoubanFetch } from './douban-queue';
@@ -26,13 +26,13 @@ export function applyDefaultView(): void {
 
 /** 幂等初始化（懒加载）：设置注入 + ESC + 自动刷新 */
 export function ensureCinema(app: App): void {
+  // G6：目录每次调用同步读设置（resolveCinemaFolderPath 唯一单源）——会话内改「影视文件夹」
+  // 立即生效；否则 M.folderPath 首次初始化缓存旧值，面板/新建仍走旧目录，
+  // 与日记本（实时读设置）对不上直到重载。DEFAULT_FOLDER 保留导出（域外引用）
+  M.folderPath = resolveCinemaFolderPath();
   if (initialized) return;
   initialized = true;
   M.appRef = app;
-  const s = tryGetSettings() as Record<string, unknown>;
-  // 目录：cinemaFolderPath 显式配置优先，缺省回落默认（旧 movieFolderPath 键已随 movie 域退役删除）
-  M.folderPath =
-    typeof s.cinemaFolderPath === 'string' && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
   registerEscapeHandler();
   registerAutoRefresh(app);
 }

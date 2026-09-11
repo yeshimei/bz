@@ -86,20 +86,22 @@ export class QuizMasterUI {
     try {
       const activeItems = await loadActiveItems(app);
       if (!activeItems.length) {
-        await this.manager.saveQuiz(getApp(), { notes: {} });
+        // G3：全清走 RMW 事务（基于磁盘现值清空 notes，不整体覆盖并发写）
+        await this.manager.mutateQuiz(app, (quiz) => {
+          for (const notePath of Object.keys(quiz.notes)) delete quiz.notes[notePath];
+        });
         return;
       }
 
-      const quiz = await this.manager.loadQuiz(app);
       const activePaths = new Set(activeItems.map((i: any) => i.filePath));
-
-      // 1. 删除已不在活跃列表中的笔记条目
-      for (const notePath of Object.keys(quiz.notes)) {
-        if (!activePaths.has(notePath)) {
-          delete quiz.notes[notePath];
+      // G3：删除已不在活跃列表中的笔记条目——RMW 事务基于磁盘现值删，不再用陈旧快照整体覆盖
+      await this.manager.mutateQuiz(app, (quiz) => {
+        for (const notePath of Object.keys(quiz.notes)) {
+          if (!activePaths.has(notePath)) {
+            delete quiz.notes[notePath];
+          }
         }
-      }
-      await this.manager.saveQuiz(app, quiz);
+      });
 
       // 2. 为缺少题目的笔记批量生成
       const notePaths = activeItems.map((i: any) => i.filePath);
@@ -139,13 +141,16 @@ export class QuizMasterUI {
         const h = notify(`正在为 ${missing.length} 篇笔记批量生成题目…`, { type: 'progress', dedupeKey: 'quiz-generate' });
         const batchResult = await this.generator.generateBatch(missing, QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
         let batchOk = 0;
-        for (const [path, qs] of Object.entries(batchResult)) {
-          if (qs.length) {
-            quiz.notes[path] = qs;
-            batchOk++;
+        // G3：AI 返回后 RMW 入队基于磁盘现值合并——批量出题的长耗时窗口内并发删题
+        // （答题出库）按序落盘，写回不再用进入时的陈旧快照覆盖（答对的题复活）
+        await this.manager.mutateQuiz(app, (quiz) => {
+          for (const [path, qs] of Object.entries(batchResult)) {
+            if (qs.length) {
+              quiz.notes[path] = qs;
+              batchOk++;
+            }
           }
-        }
-        await this.manager.saveQuiz(app, quiz);
+        });
         h.setType('success');
         h.setMessage(`已为 ${batchOk} 篇笔记生成题目`);
         return;
@@ -164,9 +169,9 @@ export class QuizMasterUI {
         if (!QuizMasterUI.ai) throw new Error('AI 未初始化');
         const qs = await this.generator.generate(note.content, QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
         if (qs.length) {
-          quiz.notes[note.id] = qs;
+          // G3：单篇写走 RMW（saveQuestionsForNote），不再持陈旧快照整体覆盖
+          await this.manager.saveQuestionsForNote(app, note.id, qs);
           okCount++;
-          await this.manager.saveQuiz(app, quiz);
         } else {
           failCount++;
         }

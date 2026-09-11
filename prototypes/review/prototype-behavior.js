@@ -1,4 +1,4 @@
-/* 源指纹 9022936d41aee8eb · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 8c52dd9ee900472d · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -4373,11 +4373,7 @@ var BZW_review = (() => {
   // src/core/z-order.ts
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
-      if (!el.isConnected) {
-        alwaysOnTop.delete(el);
-        continue;
-      }
-      el.style.zIndex = String(zCounter);
+      if (el.isConnected) el.style.zIndex = String(zCounter);
     }
   }
   function allocZBlock(n) {
@@ -5619,11 +5615,6 @@ var BZW_review = (() => {
   async function getAIProvider(override) {
     var _a, _b, _c;
     if (!override && _aiProviderCache) return _aiProviderCache;
-    const cacheable = !override;
-    const cachePut = (p) => {
-      if (cacheable) _aiProviderCache = p;
-      return p;
-    };
     const s = getQ3Settings();
     if (override && typeof override === "object" && override.apiKey) {
       return {
@@ -5642,14 +5633,15 @@ var BZW_review = (() => {
       if (!endpoint || !s.aiCustomApiKey) {
         throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
       }
-      return cachePut({
+      _aiProviderCache = {
         endpoint,
         apiKey: s.aiCustomApiKey,
         model: s.aiCustomModel || void 0,
         extraHeaders: desc.extraHeaders,
         contextWindow: desc.defaultContextWindow,
         defaultMaxTokens: desc.defaultMaxTokens
-      });
+      };
+      return _aiProviderCache;
     }
     const key = s[desc.apiKeyKey];
     if (!key && name === "deepseek") {
@@ -5658,12 +5650,13 @@ var BZW_review = (() => {
         const cfg = JSON.parse(raw);
         const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
         if (provider && provider.endpoint && provider.apiKey) {
-          return cachePut({
+          _aiProviderCache = {
             endpoint: String(provider.endpoint).replace(/\/+$/, ""),
             apiKey: provider.apiKey,
             contextWindow: desc.defaultContextWindow,
             defaultMaxTokens: desc.defaultMaxTokens
-          });
+          };
+          return _aiProviderCache;
         }
       } catch (e) {
       }
@@ -5674,7 +5667,7 @@ var BZW_review = (() => {
     const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
     const overrideContext = (_b = s.aiContextOverrides) == null ? void 0 : _b[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
-    return cachePut({
+    _aiProviderCache = {
       endpoint: desc.endpoint,
       apiKey: key || "",
       model: overrideModel || desc.model || void 0,
@@ -5682,16 +5675,12 @@ var BZW_review = (() => {
       extraHeaders: desc.extraHeaders,
       contextWindow: overrideContext || desc.defaultContextWindow,
       defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens
-    });
+    };
+    return _aiProviderCache;
   }
   function abortError() {
     const e = new Error("请求已取消");
     e.name = "AbortError";
-    return e;
-  }
-  function timeoutError() {
-    const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1e3} 秒无响应）`);
-    e.name = "TimeoutError";
     return e;
   }
   async function streamChatCompletions(provider, body, signal, onDelta) {
@@ -5700,85 +5689,60 @@ var BZW_review = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const controller = new AbortController();
-    const onOuterAbort = () => controller.abort();
-    let outerLinked = false;
-    if (signal) {
-      if (signal.aborted) controller.abort();
-      else {
-        signal.addEventListener("abort", onOuterAbort);
-        outerLinked = true;
+    const resp = await fetch(`${provider.endpoint}/chat/completions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal
+    });
+    if (!resp.ok) {
+      let msg = `API ${resp.status}`;
+      try {
+        const err = await resp.json();
+        if (err.error && err.error.message) msg = err.error.message;
+      } catch (e) {
       }
+      throw new Error(msg);
     }
-    let idleTimer = null;
-    const armIdle = () => {
-      if (idleTimer !== null) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
-    };
-    try {
-      armIdle();
-      const resp = await fetch(`${provider.endpoint}/chat/completions`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-        signal: controller.signal
-      });
-      if (!resp.ok) {
-        let msg = `API ${resp.status}`;
-        try {
-          const err = await resp.json();
-          if (err.error && err.error.message) msg = err.error.message;
-        } catch (e) {
-        }
-        throw new Error(msg);
-      }
-      if (!resp.body || typeof resp.body.getReader !== "function") {
-        const data = await resp.json();
-        return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
-      }
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let full = "", buf = "";
-      while (true) {
-        armIdle();
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        let nl;
-        while ((nl = buf.indexOf("\n")) !== -1) {
-          const line = buf.slice(0, nl).trim();
-          buf = buf.slice(nl + 1);
-          if (!line.startsWith("data:")) continue;
-          const payload = line.slice(5).trim();
-          if (payload === "[DONE]") {
-            try {
-              reader.cancel();
-            } catch (e) {
-            }
-            return full;
-          }
+    if (!resp.body || typeof resp.body.getReader !== "function") {
+      const data = await resp.json();
+      return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let full = "", buf = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) !== -1) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (payload === "[DONE]") {
           try {
-            const chunk = JSON.parse(payload);
-            const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-            if (delta) {
-              full += delta;
-              try {
-                onDelta == null ? void 0 : onDelta(delta);
-              } catch (e) {
-              }
-            }
+            reader.cancel();
           } catch (e) {
           }
+          return full;
+        }
+        try {
+          const chunk = JSON.parse(payload);
+          const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+          if (delta) {
+            full += delta;
+            try {
+              onDelta == null ? void 0 : onDelta(delta);
+            } catch (e) {
+            }
+          }
+        } catch (e) {
         }
       }
-      return full;
-    } catch (e) {
-      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
-      throw e;
-    } finally {
-      if (idleTimer !== null) clearTimeout(idleTimer);
-      if (outerLinked && signal) signal.removeEventListener("abort", onOuterAbort);
     }
+    return full;
   }
   async function chatCompletionsNonStream(provider, body, signal) {
     if (signal == null ? void 0 : signal.aborted) throw abortError();
@@ -5787,22 +5751,11 @@ var BZW_review = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const resp = await new Promise((resolve, reject) => {
-      let timer = null;
-      const settle = (fn) => {
-        if (timer !== null) clearTimeout(timer);
-        fn();
-      };
-      timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
-      requestUrl({
-        url: `${provider.endpoint}/chat/completions`,
-        method: "POST",
-        headers,
-        body: JSON.stringify({ ...body, stream: false })
-      }).then(
-        (r) => settle(() => resolve(r)),
-        (e) => settle(() => reject(e))
-      );
+    const resp = await requestUrl({
+      url: `${provider.endpoint}/chat/completions`,
+      method: "POST",
+      headers,
+      body: JSON.stringify({ ...body, stream: false })
     });
     if (signal == null ? void 0 : signal.aborted) throw abortError();
     const data = JSON.parse(resp.text);
@@ -5828,7 +5781,7 @@ var BZW_review = (() => {
     }
     return new AIService(params, defaultModel, mergedOptions);
   }
-  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AIService;
+  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AIService;
   var init_ai = __esm({
     "src/core/ai.ts"() {
       init_fake_obsidian();
@@ -6018,7 +5971,6 @@ var BZW_review = (() => {
         }
       ];
       _aiProviderCache = null;
-      AI_IDLE_TIMEOUT_MS = 6e4;
       AIService = class {
         constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
           this.defaultModel = defaultModel;
@@ -6171,31 +6123,47 @@ var BZW_review = (() => {
         async saveQuiz(app, quiz) {
           await jsonFileStore(getQuizFilePath(), { app }).write(quiz);
         }
+        /**
+         * G3：quiz.json 读改写事务（写路径唯一入口，纯读勿入——队列只为串行化「读→改→写」）。
+         * fn 基于队列内读出的磁盘现值改动；fn 返回 false = 无改动跳过写盘。
+         * 队列不可重入：fn 内勿再调 mutateQuiz/enqueueFileTask 同路径（死锁）。
+         * （session.ts 批量出题写回/清理非活跃键共用——AI 长耗时窗口内基于磁盘现值合并，不覆盖并发删题）
+         */
+        mutateQuiz(app, fn) {
+          return enqueueFileTask(getQuizFilePath(), async () => {
+            const quiz = await this.loadQuiz(app);
+            const result = await fn(quiz);
+            if (result !== false) await this.saveQuiz(app, quiz);
+            return result;
+          });
+        }
         /** 源码 L40-43 */
         async getQuestionsForNote(app, notePath) {
           const quiz = await this.loadQuiz(app);
           return quiz.notes[notePath] || null;
         }
-        /** 源码 L45-49 */
+        /** 源码 L45-49（G3：RMW 入队，fn 内改现值） */
         async saveQuestionsForNote(app, notePath, questions) {
-          const quiz = await this.loadQuiz(app);
-          quiz.notes[notePath] = questions.map((q) => ({ ...q }));
-          await this.saveQuiz(app, quiz);
+          await this.mutateQuiz(app, (quiz) => {
+            quiz.notes[notePath] = questions.map((q) => ({ ...q }));
+          });
         }
         /** 源码 L51-57 splice 语义 + P0-2 稳定定位改造：
          *  会话期 _index 是开考时的快照，题库并发变化（同笔记多题先后答对、复习重出题等）
          *  后按快照下标会删错行/漏删；改为按题目生成标识（question+options+correctIndices，
          *  correctIndices 顺序不敏感）在存储数组内定位。
          *  同内容多题：每次删除首个匹配＝按未答优先逐个消费。
-         *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功；空键仍保留（源码语义）。 */
+         *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功不写盘（fn 返回 false）；
+         *  空键仍保留（源码语义）。G3：RMW 入队，与批量出题写回互斥串行。 */
         async removeQuestion(app, notePath, target) {
-          const quiz = await this.loadQuiz(app);
-          const list = quiz.notes[notePath];
-          if (!list) return;
-          const idx = list.findIndex((q) => sameQuestion(q, target));
-          if (idx === -1) return;
-          list.splice(idx, 1);
-          await this.saveQuiz(app, quiz);
+          await this.mutateQuiz(app, (quiz) => {
+            const list = quiz.notes[notePath];
+            if (!list) return false;
+            const idx = list.findIndex((q) => sameQuestion(q, target));
+            if (idx === -1) return false;
+            list.splice(idx, 1);
+            return void 0;
+          });
         }
         /** 源码 L59-72：遍历补 notePath/_index */
         async getUncompletedQuestions(app) {
@@ -6323,25 +6291,30 @@ ${n.content.slice(0, 2e3)}
           }
           return `根据以下多篇笔记内容，为每篇笔记生成选择题。请仅返回一个合法的 JSON 对象：
 {
-  "noteId1": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0], "explain": "..." }, ... ],
-  "noteId2": [ ... ]
+  "<笔记ID>": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0], "explain": "..." }, ... ],
+  ...
 }
 规则：
 - 类型：${typeHint}，${countHint}
 - ${difficultyHint}
 - 每题必须带 explain 字段：一句话解析正确答案并附原文依据
-- 键名为笔记ID（即 "笔记ID:xxx" 中的 xxx），值为该笔记的题目数组
+- JSON 的键必须是下方「===== 笔记ID:xxx =====」中的 xxx 本身（完整笔记路径，逐字复制，不要自造编号如 noteId1），每篇笔记一个键，值为该笔记的题目数组
 - 每题4个选项，correctIndices 为正确选项索引数组
 笔记内容：${notesBlock}`;
         }
-        /** 批量生成（源码 L193-212 逐字） */
-        async generateBatch(notes, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
-          const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
-          const result = await aiService.json(prompt);
-          const parsed = this.extractJSON(result);
+        /**
+         * G5：返回键归一——AI 可能不按规则返回（照旧示例返回 noteId1、加「笔记ID:」前缀、
+         * 带首尾空白等），归一到真实笔记路径；无法映射到已知笔记的键丢弃（不写垃圾键、
+         * 不虚报「已为 N 篇生成」）。
+         */
+        normalizeBatchKeys(parsed, knownIds) {
+          const exact = new Set(knownIds);
           const out = {};
-          for (const [noteId, qs] of Object.entries(parsed)) {
+          for (const [rawKey, qs] of Object.entries(parsed)) {
             if (!Array.isArray(qs)) continue;
+            let key = rawKey.trim();
+            if (key.startsWith("笔记ID:")) key = key.slice("笔记ID:".length).trim();
+            if (!exact.has(key)) continue;
             const valid = [];
             for (const q of qs) {
               if (!q.question || !Array.isArray(q.options) || q.options.length !== 4 || !Array.isArray(q.correctIndices)) {
@@ -6351,9 +6324,16 @@ ${n.content.slice(0, 2e3)}
               if (!indices.length) continue;
               valid.push({ ...q, correctIndices: indices });
             }
-            if (valid.length) out[noteId] = valid;
+            if (valid.length) out[key] = valid;
           }
           return out;
+        }
+        /** 批量生成（源码 L193-212 逐字；G5：返回键归一到真实笔记路径） */
+        async generateBatch(notes, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
+          const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
+          const result = await aiService.json(prompt);
+          const parsed = this.extractJSON(result);
+          return this.normalizeBatchKeys(parsed, notes.map((n) => n.id));
         }
       };
     }
@@ -6425,17 +6405,19 @@ ${n.content.slice(0, 2e3)}
           try {
             const activeItems = await loadActiveItems(app);
             if (!activeItems.length) {
-              await this.manager.saveQuiz(getApp(), { notes: {} });
+              await this.manager.mutateQuiz(app, (quiz) => {
+                for (const notePath of Object.keys(quiz.notes)) delete quiz.notes[notePath];
+              });
               return;
             }
-            const quiz = await this.manager.loadQuiz(app);
             const activePaths = new Set(activeItems.map((i) => i.filePath));
-            for (const notePath of Object.keys(quiz.notes)) {
-              if (!activePaths.has(notePath)) {
-                delete quiz.notes[notePath];
+            await this.manager.mutateQuiz(app, (quiz) => {
+              for (const notePath of Object.keys(quiz.notes)) {
+                if (!activePaths.has(notePath)) {
+                  delete quiz.notes[notePath];
+                }
               }
-            }
-            await this.manager.saveQuiz(app, quiz);
+            });
             const notePaths = activeItems.map((i) => i.filePath);
             await this.ensureQuestions(notePaths);
           } catch (e) {
@@ -6467,13 +6449,14 @@ ${n.content.slice(0, 2e3)}
               const h = notify(`正在为 ${missing.length} 篇笔记批量生成题目…`, { type: "progress", dedupeKey: "quiz-generate" });
               const batchResult = await this.generator.generateBatch(missing, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
               let batchOk = 0;
-              for (const [path, qs] of Object.entries(batchResult)) {
-                if (qs.length) {
-                  quiz.notes[path] = qs;
-                  batchOk++;
+              await this.manager.mutateQuiz(app, (quiz2) => {
+                for (const [path, qs] of Object.entries(batchResult)) {
+                  if (qs.length) {
+                    quiz2.notes[path] = qs;
+                    batchOk++;
+                  }
                 }
-              }
-              await this.manager.saveQuiz(app, quiz);
+              });
               h.setType("success");
               h.setMessage(`已为 ${batchOk} 篇笔记生成题目`);
               return;
@@ -6490,9 +6473,8 @@ ${n.content.slice(0, 2e3)}
               if (!_QuizMasterUI.ai) throw new Error("AI 未初始化");
               const qs = await this.generator.generate(note.content, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
               if (qs.length) {
-                quiz.notes[note.id] = qs;
+                await this.manager.saveQuestionsForNote(app, note.id, qs);
                 okCount++;
-                await this.manager.saveQuiz(app, quiz);
               } else {
                 failCount++;
               }
@@ -7189,13 +7171,7 @@ ${n.content.slice(0, 2e3)}
         seg.style.transition = "";
       }
     };
-    const onWinResize = () => {
-      if (!el.isConnected) {
-        window.removeEventListener("resize", onWinResize);
-        return;
-      }
-      syncSeg(false);
-    };
+    const onWinResize = () => syncSeg(false);
     if (opts.float) {
       window.addEventListener("resize", onWinResize);
     }
@@ -7361,7 +7337,6 @@ ${n.content.slice(0, 2e3)}
     el.appendChild(uiIcon("chevron-down", "bz-select-car"));
     let current2 = opts.value;
     let menu = null;
-    let escHandle = null;
     const labelOf = (v) => {
       const o = opts.options.find((x) => x.value === v);
       return o ? o.label : "";
@@ -7375,10 +7350,6 @@ ${n.content.slice(0, 2e3)}
       if (menu) {
         menu.remove();
         menu = null;
-      }
-      if (escHandle) {
-        escHandle.unregister();
-        escHandle = null;
       }
       el.classList.remove("open");
       el.setAttribute("aria-expanded", "false");
@@ -7431,10 +7402,6 @@ ${n.content.slice(0, 2e3)}
         m.style.right = `${over}px`;
         if (m.getBoundingClientRect().left < 2) m.style.right = "";
       }
-      escHandle = escManager.register("bz-ui-select", {
-        isVisible: () => !!menu && menu.isConnected,
-        close: () => close()
-      });
     };
     const setValue = (v) => {
       current2 = v;
@@ -7490,12 +7457,17 @@ ${n.content.slice(0, 2e3)}
     const onDocClick = (e) => {
       if (menu && !el.contains(e.target)) close();
     };
+    const onDocKey = (e) => {
+      if (e.key === "Escape" && menu) close();
+    };
     document.addEventListener("click", onDocClick);
+    document.addEventListener("keydown", onDocKey);
     return {
       el,
       setValue,
       detach: () => {
         document.removeEventListener("click", onDocClick);
+        document.removeEventListener("keydown", onDocKey);
         close(false);
       }
     };
@@ -7503,7 +7475,6 @@ ${n.content.slice(0, 2e3)}
   var init_select = __esm({
     "src/core/ui/select.ts"() {
       init_icon();
-      init_esc_manager();
     }
   });
 
@@ -7795,12 +7766,14 @@ ${n.content.slice(0, 2e3)}
     let current2 = (_a = opts.value) != null ? _a : "";
     let items = opts.options;
     let layer = null;
-    let escHandle = null;
     const onDocClick = (e) => {
       if (!layer) return;
       const t = e.target;
       if (anchor.contains(t)) return;
       close();
+    };
+    const onDocKey = (e) => {
+      if (e.key === "Escape" && layer) close();
     };
     const open = () => {
       if (layer) return;
@@ -7837,20 +7810,14 @@ ${n.content.slice(0, 2e3)}
       (anchor.parentElement || anchor).appendChild(m);
       layer = m;
       document.addEventListener("click", onDocClick);
-      escHandle = escManager.register("bz-ui-popover", {
-        isVisible: () => !!layer && layer.isConnected,
-        close: () => close()
-      });
+      document.addEventListener("keydown", onDocKey);
     };
     const close = () => {
       if (!layer) return;
       layer.remove();
       layer = null;
       document.removeEventListener("click", onDocClick);
-      if (escHandle) {
-        escHandle.unregister();
-        escHandle = null;
-      }
+      document.removeEventListener("keydown", onDocKey);
     };
     const setValue = (id) => {
       current2 = id;
@@ -7880,6 +7847,7 @@ ${n.content.slice(0, 2e3)}
       /** 清理：关浮层并摘除 document 监听（宿主收尾用，对齐 uiSelect.detach） */
       detach: () => {
         document.removeEventListener("click", onDocClick);
+        document.removeEventListener("keydown", onDocKey);
         close();
       }
     };
@@ -7887,7 +7855,6 @@ ${n.content.slice(0, 2e3)}
   var init_popover = __esm({
     "src/core/ui/popover.ts"() {
       init_icon();
-      init_esc_manager();
     }
   });
 
@@ -8083,7 +8050,6 @@ ${n.content.slice(0, 2e3)}
       if (current !== mask) return;
       mask.remove();
       escHandle == null ? void 0 : escHandle.unregister();
-      if (currentEscHandle === escHandle) currentEscHandle = null;
       current = null;
       lockBodyScroll(false);
     }
@@ -8091,7 +8057,6 @@ ${n.content.slice(0, 2e3)}
       isVisible: () => mask.isConnected,
       close
     });
-    currentEscHandle = escHandle;
     mask.addEventListener("click", (e) => {
       if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot")) close();
     });
@@ -8103,19 +8068,16 @@ ${n.content.slice(0, 2e3)}
     if (current) {
       current.remove();
       current = null;
-      currentEscHandle == null ? void 0 : currentEscHandle.unregister();
-      currentEscHandle = null;
       lockBodyScroll(false);
     }
   }
-  var current, currentEscHandle;
+  var current;
   var init_lightbox = __esm({
     "src/core/ui/lightbox.ts"() {
       init_icon();
       init_esc_manager();
       init_z_order();
       current = null;
-      currentEscHandle = null;
     }
   });
 
@@ -8622,13 +8584,10 @@ ${n.content.slice(0, 2e3)}
       return;
     }
     if (touchSettlePending) {
-      const inPopup = popupEl != null && popupEl.contains(target) || sheetMask != null && sheetMask.contains(target);
       touchSettlePending = false;
-      if (inPopup) {
-        ev.stopImmediatePropagation();
-        ev.preventDefault();
-        return;
-      }
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      return;
     }
     if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
       closeItemMenu();
@@ -9028,12 +8987,12 @@ ${n.content.slice(0, 2e3)}
     }
     return `<span class="bz-q-tag is-stage">阶段 ${(_a = item.currentStage) != null ? _a : item.stage + 1}/${TOTAL_STAGES}</span>`;
   }
-  function sortColumn(items, now = Date.now()) {
+  function sortColumn(items, now = Date.now(), w = DEFAULT_W) {
     return items.slice().sort((a, b) => {
       var _a, _b;
       if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
-      const ra = a.phase === "fsrs" && a.stability ? (_a = currentRPct(a, DEFAULT_W, now)) != null ? _a : 999 : 999;
-      const rb = b.phase === "fsrs" && b.stability ? (_b = currentRPct(b, DEFAULT_W, now)) != null ? _b : 999 : 999;
+      const ra = a.phase === "fsrs" && a.stability ? (_a = currentRPct(a, w, now)) != null ? _a : 999 : 999;
+      const rb = b.phase === "fsrs" && b.stability ? (_b = currentRPct(b, w, now)) != null ? _b : 999 : 999;
       if (ra !== rb) return ra - rb;
       return new Date(a.nextReviewDate || 0).getTime() - new Date(b.nextReviewDate || 0).getTime();
     });
@@ -9117,10 +9076,10 @@ ${n.content.slice(0, 2e3)}
         <span class="bz-q-strip-txt">今日 ${col.today.length} 篇到期 · 逾期 ${col.overdue.length} 篇顺延</span>
         <button class="bz-btn bz-btn--primary" data-act="begin">开始本轮</button>
       </div>`;
-    const body = ctx.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${colHead(col.done.length, "已完成")}${cardsOf(sortColumn(col.done, now), full)}</div></div>` : `<div class="bz-q-cols">
-          <div class="bz-q-col danger">${colHead(col.overdue.length, "已逾期")}${cardsOf(sortColumn(col.overdue, now), full)}</div>
-          <div class="bz-q-col warn">${colHead(col.today.length, "今天到期")}${cardsOf(sortColumn(col.today, now), full)}</div>
-          <div class="bz-q-col future">${colHead(col.future.length, "未来")}${cardsOf(sortColumn(col.future, now), full)}</div>
+    const body = ctx.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${colHead(col.done.length, "已完成")}${cardsOf(sortColumn(col.done, now, w), full)}</div></div>` : `<div class="bz-q-cols">
+          <div class="bz-q-col danger">${colHead(col.overdue.length, "已逾期")}${cardsOf(sortColumn(col.overdue, now, w), full)}</div>
+          <div class="bz-q-col warn">${colHead(col.today.length, "今天到期")}${cardsOf(sortColumn(col.today, now, w), full)}</div>
+          <div class="bz-q-col future">${colHead(col.future.length, "未来")}${cardsOf(sortColumn(col.future, now, w), full)}</div>
         </div>`;
     const stats = computeStats(items);
     const archItem = ctx.showArchived ? `<span class="bz-q-fitem bz-touch-target--lg is-back" data-act="arch" title="点此返回队列">
@@ -9398,6 +9357,7 @@ ${n.content.slice(0, 2e3)}
           if (this.finished) return;
           const t = e.target;
           if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+          if (t && typeof t.closest === "function" && t.closest(".bz-sprint-opt")) return;
           if (e.ctrlKey || e.metaKey || e.altKey) return;
           if (e.key !== "Enter") {
             if (this.view !== "question" || !this.q || this.q.answered) return;
@@ -9497,7 +9457,7 @@ ${n.content.slice(0, 2e3)}
             const nextReviewAt = await this.opts.onPassed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
             if (this.finished) return;
             entry.state = "passed";
-            entry.passNote = this.nextIntervalNote(nextReviewAt || entry.item.nextReviewDate);
+            entry.passNote = this.nextIntervalNote(nextReviewAt || void 0);
           } else {
             await this.opts.onFailed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
             if (this.finished) return;
@@ -10773,7 +10733,7 @@ ${n.content.slice(0, 2e3)}
           const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : /* @__PURE__ */ new Date(0);
           if (now < nextReview) {
             const rThreshold = Number(getSettings().reviewRThreshold) || DEFAULT_R_THRESHOLD;
-            if (!isEarlyDue(item, rThreshold, this.currentW())) {
+            if (!isEarlyDue(item, rThreshold, this.currentW()) && !isDueToday(item)) {
               const diff = nextReview.getTime() - now.getTime();
               const mins = Math.ceil(diff / 6e4);
               notice(`还未到复习时间（${mins}分钟后）`);
@@ -11008,7 +10968,8 @@ ${n.content.slice(0, 2e3)}
               await this.applyReviewStyles(app);
               const fresh = await this.dataManager.loadItems();
               const updated = fresh.find((i) => i.filePath === item.filePath);
-              return (updated == null ? void 0 : updated.nextReviewDate) || void 0;
+              if (!updated || updated.lastReviewed !== item.lastReviewed) return void 0;
+              return updated.nextReviewDate || void 0;
             },
             onFailed: async (item, rating, entry) => {
               if (mode !== "redo") {
