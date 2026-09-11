@@ -1,4 +1,4 @@
-/* 源指纹 7654e27524d61b1c · 仓内输入 20 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d0572945a2b0322c · 仓内输入 20 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
@@ -4318,11 +4318,7 @@ var BZW_pomodoro = (() => {
   // src/core/z-order.ts
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
-      if (!el.isConnected) {
-        alwaysOnTop.delete(el);
-        continue;
-      }
-      el.style.zIndex = String(zCounter);
+      if (el.isConnected) el.style.zIndex = String(zCounter);
     }
   }
   function allocZBlock(n) {

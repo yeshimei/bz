@@ -12,6 +12,7 @@ import { pcardHtml } from '../../src/cinema/shared';
 import { rebuildItems } from '../../src/cinema/data';
 import {
   enqueueDoubanFetch,
+  dequeueDoubanFetch,
   sweepDoubanFetch,
   isFetching,
   shutdownDoubanQueue,
@@ -286,5 +287,72 @@ describe('豆瓣抓取队列·frontmatter 契约', () => {
     };
     expect(pcardHtml(it, null, true)).toContain('pw-fetch');
     expect(pcardHtml(it, null, false)).not.toContain('pw-fetch');
+  });
+});
+
+
+describe('G8：删除影片出队豆瓣抓取队列', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    shutdownDoubanQueue();
+    clearNotices();
+    M.folderPath = '我的/影视';
+  });
+
+  afterEach(() => {
+    shutdownDoubanQueue();
+    vi.useRealTimers();
+  });
+
+  function seedTwo(vault: MockVault) {
+    vault.files.set('我的/影视/《甲》.md', '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set('我的/影视/《乙》.md', '---\ntags: [电影]\n评分: -1\n---');
+    const app = mockAppWithVault(vault);
+    rebuildItems(app);
+    return M.items.slice();
+  }
+
+  it('正在抓取的影片被删除 → 取消集合消费，不记失败通知、pending 撤销', async () => {
+    const vault = new MockVault();
+    const [a] = seedTwo(vault);
+    let release!: () => void;
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    configureFetchQueue({ ...TEST_HOOKS, spawn: () => gate });
+    expect(enqueueDoubanFetch(a.file!, '甲')).toBe(true);
+    expect(isFetching(a.file!.path)).toBe(true);
+    // 模拟删除成功（openConfirm → dequeueDoubanFetch）
+    dequeueDoubanFetch(a.file!.path);
+    expect(isFetching(a.file!.path)).toBe(false); // pending 撤销（loading 不再挂）
+    release(); // spawn 退出（抓不到已删文件 → 失败形态）
+    await settle();
+    // 失败聚合通知不含已删片名（旧缺陷：十几秒后弹「以下影片获取失败：《甲》」且「重启后会自动重试」不实）
+    expect(getNoticeMessages().join('\n')).not.toContain('甲');
+  });
+
+  it('排队中（未开始）的影片被删除 → 移出队列零 spawn', async () => {
+    const vault = new MockVault();
+    const [a, b] = seedTwo(vault);
+    const spawned: string[] = [];
+    let release!: () => void;
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    configureFetchQueue({
+      ...TEST_HOOKS,
+      spawn: async (_cli: string, p: string) => {
+        spawned.push(p);
+        await gate;
+      },
+    });
+    enqueueDoubanFetch(a.file!, '甲');
+    enqueueDoubanFetch(b.file!, '乙'); // 排队中
+    dequeueDoubanFetch(b.file!.path); // 删除乙
+    release(); // 甲完成，队列继续
+    await settle();
+    expect(spawned.length).toBe(1); // 只有甲被抓
+    expect(getNoticeMessages().join('\n')).not.toContain('乙');
   });
 });

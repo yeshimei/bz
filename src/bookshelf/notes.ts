@@ -204,8 +204,19 @@ export async function updateComment(
       notice('未找到对应高亮（原文不匹配），编辑失败');
       return false;
     }
-    // 原子读改写：对最新盘上内容重放替换（read→write 窗口不再吃掉他域并发写入）
-    await app.vault.process(file, (latest: string) => rewriteHighlightSpan(latest, highlightId, text, applyEdit).next);
+    // 原子读改写：对最新盘上内容重放替换（read→write 窗口不再吃掉他域并发写入）。
+    // G12：重放可能因并发改动高亮原文而未命中——此时全文原样写回，必须走失败路径；
+    // 旧实现无视重放结果仍报「批注已更新」并关弹窗（假成功，编辑丢失）
+    let replayReplaced = true;
+    await app.vault.process(file, (latest: string) => {
+      const replay = rewriteHighlightSpan(latest, highlightId, text, applyEdit);
+      if (!replay.replaced) replayReplaced = false;
+      return replay.next;
+    });
+    if (!replayReplaced) {
+      notice('未找到对应高亮（原文不匹配），编辑失败');
+      return false;
+    }
     if (onDone) onDone();
     return true;
   } catch (e) {
@@ -245,7 +256,18 @@ export async function deleteHighlight(
       done(); // 失败也重开壳（B2）
       return false;
     }
-    await app.vault.process(file, (latest: string) => rewriteHighlightSpan(latest, highlightId, text, () => '').next);
+    // G12：与 updateComment 同型——重放未命中（并发改动高亮原文）走失败路径，不假成功
+    let replayReplaced = true;
+    await app.vault.process(file, (latest: string) => {
+      const replay = rewriteHighlightSpan(latest, highlightId, text, () => '');
+      if (!replay.replaced) replayReplaced = false;
+      return replay.next;
+    });
+    if (!replayReplaced) {
+      notice('未找到对应高亮（原文不匹配），删除失败');
+      done(); // 失败也重开壳（B2）
+      return false;
+    }
     done();
     return true;
   } catch (e) {

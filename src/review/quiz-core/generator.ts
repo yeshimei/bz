@@ -114,27 +114,31 @@ ${truncated}`;
 
     return `根据以下多篇笔记内容，为每篇笔记生成选择题。请仅返回一个合法的 JSON 对象：
 {
-  "noteId1": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0], "explain": "..." }, ... ],
-  "noteId2": [ ... ]
+  "<笔记ID>": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0], "explain": "..." }, ... ],
+  ...
 }
 规则：
 - 类型：${typeHint}，${countHint}
 - ${difficultyHint}
 - 每题必须带 explain 字段：一句话解析正确答案并附原文依据
-- 键名为笔记ID（即 "笔记ID:xxx" 中的 xxx），值为该笔记的题目数组
+- JSON 的键必须是下方「===== 笔记ID:xxx =====」中的 xxx 本身（完整笔记路径，逐字复制，不要自造编号如 noteId1），每篇笔记一个键，值为该笔记的题目数组
 - 每题4个选项，correctIndices 为正确选项索引数组
 笔记内容：${notesBlock}`;
   }
 
-  /** 批量生成（源码 L193-212 逐字） */
-  async generateBatch(notes: { id: string; content: string }[], aiService: AIService, enableMultipleChoice: boolean, questionsPerNote: number, difficulty: string): Promise<Record<string, QuizQuestion[]>> {
-    const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
-    const result = await aiService.json(prompt);
-    const parsed = this.extractJSON(result);
-    // 返回 { noteId: questions[] } 的映射
+  /**
+   * G5：返回键归一——AI 可能不按规则返回（照旧示例返回 noteId1、加「笔记ID:」前缀、
+   * 带首尾空白等），归一到真实笔记路径；无法映射到已知笔记的键丢弃（不写垃圾键、
+   * 不虚报「已为 N 篇生成」）。
+   */
+  private normalizeBatchKeys(parsed: Record<string, unknown>, knownIds: string[]): Record<string, QuizQuestion[]> {
+    const exact = new Set(knownIds);
     const out: Record<string, QuizQuestion[]> = {};
-    for (const [noteId, qs] of Object.entries(parsed)) {
+    for (const [rawKey, qs] of Object.entries(parsed)) {
       if (!Array.isArray(qs)) continue;
+      let key = rawKey.trim();
+      if (key.startsWith('笔记ID:')) key = key.slice('笔记ID:'.length).trim();
+      if (!exact.has(key)) continue; // 无法映射真实笔记 → 丢弃（防垃圾键 + 假成功）
       const valid: QuizQuestion[] = [];
       for (const q of qs as any[]) {
         if (!q.question || !Array.isArray(q.options) || q.options.length !== 4 || !Array.isArray(q.correctIndices)) {
@@ -146,8 +150,17 @@ ${truncated}`;
         if (!indices.length) continue;
         valid.push({ ...q, correctIndices: indices });
       }
-      if (valid.length) out[noteId] = valid;
+      if (valid.length) out[key] = valid;
     }
     return out;
+  }
+
+  /** 批量生成（源码 L193-212 逐字；G5：返回键归一到真实笔记路径） */
+  async generateBatch(notes: { id: string; content: string }[], aiService: AIService, enableMultipleChoice: boolean, questionsPerNote: number, difficulty: string): Promise<Record<string, QuizQuestion[]>> {
+    const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
+    const result = await aiService.json(prompt);
+    const parsed = this.extractJSON(result);
+    // 返回 { noteId: questions[] } 的映射（键归一：无法映射已知笔记的键丢弃）
+    return this.normalizeBatchKeys(parsed, notes.map((n) => n.id));
   }
 }

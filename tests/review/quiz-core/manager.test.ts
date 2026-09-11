@@ -101,6 +101,41 @@ describe('QuizManager', () => {
     expect(quiz).toEqual({ notes: {} });
   });
 
+  it('G3 回归：并发 saveQuestionsForNote / removeQuestion 串行落盘互不覆盖', async () => {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    const qm = new QuizManager();
+    const q1 = { question: 'Q1', options: ['a', 'b', 'c', 'd'], correctIndices: [0] };
+    const q2 = { question: 'Q2', options: ['a', 'b', 'c', 'd'], correctIndices: [1] };
+    const qN = { question: 'QN', options: ['a', 'b', 'c', 'd'], correctIndices: [2] };
+    await qm.saveQuestionsForNote(app, 'A.md', [q1, q2]);
+    await qm.saveQuestionsForNote(app, 'B.md', [q2]);
+    // 并发 RMW：队列串行执行，后行者基于磁盘现值——两个操作都必须生效
+    await Promise.all([
+      qm.saveQuestionsForNote(app, 'A.md', [q1, q2, qN]),
+      qm.removeQuestion(app, 'B.md', q2),
+    ]);
+    const quiz = await qm.loadQuiz(app);
+    expect(quiz.notes['A.md']).toHaveLength(3); // 任务 1 生效
+    expect(quiz.notes['B.md']).toEqual([]); // 任务 2 生效（不被任务 1 的陈旧基线覆盖）
+  });
+
+  it('G3 回归：removeQuestion 无改动不写盘（mutateQuiz fn 返回 false 跳过 saveQuiz）', async () => {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    const qm = new QuizManager();
+    await qm.saveQuestionsForNote(app, 'A.md', [
+      { question: 'M', options: ['a', 'b', 'c', 'd'], correctIndices: [0, 2] },
+    ]);
+    await qm.removeQuestion(app, 'A.md', { question: 'M', options: ['a', 'b', 'c', 'd'], correctIndices: [2, 0] });
+    const before = vault.files.get(QUIZ_FILE_PATH);
+    // 目标题已不在库中 → 不写盘（vault.files 同一字符串引用，modify 未发生）
+    await qm.removeQuestion(app, 'A.md', { question: 'M', options: ['a', 'b', 'c', 'd'], correctIndices: [0, 2] });
+    expect(vault.files.get(QUIZ_FILE_PATH)).toBe(before);
+  });
+
   it('getQuestionsForNote：无 → null', async () => {
     const vault = new MockVault();
     const app = mockAppWithVault(vault);

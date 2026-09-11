@@ -751,3 +751,41 @@ tags: [电影]
     expect(document.querySelector('section.bz-cinema--midnight')).toBeTruthy();
   });
 });
+
+describe('G7：快速标记落盘失败回滚', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    clearDomainEvents();
+  });
+  afterEach(() => {
+    unloadCinema();
+    vi.restoreAllMocks();
+  });
+
+  it('标记「在看」persistItem 失败 → 内存状态回滚（面板与磁盘一致）', async () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const want = M.items.find((i) => i.name === '想看片')!;
+    const prevStatus = want.status;
+    const prevRating = want.rating;
+    const prevDate = want.watchDate;
+    const spy = vi.spyOn(app.fileManager, 'processFrontMatter').mockRejectedValue(new Error('磁盘占用'));
+    const menuSel = '.bz-item-menu.cn-menu-skin';
+    pcardByName(root, '想看片').dispatchEvent(
+      new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 })
+    );
+    clickEl(
+      Array.from((document.querySelector(menuSel) as HTMLElement).querySelectorAll('.bz-item-menu-item')).find(
+        (b) => b.textContent?.includes('标记在看')
+      )
+    );
+    await vi.waitFor(() => expect(spy).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 0));
+    // 旧缺陷：先改内存再落盘、失败不回滚（saveEdit 有回滚此处没有）→ 面板显示与磁盘相反
+    expect(want.status).toBe(prevStatus);
+    expect(want.rating).toBe(prevRating);
+    expect(want.watchDate).toBe(prevDate);
+  });
+});
