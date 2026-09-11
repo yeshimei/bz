@@ -3,8 +3,10 @@
  * 插件内存队列 → 串行 spawn `douban-poster fetch <笔记绝对路径>`（桌面端 child_process；
  * 执行器 = 系统 Node.js——不能用 process.execPath：Obsidian 的 runAsNode fuse 被禁，
  * ELECTRON_RUN_AS_NODE 静默失效，spawn 出来的是 Obsidian 主程序，秒退假失败；
- * 15s 间隔防限流，单条 3 分钟硬超时杀进程）。完成信号 = spawn 退出 + frontmatter 字段验证。
- * 失败才聚合提示（一条错误通知含片名清单）；进度零通知——反馈在卡片海报遮罩 spinner。
+ * 15s 间隔防限流，单条 3 分钟硬超时杀进程）。完成信号 = spawn 退出 **或** frontmatter 字段
+ * 落盘验证（轮询兜底）——宿主内 spawn 退出事件可能延迟/丢失（用户实测：海报/豆瓣信息已
+ * 写进笔记但卡片 loading 不退），字段齐全即视为完成并提前收尾；另有 pending 时限硬上限，
+ * 双信号全失 loading 也最多转到超时上限。失败才聚合提示（一条错误通知含片名清单）；
  * 队列口径 = 缺海报或缺豆瓣链接（继承原守护全责，ADR-0111 盲区口径并入）；
  * 入队时机 = 面板打开扫描 + 新建落盘；同会话内存去重，每次会话首轮打开补抓一次。
  * 移动端无 child_process → 队列禁用；新片同步到 PC 后打开面板补抓。
@@ -29,8 +31,8 @@ interface QueueEntry {
 export type FetchSpawn = (cliJs: string, notePath: string) => Promise<void>;
 
 const queue: QueueEntry[] = [];
-/** 卡片 loading 驱动：抓取中的笔记路径 */
-const pending = new Set<string>();
+/** 卡片 loading 驱动：抓取中的笔记路径 → 入队时刻（时限兜底用，见 isFetching） */
+const pending = new Map<string, number>();
 /** 会话内去重：已入队/已处理过的路径，同会话不重复补抓 */
 const attempted = new Set<string>();
 const failedNames: string[] = [];
@@ -46,6 +48,9 @@ let spawnFn: FetchSpawn | null = null;
 let gapMs = FETCH_GAP_MS;
 /** 抓取完成后延迟重建渲染的间隔（等 metadataCache 消化磁盘变化；测试注 0） */
 let refreshDelayMs = 1500;
+/** 字段落盘轮询间隔（完成信号兜底；测试可注小值） */
+const POLL_COMPLETE_MS = 3000;
+let pollCompleteMs = POLL_COMPLETE_MS;
 /** 活动 kill 句柄（卸载/关闭时杀进程） */
 let activeKill: (() => void) | null = null;
 
@@ -195,24 +200,30 @@ async function fetchComplete(app: App | null, file: TFile): Promise<boolean> {
   }
 }
 
-/** 测试注入：替换 spawn 实现 / CLI 与 node 路径 / 条目间隔 / 完成后刷新延迟 */
+/** 测试注入：替换 spawn 实现 / CLI 与 node 路径 / 条目间隔 / 完成后刷新延迟 / 完成轮询间隔 */
 export function configureFetchQueue(hooks: {
   spawn?: FetchSpawn;
   cli?: string;
   node?: string;
   gapMs?: number;
   refreshDelayMs?: number;
+  pollMs?: number;
 }): void {
   if (hooks.spawn) spawnFn = hooks.spawn;
   if (hooks.cli !== undefined) cliPath = hooks.cli;
   if (hooks.node !== undefined) nodePath = hooks.node;
   if (hooks.gapMs !== undefined) gapMs = hooks.gapMs;
   if (hooks.refreshDelayMs !== undefined) refreshDelayMs = hooks.refreshDelayMs;
+  if (hooks.pollMs !== undefined) pollCompleteMs = hooks.pollMs;
 }
 
-/** 卡片 loading 查询：该笔记是否在抓取中 */
+/** 卡片 loading 查询：该笔记是否在抓取中。
+ *  时限兜底：超过「单条超时 + 余量」的 pending 记过期——双完成信号全失时 loading 也不永转 */
 export function isFetching(path: string | null | undefined): boolean {
-  return !!(path && pending.has(path));
+  if (!path) return false;
+  const at = pending.get(path);
+  if (!at) return false;
+  return Date.now() - at < FETCH_TIMEOUT_MS + 30_000;
 }
 
 /** 入队（会话内去重）；CLI/node 不可用时静默跳过。返回是否真入队 */
@@ -222,7 +233,7 @@ export function enqueueDoubanFetch(file: TFile | null, name: string): boolean {
   const key = file.path;
   if (attempted.has(key)) return false;
   attempted.add(key);
-  pending.add(key);
+  pending.set(key, Date.now());
   queue.push({ file, name });
   void pump();
   return true;
@@ -240,6 +251,32 @@ export function sweepDoubanFetch(_app: App): void {
   if (added > 0 && M.currentOverlay) M.renderFn?.();
 }
 
+/**
+ * 等单条完成：spawn 退出（原信号）与 frontmatter 字段落盘（轮询兜底）谁先到算谁。
+ * 背景：宿主（Electron 渲染进程）内 spawn 的退出事件可能延迟/丢失，或 CLI 写完字段后
+ * 收尾迟滞——用户实测海报/豆瓣链接已进笔记而卡片 loading 不退。字段写入是 CLI 的最后
+ * 一步，轮询到齐全即杀掉收尾中的进程提前收（waitForExit 的退出/超时兜底仍在后台生效）。
+ */
+async function waitCompleteOrExit(entry: QueueEntry, running: Promise<boolean>): Promise<boolean> {
+  let settled = false;
+  return new Promise<boolean>((resolve) => {
+    const finish = (v: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearInterval(timer);
+      resolve(v);
+    };
+    const timer = setInterval(() => {
+      void fetchComplete(M.appRef, entry.file).then((ok) => {
+        if (!ok) return;
+        activeKill?.();
+        finish(true);
+      });
+    }, pollCompleteMs);
+    running.then((ok) => finish(ok), () => finish(false));
+  });
+}
+
 async function pump(): Promise<void> {
   if (pumping) return;
   pumping = true;
@@ -249,7 +286,7 @@ async function pump(): Promise<void> {
       const entry = queue.shift()!;
       if (!first) await sleep(gapMs);
       first = false;
-      const ok = await runOne(entry);
+      const ok = await waitCompleteOrExit(entry, runOne(entry));
       pending.delete(entry.file.path);
       if (!ok) failedNames.push(entry.name);
       refreshAfterFetch();
@@ -298,4 +335,5 @@ export function shutdownDoubanQueue(): void {
   failedNames.length = 0;
   activeKill?.();
   activeKill = null;
+  pollCompleteMs = POLL_COMPLETE_MS;
 }

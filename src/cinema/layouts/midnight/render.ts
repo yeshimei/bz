@@ -60,30 +60,33 @@ export function midnightMobHtml(): string {
 const railRow = (on: boolean, attr: string, color: string, name: string, n: number) =>
   `<button class="rail-item${on ? ' is-on' : ''}" ${attr}><span class="dot" style="background:${color}"></span>${esc(name)}<span class="n">${n}</span></button>`;
 
-/** 侧栏 rail（类型 + 状态两组；计数来自全量条目快照） */
+/** 侧栏 rail（类型 + 状态两组；计数来自全量条目快照）。
+ *  ai/stat 页 rail 整体熄灭（含「全部」）——它是列表视图的筛选控件，非列表页不表达选中 */
 export function railHtml(items: CinemaItem[], view: CinemaView): { groups: string; status: string } {
+  const listOn = view.view === 'list';
   const g: Record<string, number> = {};
   const c: Record<string, number> = { 想看: 0, 在看: 0, 已看: 0 };
   items.forEach((it) => { g[it.group] = (g[it.group] || 0) + 1; c[statusText(it.status)]++; });
-  let groups = railRow(!view.typeFilter && !view.statusFilter, 'data-g="全部"', 'var(--gold)', '全部', items.length);
+  let groups = railRow(listOn && !view.typeFilter && !view.statusFilter, 'data-g="全部"', 'var(--gold)', '全部', items.length);
   for (const name of GROUP_ORDER) {
-    groups += railRow(view.typeFilter === name && !view.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);
+    groups += railRow(listOn && view.typeFilter === name && !view.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);
   }
   let status = '';
   for (const s of ['想看', '在看', '已看'] as const) {
-    status += railRow(view.statusFilter === s, `data-s="${s}"`, ST_COLOR[s], s, c[s]);
+    status += railRow(listOn && view.statusFilter === s, `data-s="${s}"`, ST_COLOR[s], s, c[s]);
   }
   return { groups, status };
 }
 
-/** 移动端筛选 chips（全部/类型/状态横滑条） */
+/** 移动端筛选 chips（全部/类型/状态横滑条；ai/stat 页同 rail 口径整体熄灭） */
 export function chipsHtml(view: CinemaView): string {
-  let html = `<button class="chip${!view.typeFilter && !view.statusFilter ? ' is-on' : ''}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
+  const listOn = view.view === 'list';
+  let html = `<button class="chip${listOn && !view.typeFilter && !view.statusFilter ? ' is-on' : ''}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
   for (const name of GROUP_ORDER) {
-    html += `<button class="chip${view.typeFilter === name && !view.statusFilter ? ' is-on' : ''}" data-c="${name}">${name}</button>`;
+    html += `<button class="chip${listOn && view.typeFilter === name && !view.statusFilter ? ' is-on' : ''}" data-c="${name}">${name}</button>`;
   }
   for (const s of ['想看', '在看', '已看'] as const) {
-    html += `<button class="chip${view.statusFilter === s ? ' is-on' : ''}" data-s="${s}">${s}</button>`;
+    html += `<button class="chip${listOn && view.statusFilter === s ? ' is-on' : ''}" data-s="${s}">${s}</button>`;
   }
   return html;
 }

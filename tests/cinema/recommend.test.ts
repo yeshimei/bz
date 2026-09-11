@@ -7,7 +7,7 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
 import {
-  buildTasteProfile, buildRecommendPrompt, quickAddWant, parseRecommendJson, runAIRecommend,
+  buildTasteProfile, buildRecommendPrompt, buildFollowupPrompt, quickAddWant, parseRecommendJson, runAIRecommend,
   runSimilarRecommend, buildSimilarPrompt,
 } from '../../src/cinema/recommend';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
@@ -39,12 +39,23 @@ describe('cinema buildTasteProfile / prompt / parse', () => {
     expect(p.recent[0]).toContain('A');
   });
 
-  it('提示词：包含画像与排除清单', () => {
+  it('提示词（方案 A）：画像 + 要 20 部按匹配度排序，不再打包全量排除清单', () => {
     const p = buildTasteProfile();
-    const prompt = buildRecommendPrompt(p, p.recent, ['A', 'B', 'C']);
+    const prompt = buildRecommendPrompt(p, p.recent);
     expect(prompt).toContain('资深影视推荐官');
     expect(prompt).toContain('诺兰×9.0');
-    expect(prompt).toContain('排除清单');
+    expect(prompt).toContain('20 部');
+    expect(prompt).toContain('从高到低');
+    expect(prompt).not.toContain('排除清单');
+    expect(prompt).toContain('"recommendations"');
+  });
+
+  it('补问提示词：带已推荐名单（不要重复）+ 再要 10 部', () => {
+    const p = buildTasteProfile();
+    const prompt = buildFollowupPrompt(p, p.recent, ['X1', 'X2']);
+    expect(prompt).toContain('不要重复推荐');
+    expect(prompt).toContain('X1、X2');
+    expect(prompt).toContain('10 部');
     expect(prompt).toContain('"recommendations"');
   });
 
@@ -150,11 +161,12 @@ describe('cinema runAIRecommend（页内化：等待 → 结果列表 / 失败�
     // 运行中重复点击（工具钮/开始按钮）→ 重入直接 return，不发第二发 AI 请求
     await runAIRecommend(M.appRef as any);
     expect(M.aiRunning).toBe(true); // 仍由第一轮占用
-    release({ status: 200, text: JSON.stringify({ choices: [{ message: { content: '{"recommendations":[{"title":"星际穿越"}]}' } }] }) });
+    // 首轮直接给满 5 部库外新片 → 不触发补问（requestUrl 恰好 1 次）
+    release({ status: 200, text: JSON.stringify({ choices: [{ message: { content: JSON.stringify({ recommendations: [1, 2, 3, 4, 5].map((i) => ({ title: `新片${i}` })) }) } }] }) });
     await p1;
     expect(requestUrl).toHaveBeenCalledTimes(1);
     expect(M.aiRunning).toBe(false);
-    expect(M.aiResult?.length).toBe(1);
+    expect(M.aiResult?.length).toBe(5);
   });
 
   it('重入防护：AI 运行中触发找同类 → 直接 return（共用 aiRunning 状态机，不发请求）', async () => {
@@ -174,6 +186,65 @@ describe('cinema runAIRecommend（页内化：等待 → 结果列表 / 失败�
     // 荐片重跑：清空基准 → 「换一批」回到荐片模式
     await runAIRecommend(M.appRef as any);
     expect(M.aiBase).toBeNull();
+  });
+
+  it('方案 A：在库/重复候选本地去重取前 5；不足 5 部自动补问一轮凑齐（相关性序保留）', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
+    resetAIProviderCache();
+    setApp(M.appRef as any);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any).mockClear(); // 此前用例的累计调用清零
+    // 库内片 = A/B/C。首轮 5 条：A 在库（弃）+ N1~N4（拾 4，不足 5 → 补问）
+    // 补问 4 条：N1 重复、A 在库（皆弃）+ N5、N6 → 共 6 取前 5
+    (requestUrl as any)
+      .mockResolvedValueOnce({ status: 200, text: JSON.stringify({ choices: [{ message: { content: JSON.stringify({ recommendations: [{ title: 'A' }, { title: 'N1' }, { title: 'N2' }, { title: 'N3' }, { title: 'N4' }] }) } }] }) })
+      .mockResolvedValueOnce({ status: 200, text: JSON.stringify({ choices: [{ message: { content: JSON.stringify({ recommendations: [{ title: 'N1' }, { title: 'A' }, { title: 'N5' }, { title: 'N6' }] }) } }] }) });
+
+    await runAIRecommend(M.appRef as any);
+
+    expect(M.aiError).toBeNull();
+    expect(M.aiResult?.map((r: any) => r.title)).toEqual(['N1', 'N2', 'N3', 'N4', 'N5']);
+    expect(requestUrl).toHaveBeenCalledTimes(2);
+    // 补问 prompt 带已见名单（含在库的 A 与首轮 N1~N4），不含全量库清单
+    const followupBody = String((requestUrl as any).mock.calls[1][0].body);
+    expect(followupBody).toContain('不要重复推荐');
+    expect(followupBody).toContain('N4');
+    expect(followupBody).toContain('A');
+  });
+
+  it('方案 A：补问失败保留首轮去重结果（不落 aiError）', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
+    resetAIProviderCache();
+    setApp(M.appRef as any);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any)
+      .mockResolvedValueOnce({ status: 200, text: JSON.stringify({ choices: [{ message: { content: '{"recommendations":[{"title":"M1"},{"title":"M2"}]}' } }] }) })
+      .mockRejectedValueOnce(new Error('boom'));
+
+    await runAIRecommend(M.appRef as any);
+
+    expect(M.aiRunning).toBe(false);
+    expect(M.aiError).toBeNull();
+    expect(M.aiResult?.map((r: any) => r.title)).toEqual(['M1', 'M2']);
+  });
+
+  it('方案 A：两轮候选全在库/重复 → 空 结果落兜底文案（不展示空列表）', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
+    resetAIProviderCache();
+    setApp(M.appRef as any);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any)
+      .mockResolvedValueOnce({ status: 200, text: JSON.stringify({ choices: [{ message: { content: '{"recommendations":[{"title":"A"},{"title":"B"}]}' } }] }) })
+      .mockResolvedValueOnce({ status: 200, text: JSON.stringify({ choices: [{ message: { content: '{"recommendations":[{"title":"C"}]}' } }] }) });
+
+    await runAIRecommend(M.appRef as any);
+
+    expect(M.aiRunning).toBe(false);
+    expect(M.aiResult).toBeNull();
+    expect(M.aiError).toContain('没有凑齐');
   });
 });
 

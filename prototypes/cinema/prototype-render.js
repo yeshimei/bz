@@ -1,4 +1,4 @@
-/* 源指纹 bbd1cc541338c69e · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ea03013b55c09145 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -276,7 +276,7 @@ var BZR_cinema = (() => {
       <div style="text-align:center;margin-top:14px"><button class="dm-btn j-ai-more" data-cinema-ai-start>${iconSpan(ICON.ai)}换一批</button></div>`;
     }
     return `<div class="ai-pref">偏好：<b>${esc(inp.pref)}</b></div>
-    <div class="ai-guide"><span class="ai-ic">${iconSpan(ICON.ai)}</span>
+    <div class="ai-guide">
       <div class="ai-title">让 AI 读懂你的片库</div>
       <div class="ai-sub">基于你的评分、影评与偏好标签生成荐片，<br>结果可直接加入想看清单</div>
       <button class="ai-start j-ai-start" data-cinema-ai-start>${iconSpan(ICON.ai)}开始推荐</button></div>`;
@@ -324,29 +324,31 @@ var BZR_cinema = (() => {
   }
   var railRow = (on, attr, color, name, n) => `<button class="rail-item${on ? " is-on" : ""}" ${attr}><span class="dot" style="background:${color}"></span>${esc(name)}<span class="n">${n}</span></button>`;
   function railHtml(items, view) {
+    const listOn = view.view === "list";
     const g = {};
     const c = { 想看: 0, 在看: 0, 已看: 0 };
     items.forEach((it) => {
       g[it.group] = (g[it.group] || 0) + 1;
       c[statusText(it.status)]++;
     });
-    let groups = railRow(!view.typeFilter && !view.statusFilter, 'data-g="全部"', "var(--gold)", "全部", items.length);
+    let groups = railRow(listOn && !view.typeFilter && !view.statusFilter, 'data-g="全部"', "var(--gold)", "全部", items.length);
     for (const name of GROUP_ORDER) {
-      groups += railRow(view.typeFilter === name && !view.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);
+      groups += railRow(listOn && view.typeFilter === name && !view.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);
     }
     let status = "";
     for (const s of ["想看", "在看", "已看"]) {
-      status += railRow(view.statusFilter === s, `data-s="${s}"`, ST_COLOR[s], s, c[s]);
+      status += railRow(listOn && view.statusFilter === s, `data-s="${s}"`, ST_COLOR[s], s, c[s]);
     }
     return { groups, status };
   }
   function chipsHtml(view) {
-    let html = `<button class="chip${!view.typeFilter && !view.statusFilter ? " is-on" : ""}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
+    const listOn = view.view === "list";
+    let html = `<button class="chip${listOn && !view.typeFilter && !view.statusFilter ? " is-on" : ""}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
     for (const name of GROUP_ORDER) {
-      html += `<button class="chip${view.typeFilter === name && !view.statusFilter ? " is-on" : ""}" data-c="${name}">${name}</button>`;
+      html += `<button class="chip${listOn && view.typeFilter === name && !view.statusFilter ? " is-on" : ""}" data-c="${name}">${name}</button>`;
     }
     for (const s of ["想看", "在看", "已看"]) {
-      html += `<button class="chip${view.statusFilter === s ? " is-on" : ""}" data-s="${s}">${s}</button>`;
+      html += `<button class="chip${listOn && view.statusFilter === s ? " is-on" : ""}" data-s="${s}">${s}</button>`;
     }
     return html;
   }
