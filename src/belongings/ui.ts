@@ -856,7 +856,6 @@ export function openForm(it: BelongingsItem | null): void {
           cur.last_updated = new Date().toISOString();
           await saveAndRender();
           emitDomainEvent('belongings', { kind: 'edit', title: name, changes: belongingsEditChanges(snapshot, cur) });
-          notice(`物品「${name}」已更新`, 'success');
         } else {
           if (!M.db) throw new Error('数据库未加载');
           const newItem: BelongingsItem = {
@@ -876,7 +875,6 @@ export function openForm(it: BelongingsItem | null): void {
           M.db.items[newItem.id] = newItem; // 用当前库（外部 modify 换新后旧 db 引用会丢写）
           await saveAndRender();
           emitDomainEvent('belongings', { kind: 'add', item: newItem });
-          notice(`物品「${name}」已添加`, 'success');
         }
         _belBaseline = null;
         unregisterSheetCompanion(mask);
