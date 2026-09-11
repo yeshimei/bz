@@ -1,4 +1,4 @@
-/* 源指纹 637dea74c3b779a8 · 仓内输入 204 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6f94e981065aac09 · 仓内输入 204 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -11978,6 +11978,8 @@ ${countsToText(s.missing)}
 
   // src/home/entry-editor.ts
   function mountHomeEntryEditor(body, app) {
+    blurController == null ? void 0 : blurController.abort();
+    blurController = new AbortController();
     const scope = isMobileEnv() ? "mob" : "desk";
     const touchMode = isMobileEnv();
     let order = null;
@@ -12003,6 +12005,10 @@ ${countsToText(s.missing)}
       });
     }
     let drag = null;
+    function onTouchMove(e) {
+      if (!drag || !drag.armed) return;
+      if (e.cancelable) e.preventDefault();
+    }
     function applyShift(c) {
       for (let i = 0; i < c.total; i++) {
         if (i === c.from) continue;
@@ -12028,7 +12034,7 @@ ${countsToText(s.missing)}
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
-      if (c.touchLocked && c.el.isConnected) c.el.style.touchAction = "";
+      window.removeEventListener("touchmove", onTouchMove);
       c.el.classList.remove(DRAG_CLS);
       c.el.style.transform = "";
       for (const el of c.rows) {
@@ -12095,13 +12101,11 @@ ${countsToText(s.missing)}
           total,
           active: false,
           armed: !touchMode,
-          touchLocked: false,
           armTimer: null
         };
         drag = c;
         if (touchMode) {
-          c.el.style.touchAction = "none";
-          c.touchLocked = true;
+          window.addEventListener("touchmove", onTouchMove, { passive: false });
           c.armTimer = setTimeout(() => {
             if (drag === c) c.armed = true;
             c.armTimer = null;
@@ -12132,9 +12136,13 @@ ${countsToText(s.missing)}
     root.addEventListener("contextmenu", (e) => {
       if (drag) e.preventDefault();
     });
-    window.addEventListener("blur", () => {
-      if (drag) endDrag();
-    });
+    window.addEventListener(
+      "blur",
+      () => {
+        if (drag) endDrag();
+      },
+      { signal: blurController.signal }
+    );
     root.addEventListener("click", (e) => {
       if (Date.now() < suppressClickUntil) {
         e.stopPropagation();
@@ -12168,7 +12176,7 @@ ${countsToText(s.missing)}
       render2();
     });
   }
-  var ROW_SEL, DRAG_PX, TOUCH_ARM_MS, TOUCH_SLOP_PX, SHIFT_CLS, DRAG_CLS, FLUSH_CLS;
+  var ROW_SEL, DRAG_PX, TOUCH_ARM_MS, TOUCH_SLOP_PX, SHIFT_CLS, DRAG_CLS, FLUSH_CLS, blurController;
   var init_entry_editor = __esm({
     "src/home/entry-editor.ts"() {
       init_mobile();
@@ -12184,6 +12192,7 @@ ${countsToText(s.missing)}
       SHIFT_CLS = "bz-home-ent-shift";
       DRAG_CLS = "bz-home-ent-drag";
       FLUSH_CLS = "bz-home-ent-flush";
+      blurController = null;
     }
   });
 
@@ -12700,12 +12709,14 @@ ${countsToText(s.missing)}
       let failed = 0;
       for (const f of repairs) {
         try {
-          const content2 = await app.vault.read(f.file);
-          const next = applyRepairs(content2, f.scan.repairs);
-          if (next !== content2) {
+          const changed = await enqueueFileTask(f.path, async () => {
+            const content2 = await app.vault.read(f.file);
+            const next = applyRepairs(content2, f.scan.repairs);
+            if (next === content2) return 0;
             await app.vault.modify(f.file, next);
-            fixed += f.scan.repairs.length;
-          }
+            return f.scan.repairs.length;
+          });
+          fixed += changed;
         } catch (e) {
           failed += f.scan.repairs.length;
           console.warn("[diary] 修复失败", f.path, e);
@@ -12743,6 +12754,7 @@ ${countsToText(s.missing)}
       init_flow_dialog();
       init_notice();
       init_app();
+      init_storage();
       init_config2();
       init_repair();
       BATCH_CONCURRENCY = 10;

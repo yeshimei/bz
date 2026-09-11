@@ -308,6 +308,9 @@ export function openRandomMovie(app: App): void {
   }
   const it = pool[Math.floor(Math.random() * pool.length)];
   if (!M.currentOverlay) createOverlay(app);
+  // C（补扫 cinema P3）：面板已开时先整刷（pickRandomCinema 已把 M.view 回落 list，样板同
+  // openCinemaAnalysis 的「已开则 renderAll」分支）——否则详情弹窗叠在旧 ai/stat 页上，状态与画面错位
+  else renderAll(app);
   const root = M.currentOverlay?.querySelector<HTMLElement>('[data-cinema-root]');
   if (!root) return;
   openDetail(root, it, app);

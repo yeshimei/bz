@@ -12,8 +12,8 @@ import { resetObsidianMocks, hasNotice, Platform } from '../mock-obsidian-entry'
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
 import { runAIRecommend, runSimilarRecommend } from '../../src/cinema/recommend';
-import { createOverlay, closeOverlay, openAddModalDirect } from '../../src/cinema/ui';
-import { ensureCinema, unloadCinema, openCinemaAnalysis } from '../../src/cinema';
+import { createOverlay, closeOverlay, openAddModalDirect, openRandomMovie, renderAll } from '../../src/cinema/ui';
+import { ensureCinema, unloadCinema, openCinemaAnalysis, pickRandomCinema } from '../../src/cinema';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -787,5 +787,55 @@ describe('G7：快速标记落盘失败回滚', () => {
     expect(want.status).toBe(prevStatus);
     expect(want.rating).toBe(prevRating);
     expect(want.watchDate).toBe(prevDate);
+  });
+});
+
+/**
+ * 补扫 C 回归：「随机抽一部」面板已开时只 createOverlay 不 renderAll——
+ * pickRandomCinema 把 M.view 回落 list 后画面还停在旧 ai/stat 页，详情弹窗叠在
+ * 旧页上、状态与画面错位。修法对齐 openCinemaAnalysis 样板：已开先 renderAll 再 openDetail。
+ */
+describe('补扫 C：随机抽一部（已开面板先整刷再叠详情）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    clearDomainEvents();
+    M.folderPath = '我的/影视';
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    Platform.isMobile = false;
+    unloadCinema();
+    document.body.innerHTML = '';
+  });
+
+  it('面板已开且停在分析页：先整刷回落列表页再叠详情（不叠旧 stat 页）', () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    // 模拟用户停在分析页
+    M.view = 'stat';
+    renderAll(app);
+    const root0 = document.querySelector('[data-cinema-root]') as HTMLElement;
+    expect(root0.querySelector('.sp-body')).toBeTruthy(); // 分析页在
+    expect(root0.querySelector('.d-scroll')).toBeNull();
+
+    // 想看池只有《想看片》→ 抽取确定
+    pickRandomCinema(app);
+
+    expect(M.view).toBe('list');
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    expect(root.querySelector('.d-scroll .pcard')).toBeTruthy(); // 列表页已渲染
+    expect(root.querySelector('.sp-body')).toBeNull(); // 旧分析页已被整刷掉
+    expect(root.querySelector('.cn-modal')).toBeTruthy(); // 详情弹窗叠在列表页上
+    expect(hasNotice(/抽到「想看片」/)).toBe(true);
+  });
+
+  it('面板未开：冷开面板落列表页再叠详情（原有口径不变）', () => {
+    const { app } = seedVault();
+    openRandomMovie(app);
+    expect(M.view).toBe('list');
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    expect(root.querySelector('.d-scroll .pcard')).toBeTruthy();
+    expect(root.querySelector('.cn-modal')).toBeTruthy();
   });
 });
