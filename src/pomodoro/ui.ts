@@ -24,7 +24,7 @@ import { PomodoroDataManager } from './data';
 import {
   POMODORO_SKIN_THEMES,
   skinClassOf,
-  panelShellHtml,
+  popupShellHtml,
 } from './render';
 export { POMODORO_SKIN_THEMES } from './render';
 export type { PomodoroSkinTheme } from './render';
@@ -478,12 +478,14 @@ export function pomodoroSettingsSchema(): SettingsSchema {
             type: 'choiceCards', name: '面板布局', binding: { key: 'pomodoroSkin' },
             options: [{ value: 'default', label: '计时盘', prevClass: 'bz-sp-prev-panel' }],
             // 配套回落（issue 246 a2 口径：不建 layoutPairMap）：换布局后若当前主题不属于
-            // 新布局的配套（layout 不符）→ 回落第一个适配主题，防「布局换了主题还挂旧皮」
+            // 新布局的配套（layout 不符）→ 回落第一个适配主题（无适配主题则兜底第一项），
+            // 防「布局换了主题还挂旧皮」
             onChange: () => {
               const s = tryGetSettings() as any;
               const cur = String(s.pomodoroSkinTheme ?? '');
-              if (!SKIN_THEME_OPTIONS.some((o) => o.value === cur && o.layout === s.pomodoroSkin)) {
-                s.pomodoroSkinTheme = SKIN_THEME_OPTIONS[0].value;
+              const fit = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
+              if (!fit.some((o) => o.value === cur)) {
+                s.pomodoroSkinTheme = (fit[0] ?? SKIN_THEME_OPTIONS[0]).value;
                 saveSettings();
               }
               render();
@@ -599,7 +601,7 @@ function buildDOM(): void {
   const mask = document.createElement('div');
   mask.id = 'pomodoro-mask';
   // 域主弹窗层级在 src/pomodoro/styles.css（#pomodoro-mask z-index，低于域设置弹窗与 Obsidian 设置页）——不再 JS 内联 z-index
-  mask.innerHTML = `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
+  mask.innerHTML = popupShellHtml();
   mask.style.zIndex = String(allocZ()); // ADR-0067：创建即显示即发号
   document.body.appendChild(mask);
   maskEl = mask;

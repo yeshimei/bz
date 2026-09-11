@@ -1,4 +1,4 @@
-/* 源指纹 76723ac8ee7970cb · 仓内输入 20 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 16883aac13b0e5e9 · 仓内输入 20 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
@@ -5035,6 +5035,9 @@ var BZW_pomodoro = (() => {
         <div id="pomodoro-week" class="pomodoro-week"></div>
       </div>`;
   }
+  function popupShellHtml() {
+    return `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
+  }
   var POMODORO_SKIN_THEMES, DEFAULT_POMODORO_SKIN_THEME;
   var init_render = __esm({
     "src/pomodoro/render.ts"() {
@@ -5552,7 +5555,7 @@ var BZW_pomodoro = (() => {
     var _a;
     const mask = document.createElement("div");
     mask.id = "pomodoro-mask";
-    mask.innerHTML = `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
+    mask.innerHTML = popupShellHtml();
     mask.style.zIndex = String(allocZ());
     document.body.appendChild(mask);
     maskEl = mask;

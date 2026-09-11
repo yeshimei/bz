@@ -317,6 +317,20 @@ describe('外观组链路（评审 c1：设置面板改主题 → 弹窗即时�
     layoutRow.onChange('default', {} as any);
     expect(settings.pomodoroSkinTheme).toBe('sakura');
   });
+
+  it('布局行配套回落：主题值非法 → 回落第一个适配主题；布局无任何适配主题 → 兜底第一项', () => {
+    // 当前全部主题 layout='default'：非法主题值在适配集内不存在 → 回落适配集第一个（tomato）
+    const s1 = { ...DEFAULT_SETTINGS, pomodoroSkin: 'default', pomodoroSkinTheme: 'no-such' } as any;
+    setup(s1);
+    const layoutRow = (pomodoroSettingsSchema().groups[0].rows as any[]).find((r) => r.name === '面板布局');
+    layoutRow.onChange('default', {} as any);
+    expect(s1.pomodoroSkinTheme).toBe('tomato');
+    // 未来新增布局（无配套主题）：适配集为空 → 兜底第一项，不留悬空值
+    const s2 = { ...DEFAULT_SETTINGS, pomodoroSkin: 'future-layout', pomodoroSkinTheme: 'sakura' } as any;
+    setup(s2);
+    (pomodoroSettingsSchema().groups[0].rows as any[]).find((r) => r.name === '面板布局')!.onChange('future-layout', {} as any);
+    expect(s2.pomodoroSkinTheme).toBe('tomato');
+  });
 });
 
 describe('设置生效', () => {
