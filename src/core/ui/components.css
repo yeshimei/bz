@@ -741,13 +741,33 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   font-family: var(--bz-font-ui);
   /* z-index 由调用方经 topifyZ 动态分配（ADR-0067），不设静态档 */
 }
-/* 面板内隐藏滚动条（滚动功能保留） */
-.bz-panel-overlay *, .bz-panel-frame * {
+/* bz 界面级隐藏滚动条（ADR-0122 / issue 277）：滚动功能保留（不动 overflow），只隐藏条。
+   作用域 = bz 自有界面：bz- 前缀类/ID + 通用面板壳整树 + 非 bz 前缀的遗留容器。
+   刻意不用 * 通配——Obsidian 核心 UI（文件树/编辑器/核心设置）不属本插件，不隐藏。
+   scrollbar-width/-ms-overflow-style 可继承（子树自动生效）；::-webkit-scrollbar 不继承，
+   故对同组选择器补「元素自身 + 子树」两种形态（守卫：tests/core/ui-scrollbar.test.ts）。 */
+.bz-panel-overlay, .bz-panel-overlay *,
+.bz-panel-frame, .bz-panel-frame *,
+[class^="bz-"], [class*=" bz-"],
+[id^="bz-"], [id^="knowledge-"],
+#add-diary-popup, .diary-tag-selector-popup, .diary-datetime-scroll-container,
+#review-entries-container, #__shared_confirm_popup__ {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-.bz-panel-overlay *::-webkit-scrollbar,
-.bz-panel-frame *::-webkit-scrollbar { display: none; }
+.bz-panel-overlay::-webkit-scrollbar, .bz-panel-overlay *::-webkit-scrollbar,
+.bz-panel-frame::-webkit-scrollbar, .bz-panel-frame *::-webkit-scrollbar,
+[class^="bz-"]::-webkit-scrollbar, [class^="bz-"] *::-webkit-scrollbar,
+[class*=" bz-"]::-webkit-scrollbar, [class*=" bz-"] *::-webkit-scrollbar,
+[id^="bz-"]::-webkit-scrollbar, [id^="bz-"] *::-webkit-scrollbar,
+[id^="knowledge-"]::-webkit-scrollbar, [id^="knowledge-"] *::-webkit-scrollbar,
+#add-diary-popup::-webkit-scrollbar, #add-diary-popup *::-webkit-scrollbar,
+.diary-tag-selector-popup::-webkit-scrollbar, .diary-tag-selector-popup *::-webkit-scrollbar,
+.diary-datetime-scroll-container::-webkit-scrollbar, .diary-datetime-scroll-container *::-webkit-scrollbar,
+#review-entries-container::-webkit-scrollbar, #review-entries-container *::-webkit-scrollbar,
+#__shared_confirm_popup__::-webkit-scrollbar, #__shared_confirm_popup__ *::-webkit-scrollbar {
+  display: none;
+}
 
 .bz-panel-frame {
   position: relative;

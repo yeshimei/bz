@@ -253,6 +253,73 @@
   });
   render();
 })();
+
+/* ==================== 自检（?selftest=1）：文献预览正文单份 + 视频嵌入在位（issue 275，经 iframe 真行为断言） ==================== */
+(function () {
+  if (!location.search.includes('selftest')) return;
+  window.__st = { pass: 0, fail: [] };
+  const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
+  const res = document.createElement('div');
+  res.id = 'stResult';
+  res.style.cssText = 'position:fixed;left:16px;top:12px;z-index:999;font:12px/1.7 monospace;background:#fff;border:1px solid #d8d1c0;padding:6px 10px;color:#3d3a30;max-width:440px;word-break:break-all;';
+  document.body.appendChild(res);
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换——每次现查（同款 review 壳 waitFrame）
+  const dtDoc = () => document.querySelector('#dtHost iframe').contentDocument;
+  const wait = (get, what) => new Promise((ok, bad) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const v = get();
+        if (v) return ok(v);
+        if (Date.now() - started > 30000) return bad(new Error('超时：' + what));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
+    };
+    tries();
+  });
+  (async () => {
+    try {
+      const MARK = '非药物治疗失眠的循证心理干预'; // CBTI 种子正文标记串
+      const rows = await wait(() => {
+        const list = dtDoc().querySelectorAll('.bz-kb-lexrow[data-kb-act=lit-peek]');
+        return list.length >= 4 ? list : null; // 部壹 4 篇种子就位才放行
+      }, '部壹文献列表');
+      const cbti = Array.prototype.find.call(rows, (r) => r.textContent.indexOf('CBTI') >= 0);
+      (cbti || rows[0]).click(); // 点开视频文献 → 文献预览弹层
+      const body = await wait(() => dtDoc().querySelector('#bz-kb-preview-body'), '文献预览正文容器');
+      await new Promise((r) => setTimeout(r, 500)); // 等异步 Markdown 渲染落定
+      const text = body.textContent || '';
+      const count = (s, needle) => s.split(needle).length - 1;
+      t('文献列表就位', rows.length >= 4);
+      t('文献预览打开', !!body);
+      t('正文只出现一份（单源渲染，无预填第二份）', count(text, MARK) === 1);
+      t('mp4 嵌入语法不再以字面残留（渲染器吃掉）', count(text, '![') === 0);
+      t('视频嵌入在位（fake 渲染器 demo 片段映射）', !!body.querySelector('video[src*="demo.mp4"]'));
+      // ---- issue 278：视频录入 URL 防抖回填（view API 罐头） ----
+      const ovl = dtDoc().querySelector('.bz-kb-ovl');
+      if (ovl) ovl.click(); // 关预览弹层
+      await wait(() => {
+        const entry = dtDoc().querySelector('[data-kb-act=video-entry]');
+        if (!entry) return null;
+        entry.click();
+        return entry;
+      }, '视频录入入口');
+      const addBtn = await wait(() => dtDoc().querySelector('#lit-btn-video-add'), '视频添加按钮');
+      addBtn.click();
+      const urlInput = await wait(() => dtDoc().querySelector('#lit-add-url'), '录入 URL 输入框');
+      urlInput.value = 'https://www.bilibili.com/video/BV1awbg6XELn/?spm_id_from=333.1391.0.0&vd_source=15205b8944be621a94fb0bf0efdb81f3';
+      urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 900)); // 450ms 防抖 + 罐头回包
+      t('URL 净化写回（追踪参数剥除）', urlInput.value === 'https://www.bilibili.com/video/BV1awbg6XELn/');
+      t('标题回填（view API 罐头）', (dtDoc().querySelector('#lit-add-vtitle').value || '').indexOf('BV1awbg6XELn') >= 0);
+      t('UP主 回填', dtDoc().querySelector('#lit-add-uploader').value === '演示 UP 主');
+      t('回填全程无 toast', !dtDoc().querySelector('.bz-notice'));
+    } catch (e) {
+      t('自检流程异常：' + ((e && e.message) || e), false);
+    }
+    res.textContent = 'PASS ' + window.__st.pass + ' / FAIL ' + window.__st.fail.length + (window.__st.fail.length ? ' → ' + window.__st.fail.join('; ') : '');
+  })();
+})();
 </script>
 </body>
 </html>

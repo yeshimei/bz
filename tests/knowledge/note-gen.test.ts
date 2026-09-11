@@ -151,6 +151,11 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 润色正文�
     expect(path).toBe('文献盒/T.md'); // 文件名取 AI title：sanitizeMdTitle('T')
     expect(aiStub.json).toHaveBeenCalledTimes(1);
     expect(String(aiStub.json.mock.calls[0][0])).toContain('心理、计算机'); // 领域词表进入判定指令
+    // issue 276：标题指令收敛为完整陈述句（禁疑问语气），旧口径「陈述句或疑问句」移除
+    const metaPrompt = String(aiStub.json.mock.calls[0][0]);
+    expect(metaPrompt).toContain('完整陈述句');
+    expect(metaPrompt).toContain('不得使用疑问句或疑问语气');
+    expect(metaPrompt).not.toContain('陈述句或疑问句');
     expect(aiStub.chat).toHaveBeenCalledTimes(2); // 两块转录 → 两次润色
 
     const content = vault.files.get(path)!;

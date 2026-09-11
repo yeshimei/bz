@@ -33,9 +33,6 @@
     .pomodoro-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .pomodoro-btn-primary { background: var(--interactive-accent); color: var(--text-on-accent); }
     .pomodoro-btn-primary:hover:not(:disabled) { background: var(--interactive-accent-hover); }
-    #pomodoro-btn-settings { position: absolute; top: 16px; right: 16px; padding: 6px; background: none; border-radius: var(--bz-radius-sm); color: var(--text-muted); transition: opacity var(--bz-dur-base); }
-    #pomodoro-btn-settings:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
-    #pomodoro-btn-settings.pomodoro-settings-hidden { opacity: 0; pointer-events: none; }
     .pomodoro-stats { margin-top: var(--bz-space-lg); padding-top: var(--bz-space-md); border-top: 1px solid var(--background-modifier-border); }
     #pomodoro-today { font-size: var(--bz-font-label); color: var(--text-muted); margin-bottom: var(--bz-space-sm); }
     .pomodoro-week { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }
@@ -43,22 +40,264 @@
     .pomodoro-stat-col { display: flex; align-items: flex-end; height: 40px; }
     .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
     .pomodoro-stat-label { font-size: var(--bz-font-caption); color: var(--text-faint); }
-    /* 今日专注时段分布：12 槽（2 小时一格）小方柱，条形语言与近 7 天柱一致（增强包） */
-    .pomodoro-hours { display: flex; gap: var(--bz-space-xs); justify-content: center; align-items: flex-end; margin-top: var(--bz-space-sm); }
-    .pomodoro-hour-bar { width: 8px; border-radius: 3px 3px 0 0; background: var(--background-modifier-border); min-height: 2px; }
-    .pomodoro-hour-bar-on { background: var(--interactive-accent); opacity: 0.7; }
 
-/* ==================== 移动端顶距避让（.bz-panel-mtop 无条件挂载） ====================
-   ≤768px 顶距工具类统一避让 Obsidian 移动端头（44px）；右上角设置钮为绝对定位，
-   不随文档流下移，需同步下移到避让区之下（无避让态无此钮规则，维持 16px） */
-@media (max-width: 768px) {
-    #pomodoro-popup.bz-panel-mtop #pomodoro-btn-settings { top: calc(max(44px, env(safe-area-inset-top, 0px)) + 12px); }
-}
+/* ==================== 面板主题（皮肤）· 10 套 × 亮/暗两版 ====================
+   口径（2026-09-11 用户拍板「全都要，每套都要亮色和暗色」）：
+   - 皮肤类由 ui.ts::applySkinClass 挂在 #pomodoro-popup 上，取值 = 设置 pomodoroSkinTheme；
+   - 清单单源 = ui.ts::POMODORO_SKIN_THEMES（设置面板选项同表生成）；
+   - **只换面/字/强调色/描边阴影**，不碰任何布局属性（尺寸/间距/结构一律不动）；
+   - 暗色走 .theme-dark 前缀（同 memo 皮肤范式，body 挂类 → 跟随 Obsidian 主题）；
+   - 每套都给满：面 · 轨道 · 强调（进度环/圆点/柱/主按钮）· 时间/阶段/任务/统计字色 · 次按钮 · 分割线。 */
+/* 1 番茄 · tomato（默认：纸白 + 番茄红 / 暗：暖褐 + 亮珊瑚） */
+    #pomodoro-popup.pomodoro-skin-tomato { background: #fdf7f3; }
+    #pomodoro-popup.pomodoro-skin-tomato .pomodoro-ring-progress { stroke: #e5534b; }
+    #pomodoro-popup.pomodoro-skin-tomato .pomodoro-cycle-dot-on,
+    #pomodoro-popup.pomodoro-skin-tomato .pomodoro-stat-bar { background: #e5534b; }
+    #pomodoro-popup.pomodoro-skin-tomato .pomodoro-btn-primary { background: #e5534b; color: #fff; }
+    #pomodoro-popup.pomodoro-skin-tomato #pomodoro-phase { color: #8b6f68; }
+    #pomodoro-popup.pomodoro-skin-tomato .pomodoro-task { color: #b09a94; }
+    #pomodoro-popup.pomodoro-skin-tomato .pomodoro-controls .pomodoro-btn { background: #f3ece6; color: #3d332f; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato { background: #2a2320; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato .pomodoro-ring-track { stroke: rgba(255,255,255,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato .pomodoro-ring-progress { stroke: #f2705e; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato .pomodoro-cycle-dot { background: rgba(255,255,255,.16); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato .pomodoro-cycle-dot-on,
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato .pomodoro-stat-bar { background: #f2705e; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato #pomodoro-time { color: #f5ece8; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato #pomodoro-phase { color: #b9a49c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato .pomodoro-task { color: #8d7a74; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato #pomodoro-today { color: #b9a49c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato .pomodoro-stat-label { color: #8d7a74; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato .pomodoro-controls .pomodoro-btn { background: #352d29; color: #d9ccc5; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato .pomodoro-btn-primary { background: #f2705e; color: #2a2320; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato .pomodoro-stats { border-top-color: rgba(255,255,255,.12); }
+
+/* 2 墨白 · ink（无彩色：纯白 + 墨黑 / 暗：近墨 + 米白） */
+    #pomodoro-popup.pomodoro-skin-ink { background: #fff; box-shadow: 0 6px 30px rgba(0,0,0,.14); }
+    #pomodoro-popup.pomodoro-skin-ink .pomodoro-ring-progress { stroke: #171512; }
+    #pomodoro-popup.pomodoro-skin-ink .pomodoro-cycle-dot-on,
+    #pomodoro-popup.pomodoro-skin-ink .pomodoro-stat-bar { background: #171512; }
+    #pomodoro-popup.pomodoro-skin-ink .pomodoro-btn-primary { background: #171512; color: #fff; }
+    #pomodoro-popup.pomodoro-skin-ink #pomodoro-phase { color: #6b6558; }
+    #pomodoro-popup.pomodoro-skin-ink .pomodoro-task { color: #a8a294; }
+    #pomodoro-popup.pomodoro-skin-ink .pomodoro-stat-label { color: #b0aa9c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink { background: #1f1f1e; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink .pomodoro-ring-track { stroke: rgba(255,255,255,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink .pomodoro-ring-progress { stroke: #f2f0ea; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink .pomodoro-cycle-dot { background: rgba(255,255,255,.16); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink .pomodoro-cycle-dot-on,
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink .pomodoro-stat-bar { background: #f2f0ea; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink #pomodoro-time { color: #f2f0ea; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink #pomodoro-phase { color: #a8a49c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink .pomodoro-task { color: #7d7a72; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink #pomodoro-today { color: #a8a49c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink .pomodoro-stat-label { color: #7d7a72; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink .pomodoro-controls .pomodoro-btn { background: #2b2b29; color: #d6d3cc; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink .pomodoro-btn-primary { background: #f2f0ea; color: #1f1f1e; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink .pomodoro-stats { border-top-color: rgba(255,255,255,.12); }
+
+/* 3 方格纸 · grid（极淡格纹 + 石墨 / 暗：暗格纹 + 米灰） */
+    #pomodoro-popup.pomodoro-skin-grid {
+      background-color: #fdfcf8;
+      background-image:
+        linear-gradient(rgba(23,21,18,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(23,21,18,.05) 1px, transparent 1px);
+      background-size: 16px 16px;
+      background-position: -1px -1px;
+    }
+    #pomodoro-popup.pomodoro-skin-grid .pomodoro-ring-progress { stroke: #4a4a46; }
+    #pomodoro-popup.pomodoro-skin-grid .pomodoro-cycle-dot-on,
+    #pomodoro-popup.pomodoro-skin-grid .pomodoro-stat-bar { background: #4a4a46; }
+    #pomodoro-popup.pomodoro-skin-grid .pomodoro-btn-primary { background: #4a4a46; color: #fff; }
+    #pomodoro-popup.pomodoro-skin-grid #pomodoro-phase { color: #6b6558; }
+    #pomodoro-popup.pomodoro-skin-grid .pomodoro-task { color: #a8a294; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid {
+      background-color: #22231f;
+      background-image:
+        linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid .pomodoro-ring-track { stroke: rgba(255,255,255,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid .pomodoro-ring-progress { stroke: #d7d3c8; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid .pomodoro-cycle-dot { background: rgba(255,255,255,.16); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid .pomodoro-cycle-dot-on,
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid .pomodoro-stat-bar { background: #d7d3c8; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid #pomodoro-time { color: #eceae2; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid #pomodoro-phase { color: #a8a49c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid .pomodoro-task { color: #7d7a72; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid #pomodoro-today { color: #a8a49c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid .pomodoro-stat-label { color: #7d7a72; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid .pomodoro-controls .pomodoro-btn { background: #2c2e29; color: #d6d3cc; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid .pomodoro-btn-primary { background: #d7d3c8; color: #22231f; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid .pomodoro-stats { border-top-color: rgba(255,255,255,.12); }
+
+/* 4 苔原 · moss（灰绿纸 + 苔绿 / 暗：墨绿 + 亮苔） */
+    #pomodoro-popup.pomodoro-skin-moss { background: #f2f5ef; }
+    #pomodoro-popup.pomodoro-skin-moss .pomodoro-ring-progress { stroke: #4c9e6c; }
+    #pomodoro-popup.pomodoro-skin-moss .pomodoro-cycle-dot-on,
+    #pomodoro-popup.pomodoro-skin-moss .pomodoro-stat-bar { background: #4c9e6c; }
+    #pomodoro-popup.pomodoro-skin-moss .pomodoro-btn-primary { background: #4c9e6c; color: #fff; }
+    #pomodoro-popup.pomodoro-skin-moss #pomodoro-phase { color: #6a7d6c; }
+    #pomodoro-popup.pomodoro-skin-moss .pomodoro-task { color: #9aa79c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss { background: #20261f; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss .pomodoro-ring-track { stroke: rgba(255,255,255,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss .pomodoro-ring-progress { stroke: #6fc08e; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss .pomodoro-cycle-dot { background: rgba(255,255,255,.16); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss .pomodoro-cycle-dot-on,
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss .pomodoro-stat-bar { background: #6fc08e; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss #pomodoro-time { color: #e8eee6; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss #pomodoro-phase { color: #9db3a2; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss .pomodoro-task { color: #7b8f80; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss #pomodoro-today { color: #9db3a2; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss .pomodoro-stat-label { color: #7b8f80; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss .pomodoro-controls .pomodoro-btn { background: #2a3228; color: #d3ddd0; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss .pomodoro-btn-primary { background: #6fc08e; color: #20261f; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss .pomodoro-stats { border-top-color: rgba(255,255,255,.12); }
+
+/* 5 海雾 · mist（冷灰蓝 + 钢蓝 / 暗：深海军 + 亮蓝） */
+    #pomodoro-popup.pomodoro-skin-mist { background: #f1f4f8; }
+    #pomodoro-popup.pomodoro-skin-mist .pomodoro-ring-progress { stroke: #3d7bd6; }
+    #pomodoro-popup.pomodoro-skin-mist .pomodoro-cycle-dot-on,
+    #pomodoro-popup.pomodoro-skin-mist .pomodoro-stat-bar { background: #3d7bd6; }
+    #pomodoro-popup.pomodoro-skin-mist .pomodoro-btn-primary { background: #3d7bd6; color: #fff; }
+    #pomodoro-popup.pomodoro-skin-mist #pomodoro-phase { color: #66768f; }
+    #pomodoro-popup.pomodoro-skin-mist .pomodoro-task { color: #96a3b6; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist { background: #1e2229; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist .pomodoro-ring-track { stroke: rgba(255,255,255,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist .pomodoro-ring-progress { stroke: #6fa0ef; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist .pomodoro-cycle-dot { background: rgba(255,255,255,.16); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist .pomodoro-cycle-dot-on,
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist .pomodoro-stat-bar { background: #6fa0ef; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist #pomodoro-time { color: #e6ecf5; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist #pomodoro-phase { color: #9aa9c2; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist .pomodoro-task { color: #78859c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist #pomodoro-today { color: #9aa9c2; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist .pomodoro-stat-label { color: #78859c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist .pomodoro-controls .pomodoro-btn { background: #272c35; color: #d2dbe9; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist .pomodoro-btn-primary { background: #6fa0ef; color: #1e2229; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist .pomodoro-stats { border-top-color: rgba(255,255,255,.12); }
+
+/* 6 暖沙 · sand（暖米 + 陶土 / 暗：深褐 + 浅陶土） */
+    #pomodoro-popup.pomodoro-skin-sand { background: #f8f2e8; }
+    #pomodoro-popup.pomodoro-skin-sand .pomodoro-ring-progress { stroke: #c27a48; }
+    #pomodoro-popup.pomodoro-skin-sand .pomodoro-cycle-dot-on,
+    #pomodoro-popup.pomodoro-skin-sand .pomodoro-stat-bar { background: #c27a48; }
+    #pomodoro-popup.pomodoro-skin-sand .pomodoro-btn-primary { background: #c27a48; color: #fff; }
+    #pomodoro-popup.pomodoro-skin-sand #pomodoro-phase { color: #7d6a55; }
+    #pomodoro-popup.pomodoro-skin-sand .pomodoro-task { color: #a8947c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand { background: #26221c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand .pomodoro-ring-track { stroke: rgba(255,255,255,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand .pomodoro-ring-progress { stroke: #e0a373; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand .pomodoro-cycle-dot { background: rgba(255,255,255,.16); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand .pomodoro-cycle-dot-on,
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand .pomodoro-stat-bar { background: #e0a373; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand #pomodoro-time { color: #f1e9dc; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand #pomodoro-phase { color: #b8a692; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand .pomodoro-task { color: #8d7f6d; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand #pomodoro-today { color: #b8a692; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand .pomodoro-stat-label { color: #8d7f6d; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand .pomodoro-controls .pomodoro-btn { background: #322c25; color: #dcd2c4; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand .pomodoro-btn-primary { background: #e0a373; color: #26221c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand .pomodoro-stats { border-top-color: rgba(255,255,255,.12); }
+
+/* 7 蜜柑 · citrus（奶白 + 柑橘橙 / 暗：深橄榄 + 亮橙） */
+    #pomodoro-popup.pomodoro-skin-citrus { background: #fffaf0; }
+    #pomodoro-popup.pomodoro-skin-citrus .pomodoro-ring-progress { stroke: #e6951d; }
+    #pomodoro-popup.pomodoro-skin-citrus .pomodoro-cycle-dot-on,
+    #pomodoro-popup.pomodoro-skin-citrus .pomodoro-stat-bar { background: #e6951d; }
+    #pomodoro-popup.pomodoro-skin-citrus .pomodoro-btn-primary { background: #e6951d; color: #fff; }
+    #pomodoro-popup.pomodoro-skin-citrus #pomodoro-phase { color: #7d6a40; }
+    #pomodoro-popup.pomodoro-skin-citrus .pomodoro-task { color: #ab9a6c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus { background: #272319; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus .pomodoro-ring-track { stroke: rgba(255,255,255,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus .pomodoro-ring-progress { stroke: #f2b544; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus .pomodoro-cycle-dot { background: rgba(255,255,255,.16); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus .pomodoro-cycle-dot-on,
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus .pomodoro-stat-bar { background: #f2b544; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus #pomodoro-time { color: #f7efdf; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus #pomodoro-phase { color: #bab192; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus .pomodoro-task { color: #8f876c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus #pomodoro-today { color: #bab192; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus .pomodoro-stat-label { color: #8f876c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus .pomodoro-controls .pomodoro-btn { background: #332e20; color: #e0d9c2; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus .pomodoro-btn-primary { background: #f2b544; color: #272319; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus .pomodoro-stats { border-top-color: rgba(255,255,255,.12); }
+
+/* 8 樱粉 · sakura（浅粉 + 玫红 / 暗：暗梅 + 亮玫） */
+    #pomodoro-popup.pomodoro-skin-sakura { background: #fdf3f6; }
+    #pomodoro-popup.pomodoro-skin-sakura .pomodoro-ring-progress { stroke: #d64d8f; }
+    #pomodoro-popup.pomodoro-skin-sakura .pomodoro-cycle-dot-on,
+    #pomodoro-popup.pomodoro-skin-sakura .pomodoro-stat-bar { background: #d64d8f; }
+    #pomodoro-popup.pomodoro-skin-sakura .pomodoro-btn-primary { background: #d64d8f; color: #fff; }
+    #pomodoro-popup.pomodoro-skin-sakura #pomodoro-phase { color: #8a5f74; }
+    #pomodoro-popup.pomodoro-skin-sakura .pomodoro-task { color: #b394a4; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura { background: #2a2026; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura .pomodoro-ring-track { stroke: rgba(255,255,255,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura .pomodoro-ring-progress { stroke: #ef77b4; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura .pomodoro-cycle-dot { background: rgba(255,255,255,.16); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura .pomodoro-cycle-dot-on,
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura .pomodoro-stat-bar { background: #ef77b4; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura #pomodoro-time { color: #f6e9ef; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura #pomodoro-phase { color: #bd9aab; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura .pomodoro-task { color: #917a87; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura #pomodoro-today { color: #bd9aab; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura .pomodoro-stat-label { color: #917a87; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura .pomodoro-controls .pomodoro-btn { background: #352830; color: #e0cfd8; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura .pomodoro-btn-primary { background: #ef77b4; color: #2a2026; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura .pomodoro-stats { border-top-color: rgba(255,255,255,.12); }
+
+/* 9 咖啡 · latte（浅拿铁 + 深棕 / 暗：深焙 + 奶棕） */
+    #pomodoro-popup.pomodoro-skin-latte { background: #f6f0e6; }
+    #pomodoro-popup.pomodoro-skin-latte .pomodoro-ring-progress { stroke: #8a5a3b; }
+    #pomodoro-popup.pomodoro-skin-latte .pomodoro-cycle-dot-on,
+    #pomodoro-popup.pomodoro-skin-latte .pomodoro-stat-bar { background: #8a5a3b; }
+    #pomodoro-popup.pomodoro-skin-latte .pomodoro-btn-primary { background: #8a5a3b; color: #fff; }
+    #pomodoro-popup.pomodoro-skin-latte #pomodoro-time { color: #4a3628; }
+    #pomodoro-popup.pomodoro-skin-latte #pomodoro-phase { color: #7a6553; }
+    #pomodoro-popup.pomodoro-skin-latte .pomodoro-task { color: #a8947c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte { background: #241f19; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte .pomodoro-ring-track { stroke: rgba(255,255,255,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte .pomodoro-ring-progress { stroke: #c08a63; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte .pomodoro-cycle-dot { background: rgba(255,255,255,.16); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte .pomodoro-cycle-dot-on,
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte .pomodoro-stat-bar { background: #c08a63; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte #pomodoro-time { color: #f1e9dc; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte #pomodoro-phase { color: #b39d8c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte .pomodoro-task { color: #8a7a6b; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte #pomodoro-today { color: #b39d8c; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte .pomodoro-stat-label { color: #8a7a6b; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte .pomodoro-controls .pomodoro-btn { background: #302920; color: #dcd2c4; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte .pomodoro-btn-primary { background: #c08a63; color: #241f19; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte .pomodoro-stats { border-top-color: rgba(255,255,255,.12); }
+
+/* 10 夜航 · night（亮：浅夜蓝纸 + 古铜琥珀（压深保证浅底可读）/ 暗：深墨 + 琥珀） */
+    #pomodoro-popup.pomodoro-skin-night { background: #eceff3; }
+    #pomodoro-popup.pomodoro-skin-night .pomodoro-ring-progress { stroke: #b5801f; }
+    #pomodoro-popup.pomodoro-skin-night .pomodoro-cycle-dot-on,
+    #pomodoro-popup.pomodoro-skin-night .pomodoro-stat-bar { background: #b5801f; }
+    #pomodoro-popup.pomodoro-skin-night .pomodoro-btn-primary { background: #b5801f; color: #fff; }
+    #pomodoro-popup.pomodoro-skin-night #pomodoro-phase { color: #5f6a78; }
+    #pomodoro-popup.pomodoro-skin-night .pomodoro-task { color: #8d97a5; }
+    #pomodoro-popup.pomodoro-skin-night #pomodoro-today { color: #5f6a78; }
+    #pomodoro-popup.pomodoro-skin-night .pomodoro-controls .pomodoro-btn { background: #e4e9ef; color: #3a4250; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night { background: #23262b; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night .pomodoro-ring-track { stroke: rgba(255,255,255,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night .pomodoro-ring-progress { stroke: #f0b429; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night .pomodoro-cycle-dot { background: rgba(255,255,255,.16); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night .pomodoro-cycle-dot-on,
+    .theme-dark #pomodoro-popup.pomodoro-skin-night .pomodoro-stat-bar { background: #f0b429; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night #pomodoro-time { color: #f2efe6; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night #pomodoro-phase { color: #a7b0bd; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night .pomodoro-task { color: #7d8794; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night #pomodoro-today { color: #a7b0bd; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night .pomodoro-stat-label { color: #7d8794; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night .pomodoro-controls .pomodoro-btn { background: #2e323a; color: #dfe3ea; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night .pomodoro-btn-primary { background: #f0b429; color: #23262b; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night .pomodoro-stats { border-top-color: rgba(255,255,255,.12); }
 
 /* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ====================
    ::after 外扩已收编 core .bz-touch-target（components.css，模板挂类）：
-   控制按钮 = --sm(-4px)、右上角设置钮 = 默认(-6px)；此处仅保留 padding 抬档。 */
+   控制按钮 = --sm(-4px)；此处仅保留 padding 抬档。 */
 @media (pointer: coarse) {
     .pomodoro-btn { padding: 10px var(--bz-space-lg); }
-    #pomodoro-btn-settings { padding: 10px; }
 }

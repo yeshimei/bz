@@ -254,11 +254,73 @@
     linear-gradient(90deg, #f0e6d2 0 50%, #1d1a14 50% 100%);
   border-radius: 3px;
 }
-/* 番茄钟·番茄 */
+/* 番茄钟·番茄（保留旧键：历史设置值/旧预览卡引用；新键见下方 bz-sp-prev-pomo-* 一组） */
 .bz-sp-mini.bz-sp-prev-tomato {
   background:
     radial-gradient(circle at 50% 50%, #d95550 0 4px, #fff 4px 6px, transparent 6px),
     linear-gradient(90deg, #fbf6f0 0 50%, #1d1512 50% 100%);
+  border-radius: 3px;
+}
+/* ── 番茄钟 10 套皮肤预览（2026-09-11：同构图异色——左亮块/右暗块 + 域色圆点；
+      与 src/pomodoro/styles.css 的 pomodoro-skin-<id> 同名配对，取值改了这里要同步） ── */
+.bz-sp-mini.bz-sp-prev-pomo-tomato {
+  background:
+    radial-gradient(circle at 50% 50%, #e5534b 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #fdf7f3 0 50%, #2a2320 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-ink {
+  background:
+    radial-gradient(circle at 50% 50%, #171512 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #ffffff 0 50%, #1f1f1e 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-grid {
+  background:
+    radial-gradient(circle at 50% 50%, #4a4a46 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #fdfcf8 0 50%, #22231f 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-moss {
+  background:
+    radial-gradient(circle at 50% 50%, #4c9e6c 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f2f5ef 0 50%, #20261f 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-mist {
+  background:
+    radial-gradient(circle at 50% 50%, #3d7bd6 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f1f4f8 0 50%, #1e2229 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-sand {
+  background:
+    radial-gradient(circle at 50% 50%, #c27a48 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f8f2e8 0 50%, #26221c 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-citrus {
+  background:
+    radial-gradient(circle at 50% 50%, #e6951d 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #fffaf0 0 50%, #272319 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-sakura {
+  background:
+    radial-gradient(circle at 50% 50%, #d64d8f 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #fdf3f6 0 50%, #2a2026 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-latte {
+  background:
+    radial-gradient(circle at 50% 50%, #8a5a3b 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f6f0e6 0 50%, #241f19 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-night {
+  background:
+    radial-gradient(circle at 50% 50%, #b5801f 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #eceff3 0 50%, #23262b 50% 100%);
   border-radius: 3px;
 }
 /* 保险库·钢灰 */
@@ -276,20 +338,8 @@
   border-radius: 3px;
 }
 
-/* ═══════════ 滚动条全隐藏（面板作用域内） ═══════════ */
-.bz-sp-desk *,
-.bz-sp-mobile *,
-.bz-sp-mobile * {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.bz-sp-desk *::-webkit-scrollbar,
-.bz-sp-mobile *::-webkit-scrollbar,
-.bz-sp-mobile *::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
+/* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277），
+   原面板作用域（.bz-sp-desk / .bz-sp-mobile）域内声明已删 */
 
 /* ═══════════ 桌面壳（几何 !important 压 createOverlay 内联尺寸） ═══════════ */
 .bz-sp-desk {

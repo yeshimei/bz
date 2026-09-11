@@ -442,9 +442,12 @@ describe('设置面板（settings-panel）', () => {
       expect(theme.type).toBe('choiceCards');
       expect(theme.binding.key).toBe(themeKey);
       expect(theme.layoutKey).toBe(layoutKey);
-      expect(theme.options).toHaveLength(1);
-      expect(theme.options[0].layout).toBe('default');
-      expect(typeof theme.options[0].prevClass).toBe('string');
+      // 主题项数：番茄钟 2026-09-11 实装 10 套皮（每套亮/暗两版），其余域仍是单套占位
+      expect(theme.options, `${name} 主题项数`).toHaveLength(name === '番茄钟' ? 10 : 1);
+      for (const o of theme.options as any[]) {
+        expect(o.layout, `${name} 主题项 layout`).toBe('default');
+        expect(typeof o.prevClass, `${name} 主题项 prevClass`).toBe('string');
+      }
     }
   });
 

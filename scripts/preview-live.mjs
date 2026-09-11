@@ -224,6 +224,7 @@ http.createServer((req, res) => {
       home: ['首页', '内容首页 · 活动河'],
       knowledge: ['知识盒', '词典皮三部 · 文献 / 卡片 / 主题'],
       'password-vault': ['密码本', '密码条目 · 金印锁屏 · 演示库密码 demo'],
+      pomodoro: ['番茄钟', '中央弹窗计时盘 · 真状态机四相位 + ⚙ 设置弹窗'],
       review: ['复习计划', '三区队列 + 做题冲刺'],
       secondbrain: ['第二大脑', '卡片网络 · AI 对话'],
       'settings-panel': ['设置面板', '全域设置 · 行为单源'],

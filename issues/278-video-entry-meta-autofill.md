@@ -24,7 +24,8 @@
 1. `parseBvid(input): string | null` —— 规范正则 `BV[0-9A-Za-z]{10}`；接受完整链接（`bilibili.com/video/BV…`）与裸 BV 号。**统一口径**：现仓存在 `{8,12}`（`ui.ts:106` 展示用）、`+`（`news-data.ts:292`）、`{10}`（CLI `tools/bili-downloader/core.js:181-184`）三套写法，本模块取 10 位为唯一判据；展示函数 `shortUrlText` 本次不动。
 2. `fetchVideoMeta(url): Promise<{ title?: string; uploader?: string } | null>`：
    - **B 站 video 链接 / 裸 BV 号** → `requestUrl('https://api.bilibili.com/x/web-interface/view?bvid=<BV>')`（10s 超时，`Promise.race` 范式）→ `code === 0` 时取 `data.title` / `data.owner.name`；非 2xx / `code !== 0` / 异常 → 落到 3。
-   - **其他 http(s) URL（含 b23.tv 短链、space 主页）** → 只走标题兜底：`fetchPageTitle(url)` + `cleanSourceTitle`，`uploader` 留空。
+   - **B 站域 URL 但无 BV 字样（b23.tv 短链、space 主页）** → 只走标题兜底：`fetchPageTitle(url)` + `cleanSourceTitle`，`uploader` 留空。
+   - **非 B 站 http(s) URL** → 直接 `null`，零网络请求（Q4 拍板「非 B 站链接只剥 utm/spm 跟踪参数、不联网抓取」；初稿 §2 曾误写为全站标题兜底，2026-09-12 实施收口时纠偏对齐）。
    - **非 URL 文本** → 直接 `null`，零网络请求。
    - 全程静默：不 notice、不 alert；调用方拿不到就什么都不回填。
    - 已知限制（写下以备忘）：`b23.tv` 短链无法解析出 bvid（Obsidian `requestUrl` 响应无 `url` 字段、看不到重定向目标），故短链只抓标题、UP主 留空；下载阶段 CLI 的 `[bz-info]` 会按「只补空」补齐 UP主（见 §2.4）。
@@ -49,7 +50,7 @@
   - view API 成功 → `{title, uploader}`；
   - `code !== 0` / 412 / 网络异常 → 回退页面标题（剔 B 站尾巴）、`uploader` 空；
   - 两条路都失败 → `null`；
-  - 非 B 站 URL → 只标题兜底；非 URL 文本 → `null` 且 `requestUrl` 零调用；
+  - 非 B 站 URL → `null` 且 `requestUrl` 零调用（Q4 拍板：只净化不联网）；B 站域无 BV 字样 URL（b23.tv 短链等）→ 标题兜底；非 URL 文本 → `null` 且零调用；
   - `parseBvid`：完整链接 / 裸号 / 非 10 位 / 无匹配。
 - `tests/knowledge/ui.test.ts`（`vi.useFakeTimers`）：输入带 `spm_id_from`+`vd_source` 的 B 站链接 → 450ms 后输入框值已被净化、标题/UP主 回填；标题已有值不被覆盖；改输入后旧响应被丢弃；粘贴后立即保存仍写入净化 URL。
 - `tests/knowledge/data.test.ts:62-69`：`normalizeUrl` 断言随新契约更新（原用例仍然通过，补带参用例与注释）。
@@ -65,9 +66,9 @@
 
 ## 验收
 
-- [ ] 粘贴 B 站分享链接（带 `spm_id_from`/`vd_source`）→ 输入框自动变干净、标题与 UP主 回填，全程无 toast
-- [ ] 手填标题后再改 URL：手填值不被覆盖；清空标题后改 URL：被回填
-- [ ] 非 B 站链接只净化不联网抓取；抓取失败完全静默；弹窗关闭后无迟到回填
-- [ ] 落库 `knowledge.json` 与新生成文献笔记 frontmatter `url` 均为净化值
-- [ ] 批处理跑完，「只补空」不覆盖手填标题、UP主 仍能补齐
-- [ ] 全量门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 自审 + diff 审查 + 主仓 `pnpm run build` 部署
+- [x] 粘贴 B 站分享链接（带 `spm_id_from`/`vd_source`）→ 输入框自动变干净、标题与 UP主 回填，全程无 toast（评审壳 selftest：`prototypes/knowledge/prototype.html?selftest=1` PASS 9/FAIL 0，含 URL 净化写回 / view API 罐头回填 / 零通知四断言；`tests/knowledge/ui.test.ts` 防抖用例同证）
+- [x] 手填标题后再改 URL：手填值不被覆盖；清空标题后改 URL：被回填（`tests/knowledge/ui.test.ts` 防抖回填用例「只补空」断言 + 编辑态同款）
+- [x] 非 B 站链接只净化不联网抓取（2026-09-12 收口纠偏：联网范围收窄为仅 B 站域 `bilibili.com`/`b23.tv`，非 B 站 URL 零请求——`tests/knowledge/video-meta.test.ts`「非 B 站 URL → null 且零请求」用例；抓取失败完全静默，实现全程零 notice，双失败/风控/超时用例同证）；弹窗关闭后无迟到回填（`tests/knowledge/ui.test.ts` 过期/关弹窗丢弃断言）
+- [x] 落库 `knowledge.json` 与新生成文献笔记 frontmatter `url` 均为净化值（`normalizeUrl` 单源收口：addTask 落库即净化（`tests/knowledge/ui.test.ts` 粘贴立即保存用例），note-gen frontmatter `url` 引用任务同值，链路无第二入口；真机整链生成待真机复核）
+- [x] 批处理跑完，「只补空」不覆盖手填标题、UP主 仍能补齐（`tests/knowledge/processor.test.ts` issue 278 用例）
+- [ ] 全量门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 自审 + diff 审查 + 主仓 `pnpm run build` 部署（worktree 内已全绿：全量测试除 master 既有红外零新增、tsc 零错误；主仓构建部署按工作流归主仓库侧）

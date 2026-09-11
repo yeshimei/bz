@@ -1,5 +1,5 @@
-/* 源指纹 09d0f5ac62674d40 · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 fdee43c225a46d25 · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -7746,6 +7746,1089 @@ var BZW_memo = (() => {
     }
   });
 
+  // src/pomodoro/state.ts
+  function createInitialState() {
+    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
+  }
+  function resumePhase(state2, now) {
+    return {
+      state: { ...state2, paused: false, pausedBy: void 0, remaining: 0, endTime: now + state2.remaining * 1e3 },
+      event: { type: "started", phase: state2.phase }
+    };
+  }
+  function activePhase(phase) {
+    return phase === "idle" ? "focus" : phase;
+  }
+  function phaseDurationSec(phase, d) {
+    if (phase === "short-break") return d.shortBreakMin * 60;
+    if (phase === "long-break") return d.longBreakMin * 60;
+    return d.workMin * 60;
+  }
+  function breakPhase(count, d) {
+    return count >= d.longBreakInterval ? "long-break" : "short-break";
+  }
+  function startPhase(state2, phase, now, d) {
+    return {
+      state: { ...state2, phase, endTime: now + phaseDurationSec(phase, d) * 1e3, paused: false, pausedBy: void 0, remaining: 0 },
+      event: { type: "started", phase }
+    };
+  }
+  function completePhase(state2, now, d, o) {
+    const phase = state2.phase;
+    const isFocus = phase === "focus";
+    let count = state2.cycleFocusCount;
+    let historyEntry;
+    let longBreak = false;
+    if (isFocus) {
+      count += 1;
+      longBreak = count >= d.longBreakInterval;
+      if (longBreak) count = 0;
+      historyEntry = { ts: now, duration: d.workMin * 60, ...state2.task ? { task: state2.task } : {} };
+    }
+    let next;
+    let autoStarted = false;
+    if (isFocus) {
+      if (o.autoSkipBreak) {
+        next = "focus";
+        autoStarted = true;
+      } else {
+        next = longBreak ? "long-break" : "short-break";
+        autoStarted = o.autoCycle;
+      }
+    } else {
+      next = "focus";
+      autoStarted = o.autoCycle;
+    }
+    const { task: _settled, ...rest } = state2;
+    const nextState = { ...rest, phase: next, cycleFocusCount: count };
+    const res = autoStarted ? startPhase(nextState, next, now, d) : {
+      state: { ...nextState, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
+      event: { type: "none" }
+    };
+    return {
+      ...res,
+      event: {
+        type: "phase-completed",
+        completedPhase: phase,
+        nextPhase: next,
+        autoStarted,
+        longBreak,
+        ...historyEntry ? { historyEntry } : {}
+      }
+    };
+  }
+  function transition(state2, action, now, d, o) {
+    if (action === "start") {
+      if (state2.paused) return resumePhase(state2, now);
+      if (state2.endTime !== null) return { state: state2, event: { type: "none" } };
+      const phase = activePhase(state2.phase);
+      return startPhase(state2, phase, now, d);
+    }
+    if (action === "pause") {
+      if (state2.endTime === null) return { state: state2, event: { type: "none" } };
+      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
+      return {
+        // 手动暂停：清除可能残留的冻结来源标记（pausedBy 只在冻结暂停期间有效）
+        state: { ...state2, paused: true, pausedBy: void 0, remaining: Math.ceil((state2.endTime - now) / 1e3), endTime: null },
+        event: { type: "none" }
+      };
+    }
+    if (action === "resume") {
+      if (!state2.paused) return { state: state2, event: { type: "none" } };
+      return resumePhase(state2, now);
+    }
+    if (action === "reset") {
+      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
+      const phase = activePhase(state2.phase);
+      return {
+        state: { ...state2, phase, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(phase, d) },
+        event: { type: "none" }
+      };
+    }
+    if (action === "skip") {
+      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
+      const phase = activePhase(state2.phase);
+      let next;
+      if (phase === "focus") next = o.autoSkipBreak ? "focus" : breakPhase(state2.cycleFocusCount, d);
+      else next = "focus";
+      const { task: _dropped, ...rest } = state2;
+      return {
+        state: { ...rest, phase: next, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(next, d) },
+        event: { type: "phase-completed", completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false }
+      };
+    }
+    if (action === "tick") {
+      if (state2.endTime === null || now < state2.endTime) return { state: state2, event: { type: "none" } };
+      return completePhase(state2, now, d, o);
+    }
+    return { state: state2, event: { type: "none" } };
+  }
+  function idleState() {
+    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
+  }
+  function recover(state2, history2, now, d, o) {
+    if (state2.endTime === null || now < state2.endTime) return { state: state2, history: history2.slice(), events: [] };
+    return { state: idleState(), history: history2.slice(), events: [] };
+  }
+  var PHASES;
+  var init_state2 = __esm({
+    "src/pomodoro/state.ts"() {
+      PHASES = ["idle", "focus", "short-break", "long-break"];
+    }
+  });
+
+  // src/pomodoro/data.ts
+  function getPomodoroFilePath() {
+    var _a2;
+    return storageFile("pomodoro.json", ((_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath) || "CONFIG/STORAGE");
+  }
+  function defaultPomodoroData() {
+    return { version: 1, state: createInitialState(), history: [] };
+  }
+  function normalizeData(raw) {
+    const def = defaultPomodoroData();
+    if (!raw || typeof raw !== "object") return def;
+    const state2 = normalizeState(raw.state);
+    const history2 = Array.isArray(raw.history) ? raw.history.filter((h) => h && typeof h.ts === "number" && typeof h.duration === "number").map((h) => ({
+      ts: h.ts,
+      duration: h.duration,
+      ...typeof h.task === "string" && h.task ? { task: h.task } : {}
+    })) : [];
+    return { version: 1, state: state2, history: history2 };
+  }
+  function normalizeState(raw) {
+    const def = createInitialState();
+    if (!raw || typeof raw !== "object") return def;
+    return {
+      phase: PHASES.includes(raw.phase) ? raw.phase : def.phase,
+      endTime: typeof raw.endTime === "number" ? raw.endTime : def.endTime,
+      remaining: typeof raw.remaining === "number" && raw.remaining >= 0 ? raw.remaining : def.remaining,
+      paused: typeof raw.paused === "boolean" ? raw.paused : def.paused,
+      // 冻结来源标记：仅认 'autopause'，旧数据无此字段/非法值 → undefined（手动暂停语义）
+      pausedBy: raw.pausedBy === "autopause" ? "autopause" : void 0,
+      cycleFocusCount: typeof raw.cycleFocusCount === "number" && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
+      // 归属任务标题：仅字符串非空保留（旧数据/非法值 → undefined）
+      task: typeof raw.task === "string" && raw.task ? raw.task : void 0
+    };
+  }
+  var PomodoroDataManager;
+  var init_data2 = __esm({
+    "src/pomodoro/data.ts"() {
+      init_settings_provider();
+      init_storage();
+      init_state2();
+      PomodoroDataManager = class {
+        constructor(app) {
+          this.app = app;
+        }
+        /**
+         * 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件留档 CONFIG/.CORRUPT 后重建默认）。
+         * 读也入 core per-path 串行队列：读是「load → 改 state → save」事务的读半边，
+         * 排在未落盘的写任务之后才能读到新值（读写同队列，消灭「读-写窗口交错」）。
+         */
+        async load() {
+          const raw = await enqueueFileTask(
+            getPomodoroFilePath(),
+            () => jsonFileStore(getPomodoroFilePath(), {
+              defaultValue: () => defaultPomodoroData(),
+              app: this.app
+            }).read()
+          );
+          return normalizeData(raw);
+        }
+        /**
+         * 保存（统一数据读写层：存在 modify / 不存在 create+建目录）。
+         * D3 可靠写契约原语 1 收编：整写入 core per-path 串行队列（键 = pomodoro.json 路径）——
+         * 计时器心跳保存与用户操作保存并发时按序落盘，后写者不再用陈旧基线覆盖先写者；
+         * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
+         */
+        async save(data) {
+          await enqueueFileTask(
+            getPomodoroFilePath(),
+            () => jsonFileStore(getPomodoroFilePath(), { app: this.app }).write(data)
+          );
+        }
+      };
+    }
+  });
+
+  // src/pomodoro/sound.ts
+  function playSound(kind, volume = 100) {
+    const w = typeof window !== "undefined" ? window : globalThis;
+    const AC = w.AudioContext || w.webkitAudioContext;
+    if (!AC) return;
+    if (volume <= 0) return;
+    try {
+      const cfg = SOUND_CONFIG[kind];
+      const ctx = new AC();
+      if (ctx.state === "suspended" && typeof ctx.resume === "function") void ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = cfg.freq;
+      const peak = 0.8 * (Math.max(1, Math.min(100, volume)) / 100);
+      const t = ctx.currentTime;
+      gain.gain.setValueAtTime(1e-3, t);
+      gain.gain.exponentialRampToValueAtTime(peak, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(1e-3, t + cfg.dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + cfg.dur + 0.02);
+      const ctxRef = ctx;
+      setTimeout(() => {
+        void ctxRef.close();
+      }, cfg.dur * 1e3 + 300);
+    } catch (e) {
+    }
+  }
+  var SOUND_CONFIG;
+  var init_sound = __esm({
+    "src/pomodoro/sound.ts"() {
+      SOUND_CONFIG = {
+        "focus-start": { freq: 880, dur: 0.25 },
+        "short-break-start": { freq: 523, dur: 0.3 },
+        "long-break-start": { freq: 392, dur: 0.45 },
+        pause: { freq: 440, dur: 0.2 }
+      };
+    }
+  });
+
+  // src/pomodoro/statusbar.ts
+  function syncPomodoroStatusBar(state2, remainSec) {
+    if (!statusEl) return;
+    const running2 = state2.endTime !== null;
+    const paused = !running2 && state2.paused;
+    statusEl.classList.toggle("pomodoro-statusbar-idle", !running2 && !paused);
+    statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
+    statusEl.title = state2.task ? `番茄钟：${state2.task}` : "番茄钟";
+    if (textSpan) {
+      if (running2) {
+        const m = Math.floor(remainSec / 60);
+        const s = remainSec % 60;
+        textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
+      } else if (paused) {
+        textSpan.textContent = "已暂停";
+      } else {
+        textSpan.textContent = "";
+      }
+    }
+  }
+  var statusEl, textSpan;
+  var init_statusbar = __esm({
+    "src/pomodoro/statusbar.ts"() {
+      init_fake_obsidian();
+      init_utils();
+      statusEl = null;
+      textSpan = null;
+    }
+  });
+
+  // src/pomodoro/stats.ts
+  function dayKey(ts) {
+    return localDayKey(ts);
+  }
+  function todayCount(history2, now) {
+    const today = dayKey(now);
+    return history2.filter((h) => dayKey(h.ts) === today).length;
+  }
+  function todayMinutes(history2, now) {
+    const today = dayKey(now);
+    return Math.round(history2.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
+  }
+  function last7Days(history2, now) {
+    const counts = /* @__PURE__ */ new Map();
+    const minutes = /* @__PURE__ */ new Map();
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    for (let i = 6; i >= 0; i--) {
+      const day = new Date(d);
+      day.setDate(day.getDate() - i);
+      const key = dayKey(day.getTime());
+      counts.set(key, 0);
+      minutes.set(key, 0);
+    }
+    for (const h of history2) {
+      const key = dayKey(h.ts);
+      if (counts.has(key)) {
+        counts.set(key, counts.get(key) + 1);
+        minutes.set(key, minutes.get(key) + h.duration / 60);
+      }
+    }
+    return Array.from(counts.entries()).map(([date, count]) => ({
+      date,
+      count,
+      minutes: Math.round(minutes.get(date) || 0)
+    }));
+  }
+  var init_stats = __esm({
+    "src/pomodoro/stats.ts"() {
+      init_utils();
+    }
+  });
+
+  // src/pomodoro/config.ts
+  var PRESETS, CUSTOM_PRESET_ID;
+  var init_config = __esm({
+    "src/pomodoro/config.ts"() {
+      PRESETS = {
+        classic: { label: "经典标准", workMin: 25, shortBreakMin: 5, longBreakMin: 15 },
+        neuro: { label: "神经专注", workMin: 30, shortBreakMin: 7, longBreakMin: 20 },
+        flow: { label: "深度心流", workMin: 50, shortBreakMin: 10, longBreakMin: 25 },
+        creative: { label: "创意激发", workMin: 40, shortBreakMin: 12, longBreakMin: 20 },
+        beginner: { label: "初学入门", workMin: 15, shortBreakMin: 5, longBreakMin: 12 },
+        study: { label: "高效学习", workMin: 30, shortBreakMin: 5, longBreakMin: 15 },
+        sprint: { label: "敏捷冲刺", workMin: 20, shortBreakMin: 4, longBreakMin: 12 },
+        marathon: { label: "马拉松式", workMin: 45, shortBreakMin: 15, longBreakMin: 30 },
+        recovery: { label: "疲劳恢复", workMin: 20, shortBreakMin: 10, longBreakMin: 20 },
+        intense: { label: "高强度", workMin: 50, shortBreakMin: 5, longBreakMin: 15 },
+        balanced: { label: "平衡模式", workMin: 35, shortBreakMin: 7, longBreakMin: 18 }
+      };
+      CUSTOM_PRESET_ID = "custom";
+    }
+  });
+
+  // src/core/pomodoro-phase.ts
+  function isFocusingPhase(p) {
+    return p === "focusing" || p === "paused";
+  }
+  var init_pomodoro_phase = __esm({
+    "src/core/pomodoro-phase.ts"() {
+    }
+  });
+
+  // src/pomodoro/ui.ts
+  var ui_exports2 = {};
+  __export(ui_exports2, {
+    POMODORO_SKIN_THEMES: () => POMODORO_SKIN_THEMES,
+    closePomodoro: () => closePomodoro,
+    ensurePomodoro: () => ensurePomodoro,
+    isFocusing: () => isFocusing,
+    menuPhase: () => menuPhase,
+    openPomodoro: () => openPomodoro,
+    pomodoroSettingsSchema: () => pomodoroSettingsSchema,
+    skipBreak: () => skipBreak,
+    startFocusForTask: () => startFocusForTask,
+    toggleFocus: () => toggleFocus,
+    togglePause: () => togglePause,
+    unloadPomodoro: () => unloadPomodoro
+  });
+  function applySkinClass() {
+    var _a2;
+    const popup = document.getElementById("pomodoro-popup");
+    if (!popup) return;
+    const cur = String((_a2 = tryGetSettings().pomodoroSkinTheme) != null ? _a2 : "");
+    const skin = POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : "tomato";
+    for (const t of POMODORO_SKIN_THEMES) popup.classList.toggle(`pomodoro-skin-${t.value}`, t.value === skin);
+  }
+  function durations() {
+    const s = tryGetSettings();
+    const num = (v, def) => {
+      const n = parseInt(v != null ? v : "", 10);
+      return Number.isFinite(n) && n > 0 ? n : def;
+    };
+    const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
+    return {
+      workMin: preset ? preset.workMin : num(s.pomodoroWorkMin, 25),
+      shortBreakMin: preset ? preset.shortBreakMin : num(s.pomodoroShortBreakMin, 5),
+      longBreakMin: preset ? preset.longBreakMin : num(s.pomodoroLongBreakMin, 15),
+      longBreakInterval: num(s.pomodoroLongBreakInterval, 4)
+    };
+  }
+  function options() {
+    const s = tryGetSettings();
+    return {
+      forceFocus: !!s.pomodoroForceFocus,
+      autoCycle: !!s.pomodoroAutoCycle,
+      autoSkipBreak: !!s.pomodoroAutoSkipBreak
+    };
+  }
+  function phaseLabel(phase) {
+    if (phase === "focus") return "专注";
+    if (phase === "short-break") return "短休息";
+    if (phase === "long-break") return "长休息";
+    return "番茄钟";
+  }
+  function phaseText(phase, count, d) {
+    if (phase === "focus") return `专注 ${count + 1}/${d.longBreakInterval}`;
+    return phaseLabel(phase);
+  }
+  function playPhaseSound(phase) {
+    const s = tryGetSettings();
+    if (s.pomodoroSound !== false) {
+      const kind = phase === "focus" ? "focus-start" : phase === "long-break" ? "long-break-start" : "short-break-start";
+      playSound(kind, pomodoroVolume());
+    }
+  }
+  function notifyPhaseStarted(phase) {
+    const d = durations();
+    if (phase === "focus") {
+      notice("专注开始", "success");
+    } else if (phase === "long-break") {
+      notice(`长休息开始：${d.longBreakMin} 分钟`, "success");
+    } else {
+      notice(`休息开始：${d.shortBreakMin} 分钟`, "success");
+    }
+    playPhaseSound(phase);
+  }
+  function notifyPaused() {
+    notice("已暂停专注", "pause");
+    const s = tryGetSettings();
+    if (s.pomodoroSound !== false) playSound("pause", pomodoroVolume());
+  }
+  function breakLabel(phase, d) {
+    return phase === "long-break" ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
+  }
+  function notifyPhaseComplete(e) {
+    const d = durations();
+    playPhaseSound(e.nextPhase);
+    if (e.autoStarted) {
+      if (e.completedPhase === "focus") {
+        notice(e.nextPhase === "focus" ? "专注完成：开始下一轮专注" : `专注完成：${breakLabel(e.nextPhase, d)}`, "success");
+      } else {
+        notice("休息结束：开始专注", "success");
+      }
+      return;
+    }
+    if (e.completedPhase === "focus") {
+      notify(`专注完成：${breakLabel(e.nextPhase, d)}`, {
+        type: "success",
+        duration: 6e3,
+        action: { label: "开始休息", onClick: () => applyAction("start") }
+      });
+    } else {
+      notify("休息结束", {
+        type: "success",
+        duration: 6e3,
+        action: { label: "开始专注", onClick: () => applyAction("start") }
+      });
+    }
+  }
+  function pomodoroVolume() {
+    const v = tryGetSettings().pomodoroVolume;
+    return typeof v === "number" && v >= 0 ? v : 100;
+  }
+  function remainingSec() {
+    if (state.endTime !== null) return Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
+    if (state.phase === "idle" && state.remaining === 0) return phaseDurationSec("focus", durations());
+    return state.remaining;
+  }
+  function fmt(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${pad2(m)}:${pad2(s)}`;
+  }
+  function renderStats() {
+    const now = Date.now();
+    const todayEl = document.getElementById("pomodoro-today");
+    if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
+    const weekEl = document.getElementById("pomodoro-week");
+    if (!weekEl) return;
+    const days = last7Days(history, now);
+    const key = days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
+    if (key === lastStatsKey) return;
+    lastStatsKey = key;
+    const max = Math.max(1, ...days.map((d) => d.count));
+    weekEl.innerHTML = "";
+    for (const d of days) {
+      const bar = document.createElement("div");
+      bar.className = "pomodoro-stat-day";
+      bar.title = `${d.date}：${d.count} 个 · ${d.minutes} 分钟`;
+      const col = document.createElement("div");
+      col.className = "pomodoro-stat-col";
+      const h = document.createElement("div");
+      h.className = "pomodoro-stat-bar";
+      h.style.height = `${Math.max(2, Math.round(d.count / max * 40))}px`;
+      col.appendChild(h);
+      const label = document.createElement("span");
+      label.className = "pomodoro-stat-label";
+      label.textContent = d.date.slice(8);
+      col.appendChild(label);
+      bar.appendChild(col);
+      weekEl.appendChild(bar);
+    }
+  }
+  function render() {
+    const d = durations();
+    const remain = remainingSec();
+    syncPomodoroStatusBar(state, remain);
+    if (!maskEl) return;
+    const total = phaseDurationSec(state.phase === "idle" ? "focus" : state.phase, d);
+    const C = 2 * Math.PI * 52;
+    const progress = total > 0 ? 1 - remain / total : 1;
+    const circle = document.getElementById("pomodoro-ring-progress");
+    if (circle) {
+      circle.setAttribute("stroke-dasharray", String(C));
+      circle.setAttribute("stroke-dashoffset", String(C * (1 - progress)));
+    }
+    const phaseEl = document.getElementById("pomodoro-phase");
+    if (phaseEl) {
+      const label = phaseLabel(state.phase);
+      if (phaseEl.dataset.label !== label) {
+        phaseEl.dataset.label = label;
+        phaseEl.innerHTML = "";
+        if (state.phase === "idle") {
+          const ic2 = document.createElement("span");
+          ic2.className = "pomodoro-phase-icon";
+          setIcon(ic2, "timer");
+          phaseEl.appendChild(ic2);
+          phaseEl.appendChild(document.createTextNode(label));
+        } else {
+          phaseEl.textContent = label;
+        }
+      }
+    }
+    renderCycleDots(d);
+    renderTaskLine();
+    const timeEl = document.getElementById("pomodoro-time");
+    if (timeEl) timeEl.textContent = fmt(remain);
+    renderStats();
+    updateButtons();
+    applySkinClass();
+  }
+  function renderCycleDots(d) {
+    const cycleEl = document.getElementById("pomodoro-cycle");
+    if (!cycleEl) return;
+    const total = Math.max(1, d.longBreakInterval);
+    if (cycleEl.childElementCount !== total) {
+      cycleEl.innerHTML = "";
+      for (let i = 0; i < total; i++) {
+        const dot = document.createElement("span");
+        dot.className = "pomodoro-cycle-dot";
+        cycleEl.appendChild(dot);
+      }
+    }
+    Array.from(cycleEl.children).forEach((dot, i) => {
+      dot.className = "pomodoro-cycle-dot" + (i < state.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
+    });
+  }
+  function renderTaskLine() {
+    const taskEl = document.getElementById("pomodoro-task");
+    if (!taskEl) return;
+    if (state.task) {
+      if (taskEl.textContent !== state.task) taskEl.textContent = state.task;
+      taskEl.title = state.task;
+    } else {
+      taskEl.textContent = "";
+      taskEl.removeAttribute("title");
+    }
+  }
+  function updateButtons() {
+    const startBtn = document.getElementById("pomodoro-btn-start");
+    if (!startBtn) return;
+    const running2 = state.endTime !== null;
+    startBtn.textContent = running2 ? "暂停" : state.paused ? "继续" : "开始";
+    const locked = options().forceFocus && state.phase === "focus" && (running2 || state.paused);
+    const startLocked = locked && !(state.paused && state.pausedBy === "autopause");
+    startBtn.disabled = startLocked;
+    const resetBtn = document.getElementById("pomodoro-btn-reset");
+    const skipBtn = document.getElementById("pomodoro-btn-skip");
+    if (resetBtn) resetBtn.disabled = locked;
+    if (skipBtn) skipBtn.disabled = locked;
+  }
+  function applyAction(action) {
+    const r = transition(state, action, Date.now(), durations(), options());
+    state = r.state;
+    if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
+    if (r.event.type === "phase-completed") {
+      if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
+      if (action === "tick") notifyPhaseComplete(r.event);
+      if (r.event.completedPhase === "focus" && r.event.historyEntry) {
+        emitDomainEvent("pomodoro", { kind: "focus-done", minutes: durations().workMin });
+      }
+    }
+    if (action === "pause" && state.paused) notifyPaused();
+    if (r.event.type !== "none" || action === "pause" && state.paused) void save();
+    ensureTick();
+    render();
+  }
+  function onTick() {
+    applyAction("tick");
+  }
+  function autoPauseEnabled() {
+    return tryGetSettings().pomodoroAutoPauseOnHide !== false;
+  }
+  function freezeRunning(s, now) {
+    if (s.endTime === null || s.paused) return s;
+    return {
+      ...s,
+      paused: true,
+      pausedBy: "autopause",
+      remaining: Math.max(0, Math.ceil((s.endTime - now) / 1e3)),
+      endTime: null
+    };
+  }
+  function unfreezeRunning(s, now) {
+    if (!s.paused) return s;
+    return { ...s, paused: false, pausedBy: void 0, remaining: 0, endTime: now + s.remaining * 1e3 };
+  }
+  function pauseOnHidden() {
+    if (!autoPauseEnabled()) return;
+    const now = Date.now();
+    if (state.endTime !== null && !state.paused) {
+      state = freezeRunning(state, now);
+      autoPauseMain = true;
+    }
+    if (autoPauseMain) {
+      void save();
+      render();
+    }
+  }
+  function resumeOnVisible() {
+    const now = Date.now();
+    if (autoPauseMain && state.paused) {
+      state = unfreezeRunning(state, now);
+      autoPauseMain = false;
+      void save();
+      render();
+      return;
+    }
+    render();
+  }
+  function registerVisibilityListener() {
+    if (visibilityHandler) return;
+    visibilityHandler = () => {
+      if (document.hidden) pauseOnHidden();
+      else resumeOnVisible();
+    };
+    document.addEventListener("visibilitychange", visibilityHandler);
+  }
+  function unregisterVisibilityListener() {
+    if (visibilityHandler) {
+      document.removeEventListener("visibilitychange", visibilityHandler);
+      visibilityHandler = null;
+    }
+  }
+  function ensureTick() {
+    const needsTick = state.endTime !== null;
+    if (needsTick && timerId === null) {
+      timerId = window.setInterval(onTick, 1e3);
+    } else if (!needsTick && timerId !== null) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+  }
+  async function save() {
+    if (dataManager) await dataManager.save({ version: 1, state, history });
+  }
+  async function initData() {
+    const data = await dataManager.load();
+    const r = recover(data.state, data.history, Date.now(), durations(), options());
+    state = r.state;
+    history = r.history;
+    const mainChanged = data.state.endTime !== null && r.state.endTime === null;
+    if (mainChanged) await dataManager.save({ version: 1, state, history });
+    loaded = true;
+  }
+  function pomodoroSettingsSchema() {
+    const soundToggle = {
+      get: () => tryGetSettings().pomodoroSound !== false,
+      set: (v) => {
+        getSettings().pomodoroSound = v;
+      },
+      save: () => saveSettings()
+    };
+    const autoPauseToggle = {
+      get: () => tryGetSettings().pomodoroAutoPauseOnHide !== false,
+      set: (v) => {
+        getSettings().pomodoroAutoPauseOnHide = v;
+      },
+      save: () => saveSettings()
+    };
+    return {
+      groups: [
+        {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "pomodoroSkin" }, options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }] },
+            // 面板主题：10 套皮（清单单源 = POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）
+            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` })) }
+          ]
+        },
+        {
+          icon: "timer",
+          name: "时间方案",
+          rows: [
+            {
+              type: "select",
+              name: "预设方案",
+              desc: "选择现成的工作与休息时长组合",
+              binding: { key: "pomodoroPreset" },
+              options: [
+                ...Object.entries(PRESETS).map(([id, p]) => ({
+                  value: id,
+                  label: `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`
+                })),
+                { value: CUSTOM_PRESET_ID, label: "自定义" }
+              ],
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "工作时长",
+              desc: "自定义方案的工作阶段分钟数",
+              binding: numStrBinding("pomodoroWorkMin", 25),
+              min: 1,
+              max: 120,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "短休息时长",
+              desc: "自定义方案的短休息分钟数",
+              binding: numStrBinding("pomodoroShortBreakMin", 5),
+              min: 1,
+              max: 60,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "长休息时长",
+              desc: "自定义方案的长休息分钟数",
+              binding: numStrBinding("pomodoroLongBreakMin", 15),
+              min: 1,
+              max: 60,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            { type: "number", name: "长休息间隔", desc: "每隔几个专注进入一次长休息", binding: numStrBinding("pomodoroLongBreakInterval", 4), min: 1, max: 20, step: 1, onChange: () => render() }
+          ]
+        },
+        {
+          icon: "sliders-horizontal",
+          name: "行为",
+          rows: [
+            { type: "toggle", name: "强制专注模式", desc: "专注进行中无法暂停跳过或重置", binding: { key: "pomodoroForceFocus" }, onChange: () => render() },
+            { type: "toggle", name: "自动循环", desc: "阶段结束后自动开始下一阶段", binding: { key: "pomodoroAutoCycle" }, onChange: () => render() },
+            { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
+            { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
+            { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
+            // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
+            {
+              type: "slider",
+              name: "提示音音量",
+              desc: "提示音大小，默认最大",
+              binding: { get: () => {
+                var _a2;
+                return (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100;
+              }, set: (v) => {
+                getSettings().pomodoroVolume = v;
+              }, save: () => saveSettings() },
+              min: 0,
+              max: 100,
+              step: 5,
+              actions: [{ text: "试听", onClick: () => {
+                var _a2;
+                return playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
+              } }]
+            },
+            {
+              type: "select",
+              name: "打开时恢复方式",
+              desc: "启动时正在倒计时，选择弹窗提醒或后台继续",
+              binding: { key: "pomodoroRestoreMode" },
+              options: [
+                { value: "background", label: "后台继续" },
+                { value: "popup", label: "自动弹窗" }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+  }
+  function bindEvents() {
+    const startBtn = document.getElementById("pomodoro-btn-start");
+    startBtn.addEventListener("click", () => applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start"));
+    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => applyAction("reset"));
+    document.getElementById("pomodoro-btn-skip").addEventListener("click", () => applyAction("skip"));
+    const popup = document.getElementById("pomodoro-popup");
+    popup.addEventListener("keydown", (e) => {
+      if (e.key !== " ") return;
+      const t = e.target;
+      const tag = t.tagName;
+      if (tag === "BUTTON" || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) return;
+      e.preventDefault();
+      applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start");
+    });
+  }
+  function buildDOM() {
+    var _a2;
+    const mask = document.createElement("div");
+    mask.id = "pomodoro-mask";
+    mask.innerHTML = `
+    <div id="pomodoro-popup" tabindex="-1">
+      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
+        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
+        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
+      <div id="pomodoro-phase"></div>
+      <div id="pomodoro-task" class="pomodoro-task"></div>
+      <div id="pomodoro-time"></div>
+      <div class="pomodoro-controls">
+        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
+        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
+        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
+      </div>
+      <div class="pomodoro-stats">
+        <div id="pomodoro-today"></div>
+        <div id="pomodoro-week" class="pomodoro-week"></div>
+      </div>
+    </div>`;
+    mask.style.zIndex = String(allocZ());
+    document.body.appendChild(mask);
+    maskEl = mask;
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) closePomodoro();
+    });
+    escHandle = escManager.register("pomodoro", {
+      isVisible: () => maskEl !== null,
+      close: closePomodoro
+    });
+    bindEvents();
+    render();
+    (_a2 = document.getElementById("pomodoro-popup")) == null ? void 0 : _a2.focus();
+  }
+  function initDataOnce() {
+    if (loaded) return Promise.resolve();
+    initInflight != null ? initInflight : initInflight = initData().finally(() => {
+      initInflight = null;
+    });
+    return initInflight;
+  }
+  async function openPomodoro(app) {
+    appRef = app;
+    if (!dataManager) dataManager = new PomodoroDataManager(app);
+    if (!maskEl) {
+      openInflight != null ? openInflight : openInflight = (async () => {
+        await initDataOnce();
+        buildDOM();
+        ensureTick();
+      })();
+      try {
+        await openInflight;
+      } finally {
+        openInflight = null;
+      }
+    }
+    const popupEl2 = maskEl ? maskEl.querySelector("#pomodoro-popup") : null;
+    popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
+  }
+  async function ensurePomodoro(app) {
+    appRef = app;
+    if (!dataManager) dataManager = new PomodoroDataManager(app);
+    registerVisibilityListener();
+    if (!loaded) {
+      await initDataOnce();
+      if (state.endTime !== null) {
+        ensureTick();
+        render();
+        const remainSec = Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
+        notice(`番茄钟继续：${phaseText(state.phase, state.cycleFocusCount, durations())}，还剩 ${fmt(remainSec)}`);
+        const s = tryGetSettings();
+        if (s.pomodoroRestoreMode === "popup") void openPomodoro(app);
+      }
+    }
+  }
+  function closePomodoro() {
+    if (maskEl) {
+      maskEl.remove();
+      maskEl = null;
+    }
+    if (escHandle) {
+      escHandle.unregister();
+      escHandle = null;
+    }
+  }
+  async function startFocusForTask(app, taskTitle) {
+    await ensurePomodoro(app);
+    const o = options();
+    const d = durations();
+    if (state.phase === "short-break" || state.phase === "long-break") {
+      state = transition(state, "skip", Date.now(), d, o).state;
+      void save();
+      render();
+    }
+    if (state.endTime !== null) {
+      notice("已有专注计时中，本次不重复开始", "warning");
+      return;
+    }
+    if (o.forceFocus && state.paused && state.pausedBy !== "autopause") {
+      notice("强制专注模式暂停中，请先在番茄钟恢复", "warning");
+      return;
+    }
+    state = { ...state, task: taskTitle };
+    applyAction("start");
+  }
+  function isFocusing() {
+    return isFocusingPhase(menuPhase());
+  }
+  async function toggleFocus(app) {
+    await ensurePomodoro(app);
+    if (isFocusing()) {
+      const before = state;
+      applyAction("reset");
+      if (state === before) notice("强制专注模式中，请先在番茄钟面板操作", "warning");
+      else notice("专注已停止");
+      return;
+    }
+    if (state.phase === "short-break" || state.phase === "long-break") {
+      state = transition(state, "skip", Date.now(), durations(), options()).state;
+      void save();
+      render();
+    }
+    applyAction("start");
+  }
+  function menuPhase() {
+    if (state.phase === "short-break" || state.phase === "long-break") return "break";
+    if (state.phase !== "focus") return "idle";
+    if (state.paused) return "paused";
+    return state.endTime !== null ? "focusing" : "idle";
+  }
+  async function skipBreak(app) {
+    await ensurePomodoro(app);
+    if (state.phase !== "short-break" && state.phase !== "long-break") {
+      notice("当前不在休息阶段", "warning");
+      return;
+    }
+    state = transition(state, "skip", Date.now(), durations(), options()).state;
+    void save();
+    render();
+    applyAction("start");
+  }
+  async function togglePause(app) {
+    await ensurePomodoro(app);
+    if (state.endTime === null && !state.paused) {
+      notice("当前没有进行中的计时", "warning");
+      return;
+    }
+    applyAction(state.paused ? "resume" : "pause");
+  }
+  function unloadPomodoro() {
+    if (timerId !== null) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+    unregisterVisibilityListener();
+    autoPauseMain = false;
+    openInflight = null;
+    initInflight = null;
+    closePomodoro();
+    state = createInitialState();
+    history = [];
+    lastStatsKey = "";
+    dataManager = null;
+    appRef = null;
+    loaded = false;
+  }
+  var dataManager, state, history, loaded, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, POMODORO_SKIN_THEMES, lastStatsKey, initInflight, openInflight;
+  var init_ui2 = __esm({
+    "src/pomodoro/ui.ts"() {
+      init_fake_obsidian();
+      init_esc_manager();
+      init_z_order();
+      init_settings_provider();
+      init_notice();
+      init_settings_common();
+      init_data2();
+      init_sound();
+      init_statusbar();
+      init_stats();
+      init_config();
+      init_state2();
+      init_pomodoro_phase();
+      init_utils();
+      init_domain_bus();
+      dataManager = null;
+      state = createInitialState();
+      history = [];
+      loaded = false;
+      maskEl = null;
+      escHandle = null;
+      timerId = null;
+      appRef = null;
+      autoPauseMain = false;
+      visibilityHandler = null;
+      POMODORO_SKIN_THEMES = [
+        { value: "tomato", label: "番茄" },
+        { value: "ink", label: "墨白" },
+        { value: "grid", label: "方格纸" },
+        { value: "moss", label: "苔原" },
+        { value: "mist", label: "海雾" },
+        { value: "sand", label: "暖沙" },
+        { value: "citrus", label: "蜜柑" },
+        { value: "sakura", label: "樱粉" },
+        { value: "latte", label: "咖啡" },
+        { value: "night", label: "夜航" }
+      ];
+      lastStatsKey = "";
+      initInflight = null;
+      openInflight = null;
+    }
+  });
+
+  // src/pomodoro/index.ts
+  var pomodoro_exports = {};
+  __export(pomodoro_exports, {
+    ensurePomodoro: () => ensurePomodoro,
+    isFocusing: () => isFocusing,
+    menuPhase: () => menuPhase,
+    openPomodoro: () => openPomodoro,
+    skipBreak: () => skipBreak,
+    startFocusForTask: () => startFocusForTask,
+    toggleFocus: () => toggleFocus,
+    togglePause: () => togglePause,
+    unloadPomodoro: () => unloadPomodoro
+  });
+  var init_pomodoro = __esm({
+    "src/pomodoro/index.ts"() {
+      init_ui2();
+    }
+  });
+
+  // src/core/domain-icons.ts
+  var DOMAIN_ICONS;
+  var init_domain_icons = __esm({
+    "src/core/domain-icons.ts"() {
+      DOMAIN_ICONS = {
+        // 面板专属域（无对应命令）
+        global: "settings",
+        appearance: "palette",
+        ai: "sparkles",
+        // 域入口命令与面板导航共用
+        home: "layout-grid",
+        recap: "calendar-heart",
+        memo: "check-square",
+        belongings: "package",
+        clipping: "scissors",
+        favorites: "star",
+        diary: "notebook-pen",
+        "reading-report": "bar-chart-3",
+        cinema: "clapperboard",
+        bookshelf: "book-open",
+        review: "repeat-2",
+        secondbrain: "brain",
+        "auto-summary": "sparkles",
+        pomodoro: "timer",
+        attach: "folder-down",
+        encrypt: "lock",
+        "password-vault": "key",
+        smartcat: "cat",
+        knowledge: "list-video",
+        // 命令专属域
+        "settings-panel": "settings-2"
+      };
+    }
+  });
+
   // src/core/path-picker.ts
   function isExcludedPath(p) {
     if (!p) return false;
@@ -8124,6 +9207,151 @@ var BZW_memo = (() => {
       currentPopup = null;
       currentHandle = null;
       focusTimer = null;
+    }
+  });
+
+  // src/core/settings-modal.ts
+  function createSettingsGroup(container, opts) {
+    const group = document.createElement("div");
+    group.className = "bz-settings-group";
+    const head = document.createElement("div");
+    head.className = "bz-settings-group-head";
+    const icon2 = document.createElement("span");
+    icon2.className = "bz-settings-group-icon";
+    setIcon(icon2, opts.icon);
+    const name = document.createElement("span");
+    name.className = "bz-settings-group-name";
+    name.textContent = opts.name;
+    const count = document.createElement("span");
+    count.className = "bz-settings-group-count";
+    count.textContent = "0 项";
+    head.append(icon2, name, count);
+    const body = document.createElement("div");
+    body.className = "bz-settings-group-body";
+    group.append(head, body);
+    container.appendChild(group);
+    return body;
+  }
+  function isItemHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function refreshSettingsGroupCounts(content) {
+    content.querySelectorAll(".bz-settings-group").forEach((g) => {
+      const body = g.querySelector(".bz-settings-group-body");
+      const countEl = g.querySelector(".bz-settings-group-count");
+      if (!body || !countEl) return;
+      const n = [...body.querySelectorAll(".setting-item")].filter((el) => {
+        const h = el;
+        return !h.classList.contains("bz-setting-action-row") && !isItemHidden(h);
+      }).length;
+      countEl.textContent = `${n} 项`;
+      countEl.style.display = n > 0 ? "" : "none";
+    });
+  }
+  function markSettingSplitRows(container) {
+    container.querySelectorAll(".setting-item").forEach((el) => {
+      if (el.classList.contains("bz-path-picker-setting-row")) return;
+      const ctl = el.querySelector(".setting-item-control");
+      el.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
+    });
+  }
+  function closeSettingsModal() {
+    var _a2;
+    if (currentModal) {
+      const m = currentModal;
+      currentModal = null;
+      m.dispose();
+      (_a2 = m.onClose) == null ? void 0 : _a2.call(m);
+    }
+  }
+  function openSettingsModal(opts) {
+    var _a2;
+    closeSettingsModal();
+    const prevActive = document.activeElement;
+    const { mask, popup } = createOverlay({
+      maskId: "bz-settings-modal-mask",
+      popupId: "bz-settings-modal-popup",
+      // z-index 动态发号（ADR-0067）：原静态层规家族表随动态层级制退役，
+      // 全站规则只有一条——谁后显示谁在上（settings-modal 每次打开新建 DOM，创建即显示）
+      maxWidth: opts.maxWidth,
+      onMaskClick: () => closeSettingsModal()
+    });
+    const header = document.createElement("div");
+    header.className = "bz-settings-header";
+    const title = document.createElement("h3");
+    title.className = "bz-settings-title";
+    title.textContent = opts.title;
+    header.appendChild(title);
+    const content = document.createElement("div");
+    content.className = "bz-settings-content";
+    renderSettingsInto(content, (_a2 = opts.schema) != null ? _a2 : { groups: [] });
+    const hasVisibleItem = Array.from(content.querySelectorAll(".setting-item")).some(
+      (el) => !el.classList.contains("bz-setting-action-row") && !isItemHidden(el)
+    );
+    if (!hasVisibleItem) {
+      content.innerHTML = "";
+      const empty = document.createElement("div");
+      empty.className = "bz-settings-empty";
+      empty.textContent = opts.emptyText || "暂无设置项";
+      if (opts.emptyDesc) {
+        const desc = document.createElement("div");
+        desc.className = "bz-settings-empty-desc";
+        desc.textContent = opts.emptyDesc;
+        empty.appendChild(desc);
+      }
+      content.appendChild(empty);
+    }
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    const firstFocusable = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR)).find((el) => {
+      if (isItemHidden(el)) return false;
+      if (isMobileEnv()) {
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return false;
+      }
+      return true;
+    });
+    if (firstFocusable) firstFocusable.focus();
+    const handle = escManager.register("bz-settings-modal", {
+      isVisible: () => !!currentModal,
+      close: () => closeSettingsModal()
+    });
+    currentModal = {
+      mask,
+      popup,
+      onClose: opts.onClose,
+      dispose: () => {
+        mask.remove();
+        popup.remove();
+        handle.unregister();
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+    };
+  }
+  var FOCUSABLE_SELECTOR, currentModal;
+  var init_settings_modal = __esm({
+    "src/core/settings-modal.ts"() {
+      init_fake_obsidian();
+      init_dom();
+      init_esc_manager();
+      init_mobile();
+      init_settings_schema();
+      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      currentModal = null;
     }
   });
 
@@ -8558,1238 +9786,6 @@ var BZW_memo = (() => {
             this.warnedInitial = null;
           }
         }
-      };
-    }
-  });
-
-  // src/core/settings-modal.ts
-  function createSettingsGroup(container, opts) {
-    const group = document.createElement("div");
-    group.className = "bz-settings-group";
-    const head = document.createElement("div");
-    head.className = "bz-settings-group-head";
-    const icon2 = document.createElement("span");
-    icon2.className = "bz-settings-group-icon";
-    setIcon(icon2, opts.icon);
-    const name = document.createElement("span");
-    name.className = "bz-settings-group-name";
-    name.textContent = opts.name;
-    const count = document.createElement("span");
-    count.className = "bz-settings-group-count";
-    count.textContent = "0 项";
-    head.append(icon2, name, count);
-    const body = document.createElement("div");
-    body.className = "bz-settings-group-body";
-    group.append(head, body);
-    container.appendChild(group);
-    return body;
-  }
-  function isItemHidden(el) {
-    let cur = el;
-    while (cur && cur !== document.body) {
-      if (cur.classList.contains("bz-setting-hidden")) return true;
-      if (cur.style.display === "none") return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-  function refreshSettingsGroupCounts(content) {
-    content.querySelectorAll(".bz-settings-group").forEach((g) => {
-      const body = g.querySelector(".bz-settings-group-body");
-      const countEl = g.querySelector(".bz-settings-group-count");
-      if (!body || !countEl) return;
-      const n = [...body.querySelectorAll(".setting-item")].filter((el) => {
-        const h = el;
-        return !h.classList.contains("bz-setting-action-row") && !isItemHidden(h);
-      }).length;
-      countEl.textContent = `${n} 项`;
-      countEl.style.display = n > 0 ? "" : "none";
-    });
-  }
-  function markSettingSplitRows(container) {
-    container.querySelectorAll(".setting-item").forEach((el) => {
-      if (el.classList.contains("bz-path-picker-setting-row")) return;
-      const ctl = el.querySelector(".setting-item-control");
-      el.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
-    });
-  }
-  function closeSettingsModal() {
-    var _a2;
-    if (currentModal) {
-      const m = currentModal;
-      currentModal = null;
-      m.dispose();
-      (_a2 = m.onClose) == null ? void 0 : _a2.call(m);
-    }
-  }
-  function openSettingsModal(opts) {
-    var _a2;
-    closeSettingsModal();
-    const prevActive = document.activeElement;
-    const { mask, popup } = createOverlay({
-      maskId: "bz-settings-modal-mask",
-      popupId: "bz-settings-modal-popup",
-      // z-index 动态发号（ADR-0067）：原静态层规家族表随动态层级制退役，
-      // 全站规则只有一条——谁后显示谁在上（settings-modal 每次打开新建 DOM，创建即显示）
-      maxWidth: opts.maxWidth,
-      onMaskClick: () => closeSettingsModal()
-    });
-    const header = document.createElement("div");
-    header.className = "bz-settings-header";
-    const title = document.createElement("h3");
-    title.className = "bz-settings-title";
-    title.textContent = opts.title;
-    header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    renderSettingsInto(content, (_a2 = opts.schema) != null ? _a2 : { groups: [] });
-    const hasVisibleItem = Array.from(content.querySelectorAll(".setting-item")).some(
-      (el) => !el.classList.contains("bz-setting-action-row") && !isItemHidden(el)
-    );
-    if (!hasVisibleItem) {
-      content.innerHTML = "";
-      const empty = document.createElement("div");
-      empty.className = "bz-settings-empty";
-      empty.textContent = opts.emptyText || "暂无设置项";
-      if (opts.emptyDesc) {
-        const desc = document.createElement("div");
-        desc.className = "bz-settings-empty-desc";
-        desc.textContent = opts.emptyDesc;
-        empty.appendChild(desc);
-      }
-      content.appendChild(empty);
-    }
-    popup.appendChild(header);
-    popup.appendChild(content);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-modal", "true");
-    const firstFocusable = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR)).find((el) => {
-      if (isItemHidden(el)) return false;
-      if (isMobileEnv()) {
-        const tag = el.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return false;
-      }
-      return true;
-    });
-    if (firstFocusable) firstFocusable.focus();
-    const handle = escManager.register("bz-settings-modal", {
-      isVisible: () => !!currentModal,
-      close: () => closeSettingsModal()
-    });
-    currentModal = {
-      mask,
-      popup,
-      onClose: opts.onClose,
-      dispose: () => {
-        mask.remove();
-        popup.remove();
-        handle.unregister();
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-    };
-  }
-  var FOCUSABLE_SELECTOR, currentModal;
-  var init_settings_modal = __esm({
-    "src/core/settings-modal.ts"() {
-      init_fake_obsidian();
-      init_dom();
-      init_esc_manager();
-      init_mobile();
-      init_settings_schema();
-      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-      currentModal = null;
-    }
-  });
-
-  // src/pomodoro/state.ts
-  function createInitialState() {
-    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
-  }
-  function resumePhase(state2, now) {
-    return {
-      state: { ...state2, paused: false, pausedBy: void 0, remaining: 0, endTime: now + state2.remaining * 1e3 },
-      event: { type: "started", phase: state2.phase }
-    };
-  }
-  function activePhase(phase) {
-    return phase === "idle" ? "focus" : phase;
-  }
-  function phaseDurationSec(phase, d) {
-    if (phase === "short-break") return d.shortBreakMin * 60;
-    if (phase === "long-break") return d.longBreakMin * 60;
-    return d.workMin * 60;
-  }
-  function breakPhase(count, d) {
-    return count >= d.longBreakInterval ? "long-break" : "short-break";
-  }
-  function startPhase(state2, phase, now, d) {
-    return {
-      state: { ...state2, phase, endTime: now + phaseDurationSec(phase, d) * 1e3, paused: false, pausedBy: void 0, remaining: 0 },
-      event: { type: "started", phase }
-    };
-  }
-  function completePhase(state2, now, d, o) {
-    const phase = state2.phase;
-    const isFocus = phase === "focus";
-    let count = state2.cycleFocusCount;
-    let historyEntry;
-    let longBreak = false;
-    if (isFocus) {
-      count += 1;
-      longBreak = count >= d.longBreakInterval;
-      if (longBreak) count = 0;
-      historyEntry = { ts: now, duration: d.workMin * 60, ...state2.task ? { task: state2.task } : {} };
-    }
-    let next;
-    let autoStarted = false;
-    if (isFocus) {
-      if (o.autoSkipBreak) {
-        next = "focus";
-        autoStarted = true;
-      } else {
-        next = longBreak ? "long-break" : "short-break";
-        autoStarted = o.autoCycle;
-      }
-    } else {
-      next = "focus";
-      autoStarted = o.autoCycle;
-    }
-    const { task: _settled, ...rest } = state2;
-    const nextState = { ...rest, phase: next, cycleFocusCount: count };
-    const res = autoStarted ? startPhase(nextState, next, now, d) : {
-      state: { ...nextState, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
-      event: { type: "none" }
-    };
-    return {
-      ...res,
-      event: {
-        type: "phase-completed",
-        completedPhase: phase,
-        nextPhase: next,
-        autoStarted,
-        longBreak,
-        ...historyEntry ? { historyEntry } : {}
-      }
-    };
-  }
-  function transition(state2, action, now, d, o) {
-    if (action === "start") {
-      if (state2.paused) return resumePhase(state2, now);
-      if (state2.endTime !== null) return { state: state2, event: { type: "none" } };
-      const phase = activePhase(state2.phase);
-      return startPhase(state2, phase, now, d);
-    }
-    if (action === "pause") {
-      if (state2.endTime === null) return { state: state2, event: { type: "none" } };
-      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
-      return {
-        // 手动暂停：清除可能残留的冻结来源标记（pausedBy 只在冻结暂停期间有效）
-        state: { ...state2, paused: true, pausedBy: void 0, remaining: Math.ceil((state2.endTime - now) / 1e3), endTime: null },
-        event: { type: "none" }
-      };
-    }
-    if (action === "resume") {
-      if (!state2.paused) return { state: state2, event: { type: "none" } };
-      return resumePhase(state2, now);
-    }
-    if (action === "reset") {
-      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
-      const phase = activePhase(state2.phase);
-      return {
-        state: { ...state2, phase, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(phase, d) },
-        event: { type: "none" }
-      };
-    }
-    if (action === "skip") {
-      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
-      const phase = activePhase(state2.phase);
-      let next;
-      if (phase === "focus") next = o.autoSkipBreak ? "focus" : breakPhase(state2.cycleFocusCount, d);
-      else next = "focus";
-      const { task: _dropped, ...rest } = state2;
-      return {
-        state: { ...rest, phase: next, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(next, d) },
-        event: { type: "phase-completed", completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false }
-      };
-    }
-    if (action === "tick") {
-      if (state2.endTime === null || now < state2.endTime) return { state: state2, event: { type: "none" } };
-      return completePhase(state2, now, d, o);
-    }
-    return { state: state2, event: { type: "none" } };
-  }
-  function idleState() {
-    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
-  }
-  function recover(state2, history2, now, d, o) {
-    if (state2.endTime === null || now < state2.endTime) return { state: state2, history: history2.slice(), events: [] };
-    return { state: idleState(), history: history2.slice(), events: [] };
-  }
-  var PHASES;
-  var init_state2 = __esm({
-    "src/pomodoro/state.ts"() {
-      PHASES = ["idle", "focus", "short-break", "long-break"];
-    }
-  });
-
-  // src/pomodoro/data.ts
-  function getPomodoroFilePath() {
-    var _a2;
-    return storageFile("pomodoro.json", ((_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath) || "CONFIG/STORAGE");
-  }
-  function defaultPomodoroData() {
-    return { version: 1, state: createInitialState(), history: [] };
-  }
-  function normalizeData(raw) {
-    const def = defaultPomodoroData();
-    if (!raw || typeof raw !== "object") return def;
-    const state2 = normalizeState(raw.state);
-    const history2 = Array.isArray(raw.history) ? raw.history.filter((h) => h && typeof h.ts === "number" && typeof h.duration === "number").map((h) => ({
-      ts: h.ts,
-      duration: h.duration,
-      ...typeof h.task === "string" && h.task ? { task: h.task } : {}
-    })) : [];
-    return { version: 1, state: state2, history: history2 };
-  }
-  function normalizeState(raw) {
-    const def = createInitialState();
-    if (!raw || typeof raw !== "object") return def;
-    return {
-      phase: PHASES.includes(raw.phase) ? raw.phase : def.phase,
-      endTime: typeof raw.endTime === "number" ? raw.endTime : def.endTime,
-      remaining: typeof raw.remaining === "number" && raw.remaining >= 0 ? raw.remaining : def.remaining,
-      paused: typeof raw.paused === "boolean" ? raw.paused : def.paused,
-      // 冻结来源标记：仅认 'autopause'，旧数据无此字段/非法值 → undefined（手动暂停语义）
-      pausedBy: raw.pausedBy === "autopause" ? "autopause" : void 0,
-      cycleFocusCount: typeof raw.cycleFocusCount === "number" && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
-      // 归属任务标题：仅字符串非空保留（旧数据/非法值 → undefined）
-      task: typeof raw.task === "string" && raw.task ? raw.task : void 0
-    };
-  }
-  var PomodoroDataManager;
-  var init_data2 = __esm({
-    "src/pomodoro/data.ts"() {
-      init_settings_provider();
-      init_storage();
-      init_state2();
-      PomodoroDataManager = class {
-        constructor(app) {
-          this.app = app;
-        }
-        /**
-         * 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件留档 CONFIG/.CORRUPT 后重建默认）。
-         * 读也入 core per-path 串行队列：读是「load → 改 state → save」事务的读半边，
-         * 排在未落盘的写任务之后才能读到新值（读写同队列，消灭「读-写窗口交错」）。
-         */
-        async load() {
-          const raw = await enqueueFileTask(
-            getPomodoroFilePath(),
-            () => jsonFileStore(getPomodoroFilePath(), {
-              defaultValue: () => defaultPomodoroData(),
-              app: this.app
-            }).read()
-          );
-          return normalizeData(raw);
-        }
-        /**
-         * 保存（统一数据读写层：存在 modify / 不存在 create+建目录）。
-         * D3 可靠写契约原语 1 收编：整写入 core per-path 串行队列（键 = pomodoro.json 路径）——
-         * 计时器心跳保存与用户操作保存并发时按序落盘，后写者不再用陈旧基线覆盖先写者；
-         * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
-         */
-        async save(data) {
-          await enqueueFileTask(
-            getPomodoroFilePath(),
-            () => jsonFileStore(getPomodoroFilePath(), { app: this.app }).write(data)
-          );
-        }
-      };
-    }
-  });
-
-  // src/pomodoro/sound.ts
-  function playSound(kind, volume = 100) {
-    const w = typeof window !== "undefined" ? window : globalThis;
-    const AC = w.AudioContext || w.webkitAudioContext;
-    if (!AC) return;
-    if (volume <= 0) return;
-    try {
-      const cfg = SOUND_CONFIG[kind];
-      const ctx = new AC();
-      if (ctx.state === "suspended" && typeof ctx.resume === "function") void ctx.resume();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = cfg.freq;
-      const peak = 0.8 * (Math.max(1, Math.min(100, volume)) / 100);
-      const t = ctx.currentTime;
-      gain.gain.setValueAtTime(1e-3, t);
-      gain.gain.exponentialRampToValueAtTime(peak, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(1e-3, t + cfg.dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + cfg.dur + 0.02);
-      const ctxRef = ctx;
-      setTimeout(() => {
-        void ctxRef.close();
-      }, cfg.dur * 1e3 + 300);
-    } catch (e) {
-    }
-  }
-  var SOUND_CONFIG;
-  var init_sound = __esm({
-    "src/pomodoro/sound.ts"() {
-      SOUND_CONFIG = {
-        "focus-start": { freq: 880, dur: 0.25 },
-        "short-break-start": { freq: 523, dur: 0.3 },
-        "long-break-start": { freq: 392, dur: 0.45 },
-        pause: { freq: 440, dur: 0.2 }
-      };
-    }
-  });
-
-  // src/pomodoro/statusbar.ts
-  function syncPomodoroStatusBar(state2, remainSec) {
-    if (!statusEl) return;
-    const running2 = state2.endTime !== null;
-    const paused = !running2 && state2.paused;
-    statusEl.classList.toggle("pomodoro-statusbar-idle", !running2 && !paused);
-    statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
-    statusEl.title = state2.task ? `番茄钟：${state2.task}` : "番茄钟";
-    if (textSpan) {
-      if (running2) {
-        const m = Math.floor(remainSec / 60);
-        const s = remainSec % 60;
-        textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
-      } else if (paused) {
-        textSpan.textContent = "已暂停";
-      } else {
-        textSpan.textContent = "";
-      }
-    }
-  }
-  var statusEl, textSpan;
-  var init_statusbar = __esm({
-    "src/pomodoro/statusbar.ts"() {
-      init_fake_obsidian();
-      init_utils();
-      statusEl = null;
-      textSpan = null;
-    }
-  });
-
-  // src/pomodoro/stats.ts
-  function dayKey(ts) {
-    return localDayKey(ts);
-  }
-  function todayCount(history2, now) {
-    const today = dayKey(now);
-    return history2.filter((h) => dayKey(h.ts) === today).length;
-  }
-  function todayMinutes(history2, now) {
-    const today = dayKey(now);
-    return Math.round(history2.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
-  }
-  function todayHourBuckets(history2, now) {
-    const buckets = Array.from({ length: 12 }, (_, i) => ({ hour: i * 2, count: 0 }));
-    const today = dayKey(now);
-    for (const h of history2) {
-      if (dayKey(h.ts) !== today) continue;
-      const hour = new Date(h.ts).getHours();
-      buckets[Math.min(11, Math.floor(hour / 2))].count += 1;
-    }
-    return buckets;
-  }
-  function last7Days(history2, now) {
-    const counts = /* @__PURE__ */ new Map();
-    const minutes = /* @__PURE__ */ new Map();
-    const d = new Date(now);
-    d.setHours(0, 0, 0, 0);
-    for (let i = 6; i >= 0; i--) {
-      const day = new Date(d);
-      day.setDate(day.getDate() - i);
-      const key = dayKey(day.getTime());
-      counts.set(key, 0);
-      minutes.set(key, 0);
-    }
-    for (const h of history2) {
-      const key = dayKey(h.ts);
-      if (counts.has(key)) {
-        counts.set(key, counts.get(key) + 1);
-        minutes.set(key, minutes.get(key) + h.duration / 60);
-      }
-    }
-    return Array.from(counts.entries()).map(([date, count]) => ({
-      date,
-      count,
-      minutes: Math.round(minutes.get(date) || 0)
-    }));
-  }
-  var init_stats = __esm({
-    "src/pomodoro/stats.ts"() {
-      init_utils();
-    }
-  });
-
-  // src/pomodoro/config.ts
-  var PRESETS, CUSTOM_PRESET_ID;
-  var init_config = __esm({
-    "src/pomodoro/config.ts"() {
-      PRESETS = {
-        classic: { label: "经典标准", workMin: 25, shortBreakMin: 5, longBreakMin: 15 },
-        neuro: { label: "神经专注", workMin: 30, shortBreakMin: 7, longBreakMin: 20 },
-        flow: { label: "深度心流", workMin: 50, shortBreakMin: 10, longBreakMin: 25 },
-        creative: { label: "创意激发", workMin: 40, shortBreakMin: 12, longBreakMin: 20 },
-        beginner: { label: "初学入门", workMin: 15, shortBreakMin: 5, longBreakMin: 12 },
-        study: { label: "高效学习", workMin: 30, shortBreakMin: 5, longBreakMin: 15 },
-        sprint: { label: "敏捷冲刺", workMin: 20, shortBreakMin: 4, longBreakMin: 12 },
-        marathon: { label: "马拉松式", workMin: 45, shortBreakMin: 15, longBreakMin: 30 },
-        recovery: { label: "疲劳恢复", workMin: 20, shortBreakMin: 10, longBreakMin: 20 },
-        intense: { label: "高强度", workMin: 50, shortBreakMin: 5, longBreakMin: 15 },
-        balanced: { label: "平衡模式", workMin: 35, shortBreakMin: 7, longBreakMin: 18 }
-      };
-      CUSTOM_PRESET_ID = "custom";
-    }
-  });
-
-  // src/pomodoro/ui.ts
-  var ui_exports2 = {};
-  __export(ui_exports2, {
-    closePomodoro: () => closePomodoro,
-    ensurePomodoro: () => ensurePomodoro,
-    isFocusing: () => isFocusing,
-    menuPhase: () => menuPhase,
-    openPomodoro: () => openPomodoro,
-    pomodoroSettingsSchema: () => pomodoroSettingsSchema,
-    skipBreak: () => skipBreak,
-    startFocusForTask: () => startFocusForTask,
-    toggleFocus: () => toggleFocus,
-    togglePause: () => togglePause,
-    unloadPomodoro: () => unloadPomodoro
-  });
-  function durations() {
-    const s = tryGetSettings();
-    const num = (v, def) => {
-      const n = parseInt(v != null ? v : "", 10);
-      return Number.isFinite(n) && n > 0 ? n : def;
-    };
-    const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
-    return {
-      workMin: preset ? preset.workMin : num(s.pomodoroWorkMin, 25),
-      shortBreakMin: preset ? preset.shortBreakMin : num(s.pomodoroShortBreakMin, 5),
-      longBreakMin: preset ? preset.longBreakMin : num(s.pomodoroLongBreakMin, 15),
-      longBreakInterval: num(s.pomodoroLongBreakInterval, 4)
-    };
-  }
-  function options() {
-    const s = tryGetSettings();
-    return {
-      forceFocus: !!s.pomodoroForceFocus,
-      autoCycle: !!s.pomodoroAutoCycle,
-      autoSkipBreak: !!s.pomodoroAutoSkipBreak
-    };
-  }
-  function phaseLabel(phase) {
-    if (phase === "focus") return "专注";
-    if (phase === "short-break") return "短休息";
-    if (phase === "long-break") return "长休息";
-    return "番茄钟";
-  }
-  function phaseText(phase, count, d) {
-    if (phase === "focus") return `专注 ${count + 1}/${d.longBreakInterval}`;
-    return phaseLabel(phase);
-  }
-  function playPhaseSound(phase) {
-    const s = tryGetSettings();
-    if (s.pomodoroSound !== false) {
-      const kind = phase === "focus" ? "focus-start" : phase === "long-break" ? "long-break-start" : "short-break-start";
-      playSound(kind, pomodoroVolume());
-    }
-  }
-  function notifyPhaseStarted(phase) {
-    const d = durations();
-    if (phase === "focus") {
-      notice("专注开始", "success");
-    } else if (phase === "long-break") {
-      notice(`长休息开始：${d.longBreakMin} 分钟`, "success");
-    } else {
-      notice(`休息开始：${d.shortBreakMin} 分钟`, "success");
-    }
-    playPhaseSound(phase);
-  }
-  function notifyPaused() {
-    notice("已暂停专注", "pause");
-    const s = tryGetSettings();
-    if (s.pomodoroSound !== false) playSound("pause", pomodoroVolume());
-  }
-  function breakLabel(phase, d) {
-    return phase === "long-break" ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
-  }
-  function notifyPhaseComplete(e) {
-    const d = durations();
-    playPhaseSound(e.nextPhase);
-    if (e.autoStarted) {
-      if (e.completedPhase === "focus") {
-        notice(e.nextPhase === "focus" ? "专注完成：开始下一轮专注" : `专注完成：${breakLabel(e.nextPhase, d)}`, "success");
-      } else {
-        notice("休息结束：开始专注", "success");
-      }
-      return;
-    }
-    if (e.completedPhase === "focus") {
-      notify(`专注完成：${breakLabel(e.nextPhase, d)}`, {
-        type: "success",
-        duration: 6e3,
-        action: { label: "开始休息", onClick: () => applyAction("start") }
-      });
-    } else {
-      notify("休息结束", {
-        type: "success",
-        duration: 6e3,
-        action: { label: "开始专注", onClick: () => applyAction("start") }
-      });
-    }
-  }
-  function pomodoroVolume() {
-    const v = tryGetSettings().pomodoroVolume;
-    return typeof v === "number" && v >= 0 ? v : 100;
-  }
-  function remainingSec() {
-    if (state.endTime !== null) return Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
-    if (state.phase === "idle" && state.remaining === 0) return phaseDurationSec("focus", durations());
-    return state.remaining;
-  }
-  function fmt(sec) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${pad2(m)}:${pad2(s)}`;
-  }
-  function renderStats() {
-    const now = Date.now();
-    const todayEl = document.getElementById("pomodoro-today");
-    if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
-    const weekEl = document.getElementById("pomodoro-week");
-    const hoursEl = document.getElementById("pomodoro-hours");
-    if (!weekEl || !hoursEl) return;
-    const days = last7Days(history, now);
-    const buckets = todayHourBuckets(history, now);
-    const key = days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",") + "|" + buckets.map((b) => b.count).join(",");
-    if (key === lastStatsKey) return;
-    lastStatsKey = key;
-    const max = Math.max(1, ...days.map((d) => d.count));
-    weekEl.innerHTML = "";
-    for (const d of days) {
-      const bar = document.createElement("div");
-      bar.className = "pomodoro-stat-day";
-      bar.title = `${d.date}：${d.count} 个 · ${d.minutes} 分钟`;
-      const col = document.createElement("div");
-      col.className = "pomodoro-stat-col";
-      const h = document.createElement("div");
-      h.className = "pomodoro-stat-bar";
-      h.style.height = `${Math.max(2, Math.round(d.count / max * 40))}px`;
-      col.appendChild(h);
-      const label = document.createElement("span");
-      label.className = "pomodoro-stat-label";
-      label.textContent = d.date.slice(5);
-      col.appendChild(label);
-      bar.appendChild(col);
-      weekEl.appendChild(bar);
-    }
-    hoursEl.innerHTML = "";
-    const hmax = Math.max(1, ...buckets.map((b) => b.count));
-    for (const b of buckets) {
-      const bar = document.createElement("div");
-      bar.className = "pomodoro-hour-bar" + (b.count > 0 ? " pomodoro-hour-bar-on" : "");
-      bar.title = `${pad2(b.hour)}–${pad2(b.hour + 2)} 时 · ${b.count} 个`;
-      bar.style.height = `${Math.max(2, Math.round(b.count / hmax * 20))}px`;
-      hoursEl.appendChild(bar);
-    }
-  }
-  function render() {
-    const d = durations();
-    const remain = remainingSec();
-    syncPomodoroStatusBar(state, remain);
-    if (!maskEl) return;
-    const total = phaseDurationSec(state.phase === "idle" ? "focus" : state.phase, d);
-    const C = 2 * Math.PI * 52;
-    const progress = total > 0 ? 1 - remain / total : 1;
-    const circle = document.getElementById("pomodoro-ring-progress");
-    if (circle) {
-      circle.setAttribute("stroke-dasharray", String(C));
-      circle.setAttribute("stroke-dashoffset", String(C * (1 - progress)));
-    }
-    const phaseEl = document.getElementById("pomodoro-phase");
-    if (phaseEl) {
-      const label = phaseLabel(state.phase);
-      if (phaseEl.dataset.label !== label) {
-        phaseEl.dataset.label = label;
-        phaseEl.innerHTML = "";
-        if (state.phase === "idle") {
-          const ic2 = document.createElement("span");
-          ic2.className = "pomodoro-phase-icon";
-          setIcon(ic2, "timer");
-          phaseEl.appendChild(ic2);
-          phaseEl.appendChild(document.createTextNode(label));
-        } else {
-          phaseEl.textContent = label;
-        }
-      }
-    }
-    renderCycleDots(d);
-    renderTaskLine();
-    const timeEl = document.getElementById("pomodoro-time");
-    if (timeEl) timeEl.textContent = fmt(remain);
-    renderStats();
-    updateButtons();
-  }
-  function renderCycleDots(d) {
-    const cycleEl = document.getElementById("pomodoro-cycle");
-    if (!cycleEl) return;
-    const total = Math.max(1, d.longBreakInterval);
-    if (cycleEl.childElementCount !== total) {
-      cycleEl.innerHTML = "";
-      for (let i = 0; i < total; i++) {
-        const dot = document.createElement("span");
-        dot.className = "pomodoro-cycle-dot";
-        cycleEl.appendChild(dot);
-      }
-    }
-    Array.from(cycleEl.children).forEach((dot, i) => {
-      dot.className = "pomodoro-cycle-dot" + (i < state.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
-    });
-  }
-  function renderTaskLine() {
-    const taskEl = document.getElementById("pomodoro-task");
-    if (!taskEl) return;
-    if (state.task) {
-      if (taskEl.textContent !== state.task) taskEl.textContent = state.task;
-      taskEl.title = state.task;
-    } else {
-      taskEl.textContent = "";
-      taskEl.removeAttribute("title");
-    }
-  }
-  function updateButtons() {
-    const startBtn = document.getElementById("pomodoro-btn-start");
-    if (!startBtn) return;
-    const running2 = state.endTime !== null;
-    startBtn.textContent = running2 ? "暂停" : state.paused ? "继续" : "开始";
-    const locked = options().forceFocus && state.phase === "focus" && (running2 || state.paused);
-    const startLocked = locked && !(state.paused && state.pausedBy === "autopause");
-    startBtn.disabled = startLocked;
-    const resetBtn = document.getElementById("pomodoro-btn-reset");
-    const skipBtn = document.getElementById("pomodoro-btn-skip");
-    if (resetBtn) resetBtn.disabled = locked;
-    if (skipBtn) skipBtn.disabled = locked;
-  }
-  function applyAction(action) {
-    const r = transition(state, action, Date.now(), durations(), options());
-    state = r.state;
-    if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
-    if (r.event.type === "phase-completed") {
-      if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
-      if (action === "tick") notifyPhaseComplete(r.event);
-      if (r.event.completedPhase === "focus" && r.event.historyEntry) {
-        emitDomainEvent("pomodoro", { kind: "focus-done", minutes: durations().workMin });
-      }
-    }
-    if (action === "pause" && state.paused) notifyPaused();
-    if (r.event.type !== "none" || action === "pause" && state.paused) void save();
-    ensureTick();
-    render();
-  }
-  function onTick() {
-    applyAction("tick");
-  }
-  function autoPauseEnabled() {
-    return tryGetSettings().pomodoroAutoPauseOnHide !== false;
-  }
-  function freezeRunning(s, now) {
-    if (s.endTime === null || s.paused) return s;
-    return {
-      ...s,
-      paused: true,
-      pausedBy: "autopause",
-      remaining: Math.max(0, Math.ceil((s.endTime - now) / 1e3)),
-      endTime: null
-    };
-  }
-  function unfreezeRunning(s, now) {
-    if (!s.paused) return s;
-    return { ...s, paused: false, pausedBy: void 0, remaining: 0, endTime: now + s.remaining * 1e3 };
-  }
-  function pauseOnHidden() {
-    if (!autoPauseEnabled()) return;
-    const now = Date.now();
-    if (state.endTime !== null && !state.paused) {
-      state = freezeRunning(state, now);
-      autoPauseMain = true;
-    }
-    if (autoPauseMain) {
-      void save();
-      render();
-    }
-  }
-  function resumeOnVisible() {
-    const now = Date.now();
-    if (autoPauseMain && state.paused) {
-      state = unfreezeRunning(state, now);
-      autoPauseMain = false;
-      void save();
-      render();
-      return;
-    }
-    render();
-  }
-  function registerVisibilityListener() {
-    if (visibilityHandler) return;
-    visibilityHandler = () => {
-      if (document.hidden) pauseOnHidden();
-      else resumeOnVisible();
-    };
-    document.addEventListener("visibilitychange", visibilityHandler);
-  }
-  function unregisterVisibilityListener() {
-    if (visibilityHandler) {
-      document.removeEventListener("visibilitychange", visibilityHandler);
-      visibilityHandler = null;
-    }
-  }
-  function ensureTick() {
-    const needsTick = state.endTime !== null;
-    if (needsTick && timerId === null) {
-      timerId = window.setInterval(onTick, 1e3);
-    } else if (!needsTick && timerId !== null) {
-      window.clearInterval(timerId);
-      timerId = null;
-    }
-  }
-  async function save() {
-    if (dataManager) await dataManager.save({ version: 1, state, history });
-  }
-  async function initData() {
-    const data = await dataManager.load();
-    const r = recover(data.state, data.history, Date.now(), durations(), options());
-    state = r.state;
-    history = r.history;
-    const mainChanged = data.state.endTime !== null && r.state.endTime === null;
-    if (mainChanged) await dataManager.save({ version: 1, state, history });
-    loaded = true;
-  }
-  function openPomodoroSettings() {
-    openSettingsModal({ title: "番茄钟设置", maxWidth: 560, schema: pomodoroSettingsSchema() });
-  }
-  function pomodoroSettingsSchema() {
-    const soundToggle = {
-      get: () => tryGetSettings().pomodoroSound !== false,
-      set: (v) => {
-        getSettings().pomodoroSound = v;
-      },
-      save: () => saveSettings()
-    };
-    const autoPauseToggle = {
-      get: () => tryGetSettings().pomodoroAutoPauseOnHide !== false,
-      set: (v) => {
-        getSettings().pomodoroAutoPauseOnHide = v;
-      },
-      save: () => saveSettings()
-    };
-    return {
-      groups: [
-        {
-          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
-          icon: "palette",
-          name: "外观",
-          rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "pomodoroSkin" }, options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }] },
-            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: [{ value: "tomato", label: "番茄", layout: "default", prevClass: "bz-sp-prev-tomato" }] }
-          ]
-        },
-        {
-          icon: "timer",
-          name: "时间方案",
-          rows: [
-            {
-              type: "select",
-              name: "预设方案",
-              desc: "选择现成的工作与休息时长组合",
-              binding: { key: "pomodoroPreset" },
-              options: [
-                ...Object.entries(PRESETS).map(([id, p]) => ({
-                  value: id,
-                  label: `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`
-                })),
-                { value: CUSTOM_PRESET_ID, label: "自定义" }
-              ],
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "工作时长",
-              desc: "自定义方案的工作阶段分钟数",
-              binding: numStrBinding("pomodoroWorkMin", 25),
-              min: 1,
-              max: 120,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "短休息时长",
-              desc: "自定义方案的短休息分钟数",
-              binding: numStrBinding("pomodoroShortBreakMin", 5),
-              min: 1,
-              max: 60,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "长休息时长",
-              desc: "自定义方案的长休息分钟数",
-              binding: numStrBinding("pomodoroLongBreakMin", 15),
-              min: 1,
-              max: 60,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            { type: "number", name: "长休息间隔", desc: "每隔几个专注进入一次长休息", binding: numStrBinding("pomodoroLongBreakInterval", 4), min: 1, max: 20, step: 1, onChange: () => render() }
-          ]
-        },
-        {
-          icon: "sliders-horizontal",
-          name: "行为",
-          rows: [
-            { type: "toggle", name: "强制专注模式", desc: "专注进行中无法暂停跳过或重置", binding: { key: "pomodoroForceFocus" }, onChange: () => render() },
-            { type: "toggle", name: "自动循环", desc: "阶段结束后自动开始下一阶段", binding: { key: "pomodoroAutoCycle" }, onChange: () => render() },
-            { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
-            { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
-            { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
-            // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
-            {
-              type: "slider",
-              name: "提示音音量",
-              desc: "提示音大小，默认最大",
-              binding: { get: () => {
-                var _a2;
-                return (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100;
-              }, set: (v) => {
-                getSettings().pomodoroVolume = v;
-              }, save: () => saveSettings() },
-              min: 0,
-              max: 100,
-              step: 5,
-              actions: [{ text: "试听", onClick: () => {
-                var _a2;
-                return playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
-              } }]
-            },
-            {
-              type: "select",
-              name: "打开时恢复方式",
-              desc: "启动时正在倒计时，选择弹窗提醒或后台继续",
-              binding: { key: "pomodoroRestoreMode" },
-              options: [
-                { value: "background", label: "后台继续" },
-                { value: "popup", label: "自动弹窗" }
-              ]
-            }
-          ]
-        }
-      ]
-    };
-  }
-  function bindEvents() {
-    const startBtn = document.getElementById("pomodoro-btn-start");
-    startBtn.addEventListener("click", () => applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start"));
-    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => applyAction("reset"));
-    document.getElementById("pomodoro-btn-skip").addEventListener("click", () => applyAction("skip"));
-    const settingsBtn = document.getElementById("pomodoro-btn-settings");
-    settingsBtn.classList.add("pomodoro-settings-hidden");
-    setIcon(settingsBtn, "gear");
-    settingsBtn.addEventListener("click", openPomodoroSettings);
-    const popup = document.getElementById("pomodoro-popup");
-    popup.addEventListener("mouseenter", () => {
-      settingsBtn.classList.remove("pomodoro-settings-hidden");
-    });
-    popup.addEventListener("mouseleave", () => {
-      settingsBtn.classList.add("pomodoro-settings-hidden");
-    });
-    popup.addEventListener("keydown", (e) => {
-      if (e.key !== " ") return;
-      const t = e.target;
-      const tag = t.tagName;
-      if (tag === "BUTTON" || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) return;
-      e.preventDefault();
-      applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start");
-    });
-  }
-  function buildDOM() {
-    var _a2;
-    const mask = document.createElement("div");
-    mask.id = "pomodoro-mask";
-    mask.innerHTML = `
-    <div id="pomodoro-popup" tabindex="-1">
-      <button id="pomodoro-btn-settings" class="pomodoro-btn bz-touch-target" title="设置"></button>
-      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
-        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
-        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
-      </svg>
-      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
-      <div id="pomodoro-phase"></div>
-      <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
-      <div class="pomodoro-controls">
-        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
-        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
-        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
-      </div>
-      <div class="pomodoro-stats">
-        <div id="pomodoro-today"></div>
-        <div id="pomodoro-week" class="pomodoro-week"></div>
-        <div id="pomodoro-hours" class="pomodoro-hours"></div>
-      </div>
-    </div>`;
-    mask.style.zIndex = String(allocZ());
-    document.body.appendChild(mask);
-    maskEl = mask;
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) closePomodoro();
-    });
-    escHandle = escManager.register("pomodoro", {
-      isVisible: () => maskEl !== null,
-      close: closePomodoro
-    });
-    bindEvents();
-    render();
-    (_a2 = document.getElementById("pomodoro-popup")) == null ? void 0 : _a2.focus();
-  }
-  function initDataOnce() {
-    if (loaded) return Promise.resolve();
-    initInflight != null ? initInflight : initInflight = initData().finally(() => {
-      initInflight = null;
-    });
-    return initInflight;
-  }
-  async function openPomodoro(app) {
-    appRef = app;
-    if (!dataManager) dataManager = new PomodoroDataManager(app);
-    if (!maskEl) {
-      openInflight != null ? openInflight : openInflight = (async () => {
-        await initDataOnce();
-        buildDOM();
-        ensureTick();
-      })();
-      try {
-        await openInflight;
-      } finally {
-        openInflight = null;
-      }
-    }
-    const popupEl2 = maskEl ? maskEl.querySelector("#pomodoro-popup") : null;
-    popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
-  }
-  async function ensurePomodoro(app) {
-    appRef = app;
-    if (!dataManager) dataManager = new PomodoroDataManager(app);
-    registerVisibilityListener();
-    if (!loaded) {
-      await initDataOnce();
-      if (state.endTime !== null) {
-        ensureTick();
-        render();
-        const remainSec = Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
-        notice(`番茄钟继续：${phaseText(state.phase, state.cycleFocusCount, durations())}，还剩 ${fmt(remainSec)}`);
-        const s = tryGetSettings();
-        if (s.pomodoroRestoreMode === "popup") void openPomodoro(app);
-      }
-    }
-  }
-  function closePomodoro() {
-    if (maskEl) {
-      maskEl.remove();
-      maskEl = null;
-    }
-    if (escHandle) {
-      escHandle.unregister();
-      escHandle = null;
-    }
-  }
-  async function startFocusForTask(app, taskTitle) {
-    await ensurePomodoro(app);
-    const o = options();
-    const d = durations();
-    if (state.phase === "short-break" || state.phase === "long-break") {
-      state = transition(state, "skip", Date.now(), d, o).state;
-      void save();
-      render();
-    }
-    if (state.endTime !== null) {
-      notice("已有专注计时中，本次不重复开始", "warning");
-      return;
-    }
-    if (o.forceFocus && state.paused && state.pausedBy !== "autopause") {
-      notice("强制专注模式暂停中，请先在番茄钟恢复", "warning");
-      return;
-    }
-    state = { ...state, task: taskTitle };
-    applyAction("start");
-  }
-  function isFocusing() {
-    return state.phase === "focus" && (state.endTime !== null || state.paused);
-  }
-  async function toggleFocus(app) {
-    await ensurePomodoro(app);
-    if (isFocusing()) {
-      const before = state;
-      applyAction("reset");
-      if (state === before) notice("强制专注模式中，请先在番茄钟面板操作", "warning");
-      else notice("专注已停止");
-      return;
-    }
-    if (state.phase === "short-break" || state.phase === "long-break") {
-      state = transition(state, "skip", Date.now(), durations(), options()).state;
-      void save();
-      render();
-    }
-    applyAction("start");
-  }
-  function menuPhase() {
-    if (state.phase === "short-break" || state.phase === "long-break") return "break";
-    if (state.phase !== "focus") return "idle";
-    if (state.paused) return "paused";
-    return state.endTime !== null ? "focusing" : "idle";
-  }
-  async function skipBreak(app) {
-    await ensurePomodoro(app);
-    if (state.phase !== "short-break" && state.phase !== "long-break") {
-      notice("当前不在休息阶段", "warning");
-      return;
-    }
-    state = transition(state, "skip", Date.now(), durations(), options()).state;
-    void save();
-    render();
-    applyAction("start");
-  }
-  async function togglePause(app) {
-    await ensurePomodoro(app);
-    if (state.endTime === null && !state.paused) {
-      notice("当前没有进行中的计时", "warning");
-      return;
-    }
-    applyAction(state.paused ? "resume" : "pause");
-  }
-  function unloadPomodoro() {
-    if (timerId !== null) {
-      window.clearInterval(timerId);
-      timerId = null;
-    }
-    unregisterVisibilityListener();
-    autoPauseMain = false;
-    openInflight = null;
-    initInflight = null;
-    closePomodoro();
-    state = createInitialState();
-    history = [];
-    lastStatsKey = "";
-    dataManager = null;
-    appRef = null;
-    loaded = false;
-  }
-  var dataManager, state, history, loaded, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, initInflight, openInflight;
-  var init_ui2 = __esm({
-    "src/pomodoro/ui.ts"() {
-      init_fake_obsidian();
-      init_esc_manager();
-      init_z_order();
-      init_settings_provider();
-      init_notice();
-      init_settings_modal();
-      init_settings_common();
-      init_data2();
-      init_sound();
-      init_statusbar();
-      init_stats();
-      init_config();
-      init_state2();
-      init_utils();
-      init_domain_bus();
-      dataManager = null;
-      state = createInitialState();
-      history = [];
-      loaded = false;
-      maskEl = null;
-      escHandle = null;
-      timerId = null;
-      appRef = null;
-      autoPauseMain = false;
-      visibilityHandler = null;
-      lastStatsKey = "";
-      initInflight = null;
-      openInflight = null;
-    }
-  });
-
-  // src/pomodoro/index.ts
-  var pomodoro_exports = {};
-  __export(pomodoro_exports, {
-    ensurePomodoro: () => ensurePomodoro,
-    isFocusing: () => isFocusing,
-    menuPhase: () => menuPhase,
-    openPomodoro: () => openPomodoro,
-    skipBreak: () => skipBreak,
-    startFocusForTask: () => startFocusForTask,
-    toggleFocus: () => toggleFocus,
-    togglePause: () => togglePause,
-    unloadPomodoro: () => unloadPomodoro
-  });
-  var init_pomodoro = __esm({
-    "src/pomodoro/index.ts"() {
-      init_ui2();
-    }
-  });
-
-  // src/core/domain-icons.ts
-  var DOMAIN_ICONS;
-  var init_domain_icons = __esm({
-    "src/core/domain-icons.ts"() {
-      DOMAIN_ICONS = {
-        // 面板专属域（无对应命令）
-        global: "settings",
-        appearance: "palette",
-        ai: "sparkles",
-        // 域入口命令与面板导航共用
-        home: "layout-grid",
-        recap: "calendar-heart",
-        memo: "check-square",
-        belongings: "package",
-        clipping: "scissors",
-        favorites: "star",
-        diary: "notebook-pen",
-        "reading-report": "bar-chart-3",
-        cinema: "clapperboard",
-        bookshelf: "book-open",
-        review: "repeat-2",
-        secondbrain: "brain",
-        "auto-summary": "sparkles",
-        pomodoro: "timer",
-        attach: "folder-down",
-        encrypt: "lock",
-        "password-vault": "key",
-        smartcat: "cat",
-        knowledge: "list-video",
-        // 命令专属域
-        "settings-panel": "settings-2"
       };
     }
   });
@@ -33314,174 +33310,11 @@ ${text}`;
     }
   });
 
-  // src/core/ui/lock-screen.ts
-  function uiLockScreen(opts) {
-    const el = document.createElement("div");
-    el.className = `bz-lockscreen bz-lockscreen--${opts.kind}` + (opts.inline ? " bz-lockscreen--inline" : " bz-lockscreen--mask");
-    el.dataset.ls = opts.inline ? "box" : "mask";
-    const box = document.createElement("div");
-    box.className = "bz-lockscreen-box";
-    box.dataset.ls = "box";
-    const seal = document.createElement("div");
-    seal.className = "bz-lockscreen-seal";
-    seal.dataset.ls = "seal";
-    seal.appendChild(uiIcon(opts.icon || "lock", "bz-lockscreen-seal-ic"));
-    box.appendChild(seal);
-    const title = document.createElement("h4");
-    title.className = "bz-lockscreen-title";
-    title.dataset.ls = "title";
-    title.textContent = opts.title;
-    box.appendChild(title);
-    const sub = document.createElement("p");
-    sub.className = "bz-lockscreen-sub";
-    sub.dataset.ls = "sub";
-    sub.textContent = opts.sub || "";
-    box.appendChild(sub);
-    const statsWrap = document.createElement("div");
-    statsWrap.className = "bz-lockscreen-stats";
-    statsWrap.dataset.ls = "stats";
-    const setStats = (list) => {
-      statsWrap.innerHTML = "";
-      (list || []).forEach((s) => {
-        const card = document.createElement("div");
-        card.className = "bz-lockscreen-stat";
-        const num = document.createElement("b");
-        num.className = "bz-lockscreen-num";
-        num.textContent = s.num;
-        const lab = document.createElement("span");
-        lab.className = "bz-lockscreen-label";
-        lab.textContent = s.label;
-        card.appendChild(num);
-        card.appendChild(lab);
-        statsWrap.appendChild(card);
-      });
-      statsWrap.style.display = list && list.length ? "" : "none";
-    };
-    setStats(opts.stats || []);
-    box.appendChild(statsWrap);
-    const warning = document.createElement("div");
-    warning.className = "bz-lockscreen-warning";
-    warning.dataset.ls = "warning";
-    warning.innerHTML = opts.warningHtml || "";
-    warning.style.display = opts.firstSetup ? "" : "none";
-    box.appendChild(warning);
-    const ack = document.createElement("label");
-    ack.className = "bz-lockscreen-ack";
-    ack.dataset.ls = "ack";
-    const ackBox = document.createElement("input");
-    ackBox.type = "checkbox";
-    ack.appendChild(ackBox);
-    ack.appendChild(document.createTextNode(opts.ackText || "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复"));
-    ack.style.display = opts.firstSetup ? "" : "none";
-    box.appendChild(ack);
-    const row = document.createElement("div");
-    row.className = "bz-lockscreen-row";
-    const input = document.createElement("input");
-    input.type = "password";
-    input.className = "bz-lockscreen-input";
-    input.dataset.ls = "p1";
-    input.placeholder = opts.placeholder || "主密码";
-    input.autocomplete = "off";
-    const input2 = document.createElement("input");
-    input2.type = "password";
-    input2.className = "bz-lockscreen-input";
-    input2.dataset.ls = "p2";
-    input2.placeholder = "再次输入";
-    input2.autocomplete = "off";
-    input2.style.display = opts.firstSetup ? "" : "none";
-    const actionBtn = document.createElement("button");
-    actionBtn.className = "bz-lockscreen-action";
-    actionBtn.dataset.ls = "go";
-    actionBtn.textContent = opts.action;
-    row.appendChild(input);
-    row.appendChild(input2);
-    row.appendChild(actionBtn);
-    box.appendChild(row);
-    const err = document.createElement("div");
-    err.className = "bz-lockscreen-err";
-    err.dataset.ls = "err";
-    box.appendChild(err);
-    const sec = document.createElement("div");
-    sec.className = "bz-lockscreen-sec";
-    sec.dataset.ls = "sec";
-    const dot = document.createElement("span");
-    dot.className = "bz-lockscreen-dot";
-    sec.appendChild(dot);
-    const secText = document.createElement("span");
-    secText.textContent = opts.secText || "";
-    sec.appendChild(secText);
-    if (opts.secTone) sec.classList.add(`bz-lockscreen-sec--${opts.secTone}`);
-    sec.style.display = opts.secText ? "" : "none";
-    box.appendChild(sec);
-    const hint = document.createElement("div");
-    hint.className = "bz-lockscreen-hint";
-    hint.dataset.ls = "hint";
-    hint.textContent = opts.hint || "";
-    hint.style.display = opts.hint ? "" : "none";
-    box.appendChild(hint);
-    if (opts.inline) {
-      el.appendChild(box);
-    } else {
-      el.appendChild(box);
-      el.style.display = "flex";
-    }
-    const focus = () => {
-      try {
-        input.focus({ preventScroll: true });
-      } catch (e) {
-        input.focus();
-      }
-    };
-    return {
-      el,
-      input,
-      input2,
-      ackBox,
-      actionBtn,
-      setTitle: (t) => {
-        title.textContent = t;
-      },
-      setMessage: (t) => {
-        sub.textContent = t;
-      },
-      setError: (t) => {
-        err.textContent = t;
-      },
-      setStats,
-      setSec: (t, tone) => {
-        secText.textContent = t;
-        sec.style.display = t ? "" : "none";
-        sec.classList.remove("bz-lockscreen-sec--ok", "bz-lockscreen-sec--warn", "bz-lockscreen-sec--bad");
-        if (tone) sec.classList.add(`bz-lockscreen-sec--${tone}`);
-      },
-      setBusy: (busy) => {
-        actionBtn.disabled = !!busy;
-        input.disabled = !!busy;
-        input2.disabled = !!busy;
-        if (busy) actionBtn.dataset.busyText = actionBtn.textContent || "";
-        actionBtn.textContent = busy ? "处理中…" : actionBtn.dataset.busyText || opts.action;
-      },
-      showSecondInput: (show) => {
-        input2.style.display = show ? "" : "none";
-      },
-      focus,
-      close: () => {
-        el.remove();
-      }
-    };
-  }
-  var init_lock_screen = __esm({
-    "src/core/ui/lock-screen.ts"() {
-      init_icon();
-    }
-  });
-
   // src/encrypt/ui.ts
   var ui_exports8 = {};
   __export(ui_exports8, {
     DEFAULT_PW_CHARSET: () => DEFAULT_PW_CHARSET,
     EncryptAppController: () => EncryptAppController,
-    LOCK_KIND_META: () => LOCK_KIND_META,
     UIManager: () => UIManager3,
     collectMediaSlots: () => collectMediaSlots,
     collectNoteAttachmentPaths: () => collectNoteAttachmentPaths,
@@ -33720,7 +33553,7 @@ ${text}`;
       ]
     };
   }
-  var LOCK_KIND_META, lastVisitedAsset, _UIManager, UIManager3, _EncryptAppController, EncryptAppController;
+  var lastVisitedAsset, _UIManager, UIManager3, _EncryptAppController, EncryptAppController;
   var init_ui10 = __esm({
     "src/encrypt/ui.ts"() {
       init_fake_obsidian();
@@ -33741,42 +33574,6 @@ ${text}`;
       init_vault_pw_view();
       init_pw_picker();
       init_vault_assets_view();
-      init_lock_screen();
-      LOCK_KIND_META = {
-        vault: {
-          icon: "shield",
-          title: "保险库已上锁",
-          sub: "解锁前，笔记正文与附件均以密文保存",
-          action: "解锁",
-          stats: [
-            { num: "—", label: "笔记条目" },
-            { num: "—", label: "随库附件" },
-            { num: "—", label: "附件密文" }
-          ]
-        },
-        "password-vault": {
-          icon: "key",
-          title: "密码本已上锁",
-          sub: "解锁前，平台与口令均以密文保存",
-          action: "解锁",
-          stats: [
-            { num: "—", label: "平台" },
-            { num: "—", label: "口令条目" },
-            { num: "—", label: "收藏" }
-          ]
-        },
-        diary: {
-          icon: "lock",
-          title: "加密日记已上锁",
-          sub: "解锁前，加密日记条目与附件均为密文",
-          action: "解锁",
-          stats: [
-            { num: "—", label: "加密条目" },
-            { num: "—", label: "随库附件" },
-            { num: "—", label: "附件密文" }
-          ]
-        }
-      };
       lastVisitedAsset = "pw";
       _UIManager = class _UIManager {
         constructor(dataManager3, config, pwDataManager) {
@@ -33814,8 +33611,6 @@ ${text}`;
           this.sessionTimer = null;
           /** 安全模式无交互自动上锁计时器（15 分钟；面板内交互重置） */
           this.idleLockTimer = null;
-          /** 解锁屏统计快照（会话内缓存；冷启动为「—」） */
-          this.lockStatsCache = {};
           this._selNoteId = null;
           this._pwEditingId = null;
           /** 同平台+账号查重命中后的放行标志（同一弹窗会话内再点一次保存即放行） */
@@ -34328,136 +34123,180 @@ ${text}`;
          * 主密码弹窗（首设两次确认 + 损坏清单重设确认）。视觉样式已收敛至 styles.css
          * （铁律 9：.bz-encrypt-dialog-* 类）；内联仅保留功能性 zIndex/显隐（display）。
          */
-        /** 解锁输入类失败：行内报错 + 通知双通道（原型为行内报错，插件既有语义保留通知） */
-        rejectInput(msg, setErr, tone) {
-          setErr(msg);
-          notice(msg, tone || void 0);
-        }
-        /** 解锁屏：三域共用骨架（core/ui/lock-screen），文案与统计按域注入 */
-        async showPasswordDialog(kind = "vault") {
+        async showPasswordDialog() {
           const exists = await this.dataManager.exists();
-          const meta = LOCK_KIND_META[kind];
           return new Promise((resolve2) => {
-            const stats = this.lockStatsCache[kind] || meta.stats.map((s) => ({ ...s, num: "—" }));
-            const ls = uiLockScreen({
-              kind,
-              icon: meta.icon,
-              title: exists ? meta.title : "设置主密码",
-              sub: exists ? meta.sub : "请设置一个主密码（用于加密所有数据）",
-              stats,
-              action: exists ? meta.action : "设置并解锁",
-              firstSetup: !exists,
-              warningHtml: `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
-              ackText: "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复",
-              secText: exists ? "主密码不会存储 · 遗忘将无法恢复密文" : "",
-              secTone: "warn",
-              hint: exists ? "" : "建议使用密码本保存此密码"
-            });
-            topifyZ(ls.el);
-            document.body.appendChild(ls.el);
-            const done = (ok) => {
-              ls.close();
-              resolve2(ok);
+            const mask = document.createElement("div");
+            mask.className = "bz-encrypt-dialog-mask";
+            topifyZ(mask);
+            mask.style.display = "flex";
+            const box = document.createElement("div");
+            box.className = "bz-encrypt-dialog-box";
+            const title = document.createElement("h4");
+            title.className = "bz-encrypt-dialog-title";
+            const message = document.createElement("p");
+            message.className = "bz-encrypt-dialog-msg";
+            const input = document.createElement("input");
+            input.type = "password";
+            input.placeholder = "输入主密码";
+            input.className = "bz-encrypt-dialog-input";
+            const input2 = document.createElement("input");
+            input2.type = "password";
+            input2.placeholder = "再次输入";
+            input2.className = "bz-encrypt-dialog-input";
+            input2.style.display = "none";
+            const warning = document.createElement("div");
+            warning.className = "bz-encrypt-dialog-warning";
+            warning.style.display = "none";
+            warning.innerHTML = `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`;
+            const ack = document.createElement("label");
+            ack.className = "bz-encrypt-dialog-ack";
+            ack.style.display = "none";
+            const ackBox = document.createElement("input");
+            ackBox.type = "checkbox";
+            ack.appendChild(ackBox);
+            ack.appendChild(document.createTextNode("我已了解：主密码无法找回，遗忘将导致密文永久无法恢复"));
+            if (exists) {
+              title.textContent = "输入主密码";
+              message.textContent = "请输入您设置的主密码以解锁保险库";
+              input2.style.display = "none";
+              warning.style.display = "none";
+              ack.style.display = "none";
+            } else {
+              title.textContent = "设置主密码";
+              message.textContent = "请设置一个主密码（用于加密所有数据）";
+              input2.style.display = "block";
+              input2.placeholder = "再次输入";
+              warning.style.display = "block";
+              ack.style.display = "block";
+            }
+            const btnContainer = document.createElement("div");
+            btnContainer.className = "bz-encrypt-dialog-btns";
+            const cancelBtn = document.createElement("button");
+            cancelBtn.textContent = "取消";
+            cancelBtn.className = "bz-encrypt-dialog-btn";
+            cancelBtn.onclick = () => {
+              document.body.removeChild(mask);
+              resolve2(false);
             };
-            const setErr = (m) => {
-              ls.setError(m);
-              setTimeout(() => {
-                if (ls.input.value) ls.setError("");
-              }, 2600);
-            };
-            ls.actionBtn.onclick = async () => {
-              const pw = ls.input.value;
+            const confirmBtn = document.createElement("button");
+            confirmBtn.textContent = "确认";
+            confirmBtn.className = "bz-encrypt-dialog-btn bz-encrypt-dialog-btn--primary";
+            confirmBtn.onclick = async () => {
+              const pw = input.value;
               if (!pw) {
-                this.rejectInput("请输入密码", setErr);
+                notice("请输入密码");
                 return;
               }
               if (!exists) {
-                if (ls.input2.style.display === "none") {
-                  ls.showSecondInput(true);
-                  ls.input2.value = "";
-                  ls.setMessage("请再次输入主密码确认");
-                  ls.focus();
+                if (input2.style.display === "none") {
+                  input2.style.display = "block";
+                  input2.value = "";
+                  this.focusUnlockInput(input2);
+                  message.textContent = "请再次输入主密码确认";
                   return;
-                }
-                if (pw !== ls.input2.value) {
-                  this.rejectInput("两次密码不一致", setErr);
-                  return;
-                }
-                if (!ls.ackBox || !ls.ackBox.checked) {
-                  this.rejectInput("请先勾选风险确认", setErr);
-                  return;
-                }
-                try {
-                  const ok = await this.dataManager.unlock(pw);
-                  if (ok) {
-                    done(true);
-                    notice("密码已设置，数据已加密", "success");
-                  } else {
-                    notice("设置失败：无法写入清单，请检查磁盘空间后重试", "error");
-                    done(false);
-                  }
-                } catch (e) {
-                  notifyActionError(e, "设置主密码");
-                  done(false);
-                }
-                return;
-              }
-              const remainMs = this.unlockCooldownUntil - Date.now();
-              if (remainMs > 0) {
-                this.rejectInput(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1e3)} 秒`, setErr, "warning");
-                return;
-              }
-              const success = await this.dataManager.unlock(pw);
-              if (success) {
-                this.resetUnlockThrottle();
-                done(true);
-                const healMsg = this.dataManager.selfHealRolledBack > 0 ? "；上次未完成的加密已自动回滚，原文未动" : "";
-                notice("解锁成功" + healMsg, "success");
-              } else {
-                const issue = this.dataManager.manifestIssue;
-                if (issue === "empty" || issue === "corrupt") {
-                  void openFlowDialog({
-                    title: "清单疑似损坏",
-                    message: "保险库清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？",
-                    actions: [
-                      { label: "暂不重设", value: "cancel" },
-                      { label: "仍要重设", value: "ok", cta: true }
-                    ]
-                  }).then((v) => {
-                    if (v === "ok") {
-                      void this.dataManager.unlock(pw, true).then((ok) => {
-                        if (ok) {
-                          this.resetUnlockThrottle();
-                          done(true);
-                          notice("已重设主密码（旧数据不可恢复）", "warning");
-                        } else {
-                          this.rejectInput("重设失败：无法写入清单", setErr, "error");
-                        }
-                      });
-                    } else {
-                      notice("未重设：请先检查或备份数据文件", "warning");
-                    }
-                  });
                 } else {
-                  this.rejectInput("密码错误，请重试", setErr, "error");
-                  const delaySec = this.registerUnlockFailure();
-                  notice(`${delaySec} 秒后可再次尝试`, "warning");
-                  ls.input.value = "";
-                  ls.focus();
+                  if (pw !== input2.value) {
+                    notice("两次密码不一致");
+                    return;
+                  }
+                  if (!ackBox.checked) {
+                    notice("请先勾选风险确认");
+                    return;
+                  }
+                  try {
+                    const ok = await this.dataManager.unlock(pw);
+                    if (ok) {
+                      document.body.removeChild(mask);
+                      resolve2(true);
+                      notice("密码已设置，数据已加密", "success");
+                    } else {
+                      notice("设置失败：无法写入清单，请检查磁盘空间后重试", "error");
+                      resolve2(false);
+                    }
+                  } catch (e) {
+                    notifyActionError(e, "设置主密码");
+                    resolve2(false);
+                  }
+                  return;
+                }
+              } else {
+                const remainMs = this.unlockCooldownUntil - Date.now();
+                if (remainMs > 0) {
+                  notice(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1e3)} 秒`, "warning");
+                  return;
+                }
+                const success = await this.dataManager.unlock(pw);
+                if (success) {
+                  this.resetUnlockThrottle();
+                  document.body.removeChild(mask);
+                  resolve2(true);
+                  const healMsg = this.dataManager.selfHealRolledBack > 0 ? "；上次未完成的加密已自动回滚，原文未动" : "";
+                  notice("解锁成功" + healMsg, "success");
+                } else {
+                  const issue = this.dataManager.manifestIssue;
+                  if (issue === "empty" || issue === "corrupt") {
+                    void openFlowDialog({
+                      title: "清单疑似损坏",
+                      message: "保险库清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？",
+                      actions: [
+                        { label: "暂不重设", value: "cancel" },
+                        { label: "仍要重设", value: "ok", cta: true }
+                      ]
+                    }).then((v) => {
+                      if (v === "ok") {
+                        void this.dataManager.unlock(pw, true).then((ok) => {
+                          if (ok) {
+                            this.resetUnlockThrottle();
+                            document.body.removeChild(mask);
+                            resolve2(true);
+                            notice("已重设主密码（旧数据不可恢复）", "warning");
+                          } else {
+                            notice("重设失败：无法写入清单", "error");
+                          }
+                        });
+                      } else {
+                        notice("未重设：请先检查或备份数据文件", "warning");
+                      }
+                    });
+                  } else {
+                    notice("密码错误，请重试", "error");
+                    const delaySec = this.registerUnlockFailure();
+                    notice(`${delaySec} 秒后可再次尝试`, "warning");
+                    input.value = "";
+                    this.focusUnlockInput(input);
+                  }
                 }
               }
             };
-            ls.input.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") ls.actionBtn.click();
+            input.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") confirmBtn.click();
             });
-            ls.input2.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") ls.actionBtn.click();
+            input2.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") confirmBtn.click();
             });
-            ls.el.addEventListener("click", (e) => {
-              if (e.target === ls.el) done(false);
-            });
-            ls.focus();
-            setTimeout(() => ls.focus(), 150);
+            btnContainer.appendChild(cancelBtn);
+            btnContainer.appendChild(confirmBtn);
+            box.appendChild(title);
+            box.appendChild(warning);
+            box.appendChild(ack);
+            box.appendChild(message);
+            box.appendChild(input);
+            box.appendChild(input2);
+            box.appendChild(btnContainer);
+            mask.appendChild(box);
+            document.body.appendChild(mask);
+            mask.onclick = (e) => {
+              if (e.target === mask) {
+                try {
+                  document.body.removeChild(mask);
+                } catch (err) {
+                }
+                resolve2(false);
+              }
+            };
+            this.focusUnlockInput(input);
+            setTimeout(() => this.focusUnlockInput(input), 150);
           });
         }
         /** 输入框聚焦（不滚动页面）+ 兼容性兜底；移动端靠二次聚焦触发系统键盘 */
@@ -34483,7 +34322,6 @@ ${text}`;
         /** 全量重绘：导航计数 + 概览/资产内容 + 移动端 + 健康卡 + 顶栏标题 */
         renderAll() {
           if (!this.rootVisible()) return;
-          if (this.dataManager.unlocked) this.captureLockStats();
           this.renderNav();
           this.renderDesktop();
           this.renderMobile();
@@ -34499,38 +34337,6 @@ ${text}`;
             note: notes.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault").length,
             diary: notes.filter((n) => n.kind === "diary-entry").length
           };
-        }
-        /**
-         * 快照解锁屏统计项（三域各一份）。
-         * 清单本身是密文，锁定态无法读计数 —— 故只在解锁期间快照，供下次上锁后的解锁屏显示；
-         * 冷启动（本次会话从未解锁）则回落「—」，不编造数字。
-         */
-        captureLockStats() {
-          var _a2;
-          try {
-            const all = ((_a2 = this.dataManager.manifest) == null ? void 0 : _a2.notes) || [];
-            const kb = (b) => b > 0 ? (b / 1024).toFixed(1) + " KB" : "—";
-            const stat = (list, labels) => {
-              const atts = list.reduce((s, n) => s + n.attachments.length, 0);
-              const bytes = list.reduce((s, n) => s + n.attachments.reduce((b, a) => b + (a.blobSize || 0), 0), 0);
-              return [{ num: String(list.length), label: labels[0] }, { num: String(atts), label: labels[1] }, { num: kb(bytes), label: labels[2] }];
-            };
-            this.lockStatsCache.vault = stat(
-              all.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault"),
-              ["笔记条目", "随库附件", "附件密文"]
-            );
-            this.lockStatsCache.diary = stat(
-              all.filter((n) => n.kind === "diary-entry"),
-              ["加密条目", "随库附件", "附件密文"]
-            );
-            const plats = this.pwDataManager.platforms();
-            this.lockStatsCache["password-vault"] = [
-              { num: String(plats.length), label: "平台" },
-              { num: String(this.pwDataManager.pwData.length), label: "口令条目" },
-              { num: String(plats.filter((p) => this.pwDataManager.hasFav(p.platform)).length), label: "收藏" }
-            ];
-          } catch (e) {
-          }
         }
         renderNav() {
           const c = this.counts();
@@ -35889,10 +35695,10 @@ ${text}`;
     if (ok) notice("保险库已锁定", "success");
     else notice("保险库本来就是锁着的", "warning");
   }
-  async function ensureSafeUnlocked(kind = "vault") {
+  async function ensureSafeUnlocked() {
     const controller2 = getController();
     if (controller2.dataManager.unlocked) return true;
-    const ok = await controller2.uiManager.showPasswordDialog(kind);
+    const ok = await controller2.uiManager.showPasswordDialog();
     return ok;
   }
   function unloadEncrypt() {

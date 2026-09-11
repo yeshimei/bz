@@ -48,8 +48,8 @@
 #bz-encrypt-popup { width: 90%; max-width: 700px; max-height: 80vh; }
 #bz-encrypt-preview-popup { max-height: 86vh; overflow: hidden; }
 #bz-encrypt-list { flex: 1; overflow-y: auto; padding: 0 20px var(--bz-space-lg); min-height: 200px; }
-#bz-encrypt-list::-webkit-scrollbar { width: 6px; }
-#bz-encrypt-list::-webkit-scrollbar-thumb { background: var(--bz-border); border-radius: var(--bz-radius-xs); }
+/* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277，#bz-encrypt-list 落 [id^="bz-"]），
+   原自绘 6px ::-webkit-scrollbar/thumb 已清退 */
 /* 旧清单卡视图规则已随 ADR-0085 统一保险库工作台退役（死规则删除） */
 .bz-encrypt-preview-head {
   display: flex; justify-content: space-between; align-items: center;

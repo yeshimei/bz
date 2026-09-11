@@ -43,7 +43,7 @@ AI 走 `deepseek-v4-flash`（`ai.json`，`src/core/ai.ts:542-547`），B 站视�
 
 ## 验收
 
-- [ ] 新生成视频文献标题为陈述句；复跑 B 站《没有脑子的立方水母……》类素材不再产出「为何…」句式
-- [ ] 剪藏摘要标题同款生效；既有笔记标题不被改动
-- [ ] `pnpm exec vitest run tests/knowledge tests/auto-summary` 全绿（prompt 断言逐字）
-- [ ] 全量门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 自审 + diff 审查 + 主仓 `pnpm run build` 部署
+- [ ] 新生成视频文献标题为陈述句；复跑 B 站《没有脑子的立方水母……》类素材不再产出「为何…」句式（真机生成项，离线无法验证）
+- [ ] 剪藏摘要标题同款生效；既有笔记标题不被改动（真机生成项，离线无法验证；存量不迁移已按 §3 落实——无任何迁移代码）
+- [x] `pnpm exec vitest run tests/knowledge tests/auto-summary` 全绿（prompt 断言逐字；11 文件 196 例通过）
+- [ ] 全量门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 自审 + diff 审查 + 主仓 `pnpm run build` 部署（前四项 worktree 内全绿：全量失败与 master 基线完全一致零新增，tsc 通过；主仓构建部署待合并后执行）
