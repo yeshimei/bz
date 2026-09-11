@@ -1,7 +1,8 @@
 /**
  * 影院（cinema）AI 荐片：复刻 movie/recommend.ts（真实 AI 调用 + 页内等待/结果 + 加入想看）
  * - 口味画像 buildTasteProfile（加权统计类型/题材/导演/主演/地区 + 最近观影）
- * - 提示词 buildRecommendPrompt（要求真实存在、引用画像偏好）
+ * - 提示词（2026-09-11 方案 A，用户拍板）：prompt 只发画像 + 最近已看，不发全量片名；
+ *   要 20 部按匹配度排序 → 结果层去重（在库/重复/空名）取前 5 → 不足补问一轮（排除已见名单）
  * - AI 页内化（用户拍板）：点入口切 AI 页 → 等待消息就地在页内显示 → 完成后结果列表就地渲染（不弹窗）
  * - ADR-0087：自旧 movie 迁入 runSimilarRecommend/buildSimilarPrompt（找同类）
  */
@@ -62,8 +63,15 @@ export function buildTasteProfile(): any {
   };
 }
 
-/** 构建推荐提示词（逐字复刻 movie/recommend buildRecommendPrompt） */
-export function buildRecommendPrompt(profile: any, recent: string[], allNames: string[]): string {
+/** 荐片配额（方案 A，用户拍板 2026-09-11）：首轮要 20 → 本地去重 → 取匹配度前 5；不足 5 部补问一轮 */
+const RECOMMEND_ASK = 20;
+const RECOMMEND_TAKE = 5;
+const FOLLOWUP_ASK = 10;
+
+/** 构建推荐提示词（2026-09-11 方案 A：不再打包全量片名做排除清单——
+ *  prompt 只发正向信号（画像 + 最近已看），要求多给（20 部按匹配度排序），
+ *  「不荐库内已有」职责移到结果层去重；token 从库规模线性降为常量级） */
+export function buildRecommendPrompt(profile: any, recent: string[]): string {
   return `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~10加权统计，数值为加权分）：
 品类分布：${profile.groups.join('、') || '无'}
 类型偏好：${profile.genres.join('、') || '无'}
@@ -72,11 +80,71 @@ export function buildRecommendPrompt(profile: any, recent: string[], allNames: s
 地区偏好：${profile.regions.join('、') || '无'}
 最近看的10部：${recent.join('；')}
 
-请基于画像推荐 5 部用户可能喜欢的、且不在排除清单中的影视（电影/剧集/动漫/纪录片/公开课均可）。推荐理由必须具体引用画像中的偏好信号（如"你偏爱X导演的Y风格"）。只推荐真实存在的影视，避免编造。
-
-排除清单（不要推荐这些）：${allNames.join('、')}
+请基于画像推荐 ${RECOMMEND_ASK} 部用户可能喜欢的影视（电影/剧集/动漫/纪录片/公开课均可），按与口味的匹配度从高到低排序。推荐理由必须具体引用画像中的偏好信号（如"你偏爱X导演的Y风格"）。只推荐真实存在的影视，避免编造。
 
 严格输出 JSON（不要输出其他内容）：{"recommendations":[{"title":"片名","year":"年份","director":"导演","type":"电影|剧集|动漫|纪录片|公开课","reason":"推荐理由"}]}`;
+}
+
+/** 补问提示词（方案 A 第二轮）：只排除「已经推荐过的名字」（≤20 个，常量级），
+ *  在库去重仍由结果层承担；凑不满 5 部就按实际所得展示 */
+export function buildFollowupPrompt(profile: any, recent: string[], excludeNames: string[]): string {
+  return `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~10加权统计，数值为加权分）：
+品类分布：${profile.groups.join('、') || '无'}
+类型偏好：${profile.genres.join('、') || '无'}
+导演偏好：${profile.directors.join('、') || '无'}
+主演偏好：${profile.actors.join('、') || '无'}
+地区偏好：${profile.regions.join('、') || '无'}
+最近看的10部：${recent.join('；')}
+
+刚才已经向你推荐过以下影片（不要重复推荐）：${excludeNames.join('、')}
+
+请再推荐 ${FOLLOWUP_ASK} 部用户可能喜欢的影视（电影/剧集/动漫/纪录片/公开课均可），按与口味的匹配度从高到低排序，避开上面已出现过的。推荐理由必须具体引用画像中的偏好信号（如"你偏爱X导演的Y风格"）。只推荐真实存在的影视，避免编造。
+
+严格输出 JSON（不要输出其他内容）：{"recommendations":[{"title":"片名","year":"年份","director":"导演","type":"电影|剧集|动漫|纪录片|公开课","reason":"推荐理由"}]}`;
+}
+
+/** 候选条目名（title 兜底 name） */
+function recTitle(r: any): string {
+  return String(r?.title || r?.name || '').trim();
+}
+
+/**
+ * 结果层去重：跳过空名 / 已拾取或已见过的名字 / 在库已有（it.name 精确匹配）；
+ * 每个见过的名字都记入 taken——补问轮的排除清单据此构造（在库的也不再返回）
+ */
+function dedupeRecommendations(cands: any[], taken: Set<string>): any[] {
+  const out: any[] = [];
+  for (const r of cands ?? []) {
+    const name = recTitle(r);
+    if (!name || taken.has(name)) continue;
+    taken.add(name);
+    if (M.items.some((it) => it.name === name)) continue;
+    out.push(r);
+  }
+  return out;
+}
+
+/**
+ * 荐片结果精修（refine）：首轮候选去重后取前 5（AI 排序即相关性序）；
+ * 不足 5 部 → 带已见名单补问一轮（FOLLOWUP_ASK），再去重补足；补问失败保留首轮所得。
+ * 全程不抛错（内部兜底），空列表由 runAIPage 落错误文案。
+ */
+async function refineRecommend(first: any[]): Promise<any[]> {
+  const taken = new Set<string>();
+  const picked = dedupeRecommendations(first, taken).slice(0, RECOMMEND_TAKE);
+  if (picked.length >= RECOMMEND_TAKE) return picked;
+  M.aiWaitMsg = `首轮候选在库较多，正在补充推荐…`;
+  M.renderFn?.();
+  try {
+    const profile = buildTasteProfile();
+    const ai = createAI();
+    const raw = await ai.json(buildFollowupPrompt(profile, profile.recent, [...taken]), {});
+    const more = parseRecommendJson(raw);
+    if (more) picked.push(...dedupeRecommendations(more, taken));
+  } catch {
+    /* 补问失败：保留首轮所得 */
+  }
+  return picked.slice(0, RECOMMEND_TAKE);
 }
 
 /** 解析 AI 返回 JSON（兼容裸数组 / recommendations / similar / suggestions / items / movies 键） */
@@ -142,6 +210,8 @@ interface AIPageOpts {
   base: CinemaItem | null;
   initWaitMsg: string;
   prepare: () => { prompt: string; waitMsg: string };
+  /** 可选结果精修（荐片专用）：首轮结果 → 去重 + 不足补问 → 最终列表；找同类不传 */
+  refine?: (first: any[]) => Promise<any[]>;
 }
 
 /**
@@ -174,7 +244,13 @@ async function runAIPage(app: App, opts: AIPageOpts): Promise<void> {
       return;
     }
     M.aiRunning = false;
-    M.aiResult = parsed;
+    const final = opts.refine ? await opts.refine(parsed) : parsed;
+    if (!final.length) {
+      M.aiError = '没有凑齐可推荐的库外新片，换一批再试';
+      M.renderFn?.();
+      return;
+    }
+    M.aiResult = final;
     M.renderFn?.();
   } catch (e: any) {
     M.aiRunning = false;
@@ -194,12 +270,12 @@ export function runAIRecommend(app: App): Promise<void> {
     initWaitMsg: 'AI 正在分析你的观影口味…',
     prepare: () => {
       const profile = buildTasteProfile();
-      const allNames = M.items.map((i) => i.name);
       return {
-        prompt: buildRecommendPrompt(profile, profile.recent, allNames),
+        prompt: buildRecommendPrompt(profile, profile.recent),
         waitMsg: `已分析 ${profile.total} 部观影历史，正在生成推荐…`,
       };
     },
+    refine: refineRecommend,
   });
 }
 

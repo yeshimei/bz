@@ -200,6 +200,48 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     expect(spawn).not.toHaveBeenCalled();
   });
 
+  it('完成信号兜底：spawn 迟迟不退出但字段落盘 → 轮询清 loading（用户实测退出信号丢失形态）', async () => {
+    const vault = new MockVault();
+    const path = '我的/影视/《信号丢失》.md';
+    vault.files.set(path, '---\ntags: [电影]\n评分: 8\n---');
+    const app = mockAppWithVault(vault);
+    M.appRef = app;
+    rebuildItems(app);
+    configureFetchQueue({
+      ...TEST_HOOKS,
+      pollMs: 10,
+      spawn: async (_cli, notePath) => {
+        // 字段先落盘，进程永不退出（模拟宿主内 spawn 退出事件丢失/CLI 收尾迟滞）
+        const rel = toRel(notePath);
+        vault.files.set(rel, `${(vault.files.get(rel) ?? '').replace(/\n*$/, '\n')}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+        await new Promise(() => {});
+      },
+    });
+
+    sweepDoubanFetch(app);
+    expect(isFetching(path)).toBe(true);
+    for (let i = 0; i < 100 && isFetching(path); i++) await new Promise((r) => setTimeout(r, 10));
+    expect(isFetching(path)).toBe(false);
+    // 轮询收尾算成功：不进失败聚合通知
+    await settle();
+    expect(hasNotice(/豆瓣信息获取失败/)).toBe(false);
+  });
+
+  it('isFetching 时限兜底：pending 超过单条超时 + 余量即视为过期（双信号全失 loading 不永转）', async () => {
+    vi.useFakeTimers();
+    const vault = new MockVault();
+    const path = '我的/影视/《超时》.md';
+    vault.files.set(path, '---\ntags: [电影]\n评分: 8\n---');
+    const app = mockAppWithVault(vault);
+    M.appRef = app;
+    rebuildItems(app);
+    configureFetchQueue({ ...TEST_HOOKS, spawn: () => new Promise(() => {}) });
+    sweepDoubanFetch(app);
+    expect(isFetching(path)).toBe(true);
+    await vi.advanceTimersByTimeAsync(FETCH_TIMEOUT_MS + 30_000 + 1);
+    expect(isFetching(path)).toBe(false);
+  });
+
   it('waitForExit：正常退出 clearTimeout 不杀；超时 kill 兜底并 resolve', async () => {
     vi.useFakeTimers();
     const child = new EventEmitter();

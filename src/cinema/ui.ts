@@ -551,6 +551,8 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     }
     const tool = t.closest('.j-tool') as HTMLElement | null;
     if (tool && tool.dataset.tool) {
+      // 进 ai/stat 不动筛选状态：rail 高亮由渲染层按视图熄灭（render.ts listOn 门控），
+      // 返回列表时先前选中的筛选高亮原样恢复
       M.view = M.view === tool.dataset.tool ? 'list' : (tool.dataset.tool as 'ai' | 'stat');
       renderAll(app);
       return;
