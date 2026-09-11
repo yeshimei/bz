@@ -220,6 +220,10 @@
   .bz-memo-card .bz-memo-check { width: 19px; height: 19px; }
   /* 触控热区 ≥44px（设计手册 §8.2）：视觉尺寸不变，::after 外扩热区（19px + 13px×2 = 45px） */
   .bz-memo-card .bz-memo-check::after { content: ''; position: absolute; inset: -13px; }
+  /* 移动抽屉头同款口径（review P3）：抽屉是移动端高频场景，圈同 19px + 45px 热区，
+     对齐列表移动段——规则同款、层叠路径同款（checked 对勾 ::after 两侧行为一致） */
+  .bz-memo-sheet-entry .bz-memo-check { width: 19px; height: 19px; }
+  .bz-memo-sheet-entry .bz-memo-check::after { content: ''; position: absolute; inset: -13px; }
   .bz-memo-card .bz-memo-card-title { font-size: var(--bz-font-emphasis); }
   .bz-memo-composer .bz-input { height: 40px; }
 }
