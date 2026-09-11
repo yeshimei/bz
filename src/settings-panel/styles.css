@@ -59,6 +59,7 @@
   position: fixed;
   inset: 0;
   background: rgba(20, 15, 8, 0.4);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: flex;
   align-items: center;
   justify-content: center;

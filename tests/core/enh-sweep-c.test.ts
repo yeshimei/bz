@@ -117,9 +117,14 @@ describe('enh-sweep-c：静态 z-index 退役（favorites/belongings）', () => 
 });
 
 describe('enh-sweep-c：杂项打磨', () => {
-  it('review：遮罩去毛玻璃 + 队列/冲刺滚动条隐藏 + 死规则清理', () => {
+  it('review：遮罩 token 毛玻璃（--bz-overlay-blur 三处单源）+ 队列/冲刺滚动条隐藏 + 死规则清理', () => {
     const s = css('review');
-    expect(s).not.toContain('backdrop-filter');
+    for (const sel of ['#review-stats-mask', '#review-history-mask', '#quiz-mask']) {
+      expect(s, `缺 ${sel} 毛玻璃`).toMatch(
+        new RegExp(`${sel.replace(/#/g, '\\#')}\\s*\\{[^}]*backdrop-filter: blur\\(var\\(--bz-overlay-blur\\)\\)`)
+      );
+    }
+    expect(s.match(/backdrop-filter/g)?.length).toBe(3); // 仅上述三处遮罩
     expect(s).toMatch(/#review-entries-container, #review-entries-container \* \{ scrollbar-width: none/);
     expect(s).not.toMatch(/#review-entries-container::-webkit-scrollbar \{ width/); // overflow:hidden 容器上的死规则
     expect(s).not.toContain('#review-watch-folders'); // 监听文件夹 chip 渲染已退役

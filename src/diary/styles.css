@@ -1284,7 +1284,8 @@
   position: fixed;
   inset: 0;
   z-index: 95;
-  background: var(--dw-cover);
+  background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: none;
   align-items: center;
   justify-content: center;
@@ -1519,7 +1520,7 @@
 
 /* 写日记弹窗 */
 #add-diary-mask {
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   animation: fadeIn var(--bz-dur-base) ease-out;
 }
 .add-diary-popup {
@@ -1548,7 +1549,7 @@
 
 /* 标签选择器弹窗 */
 #diary-tag-selector-mask {
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   animation: fadeIn var(--bz-dur-base) ease-out;
 }
 .diary-tag-selector-popup {
