@@ -53,9 +53,10 @@ describe('数据源组 schema 形态（声明式重写）', () => {
     const rows = dataSourceGroupRows(state);
     expect(rows.length).toBeGreaterThanOrEqual(6);
     expect(rows.some((r) => r.type === 'custom')).toBe(false);
-    // ADR-0119：B站组后新增「每日简报名单」按钮行（briefUps 管理入口），其余行序不变
-    expect(rows.map((r) => r.type)).toEqual(['toggle', 'toggle', 'toggle', 'button', 'button', 'number', 'number']);
-    expect(rowByName(rows, '每日简报名单').buttonText).toBe('管理');
+    // ADR-0121：每日简报退役，B站组后为「RSS 订阅」toggle + 「RSS 订阅源」管理按钮行
+    expect(rows.map((r) => r.type)).toEqual(['toggle', 'toggle', 'toggle', 'button', 'toggle', 'button', 'number', 'number']);
+    expect(rowByName(rows, '每日简报名单')).toBeUndefined();
+    expect(rowByName(rows, 'RSS 订阅源').buttonText).toBe('管理');
   });
 
   it('news.json 缺失：安装引导（info + 复制安装命令按钮）', async () => {

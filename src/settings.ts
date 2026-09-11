@@ -101,8 +101,6 @@ export default interface BzSettings {
   // ===== 📰 剪藏本（自动摘要开关 + ticket 124 详设/数据源）=====
   /** 📂 剪藏目录 */
   articleDirectory: string;
-  /** 每日简报保存目录（ADR-0119：简报保存走专属目录，不与网页剪藏混） */
-  dailyBriefDir: string;
   /** 📄 自动摘要：监听剪藏目录新文件（路径与剪藏目录一致） */
   autoSummaryEnabled: boolean;
   /** 📏 自动摘要长度档位：simple（简短）/ standard（标准）/ detailed（详细）——ticket 124 详设 */
@@ -498,7 +496,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 剪藏本
   articleDirectory: '归档/网页剪藏',
-  dailyBriefDir: '归档/每日简报',
   autoSummaryEnabled: true,
   autoSummaryLength: 'standard',
   autoSummaryTagsEnabled: true,

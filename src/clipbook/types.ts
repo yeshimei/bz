@@ -9,11 +9,11 @@
 /** 阅读流状态点：unread 蓝 / reading 琥珀 / read 空心（仅剪藏保留语义）/ saved 绿 */
 export type ClipState = 'unread' | 'reading' | 'read' | 'saved';
 
-/** 条目来源：news.json（聚合讯）或剪藏目录（.md frontmatter）或简报（news.json briefs 段，ADR-0119） */
-export type ClipOrigin = 'news' | 'clip' | 'brief';
+/** 条目来源：news.json（聚合讯）或剪藏目录（.md frontmatter） */
+export type ClipOrigin = 'news' | 'clip';
 
-/** 源类型：收件流（news 聚合） / 剪藏本（目录） / 全部聚合 / 站点（issue 222） / 每日简报（ADR-0119） */
-export type RailKind = 'inbox' | 'clip' | 'all' | 'site' | 'brief';
+/** 源类型：收件流（news 聚合） / 剪藏本（目录） / 全部聚合 / 站点（issue 222） */
+export type RailKind = 'inbox' | 'clip' | 'all' | 'site';
 
 
 /**

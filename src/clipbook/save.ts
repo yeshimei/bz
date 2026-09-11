@@ -28,12 +28,6 @@ export function clipDirOf(): string {
   return (s && s.articleDirectory) || '归档/网页剪藏';
 }
 
-/** 每日简报保存目录（ADR-0119 §14：简报保存写**专属目录**，不与网页剪藏混） */
-export function dailyBriefDirOf(): string {
-  const s = tryGetSettings() as any;
-  return (s && s.dailyBriefDir) || '归档/每日简报';
-}
-
 // C10：原 saveArticle 分流导出已删（无调用方——flow.ts 内联 B站/写剪藏分流）；
 // B站分流逻辑在 flow.flowSave 内实现。
 

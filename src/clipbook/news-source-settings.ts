@@ -3,13 +3,13 @@
  * 检测 news.json 存在性、读/写 sources 开关与 bilibiliUps 名单、最近抓取时间。
  * 纯数据层（无 DOM），供 src/clipbook/news-sources-group.ts 设置组调用。
  */
-import { readNewsData, writeNewsDataMerged, DEFAULT_SOURCES, type BilibiliUpInfo } from './news-data';
+import { readNewsData, writeNewsDataMerged, DEFAULT_SOURCES, normalizeRssFeedUrl, type BilibiliUpInfo, type RssFeed } from './news-data';
 import { enqueueNewsWrite } from './write-queue';
 
 export interface DataSourceState {
   /** news.json 是否存在（news-watcher 库存在的检测信号） */
   exists: boolean;
-  sources: { zhihu: boolean; guokr: boolean; bilibili: boolean };
+  sources: { zhihu: boolean; guokr: boolean; bilibili: boolean; rss: boolean };
   bilibiliUps: string[];
   /** UP 主资料（后台抓到消息后回填；缺失时 UI 回退显示 uid） */
   bilibiliUpInfo: Record<string, BilibiliUpInfo>;
@@ -20,15 +20,13 @@ export interface DataSourceState {
   /** 最近抓取时间（articles 最新 fetchedAt；无文章返回 null） */
   lastFetchAt: string | null;
   totalArticles: number;
-  /** 每日简报名单（ADR-0119：news.json briefUps 段，独立于 bilibiliUps） */
-  briefUps: string[];
-  /** 简报条目数（列表计数用） */
-  totalBriefs: number;
+  /** RSS 订阅列表（ADR-0121：news.json rssFeeds 段，插件写守护读） */
+  rssFeeds: RssFeed[];
 }
 
 /** 空数据源状态（news.json 缺失/损坏时的回退值；schema 构建与测试共用） */
 export function emptyDataSourceState(exists = false): DataSourceState {
-  return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', lastFetchAt: null, totalArticles: 0, briefUps: [], totalBriefs: 0 };
+  return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', lastFetchAt: null, totalArticles: 0, rssFeeds: [] };
 }
 
 /** 读数据源状态（检测 + sources + 名单 + UP 资料 + B站配置 + 最近抓取时间） */
@@ -53,13 +51,12 @@ export async function readDataSourceState(): Promise<DataSourceState> {
     bilibiliCookie: res.data.bilibiliCookie,
     lastFetchAt,
     totalArticles: res.data.articles.length,
-    briefUps: [...(res.data.briefUps || [])],
-    totalBriefs: (res.data.briefs || []).length,
+    rssFeeds: [...res.data.rssFeeds],
   };
 }
 
 /** 写 sources 开关（串行队列 + 段级合并：只声明 sources 段，其余段取磁盘现值）；缺失时合并写落默认骨架 */
-export async function writeSources(sources: { zhihu: boolean; guokr: boolean; bilibili: boolean }): Promise<void> {
+export async function writeSources(sources: { zhihu: boolean; guokr: boolean; bilibili: boolean; rss: boolean }): Promise<void> {
   await enqueueNewsWrite(async () => {
     const res = await readNewsData();
     if (!res.ok) return;
@@ -101,35 +98,31 @@ export async function writeBilibiliCookie(cookie: string): Promise<void> {
   });
 }
 
-// ===== 每日简报名单（ADR-0119：briefUps 段，与 bilibiliUps 互斥）=====
+// ===== RSS 订阅列表（ADR-0121：rssFeeds 段）=====
 
-/**
- * 添加每日简报名单 uid。互斥（ADR-0119 §8）：同一 UP 不同时出现在两个名单——
- * 加入简报名单时自动从 bilibiliUps 移除（同一视频不在「B站源」与「每日简报」两处重复出现）。
- * 返回是否新增（已存在 → false）。
- */
-export async function addBriefUp(uid: string): Promise<boolean> {
-  const id = String(uid || '').trim();
-  if (!id) return false;
+/** 添加 RSS 订阅源（url 归一去重，title 可缺省由试拉/守护回填；返回是否新增） */
+export async function addRssFeed(url: string, title?: string): Promise<boolean> {
+  const u = normalizeRssFeedUrl(url);
+  if (!u) return false;
+  const t = String(title || '').trim();
   return enqueueNewsWrite(async () => {
     const res = await readNewsData();
     if (!res.ok) return false;
-    if ((res.data.briefUps || []).includes(id)) return false;
-    const set: any = { briefUps: [...(res.data.briefUps || []), id] };
-    if (res.data.bilibiliUps.includes(id)) set.bilibiliUps = res.data.bilibiliUps.filter((u) => u !== id);
-    await writeNewsDataMerged({ set });
+    if (res.data.rssFeeds.some((f) => f.url === u)) return false; // 已存在
+    const feed: RssFeed = t ? { url: u, title: t } : { url: u };
+    await writeNewsDataMerged({ set: { rssFeeds: [...res.data.rssFeeds, feed] } });
     return true;
   });
 }
 
-/** 移除每日简报名单 uid（只动 briefUps 段；已产出的简报条目保留，由保留策略自然回收） */
-export async function removeBriefUp(uid: string): Promise<void> {
-  const id = String(uid || '').trim();
-  if (!id) return;
+/** 移除 RSS 订阅源（按 url；串行队列 + 段级合并只声明 rssFeeds 段） */
+export async function removeRssFeed(url: string): Promise<void> {
+  const u = String(url || '').trim();
+  if (!u) return;
   await enqueueNewsWrite(async () => {
     const res = await readNewsData();
     if (!res.ok || res.missing) return;
-    await writeNewsDataMerged({ set: { briefUps: (res.data.briefUps || []).filter((u) => u !== id) } });
+    await writeNewsDataMerged({ set: { rssFeeds: res.data.rssFeeds.filter((f) => f.url !== u) } });
   });
 }
 
