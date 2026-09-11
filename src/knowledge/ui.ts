@@ -526,7 +526,7 @@ export class UIManager {
     let raw = '';
     try { raw = await app.vault.read(n.file); } catch { raw = ''; }
     const body = stripFrontmatter(raw);
-    // 纯文本段落 = 渲染兜底（MarkdownRenderer 失败/没吃进内容时用）
+    // 纯文本段落 = 渲染失败兜底（只在渲染抛错/无产出或空正文时写入，绝不预填——预填 + 追加渲染 = 双份，issue 275）
     const parasHtml = body
       .split(/\r?\n\r?\n+/)
       .map((b) => b.trim())
@@ -550,20 +550,26 @@ export class UIManager {
         <span class="bz-kb-pos ${head.hot ? 'hot' : ''}">${head.badge}</span>
         <span class="bz-kb-dom">${esc(n.domain || '未分类')}</span></div>
       <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || '')}</span></div>
-      <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
+      <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join('')}</div>` : ''}
       ${srcHtml}`));
     this._previewNote = n;
-    // 正文真 Markdown 渲染：加粗/列表/标题/引用原生出，视频 ![[mp4]] 内嵌为可播放 <video>；
-    // 渲染失败/没产出元素（mock、历史挂起）→ 回退纯文本段落
+    // 正文真 Markdown 渲染：加粗/列表/标题/引用原生出，视频 ![[mp4]] 内嵌为可播放 <video>。
+    // ADR-0122 追加语义契约：render 是「追加到容器」，渲染前容器必须为空（预填纯文本再渲染 = 双份，issue 275）；
+    // 兜底改事后判定——渲染抛错/无产出（mock、空产出）才回退纯文本段落；空正文显式「（无正文）」，不留全白
     const bodyEl = this.popup ? q<HTMLElement>(this.popup, '#bz-kb-preview-body') : null;
-    if (bodyEl && body) {
-      try {
-        const comp = new Component();
-        await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
-        comp.unload();
-      } catch { /* 渲染失败回退纯文本 */ }
-      if (!bodyEl.querySelector('*') || !bodyEl.textContent?.trim()) {
+    if (bodyEl) {
+      bodyEl.textContent = '';
+      if (body) {
+        try {
+          const comp = new Component();
+          await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
+          comp.unload();
+        } catch { /* 渲染失败回退纯文本 */ }
+        if (!bodyEl.querySelector('*') || !bodyEl.textContent?.trim()) {
+          bodyEl.innerHTML = parasHtml;
+        }
+      } else {
         bodyEl.innerHTML = parasHtml;
       }
     }
