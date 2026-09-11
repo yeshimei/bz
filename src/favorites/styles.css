@@ -158,7 +158,7 @@
 /* —— 表单（原型 .mask + .form 逐字） —— */
 .bz-fav-form-mask {
   position: fixed; inset: 0; z-index: 600; /* 原型兜底值，插件端以 topifyZ 为准 */
-  background: var(--mask); display: flex; align-items: center; justify-content: center;
+  background: var(--mask); backdrop-filter: blur(var(--bz-overlay-blur)); display: flex; align-items: center; justify-content: center;
 }
 .bz-fav-form {
   width: min(430px, calc(100vw - 32px)); max-height: 86vh; overflow: auto; background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;

@@ -237,13 +237,13 @@
 .bz-review-exclude-remove:hover { color: var(--bz-danger); background: var(--bz-surface-hover); }
 
 /* 统计弹窗 / 复习历史弹窗（既有实现，容器保留） */
-#review-stats-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); }
+#review-stats-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); }
 #review-stats-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); width: 92%; max-width: 600px; max-height: 88vh; flex-direction: column; animation: slideUp var(--bz-dur-slow) ease-out; }
 #review-stats-body { flex: 1; overflow-y: auto; }
 .bz-review-stats-head { padding: var(--bz-space-sm) 18px 6px !important; }
 .bz-review-stats-head .bz-review-title { font-size: .92rem !important; font-weight: 600 !important; margin: 0 !important; }
 .bz-review-stats-tl-row:hover { background: var(--bz-surface-hover); }
-#review-history-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); }
+#review-history-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); }
 #review-history-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); width: 92%; max-width: 480px; max-height: 80vh; flex-direction: column; overflow: hidden; animation: slideUp var(--bz-dur-slow) ease-out; }
 #review-history-body { flex: 1; overflow-y: auto; position: relative; }
 /* 排名/时间线行（issue 270：stats-ui 内联收编并入本类，值逐字搬运——
@@ -323,11 +323,11 @@
    --text-normal → --bz-text-1、--background-modifier-border/hover → --bz-border/--bz-surface-hover、
    --interactive-accent/--text-on-accent → --bz-brand/--bz-on-brand；
    对错硬编码绿/红 → --bz-success/--bz-danger（15% 透底改 color-mix 等价）；
-   毛玻璃按 ui-design-manual「明确不采用」去除，遮罩用 --bz-overlay；
+   遮罩用 --bz-overlay + token 毛玻璃 --bz-overlay-blur（memo item-1789106289860 推翻「明确不采用」口径）；
    弹窗壳规格对齐组件库 modal（--bz-radius-md / --bz-shadow-lg / 82vh 限高）。
    该入口现休眠（产品走 SprintSession），样式补齐不退役、不改 DOM。
    原文件尾 @keyframes spin 无消费者（旧 loading 界面随普通模式删除），不迁。 */
-#quiz-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); display: flex; align-items: center; justify-content: center; }
+#quiz-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); display: flex; align-items: center; justify-content: center; }
 #quiz-popup { background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); padding: 24px; max-width: 600px; width: 90%; max-height: 82vh; overflow-y: auto; display: flex; flex-direction: column; position: relative; transition: none; }
 .bz-quiz-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .bz-quiz-title { font-size: 15px; font-weight: 600; }

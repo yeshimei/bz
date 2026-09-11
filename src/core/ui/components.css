@@ -579,6 +579,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   position: fixed;
   inset: 0;
   background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -733,6 +734,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   position: fixed;
   inset: 0;
   background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1408,6 +1410,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   position: fixed;
   inset: 0;
   background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--bz-dur-base) var(--bz-ease-out);
