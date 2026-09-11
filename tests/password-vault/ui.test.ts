@@ -70,7 +70,7 @@ describe('PasswordVaultUIManager', () => {
     expect(rows.textContent).toContain('★');
   });
 
-  it('未解锁 show → 锁屏 open；标题为「输入主密码」', async () => {
+  it('未解锁 show → 锁屏 open；标题为「密码本已上锁」', async () => {
     // 先建主密码再锁定
     await sm.unlock('pw');
     sm.lock();
@@ -78,7 +78,7 @@ describe('PasswordVaultUIManager', () => {
     await new Promise((r) => setTimeout(r, 20));
     const locks = document.querySelectorAll('.bz-password-vault-lock.open');
     expect(locks.length).toBe(2);
-    expect(locks[0].querySelector('[data-lock-title]')!.textContent).toBe('输入主密码');
+    expect(locks[0].querySelector('[data-ls="title"]')!.textContent).toBe('密码本已上锁');
   });
 
   it('首设：无清单 → 锁屏标题「设置主密码」', async () => {
@@ -86,10 +86,10 @@ describe('PasswordVaultUIManager', () => {
     await new Promise((r) => setTimeout(r, 20));
     const locks = document.querySelectorAll('.bz-password-vault-lock.open');
     expect(locks.length).toBe(2);
-    expect(locks[0].querySelector('[data-lock-title]')!.textContent).toBe('设置主密码');
+    expect(locks[0].querySelector('[data-ls="title"]')!.textContent).toBe('设置主密码');
   });
 
-  it('已有清单：锁屏标题「输入主密码」+ 正确密码解锁成功（回归：first 取反 bug + 解锁不重载 → 空列表）', async () => {
+  it('已有清单：锁屏标题「密码本已上锁」+ 正确密码解锁成功（回归：first 取反 bug + 解锁不重载 → 空列表）', async () => {
     // 先建清单 + 设主密码
     await sm.unlock('correct-pw');
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
@@ -100,10 +100,10 @@ describe('PasswordVaultUIManager', () => {
     await new Promise((r) => setTimeout(r, 20));
     const locks = document.querySelectorAll<HTMLElement>('.bz-password-vault-lock.open');
     expect(locks.length).toBe(2);
-    expect(locks[0].querySelector('[data-lock-title]')!.textContent).toBe('输入主密码');
+    expect(locks[0].querySelector('[data-ls="title"]')!.textContent).toBe('密码本已上锁');
     // 输入正确密码 → 解锁 → 锁屏关闭 + 数据从磁盘重载后列表渲染
-    (locks[0].querySelector('[data-lock-p1]') as HTMLInputElement).value = 'correct-pw';
-    (locks[0].querySelector('[data-lock-go]') as HTMLButtonElement).click();
+    (locks[0].querySelector('[data-ls="p1"]') as HTMLInputElement).value = 'correct-pw';
+    (locks[0].querySelector('[data-ls="go"]') as HTMLButtonElement).click();
     await new Promise((r) => setTimeout(r, 200));
     expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0);
     expect(dm.unlocked).toBe(true);

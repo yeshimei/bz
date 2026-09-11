@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V2 · 封缄台 — 保险库</title>
+<style>
+  :root{
+    --bg:#161616; --panel:#1e1e1e; --panel2:#262626; --border:#333; --border2:#3f3f3f;
+    --tx:#dadada; --tx2:#999; --tx3:#777; --ac:#8a7cf5; --danger:#e35d5d; --wax:#b3564e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--tx);font:14px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh;display:flex;flex-direction:column}
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  svg{vertical-align:-2px}
+
+  header{display:flex;align-items:center;gap:14px;padding:13px 24px;background:var(--panel);border-bottom:1px solid var(--border)}
+  .seal-state{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px}
+  .seal-knob{width:26px;height:26px;border-radius:50%;border:2px solid var(--tx3);display:flex;align-items:center;justify-content:center;color:var(--tx3);flex:none}
+  .seal-knob.open{border-color:var(--ac);color:var(--ac)}
+  header .sub{color:var(--tx3);font-size:12px}
+  header .sp{flex:1}
+  .btn{border:1px solid var(--border2);border-radius:8px;padding:6px 14px;font-size:13px;color:var(--tx2)}
+  .btn:hover{background:var(--panel2);color:var(--tx)}
+  .btn.pri{color:var(--ac);border-color:rgba(138,124,245,.45)}
+  .btn.pri:hover{background:rgba(138,124,245,.12)}
+  .btn.dgr{color:var(--danger);border-color:rgba(227,93,93,.4)}
+
+  /* ---- 锁定幕 ---- */
+  #veil{flex:1;display:flex;align-items:center;justify-content:center}
+  .veil-panel{width:330px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:32px 30px;text-align:center}
+  .veil-panel h2{font-size:15px;font-weight:600;margin:12px 0 4px}
+  .veil-panel .sub{color:var(--tx3);font-size:12px;margin-bottom:20px}
+  .pw-wrap{display:flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;background:var(--bg)}
+  .pw-wrap input{flex:1;background:none;border:none;outline:none;color:var(--tx);padding:9px 12px}
+  .pw-wrap button{padding:9px 16px;color:var(--ac);border-left:1px solid var(--border)}
+  .veil-err{color:var(--danger);font-size:12px;height:18px;margin-top:8px;text-align:left}
+
+  /* ---- 信匣 ---- */
+  #desk{flex:1;display:none;flex-direction:column;min-height:0}
+  .desk-body{flex:1;display:flex;min-height:0}
+  .tray{width:400px;border-right:1px solid var(--border);overflow:auto;padding:18px 16px}
+  .tray-hd{font-size:12px;color:var(--tx3);letter-spacing:.1em;margin-bottom:12px;display:flex;justify-content:space-between}
+  .env{border:1px solid var(--border);border-radius:9px;background:var(--panel);margin-bottom:10px;padding:12px 14px 12px 16px;cursor:pointer;position:relative;overflow:hidden}
+  .env::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--wax)}
+  .env:hover{background:var(--panel2)}
+  .env.cur{border-color:var(--ac)}
+  .env.cur::before{background:var(--ac)}
+  .env .row1{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+  .env .no{font-size:11px;color:var(--tx3);letter-spacing:.12em}
+  .env .date{font-size:11px;color:var(--tx3);margin-left:auto}
+  .env .ttl{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .env .row3{display:flex;gap:12px;font-size:11px;color:var(--tx3);margin-top:4px}
+  .env .opened-tag{color:var(--ac);font-size:11px}
+
+  /* ---- 阅读位 ---- */
+  .read{flex:1;display:flex;flex-direction:column;min-width:0}
+  .read-hd{padding:16px 26px 12px;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:12px}
+  .read-hd .no{font-size:12px;color:var(--tx3);letter-spacing:.15em}
+  .read-hd h2{font-size:17px;font-weight:600;flex:1}
+  .read-meta{padding:8px 26px;border-bottom:1px dashed var(--border);color:var(--tx3);font-size:12px;display:flex;gap:16px}
+  .read-body{flex:1;overflow:auto;padding:22px 30px;font-size:14px;line-height:1.9;color:var(--tx)}
+  .read-body p{margin-bottom:12px}
+  .read-ft{padding:13px 26px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px}
+  .read-ft .hint{color:var(--tx3);font-size:12px;flex:1}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--tx3)}
+  .empty .big{color:var(--tx3);opacity:.5}
+
+  #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--border2);border-radius:8px;padding:9px 18px;font-size:13px;display:none;z-index:20}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="seal-state">
+    <span class="seal-knob" id="knob"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+    <span id="sealText">库已封存</span>
+  </div>
+  <span class="sub" id="sealSub">12 封信件在库 · 全文密文，标题可见</span>
+  <span class="sp"></span>
+  <button class="btn" id="actBtn" style="display:none">重新封库</button>
+</header>
+
+<!-- 锁定幕 -->
+<div id="veil">
+  <div class="veil-panel">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.6"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    <h2>拆阅前先启封</h2>
+    <div class="sub">输入主密码，解开库封条</div>
+    <div class="pw-wrap">
+      <input id="pw" type="password" placeholder="主密码">
+      <button id="unsealBtn">启封</button>
+    </div>
+    <div class="veil-err" id="err"></div>
+  </div>
+</div>
+
+<!-- 信匣 -->
+<div id="desk">
+  <div class="desk-body">
+    <div class="tray">
+      <div class="tray-hd"><span>信匣 · 12 封</span><span>开启一封即自动封回上一封</span></div>
+      <div id="envList"></div>
+    </div>
+    <div class="read" id="readPane">
+      <div class="empty" id="readEmpty">
+        <svg class="big" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="m2 7 10 6L22 7"/></svg>
+        <div>未拆封任何信件</div>
+        <div style="font-size:12px">从左侧信匣中点选一封拆阅</div>
+      </div>
+      <div id="readView" style="display:none;flex:1;flex-direction:column;min-height:0">
+        <div class="read-hd"><span class="no" id="rNo"></span><h2 id="rTitle"></h2></div>
+        <div class="read-meta"><span id="rDate"></span><span id="rWords"></span><span id="rAtts"></span></div>
+        <div class="read-body" id="rBody"></div>
+        <div class="read-ft">
+          <span class="hint">关闭或拆阅另一封时，本篇自动重新封缄</span>
+          <button class="btn pri" id="resealBtn">重新封缄</button>
+          <button class="btn dgr" id="burnBtn">销毁</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const LETTERS = [
+  {no:"№ 01",title:"个人证件与材料扫描",date:"08-14",words:820,atts:2,body:["证件材料这一篇收录了所有扫描件的存放位置与说明。","身份证、户口本、护照的电子扫描件作为附件随这篇笔记一起加密保管，原文已在文库中移除。","每次需要复印件时，从保险库取出，用完立即存回。"]},
+  {no:"№ 02",title:"银行账户与密码备忘",date:"08-20",words:430,atts:0,body:["只记录账户名、开户行与用途，密码本体在密码管理器里。","这张清单的作用是：万一密码管理器本身出问题，还能从这里找到恢复入口。"]},
+  {no:"№ 03",title:"2026 上半年收入台账",date:"07-02",words:1560,atts:1,body:["一月到六月的收入明细逐月记录，工资流水截图作为附件保存。","这一篇不包含任何投资信息，投资部分单独成篇。"]},
+  {no:"№ 04",title:"写给家里的一封信",date:"06-11",words:980,atts:0,body:["有些话不适合放在公开的日记里，写完就封存。","等合适的时机再取出来。"]},
+  {no:"№ 05",title:"医疗记录汇总",date:"09-01",words:2100,atts:3,body:["三次体检的报告与处方单扫描件都在附件里。","正文按时间线记录每次就诊的结论与医嘱要点。"]},
+  {no:"№ 06",title:"合同草稿 · 房屋租赁",date:"08-28",words:3400,atts:1,body:["租约谈判过程里的底稿与修改记录。","最终签署版在对方手里，这里只留谈判过程的完整脉络。"]},
+  {no:"№ 07",title:"投资账户持仓明细",date:"09-05",words:640,atts:0,body:["只记账户与大致仓位结构，具体数字每月更新一次。"]},
+  {no:"№ 08",title:"旧手机备份清单",date:"05-19",words:290,atts:0,body:["旧手机里的照片已迁移，这篇是迁移时的核对清单。"]},
+  {no:"№ 09",title:"保险单据归档",date:"04-22",words:1120,atts:1,body:["两份保单的关键条款摘录与缴费日期。","理赔电话与流程写在正文最后一段。"]},
+  {no:"№ 10",title:"旅行证件与行程底稿",date:"03-08",words:750,atts:0,body:["护照签证的办理记录，以及一次未成行的行程规划底稿。"]},
+  {no:"№ 11",title:"家庭网络与设备口令",date:"09-08",words:380,atts:0,body:["路由器、NAS、摄像头的管理口令与固件版本。","只在家里网络环境下才有意义，但泄露了会牵连内网。"]},
+  {no:"№ 12",title:"谈话记录 · 0903",date:"09-03",words:1450,atts:0,body:["九月三日的谈话要点，按问与答的形式整理。","涉及第三方隐私，只自留。"]},
+];
+let lib = {sealed:true, opened:-1};
+const $ = id=>document.getElementById(id);
+const esc = s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(toast._h);toast._h=setTimeout(()=>t.style.display="none",2200)}
+
+function renderHeader(){
+  $("knob").className = "seal-knob" + (lib.sealed?"":" open");
+  $("knob").innerHTML = lib.sealed
+    ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
+    : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M16 11V7a4 4 0 0 0-7.7-1.5"/></svg>';
+  $("sealText").textContent = lib.sealed ? "库已封存" : "库已启封";
+  $("sealSub").textContent = lib.sealed
+    ? LETTERS.length + " 封信件在库 · 全文密文，标题可见"
+    : "拆阅中 " + (lib.opened>=0?1:0) + " 封 · 其余保持封存";
+  $("actBtn").style.display = lib.sealed ? "none" : "";
+}
+function renderTray(){
+  $("envList").innerHTML = LETTERS.map((l,i)=>`
+    <div class="env ${lib.opened===i?"cur":""}" data-i="${i}">
+      <div class="row1"><span class="no">${l.no}</span><span class="date">${l.date}</span></div>
+      <div class="ttl">${esc(l.title)}</div>
+      <div class="row3"><span>${l.words} 字</span><span>${l.atts?l.atts+" 附件":"无附件"}</span>${lib.opened===i?'<span class="opened-tag">拆封中</span>':""}</div>
+    </div>`).join("");
+  $("envList").querySelectorAll(".env").forEach(el=>el.onclick=()=>openLetter(+el.dataset.i));
+}
+function openLetter(i){
+  if(lib.sealed){ toast("库已封存，先启封"); return; }
+  if(lib.opened>=0 && lib.opened!==i) toast(`「${LETTERS[lib.opened].title}」已重新封缄`);
+  lib.opened = i; renderHeader(); renderTray(); renderRead();
+}
+function renderRead(){
+  const i = lib.opened;
+  if(i<0){ $("readEmpty").style.display="flex"; $("readView").style.display="none"; return; }
+  const l = LETTERS[i];
+  $("readEmpty").style.display="none"; $("readView").style.display="flex";
+  $("rNo").textContent = l.no; $("rTitle").textContent = l.title;
+  $("rDate").textContent = "存入 " + l.date;
+  $("rWords").textContent = l.words.toLocaleString() + " 字";
+  $("rAtts").textContent = l.atts ? l.atts + " 个附件" : "无附件";
+  $("rBody").innerHTML = l.body.map(p=>`<p>${esc(p)}</p>`).join("");
+}
+$("unsealBtn").onclick = ()=>{
+  if($("pw").value.length<4){ $("err").textContent="密码不符，重试。"; return; }
+  $("pw").value=""; $("err").textContent="";
+  lib.sealed=false; $("veil").style.display="none"; $("desk").style.display="flex";
+  renderHeader(); renderTray();
+  toast("库封条已解开，可拆阅信件");
+};
+$("pw").addEventListener("keydown",e=>{ if(e.key==="Enter") $("unsealBtn").click(); });
+function resealLib(){
+  lib.sealed=true; lib.opened=-1;
+  $("desk").style.display="none"; $("veil").style.display="flex";
+  renderHeader(); renderTray(); renderRead();
+  toast("全库重新封缄，主密码已失效");
+}
+$("actBtn").onclick = resealLib;
+$("resealBtn").onclick = ()=>{
+  if(lib.opened<0) return;
+  toast(`「${LETTERS[lib.opened].title}」已重新封缄`);
+  lib.opened=-1; renderHeader(); renderTray(); renderRead();
+};
+$("burnBtn").onclick = ()=>{
+  if(lib.opened<0) return;
+  const b=$("burnBtn");
+  if(b.dataset.arm!=="1"){ b.dataset.arm="1"; b.textContent="确认销毁？"; setTimeout(()=>{b.dataset.arm="";b.textContent="销毁"},2600); return; }
+  b.dataset.arm=""; b.textContent="销毁";
+  toast("信件密文已销毁，不可恢复");
+  lib.opened=-1; renderHeader(); renderTray(); renderRead();
+};
+renderHeader();
+</script>
+</body>
+</html>

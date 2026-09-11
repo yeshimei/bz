@@ -22,7 +22,8 @@ async function waitFor(cond: () => boolean, timeout = 4000) {
 const CONFIG = { root: 'CONFIG/.ENCRYPT', previewEnabled: false, previewSize: 384, previewQuality: 0.5, autoLoadOriginal: false, securityMode: true };
 
 function findDialog(): HTMLElement | null {
-  return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-encrypt-dialog-mask') && d.style.display === 'flex') as HTMLElement | null;
+  // 解锁屏（ADR-0124 共享骨架）挂 body 全屏遮罩；随面板收敛迁移选择器
+  return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-lockscreen--mask')) as HTMLElement | null;
 }
 
 describe('锁家族修复批（encrypt UI）', () => {
@@ -57,7 +58,7 @@ describe('锁家族修复批（encrypt UI）', () => {
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
     const inputs = dialog.querySelectorAll('input[type="password"]');
-    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     // 两遍一致但只有 3 位 → 拒绝
     (inputs[0] as HTMLInputElement).value = 'abc';
     confirmBtn.click(); // 第一步：转入再次输入
@@ -68,7 +69,7 @@ describe('锁家族修复批（encrypt UI）', () => {
     // ≥4 位 → 走风险确认后设置成功
     (inputs[0] as HTMLInputElement).value = 'abcd';
     (inputs[1] as HTMLInputElement).value = 'abcd';
-    (dialog.querySelector('.bz-encrypt-dialog-ack input') as HTMLInputElement).checked = true;
+    (dialog.querySelector('[data-ls="ack"] input') as HTMLInputElement).checked = true;
     confirmBtn.click();
     await waitFor(() => dm.unlocked);
     void p;

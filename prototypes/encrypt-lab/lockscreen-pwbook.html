@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>密码本 · 解锁屏（V3 结构 + 密码本风格）</title>
+<style>
+  /* ===== 宿主 mock（对齐 prototypes/password-vault/prototype-view.html 的主题口径） ===== */
+  :root{
+    --bg-cover:#e3e0d8;
+    --primary:#fbf9f3; --secondary:#f2efe6; --hover:rgba(23,21,18,.06);
+    --line:rgba(23,21,18,.12); --cover:rgba(30,26,18,.42);
+    --ink:#171512; --muted:#8b8474; --faint:#b3ab99;
+    --bad:#b3564d; --ok:#3d8f5d; --warn:#d08b2c;
+    --gold:#b8913e; --gold-soft:linear-gradient(135deg,#d3b26b,#b8913e);
+    --mono:'Cascadia Mono',Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{background:var(--bg-cover);color:var(--ink);font:14px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  input{font:inherit;border:1px solid var(--line);background:var(--secondary);color:var(--ink);border-radius:10px;padding:10px 14px;outline:none}
+  input:focus{border-color:var(--gold)}
+  svg{vertical-align:-2px}
+
+  /* ===== 居中工作台卡（同 bz-password-vault-desk：1060×680 圆角14 大阴影） ===== */
+  .desk{width:1060px;max-width:calc(100vw - 48px);height:680px;max-height:calc(100vh - 48px);border-radius:14px;overflow:hidden;background:var(--primary);box-shadow:0 20px 60px rgba(0,0,0,.35);position:relative;flex-shrink:0;display:flex}
+
+  /* ===== 三栏剪影（锁定时被遮罩盖着，解锁后可用） ===== */
+  .nav{width:200px;flex-shrink:0;background:var(--secondary);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 12px}
+  .logo{display:flex;align-items:center;gap:10px;padding:0 10px 22px}
+  .logo .seal{width:34px;height:34px;border-radius:10px;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(184,145,62,.4);color:#fff;flex:none}
+  .logo .name{font-size:16px;font-weight:700}
+  .logo .name small{display:block;font-size:10px;font-weight:400;color:var(--muted);letter-spacing:.08em}
+  .navitem{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:10px;font-size:13.5px;color:var(--muted);width:100%;text-align:left}
+  .navitem:hover{background:var(--hover)}
+  .navitem.on{background:rgba(184,145,62,.14);color:var(--gold);font-weight:600}
+  .navitem .cnt{margin-left:auto;font-size:11px;color:var(--faint)}
+  .nav .spacer{flex:1}
+  .lockstate{display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);width:100%}
+  .lockstate .dot{width:7px;height:7px;border-radius:50%;background:var(--bad)}
+  .lockstate.un .dot{background:var(--ok)}
+
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+  .main .bar{padding:14px 16px;display:flex;gap:10px;border-bottom:1px solid var(--line)}
+  .main .bar input{flex:1}
+  .addbtn{background:var(--gold-soft);color:#fff;font-weight:600;padding:0 18px;border-radius:10px;box-shadow:0 4px 12px rgba(184,145,62,.35);flex:none}
+  .rows{flex:1;overflow:auto}
+  .erow{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+  .erow:hover{background:var(--hover)}
+  .erow.sel{background:rgba(184,145,62,.1)}
+  .ava{width:34px;height:34px;border-radius:10px;color:#fff;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;flex:none}
+  .erow .t{flex:1;min-width:0}
+  .erow .t b{display:block;font-size:13.5px;font-weight:600}
+  .erow .t span{font-size:11px;color:var(--muted)}
+  .erow .tag{font-size:10.5px;color:var(--faint);border:1px solid var(--line);border-radius:12px;padding:1px 8px;flex:none}
+
+  .detail{width:300px;flex-shrink:0;padding:22px 20px;overflow:auto}
+  .detail .hd{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .detail .hd b{font-size:16px;font-weight:700}
+  .fld{margin-bottom:13px}
+  .fld label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px}
+  .fld .val{display:flex;align-items:center;gap:6px;background:var(--secondary);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px}
+  .fld .val.mono{font-family:var(--mono);letter-spacing:.04em}
+  .fld .val .cp{margin-left:auto;color:var(--gold);font-size:11px;font-weight:600}
+  .fld .val .cp:hover{opacity:.75}
+
+  /* ===== 解锁遮罩（V3 结构 + 密码本金色语言） ===== */
+  .lock{position:absolute;inset:0;z-index:20;background:var(--primary);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
+  .lock.hide{display:none}
+  .lock .seal{width:72px;height:72px;border-radius:22px;background:var(--gold-soft);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(184,145,62,.4);color:#fff;margin-bottom:14px}
+  .lock h2{font-size:22px;font-weight:700}
+  .lock .sub{font-size:12.5px;color:var(--muted);margin:4px 0 20px}
+  /* V3 的三张统计卡（密码本口径：条目 / 分类 / 密文总量） */
+  .stats{display:flex;gap:12px;margin-bottom:24px}
+  .stats div{min-width:118px;background:var(--secondary);border:1px solid var(--line);border-radius:12px;padding:12px 16px 10px}
+  .stats b{display:block;font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+  .stats span{font-size:11px;color:var(--muted)}
+  .pwrow{display:flex;gap:10px}
+  .pwrow input{width:280px;text-align:center;font-size:15px}
+  .go{background:var(--gold-soft);color:#fff;font-weight:600;padding:11px 30px;border-radius:12px;box-shadow:0 6px 18px rgba(184,145,62,.4)}
+  .go:hover{opacity:.92}
+  .err{font-size:12px;color:var(--bad);min-height:18px;margin-top:10px}
+  .sec{margin-top:20px;font-size:11px;color:var(--faint);display:flex;align-items:center;gap:6px}
+  .sec .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+  .hint{margin-top:8px;font-size:11.5px;color:var(--faint)}
+</style>
+</head>
+<body>
+
+<div class="desk">
+
+  <!-- 三栏（解锁后可见） -->
+  <nav class="nav">
+    <div class="logo">
+      <span class="seal"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.6 7.6a5.5 5.5 0 1 1-7.8 7.8 5.5 5.5 0 0 1 7.8-7.8zm0 0L19 3m-3.5 3.5L18 9"/></svg></span>
+      <div class="name">密码本<small>PASSWORD VAULT</small></div>
+    </div>
+    <button class="navitem on">全部条目<span class="cnt">24</span></button>
+    <button class="navitem">登录<span class="cnt">14</span></button>
+    <button class="navitem">支付<span class="cnt">4</span></button>
+    <button class="navitem">网络<span class="cnt">3</span></button>
+    <button class="navitem">备注<span class="cnt">3</span></button>
+    <span class="spacer"></span>
+    <button class="navitem">生成器</button>
+    <button class="navitem">体检</button>
+    <button class="navitem">设置</button>
+    <button class="lockstate un" id="lockBtn"><span class="dot"></span>已解锁 · 点击上锁</button>
+  </nav>
+
+  <div class="main">
+    <div class="bar">
+      <input placeholder="搜索条目…">
+      <button class="addbtn">添加</button>
+    </div>
+    <div class="rows" id="rows"></div>
+  </div>
+
+  <div class="detail" id="detail"></div>
+
+  <!-- 解锁遮罩 -->
+  <div class="lock" id="lock">
+    <div class="seal"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+    <h2>密码本已上锁</h2>
+    <div class="sub">解锁前，条目与口令均以密文保存</div>
+    <div class="stats">
+      <div><b>24</b><span>口令条目</span></div>
+      <div><b>4</b><span>分类</span></div>
+      <div><b>18.2 KB</b><span>密文总量</span></div>
+    </div>
+    <div class="pwrow">
+      <input id="pw" type="password" placeholder="主密码">
+      <button class="go" id="goBtn">解锁</button>
+    </div>
+    <div class="err" id="err"></div>
+    <div class="sec"><span class="dot"></span>体检通过 · 无弱口令 · 上次体检 09-09</div>
+    <div class="hint">演示密码：demo</div>
+  </div>
+
+</div>
+
+<script>
+const CATS = {login:["#7a6df0","#8f7df2","#6f5fe0","#9a8bf5","#8577ee","#7466e8","#9488f0","#6a5cd8","#8879f2","#7568e4","#8b7ef0","#6f62da","#9284f4","#7e70ec"],
+              pay:["#c9953a","#d4a54e","#c08c30","#d9ab58"],
+              net:["#4f9e6e","#5cb07c","#46905f"],
+              memo:["#8b8474","#9b9484","#a49d8c"]};
+const ENTRIES = [
+  {n:"腾讯云控制台",u:"包仔",p:"Tc!9k2#mQz7",cat:"login",web:"cloud.tencent.com",d:"09-08"},
+  {n:"GitHub",u:"baozai-dev",p:"gh$4Xw8pLr2",cat:"login",web:"github.com",d:"09-02"},
+  {n:"银行卡 · 工行",u:"6222 **** 4831",p:"582714",cat:"pay",web:"—",d:"08-30"},
+  {n:"家庭 NAS",u:"admin",p:"Nas#6vB3xK",cat:"net",web:"192.168.1.10",d:"08-22"},
+  {n:"微信支付密码",u:"—",p:"738429",cat:"pay",web:"—",d:"08-19"},
+  {n:"邮箱 · 主号",u:"bao@mail.com",p:"Em!2nR8sV5q",cat:"login",web:"mail.com",d:"08-11"},
+  {n:"路由器管理",u:"root",p:"Rt#1yU9tF4",cat:"net",web:"192.168.1.1",d:"08-05"},
+  {n:"保险柜应急码",u:"—",p:"904-217-385",cat:"memo",web:"—",d:"07-28"},
+  {n:"阿里云盘",u:"baozai",p:"Al$7cD2mN6",cat:"login",web:"alipan.com",d:"07-15"},
+  {n:"公积金查询",u:"3301 ****",p:"336620",cat:"pay",web:"—",d:"07-03"},
+];
+const CATN = {login:"登录",pay:"支付",net:"网络",memo:"备注"};
+let sel = 0;
+const $ = id=>document.getElementById(id);
+const esc = s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+function renderRows(){
+  $("rows").innerHTML = ENTRIES.map((e,i)=>{
+    const col = CATS[e.cat][i % CATS[e.cat].length];
+    return `<div class="erow ${sel===i?"sel":""}" data-i="${i}">
+      <span class="ava" style="background:${col}">${esc(e.n[0])}</span>
+      <div class="t"><b>${esc(e.n)}</b><span>${esc(e.u)}</span></div>
+      <span class="tag">${CATN[e.cat]}</span>
+    </div>`;
+  }).join("");
+  $("rows").querySelectorAll(".erow").forEach(el=>el.onclick=()=>{ sel=+el.dataset.i; renderRows(); renderDetail(); });
+}
+function renderDetail(){
+  const e = ENTRIES[sel];
+  const col = CATS[e.cat][sel % CATS[e.cat].length];
+  $("detail").innerHTML = `
+    <div class="hd"><span class="ava" style="background:${col}">${esc(e.n[0])}</span><b>${esc(e.n)}</b></div>
+    <div class="fld"><label>用户名 / 账号</label><div class="val">${esc(e.u)}<button class="cp">复制</button></div></div>
+    <div class="fld"><label>口令</label><div class="val mono">••••••••<button class="cp" id="peek">显示</button></div></div>
+    <div class="fld"><label>网址 / 位置</label><div class="val">${esc(e.web)}</div></div>
+    <div class="fld"><label>最近更新</label><div class="val">${e.d}</div></div>`;
+  const peek = $("peek");
+  peek.onclick = ()=>{
+    const on = peek.textContent==="显示";
+    peek.textContent = on ? "隐藏" : "显示";
+    peek.parentElement.childNodes[0].textContent = on ? e.p : "••••••••";
+  };
+}
+renderRows(); renderDetail();
+
+/* 解锁 / 上锁 */
+$("goBtn").onclick = ()=>{
+  if($("pw").value.length < 4){ $("err").textContent = "主密码不符，重试。"; return; }
+  $("pw").value=""; $("err").textContent="";
+  $("lock").classList.add("hide");
+};
+$("pw").addEventListener("keydown",e=>{ if(e.key==="Enter") $("goBtn").click(); });
+$("lockBtn").onclick = ()=>{ $("lock").classList.remove("hide"); };
+</script>
+</body>
+</html>

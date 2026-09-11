@@ -9,6 +9,7 @@ import { getApp } from '../core/app';
 import { notice } from '../core/notice';
 import { EncryptAppController, DEFAULT_PW_CHARSET } from './ui';
 import { vIc } from './vault-assets-view';
+import type { LockScreenKind } from '../core/ui/lock-screen';
 
 let initialized = false;
 let controller: EncryptAppController | null = null;
@@ -119,12 +120,14 @@ export async function lockEncrypt(app: App): Promise<void> {
 
 /**
  * 确保保险库已解锁（供日记域复用）：未解锁则弹主密码（首设两次确认+警告；与保险库同一把密码）。
+ * @param kind 调用域口径：'vault'（默认）| 'password-vault' | 'diary' —— 同一套解锁屏骨架，
+ *             文案/统计/风格按域注入（日记域传 'diary' 即显示加密日记自己的口径与配色）。
  * @returns 解锁成功返回 true
  */
-export async function ensureSafeUnlocked(): Promise<boolean> {
+export async function ensureSafeUnlocked(kind: LockScreenKind = 'vault'): Promise<boolean> {
   const controller = getController();
   if (controller.dataManager.unlocked) return true;
-  const ok = await controller.uiManager.showPasswordDialog();
+  const ok = await controller.uiManager.showPasswordDialog(kind);
   return ok;
 }
 

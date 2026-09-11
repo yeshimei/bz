@@ -28,12 +28,12 @@ export interface AssetCounts {
 /** 概览统计输入 */
 export interface OverviewStats {
   counts: AssetCounts;
-  pwPlatforms: number;
-  pwFavPlatforms: number;
-  /** 笔记+日记附件总数 */
+  /** 随库附件数（纯笔记口径，不含日记条目） */
   attachments: number;
-  /** 最近 N 条（跨资产） */
-  recent: Array<{ kind: 'pw' | 'note' | 'diary'; title: string; sub: string; time: string }>;
+  /** 附件密文字节聚合（blobSize 之和，纯笔记口径） */
+  attBytes: number;
+  /** 最近 N 条（笔记 + 日记；密码本已移出保险库面板）。id 供点击流水直接定位条目（diary 无独立资产不传） */
+  recent: Array<{ kind: 'note' | 'diary'; id?: string; title: string; sub: string; time: string }>;
   health: { issues: number; lastChecked?: string } | null;
 }
 
@@ -44,11 +44,8 @@ export function vIc(name: string, size = 14): string {
 
 /** 概览视图完整 HTML（host 挂到 area 后自绑 [data-hero] / .card[data-nav]） */
 export function overviewHTML(stats: OverviewStats): string {
-  const { counts, pwPlatforms, pwFavPlatforms, attachments, recent, health } = stats;
-  const total = counts.pw + counts.note + counts.diary;
-  const pwFav = counts.pw ? `${pwFavPlatforms} 个平台已收藏 · ` : '';
-  const noteCd = counts.note ? `含 ${attachments} 个附件镜像` : '还没有加密笔记';
-  const pwCd = counts.pw ? `${pwFav}${pwPlatforms} 个平台` : '还没有密码';
+  const { counts, attachments, attBytes, recent, health } = stats;
+  const kb = attBytes > 0 ? (attBytes / 1024).toFixed(1) + ' KB' : '—';
   const healthRows =
     health == null
       ? `<div class="bz-vault-hrow"><span class="dot" style="background:var(--bz-text-3)"></span><span class="lbl">待处理</span><span class="n">未体检</span></div>`
@@ -56,41 +53,42 @@ export function overviewHTML(stats: OverviewStats): string {
   const recentRows = recent.length
     ? recent
         .map((r) => {
-          const color = r.kind === 'pw' ? ASSET_COLOR.pw : r.kind === 'note' ? ASSET_COLOR.note : ASSET_COLOR.diary;
-          const iconName = r.kind === 'pw' ? 'key' : r.kind === 'note' ? 'file-lock' : 'book-lock';
-          return `<div class="bz-vault-minirow" data-recent="${r.kind}">
+          const color = r.kind === 'note' ? ASSET_COLOR.note : ASSET_COLOR.diary;
+          const iconName = r.kind === 'note' ? 'file-lock' : 'book-lock';
+          // 日记条目已无独立资产入口，点击统一落加密笔记列表（data-recent 不再写 'diary'）；
+          // 笔记条目带 id，点击后直定位该条目（原型：点流水 → 列表选中该篇）
+          return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml(r.id)}"` : ''}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
             <div class="mid"><div class="a">${escapeHtml(r.title)}</div><div class="b">${escapeHtml(r.sub)}</div></div>
             <span class="tm">${escapeHtml(r.time)}</span></div>`;
         })
         .join('')
-    : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc('lock', 28) + '</span><div class="bz-empty-title">还没有加密资产</div><div class="bz-empty-desc">录入密码、加密笔记或加密日记后，最近动态在这里显示</div></div>';
+    : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc('lock', 28) + '</span><div class="bz-empty-title">还没有加密动态</div><div class="bz-empty-desc">加密笔记或加密日记后，最近动态在这里显示</div></div>';
   return `
   <div class="bz-vault-hero">
-    <div class="ht">${vIc('lock', 14)} 保险库已解锁 · 三类资产集中管理</div>
-    <div class="hn">${total} 项资产${total > 0 ? ' · 尽在掌握' : ''}</div>
-    <div class="hd">密码 · 加密笔记 · 加密日记 — 同一把主密码，AES-256-GCM</div>
+    <div class="ht">${vIc('lock', 14)} 保险库已解锁 · 加密笔记集中管理</div>
+    <div class="hn">${counts.note} 项资产${counts.note > 0 ? ' · 尽在掌握' : ''}</div>
+    <div class="hd">同一把主密码 · AES-256-GCM</div>
     <div class="hbtns">
-      <button class="hbtn" data-hero="lock-note">${vIc('file-lock', 14)} 加密当前笔记</button>
-      <button class="hbtn" data-hero="add-pw">${vIc('key', 14)} 新增密码</button>
+      <button class="hbtn" data-hero="lock-note">${vIc('file-lock', 14)} 存入笔记</button>
       <button class="hbtn" data-hero="health">${vIc('stethoscope', 14)} 体检</button>
     </div>
   </div>
   <div class="bz-vault-cards">
-    <div class="card" data-nav="pw">
-      <div class="ct"><span class="k" style="background:${ASSET_COLOR.pw}">${vIc('key', 13)}</span>密码条目</div>
-      <div class="num">${counts.pw}<small>个账号</small></div>
-      <div class="cd">${pwCd}</div>
+    <div class="card" data-nav="note">
+      <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc('file-lock', 13)}</span>笔记条目</div>
+      <div class="num">${counts.note}<small>篇</small></div>
+      <div class="cd">${counts.note ? '正文与附件全量密文' : '还没有加密笔记'}</div>
     </div>
     <div class="card" data-nav="note">
-      <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc('file-lock', 13)}</span>加密笔记</div>
-      <div class="num">${counts.note}<small>篇</small></div>
-      <div class="cd">${noteCd}</div>
+      <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc('image', 13)}</span>随库附件</div>
+      <div class="num">${attachments}<small>个</small></div>
+      <div class="cd">随笔记一并加密镜像</div>
     </div>
-    <div class="card" data-nav="diary">
-      <div class="ct"><span class="k" style="background:${ASSET_COLOR.diary}">${vIc('book-lock', 13)}</span>加密日记</div>
-      <div class="num">${counts.diary}<small>篇</small></div>
-      <div class="cd">随日记面板「加密」分类移入</div>
+    <div class="card" data-nav="note">
+      <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc('lock', 13)}</span>附件密文</div>
+      <div class="num">${kb}</div>
+      <div class="cd">附件镜像密文字节</div>
     </div>
   </div>
   <div class="bz-vault-two">
@@ -126,23 +124,17 @@ export function noteRowHTML(note: SafeNote, kind: 'note' | 'diary', active: bool
 export function noteDetailHTML(note: SafeNote, kind: 'note' | 'diary', plainPreview?: string): string {
   const color = ASSET_COLOR[kind];
   const iconName = kind === 'note' ? 'file-lock' : 'book-lock';
-  const attChips = note.attachments.length
-    ? note.attachments
-        .slice(0, 6)
-        .map((a) => {
-          const kb = a.blobSize ? Math.max(1, Math.round(a.blobSize / 1024)) : 0;
-          const kindIc = vIc(a.kind === 'video' ? 'film' : 'image', 12);
-          return `<span class="chip att">${kindIc} ${escapeHtml(a.path.split('/').pop() || a.path)}${kb ? ` · ${kb} KB` : ''}</span>`;
-        })
-        .join('') + (note.attachments.length > 6 ? `<span class="chip">+${note.attachments.length - 6} 更多</span>` : '')
-    : '<span class="chip">无附件</span>';
+  // 附件收敛为统计行（原型口径）：数字 + title 挂全部附件名，不再铺 chips
+  const attLine = note.attachments.length
+    ? `<span class="val" title="${escapeHtml(note.attachments.map((a) => a.path.split('/').pop() || a.path).join('、'))}">${note.attachments.length} 个</span>`
+    : '<span class="val">无附件</span>';
   const pathLine = kind === 'note' ? `${escapeHtml(note.path)} · 已移出` : `${escapeHtml(note.path)} · 已还原该段`;
   const created = new Date(note.createdAt).toLocaleString('zh-CN', { hour12: false });
   const actionBtns =
     kind === 'note'
-      ? `<button class="bbtn teal" data-detail="preview">${vIc('eye', 14)} 预览</button>
-         <button class="bbtn" data-detail="restore">${vIc('download', 14)} 还原到原路径</button>
-         <button class="bbtn danger" data-detail="delete">${vIc('trash-2', 14)} 删除</button>`
+      ? `<button class="bbtn teal" data-detail="preview">${vIc('eye', 14)} 解密预览</button>
+         <button class="bbtn" data-detail="restore">${vIc('download', 14)} 取出还原</button>
+         <button class="bbtn danger" data-detail="delete">${vIc('trash-2', 14)} 销毁</button>`
       : `<button class="bbtn" style="background:${color};color:#fff" data-detail="restore-diary">${vIc('download', 14)} 还原回日记</button>
          <button class="bbtn" data-detail="copy-diary">${vIc('copy', 14)} 复制正文</button>
          <button class="bbtn danger" data-detail="destroy-diary">${vIc('trash-2', 14)} 彻底销毁</button>`;
@@ -154,7 +146,7 @@ export function noteDetailHTML(note: SafeNote, kind: 'note' | 'diary', plainPrev
     </div>
     <div class="bz-vault-dcontent">
       ${kind === 'note'
-        ? `<div class="field"><div class="lab">附件镜像</div><div class="valrow chips">${attChips}</div></div>
+        ? `<div class="field"><div class="lab">附件镜像</div><div class="valrow">${attLine}</div></div>
            <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>
            <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>`
         : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml(plainPreview).replace(/\n/g, '<br>') : '（未解密预览）'}</div></div>
