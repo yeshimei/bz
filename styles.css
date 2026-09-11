@@ -14391,7 +14391,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 /* ==================== 借书卡详情（纸卡 + 台账 + 印章；编辑控件融卡内） ==================== */
-.bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); height: min(82vh, 700px); background: var(--bsw-paper); border: 1px solid var(--bsw-line); scrollbar-width: none; overflow: hidden; }
+.bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); height: min(72vh, 600px); background: var(--bsw-paper); border: 1px solid var(--bsw-line); scrollbar-width: none; overflow: hidden; }
 .bz-bs-d-popup.bz-overlay-popup::-webkit-scrollbar { display: none; }
 /* 固定高：卡不随书评拉长，内容多寡只影响内部滚动区的可滚量 */
 .bz-bs-d-popup .bz-dialog-body { flex: 1; min-height: 0; }
