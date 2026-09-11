@@ -33,6 +33,9 @@ describe('aiProcess', () => {
     expect(r).toEqual({ title: 'T', summary: 'S', tags: ['a', 'b'] });
     const prompt = ai.prompt.mock.calls[0][0] as string;
     expect(prompt).toContain('生成中文标题');
+    // issue 276：标题指令收敛为完整陈述句（禁疑问语气），旧口径「陈述句或疑问句」移除
+    expect(prompt).toContain('完整陈述句，不得使用疑问句或疑问语气');
+    expect(prompt).not.toContain('陈述句或疑问句');
     expect(prompt).toContain('禁止使用');
     expect(prompt).toContain('tags 规则');
     expect(prompt).toContain('150-250字');
