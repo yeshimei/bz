@@ -15,7 +15,6 @@ export const ACT_ICON: Record<string, string> = {
   add: 'pen-line',
   search: 'search',
   close: 'x',
-  'sheet-close': 'x',
   'lb-close': 'x',
   'lb-prev': 'chevron-left',
   'lb-next': 'chevron-right',
@@ -59,7 +58,9 @@ export function mimeOfMediaName(name: string): string {
 
 /**
  * 面板壳 markup：头行（品牌 + 按钮组）/ chips 行 / 二级标签行 / 搜索行 / 两栏主体
- * （章节栏 + 瀑布）/ 灯箱 / 底部抽屉。按钮全部空壳挂 data-act，图标由 ui 侧 decorateIcons 注入。
+ * （章节栏 + 瀑布）/ 灯箱。按钮全部空壳挂 data-act，图标由 ui 侧 decorateIcons 注入。
+ * 底部抽屉不在此 markup（2026-09-11 换核 core openItemSheet：与 favorites/belongings/cinema
+ * 同源，壳/动作行/关闭手势全归共享层，域内只出富媒体头 mkSheetHead）。
  *
  * 头行按钮组：「写日记 / 搜索」+「关闭」（2026-09-11 移动端评审补回——全屏页无遮罩可点，
  * 关闭钮仅移动端显示，桌面由 CSS 隐藏、维持 ESC/点遮罩口径与 2026-09-10 头行精简决定）。
@@ -92,20 +93,6 @@ export function wallPanelHTML(): string {
         <div class="bz-diary-lbmedia"></div>
         <div class="bz-diary-lbcap"></div>
         <div class="bz-diary-lbsub"></div>
-      </div>
-      <div class="bz-sheet-mask bz-diary-sheet-mask"></div>
-      <div class="bz-sheet bz-diary-sheet">
-        <div class="bz-sheet-grip"></div>
-        <div class="bz-sheet-head bz-diary-sheet-head">
-          <span class="bz-diary-sheet-emoji"></span>
-          <div class="bz-diary-sheet-info">
-            <div class="bz-sheet-title bz-diary-sheet-time"></div>
-            <div class="bz-diary-sheet-content"></div>
-            <div class="bz-diary-sheet-media"></div>
-          </div>
-          <button class="bz-diary-sheet-close" data-act="sheet-close" title="关闭"></button>
-        </div>
-        <div class="bz-sheet-body bz-sheet-actions bz-diary-sheet-actions"></div>
       </div>
     `;
 }

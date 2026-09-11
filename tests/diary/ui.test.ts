@@ -635,8 +635,8 @@ describe('回忆墙 UI', () => {
     const item = desk.querySelector('.bz-diary-item') as HTMLElement;
     expect(item).toBeTruthy();
     item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    // 抽屉不应打开
-    expect(desk.querySelector('.bz-sheet--show')).toBeNull();
+    // 抽屉不应打开（2026-09-11 换核：抽屉 = core openItemSheet 挂 body，全局判定）
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
     // 媒体块 ⋯ 按钮已移除（用户要求去掉右上角三点）
     expect(item.querySelector('.bz-diary-ops')).toBeNull();
   });
@@ -648,25 +648,32 @@ describe('回忆墙 UI', () => {
     const item = mob.querySelector('.bz-diary-item') as HTMLElement;
     expect(item).toBeTruthy();
     item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(mob.querySelector('.bz-sheet--show')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
   });
 
-  it('长按条目 → 底部抽屉（统一手势 core/dom.longPress）：桌面长按不开、移动端短按不开、移动端长按开；抽屉仍是 .bz-diary-sheet 详情壳', async () => {
+  it('长按条目 → 底部抽屉（逐卡绑定，影院同款）：桌面实例不挂手势、移动端短按不开、移动端长按开 core .bz-item-sheet', async () => {
     await openAndWait();
     const mob = document.querySelector('.bz-diary-mob')!;
-    const item = mob.querySelector('.bz-diary-item') as HTMLElement;
-    expect(item).toBeTruthy();
-    // 桌面（Platform.isMobile=false）：手势过滤不放行
-    await touchPress(item, 550);
-    expect(mob.querySelector('.bz-sheet--show')).toBeNull();
+    const deskItem = document.querySelector('.bz-diary-desk .bz-diary-item') as HTMLElement;
+    const mobItem = mob.querySelector('.bz-diary-item') as HTMLElement;
+    expect(deskItem).toBeTruthy();
+    expect(mobItem).toBeTruthy();
+    // 桌面实例不挂长按手势（2026-09-11 逐卡重写：mobile=false 不绑定，桌面入口 = 右键）
+    await touchPress(deskItem, 550);
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
     // 移动端短按（未到 500ms）：不开
     Platform.isMobile = true;
-    await touchPress(item, 100);
-    expect(mob.querySelector('.bz-sheet--show')).toBeNull();
-    // 移动端长按：开详情抽屉（只统一手势，不换成 core 动作抽屉 .bz-item-sheet，保观感）
-    await touchPress(item, 550);
-    expect(mob.querySelector('.bz-diary-sheet.bz-sheet--show')).toBeTruthy();
+    await touchPress(mobItem, 100);
     expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    // 移动端长按：开 core 统一抽屉（富媒体头挂 sheetHead，动作集与桌面右键同源）
+    await touchPress(mobItem, 550);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).toBeTruthy();
+    // 富媒体头在场：emoji + 时间行 + 正文预览 + 右上关闭钮
+    expect(sheet.querySelector('.bz-diary-sheet-head')).toBeTruthy();
+    expect(sheet.querySelector('.bz-diary-sheet-close')).toBeTruthy();
+    // 动作行 = core 统一动作项（左对齐、!important 抗 Obsidian button 压盖）
+    expect(sheet.querySelector('.bz-item-sheet-item')).toBeTruthy();
   });
 
   it('稀疏铺满：单条日文字条跨列占满整行（sparse-1）', async () => {
@@ -761,7 +768,7 @@ describe('回忆墙 UI', () => {
     expect(media).toBeTruthy();
     media.click();
     // 单击不再开抽屉，直接进灯箱预览（条目级动作经长按抽屉可达）
-    expect(mob.querySelector('.bz-sheet--show')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
     expect(document.querySelector('.bz-diary-lb--show')).toBeTruthy();
     // DW7：重渲染后同条目媒体宽高比不变（稳定散列，非全局递增 seed）
     const c = DiaryAppController.instance!;
@@ -1380,10 +1387,13 @@ describe('回忆墙 UI', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/diary/styles.css'), 'utf8');
     // 右键菜单迁移 core item-actions（.bz-item-menu）：域内自绘菜单规则删除
     expect(css).not.toContain('.bz-diary-menu');
-    // 详情抽屉迁移共享 .bz-sheet 族：壳/把手/动作行自绘规则删除，域内只留层档钩子与富媒体头
+    // 2026-09-11 抽屉换核 core openItemSheet（.bz-item-sheet）：域内壳/把手/动作行/遮罩规则全部退役，
+    // 只留富媒体头（mkSheetHead 产物：head/emoji/time/content/media/thumb/close）
     expect(css).not.toContain('.bz-diary-sheet-grip');
     expect(css).not.toContain('.bz-diary-sheet-act');
-    expect(css).toContain('.bz-diary-sheet-mask'); // 遮罩层档钩子
+    expect(css).not.toContain('.bz-diary-sheet-mask');
+    expect(css).not.toContain('.bz-diary-mob .bz-diary-sheet');
+    expect(css).toContain('.bz-diary-sheet-head');
     // 搜索框接入共享 .bz-search：域内自绘输入框规则删除
     expect(css).not.toContain('.bz-diary-searchbox');
     // 共享层形制在位（components.css）：遮罩 + 底部定位 + 动作行

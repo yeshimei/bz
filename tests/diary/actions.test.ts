@@ -186,17 +186,44 @@ describe('日记本条目动作（ADR-0115 定位重构）', () => {
       el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
     };
     const mob = document.querySelector('.bz-diary-mob')!;
-    // 影视条目（第 2 个）抽屉
+    // 影视条目（第 2 个）抽屉（2026-09-11 换核：core openItemSheet 挂 body，全局判定）
     await press(mob.querySelectorAll('.bz-diary-item')[1] as HTMLElement);
-    expect(mob.querySelector('.bz-sheet--show')).toBeTruthy();
-    const movieActs = mob.querySelector('.bz-diary-sheet-actions') as HTMLElement;
-    expect(movieActs.textContent).not.toContain('加密');
-    expect(movieActs.textContent).not.toContain('删除');
+    const movieSheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(movieSheet).toBeTruthy();
+    expect(movieSheet.textContent).not.toContain('加密');
+    expect(movieSheet.textContent).not.toContain('删除');
     // 普通日记条目（第 1 个）抽屉
     await press(mob.querySelector('.bz-diary-item') as HTMLElement);
-    const diaryActs = mob.querySelector('.bz-diary-sheet-actions') as HTMLElement;
-    expect(diaryActs.textContent).toContain('加密');
-    expect(diaryActs.textContent).toContain('删除');
+    const diarySheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(diarySheet).toBeTruthy();
+    expect(diarySheet.textContent).toContain('加密');
+    expect(diarySheet.textContent).toContain('删除');
+    Platform.isMobile = false;
+  });
+
+  it('移动端：长按 + contextmenu 同发时只出抽屉，不出桌面跟手菜单（影院 mobile-3fix B 同款回归）', async () => {
+    // 真机触屏长按的真实事件序列：touchstart →(~500ms)→ contextmenu（与 longPress 手势同到）。
+    // contextmenu 委托不按端分流就弹桌面跟手菜单盖住抽屉（2026-09-11 真机复现）。
+    Platform.isMobile = true;
+    await openAndWait();
+    const mob = document.querySelector('.bz-diary-mob')!;
+    const item = mob.querySelector('.bz-diary-item') as HTMLElement;
+    const r = item.getBoundingClientRect();
+    const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
+    item.dispatchEvent(ts);
+    await new Promise((resolve) => setTimeout(resolve, 550));
+    item.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    const ctx = new MouseEvent('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+      clientX: r.left + 10,
+      clientY: r.top + 10,
+    });
+    item.dispatchEvent(ctx);
+    expect(ctx.defaultPrevented, '移动端条目 contextmenu 应被吞（让位给长按抽屉）').toBe(true);
+    expect(document.querySelector('.bz-item-sheet'), '长按抽屉应在').toBeTruthy();
+    expect(document.querySelector('.bz-item-menu'), '移动端不应出桌面跟手菜单').toBeNull();
     Platform.isMobile = false;
   });
 

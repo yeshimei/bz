@@ -367,8 +367,16 @@ export const TFile = class {};
 export const TFolder = class {};
 export const normalizePath = (p: string) => p;
 
-/** setIcon mock：把图标名记录到元素 dataset.icon（真实环境渲染 lucide svg） */
+/** setIcon mock：把图标名记录到元素 dataset.icon（真实环境渲染 lucide svg）。
+ *  严格档（2026-09-11 真机事故）：真 Obsidian 的 getIcon 首行是 `name.startsWith('lucide-')`，
+ *  图标名为 undefined 时抛 `Cannot read properties of undefined (reading 'startsWith')`，
+ *  整个构建链中断；宽容 mock 曾让此 bug 全绿通关。此处对齐真机行为。 */
 export const setIcon = vi.fn((el: HTMLElement, name: string, _size?: number) => {
+  if (typeof name !== 'string' || !name) {
+    throw new TypeError(
+      `setIcon: 图标名缺失（收到 ${String(name)}）——真机 Obsidian 将抛 startsWith 异常`
+    );
+  }
   el.dataset.icon = name;
 });
 
