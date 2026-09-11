@@ -1,4 +1,4 @@
-/* 源指纹 def257dd22c7e8b0 · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 0151ec3cfdd94417 · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -13782,6 +13782,7 @@ ${n.content.slice(0, 2e3)}
   init_ui();
   init_dom();
   init_item_actions();
+  init_settings_provider();
 
   // src/core/ui/str.ts
   var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -13955,6 +13956,21 @@ ${n.content.slice(0, 2e3)}
     pomodoros: 0,
     pomodoroMinutes: 0
   };
+  var DEFAULT_TIMELINE_FILTER = {
+    produce: true,
+    progress: true,
+    notes: true,
+    skipped: false
+  };
+  function timelineRangeDays(range) {
+    if (range === "3d") return 3;
+    if (range === "week") return 7;
+    return 1;
+  }
+  function timelineKind(text) {
+    if (text.startsWith("新增备忘录") || text.includes("加入片单") || text.includes("读到 ")) return "progress";
+    return "produce";
+  }
   function p2(n) {
     return String(n).padStart(2, "0");
   }
@@ -15648,25 +15664,34 @@ ${n.content.slice(0, 2e3)}
       return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '"><span class="bz-home-dot bz-home-dot--' + dot + '"></span><span class="bz-home-eic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-enm">' + esc(d.name) + '</span><span class="bz-home-ect">' + esc(ct) + '</span><span class="bz-home-ego">→</span></div>';
     }).join("");
   }
-  function flowHtml(data, view) {
-    var _a;
-    const day = (_a = data.days.find((d) => d.dateStr === view)) != null ? _a : data.today;
+  function flowHtml(data, view, opts = {}) {
+    var _a, _b, _c;
+    const filter = (_a = opts.filter) != null ? _a : DEFAULT_TIMELINE_FILTER;
+    const showTime = opts.showTime !== false;
+    const size = (_b = opts.size) != null ? _b : "normal";
+    const wrap = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + "</div>";
+    const day = (_c = data.days.find((d) => d.dateStr === view)) != null ? _c : data.today;
     const isToday = day.dateStr === data.today.dateStr;
-    const notes = isToday ? buildNotes(data) : [];
-    const body = day.events.map((e, i) => {
-      var _a2, _b, _c, _d;
+    const notes = isToday && filter.notes ? buildNotes(data) : [];
+    const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => timelineKind(e.text) === "progress" ? filter.progress : filter.produce);
+    const body = kept.map(({ e, i }) => {
+      var _a2, _b2, _c2, _d, _e;
       const note = notes.find((n) => n.index === i);
-      const lastDiary = i === day.events.length - 1 && note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
+      const lastDiary = i === ((_a2 = kept[kept.length - 1]) == null ? void 0 : _a2.i) && note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
       const memoId = e.domain;
       const dmColor = domainColor(memoId);
-      const dmName = (_b = (_a2 = DOMAIN_MAP.get(memoId)) == null ? void 0 : _a2.name) != null ? _b : e.domain;
-      const dmIcon = (_d = (_c = DOMAIN_MAP.get(memoId)) == null ? void 0 : _c.icon) != null ? _d : "";
-      return '<div class="bz-home-ev' + lastDiary + '"><span class="bz-home-ev-tm">' + esc(e.timeLabel) + '</span><div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
+      const dmName = (_c2 = (_b2 = DOMAIN_MAP.get(memoId)) == null ? void 0 : _b2.name) != null ? _c2 : e.domain;
+      const dmIcon = (_e = (_d = DOMAIN_MAP.get(memoId)) == null ? void 0 : _d.icon) != null ? _e : "";
+      return '<div class="bz-home-ev' + lastDiary + '">' + (showTime ? '<span class="bz-home-ev-tm">' + esc(e.timeLabel) + "</span>" : "") + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
     }).join("");
-    const empty = '<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>';
-    return day.events.length ? '<div class="bz-home-timeline">' + body + "</div>" : empty;
+    if (kept.length) return wrap(body);
+    if (day.events.length) {
+      return wrap('<div class="bz-home-flow-empty">这一天有痕迹，但都被「时间线内容过滤」挡掉了。<br>去 <b>设置 → 首页</b> 把想看的类别勾上。</div>');
+    }
+    return wrap('<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>');
   }
-  function nextHtml(data) {
+  function nextHtml(data, enabled = true) {
+    if (!enabled) return "";
     return '<div class="bz-home-sec-t bz-home-sec-t--ai">明 天 预 告</div>' + buildPreviews(data).map(
       (pr) => '<div role="button" tabindex="0" class="bz-home-pr" data-home-go="' + pr.go + '"><div class="bz-home-pr-h">' + esc(pr.h) + "</div><div>" + esc(pr.b) + '</div><span class="bz-home-pr-go">' + esc(pr.goLabel) + "</span></div>"
     ).join("");
@@ -15683,6 +15708,38 @@ ${n.content.slice(0, 2e3)}
 
   // src/home/ui.ts
   var riverView = null;
+  var nextOff = true;
+  function readHomeSettings() {
+    var _a, _b, _c;
+    const s = tryGetSettings();
+    const bool = (v, def) => typeof v === "boolean" ? v : def;
+    const str = (v) => typeof v === "string" && v ? v : void 0;
+    const filter = {
+      produce: bool(s.homeTimelineProduce, DEFAULT_TIMELINE_FILTER.produce),
+      progress: bool(s.homeTimelineProgress, DEFAULT_TIMELINE_FILTER.progress),
+      notes: bool(s.homeTimelineNotes, DEFAULT_TIMELINE_FILTER.notes),
+      skipped: bool(s.homeTimelineSkipped, DEFAULT_TIMELINE_FILTER.skipped)
+    };
+    const range = (_a = str(s.homeTimelineRange)) != null ? _a : "today";
+    return {
+      filter,
+      flow: {
+        filter,
+        showTime: bool(s.homeTimelineTime, true),
+        size: (_b = str(s.homeTimelineSize)) != null ? _b : "normal"
+      },
+      rangeDays: timelineRangeDays(range),
+      defaultDay: (_c = str(s.homeDefaultDay)) != null ? _c : "today",
+      next: bool(s.homeNextCards, true)
+    };
+  }
+  function pickInitialView(river, defaultDay, rangeDays) {
+    const today = river.today.dateStr;
+    if (defaultDay !== "lastActive") return null;
+    const window2 = river.days.slice(0, Math.max(1, rangeDays));
+    const hit = window2.find((d) => d.events.length > 0);
+    return hit && hit.dateStr !== today ? hit.dateStr : null;
+  }
   function createOverlay2(app) {
     const overlay = document.createElement("div");
     overlay.className = "bz-panel-overlay bz-home-overlay";
@@ -15715,6 +15772,10 @@ ${n.content.slice(0, 2e3)}
     H.river = river;
     if (order) H.order = order;
     H.pomodoroFocusing = focusing;
+    if (river && !riverView) {
+      const { defaultDay, rangeDays } = readHomeSettings();
+      riverView = pickInitialView(river, defaultDay, rangeDays);
+    }
     renderAll();
   }
   function closeOverlay() {
@@ -15757,7 +15818,7 @@ ${n.content.slice(0, 2e3)}
           overlay2.querySelectorAll("[data-home-weekday]").forEach((b) => b.classList.toggle("bz-home-wk--sel", b.dataset.homeWeekday === riverView));
           const flow = overlay2.querySelector("[data-home-flow]");
           if (flow) {
-            flow.innerHTML = flowHtml(H.river, riverView != null ? riverView : "");
+            flow.innerHTML = flowHtml(H.river, riverView != null ? riverView : "", readHomeSettings().flow);
             mountIcons(flow);
           }
         }
@@ -15825,17 +15886,21 @@ ${n.content.slice(0, 2e3)}
       return;
     }
     const river = H.river;
-    const view = riverView && river.days.some((d) => d.dateStr === riverView) ? riverView : null;
+    const cfg = readHomeSettings();
+    const windowDays = river.days.slice(0, cfg.rangeDays);
+    const view = riverView && windowDays.some((d) => d.dateStr === riverView) ? riverView : null;
     riverView = view;
     const today = river.today.dateStr;
     const week = overlay.querySelector("[data-home-week]");
-    if (week) week.innerHTML = weekHtml(river.week, today, view != null ? view : today);
+    if (week) week.innerHTML = weekHtml(river.week.slice(0, cfg.rangeDays), today, view != null ? view : today);
     const entries = overlay.querySelector("[data-home-entries]");
     const flow = overlay.querySelector("[data-home-flow]");
     const next = overlay.querySelector("[data-home-next]");
     entries.innerHTML = entriesHtml(river, H.order.desk, H.order.hiddenDesk);
-    flow.innerHTML = flowHtml(river, view != null ? view : today);
-    next.innerHTML = nextHtml(river);
+    flow.innerHTML = flowHtml(river, view != null ? view : today, cfg.flow);
+    next.innerHTML = nextHtml(river, cfg.next);
+    nextOff = !cfg.next;
+    next.style.display = nextOff ? "none" : "";
     const tiles = overlay.querySelector("[data-home-tiles]");
     tiles.innerHTML = tilesHtml(river, H.order.mob, H.order.hiddenMob);
     mountIcons(week);

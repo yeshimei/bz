@@ -194,6 +194,22 @@ export default interface BzSettings {
   /** 🎨 内容首页外观占位（issue 246 同范式）：布局=活动河单卡，主题=米白单卡 */
   homeLayout: string;
   homeSkin: string;
+  // ===== 首页时间线（issue 287，2026-09-11 用户点名六项）=====
+  /** 时间线字号档：compact 紧凑 / normal 标准 / loose 宽松（域 UI 在 .bz-home-panel 上挂 data-tl-size） */
+  homeTimelineSize: string;
+  /** 时间线时间范围（天数口径）：today 当天 / 3d 最近 3 天 / week 本周 7 天（= 周历窗口） */
+  homeTimelineRange: string;
+  /** 时间线内容过滤：勾选显示哪些类（产出 / 状态推进 / 点评 ✦ / 已跳过） */
+  homeTimelineProduce: boolean;
+  homeTimelineProgress: boolean;
+  homeTimelineNotes: boolean;
+  homeTimelineSkipped: boolean;
+  /** 打开首页默认落到哪天：today 今天 / lastActive 最后有动静的那天 */
+  homeDefaultDay: string;
+  /** 时间线显示时刻列（11:03 那列；关掉整列隐藏，行首缩进随之内收） */
+  homeTimelineTime: boolean;
+  /** 明天预告卡开关（第三栏整块） */
+  homeNextCards: boolean;
   // 旧 cinemaPageSize（每批加载数量）已删除：全仓无消费点（列表一次全量渲染），死配置随审计清理
 
 
@@ -631,6 +647,17 @@ export const DEFAULT_SETTINGS: BzSettings = {
   encryptSkinTheme: 'steel',
   homeLayout: 'default',
   homeSkin: 'cream',
+  // 首页时间线（issue 287）：默认 = 与改版前观感完全一致（标准字号 / 当天 / 四类中前三类开 /
+  // 默认今天 / 显示时刻 / 预告卡开）——「加了设置但没动过任何开关」时看不出差别
+  homeTimelineSize: 'normal',
+  homeTimelineRange: 'today',
+  homeTimelineProduce: true,
+  homeTimelineProgress: true,
+  homeTimelineNotes: true,
+  homeTimelineSkipped: false,
+  homeDefaultDay: 'today',
+  homeTimelineTime: true,
+  homeNextCards: true,
   favoritesSortKey: 'created',
   // 文献盒处理设置（键名随域更名 literature*；ticket 136 默认值=既存行为不动，零迁移）
   knowledgeProgressDetail: true,

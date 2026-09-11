@@ -11,4 +11,5 @@ export * from './shared';
 export {
   panelFrameHtml, loadingEntriesHtml, loadingFlowHtml,
   weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml,
+  type FlowOpts,
 } from './layouts/river/render';

@@ -1,4 +1,4 @@
-/* 源指纹 1cf74f88456d7541 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3248c5c87c419b38 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -13219,6 +13219,7 @@ ${countsToText(s.missing)}
   // src/home/entry-editor.ts
   function mountHomeEntryEditor(body, app) {
     const scope = isMobileEnv() ? "mob" : "desk";
+    const touchMode = isMobileEnv();
     let order = null;
     let suppressClickUntil = 0;
     const root = document.createElement("div");
@@ -13238,6 +13239,23 @@ ${countsToText(s.missing)}
       void saveHomeConfig(order, app).catch(() => void 0);
     }
     let drag = null;
+    function applyShift(c) {
+      for (let i = 0; i < c.total; i++) {
+        if (i === c.from) continue;
+        const el = c.rows[i];
+        if (!el) continue;
+        let shift = 0;
+        if (c.to > c.from && i > c.from && i <= c.to) shift = -1;
+        else if (c.to < c.from && i >= c.to && i < c.from) shift = 1;
+        if (shift) {
+          el.style.transform = `translateY(${shift * c.step}px)`;
+          el.classList.add(SHIFT_CLS);
+        } else {
+          el.style.transform = "";
+          el.classList.remove(SHIFT_CLS);
+        }
+      }
+    }
     function endDrag() {
       const c = drag;
       drag = null;
@@ -13246,8 +13264,13 @@ ${countsToText(s.missing)}
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
-      c.el.classList.remove("bz-home-ent-drag");
+      if (c.touchLocked && c.el.isConnected) c.el.style.touchAction = "";
+      c.el.classList.remove(DRAG_CLS);
       c.el.style.transform = "";
+      for (const el of c.rows) {
+        el.style.transform = "";
+        el.classList.remove(SHIFT_CLS);
+      }
     }
     function onMove(e) {
       const c = drag;
@@ -13255,17 +13278,18 @@ ${countsToText(s.missing)}
       const dy = e.clientY - c.startY;
       if (!c.active) {
         if (!c.armed) {
-          if (Math.abs(dy) > 8) endDrag();
+          if (Math.abs(dy) > TOUCH_SLOP_PX) endDrag();
           return;
         }
         if (Math.abs(dy) < DRAG_PX) return;
         c.active = true;
-        c.el.classList.add("bz-home-ent-drag");
+        c.el.classList.add(DRAG_CLS);
       }
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       const to = Math.max(0, Math.min(c.from + Math.round(dy / c.step), c.total - 1));
       c.to = to;
       c.el.style.transform = `translateY(${(to - c.from) * c.step}px)`;
+      applyShift(c);
     }
     function onUp() {
       const c = drag;
@@ -13283,12 +13307,12 @@ ${countsToText(s.missing)}
       persist();
       render2();
     }
-    function attachDrag(el, listEl2, total) {
+    function attachDrag(el, listEl2, rows) {
+      const total = rows.length;
       el.addEventListener("pointerdown", (e) => {
         var _a2, _b2;
         if (e.button) return;
         if (e.target.closest("[data-ent-remove]")) return;
-        const rows = Array.from(listEl2.querySelectorAll(ROW_SEL));
         const from = rows.indexOf(el);
         if (from < 0 || total < 2) return;
         let step = ((_b2 = (_a2 = rows[0]) == null ? void 0 : _a2.offsetHeight) != null ? _b2 : 40) + 6;
@@ -13299,17 +13323,21 @@ ${countsToText(s.missing)}
         const c = {
           el,
           listEl: listEl2,
+          rows,
           startY: e.clientY,
           step,
           from,
           to: from,
           total,
           active: false,
-          armed: !isMobileEnv(),
+          armed: !touchMode,
+          touchLocked: false,
           armTimer: null
         };
         drag = c;
-        if (isMobileEnv()) {
+        if (touchMode) {
+          c.el.style.touchAction = "none";
+          c.touchLocked = true;
           c.armTimer = setTimeout(() => {
             if (drag === c) c.armed = true;
             c.armTimer = null;
@@ -13334,8 +13362,15 @@ ${countsToText(s.missing)}
       const listEl2 = root.querySelector("[data-ent-list]");
       if (!listEl2) return;
       const rows = Array.from(listEl2.querySelectorAll(ROW_SEL));
-      for (const el of rows.slice(0, visible.length)) attachDrag(el, listEl2, visible.length);
+      const movable = rows.slice(0, visible.length);
+      for (const el of movable) attachDrag(el, listEl2, movable);
     }
+    root.addEventListener("contextmenu", (e) => {
+      if (drag) e.preventDefault();
+    });
+    window.addEventListener("blur", () => {
+      if (drag) endDrag();
+    });
     root.addEventListener("click", (e) => {
       if (Date.now() < suppressClickUntil) {
         e.stopPropagation();
@@ -13369,7 +13404,7 @@ ${countsToText(s.missing)}
       render2();
     });
   }
-  var ROW_SEL, DRAG_PX, TOUCH_ARM_MS;
+  var ROW_SEL, DRAG_PX, TOUCH_ARM_MS, TOUCH_SLOP_PX, SHIFT_CLS, DRAG_CLS;
   var init_entry_editor = __esm({
     "src/home/entry-editor.ts"() {
       init_mobile();
@@ -13379,7 +13414,10 @@ ${countsToText(s.missing)}
       init_order();
       ROW_SEL = "[data-ent-row]";
       DRAG_PX = 10;
-      TOUCH_ARM_MS = 200;
+      TOUCH_ARM_MS = 250;
+      TOUCH_SLOP_PX = 8;
+      SHIFT_CLS = "bz-home-ent-shift";
+      DRAG_CLS = "bz-home-ent-drag";
     }
   });
 
@@ -13401,7 +13439,82 @@ ${countsToText(s.missing)}
           ]
         },
         {
-          // 入口组（排外观之下）：拖动排序 + 移除/加回，内联编辑器
+          // 时间线组（issue 287）：九行——顺序按「看什么 → 看多久 → 从哪天开始看 → 怎么显示 → 那一栏要不要」
+          icon: "activity",
+          name: "时间线",
+          rows: [
+            {
+              type: "select",
+              name: "字号",
+              desc: "紧凑压信息密度、宽松看得省力。只作用于中间那条时间线。",
+              binding: { key: "homeTimelineSize" },
+              options: [
+                { value: "compact", label: "紧凑" },
+                { value: "normal", label: "标准" },
+                { value: "loose", label: "宽松" }
+              ]
+            },
+            {
+              type: "toggle",
+              name: "产出",
+              desc: "写下的、收进的、读完的——真正产出东西的动作。",
+              binding: { key: "homeTimelineProduce" }
+            },
+            {
+              type: "toggle",
+              name: "状态推进",
+              desc: "加入片单、读到 40%、新增待办这类还没成事实的推进。",
+              binding: { key: "homeTimelineProgress" }
+            },
+            {
+              type: "toggle",
+              name: "点评 ✦",
+              desc: "小橘挂在痕迹下面的那句话（动手早晚、日记连击提醒）。",
+              binding: { key: "homeTimelineNotes" }
+            },
+            {
+              type: "toggle",
+              name: "已跳过",
+              desc: "剪藏流里划掉的条目。开着能看到自己筛掉了什么，关掉更清净。",
+              binding: { key: "homeTimelineSkipped" }
+            },
+            {
+              type: "select",
+              name: "时间范围",
+              desc: "周历能往回翻几天。当天只留今天一格，本周是完整七天。",
+              binding: { key: "homeTimelineRange" },
+              options: [
+                { value: "today", label: "当天" },
+                { value: "3d", label: "最近 3 天" },
+                { value: "week", label: "本周" }
+              ]
+            },
+            {
+              type: "select",
+              name: "默认打开日",
+              desc: "打开首页先落在哪天。选「最后有动静」就不会一开就是一片空。",
+              binding: { key: "homeDefaultDay" },
+              options: [
+                { value: "today", label: "今天" },
+                { value: "lastActive", label: "最后有动静的那天" }
+              ]
+            },
+            {
+              type: "toggle",
+              name: "显示时刻列",
+              desc: "每行左边那列 11:03。关掉整列收起，正文往左靠。",
+              binding: { key: "homeTimelineTime" }
+            },
+            {
+              type: "toggle",
+              name: "明天预告卡",
+              desc: "右侧那一栏复习/剪藏/日记的预告。不看可以把整栏收掉。",
+              binding: { key: "homeNextCards" }
+            }
+          ]
+        },
+        {
+          // 入口组（排最后）：拖动排序 + 移除/加回，内联编辑器
           icon: "layout-grid",
           name: "入口",
           rows: [

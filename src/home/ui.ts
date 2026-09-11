@@ -24,18 +24,69 @@ import { notice } from '../core/notice';
 import { mountIcons } from '../core/ui';
 import { topifyZ } from '../core/dom';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
+import { tryGetSettings } from '../core/settings-provider';
 import { H } from './state';
 import { DOMAIN_MAP } from './domains';
-import { DOMAIN_MENU, pomodoroMenuLabel } from './shared';
+import {
+  DOMAIN_MENU, pomodoroMenuLabel,
+  DEFAULT_TIMELINE_FILTER, timelineRangeDays, type TimelineFilter,
+} from './shared';
 import { collectRiver, type RiverData } from './river';
 import { loadHomeOrder } from './order';
 import {
   headDateText, panelFrameHtml, loadingEntriesHtml, loadingFlowHtml,
-  weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml, sheetHeadHtml,
+  weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml, sheetHeadHtml, type FlowOpts,
 } from './render';
 
 /** 周历当前查看日（'YYYY-MM-DD'；null = 今天。周历点按切天，只重渲时间线不重采） */
 let riverView: string | null = null;
+/** 明天预告卡：本次打开是否被设置关掉（关掉时要连第三栏一起收敛，不能只清内容） */
+let nextOff = true;
+
+/* ---------- 设置读取（issue 287：首页时间线六项） ---------- */
+
+/**
+ * 读首页时间线相关设置。**每次开面板现读**（不从模块状态缓存）——
+ * 用户在设置面板里改完立刻再开首页就该生效，缓存一层就多一个不同步的机会。
+ * 键缺失/类型不符一律回落默认值（旧 data.json 没有这些键，不能让首页崩）。
+ */
+function readHomeSettings(): { filter: TimelineFilter; flow: FlowOpts; rangeDays: number; defaultDay: string; next: boolean } {
+  const s = tryGetSettings() as Record<string, unknown>;
+  const bool = (v: unknown, def: boolean): boolean => (typeof v === 'boolean' ? v : def);
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v ? v : undefined);
+  const filter: TimelineFilter = {
+    produce: bool(s.homeTimelineProduce, DEFAULT_TIMELINE_FILTER.produce),
+    progress: bool(s.homeTimelineProgress, DEFAULT_TIMELINE_FILTER.progress),
+    notes: bool(s.homeTimelineNotes, DEFAULT_TIMELINE_FILTER.notes),
+    skipped: bool(s.homeTimelineSkipped, DEFAULT_TIMELINE_FILTER.skipped),
+  };
+  const range = str(s.homeTimelineRange) ?? 'today';
+  return {
+    filter,
+    flow: {
+      filter,
+      showTime: bool(s.homeTimelineTime, true),
+      size: str(s.homeTimelineSize) ?? 'normal',
+    },
+    rangeDays: timelineRangeDays(range),
+    defaultDay: str(s.homeDefaultDay) ?? 'today',
+    next: bool(s.homeNextCards, true),
+  };
+}
+
+/**
+ * 打开时默认落到哪天（issue 287「默认打开日」）。
+ * lastActive = 时间线窗口内**最近一天有痕迹的**那天——避免「今天还没动，面板一片空」，
+ * 直接落到昨天/前天，用户打开就有东西看。窗口内全空则仍回今天。
+ * 只跑一次（首次渲染前定 riverView），用户在面板里点周历切天不受影响。
+ */
+function pickInitialView(river: RiverData, defaultDay: string, rangeDays: number): string | null {
+  const today = river.today.dateStr;
+  if (defaultDay !== 'lastActive') return null;
+  const window = river.days.slice(0, Math.max(1, rangeDays));
+  const hit = window.find((d) => d.events.length > 0);
+  return hit && hit.dateStr !== today ? hit.dateStr : null;
+}
 
 /* ---------- 生命周期 ---------- */
 
@@ -81,6 +132,11 @@ async function refreshRiverAndRender(): Promise<void> {
   H.river = river;
   if (order) H.order = order;
   H.pomodoroFocusing = focusing;
+  // 「默认打开日」只在数据刚到、用户还没点过周历时定一次（riverView 为 null = 没点过）
+  if (river && !riverView) {
+    const { defaultDay, rangeDays } = readHomeSettings();
+    riverView = pickInitialView(river, defaultDay, rangeDays);
+  }
   renderAll();
 }
 
@@ -130,7 +186,7 @@ function bindEvents(overlay: HTMLElement, app: any): void {
           b.classList.toggle('bz-home-wk--sel', (b as HTMLElement).dataset.homeWeekday === riverView));
         const flow = overlay2.querySelector('[data-home-flow]') as HTMLElement | null;
         if (flow) {
-          flow.innerHTML = flowHtml(H.river!, riverView ?? '');
+          flow.innerHTML = flowHtml(H.river!, riverView ?? '', readHomeSettings().flow);
           mountIcons(flow);
         }
       }
@@ -220,17 +276,24 @@ function renderAll(): void {
     return;
   }
   const river = H.river;
-  const view = riverView && river.days.some((d) => d.dateStr === riverView) ? riverView : null;
+  const cfg = readHomeSettings();
+  // 时间范围：只放窗口内的天可选（week 档 = 采集窗口全长 7 天，越界自然回落今天）
+  const windowDays = river.days.slice(0, cfg.rangeDays);
+  const view = riverView && windowDays.some((d) => d.dateStr === riverView) ? riverView : null;
   riverView = view;
   const today = river.today.dateStr;
   const week = overlay.querySelector('[data-home-week]') as HTMLElement;
-  if (week) week.innerHTML = weekHtml(river.week, today, view ?? today);
+  // 周历只画范围窗口内的格子（today 档就一格「今」——范围设置本身在管「能翻到多远」）
+  if (week) week.innerHTML = weekHtml(river.week.slice(0, cfg.rangeDays), today, view ?? today);
   const entries = overlay.querySelector('[data-home-entries]') as HTMLElement;
   const flow = overlay.querySelector('[data-home-flow]') as HTMLElement;
   const next = overlay.querySelector('[data-home-next]') as HTMLElement;
   entries.innerHTML = entriesHtml(river, H.order.desk, H.order.hiddenDesk);
-  flow.innerHTML = flowHtml(river, view ?? today);
-  next.innerHTML = nextHtml(river);
+  flow.innerHTML = flowHtml(river, view ?? today, cfg.flow);
+  next.innerHTML = nextHtml(river, cfg.next);
+  // 预告卡关掉 → 第三栏整块收掉（只清内容会留一条空列，桌面 grid 里就是一道空白）
+  nextOff = !cfg.next;
+  next.style.display = nextOff ? 'none' : '';
   const tiles = overlay.querySelector('[data-home-tiles]') as HTMLElement;
   tiles.innerHTML = tilesHtml(river, H.order.mob, H.order.hiddenMob);
   mountIcons(week);

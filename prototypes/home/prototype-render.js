@@ -1,4 +1,4 @@
-/* 源指纹 4685ce5df5c77a3c · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 778413b9758c751f · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -24,6 +24,7 @@ var BZR_home = (() => {
   var render_exports = {};
   __export(render_exports, {
     ALL_DOMAIN_IDS: () => ALL_DOMAIN_IDS,
+    DEFAULT_TIMELINE_FILTER: () => DEFAULT_TIMELINE_FILTER,
     DOMAINS: () => DOMAINS,
     DOMAIN_DOT: () => DOMAIN_DOT,
     DOMAIN_ICONS: () => DOMAIN_ICONS,
@@ -31,6 +32,7 @@ var BZR_home = (() => {
     DOMAIN_MENU: () => DOMAIN_MENU,
     EMPTY_COUNTS: () => EMPTY_COUNTS,
     EMPTY_SUMMARY: () => EMPTY_SUMMARY,
+    TIMELINE_KIND_LABEL: () => TIMELINE_KIND_LABEL,
     applyOrder: () => applyOrder,
     buildDots: () => buildDots,
     buildNotes: () => buildNotes,
@@ -40,6 +42,7 @@ var BZR_home = (() => {
     dotOf: () => dotOf,
     entriesHtml: () => entriesHtml,
     esc: () => esc,
+    filterEvents: () => filterEvents,
     flowHtml: () => flowHtml,
     headDateText: () => headDateText,
     hiddenOf: () => hiddenOf,
@@ -53,6 +56,8 @@ var BZR_home = (() => {
     riverCountText: () => riverCountText,
     sheetHeadHtml: () => sheetHeadHtml,
     tilesHtml: () => tilesHtml,
+    timelineKind: () => timelineKind,
+    timelineRangeDays: () => timelineRangeDays,
     visibleDomains: () => visibleDomains,
     weekHtml: () => weekHtml
   });
@@ -242,6 +247,33 @@ var BZR_home = (() => {
     pomodoros: 0,
     pomodoroMinutes: 0
   };
+  var TIMELINE_KIND_LABEL = {
+    produce: "产出",
+    progress: "状态推进",
+    note: "点评 ✦",
+    skipped: "已跳过"
+  };
+  var DEFAULT_TIMELINE_FILTER = {
+    produce: true,
+    progress: true,
+    notes: true,
+    skipped: false
+  };
+  function timelineRangeDays(range) {
+    if (range === "3d") return 3;
+    if (range === "week") return 7;
+    return 1;
+  }
+  function timelineKind(text) {
+    if (text.startsWith("新增备忘录") || text.includes("加入片单") || text.includes("读到 ")) return "progress";
+    return "produce";
+  }
+  function filterEvents(events, filter) {
+    return events.filter((e) => {
+      const kind = timelineKind(e.text);
+      return kind === "progress" ? filter.progress : filter.produce;
+    });
+  }
   function p2(n) {
     return String(n).padStart(2, "0");
   }
@@ -390,25 +422,34 @@ var BZR_home = (() => {
       return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '"><span class="bz-home-dot bz-home-dot--' + dot + '"></span><span class="bz-home-eic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-enm">' + esc(d.name) + '</span><span class="bz-home-ect">' + esc(ct) + '</span><span class="bz-home-ego">→</span></div>';
     }).join("");
   }
-  function flowHtml(data, view) {
-    var _a;
-    const day = (_a = data.days.find((d) => d.dateStr === view)) != null ? _a : data.today;
+  function flowHtml(data, view, opts = {}) {
+    var _a, _b, _c;
+    const filter = (_a = opts.filter) != null ? _a : DEFAULT_TIMELINE_FILTER;
+    const showTime = opts.showTime !== false;
+    const size = (_b = opts.size) != null ? _b : "normal";
+    const wrap = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + "</div>";
+    const day = (_c = data.days.find((d) => d.dateStr === view)) != null ? _c : data.today;
     const isToday = day.dateStr === data.today.dateStr;
-    const notes = isToday ? buildNotes(data) : [];
-    const body = day.events.map((e, i) => {
-      var _a2, _b, _c, _d;
+    const notes = isToday && filter.notes ? buildNotes(data) : [];
+    const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => timelineKind(e.text) === "progress" ? filter.progress : filter.produce);
+    const body = kept.map(({ e, i }) => {
+      var _a2, _b2, _c2, _d, _e;
       const note = notes.find((n) => n.index === i);
-      const lastDiary = i === day.events.length - 1 && note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
+      const lastDiary = i === ((_a2 = kept[kept.length - 1]) == null ? void 0 : _a2.i) && note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
       const memoId = e.domain;
       const dmColor = domainColor(memoId);
-      const dmName = (_b = (_a2 = DOMAIN_MAP.get(memoId)) == null ? void 0 : _a2.name) != null ? _b : e.domain;
-      const dmIcon = (_d = (_c = DOMAIN_MAP.get(memoId)) == null ? void 0 : _c.icon) != null ? _d : "";
-      return '<div class="bz-home-ev' + lastDiary + '"><span class="bz-home-ev-tm">' + esc(e.timeLabel) + '</span><div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
+      const dmName = (_c2 = (_b2 = DOMAIN_MAP.get(memoId)) == null ? void 0 : _b2.name) != null ? _c2 : e.domain;
+      const dmIcon = (_e = (_d = DOMAIN_MAP.get(memoId)) == null ? void 0 : _d.icon) != null ? _e : "";
+      return '<div class="bz-home-ev' + lastDiary + '">' + (showTime ? '<span class="bz-home-ev-tm">' + esc(e.timeLabel) + "</span>" : "") + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
     }).join("");
-    const empty = '<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>';
-    return day.events.length ? '<div class="bz-home-timeline">' + body + "</div>" : empty;
+    if (kept.length) return wrap(body);
+    if (day.events.length) {
+      return wrap('<div class="bz-home-flow-empty">这一天有痕迹，但都被「时间线内容过滤」挡掉了。<br>去 <b>设置 → 首页</b> 把想看的类别勾上。</div>');
+    }
+    return wrap('<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>');
   }
-  function nextHtml(data) {
+  function nextHtml(data, enabled = true) {
+    if (!enabled) return "";
     return '<div class="bz-home-sec-t bz-home-sec-t--ai">明 天 预 告</div>' + buildPreviews(data).map(
       (pr) => '<div role="button" tabindex="0" class="bz-home-pr" data-home-go="' + pr.go + '"><div class="bz-home-pr-h">' + esc(pr.h) + "</div><div>" + esc(pr.b) + '</div><span class="bz-home-pr-go">' + esc(pr.goLabel) + "</span></div>"
     ).join("");

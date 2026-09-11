@@ -266,8 +266,10 @@
         // 内联列表在 loadHomeOrder 完成后才填 —— 必须等行就绪再断言
         const entRows = await waitFor(() => dtAll('[data-ent-list] [data-ent-row]').length === 14);
         t('首页域内联出入口列表（14 域默认顺序）', !!entRows);
-        // 组序（2026-09-10 拍板）：外观（与其他域同范式，issue 246）在上、入口在下
-        t('首页域组序=外观 → 入口', dtAll('.bz-sp-pane .bz-sp-group-name').map((e) => e.textContent).join('>') === '外观>入口');
+        // 组序（2026-09-10 拍板）：外观（与其他域同范式，issue 246）在上、入口在下；
+        // 2026-09-11 issue 287 在中间插入「时间线」组 → 外观 → 时间线 → 入口
+        const homeGroupOrder = dtAll('.bz-sp-pane .bz-sp-group-name').map((e) => e.textContent).join('>');
+        t('首页域组序=外观 → 时间线 → 入口', homeGroupOrder === '外观>时间线>入口');
         const homePicks = () => dtAll('.bz-sp-pane .bz-sp-cardpick');
         await waitFor(() => homePicks().length === 2 && homePicks().every((p) => p.querySelectorAll('.bz-sp-cardpick-card').length === 1));
         t('外观组两卡组（布局+主题 各一档）', homePicks().length === 2);
@@ -277,6 +279,30 @@
           !!homePicks()[1].querySelector('.bz-sp-mini.bz-sp-prev-cream'));
         t('两卡按种子值选中（homeLayout/homeSkin）', homePicks()[0].querySelector('.bz-sp-cardpick-card').classList.contains('is-on') &&
           homePicks()[1].querySelector('.bz-sp-cardpick-card').classList.contains('is-on'));
+
+        /* ---------- 首页「时间线」组（issue 287，2026-09-11 用户点名六项） ---------- */
+        // 分组内的行类型与文案：字号/时间范围/默认打开日 = select，其余四个 = toggle。
+        // 种子值与 src/settings.ts DEFAULT 同值（三处同值铁律），故显示态就是默认态。
+        const homeTlSelects = () => dtAll('.bz-sp-pane select').map((s) => s.value);
+        const homeTlToggles = () => dtAll('.bz-sp-pane input[type="checkbox"]');
+        t('时间线组：三个 select（字号/时间范围/默认打开日）按种子选中', (() => {
+          const v = homeTlSelects();
+          return v.length === 3 && v[0] === 'normal' && v[1] === 'today' && v[2] === 'today';
+        })());
+        t('时间线组：四个 toggle（产出/状态推进/点评/已跳过），前三开、已跳过关', (() => {
+          const tg = homeTlToggles();
+          return tg.length === 4 && tg[0].checked && tg[1].checked && tg[2].checked && !tg[3].checked;
+        })());
+        t('时间线组：行文案在场（产出 / 状态推进 / 点评 ✦ / 已跳过 / 显示时刻列 / 明天预告卡）', (() => {
+          const txt = dt('.bz-sp-pane').textContent;
+          return ['状态推进', '已跳过', '显示时刻列', '明天预告卡'].every((s) => txt.indexOf(s) >= 0);
+        })());
+        // 改一个开关必须能落盘（键直绑 → saveSettings 通道）
+        t('时间线开关可切换（点「已跳过」后变勾选态）', (() => {
+          const tg = homeTlToggles()[3];
+          tg.click();
+          return tg.checked;
+        })());
         t('不再有「编辑入口…」按钮（不开弹窗）', !dtAll('.bz-sp-pane button').some((b) => b.textContent.indexOf('编辑入口') >= 0));
         t('不再有浮层遮罩（弹窗形态已退役）', !dt('.bz-home-ee-mask'));
         t('不再有「已移除的域仍可从命令面板打开」提示行', dt('.bz-sp-pane').textContent.indexOf('命令面板') < 0);
@@ -320,12 +346,19 @@
           ENT_W.dispatchEvent(new ENT_PE('pointermove', { bubbles: true, clientX: 100, clientY: entY0 + 130 }));
           await sleep(40);
           t('拖拽中行带 drag 标记', !!dt('.bz-home-ent-drag'));
+          // 让位动画（2026-09-11 用户报 bug：只移动自身、邻居纹丝不动）
+          t('被跨过的邻居行反向位移（让位动画）', (() => {
+            const shifted = dtAll('.bz-home-ent-shift');
+            if (!shifted.length) return false;
+            return shifted.every((el) => el.style.transform.indexOf('translateY(-') === 0);
+          })());
           ENT_W.dispatchEvent(new ENT_PE('pointerup', { bubbles: true, clientX: 100, clientY: entY0 + 130 }));
           // 拖拽后有 300ms 点击抑制窗口（防落点误触），必须等过它再做后续点击
           await sleep(520);
         }
         const entOrderAfter = dtAll('[data-ent-list] [data-ent-row]').map((r) => r.dataset.entRow).join(',');
         t('拖拽后列表顺序变化', entOrderAfter !== entOrderBefore);
+        t('落地后邻居让位位移已清干净（无残留 transform）', dtAll('.bz-home-ent-shift').length === 0);
 
         // 落盘形状 = v3 四份数组（顺序与隐藏都按端各一份 → 本端编辑影响不到另一端）
         t('home.json 落盘为 v3（desk/mob/hiddenDesk/hiddenMob 各一份）', (() => {

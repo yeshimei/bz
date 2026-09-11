@@ -58,7 +58,7 @@ describe('home 活动河 UI（issue 232）', () => {
     const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
     expect(overlay).toBeTruthy();
     expect(overlay.querySelector('.bz-home-title')).toBeNull(); // 2026-09-09：标题桌面/移动都去掉
-    expect(overlay.querySelectorAll('[data-home-weekday]').length).toBe(7);
+    expect(overlay.querySelectorAll('[data-home-weekday]').length).toBe(1); // issue 287「时间范围」默认当天 → 周历只今天一格
     expect(overlay.querySelector('[data-home-date]')!.textContent).toMatch(/\d{4}-\d{2}-\d{2} 周/);
     expect(overlay.querySelector('[data-home-close]')).toBeTruthy();
     expect(overlay.querySelectorAll('[data-home-go]').length).toBeGreaterThanOrEqual(DOMAINS.length);
@@ -126,11 +126,22 @@ describe('home 活动河 UI（issue 232）', () => {
     expect(app.__executed).toEqual(['bz-secondbrain-panel']);
   });
 
-  it('周历：7 格动静历渲染；点昨天格时间线切天、选中格同步', async () => {
+  it('周历：默认「当天」档只画今天一格；范围调宽后按窗口出格、点过去的天时间线切天', async () => {
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
       { title: '甲', created: yesterdayStr() + ' 09:00:00', completed: null },
     ]));
     const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    // issue 287「时间范围」默认 today：周历只留今天一格（范围设置本身就管「能往回翻几天」）
+    expect(document.querySelectorAll('[data-home-weekday]').length).toBe(1);
+
+    // 调到「本周」：7 格全出，昨天那格带 hit。
+    // 测试里没有「改设置后重开面板」的机制，故直接把 provider 换掉再重开；
+    // **afterEach 会重设回 DEFAULT_SETTINGS**（见本文件 afterEach），不会漏给别的用例。
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, homeTimelineRange: 'week' }));
+    unloadHome();
+    resetHomeState();
     openHome(app);
     await new Promise((r) => setTimeout(r, 20));
     const wks = document.querySelectorAll('[data-home-weekday]');
@@ -146,6 +157,53 @@ describe('home 活动河 UI（issue 232）', () => {
     expect(document.querySelector('[data-home-flow] .bz-home-sec-t')).toBeNull(); // 时间线标题行已退役，选中日由周历高亮表达
     expect(document.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1); // 新增备忘录一条
     expect(document.querySelector(`[data-home-weekday="${yesterday}"]`)!.classList.contains('bz-home-wk--sel')).toBe(true);
+  });
+
+  it('issue 287：时间线内容过滤 / 时刻列 / 字号档 从设置读，关掉即不出（每次开面板现读，无缓存）', async () => {
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { title: '甲', created: todayStr() + ' 09:00:00', completed: null }, // 新增备忘录 = 状态推进
+    ]));
+    setSettingsProvider(() => ({
+      ...DEFAULT_SETTINGS,
+      homeTimelineProgress: false, // 关掉状态推进 → 唯一的痕迹该被挡掉
+      homeTimelineTime: false,
+      homeTimelineSize: 'compact',
+    }));
+    const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(0);
+    expect(document.querySelector('.bz-home-flow-empty')!.textContent).toContain('时间线内容过滤');
+    expect((document.querySelector('.bz-home-timeline') as HTMLElement).dataset.tlSize).toBe('compact');
+    expect((document.querySelector('.bz-home-timeline') as HTMLElement).dataset.tlTime).toBe('0');
+    expect(document.querySelector('.bz-home-ev-tm')).toBeNull(); // 时刻列关掉 → 连 span 都不渲染
+  });
+
+  it('issue 287：明天预告卡关掉 → 第三栏整个收掉（不是只清内容）', async () => {
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, homeNextCards: false }));
+    const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const next = document.querySelector('[data-home-next]') as HTMLElement;
+    expect(next.style.display).toBe('none');
+    expect(next.innerHTML).toBe('');
+  });
+
+  it('issue 287：默认打开日＝最后有动静 → 开面板落在昨天并高亮那一格', async () => {
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { title: '甲', created: yesterdayStr() + ' 09:00:00', completed: null }, // 只有昨天有动静
+    ]));
+    setSettingsProvider(() => ({
+      ...DEFAULT_SETTINGS,
+      homeTimelineRange: 'week', // 窗口要够宽，昨天才在可选范围内
+      homeDefaultDay: 'lastActive',
+    }));
+    const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const yesterday = yesterdayDateStr();
+    expect(document.querySelector(`[data-home-weekday="${yesterday}"]`)!.classList.contains('bz-home-wk--sel')).toBe(true);
+    expect(document.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1); // 直接就看到昨天那条
   });
 
   it('点关闭钮 / 遮罩均关闭（桌面无关闭钮显示由 CSS 控制事件仍可用）', async () => {

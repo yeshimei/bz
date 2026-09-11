@@ -108,6 +108,21 @@
 .bz-home-flow-empty { padding: 26px 6px; font-size: 13.5px; color: var(--h-dim); line-height: 2.1; }
 .bz-home-flow-empty b { color: var(--h-ink); }
 
+/* ---- 时间线字号档（issue 287：「设置 → 首页 → 时间线字号」）----
+   用 `em` 而不是再造三套 px：档位只改一个基数，行内各处（时刻/域徽/点评/空态）
+   按各自比例跟着缩，改档不用同步改十个数。
+   normal 档 = 上面那套基础值原样（不加任何覆盖），故「没动过设置」的观感零变化。 */
+.bz-home-timeline[data-tl-size="compact"] { font-size: .875em; }
+.bz-home-timeline[data-tl-size="compact"] .bz-home-ev { padding-top: 7px; padding-bottom: 7px; }
+.bz-home-timeline[data-tl-size="compact"] .bz-home-ev::before { top: 15px; }
+.bz-home-timeline[data-tl-size="loose"] { font-size: 1.125em; }
+.bz-home-timeline[data-tl-size="loose"] .bz-home-ev { padding-top: 14px; padding-bottom: 14px; }
+.bz-home-timeline[data-tl-size="loose"] .bz-home-ev::before { top: 24px; }
+
+/* ---- 时间线时刻列开关（issue 287）：关掉整列收起，内容行随之左移对齐轨道 ---- */
+.bz-home-timeline[data-tl-time="0"] .bz-home-ev-tm { display: none; }
+.bz-home-timeline[data-tl-time="0"] .bz-home-ev { padding-left: var(--bz-space-lg); }
+
 /* ---- 明天预告（原型 .pr） ---- */
 .bz-home-panel .bz-home-pr { display: block; background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px var(--bz-space-lg); margin-bottom: 10px; font-size: var(--bz-font-label); line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }
 .bz-home-panel .bz-home-pr:hover { border-color: var(--h-ai); }
@@ -171,11 +186,16 @@
   display: flex; align-items: center; gap: var(--bz-space-sm);
   padding: 7px var(--bz-space-sm); border-radius: var(--bz-radius-sm);
   border-bottom: 1px solid var(--sp-line-soft, var(--background-modifier-border));
-  /* 触屏：纵向滚动归浏览器（短滑滚列表），横向不滚 → 长按拖拽不与滚动抢手势 */
+  /* 触屏：纵向滚动归浏览器（短滑滚列表），横向不滚 → 长按拖拽不与滚动抢手势。
+     长按成立后 JS 会把本行 touch-action 临时改成 none 拿住手势（见 entry-editor.ts）。 */
   touch-action: pan-y;
+  /* 让位动画：邻居行被跨过时反向位移一格，靠这条过渡「滑」过去 */
+  transition: transform .16s cubic-bezier(.2, .7, .3, 1);
 }
 .bz-home-ent-row:last-child { border-bottom: 0; }
 .bz-home-ent-row:hover { background: var(--sp-line-soft, var(--background-modifier-hover)); }
+/* 拖拽期间：所有行都别响应长按/选择（手指还在屏上，选中文本会打断观感） */
+.bz-home-ent-list:has(.bz-home-ent-drag) { user-select: none; -webkit-user-select: none; }
 .bz-home-ent-grip { display: inline-flex; color: var(--sp-ink-3, var(--text-faint)); cursor: grab; }
 .bz-home-ent-grip .bz-ic { width: 15px; height: 15px; }
 .bz-home-ent-ic { display: inline-flex; flex: none; }
@@ -195,13 +215,16 @@
    不参与排序（拖柄隐掉，恢复只走 + 按钮）—— 排序下标只对可见行计数（见 shared.reorderTo） */
 .bz-home-ent-row--off { opacity: .72; }
 .bz-home-ent-row--off .bz-home-ent-grip { visibility: hidden; }
-/* 拖拽中的行：浮起 + 阴影（位移由 JS 写 transform） */
+/* 拖拽中的行：浮起 + 阴影（位移由 JS 写 transform；跟手要即时，故不吃行上的 .16s 过渡） */
 .bz-home-ent-drag {
   position: relative; z-index: 3;
   background: var(--sp-panel, var(--background-primary));
   border-radius: var(--bz-radius-sm); box-shadow: var(--sp-shadow, var(--shadow-s));
   opacity: .95;
+  transition: none;
 }
+/* 让位中的邻居行：反向位移一格（垫在浮起行下面，别抢 z） */
+.bz-home-ent-shift { position: relative; z-index: 1; }
 
 /* 移动端：面板内字号随面板档放大（面板移动端字号见 settings-panel/styles.css） */
 @media (max-width: 768px) {
