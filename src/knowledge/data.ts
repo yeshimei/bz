@@ -11,6 +11,7 @@ import { enqueueFileTask, jsonFileStore, storageFile, type JsonFileStore } from 
 import { tryGetSettings } from '../core/settings-provider';
 import { generateId } from '../core/utils';
 import { getApp } from '../core/app';
+import { cleanUrlText, normalizeSourceUrl } from './source';
 import type { KnowledgeTask, KnowledgeTaskStatus } from './types';
 
 export interface KnowledgeSettingsLike {
@@ -61,9 +62,9 @@ export function normalizeLooseTime(t: string | null | undefined): string | null 
   return TIME_RE.test(canon) ? canon : null;
 }
 
-/** 提取展示用链接文本：BV 号原样，链接取完整串 */
+/** 提取展示用链接文本：BV 号原样，链接取完整串；带参链接走净化剥追踪参数（issue 278），裸 BV/非 http 文本原样返回 */
 export function normalizeUrl(raw: string): string {
-  return raw.trim();
+  return normalizeSourceUrl(cleanUrlText(raw));
 }
 
 /** 状态是否终态（成功/失败） */

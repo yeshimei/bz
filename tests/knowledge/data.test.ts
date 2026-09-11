@@ -66,8 +66,17 @@ describe('isTerminal / normalizeUrl', () => {
     expect(isTerminal('pending')).toBe(false);
     expect(isTerminal('processing')).toBe(false);
   });
-  it('normalizeUrl 仅去首尾空白', () => {
+  it('normalizeUrl 仅去首尾空白（裸 BV 号与非 http 文本原样）', () => {
     expect(normalizeUrl('  BV1xx411c7mD  ')).toBe('BV1xx411c7mD');
+  });
+  it('normalizeUrl 带参链接剥追踪参数（issue 278：净化单源 normalizeSourceUrl），保留内容参数 p/t', () => {
+    expect(normalizeUrl('https://www.bilibili.com/video/BV1awbg6XELn/?spm_id_from=333.0&vd_source=abc&p=2'))
+      .toBe('https://www.bilibili.com/video/BV1awbg6XELn/?p=2');
+    expect(normalizeUrl('https://b23.tv/jL9bKaX?vd_source=xyz')).toBe('https://b23.tv/jL9bKaX');
+    expect(normalizeUrl('https://zhuanlan.zhihu.com/p/123?utm_source=share')).toBe('https://zhuanlan.zhihu.com/p/123');
+    // 幂等：净化值再过一遍不变
+    const once = normalizeUrl('https://www.bilibili.com/video/BV1awbg6XELn/?spm_id_from=3&t=30');
+    expect(normalizeUrl(once)).toBe(once);
   });
 });
 

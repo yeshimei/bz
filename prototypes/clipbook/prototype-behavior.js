@@ -1,5 +1,5 @@
-/* 源指纹 c9ff813051f8458d · 仓内输入 72 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts"]*/
+/* 源指纹 05b9d03721c7f765 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -5625,6 +5625,91 @@ ${body}`;
     }
   });
 
+  // src/knowledge/source.ts
+  function noteSourceName(path, name) {
+    const explicit = String(name != null ? name : "").trim();
+    if (explicit) return explicit;
+    const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
+    return stripMdExt(base) || String(path != null ? path : "");
+  }
+  function isUrlLikeSourceText(text) {
+    const s = String(text != null ? text : "").trim();
+    if (!s || /\s/.test(s)) return false;
+    if (/^https?:\/\/\S+$/i.test(s)) return true;
+    return URL_LIKE_RE.test(s);
+  }
+  function cleanUrlText(text) {
+    return String(text != null ? text : "").trim().replace(/[，。！？；、,;.!?…'"’”\])}>】」』]+$/, "");
+  }
+  function normalizeSourceUrl(input) {
+    const s = cleanUrlText(input);
+    const m = s.match(/^(https?:\/\/)([^/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/i);
+    if (!m) return s;
+    const [, scheme, host, path, query, hash] = m;
+    const bare = host.toLowerCase().replace(/^www\./, "");
+    if (bare === "b23.tv") return scheme + host + path;
+    if (bare.endsWith("bilibili.com") && /^\/video\//.test(path)) {
+      const keep = (query != null ? query : "").slice(1).split("&").filter((kv) => /^(p|t)=/.test(kv));
+      return scheme + host + path + (keep.length ? "?" + keep.join("&") : "");
+    }
+    if (!query) return s;
+    const kept = query.slice(1).split("&").filter(Boolean).filter((kv) => {
+      const k = kv.split("=")[0].toLowerCase();
+      return !k.startsWith("utm_") && !k.startsWith("spm_") && !TRACK_KEYS.has(k);
+    });
+    return scheme + host + path + (kept.length ? "?" + kept.join("&") : "") + (hash != null ? hash : "");
+  }
+  function decodeHtmlEntities(s) {
+    return s.replace(/&quot;/gi, '"').replace(/&#0?39;/g, "'").replace(/&apos;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&");
+  }
+  function cleanSourceTitle(raw) {
+    let t = decodeHtmlEntities(String(raw != null ? raw : "")).replace(/\s+/g, " ").trim();
+    t = t.replace(/\s*[_\-–—|｜]\s*哔哩哔哩(?:_bilibili)?\s*$/i, "");
+    t = t.replace(/\s*[_\-–—|｜]\s*bilibili\s*$/i, "");
+    t = t.replace(/\s*[-–—|｜]\s*知乎(?:日报|专栏)?\s*$/, "");
+    return t.trim();
+  }
+  function serializeTermSource(src) {
+    var _a;
+    if (!src) return null;
+    if (src.kind === "external") {
+      const url = normalizeSourceUrl(src.url);
+      if (!url) return null;
+      const out = { source: url };
+      const title = src.title ? cleanSourceTitle(src.title) : "";
+      if (title) out.sourceTitle = title;
+      return out;
+    }
+    const path = String((_a = src.path) != null ? _a : "").trim();
+    if (!path) return null;
+    const name = noteSourceName(path, src.name);
+    return { source: `[[${path}|${name}]]` };
+  }
+  var URL_LIKE_RE, TRACK_KEYS;
+  var init_source = __esm({
+    "src/knowledge/source.ts"() {
+      init_utils();
+      URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
+      TRACK_KEYS = /* @__PURE__ */ new Set([
+        "vd_source",
+        "vd_src",
+        "seid",
+        "unique_k",
+        "from",
+        "share_source",
+        "share_medium",
+        "share_token",
+        "share_plat",
+        "share_to",
+        "share_from",
+        "share_times",
+        "gcid",
+        "refer",
+        "scene"
+      ]);
+    }
+  });
+
   // src/knowledge/data.ts
   function normalizeLooseTime(t) {
     const s = (t != null ? t : "").trim();
@@ -5640,7 +5725,7 @@ ${body}`;
     return TIME_RE.test(canon) ? canon : null;
   }
   function normalizeUrl(raw) {
-    return raw.trim();
+    return normalizeSourceUrl(cleanUrlText(raw));
   }
   var import_moment2, TIME_RE, KnowledgeData;
   var init_data2 = __esm({
@@ -5650,6 +5735,7 @@ ${body}`;
       init_settings_provider();
       init_utils();
       init_app();
+      init_source();
       TIME_RE = /^\d{1,3}:\d{1,2}(:\d{1,2}(\.\d{1,3})?)?$/;
       KnowledgeData = {
         filePath: "",
@@ -6756,91 +6842,6 @@ ${body}`;
     }
   });
 
-  // src/knowledge/source.ts
-  function noteSourceName(path, name) {
-    const explicit = String(name != null ? name : "").trim();
-    if (explicit) return explicit;
-    const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
-    return stripMdExt(base) || String(path != null ? path : "");
-  }
-  function isUrlLikeSourceText(text) {
-    const s = String(text != null ? text : "").trim();
-    if (!s || /\s/.test(s)) return false;
-    if (/^https?:\/\/\S+$/i.test(s)) return true;
-    return URL_LIKE_RE.test(s);
-  }
-  function cleanUrlText(text) {
-    return String(text != null ? text : "").trim().replace(/[，。！？；、,;.!?…'"’”\])}>】」』]+$/, "");
-  }
-  function normalizeSourceUrl(input) {
-    const s = cleanUrlText(input);
-    const m = s.match(/^(https?:\/\/)([^/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/i);
-    if (!m) return s;
-    const [, scheme, host, path, query, hash] = m;
-    const bare = host.toLowerCase().replace(/^www\./, "");
-    if (bare === "b23.tv") return scheme + host + path;
-    if (bare.endsWith("bilibili.com") && /^\/video\//.test(path)) {
-      const keep = (query != null ? query : "").slice(1).split("&").filter((kv) => /^(p|t)=/.test(kv));
-      return scheme + host + path + (keep.length ? "?" + keep.join("&") : "");
-    }
-    if (!query) return s;
-    const kept = query.slice(1).split("&").filter(Boolean).filter((kv) => {
-      const k = kv.split("=")[0].toLowerCase();
-      return !k.startsWith("utm_") && !k.startsWith("spm_") && !TRACK_KEYS.has(k);
-    });
-    return scheme + host + path + (kept.length ? "?" + kept.join("&") : "") + (hash != null ? hash : "");
-  }
-  function decodeHtmlEntities(s) {
-    return s.replace(/&quot;/gi, '"').replace(/&#0?39;/g, "'").replace(/&apos;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&");
-  }
-  function cleanSourceTitle(raw) {
-    let t = decodeHtmlEntities(String(raw != null ? raw : "")).replace(/\s+/g, " ").trim();
-    t = t.replace(/\s*[_\-–—|｜]\s*哔哩哔哩(?:_bilibili)?\s*$/i, "");
-    t = t.replace(/\s*[_\-–—|｜]\s*bilibili\s*$/i, "");
-    t = t.replace(/\s*[-–—|｜]\s*知乎(?:日报|专栏)?\s*$/, "");
-    return t.trim();
-  }
-  function serializeTermSource(src) {
-    var _a;
-    if (!src) return null;
-    if (src.kind === "external") {
-      const url = normalizeSourceUrl(src.url);
-      if (!url) return null;
-      const out = { source: url };
-      const title = src.title ? cleanSourceTitle(src.title) : "";
-      if (title) out.sourceTitle = title;
-      return out;
-    }
-    const path = String((_a = src.path) != null ? _a : "").trim();
-    if (!path) return null;
-    const name = noteSourceName(path, src.name);
-    return { source: `[[${path}|${name}]]` };
-  }
-  var URL_LIKE_RE, TRACK_KEYS;
-  var init_source = __esm({
-    "src/knowledge/source.ts"() {
-      init_utils();
-      URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
-      TRACK_KEYS = /* @__PURE__ */ new Set([
-        "vd_source",
-        "vd_src",
-        "seid",
-        "unique_k",
-        "from",
-        "share_source",
-        "share_medium",
-        "share_token",
-        "share_plat",
-        "share_to",
-        "share_from",
-        "share_times",
-        "gcid",
-        "refer",
-        "scene"
-      ]);
-    }
-  });
-
   // src/knowledge/note-gen.ts
   function parseDomainList(raw) {
     return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
@@ -7366,15 +7367,19 @@ ${sample}`,
                 if (m) {
                   try {
                     const info = JSON.parse(m[1]);
-                    const title = info && typeof info.title === "string" ? String(info.title).trim() : "";
-                    const uploader = info && typeof info.uploader === "string" ? String(info.uploader).trim() : "";
-                    if (title) {
-                      task.title = title;
-                      task.uploader = uploader || task.uploader;
-                      const patch = { title, uploader: task.uploader };
-                      void KnowledgeData.updateTask(task.id, patch).then(() => {
-                        events.onTaskInfo({ ...task });
-                      });
+                    const infoTitle = info && typeof info.title === "string" ? String(info.title).trim() : "";
+                    const infoUploader = info && typeof info.uploader === "string" ? String(info.uploader).trim() : "";
+                    if (infoTitle || infoUploader) {
+                      const prevTitle = task.title || "";
+                      const prevUploader = task.uploader || "";
+                      task.title = prevTitle || infoTitle;
+                      task.uploader = prevUploader || infoUploader;
+                      if (task.title !== prevTitle || task.uploader !== prevUploader) {
+                        const patch = { title: task.title || null, uploader: task.uploader || null };
+                        void KnowledgeData.updateTask(task.id, patch).then(() => {
+                          events.onTaskInfo({ ...task });
+                        });
+                      }
                     }
                   } catch (e) {
                   }
@@ -7498,6 +7503,69 @@ ${sample}`,
           onEnd(ok);
         }
       };
+    }
+  });
+
+  // src/knowledge/video-meta.ts
+  function parseBvid(input) {
+    const m = String(input != null ? input : "").match(BVID_RE);
+    return m ? m[0] : null;
+  }
+  async function fetchFromViewApi(bvid) {
+    try {
+      const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), VIEW_TIMEOUT_MS));
+      const req = requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: "GET" }).then(
+        (resp) => {
+          if (!resp || resp.status < 200 || resp.status >= 300) return null;
+          let json = null;
+          try {
+            json = JSON.parse(resp.text);
+          } catch (e) {
+            return null;
+          }
+          if (!json || json.code !== 0 || !json.data) return null;
+          const title = typeof json.data.title === "string" ? json.data.title.trim() : "";
+          const ownerName = json.data.owner && typeof json.data.owner.name === "string" ? json.data.owner.name.trim() : "";
+          const meta = {};
+          if (title) meta.title = title;
+          if (ownerName) meta.uploader = ownerName;
+          return title || ownerName ? meta : null;
+        }
+      );
+      return await Promise.race([req, timer]);
+    } catch (e) {
+      return null;
+    }
+  }
+  async function fetchFromPageTitle(url) {
+    try {
+      const raw = await fetchPageTitle(url);
+      const title = raw ? cleanSourceTitle(raw) : "";
+      return title ? { title } : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  async function fetchVideoMeta(input) {
+    const text = String(input != null ? input : "").trim();
+    if (!text) return null;
+    const bvid = parseBvid(text);
+    if (bvid) {
+      const viaApi = await fetchFromViewApi(bvid);
+      if (viaApi) return viaApi;
+      return /^https?:\/\//i.test(text) ? await fetchFromPageTitle(text) : null;
+    }
+    if (!isUrlLikeSourceText(text)) return null;
+    return await fetchFromPageTitle(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+  }
+  var BVID_RE, VIEW_TIMEOUT_MS;
+  var init_video_meta = __esm({
+    "src/knowledge/video-meta.ts"() {
+      init_fake_obsidian();
+      init_utils();
+      init_source();
+      BVID_RE = /BV[0-9A-Za-z]{10}/;
+      VIEW_TIMEOUT_MS = 1e4;
     }
   });
 
@@ -7625,6 +7693,7 @@ ${sample}`,
       init_processor();
       init_note_gen();
       init_source();
+      init_video_meta();
       STATUS_META = {
         pending: { label: "待处理", cls: "bz-kb-pending" },
         processing: { label: "处理中", cls: "bz-kb-processing" },
@@ -7665,6 +7734,9 @@ ${sample}`,
           // ---- 添加任务弹窗 / 历史弹窗 ----
           this.addMask = null;
           this.addPopup = null;
+          /** 录入 URL 防抖定时器与解析序列号（issue 278：450ms 防抖回填 + 过期响应丢弃） */
+          this.addUrlTimer = null;
+          this.addUrlSeq = 0;
           this.historyMask = null;
           this.historyPopup = null;
           this.historyList = null;
@@ -7907,19 +7979,24 @@ ${sample}`,
         <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
         <span class="bz-kb-dom">${esc(n.domain || "未分类")}</span></div>
       <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || "")}</span></div>
-      <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
+      <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
           this._previewNote = n;
           const bodyEl = this.popup ? q(this.popup, "#bz-kb-preview-body") : null;
-          if (bodyEl && body) {
-            try {
-              const comp = new Component();
-              await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
-              comp.unload();
-            } catch (e) {
-            }
-            if (!bodyEl.querySelector("*") || !((_a = bodyEl.textContent) == null ? void 0 : _a.trim())) {
+          if (bodyEl) {
+            bodyEl.textContent = "";
+            if (body) {
+              try {
+                const comp = new Component();
+                await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
+                comp.unload();
+              } catch (e) {
+              }
+              if (!bodyEl.querySelector("*") || !((_a = bodyEl.textContent) == null ? void 0 : _a.trim())) {
+                bodyEl.innerHTML = parasHtml;
+              }
+            } else {
               bodyEl.innerHTML = parasHtml;
             }
           }
@@ -8622,10 +8699,22 @@ ${sample}`,
               }
             });
           }
+          const addUrlInput = q(popup, "#lit-add-url");
+          if (addUrlInput) {
+            addUrlInput.addEventListener("input", () => {
+              if (this.addUrlTimer) clearTimeout(this.addUrlTimer);
+              this.addUrlSeq++;
+              this.addUrlTimer = setTimeout(() => {
+                this.addUrlTimer = null;
+                void this.addUrlResolve(addUrlInput);
+              }, 450);
+            });
+          }
         }
         showAddDialog(editItem) {
           var _a, _b, _c, _d, _e, _f, _g;
           if (!this.addPopup || !this.addMask) return;
+          this.addUrlReset();
           this.editingId = (_a = editItem == null ? void 0 : editItem.id) != null ? _a : null;
           const modeTag = q(this.addPopup, "#lit-add-mode");
           if (modeTag) modeTag.style.display = this.editingId ? "inline-block" : "none";
@@ -8665,11 +8754,37 @@ ${sample}`,
           if (this.addMask) this.addMask.style.display = "none";
           if (this.addPopup) this.addPopup.style.display = "none";
           this.editingId = null;
+          this.addUrlReset();
+        }
+        /** 录入 URL 解析清理：防抖定时器归零 + 序列号失效在途响应（开/关弹窗共用） */
+        addUrlReset() {
+          if (this.addUrlTimer) {
+            clearTimeout(this.addUrlTimer);
+            this.addUrlTimer = null;
+          }
+          this.addUrlSeq++;
+        }
+        /**
+         * 录入 URL 防抖触发（issue 278）：先净化写回（值有变才写，用户可见），再抓元信息。
+         * 回填只补空字段（trim 后为空才算空）；序列号 + 输入值双校验丢弃过期响应；全程静默。
+         */
+        async addUrlResolve(input) {
+          const popup = this.addPopup;
+          if (!popup) return;
+          const seq = this.addUrlSeq;
+          const cleaned = normalizeSourceUrl(input.value);
+          if (cleaned && cleaned !== input.value) input.value = cleaned;
+          const meta = await fetchVideoMeta(cleaned);
+          if (seq !== this.addUrlSeq || this.addPopup !== popup || input.value !== cleaned) return;
+          const titleEl = q(popup, "#lit-add-vtitle");
+          const upEl = q(popup, "#lit-add-uploader");
+          if ((meta == null ? void 0 : meta.title) && titleEl && !titleEl.value.trim()) titleEl.value = meta.title;
+          if ((meta == null ? void 0 : meta.uploader) && upEl && !upEl.value.trim()) upEl.value = meta.uploader;
         }
         async _handleAddSave() {
           var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
           if (!this.addPopup) return;
-          const url = ((_b = (_a = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _a.value) != null ? _b : "").trim();
+          const url = normalizeSourceUrl(((_b = (_a = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _a.value) != null ? _b : "").trim());
           const clipMode = ((_d = (_c = q(this.addPopup, "#lit-add-range")) == null ? void 0 : _c.querySelector("button[data-range].active")) == null ? void 0 : _d.getAttribute("data-range")) === "clip";
           const startRaw = ((_f = (_e = q(this.addPopup, "#lit-add-start")) == null ? void 0 : _e.value) != null ? _f : "").trim();
           const endRaw = ((_h = (_g = q(this.addPopup, "#lit-add-end")) == null ? void 0 : _g.value) != null ? _h : "").trim();
@@ -9212,6 +9327,7 @@ ${sample}`,
             clearTimeout(this.termSrcTimer);
             this.termSrcTimer = null;
           }
+          this.addUrlReset();
           try {
             (_a = this.termSrcSuggest) == null ? void 0 : _a.detach();
           } catch (e) {

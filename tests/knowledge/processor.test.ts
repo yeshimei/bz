@@ -524,6 +524,23 @@ describe('BatchRunner', () => {
     }
   });
 
+  it('[bz-info] 只补空（issue 278）：task.title 已有值不被下载阶段覆盖、UP主 空则照补', async () => {
+    await KnowledgeData.addTask({ url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00', title: '手填标题' });
+    const tasks = await KnowledgeData.loadTasks();
+    const ev = makeEvents();
+    const p = BatchRunner.runAll(tasks, ev);
+    await tick();
+    child.stdout.emit('data', Buffer.from(INFO_LINE)); // CLI 解析值：title=从零开始学B站 uploader=某UP
+    await vi.waitFor(async () => {
+      const cur = await KnowledgeData.loadTasks();
+      expect(cur[0].title).toBe('手填标题'); // 已有值不被覆盖
+      expect(cur[0].uploader).toBe('某UP'); // 空字段照补（与录入期回填同口径）
+    });
+    BatchRunner.abort();
+    child.emit('close', 0);
+    await p;
+  });
+
   it('再次批量处理：失败项续跑（重跑含 failed，成功项跳过，ADR-0067 断点续跑入口）', async () => {
     const tasks = await seedTasks();
     const ev = makeEvents();
