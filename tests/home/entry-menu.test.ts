@@ -36,6 +36,7 @@ function riverData(counts: Partial<typeof EMPTY_COUNTS> = {}, streak?: RiverStre
     week: Array.from({ length: 7 }, (_, i) => wk(i)),
     streak: streak ?? { diaryStreak: 0, diaryWrittenToday: false },
     counts: { ...EMPTY_COUNTS, ...counts },
+    pomodoroFocusing: false, // item-1789106079981：专注态入 RiverData 后的必填字段（本文件不涉彩点，恒 false）
   };
 }
 

@@ -28,6 +28,7 @@ function emptyRiver(): RiverData {
     week: Array.from({ length: 7 }, (_, i) => emptyWeek(dateStrOf(NOW - i * DAY))),
     streak: { diaryStreak: 0, diaryWrittenToday: false },
     counts: { ...EMPTY_COUNTS },
+    pomodoroFocusing: false,
   };
 }
 
@@ -118,7 +119,7 @@ describe('buildPreviews（明天预告三张卡）', () => {
 });
 
 describe('buildDots / riverCountText（入口行彩点与计数文案）', () => {
-  it('彩点：日记 ok/连击 warn、复习逾期 hot、备忘录/番茄/影视/书库有动静 ok、其余 off', () => {
+  it('彩点：日记 ok/连击 warn、复习逾期 hot、备忘录/番茄/影视/书库有动静 ok、剪藏未读恒基线、其余 off', () => {
     const d = emptyRiver();
     d.today.summary.diary = 3;
     d.counts.reviewOverdue = 1;
@@ -134,10 +135,49 @@ describe('buildDots / riverCountText（入口行彩点与计数文案）', () =>
     expect(dots.cinema).toBe('ok');
     expect(dots.bookshelf).toBe('ok');
     expect(dots.pomodoro).toBe('off');
+    expect(dots.clipping).toBe('off'); // 无未读 → 灭
     expect(dots.favorites).toBeUndefined(); // 规则外域由 UI 层回落 off
     d.today.summary.diary = 0;
     d.streak = { diaryStreak: 4, diaryWrittenToday: false };
     expect(buildDots(d).diary).toBe('warn');
+  });
+
+  it('彩点五条件各自点亮（item-1789106079981）：剪藏未读/专注中/影院在看 warn、重要备忘/复习逾期 hot，warn>ok 取高', () => {
+    const d = emptyRiver();
+    // 剪藏本：未读 > 0 → warn
+    d.counts.clippingUnread = 2;
+    expect(buildDots(d).clipping).toBe('warn');
+    d.counts.clippingUnread = 0;
+    // 番茄钟：正在专注 → warn（即使今日零轮）；今日轮数 > 0 且未专注 → ok；专注压过 ok
+    d.pomodoroFocusing = true;
+    expect(buildDots(d).pomodoro).toBe('warn');
+    d.pomodoroFocusing = false;
+    d.today.summary.pomodoros = 2;
+    expect(buildDots(d).pomodoro).toBe('ok');
+    d.pomodoroFocusing = true;
+    expect(buildDots(d).pomodoro).toBe('warn');
+    d.pomodoroFocusing = false;
+    d.today.summary.pomodoros = 0;
+    // 影院：在看 > 0 → warn（压过今日痕迹 ok）
+    d.counts.cinemaWatching = 1;
+    expect(buildDots(d).cinema).toBe('warn');
+    d.counts.cinemaWatching = 0;
+    d.today.events = [{ domain: 'cinema', ts: NOW, timeLabel: '21:00', text: 'x' }];
+    expect(buildDots(d).cinema).toBe('ok');
+    d.today.events = [];
+    // 备忘录：重要未完成 > 0 → hot（压过今日动静 ok）
+    d.counts.memoUrgentOpen = 1;
+    expect(buildDots(d).memo).toBe('hot');
+    d.today.summary.memoDone = 2;
+    expect(buildDots(d).memo).toBe('hot'); // 重要未完成仍在，hot 不降级
+    d.counts.memoUrgentOpen = 0;
+    expect(buildDots(d).memo).toBe('ok'); // 只剩今日动静 → ok
+    d.today.summary.memoDone = 0;
+    // 复习：逾期 > 0 → hot（既有规则不动）
+    d.counts.reviewOverdue = 1;
+    expect(buildDots(d).review).toBe('hot');
+    d.counts.reviewOverdue = 0;
+    expect(buildDots(d).review).toBe('off');
   });
 
   it('计数文案：各域口径与未接数域回落 null（UI 用域副题）', () => {
@@ -188,6 +228,8 @@ describe('collectRiver（只读采集集成）', () => {
     expect(d.yesterday.events).toEqual([]);
     expect(d.counts).toEqual(EMPTY_COUNTS);
     expect(d.streak).toEqual({ diaryStreak: 0, diaryWrittenToday: false });
+    // 专注态：番茄钟未初始化（只读裸相位，不 ensure 不恢复）→ 回落 false（item-1789106079981）
+    expect(d.pomodoroFocusing).toBe(false);
     const created = [...vault.files.keys()].filter((p) => !filesBefore.has(p));
     expect(created).toEqual([]);
   });
@@ -251,5 +293,21 @@ describe('collectRiver（只读采集集成）', () => {
     expect(data.today.summary.memoDone).toBe(1);
     expect(data.today.summary.memoCreated).toBe(2);
     expect(data.today.firstTs).not.toBeNull();
+  });
+
+  it('备忘录重要筛选（item-1789106079981）：memoUrgentOpen 只数未完成的重要条，memoOpen 保持全量口径', async () => {
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      // 重要 + 未完成 → 计 urgent
+      { title: ' urgent open', created: '2026-09-01 09:00:00', completed: null, priority: 'important' },
+      // 普通 + 未完成 → 只进 memoOpen
+      { title: '普通待办', created: '2026-09-01 10:00:00', completed: null },
+      // 重要 + 已完成 → 两边都不计
+      { title: 'urgent done', created: '2026-09-01 11:00:00', completed: '2026-09-02 08:00:00', priority: 'important' },
+      // 非 important 字面量（如 normal/high）不算重要
+      { title: '高优待办', created: '2026-09-01 12:00:00', completed: null, priority: 'high' },
+    ]));
+    const data = await collectRiver(mockAppWithVault(vault) as any, NOW);
+    expect(data.counts.memoOpen).toBe(3); // 未完成全量（urgent open + 普通待办 + 高优待办）
+    expect(data.counts.memoUrgentOpen).toBe(1); // 只剩重要且未完成
   });
 });

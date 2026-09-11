@@ -53,7 +53,7 @@ export function createOverlay(app: any): void {
 }
 
 /**
- * 番茄钟是否正在专注中（入口菜单动态文案用）——跨域**只读**，动态 import 遵守 ADR-0002
+ * 番茄钟是否正在专注中（入口菜单动态文案 + 彩点数据流校准用）——跨域**只读**，动态 import 遵守 ADR-0002
  * （home 不静态依赖 pomodoro 域）。先 ensurePomodoro 再读相位：
  * 插件 onload 已初始化，这里是幂等的兜底（原型壳／竞态下也拿得到真实相位）；失败按未专注处理。
  */
@@ -75,6 +75,9 @@ async function refreshRiverAndRender(): Promise<void> {
     loadHomeOrder(H.appRef),
     readPomodoroFocusing(H.appRef),
   ]);
+  // 专注相位并入数据流（item-1789106079981：彩点 warn 条件）——collectRiver 只读裸相位，
+  // 这里以 ensure 兜底后的实时值为准写回，彩点与菜单动态文案同一真相
+  if (river) river.pomodoroFocusing = focusing;
   H.river = river;
   if (order) H.order = order;
   H.pomodoroFocusing = focusing;
