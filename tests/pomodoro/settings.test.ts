@@ -2,11 +2,15 @@
  * 番茄钟设置测试（ticket 31）：settings 结构 + ⚙️ 设置弹窗（12 项/12 档/分组卡片/动态显隐/保存）+ 设置生效
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
+import { pomodoroSettingsSchema, POMODORO_SKIN_THEMES } from '../../src/pomodoro/ui';
+import { openSettingsModal } from '../../src/core/settings-modal';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import { PRESETS, CUSTOM_PRESET_ID } from '../../src/pomodoro/config';
 
@@ -38,6 +42,14 @@ function itemByName(name: string): any {
   return Array.from(document.querySelectorAll('#bz-settings-modal-popup .setting-item')).find(
     (it) => (it as HTMLElement).dataset.name === name
   );
+}
+
+/**
+ * 打开番茄钟设置弹窗（面板右上角 ⚙ 按钮已移除，2026-09-11 用户拍板——设置入口归设置面板；
+ * 此处直开同一 schema，渲染链与设置面板消费路径一致，钉 schema 驱动行为不因入口移除丢覆盖）。
+ */
+function openPomodoroSettingsDirect(): void {
+  openSettingsModal({ title: '番茄钟设置', maxWidth: 560, schema: pomodoroSettingsSchema() });
 }
 
 describe('settings 结构', () => {
@@ -88,7 +100,7 @@ describe('⚙️ 设置弹窗', () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
-    el('pomodoro-btn-settings').click();
+    openPomodoroSettingsDirect();
     expect(el('bz-settings-modal-popup')).not.toBeNull();
     // 「移动端默认全屏」组已随特性退役删除：全部设置项均可见
     const allItems = [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')];
@@ -121,7 +133,7 @@ describe('⚙️ 设置弹窗', () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
-    el('pomodoro-btn-settings').click();
+    openPomodoroSettingsDirect();
     const dd = itemByName('预设方案').__setting.controls[0];
     expect(Object.keys(dd.options)).toHaveLength(12);
     expect(dd.value).toBe('classic');
@@ -133,7 +145,7 @@ describe('⚙️ 设置弹窗', () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
-    el('pomodoro-btn-settings').click();
+    openPomodoroSettingsDirect();
     const workRow = itemByName('工作时长');
     expect(workRow.classList.contains('bz-setting-hidden')).toBe(true); // classic 非自定义
     // 各组徽标：时间方案 2 项（自定义三行隐藏），行为 7 项
@@ -159,7 +171,7 @@ describe('⚙️ 设置弹窗', () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app, saves } = setup(settings);
     await openPomodoro(app);
-    el('pomodoro-btn-settings').click();
+    openPomodoroSettingsDirect();
     const text = itemByName('长休息间隔').__setting.controls[0];
     text.trigger('3');
     expect(settings.pomodoroLongBreakInterval).toBe('3'); // 防抖窗口内内存已写
@@ -177,7 +189,7 @@ describe('⚙️ 设置弹窗', () => {
     const settings = {} as any; // 旧设置无音量字段
     const { app, saves } = setup(settings);
     await openPomodoro(app);
-    el('pomodoro-btn-settings').click();
+    openPomodoroSettingsDirect();
     const row = itemByName('提示音音量');
     expect(row).not.toBeUndefined();
     const controls = row.__setting.controls;
@@ -215,13 +227,27 @@ describe('⚙️ 设置弹窗', () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app, saves } = setup(settings);
     await openPomodoro(app);
-    el('pomodoro-btn-settings').click();
+    openPomodoroSettingsDirect();
     const dd = itemByName('打开时恢复方式').__setting.controls[0];
     expect(dd.value).toBe('background');
     expect(Object.keys(dd.options)).toEqual(['background', 'popup']);
     dd.trigger('popup');
     expect(settings.pomodoroRestoreMode).toBe('popup');
     expect(saves.length).toBe(1);
+  });
+});
+
+describe('面板主题（皮肤单源）', () => {
+  it('10 套主题：清单 = 设置选项，且 CSS 每套都有亮/暗两套皮', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
+    expect(POMODORO_SKIN_THEMES.length).toBe(10);
+    const themeRow = (pomodoroSettingsSchema().groups[0].rows as any[]).find((r) => r.name === '面板主题');
+    expect(themeRow.options.map((o: any) => o.value)).toEqual(POMODORO_SKIN_THEMES.map((t) => t.value));
+    // 每套皮 = 亮色一组 + .theme-dark 暗色一组（缺一套即静默「暗色下观感错乱」）
+    for (const t of POMODORO_SKIN_THEMES) {
+      expect(css).toContain(`#pomodoro-popup.pomodoro-skin-${t.value}`);
+      expect(css).toContain(`.theme-dark #pomodoro-popup.pomodoro-skin-${t.value}`);
+    }
   });
 });
 

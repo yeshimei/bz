@@ -33,6 +33,7 @@ import {
   DEFAULT_TIMELINE_FILTER, timelineRangeDays, type TimelineFilter,
 } from './shared';
 import type { PomodoroPhase } from '../core/pomodoro-phase';
+import { isFocusingPhase } from '../core/pomodoro-phase';
 import { collectRiver, type RiverData } from './river';
 import { loadHomeOrder } from './order';
 import {
@@ -129,8 +130,8 @@ async function refreshRiverAndRender(): Promise<void> {
   ]);
   // 番茄相位并入数据流（item-1789106079981：彩点 warn 条件）——collectRiver 只读裸相位，
   // 这里以 ensure 兜底后的实时值为准写回。彩点口径 = **专注进行中（计时或暂停）**，
-  // 休息阶段不算（与 pomodoro/ui.isFocusing 同义），与菜单四项文案同出一源。
-  const focusing = phase === 'focusing' || phase === 'paused';
+  // 休息阶段不算；布尔口径与 pomodoro/ui.isFocusing 同出 core.isFocusingPhase 单源。
+  const focusing = isFocusingPhase(phase);
   if (river) river.pomodoroFocusing = focusing;
   H.river = river;
   if (order) H.order = order;

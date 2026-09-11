@@ -1,8 +1,9 @@
 /**
- * 番茄钟弹窗 UI（ticket 28-31）：中央单例弹窗 + 1s tick 驱动 + 状态栏同步 + 完成通知 + ⚙️ 设置弹窗。
+ * 番茄钟弹窗 UI（ticket 28-31）：中央单例弹窗 + 1s tick 驱动 + 状态栏同步 + 完成通知。
  * 关闭弹窗计时后台继续（tick 常驻，状态栏持续刷新，重开从内存状态渲染）；
  * 阶段自然完成（tick 驱动）→ toast + 提示音 + 落盘；skip 静默；打开时超时恢复（initData 路径不通知）。
- * 设置：预设/自定义时长/N/开关均读 BzSettings（tryGetSettings 缺省回退）。
+ * 设置：预设/自定义时长/N/开关均读 BzSettings（tryGetSettings 缺省回退）；设置入口在设置面板
+ * （面板右上角 ⚙ 按钮已移除，2026-09-11 用户拍板）。
  * ticket 63：移除读书番茄钟与专注目标选择（用户决策），保留后台自动暂停/不补算（ticket 62）。
  * 增强包：完成通知挂「开始休息/开始专注」动作（autoCycle 关，文案按实况生成）；
  * 今日行总分钟数 + 近 7 天柱 title 扩分钟 + 今日 12 槽时段分布小方柱；
@@ -16,18 +17,18 @@ import { escManager } from '../core/esc-manager';
 import { allocZ } from '../core/z-order';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { notice, notify } from '../core/notice';
-import { openSettingsModal } from '../core/settings-modal';
 import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { PomodoroDataManager } from './data';
 import { playSound } from './sound';
 import type { SoundKind } from './sound';
 import { syncPomodoroStatusBar } from './statusbar';
-import { todayCount, todayMinutes, todayHourBuckets, last7Days } from './stats';
+import { todayCount, todayMinutes, last7Days } from './stats';
 import { PRESETS, CUSTOM_PRESET_ID } from './config';
 import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent } from './state';
 import { transition, recover, createInitialState, phaseDurationSec } from './state';
 import type { PomodoroPhase } from '../core/pomodoro-phase';
+import { isFocusingPhase } from '../core/pomodoro-phase';
 import { pad2 } from '../core/utils';
 import { emitDomainEvent } from '../core/domain-bus';
 
@@ -43,6 +44,34 @@ let appRef: App | null = null;
 let autoPauseMain = false;
 /** visibilitychange 监听清理引用（unload 用） */
 let visibilityHandler: (() => void) | null = null;
+
+/**
+ * 面板主题清单（**皮肤单源**）：设置面板「外观 → 面板主题」的选项、弹窗皮肤类、
+ * 预览卡的配色缩略全部出自这张表；CSS 侧按 `pomodoro-skin-<value>` 落皮（亮/暗两套，
+ * 暗色走 .theme-dark 前缀，同 memo 皮肤范式）。
+ * 顺序 = 默认项（番茄）在前；value 改动会牵动 CSS 类名与旧设置值，改名须留兼容。
+ */
+export const POMODORO_SKIN_THEMES: ReadonlyArray<{ value: string; label: string }> = [
+  { value: 'tomato', label: '番茄' },
+  { value: 'ink', label: '墨白' },
+  { value: 'grid', label: '方格纸' },
+  { value: 'moss', label: '苔原' },
+  { value: 'mist', label: '海雾' },
+  { value: 'sand', label: '暖沙' },
+  { value: 'citrus', label: '蜜柑' },
+  { value: 'sakura', label: '樱粉' },
+  { value: 'latte', label: '咖啡' },
+  { value: 'night', label: '夜航' },
+];
+
+/** 面板主题 → 弹窗皮肤类（未知/空值回落默认项 tomato） */
+function applySkinClass(): void {
+  const popup = document.getElementById('pomodoro-popup');
+  if (!popup) return;
+  const cur = String(tryGetSettings().pomodoroSkinTheme ?? '');
+  const skin = POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : 'tomato';
+  for (const t of POMODORO_SKIN_THEMES) popup.classList.toggle(`pomodoro-skin-${t.value}`, t.value === skin);
+}
 
 /** 时长：按设置预设解析（T31）；自定义/非法值回退默认（经典 25/5/15、N=4） */
 function durations(): Durations {
@@ -172,19 +201,16 @@ function fmt(sec: number): string {
   return `${pad2(m)}:${pad2(s)}`;
 }
 
-/** 历史统计区：今日计数+总分钟 + 近 7 天柱条 + 今日 12 槽时段分布；同数据跳过重建（防 tick 每秒 DOM churn） */
+/** 历史统计区：今日计数+总分钟 + 近 7 天柱条；同数据跳过重建（防 tick 每秒 DOM churn） */
 let lastStatsKey = '';
 function renderStats(): void {
   const now = Date.now();
   const todayEl = document.getElementById('pomodoro-today');
   if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
   const weekEl = document.getElementById('pomodoro-week');
-  const hoursEl = document.getElementById('pomodoro-hours');
-  if (!weekEl || !hoursEl) return;
+  if (!weekEl) return;
   const days = last7Days(history, now);
-  const buckets = todayHourBuckets(history, now);
-  const key =
-    days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(',') + '|' + buckets.map((b) => b.count).join(',');
+  const key = days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(',');
   if (key === lastStatsKey) return;
   lastStatsKey = key;
   const max = Math.max(1, ...days.map((d) => d.count));
@@ -201,20 +227,10 @@ function renderStats(): void {
     col.appendChild(h);
     const label = document.createElement('span');
     label.className = 'pomodoro-stat-label';
-    label.textContent = d.date.slice(5); // MM-DD
+    label.textContent = d.date.slice(8); // DD（完整日期在 title；窄面板不折行）
     col.appendChild(label);
     bar.appendChild(col);
     weekEl.appendChild(bar);
-  }
-  // 今日专注时段分布：12 槽（2 小时一格）小方柱，条形语言与近 7 天柱一致
-  hoursEl.innerHTML = '';
-  const hmax = Math.max(1, ...buckets.map((b) => b.count));
-  for (const b of buckets) {
-    const bar = document.createElement('div');
-    bar.className = 'pomodoro-hour-bar' + (b.count > 0 ? ' pomodoro-hour-bar-on' : '');
-    bar.title = `${pad2(b.hour)}–${pad2(b.hour + 2)} 时 · ${b.count} 个`;
-    bar.style.height = `${Math.max(2, Math.round((b.count / hmax) * 20))}px`;
-    hoursEl.appendChild(bar);
   }
 }
 
@@ -257,6 +273,7 @@ function render(): void {
   if (timeEl) timeEl.textContent = fmt(remain);
   renderStats();
   updateButtons();
+  applySkinClass(); // 面板主题随设置走（设置面板改主题后下一次 render 即生效）
 }
 
 /** 本轮循环位置：N 个 6px 方点，已完成填 accent 色（替代旧「专注 2/4」文字小字） */
@@ -434,16 +451,10 @@ async function initData(): Promise<void> {
   loaded = true;
 }
 
-/** ⚙️ 番茄钟设置弹窗（ADR-0009，复用 core/settings-modal；分组卡片重设计 + ticket 100 文案规范；
- *  ticket 131 声明式 schema——预设方案 dropdown 联动自定义时长行走 visibleWhen；numSetting/
- *  toggleSetting 闭包工厂退役；音量 slider + 「试听」同行附加按钮渲染器不支持 → custom 插槽保行为） */
-function openPomodoroSettings(): void {
-  openSettingsModal({ title: '番茄钟设置', maxWidth: 560, schema: pomodoroSettingsSchema() });
-}
-
 /** 番茄钟设置 schema（ticket 131；ADR-0064）：时间方案/行为/移动端三组，置于模块顶层供文案 lint 直接引用。
- *  设置变更后 render() 重绘主面板（沿用原 onChange 副作用）；声音提醒/后台自动暂停沿用缺省开语义
- *  （键缺失视为开，非键直绑的 === true 口径）——三函数绑定逐字保持原读值语义。 */
+ *  消费方 = 设置面板全域 schema（src/settings-panel/ui.ts）——面板右上角 ⚙ 设置钮已移除
+ *  （2026-09-11 用户拍板，设置入口归设置面板），其 onChange 回调仍驱动域内 render() 重绘主面板；
+ *  声音提醒/后台自动暂停沿用缺省开语义（键缺失视为开，非键直绑的 === true 口径）。 */
 export function pomodoroSettingsSchema(): SettingsSchema {
   // 缺省开语义（旧数据无键视为开）：原 toggleSetting get 口径，键直绑 === true 会翻转初始显示
   const soundToggle = {
@@ -468,7 +479,8 @@ export function pomodoroSettingsSchema(): SettingsSchema {
         name: '外观',
         rows: [
           { type: 'choiceCards', name: '面板布局', binding: { key: 'pomodoroSkin' }, options: [{ value: 'default', label: '计时盘', prevClass: 'bz-sp-prev-panel' }] },
-          { type: 'choiceCards', name: '面板主题', binding: { key: 'pomodoroSkinTheme' }, layoutKey: 'pomodoroSkin', options: [{ value: 'tomato', label: '番茄', layout: 'default', prevClass: 'bz-sp-prev-tomato' }] },
+          // 面板主题：10 套皮（清单单源 = POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）
+          { type: 'choiceCards', name: '面板主题', binding: { key: 'pomodoroSkinTheme' }, layoutKey: 'pomodoroSkin', options: POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: 'default', prevClass: `bz-sp-prev-pomo-${t.value}` })) },
         ],
       },
       {
@@ -560,19 +572,7 @@ function bindEvents(): void {
   startBtn.addEventListener('click', () => applyAction(state.paused ? 'resume' : state.endTime !== null ? 'pause' : 'start'));
   document.getElementById('pomodoro-btn-reset')!.addEventListener('click', () => applyAction('reset'));
   document.getElementById('pomodoro-btn-skip')!.addEventListener('click', () => applyAction('skip'));
-  const settingsBtn = document.getElementById('pomodoro-btn-settings')!;
-  // 设置入口：默认隐藏，hover 面板才显示（幽灵图标）
-  settingsBtn.classList.add('pomodoro-settings-hidden');
-  setIcon(settingsBtn, 'gear'); // Obsidian 原生 lucide 图标（与状态栏/命令一致）
-  settingsBtn.addEventListener('click', openPomodoroSettings);
   const popup = document.getElementById('pomodoro-popup')!;
-  // 幽灵设置按钮：默认隐藏，hover 面板才显示
-  popup.addEventListener('mouseenter', () => {
-    settingsBtn.classList.remove('pomodoro-settings-hidden');
-  });
-  popup.addEventListener('mouseleave', () => {
-    settingsBtn.classList.add('pomodoro-settings-hidden');
-  });
   // Space 键切换开始/暂停（面板聚焦时；按钮聚焦走原生 Space 激活避免双触发，输入类控件跳过）
   popup.addEventListener('keydown', (e) => {
     if (e.key !== ' ') return;
@@ -591,7 +591,6 @@ function buildDOM(): void {
   // Obsidian 设置页，⚙️ 弹窗可正常覆盖）——e3：不再 JS 内联 z-index
   mask.innerHTML = `
     <div id="pomodoro-popup" tabindex="-1">
-      <button id="pomodoro-btn-settings" class="pomodoro-btn bz-touch-target" title="设置"></button>
       <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
         <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
         <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
@@ -608,7 +607,6 @@ function buildDOM(): void {
       <div class="pomodoro-stats">
         <div id="pomodoro-today"></div>
         <div id="pomodoro-week" class="pomodoro-week"></div>
-        <div id="pomodoro-hours" class="pomodoro-hours"></div>
       </div>
     </div>`;
   mask.style.zIndex = String(allocZ()); // ADR-0067：创建即显示即发号
@@ -723,12 +721,13 @@ export async function startFocusForTask(app: App, taskTitle: string): Promise<vo
 
 /**
  * 是否处于「专注进行中」（计时中或暂停中）——只读内存态，**无副作用**（不加载数据、不触发恢复/通知）。
- * 消费方：首页入口菜单的番茄钟动态文案（专注中显示「停止专注」，否则「开始专注」）。
- * 插件启动即 ensurePomodoro（main.ts onload），故内存态与实际一致；
- * 首页侧读之前会先 ensurePomodoro 兜底（原型/竞态时也拿得到真实相位）。
+ * 消费方：toggleFocus、home/river.ts::collectFocusing（彩点 warn 条件）。
+ * 布尔口径**从相位单源推导**（core/pomodoro-phase.isFocusingPhase，与首页彩点同出一源）；
+ * 原始 state → 相位的唯一翻译点是 menuPhase（插件启动即 ensurePomodoro，
+ * 首页侧读之前还会先 ensurePomodoro 兜底，原型/竞态时也拿得到真实相位）。
  */
 export function isFocusing(): boolean {
-  return state.phase === 'focus' && (state.endTime !== null || state.paused);
+  return isFocusingPhase(menuPhase());
 }
 
 /**
