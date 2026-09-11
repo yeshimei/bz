@@ -1975,7 +1975,7 @@ export class DiaryAppController {
     return acts;
   }
 
-  /** 抽屉富媒体头（core sheetHead）：emoji + 时间行 + 正文预览 + 媒体缩略（点击进灯箱）+ 右上关闭钮 */
+  /** 抽屉富媒体头（core sheetHead）：emoji + 时间行 + 正文预览 + 媒体缩略（点击进灯箱） */
   private mkSheetHead(e: WallEntry): HTMLElement {
     const head = document.createElement('div');
     head.className = 'bz-diary-sheet-head';
@@ -2018,19 +2018,8 @@ export class DiaryAppController {
     info.appendChild(timeEl);
     info.appendChild(contentEl);
     info.appendChild(media);
-    // 右上角关闭钮（2026-09-11 移动端评审新增；随富媒体头走 sheetHead 路径）
-    const close = document.createElement('button');
-    close.type = 'button';
-    close.className = 'bz-diary-sheet-close';
-    close.title = '关闭';
-    close.appendChild(uiIcon(ACTION_ICON.close));
-    close.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      this.closeSheet();
-    });
     head.appendChild(emoji);
     head.appendChild(info);
-    head.appendChild(close);
     return head;
   }
 
