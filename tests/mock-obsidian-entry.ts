@@ -44,8 +44,14 @@ export function clearNotices(): void {
 }
 
 export const mockMarkdownRenderer = {
+  // 追加语义（ADR-0122）：真 Obsidian 的 render 是「追加到容器」（el = append 目标）而非覆盖——
+  // 包一层子元素把 md 写入后 appendChild，与真机一致；空容器上 el.textContent 仍等于 md，
+  // 容器已有内容时叠加（同容器二次渲染的双份缺陷从此在测试里可见，issue 275）
   render: vi.fn(async (_app: any, md: string, el: HTMLElement) => {
-    if (el) el.textContent = md;
+    if (!el) return;
+    const block = document.createElement('div');
+    block.textContent = md;
+    el.appendChild(block);
   }),
 };
 
