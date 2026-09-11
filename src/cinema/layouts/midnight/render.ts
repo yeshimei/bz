@@ -40,7 +40,7 @@ export function midnightDeskHtml(): string {
 
 /** mob 壳（移动端独立自绘；j-mtitle/j-mcnt/j-chips/j-mq/j-mview 为渲染挂点） */
 export function midnightMobHtml(): string {
-  return `<section class="mob bz-cinema--midnight" data-cinema-root="midnight">
+  return `<section class="mob bz-cinema--midnight bz-panel-mtop" data-cinema-root="midnight">
     <div class="m-head"><h2 class="j-mtitle">全部</h2><span class="cnt j-mcnt"></span>
       <span class="m-acts">
         <button class="add j-madd" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>

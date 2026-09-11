@@ -1,4 +1,4 @@
-/* 源指纹 9b662f279fb47dd7 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 21a3c39bb7a79b6c · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/brief.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -1099,7 +1099,6 @@ var BZW_clipbook = (() => {
     "src/core/ui/modal.ts"() {
       init_esc_manager();
       init_z_order();
-      init_icon();
     }
   });
 
@@ -11647,7 +11646,7 @@ ${sample}`,
           this.editor = null;
         }
         sheetWrap(title, body) {
-          return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc2(title)}</span><button class="bz-kb-sheet-close" data-kb-close title="关闭">✕</button></div><div class="bz-kb-sheet-body">${body}</div>`;
+          return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc2(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
         }
         /** 旧笔记自动补全（note-gen；AI 未配置跳过并提示一句）；每目录至多跑一次 */
         async runBackfill() {
@@ -11736,7 +11735,6 @@ ${sample}`,
         <button id="lit-btn-video-add" title="添加转文献任务">➕</button>
         <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">▶️</button>
         <button id="lit-btn-video-history" title="历史">🕘</button>
-        <button id="lit-btn-video-close" class="bz-win-close" title="关闭">❌</button>
       </div>`;
           const list = document.createElement("div");
           list.id = "knowledge-video-list";
@@ -11765,7 +11763,6 @@ ${sample}`,
             else void this.onRunBatch();
           };
           q(p, "#lit-btn-video-history").onclick = () => this.showHistory();
-          q(p, "#lit-btn-video-close").onclick = () => this.hideVideo();
         }
         /** 打开视频录入面板；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口） */
         showVideoEntry(prefill) {
@@ -12206,12 +12203,7 @@ ${sample}`,
           const counts = document.createElement("span");
           counts.id = "lit-history-counts";
           counts.className = "bz-kb-vmeta";
-          const headBtns = document.createElement("div");
-          headBtns.className = "bz-lit-head-btns";
-          headBtns.innerHTML = `
-      <button id="lit-history-close" class="bz-win-close" title="关闭">❌</button>`;
           toolbar.appendChild(counts);
-          toolbar.appendChild(headBtns);
           const list = document.createElement("div");
           list.id = "knowledge-history-list";
           list.className = "bz-kb-list";
@@ -12222,7 +12214,6 @@ ${sample}`,
           this.historyMask = mask;
           this.historyPopup = popup;
           this.historyList = list;
-          q(popup, "#lit-history-close").onclick = () => this.hideHistory();
         }
         showHistory() {
           if (!this.historyPopup || !this.historyMask) return;
@@ -12319,7 +12310,6 @@ ${sample}`,
           body.innerHTML = `
       <div class="bz-lit-sheet-head">
         <span class="bz-lit-sheet-title">文字录入 · 术语</span>
-        <button type="button" class="bz-lit-sheet-close" data-term-close title="关闭">✕</button>
       </div>
       <div class="bz-lit-term-row">
         <span class="bz-lit-term-meta-k">术语</span>
@@ -12356,6 +12346,9 @@ ${sample}`,
           document.body.appendChild(popup);
           this.termMask = mask;
           this.termPopup = popup;
+          mask.addEventListener("click", (e) => {
+            if (e.target === mask) this.hideTermEntry();
+          });
           q(popup, "#lit-term-generate").onclick = () => void this.onTermGenerate();
           q(popup, "#lit-term-cancel").onclick = () => this.hideTermEntry();
           q(popup, "#lit-term-regenerate").onclick = () => void this.onTermSummarize();
@@ -12393,12 +12386,10 @@ ${sample}`,
             });
           }
           popup.addEventListener("click", (e) => {
-            const t = e.target.closest("[data-term-close],[data-term-src-clear],[data-term-src-open]");
+            const t = e.target.closest("[data-term-src-clear],[data-term-src-open]");
             if (!t) return;
             e.stopPropagation();
-            if (t.hasAttribute("data-term-close")) {
-              this.hideTermEntry();
-            } else if (t.hasAttribute("data-term-src-clear")) {
+            if (t.hasAttribute("data-term-src-clear")) {
               const input = q(popup, "#lit-term-src");
               this.termSrcClear(input);
             } else if (this.termSource) {

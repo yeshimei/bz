@@ -1,4 +1,4 @@
-/* 源指纹 4cf968fc5873c91b · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a806e8bc53652b32 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -8065,14 +8065,7 @@ ${n.content.slice(0, 2e3)}
       const title = document.createElement("span");
       title.className = "bz-dialog-title";
       title.textContent = opts.title || "";
-      const closeBtn = document.createElement("button");
-      closeBtn.type = "button";
-      closeBtn.className = "bz-icon-btn bz-icon-btn--lg";
-      closeBtn.title = "关闭";
-      closeBtn.appendChild(uiIcon("x"));
-      closeBtn.addEventListener("click", () => close());
       head.appendChild(title);
-      head.appendChild(closeBtn);
       popup.appendChild(head);
     }
     const body = document.createElement("div");
@@ -8105,7 +8098,6 @@ ${n.content.slice(0, 2e3)}
     "src/core/ui/modal.ts"() {
       init_esc_manager();
       init_z_order();
-      init_icon();
     }
   });
 
@@ -9927,16 +9919,9 @@ ${n.content.slice(0, 2e3)}
     topifyZ(statsMask, statsPopup);
     const header = document.createElement("div");
     header.className = "bz-win-head bz-review-stats-head";
-    const closeBtn = document.createElement("button");
-    closeBtn.id = "review-stats-close";
-    closeBtn.className = "bz-win-close bz-touch-target--xl";
-    closeBtn.title = "关闭";
-    closeBtn.appendChild(uiIcon("x"));
     header.innerHTML = `
     <h3 class="bz-review-title">复习统计</h3>
-    <div></div>
   `;
-    header.querySelector("div").appendChild(closeBtn);
     statsPopup.appendChild(header);
     const body = document.createElement("div");
     body.id = "review-stats-body";
@@ -9944,7 +9929,6 @@ ${n.content.slice(0, 2e3)}
     statsPopup.appendChild(body);
     document.body.appendChild(statsMask);
     document.body.appendChild(statsPopup);
-    header.querySelector("#review-stats-close").addEventListener("click", closeStatsModal);
     const stats = computeStats(items, { w });
     body.innerHTML = buildStatsHTML(app, dm, items, stats);
     body.querySelectorAll(".bz-review-stats-tl-row").forEach((el) => {
@@ -10053,13 +10037,6 @@ ${n.content.slice(0, 2e3)}
     histPopup.appendChild(body);
     document.body.appendChild(histMask);
     document.body.appendChild(histPopup);
-    const closeBtn = document.createElement("button");
-    closeBtn.id = "review-history-close";
-    closeBtn.className = "bz-win-close bz-review-history-close bz-touch-target--xl";
-    closeBtn.title = "关闭";
-    closeBtn.appendChild(uiIcon("x"));
-    closeBtn.addEventListener("click", closeTimeline);
-    histPopup.appendChild(closeBtn);
     const status = document.createElement("div");
     status.className = "bz-review-history-status";
     const stageText = item.phase === "fsrs" ? `FSRS Lv.${(item.stage || 0) - 9 + 1}` : `${(item.stage || 0) + 1}/10`;
@@ -10137,7 +10114,6 @@ ${n.content.slice(0, 2e3)}
       init_utils();
       init_stats();
       init_fsrs();
-      init_ui();
       statsMask = null;
       statsPopup = null;
       statsEsc = null;

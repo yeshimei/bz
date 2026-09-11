@@ -298,20 +298,6 @@
   color: var(--ink);
 }
 
-.bz-kb-sheet-close {
-  margin-left: auto;
-  width: 26px;
-  height: 26px;
-  border: 0;
-  border-radius: var(--bz-radius-sm);
-  background: none;
-  color: var(--ink3);
-  cursor: pointer;
-  font-size: var(--bz-font-body);
-  font-family: inherit;
-}
-.bz-kb-sheet-close:hover { background: var(--chip); }
-
 .bz-kb-sheet-body {
   flex: 1;
   min-height: 0;
@@ -767,23 +753,6 @@
    衬线标题栏+✕ / 术语与来源同款行内标签行（快改批：说明行与试试示例已删） */
 .bz-lit-sheet-head { display: flex; align-items: center; gap: var(--bz-space-sm); padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .bz-lit-sheet-title { font-family: 'Noto Serif SC', SimSun, serif; font-size: var(--bz-font-emphasis); font-weight: 700; letter-spacing: 0.12em; color: var(--ink); }
-.bz-lit-sheet-close {
-  margin-left: auto;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--bz-radius-sm);
-  background: none;
-  color: var(--ink3);
-  cursor: pointer;
-  font-size: var(--bz-font-body);
-  font-family: inherit;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.bz-lit-sheet-close:hover { background: var(--chip); color: var(--ink); }
 .bz-lit-term-body > .bz-lit-term-actions { margin-top: var(--bz-space-lg); }
 
 /* 术语弹层行（ADR-0116/快改批）：术语与来源同款——行首小标签 + 控件；chip 形态（内/外徽标 + 名称 + ✕ 清） */

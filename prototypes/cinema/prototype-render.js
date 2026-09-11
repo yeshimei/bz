@@ -1,4 +1,4 @@
-/* 源指纹 a47da0b4e7dce30a · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1ed18b1e6c3f4946 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -182,7 +182,6 @@ var BZR_cinema = (() => {
       ["豆瓣评分", (_f = it.doubanRating) != null ? _f : ""]
     ].filter(([, v]) => v !== "");
     return `<div class="cn-modal" style="max-width:400px;width:100%">
-    <button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
         <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
@@ -227,7 +226,7 @@ var BZR_cinema = (() => {
     const initSt = opts.stText;
     const ratingVal = opts.rating;
     return `<div class="cn-modal" style="width:100%">
-    <div class="cn-modal-title">${editing ? "编辑影视" : "添加影视"}</div><button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
+    <div class="cn-modal-title">${editing ? "编辑影视" : "添加影视"}</div>
     <div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>
     <div class="f-field"><span class="f-label">类 型</span><div class="f-choice j-tags">${formChoicesHtml(formAllTags(), opts.typeTag, "f-tag")}</div></div>
     <div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>
@@ -309,7 +308,7 @@ var BZR_cinema = (() => {
   </section>`;
   }
   function midnightMobHtml() {
-    return `<section class="mob bz-cinema--midnight" data-cinema-root="midnight">
+    return `<section class="mob bz-cinema--midnight bz-panel-mtop" data-cinema-root="midnight">
     <div class="m-head"><h2 class="j-mtitle">全部</h2><span class="cnt j-mcnt"></span>
       <span class="m-acts">
         <button class="add j-madd" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>

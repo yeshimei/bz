@@ -1,4 +1,4 @@
-/* 源指纹 e360c74c9cc37c7b · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5e065aa06f19d063 · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -5968,14 +5968,7 @@ var BZW_home = (() => {
       const title = document.createElement("span");
       title.className = "bz-dialog-title";
       title.textContent = opts.title || "";
-      const closeBtn = document.createElement("button");
-      closeBtn.type = "button";
-      closeBtn.className = "bz-icon-btn bz-icon-btn--lg";
-      closeBtn.title = "关闭";
-      closeBtn.appendChild(uiIcon("x"));
-      closeBtn.addEventListener("click", () => close());
       head.appendChild(title);
-      head.appendChild(closeBtn);
       popup.appendChild(head);
     }
     const body = document.createElement("div");
@@ -6008,7 +6001,6 @@ var BZW_home = (() => {
     "src/core/ui/modal.ts"() {
       init_esc_manager();
       init_z_order();
-      init_icon();
     }
   });
 
@@ -10424,16 +10416,9 @@ ${n.content.slice(0, 2e3)}
     topifyZ(statsMask, statsPopup);
     const header = document.createElement("div");
     header.className = "bz-win-head bz-review-stats-head";
-    const closeBtn = document.createElement("button");
-    closeBtn.id = "review-stats-close";
-    closeBtn.className = "bz-win-close bz-touch-target--xl";
-    closeBtn.title = "关闭";
-    closeBtn.appendChild(uiIcon("x"));
     header.innerHTML = `
     <h3 class="bz-review-title">复习统计</h3>
-    <div></div>
   `;
-    header.querySelector("div").appendChild(closeBtn);
     statsPopup.appendChild(header);
     const body = document.createElement("div");
     body.id = "review-stats-body";
@@ -10441,7 +10426,6 @@ ${n.content.slice(0, 2e3)}
     statsPopup.appendChild(body);
     document.body.appendChild(statsMask);
     document.body.appendChild(statsPopup);
-    header.querySelector("#review-stats-close").addEventListener("click", closeStatsModal);
     const stats = computeStats(items, { w });
     body.innerHTML = buildStatsHTML(app, dm, items, stats);
     body.querySelectorAll(".bz-review-stats-tl-row").forEach((el) => {
@@ -10550,13 +10534,6 @@ ${n.content.slice(0, 2e3)}
     histPopup.appendChild(body);
     document.body.appendChild(histMask);
     document.body.appendChild(histPopup);
-    const closeBtn = document.createElement("button");
-    closeBtn.id = "review-history-close";
-    closeBtn.className = "bz-win-close bz-review-history-close bz-touch-target--xl";
-    closeBtn.title = "关闭";
-    closeBtn.appendChild(uiIcon("x"));
-    closeBtn.addEventListener("click", closeTimeline);
-    histPopup.appendChild(closeBtn);
     const status = document.createElement("div");
     status.className = "bz-review-history-status";
     const stageText = item.phase === "fsrs" ? `FSRS Lv.${(item.stage || 0) - 9 + 1}` : `${(item.stage || 0) + 1}/10`;
@@ -10634,7 +10611,6 @@ ${n.content.slice(0, 2e3)}
       init_utils();
       init_stats();
       init_fsrs();
-      init_ui();
       statsMask = null;
       statsPopup = null;
       statsEsc = null;

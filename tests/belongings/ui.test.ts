@@ -328,7 +328,7 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     expect(Number.isFinite(zForm) && zForm > zDetail).toBe(true);
     // 收尾：取消关表单 + 关详情
     (mask.querySelector('[data-bm-cancel]') as HTMLElement).click();
-    (detailMask()!.querySelector('[data-bd-close]') as HTMLElement).click();
+    (detailMask()! as HTMLElement).dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); // issue 271：✕ 退役，点遮罩关
     expect(detailMask()).toBeNull();
     cleanupBelongings();
   });
@@ -801,7 +801,7 @@ describe('归物本详情弹窗（P20）', () => {
     }
   });
 
-  it('详情流转条：点闲置 → 落盘 + status 事件 + notice + 流转条高亮刷新；×钮关闭', async () => {
+  it('详情流转条：点闲置 → 落盘 + status 事件 + notice + 流转条高亮刷新；点遮罩关（issue 271）', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
     await open(vault);
     clickCell(cells()[0]);
@@ -816,8 +816,8 @@ describe('归物本详情弹窗（P20）', () => {
     expect(flows.find((b) => b.dataset.bdFlow === '闲置')!.classList.contains('is-cur')).toBe(true);
     // 网格卡徽章同步
     expect(cells()[0].querySelector('.bz-bel-tag')!.textContent).toContain('闲置');
-    // × 关闭
-    (detailBox()!.querySelector('[data-bd-close]') as HTMLElement).click();
+    // 点遮罩关闭（issue 271：✕ 退役；belongings 遮罩走 mousedown）
+    (detailMask()! as HTMLElement).dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     expect(detailMask()).toBeNull();
   });
 

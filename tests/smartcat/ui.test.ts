@@ -85,7 +85,7 @@ describe('openSmartCat / 命令回调', () => {
     expect(chatPanel).not.toBeNull();
     expect(chatPanel!.querySelector('.bz-win-head')).not.toBeNull();
     expect(chatPanel!.querySelector('#smartcat-btn-settings')).toBeNull();
-    expect(chatPanel!.querySelector('#smartcat-btn-close')).not.toBeNull();
+    expect(chatPanel!.querySelector('#smartcat-btn-close')).toBeNull(); // issue 271：✕ 退役
     expect(chatPanel!.querySelector('.chat-messages')).not.toBeNull();
     expect(chatPanel!.querySelector('.chat-input')).not.toBeNull();
   }, 15000);

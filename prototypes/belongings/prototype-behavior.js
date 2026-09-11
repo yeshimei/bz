@@ -1,4 +1,4 @@
-/* 源指纹 640ba5bfa88a14cb · 仓内输入 49 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 131a7aa0772f14a5 · 仓内输入 49 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -6071,7 +6071,6 @@ var BZW_belongings = (() => {
     return `<div class="bz-bel-detail">
     <div class="bz-bel-detail-head">
       <div class="bz-bel-detail-title">${esc(it.name)}</div>
-      <button class="bz-icon-btn" data-bd-close title="关闭">${iconSpan(ICON.close)}</button>
     </div>
     <div class="bz-bel-detail-idrow">
       <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
@@ -7235,7 +7234,7 @@ var BZW_belongings = (() => {
     (_a = document.querySelector(".bz-bel-detail-mask")) == null ? void 0 : _a.remove();
   }
   function openBelDetail(it) {
-    var _a, _b, _c;
+    var _a, _b;
     closeBelDetail();
     const mask = document.createElement("div");
     mask.className = "bz-overlay-mask bz-bel-detail-mask";
@@ -7272,12 +7271,11 @@ var BZW_belongings = (() => {
     mask.addEventListener("mousedown", (e) => {
       if (e.target === mask) closeBelDetail();
     });
-    (_a = mask.querySelector("[data-bd-close]")) == null ? void 0 : _a.addEventListener("click", closeBelDetail);
-    (_b = mask.querySelector("[data-bd-edit]")) == null ? void 0 : _b.addEventListener("click", () => {
+    (_a = mask.querySelector("[data-bd-edit]")) == null ? void 0 : _a.addEventListener("click", () => {
       const cur = itemById(it.id);
       if (cur) openForm(cur);
     });
-    (_c = mask.querySelector("[data-bd-del]")) == null ? void 0 : _c.addEventListener("click", () => {
+    (_b = mask.querySelector("[data-bd-del]")) == null ? void 0 : _b.addEventListener("click", () => {
       const cur = itemById(it.id);
       if (cur) void deleteItem(cur);
     });

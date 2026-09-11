@@ -1,4 +1,4 @@
-/* 源指纹 66c51ba0242b8dc3 · 仓内输入 202 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e46af02775738372 · 仓内输入 202 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/brief.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -6896,14 +6896,7 @@ var BZW_settings_panel = (() => {
       const title = document.createElement("span");
       title.className = "bz-dialog-title";
       title.textContent = opts.title || "";
-      const closeBtn = document.createElement("button");
-      closeBtn.type = "button";
-      closeBtn.className = "bz-icon-btn bz-icon-btn--lg";
-      closeBtn.title = "关闭";
-      closeBtn.appendChild(uiIcon("x"));
-      closeBtn.addEventListener("click", () => close());
       head.appendChild(title);
-      head.appendChild(closeBtn);
       popup.appendChild(head);
     }
     const body = document.createElement("div");
@@ -6936,7 +6929,6 @@ var BZW_settings_panel = (() => {
     "src/core/ui/modal.ts"() {
       init_esc_manager();
       init_z_order();
-      init_icon();
     }
   });
 
@@ -11329,10 +11321,7 @@ ${countsToText(s.missing)}
     title.textContent = "数据体检";
     const sp = document.createElement("div");
     sp.className = "bz-panel-head-sp";
-    const btns = document.createElement("div");
-    btns.className = "bz-panel-head-btns";
-    btns.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", onClick: () => hide() }));
-    head.append(brand, title, sp, btns);
+    head.append(brand, title, sp);
     const body = document.createElement("div");
     body.className = "bz-checkup-body";
     const foot = document.createElement("div");
@@ -13873,7 +13862,6 @@ ${countsToText(s.missing)}
     return `<div class="bz-bel-detail">
     <div class="bz-bel-detail-head">
       <div class="bz-bel-detail-title">${esc(it.name)}</div>
-      <button class="bz-icon-btn" data-bd-close title="关闭">${iconSpan(ICON2.close)}</button>
     </div>
     <div class="bz-bel-detail-idrow">
       <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
@@ -14683,7 +14671,7 @@ ${countsToText(s.missing)}
     (_a2 = document.querySelector(".bz-bel-detail-mask")) == null ? void 0 : _a2.remove();
   }
   function openBelDetail(it) {
-    var _a2, _b2, _c;
+    var _a2, _b2;
     closeBelDetail();
     const mask = document.createElement("div");
     mask.className = "bz-overlay-mask bz-bel-detail-mask";
@@ -14720,12 +14708,11 @@ ${countsToText(s.missing)}
     mask.addEventListener("mousedown", (e) => {
       if (e.target === mask) closeBelDetail();
     });
-    (_a2 = mask.querySelector("[data-bd-close]")) == null ? void 0 : _a2.addEventListener("click", closeBelDetail);
-    (_b2 = mask.querySelector("[data-bd-edit]")) == null ? void 0 : _b2.addEventListener("click", () => {
+    (_a2 = mask.querySelector("[data-bd-edit]")) == null ? void 0 : _a2.addEventListener("click", () => {
       const cur = itemById(it.id);
       if (cur) openForm(cur);
     });
-    (_c = mask.querySelector("[data-bd-del]")) == null ? void 0 : _c.addEventListener("click", () => {
+    (_b2 = mask.querySelector("[data-bd-del]")) == null ? void 0 : _b2.addEventListener("click", () => {
       const cur = itemById(it.id);
       if (cur) void deleteItem(cur);
     });
@@ -19260,7 +19247,7 @@ ${sample}`,
           this.editor = null;
         }
         sheetWrap(title, body) {
-          return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc2(title)}</span><button class="bz-kb-sheet-close" data-kb-close title="关闭">✕</button></div><div class="bz-kb-sheet-body">${body}</div>`;
+          return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc2(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
         }
         /** 旧笔记自动补全（note-gen；AI 未配置跳过并提示一句）；每目录至多跑一次 */
         async runBackfill() {
@@ -19349,7 +19336,6 @@ ${sample}`,
         <button id="lit-btn-video-add" title="添加转文献任务">➕</button>
         <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">▶️</button>
         <button id="lit-btn-video-history" title="历史">🕘</button>
-        <button id="lit-btn-video-close" class="bz-win-close" title="关闭">❌</button>
       </div>`;
           const list = document.createElement("div");
           list.id = "knowledge-video-list";
@@ -19378,7 +19364,6 @@ ${sample}`,
             else void this.onRunBatch();
           };
           q(p, "#lit-btn-video-history").onclick = () => this.showHistory();
-          q(p, "#lit-btn-video-close").onclick = () => this.hideVideo();
         }
         /** 打开视频录入面板；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口） */
         showVideoEntry(prefill) {
@@ -19819,12 +19804,7 @@ ${sample}`,
           const counts = document.createElement("span");
           counts.id = "lit-history-counts";
           counts.className = "bz-kb-vmeta";
-          const headBtns = document.createElement("div");
-          headBtns.className = "bz-lit-head-btns";
-          headBtns.innerHTML = `
-      <button id="lit-history-close" class="bz-win-close" title="关闭">❌</button>`;
           toolbar.appendChild(counts);
-          toolbar.appendChild(headBtns);
           const list = document.createElement("div");
           list.id = "knowledge-history-list";
           list.className = "bz-kb-list";
@@ -19835,7 +19815,6 @@ ${sample}`,
           this.historyMask = mask;
           this.historyPopup = popup;
           this.historyList = list;
-          q(popup, "#lit-history-close").onclick = () => this.hideHistory();
         }
         showHistory() {
           if (!this.historyPopup || !this.historyMask) return;
@@ -19932,7 +19911,6 @@ ${sample}`,
           body.innerHTML = `
       <div class="bz-lit-sheet-head">
         <span class="bz-lit-sheet-title">文字录入 · 术语</span>
-        <button type="button" class="bz-lit-sheet-close" data-term-close title="关闭">✕</button>
       </div>
       <div class="bz-lit-term-row">
         <span class="bz-lit-term-meta-k">术语</span>
@@ -19969,6 +19947,9 @@ ${sample}`,
           document.body.appendChild(popup);
           this.termMask = mask;
           this.termPopup = popup;
+          mask.addEventListener("click", (e) => {
+            if (e.target === mask) this.hideTermEntry();
+          });
           q(popup, "#lit-term-generate").onclick = () => void this.onTermGenerate();
           q(popup, "#lit-term-cancel").onclick = () => this.hideTermEntry();
           q(popup, "#lit-term-regenerate").onclick = () => void this.onTermSummarize();
@@ -20006,12 +19987,10 @@ ${sample}`,
             });
           }
           popup.addEventListener("click", (e) => {
-            const t = e.target.closest("[data-term-close],[data-term-src-clear],[data-term-src-open]");
+            const t = e.target.closest("[data-term-src-clear],[data-term-src-open]");
             if (!t) return;
             e.stopPropagation();
-            if (t.hasAttribute("data-term-close")) {
-              this.hideTermEntry();
-            } else if (t.hasAttribute("data-term-src-clear")) {
+            if (t.hasAttribute("data-term-src-clear")) {
               const input = q(popup, "#lit-term-src");
               this.termSrcClear(input);
             } else if (this.termSource) {
@@ -25509,16 +25488,9 @@ ${n.content.slice(0, 2e3)}
     topifyZ(statsMask, statsPopup);
     const header = document.createElement("div");
     header.className = "bz-win-head bz-review-stats-head";
-    const closeBtn = document.createElement("button");
-    closeBtn.id = "review-stats-close";
-    closeBtn.className = "bz-win-close bz-touch-target--xl";
-    closeBtn.title = "关闭";
-    closeBtn.appendChild(uiIcon("x"));
     header.innerHTML = `
     <h3 class="bz-review-title">复习统计</h3>
-    <div></div>
   `;
-    header.querySelector("div").appendChild(closeBtn);
     statsPopup.appendChild(header);
     const body = document.createElement("div");
     body.id = "review-stats-body";
@@ -25526,7 +25498,6 @@ ${n.content.slice(0, 2e3)}
     statsPopup.appendChild(body);
     document.body.appendChild(statsMask);
     document.body.appendChild(statsPopup);
-    header.querySelector("#review-stats-close").addEventListener("click", closeStatsModal);
     const stats = computeStats(items, { w });
     body.innerHTML = buildStatsHTML(app, dm, items, stats);
     body.querySelectorAll(".bz-review-stats-tl-row").forEach((el) => {
@@ -25635,13 +25606,6 @@ ${n.content.slice(0, 2e3)}
     histPopup.appendChild(body);
     document.body.appendChild(histMask);
     document.body.appendChild(histPopup);
-    const closeBtn = document.createElement("button");
-    closeBtn.id = "review-history-close";
-    closeBtn.className = "bz-win-close bz-review-history-close bz-touch-target--xl";
-    closeBtn.title = "关闭";
-    closeBtn.appendChild(uiIcon("x"));
-    closeBtn.addEventListener("click", closeTimeline);
-    histPopup.appendChild(closeBtn);
     const status = document.createElement("div");
     status.className = "bz-review-history-status";
     const stageText = item.phase === "fsrs" ? `FSRS Lv.${(item.stage || 0) - 9 + 1}` : `${(item.stage || 0) + 1}/10`;
@@ -25719,7 +25683,6 @@ ${n.content.slice(0, 2e3)}
       init_utils();
       init_stats2();
       init_fsrs();
-      init_ui();
       statsMask = null;
       statsPopup = null;
       statsEsc = null;
@@ -34808,14 +34771,7 @@ ${text}`;
           header.className = "bz-encrypt-preview-head";
           const title = document.createElement("h4");
           title.textContent = note.title;
-          const closeBtn = document.createElement("button");
-          closeBtn.innerHTML = vIc("x", 14);
-          closeBtn.className = "bz-encrypt-btn bz-win-close";
-          closeBtn.title = "关闭";
-          closeBtn.setAttribute("aria-label", "关闭");
-          closeBtn.onclick = () => this.closePreview();
           header.appendChild(title);
-          header.appendChild(closeBtn);
           popup.appendChild(header);
           const body = document.createElement("div");
           body.className = "bz-encrypt-preview-body";
@@ -38410,9 +38366,6 @@ ${text}`;
     header.className = "bz-win-head";
     header.innerHTML = `
     <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">小橘聊天</h3>
-    <div>
-      <button id="smartcat-btn-close" class="bz-win-close" title="关闭" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">❌</button>
-    </div>
   `;
     popup.appendChild(header);
     const chatMessages = document.createElement("div");
@@ -38446,7 +38399,6 @@ ${text}`;
     document.body.appendChild(popup);
     mask.style.display = "none";
     popup.style.display = "none";
-    header.querySelector("#smartcat-btn-close").addEventListener("click", () => opts.onClose());
     const handle = escManager.register("smartcat-chat", {
       isVisible: () => popup.style.display === "flex",
       close: () => opts.onClose()

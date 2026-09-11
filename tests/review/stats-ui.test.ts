@@ -89,29 +89,24 @@ describe('统计弹窗（item 14：lucide 关闭钮 + 无开发文案）', () =>
     closeStatsModal();
   });
 
-  it('关闭钮为 lucide 图标（不再 ❌）；底部无「对齐影视统计界面」开发文案', async () => {
+  it('✕ 退役（issue 271）；底部无「对齐影视统计界面」开发文案', async () => {
     const { reviewApp } = await import('../../src/review/app');
     reviewApp.dataManager = null;
     const dm = {
       loadItems: async () => [] as ReviewItem[],
     } as unknown as ReviewDataManager;
     await showStatsModal({ vault: { getAbstractFileByPath: () => null } } as any, dm);
-    const close = document.getElementById('review-stats-close')!;
-    expect(close).not.toBeNull();
-    expect(close.textContent).not.toContain('❌'); // emoji 关闭钮废除
-    expect(close.querySelector('.bz-ic')!.getAttribute('data-icon')).toBe('x'); // lucide
+    expect(document.getElementById('review-stats-close')).toBeNull(); // issue 271：✕ 退役
     const body = document.getElementById('review-stats-body')!;
     expect(body.textContent).not.toContain('对齐影视统计界面'); // 开发文案删除
     closeStatsModal();
   });
 
-  it('复习历史弹窗关闭钮为 lucide（不再 ❌）', async () => {
+  it('复习历史弹窗 ✕ 退役（issue 271）', async () => {
     await showTimeline(null as any, null as any, mkItem([
       { timestamp: new Date().toISOString(), stage: 10, rating: 'good', stability: 5, R: 85 },
     ]));
-    const close = document.getElementById('review-history-close')!;
-    expect(close.textContent).not.toContain('❌');
-    expect(close.querySelector('.bz-ic')!.getAttribute('data-icon')).toBe('x');
+    expect(document.getElementById('review-history-close')).toBeNull();
     closeTimeline();
   });
 });

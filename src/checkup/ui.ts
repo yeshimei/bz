@@ -73,10 +73,7 @@ function build(app: App): void {
   title.textContent = '数据体检';
   const sp = document.createElement('div');
   sp.className = 'bz-panel-head-sp';
-  const btns = document.createElement('div');
-  btns.className = 'bz-panel-head-btns';
-  btns.appendChild(uiIconBtn({ icon: 'x', lg: true, title: '关闭', onClick: () => hide() }));
-  head.append(brand, title, sp, btns);
+  head.append(brand, title, sp);
 
   const body = document.createElement('div');
   body.className = 'bz-checkup-body';

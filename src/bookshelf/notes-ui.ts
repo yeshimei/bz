@@ -243,7 +243,7 @@ function openNotesShell(title: string): { popup: HTMLElement; close: () => void 
   const { popup, close } = uiModal({
     content: body,
     maxWidth: 700,
-    head: true,
+    head: true, // 标题头行保留；✕ 已在 core uiModal 退役（issue 271：点遮罩/ESC 关闭）
     title,
     className: `bz-bs-notes-pop ${bsSkinClass()}`,
     onClose: () => {
@@ -406,7 +406,7 @@ function openNoteEditModal(opts: {
   const { close } = uiModal({
     content: body,
     maxWidth: 420,
-    head: true,
+    head: true, // 标题头行保留；✕ 已在 core uiModal 退役（issue 271：点遮罩/ESC 关闭）
     title: opts.title,
     className: `bz-bs-edit-pop ${bsSkinClass()}`,
   });

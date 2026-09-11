@@ -222,7 +222,7 @@ export function openMovePreview(app: any, note: any, dest: string, moves: MoveOp
   const { close } = uiModal({
     content: body,
     maxWidth: 480,
-    head: true,
+    head: true, // 标题头行保留；✕ 已在 core uiModal 退役（issue 271：点遮罩/ESC 关闭）
     title: '移动附件',
     className: 'bz-attach-preview-pop',
   });

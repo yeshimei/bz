@@ -804,7 +804,7 @@ export class UIManager {
     this.editor = null;
   }
   private sheetWrap(title: string, body: string): string {
-    return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc(title)}</span><button class="bz-kb-sheet-close" data-kb-close title="关闭">✕</button></div><div class="bz-kb-sheet-body">${body}</div>`;
+    return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
   }
 
   /** 旧笔记自动补全（note-gen；AI 未配置跳过并提示一句）；每目录至多跑一次 */
@@ -890,7 +890,6 @@ export class UIManager {
         <button id="lit-btn-video-add" title="添加转文献任务">➕</button>
         <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">▶️</button>
         <button id="lit-btn-video-history" title="历史">🕘</button>
-        <button id="lit-btn-video-close" class="bz-win-close" title="关闭">❌</button>
       </div>`;
     const list = document.createElement('div');
     list.id = 'knowledge-video-list';
@@ -921,7 +920,6 @@ export class UIManager {
       else void this.onRunBatch();
     };
     q<HTMLButtonElement>(p, '#lit-btn-video-history')!.onclick = () => this.showHistory();
-    q<HTMLButtonElement>(p, '#lit-btn-video-close')!.onclick = () => this.hideVideo();
   }
 
   /** 打开视频录入面板；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口） */
@@ -1344,12 +1342,7 @@ export class UIManager {
     const counts = document.createElement('span');
     counts.id = 'lit-history-counts';
     counts.className = 'bz-kb-vmeta';
-    const headBtns = document.createElement('div');
-    headBtns.className = 'bz-lit-head-btns';
-    headBtns.innerHTML = `
-      <button id="lit-history-close" class="bz-win-close" title="关闭">❌</button>`;
     toolbar.appendChild(counts);
-    toolbar.appendChild(headBtns);
     const list = document.createElement('div');
     list.id = 'knowledge-history-list';
     list.className = 'bz-kb-list';
@@ -1360,7 +1353,6 @@ export class UIManager {
     this.historyMask = mask;
     this.historyPopup = popup;
     this.historyList = list;
-    q<HTMLButtonElement>(popup, '#lit-history-close')!.onclick = () => this.hideHistory();
   }
 
   showHistory(): void {
@@ -1460,7 +1452,6 @@ export class UIManager {
     body.innerHTML = `
       <div class="bz-lit-sheet-head">
         <span class="bz-lit-sheet-title">文字录入 · 术语</span>
-        <button type="button" class="bz-lit-sheet-close" data-term-close title="关闭">✕</button>
       </div>
       <div class="bz-lit-term-row">
         <span class="bz-lit-term-meta-k">术语</span>
@@ -1497,6 +1488,8 @@ export class UIManager {
     document.body.appendChild(popup);
     this.termMask = mask;
     this.termPopup = popup;
+    // 统一遮罩点关（issue 271）：✕ 已退役，点遮罩即收起
+    mask.addEventListener('click', (e) => { if (e.target === mask) this.hideTermEntry(); });
     q<HTMLButtonElement>(popup, '#lit-term-generate')!.onclick = () => void this.onTermGenerate();
     q<HTMLButtonElement>(popup, '#lit-term-cancel')!.onclick = () => this.hideTermEntry();
     q<HTMLButtonElement>(popup, '#lit-term-regenerate')!.onclick = () => void this.onTermSummarize();
@@ -1535,12 +1528,10 @@ export class UIManager {
     }
     // 委托：标题栏 ✕ / chip ✕ 清除 / meta 行点击打开（动态渲染元素，委托一次）
     popup.addEventListener('click', (e) => {
-      const t = (e.target as HTMLElement).closest('[data-term-close],[data-term-src-clear],[data-term-src-open]') as HTMLElement | null;
+      const t = (e.target as HTMLElement).closest('[data-term-src-clear],[data-term-src-open]') as HTMLElement | null;
       if (!t) return;
       e.stopPropagation();
-      if (t.hasAttribute('data-term-close')) {
-        this.hideTermEntry();
-      } else if (t.hasAttribute('data-term-src-clear')) {
+      if (t.hasAttribute('data-term-src-clear')) {
         const input = q<HTMLInputElement>(popup, '#lit-term-src');
         this.termSrcClear(input);
       } else if (this.termSource) {

@@ -72,8 +72,8 @@ describe('C. 右上角钮组（m-acts）图标精确居中', () => {
     });
   }
 
-  it('其他按钮未被波及（cn-modal-x / sp-back 无 padding 钉死）', () => {
-    expect(rule('.bz-cinema--midnight .cn-modal-x{')).not.toMatch(/padding/);
+  it('其他按钮未被波及（cn-modal-x 已随关闭钮退役 issue 271；sp-back 无 padding 钉死）', () => {
+    expect(css.includes('.cn-modal-x')).toBe(false);
     expect(rule('.bz-cinema--midnight .sp-back{')).not.toMatch(/padding/);
   });
 });

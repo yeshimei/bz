@@ -2188,14 +2188,7 @@ export class UIManager {
     header.className = 'bz-encrypt-preview-head';
     const title = document.createElement('h4');
     title.textContent = note.title;
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = vIc('x', 14); // 预览关闭（原 ❌ emoji 改 lucide 内联，铁律通知/图标去 emoji）
-    closeBtn.className = 'bz-encrypt-btn bz-win-close';
-    closeBtn.title = '关闭';
-    closeBtn.setAttribute('aria-label', '关闭');
-    closeBtn.onclick = () => this.closePreview();
     header.appendChild(title);
-    header.appendChild(closeBtn);
     popup.appendChild(header);
     const body = document.createElement('div');
     body.className = 'bz-encrypt-preview-body';

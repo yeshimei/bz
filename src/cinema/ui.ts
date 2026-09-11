@@ -283,7 +283,6 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
   const url = posterUrl(it, app);
   const { el, close } = ovl(sec, detailModalHtml(it, url));
   mountIcons(el);
-  el.querySelector('.j-close')?.addEventListener('click', close);
   el.querySelector('.j-edit')?.addEventListener('click', () => { close(); openForm(sec, it, app); });
   el.querySelector('.j-del')?.addEventListener('click', () => { close(); openConfirm(sec, it, app); });
   el.querySelector('.j-similar')?.addEventListener('click', () => { close(); void runSimilarRecommend(it, app); });
@@ -313,7 +312,6 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App): void {
     (el.querySelector('.j-rating') as HTMLElement).style.display = show ? '' : 'none';
     (el.querySelector('.j-review') as HTMLElement).style.display = show ? '' : 'none';
   }));
-  el.querySelector('.j-close')?.addEventListener('click', close);
   el.querySelector('.j-save')?.addEventListener('click', () => {
     const name = (el.querySelector('.j-name') as HTMLInputElement).value.trim();
     if (!name) { panelToast(sec, '请输入名称'); return; }

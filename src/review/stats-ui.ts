@@ -139,16 +139,9 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], 
 
   const header = document.createElement('div');
   header.className = 'bz-win-head bz-review-stats-head';
-  const closeBtn = document.createElement('button');
-  closeBtn.id = 'review-stats-close';
-  closeBtn.className = 'bz-win-close bz-touch-target--xl';
-  closeBtn.title = '关闭';
-  closeBtn.appendChild(uiIcon('x')); // item 14：❌ → lucide
   header.innerHTML = `
     <h3 class="bz-review-title">复习统计</h3>
-    <div></div>
   `;
-  header.querySelector('div')!.appendChild(closeBtn);
   statsPopup.appendChild(header);
 
   const body = document.createElement('div');
@@ -159,7 +152,6 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], 
   document.body.appendChild(statsMask);
   document.body.appendChild(statsPopup);
 
-  header.querySelector('#review-stats-close')!.addEventListener('click', closeStatsModal);
 
   const stats = computeStats(items, { w });
   body.innerHTML = buildStatsHTML(app, dm, items, stats);
@@ -292,15 +284,7 @@ export async function showTimeline(app: App, dm: ReviewDataManager, item: Review
   document.body.appendChild(histMask);
   document.body.appendChild(histPopup);
 
-  // 无标题栏：内容直接顶到卡片；仅右上角关闭钮（lucide，item 14；样式走 .bz-review-history-close）
-  const closeBtn = document.createElement('button');
-  closeBtn.id = 'review-history-close';
-  closeBtn.className = 'bz-win-close bz-review-history-close bz-touch-target--xl';
-  closeBtn.title = '关闭';
-  closeBtn.appendChild(uiIcon('x'));
-  closeBtn.addEventListener('click', closeTimeline);
-  histPopup.appendChild(closeBtn);
-
+  // 无标题栏：内容直接顶到卡片；关闭 = 点遮罩（issue 271 统一）
   // 当前状态（替代标题栏：笔记名 + 阶段/当前 R 小字，紧凑一行）
   const status = document.createElement('div');
   status.className = 'bz-review-history-status';
