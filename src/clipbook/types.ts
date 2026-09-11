@@ -60,9 +60,3 @@ export interface ClipArticle {
   /** 反链源（剪藏；打开笔记入口用） */
   backlinks: string[];
 }
-
-/** 文件行（右栏/移动详情渲染指令）：p 普通段 / quote 引文段 / img 图片段（issue 206） */
-export interface ClipParagraph {
-  type: 'p' | 'quote' | 'img';
-  text: string;
-}

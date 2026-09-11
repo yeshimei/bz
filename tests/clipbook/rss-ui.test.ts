@@ -71,6 +71,20 @@ describe('rssManagerSettingsSchema（ADR-0121）', () => {
     expect(onChanged).not.toHaveBeenCalled();
   });
 
+  it('添加动作：普通 HTML 网页（无 feed 结构标记）拦截不入库', async () => {
+    (requestUrl as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      text: '<!DOCTYPE html><html><head><title>普通网页</title></head><body>内容</body></html>',
+    });
+    const onChanged = vi.fn();
+    const schema = rssManagerSettingsSchema({ feeds: [], onChanged });
+    const add = rowByName(schema.groups[0].rows, '添加 RSS 源');
+    await add.actions[0].onClick('https://example.com/page');
+    const st = await readDataSourceState();
+    expect(st.rssFeeds).toEqual([]);
+    expect(onChanged).not.toHaveBeenCalled();
+  });
+
   it('添加动作：非 http(s) 地址本地拦截，不发起试拉', async () => {
     (requestUrl as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 200, text: RSS_OK });
     const schema = rssManagerSettingsSchema({ feeds: [], onChanged: () => {} });

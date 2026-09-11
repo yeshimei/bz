@@ -34,4 +34,15 @@
 - [x] 每日简报：rail 入口/设置弹窗简报组/AI 补跑全消失；tsc 零残留引用
 - [x] 契约：checks-drift news.json 八段 = articles/stats/bilibiliUps/bilibiliUpInfo/bilibiliMaxItems/bilibiliCookie/sources/rssFeeds
 - [x] 门禁：pnpm test 4196 用例全绿 + tsc --noEmit 0 错 + 自审 + diff 审查（含 merge master 同步 diary 批次，零冲突）；主仓库构建部署见交付
-- [ ] 运维：@jwbz/obsidian-news 发版 + 全局更新 + pm2 restart；vault news.json 手动清理两段（部署流程执行）
+- [x] 运维：@jwbz/obsidian-news@1.3.1 已发版 + 全局更新 + pm2 restart；vault news.json 八段达成（实际无简报残留段可清，已预置橘鸦源并真机入库 10 期）
+
+## §3 审查批（同日，code-review 两轴 + 正文渲染转向）
+
+两轴审查（Standards/Spec 并行子代理）结论：Standards 零硬违规 + 5 条 judgement call；Spec 6 条。处置：
+
+- **试拉校验加固**：新增 `looksLikeFeedXml`（须带 `<rss>/<feed>/<RDF>` 结构标记），普通 HTML 网页当场拦截；补 HTML 拦截测试用例。
+- **capRssWindow 口径修正**：改「该平台**库内全部条目**合并按 date 降序保最新 30 条」——原实现以本轮 feed 窗口为阈值，feed 只吐 N 条时稳态保留 N 而非 30；补补位/裁剪测试。
+- **死分支内联**（addRssFeedUrl）+ **fetchRss 失真注释更正**；弹窗壳 40 行同构保留不动（可选重构，不欠账）。
+- **正文渲染转向 Obsidian 内置 MarkdownRenderer**（用户拍板）：阅读面/移动详情改为「render.ts 出占位容器 + ui.ts 异步水合 + 纯文本兜底 + 竞态守卫」（diary/knowledge/encrypt 三域同范式）；自制段落化管线退役（md.ts toParagraphs/图片 token 拆分、render.ts paragraphsHtml/inlineHtml、ClipParagraph 类型、clipLoadingHtml），md.ts 只留 stripClipChrome；壳 fake-obsidian 的 MarkdownRenderer 桩补纯文本近似实现。全保真 markdown（表格/代码块/嵌套列表），不再维护自制子集解析器。
+- **预置源措辞对齐**：CONTEXT 词条改「首个源为橘鸦AI早报（部署时写入订阅列表，非代码内置默认）」。
+- **守护 1.3.1 回填**：writeNewsData 剥离 `missing` 读兜底标记（合并后自修，spec 外合理偏差）。

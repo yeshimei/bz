@@ -1,4 +1,4 @@
-/* 源指纹 058a19d45bb463fa · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ee374765723461fa · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/clipbook/render.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/clipbook/render.ts → window.BZR_clipbook（评审壳预览包，ADR-0104） */
 var BZR_clipbook = (() => {
@@ -24,13 +24,11 @@ var BZR_clipbook = (() => {
   var render_exports = {};
   __export(render_exports, {
     ICO: () => ICO,
-    clipLoadingHtml: () => clipLoadingHtml,
     deskFoldRowHtml: () => deskFoldRowHtml,
     dotHtml: () => dotHtml,
     esc: () => esc,
     foldBodyHtml: () => foldBodyHtml,
     iconSpan: () => iconSpan,
-    inlineHtml: () => inlineHtml,
     mobChHeadHtml: () => mobChHeadHtml,
     mobDetailHtml: () => mobDetailHtml,
     mobFoldBodyHtml: () => mobFoldBodyHtml,
@@ -39,7 +37,6 @@ var BZR_clipbook = (() => {
     mobNoHitHtml: () => mobNoHitHtml,
     mobTocHtml: () => mobTocHtml,
     panelHtml: () => panelHtml,
-    paragraphsHtml: () => paragraphsHtml,
     railFootHtml: () => railFootHtml,
     railItemHtml: () => railItemHtml,
     readerHtml: () => readerHtml,
@@ -192,33 +189,8 @@ var BZR_clipbook = (() => {
   function foldBodyHtml(html, open) {
     return html ? `<div class="bz-clip-desk-fold-body"${open ? "" : " hidden"}>${html}</div>` : "";
   }
-  function inlineHtml(text) {
-    let out = "";
-    let last = 0;
-    const re = /\[([^\]]+)\]\(([^)\s]+)\)/g;
-    let m;
-    while ((m = re.exec(text)) !== null) {
-      out += esc(text.slice(last, m.index));
-      out += `<a class="bz-clip-md-link" href="${esc(m[2])}" data-clip-ext target="_blank" rel="noopener noreferrer">${esc(m[1])}</a>`;
-      last = m.index + m[0].length;
-    }
-    out += esc(text.slice(last));
-    return out;
-  }
-  function paragraphsHtml(paras, resolveImg) {
-    return paras.map((p) => {
-      if (p.type === "img") {
-        const src = resolveImg(p.text);
-        return src ? `<img class="bz-clip-art-img" src="${esc(src)}" alt="文章配图" loading="lazy">` : "";
-      }
-      return p.type === "quote" ? `<blockquote>${inlineHtml(p.text)}</blockquote>` : `<p>${inlineHtml(p.text)}</p>`;
-    }).join("");
-  }
   function summaryHtml(summary) {
     return `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan("sparkles", "bz-ic--xs")}摘要</span>${esc(summary)}</div>`;
-  }
-  function clipLoadingHtml() {
-    return `<p class="dim">正在读取剪藏正文…</p>`;
   }
   function readerHtml(a, opts) {
     const openNoteFoot = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
@@ -229,7 +201,7 @@ var BZR_clipbook = (() => {
       <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
     </div>
     ${a.summary ? summaryHtml(a.summary) : ""}
-    <div class="bz-clip-art-md" data-clip-md>${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（笔记暂无正文）" : "正文已清空（已处理条目）")}</p>`}</div>
+    <div class="bz-clip-art-md markdown-rendered" data-clip-md>${opts.note ? `<p class="dim">${esc(opts.note)}</p>` : ""}</div>
     ${openNoteFoot}
   `;
   }
@@ -291,7 +263,7 @@ var BZR_clipbook = (() => {
     <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
     <hr class="bz-clip-mob-d-rule">
-    <div class="bz-clip-mob-d-md">${opts.paras || `<p>${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
+    <div class="bz-clip-mob-d-md markdown-rendered" data-clip-mob-md>${opts.note ? `<p>${esc(opts.note)}</p>` : ""}</div>
     <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
   `;
   }

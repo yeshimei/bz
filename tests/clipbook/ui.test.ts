@@ -332,11 +332,16 @@ describe('clipbook UI 桌面三栏', () => {
     expect(first.textContent).toContain('新文');
     // meta = 「站点短名 · 时间」（issue 214：favicon 链退役，站点短名 果壳科学人→果壳）
     expect(first.querySelector('.bz-clip-item-meta')!.textContent).toContain('果壳 · ');
-    // 点旧文 → 正文 markdown 图片渲染为 img 段（不再被丢弃）
+    // 点旧文 → 正文交 MarkdownRenderer 异步水合（issue 273 review）；
+    // mockImplementationOnce 模拟 Obsidian 渲染产出 img（一次后自动还原默认实现）
+    const { MarkdownRenderer } = await import('obsidian');
+    (MarkdownRenderer.render as ReturnType<typeof vi.fn>).mockImplementationOnce(async (_app: any, md: string, el: HTMLElement) => {
+      if (el) el.innerHTML = String(md).replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+    });
     const oldItem = [...document.querySelectorAll('.bz-clip-item')].find((r) => r.textContent!.includes('旧文')) as HTMLElement;
     oldItem.click();
     await vi.waitFor(() => {
-      const img = document.querySelector('[data-clip-reader] img.bz-clip-art-img') as HTMLImageElement;
+      const img = document.querySelector('[data-clip-reader] [data-clip-md] img') as HTMLImageElement;
       expect(img).toBeTruthy();
       expect(img.getAttribute('src')).toBe('https://a.example/old.png');
     });
