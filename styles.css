@@ -7404,22 +7404,40 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* ---- 拖拽排序已撤：入口顺序/显隐统一在「设置 → 首页入口」弹窗里打理（2026-09-10 用户拍板） ---- */
 
 /* ---- 时间线（原型 .flow/.ev） ---- */
-/* V4 拍板：时间线整体成白卡，卡内虚线轨道（随内容滚、与彩点同锚对齐） */
+/* V4 拍板：时间线整体成白卡，卡内虚线轨道（随内容滚、与彩点同锚对齐）
+   V6（2026-09-11）：**桌面端时间线整体降一档字号**（正文 14.5→13.5、时间戳 12.5→11、
+   点评 12.5→11.5、域徽 10.5→10），行距 11px→9px、圆点 top 20→17 随字号重锚；
+   移动端字号由 @container 块另行覆盖（那套本来就更大），不受影响。 */
 .bz-home-flow { min-height: 0; overflow-y: auto; scrollbar-width: none; background: var(--h-card); border: 1px solid var(--h-line); border-radius: var(--bz-radius-md); padding: 6px 14px var(--bz-space-sm) 10px; }
 .bz-home-timeline { position: relative; }
 .bz-home-timeline::before { content: ""; position: absolute; left: 9px; top: 14px; bottom: 10px; border-left: 2px dashed var(--h-line); }
-.bz-home-ev { display: flex; gap: var(--bz-space-lg); position: relative; padding: 11px 0 11px var(--bz-space-xl); }
-.bz-home-ev::before { content: ""; position: absolute; left: 6px; top: 20px; width: 8px; height: 8px; border-radius: 50%; background: var(--h-ok); box-shadow: 0 0 0 2.5px var(--h-card), 0 0 0 3.5px var(--h-line); } /* 圆心 10px = 虚线中线（left 9 + 1），白环+描边压住虚线（V4） */
+.bz-home-ev { display: flex; gap: var(--bz-space-lg); position: relative; padding: 9px 0 9px var(--bz-space-xl); }
+.bz-home-ev::before { content: ""; position: absolute; left: 6px; top: 17px; width: 8px; height: 8px; border-radius: 50%; background: var(--h-ok); box-shadow: 0 0 0 2.5px var(--h-card), 0 0 0 3.5px var(--h-line); } /* 圆心 10px = 虚线中线（left 9 + 1），白环+描边压住虚线（V4） */
 .bz-home-ev--warn::before { background: var(--h-amber); }
-.bz-home-ev-tm { font-family: var(--h-mono); font-size: var(--bz-font-meta); color: var(--h-dim); width: 44px; flex: none; padding-top: 3px; }
+.bz-home-ev-tm { font-family: var(--h-mono); font-size: 11px; color: var(--h-dim); width: 42px; flex: none; padding-top: 2px; }
 .bz-home-ev-bd { flex: 1; min-width: 0; }
-.bz-home-ev-tx { font-size: 14.5px; line-height: 1.65; }
-.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; color: #fff; padding: 1.5px var(--bz-space-sm); border-radius: var(--bz-radius-sm); margin-right: var(--bz-space-sm); vertical-align: 1.5px; }
+.bz-home-ev-tx { font-size: 13.5px; line-height: 1.6; }
+.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #fff; padding: 1px var(--bz-space-sm); border-radius: var(--bz-radius-sm); margin-right: var(--bz-space-sm); vertical-align: 1.5px; }
 .bz-home-ev-dm .bz-ic { width: 10px; height: 10px; }
-.bz-home-ev-note { margin-top: 6px; font-size: var(--bz-font-meta); color: var(--h-ai); line-height: 1.6; }
+.bz-home-ev-note { margin-top: 5px; font-size: 11.5px; color: var(--h-ai); line-height: 1.55; }
 .bz-home-ev-note::before { content: "✦ "; }
-.bz-home-flow-empty { padding: 26px 6px; font-size: 13.5px; color: var(--h-dim); line-height: 2.1; }
+.bz-home-flow-empty { padding: 24px 6px; font-size: 12.5px; color: var(--h-dim); line-height: 2; }
 .bz-home-flow-empty b { color: var(--h-ink); }
+
+/* ---- 时间线字号档（issue 287：「设置 → 首页 → 时间线字号」）----
+   用 `em` 而不是再造三套 px：档位只改一个基数，行内各处（时刻/域徽/点评/空态）
+   按各自比例跟着缩，改档不用同步改十个数。
+   normal 档 = 上面那套基础值原样（不加任何覆盖），故「没动过设置」的观感零变化。 */
+.bz-home-timeline[data-tl-size="compact"] { font-size: .875em; }
+.bz-home-timeline[data-tl-size="compact"] .bz-home-ev { padding-top: 7px; padding-bottom: 7px; }
+.bz-home-timeline[data-tl-size="compact"] .bz-home-ev::before { top: 15px; }
+.bz-home-timeline[data-tl-size="loose"] { font-size: 1.125em; }
+.bz-home-timeline[data-tl-size="loose"] .bz-home-ev { padding-top: 14px; padding-bottom: 14px; }
+.bz-home-timeline[data-tl-size="loose"] .bz-home-ev::before { top: 24px; }
+
+/* ---- 时间线时刻列开关（issue 287）：关掉整列收起，内容行随之左移对齐轨道 ---- */
+.bz-home-timeline[data-tl-time="0"] .bz-home-ev-tm { display: none; }
+.bz-home-timeline[data-tl-time="0"] .bz-home-ev { padding-left: var(--bz-space-lg); }
 
 /* ---- 明天预告（原型 .pr） ---- */
 .bz-home-panel .bz-home-pr { display: block; background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px var(--bz-space-lg); margin-bottom: 10px; font-size: var(--bz-font-label); line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }
@@ -7484,11 +7502,16 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   display: flex; align-items: center; gap: var(--bz-space-sm);
   padding: 7px var(--bz-space-sm); border-radius: var(--bz-radius-sm);
   border-bottom: 1px solid var(--sp-line-soft, var(--background-modifier-border));
-  /* 触屏：纵向滚动归浏览器（短滑滚列表），横向不滚 → 长按拖拽不与滚动抢手势 */
+  /* 触屏：纵向滚动归浏览器（短滑滚列表），横向不滚 → 长按拖拽不与滚动抢手势。
+     长按成立后 JS 会把本行 touch-action 临时改成 none 拿住手势（见 entry-editor.ts）。 */
   touch-action: pan-y;
+  /* 让位动画：邻居行被跨过时反向位移一格，靠这条过渡「滑」过去 */
+  transition: transform .16s cubic-bezier(.2, .7, .3, 1);
 }
 .bz-home-ent-row:last-child { border-bottom: 0; }
 .bz-home-ent-row:hover { background: var(--sp-line-soft, var(--background-modifier-hover)); }
+/* 拖拽期间：所有行都别响应长按/选择（手指还在屏上，选中文本会打断观感） */
+.bz-home-ent-list:has(.bz-home-ent-drag) { user-select: none; -webkit-user-select: none; }
 .bz-home-ent-grip { display: inline-flex; color: var(--sp-ink-3, var(--text-faint)); cursor: grab; }
 .bz-home-ent-grip .bz-ic { width: 15px; height: 15px; }
 .bz-home-ent-ic { display: inline-flex; flex: none; }
@@ -7508,13 +7531,16 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    不参与排序（拖柄隐掉，恢复只走 + 按钮）—— 排序下标只对可见行计数（见 shared.reorderTo） */
 .bz-home-ent-row--off { opacity: .72; }
 .bz-home-ent-row--off .bz-home-ent-grip { visibility: hidden; }
-/* 拖拽中的行：浮起 + 阴影（位移由 JS 写 transform） */
+/* 拖拽中的行：浮起 + 阴影（位移由 JS 写 transform；跟手要即时，故不吃行上的 .16s 过渡） */
 .bz-home-ent-drag {
   position: relative; z-index: 3;
   background: var(--sp-panel, var(--background-primary));
   border-radius: var(--bz-radius-sm); box-shadow: var(--sp-shadow, var(--shadow-s));
   opacity: .95;
+  transition: none;
 }
+/* 让位中的邻居行：反向位移一格（垫在浮起行下面，别抢 z） */
+.bz-home-ent-shift { position: relative; z-index: 1; }
 
 /* 移动端：面板内字号随面板档放大（面板移动端字号见 settings-panel/styles.css） */
 @media (max-width: 768px) {
