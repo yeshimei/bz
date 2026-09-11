@@ -5,13 +5,21 @@
  *
  * 派生密钥缓存：PBKDF2 十万次迭代是解密耗时大头（预览窗每附件一次），
  * 按 (password, salt) 缓存已派生密钥——同一密文重复解密（重开预览/失败重试）不再重复派生。
- * 锁定语义：保险库上锁时须 clearCryptoKeyCache()，密钥不残留内存。
+ * C7：缓存为 **LRU 有界**（KEY_CACHE_MAX 条）——encrypt 每条新 salt 必 cache miss，
+ * 无界 Map 会随加密次数只进不出，明文主密码副本长期驻留内存；超限即淘汰最旧条目，
+ * 命中语义不变（热条目始终可复用）。锁定语义：保险库上锁时须 clearCryptoKeyCache()，
+ * 密钥不残留内存。
  */
 export class CryptoService {
   static async deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
     const cacheKey = toBase64(salt);
     const hit = keyCache.get(cacheKey);
-    if (hit && hit.pw === password) return hit.key;
+    if (hit && hit.pw === password) {
+      // LRU 刷新：命中条目移到最新位（Map 插入序 = 淘汰序）
+      keyCache.delete(cacheKey);
+      keyCache.set(cacheKey, hit);
+      return hit.key;
+    }
     const enc = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, [
       'deriveKey',
@@ -28,7 +36,7 @@ export class CryptoService {
       false,
       ['encrypt', 'decrypt']
     );
-    keyCache.set(cacheKey, { pw: password, key });
+    cachePut(cacheKey, password, key);
     return key;
   }
 
@@ -77,10 +85,27 @@ function toBase64(bytes: Uint8Array): string {
   return btoa(bin);
 }
 
-/** 已派生密钥缓存：(salt base64) → {密码, 密钥}；同 salt 换密码会重新派生（校验 pw） */
+/** 已派生密钥缓存：(salt base64) → {密码, 密钥}；同 salt 换密码会重新派生（校验 pw）。
+ *  LRU 有界（C7）：写入超限淘汰最旧（Map 迭代序 = 插入序，队首最旧） */
 const keyCache = new Map<string, { pw: string; key: CryptoKey }>();
+/** 缓存上限（条）：远超单次面板渲染条目量级，热数据（当前库的条目/预览）不会被挤出 */
+export const KEY_CACHE_MAX = 128;
+
+function cachePut(cacheKey: string, password: string, key: CryptoKey): void {
+  keyCache.delete(cacheKey); // 重插 = 刷新为新（同 salt 重复派生的覆盖场景）
+  keyCache.set(cacheKey, { pw: password, key });
+  if (keyCache.size > KEY_CACHE_MAX) {
+    const oldest = keyCache.keys().next().value;
+    if (oldest !== undefined) keyCache.delete(oldest);
+  }
+}
 
 /** 清空派生密钥缓存（安全：保险库/密码本上锁时调用，密钥不残留内存） */
 export function clearCryptoKeyCache(): void {
   keyCache.clear();
+}
+
+/** 测试专用：当前缓存条数（LRU 有界性断言用） */
+export function __keyCacheSizeForTests(): number {
+  return keyCache.size;
 }

@@ -1,4 +1,4 @@
-/* 源指纹 9eb954d5a5fc9174 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4daf95cb29094a8f · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -4321,7 +4321,11 @@ var BZW_password_vault = (() => {
   var alwaysOnTop = /* @__PURE__ */ new Set();
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
-      if (el.isConnected) el.style.zIndex = String(zCounter);
+      if (!el.isConnected) {
+        alwaysOnTop.delete(el);
+        continue;
+      }
+      el.style.zIndex = String(zCounter);
     }
   }
   function allocZBlock(n) {
@@ -4364,6 +4368,10 @@ var BZW_password_vault = (() => {
   var SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
   function notice(msg, type, duration) {
     notify(msg, { type: type || "info", duration });
+  }
+  function notifySaveError(err, what) {
+    const msg = err instanceof Error ? err.message : String(err);
+    notify(what ? `保存失败（${what}）：${msg}` : `保存失败：${msg}`, { type: "error" });
   }
   function notifyActionError(err, action) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -5025,10 +5033,13 @@ var BZW_password_vault = (() => {
       return;
     }
     if (touchSettlePending) {
+      const inPopup = popupEl != null && popupEl.contains(target) || sheetMask != null && sheetMask.contains(target);
       touchSettlePending = false;
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-      return;
+      if (inPopup) {
+        ev.stopImmediatePropagation();
+        ev.preventDefault();
+        return;
+      }
     }
     if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
       closeItemMenu();
@@ -6178,9 +6189,14 @@ var BZW_password_vault = (() => {
                 void (async () => {
                   var _a3;
                   const remaining = readItems().map((x) => x.key).filter((k) => k !== it.key);
-                  await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, remaining, ctx));
-                  renderItems();
-                  reevaluate();
+                  try {
+                    await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, remaining, ctx));
+                  } catch (e) {
+                    notifySaveError(e, row.name || "列表项");
+                  } finally {
+                    renderItems();
+                    reevaluate();
+                  }
                 })();
               };
               item.appendChild(remove);
@@ -6417,7 +6433,11 @@ var BZW_password_vault = (() => {
     static async deriveKey(password, salt) {
       const cacheKey = toBase64(salt);
       const hit = keyCache.get(cacheKey);
-      if (hit && hit.pw === password) return hit.key;
+      if (hit && hit.pw === password) {
+        keyCache.delete(cacheKey);
+        keyCache.set(cacheKey, hit);
+        return hit.key;
+      }
       const enc = new TextEncoder();
       const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, [
         "deriveKey"
@@ -6434,7 +6454,7 @@ var BZW_password_vault = (() => {
         false,
         ["encrypt", "decrypt"]
       );
-      keyCache.set(cacheKey, { pw: password, key });
+      cachePut(cacheKey, password, key);
       return key;
     }
     static async encrypt(plainText, password) {
@@ -6473,6 +6493,15 @@ var BZW_password_vault = (() => {
     return btoa(bin);
   }
   var keyCache = /* @__PURE__ */ new Map();
+  var KEY_CACHE_MAX = 128;
+  function cachePut(cacheKey, password, key) {
+    keyCache.delete(cacheKey);
+    keyCache.set(cacheKey, { pw: password, key });
+    if (keyCache.size > KEY_CACHE_MAX) {
+      const oldest = keyCache.keys().next().value;
+      if (oldest !== void 0) keyCache.delete(oldest);
+    }
+  }
   function clearCryptoKeyCache() {
     keyCache.clear();
   }

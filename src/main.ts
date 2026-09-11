@@ -8,6 +8,7 @@ import { Plugin, PluginSettingTab } from 'obsidian';
 import { notice, cleanupNotices } from './core/notice';
 import { escManager } from './core/esc-manager';
 import { closeItemMenu } from './core/item-actions';
+import { cancelActiveFlowDialog } from './core/flow-dialog';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
@@ -191,12 +192,21 @@ export function applyDiarySettingsToRuntime(s: BzSettings) {
 export default class BzPlugin extends Plugin {
   settings: BzSettings = { ...DEFAULT_SETTINGS };
   private registeredCommandIds: string[] = [];
+  /** 设置落盘串行队列（C15）：并发 saveSettings 排队写入 */
+  private saveQueue: Promise<void> = Promise.resolve();
+  /** 卸载旗标（C13）：onLayoutReady 回调 / 延迟初始化定时器不随插件卸载摘除，
+   *  启动窗口期内禁用插件后布局就绪（或 setTimeout 到点）须短路，防幽灵初始化且无卸载路径 */
+  private unloaded = false;
 
   async onload() {
     const loaded = await this.loadData();
-    // issue 260 正名迁移：旧 todo* 面板设置键就地改名（读旧写新删旧）
-    migrateMemoSettingKeys(loaded);
+    // issue 260 正名迁移：旧 todo* 面板设置键就地改名（读旧写新删旧）；
+    // C16：发生迁移即调度落盘——原先只改内存，data.json 旧键长期残留、每次启动重复迁移
+    const memoKeysMigrated = migrateMemoSettingKeys(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
+    if (memoKeysMigrated) {
+      void this.saveSettings().catch((e) => console.error('[bz] 设置键迁移落盘失败:', e));
+    }
     setApp(this.app);
     // AI 设置注入（Q3 的 _q3Settings 语义 → 插件设置）
     setAISettingsProvider(() => this.settings);
@@ -239,13 +249,16 @@ export default class BzPlugin extends Plugin {
 
     // 事件常驻域按设置开关注册（懒加载架构）
     this.app.workspace.onLayoutReady(() => {
+      // C13：布局就绪回调不随插件卸载摘除——启动窗口期内禁用插件时此处必须短路，
+      // 否则备忘录自动弹出/剪藏摘要/复习监听/小橘等全部幽灵初始化且无卸载路径
+      if (this.unloaded) return;
       // 备忘录提醒后台：启动自动弹出 + 打开笔记提醒（落点=备忘录面板；设置键 autoPopupOnStart/openNoteReminder）
       ensureMemoReminders(this.app);
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
       // 引用同步无条件常驻（issue 187：原 aiAgentEnabled 开关随旧 AIAgent 退役——
       // 备忘录/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）
       ensureFileSync(this.app);
-      if (this.settings.secondBrainEnabled) ensureSecondBrainOnReady(this.app);
+      if (this.settings.secondBrainEnabled) ensureSecondBrainOnReady(this.app, () => this.unloaded);
       // 复习计划：到期提醒开启时常驻（ticket 100——监听/染色/轮询统一启动；否则懒加载）；enableAutoNotify 缺省视为开
       if (this.settings.enableAutoNotify !== false) void ensureReview(this.app);
       // 番茄钟：启动即恢复（load+recover，正在倒计时则后台继续/按设置自动弹窗）
@@ -256,6 +269,8 @@ export default class BzPlugin extends Plugin {
   }
 
   async onunload() {
+    // C13：先置卸载旗标，短路尚未触发的 onLayoutReady 回调 / 延迟初始化定时器
+    this.unloaded = true;
     // 移动端视口监听解绑 + --bz-vvh 清理（issue 266；连带卸掉 document 级监听）
     unbindMobileViewport();
     // 统一右键菜单/长按抽屉浮层先收口（fix(main)：卸载接线补全）
@@ -307,6 +322,9 @@ export default class BzPlugin extends Plugin {
     // 域事件总线收口：摘除 vault 订阅点 + 清空全部域事件订阅（总线为进程内单例，随插件卸载全量清空）
     detachObsidianAdapter();
     clearDomainEvents();
+    // C14：在途确认框（flow-dialog）先按取消语义结算再清 DOM——原先硬删遮罩不走 settle，
+    // 未决 Promise 永久悬挂，等确认结果的后续操作静默终止
+    cancelActiveFlowDialog();
     // 日记本写链路弹窗 DOM 清理（写日记/标签选择器/滚轮时间选择器挂 body 的浮层）
     const diaryIds = [
       'add-diary-mask',
@@ -325,17 +343,25 @@ export default class BzPlugin extends Plugin {
   }
 
   async saveSettings() {
-    await this.saveData(this.settings);
-    // 设置变更后重置 AI provider 缓存：DeepSeek key/服务商改动立即生效（AI 消费方）
-    resetAIProviderCache();
+    // C15：落盘串行化——并发调用（连拨开关/域设置弹窗连写）经 promise 链排队写入，
+    // 防 saveData 并发写 data.json 交错（历史上有并发写损坏先例）；失败不断链
+    const run = this.saveQueue
+      .then(() => this.saveData(this.settings))
+      .then(() => {
+        // 设置变更后重置 AI provider 缓存：DeepSeek key/服务商改动立即生效（AI 消费方）
+        resetAIProviderCache();
+      });
+    this.saveQueue = run.catch(() => undefined);
+    await run;
   }
-
 }
 
 /** 第二大脑在布局就绪后初始化（按设置开关；ticket 103 原闪念懒加载换线） */
-function ensureSecondBrainOnReady(app: any) {
+function ensureSecondBrainOnReady(app: any, isUnloaded: () => boolean) {
   // 延迟到 onLayoutReady 之后的事件循环，避免 onload 时序问题
   setTimeout(() => {
+    // C13：插件已卸载（setTimeout 到点晚于 onunload）→ 不再幽灵初始化
+    if (isUnloaded()) return;
     // 动态引入避免循环依赖；第二大脑自身懒加载
     import('./secondbrain').then((m) => m.ensureSecondBrain(app));
   }, 0);

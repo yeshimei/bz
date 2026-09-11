@@ -300,9 +300,16 @@ interface AIOverrideObject {
   defaultMaxTokens?: number;
 }
 
-/** 解析 AI provider（override 优先级最高），逻辑与 Q3 getAIProvider 逐字一致（ticket 170 起查注册表） */
+/** 解析 AI provider（override 优先级最高），逻辑与 Q3 getAIProvider 逐字一致（ticket 170 起查注册表）。
+ *  C2：带 override 的调用只服务本次，解析结果**不写**全局缓存——否则 `getAIProvider('openai')`
+ *  这类字符串 override 会把非当前设置的 provider 灌进缓存，后续无参调用命中被污染的缓存 */
 export async function getAIProvider(override?: string | AIOverrideObject): Promise<AIProvider> {
   if (!override && _aiProviderCache) return _aiProviderCache;
+  const cacheable = !override; // 无 override 才代表「当前设置的 provider」，结果可缓存复用
+  const cachePut = (p: AIProvider): AIProvider => {
+    if (cacheable) _aiProviderCache = p;
+    return p;
+  };
   const s = getQ3Settings();
   // 调用方直接给完整配置（如脚本内指定第三方端点/key）
   if (override && typeof override === 'object' && override.apiKey) {
@@ -323,15 +330,14 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
     if (!endpoint || !s.aiCustomApiKey) {
       throw new Error('未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）');
     }
-    _aiProviderCache = {
+    return cachePut({
       endpoint,
       apiKey: s.aiCustomApiKey,
       model: s.aiCustomModel || undefined,
       extraHeaders: desc.extraHeaders,
       contextWindow: desc.defaultContextWindow,
       defaultMaxTokens: desc.defaultMaxTokens,
-    };
-    return _aiProviderCache;
+    });
   }
   const key = s[desc.apiKeyKey];
   if (!key && name === 'deepseek') {
@@ -341,13 +347,12 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
       const cfg = JSON.parse(raw);
       const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
       if (provider && provider.endpoint && provider.apiKey) {
-        _aiProviderCache = {
+        return cachePut({
           endpoint: String(provider.endpoint).replace(/\/+$/, ''),
           apiKey: provider.apiKey,
           contextWindow: desc.defaultContextWindow,
           defaultMaxTokens: desc.defaultMaxTokens,
-        };
-        return _aiProviderCache;
+        });
       }
     } catch (e) { /* 读取失败由调用方提示 */ }
   }
@@ -359,7 +364,7 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
   const overrideModel = s.aiModelOverrides?.[name];
   const overrideContext = s.aiContextOverrides?.[name];
   const overrideMaxTokens = s.aiMaxTokensOverrides?.[name];
-  _aiProviderCache = {
+  return cachePut({
     endpoint: desc.endpoint,
     apiKey: (key as string) || '',
     model: overrideModel || desc.model || undefined,
@@ -367,8 +372,7 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
     extraHeaders: desc.extraHeaders,
     contextWindow: overrideContext || desc.defaultContextWindow,
     defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens,
-  };
-  return _aiProviderCache;
+  });
 }
 
 // ---------------- 请求实现 ----------------
@@ -380,62 +384,107 @@ function abortError(): Error {
   return e;
 }
 
-/** SSE 流式解析（fetch + ReadableStream）；signal 可中止，onDelta 逐段增量回调（ticket 141） */
+/**
+ * 请求空闲超时（ms，C1）：建连后远端不回包（fetch 等响应头 / reader.read() 等下一段 /
+ * requestUrl 等整个响应）超过该时长即中止并报错。对齐 smartcat 60s 先例；流式按「空闲」计
+ * （每次读到数据重置计时），长回答不被总时长误杀，死连接 60s 内必 settle 不再转圈到重启。
+ */
+export const AI_IDLE_TIMEOUT_MS = 60000;
+
+/** 超时异常（TimeoutError 语义，区别于用户取消的 AbortError——超时允许走 requestUrl 兜底重试） */
+function timeoutError(): Error {
+  const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1000} 秒无响应）`);
+  e.name = 'TimeoutError';
+  return e;
+}
+
+/** SSE 流式解析（fetch + ReadableStream）；signal 可中止，onDelta 逐段增量回调（ticket 141）。
+ *  内部 AbortController 组合外部 signal 与空闲超时（C1）：建连不回包 / 流中途停发超 60s 即中止 */
 async function streamChatCompletions(provider: AIProvider, body: any, signal?: AbortSignal, onDelta?: (delta: string) => void): Promise<string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${provider.apiKey}`,
     ...(provider.extraHeaders || {}),
   };
-  const resp = await fetch(`${provider.endpoint}/chat/completions`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-    signal,
-  });
-  if (!resp.ok) {
-    let msg = `API ${resp.status}`;
-    try {
-      const err = await resp.json();
-      if (err.error && err.error.message) msg = err.error.message;
-    } catch (e) { /* 保留状态码 */ }
-    throw new Error(msg);
-  }
-  // 响应无流（老 WebView / 非 SSE）→ 直接读完整 JSON
-  if (!resp.body || typeof (resp.body as any).getReader !== 'function') {
-    const data: any = await resp.json();
-    return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
-  }
-  const reader = (resp.body as any).getReader();
-  const decoder = new TextDecoder();
-  let full = '', buf = '';
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true });
-    let nl: number;
-    while ((nl = buf.indexOf('\n')) !== -1) {
-      const line = buf.slice(0, nl).trim();
-      buf = buf.slice(nl + 1);
-      if (!line.startsWith('data:')) continue;
-      const payload = line.slice(5).trim();
-      if (payload === '[DONE]') { try { reader.cancel(); } catch (e) { /* 忽略 */ } return full; }
-      try {
-        const chunk = JSON.parse(payload);
-        const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-        if (delta) {
-          full += delta;
-          try {
-            onDelta?.(delta); // 增量回调异常不影响流式解析
-          } catch (e) { /* 忽略 */ }
-        }
-      } catch (e) { /* 忽略坏 chunk */ }
+  // 内部 controller：外部 signal 转发 + 空闲超时；aborted 且外部未取消 ⇒ 超时
+  const controller = new AbortController();
+  const onOuterAbort = () => controller.abort();
+  let outerLinked = false;
+  if (signal) {
+    if (signal.aborted) controller.abort();
+    else {
+      signal.addEventListener('abort', onOuterAbort);
+      outerLinked = true;
     }
   }
-  return full;
+  let idleTimer: ReturnType<typeof setTimeout> | null = null;
+  const armIdle = () => {
+    if (idleTimer !== null) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
+  };
+  try {
+    armIdle();
+    const resp = await fetch(`${provider.endpoint}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    if (!resp.ok) {
+      let msg = `API ${resp.status}`;
+      try {
+        const err = await resp.json();
+        if (err.error && err.error.message) msg = err.error.message;
+      } catch (e) { /* 保留状态码 */ }
+      throw new Error(msg);
+    }
+    // 响应无流（老 WebView / 非 SSE）→ 直接读完整 JSON（json() 期间空闲超时仍生效）
+    if (!resp.body || typeof (resp.body as any).getReader !== 'function') {
+      const data: any = await resp.json();
+      return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+    }
+    const reader = (resp.body as any).getReader();
+    const decoder = new TextDecoder();
+    let full = '', buf = '';
+    while (true) {
+      armIdle(); // 每段数据之间重置空闲计时（流式长回答不受总时长限制）
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let nl: number;
+      while ((nl = buf.indexOf('\n')) !== -1) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        if (!line.startsWith('data:')) continue;
+        const payload = line.slice(5).trim();
+        if (payload === '[DONE]') { try { reader.cancel(); } catch (e) { /* 忽略 */ } return full; }
+        try {
+          const chunk = JSON.parse(payload);
+          const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+          if (delta) {
+            full += delta;
+            try {
+              onDelta?.(delta); // 增量回调异常不影响流式解析
+            } catch (e) { /* 忽略 */ }
+          }
+        } catch (e) { /* 忽略坏 chunk */ }
+      }
+    }
+    return full;
+  } catch (e: any) {
+    // 超时中止（内部 controller 触发且外部 signal 未取消）→ 人话超时错误（TimeoutError，
+    // 非 AbortError——prompt 层按可兜底失败处理，requestUrl 通道重试一次）
+    if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
+    throw e;
+  } finally {
+    if (idleTimer !== null) clearTimeout(idleTimer);
+    if (outerLinked && signal) signal.removeEventListener('abort', onOuterAbort);
+  }
 }
 
-/** 非流式（requestUrl：Obsidian 官方 API，无 CORS 限制）；requestUrl 不支持中止 → 前后查 signal，已取消按丢弃处理 */
+/** 非流式（requestUrl：Obsidian 官方 API，无 CORS 限制）；requestUrl 不支持中止 → 前后查 signal，已取消按丢弃处理。
+ *  C1：requestUrl 本身无超时也不可中止，这里以 race 兜底——超 60s 未应答 promise 先行 settle 报超时，
+ *  调用方不再永久转圈（底层连接无法显式取消，迟到结果由 race 消费侧丢弃不产生 unhandled rejection） */
 async function chatCompletionsNonStream(provider: AIProvider, body: any, signal?: AbortSignal): Promise<string> {
   if (signal?.aborted) throw abortError();
   const headers: Record<string, string> = {
@@ -443,11 +492,22 @@ async function chatCompletionsNonStream(provider: AIProvider, body: any, signal?
     'Authorization': `Bearer ${provider.apiKey}`,
     ...(provider.extraHeaders || {}),
   };
-  const resp: any = await requestUrl({
-    url: `${provider.endpoint}/chat/completions`,
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ ...body, stream: false }),
+  const resp: any = await new Promise<any>((resolve, reject) => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const settle = (fn: () => void) => {
+      if (timer !== null) clearTimeout(timer);
+      fn();
+    };
+    timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
+    requestUrl({
+      url: `${provider.endpoint}/chat/completions`,
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ ...body, stream: false }),
+    }).then(
+      (r) => settle(() => resolve(r)),
+      (e) => settle(() => reject(e))
+    );
   });
   if (signal?.aborted) throw abortError();
   const data = JSON.parse(resp.text);

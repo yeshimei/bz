@@ -175,6 +175,15 @@ export function openFlowDialog(opts: FlowDialogOptions): Promise<string | undefi
 }
 
 /**
+ * 取消结算当前在途流程框（幂等，无在途框时静默；C14）：按取消语义 resolve `undefined`
+ * 并走 settle 全量清理（DOM 移除 / esc 注销 / 焦点还原）。插件卸载前调用——原先 onunload
+ * 直接 remove 遮罩不走 settle，未决 Promise 永久悬挂，等确认结果的后续操作静默终止。
+ */
+export function cancelActiveFlowDialog(): void {
+  if (activeSettle) activeSettle(undefined);
+}
+
+/**
  * 未保存草稿拦截（ticket 141 通病 3）：表单弹窗点遮罩 / ESC 关闭前，若表单已有输入，
  * 先走流程框确认「放弃 or 继续编辑」，确认放弃才执行 proceed。脏检测（getDirty）由调用方负责——
  * 这里只统一确认框文案与「默认聚焦继续编辑」的安全焦点（回车=继续编辑，防误触丢失草稿）。

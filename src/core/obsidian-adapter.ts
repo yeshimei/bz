@@ -9,8 +9,9 @@
  *   仅 diary 附带 date: diaryDateFromPath(path)，非日期命名的日记省略 date 字段；
  *   rename 载荷 { oldPath, newPath, movedOut, date? }，movedOut = 旧路径分类 ≠ 新路径分类
  *   （含旧无新有的移入；「旧有新无」时新路径未命中域，语义事件不派发，仅剩通用兜底通道）。
- * - 只处理 extension === 'md' 的事件；delete 事件的 file 参数可能是失效对象，只用其 path
- *   （extension 读不到时按路径后缀 .md 兜底判定）。
+ * - 只处理 md 文件事件（对象 extension === 'md'；失效对象读不到 extension 时按路径后缀兜底，
+ *   且兜底排除 TFolder——名为 xxx.md 的目录不算 md 文件）；delete 事件的 file 参数可能是失效对象，
+ *   只用其 path。rename 按「新旧任一为 md」派发（md↔非md 改名不丢事件，C4）。
  * - attach 幂等（重复调用直接返回）；registerRef 用于向 Obsidian Plugin 注册事件引用
  *   （plugin.registerEvent），保证插件卸载时自动清理；detach 再做一次显式 offref 收口。
  */
@@ -22,9 +23,12 @@ let attached = false;
 let boundVault: any = null;
 const boundRefs: unknown[] = [];
 
-/** md 判定：优先读文件对象 extension（失效对象读不到时按路径后缀兜底） */
+/** md 判定：优先读文件对象 extension（失效对象读不到时按路径后缀兜底）。
+ *  C3：兜底须排除文件夹（TFolder 无 extension 属性——Obsidian API 中仅 TFile 有），
+ *  否则名为 `xxx.md` 的文件夹经 path.endsWith('.md') 被误判为 md 文件派发事件 */
 function isMarkdownFile(file: any, path: string): boolean {
   if (file && typeof file.extension === 'string') return file.extension === 'md';
+  if (file && Array.isArray((file as any).children)) return false; // TFolder 形态：目录恒非 md 文件
   return path.endsWith('.md');
 }
 
@@ -44,10 +48,20 @@ function dispatchBasic(action: 'created' | 'modified' | 'deleted', file: any): v
   emitDomainEvent(`${kind}:file-${action}`, { path });
 }
 
-/** renamed 分支派发：只发 renamed 一条（通用 + 至多一条语义），不补发 created/deleted */
+/** 文件夹判定（TFolder 形态特征：children 数组；C3/C4 共用——目录恒不按 md 派发） */
+function isFolder(file: any): boolean {
+  return !!(file && Array.isArray((file as any).children));
+}
+
+/** renamed 分支派发：只发 renamed 一条（通用 + 至多一条语义），不补发 created/deleted。
+ *  C4：md↔非md 改名（旧 .md 新 .txt / 旧 .txt 新 .md）按「新旧任一为 md」判定派发——
+ *  只看新路径会把整条事件丢掉，引用同步/复习标记从此失联 */
 function dispatchRename(file: any, oldPath: unknown): void {
   const newPath: string | undefined = file && typeof file.path === 'string' ? file.path : undefined;
-  if (!newPath || typeof oldPath !== 'string' || !oldPath || !isMarkdownFile(file, newPath)) return;
+  if (!newPath || typeof oldPath !== 'string' || !oldPath) return;
+  if (isFolder(file)) return; // 目录改名（含名为 xxx.md 的目录）不是 md 文件事件
+  const wasMd = oldPath.endsWith('.md');
+  if (!wasMd && !isMarkdownFile(file, newPath)) return;
   emitDomainEvent('vault:md-renamed', { oldPath, newPath });
   // 分类以新路径为准；旧路径仅参与 movedOut 判定（实时读设置，移动前后目录配置一致口径）
   const after = classifyFilePath(newPath);
