@@ -196,8 +196,9 @@ function seekPlan(duration: number): number[] {
  * 直挂 URL 取帧（浏览器按需流式取，支持 Range，零整片内存占用）。
  * 必须等 `canplay`（readyState≥3：帧已解码可绘制）——旧实现等的 `loadeddata` 实测全黑。
  * 拿到空帧不立刻放弃：沿 seekPlan 换落点再试，很多视频开场本身就是黑场/纯色。
+ * size = 输出小图边长（章节栏 48 档 / 墙卡海报 480 档，调用方定）。
  */
-async function frameFromUrl(src: string): Promise<DrawOutcome> {
+async function frameFromUrl(src: string, size: number): Promise<DrawOutcome> {
   if (typeof document === 'undefined') return NO_DRAW;
   const v = document.createElement('video');
   v.muted = true;
@@ -207,11 +208,11 @@ async function frameFromUrl(src: string): Promise<DrawOutcome> {
   try {
     if (!(await waitMediaEvent(v, 'canplay', VIDEO_TIMEOUT))) return NO_DRAW;
     const plan = seekPlan(v.duration);
-    if (!plan.length) return drawCover(v, v.videoWidth, v.videoHeight);
+    if (!plan.length) return drawCover(v, v.videoWidth, v.videoHeight, size);
     for (const t of plan) {
       v.currentTime = t;
       await waitMediaEvent(v, 'seeked', SEEK_TIMEOUT);
-      const r = drawCover(v, v.videoWidth, v.videoHeight);
+      const r = drawCover(v, v.videoWidth, v.videoHeight, size);
       if (r.url || r.tainted) return r; // 真帧到手（或已判跨源污染）即收工
     }
     return NO_DRAW;
@@ -229,7 +230,7 @@ async function frameFromUrl(src: string): Promise<DrawOutcome> {
 }
 
 /** blob 中转取帧：同源 blob: 不污染 canvas，代价是整片读入 → 有体积上限 */
-async function frameFromBlob(src: string): Promise<DrawOutcome> {
+async function frameFromBlob(src: string, size: number): Promise<DrawOutcome> {
   let objectUrl: string | null = null;
   try {
     const res = await fetch(src);
@@ -238,7 +239,7 @@ async function frameFromBlob(src: string): Promise<DrawOutcome> {
     const blob = await res.blob();
     if (blob.size > BLOB_MAX_BYTES) return NO_DRAW;
     objectUrl = URL.createObjectURL(blob);
-    return await frameFromUrl(objectUrl);
+    return await frameFromUrl(objectUrl, size);
   } catch {
     return NO_DRAW;
   } finally {
@@ -247,16 +248,16 @@ async function frameFromBlob(src: string): Promise<DrawOutcome> {
 }
 
 /**
- * 视频 URL → 首帧 48px 小图 dataURL；取不到可用帧返回 null（调用方走占位，不缓存）。
+ * 视频 URL → 首帧小图 dataURL（默认 48px 章节栏档）；取不到可用帧返回 null（调用方走占位，不缓存）。
  * 路径：先直挂 URL 取帧（流式、零额外内存）；若 canvas 被跨源污染（真身 app://）则记入
  * directBlocked，本环境后续一律走 blob 中转（同源，代价受 BLOB_MAX_BYTES 约束）。
  */
-export async function makeVideoThumb(src: string): Promise<string | null> {
+export async function makeVideoThumb(src: string, size = THUMB_SIZE): Promise<string | null> {
   if (!directBlocked) {
-    const r = await frameFromUrl(src);
+    const r = await frameFromUrl(src, size);
     if (r.url) return r.url;
     if (!r.tainted) return null; // 真·取不到帧（空帧/超时）：不缓存，交调用方占位
     directBlocked = true;
   }
-  return (await frameFromBlob(src)).url;
+  return (await frameFromBlob(src, size)).url;
 }
