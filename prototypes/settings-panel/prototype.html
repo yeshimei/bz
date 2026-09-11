@@ -263,6 +263,8 @@
         const homeNav = await waitFor(() => dt('.bz-sp-nav-item[data-sp-domain="home"]'));
         t('设置导航出现「首页」域', !!homeNav && homeNav.textContent.indexOf('首页') >= 0);
         if (homeNav) homeNav.click();
+        // 首页域现在是三组（外观/时间线/入口）—— 先等组就绪，否则下面的 select/toggle 查询拿到 0 个
+        await waitPaneGroups(3);
         // 内联列表在 loadHomeOrder 完成后才填 —— 必须等行就绪再断言
         const entRows = await waitFor(() => dtAll('[data-ent-list] [data-ent-row]').length === 14);
         t('首页域内联出入口列表（14 域默认顺序）', !!entRows);
@@ -281,28 +283,37 @@
           homePicks()[1].querySelector('.bz-sp-cardpick-card').classList.contains('is-on'));
 
         /* ---------- 首页「时间线」组（issue 287，2026-09-11 用户点名六项） ---------- */
-        // 分组内的行类型与文案：字号/时间范围/默认打开日 = select，其余四个 = toggle。
-        // 种子值与 src/settings.ts DEFAULT 同值（三处同值铁律），故显示态就是默认态。
-        const homeTlSelects = () => dtAll('.bz-sp-pane select').map((s) => s.value);
-        const homeTlToggles = () => dtAll('.bz-sp-pane input[type="checkbox"]');
-        t('时间线组：三个 select（字号/时间范围/默认打开日）按种子选中', (() => {
-          const v = homeTlSelects();
-          return v.length === 3 && v[0] === 'normal' && v[1] === 'today' && v[2] === 'today';
-        })());
-        t('时间线组：四个 toggle（产出/状态推进/点评/已跳过），前三开、已跳过关', (() => {
-          const tg = homeTlToggles();
-          return tg.length === 4 && tg[0].checked && tg[1].checked && tg[2].checked && !tg[3].checked;
-        })());
+        // 行控件是**面板自绘组件**（不是原生 select/checkbox）：
+        //   select 行 → .bz-sp-set-ctrl > .bz-select（当前值在 .bz-select-val 文本里）
+        //   toggle 行 → .bz-sp-set-ctrl > button.bz-sw（开 = 带 .on 且 aria-checked=true）
+        // 且行带 data-key=<键名>，按键取行最稳（不靠下标，将来插行不会错位）。
+        // **必须在 waitPaneGroups 之后取**：行是异步渲染的（issue 287 首次自检踩到）。
+        const homePane = () => dt('.bz-sp-pane');
+        const tlRow = (key) => homePane().querySelector(`.bz-sp-set-row[data-key="${key}"]`);
+        await waitFor(() => tlRow('homeTimelineSize') && tlRow('homeTimelineSkipped'));
+        const tlSelectText = (key) => tlRow(key)?.querySelector('.bz-select-val')?.textContent || '';
+        const tlOn = (key) => {
+          const b = tlRow(key)?.querySelector('button.bz-sw');
+          return !!b && b.classList.contains('on') && b.getAttribute('aria-checked') === 'true';
+        };
+        t('时间线组：三个 select 行在场且按种子取当前值（字号=标准 / 时间范围=当天 / 默认打开日=今天）',
+          tlSelectText('homeTimelineSize') === '标准' &&
+          tlSelectText('homeTimelineRange') === '当天' &&
+          tlSelectText('homeDefaultDay') === '今天');
+        t('时间线组：四个 toggle 行在场，前三开、已跳过关',
+          tlOn('homeTimelineProduce') && tlOn('homeTimelineProgress') &&
+          tlOn('homeTimelineNotes') && tlOn('homeTimelineSkipped') === false);
         t('时间线组：行文案在场（产出 / 状态推进 / 点评 ✦ / 已跳过 / 显示时刻列 / 明天预告卡）', (() => {
-          const txt = dt('.bz-sp-pane').textContent;
+          const txt = homePane().textContent;
           return ['状态推进', '已跳过', '显示时刻列', '明天预告卡'].every((s) => txt.indexOf(s) >= 0);
         })());
         // 改一个开关必须能落盘（键直绑 → saveSettings 通道）
-        t('时间线开关可切换（点「已跳过」后变勾选态）', (() => {
-          const tg = homeTlToggles()[3];
-          tg.click();
-          return tg.checked;
+        t('时间线开关可切换（点「已跳过」后变开）', (() => {
+          tlRow('homeTimelineSkipped').querySelector('button.bz-sw').click();
+          return tlOn('homeTimelineSkipped');
         })());
+        // 复原，别把改动带给后面段落
+        tlRow('homeTimelineSkipped').querySelector('button.bz-sw').click();
         t('不再有「编辑入口…」按钮（不开弹窗）', !dtAll('.bz-sp-pane button').some((b) => b.textContent.indexOf('编辑入口') >= 0));
         t('不再有浮层遮罩（弹窗形态已退役）', !dt('.bz-home-ee-mask'));
         t('不再有「已移除的域仍可从命令面板打开」提示行', dt('.bz-sp-pane').textContent.indexOf('命令面板') < 0);
