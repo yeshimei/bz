@@ -113,7 +113,9 @@ _Avoid_: 备忘录场景（用户拍板不走备忘录域）、视频剪切列�
 
 **快速流程 (Quick Flow)**: B站下载「转文字」之后的一键后续——ticket 136 起（ADR-0071）AI（标题/标签/简介/润色 + 文献类型/领域）与文献笔记落盘由 **bz 插件**完成（CLI 去 AI，产出转录临时文件交插件）；视频本体交付仍走工具，笔记嵌入交付文件。_Avoid_: 一键流程、AI 后处理
 
-**文献笔记 (Literature Note)**: 存于「文献目录」的 AI 生成笔记，两种文献类型（ADR-0073）——**视频文献**（type: video）：frontmatter 九键（title/tags/summary/url/date/author/videoTitle/type/domain），正文逐段「润色正文 + 视频双链」（ticket 151 补回：CLI 交付的 mp4 以 `![[路径]]` 嵌正文尾部「## 视频」段，keepVideo=false 未交付则无视频段）；**术语文献**（type: term）：frontmatter 五键（title/type/domain/term/date），正文一段简介（百科总结式）。区别于书库「读书笔记」与聚合讯「剪藏文章」。_Avoid_: 读书笔记、视频笔记（指本词时）
+**文献笔记 (Literature Note)**: 存于「文献目录」的 AI 生成笔记，两种文献类型（ADR-0073）——**视频文献**（type: video）：frontmatter 九键（title/tags/summary/url/date/author/videoTitle/type/domain），正文逐段「润色正文 + 视频双链」（ticket 151 补回：CLI 交付的 mp4 以 `![[路径]]` 嵌正文尾部「## 视频」段，keepVideo=false 未交付则无视频段）；**术语文献**（type: term）：frontmatter 五键（title/type/domain/term/date），正文一段简介（百科总结式）。区别于书库「读书笔记」与聚合讯「剪藏文章」。**title 生成契约为完整陈述句**（ADR-0122/issue 276）：AI 标题不得写成新闻式问句（禁疑问句与疑问语气——为何/为什么/怎么/如何/吗/呢），反例「……为何拥有六只相机眼」→ 正例「……拥有六只相机眼」；措辞是唯一约束点，存量笔记标题不迁移。_Avoid_: 读书笔记、视频笔记（指本词时）
+
+**文献预览 (Literature Preview)**: 知识盒「部壹 · 文献」行点击后的只读弹层（标题形如「文献预览 · 影像 / 词条」，卡片预览与主题预览共用同一样式与同一渲染入口）——正文整段交 Obsidian `MarkdownRenderer`（`![[…mp4]]` 内嵌为原生播放器；**笔记内容与嵌入位置一律不动**）+ 关联 chips + 可点来源外开，关闭走 ✕/ESC。**渲染契约**（ADR-0122）：渲染容器初始为空、渲染前清空，仅渲染抛错或无产出元素时才回退纯文本段落；测试 mock 与原型 fake 层同款追加语义。_Avoid_: 第二大脑预览（该域只有检索 chunk 的悬停浮卡，不含文献笔记正文）、文献详情页
 
 **文献目录 (Literature Folder)**: 存放文献笔记的 vault 内目录，设置键 `knowledgeDirectory`，默认 vault 根下「文献盒」。_Avoid_: 笔记夹、输出目录
 
@@ -124,6 +126,8 @@ _Avoid_: 备忘录场景（用户拍板不走备忘录域）、视频剪切列�
 **术语文献 (Term Note)**: 术语生成流程（文字录入）产出的文献笔记——选中/输入术语（命令 `bz-literature-note-term` 预填编辑器选中词）→ AI 生成一段简介（百科总结式）→ 预览可改（术语/领域/正文）→ 确认写入「文献目录」并自动打开；frontmatter title/type:term/domain/term/date；生成成功入小橘行为流（term-generated）。_Avoid_: 名词笔记（非术语）
 **术语来源 (Term Source, ADR-0116/issue 257)**: 术语文献的可选出处键（frontmatter `source` + 可选 `sourceTitle`）——来源两个方向：内部笔记（原生双链 `[[路径|名]]`，Obsidian 属性/反向链接面板原生可溯）或外部链接（URL 原文——b 站视频、知乎日报等，异步抓到的页面标题落 sourceTitle，失败静默降级纯链接）；录入 UI 单框智能分流（整串无空白的 URL/域名样式 → 外部 chip；其余输入联想 vault 笔记 → 内部 chip，✕ 清除）；仅记录+展示，不喂 AI 不回写任何笔记；预填仅限命令入口（当前活动笔记）。**语义两分铁律：related 是「关联」（Obsidian 原生双向链接、卡片↔源文献互链），不是「来源」**——出处一律走 source 键，术语文献不搭 related 便车、不冒充视频文献专属的 url 键。
 **关联 (related, Obsidian 双链)**: frontmatter related 键 = Obsidian 原生双向链接的载体，语义是「关联」不是「来源」——知识盒提炼成卡时卡片↔源文献自动互链（落卡即各写一条 related）、第二大脑 link agent 的自动双链同样写 related（Obsidian 图谱/反向链接面板原生呈现）；界面措辞一律用「关联」，弃用旧称「来源小纸条」（出处语义归 source/url 键，见「术语来源」）。
+
+**录入元信息 (Entry Metadata)**: 视频录入弹窗（知识盒「视频录入 · 任务」添加/编辑）从 `#lit-add-url` 单框自动取得的标题与 UP主——输入/粘贴停顿 450ms 触发：先按 `normalizeSourceUrl` 净化 URL 并写回输入框（b 站视频页只留 `p`/`t`，`spm_id_from`/`vd_source`/`utm_*`/`b23.tv` query 全剥，幂等、不重编码），再抓元信息（b 站 view API → 失败回退页面 `<title>` 清洗 → 再失败静默，全程零提示）；**回填只补空字段**（不覆盖手填），保存与数据层同源净化兜底。与术语来源（ADR-0116）共用同一套净化/抓取零件，区别是它是任务字段、不落 frontmatter。_Avoid_: 视频解析（指下载阶段的 CLI 解析）、术语来源（指文献出处键，本词指任务元信息）
 
 **视频缓存 (Video Cache)**: 「下载原件」的跨任务持久缓存——同 BV 同分 P 同清晰度的重复下载优先复用缓存、跳过下载阶段，超期（默认 7 天）清理。_Avoid_: 产物缓存、中间缓存（剪辑/压缩件不进缓存）
 

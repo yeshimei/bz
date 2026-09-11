@@ -16,8 +16,9 @@
 1. 每次改动必须走 worktree（用户明说豁免的小修除外，详见 Git 工作流）。
 2. 命令 ID 三段式：`bz-<域>-<动作>`。
 3. 通知正文不带 emoji，新语义先查 `src/core/notice.ts` ICONS。
-4. 样式写 `src/<域>/styles.css`，构建聚合至根 `styles.css`。
+4. 样式写 `src/<域>/styles.css`，构建聚合至根 `styles.css`；**滚动条不自造**——bz 界面级单源隐藏（core 通杀，ADR-0122），域内禁 `scrollbar-width: thin/auto` 与自绘 thumb。
 5. 域 UI 的唯一真理源是与原型共用的实现源码——样式 / 渲染 / 行为八域全单源（详见 `docs/prototype-first.md`）。
+6. `MarkdownRenderer.render` 是**追加**语义：渲染前容器必须为空（新建空容器或先清空），纯文本只能是渲染失败后的兜底；测试 mock 与原型 fake 层必须复刻该语义（ADR-0122）。
 
 ## 领域清单（数据均在 CONFIG/STORAGE/）
 | 域 | 数据 |
@@ -50,7 +51,7 @@
 
 - 主分支 `master`，提交遵循 Conventional Commits。
 - worktree 建在主仓库父级外（如 `../.dsh-worktrees/`），从最新 master 分叉。
-- 工作流：worktree 开发 → `git merge master` 同步底 → `pnpm test`/tsc/自审/diff 审查全绿 → 合并回主仓库 → 主仓库 `pnpm run build` 并部署。
+- 工作流：worktree 开发 → `git merge master` 同步底 → `pnpm test`/tsc/自审/diff 审查全绿 → review 通过 → 合并回主仓库 → 主仓库 `pnpm run build` 并部署。
 - 严禁在 worktree 内构建。
 - 部署后清理 worktree。
 - 并行会话占号（issues/ADR 编号）前先查主仓库最新号，防撞车重编号。
