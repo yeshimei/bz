@@ -340,7 +340,8 @@ export class SafeManager {
   }
 
   /** 首设/强制重设：写空清单。写失败必须回滚解锁态（否则下次打开又误判无清单） */
-  private async firstTimeSetup(password: string): Promise<boolean> {    this.password = password;
+  private async firstTimeSetup(password: string): Promise<boolean> {
+    this.password = password;
     this.unlocked = true;
     this.onUnlockChange?.(true);
     emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
