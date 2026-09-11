@@ -9,11 +9,11 @@
 /** 阅读流状态点：unread 蓝 / reading 琥珀 / read 空心（仅剪藏保留语义）/ saved 绿 */
 export type ClipState = 'unread' | 'reading' | 'read' | 'saved';
 
-/** 条目来源：news.json（聚合讯）或剪藏目录（.md frontmatter）或简报（news.json briefs 段，ADR-0119） */
-export type ClipOrigin = 'news' | 'clip' | 'brief';
+/** 条目来源：news.json（聚合讯）或剪藏目录（.md frontmatter） */
+export type ClipOrigin = 'news' | 'clip';
 
-/** 源类型：收件流（news 聚合） / 剪藏本（目录） / 全部聚合 / 站点（issue 222） / 每日简报（ADR-0119） */
-export type RailKind = 'inbox' | 'clip' | 'all' | 'site' | 'brief';
+/** 源类型：收件流（news 聚合） / 剪藏本（目录） / 全部聚合 / 站点（issue 222） */
+export type RailKind = 'inbox' | 'clip' | 'all' | 'site';
 
 
 /**
@@ -43,7 +43,7 @@ export interface ClipArticle {
   timeTs: number;
   /** 列表摘要（news：body 首段截取；剪藏：frontmatter summary） */
   summary: string;
-  /** 正文（news：body，可能已清空；剪藏：不读正文为空） */
+  /** 正文（news：body，issue 274 起已处理不清空——历史遗留清空条目为空；剪藏：不读正文为空） */
   body: string;
   /** 标签（剪藏 frontmatter tags；news 无） */
   tags: string[];
@@ -59,10 +59,4 @@ export interface ClipArticle {
   note?: any;
   /** 反链源（剪藏；打开笔记入口用） */
   backlinks: string[];
-}
-
-/** 文件行（右栏/移动详情渲染指令）：p 普通段 / quote 引文段 / img 图片段（issue 206） */
-export interface ClipParagraph {
-  type: 'p' | 'quote' | 'img';
-  text: string;
 }

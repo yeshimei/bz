@@ -9,14 +9,15 @@
  *   侧 state==='saved' ∨ 侧写 savedArchive 命中 ∨ url 命中剪藏目录（保底「保存过
  *   就是剪藏」）；st=reading 落侧写 articleOverrides。
  * - 动作（save/unsave/read/skip/delete/clear-unread 等）写 news.json（read/state/
- *   body 清空/stats 计数，串行队列 + 写前段级合并——write-queue.ts / news-data
+ *   stats 计数；issue 274 起正文保留不清空——已读/已收条目可再阅，超龄由保留策略
+ *   整条清理，串行队列 + 写前段级合并——write-queue.ts / news-data
  *   writeNewsDataMerged，对 daemon 双写者不丢段）与 clipbook.json 侧写。
  * - saveToClip 写剪藏笔记 + 发 news:read/saved 域事件（smartcat 行为流三跳依赖）。
  */
 import { cmpZh } from '../core/utils';
 import { readNewsData, writeNewsDataMerged } from './news-data';
 import type { ClipArticle, ClipState } from './types';
-import { articleKeyOf, briefKeyOf, excerpt, localDayKey } from './constants';
+import { articleKeyOf, excerpt } from './constants';
 import type { ClipbookData } from './data';
 import { enqueueNewsWrite } from './write-queue';
 
@@ -156,144 +157,6 @@ export function clipUrlSet(notes: Array<{ url?: string }>): Set<string> {
   return s;
 }
 
-// ===== 每日简报（ADR-0119）：news.json briefs 段 → ClipArticle =====
-
-/** 简报排序时间戳：pubdate（秒）优先，回退 date/fetchedAt 解析，非法 → 当前时刻 */
-export function briefTimeTs(b: any): number {
-  const p = Number(b && b.pubdate) || 0;
-  if (p > 0) return p * 1000;
-  const t = new Date((b && (b.date || b.fetchedAt)) || '').valueOf();
-  return isNaN(t) ? Date.now() : t;
-}
-
-/** 简报条目所属日（按天分节键）：pubdate → 本地日 YYYY-MM-DD；无则取 date 前 10 位；都无 → '未知日期' */
-export function briefDayKey(b: any): string {
-  const p = Number(b && b.pubdate) || 0;
-  if (p > 0) return localDayKey(p * 1000);
-  const d = String((b && (b.date || b.fetchedAt)) || '').slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : '未知日期';
-}
-
-/**
- * 简报条目 → ClipArticle（origin='brief'）。与 news 面同构，差异：
- * - id = `bv:<bvid>`（briefKeyOf 同源，跨段不撞）；url 恒为 B 站视频页；
- * - srcName/typeLabel = UP 名（bilibiliUpInfo 回填 → upName → uid）；
- * - summary = 要点首行清洗（列表摘要），body = 要点 markdown（右栏渲染）；
- * - 失败条目（error 非空）：标题回退 bvid、summary 用错误原因，供列表可见 + 重跑入口；
- * - st = saved > read > unread（与 news 同口径，saved 由 state 承载）。
- */
-export function clipBrief(
-  b: any,
-  opts: { savedKeys?: Set<string>; upInfo?: Record<string, any> } = {}
-): ClipArticle {
-  const savedKeys = opts.savedKeys || new Set<string>();
-  const upInfo = opts.upInfo || {};
-  const bvid = String((b && b.bvid) || '');
-  const url = String((b && b.url) || '') || (bvid ? `https://www.bilibili.com/video/${bvid}` : '');
-  const upMid = String((b && b.upMid) || '');
-  const up = String((b && b.upName) || '') || (upInfo[upMid] && upInfo[upMid].name) || upMid || '';
-  const failed = !!(b && b.error);
-  const title = failed ? (bvid || '拉取失败') : String((b && b.title) || '(无标题)');
-  const body = cleanBody(b && b.body);
-  const archived = !!url && savedKeys.has(url);
-  const saved = (b && b.state === 'saved') || archived;
-  const st: ClipState = saved ? 'saved' : (b && b.read === true) ? 'read' : 'unread';
-  const ts = briefTimeTs(b);
-  return {
-    id: 'bv:' + bvid,
-    origin: 'brief',
-    title,
-    url,
-    site: 'B站',
-    domain: 'bilibili.com',
-    author: up,
-    srcName: up || '每日简报',
-    typeLabel: '每日简报',
-    timeText: String((b && (b.fetchedAt || b.date)) || ''),
-    timeTs: ts,
-    summary: failed ? String(b.error) : excerpt(body, 110),
-    body,
-    tags: [],
-    notePath: null,
-    st,
-    clipped: !!url && !!saved,
-    raw: b,
-    backlinks: [],
-  };
-}
-
-/** 简报源条目查询（时间降序）；saved 命中侧写归档者同样折入 saved 态 */
-export function queryBriefs(
-  briefs: any[],
-  sidecar: ClipbookData,
-  upInfoMap: Record<string, any> = {}
-): ClipArticle[] {
-  const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
-  return (briefs || [])
-    .map((b) => clipBrief(b, { savedKeys, upInfo: upInfoMap }))
-    .sort((a, b) => b.timeTs - a.timeTs);
-}
-
-/**
- * 按天分节（简报源目录）：时间降序的条目 → 日节序（同日成组，节内保序）。
- * 返回 [{ day, items }]，供渲染层出日期节头（ADR-0119 §5）。
- */
-export function groupBriefsByDay(list: ClipArticle[]): Array<{ day: string; items: ClipArticle[] }> {
-  const groups: Array<{ day: string; items: ClipArticle[] }> = [];
-  const idx = new Map<string, number>();
-  for (const a of list) {
-    const day = briefDayKey(a.raw);
-    let i = idx.get(day);
-    if (i === undefined) {
-      i = groups.length;
-      idx.set(day, i);
-      groups.push({ day, items: [] });
-    }
-    groups[i].items.push(a);
-  }
-  return groups;
-}
-
-/**
- * 写回简报条目状态（read/saved）到 news.json `briefs` 段（串行队列 + 段级合并——
- * 与守护的追加写互不覆盖）。失败条目（error 非空）不回写状态（只可重跑）。
- */
-export async function writeBriefState(raw: any, action: 'save' | 'read'): Promise<void> {
-  const bvid = String((raw && raw.bvid) || '');
-  if (!bvid) return;
-  await writeBriefPatch(bvid, {
-    read: true,
-    state: (raw && raw.state === 'saved') || action === 'save' ? 'saved' : 'read',
-  });
-}
-
-/** 删除简报条目（失败条目重跑：条目不在库内 → 守护下一轮视其为「新 bvid」重新抓取） */
-export async function deleteBrief(bvid: string): Promise<void> {
-  const key = String(bvid || '');
-  if (!key) return;
-  await enqueueNewsWrite(async () => {
-    await writeNewsDataMerged({ set: {}, removeBriefKeys: ['bv:' + key] });
-  });
-}
-
-/** 按 bvid 打字段补丁写回 `briefs` 段（串行队列 + 段级合并；条目不存在则跳过） */
-export async function writeBriefPatch(bvid: string, patch: Record<string, any>): Promise<void> {
-  const key = String(bvid || '');
-  if (!key) return;
-  await enqueueNewsWrite(async () => {
-    const res = await readNewsData();
-    if (!res.ok || res.missing) return;
-    let hit = false;
-    const list = (res.data.briefs || []).map((b: any) => {
-      if (String((b && b.bvid) || '') !== key) return b;
-      hit = true;
-      return { ...b, ...patch };
-    });
-    if (!hit) return;
-    await writeNewsDataMerged({ set: { briefs: list } });
-  });
-}
-
 /**
  * 视图查询：按源过滤条目。
  * - all/未读：仅未处理 news（read!==true）的 unread/reading 派生，saved 隐藏；
@@ -311,16 +174,11 @@ export function queryBySource(
   sidecar: ClipbookData,
   clipByUrl: Set<string>,
   clipNotes: any[],
-  source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } | { kind: 'site'; site: string } | { kind: 'brief' },
-  upInfoMap: Record<string, any> = {},
-  briefs: any[] = []
+  source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } | { kind: 'site'; site: string },
+  upInfoMap: Record<string, any> = {}
 ): ClipArticle[] {
   if (source.kind === 'clip') {
     return (clipNotes || []).map((n) => clipFromNote(n));
-  }
-  // 每日简报源（ADR-0119）：独立成目，不与 news 流混
-  if (source.kind === 'brief') {
-    return queryBriefs(briefs, sidecar, upInfoMap);
   }
   // news 面：只取未处理（read!==true；骨架/已处理不进收件流）
   const pool = (articles || []).filter((a) => !a.read);
@@ -366,16 +224,11 @@ export function queryBySourceFull(
   sidecar: ClipbookData,
   clipByUrl: Set<string>,
   clipNotes: any[],
-  source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } | { kind: 'site'; site: string } | { kind: 'brief' },
-  upInfoMap: Record<string, any> = {},
-  briefs: any[] = []
+  source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } | { kind: 'site'; site: string },
+  upInfoMap: Record<string, any> = {}
 ): ClipArticle[] {
   if (source.kind === 'clip') {
     return (clipNotes || []).map((n) => clipFromNote(n));
-  }
-  // 每日简报源（ADR-0119）：独立成目——不复用 news 的已读/已收折叠分区（见 briefListHtml）
-  if (source.kind === 'brief') {
-    return queryBriefs(briefs, sidecar, upInfoMap);
   }
   const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
   const isClippedNews = (a: any): boolean =>
@@ -429,8 +282,9 @@ export function bucketByState(list: ClipArticle[]): { unread: ClipArticle[]; rea
  * 返回需要触发 UI 重渲染的提示文案（或空）。
  */
 
-/** 写回 news.json 单篇状态（read=true + state + 删 body；串行队列 + 段级合并——与 loader/
- *  news-source-settings/flow 共用同一条写链，daemon 并发追加的文章不被覆盖） */
+/** 写回 news.json 单篇状态（read=true + state；issue 274：正文保留不清。无插件内调用方，
+ *  保留作外部入口；串行队列 + 段级合并——与 loader/news-source-settings/flow 共用同一条
+ *  写链，daemon 并发追加的文章不被覆盖） */
 export async function writeNewsState(raw: any, action: 'save' | 'read' | 'skip'): Promise<void> {
   const key = articleKeyOf(raw);
   await enqueueNewsWrite(async () => {
@@ -442,7 +296,6 @@ export async function writeNewsState(raw: any, action: 'save' | 'read' | 'skip')
         ...a,
         read: true,
         state: action === 'save' ? 'saved' : action === 'skip' ? 'skipped' : a.state === 'saved' ? 'saved' : 'skipped',
-        body: action === 'read' && a.state === 'saved' ? a.body : undefined,
       };
     });
     await writeNewsDataMerged({ set: { articles: list } });

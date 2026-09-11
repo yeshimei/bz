@@ -13,6 +13,7 @@
  * - UP 名单列表：组内只留「管理」按钮行（计数在 desc），增删/配置在独立 UP 主弹窗
  *   （renderSettingsInto 自建 overlay，形态不变）。
  */
+import { requestUrl } from 'obsidian';
 import { notice } from '../core/notice';
 import { numStrBinding } from '../core/settings-common';
 import { createOverlay } from '../core/dom';
@@ -21,9 +22,9 @@ import { renderSettingsInto } from '../core/settings-schema';
 import type { SettingsRow, SettingsRowContext, SettingsSchema } from '../core/settings-schema';
 import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp,
-  writeBilibiliMaxItems, writeBilibiliCookie, addBriefUp, removeBriefUp, type DataSourceState,
+  writeBilibiliMaxItems, writeBilibiliCookie, addRssFeed, removeRssFeed, type DataSourceState,
 } from './news-source-settings';
-import { resolveUidFromInput, type BilibiliUpInfo } from './news-data';
+import { resolveUidFromInput, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, type BilibiliUpInfo, type RssFeed } from './news-data';
 
 /** 状态盒（构建期快照的可变副本）：三函数绑定 get/set 读它，save 经数据层落盘 */
 type DataSourceBox = DataSourceState;
@@ -53,8 +54,9 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
   }
 
   const bilibiliOn = () => box.sources.bilibili === true;
-  /** 三源开关绑定：读写字盒 sources 段，落盘整段合并写（数据层只声明 sources 段） */
-  const sourceBinding = (key: 'zhihu' | 'guokr' | 'bilibili') => ({
+  const rssOn = () => box.sources.rss === true;
+  /** 四源开关绑定：读写字盒 sources 段，落盘整段合并写（数据层只声明 sources 段） */
+  const sourceBinding = (key: 'zhihu' | 'guokr' | 'bilibili' | 'rss') => ({
     get: () => box.sources[key] === true,
     set: (v: boolean) => { box.sources[key] = v; },
     save: () => writeSources({ ...box.sources }),
@@ -64,11 +66,11 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
     box.bilibiliUps.length > 0
       ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗`
       : '暂未跟踪 UP 主，添加与移除在管理弹窗';
-  /** 每日简报名单行描述（ADR-0119：名单 + 已产条目计数） */
-  const briefListDesc = () =>
-    box.briefUps.length > 0
-      ? `已开启 ${box.briefUps.length} 位 UP 主，已产出 ${box.totalBriefs} 条要点`
-      : '尚未开启深度总结，添加 UP 主后每日生成要点';
+  /** RSS 订阅行描述（ADR-0121：订阅源计数） */
+  const rssListDesc = () =>
+    box.rssFeeds.length > 0
+      ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗`
+      : '暂未订阅 RSS 源，添加与移除在管理弹窗';
 
   return [
     { type: 'toggle', name: '知乎日报', desc: '抓取知乎日报每日文章', binding: sourceBinding('zhihu'),
@@ -83,31 +85,26 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
         ups: [...box.bilibiliUps],
         upInfo: { ...box.bilibiliUpInfo },
         cookie: box.bilibiliCookie,
-        briefUps: [...box.briefUps],
         onChanged: async () => {
           // 增删/配置后重读盘回填状态盒 + 行描述（以磁盘为基底，与写队列串行）
           const fresh = await readDataSourceState();
           box.bilibiliUps = [...fresh.bilibiliUps];
           box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
           box.bilibiliCookie = fresh.bilibiliCookie;
-          box.briefUps = [...fresh.briefUps];
           setRowDesc(ctx, upListDesc());
           ctx.refreshVisibility();
         },
       }) },
-    { type: 'button', name: '每日简报名单', desc: briefListDesc(), buttonText: '管理', cta: true,
-      onClick: (ctx) => openUpManagerModal({
-        ups: [...box.bilibiliUps],
-        upInfo: { ...box.bilibiliUpInfo },
-        cookie: box.bilibiliCookie,
-        briefUps: [...box.briefUps],
+    { type: 'toggle', name: 'RSS 订阅', desc: '抓取订阅列表内 RSS 源的文章', binding: sourceBinding('rss'),
+      onChange: (v) => notice(`已${v ? '开启' : '关闭'}RSS 订阅`, 'success') },
+    { type: 'button', name: 'RSS 订阅源', desc: rssListDesc(), buttonText: '管理', cta: true,
+      visibleWhen: rssOn,
+      onClick: (ctx) => openRssManagerModal({
+        feeds: box.rssFeeds.map((f) => ({ ...f })),
         onChanged: async () => {
           const fresh = await readDataSourceState();
-          box.bilibiliUps = [...fresh.bilibiliUps];
-          box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
-          box.bilibiliCookie = fresh.bilibiliCookie;
-          box.briefUps = [...fresh.briefUps];
-          setRowDesc(ctx, briefListDesc());
+          box.rssFeeds = fresh.rssFeeds.map((f) => ({ ...f }));
+          setRowDesc(ctx, rssListDesc());
           ctx.refreshVisibility();
         },
       }) },
@@ -140,8 +137,6 @@ export interface UpManagerSchemaOptions {
   ups: string[];
   upInfo: Record<string, BilibiliUpInfo>;
   cookie: string;
-  /** 每日简报名单（ADR-0119：briefUps 段，与 UP 主名单互斥）；lint 最小参数调用可省 */
-  briefUps?: string[];
   onChanged: () => void;
 }
 
@@ -151,14 +146,13 @@ interface UpManagerBox {
   cookieInput: string;
   ups: string[];
   upInfo: Record<string, BilibiliUpInfo>;
-  briefInput: string;
-  briefUps: string[];
 }
 
 /**
  * UP 主名单管理弹窗 schema（全面声明行；原 custom 三行——添加复合行/Cookie 复合行/自绘名单已退役）：
  * 添加行与 Cookie 行 = text + 行内按钮（actions，渲染器统一实现）；名单 = 通用 list 行
  * （头像/主副文案/移除，items 函数形式每次移除后以字盒为基底重建）。
+ * 原「每日简报」组随每日简报退役删除（ADR-0121）；RSS 订阅管理在独立弹窗（rssManagerSettingsSchema）。
  */
 export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsSchema {
   const box: UpManagerBox = {
@@ -166,8 +160,6 @@ export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsS
     cookieInput: String(opts.cookie || ''),
     ups: [...opts.ups],
     upInfo: { ...opts.upInfo },
-    briefInput: '',
-    briefUps: [...(opts.briefUps || [])],
   };
   return {
     groups: [
@@ -232,76 +224,8 @@ export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsS
           },
         ],
       },
-      {
-        // 每日简报（ADR-0119）：独立名单——走「字幕优先 → 转写 → AI 要点」链路，与上方 UP 主名单**互斥**
-        icon: 'newspaper',
-        name: '每日简报',
-        rows: [
-          {
-            type: 'text',
-            name: '添加 UP 主',
-            desc: '粘贴主页链接或视频链接，自动解析后入库',
-            placeholder: '粘贴链接或 UID',
-            binding: {
-              get: () => box.briefInput,
-              set: (v) => { box.briefInput = v; },
-              save: () => {},
-            },
-            actions: [{
-              text: '添加',
-              cta: true,
-              onClick: (value) => addBriefUid(value, box, opts),
-            }],
-          },
-          {
-            type: 'list',
-            name: '深度总结名单',
-            desc: '每日抓取其新投稿并生成要点',
-            items: () => box.briefUps.map((uid) => ({
-              key: uid,
-              label: upDisplayName(uid, box.upInfo[uid]),
-              sub: `UID ${uid}`,
-              imageUrl: box.upInfo[uid]?.avatar,
-            })),
-            emptyText: '暂无深度总结 UP 主，在上方粘贴主页链接添加',
-            onChange: (keys) => {
-              void (async () => {
-                const removed = box.briefUps.filter((u) => !keys.includes(u));
-                for (const uid of removed) {
-                  await removeBriefUp(uid);
-                  box.briefUps = box.briefUps.filter((u) => u !== uid);
-                  notice(`已从每日简报移除 ${uid}`, 'success');
-                }
-                if (removed.length > 0) opts.onChanged();
-              })();
-            },
-          },
-        ],
-      },
     ],
   };
-}
-
-/** 添加每日简报名单动作（解析 UID → 入库；互斥：入简报名单即从 UP 主名单移除） */
-async function addBriefUid(raw: string | undefined, box: UpManagerBox, opts: UpManagerSchemaOptions): Promise<void> {
-  const input = String(raw || '').trim();
-  if (!input) return;
-  const uid = await resolveUidFromInput(input);
-  if (!uid) {
-    notice('无法识别 UID，请粘贴 space.bilibili.com 内的主页链接', 'error');
-    return;
-  }
-  const added = await addBriefUp(uid);
-  if (!added) {
-    notice('该 UP 主已在每日简报名单中', 'info');
-    return;
-  }
-  box.briefInput = '';
-  box.briefUps = [...box.briefUps, uid];
-  // 互斥：可能已从 UP 主名单移除，字盒同步（避免弹窗内两列表同时显示同一 UP）
-  box.ups = box.ups.filter((u) => u !== uid);
-  opts.onChanged();
-  notice(`已添加每日简报 UP 主 ${uid}`, 'success');
 }
 
 /** UP 主显示名：后台回填名字则用之，否则回退 uid（ticket 126） */
@@ -343,7 +267,7 @@ async function saveCookie(value: string, box: UpManagerBox, opts: UpManagerSchem
 }
 
 /** 打开 UP 主名单管理弹窗：自建 overlay + 声明式内容（ticket 131；z 序与叠加行为零变化） */
-function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, BilibiliUpInfo>; cookie: string; briefUps: string[]; onChanged: () => void }): void {
+function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, BilibiliUpInfo>; cookie: string; onChanged: () => void }): void {
   let handle: { unregister(): void } | null = null;
   function close(): void {
     mask.remove();
@@ -378,6 +302,167 @@ function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, Bilibi
   popup.style.display = 'flex';
 
   const handleReg = escManager.register('bz-up-manager', {
+    isVisible: () => true,
+    close,
+  });
+  handle = handleReg;
+}
+
+// ===== RSS 订阅管理弹窗（ADR-0121）=====
+// 与 UP 主管理同范式的独立 overlay（bz-rss-manager-mask/-popup，z 序 10100/10101）；
+// 添加源时 requestUrl 试拉校验并预取 feed 自带标题（守护 30 分钟才拉一轮，坏 URL 当场拦截）。
+
+/** RSS 弹窗 schema 构建入参（lint 注册时以最小参数调用即可） */
+export interface RssManagerSchemaOptions {
+  feeds: RssFeed[];
+  onChanged: () => void;
+}
+
+/** RSS 弹窗级可变状态盒 */
+interface RssManagerBox {
+  inputValue: string;
+  feeds: RssFeed[];
+}
+
+/** 试拉 RSS：取 XML 原文，须带 feed 结构标记（<rss>/<feed>/<RDF>，拦截恰好含 <title> 的
+ *  普通 HTML 网页）再提取 feed 自带标题；10s 超时/非 2xx/非 feed 结构/解析不出 → null */
+async function fetchRssFeedTitle(url: string): Promise<string | null> {
+  try {
+    const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000));
+    const req = requestUrl({ url, method: 'GET' }).then((resp) => {
+      if (resp.status < 200 || resp.status >= 300) return null;
+      if (!looksLikeFeedXml(resp.text)) return null;
+      return extractFeedTitleFromXml(resp.text);
+    });
+    return await Promise.race([req, timer]);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * RSS 订阅管理弹窗 schema：版本提示 info + 添加行（text + 行内按钮，试拉校验）+
+ * 通用 list 行（feed 名为主文案、URL 为副文案、移除）。
+ */
+export function rssManagerSettingsSchema(opts: RssManagerSchemaOptions): SettingsSchema {
+  const box: RssManagerBox = {
+    inputValue: '',
+    feeds: opts.feeds.map((f) => ({ ...f })),
+  };
+  return {
+    groups: [
+      {
+        icon: 'rss',
+        name: 'RSS 订阅源',
+        rows: [
+          { type: 'info', name: '守护需更新', desc: 'RSS 抓取由 obsidian-news 守护执行，请更新到最新版并重启守护后生效' },
+          {
+            type: 'text',
+            name: '添加 RSS 源',
+            desc: '粘贴 RSS 订阅地址，保存前先试拉校验并读取源名称',
+            placeholder: 'https://example.com/rss.xml',
+            binding: {
+              get: () => box.inputValue,
+              set: (v) => { box.inputValue = v; },
+              save: () => {},
+            },
+            actions: [{
+              text: '添加',
+              cta: true,
+              onClick: (value) => addRssFeedUrl(value, box, opts),
+            }],
+          },
+          {
+            type: 'list',
+            name: '订阅列表',
+            desc: '已订阅的 RSS 源，移除后不再抓取',
+            items: () => box.feeds.map((f) => ({
+              key: f.url,
+              label: f.title || f.url,
+              sub: f.title ? f.url : '',
+            })),
+            emptyText: '暂无订阅源，在上方粘贴 RSS 地址添加',
+            onChange: (keys) => (async () => {
+              const removed = box.feeds.filter((f) => !keys.includes(f.url));
+              for (const f of removed) {
+                await removeRssFeed(f.url);
+                box.feeds = box.feeds.filter((x) => x.url !== f.url);
+                notice(`已移除 RSS 源 ${f.title || f.url}`, 'success');
+              }
+              if (removed.length > 0) opts.onChanged();
+            })(),
+          },
+        ],
+      },
+    ],
+  };
+}
+
+/** 添加 RSS 源动作：url 归一 → 去重 → 试拉校验预取名 → 入库并回填字盒 */
+async function addRssFeedUrl(raw: string | undefined, box: RssManagerBox, opts: RssManagerSchemaOptions): Promise<void> {
+  const input = String(raw || '').trim();
+  if (!input) return;
+  const url = normalizeRssFeedUrl(input);
+  if (!url) {
+    notice('无效的 RSS 地址，请粘贴 http/https 开头的订阅链接', 'error');
+    return;
+  }
+  if (box.feeds.some((f) => f.url === url)) {
+    notice('该 RSS 源已在订阅列表中', 'info');
+    return;
+  }
+  notice('正在校验 RSS 地址…', 'info');
+  const title = await fetchRssFeedTitle(url);
+  if (title === null) {
+    notice('试拉失败：地址不可达或不是有效的 RSS 源，未添加', 'error');
+    return;
+  }
+  const added = await addRssFeed(url, title);
+  if (!added) {
+    notice('该 RSS 源已在订阅列表中', 'info');
+    return;
+  }
+  box.inputValue = '';
+  box.feeds = [...box.feeds, { url, title }];
+  opts.onChanged();
+  notice(`已订阅 ${title || url}`, 'success');
+}
+
+/** 打开 RSS 订阅管理弹窗：自建 overlay + 声明式内容（范式同 UP 主管理弹窗） */
+function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => void }): void {
+  let handle: { unregister(): void } | null = null;
+  function close(): void {
+    mask.remove();
+    popup.remove();
+    if (handle) handle.unregister();
+  }
+  const { mask, popup } = createOverlay({
+    maskId: 'bz-rss-manager-mask',
+    popupId: 'bz-rss-manager-popup',
+    maxWidth: 560,
+    onMaskClick: close,
+  });
+
+  const header = document.createElement('div');
+  header.className = 'bz-settings-header';
+  const title = document.createElement('h3');
+  title.className = 'bz-settings-title';
+  title.textContent = 'RSS 订阅管理';
+  header.appendChild(title);
+
+  const content = document.createElement('div');
+  content.className = 'bz-settings-content';
+
+  renderSettingsInto(content, rssManagerSettingsSchema(opts));
+
+  popup.appendChild(header);
+  popup.appendChild(content);
+  document.body.appendChild(mask);
+  document.body.appendChild(popup);
+  mask.style.display = 'block';
+  popup.style.display = 'flex';
+
+  const handleReg = escManager.register('bz-rss-manager', {
     isVisible: () => true,
     close,
   });

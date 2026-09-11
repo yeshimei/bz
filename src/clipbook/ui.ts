@@ -25,6 +25,7 @@
  * markup 全部出自 render.ts（纯层，原型 × 插件一份），本文件只管生命周期/事件委托/
  * 数据流；行为单源（ADR-0106）经 fake-sim.ts 打进评审壳 prototype.html（alias obsidian→fake）。
  */
+import { Component, MarkdownRenderer } from 'obsidian';
 import { getApp } from '../core/app';
 import { notice, notifyUndo } from '../core/notice';
 import { uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
@@ -41,17 +42,16 @@ import { dataSourceGroupRows } from './news-sources-group';
 import { articleKeyOf } from './constants';
 import { readDataSourceState, type DataSourceState } from './news-source-settings';
 import type { ClipArticle } from './types';
-import { toParagraphs, stripClipChrome } from './md';
-import { queryBySource, queryBySourceFull, aggregateSites, clipArticle, bucketByState, queryBriefs, groupBriefsByDay, writeBriefState, deleteBrief } from './store';
+import { stripClipChrome } from './md';
+import { queryBySource, queryBySourceFull, aggregateSites, clipArticle, bucketByState } from './store';
 import {
-  panelHtml, railItemHtml, railFootHtml, tocListHtml, paragraphsHtml as paragraphsMarkup,
-  clipLoadingHtml, readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
-  deskFoldRowHtml, foldBodyHtml, briefListHtml, briefDayHeadHtml, briefPointsHtml, briefReaderHtml, ICO,
+  panelHtml, railItemHtml, railFootHtml, tocListHtml,
+  readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
+  deskFoldRowHtml, foldBodyHtml, ICO,
 } from './render';
 import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar, clipDir } from './loader';
-import { runBriefSummaries } from './brief';
-import { dailyBriefDirOf, writeClipNote } from './save';
+import { writeClipNote } from './save';
 import {
   flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession,
   flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews,
@@ -131,11 +131,6 @@ function loadIfNeeded(): Promise<void> {
   loadPromise = readNewsAndSidecar()
     .then(() => {
       dirty = false; loaded = true; beginSession(); renderAll();
-      // 每日简报出稿（ADR-0119）：装载后补跑一次「待出稿」条目（守护已抓完、body 尚空者）；
-      // 无待出稿时零开销直接返回。产出后重读数据并刷新（要点即时可见）。
-      void runBriefSummaries(M.briefs).then((r) => {
-        if (r.done > 0 && M.open) void readNewsAndSidecar().then(() => renderAll());
-      }).catch(() => { /* AI 失败已在条目上留 error，不打断面板 */ });
     })
     .catch((e) => { console.error('[剪藏本] 装载失败', e); notice('剪藏本数据读取失败', 'error'); })
     .finally(() => { loading = false; loadPromise = null; });
@@ -280,12 +275,6 @@ function buildDom(app: any): void {
     const ext = t.closest('a[data-clip-ext]') as HTMLAnchorElement | null;
     if (ext) { e.preventDefault(); try { window.open(ext.href, '_blank'); } catch { /* jsdom 无 window.open */ } return; }
     if (t.closest('[data-clip-open-note]') && M.cur) openNote(M.cur);
-    // 每日简报阅读面（ADR-0119）：打开原视频 / 失败条目重跑
-    if (t.closest('[data-clip-open-url]') && M.cur && M.cur.url) {
-      try { window.open(M.cur.url, '_blank'); } catch { /* jsdom 无 window.open */ }
-      return;
-    }
-    if (t.closest('[data-clip-brief-retry]') && M.cur) { void retryBrief(M.cur); return; }
   });
   readPaneEl!.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); stepArticle(-1); }
@@ -431,31 +420,20 @@ function renderHeadIssue(): void {
 }
 
 // ================= 视图派生 =================
-/** 源过滤条件（queryBySource 入参别名；issue 222 加 site 源；ADR-0119 加 brief 源） */
-type SrcFilter = { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } | { kind: 'site'; site: string } | { kind: 'brief' };
+/** 源过滤条件（queryBySource 入参别名；issue 222 加 site 源） */
+type SrcFilter = { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } | { kind: 'site'; site: string };
 
 /** 当前源过滤条件（M.sel → queryBySource 入参） */
 function currentSrc(): SrcFilter {
   const s = M.sel;
   if (s.kind === 'clip') return { kind: 'clip' };
   if (s.kind === 'site') return { kind: 'site', site: s.site };
-  if (s.kind === 'brief') return { kind: 'brief' };
   if (s.kind === 'inbox') return { kind: 'inbox', platform: s.platform, up: s.up || undefined };
   return { kind: 'all' };
 }
 
-/** 简报源条目（按天分节的源数据；侧写归档折 saved，UP 名走 bilibiliUpInfo 回填） */
-function currentBriefs(): ClipArticle[] {
-  return queryBriefs(M.briefs || [], M.sidecar, M.upInfo);
-}
-
-/** 简报日节序（按天分节渲染入参） */
-function currentBriefDays(): Array<{ day: string; items: ClipArticle[] }> {
-  return groupBriefsByDay(currentBriefs());
-}
-
 function currentList(): ClipArticle[] {
-  return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], currentSrc(), M.upInfo, M.briefs);
+  return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], currentSrc(), M.upInfo);
 }
 
 // ================= 会话目录快照（ADR-0108 冻结序） =================
@@ -477,7 +455,6 @@ function epochReset(): void { dirEpoch++; snapEpochs.clear(); }
 function srcKey(src: SrcFilter): string {
   if (src.kind === 'all') return 'all';
   if (src.kind === 'clip') return 'clip';
-  if (src.kind === 'brief') return 'brief';
   if (src.kind === 'site') return 'site:' + src.site;
   return `inbox:${src.platform}:${src.up || ''}`;
 }
@@ -487,7 +464,7 @@ function snapDirFor(src: SrcFilter): DirSnap {
   const key = srcKey(src);
   const cur = dirSnap.get(key);
   if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo, M.briefs));
+    const b = bucketByState(queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo));
   const snap: DirSnap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
   dirSnap.set(key, snap);
   snapEpochs.set(key, dirEpoch);
@@ -497,7 +474,7 @@ function snapDirFor(src: SrcFilter): DirSnap {
 /** 按 id 现取条目（快照 → 当前对象）：缺失即返回靠匹配 vt（id 已删就丢） */
 function resolveSnap(snap: DirSnap, src: SrcFilter): { unread: ClipArticle[]; read: ClipArticle[]; saved: ClipArticle[] } {
   const live = new Map<string, ClipArticle>();
-  for (const a of queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo, M.briefs)) live.set(a.id, a);
+  for (const a of queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo)) live.set(a.id, a);
   const pick = (ids: string[]) => ids.map((id) => live.get(id)).filter((a): a is ClipArticle => !!a);
   return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
 }
@@ -558,19 +535,10 @@ function renderRail(): void {
   const clipNotes = M.clipNotes || [];
   // 源计数（issue 206：搜索时 = 该源命中数，统计联动；无搜索 = 未读数/总数）
   const countOf = (source: SrcFilter): number =>
-    queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source, M.upInfo, M.briefs).filter(matchesSearch).length;
+    queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source, M.upInfo).filter(matchesSearch).length;
   const allHit = countOf({ kind: 'all' });
   // V1 计数口径（issue 214）：未读（搜索态 = 命中数）/ 总数（全量含已处理）
   let html = railItemHtml({ kind: 'all' }, '全部未读', allHit, arts.length, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
-
-  // 每日简报（ADR-0119）：独立成目，位次紧随「全部未读」——日常查阅入口，与聚合讯流分开
-  const briefAll = currentBriefs();
-  const briefHit = countOf({ kind: 'brief' });
-  html += railItemHtml(
-    { kind: 'brief' }, '每日简报',
-    searchKw ? briefHit : briefAll.filter((a) => a.st === 'unread').length,
-    briefAll.length, ICO.brief, '', M.sel.kind === 'brief', '',
-  );
 
   // 站点行动态聚合（issue 222：rail 按 site 属性分类，issue 206 平台聚合行退役）——
   // 全库站点 = 剪藏全量 + 未读 news 面（行总数 = 该源列表长度，口径同 queryBySource site 源）；
@@ -622,11 +590,9 @@ function renderRail(): void {
     if (!sel) return;
     const source = sel.kind === 'clip'
       ? { kind: 'clip' as const }
-      : sel.kind === 'brief'
-        ? { kind: 'brief' as const }
-        : sel.kind === 'inbox'
-          ? { kind: 'inbox' as const, platform: String(sel.platform || ''), up: sel.up ? String(sel.up) : undefined }
-          : { kind: 'all' as const };
+      : sel.kind === 'inbox'
+        ? { kind: 'inbox' as const, platform: String(sel.platform || ''), up: sel.up ? String(sel.up) : undefined }
+        : { kind: 'all' as const };
     const actions = buildRailActions(String(row.title || ''), source);
     if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ''), menuClass: 'bz-clip-menu-editorial' });
   });
@@ -634,9 +600,6 @@ function renderRail(): void {
 
 /** rail 源级动作（enh 包 4）：该源还有未读时提供「全部标为已读」；剪藏本源无未读语义不挂 */
 function buildRailActions(label: string, source: SrcFilter): ItemAction[] {
-  // 每日简报源的批量已读暂不提供（简报以「按天翻阅」为主，逐条打开即已读；
-  // 批量动作走 news 侧 flowMarkAllRead，简报条目不属 articles 段——见 issue 263 待定项）
-  if (source.kind === 'brief') return [];
   const unreadList = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo)
     .filter((a) => a.origin === 'news');
   if (!unreadList.length) return [];
@@ -678,22 +641,6 @@ async function markAllRead(label: string, items: ClipArticle[]): Promise<void> {
 function renderList(): void {
   if (!listEl) return;
   const src = currentSrc();
-  if (src.kind === 'brief') {
-    // 每日简报（ADR-0119）：按天分节，节内条目参与状态机（状态点/计数照常，见 briefListHtml）
-    const filtered = currentBriefs().filter((a) => !searchKw || matchesSearch(a));
-    if (!filtered.length) {
-      listEl.innerHTML = '';
-      listEl.appendChild(uiEmpty({ icon: 'inbox', title: searchKw ? '没有匹配的简报' : '每日简报为空' }));
-      M.cur = null;
-      if (readerEl) renderReader();
-      return;
-    }
-    if (!filtered.some((a) => a.id === (M.cur && M.cur.id))) M.cur = filtered[0];
-    listEl.innerHTML = briefListHtml(groupBriefsByDay(filtered), M.cur ? M.cur.id : null, (a) => relTime(a.timeTs));
-    M.list = filtered;
-    bindItemMenus();
-    return;
-  }
   if (src.kind === 'clip') {
     // 剪藏本源：全量平铺（冻结序不适用；read/saved 均无语义）
     const list = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo).filter((a) => !searchKw || matchesSearch(a));
@@ -844,81 +791,23 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
 }
 
 // ================= 渲染：右栏阅读 =================
-/** 图片段来源解析（issue 206）：外链直用；Obsidian 嵌链 `![[path]]` 走 vault 资源路径；其余拒载 */
-function resolveImgSrc(src: string): string | null {
-  const s = String(src || '').trim();
-  if (/^(https?:|app:|capacitor:|data:image\/)/i.test(s)) return s;
-  const wiki = s.match(/^!\[\[([^\]]+)\]\]$/);
-  if (wiki) {
-    const p = wiki[1].split('|')[0].trim(); // ![[img.png|300]] 剥别名尺寸
-    try {
-      const af = getApp().vault.getAbstractFileByPath(p);
-      if (af) return getApp().vault.getResourcePath(af as any);
-    } catch (e) { /* 文件不存在/解析失败 → 跳过该图 */ }
-    return null;
-  }
-  return null;
+/** 正文 Obsidian 内置渲染（issue 273 review；diary/knowledge 同范式）：MarkdownRenderer 异步
+ *  水合占位容器；渲染失败/空产出回退纯文本。alive = 竞态守卫（切篇后容器随重渲重建，丢弃迟到水合） */
+async function hydrateArticleMarkdown(el: HTMLElement, md: string, sourcePath: string, alive: () => boolean): Promise<void> {
+  try {
+    const comp = new Component();
+    await MarkdownRenderer.render(getApp(), md, el, sourcePath, comp);
+    comp.unload();
+  } catch { /* 渲染失败 → 纯文本兜底 */ }
+  if (!alive()) return;
+  if (!el.querySelector('*') || !el.textContent?.trim()) el.textContent = md;
 }
 
-function paragraphsHtml(body: string): string {
-  // 段落 markup 单源 render.ts（issue 247）：段落化（md.ts 纯层）+ 图片解析（行为层钩子）
-  return paragraphsMarkup(toParagraphs(body), resolveImgSrc);
-}
-
-/** 正文图片加载失败隐藏（缓存 URL 失效/断网时不留裂图） */
+/** 正文图片加载失败隐藏（外链图缓存失效/断网时不留裂图；MarkdownRenderer 产出的 img 无专属类，按容器取） */
 function bindImgFallback(container: HTMLElement): void {
-  container.querySelectorAll('img.bz-clip-art-img').forEach((img) => {
+  container.querySelectorAll('img').forEach((img) => {
     img.addEventListener('error', () => img.remove(), { once: true });
   });
-}
-
-// ================= 每日简报（ADR-0119）：阅读面辅助 =================
-/** 转录稿缓存（path → 全文）；缓存文件超保留期被清理后读到空串，阅读面自动不出该段 */
-const briefTrCache = new Map<string, string>();
-
-/** 读转录稿全文（bili-dl 缓存 `resume-brief-<bvid>.txt`；桌面端 fs，取不到 → ''） */
-function readBriefTranscript(a: ClipArticle): string {
-  const p = String((a.raw && a.raw.transcriptPath) || '');
-  if (!p) return '';
-  const cached = briefTrCache.get(p);
-  if (cached !== undefined) return cached;
-  let text = '';
-  try {
-    const w = window as any;
-    const fs = w && w.require ? w.require('fs') : null;
-    if (fs && typeof fs.readFileSync === 'function' && fs.existsSync(p)) text = String(fs.readFileSync(p, 'utf8') || '');
-  } catch { text = ''; }
-  briefTrCache.set(p, text);
-  return text;
-}
-
-/** 时长展示（秒 → M:SS）；无时长 → 空串 */
-function fmtBriefDur(a: ClipArticle): string {
-  const s = Number((a.raw && a.raw.duration) || 0);
-  if (!(s > 0)) return '';
-  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
-}
-
-/**
- * 失败条目重跑（ADR-0119 §11「可手动重跑」）：
- * - 转录稿仍在缓存 → 就地重跑 AI 要点；
- * - 转录稿已过期/缺失 → **删除该条目**，守护下一轮视其为新 bvid 重新抓取（复用既有调度，不另造重抓通道）。
- */
-async function retryBrief(a: ClipArticle): Promise<void> {
-  const raw = a.raw;
-  if (!raw || !raw.bvid) return;
-  if (readBriefTranscript(a)) {
-    notice('正在重新生成本期要点…', 'info');
-    const r = await runBriefSummaries([{ ...raw, error: undefined }]);
-    await refreshAfterAction();
-    if (r.done > 0) notice('本期要点已重新生成', 'success');
-    else notice('本期要点重跑未成功', 'error');
-    return;
-  }
-  await deleteBrief(String(raw.bvid));
-  briefTrCache.delete(String(raw.transcriptPath || ''));
-  await refreshAfterAction();
-  notice('已排入下一轮重新抓取', 'info');
 }
 
 function renderReader(): void {
@@ -931,33 +820,35 @@ function renderReader(): void {
     return;
   }
   setReadingSession(a.id);
-  // 每日简报（ADR-0119）：要点列表 + 打开原视频（转录稿段已按用户 2026-09-10 拍板退役）
-  if (a.origin === 'brief') {
-    readerEl.innerHTML = briefReaderHtml(a, {
-      time: a.timeText || relTime(a.timeTs),
-      points: a.body ? briefPointsHtml(a.body) : '',
-      durationLabel: fmtBriefDur(a),
-    });
-    mountIcons(readerEl);
-    return;
-  }
-  // 正文（enh 包 3）：news 现算；clip 懒加载 cachedRead → 剥 frontmatter → 段落化，按 path 缓存
-  let paras = '';
+  // 正文（issue 273 review）：news 直用 body；clip 懒加载 cachedRead → 剥壳缓存原文；
+  // markdown 一律交 Obsidian MarkdownRenderer 异步水合（note = 容器占位文案）
+  let body = '';
+  let note = '';
   if (a.origin === 'clip') {
     const cached = a.notePath ? clipBodyCache.get(a.notePath) : undefined;
-    paras = cached !== undefined ? paragraphsHtml(cached) : clipLoadingHtml();
+    if (cached !== undefined) {
+      body = cached;
+      if (!body) note = '（笔记暂无正文）';
+    } else {
+      note = '正在读取剪藏正文…';
+    }
   } else {
-    paras = a.body ? paragraphsHtml(a.body) : '';
+    body = a.body;
+    if (!body) note = '正文已清空（已处理条目）';
   }
 
-  readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), paras });
+  readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), note });
   mountIcons(readerEl);
   bindImgFallback(readerEl);
+  const mdEl = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
+  if (mdEl && body) {
+    void hydrateArticleMarkdown(mdEl, body, a.notePath || '', () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+  }
   if (a.origin === 'clip') void loadClipBody(a);
 }
 
-/** 剪藏正文懒加载（enh 包 3）：cachedRead → 剥 frontmatter/dataviewjs → 按 path 缓存；
- *  完成时仍是当前篇则原位填充正文（不整篇重渲染，防滚动位置重置） */
+/** 剪藏正文懒加载（enh 包 3）：cachedRead → 剥 frontmatter/dataviewjs → 按 path 缓存**原文**；
+ *  完成时仍是当前篇则原位水合正文（MarkdownRenderer，不整篇重渲染，防滚动位置重置） */
 async function loadClipBody(a: ClipArticle): Promise<void> {
   const path = a.notePath;
   if (!path || clipBodyCache.has(path)) return;
@@ -976,10 +867,12 @@ async function loadClipBody(a: ClipArticle): Promise<void> {
   clipBodyCache.set(path, body);
   if (M.cur && M.cur.id === a.id && readerEl) {
     const md = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
-    if (md) {
-      md.innerHTML = body ? paragraphsHtml(body) : `<p class="dim">（笔记暂无正文）</p>`;
-      bindImgFallback(md);
+    if (!md) return;
+    if (!body) {
+      md.innerHTML = `<p class="dim">（笔记暂无正文）</p>`;
+      return;
     }
+    void hydrateArticleMarkdown(md, body, path, () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
 }
 
@@ -1037,32 +930,9 @@ function selectArticle(id: string): void {
 
 async function doSave(a: ClipArticle | null): Promise<void> {
   if (!a) return;
-  if (a.origin === 'brief') { await doSaveBrief(a); return; }
   if (a.origin !== 'news') return;
   const ok = await flowSave(a);
   if (!ok) return;
-  await refreshAfterAction();
-}
-
-/** 简报保存（ADR-0119 §14）：写**专属目录**剪藏笔记（要点正文 + 原视频 url 进 frontmatter），并标 saved。
- *  与 news 保存的分流差异：B站视频在 news 侧会分流文献盒（ADR-0068），简报不走该分流——它就是一篇要点笔记。 */
-async function doSaveBrief(a: ClipArticle): Promise<void> {
-  const raw = a.raw || {};
-  if (raw.error) { notice('本期抓取失败，没有可保存的内容', 'warning'); return; }
-  const ok = await writeClipNote({
-    url: a.url,
-    author: a.author,
-    platform: 'B站',
-    summary: a.summary,
-    tags: [],
-    date: String(raw.date || ''),
-    title: a.title,
-    body: a.body,
-  }, dailyBriefDirOf());
-  if (!ok) return;
-  raw.read = true;          // 同步内存位（目录即时绿显）
-  raw.state = 'saved';
-  await writeBriefState(raw, 'save');
   await refreshAfterAction();
 }
 
@@ -1322,20 +1192,10 @@ function openMobDetail(id: string): void {
 }
 
 /** 打开即已读（m3 去在读 + ADR-0108 桌面接入）：打开一条未处理 news → 静默标已读（无 toast/撤销）。
- *  内存 read 位**同步**置（目录即时灰显、rail 计数即时减），落盘走串行队列（正文磁盘清空，
- *  内存 raw 保留给本次会话阅读）。会话内该条按快照原位留灰，重开面板才重排沉段。 */
+ *  内存 read 位**同步**置（目录即时灰显、rail 计数即时减），落盘走串行队列（issue 274 起
+ *  正文保留在盘，内存 raw 继续供本次会话阅读）。会话内该条按快照原位留灰，重开面板才重排沉段。 */
 function markReadOnOpen(a: ClipArticle): void {
   if (!a || a.st !== 'unread') return;
-  // 每日简报（ADR-0119）：打开即已读写 briefs 段；失败条目不改状态（只可重跑）
-  if (a.origin === 'brief') {
-    const braw = a.raw;
-    if (!braw || braw.read === true || braw.error) return;
-    braw.read = true;
-    void writeBriefState(braw, 'read').then(() => {
-      if (M.open && !M.mobDetailOpen) { renderList(); renderRail(); }
-    }).catch(() => { /* 落盘失败保持静默（下次装载还原） */ });
-    return;
-  }
   if (a.origin !== 'news') return;
   const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
   if (!raw || raw.read === true) return;
@@ -1358,14 +1218,19 @@ function renderMobDetail(): void {
     mobSaveBtnEl.classList.toggle('saved', saved);
     mobSaveBtnEl.textContent = saved ? '已存' : '存为剪藏';
   }
-  const paras = a.body ? paragraphsHtml(a.body) : '';
+  const mdBody = a.origin === 'news' ? a.body : '';
+  const note = mdBody ? '' : (a.origin === 'clip' ? '剪藏笔记正文请在 Obsidian 中打开' : '正文已清空');
   const idx = mobItemOrder.indexOf(a);
   const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : '';
-  // 详情正文 markup 单源 render.ts（m3 原型屏2）
+  // 详情正文 markup 单源 render.ts（m3 原型屏2）；markdown 交 MarkdownRenderer 异步水合
   const detailBody = mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement;
-  detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), paras, seq });
+  detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), note, seq });
   mountIcons(detailBody);
   bindImgFallback(detailBody);
+  const mdEl = detailBody.querySelector('[data-clip-mob-md]') as HTMLElement | null;
+  if (mdEl && mdBody) {
+    void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || '', () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+  }
 }
 
 // ================= 设置 schema（ADR-0064 声明式；settings-panel 域清单挂载） =================
@@ -1392,7 +1257,6 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
             { value: 'large', label: '大' },
           ], onChange: () => applyReaderFontSize() },
           { type: 'path', mode: 'single', name: '剪藏目录', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
-          { type: 'path', mode: 'single', name: '每日简报目录', desc: '每日简报保存的文件夹，与剪藏目录分开', binding: { key: 'dailyBriefDir' } },
           { type: 'number', name: '面板宽度记忆', desc: '桌面拖拽面板边缘缩放后自动记忆，0 为未拖过', binding: { key: 'clipbookPanelWidth' }, min: 0, step: 10 },
           { type: 'number', name: '面板高度记忆', desc: '桌面拖拽面板边缘缩放后自动记忆，0 为未拖过', binding: { key: 'clipbookPanelHeight' }, min: 0, step: 10 },
           { type: 'number', name: '目录栏宽度记忆', desc: '拖动目录与阅读分隔线后自动记忆，0 为未拖过', binding: { key: 'clipbookMidWidth' }, min: 0, step: 10 },

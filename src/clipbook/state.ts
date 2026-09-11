@@ -7,8 +7,8 @@ import type { ClipNote } from './scan';
 import type { ClipbookData } from './data';
 
 export interface ClipSourceSel {
-  /** null = 全部未读；'clip' = 剪藏本；'site' = 站点（site 必填，issue 222）；'brief' = 每日简报（ADR-0119）；否则 inbox（platform 必填） */
-  kind: 'all' | 'inbox' | 'clip' | 'site' | 'brief';
+  /** null = 全部未读；'clip' = 剪藏本；'site' = 站点（site 必填，issue 222）；否则 inbox（platform 必填） */
+  kind: 'all' | 'inbox' | 'clip' | 'site';
   platform: string;
   up: string | null;
   /** site 源的站点名（归一见 store normSite；非 site 源为空串） */
@@ -25,8 +25,6 @@ export interface ClipbookState {
   open: boolean;
   /** news.json 文章（内存面，未处理 + 已处理骨架） */
   articles: any[];
-  /** news.json briefs 段（每日简报条目面，ADR-0119） */
-  briefs: any[];
   /** news.json stats 段（只读镜像；rail 脚注「今日已读」取 byDate） */
   stats: { totalRead: number; totalSaved: number; totalSkipped: number; byPlatform: Record<string, number>; byDate: Record<string, number> };
   /** clipbook.json 侧写 */
@@ -59,7 +57,6 @@ export const M: ClipbookState = {
   dir: '归档/网页剪藏',
   open: false,
   articles: [],
-  briefs: [],
   stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
   sidecar: { articleOverrides: {}, savedArchive: [], order: [] },
   clipNotes: null,
@@ -78,7 +75,6 @@ export function resetClipbookState(): void {
   M.overlay = null;
   M.open = false;
   M.articles = [];
-  M.briefs = [];
   M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
   M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
   M.clipNotes = null;

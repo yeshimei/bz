@@ -45,7 +45,7 @@ beforeEach(() => {
 });
 
 describe('B站保存分流回写（enh 包 11）', () => {
-  it('B站链接保存 → 打开文献盒 + 回写已处理（read/saved/清 body/stats）+ 通知，不写剪藏笔记', async () => {
+  it('B站链接保存 → 打开文献盒 + 回写已处理（read/saved/stats）+ 通知，不写剪藏笔记', async () => {
     const vault = seedDisk([
       { platform: 'B站', title: '视频一', url: 'https://b23.tv/1', author: '影视飓风', body: '简介', date: '2026-09-01 08:00:00' },
     ]);
@@ -57,7 +57,7 @@ describe('B站保存分流回写（enh 包 11）', () => {
     const a = disk.articles.find((x: any) => x.url === 'https://b23.tv/1');
     expect(a.read).toBe(true);
     expect(a.state).toBe('saved');
-    expect(a.body).toBeUndefined();
+    expect(a.body).toBe('简介'); // issue 274：已收正文保留不清
     expect(disk.stats.totalSaved).toBe(1);
     expect(disk.stats.totalRead).toBe(1);
     // 分流不写剪藏目录
@@ -83,8 +83,9 @@ describe('rail 源「全部标为已读」（enh 包 4）', () => {
     const b = disk.articles.find((x: any) => x.url === 'https://gk.com/2');
     expect(a.read).toBe(true);
     expect(a.state).toBe('skipped');
-    expect(a.body).toBeUndefined();
+    expect(a.body).toBe('b1'); // issue 274：已读正文保留不清
     expect(b.read).toBe(true);
+    expect(b.body).toBe('b2');
     // 已读条目不被二次计数
     const c = disk.articles.find((x: any) => x.url === 'https://zh.com/3');
     expect(c.read).toBe(true);
@@ -99,6 +100,45 @@ describe('rail 源「全部标为已读」（enh 包 4）', () => {
     await flowMarkAllRead([]);
     await drainNewsWritesForTests();
     expect(vault.files.get(getNewsFilePath())).toBe(before);
+  });
+});
+
+describe('已处理正文保留（issue 274）', () => {
+  it('单篇已读 → 磁盘 body 保留；会话目录已读段条目可取正文（打开查看数据链路）', async () => {
+    const vault = seedDisk([
+      { platform: '果壳科学人', title: '甲', url: 'https://gk.com/1', body: '正文甲', date: '2026-09-01 08:00:00' },
+    ]);
+    const { flowMarkRead } = await import('../../src/clipbook/flow');
+    const store = await import('../../src/clipbook/store');
+    await flowMarkRead({ raw: diskJson(vault).articles[0] });
+    await drainNewsWritesForTests();
+    const disk = diskJson(vault);
+    expect(disk.articles[0].read).toBe(true);
+    expect(disk.articles[0].state).toBe('skipped');
+    expect(disk.articles[0].body).toBe('正文甲');
+    // 会话目录（ADR-0108）：已读段条目仍携带正文（右栏/移动详情打开即渲染）
+    const sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
+    const flat = store.queryBySourceFull(disk.articles, sidecar, new Set(), [], { kind: 'all' }, {});
+    const buckets = store.bucketByState(flat);
+    expect(buckets.read).toHaveLength(1);
+    expect(buckets.read[0].body).toBe('正文甲');
+    // 收件流口径不变：已处理仍不进收件流
+    expect(store.queryBySource(disk.articles, sidecar, new Set(), [], { kind: 'all' }, {})).toHaveLength(0);
+  });
+
+  it('已收态（未命中剪藏目录，如 B 站转文献盒）→ 会话目录已收段条目可取正文', async () => {
+    const vault = seedDisk([
+      { platform: 'B站', title: '视频一', url: 'https://b23.tv/1', author: '影视飓风', body: '简介', date: '2026-09-01 08:00:00', read: true, state: 'saved' },
+    ]);
+    const store = await import('../../src/clipbook/store');
+    const flat = store.queryBySourceFull(
+      diskJson(vault).articles,
+      { articleOverrides: {}, savedArchive: [], order: [] },
+      new Set(), [], { kind: 'all' }, {}
+    );
+    const buckets = store.bucketByState(flat);
+    expect(buckets.saved).toHaveLength(1);
+    expect(buckets.saved[0].body).toBe('简介');
   });
 });
 
