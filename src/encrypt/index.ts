@@ -6,6 +6,7 @@
 import type { App } from 'obsidian';
 import { getSettings } from '../core/settings-provider';
 import { getApp } from '../core/app';
+import { notice } from '../core/notice';
 import { EncryptAppController, DEFAULT_PW_CHARSET } from './ui';
 import { vIc } from './vault-assets-view';
 
@@ -91,6 +92,29 @@ export function copyVaultPassword(app: App): void {
  */
 export function getSafeManager(): import('./data').SafeManager {
   return getController().dataManager;
+}
+
+/**
+ * 静默上锁（2026-09-11）：已锁定返回 false；否则清内存态并返回 true，**不弹通知**。
+ * 复用面板「立即上锁」同一条路径（uiManager.lockNow：SafeManager + 密码本包装层 + 明文缓存
+ * + 解锁态 UI 同步，安全模式下顺带落锁屏）——命令侧只负责通知文案，故与加密域拆开。
+ * 保险库与密码本共用一个 SafeManager（一把主密码），两个域的「锁定」命令都落到这里。
+ */
+export async function lockSafe(app: App): Promise<boolean> {
+  await ensureEncrypt(app);
+  if (!getSafeManager().unlocked) return false;
+  getController().uiManager.lockNow();
+  return true;
+}
+
+/**
+ * 锁定保险库（命令 bz-encrypt-lock，2026-09-11 首页入口菜单）：
+ * 一步上锁、全程不打开面板。此前只能进面板点顶栏「立即上锁」。
+ */
+export async function lockEncrypt(app: App): Promise<void> {
+  const ok = await lockSafe(app);
+  if (ok) notice('保险库已锁定', 'success');
+  else notice('保险库本来就是锁着的', 'warning');
 }
 
 /**

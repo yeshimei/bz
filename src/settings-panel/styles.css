@@ -26,6 +26,10 @@
   --sp-on-accent: #fff;
   --sp-radius: 12px;
   --sp-shadow: 0 1px 5px rgba(90, 70, 40, 0.06);
+  /* 弹出层（下拉菜单）：比卡片更亮一档 + 更硬的阴影 —— 与卡片同色时浮层「没有层级」，
+     2026-09-11 观感整改（用户反馈弹出菜单廉价、不真实） */
+  --sp-pop: #ffffff;
+  --sp-pop-shadow: 0 4px 16px rgba(90, 70, 40, 0.14);
   --sp-input-bg: #fffcf6;
   --sp-ctl-off: #dcd5c2;
   --sp-knob: #fff;
@@ -49,6 +53,8 @@
   --sp-on-accent: #1b1b1f;
   --sp-radius: 10px;
   --sp-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  --sp-pop: #2e2e35;
+  --sp-pop-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
   --sp-input-bg: #202024;
   --sp-ctl-off: #3c3c44;
   --sp-knob: #fff;
@@ -595,11 +601,12 @@
   display: flex;
   flex-direction: column;
   padding: var(--bz-space-xs);
-  background: var(--sp-panel);
+  background: var(--sp-pop);
   border: 1px solid var(--sp-line);
-  border-radius: 9px;
-  box-shadow: var(--sp-shadow);
+  border-radius: 8px;
+  box-shadow: var(--sp-pop-shadow);
   z-index: 20;
+  /* 无入场动效（2026-09-11 用户：弹出菜单不要过度动效） */
   max-height: 260px;
   overflow-y: auto;
 }
@@ -611,7 +618,8 @@
   justify-content: space-between;
   gap: var(--bz-space-sm);
   width: 100%;
-  padding: 6px var(--bz-space-sm);
+  min-height: 30px;
+  padding: 0 var(--bz-space-sm);
   border: 0;
   background: transparent;
   font-family: inherit;

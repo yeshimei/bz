@@ -1,4 +1,4 @@
-/* 源指纹 778413b9758c751f · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f2e28ce6e6c7ecbe · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -49,9 +49,10 @@ var BZR_home = (() => {
     iconSpan: () => iconSpan,
     loadingEntriesHtml: () => loadingEntriesHtml,
     loadingFlowHtml: () => loadingFlowHtml,
+    menuHeadHtml: () => menuHeadHtml,
     nextHtml: () => nextHtml,
     panelFrameHtml: () => panelFrameHtml,
-    pomodoroMenuLabel: () => pomodoroMenuLabel,
+    pomodoroMenuAction: () => pomodoroMenuAction,
     reorderTo: () => reorderTo,
     riverCountText: () => riverCountText,
     sheetHeadHtml: () => sheetHeadHtml,
@@ -183,40 +184,77 @@ var BZR_home = (() => {
     const hide = new Set(hidden != null ? hidden : []);
     return applyOrder(order, domains.filter((d) => !hide.has(d.id)));
   }
-  function pomodoroMenuLabel(focusing) {
-    return focusing ? "停止专注" : "开始专注";
+  function pomodoroMenuAction(phase) {
+    if (phase === "focusing") return { label: "停止专注", commandId: "bz-pomodoro-pause", icon: "pause" };
+    if (phase === "paused") return { label: "继续专注", commandId: "bz-pomodoro-pause", icon: "play" };
+    if (phase === "break") return { label: "跳过休息", commandId: "bz-pomodoro-skip", icon: "skip-forward" };
+    return { label: "开始专注", commandId: "bz-pomodoro-focus-toggle", icon: "timer" };
   }
   var DOMAIN_MENU = {
     diary: [{ label: "写日记", commandId: "bz-diary-write", icon: "pen-line" }],
-    memo: [{ label: "写备忘", commandId: "bz-memo-add", icon: "clipboard-list" }],
+    memo: [
+      { label: "写备忘", commandId: "bz-memo-add", icon: "clipboard-list" },
+      // 打开备忘录编辑器并把**当前打开的笔记**绑定为关联（定位 chip 预置），不弹添加窗再手点定位
+      { label: "给当前笔记记一笔", commandId: "bz-memo-note-binding", icon: "notebook-pen" }
+    ],
     cinema: [
       { label: "加影视", commandId: "bz-cinema-add", icon: "plus" },
-      { label: "影视分析报告", commandId: "bz-cinema-analysis", icon: "bar-chart-3" }
+      { label: "影视分析报告", commandId: "bz-cinema-analysis", icon: "bar-chart-3" },
+      // 从「想看」池随机抽一部并直接开详情（抽不动脑子时的入口）
+      { label: "随机抽一部", commandId: "bz-cinema-random-pick", icon: "shuffle" }
     ],
     review: [
       { label: "开始复习", commandId: "bz-review-start", icon: "play" },
       { label: "加入复习计划", commandId: "bz-review-add", icon: "plus" },
       { label: "复习计划分析报告", commandId: "bz-review-report", icon: "bar-chart-3" }
     ],
-    // 番茄钟：一把切换（专注中→停止；休息中→跳过休息再开；idle→开），命令 bz-pomodoro-focus-toggle。
-    // 唯一动态文案项：label 由 ui.ts 按番茄钟实时相位改写为「停止专注 / 开始专注」（dynamic='focus'）
-    pomodoro: [{ label: "开始专注", commandId: "bz-pomodoro-focus-toggle", icon: "timer", dynamic: "focus" }],
+    // 番茄钟：**相位敏感的单个动作**（见 pomodoroMenuAction）——静态项只是 idle 兜底，
+    // 挂菜单时整条按实时相位替换（文案/命令/图标），四相位互斥、一次只出一条。
+    pomodoro: [
+      { label: "开始专注", commandId: "bz-pomodoro-focus-toggle", icon: "timer", dynamic: "phase", keepHome: true }
+    ],
     favorites: [{ label: "加收藏", commandId: "bz-favorites-add", icon: "bookmark" }],
+    // 剪藏本此前是空菜单（无域快捷动作）；这条是唯一「不开面板」的批量动作，故挂在入口上。
+    // 危险项：一次改 N 条 read 状态（面板里同款动作也是走确认框），故 kind: 'danger' + 确认框；
+    // keepHome = 确认框叠在首页上、清完当场看到「未读 N 篇」归零。
+    clipping: [
+      { label: "未读全部标为已读", commandId: "bz-clipbook-mark-all-read", icon: "check-check", kind: "danger", keepHome: true }
+    ],
     knowledge: [
       { label: "术语生成文献笔记", commandId: "bz-knowledge-note-term", icon: "file-text" },
       { label: "视频生成文献笔记", commandId: "bz-knowledge-note-video", icon: "list-video" }
     ],
-    bookshelf: [{ label: "阅读分析报告", commandId: "bz-reading-report-open", icon: "bar-chart-3" }],
+    bookshelf: [
+      { label: "阅读分析报告", commandId: "bz-reading-report-open", icon: "bar-chart-3" },
+      // 直开书架墙并切到「在读」分栏（有在读时才点亮入口彩点，见 buildDots）
+      { label: "继续在读", commandId: "bz-bookshelf-continue", icon: "book-open" }
+    ],
     secondbrain: [
       { label: "第二大脑对话", commandId: "bz-secondbrain-chat", icon: "message-circle" },
-      { label: "参考侧栏", commandId: "bz-secondbrain-open", icon: "zap" }
+      { label: "参考侧栏", commandId: "bz-secondbrain-open", icon: "zap" },
+      // 全库重建向量索引（函数早已存在、此前没有命令入口）
+      { label: "重建索引", commandId: "bz-secondbrain-rebuild-index", icon: "refresh-cw", keepHome: true }
     ],
     belongings: [{ label: "加物品", commandId: "bz-belongings-add", icon: "archive" }],
-    vault: [{ label: "快速生成密码", commandId: "bz-password-vault-gen", icon: "key" }]
+    // 保险库：此前是空菜单（无域快捷动作）；锁定是唯一「不开面板」的一步动作
+    // （加密当前笔记 / 快速取密虽已有命令，但属「作用于当前笔记」，不在本次采纳范围）
+    encrypt: [
+      { label: "锁定保险库", commandId: "bz-encrypt-lock-vault", icon: "lock", keepHome: true }
+    ],
+    vault: [
+      { label: "快速生成密码", commandId: "bz-password-vault-gen", icon: "key" },
+      // 与保险库同库同锁（一把主密码）：文案按本域名口径，行为是同一个 lockSafe
+      { label: "锁定密码本", commandId: "bz-password-vault-lock", icon: "lock", keepHome: true }
+    ]
   };
   function domainColor(id) {
     var _a;
     return (_a = DOMAIN_DOT[id]) != null ? _a : "#8a8f99";
+  }
+  function menuHeadHtml(d, data) {
+    var _a;
+    const ct = (_a = riverCountText(d.id, data)) != null ? _a : "";
+    return '<span class="bz-item-menu-head-dot" style="background:' + domainColor(d.id) + '"></span><span class="bz-item-menu-head-nm">' + esc(d.name) + "</span>" + (ct ? '<span class="bz-item-menu-head-cnt">' + esc(ct) + "</span>" : "");
   }
   function sheetHeadHtml(d, data) {
     var _a;
@@ -250,14 +288,12 @@ var BZR_home = (() => {
   var TIMELINE_KIND_LABEL = {
     produce: "产出",
     progress: "状态推进",
-    note: "点评 ✦",
-    skipped: "已跳过"
+    note: "点评 ✦"
   };
   var DEFAULT_TIMELINE_FILTER = {
     produce: true,
     progress: true,
-    notes: true,
-    skipped: false
+    notes: true
   };
   function timelineRangeDays(range) {
     if (range === "3d") return 3;
@@ -350,7 +386,9 @@ var BZR_home = (() => {
       memo: c.memoUrgentOpen > 0 ? "hot" : day.summary.memoDone + day.summary.memoCreated > 0 ? "ok" : "off",
       pomodoro: data.pomodoroFocusing ? "warn" : day.summary.pomodoros > 0 ? "ok" : "off",
       cinema: c.cinemaWatching > 0 ? "warn" : hasEvent("cinema") ? "ok" : "off",
-      bookshelf: hasEvent("bookshelf") ? "ok" : "off",
+      // 书库（2026-09-11 用户要求）：**有在读 = warn**，与影院「有在看」同口径——
+      // 「在读 N 本」是进行中的事，比「今天动过书库」更该亮；没在读才看今日动静。
+      bookshelf: c.bookshelfReading > 0 ? "warn" : hasEvent("bookshelf") ? "ok" : "off",
       clipping: c.clippingUnread > 0 ? "warn" : "off"
     };
   }
@@ -419,7 +457,7 @@ var BZR_home = (() => {
       var _a;
       const dot = dotOf(dotsMap, d.id);
       const ct = (_a = riverCountText(d.id, data)) != null ? _a : d.sub;
-      return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '"><span class="bz-home-dot bz-home-dot--' + dot + '"></span><span class="bz-home-eic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-enm">' + esc(d.name) + '</span><span class="bz-home-ect">' + esc(ct) + '</span><span class="bz-home-ego">→</span></div>';
+      return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '"><span class="bz-home-dot bz-home-dot--' + dot + '"></span><span class="bz-home-eic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-enm">' + esc(d.name) + '</span><span class="bz-home-ect">' + esc(ct) + "</span></div>";
     }).join("");
   }
   function flowHtml(data, view, opts = {}) {
@@ -444,7 +482,7 @@ var BZR_home = (() => {
     }).join("");
     if (kept.length) return wrap(body);
     if (day.events.length) {
-      return wrap('<div class="bz-home-flow-empty">这一天有痕迹，但都被「时间线内容过滤」挡掉了。<br>去 <b>设置 → 首页</b> 把想看的类别勾上。</div>');
+      return wrap('<div class="bz-home-flow-empty">这一天有痕迹，但都被「内容过滤」挡掉了。<br>去 <b>设置 → 首页 → 内容过滤</b> 把想看的类别勾上。</div>');
     }
     return wrap('<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>');
   }

@@ -13,6 +13,7 @@
  */
 import { esc, iconSpan } from '../core/ui/str';
 import { DOMAIN_ICONS } from '../core/domain-icons';
+import type { PomodoroPhase } from '../core/pomodoro-phase';
 import type { RecapItem, RecapSummary } from '../recap/aggregate';
 
 // 再出口（壳经 window.BZR_home 取用；插件 ui.ts 亦统一从这里取）
@@ -173,15 +174,38 @@ export interface DomainMenuAction {
   commandId: string;
   icon: string;
   /**
-   * 动态文案槽位：由 ui.ts 在挂菜单时按实时状态改写 label（静态 label 作兜底/默认）。
-   * 'focus' = 番茄钟（专注中 → 停止专注；否则 → 开始专注）——唯一动态项。
+   * **相位敏感单动作**槽位（番茄钟专用）：ui.ts 挂菜单时用 `pomodoroMenuAction(H.pomodoroPhase)`
+   * 的结果**整体盖掉** label / commandId / icon —— 一个相位只出**一条**，
+   * 不是「多条按状态显示不同文案」（曾把三项并列写出「停止专注 + 继续专注」自相矛盾的菜单，2026-09-11 修正）。
    */
-  dynamic?: 'focus';
+  dynamic?: 'phase';
+  /** 危险动作（清空/批量改数据类）：菜单项与抽屉项红色强调 */
+  kind?: 'danger';
+  /**
+   * 执行后**不关首页面板**（只读/即时类动作，如锁定保险库、暂停专注）——
+   * 关面板再执行会让用户看不到结果，且下次打开还要重走一遍。执行完由 ui.ts 刷新面板数据。
+   * 缺省 false = 关首页再执行（打开别域面板/需要确认框的动作走这条）。
+   */
+  keepHome?: boolean;
 }
 
-/** 番茄钟菜单项文案（纯函数，node 可测）：专注进行中 → 停止专注；否则开始专注 */
-export function pomodoroMenuLabel(focusing: boolean): string {
-  return focusing ? '停止专注' : '开始专注';
+/**
+ * 番茄钟那一条菜单项（纯函数，node 可测）：**相位敏感的单个动作**，四相位互斥、一次只出一条。
+ * 用户 2026-09-11 拍板的口径（原先把「停止专注/跳过休息/继续专注」并列 —— 停止与继续互斥，
+ * 并列必自相矛盾）：
+ *   ① 没开始任何专注 → 开始专注
+ *   ② 正在专注       → 停止专注（= 暂停；点完就落到③那一支，故两条不会同现）
+ *   ③ 停止专注了     → 继续专注
+ *   ④ 在休息阶段     → 跳过休息
+ * 三支命令都是现成的：②③ 共用 bz-pomodoro-pause（计时中暂停 / 暂停中继续），
+ * ① 走 bz-pomodoro-focus-toggle（idle 分支即开始），④ 走 bz-pomodoro-skip。
+ * 类型单源 = core/pomodoro-phase（与 pomodoro/ui.ts::menuPhase 的返回值一一对应）。
+ */
+export function pomodoroMenuAction(phase: PomodoroPhase): DomainMenuAction {
+  if (phase === 'focusing') return { label: '停止专注', commandId: 'bz-pomodoro-pause', icon: 'pause' };
+  if (phase === 'paused') return { label: '继续专注', commandId: 'bz-pomodoro-pause', icon: 'play' };
+  if (phase === 'break') return { label: '跳过休息', commandId: 'bz-pomodoro-skip', icon: 'skip-forward' };
+  return { label: '开始专注', commandId: 'bz-pomodoro-focus-toggle', icon: 'timer' };
 }
 
 /**
@@ -190,39 +214,86 @@ export function pomodoroMenuLabel(focusing: boolean): string {
  * **本表没有条目的域 = 不挂右键菜单 / 长按抽屉**（空的就别弹），ui.ts 依此判断。
  * 图标一律取「其他域右键菜单已在用」的 lucide 名（原型图标表按名查，
  * 不在表里的名字会静默渲染成空 —— 新增图标记得同时补 prototypes/home/prototype-icons.js）。
+ *
+ * 2026-09-11 补 9 条（用户点名采纳）：全部是「不开面板、一步完成」的动作，
+ * 其中即时类带 `keepHome`（不关首页）；清空类带 `kind: 'danger'`（红字 + 二次确认）。
  */
 export const DOMAIN_MENU: Record<string, DomainMenuAction[]> = {
   diary: [{ label: '写日记', commandId: 'bz-diary-write', icon: 'pen-line' }],
-  memo: [{ label: '写备忘', commandId: 'bz-memo-add', icon: 'clipboard-list' }],
+  memo: [
+    { label: '写备忘', commandId: 'bz-memo-add', icon: 'clipboard-list' },
+    // 打开备忘录编辑器并把**当前打开的笔记**绑定为关联（定位 chip 预置），不弹添加窗再手点定位
+    { label: '给当前笔记记一笔', commandId: 'bz-memo-note-binding', icon: 'notebook-pen' },
+  ],
   cinema: [
     { label: '加影视', commandId: 'bz-cinema-add', icon: 'plus' },
     { label: '影视分析报告', commandId: 'bz-cinema-analysis', icon: 'bar-chart-3' },
+    // 从「想看」池随机抽一部并直接开详情（抽不动脑子时的入口）
+    { label: '随机抽一部', commandId: 'bz-cinema-random-pick', icon: 'shuffle' },
   ],
   review: [
     { label: '开始复习', commandId: 'bz-review-start', icon: 'play' },
     { label: '加入复习计划', commandId: 'bz-review-add', icon: 'plus' },
     { label: '复习计划分析报告', commandId: 'bz-review-report', icon: 'bar-chart-3' },
   ],
-  // 番茄钟：一把切换（专注中→停止；休息中→跳过休息再开；idle→开），命令 bz-pomodoro-focus-toggle。
-  // 唯一动态文案项：label 由 ui.ts 按番茄钟实时相位改写为「停止专注 / 开始专注」（dynamic='focus'）
-  pomodoro: [{ label: '开始专注', commandId: 'bz-pomodoro-focus-toggle', icon: 'timer', dynamic: 'focus' }],
+  // 番茄钟：**相位敏感的单个动作**（见 pomodoroMenuAction）——静态项只是 idle 兜底，
+  // 挂菜单时整条按实时相位替换（文案/命令/图标），四相位互斥、一次只出一条。
+  pomodoro: [
+    { label: '开始专注', commandId: 'bz-pomodoro-focus-toggle', icon: 'timer', dynamic: 'phase', keepHome: true },
+  ],
   favorites: [{ label: '加收藏', commandId: 'bz-favorites-add', icon: 'bookmark' }],
+  // 剪藏本此前是空菜单（无域快捷动作）；这条是唯一「不开面板」的批量动作，故挂在入口上。
+  // 危险项：一次改 N 条 read 状态（面板里同款动作也是走确认框），故 kind: 'danger' + 确认框；
+  // keepHome = 确认框叠在首页上、清完当场看到「未读 N 篇」归零。
+  clipping: [
+    { label: '未读全部标为已读', commandId: 'bz-clipbook-mark-all-read', icon: 'check-check', kind: 'danger', keepHome: true },
+  ],
   knowledge: [
     { label: '术语生成文献笔记', commandId: 'bz-knowledge-note-term', icon: 'file-text' },
     { label: '视频生成文献笔记', commandId: 'bz-knowledge-note-video', icon: 'list-video' },
   ],
-  bookshelf: [{ label: '阅读分析报告', commandId: 'bz-reading-report-open', icon: 'bar-chart-3' }],
+  bookshelf: [
+    { label: '阅读分析报告', commandId: 'bz-reading-report-open', icon: 'bar-chart-3' },
+    // 直开书架墙并切到「在读」分栏（有在读时才点亮入口彩点，见 buildDots）
+    { label: '继续在读', commandId: 'bz-bookshelf-continue', icon: 'book-open' },
+  ],
   secondbrain: [
     { label: '第二大脑对话', commandId: 'bz-secondbrain-chat', icon: 'message-circle' },
     { label: '参考侧栏', commandId: 'bz-secondbrain-open', icon: 'zap' },
+    // 全库重建向量索引（函数早已存在、此前没有命令入口）
+    { label: '重建索引', commandId: 'bz-secondbrain-rebuild-index', icon: 'refresh-cw', keepHome: true },
   ],
   belongings: [{ label: '加物品', commandId: 'bz-belongings-add', icon: 'archive' }],
-  vault: [{ label: '快速生成密码', commandId: 'bz-password-vault-gen', icon: 'key' }],
+  // 保险库：此前是空菜单（无域快捷动作）；锁定是唯一「不开面板」的一步动作
+  // （加密当前笔记 / 快速取密虽已有命令，但属「作用于当前笔记」，不在本次采纳范围）
+  encrypt: [
+    { label: '锁定保险库', commandId: 'bz-encrypt-lock-vault', icon: 'lock', keepHome: true },
+  ],
+  vault: [
+    { label: '快速生成密码', commandId: 'bz-password-vault-gen', icon: 'key' },
+    // 与保险库同库同锁（一把主密码）：文案按本域名口径，行为是同一个 lockSafe
+    { label: '锁定密码本', commandId: 'bz-password-vault-lock', icon: 'lock', keepHome: true },
+  ],
 };
 
 /** 域色（入口行 / 移动瓦片 / 抽屉盒头共用单一口径；未登记的域回落中性灰） */
 export function domainColor(id: string): string {
   return DOMAIN_DOT[id] ?? '#8a8f99';
+}
+
+/**
+ * 桌面右键菜单盒头 markup（B 方案，2026-09-11 用户选）——**一行**：
+ * 「域色点 + 域名 ……… 计数」。与长按抽屉的两行盒头（sheetHeadHtml）同源口径，
+ * 但桌面菜单是窄条，塞两行会把菜单撑高，故各自出 markup：
+ *  - 右侧计数 = `riverCountText`（无计数就**留空**，不回落域副题 —— 副题偏长会把菜单顶宽）；
+ *  - 域色点走内联 style（各域色不同，CSS 侧不枚举）；文本一律 esc。
+ * 只有 home 传了它（其他域不传 = 不渲染盒头，见 core/item-actions 的 menuHeadHtml）。
+ */
+export function menuHeadHtml(d: HomeDomain, data: RiverData): string {
+  const ct = riverCountText(d.id, data) ?? '';
+  return '<span class="bz-item-menu-head-dot" style="background:' + domainColor(d.id) + '"></span>'
+    + '<span class="bz-item-menu-head-nm">' + esc(d.name) + '</span>'
+    + (ct ? '<span class="bz-item-menu-head-cnt">' + esc(ct) + '</span>' : '');
 }
 
 /**
@@ -335,7 +406,7 @@ export interface RiverData {
   pomodoroFocusing: boolean;
 }
 
-/* ---------- 时间线四类（内容过滤 / 范围 / 字号 口径；issue 287，2026-09-11 用户点名） ---------- */
+/* ---------- 时间线三类（内容过滤 / 范围 / 字号 口径；issue 287，2026-09-11 用户点名） ---------- */
 
 /** 时间线一条痕迹的类别（设置面板「时间线内容过滤」的勾选单位）。
  *  分法只认「这条痕迹说了什么」，不认域——同一条日记痕迹永远是 produce，
@@ -346,28 +417,26 @@ export type TimelineKind =
   /** 状态推进：改的是已有东西的状态（加入片单、读到 N%、新增待办、标记在看） */
   | 'progress'
   /** 小橘点评 ✦（不是痕迹，是挂在痕迹下面的那句话） */
-  | 'note'
-  /** 已跳过：剪藏流里被划掉的条目（news:skipped，真实数据里占行为流 51%） */
-  | 'skipped';
+  | 'note';
 
-/** 四类的中文名（设置面板勾选项文案单源；首页不需要，故只在这边声明） */
+/** 三类的中文名（设置面板勾选项文案单源；首页不需要，故只在这边声明） */
 export const TIMELINE_KIND_LABEL: Record<TimelineKind, string> = {
   produce: '产出',
   progress: '状态推进',
   note: '点评 ✦',
-  skipped: '已跳过',
 };
 
-/** 时间线过滤设置（四个键的读值快照；缺省全开产出/状态推进/点评、关已跳过） */
+/** 时间线过滤设置（三个键的读值快照；缺省全开产出/状态推进/点评）
+ *  「已跳过」曾占第四格，2026-09-11 用户拍板去掉（数据源在 smartcat 行为流、首页时间线吃不到，
+ *  留着只是一个点不动的开关）——见 issue 288。 */
 export interface TimelineFilter {
   produce: boolean;
   progress: boolean;
   notes: boolean;
-  skipped: boolean;
 }
 
 export const DEFAULT_TIMELINE_FILTER: TimelineFilter = {
-  produce: true, progress: true, notes: true, skipped: false,
+  produce: true, progress: true, notes: true,
 };
 
 /** 时间线时间范围（「最近 N 天」的分子；week = 周历窗口全长 7 天） */
@@ -507,7 +576,7 @@ export function buildPreviews(data: RiverData): RiverPreview[] {
   return out;
 }
 
-/** 入口行彩点状态：ok=今日有动静 / warn=进行中·待处理（日记连击、专注中、剪藏未读、影院在看）/ hot=逾期·需立即关注（复习逾期、重要备忘未完成）/ off=无动静 */
+/** 入口行彩点状态：ok=今日有动静 / warn=进行中·待处理（日记连击、专注中、剪藏未读、影院在看、书库在读）/ hot=逾期·需立即关注（复习逾期、重要备忘未完成）/ off=无动静 */
 export type RiverDot = 'ok' | 'warn' | 'hot' | 'off';
 
 /** 彩点规则（node 可测；与原型 buildDots 一致，映射到 home 域 id：memo/memo 同源）。
@@ -523,7 +592,9 @@ export function buildDots(data: RiverData): Record<string, RiverDot> {
     memo: c.memoUrgentOpen > 0 ? 'hot' : day.summary.memoDone + day.summary.memoCreated > 0 ? 'ok' : 'off',
     pomodoro: data.pomodoroFocusing ? 'warn' : day.summary.pomodoros > 0 ? 'ok' : 'off',
     cinema: c.cinemaWatching > 0 ? 'warn' : hasEvent('cinema') ? 'ok' : 'off',
-    bookshelf: hasEvent('bookshelf') ? 'ok' : 'off',
+    // 书库（2026-09-11 用户要求）：**有在读 = warn**，与影院「有在看」同口径——
+    // 「在读 N 本」是进行中的事，比「今天动过书库」更该亮；没在读才看今日动静。
+    bookshelf: c.bookshelfReading > 0 ? 'warn' : hasEvent('bookshelf') ? 'ok' : 'off',
     clipping: c.clippingUnread > 0 ? 'warn' : 'off',
   };
 }

@@ -27,6 +27,8 @@
  * jsonFileStore 经 core/app getApp() 取到同一实例，单源不裂）。
  */
 import moment from 'moment';
+import { notice } from '../../../src/core/notice';
+import { openFlowDialog } from '../../../src/core/flow-dialog';
 
 export { moment };
 
@@ -394,10 +396,65 @@ export class FakeMetadataCache {
   }
 }
 
-/** 评审壳 App：vault + metadataCache（home 聚合链的完整读取面） */
+/**
+ * 评审壳 App：vault + metadataCache（home 聚合链的完整读取面）+ commands（见下）。
+ */
 export class FakeApp {
   vault = new FakeVault();
   metadataCache = new FakeMetadataCache();
+  /**
+   * 命令面（2026-09-11）：入口菜单新增的 9 条命令在这里**真跑一遍**——
+   * 否则 FakeApp 没有 commands，runCommand 一律降级成「该功能暂时不可用」通知，
+   * 新动作在壳里等于看不见（点「未读全部标为已读」连确认框都出不来）。
+   *
+   * 口径：
+   *  - 壳里**不复制业务实现**，只复刻「用户看到什么」——即时类给一条通知，
+   *    确认类弹同一个 core/flow-dialog（同一皮类 `.bz-clip-dialog-editorial`，
+   *    真实现见 src/clipbook/index.ts::markAllUnreadRead，改文案两边一起改）；
+   *  - **表里没有的命令一律抛错**：入口左键（bz-diary-open 等）保持原降级语义，
+   *    壳自检「入口点击：降级通知弹出不崩」依赖它。
+   */
+  commands = {
+    executeCommandById: (id: string): Promise<void> => {
+      const fn = FAKE_COMMANDS[id];
+      if (!fn) throw new Error(`FakeApp 未实现命令：${id}`);
+      return fn();
+    },
+  };
 }
+
+/** 壳内命令表（键 = 命令 id；值返回 Promise，与 Obsidian executeCommandById 同签名） */
+const FAKE_COMMANDS: Record<string, () => Promise<void>> = {
+  // —— 番茄钟（壳里由 toggleFocusSim 驱动真状态机，这里只出文案）——
+  // 菜单项是**相位敏感的单个动作**（见 src/home/shared.pomodoroMenuAction）：
+  // idle→focus-toggle / focusing·paused→pause（暂停或继续）/ break→skip。
+  // 壳里给中性文案，别把相位说死（同一条 pause 命令在「停止专注」与「继续专注」两支下都会被点）。
+  'bz-pomodoro-focus-toggle': async () => notice('已开始专注', 'success'),
+  'bz-pomodoro-pause': async () => notice('已切换专注的暂停 / 继续', 'success'),
+  'bz-pomodoro-skip': async () => notice('已跳过休息，进入下一轮专注', 'success'),
+  // —— 锁定类（真实现：encrypt/index.ts::lockSafe → UIManager.lockNow）——
+  'bz-encrypt-lock-vault': async () => notice('保险库已锁定', 'success'),
+  'bz-password-vault-lock': async () => notice('密码本已锁定', 'success'),
+  // —— 即时类 ——
+  'bz-secondbrain-rebuild-index': async () => notice('索引重建完成', 'success'),
+  // —— 开别域面板类（壳里没有别域面板，只给一条说明性通知）——
+  'bz-memo-note-binding': async () => notice('已打开备忘录（关联当前笔记）'),
+  'bz-cinema-random-pick': async () => notice('已打开影院并抽中一部'),
+  'bz-bookshelf-continue': async () => notice('已打开书库（在读分栏）'),
+  // —— 确认类：与真实现同一个流程框 + 同一皮类，文案同源 ——
+  'bz-clipbook-mark-all-read': async () => {
+    const unread = 42; // 壳内不读真数据，给个确定篇数让确认框可判读
+    const ok = await openFlowDialog({
+      className: 'bz-clip-dialog-editorial',
+      title: '未读全部标为已读',
+      message: `将把未读流里的 ${unread} 篇全部标为已读。`,
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: `全部已读（${unread} 篇）`, value: 'ok', cta: true },
+      ],
+    });
+    if (ok === 'ok') notice(`已把 ${unread} 篇标为已读`, 'success');
+  },
+};
 
 export type App = FakeApp;

@@ -22,11 +22,11 @@ import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys } from './settings
 
 // 备忘录（memo 域，ADR-0092 旧备忘录域退役后 memo.json 唯一属主，ADR-0117 正名：UI/交互/写盘/引用同步归本域；
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
-import { openMemoPanel, addMemoItem, unloadMemo, ensureMemoReminders, ensureFileSync, unloadFileSync } from './memo';
+import { openMemoPanel, addMemoItem, addMemoForActiveNote, unloadMemo, ensureMemoReminders, ensureFileSync, unloadFileSync } from './memo';
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
-import { openClipbook, unloadClipbook } from './clipbook';
+import { openClipbook, markAllUnreadRead, unloadClipbook } from './clipbook';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
 import { openDiary, openDiaryWrite, unloadDiary } from './diary';
@@ -36,9 +36,9 @@ import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorite
 import { unloadReadingReport } from './reading-report';
 // 影院（cinema 域，ADR-0087 起接管影视；旧 movie 域已退役。ADR-0090：openCinemaAnalysis
 // 直达影院面板分析页，独立报告窗退役）
-import { openCinema, addCinemaItem, openCinemaAnalysis, unloadCinema } from './cinema';
+import { openCinema, addCinemaItem, openCinemaAnalysis, pickRandomCinema, unloadCinema } from './cinema';
 // 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；读书报告内嵌为面板内视图）
-import { openBookshelf, openBookshelfReport, unloadBookshelf } from './bookshelf';
+import { openBookshelf, openBookshelfReport, continueReading, unloadBookshelf } from './bookshelf';
 // 影视分析报告独立域已退役（ADR-0090：报告窗并入影院内嵌分析页，命令直达 bz-cinema-analysis）
 import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
 import {
@@ -47,18 +47,19 @@ import {
   openSecondBrainChat,
   rebuildSecondBrainLinks,
   runSecondBrainLinkAll,
+  rebuildSecondBrainIndex,
   unloadSecondBrain,
 } from './secondbrain';
-import { openPomodoro, unloadPomodoro, ensurePomodoro, toggleFocus } from './pomodoro';
+import { openPomodoro, unloadPomodoro, ensurePomodoro, toggleFocus, skipBreak, togglePause } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // 知识盒（knowledge 域，ADR-0072 自 bili-downloader 迁出、ADR-0112 三部重构；网页版已移除，见 tools/bili-downloader）
 import { openKnowledgePanel, openTermNote, openKnowledgeAddTask, unloadKnowledge } from './knowledge';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 右键菜单）
 import { openAttachMove, ensureAttachFileMenu, ATTACH_COMMAND_ID } from './attach';
 // 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板）
-import { openEncrypt, encryptCurrentNote, copyVaultPassword, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
+import { openEncrypt, encryptCurrentNote, copyVaultPassword, lockEncrypt, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 // 密码本（password-vault 域，ADR-0109 自统一保险库拆回独立域；ADR-0078 成型版，共享保险箱锁与数据）
-import { openPasswordVault, unloadPasswordVault, copyGeneratedPassword } from './password-vault';
+import { openPasswordVault, unloadPasswordVault, copyGeneratedPassword, lockPasswordVault } from './password-vault';
 // 内容首页（home 域，ticket 177；旧入口页 launcher 已退役删除，ADR-0093）
 import { openHome, unloadHome } from './home';
 // 今日回顾（recap 域，方向一 R2）：当天五域痕迹聚合只读面板
@@ -83,6 +84,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 备忘录（memo 域，ADR-0092 起为 memo.json 唯一属主）
   { id: 'bz-memo-open', name: '备忘录', icon: DOMAIN_ICONS.memo, callback: () => openMemoPanel(getApp()) },
   { id: 'bz-memo-add', name: '加备忘录', icon: 'clipboard-list', callback: () => addMemoItem(getApp()) },
+  // 给当前笔记记一笔（2026-09-11 首页入口菜单）：同一个创建弹窗 + 预置「定位」字段到当前笔记
+  { id: 'bz-memo-note-binding', name: '给当前笔记记一笔', icon: 'notebook-pen', callback: () => addMemoForActiveNote(getApp()) },
   // 归物本
   { id: 'bz-belongings-add', name: '加物品', icon: 'archive', callback: () => addBelongingsItem(getApp()) },
   { id: 'bz-belongings-open', name: '归物本', icon: DOMAIN_ICONS.belongings, callback: () => openBelongings(getApp()) },
@@ -90,6 +93,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-clipbook-open', name: '剪藏本', icon: DOMAIN_ICONS.clipping, callback: () => openClipbook(getApp()) },
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要（只重建摘要/标签，不动用户标题）
   { id: 'bz-auto-summary-redo', name: '重新生成当前剪藏摘要', icon: DOMAIN_ICONS['auto-summary'], callback: () => void redoSummaryForActiveFile(getApp()) },
+  // 未读全部标为已读（2026-09-11 首页入口菜单）：跨全库批量已读，确认框写明篇数
+  { id: 'bz-clipbook-mark-all-read', name: '未读全部标为已读', icon: 'check-check', callback: () => markAllUnreadRead() },
 
   // 日记本（diary 域，ADR-0115：原回忆墙升格正名；媒体墙即日记本唯一 UI）
   { id: 'bz-diary-open', name: '日记本', icon: DOMAIN_ICONS.diary, callback: () => openDiary(getApp()) },
@@ -106,8 +111,12 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 影院（cinema 域，ADR-0087）
   { id: 'bz-cinema-open', name: '影院', icon: DOMAIN_ICONS.cinema, callback: () => openCinema(getApp()) },
   { id: 'bz-cinema-add', name: '加影视', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
+  // 随机抽一部（2026-09-11 首页入口菜单）：想看池随机 → 直开详情
+  { id: 'bz-cinema-random-pick', name: '随机抽一部', icon: 'shuffle', callback: () => pickRandomCinema(getApp()) },
   // 书架墙（bookshelf 新域）
   { id: 'bz-bookshelf-open', name: '书库', icon: DOMAIN_ICONS.bookshelf, callback: () => openBookshelf(getApp()) },
+  // 继续在读（2026-09-11 首页入口菜单）：开书架墙并落到「在读」分栏
+  { id: 'bz-bookshelf-continue', name: '继续在读', icon: 'book-open', callback: () => void continueReading(getApp()) },
   // 复习计划（9 命令）
   { id: 'bz-review-open', name: '复习计划', icon: DOMAIN_ICONS.review, callback: () => openReviewPanel(getApp()) },
   // ticket 174：独立「复习计划分析报告」命令（直开统计弹窗）；图标弃 bar-chart-3（阅读分析报告独占，
@@ -132,10 +141,15 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-secondbrain-rebuild-links', name: '重跑当前笔记关联', icon: 'link', callback: () => rebuildSecondBrainLinks(getApp()) },
   // 自动双链（ticket 115）：存量未连接笔记手动批量补链（启动自动补链的显式兜底）
   { id: 'bz-secondbrain-link-all', name: '为未关联笔记批量补链', icon: 'link-2', callback: () => runSecondBrainLinkAll(getApp()) },
+  // 重建索引（2026-09-11 首页入口菜单）：全库重建向量索引（函数早已存在，此前无命令入口）
+  { id: 'bz-secondbrain-rebuild-index', name: '重建索引', icon: 'refresh-cw', callback: () => rebuildSecondBrainIndex(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, callback: () => openPomodoro(getApp()) },
   // 开始/停止专注（2026-09-10：首页入口菜单联动，一把切换，等价面板「开始 / 重置」两颗钮）
   { id: 'bz-pomodoro-focus-toggle', name: '开始/停止专注', icon: 'play', callback: () => void toggleFocus(getApp()) },
+  // 跳过休息 / 暂停·继续（2026-09-11 首页入口菜单）：休息中直接进下一轮专注；有无计时决定暂停还是继续
+  { id: 'bz-pomodoro-skip', name: '跳过休息', icon: 'skip-forward', callback: () => skipBreak(getApp()) },
+  { id: 'bz-pomodoro-pause', name: '暂停/继续专注', icon: 'pause', callback: () => togglePause(getApp()) },
   // 知识盒（knowledge 域，ADR-0112 三部：部壹文献录入与提炼 · 部贰卡片 · 部叁主题展示）
   { id: 'bz-knowledge-open', name: '知识盒', icon: DOMAIN_ICONS.knowledge, callback: () => openKnowledgePanel(getApp()) },
   { id: 'bz-knowledge-note-term', name: '术语生成文献笔记', icon: 'book-type', callback: () => openTermNote(getApp()) },
@@ -148,10 +162,15 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-encrypt-lock', name: '加密当前笔记', icon: 'lock-keyhole', callback: () => encryptCurrentNote(getApp()) },
   // 快速取密（fuzzy 选择器直取密码 → 剪贴板 60s 自动清空，不打开主面板）
   { id: 'bz-encrypt-copy-password', name: '快速复制密码', icon: 'key-round', callback: () => copyVaultPassword(getApp()) },
+  // 锁定保险库（2026-09-11 首页入口菜单）：一步上锁、不开面板（此前只能进面板点「立即上锁」）。
+  // id 不能用 bz-encrypt-lock —— 那条早被「加密当前笔记」占用（历史遗留的语义错位），改用 lock-vault
+  { id: 'bz-encrypt-lock-vault', name: '锁定保险库', icon: 'lock', callback: () => lockEncrypt(getApp()) },
   // 密码本（password-vault 域，ADR-0109 拆回独立域：ADR-0078 成型版 UI，与保险库共享锁与数据）
   { id: 'bz-password-vault-open', name: '密码本', icon: DOMAIN_ICONS['password-vault'], callback: () => openPasswordVault(getApp()) },
   // 快速生成密码（2026-09-10：首页入口菜单联动，按设置的长度/字符集生成即复制，60s 后清空剪贴板，不开面板）
   { id: 'bz-password-vault-gen', name: '快速生成密码', icon: 'key-round', callback: () => void copyGeneratedPassword(getApp()) },
+  // 锁定密码本（2026-09-11 首页入口菜单）：与保险库同库同锁（一把主密码）
+  { id: 'bz-password-vault-lock', name: '锁定密码本', icon: 'lock', callback: () => lockPasswordVault(getApp()) },
   // 小橘陪伴猫（smartcat 域）
   { id: 'bz-smartcat-open', name: '小橘', icon: DOMAIN_ICONS.smartcat, callback: () => openSmartCat(getApp()) },
   // f7：去 message-circle 重复（第二大脑对话保留）→ messages-square

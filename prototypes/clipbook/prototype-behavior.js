@@ -1,4 +1,4 @@
-/* 源指纹 da7aa7cde42fa52a · 仓内输入 72 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c9ff813051f8458d · 仓内输入 72 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -688,358 +688,6 @@ var BZW_clipbook = (() => {
     }
   });
 
-  // src/core/ui/icon.ts
-  function uiIcon(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-  var init_icon = __esm({
-    "src/core/ui/icon.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/icons.ts
-  function uiIconSpan(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-  function mountIcons(root) {
-    root.querySelectorAll("[data-lucide]").forEach((el) => {
-      const name = el.getAttribute("data-lucide") || "";
-      if (!name) return;
-      try {
-        const fresh = uiIconSpan(name);
-        const cls = el.className;
-        if (cls && cls !== "bz-ic") fresh.className = cls;
-        el.replaceWith(fresh);
-      } catch (e) {
-      }
-    });
-  }
-  var init_icons = __esm({
-    "src/core/ui/icons.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/button.ts
-  var init_button = __esm({
-    "src/core/ui/button.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/chip.ts
-  var init_chip = __esm({
-    "src/core/ui/chip.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/field.ts
-  var init_field = __esm({
-    "src/core/ui/field.ts"() {
-    }
-  });
-
-  // src/core/ui/slider.ts
-  var init_slider = __esm({
-    "src/core/ui/slider.ts"() {
-    }
-  });
-
-  // src/core/ui/empty.ts
-  function uiEmpty(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-empty";
-    if (opts.icon) {
-      const ic = uiIcon(opts.icon);
-      ic.classList.add("bz-empty-ic");
-      el.appendChild(ic);
-    }
-    const t = document.createElement("div");
-    t.className = "bz-empty-title";
-    t.textContent = opts.title;
-    el.appendChild(t);
-    if (opts.desc) {
-      const d = document.createElement("div");
-      d.className = "bz-empty-desc";
-      d.textContent = opts.desc;
-      el.appendChild(d);
-    }
-    if (opts.actions) el.appendChild(opts.actions);
-    return el;
-  }
-  var init_empty = __esm({
-    "src/core/ui/empty.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/segmented.ts
-  var init_segmented = __esm({
-    "src/core/ui/segmented.ts"() {
-    }
-  });
-
-  // src/core/ui/choice.ts
-  var init_choice = __esm({
-    "src/core/ui/choice.ts"() {
-    }
-  });
-
-  // src/core/ui/cardpick.ts
-  function uiCardChoice(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-cardpick" + (opts.className ? " " + opts.className : "");
-    el.setAttribute("role", "radiogroup");
-    if (opts.label) el.setAttribute("aria-label", opts.label);
-    const btns = /* @__PURE__ */ new Map();
-    let cur = opts.value;
-    const sync = (v) => {
-      cur = v;
-      btns.forEach((b, val) => {
-        const on = val === v;
-        b.classList.toggle("is-on", on);
-        b.setAttribute("aria-checked", String(on));
-      });
-    };
-    opts.options.forEach((o) => {
-      const card = document.createElement("button");
-      card.type = "button";
-      card.className = "bz-cardpick-card" + (o.value === opts.value ? " is-on" : "");
-      card.dataset.value = String(o.value);
-      card.setAttribute("role", "radio");
-      card.setAttribute("aria-checked", String(o.value === opts.value));
-      const prev = document.createElement("div");
-      prev.className = "bz-cardpick-prev" + (o.prevClass ? ` ${o.prevClass}` : "");
-      prev.setAttribute("aria-hidden", "true");
-      prev.style.height = "62px";
-      const name = document.createElement("span");
-      name.className = "bz-cardpick-name";
-      name.textContent = o.label;
-      card.append(prev, name);
-      card.addEventListener("click", () => {
-        if (cur === o.value) return;
-        sync(o.value);
-        opts.onChange(o.value);
-      });
-      btns.set(o.value, card);
-      el.appendChild(card);
-    });
-    el.addEventListener("keydown", (e) => {
-      var _a;
-      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-      const list = opts.options.map((o) => o.value);
-      const idx = list.indexOf(cur);
-      const next = e.key === "ArrowRight" ? (idx + 1) % list.length : (idx - 1 + list.length) % list.length;
-      (_a = btns.get(list[next])) == null ? void 0 : _a.focus();
-      e.preventDefault();
-    });
-    return { el, setValue: sync };
-  }
-  var init_cardpick = __esm({
-    "src/core/ui/cardpick.ts"() {
-    }
-  });
-
-  // src/core/ui/switch.ts
-  var init_switch = __esm({
-    "src/core/ui/switch.ts"() {
-    }
-  });
-
-  // src/core/ui/select.ts
-  var init_select = __esm({
-    "src/core/ui/select.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/search.ts
-  var init_search = __esm({
-    "src/core/ui/search.ts"() {
-      init_icon();
-      init_field();
-    }
-  });
-
-  // src/core/ui/mainhead.ts
-  var init_mainhead = __esm({
-    "src/core/ui/mainhead.ts"() {
-      init_button();
-    }
-  });
-
-  // src/core/ui/rail.ts
-  var init_rail = __esm({
-    "src/core/ui/rail.ts"() {
-      init_fake_obsidian();
-      init_icon();
-    }
-  });
-
-  // src/core/ui/mobstrip.ts
-  var init_mobstrip = __esm({
-    "src/core/ui/mobstrip.ts"() {
-    }
-  });
-
-  // src/core/ui/stat.ts
-  var init_stat = __esm({
-    "src/core/ui/stat.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/progress.ts
-  var init_progress = __esm({
-    "src/core/ui/progress.ts"() {
-    }
-  });
-
-  // src/core/ui/popover.ts
-  var init_popover = __esm({
-    "src/core/ui/popover.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/suggest.ts
-  function uiSuggest(opts) {
-    var _a;
-    const anchor = opts.anchor;
-    const max = (_a = opts.max) != null ? _a : 30;
-    let layer = null;
-    let skipNextOpen = false;
-    const close = () => {
-      if (!layer) return;
-      layer.remove();
-      layer = null;
-      document.removeEventListener("mousedown", onDocDown, true);
-    };
-    const onDocDown = (e) => {
-      const t = e.target;
-      if (!anchor.isConnected) {
-        close();
-        return;
-      }
-      if ((layer == null ? void 0 : layer.contains(t)) || anchor.contains(t)) return;
-      close();
-    };
-    const pick = (raw) => {
-      var _a2;
-      anchor.value = raw;
-      close();
-      (_a2 = opts.onPick) == null ? void 0 : _a2.call(opts, raw);
-      if (document.activeElement !== anchor) {
-        skipNextOpen = true;
-        anchor.focus();
-      }
-    };
-    const draw = () => {
-      if (!layer) return;
-      const cur = anchor.value.trim();
-      const q2 = cur.toLowerCase();
-      const matched = opts.source().filter((s) => (!opts.excludeCurrent || s !== cur) && (!q2 || s.toLowerCase().includes(q2))).slice(0, max);
-      if (!matched.length) {
-        close();
-        return;
-      }
-      layer.replaceChildren();
-      matched.forEach((raw) => {
-        var _a2;
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "bz-popover-item";
-        b.dataset.value = raw;
-        b.setAttribute("role", "option");
-        const on = raw === cur;
-        if (on) b.classList.add("is-on");
-        const icon = (_a2 = opts.iconOf) == null ? void 0 : _a2.call(opts, raw);
-        if (icon) {
-          const ic = document.createElement("span");
-          ic.className = "bz-suggest-ic";
-          if (typeof icon === "string") ic.textContent = icon;
-          else ic.appendChild(icon);
-          b.appendChild(ic);
-        }
-        const label = document.createElement("span");
-        label.textContent = opts.labelOf ? opts.labelOf(raw) : raw;
-        b.appendChild(label);
-        b.addEventListener("click", () => pick(raw));
-        layer.appendChild(b);
-      });
-    };
-    const open = () => {
-      if (skipNextOpen) {
-        skipNextOpen = false;
-        return;
-      }
-      if (layer) {
-        draw();
-        return;
-      }
-      const m = document.createElement("div");
-      m.className = "bz-popover";
-      m.setAttribute("role", "listbox");
-      (anchor.parentElement || anchor).appendChild(m);
-      layer = m;
-      document.addEventListener("mousedown", onDocDown, true);
-      draw();
-    };
-    const activeIdx = () => {
-      var _a2;
-      return [...(_a2 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a2 : []].findIndex((o) => o.classList.contains("is-on"));
-    };
-    const moveActive = (to) => {
-      var _a2, _b;
-      const items = [...(_a2 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a2 : []];
-      if (!items.length) return;
-      const next = items[Math.max(0, Math.min(items.length - 1, to))];
-      items.forEach((o) => o.classList.toggle("is-on", o === next));
-      (_b = next.scrollIntoView) == null ? void 0 : _b.call(next, { block: "nearest" });
-    };
-    anchor.addEventListener("focus", open);
-    anchor.addEventListener("input", () => {
-      skipNextOpen = false;
-      open();
-    });
-    anchor.addEventListener("keydown", (e) => {
-      if (!layer) return;
-      if (e.key === "ArrowDown") {
-        moveActive(activeIdx() + 1);
-        e.preventDefault();
-      } else if (e.key === "ArrowUp") {
-        moveActive(activeIdx() < 0 ? layer.querySelectorAll(".bz-popover-item").length - 1 : activeIdx() - 1);
-        e.preventDefault();
-      } else if (e.key === "Enter") {
-        const on = layer.querySelector(".bz-popover-item.is-on");
-        if (on) pick(on.dataset.value);
-        e.preventDefault();
-      } else if (e.key === "Escape") {
-        close();
-        e.stopPropagation();
-      }
-    });
-    return {
-      close,
-      /** 清理：关浮层并摘 document 监听（宿主收尾用；anchor 随表单移除时下次外点自清） */
-      detach: () => {
-        close();
-      }
-    };
-  }
-  var init_suggest = __esm({
-    "src/core/ui/suggest.ts"() {
-    }
-  });
-
   // src/core/esc-manager.ts
   var escManager;
   var init_esc_manager = __esm({
@@ -1087,399 +735,6 @@ var BZW_clipbook = (() => {
           }
         };
       })();
-    }
-  });
-
-  // src/core/ui/lightbox.ts
-  var init_lightbox = __esm({
-    "src/core/ui/lightbox.ts"() {
-      init_icon();
-      init_esc_manager();
-      init_z_order();
-    }
-  });
-
-  // src/core/ui/modal.ts
-  var init_modal = __esm({
-    "src/core/ui/modal.ts"() {
-      init_esc_manager();
-      init_z_order();
-    }
-  });
-
-  // src/core/dom.ts
-  function longPress(el, cb, dur, filter) {
-    if (!dur) dur = 500;
-    let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
-    let suppressClick = false;
-    const M2 = 10;
-    function start(e) {
-      if (filter && !filter(e)) return;
-      if (e.button !== void 0 && e.button !== 0) return;
-      fired = false;
-      moved = false;
-      if (e.touches && e.touches.length) {
-        const t = e.touches[0];
-        sx = t.clientX;
-        sy = t.clientY;
-        touching = true;
-      }
-      timer = setTimeout(function() {
-        timer = null;
-        fired = true;
-        cb(e);
-      }, dur);
-    }
-    function cancel() {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    }
-    function move(e) {
-      if (!timer || !touching || !e.touches || !e.touches.length) return;
-      const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M2 || Math.abs(t.clientY - sy) > M2) {
-        moved = true;
-        cancel();
-      }
-    }
-    function endFromTouch() {
-      if (fired) suppressClick = true;
-      touching = false;
-      cancel();
-    }
-    function endFromMouse() {
-      touching = false;
-      cancel();
-    }
-    function onClick(e) {
-      if (suppressClick) {
-        suppressClick = false;
-        e.preventDefault();
-        e.stopImmediatePropagation();
-      }
-    }
-    el.addEventListener("mousedown", start);
-    el.addEventListener("mouseup", endFromMouse);
-    el.addEventListener("mouseleave", endFromMouse);
-    el.addEventListener("touchstart", start, { passive: true });
-    el.addEventListener("touchend", endFromTouch);
-    el.addEventListener("touchmove", move, { passive: true });
-    el.addEventListener("touchcancel", endFromTouch);
-    el.addEventListener("click", onClick, true);
-  }
-  function swallowNextClick() {
-    const swallow = (e) => {
-      document.removeEventListener("click", swallow, true);
-      e.stopPropagation();
-    };
-    const disarm = () => {
-      document.removeEventListener("click", swallow, true);
-    };
-    document.addEventListener("click", swallow, true);
-    document.addEventListener("mousedown", disarm, { capture: true, once: true });
-  }
-  function createOverlay(opts) {
-    const mask = document.createElement("div");
-    mask.id = opts.maskId;
-    mask.className = "bz-overlay-mask";
-    mask.style.display = "none";
-    mask.onclick = function(e) {
-      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
-    };
-    const popup = document.createElement("div");
-    popup.id = opts.popupId;
-    popup.className = "bz-overlay-popup";
-    popup.style.display = "none";
-    popup.style.width = opts.width || "90%";
-    popup.style.maxWidth = (opts.maxWidth || 400) + "px";
-    topifyZ(mask, popup);
-    return { mask, popup, topify: () => topifyZ(mask, popup) };
-  }
-  var init_dom = __esm({
-    "src/core/dom.ts"() {
-      init_notice();
-      init_z_order();
-    }
-  });
-
-  // src/core/ui/resize.ts
-  function hitRegion(rect, x, y, edge) {
-    const onE = x >= rect.width - edge;
-    const onS = y >= rect.height - edge;
-    const onW = x <= edge;
-    const onN = y <= edge;
-    if (onE && onS) return "se";
-    if (onE && !onW) return "e";
-    if (onS && !onN) return "s";
-    return null;
-  }
-  function uiResizable(el, opts = {}) {
-    var _a, _b, _c, _d, _e;
-    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
-    if (isCoarse) {
-      return { flush: () => {
-      }, detach: () => {
-      } };
-    }
-    const edge = (_a = opts.edge) != null ? _a : 8;
-    const minW = (_b = opts.minW) != null ? _b : 320;
-    const minH = (_c = opts.minH) != null ? _c : 240;
-    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
-    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
-    let dir = null;
-    let dragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startW = 0;
-    let startH = 0;
-    const cap = (isW) => {
-      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
-      return Math.floor(Math.min(isW ? maxW : maxH, view));
-    };
-    const persist = opts.persist;
-    let persistTimer = null;
-    let lastW = 0;
-    let lastH = 0;
-    if (persist == null ? void 0 : persist.load) {
-      const saved = persist.load();
-      if (saved && saved.w > 0 && saved.h > 0) {
-        lastW = Math.min(Math.max(saved.w, minW), cap(true));
-        lastH = Math.min(Math.max(saved.h, minH), cap(false));
-        el.style.width = lastW + "px";
-        el.style.height = lastH + "px";
-      }
-    }
-    const regionAt = (e) => {
-      const rect = el.getBoundingClientRect();
-      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
-    };
-    const setCursor = (d) => {
-      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
-    };
-    const onHover = (e) => {
-      if (dragging) return;
-      setCursor(regionAt(e));
-    };
-    const onDragMove = (e) => {
-      if (!dragging) return;
-      e.preventDefault();
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      let w = dir === "e" || dir === "se" ? startW + dx : startW;
-      let h = dir === "s" || dir === "se" ? startH + dy : startH;
-      w = Math.min(Math.max(w, minW), cap(true));
-      h = Math.min(Math.max(h, minH), cap(false));
-      el.style.width = w + "px";
-      el.style.height = h + "px";
-      if (opts.onChange) opts.onChange(w, h);
-      if (persist == null ? void 0 : persist.save) {
-        lastW = w;
-        lastH = h;
-        if (persistTimer !== null) clearTimeout(persistTimer);
-        persistTimer = setTimeout(() => {
-          var _a2;
-          persistTimer = null;
-          (_a2 = persist.save) == null ? void 0 : _a2.call(persist, w, h);
-        }, 300);
-      }
-    };
-    const onMouseLeave = () => {
-      if (!dragging) setCursor(null);
-    };
-    const onMouseDown = (e) => {
-      const d = regionAt(e);
-      if (!d) return;
-      e.preventDefault();
-      dir = d;
-      dragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startW = el.getBoundingClientRect().width;
-      startH = el.getBoundingClientRect().height;
-      document.body.style.userSelect = "none";
-    };
-    const onMouseUp = () => {
-      if (!dragging) return;
-      dragging = false;
-      dir = null;
-      document.body.style.userSelect = "";
-      setCursor(null);
-      swallowNextClick();
-    };
-    el.addEventListener("mousemove", onHover);
-    el.addEventListener("mouseleave", onMouseLeave);
-    el.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("mousemove", onDragMove);
-    document.addEventListener("mouseup", onMouseUp);
-    const flush = () => {
-      if (persistTimer === null) return;
-      clearTimeout(persistTimer);
-      persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
-    };
-    return {
-      flush,
-      detach: () => {
-        flush();
-        el.removeEventListener("mousemove", onHover);
-        el.removeEventListener("mouseleave", onMouseLeave);
-        el.removeEventListener("mousedown", onMouseDown);
-        document.removeEventListener("mousemove", onDragMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        document.body.style.userSelect = "";
-        setCursor(null);
-      }
-    };
-  }
-  var init_resize = __esm({
-    "src/core/ui/resize.ts"() {
-      init_dom();
-    }
-  });
-
-  // src/core/ui/splitter.ts
-  function uiVSplitter(opts) {
-    var _a, _b;
-    const left = opts.left;
-    const minLeft = (_a = opts.minLeft) != null ? _a : 220;
-    const minRight = (_b = opts.minRight) != null ? _b : 320;
-    const persist = opts.persist;
-    const el = document.createElement("div");
-    el.className = "bz-vsplit";
-    el.setAttribute("role", "separator");
-    el.setAttribute("aria-orientation", "vertical");
-    el.title = "拖动调整两侧宽度";
-    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
-    if (isCoarse) {
-      return { el, restore: () => {
-      }, flush: () => {
-      }, detach: () => {
-      } };
-    }
-    let dragging = false;
-    let startX = 0;
-    let startW = 0;
-    let persistTimer = null;
-    let lastW = 0;
-    let restored = false;
-    const availW = () => {
-      const parent = left.parentElement;
-      if (!parent) return 0;
-      return parent.clientWidth - el.offsetWidth;
-    };
-    const clampW = (w) => {
-      const avail = availW();
-      const max = avail > 0 ? avail - minRight : Number.POSITIVE_INFINITY;
-      return Math.min(Math.max(w, minLeft), Math.max(minLeft, max));
-    };
-    const applyW = (w) => {
-      left.style.width = w + "px";
-    };
-    const debSave = (w) => {
-      if (!(persist == null ? void 0 : persist.save)) return;
-      lastW = w;
-      if (persistTimer !== null) clearTimeout(persistTimer);
-      persistTimer = setTimeout(() => {
-        var _a2;
-        persistTimer = null;
-        (_a2 = persist.save) == null ? void 0 : _a2.call(persist, w);
-      }, 300);
-    };
-    const restore = () => {
-      if (restored || !(persist == null ? void 0 : persist.load) || !el.isConnected) return;
-      if (availW() <= 0) return;
-      const saved = persist.load();
-      restored = true;
-      if (saved != null && saved > 0) {
-        const w = clampW(saved);
-        applyW(w);
-        lastW = w;
-      }
-    };
-    const onDragMove = (e) => {
-      if (!dragging) return;
-      e.preventDefault();
-      const w = clampW(startW + (e.clientX - startX));
-      if (w === lastW) return;
-      applyW(w);
-      lastW = w;
-      if (opts.onChange) opts.onChange(w);
-      debSave(w);
-    };
-    const onMouseDown = (e) => {
-      if (e.button !== 0) return;
-      e.preventDefault();
-      dragging = true;
-      startX = e.clientX;
-      startW = left.getBoundingClientRect().width;
-      el.classList.add("is-drag");
-      document.body.style.userSelect = "none";
-    };
-    const onMouseUp = () => {
-      if (!dragging) return;
-      dragging = false;
-      el.classList.remove("is-drag");
-      document.body.style.userSelect = "";
-      swallowNextClick();
-    };
-    document.addEventListener("mousemove", onDragMove);
-    el.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("mouseup", onMouseUp);
-    const flush = () => {
-      if (persistTimer === null) return;
-      clearTimeout(persistTimer);
-      persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && lastW > 0) persist.save(lastW);
-    };
-    return {
-      el,
-      restore,
-      flush,
-      detach: () => {
-        flush();
-        document.removeEventListener("mousemove", onDragMove);
-        el.removeEventListener("mousedown", onMouseDown);
-        document.removeEventListener("mouseup", onMouseUp);
-        document.body.style.userSelect = "";
-        el.classList.remove("is-drag");
-      }
-    };
-  }
-  var init_splitter = __esm({
-    "src/core/ui/splitter.ts"() {
-      init_dom();
-    }
-  });
-
-  // src/core/ui/index.ts
-  var init_ui = __esm({
-    "src/core/ui/index.ts"() {
-      init_icon();
-      init_icons();
-      init_button();
-      init_chip();
-      init_field();
-      init_slider();
-      init_empty();
-      init_segmented();
-      init_choice();
-      init_cardpick();
-      init_switch();
-      init_select();
-      init_search();
-      init_mainhead();
-      init_rail();
-      init_mobstrip();
-      init_stat();
-      init_progress();
-      init_popover();
-      init_suggest();
-      init_lightbox();
-      init_modal();
-      init_resize();
-      init_splitter();
     }
   });
 
@@ -5569,6 +4824,972 @@ var BZW_clipbook = (() => {
     }
   });
 
+  // src/core/flow-dialog.ts
+  function buildFlowDialogParts(title, message, actions) {
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id };
+  }
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve2) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      if (opts.className) popup.classList.add(opts.className);
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle2 = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        escHandle2.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve2(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
+    }
+  });
+
+  // src/core/storage.ts
+  function storageDir() {
+    const s = tryGetSettings();
+    return (s && s.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
+  }
+  function storageFile(name, base) {
+    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
+    return `${dir}/${name}`;
+  }
+  function enqueueFileTask(filePath, task) {
+    var _a;
+    const prev = (_a = fileTaskQueues.get(filePath)) != null ? _a : Promise.resolve();
+    const run = prev.then(task, task);
+    const tail = run.then(
+      () => void 0,
+      () => void 0
+    );
+    fileTaskQueues.set(filePath, tail);
+    void tail.then(() => {
+      if (fileTaskQueues.get(filePath) === tail) fileTaskQueues.delete(filePath);
+    });
+    return run;
+  }
+  function isAlreadyExistsError(e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return /already exist/i.test(msg);
+  }
+  function corruptStamp(d = /* @__PURE__ */ new Date()) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  }
+  function baseNameOf(p) {
+    return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
+  }
+  async function backupOriginal(app, filePath, raw) {
+    try {
+      const f = app.vault.getAbstractFileByPath(filePath);
+      if (!f) return null;
+      const content = raw !== void 0 ? raw : await app.vault.read(f);
+      if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
+        try {
+          await app.vault.createFolder(CORRUPT_BACKUP_DIR);
+        } catch (e) {
+        }
+      }
+      const base = baseNameOf(filePath);
+      const stamp = corruptStamp();
+      let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
+      for (let i = 2; app.vault.getAbstractFileByPath(backupPath); i++) {
+        backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
+      }
+      await app.vault.create(backupPath, content);
+      return backupPath;
+    } catch (e) {
+      console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
+      return null;
+    }
+  }
+  function notifyBackup(filePath, backupPath, cause) {
+    var _a;
+    const now = Date.now();
+    if (now - ((_a = corruptNotifyAt.get(filePath)) != null ? _a : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
+    corruptNotifyAt.set(filePath, now);
+    try {
+      const name = baseNameOf(filePath);
+      const msg = cause === "解析失败" ? `数据文件 ${name} 解析失败，原内容已留档到 ${backupPath}，数据不会丢，已重建默认文件继续使用` : `数据文件 ${name} 写入失败，原内容已留档到 ${backupPath}，数据不会丢，请稍后重试`;
+      notify(msg, { type: "warning" });
+    } catch (e) {
+    }
+  }
+  function serialize(v) {
+    return JSON.stringify(v, null, 2);
+  }
+  function jsonFileStore(filePath, opts = {}) {
+    const resolveApp = () => opts.app || getApp();
+    const resolveDefault = () => {
+      const d = opts.defaultValue;
+      return typeof d === "function" ? d() : d === void 0 ? [] : d;
+    };
+    async function ensureDir(app) {
+      const d = filePath.substring(0, filePath.lastIndexOf("/"));
+      if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
+    }
+    async function createIfMissing(app, content) {
+      await ensureDir(app);
+      try {
+        await app.vault.create(filePath, content);
+        return true;
+      } catch (e) {
+        if (isAlreadyExistsError(e) && app.vault.getAbstractFileByPath(filePath)) return false;
+        throw e;
+      }
+    }
+    async function handleCorrupt(app, err, raw) {
+      var _a;
+      if (((_a = opts.onCorrupt) == null ? void 0 : _a.call(opts, filePath, err)) === false) {
+        return null;
+      }
+      const backupPath = await backupOriginal(app, filePath, raw);
+      if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
+      const f = app.vault.getAbstractFileByPath(filePath);
+      if (f) {
+        await app.vault.modify(f, serialize(resolveDefault()));
+      } else {
+        await createIfMissing(app, serialize(resolveDefault()));
+      }
+      return resolveDefault();
+    }
+    async function modifyWithBackup(app, f, c) {
+      try {
+        await app.vault.modify(f, c);
+      } catch (e) {
+        const backupPath = await backupOriginal(app, filePath);
+        if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
+        throw e;
+      }
+    }
+    return {
+      async read() {
+        const app = resolveApp();
+        let f = app.vault.getAbstractFileByPath(filePath);
+        if (!f) {
+          const created = await createIfMissing(app, serialize(resolveDefault()));
+          if (created) return resolveDefault();
+          f = app.vault.getAbstractFileByPath(filePath);
+          if (!f) return resolveDefault();
+        }
+        const raw = await app.vault.read(f);
+        try {
+          return JSON.parse(raw);
+        } catch (e) {
+          return await handleCorrupt(app, e, raw);
+        }
+      },
+      async write(data) {
+        const app = resolveApp();
+        const c = serialize(data);
+        let f = app.vault.getAbstractFileByPath(filePath);
+        if (f) {
+          if (opts.writeIfChanged) {
+            try {
+              const cur2 = await app.vault.read(f);
+              if (cur2 === c) return;
+            } catch (e) {
+            }
+          }
+          await modifyWithBackup(app, f, c);
+          return;
+        }
+        const created = await createIfMissing(app, c);
+        if (created) return;
+        let cur = app.vault.getAbstractFileByPath(filePath);
+        if (!cur) {
+          const retried = await createIfMissing(app, c);
+          if (retried) return;
+          cur = app.vault.getAbstractFileByPath(filePath);
+          if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
+        }
+        await modifyWithBackup(app, cur, c);
+      }
+    };
+  }
+  var fileTaskQueues, CORRUPT_BACKUP_DIR, CORRUPT_NOTIFY_DEDUPE_MS, corruptNotifyAt;
+  var init_storage = __esm({
+    "src/core/storage.ts"() {
+      init_app();
+      init_settings_provider();
+      init_notice();
+      fileTaskQueues = /* @__PURE__ */ new Map();
+      CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
+      CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
+      corruptNotifyAt = /* @__PURE__ */ new Map();
+    }
+  });
+
+  // src/clipbook/constants.ts
+  function articleKeyOf(a) {
+    if (a && a.url) return "url:" + String(a.url);
+    return "td:" + String(a && a.title || "") + "|" + String(a && a.date || "");
+  }
+  function excerpt(body, max = 90) {
+    const s = String(body || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[#>*`_~-]/g, "").replace(/\s+/g, " ").trim();
+    if (!s) return "";
+    return s.length > max ? s.slice(0, max) + "…" : s;
+  }
+  function localDayKey2(ts = Date.now()) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${pad22(d.getMonth() + 1)}-${pad22(d.getDate())}`;
+  }
+  function localDatetime(ts = Date.now()) {
+    const d = new Date(ts);
+    const hms = `${pad22(d.getHours())}:${pad22(d.getMinutes())}:${pad22(d.getSeconds())}`;
+    return `${localDayKey2(ts)} ${hms}`;
+  }
+  function toDatetime(dateStr) {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
+      return d.toISOString().replace("T", " ").substring(0, 19);
+    } catch (e) {
+      return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
+    }
+  }
+  function pad22(n) {
+    return String(n).padStart(2, "0");
+  }
+  var init_constants = __esm({
+    "src/clipbook/constants.ts"() {
+    }
+  });
+
+  // src/clipbook/news-data.ts
+  function getNewsFilePath() {
+    return storageFile("news.json");
+  }
+  function emptyData() {
+    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [] };
+  }
+  function parseRssFeeds(raw) {
+    var _a, _b;
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const it of raw) {
+      if (!it || typeof it !== "object") continue;
+      const url = String((_a = it.url) != null ? _a : "").trim();
+      if (!url) continue;
+      const title = String((_b = it.title) != null ? _b : "").trim();
+      out.push(title ? { url, title } : { url });
+    }
+    return out;
+  }
+  function looksLikeFeedXml(xml) {
+    return /<(rss|feed|RDF)[\s>]/i.test(String(xml || ""));
+  }
+  function extractFeedTitleFromXml(xml) {
+    const m = String(xml || "").match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (!m) return null;
+    const t = m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+    return t || null;
+  }
+  function normalizeRssFeedUrl(text) {
+    const t = String(text || "").trim();
+    return /^https?:\/\/\S+$/i.test(t) ? t : null;
+  }
+  function parseBilibiliUpInfo(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const out = {};
+    for (const [uid, v] of Object.entries(raw)) {
+      if (!v || typeof v !== "object") continue;
+      const info = {};
+      if (v.name) info.name = String(v.name);
+      if (v.avatar) info.avatar = String(v.avatar).replace(/^http:/, "https:");
+      out[uid] = info;
+    }
+    return out;
+  }
+  function parseBilibiliMaxItems(raw) {
+    const n = Math.floor(Number(raw));
+    return Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
+  }
+  function parseBilibiliCookie(raw) {
+    return typeof raw === "string" ? raw.trim() : "";
+  }
+  function wrapArrayToNewsData(articles) {
+    const data = emptyData();
+    data.articles = Array.isArray(articles) ? articles : [];
+    return data;
+  }
+  function mergeStatsInto(data, oldStats) {
+    if (statsHasData(data.stats)) return data;
+    const s = oldStats && typeof oldStats === "object" ? oldStats : null;
+    if (!s) return data;
+    return {
+      ...data,
+      stats: {
+        totalRead: Number(s.totalRead) || 0,
+        totalSaved: Number(s.totalSaved) || 0,
+        totalSkipped: Number(s.totalSkipped) || 0,
+        byPlatform: s.byPlatform && typeof s.byPlatform === "object" ? s.byPlatform : {},
+        byDate: s.byDate && typeof s.byDate === "object" ? s.byDate : {}
+      }
+    };
+  }
+  function statsHasData(stats) {
+    if (!stats || typeof stats !== "object") return false;
+    return (Number(stats.totalRead) || 0) > 0 || (Number(stats.totalSaved) || 0) > 0 || (Number(stats.totalSkipped) || 0) > 0 || (stats.byPlatform && Object.keys(stats.byPlatform).length > 0) === true || (stats.byDate && Object.keys(stats.byDate).length > 0) === true;
+  }
+  function parseNewsFileContent(raw) {
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+    if (Array.isArray(parsed)) return wrapArrayToNewsData(parsed);
+    if (parsed && typeof parsed === "object") {
+      const obj = parsed;
+      return {
+        articles: Array.isArray(obj.articles) ? obj.articles : [],
+        stats: obj.stats && typeof obj.stats === "object" ? obj.stats : DEFAULT_STATS(),
+        bilibiliUps: Array.isArray(obj.bilibiliUps) ? obj.bilibiliUps.map((u) => String(u != null ? u : "").trim()).filter(Boolean) : [],
+        bilibiliUpInfo: parseBilibiliUpInfo(obj.bilibiliUpInfo),
+        bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
+        bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
+        sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES },
+        rssFeeds: parseRssFeeds(obj.rssFeeds)
+      };
+    }
+    return null;
+  }
+  async function readNewsData() {
+    const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
+    let corrupt = false;
+    const parsed = await jsonFileStore(getNewsFilePath(), {
+      defaultValue: () => emptyData(),
+      onCorrupt: () => {
+        corrupt = true;
+        return false;
+      }
+    }).read().catch(() => null);
+    if (parsed === null || corrupt) return { ok: false, missing: false, data: emptyData() };
+    const content = parseNewsFileContent(JSON.stringify(parsed));
+    if (!content) return { ok: false, missing: false, data: emptyData() };
+    return { ok: true, missing, data: content };
+  }
+  async function writeNewsData(data) {
+    try {
+      await jsonFileStore(getNewsFilePath()).write(data);
+    } catch (e) {
+    }
+  }
+  async function writeNewsDataMerged(intent) {
+    var _a;
+    const res = await readNewsData();
+    const base = res.ok ? res.data : emptyData();
+    const next = { ...base };
+    if (intent.set.articles || ((_a = intent.removeArticleKeys) == null ? void 0 : _a.length)) {
+      const patchList = intent.set.articles || [];
+      const removeKeys = new Set(intent.removeArticleKeys || []);
+      const patchByKey = /* @__PURE__ */ new Map();
+      for (const a of patchList) patchByKey.set(articleKeyOf(a), a);
+      const merged = [];
+      const seen = /* @__PURE__ */ new Set();
+      for (const a of base.articles || []) {
+        const k = articleKeyOf(a);
+        if (removeKeys.has(k)) continue;
+        seen.add(k);
+        merged.push(patchByKey.has(k) ? patchByKey.get(k) : a);
+      }
+      for (const a of patchList) {
+        const k = articleKeyOf(a);
+        if (!seen.has(k)) {
+          merged.push(a);
+          seen.add(k);
+        }
+      }
+      next.articles = merged;
+    }
+    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds"]) {
+      if (intent.set[seg] !== void 0) {
+        next[seg] = intent.set[seg];
+      }
+    }
+    await writeNewsData(next);
+  }
+  function parseUidFromText(text) {
+    const t = String(text || "").trim();
+    if (!t) return null;
+    const pure = t.match(/^\d{1,10}$/);
+    if (pure) return pure[0];
+    const space = t.match(/space\.bilibili\.com[\/:]*(\d+)/i);
+    if (space) return space[1];
+    return null;
+  }
+  function parseBvidFromText(text) {
+    const t = String(text || "").trim();
+    const m = t.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
+    return m ? m[1] : null;
+  }
+  async function resolveUidFromInput(text) {
+    var _a;
+    const local = parseUidFromText(text);
+    if (local) return local;
+    const bvid = parseBvidFromText(text);
+    if (!bvid) return null;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 1e4);
+      const resp = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
+        method: "GET",
+        signal: ctrl.signal
+      });
+      clearTimeout(timer);
+      if (!resp.ok) return null;
+      const json = await resp.json();
+      const mid = json && json.data && json.data.owner ? String((_a = json.data.owner.mid) != null ? _a : "") : "";
+      return mid || null;
+    } catch (e) {
+      return null;
+    }
+  }
+  async function migrateLegacyStats(data) {
+    if (statsHasData(data.stats)) return data;
+    const app = getApp();
+    const af = app.vault.getAbstractFileByPath(STATS_JSON_PATH);
+    if (!af) return data;
+    try {
+      const raw = await app.vault.read(af);
+      const old = JSON.parse(raw);
+      const merged = mergeStatsInto(data, old);
+      return merged === data ? data : merged;
+    } catch (e) {
+      return data;
+    }
+  }
+  function applyRetention(articles, savedDays, skippedDays, now = Date.now()) {
+    const DAY = 24 * 60 * 60 * 1e3;
+    const kept = [];
+    for (const a of articles) {
+      if (!a || a.read !== true) {
+        kept.push(a);
+        continue;
+      }
+      const state = a.state === "saved" ? "saved" : "skipped";
+      const days = state === "saved" ? savedDays : skippedDays;
+      if (!Number.isFinite(days) || days <= 0) {
+        kept.push(a);
+        continue;
+      }
+      const t = new Date(a.fetchedAt || a.date || "").getTime();
+      if (!Number.isFinite(t)) {
+        kept.push(a);
+        continue;
+      }
+      if (now - t > days * DAY) continue;
+      kept.push(a);
+    }
+    return kept;
+  }
+  function normalizeRetentionDays(v) {
+    const n = Number(String(v || "").trim());
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS;
+  var init_news_data = __esm({
+    "src/clipbook/news-data.ts"() {
+      init_app();
+      init_storage();
+      init_constants();
+      STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
+      DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
+      DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
+    }
+  });
+
+  // src/core/dom.ts
+  function longPress(el, cb, dur, filter) {
+    if (!dur) dur = 500;
+    let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
+    let suppressClick = false;
+    const M2 = 10;
+    function start(e) {
+      if (filter && !filter(e)) return;
+      if (e.button !== void 0 && e.button !== 0) return;
+      fired = false;
+      moved = false;
+      if (e.touches && e.touches.length) {
+        const t = e.touches[0];
+        sx = t.clientX;
+        sy = t.clientY;
+        touching = true;
+      }
+      timer = setTimeout(function() {
+        timer = null;
+        fired = true;
+        cb(e);
+      }, dur);
+    }
+    function cancel() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
+    function move(e) {
+      if (!timer || !touching || !e.touches || !e.touches.length) return;
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - sx) > M2 || Math.abs(t.clientY - sy) > M2) {
+        moved = true;
+        cancel();
+      }
+    }
+    function endFromTouch() {
+      if (fired) suppressClick = true;
+      touching = false;
+      cancel();
+    }
+    function endFromMouse() {
+      touching = false;
+      cancel();
+    }
+    function onClick(e) {
+      if (suppressClick) {
+        suppressClick = false;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+    el.addEventListener("mousedown", start);
+    el.addEventListener("mouseup", endFromMouse);
+    el.addEventListener("mouseleave", endFromMouse);
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchend", endFromTouch);
+    el.addEventListener("touchmove", move, { passive: true });
+    el.addEventListener("touchcancel", endFromTouch);
+    el.addEventListener("click", onClick, true);
+  }
+  function swallowNextClick() {
+    const swallow = (e) => {
+      document.removeEventListener("click", swallow, true);
+      e.stopPropagation();
+    };
+    const disarm = () => {
+      document.removeEventListener("click", swallow, true);
+    };
+    document.addEventListener("click", swallow, true);
+    document.addEventListener("mousedown", disarm, { capture: true, once: true });
+  }
+  function createOverlay(opts) {
+    const mask = document.createElement("div");
+    mask.id = opts.maskId;
+    mask.className = "bz-overlay-mask";
+    mask.style.display = "none";
+    mask.onclick = function(e) {
+      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
+    };
+    const popup = document.createElement("div");
+    popup.id = opts.popupId;
+    popup.className = "bz-overlay-popup";
+    popup.style.display = "none";
+    popup.style.width = opts.width || "90%";
+    popup.style.maxWidth = (opts.maxWidth || 400) + "px";
+    topifyZ(mask, popup);
+    return { mask, popup, topify: () => topifyZ(mask, popup) };
+  }
+  var init_dom = __esm({
+    "src/core/dom.ts"() {
+      init_notice();
+      init_z_order();
+    }
+  });
+
+  // src/clipbook/save.ts
+  function clipDirOf() {
+    const s = tryGetSettings();
+    return s && s.articleDirectory || "归档/网页剪藏";
+  }
+  async function writeClipNote(raw, dirOverride) {
+    const app = getApp();
+    const dir = dirOverride || clipDirOf();
+    const cleanTitle = String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim();
+    if (!cleanTitle) {
+      notice("标题为空", "error");
+      return false;
+    }
+    const filePath = `${dir}/${cleanTitle}.md`;
+    if (app.vault.getAbstractFileByPath(filePath)) {
+      const ok = await confirmOverwrite(filePath);
+      if (!ok) return false;
+    }
+    const tagsYaml = (raw.tags || []).map((t) => `  - "${yamlEscape(t)}"`).join("\n");
+    const now = localDatetime();
+    const pubDate = raw.date ? toDatetime(String(raw.date)) : "";
+    const body = String(raw.body || "").replace(/^\s*---[\s\S]*?---\s*/m, "").replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, "").trim();
+    const md = `---
+url: "${yamlEscape(raw.url || "")}"
+author: "${yamlEscape(raw.author || "")}"
+site: "${yamlEscape(raw.platform || "")}"
+summary: "${yamlEscape(raw.summary || "")}"
+tags:
+${tagsYaml}
+date: "${yamlEscape(pubDate)}"
+created: ${now}
+---
+\`\`\`dataviewjs
+await dv.view(\`CONFIG/SCRIPTS/DataView/摘要\`)
+\`\`\`
+
+${body}`;
+    try {
+      const dirAf = app.vault.getAbstractFileByPath(dir);
+      if (!dirAf) await app.vault.createFolder(dir);
+      const existing = app.vault.getAbstractFileByPath(filePath);
+      if (existing) await app.vault.modify(existing, md);
+      else await app.vault.create(filePath, md);
+      notice(`已保存：${cleanTitle}`, "success");
+      return true;
+    } catch (e) {
+      console.error("[剪藏本] 保存剪藏失败", e);
+      notice("保存失败，请稍后重试", "error");
+      return false;
+    }
+  }
+  function confirmOverwrite(filePath) {
+    return new Promise((resolve2) => {
+      const el = document.createElement("div");
+      Object.assign(el.style, {
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%,-50%)",
+        background: "var(--background-primary)",
+        borderRadius: "10px",
+        padding: "20px",
+        boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
+        minWidth: "260px",
+        textAlign: "center",
+        fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif",
+        zIndex: "10500"
+      });
+      el.innerHTML = `
+      <div style="margin-bottom:14px;color:var(--text-normal);font-size:14px;">已存在同名剪藏，覆盖？</div>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button class="y" style="padding:6px 18px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);border-radius:4px;cursor:pointer;">覆盖</button>
+        <button class="n" style="padding:6px 18px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);border-radius:4px;cursor:pointer;">取消</button>
+      </div>`;
+      const ov = document.createElement("div");
+      Object.assign(ov.style, { position: "fixed", inset: "0", background: "var(--background-modifier-cover)" });
+      topifyZ(ov, el);
+      document.body.appendChild(ov);
+      document.body.appendChild(el);
+      const close = (v) => {
+        ov.remove();
+        el.remove();
+        resolve2(v);
+      };
+      ov.onclick = () => close(false);
+      const h = escManager.register("clipbook-confirm", {
+        isVisible: () => ov.isConnected,
+        close: () => close(false)
+      });
+      el.querySelector(".y").onclick = () => {
+        h.unregister();
+        close(true);
+      };
+      el.querySelector(".n").onclick = () => {
+        h.unregister();
+        close(false);
+      };
+    });
+  }
+  var yamlEscape;
+  var init_save = __esm({
+    "src/clipbook/save.ts"() {
+      init_app();
+      init_esc_manager();
+      init_dom();
+      init_settings_provider();
+      init_notice();
+      init_constants();
+      yamlEscape = (v) => String(v != null ? v : "").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
+    }
+  });
+
+  // src/clipbook/data.ts
+  function clipbookFilePath() {
+    return storageFile(CLIPBOOK_JSON);
+  }
+  function resolve(data) {
+    return {
+      articleOverrides: data && data.articleOverrides !== null && typeof data.articleOverrides === "object" && !Array.isArray(data.articleOverrides) ? data.articleOverrides : {},
+      savedArchive: Array.isArray(data && data.savedArchive) ? data.savedArchive.filter((s) => s && typeof s === "object" && s.url) : [],
+      order: Array.isArray(data && data.order) ? data.order.map(String) : []
+    };
+  }
+  async function readClipbookData() {
+    const data = await jsonFileStore(clipbookFilePath(), { defaultValue: () => emptySidecar() }).read();
+    return resolve(data || {});
+  }
+  async function writeClipbookData(data) {
+    try {
+      await jsonFileStore(clipbookFilePath(), { defaultValue: () => emptySidecar() }).write(data);
+    } catch (e) {
+    }
+  }
+  function updateClipbookData(mutate) {
+    return enqueueFileTask(clipbookFilePath(), async () => {
+      const cur = await readClipbookData();
+      const next = mutate(cur);
+      await writeClipbookData(next);
+      return next;
+    });
+  }
+  function emptySidecar() {
+    return { articleOverrides: {}, savedArchive: [], order: [] };
+  }
+  var CLIPBOOK_JSON;
+  var init_data = __esm({
+    "src/clipbook/data.ts"() {
+      init_storage();
+      CLIPBOOK_JSON = "clipbook.json";
+    }
+  });
+
+  // src/clipbook/write-queue.ts
+  function enqueueNewsWrite(op) {
+    return enqueueFileTask(getNewsFilePath(), op);
+  }
+  var init_write_queue = __esm({
+    "src/clipbook/write-queue.ts"() {
+      init_storage();
+      init_news_data();
+    }
+  });
+
+  // src/knowledge/data.ts
+  function normalizeLooseTime(t) {
+    const s = (t != null ? t : "").trim();
+    if (!s) return "";
+    if (TIME_RE.test(s)) return s;
+    const parts = s.split(/[:：.。\-—_、，,\s]+/).filter(Boolean);
+    if (parts.length === 0 || parts.length > 3 || parts.some((p) => !/^\d+$/.test(p))) return null;
+    const [a, b, c] = parts;
+    let canon;
+    if (c !== void 0) canon = `${a}:${b.padStart(2, "0")}:${c.padStart(2, "0")}`;
+    else if (b !== void 0) canon = `${a}:${b.padStart(2, "0")}`;
+    else canon = `${a}:00`;
+    return TIME_RE.test(canon) ? canon : null;
+  }
+  function normalizeUrl(raw) {
+    return raw.trim();
+  }
+  var import_moment2, TIME_RE, KnowledgeData;
+  var init_data2 = __esm({
+    "src/knowledge/data.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_storage();
+      init_settings_provider();
+      init_utils();
+      init_app();
+      TIME_RE = /^\d{1,3}:\d{1,2}(:\d{1,2}(\.\d{1,3})?)?$/;
+      KnowledgeData = {
+        filePath: "",
+        _store: null,
+        /** 旧数据文件 literature.json → knowledge.json 一次性迁移（ADR-0112：只复制不改写，旧文件保留在原处） */
+        _legacyMigrated: false,
+        /** 初始化（幂等）：固化文件路径与 store。未调用时 read/write 按当前设置惰性补齐（统一数据读写重构） */
+        init(settings) {
+          const folder = (settings.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
+          this.filePath = folder + "/knowledge.json";
+          this._store = jsonFileStore(this.filePath);
+        },
+        /** 一次性迁移：knowledge.json 不存在而 literature.json 存在时原样复制一份（任务历史零丢失，ADR-0112） */
+        async migrateLegacy() {
+          if (this._legacyMigrated) return;
+          this._legacyMigrated = true;
+          try {
+            const app = getApp();
+            if (app.vault.getAbstractFileByPath(this.filePath)) return;
+            const legacyPath = this.filePath.replace(/knowledge\.json$/, "literature.json");
+            const legacy = app.vault.getAbstractFileByPath(legacyPath);
+            if (legacy) await app.vault.create(this.filePath, await app.vault.read(legacy));
+          } catch (e) {
+          }
+        },
+        /** 惰性 store 获取：init 前调用时按当前设置补建（消除 init 前 _store 空指针） */
+        _ensureStore() {
+          var _a;
+          if (!this._store) this.init({ storagePath: (_a = tryGetSettings()) == null ? void 0 : _a.storagePath });
+          return this._store;
+        },
+        async read() {
+          return this._ensureStore().read();
+        },
+        async write(data) {
+          return this._ensureStore().write(data);
+        },
+        /** 读改写事务：fn 基于磁盘现值改动，整体入 per-path 串行队列（D3 原语 1） */
+        async _mutate(fn) {
+          return enqueueFileTask(this.filePath, async () => {
+            const data = await this.read();
+            const result = await fn(data);
+            await this.write(data);
+            return result;
+          });
+        },
+        /** 全量读取并统一字段形状（缺省补默认值，旧/手改数据零迁移） */
+        async loadTasks() {
+          await this.migrateLegacy();
+          return this._mutate(async (raw) => {
+            let needWrite = false;
+            const tasks = raw.map((item) => {
+              if (!item.id) {
+                item.id = generateId("knowledge-task");
+                needWrite = true;
+              }
+              return {
+                id: item.id,
+                url: item.url || "",
+                start: item.start || null,
+                end: item.end || null,
+                status: item.status || "pending",
+                reason: item.reason || null,
+                remark: item.remark || null,
+                notePath: item.notePath || null,
+                videoPath: item.videoPath || null,
+                created: item.created || (0, import_moment2.default)().format("YYYY-MM-DD HH:mm:ss"),
+                processedAt: item.processedAt || null,
+                title: item.title || null,
+                uploader: item.uploader || null,
+                archived: item.archived === true,
+                archivedAt: item.archivedAt || null,
+                quality: item.quality || null,
+                page: Number.isInteger(item.page) && Number(item.page) > 0 ? Number(item.page) : null
+              };
+            });
+            if (needWrite) await this.write(raw);
+            return tasks;
+          });
+        },
+        /** 追加一条待处理任务（队列尾 = 处理顺序尾） */
+        addTask(input) {
+          var _a, _b, _c, _d, _e;
+          const task = {
+            id: generateId("knowledge-task"),
+            url: normalizeUrl(input.url),
+            start: ((_a = input.start) == null ? void 0 : _a.trim()) || null,
+            end: ((_b = input.end) == null ? void 0 : _b.trim()) || null,
+            status: "pending",
+            reason: null,
+            remark: ((_c = input.remark) == null ? void 0 : _c.trim()) || null,
+            title: ((_d = input.title) == null ? void 0 : _d.trim()) || null,
+            uploader: ((_e = input.uploader) == null ? void 0 : _e.trim()) || null,
+            notePath: null,
+            videoPath: null,
+            created: (0, import_moment2.default)().format("YYYY-MM-DD HH:mm:ss"),
+            processedAt: null,
+            archived: false,
+            archivedAt: null,
+            quality: input.quality || null,
+            page: Number.isInteger(input.page) && Number(input.page) > 0 ? Number(input.page) : null
+          };
+          return this._mutate((data) => {
+            data.push(task);
+            return task;
+          });
+        },
+        updateTask(id, patch) {
+          return this._mutate(async (data) => {
+            const idx = data.findIndex((d) => d.id === id);
+            if (idx === -1) throw new Error("任务不存在");
+            data[idx] = { ...data[idx], ...patch, id: data[idx].id };
+          }).then(() => void 0);
+        },
+        async deleteTask(id) {
+          await this._mutate((data) => {
+            const idx = data.findIndex((d) => d.id === id);
+            if (idx !== -1) data.splice(idx, 1);
+          });
+        },
+        /** 重试：失败/中止项回到待处理（保留旧结果字段，下次成功覆盖） */
+        async retryTask(id) {
+          await this.updateTask(id, {
+            status: "pending",
+            reason: null,
+            processedAt: null
+          });
+        },
+        /** 清空历史（archived 条目；主列表待处理/失败项不受影响，ADR-0067） */
+        async clearHistory() {
+          await this._mutate((data) => {
+            for (let i = data.length - 1; i >= 0; i--) {
+              if (data[i].archived === true) data.splice(i, 1);
+            }
+          });
+        }
+      };
+    }
+  });
+
   // src/core/mobile.ts
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
@@ -5700,11 +5921,20 @@ var BZW_clipbook = (() => {
     if (first) first.focus();
     attachItemKeyboardNav(host, scope);
   }
-  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass) {
+  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass, menuHeadHtml) {
     closeItemMenu();
     const m = document.createElement("div");
     m.className = "bz-item-menu" + (menuClass ? " " + menuClass : "");
     m.style.visibility = "hidden";
+    if (menuHeadHtml) {
+      const head = document.createElement("div");
+      head.className = "bz-item-menu-head";
+      head.innerHTML = menuHeadHtml;
+      m.appendChild(head);
+      const sep = document.createElement("div");
+      sep.className = "bz-item-menu-sep";
+      m.appendChild(sep);
+    }
     for (const a of actions) {
       const item = document.createElement("button");
       item.type = "button";
@@ -5890,7 +6120,7 @@ var BZW_clipbook = (() => {
       if (isMobileEnv()) return;
       if ((opts == null ? void 0 : opts.longPressFilter) && !opts.longPressFilter(e)) return;
       e.preventDefault();
-      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass);
+      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass, opts == null ? void 0 : opts.menuHeadHtml);
       suppressNextClick = false;
     });
     longPress(
@@ -5930,89 +6160,3862 @@ var BZW_clipbook = (() => {
     }
   });
 
-  // src/core/flow-dialog.ts
-  function buildFlowDialogParts(title, message, actions) {
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+  // src/core/ui/suggest.ts
+  function uiSuggest(opts) {
+    var _a;
+    const anchor = opts.anchor;
+    const max = (_a = opts.max) != null ? _a : 30;
+    let layer = null;
+    let skipNextOpen = false;
+    const close = () => {
+      if (!layer) return;
+      layer.remove();
+      layer = null;
+      document.removeEventListener("mousedown", onDocDown, true);
+    };
+    const onDocDown = (e) => {
+      const t = e.target;
+      if (!anchor.isConnected) {
+        close();
+        return;
+      }
+      if ((layer == null ? void 0 : layer.contains(t)) || anchor.contains(t)) return;
+      close();
+    };
+    const pick = (raw) => {
+      var _a2;
+      anchor.value = raw;
+      close();
+      (_a2 = opts.onPick) == null ? void 0 : _a2.call(opts, raw);
+      if (document.activeElement !== anchor) {
+        skipNextOpen = true;
+        anchor.focus();
+      }
+    };
+    const draw = () => {
+      if (!layer) return;
+      const cur = anchor.value.trim();
+      const q2 = cur.toLowerCase();
+      const matched = opts.source().filter((s) => (!opts.excludeCurrent || s !== cur) && (!q2 || s.toLowerCase().includes(q2))).slice(0, max);
+      if (!matched.length) {
+        close();
+        return;
+      }
+      layer.replaceChildren();
+      matched.forEach((raw) => {
+        var _a2;
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "bz-popover-item";
+        b.dataset.value = raw;
+        b.setAttribute("role", "option");
+        const on = raw === cur;
+        if (on) b.classList.add("is-on");
+        const icon = (_a2 = opts.iconOf) == null ? void 0 : _a2.call(opts, raw);
+        if (icon) {
+          const ic = document.createElement("span");
+          ic.className = "bz-suggest-ic";
+          if (typeof icon === "string") ic.textContent = icon;
+          else ic.appendChild(icon);
+          b.appendChild(ic);
+        }
+        const label = document.createElement("span");
+        label.textContent = opts.labelOf ? opts.labelOf(raw) : raw;
+        b.appendChild(label);
+        b.addEventListener("click", () => pick(raw));
+        layer.appendChild(b);
       });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id };
+    };
+    const open = () => {
+      if (skipNextOpen) {
+        skipNextOpen = false;
+        return;
+      }
+      if (layer) {
+        draw();
+        return;
+      }
+      const m = document.createElement("div");
+      m.className = "bz-popover";
+      m.setAttribute("role", "listbox");
+      (anchor.parentElement || anchor).appendChild(m);
+      layer = m;
+      document.addEventListener("mousedown", onDocDown, true);
+      draw();
+    };
+    const activeIdx = () => {
+      var _a2;
+      return [...(_a2 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a2 : []].findIndex((o) => o.classList.contains("is-on"));
+    };
+    const moveActive = (to) => {
+      var _a2, _b;
+      const items = [...(_a2 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a2 : []];
+      if (!items.length) return;
+      const next = items[Math.max(0, Math.min(items.length - 1, to))];
+      items.forEach((o) => o.classList.toggle("is-on", o === next));
+      (_b = next.scrollIntoView) == null ? void 0 : _b.call(next, { block: "nearest" });
+    };
+    anchor.addEventListener("focus", open);
+    anchor.addEventListener("input", () => {
+      skipNextOpen = false;
+      open();
+    });
+    anchor.addEventListener("keydown", (e) => {
+      if (!layer) return;
+      if (e.key === "ArrowDown") {
+        moveActive(activeIdx() + 1);
+        e.preventDefault();
+      } else if (e.key === "ArrowUp") {
+        moveActive(activeIdx() < 0 ? layer.querySelectorAll(".bz-popover-item").length - 1 : activeIdx() - 1);
+        e.preventDefault();
+      } else if (e.key === "Enter") {
+        const on = layer.querySelector(".bz-popover-item.is-on");
+        if (on) pick(on.dataset.value);
+        e.preventDefault();
+      } else if (e.key === "Escape") {
+        close();
+        e.stopPropagation();
+      }
+    });
+    return {
+      close,
+      /** 清理：关浮层并摘 document 监听（宿主收尾用；anchor 随表单移除时下次外点自清） */
+      detach: () => {
+        close();
+      }
+    };
   }
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+  var init_suggest = __esm({
+    "src/core/ui/suggest.ts"() {
     }
-    return new Promise((resolve2) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
+  });
+
+  // src/core/ai.ts
+  function getQ3Settings() {
+    return _settingsProvider ? _settingsProvider() : {};
+  }
+  function getProviderDescriptor(id) {
+    return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
+  }
+  async function getAIProvider(override) {
+    var _a, _b, _c;
+    if (!override && _aiProviderCache) return _aiProviderCache;
+    const s = getQ3Settings();
+    if (override && typeof override === "object" && override.apiKey) {
+      return {
+        endpoint: String(override.endpoint || "https://api.deepseek.com").replace(/\/+$/, ""),
+        apiKey: override.apiKey,
+        model: override.model || void 0,
+        extraHeaders: override.extraHeaders || void 0,
+        contextWindow: override.contextWindow,
+        defaultMaxTokens: override.defaultMaxTokens
       };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      if (opts.className) popup.classList.add(opts.className);
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle2 = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
+    }
+    const name = typeof override === "string" && override || s.aiProvider || "opencode-go";
+    const desc = getProviderDescriptor(name);
+    if (name === "custom") {
+      const endpoint = (s.aiCustomEndpoint || "").replace(/\/+$/, "");
+      if (!endpoint || !s.aiCustomApiKey) {
+        throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
+      }
+      _aiProviderCache = {
+        endpoint,
+        apiKey: s.aiCustomApiKey,
+        model: s.aiCustomModel || void 0,
+        extraHeaders: desc.extraHeaders,
+        contextWindow: desc.defaultContextWindow,
+        defaultMaxTokens: desc.defaultMaxTokens
+      };
+      return _aiProviderCache;
+    }
+    const key = s[desc.apiKeyKey];
+    if (!key && name === "deepseek") {
+      try {
+        const raw = await getApp().vault.adapter.read(".obsidian/plugins/quickadd/data.json");
+        const cfg = JSON.parse(raw);
+        const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
+        if (provider && provider.endpoint && provider.apiKey) {
+          _aiProviderCache = {
+            endpoint: String(provider.endpoint).replace(/\/+$/, ""),
+            apiKey: provider.apiKey,
+            contextWindow: desc.defaultContextWindow,
+            defaultMaxTokens: desc.defaultMaxTokens
+          };
+          return _aiProviderCache;
+        }
+      } catch (e) {
+      }
+    }
+    if (!key && name !== "ollama") {
+      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
+    }
+    const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
+    const overrideContext = (_b = s.aiContextOverrides) == null ? void 0 : _b[name];
+    const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
+    _aiProviderCache = {
+      endpoint: desc.endpoint,
+      apiKey: key || "",
+      model: overrideModel || desc.model || void 0,
+      noCors: desc.noCors,
+      extraHeaders: desc.extraHeaders,
+      contextWindow: overrideContext || desc.defaultContextWindow,
+      defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens
+    };
+    return _aiProviderCache;
+  }
+  function abortError() {
+    const e = new Error("请求已取消");
+    e.name = "AbortError";
+    return e;
+  }
+  async function streamChatCompletions(provider, body, signal, onDelta) {
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${provider.apiKey}`,
+      ...provider.extraHeaders || {}
+    };
+    const resp = await fetch(`${provider.endpoint}/chat/completions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal
+    });
+    if (!resp.ok) {
+      let msg = `API ${resp.status}`;
+      try {
+        const err = await resp.json();
+        if (err.error && err.error.message) msg = err.error.message;
+      } catch (e) {
+      }
+      throw new Error(msg);
+    }
+    if (!resp.body || typeof resp.body.getReader !== "function") {
+      const data = await resp.json();
+      return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let full = "", buf = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) !== -1) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (payload === "[DONE]") {
+          try {
+            reader.cancel();
+          } catch (e) {
+          }
+          return full;
+        }
+        try {
+          const chunk = JSON.parse(payload);
+          const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+          if (delta) {
+            full += delta;
+            try {
+              onDelta == null ? void 0 : onDelta(delta);
+            } catch (e) {
+            }
+          }
+        } catch (e) {
         }
       }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        escHandle2.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve2(v);
+    }
+    return full;
+  }
+  async function chatCompletionsNonStream(provider, body, signal) {
+    if (signal == null ? void 0 : signal.aborted) throw abortError();
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${provider.apiKey}`,
+      ...provider.extraHeaders || {}
+    };
+    const resp = await requestUrl({
+      url: `${provider.endpoint}/chat/completions`,
+      method: "POST",
+      headers,
+      body: JSON.stringify({ ...body, stream: false })
+    });
+    if (signal == null ? void 0 : signal.aborted) throw abortError();
+    const data = JSON.parse(resp.text);
+    const errMsg = data.error && (data.error.message || data.error.type) || data.message && data.message;
+    if (errMsg) throw new Error(`API ${resp.status}: ${errMsg}`);
+    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
+    return content;
+  }
+  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}, defaultMaxTokens = 8192) {
+    const internalDefaultOptions = {
+      modelOptions: {
+        max_tokens: defaultMaxTokens,
+        ...defaultOptions.modelOptions || {}
       }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
+    };
+    const mergedOptions = { ...internalDefaultOptions, ...defaultOptions };
+    if (defaultOptions.modelOptions) {
+      mergedOptions.modelOptions = {
+        ...internalDefaultOptions.modelOptions,
+        ...defaultOptions.modelOptions
+      };
+    }
+    return new AIService(params, defaultModel, mergedOptions);
+  }
+  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AIService;
+  var init_ai = __esm({
+    "src/core/ai.ts"() {
+      init_fake_obsidian();
+      init_app();
+      _settingsProvider = null;
+      AI_PROVIDER_REGISTRY = [
+        {
+          id: "deepseek",
+          label: "DeepSeek",
+          endpoint: "https://api.deepseek.com",
+          model: "",
+          // 空 = 沿用调用方默认模型（原行为：deepseek 不强制模型）
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 65536,
+          apiKeyKey: "deepseekApiKey",
+          apiKeyLabel: "DeepSeek 密钥",
+          apiKeyDesc: "留空则自动回退读取外部配置密钥"
+        },
+        {
+          id: "opencode-go",
+          label: "OpenCode Go",
+          endpoint: "https://opencode.ai/zen/go/v1",
+          model: "deepseek-v4-flash",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 131072,
+          apiKeyKey: "opencodeGoApiKey",
+          apiKeyLabel: "OpenCode 密钥",
+          apiKeyDesc: "在订阅官网获取后填入这里",
+          noCors: true
+        },
+        {
+          id: "openai",
+          label: "OpenAI",
+          endpoint: "https://api.openai.com/v1",
+          model: "gpt-4o-mini",
+          defaultMaxTokens: 16384,
+          defaultContextWindow: 128e3,
+          apiKeyKey: "openaiApiKey",
+          apiKeyLabel: "OpenAI 密钥",
+          apiKeyDesc: "在 OpenAI 官网获取后填入这里"
+        },
+        {
+          id: "anthropic",
+          label: "Anthropic（Claude）",
+          endpoint: "https://api.anthropic.com/v1",
+          model: "claude-sonnet-4-5",
+          defaultMaxTokens: 64e3,
+          // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
+          defaultContextWindow: 2e5,
+          apiKeyKey: "anthropicApiKey",
+          apiKeyLabel: "Anthropic 密钥",
+          apiKeyDesc: "在 Anthropic 官网获取后填入这里",
+          extraHeaders: { "anthropic-version": "2023-06-01" }
+        },
+        {
+          id: "google",
+          label: "Google Gemini",
+          endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
+          model: "gemini-2.0-flash",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 1048576,
+          apiKeyKey: "googleApiKey",
+          apiKeyLabel: "Gemini 密钥",
+          apiKeyDesc: "在 Google AI Studio 获取后填入这里"
+        },
+        {
+          id: "moonshot",
+          label: "Moonshot（Kimi）",
+          endpoint: "https://api.moonshot.cn/v1",
+          model: "kimi-k2-0711-preview",
+          defaultMaxTokens: 131072,
+          // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
+          defaultContextWindow: 131072,
+          apiKeyKey: "moonshotApiKey",
+          apiKeyLabel: "Kimi 密钥",
+          apiKeyDesc: "在 Moonshot 开放平台获取后填入这里"
+        },
+        {
+          id: "zhipu",
+          label: "智谱（GLM）",
+          endpoint: "https://open.bigmodel.cn/api/paas/v4",
+          model: "glm-4-flash",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 131072,
+          apiKeyKey: "zhipuApiKey",
+          apiKeyLabel: "智谱密钥",
+          apiKeyDesc: "在智谱开放平台获取后填入这里"
+        },
+        {
+          id: "dashscope",
+          label: "阿里云百炼（通义）",
+          endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          model: "qwen-plus",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 131072,
+          apiKeyKey: "dashscopeApiKey",
+          apiKeyLabel: "百炼密钥",
+          apiKeyDesc: "在阿里云百炼获取 API Key 后填入这里"
+        },
+        {
+          id: "siliconflow",
+          label: "硅基流动",
+          endpoint: "https://api.siliconflow.cn/v1",
+          model: "deepseek-ai/DeepSeek-V3",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 65536,
+          apiKeyKey: "siliconflowApiKey",
+          apiKeyLabel: "硅基流动密钥",
+          apiKeyDesc: "在硅基流动官网获取后填入这里"
+        },
+        {
+          id: "openrouter",
+          label: "OpenRouter",
+          endpoint: "https://openrouter.ai/api/v1",
+          model: "deepseek/deepseek-chat",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 131072,
+          apiKeyKey: "openrouterApiKey",
+          apiKeyLabel: "OpenRouter 密钥",
+          apiKeyDesc: "在 OpenRouter 官网获取后填入这里"
+        },
+        {
+          id: "xai",
+          label: "xAI（Grok）",
+          endpoint: "https://api.x.ai/v1",
+          model: "grok-2-latest",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 131072,
+          apiKeyKey: "xaiApiKey",
+          apiKeyLabel: "xAI 密钥",
+          apiKeyDesc: "在 xAI 控制台获取后填入这里"
+        },
+        {
+          id: "groq",
+          label: "Groq",
+          endpoint: "https://api.groq.com/openai/v1",
+          model: "llama-3.3-70b-versatile",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 131072,
+          apiKeyKey: "groqApiKey",
+          apiKeyLabel: "Groq 密钥",
+          apiKeyDesc: "在 Groq 控制台获取后填入这里"
+        },
+        {
+          id: "mistral",
+          label: "Mistral",
+          endpoint: "https://api.mistral.ai/v1",
+          model: "mistral-large-latest",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 131072,
+          apiKeyKey: "mistralApiKey",
+          apiKeyLabel: "Mistral 密钥",
+          apiKeyDesc: "在 Mistral 控制台获取后填入这里"
+        },
+        {
+          id: "together",
+          label: "Together AI",
+          endpoint: "https://api.together.xyz/v1",
+          model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 131072,
+          apiKeyKey: "togetherApiKey",
+          apiKeyLabel: "Together 密钥",
+          apiKeyDesc: "在 Together AI 官网获取后填入这里"
+        },
+        {
+          id: "ollama",
+          label: "Ollama（本地）",
+          endpoint: "http://localhost:11434/v1",
+          model: "llama3.1",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 32768,
+          apiKeyKey: "ollamaApiKey",
+          apiKeyLabel: "Ollama 密钥",
+          apiKeyDesc: "本地服务无需密钥，留空即可"
+        },
+        {
+          id: "custom",
+          label: "自定义（OpenAI 兼容）",
+          endpoint: "",
+          model: "",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 32768,
+          apiKeyKey: "aiCustomApiKey",
+          apiKeyLabel: "自定义 API 密钥",
+          apiKeyDesc: "在服务官网获取后填入这里"
+        }
+      ];
+      _aiProviderCache = null;
+      AIService = class {
+        constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
+          this.defaultModel = defaultModel;
+          this.defaultOptions = defaultOptions;
+        }
+        /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
+         *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
+         *  既有调用（不传这两项）行为零变化 */
+        async prompt(promptText, model = this.defaultModel, options = {}) {
+          var _a;
+          const mergedOptions = this._mergeOptions(options);
+          const provider = await getAIProvider(mergedOptions.provider);
+          const s = getQ3Settings();
+          const isExplicit = model !== this.defaultModel;
+          const effModel = isExplicit ? model : provider.model || model;
+          const mo = mergedOptions.modelOptions || {};
+          const effMaxTokens = (_a = mo.max_tokens) != null ? _a : provider.defaultMaxTokens || 4096;
+          const body = {
+            model: effModel,
+            messages: [{ role: "user", content: promptText }],
+            max_tokens: effMaxTokens,
+            stream: true
+          };
+          for (const k of Object.keys(mo)) {
+            if (k === "max_tokens") continue;
+            body[k] = mo[k];
+          }
+          const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
+          const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
+          try {
+            const content = provider.noCors ? await chatCompletionsNonStream(provider, body, signal) : await streamChatCompletions(provider, body, signal, onDelta);
+            return content;
+          } catch (streamError) {
+            if (signal == null ? void 0 : signal.aborted) throw streamError;
+            try {
+              const content = await chatCompletionsNonStream(provider, body, signal);
+              return content;
+            } catch (e) {
+              throw new Error(`AI 请求失败: ${streamError.message}（fallback: ${e.message}）`);
+            }
+          }
+        }
+        /** 普通对话模型（deepseek-v4-flash） */
+        async chat(promptText, extraOptions = {}) {
+          return this.prompt(promptText, "deepseek-v4-flash", extraOptions);
+        }
+        /** 推理模型，自动开启思考模式 */
+        async reason(promptText, extraOptions = {}) {
+          const options = this._prepareOptions(extraOptions, { enable_thinking: true });
+          return this.prompt(promptText, "deepseek-v4-flash", options);
+        }
+        /** 联网搜索（实验性，第三方代理平台生效） */
+        async search(promptText, extraOptions = {}) {
+          const options = this._prepareOptions(extraOptions, { search: true });
+          return this.prompt(promptText, "deepseek-v4-flash", options);
+        }
+        /** 要求 AI 返回 JSON 格式（设置 response_format） */
+        async json(promptText, extraOptions = {}) {
+          const options = this._prepareOptions(extraOptions, {
+            response_format: { type: "json_object" }
+          });
+          return this.prompt(promptText, "deepseek-v4-flash", options);
+        }
+        /** 思考 + 联网搜索（实验性） */
+        async reasonAndSearch(promptText, extraOptions = {}) {
+          const options = this._prepareOptions(extraOptions, {
+            enable_thinking: true,
+            search: true
+          });
+          return this.prompt(promptText, "deepseek-v4-flash", options);
+        }
+        setDefaultModel(model) {
+          this.defaultModel = model;
+        }
+        setDefaultOptions(options) {
+          this.defaultOptions = options;
+        }
+        // ---------- 内部辅助方法 ----------
+        _mergeOptions(options) {
+          const merged = { ...this.defaultOptions, ...options };
+          if (this.defaultOptions.modelOptions || options.modelOptions) {
+            merged.modelOptions = {
+              ...this.defaultOptions.modelOptions || {},
+              ...options.modelOptions || {}
+            };
+          }
+          return merged;
+        }
+        /** 准备选项：复制 extraOptions，并设置指定的 modelOptions 字段（用户显式传入优先） */
+        _prepareOptions(extraOptions, modelSettings) {
+          const options = { ...extraOptions };
+          if (!options.modelOptions) options.modelOptions = {};
+          const userModelOpts = options.modelOptions;
+          options.modelOptions = { ...modelSettings, ...userModelOpts };
+          return options;
+        }
+      };
+    }
+  });
+
+  // src/knowledge/source.ts
+  function noteSourceName(path, name) {
+    const explicit = String(name != null ? name : "").trim();
+    if (explicit) return explicit;
+    const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
+    return stripMdExt(base) || String(path != null ? path : "");
+  }
+  function isUrlLikeSourceText(text) {
+    const s = String(text != null ? text : "").trim();
+    if (!s || /\s/.test(s)) return false;
+    if (/^https?:\/\/\S+$/i.test(s)) return true;
+    return URL_LIKE_RE.test(s);
+  }
+  function cleanUrlText(text) {
+    return String(text != null ? text : "").trim().replace(/[，。！？；、,;.!?…'"’”\])}>】」』]+$/, "");
+  }
+  function normalizeSourceUrl(input) {
+    const s = cleanUrlText(input);
+    const m = s.match(/^(https?:\/\/)([^/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/i);
+    if (!m) return s;
+    const [, scheme, host, path, query, hash] = m;
+    const bare = host.toLowerCase().replace(/^www\./, "");
+    if (bare === "b23.tv") return scheme + host + path;
+    if (bare.endsWith("bilibili.com") && /^\/video\//.test(path)) {
+      const keep = (query != null ? query : "").slice(1).split("&").filter((kv) => /^(p|t)=/.test(kv));
+      return scheme + host + path + (keep.length ? "?" + keep.join("&") : "");
+    }
+    if (!query) return s;
+    const kept = query.slice(1).split("&").filter(Boolean).filter((kv) => {
+      const k = kv.split("=")[0].toLowerCase();
+      return !k.startsWith("utm_") && !k.startsWith("spm_") && !TRACK_KEYS.has(k);
+    });
+    return scheme + host + path + (kept.length ? "?" + kept.join("&") : "") + (hash != null ? hash : "");
+  }
+  function decodeHtmlEntities(s) {
+    return s.replace(/&quot;/gi, '"').replace(/&#0?39;/g, "'").replace(/&apos;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&");
+  }
+  function cleanSourceTitle(raw) {
+    let t = decodeHtmlEntities(String(raw != null ? raw : "")).replace(/\s+/g, " ").trim();
+    t = t.replace(/\s*[_\-–—|｜]\s*哔哩哔哩(?:_bilibili)?\s*$/i, "");
+    t = t.replace(/\s*[_\-–—|｜]\s*bilibili\s*$/i, "");
+    t = t.replace(/\s*[-–—|｜]\s*知乎(?:日报|专栏)?\s*$/, "");
+    return t.trim();
+  }
+  function serializeTermSource(src) {
+    var _a;
+    if (!src) return null;
+    if (src.kind === "external") {
+      const url = normalizeSourceUrl(src.url);
+      if (!url) return null;
+      const out = { source: url };
+      const title = src.title ? cleanSourceTitle(src.title) : "";
+      if (title) out.sourceTitle = title;
+      return out;
+    }
+    const path = String((_a = src.path) != null ? _a : "").trim();
+    if (!path) return null;
+    const name = noteSourceName(path, src.name);
+    return { source: `[[${path}|${name}]]` };
+  }
+  var URL_LIKE_RE, TRACK_KEYS;
+  var init_source = __esm({
+    "src/knowledge/source.ts"() {
+      init_utils();
+      URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
+      TRACK_KEYS = /* @__PURE__ */ new Set([
+        "vd_source",
+        "vd_src",
+        "seid",
+        "unique_k",
+        "from",
+        "share_source",
+        "share_medium",
+        "share_token",
+        "share_plat",
+        "share_to",
+        "share_from",
+        "share_times",
+        "gcid",
+        "refer",
+        "scene"
+      ]);
+    }
+  });
+
+  // src/knowledge/note-gen.ts
+  function parseDomainList(raw) {
+    return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
+  }
+  function quoteYaml(s) {
+    return '"' + String(s != null ? s : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+  }
+  function sanitizeMdTitle(s) {
+    const t = String(s != null ? s : "").replace(/[\\/:*?"<>|#^[\]]/g, "_").replace(/\s+/g, " ").trim().slice(0, 50);
+    return t || "文献笔记";
+  }
+  function chunkTranscript(text, maxLen = 4e3) {
+    const src = String(text || "").trim();
+    if (!src) return [];
+    const segs = src.split(/(?<=[。！？!?；;])/).map((s) => s.trim()).filter(Boolean);
+    const chunks = [];
+    let cur = "";
+    for (const seg of segs) {
+      if (cur && (cur + seg).length > maxLen) {
+        chunks.push(cur);
+        cur = "";
       }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
+      if (seg.length <= maxLen) {
+        cur += seg;
+        continue;
+      }
+      if (cur) {
+        chunks.push(cur);
+        cur = "";
+      }
+      let rest = seg;
+      while (rest.length > maxLen) {
+        chunks.push(rest.slice(0, maxLen));
+        rest = rest.slice(maxLen);
+      }
+      cur = rest;
+    }
+    if (cur) chunks.push(cur);
+    return chunks;
+  }
+  function parseAiJson(raw) {
+    const cleaned = String(raw || "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+    }
+    const m = cleaned.match(/\{[\s\S]*\}/);
+    if (m) {
+      try {
+        return JSON.parse(m[0]);
+      } catch (e) {
+      }
+    }
+    throw new Error("AI 返回的不是 JSON：" + cleaned.slice(0, 120));
+  }
+  function domainInstruction(list) {
+    if (!list.length) return '"domain": "领域，用一个中文词（如 物理/医学/心理/计算机/经济/文史哲 等）"';
+    return `"domain": "从以下领域选一个最贴近的：${list.join("、")}；都不贴切可写一个新的中文领域词"`;
+  }
+  function nowStamp() {
+    const d = /* @__PURE__ */ new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve2, reject) => {
+      const timer = setTimeout(() => reject(new Error(`AI 请求超时（${label}，${ms}ms）`)), ms);
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve2(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
     });
   }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
+  async function writeUniqueNote(dir, baseName, content) {
+    const app = getApp();
+    const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    let path = `${folder}/${baseName}.md`;
+    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName}_${i}.md`;
+    try {
+      const exists = await app.vault.adapter.exists(folder);
+      if (!exists) await app.vault.createFolder(folder);
+    } catch (e) {
+    }
+    await app.vault.create(path, content);
+    return path;
+  }
+  async function generateVideoNote(opts) {
+    const ai = createAI();
+    const s = tryGetSettings();
+    const list = parseDomainList(s.knowledgeDomainList);
+    const chunks = chunkTranscript(opts.transcript);
+    const metaRaw = await ai.json(
+      `你是文献整理助手。基于下方 B站视频《${opts.videoTitle || "未命名"}》的转写文稿片段，生成文献笔记元数据。只输出 JSON，不要任何解释：
+{"title":"15-30字的中文完整陈述句或疑问句，禁止冒号、破折号、句中句号问号，需要连接时用逗号","tags":["3-6个中文标签，每个不超过5个字，涵盖主题领域、关键概念、应用场景"],"summary":"一句话简介，不超过60字",${domainInstruction(list)}}
+所有字段一律使用简体中文。
+
+【转写文稿片段】
+${chunks[0] || ""}`,
+      { modelOptions: { max_tokens: 600 } }
+    );
+    const meta = parseAiJson(metaRaw);
+    const title = String((meta == null ? void 0 : meta.title) || "").trim() || opts.videoTitle || "未命名";
+    const tags = Array.isArray(meta == null ? void 0 : meta.tags) ? meta.tags.map(String).filter(Boolean).slice(0, 6) : [];
+    const summary = String((meta == null ? void 0 : meta.summary) || "").trim();
+    const domain = String((meta == null ? void 0 : meta.domain) || "").trim();
+    const polished = [];
+    for (const c of chunks) {
+      const p = await ai.chat(
+        `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。转写可能存在语音误听，专名与术语（如火箭型号、人名、地名、专业词）若明显是误听则按上下文纠正为最合理的写法；无法确定的保持原文。输出必须是简体中文（繁体转写一律转为简体）。直接输出润色后的正文，不要解释、不要加标题、不要列表。
+
+【转写文稿】
+${c}`,
+        // deepseek-v4-flash（带思考）长文润色时 reasoning_content 会吃光 max_tokens 导致 content 空串
+        // （ticket 复现：finish_reason=length、content=''）；deepseek-chat 无思考、输出直达 content，稳
+        { model: "deepseek-chat", modelOptions: { max_tokens: 8192 } }
+      );
+      polished.push(String(p || "").trim());
+    }
+    const whole = polished.join("");
+    const videoSection = opts.videoPath ? `![[${String(opts.videoPath).replace(/\\/g, "/")}]]` : null;
+    const fm = [
+      "---",
+      `title: ${quoteYaml(title)}`,
+      "tags:",
+      tags.map((t) => `  - ${quoteYaml(t)}`).join("\n"),
+      `summary: ${quoteYaml(summary)}`,
+      `url: ${quoteYaml(opts.url)}`,
+      `date: ${quoteYaml(nowStamp())}`,
+      `author: ${quoteYaml(opts.uploader)}`,
+      `videoTitle: ${quoteYaml(opts.videoTitle)}`,
+      "type: video",
+      `domain: ${quoteYaml(domain)}`,
+      "---"
+    ].join("\n");
+    const body = [fm, whole, videoSection].filter(Boolean).join("\n\n");
+    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title), body);
+  }
+  function termPrompt(term, list) {
+    return `你是百科知识整理助手。为术语「${term}」生成一篇文献笔记。只输出 JSON，不要任何解释：
+{"summary":"一段关于该术语的简明介绍（百科总结式，150-300字简体中文，连贯成文，涵盖定义、核心要点与必要背景）","domain": ${domainInstruction(list)}}`;
+  }
+  async function generateTermDraft(term) {
+    const ai = createAI();
+    const s = tryGetSettings();
+    const list = parseDomainList(s.knowledgeDomainList);
+    const t = String(term || "").trim();
+    if (!t) throw new Error("术语为空");
+    const raw = await ai.json(termPrompt(t, list));
+    const meta = parseAiJson(raw);
+    return {
+      summary: String((meta == null ? void 0 : meta.summary) || "").trim(),
+      domain: String((meta == null ? void 0 : meta.domain) || "").trim()
+    };
+  }
+  async function summarizeTermSummary(text) {
+    const ai = createAI();
+    const t = String(text || "").trim();
+    if (!t) throw new Error("内容为空");
+    const out = await ai.chat(
+      `你是文字编辑。把下面的术语介绍压缩成更精简的一段话：保留术语定义与关键事实，删除冗余表述与重复内容，长度约为原文的一半。输出必须是简体中文。直接输出结果，不要解释、不要加标题、不要列表。
+
+【原文】
+${t}`,
+      { modelOptions: { max_tokens: 1024 } }
+    );
+    const s = String(out || "").trim();
+    if (!s) throw new Error("AI 返回为空");
+    return s;
+  }
+  async function generateTermNote(opts) {
+    var _a;
+    const s = tryGetSettings();
+    const term = String(opts.term || "").trim();
+    if (!term) throw new Error("术语为空");
+    let summary;
+    let domain;
+    if (opts.summary === void 0) {
+      const draft = await generateTermDraft(term);
+      summary = draft.summary;
+      domain = draft.domain;
+    } else {
+      summary = String(opts.summary).trim();
+      domain = String((_a = opts.domain) != null ? _a : "").trim();
+    }
+    const fm = [
+      "---",
+      `title: ${quoteYaml(term)}`,
+      "type: term",
+      `domain: ${quoteYaml(domain)}`,
+      `term: ${quoteYaml(term)}`,
+      `date: ${quoteYaml(nowStamp())}`
+    ];
+    const src = serializeTermSource(opts.source);
+    if (src) {
+      fm.push(`source: ${quoteYaml(src.source)}`);
+      if (src.sourceTitle) fm.push(`sourceTitle: ${quoteYaml(src.sourceTitle)}`);
+    }
+    fm.push("---");
+    const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
+    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(term), body);
+  }
+  function parseFrontmatter(content) {
+    var _a;
+    const out = {};
+    const m = String(content || "").match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (!m) return out;
+    for (const line of m[1].split(/\r?\n/)) {
+      const kv = line.match(/^([A-Za-z\u4e00-\u9fa5_]+):\s*(.*)$/);
+      if (kv) {
+        const raw = String((_a = kv[2]) != null ? _a : "").trim();
+        const quoted = raw.startsWith('"') && raw.endsWith('"') || raw.startsWith("'") && raw.endsWith("'");
+        out[kv[1].trim()] = quoted ? raw.slice(1, -1) : raw;
+      }
+    }
+    return out;
+  }
+  function injectFrontmatter(content, entries) {
+    const head = entries.map((kv) => {
+      const [k, ...rest] = kv.split(":");
+      const v = rest.join(":").trim();
+      return `${k}: ${quoteYaml(v.replace(/^"(.*)"$/, "$1"))}`;
+    }).join("\n");
+    const m = String(content || "").match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (m) return content.replace(/^---\r?\n[\s\S]*?\r?\n---/, `---
+${m[1]}
+${head}
+---`);
+    return `---
+${head}
+---
+
+${content || ""}`;
+  }
+  async function backfillNotes(opts = {}) {
+    var _a, _b;
+    const app = getApp();
+    const s = tryGetSettings();
+    const aiTimeoutMs = (_a = opts.aiTimeoutMs) != null ? _a : BACKFILL_AI_TIMEOUT_MS;
+    const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const files = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
+    const needDomain = [];
+    let filled = 0;
+    for (const f of files) {
+      const content = await app.vault.read(f);
+      const fm = parseFrontmatter(content);
+      const hasType = fm.type === "video" || fm.type === "term";
+      const hasDomain = !!fm.domain;
+      if (hasType && hasDomain) continue;
+      const patch = [];
+      if (!hasType) {
+        const type = fm.url || fm.author || fm.videoTitle ? "video" : fm.term ? "term" : "";
+        if (type) patch.push(`type:${type}`);
+      }
+      if (!hasDomain) needDomain.push({ file: f });
+      if (patch.length) {
+        const updated = injectFrontmatter(content, patch);
+        if (updated !== content) {
+          await app.vault.modify(f, updated);
+          filled++;
+        }
+      }
+    }
+    let aiSkipped = false;
+    if (needDomain.length) {
+      const ai = createAI();
+      const list = parseDomainList(s.knowledgeDomainList);
+      for (const { file } of needDomain) {
+        try {
+          const latest = await app.vault.read(file);
+          const sample = latest.replace(/^---[\s\S]*?---/, "").slice(0, 2e3);
+          const raw = await withTimeout(
+            ai.json(
+              `请判断下面这段文字所属的领域（${domainInstruction(list)}）。只输出 JSON：{"domain":"<领域词>"}
+
+【文本】
+${sample}`,
+              { modelOptions: { max_tokens: 80 } }
+            ),
+            aiTimeoutMs,
+            "领域判定"
+          );
+          const domain = String(((_b = parseAiJson(raw)) == null ? void 0 : _b.domain) || "").trim();
+          if (domain) {
+            await app.vault.modify(file, injectFrontmatter(latest, [`domain:${domain}`]));
+            filled++;
+          }
+        } catch (e) {
+          if (/API Key|AI 配置/.test(String((e == null ? void 0 : e.message) || ""))) aiSkipped = true;
+        }
+      }
+    }
+    return { scanned: files.length, filled, aiSkipped };
+  }
+  var BACKFILL_AI_TIMEOUT_MS;
+  var init_note_gen = __esm({
+    "src/knowledge/note-gen.ts"() {
+      init_ai();
+      init_app();
+      init_settings_provider();
+      init_source();
+      BACKFILL_AI_TIMEOUT_MS = 25e3;
+    }
+  });
+
+  // src/knowledge/processor.ts
+  function getChildProcess() {
+    const w = window;
+    if (!w.require) return null;
+    try {
+      return w.require("child_process");
+    } catch (e) {
+      return null;
+    }
+  }
+  function getFs() {
+    const w = window;
+    if (!w.require) return null;
+    try {
+      return w.require("fs");
+    } catch (e) {
+      return null;
+    }
+  }
+  function resolveBatchSpawn(taskJson) {
+    const b64 = Buffer.from(taskJson, "utf8").toString("base64");
+    return { cmd: "bili-dl", args: ["--batch", `b64:${b64}`], shell: true };
+  }
+  function tryUnlink(path) {
+    if (!path) return;
+    try {
+      const fsMod = getFs();
+      if (fsMod && typeof fsMod.unlinkSync === "function") fsMod.unlinkSync(path);
+    } catch (e) {
+    }
+  }
+  function getVaultBasePath() {
+    var _a, _b, _c;
+    try {
+      const bp = (_c = (_b = (_a = getApp().vault) == null ? void 0 : _a.adapter) == null ? void 0 : _b.getBasePath) == null ? void 0 : _c.call(_b);
+      return typeof bp === "string" ? bp : "";
+    } catch (e) {
+      return "";
+    }
+  }
+  function tailStderr(chunks) {
+    let s = "";
+    for (const c of chunks) {
+      s += String(c);
+      if (s.length > 2048) s = s.slice(-2048);
+    }
+    return s.trim();
+  }
+  function nowTs() {
+    const d = /* @__PURE__ */ new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+  var INSTALL_HINT, STEP_RE, RESULT_RE, PROGRESS_RE, INFO_RE, AI_STEP_TEXT, NOTE_STEP_TEXT, BatchRunner;
+  var init_processor = __esm({
+    "src/knowledge/processor.ts"() {
+      init_notice();
+      init_domain_bus();
+      init_settings_provider();
+      init_app();
+      init_data2();
+      init_note_gen();
+      INSTALL_HINT = "请先运行 npm install -g @jwbz/bili-downloader";
+      STEP_RE = /^\[bz-step\]\s*(.+)$/;
+      RESULT_RE = /^\[bz-result\]\s*(\{.*\})$/;
+      PROGRESS_RE = /^\[bz-p\]\s*(\{.*\})$/;
+      INFO_RE = /^\[bz-info\]\s*(\{.*\})$/;
+      AI_STEP_TEXT = "AI 生成文献笔记中";
+      NOTE_STEP_TEXT = "笔记落盘中";
+      BatchRunner = {
+        running: false,
+        aborted: false,
+        /** 遇错即停（设置 knowledgeStopOnFailure）：当前任务失败后中断整批，未开始项保持待处理 */
+        stoppedFail: false,
+        _child: null,
+        _cp: null,
+        /** 桌面端可用（window.require('child_process') 存在） */
+        available() {
+          return !!getChildProcess();
+        },
+        /**
+         * 串行处理全部「待处理 + 失败」任务（按数组顺序，一次一部；ADR-0067 断点续跑：
+         * 失败项重跑时工具自动跳过已成功步骤、从出错步骤继续）。
+         * 已成功（归档）项不动；默认失败后继续（遇错即停设置开启时失败后中断）。
+         */
+        async runAll(tasks, events) {
+          if (this.running) return;
+          this.running = true;
+          this.aborted = false;
+          this.stoppedFail = false;
+          const cp = getChildProcess();
+          this._cp = cp;
+          if (!cp) {
+            notice("仅桌面端可用：文献盒处理需要 Node.js 外部进程", "error");
+            this.running = false;
+            return;
+          }
+          const stopOnFailure = tryGetSettings().knowledgeStopOnFailure === true;
+          try {
+            let success = 0;
+            let failed = 0;
+            for (const task of tasks) {
+              if (this.aborted) break;
+              if (task.status !== "pending" && task.status !== "failed") continue;
+              let itemFailed = false;
+              await this._runOne(cp, task, events, (ok) => {
+                if (ok) success++;
+                else {
+                  failed++;
+                  itemFailed = true;
+                }
+              });
+              if (itemFailed && stopOnFailure) {
+                this.stoppedFail = true;
+                break;
+              }
+            }
+            events.onBatchDone({ success, failed, aborted: this.aborted, stopped: this.stoppedFail });
+          } finally {
+            this.running = false;
+          }
+        },
+        /** 中止整批：杀死当前子进程，未开始项保持待处理，当前项由 close 标记失败「已中止」 */
+        abort() {
+          var _a, _b;
+          this.aborted = true;
+          try {
+            (_b = (_a = this._child) == null ? void 0 : _a.kill) == null ? void 0 : _b.call(_a);
+          } catch (e) {
+          }
+        },
+        /** 单部执行：spawn → 解析步骤/进度/信息/结果行 → CLI 终态 → 插件侧 AI 阶段 → 落库；Promise 在终态落库后 resolve */
+        _runOne(cp, task, events, onEnd) {
+          return new Promise((resolve2) => {
+            var _a, _b, _c, _d;
+            const s = tryGetSettings();
+            const nonEmpty = (v) => {
+              const t = typeof v === "string" ? v.trim() : "";
+              return t ? t : void 0;
+            };
+            const taskJson = JSON.stringify({
+              url: task.url,
+              start: (_a = task.start) != null ? _a : null,
+              end: (_b = task.end) != null ? _b : null,
+              page: task.page && task.page > 0 ? task.page : null,
+              options: {
+                quality: task.quality || s && s.knowledgeQuality || "highest",
+                keepVideo: !s || s.knowledgeKeepVideo !== false,
+                outputDir: nonEmpty(s && s.knowledgeOutputDir),
+                compress: !s || s.knowledgeCompress !== false,
+                crf: s && s.knowledgeCrf || 23,
+                vaultPath: getVaultBasePath(),
+                ffmpegPath: nonEmpty(s && s.knowledgeFfmpegPath),
+                ffprobePath: nonEmpty(s && s.knowledgeFfprobePath),
+                pythonPath: nonEmpty(s && s.knowledgePythonPath),
+                whisperModel: nonEmpty(s && s.knowledgeWhisperModel),
+                cacheDir: nonEmpty(s && s.knowledgeCacheDir),
+                cacheRetentionDays: s && s.knowledgeCacheRetentionDays || 7
+              }
+            });
+            void KnowledgeData.updateTask(task.id, { status: "processing", reason: "启动中…", processedAt: null }).then(() => {
+              task.status = "processing";
+              task.reason = "启动中…";
+              events.onTaskProgress({ ...task }, "启动中…");
+            });
+            const { cmd, args, shell } = resolveBatchSpawn(taskJson);
+            let child;
+            let settled = false;
+            let transcriptPath = null;
+            let videoPath = null;
+            const finish = (ok, reason, notePath, video) => {
+              if (settled) return;
+              settled = true;
+              void this._finish(task, events, onEnd, ok, reason, notePath, video).then(resolve2, () => {
+                onEnd(false);
+                resolve2();
+              });
+            };
+            try {
+              child = cp.spawn(cmd, args, { shell, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+            } catch (e) {
+              const reason = /ENOENT/.test(e.message) ? `未找到 bili-dl。${INSTALL_HINT}` : `启动失败：${e.message}。${INSTALL_HINT}`;
+              finish(false, reason, null, null);
+              return;
+            }
+            this._child = child;
+            const errChunks = [];
+            const onData = (d) => {
+              const text = String(d);
+              for (const line of text.split(/\r?\n/)) {
+                let m = line.match(STEP_RE);
+                if (m) {
+                  const stepText = m[1].trim();
+                  task.reason = stepText;
+                  void KnowledgeData.updateTask(task.id, { reason: stepText });
+                  events.onTaskProgress({ ...task }, stepText, null);
+                  continue;
+                }
+                m = line.match(PROGRESS_RE);
+                if (m) {
+                  try {
+                    const p = JSON.parse(m[1]);
+                    const progress = {
+                      phase: p && typeof p.phase === "string" ? p.phase : null,
+                      pct: p && Number.isFinite(p.pct) ? Number(p.pct) : null
+                    };
+                    events.onTaskProgress({ ...task }, task.reason || "", progress);
+                  } catch (e) {
+                  }
+                  continue;
+                }
+                m = line.match(INFO_RE);
+                if (m) {
+                  try {
+                    const info = JSON.parse(m[1]);
+                    const title = info && typeof info.title === "string" ? String(info.title).trim() : "";
+                    const uploader = info && typeof info.uploader === "string" ? String(info.uploader).trim() : "";
+                    if (title) {
+                      task.title = title;
+                      task.uploader = uploader || task.uploader;
+                      const patch = { title, uploader: task.uploader };
+                      void KnowledgeData.updateTask(task.id, patch).then(() => {
+                        events.onTaskInfo({ ...task });
+                      });
+                    }
+                  } catch (e) {
+                  }
+                  continue;
+                }
+                m = line.match(RESULT_RE);
+                if (m) {
+                  try {
+                    const r = JSON.parse(m[1]);
+                    transcriptPath = r && typeof r.transcript === "string" && r.transcript ? r.transcript : null;
+                    videoPath = r && typeof r.video === "string" && r.video ? r.video : null;
+                  } catch (e) {
+                  }
+                }
+              }
+            };
+            (_c = child.stdout) == null ? void 0 : _c.on("data", onData);
+            (_d = child.stderr) == null ? void 0 : _d.on("data", (d) => {
+              errChunks.push(d);
+            });
+            child.on("error", (e) => {
+              if (settled) return;
+              const reason = /ENOENT/.test(e.message) ? `未找到 bili-dl。${INSTALL_HINT}` : `启动失败：${e.message}`;
+              finish(false, reason, null, null);
+            });
+            child.on("close", (code) => {
+              if (settled) return;
+              if (this.aborted) {
+                finish(false, "已中止", null, null);
+                return;
+              }
+              if (code === 0) {
+                void this._aiStep(task, events, transcriptPath, videoPath, finish);
+              } else {
+                tryUnlink(transcriptPath);
+                const errTail = tailStderr(errChunks);
+                const reason = errTail || `处理失败（退出码 ${code}）。${INSTALL_HINT}`;
+                finish(false, reason, null, null);
+              }
+            });
+          });
+        },
+        /**
+         * 插件侧 AI 阶段（ADR-0071）：CLI close(0) 后由插件接管——
+         * 「AI 生成文献笔记中」→ 读转录临时文件 → generateVideoNote（元数据 + 分块润色 + 落盘）→
+         * 读毕删临时文件 → 「笔记落盘中」→ 成功终态。
+         * 转录读取失败 / AI 失败（含 AI 未配置）→ 该任务 failed（reason 中文、不落半成品笔记），
+         * 转录临时文件尽力清理；单部失败即整批语义与 CLI 失败一致（继续剩余 / 遇错即停）。
+         */
+        async _aiStep(task, events, transcriptPath, videoPath, finish) {
+          task.reason = AI_STEP_TEXT;
+          void KnowledgeData.updateTask(task.id, { reason: AI_STEP_TEXT });
+          events.onTaskProgress({ ...task }, AI_STEP_TEXT);
+          let transcript;
+          try {
+            const fsMod = getFs();
+            if (!fsMod || typeof fsMod.readFileSync !== "function" || !transcriptPath) {
+              throw new Error("无转录文件");
+            }
+            transcript = fsMod.readFileSync(transcriptPath, "utf8");
+          } catch (e) {
+            tryUnlink(transcriptPath);
+            finish(false, "转录文件读取失败", null, null);
+            return;
+          }
+          let notePath;
+          try {
+            notePath = await generateVideoNote({
+              transcript,
+              videoTitle: task.title || "",
+              url: task.url,
+              uploader: task.uploader || "",
+              // ticket 151：CLI 交付的 mp4 路径随笔记落盘（正文视频双链）；keepVideo=false 时为 null → 无视频段
+              videoPath
+            });
+          } catch (e) {
+            tryUnlink(transcriptPath);
+            finish(false, `AI 生成文献笔记失败：${(e == null ? void 0 : e.message) || String(e)}`, null, null);
+            return;
+          }
+          tryUnlink(transcriptPath);
+          task.reason = NOTE_STEP_TEXT;
+          void KnowledgeData.updateTask(task.id, { reason: NOTE_STEP_TEXT });
+          events.onTaskProgress({ ...task }, NOTE_STEP_TEXT);
+          finish(true, null, notePath, videoPath);
+        },
+        /** 终态落库 + 事件（resolve 于落库完成后）；成功 → 自动归档历史（archived+归档时间，ADR-0067） */
+        async _finish(task, events, onEnd, ok, reason, notePath, videoPath) {
+          var _a;
+          task.status = ok ? "success" : "failed";
+          task.reason = reason;
+          task.notePath = ok ? notePath : task.notePath;
+          task.videoPath = ok ? videoPath : task.videoPath;
+          task.processedAt = nowTs();
+          if (ok) {
+            task.archived = true;
+            task.archivedAt = task.processedAt;
+          }
+          try {
+            await KnowledgeData.updateTask(task.id, {
+              status: task.status,
+              reason,
+              notePath: task.notePath,
+              videoPath: task.videoPath,
+              processedAt: task.processedAt,
+              archived: task.archived,
+              archivedAt: task.archivedAt,
+              // 内存态解析信息一并落库（ADR-0067）：终态写与信息写并发时，终态写携带新字段，
+              // 避免读-改-写竞态把已落库的 title/uploader 覆盖丢失
+              title: task.title,
+              uploader: task.uploader
+            });
+          } catch (e) {
+          }
+          events.onTaskDone({ ...task });
+          if (ok) {
+            emitDomainEvent("knowledge:tasks", { kind: "converted", id: task.id, url: task.url, notePath: task.notePath });
+          } else {
+            emitDomainEvent("knowledge:tasks", { kind: "failed", id: task.id, url: task.url, notePath: (_a = task.notePath) != null ? _a : null });
+          }
+          onEnd(ok);
+        }
+      };
+    }
+  });
+
+  // src/knowledge/ui.ts
+  function q(root, sel) {
+    return root.querySelector(sel);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function shortNoteName(path) {
+    const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
+    return stripMdExt(base) || String(path || "");
+  }
+  function humanizeError(reason) {
+    const s = String(reason != null ? reason : "").trim();
+    if (!s) return "";
+    if (/未找到 bili-dl|npm install -g @jwbz\/bili-downloader|ENOENT.*bili-dl/i.test(s)) {
+      return "下载工具未安装：在电脑上运行 npm install -g @jwbz/bili-downloader 后重试";
+    }
+    if (/ffmpeg/i.test(s)) return "视频处理工具（ffmpeg）不可用：检查电脑是否已安装，或设置里的「ffmpeg 路径」";
+    if (/ffprobe/i.test(s)) return "视频探测工具（ffprobe）不可用：检查电脑是否已安装，或设置里的「ffprobe 路径」";
+    if (/找不到 Python|无法启动 Python|python.*ENOENT/i.test(s)) {
+      return "语音转写失败：未找到 Python——设置里「Python 路径」填 python（一般装了 Python 即可），或运行 where python 查绝对路径填入";
+    }
+    if (/未配置 pythonPath/i.test(s)) {
+      return "语音转写未配置：知识盒设置「Python 路径」填 python 即可（一般装了 Python 就能用，走系统 PATH），或填绝对路径（Windows 在命令提示符运行 where python 可查）";
+    }
+    if (/pip install faster-whisper|faster-whisper 环境已安装/i.test(s)) {
+      return "语音转写失败：faster-whisper 未安装，请在目标 Python 中运行 pip install faster-whisper";
+    }
+    if (/whisper|faster.whisper|no module/i.test(s)) {
+      return "语音转写失败：检查设置里的「Python 路径」与「Whisper 模型」";
+    }
+    if (/API Key|AI 配置|未配置|Unauthorized|\b401\b|invalid_api_key|insufficient|quota/i.test(s)) {
+      return "AI 配置不可用：请在插件设置 → AI 配置里检查 API Key";
+    }
+    if (/AI 请求超时|AI 返回的不是 JSON/i.test(s)) return "AI 响应异常：网络不稳定或服务繁忙，稍后重试";
+    if (/转录文件读取失败|无转录文件/i.test(s)) return "转写稿缺失：视频处理步骤未完成，可重试";
+    if (/ETIMEDOUT|ESOCKETTIMEDOUT|timed? ?out|超时/i.test(s)) return "网络超时：请检查网络连接后重试";
+    if (/ECONNRESET|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|getaddrinfo|fetch failed/i.test(s)) {
+      return "网络连接失败：请检查网络或代理设置后重试";
+    }
+    if (/^-352|\b412\b|风控|请求过于频繁/i.test(s)) return "B 站风控拦截：稍后再试，或在设置里配置登录 Cookie";
+    if (/视频不存在|稿件不存在|\b404\b|not found/i.test(s)) return "视频不存在或已删除：请检查链接是否正确";
+    return s.length > 160 ? s.slice(0, 160) + "…" : s;
+  }
+  function stepDoneLabel(step) {
+    const mapped = STEP_DONE_MAP[step];
+    if (mapped) return mapped;
+    return step.endsWith("中") ? `已${step.slice(0, -1)}` : `已${step}`;
+  }
+  function shortUrlText(url) {
+    const m = url.match(/BV[0-9A-Za-z]{8,12}/i) || url.match(/b23\.tv\/([0-9A-Za-z]+)/i);
+    if (m) return m[0];
+    return url.length > 28 ? url.slice(0, 28) + "…" : url;
+  }
+  function dateStamp() {
+    const d = /* @__PURE__ */ new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+  function litDirOf(s) {
+    const raw = s && s.knowledgeDirectory ? String(s.knowledgeDirectory) : "文献盒";
+    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function cardboxDirOf(s) {
+    const raw = s && s.knowledgeCardboxDirectory ? String(s.knowledgeCardboxDirectory) : "卡片盒";
+    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function topicDirOf(s) {
+    const raw = s && s.knowledgeTopicDirectory ? String(s.knowledgeTopicDirectory) : "主题盒";
+    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function parseDateRaw(raw) {
+    const s = String(raw != null ? raw : "").trim();
+    if (!s) return NaN;
+    const d1 = new Date(s.replace(" ", "T"));
+    if (!isNaN(d1.valueOf())) return d1.valueOf();
+    const d2 = new Date(s);
+    return d2.valueOf();
+  }
+  function stripFrontmatter(text) {
+    const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+    return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
+  }
+  function appendRelatedLine(text, link) {
+    var _a;
+    const lines = text.split(/\r?\n/);
+    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return text;
+    let close = -1;
+    let relatedAt = -1;
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim() === "---") {
+        close = i;
+        break;
+      }
+      if (/^related:/.test(lines[i])) relatedAt = i;
+    }
+    if (close === -1) return text;
+    if (relatedAt === -1) {
+      lines.splice(close, 0, "related:", `  - "${link}"`);
+    } else {
+      let end = relatedAt + 1;
+      while (end < close && /^\s*-\s/.test(lines[end])) end++;
+      lines.splice(end, 0, `  - "${link}"`);
+    }
+    return lines.join("\n");
+  }
+  var STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager;
+  var init_ui = __esm({
+    "src/knowledge/ui.ts"() {
+      init_fake_obsidian();
+      init_mobile();
+      init_settings_provider();
+      init_item_actions();
+      init_flow_dialog();
+      init_notice();
       init_utils();
+      init_suggest();
       init_z_order();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
+      init_domain_bus();
+      init_app();
+      init_data2();
+      init_processor();
+      init_note_gen();
+      init_source();
+      STATUS_META = {
+        pending: { label: "待处理", cls: "bz-kb-pending" },
+        processing: { label: "处理中", cls: "bz-kb-processing" },
+        success: { label: "成功", cls: "bz-kb-success" },
+        failed: { label: "失败", cls: "bz-kb-failed" }
+      };
+      STEP_DONE_MAP = {
+        "AI 生成文献笔记中": "已生成文献笔记",
+        "笔记落盘中": "已落盘笔记"
+      };
+      fmtElapsed = (ms) => {
+        const s = Math.max(0, Math.floor(ms / 1e3));
+        const m = Math.floor(s / 60);
+        const h = Math.floor(m / 60);
+        return h > 0 ? `${h}:${String(m % 60).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}` : `${m}:${String(s % 60).padStart(2, "0")}`;
+      };
+      UIManager = class {
+        constructor(app) {
+          // ---- 主壳（三部）----
+          this.mask = null;
+          this.popup = null;
+          this.contentEl = null;
+          this.part = "z1";
+          this.allNotes = [];
+          this.allCards = [];
+          this.allTopics = [];
+          this.cardsShown = 0;
+          this.editor = null;
+          this.sessionNewPaths = /* @__PURE__ */ new Set();
+          this.loadedLitDir = "";
+          this.loadedCardDir = "";
+          this.loadedTopicDir = "";
+          this.backfilledDir = "";
+          // ---- 视频录入面板（任务队列）----
+          this.videoMask = null;
+          this.videoPopup = null;
+          this.videoList = null;
+          // ---- 添加任务弹窗 / 历史弹窗 ----
+          this.addMask = null;
+          this.addPopup = null;
+          this.historyMask = null;
+          this.historyPopup = null;
+          this.historyList = null;
+          // ---- 术语生成面板 ----
+          this.termMask = null;
+          this.termPopup = null;
+          this.termPreview = null;
+          this.termGenerating = false;
+          this.termSummarizing = false;
+          this.termHasDraft = false;
+          this.termSource = null;
+          // 术语来源（ADR-0116；null = 未填）
+          this.termSrcSuggest = null;
+          this.termSrcTimer = null;
+          this.editingId = null;
+          this.onKeydown = () => {
+          };
+          this.batchAbortLabel = null;
+          this.runState = /* @__PURE__ */ new Map();
+          this.runTimer = null;
+          this.fileListenerRefs = [];
+          this.fileListenerAttached = false;
+          this.refreshTimer = null;
+          this.pendingRefreshPaths = /* @__PURE__ */ new Set();
+          this.pendingDeletePaths = /* @__PURE__ */ new Set();
+          this._previewNote = null;
+          this.app = app;
+          this.createMainUI();
+          this.createVideoUI();
+          this.createAddDialog();
+          this.createHistoryUI();
+          this.createTermUI();
+          this.onKeydown = (e) => {
+            if (e.key !== "Escape") return;
+            if (this.termPopup && this.termPopup.style.display === "flex") this.hideTermEntry();
+            else if (this.historyPopup && this.historyPopup.style.display === "flex") this.hideHistory();
+            else if (this.addPopup && this.addPopup.style.display === "flex") this.hideAddDialog();
+            else if (this.videoPopup && this.videoPopup.style.display === "flex") this.hideVideo();
+            else if (this.popup && this.popup.style.display === "flex") this.hideMain();
+          };
+          document.addEventListener("keydown", this.onKeydown);
+        }
+        // ==================== 主壳（三部） ====================
+        createMainUI() {
+          var _a;
+          if (this.mask && this.mask.isConnected || this.popup && this.popup.isConnected) return;
+          const mask = document.createElement("div");
+          mask.id = "knowledge-mask";
+          mask.className = "bz-kb-mask";
+          mask.style.display = "none";
+          mask.onclick = () => this.hideMain();
+          const popup = document.createElement("div");
+          popup.id = "knowledge-popup";
+          popup.className = "bz-kb-window kb";
+          if (isMobileEnv()) popup.classList.add("bz-panel-mtop");
+          popup.style.display = "none";
+          const partBtns = `
+          <button class="bz-kb-part is-on" data-kb-act="part" data-part="z1">部壹 · 文献</button>
+          <button class="bz-kb-part" data-kb-act="part" data-part="z2">部贰 · 卡片</button>
+          <button class="bz-kb-part" data-kb-act="part" data-part="z3">部叁 · 主题</button>`;
+          popup.innerHTML = isMobileEnv() ? `
+      <div class="bz-kb-head">
+        <div class="bz-kb-brand">
+          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
+          <div class="bz-kb-title">知 识 盒</div>
+        </div>
+        <button class="bz-kb-mclose" data-kb-act="kb-close" title="关闭知识盒">✕</button>
+      </div>
+      <div class="bz-kb-parts">${partBtns}
+      </div>
+      <div class="bz-kb-sc" id="kb-sc"></div>` : `
+      <div class="bz-kb-head">
+        <div class="bz-kb-parts">${partBtns}
+        </div>
+        <div class="bz-kb-brand">
+          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
+          <div class="bz-kb-title">知 识 盒</div>
+        </div>
+      </div>
+      <div class="bz-kb-sc" id="kb-sc"></div>`;
+          document.body.appendChild(mask);
+          document.body.appendChild(popup);
+          this.mask = mask;
+          this.popup = popup;
+          this.contentEl = q(popup, "#kb-sc");
+          popup.addEventListener("click", (e) => this.onShellClick(e));
+          (_a = this.contentEl) == null ? void 0 : _a.addEventListener("scroll", () => this.onContentScroll());
+          this.attachFileListener();
+        }
+        /** 主壳点击委托（部切换 / 录入入口 / 文献行 / 主题行 / 返回） */
+        onShellClick(e) {
+          const t = e.target.closest("[data-kb-act]");
+          if (!t) return;
+          const act = t.getAttribute("data-kb-act");
+          if (act === "part") {
+            this.part = t.getAttribute("data-part") || "z1";
+            void this.refreshCurrent();
+            this.syncPartButtons();
+          } else if (act === "term-entry") this.showTermEntry();
+          else if (act === "video-entry") this.showVideoEntry();
+          else if (act === "lit-peek") {
+            const p = t.getAttribute("data-path") || "";
+            const n = this.allNotes.find((x) => x.path === p);
+            if (n) void this.openPreview(n);
+          } else if (act === "card-peek") {
+            const p = t.getAttribute("data-path") || "";
+            const c = this.allCards.find((x) => x.path === p);
+            if (c) void this.openPreview(c, "card");
+          } else if (act === "topic-open") {
+            const p = t.getAttribute("data-path") || "";
+            const tp = this.allTopics.find((x) => x.path === p);
+            if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, "topic");
+          } else if (act === "kb-close") this.hideMain();
+        }
+        syncPartButtons() {
+          if (!this.popup) return;
+          this.popup.querySelectorAll(".bz-kb-part").forEach((b) => {
+            b.classList.toggle("is-on", b.getAttribute("data-part") === this.part);
+          });
+        }
+        showMain() {
+          this.createMainUI();
+          if (!this.popup || !this.mask || !this.contentEl) return;
+          topifyZ(this.mask, this.popup);
+          this.mask.style.display = "block";
+          this.popup.style.display = "flex";
+          void this.refreshCurrent();
+          void this.runBackfill();
+        }
+        hideMain() {
+          if (this.mask) this.mask.style.display = "none";
+          if (this.popup) this.popup.style.display = "none";
+        }
+        /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
+        async refreshCurrent() {
+          if (!this.contentEl) return;
+          const s = tryGetSettings();
+          if (this.part === "z1") {
+            const dir = litDirOf(s);
+            if (this.loadedLitDir && this.loadedLitDir !== dir) this.allNotes = [];
+            await this.loadLiterature(dir);
+            this.renderLiterature();
+          } else if (this.part === "z2") {
+            const dir = cardboxDirOf(s);
+            if (this.loadedCardDir && this.loadedCardDir !== dir) this.allCards = [];
+            await this.loadCards(dir);
+            this.cardsShown = 0;
+            this.renderCards();
+          } else {
+            const dir = topicDirOf(s);
+            if (this.loadedTopicDir && this.loadedTopicDir !== dir) this.allTopics = [];
+            await this.loadTopics(dir);
+            this.renderTopics();
+          }
+        }
+        /** 部壹文献扫描：文献目录下全部 .md（含子目录），metadataCache 解析 frontmatter */
+        async loadLiterature(dir) {
+          const app = getApp();
+          this.loadedLitDir = dir;
+          const prefix = dir + "/";
+          const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+          const entries = [];
+          for (const f of mdFiles) {
+            const e = await this.parseNoteFile(f);
+            if (e) entries.push(e);
+          }
+          entries.sort((a, b) => b.created - a.created || a.path.localeCompare(b.path));
+          this.allNotes = entries;
+        }
+        async parseNoteFile(file) {
+          const app = getApp();
+          try {
+            const cache = app.metadataCache.getFileCache(file);
+            const fm = cache && cache.frontmatter;
+            const title = fm && fm.title ? String(fm.title) : file.basename;
+            const date = fm && fm.date ? String(fm.date) : "";
+            let created = parseDateRaw(date);
+            if (isNaN(created)) {
+              try {
+                const st = file.stat;
+                created = st && st.ctime ? new Date(st.ctime).valueOf() : 0;
+              } catch (e) {
+                created = 0;
+              }
+            }
+            return {
+              file,
+              path: file.path,
+              title,
+              type: fm && fm.type ? String(fm.type) : "",
+              domain: fm && fm.domain ? String(fm.domain) : "",
+              summary: fm && fm.summary ? String(fm.summary) : "",
+              url: fm && fm.url ? String(fm.url) : "",
+              source: fm && fm.source ? String(fm.source) : "",
+              sourceTitle: fm && fm.sourceTitle ? String(fm.sourceTitle) : "",
+              date,
+              created
+            };
+          } catch (e) {
+            console.warn("解析文献笔记失败:", file.path, e);
+            return null;
+          }
+        }
+        renderLiterature() {
+          if (!this.contentEl) return;
+          const rows = this.allNotes.map((n, i) => {
+            const no = String(i + 1).padStart(2, "0");
+            const kind = n.type === "video" ? "影 像" : "词 条";
+            return `<div class="bz-kb-lexrow" data-kb-act="lit-peek" data-path="${esc(n.path)}">
+        <div class="bz-kb-hw"><span class="bz-kb-w">${esc(n.title)}</span><span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${kind}</span><span class="bz-kb-dom">${esc(n.domain || "未分类")}</span></div>
+        <div class="bz-kb-tail"><span class="bz-kb-meta">LIT-${no} · ${esc(n.date || "")}</span></div>
+      </div>`;
+          }).join("");
+          this.contentEl.innerHTML = `
+      <div class="bz-kb-pd">
+        <div class="bz-kb-entryrow">
+          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，当场落成一张术语卡</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>丢进来一个 B 站链接，文献笔记自动长出来</span></button>
+        </div>
+        ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的两种录入开始。</div>'}
+      </div>`;
+        }
+        /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
+        async openPreview(n, kind = "lit") {
+          var _a;
+          const app = getApp();
+          let raw = "";
+          try {
+            raw = await app.vault.read(n.file);
+          } catch (e) {
+            raw = "";
+          }
+          const body = stripFrontmatter(raw);
+          const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc(b)}</p>`).join("") || "<p>（无正文）</p>";
+          const rels = await this.noteRels(n);
+          const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.url)}" href="#">${esc(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>` : "";
+          const head = kind === "card" ? { title: "卡片预览 · 卡片盒", badge: "卡 片", hot: false } : kind === "topic" ? { title: "主题预览 · 主题笔记", badge: "主 题", hot: false } : { title: `文献预览 · ${n.type === "video" ? "影像" : "词条"}`, badge: n.type === "video" ? "影 像" : "词 条", hot: n.type === "video" };
+          this.openSheet(this.sheetWrap(head.title, `
+      <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
+        <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
+        <span class="bz-kb-dom">${esc(n.domain || "未分类")}</span></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || "")}</span></div>
+      <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
+      ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join("")}</div>` : ""}
+      ${srcHtml}`));
+          this._previewNote = n;
+          const bodyEl = this.popup ? q(this.popup, "#bz-kb-preview-body") : null;
+          if (bodyEl && body) {
+            try {
+              const comp = new Component();
+              await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
+              comp.unload();
+            } catch (e) {
+            }
+            if (!bodyEl.querySelector("*") || !((_a = bodyEl.textContent) == null ? void 0 : _a.trim())) {
+              bodyEl.innerHTML = parasHtml;
+            }
+          }
+          const srcLinks = this.popup ? this.popup.querySelectorAll("[data-lit-src-url]") : [];
+          srcLinks.forEach((a) => {
+            a.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._openExternal(a.getAttribute("data-lit-src-url") || "");
+            });
+          });
+        }
+        /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源文献+领域自动带，落 related 双链互链 / 连一张旧卡 / 为什么相关） */
+        async openCardEditor(n) {
+          await this.ensureCards();
+          const dom = n.domain || "未分类";
+          const sameDom = this.allCards.filter((c) => c.domain === dom).map((c) => c.title);
+          const others = this.allCards.map((c) => c.title).filter((t) => !sameDom.includes(t));
+          const olds = [...sameDom.slice(0, 5)];
+          for (const t of others) {
+            if (olds.length >= 6) break;
+            olds.push(t);
+          }
+          if (olds.length === 0) olds.push(n.title);
+          const whySug = `《${n.title}》与这张旧卡讨论同一主题——读后补全了机制细节，整理为显式连接。`;
+          const oldsHtml = olds.map((o, i) => `<button class="bz-kb-old" data-kb-old="${esc(o)}">${esc(o)}${i === 0 ? '<span class="bz-kb-rec">推荐</span>' : ""}</button>`).join("");
+          this.openSheet(this.sheetWrap("提炼成卡 → 卡片盒", `
+      <div class="bz-kb-f"><div class="bz-kb-flb">词 头（可 改）</div>
+        <input type="text" data-kb-role="cardtitle" value="${esc(n.title)}"></div>
+      <div class="bz-kb-f"><div class="bz-kb-flb">来 源 与 领 域（自 动 带，落 related 双链）</div>
+        <div class="bz-kb-srcline"><span class="bz-kb-srchip"><b>源</b>${esc(n.path)}</span>
+        <span class="bz-kb-srchip"><b>领域</b>〔${esc(dom)}〕自动继承</span></div></div>
+      <div class="bz-kb-f"><div class="bz-kb-flb">连 一 张 旧 卡（铁律：不 解 释 的 链 接 不 产 生 知 识）</div>
+        <div class="bz-kb-olds">${oldsHtml}</div></div>
+      <div class="bz-kb-f"><div class="bz-kb-flb">为 什 么 相 关（一 句 话，可 改）</div>
+        <input type="text" data-kb-role="why" value="${esc(whySug)}"></div>
+      <div style="margin-top:18px;display:flex;gap:10px">
+        <button class="bz-kb-bigbtn" data-kb-act="card-save" disabled>落 卡</button>
+        <button class="bz-kb-ghost" data-kb-close>取消</button>
+      </div>
+      <div class="bz-kb-note" style="font-size:11px;margin-top:14px">落卡后它躺在卡片盒，随时被任何笔记引用——不强迫挂进哪篇，也不强迫复习。</div>`));
+          this.editor = { source: n, pick: null, why: whySug, title: n.title };
+        }
+        syncSaveBtn() {
+          var _a;
+          const btn = (_a = this.popup) == null ? void 0 : _a.querySelector("[data-kb-act=card-save]");
+          if (btn && this.editor) btn.disabled = !(this.editor.pick && this.editor.why.trim());
+        }
+        /** 落卡：写卡片盒笔记（category=领域、related=源文献）+ 源文献 related 追加新卡（互链） */
+        async saveCard() {
+          var _a;
+          if (!this.editor || !this.editor.pick || !this.editor.why.trim()) return;
+          const app = getApp();
+          const s = tryGetSettings();
+          const dir = cardboxDirOf(s);
+          const src = this.editor.source;
+          const why = this.editor.why.trim();
+          let base = this.editor.title.trim() || src.title;
+          const stamp = dateStamp();
+          try {
+            let idx = 2;
+            while (app.vault.getAbstractFileByPath(`${dir}/${base}.md`)) {
+              base = `${this.editor.title.trim() || src.title} ${idx}`;
+              idx++;
+            }
+            const path = `${dir}/${base}.md`;
+            try {
+              if (!app.vault.getFolderByPath(dir)) await app.vault.createFolder(dir);
+            } catch (e) {
+            }
+            const md = ["---", "tags: []", `category: ${src.domain || "未分类"}`, "related:", `  - "[[${src.path}|${src.title}]]"`, `date: "${stamp}"`, "---", "", why, ""].join("\n");
+            await app.vault.create(path, md);
+            const srcFile = app.vault.getAbstractFileByPath(src.path);
+            if (srcFile) {
+              const text = await app.vault.read(srcFile);
+              const linkText = `[[${stripMdExt(path)}|${base}]]`;
+              const updated = appendRelatedLine(text, linkText);
+              if (updated !== text) await app.vault.modify(srcFile, updated);
+            }
+            this.allCards.unshift({ file: null, path, title: base, domain: src.domain || "未分类", review: false, created: Date.now() });
+            this.sessionNewPaths.add(path);
+            this.editor = null;
+            this.closeSheet();
+            notice("已落卡 卡片盒/" + base + ".md · 它随时被任何笔记引用", "success");
+            if (this.part === "z2") {
+              this.cardsShown = 0;
+              this.renderCards();
+            }
+          } catch (e) {
+            notice("落卡失败：" + ((_a = e == null ? void 0 : e.message) != null ? _a : String(e)), "error");
+          }
+        }
+        /** 部贰卡片扫描（存量零迁移：领域读序 domain → category → 未分类） */
+        async loadCards(dir) {
+          var _a;
+          const app = getApp();
+          this.loadedCardDir = dir;
+          const prefix = dir + "/";
+          const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+          const out = [];
+          for (const f of mdFiles) {
+            try {
+              const cache = app.metadataCache.getFileCache(f);
+              const fm = cache && cache.frontmatter || {};
+              let created = 0;
+              try {
+                created = ((_a = f.stat) == null ? void 0 : _a.ctime) ? new Date(f.stat.ctime).valueOf() : 0;
+              } catch (e) {
+                created = 0;
+              }
+              out.push({
+                file: f,
+                path: f.path,
+                title: fm && fm.title ? String(fm.title) : f.basename,
+                domain: fm && fm.domain ? String(fm.domain) : fm && fm.category ? String(fm.category) : "未分类",
+                review: fm && fm.reviewStart != null,
+                created
+              });
+            } catch (e) {
+            }
+          }
+          out.sort((a, b) => b.created - a.created || a.path.localeCompare(b.path));
+          this.allCards = out;
+        }
+        renderCards() {
+          if (!this.contentEl) return;
+          this.cardsShown = Math.max(this.cardsShown, 80);
+          const shown = this.allCards.slice(0, this.cardsShown);
+          const rows = shown.map((c) => `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc(c.path)}">
+      <div class="bz-kb-hw"><span class="bz-kb-w">${esc(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}<span class="bz-kb-dom">${esc(c.domain)}</span></div>
+      <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span></div>
+    </div>`).join("");
+          const rest = this.allCards.length - shown.length;
+          this.contentEl.innerHTML = `<div class="bz-kb-pd">
+      ${rows || '<div class="bz-kb-empty">卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。</div>'}
+      ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ""}
+    </div>`;
+        }
+        moreCards() {
+          if (this.cardsShown >= this.allCards.length) return;
+          this.cardsShown += 80;
+          this.renderCards();
+        }
+        onContentScroll() {
+          const sc = this.contentEl;
+          if (!sc || this.part !== "z2") return;
+          if (sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 60) this.moreCards();
+        }
+        /** 部叁主题扫描（仅展示） */
+        async loadTopics(dir) {
+          const app = getApp();
+          this.loadedTopicDir = dir;
+          const prefix = dir + "/";
+          const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+          const out = mdFiles.map((f) => {
+            var _a;
+            let created = 0;
+            try {
+              created = ((_a = f.stat) == null ? void 0 : _a.mtime) ? new Date(f.stat.mtime).valueOf() : 0;
+            } catch (e) {
+              created = 0;
+            }
+            return { file: f, path: f.path, title: f.basename, where: dir, created };
+          });
+          out.sort((a, b) => b.created - a.created || a.path.localeCompare(b.path));
+          this.allTopics = out;
+        }
+        renderTopics() {
+          if (!this.contentEl) return;
+          const rows = this.allTopics.map((t) => {
+            const rel = formatRelativeTime(String(t.created || ""));
+            return `<div class="bz-kb-lexrow" data-kb-act="topic-open" data-path="${esc(t.path)}">
+      <div class="bz-kb-hw"><span class="bz-kb-w">${esc(t.title)}</span><span class="bz-kb-dom">${esc(t.where)}</span></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${rel === "无效日期" ? "" : esc(rel)}</span></div>
+    </div>`;
+          }).join("");
+          this.contentEl.innerHTML = `<div class="bz-kb-pd">
+      ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
+    </div>`;
+        }
+        async ensureCards() {
+          const dir = cardboxDirOf(tryGetSettings());
+          if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
+        }
+        /** 读笔记 frontmatter related 展示名列表（预览「关联」区；行扫描实现） */
+        async noteRels(n) {
+          var _a;
+          try {
+            const app = getApp();
+            const text = await app.vault.read(n.file);
+            const lines = text.split(/\r?\n/);
+            if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return [];
+            const out = [];
+            let inRelated = false;
+            for (let i = 1; i < lines.length; i++) {
+              const line = lines[i];
+              if (line.trim() === "---") break;
+              if (/^related:/.test(line)) {
+                inRelated = true;
+                continue;
+              }
+              if (inRelated) {
+                if (/^\s+-\s/.test(line)) {
+                  const mm = line.match(/^\s*-\s*"?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]"?\s*$/);
+                  if (mm) out.push(mm[2] || mm[1]);
+                } else if (line.trim() !== "") {
+                  break;
+                }
+              }
+            }
+            return out;
+          } catch (e) {
+            return [];
+          }
+        }
+        /** 弹层（面板内覆盖） */
+        openSheet(html) {
+          this.closeSheet();
+          if (!this.popup) return;
+          const ovl = document.createElement("div");
+          ovl.className = "bz-kb-ovl";
+          ovl.innerHTML = `<div class="bz-kb-sheet">${html}</div>`;
+          ovl.addEventListener("click", (e) => {
+            var _a, _b;
+            const t = e.target.closest("[data-kb-act],[data-kb-close]");
+            if (e.target === ovl || t && t.hasAttribute("data-kb-close")) {
+              this.closeSheet();
+              return;
+            }
+            if (!t) return;
+            const act = t.getAttribute("data-kb-act");
+            if (act === "card-new") {
+              const w = ((_b = (_a = t.closest(".bz-kb-sheet")) == null ? void 0 : _a.querySelector(".bz-kb-hw .bz-kb-w")) == null ? void 0 : _b.textContent) || "";
+              const n = this.allNotes.find((x) => x.title === w);
+              if (n) void this.openCardEditor(n);
+            } else if (act === "card-save") {
+              void this.saveCard();
+            }
+          });
+          this.popup.appendChild(ovl);
+          const titleInput = ovl.querySelector("[data-kb-role=cardtitle]");
+          if (titleInput) titleInput.addEventListener("input", () => {
+            if (this.editor) this.editor.title = titleInput.value;
+            this.syncSaveBtn();
+          });
+          const whyInput = ovl.querySelector("[data-kb-role=why]");
+          if (whyInput) whyInput.addEventListener("input", () => {
+            if (this.editor) this.editor.why = whyInput.value;
+            this.syncSaveBtn();
+          });
+          ovl.querySelectorAll("[data-kb-old]").forEach((b) => {
+            b.addEventListener("click", () => {
+              if (!this.editor) return;
+              this.editor.pick = b.getAttribute("data-kb-old");
+              ovl.querySelectorAll("[data-kb-old]").forEach((x) => x.classList.toggle("is-on", x === b));
+              this.syncSaveBtn();
+            });
+          });
+          this.syncSaveBtn();
+        }
+        closeSheet() {
+          var _a;
+          (_a = this.popup) == null ? void 0 : _a.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
+          this.editor = null;
+        }
+        sheetWrap(title, body) {
+          return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
+        }
+        /** 旧笔记自动补全（note-gen；AI 未配置跳过并提示一句）；每目录至多跑一次 */
+        async runBackfill() {
+          const dir = litDirOf(tryGetSettings());
+          if (this.backfilledDir === dir) return;
+          this.backfilledDir = dir;
+          try {
+            const res = await backfillNotes();
+            if (res && res.aiSkipped) {
+              notice("AI 未配置：部分旧笔记缺少领域分类，已跳过补全（配置 AI 后重新打开面板可补全）", "info");
+            }
+            if (res && res.filled > 0 && this.part === "z1") await this.refreshCurrent();
+          } catch (e) {
+          }
+        }
+        // ---- 主面板增量刷新（knowledge:file-* 四通道 300ms 防抖） ----
+        scheduleRefreshFlush() {
+          if (this.refreshTimer) clearTimeout(this.refreshTimer);
+          this.refreshTimer = setTimeout(async () => {
+            const deletes = Array.from(this.pendingDeletePaths);
+            const modifies = Array.from(this.pendingRefreshPaths);
+            this.pendingDeletePaths.clear();
+            this.pendingRefreshPaths.clear();
+            for (const p of deletes) this.removeCached(p);
+            for (const p of modifies) this.invalidateCached(p);
+            if (this.popup && this.popup.style.display === "flex") await this.refreshCurrent();
+          }, 300);
+        }
+        removeCached(path) {
+          this.allNotes = this.allNotes.filter((n) => n.path !== path);
+          this.allCards = this.allCards.filter((c) => c.path !== path);
+          this.allTopics = this.allTopics.filter((t) => t.path !== path);
+        }
+        invalidateCached(_path) {
+          this.loadedLitDir = "";
+          this.loadedCardDir = "";
+          this.loadedTopicDir = "";
+        }
+        attachFileListener() {
+          if (this.fileListenerAttached) return;
+          const inAnyDir = (path) => {
+            const s = tryGetSettings();
+            return path.startsWith(litDirOf(s) + "/") || path.startsWith(cardboxDirOf(s) + "/") || path.startsWith(topicDirOf(s) + "/");
+          };
+          const modifyHandler = (p) => {
+            if (inAnyDir(p)) {
+              this.pendingRefreshPaths.add(p);
+              this.scheduleRefreshFlush();
+            }
+          };
+          const deleteHandler = (evt) => {
+            if (inAnyDir(evt.path)) {
+              this.pendingDeletePaths.add(evt.path);
+              this.scheduleRefreshFlush();
+            }
+          };
+          const renameHandler = (evt) => {
+            if (inAnyDir(evt.oldPath)) this.pendingDeletePaths.add(evt.oldPath);
+            if (!evt.movedOut && inAnyDir(evt.newPath)) this.pendingRefreshPaths.add(evt.newPath);
+            this.scheduleRefreshFlush();
+          };
+          this.fileListenerRefs = [
+            onDomainEvent("knowledge:file-created", (evt) => modifyHandler(evt.path)),
+            onDomainEvent("knowledge:file-modified", (evt) => modifyHandler(evt.path)),
+            onDomainEvent("knowledge:file-deleted", deleteHandler),
+            onDomainEvent("knowledge:file-renamed", renameHandler)
+          ];
+          this.fileListenerAttached = true;
+        }
+        // ==================== 视频录入面板（任务队列） ====================
+        createVideoUI() {
+          const mask = document.createElement("div");
+          mask.id = "knowledge-video-mask";
+          mask.className = "bz-kb-mask";
+          mask.style.display = "none";
+          mask.onclick = () => this.hideVideo();
+          const popup = document.createElement("div");
+          popup.id = "knowledge-video-popup";
+          popup.className = "bz-kb-window kb";
+          popup.style.display = "none";
+          const header = document.createElement("div");
+          header.className = "bz-kb-vhead";
+          header.innerHTML = `
+      <h3 class="bz-kb-vtitle">视频录入</h3>
+      <div class="bz-lit-head-btns">
+        <button id="lit-btn-video-add" title="添加转文献任务">➕</button>
+        <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">▶️</button>
+        <button id="lit-btn-video-history" title="历史">🕘</button>
+      </div>`;
+          const list = document.createElement("div");
+          list.id = "knowledge-video-list";
+          list.className = "bz-kb-list";
+          popup.appendChild(header);
+          popup.appendChild(list);
+          document.body.appendChild(mask);
+          document.body.appendChild(popup);
+          this.videoMask = mask;
+          this.videoPopup = popup;
+          this.videoList = list;
+          this._bindVideoHeaderEvents();
+          if (isMobileEnv()) {
+            const run = q(popup, "#lit-btn-video-run");
+            const history = q(popup, "#lit-btn-video-history");
+            if (run) run.style.display = "none";
+            if (history) history.style.display = "none";
+          }
+        }
+        _bindVideoHeaderEvents() {
+          const p = this.videoPopup;
+          if (!p) return;
+          q(p, "#lit-btn-video-add").onclick = () => this.showAddDialog();
+          q(p, "#lit-btn-video-run").onclick = () => {
+            if (BatchRunner.running) void this.onAbortBatch();
+            else void this.onRunBatch();
+          };
+          q(p, "#lit-btn-video-history").onclick = () => this.showHistory();
+        }
+        /** 打开视频录入面板；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口） */
+        showVideoEntry(prefill) {
+          var _a, _b;
+          if (!this.videoPopup || !this.videoMask) return;
+          topifyZ(this.videoMask, this.videoPopup);
+          this.videoMask.style.display = "block";
+          this.videoPopup.style.display = "flex";
+          void this.refreshVideoPanel();
+          if (prefill) this.showAddDialog({ url: prefill.url, title: (_a = prefill.title) != null ? _a : null, uploader: (_b = prefill.uploader) != null ? _b : null });
+        }
+        hideVideo() {
+          if (this.videoMask) this.videoMask.style.display = "none";
+          if (this.videoPopup) this.videoPopup.style.display = "none";
+        }
+        async refreshVideoPanel() {
+          const tasks = await KnowledgeData.loadTasks();
+          if (!this.videoList) return;
+          this.videoList.innerHTML = "";
+          const active = tasks.filter((t) => !t.archived);
+          const running = BatchRunner.running;
+          if (running) {
+            const idx = active.findIndex((t) => t.status === "processing");
+            const banner = document.createElement("div");
+            banner.className = "bz-kb-banner";
+            banner.textContent = idx >= 0 ? `⏳ 正在处理 第 ${idx + 1}/${active.length} 部…` : "⏳ 正在准备处理…";
+            this.videoList.appendChild(banner);
+          }
+          this._syncStatusCounts(active);
+          if (active.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "bz-kb-empty";
+            empty.textContent = "暂无转文献任务。点击 ➕ 添加视频链接与起止时间，回到桌面端即可批量处理。";
+            this.videoList.appendChild(empty);
+            this._syncRunButton(active);
+            return;
+          }
+          for (const t of active) this.videoList.appendChild(this.renderRow(t));
+          this._syncRunButton(active);
+        }
+        _syncStatusCounts(tasks) {
+          const el = this.videoPopup ? q(this.videoPopup, "#lit-video-counts") : null;
+          if (!el) return;
+          const count = (s) => tasks.filter((t) => t.status === s).length;
+          const parts = [];
+          if (count("pending")) parts.push(`${count("pending")} 待处理`);
+          if (count("processing")) parts.push(`${count("processing")} 处理中`);
+          if (count("failed")) parts.push(`${count("failed")} 失败`);
+          el.textContent = parts.join(" · ");
+        }
+        /** 单钮态机：空闲「▶️」/运行中「⏹」（终止靠 title hover 区分），移动端整钮隐藏 */
+        _syncRunButton(tasks) {
+          if (!this.videoPopup) return;
+          const run = q(this.videoPopup, "#lit-btn-video-run");
+          if (!run) return;
+          const running = BatchRunner.running;
+          const hasWork = tasks.some((t) => t.status === "pending" || t.status === "failed");
+          if (running) {
+            run.disabled = false;
+            const retry = this.batchAbortLabel === "终止整批";
+            run.textContent = "⏹";
+            run.title = retry ? "中止整批（处理失败任务中）" : "中止批量处理";
+          } else {
+            run.disabled = !hasWork;
+            run.textContent = "▶️";
+            run.title = "批量处理（桌面端）";
+          }
+        }
+        renderRow(task) {
+          var _a;
+          const card = document.createElement("div");
+          card.className = "bz-kb-taskcard";
+          card.dataset.id = task.id;
+          const meta = (_a = STATUS_META[task.status]) != null ? _a : STATUS_META.pending;
+          const timeText = task.start && task.end ? `${task.start} ~ ${task.end}` : "整片";
+          const linkLine = task.title ? `<a class="bz-kb-tlink" href="${esc(task.url)}" title="${esc(task.url)}">${esc(task.title)}</a>` : `<span class="bz-kb-turl" title="${esc(task.url)}">${esc(shortUrlText(task.url))}</span>`;
+          const upText = task.uploader ? ` · UP主 ${esc(task.uploader)}` : "";
+          card.innerHTML = `
+      <div class="bz-kb-trow">
+        <span class="bz-kb-status ${meta.cls}">${meta.label}</span>
+        ${linkLine}
+      </div>
+      <div class="bz-kb-tmeta">${timeText}${upText}${task.remark ? " · " + esc(task.remark) : ""}</div>
+      ${task.status === "processing" ? this.runState.has(task.id) ? '<div class="bz-kb-progress-box"></div>' : task.reason ? `<div class="bz-kb-progress">${esc(task.reason)}</div>` : "" : ""}
+      ${task.status === "failed" && task.reason ? `<div class="bz-kb-progress bz-kb-progress-error" title="${esc(task.reason)}">${esc(humanizeError(task.reason))}</div>` : ""}
+      ${task.status === "success" && task.notePath ? `<div class="bz-kb-notepath">📄 ${esc(task.notePath)}</div>` : ""}`;
+          const actions = this.buildCardActions(task);
+          if (actions.length) attachItemActions(card, actions);
+          const titleLink = q(card, ".bz-kb-tlink");
+          if (titleLink) titleLink.onclick = (e) => {
+            e.stopPropagation();
+            this._openExternal(titleLink.href || task.url);
+          };
+          card.addEventListener("click", () => {
+            if (task.status === "success" && task.notePath) this.openNote(task.notePath);
+            else if (task.status === "pending" || task.status === "failed") this.showAddDialog(task);
+          });
+          return card;
+        }
+        buildCardActions(task) {
+          const actions = [];
+          if (task.status === "success") {
+            if (task.notePath) actions.push({ icon: "book-open", label: "打开文献笔记", onClick: () => this.openNote(task.notePath) });
+            if (task.videoPath) actions.push({ icon: "copy", label: "复制视频路径", onClick: () => void this.copyText(task.videoPath) });
+            actions.push({ icon: "pencil", label: "编辑", onClick: () => this.showAddDialog(task) });
+          } else if (task.status === "failed" || task.status === "pending") {
+            actions.push({ icon: "pencil", label: "编辑", onClick: () => this.showAddDialog(task) });
+          }
+          actions.push({ icon: "trash-2", label: "删除", kind: "danger", onClick: () => void this.confirmDelete(task) });
+          return actions;
+        }
+        /** 行内进度定点更新（不等 storage 落库，一到立即刷 DOM） */
+        updateRowProgress(id) {
+          if (!this.videoList) return;
+          const st = this.runState.get(id);
+          const card = q(this.videoList, `.bz-kb-taskcard[data-id="${id}"]`);
+          if (!card || !st) return;
+          let box = q(card, ".bz-kb-progress-box");
+          if (!box) {
+            box = document.createElement("div");
+            box.className = "bz-kb-progress-box";
+            const meta = q(card, ".bz-kb-tmeta");
+            if (meta) meta.after(box);
+            else card.appendChild(box);
+          }
+          if (tryGetSettings().knowledgeProgressDetail === false) {
+            const cur = st.steps[st.steps.length - 1] || "处理中…";
+            box.innerHTML = `<div class="bz-kb-progress">${esc(cur)}</div>`;
+            return;
+          }
+          const segs = st.steps.map(
+            (s, i) => i === st.steps.length - 1 ? `<span class="bz-kb-step-cur">${esc(s)}</span>` : `<span class="bz-kb-step-done">✓ ${esc(stepDoneLabel(s))}</span>`
+          );
+          const pct = st.phase === "download" ? st.pct : null;
+          const bar = pct != null ? `<div class="bz-kb-progress-track"><div class="bz-kb-progress-fill" style="width:${Math.min(100, Math.max(0, pct))}%"></div></div>` : "";
+          box.innerHTML = `
+      <div class="bz-kb-steps">${segs.join('<span class="bz-kb-step-arrow">→</span>')}${pct != null ? ` <span class="bz-kb-step-pct">${Math.round(pct)}%</span>` : ""}</div>
+      ${bar}
+      <div class="bz-kb-elapsed">⌛ ${fmtElapsed(Date.now() - st.startAt)}</div>`;
+        }
+        startRunTimer() {
+          this.clearRunTimer();
+          this.runTimer = setInterval(() => {
+            for (const id of Array.from(this.runState.keys())) this.updateRowProgress(id);
+          }, 1e3);
+        }
+        clearRunTimer() {
+          if (this.runTimer !== null) {
+            clearInterval(this.runTimer);
+            this.runTimer = null;
+          }
+        }
+        async onRunBatch() {
+          if (!BatchRunner.available()) {
+            notice("仅桌面端可用：批量处理需要 Node.js 外部进程", "error");
+            return;
+          }
+          if (BatchRunner.running) return;
+          const tasks = await KnowledgeData.loadTasks();
+          const work = tasks.filter((t) => !t.archived && (t.status === "pending" || t.status === "failed"));
+          if (work.length === 0) {
+            notice("没有待处理或失败的任务", "info");
+            return;
+          }
+          this.batchAbortLabel = work.every((t) => t.status === "failed") ? "终止整批" : "终止";
+          const ui = this;
+          ui.startRunTimer();
+          const events = {
+            onTaskProgress: (t, stepText, progress) => {
+              let st = ui.runState.get(t.id);
+              if (!st) {
+                st = { steps: [], phase: null, pct: null, startAt: Date.now() };
+                ui.runState.set(t.id, st);
+              }
+              if (stepText && stepText !== "启动中…" && !st.steps.includes(stepText)) st.steps.push(stepText);
+              if (progress) {
+                if (progress.phase) st.phase = progress.phase;
+                if (progress.pct != null) st.pct = progress.pct;
+              }
+              ui.updateRowProgress(t.id);
+            },
+            onTaskInfo: () => {
+              void ui.refreshVideoPanel();
+            },
+            onTaskDone: () => {
+              void ui.refreshVideoPanel();
+            },
+            onBatchDone: (summary) => {
+              ui.clearRunTimer();
+              ui.runState.clear();
+              const head = `处理完成：成功 ${summary.success} 部`;
+              const tail = summary.failed ? `，失败 ${summary.failed} 部` : "";
+              const end = summary.aborted ? "（已中止）" : summary.stopped ? "（遇错即停）" : "";
+              notice(head + tail + end, summary.failed || summary.aborted || summary.stopped ? "warning" : "success");
+              void ui.refreshVideoPanel();
+            }
+          };
+          const runP = BatchRunner.runAll(work, events);
+          void this.refreshVideoPanel();
+          try {
+            await runP;
+          } finally {
+            this.batchAbortLabel = null;
+          }
+        }
+        async onAbortBatch() {
+          if (!BatchRunner.running) return;
+          const v = await openFlowDialog({
+            title: "中止批量处理？",
+            message: "当前正在处理的视频将停止，已成功的保留在列表；未开始的项保持待处理，可稍后继续。",
+            actions: [
+              { label: "取消", value: "cancel" },
+              { label: "中止", value: "ok", danger: true }
+            ]
+          });
+          if (v !== "ok") return;
+          BatchRunner.abort();
+          await this.refreshVideoPanel();
+        }
+        async confirmDelete(task) {
+          const v = await openFlowDialog({
+            title: "删除转文献任务",
+            message: "仅从列表移除记录，已生成的文献笔记与视频不受影响。",
+            actions: [
+              { label: "取消", value: "cancel" },
+              { label: "删除", value: "ok", danger: true }
+            ]
+          });
+          if (v !== "ok") return;
+          await KnowledgeData.deleteTask(task.id);
+          await this.refreshVideoPanel();
+          await this.refreshHistory();
+        }
+        async confirmClearHistory() {
+          const v = await openFlowDialog({
+            title: "清空历史",
+            message: "将移除全部「成功」归档记录；文献笔记与视频文件保留在原处。",
+            actions: [
+              { label: "取消", value: "cancel" },
+              { label: "清空", value: "ok", danger: true }
+            ]
+          });
+          if (v !== "ok") return;
+          await KnowledgeData.clearHistory();
+          await this.refreshHistory();
+        }
+        // ==================== 添加任务弹窗 ====================
+        createAddDialog() {
+          var _a;
+          const addMask = document.createElement("div");
+          addMask.id = "knowledge-add-mask";
+          addMask.className = "bz-kb-mask";
+          addMask.style.display = "none";
+          addMask.onclick = () => this.hideAddDialog();
+          const popup = document.createElement("div");
+          popup.id = "knowledge-add-popup";
+          popup.className = "bz-lit-dialog kb";
+          popup.style.display = "none";
+          popup.innerHTML = `
+      <div id="lit-add-mode" class="bz-lit-mode-tag" style="display:none;">编辑任务</div>
+      <div id="lit-add-fail" class="bz-lit-form-alert" style="display:none;"></div>
+      <div class="bz-lit-form-col bz-lit-url-col">
+        <label>视频链接 / BV 号</label>
+        <div class="bz-lit-url-row">
+          <input id="lit-add-url" type="text">
+          <div class="bz-lit-range-toggle" id="lit-add-range">
+            <button type="button" data-range="whole">整片</button>
+            <button type="button" data-range="clip">剪辑片段</button>
+          </div>
+        </div>
+      </div>
+      <div class="bz-lit-form-row">
+        <div class="bz-lit-form-col"><label>视频标题（可选）</label>
+          <input id="lit-add-vtitle" type="text"></div>
+        <div class="bz-lit-form-col"><label>UP主（可选）</label>
+          <input id="lit-add-uploader" type="text"></div>
+      </div>
+      <div class="bz-lit-form-row">
+        <div class="bz-lit-form-col"><label>下载清晰度</label>
+          <select id="lit-add-quality">
+            <option value="">跟随全局设置</option>
+            <option value="highest">最高</option>
+            <option value="1080">1080P</option>
+            <option value="720">720P</option>
+          </select></div>
+        <div class="bz-lit-form-col"><label>分P</label>
+          <input id="lit-add-page" type="number" min="1" step="1"></div>
+      </div>
+      <div id="lit-add-clip-fields" style="display:none;">
+        <div class="bz-lit-form-row">
+          <div class="bz-lit-form-col"><label>开始时间</label>
+            <input id="lit-add-start" type="text"></div>
+          <div class="bz-lit-form-col"><label>结束时间</label>
+            <input id="lit-add-end" type="text"></div>
+        </div>
+      </div>
+      <div class="bz-lit-form-actions">
+        <button id="lit-add-save" class="bz-lit-accent-btn">保存</button>
+      </div>`;
+          document.body.appendChild(addMask);
+          document.body.appendChild(popup);
+          this.addMask = addMask;
+          this.addPopup = popup;
+          q(popup, "#lit-add-save").onclick = () => void this._handleAddSave();
+          const rangeBox = q(popup, "#lit-add-range");
+          if (rangeBox) {
+            rangeBox.addEventListener("click", (e) => {
+              const btn = e.target.closest("button[data-range]");
+              if (btn) this._setAddRangeMode(btn.getAttribute("data-range") === "clip" ? "clip" : "whole");
+            });
+          }
+          for (const sel of ["#lit-add-url", "#lit-add-vtitle", "#lit-add-uploader", "#lit-add-page", "#lit-add-start", "#lit-add-end"]) {
+            (_a = q(popup, sel)) == null ? void 0 : _a.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void this._handleAddSave();
+              }
+            });
+          }
+        }
+        showAddDialog(editItem) {
+          var _a, _b, _c, _d, _e, _f, _g;
+          if (!this.addPopup || !this.addMask) return;
+          this.editingId = (_a = editItem == null ? void 0 : editItem.id) != null ? _a : null;
+          const modeTag = q(this.addPopup, "#lit-add-mode");
+          if (modeTag) modeTag.style.display = this.editingId ? "inline-block" : "none";
+          q(this.addPopup, "#lit-add-url").value = (_b = editItem == null ? void 0 : editItem.url) != null ? _b : "";
+          q(this.addPopup, "#lit-add-start").value = (_c = editItem == null ? void 0 : editItem.start) != null ? _c : "";
+          q(this.addPopup, "#lit-add-end").value = (_d = editItem == null ? void 0 : editItem.end) != null ? _d : "";
+          q(this.addPopup, "#lit-add-quality").value = (_e = editItem == null ? void 0 : editItem.quality) != null ? _e : "";
+          q(this.addPopup, "#lit-add-page").value = (editItem == null ? void 0 : editItem.page) ? String(editItem.page) : "";
+          q(this.addPopup, "#lit-add-vtitle").value = (_f = editItem == null ? void 0 : editItem.title) != null ? _f : "";
+          q(this.addPopup, "#lit-add-uploader").value = (_g = editItem == null ? void 0 : editItem.uploader) != null ? _g : "";
+          this._setAddRangeMode(this.editingId ? (editItem == null ? void 0 : editItem.start) || (editItem == null ? void 0 : editItem.end) ? "clip" : "whole" : "clip");
+          const fail = q(this.addPopup, "#lit-add-fail");
+          if (fail) {
+            const reason = (editItem == null ? void 0 : editItem.status) === "failed" ? editItem.reason || "" : "";
+            fail.style.display = reason ? "block" : "none";
+            fail.textContent = reason ? `上次处理失败：${humanizeError(reason)}` : "";
+            fail.title = reason;
+          }
+          topifyZ(this.addMask, this.addPopup);
+          this.addMask.style.display = "block";
+          this.addPopup.style.display = "flex";
+          const urlInput = q(this.addPopup, "#lit-add-url");
+          if (urlInput) setTimeout(() => urlInput.focus(), 100);
+        }
+        _setAddRangeMode(mode) {
+          if (!this.addPopup) return;
+          const box = q(this.addPopup, "#lit-add-range");
+          if (box) {
+            for (const btn of Array.from(box.querySelectorAll("button[data-range]"))) {
+              btn.classList.toggle("active", btn.getAttribute("data-range") === mode);
+            }
+          }
+          const clipFields = q(this.addPopup, "#lit-add-clip-fields");
+          if (clipFields) clipFields.style.display = mode === "clip" ? "block" : "none";
+        }
+        hideAddDialog() {
+          if (this.addMask) this.addMask.style.display = "none";
+          if (this.addPopup) this.addPopup.style.display = "none";
+          this.editingId = null;
+        }
+        async _handleAddSave() {
+          var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
+          if (!this.addPopup) return;
+          const url = ((_b = (_a = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _a.value) != null ? _b : "").trim();
+          const clipMode = ((_d = (_c = q(this.addPopup, "#lit-add-range")) == null ? void 0 : _c.querySelector("button[data-range].active")) == null ? void 0 : _d.getAttribute("data-range")) === "clip";
+          const startRaw = ((_f = (_e = q(this.addPopup, "#lit-add-start")) == null ? void 0 : _e.value) != null ? _f : "").trim();
+          const endRaw = ((_h = (_g = q(this.addPopup, "#lit-add-end")) == null ? void 0 : _g.value) != null ? _h : "").trim();
+          const start = clipMode ? normalizeLooseTime(startRaw) : "";
+          const end = clipMode ? normalizeLooseTime(endRaw) : "";
+          const quality = ((_j = (_i = q(this.addPopup, "#lit-add-quality")) == null ? void 0 : _i.value) != null ? _j : "").trim() || null;
+          const pageRaw = ((_l = (_k = q(this.addPopup, "#lit-add-page")) == null ? void 0 : _k.value) != null ? _l : "").trim();
+          const vtitle = ((_n = (_m = q(this.addPopup, "#lit-add-vtitle")) == null ? void 0 : _m.value) != null ? _n : "").trim();
+          const uploader = ((_p = (_o = q(this.addPopup, "#lit-add-uploader")) == null ? void 0 : _o.value) != null ? _p : "").trim();
+          const focusField = (sel) => {
+            var _a2;
+            return (_a2 = q(this.addPopup, sel)) == null ? void 0 : _a2.focus();
+          };
+          if (!url) {
+            notice("请填写视频链接或 BV 号", "error");
+            focusField("#lit-add-url");
+            return;
+          }
+          if (clipMode && !startRaw && !endRaw) {
+            notice("剪辑片段需填写开始与结束时间", "error");
+            focusField("#lit-add-start");
+            return;
+          }
+          if (start === null || end === null) {
+            notice("时间格式看不懂：支持 12.2 / 12-2 / 1:30:05 等，单个数字按分钟算", "error");
+            focusField(start === null ? "#lit-add-start" : "#lit-add-end");
+            return;
+          }
+          if (!start && end || start && !end) {
+            notice("开始与结束时间需成对填写", "error");
+            focusField(start ? "#lit-add-end" : "#lit-add-start");
+            return;
+          }
+          let page = null;
+          if (pageRaw) {
+            const n = Number(pageRaw);
+            if (!Number.isInteger(n) || n < 1) {
+              notice("分P 应为正整数（留空 = 第 1 P）", "error");
+              focusField("#lit-add-page");
+              return;
+            }
+            page = n;
+          }
+          try {
+            const patch = { url, start: start || null, end: end || null, quality, page, title: vtitle || null, uploader: uploader || null };
+            if (this.editingId) {
+              await KnowledgeData.updateTask(this.editingId, patch);
+            } else {
+              await KnowledgeData.addTask(patch);
+            }
+            this.hideAddDialog();
+            await this.refreshVideoPanel();
+          } catch (e) {
+            notice("保存失败：" + ((_q = e == null ? void 0 : e.message) != null ? _q : String(e)), "error");
+          }
+        }
+        // ==================== 历史弹窗 ====================
+        createHistoryUI() {
+          const mask = document.createElement("div");
+          mask.id = "knowledge-history-mask";
+          mask.className = "bz-kb-mask";
+          mask.style.display = "none";
+          mask.onclick = () => this.hideHistory();
+          const popup = document.createElement("div");
+          popup.id = "knowledge-history-popup";
+          popup.className = "bz-kb-window kb";
+          popup.style.display = "none";
+          const toolbar = document.createElement("div");
+          toolbar.className = "bz-kb-vhead";
+          const counts = document.createElement("span");
+          counts.id = "lit-history-counts";
+          counts.className = "bz-kb-vmeta";
+          toolbar.appendChild(counts);
+          const list = document.createElement("div");
+          list.id = "knowledge-history-list";
+          list.className = "bz-kb-list";
+          popup.appendChild(toolbar);
+          popup.appendChild(list);
+          document.body.appendChild(mask);
+          document.body.appendChild(popup);
+          this.historyMask = mask;
+          this.historyPopup = popup;
+          this.historyList = list;
+        }
+        showHistory() {
+          if (!this.historyPopup || !this.historyMask) return;
+          topifyZ(this.historyMask, this.historyPopup);
+          this.historyMask.style.display = "block";
+          this.historyPopup.style.display = "flex";
+          void this.refreshHistory();
+        }
+        hideHistory() {
+          if (this.historyMask) this.historyMask.style.display = "none";
+          if (this.historyPopup) this.historyPopup.style.display = "none";
+        }
+        async refreshHistory() {
+          if (!this.historyList) return;
+          const tasks = await KnowledgeData.loadTasks();
+          if (!this.historyList) return;
+          this.historyList.innerHTML = "";
+          const rows = tasks.filter((t) => t.archived);
+          const countsEl = this.historyPopup ? q(this.historyPopup, "#lit-history-counts") : null;
+          if (countsEl) countsEl.textContent = `🕘 历史 · 共 ${rows.length} 条`;
+          if (rows.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "bz-kb-empty";
+            empty.textContent = "暂无历史记录。成功的任务完成时会自动归档到这里。";
+            this.historyList.appendChild(empty);
+            return;
+          }
+          const groups = /* @__PURE__ */ new Map();
+          for (const t of rows) {
+            const key = t.url || t.id;
+            const g = groups.get(key);
+            if (g) g.push(t);
+            else groups.set(key, [t]);
+          }
+          const sortedGroups = Array.from(groups.values()).map((g) => {
+            g.sort((a, b) => String(a.processedAt || a.created).localeCompare(String(b.processedAt || b.created)));
+            return g;
+          });
+          sortedGroups.sort((a, b) => {
+            var _a, _b, _c, _d;
+            const la = String(((_a = a[a.length - 1]) == null ? void 0 : _a.processedAt) || ((_b = a[a.length - 1]) == null ? void 0 : _b.created) || "");
+            const lb = String(((_c = b[b.length - 1]) == null ? void 0 : _c.processedAt) || ((_d = b[b.length - 1]) == null ? void 0 : _d.created) || "");
+            return lb.localeCompare(la);
+          });
+          for (const g of sortedGroups) this.historyList.appendChild(this.renderHistoryGroup(g));
+        }
+        renderHistoryGroup(group) {
+          const head = group[0];
+          const card = document.createElement("div");
+          card.className = "bz-kb-taskcard bz-kb-hgroup";
+          card.dataset.url = head.url || "";
+          const href = head.url ? `href="${esc(head.url)}"` : "";
+          const upText = head.uploader ? `<span class="bz-kb-hup">${esc(head.uploader)}</span>` : "";
+          card.innerHTML = `
+      <div class="bz-kb-trow">
+        ${head.title ? `<a class="bz-kb-tlink" ${href} title="${esc(head.url || "")}">${esc(head.title)}</a>` : `<span class="bz-kb-turl" title="${esc(head.url || "")}">${esc(shortUrlText(head.url || ""))}</span>`}
+        ${upText}
+      </div>`;
+          for (const task of group) {
+            const line = document.createElement("div");
+            line.className = "bz-kb-hnote";
+            line.innerHTML = `📄 ${esc(shortNoteName(task.notePath || ""))}<span class="bz-kb-hnote-time">⏱ ${esc(formatRelativeTime(task.processedAt || task.created || ""))}</span>`;
+            line.addEventListener("click", () => {
+              if (task.notePath) this.openNote(task.notePath);
+            });
+            const actions = [];
+            if (task.notePath) actions.push({ icon: "book-open", label: "打开文献笔记", onClick: () => this.openNote(task.notePath) });
+            if (task.videoPath) actions.push({ icon: "copy", label: "复制视频路径", onClick: () => void this.copyText(task.videoPath) });
+            actions.push({ icon: "trash-2", label: "移出历史", kind: "danger", onClick: () => void this.confirmDelete(task) });
+            attachItemActions(line, actions);
+            card.appendChild(line);
+          }
+          const link = q(card, ".bz-kb-tlink");
+          if (link && head.url) link.onclick = (e) => {
+            e.stopPropagation();
+            this._openExternal(head.url);
+          };
+          return card;
+        }
+        // ==================== 术语生成面板（文字录入；142 简洁版 + 155 总结） ====================
+        createTermUI() {
+          var _a;
+          const mask = document.createElement("div");
+          mask.id = "knowledge-term-mask";
+          mask.className = "bz-kb-mask";
+          mask.style.display = "none";
+          mask.onclick = () => this.hideTermEntry();
+          const popup = document.createElement("div");
+          popup.id = "knowledge-term-popup";
+          popup.className = "bz-lit-dialog bz-lit-term-dialog kb";
+          popup.style.display = "none";
+          const body = document.createElement("div");
+          body.className = "bz-lit-term-body";
+          body.innerHTML = `
+      <div class="bz-lit-sheet-head">
+        <span class="bz-lit-sheet-title">文字录入 · 术语</span>
+      </div>
+      <div class="bz-lit-term-row">
+        <span class="bz-lit-term-meta-k">术语</span>
+        <input id="lit-term-input" type="text" autocomplete="off">
+      </div>
+      <div class="bz-lit-term-row">
+        <span class="bz-lit-term-meta-k">来源</span>
+        <input id="lit-term-src" type="text" autocomplete="off">
+        <span id="lit-term-src-chip" class="bz-lit-srcchip" style="display:none;"></span>
+      </div>
+      <div class="bz-lit-term-actions">
+        <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
+        <button id="lit-term-cancel" class="bz-lit-ghost-btn">取消</button>
+      </div>
+      <div id="lit-term-preview" style="display:none;">
+        <div class="bz-lit-term-card">
+          <div class="bz-lit-term-meta">
+            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">术语</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
+          </div>
+        </div>
+        <div class="bz-lit-term-card">
+          <div id="lit-term-content" class="bz-lit-term-content"></div>
+        </div>
+        <div class="bz-lit-term-actions">
+          <button id="lit-term-regenerate">总结</button>
+          <button id="lit-term-save" class="bz-lit-accent-btn">确认写入</button>
+        </div>
+      </div>`;
+          popup.appendChild(body);
+          document.body.appendChild(mask);
+          document.body.appendChild(popup);
+          this.termMask = mask;
+          this.termPopup = popup;
+          mask.addEventListener("click", (e) => {
+            if (e.target === mask) this.hideTermEntry();
+          });
+          q(popup, "#lit-term-generate").onclick = () => void this.onTermGenerate();
+          q(popup, "#lit-term-cancel").onclick = () => this.hideTermEntry();
+          q(popup, "#lit-term-regenerate").onclick = () => void this.onTermSummarize();
+          q(popup, "#lit-term-save").onclick = () => void this.onTermConfirm();
+          (_a = q(popup, "#lit-term-input")) == null ? void 0 : _a.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void this.onTermGenerate();
+            }
+          });
+          const srcInput = q(popup, "#lit-term-src");
+          if (srcInput) {
+            srcInput.addEventListener("input", () => {
+              if (this.termSrcTimer) clearTimeout(this.termSrcTimer);
+              this.termSrcTimer = setTimeout(() => this.termSrcTryCommit(srcInput), 450);
+            });
+            srcInput.addEventListener("keydown", (e) => {
+              if (e.key !== "Enter") return;
+              const raw = (srcInput.value || "").trim();
+              if (raw && isUrlLikeSourceText(raw)) {
+                e.preventDefault();
+                this.termSrcSet({ kind: "external", url: normalizeSourceUrl(raw) }, srcInput);
+              }
+            });
+            this.termSrcSuggest = uiSuggest({
+              anchor: srcInput,
+              max: 12,
+              iconOf: () => "📄",
+              labelOf: (p) => noteSourceName(p),
+              source: () => {
+                if (!srcInput.value.trim()) return [];
+                return (getApp().vault.getFiles() || []).filter((f) => f.extension === "md").map((f) => f.path);
+              },
+              onPick: (p) => this.termSrcSet({ kind: "note", path: p }, srcInput)
+            });
+          }
+          popup.addEventListener("click", (e) => {
+            const t = e.target.closest("[data-term-src-clear],[data-term-src-open]");
+            if (!t) return;
+            e.stopPropagation();
+            if (t.hasAttribute("data-term-src-clear")) {
+              const input = q(popup, "#lit-term-src");
+              this.termSrcClear(input);
+            } else if (this.termSource) {
+              if (this.termSource.kind === "note") this.openNote(this.termSource.path);
+              else this._openExternal(this.termSource.url);
+            }
+          });
+        }
+        /**
+         * 打开术语录入弹层；term 预填（命令带选中词时自动生成）；src 预填来源（ADR-0116——
+         * 仅命令入口带当前笔记，主窗按钮入口不预填）。
+         */
+        showTermEntry(term, src) {
+          if (!this.termPopup || !this.termMask) return;
+          this.termPreview = null;
+          this.termHasDraft = false;
+          const input = q(this.termPopup, "#lit-term-input");
+          if (input) input.value = (term != null ? term : "").trim();
+          this.termSrcReset(q(this.termPopup, "#lit-term-src"));
+          if (src) this.termSrcSet(src, q(this.termPopup, "#lit-term-src"));
+          this.setTermPreviewVisible(false);
+          this.setTermGenLoading(false);
+          topifyZ(this.termMask, this.termPopup);
+          this.termMask.style.display = "block";
+          this.termPopup.style.display = "flex";
+          if (input && !input.value) setTimeout(() => input.focus(), 100);
+          if (input && input.value) void this.onTermGenerate();
+        }
+        /** 来源状态清空（chip 收起、输入框复位、计时器/联想层归零）——每次打开弹层即全新 */
+        termSrcReset(input) {
+          if (this.termSrcTimer) {
+            clearTimeout(this.termSrcTimer);
+            this.termSrcTimer = null;
+          }
+          this.termSource = null;
+          if (input) {
+            input.value = "";
+            input.style.display = "";
+          }
+          this.renderTermSrcChip(input);
+          this.termSrcRefreshMeta();
+        }
+        termSrcClear(input) {
+          this.termSrcReset(input);
+          if (input) setTimeout(() => input.focus(), 0);
+        }
+        /** 输入惰性提交：整串 URL 字样 → 外部 chip；其余文本等联想点选（不自动认领） */
+        termSrcTryCommit(input) {
+          this.termSrcTimer = null;
+          const raw = (input.value || "").trim();
+          if (!raw || !isUrlLikeSourceText(raw)) return;
+          this.termSrcSet({ kind: "external", url: normalizeSourceUrl(raw) }, input);
+        }
+        /** 落来源：记录 + chip 渲染 + meta 行同步；外部来源异步抓标题（失败静默降级为纯链接） */
+        termSrcSet(src, input) {
+          this.termSource = src;
+          this.renderTermSrcChip(input);
+          this.termSrcRefreshMeta();
+          if (src.kind === "external") void this.termSrcFetchTitle(src);
+        }
+        async termSrcFetchTitle(src) {
+          try {
+            const t = await fetchPageTitle(src.url);
+            if (!t || this.termSource !== src) return;
+            src.title = cleanSourceTitle(t);
+            const inp = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
+            this.renderTermSrcChip(inp);
+            this.termSrcRefreshMeta();
+          } catch (e) {
+          }
+        }
+        /** chip 渲染：有来源 → 徽标（内/外）+ 名称 + ✕；无 → 输入框可见 */
+        renderTermSrcChip(input) {
+          const popup = this.termPopup;
+          if (!popup) return;
+          const chip = q(popup, "#lit-term-src-chip");
+          if (!chip) return;
+          const src = this.termSource;
+          if (!src) {
+            chip.style.display = "none";
+            chip.textContent = "";
+            if (input) input.style.display = "";
+            return;
+          }
+          const isNote = src.kind === "note";
+          const label = isNote ? noteSourceName(src.path) : src.title || shortUrlText(src.url);
+          chip.title = isNote ? src.path : src.url;
+          chip.style.display = "inline-flex";
+          chip.innerHTML = `<b>${isNote ? "内 部" : "外 部"}</b><span>${esc(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
+          if (input) input.style.display = "none";
+        }
+        /** 预览属性卡第 4 行「来源」：有来源显行（可点开），无来源隐行 */
+        termSrcRefreshMeta() {
+          const popup = this.termPopup;
+          if (!popup) return;
+          const row = q(popup, "#lit-term-meta-srcrow");
+          const val = q(popup, "#lit-term-meta-src");
+          if (!row || !val) return;
+          const src = this.termSource;
+          if (!src) {
+            row.style.display = "none";
+            val.textContent = "";
+            return;
+          }
+          row.style.display = "";
+          val.textContent = src.kind === "note" ? noteSourceName(src.path) : src.title || src.url;
+          val.title = src.kind === "note" ? src.path : src.url;
+        }
+        setTermPreviewVisible(v) {
+          if (!this.termPopup) return;
+          const p = q(this.termPopup, "#lit-term-preview");
+          if (p) p.style.display = v ? "flex" : "none";
+        }
+        setTermGenLoading(loading2) {
+          if (!this.termPopup) return;
+          const gen = q(this.termPopup, "#lit-term-generate");
+          if (gen) {
+            gen.disabled = loading2;
+            gen.textContent = loading2 ? "生成中…" : this.termHasDraft ? "重新生成" : "生成";
+          }
+          const regen = q(this.termPopup, "#lit-term-regenerate");
+          if (regen) regen.disabled = loading2;
+          const save = q(this.termPopup, "#lit-term-save");
+          if (save) save.disabled = loading2;
+        }
+        setTermSummarizing(s) {
+          if (!this.termPopup) return;
+          const regen = q(this.termPopup, "#lit-term-regenerate");
+          if (regen) {
+            regen.disabled = s;
+            regen.textContent = s ? "总结中…" : "总结";
+          }
+          const save = q(this.termPopup, "#lit-term-save");
+          if (save) save.disabled = s;
+          const gen = q(this.termPopup, "#lit-term-generate");
+          if (gen) gen.disabled = s;
+        }
+        noticeTermError(e) {
+          const msg = String(e && e.message || e || "未知错误");
+          if (/API Key|AI 配置|未配置/.test(msg)) {
+            notice("未配置 AI：请到插件设置「AI 配置」页填 API Key 后再生成", "error");
+          } else {
+            notice("生成失败：" + msg, "error");
+          }
+        }
+        async onTermGenerate() {
+          var _a, _b;
+          if (!this.termPopup || this.termGenerating) return;
+          const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
+          if (!term) {
+            notice("请输入术语", "error");
+            return;
+          }
+          this.termGenerating = true;
+          this.setTermGenLoading(true);
+          try {
+            const draft = await generateTermDraft(term);
+            this.presentTermPreview(draft);
+          } catch (e) {
+            this.noticeTermError(e);
+          } finally {
+            this.termGenerating = false;
+            this.setTermGenLoading(false);
+          }
+        }
+        async onTermSummarize() {
+          if (!this.termPopup || this.termSummarizing || this.termGenerating) return;
+          if (!this.termPreview || !this.termPreview.body.trim()) {
+            notice("请先生成简介", "info");
+            return;
+          }
+          this.termSummarizing = true;
+          this.setTermSummarizing(true);
+          try {
+            const summarized = await summarizeTermSummary(this.termPreview.body);
+            this.termPreview.body = summarized;
+            const contentEl = q(this.termPopup, "#lit-term-content");
+            if (contentEl) contentEl.textContent = summarized;
+          } catch (e) {
+            this.noticeTermError(e);
+          } finally {
+            this.termSummarizing = false;
+            this.setTermSummarizing(false);
+          }
+        }
+        presentTermPreview(draft) {
+          var _a, _b, _c;
+          this.termPreview = { domain: draft.domain, body: draft.summary };
+          this.termHasDraft = true;
+          if (!this.termPopup) return;
+          const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
+          const termEl = q(this.termPopup, "#lit-term-meta-term");
+          if (termEl) termEl.textContent = term || "—";
+          const domainEl = q(this.termPopup, "#lit-term-meta-domain");
+          if (domainEl) domainEl.textContent = draft.domain || "—";
+          const dateEl = q(this.termPopup, "#lit-term-meta-date");
+          if (dateEl) dateEl.textContent = dateStamp();
+          const contentEl = q(this.termPopup, "#lit-term-content");
+          if (contentEl) contentEl.textContent = draft.summary;
+          this.setTermPreviewVisible(true);
+          const prev = q(this.termPopup, "#lit-term-preview");
+          (_c = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _c.call(prev, { behavior: "smooth", block: "nearest" });
+        }
+        async onTermConfirm() {
+          var _a, _b;
+          if (!this.termPopup || this.termGenerating) return;
+          const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
+          if (!term) {
+            notice("请输入术语", "error");
+            return;
+          }
+          if (!this.termPreview) {
+            notice("请先点击「生成」获取简介预览", "info");
+            return;
+          }
+          this.termGenerating = true;
+          this.setTermGenLoading(true);
+          try {
+            const path = await generateTermNote({
+              term,
+              summary: this.termPreview.body,
+              domain: this.termPreview.domain,
+              source: this.termSource
+              // 术语来源随确认时刻的值落库（ADR-0116）
+            });
+            this.openNote(path);
+            emitDomainEvent("knowledge:tasks", { kind: "term-generated", term, title: term });
+            this.termPreview = null;
+            this.hideTermEntry();
+            notice("已生成术语文献笔记：" + term, "success");
+          } catch (e) {
+            this.noticeTermError(e);
+          } finally {
+            this.termGenerating = false;
+            this.setTermGenLoading(false);
+          }
+        }
+        hideTermEntry() {
+          this.termPreview = null;
+          const srcInput = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
+          this.termSrcReset(srcInput);
+          if (this.termMask) this.termMask.style.display = "none";
+          if (this.termPopup) this.termPopup.style.display = "none";
+        }
+        // ==================== 通用小工具 ====================
+        openNote(path) {
+          const app = getApp();
+          const file = app.vault.getAbstractFileByPath(path);
+          if (file) {
+            void app.workspace.getLeaf(false).openFile(file);
+            this.hideMain();
+            this.hideVideo();
+            this.hideHistory();
+          } else {
+            notice("文献笔记不存在：" + path, "error");
+          }
+        }
+        async copyText(text) {
+          try {
+            await navigator.clipboard.writeText(text);
+            notice("已复制：" + text, "success");
+          } catch (e) {
+            notice("复制失败", "error");
+          }
+        }
+        _openExternal(url) {
+          const app = getApp();
+          try {
+            app.openUrl(url);
+          } catch (e) {
+            const w = window;
+            const electron = w.require && w.require("electron");
+            if (electron && electron.shell) electron.shell.openExternal(url);
+          }
+        }
+        destroy() {
+          var _a;
+          this.clearRunTimer();
+          this.runState.clear();
+          if (this.termSrcTimer) {
+            clearTimeout(this.termSrcTimer);
+            this.termSrcTimer = null;
+          }
+          try {
+            (_a = this.termSrcSuggest) == null ? void 0 : _a.detach();
+          } catch (e) {
+          }
+          this.termSrcSuggest = null;
+          if (this.refreshTimer) {
+            clearTimeout(this.refreshTimer);
+            this.refreshTimer = null;
+          }
+          for (const unsub of this.fileListenerRefs) {
+            try {
+              unsub();
+            } catch (e) {
+            }
+          }
+          this.fileListenerRefs = [];
+          this.fileListenerAttached = false;
+          document.removeEventListener("keydown", this.onKeydown);
+          this.termPreview = null;
+          for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.historyMask, this.historyPopup, this.termMask, this.termPopup]) {
+            if (el && el.parentNode) el.parentNode.removeChild(el);
+          }
+          this.mask = null;
+          this.popup = null;
+          this.contentEl = null;
+          this.videoMask = null;
+          this.videoPopup = null;
+          this.videoList = null;
+          this.addMask = null;
+          this.addPopup = null;
+          this.historyMask = null;
+          this.historyPopup = null;
+          this.historyList = null;
+          this.termMask = null;
+          this.termPopup = null;
+        }
+      };
+    }
+  });
+
+  // src/knowledge/index.ts
+  var knowledge_exports = {};
+  __export(knowledge_exports, {
+    ensureKnowledge: () => ensureKnowledge,
+    openKnowledgeAddTask: () => openKnowledgeAddTask,
+    openKnowledgePanel: () => openKnowledgePanel,
+    openTermNote: () => openTermNote,
+    unloadKnowledge: () => unloadKnowledge
+  });
+  function ensureKnowledge(app) {
+    var _a;
+    if (initialized) return;
+    try {
+      KnowledgeData.init({ storagePath: (_a = tryGetSettings()) == null ? void 0 : _a.storagePath });
+      uiManager = new UIManager(app);
+      initialized = true;
+    } catch (e) {
+      console.error("bz: 文献盒初始化失败（下次打开命令将自动重试）", e);
+      uiManager = null;
+    }
+  }
+  function openKnowledgePanel(app) {
+    ensureKnowledge(app);
+    uiManager == null ? void 0 : uiManager.showMain();
+  }
+  function openKnowledgeAddTask(app, prefill) {
+    ensureKnowledge(app);
+    uiManager == null ? void 0 : uiManager.showVideoEntry(prefill);
+  }
+  function openTermNote(app, term) {
+    var _a, _b;
+    ensureKnowledge(app);
+    let t = term == null ? void 0 : term.trim();
+    let src;
+    if (!t) {
+      const view = app.workspace.getActiveViewOfType(MarkdownView);
+      t = ((_b = (_a = view == null ? void 0 : view.editor) == null ? void 0 : _a.getSelection()) == null ? void 0 : _b.trim()) || void 0;
+      const file = view == null ? void 0 : view.file;
+      if (file && file.extension === "md") src = { kind: "note", path: file.path };
+    }
+    uiManager == null ? void 0 : uiManager.showTermEntry(t, src);
+  }
+  function unloadKnowledge() {
+    uiManager == null ? void 0 : uiManager.destroy();
+    uiManager = null;
+    initialized = false;
+  }
+  var initialized, uiManager;
+  var init_knowledge = __esm({
+    "src/knowledge/index.ts"() {
+      init_fake_obsidian();
+      init_settings_provider();
+      init_data2();
+      init_ui();
+      initialized = false;
+      uiManager = null;
+    }
+  });
+
+  // src/clipbook/flow.ts
+  function setReadingSession(key) {
+    if (key !== curKey) {
+      curKey = key;
+      accumMs = 0;
+      openedAt = Date.now();
+    } else if (!openedAt) {
+      openedAt = Date.now();
+    }
+  }
+  function pauseReadingSession() {
+    if (openedAt) {
+      accumMs += Date.now() - openedAt;
+      openedAt = 0;
+    }
+  }
+  function durationMin() {
+    const now = Date.now();
+    const total = (openedAt ? now - openedAt : 0) + accumMs;
+    return Math.max(1, Math.round(total / 6e4));
+  }
+  function markHandledAndBump(raw, action) {
+    const key = articleKeyOf(raw);
+    const platform = raw.platform || "未知";
+    const today = localDayKey2();
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      const list = (res.data.articles || []).map((a) => {
+        if (articleKeyOf(a) !== key) return a;
+        return { ...a, read: true, state: action };
+      });
+      const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      s.totalRead = (Number(s.totalRead) || 0) + 1;
+      if (action === "saved") s.totalSaved = (Number(s.totalSaved) || 0) + 1;
+      else s.totalSkipped = (Number(s.totalSkipped) || 0) + 1;
+      s.byPlatform[platform] = (s.byPlatform[platform] || 0) + 1;
+      s.byDate[today] = (s.byDate[today] || 0) + 1;
+      await writeNewsDataMerged({ set: { articles: list, stats: s } });
+    });
+  }
+  function removeArticle(raw) {
+    const key = articleKeyOf(raw);
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      const list = (res.data.articles || []).filter((a) => articleKeyOf(a) !== key);
+      await writeNewsDataMerged({ set: { articles: list }, removeArticleKeys: [key] });
+    });
+  }
+  function emitReadEvt(raw, state) {
+    const evt = { title: raw.title, platform: raw.platform, state, durationMin: durationMin() };
+    emitDomainEvent("news", { kind: "read", evt });
+    return evt;
+  }
+  async function flowSave(article) {
+    const raw = article && article.raw;
+    if (!raw) return false;
+    const isBili = raw.platform === "B站" && !!String(raw.url || "").trim();
+    if (isBili) {
+      const { openKnowledgeAddTask: openKnowledgeAddTask2 } = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
+      openKnowledgeAddTask2(getApp(), { url: raw.url, title: raw.title || null, uploader: raw.author || null });
+      await markHandledAndBump(raw, "saved");
+      notice("已转入文献盒", "success");
+      return true;
+    }
+    pauseReadingSession();
+    try {
+      const ok = await writeClipNote(raw);
+      if (!ok) return false;
+      await markHandledAndBump(raw, "saved");
+      const evt = emitReadEvt(raw, "saved");
+      emitDomainEvent("news", { kind: "saved", evt, clipPath: `${dirOf()}/${String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim()}.md` });
+      return true;
+    } catch (e) {
+      console.error("[剪藏本] 保存失败", e);
+      return false;
+    }
+  }
+  async function flowMarkRead(article) {
+    const raw = article && article.raw;
+    if (!raw) return;
+    pauseReadingSession();
+    await markHandledAndBump(raw, "skipped");
+    emitReadEvt(raw, "skipped");
+  }
+  async function flowDeleteNews(article) {
+    const raw = article && article.raw;
+    if (!raw) return;
+    await removeArticle(raw);
+    try {
+      await updateClipbookData((sidecar) => {
+        const overrides = { ...sidecar.articleOverrides };
+        delete overrides[articleKeyOf(raw)];
+        return { ...sidecar, articleOverrides: overrides };
+      });
+    } catch (e) {
+    }
+  }
+  async function flowMarkAllRead(raws) {
+    const keys = new Set(raws.filter(Boolean).map((r) => articleKeyOf(r)));
+    if (!keys.size) return;
+    pauseReadingSession();
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      const today = localDayKey2();
+      const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      let bumped = 0;
+      const list = (res.data.articles || []).map((a) => {
+        if (a.read === true || !keys.has(articleKeyOf(a))) return a;
+        bumped++;
+        const next = { ...a, read: true, state: "skipped" };
+        const platform = a.platform || "未知";
+        s.byPlatform[platform] = (Number(s.byPlatform[platform]) || 0) + 1;
+        s.byDate[today] = (Number(s.byDate[today]) || 0) + 1;
+        return next;
+      });
+      if (!bumped) return;
+      s.totalRead = (Number(s.totalRead) || 0) + bumped;
+      s.totalSkipped = (Number(s.totalSkipped) || 0) + bumped;
+      await writeNewsDataMerged({ set: { articles: list, stats: s } });
+    });
+  }
+  async function flowUndoHandled(rawBefore) {
+    if (!rawBefore) return;
+    const key = articleKeyOf(rawBefore);
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      const s = res.data.stats;
+      let touched = false;
+      const list = (res.data.articles || []).map((a) => {
+        if (articleKeyOf(a) !== key) return a;
+        touched = true;
+        if (s && a.read === true) {
+          s.totalRead = Math.max(0, (Number(s.totalRead) || 0) - 1);
+          if (a.state === "saved") s.totalSaved = Math.max(0, (Number(s.totalSaved) || 0) - 1);
+          else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
+          const platform = a.platform || "未知";
+          s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
+          const day = localDayKey2();
+          s.byDate[day] = Math.max(0, (Number(s.byDate[day]) || 0) - 1);
+        }
+        const restored = { ...a };
+        if (rawBefore.read === void 0) delete restored.read;
+        else restored.read = rawBefore.read;
+        if (rawBefore.state === void 0) delete restored.state;
+        else restored.state = rawBefore.state;
+        if (rawBefore.body === void 0) delete restored.body;
+        else restored.body = rawBefore.body;
+        return restored;
+      });
+      if (!touched) return;
+      await writeNewsDataMerged({ set: s ? { articles: list, stats: s } : { articles: list } });
+    });
+  }
+  async function flowUndoDeleteNews(rawBefore) {
+    if (!rawBefore) return;
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      const list = res.data.articles || [];
+      if (list.some((a) => articleKeyOf(a) === articleKeyOf(rawBefore))) return;
+      await writeNewsDataMerged({ set: { articles: [...list, rawBefore] } });
+    });
+  }
+  function dirOf() {
+    const s = tryGetSettings();
+    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
+  }
+  var curKey, openedAt, accumMs;
+  var init_flow = __esm({
+    "src/clipbook/flow.ts"() {
+      init_app();
+      init_notice();
+      init_domain_bus();
+      init_settings_provider();
+      init_news_data();
+      init_constants();
+      init_save();
+      init_constants();
+      init_data();
+      init_write_queue();
+      curKey = "";
+      openedAt = 0;
+      accumMs = 0;
+    }
+  });
+
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  var init_icon = __esm({
+    "src/core/ui/icon.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/icons.ts
+  function uiIconSpan(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  function mountIcons(root) {
+    root.querySelectorAll("[data-lucide]").forEach((el) => {
+      const name = el.getAttribute("data-lucide") || "";
+      if (!name) return;
+      try {
+        const fresh = uiIconSpan(name);
+        const cls = el.className;
+        if (cls && cls !== "bz-ic") fresh.className = cls;
+        el.replaceWith(fresh);
+      } catch (e) {
+      }
+    });
+  }
+  var init_icons = __esm({
+    "src/core/ui/icons.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/button.ts
+  var init_button = __esm({
+    "src/core/ui/button.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/chip.ts
+  var init_chip = __esm({
+    "src/core/ui/chip.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/field.ts
+  var init_field = __esm({
+    "src/core/ui/field.ts"() {
+    }
+  });
+
+  // src/core/ui/slider.ts
+  var init_slider = __esm({
+    "src/core/ui/slider.ts"() {
+    }
+  });
+
+  // src/core/ui/empty.ts
+  function uiEmpty(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-empty";
+    if (opts.icon) {
+      const ic = uiIcon(opts.icon);
+      ic.classList.add("bz-empty-ic");
+      el.appendChild(ic);
+    }
+    const t = document.createElement("div");
+    t.className = "bz-empty-title";
+    t.textContent = opts.title;
+    el.appendChild(t);
+    if (opts.desc) {
+      const d = document.createElement("div");
+      d.className = "bz-empty-desc";
+      d.textContent = opts.desc;
+      el.appendChild(d);
+    }
+    if (opts.actions) el.appendChild(opts.actions);
+    return el;
+  }
+  var init_empty = __esm({
+    "src/core/ui/empty.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/segmented.ts
+  var init_segmented = __esm({
+    "src/core/ui/segmented.ts"() {
+    }
+  });
+
+  // src/core/ui/choice.ts
+  var init_choice = __esm({
+    "src/core/ui/choice.ts"() {
+    }
+  });
+
+  // src/core/ui/cardpick.ts
+  function uiCardChoice(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-cardpick" + (opts.className ? " " + opts.className : "");
+    el.setAttribute("role", "radiogroup");
+    if (opts.label) el.setAttribute("aria-label", opts.label);
+    const btns = /* @__PURE__ */ new Map();
+    let cur = opts.value;
+    const sync = (v) => {
+      cur = v;
+      btns.forEach((b, val) => {
+        const on = val === v;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-checked", String(on));
+      });
+    };
+    opts.options.forEach((o) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "bz-cardpick-card" + (o.value === opts.value ? " is-on" : "");
+      card.dataset.value = String(o.value);
+      card.setAttribute("role", "radio");
+      card.setAttribute("aria-checked", String(o.value === opts.value));
+      const prev = document.createElement("div");
+      prev.className = "bz-cardpick-prev" + (o.prevClass ? ` ${o.prevClass}` : "");
+      prev.setAttribute("aria-hidden", "true");
+      prev.style.height = "62px";
+      const name = document.createElement("span");
+      name.className = "bz-cardpick-name";
+      name.textContent = o.label;
+      card.append(prev, name);
+      card.addEventListener("click", () => {
+        if (cur === o.value) return;
+        sync(o.value);
+        opts.onChange(o.value);
+      });
+      btns.set(o.value, card);
+      el.appendChild(card);
+    });
+    el.addEventListener("keydown", (e) => {
+      var _a;
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      const list = opts.options.map((o) => o.value);
+      const idx = list.indexOf(cur);
+      const next = e.key === "ArrowRight" ? (idx + 1) % list.length : (idx - 1 + list.length) % list.length;
+      (_a = btns.get(list[next])) == null ? void 0 : _a.focus();
+      e.preventDefault();
+    });
+    return { el, setValue: sync };
+  }
+  var init_cardpick = __esm({
+    "src/core/ui/cardpick.ts"() {
+    }
+  });
+
+  // src/core/ui/switch.ts
+  var init_switch = __esm({
+    "src/core/ui/switch.ts"() {
+    }
+  });
+
+  // src/core/ui/select.ts
+  var init_select = __esm({
+    "src/core/ui/select.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/search.ts
+  var init_search = __esm({
+    "src/core/ui/search.ts"() {
+      init_icon();
+      init_field();
+    }
+  });
+
+  // src/core/ui/mainhead.ts
+  var init_mainhead = __esm({
+    "src/core/ui/mainhead.ts"() {
+      init_button();
+    }
+  });
+
+  // src/core/ui/rail.ts
+  var init_rail = __esm({
+    "src/core/ui/rail.ts"() {
+      init_fake_obsidian();
+      init_icon();
+    }
+  });
+
+  // src/core/ui/mobstrip.ts
+  var init_mobstrip = __esm({
+    "src/core/ui/mobstrip.ts"() {
+    }
+  });
+
+  // src/core/ui/stat.ts
+  var init_stat = __esm({
+    "src/core/ui/stat.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/progress.ts
+  var init_progress = __esm({
+    "src/core/ui/progress.ts"() {
+    }
+  });
+
+  // src/core/ui/popover.ts
+  var init_popover = __esm({
+    "src/core/ui/popover.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/lightbox.ts
+  var init_lightbox = __esm({
+    "src/core/ui/lightbox.ts"() {
+      init_icon();
+      init_esc_manager();
+      init_z_order();
+    }
+  });
+
+  // src/core/ui/modal.ts
+  var init_modal = __esm({
+    "src/core/ui/modal.ts"() {
+      init_esc_manager();
+      init_z_order();
+    }
+  });
+
+  // src/core/ui/resize.ts
+  function hitRegion(rect, x, y, edge) {
+    const onE = x >= rect.width - edge;
+    const onS = y >= rect.height - edge;
+    const onW = x <= edge;
+    const onN = y <= edge;
+    if (onE && onS) return "se";
+    if (onE && !onW) return "e";
+    if (onS && !onN) return "s";
+    return null;
+  }
+  function uiResizable(el, opts = {}) {
+    var _a, _b, _c, _d, _e;
+    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) {
+      return { flush: () => {
+      }, detach: () => {
+      } };
+    }
+    const edge = (_a = opts.edge) != null ? _a : 8;
+    const minW = (_b = opts.minW) != null ? _b : 320;
+    const minH = (_c = opts.minH) != null ? _c : 240;
+    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
+    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
+    let dir = null;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startW = 0;
+    let startH = 0;
+    const cap = (isW) => {
+      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
+      return Math.floor(Math.min(isW ? maxW : maxH, view));
+    };
+    const persist = opts.persist;
+    let persistTimer = null;
+    let lastW = 0;
+    let lastH = 0;
+    if (persist == null ? void 0 : persist.load) {
+      const saved = persist.load();
+      if (saved && saved.w > 0 && saved.h > 0) {
+        lastW = Math.min(Math.max(saved.w, minW), cap(true));
+        lastH = Math.min(Math.max(saved.h, minH), cap(false));
+        el.style.width = lastW + "px";
+        el.style.height = lastH + "px";
+      }
+    }
+    const regionAt = (e) => {
+      const rect = el.getBoundingClientRect();
+      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
+    };
+    const setCursor = (d) => {
+      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
+    };
+    const onHover = (e) => {
+      if (dragging) return;
+      setCursor(regionAt(e));
+    };
+    const onDragMove = (e) => {
+      if (!dragging) return;
+      e.preventDefault();
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      let w = dir === "e" || dir === "se" ? startW + dx : startW;
+      let h = dir === "s" || dir === "se" ? startH + dy : startH;
+      w = Math.min(Math.max(w, minW), cap(true));
+      h = Math.min(Math.max(h, minH), cap(false));
+      el.style.width = w + "px";
+      el.style.height = h + "px";
+      if (opts.onChange) opts.onChange(w, h);
+      if (persist == null ? void 0 : persist.save) {
+        lastW = w;
+        lastH = h;
+        if (persistTimer !== null) clearTimeout(persistTimer);
+        persistTimer = setTimeout(() => {
+          var _a2;
+          persistTimer = null;
+          (_a2 = persist.save) == null ? void 0 : _a2.call(persist, w, h);
+        }, 300);
+      }
+    };
+    const onMouseLeave = () => {
+      if (!dragging) setCursor(null);
+    };
+    const onMouseDown = (e) => {
+      const d = regionAt(e);
+      if (!d) return;
+      e.preventDefault();
+      dir = d;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startW = el.getBoundingClientRect().width;
+      startH = el.getBoundingClientRect().height;
+      document.body.style.userSelect = "none";
+    };
+    const onMouseUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      dir = null;
+      document.body.style.userSelect = "";
+      setCursor(null);
+      swallowNextClick();
+    };
+    el.addEventListener("mousemove", onHover);
+    el.addEventListener("mouseleave", onMouseLeave);
+    el.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onDragMove);
+    document.addEventListener("mouseup", onMouseUp);
+    const flush = () => {
+      if (persistTimer === null) return;
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      if ((persist == null ? void 0 : persist.save) && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
+    };
+    return {
+      flush,
+      detach: () => {
+        flush();
+        el.removeEventListener("mousemove", onHover);
+        el.removeEventListener("mouseleave", onMouseLeave);
+        el.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.userSelect = "";
+        setCursor(null);
+      }
+    };
+  }
+  var init_resize = __esm({
+    "src/core/ui/resize.ts"() {
+      init_dom();
+    }
+  });
+
+  // src/core/ui/splitter.ts
+  function uiVSplitter(opts) {
+    var _a, _b;
+    const left = opts.left;
+    const minLeft = (_a = opts.minLeft) != null ? _a : 220;
+    const minRight = (_b = opts.minRight) != null ? _b : 320;
+    const persist = opts.persist;
+    const el = document.createElement("div");
+    el.className = "bz-vsplit";
+    el.setAttribute("role", "separator");
+    el.setAttribute("aria-orientation", "vertical");
+    el.title = "拖动调整两侧宽度";
+    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) {
+      return { el, restore: () => {
+      }, flush: () => {
+      }, detach: () => {
+      } };
+    }
+    let dragging = false;
+    let startX = 0;
+    let startW = 0;
+    let persistTimer = null;
+    let lastW = 0;
+    let restored = false;
+    const availW = () => {
+      const parent = left.parentElement;
+      if (!parent) return 0;
+      return parent.clientWidth - el.offsetWidth;
+    };
+    const clampW = (w) => {
+      const avail = availW();
+      const max = avail > 0 ? avail - minRight : Number.POSITIVE_INFINITY;
+      return Math.min(Math.max(w, minLeft), Math.max(minLeft, max));
+    };
+    const applyW = (w) => {
+      left.style.width = w + "px";
+    };
+    const debSave = (w) => {
+      if (!(persist == null ? void 0 : persist.save)) return;
+      lastW = w;
+      if (persistTimer !== null) clearTimeout(persistTimer);
+      persistTimer = setTimeout(() => {
+        var _a2;
+        persistTimer = null;
+        (_a2 = persist.save) == null ? void 0 : _a2.call(persist, w);
+      }, 300);
+    };
+    const restore = () => {
+      if (restored || !(persist == null ? void 0 : persist.load) || !el.isConnected) return;
+      if (availW() <= 0) return;
+      const saved = persist.load();
+      restored = true;
+      if (saved != null && saved > 0) {
+        const w = clampW(saved);
+        applyW(w);
+        lastW = w;
+      }
+    };
+    const onDragMove = (e) => {
+      if (!dragging) return;
+      e.preventDefault();
+      const w = clampW(startW + (e.clientX - startX));
+      if (w === lastW) return;
+      applyW(w);
+      lastW = w;
+      if (opts.onChange) opts.onChange(w);
+      debSave(w);
+    };
+    const onMouseDown = (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      dragging = true;
+      startX = e.clientX;
+      startW = left.getBoundingClientRect().width;
+      el.classList.add("is-drag");
+      document.body.style.userSelect = "none";
+    };
+    const onMouseUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove("is-drag");
+      document.body.style.userSelect = "";
+      swallowNextClick();
+    };
+    document.addEventListener("mousemove", onDragMove);
+    el.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mouseup", onMouseUp);
+    const flush = () => {
+      if (persistTimer === null) return;
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      if ((persist == null ? void 0 : persist.save) && lastW > 0) persist.save(lastW);
+    };
+    return {
+      el,
+      restore,
+      flush,
+      detach: () => {
+        flush();
+        document.removeEventListener("mousemove", onDragMove);
+        el.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.userSelect = "";
+        el.classList.remove("is-drag");
+      }
+    };
+  }
+  var init_splitter = __esm({
+    "src/core/ui/splitter.ts"() {
+      init_dom();
+    }
+  });
+
+  // src/core/ui/index.ts
+  var init_ui2 = __esm({
+    "src/core/ui/index.ts"() {
+      init_icon();
+      init_icons();
+      init_button();
+      init_chip();
+      init_field();
+      init_slider();
+      init_empty();
+      init_segmented();
+      init_choice();
+      init_cardpick();
+      init_switch();
+      init_select();
+      init_search();
+      init_mainhead();
+      init_rail();
+      init_mobstrip();
+      init_stat();
+      init_progress();
+      init_popover();
+      init_suggest();
+      init_lightbox();
+      init_modal();
+      init_resize();
+      init_splitter();
     }
   });
 
@@ -6809,7 +10812,7 @@ var BZW_clipbook = (() => {
       init_settings_provider();
       init_path_picker();
       init_settings_modal();
-      init_ui();
+      init_ui2();
       TEXT_COMMIT_DELAY = 800;
       CommitWarn = class {
         constructor(initial, onCommit) {
@@ -6977,478 +10980,12 @@ var BZW_clipbook = (() => {
     }
   });
 
-  // src/core/ai.ts
-  function getQ3Settings() {
-    return _settingsProvider ? _settingsProvider() : {};
-  }
-  function getProviderDescriptor(id) {
-    return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
-  }
-  async function getAIProvider(override) {
-    var _a, _b, _c;
-    if (!override && _aiProviderCache) return _aiProviderCache;
-    const s = getQ3Settings();
-    if (override && typeof override === "object" && override.apiKey) {
-      return {
-        endpoint: String(override.endpoint || "https://api.deepseek.com").replace(/\/+$/, ""),
-        apiKey: override.apiKey,
-        model: override.model || void 0,
-        extraHeaders: override.extraHeaders || void 0,
-        contextWindow: override.contextWindow,
-        defaultMaxTokens: override.defaultMaxTokens
-      };
-    }
-    const name = typeof override === "string" && override || s.aiProvider || "opencode-go";
-    const desc = getProviderDescriptor(name);
-    if (name === "custom") {
-      const endpoint = (s.aiCustomEndpoint || "").replace(/\/+$/, "");
-      if (!endpoint || !s.aiCustomApiKey) {
-        throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
-      }
-      _aiProviderCache = {
-        endpoint,
-        apiKey: s.aiCustomApiKey,
-        model: s.aiCustomModel || void 0,
-        extraHeaders: desc.extraHeaders,
-        contextWindow: desc.defaultContextWindow,
-        defaultMaxTokens: desc.defaultMaxTokens
-      };
-      return _aiProviderCache;
-    }
-    const key = s[desc.apiKeyKey];
-    if (!key && name === "deepseek") {
-      try {
-        const raw = await getApp().vault.adapter.read(".obsidian/plugins/quickadd/data.json");
-        const cfg = JSON.parse(raw);
-        const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
-        if (provider && provider.endpoint && provider.apiKey) {
-          _aiProviderCache = {
-            endpoint: String(provider.endpoint).replace(/\/+$/, ""),
-            apiKey: provider.apiKey,
-            contextWindow: desc.defaultContextWindow,
-            defaultMaxTokens: desc.defaultMaxTokens
-          };
-          return _aiProviderCache;
-        }
-      } catch (e) {
-      }
-    }
-    if (!key && name !== "ollama") {
-      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
-    }
-    const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
-    const overrideContext = (_b = s.aiContextOverrides) == null ? void 0 : _b[name];
-    const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
-    _aiProviderCache = {
-      endpoint: desc.endpoint,
-      apiKey: key || "",
-      model: overrideModel || desc.model || void 0,
-      noCors: desc.noCors,
-      extraHeaders: desc.extraHeaders,
-      contextWindow: overrideContext || desc.defaultContextWindow,
-      defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens
-    };
-    return _aiProviderCache;
-  }
-  function abortError() {
-    const e = new Error("请求已取消");
-    e.name = "AbortError";
-    return e;
-  }
-  async function streamChatCompletions(provider, body, signal, onDelta) {
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${provider.apiKey}`,
-      ...provider.extraHeaders || {}
-    };
-    const resp = await fetch(`${provider.endpoint}/chat/completions`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-      signal
-    });
-    if (!resp.ok) {
-      let msg = `API ${resp.status}`;
-      try {
-        const err = await resp.json();
-        if (err.error && err.error.message) msg = err.error.message;
-      } catch (e) {
-      }
-      throw new Error(msg);
-    }
-    if (!resp.body || typeof resp.body.getReader !== "function") {
-      const data = await resp.json();
-      return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
-    }
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let full = "", buf = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      let nl;
-      while ((nl = buf.indexOf("\n")) !== -1) {
-        const line = buf.slice(0, nl).trim();
-        buf = buf.slice(nl + 1);
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (payload === "[DONE]") {
-          try {
-            reader.cancel();
-          } catch (e) {
-          }
-          return full;
-        }
-        try {
-          const chunk = JSON.parse(payload);
-          const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-          if (delta) {
-            full += delta;
-            try {
-              onDelta == null ? void 0 : onDelta(delta);
-            } catch (e) {
-            }
-          }
-        } catch (e) {
-        }
-      }
-    }
-    return full;
-  }
-  async function chatCompletionsNonStream(provider, body, signal) {
-    if (signal == null ? void 0 : signal.aborted) throw abortError();
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${provider.apiKey}`,
-      ...provider.extraHeaders || {}
-    };
-    const resp = await requestUrl({
-      url: `${provider.endpoint}/chat/completions`,
-      method: "POST",
-      headers,
-      body: JSON.stringify({ ...body, stream: false })
-    });
-    if (signal == null ? void 0 : signal.aborted) throw abortError();
-    const data = JSON.parse(resp.text);
-    const errMsg = data.error && (data.error.message || data.error.type) || data.message && data.message;
-    if (errMsg) throw new Error(`API ${resp.status}: ${errMsg}`);
-    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-    if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
-    return content;
-  }
-  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}, defaultMaxTokens = 8192) {
-    const internalDefaultOptions = {
-      modelOptions: {
-        max_tokens: defaultMaxTokens,
-        ...defaultOptions.modelOptions || {}
-      }
-    };
-    const mergedOptions = { ...internalDefaultOptions, ...defaultOptions };
-    if (defaultOptions.modelOptions) {
-      mergedOptions.modelOptions = {
-        ...internalDefaultOptions.modelOptions,
-        ...defaultOptions.modelOptions
-      };
-    }
-    return new AIService(params, defaultModel, mergedOptions);
-  }
-  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AIService;
-  var init_ai = __esm({
-    "src/core/ai.ts"() {
-      init_fake_obsidian();
-      init_app();
-      _settingsProvider = null;
-      AI_PROVIDER_REGISTRY = [
-        {
-          id: "deepseek",
-          label: "DeepSeek",
-          endpoint: "https://api.deepseek.com",
-          model: "",
-          // 空 = 沿用调用方默认模型（原行为：deepseek 不强制模型）
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 65536,
-          apiKeyKey: "deepseekApiKey",
-          apiKeyLabel: "DeepSeek 密钥",
-          apiKeyDesc: "留空则自动回退读取外部配置密钥"
-        },
-        {
-          id: "opencode-go",
-          label: "OpenCode Go",
-          endpoint: "https://opencode.ai/zen/go/v1",
-          model: "deepseek-v4-flash",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "opencodeGoApiKey",
-          apiKeyLabel: "OpenCode 密钥",
-          apiKeyDesc: "在订阅官网获取后填入这里",
-          noCors: true
-        },
-        {
-          id: "openai",
-          label: "OpenAI",
-          endpoint: "https://api.openai.com/v1",
-          model: "gpt-4o-mini",
-          defaultMaxTokens: 16384,
-          defaultContextWindow: 128e3,
-          apiKeyKey: "openaiApiKey",
-          apiKeyLabel: "OpenAI 密钥",
-          apiKeyDesc: "在 OpenAI 官网获取后填入这里"
-        },
-        {
-          id: "anthropic",
-          label: "Anthropic（Claude）",
-          endpoint: "https://api.anthropic.com/v1",
-          model: "claude-sonnet-4-5",
-          defaultMaxTokens: 64e3,
-          // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
-          defaultContextWindow: 2e5,
-          apiKeyKey: "anthropicApiKey",
-          apiKeyLabel: "Anthropic 密钥",
-          apiKeyDesc: "在 Anthropic 官网获取后填入这里",
-          extraHeaders: { "anthropic-version": "2023-06-01" }
-        },
-        {
-          id: "google",
-          label: "Google Gemini",
-          endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
-          model: "gemini-2.0-flash",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 1048576,
-          apiKeyKey: "googleApiKey",
-          apiKeyLabel: "Gemini 密钥",
-          apiKeyDesc: "在 Google AI Studio 获取后填入这里"
-        },
-        {
-          id: "moonshot",
-          label: "Moonshot（Kimi）",
-          endpoint: "https://api.moonshot.cn/v1",
-          model: "kimi-k2-0711-preview",
-          defaultMaxTokens: 131072,
-          // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
-          defaultContextWindow: 131072,
-          apiKeyKey: "moonshotApiKey",
-          apiKeyLabel: "Kimi 密钥",
-          apiKeyDesc: "在 Moonshot 开放平台获取后填入这里"
-        },
-        {
-          id: "zhipu",
-          label: "智谱（GLM）",
-          endpoint: "https://open.bigmodel.cn/api/paas/v4",
-          model: "glm-4-flash",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "zhipuApiKey",
-          apiKeyLabel: "智谱密钥",
-          apiKeyDesc: "在智谱开放平台获取后填入这里"
-        },
-        {
-          id: "dashscope",
-          label: "阿里云百炼（通义）",
-          endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-          model: "qwen-plus",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "dashscopeApiKey",
-          apiKeyLabel: "百炼密钥",
-          apiKeyDesc: "在阿里云百炼获取 API Key 后填入这里"
-        },
-        {
-          id: "siliconflow",
-          label: "硅基流动",
-          endpoint: "https://api.siliconflow.cn/v1",
-          model: "deepseek-ai/DeepSeek-V3",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 65536,
-          apiKeyKey: "siliconflowApiKey",
-          apiKeyLabel: "硅基流动密钥",
-          apiKeyDesc: "在硅基流动官网获取后填入这里"
-        },
-        {
-          id: "openrouter",
-          label: "OpenRouter",
-          endpoint: "https://openrouter.ai/api/v1",
-          model: "deepseek/deepseek-chat",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "openrouterApiKey",
-          apiKeyLabel: "OpenRouter 密钥",
-          apiKeyDesc: "在 OpenRouter 官网获取后填入这里"
-        },
-        {
-          id: "xai",
-          label: "xAI（Grok）",
-          endpoint: "https://api.x.ai/v1",
-          model: "grok-2-latest",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "xaiApiKey",
-          apiKeyLabel: "xAI 密钥",
-          apiKeyDesc: "在 xAI 控制台获取后填入这里"
-        },
-        {
-          id: "groq",
-          label: "Groq",
-          endpoint: "https://api.groq.com/openai/v1",
-          model: "llama-3.3-70b-versatile",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "groqApiKey",
-          apiKeyLabel: "Groq 密钥",
-          apiKeyDesc: "在 Groq 控制台获取后填入这里"
-        },
-        {
-          id: "mistral",
-          label: "Mistral",
-          endpoint: "https://api.mistral.ai/v1",
-          model: "mistral-large-latest",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "mistralApiKey",
-          apiKeyLabel: "Mistral 密钥",
-          apiKeyDesc: "在 Mistral 控制台获取后填入这里"
-        },
-        {
-          id: "together",
-          label: "Together AI",
-          endpoint: "https://api.together.xyz/v1",
-          model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "togetherApiKey",
-          apiKeyLabel: "Together 密钥",
-          apiKeyDesc: "在 Together AI 官网获取后填入这里"
-        },
-        {
-          id: "ollama",
-          label: "Ollama（本地）",
-          endpoint: "http://localhost:11434/v1",
-          model: "llama3.1",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 32768,
-          apiKeyKey: "ollamaApiKey",
-          apiKeyLabel: "Ollama 密钥",
-          apiKeyDesc: "本地服务无需密钥，留空即可"
-        },
-        {
-          id: "custom",
-          label: "自定义（OpenAI 兼容）",
-          endpoint: "",
-          model: "",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 32768,
-          apiKeyKey: "aiCustomApiKey",
-          apiKeyLabel: "自定义 API 密钥",
-          apiKeyDesc: "在服务官网获取后填入这里"
-        }
-      ];
-      _aiProviderCache = null;
-      AIService = class {
-        constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
-          this.defaultModel = defaultModel;
-          this.defaultOptions = defaultOptions;
-        }
-        /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
-         *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
-         *  既有调用（不传这两项）行为零变化 */
-        async prompt(promptText, model = this.defaultModel, options = {}) {
-          var _a;
-          const mergedOptions = this._mergeOptions(options);
-          const provider = await getAIProvider(mergedOptions.provider);
-          const s = getQ3Settings();
-          const isExplicit = model !== this.defaultModel;
-          const effModel = isExplicit ? model : provider.model || model;
-          const mo = mergedOptions.modelOptions || {};
-          const effMaxTokens = (_a = mo.max_tokens) != null ? _a : provider.defaultMaxTokens || 4096;
-          const body = {
-            model: effModel,
-            messages: [{ role: "user", content: promptText }],
-            max_tokens: effMaxTokens,
-            stream: true
-          };
-          for (const k of Object.keys(mo)) {
-            if (k === "max_tokens") continue;
-            body[k] = mo[k];
-          }
-          const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
-          const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
-          try {
-            const content = provider.noCors ? await chatCompletionsNonStream(provider, body, signal) : await streamChatCompletions(provider, body, signal, onDelta);
-            return content;
-          } catch (streamError) {
-            if (signal == null ? void 0 : signal.aborted) throw streamError;
-            try {
-              const content = await chatCompletionsNonStream(provider, body, signal);
-              return content;
-            } catch (e) {
-              throw new Error(`AI 请求失败: ${streamError.message}（fallback: ${e.message}）`);
-            }
-          }
-        }
-        /** 普通对话模型（deepseek-v4-flash） */
-        async chat(promptText, extraOptions = {}) {
-          return this.prompt(promptText, "deepseek-v4-flash", extraOptions);
-        }
-        /** 推理模型，自动开启思考模式 */
-        async reason(promptText, extraOptions = {}) {
-          const options = this._prepareOptions(extraOptions, { enable_thinking: true });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
-        }
-        /** 联网搜索（实验性，第三方代理平台生效） */
-        async search(promptText, extraOptions = {}) {
-          const options = this._prepareOptions(extraOptions, { search: true });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
-        }
-        /** 要求 AI 返回 JSON 格式（设置 response_format） */
-        async json(promptText, extraOptions = {}) {
-          const options = this._prepareOptions(extraOptions, {
-            response_format: { type: "json_object" }
-          });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
-        }
-        /** 思考 + 联网搜索（实验性） */
-        async reasonAndSearch(promptText, extraOptions = {}) {
-          const options = this._prepareOptions(extraOptions, {
-            enable_thinking: true,
-            search: true
-          });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
-        }
-        setDefaultModel(model) {
-          this.defaultModel = model;
-        }
-        setDefaultOptions(options) {
-          this.defaultOptions = options;
-        }
-        // ---------- 内部辅助方法 ----------
-        _mergeOptions(options) {
-          const merged = { ...this.defaultOptions, ...options };
-          if (this.defaultOptions.modelOptions || options.modelOptions) {
-            merged.modelOptions = {
-              ...this.defaultOptions.modelOptions || {},
-              ...options.modelOptions || {}
-            };
-          }
-          return merged;
-        }
-        /** 准备选项：复制 extraOptions，并设置指定的 modelOptions 字段（用户显式传入优先） */
-        _prepareOptions(extraOptions, modelSettings) {
-          const options = { ...extraOptions };
-          if (!options.modelOptions) options.modelOptions = {};
-          const userModelOpts = options.modelOptions;
-          options.modelOptions = { ...modelSettings, ...userModelOpts };
-          return options;
-        }
-      };
-    }
-  });
-
   // src/auto-summary/parser.ts
   function unquote(v) {
     if (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1);
     return v;
   }
-  function parseFrontmatter(content) {
+  function parseFrontmatter2(content) {
     const m = content.match(/^\s*---\s*\n([\s\S]*?)\n\s*---\s*\n/);
     if (!m) return { fm: null, body: content, extraLines: [] };
     const fm = {};
@@ -7631,7 +11168,7 @@ ${bodyText.substring(0, 6e3)}`;
     const tagCount = String(s.autoSummaryTagCount || "3-6");
     try {
       const content = await app.vault.read(file);
-      const { fm, body } = parseFrontmatter(content);
+      const { fm, body } = parseFrontmatter2(content);
       const bodyText = extractBodyForAI(body);
       if (!bodyText || bodyText.length < 100) return;
       const missing = [];
@@ -7679,7 +11216,7 @@ ${bodyText.substring(0, 6e3)}`;
         }
       }
       const latest = await app.vault.read(targetFile);
-      const latestParsed = parseFrontmatter(latest);
+      const latestParsed = parseFrontmatter2(latest);
       const mergedFm = { ...latestParsed.fm || {} };
       if (missing.includes("title") && aiResult.title) mergedFm.title = aiResult.title;
       if (missing.includes("summary") && aiResult.summary) mergedFm.summary = aiResult.summary;
@@ -7714,7 +11251,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   var attemptSeq, FIELD_DEFS, SUMMARY_LENGTH_RULES;
-  var init_processor = __esm({
+  var init_processor2 = __esm({
     "src/auto-summary/processor.ts"() {
       init_parser();
       init_notice();
@@ -7822,11 +11359,11 @@ ${bodyText.substring(0, 6e3)}`;
     }, 2e3);
   }
   function ensureAutoSummary(app) {
-    if (initialized) {
+    if (initialized2) {
       if (!registerTimer && !fileListenerRef) scheduleRegister(app);
       return;
     }
-    initialized = true;
+    initialized2 = true;
     vaultRef = app.vault;
     workspaceRef = app.workspace;
     scheduleRegister(app);
@@ -7865,14 +11402,14 @@ ${bodyText.substring(0, 6e3)}`;
     batchDone = 0;
     processingPaths.clear();
   }
-  var initialized, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
+  var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
   var init_auto_summary = __esm({
     "src/auto-summary/index.ts"() {
       init_ai();
       init_settings_provider();
       init_notice();
-      init_processor();
-      initialized = false;
+      init_processor2();
+      initialized2 = false;
       vaultRef = null;
       workspaceRef = null;
       fileListenerRef = null;
@@ -7908,472 +11445,6 @@ ${bodyText.substring(0, 6e3)}`;
     "src/core/settings-common.ts"() {
       init_notice();
       init_settings_provider();
-    }
-  });
-
-  // src/core/storage.ts
-  function storageDir() {
-    const s = tryGetSettings();
-    return (s && s.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
-  }
-  function storageFile(name, base) {
-    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
-    return `${dir}/${name}`;
-  }
-  function enqueueFileTask(filePath, task) {
-    var _a;
-    const prev = (_a = fileTaskQueues.get(filePath)) != null ? _a : Promise.resolve();
-    const run = prev.then(task, task);
-    const tail = run.then(
-      () => void 0,
-      () => void 0
-    );
-    fileTaskQueues.set(filePath, tail);
-    void tail.then(() => {
-      if (fileTaskQueues.get(filePath) === tail) fileTaskQueues.delete(filePath);
-    });
-    return run;
-  }
-  function isAlreadyExistsError(e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return /already exist/i.test(msg);
-  }
-  function corruptStamp(d = /* @__PURE__ */ new Date()) {
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
-  }
-  function baseNameOf(p) {
-    return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
-  }
-  async function backupOriginal(app, filePath, raw) {
-    try {
-      const f = app.vault.getAbstractFileByPath(filePath);
-      if (!f) return null;
-      const content = raw !== void 0 ? raw : await app.vault.read(f);
-      if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
-        try {
-          await app.vault.createFolder(CORRUPT_BACKUP_DIR);
-        } catch (e) {
-        }
-      }
-      const base = baseNameOf(filePath);
-      const stamp = corruptStamp();
-      let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
-      for (let i = 2; app.vault.getAbstractFileByPath(backupPath); i++) {
-        backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
-      }
-      await app.vault.create(backupPath, content);
-      return backupPath;
-    } catch (e) {
-      console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
-      return null;
-    }
-  }
-  function notifyBackup(filePath, backupPath, cause) {
-    var _a;
-    const now = Date.now();
-    if (now - ((_a = corruptNotifyAt.get(filePath)) != null ? _a : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
-    corruptNotifyAt.set(filePath, now);
-    try {
-      const name = baseNameOf(filePath);
-      const msg = cause === "解析失败" ? `数据文件 ${name} 解析失败，原内容已留档到 ${backupPath}，数据不会丢，已重建默认文件继续使用` : `数据文件 ${name} 写入失败，原内容已留档到 ${backupPath}，数据不会丢，请稍后重试`;
-      notify(msg, { type: "warning" });
-    } catch (e) {
-    }
-  }
-  function serialize(v) {
-    return JSON.stringify(v, null, 2);
-  }
-  function jsonFileStore(filePath, opts = {}) {
-    const resolveApp = () => opts.app || getApp();
-    const resolveDefault = () => {
-      const d = opts.defaultValue;
-      return typeof d === "function" ? d() : d === void 0 ? [] : d;
-    };
-    async function ensureDir(app) {
-      const d = filePath.substring(0, filePath.lastIndexOf("/"));
-      if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
-    }
-    async function createIfMissing(app, content) {
-      await ensureDir(app);
-      try {
-        await app.vault.create(filePath, content);
-        return true;
-      } catch (e) {
-        if (isAlreadyExistsError(e) && app.vault.getAbstractFileByPath(filePath)) return false;
-        throw e;
-      }
-    }
-    async function handleCorrupt(app, err, raw) {
-      var _a;
-      if (((_a = opts.onCorrupt) == null ? void 0 : _a.call(opts, filePath, err)) === false) {
-        return null;
-      }
-      const backupPath = await backupOriginal(app, filePath, raw);
-      if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
-      const f = app.vault.getAbstractFileByPath(filePath);
-      if (f) {
-        await app.vault.modify(f, serialize(resolveDefault()));
-      } else {
-        await createIfMissing(app, serialize(resolveDefault()));
-      }
-      return resolveDefault();
-    }
-    async function modifyWithBackup(app, f, c) {
-      try {
-        await app.vault.modify(f, c);
-      } catch (e) {
-        const backupPath = await backupOriginal(app, filePath);
-        if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
-        throw e;
-      }
-    }
-    return {
-      async read() {
-        const app = resolveApp();
-        let f = app.vault.getAbstractFileByPath(filePath);
-        if (!f) {
-          const created = await createIfMissing(app, serialize(resolveDefault()));
-          if (created) return resolveDefault();
-          f = app.vault.getAbstractFileByPath(filePath);
-          if (!f) return resolveDefault();
-        }
-        const raw = await app.vault.read(f);
-        try {
-          return JSON.parse(raw);
-        } catch (e) {
-          return await handleCorrupt(app, e, raw);
-        }
-      },
-      async write(data) {
-        const app = resolveApp();
-        const c = serialize(data);
-        let f = app.vault.getAbstractFileByPath(filePath);
-        if (f) {
-          if (opts.writeIfChanged) {
-            try {
-              const cur2 = await app.vault.read(f);
-              if (cur2 === c) return;
-            } catch (e) {
-            }
-          }
-          await modifyWithBackup(app, f, c);
-          return;
-        }
-        const created = await createIfMissing(app, c);
-        if (created) return;
-        let cur = app.vault.getAbstractFileByPath(filePath);
-        if (!cur) {
-          const retried = await createIfMissing(app, c);
-          if (retried) return;
-          cur = app.vault.getAbstractFileByPath(filePath);
-          if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
-        }
-        await modifyWithBackup(app, cur, c);
-      }
-    };
-  }
-  var fileTaskQueues, CORRUPT_BACKUP_DIR, CORRUPT_NOTIFY_DEDUPE_MS, corruptNotifyAt;
-  var init_storage = __esm({
-    "src/core/storage.ts"() {
-      init_app();
-      init_settings_provider();
-      init_notice();
-      fileTaskQueues = /* @__PURE__ */ new Map();
-      CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
-      CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
-      corruptNotifyAt = /* @__PURE__ */ new Map();
-    }
-  });
-
-  // src/clipbook/constants.ts
-  function articleKeyOf(a) {
-    if (a && a.url) return "url:" + String(a.url);
-    return "td:" + String(a && a.title || "") + "|" + String(a && a.date || "");
-  }
-  function excerpt(body, max = 90) {
-    const s = String(body || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[#>*`_~-]/g, "").replace(/\s+/g, " ").trim();
-    if (!s) return "";
-    return s.length > max ? s.slice(0, max) + "…" : s;
-  }
-  function localDayKey2(ts = Date.now()) {
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${pad22(d.getMonth() + 1)}-${pad22(d.getDate())}`;
-  }
-  function localDatetime(ts = Date.now()) {
-    const d = new Date(ts);
-    const hms = `${pad22(d.getHours())}:${pad22(d.getMinutes())}:${pad22(d.getSeconds())}`;
-    return `${localDayKey2(ts)} ${hms}`;
-  }
-  function toDatetime(dateStr) {
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
-      return d.toISOString().replace("T", " ").substring(0, 19);
-    } catch (e) {
-      return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
-    }
-  }
-  function pad22(n) {
-    return String(n).padStart(2, "0");
-  }
-  var init_constants = __esm({
-    "src/clipbook/constants.ts"() {
-    }
-  });
-
-  // src/clipbook/news-data.ts
-  function getNewsFilePath() {
-    return storageFile("news.json");
-  }
-  function emptyData() {
-    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [] };
-  }
-  function parseRssFeeds(raw) {
-    var _a, _b;
-    if (!Array.isArray(raw)) return [];
-    const out = [];
-    for (const it of raw) {
-      if (!it || typeof it !== "object") continue;
-      const url = String((_a = it.url) != null ? _a : "").trim();
-      if (!url) continue;
-      const title = String((_b = it.title) != null ? _b : "").trim();
-      out.push(title ? { url, title } : { url });
-    }
-    return out;
-  }
-  function looksLikeFeedXml(xml) {
-    return /<(rss|feed|RDF)[\s>]/i.test(String(xml || ""));
-  }
-  function extractFeedTitleFromXml(xml) {
-    const m = String(xml || "").match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-    if (!m) return null;
-    const t = m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
-    return t || null;
-  }
-  function normalizeRssFeedUrl(text) {
-    const t = String(text || "").trim();
-    return /^https?:\/\/\S+$/i.test(t) ? t : null;
-  }
-  function parseBilibiliUpInfo(raw) {
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
-    const out = {};
-    for (const [uid, v] of Object.entries(raw)) {
-      if (!v || typeof v !== "object") continue;
-      const info = {};
-      if (v.name) info.name = String(v.name);
-      if (v.avatar) info.avatar = String(v.avatar).replace(/^http:/, "https:");
-      out[uid] = info;
-    }
-    return out;
-  }
-  function parseBilibiliMaxItems(raw) {
-    const n = Math.floor(Number(raw));
-    return Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
-  }
-  function parseBilibiliCookie(raw) {
-    return typeof raw === "string" ? raw.trim() : "";
-  }
-  function wrapArrayToNewsData(articles) {
-    const data = emptyData();
-    data.articles = Array.isArray(articles) ? articles : [];
-    return data;
-  }
-  function mergeStatsInto(data, oldStats) {
-    if (statsHasData(data.stats)) return data;
-    const s = oldStats && typeof oldStats === "object" ? oldStats : null;
-    if (!s) return data;
-    return {
-      ...data,
-      stats: {
-        totalRead: Number(s.totalRead) || 0,
-        totalSaved: Number(s.totalSaved) || 0,
-        totalSkipped: Number(s.totalSkipped) || 0,
-        byPlatform: s.byPlatform && typeof s.byPlatform === "object" ? s.byPlatform : {},
-        byDate: s.byDate && typeof s.byDate === "object" ? s.byDate : {}
-      }
-    };
-  }
-  function statsHasData(stats) {
-    if (!stats || typeof stats !== "object") return false;
-    return (Number(stats.totalRead) || 0) > 0 || (Number(stats.totalSaved) || 0) > 0 || (Number(stats.totalSkipped) || 0) > 0 || (stats.byPlatform && Object.keys(stats.byPlatform).length > 0) === true || (stats.byDate && Object.keys(stats.byDate).length > 0) === true;
-  }
-  function parseNewsFileContent(raw) {
-    let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (e) {
-      return null;
-    }
-    if (Array.isArray(parsed)) return wrapArrayToNewsData(parsed);
-    if (parsed && typeof parsed === "object") {
-      const obj = parsed;
-      return {
-        articles: Array.isArray(obj.articles) ? obj.articles : [],
-        stats: obj.stats && typeof obj.stats === "object" ? obj.stats : DEFAULT_STATS(),
-        bilibiliUps: Array.isArray(obj.bilibiliUps) ? obj.bilibiliUps.map((u) => String(u != null ? u : "").trim()).filter(Boolean) : [],
-        bilibiliUpInfo: parseBilibiliUpInfo(obj.bilibiliUpInfo),
-        bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
-        bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
-        sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES },
-        rssFeeds: parseRssFeeds(obj.rssFeeds)
-      };
-    }
-    return null;
-  }
-  async function readNewsData() {
-    const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
-    let corrupt = false;
-    const parsed = await jsonFileStore(getNewsFilePath(), {
-      defaultValue: () => emptyData(),
-      onCorrupt: () => {
-        corrupt = true;
-        return false;
-      }
-    }).read().catch(() => null);
-    if (parsed === null || corrupt) return { ok: false, missing: false, data: emptyData() };
-    const content = parseNewsFileContent(JSON.stringify(parsed));
-    if (!content) return { ok: false, missing: false, data: emptyData() };
-    return { ok: true, missing, data: content };
-  }
-  async function writeNewsData(data) {
-    try {
-      await jsonFileStore(getNewsFilePath()).write(data);
-    } catch (e) {
-    }
-  }
-  async function writeNewsDataMerged(intent) {
-    var _a;
-    const res = await readNewsData();
-    const base = res.ok ? res.data : emptyData();
-    const next = { ...base };
-    if (intent.set.articles || ((_a = intent.removeArticleKeys) == null ? void 0 : _a.length)) {
-      const patchList = intent.set.articles || [];
-      const removeKeys = new Set(intent.removeArticleKeys || []);
-      const patchByKey = /* @__PURE__ */ new Map();
-      for (const a of patchList) patchByKey.set(articleKeyOf(a), a);
-      const merged = [];
-      const seen = /* @__PURE__ */ new Set();
-      for (const a of base.articles || []) {
-        const k = articleKeyOf(a);
-        if (removeKeys.has(k)) continue;
-        seen.add(k);
-        merged.push(patchByKey.has(k) ? patchByKey.get(k) : a);
-      }
-      for (const a of patchList) {
-        const k = articleKeyOf(a);
-        if (!seen.has(k)) {
-          merged.push(a);
-          seen.add(k);
-        }
-      }
-      next.articles = merged;
-    }
-    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds"]) {
-      if (intent.set[seg] !== void 0) {
-        next[seg] = intent.set[seg];
-      }
-    }
-    await writeNewsData(next);
-  }
-  function parseUidFromText(text) {
-    const t = String(text || "").trim();
-    if (!t) return null;
-    const pure = t.match(/^\d{1,10}$/);
-    if (pure) return pure[0];
-    const space = t.match(/space\.bilibili\.com[\/:]*(\d+)/i);
-    if (space) return space[1];
-    return null;
-  }
-  function parseBvidFromText(text) {
-    const t = String(text || "").trim();
-    const m = t.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
-    return m ? m[1] : null;
-  }
-  async function resolveUidFromInput(text) {
-    var _a;
-    const local = parseUidFromText(text);
-    if (local) return local;
-    const bvid = parseBvidFromText(text);
-    if (!bvid) return null;
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 1e4);
-      const resp = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
-        method: "GET",
-        signal: ctrl.signal
-      });
-      clearTimeout(timer);
-      if (!resp.ok) return null;
-      const json = await resp.json();
-      const mid = json && json.data && json.data.owner ? String((_a = json.data.owner.mid) != null ? _a : "") : "";
-      return mid || null;
-    } catch (e) {
-      return null;
-    }
-  }
-  async function migrateLegacyStats(data) {
-    if (statsHasData(data.stats)) return data;
-    const app = getApp();
-    const af = app.vault.getAbstractFileByPath(STATS_JSON_PATH);
-    if (!af) return data;
-    try {
-      const raw = await app.vault.read(af);
-      const old = JSON.parse(raw);
-      const merged = mergeStatsInto(data, old);
-      return merged === data ? data : merged;
-    } catch (e) {
-      return data;
-    }
-  }
-  function applyRetention(articles, savedDays, skippedDays, now = Date.now()) {
-    const DAY = 24 * 60 * 60 * 1e3;
-    const kept = [];
-    for (const a of articles) {
-      if (!a || a.read !== true) {
-        kept.push(a);
-        continue;
-      }
-      const state = a.state === "saved" ? "saved" : "skipped";
-      const days = state === "saved" ? savedDays : skippedDays;
-      if (!Number.isFinite(days) || days <= 0) {
-        kept.push(a);
-        continue;
-      }
-      const t = new Date(a.fetchedAt || a.date || "").getTime();
-      if (!Number.isFinite(t)) {
-        kept.push(a);
-        continue;
-      }
-      if (now - t > days * DAY) continue;
-      kept.push(a);
-    }
-    return kept;
-  }
-  function normalizeRetentionDays(v) {
-    const n = Number(String(v || "").trim());
-    return Number.isFinite(n) && n > 0 ? n : null;
-  }
-  var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS;
-  var init_news_data = __esm({
-    "src/clipbook/news-data.ts"() {
-      init_app();
-      init_storage();
-      init_constants();
-      STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
-      DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
-      DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
-    }
-  });
-
-  // src/clipbook/write-queue.ts
-  function enqueueNewsWrite(op) {
-    return enqueueFileTask(getNewsFilePath(), op);
-  }
-  var init_write_queue = __esm({
-    "src/clipbook/write-queue.ts"() {
-      init_storage();
-      init_news_data();
     }
   });
 
@@ -9101,7 +12172,7 @@ ${bodyText.substring(0, 6e3)}`;
   function escapeHtml2(s) {
     return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
   }
-  function esc(s) {
+  function esc2(s) {
     return escapeHtml2(String(s != null ? s : ""));
   }
   function iconSpan(name, extra = "") {
@@ -9175,12 +12246,12 @@ ${bodyText.substring(0, 6e3)}`;
     return `hsl(${h % 360}, 42%, 52%)`;
   }
   function railItemHtml(sel, label, unread, total, icon, color, active, sub) {
-    const badge = icon === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${esc(sub || label.slice(0, 1))}</span>` : icon === "bili" ? `<span class="bz-rail-badge bili">${esc(sub || label.slice(0, 1))}</span>` : icon === "clip" ? `<span class="bz-rail-ic">${iconSpan("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon ? iconSpan(icon) : ""}</span>`;
+    const badge = icon === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${esc2(sub || label.slice(0, 1))}</span>` : icon === "bili" ? `<span class="bz-rail-badge bili">${esc2(sub || label.slice(0, 1))}</span>` : icon === "clip" ? `<span class="bz-rail-ic">${iconSpan("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon ? iconSpan(icon) : ""}</span>`;
     const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
     return `
-    <div class="bz-rail-item${active ? " on" : ""}" data-src='${esc(JSON.stringify(sel))}' title="${esc(label)}">
+    <div class="bz-rail-item${active ? " on" : ""}" data-src='${esc2(JSON.stringify(sel))}' title="${esc2(label)}">
       ${badge}
-      <span class="bz-rail-name">${esc(label)}</span>
+      <span class="bz-rail-name">${esc2(label)}</span>
       <span class="bz-clip-lead"></span>
       ${count}
     </div>`;
@@ -9190,11 +12261,11 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function tocListHtml(list, curId, timeOf) {
     return list.map((a, i) => `
-    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
+    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" data-id="${esc2(a.id)}">
       <span class="bz-clip-no">${String(i + 1).padStart(2, "0")}</span>
       <div class="bz-clip-item-main">
-        <div class="bz-clip-item-t"><span>${esc(a.title)}</span></div>
-        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}</div>
+        <div class="bz-clip-item-t"><span>${esc2(a.title)}</span></div>
+        <div class="bz-clip-item-meta">${esc2(siteShort(a.srcName))} · ${esc2(timeOf(a))}</div>
       </div>
     </div>`).join("");
   }
@@ -9213,28 +12284,28 @@ ${bodyText.substring(0, 6e3)}`;
     return html ? `<div class="bz-clip-desk-fold-body"${open ? "" : " hidden"}>${html}</div>` : "";
   }
   function summaryHtml(summary) {
-    return `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan("sparkles", "bz-ic--xs")}摘要</span>${esc(summary)}</div>`;
+    return `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan("sparkles", "bz-ic--xs")}摘要</span>${esc2(summary)}</div>`;
   }
   function readerHtml(a, opts) {
     const openNoteFoot = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
     return `
-    <div class="bz-clip-art-title">${esc(a.title)}</div>
+    <div class="bz-clip-art-title">${esc2(a.title)}</div>
     <div class="bz-clip-art-meta">
-      <span>${esc(opts.time)}</span>
-      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
+      <span>${esc2(opts.time)}</span>
+      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc2(siteShort(a.srcName))}</span></span>
     </div>
     ${a.summary ? summaryHtml(a.summary) : ""}
-    <div class="bz-clip-art-md markdown-rendered" data-clip-md>${opts.note ? `<p class="dim">${esc(opts.note)}</p>` : ""}</div>
+    <div class="bz-clip-art-md markdown-rendered" data-clip-md>${opts.note ? `<p class="dim">${esc2(opts.note)}</p>` : ""}</div>
     ${openNoteFoot}
   `;
   }
   function mobListHtml(list, timeOf) {
     return list.map((a) => `
-    <div class="bz-clip-mob-item ${a.st}" data-id="${esc(a.id)}">
+    <div class="bz-clip-mob-item ${a.st}" data-id="${esc2(a.id)}">
       <span class="bz-clip-mob-dot ${a.st}"></span>
-      <span class="bz-clip-mob-ttl">${esc(a.title)}</span>
+      <span class="bz-clip-mob-ttl">${esc2(a.title)}</span>
       ${a.st === "reading" ? '<span class="bz-clip-mob-tag">在读</span>' : ""}
-      <span class="bz-clip-mob-time">${esc(timeOf(a))}</span>
+      <span class="bz-clip-mob-time">${esc2(timeOf(a))}</span>
     </div>`).join("");
   }
   function mobChHeadHtml(site, unread, readN, savedN) {
@@ -9244,8 +12315,8 @@ ${bodyText.substring(0, 6e3)}`;
     if (savedN > 0) seg.push(`${savedN} 已收`);
     const cntTxt = seg.join(" · ");
     return `
-    <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: "site", site }))}' title="${esc(site)}">
-      <span class="bz-clip-mob-ch-name">${esc(site)}</span>
+    <div class="bz-clip-mob-ch-hd" data-src='${esc2(JSON.stringify({ kind: "site", site }))}' title="${esc2(site)}">
+      <span class="bz-clip-mob-ch-name">${esc2(site)}</span>
       <span class="bz-clip-mob-ch-n">${cntTxt}</span>
       <span class="bz-clip-mob-ch-rule"></span>
     </div>`;
@@ -9279,15 +12350,15 @@ ${bodyText.substring(0, 6e3)}`;
     }).join("");
   }
   function mobNoHitHtml(text) {
-    return `<div class="bz-clip-mob-no-hit">${esc(text)}</div>`;
+    return `<div class="bz-clip-mob-no-hit">${esc2(text)}</div>`;
   }
   function mobDetailHtml(a, opts) {
     return `
-    <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
-    <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
+    <div class="bz-clip-mob-d-kicker"><span>${esc2(siteShort(a.srcName))} · ${esc2(opts.time)}</span><span>${esc2(opts.seq)}</span></div>
+    <div class="bz-clip-mob-d-title">${esc2(a.title)}</div>
     <hr class="bz-clip-mob-d-rule">
-    <div class="bz-clip-mob-d-md markdown-rendered" data-clip-mob-md>${opts.note ? `<p>${esc(opts.note)}</p>` : ""}</div>
-    <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
+    <div class="bz-clip-mob-d-md markdown-rendered" data-clip-mob-md>${opts.note ? `<p>${esc2(opts.note)}</p>` : ""}</div>
+    <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc2(siteShort(a.srcName))}</span></div>
   `;
   }
   var ICO;
@@ -9356,46 +12427,6 @@ ${bodyText.substring(0, 6e3)}`;
         mobDetailOpen: false,
         isMobile: false
       };
-    }
-  });
-
-  // src/clipbook/data.ts
-  function clipbookFilePath() {
-    return storageFile(CLIPBOOK_JSON);
-  }
-  function resolve(data) {
-    return {
-      articleOverrides: data && data.articleOverrides !== null && typeof data.articleOverrides === "object" && !Array.isArray(data.articleOverrides) ? data.articleOverrides : {},
-      savedArchive: Array.isArray(data && data.savedArchive) ? data.savedArchive.filter((s) => s && typeof s === "object" && s.url) : [],
-      order: Array.isArray(data && data.order) ? data.order.map(String) : []
-    };
-  }
-  async function readClipbookData() {
-    const data = await jsonFileStore(clipbookFilePath(), { defaultValue: () => emptySidecar() }).read();
-    return resolve(data || {});
-  }
-  async function writeClipbookData(data) {
-    try {
-      await jsonFileStore(clipbookFilePath(), { defaultValue: () => emptySidecar() }).write(data);
-    } catch (e) {
-    }
-  }
-  function updateClipbookData(mutate) {
-    return enqueueFileTask(clipbookFilePath(), async () => {
-      const cur = await readClipbookData();
-      const next = mutate(cur);
-      await writeClipbookData(next);
-      return next;
-    });
-  }
-  function emptySidecar() {
-    return { articleOverrides: {}, savedArchive: [], order: [] };
-  }
-  var CLIPBOOK_JSON;
-  var init_data = __esm({
-    "src/clipbook/data.ts"() {
-      init_storage();
-      CLIPBOOK_JSON = "clipbook.json";
     }
   });
 
@@ -9536,3028 +12567,6 @@ ${bodyText.substring(0, 6e3)}`;
       init_app();
       init_state();
       init_write_queue();
-    }
-  });
-
-  // src/clipbook/save.ts
-  function clipDirOf() {
-    const s = tryGetSettings();
-    return s && s.articleDirectory || "归档/网页剪藏";
-  }
-  async function writeClipNote(raw, dirOverride) {
-    const app = getApp();
-    const dir = dirOverride || clipDirOf();
-    const cleanTitle = String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim();
-    if (!cleanTitle) {
-      notice("标题为空", "error");
-      return false;
-    }
-    const filePath = `${dir}/${cleanTitle}.md`;
-    if (app.vault.getAbstractFileByPath(filePath)) {
-      const ok = await confirmOverwrite(filePath);
-      if (!ok) return false;
-    }
-    const tagsYaml = (raw.tags || []).map((t) => `  - "${yamlEscape(t)}"`).join("\n");
-    const now = localDatetime();
-    const pubDate = raw.date ? toDatetime(String(raw.date)) : "";
-    const body = String(raw.body || "").replace(/^\s*---[\s\S]*?---\s*/m, "").replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, "").trim();
-    const md = `---
-url: "${yamlEscape(raw.url || "")}"
-author: "${yamlEscape(raw.author || "")}"
-site: "${yamlEscape(raw.platform || "")}"
-summary: "${yamlEscape(raw.summary || "")}"
-tags:
-${tagsYaml}
-date: "${yamlEscape(pubDate)}"
-created: ${now}
----
-\`\`\`dataviewjs
-await dv.view(\`CONFIG/SCRIPTS/DataView/摘要\`)
-\`\`\`
-
-${body}`;
-    try {
-      const dirAf = app.vault.getAbstractFileByPath(dir);
-      if (!dirAf) await app.vault.createFolder(dir);
-      const existing = app.vault.getAbstractFileByPath(filePath);
-      if (existing) await app.vault.modify(existing, md);
-      else await app.vault.create(filePath, md);
-      notice(`已保存：${cleanTitle}`, "success");
-      return true;
-    } catch (e) {
-      console.error("[剪藏本] 保存剪藏失败", e);
-      notice("保存失败，请稍后重试", "error");
-      return false;
-    }
-  }
-  function confirmOverwrite(filePath) {
-    return new Promise((resolve2) => {
-      const el = document.createElement("div");
-      Object.assign(el.style, {
-        position: "fixed",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%,-50%)",
-        background: "var(--background-primary)",
-        borderRadius: "10px",
-        padding: "20px",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
-        minWidth: "260px",
-        textAlign: "center",
-        fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif",
-        zIndex: "10500"
-      });
-      el.innerHTML = `
-      <div style="margin-bottom:14px;color:var(--text-normal);font-size:14px;">已存在同名剪藏，覆盖？</div>
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <button class="y" style="padding:6px 18px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);border-radius:4px;cursor:pointer;">覆盖</button>
-        <button class="n" style="padding:6px 18px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);border-radius:4px;cursor:pointer;">取消</button>
-      </div>`;
-      const ov = document.createElement("div");
-      Object.assign(ov.style, { position: "fixed", inset: "0", background: "var(--background-modifier-cover)" });
-      topifyZ(ov, el);
-      document.body.appendChild(ov);
-      document.body.appendChild(el);
-      const close = (v) => {
-        ov.remove();
-        el.remove();
-        resolve2(v);
-      };
-      ov.onclick = () => close(false);
-      const h = escManager.register("clipbook-confirm", {
-        isVisible: () => ov.isConnected,
-        close: () => close(false)
-      });
-      el.querySelector(".y").onclick = () => {
-        h.unregister();
-        close(true);
-      };
-      el.querySelector(".n").onclick = () => {
-        h.unregister();
-        close(false);
-      };
-    });
-  }
-  var yamlEscape;
-  var init_save = __esm({
-    "src/clipbook/save.ts"() {
-      init_app();
-      init_esc_manager();
-      init_dom();
-      init_settings_provider();
-      init_notice();
-      init_constants();
-      yamlEscape = (v) => String(v != null ? v : "").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
-    }
-  });
-
-  // src/knowledge/data.ts
-  function normalizeLooseTime(t) {
-    const s = (t != null ? t : "").trim();
-    if (!s) return "";
-    if (TIME_RE.test(s)) return s;
-    const parts = s.split(/[:：.。\-—_、，,\s]+/).filter(Boolean);
-    if (parts.length === 0 || parts.length > 3 || parts.some((p) => !/^\d+$/.test(p))) return null;
-    const [a, b, c] = parts;
-    let canon;
-    if (c !== void 0) canon = `${a}:${b.padStart(2, "0")}:${c.padStart(2, "0")}`;
-    else if (b !== void 0) canon = `${a}:${b.padStart(2, "0")}`;
-    else canon = `${a}:00`;
-    return TIME_RE.test(canon) ? canon : null;
-  }
-  function normalizeUrl(raw) {
-    return raw.trim();
-  }
-  var import_moment2, TIME_RE, KnowledgeData;
-  var init_data2 = __esm({
-    "src/knowledge/data.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_storage();
-      init_settings_provider();
-      init_utils();
-      init_app();
-      TIME_RE = /^\d{1,3}:\d{1,2}(:\d{1,2}(\.\d{1,3})?)?$/;
-      KnowledgeData = {
-        filePath: "",
-        _store: null,
-        /** 旧数据文件 literature.json → knowledge.json 一次性迁移（ADR-0112：只复制不改写，旧文件保留在原处） */
-        _legacyMigrated: false,
-        /** 初始化（幂等）：固化文件路径与 store。未调用时 read/write 按当前设置惰性补齐（统一数据读写重构） */
-        init(settings) {
-          const folder = (settings.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
-          this.filePath = folder + "/knowledge.json";
-          this._store = jsonFileStore(this.filePath);
-        },
-        /** 一次性迁移：knowledge.json 不存在而 literature.json 存在时原样复制一份（任务历史零丢失，ADR-0112） */
-        async migrateLegacy() {
-          if (this._legacyMigrated) return;
-          this._legacyMigrated = true;
-          try {
-            const app = getApp();
-            if (app.vault.getAbstractFileByPath(this.filePath)) return;
-            const legacyPath = this.filePath.replace(/knowledge\.json$/, "literature.json");
-            const legacy = app.vault.getAbstractFileByPath(legacyPath);
-            if (legacy) await app.vault.create(this.filePath, await app.vault.read(legacy));
-          } catch (e) {
-          }
-        },
-        /** 惰性 store 获取：init 前调用时按当前设置补建（消除 init 前 _store 空指针） */
-        _ensureStore() {
-          var _a;
-          if (!this._store) this.init({ storagePath: (_a = tryGetSettings()) == null ? void 0 : _a.storagePath });
-          return this._store;
-        },
-        async read() {
-          return this._ensureStore().read();
-        },
-        async write(data) {
-          return this._ensureStore().write(data);
-        },
-        /** 读改写事务：fn 基于磁盘现值改动，整体入 per-path 串行队列（D3 原语 1） */
-        async _mutate(fn) {
-          return enqueueFileTask(this.filePath, async () => {
-            const data = await this.read();
-            const result = await fn(data);
-            await this.write(data);
-            return result;
-          });
-        },
-        /** 全量读取并统一字段形状（缺省补默认值，旧/手改数据零迁移） */
-        async loadTasks() {
-          await this.migrateLegacy();
-          return this._mutate(async (raw) => {
-            let needWrite = false;
-            const tasks = raw.map((item) => {
-              if (!item.id) {
-                item.id = generateId("knowledge-task");
-                needWrite = true;
-              }
-              return {
-                id: item.id,
-                url: item.url || "",
-                start: item.start || null,
-                end: item.end || null,
-                status: item.status || "pending",
-                reason: item.reason || null,
-                remark: item.remark || null,
-                notePath: item.notePath || null,
-                videoPath: item.videoPath || null,
-                created: item.created || (0, import_moment2.default)().format("YYYY-MM-DD HH:mm:ss"),
-                processedAt: item.processedAt || null,
-                title: item.title || null,
-                uploader: item.uploader || null,
-                archived: item.archived === true,
-                archivedAt: item.archivedAt || null,
-                quality: item.quality || null,
-                page: Number.isInteger(item.page) && Number(item.page) > 0 ? Number(item.page) : null
-              };
-            });
-            if (needWrite) await this.write(raw);
-            return tasks;
-          });
-        },
-        /** 追加一条待处理任务（队列尾 = 处理顺序尾） */
-        addTask(input) {
-          var _a, _b, _c, _d, _e;
-          const task = {
-            id: generateId("knowledge-task"),
-            url: normalizeUrl(input.url),
-            start: ((_a = input.start) == null ? void 0 : _a.trim()) || null,
-            end: ((_b = input.end) == null ? void 0 : _b.trim()) || null,
-            status: "pending",
-            reason: null,
-            remark: ((_c = input.remark) == null ? void 0 : _c.trim()) || null,
-            title: ((_d = input.title) == null ? void 0 : _d.trim()) || null,
-            uploader: ((_e = input.uploader) == null ? void 0 : _e.trim()) || null,
-            notePath: null,
-            videoPath: null,
-            created: (0, import_moment2.default)().format("YYYY-MM-DD HH:mm:ss"),
-            processedAt: null,
-            archived: false,
-            archivedAt: null,
-            quality: input.quality || null,
-            page: Number.isInteger(input.page) && Number(input.page) > 0 ? Number(input.page) : null
-          };
-          return this._mutate((data) => {
-            data.push(task);
-            return task;
-          });
-        },
-        updateTask(id, patch) {
-          return this._mutate(async (data) => {
-            const idx = data.findIndex((d) => d.id === id);
-            if (idx === -1) throw new Error("任务不存在");
-            data[idx] = { ...data[idx], ...patch, id: data[idx].id };
-          }).then(() => void 0);
-        },
-        async deleteTask(id) {
-          await this._mutate((data) => {
-            const idx = data.findIndex((d) => d.id === id);
-            if (idx !== -1) data.splice(idx, 1);
-          });
-        },
-        /** 重试：失败/中止项回到待处理（保留旧结果字段，下次成功覆盖） */
-        async retryTask(id) {
-          await this.updateTask(id, {
-            status: "pending",
-            reason: null,
-            processedAt: null
-          });
-        },
-        /** 清空历史（archived 条目；主列表待处理/失败项不受影响，ADR-0067） */
-        async clearHistory() {
-          await this._mutate((data) => {
-            for (let i = data.length - 1; i >= 0; i--) {
-              if (data[i].archived === true) data.splice(i, 1);
-            }
-          });
-        }
-      };
-    }
-  });
-
-  // src/knowledge/source.ts
-  function noteSourceName(path, name) {
-    const explicit = String(name != null ? name : "").trim();
-    if (explicit) return explicit;
-    const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
-    return stripMdExt(base) || String(path != null ? path : "");
-  }
-  function isUrlLikeSourceText(text) {
-    const s = String(text != null ? text : "").trim();
-    if (!s || /\s/.test(s)) return false;
-    if (/^https?:\/\/\S+$/i.test(s)) return true;
-    return URL_LIKE_RE.test(s);
-  }
-  function cleanUrlText(text) {
-    return String(text != null ? text : "").trim().replace(/[，。！？；、,;.!?…'"’”\])}>】」』]+$/, "");
-  }
-  function normalizeSourceUrl(input) {
-    const s = cleanUrlText(input);
-    const m = s.match(/^(https?:\/\/)([^/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/i);
-    if (!m) return s;
-    const [, scheme, host, path, query, hash] = m;
-    const bare = host.toLowerCase().replace(/^www\./, "");
-    if (bare === "b23.tv") return scheme + host + path;
-    if (bare.endsWith("bilibili.com") && /^\/video\//.test(path)) {
-      const keep = (query != null ? query : "").slice(1).split("&").filter((kv) => /^(p|t)=/.test(kv));
-      return scheme + host + path + (keep.length ? "?" + keep.join("&") : "");
-    }
-    if (!query) return s;
-    const kept = query.slice(1).split("&").filter(Boolean).filter((kv) => {
-      const k = kv.split("=")[0].toLowerCase();
-      return !k.startsWith("utm_") && !k.startsWith("spm_") && !TRACK_KEYS.has(k);
-    });
-    return scheme + host + path + (kept.length ? "?" + kept.join("&") : "") + (hash != null ? hash : "");
-  }
-  function decodeHtmlEntities(s) {
-    return s.replace(/&quot;/gi, '"').replace(/&#0?39;/g, "'").replace(/&apos;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&");
-  }
-  function cleanSourceTitle(raw) {
-    let t = decodeHtmlEntities(String(raw != null ? raw : "")).replace(/\s+/g, " ").trim();
-    t = t.replace(/\s*[_\-–—|｜]\s*哔哩哔哩(?:_bilibili)?\s*$/i, "");
-    t = t.replace(/\s*[_\-–—|｜]\s*bilibili\s*$/i, "");
-    t = t.replace(/\s*[-–—|｜]\s*知乎(?:日报|专栏)?\s*$/, "");
-    return t.trim();
-  }
-  function serializeTermSource(src) {
-    var _a;
-    if (!src) return null;
-    if (src.kind === "external") {
-      const url = normalizeSourceUrl(src.url);
-      if (!url) return null;
-      const out = { source: url };
-      const title = src.title ? cleanSourceTitle(src.title) : "";
-      if (title) out.sourceTitle = title;
-      return out;
-    }
-    const path = String((_a = src.path) != null ? _a : "").trim();
-    if (!path) return null;
-    const name = noteSourceName(path, src.name);
-    return { source: `[[${path}|${name}]]` };
-  }
-  var URL_LIKE_RE, TRACK_KEYS;
-  var init_source = __esm({
-    "src/knowledge/source.ts"() {
-      init_utils();
-      URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
-      TRACK_KEYS = /* @__PURE__ */ new Set([
-        "vd_source",
-        "vd_src",
-        "seid",
-        "unique_k",
-        "from",
-        "share_source",
-        "share_medium",
-        "share_token",
-        "share_plat",
-        "share_to",
-        "share_from",
-        "share_times",
-        "gcid",
-        "refer",
-        "scene"
-      ]);
-    }
-  });
-
-  // src/knowledge/note-gen.ts
-  function parseDomainList(raw) {
-    return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
-  }
-  function quoteYaml(s) {
-    return '"' + String(s != null ? s : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
-  }
-  function sanitizeMdTitle(s) {
-    const t = String(s != null ? s : "").replace(/[\\/:*?"<>|#^[\]]/g, "_").replace(/\s+/g, " ").trim().slice(0, 50);
-    return t || "文献笔记";
-  }
-  function chunkTranscript(text, maxLen = 4e3) {
-    const src = String(text || "").trim();
-    if (!src) return [];
-    const segs = src.split(/(?<=[。！？!?；;])/).map((s) => s.trim()).filter(Boolean);
-    const chunks = [];
-    let cur = "";
-    for (const seg of segs) {
-      if (cur && (cur + seg).length > maxLen) {
-        chunks.push(cur);
-        cur = "";
-      }
-      if (seg.length <= maxLen) {
-        cur += seg;
-        continue;
-      }
-      if (cur) {
-        chunks.push(cur);
-        cur = "";
-      }
-      let rest = seg;
-      while (rest.length > maxLen) {
-        chunks.push(rest.slice(0, maxLen));
-        rest = rest.slice(maxLen);
-      }
-      cur = rest;
-    }
-    if (cur) chunks.push(cur);
-    return chunks;
-  }
-  function parseAiJson(raw) {
-    const cleaned = String(raw || "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
-    try {
-      return JSON.parse(cleaned);
-    } catch (e) {
-    }
-    const m = cleaned.match(/\{[\s\S]*\}/);
-    if (m) {
-      try {
-        return JSON.parse(m[0]);
-      } catch (e) {
-      }
-    }
-    throw new Error("AI 返回的不是 JSON：" + cleaned.slice(0, 120));
-  }
-  function domainInstruction(list) {
-    if (!list.length) return '"domain": "领域，用一个中文词（如 物理/医学/心理/计算机/经济/文史哲 等）"';
-    return `"domain": "从以下领域选一个最贴近的：${list.join("、")}；都不贴切可写一个新的中文领域词"`;
-  }
-  function nowStamp() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve2, reject) => {
-      const timer = setTimeout(() => reject(new Error(`AI 请求超时（${label}，${ms}ms）`)), ms);
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve2(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
-  }
-  async function writeUniqueNote(dir, baseName, content) {
-    const app = getApp();
-    const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    let path = `${folder}/${baseName}.md`;
-    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName}_${i}.md`;
-    try {
-      const exists = await app.vault.adapter.exists(folder);
-      if (!exists) await app.vault.createFolder(folder);
-    } catch (e) {
-    }
-    await app.vault.create(path, content);
-    return path;
-  }
-  async function generateVideoNote(opts) {
-    const ai = createAI();
-    const s = tryGetSettings();
-    const list = parseDomainList(s.knowledgeDomainList);
-    const chunks = chunkTranscript(opts.transcript);
-    const metaRaw = await ai.json(
-      `你是文献整理助手。基于下方 B站视频《${opts.videoTitle || "未命名"}》的转写文稿片段，生成文献笔记元数据。只输出 JSON，不要任何解释：
-{"title":"15-30字的中文完整陈述句或疑问句，禁止冒号、破折号、句中句号问号，需要连接时用逗号","tags":["3-6个中文标签，每个不超过5个字，涵盖主题领域、关键概念、应用场景"],"summary":"一句话简介，不超过60字",${domainInstruction(list)}}
-所有字段一律使用简体中文。
-
-【转写文稿片段】
-${chunks[0] || ""}`,
-      { modelOptions: { max_tokens: 600 } }
-    );
-    const meta = parseAiJson(metaRaw);
-    const title = String((meta == null ? void 0 : meta.title) || "").trim() || opts.videoTitle || "未命名";
-    const tags = Array.isArray(meta == null ? void 0 : meta.tags) ? meta.tags.map(String).filter(Boolean).slice(0, 6) : [];
-    const summary = String((meta == null ? void 0 : meta.summary) || "").trim();
-    const domain = String((meta == null ? void 0 : meta.domain) || "").trim();
-    const polished = [];
-    for (const c of chunks) {
-      const p = await ai.chat(
-        `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。转写可能存在语音误听，专名与术语（如火箭型号、人名、地名、专业词）若明显是误听则按上下文纠正为最合理的写法；无法确定的保持原文。输出必须是简体中文（繁体转写一律转为简体）。直接输出润色后的正文，不要解释、不要加标题、不要列表。
-
-【转写文稿】
-${c}`,
-        // deepseek-v4-flash（带思考）长文润色时 reasoning_content 会吃光 max_tokens 导致 content 空串
-        // （ticket 复现：finish_reason=length、content=''）；deepseek-chat 无思考、输出直达 content，稳
-        { model: "deepseek-chat", modelOptions: { max_tokens: 8192 } }
-      );
-      polished.push(String(p || "").trim());
-    }
-    const whole = polished.join("");
-    const videoSection = opts.videoPath ? `![[${String(opts.videoPath).replace(/\\/g, "/")}]]` : null;
-    const fm = [
-      "---",
-      `title: ${quoteYaml(title)}`,
-      "tags:",
-      tags.map((t) => `  - ${quoteYaml(t)}`).join("\n"),
-      `summary: ${quoteYaml(summary)}`,
-      `url: ${quoteYaml(opts.url)}`,
-      `date: ${quoteYaml(nowStamp())}`,
-      `author: ${quoteYaml(opts.uploader)}`,
-      `videoTitle: ${quoteYaml(opts.videoTitle)}`,
-      "type: video",
-      `domain: ${quoteYaml(domain)}`,
-      "---"
-    ].join("\n");
-    const body = [fm, whole, videoSection].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title), body);
-  }
-  function termPrompt(term, list) {
-    return `你是百科知识整理助手。为术语「${term}」生成一篇文献笔记。只输出 JSON，不要任何解释：
-{"summary":"一段关于该术语的简明介绍（百科总结式，150-300字简体中文，连贯成文，涵盖定义、核心要点与必要背景）","domain": ${domainInstruction(list)}}`;
-  }
-  async function generateTermDraft(term) {
-    const ai = createAI();
-    const s = tryGetSettings();
-    const list = parseDomainList(s.knowledgeDomainList);
-    const t = String(term || "").trim();
-    if (!t) throw new Error("术语为空");
-    const raw = await ai.json(termPrompt(t, list));
-    const meta = parseAiJson(raw);
-    return {
-      summary: String((meta == null ? void 0 : meta.summary) || "").trim(),
-      domain: String((meta == null ? void 0 : meta.domain) || "").trim()
-    };
-  }
-  async function summarizeTermSummary(text) {
-    const ai = createAI();
-    const t = String(text || "").trim();
-    if (!t) throw new Error("内容为空");
-    const out = await ai.chat(
-      `你是文字编辑。把下面的术语介绍压缩成更精简的一段话：保留术语定义与关键事实，删除冗余表述与重复内容，长度约为原文的一半。输出必须是简体中文。直接输出结果，不要解释、不要加标题、不要列表。
-
-【原文】
-${t}`,
-      { modelOptions: { max_tokens: 1024 } }
-    );
-    const s = String(out || "").trim();
-    if (!s) throw new Error("AI 返回为空");
-    return s;
-  }
-  async function generateTermNote(opts) {
-    var _a;
-    const s = tryGetSettings();
-    const term = String(opts.term || "").trim();
-    if (!term) throw new Error("术语为空");
-    let summary;
-    let domain;
-    if (opts.summary === void 0) {
-      const draft = await generateTermDraft(term);
-      summary = draft.summary;
-      domain = draft.domain;
-    } else {
-      summary = String(opts.summary).trim();
-      domain = String((_a = opts.domain) != null ? _a : "").trim();
-    }
-    const fm = [
-      "---",
-      `title: ${quoteYaml(term)}`,
-      "type: term",
-      `domain: ${quoteYaml(domain)}`,
-      `term: ${quoteYaml(term)}`,
-      `date: ${quoteYaml(nowStamp())}`
-    ];
-    const src = serializeTermSource(opts.source);
-    if (src) {
-      fm.push(`source: ${quoteYaml(src.source)}`);
-      if (src.sourceTitle) fm.push(`sourceTitle: ${quoteYaml(src.sourceTitle)}`);
-    }
-    fm.push("---");
-    const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(term), body);
-  }
-  function parseFrontmatter2(content) {
-    var _a;
-    const out = {};
-    const m = String(content || "").match(/^---\r?\n([\s\S]*?)\r?\n---/);
-    if (!m) return out;
-    for (const line of m[1].split(/\r?\n/)) {
-      const kv = line.match(/^([A-Za-z\u4e00-\u9fa5_]+):\s*(.*)$/);
-      if (kv) {
-        const raw = String((_a = kv[2]) != null ? _a : "").trim();
-        const quoted = raw.startsWith('"') && raw.endsWith('"') || raw.startsWith("'") && raw.endsWith("'");
-        out[kv[1].trim()] = quoted ? raw.slice(1, -1) : raw;
-      }
-    }
-    return out;
-  }
-  function injectFrontmatter(content, entries) {
-    const head = entries.map((kv) => {
-      const [k, ...rest] = kv.split(":");
-      const v = rest.join(":").trim();
-      return `${k}: ${quoteYaml(v.replace(/^"(.*)"$/, "$1"))}`;
-    }).join("\n");
-    const m = String(content || "").match(/^---\r?\n([\s\S]*?)\r?\n---/);
-    if (m) return content.replace(/^---\r?\n[\s\S]*?\r?\n---/, `---
-${m[1]}
-${head}
----`);
-    return `---
-${head}
----
-
-${content || ""}`;
-  }
-  async function backfillNotes(opts = {}) {
-    var _a, _b;
-    const app = getApp();
-    const s = tryGetSettings();
-    const aiTimeoutMs = (_a = opts.aiTimeoutMs) != null ? _a : BACKFILL_AI_TIMEOUT_MS;
-    const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    const files = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
-    const needDomain = [];
-    let filled = 0;
-    for (const f of files) {
-      const content = await app.vault.read(f);
-      const fm = parseFrontmatter2(content);
-      const hasType = fm.type === "video" || fm.type === "term";
-      const hasDomain = !!fm.domain;
-      if (hasType && hasDomain) continue;
-      const patch = [];
-      if (!hasType) {
-        const type = fm.url || fm.author || fm.videoTitle ? "video" : fm.term ? "term" : "";
-        if (type) patch.push(`type:${type}`);
-      }
-      if (!hasDomain) needDomain.push({ file: f });
-      if (patch.length) {
-        const updated = injectFrontmatter(content, patch);
-        if (updated !== content) {
-          await app.vault.modify(f, updated);
-          filled++;
-        }
-      }
-    }
-    let aiSkipped = false;
-    if (needDomain.length) {
-      const ai = createAI();
-      const list = parseDomainList(s.knowledgeDomainList);
-      for (const { file } of needDomain) {
-        try {
-          const latest = await app.vault.read(file);
-          const sample = latest.replace(/^---[\s\S]*?---/, "").slice(0, 2e3);
-          const raw = await withTimeout(
-            ai.json(
-              `请判断下面这段文字所属的领域（${domainInstruction(list)}）。只输出 JSON：{"domain":"<领域词>"}
-
-【文本】
-${sample}`,
-              { modelOptions: { max_tokens: 80 } }
-            ),
-            aiTimeoutMs,
-            "领域判定"
-          );
-          const domain = String(((_b = parseAiJson(raw)) == null ? void 0 : _b.domain) || "").trim();
-          if (domain) {
-            await app.vault.modify(file, injectFrontmatter(latest, [`domain:${domain}`]));
-            filled++;
-          }
-        } catch (e) {
-          if (/API Key|AI 配置/.test(String((e == null ? void 0 : e.message) || ""))) aiSkipped = true;
-        }
-      }
-    }
-    return { scanned: files.length, filled, aiSkipped };
-  }
-  var BACKFILL_AI_TIMEOUT_MS;
-  var init_note_gen = __esm({
-    "src/knowledge/note-gen.ts"() {
-      init_ai();
-      init_app();
-      init_settings_provider();
-      init_source();
-      BACKFILL_AI_TIMEOUT_MS = 25e3;
-    }
-  });
-
-  // src/knowledge/processor.ts
-  function getChildProcess() {
-    const w = window;
-    if (!w.require) return null;
-    try {
-      return w.require("child_process");
-    } catch (e) {
-      return null;
-    }
-  }
-  function getFs() {
-    const w = window;
-    if (!w.require) return null;
-    try {
-      return w.require("fs");
-    } catch (e) {
-      return null;
-    }
-  }
-  function resolveBatchSpawn(taskJson) {
-    const b64 = Buffer.from(taskJson, "utf8").toString("base64");
-    return { cmd: "bili-dl", args: ["--batch", `b64:${b64}`], shell: true };
-  }
-  function tryUnlink(path) {
-    if (!path) return;
-    try {
-      const fsMod = getFs();
-      if (fsMod && typeof fsMod.unlinkSync === "function") fsMod.unlinkSync(path);
-    } catch (e) {
-    }
-  }
-  function getVaultBasePath() {
-    var _a, _b, _c;
-    try {
-      const bp = (_c = (_b = (_a = getApp().vault) == null ? void 0 : _a.adapter) == null ? void 0 : _b.getBasePath) == null ? void 0 : _c.call(_b);
-      return typeof bp === "string" ? bp : "";
-    } catch (e) {
-      return "";
-    }
-  }
-  function tailStderr(chunks) {
-    let s = "";
-    for (const c of chunks) {
-      s += String(c);
-      if (s.length > 2048) s = s.slice(-2048);
-    }
-    return s.trim();
-  }
-  function nowTs() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
-  var INSTALL_HINT, STEP_RE, RESULT_RE, PROGRESS_RE, INFO_RE, AI_STEP_TEXT, NOTE_STEP_TEXT, BatchRunner;
-  var init_processor2 = __esm({
-    "src/knowledge/processor.ts"() {
-      init_notice();
-      init_domain_bus();
-      init_settings_provider();
-      init_app();
-      init_data2();
-      init_note_gen();
-      INSTALL_HINT = "请先运行 npm install -g @jwbz/bili-downloader";
-      STEP_RE = /^\[bz-step\]\s*(.+)$/;
-      RESULT_RE = /^\[bz-result\]\s*(\{.*\})$/;
-      PROGRESS_RE = /^\[bz-p\]\s*(\{.*\})$/;
-      INFO_RE = /^\[bz-info\]\s*(\{.*\})$/;
-      AI_STEP_TEXT = "AI 生成文献笔记中";
-      NOTE_STEP_TEXT = "笔记落盘中";
-      BatchRunner = {
-        running: false,
-        aborted: false,
-        /** 遇错即停（设置 knowledgeStopOnFailure）：当前任务失败后中断整批，未开始项保持待处理 */
-        stoppedFail: false,
-        _child: null,
-        _cp: null,
-        /** 桌面端可用（window.require('child_process') 存在） */
-        available() {
-          return !!getChildProcess();
-        },
-        /**
-         * 串行处理全部「待处理 + 失败」任务（按数组顺序，一次一部；ADR-0067 断点续跑：
-         * 失败项重跑时工具自动跳过已成功步骤、从出错步骤继续）。
-         * 已成功（归档）项不动；默认失败后继续（遇错即停设置开启时失败后中断）。
-         */
-        async runAll(tasks, events) {
-          if (this.running) return;
-          this.running = true;
-          this.aborted = false;
-          this.stoppedFail = false;
-          const cp = getChildProcess();
-          this._cp = cp;
-          if (!cp) {
-            notice("仅桌面端可用：文献盒处理需要 Node.js 外部进程", "error");
-            this.running = false;
-            return;
-          }
-          const stopOnFailure = tryGetSettings().knowledgeStopOnFailure === true;
-          try {
-            let success = 0;
-            let failed = 0;
-            for (const task of tasks) {
-              if (this.aborted) break;
-              if (task.status !== "pending" && task.status !== "failed") continue;
-              let itemFailed = false;
-              await this._runOne(cp, task, events, (ok) => {
-                if (ok) success++;
-                else {
-                  failed++;
-                  itemFailed = true;
-                }
-              });
-              if (itemFailed && stopOnFailure) {
-                this.stoppedFail = true;
-                break;
-              }
-            }
-            events.onBatchDone({ success, failed, aborted: this.aborted, stopped: this.stoppedFail });
-          } finally {
-            this.running = false;
-          }
-        },
-        /** 中止整批：杀死当前子进程，未开始项保持待处理，当前项由 close 标记失败「已中止」 */
-        abort() {
-          var _a, _b;
-          this.aborted = true;
-          try {
-            (_b = (_a = this._child) == null ? void 0 : _a.kill) == null ? void 0 : _b.call(_a);
-          } catch (e) {
-          }
-        },
-        /** 单部执行：spawn → 解析步骤/进度/信息/结果行 → CLI 终态 → 插件侧 AI 阶段 → 落库；Promise 在终态落库后 resolve */
-        _runOne(cp, task, events, onEnd) {
-          return new Promise((resolve2) => {
-            var _a, _b, _c, _d;
-            const s = tryGetSettings();
-            const nonEmpty = (v) => {
-              const t = typeof v === "string" ? v.trim() : "";
-              return t ? t : void 0;
-            };
-            const taskJson = JSON.stringify({
-              url: task.url,
-              start: (_a = task.start) != null ? _a : null,
-              end: (_b = task.end) != null ? _b : null,
-              page: task.page && task.page > 0 ? task.page : null,
-              options: {
-                quality: task.quality || s && s.knowledgeQuality || "highest",
-                keepVideo: !s || s.knowledgeKeepVideo !== false,
-                outputDir: nonEmpty(s && s.knowledgeOutputDir),
-                compress: !s || s.knowledgeCompress !== false,
-                crf: s && s.knowledgeCrf || 23,
-                vaultPath: getVaultBasePath(),
-                ffmpegPath: nonEmpty(s && s.knowledgeFfmpegPath),
-                ffprobePath: nonEmpty(s && s.knowledgeFfprobePath),
-                pythonPath: nonEmpty(s && s.knowledgePythonPath),
-                whisperModel: nonEmpty(s && s.knowledgeWhisperModel),
-                cacheDir: nonEmpty(s && s.knowledgeCacheDir),
-                cacheRetentionDays: s && s.knowledgeCacheRetentionDays || 7
-              }
-            });
-            void KnowledgeData.updateTask(task.id, { status: "processing", reason: "启动中…", processedAt: null }).then(() => {
-              task.status = "processing";
-              task.reason = "启动中…";
-              events.onTaskProgress({ ...task }, "启动中…");
-            });
-            const { cmd, args, shell } = resolveBatchSpawn(taskJson);
-            let child;
-            let settled = false;
-            let transcriptPath = null;
-            let videoPath = null;
-            const finish = (ok, reason, notePath, video) => {
-              if (settled) return;
-              settled = true;
-              void this._finish(task, events, onEnd, ok, reason, notePath, video).then(resolve2, () => {
-                onEnd(false);
-                resolve2();
-              });
-            };
-            try {
-              child = cp.spawn(cmd, args, { shell, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
-            } catch (e) {
-              const reason = /ENOENT/.test(e.message) ? `未找到 bili-dl。${INSTALL_HINT}` : `启动失败：${e.message}。${INSTALL_HINT}`;
-              finish(false, reason, null, null);
-              return;
-            }
-            this._child = child;
-            const errChunks = [];
-            const onData = (d) => {
-              const text = String(d);
-              for (const line of text.split(/\r?\n/)) {
-                let m = line.match(STEP_RE);
-                if (m) {
-                  const stepText = m[1].trim();
-                  task.reason = stepText;
-                  void KnowledgeData.updateTask(task.id, { reason: stepText });
-                  events.onTaskProgress({ ...task }, stepText, null);
-                  continue;
-                }
-                m = line.match(PROGRESS_RE);
-                if (m) {
-                  try {
-                    const p = JSON.parse(m[1]);
-                    const progress = {
-                      phase: p && typeof p.phase === "string" ? p.phase : null,
-                      pct: p && Number.isFinite(p.pct) ? Number(p.pct) : null
-                    };
-                    events.onTaskProgress({ ...task }, task.reason || "", progress);
-                  } catch (e) {
-                  }
-                  continue;
-                }
-                m = line.match(INFO_RE);
-                if (m) {
-                  try {
-                    const info = JSON.parse(m[1]);
-                    const title = info && typeof info.title === "string" ? String(info.title).trim() : "";
-                    const uploader = info && typeof info.uploader === "string" ? String(info.uploader).trim() : "";
-                    if (title) {
-                      task.title = title;
-                      task.uploader = uploader || task.uploader;
-                      const patch = { title, uploader: task.uploader };
-                      void KnowledgeData.updateTask(task.id, patch).then(() => {
-                        events.onTaskInfo({ ...task });
-                      });
-                    }
-                  } catch (e) {
-                  }
-                  continue;
-                }
-                m = line.match(RESULT_RE);
-                if (m) {
-                  try {
-                    const r = JSON.parse(m[1]);
-                    transcriptPath = r && typeof r.transcript === "string" && r.transcript ? r.transcript : null;
-                    videoPath = r && typeof r.video === "string" && r.video ? r.video : null;
-                  } catch (e) {
-                  }
-                }
-              }
-            };
-            (_c = child.stdout) == null ? void 0 : _c.on("data", onData);
-            (_d = child.stderr) == null ? void 0 : _d.on("data", (d) => {
-              errChunks.push(d);
-            });
-            child.on("error", (e) => {
-              if (settled) return;
-              const reason = /ENOENT/.test(e.message) ? `未找到 bili-dl。${INSTALL_HINT}` : `启动失败：${e.message}`;
-              finish(false, reason, null, null);
-            });
-            child.on("close", (code) => {
-              if (settled) return;
-              if (this.aborted) {
-                finish(false, "已中止", null, null);
-                return;
-              }
-              if (code === 0) {
-                void this._aiStep(task, events, transcriptPath, videoPath, finish);
-              } else {
-                tryUnlink(transcriptPath);
-                const errTail = tailStderr(errChunks);
-                const reason = errTail || `处理失败（退出码 ${code}）。${INSTALL_HINT}`;
-                finish(false, reason, null, null);
-              }
-            });
-          });
-        },
-        /**
-         * 插件侧 AI 阶段（ADR-0071）：CLI close(0) 后由插件接管——
-         * 「AI 生成文献笔记中」→ 读转录临时文件 → generateVideoNote（元数据 + 分块润色 + 落盘）→
-         * 读毕删临时文件 → 「笔记落盘中」→ 成功终态。
-         * 转录读取失败 / AI 失败（含 AI 未配置）→ 该任务 failed（reason 中文、不落半成品笔记），
-         * 转录临时文件尽力清理；单部失败即整批语义与 CLI 失败一致（继续剩余 / 遇错即停）。
-         */
-        async _aiStep(task, events, transcriptPath, videoPath, finish) {
-          task.reason = AI_STEP_TEXT;
-          void KnowledgeData.updateTask(task.id, { reason: AI_STEP_TEXT });
-          events.onTaskProgress({ ...task }, AI_STEP_TEXT);
-          let transcript;
-          try {
-            const fsMod = getFs();
-            if (!fsMod || typeof fsMod.readFileSync !== "function" || !transcriptPath) {
-              throw new Error("无转录文件");
-            }
-            transcript = fsMod.readFileSync(transcriptPath, "utf8");
-          } catch (e) {
-            tryUnlink(transcriptPath);
-            finish(false, "转录文件读取失败", null, null);
-            return;
-          }
-          let notePath;
-          try {
-            notePath = await generateVideoNote({
-              transcript,
-              videoTitle: task.title || "",
-              url: task.url,
-              uploader: task.uploader || "",
-              // ticket 151：CLI 交付的 mp4 路径随笔记落盘（正文视频双链）；keepVideo=false 时为 null → 无视频段
-              videoPath
-            });
-          } catch (e) {
-            tryUnlink(transcriptPath);
-            finish(false, `AI 生成文献笔记失败：${(e == null ? void 0 : e.message) || String(e)}`, null, null);
-            return;
-          }
-          tryUnlink(transcriptPath);
-          task.reason = NOTE_STEP_TEXT;
-          void KnowledgeData.updateTask(task.id, { reason: NOTE_STEP_TEXT });
-          events.onTaskProgress({ ...task }, NOTE_STEP_TEXT);
-          finish(true, null, notePath, videoPath);
-        },
-        /** 终态落库 + 事件（resolve 于落库完成后）；成功 → 自动归档历史（archived+归档时间，ADR-0067） */
-        async _finish(task, events, onEnd, ok, reason, notePath, videoPath) {
-          var _a;
-          task.status = ok ? "success" : "failed";
-          task.reason = reason;
-          task.notePath = ok ? notePath : task.notePath;
-          task.videoPath = ok ? videoPath : task.videoPath;
-          task.processedAt = nowTs();
-          if (ok) {
-            task.archived = true;
-            task.archivedAt = task.processedAt;
-          }
-          try {
-            await KnowledgeData.updateTask(task.id, {
-              status: task.status,
-              reason,
-              notePath: task.notePath,
-              videoPath: task.videoPath,
-              processedAt: task.processedAt,
-              archived: task.archived,
-              archivedAt: task.archivedAt,
-              // 内存态解析信息一并落库（ADR-0067）：终态写与信息写并发时，终态写携带新字段，
-              // 避免读-改-写竞态把已落库的 title/uploader 覆盖丢失
-              title: task.title,
-              uploader: task.uploader
-            });
-          } catch (e) {
-          }
-          events.onTaskDone({ ...task });
-          if (ok) {
-            emitDomainEvent("knowledge:tasks", { kind: "converted", id: task.id, url: task.url, notePath: task.notePath });
-          } else {
-            emitDomainEvent("knowledge:tasks", { kind: "failed", id: task.id, url: task.url, notePath: (_a = task.notePath) != null ? _a : null });
-          }
-          onEnd(ok);
-        }
-      };
-    }
-  });
-
-  // src/knowledge/ui.ts
-  function q(root, sel) {
-    return root.querySelector(sel);
-  }
-  function esc2(s) {
-    return escapeHtml(String(s != null ? s : ""));
-  }
-  function shortNoteName(path) {
-    const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
-    return stripMdExt(base) || String(path || "");
-  }
-  function humanizeError(reason) {
-    const s = String(reason != null ? reason : "").trim();
-    if (!s) return "";
-    if (/未找到 bili-dl|npm install -g @jwbz\/bili-downloader|ENOENT.*bili-dl/i.test(s)) {
-      return "下载工具未安装：在电脑上运行 npm install -g @jwbz/bili-downloader 后重试";
-    }
-    if (/ffmpeg/i.test(s)) return "视频处理工具（ffmpeg）不可用：检查电脑是否已安装，或设置里的「ffmpeg 路径」";
-    if (/ffprobe/i.test(s)) return "视频探测工具（ffprobe）不可用：检查电脑是否已安装，或设置里的「ffprobe 路径」";
-    if (/找不到 Python|无法启动 Python|python.*ENOENT/i.test(s)) {
-      return "语音转写失败：未找到 Python——设置里「Python 路径」填 python（一般装了 Python 即可），或运行 where python 查绝对路径填入";
-    }
-    if (/未配置 pythonPath/i.test(s)) {
-      return "语音转写未配置：知识盒设置「Python 路径」填 python 即可（一般装了 Python 就能用，走系统 PATH），或填绝对路径（Windows 在命令提示符运行 where python 可查）";
-    }
-    if (/pip install faster-whisper|faster-whisper 环境已安装/i.test(s)) {
-      return "语音转写失败：faster-whisper 未安装，请在目标 Python 中运行 pip install faster-whisper";
-    }
-    if (/whisper|faster.whisper|no module/i.test(s)) {
-      return "语音转写失败：检查设置里的「Python 路径」与「Whisper 模型」";
-    }
-    if (/API Key|AI 配置|未配置|Unauthorized|\b401\b|invalid_api_key|insufficient|quota/i.test(s)) {
-      return "AI 配置不可用：请在插件设置 → AI 配置里检查 API Key";
-    }
-    if (/AI 请求超时|AI 返回的不是 JSON/i.test(s)) return "AI 响应异常：网络不稳定或服务繁忙，稍后重试";
-    if (/转录文件读取失败|无转录文件/i.test(s)) return "转写稿缺失：视频处理步骤未完成，可重试";
-    if (/ETIMEDOUT|ESOCKETTIMEDOUT|timed? ?out|超时/i.test(s)) return "网络超时：请检查网络连接后重试";
-    if (/ECONNRESET|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|getaddrinfo|fetch failed/i.test(s)) {
-      return "网络连接失败：请检查网络或代理设置后重试";
-    }
-    if (/^-352|\b412\b|风控|请求过于频繁/i.test(s)) return "B 站风控拦截：稍后再试，或在设置里配置登录 Cookie";
-    if (/视频不存在|稿件不存在|\b404\b|not found/i.test(s)) return "视频不存在或已删除：请检查链接是否正确";
-    return s.length > 160 ? s.slice(0, 160) + "…" : s;
-  }
-  function stepDoneLabel(step) {
-    const mapped = STEP_DONE_MAP[step];
-    if (mapped) return mapped;
-    return step.endsWith("中") ? `已${step.slice(0, -1)}` : `已${step}`;
-  }
-  function shortUrlText(url) {
-    const m = url.match(/BV[0-9A-Za-z]{8,12}/i) || url.match(/b23\.tv\/([0-9A-Za-z]+)/i);
-    if (m) return m[0];
-    return url.length > 28 ? url.slice(0, 28) + "…" : url;
-  }
-  function dateStamp() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
-  function litDirOf(s) {
-    const raw = s && s.knowledgeDirectory ? String(s.knowledgeDirectory) : "文献盒";
-    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-  }
-  function cardboxDirOf(s) {
-    const raw = s && s.knowledgeCardboxDirectory ? String(s.knowledgeCardboxDirectory) : "卡片盒";
-    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-  }
-  function topicDirOf(s) {
-    const raw = s && s.knowledgeTopicDirectory ? String(s.knowledgeTopicDirectory) : "主题盒";
-    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-  }
-  function parseDateRaw(raw) {
-    const s = String(raw != null ? raw : "").trim();
-    if (!s) return NaN;
-    const d1 = new Date(s.replace(" ", "T"));
-    if (!isNaN(d1.valueOf())) return d1.valueOf();
-    const d2 = new Date(s);
-    return d2.valueOf();
-  }
-  function stripFrontmatter(text) {
-    const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
-    return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
-  }
-  function appendRelatedLine(text, link) {
-    var _a;
-    const lines = text.split(/\r?\n/);
-    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return text;
-    let close = -1;
-    let relatedAt = -1;
-    for (let i = 1; i < lines.length; i++) {
-      if (lines[i].trim() === "---") {
-        close = i;
-        break;
-      }
-      if (/^related:/.test(lines[i])) relatedAt = i;
-    }
-    if (close === -1) return text;
-    if (relatedAt === -1) {
-      lines.splice(close, 0, "related:", `  - "${link}"`);
-    } else {
-      let end = relatedAt + 1;
-      while (end < close && /^\s*-\s/.test(lines[end])) end++;
-      lines.splice(end, 0, `  - "${link}"`);
-    }
-    return lines.join("\n");
-  }
-  var STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager;
-  var init_ui2 = __esm({
-    "src/knowledge/ui.ts"() {
-      init_fake_obsidian();
-      init_mobile();
-      init_settings_provider();
-      init_item_actions();
-      init_flow_dialog();
-      init_notice();
-      init_utils();
-      init_suggest();
-      init_z_order();
-      init_domain_bus();
-      init_app();
-      init_data2();
-      init_processor2();
-      init_note_gen();
-      init_source();
-      STATUS_META = {
-        pending: { label: "待处理", cls: "bz-kb-pending" },
-        processing: { label: "处理中", cls: "bz-kb-processing" },
-        success: { label: "成功", cls: "bz-kb-success" },
-        failed: { label: "失败", cls: "bz-kb-failed" }
-      };
-      STEP_DONE_MAP = {
-        "AI 生成文献笔记中": "已生成文献笔记",
-        "笔记落盘中": "已落盘笔记"
-      };
-      fmtElapsed = (ms) => {
-        const s = Math.max(0, Math.floor(ms / 1e3));
-        const m = Math.floor(s / 60);
-        const h = Math.floor(m / 60);
-        return h > 0 ? `${h}:${String(m % 60).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}` : `${m}:${String(s % 60).padStart(2, "0")}`;
-      };
-      UIManager = class {
-        constructor(app) {
-          // ---- 主壳（三部）----
-          this.mask = null;
-          this.popup = null;
-          this.contentEl = null;
-          this.part = "z1";
-          this.allNotes = [];
-          this.allCards = [];
-          this.allTopics = [];
-          this.cardsShown = 0;
-          this.editor = null;
-          this.sessionNewPaths = /* @__PURE__ */ new Set();
-          this.loadedLitDir = "";
-          this.loadedCardDir = "";
-          this.loadedTopicDir = "";
-          this.backfilledDir = "";
-          // ---- 视频录入面板（任务队列）----
-          this.videoMask = null;
-          this.videoPopup = null;
-          this.videoList = null;
-          // ---- 添加任务弹窗 / 历史弹窗 ----
-          this.addMask = null;
-          this.addPopup = null;
-          this.historyMask = null;
-          this.historyPopup = null;
-          this.historyList = null;
-          // ---- 术语生成面板 ----
-          this.termMask = null;
-          this.termPopup = null;
-          this.termPreview = null;
-          this.termGenerating = false;
-          this.termSummarizing = false;
-          this.termHasDraft = false;
-          this.termSource = null;
-          // 术语来源（ADR-0116；null = 未填）
-          this.termSrcSuggest = null;
-          this.termSrcTimer = null;
-          this.editingId = null;
-          this.onKeydown = () => {
-          };
-          this.batchAbortLabel = null;
-          this.runState = /* @__PURE__ */ new Map();
-          this.runTimer = null;
-          this.fileListenerRefs = [];
-          this.fileListenerAttached = false;
-          this.refreshTimer = null;
-          this.pendingRefreshPaths = /* @__PURE__ */ new Set();
-          this.pendingDeletePaths = /* @__PURE__ */ new Set();
-          this._previewNote = null;
-          this.app = app;
-          this.createMainUI();
-          this.createVideoUI();
-          this.createAddDialog();
-          this.createHistoryUI();
-          this.createTermUI();
-          this.onKeydown = (e) => {
-            if (e.key !== "Escape") return;
-            if (this.termPopup && this.termPopup.style.display === "flex") this.hideTermEntry();
-            else if (this.historyPopup && this.historyPopup.style.display === "flex") this.hideHistory();
-            else if (this.addPopup && this.addPopup.style.display === "flex") this.hideAddDialog();
-            else if (this.videoPopup && this.videoPopup.style.display === "flex") this.hideVideo();
-            else if (this.popup && this.popup.style.display === "flex") this.hideMain();
-          };
-          document.addEventListener("keydown", this.onKeydown);
-        }
-        // ==================== 主壳（三部） ====================
-        createMainUI() {
-          var _a;
-          if (this.mask && this.mask.isConnected || this.popup && this.popup.isConnected) return;
-          const mask = document.createElement("div");
-          mask.id = "knowledge-mask";
-          mask.className = "bz-kb-mask";
-          mask.style.display = "none";
-          mask.onclick = () => this.hideMain();
-          const popup = document.createElement("div");
-          popup.id = "knowledge-popup";
-          popup.className = "bz-kb-window kb";
-          if (isMobileEnv()) popup.classList.add("bz-panel-mtop");
-          popup.style.display = "none";
-          const partBtns = `
-          <button class="bz-kb-part is-on" data-kb-act="part" data-part="z1">部壹 · 文献</button>
-          <button class="bz-kb-part" data-kb-act="part" data-part="z2">部贰 · 卡片</button>
-          <button class="bz-kb-part" data-kb-act="part" data-part="z3">部叁 · 主题</button>`;
-          popup.innerHTML = isMobileEnv() ? `
-      <div class="bz-kb-head">
-        <div class="bz-kb-brand">
-          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
-          <div class="bz-kb-title">知 识 盒</div>
-        </div>
-        <button class="bz-kb-mclose" data-kb-act="kb-close" title="关闭知识盒">✕</button>
-      </div>
-      <div class="bz-kb-parts">${partBtns}
-      </div>
-      <div class="bz-kb-sc" id="kb-sc"></div>` : `
-      <div class="bz-kb-head">
-        <div class="bz-kb-parts">${partBtns}
-        </div>
-        <div class="bz-kb-brand">
-          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
-          <div class="bz-kb-title">知 识 盒</div>
-        </div>
-      </div>
-      <div class="bz-kb-sc" id="kb-sc"></div>`;
-          document.body.appendChild(mask);
-          document.body.appendChild(popup);
-          this.mask = mask;
-          this.popup = popup;
-          this.contentEl = q(popup, "#kb-sc");
-          popup.addEventListener("click", (e) => this.onShellClick(e));
-          (_a = this.contentEl) == null ? void 0 : _a.addEventListener("scroll", () => this.onContentScroll());
-          this.attachFileListener();
-        }
-        /** 主壳点击委托（部切换 / 录入入口 / 文献行 / 主题行 / 返回） */
-        onShellClick(e) {
-          const t = e.target.closest("[data-kb-act]");
-          if (!t) return;
-          const act = t.getAttribute("data-kb-act");
-          if (act === "part") {
-            this.part = t.getAttribute("data-part") || "z1";
-            void this.refreshCurrent();
-            this.syncPartButtons();
-          } else if (act === "term-entry") this.showTermEntry();
-          else if (act === "video-entry") this.showVideoEntry();
-          else if (act === "lit-peek") {
-            const p = t.getAttribute("data-path") || "";
-            const n = this.allNotes.find((x) => x.path === p);
-            if (n) void this.openPreview(n);
-          } else if (act === "card-peek") {
-            const p = t.getAttribute("data-path") || "";
-            const c = this.allCards.find((x) => x.path === p);
-            if (c) void this.openPreview(c, "card");
-          } else if (act === "topic-open") {
-            const p = t.getAttribute("data-path") || "";
-            const tp = this.allTopics.find((x) => x.path === p);
-            if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, "topic");
-          } else if (act === "kb-close") this.hideMain();
-        }
-        syncPartButtons() {
-          if (!this.popup) return;
-          this.popup.querySelectorAll(".bz-kb-part").forEach((b) => {
-            b.classList.toggle("is-on", b.getAttribute("data-part") === this.part);
-          });
-        }
-        showMain() {
-          this.createMainUI();
-          if (!this.popup || !this.mask || !this.contentEl) return;
-          topifyZ(this.mask, this.popup);
-          this.mask.style.display = "block";
-          this.popup.style.display = "flex";
-          void this.refreshCurrent();
-          void this.runBackfill();
-        }
-        hideMain() {
-          if (this.mask) this.mask.style.display = "none";
-          if (this.popup) this.popup.style.display = "none";
-        }
-        /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
-        async refreshCurrent() {
-          if (!this.contentEl) return;
-          const s = tryGetSettings();
-          if (this.part === "z1") {
-            const dir = litDirOf(s);
-            if (this.loadedLitDir && this.loadedLitDir !== dir) this.allNotes = [];
-            await this.loadLiterature(dir);
-            this.renderLiterature();
-          } else if (this.part === "z2") {
-            const dir = cardboxDirOf(s);
-            if (this.loadedCardDir && this.loadedCardDir !== dir) this.allCards = [];
-            await this.loadCards(dir);
-            this.cardsShown = 0;
-            this.renderCards();
-          } else {
-            const dir = topicDirOf(s);
-            if (this.loadedTopicDir && this.loadedTopicDir !== dir) this.allTopics = [];
-            await this.loadTopics(dir);
-            this.renderTopics();
-          }
-        }
-        /** 部壹文献扫描：文献目录下全部 .md（含子目录），metadataCache 解析 frontmatter */
-        async loadLiterature(dir) {
-          const app = getApp();
-          this.loadedLitDir = dir;
-          const prefix = dir + "/";
-          const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
-          const entries = [];
-          for (const f of mdFiles) {
-            const e = await this.parseNoteFile(f);
-            if (e) entries.push(e);
-          }
-          entries.sort((a, b) => b.created - a.created || a.path.localeCompare(b.path));
-          this.allNotes = entries;
-        }
-        async parseNoteFile(file) {
-          const app = getApp();
-          try {
-            const cache = app.metadataCache.getFileCache(file);
-            const fm = cache && cache.frontmatter;
-            const title = fm && fm.title ? String(fm.title) : file.basename;
-            const date = fm && fm.date ? String(fm.date) : "";
-            let created = parseDateRaw(date);
-            if (isNaN(created)) {
-              try {
-                const st = file.stat;
-                created = st && st.ctime ? new Date(st.ctime).valueOf() : 0;
-              } catch (e) {
-                created = 0;
-              }
-            }
-            return {
-              file,
-              path: file.path,
-              title,
-              type: fm && fm.type ? String(fm.type) : "",
-              domain: fm && fm.domain ? String(fm.domain) : "",
-              summary: fm && fm.summary ? String(fm.summary) : "",
-              url: fm && fm.url ? String(fm.url) : "",
-              source: fm && fm.source ? String(fm.source) : "",
-              sourceTitle: fm && fm.sourceTitle ? String(fm.sourceTitle) : "",
-              date,
-              created
-            };
-          } catch (e) {
-            console.warn("解析文献笔记失败:", file.path, e);
-            return null;
-          }
-        }
-        renderLiterature() {
-          if (!this.contentEl) return;
-          const rows = this.allNotes.map((n, i) => {
-            const no = String(i + 1).padStart(2, "0");
-            const kind = n.type === "video" ? "影 像" : "词 条";
-            return `<div class="bz-kb-lexrow" data-kb-act="lit-peek" data-path="${esc2(n.path)}">
-        <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(n.title)}</span><span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${kind}</span><span class="bz-kb-dom">${esc2(n.domain || "未分类")}</span></div>
-        <div class="bz-kb-tail"><span class="bz-kb-meta">LIT-${no} · ${esc2(n.date || "")}</span></div>
-      </div>`;
-          }).join("");
-          this.contentEl.innerHTML = `
-      <div class="bz-kb-pd">
-        <div class="bz-kb-entryrow">
-          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，当场落成一张术语卡</span></button>
-          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>丢进来一个 B 站链接，文献笔记自动长出来</span></button>
-        </div>
-        ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的两种录入开始。</div>'}
-      </div>`;
-        }
-        /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
-        async openPreview(n, kind = "lit") {
-          var _a;
-          const app = getApp();
-          let raw = "";
-          try {
-            raw = await app.vault.read(n.file);
-          } catch (e) {
-            raw = "";
-          }
-          const body = stripFrontmatter(raw);
-          const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc2(b)}</p>`).join("") || "<p>（无正文）</p>";
-          const rels = await this.noteRels(n);
-          const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.url)}" href="#">${esc2(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.source)}" href="#">${esc2(n.sourceTitle || n.source)}</a></div>` : "";
-          const head = kind === "card" ? { title: "卡片预览 · 卡片盒", badge: "卡 片", hot: false } : kind === "topic" ? { title: "主题预览 · 主题笔记", badge: "主 题", hot: false } : { title: `文献预览 · ${n.type === "video" ? "影像" : "词条"}`, badge: n.type === "video" ? "影 像" : "词 条", hot: n.type === "video" };
-          this.openSheet(this.sheetWrap(head.title, `
-      <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc2(n.title)}</span>
-        <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
-        <span class="bz-kb-dom">${esc2(n.domain || "未分类")}</span></div>
-      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc2(n.date || "")}</span></div>
-      <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
-      ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
-      ${srcHtml}`));
-          this._previewNote = n;
-          const bodyEl = this.popup ? q(this.popup, "#bz-kb-preview-body") : null;
-          if (bodyEl && body) {
-            try {
-              const comp = new Component();
-              await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
-              comp.unload();
-            } catch (e) {
-            }
-            if (!bodyEl.querySelector("*") || !((_a = bodyEl.textContent) == null ? void 0 : _a.trim())) {
-              bodyEl.innerHTML = parasHtml;
-            }
-          }
-          const srcLinks = this.popup ? this.popup.querySelectorAll("[data-lit-src-url]") : [];
-          srcLinks.forEach((a) => {
-            a.addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              this._openExternal(a.getAttribute("data-lit-src-url") || "");
-            });
-          });
-        }
-        /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源文献+领域自动带，落 related 双链互链 / 连一张旧卡 / 为什么相关） */
-        async openCardEditor(n) {
-          await this.ensureCards();
-          const dom = n.domain || "未分类";
-          const sameDom = this.allCards.filter((c) => c.domain === dom).map((c) => c.title);
-          const others = this.allCards.map((c) => c.title).filter((t) => !sameDom.includes(t));
-          const olds = [...sameDom.slice(0, 5)];
-          for (const t of others) {
-            if (olds.length >= 6) break;
-            olds.push(t);
-          }
-          if (olds.length === 0) olds.push(n.title);
-          const whySug = `《${n.title}》与这张旧卡讨论同一主题——读后补全了机制细节，整理为显式连接。`;
-          const oldsHtml = olds.map((o, i) => `<button class="bz-kb-old" data-kb-old="${esc2(o)}">${esc2(o)}${i === 0 ? '<span class="bz-kb-rec">推荐</span>' : ""}</button>`).join("");
-          this.openSheet(this.sheetWrap("提炼成卡 → 卡片盒", `
-      <div class="bz-kb-f"><div class="bz-kb-flb">词 头（可 改）</div>
-        <input type="text" data-kb-role="cardtitle" value="${esc2(n.title)}"></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">来 源 与 领 域（自 动 带，落 related 双链）</div>
-        <div class="bz-kb-srcline"><span class="bz-kb-srchip"><b>源</b>${esc2(n.path)}</span>
-        <span class="bz-kb-srchip"><b>领域</b>〔${esc2(dom)}〕自动继承</span></div></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">连 一 张 旧 卡（铁律：不 解 释 的 链 接 不 产 生 知 识）</div>
-        <div class="bz-kb-olds">${oldsHtml}</div></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">为 什 么 相 关（一 句 话，可 改）</div>
-        <input type="text" data-kb-role="why" value="${esc2(whySug)}"></div>
-      <div style="margin-top:18px;display:flex;gap:10px">
-        <button class="bz-kb-bigbtn" data-kb-act="card-save" disabled>落 卡</button>
-        <button class="bz-kb-ghost" data-kb-close>取消</button>
-      </div>
-      <div class="bz-kb-note" style="font-size:11px;margin-top:14px">落卡后它躺在卡片盒，随时被任何笔记引用——不强迫挂进哪篇，也不强迫复习。</div>`));
-          this.editor = { source: n, pick: null, why: whySug, title: n.title };
-        }
-        syncSaveBtn() {
-          var _a;
-          const btn = (_a = this.popup) == null ? void 0 : _a.querySelector("[data-kb-act=card-save]");
-          if (btn && this.editor) btn.disabled = !(this.editor.pick && this.editor.why.trim());
-        }
-        /** 落卡：写卡片盒笔记（category=领域、related=源文献）+ 源文献 related 追加新卡（互链） */
-        async saveCard() {
-          var _a;
-          if (!this.editor || !this.editor.pick || !this.editor.why.trim()) return;
-          const app = getApp();
-          const s = tryGetSettings();
-          const dir = cardboxDirOf(s);
-          const src = this.editor.source;
-          const why = this.editor.why.trim();
-          let base = this.editor.title.trim() || src.title;
-          const stamp = dateStamp();
-          try {
-            let idx = 2;
-            while (app.vault.getAbstractFileByPath(`${dir}/${base}.md`)) {
-              base = `${this.editor.title.trim() || src.title} ${idx}`;
-              idx++;
-            }
-            const path = `${dir}/${base}.md`;
-            try {
-              if (!app.vault.getFolderByPath(dir)) await app.vault.createFolder(dir);
-            } catch (e) {
-            }
-            const md = ["---", "tags: []", `category: ${src.domain || "未分类"}`, "related:", `  - "[[${src.path}|${src.title}]]"`, `date: "${stamp}"`, "---", "", why, ""].join("\n");
-            await app.vault.create(path, md);
-            const srcFile = app.vault.getAbstractFileByPath(src.path);
-            if (srcFile) {
-              const text = await app.vault.read(srcFile);
-              const linkText = `[[${stripMdExt(path)}|${base}]]`;
-              const updated = appendRelatedLine(text, linkText);
-              if (updated !== text) await app.vault.modify(srcFile, updated);
-            }
-            this.allCards.unshift({ file: null, path, title: base, domain: src.domain || "未分类", review: false, created: Date.now() });
-            this.sessionNewPaths.add(path);
-            this.editor = null;
-            this.closeSheet();
-            notice("已落卡 卡片盒/" + base + ".md · 它随时被任何笔记引用", "success");
-            if (this.part === "z2") {
-              this.cardsShown = 0;
-              this.renderCards();
-            }
-          } catch (e) {
-            notice("落卡失败：" + ((_a = e == null ? void 0 : e.message) != null ? _a : String(e)), "error");
-          }
-        }
-        /** 部贰卡片扫描（存量零迁移：领域读序 domain → category → 未分类） */
-        async loadCards(dir) {
-          var _a;
-          const app = getApp();
-          this.loadedCardDir = dir;
-          const prefix = dir + "/";
-          const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
-          const out = [];
-          for (const f of mdFiles) {
-            try {
-              const cache = app.metadataCache.getFileCache(f);
-              const fm = cache && cache.frontmatter || {};
-              let created = 0;
-              try {
-                created = ((_a = f.stat) == null ? void 0 : _a.ctime) ? new Date(f.stat.ctime).valueOf() : 0;
-              } catch (e) {
-                created = 0;
-              }
-              out.push({
-                file: f,
-                path: f.path,
-                title: fm && fm.title ? String(fm.title) : f.basename,
-                domain: fm && fm.domain ? String(fm.domain) : fm && fm.category ? String(fm.category) : "未分类",
-                review: fm && fm.reviewStart != null,
-                created
-              });
-            } catch (e) {
-            }
-          }
-          out.sort((a, b) => b.created - a.created || a.path.localeCompare(b.path));
-          this.allCards = out;
-        }
-        renderCards() {
-          if (!this.contentEl) return;
-          this.cardsShown = Math.max(this.cardsShown, 80);
-          const shown = this.allCards.slice(0, this.cardsShown);
-          const rows = shown.map((c) => `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc2(c.path)}">
-      <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}<span class="bz-kb-dom">${esc2(c.domain)}</span></div>
-      <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span></div>
-    </div>`).join("");
-          const rest = this.allCards.length - shown.length;
-          this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      ${rows || '<div class="bz-kb-empty">卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。</div>'}
-      ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ""}
-    </div>`;
-        }
-        moreCards() {
-          if (this.cardsShown >= this.allCards.length) return;
-          this.cardsShown += 80;
-          this.renderCards();
-        }
-        onContentScroll() {
-          const sc = this.contentEl;
-          if (!sc || this.part !== "z2") return;
-          if (sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 60) this.moreCards();
-        }
-        /** 部叁主题扫描（仅展示） */
-        async loadTopics(dir) {
-          const app = getApp();
-          this.loadedTopicDir = dir;
-          const prefix = dir + "/";
-          const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
-          const out = mdFiles.map((f) => {
-            var _a;
-            let created = 0;
-            try {
-              created = ((_a = f.stat) == null ? void 0 : _a.mtime) ? new Date(f.stat.mtime).valueOf() : 0;
-            } catch (e) {
-              created = 0;
-            }
-            return { file: f, path: f.path, title: f.basename, where: dir, created };
-          });
-          out.sort((a, b) => b.created - a.created || a.path.localeCompare(b.path));
-          this.allTopics = out;
-        }
-        renderTopics() {
-          if (!this.contentEl) return;
-          const rows = this.allTopics.map((t) => {
-            const rel = formatRelativeTime(String(t.created || ""));
-            return `<div class="bz-kb-lexrow" data-kb-act="topic-open" data-path="${esc2(t.path)}">
-      <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(t.title)}</span><span class="bz-kb-dom">${esc2(t.where)}</span></div>
-      <div class="bz-kb-tail"><span class="bz-kb-meta">${rel === "无效日期" ? "" : esc2(rel)}</span></div>
-    </div>`;
-          }).join("");
-          this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
-    </div>`;
-        }
-        async ensureCards() {
-          const dir = cardboxDirOf(tryGetSettings());
-          if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
-        }
-        /** 读笔记 frontmatter related 展示名列表（预览「关联」区；行扫描实现） */
-        async noteRels(n) {
-          var _a;
-          try {
-            const app = getApp();
-            const text = await app.vault.read(n.file);
-            const lines = text.split(/\r?\n/);
-            if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return [];
-            const out = [];
-            let inRelated = false;
-            for (let i = 1; i < lines.length; i++) {
-              const line = lines[i];
-              if (line.trim() === "---") break;
-              if (/^related:/.test(line)) {
-                inRelated = true;
-                continue;
-              }
-              if (inRelated) {
-                if (/^\s+-\s/.test(line)) {
-                  const mm = line.match(/^\s*-\s*"?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]"?\s*$/);
-                  if (mm) out.push(mm[2] || mm[1]);
-                } else if (line.trim() !== "") {
-                  break;
-                }
-              }
-            }
-            return out;
-          } catch (e) {
-            return [];
-          }
-        }
-        /** 弹层（面板内覆盖） */
-        openSheet(html) {
-          this.closeSheet();
-          if (!this.popup) return;
-          const ovl = document.createElement("div");
-          ovl.className = "bz-kb-ovl";
-          ovl.innerHTML = `<div class="bz-kb-sheet">${html}</div>`;
-          ovl.addEventListener("click", (e) => {
-            var _a, _b;
-            const t = e.target.closest("[data-kb-act],[data-kb-close]");
-            if (e.target === ovl || t && t.hasAttribute("data-kb-close")) {
-              this.closeSheet();
-              return;
-            }
-            if (!t) return;
-            const act = t.getAttribute("data-kb-act");
-            if (act === "card-new") {
-              const w = ((_b = (_a = t.closest(".bz-kb-sheet")) == null ? void 0 : _a.querySelector(".bz-kb-hw .bz-kb-w")) == null ? void 0 : _b.textContent) || "";
-              const n = this.allNotes.find((x) => x.title === w);
-              if (n) void this.openCardEditor(n);
-            } else if (act === "card-save") {
-              void this.saveCard();
-            }
-          });
-          this.popup.appendChild(ovl);
-          const titleInput = ovl.querySelector("[data-kb-role=cardtitle]");
-          if (titleInput) titleInput.addEventListener("input", () => {
-            if (this.editor) this.editor.title = titleInput.value;
-            this.syncSaveBtn();
-          });
-          const whyInput = ovl.querySelector("[data-kb-role=why]");
-          if (whyInput) whyInput.addEventListener("input", () => {
-            if (this.editor) this.editor.why = whyInput.value;
-            this.syncSaveBtn();
-          });
-          ovl.querySelectorAll("[data-kb-old]").forEach((b) => {
-            b.addEventListener("click", () => {
-              if (!this.editor) return;
-              this.editor.pick = b.getAttribute("data-kb-old");
-              ovl.querySelectorAll("[data-kb-old]").forEach((x) => x.classList.toggle("is-on", x === b));
-              this.syncSaveBtn();
-            });
-          });
-          this.syncSaveBtn();
-        }
-        closeSheet() {
-          var _a;
-          (_a = this.popup) == null ? void 0 : _a.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
-          this.editor = null;
-        }
-        sheetWrap(title, body) {
-          return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc2(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
-        }
-        /** 旧笔记自动补全（note-gen；AI 未配置跳过并提示一句）；每目录至多跑一次 */
-        async runBackfill() {
-          const dir = litDirOf(tryGetSettings());
-          if (this.backfilledDir === dir) return;
-          this.backfilledDir = dir;
-          try {
-            const res = await backfillNotes();
-            if (res && res.aiSkipped) {
-              notice("AI 未配置：部分旧笔记缺少领域分类，已跳过补全（配置 AI 后重新打开面板可补全）", "info");
-            }
-            if (res && res.filled > 0 && this.part === "z1") await this.refreshCurrent();
-          } catch (e) {
-          }
-        }
-        // ---- 主面板增量刷新（knowledge:file-* 四通道 300ms 防抖） ----
-        scheduleRefreshFlush() {
-          if (this.refreshTimer) clearTimeout(this.refreshTimer);
-          this.refreshTimer = setTimeout(async () => {
-            const deletes = Array.from(this.pendingDeletePaths);
-            const modifies = Array.from(this.pendingRefreshPaths);
-            this.pendingDeletePaths.clear();
-            this.pendingRefreshPaths.clear();
-            for (const p of deletes) this.removeCached(p);
-            for (const p of modifies) this.invalidateCached(p);
-            if (this.popup && this.popup.style.display === "flex") await this.refreshCurrent();
-          }, 300);
-        }
-        removeCached(path) {
-          this.allNotes = this.allNotes.filter((n) => n.path !== path);
-          this.allCards = this.allCards.filter((c) => c.path !== path);
-          this.allTopics = this.allTopics.filter((t) => t.path !== path);
-        }
-        invalidateCached(_path) {
-          this.loadedLitDir = "";
-          this.loadedCardDir = "";
-          this.loadedTopicDir = "";
-        }
-        attachFileListener() {
-          if (this.fileListenerAttached) return;
-          const inAnyDir = (path) => {
-            const s = tryGetSettings();
-            return path.startsWith(litDirOf(s) + "/") || path.startsWith(cardboxDirOf(s) + "/") || path.startsWith(topicDirOf(s) + "/");
-          };
-          const modifyHandler = (p) => {
-            if (inAnyDir(p)) {
-              this.pendingRefreshPaths.add(p);
-              this.scheduleRefreshFlush();
-            }
-          };
-          const deleteHandler = (evt) => {
-            if (inAnyDir(evt.path)) {
-              this.pendingDeletePaths.add(evt.path);
-              this.scheduleRefreshFlush();
-            }
-          };
-          const renameHandler = (evt) => {
-            if (inAnyDir(evt.oldPath)) this.pendingDeletePaths.add(evt.oldPath);
-            if (!evt.movedOut && inAnyDir(evt.newPath)) this.pendingRefreshPaths.add(evt.newPath);
-            this.scheduleRefreshFlush();
-          };
-          this.fileListenerRefs = [
-            onDomainEvent("knowledge:file-created", (evt) => modifyHandler(evt.path)),
-            onDomainEvent("knowledge:file-modified", (evt) => modifyHandler(evt.path)),
-            onDomainEvent("knowledge:file-deleted", deleteHandler),
-            onDomainEvent("knowledge:file-renamed", renameHandler)
-          ];
-          this.fileListenerAttached = true;
-        }
-        // ==================== 视频录入面板（任务队列） ====================
-        createVideoUI() {
-          const mask = document.createElement("div");
-          mask.id = "knowledge-video-mask";
-          mask.className = "bz-kb-mask";
-          mask.style.display = "none";
-          mask.onclick = () => this.hideVideo();
-          const popup = document.createElement("div");
-          popup.id = "knowledge-video-popup";
-          popup.className = "bz-kb-window kb";
-          popup.style.display = "none";
-          const header = document.createElement("div");
-          header.className = "bz-kb-vhead";
-          header.innerHTML = `
-      <h3 class="bz-kb-vtitle">视频录入</h3>
-      <div class="bz-lit-head-btns">
-        <button id="lit-btn-video-add" title="添加转文献任务">➕</button>
-        <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">▶️</button>
-        <button id="lit-btn-video-history" title="历史">🕘</button>
-      </div>`;
-          const list = document.createElement("div");
-          list.id = "knowledge-video-list";
-          list.className = "bz-kb-list";
-          popup.appendChild(header);
-          popup.appendChild(list);
-          document.body.appendChild(mask);
-          document.body.appendChild(popup);
-          this.videoMask = mask;
-          this.videoPopup = popup;
-          this.videoList = list;
-          this._bindVideoHeaderEvents();
-          if (isMobileEnv()) {
-            const run = q(popup, "#lit-btn-video-run");
-            const history = q(popup, "#lit-btn-video-history");
-            if (run) run.style.display = "none";
-            if (history) history.style.display = "none";
-          }
-        }
-        _bindVideoHeaderEvents() {
-          const p = this.videoPopup;
-          if (!p) return;
-          q(p, "#lit-btn-video-add").onclick = () => this.showAddDialog();
-          q(p, "#lit-btn-video-run").onclick = () => {
-            if (BatchRunner.running) void this.onAbortBatch();
-            else void this.onRunBatch();
-          };
-          q(p, "#lit-btn-video-history").onclick = () => this.showHistory();
-        }
-        /** 打开视频录入面板；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口） */
-        showVideoEntry(prefill) {
-          var _a, _b;
-          if (!this.videoPopup || !this.videoMask) return;
-          topifyZ(this.videoMask, this.videoPopup);
-          this.videoMask.style.display = "block";
-          this.videoPopup.style.display = "flex";
-          void this.refreshVideoPanel();
-          if (prefill) this.showAddDialog({ url: prefill.url, title: (_a = prefill.title) != null ? _a : null, uploader: (_b = prefill.uploader) != null ? _b : null });
-        }
-        hideVideo() {
-          if (this.videoMask) this.videoMask.style.display = "none";
-          if (this.videoPopup) this.videoPopup.style.display = "none";
-        }
-        async refreshVideoPanel() {
-          const tasks = await KnowledgeData.loadTasks();
-          if (!this.videoList) return;
-          this.videoList.innerHTML = "";
-          const active = tasks.filter((t) => !t.archived);
-          const running = BatchRunner.running;
-          if (running) {
-            const idx = active.findIndex((t) => t.status === "processing");
-            const banner = document.createElement("div");
-            banner.className = "bz-kb-banner";
-            banner.textContent = idx >= 0 ? `⏳ 正在处理 第 ${idx + 1}/${active.length} 部…` : "⏳ 正在准备处理…";
-            this.videoList.appendChild(banner);
-          }
-          this._syncStatusCounts(active);
-          if (active.length === 0) {
-            const empty = document.createElement("div");
-            empty.className = "bz-kb-empty";
-            empty.textContent = "暂无转文献任务。点击 ➕ 添加视频链接与起止时间，回到桌面端即可批量处理。";
-            this.videoList.appendChild(empty);
-            this._syncRunButton(active);
-            return;
-          }
-          for (const t of active) this.videoList.appendChild(this.renderRow(t));
-          this._syncRunButton(active);
-        }
-        _syncStatusCounts(tasks) {
-          const el = this.videoPopup ? q(this.videoPopup, "#lit-video-counts") : null;
-          if (!el) return;
-          const count = (s) => tasks.filter((t) => t.status === s).length;
-          const parts = [];
-          if (count("pending")) parts.push(`${count("pending")} 待处理`);
-          if (count("processing")) parts.push(`${count("processing")} 处理中`);
-          if (count("failed")) parts.push(`${count("failed")} 失败`);
-          el.textContent = parts.join(" · ");
-        }
-        /** 单钮态机：空闲「▶️」/运行中「⏹」（终止靠 title hover 区分），移动端整钮隐藏 */
-        _syncRunButton(tasks) {
-          if (!this.videoPopup) return;
-          const run = q(this.videoPopup, "#lit-btn-video-run");
-          if (!run) return;
-          const running = BatchRunner.running;
-          const hasWork = tasks.some((t) => t.status === "pending" || t.status === "failed");
-          if (running) {
-            run.disabled = false;
-            const retry = this.batchAbortLabel === "终止整批";
-            run.textContent = "⏹";
-            run.title = retry ? "中止整批（处理失败任务中）" : "中止批量处理";
-          } else {
-            run.disabled = !hasWork;
-            run.textContent = "▶️";
-            run.title = "批量处理（桌面端）";
-          }
-        }
-        renderRow(task) {
-          var _a;
-          const card = document.createElement("div");
-          card.className = "bz-kb-taskcard";
-          card.dataset.id = task.id;
-          const meta = (_a = STATUS_META[task.status]) != null ? _a : STATUS_META.pending;
-          const timeText = task.start && task.end ? `${task.start} ~ ${task.end}` : "整片";
-          const linkLine = task.title ? `<a class="bz-kb-tlink" href="${esc2(task.url)}" title="${esc2(task.url)}">${esc2(task.title)}</a>` : `<span class="bz-kb-turl" title="${esc2(task.url)}">${esc2(shortUrlText(task.url))}</span>`;
-          const upText = task.uploader ? ` · UP主 ${esc2(task.uploader)}` : "";
-          card.innerHTML = `
-      <div class="bz-kb-trow">
-        <span class="bz-kb-status ${meta.cls}">${meta.label}</span>
-        ${linkLine}
-      </div>
-      <div class="bz-kb-tmeta">${timeText}${upText}${task.remark ? " · " + esc2(task.remark) : ""}</div>
-      ${task.status === "processing" ? this.runState.has(task.id) ? '<div class="bz-kb-progress-box"></div>' : task.reason ? `<div class="bz-kb-progress">${esc2(task.reason)}</div>` : "" : ""}
-      ${task.status === "failed" && task.reason ? `<div class="bz-kb-progress bz-kb-progress-error" title="${esc2(task.reason)}">${esc2(humanizeError(task.reason))}</div>` : ""}
-      ${task.status === "success" && task.notePath ? `<div class="bz-kb-notepath">📄 ${esc2(task.notePath)}</div>` : ""}`;
-          const actions = this.buildCardActions(task);
-          if (actions.length) attachItemActions(card, actions);
-          const titleLink = q(card, ".bz-kb-tlink");
-          if (titleLink) titleLink.onclick = (e) => {
-            e.stopPropagation();
-            this._openExternal(titleLink.href || task.url);
-          };
-          card.addEventListener("click", () => {
-            if (task.status === "success" && task.notePath) this.openNote(task.notePath);
-            else if (task.status === "pending" || task.status === "failed") this.showAddDialog(task);
-          });
-          return card;
-        }
-        buildCardActions(task) {
-          const actions = [];
-          if (task.status === "success") {
-            if (task.notePath) actions.push({ icon: "book-open", label: "打开文献笔记", onClick: () => this.openNote(task.notePath) });
-            if (task.videoPath) actions.push({ icon: "copy", label: "复制视频路径", onClick: () => void this.copyText(task.videoPath) });
-            actions.push({ icon: "pencil", label: "编辑", onClick: () => this.showAddDialog(task) });
-          } else if (task.status === "failed" || task.status === "pending") {
-            actions.push({ icon: "pencil", label: "编辑", onClick: () => this.showAddDialog(task) });
-          }
-          actions.push({ icon: "trash-2", label: "删除", kind: "danger", onClick: () => void this.confirmDelete(task) });
-          return actions;
-        }
-        /** 行内进度定点更新（不等 storage 落库，一到立即刷 DOM） */
-        updateRowProgress(id) {
-          if (!this.videoList) return;
-          const st = this.runState.get(id);
-          const card = q(this.videoList, `.bz-kb-taskcard[data-id="${id}"]`);
-          if (!card || !st) return;
-          let box = q(card, ".bz-kb-progress-box");
-          if (!box) {
-            box = document.createElement("div");
-            box.className = "bz-kb-progress-box";
-            const meta = q(card, ".bz-kb-tmeta");
-            if (meta) meta.after(box);
-            else card.appendChild(box);
-          }
-          if (tryGetSettings().knowledgeProgressDetail === false) {
-            const cur = st.steps[st.steps.length - 1] || "处理中…";
-            box.innerHTML = `<div class="bz-kb-progress">${esc2(cur)}</div>`;
-            return;
-          }
-          const segs = st.steps.map(
-            (s, i) => i === st.steps.length - 1 ? `<span class="bz-kb-step-cur">${esc2(s)}</span>` : `<span class="bz-kb-step-done">✓ ${esc2(stepDoneLabel(s))}</span>`
-          );
-          const pct = st.phase === "download" ? st.pct : null;
-          const bar = pct != null ? `<div class="bz-kb-progress-track"><div class="bz-kb-progress-fill" style="width:${Math.min(100, Math.max(0, pct))}%"></div></div>` : "";
-          box.innerHTML = `
-      <div class="bz-kb-steps">${segs.join('<span class="bz-kb-step-arrow">→</span>')}${pct != null ? ` <span class="bz-kb-step-pct">${Math.round(pct)}%</span>` : ""}</div>
-      ${bar}
-      <div class="bz-kb-elapsed">⌛ ${fmtElapsed(Date.now() - st.startAt)}</div>`;
-        }
-        startRunTimer() {
-          this.clearRunTimer();
-          this.runTimer = setInterval(() => {
-            for (const id of Array.from(this.runState.keys())) this.updateRowProgress(id);
-          }, 1e3);
-        }
-        clearRunTimer() {
-          if (this.runTimer !== null) {
-            clearInterval(this.runTimer);
-            this.runTimer = null;
-          }
-        }
-        async onRunBatch() {
-          if (!BatchRunner.available()) {
-            notice("仅桌面端可用：批量处理需要 Node.js 外部进程", "error");
-            return;
-          }
-          if (BatchRunner.running) return;
-          const tasks = await KnowledgeData.loadTasks();
-          const work = tasks.filter((t) => !t.archived && (t.status === "pending" || t.status === "failed"));
-          if (work.length === 0) {
-            notice("没有待处理或失败的任务", "info");
-            return;
-          }
-          this.batchAbortLabel = work.every((t) => t.status === "failed") ? "终止整批" : "终止";
-          const ui = this;
-          ui.startRunTimer();
-          const events = {
-            onTaskProgress: (t, stepText, progress) => {
-              let st = ui.runState.get(t.id);
-              if (!st) {
-                st = { steps: [], phase: null, pct: null, startAt: Date.now() };
-                ui.runState.set(t.id, st);
-              }
-              if (stepText && stepText !== "启动中…" && !st.steps.includes(stepText)) st.steps.push(stepText);
-              if (progress) {
-                if (progress.phase) st.phase = progress.phase;
-                if (progress.pct != null) st.pct = progress.pct;
-              }
-              ui.updateRowProgress(t.id);
-            },
-            onTaskInfo: () => {
-              void ui.refreshVideoPanel();
-            },
-            onTaskDone: () => {
-              void ui.refreshVideoPanel();
-            },
-            onBatchDone: (summary) => {
-              ui.clearRunTimer();
-              ui.runState.clear();
-              const head = `处理完成：成功 ${summary.success} 部`;
-              const tail = summary.failed ? `，失败 ${summary.failed} 部` : "";
-              const end = summary.aborted ? "（已中止）" : summary.stopped ? "（遇错即停）" : "";
-              notice(head + tail + end, summary.failed || summary.aborted || summary.stopped ? "warning" : "success");
-              void ui.refreshVideoPanel();
-            }
-          };
-          const runP = BatchRunner.runAll(work, events);
-          void this.refreshVideoPanel();
-          try {
-            await runP;
-          } finally {
-            this.batchAbortLabel = null;
-          }
-        }
-        async onAbortBatch() {
-          if (!BatchRunner.running) return;
-          const v = await openFlowDialog({
-            title: "中止批量处理？",
-            message: "当前正在处理的视频将停止，已成功的保留在列表；未开始的项保持待处理，可稍后继续。",
-            actions: [
-              { label: "取消", value: "cancel" },
-              { label: "中止", value: "ok", danger: true }
-            ]
-          });
-          if (v !== "ok") return;
-          BatchRunner.abort();
-          await this.refreshVideoPanel();
-        }
-        async confirmDelete(task) {
-          const v = await openFlowDialog({
-            title: "删除转文献任务",
-            message: "仅从列表移除记录，已生成的文献笔记与视频不受影响。",
-            actions: [
-              { label: "取消", value: "cancel" },
-              { label: "删除", value: "ok", danger: true }
-            ]
-          });
-          if (v !== "ok") return;
-          await KnowledgeData.deleteTask(task.id);
-          await this.refreshVideoPanel();
-          await this.refreshHistory();
-        }
-        async confirmClearHistory() {
-          const v = await openFlowDialog({
-            title: "清空历史",
-            message: "将移除全部「成功」归档记录；文献笔记与视频文件保留在原处。",
-            actions: [
-              { label: "取消", value: "cancel" },
-              { label: "清空", value: "ok", danger: true }
-            ]
-          });
-          if (v !== "ok") return;
-          await KnowledgeData.clearHistory();
-          await this.refreshHistory();
-        }
-        // ==================== 添加任务弹窗 ====================
-        createAddDialog() {
-          var _a;
-          const addMask = document.createElement("div");
-          addMask.id = "knowledge-add-mask";
-          addMask.className = "bz-kb-mask";
-          addMask.style.display = "none";
-          addMask.onclick = () => this.hideAddDialog();
-          const popup = document.createElement("div");
-          popup.id = "knowledge-add-popup";
-          popup.className = "bz-lit-dialog kb";
-          popup.style.display = "none";
-          popup.innerHTML = `
-      <div id="lit-add-mode" class="bz-lit-mode-tag" style="display:none;">编辑任务</div>
-      <div id="lit-add-fail" class="bz-lit-form-alert" style="display:none;"></div>
-      <div class="bz-lit-form-col bz-lit-url-col">
-        <label>视频链接 / BV 号</label>
-        <div class="bz-lit-url-row">
-          <input id="lit-add-url" type="text">
-          <div class="bz-lit-range-toggle" id="lit-add-range">
-            <button type="button" data-range="whole">整片</button>
-            <button type="button" data-range="clip">剪辑片段</button>
-          </div>
-        </div>
-      </div>
-      <div class="bz-lit-form-row">
-        <div class="bz-lit-form-col"><label>视频标题（可选）</label>
-          <input id="lit-add-vtitle" type="text"></div>
-        <div class="bz-lit-form-col"><label>UP主（可选）</label>
-          <input id="lit-add-uploader" type="text"></div>
-      </div>
-      <div class="bz-lit-form-row">
-        <div class="bz-lit-form-col"><label>下载清晰度</label>
-          <select id="lit-add-quality">
-            <option value="">跟随全局设置</option>
-            <option value="highest">最高</option>
-            <option value="1080">1080P</option>
-            <option value="720">720P</option>
-          </select></div>
-        <div class="bz-lit-form-col"><label>分P</label>
-          <input id="lit-add-page" type="number" min="1" step="1"></div>
-      </div>
-      <div id="lit-add-clip-fields" style="display:none;">
-        <div class="bz-lit-form-row">
-          <div class="bz-lit-form-col"><label>开始时间</label>
-            <input id="lit-add-start" type="text"></div>
-          <div class="bz-lit-form-col"><label>结束时间</label>
-            <input id="lit-add-end" type="text"></div>
-        </div>
-      </div>
-      <div class="bz-lit-form-actions">
-        <button id="lit-add-save" class="bz-lit-accent-btn">保存</button>
-      </div>`;
-          document.body.appendChild(addMask);
-          document.body.appendChild(popup);
-          this.addMask = addMask;
-          this.addPopup = popup;
-          q(popup, "#lit-add-save").onclick = () => void this._handleAddSave();
-          const rangeBox = q(popup, "#lit-add-range");
-          if (rangeBox) {
-            rangeBox.addEventListener("click", (e) => {
-              const btn = e.target.closest("button[data-range]");
-              if (btn) this._setAddRangeMode(btn.getAttribute("data-range") === "clip" ? "clip" : "whole");
-            });
-          }
-          for (const sel of ["#lit-add-url", "#lit-add-vtitle", "#lit-add-uploader", "#lit-add-page", "#lit-add-start", "#lit-add-end"]) {
-            (_a = q(popup, sel)) == null ? void 0 : _a.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                void this._handleAddSave();
-              }
-            });
-          }
-        }
-        showAddDialog(editItem) {
-          var _a, _b, _c, _d, _e, _f, _g;
-          if (!this.addPopup || !this.addMask) return;
-          this.editingId = (_a = editItem == null ? void 0 : editItem.id) != null ? _a : null;
-          const modeTag = q(this.addPopup, "#lit-add-mode");
-          if (modeTag) modeTag.style.display = this.editingId ? "inline-block" : "none";
-          q(this.addPopup, "#lit-add-url").value = (_b = editItem == null ? void 0 : editItem.url) != null ? _b : "";
-          q(this.addPopup, "#lit-add-start").value = (_c = editItem == null ? void 0 : editItem.start) != null ? _c : "";
-          q(this.addPopup, "#lit-add-end").value = (_d = editItem == null ? void 0 : editItem.end) != null ? _d : "";
-          q(this.addPopup, "#lit-add-quality").value = (_e = editItem == null ? void 0 : editItem.quality) != null ? _e : "";
-          q(this.addPopup, "#lit-add-page").value = (editItem == null ? void 0 : editItem.page) ? String(editItem.page) : "";
-          q(this.addPopup, "#lit-add-vtitle").value = (_f = editItem == null ? void 0 : editItem.title) != null ? _f : "";
-          q(this.addPopup, "#lit-add-uploader").value = (_g = editItem == null ? void 0 : editItem.uploader) != null ? _g : "";
-          this._setAddRangeMode(this.editingId ? (editItem == null ? void 0 : editItem.start) || (editItem == null ? void 0 : editItem.end) ? "clip" : "whole" : "clip");
-          const fail = q(this.addPopup, "#lit-add-fail");
-          if (fail) {
-            const reason = (editItem == null ? void 0 : editItem.status) === "failed" ? editItem.reason || "" : "";
-            fail.style.display = reason ? "block" : "none";
-            fail.textContent = reason ? `上次处理失败：${humanizeError(reason)}` : "";
-            fail.title = reason;
-          }
-          topifyZ(this.addMask, this.addPopup);
-          this.addMask.style.display = "block";
-          this.addPopup.style.display = "flex";
-          const urlInput = q(this.addPopup, "#lit-add-url");
-          if (urlInput) setTimeout(() => urlInput.focus(), 100);
-        }
-        _setAddRangeMode(mode) {
-          if (!this.addPopup) return;
-          const box = q(this.addPopup, "#lit-add-range");
-          if (box) {
-            for (const btn of Array.from(box.querySelectorAll("button[data-range]"))) {
-              btn.classList.toggle("active", btn.getAttribute("data-range") === mode);
-            }
-          }
-          const clipFields = q(this.addPopup, "#lit-add-clip-fields");
-          if (clipFields) clipFields.style.display = mode === "clip" ? "block" : "none";
-        }
-        hideAddDialog() {
-          if (this.addMask) this.addMask.style.display = "none";
-          if (this.addPopup) this.addPopup.style.display = "none";
-          this.editingId = null;
-        }
-        async _handleAddSave() {
-          var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
-          if (!this.addPopup) return;
-          const url = ((_b = (_a = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _a.value) != null ? _b : "").trim();
-          const clipMode = ((_d = (_c = q(this.addPopup, "#lit-add-range")) == null ? void 0 : _c.querySelector("button[data-range].active")) == null ? void 0 : _d.getAttribute("data-range")) === "clip";
-          const startRaw = ((_f = (_e = q(this.addPopup, "#lit-add-start")) == null ? void 0 : _e.value) != null ? _f : "").trim();
-          const endRaw = ((_h = (_g = q(this.addPopup, "#lit-add-end")) == null ? void 0 : _g.value) != null ? _h : "").trim();
-          const start = clipMode ? normalizeLooseTime(startRaw) : "";
-          const end = clipMode ? normalizeLooseTime(endRaw) : "";
-          const quality = ((_j = (_i = q(this.addPopup, "#lit-add-quality")) == null ? void 0 : _i.value) != null ? _j : "").trim() || null;
-          const pageRaw = ((_l = (_k = q(this.addPopup, "#lit-add-page")) == null ? void 0 : _k.value) != null ? _l : "").trim();
-          const vtitle = ((_n = (_m = q(this.addPopup, "#lit-add-vtitle")) == null ? void 0 : _m.value) != null ? _n : "").trim();
-          const uploader = ((_p = (_o = q(this.addPopup, "#lit-add-uploader")) == null ? void 0 : _o.value) != null ? _p : "").trim();
-          const focusField = (sel) => {
-            var _a2;
-            return (_a2 = q(this.addPopup, sel)) == null ? void 0 : _a2.focus();
-          };
-          if (!url) {
-            notice("请填写视频链接或 BV 号", "error");
-            focusField("#lit-add-url");
-            return;
-          }
-          if (clipMode && !startRaw && !endRaw) {
-            notice("剪辑片段需填写开始与结束时间", "error");
-            focusField("#lit-add-start");
-            return;
-          }
-          if (start === null || end === null) {
-            notice("时间格式看不懂：支持 12.2 / 12-2 / 1:30:05 等，单个数字按分钟算", "error");
-            focusField(start === null ? "#lit-add-start" : "#lit-add-end");
-            return;
-          }
-          if (!start && end || start && !end) {
-            notice("开始与结束时间需成对填写", "error");
-            focusField(start ? "#lit-add-end" : "#lit-add-start");
-            return;
-          }
-          let page = null;
-          if (pageRaw) {
-            const n = Number(pageRaw);
-            if (!Number.isInteger(n) || n < 1) {
-              notice("分P 应为正整数（留空 = 第 1 P）", "error");
-              focusField("#lit-add-page");
-              return;
-            }
-            page = n;
-          }
-          try {
-            const patch = { url, start: start || null, end: end || null, quality, page, title: vtitle || null, uploader: uploader || null };
-            if (this.editingId) {
-              await KnowledgeData.updateTask(this.editingId, patch);
-            } else {
-              await KnowledgeData.addTask(patch);
-            }
-            this.hideAddDialog();
-            await this.refreshVideoPanel();
-          } catch (e) {
-            notice("保存失败：" + ((_q = e == null ? void 0 : e.message) != null ? _q : String(e)), "error");
-          }
-        }
-        // ==================== 历史弹窗 ====================
-        createHistoryUI() {
-          const mask = document.createElement("div");
-          mask.id = "knowledge-history-mask";
-          mask.className = "bz-kb-mask";
-          mask.style.display = "none";
-          mask.onclick = () => this.hideHistory();
-          const popup = document.createElement("div");
-          popup.id = "knowledge-history-popup";
-          popup.className = "bz-kb-window kb";
-          popup.style.display = "none";
-          const toolbar = document.createElement("div");
-          toolbar.className = "bz-kb-vhead";
-          const counts = document.createElement("span");
-          counts.id = "lit-history-counts";
-          counts.className = "bz-kb-vmeta";
-          toolbar.appendChild(counts);
-          const list = document.createElement("div");
-          list.id = "knowledge-history-list";
-          list.className = "bz-kb-list";
-          popup.appendChild(toolbar);
-          popup.appendChild(list);
-          document.body.appendChild(mask);
-          document.body.appendChild(popup);
-          this.historyMask = mask;
-          this.historyPopup = popup;
-          this.historyList = list;
-        }
-        showHistory() {
-          if (!this.historyPopup || !this.historyMask) return;
-          topifyZ(this.historyMask, this.historyPopup);
-          this.historyMask.style.display = "block";
-          this.historyPopup.style.display = "flex";
-          void this.refreshHistory();
-        }
-        hideHistory() {
-          if (this.historyMask) this.historyMask.style.display = "none";
-          if (this.historyPopup) this.historyPopup.style.display = "none";
-        }
-        async refreshHistory() {
-          if (!this.historyList) return;
-          const tasks = await KnowledgeData.loadTasks();
-          if (!this.historyList) return;
-          this.historyList.innerHTML = "";
-          const rows = tasks.filter((t) => t.archived);
-          const countsEl = this.historyPopup ? q(this.historyPopup, "#lit-history-counts") : null;
-          if (countsEl) countsEl.textContent = `🕘 历史 · 共 ${rows.length} 条`;
-          if (rows.length === 0) {
-            const empty = document.createElement("div");
-            empty.className = "bz-kb-empty";
-            empty.textContent = "暂无历史记录。成功的任务完成时会自动归档到这里。";
-            this.historyList.appendChild(empty);
-            return;
-          }
-          const groups = /* @__PURE__ */ new Map();
-          for (const t of rows) {
-            const key = t.url || t.id;
-            const g = groups.get(key);
-            if (g) g.push(t);
-            else groups.set(key, [t]);
-          }
-          const sortedGroups = Array.from(groups.values()).map((g) => {
-            g.sort((a, b) => String(a.processedAt || a.created).localeCompare(String(b.processedAt || b.created)));
-            return g;
-          });
-          sortedGroups.sort((a, b) => {
-            var _a, _b, _c, _d;
-            const la = String(((_a = a[a.length - 1]) == null ? void 0 : _a.processedAt) || ((_b = a[a.length - 1]) == null ? void 0 : _b.created) || "");
-            const lb = String(((_c = b[b.length - 1]) == null ? void 0 : _c.processedAt) || ((_d = b[b.length - 1]) == null ? void 0 : _d.created) || "");
-            return lb.localeCompare(la);
-          });
-          for (const g of sortedGroups) this.historyList.appendChild(this.renderHistoryGroup(g));
-        }
-        renderHistoryGroup(group) {
-          const head = group[0];
-          const card = document.createElement("div");
-          card.className = "bz-kb-taskcard bz-kb-hgroup";
-          card.dataset.url = head.url || "";
-          const href = head.url ? `href="${esc2(head.url)}"` : "";
-          const upText = head.uploader ? `<span class="bz-kb-hup">${esc2(head.uploader)}</span>` : "";
-          card.innerHTML = `
-      <div class="bz-kb-trow">
-        ${head.title ? `<a class="bz-kb-tlink" ${href} title="${esc2(head.url || "")}">${esc2(head.title)}</a>` : `<span class="bz-kb-turl" title="${esc2(head.url || "")}">${esc2(shortUrlText(head.url || ""))}</span>`}
-        ${upText}
-      </div>`;
-          for (const task of group) {
-            const line = document.createElement("div");
-            line.className = "bz-kb-hnote";
-            line.innerHTML = `📄 ${esc2(shortNoteName(task.notePath || ""))}<span class="bz-kb-hnote-time">⏱ ${esc2(formatRelativeTime(task.processedAt || task.created || ""))}</span>`;
-            line.addEventListener("click", () => {
-              if (task.notePath) this.openNote(task.notePath);
-            });
-            const actions = [];
-            if (task.notePath) actions.push({ icon: "book-open", label: "打开文献笔记", onClick: () => this.openNote(task.notePath) });
-            if (task.videoPath) actions.push({ icon: "copy", label: "复制视频路径", onClick: () => void this.copyText(task.videoPath) });
-            actions.push({ icon: "trash-2", label: "移出历史", kind: "danger", onClick: () => void this.confirmDelete(task) });
-            attachItemActions(line, actions);
-            card.appendChild(line);
-          }
-          const link = q(card, ".bz-kb-tlink");
-          if (link && head.url) link.onclick = (e) => {
-            e.stopPropagation();
-            this._openExternal(head.url);
-          };
-          return card;
-        }
-        // ==================== 术语生成面板（文字录入；142 简洁版 + 155 总结） ====================
-        createTermUI() {
-          var _a;
-          const mask = document.createElement("div");
-          mask.id = "knowledge-term-mask";
-          mask.className = "bz-kb-mask";
-          mask.style.display = "none";
-          mask.onclick = () => this.hideTermEntry();
-          const popup = document.createElement("div");
-          popup.id = "knowledge-term-popup";
-          popup.className = "bz-lit-dialog bz-lit-term-dialog kb";
-          popup.style.display = "none";
-          const body = document.createElement("div");
-          body.className = "bz-lit-term-body";
-          body.innerHTML = `
-      <div class="bz-lit-sheet-head">
-        <span class="bz-lit-sheet-title">文字录入 · 术语</span>
-      </div>
-      <div class="bz-lit-term-row">
-        <span class="bz-lit-term-meta-k">术语</span>
-        <input id="lit-term-input" type="text" autocomplete="off">
-      </div>
-      <div class="bz-lit-term-row">
-        <span class="bz-lit-term-meta-k">来源</span>
-        <input id="lit-term-src" type="text" autocomplete="off">
-        <span id="lit-term-src-chip" class="bz-lit-srcchip" style="display:none;"></span>
-      </div>
-      <div class="bz-lit-term-actions">
-        <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
-        <button id="lit-term-cancel" class="bz-lit-ghost-btn">取消</button>
-      </div>
-      <div id="lit-term-preview" style="display:none;">
-        <div class="bz-lit-term-card">
-          <div class="bz-lit-term-meta">
-            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">术语</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
-            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
-            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
-            <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
-          </div>
-        </div>
-        <div class="bz-lit-term-card">
-          <div id="lit-term-content" class="bz-lit-term-content"></div>
-        </div>
-        <div class="bz-lit-term-actions">
-          <button id="lit-term-regenerate">总结</button>
-          <button id="lit-term-save" class="bz-lit-accent-btn">确认写入</button>
-        </div>
-      </div>`;
-          popup.appendChild(body);
-          document.body.appendChild(mask);
-          document.body.appendChild(popup);
-          this.termMask = mask;
-          this.termPopup = popup;
-          mask.addEventListener("click", (e) => {
-            if (e.target === mask) this.hideTermEntry();
-          });
-          q(popup, "#lit-term-generate").onclick = () => void this.onTermGenerate();
-          q(popup, "#lit-term-cancel").onclick = () => this.hideTermEntry();
-          q(popup, "#lit-term-regenerate").onclick = () => void this.onTermSummarize();
-          q(popup, "#lit-term-save").onclick = () => void this.onTermConfirm();
-          (_a = q(popup, "#lit-term-input")) == null ? void 0 : _a.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              void this.onTermGenerate();
-            }
-          });
-          const srcInput = q(popup, "#lit-term-src");
-          if (srcInput) {
-            srcInput.addEventListener("input", () => {
-              if (this.termSrcTimer) clearTimeout(this.termSrcTimer);
-              this.termSrcTimer = setTimeout(() => this.termSrcTryCommit(srcInput), 450);
-            });
-            srcInput.addEventListener("keydown", (e) => {
-              if (e.key !== "Enter") return;
-              const raw = (srcInput.value || "").trim();
-              if (raw && isUrlLikeSourceText(raw)) {
-                e.preventDefault();
-                this.termSrcSet({ kind: "external", url: normalizeSourceUrl(raw) }, srcInput);
-              }
-            });
-            this.termSrcSuggest = uiSuggest({
-              anchor: srcInput,
-              max: 12,
-              iconOf: () => "📄",
-              labelOf: (p) => noteSourceName(p),
-              source: () => {
-                if (!srcInput.value.trim()) return [];
-                return (getApp().vault.getFiles() || []).filter((f) => f.extension === "md").map((f) => f.path);
-              },
-              onPick: (p) => this.termSrcSet({ kind: "note", path: p }, srcInput)
-            });
-          }
-          popup.addEventListener("click", (e) => {
-            const t = e.target.closest("[data-term-src-clear],[data-term-src-open]");
-            if (!t) return;
-            e.stopPropagation();
-            if (t.hasAttribute("data-term-src-clear")) {
-              const input = q(popup, "#lit-term-src");
-              this.termSrcClear(input);
-            } else if (this.termSource) {
-              if (this.termSource.kind === "note") this.openNote(this.termSource.path);
-              else this._openExternal(this.termSource.url);
-            }
-          });
-        }
-        /**
-         * 打开术语录入弹层；term 预填（命令带选中词时自动生成）；src 预填来源（ADR-0116——
-         * 仅命令入口带当前笔记，主窗按钮入口不预填）。
-         */
-        showTermEntry(term, src) {
-          if (!this.termPopup || !this.termMask) return;
-          this.termPreview = null;
-          this.termHasDraft = false;
-          const input = q(this.termPopup, "#lit-term-input");
-          if (input) input.value = (term != null ? term : "").trim();
-          this.termSrcReset(q(this.termPopup, "#lit-term-src"));
-          if (src) this.termSrcSet(src, q(this.termPopup, "#lit-term-src"));
-          this.setTermPreviewVisible(false);
-          this.setTermGenLoading(false);
-          topifyZ(this.termMask, this.termPopup);
-          this.termMask.style.display = "block";
-          this.termPopup.style.display = "flex";
-          if (input && !input.value) setTimeout(() => input.focus(), 100);
-          if (input && input.value) void this.onTermGenerate();
-        }
-        /** 来源状态清空（chip 收起、输入框复位、计时器/联想层归零）——每次打开弹层即全新 */
-        termSrcReset(input) {
-          if (this.termSrcTimer) {
-            clearTimeout(this.termSrcTimer);
-            this.termSrcTimer = null;
-          }
-          this.termSource = null;
-          if (input) {
-            input.value = "";
-            input.style.display = "";
-          }
-          this.renderTermSrcChip(input);
-          this.termSrcRefreshMeta();
-        }
-        termSrcClear(input) {
-          this.termSrcReset(input);
-          if (input) setTimeout(() => input.focus(), 0);
-        }
-        /** 输入惰性提交：整串 URL 字样 → 外部 chip；其余文本等联想点选（不自动认领） */
-        termSrcTryCommit(input) {
-          this.termSrcTimer = null;
-          const raw = (input.value || "").trim();
-          if (!raw || !isUrlLikeSourceText(raw)) return;
-          this.termSrcSet({ kind: "external", url: normalizeSourceUrl(raw) }, input);
-        }
-        /** 落来源：记录 + chip 渲染 + meta 行同步；外部来源异步抓标题（失败静默降级为纯链接） */
-        termSrcSet(src, input) {
-          this.termSource = src;
-          this.renderTermSrcChip(input);
-          this.termSrcRefreshMeta();
-          if (src.kind === "external") void this.termSrcFetchTitle(src);
-        }
-        async termSrcFetchTitle(src) {
-          try {
-            const t = await fetchPageTitle(src.url);
-            if (!t || this.termSource !== src) return;
-            src.title = cleanSourceTitle(t);
-            const inp = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
-            this.renderTermSrcChip(inp);
-            this.termSrcRefreshMeta();
-          } catch (e) {
-          }
-        }
-        /** chip 渲染：有来源 → 徽标（内/外）+ 名称 + ✕；无 → 输入框可见 */
-        renderTermSrcChip(input) {
-          const popup = this.termPopup;
-          if (!popup) return;
-          const chip = q(popup, "#lit-term-src-chip");
-          if (!chip) return;
-          const src = this.termSource;
-          if (!src) {
-            chip.style.display = "none";
-            chip.textContent = "";
-            if (input) input.style.display = "";
-            return;
-          }
-          const isNote = src.kind === "note";
-          const label = isNote ? noteSourceName(src.path) : src.title || shortUrlText(src.url);
-          chip.title = isNote ? src.path : src.url;
-          chip.style.display = "inline-flex";
-          chip.innerHTML = `<b>${isNote ? "内 部" : "外 部"}</b><span>${esc2(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
-          if (input) input.style.display = "none";
-        }
-        /** 预览属性卡第 4 行「来源」：有来源显行（可点开），无来源隐行 */
-        termSrcRefreshMeta() {
-          const popup = this.termPopup;
-          if (!popup) return;
-          const row = q(popup, "#lit-term-meta-srcrow");
-          const val = q(popup, "#lit-term-meta-src");
-          if (!row || !val) return;
-          const src = this.termSource;
-          if (!src) {
-            row.style.display = "none";
-            val.textContent = "";
-            return;
-          }
-          row.style.display = "";
-          val.textContent = src.kind === "note" ? noteSourceName(src.path) : src.title || src.url;
-          val.title = src.kind === "note" ? src.path : src.url;
-        }
-        setTermPreviewVisible(v) {
-          if (!this.termPopup) return;
-          const p = q(this.termPopup, "#lit-term-preview");
-          if (p) p.style.display = v ? "flex" : "none";
-        }
-        setTermGenLoading(loading2) {
-          if (!this.termPopup) return;
-          const gen = q(this.termPopup, "#lit-term-generate");
-          if (gen) {
-            gen.disabled = loading2;
-            gen.textContent = loading2 ? "生成中…" : this.termHasDraft ? "重新生成" : "生成";
-          }
-          const regen = q(this.termPopup, "#lit-term-regenerate");
-          if (regen) regen.disabled = loading2;
-          const save = q(this.termPopup, "#lit-term-save");
-          if (save) save.disabled = loading2;
-        }
-        setTermSummarizing(s) {
-          if (!this.termPopup) return;
-          const regen = q(this.termPopup, "#lit-term-regenerate");
-          if (regen) {
-            regen.disabled = s;
-            regen.textContent = s ? "总结中…" : "总结";
-          }
-          const save = q(this.termPopup, "#lit-term-save");
-          if (save) save.disabled = s;
-          const gen = q(this.termPopup, "#lit-term-generate");
-          if (gen) gen.disabled = s;
-        }
-        noticeTermError(e) {
-          const msg = String(e && e.message || e || "未知错误");
-          if (/API Key|AI 配置|未配置/.test(msg)) {
-            notice("未配置 AI：请到插件设置「AI 配置」页填 API Key 后再生成", "error");
-          } else {
-            notice("生成失败：" + msg, "error");
-          }
-        }
-        async onTermGenerate() {
-          var _a, _b;
-          if (!this.termPopup || this.termGenerating) return;
-          const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
-          if (!term) {
-            notice("请输入术语", "error");
-            return;
-          }
-          this.termGenerating = true;
-          this.setTermGenLoading(true);
-          try {
-            const draft = await generateTermDraft(term);
-            this.presentTermPreview(draft);
-          } catch (e) {
-            this.noticeTermError(e);
-          } finally {
-            this.termGenerating = false;
-            this.setTermGenLoading(false);
-          }
-        }
-        async onTermSummarize() {
-          if (!this.termPopup || this.termSummarizing || this.termGenerating) return;
-          if (!this.termPreview || !this.termPreview.body.trim()) {
-            notice("请先生成简介", "info");
-            return;
-          }
-          this.termSummarizing = true;
-          this.setTermSummarizing(true);
-          try {
-            const summarized = await summarizeTermSummary(this.termPreview.body);
-            this.termPreview.body = summarized;
-            const contentEl = q(this.termPopup, "#lit-term-content");
-            if (contentEl) contentEl.textContent = summarized;
-          } catch (e) {
-            this.noticeTermError(e);
-          } finally {
-            this.termSummarizing = false;
-            this.setTermSummarizing(false);
-          }
-        }
-        presentTermPreview(draft) {
-          var _a, _b, _c;
-          this.termPreview = { domain: draft.domain, body: draft.summary };
-          this.termHasDraft = true;
-          if (!this.termPopup) return;
-          const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
-          const termEl = q(this.termPopup, "#lit-term-meta-term");
-          if (termEl) termEl.textContent = term || "—";
-          const domainEl = q(this.termPopup, "#lit-term-meta-domain");
-          if (domainEl) domainEl.textContent = draft.domain || "—";
-          const dateEl = q(this.termPopup, "#lit-term-meta-date");
-          if (dateEl) dateEl.textContent = dateStamp();
-          const contentEl = q(this.termPopup, "#lit-term-content");
-          if (contentEl) contentEl.textContent = draft.summary;
-          this.setTermPreviewVisible(true);
-          const prev = q(this.termPopup, "#lit-term-preview");
-          (_c = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _c.call(prev, { behavior: "smooth", block: "nearest" });
-        }
-        async onTermConfirm() {
-          var _a, _b;
-          if (!this.termPopup || this.termGenerating) return;
-          const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
-          if (!term) {
-            notice("请输入术语", "error");
-            return;
-          }
-          if (!this.termPreview) {
-            notice("请先点击「生成」获取简介预览", "info");
-            return;
-          }
-          this.termGenerating = true;
-          this.setTermGenLoading(true);
-          try {
-            const path = await generateTermNote({
-              term,
-              summary: this.termPreview.body,
-              domain: this.termPreview.domain,
-              source: this.termSource
-              // 术语来源随确认时刻的值落库（ADR-0116）
-            });
-            this.openNote(path);
-            emitDomainEvent("knowledge:tasks", { kind: "term-generated", term, title: term });
-            this.termPreview = null;
-            this.hideTermEntry();
-            notice("已生成术语文献笔记：" + term, "success");
-          } catch (e) {
-            this.noticeTermError(e);
-          } finally {
-            this.termGenerating = false;
-            this.setTermGenLoading(false);
-          }
-        }
-        hideTermEntry() {
-          this.termPreview = null;
-          const srcInput = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
-          this.termSrcReset(srcInput);
-          if (this.termMask) this.termMask.style.display = "none";
-          if (this.termPopup) this.termPopup.style.display = "none";
-        }
-        // ==================== 通用小工具 ====================
-        openNote(path) {
-          const app = getApp();
-          const file = app.vault.getAbstractFileByPath(path);
-          if (file) {
-            void app.workspace.getLeaf(false).openFile(file);
-            this.hideMain();
-            this.hideVideo();
-            this.hideHistory();
-          } else {
-            notice("文献笔记不存在：" + path, "error");
-          }
-        }
-        async copyText(text) {
-          try {
-            await navigator.clipboard.writeText(text);
-            notice("已复制：" + text, "success");
-          } catch (e) {
-            notice("复制失败", "error");
-          }
-        }
-        _openExternal(url) {
-          const app = getApp();
-          try {
-            app.openUrl(url);
-          } catch (e) {
-            const w = window;
-            const electron = w.require && w.require("electron");
-            if (electron && electron.shell) electron.shell.openExternal(url);
-          }
-        }
-        destroy() {
-          var _a;
-          this.clearRunTimer();
-          this.runState.clear();
-          if (this.termSrcTimer) {
-            clearTimeout(this.termSrcTimer);
-            this.termSrcTimer = null;
-          }
-          try {
-            (_a = this.termSrcSuggest) == null ? void 0 : _a.detach();
-          } catch (e) {
-          }
-          this.termSrcSuggest = null;
-          if (this.refreshTimer) {
-            clearTimeout(this.refreshTimer);
-            this.refreshTimer = null;
-          }
-          for (const unsub of this.fileListenerRefs) {
-            try {
-              unsub();
-            } catch (e) {
-            }
-          }
-          this.fileListenerRefs = [];
-          this.fileListenerAttached = false;
-          document.removeEventListener("keydown", this.onKeydown);
-          this.termPreview = null;
-          for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.historyMask, this.historyPopup, this.termMask, this.termPopup]) {
-            if (el && el.parentNode) el.parentNode.removeChild(el);
-          }
-          this.mask = null;
-          this.popup = null;
-          this.contentEl = null;
-          this.videoMask = null;
-          this.videoPopup = null;
-          this.videoList = null;
-          this.addMask = null;
-          this.addPopup = null;
-          this.historyMask = null;
-          this.historyPopup = null;
-          this.historyList = null;
-          this.termMask = null;
-          this.termPopup = null;
-        }
-      };
-    }
-  });
-
-  // src/knowledge/index.ts
-  var knowledge_exports = {};
-  __export(knowledge_exports, {
-    ensureKnowledge: () => ensureKnowledge,
-    openKnowledgeAddTask: () => openKnowledgeAddTask,
-    openKnowledgePanel: () => openKnowledgePanel,
-    openTermNote: () => openTermNote,
-    unloadKnowledge: () => unloadKnowledge
-  });
-  function ensureKnowledge(app) {
-    var _a;
-    if (initialized2) return;
-    try {
-      KnowledgeData.init({ storagePath: (_a = tryGetSettings()) == null ? void 0 : _a.storagePath });
-      uiManager = new UIManager(app);
-      initialized2 = true;
-    } catch (e) {
-      console.error("bz: 文献盒初始化失败（下次打开命令将自动重试）", e);
-      uiManager = null;
-    }
-  }
-  function openKnowledgePanel(app) {
-    ensureKnowledge(app);
-    uiManager == null ? void 0 : uiManager.showMain();
-  }
-  function openKnowledgeAddTask(app, prefill) {
-    ensureKnowledge(app);
-    uiManager == null ? void 0 : uiManager.showVideoEntry(prefill);
-  }
-  function openTermNote(app, term) {
-    var _a, _b;
-    ensureKnowledge(app);
-    let t = term == null ? void 0 : term.trim();
-    let src;
-    if (!t) {
-      const view = app.workspace.getActiveViewOfType(MarkdownView);
-      t = ((_b = (_a = view == null ? void 0 : view.editor) == null ? void 0 : _a.getSelection()) == null ? void 0 : _b.trim()) || void 0;
-      const file = view == null ? void 0 : view.file;
-      if (file && file.extension === "md") src = { kind: "note", path: file.path };
-    }
-    uiManager == null ? void 0 : uiManager.showTermEntry(t, src);
-  }
-  function unloadKnowledge() {
-    uiManager == null ? void 0 : uiManager.destroy();
-    uiManager = null;
-    initialized2 = false;
-  }
-  var initialized2, uiManager;
-  var init_knowledge = __esm({
-    "src/knowledge/index.ts"() {
-      init_fake_obsidian();
-      init_settings_provider();
-      init_data2();
-      init_ui2();
-      initialized2 = false;
-      uiManager = null;
-    }
-  });
-
-  // src/clipbook/flow.ts
-  function setReadingSession(key) {
-    if (key !== curKey) {
-      curKey = key;
-      accumMs = 0;
-      openedAt = Date.now();
-    } else if (!openedAt) {
-      openedAt = Date.now();
-    }
-  }
-  function pauseReadingSession() {
-    if (openedAt) {
-      accumMs += Date.now() - openedAt;
-      openedAt = 0;
-    }
-  }
-  function durationMin() {
-    const now = Date.now();
-    const total = (openedAt ? now - openedAt : 0) + accumMs;
-    return Math.max(1, Math.round(total / 6e4));
-  }
-  function markHandledAndBump(raw, action) {
-    const key = articleKeyOf(raw);
-    const platform = raw.platform || "未知";
-    const today = localDayKey2();
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok || res.missing) return;
-      const list = (res.data.articles || []).map((a) => {
-        if (articleKeyOf(a) !== key) return a;
-        return { ...a, read: true, state: action };
-      });
-      const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      s.totalRead = (Number(s.totalRead) || 0) + 1;
-      if (action === "saved") s.totalSaved = (Number(s.totalSaved) || 0) + 1;
-      else s.totalSkipped = (Number(s.totalSkipped) || 0) + 1;
-      s.byPlatform[platform] = (s.byPlatform[platform] || 0) + 1;
-      s.byDate[today] = (s.byDate[today] || 0) + 1;
-      await writeNewsDataMerged({ set: { articles: list, stats: s } });
-    });
-  }
-  function removeArticle(raw) {
-    const key = articleKeyOf(raw);
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok || res.missing) return;
-      const list = (res.data.articles || []).filter((a) => articleKeyOf(a) !== key);
-      await writeNewsDataMerged({ set: { articles: list }, removeArticleKeys: [key] });
-    });
-  }
-  function emitReadEvt(raw, state) {
-    const evt = { title: raw.title, platform: raw.platform, state, durationMin: durationMin() };
-    emitDomainEvent("news", { kind: "read", evt });
-    return evt;
-  }
-  async function flowSave(article) {
-    const raw = article && article.raw;
-    if (!raw) return false;
-    const isBili = raw.platform === "B站" && !!String(raw.url || "").trim();
-    if (isBili) {
-      const { openKnowledgeAddTask: openKnowledgeAddTask2 } = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
-      openKnowledgeAddTask2(getApp(), { url: raw.url, title: raw.title || null, uploader: raw.author || null });
-      await markHandledAndBump(raw, "saved");
-      notice("已转入文献盒", "success");
-      return true;
-    }
-    pauseReadingSession();
-    try {
-      const ok = await writeClipNote(raw);
-      if (!ok) return false;
-      await markHandledAndBump(raw, "saved");
-      const evt = emitReadEvt(raw, "saved");
-      emitDomainEvent("news", { kind: "saved", evt, clipPath: `${dirOf()}/${String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim()}.md` });
-      return true;
-    } catch (e) {
-      console.error("[剪藏本] 保存失败", e);
-      return false;
-    }
-  }
-  async function flowMarkRead(article) {
-    const raw = article && article.raw;
-    if (!raw) return;
-    pauseReadingSession();
-    await markHandledAndBump(raw, "skipped");
-    emitReadEvt(raw, "skipped");
-  }
-  async function flowDeleteNews(article) {
-    const raw = article && article.raw;
-    if (!raw) return;
-    await removeArticle(raw);
-    try {
-      await updateClipbookData((sidecar) => {
-        const overrides = { ...sidecar.articleOverrides };
-        delete overrides[articleKeyOf(raw)];
-        return { ...sidecar, articleOverrides: overrides };
-      });
-    } catch (e) {
-    }
-  }
-  async function flowMarkAllRead(raws) {
-    const keys = new Set(raws.filter(Boolean).map((r) => articleKeyOf(r)));
-    if (!keys.size) return;
-    pauseReadingSession();
-    await enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok || res.missing) return;
-      const today = localDayKey2();
-      const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      let bumped = 0;
-      const list = (res.data.articles || []).map((a) => {
-        if (a.read === true || !keys.has(articleKeyOf(a))) return a;
-        bumped++;
-        const next = { ...a, read: true, state: "skipped" };
-        const platform = a.platform || "未知";
-        s.byPlatform[platform] = (Number(s.byPlatform[platform]) || 0) + 1;
-        s.byDate[today] = (Number(s.byDate[today]) || 0) + 1;
-        return next;
-      });
-      if (!bumped) return;
-      s.totalRead = (Number(s.totalRead) || 0) + bumped;
-      s.totalSkipped = (Number(s.totalSkipped) || 0) + bumped;
-      await writeNewsDataMerged({ set: { articles: list, stats: s } });
-    });
-  }
-  async function flowUndoHandled(rawBefore) {
-    if (!rawBefore) return;
-    const key = articleKeyOf(rawBefore);
-    await enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok || res.missing) return;
-      const s = res.data.stats;
-      let touched = false;
-      const list = (res.data.articles || []).map((a) => {
-        if (articleKeyOf(a) !== key) return a;
-        touched = true;
-        if (s && a.read === true) {
-          s.totalRead = Math.max(0, (Number(s.totalRead) || 0) - 1);
-          if (a.state === "saved") s.totalSaved = Math.max(0, (Number(s.totalSaved) || 0) - 1);
-          else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
-          const platform = a.platform || "未知";
-          s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
-          const day = localDayKey2();
-          s.byDate[day] = Math.max(0, (Number(s.byDate[day]) || 0) - 1);
-        }
-        const restored = { ...a };
-        if (rawBefore.read === void 0) delete restored.read;
-        else restored.read = rawBefore.read;
-        if (rawBefore.state === void 0) delete restored.state;
-        else restored.state = rawBefore.state;
-        if (rawBefore.body === void 0) delete restored.body;
-        else restored.body = rawBefore.body;
-        return restored;
-      });
-      if (!touched) return;
-      await writeNewsDataMerged({ set: s ? { articles: list, stats: s } : { articles: list } });
-    });
-  }
-  async function flowUndoDeleteNews(rawBefore) {
-    if (!rawBefore) return;
-    await enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok || res.missing) return;
-      const list = res.data.articles || [];
-      if (list.some((a) => articleKeyOf(a) === articleKeyOf(rawBefore))) return;
-      await writeNewsDataMerged({ set: { articles: [...list, rawBefore] } });
-    });
-  }
-  function dirOf() {
-    const s = tryGetSettings();
-    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-  }
-  var curKey, openedAt, accumMs;
-  var init_flow = __esm({
-    "src/clipbook/flow.ts"() {
-      init_app();
-      init_notice();
-      init_domain_bus();
-      init_settings_provider();
-      init_news_data();
-      init_constants();
-      init_save();
-      init_constants();
-      init_data();
-      init_write_queue();
-      curKey = "";
-      openedAt = 0;
-      accumMs = 0;
     }
   });
 
@@ -13635,7 +13644,7 @@ ${sample}`,
       init_fake_obsidian();
       init_app();
       init_notice();
-      init_ui();
+      init_ui2();
       init_utils();
       init_mobile();
       init_esc_manager();
@@ -13803,6 +13812,10 @@ ${sample}`,
   // src/clipbook/index.ts
   init_settings_provider();
   init_domain_bus();
+  init_notice();
+  init_flow_dialog();
+  init_news_data();
+  init_flow();
   init_ui3();
   var initialized3 = false;
   var autoRefreshRegistered = false;

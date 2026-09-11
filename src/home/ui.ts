@@ -10,7 +10,8 @@
  *    统一件）——菜单内容 = `shared.DOMAIN_MENU` 里的域快捷动作；
  *    **没有快捷动作的域不挂菜单**（空菜单不如不弹）。
  *    抽屉盒头 = 域彩色图标 + 域名 + 入口行右侧那行灰字（markup 见 render.sheetHeadHtml）；
- *    番茄钟项文案随实时相位动态改写（专注中「停止专注」/ 否则「开始专注」，读 ./state.H.pomodoroFocusing）。
+ *    动态文案按 `dynamic` 槽位改写（focus → 开始/停止专注；pause → 暂停/继续专注，
+ *    读 ./state.H.pomodoroPhase → shared.pomodoroMenuAction）；`keepHome` 的即时类动作不关面板。
  *  - 入口顺序 / 显隐：**本页不做任何编辑交互**，统一由「设置 → 首页入口」弹窗打理
  *    （顺序两端各一套 + 隐藏域，存 home.json，见 ./order）；本页只按序渲染可见域。
  *  - 时间线：recap 五域痕迹流 + 规则点评（✦ 域内自算，非 AI 调用）
@@ -28,18 +29,17 @@ import { tryGetSettings } from '../core/settings-provider';
 import { H } from './state';
 import { DOMAIN_MAP } from './domains';
 import {
-  DOMAIN_MENU, pomodoroMenuLabel,
+  DOMAIN_MENU, pomodoroMenuAction,
   DEFAULT_TIMELINE_FILTER, timelineRangeDays, type TimelineFilter,
 } from './shared';
+import type { PomodoroPhase } from '../core/pomodoro-phase';
 import { collectRiver, type RiverData } from './river';
 import { loadHomeOrder } from './order';
 import {
   headDateText, panelFrameHtml, loadingEntriesHtml, loadingFlowHtml,
-  weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml, sheetHeadHtml, type FlowOpts,
+  weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml, sheetHeadHtml, menuHeadHtml, type FlowOpts,
 } from './render';
 
-/** 周历当前查看日（'YYYY-MM-DD'；null = 今天。周历点按切天，只重渲时间线不重采） */
-let riverView: string | null = null;
 /** 明天预告卡：本次打开是否被设置关掉（关掉时要连第三栏一起收敛，不能只清内容） */
 let nextOff = true;
 
@@ -58,9 +58,9 @@ function readHomeSettings(): { filter: TimelineFilter; flow: FlowOpts; rangeDays
     produce: bool(s.homeTimelineProduce, DEFAULT_TIMELINE_FILTER.produce),
     progress: bool(s.homeTimelineProgress, DEFAULT_TIMELINE_FILTER.progress),
     notes: bool(s.homeTimelineNotes, DEFAULT_TIMELINE_FILTER.notes),
-    skipped: bool(s.homeTimelineSkipped, DEFAULT_TIMELINE_FILTER.skipped),
   };
-  const range = str(s.homeTimelineRange) ?? 'today';
+  // 范围缺省 = week（用户 2026-09-11 拍板：默认能往回翻整周）；老 data.json 无此键时同样落 week
+  const range = str(s.homeTimelineRange) ?? 'week';
   return {
     filter,
     flow: {
@@ -78,7 +78,7 @@ function readHomeSettings(): { filter: TimelineFilter; flow: FlowOpts; rangeDays
  * 打开时默认落到哪天（issue 287「默认打开日」）。
  * lastActive = 时间线窗口内**最近一天有痕迹的**那天——避免「今天还没动，面板一片空」，
  * 直接落到昨天/前天，用户打开就有东西看。窗口内全空则仍回今天。
- * 只跑一次（首次渲染前定 riverView），用户在面板里点周历切天不受影响。
+ * 只跑一次（首次渲染前定 H.riverView），用户在面板里点周历切天不受影响。
  */
 function pickInitialView(river: RiverData, defaultDay: string, rangeDays: number): string | null {
   const today = river.today.dateStr;
@@ -104,38 +104,41 @@ export function createOverlay(app: any): void {
 }
 
 /**
- * 番茄钟是否正在专注中（入口菜单动态文案 + 彩点数据流校准用）——跨域**只读**，动态 import 遵守 ADR-0002
- * （home 不静态依赖 pomodoro 域）。先 ensurePomodoro 再读相位：
- * 插件 onload 已初始化，这里是幂等的兜底（原型壳／竞态下也拿得到真实相位）；失败按未专注处理。
+ * 番茄钟实时界面相位（idle / focusing / paused / break）——入口菜单唯一那条番茄钟项的文案与
+ * 命令由它决定（彩点数据流也在这里校准）。跨域**只读**，动态 import 遵守 ADR-0002
+ * （home 不静态依赖 pomodoro 域）。先 ensurePomodoro 再读相位：插件 onload 已初始化，
+ * 这里是幂等的兜底（原型壳／竞态下也拿得到真实相位）；失败按未开始处理。
  */
-async function readPomodoroFocusing(app: any): Promise<boolean> {
+async function readPomodoroPhase(app: any): Promise<PomodoroPhase> {
   try {
     const m = await import('../pomodoro');
     await m.ensurePomodoro(app);
-    return m.isFocusing();
+    return m.menuPhase();
   } catch {
-    return false;
+    return 'idle';
   }
 }
 
-/** 重新采集活动河数据 + 读入口顺序/隐藏域 + 番茄钟专注相位（并发取回，避免多趟闪） */
+/** 重新采集活动河数据 + 读入口顺序/隐藏域 + 番茄钟相位（并发取回，避免多趟闪） */
 async function refreshRiverAndRender(): Promise<void> {
   if (!H.currentOverlay || !H.appRef) return;
-  const [river, order, focusing] = await Promise.all([
+  const [river, order, phase] = await Promise.all([
     collectRiver(H.appRef).catch(() => null),
     loadHomeOrder(H.appRef),
-    readPomodoroFocusing(H.appRef),
+    readPomodoroPhase(H.appRef),
   ]);
-  // 专注相位并入数据流（item-1789106079981：彩点 warn 条件）——collectRiver 只读裸相位，
-  // 这里以 ensure 兜底后的实时值为准写回，彩点与菜单动态文案同一真相
+  // 番茄相位并入数据流（item-1789106079981：彩点 warn 条件）——collectRiver 只读裸相位，
+  // 这里以 ensure 兜底后的实时值为准写回。彩点口径 = **专注进行中（计时或暂停）**，
+  // 休息阶段不算（与 pomodoro/ui.isFocusing 同义），与菜单四项文案同出一源。
+  const focusing = phase === 'focusing' || phase === 'paused';
   if (river) river.pomodoroFocusing = focusing;
   H.river = river;
   if (order) H.order = order;
-  H.pomodoroFocusing = focusing;
-  // 「默认打开日」只在数据刚到、用户还没点过周历时定一次（riverView 为 null = 没点过）
-  if (river && !riverView) {
+  H.pomodoroPhase = phase;
+  // 「默认打开日」只在数据刚到、用户还没点过周历时定一次（H.riverView 为 null = 没点过）
+  if (river && !H.riverView) {
     const { defaultDay, rangeDays } = readHomeSettings();
-    riverView = pickInitialView(river, defaultDay, rangeDays);
+    H.riverView = pickInitialView(river, defaultDay, rangeDays);
   }
   renderAll();
 }
@@ -145,6 +148,8 @@ export function closeOverlay(): void {
   H.currentOverlay.remove();
   H.currentOverlay = null;
   H.river = null;
+  // 查看日随本次打开失效：重开要重新按「默认打开日」定位（否则会以关面板前的选中日渲染）
+  H.riverView = null;
 }
 
 /* ---------- 事件 ---------- */
@@ -179,14 +184,14 @@ function bindEvents(overlay: HTMLElement, app: any): void {
     // 周历切天：切换选中格并只重渲时间线（数据已在采集窗口内）
     const wk = t.closest('[data-home-weekday]') as HTMLElement | null;
     if (wk && H.river) {
-      riverView = wk.dataset.homeWeekday || null;
+      H.riverView = wk.dataset.homeWeekday || null;
       const overlay2 = H.currentOverlay;
       if (overlay2) {
         overlay2.querySelectorAll('[data-home-weekday]').forEach((b) =>
-          b.classList.toggle('bz-home-wk--sel', (b as HTMLElement).dataset.homeWeekday === riverView));
+          b.classList.toggle('bz-home-wk--sel', (b as HTMLElement).dataset.homeWeekday === H.riverView));
         const flow = overlay2.querySelector('[data-home-flow]') as HTMLElement | null;
         if (flow) {
-          flow.innerHTML = flowHtml(H.river!, riverView ?? '', readHomeSettings().flow);
+          flow.innerHTML = flowHtml(H.river!, H.riverView ?? '', readHomeSettings().flow);
           mountIcons(flow);
         }
       }
@@ -210,6 +215,27 @@ function runCommand(commandId: string, app: any, failText = '该功能暂时不�
   }
 }
 
+/**
+ * 直达命令 + 跑完刷新首页数据（`keepHome` 动作专用）。
+ * executeCommandById 返回 Promise（命令可能是异步：先弹确认框再写盘）——等它落地再刷新，
+ * 否则会在用户还没确认时就刷新（看不到计数变化），或在写入前读到旧值。
+ * 无 commands / 非 Promise 环境（原型壳）就地跳过刷新，不崩。
+ */
+function runCommandAndRefresh(commandId: string, app: any): void {
+  let ret: unknown;
+  try {
+    ret = app.commands.executeCommandById(commandId);
+  } catch {
+    notice('该功能暂时不可用', 'warning');
+    return;
+  }
+  if (ret && typeof (ret as Promise<unknown>).then === 'function') {
+    void (ret as Promise<unknown>).then(() => refreshRiverAndRender(), () => refreshRiverAndRender());
+  } else {
+    void refreshRiverAndRender();
+  }
+}
+
 /* ---------- 入口行交互：域快捷菜单 ---------- */
 
 /** 容器内的入口元素（桌面容器只有入口行、移动容器只有瓦片） */
@@ -221,27 +247,43 @@ function rowEls(container: HTMLElement): HTMLElement[] {
  * 挂统一操作浮层（core/item-actions：桌面右键菜单、移动长按抽屉）。
  * **DOMAIN_MENU 没有条目的域直接不挂** —— 右键/长按不弹任何东西。
  * 抽屉盒头 = 域彩色图标 + 域名 + 入口行那行灰字（markup 出自 render.sheetHeadHtml）；
- * 番茄钟项文案按实时相位动态改写（专注中＝停止专注）。
+ * `dynamic: 'phase'` 的项（番茄钟）按实时相位**整条替换**（文案/命令/图标）——
+ * 四相位互斥、一次只出一条，不会出现「停止专注 + 继续专注」并列。
+ * `keepHome` 的动作**不关首页**（即时类，如锁定保险库/暂停专注）：关面板再执行会让用户
+ * 看不到结果、下次还得重开；执行完刷新面板数据（未读计数/彩点即时归位）。
+ * 其余动作（开别域面板、需要确认框的批量改写）先关首页再执行——避免两层面板叠着。
  */
 function attachRowMenu(el: HTMLElement, app: any, river: RiverData): void {
   const d = DOMAIN_MAP.get(el.dataset.homeGo || '');
   if (!d) return;
   const menu = DOMAIN_MENU[d.id];
   if (!menu || !menu.length) return;
-  const actions: ItemAction[] = menu.map((a) => ({
-    icon: a.icon as IconName,
-    label: a.dynamic === 'focus' ? pomodoroMenuLabel(H.pomodoroFocusing) : a.label,
-    onClick: () => {
-      closeOverlay();
-      runCommand(a.commandId, app);
-    },
-  }));
+  const actions: ItemAction[] = menu.map((a) => {
+    // 相位敏感项：静态声明只是 idle 兜底，这里按实时相位整体换掉（见 shared.pomodoroMenuAction）
+    const spec = a.dynamic === 'phase' ? { ...a, ...pomodoroMenuAction(H.pomodoroPhase) } : a;
+    return {
+      icon: spec.icon as IconName,
+      label: spec.label,
+      kind: spec.kind === 'danger' ? 'danger' : 'normal',
+      onClick: () => {
+        if (spec.keepHome) {
+          // 即时类：面板留着，动作跑完刷新一次数据（计数/彩点当场归位）
+          runCommandAndRefresh(spec.commandId, app);
+          return;
+        }
+        closeOverlay();
+        runCommand(spec.commandId, app);
+      },
+    };
+  });
   const head = document.createElement('div');
   head.innerHTML = sheetHeadHtml(d, river);
-  mountIcons(head); // data-lucide 占位 → 真 SVG（桌面菜单不消费盒头，无副作用）
+  mountIcons(head); // data-lucide 占位 → 真 SVG（抽屉盒头消费它）
   // bz-home-menu = home 浮层皮肤类：两端都传（桌面菜单 + 移动抽屉），字号口径见 styles.css
   attachItemActions(el, actions, {
     sheetHead: head,
+    // 桌面菜单另给一行版盒头（B 方案 2026-09-11）：跨 21 个域，右键后要知道自己点的是哪个域
+    menuHeadHtml: menuHeadHtml(d, river),
     menuClass: 'bz-home-menu',
     sheetClass: 'bz-home-menu',
   });
@@ -279,8 +321,8 @@ function renderAll(): void {
   const cfg = readHomeSettings();
   // 时间范围：只放窗口内的天可选（week 档 = 采集窗口全长 7 天，越界自然回落今天）
   const windowDays = river.days.slice(0, cfg.rangeDays);
-  const view = riverView && windowDays.some((d) => d.dateStr === riverView) ? riverView : null;
-  riverView = view;
+  const view = H.riverView && windowDays.some((d) => d.dateStr === H.riverView) ? H.riverView : null;
+  H.riverView = view;
   const today = river.today.dateStr;
   const week = overlay.querySelector('[data-home-week]') as HTMLElement;
   // 周历只画范围窗口内的格子（today 档就一格「今」——范围设置本身在管「能翻到多远」）

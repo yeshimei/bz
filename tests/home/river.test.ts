@@ -165,6 +165,14 @@ describe('buildDots / riverCountText（入口行彩点与计数文案）', () =>
     d.today.events = [{ domain: 'cinema', ts: NOW, timeLabel: '21:00', text: 'x' }];
     expect(buildDots(d).cinema).toBe('ok');
     d.today.events = [];
+    // 书库（2026-09-11 用户要求）：在读 > 0 → warn（与影院在看同口径，压过今日痕迹 ok）；
+    // 没在读时回落「今日有动静 ok」；两者皆无 → 灭
+    d.counts.bookshelfReading = 2;
+    expect(buildDots(d).bookshelf).toBe('warn');
+    d.counts.bookshelfReading = 0;
+    d.today.events = [{ domain: 'bookshelf', ts: NOW, timeLabel: '21:00', text: 'x' }];
+    expect(buildDots(d).bookshelf).toBe('ok');
+    d.today.events = [];
     // 备忘录：重要未完成 > 0 → hot（压过今日动静 ok）
     d.counts.memoUrgentOpen = 1;
     expect(buildDots(d).memo).toBe('hot');

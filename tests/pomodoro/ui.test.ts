@@ -10,7 +10,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openPomodoro, unloadPomodoro, ensurePomodoro, startFocusForTask, toggleFocus, isFocusing } from '../../src/pomodoro';
+import { openPomodoro, unloadPomodoro, ensurePomodoro, startFocusForTask, toggleFocus, isFocusing, menuPhase } from '../../src/pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from '../../src/pomodoro/statusbar';
 import { getPomodoroFilePath, PomodoroDataManager } from '../../src/pomodoro/data';
 import { enqueueFileTask } from '../../src/core/storage';
@@ -869,5 +869,69 @@ describe('isFocusing（首页入口菜单动态文案的只读相位）', () => 
     expect(isFocusing()).toBe(false);
     await toggleFocus(app);
     expect(isFocusing()).toBe(true);
+  });
+});
+
+/**
+ * menuPhase（2026-09-11）：首页入口菜单的番茄钟项是**相位敏感的单个动作**
+ * （见 home/shared.pomodoroMenuAction —— 未开始→开始专注 / 专注中→停止专注 /
+ * 暂停中→继续专注 / 休息中→跳过休息）。四相位互斥，故判定必须是这一个函数。
+ * 特别钉住那个坑：**reset/停止后 phase 仍是 'focus'**（state.ts::activePhase 语义），
+ * 所以 idle 不能按 phase 判，要看 endTime / paused。
+ */
+describe('menuPhase（首页入口菜单番茄项的相位派发）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+    unloadPomodoro();
+    unmountPomodoroStatusBar();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(T0));
+  });
+  afterEach(() => {
+    unloadPomodoro();
+    unmountPomodoroStatusBar();
+    vi.useRealTimers();
+  });
+
+  /** 载入一份番茄 state 到 mock vault 并 init（相位由 state 形状决定，不走 UI） */
+  async function loadPhase(state: Record<string, unknown>) {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), JSON.stringify({ version: 1, state, history: [] }));
+    const app = makeApp(vault);
+    setApp(app);
+    await ensurePomodoro(app);
+    return app;
+  }
+
+  it('未加载 → idle（内存态 = 初始空闲）', () => {
+    expect(menuPhase()).toBe('idle');
+  });
+
+  it('专注计时中 → focusing', async () => {
+    await loadPhase({ phase: 'focus', endTime: T0 + 60_000, remaining: 0, paused: false, cycleFocusCount: 1 });
+    expect(menuPhase()).toBe('focusing');
+  });
+
+  it('暂停中的专注（=「停止专注」之后）→ paused', async () => {
+    await loadPhase({ phase: 'focus', endTime: null, remaining: 900, paused: true, cycleFocusCount: 1, task: '周报' });
+    expect(menuPhase()).toBe('paused');
+  });
+
+  it('短休计时中 / 长休暂停中 → 都算 break（暂停的休息照样能跳过）', async () => {
+    await loadPhase({ phase: 'short-break', endTime: T0 + 60_000, remaining: 0, paused: false, cycleFocusCount: 1 });
+    expect(menuPhase()).toBe('break');
+    unloadPomodoro();
+    await loadPhase({ phase: 'long-break', endTime: null, remaining: 300, paused: true, cycleFocusCount: 0 });
+    expect(menuPhase()).toBe('break');
+  });
+
+  it('停止专注后 phase 仍是 focus 但 endTime=null → 必须回落 idle（否则菜单卡在「继续专注」）', async () => {
+    const app = await loadPhase({ phase: 'focus', endTime: null, remaining: 900, paused: true, cycleFocusCount: 1 });
+    expect(menuPhase()).toBe('paused');
+    await toggleFocus(app); // 停止（= reset：phase 保持 focus，endTime/paused 归零）
+    expect(menuPhase()).toBe('idle');
   });
 });

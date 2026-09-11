@@ -7,7 +7,9 @@
  */
 import type { App, EventRef } from 'obsidian';
 import { onDomainEvent } from '../core/domain-bus';
+import { notice } from '../core/notice';
 import { M, resetBookshelfState, applyDefaultView } from './state';
+import { currentSideItems } from './shared';
 import { resolveFolderPath, rebuildItems, WEAVE_DATA_FILE } from './data';
 import {
   createOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler,
@@ -77,6 +79,26 @@ export function openBookshelf(app: App): void {
 export function openBookshelfReport(app: App): void {
   ensureBookshelf(app);
   openReportView(app);
+}
+
+/**
+ * 继续在读（命令 bz-bookshelf-continue，2026-09-11 首页入口菜单）：
+ * 开书架墙并直接落到「在读」分栏（首页入口有在读时才亮彩点，见 home/shared.buildDots）。
+ * 在读为空 → 只提示不面板（空白分栏比一句提示更让人困惑）；
+ * 面板已开则就地切分栏重渲染，不 toggle 关闭（与「阅读分析报告」同一幂等口径）。
+ */
+export async function continueReading(app: App): Promise<void> {
+  ensureBookshelf(app);
+  const items = M.items.length ? M.items : await rebuildItems(app);
+  if (!currentSideItems(items, 'reading').length) {
+    notice('书库里还没有在读的书', 'warning');
+    return;
+  }
+  M.view = 'shelf';
+  M.side = 'reading';
+  M.catFilter = 'all';
+  if (M.currentOverlay) renderAll();
+  else createOverlay(app);
 }
 
 /** 卸载清理（main.ts onunload 调用） */

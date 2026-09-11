@@ -74,17 +74,28 @@ describe('首页时间线设置（issue 287）', () => {
     expect(timelineRangeDays(undefined)).toBe(1);
   });
 
+  it('DEFAULT_SETTINGS：时间范围默认「本周」（2026-09-11 用户拍板）', async () => {
+    const { DEFAULT_SETTINGS } = await import('../../src/settings');
+    expect(DEFAULT_SETTINGS.homeTimelineRange).toBe('week');
+  });
+
+  it('「已跳过」已退役：过滤类型里没有它，痕迹也不会被判成它', () => {
+    expect(Object.keys(DEFAULT_TIMELINE_FILTER).sort()).toEqual(['notes', 'produce', 'progress']);
+    // 剪藏跳过的文案即便出现，也只会落到 produce/progress 两档之一（不存在第三档）
+    expect(['produce', 'progress']).toContain(timelineKind('跳过《某篇》'));
+  });
+
   it('flowHtml：痕迹被过滤光 → 专属空态（明确告知「东西在，只是没显示」）', () => {
     const html = flowHtml(river([ev('新增备忘录『甲』')]), '2026-09-11', { filter: F({ progress: false }) });
     expect(html).toContain('bz-home-flow-empty');
-    expect(html).toContain('时间线内容过滤');
+    expect(html).toContain('内容过滤');
     expect(html).toContain('设置');
   });
 
   it('flowHtml：本来就没痕迹 → 原来的空态（不说「被过滤了」）', () => {
     const html = flowHtml(river([]), '2026-09-11', { filter: F() });
     expect(html).toContain('这一天还没有留下痕迹');
-    expect(html).not.toContain('时间线内容过滤');
+    expect(html).not.toContain('被「内容过滤」挡掉');
   });
 
   it('flowHtml：时刻列开关与字号档落到 data 属性；关掉不渲染时刻文本', () => {
