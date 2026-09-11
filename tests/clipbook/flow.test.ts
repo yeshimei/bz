@@ -13,7 +13,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { getNewsFilePath, readNewsData } from '../../src/clipbook/news-data';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
-import { flowSave, flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews, flowDeleteNews } from '../../src/clipbook/flow';
+import { flowSave, flowMarkRead, flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews, flowDeleteNews } from '../../src/clipbook/flow';
 
 vi.mock('../../src/knowledge', () => ({ openKnowledgeAddTask: vi.fn() }));
 const { openKnowledgeAddTask } = await import('../../src/knowledge');
@@ -66,6 +66,36 @@ describe('B站保存分流回写（enh 包 11）', () => {
     const { queryBySource } = await import('../../src/clipbook/store');
     const stream = queryBySource(disk.articles, { articleOverrides: {}, savedArchive: [], order: [] }, new Set(), [], { kind: 'all' }, {});
     expect(stream).toHaveLength(0);
+  });
+});
+
+describe('F3 review 收编：已读未收补收升级路径', () => {
+  it('已读未收（read=true state=skipped）再保存 → state 升级 saved、totalSaved+1，totalRead 不重复计', async () => {
+    const vault = seedDisk([
+      { platform: 'B站', title: '已读未收片', url: 'https://b23.tv/up', author: 'UP主', body: '简介', date: '2026-09-01 08:00:00', read: true, state: 'skipped' },
+    ]);
+    const ok = await flowSave({ raw: diskJson(vault).articles[0] });
+    expect(ok).toBe(true);
+    await drainNewsWritesForTests();
+    const disk = diskJson(vault);
+    const a = disk.articles.find((x: any) => x.url === 'https://b23.tv/up');
+    expect(a.read).toBe(true);
+    expect(a.state).toBe('saved'); // 修复前被 F3 守卫拦截，恒停 skipped（笔记已写出但盘面不映）
+    expect(disk.stats.totalSaved).toBe(1); // 升级计入已收
+    expect(disk.stats.totalRead).toBe(0); // 已是已读，不重复计
+    expect(disk.stats.totalSkipped).toBe(0);
+  });
+
+  it('已读未收再走标读（skipped→skipped）→ 仍拦截：state 不变、统计全不动', async () => {
+    const vault = seedDisk([
+      { platform: 'B站', title: '已读未收片', url: 'https://b23.tv/up2', author: 'UP主', body: '简介', date: '2026-09-01 08:00:00', read: true, state: 'skipped' },
+    ]);
+    const before = diskJson(vault).stats;
+    await flowMarkRead({ raw: diskJson(vault).articles[0] });
+    await drainNewsWritesForTests();
+    const disk = diskJson(vault);
+    expect(disk.articles.find((x: any) => x.url === 'https://b23.tv/up2').state).toBe('skipped');
+    expect(disk.stats).toEqual(before); // 重复标读不重复计数（F3 原口径保持）
   });
 });
 
