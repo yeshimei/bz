@@ -1,4 +1,4 @@
-/* 源指纹 ce86991d66695f0e · 仓内输入 208 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 16f4098da52d2e55 · 仓内输入 208 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -7885,6 +7885,13 @@ var BZW_memo = (() => {
   function defaultPomodoroData() {
     return { version: 1, state: createInitialState(), history: [] };
   }
+  function trimHistory(history2, now) {
+    const floor = new Date(now);
+    floor.setHours(0, 0, 0, 0);
+    floor.setDate(floor.getDate() - 6);
+    const t = floor.getTime();
+    return history2.filter((h) => h.ts >= t);
+  }
   function normalizeData(raw) {
     const def = defaultPomodoroData();
     if (!raw || typeof raw !== "object") return def;
@@ -8376,8 +8383,10 @@ var BZW_memo = (() => {
     if (skipBtn) skipBtn.disabled = locked;
   }
   function applyAction(action) {
+    const prev = state;
     const r = transition(state, action, Date.now(), durations(), options());
     state = r.state;
+    if (!state.paused) autoPauseMain = false;
     if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
     if (r.event.type === "phase-completed") {
       if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
@@ -8387,7 +8396,7 @@ var BZW_memo = (() => {
       }
     }
     if (action === "pause" && state.paused) notifyPaused();
-    if (r.event.type !== "none" || action === "pause" && state.paused) void save();
+    if (r.event.type !== "none" || action === "pause" && state.paused || action === "reset" && r.state !== prev) void save();
     ensureTick();
     render();
   }
@@ -8458,13 +8467,14 @@ var BZW_memo = (() => {
     }
   }
   async function save() {
+    history = trimHistory(history, Date.now());
     if (dataManager) await dataManager.save({ version: 1, state, history });
   }
   async function initData() {
     const data = await dataManager.load();
     const r = recover(data.state, data.history, Date.now(), durations(), options());
     state = r.state;
-    history = r.history;
+    history = trimHistory(r.history, Date.now());
     const mainChanged = data.state.endTime !== null && r.state.endTime === null;
     if (mainChanged) await dataManager.save({ version: 1, state, history });
     loaded = true;
@@ -16402,7 +16412,8 @@ ${countsToText(s.missing)}
   async function writeNewsDataMerged(intent) {
     var _a2;
     const res = await readNewsData();
-    const base = res.ok ? res.data : emptyData();
+    if (!res.ok) return;
+    const base = res.data;
     const next = { ...base };
     if (intent.set.articles || ((_a2 = intent.removeArticleKeys) == null ? void 0 : _a2.length)) {
       const patchList = intent.set.articles || [];
@@ -16868,7 +16879,8 @@ ${bodyText.substring(0, 6e3)}`;
           e.stopPropagation();
           retryBtn.remove();
           errHandle.hide();
-          void processFile(app, ai, file, { force });
+          void Promise.resolve().then(() => (init_auto_summary(), auto_summary_exports)).then((m) => m.retrySummaryWithAI(app, ai, file, force)).catch(() => {
+          });
         });
         errHandle.el.appendChild(retryBtn);
         return;
@@ -16941,6 +16953,16 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/auto-summary/index.ts
+  var auto_summary_exports = {};
+  __export(auto_summary_exports, {
+    ensureAutoSummary: () => ensureAutoSummary,
+    isAutoSummaryInitialized: () => isAutoSummaryInitialized,
+    redoSummaryForActiveFile: () => redoSummaryForActiveFile,
+    regenerateSummary: () => regenerateSummary,
+    retrySummaryWithAI: () => retrySummaryWithAI,
+    stopAutoSummary: () => stopAutoSummary,
+    unloadAutoSummary: () => unloadAutoSummary
+  });
   function getWatchDir() {
     const s = tryGetSettings();
     return s && s.articleDirectory || "归档/网页剪藏";
@@ -17012,6 +17034,19 @@ ${bodyText.substring(0, 6e3)}`;
     if (!file || file.extension !== "md") return Promise.resolve();
     return enqueueJob({ app, ai: createAI(), file, force: true });
   }
+  function retrySummaryWithAI(app, ai, file, force) {
+    if (!file || file.extension !== "md") return Promise.resolve();
+    return enqueueJob({ app, ai, file, force });
+  }
+  async function redoSummaryForActiveFile(app) {
+    const ws = app && app.workspace;
+    const file = ws && typeof ws.getActiveFile === "function" ? ws.getActiveFile() : null;
+    if (!file || file.extension !== "md" || !String(file.path || "").startsWith(getWatchDir() + "/")) {
+      notify("当前打开的不是剪藏笔记，无法重新生成摘要", { type: "info" });
+      return;
+    }
+    await regenerateSummary(app, file);
+  }
   function scheduleRegister(app) {
     const ai = createAI();
     registerTimer = setTimeout(() => {
@@ -17036,6 +17071,9 @@ ${bodyText.substring(0, 6e3)}`;
     vaultRef = app.vault;
     workspaceRef = app.workspace;
     scheduleRegister(app);
+  }
+  function isAutoSummaryInitialized() {
+    return initialized2;
   }
   function stopAutoSummary() {
     if (registerTimer) {
@@ -17070,6 +17108,12 @@ ${bodyText.substring(0, 6e3)}`;
     batchTotal = 0;
     batchDone = 0;
     processingPaths.clear();
+  }
+  function unloadAutoSummary() {
+    stopAutoSummary();
+    initialized2 = false;
+    vaultRef = null;
+    workspaceRef = null;
   }
   var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
   var init_auto_summary = __esm({
@@ -18096,7 +18140,12 @@ ${bodyText.substring(0, 6e3)}`;
     let data = res.data;
     const cleaned = applyRetention(data.articles, days, days);
     const retentionChanged = cleaned.length !== data.articles.length;
-    if (retentionChanged) data = { ...data, articles: cleaned };
+    let removedKeys = [];
+    if (retentionChanged) {
+      const kept = new Set(cleaned.map((a) => articleKeyOf(a)));
+      removedKeys = (data.articles || []).map((a) => articleKeyOf(a)).filter((k) => !kept.has(k));
+      data = { ...data, articles: cleaned };
+    }
     let statsChanged = false;
     if (!statsHasData(data.stats)) {
       const migrated = await migrateLegacyStats(data);
@@ -18109,7 +18158,7 @@ ${bodyText.substring(0, 6e3)}`;
       const set = {};
       if (retentionChanged) set.articles = data.articles;
       if (statsChanged) set.stats = data.stats;
-      await enqueueNewsWrite(() => writeNewsDataMerged({ set }));
+      await enqueueNewsWrite(() => writeNewsDataMerged({ set, removeArticleKeys: removedKeys }));
     }
     const sidecar = await readClipbookData();
     const clipNotes = await scanClipDirectory(M5.dir || clipDir(), {
@@ -18130,6 +18179,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_data6();
       init_scan();
       init_store();
+      init_constants3();
       init_settings_provider();
       init_app();
       init_state5();
@@ -21191,10 +21241,16 @@ ${sample}`,
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
+      let touched = false;
+      let changed = false;
       const list = (res.data.articles || []).map((a) => {
         if (articleKeyOf(a) !== key) return a;
+        touched = true;
+        if (a.read === true) return a;
+        changed = true;
         return { ...a, read: true, state: action };
       });
+      if (!touched || !changed) return;
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       s.totalRead = (Number(s.totalRead) || 0) + 1;
       if (action === "saved") s.totalSaved = (Number(s.totalSaved) || 0) + 1;
@@ -21818,7 +21874,10 @@ ${sample}`,
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M5.cur && M5.cur.id))) M5.cur = list[0];
+      if (!list.some((a) => a.id === (M5.cur && M5.cur.id))) {
+        M5.cur = list[0];
+        if (readerEl) renderReader();
+      }
       listEl.innerHTML = tocListHtml(list, M5.cur ? M5.cur.id : null, (a) => relTime(a.timeTs));
       M5.list = list;
       bindItemMenus();
@@ -22060,6 +22119,7 @@ ${sample}`,
   }
   async function doMarkRead(a) {
     if (!a || a.origin !== "news") return;
+    if (a.st !== "unread") return;
     const rawBefore = { ...a.raw || {} };
     await flowMarkRead(a);
     notifyUndo(`已将「${a.title}」标为已读`, () => void undoMarkRead(rawBefore));
@@ -22992,10 +23052,23 @@ ${sample}`,
     const app = appOf();
     try {
       app.openUrl(url);
+      return;
     } catch (e) {
-      const electron = window.require && window.require("electron");
-      if (electron && electron.shell) electron.shell.openExternal(url);
     }
+    try {
+      const electron = window.require && window.require("electron");
+      if (electron && electron.shell) {
+        electron.shell.openExternal(url);
+        return;
+      }
+    } catch (e) {
+    }
+    try {
+      const w = window.open(url, "_blank");
+      if (w) return;
+    } catch (e) {
+    }
+    notice("无法打开链接，请复制到浏览器打开", "error");
   }
   function formTagsNow(popup) {
     return [...popup.querySelectorAll("#fz-tags [data-tag].bz-fav-on")].map((b) => b.dataset.tag || "").sort().join("|");
@@ -23028,6 +23101,8 @@ ${sample}`,
   function openForm2(item) {
     var _a2, _b2, _c;
     ensureFavoritesEsc();
+    const existing = document.querySelector(".bz-fav-form");
+    if (existing) closeForm(existing);
     const it = item;
     const mask = document.createElement("div");
     mask.className = "bz-fav-form-mask bz-fav-scope";

@@ -19,7 +19,7 @@ import { tryGetSettings, getSettings, saveSettings } from '../core/settings-prov
 import { notice, notify } from '../core/notice';
 import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
-import { PomodoroDataManager } from './data';
+import { PomodoroDataManager, trimHistory } from './data';
 // 面板主题清单 / 弹窗骨架：单源在 ./render（ui.ts 与评审壳皮肤页共用）
 import {
   POMODORO_SKIN_THEMES,
@@ -319,8 +319,13 @@ function updateButtons(): void {
 
 /** 状态变更统一入口：transition → 落盘（完成事件）→ 通知/声音 → tick 生命周期 → 渲染 */
 function applyAction(action: PomodoroAction): void {
+  const prev = state;
   const r = transition(state, action, Date.now(), durations(), options());
   state = r.state;
+  // F12：冻结标记随「paused 被清除」一并清——resume/start/reset 等任意解冻路径都经此处，
+  // 防标记残留后 resumeOnVisible 把后续的手动暂停静默续跑（document.hidden 期间 popout
+  // 窗口/通知动作等入口仍可驱动的场景）
+  if (!state.paused) autoPauseMain = false;
   if (r.event.type === 'started') notifyPhaseStarted(r.event.phase);
   if (r.event.type === 'phase-completed') {
     if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
@@ -336,8 +341,9 @@ function applyAction(action: PomodoroAction): void {
   // 暂停生效（含手动；forceFocus 下 transition 返回 none 不触发）才通知+响
   if (action === 'pause' && state.paused) notifyPaused();
   // 落盘：事件非 none（阶段完成/开始），或手动暂停生效（ticket 62：暂停态与后台冻结应持久化；
-  // 手动暂停不带来源标记，重启后 locked 判定维持锁定）
-  if (r.event.type !== 'none' || (action === 'pause' && state.paused)) void save();
+  // 手动暂停不带来源标记，重启后 locked 判定维持锁定），或重置/停止生效（F11：reset 恒返回
+  // none 事件，不落盘会旧计时复活重启后弹「番茄钟继续」；forceFocus 拦下的 reset 同引用不写）
+  if (r.event.type !== 'none' || (action === 'pause' && state.paused) || (action === 'reset' && r.state !== prev)) void save();
   ensureTick();
   render();
 }
@@ -429,6 +435,7 @@ function ensureTick(): void {
 }
 
 async function save(): Promise<void> {
+  history = trimHistory(history, Date.now()); // F13：历史按保留窗裁剪后再落盘（pomodoro.json 不线性膨胀）
   if (dataManager) await dataManager.save({ version: 1, state, history });
 }
 
@@ -437,7 +444,7 @@ async function initData(): Promise<void> {
   const data = await dataManager!.load();
   const r = recover(data.state, data.history, Date.now(), durations(), options());
   state = r.state;
-  history = r.history;
+  history = trimHistory(r.history, Date.now()); // F13：装载即裁剪（此后任何 save 落盘的都是裁剪后历史）
   // 主番茄钟超时回空闲（endTime 从有到无）→ 落盘
   const mainChanged = data.state.endTime !== null && r.state.endTime === null;
   if (mainChanged) await dataManager!.save({ version: 1, state, history });

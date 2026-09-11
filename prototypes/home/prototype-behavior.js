@@ -1,4 +1,4 @@
-/* 源指纹 21bb0a992f668f26 · 仓内输入 97 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b09f1bfa1de935b2 · 仓内输入 97 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -7302,6 +7302,13 @@ var BZW_home = (() => {
   function defaultPomodoroData() {
     return { version: 1, state: createInitialState(), history: [] };
   }
+  function trimHistory(history2, now) {
+    const floor = new Date(now);
+    floor.setHours(0, 0, 0, 0);
+    floor.setDate(floor.getDate() - 6);
+    const t = floor.getTime();
+    return history2.filter((h) => h.ts >= t);
+  }
   function normalizeData(raw) {
     const def = defaultPomodoroData();
     if (!raw || typeof raw !== "object") return def;
@@ -12392,8 +12399,10 @@ ${n.content.slice(0, 2e3)}
     if (skipBtn) skipBtn.disabled = locked;
   }
   function applyAction(action) {
+    const prev = state;
     const r = transition(state, action, Date.now(), durations(), options());
     state = r.state;
+    if (!state.paused) autoPauseMain = false;
     if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
     if (r.event.type === "phase-completed") {
       if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
@@ -12403,7 +12412,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     if (action === "pause" && state.paused) notifyPaused();
-    if (r.event.type !== "none" || action === "pause" && state.paused) void save();
+    if (r.event.type !== "none" || action === "pause" && state.paused || action === "reset" && r.state !== prev) void save();
     ensureTick();
     render();
   }
@@ -12474,13 +12483,14 @@ ${n.content.slice(0, 2e3)}
     }
   }
   async function save() {
+    history = trimHistory(history, Date.now());
     if (dataManager2) await dataManager2.save({ version: 1, state, history });
   }
   async function initData() {
     const data = await dataManager2.load();
     const r = recover(data.state, data.history, Date.now(), durations(), options());
     state = r.state;
-    history = r.history;
+    history = trimHistory(r.history, Date.now());
     const mainChanged = data.state.endTime !== null && r.state.endTime === null;
     if (mainChanged) await dataManager2.save({ version: 1, state, history });
     loaded = true;

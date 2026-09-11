@@ -187,7 +187,11 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
         e.stopPropagation();
         retryBtn.remove();
         errHandle.hide();
-        void processFile(app, ai, file, { force }); // 重试保留 force 语义（手动重跑失败重试仍不吞标题）
+        // F9：重试改走域队列（retrySummaryWithAI 复用 processingPaths 去重）——直调 processFile
+        // 绕过去重，双击并发跑两次 AI 双倍花费；函数级动态 import 解 processor←→index 环（ADR-0002）
+        void import('./index')
+          .then((m) => m.retrySummaryWithAI(app, ai, file, force))
+          .catch(() => { /* 队列入口不可用（卸载中）时放弃重试 */ });
       });
       errHandle.el.appendChild(retryBtn);
       return;
