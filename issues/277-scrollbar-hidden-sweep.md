@@ -75,3 +75,4 @@
 - [ ] 全量门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 自审 + diff 审查 + 主仓 `pnpm run build` 部署（分支侧 test / tsc / 自审 / diff 审查已过；主仓 build 部署待合并后执行）
 
 > **首轮执行遗留（2026-09-11）**：`src/core/styles.css` 的 `.bz-item-sheet-body`（:751-757）与 `src/home/styles.css`（:61-62、:95）两处「已隐藏的冗余声明」本轮未删——主仓有并行会话正在改这两个文件，避让防合并冲突；新核心界面级规则已覆盖同批容器，删除纯属去重、不删不影响任何可见效果，留待下轮清退。
+> **review 收口（2026-09-12）**：review（Standards 轴）点名的 bookshelf（借书卡详情弹窗/内部滚动体）与 diary（#add-diary-popup/.diary-tag-selector-popup/.diary-datetime-scroll-container 三组域内重复定义）残留冗余已当场清退（`f1a0546b`）；上述两条避让项仍留待下轮。
