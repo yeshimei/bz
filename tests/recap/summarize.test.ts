@@ -134,6 +134,21 @@ describe('sanitizeSummaryText / buildEntryContent / isRecapEntry', () => {
     expect(sanitizeSummaryText('普通 # 标记 不动')).toContain('# 标记');
   });
 
+  it('D8 回归：行首任意「#{1,6} 」标题形（含不带时间的 # 标题）都转全角，重解析不再锁死当天', () => {
+    // 不带时间的 `# 标题` 行（前有空行）：旧消毒放过 → 空行+# 行提前闭合条目，
+    // 该行及之后正文全部计成未解析行 → 写守卫锁死当天、一键修复修不了
+    const out = sanitizeSummaryText('总结开头\n\n# 标题\n后续正文\n\n## 小节\n尾');
+    expect(out).toBe('总结开头\n\n＃ 标题\n后续正文\n\n＃＃ 小节\n尾');
+    // 消毒后的正文写进日记条目重解析：不再产生未解析行、条目完整
+    const content = buildEntryContent(out, DATA.summary, EMPTY_FAILED, { withNumbers: false });
+    let unparsed = 0;
+    const parsed = parseFile(`# 📖 21:00\n\n${content}\n`, '2026-09-04', (n) => (unparsed = n));
+    expect(unparsed).toBe(0);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0].content).toContain('＃ 标题');
+    expect(parsed[0].content).toContain('尾');
+  });
+
   it('AI 模式正文 = 标记行 + 正文 + 空行 + 关键数字行；模板模式无数字行', () => {
     const ai = buildEntryContent('今天你过得很踏实。', DATA.summary, EMPTY_FAILED, { withNumbers: true });
     expect(ai.split('\n')).toEqual([

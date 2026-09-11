@@ -8,17 +8,32 @@ import { notice } from '../../core/notice';
 import { openFlowDialog } from '../../core/flow-dialog';
 import { getApp } from '../../core/app';
 import { emitDomainEvent } from '../../core/domain-bus';
+import { stripMdExt } from '../../core/utils';
 import { DIARY_DIRECTORY } from '../config';
-import { isUnparsedRefusal, removeDiaryEntries } from '../store';
+import { isUnparsedRefusal, isDiaryReadFailure, removeDiaryEntries } from '../store';
 import { deleteEncryptedEntry } from '../encrypt';
 import type { DiaryEntryLocator } from './dialogs';
 import { buildLocatorPredicateFor } from './locator';
-/** 跳转普通日记条目原文：打开 `<日记目录>/<日期>#<emoji 时间>` 标题锚点 */
-export async function jumpToDiaryEntry(entry: { filename: string; emoji: string; time: string }): Promise<void> {
-  const fileName = entry.filename; // 日期字符串，不含扩展名
-  const filePath = `${DIARY_DIRECTORY}/${fileName}.md`;
+
+/** 条目锚点面：filename（日期串）或 filePath（完整路径，子目录日期文件）二选一 */
+export interface DiaryAnchorRef {
+  filename: string;
+  /** 完整 vault 路径（D2：子目录日期文件跳转/双链按实际路径构建，不再平面拼顶层） */
+  filePath?: string;
+  emoji: string;
+  time: string;
+}
+
+/** 条目所在 md 文件路径（filePath 优先；缺省按顶层 `<日记目录>/<filename>.md` 拼） */
+function diaryEntryFilePath(entry: DiaryAnchorRef): string {
+  return entry.filePath || `${DIARY_DIRECTORY}/${entry.filename}.md`;
+}
+
+/** 跳转普通日记条目原文：打开 `<日记路径>#<emoji 时间>` 标题锚点 */
+export async function jumpToDiaryEntry(entry: DiaryAnchorRef): Promise<void> {
+  const filePath = diaryEntryFilePath(entry);
   const anchor = `${entry.emoji} ${entry.time}`; // 例如 "📖 14:30"
-  const link = `${DIARY_DIRECTORY}/${fileName}#${anchor}`;
+  const link = `${stripMdExt(filePath)}#${anchor}`;
 
   // 检查文件是否存在
   const file = getApp().vault.getAbstractFileByPath(filePath) as any;
@@ -31,9 +46,9 @@ export async function jumpToDiaryEntry(entry: { filename: string; emoji: string;
   await getApp().workspace.openLinkText(link, '', false, { active: true });
 }
 
-/** 复制普通日记条目的双链引用（`[[日记目录/日期#emoji 时间]]`） */
-export async function copyDiaryLink(entry: { filename: string; emoji: string; time: string }): Promise<void> {
-  const link = `[[${DIARY_DIRECTORY}/${entry.filename}#${entry.emoji} ${entry.time}]]`;
+/** 复制普通日记条目的双链引用（`[[日记路径不带扩展名#emoji 时间]]`） */
+export async function copyDiaryLink(entry: DiaryAnchorRef): Promise<void> {
+  const link = `[[${stripMdExt(diaryEntryFilePath(entry))}#${entry.emoji} ${entry.time}]]`;
   await navigator.clipboard.writeText(link);
   notice(`已复制双链引用：${link}`, 'success');
 }
@@ -63,7 +78,9 @@ export function showConfirm(loc: DiaryEntryLocator): void {
         // 动作埋点：加密日记密文销毁（本期无消费者，emit 即可）
         emitDomainEvent('diary:encrypted-purged', { noteId: loc.noteId });
       } else {
-        const removed = await removeDiaryEntries(loc.date, await buildLocatorPredicateFor(loc.date, loc));
+        const removed = await removeDiaryEntries(loc.date, await buildLocatorPredicateFor(loc.date, loc), {
+          filePath: loc.filePath,
+        });
         if (removed === 0) {
           notice('未能在日记数据中定位该条目，没有删除', 'error');
           return;
@@ -74,7 +91,7 @@ export function showConfirm(loc: DiaryEntryLocator): void {
       notice('日记条目已删除', 'success');
     })
     .catch((err: any) => {
-      if (err && isUnparsedRefusal(err)) return; // 守卫拒删：人话通知已由写层发出
+      if (err && (isUnparsedRefusal(err) || isDiaryReadFailure(err))) return; // 守卫拒删/读失败：人话通知已由写层发出
       // P3 审查修复：删除失败必须有人话提示（旧实现 .then 无 .catch，deleteEntry 抛错
       // 成为 unhandled rejection，用户确认后什么都没发生也无从排查）
       notice('删除日记失败：' + (err?.message || err), 'error');

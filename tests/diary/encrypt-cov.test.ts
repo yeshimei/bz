@@ -195,7 +195,7 @@ describe('loadEncryptedEntries 防御分支', () => {
 });
 
 describe('reclassifyEntry 分支', () => {
-  it('newTags 为空 → 原文原样还原并从保险箱取出', async () => {
+  it('D10 回归：newTags 为空 → 标题兜底「日记」重建（不再原样保留 🔐 把条目永久藏进墙里）', async () => {
     const sm = await unlockSafe();
     // 用与现有块不同的时间槽，避免同标题幂等合并跳过写盘
     const res = await encryptEntry(plainEntry({ time: '21:00', timeValue: 2100, content: '要还原的日记' }));
@@ -205,8 +205,35 @@ describe('reclassifyEntry 分支', () => {
     await waitFor(() => sm.manifest.notes.length === 0);
     const md = vault.files.get('我的/日记/2024-01-01.md')!;
     expect(md).toContain('要还原的日记');
-    // 空标签 = 原样保留：原始 emoji 序列（含 🔐）不动
-    expect(md).toContain('# 📖🔐 21:00');
+    // 空标签兜底「日记」：标题重建为 📖，不再残留 🔐（残留会被墙按「加密」永久隐藏且无 noteId 可再解）
+    expect(md).toContain('# 📖 21:00');
+    expect(md).not.toContain('🔐');
+  });
+
+  it('D9 回归：encryptEntry 的 noteId 来自 lockNote 返回值（与清单中该篇 id 一致）', async () => {
+    const sm = await unlockSafe();
+    const res = await encryptEntry(plainEntry());
+    expect(res).not.toBeNull();
+    const note = sm.manifest.notes.find((n: any) => n.id === res!.noteId);
+    expect(note).toBeTruthy();
+    expect(note!.kind).toBe('diary-entry');
+    expect(note!.path).toBe('我的/日记/2024-01-01.md');
+  });
+
+  it('D9 回归：日记目录变更后解密还原按当前目录重算落点（不还原进旧目录）', async () => {
+    const sm = await unlockSafe();
+    const res = await encryptEntry(plainEntry({ time: '21:00', timeValue: 2100, content: '要还原的日记' }));
+    expect(res).not.toBeNull();
+    const note = sm.manifest.notes.find((n: any) => n.id === res!.noteId)!;
+    // 模拟用户改日记目录 + 旧文件已不在：note.path 还指着旧目录
+    note.path = '日记本/2024-01-01.md';
+    vault.files.delete('我的/日记/2024-01-01.md');
+    await applyDirectories({ diaryDirectory: '日记本' });
+    const ok = await reclassifyEntry(res!.noteId!, ['日记']);
+    expect(ok).toBe(true);
+    await waitFor(() => sm.manifest.notes.length === 0);
+    expect(vault.files.get('日记本/2024-01-01.md')).toContain('要还原的日记');
+    applyDirectories({});
   });
 
   it('明文异常（无标题行）→ 返回 false 且清单不变', async () => {

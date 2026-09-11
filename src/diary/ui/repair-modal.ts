@@ -32,6 +32,8 @@ function findDirRecursive(node: any, target: string): any | null {
   return null;
 }
 
+/** 递归收集日记目录下全部 .md（含子目录；D3：子目录日记同样被守卫拒写，
+ *  只扫顶层会让子目录的未解析行永远「检测不出、修不了」，该日期永久写不进） */
 async function collectDiaryFiles(): Promise<any[]> {
   const app = getApp();
   let dir = app.vault.getAbstractFileByPath(DIARY_DIRECTORY) as any;
@@ -40,9 +42,15 @@ async function collectDiaryFiles(): Promise<any[]> {
     dir = findDirRecursive(root, DIARY_DIRECTORY);
   }
   if (!dir || !dir.children) return [];
-  return dir.children
-    .filter((f: any) => f.extension === 'md')
-    .sort((a: any, b: any) => b.name.localeCompare(a.name));
+  const out: any[] = [];
+  const walk = (node: any) => {
+    for (const child of node.children ?? []) {
+      if (child.children) walk(child); // 子目录递归
+      else if (child.extension === 'md') out.push(child);
+    }
+  };
+  walk(dir);
+  return out.sort((a: any, b: any) => b.name.localeCompare(a.name));
 }
 
 async function runScan(

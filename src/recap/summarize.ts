@@ -78,12 +78,15 @@ export function buildSummaryPrompt(digest: string): string {
   ].join('\n');
 }
 
-/** AI 返回消毒：日记条目正文里行首 `# … HH:mm` 形会在重解析时被误切成新条目，
- *  命中该形态的行把半角 # 换成全角＃（总结是纯文本，不影响阅读） */
+/** AI 返回消毒：日记条目正文里的行首 markdown 标题行会在重解析时出事——
+ *  `# 📖 09:00` 形被 parseFile 误切成新条目；不带时间的 `# 标题` 行（前有空行）更隐蔽：
+ *  空行 + `#` 开头会提前闭合当前条目（尾部正文丢失），该行及其后正文全部计成「无法解析行」，
+ *  写守卫从此锁死当天、一键修复也修不了。一律把行首 `#{1,6} ` 的半角 # 换成全角＃
+ *  （总结是纯文本，不影响阅读）。 */
 export function sanitizeSummaryText(text: string): string {
   return text
     .split('\n')
-    .map((line) => (/^#{1,6}\s+\S+\s+\d{2}:\d{2}/.test(line) ? line.replace(/^#+/, (h) => '＃'.repeat(h.length)) : line))
+    .map((line) => (/^#{1,6}\s/.test(line) ? line.replace(/^#+/, (h) => '＃'.repeat(h.length)) : line))
     .join('\n')
     .trim();
 }

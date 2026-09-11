@@ -21,7 +21,7 @@ import {
   isSubTag,
 } from '../config';
 import { parseFlexibleDateTime } from '../parser';
-import { addEntry, updateDiaryTags, isUnparsedRefusal } from '../store';
+import { addEntry, updateDiaryTags, isUnparsedRefusal, isDiaryReadFailure } from '../store';
 import { ENCRYPT_TAG, reclassifyEntry } from '../encrypt';
 import { emitDomainEvent } from '../../core/domain-bus';
 import { createDateTimeControl, resetDateTimeControl, setDateTimeYearRangeProvider } from './datetime-picker';
@@ -54,6 +54,8 @@ function createTagOptionButton(tag: string): HTMLButtonElement {
 export interface DiaryEntryLocator {
   /** 来源文件名（日记 = 日期字符串） */
   filename: string;
+  /** 来源文件完整 vault 路径（子目录日期文件必带；D2：写层按路径定位，不平面误写顶层同名文件） */
+  filePath?: string;
   /** 日期 YYYY-MM-DD */
   date: string;
   /** 时间 HH:mm */
@@ -184,12 +186,12 @@ async function handleTagPickerSave(loc: DiaryEntryLocator, selTagNames: string[]
   const dateStr = loc.date;
   const predicate = await buildLocatorPredicateFor(dateStr, loc);
   try {
-    const updated = await updateDiaryTags(dateStr, predicate, selTagNames);
+    const updated = await updateDiaryTags(dateStr, predicate, selTagNames, { filePath: loc.filePath });
     if (!updated) {
       notice('未能在日记数据中定位该条目，标签没有修改', 'error');
     }
   } catch (e) {
-    if (!isUnparsedRefusal(e)) throw e;
+    if (!isUnparsedRefusal(e) && !isDiaryReadFailure(e)) throw e;
   }
 }
 
@@ -381,8 +383,13 @@ function getUseFileDateTimeSetting(): boolean {
   return s?.useFileDateTime === true;
 }
 
+/** 保存进行中标志（D7 防连点）：大文件写盘慢时双击「保存」会在同刻写入两条重复空条目，
+ *  同刻唯一兜底定位随之失效——进行中再点直接忽略，写盘结束（含失败）才放行。 */
+let savingNewEntry = false;
+
 /** 保存新日记条目（原 3428-3478；面板插拔随域退役，保存成功由写层发 diary:entry-added） */
 export async function saveNewEntry() {
+  if (savingNewEntry) return; // D7 防连点：上一笔仍在写盘
   const datetimeInput = document.getElementById('add-diary-datetime') as HTMLInputElement | null;
   const mask = document.getElementById('add-diary-mask');
   const popup = document.getElementById('add-diary-popup');
@@ -408,14 +415,17 @@ export async function saveNewEntry() {
   const dateStr = targetMoment.format('YYYY-MM-DD');
   const timeStr = targetMoment.format('HH:mm');
 
+  savingNewEntry = true;
   try {
     await addEntry(dateStr, timeStr, selTagNames, '');
     // 收紧通知（memo item-1789105697068）：保存成功结果立即可见（弹窗关、墙已刷新），不再弹成功提示
     mask.style.display = 'none';
     popup.style.display = 'none';
   } catch (error: any) {
-    if (isUnparsedRefusal(error)) return; // 守卫拒写：人话通知已由写层发出
+    if (isUnparsedRefusal(error) || isDiaryReadFailure(error)) return; // 守卫拒写/读盘失败：人话通知已由写层发出
     console.error('保存日记失败:', error);
     notice('保存日记失败：' + error.message, 'error');
+  } finally {
+    savingNewEntry = false;
   }
 }

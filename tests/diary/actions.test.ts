@@ -109,14 +109,19 @@ function menuButton(menu: HTMLElement, label: string): HTMLElement | null {
 }
 
 describe('日记本条目动作（ADR-0115 定位重构）', () => {
-  it('普通日记条目「复制双链」：entry-actions 收到 filename+emoji+time（本地拼锚点，无反查）', async () => {
+  it('普通日记条目「复制双链」：entry-actions 收到 filename+filePath+emoji+time（本地拼锚点，无反查）', async () => {
     await openAndWait();
     const item = document.querySelector('.bz-diary-desk .bz-diary-item') as HTMLElement;
     const menu = openMenu(item);
     const btn = menuButton(menu, '复制双链')!;
     btn.click();
     await waitFor(() => mocks.copyDiaryLink.mock.calls.length > 0);
-    expect(mocks.copyDiaryLink).toHaveBeenCalledWith({ filename: '2026-08-19', emoji: '📖', time: '23:02' });
+    expect(mocks.copyDiaryLink).toHaveBeenCalledWith({
+      filename: '2026-08-19',
+      filePath: '我的/日记/2026-08-19.md',
+      emoji: '📖',
+      time: '23:02',
+    });
   });
 
   it('普通日记条目「删除」：locator 对象传 showConfirm（加密分流在 actions 内）', async () => {
@@ -153,6 +158,21 @@ describe('日记本条目动作（ADR-0115 定位重构）', () => {
     await c.encryptEntryAction(ghost);
     expect(mocks.encryptEntry).not.toHaveBeenCalled();
     expect(getNoticeMessages().join('\n')).toContain('找不到原文条目');
+  });
+
+  it('D5 回归：原文块摘除失败 → 回滚保险箱密文（deleteEncryptedEntry 收到 noteId）并弹失败提示', async () => {
+    await openAndWait();
+    // 密文入库后、摘除前原文件消失 → removeDiaryEntries 返回 0（旧实现只弹提示不回滚，
+    // 保险箱与原文双份并存，解锁后同条出现两次且重试越积越多）
+    mocks.encryptEntry.mockImplementation(async (entry: any) => {
+      vault.files.delete(`我的/日记/${entry.date}.md`);
+      return { encrypted: true, noteId: 'note-d5' };
+    });
+    const item = document.querySelector('.bz-diary-desk .bz-diary-item') as HTMLElement;
+    const menu = openMenu(item);
+    menuButton(menu, '加密')!.click();
+    await waitFor(() => getNoticeMessages().join('\n').includes('加密失败：原文块摘除未生效'));
+    expect(mocks.deleteEncryptedEntry).toHaveBeenCalledWith('note-d5');
   });
 
   it('影视条目菜单：无「加密」「删除」，改标签保留；动作兜底不触发解锁/删除', async () => {
