@@ -266,19 +266,24 @@ export const BatchRunner = {
           // 解析信息行（ADR-0067）：标题/UP主 落库（面板行内「文字+链接」展示）。
           // 先落库再回调：UI onTaskInfo 整表刷新时能确定性读到新字段（避免读旧快照的竞态）。
           // P3-2：不发射 knowledge:tasks 域事件——契约 §10 观察收敛为 converted/failed 两类，parsed 无订阅者
+          // issue 278 合并口径：标题与 UP主 同为「只在空时回填」——录入期回填/手填值不被下载阶段覆盖
           m = line.match(INFO_RE);
           if (m) {
             try {
               const info = JSON.parse(m[1]);
-              const title = info && typeof info.title === 'string' ? String(info.title).trim() : '';
-              const uploader = info && typeof info.uploader === 'string' ? String(info.uploader).trim() : '';
-              if (title) {
-                task.title = title;
-                task.uploader = uploader || task.uploader;
-                const patch: Partial<KnowledgeTask> = { title, uploader: task.uploader };
-                void KnowledgeData.updateTask(task.id, patch).then(() => {
-                  events.onTaskInfo({ ...task });
-                });
+              const infoTitle = info && typeof info.title === 'string' ? String(info.title).trim() : '';
+              const infoUploader = info && typeof info.uploader === 'string' ? String(info.uploader).trim() : '';
+              if (infoTitle || infoUploader) {
+                const prevTitle = task.title || '';
+                const prevUploader = task.uploader || '';
+                task.title = prevTitle || infoTitle;
+                task.uploader = prevUploader || infoUploader;
+                if (task.title !== prevTitle || task.uploader !== prevUploader) {
+                  const patch: Partial<KnowledgeTask> = { title: task.title || null, uploader: task.uploader || null };
+                  void KnowledgeData.updateTask(task.id, patch).then(() => {
+                    events.onTaskInfo({ ...task });
+                  });
+                }
               }
             } catch { /* 忽略坏信息行 */ }
             continue;

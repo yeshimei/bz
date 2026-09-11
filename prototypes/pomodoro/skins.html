@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>番茄钟 · 10 套皮肤（亮 / 暗）</title>
+<!--
+  番茄钟皮肤**验证页**（评审外景，非产物）：
+  皮肤已在 src/pomodoro/styles.css 实装（pomodoro-skin-<id>，亮色 + .theme-dark 暗色两套），
+  本页只负责把它们并排铺出来看——皮肤块不再手抄一份，改真 CSS 刷新即见。
+  每张卡 = 同一布局的亮色实例 + 暗色实例；暗色实例外层挂 .theme-dark（与 Obsidian 宿主同口径）。
+  卡片根 id 复用 #pomodoro-popup 是为了让真样式原样命中（重复 id 只影响 getElementById，不影响 CSS）。
+-->
+<link rel="stylesheet" href="../../src/core/styles.css">
+<link rel="stylesheet" href="../../src/core/ui/tokens.css">
+<link rel="stylesheet" href="../../src/core/ui/components.css">
+<link rel="stylesheet" href="../../src/pomodoro/styles.css">
+<style>
+  /* ===== 外景（验证页自用，禁放皮肤定义） ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; padding: 26px 22px 60px; background: #e3e0d8; color: #171512;
+    font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  body {
+    --background-primary: #fbf9f3; --background-secondary: #f2eee6; --text-normal: #171512;
+    --text-muted: #8b8474; --text-faint: #b3ab99; --background-modifier-border: rgba(23,21,18,.12);
+    --background-modifier-hover: rgba(23,21,18,.06); --interactive-accent: #3d8f5d; --text-on-accent: #fff;
+  }
+  h1 { font-size: 17px; font-weight: 700; }
+  .tip { font-size: 12px; color: #6b6558; margin-top: 6px; line-height: 1.7; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; margin-top: 18px; }
+  .card .pair { display: flex; gap: 10px; padding: 16px 10px; background: #ded9cd; }
+  .card .pair .side { flex: 1; display: flex; justify-content: center; }
+  .card .side.dark { background: #2b2b28; }
+  .card .meta { display: flex; align-items: baseline; gap: 8px; padding: 10px 2px 0; }
+  .card .name { font-size: 14px; font-weight: 700; }
+  .card .id { font-size: 11px; color: #8b8474; }
+  /* 缩略：popup 本体 320px，两个并排放不下，缩一档 */
+  #pomodoro-popup { transform: scale(.78); transform-origin: top center; }
+  #pomodoro-popup.pomodoro-skin-grid { transform: scale(.78); }
+</style>
+</head>
+<body class="theme-light">
+  <h1>番茄钟皮肤 · 10 套（每套亮 / 暗两版，布局全同）</h1>
+  <div class="tip">
+    皮肤已实装在 <code>src/pomodoro/styles.css</code>（<code>pomodoro-skin-&lt;id&gt;</code>：亮色 + <code>.theme-dark</code> 暗色），
+    设置面板「外观 → 面板主题」十张预览卡同步挂好；本页只是把它们铺出来验收。
+    默认 = <b>番茄</b>（与 settings 里既有的 pomodoroSkinTheme 默认值一致），切主题走设置面板。
+  </div>
+  <div class="grid" id="grid"></div>
+
+<script>
+  var SKINS = [
+    { id: 'tomato', name: '番茄（默认）' },
+    { id: 'ink', name: '墨白' },
+    { id: 'grid', name: '方格纸' },
+    { id: 'moss', name: '苔原' },
+    { id: 'mist', name: '海雾' },
+    { id: 'sand', name: '暖沙' },
+    { id: 'citrus', name: '蜜柑' },
+    { id: 'sakura', name: '樱粉' },
+    { id: 'latte', name: '咖啡' },
+    { id: 'night', name: '夜航' },
+  ];
+
+  var BARS = ['05', '06', '07', '08', '09', '10', '11'];
+  var HEIGHTS = [10, 18, 26, 12, 24, 40, 32];
+
+  function popupHtml(skin) {
+    var bars = BARS.map(function (d, i) {
+      return '<div class="pomodoro-stat-day">' +
+        '<div class="pomodoro-stat-col"><div class="pomodoro-stat-bar" style="height:' + HEIGHTS[i] + 'px"></div></div>' +
+        '<span class="pomodoro-stat-label">' + d + '</span></div>';
+    }).join('');
+    var dots = '';
+    for (var i = 0; i < 4; i++) dots += '<span class="pomodoro-cycle-dot' + (i < 2 ? ' pomodoro-cycle-dot-on' : '') + '"></span>';
+    return '<div id="pomodoro-popup" class="pomodoro-skin-' + skin.id + '">' +
+      '<svg id="pomodoro-ring-svg" viewBox="0 0 120 120">' +
+        '<circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>' +
+        '<circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52" ' +
+          'stroke-dasharray="326.7" stroke-dashoffset="120"></circle>' +
+      '</svg>' +
+      '<div id="pomodoro-cycle" class="pomodoro-cycle">' + dots + '</div>' +
+      '<div id="pomodoro-phase">专注</div>' +
+      '<div id="pomodoro-task" class="pomodoro-task">周报</div>' +
+      '<div id="pomodoro-time">15:00</div>' +
+      '<div class="pomodoro-controls">' +
+        '<div class="pomodoro-btn pomodoro-btn-primary">继续</div>' +
+        '<div class="pomodoro-btn">重置</div>' +
+        '<div class="pomodoro-btn">跳过</div>' +
+      '</div>' +
+      '<div class="pomodoro-stats">' +
+        '<div id="pomodoro-today">今日 2 个 · 50 分钟</div>' +
+        '<div id="pomodoro-week" class="pomodoro-week">' + bars + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  document.getElementById('grid').innerHTML = SKINS.map(function (s) {
+    return '<div class="card">' +
+      '<div class="pair">' +
+        '<div class="side">' + popupHtml(s) + '</div>' +
+        '<div class="side dark"><div class="theme-dark">' + popupHtml(s) + '</div></div>' +
+      '</div>' +
+      '<div class="meta"><span class="name">' + s.name + '</span><span class="id">' + s.id + '</span></div>' +
+    '</div>';
+  }).join('');
+</script>
+</body>
+</html>

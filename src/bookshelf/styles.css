@@ -565,11 +565,10 @@
   }
   .bz-bs-header {
     padding: var(--bz-space-md) 14px var(--bz-space-xs); gap: var(--bz-space-sm); flex-wrap: nowrap; align-items: center;
-    overflow-x: auto; scrollbar-width: none;
+    overflow-x: auto; /* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277） */
     /* 避让刘海/状态栏（=core .bz-panel-mtop 同档 44px；墙纸借此连纹理铺到面板顶边） */
     margin-top: max(44px, env(safe-area-inset-top, 0px));
   }
-  .bz-bs-header::-webkit-scrollbar { display: none; }
   .bz-bs-labels, .bz-bs-cats { display: contents; }
   .bz-bs-plaque { padding: 5px var(--bz-space-md); border-width: 2px; flex: none; cursor: pointer; }
   .bz-bs-plaque:active { transform: translateY(1px); }

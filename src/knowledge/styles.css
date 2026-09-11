@@ -151,7 +151,6 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 .bz-kb-pd { padding: 14px 26px 20px; }
@@ -304,7 +303,6 @@
   min-height: 0;
   overflow-y: auto;
   padding: var(--bz-space-md) 18px 18px;
-  scrollbar-width: thin;
 }
 
 .bz-kb-paras p {
@@ -520,7 +518,6 @@
   min-height: 0;
   overflow-y: auto;
   padding: 10px 18px var(--bz-space-lg);
-  scrollbar-width: thin;
 }
 
 .bz-kb-banner {

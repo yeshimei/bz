@@ -254,7 +254,7 @@ describe('番茄钟弹窗', () => {
     expect(el('pomodoro-btn-start').textContent).toContain('开始');
     expect(el('pomodoro-btn-reset')).not.toBeNull();
     expect(el('pomodoro-btn-skip')).not.toBeNull();
-    expect(el('pomodoro-btn-settings')).not.toBeNull();
+    expect(el('pomodoro-btn-settings')).toBeNull(); // ⚙ 已移除（2026-09-11 用户拍板：设置入口归设置面板）
   });
 
   it('点击开始 → 专注倒计时走；按钮变「暂停」', async () => {
@@ -582,18 +582,6 @@ describe('番茄钟弹窗', () => {
     expect(el('pomodoro-time').textContent).toBe('01:38'); // 倒计时继续走
   });
 
-  it('设置按钮默认隐藏，hover 弹窗显示', async () => {
-    const { app } = setup();
-    await openPomodoro(app);
-    const btn = el('pomodoro-btn-settings');
-    expect(btn.classList.contains('pomodoro-settings-hidden')).toBe(true);
-    const popup = el('pomodoro-popup');
-    popup.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
-    expect(btn.classList.contains('pomodoro-settings-hidden')).toBe(false);
-    popup.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
-    expect(btn.classList.contains('pomodoro-settings-hidden')).toBe(true);
-  });
-
   it('恢复：数据文件运行中超时 → 回空闲（ticket 62 不补算，不再流转补历史）', async () => {
     const vault = new MockVault();
     vault.files.set(
@@ -668,6 +656,20 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
     vi.useRealTimers();
   });
 
+  it('面板主题 → 弹窗皮肤类：设置给值即换类，同时只挂一套', async () => {
+    const { app } = setup(new MockVault(), { pomodoroSkinTheme: 'night' });
+    await openPomodoro(app);
+    const popup = el('pomodoro-popup');
+    expect(popup.classList.contains('pomodoro-skin-night')).toBe(true);
+    expect(popup.classList.contains('pomodoro-skin-tomato')).toBe(false);
+  });
+
+  it('面板主题未设 / 未知值 → 回落默认皮肤番茄', async () => {
+    const { app } = setup(new MockVault(), { pomodoroSkinTheme: 'no-such-skin' });
+    await openPomodoro(app);
+    expect(el('pomodoro-popup').classList.contains('pomodoro-skin-tomato')).toBe(true);
+  });
+
   it('循环位置圆点行：4 个 6px 方点，完成 1 个专注后点亮 1 个（替代「专注 N/M」文字）', async () => {
     const { app } = setup(new MockVault(), { pomodoroAutoCycle: true });
     await openPomodoro(app);
@@ -681,22 +683,18 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
     expect(dots().filter((d) => d.classList.contains('pomodoro-cycle-dot-on')).length).toBe(2);
   });
 
-  it('统计区：今日行带总分钟、7 天柱 title 带「N 个 · M 分钟」、今日 12 槽时段柱按完成时刻点亮', async () => {
+  it('统计区：今日行带总分钟、7 天柱 title 带「N 个 · M 分钟」（时段分布已移除，2026-09-11）', async () => {
     const { app } = setup();
     await openPomodoro(app);
     expect(el('pomodoro-today').textContent).toContain('今日 0 个 · 0 分钟');
-    expect(document.querySelectorAll('.pomodoro-hour-bar').length).toBe(12);
+    expect(document.getElementById('pomodoro-hours')).toBeNull(); // 今日时段分布已删（视觉降噪）
+    expect(document.querySelectorAll('.pomodoro-hour-bar').length).toBe(0);
     el('pomodoro-btn-start').click();
     await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
     expect(el('pomodoro-today').textContent).toContain('今日 1 个 · 25 分钟');
     const dayBars = [...document.querySelectorAll('.pomodoro-stat-day')] as HTMLElement[];
     expect(dayBars[6].title).toBe('2026-08-10：1 个 · 25 分钟');
-    // T0 = 10:00 → [10,12) 槽（第 6 根）点亮
-    const hourBars = [...document.querySelectorAll('.pomodoro-hour-bar')] as HTMLElement[];
-    expect(hourBars[5].classList.contains('pomodoro-hour-bar-on')).toBe(true);
-    expect(hourBars[5].title).toContain('10–12 时');
-    expect(hourBars[5].title).toContain('1 个');
-    expect(hourBars.filter((b) => b.classList.contains('pomodoro-hour-bar-on')).length).toBe(1);
+    expect(dayBars[6].textContent).toBe('10'); // 标签缩为「日」（窄面板不折行；T0 = 2026-08-10）
   });
 
   it('autoCycle 关：专注完成 toast 挂「开始休息」动作，点击直达开始短休', async () => {

@@ -10,10 +10,6 @@
 
 .bz-sb-scroll-y {
   overflow-y: auto;
-  scrollbar-width: none;
-}
-.bz-sb-scroll-y::-webkit-scrollbar {
-  display: none;
 }
 /* 头部功能钮隐藏态（主面板引导/进度期收起，切回内容态恢复） */
 .bz-sb-btn-hidden {
@@ -448,11 +444,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  scrollbar-width: none;
   padding-right: 2px;
-}
-.bz-sb-recent::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-recent-row {
   display: flex;
@@ -511,10 +503,6 @@
   line-height: 1.75;
   color: #4a4438;
   overflow: auto;
-  scrollbar-width: none;
-}
-.bz-sb-ai-txt::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-ai-when {
   font-size: 10px;
@@ -653,12 +641,8 @@
   }
   .bz-sb-panel-content {
     overflow-y: auto;
-    scrollbar-width: none;
     /* 底部操作行 absolute 出血定底（不占流），留出等高内边距防末尾内容被盖 */
     padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-  }
-  .bz-sb-panel-content::-webkit-scrollbar {
-    display: none;
   }
   /* 头行精简：索引健康签 + 副题小字（ADR-0114 迭代） */
   .bz-sb-panel .bz-sb-pill,
@@ -748,14 +732,10 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: none;
   padding: var(--bz-space-lg) var(--bz-space-xl) var(--bz-space-sm);
   display: flex;
   flex-direction: column;
   gap: 13px;
-}
-.bz-sb-chat-modal .bz-sb-chat-messages::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-chat-msg {
   display: flex;
@@ -1123,10 +1103,6 @@
 
 .bz-sb-ref-list {
   padding: 9px;
-  scrollbar-width: none;
-}
-.bz-sb-ref-list::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-ref-empty {
   padding: 26px var(--bz-space-lg);
@@ -1228,10 +1204,6 @@
 .bz-sb-ref-card--float .bz-sb-ref-card-body {
   max-height: none;
   overflow: auto;
-  scrollbar-width: none;
-}
-.bz-sb-ref-card--float .bz-sb-ref-card-body::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-ref-dense .bz-sb-ref-card:not(.bz-sb-ref-card--float) .bz-sb-ref-card-body {
   display: none;
@@ -1269,10 +1241,6 @@
   color: var(--sb-ink2);
   max-height: 300px;
   overflow: auto;
-  scrollbar-width: none;
-}
-.bz-sb-ref-preview-body::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-ref-preview-body p {
   margin: 0 0 6px;
