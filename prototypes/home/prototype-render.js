@@ -1,4 +1,4 @@
-/* 源指纹 49ad8ad6ac9eaa10 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4685ce5df5c77a3c · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -221,6 +221,7 @@ var BZR_home = (() => {
   var EMPTY_COUNTS = {
     diaryTotal: 0,
     memoOpen: 0,
+    memoUrgentOpen: 0,
     reviewTotal: 0,
     reviewOverdue: 0,
     reviewDueTomorrow: 0,
@@ -310,13 +311,15 @@ var BZR_home = (() => {
   function buildDots(data) {
     const day = data.today;
     const hasEvent = (d) => day.events.some((e) => e.domain === d);
+    const c = data.counts;
     return {
       diary: day.summary.diary > 0 ? "ok" : data.streak.diaryStreak > 0 ? "warn" : "off",
-      review: data.counts.reviewOverdue > 0 ? "hot" : "off",
-      memo: day.summary.memoDone + day.summary.memoCreated > 0 ? "ok" : "off",
-      pomodoro: day.summary.pomodoros > 0 ? "ok" : "off",
-      cinema: hasEvent("cinema") ? "ok" : "off",
-      bookshelf: hasEvent("bookshelf") ? "ok" : "off"
+      review: c.reviewOverdue > 0 ? "hot" : "off",
+      memo: c.memoUrgentOpen > 0 ? "hot" : day.summary.memoDone + day.summary.memoCreated > 0 ? "ok" : "off",
+      pomodoro: data.pomodoroFocusing ? "warn" : day.summary.pomodoros > 0 ? "ok" : "off",
+      cinema: c.cinemaWatching > 0 ? "warn" : hasEvent("cinema") ? "ok" : "off",
+      bookshelf: hasEvent("bookshelf") ? "ok" : "off",
+      clipping: c.clippingUnread > 0 ? "warn" : "off"
     };
   }
   function dotOf(dots, id) {

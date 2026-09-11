@@ -78,6 +78,29 @@ describe('home 活动河 UI（issue 232）', () => {
     expect((overlay.querySelector('[data-home-next]') as HTMLElement).textContent).toContain('明 天 预 告');
   });
 
+  it('入口彩点 class（item-1789106079981）：日记动静 ok、剪藏未读/影院在看 warn、重要备忘 hot、规则外域 off', async () => {
+    vault.files.set(`我的/日记/${todayStr()}.md`, '# 🌤 08:30\n记一笔。\n'); // 今日有动静 → diary ok
+    vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({ articles: [{ read: false }, { read: true }] })); // 未读 > 0 → clipping warn
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { title: '重要待办', created: '2026-01-01 09:00:00', completed: null, priority: 'important' }, // 重要未完成 → memo hot
+    ]));
+    vault.files.set('我的/影视/《正在看》.md', '---\ntags:\n- 电影\n评分: 0\n---\n'); // 在看 > 0 → cinema warn
+    const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const overlay = document.querySelector('.bz-home-overlay')!;
+    const dotClass = (id: string): string => {
+      const el = overlay.querySelector(`[data-home-go="${id}"] .bz-home-dot`);
+      expect(el, `域 ${id} 入口行彩点缺失`).toBeTruthy();
+      return Array.from(el!.classList).find((c) => c.startsWith('bz-home-dot--'))!;
+    };
+    expect(dotClass('diary')).toBe('bz-home-dot--ok');
+    expect(dotClass('clipping')).toBe('bz-home-dot--warn');
+    expect(dotClass('cinema')).toBe('bz-home-dot--warn');
+    expect(dotClass('memo')).toBe('bz-home-dot--hot');
+    expect(dotClass('favorites')).toBe('bz-home-dot--off'); // 规则外域由 dotOf 回落 off
+  });
+
   it('点入口行执行对应域命令并关首页（demo 命令通道记录 id）', async () => {
     const app = recApp(vault);
     openHome(app);
