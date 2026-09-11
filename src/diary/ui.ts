@@ -34,7 +34,7 @@ import { escManager } from '../core/esc-manager';
 import { topifyZ, longPress } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
 import { uiIcon, uiSearch } from '../core/ui';
-import { openItemMenu, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
+import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import { escapeHtml, hash31, localDayKey, stripMdExt } from '../core/utils';
 import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
@@ -51,7 +51,11 @@ import { isUnlocked, loadEncryptedEntries, encryptEntry, reclassifyEntry, delete
 
 /** 右键菜单/抽屉动作 → lucide 图标名（增强包 #4/#7；ItemAction.icon 走 Obsidian IconName；
  *  头行/灯箱/媒体类型图标表在 render.ts 单源，import 处合入） */
-const ACTION_ICON: Record<string, IconName> = {
+/** 动作图标映射：`satisfies`（非 Record<string, …> 注解）——键集由字面量推断，
+ *  取不存在的键是编译错误。2026-09-11 真机事故：曾因缺 close 键取到 undefined，
+ *  Obsidian setIcon(undefined) 在 getIcon 里 `name.startsWith` 抛异常，整条抽屉构建
+ *  中断且被 mock 静默吞掉——Record<string,…> 注解是漏网主因，勿改回。 */
+const ACTION_ICON = {
   open: 'external-link',
   copyLink: 'copy',
   copyContent: 'file-text',
@@ -63,7 +67,8 @@ const ACTION_ICON: Record<string, IconName> = {
   play: 'play',
   music: 'music',
   image: 'image',
-};
+  close: 'x',
+} satisfies Record<string, IconName>;
 
 /**
  * 增强包 #11：跳原文（/在日记本中查看）前捕获的墙视图状态——回墙恢复筛选与滚动位置。
@@ -140,13 +145,6 @@ export class DiaryAppController {
     lbMedia: HTMLElement;
     lbCap: HTMLElement;
     lbSub: HTMLElement;
-    sheetMask: HTMLElement;
-    sheet: HTMLElement;
-    sheetEmoji: HTMLElement;
-    sheetTime: HTMLElement;
-    sheetContent: HTMLElement;
-    sheetMedia: HTMLElement;
-    sheetActions: HTMLElement;
   };
   /** 移动实例 DOM */
   private mob!: {
@@ -163,13 +161,6 @@ export class DiaryAppController {
     lbMedia: HTMLElement;
     lbCap: HTMLElement;
     lbSub: HTMLElement;
-    sheetMask: HTMLElement;
-    sheet: HTMLElement;
-    sheetEmoji: HTMLElement;
-    sheetTime: HTMLElement;
-    sheetContent: HTMLElement;
-    sheetMedia: HTMLElement;
-    sheetActions: HTMLElement;
   };
   /** 根容器（固定全屏遮罩层） */
   root: HTMLDivElement | null = null;
@@ -263,7 +254,6 @@ export class DiaryAppController {
     this.decorateIcons(desk);
     this.decorateIcons(mob);
     this.bindLightbox();
-    this.bindSheet();
     this.registerEscape();
     // 增强 #1：方向键连看（单次注册；handler 内自判灯箱可见）
     document.addEventListener('keydown', this._onLbKeydown);
@@ -294,13 +284,6 @@ export class DiaryAppController {
       lbMedia: q('.bz-diary-lbmedia'),
       lbCap: q('.bz-diary-lbcap'),
       lbSub: q('.bz-diary-lbsub'),
-      sheetMask: q('.bz-diary-sheet-mask'),
-      sheet: q('.bz-diary-sheet'),
-      sheetEmoji: q('.bz-diary-sheet-emoji'),
-      sheetTime: q('.bz-diary-sheet-time'),
-      sheetContent: q('.bz-diary-sheet-content'),
-      sheetMedia: q('.bz-diary-sheet-media'),
-      sheetActions: q('.bz-diary-sheet-actions'),
     };
   }
 
@@ -861,8 +844,8 @@ export class DiaryAppController {
     }
   }
 
-  /** 条目级交互：双击 → 跳转原文；右键 → 跟手上下文菜单（桌面）；加密隐藏时不弹。
-   *  单击开抽屉已取消（2026-09-11 用户评审）：移动端抽屉唯一入口 = 长按（bindWallContext）。 */
+  /** 条目级交互：双击 → 跳转原文；右键 → 跟手上下文菜单（桌面，容器委托）；移动端逐卡长按 → 抽屉；
+   *  加密隐藏时不弹。单击开抽屉已取消（2026-09-11 用户评审）：移动端抽屉唯一入口 = 长按。 */
   private bindItem(item: HTMLElement, e: WallEntry, mobile: boolean) {
     // 双击跳转（300ms 内两次点击）
     let lastClick = 0;
@@ -876,9 +859,17 @@ export class DiaryAppController {
       }
       lastClick = now;
     });
-    // 右键 → 跟手上下文菜单（桌面；capture 捕获阶段拦截，防止 Obsidian 全局右键菜单抢先处理）。
-    // 委托挂在 wall 容器（bindWallContext），此处不再逐条绑——媒体/正文/文字条统一由容器委托覆盖
-    // （用户反馈：桌面端鼠标放到正文、图片或视频上右键无法打开菜单——逐条绑定漏了媒体子元素）。
+    // 右键 → 跟手上下文菜单（桌面；capture 委托挂在 wall 容器（bindWallContext），覆盖媒体/正文子元素）
+    if (mobile) {
+      // 2026-09-11 真机重写：影院 attachLongPress 同款**逐卡**绑定，弃「容器委托 + filter」的
+      // diary 独有形态——与真机验证过的域实现归零差异。原生长按菜单/文本选择让位（逐卡
+      // preventDefault，影院同款）；桌面实例（mobile=false）不挂，鼠标右键走容器委托。
+      item.addEventListener('contextmenu', (ev) => ev.preventDefault());
+      longPress(item, () => {
+        if (this.isEncHidden(e)) return;
+        this.openSheet(e);
+      });
+    }
   }
 
   /** 在瀑布容器上挂右键委托：正文/图片/视频任意子元素右键都能打开条目菜单（#9） */
@@ -894,6 +885,14 @@ export class DiaryAppController {
         const idx = Number(item.dataset.widx);
         const e = this._wallEntries[idx];
         if (!e || Number.isNaN(idx)) return;
+        // 移动端分流（core attachItemActions 同款范式）：真机触屏长按 ~500ms 会伴发 contextmenu，
+        // 与 longPress 手势同到——不分流就弹桌面跟手菜单盖住抽屉（影院 mobile-3fix B 同款真机
+        // 缺陷，2026-09-11 真机复现：长按出的是右键菜单不是抽屉）。preventDefault 让位给抽屉，
+        // 原生长按菜单/文本选择一并让位；抽屉唯一入口 = longPress。
+        if (isMobileEnv()) {
+          ev.preventDefault();
+          return;
+        }
         if (this.isEncHidden(e)) return;
         ev.preventDefault();
         ev.stopPropagation();
@@ -907,23 +906,8 @@ export class DiaryAppController {
       },
       true
     );
-    // 移动端长按条目 → 详情抽屉（统一手势 core/dom.longPress：与 core/item-actions 同源，
-    // 触屏滚动不受影响——被动监听 + 10px 移动取消）。抽屉唯一入口（单击入口已按
-    // 2026-09-11 评审取消）；抽屉仍是 .bz-diary-sheet 详情壳（不换 core 动作抽屉，保观感）。
-    longPress(
-      wall,
-      (ev: any) => {
-        const item = (ev.target as HTMLElement)?.closest?.<HTMLElement>('.bz-diary-item');
-        if (!item) return;
-        const idx = Number(item.dataset.widx);
-        const e = this._wallEntries[idx];
-        if (!e || Number.isNaN(idx)) return;
-        if (this.isEncHidden(e)) return;
-        this.openSheet(e);
-      },
-      undefined,
-      (ev: any) => isMobileEnv() && !!(ev.target as HTMLElement)?.closest?.('.bz-diary-item')
-    );
+    // 移动端长按已随 2026-09-11 真机重写迁至 bindItem 逐卡绑定（cinema 同款）——容器委托式
+    // 「longPress + filter」是 diary 独有形态，与真机异常的触发路径相关，整段退役。
   }
 
   /** 双击跳转原文（普通日记走 entry-actions 标题锚点；加密/影视/信/书分流） */
@@ -1957,25 +1941,58 @@ export class DiaryAppController {
     }
   }
 
-  // ---------- 底部抽屉（移动端单击条目弹出；壳 = 共享 .bz-sheet 族） ----------
+  // ---------- 底部抽屉（移动端长按条目弹出；2026-09-11 换核 core openItemSheet） ----------
   private openSheet(e: WallEntry) {
-    this.sheetEntry = e;
-    [this.desk, this.mob].forEach((ui) => {
-      ui.sheetEmoji.textContent = e.emoji;
-      ui.sheetTime.textContent = `${e.date}  ${e.time}  ·  ${e.tags.join(' ')}`;
-      // issue 217 S6：抽屉预览去媒体嵌入语法（![[xxx.jpg]] 原样外露）
-      ui.sheetContent.textContent = stripMediaLinks(e.content) || '（仅媒体）';
-      this.fillSheetMedia(ui, e);
-      this.fillSheetActions(ui, e);
-      ui.sheet.classList.add('bz-sheet--show');
-      ui.sheetMask.classList.add('open');
-    });
+    // 与 favorites/belongings/cinema 同壳（.bz-item-sheet，挂 body 不受域 reset/Obsidian
+    // 移动端 button 样式压盖）；动作集与桌面右键同源；动作项点击后 core 自动关抽屉，
+    // 遮罩点击/下拉关闭也归共享层。
+    try {
+      this.sheetEntry = e;
+      openItemSheet(this.buildSheetActions(e), { sheetHead: this.mkSheetHead(e) });
+    } catch (err) {
+      // 构建期异常会让抽屉整体不出（2026-09-11 真机事故：图标名 undefined → setIcon 抛异常，
+      // 手机端无控制台，全程静默）——兜底上屏 + 复位 ESC 标记，栈进控制台
+      this.sheetEntry = null;
+      notice(`日记抽屉打开失败：${err instanceof Error ? err.message : String(err)}`);
+      console.error('[bz-diary] openSheet', err);
+    }
   }
 
-  /** 抽屉媒体缩略（点击进灯箱；加密条目缩略图走按需解密——增强 #8） */
-  private fillSheetMedia(ui: typeof this.desk, e: WallEntry) {
-    const mbox = ui.sheetMedia;
-    mbox.innerHTML = '';
+  /** 抽屉动作集 = buildMenuActions 同源 + 抽屉特有项（附件、复制正文字数小字；
+   *  ItemAction.sub 仅移动端抽屉渲染，桌面菜单不渲染小字——core 既有口径） */
+  private buildSheetActions(e: WallEntry): ItemAction[] {
+    const acts = this.buildMenuActions(e).map((a) => ({ ...a }));
+    const copyIdx = acts.findIndex((a) => a.label === '复制正文');
+    if (copyIdx >= 0) acts[copyIdx].sub = `${(e.content || '').trim().length} 字`;
+    if (e.media.length) {
+      acts.splice(copyIdx + 1, 0, {
+        icon: ACTION_ICON.attachment,
+        label: '附件',
+        sub: `${e.media.length} 个媒体`,
+        onClick: () => notice(`附件：${e.media.map((m) => m.name).join('、')}`),
+      });
+    }
+    return acts;
+  }
+
+  /** 抽屉富媒体头（core sheetHead）：emoji + 时间行 + 正文预览 + 媒体缩略（点击进灯箱）+ 右上关闭钮 */
+  private mkSheetHead(e: WallEntry): HTMLElement {
+    const head = document.createElement('div');
+    head.className = 'bz-diary-sheet-head';
+    const emoji = document.createElement('span');
+    emoji.className = 'bz-diary-sheet-emoji';
+    emoji.textContent = e.emoji;
+    const info = document.createElement('div');
+    info.className = 'bz-diary-sheet-info';
+    const timeEl = document.createElement('div');
+    timeEl.className = 'bz-diary-sheet-time';
+    timeEl.textContent = `${e.date}  ${e.time}  ·  ${(e.tags || []).join(' ')}`;
+    const contentEl = document.createElement('div');
+    contentEl.className = 'bz-diary-sheet-content';
+    // issue 217 S6：抽屉预览去媒体嵌入语法（![[xxx.jpg]] 原样外露）
+    contentEl.textContent = stripMediaLinks(e.content) || '（仅媒体）';
+    const media = document.createElement('div');
+    media.className = 'bz-diary-sheet-media';
     e.media.forEach((k) => {
       const mt = document.createElement('div');
       mt.className = 'bz-diary-sheet-thumb';
@@ -1983,6 +2000,7 @@ export class DiaryAppController {
       if (k.kind === 'img') {
         const img = document.createElement('img');
         img.alt = k.name;
+        // 加密条目缩略图走按需解密——增强 #8
         if (e.encrypted) {
           void this.encMediaUrl(e.noteId || '', k).then((url) => {
             if (url && img.isConnected) img.src = url;
@@ -1995,98 +2013,31 @@ export class DiaryAppController {
         mt.appendChild(uiIcon(k.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.music));
       }
       mt.addEventListener('click', () => this.openLightbox(k, e));
-      mbox.appendChild(mt);
+      media.appendChild(mt);
     });
-  }
-
-  /** 抽屉动作行 = 共享 .bz-sheet-act（icon + 文案 + 右侧小字；danger/accent 语义档） */
-  private fillSheetActions(ui: typeof this.desk, e: WallEntry) {
-    const acts = ui.sheetActions;
-    acts.innerHTML = '';
-    const mk = (icon: string, label: string, sub: string | null, mod: string | null, fn: () => void) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'bz-sheet-act' + (mod ? ' ' + mod : '');
-      const ic = document.createElement('span');
-      ic.className = 'bz-sheet-act-ic';
-      ic.appendChild(uiIcon(icon));
-      b.appendChild(ic);
-      b.appendChild(document.createTextNode(label));
-      if (sub) {
-        const subEl = document.createElement('span');
-        subEl.className = 'bz-sheet-act-sub';
-        subEl.textContent = sub;
-        b.appendChild(subEl);
-      }
-      b.addEventListener('click', fn);
-      acts.appendChild(b);
-    };
-    mk(ACTION_ICON.open, '打开', null, null, () => {
+    info.appendChild(timeEl);
+    info.appendChild(contentEl);
+    info.appendChild(media);
+    // 右上角关闭钮（2026-09-11 移动端评审新增；随富媒体头走 sheetHead 路径）
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'bz-diary-sheet-close';
+    close.title = '关闭';
+    close.appendChild(uiIcon(ACTION_ICON.close));
+    close.addEventListener('click', (ev) => {
+      ev.stopPropagation();
       this.closeSheet();
-      void this.jumpTo(e);
     });
-    mk(ACTION_ICON.copyLink, '复制双链', null, null, () => {
-      this.closeSheet();
-      void this.copyLink(e);
-    });
-    mk(ACTION_ICON.copyContent, '复制正文', `${(e.content || '').trim().length} 字`, null, () => {
-      this.closeSheet();
-      void this.copyContent(e);
-    });
-    if (e.media.length) {
-      mk(ACTION_ICON.attachment, '附件', `${e.media.length} 个媒体`, null, () => {
-        this.closeSheet();
-        notice(`附件：${e.media.map((m) => m.name).join('、')}`);
-      });
-    }
-    // P1 审查修复：特殊条目（影视/信/书）不给「加密/删除」，与右键菜单同口径
-    const special = this.isSpecialWallEntry(e);
-    if (!e.encrypted && !e.tags.includes('加密')) {
-      mk(ACTION_ICON.editTags, '改标签', null, null, () => {
-        this.closeSheet();
-        this.editTags(e);
-      });
-      if (!special) {
-        mk(ACTION_ICON.encrypt, '加密', null, 'bz-sheet-act--accent', () => {
-          this.closeSheet();
-          void this.encryptEntryAction(e);
-        });
-      }
-    } else {
-      mk(ACTION_ICON.decrypt, '解密', null, 'bz-sheet-act--accent', () => {
-        this.closeSheet();
-        void this.decryptEntryAction(e);
-      });
-    }
-    if (!special) {
-      mk(ACTION_ICON.remove, '删除', null, 'bz-sheet-act--danger', () => {
-        this.closeSheet();
-        void this.deleteEntryAction(e);
-      });
-    }
+    head.appendChild(emoji);
+    head.appendChild(info);
+    head.appendChild(close);
+    return head;
   }
 
   private closeSheet() {
-    [this.desk, this.mob].forEach((ui) => {
-      ui.sheet.classList.remove('bz-sheet--show');
-      ui.sheetMask.classList.remove('open');
-    });
+    // 抽屉壳/遮罩/关闭手势归 core（closeItemMenu 幂等）；sheetEntry 只作 ESC 分流标记
+    closeItemMenu();
     this.sheetEntry = null;
-  }
-
-  private bindSheet() {
-    [this.desk, this.mob].forEach((ui) => {
-      // 右上角关闭钮（2026-09-11 移动端评审新增）
-      ui.sheet.querySelector('[data-act="sheet-close"]')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.closeSheet();
-      });
-      // 点遮罩 / 抽屉自身空白区关闭
-      ui.sheet.addEventListener('click', (e) => {
-        if (e.target === ui.sheet) this.closeSheet();
-      });
-      ui.sheetMask.addEventListener('click', () => this.closeSheet());
-    });
   }
 
   // ---------- 统计 ----------
@@ -2109,7 +2060,7 @@ export class DiaryAppController {
           this.closeDateFilter();
           return;
         }
-        if ([this.desk, this.mob].some((u) => u.sheet.classList.contains('bz-sheet--show'))) {
+        if (this.sheetEntry) {
           this.closeSheet();
           return;
         }

@@ -728,13 +728,13 @@
   font-size: var(--bz-font-meta);
 }
 /* issue 217 S5：`.bz-diary-tx`（媒体下挂正文）规则已随 213/214 版式删除（死规则）；
-   正文卡允许选中复制（issue 217 小项：卡片全局 user-select:none 的文本区豁免） */
+   原随 217 加的正文可选中豁免已退役（2026-09-11 用户拍板，两端取消）：真机长按正文时系统
+   文本选择接管 → touchcancel 掐死 core/dom.longPress 的 500ms 计时 → 长按抽屉永不出
+   （用户见到的「右键菜单」即系统选择浮标）。正文选择回归 none（继承 .bz-diary-item） */
 .bz-diary-text-tx {
   font-size: var(--bz-font-label);
   line-height: 1.6;
   color: var(--dw-ink);
-  user-select: text;
-  -webkit-user-select: text;
 }
 
 /* ---- issue 217 S1：markdown 排版（域 reset 的 * {margin:0;padding:0} 会把
@@ -942,33 +942,20 @@
   gap: 10px;
 }
 
-/* ============ 底部抽屉（移动端单击条目 → 动作列表） ============
-   壳/动作行 = 共享 .bz-sheet 族（components.css；issue 198 批次 A 收敛：
-   .bz-sheet-mask 遮罩 + .bz-sheet 壳 + .bz-sheet-grip/-head/-title/-body/-actions/-act）。
-   域内只留：root 内层档钩子（日期节头 sticky z10 之上、灯箱 z90 之下）+ 富媒体头与媒体缩略图；
-   另因本域 reset 通配（.bz-diary *）清 margin/padding 且聚合在 components.css 之后，
-   共享壳的 padding/grip 对齐/小字右对齐须按下述 ≥(0,2,0) 规则原值恢复（同 .bz-rail 先例）。 */
-.bz-diary .bz-diary-sheet {
-  z-index: 60;
-  padding: 0 var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px));
-}
-.bz-diary .bz-diary-sheet-mask {
-  z-index: 59;
-}
-.bz-diary .bz-diary-sheet .bz-sheet-grip {
-  margin: var(--bz-space-sm) auto 2px;
-}
-/* 动作行横向 padding 归零：列表内容与头部/正文/媒体缩略左缘对齐（2026-09-11 用户评审） */
-.bz-diary .bz-diary-sheet .bz-sheet-act {
-  padding: var(--bz-space-md) 0;
-  text-align: left;
-}
-.bz-diary .bz-diary-sheet .bz-sheet-act-sub {
-  margin-left: auto;
-}
+/* ============ 底部抽屉（移动端长按条目弹出） ============
+   2026-09-11 换核：壳/动作行/遮罩/关闭手势全归 core openItemSheet（.bz-item-sheet，
+   与 favorites/belongings/cinema 同源——全套 !important 抗 Obsidian 移动端 button 居中压盖，
+   域内自绘 .bz-sheet 壳真机动作行被压成居中即此因）。抽屉挂 body 不在 .bz-diary 内，
+   域内只留富媒体头（mkSheetHead 产物）：emoji + 时间行 + 正文预览 + 媒体缩略 + 右上关闭钮。
+   ⚠️ 头不在 .bz-diary 根内 → 域变量 --dw-* 取不到（var() 解析失败退化为继承，不是回退到
+   core 规则），此段一律用 core token / Obsidian 全局变量取色。 */
 .bz-diary-sheet-head {
-  padding: 10px 0 var(--bz-space-md);
-  border-bottom: 1px solid var(--dw-line);
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bz-space-md);
+  padding: 2px 0 var(--bz-space-md);
+  border-bottom: 1px solid var(--background-modifier-border);
 }
 .bz-diary-sheet-emoji {
   font-size: var(--bz-font-display);
@@ -978,9 +965,14 @@
   flex: 1;
   min-width: 0;
 }
+.bz-diary-sheet-time {
+  font-size: var(--bz-font-emphasis);
+  font-weight: var(--bz-weight-semibold);
+  color: var(--bz-text-1);
+}
 .bz-diary-sheet-content {
   font-size: var(--bz-font-label);
-  color: var(--dw-muted);
+  color: var(--text-muted);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1004,7 +996,7 @@
   justify-content: center;
   overflow: hidden;
   position: relative;
-  background: var(--dw-surface);
+  background: var(--background-secondary);
   cursor: pointer;
 }
 .bz-diary-sheet-thumb img {
@@ -1012,28 +1004,35 @@
   height: 100%;
   object-fit: cover;
 }
-/* 抽屉右上角关闭钮（2026-09-11 移动端评审新增；规格同 .bz-diary-icon-btn / datefilter-close：
-   带 .bz-diary 前缀压过 core reset 的全局按钮清零） */
-.bz-diary .bz-diary-sheet-close {
+/* 右上角关闭钮（2026-09-11 移动端评审新增，随富媒体头走 sheetHead 路径）。
+   !important 组抗 Obsidian 默认 button 样式（灰底/边框/居中）压盖——core 动作行同款防御姿势 */
+.bz-diary-sheet-close {
+  position: absolute;
+  top: 0;
+  right: 0;
   flex-shrink: 0;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 26px;
-  padding: 0;
-  border: none;
-  border-radius: var(--bz-radius-xs);
-  background: none;
-  box-shadow: none;
-  color: var(--dw-muted);
-  font-size: var(--bz-font-body);
+  width: 26px;
+  height: 30px;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: var(--bz-radius-xs) !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  font-size: var(--bz-font-body) !important;
   line-height: 1;
   cursor: pointer;
   transition: background var(--bz-dur-fast);
 }
-.bz-diary .bz-diary-sheet-close:hover {
-  background: var(--dw-surface);
+.bz-diary-sheet-close:hover {
+  background: var(--background-secondary) !important;
+}
+.bz-diary-sheet-close .bz-ic {
+  width: var(--bz-font-body);
+  height: var(--bz-font-body);
 }
 
 /* ============ 空态 ============ */
@@ -1238,35 +1237,9 @@
   .bz-diary-mob .bz-diary-lbsub {
     font-size: 13px;
   }
-  /* 底部抽屉：题 17 / 正文 14 / 动作行 15（图标盒 24·字 20）/ 右上关闭钮 32×36 */
-  .bz-diary-mob .bz-diary-sheet-emoji {
-    font-size: 22px;
-  }
-  .bz-diary-mob .bz-diary-sheet .bz-sheet-title {
-    font-size: 17px;
-  }
-  .bz-diary-mob .bz-diary-sheet-content {
-    font-size: 14px;
-  }
-  .bz-diary-mob .bz-diary-sheet-thumb {
-    width: 54px;
-    height: 54px;
-  }
-  .bz-diary-mob .bz-diary-sheet .bz-sheet-act {
-    font-size: 15px;
-  }
-  .bz-diary-mob .bz-diary-sheet .bz-sheet-act-ic {
-    width: 24px;
-    font-size: 20px;
-  }
-  .bz-diary-mob .bz-diary-sheet .bz-sheet-act-sub {
-    font-size: 12.5px;
-  }
-  .bz-diary-mob .bz-diary-sheet-close {
-    width: 32px;
-    height: 36px;
-    font-size: 18px;
-  }
+  /* 底部抽屉字号/几何不再域内定档：2026-09-11 换核 core openItemSheet（.bz-item-sheet），
+     与 favorites/belongings/cinema 同壳同档——「和别的域一致」正是本次用户诉求。
+     域内六档 sheet 段（emoji/title/content/thumb/act/act-sub/close）随之退役。 */
   /* 空态：图 40 / 题 15 / 描述 13 / 按钮 14.5 */
   .bz-diary-mob .bz-diary-empty-ic {
     font-size: 40px;

@@ -1,4 +1,4 @@
-/* 源指纹 af0e4617d96f2a43 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 2a963a4a1a4b8de2 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -12570,7 +12570,6 @@ ${String(review).trim()}`;
     add: "pen-line",
     search: "search",
     close: "x",
-    "sheet-close": "x",
     "lb-close": "x",
     "lb-prev": "chevron-left",
     "lb-next": "chevron-right"
@@ -12629,20 +12628,6 @@ ${String(review).trim()}`;
         <div class="bz-diary-lbmedia"></div>
         <div class="bz-diary-lbcap"></div>
         <div class="bz-diary-lbsub"></div>
-      </div>
-      <div class="bz-sheet-mask bz-diary-sheet-mask"></div>
-      <div class="bz-sheet bz-diary-sheet">
-        <div class="bz-sheet-grip"></div>
-        <div class="bz-sheet-head bz-diary-sheet-head">
-          <span class="bz-diary-sheet-emoji"></span>
-          <div class="bz-diary-sheet-info">
-            <div class="bz-sheet-title bz-diary-sheet-time"></div>
-            <div class="bz-diary-sheet-content"></div>
-            <div class="bz-diary-sheet-media"></div>
-          </div>
-          <button class="bz-diary-sheet-close" data-act="sheet-close" title="关闭"></button>
-        </div>
-        <div class="bz-sheet-body bz-sheet-actions bz-diary-sheet-actions"></div>
       </div>
     `;
   }
@@ -13931,7 +13916,8 @@ ${entry.content.trim()}`;
     remove: "trash-2",
     play: "play",
     music: "music",
-    image: "image"
+    image: "image",
+    close: "x"
   };
   var WIDE_TEXT_MIN_CHARS = 800;
   var SEARCH_DEBOUNCE_MS = 250;
@@ -14043,7 +14029,6 @@ ${entry.content.trim()}`;
       this.decorateIcons(desk);
       this.decorateIcons(mob);
       this.bindLightbox();
-      this.bindSheet();
       this.registerEscape();
       document.addEventListener("keydown", this._onLbKeydown);
       if (typeof matchMedia === "function") {
@@ -14071,14 +14056,7 @@ ${entry.content.trim()}`;
         lb: q(".bz-diary-lb"),
         lbMedia: q(".bz-diary-lbmedia"),
         lbCap: q(".bz-diary-lbcap"),
-        lbSub: q(".bz-diary-lbsub"),
-        sheetMask: q(".bz-diary-sheet-mask"),
-        sheet: q(".bz-diary-sheet"),
-        sheetEmoji: q(".bz-diary-sheet-emoji"),
-        sheetTime: q(".bz-diary-sheet-time"),
-        sheetContent: q(".bz-diary-sheet-content"),
-        sheetMedia: q(".bz-diary-sheet-media"),
-        sheetActions: q(".bz-diary-sheet-actions")
+        lbSub: q(".bz-diary-lbsub")
       };
     }
     /**
@@ -14552,8 +14530,8 @@ ${entry.content.trim()}`;
         console.warn("[bz-diary] markdown 渲染失败，已回退纯文本", e.date, err);
       }
     }
-    /** 条目级交互：双击 → 跳转原文；右键 → 跟手上下文菜单（桌面）；加密隐藏时不弹。
-     *  单击开抽屉已取消（2026-09-11 用户评审）：移动端抽屉唯一入口 = 长按（bindWallContext）。 */
+    /** 条目级交互：双击 → 跳转原文；右键 → 跟手上下文菜单（桌面，容器委托）；移动端逐卡长按 → 抽屉；
+     *  加密隐藏时不弹。单击开抽屉已取消（2026-09-11 用户评审）：移动端抽屉唯一入口 = 长按。 */
     bindItem(item, e, mobile) {
       let lastClick = 0;
       item.addEventListener("click", (ev) => {
@@ -14566,6 +14544,13 @@ ${entry.content.trim()}`;
         }
         lastClick = now;
       });
+      if (mobile) {
+        item.addEventListener("contextmenu", (ev) => ev.preventDefault());
+        longPress(item, () => {
+          if (this.isEncHidden(e)) return;
+          this.openSheet(e);
+        });
+      }
     }
     /** 在瀑布容器上挂右键委托：正文/图片/视频任意子元素右键都能打开条目菜单（#9） */
     bindWallContext(wall, key) {
@@ -14579,6 +14564,10 @@ ${entry.content.trim()}`;
           const idx = Number(item.dataset.widx);
           const e = this._wallEntries[idx];
           if (!e || Number.isNaN(idx)) return;
+          if (isMobileEnv()) {
+            ev.preventDefault();
+            return;
+          }
           if (this.isEncHidden(e)) return;
           ev.preventDefault();
           ev.stopPropagation();
@@ -14587,24 +14576,6 @@ ${entry.content.trim()}`;
           resetItemMenuClickGuard();
         },
         true
-      );
-      longPress(
-        wall,
-        (ev) => {
-          var _a, _b;
-          const item = (_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".bz-diary-item");
-          if (!item) return;
-          const idx = Number(item.dataset.widx);
-          const e = this._wallEntries[idx];
-          if (!e || Number.isNaN(idx)) return;
-          if (this.isEncHidden(e)) return;
-          this.openSheet(e);
-        },
-        void 0,
-        (ev) => {
-          var _a, _b;
-          return isMobileEnv() && !!((_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".bz-diary-item"));
-        }
       );
     }
     /** 双击跳转原文（普通日记走 entry-actions 标题锚点；加密/影视/信/书分流） */
@@ -15540,23 +15511,50 @@ ${entry.content.trim()}`;
         notice("删除暂不可用", "error");
       }
     }
-    // ---------- 底部抽屉（移动端单击条目弹出；壳 = 共享 .bz-sheet 族） ----------
+    // ---------- 底部抽屉（移动端长按条目弹出；2026-09-11 换核 core openItemSheet） ----------
     openSheet(e) {
-      this.sheetEntry = e;
-      [this.desk, this.mob].forEach((ui) => {
-        ui.sheetEmoji.textContent = e.emoji;
-        ui.sheetTime.textContent = `${e.date}  ${e.time}  ·  ${e.tags.join(" ")}`;
-        ui.sheetContent.textContent = stripMediaLinks(e.content) || "（仅媒体）";
-        this.fillSheetMedia(ui, e);
-        this.fillSheetActions(ui, e);
-        ui.sheet.classList.add("bz-sheet--show");
-        ui.sheetMask.classList.add("open");
-      });
+      try {
+        this.sheetEntry = e;
+        openItemSheet(this.buildSheetActions(e), { sheetHead: this.mkSheetHead(e) });
+      } catch (err) {
+        this.sheetEntry = null;
+        notice(`日记抽屉打开失败：${err instanceof Error ? err.message : String(err)}`);
+        console.error("[bz-diary] openSheet", err);
+      }
     }
-    /** 抽屉媒体缩略（点击进灯箱；加密条目缩略图走按需解密——增强 #8） */
-    fillSheetMedia(ui, e) {
-      const mbox = ui.sheetMedia;
-      mbox.innerHTML = "";
+    /** 抽屉动作集 = buildMenuActions 同源 + 抽屉特有项（附件、复制正文字数小字；
+     *  ItemAction.sub 仅移动端抽屉渲染，桌面菜单不渲染小字——core 既有口径） */
+    buildSheetActions(e) {
+      const acts = this.buildMenuActions(e).map((a) => ({ ...a }));
+      const copyIdx = acts.findIndex((a) => a.label === "复制正文");
+      if (copyIdx >= 0) acts[copyIdx].sub = `${(e.content || "").trim().length} 字`;
+      if (e.media.length) {
+        acts.splice(copyIdx + 1, 0, {
+          icon: ACTION_ICON.attachment,
+          label: "附件",
+          sub: `${e.media.length} 个媒体`,
+          onClick: () => notice(`附件：${e.media.map((m) => m.name).join("、")}`)
+        });
+      }
+      return acts;
+    }
+    /** 抽屉富媒体头（core sheetHead）：emoji + 时间行 + 正文预览 + 媒体缩略（点击进灯箱）+ 右上关闭钮 */
+    mkSheetHead(e) {
+      const head = document.createElement("div");
+      head.className = "bz-diary-sheet-head";
+      const emoji = document.createElement("span");
+      emoji.className = "bz-diary-sheet-emoji";
+      emoji.textContent = e.emoji;
+      const info = document.createElement("div");
+      info.className = "bz-diary-sheet-info";
+      const timeEl = document.createElement("div");
+      timeEl.className = "bz-diary-sheet-time";
+      timeEl.textContent = `${e.date}  ${e.time}  ·  ${(e.tags || []).join(" ")}`;
+      const contentEl = document.createElement("div");
+      contentEl.className = "bz-diary-sheet-content";
+      contentEl.textContent = stripMediaLinks(e.content) || "（仅媒体）";
+      const media = document.createElement("div");
+      media.className = "bz-diary-sheet-media";
       e.media.forEach((k) => {
         const mt = document.createElement("div");
         mt.className = "bz-diary-sheet-thumb";
@@ -15576,93 +15574,28 @@ ${entry.content.trim()}`;
           mt.appendChild(uiIcon(k.kind === "video" ? ACTION_ICON.play : ACTION_ICON.music));
         }
         mt.addEventListener("click", () => this.openLightbox(k, e));
-        mbox.appendChild(mt);
+        media.appendChild(mt);
       });
-    }
-    /** 抽屉动作行 = 共享 .bz-sheet-act（icon + 文案 + 右侧小字；danger/accent 语义档） */
-    fillSheetActions(ui, e) {
-      const acts = ui.sheetActions;
-      acts.innerHTML = "";
-      const mk = (icon, label, sub, mod, fn) => {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "bz-sheet-act" + (mod ? " " + mod : "");
-        const ic = document.createElement("span");
-        ic.className = "bz-sheet-act-ic";
-        ic.appendChild(uiIcon(icon));
-        b.appendChild(ic);
-        b.appendChild(document.createTextNode(label));
-        if (sub) {
-          const subEl = document.createElement("span");
-          subEl.className = "bz-sheet-act-sub";
-          subEl.textContent = sub;
-          b.appendChild(subEl);
-        }
-        b.addEventListener("click", fn);
-        acts.appendChild(b);
-      };
-      mk(ACTION_ICON.open, "打开", null, null, () => {
+      info.appendChild(timeEl);
+      info.appendChild(contentEl);
+      info.appendChild(media);
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "bz-diary-sheet-close";
+      close.title = "关闭";
+      close.appendChild(uiIcon(ACTION_ICON.close));
+      close.addEventListener("click", (ev) => {
+        ev.stopPropagation();
         this.closeSheet();
-        void this.jumpTo(e);
       });
-      mk(ACTION_ICON.copyLink, "复制双链", null, null, () => {
-        this.closeSheet();
-        void this.copyLink(e);
-      });
-      mk(ACTION_ICON.copyContent, "复制正文", `${(e.content || "").trim().length} 字`, null, () => {
-        this.closeSheet();
-        void this.copyContent(e);
-      });
-      if (e.media.length) {
-        mk(ACTION_ICON.attachment, "附件", `${e.media.length} 个媒体`, null, () => {
-          this.closeSheet();
-          notice(`附件：${e.media.map((m) => m.name).join("、")}`);
-        });
-      }
-      const special = this.isSpecialWallEntry(e);
-      if (!e.encrypted && !e.tags.includes("加密")) {
-        mk(ACTION_ICON.editTags, "改标签", null, null, () => {
-          this.closeSheet();
-          this.editTags(e);
-        });
-        if (!special) {
-          mk(ACTION_ICON.encrypt, "加密", null, "bz-sheet-act--accent", () => {
-            this.closeSheet();
-            void this.encryptEntryAction(e);
-          });
-        }
-      } else {
-        mk(ACTION_ICON.decrypt, "解密", null, "bz-sheet-act--accent", () => {
-          this.closeSheet();
-          void this.decryptEntryAction(e);
-        });
-      }
-      if (!special) {
-        mk(ACTION_ICON.remove, "删除", null, "bz-sheet-act--danger", () => {
-          this.closeSheet();
-          void this.deleteEntryAction(e);
-        });
-      }
+      head.appendChild(emoji);
+      head.appendChild(info);
+      head.appendChild(close);
+      return head;
     }
     closeSheet() {
-      [this.desk, this.mob].forEach((ui) => {
-        ui.sheet.classList.remove("bz-sheet--show");
-        ui.sheetMask.classList.remove("open");
-      });
+      closeItemMenu();
       this.sheetEntry = null;
-    }
-    bindSheet() {
-      [this.desk, this.mob].forEach((ui) => {
-        var _a;
-        (_a = ui.sheet.querySelector('[data-act="sheet-close"]')) == null ? void 0 : _a.addEventListener("click", (e) => {
-          e.stopPropagation();
-          this.closeSheet();
-        });
-        ui.sheet.addEventListener("click", (e) => {
-          if (e.target === ui.sheet) this.closeSheet();
-        });
-        ui.sheetMask.addEventListener("click", () => this.closeSheet());
-      });
     }
     // ---------- 统计 ----------
     dayStats(list) {
@@ -15680,7 +15613,7 @@ ${entry.content.trim()}`;
             this.closeDateFilter();
             return;
           }
-          if ([this.desk, this.mob].some((u) => u.sheet.classList.contains("bz-sheet--show"))) {
+          if (this.sheetEntry) {
             this.closeSheet();
             return;
           }

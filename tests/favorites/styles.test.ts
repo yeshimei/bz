@@ -17,13 +17,14 @@ const favRender = () => repo('src/favorites/layouts/board/render.ts');
 const favProto = () => repo('prototypes/favorites/prototype.html');
 
 describe('C1：域选择器脱离 core reset 同分顺序对抗 + 原型 core 链', () => {
-  it('styles.css 磁贴/右键菜单 button 基础规则挂 .bz-fav-scope 前缀（(0,2,1)）', () => {
+  it('styles.css 磁贴 button 基础规则挂 .bz-fav-scope 前缀（(0,2,1)）；右键菜单/抽屉已收编 core（2026-09-11）', () => {
     const css = favCss();
     expect(css).toContain('.bz-fav-scope .bz-fav-tags button {');
-    expect(css).toContain('.bz-fav-scope .bz-fav-ctx button {');
+    // 菜单/抽屉自绘壳规则全部退役（core .bz-item-menu / .bz-item-sheet 承载）
+    expect(css).not.toContain('.bz-fav-ctx');
+    expect(css).not.toContain('.bz-fav-sheet');
     // 不再有无前缀的 (0,1,1) 基础规则残留
     expect(css).not.toMatch(/^\.bz-fav-tags button \{/m);
-    expect(css).not.toMatch(/^\.bz-fav-ctx button \{/m);
   });
 
   it('prototype.html link 链与 build-css SOURCES 同序（core 三份 → 域样式）', () => {
@@ -77,12 +78,9 @@ describe('C9：移动关闭钮触控档 --xl', () => {
 });
 
 describe('C10：图标尺寸对齐 c5 基准（ADR-0101 1:1 恢复）', () => {
-  it('抽屉动作行 15px（c5 动作按钮 icon(a.ic, 15)）+ 卡片标签徽记 11px（域内原型 icon(ic, 11)）', () => {
+  it('抽屉动作行图标尺寸随收编退役（core 统一档）；卡片标签徽记 11px 保留（域内原型 icon(ic, 11)）', () => {
     const css = favCss();
-    const sheetRule = css.match(/\.bz-fav-sheet \.bz-ic\s*\{[^}]*\}/);
-    expect(sheetRule, '缺抽屉图标尺寸规则').not.toBeNull();
-    expect(sheetRule![0]).toContain('width: 15px');
-    expect(sheetRule![0]).toContain('height: 15px');
+    expect(css, '抽屉自绘规则应已退役').not.toContain('.bz-fav-sheet .bz-ic');
     // tagb 覆盖对抗 core .bz-ic--xs（12px !important）须同带 !important
     const tagbRule = css.match(/\.bz-fav-card \.bz-fav-tagb \.bz-ic\s*\{[^}]*\}/);
     expect(tagbRule, '缺标签徽记图标尺寸规则').not.toBeNull();
@@ -92,11 +90,9 @@ describe('C10：图标尺寸对齐 c5 基准（ADR-0101 1:1 恢复）', () => {
 });
 
 describe('C11：静态 z-index 标注原型兜底', () => {
-  it('ctx/sheet-mask/form-mask 三处 z-index 行带「原型兜底值，插件端以 topifyZ 为准」注释', () => {
+  it('form-mask z-index 行带「原型兜底值，插件端以 topifyZ 为准」注释（菜单/抽屉 z 已归 core 动态发号）', () => {
     const css = favCss();
-    expect(css.match(/原型兜底值，插件端以 topifyZ 为准/g)?.length).toBe(3);
-    expect(css).toMatch(/z-index: 500; \/\* 原型兜底值/);
-    expect(css).toMatch(/z-index: 400; \/\* 原型兜底值/);
+    expect(css.match(/原型兜底值，插件端以 topifyZ 为准/g)?.length).toBe(1);
     expect(css).toMatch(/z-index: 600; \/\* 原型兜底值/);
   });
 });

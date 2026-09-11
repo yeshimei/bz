@@ -27,6 +27,7 @@ import { longPress } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
+import { openItemMenu, openItemSheet, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { getApp } from '../core/app';
 import { mountIcons } from '../core/ui';
 import { emitDomainEvent } from '../core/domain-bus';
@@ -34,7 +35,7 @@ import { favoritesEditChanges } from '../smartcat/favorites-source';
 import type { SettingsSchema } from '../core/settings-schema';
 import { TAGS, normalizeUrl, isUrlLike } from './config';
 import {
-  actionSpecs, ctxMenuHtml, sheetHtml, formHtml, pickChipsHtml,
+  actionSpecs, formHtml, pickChipsHtml, hueOf, relTime,
   panelHtml, renderPanelView, localNow,
   type FavActionSpec,
   type FavoritesItem,
@@ -92,21 +93,18 @@ export function favoritesSettingsSchema(): SettingsSchema {
 
 let mainEscRegistered = false;
 
-/** ESC 层注册（主面板 + 浮层栈：菜单 → 抽屉 → 表单 → 面板）。
+/** ESC 层注册（主面板 + 表单浮层）。
  *  openPanel 与 openForm 开头各调一次：命令（bz-favorites-add）可不经面板直开表单，
- *  ESC 层必须随表单在场（对照 belongings ensureBelongingsEsc 同款）。 */
+ *  ESC 层必须随表单在场（对照 belongings ensureBelongingsEsc 同款）。
+ *  2026-09-11 收编 core：菜单/抽屉浮层（含 ESC 条目/遮罩点击/下滑关闭）全归 core/item-actions
+ *  自持，本条目只管面板与表单；closeItemMenu 兜底收残（core 幂等，浮层未开时 no-op）。 */
 function ensureFavoritesEsc(): void {
   if (mainEscRegistered) return;
   mainEscRegistered = true;
   escManager.register('bz-fav', {
-    isVisible: () =>
-      !!M.overlay ||
-      !!document.querySelector('.bz-fav-form') ||
-      !!document.querySelector('.bz-fav-sheet-mask'),
+    isVisible: () => !!M.overlay || !!document.querySelector('.bz-fav-form'),
     close: () => {
-      if (closeMenu()) return;
-      // 抽屉走 closeSheet（动作路径同款）：遮罩元素连监听一并移除，不再只摘 show 类残留 DOM
-      if (document.querySelector('.bz-fav-sheet-mask')) { closeSheet(); return; }
+      closeItemMenu();
       const form = document.querySelector('.bz-fav-form') as HTMLElement | null;
       if (form) requestCloseForm(form);
       else closePanel();
@@ -298,67 +296,52 @@ function runAction(it: FavoritesItem, spec: FavActionSpec): void {
   }
 }
 
-/** 桌面：右键 → linen 浮层菜单（原型 1:1；删除红字置底，分隔线隔开） */
-let menuEl: HTMLElement | null = null;
-let menuOutsideHandler: ((e: MouseEvent) => void) | null = null;
+// ==================== 行动浮层（2026-09-11 收编 core/item-actions） ====================
 
-function closeMenu(): boolean {
-  if (!menuEl) return false;
-  menuEl.remove();
-  menuEl = null;
-  if (menuOutsideHandler) {
-    document.removeEventListener('click', menuOutsideHandler, true);
-    menuOutsideHandler = null;
-  }
-  return true;
+/** FavActionSpec → core ItemAction（lucide 图标名直通；danger→kind 红字档；
+ *  onClick 闭包 runAction——动作序/确认文案契约不变，点击后 core 自动收浮层） */
+function toItemActions(it: FavoritesItem): ItemAction[] {
+  return actionSpecs(it).map((a) => ({
+    icon: a.icon,
+    label: a.label,
+    kind: a.danger ? ('danger' as const) : undefined,
+    onClick: () => runAction(it, a),
+  }));
 }
 
+/** 桌面：右键 → core 跟手菜单（.bz-item-menu：防溢出定位/动态 z/键盘导航/外点关全归共享层；
+ *  全套 !important 抗 Obsidian 默认 button 居中压盖——自绘 .bz-fav-ctx 真机即被压歪） */
 function openRowMenuAt(it: FavoritesItem, x: number, y: number): void {
-  closeMenu();
-  const acts = actionSpecs(it);
-  menuEl = document.createElement('div');
-  menuEl.className = 'bz-fav-ctx bz-fav-scope';
-  menuEl.innerHTML = ctxMenuHtml(acts);
-  menuEl.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest('button'); if (!b) return;
-    closeMenu();
-    runAction(it, acts[+(b as HTMLElement).dataset.k!]);
-  });
-  document.body.appendChild(menuEl);
-  mountIcons(menuEl);
-  topifyZ(menuEl);
-  const r = menuEl.getBoundingClientRect();
-  menuEl.style.left = Math.min(x, window.innerWidth - r.width - 8) + 'px';
-  menuEl.style.top = Math.min(y, window.innerHeight - r.height - 8) + 'px';
-  // 外点关菜单（capture 先于菜单自身 handler；菜单内点击由 contains 守卫放行）
-  menuOutsideHandler = (e) => {
-    if (menuEl && e.target instanceof Node && menuEl.contains(e.target)) return;
-    closeMenu();
-  };
-  document.addEventListener('click', menuOutsideHandler, true);
+  openItemMenu(x, y, toItemActions(it), true);
 }
 
-/** 移动：底部详情抽屉（原型 1:1：磁点 + 标题 + meta + 动作列；markup 在 shared.sheetHtml） */
+/** 移动：底部详情抽屉（2026-09-11 收编 core openItemSheet：与 diary/belongings/cinema 同壳；
+ *  遮罩点击/下滑关闭/防穿透/z 发号归共享层。磁点 + 标题 + meta 头走 sheetHead 通道） */
 function openMobSheet(it: FavoritesItem): void {
-  closeSheet();
-  const acts = actionSpecs(it);
-  const mask = document.createElement('div');
-  mask.className = 'bz-fav-sheet-mask bz-fav-scope bz-fav-show';
-  mask.innerHTML = `<div class="bz-fav-sheet">${sheetHtml(it, acts)}</div>`;
-  mask.addEventListener('click', (e) => {
-    if (e.target === mask) { closeSheet(); return; }
-    const b = (e.target as HTMLElement).closest('button');
-    if (!b) return;
-    closeSheet();
-    runAction(it, acts[+(b as HTMLElement).dataset.k!]);
-  });
-  document.body.appendChild(mask);
-  mountIcons(mask);
-  topifyZ(mask);
+  openItemSheet(toItemActions(it), { sheetHead: favSheetHead(it) });
+}
+
+/** 抽屉头（core sheetHead）：磁点 + 标题 + meta（原 shared.sheetHtml 头段迁移为 DOM 构建） */
+function favSheetHead(it: FavoritesItem): HTMLElement {
+  const head = document.createElement('div');
+  head.className = 'bz-fav-sh-head';
+  const dot = document.createElement('span');
+  dot.className = 'bz-fav-sh-dot';
+  dot.style.setProperty('--c', `hsl(${hueOf((it.tags || [])[0] || '')} 52% 58%)`);
+  const box = document.createElement('div');
+  const title = document.createElement('div');
+  title.className = 'bz-fav-sh-title';
+  title.textContent = it.title || '无标题';
+  const meta = document.createElement('div');
+  meta.className = 'bz-fav-sh-meta';
+  meta.textContent = `${relTime(it.created)}${it.pinned ? ' · 已置顶' : ''}${it.archived ? ' · 已归档' : ''}`;
+  box.append(title, meta);
+  head.append(dot, box);
+  return head;
 }
 
 function closeSheet(): void {
-  document.querySelector('.bz-fav-sheet-mask')?.remove();
+  closeItemMenu();
 }
 
 // ==================== 归档 / 取消归档 / 删除 ====================
@@ -487,7 +470,7 @@ function requestCloseForm(popup: HTMLElement): void {
 function closeForm(popup: HTMLElement): void {
   _baseline = null;
   _saving = false;
-  closeMenu();
+  closeItemMenu(); // 表单开着时若菜单/抽屉残留在下，一并收掉（core 幂等）
   // 连同遮罩一并移除（不留全屏空遮罩挡住下层交互）
   (popup.closest('.bz-fav-form-mask') ?? popup).remove();
 }

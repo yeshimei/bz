@@ -40,7 +40,7 @@ function openCardMenu(card: HTMLElement): void {
 
 /** 当前浮层动作项文案集合（桌面菜单 label / 移动抽屉 label） */
 function menuLabels(): (string | null)[] {
-  return [...document.querySelectorAll('.bz-fav-ctx button, .bz-fav-sh-acts button')]
+  return [...document.querySelectorAll('.bz-item-menu button, .bz-item-sheet .bz-item-sheet-item')]
     .map((b) => { const sp = b.querySelectorAll('span'); return sp.length ? sp[sp.length - 1].textContent : null; });
 }
 
@@ -56,7 +56,7 @@ async function touchPress(el: HTMLElement, ms: number): Promise<void> {
 
 /** 按文案点击浮层动作项 */
 function clickAction(label: string): HTMLElement {
-  const items = [...document.querySelectorAll('.bz-fav-ctx button, .bz-fav-sh-acts button')] as HTMLElement[];
+  const items = [...document.querySelectorAll('.bz-item-menu button, .bz-item-sheet .bz-item-sheet-item')] as HTMLElement[];
   const target = items.find((el) => {
     const sp = el.querySelectorAll('span');
     return sp.length > 0 && sp[sp.length - 1].textContent === label;
@@ -520,19 +520,19 @@ describe('桌面行动作浮层', () => {
       .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     expect(app.openUrl).toHaveBeenCalledWith('https://github.com/a/b');
-    expect(document.querySelector('.bz-fav-ctx')).toBeNull();
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
     // 点无链卡片 → 不动作、不弹菜单
     cards().find((c) => c.querySelector('h3')!.textContent === '无链收藏')!
       .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
-    expect(document.querySelector('.bz-fav-ctx')).toBeNull();
-    // 右键仍弹菜单（域内自绘 linen 浮层，ADR-0101 挂 bz-fav-scope 主题作用域）
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    // 右键仍弹菜单（2026-09-11 收编 core .bz-item-menu：不携域皮肤变量，统一观感）
     openCardMenu(cards()[0]);
     await tick(10);
-    const menuEl = document.querySelector('.bz-fav-ctx');
+    const menuEl = document.querySelector('.bz-item-menu');
     expect(menuEl).not.toBeNull();
-    expect(menuEl!.classList.contains('bz-fav-scope')).toBe(true);
-    document.querySelector('.bz-fav-ctx')?.remove();
+    expect(menuEl!.classList.contains('bz-fav-scope')).toBe(false);
+    document.querySelector('.bz-item-menu')?.remove();
   });
 
   it('右键卡片弹 .bz-item-menu；动作文案集合按数据条件（无 url 无 note：置顶/编辑/归档/删除）', async () => {
@@ -544,13 +544,13 @@ describe('桌面行动作浮层', () => {
     await tick(20);
     openCardMenu(cards()[0]);
     await tick(10);
-    const menu = document.querySelector('.bz-fav-ctx');
+    const menu = document.querySelector('.bz-item-menu');
     expect(menu).not.toBeNull();
     expect(menuLabels()).toEqual(['置顶', '编辑', '归档', '删除']);
     // 删除项 danger 类
     const delItem = [...menu!.querySelectorAll('button')].find((i) => i.textContent?.includes('删除'));
-    expect(delItem!.classList.contains('bz-fav-danger')).toBe(true);
-    document.querySelector('.bz-fav-ctx')?.remove();
+    expect(delItem!.classList.contains('bz-item-menu-item--danger')).toBe(true);
+    document.querySelector('.bz-item-menu')?.remove();
   });
 
   it('右键（contextmenu 事件）同样触发浮层', async () => {
@@ -561,7 +561,7 @@ describe('桌面行动作浮层', () => {
     const card = cards()[0];
     card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
     await tick(10);
-    expect(document.querySelector('.bz-fav-ctx')).not.toBeNull();
+    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
     closeItemMenu();
   });
 
@@ -581,7 +581,7 @@ describe('桌面行动作浮层', () => {
     clickAction('打开');
     await tick(10);
     expect(app.openUrl).toHaveBeenCalledWith('https://github.com/a/b');
-    expect(document.querySelector('.bz-fav-ctx')).toBeNull(); // 非 keepOpen 动作浮层收起
+    expect(document.querySelector('.bz-item-menu')).toBeNull(); // 非 keepOpen 动作浮层收起
 
     openCardMenu(byTitle('无协议'));
     await tick(10);
@@ -624,7 +624,7 @@ describe('桌面行动作浮层', () => {
     expect(menuLabels()).toContain('置顶');
     clickAction('置顶');
     // 桌面菜单点项 = 浮层收起（keepOpen 语义只服务抽屉路径）
-    expect(document.querySelector('.bz-fav-ctx')).toBeNull();
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
     await tick(40);
     // 写盘
     expect((await ctx.dm.getAll()).find((d) => d.id === '1')!.pinned).toBe(true);
@@ -664,7 +664,7 @@ describe('桌面行动作浮层', () => {
     clickAction('归档');
     await tick(10);
     // 非 keepOpen：浮层收起
-    expect(document.querySelector('.bz-fav-ctx')).toBeNull();
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
     // flow-dialog
     const popup = document.getElementById('__shared_confirm_popup__');
     expect(popup).not.toBeNull();
@@ -741,7 +741,7 @@ describe('桌面行动作浮层', () => {
     await tick(10);
     clickAction('删除');
     await tick(10);
-    expect(document.querySelector('.bz-fav-ctx')).toBeNull();
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
     const popup = document.getElementById('__shared_confirm_popup__');
     expect(popup!.textContent).toContain('确定删除收藏「被删条目」吗？');
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
@@ -1215,7 +1215,7 @@ describe('smartcat 域事件总线', () => {
 // ==================== 14. 移动抽屉 ====================
 
 describe('移动端抽屉', () => {
-  it('Platform.isMobile → 点卡弹 .bz-item-sheet（头部 + 动作项），编辑 keepOpen 抽屉仍在', async () => {
+  it('Platform.isMobile → 点卡弹 .bz-item-sheet（磁点头 + 动作项），点编辑收抽屉开表单', async () => {
     Platform.isMobile = true;
     const ctx = await setup();
     seedVault(ctx.vault, [
@@ -1226,19 +1226,19 @@ describe('移动端抽屉', () => {
     // 移动点卡 = 抽屉
     cards()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(450); // 越过触屏残余 click 静置窗口（400ms），后续点击才不被吞
-    const sheet = document.querySelector('.bz-fav-sheet');
+    const sheet = document.querySelector('.bz-item-sheet');
     expect(sheet).not.toBeNull();
-    expect(document.querySelector('.bz-fav-sheet-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
     // 头部（原型 1:1）：磁点 + 标题 + meta（相对时间）
     expect(document.querySelector('.bz-fav-sh-title')!.textContent).toBe('抽屉条目');
     expect(document.querySelector('.bz-fav-sh-dot')).not.toBeNull();
     expect(document.querySelector('.bz-fav-sh-meta')!.textContent).not.toBe('');
     // 动作列：打开（无 url 不出现）/置顶/编辑/归档/删除；删除红字（ADR-0101 跳转笔记退役）
-    const labels = [...document.querySelectorAll('.bz-fav-sh-acts button')].map((b) => b.textContent);
+    const labels = [...document.querySelectorAll('.bz-item-sheet .bz-item-sheet-item')].map((b) => b.textContent);
     expect(labels.join('|')).not.toContain('跳转笔记');
     // 删除为危险项
-    const del = [...document.querySelectorAll('.bz-fav-sh-acts button')].find((i) => i.textContent?.includes('删除'));
-    expect(del!.classList.contains('bz-fav-danger')).toBe(true);
+    const del = [...document.querySelectorAll('.bz-item-sheet .bz-item-sheet-item')].find((i) => i.textContent?.includes('删除'));
+    expect(del!.classList.contains('bz-item-sheet-item--danger')).toBe(true);
 
     // 编辑：抽屉先收起 + 表单叠上（companion 防误关，ADR-0101 口径：动作前 closeSheet）
     clickAction('编辑');
@@ -1248,23 +1248,24 @@ describe('移动端抽屉', () => {
     (document.querySelector('#fz-title') as HTMLInputElement).value = '改后';
     (document.querySelector('#fz-save') as HTMLButtonElement).click();
     await tick(40);
-    expect(document.querySelector('.bz-fav-sheet')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
     expect((await ctx.dm.getAll())[0].title).toBe('改后');
   });
 
-  it('移动抽屉：点遮罩关闭抽屉', async () => {
+  it('移动抽屉：点遮罩关闭抽屉（core 外点关闭；先越过 400ms 触屏残余 click 静置窗口）', async () => {
     Platform.isMobile = true;
     const ctx = await setup();
     seedVault(ctx.vault, [seedItem({ id: '1', title: 'x', url: '', desc: 'y' })]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     cards()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await tick(10);
-    expect(document.querySelector('.bz-fav-sheet')).not.toBeNull();
-    const mask = document.querySelector('.bz-fav-sheet-mask') as HTMLElement;
+    await tick(450); // 越过触屏残余 click 静置窗口，后续点击才不被吞
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+    const mask = document.querySelector('.bz-item-sheet-mask') as HTMLElement;
+    expect(mask).not.toBeNull();
     mask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
-    expect(document.querySelector('.bz-fav-sheet')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
   });
 
   it('长按卡片 → 弹抽屉（统一手势 core/dom.longPress）：桌面长按不弹、移动端短按不弹、移动端长按弹', async () => {
@@ -1274,14 +1275,14 @@ describe('移动端抽屉', () => {
     await tick(20);
     // 桌面（Platform.isMobile=false）：手势过滤不放行
     await touchPress(cards()[0], 550);
-    expect(document.querySelector('.bz-fav-sheet')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
     // 移动端短按（未到 500ms）：不弹
     Platform.isMobile = true;
     await touchPress(cards()[0], 100);
-    expect(document.querySelector('.bz-fav-sheet')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
     // 移动端长按：弹抽屉，头部标题正确（与点卡入口同一 openMobSheet）
     await touchPress(cards()[0], 550);
-    expect(document.querySelector('.bz-fav-sheet')).not.toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
     expect(document.querySelector('.bz-fav-sh-title')!.textContent).toBe('长按条目');
   });
 });
@@ -1471,12 +1472,12 @@ describe('ESC 关闭（escManager bz-fav 层）', () => {
     await tick(20);
     cards()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(450); // 越过触屏残余 click 静置窗口（400ms）
-    expect(document.querySelector('.bz-fav-sheet-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
     await tick(10);
     // 遮罩元素（连同其监听）整体移除，而非仅摘 bz-fav-show 类
-    expect(document.querySelector('.bz-fav-sheet-mask')).toBeNull();
-    expect(document.querySelector('.bz-fav-sheet')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
     // 层序：抽屉关后主面板仍在
     expect(document.querySelector('.bz-panel-overlay')).not.toBeNull();
   });

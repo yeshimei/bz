@@ -172,24 +172,9 @@ export function actionSpecs(it: FavoritesItem): FavActionSpec[] {
   return acts;
 }
 
-/** 桌面右键菜单内容（.bz-fav-ctx 容器由调用方建；删除红字置底，分隔线隔开） */
-export function ctxMenuHtml(acts: FavActionSpec[]): string {
-  return acts.map((a, k) => {
-    const last = k === acts.length - 1;
-    const btn = `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ''}>${iconSpan(a.icon, 'bz-ic--sm')}<span>${esc(a.label)}</span></button>`;
-    return last ? `<div class="bz-fav-ctx-sep"></div>${btn}` : btn;
-  }).join('');
-}
-
-/** 移动底部抽屉内容（.bz-fav-sheet 内部：磁点 + 标题 + meta + 动作列） */
-export function sheetHtml(it: FavoritesItem, acts: FavActionSpec[]): string {
-  const hue = hueOf((it.tags || [])[0] || '');
-  return `<div class="bz-fav-sh-head"><span class="bz-fav-sh-dot" style="--c:hsl(${hue} 52% 58%)"></span>
-    <div><div class="bz-fav-sh-title">${esc(it.title || '无标题')}</div>
-    <div class="bz-fav-sh-meta">${esc(relTime(it.created))}${it.pinned ? ' · 已置顶' : ''}${it.archived ? ' · 已归档' : ''}</div></div></div>
-  <div class="bz-fav-sh-acts">${acts.map((a, k) =>
-    `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ''}>${iconSpan(a.icon)}<span>${esc(a.label)}</span></button>`).join('')}</div>`;
-}
+// 2026-09-11 收编 core/item-actions：自绘菜单/抽屉模板（ctxMenuHtml/sheetHtml）退役——
+// 行动浮层壳/动作行/防 Obsidian button 压盖全归共享层，域内只留磁点头皮肤（ui.ts favSheetHead）。
+// actionSpecs（动作序/语义键契约）保留：core ItemAction 映射与评审壳演示层共用。
 
 // ==================== 表单（添加 / 编辑共用骨架） ====================
 
