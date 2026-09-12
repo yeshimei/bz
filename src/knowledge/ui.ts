@@ -240,7 +240,7 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
           { type: 'path', mode: 'single', name: '文献目录', desc: '文献笔记所在文件夹，部壹扫描该目录', binding: { key: 'knowledgeDirectory' } },
           { type: 'path', mode: 'single', name: '卡片目录', desc: '你自己写的卡片笔记所在文件夹，部贰扫描该目录，提炼成卡落在这里', binding: { key: 'knowledgeCardboxDirectory' } },
           { type: 'path', mode: 'single', name: '主题目录', desc: '主题笔记所在文件夹，部叁展示该目录（仅展示，不影响写作）', binding: { key: 'knowledgeTopicDirectory' } },
-          { type: 'textarea', name: '领域词表', desc: '逗号分隔的领域词；留空 = AI 自由写领域', binding: { key: 'knowledgeDomainList' }, placeholder: '物理,医学,计算机,经济,文史哲…' },
+          { type: 'textarea', name: '领域词表', desc: '逗号分隔的领域词；留空 = AI 自由写领域', binding: { key: 'knowledgeDomainList' }, placeholder: '物理,医学,计算机,经济…' },
         ],
       },
       {
