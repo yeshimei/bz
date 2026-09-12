@@ -67,7 +67,9 @@ export function showConfirm(loc: DiaryEntryLocator): void {
       : '确定要删除这篇日记吗？\n\n此操作不可撤销，日记将从笔记中永久删除。',
     actions: [
       { label: '取消', value: 'cancel' },
-      { label: '删除日记', value: 'ok', cta: true },
+      // danger（issue 291 评审补）：删除日记是不可撤销的（加密分支还会销毁保险库密文），
+      // 主按钮不得高亮——手册 §9/§10 的慎重决策口径
+      { label: '删除日记', value: 'ok', cta: true, danger: true },
     ],
   })
     .then(async (v) => {

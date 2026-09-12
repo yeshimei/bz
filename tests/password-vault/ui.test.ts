@@ -271,9 +271,36 @@ describe('PasswordVaultUIManager', () => {
     expect(popup.classList.contains('bz-overlay-popup')).toBe(true); // 统一壳（issue 291 核心）
     expect(popup.classList.contains('bz-flow-dialog')).toBe(true);
     expect(popup.classList.contains('bz-pwv-flow-dialog')).toBe(true); // 域皮
-    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(false); // cta 主动作 → 金色主钮
+    // 刻意不挂危险修饰（issue 291 评审）：本框是「风险告知门」，主动作是把主密码设下去的
+    // 正向路径、动作本身不破坏数据，故保留金色主钮；域 CSS 的
+    // :not(.bz-flow-dialog--danger) 守卫就是给它的通路（对照下方「仍要重设」用例）。
+    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(false);
     // 收尾：取消（按取消语义结算并移除 DOM，防污染后续用例）
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
     expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
+  });
+
+  // issue 291 评审补：「仍要重设」会生成全新空清单、旧加密数据永久无法恢复 —— 破坏性主动作，
+  // 必须挂 bz-flow-dialog--danger（core 把主钮整套压回中性次级形制、只留红字，手册 §9/§10）。
+  it('清单损坏重设确认：破坏性主动作挂 bz-flow-dialog--danger（主钮不高亮）', async () => {
+    await sm.unlock('oldpw'); // 先建清单，避免落进首设分支
+    sm.lock();
+    vault.files.set('CONFIG/.ENCRYPT/.safe.enc', ''); // 半写崩溃现场：清单为空 → manifestIssue='empty'
+    ui.show();
+    // 锁屏是异步装配的（isFirstTime → 建锁屏 DOM）：等输入框本体，别只等 .open 外壳
+    await vi.waitFor(() =>
+      expect(document.querySelector('.bz-password-vault-lock.open [data-ls="p1"]')).toBeTruthy()
+    );
+    const lock = document.querySelector('.bz-password-vault-lock.open') as HTMLElement;
+    (lock.querySelector('[data-ls="p1"]') as HTMLInputElement).value = 'newpw';
+    (lock.querySelector('[data-ls="go"]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
+    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    expect(popup.querySelector('h4')!.textContent).toBe('清单疑似损坏');
+    expect(popup.classList.contains('bz-pwv-flow-dialog')).toBe(true);
+    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true);
+    // 收尾：取消（不重设，避免污染后续用例）
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 20));
   });
 });

@@ -51,6 +51,17 @@ beforeEach(() => {
 });
 
 describe('showConfirm 删除确认（locator 定位）', () => {
+  it('删除确认挂危险修饰（issue 291 评审补）：主钮中性底 + 红字，标准双动作按钮不加类', async () => {
+    showConfirm(LOC);
+    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
+    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    expect(popup.classList.contains('bz-overlay-popup')).toBe(true);
+    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true);
+    expect((document.getElementById('__shared_confirm_ok__') as HTMLElement).className).toBe(''); // 冻结契约
+    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+  });
+
   it('删除失败（写层抛错）：弹「删除日记失败」错误通知', async () => {
     vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nA\n');
     // 写层故障注入：vault.delete 抛错（删到空触发整文件删除分支）

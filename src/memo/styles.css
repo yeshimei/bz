@@ -890,6 +890,10 @@
   font-weight: 900;
   letter-spacing: 0.06em;
 }
+/* 纸感主钮形制（凸起墨章）。注意：本域两个流程框（删除备忘录 / 删除场景）都是危险主动作，
+   danger 态由 core `#__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__`
+   （特异性 2,2,0 > 本块 2,1,0）整套压回中性次级形制（含 border/border-radius/box-shadow），
+   所以删除钮不会带着墨框与硬阴影半吊子地"中性化"。本块在非 danger 场景（将来新增的说明框等）才生效。 */
 #__shared_confirm_popup__.bz-memo-skin-paper #__shared_confirm_ok__ {
   border: 2px solid var(--bz-skin-ink);
   border-radius: 11px;
