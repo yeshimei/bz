@@ -1,6 +1,6 @@
 # 第二大脑自动双链管线（link agent）设计 spec
 
-状态：已评审定稿（2026-08，六轮设计交流 + 用户逐项拍板）；v1.1 增量（ticket 115：启动存量补链 + 批量补链命令）+ v1.2 语义修订（ticket 116：范围只管目标侧 / 候选来源 = 白名单索引库 / 两目录字段默认空、空=什么也不录）+ v1.4 增量（ticket 119：正文大改自动重跑——基准哈希 + 修改监听）+ v1.5 数据整合（ticket 120：queue/state 并入 secondbrain.json link 段、vec 改名 secondbrain.vec、store-file 串行写链 + 一次性迁移）+ v1.6 冲突自愈（ticket 152：Syncthing 冲突文件段级 union + .vec 行级重排，见「冲突文件自愈」节）+ v1.7 增量（ticket 167：已有 related 不再自动建链——尊重开关 + 三条自动路径统一跳过）含内
+状态：已评审定稿（2026-08，六轮设计交流 + 用户逐项拍板）；v1.1 增量（ticket 115：启动存量补链 + 批量补链命令）+ v1.2 语义修订（ticket 116：范围只管目标侧 / 候选来源 = 白名单索引库 / 两目录字段默认空、空=什么也不录）+ v1.4 增量（ticket 119：正文大改自动重跑——基准哈希 + 修改监听）+ v1.5 数据整合（ticket 120：queue/state 并入 secondbrain.json link 段、vec 改名 secondbrain.vec、store-file 串行写链 + 一次性迁移）+ v1.6 冲突自愈（ticket 152：Syncthing 冲突文件段级 union + .vec 行级重排，见「冲突文件自愈」节）+ v1.7 增量（ticket 167：已有 related 不再自动建链——尊重开关 + 三条自动路径统一跳过）+ v1.8 增量（issue 298：文献笔记生成即跑——知识盒生成落盘后经 `knowledge:tasks` 立即建链，不等批次防抖、不受范围限制）含内
 归属域：secondbrain
 前置依赖：ticket 110（切块剥离 frontmatter——向量候选质量的前提）
 
@@ -15,6 +15,9 @@ v1.2（ticket 116，用户澄清语义）：**关联范围只管"哪些笔记会
 v1.4（ticket 119，用户拍板）：**正文大改自动重跑**——记录每篇被处理笔记向量化/建链时的内容**基准哈希**（新状态文件 `secondbrain_link_state.json`，不动 frontmatter 格式）；监听 `vault:md-modified`（范围过滤），**内容哈希与基准不同才重跑该篇建链**：避免 Obsidian 高频保存（内容未变）空转裁判、避免自写 `related` 触发死循环；基准随每次成功建链/重跑刷新。
 
 v1.7（ticket 167，用户拍板）：**已有 related 不再自动建链**——新增尊重开关 `linkAgentRespectRelated`（默认开）；开启时**创建 / 修改 / 队列消费**三条自动路径对 **`related` 非空**（至少 1 个有效条目；空数组/空值/缺失 = 未接管，继续建链）的笔记一律跳过（`skipped-related`，队列条目顺带移除不滞留）；存量补链天然只收缺 `related` 者不受影响；**手动命令 `bz-secondbrain-rebuild-links` 豁免**（传 `respectRelated:false` 强制重跑，显式意图）。关闭开关 = 恢复旧行为（正文大改仍自动重跑）。
+
+v1.8（issue 298，用户拍板）：**文献笔记生成即跑**——知识盒生成文献笔记（视频转写 / 术语）后**立即**建链，不等约 60 秒批次防抖，也不受 `linkAgentScopes` 关联范围限制（生成即显式目标，语义同手动重跑）。触发源复用知识盒既有的 `knowledge:tasks` 域事件（ADR-0112；`converted` 本就带 `notePath`，本轮为 `term-generated` 补 `notePath` 字段），不新开通道。
+> 同轮澄清（用户）：**「自动双链整体迁移到知识盒」暂缓**——候选近邻依赖第二大脑向量索引（白名单索引库 + embedding 服务 + `secondbrain.vec`），知识盒无索引能力；迁移需先把切块 / 嵌入 / 向量检索内核上提共享层（约 2000 行级），待候选索引归属定案后再启动。**本轮只做生成即跑，设置与命令仍留第二大脑。**
 
 ## 范围
 
@@ -97,8 +100,18 @@ Syncthing 对「同步窗口内两端都修改的同一文件」必然保留 `se
 - 创建事件防抖聚合约 1 分钟内的批次；修改事件同样防抖聚合，冲刷时先按基准哈希过滤（**内容无实质变化 / 自写 related 触发的 modify 一律跳过**，只留真正改动的笔记）；
 - 探测 embedding 服务（短超时 ~1.5s）：**可达 → 就地完整管线；不可达 → 入队**，手机桌面同一规则。
 
-### ①b 存量补链（v1.1/ticket 115）
+### ①c 文献笔记生成即跑（v1.8/issue 298）
 
+- **触发源**：知识盒 `emitDomainEvent('knowledge:tasks', evt)`（ADR-0112 既有契约）——`kind:'converted'`（`processor.ts::_finish`，视频转文献成功，本就带 `notePath`）与 `kind:'term-generated'`（`ui.ts::onTermConfirm`，术语生成成功，本轮补 `notePath` 字段）。**不新开通道**。
+- **消费**：`LinkAgentWatcher` 订阅该通道 → `onNoteGenerated` 守卫（`kind` 属两类之一 且 `notePath` 非空 且 文件存在）→ `LinkAgent.processNoteNow(path)`。
+- **不等**：不经过 60 秒批次防抖（旧路径 `vault:md-created` 仍保留给范围监听）；**不受 `linkAgentScopes` 限制**（生成即显式目标，同手动重跑语义）。
+- **纪律**：经 agent 串行锁执行，与监听批次 / 存量补链排队互斥（避免并发 refresh 与裁判请求交错）；先 `await store.initialLoad` 再跑（避免 in-flight refresh 与 load 并发读到半装载索引，装载失败不阻断）。
+- **防循环**：写入 `related` 触发的 `vault:md-modified` 由 `link.state` 基准哈希挡掉（v1.4 机制沿用，不新增）；若同篇已进入范围防抖缓冲，冲刷时被尊重门（v1.7）判 `skipped-related`，不重复花裁判算力。
+- **反馈**：受 `linkAgentNotify` 门控，同键 `dedupeKey` 单框动态更新——新建 N>0 报「已为文献笔记新建关联 N 条」；embedding 不可达报已入队；裁判失败 warning；**N=0 静默**。
+- **索引覆盖引导（一次性，只提示不代改配置）**：文献笔记所在目录不在 `secondBrainAllowPaths` 内（含白名单为空的缺省态）→ 提示该目录不会被向量化、候选检索不会命中，指引去补白名单。**避免「生成了却零关联」的静默失效。**
+- **总开关**：`linkAgentEnabled=false` 时不订阅、不探测、不写盘（同既有语义）。
+
+### ①b 存量补链（v1.1/ticket 115）
 - 触发点：插件每次启动（第二大脑域初始化），**队列消费之后**串行执行；显式兜底 = 手动命令 `bz-secondbrain-link-all`；
 - 目标清单：`linkAgentScopes` 范围内全部 `.md` 存量笔记（**空范围 = 无目标**），剔除 ①已含 `related`（进度检查点，下次启动自动跳过）②encrypt 锁定文件 ③队列内待重试条目（避免重复算力）；
 - 可达性门：先探测 embedding，不可达 → 启动路径静默跳过（下次启动重试），手动命令明确通知；
@@ -148,6 +161,8 @@ Syncthing 对「同步窗口内两端都修改的同一文件」必然保留 `se
 | `linkAgentRespectRelated` | boolean | true | 已有关联不再自动建链（v1.7/ticket 167）：自动路径（创建/修改/队列消费）对 `related` 非空笔记跳过；手动重跑豁免 |
 | `linkAgentScopes` | string | ''（空） | 关联范围：**只决定哪些笔记会被自动关联**（目标/触发侧：落盘监听目录 + 存量补链目标 + 死链扫描）；**候选来源不受此限制**（见 ②，ticket 116）；英文逗号分隔；**空 = 什么也不录，不是全库**（ticket 116，无「文献盒」回退） |
 
+> v1.8/issue 298 **不新增任何设置键**：生成即跑复用既有七键（总开关 / 通知 / 尊重门 / 候选数量 / 上限 / 自动清理 / 关联范围）。「整体迁移到知识盒」暂缓，设置入口与两条命令仍留第二大脑。
+
 ### 设置面板联动行为（用户拍板补充）
 
 - ⚙️ 弹窗内 `linkAgentEnabled` 为**明细设置的显隐开关**：开启时下方展开明细行（候选数量 / 关联上限 / 完成通知 / 自动清理 / **关联范围**）；关闭时明细整体隐藏；
@@ -178,6 +193,7 @@ Syncthing 对「同步窗口内两端都修改的同一文件」必然保留 `se
 - [ ] **v1.1：启动后自动对存量缺 `related` 笔记补链（进度 toast + 汇总；全部已连接则静默）；手动 `bz-secondbrain-link-all` 各分支明确通知；批次与监听批次串行互斥（并发不重叠）**；
 - [ ] **v1.4：修改事件按基准哈希过滤——内容未实质变化（含自写 related 触发的 modify）不重跑；哈希不同 / 无基准才重跑；重跑成功后基准刷新；修改监听随 `linkAgentScopes` 与总开关生效**；
 - [ ] **v1.7：尊重开关默认开——创建/修改/队列消费对 `related` 非空笔记 `skipped-related`（不探测不裁判不写入，队列条目顺带移除）；`related: []`/缺失视为未接管照常建链；`respectRelated:false`（手动重跑）豁免强制重跑；开关关闭恢复旧行为**；
+- [ ] **v1.8/issue 298：知识盒生成文献笔记（`knowledge:tasks` 的 converted / term-generated）后**立即**跑建链——不等 60 秒批窗口、不受 `linkAgentScopes` 限制；`failed` / 缺 `notePath` / 文件不存在 / 总开关关闭一律不触发；先等索引装载完成（装载失败不阻断）；新建 N>0 报条数、N=0 静默、不可达报入队、裁判失败 warning，`linkAgentNotify=false` 全程静默；文献目录不在白名单时一次性引导提示（补白名单后不再提示）**；
 - [ ] 数据层 + UI/通知层 Vitest 覆盖（队列 CRUD、幂等、清理逻辑、开关行为、补链目标清单与串行锁、空值语义），smoke 同步；
 - [ ] `pnpm exec tsc --noEmit` 与构建通过。
 

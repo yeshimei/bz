@@ -8,10 +8,11 @@
 import { stripMdExt } from '../core/utils';
 import type { StructuredMeta } from './types';
 
-/** 文献盒动作事件（literature 域 emitDomainEvent('knowledge:tasks', evt) 载荷；ADR-0066/0072） */
+/** 文献盒动作事件（literature 域 emitDomainEvent('knowledge:tasks', evt) 载荷；ADR-0066/0072）
+ *  notePath（issue 298）：两类成功事件均携带落盘笔记路径——第二大脑自动双链据此即时建链 */
 export type KnowledgeActionEvent =
   | { kind: 'converted'; id?: string; url: string; notePath?: string | null }
-  | { kind: 'term-generated'; id?: string; term: string; title?: string | null };
+  | { kind: 'term-generated'; id?: string; term: string; title?: string | null; notePath?: string | null };
 
 /** 从 url 提取 BV 号（BV1xx411c7mD）；失败返回空串 */
 function bvOf(url: string): string {
