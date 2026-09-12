@@ -1263,6 +1263,9 @@ export class PasswordVaultUIManager {
           className: 'bz-pwv-flow-dialog',
           actions: [
             { label: '取消', value: 'cancel' },
+            // 刻意不标 danger（issue 291 评审）：本框是「风险告知门」，主动作是把主密码设下去
+            // 的正向路径，动作本身不破坏任何数据（与下方「仍要重设」的破坏性重设不同），
+            // 故保留金色主钮——域 CSS 的 :not(.bz-flow-dialog--danger) 就是为它保留的通路。
             { label: '我已了解并继续', value: 'ok', cta: true },
           ],
         }).then(async (v) => {
@@ -1324,7 +1327,11 @@ export class PasswordVaultUIManager {
               className: 'bz-pwv-flow-dialog',
               actions: [
                 { label: '暂不重设', value: 'cancel' },
-                { label: '仍要重设', value: 'ok', cta: true },
+                // danger（issue 291 评审补）：重设会生成全新空清单、旧加密数据永久无法恢复 ——
+                // 破坏性主动作，主按钮降中性底 + 红字（手册 §9/§10）。
+                // 对照上方「设置主密码」：那句是风险告知门、动作本身是首设正向路径，
+                // 故刻意不标 danger，域 CSS 的 :not(.bz-flow-dialog--danger) 金色主钮正是给它用。
+                { label: '仍要重设', value: 'ok', cta: true, danger: true },
               ],
             }).then((v) => {
               if (v === 'ok') {

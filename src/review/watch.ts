@@ -142,7 +142,9 @@ export class ReviewWatcher {
               : `「${firstName}」已从 vault 删除，是否同步移除复习计划里的记录？不移除则保留（文件恢复后继续复习，列表现删除线）。`,
           actions: [
             { label: '保留', value: 'cancel' },
-            { label: '移除', value: 'ok', cta: true },
+            // danger（issue 291 评审补）：移除 = 同步删掉复习计划里的记录并写入排除名单
+            //（删除类主动作，故主按钮不高亮；「保留」才是无损选项，手册 §9/§10）
+            { label: '移除', value: 'ok', cta: true, danger: true },
           ],
         }).then(async (v) => {
           if (v === 'ok') {

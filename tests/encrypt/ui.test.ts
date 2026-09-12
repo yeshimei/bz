@@ -1069,6 +1069,10 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     // 不清静默重设：先出损坏确认框
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
     expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('清单疑似损坏');
+    // issue 291 评审补：重设会生成全新空清单、旧加密数据永久无法恢复 → 危险主动作不得高亮
+    expect(
+      document.getElementById('__shared_confirm_popup__')!.classList.contains('bz-flow-dialog--danger')
+    ).toBe(true);
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     expect(await p).toBe(true);
     expect(dm.unlocked).toBe(true);

@@ -331,7 +331,7 @@
 | 主窗口 | `.bz-win-head` + `.bz-win-close`（core） | 头行规范照抄，勿另写 |
 | 通用遮罩/弹窗 | `.bz-overlay-mask` / `.bz-overlay-popup`（core） | **浮层唯一壳**（ADR-0125）：12px 圆角、1px 描边、shadow-lg、82vh 限高、16px 内边距；新浮层一律复用，禁另造壳 |
 | 图标按钮 | `.bz-icon-btn`（core） | 22×26/14px、hover 背景、无边框 |
-| 确认框 | `#__shared_confirm_*`（core/flow-dialog） | 与表单弹窗**同壳**（popup 挂 `.bz-overlay-popup`）+ 版式类 `.bz-flow-dialog`：24px 内边距、`min(400px, 100vw - 32px)` 宽、居中纵排；按钮几何同 `.bz-btn`；**慎重决策场景按钮保持中性**（[Ant Design 对比原则](https://ant.design/docs/spec/contrast-cn)）——危险主动作时 popup 挂 `.bz-flow-dialog--danger`，主按钮降为中性次级底 + danger 文字，不默认高亮「删除」（ADR-0125） |
+| 确认框 | `#__shared_confirm_*`（core/flow-dialog） | 与表单弹窗**同壳**（popup 挂 `.bz-overlay-popup`）+ 版式类 `.bz-flow-dialog`：24px 内边距、`min(400px, 100vw - 32px)` 宽、居中纵排；按钮几何同 `.bz-btn`；**慎重决策场景按钮保持中性**（[Ant Design 对比原则](https://ant.design/docs/spec/contrast-cn)）——危险主动作时 popup 挂 `.bz-flow-dialog--danger`，主按钮降为**整套**中性次级形制（底 + 文字 + 描边 + 圆角 + 阴影五项一并复位，域皮的提级形制不得残留），只有文字用 danger 色，不默认高亮「删除」（ADR-0125）。**破坏性主动作（删除/清空/销毁/重设覆盖）必须标 `danger: true`**，否则 §9 本条落不了地 |
 | 子弹窗皮肤通道 | `uiModal.className` / `openFlowDialog.className`（core） | 浮层挂 `document.body`，**脱离面板根 = 面板皮肤类不会自动继承**：带皮肤的域必须显式把皮肤类传进去（`.bz-overlay-popup.bz-<域>-skin-*` 复合选择器才命中）；用私有 token 的域另写 `#__shared_confirm_popup__.bz-<域>-flow-dialog` 映射（ADR-0125） |
 | 通知 toast | `.bz-notice*`（core） | 10px 圆角、shadow-sm、顶右/移动端顶中；错误常驻/可关，成功 1.5s |
 | 右键菜单 | `.bz-item-menu`（core） | shadow-sm、8px 圆角、无底色项 |
@@ -375,6 +375,7 @@
 - [ ] 语义色只表达状态，且附文字/图标佐证（不只靠颜色）
 - [ ] 主按钮 hover 只调 opacity；选中态规范用 accent
 - [ ] 慎重决策场景（删除确认等）按钮保持中性，不默认高亮危险项（危险主动作自动挂 `.bz-flow-dialog--danger`）
+- [ ] 破坏性主动作（删除/清空/销毁/重设覆盖）在 `openFlowDialog` 的 actions 里标了 `danger: true`；域皮若要保留自有按钮形制，另写一条 `.bz-flow-dialog--danger` 限定覆写（亮/暗两套）
 - [ ] 域内子弹窗（编辑/确认/选择器）**带了本域皮肤类**？挂 body 的浮层不会自动继承面板皮肤（ADR-0125）
 - [ ] 动效 ≤0.45s、transform+opacity、有 reduced-motion 降级；错误提示常驻、一页一加载动画
 - [ ] 移动端 768 断点；真全屏/抽屉/安全区已适配；触控热区 ≥44px（下限 40px）、间距 ≥8px

@@ -71,6 +71,8 @@ export function confirmFullRebuild(): Promise<boolean> {
     className: 'bz-sb-flow-dialog',
     actions: [
       { label: '取消', value: 'cancel' },
+      // 刻意不标 danger（issue 291 评审）：清空的是**可重建的派生数据**（向量索引按白名单重嵌入即恢复），
+      // 用户笔记与配置一字不动 —— 非不可逆数据破坏，故保留普通高亮主动作。
       { label: '开始重建', value: 'ok', cta: true },
     ],
   }).then((v) => v === 'ok');
@@ -679,6 +681,9 @@ export function secondBrainSettingsSchema(): SettingsSchema {
                   message: `将「移动端远程地址」覆盖为 ${target}？`,
                   actions: [
                     { label: '取消', value: 'cancel' },
+                    // 刻意不标 danger（issue 291 评审）：这是「填便利值」而非删除类动作——
+                    // 只是把被探测到的局域网地址写进设置项，用户随时可手改回，
+                    // 不构成不可逆数据破坏，故保留普通高亮主动作。
                     { label: '覆盖', value: 'ok', cta: true },
                   ],
                 }).then((v) => {
