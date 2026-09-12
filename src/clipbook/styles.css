@@ -231,7 +231,7 @@
 /* .sm 14px 框为装饰性 favicon 回退字chip，字号不抬档（例外见收尾报告） */
 .bz-clip-favchip.sm { width: 14px; height: 14px; font-size: 8px; }
 .bz-clip-art-title {
-  font-family: var(--clip-serif); font-size: 24px; font-weight: var(--bz-weight-bold);
+  font-family: var(--clip-serif); font-size: var(--bz-font-display); font-weight: var(--bz-weight-bold);
   line-height: 1.42; margin-bottom: var(--bz-space-md); color: var(--clip-ink);
 }
 .bz-clip-art-flag { display: inline-flex; align-items: center; gap: var(--bz-space-xs); font-size: var(--bz-font-caption); font-weight: var(--bz-weight-semibold); border-radius: var(--bz-radius-xs); padding: 2px var(--bz-space-sm); }
@@ -374,7 +374,7 @@
 .bz-clip-mob-save.saved { color: var(--clip-dim); }
 .bz-clip-mob-detail-body { flex: 1; overflow-y: auto; padding: 26px 22px var(--bz-space-2xl); }
 .bz-clip-mob-d-kicker { font-family: var(--clip-serif); font-size: 16.5px; letter-spacing: 3px; color: var(--clip-muted); display: flex; justify-content: space-between; }
-.bz-clip-mob-d-title { font-family: var(--clip-serif); font-size: 33px; font-weight: 700; line-height: 1.45; margin: 10px 0 14px; color: var(--clip-ink); }
+.bz-clip-mob-d-title { font-family: var(--clip-serif); font-size: 27px; font-weight: 700; line-height: 1.45; margin: 10px 0 14px; color: var(--clip-ink); }
 .bz-clip-mob-d-rule { border: none; border-top: 1px solid var(--clip-line); margin: 2px 0 var(--bz-space-lg); }
 .bz-clip-mob-d-md { font-family: var(--clip-serif); font-size: 22.5px; line-height: 1.95; color: var(--clip-body); text-align: justify; }
 .bz-clip-mob-d-md p { margin-bottom: 14px; }
