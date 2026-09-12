@@ -16,11 +16,11 @@ import { __resetNoticeForTests } from '../../src/core/notice';
 import { openDataCheckup, unloadDataCheckup } from '../../src/checkup';
 import { __resetCheckupCacheForTests } from '../../src/checkup/run';
 
-// 确认框替身：默认「清除」；用例可改返回值
-const flowMock = vi.fn(() => Promise.resolve<string | undefined>('ok'));
+// 确认框替身：默认「清除」；用例可改返回值。参数原样透传给 flowMock，供断言 actions（danger 标记）
+const flowMock = vi.fn((..._args: unknown[]) => Promise.resolve<string | undefined>('ok'));
 vi.mock('../../src/core/flow-dialog', async (importOriginal) => {
   const mod = await importOriginal<Record<string, unknown>>();
-  return { ...mod, openFlowDialog: (...args: unknown[]) => flowMock() };
+  return { ...mod, openFlowDialog: (...args: unknown[]) => flowMock(...args) };
 });
 
 const DIR = 'CONFIG/STORAGE';
@@ -176,6 +176,13 @@ describe('数据体检面板（checkup UI）', () => {
     const fixBtn = [...popup.querySelectorAll<HTMLButtonElement>('.bz-checkup-group--warn button')].find((b) => b.textContent!.includes('清除关联'))!;
     fixBtn.click();
     expect(flowMock).toHaveBeenCalled();
+    // issue 291 评审补：「清除」是删除类主动作（从数据文件里删失效引用/残留，可撤销）→
+    // 必须标 danger，主按钮不高亮（设计手册 §9/§10）
+    expect(flowMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actions: expect.arrayContaining([expect.objectContaining({ label: '清除', danger: true })]),
+      })
+    );
     await waitFor(() => getNoticeMessages().some((m) => m.includes('已清除 1 条失效的收藏关联')));
     // 数据落盘：linkedNote 置 null
     const after = JSON.parse(vault.files.get(`${DIR}/favorites.json`)!);

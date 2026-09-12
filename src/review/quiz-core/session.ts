@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 做题家 UI（ticket 17 修正版：对齐源码 QuizMasterUI 逐字）
  * 模块单例 quizUI（复习域联动）。
  */
@@ -508,6 +508,8 @@ export class QuizMasterUI {
       message: '未完成的题目将丢弃，本次复习将按已答题目结算评级',
       actions: [
         { label: '继续做题', value: 'cancel' },
+        // 刻意不标 danger（issue 291 评审）：同 sprint.requestQuit —— 丢弃的是本轮未答的临时状态，
+        // 已答题目照常结算评级，不删任何持久化数据。
         { label: '放弃', value: 'ok', cta: true },
       ],
     }).then((v) => {

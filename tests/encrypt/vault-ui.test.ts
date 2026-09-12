@@ -265,6 +265,31 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(sheet.textContent).toContain('彻底销毁');
   });
 
+  // issue 291 评审补：encrypt 的 askConfirm 走 core 流程框（与 password-vault 的域内自绘确认不同），
+  // 因此删除/销毁类主动作必须由调用方显式传 danger —— 这里直接验参数语义（两条分支）。
+  it('askConfirm(danger)：销毁类 → 弹窗挂 bz-flow-dialog--danger；还原类 → 保持普通高亮', async () => {
+    ui.show();
+    await new Promise((r) => setTimeout(r, 30));
+    const fired: string[] = [];
+    (ui as any).askConfirm('彻底销毁日记', '将永久销毁密文（含附件）。此操作不可撤销。', '永久销毁', true, () =>
+      fired.push('destroy')
+    );
+    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
+    const dangerPopup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    expect(dangerPopup.querySelector('h4')!.textContent).toBe('彻底销毁日记');
+    expect(dangerPopup.classList.contains('bz-flow-dialog--danger')).toBe(true);
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(fired).toEqual(['destroy']));
+
+    (ui as any).askConfirm('还原', '将原文还原到原路径？', '还原', false, () => fired.push('restore'));
+    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
+    const plainPopup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    expect(plainPopup.classList.contains('bz-flow-dialog--danger')).toBe(false);
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(fired).toEqual(['destroy']);
+  });
+
   it('E6：移动端密码平台详情页 ⋮ 直接开底部抽屉（旧 [data-mob-menu] 未绑事件点击无反应）', async () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     ui.show();
@@ -346,6 +371,9 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(popup.querySelector('h4')!.textContent).toBe('删除密码条目');
     expect(popup.textContent).toContain('确定删除账号「me@example」吗？此操作不可撤销。');
     expect((document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).textContent).toBe('删除');
+    // issue 291 评审补：删除类主动作走 core 流程框时必须显式传 danger（askConfirm 第 4 参）→
+    // 弹窗挂危险中性态，主按钮不高亮（手册 §9/§10）
+    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true);
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     // 成功 toast 带对象名（不再是孤零零「已删除」）；轮询等待写队列落盘（全量并发下固定 sleep 会抖）
     await waitFor(() =>

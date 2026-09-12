@@ -140,7 +140,9 @@ export async function reviewRemoveCurrent(app: App): Promise<void> {
     message: `确定把「${file.basename}」移出复习计划吗？所有复习数据将被删除，移出后可在通知中撤销。`,
     actions: [
       { label: '取消', value: 'cancel' },
-      { label: '移出', value: 'ok', cta: true },
+      // danger（issue 291 评审补）：移出复习计划 = 删除该笔记的全部复习数据（可撤销但仍是删除类
+      // 主动作）→ 主钮不高亮（手册 §9/§10）
+      { label: '移出', value: 'ok', cta: true, danger: true },
     ],
   }).then(async (v) => {
     if (v !== 'ok') return;

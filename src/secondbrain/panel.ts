@@ -71,6 +71,8 @@ export function confirmFullRebuild(): Promise<boolean> {
     className: 'bz-sb-flow-dialog',
     actions: [
       { label: '取消', value: 'cancel' },
+      // 刻意不标 danger（issue 291 评审）：清空的是**可重建的派生数据**（向量索引按白名单重嵌入即恢复），
+      // 用户笔记与配置一字不动 —— 非不可逆数据破坏，故保留普通高亮主动作。
       { label: '开始重建', value: 'ok', cta: true },
     ],
   }).then((v) => v === 'ok');
