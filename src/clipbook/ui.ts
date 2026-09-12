@@ -1267,9 +1267,6 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
             { value: 'large', label: '大' },
           ], onChange: () => applyReaderFontSize() },
           { type: 'path', mode: 'single', name: '剪藏目录', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
-          { type: 'number', name: '面板宽度记忆', desc: '桌面拖拽面板边缘缩放后自动记忆，0 为未拖过', binding: { key: 'clipbookPanelWidth' }, min: 0, step: 10 },
-          { type: 'number', name: '面板高度记忆', desc: '桌面拖拽面板边缘缩放后自动记忆，0 为未拖过', binding: { key: 'clipbookPanelHeight' }, min: 0, step: 10 },
-          { type: 'number', name: '目录栏宽度记忆', desc: '拖动目录与阅读分隔线后自动记忆，0 为未拖过', binding: { key: 'clipbookMidWidth' }, min: 0, step: 10 },
         ],
       },
       {

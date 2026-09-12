@@ -19,7 +19,7 @@ import type BzSettings from '../settings';
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import { renderPathSettingRow } from './path-picker';
 import { createSettingsGroup, markSettingSplitRows, refreshSettingsGroupCounts } from './settings-modal';
-import { uiCardChoice } from './ui';
+import { uiCardChoice, uiSetlist } from './ui';
 import { notifySaveError } from './notice';
 
 /** 设置快照：visibleWhen 条件函数的入参（键直绑行的当前值；外部数据行请自行闭包捕获）。 */
@@ -222,6 +222,9 @@ interface ListRow extends RowBase {
   emptyText?: string;
   /** 移除按钮文案（默认「移除」） */
   removeLabel?: string;
+  /** 布局变体（通用组件 .bz-setlist 修饰类，两渲染器同口径；缺省 = chips 流式胶囊，2026-09-12 拍板）：
+   *  rows = 全宽行列表 / grid = 卡片网格 / dense = 紧密分隔行 */
+  variant?: 'rows' | 'grid' | 'chips' | 'dense';
   onChange?: (keys: string[], ctx: SettingsRowContext) => void;
 }
 
@@ -679,7 +682,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         return;
       }
       case 'list': {
-        // 通用列表行（chips 自绘 DOM 收口）：条目 = 头像可选 + 主文案 + 副文案 + 移除按钮；
+        // 通用列表行：条目 markup/行为 = 组件库 uiSetlist（唯一源，与面板渲染器同调）；
         // 包装容器作 visibleWhen 宿主；items 函数形式在每次移除后重读重建（域侧以磁盘为基底）
         const wrap = document.createElement('div');
         wrap.className = 'bz-setlist-wrap';
@@ -687,53 +690,17 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         const setting = new Setting(wrap).setName(row.name);
         if (row.desc) setting.setDesc(row.desc);
         if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
-        const box = document.createElement('div');
-        box.className = 'bz-setlist';
-        wrap.appendChild(box);
         const readItems = () => (typeof row.items === 'function' ? row.items() : row.items);
         const renderItems = (): void => {
-          const items = readItems();
-          box.innerHTML = '';
-          if (items.length === 0) {
-            if (row.emptyText) {
-              const empty = document.createElement('div');
-              empty.className = 'bz-setlist-empty';
-              empty.textContent = row.emptyText;
-              box.appendChild(empty);
-            }
-            return;
-          }
-          for (const it of items) {
-            const item = document.createElement('div');
-            item.className = 'bz-setlist-item';
-            item.dataset.key = it.key;
-            if (it.imageUrl) {
-              const img = document.createElement('img');
-              img.className = 'bz-setlist-avatar';
-              img.src = it.imageUrl;
-              img.alt = '';
-              img.onerror = () => img.remove(); // 头像加载失败不占位
-              item.appendChild(img);
-            }
-            const text = document.createElement('div');
-            text.className = 'bz-setlist-text';
-            const name = document.createElement('div');
-            name.className = 'bz-setlist-name';
-            name.textContent = it.label;
-            text.appendChild(name);
-            if (it.sub) {
-              const sub = document.createElement('div');
-              sub.className = 'bz-setlist-sub';
-              sub.textContent = it.sub;
-              text.appendChild(sub);
-            }
-            item.appendChild(text);
-            const remove = document.createElement('button');
-            remove.className = 'bz-setlist-remove bz-touch-target--xl';
-            remove.textContent = row.removeLabel || '移除';
-            remove.onclick = () => {
+          wrap.querySelector('.bz-setlist')?.remove();
+          wrap.appendChild(uiSetlist({
+            items: readItems(),
+            variant: row.variant,
+            removeLabel: row.removeLabel,
+            emptyText: row.emptyText,
+            onRemove: (key) => {
               void (async () => {
-                const remaining = readItems().map((x) => x.key).filter((k) => k !== it.key);
+                const remaining = readItems().map((x) => x.key).filter((k) => k !== key);
                 try {
                   await row.onChange?.(remaining, ctx);
                 } catch (e) {
@@ -741,16 +708,15 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
                   // UI 停在已删假象、无提示，renderItems/reevaluate 被跳过）
                   notifySaveError(e, row.name || '列表项');
                 } finally {
-                  renderItems();
-                  reevaluate();
+                  reevaluate(); // 经 customRefreshes 重读重建（含本行）——与添加同路径
                 }
               })();
-            };
-            item.appendChild(remove);
-            box.appendChild(item);
-          }
+            },
+          }));
         };
         renderItems();
+        // 列表行随任意行变更重读重建（添加按钮/输入提交后即时可见；否则要重开弹窗——2026-09-12 修）
+        customRefreshes.push(renderItems);
         return;
       }
       case 'text':

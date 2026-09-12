@@ -4,7 +4,7 @@
  * - schema 形态：两条路径（news.json 缺失 → 安装引导行；存在 → 声明行），
  *   全组零 custom 插槽（与面板其他组同一渲染链——推翻 ticket 131 custom 方案的锚点）；
  * - 三函数绑定：三源开关/B站条数读写字盒、save 经数据层落盘 news.json；
- * - 显隐联动：B 站开关关闭 → UP 名单/抓取条数行 visibleWhen 假（闭包读状态盒）；
+ * - 常显：B 站/RSS 开关退役（2026-09-12 用户拍板），管理行与条数行不再受开关显隐；
  * - 保留天数行绑定 numStrBinding（data.json string 键）。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -53,8 +53,8 @@ describe('数据源组 schema 形态（声明式重写）', () => {
     const rows = dataSourceGroupRows(state);
     expect(rows.length).toBeGreaterThanOrEqual(6);
     expect(rows.some((r) => r.type === 'custom')).toBe(false);
-    // ADR-0121：每日简报退役，B站组后为「RSS 订阅」toggle + 「RSS 订阅源」管理按钮行
-    expect(rows.map((r) => r.type)).toEqual(['toggle', 'toggle', 'toggle', 'button', 'toggle', 'button', 'number', 'number']);
+    // ADR-0121 后 RSS 管理行入组；2026-09-12 B站/RSS 开关退役 → 两 toggle + 两管理行 + 两 number
+    expect(rows.map((r) => r.type)).toEqual(['toggle', 'toggle', 'button', 'button', 'number', 'number']);
     expect(rowByName(rows, '每日简报名单')).toBeUndefined();
     expect(rowByName(rows, 'RSS 订阅源').buttonText).toBe('管理');
   });
@@ -112,18 +112,15 @@ describe('数据源组三函数绑定（news.json 落盘）', () => {
   });
 });
 
-describe('数据源组显隐联动（B 站开关联动，闭包读状态盒）', () => {
-  it('B站关 → UP 名单/抓取条数行 visibleWhen 假；字盒置开后转真（无需重建）', async () => {
+describe('数据源组常显（B 站/RSS 开关退役）', () => {
+  it('开关行移除，UP 名单/RSS 订阅源/抓取条数行无 visibleWhen 恒常显', async () => {
     seedDisk({ zhihu: true, guokr: true, bilibili: false });
     const rows = dataSourceGroupRows(await readDataSourceState());
-    const snap = {} as never; // 外部绑定行：visibleWhen 不依赖 data.json 快照
-    const upRow = rowByName(rows, 'UP 主名单');
-    const countRow = rowByName(rows, 'B站抓取条数');
-    expect(upRow.visibleWhen(snap)).toBe(false);
-    expect(countRow.visibleWhen(snap)).toBe(false);
-    rowByName(rows, 'B站 UP 主').binding.set(true);
-    expect(upRow.visibleWhen(snap)).toBe(true);
-    expect(countRow.visibleWhen(snap)).toBe(true);
+    expect(rowByName(rows, 'B站 UP 主')).toBeUndefined();
+    expect(rowByName(rows, 'RSS 订阅')).toBeUndefined();
+    for (const name of ['UP 主名单', 'RSS 订阅源', 'B站抓取条数']) {
+      expect(rowByName(rows, name).visibleWhen).toBeUndefined();
+    }
   });
 
   it('UP 名单行 desc 计数：已跟踪 N 位 / 暂未跟踪', async () => {

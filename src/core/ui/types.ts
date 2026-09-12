@@ -163,6 +163,24 @@ export interface BzMobStripOpts {
   onChange?: (id: string) => void;
 }
 
+/** 可移除列表（.bz-setlist）条目：稳定键 + 主文案 + 副文案（UID/URL 等，可省）+ 头像（可省） */
+export interface BzSetlistItem {
+  key: string;
+  label: string;
+  sub?: string;            // chips 变体不展示，转 title 悬停提示
+  imageUrl?: string;
+}
+
+/** 可移除列表（.bz-setlist）：条目 + 四布局变体（缺省 chips 流式胶囊，2026-09-12 拍板） */
+export interface BzSetlistOpts {
+  items: BzSetlistItem[];
+  variant?: 'rows' | 'grid' | 'chips' | 'dense'; // rows 全宽行列表 / grid 卡片网格 / chips 胶囊 / dense 紧密分隔行
+  removeLabel?: string;    // 移除钮文案（缺省「移除」）
+  onRemove?: (key: string) => void;
+  emptyText?: string;      // items 为空时的空态文案（不传则空容器，:empty 不占位）
+  className?: string;
+}
+
 /** 统计卡（.bz-stat：数字 + 标签） */
 export interface BzStatOpts {
   label: string;

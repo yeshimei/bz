@@ -22,7 +22,7 @@ import { openDirPicker } from './dir-picker';
 import { notice } from '../core/notice';
 // markup 单源（ADR-0104/0105）：行/组/控件结构串全出自渲染纯层，本文件只留行为绑定
 import * as R from './render';
-import { mountIcons } from '../core/ui';
+import { mountIcons, uiSetlist } from '../core/ui';
 
 /** 快照读取（visibleWhen 求值输入；键直绑行从 getSettings 读，三函数行由外部提供） */
 function snapshot(): SettingsSnapshot {
@@ -289,7 +289,11 @@ function renderRow(
   const holder = document.createElement('div');
   holder.innerHTML = R.rowHtml({
     key: bindKey || rowName || '',
-    cls: (row as { isChild?: boolean }).isChild ? 'child' : undefined,
+    cls: [
+      (row as { isChild?: boolean }).isChild ? 'child' : '',
+      // 列表行 = 面板行宿主 modifier（名称/描述一行在上，列表占满行宽在下；缺它条目会横铺进右侧控件区）
+      row.type === 'list' ? 'bz-sp-set-row--list' : '',
+    ].filter(Boolean).join(' ') || undefined,
     isCards: isCardsRow,
     isCustom,
     name: rowName,
@@ -561,26 +565,28 @@ function renderRow(
       break;
     }
     case 'list': {
-      // 通用列表行（chips 自绘 DOM 收口）：条目 = 头像可选 + 主文案 + 副文案 + 移除按钮；
+      // 通用列表行：条目 markup/行为 = 组件库 uiSetlist（唯一源，与 core 渲染器同调）；
       // items 函数形式在每次移除后重读重建（域侧以磁盘/字盒为基底），空数组回退 emptyText
       const renderItems = () => {
         const items = typeof row.items === 'function' ? row.items() : row.items;
-        ctrlEl.innerHTML = items.length > 0
-          ? R.listHtml(items, row.removeLabel)
-          : (row.emptyText ? R.listEmptyHtml(row.emptyText) : '');
-        ctrlEl.querySelectorAll<HTMLElement>('.bz-setlist-item').forEach((itemEl) => {
-          const key = itemEl.dataset.key ?? '';
-          itemEl.querySelector('.bz-setlist-remove')?.addEventListener('click', () => {
+        ctrlEl.innerHTML = '';
+        ctrlEl.appendChild(uiSetlist({
+          items,
+          variant: (row as { variant?: 'rows' | 'grid' | 'chips' | 'dense' }).variant,
+          removeLabel: row.removeLabel,
+          emptyText: row.emptyText,
+          onRemove: (key) => {
             void (async () => {
               const cur = (typeof row.items === 'function' ? row.items() : row.items).map((x) => x.key);
               await row.onChange?.(cur.filter((k) => k !== key), ctx);
-              renderItems();
-              refresh();
+              refresh(); // 经 refreshKey 链重读重建（含本行）——与添加同路径
             })();
-          });
-        });
+          },
+        }));
       };
       renderItems();
+      // 列表行随任意行变更重读重建（添加按钮/输入提交后即时可见；否则要重开弹窗——2026-09-12 修）
+      regRefresh?.(renderItems);
       break;
     }
     case 'choiceCards': {

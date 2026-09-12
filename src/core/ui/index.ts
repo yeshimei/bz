@@ -17,6 +17,7 @@ export type {
   BzSwitchOpts, BzSelectOpts, BzCardPickOpts,
   BzSearchOpts, BzMainHeadOpts, BzRailItem, BzRailOpts,
   BzMobStripOpts, BzStatOpts, BzProgressOpts, BzPopoverOpts, BzSuggestOpts,
+  BzSetlistItem, BzSetlistOpts,
 } from './types';
 
 // 组件工厂（每组件一文件）
@@ -24,6 +25,7 @@ export { uiIcon } from './icon';
 export { uiIconSpan, mountIcons } from './icons';
 export { uiBtn, uiIconBtn, uiBtnRow, uiDialogActions } from './button';
 export { uiChip } from './chip';
+export { uiSetlist } from './setlist';
 export { uiInput, uiField } from './field';
 export { uiRange } from './slider';
 export { uiEmpty } from './empty';

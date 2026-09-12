@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>通用列表组件（.bz-setlist）· 布局变体评审</title>
+<!--
+  评审工件：通用列表组件的四种布局变体（A 行列表缺省 / B 卡片网格 / C 流式胶囊 / D 紧密分隔行）。
+  样式全部来自真源码链（core/styles.css → tokens → components.css → settings-panel/styles.css），
+  条目结构 = listHtml 产物逐字复制；--sp-* 为 S1 亚麻暖白同源复制（页面外景用，仅评审）。
+  定稿后：被选变体定为通用组件缺省（或 ListRow.variant 落域），本页删除。
+-->
+<link rel="stylesheet" href="../../src/core/styles.css">
+<link rel="stylesheet" href="../../src/core/ui/tokens.css">
+<link rel="stylesheet" href="../../src/core/ui/components.css">
+<link rel="stylesheet" href="../../src/settings-panel/styles.css">
+<style>
+  /* 评审页外景（壳内只允许外景容器样式） */
+  body { margin: 0; background: #e9e7e1; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; color: #211d16; padding: 32px 20px 72px; }
+  .lp-wrap { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  .lp-sub { font-size: 12.5px; color: #7a7466; line-height: 1.75; margin-bottom: 22px; }
+  .lp-sub b { color: #a33d2a; }
+  /* S1 亚麻暖白 token 同源复制（评审页 scope；正式页面类在面板根） */
+  .lp-scope {
+    --sp-bg: #f6f2e9; --sp-panel: #fffcf6; --sp-line: #e5dfcf; --sp-line-soft: #f2eee1;
+    --sp-ink: #2c2924; --sp-ink-2: #7a7466; --sp-ink-3: #aca595;
+    --sp-accent: #c95a28; --sp-accent-soft: #f7e8dd; --sp-on-accent: #fff;
+    --sp-radius: 12px; --sp-shadow: 0 1px 5px rgba(90, 70, 40, 0.06);
+    --sp-pop: #ffffff; --sp-pop-shadow: 0 4px 16px rgba(90, 70, 40, 0.14);
+    --sp-input-bg: #fffcf6; --sp-ctl-off: #dcd5c2; --sp-knob: #fff;
+    background: var(--sp-bg); border-radius: 14px; padding: 18px; margin-bottom: 18px;
+  }
+  /* S3 炭黑夜航（深色预览：面板 UI token 切暗，与 bz token 的 .theme-dark 同步） */
+  body.theme-dark .lp-scope {
+    --sp-bg: #1b1b1f; --sp-panel: #242429; --sp-line: #35353c; --sp-line-soft: #2c2c32;
+    --sp-ink: #e8e8ec; --sp-ink-2: #a2a2ac; --sp-ink-3: #6a6a74;
+    --sp-accent: #eda75c; --sp-accent-soft: rgba(237, 167, 92, 0.14); --sp-on-accent: #1b1b1f;
+    --sp-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+  .lp-sec { margin-bottom: 30px; }
+  .lp-sec:last-child { margin-bottom: 0; }
+  .lp-sec h2 { font-size: 15px; margin: 0 0 4px; }
+  .lp-tag { display: inline-block; font-size: 10.5px; font-weight: 700; color: #a33d2a; border: 1px solid #e5dfcf; border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: 2px; background: #fffcf6; }
+  .lp-desc { font-size: 12px; color: #7a7466; margin-bottom: 10px; line-height: 1.6; }
+  .lp-cap { font-size: 11px; color: #aca595; margin: 10px 0 4px; }
+</style>
+</head>
+<body class="theme-light"> <!-- 模拟 Obsidian 宿主：bz 色彩 token 挂 theme-light/dark（壳内必须补一类，否则 var 全失效） -->
+<div class="lp-wrap">
+  <h1>通用列表组件（.bz-setlist）· 布局变体评审</h1>
+  <div class="lp-sub">
+    同一组件、同一份真样式，四种布局。条目 = 头像（可缺省）+ 名称 + UID 副文案 + 移除按钮。<br>
+    每个变体给「3 项」与「长名单 8 项」两个样本（行宿主与弹窗/面板内完全一致）。<br>
+    选定后告诉我 <b>A / B / C / D</b>，我把它定为通用组件缺省，接入 UP 主名单、RSS 订阅源与复习排除名单。
+    <button type="button" id="lp-theme" style="margin-left:10px;font:inherit;font-size:11.5px;padding:2px 10px;border:1px solid #d8d2c4;border-radius:999px;background:#fffcf6;color:#a33d2a;cursor:pointer">切深色皮</button>
+  </div>
+  <div class="lp-sub" style="margin-top:-14px"><b>已拍板：C 流式胶囊为通用组件缺省</b>（2026-09-12）；A/B/D 保留为 ListRow.variant 可选变体。</div>
+
+  <div class="lp-scope">
+    <section class="lp-sec">
+      <h2>A · 行列表<span class="lp-tag">显式 variant: 'rows'</span></h2>
+      <div class="lp-desc">每条独占一整行、铺满宽度：头像 + 名称 + UID + 右侧移除。信息最全，纵向占位最多。</div>
+      <div class="bz-sp-group"><div class="bz-sp-group-body">
+        <div class="bz-sp-set-row bz-sp-set-row--list">
+          <div class="bz-sp-set-info"><div class="bz-sp-set-name">名单列表</div><div class="bz-sp-set-desc">已跟踪的 UP 主，移除后不再抓取其投稿</div></div>
+          <div class="bz-sp-set-ctrl"><div class="lp-list" data-variant="rows" data-count="3"></div></div>
+        </div>
+      </div></div>
+      <div class="lp-cap">长名单 8 项：</div>
+      <div class="bz-sp-group"><div class="bz-sp-group-body">
+        <div class="bz-sp-set-row bz-sp-set-row--list">
+          <div class="bz-sp-set-info"><div class="bz-sp-set-name">名单列表</div><div class="bz-sp-set-desc">已跟踪的 UP 主，移除后不再抓取其投稿</div></div>
+          <div class="bz-sp-set-ctrl"><div class="lp-list" data-variant="rows" data-count="8"></div></div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="lp-sec">
+      <h2>B · 卡片网格<span class="lp-tag">名单多时最省纵向</span></h2>
+      <div class="lp-desc">每条一张小卡（头像、名称、UID 竖排），自动填列。名字长时卡片变高，扫视效率最好。</div>
+      <div class="bz-sp-group"><div class="bz-sp-group-body">
+        <div class="bz-sp-set-row bz-sp-set-row--list">
+          <div class="bz-sp-set-info"><div class="bz-sp-set-name">名单列表</div><div class="bz-sp-set-desc">已跟踪的 UP 主，移除后不再抓取其投稿</div></div>
+          <div class="bz-sp-set-ctrl"><div class="lp-list" data-variant="grid" data-count="3"></div></div>
+        </div>
+      </div></div>
+      <div class="lp-cap">长名单 8 项：</div>
+      <div class="bz-sp-group"><div class="bz-sp-group-body">
+        <div class="bz-sp-set-row bz-sp-set-row--list">
+          <div class="bz-sp-set-info"><div class="bz-sp-set-name">名单列表</div><div class="bz-sp-set-desc">已跟踪的 UP 主，移除后不再抓取其投稿</div></div>
+          <div class="bz-sp-set-ctrl"><div class="lp-list" data-variant="grid" data-count="8"></div></div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="lp-sec">
+      <h2>C · 流式胶囊<span class="lp-tag">缺省（不写 variant 即此版）</span></h2>
+      <div class="lp-desc">头像 + 名称排成胶囊流式换行，UID 副文案让位（悬停可后续补 tooltip），移除收成胶囊尾的 ×。</div>
+      <div class="bz-sp-group"><div class="bz-sp-group-body">
+        <div class="bz-sp-set-row bz-sp-set-row--list">
+          <div class="bz-sp-set-info"><div class="bz-sp-set-name">名单列表</div><div class="bz-sp-set-desc">已跟踪的 UP 主，移除后不再抓取其投稿</div></div>
+          <div class="bz-sp-set-ctrl"><div class="lp-list" data-variant="chips" data-count="3"></div></div>
+        </div>
+      </div></div>
+      <div class="lp-cap">长名单 8 项：</div>
+      <div class="bz-sp-group"><div class="bz-sp-group-body">
+        <div class="bz-sp-set-row bz-sp-set-row--list">
+          <div class="bz-sp-set-info"><div class="bz-sp-set-name">名单列表</div><div class="bz-sp-set-desc">已跟踪的 UP 主，移除后不再抓取其投稿</div></div>
+          <div class="bz-sp-set-ctrl"><div class="lp-list" data-variant="chips" data-count="8"></div></div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="lp-sec">
+      <h2>D · 紧密分隔行</h2>
+      <div class="lp-desc">无条目底色，行间发丝分隔线；名称 + UID + 移除保持一行。长名单密集浏览最像「清单」。</div>
+      <div class="bz-sp-group"><div class="bz-sp-group-body">
+        <div class="bz-sp-set-row bz-sp-set-row--list">
+          <div class="bz-sp-set-info"><div class="bz-sp-set-name">名单列表</div><div class="bz-sp-set-desc">已跟踪的 UP 主，移除后不再抓取其投稿</div></div>
+          <div class="bz-sp-set-ctrl"><div class="lp-list" data-variant="dense" data-count="3"></div></div>
+        </div>
+      </div></div>
+      <div class="lp-cap">长名单 8 项：</div>
+      <div class="bz-sp-group"><div class="bz-sp-group-body">
+        <div class="bz-sp-set-row bz-sp-set-row--list">
+          <div class="bz-sp-set-info"><div class="bz-sp-set-name">名单列表</div><div class="bz-sp-set-desc">已跟踪的 UP 主，移除后不再抓取其投稿</div></div>
+          <div class="bz-sp-set-ctrl"><div class="lp-list" data-variant="dense" data-count="8"></div></div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="lp-sec">
+      <h2>空态（各变体同款）</h2>
+      <div class="lp-desc">名单为空时整行显示空态文案。</div>
+      <div class="bz-sp-group"><div class="bz-sp-group-body">
+        <div class="bz-sp-set-row bz-sp-set-row--list">
+          <div class="bz-sp-set-info"><div class="bz-sp-set-name">名单列表</div><div class="bz-sp-set-desc">已跟踪的 UP 主，移除后不再抓取其投稿</div></div>
+          <div class="bz-sp-set-ctrl"><div class="bz-setlist-empty">暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加</div></div>
+        </div>
+      </div></div>
+    </section>
+  </div>
+</div>
+<script>
+  /* 样本条目 = listHtml 产物逐字（真结构）；头像用同尺寸占位圆，验证有/无头像两态 */
+  const AV = (c) => `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23${c}'/%3E%3C/svg%3E`;
+  const COLORS = ['c95a28', '4f7a58', '8a6d3b', '5b6f8a'];
+  const itemHtml = (i, withAvatar) => `<div class="bz-setlist-item" data-key="u${i}">
+    ${withAvatar ? `<img class="bz-setlist-avatar" src="${AV(COLORS[i % 4])}" alt="" onerror="this.remove()">` : ''}
+    <div class="bz-setlist-text"><div class="bz-setlist-name">UP ${10000000 + i * 111111}</div><div class="bz-setlist-sub">UID ${10000000 + i * 111111}</div></div>
+    <button type="button" class="bz-setlist-remove bz-touch-target--xl">移除</button>
+  </div>`;
+  document.querySelectorAll('.lp-list').forEach((el) => {
+    const n = Number(el.dataset.count || 3);
+    el.className = `bz-setlist bz-setlist--${el.dataset.variant || 'chips'}`;
+    el.innerHTML = Array.from({ length: n }, (_, i) => itemHtml(i, i % 3 !== 2)).join('');
+  });
+  document.getElementById('lp-theme')?.addEventListener('click', () => {
+    document.body.classList.toggle('theme-light');
+    document.body.classList.toggle('theme-dark');
+  });
+</script>
+</body>
+</html>
