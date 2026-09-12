@@ -4,7 +4,7 @@ import { todayStr } from '../helpers/date';
  * 面板装配（头行/三栏/移动瓦片）、全域入口行、时间线空态、预告三卡、点行直达、ESC/遮罩关闭；
  * issue 290 秒开三件套：首次骨架秒开、关闭保留 DOM 重开复用刷新、卸载真销毁。
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -55,11 +55,16 @@ describe('home 活动河 UI（issue 232）', () => {
   it('面板装配：头行（周历+日期，标题已退役）+ 三栏容器 + 关闭钮；数据采集后全量入口行渲染', async () => {
     const app = recApp(vault);
     openHome(app);
-    await new Promise((r) => setTimeout(r, 20));
-    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
-    expect(overlay).toBeTruthy();
+    // 面板异步装配（骨架秒开 → 数据采集回填）：固定 sleep 在高负载（部署后 Obsidian 重索引整库）下
+    // 会读到半成品 DOM（[data-home-weekday] 实得 0），故改为对「渲染完成」这件事本身做 waitFor（issue 291 §7①）
+    const overlay = await vi.waitFor(() => {
+      const el = document.querySelector('.bz-home-overlay') as HTMLElement;
+      expect(el).toBeTruthy();
+      expect(el.querySelectorAll('[data-home-weekday]').length).toBe(7); // issue 288 本周 → 周历七格
+      expect(el.querySelectorAll('.bz-home-erow').length).toBe(DOMAINS.length);
+      return el;
+    });
     expect(overlay.querySelector('.bz-home-title')).toBeNull(); // 2026-09-09：标题桌面/移动都去掉
-    expect(overlay.querySelectorAll('[data-home-weekday]').length).toBe(7); // issue 288「时间范围」默认本周 → 周历七格
     expect(overlay.querySelector('[data-home-date]')!.textContent).toMatch(/\d{4}-\d{2}-\d{2} 周/);
     expect(overlay.querySelector('[data-home-close]')).toBeTruthy();
     expect(overlay.querySelectorAll('[data-home-go]').length).toBeGreaterThanOrEqual(DOMAINS.length);
