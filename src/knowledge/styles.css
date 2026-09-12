@@ -906,3 +906,69 @@
 .bz-kb-window.bz-panel-mtop .bz-kb-part + .bz-kb-part { border-left: 1px solid var(--line); }
 .bz-kb-window.bz-panel-mtop .bz-kb-part.is-on { background: none; color: var(--ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--ink); }
 
+/* ===== 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一）=====
+   三处确认框（中止批量处理 / 删除转文献任务 / 清空历史）走 openFlowDialog，
+   popup 挂 document.body —— 脱离 .kb 后纸墨私有 token 与域弹窗类一并失效。
+   故三处传 className: 'kb bz-kb-flow-dialog'：
+   - 'kb'：变量作用域（本文件开头 :7-33，含 .theme-dark .kb 暗色组）随根带上；
+   - 'bz-kb-flow-dialog'：域弹窗类，供下方 id 选择器把共享壳（.bz-overlay-popup）
+     改写成纸墨材质。
+   只映射「材质 / 文字 / 按钮」三件事——显式不复用 .bz-kb-window / .bz-lit-dialog 的
+   定位与尺寸（那两个类是 position:fixed 居中 + 定宽的浮层几何，确认框已有自己的版式：
+   居中纵排 + 400px 限宽 + 24px 内边距，见 core/styles.css；套上会双份定位）。 */
+
+/* 壳材质：逐值取自 .bz-lit-dialog（本文件「保留弹窗的纸墨皮」段，术语/添加任务弹窗）——
+   底 var(--panel) / 细线 var(--line) / 14px 圆角 / 深投影；字色取 .bz-kb-window 的 var(--ink)。
+   共享壳默认是 --bz-surface-3 底 + --bz-border 边 + --bz-radius-md 圆角（组件库调色板），
+   在纸墨皮里读作「另一套底」，覆盖后才与同域弹窗同皮。 */
+#__shared_confirm_popup__.bz-kb-flow-dialog {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-interface);
+  /* 共享壳内的文字与中性钮消费 --bz-* 组件 token（core/styles.css 的 #__shared_confirm_* 段），
+     那是 bz 自有固定调色板（亮色白底 / 暗色近黑），与纸墨皮不是一套；
+     整组映射到纸面上的私有墨色，否则深色 Obsidian 主题下「浅纸底 + 浅字」不可读
+     （与 issue 257「缺 kb 背景变量失效」同族事故）。 */
+  --bz-text-1: var(--ink);
+  --bz-text-2: var(--ink2);
+  --bz-surface-2: var(--card);
+  --bz-surface-hover: var(--chip);
+  --bz-danger: var(--red);
+  --bz-radius-sm: 9px; /* 与域内 .bz-lit-ghost-btn / .bz-lit-accent-btn 的 9px 圆角同源 */
+  /* 非危险流程框的主动作语言 = .bz-lit-accent-btn 的绿色实底（域内「生成 / 添加」钮）。
+     当前三处确认框主动作均为 danger，core 的 bz-flow-dialog--danger 只消费 --bz-surface-2 /
+     --bz-danger（中性底 + 红线字），与 --bz-brand 无关 —— 既与危险语义不打架，
+     也保证将来加非危险确认框时按钮即刻同皮（无需再写域规则）。 */
+  --bz-brand: var(--green);
+  --bz-on-brand: #fff;
+}
+
+/* 标题：字面语言取术语弹层的 .bz-lit-sheet-title（衬线 + 字距 + 700）；
+   字号仍留 core 的 18px 标题档（词条页的 emphasis 小档不适合确认框）。 */
+#__shared_confirm_popup__.bz-kb-flow-dialog h4 {
+  font-family: 'Noto Serif SC', SimSun, serif;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+/* 正文：次级墨色 var(--ink2)（同 .bz-lit-term-meta-k 一族的次级字号色）；
+   字号/行高沿用 core（15px / leading-normal），只换色。 */
+#__shared_confirm_popup__.bz-kb-flow-dialog p { color: var(--ink2); }
+
+/* 取消钮 = .bz-lit-ghost-btn 的 ghost 档（透底 + var(--line) 细边 + var(--ink2) 字 + 0.08em 字距）；
+   纸墨皮里按钮不铺芯片底，故把共享壳的中性底显式撤成透明。 */
+#__shared_confirm_popup__.bz-kb-flow-dialog #__shared_confirm_cancel__ {
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink2);
+  letter-spacing: 0.08em;
+}
+#__shared_confirm_popup__.bz-kb-flow-dialog #__shared_confirm_cancel__:hover {
+  border-color: var(--accent);
+  background: var(--chip);
+  color: var(--ink);
+}
+

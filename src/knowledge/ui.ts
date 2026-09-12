@@ -1142,6 +1142,11 @@ export class UIManager {
     const v = await openFlowDialog({
       title: '中止批量处理？',
       message: '当前正在处理的视频将停止，已成功的保留在列表；未开始的项保持待处理，可稍后继续。',
+      // issue 291：流程框挂 document.body，脱离面板根后纸墨 token 与域弹窗类全部失效。
+      // 必须显式带两个类——'kb' = 纸墨变量作用域（本域 styles.css :7-33，亮暗两档），
+      // 'bz-kb-flow-dialog' = 域弹窗类（供 id 选择器把共享壳改写成本域材质），
+      // 否则本框与同域的「添加文献」「术语录入」弹窗不同皮（缺 'kb' 连底色都失效，同 issue 257 事故）。
+      className: 'kb bz-kb-flow-dialog',
       actions: [
         { label: '取消', value: 'cancel' },
         { label: '中止', value: 'ok', danger: true },
@@ -1156,6 +1161,8 @@ export class UIManager {
     const v = await openFlowDialog({
       title: '删除转文献任务',
       message: '仅从列表移除记录，已生成的文献笔记与视频不受影响。',
+      // issue 291：同上——弹窗挂 body 必须自带 'kb'（token 作用域）+ 'bz-kb-flow-dialog'（域皮）
+      className: 'kb bz-kb-flow-dialog',
       actions: [
         { label: '取消', value: 'cancel' },
         { label: '删除', value: 'ok', danger: true },
@@ -1171,6 +1178,8 @@ export class UIManager {
     const v = await openFlowDialog({
       title: '清空历史',
       message: '将移除全部「成功」归档记录；文献笔记与视频文件保留在原处。',
+      // issue 291：同上——挂 body 的流程框须显式带皮肤类才与「历史」窗口同皮
+      className: 'kb bz-kb-flow-dialog',
       actions: [
         { label: '取消', value: 'cancel' },
         { label: '清空', value: 'ok', danger: true },

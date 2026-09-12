@@ -1,4 +1,4 @@
-/* 源指纹 f80fc933c4538d68 · 仓内输入 49 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 8324e3c09aebffc1 · 仓内输入 49 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -4607,7 +4607,7 @@ var BZW_belongings = (() => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
       return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
     }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id };
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
   var activeSettle = null;
   function openFlowDialog(opts) {
@@ -4626,7 +4626,10 @@ var BZW_belongings = (() => {
       };
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
-      if (opts.className) popup.classList.add(opts.className);
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
       popup.setAttribute("role", "dialog");
       popup.setAttribute("aria-modal", "true");
       popup.innerHTML = parts.html;
@@ -4660,10 +4663,11 @@ var BZW_belongings = (() => {
       if (focusBtn) focusBtn.focus();
     });
   }
-  function confirmDiscard(proceed, message) {
+  function confirmDiscard(proceed, message, className) {
     void openFlowDialog({
       title: "放弃未保存的内容？",
       message: message || "弹窗内有未保存的输入，关闭后将丢失",
+      className,
       actions: [
         { label: "放弃", value: "ok" },
         { label: "继续编辑", value: "cancel" }
@@ -7449,6 +7453,9 @@ var BZW_belongings = (() => {
     const v = await openFlowDialog({
       title: "删除物品",
       message: `确定要删除物品「${it.name}」吗？删除后可在通知中撤销。`,
+      // 皮肤类（issue 291）：确认框挂 body、脱离面板根，必须显式带 .bz-bel-flow-dialog
+      // 才能拿到海报 token（否则掉回 core 裸样式，与「物品详情」不同源）
+      className: "bz-bel-flow-dialog",
       actions: [
         { label: "取消", value: "cancel" },
         { label: "删除", value: "del", danger: true, cta: true }
@@ -7516,7 +7523,7 @@ var BZW_belongings = (() => {
     mask.remove();
   }
   function requestCloseBelForm(mask) {
-    if (belFormDirty()) confirmDiscard(() => closeBelForm(mask));
+    if (belFormDirty()) confirmDiscard(() => closeBelForm(mask), void 0, "bz-bel-flow-dialog");
     else closeBelForm(mask);
   }
   function openForm(it) {

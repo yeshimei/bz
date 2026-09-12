@@ -12,13 +12,17 @@
  * 口径：标签/徽章字号 ≥11px；不持静态 z-index；触控 44px 档走 .bz-touch-target / min-height。
  */
 
-/* ---- 皮肤 token（面板 + 表单 + 详情 + 右键菜单四壳同源；亮色纸面，暗色见下方夜版组） ----
+/* ---- 皮肤 token（面板 + 表单 + 详情 + 右键菜单 + 确认流程框五壳同源；亮色纸面，暗色见下方夜版组） ----
    菜单/表单/详情挂 body，须自带 token（.bz-bel-menu 经 openItemMenu menuClass 挂上；
-   三者都是 body 后代，.theme-dark 祖先选择器可达） */
+   四者都是 body 后代，.theme-dark 祖先选择器可达）。
+   .bz-bel-flow-dialog（issue 291）：core/flow-dialog 的确认框同样挂 body、脱离面板根，
+   也进这张列表——它消费的是公共 --bz-* token，进组后共享壳 .bz-overlay-popup 的
+   底色/描边/文字与按钮主色自动跟随海报皮，域 CSS 只需补形制（见文末确认流程框段）。 */
 .bz-bel--poster,
 .bz-bel-form,
 .bz-bel-detail,
-.bz-bel-menu {
+.bz-bel-menu,
+.bz-bel-flow-dialog {
   --bz-bel-paper: #f5f2ec;
   --bz-bel-ink: #171512;
   --bz-bel-accent: #e8481f;
@@ -52,7 +56,8 @@
 .theme-dark .bz-bel--poster,
 .theme-dark .bz-bel-form,
 .theme-dark .bz-bel-detail,
-.theme-dark .bz-bel-menu {
+.theme-dark .bz-bel-menu,
+.theme-dark .bz-bel-flow-dialog {
   --bz-bel-paper: #1a1815;
   --bz-bel-ink: #ece7da;
   --bz-bel-accent: #f0603a;
@@ -371,6 +376,45 @@
 .bz-bel-statuspick .bz-choice-btn.is-on:hover { background: var(--bz-bel-ink) !important; }
 .bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2 { background: var(--bz-bel-accent) !important; color: var(--bz-on-brand, #fff) !important; }
 .bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2:hover { background: var(--bz-bel-accent) !important; }
+
+/* ---- 确认流程框（core/flow-dialog，issue 291：子弹窗统一带皮） ----
+   删除物品确认（ui.ts deleteItem）与「放弃未保存草稿」确认（ui.ts requestCloseBelForm →
+   core/flow-dialog 的 confirmDiscard）都挂 body、脱离面板根，必须显式把皮肤类
+   （.bz-bel-flow-dialog）交给 openFlowDialog，否则这两框掉回 core 裸样式，与同域的
+   「记一笔」表单、「物品详情」不是一套皮。
+   皮肤类已并入上方 token 组选择器列表（亮/暗两份），它消费公共 --bz-* token：共享壳
+   .bz-overlay-popup 的底色/描边/圆角/文字与按钮主色（--bz-brand 赤橙）由此自动跟随海报皮，
+   本段只补「形制」——逐值同源 .bz-bel-form / .bz-bel-detail 的材质语言（2px 墨框 + 方角 +
+   硬偏移阴影）与 .bz-bel-form-title 的标题档。
+   注意：不搬 .bz-bel-form / .bz-bel-detail 的宽高/flex——它们是内容根，套上去会改确认框版式；
+   暗色无需另写规则：本段取值全走 token，上方夜版组已整组翻转（含 --bz-bel-shadow-strong）。 */
+#__shared_confirm_popup__.bz-bel-flow-dialog {
+  background: var(--bz-bel-paper);
+  color: var(--bz-bel-ink);
+  border: 2px solid var(--bz-bel-ink);
+  border-radius: 0;
+  box-shadow: 10px 10px 0 var(--bz-bel-shadow-strong);
+}
+/* 标题：逐值同源 .bz-bel-form-title（22px / 800 / 字距 -0.3px）+ 其墨线收尾；
+   确认框是居中窄卡，墨线随标题自身宽度收尾（不写 align-self/width 撑满整行，避免把表单的
+   整行版式搬过来）。正文 color 不必写：core 用 var(--bz-text-2)，token 组内已是海报墨次强档。 */
+#__shared_confirm_popup__.bz-bel-flow-dialog h4 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--bz-bel-ink);
+  border-bottom: 4px solid var(--bz-bel-ink);
+  padding-bottom: 8px;
+}
+/* 按钮：只补海报字距（.bz-bel-flowbtn / 状态四格 / 菜单项同为 1px 海报字距）。
+   几何与颜色一律不覆写：确认框按钮本就与组件库 .bz-btn 同源（core/styles.css 该段口径），
+   底色/主色由上方 token 组自动跟随（主钮 = --bz-brand 赤橙 + --bz-brand-hover 加深档）。
+   删除确认（danger 主动作）的「主钮保持中性、仅文字用 danger 色」（设计手册 §9/§10）
+   也正因这里不写 background/color 而完整保留。 */
+#__shared_confirm_popup__.bz-bel-flow-dialog #__shared_confirm_cancel__,
+#__shared_confirm_popup__.bz-bel-flow-dialog #__shared_confirm_ok__ {
+  letter-spacing: 1px;
+}
 
 /* ---- 移动端（≤768px = p20 手机壳）----
    容器查询基座：面板与浮层遮罩各为容器（原型评审壳 .demo-mob 396px 由此触发移动端样式，

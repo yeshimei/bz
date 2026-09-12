@@ -1257,6 +1257,10 @@ export class PasswordVaultUIManager {
           title: '设置主密码',
           message:
             '主密码不会存储，也无法找回。若遗忘密码，保险库及加密数据将永久丢失。确定继续吗？',
+          // issue 291：流程框挂 document.body，脱离 .bz-password-vault 根后 --pwv-* token
+          // 全部失效（金色主钮会掉回 core 默认品牌色）。本类既在域 CSS 里复制一份 token，
+          // 又供 id 选择器把共享壳映射成本域材质 —— 缺它确认框与面板不同皮（同 issue 257 事故）。
+          className: 'bz-pwv-flow-dialog',
           actions: [
             { label: '取消', value: 'cancel' },
             { label: '我已了解并继续', value: 'ok', cta: true },
@@ -1316,6 +1320,8 @@ export class PasswordVaultUIManager {
               message:
                 '保险箱清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。' +
                 '重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？',
+              // issue 291：同上——挂 body 的流程框须显式带域类才拿到 --pwv-* 与域材质
+              className: 'bz-pwv-flow-dialog',
               actions: [
                 { label: '暂不重设', value: 'cancel' },
                 { label: '仍要重设', value: 'ok', cta: true },

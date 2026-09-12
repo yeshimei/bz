@@ -834,6 +834,10 @@ describe('归物本详情弹窗（P20）', () => {
     (detailBox()!.querySelector('[data-bd-del]') as HTMLElement).click();
     await flush();
     expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    // issue 291：确认框挂 body，须带域皮肤类才拿到海报 token（与详情/表单同皮）
+    expect(
+      document.getElementById('__shared_confirm_popup__')!.classList.contains('bz-bel-flow-dialog')
+    ).toBe(true);
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
     await flush();
     expect(detailBox()).not.toBeNull(); // 取消：详情保持
@@ -1520,6 +1524,12 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     // 脏拦截：confirm 弹出，表单保持
     expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
     expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    // issue 291：confirmDiscard 的确认框同样带域皮肤类（否则与刚被拦住的表单弹窗两张脸）
+    expect(
+      document.getElementById('__shared_confirm_popup__')!.classList.contains('bz-bel-flow-dialog')
+    ).toBe(true);
+    // 标准双动作按钮不加类（冻结契约，core/flow-dialog 契约测试同口径）
+    expect((document.getElementById('__shared_confirm_ok__') as HTMLElement).className).toBe('');
     // 放弃（confirmDiscard 第一动作 = __shared_confirm_cancel__）→ 表单关，数据未动
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
     await flush();

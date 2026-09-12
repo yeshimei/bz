@@ -269,6 +269,10 @@ describe('第二大脑对话：历史持久化与清空（ticket 141）', () => 
     // 取消路径：历史不动
     clearBtn.click();
     await until(() => document.getElementById('__shared_confirm_popup__') !== null);
+    // issue 291：确认框挂 body，须带域皮肤类才拿到 --sb-*（否则掉回 core 裸样式）
+    expect(
+      document.getElementById('__shared_confirm_popup__')!.classList.contains('bz-sb-flow-dialog')
+    ).toBe(true);
     (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
     await until(() => document.getElementById('__shared_confirm_popup__') === null);
     expect((await persisted()).length).toBe(2);

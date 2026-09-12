@@ -1,4 +1,4 @@
-/* 源指纹 d955c0b173ef701b · 仓内输入 50 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7e3b5a0e3a0cde95 · 仓内输入 50 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -5434,7 +5434,7 @@ var BZW_favorites = (() => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
       return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
     }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id };
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
   var activeSettle = null;
   function openFlowDialog(opts) {
@@ -5453,7 +5453,10 @@ var BZW_favorites = (() => {
       };
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
-      if (opts.className) popup.classList.add(opts.className);
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
       popup.setAttribute("role", "dialog");
       popup.setAttribute("aria-modal", "true");
       popup.innerHTML = parts.html;
@@ -5487,10 +5490,11 @@ var BZW_favorites = (() => {
       if (focusBtn) focusBtn.focus();
     });
   }
-  function confirmDiscard(proceed, message) {
+  function confirmDiscard(proceed, message, className) {
     void openFlowDialog({
       title: "放弃未保存的内容？",
       message: message || "弹窗内有未保存的输入，关闭后将丢失",
+      className,
       actions: [
         { label: "放弃", value: "ok" },
         { label: "继续编辑", value: "cancel" }
@@ -6227,6 +6231,11 @@ var BZW_favorites = (() => {
     } else if (spec.act === "archive") {
       void openFlowDialog({
         title: "归档收藏",
+        // issue 291：流程框挂 document.body，不在 .bz-fav-panel 树内——不显式带皮肤类就掉回 core 裸皮。
+        // `bz-fav-flow-dialog` = 本域确认框专属类（styles.css 映射表单弹窗 .bz-fav-form 那套亚麻取值）；
+        // `bz-fav-scope` 必须跟着传：亚麻/暖纸是私有 token（--pop/--pop-ink/--pop-mut/--mask/--acc），
+        // 只在 .bz-fav-scope 命中时才定义，缺它变量全部解析失败。
+        className: "bz-fav-flow-dialog bz-fav-scope",
         message: `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`,
         actions: [
           { label: "取消", value: "cancel" },
@@ -6240,6 +6249,9 @@ var BZW_favorites = (() => {
     } else if (spec.act === "del") {
       void openFlowDialog({
         title: "删除收藏",
+        // issue 291：与归档确认同一套皮肤类（删除是危险主动作 → core 另挂 bz-flow-dialog--danger，
+        // 与皮肤类并存不冲突）。类含义见归档确认处注释。
+        className: "bz-fav-flow-dialog bz-fav-scope",
         message: `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`,
         actions: [
           { label: "取消", value: "cancel" },
@@ -6380,8 +6392,11 @@ var BZW_favorites = (() => {
     return inputVal(popup, "#fz-title") !== _baseline.title || inputVal(popup, "#fz-url") !== _baseline.url || inputVal(popup, "#fz-desc") !== _baseline.desc || formPinNow(popup) !== _baseline.pinned || formTagsNow(popup) !== _baseline.tags;
   }
   function requestCloseForm(popup) {
-    if (formDirty()) confirmDiscard(() => closeForm(popup));
-    else closeForm(popup);
+    if (formDirty()) {
+      confirmDiscard(() => closeForm(popup), void 0, "bz-fav-flow-dialog bz-fav-scope");
+    } else {
+      closeForm(popup);
+    }
   }
   function closeForm(popup) {
     var _a;

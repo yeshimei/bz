@@ -1,4 +1,4 @@
-/* 源指纹 8d3293b503fc97a4 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6fd62da99da02c65 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -4854,7 +4854,7 @@ var BZW_clipbook = (() => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
       return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
     }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id };
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
   function openFlowDialog(opts) {
     if (!opts.actions || opts.actions.length === 0) {
@@ -4872,7 +4872,10 @@ var BZW_clipbook = (() => {
       };
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
-      if (opts.className) popup.classList.add(opts.className);
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
       popup.setAttribute("role", "dialog");
       popup.setAttribute("aria-modal", "true");
       popup.innerHTML = parts.html;
@@ -8652,6 +8655,11 @@ ${sample}`,
           const v = await openFlowDialog({
             title: "中止批量处理？",
             message: "当前正在处理的视频将停止，已成功的保留在列表；未开始的项保持待处理，可稍后继续。",
+            // issue 291：流程框挂 document.body，脱离面板根后纸墨 token 与域弹窗类全部失效。
+            // 必须显式带两个类——'kb' = 纸墨变量作用域（本域 styles.css :7-33，亮暗两档），
+            // 'bz-kb-flow-dialog' = 域弹窗类（供 id 选择器把共享壳改写成本域材质），
+            // 否则本框与同域的「添加文献」「术语录入」弹窗不同皮（缺 'kb' 连底色都失效，同 issue 257 事故）。
+            className: "kb bz-kb-flow-dialog",
             actions: [
               { label: "取消", value: "cancel" },
               { label: "中止", value: "ok", danger: true }
@@ -8665,6 +8673,8 @@ ${sample}`,
           const v = await openFlowDialog({
             title: "删除转文献任务",
             message: "仅从列表移除记录，已生成的文献笔记与视频不受影响。",
+            // issue 291：同上——弹窗挂 body 必须自带 'kb'（token 作用域）+ 'bz-kb-flow-dialog'（域皮）
+            className: "kb bz-kb-flow-dialog",
             actions: [
               { label: "取消", value: "cancel" },
               { label: "删除", value: "ok", danger: true }
@@ -8679,6 +8689,8 @@ ${sample}`,
           const v = await openFlowDialog({
             title: "清空历史",
             message: "将移除全部「成功」归档记录；文献笔记与视频文件保留在原处。",
+            // issue 291：同上——挂 body 的流程框须显式带皮肤类才与「历史」窗口同皮
+            className: "kb bz-kb-flow-dialog",
             actions: [
               { label: "取消", value: "cancel" },
               { label: "清空", value: "ok", danger: true }

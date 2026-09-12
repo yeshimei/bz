@@ -1676,3 +1676,81 @@
   --ls-accent-soft: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent, #b8913e) 70%, white), var(--interactive-accent, #b8913e));
   --ls-seal-radius: 22px;
 }
+
+/* ============ 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一）============
+   两处确认框（首设主密码风险确认 / 清单疑似损坏 → 仍要重设）走 openFlowDialog，
+   popup 挂 document.body —— 脱离 .bz-password-vault 根后 --pwv-* 全部失效（金色主钮
+   会掉回 core 默认品牌色）。故两处传 className: 'bz-pwv-flow-dialog'，本文件补两段：
+   token 层（紧邻）承载域变量，id 选择器段映射域材质与金色按钮语言。 */
+
+/* token 层：把 .bz-password-vault（本文件 :7-23）的私有 token 按同值复制一份到本根。
+   为什么不直接把 .bz-pwv-flow-dialog 加进原选择器列表：那条规则除 token 外还写了容器布局
+   （background / display:flex / padding / 居中），挂到确认框根上会与共享壳的定位双份打架。
+   经查 :7-23 只声明 --pwv-*、未覆盖任何 --bz-*，故此处只搬 --pwv-*（整表照搬防漂移；
+   确认框实际消费 surface/ink/muted/surface2/bad/gold-soft）。 */
+.bz-pwv-flow-dialog {
+  --pwv-bg: var(--background-primary);
+  --pwv-surface: var(--background-secondary);
+  --pwv-surface2: var(--background-modifier-hover);
+  --pwv-ink: var(--text-normal);
+  --pwv-muted: var(--text-muted);
+  --pwv-faint: var(--text-faint);
+  --pwv-line: var(--background-modifier-border);
+  --pwv-gold: var(--interactive-accent);
+  --pwv-gold-soft: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent) 70%, white), var(--interactive-accent));
+  --pwv-gold-ink: var(--interactive-accent);
+  --pwv-ok: var(--color-green);
+  --pwv-bad: var(--text-error);
+  --pwv-warn: var(--color-orange);
+  --pwv-shadow: 0 10px 30px rgba(0, 0, 0, 0.10);
+  --pwv-mono: var(--font-monospace);
+  --pwv-radius: 12px;
+}
+
+/* 壳材质：逐值取自 .bz-password-vault-pop2 .card（本文件 :1598-1607，域内自绘确认框）——
+   底 --pwv-surface / 无描边（只用投影分界）/ 18px 圆角 / 深投影；文字口径同段 .card h3、.msg。
+   共享壳默认（--bz-surface-3 底 + --bz-border 描边 + --bz-radius-md 圆角）是组件库自有调色板，
+   与本域「随 Obsidian 主题变量、金色为强调色」不是一套，覆盖后才与自绘确认框同皮。 */
+#__shared_confirm_popup__.bz-pwv-flow-dialog {
+  background: var(--pwv-surface);
+  border: none;
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+  color: var(--pwv-ink);
+  /* 共享壳内的文字与中性钮消费 --bz-* 组件 token（core/styles.css 的 #__shared_confirm_* 段），
+     整组映射到本域口径：标题 .pop2 .card h3 / 正文 .msg / 取消钮 .pop2 .cancel。
+     --bz-surface-hover 与 --bz-surface-2 同值——本域 chip 底（--pwv-surface2）无更深一档，
+     hover 反馈由下方 opacity 承担（域内 .bz-password-vault-btn:hover 同法）。 */
+  --bz-text-1: var(--pwv-ink);
+  --bz-text-2: var(--pwv-muted);
+  --bz-surface-2: var(--pwv-surface2);
+  --bz-surface-hover: var(--pwv-surface2);
+  --bz-danger: var(--pwv-bad);
+  --bz-radius-sm: 11px; /* 与 .bz-password-vault-pop2 .btns button 的 11px 圆角同源 */
+}
+
+/* 标题：.pop2 .card h3 的 700 字重（字号留 core 的 18px 标题档）；
+   正文字号/行高取 .pop2 .card .msg 的 1.6 档（core 的 leading-normal 同类，显式对齐域口径）。 */
+#__shared_confirm_popup__.bz-pwv-flow-dialog h4 { font-weight: 700; }
+#__shared_confirm_popup__.bz-pwv-flow-dialog p { line-height: 1.6; }
+
+/* 取消钮：底/字色由上方 --bz-* 映射给出（= .pop2 .cancel 的 --pwv-surface2 + --pwv-ink），
+   这里只补域内 hover 语言（透明度反馈），并跟主钮一样加 600 字重。 */
+#__shared_confirm_popup__.bz-pwv-flow-dialog #__shared_confirm_cancel__ { font-weight: 600; }
+#__shared_confirm_popup__.bz-pwv-flow-dialog #__shared_confirm_cancel__:hover { opacity: 0.82; }
+
+/* 金色主钮 = .bz-password-vault-pop2 .ok / .bz-password-vault-btn.gold 的取值：
+   --pwv-gold-soft 渐变实底 + #fff 字 + 金色投影（与色值逐项同源）。
+   守卫 :not(.bz-flow-dialog--danger)：危险主动作时 core 的 bz-flow-dialog--danger 把主钮
+   降级成中性底 + 红字（设计手册 §9/§10 既定口径），域规则不得把它盖回金色 ——
+   本条在危险态下直接不匹配，危险语义与配色原样保留（本域两处确认框主动作均为 cta 非 danger）。 */
+#__shared_confirm_popup__.bz-pwv-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__ {
+  background: var(--pwv-gold-soft);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
+}
+#__shared_confirm_popup__.bz-pwv-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__:hover {
+  background: var(--pwv-gold-soft);
+  opacity: 0.82; /* 同 .bz-password-vault-btn:hover */
+}

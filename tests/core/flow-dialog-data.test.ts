@@ -66,6 +66,24 @@ describe('flow-dialog 数据层：标准双动作 DOM 契约', () => {
     ]);
     expect(parts.html).toContain('<h4>确认</h4>');
   });
+
+  it('dangerPrimary：主动作（cta 优先，否则最后一个）带 danger 才为 true（issue 291 慎重决策中性按钮依据）', () => {
+    // 删除类确认：右侧确认钮 danger → true
+    expect(buildFlowDialogParts('删除', 'm', [
+      { label: '取消', value: 'cancel' },
+      { label: '删除', value: 'del', danger: true, cta: true },
+    ]).dangerPrimary).toBe(true);
+    // 无 danger 标记的安全确认 → false（主按钮保持高亮）
+    expect(buildFlowDialogParts('归档', 'm', [
+      { label: '取消', value: 'cancel' },
+      { label: '归档', value: 'ok', cta: true },
+    ]).dangerPrimary).toBe(false);
+    // danger 不在主动作位（左侧取消是 danger）→ false
+    expect(buildFlowDialogParts('t', 'm', [
+      { label: '取消', value: 'cancel', danger: true },
+      { label: '确定', value: 'ok' },
+    ]).dangerPrimary).toBe(false);
+  });
 });
 
 describe('flow-dialog 数据层：三动作及以上扩展', () => {

@@ -66,6 +66,9 @@ export function confirmFullRebuild(): Promise<boolean> {
   return openFlowDialog({
     title: '重新索引',
     message: '将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？',
+    // 皮肤类（issue 291）：确认框挂 body，脱离主面板根，须显式带 .bz-sb-flow-dialog
+    // 才拿到 --sb-* token（否则掉回 core 裸样式）；单源生效于三处入口
+    className: 'bz-sb-flow-dialog',
     actions: [
       { label: '取消', value: 'cancel' },
       { label: '开始重建', value: 'ok', cta: true },
