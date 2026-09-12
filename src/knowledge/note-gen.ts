@@ -57,7 +57,7 @@ export function parseAiJson(raw: string): any {
 
 /** 领域判定指令：有词表从词表选（可自定义），空词表自由写 */
 function domainInstruction(list: string[]): string {
-  if (!list.length) return '"domain": "领域，用一个中文词（如 物理/医学/心理/计算机/经济/文史哲 等）"';
+  if (!list.length) return '"domain": "领域，用一个中文词"';
   return `"domain": "从以下领域选一个最贴近的：${list.join('、')}；都不贴切可写一个新的中文领域词"`;
 }
 
