@@ -1,4 +1,4 @@
-/* 源指纹 d036aaff5010f4a2 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f877316b4ab5c26b · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/settings-panel/render.ts → window.BZR_settings_panel（评审壳预览包，ADR-0104） */
 var BZR_settings_panel = (() => {
