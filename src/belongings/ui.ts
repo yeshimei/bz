@@ -38,7 +38,8 @@ import { loadDatabase, saveDatabase, getDataFilePath } from './data';
 import {
   renderPanelView, panelHtml,
   belDetailHtml, flowBtnsHtml, belFormHtml, belFormInit, statusPickHtml, sheetHeadHtml,
-  actionSpecs, todayStr, isExited, exitedStatus,
+  actionSpecs, todayStr, isExited, exitedStatus, SORT_OPTS,
+  type MoneyUnit,
 } from './render';
 import type { BelongingsDatabase, BelongingsItem } from './types';
 import { aiSuggestCategory } from './ai';
@@ -88,6 +89,17 @@ export function resetBelongingsState(): void {
 
 // ==================== 设置 schema ====================
 
+/** 金额单位读取（belongingsCurrency，issue 294；非法值回落 cny）——纯层显式入参，设置只在本层读 */
+function currencyUnit(): MoneyUnit {
+  const v = (tryGetSettings() as Record<string, unknown>).belongingsCurrency;
+  return v === 'yuan' || v === 'usd' || v === 'none' || v === 'cny' ? v : 'cny';
+}
+
+/** 新记条目默认状态（belongingsNewStatus，issue 294；非法值回落「使用中」；编辑回填不受影响） */
+function newItemStatus(): string {
+  return (tryGetSettings() as Record<string, unknown>).belongingsNewStatus === '闲置' ? '闲置' : '使用中';
+}
+
 /** 默认状态筛选合法值（与 chips 同源；空串=全部） */
 const DEFAULT_STATUS_VALUES = ['', 'using', 'idle', 'sold', 'discard'];
 
@@ -134,6 +146,45 @@ export function belongingSettingsSchema(): SettingsSchema {
               { value: 'idle', label: '闲置' },
               { value: 'sold', label: '已转卖' },
               { value: 'discard', label: '已丢弃' },
+            ],
+          },
+          {
+            type: 'select',
+            name: '默认排序',
+            desc: '打开面板时物品的排列方式',
+            binding: { key: 'belongingsDefaultSort' },
+            options: [
+              { value: 'recent', label: '最近购入' },
+              { value: 'price', label: '投入最高' },
+              { value: 'daily', label: '日均最高' },
+            ],
+          },
+          {
+            type: 'select',
+            name: '金额单位',
+            desc: '价格与统计的金额显示方式',
+            binding: { key: 'belongingsCurrency' },
+            options: [
+              { value: 'cny', label: '￥' },
+              { value: 'yuan', label: '元' },
+              { value: 'usd', label: '$' },
+              { value: 'none', label: '无符号' },
+            ],
+          },
+        ],
+      },
+      {
+        icon: 'pencil-line',
+        name: '记一笔',
+        rows: [
+          {
+            type: 'select',
+            name: '新增物品默认状态',
+            desc: '记一笔时物品的初始状态',
+            binding: { key: 'belongingsNewStatus' },
+            options: [
+              { value: '使用中', label: '使用中' },
+              { value: '闲置', label: '闲置' },
             ],
           },
         ],
@@ -205,6 +256,9 @@ async function openPanelInner(): Promise<void> {
   // 面板内改选为会话内临时态，同收藏本 openPanel 语义）
   const st = (tryGetSettings() as Record<string, unknown>).belongingsDefaultStatus;
   M.status = typeof st === 'string' && DEFAULT_STATUS_VALUES.includes(st) && st !== '' ? st : null;
+  // 默认排序接线（belongingsDefaultSort，issue 294）：每次打开读设置，非法值回「最近购入」
+  const srt = (tryGetSettings() as Record<string, unknown>).belongingsDefaultSort;
+  M.sort = SORT_OPTS.some((o) => o.v === srt) ? (srt as BelState['sort']) : 'recent';
   M.db = await loadDatabase();
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
@@ -426,7 +480,7 @@ function renderAll(): void {
   const panel = M.overlay.querySelector('.bz-bel-panel') as HTMLElement | null;
   if (!panel) return;
   // BelState 与 render.BelViewState 结构兼容（status/year/q/sort）；view.year 悬空回写直通 M
-  renderPanelView(panel, itemList(), M, { mountIcons });
+  renderPanelView(panel, itemList(), M, { mountIcons }, currencyUnit());
 }
 
 /** 状态筛选切换语义（chips 与移动横滑条委托共用）：
@@ -447,7 +501,7 @@ function openBelDetail(it: BelongingsItem): void {
   closeBelDetail();
   const mask = document.createElement('div');
   mask.className = 'bz-overlay-mask bz-bel-detail-mask';
-  mask.innerHTML = belDetailHtml(it);
+  mask.innerHTML = belDetailHtml(it, currencyUnit());
   document.body.appendChild(mask);
   topifyZ(mask); // ADR-0067：显示即发号（详情恒压主面板；表单再开时后发号恒压详情）
   mountIcons(mask);
@@ -490,7 +544,7 @@ function openBelDetail(it: BelongingsItem): void {
 /** 抽屉头：render.ts 串 → 元素（core/item-actions 契约收 HTMLElement；占位图标在此兑现） */
 function sheetHeadEl(it: BelongingsItem): HTMLElement {
   const holder = document.createElement('div');
-  holder.innerHTML = sheetHeadHtml(it);
+  holder.innerHTML = sheetHeadHtml(it, currencyUnit());
   mountIcons(holder);
   return holder.firstElementChild as HTMLElement;
 }
@@ -736,7 +790,7 @@ export function openForm(it: BelongingsItem | null): void {
   const init = belFormInit(it);
   const mask = document.createElement('div');
   mask.className = 'bz-overlay-mask bz-bel-form-mask';
-  mask.innerHTML = belFormHtml(it);
+  mask.innerHTML = belFormHtml(it, currencyUnit());
   _belFormTargetId = it?.id ?? null;
   document.body.appendChild(mask);
   topifyZ(mask); // ADR-0067：显示即发号（原静态 z-index:110000 已删，恒压主面板）
@@ -752,7 +806,7 @@ export function openForm(it: BelongingsItem | null): void {
     cat: init.catVal,
     price: init.priceVal,
     date: init.dateVal,
-    status: it?.current_status || '使用中',
+    status: it?.current_status || newItemStatus(),
     desc: init.descVal,
     exitDate: init.exitDateVal,
     soldPrice: init.soldPriceVal,
@@ -787,7 +841,7 @@ export function openForm(it: BelongingsItem | null): void {
   const statusPick = mask.querySelector('#bm-status') as HTMLElement;
   const exitRow = mask.querySelector('#bm-exit') as HTMLElement;
   const soldField = mask.querySelector('#bm-soldfield') as HTMLElement;
-  let curStatus = it?.current_status || '使用中';
+  let curStatus = it?.current_status || newItemStatus();
   const syncExitRow = () => {
     const exited = curStatus === '已转卖' || curStatus === '已丢弃';
     exitRow.hidden = !exited;

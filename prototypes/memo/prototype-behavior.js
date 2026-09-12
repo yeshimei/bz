@@ -1,4 +1,4 @@
-/* 源指纹 8086716e30d175e5 · 仓内输入 210 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 0bdaad828dc8224e · 仓内输入 210 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -15082,11 +15082,19 @@ ${countsToText(s.missing)}
   });
 
   // src/belongings/shared.ts
-  function money(n) {
-    return "￥" + (Number(n) || 0).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function moneyUnitLabel(unit = "cny") {
+    return unit === "yuan" ? "元" : unit === "usd" ? "$" : unit === "none" ? "" : "￥";
   }
-  function moneyShort(n) {
-    return "￥" + (Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 });
+  function moneyWith(mid, unit = "cny") {
+    if (unit === "yuan") return `${mid} 元`;
+    if (unit === "none") return mid;
+    return moneyUnitLabel(unit) + mid;
+  }
+  function money(n, unit = "cny") {
+    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), unit);
+  }
+  function moneyShort(n, unit = "cny") {
+    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 }), unit);
   }
   function todayStr() {
     const d = /* @__PURE__ */ new Date();
@@ -15217,7 +15225,7 @@ ${countsToText(s.missing)}
   function heroSubText(items, view) {
     return view.status ? `归物本 — ${filtered(items, view).length} 件在列 · FILTERED VIEW` : "归物本 — NOTHING MORE, NOTHING LESS";
   }
-  function belDetailHtml(it) {
+  function belDetailHtml(it, unit = "cny") {
     var _a2;
     const gone = isExited(it);
     const key = statusKeyOf(it.current_status);
@@ -15234,10 +15242,10 @@ ${countsToText(s.missing)}
       <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
     </div>
     <div class="bz-bel-detail-fields">
-      <div class="bz-bel-dfield"><span>购买价</span><b>${money(Number(it.purchase_price) || 0)}</b></div>
+      <div class="bz-bel-dfield"><span>购买价</span><b>${money(Number(it.purchase_price) || 0, unit)}</b></div>
       <div class="bz-bel-dfield"><span>购买日期</span><b>${esc(String(it.purchase_date || "").slice(0, 10) || "—")} · ${daysUsed(it)} 天</b></div>
-      <div class="bz-bel-dfield"><span>日均成本</span><b>￥${dailyCostOf(it).toFixed(2)}${gone ? "（已封口）" : "/天 · 越用越便宜"}</b></div>
-      ${gone ? `<div class="bz-bel-dfield"><span>出离日期</span><b>${esc(it.exit_date || "—")}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + money(Number(it.sold_price)) : ""}</b></div>` : ""}
+      <div class="bz-bel-dfield"><span>日均成本</span><b>${moneyWith(dailyCostOf(it).toFixed(2), unit)}${gone ? "（已封口）" : "/天 · 越用越便宜"}</b></div>
+      ${gone ? `<div class="bz-bel-dfield"><span>出离日期</span><b>${esc(it.exit_date || "—")}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + money(Number(it.sold_price), unit) : ""}</b></div>` : ""}
       <div class="bz-bel-dfield"><span>录入 / 更新</span><b>${esc(String(it.created_date || "").slice(0, 10))} / ${esc(String(it.last_updated || "").slice(0, 10))}</b></div>
     </div>
     <div class="bz-bel-detail-acts" data-bd-acts></div>
@@ -15267,9 +15275,10 @@ ${countsToText(s.missing)}
       exitedInit: !!it && isExited(it)
     };
   }
-  function belFormHtml(it) {
+  function belFormHtml(it, unit = "cny") {
     var _a2;
     const editing = !!it;
+    const unitLabel = moneyUnitLabel(unit);
     const { priceVal, dateVal, catVal, descVal, exitDateVal, soldPriceVal, exitedInit } = belFormInit(it);
     return `
   <div class="bz-bel-form">
@@ -15278,7 +15287,7 @@ ${countsToText(s.missing)}
       <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc((_a2 = it == null ? void 0 : it.name) != null ? _a2 : "")}" placeholder="如：iPhone 15 Pro"></div>
       <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选历史分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或从历史分类选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${iconSpan("sparkles", "bz-ic--sm")}</button></span></div>
       <div class="bz-bel-form-row">
-        <div class="bz-field"><span class="bz-field-label">购买价格（元）</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
+        <div class="bz-field"><span class="bz-field-label">购买价格${unitLabel ? `（${esc(unitLabel)}）` : ""}</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
         <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc(dateVal)}"></div>
       </div>
       <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-bel-statuspick" id="bm-status"></span></div>
@@ -15304,13 +15313,13 @@ ${countsToText(s.missing)}
       }
     ).join("");
   }
-  function sheetHeadHtml(it) {
+  function sheetHeadHtml(it, unit = "cny") {
     const catName = catNameOf(it.category);
     const days = daysUsed(it);
     return `<div class="bz-item-sheet-entry"><div class="bz-bel-sheet-head">
       <span class="bz-item-sheet-emoji">${itemEmHtml(it)}</span>
       <div class="bz-bel-sheet-info"><div class="bz-item-sheet-title">${esc(it.name)}</div>
-      <div class="bz-item-sheet-sub">${esc(catName)} · ${money(Number(it.purchase_price) || 0)} · 已用 ${days} 天</div></div></div></div>`;
+      <div class="bz-item-sheet-sub">${esc(catName)} · ${money(Number(it.purchase_price) || 0, unit)} · 已用 ${days} 天</div></div></div></div>`;
   }
   function actionSpecs(it) {
     const specs = [];
@@ -15428,44 +15437,44 @@ ${countsToText(s.missing)}
   function segmentedHtml(sort) {
     return `<div class="bz-segmented" role="radiogroup" aria-label="排序">${SORT_OPTS.map((o) => `<button type="button" class="bz-segmented-btn${sort === o.v ? " is-on" : ""}" data-k="${o.v}" role="radio" aria-checked="${sort === o.v}">${o.label}</button>`).join("")}</div>`;
   }
-  function kpisHtml(items) {
+  function kpisHtml(items, unit = "cny") {
     const gone = items.filter(isExited);
     const recover2 = gone.reduce((s, i) => s + (Number(i.sold_price) || 0), 0);
     const kpi = (num, label, opts = {}) => `<div class="bz-bel-kpi${opts.hero ? " bz-bel-kpi--hero" : ""}${opts.click ? " bz-bel-kpi--click" : ""}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ""}><b>${num}</b><span>${esc(label)}</span></div>`;
-    return kpi(String(stockCount(items)), "在库件数", { hero: true, click: true }) + kpi(moneyShort(totalAssets(items)), "在库投入", { click: true }) + kpi("￥" + avgDailyCost(items).toFixed(2), "日均成本") + kpi(`${gone.length} 件 · ${moneyShort(recover2)}`, "已离场 · 回收");
+    return kpi(String(stockCount(items)), "在库件数", { hero: true, click: true }) + kpi(moneyShort(totalAssets(items), unit), "在库投入", { click: true }) + kpi(moneyWith(avgDailyCost(items).toFixed(2), unit), "日均成本") + kpi(`${gone.length} 件 · ${moneyShort(recover2, unit)}`, "已离场 · 回收");
   }
   function stampCount(items) {
     return String(stockCount(items));
   }
-  function mobStatsText(items) {
-    return `投入 ${moneyShort(totalAssets(items))} · 日均 ${avgDailyCost(items).toFixed(2)}`;
+  function mobStatsText(items, unit = "cny") {
+    return `投入 ${moneyShort(totalAssets(items), unit)} · 日均 ${moneyWith(avgDailyCost(items).toFixed(2), unit)}`;
   }
   function emptyHtml(noMatch) {
     return `<div class="bz-empty">${iconSpan(ICON2.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
   }
-  function cellHtml(it, idx) {
+  function cellHtml(it, idx, unit = "cny") {
     var _a2;
     const gone = isExited(it);
     const idle = it.current_status === "闲置";
     const days = daysUsed(it);
     const daily = dailyCostOf(it);
     const key = statusKeyOf(it.current_status);
-    const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price)) : ""}` : "";
+    const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price), unit) : ""}` : "";
     const dailyStr = daily < 0.01 ? daily.toFixed(4) : daily.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
-    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ￥${dailyStr}`;
+    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
     return `<div class="bz-bel-cell${gone ? " bz-bel-cell--gone" : ""}${idle ? " bz-bel-cell--idle" : ""}" data-bel-id="${esc(it.id)}">
     <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, "0")} — ${esc(catNameOf(it.category) || "未分类")}</span>
     <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
     <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
     <span class="bz-bel-name">${esc(it.name)}</span>
-    <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0)}</span>
+    <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0, unit)}</span>
     <span class="bz-bel-mut">${mut}</span>
   </div>`;
   }
-  function gridHtml(items, view) {
-    return `<div class="bz-bel-grid" data-bel-grid>${filtered(items, view).map((it, idx) => cellHtml(it, idx)).join("")}</div>`;
+  function gridHtml(items, view, unit = "cny") {
+    return `<div class="bz-bel-grid" data-bel-grid>${filtered(items, view).map((it, idx) => cellHtml(it, idx, unit)).join("")}</div>`;
   }
-  function renderPanelView(root, items, view, hooks) {
+  function renderPanelView(root, items, view, hooks, unit = "cny") {
     var _a2;
     const q2 = (sel) => root.querySelector(sel);
     const title = q2("[data-bel-herotitle]");
@@ -15484,11 +15493,11 @@ ${countsToText(s.missing)}
       if (menu) menu.innerHTML = yearsOptionsHtml(items, view.year);
     }
     const wrap = q2("[data-bel-kpis]");
-    if (wrap) wrap.innerHTML = kpisHtml(items);
+    if (wrap) wrap.innerHTML = kpisHtml(items, unit);
     const stampN = q2("[data-bel-stampn]");
     if (stampN) stampN.textContent = stampCount(items);
     const mobStats = q2("[data-bel-mobstats]");
-    if (mobStats) mobStats.textContent = mobStatsText(items);
+    if (mobStats) mobStats.textContent = mobStatsText(items, unit);
     const sortHost = q2("[data-bel-sort]");
     if (sortHost) sortHost.innerHTML = segmentedHtml(view.sort);
     const mobSortSel = q2("[data-bel-mobsortsel]");
@@ -15504,7 +15513,7 @@ ${countsToText(s.missing)}
       const noMatch = !!view.q || view.status !== null || view.year !== "";
       content.innerHTML = emptyHtml(noMatch);
     } else {
-      content.innerHTML = gridHtml(items, view);
+      content.innerHTML = gridHtml(items, view, unit);
       const gridEl = content.querySelector("[data-bel-grid]");
       const cols = (getComputedStyle(gridEl).gridTemplateColumns || "").split(" ").filter(Boolean).length || 1;
       const rem = list.length % cols;
@@ -15723,6 +15732,13 @@ ${countsToText(s.missing)}
     M4.sort = "recent";
     M4.renderFn = null;
   }
+  function currencyUnit() {
+    const v = tryGetSettings().belongingsCurrency;
+    return v === "yuan" || v === "usd" || v === "none" || v === "cny" ? v : "cny";
+  }
+  function newItemStatus() {
+    return tryGetSettings().belongingsNewStatus === "闲置" ? "闲置" : "使用中";
+  }
   function belongingSettingsSchema() {
     return {
       groups: [
@@ -15766,6 +15782,45 @@ ${countsToText(s.missing)}
                 { value: "idle", label: "闲置" },
                 { value: "sold", label: "已转卖" },
                 { value: "discard", label: "已丢弃" }
+              ]
+            },
+            {
+              type: "select",
+              name: "默认排序",
+              desc: "打开面板时物品的排列方式",
+              binding: { key: "belongingsDefaultSort" },
+              options: [
+                { value: "recent", label: "最近购入" },
+                { value: "price", label: "投入最高" },
+                { value: "daily", label: "日均最高" }
+              ]
+            },
+            {
+              type: "select",
+              name: "金额单位",
+              desc: "价格与统计的金额显示方式",
+              binding: { key: "belongingsCurrency" },
+              options: [
+                { value: "cny", label: "￥" },
+                { value: "yuan", label: "元" },
+                { value: "usd", label: "$" },
+                { value: "none", label: "无符号" }
+              ]
+            }
+          ]
+        },
+        {
+          icon: "pencil-line",
+          name: "记一笔",
+          rows: [
+            {
+              type: "select",
+              name: "新增物品默认状态",
+              desc: "记一笔时物品的初始状态",
+              binding: { key: "belongingsNewStatus" },
+              options: [
+                { value: "使用中", label: "使用中" },
+                { value: "闲置", label: "闲置" }
               ]
             }
           ]
@@ -15816,6 +15871,8 @@ ${countsToText(s.missing)}
   async function openPanelInner() {
     const st = tryGetSettings().belongingsDefaultStatus;
     M4.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    const srt = tryGetSettings().belongingsDefaultSort;
+    M4.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
     M4.db = await loadDatabase();
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
@@ -16028,7 +16085,7 @@ ${countsToText(s.missing)}
     if (!M4.overlay) return;
     const panel2 = M4.overlay.querySelector(".bz-bel-panel");
     if (!panel2) return;
-    renderPanelView(panel2, itemList(), M4, { mountIcons });
+    renderPanelView(panel2, itemList(), M4, { mountIcons }, currencyUnit());
   }
   function applyStatusFilter(k) {
     if (k === "__all") M4.status = null;
@@ -16044,7 +16101,7 @@ ${countsToText(s.missing)}
     closeBelDetail();
     const mask = document.createElement("div");
     mask.className = "bz-overlay-mask bz-bel-detail-mask";
-    mask.innerHTML = belDetailHtml(it);
+    mask.innerHTML = belDetailHtml(it, currencyUnit());
     document.body.appendChild(mask);
     topifyZ(mask);
     mountIcons(mask);
@@ -16088,7 +16145,7 @@ ${countsToText(s.missing)}
   }
   function sheetHeadEl2(it) {
     const holder = document.createElement("div");
-    holder.innerHTML = sheetHeadHtml(it);
+    holder.innerHTML = sheetHeadHtml(it, currencyUnit());
     mountIcons(holder);
     return holder.firstElementChild;
   }
@@ -16281,7 +16338,7 @@ ${countsToText(s.missing)}
     const init = belFormInit(it);
     const mask = document.createElement("div");
     mask.className = "bz-overlay-mask bz-bel-form-mask";
-    mask.innerHTML = belFormHtml(it);
+    mask.innerHTML = belFormHtml(it, currencyUnit());
     _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
     document.body.appendChild(mask);
     topifyZ(mask);
@@ -16294,7 +16351,7 @@ ${countsToText(s.missing)}
       cat: init.catVal,
       price: init.priceVal,
       date: init.dateVal,
-      status: (it == null ? void 0 : it.current_status) || "使用中",
+      status: (it == null ? void 0 : it.current_status) || newItemStatus(),
       desc: init.descVal,
       exitDate: init.exitDateVal,
       soldPrice: init.soldPriceVal
@@ -16334,7 +16391,7 @@ ${countsToText(s.missing)}
     const statusPick = mask.querySelector("#bm-status");
     const exitRow = mask.querySelector("#bm-exit");
     const soldField = mask.querySelector("#bm-soldfield");
-    let curStatus = (it == null ? void 0 : it.current_status) || "使用中";
+    let curStatus = (it == null ? void 0 : it.current_status) || newItemStatus();
     const syncExitRow = () => {
       const exited = curStatus === "已转卖" || curStatus === "已丢弃";
       exitRow.hidden = !exited;

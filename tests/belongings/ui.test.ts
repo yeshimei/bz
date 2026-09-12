@@ -1666,7 +1666,7 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     const settings = { belongingsDataFolder: 'CONFIG/STORAGE' };
     setSettingsProvider(() => settings as any);
     const schema = belongingSettingsSchema();
-    expect(schema.groups).toHaveLength(2);
+    expect(schema.groups).toHaveLength(3); // 外观 + 显示 + 记一笔（issue 294 新增第三组）
     // 外观组（用户拍板 C 占位单卡）：布局/主题两行 choiceCards，主题行绑 layoutKey=belSkin
     const look = schema.groups[0];
     expect(look.name).toBe('外观');
@@ -1681,13 +1681,25 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     expect(trow.binding).toMatchObject({ key: 'belSkinTheme' });
     expect(trow.layoutKey).toBe('belSkin');
     expect(trow.options[0]).toMatchObject({ value: 'warmwhite', label: '暖白', layout: 'poster', prevClass: 'bz-sp-prev-warmwhite' });
-    // 显示组（issue 194）：默认状态筛选 select，常显（无组级门控）
+    // 显示组（issue 194 / issue 294）：默认状态筛选 + 默认排序 + 金额单位，常显（无组级门控）
     const view = schema.groups[1];
     expect(view.name).toBe('显示');
     expect(view.visibleWhen).toBeUndefined();
     const vrow = view.rows[0] as any;
     expect(vrow.type).toBe('select');
     expect(vrow.binding).toMatchObject({ key: 'belongingsDefaultStatus' });
+    const sortRow = view.rows[1] as any;
+    expect(sortRow.binding).toMatchObject({ key: 'belongingsDefaultSort' });
+    expect(sortRow.options.map((o: any) => o.value)).toEqual(['recent', 'price', 'daily']);
+    const curRow = view.rows[2] as any;
+    expect(curRow.binding).toMatchObject({ key: 'belongingsCurrency' });
+    expect(curRow.options.map((o: any) => o.value)).toEqual(['cny', 'yuan', 'usd', 'none']);
+    // 记一笔组（issue 294）：新增物品默认状态
+    const form = schema.groups[2];
+    expect(form.name).toBe('记一笔');
+    const nrow = form.rows[0] as any;
+    expect(nrow.binding).toMatchObject({ key: 'belongingsNewStatus' });
+    expect(nrow.options.map((o: any) => o.value)).toEqual(['使用中', '闲置']);
   });
 
   it('XSS：名称含 <img onerror> 按纯文本渲染，不产生 img 元素；动作项按文本构造', async () => {
@@ -2056,6 +2068,110 @@ describe('默认状态筛选接线（issue 194）', () => {
     expect(row.type).toBe('select');
     expect(row.binding).toMatchObject({ key: 'belongingsDefaultStatus' });
     expect(row.options.map((o: any) => o.value)).toEqual(['', 'using', 'idle', 'sold', 'discard']);
+  });
+});
+
+describe('默认排序接线（issue 294）', () => {
+  beforeEach(() => {
+    setupDom(); // 本文件约定：每个 describe 自清 DOM（前序用例可能留表单/浮层）
+  });
+
+  it('belongingsDefaultSort=price → 打开即按投入最高排列且排序段选中该档', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2024-08-01T12:00:00'));
+    try {
+      const vault = new MockVault();
+      seed(vault, {
+        a: makeItem({ id: 'a', name: '老贵物', purchase_price: 5000, purchase_date: '2023-01-01T12:00:00' }),
+        b: makeItem({ id: 'b', name: '新便宜物', purchase_price: 99, purchase_date: '2024-08-01T12:00:00' }),
+      });
+      await open(vault, { belongingsDefaultSort: 'price' });
+      expect(cells()[0].dataset.belId).toBe('a'); // 5000 > 99（默认 recent 时首位应为 b）
+      const onBtn = [...document.querySelectorAll('[data-bel-sort] .bz-segmented-btn')].find((b) => b.classList.contains('is-on'));
+      expect(onBtn!.textContent).toBe('投入最高');
+      close();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('非法值 → 回落最近购入', async () => {
+    const vault = new MockVault();
+    seed(vault, {
+      a: makeItem({ id: 'a', name: '老贵物', purchase_price: 5000, purchase_date: '2023-01-01T12:00:00' }),
+      b: makeItem({ id: 'b', name: '新便宜物', purchase_price: 99, purchase_date: '2024-08-01T12:00:00' }),
+    });
+    await open(vault, { belongingsDefaultSort: 'bogus' });
+    expect(cells()[0].dataset.belId).toBe('b');
+    close();
+  });
+});
+
+describe('新增物品默认状态（issue 294）', () => {
+  beforeEach(() => {
+    setupDom();
+  });
+
+  it('belongingsNewStatus=闲置 → 记一笔表单状态预设「闲置」并入库；编辑回填不受影响', async () => {
+    const vault = new MockVault();
+    seed(vault, { old: makeItem({ id: 'old', name: '旧相机', current_status: '使用中' }) });
+    const panelEl = await open(vault, { belongingsNewStatus: '闲置' });
+    openAddForm(panelEl);
+    await flush();
+    expect((formMask().querySelector('#bm-status .bz-choice-btn.is-on') as HTMLElement).dataset.status).toBe('闲置');
+    nameInp().value = '新键盘';
+    catInp().value = '数码';
+    priceInp().value = '100';
+    saveBtn().click();
+    await flush();
+    const saved = Object.values(JSON.parse(vault.files.get(DATA_PATH)!).items) as any[];
+    expect(saved.find((i) => i.name === '新键盘').current_status).toBe('闲置');
+    // 编辑既有条目：状态按条目自身回填（默认值只管新记）
+    (cells().find((c) => c.textContent?.includes('旧相机')) as HTMLElement).click();
+    await flush();
+    (document.querySelector('.bz-bel-detail-mask [data-bd-edit]') as HTMLElement)?.click();
+    await flush();
+    expect((formMask().querySelector('#bm-status .bz-choice-btn.is-on') as HTMLElement).dataset.status).toBe('使用中');
+    close();
+  });
+});
+
+describe('金额单位（issue 294）', () => {
+  beforeEach(() => {
+    setupDom();
+  });
+
+  it('belongingsCurrency=yuan → KPI 与卡片「数字 元」后缀、表单字段名带「元」', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2024-08-01T12:00:00'));
+    try {
+      const vault = new MockVault();
+      seed(vault, { a: makeItem({ id: 'a', name: '键盘', purchase_price: 500, purchase_date: '2024-07-01T12:00:00' }) });
+      const panelEl = await open(vault, { belongingsCurrency: 'yuan' });
+      expect(kpiVal('在库投入')).toBe('500 元');
+      expect(kpiVal('日均成本')).toBe('16.13 元'); // 500/31
+      expect(cells()[0].querySelector('.bz-bel-price')!.textContent).toBe('500 元');
+      expect(cells()[0].querySelector('.bz-bel-mut')!.textContent).toContain('日均 16.13 元');
+      openAddForm(panelEl);
+      await drain(); // 假时钟下 flush 的 setTimeout 永不触发，用微任务排空
+      expect(formMask().textContent).toContain('购买价格（元）');
+      close();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('belongingsCurrency=none → 裸数字；非法值回落 ￥', async () => {
+    const vault = new MockVault();
+    seed(vault, { a: makeItem({ id: 'a', name: '键盘', purchase_price: 500, purchase_date: '2024-07-01T12:00:00' }) });
+    await open(vault, { belongingsCurrency: 'none' });
+    expect(cells()[0].querySelector('.bz-bel-price')!.textContent).toBe('500');
+    close();
+    const vault2 = new MockVault();
+    seed(vault2, { a: makeItem({ id: 'a', name: '键盘', purchase_price: 500, purchase_date: '2024-07-01T12:00:00' }) });
+    await open(vault2, { belongingsCurrency: 'bogus' });
+    expect(cells()[0].querySelector('.bz-bel-price')!.textContent).toBe('￥500');
+    close();
   });
 });
 

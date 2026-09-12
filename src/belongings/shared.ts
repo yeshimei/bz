@@ -76,11 +76,26 @@ export interface BelViewState {
 
 // ==================== 展示格式化 ====================
 
-export function money(n: number): string {
-  return '￥' + (Number(n) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/** 金额单位（belongingsCurrency 的语义值；纯层显式入参，禁在纯层读设置） */
+export type MoneyUnit = 'cny' | 'yuan' | 'usd' | 'none';
+
+/** 单位标签（表单字段名用）：cny=￥ / yuan=元 / usd=$ / none=空串 */
+export function moneyUnitLabel(unit: MoneyUnit = 'cny'): string {
+  return unit === 'yuan' ? '元' : unit === 'usd' ? '$' : unit === 'none' ? '' : '￥';
 }
-export function moneyShort(n: number): string {
-  return '￥' + (Number(n) || 0).toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+
+/** 金额串按单位包裹：符号档前缀、元档后缀（空一格）、无符号档裸数字 */
+export function moneyWith(mid: string, unit: MoneyUnit = 'cny'): string {
+  if (unit === 'yuan') return `${mid} 元`;
+  if (unit === 'none') return mid;
+  return moneyUnitLabel(unit) + mid;
+}
+
+export function money(n: number, unit: MoneyUnit = 'cny'): string {
+  return moneyWith((Number(n) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), unit);
+}
+export function moneyShort(n: number, unit: MoneyUnit = 'cny'): string {
+  return moneyWith((Number(n) || 0).toLocaleString('zh-CN', { maximumFractionDigits: 0 }), unit);
 }
 export function todayStr(): string {
   const d = new Date();
@@ -235,7 +250,7 @@ export function heroSubText(items: BelongingsItem[], view: BelViewState): string
 }
 
 /** 详情弹窗（P20 桌面点卡）：字段全览 + 四态流转条挂点 + 编辑/删除 */
-export function belDetailHtml(it: BelongingsItem): string {
+export function belDetailHtml(it: BelongingsItem, unit: MoneyUnit = 'cny'): string {
   const gone = isExited(it);
   const key = statusKeyOf(it.current_status);
   return `<div class="bz-bel-detail">
@@ -251,10 +266,10 @@ export function belDetailHtml(it: BelongingsItem): string {
       <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(STATUS[key]?.ic || 'box', 'bz-ic--sm')}${esc(it.current_status)}</span>
     </div>
     <div class="bz-bel-detail-fields">
-      <div class="bz-bel-dfield"><span>购买价</span><b>${money(Number(it.purchase_price) || 0)}</b></div>
+      <div class="bz-bel-dfield"><span>购买价</span><b>${money(Number(it.purchase_price) || 0, unit)}</b></div>
       <div class="bz-bel-dfield"><span>购买日期</span><b>${esc(String(it.purchase_date || '').slice(0, 10) || '—')} · ${daysUsed(it)} 天</b></div>
-      <div class="bz-bel-dfield"><span>日均成本</span><b>￥${dailyCostOf(it).toFixed(2)}${gone ? '（已封口）' : '/天 · 越用越便宜'}</b></div>
-      ${gone ? `<div class="bz-bel-dfield"><span>出离日期</span><b>${esc(it.exit_date || '—')}${it.current_status === '已转卖' && Number(it.sold_price) > 0 ? ' · 售出 ' + money(Number(it.sold_price)) : ''}</b></div>` : ''}
+      <div class="bz-bel-dfield"><span>日均成本</span><b>${moneyWith(dailyCostOf(it).toFixed(2), unit)}${gone ? '（已封口）' : '/天 · 越用越便宜'}</b></div>
+      ${gone ? `<div class="bz-bel-dfield"><span>出离日期</span><b>${esc(it.exit_date || '—')}${it.current_status === '已转卖' && Number(it.sold_price) > 0 ? ' · 售出 ' + money(Number(it.sold_price), unit) : ''}</b></div>` : ''}
       <div class="bz-bel-dfield"><span>录入 / 更新</span><b>${esc(String(it.created_date || '').slice(0, 10))} / ${esc(String(it.last_updated || '').slice(0, 10))}</b></div>
     </div>
     <div class="bz-bel-detail-acts" data-bd-acts></div>
@@ -297,8 +312,9 @@ export function belFormInit(it: BelongingsItem | null): BelFormInit {
 }
 
 /** 表单（记一笔/编辑共用骨架；字段初值在构建时算好，id 契约 bm-* 由两侧绑定消费） */
-export function belFormHtml(it: BelongingsItem | null): string {
+export function belFormHtml(it: BelongingsItem | null, unit: MoneyUnit = 'cny'): string {
   const editing = !!it;
+  const unitLabel = moneyUnitLabel(unit);
   const { priceVal, dateVal, catVal, descVal, exitDateVal, soldPriceVal, exitedInit } = belFormInit(it);
   return `
   <div class="bz-bel-form">
@@ -307,7 +323,7 @@ export function belFormHtml(it: BelongingsItem | null): string {
       <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc(it?.name ?? '')}" placeholder="如：iPhone 15 Pro"></div>
       <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选历史分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或从历史分类选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${iconSpan('sparkles', 'bz-ic--sm')}</button></span></div>
       <div class="bz-bel-form-row">
-        <div class="bz-field"><span class="bz-field-label">购买价格（元）</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
+        <div class="bz-field"><span class="bz-field-label">购买价格${unitLabel ? `（${esc(unitLabel)}）` : ''}</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
         <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc(dateVal)}"></div>
       </div>
       <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-bel-statuspick" id="bm-status"></span></div>
@@ -334,13 +350,13 @@ export function statusPickHtml(curStatus: string): string {
 }
 
 /** 底部抽屉头（海报皮：图标/名称/分类·价格·已用天数） */
-export function sheetHeadHtml(it: BelongingsItem): string {
+export function sheetHeadHtml(it: BelongingsItem, unit: MoneyUnit = 'cny'): string {
   const catName = catNameOf(it.category);
   const days = daysUsed(it);
   return `<div class="bz-item-sheet-entry"><div class="bz-bel-sheet-head">
       <span class="bz-item-sheet-emoji">${itemEmHtml(it)}</span>
       <div class="bz-bel-sheet-info"><div class="bz-item-sheet-title">${esc(it.name)}</div>
-      <div class="bz-item-sheet-sub">${esc(catName)} · ${money(Number(it.purchase_price) || 0)} · 已用 ${days} 天</div></div></div></div>`;
+      <div class="bz-item-sheet-sub">${esc(catName)} · ${money(Number(it.purchase_price) || 0, unit)} · 已用 ${days} 天</div></div></div></div>`;
 }
 
 // ==================== 行操作集 ====================

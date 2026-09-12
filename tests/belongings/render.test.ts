@@ -10,7 +10,7 @@ import {
   panelHtml, cellHtml, chipsHtml, mobChipsHtml, kpisHtml, segmentedHtml, sortOptionsHtml,
   emptyHtml, belDetailHtml, belFormHtml, belFormInit, statusPickHtml, sheetHeadHtml,
   actionSpecs, flowBtnsHtml, renderPanelView,
-  moneyShort, catNameOf, catEmHtml, itemEmHtml,
+  moneyShort, money, moneyWith, moneyUnitLabel, catNameOf, catEmHtml, itemEmHtml,
 } from '../../src/belongings/render';
 import type { BelongingsItem } from '../../src/belongings/types';
 
@@ -231,6 +231,17 @@ describe('markup 构建器（钩子契约 = 两侧绑定与测试断言的共同
     expect(catEmHtml('📦')).toContain('package'); // 空分类 📦 → 映射 package（ui.test 同款口径）
     expect(catNameOf('💡 灯具')).toBe('灯具');
     expect(moneyShort(12345)).toBe('￥12,345');
+  });
+
+  it('金额单位（issue 294）：cny 前缀 / yuan 后缀 / usd 前缀 / none 无符号；moneyWith 包裹预格式化串', () => {
+    expect(money(1234.5)).toBe('￥1,234.50');
+    expect(money(1234.5, 'yuan')).toBe('1,234.50 元');
+    expect(money(1234.5, 'usd')).toBe('$1,234.50');
+    expect(money(1234.5, 'none')).toBe('1,234.50');
+    expect(moneyShort(12345, 'yuan')).toBe('12,345 元');
+    expect(moneyWith('0.0025', 'usd')).toBe('$0.0025'); // 卡片日均小值 4 位档原样包裹
+    expect(moneyUnitLabel('none')).toBe('');
+    expect(moneyUnitLabel('yuan')).toBe('元');
   });
 });
 

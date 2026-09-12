@@ -6,12 +6,12 @@
 import { esc, iconSpan } from '../../../core/ui/str';
 import {
   ICON, STATUS, STATUS_ORDER, SORT_OPTS,
-  moneyShort, statusKeyOf,
+  moneyShort, moneyWith, statusKeyOf,
   isExited, daysUsed, dailyCostOf, stockCount, totalAssets, avgDailyCost, statusCount,
   yearsAvailable, resolveYear,
   itemEmHtml, catNameOf,
   filtered, heroTitleText, heroSubText,
-  type BelViewState,
+  type BelViewState, type MoneyUnit,
 } from '../../shared';
 import type { BelongingsItem } from '../../types';
 
@@ -101,16 +101,16 @@ export function segmentedHtml(sort: string): string {
 }
 
 /** KPI 行（在库件数 hero 可点/在库投入可点/日均成本/已离场·回收；ticket 189 资产合成筛选） */
-export function kpisHtml(items: BelongingsItem[]): string {
+export function kpisHtml(items: BelongingsItem[], unit: MoneyUnit = 'cny'): string {
   const gone = items.filter(isExited);
   const recover = gone.reduce((s, i) => s + (Number(i.sold_price) || 0), 0);
   const kpi = (num: string, label: string, opts: { hero?: boolean; click?: boolean } = {}) =>
     `<div class="bz-bel-kpi${opts.hero ? ' bz-bel-kpi--hero' : ''}${opts.click ? ' bz-bel-kpi--click' : ''}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ''}><b>${num}</b><span>${esc(label)}</span></div>`;
   return (
     kpi(String(stockCount(items)), '在库件数', { hero: true, click: true }) +
-    kpi(moneyShort(totalAssets(items)), '在库投入', { click: true }) +
-    kpi('￥' + avgDailyCost(items).toFixed(2), '日均成本') +
-    kpi(`${gone.length} 件 · ${moneyShort(recover)}`, '已离场 · 回收')
+    kpi(moneyShort(totalAssets(items), unit), '在库投入', { click: true }) +
+    kpi(moneyWith(avgDailyCost(items).toFixed(2), unit), '日均成本') +
+    kpi(`${gone.length} 件 · ${moneyShort(recover, unit)}`, '已离场 · 回收')
   );
 }
 
@@ -119,8 +119,8 @@ export function stampCount(items: BelongingsItem[]): string {
   return String(stockCount(items));
 }
 /** 移动印章头小字（投入/日均，与桌面 KPI 同口径） */
-export function mobStatsText(items: BelongingsItem[]): string {
-  return `投入 ${moneyShort(totalAssets(items))} · 日均 ${avgDailyCost(items).toFixed(2)}`;
+export function mobStatsText(items: BelongingsItem[], unit: MoneyUnit = 'cny'): string {
+  return `投入 ${moneyShort(totalAssets(items), unit)} · 日均 ${moneyWith(avgDailyCost(items).toFixed(2), unit)}`;
 }
 
 /** 空态（bz-empty 库皮；文案区分库空 vs 筛选无匹配） */
@@ -129,7 +129,7 @@ export function emptyHtml(noMatch: boolean): string {
 }
 
 /** 网格卡（P20 大字报）：NO.XX 编号 + 状态徽章 + 特大分类图标 + 名称 + 大字价格 + meta */
-export function cellHtml(it: BelongingsItem, idx: number): string {
+export function cellHtml(it: BelongingsItem, idx: number, unit: MoneyUnit = 'cny'): string {
   const gone = isExited(it);
   const idle = it.current_status === '闲置';
   const days = daysUsed(it);
@@ -137,25 +137,25 @@ export function cellHtml(it: BelongingsItem, idx: number): string {
   const key = statusKeyOf(it.current_status);
   // 出离尾注（ADR-0089）：封口日期 + 转卖售价
   const exitNote = gone
-    ? `${it.exit_date ? ' → ' + esc(String(it.exit_date).slice(0, 10)) : ''}${it.current_status === '已转卖' && Number(it.sold_price) > 0 ? ' · 售出 ' + moneyShort(Number(it.sold_price)) : ''}`
+    ? `${it.exit_date ? ' → ' + esc(String(it.exit_date).slice(0, 10)) : ''}${it.current_status === '已转卖' && Number(it.sold_price) > 0 ? ' · 售出 ' + moneyShort(Number(it.sold_price), unit) : ''}`
     : '';
   const dailyStr = daily < 0.01 ? daily.toFixed(4) : daily.toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
   const mut = gone
     ? `${esc(String(it.purchase_date || '').slice(0, 10) || '日期未知')} 起 · 陪伴 ${days || '—'} 天${exitNote}`
-    : `${esc(String(it.purchase_date || '').slice(0, 10) || '日期未知')} 起 · ${days || '—'} 天 · 日均 ￥${dailyStr}`;
+    : `${esc(String(it.purchase_date || '').slice(0, 10) || '日期未知')} 起 · ${days || '—'} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
   return `<div class="bz-bel-cell${gone ? ' bz-bel-cell--gone' : ''}${idle ? ' bz-bel-cell--idle' : ''}" data-bel-id="${esc(it.id)}">
     <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, '0')} — ${esc(catNameOf(it.category) || '未分类')}</span>
     <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(STATUS[key]?.ic || 'box', 'bz-ic--sm')}${esc(it.current_status)}</span>
     <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
     <span class="bz-bel-name">${esc(it.name)}</span>
-    <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0)}</span>
+    <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0, unit)}</span>
     <span class="bz-bel-mut">${mut}</span>
   </div>`;
 }
 
 /** 网格（含 data-bel-grid 钩子；末行 filler 由 renderPanelView 量列后补） */
-export function gridHtml(items: BelongingsItem[], view: BelViewState): string {
-  return `<div class="bz-bel-grid" data-bel-grid>${filtered(items, view).map((it, idx) => cellHtml(it, idx)).join('')}</div>`;
+export function gridHtml(items: BelongingsItem[], view: BelViewState, unit: MoneyUnit = 'cny'): string {
+  return `<div class="bz-bel-grid" data-bel-grid>${filtered(items, view).map((it, idx) => cellHtml(it, idx, unit)).join('')}</div>`;
 }
 
 // ==================== 面板渲染胶水（六步全量重渲；对入参 root 写 innerHTML） ====================
@@ -168,7 +168,7 @@ export interface RenderHooks {
 /** 全量渲染面板视图：hero/chips/年份/KPI/排序/内容六步（与历史 renderAll 族逐语义等价）。
  *  view.year 悬空时回写归位（外部数据变化后选中年份消失 → 自动回全部年份）。
  *  量列补 filler：jsdom 无布局 → gridTemplateColumns 空串回退单列，rem 恒 0 不补。 */
-export function renderPanelView(root: HTMLElement, items: BelongingsItem[], view: BelViewState, hooks: RenderHooks): void {
+export function renderPanelView(root: HTMLElement, items: BelongingsItem[], view: BelViewState, hooks: RenderHooks, unit: MoneyUnit = 'cny'): void {
   const q = <T extends Element = HTMLElement>(sel: string): T | null => root.querySelector(sel);
   const title = q('[data-bel-herotitle]');
   if (title) title.textContent = heroTitleText(view);
@@ -186,11 +186,11 @@ export function renderPanelView(root: HTMLElement, items: BelongingsItem[], view
     if (menu) menu.innerHTML = yearsOptionsHtml(items, view.year);
   }
   const wrap = q('[data-bel-kpis]');
-  if (wrap) wrap.innerHTML = kpisHtml(items);
+  if (wrap) wrap.innerHTML = kpisHtml(items, unit);
   const stampN = q('[data-bel-stampn]');
   if (stampN) stampN.textContent = stampCount(items);
   const mobStats = q('[data-bel-mobstats]');
-  if (mobStats) mobStats.textContent = mobStatsText(items);
+  if (mobStats) mobStats.textContent = mobStatsText(items, unit);
   const sortHost = q('[data-bel-sort]');
   if (sortHost) sortHost.innerHTML = segmentedHtml(view.sort);
   const mobSortSel = q('[data-bel-mobsortsel]');
@@ -209,7 +209,7 @@ export function renderPanelView(root: HTMLElement, items: BelongingsItem[], view
     const noMatch = !!view.q || view.status !== null || view.year !== '';
     content.innerHTML = emptyHtml(noMatch);
   } else {
-    content.innerHTML = gridHtml(items, view);
+    content.innerHTML = gridHtml(items, view, unit);
     // 末行空位补纸面 filler（P20：黑缝线只出现在卡与卡之间，空区保持纸面）
     const gridEl = content.querySelector('[data-bel-grid]') as HTMLElement;
     const cols = (((getComputedStyle(gridEl).gridTemplateColumns as string) || '').split(' ').filter(Boolean).length) || 1;

@@ -171,6 +171,12 @@ export default interface BzSettings {
   cinemaStyle: string;
   /** 📦 归物本：默认状态筛选（空串=全部，其余 using/idle/sold/discard；非法值回落全部。issue 194） */
   belongingsDefaultStatus: string;
+  /** 📦 归物本：默认排序（recent 最近购入 / price 投入最高 / daily 日均最高；非法值回落 recent。issue 294） */
+  belongingsDefaultSort: string;
+  /** 📦 归物本：新记条目默认状态（使用中/闲置；非法值回落「使用中」。issue 294） */
+  belongingsNewStatus: string;
+  /** 📦 归物本：金额单位（cny=￥ 前缀默认 / yuan=元 后缀 / usd=$ / none=无符号；非法值回落 cny。issue 294） */
+  belongingsCurrency: string;
   /** 🎨 归物本面板布局皮肤（外观组占位单卡，用户拍板 C）：当前仅 poster（P20 瑞士大字报）；未知值回落 poster */
   belSkin: string;
   /** 🎨 归物本主题（与布局一一对应，poster ↔ warmwhite 恒定纸面） */
@@ -638,6 +644,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 移动端主窗口默认全屏（ticket 68：默认值=行为保持——原移动端即全屏→开，原居中卡→关；
   // 阅读报告跟随书架墙键，不设独立键）
   belongingsDefaultStatus: '',
+  belongingsDefaultSort: 'recent',
+  belongingsNewStatus: '使用中',
+  belongingsCurrency: 'cny',
   belSkin: 'poster',
   belSkinTheme: 'warmwhite',
   // 外观组占位键默认值（issue 246；布局统一 default，主题各域一名，与原型 VALUES 同值）；
