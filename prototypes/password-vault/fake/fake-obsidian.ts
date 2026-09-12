@@ -276,10 +276,14 @@ export class FakeVault {
     },
     // 递归建目录（SafeManager ensureDir 面板；localStorage 无目录概念，no-op）
     mkdir: async (_path: string): Promise<void> => {},
-    // 原子改名/晋升（SafeManager staged 三段式写：staged → 正式名）
+    // 原子改名/晋升（SafeManager staged 三段式写：staged → 正式名；清单三段式同用）。
+    // **源不存在 = 静默 no-op**，与真实现同判据（tests/mock-vault.ts 的 adapter.rename
+    // 同样只在命中时才搬）。此处曾直接 throw，导致 SafeManager.saveManifest 的 S2
+    // 「旧清单挪为 .bak」在**首设**（正本尚不存在）时抛错 → firstTimeSetup 回滚解锁态
+    // → 表现为「输了新主密码却仍停在设置主密码」（2026-09-12 保险库壳现场建库时踩到）。
     rename: async (from: string, to: string): Promise<void> => {
       const v = this.raw(from);
-      if (v == null) throw new Error('file not found: ' + from);
+      if (v == null) return;
       localStorage.setItem(LS_PREFIX + to, v);
       localStorage.removeItem(LS_PREFIX + from);
       const stats = this.stats();

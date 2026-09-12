@@ -1159,7 +1159,7 @@ export class SafeManager {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法还原笔记');
     const app = getApp();
     const note = this.manifest.notes.find((n) => n.id === noteId);
-    if (!note) throw new Error('未找到该加密笔记');
+    if (!note) throw new Error('未找到该笔记');
     const conflicts: string[] = [];
     const total = note.attachments.length + 1;
 

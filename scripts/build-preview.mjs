@@ -101,7 +101,10 @@ export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook",
 // review 行为产物（issue 253）：quiz-core/app/fit/watch 闭包 + ⚙ 直达 settings-panel 内联；
 //   出题 AI 走 fake requestUrl canned 回放（prompt 特征识别 → RVW.SEED.quizBank）
 // knowledge 行为产物（issue 259）：真 ui.ts 依赖链 + fake requestUrl 罐头（术语生成/总结/领域判定）
-export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "diary", "favorites", "home", "knowledge", "memo", "password-vault", "pomodoro", "review", "secondbrain", "settings-panel"];
+// encrypt 行为产物（2026-09-12）：保险库域此前在原型侧缺席（只有 encrypt-lab 设计稿与
+//   password-vault 壳），接入后 encrypt/styles.css + 三资产工作台 + 锁屏走行为单源；
+//   该域无 render.ts（markup 全在 ui.ts 内拼），故只产行为包、不进 PREVIEW_DOMAINS。
+export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "encrypt", "diary", "favorites", "home", "knowledge", "memo", "password-vault", "pomodoro", "review", "secondbrain", "settings-panel"];
 
 export async function buildBehavior(domain) {
   const entry = path.join(ROOT, "prototypes", domain, "fake-sim.ts");
