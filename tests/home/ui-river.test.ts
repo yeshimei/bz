@@ -1,7 +1,8 @@
 import { todayStr } from '../helpers/date';
 /**
  * 内容首页（home 域）UI 测试（issue 232 活动河改版）：
- * 面板装配（头行/三栏/移动瓦片）、全域入口行、时间线空态、预告三卡、点行直达、ESC/遮罩关闭。
+ * 面板装配（头行/三栏/移动瓦片）、全域入口行、时间线空态、预告三卡、点行直达、ESC/遮罩关闭；
+ * issue 290 秒开三件套：首次骨架秒开、关闭保留 DOM 重开复用刷新、卸载真销毁。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -108,8 +109,12 @@ describe('home 活动河 UI（issue 232）', () => {
     (document.querySelector('[data-home-go="cinema"]') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 0));
     expect(app.__executed).toEqual(['bz-cinema-open']);
-    expect(document.querySelector('.bz-home-overlay')).toBeNull();
-    expect(H.river).toBeNull(); // 关闭清采集态
+    // issue 290：关闭 = 隐藏保留 DOM（重开秒显），采集态一并保留
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    expect(overlay).toBeTruthy();
+    expect(overlay.style.display).toBe('none');
+    expect(H.overlayVisible).toBe(false);
+    expect(H.river).not.toBeNull();
   });
 
   it('第二大脑磁贴（issue 251）：入口行在册、图标物化、点行直达主面板命令', async () => {
@@ -213,9 +218,10 @@ describe('home 活动河 UI（issue 232）', () => {
     expect(document.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1); // 直接就看到昨天那条
   });
 
-  it('时间线查看日随面板关闭失效（H.riverView 归零，重开回到「默认打开日」）', async () => {
+  it('时间线查看日随关闭保留、随卸载归零（issue 290 反转：重开停在上次查看日）', async () => {
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
       { title: '甲', created: todayStr() + ' 09:00:00', completed: null },
+      { title: '乙', created: yesterdayStr(), completed: null }, // 昨天也有一条：切过去才有事件可断言
     ]));
     const app = recApp(vault);
     openHome(app);
@@ -226,27 +232,90 @@ describe('home 活动河 UI（issue 232）', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(H.riverView).toBe(yesterday);
 
-    // 关面板再重开：查看日必须回到默认（今天），否则会以旧选中日渲染——
-    // 2026-09-11 默认范围放宽到 7 天窗口后，前一天不再被窗口滤掉，这个泄漏才暴露出来
+    // 关面板再重开（issue 290）：DOM 与查看日保留——同一元素复用，仍停昨天的选中
+    const el1 = document.querySelector('.bz-home-overlay');
     closeOverlay();
     openHome(app);
     await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelector('.bz-home-overlay')).toBe(el1); // 复用不重建
+    expect(H.riverView).toBe(yesterday);
+    expect(document.querySelector(`[data-home-weekday="${yesterday}"]`)!.classList.contains('bz-home-wk--sel')).toBe(true);
+    expect(document.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1); // 停在昨天：只出昨天那条（今天的不在）
+
+    // 卸载（resetHomeState）才是查看日的真归零时机
+    unloadHome();
+    resetHomeState();
     expect(H.riverView).toBeNull();
-    expect(document.querySelector(`[data-home-weekday="${todayStr()}"]`)!.classList.contains('bz-home-wk--sel')).toBe(true);
-    expect(document.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1); // 今天那条在
   });
 
-  it('点关闭钮 / 遮罩均关闭（桌面无关闭钮显示由 CSS 控制事件仍可用）', async () => {
+  it('点关闭钮 / 遮罩均关闭（issue 290：隐藏保留 DOM，非移除）', async () => {
     const app = recApp(vault);
     openHome(app);
     await new Promise((r) => setTimeout(r, 20));
     (document.querySelector('[data-home-close]') as HTMLElement).click();
-    expect(document.querySelector('.bz-home-overlay')).toBeNull();
+    const afterClose = document.querySelector('.bz-home-overlay') as HTMLElement;
+    expect(afterClose).toBeTruthy();
+    expect(afterClose.style.display).toBe('none');
 
     openHome(app);
     await new Promise((r) => setTimeout(r, 20));
-    const overlay = document.querySelector('.bz-home-overlay')!;
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    expect(overlay.style.display).not.toBe('none');
     overlay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(document.querySelector('.bz-home-overlay')).toBeNull();
+    expect((document.querySelector('.bz-home-overlay') as HTMLElement).style.display).toBe('none');
+  });
+
+  it('issue 290：首次打开秒开——openHome 同步返回即有面板骨架，时间线异步汇入', async () => {
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { title: '甲', created: todayStr() + ' 09:00:00', completed: null },
+    ]));
+    const app = recApp(vault);
+    openHome(app); // 不 await：同步段就该有完整面板壳 + 骨架占位
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    expect(overlay).toBeTruthy();
+    expect(overlay.querySelector('[data-home-close]')).toBeTruthy();
+    expect((overlay.querySelector('[data-home-flow]') as HTMLElement).textContent).toContain('正在汇入今天的痕迹');
+    await new Promise((r) => setTimeout(r, 20));
+    // 动态加载到位：骨架被真数据替换（时间线出今天那条，不再有「正在汇入」）
+    expect((overlay.querySelector('[data-home-flow]') as HTMLElement).textContent).not.toContain('正在汇入今天的痕迹');
+    expect(overlay.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1);
+  });
+
+  it('issue 290：关闭保留 DOM——重开复用同一元素秒显旧渲染，动态刷新写入新数据', async () => {
+    const app = recApp(vault); // 初始 memo.json 无今日动静 → 时间线空态
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const el1 = document.querySelector('.bz-home-overlay') as HTMLElement;
+    expect(el1.querySelector('.bz-home-flow-empty')!.textContent).toContain('这一天还没有留下痕迹');
+
+    closeOverlay();
+    expect(el1.isConnected).toBe(true); // DOM 保留
+    expect(el1.style.display).toBe('none');
+
+    // vault 新增今日动静后重开：同一元素、同步恢复显示（秒显旧内容），刷新尚未到达
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { title: '新条目', created: todayStr() + ' 10:00:00', completed: null },
+    ]));
+    openHome(app);
+    expect(document.querySelector('.bz-home-overlay')).toBe(el1); // 复用不重建
+    expect(el1.style.display).not.toBe('none');
+    expect(H.overlayVisible).toBe(true);
+    expect(el1.querySelector('.bz-home-flow-empty')!.textContent).toContain('这一天还没有留下痕迹'); // 旧渲染还在
+    // 动态刷新到达：时间线写进新条目
+    await new Promise((r) => setTimeout(r, 20));
+    expect(el1.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1);
+  });
+
+  it('issue 290：unloadHome 真销毁——隐藏保留的 DOM 被移除、状态整体归零', async () => {
+    const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    closeOverlay();
+    expect(document.querySelector('.bz-home-overlay')).toBeTruthy(); // 关闭保留
+    unloadHome();
+    expect(document.querySelector('.bz-home-overlay')).toBeNull(); // 卸载真销毁
+    expect(H.currentOverlay).toBeNull();
+    expect(H.overlayVisible).toBe(false);
+    expect(H.river).toBeNull();
   });
 });

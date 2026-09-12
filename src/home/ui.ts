@@ -98,6 +98,7 @@ export function createOverlay(app: any): void {
   document.body.appendChild(overlay);
   topifyZ(overlay); // ADR-0067：显示即发号（cinema 等后开面板可压过首页）
   H.currentOverlay = overlay;
+  H.overlayVisible = true;
   mountIcons(overlay); // 头行关闭钮等静态占位（renderAll 只挂数据区图标）
   bindEvents(overlay, app);
   renderAll();
@@ -133,10 +134,13 @@ async function refreshRiverAndRender(): Promise<void> {
   // 休息阶段不算；布尔口径与 pomodoro/ui.isFocusing 同出 core.isFocusingPhase 单源。
   const focusing = isFocusingPhase(phase);
   if (river) river.pomodoroFocusing = focusing;
-  H.river = river;
   // 采集失败标记（H12）：聚合层异常被 catch(() => null) 吞成 null 时置位——渲染出「失败 + 重试」
-  // 空态而非永挂加载骨架；成功采集即清位
+  // 空态而非永挂加载骨架；成功采集即清位。
+  // issue 290：失败只兜「从没有过数据」——H.river 不再随失败回 null，常驻 DOM 里已有的
+  // 好渲染不被一次刷新失败换成失败空态（重试路径 renderAll 读的也是旧数据，语义不变）。
   H.riverFailed = river === null;
+  if (river) H.river = river;
+  if (!river && H.river) return;
   if (order) H.order = order;
   H.pomodoroPhase = phase;
   // 「默认打开日」只在数据刚到、用户还没点过周历时定一次（H.riverView 为 null = 没点过）
@@ -147,14 +151,25 @@ async function refreshRiverAndRender(): Promise<void> {
   renderAll();
 }
 
+/**
+ * 关闭（issue 290）= 隐藏保留 DOM：面板壳、上次渲染、采集数据、入口顺序、查看日全部原地保留，
+ * 重开（openHome → showOverlay）秒显旧内容再动态刷新，不重建不闪骨架。
+ * 真销毁只有一条路：unloadHome（插件卸载，remove + resetHomeState）。
+ */
 export function closeOverlay(): void {
-  if (!H.currentOverlay) return;
-  H.currentOverlay.remove();
-  H.currentOverlay = null;
-  H.river = null;
-  H.riverFailed = false; // 失败态随面板关闭失效（重开先出加载骨架，不由上次失败残留）
-  // 查看日随本次打开失效：重开要重新按「默认打开日」定位（否则会以关面板前的选中日渲染）
-  H.riverView = null;
+  if (!H.currentOverlay || !H.overlayVisible) return;
+  H.currentOverlay.style.display = 'none';
+  H.overlayVisible = false;
+}
+
+/** 重开复用（issue 290）：恢复显示 + 重新发号（谁后显示谁在上）+ 立即动态刷新数据 */
+export function showOverlay(): void {
+  const overlay = H.currentOverlay;
+  if (!overlay || H.overlayVisible) return;
+  overlay.style.display = '';
+  topifyZ(overlay);
+  H.overlayVisible = true;
+  void refreshRiverAndRender();
 }
 
 /* ---------- 事件 ---------- */
@@ -374,7 +389,9 @@ function renderAll(): void {
 /* ---------- ESC / 通知 ---------- */
 
 export function registerEscapeHandler(): void {
-  registerPanelEsc('bz-home', () => !!H.currentOverlay, closeOverlay);
+  // DOM 常驻（issue 290）后 currentOverlay 恒非 null，判活必须带上「显示中」——
+  // 隐藏保留的首页层不得截胡其他面板的 ESC
+  registerPanelEsc('bz-home', () => !!H.currentOverlay && H.overlayVisible, closeOverlay);
 }
 
 /** 注销 ESC 层（关闭面板/卸载时调用；escManager 层不随插件卸载自动清理） */

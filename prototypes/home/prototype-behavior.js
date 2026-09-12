@@ -1,4 +1,4 @@
-/* 源指纹 58ac0457517d9510 · 仓内输入 97 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 44e68e833796dc4e · 仓内输入 97 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -12835,6 +12835,7 @@ ${n.content.slice(0, 2e3)}
   // src/home/state.ts
   var H = {
     currentOverlay: null,
+    overlayVisible: false,
     appRef: null,
     river: null,
     riverFailed: false,
@@ -14858,6 +14859,7 @@ ${n.content.slice(0, 2e3)}
     document.body.appendChild(overlay);
     topifyZ(overlay);
     H.currentOverlay = overlay;
+    H.overlayVisible = true;
     mountIcons(overlay);
     bindEvents2(overlay, app);
     renderAll();
@@ -14881,8 +14883,9 @@ ${n.content.slice(0, 2e3)}
     ]);
     const focusing = isFocusingPhase(phase);
     if (river) river.pomodoroFocusing = focusing;
-    H.river = river;
     H.riverFailed = river === null;
+    if (river) H.river = river;
+    if (!river && H.river) return;
     if (order) H.order = order;
     H.pomodoroPhase = phase;
     if (river && !H.riverView) {
@@ -14892,12 +14895,17 @@ ${n.content.slice(0, 2e3)}
     renderAll();
   }
   function closeOverlay() {
-    if (!H.currentOverlay) return;
-    H.currentOverlay.remove();
-    H.currentOverlay = null;
-    H.river = null;
-    H.riverFailed = false;
-    H.riverView = null;
+    if (!H.currentOverlay || !H.overlayVisible) return;
+    H.currentOverlay.style.display = "none";
+    H.overlayVisible = false;
+  }
+  function showOverlay() {
+    const overlay = H.currentOverlay;
+    if (!overlay || H.overlayVisible) return;
+    overlay.style.display = "";
+    topifyZ(overlay);
+    H.overlayVisible = true;
+    void refreshRiverAndRender();
   }
   function bindEvents2(overlay, app) {
     overlay.addEventListener("keydown", (e) => {
@@ -15071,7 +15079,7 @@ ${n.content.slice(0, 2e3)}
     mountRowInteractions(overlay, H.appRef, river);
   }
   function registerEscapeHandler() {
-    registerPanelEsc("bz-home", () => !!H.currentOverlay, closeOverlay);
+    registerPanelEsc("bz-home", () => !!H.currentOverlay && H.overlayVisible, closeOverlay);
   }
 
   // src/home/index.ts
@@ -15084,7 +15092,11 @@ ${n.content.slice(0, 2e3)}
   function openHome(app) {
     ensureHome(app);
     if (H.currentOverlay) {
-      closeOverlay();
+      if (H.overlayVisible) {
+        closeOverlay();
+        return;
+      }
+      showOverlay();
       return;
     }
     registerEscapeHandler();
