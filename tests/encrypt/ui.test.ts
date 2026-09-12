@@ -526,7 +526,7 @@ describe('EncryptAppController', () => {
     expect(document.getElementById('bz-encrypt-popup')!.style.display).toBe('none');
   });
 
-  it('面板顶部动作收敛：存入笔记(lock-note)/体检(health)/关闭(close)，无设置与生成按钮；点击 lock-note 触发加密确认', async () => {
+  it('面板顶部动作收敛：顶栏只剩标题无任何按钮（lock-note/health/close 均按评审移除）；存入笔记走 lockCurrentNote 仍弹加密确认', async () => {
     const app = setup(vault, CONFIG);
     vault.create('笔记/主题.md', '正文');
     const activeFile = { path: '笔记/主题.md', basename: '主题', vault: vault as any };
@@ -536,17 +536,12 @@ describe('EncryptAppController', () => {
     await c.init();
     await c.dataManager.unlock('pw');
     c.uiManager.show();
-    // 顶栏动作按原型收敛：设置(settings)/生成密码(gen)已移除（设置收进面板空白处右键菜单）
-    const barBtns = [...document.querySelectorAll('.bz-vault-bar [data-act]')].map((b) => b.getAttribute('data-act'));
-    expect(barBtns).toContain('lock-note');
-    expect(barBtns).toContain('health');
-    expect(barBtns).toContain('close');
-    expect(barBtns).not.toContain('settings');
-    expect(barBtns).not.toContain('gen');
-    expect(barBtns.indexOf('lock-note')).toBeLessThan(barBtns.indexOf('health'));
-    expect(barBtns.indexOf('health')).toBeLessThan(barBtns.indexOf('close'));
-    // 点击 → 弹加密确认（文案「加密到保险库」）
-    (document.querySelector('.bz-vault-bar [data-act="lock-note"]') as HTMLButtonElement).click();
+    // 顶栏动作 2026-09-12 按评审全部移除：关闭走 Esc/点遮罩，体检走左栏健康卡
+    const barBtns = [...document.querySelectorAll('.bz-vault-bar [data-act]')];
+    expect(barBtns.length).toBe(0);
+    expect(document.querySelector('[data-vault-title]')).toBeTruthy();
+    // 「存入笔记」入口 = 控制器 lockCurrentNote（命令 bz-encrypt-lock-current-note 同一落点）→ 弹加密确认
+    void c.lockCurrentNote();
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
     expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('加密到保险库');
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
@@ -569,11 +564,10 @@ describe('EncryptAppController', () => {
       path: '笔记/没了.md', title: '失效笔记', content: '# x', attachments: [],
     });
     vault.files.delete('CONFIG/.ENCRYPT/' + dead.contentRef); // 正文镜像丢失
-    // 顶栏 data-act 动作：health 存在、无旧扫把
-    const barActs = [...document.querySelectorAll('.bz-vault-bar [data-act]')].map((b) => b.getAttribute('data-act'));
-    expect(barActs.indexOf('health')).toBeGreaterThanOrEqual(0);
-    expect(barActs.indexOf('🧹')).toBe(-1);
-    const healthBtn = document.querySelector('.bz-vault-bar [data-act="health"]') as HTMLButtonElement;
+    // 顶栏三按钮已按评审移除：体检入口 = 左栏健康卡（顶栏应无任何 data-act 按钮）
+    const barActs = [...document.querySelectorAll('.bz-vault-bar [data-act]')];
+    expect(barActs.length).toBe(0);
+    const healthBtn = document.querySelector('[data-act="health-card"]') as HTMLElement;
     healthBtn.click();
     await waitFor(() => !!document.getElementById('bz-encrypt-health-popup') && document.getElementById('bz-encrypt-health-popup')!.style.display === 'flex');
     // 回归：弹窗卡片必须是遮罩的子元素（脱离 flex 容器会沉入文档流，出现「只有遮罩没有内容」）
