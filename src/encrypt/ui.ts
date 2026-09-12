@@ -457,7 +457,7 @@ export class UIManager {
         toast: (m, err) => this.toast(m, err),
         openPwEntryDialog: (edit, prefill) => this.openPwEntryDialog(edit, prefill),
         openPwPlatformEdit: (p) => this.openPwPlatformEdit(p),
-        askConfirm: (t, m, okLabel, cb) => this.askConfirm(t, m, okLabel, cb),
+        askConfirm: (t, m, okLabel, danger, cb) => this.askConfirm(t, m, okLabel, danger, cb),
         copySensitive: (t) => this.copySensitive(t),
         openExternal: (u) => this.openExternal(u),
         onPwChanged: () => this.renderAll(),
@@ -1128,7 +1128,9 @@ export class UIManager {
                 '重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？',
               actions: [
                 { label: '暂不重设', value: 'cancel' },
-                { label: '仍要重设', value: 'ok', cta: true },
+                // danger（issue 291 评审补）：与 password-vault 同名同义的另一份实现——重设会生成
+                // 全新空清单、旧加密数据永久无法恢复，破坏性主动作不得高亮（手册 §9/§10）。
+                { label: '仍要重设', value: 'ok', cta: true, danger: true },
               ],
             }).then((v) => {
               if (v === 'ok') {
@@ -1831,14 +1833,26 @@ export class UIManager {
     document.body.appendChild(mask);
   }
 
-  /** 流程确认框（取消 / 确认 cta）：密码资产与笔记/日记动作共用 */
-  private askConfirm(title: string, message: string, okLabel: string, onYes: () => void): void {
+  /**
+   * 流程确认框（取消 / 确认 cta）：密码资产与笔记/日记动作共用。
+   * `danger`（issue 291 评审补）= 主动作是删除/销毁类 → 弹窗挂 `.bz-flow-dialog--danger`，
+   * 主按钮降为中性底 + 红字（设计手册 §9/§10）。默认 false（还原等非破坏动作保持高亮）。
+   * 注意与 password-vault 的 `askConfirm` 区别：那个是域内自绘确认（自带 .danger 按钮样式），
+   * 本方法走 core 流程框，危险语义必须显式传进来。
+   */
+  private askConfirm(
+    title: string,
+    message: string,
+    okLabel: string,
+    danger: boolean,
+    onYes: () => void
+  ): void {
     void openFlowDialog({
       title,
       message,
       actions: [
         { label: '取消', value: 'cancel' },
-        { label: okLabel, value: 'ok', cta: true },
+        { label: okLabel, value: 'ok', cta: true, danger },
       ],
     }).then((v) => {
       if (v === 'ok') onYes();
@@ -2165,6 +2179,7 @@ export class UIManager {
       '还原回日记',
       `将「${note.title}」的正文与附件还原到 ${note.path} 的时间序位置？`,
       '还原',
+      false, // 还原是取出动作，非破坏 → 保持普通高亮主动作
       () => {
         const h = progressNotify('还原日记 ' + note.title);
         void this.restoreDiaryEntry(note, h);
@@ -2214,6 +2229,7 @@ export class UIManager {
       '彻底销毁日记',
       `将永久销毁「${note.title}」的密文（含附件）。此操作不可撤销，确定继续吗？`,
       '永久销毁',
+      true, // danger：永久销毁密文（不可撤销）→ 主按钮中性底 + 红字（手册 §9/§10）
       () => {
         void this.dataManager
           .removeNote(note.id)
@@ -2233,6 +2249,7 @@ export class UIManager {
       '还原',
       `将「${note.title}」的原文${note.attachments.length ? '与 ' + note.attachments.length + ' 个原质量附件' : ''}还原到原路径？`,
       '还原',
+      false, // 还原是取出动作，非破坏
       () => {
         const h = progressNotify('还原 ' + note.title);
         void this.dataManager
@@ -2631,6 +2648,8 @@ export class EncryptAppController {
         message: `把「${file.basename}」的正文${attCount ? '与 ' + attCount + ' 个附件' : ''}加密移入保险库？加密后原笔记与附件将从原路径移出（保险库内为密文）。`,
         actions: [
           { label: '取消', value: 'cancel' },
+          // 刻意不标 danger（issue 291 评审）：加密是「搬进保险库」而非销毁——原路径消失但正文/附件
+          // 完整保留在库内（可解密取回），不构成不可逆数据破坏。
           { label: '加密', value: 'ok', cta: true },
         ],
       })) === 'ok'

@@ -1743,7 +1743,10 @@
    --pwv-gold-soft 渐变实底 + #fff 字 + 金色投影（与色值逐项同源）。
    守卫 :not(.bz-flow-dialog--danger)：危险主动作时 core 的 bz-flow-dialog--danger 把主钮
    降级成中性底 + 红字（设计手册 §9/§10 既定口径），域规则不得把它盖回金色 ——
-   本条在危险态下直接不匹配，危险语义与配色原样保留（本域两处确认框主动作均为 cta 非 danger）。 */
+   本条在危险态下直接不匹配，危险语义与配色原样保留。
+   本域两处确认框的分工（issue 291 评审补）：「设置主密码」是风险告知门、主动作是首设正向路径，
+   **不标 danger** → 走本条金色主钮；「仍要重设」是破坏性重设（旧数据永久不可恢复），**已标 danger**
+   → 本条不匹配、落到 core 中性档。 */
 #__shared_confirm_popup__.bz-pwv-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__ {
   background: var(--pwv-gold-soft);
   color: #fff;

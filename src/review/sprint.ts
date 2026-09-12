@@ -163,6 +163,8 @@ export class SprintSession {
       message: '未完成的题目将丢弃，本轮复习按已完成篇目结算',
       actions: [
         { label: '继续做题', value: 'cancel' },
+        // 刻意不标 danger（issue 291 评审）：丢弃的是**本轮会话里未答的临时状态**（已答篇目照常结算、
+        // 题库与复习数据不删）——与 core confirmDiscard「放弃未保存草稿」同口径，不属破坏性动作。
         { label: '放弃', value: 'ok', cta: true },
       ],
     }).then((v) => {

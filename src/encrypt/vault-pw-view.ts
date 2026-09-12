@@ -65,7 +65,8 @@ export interface PwViewHost {
   openPwEntryDialog(edit?: PasswordVaultEntry | null, prefill?: { platform?: string; url?: string }): void;
   /** 打开平台信息编辑弹窗 */
   openPwPlatformEdit(platform: string): void;
-  askConfirm(title: string, message: string, okLabel: string, onYes: () => void): void;
+  /** 确认框：`danger=true` = 删除/销毁类主动作（core 流程框据此挂危险中性态，手册 §9/§10） */
+  askConfirm(title: string, message: string, okLabel: string, danger: boolean, onYes: () => void): void;
   /** 复制敏感文本（60s 自动清空由宿主实现） */
   copySensitive(text: string): Promise<boolean>;
   openExternal(url: string): void;
@@ -306,7 +307,7 @@ export class VaultPwView {
     } else if (act === 'fav') {
       void this.dm.toggleFav(d.id).then(() => this.host.onPwChanged?.()).catch((e) => this.failToast(e));
     } else if (act === 'del') {
-      this.host.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, '删除', () => {
+      this.host.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, '删除', true, () => {
         void this.dm.deleteItem(d.id).then(() => {
           if (st.selAccount === d.id) st.selAccount = null;
           this.host.onPwChanged?.();
@@ -351,7 +352,7 @@ export class VaultPwView {
         label: '删除',
         kind: 'danger',
         onClick: () =>
-          this.host.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, '删除', () => {
+          this.host.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, '删除', true, () => {
             void this.dm.deleteItem(d.id).then(() => {
               this.host.onPwChanged?.();
               this.host.toast(`已删除账号「${d.account}」`);
@@ -400,7 +401,7 @@ export class VaultPwView {
       label: '删除整个平台',
       kind: 'danger',
       onClick: () =>
-        this.host.askConfirm('删除整个平台', `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, '删除', () => {
+        this.host.askConfirm('删除整个平台', `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, '删除', true, () => {
           void this.dm.removePlatform(platform).then(() => {
             this.host.onPwChanged?.();
             this.host.toast(`已删除平台与 ${count} 个账号`);

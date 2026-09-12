@@ -436,12 +436,15 @@
 /* 危险主动作（删除条目 / 删除剪藏，issue 291 评审补）：core 的 `.bz-flow-dialog--danger`
    会把主钮压回中性次级形制（透明描边 + radius-sm + 去阴影）。编辑部的「方角 + 墨线」是本皮
    的按钮形制本身，压掉会让同框两钮一个圆一个方，故按 core 注释指明的口径用 `.bz-flow-dialog--danger`
-   限定规则覆写：只清底色 + 文字换危险色，描边/方角/字距保持（特异性 2,3,0 > core 的 2,2,0，
-   域文件在聚合序中后到，两者同时满足）。 */
-#__shared_confirm_popup__.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__ {
+   限定规则覆写：只清底色 + 文字换危险色，描边/方角/字距保持。
+   **特异性必须自己提**：只写 `.bz-clip-dialog-editorial.bz-flow-dialog--danger` 是 (2,2,0)，与 core
+   危险规则同级、仅靠域文件后到取胜（评审指出：脆弱且注释曾把这里误写成 2,3,0），故补
+   `.bz-overlay-popup`（popup 本就挂该类）提到 (2,3,0) 稳赢，并由
+   tests/core/flow-dialog-danger-neutral.test.ts 的跨域不变量锁住。 */
+#__shared_confirm_popup__.bz-overlay-popup.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__ {
   background: transparent; border: 1px solid #1c1a17; border-radius: 0; color: var(--bz-danger);
 }
-#__shared_confirm_popup__.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__:hover { background: #efe9dd; }
+#__shared_confirm_popup__.bz-overlay-popup.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__:hover { background: #efe9dd; }
 
 
 /* ==================== 暗色皮（2026-09-10 用户需求） ====================
@@ -478,8 +481,9 @@
 .theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_cancel__:hover { background: #2e2b25; }
 .theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_ok__ { background: #ece8dd; color: #1b1a17; }
 /* 暗色危险态：`.theme-dark` 那条（2,2,0）与 core 危险规则同特异性且后到，会把手写体墨章又压回来，
-   故同样用 `.bz-flow-dialog--danger` 限定覆写（2,3,0）：墨线换亮色、底透明、文字危险色。 */
-.theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__ {
+   故同样用 `.bz-flow-dialog--danger` 限定覆写（补 `.bz-overlay-popup` 提到 2,4,0 稳赢）：
+   墨线换亮色、底透明、文字危险色。 */
+.theme-dark #__shared_confirm_popup__.bz-overlay-popup.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__ {
   background: transparent; border-color: #ece8dd; color: var(--bz-danger);
 }
-.theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__:hover { background: #2e2b25; }
+.theme-dark #__shared_confirm_popup__.bz-overlay-popup.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__:hover { background: #2e2b25; }
