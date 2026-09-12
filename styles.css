@@ -9302,7 +9302,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* .sm 14px 框为装饰性 favicon 回退字chip，字号不抬档（例外见收尾报告） */
 .bz-clip-favchip.sm { width: 14px; height: 14px; font-size: 8px; }
 .bz-clip-art-title {
-  font-family: var(--clip-serif); font-size: 24px; font-weight: var(--bz-weight-bold);
+  font-family: var(--clip-serif); font-size: var(--bz-font-display); font-weight: var(--bz-weight-bold);
   line-height: 1.42; margin-bottom: var(--bz-space-md); color: var(--clip-ink);
 }
 .bz-clip-art-flag { display: inline-flex; align-items: center; gap: var(--bz-space-xs); font-size: var(--bz-font-caption); font-weight: var(--bz-weight-semibold); border-radius: var(--bz-radius-xs); padding: 2px var(--bz-space-sm); }
@@ -9445,7 +9445,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-clip-mob-save.saved { color: var(--clip-dim); }
 .bz-clip-mob-detail-body { flex: 1; overflow-y: auto; padding: 26px 22px var(--bz-space-2xl); }
 .bz-clip-mob-d-kicker { font-family: var(--clip-serif); font-size: 16.5px; letter-spacing: 3px; color: var(--clip-muted); display: flex; justify-content: space-between; }
-.bz-clip-mob-d-title { font-family: var(--clip-serif); font-size: 33px; font-weight: 700; line-height: 1.45; margin: 10px 0 14px; color: var(--clip-ink); }
+.bz-clip-mob-d-title { font-family: var(--clip-serif); font-size: 27px; font-weight: 700; line-height: 1.45; margin: 10px 0 14px; color: var(--clip-ink); }
 .bz-clip-mob-d-rule { border: none; border-top: 1px solid var(--clip-line); margin: 2px 0 var(--bz-space-lg); }
 .bz-clip-mob-d-md { font-family: var(--clip-serif); font-size: 22.5px; line-height: 1.95; color: var(--clip-body); text-align: justify; }
 .bz-clip-mob-d-md p { margin-bottom: 14px; }
@@ -13105,6 +13105,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     linear-gradient(90deg, #e8e9eb 0 50%, #14161a 50% 100%);
   border-radius: 3px;
 }
+/* 密码本·金印（2026-09-12 补：构图同晨昏族，域色取解锁屏金色印章 #b8913e） */
+.bz-sp-mini.bz-sp-prev-gold {
+  background:
+    radial-gradient(circle at 50% 50%, #b8913e 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f6f1e4 0 50%, #1c1a16 50% 100%);
+  border-radius: 3px;
+}
 /* 内容首页·米白（2026-09-10 补：构图同晨昏，域色取首页 AI 紫 #7a5ce0） */
 .bz-sp-mini.bz-sp-prev-cream {
   background:
@@ -13253,6 +13260,29 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   gap: var(--bz-space-md);
   margin-bottom: 18px;
 }
+/* 页头右侧动作区（2026-09-12：「重置本域」+ 项数/组数徽标；auto 由此承担） */
+.bz-sp-page-acts {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-md);
+}
+/* 页头「重置本域」（破坏性动作，flow 确认在前）：面板小按钮形制，克制不抢眼 */
+.bz-sp-page-reset {
+  font-family: inherit;
+  font-size: 11.5px;
+  line-height: 1;
+  color: var(--sp-ink-2);
+  background: var(--sp-panel);
+  border: 1px solid var(--sp-line);
+  border-radius: 7px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.bz-sp-page-reset:hover {
+  color: var(--sp-ink);
+  border-color: var(--sp-ink-3);
+}
 .bz-sp-page-title {
   font-size: 22px;
   font-weight: 700;
@@ -13265,7 +13295,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   padding-bottom: 3px;
 }
 .bz-sp-page-tag {
-  margin-left: auto;
   font-size: 10.5px;
   color: var(--sp-ink-3);
   border: 1px solid var(--sp-line);
