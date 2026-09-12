@@ -485,10 +485,11 @@ describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
 
   it('桌面端：外观组后显示组暴露「默认状态筛选」select（五态，直绑 belongingsDefaultStatus；issue 246）', () => {
     const schema = belongingSettingsSchema();
-    // 移动端默认全屏组退役后：2 组 = 外观/显示
-    expect(schema.groups).toHaveLength(2);
+    // 移动端默认全屏组退役后：3 组 = 外观/显示/记一笔（issue 294 增第三组）
+    expect(schema.groups).toHaveLength(3);
     expect(schema.groups[0].name).toBe('外观');
     expect(schema.groups[1].name).toBe('显示');
+    expect(schema.groups[2].name).toBe('记一笔');
     const row = schema.groups[1].rows[0] as any;
     expect(row.type).toBe('select');
     expect(row.name).toBe('默认状态筛选');

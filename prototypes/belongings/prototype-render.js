@@ -1,4 +1,4 @@
-/* 源指纹 20734407f4562452 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 58a80c043b8af8ae · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/belongings/render.ts → window.BZR_belongings（评审壳预览包，ADR-0104） */
 var BZR_belongings = (() => {
@@ -60,6 +60,8 @@ var BZR_belongings = (() => {
     mobStatsText: () => mobStatsText,
     money: () => money,
     moneyShort: () => moneyShort,
+    moneyUnitLabel: () => moneyUnitLabel,
+    moneyWith: () => moneyWith,
     panelHtml: () => panelHtml,
     renderPanelView: () => renderPanelView,
     resolveYear: () => resolveYear,
@@ -591,11 +593,19 @@ var BZR_belongings = (() => {
     { v: "price", label: "投入最高" },
     { v: "daily", label: "日均最高" }
   ];
-  function money(n) {
-    return "￥" + (Number(n) || 0).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function moneyUnitLabel(unit = "cny") {
+    return unit === "yuan" ? "元" : unit === "usd" ? "$" : unit === "none" ? "" : "￥";
   }
-  function moneyShort(n) {
-    return "￥" + (Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 });
+  function moneyWith(mid, unit = "cny") {
+    if (unit === "yuan") return `${mid} 元`;
+    if (unit === "none") return mid;
+    return moneyUnitLabel(unit) + mid;
+  }
+  function money(n, unit = "cny") {
+    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), unit);
+  }
+  function moneyShort(n, unit = "cny") {
+    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 }), unit);
   }
   function todayStr() {
     const d = /* @__PURE__ */ new Date();
@@ -726,7 +736,7 @@ var BZR_belongings = (() => {
   function heroSubText(items, view) {
     return view.status ? `归物本 — ${filtered(items, view).length} 件在列 · FILTERED VIEW` : "归物本 — NOTHING MORE, NOTHING LESS";
   }
-  function belDetailHtml(it) {
+  function belDetailHtml(it, unit = "cny") {
     var _a;
     const gone = isExited(it);
     const key = statusKeyOf(it.current_status);
@@ -743,10 +753,10 @@ var BZR_belongings = (() => {
       <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a = STATUS[key]) == null ? void 0 : _a.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
     </div>
     <div class="bz-bel-detail-fields">
-      <div class="bz-bel-dfield"><span>购买价</span><b>${money(Number(it.purchase_price) || 0)}</b></div>
+      <div class="bz-bel-dfield"><span>购买价</span><b>${money(Number(it.purchase_price) || 0, unit)}</b></div>
       <div class="bz-bel-dfield"><span>购买日期</span><b>${esc(String(it.purchase_date || "").slice(0, 10) || "—")} · ${daysUsed(it)} 天</b></div>
-      <div class="bz-bel-dfield"><span>日均成本</span><b>￥${dailyCostOf(it).toFixed(2)}${gone ? "（已封口）" : "/天 · 越用越便宜"}</b></div>
-      ${gone ? `<div class="bz-bel-dfield"><span>出离日期</span><b>${esc(it.exit_date || "—")}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + money(Number(it.sold_price)) : ""}</b></div>` : ""}
+      <div class="bz-bel-dfield"><span>日均成本</span><b>${moneyWith(dailyCostOf(it).toFixed(2), unit)}${gone ? "（已封口）" : "/天 · 越用越便宜"}</b></div>
+      ${gone ? `<div class="bz-bel-dfield"><span>出离日期</span><b>${esc(it.exit_date || "—")}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + money(Number(it.sold_price), unit) : ""}</b></div>` : ""}
       <div class="bz-bel-dfield"><span>录入 / 更新</span><b>${esc(String(it.created_date || "").slice(0, 10))} / ${esc(String(it.last_updated || "").slice(0, 10))}</b></div>
     </div>
     <div class="bz-bel-detail-acts" data-bd-acts></div>
@@ -776,9 +786,10 @@ var BZR_belongings = (() => {
       exitedInit: !!it && isExited(it)
     };
   }
-  function belFormHtml(it) {
+  function belFormHtml(it, unit = "cny") {
     var _a;
     const editing = !!it;
+    const unitLabel = moneyUnitLabel(unit);
     const { priceVal, dateVal, catVal, descVal, exitDateVal, soldPriceVal, exitedInit } = belFormInit(it);
     return `
   <div class="bz-bel-form">
@@ -787,7 +798,7 @@ var BZR_belongings = (() => {
       <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc((_a = it == null ? void 0 : it.name) != null ? _a : "")}" placeholder="如：iPhone 15 Pro"></div>
       <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选历史分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或从历史分类选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${iconSpan("sparkles", "bz-ic--sm")}</button></span></div>
       <div class="bz-bel-form-row">
-        <div class="bz-field"><span class="bz-field-label">购买价格（元）</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
+        <div class="bz-field"><span class="bz-field-label">购买价格${unitLabel ? `（${esc(unitLabel)}）` : ""}</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
         <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc(dateVal)}"></div>
       </div>
       <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-bel-statuspick" id="bm-status"></span></div>
@@ -813,13 +824,13 @@ var BZR_belongings = (() => {
       }
     ).join("");
   }
-  function sheetHeadHtml(it) {
+  function sheetHeadHtml(it, unit = "cny") {
     const catName = catNameOf(it.category);
     const days = daysUsed(it);
     return `<div class="bz-item-sheet-entry"><div class="bz-bel-sheet-head">
       <span class="bz-item-sheet-emoji">${itemEmHtml(it)}</span>
       <div class="bz-bel-sheet-info"><div class="bz-item-sheet-title">${esc(it.name)}</div>
-      <div class="bz-item-sheet-sub">${esc(catName)} · ${money(Number(it.purchase_price) || 0)} · 已用 ${days} 天</div></div></div></div>`;
+      <div class="bz-item-sheet-sub">${esc(catName)} · ${money(Number(it.purchase_price) || 0, unit)} · 已用 ${days} 天</div></div></div></div>`;
   }
   function actionSpecs(it) {
     const specs = [];
@@ -902,44 +913,44 @@ var BZR_belongings = (() => {
   function segmentedHtml(sort) {
     return `<div class="bz-segmented" role="radiogroup" aria-label="排序">${SORT_OPTS.map((o) => `<button type="button" class="bz-segmented-btn${sort === o.v ? " is-on" : ""}" data-k="${o.v}" role="radio" aria-checked="${sort === o.v}">${o.label}</button>`).join("")}</div>`;
   }
-  function kpisHtml(items) {
+  function kpisHtml(items, unit = "cny") {
     const gone = items.filter(isExited);
     const recover = gone.reduce((s, i) => s + (Number(i.sold_price) || 0), 0);
     const kpi = (num, label, opts = {}) => `<div class="bz-bel-kpi${opts.hero ? " bz-bel-kpi--hero" : ""}${opts.click ? " bz-bel-kpi--click" : ""}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ""}><b>${num}</b><span>${esc(label)}</span></div>`;
-    return kpi(String(stockCount(items)), "在库件数", { hero: true, click: true }) + kpi(moneyShort(totalAssets(items)), "在库投入", { click: true }) + kpi("￥" + avgDailyCost(items).toFixed(2), "日均成本") + kpi(`${gone.length} 件 · ${moneyShort(recover)}`, "已离场 · 回收");
+    return kpi(String(stockCount(items)), "在库件数", { hero: true, click: true }) + kpi(moneyShort(totalAssets(items), unit), "在库投入", { click: true }) + kpi(moneyWith(avgDailyCost(items).toFixed(2), unit), "日均成本") + kpi(`${gone.length} 件 · ${moneyShort(recover, unit)}`, "已离场 · 回收");
   }
   function stampCount(items) {
     return String(stockCount(items));
   }
-  function mobStatsText(items) {
-    return `投入 ${moneyShort(totalAssets(items))} · 日均 ${avgDailyCost(items).toFixed(2)}`;
+  function mobStatsText(items, unit = "cny") {
+    return `投入 ${moneyShort(totalAssets(items), unit)} · 日均 ${moneyWith(avgDailyCost(items).toFixed(2), unit)}`;
   }
   function emptyHtml(noMatch) {
     return `<div class="bz-empty">${iconSpan(ICON.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
   }
-  function cellHtml(it, idx) {
+  function cellHtml(it, idx, unit = "cny") {
     var _a;
     const gone = isExited(it);
     const idle = it.current_status === "闲置";
     const days = daysUsed(it);
     const daily = dailyCostOf(it);
     const key = statusKeyOf(it.current_status);
-    const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price)) : ""}` : "";
+    const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price), unit) : ""}` : "";
     const dailyStr = daily < 0.01 ? daily.toFixed(4) : daily.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
-    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ￥${dailyStr}`;
+    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
     return `<div class="bz-bel-cell${gone ? " bz-bel-cell--gone" : ""}${idle ? " bz-bel-cell--idle" : ""}" data-bel-id="${esc(it.id)}">
     <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, "0")} — ${esc(catNameOf(it.category) || "未分类")}</span>
     <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a = STATUS[key]) == null ? void 0 : _a.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
     <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
     <span class="bz-bel-name">${esc(it.name)}</span>
-    <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0)}</span>
+    <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0, unit)}</span>
     <span class="bz-bel-mut">${mut}</span>
   </div>`;
   }
-  function gridHtml(items, view) {
-    return `<div class="bz-bel-grid" data-bel-grid>${filtered(items, view).map((it, idx) => cellHtml(it, idx)).join("")}</div>`;
+  function gridHtml(items, view, unit = "cny") {
+    return `<div class="bz-bel-grid" data-bel-grid>${filtered(items, view).map((it, idx) => cellHtml(it, idx, unit)).join("")}</div>`;
   }
-  function renderPanelView(root, items, view, hooks) {
+  function renderPanelView(root, items, view, hooks, unit = "cny") {
     var _a;
     const q = (sel) => root.querySelector(sel);
     const title = q("[data-bel-herotitle]");
@@ -958,11 +969,11 @@ var BZR_belongings = (() => {
       if (menu) menu.innerHTML = yearsOptionsHtml(items, view.year);
     }
     const wrap = q("[data-bel-kpis]");
-    if (wrap) wrap.innerHTML = kpisHtml(items);
+    if (wrap) wrap.innerHTML = kpisHtml(items, unit);
     const stampN = q("[data-bel-stampn]");
     if (stampN) stampN.textContent = stampCount(items);
     const mobStats = q("[data-bel-mobstats]");
-    if (mobStats) mobStats.textContent = mobStatsText(items);
+    if (mobStats) mobStats.textContent = mobStatsText(items, unit);
     const sortHost = q("[data-bel-sort]");
     if (sortHost) sortHost.innerHTML = segmentedHtml(view.sort);
     const mobSortSel = q("[data-bel-mobsortsel]");
@@ -978,7 +989,7 @@ var BZR_belongings = (() => {
       const noMatch = !!view.q || view.status !== null || view.year !== "";
       content.innerHTML = emptyHtml(noMatch);
     } else {
-      content.innerHTML = gridHtml(items, view);
+      content.innerHTML = gridHtml(items, view, unit);
       const gridEl = content.querySelector("[data-bel-grid]");
       const cols = (getComputedStyle(gridEl).gridTemplateColumns || "").split(" ").filter(Boolean).length || 1;
       const rem = list.length % cols;

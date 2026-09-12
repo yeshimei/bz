@@ -103,7 +103,7 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[3]).toBe('4'); // AI：服务商+模型名称+上下文+最大输出（采样参数组已退役；aiProvider 未设 → 密钥行门控隐藏）
     expect(badges[5]).toBe('5'); // 日记本：ADR-0115 升格后 = 外观 2 + 目录 2 + 显示 1（维护组为按钮行，不计设置项）
     expect(badges[6]).toBe('11'); // 备忘录（todo→memo 正名沿用待办 schema）：11 项（issue 293 增打开默认场景/已完成显示范围；issue 292 退役「到期时间格式」）
-    expect(badges[7]).toBe('3'); // 归物本：外观组布局/主题两卡 + 默认状态筛选，桌面 3 项
+    expect(badges[7]).toBe('6'); // 归物本：外观 2 卡 + 显示 3（默认状态筛选/默认排序/金额单位）+ 记一笔 1（issue 294）
     expect(badges[9]).toBe('2'); // 收藏本：issue 246 补外观组两卡 → 桌面回归列表
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
