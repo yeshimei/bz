@@ -292,6 +292,10 @@ describe('体检弹窗覆盖补测', () => {
     expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('清理确认');
     expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('1 条失效条目（含残余附件镜像）');
     expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('将永久删除，不可恢复');
+    // issue 291 评审补：永久删除是危险主动作 → 弹窗挂危险修饰（主钮中性底 + 红字，手册 §9/§10）
+    expect(
+      document.getElementById('__shared_confirm_popup__')!.classList.contains('bz-flow-dialog--danger')
+    ).toBe(true);
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await waitFor(() => hasNotice('已清理：2 个失效条目、1 个孤儿密文'));
     expect((dm as any).scanHealth.mock.calls.length).toBeGreaterThanOrEqual(2);

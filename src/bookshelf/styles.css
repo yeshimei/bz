@@ -315,6 +315,18 @@
   font-family: var(--bsw-serif);
   letter-spacing: 2px;
 }
+/* 危险主动作（删除划线，issue 291 评审补）：core 的 `.bz-flow-dialog--danger` 会把主钮整套压回
+   中性次级形制（描边 transparent + radius-sm + 去阴影），而本域两钮共用同一纸卡形制
+   （radius-xs + var(--bsw-line) 描边，见上一条）——不复位就会与同框「取消」一圆一方。
+   故按 core 注释指明的口径用 `.bz-flow-dialog--danger` 限定覆写：保纸卡方角与描边档，
+   底/字色回到与取消钮同档的次级态（底 = --bz-surface-2，本域 token 组已映射成纸面），文字危险色。
+   `.bz-overlay-popup` 是为提特异性到 (2,3,0)：不写则与 core 危险规则同级 (2,2,0)，只靠聚合序取胜。 */
+#__shared_confirm_popup__.bz-overlay-popup.bz-bs-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__ {
+  background: var(--bz-surface-2);
+  border-radius: var(--bz-radius-xs);
+  border-color: var(--bsw-line);
+  color: var(--bz-danger);
+}
 
 
 /* ==================== 报告视图（命令 bz-reading-report-open 专用；墙面无入口） ====================

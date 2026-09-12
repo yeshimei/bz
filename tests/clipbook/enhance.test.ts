@@ -219,6 +219,26 @@ describe('误标/误删可撤销（enh 包 5）', () => {
     });
   });
 
+  it('删除条目（收件流）确认框：危险主动作挂 bz-flow-dialog--danger（issue 291 评审补），取消不动盘', async () => {
+    const { vault } = await openDesktop();
+    const item = document.querySelector('.bz-clip-item') as HTMLElement;
+    const menu = await openContextMenuOn(item);
+    const delBtn = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.trim() === '删除') as HTMLElement;
+    expect(delBtn.title).toBe('从收件流删除'); // 确认点的是收件流分支（非剪藏本删除）
+    delBtn.click();
+    const popup = await vi.waitFor(() => {
+      const el = document.querySelector('#__shared_confirm_popup__') as HTMLElement;
+      expect(el).toBeTruthy();
+      return el;
+    });
+    expect(popup.querySelector('h4')!.textContent).toBe('删除条目');
+    expect(popup.classList.contains('bz-clip-dialog-editorial')).toBe(true); // 域皮在
+    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true);   // 删除钮不高亮
+    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(diskJson(vault).articles).toHaveLength(2);
+  });
+
   it('删除剪藏 → vault.trash 移入系统回收站（确认文案写明），撤销后原路径恢复', async () => {
     const { vault } = await openDesktop();
     const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
@@ -237,6 +257,8 @@ describe('误标/误删可撤销（enh 包 5）', () => {
     expect(popup.querySelector('h4')!.textContent).toBe('删除剪藏');
     expect(popup.textContent).toContain('确定删除剪藏「剪藏笔记A」吗？');
     expect(popup.textContent).toContain('系统回收站');
+    // issue 291 评审补：删除剪藏是危险主动作 → 挂危险修饰（编辑部皮另有方角危险态覆写）
+    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true);
     (document.querySelector('#__shared_confirm_ok__') as HTMLElement).click();
     await vi.waitFor(() => {
       expect(vault.trashed.some((t) => t.path === '归档/网页剪藏/剪藏笔记A.md' && t.system)).toBe(true);

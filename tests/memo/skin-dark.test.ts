@@ -83,9 +83,17 @@ describe('issue 291：确认框随皮肤（流程框与 uiModal 同壳）', () =
   });
 
   it('styles.css 有确认框双肤规则（纸感墨边硬阴影主按钮 + 两肤衬线标题）', () => {
-    const paper = css().match(/#__shared_confirm_popup__\.bz-memo-skin-paper #__shared_confirm_ok__\s*\{[^}]*\}/);
-    expect(paper, '缺纸感确认框主按钮规则').not.toBeNull();
+    // issue 291 评审：纸感主钮两条规则都须带 :not(.bz-flow-dialog--danger) 守卫 ——
+    // 只靠特异性挡不住 hover 那条（与 core 危险规则同为 2,2,0 且域文件后到）。
+    const paper = css().match(
+      /#__shared_confirm_popup__\.bz-memo-skin-paper:not\(\.bz-flow-dialog--danger\) #__shared_confirm_ok__\s*\{[^}]*\}/
+    );
+    expect(paper, '缺纸感确认框主按钮规则（须带 danger 守卫）').not.toBeNull();
     expect(paper![0]).toContain('var(--bz-skin-ink)'); // 墨边 + 硬偏移阴影随皮肤 token
+    const paperHover = css().match(
+      /#__shared_confirm_popup__\.bz-memo-skin-paper:not\(\.bz-flow-dialog--danger\) #__shared_confirm_ok__:hover\s*\{[^}]*\}/
+    );
+    expect(paperHover, '缺纸感主按钮 hover 规则（须带 danger 守卫，否则悬停找回硬阴影）').not.toBeNull();
     for (const sel of [
       '#__shared_confirm_popup__.bz-memo-skin-paper h4',
       '#__shared_confirm_popup__.bz-memo-skin-editorial h4',

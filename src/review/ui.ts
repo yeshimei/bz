@@ -419,7 +419,8 @@ export class UIManager {
             message: `确定移出「${item.name}」吗？移出后可在通知中撤销。`,
             actions: [
               { label: '取消', value: 'cancel' },
-              { label: '移出', value: 'ok', cta: true },
+              // danger（issue 291 评审补）：移出 = 删除该笔记的复习数据（可撤销但仍是删除类主动作）
+              { label: '移出', value: 'ok', cta: true, danger: true },
             ],
           }).then(async (v) => {
             if (v !== 'ok') return;

@@ -1,4 +1,4 @@
-/* 源指纹 e74a1f4617d67bd0 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6c385264d777c9d7 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -8316,7 +8316,7 @@ var BZW_password_vault = (() => {
           return (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
         }).catch((e) => this.failToast(e));
       } else if (act === "del") {
-        this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", () => {
+        this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", true, () => {
           void this.dm.deleteItem(d.id).then(() => {
             var _a2, _b2;
             if (st.selAccount === d.id) st.selAccount = null;
@@ -8363,7 +8363,7 @@ var BZW_password_vault = (() => {
           icon: "trash-2",
           label: "删除",
           kind: "danger",
-          onClick: () => this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", () => {
+          onClick: () => this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", true, () => {
             void this.dm.deleteItem(d.id).then(() => {
               var _a, _b;
               (_b = (_a = this.host).onPwChanged) == null ? void 0 : _b.call(_a);
@@ -8409,7 +8409,7 @@ var BZW_password_vault = (() => {
         icon: "trash-2",
         label: "删除整个平台",
         kind: "danger",
-        onClick: () => this.host.askConfirm("删除整个平台", `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, "删除", () => {
+        onClick: () => this.host.askConfirm("删除整个平台", `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, "删除", true, () => {
           void this.dm.removePlatform(platform).then(() => {
             var _a, _b;
             (_b = (_a = this.host).onPwChanged) == null ? void 0 : _b.call(_a);
@@ -9326,7 +9326,7 @@ var BZW_password_vault = (() => {
           toast: (m, err) => this.toast(m, err),
           openPwEntryDialog: (edit, prefill) => this.openPwEntryDialog(edit, prefill),
           openPwPlatformEdit: (p) => this.openPwPlatformEdit(p),
-          askConfirm: (t, m, okLabel, cb) => this.askConfirm(t, m, okLabel, cb),
+          askConfirm: (t, m, okLabel, danger, cb) => this.askConfirm(t, m, okLabel, danger, cb),
           copySensitive: (t) => this.copySensitive(t),
           openExternal: (u) => this.openExternal(u),
           onPwChanged: () => this.renderAll(),
@@ -9795,7 +9795,8 @@ var BZW_password_vault = (() => {
         message: parts.join("、") + "将永久删除，不可恢复",
         actions: [
           { label: "取消", value: "cancel" },
-          { label: "永久删除", value: "ok", cta: true }
+          // danger（issue 291 评审补）：永久删除密文/失效条目，主按钮不得高亮（手册 §9/§10）
+          { label: "永久删除", value: "ok", cta: true, danger: true }
         ]
       }).then((v) => {
         if (v === "ok") void this.executeHealthCleanup(keys);
@@ -9930,7 +9931,9 @@ var BZW_password_vault = (() => {
                 message: "保险库清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？",
                 actions: [
                   { label: "暂不重设", value: "cancel" },
-                  { label: "仍要重设", value: "ok", cta: true }
+                  // danger（issue 291 评审补）：与 password-vault 同名同义的另一份实现——重设会生成
+                  // 全新空清单、旧加密数据永久无法恢复，破坏性主动作不得高亮（手册 §9/§10）。
+                  { label: "仍要重设", value: "ok", cta: true, danger: true }
                 ]
               }).then((v) => {
                 if (v === "ok") {
@@ -10572,14 +10575,20 @@ var BZW_password_vault = (() => {
       });
       document.body.appendChild(mask);
     }
-    /** 流程确认框（取消 / 确认 cta）：密码资产与笔记/日记动作共用 */
-    askConfirm(title, message, okLabel, onYes) {
+    /**
+     * 流程确认框（取消 / 确认 cta）：密码资产与笔记/日记动作共用。
+     * `danger`（issue 291 评审补）= 主动作是删除/销毁类 → 弹窗挂 `.bz-flow-dialog--danger`，
+     * 主按钮降为中性底 + 红字（设计手册 §9/§10）。默认 false（还原等非破坏动作保持高亮）。
+     * 注意与 password-vault 的 `askConfirm` 区别：那个是域内自绘确认（自带 .danger 按钮样式），
+     * 本方法走 core 流程框，危险语义必须显式传进来。
+     */
+    askConfirm(title, message, okLabel, danger, onYes) {
       void openFlowDialog({
         title,
         message,
         actions: [
           { label: "取消", value: "cancel" },
-          { label: okLabel, value: "ok", cta: true }
+          { label: okLabel, value: "ok", cta: true, danger }
         ]
       }).then((v) => {
         if (v === "ok") onYes();
@@ -10872,6 +10881,8 @@ var BZW_password_vault = (() => {
         "还原回日记",
         `将「${note.title}」的正文与附件还原到 ${note.path} 的时间序位置？`,
         "还原",
+        false,
+        // 还原是取出动作，非破坏 → 保持普通高亮主动作
         () => {
           const h = progressNotify("还原日记 " + note.title);
           void this.restoreDiaryEntry(note, h);
@@ -10915,6 +10926,8 @@ var BZW_password_vault = (() => {
         "彻底销毁日记",
         `将永久销毁「${note.title}」的密文（含附件）。此操作不可撤销，确定继续吗？`,
         "永久销毁",
+        true,
+        // danger：永久销毁密文（不可撤销）→ 主按钮中性底 + 红字（手册 §9/§10）
         () => {
           void this.dataManager.removeNote(note.id).then(() => {
             delete this._diaryPlain[note.id];
@@ -10930,6 +10943,8 @@ var BZW_password_vault = (() => {
         "还原",
         `将「${note.title}」的原文${note.attachments.length ? "与 " + note.attachments.length + " 个原质量附件" : ""}还原到原路径？`,
         "还原",
+        false,
+        // 还原是取出动作，非破坏
         () => {
           const h = progressNotify("还原 " + note.title);
           void this.dataManager.restoreNote(note.id, (p) => updateProgress(h, p.done, p.total, p.current)).then(({ conflicts, removed, manifestSaveFailed }) => {
@@ -11269,6 +11284,8 @@ var BZW_password_vault = (() => {
         message: `把「${file.basename}」的正文${attCount ? "与 " + attCount + " 个附件" : ""}加密移入保险库？加密后原笔记与附件将从原路径移出（保险库内为密文）。`,
         actions: [
           { label: "取消", value: "cancel" },
+          // 刻意不标 danger（issue 291 评审）：加密是「搬进保险库」而非销毁——原路径消失但正文/附件
+          // 完整保留在库内（可解密取回），不构成不可逆数据破坏。
           { label: "加密", value: "ok", cta: true }
         ]
       }) === "ok";
@@ -12722,6 +12739,9 @@ var BZW_password_vault = (() => {
             className: "bz-pwv-flow-dialog",
             actions: [
               { label: "取消", value: "cancel" },
+              // 刻意不标 danger（issue 291 评审）：本框是「风险告知门」，主动作是把主密码设下去
+              // 的正向路径，动作本身不破坏任何数据（与下方「仍要重设」的破坏性重设不同），
+              // 故保留金色主钮——域 CSS 的 :not(.bz-flow-dialog--danger) 就是为它保留的通路。
               { label: "我已了解并继续", value: "ok", cta: true }
             ]
           }).then(async (v) => {
@@ -12779,7 +12799,11 @@ var BZW_password_vault = (() => {
                 className: "bz-pwv-flow-dialog",
                 actions: [
                   { label: "暂不重设", value: "cancel" },
-                  { label: "仍要重设", value: "ok", cta: true }
+                  // danger（issue 291 评审补）：重设会生成全新空清单、旧加密数据永久无法恢复 ——
+                  // 破坏性主动作，主按钮降中性底 + 红字（手册 §9/§10）。
+                  // 对照上方「设置主密码」：那句是风险告知门、动作本身是首设正向路径，
+                  // 故刻意不标 danger，域 CSS 的 :not(.bz-flow-dialog--danger) 金色主钮正是给它用。
+                  { label: "仍要重设", value: "ok", cta: true, danger: true }
                 ]
               }).then((v) => {
                 if (v === "ok") {

@@ -337,6 +337,8 @@ describe('ticket 098：监听文件夹事件（总线 vault:md-created/deleted�
     const popup = document.getElementById('__shared_confirm_popup__')!;
     expect(popup).not.toBeNull();
     expect(popup.textContent).toContain('删除');
+    // issue 291 评审补：移出复习计划 = 删除该笔记全部复习数据 → 危险主动作，主按钮不高亮（手册 §9/§10）
+    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true);
     // 保留
     (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 30));

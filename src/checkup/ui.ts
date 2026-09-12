@@ -376,7 +376,9 @@ async function confirmFix(issues: CheckIssue[], what: string): Promise<void> {
     message: `将清除 ${fixable.length} 项失效引用（数据文件里的关联/残留，不动你的笔记），清除后可在通知里撤销`,
     actions: [
       { label: '取消', value: 'cancel' },
-      { label: '清除', value: 'ok', cta: true },
+      // danger（issue 291 评审补）：清除会从数据文件里删掉失效引用/残留（可撤销但仍是删除类
+      // 主动作，与 belongings/favorites/memo 的可撤销删除同口径）→ 主钮不高亮（手册 §9/§10）
+      { label: '清除', value: 'ok', cta: true, danger: true },
     ],
   });
   if (v !== 'ok') return;

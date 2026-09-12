@@ -1,4 +1,4 @@
-/* 源指纹 9fc41685337d0e6c · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f3bda42030ca79a2 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -6816,6 +6816,8 @@ ${n.content.slice(0, 2e3)}
             message: "未完成的题目将丢弃，本次复习将按已答题目结算评级",
             actions: [
               { label: "继续做题", value: "cancel" },
+              // 刻意不标 danger（issue 291 评审）：同 sprint.requestQuit —— 丢弃的是本轮未答的临时状态，
+              // 已答题目照常结算评级，不删任何持久化数据。
               { label: "放弃", value: "ok", cta: true }
             ]
           }).then((v) => {
@@ -9382,6 +9384,8 @@ ${n.content.slice(0, 2e3)}
             message: "未完成的题目将丢弃，本轮复习按已完成篇目结算",
             actions: [
               { label: "继续做题", value: "cancel" },
+              // 刻意不标 danger（issue 291 评审）：丢弃的是**本轮会话里未答的临时状态**（已答篇目照常结算、
+              // 题库与复习数据不删）——与 core confirmDiscard「放弃未保存草稿」同口径，不属破坏性动作。
               { label: "放弃", value: "ok", cta: true }
             ]
           }).then((v) => {
@@ -10599,7 +10603,8 @@ ${n.content.slice(0, 2e3)}
                   message: `确定移出「${item.name}」吗？移出后可在通知中撤销。`,
                   actions: [
                     { label: "取消", value: "cancel" },
-                    { label: "移出", value: "ok", cta: true }
+                    // danger（issue 291 评审补）：移出 = 删除该笔记的复习数据（可撤销但仍是删除类主动作）
+                    { label: "移出", value: "ok", cta: true, danger: true }
                   ]
                 }).then(async (v) => {
                   if (v !== "ok") return;
@@ -11479,7 +11484,9 @@ ${n.content.slice(0, 2e3)}
                 message: n > 1 ? `有 ${n} 篇笔记已从 vault 删除，是否同步移除复习计划里的记录？不移除则保留（文件恢复后继续复习，列表现删除线）。` : `「${firstName}」已从 vault 删除，是否同步移除复习计划里的记录？不移除则保留（文件恢复后继续复习，列表现删除线）。`,
                 actions: [
                   { label: "保留", value: "cancel" },
-                  { label: "移除", value: "ok", cta: true }
+                  // danger（issue 291 评审补）：移除 = 同步删掉复习计划里的记录并写入排除名单
+                  //（删除类主动作，故主按钮不高亮；「保留」才是无损选项，手册 §9/§10）
+                  { label: "移除", value: "ok", cta: true, danger: true }
                 ]
               }).then(async (v) => {
                 if (v === "ok") {
@@ -11707,7 +11714,9 @@ ${n.content.slice(0, 2e3)}
       message: `确定把「${file.basename}」移出复习计划吗？所有复习数据将被删除，移出后可在通知中撤销。`,
       actions: [
         { label: "取消", value: "cancel" },
-        { label: "移出", value: "ok", cta: true }
+        // danger（issue 291 评审补）：移出复习计划 = 删除该笔记的全部复习数据（可撤销但仍是删除类
+        // 主动作）→ 主钮不高亮（手册 §9/§10）
+        { label: "移出", value: "ok", cta: true, danger: true }
       ]
     }).then(async (v) => {
       if (v !== "ok") return;

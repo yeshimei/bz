@@ -1,4 +1,4 @@
-/* 源指纹 778acffa320432fb · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 0985716defdf5c7b · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -11758,7 +11758,9 @@ ${countsToText(s.missing)}
       message: `将清除 ${fixable.length} 项失效引用（数据文件里的关联/残留，不动你的笔记），清除后可在通知里撤销`,
       actions: [
         { label: "取消", value: "cancel" },
-        { label: "清除", value: "ok", cta: true }
+        // danger（issue 291 评审补）：清除会从数据文件里删掉失效引用/残留（可撤销但仍是删除类
+        // 主动作，与 belongings/favorites/memo 的可撤销删除同口径）→ 主钮不高亮（手册 §9/§10）
+        { label: "清除", value: "ok", cta: true, danger: true }
       ]
     });
     if (v !== "ok") return;
@@ -21430,7 +21432,8 @@ ${sample}`,
       message: `确定从收件流删除「${a.title}」吗？删除后可在通知中撤销。`,
       actions: [
         { label: "取消", value: "cancel" },
-        { label: "删除", value: "ok", cta: true }
+        // danger（issue 291 评审补）：删除类主动作标 danger → 主钮中性底 + 红字（手册 §9/§10）
+        { label: "删除", value: "ok", cta: true, danger: true }
       ]
     });
     if (ok !== "ok") return;
@@ -21451,7 +21454,8 @@ ${sample}`,
       message: `确定删除剪藏「${a.title}」吗？文件将移入系统回收站。`,
       actions: [
         { label: "取消", value: "cancel" },
-        { label: "删除", value: "ok", cta: true }
+        // danger（issue 291 评审补）：删除剪藏确认同口径
+        { label: "删除", value: "ok", cta: true, danger: true }
       ]
     });
     if (ok !== "ok") return;
@@ -24180,6 +24184,8 @@ ${n.content.slice(0, 2e3)}
             message: "未完成的题目将丢弃，本次复习将按已答题目结算评级",
             actions: [
               { label: "继续做题", value: "cancel" },
+              // 刻意不标 danger（issue 291 评审）：同 sprint.requestQuit —— 丢弃的是本轮未答的临时状态，
+              // 已答题目照常结算评级，不删任何持久化数据。
               { label: "放弃", value: "ok", cta: true }
             ]
           }).then((v) => {
@@ -24364,7 +24370,9 @@ ${n.content.slice(0, 2e3)}
                 message: n > 1 ? `有 ${n} 篇笔记已从 vault 删除，是否同步移除复习计划里的记录？不移除则保留（文件恢复后继续复习，列表现删除线）。` : `「${firstName}」已从 vault 删除，是否同步移除复习计划里的记录？不移除则保留（文件恢复后继续复习，列表现删除线）。`,
                 actions: [
                   { label: "保留", value: "cancel" },
-                  { label: "移除", value: "ok", cta: true }
+                  // danger（issue 291 评审补）：移除 = 同步删掉复习计划里的记录并写入排除名单
+                  //（删除类主动作，故主按钮不高亮；「保留」才是无损选项，手册 §9/§10）
+                  { label: "移除", value: "ok", cta: true, danger: true }
                 ]
               }).then(async (v) => {
                 if (v === "ok") {
@@ -24862,6 +24870,8 @@ ${n.content.slice(0, 2e3)}
             message: "未完成的题目将丢弃，本轮复习按已完成篇目结算",
             actions: [
               { label: "继续做题", value: "cancel" },
+              // 刻意不标 danger（issue 291 评审）：丢弃的是**本轮会话里未答的临时状态**（已答篇目照常结算、
+              // 题库与复习数据不删）——与 core confirmDiscard「放弃未保存草稿」同口径，不属破坏性动作。
               { label: "放弃", value: "ok", cta: true }
             ]
           }).then((v) => {
@@ -26079,7 +26089,8 @@ ${n.content.slice(0, 2e3)}
                   message: `确定移出「${item.name}」吗？移出后可在通知中撤销。`,
                   actions: [
                     { label: "取消", value: "cancel" },
-                    { label: "移出", value: "ok", cta: true }
+                    // danger（issue 291 评审补）：移出 = 删除该笔记的复习数据（可撤销但仍是删除类主动作）
+                    { label: "移出", value: "ok", cta: true, danger: true }
                   ]
                 }).then(async (v) => {
                   if (v !== "ok") return;
@@ -26235,7 +26246,9 @@ ${n.content.slice(0, 2e3)}
       message: `确定把「${file.basename}」移出复习计划吗？所有复习数据将被删除，移出后可在通知中撤销。`,
       actions: [
         { label: "取消", value: "cancel" },
-        { label: "移出", value: "ok", cta: true }
+        // danger（issue 291 评审补）：移出复习计划 = 删除该笔记的全部复习数据（可撤销但仍是删除类
+        // 主动作）→ 主钮不高亮（手册 §9/§10）
+        { label: "移出", value: "ok", cta: true, danger: true }
       ]
     }).then(async (v) => {
       if (v !== "ok") return;
@@ -29874,7 +29887,8 @@ ${userMsg}`;
             className: "bz-sb-flow-dialog",
             actions: [
               { label: "取消", value: "cancel" },
-              { label: "清空", value: "ok", cta: true }
+              // danger（issue 291 评审补）：清空即抹掉全部对话历史，主按钮中性底 + 红字（手册 §9/§10）
+              { label: "清空", value: "ok", cta: true, danger: true }
             ]
           });
           if (v !== "ok") return;
@@ -32393,7 +32407,7 @@ ${text}`;
               return (_b3 = (_a3 = this.host).onPwChanged) == null ? void 0 : _b3.call(_a3);
             }).catch((e) => this.failToast(e));
           } else if (act === "del") {
-            this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", () => {
+            this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", true, () => {
               void this.dm.deleteItem(d.id).then(() => {
                 var _a3, _b3;
                 if (st.selAccount === d.id) st.selAccount = null;
@@ -32440,7 +32454,7 @@ ${text}`;
               icon: "trash-2",
               label: "删除",
               kind: "danger",
-              onClick: () => this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", () => {
+              onClick: () => this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", true, () => {
                 void this.dm.deleteItem(d.id).then(() => {
                   var _a2, _b2;
                   (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
@@ -32486,7 +32500,7 @@ ${text}`;
             icon: "trash-2",
             label: "删除整个平台",
             kind: "danger",
-            onClick: () => this.host.askConfirm("删除整个平台", `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, "删除", () => {
+            onClick: () => this.host.askConfirm("删除整个平台", `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, "删除", true, () => {
               void this.dm.removePlatform(platform).then(() => {
                 var _a2, _b2;
                 (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
@@ -33461,7 +33475,7 @@ ${text}`;
               toast: (m, err) => this.toast(m, err),
               openPwEntryDialog: (edit, prefill) => this.openPwEntryDialog(edit, prefill),
               openPwPlatformEdit: (p) => this.openPwPlatformEdit(p),
-              askConfirm: (t, m, okLabel, cb) => this.askConfirm(t, m, okLabel, cb),
+              askConfirm: (t, m, okLabel, danger, cb) => this.askConfirm(t, m, okLabel, danger, cb),
               copySensitive: (t) => this.copySensitive(t),
               openExternal: (u) => this.openExternal(u),
               onPwChanged: () => this.renderAll(),
@@ -33930,7 +33944,8 @@ ${text}`;
             message: parts.join("、") + "将永久删除，不可恢复",
             actions: [
               { label: "取消", value: "cancel" },
-              { label: "永久删除", value: "ok", cta: true }
+              // danger（issue 291 评审补）：永久删除密文/失效条目，主按钮不得高亮（手册 §9/§10）
+              { label: "永久删除", value: "ok", cta: true, danger: true }
             ]
           }).then((v) => {
             if (v === "ok") void this.executeHealthCleanup(keys);
@@ -34065,7 +34080,9 @@ ${text}`;
                     message: "保险库清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？",
                     actions: [
                       { label: "暂不重设", value: "cancel" },
-                      { label: "仍要重设", value: "ok", cta: true }
+                      // danger（issue 291 评审补）：与 password-vault 同名同义的另一份实现——重设会生成
+                      // 全新空清单、旧加密数据永久无法恢复，破坏性主动作不得高亮（手册 §9/§10）。
+                      { label: "仍要重设", value: "ok", cta: true, danger: true }
                     ]
                   }).then((v) => {
                     if (v === "ok") {
@@ -34707,14 +34724,20 @@ ${text}`;
           });
           document.body.appendChild(mask);
         }
-        /** 流程确认框（取消 / 确认 cta）：密码资产与笔记/日记动作共用 */
-        askConfirm(title, message, okLabel, onYes) {
+        /**
+         * 流程确认框（取消 / 确认 cta）：密码资产与笔记/日记动作共用。
+         * `danger`（issue 291 评审补）= 主动作是删除/销毁类 → 弹窗挂 `.bz-flow-dialog--danger`，
+         * 主按钮降为中性底 + 红字（设计手册 §9/§10）。默认 false（还原等非破坏动作保持高亮）。
+         * 注意与 password-vault 的 `askConfirm` 区别：那个是域内自绘确认（自带 .danger 按钮样式），
+         * 本方法走 core 流程框，危险语义必须显式传进来。
+         */
+        askConfirm(title, message, okLabel, danger, onYes) {
           void openFlowDialog({
             title,
             message,
             actions: [
               { label: "取消", value: "cancel" },
-              { label: okLabel, value: "ok", cta: true }
+              { label: okLabel, value: "ok", cta: true, danger }
             ]
           }).then((v) => {
             if (v === "ok") onYes();
@@ -35007,6 +35030,8 @@ ${text}`;
             "还原回日记",
             `将「${note.title}」的正文与附件还原到 ${note.path} 的时间序位置？`,
             "还原",
+            false,
+            // 还原是取出动作，非破坏 → 保持普通高亮主动作
             () => {
               const h = progressNotify("还原日记 " + note.title);
               void this.restoreDiaryEntry(note, h);
@@ -35050,6 +35075,8 @@ ${text}`;
             "彻底销毁日记",
             `将永久销毁「${note.title}」的密文（含附件）。此操作不可撤销，确定继续吗？`,
             "永久销毁",
+            true,
+            // danger：永久销毁密文（不可撤销）→ 主按钮中性底 + 红字（手册 §9/§10）
             () => {
               void this.dataManager.removeNote(note.id).then(() => {
                 delete this._diaryPlain[note.id];
@@ -35065,6 +35092,8 @@ ${text}`;
             "还原",
             `将「${note.title}」的原文${note.attachments.length ? "与 " + note.attachments.length + " 个原质量附件" : ""}还原到原路径？`,
             "还原",
+            false,
+            // 还原是取出动作，非破坏
             () => {
               const h = progressNotify("还原 " + note.title);
               void this.dataManager.restoreNote(note.id, (p) => updateProgress2(h, p.done, p.total, p.current)).then(({ conflicts, removed, manifestSaveFailed }) => {
@@ -35404,6 +35433,8 @@ ${text}`;
             message: `把「${file.basename}」的正文${attCount ? "与 " + attCount + " 个附件" : ""}加密移入保险库？加密后原笔记与附件将从原路径移出（保险库内为密文）。`,
             actions: [
               { label: "取消", value: "cancel" },
+              // 刻意不标 danger（issue 291 评审）：加密是「搬进保险库」而非销毁——原路径消失但正文/附件
+              // 完整保留在库内（可解密取回），不构成不可逆数据破坏。
               { label: "加密", value: "ok", cta: true }
             ]
           }) === "ok";
@@ -36609,6 +36640,8 @@ ${text}`;
       className: "bz-sb-flow-dialog",
       actions: [
         { label: "取消", value: "cancel" },
+        // 刻意不标 danger（issue 291 评审）：清空的是**可重建的派生数据**（向量索引按白名单重嵌入即恢复），
+        // 用户笔记与配置一字不动 —— 非不可逆数据破坏，故保留普通高亮主动作。
         { label: "开始重建", value: "ok", cta: true }
       ]
     }).then((v) => v === "ok");
@@ -36693,6 +36726,9 @@ ${text}`;
                     message: `将「移动端远程地址」覆盖为 ${target}？`,
                     actions: [
                       { label: "取消", value: "cancel" },
+                      // 刻意不标 danger（issue 291 评审）：这是「填便利值」而非删除类动作——
+                      // 只是把被探测到的局域网地址写进设置项，用户随时可手改回，
+                      // 不构成不可逆数据破坏，故保留普通高亮主动作。
                       { label: "覆盖", value: "ok", cta: true }
                     ]
                   }).then((v) => {
