@@ -1,4 +1,4 @@
-/* 源指纹 2ddbae2b082a7c67 · 仓内输入 209 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e38be6fa9afb48d5 · 仓内输入 209 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -14364,6 +14364,19 @@ ${countsToText(s.missing)}
           rows: [
             {
               type: "select",
+              name: "打开默认场景",
+              desc: "打开备忘录面板时默认选中的场景",
+              binding: { key: "memoOpenScene" },
+              options: [
+                { value: "@last", label: "上次停留" },
+                { value: "全部", label: "全部" },
+                { value: "今日", label: "今日" },
+                { value: "重要", label: "重要" },
+                ...MemoData.getScenarios().map((sc) => ({ value: sc, label: sc }))
+              ]
+            },
+            {
+              type: "select",
               name: "默认排序方式",
               desc: "面板条目按所选规则排序",
               binding: { key: "memoSortMode" },
@@ -14378,6 +14391,18 @@ ${countsToText(s.missing)}
               name: "默认显示已完成",
               desc: "打开面板时同时展开已完成折叠区",
               binding: { key: "memoShowArchivedByDefault" }
+            },
+            {
+              type: "select",
+              name: "已完成显示范围",
+              desc: "展开已完成折叠区时列出最近多少天完成的条目",
+              binding: { key: "memoDoneWindow" },
+              options: [
+                { value: "7", label: "近 7 天" },
+                { value: "30", label: "近 30 天" },
+                { value: "90", label: "近 90 天" },
+                { value: "all", label: "全部" }
+              ]
             }
           ]
         },
@@ -39598,6 +39623,24 @@ ${text}`;
     const specific = M.activeScene !== "全部" && M.activeScene !== "今日" && M.activeScene !== "重要" && scenes.includes(M.activeScene);
     return specific ? M.activeScene : fallbackScene();
   }
+  function doneWindowDays() {
+    var _a2;
+    const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2.memoDoneWindow;
+    if (v === "all") return null;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 30;
+  }
+  function resolveOpenScene() {
+    const s = tryGetSettings();
+    const v = s == null ? void 0 : s.memoOpenScene;
+    const scenes = MemoData.getScenarios();
+    const known = (x) => x === "全部" || x === "今日" || x === "重要" || scenes.includes(x);
+    if (v === "@last") {
+      const last = s == null ? void 0 : s.memoLastScene;
+      return last && known(last) ? last : "全部";
+    }
+    return v && known(v) ? v : "全部";
+  }
   async function readClipUrl() {
     let text = "";
     try {
@@ -39702,6 +39745,7 @@ ${text}`;
     const sortSetting = tryGetSettings().memoSortMode;
     M.sortMode = sortSetting === "priority" || sortSetting === "due" || sortSetting === "created" ? sortSetting : "priority";
     M.showDone = tryGetSettings().memoShowArchivedByDefault === true;
+    M.activeScene = (opts == null ? void 0 : opts.notePath) ? "全部" : resolveOpenScene();
     M.showEarlierDone = false;
     M.pinnedNewId = null;
     M.search = "";
@@ -39857,6 +39901,11 @@ ${text}`;
   }
   function closeMemoPanel() {
     if (M.overlay) {
+      const s = tryGetSettings();
+      if (s) {
+        s.memoLastScene = M.activeScene;
+        void saveSettings();
+      }
       M.overlay.remove();
       M.overlay = null;
     }
@@ -39964,8 +40013,9 @@ ${text}`;
     }
     if (done.length) {
       const open = M.showDone;
-      const cutoff = (0, import_moment6.default)().subtract(DONE_WINDOW_DAYS, "days").format("YYYY-MM-DD HH:mm:ss");
-      const recent2 = done.filter((i) => i.completed >= cutoff);
+      const win = doneWindowDays();
+      const cutoff = win === null ? null : (0, import_moment6.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
+      const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
       const earlier = done.length - recent2.length;
       const listed = !open || M.showEarlierDone ? done : recent2;
       sections.push(doneBarHtml(open, done.length));
@@ -40782,7 +40832,7 @@ ${text}`;
       console.error(e);
     }
   }
-  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, DONE_WINDOW_DAYS, searchDebounceTimer2, clipTitleHint, panelResizeDetach2, sortSelectDetach, composerBusy;
+  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, searchDebounceTimer2, clipTitleHint, panelResizeDetach2, sortSelectDetach, composerBusy;
   var init_ui13 = __esm({
     "src/memo/ui.ts"() {
       import_moment6 = __toESM(require_moment());
@@ -40802,7 +40852,6 @@ ${text}`;
       init_state();
       PANEL = { MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
       SEARCH_DEBOUNCE_MS3 = 180;
-      DONE_WINDOW_DAYS = 30;
       searchDebounceTimer2 = null;
       clipTitleHint = null;
       panelResizeDetach2 = null;
