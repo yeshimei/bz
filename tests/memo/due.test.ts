@@ -51,10 +51,11 @@ describe('formatDueText', () => {
     const later = moment().add(5, 'days');
     expect(formatDueText(fmt(later.toDate()))).toBe(`${later.format('MM/DD')} ${later.format('HH:mm')} 到期`);
   });
-  it('absolute 模式：固定 MM/DD HH:mm + 状态后缀', () => {
-    const later = moment().add(5, 'days');
-    expect(formatDueText(fmt(later.toDate()), 'absolute')).toBe(`${later.format('MM/DD')} ${later.format('HH:mm')} 到期`);
+  it('口径固定相对：原 absolute 模式退役，第二参不再影响输出', () => {
     const past = moment().subtract(3, 'days');
-    expect(formatDueText(fmt(past.toDate()), 'absolute')).toBe(`${past.format('MM/DD')} ${past.format('HH:mm')} 已过期`);
+    const call = formatDueText as unknown as (due: string, mode?: string) => string;
+    expect(call(fmt(past.toDate()), 'absolute')).toBe('3天前已过期');
+    const later = moment().add(5, 'days');
+    expect(call(fmt(later.toDate()), 'absolute')).toBe(`${later.format('MM/DD')} ${later.format('HH:mm')} 到期`);
   });
 });

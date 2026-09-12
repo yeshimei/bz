@@ -577,8 +577,7 @@ function metaDueOf(it: MemoItem): MetaDue {
   if (!it.due || it.completed) return null;
   const st = getDueStatus(it.due);
   if (!st) return null;
-  const mode = tryGetSettings().memoDueFormat === 'absolute' ? 'absolute' : 'relative';
-  return { status: st, text: formatDueText(it.due, mode) };
+  return { status: st, text: formatDueText(it.due) };
 }
 
 /** 卡片 meta 行（纯层 metaTagsHtml 的行为侧封装：注入 due 包与相对时间） */

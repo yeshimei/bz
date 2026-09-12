@@ -83,8 +83,7 @@ export default interface BzSettings {
   memoDefaultPriority: string;
   /** 🆕 新条目默认场景（空=第一个场景） */
   memoDefaultScene: string;
-  /** 🕒 到期时间格式：relative（今天 14:00 到期）/ absolute（MM/DD HH:mm 到期） */
-  memoDueFormat: string;
+  // 退役：memoDueFormat（到期时间格式）——口径固定相对，键与设置行一并下线，data.json 残留值忽略
 
   // ===== 📖 日记本（ADR-0115：旧 12 键按消费面收编为 3 键 + 2 跨域读；退役键 data.json 残留值忽略）=====
   /** 📂 日记目录 */
@@ -504,7 +503,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   memoShowArchivedByDefault: false,
   memoDefaultPriority: 'minor',
   memoDefaultScene: '',
-  memoDueFormat: 'relative',
+  // memoDueFormat 已退役（到期文案固定相对，2026-09-12 用户拍板）
   // 备忘录面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 720×580）
   memoPanelWidth: 0,
   memoPanelHeight: 0,

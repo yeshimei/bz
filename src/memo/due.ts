@@ -3,7 +3,7 @@
  * 自 memo/due.ts 迁移（备忘录.js 逐字移植语义）。
  * getDueStatus：overdue（已过期）/ today（今日到期）/ future（未来）/ null（无截止）
  * formatDueText：逾期文案（N天前已过期/今天 HH:mm 已过期/今天 HH:mm 到期/明天 HH:mm 到期/MM/DD HH:mm 到期）
- * formatDueText 支持 relative（默认，现语义）/ absolute（MM/DD HH:mm 固定格式）两种模式。
+ * 口径固定相对（2026-09-12 用户拍板：原 memoDueFormat 设置与其 absolute 分支一并退役）。
  */
 import moment from 'moment';
 import { localDayKey } from '../core/utils';
@@ -33,19 +33,13 @@ export function getDueStatus(due: string | null): DueStatus {
   return 'today';
 }
 
-export function formatDueText(due: string, mode: 'relative' | 'absolute' = 'relative'): string {
+export function formatDueText(due: string): string {
   const status = getDueStatus(due);
   const dueMoment = moment(due.replace('T', ' '));
   const timeStr = dueMoment.format('HH:mm');
   const dateStr = dueMoment.format('MM/DD');
   const today = getTodayStr();
   const dueDate = due.slice(0, 10);
-
-  // 绝对格式：固定 MM/DD HH:mm + 状态后缀
-  if (mode === 'absolute') {
-    if (status === 'overdue') return `${dateStr} ${timeStr} 已过期`;
-    return `${dateStr} ${timeStr} 到期`;
-  }
 
   if (status === 'overdue') {
     if (dueDate === today) return `今天 ${timeStr} 已过期`;
