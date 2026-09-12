@@ -22,7 +22,6 @@ const SETTINGS = {
   memoSortMode: 'priority',
   memoDefaultPriority: 'minor',
   memoDefaultScene: '',
-  memoDueFormat: 'relative',
   memoAutoArchive: true,
   cinemaFolderPath: '我的/影视',
 };
@@ -1128,6 +1127,9 @@ describe('备忘录面板皮肤（issue 210）', () => {
     // 显示组不再含皮肤行
     const show = schema.groups.find((g) => g.name === '显示');
     expect(show!.rows.some((r: any) => r.name === '面板皮肤')).toBe(false);
+    // 到期时间格式行已退役（口径固定相对）
+    expect(show!.rows.some((r: any) => r.name === '到期时间格式')).toBe(false);
+    expect(show!.rows.some((r: any) => r.binding?.key === 'memoDueFormat')).toBe(false);
     void app;
   });
 

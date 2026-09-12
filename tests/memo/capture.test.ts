@@ -24,7 +24,6 @@ const BASE_SETTINGS = {
   memoSortMode: 'priority',
   memoDefaultPriority: 'minor',
   memoDefaultScene: '',
-  memoDueFormat: 'relative',
   memoAutoArchive: true,
   autoPopupOnStart: true,
   openNoteReminder: true,

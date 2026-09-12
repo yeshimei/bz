@@ -366,7 +366,7 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 - **📂 数据存储路径**：storagePath（共享，默认 CONFIG/STORAGE；旧 7 字段废弃仅兼容：todoFilePath/belongingsDataFolder/pwStoragePath/favoritesStoragePath/reviewStoragePath/META_PATH/VEC_PATH）
 
 **域设置弹窗（⚙️，各功能主面板右上角）**：
-- **备忘录**（9 项，分组：提醒/显示/新建/场景列表）：autoPopupOnStart、openNoteReminder、memoSortMode、memoShowArchivedByDefault、memoDueFormat、memoDefaultPriority、memoDefaultScene、memoAutoArchive、memoScenarios
+- **备忘录**（8 项，分组：提醒/显示/新建/场景列表）：autoPopupOnStart、openNoteReminder、memoSortMode、memoShowArchivedByDefault、memoDefaultPriority、memoDefaultScene、memoAutoArchive、memoScenarios（issue 292 退役 memoDueFormat——到期文案口径固定相对，ADR-0126）
 - **日记本**（ADR-0115/issue 256 收编后 3 项）：diaryDirectory、letterDirectory、useFileDateTime；跨域读 2：影视→`cinemaFolderPath`（影院设置）、书库→bookshelf `resolveFolderPath()`（用户拍板「影视部分走影院的」）；原 12 项中其余 9 键随旧编辑域退役（data.json 残留值忽略）
 - **归物本**：1 项「移动端默认全屏」（仅移动端显示；桌面仍空态，见下跨域条目）
 - **剪藏本**：articleDirectory、articleBatchSize、autoSummaryEnabled

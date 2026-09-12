@@ -24,7 +24,6 @@ const SETTINGS = {
   memoSortMode: 'priority',
   memoDefaultPriority: 'minor',
   memoDefaultScene: '',
-  memoDueFormat: 'relative',
   memoAutoArchive: true,
   cinemaFolderPath: '我的/影视',
 };
