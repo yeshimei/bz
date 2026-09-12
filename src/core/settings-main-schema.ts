@@ -221,7 +221,8 @@ export function aiSettingsSchema(): SettingsSchema {
   };
 }
 
-/** 通用设置组（原「全局」数据存储路径区块；issue 186 拆出 AI 后的剩余全局项） */
+/** 通用设置组（原「全局」数据存储路径区块；issue 186 拆出 AI 后的剩余全局项）。
+ *  2026-09-12：通知组拆出为独立面板页（noticeSettingsSchema），本组只剩数据存储路径。 */
 export function generalSettingsSchema(): SettingsSchema {
   return {
     groups: [
@@ -242,8 +243,19 @@ export function generalSettingsSchema(): SettingsSchema {
           },
         ],
       },
+      // 通知组已拆出（2026-09-12 用户拍板）：见下方 noticeSettingsSchema ——
+      // 设置面板里独立成一页，不再挤在「通用」域里
+    ],
+  };
+}
+
+/** 通知设置组（2026-09-12 用户拍板：自「通用」域拆出，设置面板里独立成一页）。
+ *  不建业务域——core notice toast 是横切偏好，schema 留 core，面板只多一个导航页。
+ *  issue 297：行型全 select，原生设置页与面板双渲染器通用。 */
+export function noticeSettingsSchema(): SettingsSchema {
+  return {
+    groups: [
       {
-        // 通知组（issue 297）：core notice toast 横切偏好；行型全 select，原生设置页与面板双渲染器通用
         icon: 'bell',
         name: '通知',
         rows: [
@@ -299,9 +311,10 @@ export function generalSettingsSchema(): SettingsSchema {
   };
 }
 
-/** 构造主设置页 schema（⚙️ 原生设置页两区块 = AI + 数据存储路径；每次 display 重建，visibleWhen 在渲染器内重求值） */
+/** 构造主设置页 schema（⚙️ 原生设置页三区块 = AI + 数据存储路径 + 通知；每次 display 重建，
+ *  visibleWhen 在渲染器内重求值）。2026-09-12：通知自「通用」域拆出独立成一页，原生页随之为三区块。 */
 export function mainSettingsSchema(): SettingsSchema {
   return {
-    groups: [...aiSettingsSchema().groups, ...generalSettingsSchema().groups],
+    groups: [...aiSettingsSchema().groups, ...generalSettingsSchema().groups, ...noticeSettingsSchema().groups],
   };
 }

@@ -28,8 +28,8 @@ export function diarySettingsSchema(): SettingsSchema {
         icon: 'folder-open',
         name: '目录',
         rows: [
-          { type: 'path', mode: 'single', name: '日记目录', desc: '存放日记文件的文件夹路径', binding: { key: 'diaryDirectory' }, onChange: () => applyDirectories(getSettings()) },
-          { type: 'path', mode: 'single', name: '信件目录', desc: '存放信件的文件夹路径', binding: { key: 'letterDirectory' }, onChange: () => applyDirectories(getSettings()) },
+          { type: 'path', mode: 'single', name: '日记文件夹', desc: '存放日记文件的文件夹', binding: { key: 'diaryDirectory' }, onChange: () => applyDirectories(getSettings()) },
+          { type: 'path', mode: 'single', name: '信件文件夹', desc: '存放信件的文件夹', binding: { key: 'letterDirectory' }, onChange: () => applyDirectories(getSettings()) },
         ],
       },
       {

@@ -19,7 +19,8 @@
 export const DOMAIN_ICONS: Readonly<Record<string, string>> = {
   // 面板专属域（无对应命令）
   global: 'settings',
-  appearance: 'palette',
+  // 通知（2026-09-12）：自「通用」域拆出的独立面板页；「设置」页并入通用后 appearance 键退役
+  notice: 'bell',
   ai: 'sparkles',
   // 域入口命令与面板导航共用
   home: 'layout-grid',

@@ -1,4 +1,4 @@
-/* 源指纹 e06352f6bf494578 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 84e483a6c4036993 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/settings-panel/render.ts → window.BZR_settings_panel（评审壳预览包，ADR-0104） */
 var BZR_settings_panel = (() => {
@@ -160,8 +160,8 @@ var BZR_settings_panel = (() => {
     const ic = icon ? iconSpan(icon, "bz-sp-group-icon") : "";
     return `<section class="bz-sp-group"><div class="bz-sp-group-head">${ic}<span class="bz-sp-group-name">${esc(name)}</span><span class="bz-sp-group-count">${esc(count)}</span></div><div class="bz-sp-group-body"></div></section>`;
   }
-  function pageHeadHtml(name, desc, tag) {
-    return `<div class="bz-sp-page-head"><div><div class="bz-sp-page-title">${esc(name)}</div><div class="bz-sp-page-desc">${esc(desc)}</div></div><span class="bz-sp-page-tag">${esc(tag)}</span></div>`;
+  function pageHeadHtml(name, desc, tag, withReset) {
+    return `<div class="bz-sp-page-head"><div><div class="bz-sp-page-title">${esc(name)}</div><div class="bz-sp-page-desc">${esc(desc)}</div></div><div class="bz-sp-page-acts">` + (withReset ? `<button type="button" class="bz-sp-page-reset">重置本域</button>` : "") + `<span class="bz-sp-page-tag">${esc(tag)}</span></div></div>`;
   }
   function loadingHtml(text = "加载设置…") {
     return `<div class="bz-sp-loading"><span class="bz-spinner"></span><span>${esc(text)}</span></div>`;
@@ -182,7 +182,7 @@ var BZR_settings_panel = (() => {
   }
   function mobItemHtml(opts) {
     const tail = opts.kind ? `<span class="bz-sp-mob-kind">${esc(opts.kind)}</span>` : `<span class="bz-sp-mob-chev">${iconSpan("chevron-right")}</span>`;
-    return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"><span class="bz-sp-mob-ic">${iconSpan(opts.icon)}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span>${tail}</button>`;
+    return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"${opts.row ? ` data-sp-row="${esc(opts.row)}"` : ""}><span class="bz-sp-mob-ic">${iconSpan(opts.icon)}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span>${tail}</button>`;
   }
   return __toCommonJS(render_exports);
 })();

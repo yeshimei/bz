@@ -29,6 +29,12 @@ vi.mock('../../src/smartcat', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   ensureSmartCat: vi.fn(),
 }));
+// 第二大脑自 2026-09-12 起启动即加载（secondBrainEnabled 开关退役）→ 必须 spy 掉真实初始化
+// （原测试靠传 secondBrainEnabled: false 规避，键删后改为 mock）
+vi.mock('../../src/secondbrain', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  ensureSecondBrain: vi.fn(),
+}));
 
 import BzPlugin, { applyDiarySettingsToRuntime } from '../../src/main';
 import { migrateMemoSettingKeys } from '../../src/settings';
@@ -86,9 +92,11 @@ beforeEach(() => {
   clearEnsureSpies();
 });
 
+// 注：三条用例原以 `secondBrainEnabled: false` 规避第二大脑真实初始化；该键已退役、
+// 启动改为无条件加载（2026-09-12），故改为 spy ensureSecondBrain 后传空设置。
 describe('C13：onLayoutReady 回调随卸载旗标短路', () => {
   it('未卸载时布局就绪正常触发 ensure*（接线通的对照）', async () => {
-    const { state } = await createPlugin({ secondBrainEnabled: false });
+    const { state } = await createPlugin({});
     expect(state.layoutReadyCb).not.toBeNull();
     state.layoutReadyCb!();
     expect(ensureMemoReminders).toHaveBeenCalledTimes(1);
@@ -96,7 +104,7 @@ describe('C13：onLayoutReady 回调随卸载旗标短路', () => {
   });
 
   it('卸载后布局就绪回调短路：ensure* 全部不触发（幽灵初始化消除）', async () => {
-    const { plugin, state } = await createPlugin({ secondBrainEnabled: false });
+    const { plugin, state } = await createPlugin({});
     await plugin.onunload();
     clearEnsureSpies();
     state.layoutReadyCb!(); // 插件已禁用后布局才就绪
@@ -109,7 +117,7 @@ describe('C13：onLayoutReady 回调随卸载旗标短路', () => {
   });
 
   it('未卸载时触发回调后插件卸载：ensure* 已真实初始化（不受旗标影响，回归保护）', async () => {
-    const { plugin, state } = await createPlugin({ secondBrainEnabled: false });
+    const { plugin, state } = await createPlugin({});
     state.layoutReadyCb!();
     expect(ensureMemoReminders).toHaveBeenCalledTimes(1);
     await plugin.onunload();
