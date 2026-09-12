@@ -1,7 +1,7 @@
-/* 源指纹 b0ab0922e0915c11 · 仓内输入 59 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
-/* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
-var BZW_password_vault = (() => {
+/* 源指纹 68165b300a53c21f · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
+/* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/encrypt/fake-sim.ts → window.BZW_encrypt（行为单源预览包，issue 245/ADR-0106） */
+var BZW_encrypt = (() => {
   var __create = Object.create;
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -4028,12 +4028,11 @@ var BZW_password_vault = (() => {
     }
   });
 
-  // prototypes/password-vault/fake-sim.ts
+  // prototypes/encrypt/fake-sim.ts
   var fake_sim_exports = {};
   __export(fake_sim_exports, {
     DEMO_MASTER_PASSWORD: () => DEMO_MASTER_PASSWORD,
-    SETTINGS_KEY: () => SETTINGS_KEY,
-    bootPasswordVaultSim: () => bootPasswordVaultSim,
+    bootEncryptSim: () => bootEncryptSim,
     openPanel: () => openPanel,
     unload: () => unload
   });
@@ -4042,21 +4041,6 @@ var BZW_password_vault = (() => {
   var Platform = {
     isMobile: typeof window !== "undefined" && window.innerWidth <= 768
   };
-  function setIcon(container, iconId) {
-    var _a;
-    const d = typeof window !== "undefined" && ((_a = window.PWV_ICONS) == null ? void 0 : _a[iconId]) || "";
-    if (!d) return;
-    const ns = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(ns, "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("fill", "none");
-    svg.setAttribute("stroke", "currentColor");
-    svg.setAttribute("stroke-width", "2");
-    svg.setAttribute("stroke-linecap", "round");
-    svg.setAttribute("stroke-linejoin", "round");
-    svg.innerHTML = d;
-    container.replaceChildren(svg);
-  }
   var TFile = class {
     constructor() {
       this.path = "";
@@ -4070,8 +4054,6 @@ var BZW_password_vault = (() => {
     constructor(_container) {
       this.settingEl = document.createElement("div");
     }
-  };
-  var MarkdownRenderer = class {
   };
   var Component = class {
   };
@@ -4286,6 +4268,99 @@ var BZW_password_vault = (() => {
         trigger() {
         }
       };
+    }
+  };
+
+  // prototypes/encrypt/fake/fake-obsidian.ts
+  function setIcon(container, iconId) {
+    var _a;
+    const d = typeof window !== "undefined" && ((_a = window.VLT_ICONS) == null ? void 0 : _a[iconId]) || "";
+    if (!d) return;
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.innerHTML = d;
+    container.replaceChildren(svg);
+  }
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function inlineMd(s) {
+    return escapeHtml(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>").replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+  }
+  function mdToHtml(md) {
+    const lines = md.replace(/\r\n?/g, "\n").split("\n");
+    const out = [];
+    let inCode = false;
+    let list = null;
+    const flushList = () => {
+      if (!list) return;
+      out.push(`<${list.type}>${list.items.map((i) => `<li>${i}</li>`).join("")}</${list.type}>`);
+      list = null;
+    };
+    for (const raw of lines) {
+      const line = raw;
+      if (/^\s*```/.test(line)) {
+        flushList();
+        out.push(inCode ? "</code></pre>" : "<pre><code>");
+        inCode = !inCode;
+        continue;
+      }
+      if (inCode) {
+        out.push(escapeHtml(line));
+        continue;
+      }
+      if (!line.trim()) {
+        flushList();
+        continue;
+      }
+      const h = /^(#{1,6})\s+(.*)$/.exec(line);
+      if (h) {
+        flushList();
+        const lv = h[1].length;
+        out.push(`<h${lv}>${inlineMd(h[2])}</h${lv}>`);
+        continue;
+      }
+      if (/^\s*(---|\*\*\*)\s*$/.test(line)) {
+        flushList();
+        out.push("<hr>");
+        continue;
+      }
+      const q = /^>\s?(.*)$/.exec(line);
+      if (q) {
+        flushList();
+        out.push(`<blockquote>${inlineMd(q[1])}</blockquote>`);
+        continue;
+      }
+      const ul = /^\s*[-*+]\s+(.*)$/.exec(line);
+      const ol = /^\s*\d+\.\s+(.*)$/.exec(line);
+      if (ul || ol) {
+        const type = ul ? "ul" : "ol";
+        if (!list || list.type !== type) {
+          flushList();
+          list = { type, items: [] };
+        }
+        list.items.push(inlineMd((ul || ol)[1]));
+        continue;
+      }
+      flushList();
+      out.push(`<p>${inlineMd(line)}</p>`);
+    }
+    flushList();
+    if (inCode) out.push("</code></pre>");
+    return out.join("\n");
+  }
+  var MarkdownRenderer = class {
+    static async render(_app2, markdown, el, _sourcePath, _component) {
+      const box = document.createElement("div");
+      box.className = "bz-sim-md";
+      box.innerHTML = mdToHtml(String(markdown != null ? markdown : ""));
+      el.appendChild(box);
     }
   };
 
@@ -4720,7 +4795,7 @@ var BZW_password_vault = (() => {
 
   // src/core/utils.ts
   var import_moment = __toESM(require_moment());
-  function escapeHtml(str) {
+  function escapeHtml2(str) {
     return str.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
       if (m === "<") return "&lt;";
@@ -4834,9 +4909,9 @@ var BZW_password_vault = (() => {
     }
     const ctaIdx = actions.findIndex((a) => a.cta);
     const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
     }).join("") + "</div>";
     return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
@@ -8121,13 +8196,6 @@ var BZW_password_vault = (() => {
   };
 
   // src/core/ui/str.ts
-  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  function escapeHtml2(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml2(String(s != null ? s : ""));
-  }
   function escAttr(s) {
     return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
@@ -8615,7 +8683,7 @@ var BZW_password_vault = (() => {
       return empty;
     }
     esc(s) {
-      return escapeHtml(String(s != null ? s : ""));
+      return escapeHtml2(String(s != null ? s : ""));
     }
   };
   var ICON_PATHS = {
@@ -8812,10 +8880,10 @@ var BZW_password_vault = (() => {
     const recentRows = recent2.length ? recent2.map((r) => {
       const color = r.kind === "note" ? ASSET_COLOR.note : ASSET_COLOR.diary;
       const iconName = r.kind === "note" ? "file-lock" : "book-lock";
-      return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml(r.id)}"` : ""}>
+      return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
-            <div class="mid"><div class="a">${escapeHtml(r.title)}</div><div class="b">${escapeHtml(r.sub)}</div></div>
-            <span class="tm">${escapeHtml(r.time)}</span></div>`;
+            <div class="mid"><div class="a">${escapeHtml2(r.title)}</div><div class="b">${escapeHtml2(r.sub)}</div></div>
+            <span class="tm">${escapeHtml2(r.time)}</span></div>`;
     }).join("") : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc("lock", 28) + '</span><div class="bz-empty-title">还没有动态</div><div class="bz-empty-desc">笔记或日记入库后，最近动态在这里显示</div></div>';
     return `
   <div class="bz-vault-hero">
@@ -8859,19 +8927,19 @@ var BZW_password_vault = (() => {
   function noteRowHTML(note, kind, active) {
     const color = ASSET_COLOR[kind];
     const iconName = kind === "note" ? "file-lock" : "book-lock";
-    const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
+    const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml2(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
     return `
-    <div class="bz-vault-row ${active ? "on" : ""}" data-noteid="${escapeHtml(note.id)}" data-kind="${kind}">
+    <div class="bz-vault-row ${active ? "on" : ""}" data-noteid="${escapeHtml2(note.id)}" data-kind="${kind}">
       <span class="av" style="background:${color}">${vIc(iconName, 16)}</span>
-      <div class="mid"><div class="t1">${escapeHtml(note.title)}</div><div class="t2">${sub}</div></div>
-      <span class="tm">${escapeHtml(formatRelativeTime(note.createdAt))}</span>
+      <div class="mid"><div class="t1">${escapeHtml2(note.title)}</div><div class="t2">${sub}</div></div>
+      <span class="tm">${escapeHtml2(formatRelativeTime(note.createdAt))}</span>
     </div>`;
   }
   function noteDetailHTML(note, kind, plainPreview) {
     const color = ASSET_COLOR[kind];
     const iconName = kind === "note" ? "file-lock" : "book-lock";
-    const attLine = note.attachments.length ? `<span class="val" title="${escapeHtml(note.attachments.map((a) => a.path.split("/").pop() || a.path).join("、"))}">${note.attachments.length} 个</span>` : '<span class="val">无附件</span>';
-    const pathLine = kind === "note" ? `${escapeHtml(note.path)} · 已移出` : `${escapeHtml(note.path)} · 已还原该段`;
+    const attLine = note.attachments.length ? `<span class="val" title="${escapeHtml2(note.attachments.map((a) => a.path.split("/").pop() || a.path).join("、"))}">${note.attachments.length} 个</span>` : '<span class="val">无附件</span>';
+    const pathLine = kind === "note" ? `${escapeHtml2(note.path)} · 已移出` : `${escapeHtml2(note.path)} · 已还原该段`;
     const created = new Date(note.createdAt).toLocaleString("zh-CN", { hour12: false });
     const actionBtns = kind === "note" ? `<button class="bbtn teal" data-detail="preview">${vIc("eye", 14)} 解密预览</button>
          <button class="bbtn" data-detail="restore">${vIc("download", 14)} 取出还原</button>
@@ -8881,13 +8949,13 @@ var BZW_password_vault = (() => {
     return `
     <div class="bz-vault-dhead">
       <span class="big" style="background:${color}">${vIc(iconName, 21)}</span>
-      <div class="ttl"><h2>${escapeHtml(note.title)}</h2><div class="url">${pathLine}</div></div>
+      <div class="ttl"><h2>${escapeHtml2(note.title)}</h2><div class="url">${pathLine}</div></div>
     </div>
     <div class="bz-vault-dcontent">
       ${kind === "note" ? `<div class="field"><div class="lab">附件镜像</div><div class="valrow">${attLine}</div></div>
-           <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>
-           <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>` : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml(plainPreview).replace(/\n/g, "<br>") : "（未解密预览）"}</div></div>
-           <div class="field"><div class="lab">加密于</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>`}
+           <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml2(created)}</span></div></div>
+           <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>` : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml2(plainPreview).replace(/\n/g, "<br>") : "（未解密预览）"}</div></div>
+           <div class="field"><div class="lab">加密于</div><div class="valrow"><span class="val">${escapeHtml2(created)}</span></div></div>`}
       <div class="bigbtns">${actionBtns}</div>
     </div>`;
   }
@@ -9230,7 +9298,7 @@ var BZW_password_vault = (() => {
   }
   function mediaHtml(a, dataUrl) {
     if (!a) return "";
-    const alt = escapeHtml(a.path || "");
+    const alt = escapeHtml2(a.path || "");
     const key = encodeURIComponent(a.path);
     const kindLabel = a.kind === "video" ? "视频" : "图";
     let inner;
@@ -9930,12 +9998,12 @@ var BZW_password_vault = (() => {
         });
         topifyZ(ls.el);
         document.body.appendChild(ls.el);
-        const esc2 = escManager.register("bz-vault-unlock", {
+        const esc = escManager.register("bz-vault-unlock", {
           isVisible: () => ls.el.isConnected,
           close: () => done(false)
         });
         const done = (ok) => {
-          esc2.unregister();
+          esc.unregister();
           ls.close();
           resolve(ok);
         };
@@ -10617,10 +10685,10 @@ var BZW_password_vault = (() => {
       mask.style.display = "flex";
       mask.innerHTML = `
       <div class="bz-vault-dlg">
-        <h3>编辑平台 · ${escapeHtml(platform)}</h3>
+        <h3>编辑平台 · ${escapeHtml2(platform)}</h3>
         <div class="sub">改名/改链接将应用到该平台全部账号</div>
-        <label>平台名 *</label><input data-pf="platform" value="${escapeHtml(platform === "(无平台)" ? "" : platform)}">
-        <label>链接（可选）</label><input data-pf="url" value="${escapeHtml((d == null ? void 0 : d.url) || "")}">
+        <label>平台名 *</label><input data-pf="platform" value="${escapeHtml2(platform === "(无平台)" ? "" : platform)}">
+        <label>链接（可选）</label><input data-pf="url" value="${escapeHtml2((d == null ? void 0 : d.url) || "")}">
         <div class="err" data-pf-err></div>
         <div class="btns"><button class="cancel" data-pf-act="cancel">取消</button><button class="save" data-pf-act="save">保存</button></div>
       </div>`;
@@ -10866,14 +10934,14 @@ var BZW_password_vault = (() => {
       if (kind === "diary") {
         void this.dataManager.decryptNoteBody(note).then((t) => {
           const pre = body.querySelector(".note.pre");
-          if (pre && t !== null) pre.innerHTML = escapeHtml(t).replace(/\n/g, "<br>");
+          if (pre && t !== null) pre.innerHTML = escapeHtml2(t).replace(/\n/g, "<br>");
         }).catch(() => {
         });
       }
     }
     openPwMobPage(p) {
       var _a, _b;
-      const { page } = this.createMobPage(escapeHtml(p.platform));
+      const { page } = this.createMobPage(escapeHtml2(p.platform));
       this.pwView.renderMobPlatformPage(page.querySelector(".body"), p, this.pwState);
       (_a = page.querySelector("[data-mob-back]")) == null ? void 0 : _a.addEventListener("click", () => page.remove());
       (_b = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b.addEventListener("click", () => this.pwView.openPlatformSheet(p.platform));
@@ -10881,7 +10949,7 @@ var BZW_password_vault = (() => {
     }
     openPwAccountPage(d, st) {
       var _a, _b;
-      const { page, body } = this.createMobPage(escapeHtml(d.platform));
+      const { page, body } = this.createMobPage(escapeHtml2(d.platform));
       this.pwView.renderDeskDetail(body, { ...st, selPlatform: d.platform, selAccount: d.id });
       (_a = page.querySelector("[data-mob-back]")) == null ? void 0 : _a.addEventListener("click", () => page.remove());
       (_b = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b.addEventListener("click", () => this.pwView.openAccountSheet(d));
@@ -10911,7 +10979,7 @@ var BZW_password_vault = (() => {
       });
       topifyZ(ls.el);
       document.body.appendChild(ls.el);
-      const esc2 = escManager.register("bz-vault-destroy-confirm", {
+      const esc = escManager.register("bz-vault-destroy-confirm", {
         isVisible: () => !!ls.el.isConnected,
         close: () => done(false)
       });
@@ -10922,7 +10990,7 @@ var BZW_password_vault = (() => {
         }, 2600);
       };
       const done = (ok) => {
-        esc2.unregister();
+        esc.unregister();
         ls.close();
         if (!ok) return;
         void this.dataManager.removeNote(note.id).then(() => {
@@ -11222,7 +11290,7 @@ var BZW_password_vault = (() => {
         } else if (missing) {
           const im = document.createElement("img");
           im.className = "bz-encrypt-preview-media";
-          im.alt = escapeHtml(a.path || "");
+          im.alt = escapeHtml2(a.path || "");
           im.src = url;
           missing.replaceWith(im);
         }
@@ -11494,6 +11562,7 @@ var BZW_password_vault = (() => {
   var EncryptAppController = _EncryptAppController;
 
   // src/encrypt/index.ts
+  var initialized = false;
   var controller = null;
   function getController() {
     if (!controller) {
@@ -11513,1584 +11582,211 @@ var BZW_password_vault = (() => {
     }
     return controller;
   }
+  async function ensureEncrypt(app) {
+    if (initialized) return;
+    initialized = true;
+    await getController().init();
+  }
+  function openEncrypt(app) {
+    void ensureEncrypt(app).then(() => getController().openManager());
+  }
   function getSafeManager() {
     return getController().dataManager;
   }
-
-  // src/password-vault/render.ts
-  function relTime2(iso) {
-    if (!iso) return "";
-    const d = new Date(iso);
-    const diff = (Date.now() - d.getTime()) / 864e5;
-    if (diff < 1) return "今天";
-    if (diff < 2) return "昨天";
-    if (diff < 30) return Math.round(diff) + " 天前";
-    return d.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
-  }
-  function fmtDate(iso) {
-    return new Date(iso).toLocaleDateString("zh-CN");
-  }
-  function dots2(p) {
-    return "•".repeat(Math.min((p || "").length, 18));
-  }
-  var ICONS2 = {
-    seal: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.6" fill="#fff" stroke="none"/></svg>',
-    list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg>',
-    star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 15 9l7 .8-5.3 4.7 1.6 6.9L12 17.8 5.7 21.4l1.6-6.9L2 9.8 9 9z"/></svg>',
-    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
-    chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>',
-    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>',
-    menuDots: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>',
-    copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
-    key: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3z"/></svg>',
-    edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
-    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>',
-    open: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M8 7h9v9"/></svg>',
-    eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
-    eyeoff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 8 10 8a13.2 13.2 0 0 1-1.67 2.68M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 8 10 8a9.7 9.7 0 0 0 5.39-1.61M2 2l20 20"/></svg>',
-    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
-    go: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>',
-    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
-    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
-  };
-  var AV_BG = (platform) => `background:${colorOf(platform)}`;
-  function avatarHTML2(platform, url, cls = "bz-password-vault-av") {
-    const ch = esc((platform || "?").slice(0, 1));
-    return `<div class="${cls} bz-pwv-avatar" style="${AV_BG(platform)}" data-avatar="1" data-url="${escAttr(url || "")}"><span>${ch}</span></div>`;
-  }
-  function lockHTML(which) {
-    return `
-      <div class="bz-password-vault-lock" data-lock="${which}"></div>`;
-  }
-  function modalHTML(which) {
-    return `
-      <div class="bz-password-vault-modal" data-modal="${which}">
-        <div class="bz-password-vault-dialog">
-          <h3>添加密码条目</h3>
-          <div class="sub">带 * 为必填 · 平台与账号密码不可为空</div>
-          <label>平台 *</label><input data-f="platform" placeholder="如 GitHub">
-          <label>链接（可选）</label><input data-f="url" placeholder="https://…">
-          <label>账号 *</label><input data-f="account" placeholder="登录账号 / 邮箱 / 手机号">
-          <label>密码 *</label>
-          <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="mini" data-act="pw-eye" type="button" title="显示密码">${ICONS2.eye}</button><button class="gen" data-act="gen">生成</button></div>
-          <label>备注（可选）</label><input data-f="note" placeholder="备用信息…">
-          <div class="err" data-f-err></div>
-          <div class="btns"><button class="cancel" data-act="cancel">取消</button><button class="save" data-act="save">保存</button></div>
-        </div>
-      </div>`;
-  }
-  function confirmHTML(which) {
-    return `
-      <div class="bz-password-vault-pop2" data-confirm="${which}">
-        <div class="card"><h3>确认</h3><div class="msg"></div>
-        <div class="btns"><button class="cancel" data-act="cancel">取消</button><button class="ok" data-act="ok">确定</button></div></div>
-      </div>`;
-  }
-  function platEditHTML(which) {
-    return `
-      <div class="bz-password-vault-pop2 bz-password-vault-platedit" data-plat-edit="${which}">
-        <div class="card">
-          <h3>编辑平台信息</h3>
-          <div class="sub">改名/改链接将应用到该平台全部账号</div>
-          <label>平台名 *</label><input data-f="platform" placeholder="如 GitHub">
-          <label>链接（可选）</label><input data-f="url" placeholder="https://…">
-          <div class="err"></div>
-          <div class="btns"><button class="cancel" data-act="cancel">取消</button><button class="save" data-act="save">保存</button></div>
-        </div>
-      </div>`;
-  }
-  function deskHTML() {
-    return `
-      <div class="bz-password-vault-nav">
-        <div class="bz-password-vault-logo">
-          <div class="seal">${ICONS2.seal}</div>
-          <div class="name">密码本<small>PASSWORD VAULT</small></div>
-        </div>
-        <div class="bz-password-vault-navitem on" data-view="all">${ICONS2.list}全部条目<span class="cnt" data-cnt="all"></span></div>
-        <div class="bz-password-vault-navitem" data-view="fav">${ICONS2.star}已收藏<span class="cnt" data-cnt="fav"></span></div>
-      </div>
-      <div class="bz-password-vault-list">
-        <div class="bz-password-vault-listhead">
-          <h1>全部条目</h1>
-          <div class="bz-password-vault-search">${ICONS2.search}<input placeholder="搜索平台、账号、备注…"></div>
-        </div>
-        <div class="bz-password-vault-count"></div>
-        <div class="bz-password-vault-rows"></div>
-      </div>
-      <div class="bz-password-vault-detail">
-        <div class="bz-password-vault-empty">
-          ${ICONS2.lock}
-          <div class="t">选择一条记录</div>
-          <div class="d">左侧列表选中后，这里显示完整详情与操作</div>
-        </div>
-      </div>
-      ${lockHTML("desk")}
-      <div class="bz-password-vault-toast"></div>
-      ${modalHTML("desk")}
-      ${confirmHTML("desk")}
-      ${platEditHTML("desk")}
-    `;
-  }
-  function mobHTML() {
-    return `
-      <div class="bz-password-vault-mobbar">
-        <div class="seal">${ICONS2.seal}</div>
-        <div class="t">密码本</div>
-        <button class="bz-password-vault-mobclose" data-act="mob-close" aria-label="关闭">${ICONS2.x}</button>
-      </div>
-      <div class="bz-password-vault-mobsearch">${ICONS2.search}<input placeholder="搜索平台、账号、备注…"></div>
-      <div class="bz-password-vault-moblist"></div>
-      <button class="bz-password-vault-fab">${ICONS2.plus}</button>
-      <div class="bz-password-vault-mobpage">
-        <div class="bz-password-vault-mobsheet">
-          <div class="head">
-            <button class="bz-password-vault-back">${ICONS2.back}</button>
-            <div class="t">详情</div>
-            <button class="ic" data-act="menu">${ICONS2.menuDots}</button>
-          </div>
-          <div class="bz-password-vault-mobbody"></div>
-        </div>
-      </div>
-      ${lockHTML("mob")}
-      <div class="bz-password-vault-toast"></div>
-      ${modalHTML("mob")}
-      ${confirmHTML("mob")}
-      ${platEditHTML("mob")}
-    `;
-  }
-  function emptyHtml(cls, t, d, opts) {
-    var _a;
-    const style = (opts == null ? void 0 : opts.style) ? ` style="${opts.style}"` : "";
-    const icon = (_a = opts == null ? void 0 : opts.icon) != null ? _a : "";
-    const cta = (opts == null ? void 0 : opts.ctaLabel) ? `<button class="act" data-act="${opts.ctaAct}">${opts.ctaLabel}</button>` : "";
-    return `<div class="${cls}"${style}>${icon}<div class="t">${t}</div><div class="d">${d}</div>${cta}</div>`;
-  }
-  function hitRowHtml(d) {
-    return `${avatarHTML2(d.platform, d.url)}
-          <div class="mid"><div class="pl">${esc(d.platform)}${d.fav ? ' <span class="star">★</span>' : ""}</div><div class="ac">${esc(d.account || "(无账号)")}</div></div>
-          <div class="tm">${relTime2(d.createdAt)}</div>`;
-  }
-  function platRowHtml(opts) {
-    const favStar = opts.fav ? ' <span class="star">★</span>' : "";
-    const countBadge = opts.count > 1 ? `<span class="bz-password-vault-plcount">${opts.count}</span>` : "";
-    return `${avatarHTML2(opts.platform, opts.url)}
-        <div class="mid"><div class="pl">${esc(opts.platform)}${favStar}${countBadge}</div><div class="ac">${opts.account ? esc(opts.account) : ""}</div></div>
-        <div class="tm">${relTime2(opts.time)}</div>`;
-  }
-  function platDetailShellHtml(opts) {
-    const favStar = opts.fav ? ' <span style="color:var(--pwv-warn)">★</span>' : "";
-    return `<div class="bz-password-vault-detailhead">
-      <div class="ttl"><h2>${esc(opts.platform)}${favStar}</h2>
-        ${opts.url ? `<a class="url" href="${esc(opts.url)}" target="_blank" rel="noopener">${esc(opts.url)} ↗</a>` : '<div class="url" style="color:var(--pwv-faint)">无链接</div>'}</div>
-    </div>
-    <div class="bz-password-vault-accthead">
-      <div class="t">${opts.count} 个账号</div>
-      <button class="add" data-act="plat-add">+ 在该平台新增账号</button>
-    </div>
-    <div class="bz-password-vault-accts"></div>`;
-  }
-  function acctCardHtml(d, shown) {
-    return `<div class="accrow">
-        <div class="name">${esc(d.account || "(无账号)")}${d.fav ? '<span class="star">★</span>' : ""}</div>
-        <button class="copyac" data-act="copy-ac">${ICONS2.copy} 复制账号</button>
-      </div>
-      <div class="pwrow">
-        <div class="pw ${shown ? "" : "mask"}">${shown ? esc(d.password) : dots2(d.password)}</div>
-        <button class="mini" data-act="eye">${shown ? ICONS2.eyeoff : ICONS2.eye}</button>
-        <button class="mini" data-act="copy-pw">${ICONS2.copy}</button>
-      </div>
-      ${d.note ? `<div class="note">${esc(d.note)}</div>` : ""}
-      <div class="meta">创建于 ${esc(fmtDate(d.createdAt))}${d.url ? ' · <a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + esc(d.url.replace("https://", "")) + " ↗</a>" : ""}</div>`;
-  }
-  function mobHitCardHtml(d) {
-    return `${avatarHTML2(d.platform, d.url, "av")}
-          <div class="mid"><div class="pl">${esc(d.platform)}${d.fav ? ' <span class="star">★</span>' : ""}</div><div class="ac">${esc(d.account || "(无账号)")}</div></div>
-          <div class="go">${ICONS2.go}</div>`;
-  }
-  function mobPlatCardHtml(opts) {
-    const favStar = opts.fav ? ' <span class="star">★</span>' : "";
-    const cnt = opts.count > 1 ? `<span class="cnt">${opts.count}</span>` : "";
-    return `${avatarHTML2(opts.platform, opts.url, "av")}
-        <div class="mid"><div class="pl">${esc(opts.platform)}${favStar}${cnt}</div><div class="ac">${opts.account ? esc(opts.account) : ""}</div></div>
-        <div class="go">${ICONS2.go}</div>`;
-  }
-  function mobPlatHeadHtml(opts) {
-    const favStar = opts.fav ? ' <span style="color:var(--pwv-warn)">★</span>' : "";
-    return `<div class="bz-password-vault-mobplathead">
-      <div><div style="font-size:17px;font-weight:700">${esc(opts.platform)}${favStar}</div>${opts.url ? `<a style="font-size:12px;color:var(--pwv-gold-ink)" href="${esc(opts.url)}" target="_blank" rel="noopener">${esc(opts.url)} ↗</a>` : '<div style="font-size:12px;color:var(--pwv-faint)">无链接</div>'}</div>
-      <button class="bz-password-vault-btn gold" data-act="add">+ 新增账号</button>
-    </div>`;
-  }
-  function mobSegHtml(d, shown, withId) {
-    const idAttr = withId ? ` data-id="${d.id}"` : "";
-    return `<div class="bz-password-vault-seg">
-          <div class="seghead"><div class="acc">${esc(d.account || "(无账号)")}${d.fav ? ' <span class="star">★</span>' : ""}</div>
-            <button class="copyac" data-act="copy-ac"${idAttr}>${ICONS2.copy} 复制账号</button></div>
-          <div class="pwdline"><div class="pw ${shown ? "" : "mask"}">${shown ? esc(d.password) : dots2(d.password)}</div>
-            <button class="mini" data-act="eye"${idAttr}>${shown ? ICONS2.eyeoff : ICONS2.eye}</button>
-            <button class="mini" data-act="copy-pw"${idAttr}>${ICONS2.copy}</button></div>
-          ${d.note ? `<div class="note">${esc(d.note)}</div>` : ""}
-          <div class="segmeta">创建于 ${esc(fmtDate(d.createdAt))}${d.url ? " · " + esc(d.url.replace("https://", "")) : ""}</div>
-        </div>`;
-  }
-
-  // src/password-vault/ui.ts
-  var DEFAULT_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
-  function hydrateAvatars(scope) {
-    scope.querySelectorAll("[data-avatar]").forEach((box) => {
-      if (box.querySelector("img")) return;
-      const url = box.getAttribute("data-url");
-      let domain = null;
-      try {
-        domain = url ? new URL(url).hostname : null;
-      } catch (e) {
-        domain = null;
-      }
-      const img = createSiteIcon(domain, 64);
-      if (img) {
-        img.className = "bz-pwv-favicon";
-        img.removeAttribute("style");
-        img.addEventListener("load", () => {
-          const ch = box.querySelector("span");
-          if (ch) ch.style.display = "none";
-          if (box.classList.contains("bz-password-vault-av")) box.removeAttribute("style");
-        });
-        box.appendChild(img);
-      }
-    });
-  }
-  var PasswordVaultUIManager = class {
-    constructor(dataManager, config) {
-      this.root = null;
-      // 状态
-      this.view = "all";
-      this.searchKw = "";
-      this.selPlatform = null;
-      this.selAccount = null;
-      this.shownIds = {};
-      this.pendingPassword = null;
-      this.editingId = null;
-      // 安全机制（Q13）
-      this.security = { unlockFailStreak: 0, unlockCooldownUntil: 0 };
-      // 计时器
-      this.searchTimer = null;
-      this.toastTimer = null;
-      this.escUnregister = null;
-      /** 共锁订阅（E2）：encrypt:unlock-changed 退订句柄（show 挂 / hide+cleanup 摘） */
-      this.unlockOff = null;
-      this._initialized = false;
-      this.mobPagePlatform = null;
-      /** 当前移动详情页若是「账号详情页」，记录其条目（E6：重建页内容时区分平台页/账号页） */
-      this.mobPageAccount = null;
-      // ---------- 确认框（原型自绘，双实例同步） ----------
-      /** 当前确认回调（E1）：监听器只在首绑时挂一次，回调每次 askConfirm 覆写——
-       *  此前每次调用都给 .ok 叠加监听器：第一次取消后第二次确认会先命中旧监听器，
-       *  执行的是上一次的动作（删错条目）；首次已确认过则旧监听器抢先消费 pending。 */
-      this.confirmYes = null;
-      /**
-       * 共锁感知（E2）：保险库与密码本同一把主密码，别域上锁/解锁后面板必须实时跟随——
-       * - 上锁：清数据 + 锁屏接管（此前明文照常可看可复制、写操作静默无效）；
-       * - 解锁：重载数据并重绘（锁后同会话再解锁的路径）。
-       * 事件到达时 SafeManager 已翻转解锁态，本域仅对「订阅期间见过解锁」的首次 false
-       * 补一次 lock()（清密码本明文缓存）；lock() 内部的重复广播由此旗标自然收敛。
-       */
-      this.lastUnlockSeen = false;
-      /** 显示锁屏（未解锁态）；锁屏绑定一次 */
-      /** 锁屏句柄（desk/mob 双实例各一份；结构由 core/ui/lock-screen 提供，三域同源） */
-      this.lockHandles = /* @__PURE__ */ new WeakMap();
-      /** 统计快照：清单是密文，锁定态读不到 —— 用解锁期间的快照，冷启动回落「—」 */
-      this.pwLockStatsCache = [
-        { num: "—", label: "平台" },
-        { num: "—", label: "口令条目" },
-        { num: "—", label: "收藏" }
-      ];
-      this.dataManager = dataManager;
-      this.config = config;
-    }
-    // ---------- 创建 DOM（桌面 + 移动双实例，共享同一 DataManager） ----------
-    ensureElements() {
-      if (this._initialized) return;
-      this._initialized = true;
-      this.root = document.createElement("div");
-      this.root.className = "bz-password-vault";
-      this.root.style.cssText = "position:fixed;inset:0;z-index:var(--bz-z-overlay,1000);display:none;";
-      document.body.appendChild(this.root);
-      const desk = document.createElement("div");
-      desk.className = "bz-password-vault-desk";
-      desk.innerHTML = deskHTML();
-      this.root.appendChild(desk);
-      this.desk = {
-        rows: desk.querySelector(".bz-password-vault-rows"),
-        detail: desk.querySelector(".bz-password-vault-detail"),
-        search: desk.querySelector(".bz-password-vault-search input"),
-        count: desk.querySelector(".bz-password-vault-count"),
-        title: desk.querySelector(".bz-password-vault-listhead h1"),
-        lock: desk.querySelector(".bz-password-vault-lock"),
-        toast: desk.querySelector(".bz-password-vault-toast"),
-        modal: desk.querySelector(".bz-password-vault-modal"),
-        confirm: desk.querySelector(".bz-password-vault-pop2"),
-        platEdit: desk.querySelector(".bz-password-vault-platedit")
-      };
-      const mob = document.createElement("div");
-      mob.className = "bz-password-vault-mob";
-      mob.innerHTML = mobHTML();
-      this.root.appendChild(mob);
-      this.mob = {
-        list: mob.querySelector(".bz-password-vault-moblist"),
-        search: mob.querySelector(".bz-password-vault-mobsearch input"),
-        page: mob.querySelector(".bz-password-vault-mobpage"),
-        pageBody: mob.querySelector(".bz-password-vault-mobbody"),
-        pageTitle: mob.querySelector(".bz-password-vault-mobpage .head .t"),
-        lock: mob.querySelector(".bz-password-vault-lock"),
-        toast: mob.querySelector(".bz-password-vault-toast"),
-        modal: mob.querySelector(".bz-password-vault-modal"),
-        confirm: mob.querySelector(".bz-password-vault-pop2"),
-        platEdit: mob.querySelector(".bz-password-vault-platedit")
-      };
-      this.bindDesk();
-      this.bindMob();
-      this.bindDialogs();
-      this.registerEscape();
-      this.dataManager.onExternalChange = () => {
-        this.renderAll();
-      };
-    }
-    // ---------- 交互绑定 ----------
-    bindDesk() {
-      const root = this.root;
-      root.querySelectorAll(".bz-password-vault-navitem").forEach((it) => {
-        it.addEventListener("click", () => {
-          root.querySelectorAll(".bz-password-vault-navitem").forEach((x) => x.classList.remove("on"));
-          it.classList.add("on");
-          this.view = it.getAttribute("data-view");
-          this.renderAll();
-        });
-      });
-      this.desk.search.addEventListener("input", (e) => {
-        const v = e.target.value.trim();
-        if (this.searchTimer) clearTimeout(this.searchTimer);
-        this.searchTimer = setTimeout(() => {
-          this.searchKw = v;
-          this.renderAll();
-        }, 180);
-      });
-      root.addEventListener("click", (e) => {
-        if (e.target === root && this.root.style.display === "flex") {
-          this.hide();
-        }
-      });
-    }
-    bindMob() {
-      var _a, _b, _c, _d;
-      const root = this.root;
-      this.mob.search.addEventListener("input", (e) => {
-        const v = e.target.value.trim();
-        if (this.searchTimer) clearTimeout(this.searchTimer);
-        this.searchTimer = setTimeout(() => {
-          this.searchKw = v;
-          this.renderAll();
-        }, 180);
-      });
-      (_a = root.querySelector(".bz-password-vault-fab")) == null ? void 0 : _a.addEventListener("click", () => this.openEntryDialog(null));
-      (_b = root.querySelector('[data-act="mob-close"]')) == null ? void 0 : _b.addEventListener("click", () => this.hide());
-      (_c = root.querySelector(".bz-password-vault-back")) == null ? void 0 : _c.addEventListener("click", () => this.mob.page.classList.remove("open"));
-      this.mob.page.addEventListener("click", (e) => {
-        if (e.target === this.mob.page) this.mob.page.classList.remove("open");
-      });
-      (_d = root.querySelector('.bz-password-vault-mobpage .head [data-act="menu"]')) == null ? void 0 : _d.addEventListener("click", () => {
-        const cur = this.mobPagePlatform;
-        if (cur) {
-          openItemSheet(this.buildPlatformActions(cur), {
-            sheetHead: this.buildSheetHead(cur, "", "")
-          });
-        }
-      });
-    }
-    /** 绑定添加/编辑弹窗的保存/取消/生成按钮（双实例各一份） */
-    bindDialogs() {
-      this.root.querySelectorAll(".bz-password-vault-modal").forEach((modal) => {
-        var _a, _b, _c, _d;
-        const dlg = modal.querySelector(".bz-password-vault-dialog");
-        const errEl = dlg.querySelector("[data-f-err]");
-        const get = (f) => dlg.querySelector(`[data-f="${f}"]`).value.trim();
-        modal.addEventListener("click", (e) => {
-          if (e.target === modal) this.closeEntryDialog();
-        });
-        (_a = dlg.querySelector('[data-act="gen"]')) == null ? void 0 : _a.addEventListener("click", () => {
-          dlg.querySelector('[data-f="password"]').value = this.generatePassword();
-          this.toast("已生成新密码");
-        });
-        (_b = dlg.querySelector('[data-act="pw-eye"]')) == null ? void 0 : _b.addEventListener("click", () => {
-          const input = dlg.querySelector('[data-f="password"]');
-          const eye = dlg.querySelector('[data-act="pw-eye"]');
-          const show = input.type === "password";
-          input.type = show ? "text" : "password";
-          eye.title = show ? "隐藏密码" : "显示密码";
-          eye.innerHTML = show ? ICONS2.eyeoff : ICONS2.eye;
-        });
-        (_c = dlg.querySelector('[data-act="cancel"]')) == null ? void 0 : _c.addEventListener("click", () => {
-          this.closeEntryDialog();
-        });
-        (_d = dlg.querySelector('[data-act="save"]')) == null ? void 0 : _d.addEventListener("click", async () => {
-          var _a2, _b2;
-          const platform = get("platform");
-          if (!platform) {
-            errEl.textContent = "平台不能为空";
-            return;
-          }
-          if (!get("account") || !get("password")) {
-            errEl.textContent = "账号和密码不能为空";
-            return;
-          }
-          const item = {
-            platform,
-            url: get("url"),
-            account: get("account"),
-            password: get("password"),
-            note: get("note")
-          };
-          try {
-            if (this.editingId) {
-              await this.dataManager.updateItem(this.editingId, item);
-              this.selPlatform = item.platform;
-              this.selAccount = this.editingId;
-            } else {
-              await this.dataManager.addItem(item);
-              this.selPlatform = item.platform;
-              this.selAccount = (_b2 = (_a2 = this.dataManager.pwData[0]) == null ? void 0 : _a2.id) != null ? _b2 : null;
-            }
-            this.closeEntryDialog();
-            this.renderAll();
-            this.toast("已保存");
-          } catch (e) {
-            errEl.textContent = "保存失败：" + e.message;
-          }
-        });
-      });
-      this.root.querySelectorAll(".bz-password-vault-platedit").forEach((el) => {
-        var _a, _b;
-        const card = el;
-        const errEl = card.querySelector(".err");
-        let currentPlatform = null;
-        card.addEventListener("click", (e) => {
-          if (e.target === card) card.classList.remove("open");
-        });
-        (_a = card.querySelector('[data-act="cancel"]')) == null ? void 0 : _a.addEventListener("click", () => {
-          card.classList.remove("open");
-        });
-        (_b = card.querySelector('[data-act="save"]')) == null ? void 0 : _b.addEventListener("click", async () => {
-          const name = card.querySelector('[data-f="platform"]').value.trim();
-          if (!name) {
-            errEl.textContent = "平台名不能为空";
-            return;
-          }
-          if (!currentPlatform) return;
-          const url = card.querySelector('[data-f="url"]').value;
-          try {
-            await this.dataManager.updatePlatform(currentPlatform, { platform: name, url });
-            this.selPlatform = name;
-            this.selAccount = null;
-            card.classList.remove("open");
-            this.renderAll();
-            this.toast("平台信息已更新");
-          } catch (e) {
-            errEl.textContent = "保存失败：" + e.message;
-          }
-        });
-        card.__setCurrent = (p) => {
-          currentPlatform = p;
-        };
-      });
-    }
-    // ---------- 渲染 ----------
-    renderAll() {
-      var _a;
-      if (!this.root) return;
-      if ((_a = this.dataManager.safeManager) == null ? void 0 : _a.unlocked) this.captureLockStats();
-      this.renderLock();
-      this.renderDeskList();
-      this.renderDeskDetail();
-      this.renderMobList();
-    }
-    renderLock() {
-      const unlocked = this.dataManager.unlocked;
-      this.root.querySelectorAll(".bz-password-vault-lock").forEach((el) => {
-        el.classList.toggle("open", !unlocked);
-      });
-    }
-    /** 解锁成功后重载数据：锁屏打开时 load() 因未解锁而失败，pwData 为空，
-     *  解锁成功必须重新 load 才能渲染出清单（回归：解锁不重载 → 空列表） */
-    async reloadAfterUnlock() {
-      try {
-        await this.dataManager.load();
-      } catch (e) {
-        notice("加载数据失败：" + e.message, "error");
-      }
-    }
-    /** 渲染桌面列表（平台聚合 / 搜索展平） */
-    renderDeskList() {
-      var _a;
-      const rows = this.desk.rows;
-      const kw = this.searchKw;
-      const count = this.dataManager.pwData.length;
-      this.desk.count.textContent = count + " 条";
-      this.root.querySelector('[data-cnt="all"]').textContent = String(count);
-      this.root.querySelector('[data-cnt="fav"]').textContent = String(this.dataManager.pwData.filter((d) => d.fav).length);
-      this.desk.title.textContent = this.view === "fav" ? "已收藏" : "全部条目";
-      if (kw) {
-        const hits = this.dataManager.search(kw).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || "") * -1);
-        this.desk.count.textContent = hits.length + " 条匹配";
-        rows.innerHTML = "";
-        if (!hits.length) {
-          rows.innerHTML = emptyHtml("bz-password-vault-empty", "没有匹配的条目", "换个关键词，或清空搜索", { style: "flex:1" });
-          return;
-        }
-        hits.forEach((d) => {
-          const r = document.createElement("div");
-          r.className = "bz-password-vault-row" + (d.id === this.selAccount ? " on" : "");
-          r.innerHTML = hitRowHtml(d);
-          r.addEventListener("click", (e) => {
-            this.selAccount = d.id;
-            this.renderAll();
-          });
-          attachItemActions(r, this.buildAccountActions(d), {
-            sheetHead: this.buildSheetHead(d.account, d.platform, d.createdAt)
-          });
-          rows.appendChild(r);
-        });
-        hydrateAvatars(rows);
-        return;
-      }
-      let plats = this.dataManager.platforms();
-      if (this.view === "fav") plats = plats.filter((p) => this.dataManager.hasFav(p.platform));
-      this.desk.count.textContent = plats.length + " 个平台";
-      rows.innerHTML = "";
-      if (!plats.length) {
-        rows.innerHTML = this.view === "fav" ? emptyHtml("bz-password-vault-empty", "还没有收藏", "点条目里的 ★ 收藏常用账号", { style: "flex:1" }) : emptyHtml("bz-password-vault-empty", "保险库还是空的", "点击右上角「添加密码」开始收录", { style: "flex:1", ctaLabel: "添加第一条密码", ctaAct: "add-first" });
-        (_a = rows.querySelector('[data-act="add-first"]')) == null ? void 0 : _a.addEventListener("click", () => this.openEntryDialog(null));
-        return;
-      }
-      plats.forEach((p) => {
-        const recent2 = p.accounts[0];
-        const r = document.createElement("div");
-        r.className = "bz-password-vault-plrow" + (p.platform === this.selPlatform ? " on" : "");
-        r.innerHTML = platRowHtml({
-          platform: p.platform,
-          url: (recent2 == null ? void 0 : recent2.url) || "",
-          account: (recent2 == null ? void 0 : recent2.account) || "",
-          count: p.accounts.length,
-          time: (recent2 == null ? void 0 : recent2.createdAt) || "",
-          fav: this.dataManager.hasFav(p.platform),
-          selected: p.platform === this.selPlatform
-        });
-        r.addEventListener("click", (e) => {
-          this.selPlatform = p.platform;
-          this.selAccount = null;
-          this.renderAll();
-        });
-        attachItemActions(r, this.buildPlatformActions(p.platform), {
-          sheetHead: this.buildSheetHead(p.platform, (recent2 == null ? void 0 : recent2.account) || "", (recent2 == null ? void 0 : recent2.createdAt) || "")
-        });
-        rows.appendChild(r);
-      });
-      hydrateAvatars(rows);
-    }
-    /** 渲染桌面详情（平台视图 / 账号详情） */
-    renderDeskDetail() {
-      var _a, _b;
-      const detail = this.desk.detail;
-      const kw = this.searchKw;
-      if (kw) {
-        const d = this.dataManager.pwData.find((x) => x.id === this.selAccount);
-        if (d) {
-          this.renderAccountDetail(d);
-          return;
-        }
-        detail.innerHTML = emptyHtml("bz-password-vault-empty", "选择一条结果", "点击左侧结果查看详情");
-        return;
-      }
-      const platform = this.selPlatform;
-      if (!platform) {
-        detail.innerHTML = emptyHtml("bz-password-vault-empty", "选择一个平台", "左侧选择平台后，这里显示其全部账号", { icon: ICONS2.lock });
-        return;
-      }
-      let accs = this.dataManager.accountsOf(platform);
-      if (this.view === "fav") accs = accs.filter((d) => d.fav);
-      detail.innerHTML = platDetailShellHtml({
-        platform,
-        url: ((_a = accs[0]) == null ? void 0 : _a.url) || "",
-        fav: this.dataManager.hasFav(platform),
-        count: accs.length
-      });
-      (_b = detail.querySelector('[data-act="plat-add"]')) == null ? void 0 : _b.addEventListener(
-        "click",
-        () => {
-          var _a2;
-          return this.openEntryDialog(null, { platform, url: ((_a2 = accs[0]) == null ? void 0 : _a2.url) || "" });
-        }
-      );
-      const acctsEl = detail.querySelector(".bz-password-vault-accts");
-      if (!accs.length) {
-        acctsEl.innerHTML = emptyHtml("bz-password-vault-empty", "该平台暂无账号", "");
-        return;
-      }
-      this.appendAcctCards(acctsEl, accs);
-    }
-    /** 账号卡序列（桌面详情容器复用：卡 DOM + 动作绑定同构） */
-    appendAcctCards(acctsEl, accs) {
-      accs.forEach((d) => {
-        const shown = !!this.shownIds[d.id];
-        const card = document.createElement("div");
-        card.className = "bz-password-vault-acctcard";
-        card.innerHTML = acctCardHtml(d, shown);
-        card.querySelectorAll("[data-act]").forEach(
-          (b) => b.addEventListener("click", (e) => {
-            e.stopPropagation();
-            void this.handleAccountAction(d, b.getAttribute("data-act") || "");
-          })
-        );
-        attachItemActions(card, this.buildAccountActions(d), {
-          sheetHead: this.buildSheetHead(d.account, d.platform, d.createdAt)
-        });
-        acctsEl.appendChild(card);
-      });
-    }
-    /** 渲染账号详情（搜索态，同构单卡） */
-    renderAccountDetail(d) {
-      var _a;
-      const shown = !!this.shownIds[d.id];
-      const accs = this.dataManager.accountsOf(d.platform);
-      this.desk.detail.innerHTML = platDetailShellHtml({
-        platform: d.platform,
-        url: d.url || "",
-        fav: this.dataManager.hasFav(d.platform),
-        count: accs.length
-      });
-      (_a = this.desk.detail.querySelector('[data-act="plat-add"]')) == null ? void 0 : _a.addEventListener(
-        "click",
-        () => {
-          var _a2;
-          return this.openEntryDialog(null, { platform: d.platform, url: ((_a2 = accs[0]) == null ? void 0 : _a2.url) || "" });
-        }
-      );
-      const acctsEl = this.desk.detail.querySelector(".bz-password-vault-accts");
-      const card = document.createElement("div");
-      card.className = "bz-password-vault-acctcard";
-      card.innerHTML = acctCardHtml(d, shown);
-      card.querySelectorAll("[data-act]").forEach(
-        (b) => b.addEventListener("click", (e) => {
-          e.stopPropagation();
-          void this.handleAccountAction(d, b.getAttribute("data-act") || "");
-        })
-      );
-      attachItemActions(card, this.buildAccountActions(d), {
-        sheetHead: this.buildSheetHead(d.account, d.platform, d.createdAt)
-      });
-      acctsEl.appendChild(card);
-    }
-    /** 账号级动作分发（桌面卡片/详情/搜索态共用） */
-    async handleAccountAction(d, act) {
-      const t = (m, err = false) => this.toast(m, err);
-      if (act === "copy-ac") {
-        await this.copy(d.account || "") ? t("账号已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
-      } else if (act === "copy-pw") {
-        await this.copy(d.password || "") ? t("密码已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
-      } else if (act === "eye") {
-        this.shownIds[d.id] = !this.shownIds[d.id];
-        this.renderAll();
-        this.refreshMobPage();
-      } else if (act === "edit") {
-        this.openEntryDialog(d);
-      } else if (act === "fav") {
-        try {
-          await this.dataManager.toggleFav(d.id);
-        } catch (e) {
-          t("操作失败：" + ((e == null ? void 0 : e.message) || e), true);
-        }
-        this.renderAll();
-        this.refreshMobPage();
-      } else if (act === "del") {
-        this.askConfirm("删除密码条目", `确定删除账号 "${d.account}" 吗？此操作不可撤销。`, true, async () => {
-          try {
-            await this.dataManager.deleteItem(d.id);
-          } catch (e) {
-            t("删除失败：" + ((e == null ? void 0 : e.message) || e), true);
-            this.renderAll();
-            return;
-          }
-          if (this.selAccount === d.id) this.selAccount = null;
-          this.renderAll();
-          this.refreshMobPage();
-          t("已删除");
-        });
-      }
-    }
-    /**
-     * 重建当前移动端详情页（E6）：renderAll 只重绘列表，已打开的 pageBody 不重建——
-     * eye/fav 等内存态变化后页面内容要等下次进入才更新（点眼睛/收藏无可见反应）。
-     * 页未打开为幂等空操作；条目/平台已被删光则收起页面。
-     */
-    refreshMobPage() {
-      if (!this.mobPagePlatform || !this.mob.page.classList.contains("open")) return;
-      const plat = this.mobPagePlatform;
-      if (this.mobPageAccount && this.mobPageAccount.id) {
-        const d = this.dataManager.pwData.find((x) => x.id === this.mobPageAccount.id);
-        if (d) {
-          this.openAccountPage(d);
-          return;
-        }
-      }
-      const group = this.dataManager.platforms().find((p) => p.platform === plat);
-      if (group) {
-        this.openPage(group);
-        return;
-      }
-      this.mob.page.classList.remove("open");
-      this.mobPagePlatform = null;
-      this.mobPageAccount = null;
-    }
-    // ---------- 移动端渲染 ----------
-    renderMobList() {
-      var _a;
-      const list = this.mob.list;
-      const kw = this.searchKw;
-      list.innerHTML = "";
-      if (kw) {
-        const hits = this.dataManager.search(kw).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || "") * -1);
-        if (!hits.length) {
-          list.innerHTML = emptyHtml("bz-password-vault-mobempty", "没有匹配的条目", "换个关键词试试");
-          return;
-        }
-        hits.forEach((d) => {
-          const c = document.createElement("div");
-          c.className = "bz-password-vault-mobcard";
-          c.innerHTML = mobHitCardHtml(d);
-          this.bindAccountCard(c, d);
-          list.appendChild(c);
-        });
-        hydrateAvatars(list);
-        return;
-      }
-      let plats = this.dataManager.platforms();
-      if (this.view === "fav") plats = plats.filter((p) => this.dataManager.hasFav(p.platform));
-      if (!plats.length) {
-        list.innerHTML = this.view === "fav" ? emptyHtml("bz-password-vault-mobempty", "还没有收藏", "点条目里的 ★ 收藏常用账号") : emptyHtml("bz-password-vault-mobempty", "保险库还是空的", "点击右下角 + 添加第一条密码", { ctaLabel: "添加密码", ctaAct: "add-first" });
-        (_a = list.querySelector('[data-act="add-first"]')) == null ? void 0 : _a.addEventListener("click", () => this.openEntryDialog(null));
-        return;
-      }
-      plats.forEach((p) => {
-        const recent2 = p.accounts[0];
-        const c = document.createElement("div");
-        c.className = "bz-password-vault-mobcard";
-        c.innerHTML = mobPlatCardHtml({
-          platform: p.platform,
-          url: (recent2 == null ? void 0 : recent2.url) || "",
-          account: (recent2 == null ? void 0 : recent2.account) || "",
-          count: p.accounts.length,
-          fav: this.dataManager.hasFav(p.platform)
-        });
-        this.bindCard(c, p);
-        list.appendChild(c);
-      });
-      hydrateAvatars(list);
-    }
-    /** 平台卡：bz 统一右键/长按抽屉；点击 → 平台详情页 */
-    bindCard(card, p) {
-      var _a, _b;
-      attachItemActions(card, this.buildPlatformActions(p.platform), {
-        sheetHead: this.buildSheetHead(p.platform, ((_a = p.accounts[0]) == null ? void 0 : _a.account) || "", ((_b = p.accounts[0]) == null ? void 0 : _b.createdAt) || "")
-      });
-      card.addEventListener("click", (e) => {
-        if (e.target.closest("a")) return;
-        this.openPage(p);
-      });
-    }
-    /** 账号卡（搜索态）：bz 统一右键/长按抽屉；点击 → 账号详情页 */
-    bindAccountCard(card, d) {
-      attachItemActions(card, this.buildAccountActions(d), {
-        sheetHead: this.buildSheetHead(d.account, d.platform, d.createdAt)
-      });
-      card.addEventListener("click", (e) => {
-        if (e.target.closest("a")) return;
-        this.openAccountPage(d);
-      });
-    }
-    /** 平台详情页 */
-    openPage(p) {
-      var _a, _b;
-      const accs = p.accounts;
-      let body = mobPlatHeadHtml({
-        platform: p.platform,
-        url: ((_a = accs[0]) == null ? void 0 : _a.url) || "",
-        fav: this.dataManager.hasFav(p.platform)
-      });
-      if (!accs.length) {
-        body += emptyHtml("bz-password-vault-mobempty", "该平台暂无账号", "");
-      } else {
-        accs.forEach((d) => {
-          const shown = !!this.shownIds[d.id];
-          body += mobSegHtml(d, shown, true);
-        });
-      }
-      this.mob.pageBody.innerHTML = body;
-      (_b = this.mob.pageBody.querySelector('[data-act="add"]')) == null ? void 0 : _b.addEventListener("click", () => {
-        var _a2;
-        this.mob.page.classList.remove("open");
-        this.openEntryDialog(null, { platform: p.platform, url: ((_a2 = accs[0]) == null ? void 0 : _a2.url) || "" });
-      });
-      this.mob.pageBody.querySelectorAll("[data-act]").forEach(
-        (b) => b.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const a = b.getAttribute("data-act") || "";
-          const id = b.getAttribute("data-id") || "";
-          const d = this.dataManager.pwData.find((x) => x.id === id);
-          if (!d && a !== "menu") return;
-          void this.handleAccountAction(d, a);
-        })
-      );
-      this.mob.pageBody.querySelectorAll(".bz-password-vault-seg").forEach((seg) => {
-        var _a2;
-        const id = ((_a2 = seg.querySelector("[data-id]")) == null ? void 0 : _a2.getAttribute("data-id")) || "";
-        const d = this.dataManager.pwData.find((x) => x.id === id);
-        if (d) attachItemActions(seg, this.buildAccountActions(d), {
-          sheetHead: this.buildSheetHead(d.account, d.platform, d.createdAt)
-        });
-      });
-      this.mob.pageTitle.textContent = p.platform;
-      this.mobPagePlatform = p.platform;
-      this.mobPageAccount = null;
-      this.mob.page.classList.add("open");
-    }
-    /** 账号详情页（搜索态点账号卡，同构单卡） */
-    openAccountPage(d) {
-      var _a;
-      const shown = !!this.shownIds[d.id];
-      this.mob.pageBody.innerHTML = mobPlatHeadHtml({
-        platform: d.platform,
-        url: d.url || "",
-        fav: this.dataManager.hasFav(d.platform)
-      }) + mobSegHtml(d, shown, false);
-      (_a = this.mob.pageBody.querySelector('[data-act="add"]')) == null ? void 0 : _a.addEventListener("click", () => {
-        this.mob.page.classList.remove("open");
-        this.openEntryDialog(null, { platform: d.platform, url: d.url || "" });
-      });
-      this.mob.pageBody.querySelectorAll("[data-act]").forEach(
-        (b) => b.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const a = b.getAttribute("data-act") || "";
-          void this.handleAccountAction(d, a);
-        })
-      );
-      const seg = this.mob.pageBody.querySelector(".bz-password-vault-seg");
-      attachItemActions(seg, this.buildAccountActions(d), {
-        sheetHead: this.buildSheetHead(d.account, d.platform, d.createdAt)
-      });
-      this.mob.pageTitle.textContent = d.platform;
-      this.mobPagePlatform = d.platform;
-      this.mobPageAccount = d;
-      this.mob.page.classList.add("open");
-    }
-    // ---------- 动作定义（bz 统一右键菜单 / 长按抽屉，item-actions） ----------
-    /** 抽屉头部（bz 统一抽屉样式：标题 + 副标题） */
-    buildSheetHead(title, sub, time) {
-      const head = document.createElement("div");
-      head.className = "bz-item-sheet-entry";
-      const body = document.createElement("div");
-      body.style.cssText = "display:flex; align-items:flex-start; gap:10px;";
-      const emoji = document.createElement("span");
-      emoji.className = "bz-item-sheet-emoji";
-      emoji.textContent = "🔑";
-      body.appendChild(emoji);
-      const info = document.createElement("div");
-      info.style.cssText = "flex:1; min-width:0;";
-      const t = document.createElement("div");
-      t.className = "bz-item-sheet-title";
-      t.textContent = title;
-      info.appendChild(t);
-      const s = document.createElement("div");
-      s.className = "bz-item-sheet-sub";
-      s.textContent = `${sub}${sub ? " · " : ""}${relTime2(time)}`;
-      info.appendChild(s);
-      body.appendChild(info);
-      head.appendChild(body);
-      return head;
-    }
-    buildAccountActions(d) {
-      const t = (m, err = false) => this.toast(m, err);
-      return [
-        {
-          icon: "copy",
-          label: "复制账号",
-          onClick: () => {
-            void (async () => {
-              await this.copy(d.account || "") ? t("账号已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
-            })();
-          }
-        },
-        {
-          icon: "key",
-          label: "复制密码",
-          onClick: () => {
-            void (async () => {
-              await this.copy(d.password || "") ? t("密码已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
-            })();
-          }
-        },
-        {
-          icon: "star",
-          label: d.fav ? "取消收藏" : "收藏",
-          onClick: () => {
-            void (async () => {
-              try {
-                await this.dataManager.toggleFav(d.id);
-              } catch (e) {
-                t("操作失败：" + ((e == null ? void 0 : e.message) || e), true);
-              }
-              this.renderAll();
-              this.refreshMobPage();
-            })();
-          }
-        },
-        {
-          icon: "external-link",
-          label: "打开链接",
-          onClick: () => {
-            if (d.url) this.openExternal(d.url);
-            else t("该条目没有链接", true);
-          }
-        },
-        { icon: "pencil", label: "编辑", onClick: () => this.openEntryDialog(d) },
-        {
-          icon: "trash-2",
-          label: "删除",
-          kind: "danger",
-          onClick: () => this.askConfirm("删除密码条目", `确定删除账号 "${d.account}" 吗？此操作不可撤销。`, true, () => {
-            void (async () => {
-              try {
-                await this.dataManager.deleteItem(d.id);
-              } catch (e) {
-                t("删除失败：" + ((e == null ? void 0 : e.message) || e), true);
-                this.renderAll();
-                return;
-              }
-              this.renderAll();
-              this.refreshMobPage();
-              t("已删除");
-            })();
-          })
-        }
-      ];
-    }
-    buildPlatformActions(platform) {
-      const accs = this.dataManager.accountsOf(platform);
-      const recent2 = accs[0];
-      const count = accs.length;
-      const t = (m, err = false) => this.toast(m, err);
-      const actions = [
-        {
-          icon: "plus",
-          label: "在该平台新增账号",
-          onClick: () => this.openEntryDialog(null, { platform, url: (recent2 == null ? void 0 : recent2.url) || "" })
-        }
-      ];
-      if (recent2) {
-        actions.push({
-          icon: "copy",
-          label: "复制最近账号",
-          onClick: () => {
-            void (async () => {
-              await this.copy(recent2.account || "") ? t("最近账号已复制（60 秒后自动清空）") : t("复制失败", true);
-            })();
-          }
-        });
-        actions.push({
-          icon: "key",
-          label: "复制最近密码",
-          onClick: () => {
-            void (async () => {
-              await this.copy(recent2.password || "") ? t("最近密码已复制（60 秒后自动清空）") : t("复制失败", true);
-            })();
-          }
-        });
-      }
-      actions.push({ icon: "pencil", label: "编辑平台信息", onClick: () => this.openPlatformEdit(platform) });
-      actions.push({
-        icon: "trash-2",
-        label: "删除整个平台",
-        kind: "danger",
-        onClick: () => this.askConfirm("删除整个平台", `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, true, () => {
-          void (async () => {
-            let n = 0;
-            try {
-              n = await this.dataManager.removePlatform(platform);
-            } catch (e) {
-              t("删除失败：" + ((e == null ? void 0 : e.message) || e), true);
-              this.renderAll();
-              return;
-            }
-            this.selPlatform = null;
-            this.renderAll();
-            this.refreshMobPage();
-            t(`已删除平台与 ${n} 个账号`);
-          })();
-        })
-      });
-      return actions;
-    }
-    // ---------- 添加/编辑弹窗 ----------
-    openEntryDialog(editItem = null, preset) {
-      if (!this.dataManager.unlocked) {
-        notice("请先解锁保险库");
-        return;
-      }
-      this.editingId = editItem ? editItem.id : null;
-      const title = editItem ? "编辑密码条目" : "添加密码条目";
-      const subtitle = "带 * 为必填 · 平台与账号密码不可为空";
-      this.root.querySelectorAll(".bz-password-vault-modal").forEach((modal) => {
-        const dlg = modal.querySelector(".bz-password-vault-dialog");
-        dlg.querySelector("h3").textContent = title;
-        dlg.querySelector(".sub").textContent = subtitle;
-        const fields = ["platform", "url", "account", "password", "note"];
-        fields.forEach((f) => {
-          const input = dlg.querySelector(`[data-f="${f}"]`);
-          input.value = editItem ? editItem[f] || "" : preset && f !== "password" ? preset[f] || "" : "";
-        });
-        if (!editItem) {
-          const staged = this.pendingPassword;
-          this.pendingPassword = null;
-          dlg.querySelector('[data-f="password"]').value = staged || this.generatePassword();
-        }
-        dlg.querySelector("[data-f-err]").textContent = "";
-        modal.classList.add("open");
-      });
-      const first = this.root.querySelector('.bz-password-vault-modal [data-f="platform"]');
-      first == null ? void 0 : first.focus();
-    }
-    closeEntryDialog() {
-      this.root.querySelectorAll(".bz-password-vault-modal").forEach((m) => m.classList.remove("open"));
-      this.editingId = null;
-      this.pendingPassword = null;
-    }
-    // ---------- 平台编辑弹窗 ----------
-    openPlatformEdit(platform) {
-      const accs = this.dataManager.accountsOf(platform);
-      const d = accs[0] || {};
-      this.root.querySelectorAll(".bz-password-vault-platedit").forEach((el) => {
-        var _a;
-        const card = el;
-        card.querySelector("h3").textContent = "编辑平台 · " + platform;
-        card.querySelector('[data-f="platform"]').value = platform === "(无平台)" ? "" : platform;
-        card.querySelector('[data-f="url"]').value = d.url || "";
-        card.querySelector(".err").textContent = "";
-        (_a = card.__setCurrent) == null ? void 0 : _a.call(card, platform);
-        card.classList.add("open");
-      });
-    }
-    askConfirm(title, message, danger, onYes) {
-      this.confirmYes = onYes;
-      this.root.querySelectorAll(".bz-password-vault-pop2:not(.bz-password-vault-platedit)").forEach((node) => {
-        const pop = node;
-        const card = pop.querySelector(".card");
-        card.querySelector("h3").textContent = title;
-        card.querySelector(".msg").textContent = message;
-        const ok = card.querySelector(".ok");
-        ok.textContent = danger ? "删除" : "确定";
-        ok.classList.toggle("danger", !!danger);
-        pop.classList.add("open");
-        pop.dataset.confirmCb = "pending";
-        if (!pop.dataset.maskBound) {
-          pop.dataset.maskBound = "1";
-          pop.addEventListener("click", (e) => {
-            if (e.target === pop) {
-              pop.classList.remove("open");
-              pop.dataset.confirmCb = "";
-            }
-          });
-          ok.addEventListener("click", () => {
-            var _a;
-            pop.classList.remove("open");
-            if (pop.dataset.confirmCb === "pending") {
-              pop.dataset.confirmCb = "";
-              (_a = this.confirmYes) == null ? void 0 : _a.call(this);
-            }
-          });
-        }
-      });
-    }
-    // ---------- toast（原型自绘） ----------
-    toast(msg, isErr = false) {
-      this.root.querySelectorAll(".bz-password-vault-toast").forEach((el) => {
-        el.textContent = msg;
-        el.classList.toggle("err", !!isErr);
-        el.classList.add("show");
-      });
-      if (this.toastTimer) clearTimeout(this.toastTimer);
-      this.toastTimer = setTimeout(() => {
-        this.root.querySelectorAll(".bz-password-vault-toast").forEach((el) => el.classList.remove("show"));
-      }, 1800);
-    }
-    // ---------- 复制 ----------
-    async copy(text) {
-      try {
-        await copySensitiveText(text);
-        return true;
-      } catch (e) {
-        try {
-          const ta = document.createElement("textarea");
-          ta.value = text;
-          ta.style.cssText = "position:fixed;opacity:0";
-          document.body.appendChild(ta);
-          ta.select();
-          const ok = document.execCommand("copy");
-          ta.remove();
-          if (ok) armClipboardClear();
-          return ok;
-        } catch (e2) {
-          return false;
-        }
-      }
-    }
-    /** 打开外链（electron shell 优先，Obsidian 环境） */
-    openExternal(url) {
-      try {
-        const w = window;
-        const electron = w.require && w.require("electron");
-        if (electron && electron.shell) {
-          electron.shell.openExternal(url);
-          return;
-        }
-      } catch (e) {
-      }
-      window.open(url, "_blank");
-    }
-    // ---------- 生成器 ----------
-    generatePassword() {
-      const length = parseInt(this.config.length) || 16;
-      const charset = this.config.charset || DEFAULT_CHARSET;
-      return secureRandomPassword(length, charset);
-    }
-    // ---------- 显示/隐藏 ----------
-    show() {
-      if (!this._initialized) this.ensureElements();
-      this.root.style.display = "flex";
-      topifyZ(this.root);
-      this.subscribeUnlockEvents();
-      void this.loadAndRender();
-    }
-    hide() {
-      if (!this.root) return;
-      this.unsubscribeUnlockEvents();
-      this.root.style.display = "none";
-      if (this.config.securityMode) {
-        this.dataManager.lock();
-        notice("安全模式：已自动上锁");
-      }
-    }
-    subscribeUnlockEvents() {
-      if (this.unlockOff) return;
-      this.lastUnlockSeen = this.dataManager.unlocked;
-      this.unlockOff = onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
-        void this.onSharedLockChanged(!!(evt == null ? void 0 : evt.unlocked));
-      });
-    }
-    unsubscribeUnlockEvents() {
-      if (this.unlockOff) {
-        this.unlockOff();
-        this.unlockOff = null;
-      }
-    }
-    async onSharedLockChanged(unlocked) {
-      if (unlocked) {
-        this.lastUnlockSeen = true;
-        await this.loadAndRender();
-        return;
-      }
-      if (this.lastUnlockSeen) {
-        this.lastUnlockSeen = false;
-        this.dataManager.lock();
-      }
-      this.renderAll();
-    }
-    async loadAndRender() {
-      if (!this.dataManager.unlocked) {
-        this.renderAll();
-        this.showLock();
-        return;
-      }
-      try {
-        await this.dataManager.load();
-      } catch (e) {
-        notice("加载数据失败：" + e.message, "error");
-      }
-      this.renderAll();
-    }
-    /** 快照本域统计（解锁态调用） */
-    captureLockStats() {
-      try {
-        const plats = this.dataManager.platforms();
-        this.pwLockStatsCache = [
-          { num: String(plats.length), label: "平台" },
-          { num: String(this.dataManager.pwData.length), label: "口令条目" },
-          { num: String(plats.filter((x) => this.dataManager.hasFav(x.platform)).length), label: "收藏" }
-        ];
-      } catch (e) {
-      }
-    }
-    /** 显示锁屏（未解锁态）：core 共享骨架 + 本域口径（平台/口令条目/收藏）与金色风格 */
-    showLock() {
-      void this.isFirstTime().then((firstTime) => {
-        this.root.querySelectorAll(".bz-password-vault-lock").forEach((lockEl) => {
-          lockEl.classList.add("open");
-          let ls = this.lockHandles.get(lockEl);
-          if (!ls) {
-            ls = uiLockScreen({
-              kind: "password-vault",
-              icon: "key",
-              title: "",
-              sub: "",
-              stats: this.pwLockStatsCache,
-              action: "",
-              inline: true
-            });
-            lockEl.appendChild(ls.el);
-            this.lockHandles.set(lockEl, ls);
-            this.bindLock(ls);
-          }
-          ls.setTitle(firstTime ? "设置主密码" : "密码本已上锁");
-          ls.setMessage(firstTime ? "请设置一个主密码（用于加密密码本数据）" : "解锁后可查看平台与口令");
-          ls.actionBtn.textContent = firstTime ? "设置并解锁" : "解锁";
-          ls.showSecondInput(firstTime);
-          ls.setError("");
-          ls.input.value = "";
-          ls.input2.value = "";
-          ls.setStats(this.pwLockStatsCache);
-          requestAnimationFrame(() => ls.focus());
-        });
-      });
-    }
-    async isFirstTime() {
-      const safe = this.dataManager.safeManager;
-      try {
-        return !await safe.exists();
-      } catch (e) {
-        return false;
-      }
-    }
-    /** 锁屏交互（原型视觉 + 保险箱安全机制） */
-    /** 锁屏交互（首设双输入 + 冷却节流；语义留本域，结构走 core 共享组件） */
-    bindLock(ls) {
-      const safe = this.dataManager.safeManager;
-      let busy = false;
-      const showErr = (m) => {
-        ls.setError(m);
-        setTimeout(() => {
-          if (ls.input.value) ls.setError("");
-        }, 2600);
-      };
-      const resetBtn = () => {
-        void this.isFirstTime().then((f) => {
-          ls.actionBtn.textContent = f ? "设置并解锁" : "解锁";
-        });
-      };
-      ls.actionBtn.addEventListener("click", async () => {
-        if (busy) return;
-        const first = await this.isFirstTime();
-        const pw = ls.input.value;
-        if (!pw) {
-          showErr("请输入主密码");
-          return;
-        }
-        if (first) {
-          if (ls.input2.style.display === "none") {
-            ls.showSecondInput(true);
-            ls.input2.value = "";
-            ls.setMessage("请再次输入主密码确认");
-            ls.focus();
-            return;
-          }
-          if (pw !== ls.input2.value) {
-            showErr("两次密码不一致");
-            return;
-          }
-          if (pw.length < 4) {
-            showErr("主密码至少 4 位");
-            return;
-          }
-          void openFlowDialog({
-            title: "设置主密码",
-            message: "主密码不会存储，也无法找回。若遗忘密码，保险库及加密数据将永久丢失。确定继续吗？",
-            // issue 291：流程框挂 document.body，脱离 .bz-password-vault 根后 --pwv-* token
-            // 全部失效（金色主钮会掉回 core 默认品牌色）。本类既在域 CSS 里复制一份 token，
-            // 又供 id 选择器把共享壳映射成本域材质 —— 缺它确认框与面板不同皮（同 issue 257 事故）。
-            className: "bz-pwv-flow-dialog",
-            actions: [
-              { label: "取消", value: "cancel" },
-              // 刻意不标 danger（issue 291 评审）：本框是「风险告知门」，主动作是把主密码设下去
-              // 的正向路径，动作本身不破坏任何数据（与下方「仍要重设」的破坏性重设不同），
-              // 故保留金色主钮——域 CSS 的 :not(.bz-flow-dialog--danger) 就是为它保留的通路。
-              { label: "我已了解并继续", value: "ok", cta: true }
-            ]
-          }).then(async (v) => {
-            if (v !== "ok") {
-              ls.input.value = "";
-              ls.input2.value = "";
-              showErr("已取消设置");
-              return;
-            }
-            busy = true;
-            ls.setBusy(true);
-            try {
-              const ok = await safe.unlock(pw);
-              if (ok) {
-                this.closeLock();
-                this.toast("保险库已解锁");
-                await this.reloadAfterUnlock();
-                this.renderAll();
-              } else {
-                showErr("设置失败：无法写入清单，请检查磁盘空间后重试");
-              }
-            } catch (e) {
-              showErr("设置失败：" + ((e == null ? void 0 : e.message) || ""));
-            } finally {
-              busy = false;
-              ls.setBusy(false);
-              resetBtn();
-            }
-          });
-          return;
-        }
-        const remainMs = this.security.unlockCooldownUntil - Date.now();
-        if (remainMs > 0) {
-          showErr(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1e3)} 秒`);
-          return;
-        }
-        busy = true;
-        ls.setBusy(true);
-        try {
-          const ok = await safe.unlock(pw);
-          if (ok) {
-            this.security.unlockFailStreak = 0;
-            this.security.unlockCooldownUntil = 0;
-            this.closeLock();
-            this.toast("保险库已解锁");
-            await this.reloadAfterUnlock();
-            this.renderAll();
-          } else {
-            const issue = safe.manifestIssue;
-            if (issue === "empty" || issue === "corrupt") {
-              void openFlowDialog({
-                title: "清单疑似损坏",
-                message: "保险箱清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？",
-                // issue 291：同上——挂 body 的流程框须显式带域类才拿到 --pwv-* 与域材质
-                className: "bz-pwv-flow-dialog",
-                actions: [
-                  { label: "暂不重设", value: "cancel" },
-                  // danger（issue 291 评审补）：重设会生成全新空清单、旧加密数据永久无法恢复 ——
-                  // 破坏性主动作，主按钮降中性底 + 红字（手册 §9/§10）。
-                  // 对照上方「设置主密码」：那句是风险告知门、动作本身是首设正向路径，
-                  // 故刻意不标 danger，域 CSS 的 :not(.bz-flow-dialog--danger) 金色主钮正是给它用。
-                  { label: "仍要重设", value: "ok", cta: true, danger: true }
-                ]
-              }).then((v) => {
-                if (v === "ok") {
-                  void safe.unlock(pw, true).then(async (ok2) => {
-                    if (ok2) {
-                      this.security.unlockFailStreak = 0;
-                      this.security.unlockCooldownUntil = 0;
-                      this.closeLock();
-                      this.toast("已重设主密码（旧数据不可恢复）", true);
-                      await this.reloadAfterUnlock();
-                      this.renderAll();
-                    } else {
-                      showErr("重设失败：无法写入清单");
-                    }
-                  });
-                } else {
-                  showErr("未重设：请先检查或备份数据文件");
-                }
-              });
-              return;
-            }
-            showErr("密码错误，请重试");
-            this.security.unlockFailStreak += 1;
-            const delaySec = Math.min(2 ** (this.security.unlockFailStreak - 1), 8);
-            this.security.unlockCooldownUntil = Date.now() + delaySec * 1e3;
-            showErr(`${delaySec} 秒后可再次尝试`);
-            ls.input.value = "";
-            ls.focus();
-          }
-        } finally {
-          busy = false;
-          ls.setBusy(false);
-          resetBtn();
-        }
-      });
-      ls.input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          if (ls.input2.style.display === "none") ls.actionBtn.click();
-          else ls.input2.focus();
-        }
-      });
-      ls.input2.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") ls.actionBtn.click();
-      });
-    }
-    closeLock() {
-      this.root.querySelectorAll(".bz-password-vault-lock").forEach((l) => l.classList.remove("open"));
-    }
-    // ---------- ESC ----------
-    registerEscape() {
-      this.escUnregister = escManager.register("password-vault", {
-        isVisible: () => !!this.root && this.root.style.display === "flex",
-        close: () => {
-          const openModal = this.root.querySelector(".bz-password-vault-modal.open");
-          if (openModal) {
-            this.closeEntryDialog();
-            return;
-          }
-          const openConfirm = this.root.querySelector(".bz-password-vault-pop2.open");
-          if (openConfirm) {
-            openConfirm.classList.remove("open");
-            openConfirm.dataset.confirmCb = "";
-            return;
-          }
-          this.hide();
-        }
-      });
-    }
-    // ---------- 卸载 ----------
-    cleanup() {
-      var _a;
-      cancelClipboardClear();
-      this.unsubscribeUnlockEvents();
-      if (this.searchTimer !== null) {
-        clearTimeout(this.searchTimer);
-        this.searchTimer = null;
-      }
-      if (this.toastTimer !== null) {
-        clearTimeout(this.toastTimer);
-        this.toastTimer = null;
-      }
-      (_a = this.escUnregister) == null ? void 0 : _a.unregister();
-      this.escUnregister = null;
-      this.dataManager.destroy();
-      if (this.root) {
-        this.root.remove();
-        this.root = null;
-      }
-      this._initialized = false;
-    }
-  };
-  var _PasswordVaultAppController = class _PasswordVaultAppController {
-    constructor(config) {
-      this._initialized = false;
-      this.dataManager = new PasswordVaultDataManager(getSafeManager());
-      this.uiManager = new PasswordVaultUIManager(this.dataManager, config);
-    }
-    static getInstance(config) {
-      if (!_PasswordVaultAppController.instance) {
-        _PasswordVaultAppController.instance = new _PasswordVaultAppController(config);
-      }
-      return _PasswordVaultAppController.instance;
-    }
-    async init() {
-      if (this._initialized) return;
-      this.uiManager.ensureElements();
-      this._initialized = true;
-    }
-    /** 打开：未解锁 → 先解锁（原型锁屏），解锁后进入 */
-    async openManager() {
-      await this.init();
-      this.uiManager.show();
-    }
-    cleanup() {
-      this.uiManager.cleanup();
-      _PasswordVaultAppController.instance = null;
-    }
-  };
-  _PasswordVaultAppController.instance = null;
-  var PasswordVaultAppController = _PasswordVaultAppController;
-
-  // src/password-vault/index.ts
-  var initialized = false;
-  var controller2 = null;
-  function getController2() {
-    if (!controller2) {
-      const s = getSettings();
-      const charset = s.passwordCharset || "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
-      const length = String(parseInt(s.passwordLength) || 16);
-      const securityMode = !!s.securityMode;
-      controller2 = PasswordVaultAppController.getInstance({ charset, length, securityMode });
-    }
-    return controller2;
-  }
-  async function ensurePasswordVault(app) {
-    if (initialized) return;
-    initialized = true;
-    await getController2().init();
-  }
-  function openPasswordVault(app) {
-    void ensurePasswordVault(app).then(() => getController2().openManager());
-  }
-  function unloadPasswordVault() {
-    if (controller2) controller2.cleanup();
-    controller2 = null;
+  function unloadEncrypt() {
+    if (controller) controller.cleanup();
+    controller = null;
     initialized = false;
   }
 
-  // prototypes/password-vault/fake-sim.ts
-  var SEED_MARK = "bz-sim:__pwv-seed-v1";
-  var SETTINGS_KEY = "bz-sim:__settings";
+  // prototypes/encrypt/fake-sim.ts
+  var SEED_MARK = "bz-sim:__vlt-seed-v1";
+  var SEED_LOCK = "bz-sim:__vlt-seeding";
   var DEMO_MASTER_PASSWORD = "demo";
   var settingsStore = {
     storagePath: "CONFIG/STORAGE",
     encryptRoot: "CONFIG/.ENCRYPT",
-    encryptPreviewEnabled: false,
+    encryptPreviewEnabled: true,
+    encryptPreviewSize: "384",
+    encryptPreviewQuality: "0.5",
+    encryptAutoLoadOriginal: false,
     encryptSecurityMode: false,
     // 安全模式演示期关闭：关窗不上锁，评审可反复进出（真插件默认值同为 false）
     securityMode: false,
     passwordCharset: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+",
     passwordLength: "16"
   };
-  function seedDatabase() {
-    const src = window.PWV_DATA || window.parent && window.parent.PWV_DATA || null;
-    if (!src || localStorage.getItem(SEED_MARK)) return;
-    for (const [path, content] of Object.entries(src)) {
-      seedVaultFile(path, content);
+  var SEED_NOTES = [
+    {
+      path: "我的/私密/深夜盘点.md",
+      title: "深夜盘点",
+      content: [
+        "# 深夜盘点",
+        "",
+        "这个月把三件拖了很久的事收掉了，仍然有两件在原地打转。",
+        "",
+        "## 收掉的",
+        "",
+        "- 迁移脚本终于跑通，回滚路径也验过了",
+        "- 把「想做的事」清单砍到只剩 5 条",
+        "- 体检报告看完了，问题不大，但要开始规律作息",
+        "",
+        "## 没动的",
+        "",
+        "> 那些迟迟不动的事，多半不是难，是我不愿意承认它的代价。",
+        "",
+        "1. 学钢琴，每周至少两次",
+        "2. 把书架第二层清掉一半",
+        "",
+        "下周只留一件事：把上面第 1 条排进日历。"
+      ].join("\n")
+    },
+    {
+      path: "我的/私密/服务器迁移备忘.md",
+      title: "服务器迁移备忘",
+      content: [
+        "# 服务器迁移备忘",
+        "",
+        "老机器 10 月底到期，迁移分三步，别一次全量切换。",
+        "",
+        "| 步骤 | 内容 | 回滚 |",
+        "| --- | --- | --- |",
+        "| 1 | 静态资源先切 CDN | 改回源站域名 |",
+        "| 2 | 数据库主从 + 只读切换 | 提权旧主库 |",
+        "| 3 | 应用灰度 10% → 50% → 全量 | 摘掉灰度实例 |",
+        "",
+        "关键命令记一下：",
+        "",
+        "```bash",
+        'ssh deploy@old-host "systemctl stop app"',
+        "rsync -avz --delete /srv/data/ new-host:/srv/data/",
+        "```",
+        "",
+        "> 迁移窗口选周二凌晨，别选周五。",
+        "",
+        "迁移完成后立刻做的事：更新 DNS TTL、把旧机器留一周再关机。"
+      ].join("\n")
+    },
+    {
+      path: "我的/私密/一些不愿公开的片段.md",
+      title: "一些不愿公开的片段",
+      content: [
+        "# 一些不愿公开的片段",
+        "",
+        "写下来只是为了让它们从脑子里出去。",
+        "",
+        "- 那次会议我的判断错了，而且我当场就知道错了，但没改口。",
+        "- 有些关系不是变淡了，是我先松的手。",
+        "- 存了一笔「以后再说」的钱，其实是为了买一点退路。",
+        "",
+        "这些没有结论，也不需要结论。"
+      ].join("\n")
+    },
+    {
+      path: "我的/日记/2026-09-10.md",
+      title: "2026-09-10 阴",
+      kind: "diary-entry",
+      content: [
+        "## 2026-09-10 阴",
+        "",
+        "一整天断断续续的雨。上午把预发布环境重装了一遍，终于干净了。",
+        "",
+        "晚上没写代码，把纪录片看完了。片子讲的是修钟表的人，节奏很慢，看完反而踏实。"
+      ].join("\n")
+    },
+    {
+      path: "我的/日记/2026-09-11.md",
+      title: "2026-09-11 晴",
+      kind: "diary-entry",
+      content: [
+        "## 2026-09-11 晴",
+        "",
+        "晴，但风起来了。",
+        "",
+        "早上六点半自然醒，出门走了一圈，路上只遇到一个遛狗的人。回来把积压的邮件清空了——清邮件这件事本身没有价值，但它让我觉得这一天是我在安排。",
+        "",
+        "> 今天唯一想记住的一句：先把该做的做完，再去想值不值得。"
+      ].join("\n")
     }
-    localStorage.setItem(SEED_MARK, (/* @__PURE__ */ new Date()).toISOString());
-  }
-  function injectSettings() {
-    setSettingsProvider(() => settingsStore);
-  }
+  ];
   var simApp = null;
-  function bootPasswordVaultSim() {
-    const g = window;
-    if (g.__bzPwvSimBooted) return;
-    g.__bzPwvSimBooted = true;
-    seedDatabase();
-    const app = new FakeApp();
-    simApp = app;
-    setApp(app);
-    injectSettings();
+  var bootPromise = null;
+  function waitSeeded(timeoutMs = 2e4) {
+    return new Promise((resolve) => {
+      const t0 = Date.now();
+      const tick = () => {
+        if (localStorage.getItem(SEED_MARK) || Date.now() - t0 > timeoutMs) return resolve();
+        setTimeout(tick, 120);
+      };
+      tick();
+    });
   }
-  function injectLockHint() {
-    document.querySelectorAll(".bz-password-vault-lock").forEach((lock) => {
-      if (lock.querySelector(".bz-pwv-sim-hint")) return;
+  async function seedDatabase(app) {
+    await ensureEncrypt(app);
+    if (localStorage.getItem(SEED_MARK)) return;
+    if (localStorage.getItem(SEED_LOCK)) {
+      await waitSeeded();
+      if (localStorage.getItem(SEED_MARK)) return;
+      localStorage.setItem(SEED_LOCK, String(Date.now()));
+    } else {
+      localStorage.setItem(SEED_LOCK, String(Date.now()));
+    }
+    try {
+      const sm = getSafeManager();
+      if (!sm.unlocked) {
+        const ok = await sm.unlock(DEMO_MASTER_PASSWORD);
+        if (!ok) return;
+      }
+      for (const n of SEED_NOTES) {
+        seedVaultFile(n.path, n.content, Date.parse("2026-09-11T21:00:00+08:00") || void 0);
+        await sm.lockNote({
+          path: n.path,
+          title: n.title,
+          kind: n.kind,
+          content: n.content,
+          attachments: []
+        });
+      }
+      sm.lock();
+      localStorage.setItem(SEED_MARK, (/* @__PURE__ */ new Date()).toISOString());
+    } finally {
+      localStorage.removeItem(SEED_LOCK);
+    }
+  }
+  function bootEncryptSim() {
+    if (!bootPromise) {
+      bootPromise = (async () => {
+        const app = new FakeApp();
+        simApp = app;
+        setApp(app);
+        setSettingsProvider(() => settingsStore);
+        await seedDatabase(app);
+      })();
+    }
+    return bootPromise;
+  }
+  function injectLockHint(retries = 20) {
+    const boxes = document.querySelectorAll(".bz-lockscreen-box");
+    if (!boxes.length) {
+      if (retries > 0) setTimeout(() => injectLockHint(retries - 1), 200);
+      return;
+    }
+    boxes.forEach((lock) => {
+      if (lock.querySelector(".bz-vlt-sim-hint")) return;
       const hint = document.createElement("div");
-      hint.className = "bz-pwv-sim-hint";
-      hint.style.cssText = "margin-top:12px;font-size:12px;color:#9a917d;letter-spacing:.5px;";
+      hint.className = "bz-vlt-sim-hint";
+      hint.style.cssText = "margin-top:12px;font-size:12px;opacity:.7;letter-spacing:.5px;text-align:center;";
       hint.textContent = "演示库主密码：demo（小写；两端各自解锁）";
       lock.appendChild(hint);
     });
   }
-  function openPanel() {
-    if (!simApp) bootPasswordVaultSim();
-    openPasswordVault(simApp);
+  async function openPanel() {
+    await bootEncryptSim();
+    openEncrypt(simApp);
     injectLockHint();
   }
   function unload() {
-    unloadPasswordVault();
+    unloadEncrypt();
   }
   return __toCommonJS(fake_sim_exports);
 })();
