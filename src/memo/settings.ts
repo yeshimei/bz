@@ -44,6 +44,19 @@ export function memoSettingsSchema(): SettingsSchema {
         rows: [
           {
             type: 'select',
+            name: '打开默认场景',
+            desc: '打开备忘录面板时默认选中的场景',
+            binding: { key: 'memoOpenScene' },
+            options: [
+              { value: '@last', label: '上次停留' },
+              { value: '全部', label: '全部' },
+              { value: '今日', label: '今日' },
+              { value: '重要', label: '重要' },
+              ...MemoData.getScenarios().map((sc) => ({ value: sc, label: sc })),
+            ],
+          },
+          {
+            type: 'select',
             name: '默认排序方式',
             desc: '面板条目按所选规则排序',
             binding: { key: 'memoSortMode' },
@@ -58,6 +71,18 @@ export function memoSettingsSchema(): SettingsSchema {
             name: '默认显示已完成',
             desc: '打开面板时同时展开已完成折叠区',
             binding: { key: 'memoShowArchivedByDefault' },
+          },
+          {
+            type: 'select',
+            name: '已完成显示范围',
+            desc: '展开已完成折叠区时列出最近多少天完成的条目',
+            binding: { key: 'memoDoneWindow' },
+            options: [
+              { value: '7', label: '近 7 天' },
+              { value: '30', label: '近 30 天' },
+              { value: '90', label: '近 90 天' },
+              { value: 'all', label: '全部' },
+            ],
           },
         ],
       },

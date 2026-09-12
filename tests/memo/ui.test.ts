@@ -22,6 +22,8 @@ const SETTINGS = {
   memoSortMode: 'priority',
   memoDefaultPriority: 'minor',
   memoDefaultScene: '',
+  memoOpenScene: '@last',
+  memoDoneWindow: '30',
   memoAutoArchive: true,
   cinemaFolderPath: '我的/影视',
 };
@@ -835,6 +837,76 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     expect(document.querySelector('[data-memo-donemore]')).toBeNull();
   });
 
+  it('已完成显示范围（memoDoneWindow）：7 天窗把窗外完成收进「更早 N 条」，全部=不折叠', async () => {
+    const { vault, app, settings } = seedVault();
+    settings.memoDoneWindow = '7';
+    pushItem(vault, { id: 'f', title: '十天前完成的旧账', scene: '工作', priority: 'minor', created: at(-11, '10:00'), completed: at(-10, '10:00') });
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-donebar')).toBeTruthy();
+    });
+    (document.querySelector('.bz-memo-donebar') as HTMLElement).click();
+    await vi.waitFor(() => {
+      // 7 天窗：d（昨天完成）在列，10 天前完成的 f 收进「更早 1 条」
+      const doneCards = document.querySelectorAll('.bz-memo-card.bz-memo-done');
+      expect(doneCards.length).toBe(1);
+      expect(doneCards[0].textContent).toContain('重看注意力机制');
+      expect(document.body.textContent).not.toContain('十天前完成的旧账');
+    });
+    expect((document.querySelector('[data-memo-donemore]') as HTMLElement).textContent).toContain('更早 1 条');
+
+    closeMemoPanel();
+    settings.memoDoneWindow = 'all';
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-donebar')).toBeTruthy();
+    });
+    (document.querySelector('.bz-memo-donebar') as HTMLElement).click();
+    await vi.waitFor(() => {
+      // 全部：不折叠，直接列全，无「更早 N 条」
+      const doneCards = document.querySelectorAll('.bz-memo-card.bz-memo-done');
+      expect(doneCards.length).toBe(2);
+      expect(doneCards[1].textContent).toContain('十天前完成的旧账');
+    });
+    expect(document.querySelector('[data-memo-donemore]')).toBeNull();
+  });
+
+  it('打开默认场景（memoOpenScene）：固定场景直用 / @last 关面板记忆跨开合 / 场景失效回落全部', async () => {
+    const { app, settings } = seedVault();
+    const activeScene = () =>
+      (document.querySelector('[data-memo-nav] [data-memo-scene].on') as HTMLElement)?.getAttribute('data-memo-scene');
+    const opened = () =>
+      vi.waitFor(() => {
+        expect(document.querySelector('[data-memo-nav] .bz-rail-item')).toBeTruthy();
+      });
+
+    settings.memoOpenScene = '今日';
+    openMemoPanel(app);
+    await opened();
+    expect(activeScene()).toBe('今日');
+    closeMemoPanel(); // 关面板写入记忆
+    expect(settings.memoLastScene).toBe('今日');
+
+    settings.memoOpenScene = '@last';
+    openMemoPanel(app); // 取上一段记忆 → 仍回「今日」
+    await opened();
+    expect(activeScene()).toBe('今日');
+    (document.querySelector('[data-memo-scene="学习"]') as HTMLElement).click();
+    expect(activeScene()).toBe('学习');
+    closeMemoPanel();
+    expect(settings.memoLastScene).toBe('学习');
+
+    openMemoPanel(app); // 重开回到上次停留
+    await opened();
+    expect(activeScene()).toBe('学习');
+    closeMemoPanel();
+
+    settings.memoLastScene = '已被删除的场景'; // 记忆失效（场景已删/改名）→ 回落「全部」
+    openMemoPanel(app);
+    await opened();
+    expect(activeScene()).toBe('全部');
+  });
+
   it('删除接撤销：三段式确认框 + notifyUndo 撤销后条目插回原位', async () => {
     const { vault, app } = seedVault();
     openMemoPanel(app);
@@ -1130,6 +1202,13 @@ describe('备忘录面板皮肤（issue 210）', () => {
     // 到期时间格式行已退役（口径固定相对）
     expect(show!.rows.some((r: any) => r.name === '到期时间格式')).toBe(false);
     expect(show!.rows.some((r: any) => r.binding?.key === 'memoDueFormat')).toBe(false);
+    // 打开默认场景：@last 哨兵 + 伪场景 + 动态场景；已完成显示范围：三档窗口 + 全部
+    const openSceneRow = show!.rows.find((r: any) => r.binding?.key === 'memoOpenScene') as any;
+    expect(openSceneRow.name).toBe('打开默认场景');
+    expect(openSceneRow.options.map((o: any) => o.value)).toEqual(['@last', '全部', '今日', '重要', '剪藏', '工作', '学习', '生活', '代码', '公开课']);
+    const doneWinRow = show!.rows.find((r: any) => r.binding?.key === 'memoDoneWindow') as any;
+    expect(doneWinRow.name).toBe('已完成显示范围');
+    expect(doneWinRow.options.map((o: any) => o.value)).toEqual(['7', '30', '90', 'all']);
     void app;
   });
 
