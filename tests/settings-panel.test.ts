@@ -97,7 +97,7 @@ describe('设置面板（settings-panel）', () => {
       badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     }
     // 2026-09-10 侧栏重新分细组（基础/智能/记录/收集/媒体与阅读/工具/安全 七组）→ 下标整体重排
-    expect(badges[0]).toBe('1'); // 通用：数据存储路径 1 项（外观已独立「设置」域）
+    expect(badges[0]).toBe('5'); // 通用：数据存储路径 1 项 + 通知 4 项（issue 297；外观已独立「设置」域）
     expect(badges[1]).toBe('2'); // 设置：布局 + 主题两张卡片行（拍板 P1：外观独立域）
     expect(badges[2]).toBe('11'); // 首页：外观 2 卡 + 时间线 4 + 内容过滤 3 + 预告栏 1（issue 288 拆组去「已跳过」）+ 入口内联编辑器 1 行
     expect(badges[3]).toBe('4'); // AI：服务商+模型名称+上下文+最大输出（采样参数组已退役；aiProvider 未设 → 密钥行门控隐藏）
@@ -152,13 +152,13 @@ describe('设置面板（settings-panel）', () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    // 默认域 = 通用（issue 186：AI 拆出后全局改称通用，仅剩数据存储路径一组）
+    // 默认域 = 通用（issue 186：AI 拆出后全局改称通用；issue 297 补「通知」组 → 两组）
     // 首次动态 import 冷加载可能超过 tick 的 20ms：改轮询等分组出现，消除时序脆断（原 await tick()）
     expect(await waitGroups(popup, 1)).toBe(true);
     let groups = popup.querySelectorAll('.bz-sp-group');
-    expect(groups.length).toBe(1);
-    // 外观已独立「设置」域（拍板 P1 十六轮）：通用域恢复单组 = 数据存储路径
+    expect(groups.length).toBe(2);
     expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('数据存储路径');
+    expect(groups[1].querySelector('.bz-sp-group-name')!.textContent).toBe('通知');
     // 点 AI 域 → 内嵌渲染 AI 组（服务商 select 等）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')
@@ -236,9 +236,9 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 通用域分组：数据存储路径（folder-open）
+    // 通用域分组：数据存储路径（folder-open）+ 通知（bell，issue 297）
     let icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(icons).toEqual(['folder-open']);
+    expect(icons).toEqual(['folder-open', 'bell']);
     // AI 域分组：AI（sparkles）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')

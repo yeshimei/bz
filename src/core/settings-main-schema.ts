@@ -242,6 +242,59 @@ export function generalSettingsSchema(): SettingsSchema {
           },
         ],
       },
+      {
+        // 通知组（issue 297）：core notice toast 横切偏好；行型全 select，原生设置页与面板双渲染器通用
+        icon: 'bell',
+        name: '通知',
+        rows: [
+          {
+            type: 'select',
+            name: '通知级别',
+            desc: '低档位静默常规通知，带撤销按钮的通知不受影响',
+            binding: { key: 'noticeLevel' },
+            options: [
+              { value: 'all', label: '全部' },
+              { value: 'important', label: '仅警告与错误' },
+              { value: 'error', label: '仅错误' },
+            ],
+          },
+          {
+            type: 'select',
+            name: '停留时长',
+            desc: '长文案自动延长，撤销类 6 秒反悔窗口不受影响',
+            binding: { key: 'noticeDuration' },
+            options: [
+              { value: 'quick', label: '干脆（2 秒）' },
+              { value: 'standard', label: '标准（3 秒）' },
+              { value: 'relaxed', label: '从容（5 秒）' },
+              { value: 'persistent', label: '常驻（点击才关）' },
+            ],
+          },
+          {
+            type: 'select',
+            name: '弹出位置',
+            desc: '桌面端四角任选，移动端恒顶部居中',
+            binding: { key: 'noticePosition' },
+            options: [
+              { value: 'top-right', label: '右上（默认）' },
+              { value: 'bottom-right', label: '右下' },
+              { value: 'bottom-left', label: '左下' },
+              { value: 'top-left', label: '左上' },
+            ],
+          },
+          {
+            type: 'select',
+            name: '同屏上限',
+            desc: '超出时挤掉最旧的一条',
+            binding: { key: 'noticeMaxVisible' },
+            options: [
+              { value: '3', label: '3 条' },
+              { value: '5', label: '5 条' },
+              { value: '8', label: '8 条' },
+            ],
+          },
+        ],
+      },
     ],
   };
 }

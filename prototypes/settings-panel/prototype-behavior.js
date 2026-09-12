@@ -1,4 +1,4 @@
-/* 源指纹 c58d8e74522eaa8a · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 72ac588199c9f7cd · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -4574,6 +4574,10 @@ var BZW_settings_panel = (() => {
   });
 
   // src/core/notice.ts
+  function maxVisible() {
+    const v = Number(noticePref("noticeMaxVisible"));
+    return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
+  }
   function notice(msg, type, duration) {
     notify(msg, { type: type || "info", duration });
   }
@@ -4596,10 +4600,43 @@ var BZW_settings_panel = (() => {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
   }
   function defaultVariant() {
-    return isMobileView() ? "drop" : "slide-right";
+    if (isMobileView()) return "drop";
+    const pos = noticePref("noticePosition");
+    return pos === "top-left" || pos === "bottom-left" ? "slide-left" : "slide-right";
+  }
+  function noticePref(key) {
+    var _a2;
+    try {
+      const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2[key];
+      return typeof v === "string" ? v : void 0;
+    } catch (e) {
+      return void 0;
+    }
+  }
+  function durationGear() {
+    const v = noticePref("noticeDuration");
+    if (v === "quick") return { base: 2e3, persistent: false };
+    if (v === "relaxed") return { base: 5e3, persistent: false };
+    if (v === "persistent") return { base: 3e3, persistent: true };
+    return { base: 3e3, persistent: false };
   }
   function defaultDuration(type) {
-    return type === "error" ? 5e3 : 3e3;
+    const base = durationGear().base;
+    return type === "error" ? base + 2e3 : base;
+  }
+  function suppressedByLevel(kind, opts) {
+    const level = noticePref("noticeLevel");
+    if (level !== "important" && level !== "error") return false;
+    if (kind === "progress") return false;
+    if (opts && (opts.action || opts.actions && opts.actions.length > 0)) return false;
+    if (level === "error") return kind !== "error";
+    return kind !== "warning" && kind !== "error";
+  }
+  function applyPositionClass(container) {
+    const pos = noticePref("noticePosition");
+    container.classList.remove(...POSITION_CLASSES);
+    const cls = pos === "bottom-right" || pos === "bottom-left" || pos === "top-left" ? `bz-notice-pos--${pos}` : "";
+    if (cls) container.classList.add(cls);
   }
   function calcDuration(text, base) {
     const len = text.length;
@@ -4626,7 +4663,7 @@ var BZW_settings_panel = (() => {
     if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
   }
   function evictOldest() {
-    let quota = live.length - MAX_VISIBLE + 1;
+    let quota = live.length - maxVisible() + 1;
     for (let i = 0; quota > 0 && i < live.length; ) {
       const candidate = live[i];
       if (candidate.persistent) {
@@ -4694,6 +4731,7 @@ var BZW_settings_panel = (() => {
       n.persistent = true;
       return;
     }
+    if (explicitDuration === void 0 && durationGear().persistent) return;
     n.timer = window.setTimeout(() => hideNow(n), dur);
   }
   function noopHandle() {
@@ -4723,10 +4761,12 @@ var BZW_settings_panel = (() => {
   }
   function notify(msg, opts) {
     const kind = opts && opts.type || "info";
+    if (suppressedByLevel(kind, opts)) return noopHandle();
     const isProgress = kind === "progress";
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key = opts.dedupeKey;
       const r = recent[key];
@@ -4830,11 +4870,12 @@ var BZW_settings_panel = (() => {
       }
     };
   }
-  var MAX_VISIBLE, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, UNDO_DURATION_MS, OUT_CLASS, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
+  var MAX_VISIBLE_DEFAULT, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, UNDO_DURATION_MS, OUT_CLASS, POSITION_CLASSES, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
   var init_notice = __esm({
     "src/core/notice.ts"() {
       init_z_order();
-      MAX_VISIBLE = 5;
+      init_settings_provider();
+      MAX_VISIBLE_DEFAULT = 5;
       LEAVE_MS = 200;
       DEDUPE_WINDOW_MS = 3e4;
       MOBILE_QUERY = "(max-width: 768px)";
@@ -4861,6 +4902,7 @@ var BZW_settings_panel = (() => {
         bounce: "bz-notice--out-fade",
         shake: "bz-notice--out-fade"
       };
+      POSITION_CLASSES = ["bz-notice-pos--bottom-right", "bz-notice-pos--bottom-left", "bz-notice-pos--top-left"];
       PER_CHAR_MS = 60;
       SHORT_THRESHOLD = 20;
       live = [];
@@ -9670,6 +9712,59 @@ var BZW_settings_panel = (() => {
               onCommit: () => {
                 notice(STORAGE_PATH_COMMIT_NOTICE, "warning");
               }
+            }
+          ]
+        },
+        {
+          // 通知组（issue 297）：core notice toast 横切偏好；行型全 select，原生设置页与面板双渲染器通用
+          icon: "bell",
+          name: "通知",
+          rows: [
+            {
+              type: "select",
+              name: "通知级别",
+              desc: "低档位静默常规通知，带撤销按钮的通知不受影响",
+              binding: { key: "noticeLevel" },
+              options: [
+                { value: "all", label: "全部" },
+                { value: "important", label: "仅警告与错误" },
+                { value: "error", label: "仅错误" }
+              ]
+            },
+            {
+              type: "select",
+              name: "停留时长",
+              desc: "长文案自动延长，撤销类 6 秒反悔窗口不受影响",
+              binding: { key: "noticeDuration" },
+              options: [
+                { value: "quick", label: "干脆（2 秒）" },
+                { value: "standard", label: "标准（3 秒）" },
+                { value: "relaxed", label: "从容（5 秒）" },
+                { value: "persistent", label: "常驻（点击才关）" }
+              ]
+            },
+            {
+              type: "select",
+              name: "弹出位置",
+              desc: "桌面端四角任选，移动端恒顶部居中",
+              binding: { key: "noticePosition" },
+              options: [
+                { value: "top-right", label: "右上（默认）" },
+                { value: "bottom-right", label: "右下" },
+                { value: "bottom-left", label: "左下" },
+                { value: "top-left", label: "左上" }
+              ]
+            },
+            {
+              type: "select",
+              name: "同屏上限",
+              desc: "超出时挤掉最旧的一条",
+              binding: { key: "noticeMaxVisible" },
+              options: [
+                { value: "3", label: "3 条" },
+                { value: "5", label: "5 条" },
+                { value: "8", label: "8 条" }
+              ]
             }
           ]
         }
@@ -39891,7 +39986,13 @@ ${text}`;
     // 密码本（issue 250）：生成/安全三键与 src/settings.ts DEFAULT 同值
     passwordCharset: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+",
     passwordLength: "16",
-    securityMode: false
+    securityMode: false,
+    // 通知（issue 297，通用域「通知」组）：四键与 src/settings.ts DEFAULT 同值——
+    // 壳内 toast 走真 notice.ts（settings-provider 已注入），改档位行为实时生效
+    noticeLevel: "all",
+    noticeDuration: "standard",
+    noticePosition: "top-right",
+    noticeMaxVisible: "5"
   };
   var SEED_FILES = [
     ["我的/日记/2026-09-01.md", "# 日记\n\n演示日记。"],

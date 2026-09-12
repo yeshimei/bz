@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { notify, notifyUndo, notifySaveError, notifyActionError, __resetNoticeForTests, cleanupNotices } from '../../src/core/notice';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 function visibleNotices(): HTMLElement[] {
   return Array.from(document.querySelectorAll('.bz-notice')) as HTMLElement[];
@@ -411,5 +412,227 @@ describe('通知系统', () => {
       notifyActionError(42, '还原');
       expect(visibleNotices()[1].querySelector('.bz-notice-msg')!.textContent).toBe('还原失败：42，请重试');
     });
+  });
+});
+
+// ==================== 用户偏好（issue 297）：级别 / 停留档位 / 桌面位置 / 同屏上限 ====================
+// 本段注入 settings provider（上方用例无 provider = 缺省行为，顺序在先不受影响）；
+// 各 afterEach 统一还原空 provider，防串段。
+
+function noticeSettingsOf(state: Record<string, unknown>): void {
+  setSettingsProvider(() => state as never);
+}
+
+function noticeTexts(): (string | null)[] {
+  return visibleNotices().map((el) => el.querySelector('.bz-notice-msg')!.textContent);
+}
+
+describe('通知级别（issue 297）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    __resetNoticeForTests();
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as never);
+  });
+
+  it('缺省 all：全部弹出（原行为）', () => {
+    noticeSettingsOf({ noticeLevel: 'all' });
+    notify('信息');
+    notify('成功', { type: 'success' });
+    notify('警告', { type: 'warning' });
+    expect(visibleNotices()).toHaveLength(3);
+  });
+
+  it('important：info/success 静默，warning/error 放行', () => {
+    noticeSettingsOf({ noticeLevel: 'important' });
+    notify('信息');
+    notify('成功', { type: 'success' });
+    expect(visibleNotices()).toHaveLength(0);
+    notify('警告', { type: 'warning' });
+    notify('错误', { type: 'error' });
+    expect(visibleNotices()).toHaveLength(2);
+  });
+
+  it('error：仅 error 放行（warning 也静默）', () => {
+    noticeSettingsOf({ noticeLevel: 'error' });
+    notify('警告', { type: 'warning' });
+    notify('信息');
+    expect(visibleNotices()).toHaveLength(0);
+    notify('错误', { type: 'error' });
+    expect(visibleNotices()).toHaveLength(1);
+  });
+
+  it('带操作按钮的通知永不静默（撤销出口），无按钮 success 同档静默', () => {
+    noticeSettingsOf({ noticeLevel: 'error' });
+    notifyUndo('已删除收藏', () => {});
+    expect(visibleNotices()).toHaveLength(1);
+    notify('已完成', { type: 'success' });
+    expect(visibleNotices()).toHaveLength(1);
+  });
+
+  it('progress 不受级别影响', () => {
+    noticeSettingsOf({ noticeLevel: 'error' });
+    notify('处理中', { type: 'progress' });
+    expect(visibleNotices()).toHaveLength(1);
+  });
+
+  it('静默调用返回空操作 handle：setMessage/setType/setProgress/hide 可安全调用', () => {
+    noticeSettingsOf({ noticeLevel: 'error' });
+    const h = notify('静默');
+    expect(() => {
+      h.setMessage('x');
+      h.setType('success');
+      h.setProgress(50);
+      h.hide();
+    }).not.toThrow();
+    expect(visibleNotices()).toHaveLength(0);
+  });
+
+  it('设置读取失败（provider 抛错）不炸通知：按缺省行为弹出（通知是最后兜底通道）', () => {
+    setSettingsProvider(
+      (() => {
+        throw new Error('设置读取失败');
+      }) as never
+    );
+    expect(() => notify('兜底')).not.toThrow();
+    expect(visibleNotices()).toHaveLength(1);
+  });
+});
+
+describe('停留时长档位（issue 297）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    __resetNoticeForTests();
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as never);
+  });
+
+  it('quick：常规 2s 消失、错误 +2s（4s）', () => {
+    noticeSettingsOf({ noticeDuration: 'quick' });
+    notify('短命');
+    notify('错误', { type: 'error' });
+    vi.advanceTimersByTime(1990);
+    expect(visibleNotices()).toHaveLength(2); // 1.99s 都在
+    vi.advanceTimersByTime(400); // 2.39s：info 收尾（退出动画 200ms 播完）
+    expect(visibleNotices()).toHaveLength(1);
+    expect(visibleNotices()[0].classList.contains('bz-notice--error')).toBe(true);
+    vi.advanceTimersByTime(2100); // 4.49s：error（4s）也收尾
+    expect(visibleNotices()).toHaveLength(0);
+  });
+
+  it('relaxed：3.5s 时仍在（标准 3s 早已收）、5.4s 消失', () => {
+    noticeSettingsOf({ noticeDuration: 'relaxed' });
+    notify('从容');
+    vi.advanceTimersByTime(3500);
+    expect(visibleNotices()).toHaveLength(1);
+    vi.advanceTimersByTime(1900);
+    expect(visibleNotices()).toHaveLength(0);
+  });
+
+  it('显式时长不缩放：quick 档下撤销 6s 反悔窗口原样', () => {
+    noticeSettingsOf({ noticeDuration: 'quick' });
+    notifyUndo('已删除', () => {});
+    vi.advanceTimersByTime(2000);
+    expect(visibleNotices()).toHaveLength(1);
+    vi.advanceTimersByTime(3990);
+    expect(visibleNotices()).toHaveLength(1); // 5.99s 仍在
+    vi.advanceTimersByTime(300);
+    expect(visibleNotices()).toHaveLength(0); // 6s 计时到 → 退出动画播完
+  });
+
+  it('persistent：常规通知不自动消失（60s 后仍在）', () => {
+    noticeSettingsOf({ noticeDuration: 'persistent' });
+    notify('常驻');
+    vi.advanceTimersByTime(60000);
+    expect(visibleNotices()).toHaveLength(1);
+  });
+
+  it('persistent 档普通帧仍参与堆叠驱逐（区别于 progress 常驻帧的免疫）', () => {
+    noticeSettingsOf({ noticeDuration: 'persistent' });
+    for (let i = 0; i < 6; i++) notify('常驻' + i);
+    expect(visibleNotices()).toHaveLength(5);
+    expect(noticeTexts()[0]).toBe('常驻1'); // 最旧的常驻0 被挤出
+  });
+});
+
+describe('弹出位置（issue 297，桌面四角）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    __resetNoticeForTests();
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as never);
+  });
+
+  it('缺省 top-right：容器不挂位置类（走基底 CSS）', () => {
+    noticeSettingsOf({ noticePosition: 'top-right' });
+    notify('右上');
+    const c = document.getElementById('bz-notice-container')!;
+    expect(c.className).not.toContain('bz-notice-pos--');
+  });
+
+  it('角位类挂容器；换角先清旧类', () => {
+    noticeSettingsOf({ noticePosition: 'bottom-left' });
+    notify('左下');
+    let c = document.getElementById('bz-notice-container')!;
+    expect(c.classList.contains('bz-notice-pos--bottom-left')).toBe(true);
+    noticeSettingsOf({ noticePosition: 'bottom-right' });
+    notify('右下');
+    c = document.getElementById('bz-notice-container')!;
+    expect(c.classList.contains('bz-notice-pos--bottom-right')).toBe(true);
+    expect(c.classList.contains('bz-notice-pos--bottom-left')).toBe(false);
+  });
+
+  it('左列位置默认变体换 slide-left（从左滑入）', () => {
+    noticeSettingsOf({ noticePosition: 'top-left' });
+    const h = notify('左上');
+    expect(h.el.classList.contains('bz-notice--in-slide-left')).toBe(true);
+  });
+
+  it('右列位置保持 slide-right', () => {
+    noticeSettingsOf({ noticePosition: 'bottom-right' });
+    const h = notify('右下');
+    expect(h.el.classList.contains('bz-notice--in-slide-right')).toBe(true);
+  });
+});
+
+describe('同屏上限（issue 297）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    __resetNoticeForTests();
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as never);
+  });
+
+  it('缺省 5：第 6 条挤出最旧（原行为）', () => {
+    for (let i = 1; i <= 6; i++) notify('条目' + i);
+    expect(noticeTexts()).toEqual(['条目2', '条目3', '条目4', '条目5', '条目6']);
+  });
+
+  it("'3'：第 4 条起挤出最旧", () => {
+    noticeSettingsOf({ noticeMaxVisible: '3' });
+    for (let i = 1; i <= 4; i++) notify('条目' + i);
+    expect(noticeTexts()).toEqual(['条目2', '条目3', '条目4']);
+  });
+
+  it('非法值回落 5', () => {
+    noticeSettingsOf({ noticeMaxVisible: '99' });
+    for (let i = 1; i <= 6; i++) notify('条目' + i);
+    expect(visibleNotices()).toHaveLength(5);
   });
 });

@@ -1,4 +1,4 @@
-/* 源指纹 14a93355658edd3b · 仓内输入 81 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a2055c95de24182b · 仓内输入 81 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
@@ -771,6 +771,10 @@ var BZW_secondbrain = (() => {
   });
 
   // src/core/notice.ts
+  function maxVisible() {
+    const v = Number(noticePref("noticeMaxVisible"));
+    return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
+  }
   function notice(msg, type, duration) {
     notify(msg, { type: type || "info", duration });
   }
@@ -778,10 +782,43 @@ var BZW_secondbrain = (() => {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
   }
   function defaultVariant() {
-    return isMobileView() ? "drop" : "slide-right";
+    if (isMobileView()) return "drop";
+    const pos = noticePref("noticePosition");
+    return pos === "top-left" || pos === "bottom-left" ? "slide-left" : "slide-right";
+  }
+  function noticePref(key) {
+    var _a2;
+    try {
+      const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2[key];
+      return typeof v === "string" ? v : void 0;
+    } catch (e) {
+      return void 0;
+    }
+  }
+  function durationGear() {
+    const v = noticePref("noticeDuration");
+    if (v === "quick") return { base: 2e3, persistent: false };
+    if (v === "relaxed") return { base: 5e3, persistent: false };
+    if (v === "persistent") return { base: 3e3, persistent: true };
+    return { base: 3e3, persistent: false };
   }
   function defaultDuration(type) {
-    return type === "error" ? 5e3 : 3e3;
+    const base = durationGear().base;
+    return type === "error" ? base + 2e3 : base;
+  }
+  function suppressedByLevel(kind, opts) {
+    const level = noticePref("noticeLevel");
+    if (level !== "important" && level !== "error") return false;
+    if (kind === "progress") return false;
+    if (opts && (opts.action || opts.actions && opts.actions.length > 0)) return false;
+    if (level === "error") return kind !== "error";
+    return kind !== "warning" && kind !== "error";
+  }
+  function applyPositionClass(container) {
+    const pos = noticePref("noticePosition");
+    container.classList.remove(...POSITION_CLASSES);
+    const cls = pos === "bottom-right" || pos === "bottom-left" || pos === "top-left" ? `bz-notice-pos--${pos}` : "";
+    if (cls) container.classList.add(cls);
   }
   function calcDuration(text, base) {
     const len = text.length;
@@ -808,7 +845,7 @@ var BZW_secondbrain = (() => {
     if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
   }
   function evictOldest() {
-    let quota = live.length - MAX_VISIBLE + 1;
+    let quota = live.length - maxVisible() + 1;
     for (let i = 0; quota > 0 && i < live.length; ) {
       const candidate = live[i];
       if (candidate.persistent) {
@@ -876,6 +913,7 @@ var BZW_secondbrain = (() => {
       n.persistent = true;
       return;
     }
+    if (explicitDuration === void 0 && durationGear().persistent) return;
     n.timer = window.setTimeout(() => hideNow(n), dur);
   }
   function noopHandle() {
@@ -905,10 +943,12 @@ var BZW_secondbrain = (() => {
   }
   function notify(msg, opts) {
     const kind = opts && opts.type || "info";
+    if (suppressedByLevel(kind, opts)) return noopHandle();
     const isProgress = kind === "progress";
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key = opts.dedupeKey;
       const r = recent[key];
@@ -1012,11 +1052,12 @@ var BZW_secondbrain = (() => {
       }
     };
   }
-  var MAX_VISIBLE, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, OUT_CLASS, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
+  var MAX_VISIBLE_DEFAULT, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, OUT_CLASS, POSITION_CLASSES, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
   var init_notice = __esm({
     "src/core/notice.ts"() {
       init_z_order();
-      MAX_VISIBLE = 5;
+      init_settings_provider();
+      MAX_VISIBLE_DEFAULT = 5;
       LEAVE_MS = 200;
       DEDUPE_WINDOW_MS = 3e4;
       MOBILE_QUERY = "(max-width: 768px)";
@@ -1042,6 +1083,7 @@ var BZW_secondbrain = (() => {
         bounce: "bz-notice--out-fade",
         shake: "bz-notice--out-fade"
       };
+      POSITION_CLASSES = ["bz-notice-pos--bottom-right", "bz-notice-pos--bottom-left", "bz-notice-pos--top-left"];
       PER_CHAR_MS = 60;
       SHORT_THRESHOLD = 20;
       live = [];

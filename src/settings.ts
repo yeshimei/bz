@@ -58,6 +58,18 @@ export default interface BzSettings {
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
   storagePath: string;
 
+  // ===== 🔔 通知（core notice toast 横切偏好，issue 297）=====
+  /** 通知级别：all=全部 / important=仅警告与错误 / error=仅错误。低档位静默常规通知，
+   *  但带操作按钮的通知（撤销/查看等交互出口）与 progress 永不放行（notice.ts 消费） */
+  noticeLevel: string;
+  /** 通知停留档位：quick=干脆 2s / standard=标准 3s（缺省）/ relaxed=从容 5s / persistent=常驻点击才关。
+   *  只作用于未显式指定 duration 的默认时长；错误类比常规 +2s；撤销 6s 等显式语义时长不缩放 */
+  noticeDuration: string;
+  /** 通知弹出位置（仅桌面）：top-right（缺省）/ bottom-right / bottom-left / top-left；移动端恒顶部居中 */
+  noticePosition: string;
+  /** 通知同屏上限：'3' / '5'（缺省）/ '8'；超出挤掉最旧 */
+  noticeMaxVisible: string;
+
   // ===== 📎 附件搬移（ticket 65，运行时记忆，不暴露设置）=====
   /** 上次选择的目标文件夹（文件夹选择器默认值） */
   attachLastFolder: string;
@@ -516,6 +528,12 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 附件搬移（ticket 65，运行时记忆）
   attachLastFolder: '',
+
+  // 通知（core notice toast 横切偏好，issue 297）
+  noticeLevel: 'all',
+  noticeDuration: 'standard',
+  noticePosition: 'top-right',
+  noticeMaxVisible: '5',
 
   // 备忘录
   autoPopupOnStart: true,
