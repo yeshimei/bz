@@ -38,6 +38,7 @@ import { openPasswordQuickPicker } from './pw-picker';
 import { overviewHTML, noteRowHTML, noteDetailHTML, type VaultAsset, type OverviewStats, vIc } from './vault-assets-view';
 import { uiLockScreen } from '../core/ui/lock-screen';
 import type { LockScreenKind, LockScreenStat } from '../core/ui/lock-screen';
+import { readLockStats, writeLockStats } from '../core/lock-stats';
 
 /**
  * 解锁屏三域口径（结构同源，内容与统计按域注入；ADR-0002：共享壳在 core，语义在数据域）
@@ -1044,9 +1045,10 @@ export class UIManager {
   async showPasswordDialog(kind: LockScreenKind = 'vault'): Promise<boolean> {
     const exists = await this.dataManager.exists();
     const meta = LOCK_KIND_META[kind];
+    // 统计项：会话快照优先，冷启动回落 lock-stats.json 上次快照（ADR-0124 决策 4 修订），都没有才「—」
+    const stats =
+      this.lockStatsCache[kind] || (await readLockStats(kind)) || meta.stats.map((s) => ({ ...s, num: '—' }));
     return new Promise((resolve) => {
-      // 统计项：清单密文未解锁时不可读，故用本次会话最后一次解锁时的快照；冷启动显示「—」
-      const stats = this.lockStatsCache[kind] || meta.stats.map((s) => ({ ...s, num: '—' }));
       const ls = uiLockScreen({
         kind,
         icon: meta.icon,
@@ -1218,7 +1220,7 @@ export class UIManager {
   /**
    * 快照解锁屏统计项（三域各一份）。
    * 清单本身是密文，锁定态无法读计数 —— 故只在解锁期间快照，供下次上锁后的解锁屏显示；
-   * 冷启动（本次会话从未解锁）则回落「—」，不编造数字。
+   * 快照同时写明文档 lock-stats.json（core/lock-stats），冷启动回落上次快照而非「—」。
    */
   private captureLockStats(): void {
     try {
@@ -1243,12 +1245,16 @@ export class UIManager {
         { num: String(this.pwDataManager.pwData.length), label: '口令条目' },
         { num: String(plats.filter((p) => this.pwDataManager.hasFav(p.platform)).length), label: '收藏' },
       ];
+      // 快照即落明文档（fire-and-forget：统计丢一拍不伤数据，下次解锁会重写）
+      for (const k of ['vault', 'diary', 'password-vault'] as LockScreenKind[]) {
+        void writeLockStats(k, this.lockStatsCache[k]!).catch(() => {});
+      }
     } catch (e) {
       /* 清单不可读时保持上一次快照 */
     }
   }
 
-  /** 解锁屏统计快照（会话内缓存；冷启动为「—」） */
+  /** 解锁屏统计快照（会话内缓存；冷启动回落 lock-stats.json 上次快照，见 core/lock-stats） */
   private lockStatsCache: Partial<Record<LockScreenKind, LockScreenStat[]>> = {};
 
   private renderNav() {

@@ -13,6 +13,16 @@ import { PasswordVaultDataManager, type PasswordVaultEntry } from '../../src/pas
 import { PasswordVaultUIManager } from '../../src/password-vault/ui';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { readLockStats } from '../../src/core/lock-stats';
+
+/** 轮询等待异步落盘/回落完成（fire-and-forget 链无完成信号） */
+async function waitForAsync(cond: () => Promise<boolean>, timeout = 4000) {
+  const start = Date.now();
+  while (!(await cond())) {
+    if (Date.now() - start > timeout) throw new Error('waitForAsync 超时');
+    await new Promise((r) => setTimeout(r, 25));
+  }
+}
 
 describe('PasswordVaultUIManager', () => {
   let vault: MockVault;
@@ -87,6 +97,29 @@ describe('PasswordVaultUIManager', () => {
     const locks = document.querySelectorAll('.bz-password-vault-lock.open');
     expect(locks.length).toBe(2);
     expect(locks[0].querySelector('[data-ls="title"]')!.textContent).toBe('设置主密码');
+  });
+
+  it('冷启动锁屏统计回落 lock-stats.json 快照（ADR-0124 决策 4 修订，issue 299）', async () => {
+    await vault.create('CONFIG/STORAGE/lock-stats.json', JSON.stringify({
+      'password-vault': [{ num: '3', label: '平台' }, { num: '5', label: '口令条目' }, { num: '1', label: '收藏' }],
+    }));
+    ui.show();
+    // hydrate 是 fire-and-forget 链：轮询等首个实例渲染出回落数字，不定长 sleep
+    await waitForAsync(async () => {
+      const nums = [...document.querySelectorAll('.bz-password-vault-lock.open .bz-lockscreen-num')].map((n) => n.textContent);
+      return nums.length >= 3 && nums[0] === '3';
+    });
+    const nums = [...document.querySelectorAll('.bz-password-vault-lock.open .bz-lockscreen-num')].map((n) => n.textContent);
+    expect(nums.slice(0, 3)).toEqual(['3', '5', '1']);
+  });
+
+  it('解锁态快照落盘 lock-stats.json（captureLockStats → writeLockStats，issue 299）', async () => {
+    await sm.unlock('pw');
+    await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x', fav: true });
+    ui.show(); // 已解锁 → renderAll → captureLockStats
+    await waitForAsync(async () => (await readLockStats('password-vault')) !== null);
+    const hit = await readLockStats('password-vault');
+    expect(hit!.map((s) => s.num)).toEqual(['1', '1', '1']);
   });
 
   it('已有清单：锁屏标题「密码本已上锁」+ 正确密码解锁成功（回归：first 取反 bug + 解锁不重载 → 空列表）', async () => {
