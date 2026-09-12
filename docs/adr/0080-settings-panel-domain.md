@@ -50,7 +50,7 @@ bz 现有设置架构（ADR-0009）：Obsidian 设置页单页（只含「🤖 A
 
 ### 4. 文件选择器复用 core/path-picker（不新造）
 
-面板内路径设置行（共享数据路径/监听文件夹/白名单目录/关联范围）复用 `renderPathSettingRow` + `openPathPicker`（ADR-0061），不另写选择器。原型里的选择器是一比一复刻该组件的行为。
+面板内路径设置行（共享数据路径/监听文件夹/白名单目录/关联范围）的**弹窗**复用 `openPathPicker`（ADR-0061），不另写选择器——2026-09-12 起由 ADR-0127 收口并加皮肤通道：面板内打开时传 `skinClassName: 'bz-sp-skin'`（材质映射面板令牌，见 settings-panel/styles.css），**行内 chips 仍为面板自绘**（`.bz-sp-chips` / `.bz-sp-path-btn` / `.bz-sp-chip`，控件层见 §3）。原型壳消费同一份 core 实现（行为单源）——曾一度有域内自绘的 `dir-picker.ts`，已删除。
 
 ### 5. 移动端全屏键
 

@@ -352,7 +352,7 @@
 
 **滚动条**：**bz 自有界面全量隐藏滚动条，滚动功能保留**（ADR-0080 首发、ADR-0122 收敛）——单源 = `src/core/ui/components.css` 的界面级规则（选择器按「`bz-` 前缀类/ID + 面板壳整树 + 非 bz 前缀的遗留弹层」枚举，**刻意不用 `*` 通配**：Obsidian 核心 UI 不属 bz，不被波及）。**新 UI 只做两件事**：类名带 `bz-` 前缀（自动生效）、不动 `overflow`（隐藏的是条，不是滚动）。域内一律**禁止**自造滚动条样式：`scrollbar-width: thin/auto`、`::-webkit-scrollbar { width }`、`::-webkit-scrollbar-thumb` 自绘均为违规（issue 275–278 清退对象）；既有域内隐藏声明视为冗余，删。条款由 `tests/core/ui-scrollbar.test.ts` 守卫。
 
-**设置面板的域设置内容**：不新造——点开 = 内嵌渲染各域既有 schema（review/pomodoro/secondbrain 等与 ⚙️ 完全同源，`renderPanelSchema`）；路径行 = 路径胶囊 + `openPathPicker`（ADR-0061）。设置面板的控件基线已收编进组件库（`src/core/ui`：`.bz-input/.bz-sw/.bz-select/.bz-range/.bz-chip/.bz-btn/.bz-badge/.bz-empty`），不再有面板私有控件副本。
+**设置面板的域设置内容**：不新造——点开 = 内嵌渲染各域既有 schema（review/pomodoro/secondbrain 等与 ⚙️ 完全同源，`renderPanelSchema`）；路径行 = 路径胶囊 + `openPathPicker`（ADR-0061；面板内挂 `.bz-sp-skin` 皮肤，ADR-0127）。设置面板的控件基线已收编进组件库（`src/core/ui`：`.bz-input/.bz-sw/.bz-select/.bz-range/.bz-chip/.bz-btn/.bz-badge/.bz-empty`），不再有面板私有控件副本。
 
 **写新 UI 的固定路径**：查本表 → 没有 → 在 `src/core/styles.css` 加共享类（跨域通用）或在 `src/<域>/styles.css` 加域类（`bz-` 前缀）→ 类名 `bz-` 前缀 → 用本手册变量/圆角/阴影/动效 → 两端自检（§8）。
 
