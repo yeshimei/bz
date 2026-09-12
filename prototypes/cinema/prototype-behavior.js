@@ -1,4 +1,4 @@
-/* 源指纹 5adff94b897ec179 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6adc74eee6c67cdf · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -5174,7 +5174,11 @@ var BZW_cinema = (() => {
   }
 
   // src/core/notice.ts
-  var MAX_VISIBLE = 5;
+  var MAX_VISIBLE_DEFAULT = 5;
+  function maxVisible() {
+    const v = Number(noticePref("noticeMaxVisible"));
+    return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
+  }
   var LEAVE_MS = 200;
   var DEDUPE_WINDOW_MS = 3e4;
   var MOBILE_QUERY = "(max-width: 768px)";
@@ -5203,7 +5207,9 @@ var BZW_cinema = (() => {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
   }
   function defaultVariant() {
-    return isMobileView() ? "drop" : "slide-right";
+    if (isMobileView()) return "drop";
+    const pos = noticePref("noticePosition");
+    return pos === "top-left" || pos === "bottom-left" ? "slide-left" : "slide-right";
   }
   var OUT_CLASS = {
     drop: "bz-notice--out-drop",
@@ -5213,8 +5219,40 @@ var BZW_cinema = (() => {
     bounce: "bz-notice--out-fade",
     shake: "bz-notice--out-fade"
   };
+  function noticePref(key) {
+    var _a;
+    try {
+      const v = (_a = tryGetSettings()) == null ? void 0 : _a[key];
+      return typeof v === "string" ? v : void 0;
+    } catch (e) {
+      return void 0;
+    }
+  }
+  function durationGear() {
+    const v = noticePref("noticeDuration");
+    if (v === "quick") return { base: 2e3, persistent: false };
+    if (v === "relaxed") return { base: 5e3, persistent: false };
+    if (v === "persistent") return { base: 3e3, persistent: true };
+    return { base: 3e3, persistent: false };
+  }
   function defaultDuration(type) {
-    return type === "error" ? 5e3 : 3e3;
+    const base = durationGear().base;
+    return type === "error" ? base + 2e3 : base;
+  }
+  function suppressedByLevel(kind, opts) {
+    const level = noticePref("noticeLevel");
+    if (level !== "important" && level !== "error") return false;
+    if (kind === "progress") return false;
+    if (opts && (opts.action || opts.actions && opts.actions.length > 0)) return false;
+    if (level === "error") return kind !== "error";
+    return kind !== "warning" && kind !== "error";
+  }
+  var POSITION_CLASSES = ["bz-notice-pos--bottom-right", "bz-notice-pos--bottom-left", "bz-notice-pos--top-left"];
+  function applyPositionClass(container) {
+    const pos = noticePref("noticePosition");
+    container.classList.remove(...POSITION_CLASSES);
+    const cls = pos === "bottom-right" || pos === "bottom-left" || pos === "top-left" ? `bz-notice-pos--${pos}` : "";
+    if (cls) container.classList.add(cls);
   }
   var PER_CHAR_MS = 60;
   var SHORT_THRESHOLD = 20;
@@ -5245,7 +5283,7 @@ var BZW_cinema = (() => {
     if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
   }
   function evictOldest() {
-    let quota = live.length - MAX_VISIBLE + 1;
+    let quota = live.length - maxVisible() + 1;
     for (let i = 0; quota > 0 && i < live.length; ) {
       const candidate = live[i];
       if (candidate.persistent) {
@@ -5313,6 +5351,7 @@ var BZW_cinema = (() => {
       n.persistent = true;
       return;
     }
+    if (explicitDuration === void 0 && durationGear().persistent) return;
     n.timer = window.setTimeout(() => hideNow(n), dur);
   }
   function noopHandle() {
@@ -5342,10 +5381,12 @@ var BZW_cinema = (() => {
   }
   function notify(msg, opts) {
     const kind = opts && opts.type || "info";
+    if (suppressedByLevel(kind, opts)) return noopHandle();
     const isProgress = kind === "progress";
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key = opts.dedupeKey;
       const r = recent[key];

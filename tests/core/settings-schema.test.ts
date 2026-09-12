@@ -19,9 +19,9 @@ function snapOf(partial: Partial<SettingsSnapshot>): SettingsSnapshot {
 describe('mainSettingsSchema：主设置页两区块', () => {
   const schema = mainSettingsSchema();
 
-  it('ticket 170：两区块升级为分组卡片（带 icon），标题不带 emoji 前缀（emoji 由分组卡图标呈现，防两遍）', () => {
-    expect(schema.groups.map((g) => g.name)).toEqual(['AI', '数据存储路径']);
-    expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'folder-open']);
+  it('ticket 170：两区块升级为分组卡片（带 icon），标题不带 emoji 前缀（emoji 由分组卡图标呈现，防两遍；issue 297 通用域补通知组）', () => {
+    expect(schema.groups.map((g) => g.name)).toEqual(['AI', '数据存储路径', '通知']);
+    expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'folder-open', 'bell']);
   });
 
   it('AI 区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行 + per-provider 配置三行（ticket 171/172；issue 187 删自定义模型行）', () => {

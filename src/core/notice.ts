@@ -3,6 +3,8 @@
  *
  * 设计决策（grilling 会话敲定 + 修订）：
  * - 位置：桌面端右上角、从右侧滑入；移动端（max-width 768px）顶部居中、从上往下
+ * - 用户偏好（issue 297）：级别静默 / 停留档位 / 桌面四角位置 / 同屏上限——经 settings-provider
+ *   读取（noticeLevel/noticeDuration/noticePosition/noticeMaxVisible），缺省值 = 本表所列原行为
  * - 堆叠 + 上限 5 条（超出挤掉最旧；常驻帧 duration<=0 / progress 默认不参与驱逐——P1-33：
  *   连续任务的常驻句柄不会被后续 toast 挤掉，setMessage/setType 始终有效）
  * - 类型图标用 emoji（info ℹ️ / success ✅ / warning ⚠️ / error ❌ / pause ⏸️ / accept ✨ /
@@ -23,6 +25,7 @@
  * - z-index 动态发号（ADR-0067）：每次弹出抬顶容器——toast 永远盖过最新打开的 overlay
  */
 import { allocZ } from './z-order';
+import { tryGetSettings } from './settings-provider';
 
 export type NoticeType =
   | 'info'
@@ -83,7 +86,13 @@ export interface NoticeHandle {
   hide(): void;
 }
 
-const MAX_VISIBLE = 5;
+const MAX_VISIBLE_DEFAULT = 5;
+
+/** 同屏上限（noticeMaxVisible 设置，issue 297）：'3'/'8'，其余回落 5 */
+function maxVisible(): number {
+  const v = Number(noticePref('noticeMaxVisible'));
+  return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
+}
 const LEAVE_MS = 200;
 /** 去重窗口：同 dedupeKey 的通知已消失后，在此窗口内重复触发不新弹 */
 const DEDUPE_WINDOW_MS = 30000;
@@ -165,9 +174,12 @@ function isMobileView(): boolean {
   );
 }
 
-/** 默认动效变体：桌面右侧滑入；移动端顶部下滑（保证全站位置/动效一致） */
+/** 默认动效变体：桌面右侧滑入（位置在左列时换 slide-left 从左滑入，issue 297）；移动端顶部下滑
+ *  （保证全站位置/动效一致） */
 function defaultVariant(): NoticeVariant {
-  return isMobileView() ? 'drop' : 'slide-right';
+  if (isMobileView()) return 'drop';
+  const pos = noticePref('noticePosition');
+  return pos === 'top-left' || pos === 'bottom-left' ? 'slide-left' : 'slide-right';
 }
 
 /** 各变体的退出动画类（默认 out-drop） */
@@ -180,8 +192,56 @@ const OUT_CLASS: Record<NoticeVariant, string> = {
   shake: 'bz-notice--out-fade',
 };
 
+/** 通知偏好读取（issue 297）：通知是最后兜底的报告通道，设置读取失败不得让通知本身炸掉——
+ *  provider 未注入/抛错一律按缺省行为走（settings 抛错的场景正是通知要报告的对象） */
+function noticePref(key: 'noticeLevel' | 'noticeDuration' | 'noticePosition' | 'noticeMaxVisible'): string | undefined {
+  try {
+    const v = (tryGetSettings() as Record<string, unknown> | undefined)?.[key];
+    return typeof v === 'string' ? v : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** 停留档位（noticeDuration 设置，issue 297）：quick=2s / standard=3s（缺省）/ relaxed=5s /
+ *  persistent=常驻点击才关。只作用于未显式指定 duration 的默认时长——撤销 6s 等显式时长不缩放 */
+function durationGear(): { base: number; persistent: boolean } {
+  const v = noticePref('noticeDuration');
+  if (v === 'quick') return { base: 2000, persistent: false };
+  if (v === 'relaxed') return { base: 5000, persistent: false };
+  if (v === 'persistent') return { base: 3000, persistent: true };
+  return { base: 3000, persistent: false };
+}
+
 function defaultDuration(type: NoticeType): number {
-  return type === 'error' ? 5000 : 3000;
+  const base = durationGear().base;
+  return type === 'error' ? base + 2000 : base;
+}
+
+/** 通知级别（noticeLevel 设置，issue 297）：important=仅警告与错误 / error=仅错误。
+ *  低档位静默常规通知——但带操作按钮（撤销/查看等交互出口）与 progress 永不放行。
+ *  静默先于去重登记：被静默的调用视同未发生 */
+function suppressedByLevel(kind: NoticeKind, opts?: NoticeOptions): boolean {
+  const level = noticePref('noticeLevel');
+  if (level !== 'important' && level !== 'error') return false;
+  if (kind === 'progress') return false;
+  if (opts && (opts.action || (opts.actions && opts.actions.length > 0))) return false;
+  if (level === 'error') return kind !== 'error';
+  return kind !== 'warning' && kind !== 'error';
+}
+
+/** 弹出位置类（noticePosition 设置，issue 297）：容器挂角位类，CSS 只在 769px+ 生效——
+ *  移动端媒体查询（id 特异性低于 id+类）恒顶部居中不被覆盖。缺省 top-right 不挂类 */
+const POSITION_CLASSES = ['bz-notice-pos--bottom-right', 'bz-notice-pos--bottom-left', 'bz-notice-pos--top-left'] as const;
+
+function applyPositionClass(container: HTMLElement): void {
+  const pos = noticePref('noticePosition');
+  container.classList.remove(...POSITION_CLASSES);
+  const cls =
+    pos === 'bottom-right' || pos === 'bottom-left' || pos === 'top-left'
+      ? `bz-notice-pos--${pos}`
+      : '';
+  if (cls) container.classList.add(cls);
 }
 
 /** 基础阅读速度：每字符约 60ms（中英文混合均值）；短文本用 base 兜底 */
@@ -242,7 +302,7 @@ function removeInternal(n: InternalNotice): void {
 function evictOldest(): void {
   // 为即将入栈的新通知腾位：最多驱逐「超员数 + 1」条最旧的可驱逐帧。
   // 常驻帧跳过不驱逐（P1-33）；配额封顶防止常驻帧滞留时循环吞掉全部普通帧。
-  let quota = live.length - MAX_VISIBLE + 1;
+  let quota = live.length - maxVisible() + 1;
   for (let i = 0; quota > 0 && i < live.length; ) {
     const candidate = live[i];
     if (candidate.persistent) {
@@ -325,6 +385,9 @@ function armTimer(n: InternalNotice, kind: NoticeKind, explicitDuration?: number
     n.persistent = true; // <= 0 = 常驻
     return;
   }
+  // 常驻档（issue 297）：未显式指定时长不自动消失。persistent 保持 false——与 progress 常驻帧
+  // 不同，仍参与堆叠驱逐，否则普通帧无限滞留堆出屏幕
+  if (explicitDuration === undefined && durationGear().persistent) return;
   n.timer = window.setTimeout(() => hideNow(n), dur);
 }
 
@@ -383,11 +446,14 @@ function appendActionBtn(n: InternalNotice, action: NoticeAction): void {
 
 export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
   const kind: NoticeKind = (opts && opts.type) || 'info';
+  // 级别静默（issue 297）：先于去重登记，被静默的调用视同未发生
+  if (suppressedByLevel(kind, opts)) return noopHandle();
   const isProgress = kind === 'progress';
   const type: NoticeType = isProgress ? 'info' : kind;
   const variant: NoticeVariant =
     (opts && opts.variant) || defaultVariant();
   const container = ensureContainer();
+  applyPositionClass(container);
 
   // 去重：同键通知存活 → 原地合并更新消息并重置计时（连续任务单框）；
   // 已消失但 30s 窗口内 → 不新弹（防刷屏）

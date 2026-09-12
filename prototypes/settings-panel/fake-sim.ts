@@ -83,6 +83,12 @@ const SEED_SETTINGS: Record<string, unknown> = {
   passwordCharset: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+',
   passwordLength: '16',
   securityMode: false,
+  // 通知（issue 297，通用域「通知」组）：四键与 src/settings.ts DEFAULT 同值——
+  // 壳内 toast 走真 notice.ts（settings-provider 已注入），改档位行为实时生效
+  noticeLevel: 'all',
+  noticeDuration: 'standard',
+  noticePosition: 'top-right',
+  noticeMaxVisible: '5',
 };
 
 /**

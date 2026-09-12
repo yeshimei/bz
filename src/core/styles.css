@@ -139,6 +139,26 @@ button.news-close-btn {
     top: calc(34px + env(safe-area-inset-top, 0px));
   }
 }
+/* 桌面四角位置（noticePosition 设置，issue 297；缺省 top-right 不挂类）。
+ * 只在 769px+ 生效：id+类特异性高于移动端媒体查询的纯 id 选择器，不限定会被角类覆盖顶部居中 */
+@media (min-width: 769px) {
+  #bz-notice-container.bz-notice-pos--top-left {
+    left: 16px;
+    right: auto;
+    align-items: flex-start;
+  }
+  #bz-notice-container.bz-notice-pos--bottom-right {
+    top: auto;
+    bottom: 16px;
+  }
+  #bz-notice-container.bz-notice-pos--bottom-left {
+    top: auto;
+    bottom: 16px;
+    left: 16px;
+    right: auto;
+    align-items: flex-start;
+  }
+}
 .bz-notice {
   pointer-events: auto;
   position: relative;

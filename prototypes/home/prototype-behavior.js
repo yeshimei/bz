@@ -1,4 +1,4 @@
-/* 源指纹 ab60308be7931718 · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 87aaca7b608ff016 · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -4067,7 +4067,35 @@ var BZW_home = (() => {
     }
   });
 
+  // src/core/settings-provider.ts
+  function setSettingsProvider(fn) {
+    _provider = fn;
+  }
+  function saveSettings() {
+    return _saver ? _saver() : Promise.resolve();
+  }
+  function getSettings() {
+    if (!_provider) {
+      throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
+    }
+    return _provider();
+  }
+  function tryGetSettings() {
+    return _provider ? _provider() : {};
+  }
+  var _provider, _saver;
+  var init_settings_provider = __esm({
+    "src/core/settings-provider.ts"() {
+      _provider = null;
+      _saver = null;
+    }
+  });
+
   // src/core/notice.ts
+  function maxVisible() {
+    const v = Number(noticePref("noticeMaxVisible"));
+    return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
+  }
   function notice(msg, type, duration) {
     notify(msg, { type: type || "info", duration });
   }
@@ -4086,10 +4114,43 @@ var BZW_home = (() => {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
   }
   function defaultVariant() {
-    return isMobileView() ? "drop" : "slide-right";
+    if (isMobileView()) return "drop";
+    const pos = noticePref("noticePosition");
+    return pos === "top-left" || pos === "bottom-left" ? "slide-left" : "slide-right";
+  }
+  function noticePref(key) {
+    var _a;
+    try {
+      const v = (_a = tryGetSettings()) == null ? void 0 : _a[key];
+      return typeof v === "string" ? v : void 0;
+    } catch (e) {
+      return void 0;
+    }
+  }
+  function durationGear() {
+    const v = noticePref("noticeDuration");
+    if (v === "quick") return { base: 2e3, persistent: false };
+    if (v === "relaxed") return { base: 5e3, persistent: false };
+    if (v === "persistent") return { base: 3e3, persistent: true };
+    return { base: 3e3, persistent: false };
   }
   function defaultDuration(type) {
-    return type === "error" ? 5e3 : 3e3;
+    const base = durationGear().base;
+    return type === "error" ? base + 2e3 : base;
+  }
+  function suppressedByLevel(kind, opts) {
+    const level = noticePref("noticeLevel");
+    if (level !== "important" && level !== "error") return false;
+    if (kind === "progress") return false;
+    if (opts && (opts.action || opts.actions && opts.actions.length > 0)) return false;
+    if (level === "error") return kind !== "error";
+    return kind !== "warning" && kind !== "error";
+  }
+  function applyPositionClass(container) {
+    const pos = noticePref("noticePosition");
+    container.classList.remove(...POSITION_CLASSES);
+    const cls = pos === "bottom-right" || pos === "bottom-left" || pos === "top-left" ? `bz-notice-pos--${pos}` : "";
+    if (cls) container.classList.add(cls);
   }
   function calcDuration(text, base) {
     const len = text.length;
@@ -4116,7 +4177,7 @@ var BZW_home = (() => {
     if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
   }
   function evictOldest() {
-    let quota = live.length - MAX_VISIBLE + 1;
+    let quota = live.length - maxVisible() + 1;
     for (let i = 0; quota > 0 && i < live.length; ) {
       const candidate = live[i];
       if (candidate.persistent) {
@@ -4184,6 +4245,7 @@ var BZW_home = (() => {
       n.persistent = true;
       return;
     }
+    if (explicitDuration === void 0 && durationGear().persistent) return;
     n.timer = window.setTimeout(() => hideNow(n), dur);
   }
   function noopHandle() {
@@ -4213,10 +4275,12 @@ var BZW_home = (() => {
   }
   function notify(msg, opts) {
     const kind = opts && opts.type || "info";
+    if (suppressedByLevel(kind, opts)) return noopHandle();
     const isProgress = kind === "progress";
     const type = isProgress ? "info" : kind;
     const variant = opts && opts.variant || defaultVariant();
     const container = ensureContainer();
+    applyPositionClass(container);
     if (opts && opts.dedupeKey) {
       const key = opts.dedupeKey;
       const r = recent[key];
@@ -4320,11 +4384,12 @@ var BZW_home = (() => {
       }
     };
   }
-  var MAX_VISIBLE, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, UNDO_DURATION_MS, OUT_CLASS, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
+  var MAX_VISIBLE_DEFAULT, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, UNDO_DURATION_MS, OUT_CLASS, POSITION_CLASSES, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
   var init_notice = __esm({
     "src/core/notice.ts"() {
       init_z_order();
-      MAX_VISIBLE = 5;
+      init_settings_provider();
+      MAX_VISIBLE_DEFAULT = 5;
       LEAVE_MS = 200;
       DEDUPE_WINDOW_MS = 3e4;
       MOBILE_QUERY = "(max-width: 768px)";
@@ -4351,6 +4416,7 @@ var BZW_home = (() => {
         bounce: "bz-notice--out-fade",
         shake: "bz-notice--out-fade"
       };
+      POSITION_CLASSES = ["bz-notice-pos--bottom-right", "bz-notice-pos--bottom-left", "bz-notice-pos--top-left"];
       PER_CHAR_MS = 60;
       SHORT_THRESHOLD = 20;
       live = [];
@@ -4861,30 +4927,6 @@ var BZW_home = (() => {
           if (ok === "ok") notice(`已把 ${unread} 篇标为已读`, "success");
         }
       };
-    }
-  });
-
-  // src/core/settings-provider.ts
-  function setSettingsProvider(fn) {
-    _provider = fn;
-  }
-  function saveSettings() {
-    return _saver ? _saver() : Promise.resolve();
-  }
-  function getSettings() {
-    if (!_provider) {
-      throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
-    }
-    return _provider();
-  }
-  function tryGetSettings() {
-    return _provider ? _provider() : {};
-  }
-  var _provider, _saver;
-  var init_settings_provider = __esm({
-    "src/core/settings-provider.ts"() {
-      _provider = null;
-      _saver = null;
     }
   });
 
