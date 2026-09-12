@@ -59,16 +59,6 @@ export function memoSettingsSchema(): SettingsSchema {
             desc: '打开面板时同时展开已完成折叠区',
             binding: { key: 'memoShowArchivedByDefault' },
           },
-          {
-            type: 'select',
-            name: '到期时间格式',
-            desc: '到期时间按相对或绝对格式显示',
-            binding: { key: 'memoDueFormat' },
-            options: [
-              { value: 'relative', label: '相对' },
-              { value: 'absolute', label: '绝对' },
-            ],
-          },
         ],
       },
       {
