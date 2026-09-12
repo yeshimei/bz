@@ -141,13 +141,17 @@ export default interface BzSettings {
   /** 剪藏本目录栏宽度记忆（issue 222：拖动中/右栏分割线后记住；0=未拖过走默认 360px） */
   clipbookMidWidth: number;
 
-  // ===== 🔐 密码本（4 项）=====
+  // ===== 🔐 密码本（6 项）=====
   /** 🔤 密码生成字符集 */
   passwordCharset: string;
   /** 🔢 密码生成长度 */
   passwordLength: string;
   /** 🔒 安全模式（关闭列表窗口立即自动上锁） */
   securityMode: boolean;
+  /** 🎨 密码本面板布局：'default' = 三栏（导航 / 列表 / 详情；当前唯一布局） */
+  passwordVaultSkin: string;
+  /** 🎨 密码本面板主题：'gold' = 金印（金色印章语言，与解锁屏同源；当前唯一主题） */
+  passwordVaultSkinTheme: string;
 
   // ===== ⭐ 收藏本（1 项，ADR-0009 废弃）=====
 
@@ -315,9 +319,9 @@ export default interface BzSettings {
   /** 已有关联不再建链（v1.7/ticket 167）：自动路径（创建/修改/队列消费）对 related 非空笔记跳过；手动重跑豁免 */
   linkAgentRespectRelated: boolean;
 
-  // ===== 常驻监听开关（懒加载架构，ADR-0003）=====
-  /** 第二大脑启用开关（l7A）：仅控制启动时自动加载（常驻监听/面板初始化），关闭后仍可从命令面板手动打开；原 flashEnabled，ticket 103 更名迁移 */
-  secondBrainEnabled: boolean;
+  // ===== 第二大脑（2026-09-12 拍板：启用开关退役）=====
+  /** 第二大脑不再有启用键：启动时无条件自动加载（原 l7A secondBrainEnabled 开关与懒加载分支一并退役，
+   *  用户拍板「去掉基础组中的启动，默认启动」） */
 
   // ===== 🍅 番茄钟（9 项，ticket 31）=====
   /** 预设方案 id（PRESETS 12 档：11 科学预设 + custom 自定义） */
@@ -580,6 +584,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
     '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+',
   passwordLength: '16',
   securityMode: false,
+  // 外观组（2026-09-12）：布局/主题各一档（与保险库 · 影院 · 第二大脑同范式）
+  passwordVaultSkin: 'default',
+  passwordVaultSkinTheme: 'gold',
 
 
 
@@ -645,7 +652,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   linkAgentRespectRelated: true, // v1.7/ticket 167：默认尊重「已有 related 不再自动建链」
 
   // 常驻监听（issue 187：旧 aiAgent 4 键退役，引用同步无条件常驻，不设开关）
-  secondBrainEnabled: true,
+  // 第二大脑（2026-09-12 拍板）：启用开关退役，启动无条件自动加载，键不再落盘
 
   // 番茄钟（9 项，ticket 31）
   pomodoroPreset: 'classic',

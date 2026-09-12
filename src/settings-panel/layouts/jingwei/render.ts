@@ -50,12 +50,13 @@ export function mobShellHtml(): string {
     `</div>`;
 }
 
-/** 移动端列表域项（图标方块 + 名称 + 描述 + ›/「设置」签；data-sp-domain 契约供事件层回查） */
-export function mobItemHtml(opts: { id: string; icon: string; name: string; desc: string; kind?: string }): string {
+/** 移动端列表域项（图标方块 + 名称 + 描述 + ›/「设置」签；data-sp-domain 契约供事件层回查）。
+ *  row（2026-09-12 补）：搜索命中的**设置项**行 → 推入该域后滚动定位并高亮该行。 */
+export function mobItemHtml(opts: { id: string; icon: string; name: string; desc: string; kind?: string; row?: string }): string {
   const tail = opts.kind
     ? `<span class="bz-sp-mob-kind">${esc(opts.kind)}</span>`
     : `<span class="bz-sp-mob-chev">${iconSpan('chevron-right')}</span>`;
-  return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}">` +
+  return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"${opts.row ? ` data-sp-row="${esc(opts.row)}"` : ''}>` +
     `<span class="bz-sp-mob-ic">${iconSpan(opts.icon)}</span>` +
     `<span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span>` +
     `<span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span>${tail}</button>`;

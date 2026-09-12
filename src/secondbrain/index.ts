@@ -43,7 +43,8 @@ let linkWatcher: LinkAgentWatcher | null = null;
 let unsubVault: (() => void) | null = null;
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
-/** 幂等初始化（懒加载 ADR-0003：secondBrainEnabled 开关在 main.onload 控制） */
+/** 幂等初始化（2026-09-12 起：启动即自动加载 —— 原 secondBrainEnabled 懒加载开关退役，
+ *  main.onLoad 布局就绪时无条件调用；命令面板/首页入口仍可再次调用，幂等保证只初始化一次） */
 export function ensureSecondBrain(app: App): void {
   if (initialized) return;
   initialized = true;

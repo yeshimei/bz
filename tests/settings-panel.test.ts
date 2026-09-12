@@ -75,7 +75,8 @@ describe('设置面板（settings-panel）', () => {
     const head = popup.firstElementChild as HTMLElement;
     expect(head.classList.contains('bz-sp-head')).toBe(true);
     expect(head.querySelector('.bz-sp-head-title')!.textContent).toBe('设置');
-    expect(head.querySelectorAll('.bz-sp-head-tools *').length).toBe(0);
+    // 工具位（2026-09-12：搜索即过滤无开关）保持为空，无工具钮/品牌残留
+    expect(head.querySelectorAll('.bz-sp-head-tools > *').length).toBe(0);
     expect(popup.querySelector('.bz-sp-brand-name')).toBeNull();
     expect(popup.querySelector('.bz-sp-logo')).toBeNull();
     // 无设置项的域不在左侧列表显示（用户拍板）；issue 186 AI 自全局拆出独立成域（通用 + AI 两项）
@@ -97,8 +98,8 @@ describe('设置面板（settings-panel）', () => {
       badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     }
     // 2026-09-10 侧栏重新分细组（基础/智能/记录/收集/媒体与阅读/工具/安全 七组）→ 下标整体重排
-    expect(badges[0]).toBe('5'); // 通用：数据存储路径 1 项 + 通知 4 项（issue 297；外观已独立「设置」域）
-    expect(badges[1]).toBe('2'); // 设置：布局 + 主题两张卡片行（拍板 P1：外观独立域）
+    expect(badges[0]).toBe('3'); // 通用：外观 2 卡（原「设置」域并入）+ 数据存储路径 1 项（体检为按钮行不计）
+    expect(badges[1]).toBe('4'); // 通知：4 个 select（issue 297 建的组，2026-09-12 自通用域拆出独立成一页）
     expect(badges[2]).toBe('11'); // 首页：外观 2 卡 + 时间线 4 + 内容过滤 3 + 预告栏 1（issue 288 拆组去「已跳过」）+ 入口内联编辑器 1 行
     expect(badges[3]).toBe('4'); // AI：服务商+模型名称+上下文+最大输出（采样参数组已退役；aiProvider 未设 → 密钥行门控隐藏）
     expect(badges[5]).toBe('5'); // 日记本：ADR-0115 升格后 = 外观 2 + 目录 2 + 显示 1（维护组为按钮行，不计设置项）
@@ -109,7 +110,7 @@ describe('设置面板（settings-panel）', () => {
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
     expect(navIcons.length).toBe(18); // issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17；2026-09-10 内容首页域补入口设置 → 18
     expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 通用
-    expect(navIcons[1].getAttribute('data-icon')).toBe('palette'); // 设置（拍板 P1：外观独立域）
+    expect(navIcons[1].getAttribute('data-icon')).toBe('bell'); // 通知（基础组第二位，2026-09-12 独立成页）
     expect(navIcons[2].getAttribute('data-icon')).toBe('layout-grid'); // 首页（基础组第三位，2026-09-10 侧栏重分组）
     expect(navIcons[3].getAttribute('data-icon')).toBe('sparkles'); // AI（智能组首位）
     expect(navIcons[5].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
@@ -152,13 +153,13 @@ describe('设置面板（settings-panel）', () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    // 默认域 = 通用（issue 186：AI 拆出后全局改称通用；issue 297 补「通知」组 → 两组）
+    // 默认域 = 通用（issue 186：AI 拆出后全局改称通用；2026-09-12：原「设置」域外观组并入 → 仍两组）
     // 首次动态 import 冷加载可能超过 tick 的 20ms：改轮询等分组出现，消除时序脆断（原 await tick()）
     expect(await waitGroups(popup, 1)).toBe(true);
     let groups = popup.querySelectorAll('.bz-sp-group');
     expect(groups.length).toBe(2);
-    expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('数据存储路径');
-    expect(groups[1].querySelector('.bz-sp-group-name')!.textContent).toBe('通知');
+    expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('外观');
+    expect(groups[1].querySelector('.bz-sp-group-name')!.textContent).toBe('数据存储路径');
     // 点 AI 域 → 内嵌渲染 AI 组（服务商 select 等）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')
@@ -236,9 +237,9 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 通用域分组：数据存储路径（folder-open）+ 通知（bell，issue 297）
+    // 通用域分组：外观（palette，原「设置」域并入）+ 数据存储路径（folder-open）
     let icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(icons).toEqual(['folder-open', 'bell']);
+    expect(icons).toEqual(['palette', 'folder-open']);
     // AI 域分组：AI（sparkles）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')
@@ -356,16 +357,11 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('桌面端：「设置」域外观组——布局/主题各一张卡片卡，点主题卡落盘 chenhun（拍板 P1 十六轮）', async () => {
+  it('桌面端：通用域外观组——布局/主题各一张卡片卡，点主题卡落盘 chenhun（2026-09-12：原「设置」域并入通用）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    // 点导航「设置」域 → 渲染单组「外观」：上行布局（经纬）+ 下行主题（晨昏），各一张卡
-    const apItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
-      (el) => el.textContent?.includes('设置')
-    ) as HTMLElement;
-    apItem.click();
-    await tick();
+    // 默认域即通用 → 首组「外观」：上行布局（经纬）+ 下行主题（晨昏），各一张卡（无需再点导航）
     expect(await waitGroups(popup, 1)).toBe(true);
     const group = popup.querySelector('.bz-sp-group')!;
     expect(group.querySelector('.bz-sp-group-name')!.textContent).toBe('外观');
@@ -474,7 +470,7 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.querySelector('.bz-sp-pane .setting-item')).toBeNull();
     // 空态（未设置路径）只显示选择按钮，无 chip
     const pathRow = chips!.closest('.bz-sp-set-row')!;
-    expect(pathRow.querySelector('.bz-sp-set-name')!.textContent).toBe('日记目录');
+    expect(pathRow.querySelector('.bz-sp-set-name')!.textContent).toBe('日记文件夹');
     expect(pathBtn.textContent).toBe('选择…');
     ui.cleanup();
   });
@@ -501,9 +497,13 @@ describe('设置面板（settings-panel）', () => {
     // 有 chip 即无按钮（2026-09-08 拍板：按钮仅空态在场）；chip 点击重开选择器
     expect(row1.querySelector('.bz-sp-path-btn')).toBeNull();
     chip1.click();
-    expect(document.querySelector('.bz-sp-picker-mask'), '回落 chip 点击打开 dir-picker').toBeTruthy();
-    (document.querySelector('.bz-sp-picker-foot .bz-sp-btn') as HTMLElement).click(); // 取消关闭
-    expect(document.querySelector('.bz-sp-picker-mask')).toBeNull();
+    expect(document.querySelector('#bz-path-picker-mask'), '回落 chip 点击打开路径选择器').toBeTruthy();
+    expect(document.querySelector('.bz-path-picker'), '弹窗 = core 统一选择器（ADR-0127）').toBeTruthy();
+    // core 选择器无取消按钮：遮罩点击 / ESC 关闭（主窗口规范）
+    (document.querySelector('#bz-path-picker-mask') as HTMLElement).dispatchEvent(
+      new MouseEvent('click', { bubbles: true })
+    );
+    expect(document.querySelector('#bz-path-picker-mask')).toBeNull();
     ui1.cleanup();
     delete (panelState as any).libraryFolderPath;
 
@@ -541,7 +541,7 @@ describe('设置面板（settings-panel）', () => {
     delete (panelState as any).bookshelfFolderPath;
   });
 
-  it('桌面端：路径行 chips 重渲清旧值（回归：dir-picker 选用后 muted 占位不得残留）', async () => {
+  it('桌面端：路径行 chips 重渲清旧值（回归：选择器选用后 muted 占位不得残留）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
@@ -550,20 +550,22 @@ describe('设置面板（settings-panel）', () => {
     const chips = popup.querySelector('.bz-sp-chips') as HTMLElement;
     expect(chips).toBeTruthy();
     expect(chips.querySelector('.bz-sp-chip--muted')).toBeNull();
-    // 打开 dir-picker（目录聚合走 MockVault；轮询至目录扫描完成——加载占位行同为
-    // .bz-sp-picker-row 但无点击行为，须等到真实目录行（库根目录）出现）
+    // 打开选择器（core openPathPicker：目录聚合走 MockVault；快速首渲染即出库根行，
+    // adapter 补齐在后台完成——弹窗带 .bz-sp-skin 面板皮肤）
     chips.querySelector('.bz-sp-path-btn')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(document.querySelector('.bz-sp-picker-mask')).toBeTruthy();
+    const popupEl = document.querySelector('.bz-path-picker') as HTMLElement;
+    expect(popupEl).toBeTruthy();
+    expect(popupEl.classList.contains('bz-sp-skin'), '面板内打开 = 挂面板皮肤').toBe(true);
     const deadline = Date.now() + 5000;
     let row: Element | null = null;
     while (Date.now() < deadline) {
-      row = [...document.querySelectorAll('.bz-sp-picker-row')].find((r) => r.textContent?.includes('（库根目录）')) ?? null;
+      row = [...document.querySelectorAll('.bz-path-picker-row')].find((r) => r.textContent?.includes('（库根目录）')) ?? null;
       if (row) break;
       await new Promise((r) => setTimeout(r, 30));
     }
-    expect(row, 'dir-picker 目录行就绪').toBeTruthy();
+    expect(row, '选择器目录行就绪').toBeTruthy();
     (row as HTMLElement).click();
-    (document.querySelector('.bz-sp-picker-foot .bz-sp-btn--primary') as HTMLElement).click();
+    (document.querySelector('.bz-path-picker-btn--primary') as HTMLElement).click();
     await tick();
     // 重渲后：唯一 chip =（库根目录）；muted 占位已清（清旧值选择器错类名即残留双 chip 缺陷）
     const after = popup.querySelector('.bz-sp-chips')!;
@@ -647,7 +649,7 @@ describe('设置面板（settings-panel）', () => {
     }
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
     expect(names).toHaveLength(18); // issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17；2026-09-10 内容首页域转可见 → 18
-    expect(names.slice(0, 3)).toEqual(['通用', '设置', '首页']); // 基础组（2026-09-10 七组重排）：通用 → 设置 → 首页
+    expect(names.slice(0, 3)).toEqual(['通用', '通知', '首页']); // 基础组（2026-09-12）：通用 → 通知 → 首页
     // 无设置域（聚合讯/阅读报告/自动摘要/附件搬移）一律不出现；小橘陪伴猫有 schema（issue 194 转可见）
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '附件搬移']) {
       expect(names).not.toContain(n);
@@ -685,7 +687,7 @@ describe('设置面板（settings-panel）', () => {
     }
     // 只看域名（mob-name），避免描述包含误判
     expect(names).toHaveLength(18); // 拍板 P1 补「设置」域 → 17；issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17；2026-09-10 内容首页域转可见 → 18
-    expect(names.slice(0, 3)).toEqual(['通用', '设置', '首页']); // 基础组（2026-09-10 七组重排）：通用 → 设置 → 首页
+    expect(names.slice(0, 3)).toEqual(['通用', '通知', '首页']); // 基础组（2026-09-12）：通用 → 通知 → 首页
     expect(names).not.toContain('聚合讯');
     expect(names).toContain('小橘陪伴猫'); // 有 schema，issue 194 转可见
     expect(names).toContain('日记本'); // ADR-0115：回忆墙升格日记本，单条目在列

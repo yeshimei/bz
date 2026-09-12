@@ -8,14 +8,15 @@
  * - 域设置内容：数据 = 各域真实 schema（xxxSettingsSchema()，与 ⚙️ 弹窗同源），
  *   视觉 = 渲染器 renderPanelSchema（组件库控件），绑定逻辑与 ⚙️ 弹窗同一套
  *   （键直绑 getSettings/saveSettings / 三函数 / visibleWhen / onChange）；
- *   路径行走 uiChip 路径胶囊 + openPathPicker（ADR-0061 选择器）。
+ *   路径行走 uiChip 路径胶囊 + openPathPicker（ADR-0061 选择器；面板内挂 .bz-sp-skin 皮肤，ADR-0127）。
  * - 桌面导航徽标动态计算（无设置=— / 其余初始=·，schema 加载后回填设置项总数）。
  * - 通用域/AI 域 → generalSettingsSchema()/aiSettingsSchema()（issue 186：AI 自全局拆出独立成域）。
  */
 import { createOverlay, topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
-import { tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
+import { openFlowDialog } from '../core/flow-dialog';
 import type { SettingsSchema } from '../core/settings-schema';
 import { DOMAIN_ICONS } from '../core/domain-icons';
 import { renderPanelSchema } from './renderer';
@@ -42,11 +43,14 @@ interface DomainDef {
 
 /** 惰性 schema 加载器（与各域 ⚙️ 弹窗同源） */
 const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
-  // 通用组：基础 schema（存储路径）+「数据体检」按钮行（D4：检查项直达体检面板；
-  // core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
+  // 通用组：基础 schema（存储路径）+ 外观组（原「设置」页并入）+「数据体检」按钮行
+  // （D4：检查项直达体检面板；core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
   general: async () => {
     const schema = await (await import('../core/settings-main-schema')).generalSettingsSchema();
     const { openDataCheckup } = await import('../checkup');
+    // 外观组排最前（2026-09-12 用户拍板：「设置」页撤销，其外观组并入通用）
+    const { appearanceSettingsSchema } = await import('./schema');
+    schema.groups.unshift(...appearanceSettingsSchema().groups);
     // 「数据体检」按钮挂「数据存储路径」组尾（按 name 定位防未来组序漂移）
     const storageGroup = schema.groups.find((g) => g.name === '数据存储路径') ?? schema.groups[schema.groups.length - 1];
     storageGroup.rows.push({
@@ -60,7 +64,9 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
     return schema;
   },
   ai: async () => (await import('../core/settings-main-schema')).aiSettingsSchema(),
-  appearance: async () => (await import('./schema')).appearanceSettingsSchema(),
+  // 通知（2026-09-12 用户拍板）：自「通用」域拆出，面板里独立成一页
+  // （不建业务域——横切偏好，schema 留 core/settings-main-schema）
+  notice: async () => (await import('../core/settings-main-schema')).noticeSettingsSchema(),
   // 内容首页（home 域，2026-09-10）：入口顺序与显隐 = 一个按钮开编辑弹窗
   home: async () => (await import('../home/settings')).homeSettingsSchema(),
   diary: async () => (await import('../diary/settings')).diarySettingsSchema(),
@@ -111,35 +117,36 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
  *  描述只写功能语义，不带「新域/ADR」开发黑话；徽标运行时动态计算，见 badgeOf）。
  *  导出供回归测试断言（图标映射一致性/历史重复图标错开）。 */
 export const DOMAINS: DomainDef[] = [
-  { id: 'global', name: '通用', icon: DOMAIN_ICONS.global, desc: '存储路径等跨域基础偏好', schemaLoader: schemaLoaders.general },
-  { id: 'appearance', name: '设置', icon: DOMAIN_ICONS.appearance, desc: '设置面板的布局与主题', schemaLoader: schemaLoaders.appearance },
+  { id: 'global', name: '通用', icon: DOMAIN_ICONS.global, desc: '面板外观、存储路径等跨域偏好', schemaLoader: schemaLoaders.general },
+  // 通知（2026-09-12）：自通用域拆出的独立面板页；「设置」页并入通用后 appearance 域退役
+  { id: 'notice', name: '通知', icon: DOMAIN_ICONS.notice, desc: '通知级别、时长与弹出位置', schemaLoader: schemaLoaders.notice },
   { id: 'ai', name: 'AI', icon: DOMAIN_ICONS.ai, desc: 'AI 服务商与模型配置', schemaLoader: schemaLoaders.ai },
   // diary = ADR-0115 回忆墙升格正名（唯一日记 UI），diary-wall 域退役
   { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录、写日记与解析检测', schemaLoader: schemaLoaders.diary },
-  { id: 'memo', name: '备忘录', icon: DOMAIN_ICONS.memo, desc: '备忘录工作台与提醒（捕获入口落点）', schemaLoader: schemaLoaders.memo },
+  { id: 'memo', name: '备忘录', icon: DOMAIN_ICONS.memo, desc: '备忘录工作台与提醒设置', schemaLoader: schemaLoaders.memo },
   { id: 'belongings', name: '归物本', icon: DOMAIN_ICONS.belongings, desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
   { id: 'clipping', name: '剪藏本', icon: DOMAIN_ICONS.clipping, desc: '未读流与剪藏笔记', schemaLoader: schemaLoaders.clipping },
   { id: 'favorites', name: '收藏本', icon: DOMAIN_ICONS.favorites, desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
   { id: 'reading-report', name: '阅读报告', icon: DOMAIN_ICONS['reading-report'], desc: '阅读统计', noSettings: true },
 
   { id: 'cinema', name: '影院', icon: DOMAIN_ICONS.cinema, desc: '影视目录与海报', schemaLoader: schemaLoaders.cinema },
-  { id: 'bookshelf', name: '书库', icon: DOMAIN_ICONS.bookshelf, desc: '藏书封面墙', schemaLoader: schemaLoaders.bookshelf },
+  { id: 'bookshelf', name: '书库', icon: DOMAIN_ICONS.bookshelf, desc: '藏书封面墙、读书笔记与阅读报告', schemaLoader: schemaLoaders.bookshelf },
   { id: 'review', name: '复习计划', icon: DOMAIN_ICONS.review, desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
   { id: 'secondbrain', name: '第二大脑', icon: DOMAIN_ICONS.secondbrain, desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
   { id: 'auto-summary', name: '自动摘要', icon: DOMAIN_ICONS['auto-summary'], desc: '剪藏自动摘要', noSettings: true },
-  { id: 'home', name: '首页', icon: DOMAIN_ICONS.home, desc: '首页外观：入口顺序与显隐', schemaLoader: schemaLoaders.home },
+  { id: 'home', name: '首页', icon: DOMAIN_ICONS.home, desc: '首页外观与时间线入口等显示偏好', schemaLoader: schemaLoaders.home },
   { id: 'pomodoro', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
   { id: 'attach', name: '附件搬移', icon: DOMAIN_ICONS.attach, desc: '附件整理', noSettings: true },
   { id: 'encrypt', name: '保险库', icon: DOMAIN_ICONS.encrypt, desc: '密码、加密笔记与加密日记', schemaLoader: schemaLoaders.encrypt },
   { id: 'password-vault', name: '密码本', icon: DOMAIN_ICONS['password-vault'], desc: '密码条目与生成器', schemaLoader: schemaLoaders['password-vault'] },
   { id: 'smartcat', name: '小橘陪伴猫', icon: DOMAIN_ICONS.smartcat, desc: '桌面宠物陪伴', schemaLoader: schemaLoaders.smartcat },
-  { id: 'knowledge', name: '知识盒', icon: DOMAIN_ICONS.knowledge, desc: '文献录入 · 卡片 · 主题', schemaLoader: schemaLoaders.knowledge },
+  { id: 'knowledge', name: '知识盒', icon: DOMAIN_ICONS.knowledge, desc: '文献录入、卡片与主题管理', schemaLoader: schemaLoaders.knowledge },
 ];
 
 /** 导航语义分组（拍板原型 P1：基础/记录/媒体与知识/工具 四组；不在表内的域归「其他」尾组）。
  *  id 口径 = DOMAINS 的 id（剪藏本在 DOMAINS 里叫 clipping）。导出供回归测试断言。 */
 export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
-  { title: '基础', ids: ['global', 'appearance', 'home'] },
+  { title: '基础', ids: ['global', 'notice', 'home'] },
   { title: '智能', ids: ['ai', 'secondbrain'] },
   { title: '记录', ids: ['diary', 'memo', 'belongings'] },
   { title: '收集', ids: ['clipping', 'favorites'] },
@@ -241,6 +248,9 @@ export class SettingsPanelUI {
   private rerenderList: (() => void) | null = null;
   /** 移动端推入状态：home = 首页列表；domain = 已推入域设置页 */
   private mobPushed = false;
+  /** 当前搜索词（桌面：切域重渲后按它重刷命中/过滤状态）。
+   *  2026-09-12 用户拍板：去掉「只看命中」开关，搜索即过滤（默认恒开）。 */
+  private searchQuery = '';
 
   /**
    * 打开面板；domainId 可选（增强包：备忘录场景菜单「在设置中编辑」直达）——
@@ -318,6 +328,9 @@ export class SettingsPanelUI {
     const pane = popup.querySelector('.bz-sp-pane') as HTMLElement;
     const searchIn = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
 
+    // 键盘导航（2026-09-12 补）：↑↓ 在可见域间前后切换（顺序同导航视觉顺序）
+    popup.addEventListener('keydown', (e) => this.onNavKey(e, pane));
+
     const renderNav = (q: string) => {
       const query = q.trim();
       nav.innerHTML = '';
@@ -354,11 +367,10 @@ export class SettingsPanelUI {
 
     searchIn.addEventListener('input', () => {
       renderNav(searchIn.value);
-      // 桌面搜索词对当前内容区行做 .hit 命中高亮（renderNav 重绘 + 行级命中同刷）
-      const q = searchIn.value.trim();
-      popup.querySelectorAll<HTMLElement>('.bz-sp-settings-body .bz-sp-set-row').forEach((row) => {
-        row.classList.toggle('hit', !!q && !!row.textContent && row.textContent.includes(q));
-      });
+      // 搜索即过滤（2026-09-12 用户拍板：命中行高亮，未命中行与空组隐藏，无开关恒开）；
+      // 切域重渲后按 searchQuery 以同一口径复刷
+      this.searchQuery = searchIn.value.trim();
+      this.applyHitFilter(popup, this.searchQuery);
     });
     renderNav('');
     // 注册列表重绘回调：preload 解析出零项域后按当前搜索词重绘导航（issue 194 按端隐藏）
@@ -419,12 +431,16 @@ export class SettingsPanelUI {
     this.renderHandles = [];
     pane.innerHTML = '';
 
-    // 域页头（桌面：域名 + 描述 + 右侧项数/组数徽标；移动端推入页头行已有域名，跳过）
+    // 域页头（桌面：域名 + 描述 + 「重置本域」+ 右侧项数/组数徽标；移动端推入页头行已有域名，跳过）
     let pageHead: HTMLElement | null = null;
     if (opts.withHead !== false) {
       const headHolder = document.createElement('div');
-      headHolder.innerHTML = R.pageHeadHtml(domain.name, domain.desc, '');
+      headHolder.innerHTML = R.pageHeadHtml(domain.name, domain.desc, '', true);
       pageHead = headHolder.firstElementChild as HTMLElement;
+      // 「重置本域」（2026-09-12 补）：本域 schema 里带字符串键的行恢复 DEFAULT 值
+      pageHead.querySelector('.bz-sp-page-reset')?.addEventListener('click', () => {
+        void this.resetDomain(domain, pane);
+      });
       pane.appendChild(pageHead);
     }
 
@@ -471,6 +487,8 @@ export class SettingsPanelUI {
           '该域的设置项仅移动端可见（如移动端默认全屏），桌面端无需配置'
         ));
       }
+      // 切域/重渲后按当前搜索词复刷命中高亮与过滤（H：状态跨域保持）
+      this.applyHitFilter(pane, this.searchQuery);
       return;
     } catch (e) {
       body.innerHTML = '';
@@ -481,6 +499,111 @@ export class SettingsPanelUI {
       ));
       notice(`加载「${domain.name}」设置失败：${(e as Error).message}`, 'error');
     }
+  }
+
+  /**
+   * 命中高亮 + 搜索过滤（2026-09-12 补，桌面；用户拍板：无开关，搜索即过滤）：
+   * - q 非空时给命中行加 .hit，并隐藏未命中行与「无可见行」的组；q 清空恢复全显；
+   * - **只回收自己设过的**内联 display，不触碰渲染器 visibleWhen 的隐藏
+   *   （否则一过滤就会把门控隐藏的行放出来）。
+   */
+  private applyHitFilter(root: HTMLElement, q: string): void {
+    root.querySelectorAll<HTMLElement>('.bz-sp-set-row').forEach((row) => {
+      if (row.dataset.spHitHidden === '1') {
+        row.style.display = '';
+        delete row.dataset.spHitHidden;
+      }
+      const hit = !!q && !!row.textContent && row.textContent.includes(q);
+      row.classList.toggle('hit', hit);
+      if (q && !hit) {
+        row.style.display = 'none';
+        row.dataset.spHitHidden = '1';
+      }
+    });
+    root.querySelectorAll<HTMLElement>('.bz-sp-group').forEach((g) => {
+      if (g.dataset.spHitHidden === '1') {
+        g.style.display = '';
+        delete g.dataset.spHitHidden;
+      }
+      if (!q) return;
+      const any = [...g.querySelectorAll<HTMLElement>('.bz-sp-set-row')].some((r) => r.style.display !== 'none');
+      if (!any) {
+        g.style.display = 'none';
+        g.dataset.spHitHidden = '1';
+      }
+    });
+  }
+
+  /**
+   * 键盘导航（2026-09-12 补，桌面）：↑↓ 在可见域间前后切换，顺序 = 导航视觉顺序
+   * （NAV_SECS 分组序，与左栏自上而下一致）。多行文本 / 下拉里让位，搜索框与面板本体可用。
+   */
+  private onNavKey(e: KeyboardEvent, pane: HTMLElement): void {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
+    const ordered = groupDomains(listableDomains()).flatMap((s) => s.domains);
+    const idx = ordered.findIndex((d) => d.id === this.activeDomainId);
+    if (idx < 0) return;
+    const next = e.key === 'ArrowDown' ? Math.min(idx + 1, ordered.length - 1) : Math.max(idx - 1, 0);
+    if (next === idx) return;
+    e.preventDefault();
+    const d = ordered[next];
+    this.activeDomainId = d.id;
+    this.rerenderList?.(); // 重绘导航：选中态跟手（与点击同一路径）
+    void this.renderDomain(pane, d);
+    this.navEl
+      ?.querySelector<HTMLElement>(`.bz-sp-nav-item[data-sp-domain="${d.id}"]`)
+      ?.scrollIntoView({ block: 'nearest' });
+  }
+
+  /**
+   * 重置本域（2026-09-12 补）：把本域 schema 中带**字符串键**的行恢复为 DEFAULT_SETTINGS 值，
+   * 落盘后重渲。三函数 binding 的行（无键，如 per-provider 覆盖 / 钳制类）跳过——无通用默认值可查，
+   * 误写风险大于收益。破坏性动作，flow 确认在前，不能一点就改。
+   */
+  private async resetDomain(domain: DomainDef, pane: HTMLElement): Promise<void> {
+    if (!domain.schemaLoader) return;
+    let schema: SettingsSchema;
+    try {
+      schema = await domain.schemaLoader();
+    } catch (e) {
+      notice(`读取「${domain.name}」设置失败：${(e as Error).message}`, 'error');
+      return;
+    }
+    const keys = new Set<string>();
+    for (const g of schema.groups) {
+      for (const r of g.rows) {
+        const k = (r as { binding?: { key?: string } }).binding?.key;
+        if (k) keys.add(k);
+      }
+    }
+    if (!keys.size) {
+      notice(`「${domain.name}」没有可重置的设置项`, 'info');
+      return;
+    }
+    const ans = await openFlowDialog({
+      title: '重置本域设置',
+      message: `把「${domain.name}」的设置项恢复为默认值（未改动的项不受影响）。确定继续吗？`,
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '重置', value: 'ok', cta: true },
+      ],
+    });
+    if (ans !== 'ok') return;
+    const { DEFAULT_SETTINGS } = await import('../settings');
+    const defaults = DEFAULT_SETTINGS as unknown as Record<string, unknown>;
+    const s = getSettings() as unknown as Record<string, unknown>;
+    let n = 0;
+    for (const k of keys) {
+      const def = defaults[k];
+      if (def === undefined) continue;
+      s[k] = Array.isArray(def) ? [...def] : def; // 数组浅拷贝：别把 DEFAULT 里的数组引用写进设置
+      n++;
+    }
+    await saveSettings();
+    notice(`「${domain.name}」已重置 ${n} 项`, 'success');
+    void this.renderDomain(pane, domain);
   }
 
   /* ---------- 移动端：全屏推入式两页（首页搜索 + 域列表 → 推入域设置页） ---------- */
@@ -534,14 +657,16 @@ export class SettingsPanelUI {
         }
         if (rows.length) {
           html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
-          rows.forEach((r) => { html += R.mobItemHtml({ id: r.domain.id, icon: r.domain.icon, name: r.name, desc: `${r.domain.name} · ${r.desc}`, kind: '设置' }); });
+          // row = 行名（data-sp-row）：推入该域后据此滚动定位并高亮（2026-09-12 补）
+          rows.forEach((r) => { html += R.mobItemHtml({ id: r.domain.id, icon: r.domain.icon, name: r.name, desc: `${r.domain.name} · ${r.desc}`, kind: '设置', row: r.name }); });
         }
         if (!doms.length && !rows.length) html = `<div class="bz-sp-mob-empty">没有匹配「${R.esc(query)}」的设置或域</div>`;
         list.innerHTML = html;
       }
       list.querySelectorAll<HTMLElement>('.bz-sp-mob-item').forEach((b) => {
         const d = DOMAINS.find((x) => x.id === b.dataset.spDomain);
-        if (d) b.addEventListener('click', () => void this.pushDomain(d));
+        // 设置项命中带 data-sp-row → 推入后定位到该行（2026-09-12 补）
+        if (d) b.addEventListener('click', () => void this.pushDomain(d, b.dataset.spRow));
       });
       mountIcons(list); // 列表项图标占位物化（render 重绘后补挂）
     };
@@ -552,14 +677,26 @@ export class SettingsPanelUI {
     this.rerenderList = () => { if (!this.mobPushed) render(searchIn.value); };
   }
 
-  /** 推入域设置页（全屏页切换；返回/ESC 弹回首页） */
-  private async pushDomain(domain: DomainDef): Promise<void> {
+  /** 推入域设置页（全屏页切换；返回/ESC 弹回首页）。
+   *  focusRow（2026-09-12 补）：来自搜索「设置项」命中 → 渲染完成后滚动定位并高亮该行。 */
+  private async pushDomain(domain: DomainDef, focusRow?: string): Promise<void> {
     const popup = this.popup!;
     this.mobPushed = true;
     (popup.querySelector('.bz-sp-mob-title') as HTMLElement).textContent = domain.name;
     popup.classList.add('bz-sp-mob-pushed');
     const body = popup.querySelector('.bz-sp-mob-page-body') as HTMLElement;
     await this.renderDomain(body, domain, { withHead: false });
+    if (focusRow) this.focusRowIn(body, focusRow);
+  }
+
+  /** 滚动定位到指定行并高亮（行名匹配 .bz-sp-set-name；找不到静默跳过）。 */
+  private focusRowIn(body: HTMLElement, rowName: string): void {
+    const target = [...body.querySelectorAll<HTMLElement>('.bz-sp-set-row')].find(
+      (el) => el.querySelector('.bz-sp-set-name')?.textContent === rowName
+    );
+    if (!target) return;
+    target.classList.add('hit');
+    target.scrollIntoView({ block: 'center' });
   }
 
   /** 弹回首页（作废进行中的域渲染；下次推入重渲） */

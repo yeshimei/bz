@@ -35,7 +35,7 @@ function openWith(memoryDirectories: string[], hooks: { changed: string[][]; sav
   });
 }
 
-const row = () => document.querySelector('.setting-item[data-name="记忆目录"]') as HTMLElement | null;
+const row = () => document.querySelector('.setting-item[data-name="记忆文件夹"]') as HTMLElement | null;
 
 describe('⚙️ 小橘设置：记忆目录行（ADR-0069）', () => {
   beforeEach(() => {
@@ -48,7 +48,7 @@ describe('⚙️ 小橘设置：记忆目录行（ADR-0069）', () => {
     const el = row();
     expect(el).not.toBeNull();
     // mock Setting 名称/描述存实例属性（DOM 只渲染控件）；弹窗行按 data-name 定位
-    expect((el as any).__setting.name).toBe('记忆目录');
+    expect((el as any).__setting.name).toBe('记忆文件夹');
     expect((el as any).__setting.desc).toContain('小橘的记忆库');
     expect(el!.dataset.filled).toBe('0');
     const btn = el!.querySelector('button');

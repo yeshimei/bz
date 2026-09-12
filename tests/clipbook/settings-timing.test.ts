@@ -13,7 +13,7 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 
 function timingRow(): { onChange?: (v: string, ctx?: unknown) => void } {
   const schema = clipbookSettingsSchema(emptyDataSourceState(true));
-  const group = schema.groups.find((g) => g.name === '智能')!;
+  const group = schema.groups.find((g) => g.name === '自动摘要')!;
   const row: any = group.rows.find((r: any) => r.name === '摘要时机');
   expect(row).toBeTruthy();
   return row;

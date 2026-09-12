@@ -258,7 +258,8 @@ export default class BzPlugin extends Plugin {
       // 引用同步无条件常驻（issue 187：原 aiAgentEnabled 开关随旧 AIAgent 退役——
       // 备忘录/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）
       ensureFileSync(this.app);
-      if (this.settings.secondBrainEnabled) ensureSecondBrainOnReady(this.app, () => this.unloaded);
+      // 第二大脑（2026-09-12 拍板）：启用开关退役 → 启动即无条件自动加载（原懒加载分支已删）
+      ensureSecondBrainOnReady(this.app, () => this.unloaded);
       // 复习计划：到期提醒开启时常驻（ticket 100——监听/染色/轮询统一启动；否则懒加载）；enableAutoNotify 缺省视为开
       if (this.settings.enableAutoNotify !== false) void ensureReview(this.app);
       // 番茄钟：启动即恢复（load+recover，正在倒计时则后台继续/按设置自动弹窗）

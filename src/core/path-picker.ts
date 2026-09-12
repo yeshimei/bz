@@ -13,6 +13,10 @@
  *   chip 文本点击重开选择器、✕ 保留清除；移动端名称/描述与控件区同行（控件区恒 1 子元素）。
  * - 移动端近全屏（≤768 顶对齐避让软键盘 + 底部 safe-area）。
  * - z-index 动态发号（ADR-0067）：每次打开新建 DOM，创建即显示，谁后开谁在上。
+ * - 宿主皮肤通道（2026-09-12，ADR-0127）：skinClassName 同时挂 mask 与 popup（body 下两个
+ *   兄弟节点）。浮层在面板根之外，够不着面板作用域的 --sp-* token —— 皮肤类须**自带一份
+ *   token 声明**再消费（先例 `.bz-item-menu.bz-home-menu`），见 settings-panel/styles.css
+ *   `.bz-sp-skin` 段。设置面板内的路径行传 'bz-sp-skin' 即得面板观感，其余入口不传 = 现状。
  */
 import { Setting } from 'obsidian';
 import { getApp } from './app';
@@ -32,6 +36,9 @@ export interface PathPickerOptions {
   okText?: string;
   /** 确定回调（list = 清洗后的目录清单；单选长度 0 或 1；'' = 库根目录） */
   onConfirm: (list: string[]) => void;
+  /** 宿主皮肤类（空格分隔可多类；同时挂 mask 与 popup）。缺省 = core 皮（Obsidian 主题变量）；
+   *  设置面板传 'bz-sp-skin' → 面板双皮（--sp-*）。皮肤类自带 token 声明，见文件头说明。 */
+  skinClassName?: string;
 }
 
 /* ==================== 数据层 ==================== */
@@ -349,6 +356,13 @@ export function openPathPicker(opts: PathPickerOptions): void {
   });
   currentMask = mask;
   currentPopup = popup;
+  // 宿主皮肤类同时挂 mask 与 popup（body 下两个兄弟节点，各自作用域独立）——皮肤类自带的
+  // token 声明因此对两者都生效（遮罩底色 tint 与弹窗材质同皮）
+  const skinClasses = (opts.skinClassName || '').split(/\s+/).filter(Boolean);
+  if (skinClasses.length) {
+    mask.classList.add(...skinClasses);
+    popup.classList.add(...skinClasses);
+  }
   popup.classList.add('bz-path-picker');
   popup.style.height = 'min(560px, 82vh)'; // 功能性几何（铁律 8：显隐/动态计算内联，视觉样式收敛 CSS）
 

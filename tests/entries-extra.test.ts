@@ -77,9 +77,8 @@ describe('main.ts onunload 清理分支', () => {
     plugin.loadData = async () => null;
     plugin.saveData = async () => {};
     await plugin.onload();
-    // 开启常驻域后卸载
+    // 开启常驻域后卸载（第二大脑自 2026-09-12 起启动即加载，无开关可置）
     plugin.settings.autoSummaryEnabled = true;
-    plugin.settings.secondBrainEnabled = true;
     await plugin.onunload();
     expect(plugin.registeredCommandIds.length).toBeGreaterThan(0);
   });

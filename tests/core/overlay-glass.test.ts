@@ -112,7 +112,8 @@ describe('域遮罩 blur 全量在位', () => {
     expect(sb).toContain(BLUR);
     expect(sb, 'secondbrain 暖褐底色应保留').toContain('background: #2a261e4d');
 
-    const sp = rule(repo('src/settings-panel/styles.css'), '.bz-sp-picker-mask');
+    // 路径选择弹窗（core openPathPicker + .bz-sp-skin 面板皮肤；ADR-0127）
+    const sp = rule(repo('src/settings-panel/styles.css'), '.bz-sp-skin.bz-overlay-mask');
     expect(sp).toContain(BLUR);
     expect(sp, 'settings-panel 暖黑亮态底色应保留').toContain('background: rgba(20, 15, 8, 0.4)');
   });
