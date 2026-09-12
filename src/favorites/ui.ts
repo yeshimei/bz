@@ -31,13 +31,15 @@ import { openItemMenu, openItemSheet, closeItemMenu, type ItemAction } from '../
 import { getApp } from '../core/app';
 import { mountIcons } from '../core/ui';
 import { emitDomainEvent } from '../core/domain-bus';
+import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
 import type { SettingsSchema } from '../core/settings-schema';
 import { TAGS, normalizeUrl, isUrlLike } from './config';
 import {
   actionSpecs, formHtml, pickChipsHtml, hueOf, relTime,
-  panelHtml, renderPanelView, localNow,
+  panelHtml, renderPanelView, localNow, normalizeFavSort,
   type FavActionSpec,
+  type FavSort,
   type FavoritesItem,
 } from './render';
 import { FavoritesAIService } from './ai';
@@ -51,6 +53,8 @@ interface FavState {
   tag: string | null;
   /** 已归档视图（磁贴行「已归档」贴纸入口；数据仍 favorites.json，ADR-0074 冷存语义不变） */
   archived: boolean;
+  /** 当前排序（打开时按 favoritesDefaultSort 播种，issue 296；纯层 filteredItems 消费） */
+  sort: FavSort;
   renderFn: (() => void) | null;
 }
 
@@ -59,6 +63,7 @@ const M: FavState = {
   items: [],
   tag: null,
   archived: false,
+  sort: 'new',
   renderFn: null,
 };
 
@@ -67,6 +72,7 @@ export function resetFavoritesState(): void {
   M.items = [];
   M.tag = null;
   M.archived = false;
+  M.sort = 'new';
   M.renderFn = null;
 }
 
@@ -85,8 +91,51 @@ export function favoritesSettingsSchema(): SettingsSchema {
           { type: 'choiceCards', name: '面板主题', binding: { key: 'favoritesSkinTheme' }, layoutKey: 'favoritesSkin', options: [{ value: 'linen', label: '亚麻', layout: 'default', prevClass: 'bz-sp-prev-linen' }] },
         ],
       },
+      {
+        // 显示组（issue 296）：打开默认筛选 + 默认排序——只管「打开面板时是什么」，面板内切换不回写
+        icon: 'eye',
+        name: '显示',
+        rows: [
+          {
+            type: 'select',
+            name: '打开默认筛选',
+            binding: { key: 'favoritesOpenFilter' },
+            options: [
+              { value: '', label: '全部' },
+              { value: '@last', label: '记住上次' },
+              ...TAGS.map((t) => ({ value: t.label, label: t.label })),
+            ],
+          },
+          {
+            type: 'select',
+            name: '默认排序',
+            binding: { key: 'favoritesDefaultSort' },
+            options: [
+              { value: 'new', label: '最新收藏' },
+              { value: 'old', label: '最早收藏' },
+              { value: 'title', label: '按标题' },
+            ],
+          },
+        ],
+      },
     ],
   };
+}
+
+/** 打开默认筛选（设置 favoritesOpenFilter，issue 296）：''=全部；'@last'=取关面板记忆
+ *  favoritesLastFilter（memoOpenScene '@last' 同款先例）；标签 label=固定该标签；
+ *  非法值（含标签已不在九类）回落全部 */
+function resolveOpenFilter(): { tag: string | null; archived: boolean } {
+  const s = tryGetSettings();
+  const v = s?.favoritesOpenFilter;
+  if (v === '@last') {
+    const last = s?.favoritesLastFilter;
+    if (last === '@archived') return { tag: null, archived: true };
+    if (last && TAGS.some((t) => t.label === last)) return { tag: last, archived: false };
+    return { tag: null, archived: false };
+  }
+  if (v && TAGS.some((t) => t.label === v)) return { tag: v, archived: false };
+  return { tag: null, archived: false };
 }
 
 // ==================== 主面板生命周期 ====================
@@ -135,6 +184,12 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   topifyZ(overlay); // ADR-0067：显示即发号
   M.overlay = overlay;
   M.renderFn = () => renderAll();
+
+  // 打开默认（issue 296）：筛选与排序按设置播种——''=全部 / '@last'=关面板记忆 / 固定标签直选
+  const openFilter = resolveOpenFilter();
+  M.tag = openFilter.tag;
+  M.archived = openFilter.archived;
+  M.sort = normalizeFavSort(tryGetSettings()?.favoritesDefaultSort);
 
   mountIcons(overlay); // 头行关闭钮等 innerHTML 模板里的图标占位
 
@@ -199,6 +254,13 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
 
 export function closePanel(): void {
   if (M.overlay) {
+    // 上次筛选记忆（favoritesOpenFilter='@last' 的取数源）：关面板记住当下视图，下次打开取回
+    // （issue 296，memoLastScene 同款先例）。落设置不落 favorites.json——顶层纯条目数组不改根结构
+    const s = tryGetSettings();
+    if (s) {
+      s.favoritesLastFilter = M.archived ? '@archived' : (M.tag || '');
+      void saveSettings();
+    }
     M.overlay.remove();
     M.overlay = null;
   }

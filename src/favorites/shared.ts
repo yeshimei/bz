@@ -44,12 +44,22 @@ export const ICON = {
   ai: 'sparkles',
 };
 
+/** 默认排序键（favoritesDefaultSort 设置消费；issue 296）：new=最新收藏（缺省）/ old=最早收藏 / title=按标题 */
+export type FavSort = 'new' | 'old' | 'title';
+
+/** 非法值回落 new（与 memo resolveOpenScene 同款归一口径） */
+export function normalizeFavSort(v: unknown): FavSort {
+  return v === 'old' || v === 'title' ? v : 'new';
+}
+
 /** 视图状态切片（面板内会话态；ui.ts 的 FavState 与评审壳的 M 均结构兼容于此） */
 export interface FavView {
   /** 当前标签筛选（null = 全部；存标签 label） */
   tag: string | null;
   /** 已归档视图（磁贴行「已归档」贴纸入口；数据仍 favorites.json，ADR-0074 冷存语义不变） */
   archived: boolean;
+  /** 当前排序（issue 296 默认排序设置播种；缺省 new=最新收藏，置顶恒最前与排序无关） */
+  sort?: FavSort;
 }
 
 // ==================== 小工具 / 口径 ====================
@@ -102,13 +112,20 @@ export function tagCount(items: FavoritesItem[], label: string): number {
   return visibleItems(items).filter((i) => (i.tags || []).includes(label)).length;
 }
 
-/** 当前展示列表：标签筛选（已归档视图不叠标签筛）+ 固定「最新收藏」排序 + 置顶恒最前（稳定分区） */
+/** 当前展示列表：标签筛选（已归档视图不叠标签筛）+ 排序（view.sort，缺省最新收藏；issue 296）+
+ *  置顶恒最前（稳定分区：置顶/非置顶各自组内按同序排） */
 export function filteredItems(items: FavoritesItem[], view: FavView): FavoritesItem[] {
   let list = poolOf(items, view);
   if (!view.archived && view.tag) list = list.filter((i) => (i.tags || []).includes(view.tag as string));
-  const byTime = (a: FavoritesItem, b: FavoritesItem) =>
+  const byTimeDesc = (a: FavoritesItem, b: FavoritesItem) =>
     (b.created || '').localeCompare(a.created || '') || (b.id || '').localeCompare(a.id || '');
-  const base = [...list].sort(byTime);
+  const cmp: (a: FavoritesItem, b: FavoritesItem) => number =
+    view.sort === 'old'
+      ? (a, b) => (a.created || '').localeCompare(b.created || '') || (a.id || '').localeCompare(b.id || '')
+      : view.sort === 'title'
+        ? (a, b) => (a.title || '').localeCompare(b.title || '', 'zh-CN') || byTimeDesc(a, b)
+        : byTimeDesc;
+  const base = [...list].sort(cmp);
   const pinned = base.filter((i) => i.pinned);
   const rest = base.filter((i) => !i.pinned);
   return [...pinned, ...rest];

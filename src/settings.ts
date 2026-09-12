@@ -362,6 +362,16 @@ export default interface BzSettings {
    *  且违背「既有结构不改」铁律；排序键落设置与 memoSortMode 同惯例） */
   favoritesSortKey: string;
   // 旧 favoritesTimeFormat（卡片日期显示）已删（ADR-0101）：固定相对时间
+  /** 收藏本：打开面板默认筛选（issue 296）：''=全部 / '@last'=记住上次（取 favoritesLastFilter，同
+   *  memoOpenScene '@last' 先例）/ 标签 label=固定该标签；非法值（含标签不在九类）回落全部 */
+  favoritesOpenFilter: string;
+  /** 收藏本：上次筛选记忆（issue 296；closePanel 写回：''=全部 / '@archived'=已归档视图 / 标签 label；
+   *  仅 favoritesOpenFilter='@last' 时消费。落设置（data.json）而非 favorites.json——顶层纯条目数组
+   *  不改根结构，与 favoritesSortKey 同惯例） */
+  favoritesLastFilter: string;
+  /** 收藏本：默认排序（issue 296）：new=最新收藏 / old=最早收藏 / title=按标题；置顶恒最前不变；
+   *  非法值回落 new。只管「打开面板时是什么序」，与退役的 favoritesSortKey（排序循环钮）无涉 */
+  favoritesDefaultSort: string;
   /** 影院：移动端默认全屏（默认开——原 JS 内联强制全屏；ADR-0087 起影视报告同控此键） */
   /** 复习计划：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   /** 番茄钟：移动端默认全屏（默认关——原移动端 320px 居中卡） */
@@ -681,6 +691,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   homeTimelineTime: true,
   homeNextCards: true,
   favoritesSortKey: 'created',
+  favoritesOpenFilter: '',
+  favoritesLastFilter: '',
+  favoritesDefaultSort: 'new',
   // 文献盒处理设置（键名随域更名 literature*；ticket 136 默认值=既存行为不动，零迁移）
   knowledgeProgressDetail: true,
   knowledgeKeepVideo: true,

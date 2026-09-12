@@ -503,6 +503,132 @@ describe('排序（固定最新收藏）', () => {
   });
 });
 
+// ==================== 4b. 打开默认筛选 + 默认排序（issue 296） ====================
+
+/** 磁贴行当前高亮贴纸的 data-fav-tag 值集合（bz-fav-on；文案带计数，断言取键不取文本） */
+function activeChipKeys(): string[] {
+  return [...document.querySelectorAll('[data-fav-tags] [data-fav-tag].bz-fav-on')]
+    .map((el) => (el as HTMLElement).dataset.favTag || '');
+}
+
+describe('打开默认筛选（issue 296）', () => {
+  const TWO = [
+    seedItem({ id: '1', title: 'GH', tags: ['GitHub'], created: '2025-01-02 00:00:00' }),
+    seedItem({ id: '2', title: '站', tags: ['网站'], created: '2025-01-01 00:00:00' }),
+  ];
+
+  it("缺省 ''=全部：磁贴「全部」高亮，不筛选（原行为）", async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, TWO);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cardTitles()).toEqual(['GH', '站']);
+    expect(activeChipKeys()).toContain('全部');
+  });
+
+  it("'@last'：筛选 GitHub → 关面板写回 favoritesLastFilter → 重开仍在 GitHub", async () => {
+    const ctx = await setup();
+    ctx.state.favoritesOpenFilter = '@last';
+    seedVault(ctx.vault, TWO);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    (document.querySelector('[data-fav-tags] [data-fav-tag="GitHub"]') as HTMLElement).click();
+    expect(cardTitles()).toEqual(['GH']);
+    closePanel();
+    expect(ctx.state.favoritesLastFilter).toBe('GitHub');
+    expect(ctx.saveCount()).toBeGreaterThan(0);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cardTitles()).toEqual(['GH']);
+    expect(activeChipKeys()).toContain('GitHub');
+  });
+
+  it("'@last' 且上次为已归档视图：重开直接进归档视图；关面板记忆保持", async () => {
+    const ctx = await setup();
+    ctx.state.favoritesOpenFilter = '@last';
+    ctx.state.favoritesLastFilter = '@archived';
+    seedVault(ctx.vault, [
+      seedItem({ id: '1', title: '活的', created: '2025-01-01 00:00:00' }),
+      seedItem({ id: '2', title: '存档', created: '2025-01-02 00:00:00', archived: true }),
+    ]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cardTitles()).toEqual(['存档']);
+    closePanel();
+    expect(ctx.state.favoritesLastFilter).toBe('@archived');
+  });
+
+  it("固定标签='网站'：每次打开直选该标签，记忆不覆盖", async () => {
+    const ctx = await setup();
+    ctx.state.favoritesOpenFilter = '网站';
+    seedVault(ctx.vault, TWO);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cardTitles()).toEqual(['站']);
+    expect(activeChipKeys()).toContain('网站');
+    // 固定标签模式：关面板写记忆只是记录当下，重开仍以设置为准
+    closePanel();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cardTitles()).toEqual(['站']);
+  });
+
+  it('非法值回落全部：标签不在九类 / 未知枚举', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, TWO);
+    ctx.state.favoritesOpenFilter = '不存在的标签';
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cardTitles()).toEqual(['GH', '站']);
+    closePanel();
+    ctx.state.favoritesOpenFilter = '@weird';
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cardTitles()).toEqual(['GH', '站']);
+  });
+});
+
+describe('默认排序（issue 296）', () => {
+  const FOUR = [
+    seedItem({ id: '1', title: '新A', created: '2025-01-03 00:00:00' }),
+    seedItem({ id: '2', title: '旧B', created: '2025-01-01 00:00:00' }),
+    seedItem({ id: '3', title: '中C', created: '2025-01-02 00:00:00' }),
+    seedItem({ id: '4', title: '顶D', pinned: true, created: '2025-01-01 12:00:00' }),
+  ];
+
+  it('old=最早收藏在前，置顶仍恒最前', async () => {
+    const ctx = await setup();
+    ctx.state.favoritesDefaultSort = 'old';
+    seedVault(ctx.vault, FOUR);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cardTitles()).toEqual(['顶D', '旧B', '中C', '新A']);
+  });
+
+  it('title=按标题升序，置顶恒最前（纯拉丁标题——各 collation 无歧义）', async () => {
+    const ctx = await setup();
+    ctx.state.favoritesDefaultSort = 'title';
+    seedVault(ctx.vault, [
+      seedItem({ id: '1', title: 'Banana', created: '2025-01-03 00:00:00' }),
+      seedItem({ id: '2', title: 'Apple', created: '2025-01-01 00:00:00' }),
+      seedItem({ id: '3', title: 'Cherry', created: '2025-01-02 00:00:00' }),
+      seedItem({ id: '4', title: '顶D', pinned: true, created: '2025-01-01 12:00:00' }),
+    ]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cardTitles()).toEqual(['顶D', 'Apple', 'Banana', 'Cherry']);
+  });
+
+  it('非法值回落最新收藏（缺省行为不变）', async () => {
+    const ctx = await setup();
+    ctx.state.favoritesDefaultSort = 'weird';
+    seedVault(ctx.vault, FOUR);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cardTitles()).toEqual(['顶D', '新A', '中C', '旧B']);
+  });
+});
+
 // ==================== 6. 行动作（桌面右键 → .bz-item-menu；点卡不弹菜单 bug 修复） ====================
 
 describe('桌面行动作浮层', () => {
