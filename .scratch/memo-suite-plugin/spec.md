@@ -1133,3 +1133,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > ⑤ **memo 抽屉头勾选圈（284）**：checkHtml 抽导出与列表单源；点圈接 toggleCheck（300ms 防抖共享）；sheetClass 皮肤随行；44px 触控热区 + 19px 尺寸对齐列表（review 回补）。
 > ⑥ **通知收紧（285）**：全局口径 = 操作结果在触发 UI 上立即可见不弹成功通知。18 处删除（diary×3 + memo×4 + 主体×11），边缘两可类（批量计数/密码确认/后果说明）不动；口径回写 CONTEXT「通知」词条。diary dialogs:178 遗留一处待后续统一。
 > ⑦ **影院标记已看改编辑窗（286）**：openForm 加 presetSt='已看'，评分滑杆预填、影评展开，取消不落盘；saveEdit 补发 status/rated 事件与 markStatus 同口径（副作用：普通编辑也进行为流，有意扩展）；「标记在看」保持快速语义。
+
+### 首页秒开：关闭保留 DOM + 重开复用动态刷新（issue 290，2026-09-12）
+
+> 用户需求三段：① 首次打开主界面秒开（骨架同步出，时间线异步汇入——现有行为确认保留）；② 之后动态加载时间线刷新（refreshRiverAndRender 既有，重开路径补上）；③ **关闭主面板保留 DOM 渲染**。落地：closeOverlay 从 `overlay.remove()` + 清数据改为 `display:none` 隐藏（数据 river/order/riverView 全保留，重开原地秒显上次渲染不闪骨架）；openHome 升三分支 toggle（显示中→关 / 隐藏中→showOverlay 复用：topifyZ 重发号 + 恢复显示 + 立即动态刷新；无 DOM→createOverlay）；ESC 层 isVisible 加 visible 判据防隐藏层截胡；刷新失败但有旧渲染时保留旧内容不出失败态覆盖（首次失败仍走 H12 失败态）；unloadHome 真销毁不变。查看日语义随行为反转：随关闭保留（重开停在上次查看日），随卸载归零。无新 ADR（复用 core/dom.ts show/hide + topify 既有范式，域内可逆改动）。
