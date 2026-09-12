@@ -1,4 +1,4 @@
-/* 源指纹 13d8ac2e26ebf8e1 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b5eafbe2112ceb9a · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/review/fsrs.ts","src/review/queue.ts","src/review/render.ts","src/review/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/review/render.ts → window.BZR_review（评审壳预览包，ADR-0104） */
 var BZR_review = (() => {
