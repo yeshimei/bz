@@ -32,8 +32,11 @@
    `ensureSafeUnlocked(kind)` 新增 `kind` 参数，`diary` 传 `'diary'` 即得本域口径与配色。
 3. **样式按域作用域**：组件类名 `.bz-lockscreen*` + 作用域 `.bz-lockscreen--vault|password-vault|diary`，
    组件暴露 `--ls-accent / --ls-accent-soft / --ls-seal-radius / --ls-bg / --ls-surface / --ls-ink …` 变量供域覆盖。
-4. **统计只能是快照**：清单（`safe.enc`）本身是密文，锁定态读不到计数。
-   故统计在解锁期间快照进会话内存（`captureLockStats()`），冷启动（本次会话未解锁过）回落「—」，**不编造数字**；
+4. **统计是快照（2026-09-12 修订，issue 300）**：清单（`safe.enc`）本身是密文，锁定态读不到计数。
+   统计在解锁期间快照（`captureLockStats()`）——原仅存会话内存，冷启动一律「—」；
+   **修订后快照同时落明文档 `CONFIG/STORAGE/lock-stats.json`（`core/lock-stats.ts`，段级合并写），
+   冷启动回落「上次快照」而非一律「—」**；文件缺失 / 该档缺失 / 读失败仍显「—」，**不编造数字**（底线保留）。
+   取舍：明文计数向能读 vault 目录者暴露条目规模（元数据级），系修订有意接受项。
    「密文总量」只统计附件镜像 `blobSize`（正文 .enc 大小清单未记），故标签写作「附件密文」。
 5. **取消语义**：新解锁屏无「取消」按钮（原型口径），点遮罩即取消（resolve false）。
 

@@ -1137,3 +1137,10 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 首页秒开：关闭保留 DOM + 重开复用动态刷新（issue 290，2026-09-12）
 
 > 用户需求三段：① 首次打开主界面秒开（骨架同步出，时间线异步汇入——现有行为确认保留）；② 之后动态加载时间线刷新（refreshRiverAndRender 既有，重开路径补上）；③ **关闭主面板保留 DOM 渲染**。落地：closeOverlay 从 `overlay.remove()` + 清数据改为 `display:none` 隐藏（数据 river/order/riverView 全保留，重开原地秒显上次渲染不闪骨架）；openHome 升三分支 toggle（显示中→关 / 隐藏中→showOverlay 复用：topifyZ 重发号 + 恢复显示 + 立即动态刷新；无 DOM→createOverlay）；ESC 层 isVisible 加 visible 判据防隐藏层截胡；刷新失败但有旧渲染时保留旧内容不出失败态覆盖（首次失败仍走 H12 失败态）；unloadHome 真销毁不变。查看日语义随行为反转：随关闭保留（重开停在上次查看日），随卸载归零。无新 ADR（复用 core/dom.ts show/hide + topify 既有范式，域内可逆改动）。
+
+### 备忘录代码批三项：锁屏统计明文落盘 + 剪藏本标题降档 + 首页时间线字体（issue 300–301，2026-09-12）
+
+> memo-code-fix 全流程：memo.json 筛 scene='代码' 未完成 3 条 → 3 路并行调研（判定一项已交付只闭环）→ 2 worktree 并行开发 → reviewer 审查 pass（P2 轮询化当场回补）→ 串行合并（全量 4577 用例绿）→ build 部署。过程踩坑在案：issue 299 与并行会话撞号（其 proto/encrypt 评审壳先落库），worktree 提交重编号 300/301 并 merge master 同步底。
+> ① **锁屏统计明文落盘（300 / ADR-0124 决策 4 修订）**：备忘「把解锁界面的统计信息放到明文数据文件中」（「文明」为「明文」笔误）。新增 `core/lock-stats.ts` 读写 `CONFIG/STORAGE/lock-stats.json`（键 = LockScreenKind，段级合并写 + writeIfChanged）；encrypt `captureLockStats` 三档算齐后 fire-and-forget 落盘、`showPasswordDialog` 兜底链 会话缓存→文件→「—」；password-vault 首显 hydrate 一次 + 解锁态落盘本档；diary 复用 encrypt 解锁屏零改动生效。取舍：明文计数暴露条目规模（元数据级）有意接受；文件缺失仍「—」不编造数字（ADR-0124 底线保留）。
+> ② **剪藏本文章标题降档（301）**：桌面 `.bz-clip-art-title` 24px→`var(--bz-font-display)`（20px）、移动 `.bz-clip-mob-d-title` 33px→27px（与桌面同比例）。判读=文章标题；顶栏刊名不动（09-10 刚按用户拍板 21→17，备忘晚于该决策）。回归锁 `tests/clipbook/title-type.test.ts`（readFileSync 选择器切块断言，仿 review-mobile-type 先例）。
+> ③ **首页时间线字体（memo item-1789127591011）**：调研判定已交付——提交 8fccf9a5（09-11 20:18「桌面端时间线字号降档」，home/styles.css V6：正文 14.5→13.5、时间戳 12.5→11 等）晚于 memo 创建 25 分钟，纯闭环不改码。
