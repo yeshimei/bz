@@ -17,6 +17,7 @@ import { topifyZ, createSiteIcon } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
 import { uiLockScreen } from '../core/ui/lock-screen';
 import type { LockScreenHandle, LockScreenStat } from '../core/ui/lock-screen';
+import { readLockStats, writeLockStats } from '../core/lock-stats';
 import { notice } from '../core/notice';
 import { attachItemActions, openItemSheet, type ItemAction } from '../core/item-actions';
 import {
@@ -1150,12 +1151,14 @@ export class PasswordVaultUIManager {
   /** 显示锁屏（未解锁态）；锁屏绑定一次 */
   /** 锁屏句柄（desk/mob 双实例各一份；结构由 core/ui/lock-screen 提供，三域同源） */
   private lockHandles = new WeakMap<HTMLElement, LockScreenHandle>();
-  /** 统计快照：清单是密文，锁定态读不到 —— 用解锁期间的快照，冷启动回落「—」 */
+  /** 统计快照：清单是密文，锁定态读不到 —— 用解锁期间的快照，冷启动回落 lock-stats.json 上次快照 */
   private pwLockStatsCache: LockScreenStat[] = [
     { num: '—', label: '平台' },
     { num: '—', label: '口令条目' },
     { num: '—', label: '收藏' },
   ];
+  /** 冷启动已从 lock-stats.json 回落过（仅首显 hydrate 一次，此后由 captureLockStats 维护） */
+  private pwLockStatsHydrated = false;
 
   /** 快照本域统计（解锁态调用） */
   private captureLockStats(): void {
@@ -1166,14 +1169,24 @@ export class PasswordVaultUIManager {
         { num: String(this.dataManager.pwData.length), label: '口令条目' },
         { num: String(plats.filter((x) => this.dataManager.hasFav(x.platform)).length), label: '收藏' },
       ];
+      // 快照即落明文档（fire-and-forget：统计丢一拍不伤数据，下次解锁会重写）
+      void writeLockStats('password-vault', this.pwLockStatsCache).catch(() => {});
     } catch (e) {
       /* 未解锁时保持上一次快照 */
     }
   }
 
+  /** 冷启动从 lock-stats.json 回落上次快照（ADR-0124 决策 4 修订；读到才覆盖「—」初值） */
+  private async hydrateLockStats(): Promise<void> {
+    if (this.pwLockStatsHydrated) return;
+    this.pwLockStatsHydrated = true;
+    const hit = await readLockStats('password-vault');
+    if (hit) this.pwLockStatsCache = hit;
+  }
+
   /** 显示锁屏（未解锁态）：core 共享骨架 + 本域口径（平台/口令条目/收藏）与金色风格 */
   private showLock() {
-    void this.isFirstTime().then((firstTime) => {
+    void this.hydrateLockStats().then(() => this.isFirstTime()).then((firstTime) => {
       this.root!.querySelectorAll<HTMLElement>('.bz-password-vault-lock').forEach((lockEl) => {
         lockEl.classList.add('open');
         let ls = this.lockHandles.get(lockEl);
