@@ -501,9 +501,13 @@ describe('设置面板（settings-panel）', () => {
     // 有 chip 即无按钮（2026-09-08 拍板：按钮仅空态在场）；chip 点击重开选择器
     expect(row1.querySelector('.bz-sp-path-btn')).toBeNull();
     chip1.click();
-    expect(document.querySelector('.bz-sp-picker-mask'), '回落 chip 点击打开 dir-picker').toBeTruthy();
-    (document.querySelector('.bz-sp-picker-foot .bz-sp-btn') as HTMLElement).click(); // 取消关闭
-    expect(document.querySelector('.bz-sp-picker-mask')).toBeNull();
+    expect(document.querySelector('#bz-path-picker-mask'), '回落 chip 点击打开路径选择器').toBeTruthy();
+    expect(document.querySelector('.bz-path-picker'), '弹窗 = core 统一选择器（ADR-0127）').toBeTruthy();
+    // core 选择器无取消按钮：遮罩点击 / ESC 关闭（主窗口规范）
+    (document.querySelector('#bz-path-picker-mask') as HTMLElement).dispatchEvent(
+      new MouseEvent('click', { bubbles: true })
+    );
+    expect(document.querySelector('#bz-path-picker-mask')).toBeNull();
     ui1.cleanup();
     delete (panelState as any).libraryFolderPath;
 
@@ -541,7 +545,7 @@ describe('设置面板（settings-panel）', () => {
     delete (panelState as any).bookshelfFolderPath;
   });
 
-  it('桌面端：路径行 chips 重渲清旧值（回归：dir-picker 选用后 muted 占位不得残留）', async () => {
+  it('桌面端：路径行 chips 重渲清旧值（回归：选择器选用后 muted 占位不得残留）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
@@ -550,20 +554,22 @@ describe('设置面板（settings-panel）', () => {
     const chips = popup.querySelector('.bz-sp-chips') as HTMLElement;
     expect(chips).toBeTruthy();
     expect(chips.querySelector('.bz-sp-chip--muted')).toBeNull();
-    // 打开 dir-picker（目录聚合走 MockVault；轮询至目录扫描完成——加载占位行同为
-    // .bz-sp-picker-row 但无点击行为，须等到真实目录行（库根目录）出现）
+    // 打开选择器（core openPathPicker：目录聚合走 MockVault；快速首渲染即出库根行，
+    // adapter 补齐在后台完成——弹窗带 .bz-sp-skin 面板皮肤）
     chips.querySelector('.bz-sp-path-btn')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(document.querySelector('.bz-sp-picker-mask')).toBeTruthy();
+    const popupEl = document.querySelector('.bz-path-picker') as HTMLElement;
+    expect(popupEl).toBeTruthy();
+    expect(popupEl.classList.contains('bz-sp-skin'), '面板内打开 = 挂面板皮肤').toBe(true);
     const deadline = Date.now() + 5000;
     let row: Element | null = null;
     while (Date.now() < deadline) {
-      row = [...document.querySelectorAll('.bz-sp-picker-row')].find((r) => r.textContent?.includes('（库根目录）')) ?? null;
+      row = [...document.querySelectorAll('.bz-path-picker-row')].find((r) => r.textContent?.includes('（库根目录）')) ?? null;
       if (row) break;
       await new Promise((r) => setTimeout(r, 30));
     }
-    expect(row, 'dir-picker 目录行就绪').toBeTruthy();
+    expect(row, '选择器目录行就绪').toBeTruthy();
     (row as HTMLElement).click();
-    (document.querySelector('.bz-sp-picker-foot .bz-sp-btn--primary') as HTMLElement).click();
+    (document.querySelector('.bz-path-picker-btn--primary') as HTMLElement).click();
     await tick();
     // 重渲后：唯一 chip =（库根目录）；muted 占位已清（清旧值选择器错类名即残留双 chip 缺陷）
     const after = popup.querySelector('.bz-sp-chips')!;

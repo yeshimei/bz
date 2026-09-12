@@ -8,7 +8,7 @@
  * - 域设置内容：数据 = 各域真实 schema（xxxSettingsSchema()，与 ⚙️ 弹窗同源），
  *   视觉 = 渲染器 renderPanelSchema（组件库控件），绑定逻辑与 ⚙️ 弹窗同一套
  *   （键直绑 getSettings/saveSettings / 三函数 / visibleWhen / onChange）；
- *   路径行走 uiChip 路径胶囊 + openPathPicker（ADR-0061 选择器）。
+ *   路径行走 uiChip 路径胶囊 + openPathPicker（ADR-0061 选择器；面板内挂 .bz-sp-skin 皮肤，ADR-0127）。
  * - 桌面导航徽标动态计算（无设置=— / 其余初始=·，schema 加载后回填设置项总数）。
  * - 通用域/AI 域 → generalSettingsSchema()/aiSettingsSchema()（issue 186：AI 自全局拆出独立成域）。
  */
