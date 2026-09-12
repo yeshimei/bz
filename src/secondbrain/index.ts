@@ -9,6 +9,8 @@
  * - ticket 111：自动双链管线（link agent）——linkAgentEnabled 开关注册监听与队列消费；
  * - ticket 115：启动存量补链（队列消费后串行）+ 手动命令 bz-secondbrain-link-all 兜底；
  * - ticket 119（v1.4）：正文大改自动重跑——修改监听按基准哈希过滤，内容实质变化才重跑建链；
+ * - issue 298：文献笔记生成即跑——知识盒生成视频/术语文献笔记后经 'knowledge:tasks' 立即建链
+ *   （不等批次防抖、不受关联范围限制）；
  * - unload 全量清理：定时器、订阅、面板 DOM、DeepSeek 服务、link agent。
  */
 import type { App } from 'obsidian';
@@ -79,7 +81,8 @@ export function ensureSecondBrain(app: App): void {
   try {
     if ((tryGetSettings() as any).linkAgentEnabled !== false) {
       linkAgent = new LinkAgent({ app, store: s });
-      linkWatcher = new LinkAgentWatcher(app, linkAgent);
+      // initialLoad 传入监听器：文献笔记生成即跑链路先等索引装载完成（issue 298）
+      linkWatcher = new LinkAgentWatcher(app, linkAgent, s.initialLoad);
       linkWatcher.start();
       // 域初始化发现队列非空且 embedding 可达 → 自动消费，无需询问；
       // 队列消费之后串行执行存量补链（ticket 115：关联范围内缺 related 的存量笔记批量建链，

@@ -1809,7 +1809,7 @@ export class UIManager {
         source: this.termSource, // 术语来源随确认时刻的值落库（ADR-0116）
       });
       this.openNote(path);
-      emitDomainEvent('knowledge:tasks', { kind: 'term-generated', term, title: term });
+      emitDomainEvent('knowledge:tasks', { kind: 'term-generated', term, title: term, notePath: path });
       this.termPreview = null;
       this.hideTermEntry();
       notice('已生成术语文献笔记：' + term, 'success');

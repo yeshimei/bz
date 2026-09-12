@@ -7,13 +7,15 @@
  * - 存量补链（ticket 115）：目标清单扫描 / 可达门 / 队列排除 / 串行锁；命令 bz-secondbrain-link-all 守卫分支；
  * - 正文大改自动重跑（v1.4/ticket 119）：成功建链后记基准哈希；修改过滤（实质变化才重跑）；
  *   修改监听聚合与删除清基准；自写 related 不触发循环重跑。
+ * - 文献笔记生成即跑（issue 298）：knowledge:tasks 的 converted / term-generated → 立即 processNoteNow
+ *   （不等防抖、不受范围限制）；载荷守卫、装载等待、索引白名单一次性引导、即时反馈通知。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
-import { clearDomainEvents } from '../../src/core/domain-bus';
+import { clearDomainEvents, emitDomainEvent } from '../../src/core/domain-bus';
 import { closeSettingsModal } from '../../src/core/settings-modal';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import { openSecondBrainSettings } from '../../src/secondbrain/panel';
@@ -1035,5 +1037,220 @@ describe('命令 bz-secondbrain-link-all 守卫分支', () => {
     vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({ status: 'no-targets' });
     await runSecondBrainLinkAll(makeAllApp() as any);
     expect(getNoticeMessages().some((m) => m.includes('当前无待补链笔记'))).toBe(true);
+  });
+});
+
+// ---------------- 文献笔记生成即跑（issue 298） ----------------
+
+describe('文献笔记生成即跑：knowledge:tasks → 立即建链', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    clearDomainEvents();
+    document.body.innerHTML = '';
+    __setLinkBatchMsForTests(30);
+    __setLinkCleanDebounceMsForTests(30);
+    __resetLinkAgentGuideForTests();
+    setSettingsProvider(baseSettings);
+    setSettingsSaver(() => Promise.resolve());
+  });
+
+  function makeWatcher(vault: MockVault, initialLoad?: Promise<void> | null) {
+    const app = mockAppWithVault(vault);
+    setApp(app as any);
+    const agent = {
+      processBatch: vi.fn(async () => ({ total: 0, processed: 0, created: 0, queued: 0, failed: 0 })),
+      processNoteNow: vi.fn(async () => ({ status: 'done', created: 1 })),
+      cleanDeadLinks: vi.fn(async () => 0),
+      filterChangedForRelink: vi.fn(async (paths: string[]) => paths),
+      dropLinkBaseline: vi.fn(async () => {}),
+    } as any;
+    const watcher = new LinkAgentWatcher(app as any, agent, initialLoad);
+    return { vault, agent, watcher };
+  }
+
+  it('converted 事件立即触发：不等防抖窗口，且不受 linkAgentScopes 范围限制', async () => {
+    const { vault, agent, watcher } = makeWatcher(new MockVault());
+    vault.files.set('文献盒/新文献.md', 'x');
+    // 范围只含卡片盒：生成即跑属显式意图，照常触发（不等 30ms 防抖窗口）
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '卡片盒' }));
+    watcher.start();
+    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/新文献.md' });
+    await new Promise((r) => setTimeout(r, 5));
+    expect(agent.processNoteNow).toHaveBeenCalledWith('文献盒/新文献.md');
+    expect(agent.processBatch).not.toHaveBeenCalled(); // 走即时入口而非批次
+    watcher.destroy();
+  });
+
+  it('term-generated 携带 notePath 触发；旧载荷（缺 notePath）忽略', async () => {
+    const { vault, agent, watcher } = makeWatcher(new MockVault());
+    vault.files.set('文献盒/习得性无助.md', 'x');
+    watcher.start();
+    emitDomainEvent('knowledge:tasks', { kind: 'term-generated', term: '习得性无助', title: '习得性无助' });
+    await new Promise((r) => setTimeout(r, 5));
+    expect(agent.processNoteNow).not.toHaveBeenCalled();
+    emitDomainEvent('knowledge:tasks', {
+      kind: 'term-generated',
+      term: '习得性无助',
+      title: '习得性无助',
+      notePath: '文献盒/习得性无助.md',
+    });
+    await new Promise((r) => setTimeout(r, 5));
+    expect(agent.processNoteNow).toHaveBeenCalledWith('文献盒/习得性无助.md');
+    watcher.destroy();
+  });
+
+  it('failed 事件与文件不存在：一律不触发（notePath 可能是失败任务的旧值）', async () => {
+    const { vault, agent, watcher } = makeWatcher(new MockVault());
+    vault.files.set('文献盒/在.md', 'x');
+    watcher.start();
+    emitDomainEvent('knowledge:tasks', { kind: 'failed', url: 'BV1xx411c7mD', notePath: '文献盒/在.md' });
+    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/没了.md' });
+    emitDomainEvent('knowledge:tasks', { kind: 'added', url: 'BV1xx411c7mD', notePath: '文献盒/在.md' });
+    await new Promise((r) => setTimeout(r, 5));
+    expect(agent.processNoteNow).not.toHaveBeenCalled();
+    watcher.destroy();
+  });
+
+  it('linkAgentEnabled=false：start 不订阅，生成事件无任何反应', async () => {
+    const { vault, agent, watcher } = makeWatcher(new MockVault());
+    vault.files.set('文献盒/X.md', 'x');
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentEnabled: false }));
+    watcher.start();
+    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
+    await new Promise((r) => setTimeout(r, 5));
+    expect(agent.processNoteNow).not.toHaveBeenCalled();
+    watcher.destroy();
+  });
+
+  it('先等索引装载完成再跑（避免与 load 并发读半装载索引）', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    const { vault, agent, watcher } = makeWatcher(new MockVault(), gate);
+    vault.files.set('文献盒/X.md', 'x');
+    watcher.start();
+    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
+    await new Promise((r) => setTimeout(r, 5));
+    expect(agent.processNoteNow).not.toHaveBeenCalled(); // 装载未完成
+    release();
+    await new Promise((r) => setTimeout(r, 5));
+    expect(agent.processNoteNow).toHaveBeenCalledWith('文献盒/X.md');
+    watcher.destroy();
+  });
+
+  it('装载失败不阻断：initialLoad reject 后照常跑管线', async () => {
+    const { vault, agent, watcher } = makeWatcher(new MockVault(), Promise.reject(new Error('装载失败')));
+    vault.files.set('文献盒/X.md', 'x');
+    watcher.start();
+    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
+    await new Promise((r) => setTimeout(r, 5));
+    expect(agent.processNoteNow).toHaveBeenCalledWith('文献盒/X.md');
+    watcher.destroy();
+  });
+
+  it('索引白名单未覆盖该目录：一次性提示；已覆盖则零提示', async () => {
+    const miss = makeWatcher(new MockVault());
+    miss.vault.files.set('文献盒/X.md', 'x');
+    setSettingsProvider(() => ({ ...baseSettings(), secondBrainAllowPaths: '卡片盒' }));
+    miss.watcher.start();
+    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
+    await new Promise((r) => setTimeout(r, 5));
+    const hinted = () => getNoticeMessages().filter((m) => m.includes('文献笔记目录'));
+    expect(hinted().length).toBe(1);
+    expect(hinted()[0]).toContain('文献盒');
+    // 会话级一次性：第二个事件不再提示
+    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
+    await new Promise((r) => setTimeout(r, 5));
+    expect(hinted().length).toBe(1);
+    miss.watcher.destroy();
+
+    // 白名单已含文献盒：零提示
+    clearDomainEvents();
+    clearNotices(); // 前一段的提示不串到本段（notices 累积）
+    const hit = makeWatcher(new MockVault());
+    hit.vault.files.set('文献盒/X.md', 'x');
+    setSettingsProvider(() => ({ ...baseSettings(), secondBrainAllowPaths: '文献盒' }));
+    hit.watcher.start();
+    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
+    await new Promise((r) => setTimeout(r, 5));
+    expect(hinted().length).toBe(0);
+    hit.watcher.destroy();
+  });
+
+  it('白名单为空（默认）同样提示：不索引任何目录即候选检索必然落空', async () => {
+    const { vault, agent, watcher } = makeWatcher(new MockVault());
+    vault.files.set('文献盒/X.md', 'x');
+    setSettingsProvider(() => ({ ...baseSettings(), secondBrainAllowPaths: '' }));
+    watcher.start();
+    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
+    await new Promise((r) => setTimeout(r, 5));
+    expect(getNoticeMessages().some((m) => m.includes('文献笔记目录'))).toBe(true);
+    expect(agent.processNoteNow).toHaveBeenCalled(); // 提示不阻断管线
+    watcher.destroy();
+  });
+});
+
+describe('单篇即时建链 processNoteNow 通知（issue 298）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    clearDomainEvents();
+    document.body.innerHTML = '';
+    setSettingsProvider(baseSettings);
+    setSettingsSaver(() => Promise.resolve());
+  });
+
+  it('新建 N>0：报「已为文献笔记新建关联 N 条」', async () => {
+    const { agent, askSpy } = makeWorld({
+      hits: [
+        { path: '文献盒/B.md', chunk: 'B', score: 0.9 },
+        { path: '文献盒/D.md', chunk: 'D', score: 0.8 },
+      ],
+    });
+    askSpy.mockResolvedValue('[{"id":1,"reason":"a"},{"id":2,"reason":"b"}]');
+    const r = await agent.processNoteNow('文献盒/A.md');
+    expect(r).toEqual({ status: 'done', created: 2 });
+    expect(getNoticeMessages().some((m) => m.includes('已为文献笔记新建关联 2 条'))).toBe(true);
+  });
+
+  it('N=0（无实质关联）静默：不出现完成文案', async () => {
+    const { agent } = makeWorld({ hits: [] });
+    await agent.processNoteNow('文献盒/A.md');
+    expect(getNoticeMessages()).toEqual([]);
+  });
+
+  it('embedding 不可达：提示已入队，且不写 related', async () => {
+    const { vault, agent } = makeWorld({ reachable: false });
+    const r = await agent.processNoteNow('文献盒/A.md');
+    expect(r).toEqual({ status: 'queued' });
+    expect(getNoticeMessages().some((m) => m.includes('已入队待服务恢复后自动处理'))).toBe(true);
+    expect(vault.files.get('文献盒/A.md')).not.toContain('related');
+  });
+
+  it('裁判失败：warning 提示，条目保留队列', async () => {
+    const { agent, askSpy } = makeWorld({ hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }] });
+    askSpy.mockRejectedValue(new Error('服务商不可用'));
+    const r = await agent.processNoteNow('文献盒/A.md');
+    expect(r.status).toBe('failed');
+    expect(getNoticeMessages().some((m) => m.includes('自动双链处理失败'))).toBe(true);
+    expect((await loadQueue()).some((i) => i.path === '文献盒/A.md')).toBe(true);
+  });
+
+  it('linkAgentNotify=false：即时反馈全程静默', async () => {
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentNotify: false }));
+    const { agent, askSpy } = makeWorld({ hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }] });
+    askSpy.mockResolvedValue('[{"id":1,"reason":"a"}]');
+    const r = await agent.processNoteNow('文献盒/A.md');
+    expect(r).toEqual({ status: 'done', created: 1 });
+    expect(getNoticeMessages()).toEqual([]);
+  });
+
+  it('总开关关闭：processNoteNow 直接 skipped，不探测不裁判', async () => {
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentEnabled: false }));
+    const { agent, askSpy } = makeWorld({ hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }] });
+    const r = await agent.processNoteNow('文献盒/A.md');
+    expect(r).toEqual({ status: 'skipped' });
+    expect(askSpy).not.toHaveBeenCalled();
+    expect(getNoticeMessages()).toEqual([]);
   });
 });
