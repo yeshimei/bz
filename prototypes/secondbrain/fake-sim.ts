@@ -220,7 +220,7 @@ function seed(): void {
 /** 注入 secondbrain 实际设置键（真 settings-provider 实现；无持久化需求走内存默认值） */
 function injectSettings(): void {
   const settings: Record<string, unknown> = {
-    secondBrainEnabled: true,
+    // secondBrainEnabled 键已退役（2026-09-12 拍板：启动即加载，不再有开关）
     aiProvider: 'deepseek', // 对话走 deepseek 通道；网络层由 patchFetch 拦截（无真实请求）
     deepseekApiKey: 'demo-key',
     linkAgentEnabled: false, // 原型不跑自动双链（避免空转队列）

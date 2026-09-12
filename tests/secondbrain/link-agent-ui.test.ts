@@ -147,20 +147,15 @@ describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
     closeSettingsModal();
   });
 
-  it('[l7A/f2-sb] 「启用」开关：desc 为启动语义说明；改动弹「重载后生效」且一次弹窗只提示一次', async () => {
+  it('[f2-sb] 重载提示一次弹窗只提示一次（样本改用「自动双链」；原「启用」开关已随启用键退役 2026-09-12）', async () => {
     openSecondBrainSettings();
     const popup = document.getElementById('bz-settings-modal-popup')!;
-    const row = [...popup.querySelectorAll('.setting-item')].find(
-      (n) => (n as HTMLElement).dataset.name === '启用'
-    ) as any;
-    expect(row).toBeTruthy();
-    // MockSetting 的 desc 存于实例（不入 DOM 文本）
-    expect(row.__setting.desc).toContain('仅控制启动时自动加载，关闭后仍可从命令面板手动打开');
     clearNotices();
-    rowTrigger(popup, '启用')(false);
-    rowTrigger(popup, '启用')(true);
+    // 「自动双链」toggle 仍带 warnReload（首次改动提示「重载插件后生效」）
+    rowTrigger(popup, '自动双链')(false);
+    rowTrigger(popup, '自动双链')(true);
     await new Promise((r) => setTimeout(r, 5));
-    expect(settings.secondBrainEnabled).toBe(true);
+    expect(settings.linkAgentEnabled).toBe(true);
     // 一次弹窗会话内只提示一次（f2 重载提示收敛）
     expect(getNoticeMessages().filter((m) => m.includes('重载插件后生效')).length).toBe(1);
     closeSettingsModal();

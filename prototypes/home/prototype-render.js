@@ -1,4 +1,4 @@
-/* 源指纹 6c9423ef1f241c1f · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 709712a37e951ddc · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -79,7 +79,8 @@ var BZR_home = (() => {
   var DOMAIN_ICONS = {
     // 面板专属域（无对应命令）
     global: "settings",
-    appearance: "palette",
+    // 通知（2026-09-12）：自「通用」域拆出的独立面板页；「设置」页并入通用后 appearance 键退役
+    notice: "bell",
     ai: "sparkles",
     // 域入口命令与面板导航共用
     home: "layout-grid",

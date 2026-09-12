@@ -1,5 +1,5 @@
-/* 源指纹 932fdbc69e094234 · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 7786be76418212e6 · 仓内输入 186 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -5113,6 +5113,277 @@ var BZW_settings_panel = (() => {
     }
   });
 
+  // src/core/utils.ts
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function generateId(prefix) {
+    prefix = prefix || "item";
+    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  }
+  function extractUrlAndDisplay(c) {
+    const m1 = c.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (m1) return { url: m1[2], display: m1[1] };
+    const m2 = c.match(/(https?:\/\/\S+)/i);
+    if (m2) {
+      const u = m2[1], d = c.replace(u, "").trim();
+      return { url: u, display: d || u };
+    }
+    return { url: null, display: c };
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment2.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment2.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+    const todayStart = (0, import_moment2.default)(now).startOf("day");
+    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
+      const hours = Math.floor(diffMinutes / 60);
+      return `${hours}小时前`;
+    }
+    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment2.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  async function fetchPageTitle(url) {
+    try {
+      const r = await requestUrl({
+        url,
+        method: "GET",
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+      });
+      if (r.status === 200) {
+        const m = r.text.match(/<title[^>]*>([^<]*)<\/title>/i);
+        if (m && m[1]) return m[1].trim();
+      }
+    } catch (e) {
+    }
+    return null;
+  }
+  function bytesEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
+  }
+  function stripTitleMarks(s) {
+    return String(s || "").replace(/^《|》$/g, "");
+  }
+  function cmpZh(a, b) {
+    return String(a || "").localeCompare(String(b || ""), "zh");
+  }
+  function isUnderFolder(folder, path) {
+    const f = (folder || "").trim().replace(/\/+$/, "");
+    if (!f) return false;
+    return path === f || path.startsWith(f + "/");
+  }
+  function yieldToMainThread(timeoutMs = 200) {
+    return new Promise((resolve2) => {
+      if (typeof window === "undefined") {
+        resolve2();
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === "function") ric(() => resolve2(), { timeout: timeoutMs });
+      else window.setTimeout(resolve2, 0);
+    });
+  }
+  function secureRandomPassword(length, charset) {
+    const n = charset.length;
+    if (!(length > 0) || n === 0) return "";
+    const LIMIT2 = Math.floor(4294967296 / n) * n;
+    let pwd = "";
+    while (pwd.length < length) {
+      const buf = new Uint32Array(length - pwd.length);
+      crypto.getRandomValues(buf);
+      for (let i = 0; i < buf.length && pwd.length < length; i++) {
+        if (buf[i] >= LIMIT2) continue;
+        pwd += charset.charAt(buf[i] % n);
+      }
+    }
+    return pwd;
+  }
+  function cancelClipboardClear() {
+    if (clipboardClearTimer !== null) {
+      clearTimeout(clipboardClearTimer);
+      clipboardClearTimer = null;
+    }
+  }
+  function armClipboardClear() {
+    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
+    clipboardClearTimer = setTimeout(() => {
+      clipboardClearTimer = null;
+      try {
+        void navigator.clipboard.writeText("").catch(() => {
+        });
+      } catch (e) {
+      }
+    }, CLIPBOARD_CLEAR_DELAY_MS);
+  }
+  function copySensitiveText(text) {
+    try {
+      return navigator.clipboard.writeText(text).then(() => armClipboardClear());
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_fake_obsidian();
+      init_app();
+      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
+      clipboardClearTimer = null;
+    }
+  });
+
+  // src/core/flow-dialog.ts
+  function buildFlowDialogParts(title, message, actions) {
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
+  }
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve2) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle4 = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        escHandle4.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve2(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+  function confirmDiscard(proceed, message, className) {
+    void openFlowDialog({
+      title: "放弃未保存的内容？",
+      message: message || "弹窗内有未保存的输入，关闭后将丢失",
+      className,
+      actions: [
+        { label: "放弃", value: "ok" },
+        { label: "继续编辑", value: "cancel" }
+      ]
+    }).then((v) => {
+      if (v === "ok") proceed();
+    });
+  }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
+    }
+  });
+
   // src/core/domain-icons.ts
   var DOMAIN_ICONS;
   var init_domain_icons = __esm({
@@ -5120,7 +5391,8 @@ var BZW_settings_panel = (() => {
       DOMAIN_ICONS = {
         // 面板专属域（无对应命令）
         global: "settings",
-        appearance: "palette",
+        // 通知（2026-09-12）：自「通用」域拆出的独立面板页；「设置」页并入通用后 appearance 键退役
+        notice: "bell",
         ai: "sparkles",
         // 域入口命令与面板导航共用
         home: "layout-grid",
@@ -5360,6 +5632,11 @@ var BZW_settings_panel = (() => {
     });
     currentMask = mask;
     currentPopup = popup;
+    const skinClasses = (opts.skinClassName || "").split(/\s+/).filter(Boolean);
+    if (skinClasses.length) {
+      mask.classList.add(...skinClasses);
+      popup.classList.add(...skinClasses);
+    }
     popup.classList.add("bz-path-picker");
     popup.style.height = "min(560px, 82vh)";
     const head = document.createElement("div");
@@ -7778,215 +8055,12 @@ var BZW_settings_panel = (() => {
     }
   });
 
-  // src/settings-panel/dir-picker.ts
-  function openDirPicker(opts) {
-    var _a2;
-    const multi = opts.multi === true;
-    const selected = new Set(((_a2 = opts.selected) != null ? _a2 : []).filter((x) => x !== void 0));
-    let q2 = "";
-    let dirsCache = [];
-    let dirsLoaded = false;
-    let scanFailed = false;
-    const mask = document.createElement("div");
-    mask.className = "bz-sp-picker-mask";
-    const dlg = document.createElement("div");
-    dlg.className = "bz-sp-picker";
-    const head = document.createElement("div");
-    head.className = "bz-sp-picker-head";
-    const titleEl = document.createElement("b");
-    titleEl.textContent = opts.title;
-    const search = document.createElement("div");
-    search.className = "bz-sp-picker-search";
-    const searchIc = document.createElement("span");
-    searchIc.className = "bz-ic";
-    setIcon(searchIc, "search");
-    const sinp = document.createElement("input");
-    sinp.placeholder = "搜索目录…（命中项保留上级链）";
-    search.append(searchIc, sinp);
-    head.append(titleEl, search);
-    const crumb = document.createElement("div");
-    crumb.className = "bz-sp-picker-crumb";
-    const list = document.createElement("div");
-    list.className = "bz-sp-picker-list";
-    const foot = document.createElement("div");
-    foot.className = "bz-sp-picker-foot";
-    const cancel = document.createElement("button");
-    cancel.type = "button";
-    cancel.className = "bz-sp-btn";
-    cancel.textContent = "取消";
-    const ok = document.createElement("button");
-    ok.type = "button";
-    ok.className = "bz-sp-btn bz-sp-btn--primary";
-    ok.textContent = opts.okText || (multi ? "添加所选" : "选用");
-    let settled = false;
-    const close = (v) => {
-      if (settled) return;
-      settled = true;
-      escHandle4.unregister();
-      mask.remove();
-      if (v !== null) opts.onConfirm(normalizePicked(v));
-    };
-    cancel.addEventListener("click", () => close(null));
-    ok.addEventListener("click", () => close([...selected]));
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) close(null);
-    });
-    const escHandle4 = escManager.register("bz-sp-dir-picker", {
-      isVisible: () => mask.isConnected,
-      close: () => close(null)
-    });
-    function renderCrumb() {
-      crumb.innerHTML = "";
-      const lab = document.createElement("span");
-      lab.className = "bz-sp-picker-lab";
-      lab.textContent = multi ? "已选" : "将选用";
-      crumb.appendChild(lab);
-      const arr = [...selected].filter(Boolean);
-      if (multi) {
-        const v = document.createElement("span");
-        v.textContent = arr.length ? `${arr.length} 个目录` : "尚未选择";
-        crumb.appendChild(v);
-      } else if (!arr.length) {
-        const v = document.createElement("span");
-        v.textContent = "未设置";
-        crumb.appendChild(v);
-      } else {
-        arr[0].split("/").forEach((seg, i) => {
-          if (i) {
-            const sp = document.createElement("span");
-            sp.className = "bz-sp-picker-sep";
-            sp.textContent = "▸";
-            crumb.appendChild(sp);
-          }
-          const sg = document.createElement("span");
-          sg.textContent = seg;
-          crumb.appendChild(sg);
-        });
-      }
-    }
-    function renderList2() {
-      const query = q2.trim().toLowerCase();
-      let items = dirsCache;
-      if (query) {
-        const keep = /* @__PURE__ */ new Set();
-        for (const d of dirsCache) {
-          if (d.toLowerCase().includes(query)) {
-            keep.add(d);
-            const parts = d.split("/");
-            for (let i = 1; i < parts.length; i++) keep.add(parts.slice(0, i).join("/"));
-          }
-        }
-        items = dirsCache.filter((d) => keep.has(d));
-      }
-      items = items.slice().reverse();
-      list.innerHTML = "";
-      if (!dirsLoaded) {
-        if (scanFailed) {
-          const failRow = document.createElement("div");
-          failRow.className = "bz-sp-picker-row";
-          failRow.style.pointerEvents = "none";
-          failRow.style.opacity = "0.55";
-          failRow.textContent = "目录读取失败";
-          const retry = document.createElement("button");
-          retry.type = "button";
-          retry.className = "bz-sp-btn";
-          retry.textContent = "重试";
-          retry.addEventListener("click", () => scanDirs());
-          list.append(failRow, retry);
-          return;
-        }
-        const loading2 = document.createElement("div");
-        loading2.className = "bz-sp-picker-row";
-        loading2.style.pointerEvents = "none";
-        loading2.style.opacity = "0.55";
-        loading2.textContent = "正在读取目录…";
-        list.appendChild(loading2);
-        return;
-      }
-      for (const d of items) {
-        const parts = d.split("/");
-        const rowBtn = document.createElement("button");
-        rowBtn.type = "button";
-        rowBtn.className = "bz-sp-picker-row" + (selected.has(d) ? " sel" : "");
-        const ic2 = document.createElement("span");
-        ic2.className = "bz-ic";
-        setIcon(ic2, "folder-open");
-        rowBtn.appendChild(ic2);
-        const nm = document.createElement("span");
-        nm.textContent = parts[parts.length - 1] || "（库根目录）";
-        rowBtn.appendChild(nm);
-        const anc = document.createElement("span");
-        anc.className = "anc";
-        anc.textContent = parts.length > 1 ? parts.slice(0, -1).join(" / ") + " /" : "vault 根目录";
-        rowBtn.appendChild(anc);
-        rowBtn.addEventListener("click", () => {
-          if (multi) {
-            if (selected.has(d)) selected.delete(d);
-            else selected.add(d);
-            rowBtn.classList.toggle("sel", selected.has(d));
-          } else {
-            selected.clear();
-            selected.add(d);
-            list.querySelectorAll(".sel").forEach((x) => x.classList.remove("sel"));
-            rowBtn.classList.add("sel");
-          }
-          renderCrumb();
-        });
-        if (!multi) rowBtn.addEventListener("dblclick", () => close([d]));
-        list.appendChild(rowBtn);
-      }
-      if (!items.length) {
-        const empty = document.createElement("div");
-        empty.className = "bz-sp-picker-row";
-        empty.style.pointerEvents = "none";
-        empty.style.opacity = "0.55";
-        empty.textContent = "无匹配目录";
-        list.appendChild(empty);
-      }
-    }
-    foot.append(cancel, ok);
-    dlg.append(head, crumb, list, foot);
-    mask.appendChild(dlg);
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    sinp.addEventListener("input", () => {
-      q2 = sinp.value;
-      renderList2();
-    });
-    renderCrumb();
-    renderList2();
-    function scanDirs() {
-      scanFailed = false;
-      if (!dirsLoaded) renderList2();
-      collectVaultFolders(getApp()).then((dirs) => {
-        if (settled) return;
-        dirsCache = dirs;
-        dirsLoaded = true;
-        renderList2();
-      }).catch(() => {
-        if (settled) return;
-        scanFailed = true;
-        renderList2();
-      });
-    }
-    scanDirs();
-  }
-  var init_dir_picker = __esm({
-    "src/settings-panel/dir-picker.ts"() {
-      init_fake_obsidian();
-      init_app();
-      init_path_picker();
-      init_esc_manager();
-      init_z_order();
-    }
-  });
-
   // src/core/ui/str.ts
-  function escapeHtml(s) {
+  function escapeHtml2(s) {
     return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
   }
   function esc(s) {
-    return escapeHtml(String(s != null ? s : ""));
+    return escapeHtml2(String(s != null ? s : ""));
   }
   function localNow() {
     const d = /* @__PURE__ */ new Date();
@@ -8126,8 +8200,8 @@ var BZW_settings_panel = (() => {
     const ic2 = icon2 ? iconSpan(icon2, "bz-sp-group-icon") : "";
     return `<section class="bz-sp-group"><div class="bz-sp-group-head">${ic2}<span class="bz-sp-group-name">${esc(name)}</span><span class="bz-sp-group-count">${esc(count)}</span></div><div class="bz-sp-group-body"></div></section>`;
   }
-  function pageHeadHtml(name, desc, tag) {
-    return `<div class="bz-sp-page-head"><div><div class="bz-sp-page-title">${esc(name)}</div><div class="bz-sp-page-desc">${esc(desc)}</div></div><span class="bz-sp-page-tag">${esc(tag)}</span></div>`;
+  function pageHeadHtml(name, desc, tag, withReset) {
+    return `<div class="bz-sp-page-head"><div><div class="bz-sp-page-title">${esc(name)}</div><div class="bz-sp-page-desc">${esc(desc)}</div></div><div class="bz-sp-page-acts">` + (withReset ? `<button type="button" class="bz-sp-page-reset">重置本域</button>` : "") + `<span class="bz-sp-page-tag">${esc(tag)}</span></div></div>`;
   }
   function loadingHtml(text = "加载设置…") {
     return `<div class="bz-sp-loading"><span class="bz-spinner"></span><span>${esc(text)}</span></div>`;
@@ -8153,7 +8227,7 @@ var BZW_settings_panel = (() => {
   }
   function mobItemHtml(opts) {
     const tail = opts.kind ? `<span class="bz-sp-mob-kind">${esc(opts.kind)}</span>` : `<span class="bz-sp-mob-chev">${iconSpan("chevron-right")}</span>`;
-    return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"><span class="bz-sp-mob-ic">${iconSpan(opts.icon)}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span>${tail}</button>`;
+    return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"${opts.row ? ` data-sp-row="${esc(opts.row)}"` : ""}><span class="bz-sp-mob-ic">${iconSpan(opts.icon)}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span>${tail}</button>`;
   }
   var init_render = __esm({
     "src/settings-panel/layouts/jingwei/render.ts"() {
@@ -8251,11 +8325,14 @@ var BZW_settings_panel = (() => {
       renderChips();
     };
     const openPicker = () => {
-      openDirPicker({
-        title: (opts.mode === "multi" ? "添加文件夹 · " : "选择文件夹 · ") + (opts.pickerTitle || opts.name),
-        multi: opts.mode === "multi",
+      const multiMode = opts.mode === "multi";
+      openPathPicker({
+        title: (multiMode ? "添加文件夹 · " : "选择文件夹 · ") + (opts.pickerTitle || opts.name),
+        desc: opts.pickerDesc,
+        mode: multiMode ? "multi" : "single",
         selected: current2,
-        okText: opts.okText,
+        okText: opts.okText || (multiMode ? "添加所选" : "选用"),
+        skinClassName: "bz-sp-skin",
         onConfirm: (list) => {
           void apply(list);
         }
@@ -8764,8 +8841,8 @@ var BZW_settings_panel = (() => {
   var init_renderer = __esm({
     "src/settings-panel/renderer.ts"() {
       init_settings_provider();
+      init_path_picker();
       init_settings_schema();
-      init_dir_picker();
       init_notice();
       init_render2();
       init_ui();
@@ -8883,11 +8960,11 @@ var BZW_settings_panel = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const controller2 = new AbortController();
-    const onOuterAbort = () => controller2.abort();
+    const controller = new AbortController();
+    const onOuterAbort = () => controller.abort();
     let outerLinked = false;
     if (signal) {
-      if (signal.aborted) controller2.abort();
+      if (signal.aborted) controller.abort();
       else {
         signal.addEventListener("abort", onOuterAbort);
         outerLinked = true;
@@ -8896,7 +8973,7 @@ var BZW_settings_panel = (() => {
     let idleTimer = null;
     const armIdle = () => {
       if (idleTimer !== null) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => controller2.abort(), AI_IDLE_TIMEOUT_MS);
+      idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
     };
     try {
       armIdle();
@@ -8904,7 +8981,7 @@ var BZW_settings_panel = (() => {
         method: "POST",
         headers,
         body: JSON.stringify(body),
-        signal: controller2.signal
+        signal: controller.signal
       });
       if (!resp.ok) {
         let msg = `API ${resp.status}`;
@@ -8956,7 +9033,7 @@ var BZW_settings_panel = (() => {
       }
       return full;
     } catch (e) {
-      if (controller2.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
+      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
       throw e;
     } finally {
       if (idleTimer !== null) clearTimeout(idleTimer);
@@ -9374,12 +9451,12 @@ var BZW_settings_panel = (() => {
     if (desc.noCors) {
       attempt = await requestUrlAttempt();
     } else {
-      const controller2 = new AbortController();
-      const timer = setTimeout(() => controller2.abort(), timeoutMs);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
-        attempt = await fetchAttempt(controller2.signal);
+        attempt = await fetchAttempt(controller.signal);
       } catch (e) {
-        if (controller2.signal.aborted) {
+        if (controller.signal.aborted) {
           throw new Error(`${desc.label} 无响应（超过 ${timeoutMs / 1e3}s 未应答）`);
         }
         attempt = await requestUrlAttempt();
@@ -9536,7 +9613,8 @@ var BZW_settings_panel = (() => {
     STORAGE_PATH_COMMIT_NOTICE: () => STORAGE_PATH_COMMIT_NOTICE,
     aiSettingsSchema: () => aiSettingsSchema,
     generalSettingsSchema: () => generalSettingsSchema,
-    mainSettingsSchema: () => mainSettingsSchema
+    mainSettingsSchema: () => mainSettingsSchema,
+    noticeSettingsSchema: () => noticeSettingsSchema
   });
   function currentProviderId() {
     const s = tryGetSettings();
@@ -9714,9 +9792,16 @@ var BZW_settings_panel = (() => {
               }
             }
           ]
-        },
+        }
+        // 通知组已拆出（2026-09-12 用户拍板）：见下方 noticeSettingsSchema ——
+        // 设置面板里独立成一页，不再挤在「通用」域里
+      ]
+    };
+  }
+  function noticeSettingsSchema() {
+    return {
+      groups: [
         {
-          // 通知组（issue 297）：core notice toast 横切偏好；行型全 select，原生设置页与面板双渲染器通用
           icon: "bell",
           name: "通知",
           rows: [
@@ -9773,7 +9858,7 @@ var BZW_settings_panel = (() => {
   }
   function mainSettingsSchema() {
     return {
-      groups: [...aiSettingsSchema().groups, ...generalSettingsSchema().groups]
+      groups: [...aiSettingsSchema().groups, ...generalSettingsSchema().groups, ...noticeSettingsSchema().groups]
     };
   }
   var STORAGE_PATH_COMMIT_NOTICE;
@@ -9785,277 +9870,6 @@ var BZW_settings_panel = (() => {
       init_ai_models();
       init_settings_model_picker();
       STORAGE_PATH_COMMIT_NOTICE = "存储路径已修改：仅改路径，文件不会自动迁移，旧数据需自行迁移；重载插件后生效。";
-    }
-  });
-
-  // src/core/utils.ts
-  function escapeHtml2(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function generateId(prefix) {
-    prefix = prefix || "item";
-    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
-  }
-  function extractUrlAndDisplay(c) {
-    const m1 = c.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    if (m1) return { url: m1[2], display: m1[1] };
-    const m2 = c.match(/(https?:\/\/\S+)/i);
-    if (m2) {
-      const u = m2[1], d = c.replace(u, "").trim();
-      return { url: u, display: d || u };
-    }
-    return { url: null, display: c };
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment2.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
-    }
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  async function fetchPageTitle(url) {
-    try {
-      const r = await requestUrl({
-        url,
-        method: "GET",
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
-      });
-      if (r.status === 200) {
-        const m = r.text.match(/<title[^>]*>([^<]*)<\/title>/i);
-        if (m && m[1]) return m[1].trim();
-      }
-    } catch (e) {
-    }
-    return null;
-  }
-  function bytesEqual(a, b) {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-    return true;
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
-  function stripTitleMarks(s) {
-    return String(s || "").replace(/^《|》$/g, "");
-  }
-  function cmpZh(a, b) {
-    return String(a || "").localeCompare(String(b || ""), "zh");
-  }
-  function isUnderFolder(folder, path) {
-    const f = (folder || "").trim().replace(/\/+$/, "");
-    if (!f) return false;
-    return path === f || path.startsWith(f + "/");
-  }
-  function yieldToMainThread(timeoutMs = 200) {
-    return new Promise((resolve2) => {
-      if (typeof window === "undefined") {
-        resolve2();
-        return;
-      }
-      const ric = window.requestIdleCallback;
-      if (typeof ric === "function") ric(() => resolve2(), { timeout: timeoutMs });
-      else window.setTimeout(resolve2, 0);
-    });
-  }
-  function secureRandomPassword(length, charset) {
-    const n = charset.length;
-    if (!(length > 0) || n === 0) return "";
-    const LIMIT2 = Math.floor(4294967296 / n) * n;
-    let pwd = "";
-    while (pwd.length < length) {
-      const buf = new Uint32Array(length - pwd.length);
-      crypto.getRandomValues(buf);
-      for (let i = 0; i < buf.length && pwd.length < length; i++) {
-        if (buf[i] >= LIMIT2) continue;
-        pwd += charset.charAt(buf[i] % n);
-      }
-    }
-    return pwd;
-  }
-  function cancelClipboardClear() {
-    if (clipboardClearTimer !== null) {
-      clearTimeout(clipboardClearTimer);
-      clipboardClearTimer = null;
-    }
-  }
-  function armClipboardClear() {
-    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
-    clipboardClearTimer = setTimeout(() => {
-      clipboardClearTimer = null;
-      try {
-        void navigator.clipboard.writeText("").catch(() => {
-        });
-      } catch (e) {
-      }
-    }, CLIPBOARD_CLEAR_DELAY_MS);
-  }
-  function copySensitiveText(text) {
-    try {
-      return navigator.clipboard.writeText(text).then(() => armClipboardClear());
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_fake_obsidian();
-      init_app();
-      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
-      clipboardClearTimer = null;
-    }
-  });
-
-  // src/core/flow-dialog.ts
-  function buildFlowDialogParts(title, message, actions) {
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
-      });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
-  }
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
-    }
-    return new Promise((resolve2) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
-      if (opts.className) {
-        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
-      }
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle4 = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        escHandle4.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve2(v);
-      }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
-      }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
-    });
-  }
-  function confirmDiscard(proceed, message, className) {
-    void openFlowDialog({
-      title: "放弃未保存的内容？",
-      message: message || "弹窗内有未保存的输入，关闭后将丢失",
-      className,
-      actions: [
-        { label: "放弃", value: "ok" },
-        { label: "继续编辑", value: "cancel" }
-      ]
-    }).then((v) => {
-      if (v === "ok") proceed();
-    });
-  }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
-      init_utils();
-      init_z_order();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
     }
   });
 
@@ -11487,8 +11301,8 @@ ${countsToText(s.missing)}
     const restored = /* @__PURE__ */ new Map();
     const fixed = await enqueueFileTask(file, async () => {
       var _a2;
-      const store3 = jsonFileStore(file, { defaultValue: [] });
-      const data = await store3.read();
+      const store2 = jsonFileStore(file, { defaultValue: [] });
+      const data = await store2.read();
       const want = new Set(ids);
       let n = 0;
       for (const it of data) {
@@ -11499,7 +11313,7 @@ ${countsToText(s.missing)}
         it.linkedNote = null;
         n += 1;
       }
-      if (n > 0) await store3.write(data);
+      if (n > 0) await store2.write(data);
       return n;
     });
     return {
@@ -11509,13 +11323,13 @@ ${countsToText(s.missing)}
         if (!restored.size) return;
         await enqueueFileTask(file, async () => {
           var _a2;
-          const store3 = jsonFileStore(file, { defaultValue: [] });
-          const data = await store3.read();
+          const store2 = jsonFileStore(file, { defaultValue: [] });
+          const data = await store2.read();
           for (const it of data) {
             if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
             it.linkedNote = (_a2 = restored.get(String(it.id))) != null ? _a2 : null;
           }
-          await store3.write(data);
+          await store2.write(data);
         });
       }
     };
@@ -11523,10 +11337,10 @@ ${countsToText(s.missing)}
   async function fixClipbook(app, file, urls) {
     const removed = [];
     const fixed = await enqueueFileTask(file, async () => {
-      const store3 = jsonFileStore(file, {
+      const store2 = jsonFileStore(file, {
         defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
       });
-      const data = await store3.read();
+      const data = await store2.read();
       const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
       const want = new Set(urls);
       const kept = [];
@@ -11542,7 +11356,7 @@ ${countsToText(s.missing)}
       });
       if (n > 0) {
         data.savedArchive = kept;
-        await store3.write(data);
+        await store2.write(data);
       }
       return n;
     });
@@ -11552,17 +11366,17 @@ ${countsToText(s.missing)}
       undo: async () => {
         if (!removed.length) return;
         await enqueueFileTask(file, async () => {
-          const store3 = jsonFileStore(file, {
+          const store2 = jsonFileStore(file, {
             defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
           });
-          const data = await store3.read();
+          const data = await store2.read();
           const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
           for (const r of removed) {
             const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
             list.splice(at, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
           }
           data.savedArchive = list;
-          await store3.write(data);
+          await store2.write(data);
         });
       }
     };
@@ -12350,8 +12164,8 @@ ${countsToText(s.missing)}
           rows: [
             {
               type: "select",
-              name: "字号",
-              desc: "紧凑压信息密度、宽松看得省力。只作用于中间那条时间线。",
+              name: "时间线字号",
+              desc: "紧凑压信息密度，宽松看得省力。只作用于中间那条时间线。",
               binding: { key: "homeTimelineSize" },
               options: [
                 { value: "compact", label: "紧凑" },
@@ -12373,7 +12187,7 @@ ${countsToText(s.missing)}
             {
               type: "select",
               name: "默认打开日",
-              desc: "打开首页先落在哪天。选「最后有动静」就不会一开就是一片空。",
+              desc: "打开首页先落在哪天，选最后有动静就不会一开是空的。",
               binding: { key: "homeDefaultDay" },
               options: [
                 { value: "today", label: "今天" },
@@ -12383,7 +12197,7 @@ ${countsToText(s.missing)}
             {
               type: "toggle",
               name: "显示时刻列",
-              desc: "每行左边那列 11:03。关掉整列收起，正文往左靠。",
+              desc: "每行左边显示时刻，关掉整列收起，正文往左靠。",
               binding: { key: "homeTimelineTime" }
             }
           ]
@@ -12395,20 +12209,21 @@ ${countsToText(s.missing)}
           rows: [
             {
               type: "toggle",
-              name: "产出",
-              desc: "写下的、收进的、读完的——真正产出东西的动作。",
+              name: "产出动作",
+              desc: "写下的收进的读完的，都是真正产出东西的动作。",
               binding: { key: "homeTimelineProduce" }
             },
             {
               type: "toggle",
               name: "状态推进",
-              desc: "加入片单、读到 40%、新增待办这类还没成事实的推进。",
+              desc: "加入片单读到一半新增待办，这类还没成事实的推进。",
               binding: { key: "homeTimelineProgress" }
             },
             {
               type: "toggle",
-              name: "点评 ✦",
-              desc: "小橘挂在痕迹下面的那句话（动手早晚、日记连击提醒）。",
+              // 2026-09-12：「点评 ✦」→「小橘点评」（去符号；说明白这句话是谁说的）
+              name: "小橘点评",
+              desc: "小橘挂在痕迹下面的那句话，提醒动手早晚与日记连击。",
               binding: { key: "homeTimelineNotes" }
             }
           ]
@@ -12421,7 +12236,7 @@ ${countsToText(s.missing)}
             {
               type: "toggle",
               name: "明天预告卡",
-              desc: "右侧那一栏复习/剪藏/日记的预告。不看可以把整栏收掉。",
+              desc: "右侧那一栏复习剪藏与日记的预告，不看可以把整栏收掉。",
               binding: { key: "homeNextCards" }
             }
           ]
@@ -12916,8 +12731,8 @@ ${countsToText(s.missing)}
           icon: "folder-open",
           name: "目录",
           rows: [
-            { type: "path", mode: "single", name: "日记目录", desc: "存放日记文件的文件夹路径", binding: { key: "diaryDirectory" }, onChange: () => applyDirectories(getSettings()) },
-            { type: "path", mode: "single", name: "信件目录", desc: "存放信件的文件夹路径", binding: { key: "letterDirectory" }, onChange: () => applyDirectories(getSettings()) }
+            { type: "path", mode: "single", name: "日记文件夹", desc: "存放日记文件的文件夹", binding: { key: "diaryDirectory" }, onChange: () => applyDirectories(getSettings()) },
+            { type: "path", mode: "single", name: "信件文件夹", desc: "存放信件的文件夹", binding: { key: "letterDirectory" }, onChange: () => applyDirectories(getSettings()) }
           ]
         },
         {
@@ -13443,11 +13258,11 @@ ${countsToText(s.missing)}
   // src/memo/ui.ts
   function applyMemoSkin(skin) {
     if (!M3.overlay) return;
-    const panel2 = M3.overlay.querySelector(".bz-memo-panel");
-    if (!panel2) return;
-    panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
+    const panel = M3.overlay.querySelector(".bz-memo-panel");
+    if (!panel) return;
+    panel.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
     const v = skin === "editorial" ? "editorial" : "paper";
-    panel2.classList.add(`bz-memo-skin-${v}`);
+    panel.classList.add(`bz-memo-skin-${v}`);
   }
   var import_moment5;
   var init_ui3 = __esm({
@@ -13582,7 +13397,7 @@ ${countsToText(s.missing)}
             {
               type: "textarea",
               name: "自定义场景列表",
-              desc: "场景名用逗号分隔，留空使用默认场景（与备忘录共用）",
+              desc: "场景名用逗号分隔，留空使用默认场景",
               placeholder: "剪藏,工作,学习,生活,代码,公开课",
               binding: { key: "memoScenarios" },
               onCommit: memoReloadScenes
@@ -13602,7 +13417,7 @@ ${countsToText(s.missing)}
             {
               type: "toggle",
               name: "打开笔记自动提醒",
-              desc: "打开笔记时若笔记有重要或到期的未完成备忘录，自动打开备忘录面板并定位到关联备忘录",
+              desc: "打开笔记时若有重要或到期的备忘录，自动弹出面板并定位到它",
               binding: {
                 get: () => getSettings().openNoteReminder !== false,
                 set: (v) => {
@@ -15197,9 +15012,9 @@ ${countsToText(s.missing)}
   }
   function renderAll() {
     if (!M4.overlay) return;
-    const panel2 = M4.overlay.querySelector(".bz-bel-panel");
-    if (!panel2) return;
-    renderPanelView(panel2, itemList(), M4, { mountIcons }, currencyUnit());
+    const panel = M4.overlay.querySelector(".bz-bel-panel");
+    if (!panel) return;
+    renderPanelView(panel, itemList(), M4, { mountIcons }, currencyUnit());
   }
   function applyStatusFilter(k) {
     if (k === "__all") M4.status = null;
@@ -18742,7 +18557,7 @@ ${sample}`,
     return root.querySelector(sel);
   }
   function esc2(s) {
-    return escapeHtml2(String(s != null ? s : ""));
+    return escapeHtml(String(s != null ? s : ""));
   }
   function shortNoteName(path) {
     const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
@@ -18859,34 +18674,34 @@ ${sample}`,
           icon: "folder-open",
           name: "目录与分类",
           rows: [
-            { type: "path", mode: "single", name: "文献目录", desc: "文献笔记所在文件夹，部壹扫描该目录", binding: { key: "knowledgeDirectory" } },
-            { type: "path", mode: "single", name: "卡片目录", desc: "你自己写的卡片笔记所在文件夹，部贰扫描该目录，提炼成卡落在这里", binding: { key: "knowledgeCardboxDirectory" } },
-            { type: "path", mode: "single", name: "主题目录", desc: "主题笔记所在文件夹，部叁展示该目录（仅展示，不影响写作）", binding: { key: "knowledgeTopicDirectory" } },
-            { type: "textarea", name: "领域词表", desc: "逗号分隔的领域词；留空 = AI 自由写领域", binding: { key: "knowledgeDomainList" }, placeholder: "物理,医学,计算机,经济…" }
+            { type: "path", mode: "single", name: "文献文件夹", desc: "文献笔记所在文件夹，部壹扫描这里", binding: { key: "knowledgeDirectory" } },
+            { type: "path", mode: "single", name: "卡片文件夹", desc: "你自己写的卡片笔记所在文件夹，部贰扫描后把提炼的卡落在这里", binding: { key: "knowledgeCardboxDirectory" } },
+            { type: "path", mode: "single", name: "主题文件夹", desc: "主题笔记所在文件夹，部叁仅作展示不影响写作", binding: { key: "knowledgeTopicDirectory" } },
+            { type: "textarea", name: "领域词表", desc: "逗号分隔的领域词，留空则 AI 自由写领域", binding: { key: "knowledgeDomainList" }, placeholder: "物理,医学,计算机,经济…" }
           ]
         },
         {
           icon: "settings-2",
           name: "视频处理",
           rows: [
-            { type: "toggle", name: "详细进度提示", desc: "处理中显示当前步骤、耗时、百分比与步骤时间线；关闭则仅显示步骤徽章", binding: { key: "knowledgeProgressDetail" } },
-            { type: "toggle", name: "保留视频原件", desc: "转文献完成后保留视频文件；关闭则只生成文献笔记", binding: { key: "knowledgeKeepVideo" } },
+            { type: "toggle", name: "详细进度提示", desc: "处理中显示当前步骤与耗时，关闭则仅显示步骤徽章", binding: { key: "knowledgeProgressDetail" } },
+            { type: "toggle", name: "保留视频原件", desc: "转文献完成后保留视频文件，关闭则只生成文献笔记", binding: { key: "knowledgeKeepVideo" } },
             { type: "select", name: "下载清晰度", desc: "以视频源可用档位为准，低档优先命中缓存", binding: { key: "knowledgeQuality" }, options: [{ value: "highest", label: "最高" }, { value: "1080", label: "1080P" }, { value: "720", label: "720P" }] },
-            { type: "toggle", name: "遇错即停", desc: "单条失败后停止处理剩余任务；关闭则失败后继续", binding: { key: "knowledgeStopOnFailure" } },
-            { type: "text", name: "输出目录", desc: "视频文件落地目录；留空跟随工具配置", binding: { key: "knowledgeOutputDir" }, placeholder: "如 D:/videos" },
-            { type: "toggle", name: "压缩", desc: "转文字前压缩视频，默认开启", binding: { key: "knowledgeCompress" } },
-            { type: "number", name: "压缩质量（CRF）", desc: "数值越小画质越高；范围 18-28", binding: { key: "knowledgeCrf" }, min: 18, max: 28, step: 1 }
+            { type: "toggle", name: "遇错即停", desc: "单条失败后停止处理剩余任务，关闭则失败后继续", binding: { key: "knowledgeStopOnFailure" } },
+            { type: "text", name: "输出文件夹", desc: "视频文件落地文件夹，留空跟随工具配置", binding: { key: "knowledgeOutputDir" }, placeholder: "如 D:/videos" },
+            { type: "toggle", name: "视频压缩", desc: "转文字前压缩视频，默认开启", binding: { key: "knowledgeCompress" } },
+            { type: "number", name: "压缩质量 CRF", desc: "数值越小画质越高，范围 18 到 28", binding: { key: "knowledgeCrf" }, min: 18, max: 28, step: 1 }
           ]
         },
         {
           icon: "terminal",
           name: "工具",
           rows: [
-            { type: "text", name: "ffmpeg 路径", desc: "视频处理用；留空跟随工具配置", binding: { key: "knowledgeFfmpegPath" }, placeholder: "如 ffmpeg 或 D:/tools/ffmpeg.exe" },
-            { type: "text", name: "ffprobe 路径", desc: "探测视频元数据用；留空跟随工具配置", binding: { key: "knowledgeFfprobePath" }, placeholder: "如 ffprobe 或 D:/tools/ffprobe.exe" },
-            { type: "text", name: "Python 路径", desc: "装了 Python 一般填 python 即可（走系统 PATH）；或填绝对路径；留空跟随工具配置", binding: { key: "knowledgePythonPath" }, placeholder: "如 python 或 D:/tools/python.exe" },
-            { type: "text", name: "Whisper 模型", desc: "转写模型档位（tiny/base/small/medium/large）", binding: { key: "knowledgeWhisperModel" }, placeholder: "如 small" },
-            { type: "text", name: "缓存目录", desc: "剪辑产物与转写稿缓存；留空 = 系统临时目录", binding: { key: "knowledgeCacheDir" }, placeholder: "如 D:/bili-dl-cache" },
+            { type: "text", name: "ffmpeg 路径", desc: "视频处理用，留空跟随工具配置", binding: { key: "knowledgeFfmpegPath" }, placeholder: "如 ffmpeg 或 D:/tools/ffmpeg.exe" },
+            { type: "text", name: "ffprobe 路径", desc: "探测视频元数据用，留空跟随工具配置", binding: { key: "knowledgeFfprobePath" }, placeholder: "如 ffprobe 或 D:/tools/ffprobe.exe" },
+            { type: "text", name: "Python 路径", desc: "装了 Python 一般填 python 即可，或填绝对路径，留空跟随工具配置", binding: { key: "knowledgePythonPath" }, placeholder: "如 python 或 D:/tools/python.exe" },
+            { type: "text", name: "Whisper 模型", desc: "转写模型档位，可选 tiny 到 large", binding: { key: "knowledgeWhisperModel" }, placeholder: "如 small" },
+            { type: "text", name: "缓存文件夹", desc: "剪辑产物与转写稿的缓存，留空用系统临时目录", binding: { key: "knowledgeCacheDir" }, placeholder: "如 D:/bili-dl-cache" },
             { type: "number", name: "缓存保留天数", desc: "超过该天数的缓存自动清理", binding: { key: "knowledgeCacheRetentionDays" }, min: 1, step: 1 }
           ]
         },
@@ -18897,7 +18712,7 @@ ${sample}`,
             {
               type: "button",
               name: "清空历史",
-              desc: "移除全部成功归档的转文献记录；文献笔记与视频文件保留在 vault 中",
+              desc: "移除全部成功归档的转文献记录，文献笔记与视频文件保留在库中",
               buttonText: "清空历史",
               onClick: () => {
                 if (opts == null ? void 0 : opts.onClearHistory) void opts.onClearHistory();
@@ -21862,20 +21677,27 @@ ${sample}`,
           ]
         },
         {
-          icon: "folder-open",
-          name: "基础",
+          icon: "eye",
+          // 2026-09-12：原「基础」组拆为「显示」（阅读字号）+「目录」（剪藏文件夹），对齐全域分组范式
+          name: "显示",
           rows: [
             { type: "select", name: "阅读字号", desc: "桌面阅读面正文字号", binding: { key: "clipbookReaderFontSize" }, options: [
               { value: "small", label: "小" },
               { value: "medium", label: "中" },
               { value: "large", label: "大" }
-            ], onChange: () => applyReaderFontSize() },
-            { type: "path", mode: "single", name: "剪藏目录", desc: "存放网页剪藏文章的文件夹", binding: { key: "articleDirectory" } }
+            ], onChange: () => applyReaderFontSize() }
+          ]
+        },
+        {
+          icon: "folder-open",
+          name: "目录",
+          rows: [
+            { type: "path", mode: "single", name: "剪藏文件夹", desc: "存放网页剪藏文章的文件夹", binding: { key: "articleDirectory" } }
           ]
         },
         {
           icon: "sparkles",
-          name: "智能",
+          name: "自动摘要",
           rows: [
             {
               type: "toggle",
@@ -22150,22 +21972,22 @@ ${sample}`,
   });
 
   // src/favorites/layouts/board/render.ts
-  function panelHtml4(mobile2) {
-    const mob = mobile2 ? " bz-fav-mob bz-panel-mtop" : "";
+  function panelHtml4(mobile) {
+    const mob = mobile ? " bz-fav-mob bz-panel-mtop" : "";
     return `<div class="bz-fav-panel bz-fav-scope${mob}">
   <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON3.close, "bz-ic--xs")}</button></div>
   <div class="bz-fav-tags" data-fav-tags></div>
   <div class="bz-fav-board" data-fav-content></div>
 </div>`;
   }
-  function chipsHtml2(items, view, mobile2) {
+  function chipsHtml2(items, view, mobile) {
     const mk = (label, ic2, cnt, active2, grey = false) => `<button class="bz-fav-chip${active2 ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}" data-fav-tag="${esc(label)}">${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(label)} ${cnt}</span></button>`;
     const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON3.add, "bz-ic--xs")}<span>新收藏</span></button>`;
     const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + TAGS.map((t) => {
       const n = tagCount(items, t.label);
       return n ? mk(t.label, t.ic, n, !view.archived && view.tag === t.label) : "";
     }).join("");
-    return mobile2 ? add + chips : chips + add;
+    return mobile ? add + chips : chips + add;
   }
   function boardHtml(items, view) {
     const list = filteredItems(items, view);
@@ -22180,10 +22002,10 @@ ${sample}`,
     board.innerHTML = boardHtml(items, view);
     hooks.mountIcons(board);
   }
-  function renderPanelView2(panel2, items, view, hooks) {
-    const tags = panel2.querySelector("[data-fav-tags]");
+  function renderPanelView2(panel, items, view, hooks) {
+    const tags = panel.querySelector("[data-fav-tags]");
     if (tags) renderTagsInto(tags, items, view, hooks);
-    const board = panel2.querySelector("[data-fav-content]");
+    const board = panel.querySelector("[data-fav-content]");
     if (board) renderBoardInto(board, items, view, hooks);
   }
   var init_render9 = __esm({
@@ -22408,8 +22230,8 @@ ${sample}`,
   }
   function renderAll3() {
     if (!M6.overlay) return;
-    const panel2 = M6.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel2, M6.items, M6, { mountIcons, mobile: isMobileEnv() });
+    const panel = M6.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel, M6.items, M6, { mountIcons, mobile: isMobileEnv() });
   }
   function applyTagFilter(label) {
     if (label === "全部" || label === "__all") {
@@ -23035,10 +22857,10 @@ GitHub 仓库：${ghInfo.title}
   }
   function applyBookshelfSkin(skin) {
     if (!M.currentOverlay) return;
-    const panel2 = M.currentOverlay.querySelector(".bz-bs-panel");
-    if (!panel2) return;
-    panel2.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), "bz-bs-mode-light", "bz-bs-mode-dark");
-    panel2.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
+    const panel = M.currentOverlay.querySelector(".bz-bs-panel");
+    if (!panel) return;
+    panel.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), "bz-bs-mode-light", "bz-bs-mode-dark");
+    panel.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
   }
   var SKIN_IDS;
   var init_ui8 = __esm({
@@ -23098,7 +22920,7 @@ GitHub 仓库：${ghInfo.title}
               type: "path",
               mode: "single",
               name: "书库文件夹",
-              desc: "存放书籍笔记的文件夹，留空用 vault 根下的「书库」",
+              desc: "存放书籍笔记的文件夹，留空用库根下的书库文件夹",
               binding: { key: "bookshelfFolderPath" },
               fallbackValue: () => resolveFolderPath()
             }
@@ -24252,7 +24074,7 @@ ${n.content.slice(0, 2e3)}
             const btn = document.createElement("button");
             btn.className = "quiz-option-btn";
             const cleanText = cleanOptionText(opt);
-            btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml2(cleanText)}</span><span class="check-mark">✔️</span>`;
+            btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml(cleanText)}</span><span class="check-mark">✔️</span>`;
             btn.dataset.index = String(idx);
             btn.onclick = () => {
               if (answeredRef.value) return;
@@ -25710,7 +25532,7 @@ ${n.content.slice(0, 2e3)}
       const rank = i < 3 ? `<span class="bz-stats-rank-badge" style="background:${badges[i]};">${i + 1}</span>` : `<span class="bz-stats-rank-plain">${i + 1}</span>`;
       return `<div class="bz-review-stats-tl-row" data-idx="${i}">
       ${rank}
-      <span class="bz-stats-rank-name">${escapeHtml2(it.name)}</span>
+      <span class="bz-stats-rank-name">${escapeHtml(it.name)}</span>
       ${it.sub ? `<span class="bz-stats-rank-sub">${it.sub}</span>` : ""}
       <span class="bz-stats-rank-meta">${it.meta}</span>
     </div>`;
@@ -25871,7 +25693,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     status.innerHTML = `
-    <div class="bz-review-history-name">${escapeHtml2(stripTitleMarks(item.name))}</div>
+    <div class="bz-review-history-name">${escapeHtml(stripTitleMarks(item.name))}</div>
     <div class="bz-review-history-sub">${stageText} · 共 ${history2.length} 次复习${curR || ""}</div>
   `;
     body.appendChild(status);
@@ -27425,11 +27247,11 @@ ${n.content.slice(0, 2e3)}
   function normalizeStore(raw) {
     const d = raw && typeof raw === "object" ? raw : {};
     const linkRaw = d.link && typeof d.link === "object" ? d.link : {};
-    const panel2 = d.panel && typeof d.panel === "object" ? d.panel : null;
+    const panel = d.panel && typeof d.panel === "object" ? d.panel : null;
     return {
       version: d.version === STORE_VERSION ? STORE_VERSION : void 0,
       meta: d.meta && typeof d.meta === "object" ? d.meta : {},
-      panel: panel2,
+      panel,
       link: {
         queue: Array.isArray(linkRaw.queue) ? linkRaw.queue : [],
         state: linkRaw.state && typeof linkRaw.state === "object" && !Array.isArray(linkRaw.state) ? linkRaw.state : {}
@@ -27465,22 +27287,22 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
     let anyLegacy = false;
-    const store3 = emptyStore();
+    const store2 = emptyStore();
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
       const raw = await readJsonIfExists(app, legacyPath).catch(() => null);
       if (raw === null) continue;
       anyLegacy = true;
-      if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store3.meta = raw;
-      else if (name === "secondbrain_panel.json" && raw && typeof raw === "object") store3.panel = raw;
+      if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store2.meta = raw;
+      else if (name === "secondbrain_panel.json" && raw && typeof raw === "object") store2.panel = raw;
       else if (name === "secondbrain_link_queue.json") {
-        if (Array.isArray(raw)) store3.link.queue = raw;
+        if (Array.isArray(raw)) store2.link.queue = raw;
       } else if (name === "secondbrain_link_state.json") {
-        if (raw && typeof raw === "object" && !Array.isArray(raw)) store3.link.state = raw;
+        if (raw && typeof raw === "object" && !Array.isArray(raw)) store2.link.state = raw;
       }
     }
     if (!anyLegacy) return false;
-    await adapter.write(storePath, JSON.stringify(store3));
+    await adapter.write(storePath, JSON.stringify(store2));
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
       try {
@@ -27544,8 +27366,8 @@ ${n.content.slice(0, 2e3)}
       }
     }
     const meta = { ...priMeta, notes };
-    let panel2 = primary.panel;
-    if (conflict.panel && (!panel2 || conflict.panel.generatedAt > panel2.generatedAt)) panel2 = conflict.panel;
+    let panel = primary.panel;
+    if (conflict.panel && (!panel || conflict.panel.generatedAt > panel.generatedAt)) panel = conflict.panel;
     const queue = [...primary.link.queue];
     const seen = new Set(queue.map((q2) => q2.path));
     for (const q2 of conflict.link.queue) {
@@ -27569,7 +27391,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     const chatTrimmed = chatHistory.slice(-CHAT_HISTORY_LIMIT);
-    return { version: primary.version, meta, panel: panel2, link: { queue, state: state2 }, chatHistory: chatTrimmed };
+    return { version: primary.version, meta, panel, link: { queue, state: state2 }, chatHistory: chatTrimmed };
   }
   function buildRowOffsets(meta) {
     const map = /* @__PURE__ */ new Map();
@@ -27707,23 +27529,23 @@ ${n.content.slice(0, 2e3)}
       }
     }
   }
-  async function reconcileConflicts(a, store3) {
+  async function reconcileConflicts(a, store2) {
     var _a2;
     const adapter = (_a2 = a == null ? void 0 : a.vault) == null ? void 0 : _a2.adapter;
-    if (!adapter || typeof adapter.list !== "function") return store3;
+    if (!adapter || typeof adapter.list !== "function") return store2;
     let listed = [];
     try {
       const r = await adapter.list(storeDir());
       listed = Array.isArray(r == null ? void 0 : r.files) ? r.files : [];
     } catch (e) {
-      return store3;
+      return store2;
     }
     const conflictJson = listed.filter((f) => isConflictJsonName(f.split("/").pop() || f));
     const conflictVec = listed.filter((f) => isConflictVecName(f.split("/").pop() || f));
-    if (!conflictJson.length && !conflictVec.length) return store3;
-    const primaryMeta = store3.meta;
+    if (!conflictJson.length && !conflictVec.length) return store2;
+    const primaryMeta = store2.meta;
     const conflictMetas = [];
-    let merged = store3;
+    let merged = store2;
     let jsonMerged = false;
     for (const name of conflictJson) {
       try {
@@ -27806,8 +27628,8 @@ ${n.content.slice(0, 2e3)}
   }
   async function readStoreRaw(app) {
     const a = resolveApp(app);
-    const store3 = await readStoreRawInner(a);
-    return reconcileConflicts(a, store3);
+    const store2 = await readStoreRawInner(a);
+    return reconcileConflicts(a, store2);
   }
   async function saveStoreRaw(data, app) {
     var _a2;
@@ -27823,30 +27645,6 @@ ${n.content.slice(0, 2e3)}
   }
   async function loadStore(app) {
     return enqueue(() => readStoreRaw(app));
-  }
-  async function mutateStore(fn, app) {
-    await enqueue(async () => {
-      const store3 = await readStoreRaw(app);
-      fn(store3);
-      await saveStoreRaw(store3, app);
-    });
-  }
-  async function loadChatHistory(app) {
-    return (await loadStore(app)).chatHistory;
-  }
-  async function appendChatHistory(entries, app) {
-    const list = Array.isArray(entries) ? entries : [entries];
-    let result = [];
-    await mutateStore((s) => {
-      s.chatHistory = [...s.chatHistory, ...list].slice(-CHAT_HISTORY_LIMIT);
-      result = s.chatHistory;
-    }, app);
-    return result;
-  }
-  async function clearChatHistory(app) {
-    await mutateStore((s) => {
-      s.chatHistory = [];
-    }, app);
   }
   var STORE_VERSION, CHAT_HISTORY_LIMIT, LEGACY_FILES, LEGACY_VEC, chain;
   var init_store_file = __esm({
@@ -28071,2686 +27869,1806 @@ ${n.content.slice(0, 2e3)}
   function panelLogHtml(parts) {
     return parts.map((p) => `<span class="bz-sb-log-item${p.warn ? " bz-sb-log-item--warn" : ""}">${escapeHtml3(p.text)}</span>`).join('<span class="bz-sb-log-sep">·</span>');
   }
-  function chatShellHtml(topK) {
-    return `
-  <div class="bz-sb-chat-head">
-    <div class="bz-sb-glyph bz-sb-chat-glyph">${ic("brain", 17)}</div>
-    <div class="bz-sb-head-title">
-      <h3>AI 对话</h3>
-      <div class="bz-sb-cnt">以库为底作答 · 单次检索 ${topK} 条相关段落</div>
-    </div>
-    <div class="bz-sb-head-sp"></div>
-    <button class="bz-sb-chat-clear bz-sb-fbtn" id="bz-sb-chat-clear">${ic("history", 13)}清空对话</button>
-  </div>
-  <div class="bz-sb-chat-messages bz-sb-scroll-y" id="bz-sb-chat-messages"></div>
-  <div class="bz-sb-chat-input-area">
-    <div class="bz-sb-chat-input-row">
-      <span class="bz-sb-chat-lens">${ic("sparkles", 15)}</span>
-      <textarea class="bz-sb-chat-input" id="bz-sb-chat-input" rows="1" placeholder="向第二大脑提问，回车发送…"></textarea>
-      <button class="bz-sb-chat-send" id="bz-sb-chat-send" aria-label="发送">${ic("send", 14)}</button>
-    </div>
-    <div class="bz-sb-chat-chips" id="bz-sb-chat-chips">
-      ${CHAT_CHIPS.map((c) => `<button class="bz-sb-chat-chip" data-q="${escapeHtml3(c)}">${escapeHtml3(c)}</button>`).join("")}
-    </div>
-  </div>`;
-  }
-  function chatUserMsgHtml() {
-    return `<div class="bz-sb-chat-who">${ic("send", 10)}刚问</div><div class="bz-sb-chat-bubble"></div>`;
-  }
-  function chatAiMsgHtml() {
-    return `<div class="bz-sb-chat-who">${ic("brain", 10)}第二大脑</div><div class="bz-sb-chat-bubble"></div>`;
-  }
-  function chatThinkingHtml(topK) {
-    return `<div class="bz-sb-chat-thinking"><span class="bz-sb-chat-thinking-dots"><i></i><i></i><i></i></span>正在检索 ${topK} 条相关段落…</div>`;
-  }
-  function chatCitesHtml(hits) {
-    if (!hits.length) return "";
-    return `<div class="bz-sb-chat-cites">` + hits.map(
-      (h) => `<button class="bz-sb-chat-cite" data-path="${escapeHtml3(h.path)}"><span class="bz-sb-chat-cite-score">${h.pct}%</span><span class="bz-sb-dot" style="background:${h.color}"></span><span class="bz-sb-chat-cite-name">${escapeHtml3(h.path.replace(/^.*[\\/]/, "").replace(/\.md$/i, ""))}</span></button>`
-    ).join("") + `</div>`;
-  }
-  function refCardHtml(name, pct, color) {
-    return `<div class="bz-sb-ref-card-top"><div class="bz-sb-ref-card-path">${escapeHtml3(name)}</div><span class="bz-sb-ref-card-score">${pct}%</span></div><div class="bz-sb-ref-card-bar"><span class="bz-sb-ref-card-bar-fill" style="width:${pct}%;background:${color}"></span></div><div class="bz-sb-ref-card-body"></div>`;
-  }
-  function refStateHtml(text) {
-    return `<div class="bz-sb-ref-empty">${escapeHtml3(text)}</div>`;
-  }
-  var SB_PALETTE, SB_FALLBACK, ic, CHAT_CHIPS;
+  var SB_PALETTE, SB_FALLBACK, ic;
   var init_render12 = __esm({
     "src/secondbrain/render.ts"() {
       SB_PALETTE = ["#0f766e", "#6366f1", "#d97706", "#db2777", "#0e7490", "#7c3aed", "#b45309", "#be185d"];
       SB_FALLBACK = "#a39b8c";
       ic = (name, size = 15) => `<i data-lucide="${name}" style="width:${size}px;height:${size}px"></i>`;
-      CHAT_CHIPS = ["为什么会遗忘", "享乐适应", "怎么高效记笔记", "睡不好怎么补救", "闪电", "王阳明"];
     }
   });
 
-  // src/secondbrain/binary.ts
-  var MobileBuffer;
-  var init_binary = __esm({
-    "src/secondbrain/binary.ts"() {
-      MobileBuffer = class _MobileBuffer {
-        constructor(data) {
-          this._data = data;
-          this._view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-        }
-        static alloc(size) {
-          return new _MobileBuffer(new Uint8Array(size));
-        }
-        static concat(parts) {
-          const arrays = parts.map((p) => p instanceof _MobileBuffer ? p._data : p);
-          const total = arrays.reduce((s, a) => s + a.byteLength, 0);
-          const out = new Uint8Array(total);
-          let offset = 0;
-          for (const a of arrays) {
-            out.set(a, offset);
-            offset += a.byteLength;
-          }
-          return new _MobileBuffer(out);
-        }
-        writeUInt32LE(value, offset) {
-          this._view.setUint32(offset, value, true);
-        }
-      };
-    }
+  // src/secondbrain/panel.ts
+  var panel_exports = {};
+  __export(panel_exports, {
+    SecondBrainPanel: () => SecondBrainPanel,
+    buildSourceTree: () => buildSourceTree,
+    computeStats: () => computeStats2,
+    confirmFullRebuild: () => confirmFullRebuild,
+    fmtCompact: () => fmtCompact,
+    openSecondBrainSettings: () => openSecondBrainSettings,
+    secondBrainSettingsSchema: () => secondBrainSettingsSchema
   });
-
-  // src/secondbrain/chunk.ts
-  function stripFrontmatter2(text) {
-    return text.replace(FRONTMATTER_RE, "");
+  function confirmFullRebuild() {
+    return openFlowDialog({
+      title: "重新索引",
+      message: "将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？",
+      // 皮肤类（issue 291）：确认框挂 body，脱离主面板根，须显式带 .bz-sb-flow-dialog
+      // 才拿到 --sb-* token（否则掉回 core 裸样式）；单源生效于三处入口
+      className: "bz-sb-flow-dialog",
+      actions: [
+        { label: "取消", value: "cancel" },
+        // 刻意不标 danger（issue 291 评审）：清空的是**可重建的派生数据**（向量索引按白名单重嵌入即恢复），
+        // 用户笔记与配置一字不动 —— 非不可逆数据破坏，故保留普通高亮主动作。
+        { label: "开始重建", value: "ok", cta: true }
+      ]
+    }).then((v) => v === "ok");
   }
-  function noteTitleFromPath(path) {
-    return stripMdExt(path.slice(path.lastIndexOf("/") + 1));
+  function topLevelName(path) {
+    const i = path.indexOf("/");
+    return i === -1 ? "（根目录）" : path.slice(0, i);
   }
-  function embedChunks(content, title, minChunk = 50) {
-    const body = stripFrontmatter2(content);
-    const chunks = smartChunk(body, minChunk);
-    if (chunks.length === 0 && body.trim().length > 0) chunks.push(body.trim().slice(0, CHUNK_SIZE));
-    if (chunks.length > 0 && title) chunks[0] = title + "\n" + chunks[0];
-    return chunks;
-  }
-  function smartChunk(text, minChunk = 50) {
-    const blocks = text.split(/\n\s*\n/);
-    const chunks = [];
-    let buffer = "";
-    for (const block of blocks) {
-      const trimmed = block.trim();
-      if (!trimmed) continue;
-      if ((buffer + "\n" + trimmed).length <= CHUNK_SIZE) {
-        buffer = buffer ? buffer + "\n" + trimmed : trimmed;
-      } else {
-        if (buffer.length >= minChunk) chunks.push(buffer);
-        buffer = "";
-        if (trimmed.length > CHUNK_SIZE) {
-          const sentences = trimmed.split(SENTENCE_BOUNDARY);
-          let sbuf = "";
-          for (const s of sentences) {
-            if ((sbuf + s).length > CHUNK_SIZE) {
-              if (sbuf.length >= minChunk) chunks.push(sbuf.trim());
-              sbuf = s;
-            } else {
-              sbuf += s;
-            }
-          }
-          if (sbuf.trim().length >= minChunk) chunks.push(sbuf.trim());
-        } else {
-          buffer = trimmed;
-        }
-      }
+  function lanIpDesc() {
+    if (isMobileEnv()) return "";
+    const lanIPs = getLanIPs();
+    if (lanIPs.length === 0) {
+      return "未能探测本机局域网 IP，请确认电脑已联网，移动端远程地址需手动填写电脑的局域网 IP";
     }
-    if (buffer.trim().length >= minChunk) chunks.push(buffer.trim());
-    return chunks;
+    const primary = pickPrimaryLanIp(lanIPs);
+    return `本机当前局域网 IP 为 ${lanIPs.map((l) => `${l.ip}，${l.iface}`).join("；")}。移动端连不上时，把远程地址填为${primary ? ` ${formatRemoteOllamaUrl(primary.ip)}` : "此处 IP"}`;
   }
-  var CHUNK_SIZE, SENTENCE_BOUNDARY, FRONTMATTER_RE;
-  var init_chunk = __esm({
-    "src/secondbrain/chunk.ts"() {
-      init_utils();
-      CHUNK_SIZE = 256;
-      SENTENCE_BOUNDARY = /[。！？!?\n]+/;
-      FRONTMATTER_RE = /^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/;
-    }
-  });
-
-  // src/secondbrain/vptree.ts
-  function euclideanSq(a, b) {
-    let sum = 0;
-    const n = a.length;
-    for (let i = 0; i < n; i++) {
-      const d = a[i] - b[i];
-      sum += d * d;
-    }
-    return sum;
-  }
-  function normalizeVec(v) {
-    let norm = 0;
-    for (let i = 0; i < v.length; i++) norm += v[i] * v[i];
-    norm = Math.sqrt(norm);
-    if (norm === 0) return Array.from(v);
-    const out = new Array(v.length);
-    for (let i = 0; i < v.length; i++) out[i] = v[i] / norm;
-    return out;
-  }
-  function vptree_build(items, idxs) {
-    if (idxs.length === 0) return null;
-    return buildRecursive(idxs, 0);
-    function buildRecursive(idxList, depth) {
-      if (idxList.length === 0) return null;
-      if (idxList.length === 1) {
-        return { idx: idxList[0], mu: 0, minD: 0, maxD: 0, left: null, right: null };
-      }
-      const vpIdx = idxList[depth % idxList.length];
-      const vp = items[vpIdx];
-      const dists = idxList.map((i) => ({ i, d: euclideanSq(items[i], vp) })).sort((a, b) => a.d - b.d);
-      const mid = dists.length >> 1;
-      return {
-        idx: vpIdx,
-        mu: dists[mid].d,
-        minD: dists[0].d,
-        maxD: dists[dists.length - 1].d,
-        left: buildRecursive(
-          dists.slice(0, mid).map((x) => x.i),
-          depth + 1
-        ),
-        right: buildRecursive(
-          dists.slice(mid).map((x) => x.i),
-          depth + 1
-        )
-      };
-    }
-  }
-  function vptree_search(node, items, query, k) {
-    let best = [];
-    let tau = Infinity;
-    (function searchNode(n) {
-      if (!n) return;
-      const d = euclideanSq(query, items[n.idx]);
-      if (d < tau) {
-        best.push({ idx: n.idx, dist: d });
-        if (best.length > k) {
-          best.sort((a, b) => a.dist - b.dist);
-          best.pop();
-          tau = best[best.length - 1].dist;
-        }
-      }
-      const diff = d - n.mu;
-      const first = diff < 0 ? n.left : n.right;
-      const second = diff < 0 ? n.right : n.left;
-      searchNode(first);
-      if (second && n.minD - tau <= diff && diff <= n.maxD + tau) {
-        searchNode(second);
-      }
-    })(node);
-    return best.sort((a, b) => a.dist - b.dist);
-  }
-  var init_vptree = __esm({
-    "src/secondbrain/vptree.ts"() {
-    }
-  });
-
-  // src/secondbrain/parallel.ts
-  async function parallelMap(array, initConcurrency, asyncFn) {
-    const results = [];
-    let index = 0;
-    const inProgress = /* @__PURE__ */ new Set();
-    let concurrency = initConcurrency;
-    let emaMs = 0;
-    const ALPHA = 0.3;
-    let minLatency = Infinity;
-    let rampUpDone = false;
-    return new Promise((resolve2) => {
-      function next() {
-        if (index >= array.length && inProgress.size === 0) {
-          resolve2(results);
-          return;
-        }
-        while (index < array.length && inProgress.size < concurrency) {
-          const i = index++;
-          const t0 = Date.now();
-          const promise = asyncFn(array[i], i).then((result) => {
-            const ms = Date.now() - t0;
-            emaMs = emaMs ? ALPHA * ms + (1 - ALPHA) * emaMs : ms;
-            if (ms < minLatency) minLatency = ms;
-            if (!rampUpDone && emaMs < minLatency * 1.3 && concurrency < 60) concurrency++;
-            if (!rampUpDone && emaMs > minLatency * 1.5) {
-              rampUpDone = true;
-              console.log(`[secondbrain] 并发锁定: ${concurrency}, 均延迟: ${Math.round(emaMs)}ms`);
-            }
-            results[i] = result;
-          }).catch((err) => {
-            var _a2;
-            results[i] = { error: String((_a2 = err == null ? void 0 : err.message) != null ? _a2 : err) };
-          }).finally(() => {
-            inProgress.delete(promise);
-            next();
-          });
-          inProgress.add(promise);
-        }
-      }
-      next();
+  function secondBrainSettingsSchema() {
+    let reloadWarned = false;
+    const warnReload = () => {
+      if (reloadWarned) return;
+      reloadWarned = true;
+      notice("第二大脑设置已保存，重载插件后生效", "info");
+    };
+    const trimStore = (key) => (v) => {
+      getSettings()[key] = v.trim();
+    };
+    const boolDefaultOn = (key) => ({
+      get: () => tryGetSettings()[key] !== false,
+      set: (v) => {
+        getSettings()[key] = v;
+      },
+      save: () => saveSettings()
     });
-  }
-  var init_parallel = __esm({
-    "src/secondbrain/parallel.ts"() {
-    }
-  });
-
-  // src/secondbrain/tfidf.ts
-  var TFIDF_STOP_WORDS, STOP_SET, TFIDF;
-  var init_tfidf = __esm({
-    "src/secondbrain/tfidf.ts"() {
-      TFIDF_STOP_WORDS = "的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等";
-      STOP_SET = new Set(TFIDF_STOP_WORDS);
-      TFIDF = class _TFIDF {
-        constructor() {
-          this.docs = [];
-          this.df = /* @__PURE__ */ new Map();
-          this.N = 0;
-          this.avgDl = 1;
-        }
-        static tokenize(text) {
-          const tokens = [];
-          const cjk = text.match(/[一-鿿]/g) || [];
-          const eng = text.toLowerCase().match(/[a-z]{2,}/g) || [];
-          for (const c of cjk) {
-            if (!STOP_SET.has(c)) tokens.push(c);
-          }
-          for (const w of eng) {
-            if (!STOP_SET.has(w)) tokens.push(w);
-          }
-          return tokens;
-        }
-        /** docs 必须是 chunk 粒度（path=所属笔记路径，text=chunk 原文） */
-        build(docs) {
-          this.docs = [];
-          this.df = /* @__PURE__ */ new Map();
-          let totalLen = 0;
-          for (const doc of docs) {
-            const tokens = _TFIDF.tokenize(doc.text);
-            if (!tokens.length) continue;
-            const tf = /* @__PURE__ */ new Map();
-            for (const t of tokens) tf.set(t, (tf.get(t) || 0) + 1);
-            const seen = new Set(tokens);
-            for (const t of seen) this.df.set(t, (this.df.get(t) || 0) + 1);
-            this.docs.push({ path: doc.path, text: doc.text, tf, len: tokens.length });
-            totalLen += tokens.length;
-          }
-          this.N = this.docs.length;
-          this.avgDl = this.N > 0 ? totalLen / this.N : 1;
-        }
-        /** BM25 式检索；返回含 chunk 原文，最高分归一化 */
-        search(query, topK = 20) {
-          if (!this.N || !query) return [];
-          const qTokens = _TFIDF.tokenize(query);
-          if (!qTokens.length) return [];
-          const k1 = 1.5;
-          const b = 0.75;
-          const scores = [];
-          for (const doc of this.docs) {
-            let score = 0;
-            for (const qt of qTokens) {
-              const tf = doc.tf.get(qt);
-              if (!tf) continue;
-              const df = this.df.get(qt) || 0;
-              const idf = Math.log((this.N - df + 0.5) / (df + 0.5) + 1);
-              const tfNorm = tf * (k1 + 1) / (tf + k1 * (1 - b + b * doc.len / this.avgDl));
-              score += idf * tfNorm;
-            }
-            if (score > 0) scores.push({ path: doc.path, chunk: doc.text, score });
-          }
-          scores.sort((a, b2) => b2.score - a.score);
-          if (scores.length > 0 && scores[0].score > 0) {
-            const maxS = scores[0].score;
-            for (const s of scores) s.score = s.score / maxS;
-          }
-          return scores.slice(0, topK);
-        }
-      };
-    }
-  });
-
-  // src/secondbrain/text-search.ts
-  function extractTerms(q2) {
-    const terms = [];
-    const cjk = q2.match(/[一-鿿]/g) || [];
-    const eng = q2.toLowerCase().match(/[a-z]{2,}/g) || [];
-    for (const c of cjk) {
-      if (!STOP_WORDS.has(c)) terms.push(c);
-    }
-    for (const w of eng) {
-      if (!STOP_WORDS.has(w)) terms.push(w);
-    }
-    if (terms.length === 0) terms.push(q2.toLowerCase());
-    return terms;
-  }
-  function searchTextIndex(query, notes, topK = 20) {
-    const q2 = query.trim();
-    if (!q2) return [];
-    const noteCount = Object.keys(notes).length;
-    let chunkCount = 0;
-    for (const n of Object.values(notes)) chunkCount += n.chunks.length;
-    console.log(`[文本检索] query="${q2}" notes=${noteCount} chunks=${chunkCount}`);
-    if (noteCount === 0) return [];
-    const terms = extractTerms(q2);
-    const qLower = q2.toLowerCase();
-    const results = [];
-    for (const [path, note] of Object.entries(notes)) {
-      for (const chunk of note.chunks) {
-        const text = chunk.text || "";
-        if (!text) continue;
-        const lower = text.toLowerCase();
-        let score = 0;
-        if (lower.includes(qLower)) {
-          score = 0.7 + 0.3 * Math.min(1, q2.length / text.length);
-        } else {
-          let matched = 0;
-          let totalFreq = 0;
-          for (const term of terms) {
-            const idx = lower.indexOf(term);
-            if (idx !== -1) {
-              matched++;
-              let freq = 0;
-              let pos = 0;
-              while ((pos = lower.indexOf(term, pos)) !== -1) {
-                freq++;
-                pos += term.length;
-              }
-              totalFreq += freq;
-            }
-          }
-          if (matched === 0) continue;
-          const hitRate = matched / terms.length;
-          const avgFreq = totalFreq / matched;
-          const freqScore = Math.min(1, avgFreq / 5);
-          const coverLen = terms.filter((t) => lower.includes(t)).reduce((s, t) => s + t.length, 0);
-          const density = Math.min(1, coverLen / Math.max(1, text.length) * 10);
-          score = hitRate * 0.5 + freqScore * 0.25 + density * 0.25;
-        }
-        if (text.length < 20) score *= 0.7;
-        if (score > 0.25) {
-          results.push({ path, chunk: text, score });
-        }
-      }
-    }
-    const seen = /* @__PURE__ */ new Set();
-    const deduped = [];
-    for (const item of results.sort((a, b) => b.score - a.score)) {
-      const key = item.path + "::" + item.chunk;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      deduped.push(item);
-    }
-    const final = deduped.slice(0, topK);
-    console.log(`[文本检索] 命中 ${results.length} 条，去重后 ${deduped.length} 条，返回 ${final.length} 条`);
-    return final;
-  }
-  var STOP_WORDS;
-  var init_text_search = __esm({
-    "src/secondbrain/text-search.ts"() {
-      STOP_WORDS = new Set("的了是在我有和人这中大为上个国不以到说时要就出会也年对自其");
-    }
-  });
-
-  // src/secondbrain/ollama.ts
-  async function httpFetch(url, opts, timeoutMs = EMBED_TIMEOUT_MS) {
-    const controller2 = new AbortController();
-    const timer = setTimeout(() => controller2.abort(), timeoutMs);
-    try {
-      return await fetch(url, { ...opts, signal: controller2.signal });
-    } catch (e) {
-      if (controller2.signal.aborted) {
-        throw new Error(`Ollama 无响应（超过 ${timeoutMs / 1e3}s 未应答）：${url}`);
-      }
-      throw e;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  async function getEmbedding(text, isQuery, baseUrl, model) {
-    const CONFIG2 = buildConfig();
-    const url = baseUrl || CONFIG2.OLLAMA_URL;
-    const prompt = isQuery ? `Represent this sentence for searching relevant passages: ${text}` : text;
-    const resp = await httpFetch(`${url}/api/embeddings`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: model || CONFIG2.EMBEDDING_MODEL, prompt })
+    const pathsOf = (key) => ({
+      get: () => {
+        var _a2;
+        return parsePathList(String((_a2 = tryGetSettings()[key]) != null ? _a2 : ""));
+      },
+      set: (v) => {
+        getSettings()[key] = formatPathList(v);
+      },
+      save: () => saveSettings()
     });
-    if (!resp.ok) throw new Error(`Ollama 错误: ${resp.status}`);
-    const data = await resp.json();
-    const vec = data.embedding;
-    if (!vec || !vec.length) throw new Error("向量为空");
-    return vec;
-  }
-  async function getEmbeddingsBatch(texts, baseUrl) {
-    const CONFIG2 = buildConfig();
-    const resp = await httpFetch(`${baseUrl || CONFIG2.OLLAMA_URL}/api/embed`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: CONFIG2.EMBEDDING_MODEL, input: texts })
-    });
-    if (!resp.ok) throw new Error(`Ollama 错误: ${resp.status}`);
-    const data = await resp.json();
-    const vec = data.embeddings;
-    if (!vec || !vec.length) throw new Error("向量为空");
-    return vec;
-  }
-  async function checkRemoteOllama(url) {
-    try {
-      const resp = await httpFetch(`${url}/api/tags`, { method: "GET" });
-      return resp.ok;
-    } catch (e) {
-      return false;
-    }
-  }
-  var EMBED_BATCH_SIZE, EMBED_TIMEOUT_MS, SEARCH_TIMEOUT_MS;
-  var init_ollama = __esm({
-    "src/secondbrain/ollama.ts"() {
-      init_config3();
-      EMBED_BATCH_SIZE = 64;
-      EMBED_TIMEOUT_MS = 3e4;
-      SEARCH_TIMEOUT_MS = 1e4;
-    }
-  });
-
-  // src/secondbrain/vector-store.ts
-  var VECTOR_STORE_VERSION, CHECKPOINT_POLICY, VectorStore;
-  var init_vector_store = __esm({
-    "src/secondbrain/vector-store.ts"() {
-      init_config3();
-      init_store_file();
-      init_binary();
-      init_chunk();
-      init_vptree();
-      init_parallel();
-      init_tfidf();
-      init_text_search();
-      init_ollama();
-      init_utils();
-      VECTOR_STORE_VERSION = 9;
-      CHECKPOINT_POLICY = { minIntervalMs: 5e3, minNewChunks: 200 };
-      VectorStore = class {
-        constructor(app) {
-          this.meta = { version: VECTOR_STORE_VERSION, notes: {}, _dim: 0 };
-          this.vectors = new Float32Array(0);
-          this.dim = 0;
-          this.tfidf = new TFIDF();
-          this.searchMode = "text";
-          this.updateProgress = () => {
-          };
-          /** 初始 load 完成信号（域入口注入；主面板打开时等待，防启动竞态误入引导态——ticket 107） */
-          this.initialLoad = null;
-          /** VP 索引缓存：树 + 归一化向量 + 缓存键 + 来源数组身份（内容变更即失效） */
-          this.vpTree = null;
-          this.vpVecs = null;
-          this.vpMetaKey = null;
-          this.vpSrc = null;
-          /** 进行中的 refresh（并发去重：重复调用复用同一 promise，ticket 107） */
-          this.refreshPromise = null;
-          this.app = app;
-        }
-        get notes() {
-          return this.meta.notes;
-        }
-        async load() {
-          const data = await loadStore(this.app);
-          const parsed = data.meta;
-          if (parsed && typeof parsed === "object" && parsed.version === VECTOR_STORE_VERSION) {
-            this.meta = parsed;
-            this.dim = parsed._dim || 0;
-            await this.loadVectors();
-            return;
-          }
-          if (parsed && typeof parsed === "object") {
-            console.log(`[secondbrain] 向量库版本升级: ${parsed.version || 0} → ${VECTOR_STORE_VERSION}，触发重建`);
-          }
-          this.meta = { version: VECTOR_STORE_VERSION, notes: {}, _dim: 0 };
-          this.vectors = new Float32Array(0);
-          this.dim = 0;
-        }
-        async loadVectors() {
-          const CONFIG2 = buildConfig();
-          try {
-            const buf = await this.app.vault.adapter.readBinary(CONFIG2.VEC_PATH);
-            const arr = new Uint8Array(buf);
-            const dim = new DataView(arr.buffer, arr.byteOffset, 4).getUint32(0, true);
-            const payload = arr.slice(4);
-            this.vectors = new Float32Array(payload.buffer, payload.byteOffset, payload.byteLength >> 2);
-            this.dim = dim;
-          } catch (e) {
-            this.vectors = new Float32Array(0);
-            this.dim = 0;
-          }
-        }
-        /**
-         * 索引是否就绪（ticket 107）：meta 有条目且向量已装载。
-         * 空库 / meta 残留但 .vec 丢失（损坏态）返回 false——主面板据此进入引导态，
-         * 参考侧边栏与 AI 对话命令据此统一转开主面板。
-         */
-        isIndexReady() {
-          return Object.keys(this.meta.notes).length > 0 && this.vectors.length > 0 && this.dim > 0;
-        }
-        /** 是否有 refresh 正在进行（ticket 114）：主面板重开时据此恢复进度视图而非引导死按钮 */
-        isRefreshing() {
-          return this.refreshPromise !== null;
-        }
-        /** 白名单过滤后的 md 文件列表（doRefresh / hasPendingChanges / 主面板覆盖率共用） */
-        whitelistedFiles() {
-          const CONFIG2 = buildConfig();
-          const allowPaths = CONFIG2.ALLOW_PATHS || [];
-          return this.app.vault.getMarkdownFiles().filter((f) => {
-            if (allowPaths.length === 0) return false;
-            for (const allow of allowPaths) {
-              if (f.path.startsWith(allow + "/") || f.path === allow) return true;
-            }
-            return false;
-          });
-        }
-        /**
-         * 是否有增量索引待处理项（ticket 108）：新文件 / mtime 变化 / 已删除文件，任一即 true。
-         * 主面板打开时据此决定是否显示增量索引进度视图（纯扫描不读文件内容，开销可忽略）。
-         */
-        hasPendingChanges() {
-          const files = this.whitelistedFiles();
-          const filePaths = new Set(files.map((f) => f.path));
-          for (const path of Object.keys(this.meta.notes)) {
-            if (!filePaths.has(path)) return true;
-          }
-          for (const f of files) {
-            const entry = this.meta.notes[f.path];
-            if (!entry || entry.mtime !== f.stat.mtime) return true;
-          }
-          return false;
-        }
-        /**
-         * 全量重建（ticket 108「重新索引」）：清空元数据与向量后整库重嵌。
-         * 先等待进行中的 refresh 结束再清空，避免与增量刷新交错写坏布局。
-         */
-        async rebuildAll(updateProgress3) {
-          if (this.refreshPromise) {
-            try {
-              await this.refreshPromise;
-            } catch (e) {
-            }
-          }
-          this.meta.notes = {};
-          this.vectors = new Float32Array(0);
-          this.dim = 0;
-          this.meta._dim = 0;
-          this.vpTree = null;
-          this.vpVecs = null;
-          this.vpMetaKey = null;
-          this.vpSrc = null;
-          await this.refresh(updateProgress3);
-        }
-        async saveVectors() {
-          const CONFIG2 = buildConfig();
-          const dim = this.dim;
-          const header = MobileBuffer.alloc(4);
-          header.writeUInt32LE(dim, 0);
-          const payload = new Uint8Array(this.vectors.buffer, this.vectors.byteOffset, this.vectors.byteLength);
-          const data = MobileBuffer.concat([header._data, payload]);
-          try {
-            const adapter = this.app.vault.adapter;
-            if (typeof (adapter == null ? void 0 : adapter.readBinary) === "function") {
-              const cur = new Uint8Array(await adapter.readBinary(CONFIG2.VEC_PATH));
-              if (bytesEqual(cur, data._data)) return;
-            }
-          } catch (e) {
-          }
-          await this.app.vault.adapter.writeBinary(CONFIG2.VEC_PATH, data._data.buffer);
-        }
-        async saveStore() {
-          await mutateStore(
-            (s) => {
-              s.meta = this.meta;
+    return {
+      groups: [
+        {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "secondbrainSkin" }, options: [{ value: "default", label: "对话", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "secondbrainSkinTheme" }, layoutKey: "secondbrainSkin", options: [{ value: "graphite", label: "石墨", layout: "default", prevClass: "bz-sp-prev-graphite" }] }
+          ]
+        },
+        {
+          icon: "folder-open",
+          // 2026-09-12：组名「基础」→「服务」（内容全是 Ollama 连接与模型，原名字不达意）
+          name: "服务",
+          rows: [
+            { type: "text", name: "Ollama 本地 URL", desc: "本地 Ollama 服务地址，留空用默认端口", binding: { key: "secondBrainOllamaUrl" }, onChange: trimStore("secondBrainOllamaUrl") },
+            // 远程 Ollama URL（移动端）：声明 text 行 + 行内「填入远程 URL」按钮（actions 统一实现，
+            // 动作完成后渲染器重读绑定回填显示——custom 输入框引用持快手已退役）
+            {
+              type: "text",
+              name: "移动端远程地址",
+              desc: "手机上连本地向量库走这个地址",
+              binding: { key: "secondBrainRemoteOllamaUrl" },
+              onChange: (v) => trimStore("secondBrainRemoteOllamaUrl")(v),
+              actions: [{
+                text: "填入远程 URL",
+                cta: true,
+                onClick: () => {
+                  const lanIPs = getLanIPs();
+                  const primary = pickPrimaryLanIp(lanIPs);
+                  if (!primary) {
+                    notice("未探测到本机局域网 IP，请手动填写");
+                    return;
+                  }
+                  const target = formatRemoteOllamaUrl(primary.ip);
+                  return openFlowDialog({
+                    title: "填入远程 Ollama URL",
+                    message: `将「移动端远程地址」覆盖为 ${target}？`,
+                    actions: [
+                      { label: "取消", value: "cancel" },
+                      // 刻意不标 danger（issue 291 评审）：这是「填便利值」而非删除类动作——
+                      // 只是把被探测到的局域网地址写进设置项，用户随时可手改回，
+                      // 不构成不可逆数据破坏，故保留普通高亮主动作。
+                      { label: "覆盖", value: "ok", cta: true }
+                    ]
+                  }).then((v) => {
+                    if (v === "ok") {
+                      getSettings().secondBrainRemoteOllamaUrl = target;
+                      void saveSettings();
+                    }
+                  });
+                }
+              }]
             },
-            this.app
-          );
-        }
-        /**
-         * 按 meta.notes 当前键序紧凑重排向量段并落盘。
-         * @param srcOffsets 删除前布局的 path→行偏移；无源偏移的条目（理论不出现在删除-only 路径）跳过其向量段。
-         */
-        async compactAndSave(srcOffsets) {
-          const dim = this.dim;
-          if (dim > 0) {
-            let total = 0;
-            for (const note of Object.values(this.meta.notes)) total += note.chunks.length;
-            const merged = new Float32Array(total * dim);
-            let offset = 0;
-            for (const [path, note] of Object.entries(this.meta.notes)) {
-              const srcRow = srcOffsets.get(path);
-              if (srcRow === void 0) continue;
-              const count = note.chunks.length;
-              merged.set(this.vectors.subarray(srcRow * dim, srcRow * dim + count * dim), offset);
-              offset += count * dim;
+            // 本机局域网 IP（展示行，actions 已并上侧「填入远程 URL」按钮；custom 双分支已退役）
+            {
+              type: "info",
+              name: "本机局域网 IP",
+              visibleWhen: () => !isMobileEnv(),
+              desc: lanIpDesc()
+            },
+            {
+              type: "info",
+              name: "局域网 IP 提示",
+              visibleWhen: () => isMobileEnv(),
+              desc: "连不上远程库时，在电脑上查看本机 IP 并核对上方地址"
+            },
+            { type: "text", name: "Embedding 模型", desc: "向量化用的嵌入模型名，留空用默认", binding: { key: "secondBrainEmbeddingModel" }, onChange: trimStore("secondBrainEmbeddingModel") },
+            // 白名单文件夹（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
+            {
+              type: "path",
+              mode: "multi",
+              name: "白名单文件夹",
+              desc: "纳入第二大脑检索与候选来源的笔记文件夹，留空则不索引",
+              binding: pathsOf("secondBrainAllowPaths"),
+              pickerTitle: "选择白名单目录",
+              pickerDesc: "白名单为目录前缀语义：勾选祖先目录即覆盖其下全部子目录",
+              buttonText: "选择",
+              emptyText: "暂未选择（留空 = 不索引任何目录）"
             }
-            this.vectors = merged;
-            await this.saveVectors();
-          }
-          await this.saveStore();
-        }
-        /**
-         * 合并写回（ticket 114：最终写回与中途断点暂存共用同一实现）。
-         * 按 meta.notes 当前键序重建整段向量：本轮新完成文件（embedded）写入新嵌入向量，
-         * 未变文件按「删除前」源偏移从 srcVectors（本轮开始时的原始缓冲，永不原地改写）拷贝旧段，
-         * 随后 saveVectors + saveStore。中间无论暂存多少次，最终布局与一次到位完全一致。
-         */
-        async mergeWrite(srcVectors, srcOffsets, embedded, dim) {
-          if (dim > 0) {
-            let totalVecs = 0;
-            for (const note of Object.values(this.meta.notes)) totalVecs += note.chunks.length;
-            const merged = new Float32Array(totalVecs * dim);
-            let offset = 0;
-            for (const [path, note] of Object.entries(this.meta.notes)) {
-              const vecs = embedded.get(path);
-              if (vecs) {
-                for (const v of vecs) {
-                  merged.set(v, offset);
-                  offset += v.length;
-                }
-              } else {
-                const srcRow = srcOffsets.get(path);
-                if (srcRow === void 0) continue;
-                const srcStart = srcRow * dim;
-                merged.set(srcVectors.subarray(srcStart, srcStart + note.chunks.length * dim), offset);
-                offset += note.chunks.length * dim;
+            // 「启用」开关已删（2026-09-12 用户拍板：去掉启动开关，启动即无条件自动加载）
+          ]
+        },
+        {
+          icon: "link",
+          name: "自动双链",
+          rows: [
+            // 自动双链（ticket 111）：总开关为明细设置的显隐开关（visibleWhen 声明式联动 + 徽标自动刷新）
+            { type: "toggle", name: "自动双链", desc: "关联范围内新笔记落盘时自动建双链，候选近邻经 AI 裁判筛选", binding: boolDefaultOn("linkAgentEnabled"), onChange: warnReload },
+            {
+              type: "text",
+              name: "单篇候选数量 TopK",
+              desc: "每篇笔记的近邻候选数，来源为白名单索引库的全部笔记",
+              // number 键（linkAgentTopK）不走键直绑（收窄到 string），三函数绑定 + onChange 钳制复写
+              binding: {
+                get: () => {
+                  var _a2;
+                  return String((_a2 = getSettings().linkAgentTopK) != null ? _a2 : 8);
+                },
+                set: (v) => {
+                  getSettings().linkAgentTopK = v;
+                },
+                save: () => saveSettings()
+              },
+              visibleWhen: (s) => s.linkAgentEnabled !== false,
+              isChild: true,
+              onChange: (v) => {
+                const n = Math.floor(Number(v));
+                getSettings().linkAgentTopK = Number.isFinite(n) && n > 0 ? n : 8;
               }
-            }
-            this.vectors = merged;
-            this.dim = dim;
-            this.meta._dim = dim;
-            await this.saveVectors();
-          }
-          await this.saveStore();
-        }
-        /** 增量重建向量库（并发去重：进行中重复调用复用同一 promise——ticket 107） */
-        refresh(updateProgress3) {
-          if (updateProgress3) this.updateProgress = updateProgress3;
-          if (this.refreshPromise) return this.refreshPromise;
-          this.refreshPromise = this.doRefresh().finally(() => {
-            this.refreshPromise = null;
-          });
-          return this.refreshPromise;
-        }
-        async doRefresh() {
-          const CONFIG2 = buildConfig();
-          const allowPaths = CONFIG2.ALLOW_PATHS || [];
-          const allFiles = this.app.vault.getMarkdownFiles();
-          const files = this.whitelistedFiles();
-          console.log(`[secondbrain] 全库 ${allFiles.length} 篇，白名单 [${allowPaths}] → 过滤后 ${files.length} 篇`);
-          const srcOffsets = /* @__PURE__ */ new Map();
-          let srcOff = 0;
-          for (const [path, note] of Object.entries(this.meta.notes)) {
-            srcOffsets.set(path, srcOff);
-            srcOff += note.chunks.length;
-          }
-          if (files.length === 0) {
-            if (Object.keys(this.meta.notes).length > 0) {
-              this.meta.notes = {};
-              this.vectors = new Float32Array(0);
-              this.dim = 0;
-              this.meta._dim = 0;
-              await this.saveVectors();
-              await this.saveStore();
-              this.updateProgress("✅ 向量库已清空（白名单为空）");
-            } else {
-              this.updateProgress("⚠️ 没有符合条件的文件");
-            }
-            return;
-          }
-          const filePaths = new Set(files.map((f) => f.path));
-          let deleted = 0;
-          for (const path of Object.keys(this.meta.notes)) {
-            if (!filePaths.has(path)) {
-              delete this.meta.notes[path];
-              deleted++;
-            }
-          }
-          const indexIncomplete = Object.keys(this.meta.notes).length > 0 && (this.vectors.length === 0 || !this.dim);
-          let vectors = this.vectors;
-          let dim = this.meta._dim || this.dim || 0;
-          if (srcOff === 0 || indexIncomplete) {
-            vectors = new Float32Array(0);
-            dim = 0;
-          }
-          let toProcess = files.filter((f) => {
-            const entry = this.meta.notes[f.path];
-            return !entry || entry.mtime !== f.stat.mtime;
-          });
-          if (indexIncomplete) toProcess = files.slice();
-          if (toProcess.length === 0) {
-            if (deleted > 0) {
-              await this.compactAndSave(srcOffsets);
-              this.updateProgress(`✅ 向量库已最新（清理 ${deleted} 个失效条目）`);
-            } else {
-              this.updateProgress("✅ 向量库已最新");
-            }
-            return;
-          }
-          const minChunk = CONFIG2.CHUNK_MIN_LENGTH || 50;
-          const fileChunksMap = /* @__PURE__ */ new Map();
-          const globalTasks = [];
-          for (const file of toProcess) {
-            try {
-              const content = await this.app.vault.read(file);
-              const chunks = embedChunks(content, noteTitleFromPath(file.path), minChunk);
-              fileChunksMap.set(file.path, chunks.map(() => null));
-              chunks.forEach((text, idx) => globalTasks.push({ filePath: file.path, chunkIdx: idx, text }));
-            } catch (err) {
-              console.error(`[secondbrain] 读取失败 [${file.path}]`, err);
-              delete this.meta.notes[file.path];
-            }
-          }
-          if (globalTasks.length === 0) {
-            this.updateProgress("✅ 向量化完成（无新内容）");
-            return;
-          }
-          const embedBase = IS_MOBILE ? CONFIG2.OLLAMA_REMOTE_URL || CONFIG2.OLLAMA_URL : CONFIG2.OLLAMA_URL;
-          const batches = [];
-          for (let i = 0; i < globalTasks.length; i += EMBED_BATCH_SIZE) {
-            batches.push(globalTasks.slice(i, i + EMBED_BATCH_SIZE));
-          }
-          let processed = 0;
-          const total = toProcess.length;
-          let failed = 0;
-          const ckptEmbedded = /* @__PURE__ */ new Map();
-          const ckptDoneFiles = /* @__PURE__ */ new Set();
-          let lastCkptAt = Date.now();
-          let ckptChunks = 0;
-          let ckptChain = Promise.resolve();
-          const maybeCheckpoint = () => {
-            if (dim <= 0) return;
-            let doneChunks = 0;
-            for (const slots of fileChunksMap.values()) {
-              for (const s of slots) if (s) doneChunks++;
-            }
-            if (doneChunks - ckptChunks < CHECKPOINT_POLICY.minNewChunks) return;
-            const now = Date.now();
-            if (now - lastCkptAt < CHECKPOINT_POLICY.minIntervalMs) return;
-            lastCkptAt = now;
-            ckptChunks = doneChunks;
-            ckptChain = ckptChain.then(async () => {
-              let newly = 0;
-              for (const file of toProcess) {
-                const slots = fileChunksMap.get(file.path);
-                if (!slots || slots.some((s) => !s || !s.embedding)) continue;
-                if (ckptDoneFiles.has(file.path)) continue;
-                ckptDoneFiles.add(file.path);
-                newly++;
-                const tasks = slots;
-                this.meta.notes[file.path] = { mtime: file.stat.mtime, chunks: tasks.map((c) => ({ text: c.text })) };
-                const vecs = tasks.map((t) => t.embedding);
-                ckptEmbedded.set(file.path, vecs);
+            },
+            {
+              type: "text",
+              name: "每篇关联上限",
+              desc: "0 表示不限量，由 AI 裁判自行决定，沿用复习域惯例",
+              // number 键（linkAgentMaxLinks）同上
+              binding: {
+                get: () => {
+                  var _a2;
+                  return String((_a2 = getSettings().linkAgentMaxLinks) != null ? _a2 : 0);
+                },
+                set: (v) => {
+                  getSettings().linkAgentMaxLinks = v;
+                },
+                save: () => saveSettings()
+              },
+              visibleWhen: (s) => s.linkAgentEnabled !== false,
+              isChild: true,
+              onChange: (v) => {
+                const n = Math.floor(Number(v));
+                getSettings().linkAgentMaxLinks = Number.isFinite(n) && n > 0 ? n : 0;
               }
-              if (newly === 0) return;
-              await this.mergeWrite(vectors, srcOffsets, ckptEmbedded, dim);
-              let regTotal = 0;
-              for (const v of ckptEmbedded.values()) regTotal += v.length;
-              this.updateProgress(`已暂存 ${regTotal}/${globalTasks.length} 段（此时关闭也会保留进度，重开自动继续）`);
-            }).catch((e) => console.warn("[secondbrain] 断点暂存失败（索引继续，不影响最终结果）", e));
-          };
-          await parallelMap(batches, 3, async (batch) => {
-            var _a2;
-            try {
-              const embeddings = await getEmbeddingsBatch(batch.map((t) => t.text), embedBase);
-              for (let j = 0; j < batch.length; j++) {
-                fileChunksMap.get(batch[j].filePath)[batch[j].chunkIdx] = batch[j];
-                batch[j].embedding = new Float32Array(embeddings[j]);
-              }
-              if (dim === 0 && ((_a2 = batch[0]) == null ? void 0 : _a2.embedding)) dim = batch[0].embedding.length;
-              processed += batch.length;
-              this.updateProgress(
-                `向量化: ${processed}/${globalTasks.length} chunks (${total} 篇文件, ${Math.round(processed / globalTasks.length * 100)}%)`
-              );
-              maybeCheckpoint();
-            } catch (err) {
-              console.warn("[secondbrain] 批量向量化失败，回退逐条处理", err);
-              for (const task of batch) {
-                try {
-                  const embedding = await getEmbedding(task.text, false, embedBase);
-                  fileChunksMap.get(task.filePath)[task.chunkIdx] = task;
-                  task.embedding = new Float32Array(embedding);
-                  if (dim === 0 && task.embedding.length) dim = task.embedding.length;
-                  processed++;
-                } catch (e) {
-                  failed++;
-                  console.warn(`[secondbrain] 段落向量化失败 [${task.filePath}]`, e);
-                }
-              }
-              maybeCheckpoint();
+            },
+            { type: "toggle", name: "完成通知", desc: "处理完成后通知提醒，关闭则全程静默", binding: boolDefaultOn("linkAgentNotify"), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+            { type: "toggle", name: "失效关联自动清理", desc: "笔记删除后自动移除指向它的失效 related 条目", binding: boolDefaultOn("linkAgentAutoClean"), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+            { type: "toggle", name: "已有关联不再建链", desc: "笔记已有关联时自动跳过处理", binding: boolDefaultOn("linkAgentRespectRelated"), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+            // 关联范围（ticket 128 统一选择器：chips + 选择按钮；格式冻结——英文逗号分隔字符串）
+            {
+              type: "path",
+              mode: "multi",
+              name: "关联范围",
+              desc: "决定哪些笔记会被自动关联，并作为落盘监听与补链目标",
+              binding: pathsOf("linkAgentScopes"),
+              visibleWhen: (s) => s.linkAgentEnabled !== false,
+              isChild: true,
+              pickerTitle: "选择关联范围目录",
+              buttonText: "选择",
+              // ticket 170：去 emoji
+              emptyText: "暂未选择（留空 = 不自动关联）"
             }
-          });
-          await ckptChain;
-          const newChunksPerFile = /* @__PURE__ */ new Map();
-          for (const file of toProcess) {
-            const slots = fileChunksMap.get(file.path);
-            if (!slots) continue;
-            if (slots.some((s) => !s || !s.embedding)) {
-              if (!slots.some((s) => s == null ? void 0 : s.embedding)) delete this.meta.notes[file.path];
-              continue;
-            }
-            const vecs = slots.map((s) => s.embedding);
-            if (dim === 0) dim = vecs[0].length;
-            const keptTexts = slots.map((c) => ({ text: c.text }));
-            this.meta.notes[file.path] = { mtime: file.stat.mtime, chunks: keptTexts };
-            newChunksPerFile.set(file.path, vecs);
-          }
-          await this.mergeWrite(vectors, srcOffsets, newChunksPerFile, dim);
-          console.log(`[secondbrain] 向量库已保存: ${Object.keys(this.meta.notes).length} 个文件, dim=${dim}`);
-          if (failed === 0) {
-            this.updateProgress(`✅ 向量化完成：${total} 篇文件，${globalTasks.length} 个段落`);
-          } else {
-            this.updateProgress(`⚠️ ${failed} 段向量化失败，请检查 Ollama 服务`);
-          }
+          ]
+        },
+        {
+          icon: "search",
+          name: "检索",
+          rows: [
+            // 2026-09-12：检索组六行原本零描述（参数名裸奔），补齐自然句说明
+            { type: "text", name: "参考结果数 TopK", desc: "参考侧返回的近邻条数，越大越全也越慢", binding: { key: "secondBrainTopK" }, onChange: trimStore("secondBrainTopK") },
+            { type: "text", name: "对话参考结果数", desc: "对话时注入上下文的参考条数", binding: { key: "secondBrainChatTopK" }, onChange: trimStore("secondBrainChatTopK") },
+            { type: "text", name: "段落最小长度", desc: "短于该字符数的段落不入向量索引", binding: { key: "secondBrainChunkMinLength" }, onChange: trimStore("secondBrainChunkMinLength") },
+            { type: "text", name: "上下文限制", desc: "单次注入对话的上下文字符上限", binding: { key: "secondBrainContextLimit" }, onChange: trimStore("secondBrainContextLimit") },
+            { type: "text", name: "防抖延迟毫秒", desc: "输入停顿该毫秒数后才开始检索", binding: { key: "secondBrainDebounceDelay" }, onChange: trimStore("secondBrainDebounceDelay") },
+            { type: "text", name: "光标轮询毫秒", desc: "光标位置轮询间隔，越小跟随越快", binding: { key: "secondBrainCursorPollInterval" }, onChange: trimStore("secondBrainCursorPollInterval") }
+          ]
+        },
+        {
+          icon: "message-square",
+          name: "对话",
+          rows: [
+            { type: "text", name: "最大历史记录", desc: "对话保留的历史轮数上限", binding: { key: "secondBrainMaxHistory" }, onChange: trimStore("secondBrainMaxHistory") }
+            // 「AI 通道」跳转按钮已删（2026-09-12 用户拍板）：设置面板不放跳转移交类按钮
+          ]
         }
-        /** VP 索引缓存（QA L645-654）：键含 dim/count/noteCount，另加来源数组身份校验（内容变即重建） */
-        buildVPIndex(vecs) {
-          const metaKey = JSON.stringify({ dim: this.meta._dim, count: vecs.length, hash: Object.keys(this.meta.notes).length });
-          if (this.vpMetaKey === metaKey && this.vpSrc === this.vectors && this.vpTree && this.vpVecs) return;
-          const normalized = vecs.map((v) => normalizeVec(v));
-          this.vpTree = vptree_build(
-            normalized,
-            normalized.map((_, i) => i)
-          );
-          this.vpVecs = normalized.map((v) => Float32Array.from(v));
-          this.vpMetaKey = metaKey;
-          this.vpSrc = this.vectors;
-          console.log(`[secondbrain] VP-Tree built: ${normalized.length} vecs`);
-        }
-        /** 向量检索：查询嵌入 → VP-Tree topK×3 候选 → cos=1−d²/2 → 去重 → topK → score^0.35（QA L655-691） */
-        async vectorSearch(query, topK = 20, baseUrl) {
-          const queryEmbedding = await getEmbedding(query, true, baseUrl);
-          if (!queryEmbedding) return [];
-          const dim = this.meta._dim || this.dim;
-          if (!dim || this.vectors.length === 0) return [];
-          const vecs = [];
-          for (let i = 0; i < this.vectors.length; i += dim) {
-            vecs.push(this.vectors.subarray(i, i + dim));
-          }
-          this.buildVPIndex(vecs);
-          const k = Math.min(topK * 3, vecs.length);
-          const queryNorm = normalizeVec(queryEmbedding);
-          const candidates = vptree_search(this.vpTree, this.vpVecs, queryNorm, k);
-          const paths = Object.keys(this.meta.notes);
-          const hits = candidates.map((r) => {
-            var _a2, _b2, _c;
-            let vecIdx = r.idx;
-            let accPath = (_a2 = paths[0]) != null ? _a2 : "";
-            for (const p of paths) {
-              const count = this.meta.notes[p].chunks.length;
-              if (vecIdx < count) {
-                accPath = p;
-                break;
-              }
-              vecIdx -= count;
-            }
-            const cosSim = Math.max(0, 1 - r.dist / 2);
-            return { path: accPath, chunk: ((_c = (_b2 = this.meta.notes[accPath]) == null ? void 0 : _b2.chunks[vecIdx]) == null ? void 0 : _c.text) || "", score: cosSim };
-          });
-          const seen = /* @__PURE__ */ new Set();
-          const deduped = [];
-          for (const item of hits) {
-            const key = item.path + "::" + item.chunk;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            deduped.push(item);
-          }
-          const topResults = deduped.sort((a, b) => b.score - a.score).slice(0, topK);
-          for (const r of topResults) r.score = Math.pow(r.score, 0.35);
-          return topResults;
-        }
-        /** 桌面检索：向量优先，异常降级文本；移动端直走文本索引（QA L694-699 + bz 降级改进） */
-        async search(query, topK = 20, onDegraded) {
-          if (IS_MOBILE) return searchTextIndex(query, this.meta.notes, topK);
-          try {
-            return await this.withSearchTimeout(this.vectorSearch(query, topK));
-          } catch (e) {
-            console.warn("[secondbrain] 向量检索失败，降级为文本检索", e);
-            onDegraded == null ? void 0 : onDegraded(e);
-            return searchTextIndex(query, this.meta.notes, topK);
-          }
-        }
-        /** [46] 检索级超时封装：超时按失败降级处理（不吞掉原错误，仅兜住挂起请求）；
-         *  10s（SEARCH_TIMEOUT_MS）与嵌入端点 30s 分离——检索降级快，嵌入不因慢推理误报失败 */
-        async withSearchTimeout(p) {
-          let timer;
-          const timeout = new Promise((_, reject) => {
-            timer = setTimeout(() => reject(new Error(`向量检索超时（${SEARCH_TIMEOUT_MS / 1e3}s）`)), SEARCH_TIMEOUT_MS);
-          });
-          try {
-            return await Promise.race([p, timeout]);
-          } finally {
-            clearTimeout(timer);
-          }
-        }
-        searchText(query, topK = 20) {
-          return searchTextIndex(query, this.meta.notes, topK);
-        }
-        /** 移动端三级检索：远程向量 → TF-IDF（复用已建索引）→ 文本（QA L704-718） */
-        async searchMobile(query, topK = 20) {
-          const CONFIG2 = buildConfig();
-          if (this.searchMode === "remote" && CONFIG2.OLLAMA_REMOTE_URL) {
-            try {
-              const results = await this.vectorSearch(query, topK, CONFIG2.OLLAMA_REMOTE_URL);
-              if (results.length) return results;
-            } catch (e) {
-              console.warn("[secondbrain] 远程向量检索失败，降级", e);
-            }
-          }
-          if (this.searchMode === "tfidf" && this.tfidf.N > 0) {
-            return this.tfidf.search(query, topK);
-          }
-          return this.searchText(query, topK);
-        }
-        /** 移动端初始化：探活远程 Ollama，否则建 chunk 粒度 TF-IDF 索引（构建一次，检索期复用） */
-        async initMobile() {
-          const CONFIG2 = buildConfig();
-          if (CONFIG2.OLLAMA_REMOTE_URL) {
-            const ok = await checkRemoteOllama(CONFIG2.OLLAMA_REMOTE_URL);
-            if (ok) {
-              this.searchMode = "remote";
-              console.log(`[secondbrain][移动端] 远程 Ollama 就绪: ${CONFIG2.OLLAMA_REMOTE_URL}`);
-              return "✅ 远程 Ollama 已连接";
-            }
-          }
-          const docs = [];
-          for (const [path, note] of Object.entries(this.meta.notes)) {
-            for (const chunk of note.chunks) {
-              if (chunk.text) docs.push({ path, text: chunk.text });
-            }
-          }
-          this.tfidf.build(docs);
-          if (this.tfidf.N > 0) {
-            this.searchMode = "tfidf";
-            console.log(`[secondbrain][移动端] TF-IDF 就绪: ${this.tfidf.N} docs`);
-            return `✅ TF-IDF 就绪（${this.tfidf.N} 段）`;
-          }
-          this.searchMode = "text";
-          console.log("[secondbrain][移动端] TF-IDF 无数据，使用文本匹配");
-          return "⚠️ 没有符合条件的文件";
-        }
-      };
-    }
-  });
-
-  // src/secondbrain/ai.ts
-  function getDeepseekAI() {
-    if (!deepseek) deepseek = createAI({}, "deepseek-v4-flash", {}, 16384);
-    return deepseek;
-  }
-  function resetDeepseekAI() {
-    deepseek = null;
-  }
-  var deepseek, AI;
-  var init_ai3 = __esm({
-    "src/secondbrain/ai.ts"() {
-      init_ai();
-      deepseek = null;
-      AI = {
-        /** 统一入口：失败直接抛出，由调用方 toast 报错（不静默回退 Ollama——ticket 108）；
-         *  opts 可选（既有单参调用零兼容负担），透传取消/流式（ticket 141） */
-        async ask(prompt, opts) {
-          return getDeepseekAI().prompt(prompt, void 0, opts != null ? opts : {});
-        }
-      };
-    }
-  });
-
-  // src/secondbrain/ui-tools.ts
-  function jumpToChunk(file, chunkText, highlight = false) {
-    try {
-      const app = getApp();
-      const f = app.vault.getAbstractFileByPath(file.path);
-      if (!f) return;
-      const leaf = app.workspace.getLeaf();
-      leaf.openFile(f).then(() => {
-        if (highlight) {
-          const view = leaf.view;
-          const ed = view == null ? void 0 : view.editor;
-          if (ed) {
-            const text = ed.getValue();
-            const idx = text.indexOf(chunkText);
-            if (idx !== -1) {
-              const from = ed.offsetToPos(idx);
-              const to = ed.offsetToPos(idx + chunkText.length);
-              ed.setSelection(from, to);
-            }
-          }
-        }
-      }).catch(() => {
-      });
-    } catch (e) {
-    }
-  }
-  function renderMarkdown(el, md, app) {
-    try {
-      const ctx = new Component();
-      Promise.resolve(MarkdownRenderer.render(app, md, el, "", ctx)).catch(() => {
-        el.textContent = md;
-      });
-    } catch (e) {
-      el.textContent = md;
-    }
-  }
-  function makeDraggable(el, handle, onMove) {
-    let dragging = false;
-    let startX = 0, startY = 0, origX = 0, origY = 0;
-    const onDown = (e) => {
-      dragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      const rect = el.getBoundingClientRect();
-      origX = rect.left;
-      origY = rect.top;
-      e.preventDefault();
-    };
-    const onMoveHandler = (e) => {
-      if (!dragging) return;
-      let x = origX + (e.clientX - startX);
-      let y = origY + (e.clientY - startY);
-      x = Math.max(0, Math.min(window.innerWidth - el.offsetWidth, x));
-      y = Math.max(0, Math.min(window.innerHeight - el.offsetHeight, y));
-      el.style.left = x + "px";
-      el.style.top = y + "px";
-      onMove == null ? void 0 : onMove(x, y);
-    };
-    const onUp = () => {
-      dragging = false;
-    };
-    handle.addEventListener("mousedown", onDown);
-    document.addEventListener("mousemove", onMoveHandler);
-    document.addEventListener("mouseup", onUp);
-    return () => {
-      handle.removeEventListener("mousedown", onDown);
-      document.removeEventListener("mousemove", onMoveHandler);
-      document.removeEventListener("mouseup", onUp);
+        // 「面板」组（重新索引按钮行）已删（2026-09-12 用户拍板）：重建入口仍在主面板底部
+        // 「全量重建」与首页入口菜单（confirmFullRebuild 单源三处，此处不再重复暴露）
+      ]
     };
   }
-  function makeResizable(el, minW = 200, minH = 120) {
-    const dirs = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
-    const handles = [];
-    let dragging = null;
-    let startX = 0, startY = 0, origW = 0, origH = 0, origLeft = 0, origTop = 0;
-    const onResizeDown = (dir) => (e) => {
-      dragging = dir;
-      startX = e.clientX;
-      startY = e.clientY;
-      const rect = el.getBoundingClientRect();
-      origW = rect.width;
-      origH = rect.height;
-      origLeft = rect.left;
-      origTop = rect.top;
-      e.preventDefault();
-    };
-    const onResizeMove = (e) => {
-      if (!dragging) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      let { w, h, l, t } = { w: origW, h: origH, l: origLeft, t: origTop };
-      if (dragging.includes("e")) w = Math.max(minW, origW + dx);
-      if (dragging.includes("s")) h = Math.max(minH, origH + dy);
-      if (dragging.includes("w")) {
-        w = Math.max(minW, origW - dx);
-        l = origLeft + (origW - w);
-      }
-      if (dragging.includes("n")) {
-        h = Math.max(minH, origH - dy);
-        t = origTop + (origH - h);
-      }
-      el.style.width = w + "px";
-      el.style.height = h + "px";
-      el.style.left = l + "px";
-      el.style.top = t + "px";
-    };
-    const onResizeUp = () => {
-      dragging = null;
-    };
-    for (const dir of dirs) {
-      const h = document.createElement("div");
-      h.style.cssText = `position:absolute;${dir.includes("n") ? "top:-3px;" : ""}${dir.includes("s") ? "bottom:-3px;" : ""}${dir.includes("w") ? "left:-3px;" : ""}${dir.includes("e") ? "right:-3px;" : ""}width:7px;height:7px;cursor:${dir}-resize;z-index:10;`;
-      h.addEventListener("mousedown", onResizeDown(dir));
-      el.appendChild(h);
-      handles.push(h);
-    }
-    document.addEventListener("mousemove", onResizeMove);
-    document.addEventListener("mouseup", onResizeUp);
-    return () => {
-      handles.forEach((h) => h.remove());
-      document.removeEventListener("mousemove", onResizeMove);
-      document.removeEventListener("mouseup", onResizeUp);
-    };
+  function openSecondBrainSettings(_app3) {
+    openSettingsModal({ title: "第二大脑设置", maxWidth: 520, schema: secondBrainSettingsSchema() });
   }
-  var init_ui_tools = __esm({
-    "src/secondbrain/ui-tools.ts"() {
-      init_fake_obsidian();
-      init_app();
-    }
-  });
-
-  // src/secondbrain/float-window.ts
-  var FloatWindow;
-  var init_float_window = __esm({
-    "src/secondbrain/float-window.ts"() {
-      init_esc_manager();
+  var SecondBrainPanel;
+  var init_panel = __esm({
+    "src/secondbrain/panel.ts"() {
+      init_notice();
       init_z_order();
-      init_ui_tools();
-      FloatWindow = class {
-        constructor(title, opts = {}) {
-          this.isHidden = false;
-          this.isMaximized = false;
-          this.onClose = null;
-          this.restoreRect = null;
-          this.hoverExpandTimer = null;
-          this.detachFns = [];
+      init_mobile();
+      init_ui();
+      init_flow_dialog();
+      init_esc_manager();
+      init_utils();
+      init_settings_provider();
+      init_settings_modal();
+      init_config3();
+      init_whitelist();
+      init_local_ip();
+      init_store_file();
+      init_render12();
+      init_render12();
+      SecondBrainPanel = class {
+        constructor(app, store2, opts) {
+          this.mask = null;
+          this.popup = null;
+          /** ESC 层级句柄（ticket 141 迁移：原私挂 document keydown 废弃） */
           this.escHandle = null;
-          this.closed = false;
-          var _a2;
-          this.onClose = opts.onClose || null;
-          this.origWidth = (_a2 = opts.width) != null ? _a2 : 300;
-          this.el = document.createElement("div");
-          this.el.className = "bz-sb-float-win bz-sb-float-enter";
-          this.el.style.width = this.origWidth + "px";
-          this.header = document.createElement("div");
-          this.header.className = "bz-sb-float-head";
-          this.stripEl = document.createElement("span");
-          this.stripEl.className = "bz-sb-float-strip";
-          this.stripEl.textContent = "📖";
-          this.titleEl = document.createElement("span");
-          this.titleEl.className = "bz-sb-float-title";
-          this.titleEl.textContent = title;
-          this.headerRight = document.createElement("div");
-          this.headerRight.className = "bz-sb-float-headright";
-          const resetBtn = document.createElement("button");
-          resetBtn.className = "bz-sb-float-btn";
-          resetBtn.textContent = "🔄";
-          resetBtn.title = "复位位置";
-          resetBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            this.reset();
-          });
-          this.hideBtn = document.createElement("button");
-          this.hideBtn.className = "bz-sb-float-btn";
-          this.hideBtn.textContent = "◀️";
-          this.hideBtn.title = "隐藏到右侧";
-          this.hideBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            this.toggleHide();
-          });
-          if (opts.headerRight) this.headerRight.appendChild(opts.headerRight);
-          const closeBtn = document.createElement("button");
-          closeBtn.className = "bz-sb-float-btn bz-sb-float-btn-close";
-          closeBtn.textContent = "❌";
-          closeBtn.title = "关闭 (Esc)";
-          closeBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            this.close();
-          });
-          this.headerRight.appendChild(resetBtn);
-          this.headerRight.appendChild(this.hideBtn);
-          this.headerRight.appendChild(closeBtn);
-          this.headerRight.addEventListener("mousedown", (e) => e.stopPropagation());
-          this.header.appendChild(this.stripEl);
-          this.header.appendChild(this.titleEl);
-          this.header.appendChild(this.headerRight);
-          this.body = document.createElement("div");
-          this.body.className = "bz-sb-float-body";
-          this.el.appendChild(this.header);
-          this.el.appendChild(this.body);
-          topifyZ(this.el);
-          document.body.appendChild(this.el);
-          this.el.addEventListener(
-            "mousedown",
-            () => {
-              if (!this.el.style.left) {
-                const r = this.el.getBoundingClientRect();
-                this.el.style.left = r.left + "px";
-                this.el.style.top = r.top + "px";
-                this.el.style.right = "auto";
-              }
-            },
-            true
-          );
-          this.detachFns.push(makeDraggable(this.el, this.header));
-          this.detachFns.push(makeResizable(this.el, 30, 180));
-          this.header.addEventListener("dblclick", (e) => {
-            if (e.target instanceof Element && e.target.closest("button")) return;
-            this.toggleMaximize();
-          });
-          this.el.addEventListener("mouseenter", () => {
-            if (this.hoverExpandTimer) clearTimeout(this.hoverExpandTimer);
-            if (this.isHidden) {
-              this.hoverExpandTimer = setTimeout(() => this.show(), 200);
-            }
-          });
-          this.el.addEventListener("mouseleave", () => {
-            if (this.hoverExpandTimer) clearTimeout(this.hoverExpandTimer);
-          });
-          this.escHandle = escManager.register("bz-sb-float-win", {
-            isVisible: () => !!this.el.isConnected,
+          this.refreshing = false;
+          /** 初始向量化视图进行中标记（ticket 114：runInitialIndexView 持有；进行中重复点击接回进度视图而非静默失效） */
+          this.initializing = false;
+          /** 来源分布树已展开的目录（ticket 108，会话内记忆） */
+          this.expandedDirs = /* @__PURE__ */ new Set();
+          /** 设置页「重新索引」意图标记（ticket 108：确认后打开面板即自动全量重建） */
+          this.rebuildRequested = false;
+          this.app = app;
+          this.store = store2;
+          this.opts = opts;
+        }
+        /** 设置页「重新索引」调用（index.ts 入口转发）：标记意图后打开面板自动跑 */
+        requestRebuild() {
+          this.rebuildRequested = true;
+        }
+        async open() {
+          this.createUI();
+          this.attachEscapeListener();
+          topifyZ(this.mask, this.popup);
+          this.mask.style.display = "block";
+          this.popup.style.display = "flex";
+          await this.render();
+        }
+        close() {
+          this.removeEscapeListener();
+          if (this.mask) this.mask.style.display = "none";
+          if (this.popup) this.popup.style.display = "none";
+        }
+        /** [l2-sb] ESC 关闭走 escManager 层级（ticket 141 迁移）：open 注册、close 注销成对（幂等）——
+         *  ⚙️ 设置弹窗叠开时其 'bz-settings-modal' 层后注册在上，ESC 先关设置、再 ESC 才关面板 */
+        attachEscapeListener() {
+          if (this.escHandle) return;
+          this.escHandle = escManager.register("bz-sb-panel", {
+            isVisible: () => !!this.popup && this.popup.isConnected && this.popup.style.display === "flex",
             close: () => this.close()
           });
         }
-        get alive() {
-          return !!this.el.isConnected;
-        }
-        /** 展开等价于触发一次悬停（隐藏态 200ms 后弹出；QA L1237 同构） */
-        expand() {
-          this.el.dispatchEvent(new Event("mouseenter"));
-        }
-        /** 复位到右贴边基线：清空内联定位回归 CSS 基线 */
-        reset() {
-          const c = this.el;
-          c.style.right = "";
-          c.style.left = "";
-          c.style.top = "";
-          c.style.transform = "";
-          c.style.width = this.origWidth + "px";
-          c.style.height = window.innerHeight + "px";
-          c.classList.remove("bz-sb-float-max");
-          this.isMaximized = false;
-          this.isHidden = false;
-          this.syncHiddenUI(false);
-        }
-        toggleMaximize() {
-          const c = this.el;
-          if (!this.isMaximized) {
-            this.restoreRect = {
-              left: c.style.left,
-              top: c.style.top,
-              right: c.style.right,
-              width: c.style.width,
-              height: c.style.height,
-              transform: c.style.transform
-            };
-            c.style.left = "0";
-            c.style.top = "0";
-            c.style.right = "auto";
-            c.style.width = "100vw";
-            c.style.height = "100vh";
-            c.style.transform = "translateX(0)";
-            c.classList.add("bz-sb-float-max");
-            this.isMaximized = true;
-            this.isHidden = false;
-            this.syncHiddenUI(false);
-          } else {
-            const r = this.restoreRect;
-            if (r) {
-              c.style.left = r.left;
-              c.style.top = r.top;
-              c.style.right = r.right;
-              c.style.width = r.width;
-              c.style.height = r.height;
-              c.style.transform = r.transform || "translateX(0)";
-            }
-            c.classList.remove("bz-sb-float-max");
-            this.restoreRect = null;
-            this.isMaximized = false;
-          }
-        }
-        toggleHide() {
-          if (this.isMaximized) return;
-          if (this.isHidden) this.show();
-          else this.hide();
-        }
-        /** 收缩为右侧 30px 边条（transform 平移属动态几何） */
-        hide() {
-          if (this.isHidden || this.isMaximized) return;
-          this.isHidden = true;
-          const rect = this.el.getBoundingClientRect();
-          this.el.style.transform = `translateX(${window.innerWidth - rect.left - 30}px)`;
-          this.syncHiddenUI(true);
-        }
-        show() {
-          if (!this.isHidden) return;
-          this.isHidden = false;
-          topifyZ(this.el);
-          this.el.style.transform = "translateX(0)";
-          this.syncHiddenUI(false);
-        }
-        /** 隐藏态 UI：标题/按钮/内容淡出只留 📖 边条标识（视觉切换收敛 CSS hidden 类） */
-        syncHiddenUI(hidden) {
-          this.el.classList.toggle("bz-sb-float-hidden", hidden);
-          this.hideBtn.textContent = hidden ? "▶️" : "◀️";
-          this.hideBtn.title = hidden ? "展开" : "隐藏到右侧";
-        }
-        close() {
-          var _a2, _b2;
-          if (this.closed || !this.alive) return;
-          this.closed = true;
-          this.el.style.opacity = "0";
-          if (this.hoverExpandTimer) clearTimeout(this.hoverExpandTimer);
-          this.detachFns.forEach((fn) => fn());
-          this.detachFns = [];
+        removeEscapeListener() {
+          var _a2;
           (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
           this.escHandle = null;
-          setTimeout(() => this.el.remove(), 150);
-          (_b2 = this.onClose) == null ? void 0 : _b2.call(this);
         }
-      };
-    }
-  });
-
-  // src/secondbrain/context.ts
-  function getCurrentContext(ed) {
-    if (!ed) return "";
-    try {
-      const cursor = ed.getCursor();
-      const line = ed.getLine(cursor.line);
-      if (!line || line.trim().length === 0) {
-        if (cursor.line > 0) {
-          const prevLine = ed.getLine(cursor.line - 1);
-          if (prevLine && prevLine.trim().length > 0) {
-            return prevLine.trim().slice(-300);
-          }
-        }
-        return "";
-      }
-      const fullText = line;
-      const cursorPos = cursor.ch;
-      const sentenceBreaks = /[。！？!?；;…\n]/;
-      let start = 0;
-      for (let i = cursorPos - 1; i >= 0; i--) {
-        if (sentenceBreaks.test(fullText[i])) {
-          start = i + 1;
-          break;
-        }
-      }
-      let end = fullText.length;
-      for (let i = cursorPos; i < fullText.length; i++) {
-        if (sentenceBreaks.test(fullText[i])) {
-          end = i + 1;
-          break;
-        }
-      }
-      let sentence = fullText.substring(start, end).trim();
-      if (!sentence) sentence = fullText.trim();
-      return sentence;
-    } catch (e) {
-      return "";
-    }
-  }
-  var init_context = __esm({
-    "src/secondbrain/context.ts"() {
-    }
-  });
-
-  // src/secondbrain/reference-panel.ts
-  var ReferencePanel;
-  var init_reference_panel = __esm({
-    "src/secondbrain/reference-panel.ts"() {
-      init_utils();
-      init_notice();
-      init_z_order();
-      init_float_window();
-      init_config3();
-      init_context();
-      init_ui_tools();
-      init_render12();
-      init_ui();
-      ReferencePanel = class {
-        constructor(app, store3, existingWin) {
-          this.lastQuery = "";
-          this.floatingCards = /* @__PURE__ */ new Set();
-          /** 密度态：false=标题+省略内容（默认），true=仅标题（会话内有效，不持久化） */
-          this.denseMode = false;
-          this.isClosed = false;
-          this.pollTimer = null;
-          this.debounceTimer = null;
-          this.hoverTimer = null;
-          this.lastCursor = null;
-          this.vaultRef = null;
-          this.leafRef = null;
-          this.editorRef = null;
-          /** 浮卡拖出跟随的 document 级监听卸载器（close 时兜底清理） */
-          this.activeFollows = /* @__PURE__ */ new Set();
-          /** 每张卡片的未决态清理器：列表整页重建/面板关闭前统一执行——长按计时器不得跨重建存活（左上角幽灵卡根因） */
-          this.cardTeardowns = /* @__PURE__ */ new Map();
-          /** 浮卡的拖拽/缩放 document 级监听卸载器：close 时对仍在漂浮的卡片兜底解绑 */
-          this.floatDetachers = /* @__PURE__ */ new Map();
-          this.app = app;
-          this.store = store3;
-          this.denseBtn = document.createElement("button");
-          this.denseBtn.className = "bz-sb-float-btn";
-          this.denseBtn.innerHTML = '<i data-lucide="file-text"></i>';
-          this.denseBtn.title = "切换：仅标题 / 标题+内容";
-          if (existingWin) {
-            this.fw = existingWin;
-            this.fw.headerRight.appendChild(this.denseBtn);
-          } else {
-            this.fw = new FloatWindow("灵感参考", { headerRight: this.denseBtn, onClose: () => this.destroyResources() });
-          }
-          this.denseBtn.addEventListener("click", () => this.toggleDensity());
-          mountIcons(this.denseBtn);
-          this.resultsDiv = document.createElement("div");
-          this.resultsDiv.className = "bz-sb-ref-list bz-sb-scroll-y";
-          this.fw.body.appendChild(this.resultsDiv);
-          try {
-            this.vaultRef = app.vault.on("modify", (f) => {
-              if (f.extension === "md") this.refreshWithDebounce();
-            });
-            this.leafRef = app.workspace.on("active-leaf-change", () => this.refreshWithDebounce());
-            this.editorRef = app.workspace.on("editor-change", () => this.refreshWithDebounce());
-          } catch (e) {
-          }
-          const CONFIG2 = buildConfig();
-          this.pollTimer = setInterval(() => {
-            var _a2;
-            if (!this.fw.alive || this.fw.isHidden) return;
-            const ed = (_a2 = app.workspace.activeEditor) == null ? void 0 : _a2.editor;
-            if (!ed) return;
-            const c = ed.getCursor();
-            const k = `${c.line}:${c.ch}`;
-            if (this.lastCursor !== k) {
-              this.lastCursor = k;
-              this.refreshWithDebounce();
-            }
-          }, CONFIG2.CURSOR_POLL_INTERVAL);
-        }
-        get alive() {
-          return !this.isClosed && this.fw.alive;
-        }
-        expand() {
-          this.fw.expand();
-        }
-        /** 密度切换（ticket 108）：📃 仅标题 / 📑 标题+省略内容；CSS 类整体切换，会话内有效 */
-        toggleDensity() {
-          this.denseMode = !this.denseMode;
-          this.resultsDiv.classList.toggle("bz-sb-ref-dense", this.denseMode);
-          this.denseBtn.innerHTML = `<i data-lucide="${this.denseMode ? "list-tree" : "file-text"}"></i>`;
-          mountIcons(this.denseBtn);
-          this.denseBtn.title = this.denseMode ? "切换：标题+内容" : "切换：仅标题";
-        }
-        refreshWithDebounce() {
-          if (this.isClosed) return;
-          if (this.debounceTimer) clearTimeout(this.debounceTimer);
-          const CONFIG2 = buildConfig();
-          this.debounceTimer = setTimeout(() => void this.refreshContent(), CONFIG2.DEBOUNCE_DELAY);
-        }
-        async refreshContent() {
-          var _a2;
-          if (this.isClosed) return;
-          const ed = (_a2 = this.app.workspace.activeEditor) == null ? void 0 : _a2.editor;
-          if (!ed) {
-            this.resultsDiv.innerHTML = "";
-            return;
-          }
-          const query = getCurrentContext(ed);
-          if (query.length < 2 || query === this.lastQuery) return;
-          this.lastQuery = query;
-          this.showListState("检索中…");
-          let degraded = false;
-          try {
-            const CONFIG2 = buildConfig();
-            const results = await this.store.search(query, CONFIG2.TOP_K, () => {
-              degraded = true;
-            });
-            if (this.isClosed) return;
-            this.renderResults(results);
-            if (degraded) this.appendListHint("⚠ 向量检索暂不可用，已降级为文本匹配");
-          } catch (err) {
-            console.warn("[secondbrain] 参考面板检索失败", err);
-            if (this.isClosed) return;
-            this.showListState("检索失败：请检查 Ollama 服务后重试");
-          }
-        }
-        /** [46] 列表整体占位/错误提示（loading / 失败态，复用空态样式） */
-        showListState(text) {
-          this.cancelPendingCardStates();
-          this.resultsDiv.innerHTML = "";
-          this.resultsDiv.insertAdjacentHTML("beforeend", refStateHtml(text));
-        }
-        /** [46] 降级脚注：不打断结果列表，在列表末追加一行说明 */
-        appendListHint(text) {
-          this.resultsDiv.insertAdjacentHTML("beforeend", refStateHtml(text));
-        }
-        renderResults(results) {
-          var _a2;
-          this.cancelPendingCardStates();
-          this.resultsDiv.innerHTML = "";
-          const currentPath = ((_a2 = this.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) || "";
-          const filtered2 = (results || []).filter((item) => item.path !== currentPath);
-          if (!filtered2.length) {
-            const empty = document.createElement("div");
-            empty.className = "bz-sb-ref-empty";
-            empty.textContent = "暂无相关笔记";
-            this.resultsDiv.appendChild(empty);
-            return;
-          }
-          for (const item of filtered2) {
-            this.createResultCard(item);
-          }
-        }
-        /** 列表重建/关闭前清场：取消所有卡片的未决长按与悬停计时（卡片即将被摘除，计时器不得存活） */
-        cancelPendingCardStates() {
-          for (const teardown of this.cardTeardowns.values()) teardown();
-          this.cardTeardowns.clear();
-          if (this.hoverTimer) clearTimeout(this.hoverTimer);
-          this.hoverTimer = null;
-        }
-        /** 单张卡片：悬停预览 / 双击跳转 / 长按浮出拖出独立浮卡 */
-        createResultCard(item) {
-          const panel2 = this;
-          const card = document.createElement("div");
-          card.className = "bz-sb-ref-card";
-          card.innerHTML = refCardHtml(stripMdExt(item.path.replace(/^.*[\\/]/, "")), Math.round(item.score * 100), "#a33d2a");
-          const topRow = card.querySelector(".bz-sb-ref-card-top");
-          const bodyDiv = card.querySelector(".bz-sb-ref-card-body");
-          renderMarkdown(bodyDiv, item.chunk, panel2.app);
-          panel2.resultsDiv.appendChild(card);
-          const isFloating = () => card.classList.contains("bz-sb-ref-card--float");
-          card.addEventListener("mouseenter", () => {
-            var _a2;
-            if (isFloating()) return;
-            clearTimeout((_a2 = panel2.hoverTimer) != null ? _a2 : void 0);
-            panel2.hoverTimer = setTimeout(() => {
-              if (isFloating() || !card.isConnected) return;
-              panel2.showHoverPreview(item, card);
-            }, 300);
-          });
-          card.addEventListener("mouseleave", () => {
-            var _a2;
-            clearTimeout((_a2 = panel2.hoverTimer) != null ? _a2 : void 0);
-            panel2.hoverTimer = null;
-            if (!isFloating()) panel2.hideHoverPreview();
-          });
-          card.addEventListener("dblclick", () => {
-            if (isFloating()) {
-              collapseCard();
-              return;
-            }
-            const file = panel2.app.vault.getAbstractFileByPath(item.path);
-            if (!file) {
-              notice("文件不存在");
-              return;
-            }
-            jumpToChunk(file, item.chunk.slice(0, 30).trim(), true);
-          });
-          let holdTimer = null;
-          let isHeld = false;
-          let holdStartX = 0;
-          let holdStartY = 0;
-          let detachDrag = null;
-          let detachResize = null;
-          let originalNext = null;
-          const cancelHold = () => {
-            if (holdTimer) clearTimeout(holdTimer);
-            holdTimer = null;
-            isHeld = false;
-            card.classList.remove("bz-sb-ref-card--held");
-          };
-          const attachFollow = (sx, sy) => {
-            const r = card.getBoundingClientRect();
-            const baseLeft = r.left;
-            const baseTop = r.top;
-            const move = (e) => {
-              card.style.left = Math.max(0, baseLeft + e.clientX - sx) + "px";
-              card.style.top = Math.max(0, baseTop + e.clientY - sy) + "px";
-            };
-            const detach = () => {
-              document.removeEventListener("mousemove", move);
-              document.removeEventListener("mouseup", up);
-              panel2.activeFollows.delete(detach);
-            };
-            const up = () => detach();
-            document.addEventListener("mousemove", move);
-            document.addEventListener("mouseup", up);
-            panel2.activeFollows.add(detach);
-          };
-          const floatCard = () => {
-            if (!card.isConnected || isFloating()) return;
-            card.classList.add("bz-sb-ref-card--float");
-            card.style.zIndex = String(allocZ());
-            panel2.floatingCards.add(card);
-            panel2.hideHoverPreview();
-            cancelHold();
-            const r = card.getBoundingClientRect();
-            card.style.position = "fixed";
-            card.style.left = r.left + "px";
-            card.style.top = r.top + "px";
-            card.style.width = r.width + "px";
-            originalNext = card.nextElementSibling;
-            document.body.appendChild(card);
-            topRow.classList.add("bz-sb-ref-card-top--grip");
-            detachDrag = makeDraggable(card, topRow);
-            detachResize = makeResizable(card, 180, 120);
-            panel2.floatDetachers.set(card, () => {
-              if (detachDrag) detachDrag();
-              if (detachResize) detachResize();
-            });
-          };
-          const collapseCard = () => {
-            card.classList.remove("bz-sb-ref-card--float");
-            panel2.floatingCards.delete(card);
-            if (detachDrag) detachDrag();
-            if (detachResize) detachResize();
-            detachDrag = null;
-            detachResize = null;
-            panel2.floatDetachers.delete(card);
-            topRow.classList.remove("bz-sb-ref-card-top--grip");
-            card.style.cssText = "";
-            if (originalNext && originalNext.parentNode === panel2.resultsDiv) {
-              panel2.resultsDiv.insertBefore(card, originalNext);
-            } else {
-              panel2.resultsDiv.appendChild(card);
-            }
-            originalNext = null;
-            card.classList.add("bz-sb-ref-card--return");
-            setTimeout(() => card.classList.remove("bz-sb-ref-card--return"), 400);
-          };
-          card.addEventListener("mousedown", (e) => {
-            if (isFloating() || e.button !== 0) return;
-            holdStartX = e.clientX;
-            holdStartY = e.clientY;
-            holdTimer = setTimeout(() => {
-              holdTimer = null;
-              if (!card.isConnected) return;
-              isHeld = true;
-              card.classList.add("bz-sb-ref-card--held");
-              panel2.hideHoverPreview();
-            }, 250);
-          });
-          card.addEventListener("mousemove", (e) => {
-            if (isFloating() || !card.isConnected) return;
-            if (!isHeld) {
-              if (holdTimer && (Math.abs(e.clientX - holdStartX) > 8 || Math.abs(e.clientY - holdStartY) > 8)) {
-                clearTimeout(holdTimer);
-                holdTimer = null;
-              }
-              return;
-            }
-            if (Math.abs(e.clientX - holdStartX) > 15 || Math.abs(e.clientY - holdStartY) > 15) {
-              floatCard();
-              attachFollow(e.clientX, e.clientY);
-            }
-          });
-          card.addEventListener("mouseup", () => {
-            if (isFloating()) return;
-            cancelHold();
-          });
-          card.addEventListener("mouseleave", () => {
-            if (isFloating()) return;
-            if (!card.isConnected) {
-              cancelHold();
-              return;
-            }
-            if (isHeld) {
-              cancelHold();
-              floatCard();
-            }
-          });
-          panel2.cardTeardowns.set(card, () => cancelHold());
-          return card;
-        }
-        /** 悬停预览：带路径与匹配度，按窄窗在屏左/右智能定位（QA L1599-1637） */
-        showHoverPreview(item, cardEl) {
-          this.hideHoverPreview();
-          const refRect = this.fw.el.getBoundingClientRect();
-          const cardRect = cardEl.getBoundingClientRect();
-          const isRightSide = refRect.left > window.innerWidth / 2;
-          const preview = document.createElement("div");
-          preview.className = "bz-sb-ref-preview";
-          preview.style.zIndex = String(allocZ());
-          const PW = 460;
-          let left = isRightSide ? refRect.left - (PW + 8) : refRect.right + 8;
-          left = Math.max(8, Math.min(left, window.innerWidth - PW - 8));
-          preview.style.left = left + "px";
-          this.clampPreviewTop(preview, cardRect.top - 20);
-          const pathLabel = document.createElement("div");
-          pathLabel.className = "bz-sb-ref-preview-path";
-          pathLabel.textContent = item.path;
-          const scoreLabel = document.createElement("div");
-          scoreLabel.className = "bz-sb-ref-preview-score";
-          scoreLabel.textContent = `匹配度 ${Math.round(item.score * 100)}%`;
-          const bodyDiv = document.createElement("div");
-          bodyDiv.className = "bz-sb-ref-preview-body";
-          renderMarkdown(bodyDiv, item.chunk, this.app);
-          preview.appendChild(pathLabel);
-          preview.appendChild(scoreLabel);
-          preview.appendChild(bodyDiv);
-          document.body.appendChild(preview);
-          setTimeout(() => {
-            if (preview.isConnected) this.clampPreviewTop(preview, cardRect.top - 20);
-          }, 120);
-        }
-        /** 不限高随内容生长（ticket 109）：top 钳制进视口，尽量多显示全文 */
-        clampPreviewTop(preview, desiredTop) {
-          const maxTop = window.innerHeight - preview.offsetHeight - 10;
-          preview.style.top = Math.max(10, Math.min(desiredTop, maxTop)) + "px";
-        }
-        hideHoverPreview() {
-          var _a2;
-          document.querySelectorAll(".bz-sb-ref-preview").forEach((el) => el.remove());
-          clearTimeout((_a2 = this.hoverTimer) != null ? _a2 : void 0);
-          this.hoverTimer = null;
-        }
-        /** 关闭并释放全部资源（幂等） */
-        close() {
-          this.destroyResources();
-          this.fw.close();
-        }
-        destroyResources() {
+        destroy() {
           var _a2, _b2;
-          if (this.isClosed) return;
-          this.isClosed = true;
-          clearTimeout((_a2 = this.debounceTimer) != null ? _a2 : void 0);
-          clearInterval((_b2 = this.pollTimer) != null ? _b2 : void 0);
-          this.debounceTimer = null;
-          this.pollTimer = null;
-          if (this.vaultRef || this.leafRef || this.editorRef) {
+          this.removeEscapeListener();
+          (_a2 = this.mask) == null ? void 0 : _a2.remove();
+          (_b2 = this.popup) == null ? void 0 : _b2.remove();
+          this.mask = null;
+          this.popup = null;
+        }
+        /** 打开形态分派：重建意图 → 全量重建进度；空库+初始索引进行中 → 恢复进度（fire-and-forget，不阻塞 panel.open）；空库 → 引导态；
+         *  就绪 + 待处理 → 增量进度；就绪无变更 → 统计（ticket 114 补「空库但 refresh 在途」分支） */
+        async render() {
+          if (this.store.initialLoad) {
             try {
-              if (this.vaultRef) this.app.vault.offref(this.vaultRef);
-              if (this.leafRef) this.app.workspace.offref(this.leafRef);
-              if (this.editorRef) this.app.workspace.offref(this.editorRef);
+              await this.store.initialLoad;
             } catch (e) {
             }
           }
-          this.cancelPendingCardStates();
-          this.hideHoverPreview();
-          for (const detach of this.activeFollows) detach();
-          this.activeFollows.clear();
-          for (const detach of this.floatDetachers.values()) detach();
-          this.floatDetachers.clear();
-          for (const fc of this.floatingCards) fc.remove();
-          this.floatingCards.clear();
-        }
-      };
-    }
-  });
-
-  // src/secondbrain/chat-panel.ts
-  function welcomeText(topK) {
-    return `你好！每次提问会独立检索 ${topK} 条笔记辅助回答。`;
-  }
-  var ChatPanel;
-  var init_chat_panel = __esm({
-    "src/secondbrain/chat-panel.ts"() {
-      init_dom();
-      init_esc_manager();
-      init_flow_dialog();
-      init_ui();
-      init_config3();
-      init_ui_tools();
-      init_ai3();
-      init_store_file();
-      init_render12();
-      ChatPanel = class {
-        constructor(store3, app) {
-          this.history = [];
-          this.escHandle = null;
-          /** 进行中的对话请求（ticket 141）：非空时发送钮呈「停止」态，点击中止 */
-          this.inFlight = null;
-          /** 轮次序号：清空对话 / 销毁后，旧轮的回调不再写 UI 与历史 */
-          this.seq = 0;
-          var _a2, _b2;
-          this.app = app;
-          this.store = store3;
-          const CONFIG2 = buildConfig();
-          const { mask, popup } = createOverlay({
-            maskId: "bz-sb-chat-mask",
-            popupId: "bz-sb-chat-panel",
-            onMaskClick: () => this.close(),
-            width: "760px",
-            // createOverlay 以内联样式设宽（优先级高于类规则），必须在此定尺寸
-            maxWidth: 760
-          });
-          this.mask = mask;
-          this.popup = popup;
-          this.popup.classList.add("bz-sb-chat-modal");
-          this.popup.innerHTML = chatShellHtml(CONFIG2.CHAT_TOP_K);
-          mountIcons(this.popup);
-          this.messagesDiv = this.popup.querySelector("#bz-sb-chat-messages");
-          this.input = this.popup.querySelector("#bz-sb-chat-input");
-          this.sendBtn = this.popup.querySelector("#bz-sb-chat-send");
-          (_a2 = this.popup.querySelector("#bz-sb-chat-clear")) == null ? void 0 : _a2.addEventListener("click", () => void this.confirmClear());
-          this.sendBtn.addEventListener("click", () => {
-            if (this.inFlight) {
-              this.inFlight.abort();
+          const rebuild = this.rebuildRequested;
+          this.rebuildRequested = false;
+          if (rebuild && this.store.isIndexReady()) {
+            await this.runRebuild();
+            return;
+          }
+          if (!this.store.isIndexReady()) {
+            if (this.store.isRefreshing()) {
+              this.enterProgressView("正在初始化向量数据库");
+              void this.runInitialIndexView();
               return;
             }
-            void this.sendChatMessage();
-          });
-          this.input.addEventListener("keydown", (e) => {
-            if (e.isComposing || e.keyCode === 229) return;
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              void this.sendChatMessage();
+            this.showInitGuidance();
+            return;
+          }
+          if (this.store.hasPendingChanges()) {
+            await this.runIncremental();
+            return;
+          }
+          this.showContent();
+        }
+        showContent(skipRefresh = false) {
+          var _a2, _b2;
+          const onboard = document.getElementById("bz-sb-onboard");
+          const content = document.getElementById("bz-sb-content");
+          if (onboard) onboard.style.display = "none";
+          if (content) content.style.display = "flex";
+          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.remove("bz-sb-btn-hidden");
+          if (!skipRefresh && !this.refreshing) void this.autoRefreshThenRender();
+        }
+        /** 空库首次引导：说明 + 开始按钮（进度视图的 init 形态） */
+        showInitGuidance() {
+          var _a2, _b2;
+          const onboard = document.getElementById("bz-sb-onboard");
+          const content = document.getElementById("bz-sb-content");
+          const title = document.getElementById("bz-sb-progress-title");
+          const desc = document.getElementById("bz-sb-onboard-desc");
+          const btn = document.getElementById("bz-sb-init-btn");
+          const box = document.getElementById("bz-sb-init-progress");
+          if (title) title.textContent = "初始化向量数据库";
+          if (desc) desc.style.display = "block";
+          if (btn) {
+            btn.style.display = "block";
+            btn.disabled = false;
+            btn.textContent = "开始向量化";
+          }
+          if (box) box.style.display = "none";
+          if (onboard) onboard.style.display = "flex";
+          if (content) content.style.display = "none";
+          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
+        }
+        /** 进入纯进度形态（自动运行，无按钮；title 由调用方给定） */
+        enterProgressView(titleText, resetStatus = true) {
+          var _a2, _b2;
+          const onboard = document.getElementById("bz-sb-onboard");
+          const content = document.getElementById("bz-sb-content");
+          const title = document.getElementById("bz-sb-progress-title");
+          const desc = document.getElementById("bz-sb-onboard-desc");
+          const btn = document.getElementById("bz-sb-init-btn");
+          const box = document.getElementById("bz-sb-init-progress");
+          const fill = document.getElementById("bz-sb-init-fill");
+          const status = document.getElementById("bz-sb-init-status");
+          if (title) title.textContent = titleText;
+          if (desc) desc.style.display = "none";
+          if (btn) btn.style.display = "none";
+          if (box) box.style.display = "flex";
+          if (fill) fill.style.width = "0%";
+          if (resetStatus && status) status.textContent = "准备中…";
+          if (onboard) onboard.style.display = "flex";
+          if (content) content.style.display = "none";
+          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
+        }
+        /** 进度回调解析：把 store.updateProgress 文案换算成进度条（面板销毁后不再写 DOM） */
+        progressObserver() {
+          const status = document.getElementById("bz-sb-init-status");
+          const fill = document.getElementById("bz-sb-init-fill");
+          return (msg) => {
+            if (!(status == null ? void 0 : status.isConnected)) return;
+            const m = msg.match(/向量化:\s*(\d+)\/(\d+)/);
+            if (m && Number(m[2]) > 0) {
+              fill.style.width = Math.min(100, Math.round(Number(m[1]) / Number(m[2]) * 100)) + "%";
+            }
+            status.textContent = msg;
+          };
+        }
+        /** 自动增量索引（ticket 108）：有待处理块 → 进度视图 → 完成后统计；
+         *  ticket 3 假成功修复：有失败段 → toast 明示失败数（进度视图随即被内容态替代，仅靠状态行不可见） */
+        async runIncremental() {
+          this.enterProgressView("正在同步索引");
+          let lastMsg = "";
+          try {
+            await this.store.refresh((msg) => {
+              lastMsg = msg;
+              this.progressObserver()(msg);
+            });
+          } catch (e) {
+            console.warn("[secondbrain] 面板增量索引失败", e);
+          }
+          if (!this.store.isIndexReady()) {
+            this.showInitGuidance();
+            return;
+          }
+          this.showContent(true);
+          await this.renderStats();
+          const fail = lastMsg.match(/^⚠️\s*(\d+)\s*段向量化失败/);
+          if (fail) {
+            notice(`第二大脑：${fail[1]} 段向量化失败，请检查 Ollama 服务`, "warning");
+          }
+        }
+        /** 全量重建（ticket 108「重新索引」）：清空 → 整库重嵌 → 统计；失败给原因可重试 */
+        async runRebuild() {
+          this.enterProgressView("正在重建向量数据库");
+          const status = document.getElementById("bz-sb-init-status");
+          this.initializing = true;
+          try {
+            await this.store.rebuildAll(this.progressObserver());
+            if (this.store.isIndexReady()) {
+              this.showContent(true);
+              await this.renderStats();
+            } else {
+              const box = document.getElementById("bz-sb-init-progress");
+              if (box) box.style.display = "flex";
+              if (status) status.textContent = "重建未完成：请确认 Ollama 服务与 Embedding 模型可用后重试";
+              this.revealInitBtn("重试重建");
+            }
+          } catch (e) {
+            console.warn("[secondbrain] 全量重建失败", e);
+            if (status == null ? void 0 : status.isConnected) {
+              status.textContent = "重建失败：" + ((e == null ? void 0 : e.message) || e);
+              this.revealInitBtn("重试重建");
+            }
+          } finally {
+            this.initializing = false;
+          }
+        }
+        /** 组装弹窗 DOM（markup 全部出自 render.ts；本方法只绑定事件） */
+        createUI() {
+          var _a2, _b2, _c, _d, _e, _f;
+          if (this.mask && document.body.contains(this.mask)) return;
+          const mask = document.createElement("div");
+          mask.className = "bz-sb-panel-mask";
+          mask.onclick = () => this.close();
+          const popup = document.createElement("div");
+          popup.className = "bz-sb-panel bz-panel-mtop";
+          popup.innerHTML = panelShellHtml2();
+          (_a2 = popup.querySelector("#bz-sb-panel-close")) == null ? void 0 : _a2.addEventListener("click", () => {
+            if (this.expandedDirs.size) {
+              this.expandedDirs.clear();
+              this.renderDist();
+            } else {
+              this.close();
             }
           });
-          this.input.addEventListener("input", () => this.autoGrowInput());
-          (_b2 = this.popup.querySelector("#bz-sb-chat-chips")) == null ? void 0 : _b2.addEventListener("click", (e) => {
-            const chip = e.target.closest(".bz-sb-chat-chip");
-            if (!chip || this.inFlight) return;
-            this.input.value = chip.dataset.q || "";
-            void this.sendChatMessage();
+          (_b2 = popup.querySelector("#bz-sb-open-chat")) == null ? void 0 : _b2.addEventListener("click", () => {
+            this.close();
+            this.opts.onOpenChat();
           });
-          this.messagesDiv.addEventListener("click", (e) => {
-            const cite = e.target.closest(".bz-sb-chat-cite");
-            if (!cite) return;
-            const path = cite.dataset.path;
-            const f = path ? this.app.vault.getAbstractFileByPath(path) : null;
-            if (f) void this.app.workspace.getLeaf(false).openFile(f);
-            else if (path) this.appendAiNote("文件不存在或已被移动");
+          (_c = popup.querySelector("#bz-sb-open-ref")) == null ? void 0 : _c.addEventListener("click", () => {
+            this.close();
+            this.opts.onOpenReference();
+          });
+          (_d = popup.querySelector("#bz-sb-incr")) == null ? void 0 : _d.addEventListener("click", () => {
+            if (this.refreshing || this.initializing) return;
+            void this.runIncremental();
+          });
+          (_e = popup.querySelector("#bz-sb-rebuild")) == null ? void 0 : _e.addEventListener("click", () => {
+            void confirmFullRebuild().then((ok) => {
+              if (ok) void this.runRebuild();
+            });
+          });
+          const initBtn = popup.querySelector("#bz-sb-init-btn");
+          if (initBtn) initBtn.onclick = () => void this.startInitialIndex();
+          (_f = popup.querySelector("#bz-sb-dist")) == null ? void 0 : _f.addEventListener("click", (e) => {
+            const row = e.target.closest(".bz-sb-dist-row--dir");
+            if (!row) return;
+            const path = row.dataset.path;
+            if (!path) return;
+            if (this.expandedDirs.has(path)) this.expandedDirs.delete(path);
+            else this.expandedDirs.add(path);
+            this.renderDist();
           });
           document.body.appendChild(mask);
           document.body.appendChild(popup);
-          this.escHandle = escManager.register("bz-sb-chat-modal", {
-            isVisible: () => this.popup.style.display === "flex" && !!this.popup.isConnected,
-            close: () => this.close()
-          });
-          this.addChatMessage("assistant", welcomeText(CONFIG2.CHAT_TOP_K));
-          this.restorePersistedHistory();
+          this.mask = mask;
+          this.popup = popup;
         }
-        get alive() {
-          return !!this.popup.isConnected;
-        }
-        /** 显示弹窗并聚焦输入框 */
-        show() {
-          if (!this.alive) return;
-          this.mask.style.display = "block";
-          this.popup.style.display = "flex";
-          this.input.focus();
-        }
-        close() {
-          this.mask.style.display = "none";
-          this.popup.style.display = "none";
-        }
-        /** 完全销毁（unload 调用）：摘 ESC 层、中止在途请求并移除 DOM */
-        destroy() {
-          var _a2, _b2;
-          this.seq++;
-          (_a2 = this.inFlight) == null ? void 0 : _a2.abort();
-          this.inFlight = null;
-          (_b2 = this.escHandle) == null ? void 0 : _b2.unregister();
-          this.escHandle = null;
-          this.mask.remove();
-          this.popup.remove();
-        }
-        /** 历史仅 UI 展示用；裁剪 MAX_HISTORY×2 条，不进 prompt（每问独立检索） */
-        addChatMessage(role, content, hits) {
-          const div = document.createElement("div");
-          div.className = `bz-sb-chat-msg ${role}`;
-          if (role === "assistant") {
-            div.innerHTML = chatAiMsgHtml();
-            const bubble = div.querySelector(".bz-sb-chat-bubble");
-            renderMarkdown(bubble, content, this.app);
-            if (hits == null ? void 0 : hits.length) bubble.insertAdjacentHTML("beforeend", chatCitesHtml(this.citeRows(hits)));
-          } else {
-            div.innerHTML = chatUserMsgHtml();
-            div.querySelector(".bz-sb-chat-bubble").textContent = content;
-          }
-          this.messagesDiv.appendChild(div);
-          this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
-          this.history.push({ role, content });
-          const CONFIG2 = buildConfig();
-          if (this.history.length > CONFIG2.MAX_HISTORY * 2) {
-            this.history = this.history.slice(-CONFIG2.MAX_HISTORY * 2);
-          }
-          return div;
-        }
-        /** 引用卡行（来源色点按来源分布序取色板） */
-        citeRows(hits) {
-          const order = new Map(computeStats2(this.store.meta).bySource.map((s, i) => [s.name, i]));
-          return hits.slice(0, 5).map((h) => ({
-            path: h.path,
-            pct: Math.round(h.score * 100),
-            color: sbSourceColor(h.path.split("/")[0] || "（根目录）", order)
-          }));
-        }
-        /** 轻量 assistant 提示（不进历史；用于错误/停止等纯 UI 文案之外的补充说明） */
-        appendAiNote(text) {
-          const note = document.createElement("div");
-          note.className = "bz-sb-ref-empty";
-          note.textContent = text;
-          this.messagesDiv.appendChild(note);
-        }
-        // ==================== ticket 141：多行输入 / 取消 / 流式 / 历史持久化 ====================
-        /** textarea 自增高度：随内容长高，CSS max-height 钳制上限，超出内部滚动 */
-        autoGrowInput() {
-          this.input.style.height = "auto";
-          this.input.style.height = this.input.scrollHeight + "px";
-        }
-        /** 每轮写盘（fire-and-forget；失败仅告警，不阻断对话） */
-        persistHistory(entries) {
-          appendChatHistory(entries, this.app).catch(
-            (e) => console.warn("[secondbrain] 对话历史写盘失败", e)
-          );
-        }
-        /** 打开读回持久化历史（旧数据无 chatHistory 段 → []，保持欢迎语，零迁移） */
-        async restorePersistedHistory() {
-          let entries;
+        /** 内容态打开时自动增量刷新，完成后重渲统计（修复：原先渲染不等 refresh，展示的总是上一轮旧数据） */
+        async autoRefreshThenRender() {
+          if (this.refreshing) return;
+          this.refreshing = true;
           try {
-            entries = await loadChatHistory(this.app);
-          } catch (e) {
-            console.warn("[secondbrain] 对话历史读回失败", e);
-            return;
-          }
-          if (!entries.length || !this.alive) return;
-          for (const m of entries) this.addChatMessage(m.role, m.content);
-        }
-        async sendChatMessage() {
-          if (this.inFlight) return;
-          const userMsg = this.input.value.trim();
-          if (!userMsg) return;
-          this.input.value = "";
-          this.autoGrowInput();
-          this.addChatMessage("user", userMsg);
-          this.persistHistory([{ role: "user", content: userMsg }]);
-          const CONFIG2 = buildConfig();
-          const controller2 = new AbortController();
-          const seq = ++this.seq;
-          this.inFlight = controller2;
-          this.sendBtn.disabled = false;
-          this.sendBtn.setAttribute("data-state", "stop");
-          this.sendBtn.title = "停止";
-          const live2 = document.createElement("div");
-          live2.className = "bz-sb-chat-msg assistant";
-          live2.innerHTML = chatAiMsgHtml();
-          live2.querySelector(".bz-sb-chat-bubble").innerHTML = chatThinkingHtml(CONFIG2.CHAT_TOP_K);
-          this.messagesDiv.appendChild(live2);
-          this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
-          let acc = "";
-          try {
-            const results = await this.store.search(userMsg, CONFIG2.CHAT_TOP_K);
-            if (seq !== this.seq) return;
-            const context = results.length > 0 ? results.map((r) => `[${r.path}] (${Math.round(r.score * 100)}%)
-${r.chunk}`).join("\n\n") : "（未找到相关笔记）";
-            const fullPrompt = `你是知识助手。参考笔记库中 ${results.length} 条检索结果回答问题。不相关可忽略。
-
-【参考内容】
-${context}
-
-【问题】
-${userMsg}`;
-            const answer = await AI.ask(fullPrompt, {
-              signal: controller2.signal,
-              onDelta: (delta) => {
-                acc += delta;
-                const bubble = live2.querySelector(".bz-sb-chat-bubble");
-                if (bubble) bubble.textContent = acc;
-                this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
-              }
+            await this.store.refresh((msg) => {
+              if (msg.startsWith("向量化:") || msg.startsWith("✅ 向量化完成")) console.log(`[secondbrain] ${msg}`);
             });
-            live2.remove();
-            if (seq === this.seq) {
-              this.addChatMessage("assistant", answer, results);
-              this.persistHistory([{ role: "assistant", content: answer }]);
+          } catch (e) {
+            console.warn("[secondbrain] 面板自动刷新失败", e);
+          } finally {
+            this.refreshing = false;
+          }
+          await this.renderStats();
+        }
+        /**
+         * 初始向量化运行器（ticket 114 自按钮处理器抽出共用）：进入进度视图并接住 refresh 实时进度，
+         * 完成切内容态渲染统计；失败给出原因并可重试。
+         * 按钮点击与「关页重开恢复」（render 分派）两条路都走这里——store.refresh 并发去重保证
+         * 重复调用只是把进度回调重新接到同一个进行中的 promise 上，不会二次跑库。
+         * 注意：refresh 全部嵌入失败时不抛错也不登记任何条目（QA 同语义），故以 isIndexReady 判定成败。
+         */
+        async runInitialIndexView() {
+          const status = document.getElementById("bz-sb-init-status");
+          if (!status || !status.isConnected) return;
+          this.enterProgressView("正在初始化向量数据库");
+          this.initializing = true;
+          let sawCountedDone = false;
+          let sawWarning = false;
+          let sawFail = false;
+          try {
+            await this.store.refresh((msg) => {
+              if (!status.isConnected) return;
+              if (msg.startsWith("⚠️")) sawWarning = true;
+              if (msg.includes("段向量化失败")) sawFail = true;
+              if (msg.startsWith("✅ 向量化完成：")) sawCountedDone = true;
+              this.progressObserver()(msg);
+            });
+            if (!status.isConnected) return;
+            if (this.store.isIndexReady()) {
+              this.showContent(true);
+              await this.renderStats();
+            } else if (sawFail || sawCountedDone) {
+              status.textContent = "没有成功向量化任何内容：请确认 Ollama 服务与 Embedding 模型可用" + (IS_MOBILE ? "（移动端需配置「远程 Ollama URL」）" : "") + "后重试";
+              this.revealInitBtn("重试初始化");
+            } else if (sawWarning) {
+              status.textContent = "白名单目录内没有可索引的 Markdown 笔记：请检查 ⚙️ 设置中的「白名单目录」";
+              this.revealInitBtn("重试初始化");
+            } else {
+              status.textContent = "未发现可索引的笔记内容";
+              this.revealInitBtn("重试初始化");
             }
           } catch (e) {
-            live2.remove();
-            if (seq !== this.seq) return;
-            if (controller2.signal.aborted) {
-              this.addChatMessage("assistant", "已停止生成。");
-            } else {
-              this.addChatMessage("assistant", "出错了：" + ((e == null ? void 0 : e.message) || e));
+            console.warn("[secondbrain] 初始向量化失败", e);
+            if (status.isConnected) {
+              status.textContent = "初始化失败：" + ((e == null ? void 0 : e.message) || e);
+              this.revealInitBtn("重试初始化");
             }
           } finally {
-            if (seq === this.seq) {
-              this.inFlight = null;
-              this.sendBtn.disabled = false;
-              this.sendBtn.removeAttribute("data-state");
-              this.sendBtn.title = "发送";
-            } else if (this.inFlight === controller2) {
-              this.inFlight = null;
-            }
+            this.initializing = false;
           }
         }
-        /** 「清空对话」（ticket 141）：flow 确认 → 中止在途请求 → 清内存与 UI → 写盘空段 */
-        async confirmClear() {
-          var _a2;
-          const v = await openFlowDialog({
-            title: "清空对话",
-            message: "将清空全部对话历史并写盘，确定继续吗？",
-            // 皮肤类（issue 291）：对话弹窗掉 body 外的确认框不会继承 .bz-sb-chat-modal 的 --sb-*，
-            // 必须显式带 .bz-sb-flow-dialog 才与「清空对话」所在界面同一套米白×红棕皮
-            className: "bz-sb-flow-dialog",
-            actions: [
-              { label: "取消", value: "cancel" },
-              // danger（issue 291 评审补）：清空即抹掉全部对话历史，主按钮中性底 + 红字（手册 §9/§10）
-              { label: "清空", value: "ok", cta: true, danger: true }
-            ]
-          });
-          if (v !== "ok") return;
-          this.seq++;
-          (_a2 = this.inFlight) == null ? void 0 : _a2.abort();
-          this.inFlight = null;
-          this.sendBtn.disabled = false;
-          this.sendBtn.removeAttribute("data-state");
-          this.sendBtn.title = "发送";
-          this.history = [];
-          this.messagesDiv.innerHTML = "";
-          this.addChatMessage("assistant", welcomeText(buildConfig().CHAT_TOP_K));
-          try {
-            await clearChatHistory(this.app);
-          } catch (e) {
-            console.warn("[secondbrain] 对话历史清空写盘失败", e);
-          }
-        }
-      };
-    }
-  });
-
-  // src/secondbrain/mobile-panel.ts
-  var SNAP_MID, SNAP_HIGH, COLLAPSE_THRESHOLD, MobilePanel;
-  var init_mobile_panel = __esm({
-    "src/secondbrain/mobile-panel.ts"() {
-      init_utils();
-      init_esc_manager();
-      init_notice();
-      init_ui();
-      init_config3();
-      init_z_order();
-      init_context();
-      init_ui_tools();
-      init_ai3();
-      init_render12();
-      init_store_file();
-      SNAP_MID = 45;
-      SNAP_HIGH = 75;
-      COLLAPSE_THRESHOLD = 18;
-      MobilePanel = class {
-        constructor(app, store3) {
-          this.mode = "ref";
-          this.collapsed = false;
-          this.chatHistory = [];
-          this.refResults = [];
-          /** 检索失败提示（ticket 141：不再吞错成「暂无相关笔记」，与桌面参考面板同款文案与形态；成功检索后清空） */
-          this.refError = null;
-          this.chatMessagesDiv = null;
-          this.cursorPoll = null;
-          this.debounceTimer = null;
-          this.evLeaf = null;
-          this.escHandle = null;
-          this.lastCursor = null;
-          this.lastQuery = "";
-          var _a2;
-          this.app = app;
-          this.store = store3;
-          const CONFIG2 = buildConfig();
-          this.sheet = document.createElement("div");
-          this.sheet.className = "bz-sb-mb-sheet";
-          const topbar = document.createElement("div");
-          topbar.className = "bz-sb-mb-topbar";
-          this.pillRef = document.createElement("button");
-          this.pillRef.className = "bz-sb-mb-pill active";
-          this.pillRef.title = "参考";
-          this.pillRef.setAttribute("aria-label", "参考");
-          this.pillRef.innerHTML = '<i data-lucide="radar"></i>';
-          this.pillChat = document.createElement("button");
-          this.pillChat.className = "bz-sb-mb-pill";
-          this.pillChat.title = "AI";
-          this.pillChat.setAttribute("aria-label", "AI");
-          this.pillChat.innerHTML = '<i data-lucide="message-square"></i>';
-          const dragStrip = document.createElement("div");
-          dragStrip.className = "bz-sb-mb-drag-strip";
-          const dragDot = document.createElement("div");
-          dragDot.className = "bz-sb-mb-drag-dot";
-          dragStrip.appendChild(dragDot);
-          topbar.appendChild(this.pillRef);
-          topbar.appendChild(dragStrip);
-          topbar.appendChild(this.pillChat);
-          this.sheet.appendChild(topbar);
-          mountIcons(topbar);
-          this.body = document.createElement("div");
-          this.body.className = "bz-sb-mb-body bz-sb-scroll-y";
-          this.sheet.appendChild(this.body);
-          this.mini = document.createElement("div");
-          this.mini.className = "bz-sb-mb-mini";
-          const miniDot = document.createElement("span");
-          miniDot.className = "bz-sb-mb-mini-dot";
-          const miniLabel = document.createElement("span");
-          miniLabel.className = "bz-sb-mb-mini-label";
-          miniLabel.textContent = "参考";
-          this.mini.appendChild(miniDot);
-          this.mini.appendChild(miniLabel);
-          document.body.appendChild(this.sheet);
-          document.body.appendChild(this.mini);
-          this.pillRef.addEventListener("click", () => this.switchTab("ref"));
-          this.pillChat.addEventListener("click", () => this.switchTab("chat"));
-          this.mini.addEventListener("click", () => this.expand());
-          void store3.initMobile().catch((e) => console.warn("[secondbrain] initMobile 失败", e));
-          this.escHandle = escManager.register("bz-sb-mb-sheet", {
-            isVisible: () => !this.collapsed && !!this.sheet.isConnected,
-            close: () => this.collapse()
-          });
-          let dragging = false;
-          let dragStartY = 0;
-          let dragStartH = 0;
-          topbar.addEventListener(
-            "touchstart",
-            (e) => {
-              if (this.collapsed) return;
-              dragging = true;
-              dragStartY = e.touches[0].clientY;
-              dragStartH = this.sheet.getBoundingClientRect().height;
-              this.sheet.classList.add("bz-sb-mb-dragging");
-            },
-            { passive: true }
-          );
-          this.onTouchMove = (e) => {
-            if (!dragging) return;
-            const dy = dragStartY - e.touches[0].clientY;
-            const vh = window.innerHeight;
-            const pct = Math.max(6, Math.min(88, (dragStartH + dy) / vh * 100));
-            this.sheet.style.height = pct + "vh";
-          };
-          this.onTouchEnd = () => {
-            if (!dragging) return;
-            dragging = false;
-            this.sheet.classList.remove("bz-sb-mb-dragging");
-            const pct = this.sheet.getBoundingClientRect().height / window.innerHeight * 100;
-            if (pct < COLLAPSE_THRESHOLD) {
-              this.collapse();
-              return;
-            }
-            const closest = Math.abs(SNAP_MID - pct) <= Math.abs(SNAP_HIGH - pct) ? SNAP_MID : SNAP_HIGH;
-            this.sheet.style.height = closest + "vh";
-          };
-          document.addEventListener("touchmove", this.onTouchMove, { passive: true });
-          document.addEventListener("touchend", this.onTouchEnd);
-          this.cursorPoll = setInterval(() => {
-            if (this.collapsed) return;
-            this.checkCursor();
-          }, CONFIG2.CURSOR_POLL_INTERVAL);
-          try {
-            this.evLeaf = app.workspace.on("active-leaf-change", () => this.checkCursor());
-          } catch (e) {
-          }
-          this.onSelectionChange = () => {
-            setTimeout(() => this.checkCursor(), 50);
-          };
-          document.addEventListener("selectionchange", this.onSelectionChange);
-          this.renderBody();
-          if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => this.expand());
-          else this.expand();
-          const initEd = (_a2 = app.workspace.activeEditor) == null ? void 0 : _a2.editor;
-          if (initEd) {
-            const q2 = getCurrentContext(initEd);
-            if (q2.length >= 2) {
-              this.lastQuery = q2;
-              const c = initEd.getCursor();
-              this.lastCursor = `${c.line}:${c.ch}`;
-              void this.refreshResults(q2);
-            }
-          }
-          void loadChatHistory(app).then((entries) => {
-            if (!entries.length) return;
-            this.chatHistory = entries.slice(-buildConfig().MAX_HISTORY * 2);
-            if (this.mode === "chat") this.renderBody();
-          }).catch(() => {
-          });
-        }
-        get alive() {
-          return !!this.sheet.isConnected;
-        }
-        /** 展开抽屉（expand 的对外别名，与 FloatWindow.show 语义对齐，index 接线使用） */
-        show() {
-          this.expand();
-        }
-        /** 展开（45vh），隐藏 mini */
-        expand() {
-          this.collapsed = false;
-          topifyZ(this.sheet);
-          this.sheet.classList.remove("bz-sb-mb-dragging");
-          this.sheet.style.height = SNAP_MID + "vh";
-          this.sheet.classList.add("bz-sb-mb-open");
-          this.mini.classList.remove("bz-sb-mb-visible");
-        }
-        /** 收起为底部 mini 胶囊 */
-        collapse() {
-          this.collapsed = true;
-          this.sheet.classList.remove("bz-sb-mb-open");
-          this.sheet.classList.remove("bz-sb-mb-dragging");
-          topifyZ(this.mini);
-          this.mini.classList.add("bz-sb-mb-visible");
-        }
-        updateMiniLabel() {
-          const label = this.mini.querySelector(".bz-sb-mb-mini-label");
-          if (label) label.textContent = this.mode === "ref" ? "参考" : "AI";
-        }
-        switchTab(tab) {
-          this.mode = tab;
-          this.pillRef.classList.toggle("active", tab === "ref");
-          this.pillChat.classList.toggle("active", tab === "chat");
-          this.updateMiniLabel();
-          this.renderBody();
-        }
-        /** 光标变化 → 防抖 → 上下文变化才重新检索（QA L2016-2031） */
-        checkCursor() {
-          var _a2, _b2;
-          const ed = (_a2 = this.app.workspace.activeEditor) == null ? void 0 : _a2.editor;
-          if (!ed) return;
-          const c = ed.getCursor();
-          const k = `${c.line}:${c.ch}`;
-          if (this.lastCursor === k) return;
-          this.lastCursor = k;
-          clearTimeout((_b2 = this.debounceTimer) != null ? _b2 : void 0);
-          this.debounceTimer = setTimeout(() => {
-            void (async () => {
-              const q2 = getCurrentContext(ed);
-              if (q2 === this.lastQuery) return;
-              this.lastQuery = q2;
-              await this.refreshResults(q2);
-            })();
-          }, buildConfig().DEBOUNCE_DELAY);
-        }
-        async refreshResults(query) {
-          const CONFIG2 = buildConfig();
-          if (!query || query.length < 2) {
-            this.refResults = [];
-            this.refError = null;
-            if (this.mode === "ref") this.renderRefTab();
+        /**
+         * 引导按钮（ticket 107/108；ticket 114 修「点了没反应」）：首次全量向量化。
+         * 已在进行中（关页重开后的引导态残留 / 双击）时不再静默吞掉——只要后台确有 refresh 在跑，
+         * 就切回进度视图接回实时进度；否则维持原守卫语义不动。
+         */
+        startInitialIndex() {
+          if (!document.getElementById("bz-sb-init-progress")) return;
+          if (this.initializing || this.refreshing) {
+            if (this.store.isRefreshing()) void this.runInitialIndexView();
             return;
           }
+          void this.runInitialIndexView();
+        }
+        /** 失败路径恢复「开始按钮」可见并复位文案（进度形态时按钮被隐藏） */
+        revealInitBtn(label) {
+          const btn = document.getElementById("bz-sb-init-btn");
+          if (!btn) return;
+          btn.style.display = "block";
+          btn.disabled = false;
+          btn.textContent = label;
+          btn.onclick = () => void this.startInitialIndex();
+        }
+        /** 内容态统计渲染：markup 出 render.ts，本方法只算数与注入 */
+        async renderStats() {
+          var _a2, _b2, _c, _d, _e;
+          const popup = this.popup;
+          if (!popup || !popup.isConnected) return;
+          const CONFIG2 = buildConfig();
+          let metaBytes = 0;
+          let vecBytes = 0;
           try {
-            this.refResults = await this.store.searchMobile(query, CONFIG2.TOP_K);
-            this.refError = null;
+            metaBytes = (_b2 = (_a2 = await this.app.vault.adapter.stat(CONFIG2.STORE_PATH)) == null ? void 0 : _a2.size) != null ? _b2 : 0;
           } catch (e) {
-            console.warn("[secondbrain] 移动端检索失败", e);
-            this.refResults = [];
-            this.refError = "检索失败：请检查 Ollama 服务后重试";
           }
-          if (this.mode === "ref") this.renderRefTab();
-        }
-        renderBody() {
-          this.body.innerHTML = "";
-          if (this.mode === "ref") this.renderRefTab();
-          else this.renderChatTab();
-        }
-        /** 参考 tab：过滤当前文件 + 单击懒渲染展开 + 长按震动跳转并收起（QA L2050-2100） */
-        renderRefTab() {
-          var _a2;
-          this.body.innerHTML = "";
-          const currentPath = ((_a2 = this.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) || "";
-          const filtered2 = this.refResults.filter((r) => r.path !== currentPath);
-          if (!filtered2.length) {
-            const empty = document.createElement("div");
-            empty.className = "bz-sb-mb-empty";
-            empty.textContent = this.refError || "暂无相关笔记";
-            this.body.appendChild(empty);
-            return;
+          try {
+            vecBytes = (_d = (_c = await this.app.vault.adapter.stat(CONFIG2.VEC_PATH)) == null ? void 0 : _c.size) != null ? _d : 0;
+          } catch (e) {
           }
-          for (const item of filtered2) {
-            const card = document.createElement("div");
-            card.className = "bz-sb-mb-card";
-            const topRow = document.createElement("div");
-            topRow.className = "bz-sb-mb-card-top";
-            const pathDiv = document.createElement("div");
-            pathDiv.className = "bz-sb-mb-card-path";
-            pathDiv.textContent = stripMdExt(item.path.replace(/^.*[\\/]/, ""));
-            const scoreDiv = document.createElement("div");
-            scoreDiv.className = "bz-sb-mb-card-score";
-            scoreDiv.textContent = `${Math.round(item.score * 100)}%`;
-            topRow.appendChild(pathDiv);
-            topRow.appendChild(scoreDiv);
-            card.appendChild(topRow);
-            const bar = document.createElement("div");
-            bar.className = "bz-sb-mb-card-bar";
-            const barFill = document.createElement("span");
-            barFill.style.width = `${Math.round(item.score * 100)}%`;
-            bar.appendChild(barFill);
-            card.appendChild(bar);
-            const chunkDiv = document.createElement("div");
-            chunkDiv.className = "bz-sb-mb-card-chunk";
-            card.appendChild(chunkDiv);
-            this.body.appendChild(card);
-            let expanded = false;
-            let rendered = false;
-            card.addEventListener("click", () => {
-              expanded = !expanded;
-              if (expanded && !rendered) {
-                chunkDiv.innerHTML = "";
-                renderMarkdown(chunkDiv, item.chunk, this.app);
-                rendered = true;
-              }
-              chunkDiv.classList.toggle("expanded", expanded);
-            });
-            let holdTimer = null;
-            card.addEventListener(
-              "touchstart",
-              () => {
-                holdTimer = setTimeout(() => {
-                  holdTimer = null;
-                  if (navigator.vibrate) navigator.vibrate(30);
-                  const file = this.app.vault.getAbstractFileByPath(item.path);
-                  if (!file) {
-                    notice("文件不存在");
-                    return;
-                  }
-                  jumpToChunk(file, item.chunk.slice(0, 30).trim(), false);
-                  this.collapse();
-                }, 500);
-              },
-              { passive: true }
+          const stats = { ...computeStats2(this.store.meta), metaBytes, vecBytes };
+          const vecRows = stats.dim && vecBytes > 0 ? this.store.vectors.length / stats.dim : 0;
+          const healthy = vecRows === 0 || vecRows === stats.chunkCount;
+          const fmtBytes = (n) => n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
+          const order = new Map(stats.bySource.map((s, i) => [s.name, i]));
+          const colorOf2 = (name) => sbSourceColor(name, order);
+          const cnt = popup.querySelector("#bz-sb-cnt");
+          if (cnt) cnt.textContent = `${fmtCompact(stats.noteCount)} 篇 · ${fmtCompact(stats.chunkCount)} 段已入脑`;
+          const pill = popup.querySelector("#bz-sb-pill-txt");
+          if (pill) pill.textContent = healthy ? "索引健康" : `索引偏差 ${Math.abs(vecRows - stats.chunkCount)} 行`;
+          (_e = popup.querySelector(".bz-sb-pill-dot")) == null ? void 0 : _e.classList.toggle("bz-sb-pill-dot--warn", !healthy);
+          const cards = popup.querySelector("#bz-sb-cards");
+          if (cards) {
+            cards.innerHTML = panelCardsHtml([
+              { v: fmtCompact(stats.noteCount), k: "笔记", tip: `共 ${stats.noteCount.toLocaleString()} 篇笔记`, acc: true },
+              { v: fmtCompact(stats.chunkCount), k: "段落", tip: `共 ${stats.chunkCount.toLocaleString()} 个向量块`, acc: true },
+              { v: fmtCompact(stats.totalChars), k: "字符", tip: `共 ${stats.totalChars.toLocaleString()} 字` },
+              { v: stats.dim > 0 ? `${stats.dim} 维` : "—", k: "向量维度", tip: `嵌入模型 ${CONFIG2.EMBEDDING_MODEL} · 维度变更需重建索引` },
+              { v: `${stats.avgChunkLen} 字`, k: "平均段长", tip: `平均每篇 ${stats.avgChunksPerNote} 段` },
+              { v: vecBytes ? fmtBytes(metaBytes + vecBytes) : "—", k: "存储占用", tip: `meta ${fmtBytes(metaBytes)} + 向量 ${fmtBytes(vecBytes)}` }
+            ]);
+          }
+          const trend = popup.querySelector("#bz-sb-trend");
+          if (trend) {
+            trend.innerHTML = panelTrendHtml(stats.trend12w);
+            const sum = popup.querySelector("#bz-sb-trend-sum");
+            if (sum) sum.textContent = stats.trend12w.reduce((a, b) => a + b, 0) + " 篇";
+          }
+          this.renderDist();
+          const recentEl = popup.querySelector("#bz-sb-recent");
+          if (recentEl) {
+            recentEl.innerHTML = panelRecentHtml(
+              stats.recent.map((r) => ({
+                path: r.path,
+                name: r.path.split("/").pop() || r.path,
+                chunks: r.chunks,
+                when: formatRelativeTime(r.mtime),
+                color: colorOf2(topLevelName(r.path))
+              }))
             );
-            card.addEventListener("touchend", () => {
-              if (holdTimer) clearTimeout(holdTimer);
-              holdTimer = null;
-            });
-            card.addEventListener("touchmove", () => {
-              if (holdTimer) clearTimeout(holdTimer);
-              holdTimer = null;
-            });
+            const recentN = popup.querySelector("#bz-sb-recent-n");
+            if (recentN) recentN.textContent = `最新 ${stats.recent.length} 条`;
           }
+          const log = popup.querySelector("#bz-sb-log");
+          if (log) {
+            log.innerHTML = panelLogHtml([
+              { text: `上次索引 ${stats.lastIndexedAt ? formatRelativeTime(stats.lastIndexedAt) : "—"}` },
+              { text: healthy ? "索引一致" : `向量 ${Math.round(vecRows)} 行 / 块 ${stats.chunkCount} 个`, warn: !healthy },
+              { text: vecBytes ? `占用 ${fmtBytes(metaBytes + vecBytes)}` : "暂无向量文件" }
+            ]);
+          }
+          mountIcons(popup);
+          void this.loadSummaryAndLinks();
         }
-        /** AI tab：桌面同构重排（issue 251 移动对齐）——标签气泡 + 推荐问法 + 带聚焦态输入行 */
-        renderChatTab() {
-          const CONFIG2 = buildConfig();
-          const chat2 = document.createElement("div");
-          chat2.className = "bz-sb-mb-chat";
-          this.chatMessagesDiv = document.createElement("div");
-          this.chatMessagesDiv.className = "bz-sb-mb-chat-messages bz-sb-scroll-y";
-          chat2.appendChild(this.chatMessagesDiv);
-          const inputArea = document.createElement("div");
-          inputArea.className = "bz-sb-mb-chat-input-area";
-          const inputRow = document.createElement("div");
-          inputRow.className = "bz-sb-mb-chat-input-row";
-          const lens = document.createElement("span");
-          lens.className = "bz-sb-mb-chat-lens";
-          lens.innerHTML = '<i data-lucide="sparkles"></i>';
-          const input = document.createElement("input");
-          input.className = "bz-sb-mb-chat-input";
-          input.type = "text";
-          input.placeholder = "向第二大脑提问，回车发送…";
-          const sendBtn = document.createElement("button");
-          sendBtn.className = "bz-sb-mb-chat-send";
-          sendBtn.setAttribute("aria-label", "发送");
-          sendBtn.title = "发送";
-          sendBtn.innerHTML = '<i data-lucide="send"></i>';
-          inputRow.appendChild(lens);
-          inputRow.appendChild(input);
-          inputRow.appendChild(sendBtn);
-          inputArea.appendChild(inputRow);
-          const chips = document.createElement("div");
-          chips.className = "bz-sb-mb-chat-chips";
-          for (const q2 of CHAT_CHIPS) {
-            const chip = document.createElement("button");
-            chip.className = "bz-sb-mb-chat-chip";
-            chip.textContent = q2;
-            chip.addEventListener("click", () => {
-              if (sendBtn.disabled) return;
-              input.value = q2;
-              void send();
-            });
-            chips.appendChild(chip);
-          }
-          inputArea.appendChild(chips);
-          chat2.appendChild(inputArea);
-          this.body.appendChild(chat2);
-          for (const msg of this.chatHistory) this.appendChatMsg(msg.role, msg.content);
-          if (!this.chatHistory.length) {
-            this.appendChatMsg("assistant", `你好！每次提问会独立检索 ${Object.keys(this.store.notes).length} 篇笔记作答。`);
-          }
-          const send = async () => {
-            const text = input.value.trim();
-            if (!text) return;
-            input.value = "";
-            this.appendChatMsg("user", text);
-            this.chatHistory.push({ role: "user", content: text });
-            void appendChatHistory([{ role: "user", content: text }], this.app).catch(() => {
-            });
-            sendBtn.disabled = true;
-            try {
-              const results = await this.store.searchMobile(text, CONFIG2.CHAT_TOP_K);
-              const ctx = results.length > 0 ? results.map((r) => `[${r.path}] (${Math.round(r.score * 100)}%)
-${r.chunk}`).join("\n\n") : "（未找到相关笔记）";
-              const prompt = `你是知识助手。参考 ${results.length} 条检索结果回答。不相关可忽略。
-
-【参考】
-${ctx}
-
-【问题】
-${text}`;
-              const answer = await AI.ask(prompt);
-              this.appendChatMsg("assistant", answer);
-              this.chatHistory.push({ role: "assistant", content: answer });
-              void appendChatHistory([{ role: "assistant", content: answer }], this.app).catch(() => {
-              });
-              if (this.chatHistory.length > CONFIG2.MAX_HISTORY * 2) {
-                this.chatHistory = this.chatHistory.slice(-CONFIG2.MAX_HISTORY * 2);
-              }
-            } catch (e) {
-              this.appendChatMsg("assistant", "出错了：" + ((e == null ? void 0 : e.message) || e));
-            } finally {
-              sendBtn.disabled = false;
-            }
-          };
-          sendBtn.addEventListener("click", () => void send());
-          input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") void send();
-          });
-          mountIcons(chat2);
+        /** 来源树渲染（renderStats 与展开点击共用；展开集会话内记忆） */
+        renderDist() {
+          const popup = this.popup;
+          const dist = popup == null ? void 0 : popup.querySelector("#bz-sb-dist");
+          if (!popup || !dist) return;
+          const tree = buildSourceTree(this.store.meta);
+          const order = new Map(computeStats2(this.store.meta).bySource.map((s, i) => [s.name, i]));
+          const colorOf2 = (name) => sbSourceColor(name, order);
+          const rootMax = Math.max(1, ...tree.map((n) => n.chunks));
+          dist.innerHTML = panelDistHtml(tree, this.expandedDirs, colorOf2, rootMax);
+          const distN = popup.querySelector("#bz-sb-dist-n");
+          if (distN) distN.textContent = `${tree.length} 个来源`;
+          mountIcons(dist);
         }
-        appendChatMsg(role, content) {
-          if (!this.chatMessagesDiv) return;
-          const div = document.createElement("div");
-          div.className = `bz-sb-mb-chat-msg ${role}`;
-          const who = document.createElement("div");
-          who.className = "bz-sb-mb-chat-who";
-          who.innerHTML = `<i data-lucide="${role === "user" ? "send" : "brain"}"></i>${role === "user" ? "刚问" : "第二大脑"}`;
-          const bubble = document.createElement("div");
-          bubble.className = "bz-sb-mb-chat-bubble";
-          if (role === "assistant") {
-            renderMarkdown(bubble, content, this.app);
-          } else {
-            bubble.textContent = content;
-          }
-          div.appendChild(who);
-          div.appendChild(bubble);
-          this.chatMessagesDiv.appendChild(div);
-          mountIcons(div);
-          this.chatMessagesDiv.scrollTop = this.chatMessagesDiv.scrollHeight;
-        }
-        /** 完全关闭（区别于收起）：清理监听与定时器后移除 DOM */
-        close() {
+        /** AI 库摘要 + 自动建链数（secondbrain.json panel/link 段，异步回填；生成入口已移除，旧值仍可展示） */
+        async loadSummaryAndLinks() {
           var _a2, _b2, _c;
-          (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
-          this.escHandle = null;
-          if (this.evLeaf) {
-            try {
-              this.app.workspace.offref(this.evLeaf);
-            } catch (e) {
+          try {
+            const store2 = await loadStore(this.app);
+            const popup = this.popup;
+            if (!popup || !popup.isConnected) return;
+            const summary = ((_a2 = store2.panel) == null ? void 0 : _a2.summary) || "";
+            const aiCard = popup.querySelector("#bz-sb-ai-card");
+            const aiTxt = popup.querySelector("#bz-sb-ai-txt");
+            if (aiCard) aiCard.style.display = summary ? "" : "none";
+            if (aiTxt && summary) {
+              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store2.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store2.panel.generatedAt) : "");
             }
+            const linkedTotal = Object.keys(((_c = store2.link) == null ? void 0 : _c.state) || {}).length;
+            const log = popup.querySelector("#bz-sb-log");
+            if (log && linkedTotal) {
+              log.insertAdjacentHTML(
+                "beforeend",
+                `<span class="bz-sb-log-sep">·</span>${panelLogHtml([{ text: `自动建链 ${linkedTotal} 条` }])}`
+              );
+            }
+          } catch (e) {
           }
-          document.removeEventListener("selectionchange", this.onSelectionChange);
-          document.removeEventListener("touchmove", this.onTouchMove);
-          document.removeEventListener("touchend", this.onTouchEnd);
-          clearInterval((_b2 = this.cursorPoll) != null ? _b2 : void 0);
-          clearTimeout((_c = this.debounceTimer) != null ? _c : void 0);
-          this.cursorPoll = null;
-          this.debounceTimer = null;
-          this.sheet.classList.remove("bz-sb-mb-open");
-          this.mini.classList.remove("bz-sb-mb-visible");
-          setTimeout(() => {
-            this.sheet.remove();
-            this.mini.remove();
-          }, 300);
         }
       };
     }
   });
 
-  // src/secondbrain/link-agent/data.ts
-  function parseScopeList(raw) {
-    const list = String(raw != null ? raw : "").split(",").map((x) => x.trim()).filter(Boolean);
-    return [...new Set(list)];
+  // src/pomodoro/state.ts
+  function createInitialState() {
+    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
   }
-  function getLinkAgentScopes() {
-    return parseScopeList(tryGetSettings().linkAgentScopes);
+  function resumePhase(state2, now) {
+    return {
+      state: { ...state2, paused: false, pausedBy: void 0, remaining: 0, endTime: now + state2.remaining * 1e3 },
+      event: { type: "started", phase: state2.phase }
+    };
   }
-  function matchesScope(scopes, path) {
-    if (!scopes.length) return false;
-    return scopes.some((dir) => isUnderFolder3(dir, path));
+  function activePhase(phase) {
+    return phase === "idle" ? "focus" : phase;
   }
-  function computeBackfillTargets(allPaths, opts) {
-    const seen = /* @__PURE__ */ new Set();
-    const out = [];
-    for (const p of [...allPaths].sort()) {
-      if (!p.endsWith(".md") || seen.has(p)) continue;
-      seen.add(p);
-      if (!opts.inScope(p) || opts.hasRelated(p) || opts.excluded(p)) continue;
-      out.push(p);
+  function phaseDurationSec(phase, d) {
+    if (phase === "short-break") return d.shortBreakMin * 60;
+    if (phase === "long-break") return d.longBreakMin * 60;
+    return d.workMin * 60;
+  }
+  function breakPhase(count, d) {
+    return count >= d.longBreakInterval ? "long-break" : "short-break";
+  }
+  function startPhase(state2, phase, now, d) {
+    return {
+      state: { ...state2, phase, endTime: now + phaseDurationSec(phase, d) * 1e3, paused: false, pausedBy: void 0, remaining: 0 },
+      event: { type: "started", phase }
+    };
+  }
+  function completePhase(state2, now, d, o) {
+    const phase = state2.phase;
+    const isFocus = phase === "focus";
+    let count = state2.cycleFocusCount;
+    let historyEntry;
+    let longBreak = false;
+    if (isFocus) {
+      count += 1;
+      longBreak = count >= d.longBreakInterval;
+      if (longBreak) count = 0;
+      historyEntry = { ts: now, duration: d.workMin * 60, ...state2.task ? { task: state2.task } : {} };
     }
-    return out;
-  }
-  function isUnderFolder3(folder, path) {
-    return isUnderFolder(folder, path);
-  }
-  function computeHash(content) {
-    let h = 2166136261;
-    for (let i = 0; i < content.length; i++) {
-      h ^= content.charCodeAt(i);
-      h = Math.imul(h, 16777619);
+    let next;
+    let autoStarted = false;
+    if (isFocus) {
+      if (o.autoSkipBreak) {
+        next = "focus";
+        autoStarted = true;
+      } else {
+        next = longBreak ? "long-break" : "short-break";
+        autoStarted = o.autoCycle;
+      }
+    } else {
+      next = "focus";
+      autoStarted = o.autoCycle;
     }
-    return (h >>> 0).toString(16).padStart(8, "0") + ":" + content.length.toString(16);
+    const { task: _settled, ...rest } = state2;
+    const nextState = { ...rest, phase: next, cycleFocusCount: count };
+    const res = autoStarted ? startPhase(nextState, next, now, d) : {
+      state: { ...nextState, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
+      event: { type: "none" }
+    };
+    return {
+      ...res,
+      event: {
+        type: "phase-completed",
+        completedPhase: phase,
+        nextPhase: next,
+        autoStarted,
+        longBreak,
+        ...historyEntry ? { historyEntry } : {}
+      }
+    };
   }
-  function parseRelatedEntries(value) {
-    if (value === null || value === void 0) return [];
-    const raw = Array.isArray(value) ? value : [value];
-    return raw.map((v) => String(v != null ? v : "").trim()).filter((v) => v.length > 0);
-  }
-  function hasRelatedEntries(value) {
-    return parseRelatedEntries(value).length > 0;
-  }
-  function toRelatedEntry(targetPath) {
-    return `[[${stripMdExt(targetPath)}]]`;
-  }
-  function normalizeRelatedEntry(entry) {
-    const m = String(entry != null ? entry : "").match(/\[\[\s*([^\][]+?)\s*(?:#[^\][]*)?(?:\|[^\][]*)?\]\]/);
-    if (!m) return null;
-    const p = stripMdExt(m[1].trim());
-    return p || null;
-  }
-  function mergeRelated(existing, additions, maxLinks = 0) {
-    const have = new Set(existing.map((e) => e.trim()).filter(Boolean));
-    const appended = [];
-    for (const a of additions) {
-      const key = a.trim();
-      if (!key || have.has(key)) continue;
-      have.add(key);
-      appended.push(key);
+  function transition(state2, action, now, d, o) {
+    if (action === "start") {
+      if (state2.paused) return resumePhase(state2, now);
+      if (state2.endTime !== null) return { state: state2, event: { type: "none" } };
+      const phase = activePhase(state2.phase);
+      return startPhase(state2, phase, now, d);
     }
-    let entries = [...existing, ...appended];
-    let added = appended;
-    if (maxLinks > 0 && entries.length > maxLinks) {
-      entries = entries.slice(0, maxLinks);
-      const kept = new Set(entries);
-      added = appended.filter((a) => kept.has(a));
+    if (action === "pause") {
+      if (state2.endTime === null) return { state: state2, event: { type: "none" } };
+      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
+      return {
+        // 手动暂停：清除可能残留的冻结来源标记（pausedBy 只在冻结暂停期间有效）
+        state: { ...state2, paused: true, pausedBy: void 0, remaining: Math.ceil((state2.endTime - now) / 1e3), endTime: null },
+        event: { type: "none" }
+      };
     }
-    return { entries, added };
-  }
-  function planRemovals(entries, isAlive) {
-    const keep = [];
-    const removed = [];
-    for (const e of entries) {
-      const target = normalizeRelatedEntry(e);
-      if (target === null || isAlive(target)) keep.push(e);
-      else removed.push(e);
+    if (action === "resume") {
+      if (!state2.paused) return { state: state2, event: { type: "none" } };
+      return resumePhase(state2, now);
     }
-    return { keep, removed };
+    if (action === "reset") {
+      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
+      const phase = activePhase(state2.phase);
+      return {
+        state: { ...state2, phase, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(phase, d) },
+        event: { type: "none" }
+      };
+    }
+    if (action === "skip") {
+      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
+      const phase = activePhase(state2.phase);
+      let next;
+      if (phase === "focus") next = o.autoSkipBreak ? "focus" : breakPhase(state2.cycleFocusCount, d);
+      else next = "focus";
+      const { task: _dropped, ...rest } = state2;
+      return {
+        state: { ...rest, phase: next, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(next, d) },
+        event: { type: "phase-completed", completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false }
+      };
+    }
+    if (action === "tick") {
+      if (state2.endTime === null || now < state2.endTime) return { state: state2, event: { type: "none" } };
+      return completePhase(state2, now, d, o);
+    }
+    return { state: state2, event: { type: "none" } };
   }
-  async function loadQueue() {
-    const store3 = await loadStore();
-    const data = store3.link.queue;
-    if (!Array.isArray(data)) return [];
-    return data.filter((it) => it && typeof it.path === "string" && it.path.endsWith(".md")).map((it) => ({
-      path: it.path,
-      hash: typeof it.hash === "string" ? it.hash : void 0,
-      queuedAt: typeof it.queuedAt === "string" ? it.queuedAt : void 0
+  function idleState() {
+    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
+  }
+  function recover(state2, history2, now, d, o) {
+    if (state2.endTime === null || now < state2.endTime) return { state: state2, history: history2.slice(), events: [] };
+    return { state: idleState(), history: history2.slice(), events: [] };
+  }
+  var PHASES;
+  var init_state5 = __esm({
+    "src/pomodoro/state.ts"() {
+      PHASES = ["idle", "focus", "short-break", "long-break"];
+    }
+  });
+
+  // src/pomodoro/data.ts
+  function getPomodoroFilePath() {
+    var _a2;
+    return storageFile("pomodoro.json", ((_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath) || "CONFIG/STORAGE");
+  }
+  function defaultPomodoroData() {
+    return { version: 1, state: createInitialState(), history: [] };
+  }
+  function trimHistory(history2, now) {
+    const floor = new Date(now);
+    floor.setHours(0, 0, 0, 0);
+    floor.setDate(floor.getDate() - 6);
+    const t = floor.getTime();
+    return history2.filter((h) => h.ts >= t);
+  }
+  function normalizeData(raw) {
+    const def = defaultPomodoroData();
+    if (!raw || typeof raw !== "object") return def;
+    const state2 = normalizeState(raw.state);
+    const history2 = Array.isArray(raw.history) ? raw.history.filter((h) => h && typeof h.ts === "number" && typeof h.duration === "number").map((h) => ({
+      ts: h.ts,
+      duration: h.duration,
+      ...typeof h.task === "string" && h.task ? { task: h.task } : {}
+    })) : [];
+    return { version: 1, state: state2, history: history2 };
+  }
+  function normalizeState(raw) {
+    const def = createInitialState();
+    if (!raw || typeof raw !== "object") return def;
+    return {
+      phase: PHASES.includes(raw.phase) ? raw.phase : def.phase,
+      endTime: typeof raw.endTime === "number" ? raw.endTime : def.endTime,
+      remaining: typeof raw.remaining === "number" && raw.remaining >= 0 ? raw.remaining : def.remaining,
+      paused: typeof raw.paused === "boolean" ? raw.paused : def.paused,
+      // 冻结来源标记：仅认 'autopause'，旧数据无此字段/非法值 → undefined（手动暂停语义）
+      pausedBy: raw.pausedBy === "autopause" ? "autopause" : void 0,
+      cycleFocusCount: typeof raw.cycleFocusCount === "number" && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
+      // 归属任务标题：仅字符串非空保留（旧数据/非法值 → undefined）
+      task: typeof raw.task === "string" && raw.task ? raw.task : void 0
+    };
+  }
+  var PomodoroDataManager;
+  var init_data8 = __esm({
+    "src/pomodoro/data.ts"() {
+      init_settings_provider();
+      init_storage();
+      init_state5();
+      PomodoroDataManager = class {
+        constructor(app) {
+          this.app = app;
+        }
+        /**
+         * 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件留档 CONFIG/.CORRUPT 后重建默认）。
+         * 读也入 core per-path 串行队列：读是「load → 改 state → save」事务的读半边，
+         * 排在未落盘的写任务之后才能读到新值（读写同队列，消灭「读-写窗口交错」）。
+         */
+        async load() {
+          const raw = await enqueueFileTask(
+            getPomodoroFilePath(),
+            () => jsonFileStore(getPomodoroFilePath(), {
+              defaultValue: () => defaultPomodoroData(),
+              app: this.app
+            }).read()
+          );
+          return normalizeData(raw);
+        }
+        /**
+         * 保存（统一数据读写层：存在 modify / 不存在 create+建目录）。
+         * D3 可靠写契约原语 1 收编：整写入 core per-path 串行队列（键 = pomodoro.json 路径）——
+         * 计时器心跳保存与用户操作保存并发时按序落盘，后写者不再用陈旧基线覆盖先写者；
+         * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
+         */
+        async save(data) {
+          await enqueueFileTask(
+            getPomodoroFilePath(),
+            () => jsonFileStore(getPomodoroFilePath(), { app: this.app }).write(data)
+          );
+        }
+      };
+    }
+  });
+
+  // src/pomodoro/render.ts
+  function normalizeSkinTheme(v) {
+    const cur = String(v != null ? v : "");
+    return POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : DEFAULT_POMODORO_SKIN_THEME;
+  }
+  function skinClassOf(v) {
+    return `pomodoro-skin-${normalizeSkinTheme(v)}`;
+  }
+  function panelShellHtml3() {
+    return `
+      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
+        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
+        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
+      <div id="pomodoro-phase"></div>
+      <div id="pomodoro-task" class="pomodoro-task"></div>
+      <div id="pomodoro-time"></div>
+      <div class="pomodoro-controls">
+        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
+        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
+        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
+      </div>
+      <div class="pomodoro-stats">
+        <div id="pomodoro-today"></div>
+        <div id="pomodoro-week" class="pomodoro-week"></div>
+      </div>`;
+  }
+  function popupShellHtml() {
+    return `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml3()}</div>`;
+  }
+  var POMODORO_SKIN_THEMES, DEFAULT_POMODORO_SKIN_THEME;
+  var init_render13 = __esm({
+    "src/pomodoro/render.ts"() {
+      POMODORO_SKIN_THEMES = [
+        { value: "tomato", label: "番茄" },
+        { value: "ink", label: "墨白" },
+        { value: "grid", label: "方格纸" },
+        { value: "moss", label: "苔原" },
+        { value: "mist", label: "海雾" },
+        { value: "sand", label: "暖沙" },
+        { value: "citrus", label: "蜜柑" },
+        { value: "sakura", label: "樱粉" },
+        { value: "latte", label: "咖啡" },
+        { value: "night", label: "夜航" }
+      ];
+      DEFAULT_POMODORO_SKIN_THEME = "tomato";
+    }
+  });
+
+  // src/pomodoro/sound.ts
+  function playSound(kind, volume = 100) {
+    const w = typeof window !== "undefined" ? window : globalThis;
+    const AC = w.AudioContext || w.webkitAudioContext;
+    if (!AC) return;
+    if (volume <= 0) return;
+    try {
+      const cfg = SOUND_CONFIG[kind];
+      const ctx = new AC();
+      if (ctx.state === "suspended" && typeof ctx.resume === "function") void ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = cfg.freq;
+      const peak = 0.8 * (Math.max(1, Math.min(100, volume)) / 100);
+      const t = ctx.currentTime;
+      gain.gain.setValueAtTime(1e-3, t);
+      gain.gain.exponentialRampToValueAtTime(peak, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(1e-3, t + cfg.dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + cfg.dur + 0.02);
+      const ctxRef = ctx;
+      setTimeout(() => {
+        void ctxRef.close();
+      }, cfg.dur * 1e3 + 300);
+    } catch (e) {
+    }
+  }
+  var SOUND_CONFIG;
+  var init_sound = __esm({
+    "src/pomodoro/sound.ts"() {
+      SOUND_CONFIG = {
+        "focus-start": { freq: 880, dur: 0.25 },
+        "short-break-start": { freq: 523, dur: 0.3 },
+        "long-break-start": { freq: 392, dur: 0.45 },
+        pause: { freq: 440, dur: 0.2 }
+      };
+    }
+  });
+
+  // src/pomodoro/statusbar.ts
+  function syncPomodoroStatusBar(state2, remainSec) {
+    if (!statusEl) return;
+    const running2 = state2.endTime !== null;
+    const paused = !running2 && state2.paused;
+    statusEl.classList.toggle("pomodoro-statusbar-idle", !running2 && !paused);
+    statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
+    statusEl.title = state2.task ? `番茄钟：${state2.task}` : "番茄钟";
+    if (textSpan) {
+      if (running2) {
+        const m = Math.floor(remainSec / 60);
+        const s = remainSec % 60;
+        textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
+      } else if (paused) {
+        textSpan.textContent = "已暂停";
+      } else {
+        textSpan.textContent = "";
+      }
+    }
+  }
+  var statusEl, textSpan;
+  var init_statusbar = __esm({
+    "src/pomodoro/statusbar.ts"() {
+      init_fake_obsidian();
+      init_utils();
+      statusEl = null;
+      textSpan = null;
+    }
+  });
+
+  // src/pomodoro/stats.ts
+  function dayKey(ts) {
+    return localDayKey(ts);
+  }
+  function todayCount(history2, now) {
+    const today = dayKey(now);
+    return history2.filter((h) => dayKey(h.ts) === today).length;
+  }
+  function todayMinutes(history2, now) {
+    const today = dayKey(now);
+    return Math.round(history2.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
+  }
+  function last7Days(history2, now) {
+    const counts = /* @__PURE__ */ new Map();
+    const minutes = /* @__PURE__ */ new Map();
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    for (let i = 6; i >= 0; i--) {
+      const day = new Date(d);
+      day.setDate(day.getDate() - i);
+      const key = dayKey(day.getTime());
+      counts.set(key, 0);
+      minutes.set(key, 0);
+    }
+    for (const h of history2) {
+      const key = dayKey(h.ts);
+      if (counts.has(key)) {
+        counts.set(key, counts.get(key) + 1);
+        minutes.set(key, minutes.get(key) + h.duration / 60);
+      }
+    }
+    return Array.from(counts.entries()).map(([date, count]) => ({
+      date,
+      count,
+      minutes: Math.round(minutes.get(date) || 0)
     }));
   }
-  async function enqueuePaths(paths, hashes) {
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    await mutateStore((s) => {
-      const items = Array.isArray(s.link.queue) ? s.link.queue : [];
-      for (const path of paths) {
-        if (!path || !path.endsWith(".md")) continue;
-        const cur = items.find((i) => i.path === path);
-        const hash = hashes == null ? void 0 : hashes[path];
-        if (cur) {
-          if (hash !== void 0) cur.hash = hash;
-          cur.queuedAt = now;
+  var init_stats3 = __esm({
+    "src/pomodoro/stats.ts"() {
+      init_utils();
+    }
+  });
+
+  // src/pomodoro/config.ts
+  var PRESETS, CUSTOM_PRESET_ID;
+  var init_config4 = __esm({
+    "src/pomodoro/config.ts"() {
+      PRESETS = {
+        classic: { label: "经典标准", workMin: 25, shortBreakMin: 5, longBreakMin: 15 },
+        neuro: { label: "神经专注", workMin: 30, shortBreakMin: 7, longBreakMin: 20 },
+        flow: { label: "深度心流", workMin: 50, shortBreakMin: 10, longBreakMin: 25 },
+        creative: { label: "创意激发", workMin: 40, shortBreakMin: 12, longBreakMin: 20 },
+        beginner: { label: "初学入门", workMin: 15, shortBreakMin: 5, longBreakMin: 12 },
+        study: { label: "高效学习", workMin: 30, shortBreakMin: 5, longBreakMin: 15 },
+        sprint: { label: "敏捷冲刺", workMin: 20, shortBreakMin: 4, longBreakMin: 12 },
+        marathon: { label: "马拉松式", workMin: 45, shortBreakMin: 15, longBreakMin: 30 },
+        recovery: { label: "疲劳恢复", workMin: 20, shortBreakMin: 10, longBreakMin: 20 },
+        intense: { label: "高强度", workMin: 50, shortBreakMin: 5, longBreakMin: 15 },
+        balanced: { label: "平衡模式", workMin: 35, shortBreakMin: 7, longBreakMin: 18 }
+      };
+      CUSTOM_PRESET_ID = "custom";
+    }
+  });
+
+  // src/core/pomodoro-phase.ts
+  function isFocusingPhase(p) {
+    return p === "focusing" || p === "paused";
+  }
+  var init_pomodoro_phase = __esm({
+    "src/core/pomodoro-phase.ts"() {
+    }
+  });
+
+  // src/pomodoro/ui.ts
+  var ui_exports7 = {};
+  __export(ui_exports7, {
+    POMODORO_SKIN_THEMES: () => POMODORO_SKIN_THEMES,
+    closePomodoro: () => closePomodoro,
+    ensurePomodoro: () => ensurePomodoro,
+    isFocusing: () => isFocusing,
+    menuPhase: () => menuPhase,
+    openPomodoro: () => openPomodoro,
+    pomodoroSettingsSchema: () => pomodoroSettingsSchema,
+    skipBreak: () => skipBreak,
+    startFocusForTask: () => startFocusForTask,
+    toggleFocus: () => toggleFocus,
+    togglePause: () => togglePause,
+    unloadPomodoro: () => unloadPomodoro
+  });
+  function applySkinClass() {
+    const popup = document.getElementById("pomodoro-popup");
+    if (!popup) return;
+    const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
+    for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
+    popup.classList.add(want);
+  }
+  function durations() {
+    const s = tryGetSettings();
+    const num = (v, def) => {
+      const n = parseInt(v != null ? v : "", 10);
+      return Number.isFinite(n) && n > 0 ? n : def;
+    };
+    const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
+    return {
+      workMin: preset ? preset.workMin : num(s.pomodoroWorkMin, 25),
+      shortBreakMin: preset ? preset.shortBreakMin : num(s.pomodoroShortBreakMin, 5),
+      longBreakMin: preset ? preset.longBreakMin : num(s.pomodoroLongBreakMin, 15),
+      longBreakInterval: num(s.pomodoroLongBreakInterval, 4)
+    };
+  }
+  function options() {
+    const s = tryGetSettings();
+    return {
+      forceFocus: !!s.pomodoroForceFocus,
+      autoCycle: !!s.pomodoroAutoCycle,
+      autoSkipBreak: !!s.pomodoroAutoSkipBreak
+    };
+  }
+  function phaseLabel(phase) {
+    if (phase === "focus") return "专注";
+    if (phase === "short-break") return "短休息";
+    if (phase === "long-break") return "长休息";
+    return "番茄钟";
+  }
+  function phaseText(phase, count, d) {
+    if (phase === "focus") return `专注 ${count + 1}/${d.longBreakInterval}`;
+    return phaseLabel(phase);
+  }
+  function playPhaseSound(phase) {
+    const s = tryGetSettings();
+    if (s.pomodoroSound !== false) {
+      const kind = phase === "focus" ? "focus-start" : phase === "long-break" ? "long-break-start" : "short-break-start";
+      playSound(kind, pomodoroVolume());
+    }
+  }
+  function notifyPhaseStarted(phase) {
+    const d = durations();
+    if (phase === "focus") {
+      notice("专注开始", "success");
+    } else if (phase === "long-break") {
+      notice(`长休息开始：${d.longBreakMin} 分钟`, "success");
+    } else {
+      notice(`休息开始：${d.shortBreakMin} 分钟`, "success");
+    }
+    playPhaseSound(phase);
+  }
+  function notifyPaused() {
+    notice("已暂停专注", "pause");
+    const s = tryGetSettings();
+    if (s.pomodoroSound !== false) playSound("pause", pomodoroVolume());
+  }
+  function breakLabel(phase, d) {
+    return phase === "long-break" ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
+  }
+  function notifyPhaseComplete(e) {
+    const d = durations();
+    playPhaseSound(e.nextPhase);
+    if (e.autoStarted) {
+      if (e.completedPhase === "focus") {
+        notice(e.nextPhase === "focus" ? "专注完成：开始下一轮专注" : `专注完成：${breakLabel(e.nextPhase, d)}`, "success");
+      } else {
+        notice("休息结束：开始专注", "success");
+      }
+      return;
+    }
+    if (e.completedPhase === "focus") {
+      notify(`专注完成：${breakLabel(e.nextPhase, d)}`, {
+        type: "success",
+        duration: 6e3,
+        action: { label: "开始休息", onClick: () => applyAction("start") }
+      });
+    } else {
+      notify("休息结束", {
+        type: "success",
+        duration: 6e3,
+        action: { label: "开始专注", onClick: () => applyAction("start") }
+      });
+    }
+  }
+  function pomodoroVolume() {
+    const v = tryGetSettings().pomodoroVolume;
+    return typeof v === "number" && v >= 0 ? v : 100;
+  }
+  function remainingSec() {
+    if (state.endTime !== null) return Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
+    if (state.phase === "idle" && state.remaining === 0) return phaseDurationSec("focus", durations());
+    return state.remaining;
+  }
+  function fmt(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${pad2(m)}:${pad2(s)}`;
+  }
+  function renderStats() {
+    const now = Date.now();
+    const todayEl = document.getElementById("pomodoro-today");
+    if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
+    const weekEl = document.getElementById("pomodoro-week");
+    if (!weekEl) return;
+    const days = last7Days(history, now);
+    const key = days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
+    if (key === lastStatsKey) return;
+    lastStatsKey = key;
+    const max = Math.max(1, ...days.map((d) => d.count));
+    weekEl.innerHTML = "";
+    for (const d of days) {
+      const bar = document.createElement("div");
+      bar.className = "pomodoro-stat-day";
+      bar.title = `${d.date}：${d.count} 个 · ${d.minutes} 分钟`;
+      const col = document.createElement("div");
+      col.className = "pomodoro-stat-col";
+      const h = document.createElement("div");
+      h.className = "pomodoro-stat-bar";
+      h.style.height = `${Math.max(2, Math.round(d.count / max * 40))}px`;
+      col.appendChild(h);
+      const label = document.createElement("span");
+      label.className = "pomodoro-stat-label";
+      label.textContent = d.date.slice(8);
+      col.appendChild(label);
+      bar.appendChild(col);
+      weekEl.appendChild(bar);
+    }
+  }
+  function render() {
+    const d = durations();
+    const remain = remainingSec();
+    syncPomodoroStatusBar(state, remain);
+    if (!maskEl) return;
+    const total = phaseDurationSec(state.phase === "idle" ? "focus" : state.phase, d);
+    const C = 2 * Math.PI * 52;
+    const progress = total > 0 ? 1 - remain / total : 1;
+    const circle = document.getElementById("pomodoro-ring-progress");
+    if (circle) {
+      circle.setAttribute("stroke-dasharray", String(C));
+      circle.setAttribute("stroke-dashoffset", String(C * (1 - progress)));
+    }
+    const phaseEl = document.getElementById("pomodoro-phase");
+    if (phaseEl) {
+      const label = phaseLabel(state.phase);
+      if (phaseEl.dataset.label !== label) {
+        phaseEl.dataset.label = label;
+        phaseEl.innerHTML = "";
+        if (state.phase === "idle") {
+          const ic2 = document.createElement("span");
+          ic2.className = "pomodoro-phase-icon";
+          setIcon(ic2, "timer");
+          phaseEl.appendChild(ic2);
+          phaseEl.appendChild(document.createTextNode(label));
         } else {
-          items.push({ path, ...hash !== void 0 ? { hash } : {}, queuedAt: now });
+          phaseEl.textContent = label;
         }
       }
-      s.link.queue = items;
-    });
+    }
+    renderCycleDots(d);
+    renderTaskLine();
+    const timeEl = document.getElementById("pomodoro-time");
+    if (timeEl) timeEl.textContent = fmt(remain);
+    renderStats();
+    updateButtons();
+    applySkinClass();
   }
-  async function dequeuePath(path) {
-    await mutateStore((s) => {
-      const items = Array.isArray(s.link.queue) ? s.link.queue : [];
-      const next = items.filter((i) => i.path !== path);
-      if (next.length !== items.length) s.link.queue = next;
-    });
-  }
-  async function pruneQueueByExists(exists) {
-    let removed = 0;
-    await mutateStore((s) => {
-      const items = Array.isArray(s.link.queue) ? s.link.queue : [];
-      const next = items.filter((i) => exists(i.path));
-      removed = items.length - next.length;
-      if (removed > 0) s.link.queue = next;
-    });
-    return removed;
-  }
-  async function loadLinkState() {
-    const store3 = await loadStore();
-    const data = store3.link.state;
-    if (!data || typeof data !== "object" || Array.isArray(data)) return {};
-    const out = {};
-    for (const [path, entry] of Object.entries(data)) {
-      const e = entry;
-      if (e && typeof e === "object" && typeof e.hash === "string" && e.hash) {
-        out[path] = { hash: e.hash, linkedAt: typeof e.linkedAt === "string" ? e.linkedAt : "" };
+  function renderCycleDots(d) {
+    const cycleEl = document.getElementById("pomodoro-cycle");
+    if (!cycleEl) return;
+    const total = Math.max(1, d.longBreakInterval);
+    if (cycleEl.childElementCount !== total) {
+      cycleEl.innerHTML = "";
+      for (let i = 0; i < total; i++) {
+        const dot = document.createElement("span");
+        dot.className = "pomodoro-cycle-dot";
+        cycleEl.appendChild(dot);
       }
     }
-    return out;
-  }
-  async function upsertLinkState(path, hash) {
-    if (!path || !hash) return;
-    await mutateStore((s) => {
-      s.link.state[path] = { hash, linkedAt: (/* @__PURE__ */ new Date()).toISOString() };
+    Array.from(cycleEl.children).forEach((dot, i) => {
+      dot.className = "pomodoro-cycle-dot" + (i < state.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
     });
   }
-  async function removeLinkState(path) {
-    await mutateStore((s) => {
-      if (path in s.link.state) delete s.link.state[path];
+  function renderTaskLine() {
+    const taskEl = document.getElementById("pomodoro-task");
+    if (!taskEl) return;
+    if (state.task) {
+      if (taskEl.textContent !== state.task) taskEl.textContent = state.task;
+      taskEl.title = state.task;
+    } else {
+      taskEl.textContent = "";
+      taskEl.removeAttribute("title");
+    }
+  }
+  function updateButtons() {
+    const startBtn = document.getElementById("pomodoro-btn-start");
+    if (!startBtn) return;
+    const running2 = state.endTime !== null;
+    startBtn.textContent = running2 ? "暂停" : state.paused ? "继续" : "开始";
+    const locked = options().forceFocus && state.phase === "focus" && (running2 || state.paused);
+    const startLocked = locked && !(state.paused && state.pausedBy === "autopause");
+    startBtn.disabled = startLocked;
+    const resetBtn = document.getElementById("pomodoro-btn-reset");
+    const skipBtn = document.getElementById("pomodoro-btn-skip");
+    if (resetBtn) resetBtn.disabled = locked;
+    if (skipBtn) skipBtn.disabled = locked;
+  }
+  function applyAction(action) {
+    const prev = state;
+    const r = transition(state, action, Date.now(), durations(), options());
+    state = r.state;
+    if (!state.paused) autoPauseMain = false;
+    if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
+    if (r.event.type === "phase-completed") {
+      if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
+      if (action === "tick") notifyPhaseComplete(r.event);
+      if (r.event.completedPhase === "focus" && r.event.historyEntry) {
+        emitDomainEvent("pomodoro", { kind: "focus-done", minutes: durations().workMin });
+      }
+    }
+    if (action === "pause" && state.paused) notifyPaused();
+    if (r.event.type !== "none" || action === "pause" && state.paused || action === "reset" && r.state !== prev) void save();
+    ensureTick();
+    render();
+  }
+  function onTick() {
+    applyAction("tick");
+  }
+  function autoPauseEnabled() {
+    return tryGetSettings().pomodoroAutoPauseOnHide !== false;
+  }
+  function freezeRunning(s, now) {
+    if (s.endTime === null || s.paused) return s;
+    return {
+      ...s,
+      paused: true,
+      pausedBy: "autopause",
+      remaining: Math.max(0, Math.ceil((s.endTime - now) / 1e3)),
+      endTime: null
+    };
+  }
+  function unfreezeRunning(s, now) {
+    if (!s.paused) return s;
+    return { ...s, paused: false, pausedBy: void 0, remaining: 0, endTime: now + s.remaining * 1e3 };
+  }
+  function pauseOnHidden() {
+    if (!autoPauseEnabled()) return;
+    const now = Date.now();
+    if (state.endTime !== null && !state.paused) {
+      state = freezeRunning(state, now);
+      autoPauseMain = true;
+    }
+    if (autoPauseMain) {
+      void save();
+      render();
+    }
+  }
+  function resumeOnVisible() {
+    const now = Date.now();
+    if (autoPauseMain && state.paused) {
+      state = unfreezeRunning(state, now);
+      autoPauseMain = false;
+      void save();
+      render();
+      return;
+    }
+    render();
+  }
+  function registerVisibilityListener() {
+    if (visibilityHandler) return;
+    visibilityHandler = () => {
+      if (document.hidden) pauseOnHidden();
+      else resumeOnVisible();
+    };
+    document.addEventListener("visibilitychange", visibilityHandler);
+  }
+  function unregisterVisibilityListener() {
+    if (visibilityHandler) {
+      document.removeEventListener("visibilitychange", visibilityHandler);
+      visibilityHandler = null;
+    }
+  }
+  function ensureTick() {
+    const needsTick = state.endTime !== null;
+    if (needsTick && timerId === null) {
+      timerId = window.setInterval(onTick, 1e3);
+    } else if (!needsTick && timerId !== null) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+  }
+  async function save() {
+    history = trimHistory(history, Date.now());
+    if (dataManager2) await dataManager2.save({ version: 1, state, history });
+  }
+  async function initData() {
+    const data = await dataManager2.load();
+    const r = recover(data.state, data.history, Date.now(), durations(), options());
+    state = r.state;
+    history = trimHistory(r.history, Date.now());
+    const mainChanged = data.state.endTime !== null && r.state.endTime === null;
+    if (mainChanged) await dataManager2.save({ version: 1, state, history });
+    loaded2 = true;
+  }
+  function pomodoroSettingsSchema() {
+    const soundToggle = {
+      get: () => tryGetSettings().pomodoroSound !== false,
+      set: (v) => {
+        getSettings().pomodoroSound = v;
+      },
+      save: () => saveSettings()
+    };
+    const autoPauseToggle = {
+      get: () => tryGetSettings().pomodoroAutoPauseOnHide !== false,
+      set: (v) => {
+        getSettings().pomodoroAutoPauseOnHide = v;
+      },
+      save: () => saveSettings()
+    };
+    return {
+      groups: [
+        {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            {
+              type: "choiceCards",
+              name: "面板布局",
+              binding: { key: "pomodoroSkin" },
+              options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }],
+              // 配套回落（issue 246 a2 口径：不建 layoutPairMap）：换布局后若当前主题不属于
+              // 新布局的配套（layout 不符）→ 回落第一个适配主题（无适配主题则兜底第一项），
+              // 防「布局换了主题还挂旧皮」
+              onChange: () => {
+                var _a2, _b2;
+                const s = tryGetSettings();
+                const cur = String((_a2 = s.pomodoroSkinTheme) != null ? _a2 : "");
+                const fit = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
+                if (!fit.some((o) => o.value === cur)) {
+                  s.pomodoroSkinTheme = ((_b2 = fit[0]) != null ? _b2 : SKIN_THEME_OPTIONS[0]).value;
+                  saveSettings();
+                }
+                render();
+              }
+            },
+            // 面板主题：10 套皮（清单单源 = render.ts POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）；
+            // onChange 驱动 render() 重挂皮肤类——设置面板关着弹窗换肤也要即时生效（评审 c1）
+            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: SKIN_THEME_OPTIONS, onChange: () => render() }
+          ]
+        },
+        {
+          icon: "timer",
+          name: "时间方案",
+          rows: [
+            {
+              type: "select",
+              name: "预设方案",
+              desc: "选择现成的工作与休息时长组合",
+              binding: { key: "pomodoroPreset" },
+              options: [
+                ...Object.entries(PRESETS).map(([id, p]) => ({
+                  value: id,
+                  label: `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`
+                })),
+                { value: CUSTOM_PRESET_ID, label: "自定义" }
+              ],
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "工作时长",
+              desc: "自定义方案的工作阶段分钟数",
+              binding: numStrBinding("pomodoroWorkMin", 25),
+              min: 1,
+              max: 120,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "短休息时长",
+              desc: "自定义方案的短休息分钟数",
+              binding: numStrBinding("pomodoroShortBreakMin", 5),
+              min: 1,
+              max: 60,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "长休息时长",
+              desc: "自定义方案的长休息分钟数",
+              binding: numStrBinding("pomodoroLongBreakMin", 15),
+              min: 1,
+              max: 60,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            { type: "number", name: "长休息间隔", desc: "每隔几个专注进入一次长休息", binding: numStrBinding("pomodoroLongBreakInterval", 4), min: 1, max: 20, step: 1, onChange: () => render() }
+          ]
+        },
+        {
+          icon: "sliders-horizontal",
+          name: "行为",
+          rows: [
+            { type: "toggle", name: "强制专注模式", desc: "专注进行中无法暂停跳过或重置", binding: { key: "pomodoroForceFocus" }, onChange: () => render() },
+            { type: "toggle", name: "自动循环", desc: "阶段结束后自动开始下一阶段", binding: { key: "pomodoroAutoCycle" }, onChange: () => render() },
+            { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
+            { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
+            { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
+            // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
+            {
+              type: "slider",
+              name: "提示音音量",
+              desc: "提示音大小，默认最大",
+              binding: { get: () => {
+                var _a2;
+                return (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100;
+              }, set: (v) => {
+                getSettings().pomodoroVolume = v;
+              }, save: () => saveSettings() },
+              min: 0,
+              max: 100,
+              step: 5,
+              actions: [{ text: "试听", onClick: () => {
+                var _a2;
+                return playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
+              } }]
+            },
+            {
+              type: "select",
+              name: "打开时恢复方式",
+              desc: "启动时正在倒计时，选择弹窗提醒或后台继续",
+              binding: { key: "pomodoroRestoreMode" },
+              options: [
+                { value: "background", label: "后台继续" },
+                { value: "popup", label: "自动弹窗" }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+  }
+  function bindEvents() {
+    const startBtn = document.getElementById("pomodoro-btn-start");
+    startBtn.addEventListener("click", () => applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start"));
+    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => applyAction("reset"));
+    document.getElementById("pomodoro-btn-skip").addEventListener("click", () => applyAction("skip"));
+    const popup = document.getElementById("pomodoro-popup");
+    popup.addEventListener("keydown", (e) => {
+      if (e.key !== " ") return;
+      const t = e.target;
+      const tag = t.tagName;
+      if (tag === "BUTTON" || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) return;
+      e.preventDefault();
+      applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start");
     });
   }
-  function parseJudgeOutput(text, maxId) {
-    if (!text) return [];
-    let body = String(text).trim();
-    const fence = body.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    if (fence) body = fence[1].trim();
-    const arrMatch = body.match(/\[[\s\S]*\]/);
-    if (!arrMatch) return [];
-    let parsed;
-    try {
-      parsed = JSON.parse(arrMatch[0]);
-    } catch (e) {
-      return [];
-    }
-    if (!Array.isArray(parsed)) return [];
-    const out = [];
-    const seen = /* @__PURE__ */ new Set();
-    for (const item of parsed) {
-      if (!item || typeof item !== "object") continue;
-      const rec = item;
-      const id = rec.id;
-      const reason = rec.reason;
-      if (typeof id !== "number" || !Number.isInteger(id) || id < 1 || id > maxId) continue;
-      if (typeof reason !== "string" || !reason.trim()) continue;
-      if (seen.has(id)) continue;
-      seen.add(id);
-      out.push({ id, reason: reason.trim() });
-    }
-    return out;
+  function buildDOM() {
+    var _a2;
+    const mask = document.createElement("div");
+    mask.id = "pomodoro-mask";
+    mask.innerHTML = popupShellHtml();
+    mask.style.zIndex = String(allocZ());
+    document.body.appendChild(mask);
+    maskEl = mask;
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) closePomodoro();
+    });
+    escHandle3 = escManager.register("pomodoro", {
+      isVisible: () => maskEl !== null,
+      close: closePomodoro
+    });
+    bindEvents();
+    render();
+    (_a2 = document.getElementById("pomodoro-popup")) == null ? void 0 : _a2.focus();
   }
-  var init_data8 = __esm({
-    "src/secondbrain/link-agent/data.ts"() {
-      init_utils();
-      init_store_file();
+  function initDataOnce() {
+    if (loaded2) return Promise.resolve();
+    initInflight != null ? initInflight : initInflight = initData().finally(() => {
+      initInflight = null;
+    });
+    return initInflight;
+  }
+  async function openPomodoro(app) {
+    appRef = app;
+    if (!dataManager2) dataManager2 = new PomodoroDataManager(app);
+    if (!maskEl) {
+      openInflight != null ? openInflight : openInflight = (async () => {
+        await initDataOnce();
+        buildDOM();
+        ensureTick();
+      })();
+      try {
+        await openInflight;
+      } finally {
+        openInflight = null;
+      }
+    }
+    const popupEl2 = maskEl ? maskEl.querySelector("#pomodoro-popup") : null;
+    popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
+  }
+  async function ensurePomodoro(app) {
+    appRef = app;
+    if (!dataManager2) dataManager2 = new PomodoroDataManager(app);
+    registerVisibilityListener();
+    if (!loaded2) {
+      await initDataOnce();
+      if (state.endTime !== null) {
+        ensureTick();
+        render();
+        const remainSec = Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
+        notice(`番茄钟继续：${phaseText(state.phase, state.cycleFocusCount, durations())}，还剩 ${fmt(remainSec)}`);
+        const s = tryGetSettings();
+        if (s.pomodoroRestoreMode === "popup") void openPomodoro(app);
+      }
+    }
+  }
+  function closePomodoro() {
+    if (maskEl) {
+      maskEl.remove();
+      maskEl = null;
+    }
+    if (escHandle3) {
+      escHandle3.unregister();
+      escHandle3 = null;
+    }
+  }
+  async function startFocusForTask(app, taskTitle) {
+    await ensurePomodoro(app);
+    const o = options();
+    const d = durations();
+    if (state.phase === "short-break" || state.phase === "long-break") {
+      state = transition(state, "skip", Date.now(), d, o).state;
+      void save();
+      render();
+    }
+    if (state.endTime !== null) {
+      notice("已有专注计时中，本次不重复开始", "warning");
+      return;
+    }
+    if (o.forceFocus && state.paused && state.pausedBy !== "autopause") {
+      notice("强制专注模式暂停中，请先在番茄钟恢复", "warning");
+      return;
+    }
+    state = { ...state, task: taskTitle };
+    applyAction("start");
+  }
+  function isFocusing() {
+    return isFocusingPhase(menuPhase());
+  }
+  async function toggleFocus(app) {
+    await ensurePomodoro(app);
+    if (isFocusing()) {
+      const before = state;
+      applyAction("reset");
+      if (state === before) notice("强制专注模式中，请先在番茄钟面板操作", "warning");
+      else notice("专注已停止");
+      return;
+    }
+    if (state.phase === "short-break" || state.phase === "long-break") {
+      state = transition(state, "skip", Date.now(), durations(), options()).state;
+      void save();
+      render();
+    }
+    applyAction("start");
+  }
+  function menuPhase() {
+    if (state.phase === "short-break" || state.phase === "long-break") return "break";
+    if (state.phase !== "focus") return "idle";
+    if (state.paused) return "paused";
+    return state.endTime !== null ? "focusing" : "idle";
+  }
+  async function skipBreak(app) {
+    await ensurePomodoro(app);
+    if (state.phase !== "short-break" && state.phase !== "long-break") {
+      notice("当前不在休息阶段", "warning");
+      return;
+    }
+    state = transition(state, "skip", Date.now(), durations(), options()).state;
+    void save();
+    render();
+    applyAction("start");
+  }
+  async function togglePause(app) {
+    await ensurePomodoro(app);
+    if (state.endTime === null && !state.paused) {
+      notice("当前没有进行中的计时", "warning");
+      return;
+    }
+    applyAction(state.paused ? "resume" : "pause");
+  }
+  function unloadPomodoro() {
+    if (timerId !== null) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+    unregisterVisibilityListener();
+    autoPauseMain = false;
+    openInflight = null;
+    initInflight = null;
+    closePomodoro();
+    state = createInitialState();
+    history = [];
+    lastStatsKey = "";
+    dataManager2 = null;
+    appRef = null;
+    loaded2 = false;
+  }
+  var dataManager2, state, history, loaded2, maskEl, escHandle3, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var init_ui10 = __esm({
+    "src/pomodoro/ui.ts"() {
+      init_fake_obsidian();
+      init_esc_manager();
+      init_z_order();
       init_settings_provider();
+      init_notice();
+      init_settings_common();
+      init_data8();
+      init_render13();
+      init_render13();
+      init_sound();
+      init_statusbar();
+      init_stats3();
+      init_config4();
+      init_state5();
+      init_pomodoro_phase();
+      init_utils();
+      init_domain_bus();
+      dataManager2 = null;
+      state = createInitialState();
+      history = [];
+      loaded2 = false;
+      maskEl = null;
+      escHandle3 = null;
+      timerId = null;
+      appRef = null;
+      autoPauseMain = false;
+      visibilityHandler = null;
+      lastStatsKey = "";
+      SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
+      initInflight = null;
+      openInflight = null;
     }
   });
 
@@ -32858,7 +31776,7 @@ ${text}`;
           return empty;
         }
         esc(s) {
-          return escapeHtml2(String(s != null ? s : ""));
+          return escapeHtml(String(s != null ? s : ""));
         }
       };
       ICON_PATHS = {
@@ -33059,10 +31977,10 @@ ${text}`;
     const recentRows = recent2.length ? recent2.map((r) => {
       const color = r.kind === "note" ? ASSET_COLOR.note : ASSET_COLOR.diary;
       const iconName = r.kind === "note" ? "file-lock" : "book-lock";
-      return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
+      return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml(r.id)}"` : ""}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
-            <div class="mid"><div class="a">${escapeHtml2(r.title)}</div><div class="b">${escapeHtml2(r.sub)}</div></div>
-            <span class="tm">${escapeHtml2(r.time)}</span></div>`;
+            <div class="mid"><div class="a">${escapeHtml(r.title)}</div><div class="b">${escapeHtml(r.sub)}</div></div>
+            <span class="tm">${escapeHtml(r.time)}</span></div>`;
     }).join("") : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc("lock", 28) + '</span><div class="bz-empty-title">还没有动态</div><div class="bz-empty-desc">笔记或日记入库后，最近动态在这里显示</div></div>';
     return `
   <div class="bz-vault-hero">
@@ -33106,19 +32024,19 @@ ${text}`;
   function noteRowHTML(note, kind, active2) {
     const color = ASSET_COLOR[kind];
     const iconName = kind === "note" ? "file-lock" : "book-lock";
-    const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml2(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
+    const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
     return `
-    <div class="bz-vault-row ${active2 ? "on" : ""}" data-noteid="${escapeHtml2(note.id)}" data-kind="${kind}">
+    <div class="bz-vault-row ${active2 ? "on" : ""}" data-noteid="${escapeHtml(note.id)}" data-kind="${kind}">
       <span class="av" style="background:${color}">${vIc(iconName, 16)}</span>
-      <div class="mid"><div class="t1">${escapeHtml2(note.title)}</div><div class="t2">${sub}</div></div>
-      <span class="tm">${escapeHtml2(formatRelativeTime(note.createdAt))}</span>
+      <div class="mid"><div class="t1">${escapeHtml(note.title)}</div><div class="t2">${sub}</div></div>
+      <span class="tm">${escapeHtml(formatRelativeTime(note.createdAt))}</span>
     </div>`;
   }
   function noteDetailHTML(note, kind, plainPreview) {
     const color = ASSET_COLOR[kind];
     const iconName = kind === "note" ? "file-lock" : "book-lock";
-    const attLine = note.attachments.length ? `<span class="val" title="${escapeHtml2(note.attachments.map((a) => a.path.split("/").pop() || a.path).join("、"))}">${note.attachments.length} 个</span>` : '<span class="val">无附件</span>';
-    const pathLine = kind === "note" ? `${escapeHtml2(note.path)} · 已移出` : `${escapeHtml2(note.path)} · 已还原该段`;
+    const attLine = note.attachments.length ? `<span class="val" title="${escapeHtml(note.attachments.map((a) => a.path.split("/").pop() || a.path).join("、"))}">${note.attachments.length} 个</span>` : '<span class="val">无附件</span>';
+    const pathLine = kind === "note" ? `${escapeHtml(note.path)} · 已移出` : `${escapeHtml(note.path)} · 已还原该段`;
     const created = new Date(note.createdAt).toLocaleString("zh-CN", { hour12: false });
     const actionBtns = kind === "note" ? `<button class="bbtn teal" data-detail="preview">${vIc("eye", 14)} 解密预览</button>
          <button class="bbtn" data-detail="restore">${vIc("download", 14)} 取出还原</button>
@@ -33128,13 +32046,13 @@ ${text}`;
     return `
     <div class="bz-vault-dhead">
       <span class="big" style="background:${color}">${vIc(iconName, 21)}</span>
-      <div class="ttl"><h2>${escapeHtml2(note.title)}</h2><div class="url">${pathLine}</div></div>
+      <div class="ttl"><h2>${escapeHtml(note.title)}</h2><div class="url">${pathLine}</div></div>
     </div>
     <div class="bz-vault-dcontent">
       ${kind === "note" ? `<div class="field"><div class="lab">附件镜像</div><div class="valrow">${attLine}</div></div>
-           <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml2(created)}</span></div></div>
-           <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>` : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml2(plainPreview).replace(/\n/g, "<br>") : "（未解密预览）"}</div></div>
-           <div class="field"><div class="lab">加密于</div><div class="valrow"><span class="val">${escapeHtml2(created)}</span></div></div>`}
+           <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>
+           <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>` : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml(plainPreview).replace(/\n/g, "<br>") : "（未解密预览）"}</div></div>
+           <div class="field"><div class="lab">加密于</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>`}
       <div class="bigbtns">${actionBtns}</div>
     </div>`;
   }
@@ -33335,8 +32253,8 @@ ${text}`;
   });
 
   // src/encrypt/ui.ts
-  var ui_exports7 = {};
-  __export(ui_exports7, {
+  var ui_exports8 = {};
+  __export(ui_exports8, {
     DEFAULT_PW_CHARSET: () => DEFAULT_PW_CHARSET,
     EncryptAppController: () => EncryptAppController,
     LOCK_KIND_META: () => LOCK_KIND_META,
@@ -33473,7 +32391,7 @@ ${text}`;
   }
   function mediaHtml(a, dataUrl) {
     if (!a) return "";
-    const alt = escapeHtml2(a.path || "");
+    const alt = escapeHtml(a.path || "");
     const key = encodeURIComponent(a.path);
     const kindLabel = a.kind === "video" ? "视频" : "图";
     let inner;
@@ -33528,6 +32446,22 @@ ${text}`;
           ]
         },
         {
+          icon: "folder-open",
+          // 2026-09-12：组名「存储」→「目录」并提前到「安全」前（全域路径组统一范式：外观 → 目录 → 行为）
+          name: "目录",
+          rows: [
+            // ticket 128：保险库根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
+            {
+              type: "path",
+              mode: "single",
+              name: "保险库根文件夹",
+              desc: "加密文件的存放位置",
+              binding: { key: "encryptRoot" },
+              onCommit: warnReload
+            }
+          ]
+        },
+        {
           icon: "shield",
           name: "安全",
           rows: [
@@ -33551,21 +32485,6 @@ ${text}`;
           ]
         },
         {
-          icon: "folder-open",
-          name: "存储",
-          rows: [
-            // ticket 128：保险库根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
-            {
-              type: "path",
-              mode: "single",
-              name: "保险库根目录",
-              desc: "加密文件的存放位置",
-              binding: { key: "encryptRoot" },
-              onCommit: warnReload
-            }
-          ]
-        },
-        {
           icon: "image",
           name: "预览",
           rows: [
@@ -33579,7 +32498,7 @@ ${text}`;
     };
   }
   var LOCK_KIND_META, lastVisitedAsset, _UIManager, UIManager3, _EncryptAppController, EncryptAppController;
-  var init_ui10 = __esm({
+  var init_ui11 = __esm({
     "src/encrypt/ui.ts"() {
       init_fake_obsidian();
       init_notice();
@@ -34918,10 +33837,10 @@ ${text}`;
           mask.style.display = "flex";
           mask.innerHTML = `
       <div class="bz-vault-dlg">
-        <h3>编辑平台 · ${escapeHtml2(platform)}</h3>
+        <h3>编辑平台 · ${escapeHtml(platform)}</h3>
         <div class="sub">改名/改链接将应用到该平台全部账号</div>
-        <label>平台名 *</label><input data-pf="platform" value="${escapeHtml2(platform === "(无平台)" ? "" : platform)}">
-        <label>链接（可选）</label><input data-pf="url" value="${escapeHtml2((d == null ? void 0 : d.url) || "")}">
+        <label>平台名 *</label><input data-pf="platform" value="${escapeHtml(platform === "(无平台)" ? "" : platform)}">
+        <label>链接（可选）</label><input data-pf="url" value="${escapeHtml((d == null ? void 0 : d.url) || "")}">
         <div class="err" data-pf-err></div>
         <div class="btns"><button class="cancel" data-pf-act="cancel">取消</button><button class="save" data-pf-act="save">保存</button></div>
       </div>`;
@@ -35167,14 +34086,14 @@ ${text}`;
           if (kind === "diary") {
             void this.dataManager.decryptNoteBody(note).then((t) => {
               const pre = body.querySelector(".note.pre");
-              if (pre && t !== null) pre.innerHTML = escapeHtml2(t).replace(/\n/g, "<br>");
+              if (pre && t !== null) pre.innerHTML = escapeHtml(t).replace(/\n/g, "<br>");
             }).catch(() => {
             });
           }
         }
         openPwMobPage(p) {
           var _a2, _b2;
-          const { page } = this.createMobPage(escapeHtml2(p.platform));
+          const { page } = this.createMobPage(escapeHtml(p.platform));
           this.pwView.renderMobPlatformPage(page.querySelector(".body"), p, this.pwState);
           (_a2 = page.querySelector("[data-mob-back]")) == null ? void 0 : _a2.addEventListener("click", () => page.remove());
           (_b2 = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b2.addEventListener("click", () => this.pwView.openPlatformSheet(p.platform));
@@ -35182,7 +34101,7 @@ ${text}`;
         }
         openPwAccountPage(d, st) {
           var _a2, _b2;
-          const { page, body } = this.createMobPage(escapeHtml2(d.platform));
+          const { page, body } = this.createMobPage(escapeHtml(d.platform));
           this.pwView.renderDeskDetail(body, { ...st, selPlatform: d.platform, selAccount: d.id });
           (_a2 = page.querySelector("[data-mob-back]")) == null ? void 0 : _a2.addEventListener("click", () => page.remove());
           (_b2 = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b2.addEventListener("click", () => this.pwView.openAccountSheet(d));
@@ -35523,7 +34442,7 @@ ${text}`;
             } else if (missing) {
               const im = document.createElement("img");
               im.className = "bz-encrypt-preview-media";
-              im.alt = escapeHtml2(a.path || "");
+              im.alt = escapeHtml(a.path || "");
               im.src = url;
               missing.replaceWith(im);
             }
@@ -35796,2967 +34715,6 @@ ${text}`;
     }
   });
 
-  // src/encrypt/index.ts
-  var encrypt_exports = {};
-  __export(encrypt_exports, {
-    copyVaultPassword: () => copyVaultPassword,
-    encryptCurrentNote: () => encryptCurrentNote,
-    ensureEncrypt: () => ensureEncrypt,
-    ensureSafeUnlocked: () => ensureSafeUnlocked,
-    getSafeManager: () => getSafeManager,
-    lockEncrypt: () => lockEncrypt,
-    lockSafe: () => lockSafe,
-    mountEncryptStatusBar: () => mountEncryptStatusBar,
-    openEncrypt: () => openEncrypt,
-    unloadEncrypt: () => unloadEncrypt,
-    unmountEncryptStatusBar: () => unmountEncryptStatusBar
-  });
-  function getController() {
-    if (!controller) {
-      const s = getSettings();
-      const config = {
-        root: (s.encryptRoot || "CONFIG/.ENCRYPT").replace(/\/+$/, ""),
-        previewEnabled: s.encryptPreviewEnabled !== false,
-        previewSize: parseInt(s.encryptPreviewSize) || 384,
-        previewQuality: parseFloat(s.encryptPreviewQuality) || 0.5,
-        autoLoadOriginal: !!s.encryptAutoLoadOriginal,
-        securityMode: !!s.encryptSecurityMode,
-        // ADR-0085：密码资产并入保险库；生成器沿用全局键（旧密码本同源）
-        pwCharset: s.passwordCharset || DEFAULT_PW_CHARSET,
-        pwLength: String(parseInt(s.passwordLength) || 16)
-      };
-      controller = EncryptAppController.getInstance(config);
-    }
-    return controller;
-  }
-  async function ensureEncrypt(app) {
-    if (initialized5) return;
-    initialized5 = true;
-    await getController().init();
-  }
-  function statusbarHtml2(unlocked) {
-    return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
-  }
-  function mountEncryptStatusBar(container) {
-    if (statusBarEl) return;
-    const el = document.createElement("span");
-    el.className = "bz-encrypt-statusbar";
-    el.title = "保险库：点击打开";
-    el.innerHTML = statusbarHtml2(false);
-    el.addEventListener("click", () => openEncrypt(getApp()));
-    container.appendChild(el);
-    statusBarEl = el;
-    void ensureEncrypt(getApp()).then(() => getController().attachStatusBar(el));
-  }
-  function unmountEncryptStatusBar() {
-    if (statusBarEl) {
-      statusBarEl.remove();
-      statusBarEl = null;
-    }
-  }
-  function openEncrypt(app) {
-    void ensureEncrypt(app).then(() => getController().openManager());
-  }
-  function encryptCurrentNote(app) {
-    void ensureEncrypt(app).then(() => getController().lockCurrentNote());
-  }
-  function copyVaultPassword(app) {
-    void ensureEncrypt(app).then(() => getController().quickCopyPassword());
-  }
-  function getSafeManager() {
-    return getController().dataManager;
-  }
-  async function lockSafe(app) {
-    await ensureEncrypt(app);
-    if (!getSafeManager().unlocked) return false;
-    getController().uiManager.lockNow(true);
-    return true;
-  }
-  async function lockEncrypt(app) {
-    const ok = await lockSafe(app);
-    if (ok) notice("保险库已锁定", "success");
-    else notice("保险库本来就是锁着的", "warning");
-  }
-  async function ensureSafeUnlocked(kind = "vault") {
-    const controller2 = getController();
-    if (controller2.dataManager.unlocked) return true;
-    const ok = await controller2.uiManager.showPasswordDialog(kind);
-    return ok;
-  }
-  function unloadEncrypt() {
-    if (controller) controller.cleanup();
-    controller = null;
-    initialized5 = false;
-  }
-  var initialized5, controller, statusBarEl;
-  var init_encrypt = __esm({
-    "src/encrypt/index.ts"() {
-      init_settings_provider();
-      init_app();
-      init_notice();
-      init_ui10();
-      init_vault_assets_view();
-      initialized5 = false;
-      controller = null;
-      statusBarEl = null;
-    }
-  });
-
-  // src/secondbrain/link-agent/pipeline.ts
-  function settingNumber(v, fallback) {
-    const n = Number(v);
-    return Number.isFinite(n) && n >= 0 ? n : fallback;
-  }
-  function boolSetting(v, fallback) {
-    return v === void 0 || v === null ? fallback : v === true;
-  }
-  function bodyExcerpt(content, maxLen) {
-    const body = content.replace(/^---\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/, "");
-    return body.replace(/\s+/g, " ").trim().slice(0, maxLen);
-  }
-  async function probeEmbeddingReachable(baseUrl) {
-    const cfg = buildConfig();
-    const url = baseUrl || (IS_MOBILE ? cfg.OLLAMA_REMOTE_URL || cfg.OLLAMA_URL : cfg.OLLAMA_URL);
-    if (!url) return false;
-    const controller2 = new AbortController();
-    const timer = setTimeout(() => controller2.abort(), LINK_PROBE_TIMEOUT_MS);
-    try {
-      const resp = await fetch(`${url.replace(/\/+$/, "")}/api/tags`, { method: "GET", signal: controller2.signal });
-      return resp.ok;
-    } catch (e) {
-      return false;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  function encryptRoot() {
-    const s = tryGetSettings();
-    return String(s.encryptRoot || "CONFIG/.ENCRYPT").replace(/\/+$/, "");
-  }
-  function isEncryptLockedPath(app, path) {
-    return isUnderFolder3(encryptRoot(), path);
-  }
-  var LINK_PROBE_TIMEOUT_MS, LINK_BATCH_DELAY_MS, LINK_BATCH_NOTICE_KEY, LINK_ERROR_NOTICE_KEY, LINK_NOTE_NOW_NOTICE_KEY, JUDGE_PROMPT_PREFIX, CANDIDATE_POOL_MIN, LINK_QUERY_MAX_CHARS, LinkAgent;
-  var init_pipeline = __esm({
-    "src/secondbrain/link-agent/pipeline.ts"() {
-      init_utils();
-      init_notice();
-      init_settings_provider();
-      init_config3();
-      init_ai3();
-      init_data8();
-      LINK_PROBE_TIMEOUT_MS = 1500;
-      LINK_BATCH_DELAY_MS = 6e4;
-      LINK_BATCH_NOTICE_KEY = "bz-sb-link-agent-batch";
-      LINK_ERROR_NOTICE_KEY = "bz-sb-link-agent-error";
-      LINK_NOTE_NOW_NOTICE_KEY = "bz-sb-link-agent-note";
-      JUDGE_PROMPT_PREFIX = [
-        "你是笔记库的双链裁判。给定一篇新笔记的档案卡和若干候选笔记的档案卡，",
-        "逐一判断候选与新笔记是否存在实质的知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。",
-        "标准：只链实质关联，存疑不链；宁缺勿滥。",
-        '输出要求：严格 JSON 数组 [{"id":<候选编号>,"reason":"一句话理由"}]，按关联强度降序；无关联输出 []；不要输出 JSON 以外的任何文字。'
-      ].join("");
-      CANDIDATE_POOL_MIN = 24;
-      LINK_QUERY_MAX_CHARS = 8e3;
-      LinkAgent = class {
-        constructor(deps) {
-          /**
-           * 批次串行锁（ticket 115）：启停补链、监听批次共用同一 agent 实例时，
-           * 批次级管线（refresh + 向量检索 + AI 裁判）只允许一端执行，其余排队串行——
-           * 避免并发 refresh 争抢 embedding 与裁判请求交错（store.refresh 自带并发去重仍不保证整体串行）。
-           */
-          this.serialChain = Promise.resolve();
-          this.app = deps.app;
-          this.store = deps.store;
-          this.probeFn = deps.probe || (() => probeEmbeddingReachable());
-        }
-        get maxTopK() {
-          const s = tryGetSettings();
-          return settingNumber(s.linkAgentTopK, 8) || 8;
-        }
-        get maxLinks() {
-          const s = tryGetSettings();
-          return settingNumber(s.linkAgentMaxLinks, 0);
-        }
-        get notifyEnabled() {
-          const s = tryGetSettings();
-          return boolSetting(s.linkAgentNotify, true);
-        }
-        /**
-         * 尊重「已有 related 不再自动建链」（v1.7/ticket 167）：默认开（缺省兜底 true）。
-         * 开启时 processNote 对 related 非空的笔记一律跳过；手动命令传 respectRelated:false 豁免。
-         */
-        get respectRelated() {
-          const s = tryGetSettings();
-          return boolSetting(s.linkAgentRespectRelated, true);
-        }
-        /**
-         * 单篇完整管线；assumeReachable=true 时跳过探测（队列消费已在入口统一探过）。
-         * v1.7/ticket 167：respectRelated !== false 时，frontmatter related 非空 → `skipped-related` 跳过
-         * （创建 / 修改 / 队列消费三条自动路径统一；存量补链目标天然只收缺 related 者，此门不触发）。
-         */
-        async processNote(path, opts) {
-          var _a2, _b2, _c;
-          const s = tryGetSettings();
-          if (s.linkAgentEnabled === false) return { status: "skipped" };
-          const file = this.app.vault.getAbstractFileByPath(path);
-          if (!file || file.extension !== "md") return { status: "skipped" };
-          if (isEncryptLockedPath(this.app, path)) return { status: "skipped" };
-          let content = "";
-          try {
-            content = await this.app.vault.read(file);
-          } catch (e) {
-            return { status: "skipped" };
-          }
-          const hash = computeHash(content);
-          if ((opts == null ? void 0 : opts.respectRelated) !== false && this.respectRelated) {
-            const fm = (_c = (_b2 = (_a2 = this.app.metadataCache) == null ? void 0 : _a2.getFileCache) == null ? void 0 : _b2.call(_a2, file)) == null ? void 0 : _c.frontmatter;
-            if (hasRelatedEntries(fm == null ? void 0 : fm.related)) return { status: "skipped-related" };
-          }
-          if (!(opts == null ? void 0 : opts.assumeReachable)) {
-            const ok = await this.probeFn();
-            if (!ok) {
-              await enqueuePaths([path], { [path]: hash });
-              return { status: "queued" };
-            }
-          }
-          await this.store.refresh();
-          const candidates = await this.findCandidates(path, content);
-          let picks = [];
-          if (candidates.length > 0) {
-            const prompt = this.buildJudgePrompt(file, content, candidates);
-            let text = "";
-            try {
-              text = await AI.ask(prompt);
-            } catch (e) {
-              await enqueuePaths([path], { [path]: hash });
-              return { status: "failed", error: e instanceof Error ? e.message : String(e) };
-            }
-            picks = parseJudgeOutput(text, candidates.length);
-          }
-          const links = picks.map((p) => candidates[p.id - 1]).filter((c) => !!c && c.path !== path && !!this.app.vault.getAbstractFileByPath(c.path));
-          const created = await this.writeRelated(file, links.map((c) => c.path));
-          await this.recordLinkBaseline(path);
-          return { status: "done", created };
-        }
-        /**
-         * 单篇即时建链（issue 298）：知识盒生成文献笔记后**立刻**跑，不经批次防抖、不受关联范围限制
-         * （生成即显式目标，语义同手动重跑「显式意图」）。经串行锁执行——与监听批次 / 存量补链排队互斥，
-         * 避免并发 refresh 与裁判请求交错。
-         * 通知受 linkAgentNotify 门控（同键合并单条）：N>0 报新建条数；不可达报入队；失败报错；N=0 静默。
-         */
-        async processNoteNow(path, opts) {
-          const outcome = await this.runSerial(() => this.processNote(path));
-          if (!this.notifyEnabled || (opts == null ? void 0 : opts.silent)) return outcome;
-          if (outcome.status === "done") {
-            if (outcome.created > 0) {
-              notify(`自动双链：已为文献笔记新建关联 ${outcome.created} 条`, {
-                type: "success",
-                dedupeKey: LINK_NOTE_NOW_NOTICE_KEY
-              });
-            }
-          } else if (outcome.status === "queued") {
-            notify("自动双链：embedding 服务不可达，已入队待服务恢复后自动处理", {
-              type: "info",
-              dedupeKey: LINK_NOTE_NOW_NOTICE_KEY
-            });
-          } else if (outcome.status === "failed") {
-            notify(`自动双链处理失败：${outcome.error}`, { type: "warning", dedupeKey: LINK_ERROR_NOTICE_KEY });
-          }
-          return outcome;
-        }
-        /**
-         * v1.4/ticket 119：记录某篇的正文基准哈希（写盘成功后调用）。
-         * - 只记录"当前文件内容"（含本次写入的 related）——这样自写触发的 vault:md-modified
-         *   到冲刷时哈希与基准相同 → 被过滤跳过，不会循环重跑；
-         * - 失败静默（下一次成功建链会重记）。
-         */
-        async recordLinkBaseline(path) {
-          try {
-            const file = this.app.vault.getAbstractFileByPath(path);
-            if (!file) return;
-            const content = await this.app.vault.read(file);
-            await upsertLinkState(path, computeHash(content));
-          } catch (e) {
-            console.warn("[link-agent] 基准哈希记录失败", e);
-          }
-        }
-        /**
-         * v1.4/ticket 119：修改事件冲刷过滤——输入候选路径，返回**需要重跑建链**的子集：
-         * - 与基准哈希相同（内容未实质变化 / 自写 related / Obsidian 高频保存）→ 剔除；
-         * - 无基准（升级前存量已连接笔记 / 首次见到）→ 保留（重跑一次并从成功结果重建基准）；
-         * - 文件已删 / 非 md / encrypt 锁定 → 剔除（管线本来会跳过，省一次读取）。
-         */
-        async filterChangedForRelink(paths) {
-          var _a2;
-          let state2 = {};
-          try {
-            state2 = await loadLinkState();
-          } catch (e) {
-          }
-          const out = [];
-          for (const p of [...paths].sort()) {
-            const file = this.app.vault.getAbstractFileByPath(p);
-            if (!file || file.extension !== "md") continue;
-            if (isEncryptLockedPath(this.app, p)) continue;
-            let content = "";
-            try {
-              content = await this.app.vault.read(file);
-            } catch (e) {
-              continue;
-            }
-            if (((_a2 = state2[p]) == null ? void 0 : _a2.hash) === computeHash(content)) continue;
-            out.push(p);
-          }
-          return out;
-        }
-        /** v1.4/ticket 119：文件删除时移除基准条目（死链/删除清理顺带） */
-        async dropLinkBaseline(path) {
-          try {
-            await removeLinkState(path);
-          } catch (e) {
-          }
-        }
-        /**
-         * 候选生成（ticket 116：来源 = 白名单索引库全部笔记，不再按 linkAgentScopes 过滤）：
-         * 全局大池近邻 → 去自身 → 剔除已不存在文件与 encrypt 锁定 → 按 path 去重取最优 → Top-K。
-         * 关联范围（linkAgentScopes）只决定"哪些笔记会被关联"（目标/触发侧），不限制候选来源。
-         * 查询端（ticket 118）：**全文嵌入**——正文全文（剥 frontmatter、去空白，超长按 LINK_QUERY_MAX_CHARS 安全截尾）
-         * 送向量模型生成查询向量，而非 800 字摘要，提高召回。
-         */
-        async findCandidates(selfPath, content) {
-          const topK = this.maxTopK;
-          const cfg = buildConfig();
-          const baseUrl = IS_MOBILE ? cfg.OLLAMA_REMOTE_URL || cfg.OLLAMA_URL : void 0;
-          const pool = Math.max(topK * 3, CANDIDATE_POOL_MIN);
-          let hits = [];
-          try {
-            hits = await this.store.vectorSearch(bodyExcerpt(content, LINK_QUERY_MAX_CHARS), pool, baseUrl);
-          } catch (e) {
-            console.warn("[link-agent] 近邻检索失败", e);
-            return [];
-          }
-          const bestByPath = /* @__PURE__ */ new Map();
-          for (const hit of hits) {
-            if (hit.path === selfPath) continue;
-            if (!this.app.vault.getAbstractFileByPath(hit.path)) continue;
-            if (isEncryptLockedPath(this.app, hit.path)) continue;
-            const cur = bestByPath.get(hit.path);
-            if (!cur || hit.score > cur.score) bestByPath.set(hit.path, hit);
-          }
-          return [...bestByPath.values()].sort((a, b) => b.score - a.score).slice(0, topK);
-        }
-        /** 组档案卡调 core AI 裁判；maxLinks>0 时提示附上限（写入侧仍截断兜底） */
-        buildJudgePrompt(selfFile, selfContent, candidates) {
-          const s = tryGetSettings();
-          const maxLinks = settingNumber(s.linkAgentMaxLinks, 0);
-          const lines = [JUDGE_PROMPT_PREFIX];
-          if (maxLinks > 0) lines.push(`本次最多选择 ${maxLinks} 条。`);
-          lines.push("", "## 新笔记");
-          lines.push(this.dossierCard(selfFile, bodyExcerpt(selfContent, 400)));
-          lines.push("", "## 候选笔记");
-          candidates.forEach((c, i) => {
-            const f = this.app.vault.getAbstractFileByPath(c.path);
-            lines.push(`### id=${i + 1}`);
-            lines.push(this.dossierCard(f, (c.chunk || "").slice(0, 200)));
-          });
-          return lines.join("\n");
-        }
-        /** 档案卡紧凑格式：标题/tags/summary/首块截断 */
-        dossierCard(file, firstChunk) {
-          var _a2, _b2, _c, _d, _e;
-          if (!file) return "-（文件缺失）";
-          let tags = "";
-          let summary = "";
-          let title = file.basename;
-          try {
-            const fm = (_a2 = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter;
-            if (fm) {
-              if (typeof fm.title === "string" && fm.title.trim()) title = fm.title.trim();
-              else if (typeof fm["标题"] === "string" && fm["标题"].trim()) title = fm["标题"].trim();
-              const rawTags = (_c = (_b2 = fm.tags) != null ? _b2 : fm.tag) != null ? _c : fm["标签"];
-              if (Array.isArray(rawTags)) tags = rawTags.map((t) => String(t)).join(", ");
-              else if (typeof rawTags === "string") tags = rawTags;
-              const rawSummary = (_e = (_d = fm.summary) != null ? _d : fm["简介"]) != null ? _e : fm["一句话简介"];
-              if (typeof rawSummary === "string") summary = rawSummary;
-            }
-          } catch (e) {
-          }
-          const parts = [
-            `标题：${title}`,
-            tags ? `标签：${tags}` : "",
-            summary ? `简介：${summary.slice(0, 120)}` : "",
-            firstChunk ? `首块：${firstChunk}` : ""
-          ].filter(Boolean);
-          return `- ${parts.join("｜")}`;
-        }
-        /** 幂等写入 related（只写本笔记侧）；返回实际新增条数 */
-        async writeRelated(file, targetPaths) {
-          if (!targetPaths.length) return 0;
-          let addedCount = 0;
-          try {
-            await this.app.fileManager.processFrontMatter(file, (fm) => {
-              const existing = parseRelatedEntries(fm.related);
-              const additions = targetPaths.map(toRelatedEntry);
-              const merged = mergeRelated(existing, additions, this.maxLinks);
-              addedCount = merged.added.length;
-              if (merged.added.length > 0) {
-                if (merged.entries.length > 0) fm.related = merged.entries;
-                else delete fm.related;
-              }
-            });
-          } catch (e) {
-            console.warn("[link-agent] related 写入失败", e);
-            return 0;
-          }
-          return addedCount;
-        }
-        runSerial(fn) {
-          const run = this.serialChain.then(
-            () => fn(),
-            () => fn()
-          );
-          this.serialChain = run.then(
-            () => void 0,
-            () => void 0
-          );
-          return run;
-        }
-        /**
-         * 批次处理：逐篇跑管线；批次进行中以 dedupeKey 合并动态更新单条 progress toast，
-         * 结束时同键切换为完成通知（新建 0 条静默——隐藏进行中帧），失败合并提示一次。
-         * 经串行锁执行：与存量补链批次排队互斥。
-         * @param assumeReachable 已在上游探测过可达（存量补链），批内不再逐篇探测（同队列消费语义）
-         * @param silent 启动路径静默（ticket 6）：批次进度/完成 toast 一律不弹，仅汇总照常返回
-         */
-        async processBatch(paths, opts) {
-          return this.runSerial(() => this.runBatch(paths, opts));
-        }
-        async runBatch(paths, opts) {
-          const summary = { total: paths.length, processed: 0, created: 0, queued: 0, failed: 0 };
-          if (!paths.length) return summary;
-          const notifyOn = this.notifyEnabled && !(opts == null ? void 0 : opts.silent);
-          let handle = null;
-          if (notifyOn) {
-            handle = notify(`自动双链：处理中 0/${paths.length} 篇`, { type: "progress", dedupeKey: LINK_BATCH_NOTICE_KEY });
-          }
-          for (let i = 0; i < paths.length; i++) {
-            const outcome = await this.processNote(paths[i], opts);
-            if (outcome.status === "done") {
-              summary.processed++;
-              summary.created += outcome.created;
-            } else if (outcome.status === "queued") {
-              summary.queued++;
-            } else if (outcome.status === "failed") {
-              summary.failed++;
-            }
-            if (notifyOn) {
-              notify(`自动双链：处理中 ${i + 1}/${paths.length} 篇`, { type: "progress", dedupeKey: LINK_BATCH_NOTICE_KEY });
-            }
-          }
-          if (notifyOn) {
-            if (summary.created > 0) {
-              notify(`本批新建关联 ${summary.created} 条`, { type: "success", dedupeKey: LINK_BATCH_NOTICE_KEY });
-            } else {
-              handle == null ? void 0 : handle.hide();
-            }
-            if (summary.failed > 0) {
-              notify(`${summary.failed} 篇笔记关联处理失败，已入队稍后自动重试`, {
-                type: "warning",
-                dedupeKey: LINK_ERROR_NOTICE_KEY
-              });
-            }
-          }
-          return summary;
-        }
-        /**
-         * 队列消费（域初始化调用）：队列非空且 embedding 可达 → 自动消费无需询问；
-         * 成功移除条目、失败保留；全部完成后通知「待处理关联已处理完毕：N 篇 / 新建 M 条」。
-         * @param silent 启动静默（ticket 6）：批次进度/完成 toast 不弹（启动路径由 index 传 silent:true）
-         */
-        async consumeQueue(opts) {
-          try {
-            await pruneQueueByExists((p) => !!this.app.vault.getAbstractFileByPath(p));
-          } catch (e) {
-            console.warn("[link-agent] 队列清理失败", e);
-          }
-          let items;
-          try {
-            items = await loadQueue();
-          } catch (e) {
-            console.warn("[link-agent] 队列读取失败", e);
-            return null;
-          }
-          if (!items.length) return null;
-          const reachable = await this.probeFn();
-          if (!reachable) return null;
-          const summary = { total: items.length, processed: 0, created: 0, queued: 0, failed: 0 };
-          const notifyOn = this.notifyEnabled && !(opts == null ? void 0 : opts.silent);
-          let handle = null;
-          if (notifyOn) {
-            handle = notify(`待处理关联：处理中 0/${items.length} 篇`, { type: "progress", dedupeKey: LINK_BATCH_NOTICE_KEY });
-          }
-          for (let i = 0; i < items.length; i++) {
-            const outcome = await this.processNote(items[i].path, { assumeReachable: true });
-            if (outcome.status === "done") {
-              summary.processed++;
-              summary.created += outcome.created;
-              await dequeuePath(items[i].path);
-            } else if (outcome.status === "failed") {
-              summary.failed++;
-            } else if (outcome.status === "queued") {
-              summary.queued++;
-            } else if (outcome.status === "skipped-related") {
-              await dequeuePath(items[i].path);
-            }
-            if (notifyOn) {
-              notify(`待处理关联：处理中 ${i + 1}/${items.length} 篇`, { type: "progress", dedupeKey: LINK_BATCH_NOTICE_KEY });
-            }
-          }
-          if (notifyOn) {
-            if (summary.processed > 0) {
-              notify(`待处理关联已处理完毕：${summary.processed} 篇 / 新建 ${summary.created} 条`, {
-                type: "success",
-                dedupeKey: LINK_BATCH_NOTICE_KEY
-              });
-            } else {
-              handle == null ? void 0 : handle.hide();
-            }
-            if (summary.failed > 0) {
-              notify(`${summary.failed} 篇待处理关联处理失败，已保留队列下次重试`, {
-                type: "warning",
-                dedupeKey: LINK_ERROR_NOTICE_KEY
-              });
-            }
-          }
-          return summary;
-        }
-        /**
-         * 存量补链（ticket 115）：扫描关联范围内**缺 related** 的存量笔记批量建链。
-         * - 探测 embedding 可达：不可达 → 返回 unreachable（启动调用方静默跳过，下次启动重试）；
-         * - 目标清单 = scope 内 md、frontmatter 无 related、排除 encrypt 锁定与队列内待重试条目；
-         *   related 即进度检查点——中断/重启后续跑只处理仍未连接的，天然增量；
-         * - 批次走 processBatch（入口已探测，批内 assumeReachable 不再逐篇探测），与监听批次串行互斥；
-         * - 启动调用忽略结果且批次全程静默（ticket 6，index 传 silent:true）；手动命令 bz-secondbrain-link-all 按 status 通知。
-         */
-        async backfillMissingLinks(opts) {
-          if (tryGetSettings().linkAgentEnabled === false) return { status: "disabled" };
-          const reachable = await this.probeFn();
-          if (!reachable) return { status: "unreachable" };
-          const targets = await this.computeBackfillTargets();
-          if (!targets.length) return { status: "no-targets" };
-          const summary = await this.processBatch(targets, { assumeReachable: true, ...opts });
-          return { status: "done", summary };
-        }
-        /** 存量补链目标清单（app 层把 vault / metadataCache / encrypt 边界 / 队列翻译成纯谓词） */
-        async computeBackfillTargets() {
-          const vault = this.app.vault;
-          const cache = this.app.metadataCache;
-          const scopes = getLinkAgentScopes();
-          let queued;
-          try {
-            queued = new Set((await loadQueue()).map((i) => i.path));
-          } catch (e) {
-            queued = /* @__PURE__ */ new Set();
-          }
-          const files = typeof vault.getMarkdownFiles === "function" ? vault.getMarkdownFiles() : [];
-          return computeBackfillTargets(
-            files.map((f) => f.path),
-            {
-              inScope: (p) => matchesScope(scopes, p),
-              hasRelated: (p) => {
-                var _a2, _b2;
-                try {
-                  const fm = (_b2 = (_a2 = cache == null ? void 0 : cache.getFileCache) == null ? void 0 : _a2.call(cache, vault.getAbstractFileByPath(p))) == null ? void 0 : _b2.frontmatter;
-                  return parseRelatedEntries(fm == null ? void 0 : fm.related).length > 0;
-                } catch (e) {
-                  return true;
-                }
-              },
-              excluded: (p) => isEncryptLockedPath(this.app, p) || queued.has(p)
-            }
-          );
-        }
-        /**
-         * 死链清理：解析关联范围（linkAgentScopes，空 = 不扫描）内各笔记 related，移除指向不存在文件的失效条目（非 wikilink 条目不动）。
-         * encrypt 域锁定文件一律跳过：保险箱锁定态无法区分「已删除」与「已加密」，整体跳过本次清理；
-         * 解锁态下清单内路径视为存活。返回实际移除条数；有移除才通知（零变化静默）。
-         */
-        async cleanDeadLinks(opts) {
-          var _a2, _b2, _c, _d;
-          const s = tryGetSettings();
-          if (s.linkAgentAutoClean === false) return 0;
-          const cache = this.app.metadataCache;
-          if (!(cache == null ? void 0 : cache.getFileCache)) return 0;
-          let encryptedPaths = null;
-          try {
-            const root = encryptRoot();
-            let safeExists = false;
-            try {
-              const existsFn = (_a2 = this.app.vault.adapter) == null ? void 0 : _a2.exists;
-              safeExists = typeof existsFn === "function" ? !!await existsFn.call(this.app.vault.adapter, `${root}/.safe.enc`) : false;
-            } catch (e) {
-              safeExists = false;
-            }
-            if (safeExists) {
-              const enc = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
-              const sm = enc.getSafeManager();
-              if (sm.unlocked) {
-                encryptedPaths = new Set(((_c = (_b2 = sm.manifest) == null ? void 0 : _b2.notes) != null ? _c : []).map((n) => String(n.path)));
-              } else {
-                return 0;
-              }
-            }
-          } catch (e) {
-            console.warn("[link-agent] encrypt 边界检查失败，按无保险箱处理", e);
-          }
-          const mdFiles = this.app.vault.getMarkdownFiles().filter(Boolean);
-          const basenameCounts = /* @__PURE__ */ new Map();
-          for (const f of mdFiles) {
-            const b = f.basename;
-            basenameCounts.set(b, (basenameCounts.get(b) || 0) + 1);
-          }
-          const isAlive = (target) => {
-            const full = target.endsWith(".md") ? target : `${target}.md`;
-            if (this.app.vault.getAbstractFileByPath(full)) return true;
-            if (((encryptedPaths == null ? void 0 : encryptedPaths.has(full)) || (encryptedPaths == null ? void 0 : encryptedPaths.has(target))) === true) return true;
-            const base = stripMdExt(full.split("/").pop() || "");
-            return (basenameCounts.get(base) || 0) > 0;
-          };
-          let removedTotal = 0;
-          const scopedFiles = mdFiles.filter((f) => matchesScope(getLinkAgentScopes(), f.path));
-          for (const file of scopedFiles) {
-            let entries;
-            try {
-              const fm = (_d = cache.getFileCache(file)) == null ? void 0 : _d.frontmatter;
-              entries = parseRelatedEntries(fm == null ? void 0 : fm.related);
-            } catch (e) {
-              continue;
-            }
-            if (!entries.length) continue;
-            const { keep, removed } = planRemovals(entries, isAlive);
-            if (!removed.length) continue;
-            try {
-              await this.app.fileManager.processFrontMatter(file, (fmo) => {
-                if (keep.length > 0) fmo.related = keep;
-                else delete fmo.related;
-              });
-              removedTotal += removed.length;
-            } catch (e) {
-              console.warn(`[link-agent] 死链清理写回失败 [${file.path}]`, e);
-            }
-          }
-          if (removedTotal > 0 && !(opts == null ? void 0 : opts.silent) && this.notifyEnabled) {
-            notice(`已清理 ${removedTotal} 条失效关联`, "delete");
-          }
-          return removedTotal;
-        }
-      };
-    }
-  });
-
-  // src/secondbrain/link-agent/watch.ts
-  async function startQueueConsumption(agent, initialLoad, opts) {
-    try {
-      await initialLoad;
-    } catch (e) {
-    }
-    try {
-      await agent.consumeQueue(opts);
-    } catch (e) {
-      console.warn("[link-agent] 队列消费失败", e);
-    }
-  }
-  async function startStartupBackfill(agent, initialLoad, opts) {
-    try {
-      await initialLoad;
-    } catch (e) {
-    }
-    try {
-      const result = await agent.backfillMissingLinks(opts);
-      if (result.status === "done" || result.status === "unreachable" || result.status === "no-targets") return;
-      console.warn("[link-agent] 启动补链跳过（自动双链已关闭）");
-    } catch (e) {
-      console.warn("[link-agent] 启动补链失败", e);
-    }
-  }
-  var LINK_CLEAN_DEBOUNCE_MS, LINK_SWEEP_INTERVAL_MS, allowPathsGuideShown, indexDirGuideShown, LinkAgentWatcher;
-  var init_watch2 = __esm({
-    "src/secondbrain/link-agent/watch.ts"() {
-      init_domain_bus();
-      init_notice();
-      init_settings_provider();
-      init_config3();
-      init_data8();
-      init_pipeline();
-      LINK_CLEAN_DEBOUNCE_MS = 5e3;
-      LINK_SWEEP_INTERVAL_MS = 30 * 60 * 1e3;
-      allowPathsGuideShown = false;
-      indexDirGuideShown = false;
-      LinkAgentWatcher = class {
-        constructor(app, agent, initialLoad) {
-          /** 防抖批次缓冲（创建事件聚合） */
-          this.pendingCreates = /* @__PURE__ */ new Set();
-          /** 防抖批次缓冲（修改事件聚合，v1.4/ticket 119） */
-          this.pendingModifies = /* @__PURE__ */ new Set();
-          this.batchTimer = null;
-          /** 死链清理防抖定时器 */
-          this.cleanTimer = null;
-          /** 低频巡检定时器 */
-          this.sweepTimer = null;
-          /** 总线退订函数账本 */
-          this.unsubs = [];
-          /** 批次重入保护（上一批未完成时丢弃新触发的 flush） */
-          this.running = false;
-          this.app = app;
-          this.agent = agent;
-          this.initialLoad = initialLoad != null ? initialLoad : null;
-        }
-        get enabled() {
-          return tryGetSettings().linkAgentEnabled !== false;
-        }
-        /** 注册事件订阅与巡检（linkAgentEnabled=false 时整体不注册——无任何监听与写入） */
-        start() {
-          if (!this.enabled) return;
-          this.unsubs.push(
-            onDomainEvent("vault:md-created", (evt) => this.onCreated(evt.path)),
-            onDomainEvent("vault:md-modified", (evt) => this.onModified(evt.path)),
-            onDomainEvent("vault:md-deleted", (evt) => this.onDeleted(evt.path)),
-            // 文献笔记生成即跑（issue 298）：知识盒 converted / term-generated
-            onDomainEvent("knowledge:tasks", (evt) => this.onNoteGenerated(evt))
-          );
-          this.sweepTimer = setInterval(() => {
-            void this.runDeadLinkSweep();
-          }, LINK_SWEEP_INTERVAL_MS);
-          this.maybeGuideAllowPaths();
-        }
-        /** 关联范围内（空 = 不触发任何监听）新笔记落盘 → 入缓冲并重置防抖计时（约 60 秒聚合一批）；范围随 linkAgentScopes 实时生效 */
-        onCreated(path) {
-          if (!this.enabled) return;
-          if (!matchesScope(getLinkAgentScopes(), path)) return;
-          this.pendingCreates.add(path);
-          if (this.batchTimer) clearTimeout(this.batchTimer);
-          this.batchTimer = setTimeout(() => {
-            this.batchTimer = null;
-            void this.flushBatch();
-          }, LINK_BATCH_DELAY_MS);
-        }
-        /**
-         * 修改事件（v1.4/ticket 119 正文大改自动重跑）：范围内已有笔记被修改 → 入缓冲防抖聚合；
-         * 冲刷时经 agent.filterChangedForRelink 基准哈希过滤，只重跑真正变化的笔记
-         * （Obsidian 高频保存 / 自写 related 触发的 modify 被哈希挡掉，不空转裁判）。
-         */
-        onModified(path) {
-          if (!this.enabled) return;
-          if (!matchesScope(getLinkAgentScopes(), path)) return;
-          this.pendingModifies.add(path);
-          if (this.batchTimer) clearTimeout(this.batchTimer);
-          this.batchTimer = setTimeout(() => {
-            this.batchTimer = null;
-            void this.flushBatch();
-          }, LINK_BATCH_DELAY_MS);
-        }
-        /** 删除事件：缓冲内顺带剔除；死链清理防抖合并触发；该篇基准哈希一并移除 */
-        onDeleted(path) {
-          this.pendingCreates.delete(path);
-          this.pendingModifies.delete(path);
-          if (!this.enabled) return;
-          if (this.cleanTimer) clearTimeout(this.cleanTimer);
-          this.cleanTimer = setTimeout(() => {
-            this.cleanTimer = null;
-            void this.runDeadLinkSweep();
-          }, LINK_CLEAN_DEBOUNCE_MS);
-          void this.agent.dropLinkBaseline(path);
-        }
-        /**
-         * 文献笔记生成即跑（issue 298）：知识盒生成视频 / 术语文献笔记后经 'knowledge:tasks' 域事件
-         * **立即**对该篇建链——不等约 60 秒批次防抖，也不受 linkAgentScopes 范围限制
-         * （生成即显式目标，语义同手动重跑）。
-         * 只认 converted / term-generated 两类且 notePath 非空的成功事件（failed 与缺路径一律忽略）；
-         * 等索引装载完成再跑，实际执行经 agent 的串行锁与批次 / 补链排队互斥。
-         */
-        onNoteGenerated(evt) {
-          if (!this.enabled) return;
-          const kind = evt == null ? void 0 : evt.kind;
-          if (kind !== "converted" && kind !== "term-generated") return;
-          const path = typeof (evt == null ? void 0 : evt.notePath) === "string" ? evt.notePath.trim() : "";
-          if (!path) return;
-          if (!this.app.vault.getAbstractFileByPath(path)) return;
-          this.guideIndexCoverage(path);
-          void (async () => {
-            try {
-              await this.initialLoad;
-            } catch (e) {
-            }
-            await this.agent.processNoteNow(path);
-          })();
-        }
-        /**
-         * 生成即跑的索引覆盖引导（一次性；只提示，绝不代改用户配置）：
-         * 文献笔记所在目录不在第二大脑索引白名单（secondBrainAllowPaths）内时，
-         * 该目录既不会被向量化、检索也不会命中 → 明确告知，避免「生成了却零关联」的静默失效。
-         */
-        guideIndexCoverage(path) {
-          if (indexDirGuideShown) return;
-          let allow = [];
-          try {
-            allow = buildConfig().ALLOW_PATHS || [];
-          } catch (e) {
-            return;
-          }
-          if (allow.some((dir2) => isUnderFolder3(dir2, path))) return;
-          indexDirGuideShown = true;
-          const dir = path.split("/")[0] || path;
-          notice(
-            `自动双链已开启：文献笔记目录「${dir}」不在第二大脑索引白名单目录内，候选检索不会命中该目录，可在第二大脑设置的白名单目录中补充。`,
-            "warning"
-          );
-        }
-        /** 冲刷防抖批次：只处理仍存在的文件；上一批未完成时本次跳过（下一事件重新聚合） */
-        async flushBatch() {
-          const batch = [...this.pendingCreates].filter((p) => !!this.app.vault.getAbstractFileByPath(p));
-          this.pendingCreates.clear();
-          if (this.pendingModifies.size > 0) {
-            const mods = [...this.pendingModifies].filter((p) => !!this.app.vault.getAbstractFileByPath(p));
-            this.pendingModifies.clear();
-            try {
-              const changed = await this.agent.filterChangedForRelink(mods);
-              for (const p of changed) if (!batch.includes(p)) batch.push(p);
-            } catch (e) {
-              console.warn("[link-agent] 修改过滤失败，按全部修改保留", e);
-              for (const p of mods) if (!batch.includes(p)) batch.push(p);
-            }
-          }
-          if (!batch.length || this.running) return;
-          this.running = true;
-          try {
-            await this.agent.processBatch(batch);
-          } catch (e) {
-            console.warn("[link-agent] 批次处理失败", e);
-          } finally {
-            this.running = false;
-          }
-        }
-        /** 死链清理入口（删除防抖 + 低频巡检共用）；顺带清理队列中已删文件条目 */
-        async runDeadLinkSweep() {
-          if (!this.enabled) return 0;
-          try {
-            return await this.agent.cleanDeadLinks();
-          } catch (e) {
-            console.warn("[link-agent] 死链清理失败", e);
-            return 0;
-          }
-        }
-        /**
-         * 一次性引导提示（泛化版）：linkAgentScopes 中出现 secondBrainAllowPaths 未包含的目录时，
-         * 提示用户把目录加入第二大脑索引范围；只提示，绝不代改用户 data.json 配置。
-         */
-        maybeGuideAllowPaths() {
-          if (allowPathsGuideShown) return;
-          const s = tryGetSettings();
-          const allow = String(s.secondBrainAllowPaths || "").split(",").map((x) => x.trim()).filter(Boolean);
-          const missing = getLinkAgentScopes().filter((dir) => !allow.includes(dir));
-          if (missing.length > 0) {
-            allowPathsGuideShown = true;
-            notice(
-              `自动双链已开启：关联范围中的「${missing.join("」「")}」不在第二大脑白名单目录内，候选检索不会命中这些目录，可在第二大脑设置的白名单目录中补充。`,
-              "warning"
-            );
-          }
-        }
-        /** 卸载清理（定时器/退订/缓冲） */
-        destroy() {
-          if (this.batchTimer) {
-            clearTimeout(this.batchTimer);
-            this.batchTimer = null;
-          }
-          if (this.cleanTimer) {
-            clearTimeout(this.cleanTimer);
-            this.cleanTimer = null;
-          }
-          if (this.sweepTimer) {
-            clearInterval(this.sweepTimer);
-            this.sweepTimer = null;
-          }
-          for (const off of this.unsubs) {
-            try {
-              off();
-            } catch (e) {
-            }
-          }
-          this.unsubs = [];
-          this.pendingCreates.clear();
-          this.pendingModifies.clear();
-        }
-      };
-    }
-  });
-
-  // src/secondbrain/index.ts
-  var secondbrain_exports = {};
-  __export(secondbrain_exports, {
-    ensureSecondBrain: () => ensureSecondBrain,
-    openSecondBrainChat: () => openSecondBrainChat,
-    openSecondBrainPanel: () => openSecondBrainPanel,
-    openSecondBrainReference: () => openSecondBrainReference,
-    rebuildSecondBrainIndex: () => rebuildSecondBrainIndex,
-    rebuildSecondBrainLinks: () => rebuildSecondBrainLinks,
-    requestRebuildAndOpen: () => requestRebuildAndOpen,
-    runSecondBrainLinkAll: () => runSecondBrainLinkAll,
-    unloadSecondBrain: () => unloadSecondBrain
-  });
-  function ensureSecondBrain(app) {
-    if (initialized6) return;
-    initialized6 = true;
-    appRef = app;
-    const s = new VectorStore(app);
-    store2 = s;
-    s.initialLoad = (async () => {
-      try {
-        await s.load();
-        if (IS_MOBILE) {
-          const msg = await s.initMobile();
-          if (msg) console.log(`[secondbrain] ${msg}`);
-        } else if (s.isIndexReady()) {
-          await s.refresh();
-        } else {
-          console.log("[secondbrain] 本地暂无向量数据，等待用户在主面板初始化");
-        }
-      } catch (e) {
-        console.warn("[secondbrain] 初始化失败", e);
-      }
-    })();
-    unsubVault = onDomainEvent("vault:md-modified", () => {
-      if (!(store2 == null ? void 0 : store2.isIndexReady())) return;
-      if (refreshTimer) clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(() => {
-        store2 == null ? void 0 : store2.refresh().catch((e) => console.warn("[secondbrain] 后台刷新失败", e));
-      }, 5e3);
-    });
-    try {
-      if (tryGetSettings().linkAgentEnabled !== false) {
-        linkAgent = new LinkAgent({ app, store: s });
-        linkWatcher = new LinkAgentWatcher(app, linkAgent, s.initialLoad);
-        linkWatcher.start();
-        void (async () => {
-          try {
-            await startQueueConsumption(linkAgent, s.initialLoad, { silent: true });
-          } catch (e) {
-            console.warn("[secondbrain] 队列消费失败", e);
-          }
-          try {
-            await startStartupBackfill(linkAgent, s.initialLoad, { silent: true });
-          } catch (e) {
-            console.warn("[secondbrain] 启动补链失败", e);
-          }
-        })();
-      }
-    } catch (e) {
-      console.warn("[secondbrain] 自动双链初始化失败", e);
-    }
-  }
-  function unloadSecondBrain() {
-    if (refreshTimer) {
-      clearTimeout(refreshTimer);
-      refreshTimer = null;
-    }
-    unsubVault == null ? void 0 : unsubVault();
-    unsubVault = null;
-    panel == null ? void 0 : panel.destroy();
-    panel = null;
-    reference == null ? void 0 : reference.close();
-    reference = null;
-    chat == null ? void 0 : chat.destroy();
-    chat = null;
-    mobile == null ? void 0 : mobile.close();
-    mobile = null;
-    linkWatcher == null ? void 0 : linkWatcher.destroy();
-    linkWatcher = null;
-    linkAgent = null;
-    store2 = null;
-    appRef = null;
-    initialized6 = false;
-    resetDeepseekAI();
-  }
-  function ensureReference() {
-    if (!appRef || !store2) return;
-    if (reference && !reference.alive) reference = null;
-    if (reference) return;
-    if (IS_MOBILE) {
-      mobile != null ? mobile : mobile = new MobilePanel(appRef, store2);
-      return;
-    }
-    reference = new ReferencePanel(appRef, store2);
-  }
-  function openReferenceInternal() {
-    ensureReference();
-    if (IS_MOBILE) {
-      mobile == null ? void 0 : mobile.show();
-    } else {
-      reference == null ? void 0 : reference.fw.show();
-    }
-  }
-  function ensureChat() {
-    if (!appRef || !store2 || chat) return;
-    chat = new ChatPanel(store2, appRef);
-  }
-  function openChatInternal() {
-    if (IS_MOBILE) {
-      ensureReference();
-      mobile == null ? void 0 : mobile.switchTab("chat");
-      mobile == null ? void 0 : mobile.show();
-      return;
-    }
-    ensureChat();
-    chat == null ? void 0 : chat.show();
-  }
-  function openSecondBrainPanel(app) {
-    ensureSecondBrain(app);
-    if (!store2) return;
-    panel != null ? panel : panel = new SecondBrainPanel(app, store2, {
-      onOpenReference: () => openReferenceInternal(),
-      onOpenChat: () => openChatInternal()
-    });
-    void panel.open();
-  }
-  function requestRebuildAndOpen(app) {
-    ensureSecondBrain(app);
-    if (!store2) return;
-    panel != null ? panel : panel = new SecondBrainPanel(app, store2, {
-      onOpenReference: () => openReferenceInternal(),
-      onOpenChat: () => openChatInternal()
-    });
-    panel.requestRebuild();
-    void panel.open();
-  }
-  async function rebuildSecondBrainIndex(app) {
-    if (!await confirmFullRebuild()) return;
-    requestRebuildAndOpen(app);
-  }
-  function openSecondBrainReference(app) {
-    ensureSecondBrain(app);
-    if (!(store2 == null ? void 0 : store2.isIndexReady())) {
-      openSecondBrainPanel(app);
-      return;
-    }
-    openReferenceInternal();
-  }
-  function openSecondBrainChat(app) {
-    ensureSecondBrain(app);
-    if (!(store2 == null ? void 0 : store2.isIndexReady())) {
-      openSecondBrainPanel(app);
-      return;
-    }
-    openChatInternal();
-  }
-  async function runSecondBrainLinkAll(app) {
-    if (tryGetSettings().linkAgentEnabled === false) {
-      notice("自动双链已在第二大脑设置中关闭");
-      return;
-    }
-    ensureSecondBrain(app);
-    if (!linkAgent) return;
-    try {
-      const result = await linkAgent.backfillMissingLinks();
-      if (result.status === "done") {
-        const { summary } = result;
-        notice(
-          summary.created > 0 ? `批量补链完成：处理 ${summary.processed} 篇 / 新建关联 ${summary.created} 条` : "批量补链完成：未发现实质关联，未新建",
-          "success"
-        );
-      } else if (result.status === "unreachable") {
-        notice("embedding 服务不可达，无法补链；服务恢复后可在下次启动自动补链", "info");
-      } else if (result.status === "no-targets") {
-        notice("当前无待补链笔记：关联范围内未连接的笔记已处理完", "info");
-      } else {
-        notice("批量补链跳过（自动双链已关闭）", "info");
-      }
-    } catch (e) {
-      console.warn("[secondbrain] 批量补链失败", e);
-      notice(`批量补链失败：${e instanceof Error ? e.message : String(e)}`, "error");
-    }
-  }
-  async function rebuildSecondBrainLinks(app) {
-    var _a2, _b2;
-    const file = (_b2 = (_a2 = app.workspace).getActiveFile) == null ? void 0 : _b2.call(_a2);
-    if (!file) {
-      notice("请先打开一个笔记");
-      return;
-    }
-    if (tryGetSettings().linkAgentEnabled === false) {
-      notice("自动双链已在第二大脑设置中关闭");
-      return;
-    }
-    ensureSecondBrain(app);
-    if (!linkAgent) return;
-    try {
-      const outcome = await linkAgent.processNote(file.path, { respectRelated: false });
-      if (outcome.status === "done") {
-        notice(outcome.created > 0 ? `已新建关联 ${outcome.created} 条` : "未发现实质关联，未新建", "success");
-      } else if (outcome.status === "queued") {
-        notice("embedding 服务不可达，已加入待处理队列，服务可达后自动处理", "info");
-      } else if (outcome.status === "failed") {
-        notice(`关联处理失败：${outcome.error}`, "error");
-      } else {
-        notice("该笔记暂无法处理（文件缺失或位于加密目录）", "info");
-      }
-    } catch (e) {
-      console.warn("[secondbrain] 重跑关联失败", e);
-      notice(`关联处理失败：${e instanceof Error ? e.message : String(e)}`, "error");
-    }
-  }
-  var appRef, store2, initialized6, panel, reference, chat, mobile, linkAgent, linkWatcher, unsubVault, refreshTimer;
-  var init_secondbrain = __esm({
-    "src/secondbrain/index.ts"() {
-      init_domain_bus();
-      init_notice();
-      init_settings_provider();
-      init_config3();
-      init_vector_store();
-      init_ai3();
-      init_panel();
-      init_reference_panel();
-      init_chat_panel();
-      init_mobile_panel();
-      init_pipeline();
-      init_watch2();
-      appRef = null;
-      store2 = null;
-      initialized6 = false;
-      panel = null;
-      reference = null;
-      chat = null;
-      mobile = null;
-      linkAgent = null;
-      linkWatcher = null;
-      unsubVault = null;
-      refreshTimer = null;
-    }
-  });
-
-  // src/secondbrain/panel.ts
-  var panel_exports = {};
-  __export(panel_exports, {
-    SecondBrainPanel: () => SecondBrainPanel,
-    buildSourceTree: () => buildSourceTree,
-    computeStats: () => computeStats2,
-    confirmFullRebuild: () => confirmFullRebuild,
-    fmtCompact: () => fmtCompact,
-    openSecondBrainSettings: () => openSecondBrainSettings,
-    secondBrainSettingsSchema: () => secondBrainSettingsSchema
-  });
-  function confirmFullRebuild() {
-    return openFlowDialog({
-      title: "重新索引",
-      message: "将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？",
-      // 皮肤类（issue 291）：确认框挂 body，脱离主面板根，须显式带 .bz-sb-flow-dialog
-      // 才拿到 --sb-* token（否则掉回 core 裸样式）；单源生效于三处入口
-      className: "bz-sb-flow-dialog",
-      actions: [
-        { label: "取消", value: "cancel" },
-        // 刻意不标 danger（issue 291 评审）：清空的是**可重建的派生数据**（向量索引按白名单重嵌入即恢复），
-        // 用户笔记与配置一字不动 —— 非不可逆数据破坏，故保留普通高亮主动作。
-        { label: "开始重建", value: "ok", cta: true }
-      ]
-    }).then((v) => v === "ok");
-  }
-  function topLevelName(path) {
-    const i = path.indexOf("/");
-    return i === -1 ? "（根目录）" : path.slice(0, i);
-  }
-  function lanIpDesc() {
-    if (isMobileEnv()) return "";
-    const lanIPs = getLanIPs();
-    if (lanIPs.length === 0) {
-      return "未能探测本机局域网 IP，请确认电脑已联网，移动端远程地址需手动填写电脑的局域网 IP";
-    }
-    const primary = pickPrimaryLanIp(lanIPs);
-    return `本机当前局域网 IP 为 ${lanIPs.map((l) => `${l.ip}，${l.iface}`).join("；")}。移动端连不上时，把远程地址填为${primary ? ` ${formatRemoteOllamaUrl(primary.ip)}` : "此处 IP"}`;
-  }
-  function secondBrainSettingsSchema() {
-    let reloadWarned = false;
-    const warnReload = () => {
-      if (reloadWarned) return;
-      reloadWarned = true;
-      notice("第二大脑设置已保存，重载插件后生效", "info");
-    };
-    const trimStore = (key) => (v) => {
-      getSettings()[key] = v.trim();
-    };
-    const boolDefaultOn = (key) => ({
-      get: () => tryGetSettings()[key] !== false,
-      set: (v) => {
-        getSettings()[key] = v;
-      },
-      save: () => saveSettings()
-    });
-    const pathsOf = (key) => ({
-      get: () => {
-        var _a2;
-        return parsePathList(String((_a2 = tryGetSettings()[key]) != null ? _a2 : ""));
-      },
-      set: (v) => {
-        getSettings()[key] = formatPathList(v);
-      },
-      save: () => saveSettings()
-    });
-    return {
-      groups: [
-        {
-          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
-          icon: "palette",
-          name: "外观",
-          rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "secondbrainSkin" }, options: [{ value: "default", label: "对话", prevClass: "bz-sp-prev-panel" }] },
-            { type: "choiceCards", name: "面板主题", binding: { key: "secondbrainSkinTheme" }, layoutKey: "secondbrainSkin", options: [{ value: "graphite", label: "石墨", layout: "default", prevClass: "bz-sp-prev-graphite" }] }
-          ]
-        },
-        {
-          icon: "folder-open",
-          name: "基础",
-          rows: [
-            { type: "text", name: "Ollama 本地 URL", binding: { key: "secondBrainOllamaUrl" }, onChange: trimStore("secondBrainOllamaUrl") },
-            // 远程 Ollama URL（移动端）：声明 text 行 + 行内「填入远程 URL」按钮（actions 统一实现，
-            // 动作完成后渲染器重读绑定回填显示——custom 输入框引用持快手已退役）
-            {
-              type: "text",
-              name: "移动端远程地址",
-              desc: "手机上连本地向量库走这个地址",
-              binding: { key: "secondBrainRemoteOllamaUrl" },
-              onChange: (v) => trimStore("secondBrainRemoteOllamaUrl")(v),
-              actions: [{
-                text: "填入远程 URL",
-                cta: true,
-                onClick: () => {
-                  const lanIPs = getLanIPs();
-                  const primary = pickPrimaryLanIp(lanIPs);
-                  if (!primary) {
-                    notice("未探测到本机局域网 IP，请手动填写");
-                    return;
-                  }
-                  const target = formatRemoteOllamaUrl(primary.ip);
-                  return openFlowDialog({
-                    title: "填入远程 Ollama URL",
-                    message: `将「移动端远程地址」覆盖为 ${target}？`,
-                    actions: [
-                      { label: "取消", value: "cancel" },
-                      // 刻意不标 danger（issue 291 评审）：这是「填便利值」而非删除类动作——
-                      // 只是把被探测到的局域网地址写进设置项，用户随时可手改回，
-                      // 不构成不可逆数据破坏，故保留普通高亮主动作。
-                      { label: "覆盖", value: "ok", cta: true }
-                    ]
-                  }).then((v) => {
-                    if (v === "ok") {
-                      getSettings().secondBrainRemoteOllamaUrl = target;
-                      void saveSettings();
-                    }
-                  });
-                }
-              }]
-            },
-            // 本机局域网 IP（展示行，actions 已并上侧「填入远程 URL」按钮；custom 双分支已退役）
-            {
-              type: "info",
-              name: "本机局域网 IP",
-              visibleWhen: () => !isMobileEnv(),
-              desc: lanIpDesc()
-            },
-            {
-              type: "info",
-              name: "局域网 IP 提示",
-              visibleWhen: () => isMobileEnv(),
-              desc: "连不上远程库时，在电脑上查看本机 IP 并核对上方地址"
-            },
-            { type: "text", name: "Embedding 模型", binding: { key: "secondBrainEmbeddingModel" }, onChange: trimStore("secondBrainEmbeddingModel") },
-            // 白名单目录（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
-            {
-              type: "path",
-              mode: "multi",
-              name: "白名单目录",
-              desc: "纳入第二大脑检索与候选来源的笔记目录，留空则不索引",
-              binding: pathsOf("secondBrainAllowPaths"),
-              pickerTitle: "选择白名单目录",
-              pickerDesc: "白名单为目录前缀语义：勾选祖先目录即覆盖其下全部子目录",
-              buttonText: "选择",
-              emptyText: "暂未选择（留空 = 不索引任何目录）"
-            },
-            { type: "toggle", name: "启用", desc: "仅控制启动时自动加载，关闭后仍可从命令面板手动打开", binding: { key: "secondBrainEnabled" }, onChange: warnReload }
-          ]
-        },
-        {
-          icon: "link",
-          name: "自动双链",
-          rows: [
-            // 自动双链（ticket 111）：总开关为明细设置的显隐开关（visibleWhen 声明式联动 + 徽标自动刷新）
-            { type: "toggle", name: "自动双链", desc: "关联范围内新笔记落盘时自动建双链，候选近邻经 AI 裁判筛选", binding: boolDefaultOn("linkAgentEnabled"), onChange: warnReload },
-            {
-              type: "text",
-              name: "单篇候选数量 TopK",
-              desc: "每篇笔记的近邻候选数，来源为白名单索引库的全部笔记",
-              // number 键（linkAgentTopK）不走键直绑（收窄到 string），三函数绑定 + onChange 钳制复写
-              binding: {
-                get: () => {
-                  var _a2;
-                  return String((_a2 = getSettings().linkAgentTopK) != null ? _a2 : 8);
-                },
-                set: (v) => {
-                  getSettings().linkAgentTopK = v;
-                },
-                save: () => saveSettings()
-              },
-              visibleWhen: (s) => s.linkAgentEnabled !== false,
-              isChild: true,
-              onChange: (v) => {
-                const n = Math.floor(Number(v));
-                getSettings().linkAgentTopK = Number.isFinite(n) && n > 0 ? n : 8;
-              }
-            },
-            {
-              type: "text",
-              name: "每篇关联上限",
-              desc: "0 表示不限量，由 AI 裁判自行决定，沿用复习域惯例",
-              // number 键（linkAgentMaxLinks）同上
-              binding: {
-                get: () => {
-                  var _a2;
-                  return String((_a2 = getSettings().linkAgentMaxLinks) != null ? _a2 : 0);
-                },
-                set: (v) => {
-                  getSettings().linkAgentMaxLinks = v;
-                },
-                save: () => saveSettings()
-              },
-              visibleWhen: (s) => s.linkAgentEnabled !== false,
-              isChild: true,
-              onChange: (v) => {
-                const n = Math.floor(Number(v));
-                getSettings().linkAgentMaxLinks = Number.isFinite(n) && n > 0 ? n : 0;
-              }
-            },
-            { type: "toggle", name: "完成通知", desc: "处理完成后通知提醒，关闭则全程静默", binding: boolDefaultOn("linkAgentNotify"), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
-            { type: "toggle", name: "失效关联自动清理", desc: "笔记删除后自动移除指向它的失效 related 条目", binding: boolDefaultOn("linkAgentAutoClean"), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
-            { type: "toggle", name: "已有关联不再建链", desc: "笔记已有关联时自动跳过处理", binding: boolDefaultOn("linkAgentRespectRelated"), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
-            // 关联范围（ticket 128 统一选择器：chips + 选择按钮；格式冻结——英文逗号分隔字符串）
-            {
-              type: "path",
-              mode: "multi",
-              name: "关联范围",
-              desc: "决定哪些笔记会被自动关联，并作为落盘监听与补链目标",
-              binding: pathsOf("linkAgentScopes"),
-              visibleWhen: (s) => s.linkAgentEnabled !== false,
-              isChild: true,
-              pickerTitle: "选择关联范围目录",
-              buttonText: "选择",
-              // ticket 170：去 emoji
-              emptyText: "暂未选择（留空 = 不自动关联）"
-            }
-          ]
-        },
-        {
-          icon: "search",
-          name: "检索",
-          rows: [
-            { type: "text", name: "参考结果数 TopK", binding: { key: "secondBrainTopK" }, onChange: trimStore("secondBrainTopK") },
-            { type: "text", name: "对话参考结果数", binding: { key: "secondBrainChatTopK" }, onChange: trimStore("secondBrainChatTopK") },
-            { type: "text", name: "段落最小长度", binding: { key: "secondBrainChunkMinLength" }, onChange: trimStore("secondBrainChunkMinLength") },
-            { type: "text", name: "上下文限制", binding: { key: "secondBrainContextLimit" }, onChange: trimStore("secondBrainContextLimit") },
-            { type: "text", name: "防抖延迟毫秒", binding: { key: "secondBrainDebounceDelay" }, onChange: trimStore("secondBrainDebounceDelay") },
-            { type: "text", name: "光标轮询毫秒", binding: { key: "secondBrainCursorPollInterval" }, onChange: trimStore("secondBrainCursorPollInterval") }
-          ]
-        },
-        {
-          icon: "message-square",
-          name: "对话",
-          rows: [
-            { type: "text", name: "最大历史记录", binding: { key: "secondBrainMaxHistory" }, onChange: trimStore("secondBrainMaxHistory") },
-            {
-              type: "button",
-              name: "AI 通道",
-              // ticket 141：「AI 生成概括」移除后描述同步收敛（仅剩对话走主设置页 AI）
-              desc: "对话统一走主设置页 AI 服务商，Embedding 仍走 Ollama",
-              buttonText: "前往配置",
-              onClick: () => {
-                var _a2, _b2;
-                closeSettingsModal();
-                (_b2 = (_a2 = getApp().setting) == null ? void 0 : _a2.open) == null ? void 0 : _b2.call(_a2);
-              }
-            }
-          ]
-        },
-        {
-          icon: "layout-dashboard",
-          name: "面板",
-          rows: [
-            // 重新索引（ticket 108）：确认已 flow 化（openFlowDialog），此处仅保留按钮与文案
-            {
-              type: "button",
-              name: "重新索引",
-              desc: "清空现有向量索引并按当前白名单重嵌入，期间检索降级为文本匹配",
-              buttonText: "开始",
-              onClick: () => {
-                void confirmFullRebuild().then((ok) => {
-                  if (ok) {
-                    closeSettingsModal();
-                    void Promise.resolve().then(() => (init_secondbrain(), secondbrain_exports)).then((m) => m.requestRebuildAndOpen(getApp()));
-                  }
-                });
-              }
-            }
-          ]
-        }
-      ]
-    };
-  }
-  function openSecondBrainSettings(_app3) {
-    openSettingsModal({ title: "第二大脑设置", maxWidth: 520, schema: secondBrainSettingsSchema() });
-  }
-  var SecondBrainPanel;
-  var init_panel = __esm({
-    "src/secondbrain/panel.ts"() {
-      init_notice();
-      init_z_order();
-      init_mobile();
-      init_ui();
-      init_flow_dialog();
-      init_esc_manager();
-      init_app();
-      init_utils();
-      init_settings_provider();
-      init_settings_modal();
-      init_config3();
-      init_whitelist();
-      init_local_ip();
-      init_store_file();
-      init_render12();
-      init_render12();
-      SecondBrainPanel = class {
-        constructor(app, store3, opts) {
-          this.mask = null;
-          this.popup = null;
-          /** ESC 层级句柄（ticket 141 迁移：原私挂 document keydown 废弃） */
-          this.escHandle = null;
-          this.refreshing = false;
-          /** 初始向量化视图进行中标记（ticket 114：runInitialIndexView 持有；进行中重复点击接回进度视图而非静默失效） */
-          this.initializing = false;
-          /** 来源分布树已展开的目录（ticket 108，会话内记忆） */
-          this.expandedDirs = /* @__PURE__ */ new Set();
-          /** 设置页「重新索引」意图标记（ticket 108：确认后打开面板即自动全量重建） */
-          this.rebuildRequested = false;
-          this.app = app;
-          this.store = store3;
-          this.opts = opts;
-        }
-        /** 设置页「重新索引」调用（index.ts 入口转发）：标记意图后打开面板自动跑 */
-        requestRebuild() {
-          this.rebuildRequested = true;
-        }
-        async open() {
-          this.createUI();
-          this.attachEscapeListener();
-          topifyZ(this.mask, this.popup);
-          this.mask.style.display = "block";
-          this.popup.style.display = "flex";
-          await this.render();
-        }
-        close() {
-          this.removeEscapeListener();
-          if (this.mask) this.mask.style.display = "none";
-          if (this.popup) this.popup.style.display = "none";
-        }
-        /** [l2-sb] ESC 关闭走 escManager 层级（ticket 141 迁移）：open 注册、close 注销成对（幂等）——
-         *  ⚙️ 设置弹窗叠开时其 'bz-settings-modal' 层后注册在上，ESC 先关设置、再 ESC 才关面板 */
-        attachEscapeListener() {
-          if (this.escHandle) return;
-          this.escHandle = escManager.register("bz-sb-panel", {
-            isVisible: () => !!this.popup && this.popup.isConnected && this.popup.style.display === "flex",
-            close: () => this.close()
-          });
-        }
-        removeEscapeListener() {
-          var _a2;
-          (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
-          this.escHandle = null;
-        }
-        destroy() {
-          var _a2, _b2;
-          this.removeEscapeListener();
-          (_a2 = this.mask) == null ? void 0 : _a2.remove();
-          (_b2 = this.popup) == null ? void 0 : _b2.remove();
-          this.mask = null;
-          this.popup = null;
-        }
-        /** 打开形态分派：重建意图 → 全量重建进度；空库+初始索引进行中 → 恢复进度（fire-and-forget，不阻塞 panel.open）；空库 → 引导态；
-         *  就绪 + 待处理 → 增量进度；就绪无变更 → 统计（ticket 114 补「空库但 refresh 在途」分支） */
-        async render() {
-          if (this.store.initialLoad) {
-            try {
-              await this.store.initialLoad;
-            } catch (e) {
-            }
-          }
-          const rebuild = this.rebuildRequested;
-          this.rebuildRequested = false;
-          if (rebuild && this.store.isIndexReady()) {
-            await this.runRebuild();
-            return;
-          }
-          if (!this.store.isIndexReady()) {
-            if (this.store.isRefreshing()) {
-              this.enterProgressView("正在初始化向量数据库");
-              void this.runInitialIndexView();
-              return;
-            }
-            this.showInitGuidance();
-            return;
-          }
-          if (this.store.hasPendingChanges()) {
-            await this.runIncremental();
-            return;
-          }
-          this.showContent();
-        }
-        showContent(skipRefresh = false) {
-          var _a2, _b2;
-          const onboard = document.getElementById("bz-sb-onboard");
-          const content = document.getElementById("bz-sb-content");
-          if (onboard) onboard.style.display = "none";
-          if (content) content.style.display = "flex";
-          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.remove("bz-sb-btn-hidden");
-          if (!skipRefresh && !this.refreshing) void this.autoRefreshThenRender();
-        }
-        /** 空库首次引导：说明 + 开始按钮（进度视图的 init 形态） */
-        showInitGuidance() {
-          var _a2, _b2;
-          const onboard = document.getElementById("bz-sb-onboard");
-          const content = document.getElementById("bz-sb-content");
-          const title = document.getElementById("bz-sb-progress-title");
-          const desc = document.getElementById("bz-sb-onboard-desc");
-          const btn = document.getElementById("bz-sb-init-btn");
-          const box = document.getElementById("bz-sb-init-progress");
-          if (title) title.textContent = "初始化向量数据库";
-          if (desc) desc.style.display = "block";
-          if (btn) {
-            btn.style.display = "block";
-            btn.disabled = false;
-            btn.textContent = "开始向量化";
-          }
-          if (box) box.style.display = "none";
-          if (onboard) onboard.style.display = "flex";
-          if (content) content.style.display = "none";
-          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
-        }
-        /** 进入纯进度形态（自动运行，无按钮；title 由调用方给定） */
-        enterProgressView(titleText, resetStatus = true) {
-          var _a2, _b2;
-          const onboard = document.getElementById("bz-sb-onboard");
-          const content = document.getElementById("bz-sb-content");
-          const title = document.getElementById("bz-sb-progress-title");
-          const desc = document.getElementById("bz-sb-onboard-desc");
-          const btn = document.getElementById("bz-sb-init-btn");
-          const box = document.getElementById("bz-sb-init-progress");
-          const fill = document.getElementById("bz-sb-init-fill");
-          const status = document.getElementById("bz-sb-init-status");
-          if (title) title.textContent = titleText;
-          if (desc) desc.style.display = "none";
-          if (btn) btn.style.display = "none";
-          if (box) box.style.display = "flex";
-          if (fill) fill.style.width = "0%";
-          if (resetStatus && status) status.textContent = "准备中…";
-          if (onboard) onboard.style.display = "flex";
-          if (content) content.style.display = "none";
-          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
-        }
-        /** 进度回调解析：把 store.updateProgress 文案换算成进度条（面板销毁后不再写 DOM） */
-        progressObserver() {
-          const status = document.getElementById("bz-sb-init-status");
-          const fill = document.getElementById("bz-sb-init-fill");
-          return (msg) => {
-            if (!(status == null ? void 0 : status.isConnected)) return;
-            const m = msg.match(/向量化:\s*(\d+)\/(\d+)/);
-            if (m && Number(m[2]) > 0) {
-              fill.style.width = Math.min(100, Math.round(Number(m[1]) / Number(m[2]) * 100)) + "%";
-            }
-            status.textContent = msg;
-          };
-        }
-        /** 自动增量索引（ticket 108）：有待处理块 → 进度视图 → 完成后统计；
-         *  ticket 3 假成功修复：有失败段 → toast 明示失败数（进度视图随即被内容态替代，仅靠状态行不可见） */
-        async runIncremental() {
-          this.enterProgressView("正在同步索引");
-          let lastMsg = "";
-          try {
-            await this.store.refresh((msg) => {
-              lastMsg = msg;
-              this.progressObserver()(msg);
-            });
-          } catch (e) {
-            console.warn("[secondbrain] 面板增量索引失败", e);
-          }
-          if (!this.store.isIndexReady()) {
-            this.showInitGuidance();
-            return;
-          }
-          this.showContent(true);
-          await this.renderStats();
-          const fail = lastMsg.match(/^⚠️\s*(\d+)\s*段向量化失败/);
-          if (fail) {
-            notice(`第二大脑：${fail[1]} 段向量化失败，请检查 Ollama 服务`, "warning");
-          }
-        }
-        /** 全量重建（ticket 108「重新索引」）：清空 → 整库重嵌 → 统计；失败给原因可重试 */
-        async runRebuild() {
-          this.enterProgressView("正在重建向量数据库");
-          const status = document.getElementById("bz-sb-init-status");
-          this.initializing = true;
-          try {
-            await this.store.rebuildAll(this.progressObserver());
-            if (this.store.isIndexReady()) {
-              this.showContent(true);
-              await this.renderStats();
-            } else {
-              const box = document.getElementById("bz-sb-init-progress");
-              if (box) box.style.display = "flex";
-              if (status) status.textContent = "重建未完成：请确认 Ollama 服务与 Embedding 模型可用后重试";
-              this.revealInitBtn("重试重建");
-            }
-          } catch (e) {
-            console.warn("[secondbrain] 全量重建失败", e);
-            if (status == null ? void 0 : status.isConnected) {
-              status.textContent = "重建失败：" + ((e == null ? void 0 : e.message) || e);
-              this.revealInitBtn("重试重建");
-            }
-          } finally {
-            this.initializing = false;
-          }
-        }
-        /** 组装弹窗 DOM（markup 全部出自 render.ts；本方法只绑定事件） */
-        createUI() {
-          var _a2, _b2, _c, _d, _e, _f;
-          if (this.mask && document.body.contains(this.mask)) return;
-          const mask = document.createElement("div");
-          mask.className = "bz-sb-panel-mask";
-          mask.onclick = () => this.close();
-          const popup = document.createElement("div");
-          popup.className = "bz-sb-panel bz-panel-mtop";
-          popup.innerHTML = panelShellHtml2();
-          (_a2 = popup.querySelector("#bz-sb-panel-close")) == null ? void 0 : _a2.addEventListener("click", () => {
-            if (this.expandedDirs.size) {
-              this.expandedDirs.clear();
-              this.renderDist();
-            } else {
-              this.close();
-            }
-          });
-          (_b2 = popup.querySelector("#bz-sb-open-chat")) == null ? void 0 : _b2.addEventListener("click", () => {
-            this.close();
-            this.opts.onOpenChat();
-          });
-          (_c = popup.querySelector("#bz-sb-open-ref")) == null ? void 0 : _c.addEventListener("click", () => {
-            this.close();
-            this.opts.onOpenReference();
-          });
-          (_d = popup.querySelector("#bz-sb-incr")) == null ? void 0 : _d.addEventListener("click", () => {
-            if (this.refreshing || this.initializing) return;
-            void this.runIncremental();
-          });
-          (_e = popup.querySelector("#bz-sb-rebuild")) == null ? void 0 : _e.addEventListener("click", () => {
-            void confirmFullRebuild().then((ok) => {
-              if (ok) void this.runRebuild();
-            });
-          });
-          const initBtn = popup.querySelector("#bz-sb-init-btn");
-          if (initBtn) initBtn.onclick = () => void this.startInitialIndex();
-          (_f = popup.querySelector("#bz-sb-dist")) == null ? void 0 : _f.addEventListener("click", (e) => {
-            const row = e.target.closest(".bz-sb-dist-row--dir");
-            if (!row) return;
-            const path = row.dataset.path;
-            if (!path) return;
-            if (this.expandedDirs.has(path)) this.expandedDirs.delete(path);
-            else this.expandedDirs.add(path);
-            this.renderDist();
-          });
-          document.body.appendChild(mask);
-          document.body.appendChild(popup);
-          this.mask = mask;
-          this.popup = popup;
-        }
-        /** 内容态打开时自动增量刷新，完成后重渲统计（修复：原先渲染不等 refresh，展示的总是上一轮旧数据） */
-        async autoRefreshThenRender() {
-          if (this.refreshing) return;
-          this.refreshing = true;
-          try {
-            await this.store.refresh((msg) => {
-              if (msg.startsWith("向量化:") || msg.startsWith("✅ 向量化完成")) console.log(`[secondbrain] ${msg}`);
-            });
-          } catch (e) {
-            console.warn("[secondbrain] 面板自动刷新失败", e);
-          } finally {
-            this.refreshing = false;
-          }
-          await this.renderStats();
-        }
-        /**
-         * 初始向量化运行器（ticket 114 自按钮处理器抽出共用）：进入进度视图并接住 refresh 实时进度，
-         * 完成切内容态渲染统计；失败给出原因并可重试。
-         * 按钮点击与「关页重开恢复」（render 分派）两条路都走这里——store.refresh 并发去重保证
-         * 重复调用只是把进度回调重新接到同一个进行中的 promise 上，不会二次跑库。
-         * 注意：refresh 全部嵌入失败时不抛错也不登记任何条目（QA 同语义），故以 isIndexReady 判定成败。
-         */
-        async runInitialIndexView() {
-          const status = document.getElementById("bz-sb-init-status");
-          if (!status || !status.isConnected) return;
-          this.enterProgressView("正在初始化向量数据库");
-          this.initializing = true;
-          let sawCountedDone = false;
-          let sawWarning = false;
-          let sawFail = false;
-          try {
-            await this.store.refresh((msg) => {
-              if (!status.isConnected) return;
-              if (msg.startsWith("⚠️")) sawWarning = true;
-              if (msg.includes("段向量化失败")) sawFail = true;
-              if (msg.startsWith("✅ 向量化完成：")) sawCountedDone = true;
-              this.progressObserver()(msg);
-            });
-            if (!status.isConnected) return;
-            if (this.store.isIndexReady()) {
-              this.showContent(true);
-              await this.renderStats();
-            } else if (sawFail || sawCountedDone) {
-              status.textContent = "没有成功向量化任何内容：请确认 Ollama 服务与 Embedding 模型可用" + (IS_MOBILE ? "（移动端需配置「远程 Ollama URL」）" : "") + "后重试";
-              this.revealInitBtn("重试初始化");
-            } else if (sawWarning) {
-              status.textContent = "白名单目录内没有可索引的 Markdown 笔记：请检查 ⚙️ 设置中的「白名单目录」";
-              this.revealInitBtn("重试初始化");
-            } else {
-              status.textContent = "未发现可索引的笔记内容";
-              this.revealInitBtn("重试初始化");
-            }
-          } catch (e) {
-            console.warn("[secondbrain] 初始向量化失败", e);
-            if (status.isConnected) {
-              status.textContent = "初始化失败：" + ((e == null ? void 0 : e.message) || e);
-              this.revealInitBtn("重试初始化");
-            }
-          } finally {
-            this.initializing = false;
-          }
-        }
-        /**
-         * 引导按钮（ticket 107/108；ticket 114 修「点了没反应」）：首次全量向量化。
-         * 已在进行中（关页重开后的引导态残留 / 双击）时不再静默吞掉——只要后台确有 refresh 在跑，
-         * 就切回进度视图接回实时进度；否则维持原守卫语义不动。
-         */
-        startInitialIndex() {
-          if (!document.getElementById("bz-sb-init-progress")) return;
-          if (this.initializing || this.refreshing) {
-            if (this.store.isRefreshing()) void this.runInitialIndexView();
-            return;
-          }
-          void this.runInitialIndexView();
-        }
-        /** 失败路径恢复「开始按钮」可见并复位文案（进度形态时按钮被隐藏） */
-        revealInitBtn(label) {
-          const btn = document.getElementById("bz-sb-init-btn");
-          if (!btn) return;
-          btn.style.display = "block";
-          btn.disabled = false;
-          btn.textContent = label;
-          btn.onclick = () => void this.startInitialIndex();
-        }
-        /** 内容态统计渲染：markup 出 render.ts，本方法只算数与注入 */
-        async renderStats() {
-          var _a2, _b2, _c, _d, _e;
-          const popup = this.popup;
-          if (!popup || !popup.isConnected) return;
-          const CONFIG2 = buildConfig();
-          let metaBytes = 0;
-          let vecBytes = 0;
-          try {
-            metaBytes = (_b2 = (_a2 = await this.app.vault.adapter.stat(CONFIG2.STORE_PATH)) == null ? void 0 : _a2.size) != null ? _b2 : 0;
-          } catch (e) {
-          }
-          try {
-            vecBytes = (_d = (_c = await this.app.vault.adapter.stat(CONFIG2.VEC_PATH)) == null ? void 0 : _c.size) != null ? _d : 0;
-          } catch (e) {
-          }
-          const stats = { ...computeStats2(this.store.meta), metaBytes, vecBytes };
-          const vecRows = stats.dim && vecBytes > 0 ? this.store.vectors.length / stats.dim : 0;
-          const healthy = vecRows === 0 || vecRows === stats.chunkCount;
-          const fmtBytes = (n) => n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
-          const order = new Map(stats.bySource.map((s, i) => [s.name, i]));
-          const colorOf2 = (name) => sbSourceColor(name, order);
-          const cnt = popup.querySelector("#bz-sb-cnt");
-          if (cnt) cnt.textContent = `${fmtCompact(stats.noteCount)} 篇 · ${fmtCompact(stats.chunkCount)} 段已入脑`;
-          const pill = popup.querySelector("#bz-sb-pill-txt");
-          if (pill) pill.textContent = healthy ? "索引健康" : `索引偏差 ${Math.abs(vecRows - stats.chunkCount)} 行`;
-          (_e = popup.querySelector(".bz-sb-pill-dot")) == null ? void 0 : _e.classList.toggle("bz-sb-pill-dot--warn", !healthy);
-          const cards = popup.querySelector("#bz-sb-cards");
-          if (cards) {
-            cards.innerHTML = panelCardsHtml([
-              { v: fmtCompact(stats.noteCount), k: "笔记", tip: `共 ${stats.noteCount.toLocaleString()} 篇笔记`, acc: true },
-              { v: fmtCompact(stats.chunkCount), k: "段落", tip: `共 ${stats.chunkCount.toLocaleString()} 个向量块`, acc: true },
-              { v: fmtCompact(stats.totalChars), k: "字符", tip: `共 ${stats.totalChars.toLocaleString()} 字` },
-              { v: stats.dim > 0 ? `${stats.dim} 维` : "—", k: "向量维度", tip: `嵌入模型 ${CONFIG2.EMBEDDING_MODEL} · 维度变更需重建索引` },
-              { v: `${stats.avgChunkLen} 字`, k: "平均段长", tip: `平均每篇 ${stats.avgChunksPerNote} 段` },
-              { v: vecBytes ? fmtBytes(metaBytes + vecBytes) : "—", k: "存储占用", tip: `meta ${fmtBytes(metaBytes)} + 向量 ${fmtBytes(vecBytes)}` }
-            ]);
-          }
-          const trend = popup.querySelector("#bz-sb-trend");
-          if (trend) {
-            trend.innerHTML = panelTrendHtml(stats.trend12w);
-            const sum = popup.querySelector("#bz-sb-trend-sum");
-            if (sum) sum.textContent = stats.trend12w.reduce((a, b) => a + b, 0) + " 篇";
-          }
-          this.renderDist();
-          const recentEl = popup.querySelector("#bz-sb-recent");
-          if (recentEl) {
-            recentEl.innerHTML = panelRecentHtml(
-              stats.recent.map((r) => ({
-                path: r.path,
-                name: r.path.split("/").pop() || r.path,
-                chunks: r.chunks,
-                when: formatRelativeTime(r.mtime),
-                color: colorOf2(topLevelName(r.path))
-              }))
-            );
-            const recentN = popup.querySelector("#bz-sb-recent-n");
-            if (recentN) recentN.textContent = `最新 ${stats.recent.length} 条`;
-          }
-          const log = popup.querySelector("#bz-sb-log");
-          if (log) {
-            log.innerHTML = panelLogHtml([
-              { text: `上次索引 ${stats.lastIndexedAt ? formatRelativeTime(stats.lastIndexedAt) : "—"}` },
-              { text: healthy ? "索引一致" : `向量 ${Math.round(vecRows)} 行 / 块 ${stats.chunkCount} 个`, warn: !healthy },
-              { text: vecBytes ? `占用 ${fmtBytes(metaBytes + vecBytes)}` : "暂无向量文件" }
-            ]);
-          }
-          mountIcons(popup);
-          void this.loadSummaryAndLinks();
-        }
-        /** 来源树渲染（renderStats 与展开点击共用；展开集会话内记忆） */
-        renderDist() {
-          const popup = this.popup;
-          const dist = popup == null ? void 0 : popup.querySelector("#bz-sb-dist");
-          if (!popup || !dist) return;
-          const tree = buildSourceTree(this.store.meta);
-          const order = new Map(computeStats2(this.store.meta).bySource.map((s, i) => [s.name, i]));
-          const colorOf2 = (name) => sbSourceColor(name, order);
-          const rootMax = Math.max(1, ...tree.map((n) => n.chunks));
-          dist.innerHTML = panelDistHtml(tree, this.expandedDirs, colorOf2, rootMax);
-          const distN = popup.querySelector("#bz-sb-dist-n");
-          if (distN) distN.textContent = `${tree.length} 个来源`;
-          mountIcons(dist);
-        }
-        /** AI 库摘要 + 自动建链数（secondbrain.json panel/link 段，异步回填；生成入口已移除，旧值仍可展示） */
-        async loadSummaryAndLinks() {
-          var _a2, _b2, _c;
-          try {
-            const store3 = await loadStore(this.app);
-            const popup = this.popup;
-            if (!popup || !popup.isConnected) return;
-            const summary = ((_a2 = store3.panel) == null ? void 0 : _a2.summary) || "";
-            const aiCard = popup.querySelector("#bz-sb-ai-card");
-            const aiTxt = popup.querySelector("#bz-sb-ai-txt");
-            if (aiCard) aiCard.style.display = summary ? "" : "none";
-            if (aiTxt && summary) {
-              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store3.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store3.panel.generatedAt) : "");
-            }
-            const linkedTotal = Object.keys(((_c = store3.link) == null ? void 0 : _c.state) || {}).length;
-            const log = popup.querySelector("#bz-sb-log");
-            if (log && linkedTotal) {
-              log.insertAdjacentHTML(
-                "beforeend",
-                `<span class="bz-sb-log-sep">·</span>${panelLogHtml([{ text: `自动建链 ${linkedTotal} 条` }])}`
-              );
-            }
-          } catch (e) {
-          }
-        }
-      };
-    }
-  });
-
-  // src/pomodoro/state.ts
-  function createInitialState() {
-    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
-  }
-  function resumePhase(state2, now) {
-    return {
-      state: { ...state2, paused: false, pausedBy: void 0, remaining: 0, endTime: now + state2.remaining * 1e3 },
-      event: { type: "started", phase: state2.phase }
-    };
-  }
-  function activePhase(phase) {
-    return phase === "idle" ? "focus" : phase;
-  }
-  function phaseDurationSec(phase, d) {
-    if (phase === "short-break") return d.shortBreakMin * 60;
-    if (phase === "long-break") return d.longBreakMin * 60;
-    return d.workMin * 60;
-  }
-  function breakPhase(count, d) {
-    return count >= d.longBreakInterval ? "long-break" : "short-break";
-  }
-  function startPhase(state2, phase, now, d) {
-    return {
-      state: { ...state2, phase, endTime: now + phaseDurationSec(phase, d) * 1e3, paused: false, pausedBy: void 0, remaining: 0 },
-      event: { type: "started", phase }
-    };
-  }
-  function completePhase(state2, now, d, o) {
-    const phase = state2.phase;
-    const isFocus = phase === "focus";
-    let count = state2.cycleFocusCount;
-    let historyEntry;
-    let longBreak = false;
-    if (isFocus) {
-      count += 1;
-      longBreak = count >= d.longBreakInterval;
-      if (longBreak) count = 0;
-      historyEntry = { ts: now, duration: d.workMin * 60, ...state2.task ? { task: state2.task } : {} };
-    }
-    let next;
-    let autoStarted = false;
-    if (isFocus) {
-      if (o.autoSkipBreak) {
-        next = "focus";
-        autoStarted = true;
-      } else {
-        next = longBreak ? "long-break" : "short-break";
-        autoStarted = o.autoCycle;
-      }
-    } else {
-      next = "focus";
-      autoStarted = o.autoCycle;
-    }
-    const { task: _settled, ...rest } = state2;
-    const nextState = { ...rest, phase: next, cycleFocusCount: count };
-    const res = autoStarted ? startPhase(nextState, next, now, d) : {
-      state: { ...nextState, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
-      event: { type: "none" }
-    };
-    return {
-      ...res,
-      event: {
-        type: "phase-completed",
-        completedPhase: phase,
-        nextPhase: next,
-        autoStarted,
-        longBreak,
-        ...historyEntry ? { historyEntry } : {}
-      }
-    };
-  }
-  function transition(state2, action, now, d, o) {
-    if (action === "start") {
-      if (state2.paused) return resumePhase(state2, now);
-      if (state2.endTime !== null) return { state: state2, event: { type: "none" } };
-      const phase = activePhase(state2.phase);
-      return startPhase(state2, phase, now, d);
-    }
-    if (action === "pause") {
-      if (state2.endTime === null) return { state: state2, event: { type: "none" } };
-      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
-      return {
-        // 手动暂停：清除可能残留的冻结来源标记（pausedBy 只在冻结暂停期间有效）
-        state: { ...state2, paused: true, pausedBy: void 0, remaining: Math.ceil((state2.endTime - now) / 1e3), endTime: null },
-        event: { type: "none" }
-      };
-    }
-    if (action === "resume") {
-      if (!state2.paused) return { state: state2, event: { type: "none" } };
-      return resumePhase(state2, now);
-    }
-    if (action === "reset") {
-      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
-      const phase = activePhase(state2.phase);
-      return {
-        state: { ...state2, phase, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(phase, d) },
-        event: { type: "none" }
-      };
-    }
-    if (action === "skip") {
-      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
-      const phase = activePhase(state2.phase);
-      let next;
-      if (phase === "focus") next = o.autoSkipBreak ? "focus" : breakPhase(state2.cycleFocusCount, d);
-      else next = "focus";
-      const { task: _dropped, ...rest } = state2;
-      return {
-        state: { ...rest, phase: next, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(next, d) },
-        event: { type: "phase-completed", completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false }
-      };
-    }
-    if (action === "tick") {
-      if (state2.endTime === null || now < state2.endTime) return { state: state2, event: { type: "none" } };
-      return completePhase(state2, now, d, o);
-    }
-    return { state: state2, event: { type: "none" } };
-  }
-  function idleState() {
-    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
-  }
-  function recover(state2, history2, now, d, o) {
-    if (state2.endTime === null || now < state2.endTime) return { state: state2, history: history2.slice(), events: [] };
-    return { state: idleState(), history: history2.slice(), events: [] };
-  }
-  var PHASES;
-  var init_state5 = __esm({
-    "src/pomodoro/state.ts"() {
-      PHASES = ["idle", "focus", "short-break", "long-break"];
-    }
-  });
-
-  // src/pomodoro/data.ts
-  function getPomodoroFilePath() {
-    var _a2;
-    return storageFile("pomodoro.json", ((_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath) || "CONFIG/STORAGE");
-  }
-  function defaultPomodoroData() {
-    return { version: 1, state: createInitialState(), history: [] };
-  }
-  function trimHistory(history2, now) {
-    const floor = new Date(now);
-    floor.setHours(0, 0, 0, 0);
-    floor.setDate(floor.getDate() - 6);
-    const t = floor.getTime();
-    return history2.filter((h) => h.ts >= t);
-  }
-  function normalizeData(raw) {
-    const def = defaultPomodoroData();
-    if (!raw || typeof raw !== "object") return def;
-    const state2 = normalizeState(raw.state);
-    const history2 = Array.isArray(raw.history) ? raw.history.filter((h) => h && typeof h.ts === "number" && typeof h.duration === "number").map((h) => ({
-      ts: h.ts,
-      duration: h.duration,
-      ...typeof h.task === "string" && h.task ? { task: h.task } : {}
-    })) : [];
-    return { version: 1, state: state2, history: history2 };
-  }
-  function normalizeState(raw) {
-    const def = createInitialState();
-    if (!raw || typeof raw !== "object") return def;
-    return {
-      phase: PHASES.includes(raw.phase) ? raw.phase : def.phase,
-      endTime: typeof raw.endTime === "number" ? raw.endTime : def.endTime,
-      remaining: typeof raw.remaining === "number" && raw.remaining >= 0 ? raw.remaining : def.remaining,
-      paused: typeof raw.paused === "boolean" ? raw.paused : def.paused,
-      // 冻结来源标记：仅认 'autopause'，旧数据无此字段/非法值 → undefined（手动暂停语义）
-      pausedBy: raw.pausedBy === "autopause" ? "autopause" : void 0,
-      cycleFocusCount: typeof raw.cycleFocusCount === "number" && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
-      // 归属任务标题：仅字符串非空保留（旧数据/非法值 → undefined）
-      task: typeof raw.task === "string" && raw.task ? raw.task : void 0
-    };
-  }
-  var PomodoroDataManager;
-  var init_data10 = __esm({
-    "src/pomodoro/data.ts"() {
-      init_settings_provider();
-      init_storage();
-      init_state5();
-      PomodoroDataManager = class {
-        constructor(app) {
-          this.app = app;
-        }
-        /**
-         * 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件留档 CONFIG/.CORRUPT 后重建默认）。
-         * 读也入 core per-path 串行队列：读是「load → 改 state → save」事务的读半边，
-         * 排在未落盘的写任务之后才能读到新值（读写同队列，消灭「读-写窗口交错」）。
-         */
-        async load() {
-          const raw = await enqueueFileTask(
-            getPomodoroFilePath(),
-            () => jsonFileStore(getPomodoroFilePath(), {
-              defaultValue: () => defaultPomodoroData(),
-              app: this.app
-            }).read()
-          );
-          return normalizeData(raw);
-        }
-        /**
-         * 保存（统一数据读写层：存在 modify / 不存在 create+建目录）。
-         * D3 可靠写契约原语 1 收编：整写入 core per-path 串行队列（键 = pomodoro.json 路径）——
-         * 计时器心跳保存与用户操作保存并发时按序落盘，后写者不再用陈旧基线覆盖先写者；
-         * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
-         */
-        async save(data) {
-          await enqueueFileTask(
-            getPomodoroFilePath(),
-            () => jsonFileStore(getPomodoroFilePath(), { app: this.app }).write(data)
-          );
-        }
-      };
-    }
-  });
-
-  // src/pomodoro/render.ts
-  function normalizeSkinTheme(v) {
-    const cur = String(v != null ? v : "");
-    return POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : DEFAULT_POMODORO_SKIN_THEME;
-  }
-  function skinClassOf(v) {
-    return `pomodoro-skin-${normalizeSkinTheme(v)}`;
-  }
-  function panelShellHtml3() {
-    return `
-      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
-        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
-        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
-      </svg>
-      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
-      <div id="pomodoro-phase"></div>
-      <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
-      <div class="pomodoro-controls">
-        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
-        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
-        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
-      </div>
-      <div class="pomodoro-stats">
-        <div id="pomodoro-today"></div>
-        <div id="pomodoro-week" class="pomodoro-week"></div>
-      </div>`;
-  }
-  function popupShellHtml() {
-    return `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml3()}</div>`;
-  }
-  var POMODORO_SKIN_THEMES, DEFAULT_POMODORO_SKIN_THEME;
-  var init_render13 = __esm({
-    "src/pomodoro/render.ts"() {
-      POMODORO_SKIN_THEMES = [
-        { value: "tomato", label: "番茄" },
-        { value: "ink", label: "墨白" },
-        { value: "grid", label: "方格纸" },
-        { value: "moss", label: "苔原" },
-        { value: "mist", label: "海雾" },
-        { value: "sand", label: "暖沙" },
-        { value: "citrus", label: "蜜柑" },
-        { value: "sakura", label: "樱粉" },
-        { value: "latte", label: "咖啡" },
-        { value: "night", label: "夜航" }
-      ];
-      DEFAULT_POMODORO_SKIN_THEME = "tomato";
-    }
-  });
-
-  // src/pomodoro/sound.ts
-  function playSound(kind, volume = 100) {
-    const w = typeof window !== "undefined" ? window : globalThis;
-    const AC = w.AudioContext || w.webkitAudioContext;
-    if (!AC) return;
-    if (volume <= 0) return;
-    try {
-      const cfg = SOUND_CONFIG[kind];
-      const ctx = new AC();
-      if (ctx.state === "suspended" && typeof ctx.resume === "function") void ctx.resume();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = cfg.freq;
-      const peak = 0.8 * (Math.max(1, Math.min(100, volume)) / 100);
-      const t = ctx.currentTime;
-      gain.gain.setValueAtTime(1e-3, t);
-      gain.gain.exponentialRampToValueAtTime(peak, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(1e-3, t + cfg.dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + cfg.dur + 0.02);
-      const ctxRef = ctx;
-      setTimeout(() => {
-        void ctxRef.close();
-      }, cfg.dur * 1e3 + 300);
-    } catch (e) {
-    }
-  }
-  var SOUND_CONFIG;
-  var init_sound = __esm({
-    "src/pomodoro/sound.ts"() {
-      SOUND_CONFIG = {
-        "focus-start": { freq: 880, dur: 0.25 },
-        "short-break-start": { freq: 523, dur: 0.3 },
-        "long-break-start": { freq: 392, dur: 0.45 },
-        pause: { freq: 440, dur: 0.2 }
-      };
-    }
-  });
-
-  // src/pomodoro/statusbar.ts
-  function syncPomodoroStatusBar(state2, remainSec) {
-    if (!statusEl) return;
-    const running2 = state2.endTime !== null;
-    const paused = !running2 && state2.paused;
-    statusEl.classList.toggle("pomodoro-statusbar-idle", !running2 && !paused);
-    statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
-    statusEl.title = state2.task ? `番茄钟：${state2.task}` : "番茄钟";
-    if (textSpan) {
-      if (running2) {
-        const m = Math.floor(remainSec / 60);
-        const s = remainSec % 60;
-        textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
-      } else if (paused) {
-        textSpan.textContent = "已暂停";
-      } else {
-        textSpan.textContent = "";
-      }
-    }
-  }
-  var statusEl, textSpan;
-  var init_statusbar = __esm({
-    "src/pomodoro/statusbar.ts"() {
-      init_fake_obsidian();
-      init_utils();
-      statusEl = null;
-      textSpan = null;
-    }
-  });
-
-  // src/pomodoro/stats.ts
-  function dayKey(ts) {
-    return localDayKey(ts);
-  }
-  function todayCount(history2, now) {
-    const today = dayKey(now);
-    return history2.filter((h) => dayKey(h.ts) === today).length;
-  }
-  function todayMinutes(history2, now) {
-    const today = dayKey(now);
-    return Math.round(history2.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
-  }
-  function last7Days(history2, now) {
-    const counts = /* @__PURE__ */ new Map();
-    const minutes = /* @__PURE__ */ new Map();
-    const d = new Date(now);
-    d.setHours(0, 0, 0, 0);
-    for (let i = 6; i >= 0; i--) {
-      const day = new Date(d);
-      day.setDate(day.getDate() - i);
-      const key = dayKey(day.getTime());
-      counts.set(key, 0);
-      minutes.set(key, 0);
-    }
-    for (const h of history2) {
-      const key = dayKey(h.ts);
-      if (counts.has(key)) {
-        counts.set(key, counts.get(key) + 1);
-        minutes.set(key, minutes.get(key) + h.duration / 60);
-      }
-    }
-    return Array.from(counts.entries()).map(([date, count]) => ({
-      date,
-      count,
-      minutes: Math.round(minutes.get(date) || 0)
-    }));
-  }
-  var init_stats3 = __esm({
-    "src/pomodoro/stats.ts"() {
-      init_utils();
-    }
-  });
-
-  // src/pomodoro/config.ts
-  var PRESETS, CUSTOM_PRESET_ID;
-  var init_config4 = __esm({
-    "src/pomodoro/config.ts"() {
-      PRESETS = {
-        classic: { label: "经典标准", workMin: 25, shortBreakMin: 5, longBreakMin: 15 },
-        neuro: { label: "神经专注", workMin: 30, shortBreakMin: 7, longBreakMin: 20 },
-        flow: { label: "深度心流", workMin: 50, shortBreakMin: 10, longBreakMin: 25 },
-        creative: { label: "创意激发", workMin: 40, shortBreakMin: 12, longBreakMin: 20 },
-        beginner: { label: "初学入门", workMin: 15, shortBreakMin: 5, longBreakMin: 12 },
-        study: { label: "高效学习", workMin: 30, shortBreakMin: 5, longBreakMin: 15 },
-        sprint: { label: "敏捷冲刺", workMin: 20, shortBreakMin: 4, longBreakMin: 12 },
-        marathon: { label: "马拉松式", workMin: 45, shortBreakMin: 15, longBreakMin: 30 },
-        recovery: { label: "疲劳恢复", workMin: 20, shortBreakMin: 10, longBreakMin: 20 },
-        intense: { label: "高强度", workMin: 50, shortBreakMin: 5, longBreakMin: 15 },
-        balanced: { label: "平衡模式", workMin: 35, shortBreakMin: 7, longBreakMin: 18 }
-      };
-      CUSTOM_PRESET_ID = "custom";
-    }
-  });
-
-  // src/core/pomodoro-phase.ts
-  function isFocusingPhase(p) {
-    return p === "focusing" || p === "paused";
-  }
-  var init_pomodoro_phase = __esm({
-    "src/core/pomodoro-phase.ts"() {
-    }
-  });
-
-  // src/pomodoro/ui.ts
-  var ui_exports8 = {};
-  __export(ui_exports8, {
-    POMODORO_SKIN_THEMES: () => POMODORO_SKIN_THEMES,
-    closePomodoro: () => closePomodoro,
-    ensurePomodoro: () => ensurePomodoro,
-    isFocusing: () => isFocusing,
-    menuPhase: () => menuPhase,
-    openPomodoro: () => openPomodoro,
-    pomodoroSettingsSchema: () => pomodoroSettingsSchema,
-    skipBreak: () => skipBreak,
-    startFocusForTask: () => startFocusForTask,
-    toggleFocus: () => toggleFocus,
-    togglePause: () => togglePause,
-    unloadPomodoro: () => unloadPomodoro
-  });
-  function applySkinClass() {
-    const popup = document.getElementById("pomodoro-popup");
-    if (!popup) return;
-    const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
-    for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
-    popup.classList.add(want);
-  }
-  function durations() {
-    const s = tryGetSettings();
-    const num = (v, def) => {
-      const n = parseInt(v != null ? v : "", 10);
-      return Number.isFinite(n) && n > 0 ? n : def;
-    };
-    const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
-    return {
-      workMin: preset ? preset.workMin : num(s.pomodoroWorkMin, 25),
-      shortBreakMin: preset ? preset.shortBreakMin : num(s.pomodoroShortBreakMin, 5),
-      longBreakMin: preset ? preset.longBreakMin : num(s.pomodoroLongBreakMin, 15),
-      longBreakInterval: num(s.pomodoroLongBreakInterval, 4)
-    };
-  }
-  function options() {
-    const s = tryGetSettings();
-    return {
-      forceFocus: !!s.pomodoroForceFocus,
-      autoCycle: !!s.pomodoroAutoCycle,
-      autoSkipBreak: !!s.pomodoroAutoSkipBreak
-    };
-  }
-  function phaseLabel(phase) {
-    if (phase === "focus") return "专注";
-    if (phase === "short-break") return "短休息";
-    if (phase === "long-break") return "长休息";
-    return "番茄钟";
-  }
-  function phaseText(phase, count, d) {
-    if (phase === "focus") return `专注 ${count + 1}/${d.longBreakInterval}`;
-    return phaseLabel(phase);
-  }
-  function playPhaseSound(phase) {
-    const s = tryGetSettings();
-    if (s.pomodoroSound !== false) {
-      const kind = phase === "focus" ? "focus-start" : phase === "long-break" ? "long-break-start" : "short-break-start";
-      playSound(kind, pomodoroVolume());
-    }
-  }
-  function notifyPhaseStarted(phase) {
-    const d = durations();
-    if (phase === "focus") {
-      notice("专注开始", "success");
-    } else if (phase === "long-break") {
-      notice(`长休息开始：${d.longBreakMin} 分钟`, "success");
-    } else {
-      notice(`休息开始：${d.shortBreakMin} 分钟`, "success");
-    }
-    playPhaseSound(phase);
-  }
-  function notifyPaused() {
-    notice("已暂停专注", "pause");
-    const s = tryGetSettings();
-    if (s.pomodoroSound !== false) playSound("pause", pomodoroVolume());
-  }
-  function breakLabel(phase, d) {
-    return phase === "long-break" ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
-  }
-  function notifyPhaseComplete(e) {
-    const d = durations();
-    playPhaseSound(e.nextPhase);
-    if (e.autoStarted) {
-      if (e.completedPhase === "focus") {
-        notice(e.nextPhase === "focus" ? "专注完成：开始下一轮专注" : `专注完成：${breakLabel(e.nextPhase, d)}`, "success");
-      } else {
-        notice("休息结束：开始专注", "success");
-      }
-      return;
-    }
-    if (e.completedPhase === "focus") {
-      notify(`专注完成：${breakLabel(e.nextPhase, d)}`, {
-        type: "success",
-        duration: 6e3,
-        action: { label: "开始休息", onClick: () => applyAction("start") }
-      });
-    } else {
-      notify("休息结束", {
-        type: "success",
-        duration: 6e3,
-        action: { label: "开始专注", onClick: () => applyAction("start") }
-      });
-    }
-  }
-  function pomodoroVolume() {
-    const v = tryGetSettings().pomodoroVolume;
-    return typeof v === "number" && v >= 0 ? v : 100;
-  }
-  function remainingSec() {
-    if (state.endTime !== null) return Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
-    if (state.phase === "idle" && state.remaining === 0) return phaseDurationSec("focus", durations());
-    return state.remaining;
-  }
-  function fmt(sec) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${pad2(m)}:${pad2(s)}`;
-  }
-  function renderStats() {
-    const now = Date.now();
-    const todayEl = document.getElementById("pomodoro-today");
-    if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
-    const weekEl = document.getElementById("pomodoro-week");
-    if (!weekEl) return;
-    const days = last7Days(history, now);
-    const key = days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
-    if (key === lastStatsKey) return;
-    lastStatsKey = key;
-    const max = Math.max(1, ...days.map((d) => d.count));
-    weekEl.innerHTML = "";
-    for (const d of days) {
-      const bar = document.createElement("div");
-      bar.className = "pomodoro-stat-day";
-      bar.title = `${d.date}：${d.count} 个 · ${d.minutes} 分钟`;
-      const col = document.createElement("div");
-      col.className = "pomodoro-stat-col";
-      const h = document.createElement("div");
-      h.className = "pomodoro-stat-bar";
-      h.style.height = `${Math.max(2, Math.round(d.count / max * 40))}px`;
-      col.appendChild(h);
-      const label = document.createElement("span");
-      label.className = "pomodoro-stat-label";
-      label.textContent = d.date.slice(8);
-      col.appendChild(label);
-      bar.appendChild(col);
-      weekEl.appendChild(bar);
-    }
-  }
-  function render() {
-    const d = durations();
-    const remain = remainingSec();
-    syncPomodoroStatusBar(state, remain);
-    if (!maskEl) return;
-    const total = phaseDurationSec(state.phase === "idle" ? "focus" : state.phase, d);
-    const C = 2 * Math.PI * 52;
-    const progress = total > 0 ? 1 - remain / total : 1;
-    const circle = document.getElementById("pomodoro-ring-progress");
-    if (circle) {
-      circle.setAttribute("stroke-dasharray", String(C));
-      circle.setAttribute("stroke-dashoffset", String(C * (1 - progress)));
-    }
-    const phaseEl = document.getElementById("pomodoro-phase");
-    if (phaseEl) {
-      const label = phaseLabel(state.phase);
-      if (phaseEl.dataset.label !== label) {
-        phaseEl.dataset.label = label;
-        phaseEl.innerHTML = "";
-        if (state.phase === "idle") {
-          const ic2 = document.createElement("span");
-          ic2.className = "pomodoro-phase-icon";
-          setIcon(ic2, "timer");
-          phaseEl.appendChild(ic2);
-          phaseEl.appendChild(document.createTextNode(label));
-        } else {
-          phaseEl.textContent = label;
-        }
-      }
-    }
-    renderCycleDots(d);
-    renderTaskLine();
-    const timeEl = document.getElementById("pomodoro-time");
-    if (timeEl) timeEl.textContent = fmt(remain);
-    renderStats();
-    updateButtons();
-    applySkinClass();
-  }
-  function renderCycleDots(d) {
-    const cycleEl = document.getElementById("pomodoro-cycle");
-    if (!cycleEl) return;
-    const total = Math.max(1, d.longBreakInterval);
-    if (cycleEl.childElementCount !== total) {
-      cycleEl.innerHTML = "";
-      for (let i = 0; i < total; i++) {
-        const dot = document.createElement("span");
-        dot.className = "pomodoro-cycle-dot";
-        cycleEl.appendChild(dot);
-      }
-    }
-    Array.from(cycleEl.children).forEach((dot, i) => {
-      dot.className = "pomodoro-cycle-dot" + (i < state.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
-    });
-  }
-  function renderTaskLine() {
-    const taskEl = document.getElementById("pomodoro-task");
-    if (!taskEl) return;
-    if (state.task) {
-      if (taskEl.textContent !== state.task) taskEl.textContent = state.task;
-      taskEl.title = state.task;
-    } else {
-      taskEl.textContent = "";
-      taskEl.removeAttribute("title");
-    }
-  }
-  function updateButtons() {
-    const startBtn = document.getElementById("pomodoro-btn-start");
-    if (!startBtn) return;
-    const running2 = state.endTime !== null;
-    startBtn.textContent = running2 ? "暂停" : state.paused ? "继续" : "开始";
-    const locked = options().forceFocus && state.phase === "focus" && (running2 || state.paused);
-    const startLocked = locked && !(state.paused && state.pausedBy === "autopause");
-    startBtn.disabled = startLocked;
-    const resetBtn = document.getElementById("pomodoro-btn-reset");
-    const skipBtn = document.getElementById("pomodoro-btn-skip");
-    if (resetBtn) resetBtn.disabled = locked;
-    if (skipBtn) skipBtn.disabled = locked;
-  }
-  function applyAction(action) {
-    const prev = state;
-    const r = transition(state, action, Date.now(), durations(), options());
-    state = r.state;
-    if (!state.paused) autoPauseMain = false;
-    if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
-    if (r.event.type === "phase-completed") {
-      if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
-      if (action === "tick") notifyPhaseComplete(r.event);
-      if (r.event.completedPhase === "focus" && r.event.historyEntry) {
-        emitDomainEvent("pomodoro", { kind: "focus-done", minutes: durations().workMin });
-      }
-    }
-    if (action === "pause" && state.paused) notifyPaused();
-    if (r.event.type !== "none" || action === "pause" && state.paused || action === "reset" && r.state !== prev) void save();
-    ensureTick();
-    render();
-  }
-  function onTick() {
-    applyAction("tick");
-  }
-  function autoPauseEnabled() {
-    return tryGetSettings().pomodoroAutoPauseOnHide !== false;
-  }
-  function freezeRunning(s, now) {
-    if (s.endTime === null || s.paused) return s;
-    return {
-      ...s,
-      paused: true,
-      pausedBy: "autopause",
-      remaining: Math.max(0, Math.ceil((s.endTime - now) / 1e3)),
-      endTime: null
-    };
-  }
-  function unfreezeRunning(s, now) {
-    if (!s.paused) return s;
-    return { ...s, paused: false, pausedBy: void 0, remaining: 0, endTime: now + s.remaining * 1e3 };
-  }
-  function pauseOnHidden() {
-    if (!autoPauseEnabled()) return;
-    const now = Date.now();
-    if (state.endTime !== null && !state.paused) {
-      state = freezeRunning(state, now);
-      autoPauseMain = true;
-    }
-    if (autoPauseMain) {
-      void save();
-      render();
-    }
-  }
-  function resumeOnVisible() {
-    const now = Date.now();
-    if (autoPauseMain && state.paused) {
-      state = unfreezeRunning(state, now);
-      autoPauseMain = false;
-      void save();
-      render();
-      return;
-    }
-    render();
-  }
-  function registerVisibilityListener() {
-    if (visibilityHandler) return;
-    visibilityHandler = () => {
-      if (document.hidden) pauseOnHidden();
-      else resumeOnVisible();
-    };
-    document.addEventListener("visibilitychange", visibilityHandler);
-  }
-  function unregisterVisibilityListener() {
-    if (visibilityHandler) {
-      document.removeEventListener("visibilitychange", visibilityHandler);
-      visibilityHandler = null;
-    }
-  }
-  function ensureTick() {
-    const needsTick = state.endTime !== null;
-    if (needsTick && timerId === null) {
-      timerId = window.setInterval(onTick, 1e3);
-    } else if (!needsTick && timerId !== null) {
-      window.clearInterval(timerId);
-      timerId = null;
-    }
-  }
-  async function save() {
-    history = trimHistory(history, Date.now());
-    if (dataManager2) await dataManager2.save({ version: 1, state, history });
-  }
-  async function initData() {
-    const data = await dataManager2.load();
-    const r = recover(data.state, data.history, Date.now(), durations(), options());
-    state = r.state;
-    history = trimHistory(r.history, Date.now());
-    const mainChanged = data.state.endTime !== null && r.state.endTime === null;
-    if (mainChanged) await dataManager2.save({ version: 1, state, history });
-    loaded2 = true;
-  }
-  function pomodoroSettingsSchema() {
-    const soundToggle = {
-      get: () => tryGetSettings().pomodoroSound !== false,
-      set: (v) => {
-        getSettings().pomodoroSound = v;
-      },
-      save: () => saveSettings()
-    };
-    const autoPauseToggle = {
-      get: () => tryGetSettings().pomodoroAutoPauseOnHide !== false,
-      set: (v) => {
-        getSettings().pomodoroAutoPauseOnHide = v;
-      },
-      save: () => saveSettings()
-    };
-    return {
-      groups: [
-        {
-          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
-          icon: "palette",
-          name: "外观",
-          rows: [
-            {
-              type: "choiceCards",
-              name: "面板布局",
-              binding: { key: "pomodoroSkin" },
-              options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }],
-              // 配套回落（issue 246 a2 口径：不建 layoutPairMap）：换布局后若当前主题不属于
-              // 新布局的配套（layout 不符）→ 回落第一个适配主题（无适配主题则兜底第一项），
-              // 防「布局换了主题还挂旧皮」
-              onChange: () => {
-                var _a2, _b2;
-                const s = tryGetSettings();
-                const cur = String((_a2 = s.pomodoroSkinTheme) != null ? _a2 : "");
-                const fit = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
-                if (!fit.some((o) => o.value === cur)) {
-                  s.pomodoroSkinTheme = ((_b2 = fit[0]) != null ? _b2 : SKIN_THEME_OPTIONS[0]).value;
-                  saveSettings();
-                }
-                render();
-              }
-            },
-            // 面板主题：10 套皮（清单单源 = render.ts POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）；
-            // onChange 驱动 render() 重挂皮肤类——设置面板关着弹窗换肤也要即时生效（评审 c1）
-            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: SKIN_THEME_OPTIONS, onChange: () => render() }
-          ]
-        },
-        {
-          icon: "timer",
-          name: "时间方案",
-          rows: [
-            {
-              type: "select",
-              name: "预设方案",
-              desc: "选择现成的工作与休息时长组合",
-              binding: { key: "pomodoroPreset" },
-              options: [
-                ...Object.entries(PRESETS).map(([id, p]) => ({
-                  value: id,
-                  label: `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`
-                })),
-                { value: CUSTOM_PRESET_ID, label: "自定义" }
-              ],
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "工作时长",
-              desc: "自定义方案的工作阶段分钟数",
-              binding: numStrBinding("pomodoroWorkMin", 25),
-              min: 1,
-              max: 120,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "短休息时长",
-              desc: "自定义方案的短休息分钟数",
-              binding: numStrBinding("pomodoroShortBreakMin", 5),
-              min: 1,
-              max: 60,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "长休息时长",
-              desc: "自定义方案的长休息分钟数",
-              binding: numStrBinding("pomodoroLongBreakMin", 15),
-              min: 1,
-              max: 60,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            { type: "number", name: "长休息间隔", desc: "每隔几个专注进入一次长休息", binding: numStrBinding("pomodoroLongBreakInterval", 4), min: 1, max: 20, step: 1, onChange: () => render() }
-          ]
-        },
-        {
-          icon: "sliders-horizontal",
-          name: "行为",
-          rows: [
-            { type: "toggle", name: "强制专注模式", desc: "专注进行中无法暂停跳过或重置", binding: { key: "pomodoroForceFocus" }, onChange: () => render() },
-            { type: "toggle", name: "自动循环", desc: "阶段结束后自动开始下一阶段", binding: { key: "pomodoroAutoCycle" }, onChange: () => render() },
-            { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
-            { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
-            { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
-            // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
-            {
-              type: "slider",
-              name: "提示音音量",
-              desc: "提示音大小，默认最大",
-              binding: { get: () => {
-                var _a2;
-                return (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100;
-              }, set: (v) => {
-                getSettings().pomodoroVolume = v;
-              }, save: () => saveSettings() },
-              min: 0,
-              max: 100,
-              step: 5,
-              actions: [{ text: "试听", onClick: () => {
-                var _a2;
-                return playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
-              } }]
-            },
-            {
-              type: "select",
-              name: "打开时恢复方式",
-              desc: "启动时正在倒计时，选择弹窗提醒或后台继续",
-              binding: { key: "pomodoroRestoreMode" },
-              options: [
-                { value: "background", label: "后台继续" },
-                { value: "popup", label: "自动弹窗" }
-              ]
-            }
-          ]
-        }
-      ]
-    };
-  }
-  function bindEvents() {
-    const startBtn = document.getElementById("pomodoro-btn-start");
-    startBtn.addEventListener("click", () => applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start"));
-    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => applyAction("reset"));
-    document.getElementById("pomodoro-btn-skip").addEventListener("click", () => applyAction("skip"));
-    const popup = document.getElementById("pomodoro-popup");
-    popup.addEventListener("keydown", (e) => {
-      if (e.key !== " ") return;
-      const t = e.target;
-      const tag = t.tagName;
-      if (tag === "BUTTON" || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) return;
-      e.preventDefault();
-      applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start");
-    });
-  }
-  function buildDOM() {
-    var _a2;
-    const mask = document.createElement("div");
-    mask.id = "pomodoro-mask";
-    mask.innerHTML = popupShellHtml();
-    mask.style.zIndex = String(allocZ());
-    document.body.appendChild(mask);
-    maskEl = mask;
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) closePomodoro();
-    });
-    escHandle3 = escManager.register("pomodoro", {
-      isVisible: () => maskEl !== null,
-      close: closePomodoro
-    });
-    bindEvents();
-    render();
-    (_a2 = document.getElementById("pomodoro-popup")) == null ? void 0 : _a2.focus();
-  }
-  function initDataOnce() {
-    if (loaded2) return Promise.resolve();
-    initInflight != null ? initInflight : initInflight = initData().finally(() => {
-      initInflight = null;
-    });
-    return initInflight;
-  }
-  async function openPomodoro(app) {
-    appRef2 = app;
-    if (!dataManager2) dataManager2 = new PomodoroDataManager(app);
-    if (!maskEl) {
-      openInflight != null ? openInflight : openInflight = (async () => {
-        await initDataOnce();
-        buildDOM();
-        ensureTick();
-      })();
-      try {
-        await openInflight;
-      } finally {
-        openInflight = null;
-      }
-    }
-    const popupEl2 = maskEl ? maskEl.querySelector("#pomodoro-popup") : null;
-    popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
-  }
-  async function ensurePomodoro(app) {
-    appRef2 = app;
-    if (!dataManager2) dataManager2 = new PomodoroDataManager(app);
-    registerVisibilityListener();
-    if (!loaded2) {
-      await initDataOnce();
-      if (state.endTime !== null) {
-        ensureTick();
-        render();
-        const remainSec = Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
-        notice(`番茄钟继续：${phaseText(state.phase, state.cycleFocusCount, durations())}，还剩 ${fmt(remainSec)}`);
-        const s = tryGetSettings();
-        if (s.pomodoroRestoreMode === "popup") void openPomodoro(app);
-      }
-    }
-  }
-  function closePomodoro() {
-    if (maskEl) {
-      maskEl.remove();
-      maskEl = null;
-    }
-    if (escHandle3) {
-      escHandle3.unregister();
-      escHandle3 = null;
-    }
-  }
-  async function startFocusForTask(app, taskTitle) {
-    await ensurePomodoro(app);
-    const o = options();
-    const d = durations();
-    if (state.phase === "short-break" || state.phase === "long-break") {
-      state = transition(state, "skip", Date.now(), d, o).state;
-      void save();
-      render();
-    }
-    if (state.endTime !== null) {
-      notice("已有专注计时中，本次不重复开始", "warning");
-      return;
-    }
-    if (o.forceFocus && state.paused && state.pausedBy !== "autopause") {
-      notice("强制专注模式暂停中，请先在番茄钟恢复", "warning");
-      return;
-    }
-    state = { ...state, task: taskTitle };
-    applyAction("start");
-  }
-  function isFocusing() {
-    return isFocusingPhase(menuPhase());
-  }
-  async function toggleFocus(app) {
-    await ensurePomodoro(app);
-    if (isFocusing()) {
-      const before = state;
-      applyAction("reset");
-      if (state === before) notice("强制专注模式中，请先在番茄钟面板操作", "warning");
-      else notice("专注已停止");
-      return;
-    }
-    if (state.phase === "short-break" || state.phase === "long-break") {
-      state = transition(state, "skip", Date.now(), durations(), options()).state;
-      void save();
-      render();
-    }
-    applyAction("start");
-  }
-  function menuPhase() {
-    if (state.phase === "short-break" || state.phase === "long-break") return "break";
-    if (state.phase !== "focus") return "idle";
-    if (state.paused) return "paused";
-    return state.endTime !== null ? "focusing" : "idle";
-  }
-  async function skipBreak(app) {
-    await ensurePomodoro(app);
-    if (state.phase !== "short-break" && state.phase !== "long-break") {
-      notice("当前不在休息阶段", "warning");
-      return;
-    }
-    state = transition(state, "skip", Date.now(), durations(), options()).state;
-    void save();
-    render();
-    applyAction("start");
-  }
-  async function togglePause(app) {
-    await ensurePomodoro(app);
-    if (state.endTime === null && !state.paused) {
-      notice("当前没有进行中的计时", "warning");
-      return;
-    }
-    applyAction(state.paused ? "resume" : "pause");
-  }
-  function unloadPomodoro() {
-    if (timerId !== null) {
-      window.clearInterval(timerId);
-      timerId = null;
-    }
-    unregisterVisibilityListener();
-    autoPauseMain = false;
-    openInflight = null;
-    initInflight = null;
-    closePomodoro();
-    state = createInitialState();
-    history = [];
-    lastStatsKey = "";
-    dataManager2 = null;
-    appRef2 = null;
-    loaded2 = false;
-  }
-  var dataManager2, state, history, loaded2, maskEl, escHandle3, timerId, appRef2, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
-  var init_ui11 = __esm({
-    "src/pomodoro/ui.ts"() {
-      init_fake_obsidian();
-      init_esc_manager();
-      init_z_order();
-      init_settings_provider();
-      init_notice();
-      init_settings_common();
-      init_data10();
-      init_render13();
-      init_render13();
-      init_sound();
-      init_statusbar();
-      init_stats3();
-      init_config4();
-      init_state5();
-      init_pomodoro_phase();
-      init_utils();
-      init_domain_bus();
-      dataManager2 = null;
-      state = createInitialState();
-      history = [];
-      loaded2 = false;
-      maskEl = null;
-      escHandle3 = null;
-      timerId = null;
-      appRef2 = null;
-      autoPauseMain = false;
-      visibilityHandler = null;
-      lastStatsKey = "";
-      SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
-      initInflight = null;
-      openInflight = null;
-    }
-  });
-
   // src/password-vault/settings.ts
   var settings_exports6 = {};
   __export(settings_exports6, {
@@ -38766,6 +34724,17 @@ ${text}`;
     const warnReload = makeReloadWarnOnce();
     return {
       groups: [
+        {
+          // 外观组（2026-09-12 补，与保险库 · 影院 · 第二大脑同范式）：布局单卡占位 + 主题单档，
+          // 域 UI 消费（皮肤类接线）待皮肤设计时接入——本域 styles.css 已 token 化（--pwv-*），
+          // 真出皮肤时只需在域内加皮肤段，本 schema 不动
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "passwordVaultSkin" }, options: [{ value: "default", label: "三栏", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "passwordVaultSkinTheme" }, layoutKey: "passwordVaultSkin", options: [{ value: "gold", label: "金印", layout: "default", prevClass: "bz-sp-prev-gold" }] }
+          ]
+        },
         { icon: "key-round", name: "生成", rows: [
           { type: "text", name: "密码生成字符集", desc: "随机生成密码时使用的字符集", binding: { key: "passwordCharset" }, onCommit: warnReload },
           { type: "number", name: "密码生成长度", desc: "随机生成密码的字符个数", binding: numStrBinding("passwordLength", 16), min: 4, max: 128, step: 1, onCommit: warnReload }
@@ -39114,7 +35083,7 @@ ${text}`;
     await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app }).write(data);
   }
   var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS;
-  var init_data11 = __esm({
+  var init_data10 = __esm({
     "src/smartcat/data.ts"() {
       init_storage();
       init_config5();
@@ -39297,28 +35266,9 @@ ${text}`;
         }
       ]
     };
-    const vizGroups = opts.onOpenDashboard ? [
-      {
-        icon: "bar-chart-3",
-        name: "可视化",
-        rows: [
-          {
-            type: "button",
-            name: "打开数据面板",
-            desc: "查看小橘的状态全貌与每周懂你报告",
-            buttonText: "打开数据面板",
-            onClick: () => {
-              closeSettingsModal();
-              opts.onOpenDashboard();
-            }
-          }
-        ]
-      }
-    ] : [];
     return {
       groups: [
         lookGroup,
-        ...vizGroups,
         {
           icon: "message-circle",
           name: "互动",
@@ -39357,14 +35307,15 @@ ${text}`;
         // ADR-0069 记忆目录（记忆目录流）：多文件夹选择（core/path-picker 多选），其内笔记进入笔记记忆库
         {
           icon: "folder-open",
-          name: "记忆目录",
+          // 2026-09-12：组名「记忆目录」→「记忆来源」（组内行同名易混；来源语义更准）
+          name: "记忆来源",
           rows: [
             // 通用 path 行（multi chips，两渲染器统一实现——custom 套 renderPathSettingRow 已退役）
             {
               type: "path",
               mode: "multi",
-              name: "记忆目录",
-              desc: "文件夹内的笔记会进入小橘的记忆库，移除目录会清掉对应记忆",
+              name: "记忆文件夹",
+              desc: "文件夹内的笔记会进入小橘的记忆库，移除文件夹会清掉对应记忆",
               binding: {
                 get: () => normalizeMemoryDirectories(tryGetSettings().memoryDirectories),
                 set: () => {
@@ -39372,7 +35323,7 @@ ${text}`;
                 save: () => {
                 }
               },
-              pickerTitle: "选择记忆目录",
+              pickerTitle: "选择记忆文件夹",
               pickerDesc: "选择小橘读取笔记的文件夹（可多选）",
               onChange: (list) => {
                 var _a2;
@@ -39415,8 +35366,19 @@ ${text}`;
         },
         {
           icon: "eye",
-          name: "显示",
+          // 2026-09-12：原「可视化」（按钮）+「显示」（开关）合并为一组，挪到面板末尾
+          name: "数据面板",
           rows: [
+            ...opts.onOpenDashboard ? [{
+              type: "button",
+              name: "打开数据面板",
+              desc: "查看小橘的状态全貌与每周懂你报告",
+              buttonText: "打开数据面板",
+              onClick: () => {
+                closeSettingsModal();
+                opts.onOpenDashboard();
+              }
+            }] : [],
             { type: "toggle", name: "显示行为日志", desc: "在数据面板中显示行为日志页签", binding: bindBehaviorOn("showBehaviorLog") }
           ]
         }
@@ -39500,6 +35462,275 @@ ${text}`;
     }
   });
 
+  // src/settings.ts
+  var settings_exports7 = {};
+  __export(settings_exports7, {
+    DEFAULT_SETTINGS: () => DEFAULT_SETTINGS,
+    migrateMemoSettingKeys: () => migrateMemoSettingKeys
+  });
+  function migrateMemoSettingKeys(raw) {
+    if (!raw || typeof raw !== "object") return false;
+    const rec = raw;
+    let migrated = false;
+    for (const [from, to] of MEMO_KEY_MIGRATIONS) {
+      if (rec[from] !== void 0) {
+        if (rec[to] === void 0) rec[to] = rec[from];
+        delete rec[from];
+        migrated = true;
+      }
+    }
+    return migrated;
+  }
+  var MEMO_KEY_MIGRATIONS, DEFAULT_SETTINGS;
+  var init_settings7 = __esm({
+    "src/settings.ts"() {
+      MEMO_KEY_MIGRATIONS = [
+        ["todoPanelWidth", "memoPanelWidth"],
+        ["todoPanelHeight", "memoPanelHeight"],
+        ["todoSkin", "memoSkin"],
+        ["todoLayout", "memoLayout"]
+      ];
+      DEFAULT_SETTINGS = {
+        // AI 全局
+        aiProvider: "opencode-go",
+        deepseekApiKey: "",
+        opencodeGoApiKey: "",
+        openaiApiKey: "",
+        anthropicApiKey: "",
+        googleApiKey: "",
+        moonshotApiKey: "",
+        zhipuApiKey: "",
+        dashscopeApiKey: "",
+        siliconflowApiKey: "",
+        openrouterApiKey: "",
+        xaiApiKey: "",
+        groqApiKey: "",
+        mistralApiKey: "",
+        togetherApiKey: "",
+        ollamaApiKey: "",
+        aiCustomEndpoint: "",
+        aiCustomModel: "",
+        aiCustomApiKey: "",
+        aiModelOverrides: {},
+        aiContextOverrides: {},
+        aiMaxTokensOverrides: {},
+        // 共享数据路径（ADR-0009）
+        storagePath: "CONFIG/STORAGE",
+        // 附件搬移（ticket 65，运行时记忆）
+        attachLastFolder: "",
+        // 通知（core notice toast 横切偏好，issue 297）
+        noticeLevel: "all",
+        noticeDuration: "standard",
+        noticePosition: "top-right",
+        noticeMaxVisible: "5",
+        // 备忘录
+        autoPopupOnStart: true,
+        openNoteReminder: true,
+        memoScenarios: "",
+        memoSortMode: "priority",
+        memoShowArchivedByDefault: false,
+        memoDefaultPriority: "minor",
+        memoDefaultScene: "",
+        memoOpenScene: "@last",
+        memoLastScene: "",
+        memoDoneWindow: "30",
+        // memoDueFormat 已退役（到期文案固定相对，2026-09-12 用户拍板）
+        // 备忘录面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 720×580）
+        memoPanelWidth: 0,
+        memoPanelHeight: 0,
+        memoSkin: "paper",
+        memoLayout: "default",
+        // 日记本（ADR-0115：3 键；影视/书库目录跨域读，退役键见接口注释）
+        diaryDirectory: "我的/日记",
+        letterDirectory: "我的/信",
+        useFileDateTime: false,
+        // 剪藏本
+        articleDirectory: "归档/网页剪藏",
+        autoSummaryEnabled: true,
+        autoSummaryLength: "standard",
+        autoSummaryTagsEnabled: true,
+        autoSummaryTagCount: "3-6",
+        autoSummaryTiming: "immediate",
+        newsRetentionUnsavedDays: "30",
+        // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
+        // clipbook：右栏阅读字号三档（small/medium/large）
+        clipbookReaderFontSize: "medium",
+        // clipbook：面板桌面尺寸记忆（ADR-0084；0=未拖过）
+        clipbookPanelWidth: 0,
+        clipbookPanelHeight: 0,
+        // clipbook：目录栏宽度记忆（issue 222 分割线拖宽；0=未拖过）
+        clipbookMidWidth: 0,
+        passwordCharset: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+",
+        passwordLength: "16",
+        securityMode: false,
+        // 外观组（2026-09-12）：布局/主题各一档（与保险库 · 影院 · 第二大脑同范式）
+        passwordVaultSkin: "default",
+        passwordVaultSkinTheme: "gold",
+        // 书架墙（bookshelf；空 = 未配置，运行时回落旧 libraryFolderPath 存量值——零感知迁移）
+        bookshelfFolderPath: "",
+        bookshelfDefaultSide: "all",
+        bookshelfSortMode: "date",
+        bookshelfSkin: "nordic",
+        bookshelfLayout: "default",
+        // 影院（cinema；ADR-0087 起接管影视；缺省回落默认目录，旧 movieFolderPath 键已退役）
+        cinemaFolderPath: "我的/影视",
+        cinemaSortMode: "date",
+        cinemaStatusFilter: "",
+        cinemaGridColumns: "5",
+        cinemaStyle: "midnight",
+        // 做题家（设置并入复习计划 tab）
+        enableMultipleChoice: true,
+        questionsPerNote: "0",
+        shuffleQuestions: true,
+        difficulty: "random",
+        enableAutoNotify: true,
+        reviewAutoAddNotice: true,
+        forceQuizForReview: false,
+        reviewDailyLimit: 0,
+        reviewIntervalScale: 1,
+        reviewTreeBadge: true,
+        reviewEnableFit: true,
+        reviewFitEveryN: 10,
+        reviewRThreshold: 0.9,
+        reviewWatchedFolders: [],
+        reviewExcludedNotes: [],
+        // 第二大脑（ticket 103：原闪念键更名，值语义与存储类型不变；META_PATH/VEC_PATH 废弃清除）
+        secondBrainOllamaUrl: "http://localhost:11434",
+        secondBrainEmbeddingModel: "bge-m3",
+        secondBrainTopK: "20",
+        secondBrainChatTopK: "20",
+        secondBrainChunkMinLength: "50",
+        secondBrainAllowPaths: "",
+        // ticket 116：默认空 = 什么也不录（不索引任何目录），由用户自行填写
+        secondBrainContextLimit: "600",
+        secondBrainDebounceDelay: "300",
+        secondBrainCursorPollInterval: "500",
+        secondBrainChatModel: "qwen2.5:14b-instruct",
+        secondBrainDeepseekModel: "deepseek-v4-flash",
+        secondBrainDefaultUseDeepseek: "false",
+        secondBrainMaxHistory: "10",
+        // 空 = 未配置远程（enh-sweep-a：原写死内网 IP 改留空；secondbrain/config 同步去 IP 回落）
+        secondBrainRemoteOllamaUrl: "",
+        // 自动双链管线（ticket 111；ticket 116 起默认空 = 什么也不录，由用户自行填写范围）
+        linkAgentEnabled: true,
+        linkAgentScopes: "",
+        linkAgentTopK: 8,
+        linkAgentMaxLinks: 0,
+        linkAgentNotify: true,
+        linkAgentAutoClean: true,
+        linkAgentRespectRelated: true,
+        // v1.7/ticket 167：默认尊重「已有 related 不再自动建链」
+        // 常驻监听（issue 187：旧 aiAgent 4 键退役，引用同步无条件常驻，不设开关）
+        // 第二大脑（2026-09-12 拍板）：启用开关退役，启动无条件自动加载，键不再落盘
+        // 番茄钟（9 项，ticket 31）
+        pomodoroPreset: "classic",
+        pomodoroWorkMin: "25",
+        pomodoroShortBreakMin: "5",
+        pomodoroLongBreakMin: "15",
+        pomodoroLongBreakInterval: "4",
+        pomodoroForceFocus: false,
+        pomodoroAutoCycle: false,
+        pomodoroAutoSkipBreak: false,
+        pomodoroSound: true,
+        pomodoroVolume: 100,
+        pomodoroRestoreMode: "background",
+        pomodoroAutoPauseOnHide: true,
+        // 加密保险箱（encrypt 域）
+        encryptRoot: "CONFIG/.ENCRYPT",
+        encryptPreviewEnabled: true,
+        encryptPreviewSize: "384",
+        encryptPreviewQuality: "0.5",
+        encryptAutoLoadOriginal: false,
+        encryptSecurityMode: false,
+        // 移动端主窗口默认全屏（ticket 68：默认值=行为保持——原移动端即全屏→开，原居中卡→关；
+        // 阅读报告跟随书架墙键，不设独立键）
+        belongingsDefaultStatus: "",
+        belongingsDefaultSort: "recent",
+        belongingsNewStatus: "使用中",
+        belongingsCurrency: "cny",
+        belSkin: "poster",
+        belSkinTheme: "warmwhite",
+        // 外观组占位键默认值（issue 246；布局统一 default，主题各域一名，与原型 VALUES 同值）；
+        // 日记本主题默认画廊白（ADR-0115 正名沿用 diarySkinTheme 键，默认值随墙语义 ivory→gallery）
+        diarySkin: "default",
+        diarySkinTheme: "gallery",
+        clipbookSkin: "default",
+        clipbookSkinTheme: "newsprint",
+        favoritesSkin: "default",
+        favoritesSkinTheme: "linen",
+        cinemaSkinTheme: "nightfall",
+        reviewSkin: "default",
+        reviewSkinTheme: "sage",
+        secondbrainSkin: "default",
+        secondbrainSkinTheme: "graphite",
+        knowledgeSkin: "default",
+        knowledgeSkinTheme: "manila",
+        pomodoroSkin: "default",
+        pomodoroSkinTheme: "tomato",
+        encryptSkin: "default",
+        encryptSkinTheme: "steel",
+        homeLayout: "default",
+        homeSkin: "cream",
+        // 首页时间线（issue 287/288）：默认 = 标准字号 / **本周**（能往回翻整周，用户 2026-09-11 拍板）/
+        // 三类中前三类开 / 默认今天 / 显示时刻 / 预告卡开
+        homeTimelineSize: "normal",
+        homeTimelineRange: "week",
+        homeTimelineProduce: true,
+        homeTimelineProgress: true,
+        homeTimelineNotes: true,
+        homeDefaultDay: "today",
+        homeTimelineTime: true,
+        homeNextCards: true,
+        favoritesSortKey: "created",
+        favoritesOpenFilter: "",
+        favoritesLastFilter: "",
+        favoritesDefaultSort: "new",
+        // 文献盒处理设置（键名随域更名 literature*；ticket 136 默认值=既存行为不动，零迁移）
+        knowledgeProgressDetail: true,
+        knowledgeKeepVideo: true,
+        knowledgeQuality: "highest",
+        knowledgeStopOnFailure: false,
+        knowledgeOutputDir: "",
+        knowledgeCompress: true,
+        knowledgeCrf: 23,
+        knowledgeCardboxDirectory: "卡片盒",
+        knowledgeTopicDirectory: "主题盒",
+        knowledgeDirectory: "文献盒",
+        knowledgeDomainList: "",
+        knowledgeFfmpegPath: "ffmpeg",
+        knowledgeFfprobePath: "ffprobe",
+        knowledgePythonPath: "",
+        knowledgeWhisperModel: "small",
+        knowledgeCacheDir: "",
+        knowledgeCacheRetentionDays: 7,
+        // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
+        settingsPanelLayout: "jingwei",
+        settingsPanelSkin: "chenhun",
+        // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）
+        smartcatEnabled: true,
+        smartcatEmbeddingModel: "",
+        smartcatChunkLimitChars: 800,
+        // 小橘对我的称呼（ticket 163）：默认包仔——把记忆流/行为流喂给 AI 时「你/用户」替换为此称呼
+        smartcatUserName: "包仔",
+        // 小橘记忆巩固（ticket 160 引入；ticket 162 精简——窗口化语义，见接口注释。旧键（间隔/条数阈值/
+        // 证据窗口/洞察条数/周报门槛）从默认值退役，data.json 残留值被忽略）
+        smartcatReflectMinNew: 20,
+        smartcatRefExcerptLimit: 400,
+        // ticket 163：洞察条数上限（默认 3——反思 prompt 最高 N 条 + LLM 返回按序截断）
+        smartcatReflectMaxInsights: 3,
+        // 小橘行为流设置（P1 数据基座，ticket 123；ADR-0069：全量补齐后扩容 30→60 天 / 2000→10000 条）
+        behaviorMaxDays: 60,
+        /** 行为流最大保留条数（ticket 129：1000→2000；ADR-0069：2000→10000——全域事件补齐后条目增速再升，已有 data.json 值尊重、零迁移） */
+        behaviorMaxCount: 1e4,
+        showBehaviorLog: true,
+        enableAutoLinking: true,
+        linkWindowDays: 7,
+        // 记忆目录（ADR-0069 记忆目录流）：默认空=不启用笔记记忆库
+        memoryDirectories: []
+      };
+    }
+  });
+
   // src/settings-panel/ui.ts
   function cacheRowsFor(domainId, schema) {
     const rows = schema.groups.flatMap(
@@ -39556,6 +35787,7 @@ ${text}`;
       init_esc_manager();
       init_mobile();
       init_settings_provider();
+      init_flow_dialog();
       init_domain_icons();
       init_renderer();
       init_notice();
@@ -39563,12 +35795,14 @@ ${text}`;
       init_ui();
       init_render2();
       schemaLoaders = {
-        // 通用组：基础 schema（存储路径）+「数据体检」按钮行（D4：检查项直达体检面板；
-        // core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
+        // 通用组：基础 schema（存储路径）+ 外观组（原「设置」页并入）+「数据体检」按钮行
+        // （D4：检查项直达体检面板；core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
         general: async () => {
           var _a2;
           const schema = await (await Promise.resolve().then(() => (init_settings_main_schema(), settings_main_schema_exports))).generalSettingsSchema();
           const { openDataCheckup: openDataCheckup2 } = await Promise.resolve().then(() => (init_checkup(), checkup_exports));
+          const { appearanceSettingsSchema: appearanceSettingsSchema2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
+          schema.groups.unshift(...appearanceSettingsSchema2().groups);
           const storageGroup = (_a2 = schema.groups.find((g) => g.name === "数据存储路径")) != null ? _a2 : schema.groups[schema.groups.length - 1];
           storageGroup.rows.push({
             type: "button",
@@ -39581,7 +35815,9 @@ ${text}`;
           return schema;
         },
         ai: async () => (await Promise.resolve().then(() => (init_settings_main_schema(), settings_main_schema_exports))).aiSettingsSchema(),
-        appearance: async () => (await Promise.resolve().then(() => (init_schema(), schema_exports))).appearanceSettingsSchema(),
+        // 通知（2026-09-12 用户拍板）：自「通用」域拆出，面板里独立成一页
+        // （不建业务域——横切偏好，schema 留 core/settings-main-schema）
+        notice: async () => (await Promise.resolve().then(() => (init_settings_main_schema(), settings_main_schema_exports))).noticeSettingsSchema(),
         // 内容首页（home 域，2026-09-10）：入口顺序与显隐 = 一个按钮开编辑弹窗
         home: async () => (await Promise.resolve().then(() => (init_settings(), settings_exports))).homeSettingsSchema(),
         diary: async () => (await Promise.resolve().then(() => (init_settings2(), settings_exports2))).diarySettingsSchema(),
@@ -39604,17 +35840,17 @@ ${text}`;
           return reviewSettingsSchema2({ app, dataManager: reviewApp2.dataManager });
         },
         secondbrain: async () => (await Promise.resolve().then(() => (init_panel(), panel_exports))).secondBrainSettingsSchema(),
-        pomodoro: async () => (await Promise.resolve().then(() => (init_ui11(), ui_exports8))).pomodoroSettingsSchema(),
-        encrypt: async () => (await Promise.resolve().then(() => (init_ui10(), ui_exports7))).encryptSettingsSchema(),
+        pomodoro: async () => (await Promise.resolve().then(() => (init_ui10(), ui_exports7))).pomodoroSettingsSchema(),
+        encrypt: async () => (await Promise.resolve().then(() => (init_ui11(), ui_exports8))).encryptSettingsSchema(),
         "password-vault": async () => (await Promise.resolve().then(() => (init_settings6(), settings_exports6))).passwordVaultSettingsSchema(),
         knowledge: async () => (await Promise.resolve().then(() => (init_ui5(), ui_exports3))).knowledgeSettingsSchema(),
         smartcat: async () => {
-          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
+          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data10(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui12(), ui_exports9));
           const app = getApp();
           const data = await loadSmartCatData2(app);
           const saveConfig = async (config) => {
-            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
+            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data10(), data_exports));
             data.config = config;
             await saveSmartCatData2(app, data);
           };
@@ -39628,31 +35864,32 @@ ${text}`;
         }
       };
       DOMAINS2 = [
-        { id: "global", name: "通用", icon: DOMAIN_ICONS.global, desc: "存储路径等跨域基础偏好", schemaLoader: schemaLoaders.general },
-        { id: "appearance", name: "设置", icon: DOMAIN_ICONS.appearance, desc: "设置面板的布局与主题", schemaLoader: schemaLoaders.appearance },
+        { id: "global", name: "通用", icon: DOMAIN_ICONS.global, desc: "面板外观、存储路径等跨域偏好", schemaLoader: schemaLoaders.general },
+        // 通知（2026-09-12）：自通用域拆出的独立面板页；「设置」页并入通用后 appearance 域退役
+        { id: "notice", name: "通知", icon: DOMAIN_ICONS.notice, desc: "通知级别、时长与弹出位置", schemaLoader: schemaLoaders.notice },
         { id: "ai", name: "AI", icon: DOMAIN_ICONS.ai, desc: "AI 服务商与模型配置", schemaLoader: schemaLoaders.ai },
         // diary = ADR-0115 回忆墙升格正名（唯一日记 UI），diary-wall 域退役
         { id: "diary", name: "日记本", icon: DOMAIN_ICONS.diary, desc: "日记目录、写日记与解析检测", schemaLoader: schemaLoaders.diary },
-        { id: "memo", name: "备忘录", icon: DOMAIN_ICONS.memo, desc: "备忘录工作台与提醒（捕获入口落点）", schemaLoader: schemaLoaders.memo },
+        { id: "memo", name: "备忘录", icon: DOMAIN_ICONS.memo, desc: "备忘录工作台与提醒设置", schemaLoader: schemaLoaders.memo },
         { id: "belongings", name: "归物本", icon: DOMAIN_ICONS.belongings, desc: "物品登记与查找", schemaLoader: schemaLoaders.belongings },
         { id: "clipping", name: "剪藏本", icon: DOMAIN_ICONS.clipping, desc: "未读流与剪藏笔记", schemaLoader: schemaLoaders.clipping },
         { id: "favorites", name: "收藏本", icon: DOMAIN_ICONS.favorites, desc: "收藏条目", schemaLoader: schemaLoaders.favorites },
         { id: "reading-report", name: "阅读报告", icon: DOMAIN_ICONS["reading-report"], desc: "阅读统计", noSettings: true },
         { id: "cinema", name: "影院", icon: DOMAIN_ICONS.cinema, desc: "影视目录与海报", schemaLoader: schemaLoaders.cinema },
-        { id: "bookshelf", name: "书库", icon: DOMAIN_ICONS.bookshelf, desc: "藏书封面墙", schemaLoader: schemaLoaders.bookshelf },
+        { id: "bookshelf", name: "书库", icon: DOMAIN_ICONS.bookshelf, desc: "藏书封面墙、读书笔记与阅读报告", schemaLoader: schemaLoaders.bookshelf },
         { id: "review", name: "复习计划", icon: DOMAIN_ICONS.review, desc: "间隔重复与做题", schemaLoader: schemaLoaders.review },
         { id: "secondbrain", name: "第二大脑", icon: DOMAIN_ICONS.secondbrain, desc: "嵌入检索与对话", schemaLoader: schemaLoaders.secondbrain },
         { id: "auto-summary", name: "自动摘要", icon: DOMAIN_ICONS["auto-summary"], desc: "剪藏自动摘要", noSettings: true },
-        { id: "home", name: "首页", icon: DOMAIN_ICONS.home, desc: "首页外观：入口顺序与显隐", schemaLoader: schemaLoaders.home },
+        { id: "home", name: "首页", icon: DOMAIN_ICONS.home, desc: "首页外观与时间线入口等显示偏好", schemaLoader: schemaLoaders.home },
         { id: "pomodoro", name: "番茄钟", icon: DOMAIN_ICONS.pomodoro, desc: "专注计时与休息", schemaLoader: schemaLoaders.pomodoro },
         { id: "attach", name: "附件搬移", icon: DOMAIN_ICONS.attach, desc: "附件整理", noSettings: true },
         { id: "encrypt", name: "保险库", icon: DOMAIN_ICONS.encrypt, desc: "密码、加密笔记与加密日记", schemaLoader: schemaLoaders.encrypt },
         { id: "password-vault", name: "密码本", icon: DOMAIN_ICONS["password-vault"], desc: "密码条目与生成器", schemaLoader: schemaLoaders["password-vault"] },
         { id: "smartcat", name: "小橘陪伴猫", icon: DOMAIN_ICONS.smartcat, desc: "桌面宠物陪伴", schemaLoader: schemaLoaders.smartcat },
-        { id: "knowledge", name: "知识盒", icon: DOMAIN_ICONS.knowledge, desc: "文献录入 · 卡片 · 主题", schemaLoader: schemaLoaders.knowledge }
+        { id: "knowledge", name: "知识盒", icon: DOMAIN_ICONS.knowledge, desc: "文献录入、卡片与主题管理", schemaLoader: schemaLoaders.knowledge }
       ];
       NAV_SECS = [
-        { title: "基础", ids: ["global", "appearance", "home"] },
+        { title: "基础", ids: ["global", "notice", "home"] },
         { title: "智能", ids: ["ai", "secondbrain"] },
         { title: "记录", ids: ["diary", "memo", "belongings"] },
         { title: "收集", ids: ["clipping", "favorites"] },
@@ -39684,6 +35921,9 @@ ${text}`;
           this.rerenderList = null;
           /** 移动端推入状态：home = 首页列表；domain = 已推入域设置页 */
           this.mobPushed = false;
+          /** 当前搜索词（桌面：切域重渲后按它重刷命中/过滤状态）。
+           *  2026-09-12 用户拍板：去掉「只看命中」开关，搜索即过滤（默认恒开）。 */
+          this.searchQuery = "";
         }
         /**
          * 打开面板；domainId 可选（增强包：备忘录场景菜单「在设置中编辑」直达）——
@@ -39750,6 +35990,7 @@ ${text}`;
           this.navEl = nav;
           const pane = popup.querySelector(".bz-sp-pane");
           const searchIn = popup.querySelector(".bz-sp-search .bz-input");
+          popup.addEventListener("keydown", (e) => this.onNavKey(e, pane));
           const renderNav = (q2) => {
             const query = q2.trim();
             nav.innerHTML = "";
@@ -39782,10 +36023,8 @@ ${text}`;
           };
           searchIn.addEventListener("input", () => {
             renderNav(searchIn.value);
-            const q2 = searchIn.value.trim();
-            popup.querySelectorAll(".bz-sp-settings-body .bz-sp-set-row").forEach((row) => {
-              row.classList.toggle("hit", !!q2 && !!row.textContent && row.textContent.includes(q2));
-            });
+            this.searchQuery = searchIn.value.trim();
+            this.applyHitFilter(popup, this.searchQuery);
           });
           renderNav("");
           this.rerenderList = () => renderNav(searchIn.value);
@@ -39833,14 +36072,18 @@ ${text}`;
          * 无 schema 的域显示空态。
          */
         async renderDomain(pane, domain, opts = {}) {
+          var _a2;
           const runId = ++this.renderSeq;
           this.renderHandles = [];
           pane.innerHTML = "";
           let pageHead = null;
           if (opts.withHead !== false) {
             const headHolder = document.createElement("div");
-            headHolder.innerHTML = pageHeadHtml(domain.name, domain.desc, "");
+            headHolder.innerHTML = pageHeadHtml(domain.name, domain.desc, "", true);
             pageHead = headHolder.firstElementChild;
+            (_a2 = pageHead.querySelector(".bz-sp-page-reset")) == null ? void 0 : _a2.addEventListener("click", () => {
+              void this.resetDomain(domain, pane);
+            });
             pane.appendChild(pageHead);
           }
           if (domain.noSettings || !domain.schemaLoader) {
@@ -39877,6 +36120,7 @@ ${text}`;
                 "该域的设置项仅移动端可见（如移动端默认全屏），桌面端无需配置"
               ));
             }
+            this.applyHitFilter(pane, this.searchQuery);
             return;
           } catch (e) {
             body.innerHTML = "";
@@ -39887,6 +36131,108 @@ ${text}`;
             ));
             notice(`加载「${domain.name}」设置失败：${e.message}`, "error");
           }
+        }
+        /**
+         * 命中高亮 + 搜索过滤（2026-09-12 补，桌面；用户拍板：无开关，搜索即过滤）：
+         * - q 非空时给命中行加 .hit，并隐藏未命中行与「无可见行」的组；q 清空恢复全显；
+         * - **只回收自己设过的**内联 display，不触碰渲染器 visibleWhen 的隐藏
+         *   （否则一过滤就会把门控隐藏的行放出来）。
+         */
+        applyHitFilter(root, q2) {
+          root.querySelectorAll(".bz-sp-set-row").forEach((row) => {
+            if (row.dataset.spHitHidden === "1") {
+              row.style.display = "";
+              delete row.dataset.spHitHidden;
+            }
+            const hit = !!q2 && !!row.textContent && row.textContent.includes(q2);
+            row.classList.toggle("hit", hit);
+            if (q2 && !hit) {
+              row.style.display = "none";
+              row.dataset.spHitHidden = "1";
+            }
+          });
+          root.querySelectorAll(".bz-sp-group").forEach((g) => {
+            if (g.dataset.spHitHidden === "1") {
+              g.style.display = "";
+              delete g.dataset.spHitHidden;
+            }
+            if (!q2) return;
+            const any = [...g.querySelectorAll(".bz-sp-set-row")].some((r) => r.style.display !== "none");
+            if (!any) {
+              g.style.display = "none";
+              g.dataset.spHitHidden = "1";
+            }
+          });
+        }
+        /**
+         * 键盘导航（2026-09-12 补，桌面）：↑↓ 在可见域间前后切换，顺序 = 导航视觉顺序
+         * （NAV_SECS 分组序，与左栏自上而下一致）。多行文本 / 下拉里让位，搜索框与面板本体可用。
+         */
+        onNavKey(e, pane) {
+          var _a2, _b2, _c;
+          if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+          const t = e.target;
+          if (t && (t.tagName === "TEXTAREA" || t.tagName === "SELECT")) return;
+          const ordered = groupDomains(listableDomains()).flatMap((s) => s.domains);
+          const idx = ordered.findIndex((d2) => d2.id === this.activeDomainId);
+          if (idx < 0) return;
+          const next = e.key === "ArrowDown" ? Math.min(idx + 1, ordered.length - 1) : Math.max(idx - 1, 0);
+          if (next === idx) return;
+          e.preventDefault();
+          const d = ordered[next];
+          this.activeDomainId = d.id;
+          (_a2 = this.rerenderList) == null ? void 0 : _a2.call(this);
+          void this.renderDomain(pane, d);
+          (_c = (_b2 = this.navEl) == null ? void 0 : _b2.querySelector(`.bz-sp-nav-item[data-sp-domain="${d.id}"]`)) == null ? void 0 : _c.scrollIntoView({ block: "nearest" });
+        }
+        /**
+         * 重置本域（2026-09-12 补）：把本域 schema 中带**字符串键**的行恢复为 DEFAULT_SETTINGS 值，
+         * 落盘后重渲。三函数 binding 的行（无键，如 per-provider 覆盖 / 钳制类）跳过——无通用默认值可查，
+         * 误写风险大于收益。破坏性动作，flow 确认在前，不能一点就改。
+         */
+        async resetDomain(domain, pane) {
+          var _a2;
+          if (!domain.schemaLoader) return;
+          let schema;
+          try {
+            schema = await domain.schemaLoader();
+          } catch (e) {
+            notice(`读取「${domain.name}」设置失败：${e.message}`, "error");
+            return;
+          }
+          const keys = /* @__PURE__ */ new Set();
+          for (const g of schema.groups) {
+            for (const r of g.rows) {
+              const k = (_a2 = r.binding) == null ? void 0 : _a2.key;
+              if (k) keys.add(k);
+            }
+          }
+          if (!keys.size) {
+            notice(`「${domain.name}」没有可重置的设置项`, "info");
+            return;
+          }
+          const ans = await openFlowDialog({
+            title: "重置本域设置",
+            message: `把「${domain.name}」的设置项恢复为默认值（未改动的项不受影响）。确定继续吗？`,
+            actions: [
+              { label: "取消", value: "cancel" },
+              { label: "重置", value: "ok", cta: true }
+            ]
+          });
+          if (ans !== "ok") return;
+          const { DEFAULT_SETTINGS: DEFAULT_SETTINGS2 } = await Promise.resolve().then(() => (init_settings7(), settings_exports7));
+          const defaults = DEFAULT_SETTINGS2;
+          const s = getSettings();
+          let n = 0;
+          for (const k of keys) {
+            const def = defaults[k];
+            if (def === void 0) continue;
+            s[k] = Array.isArray(def) ? [...def] : def;
+            n++;
+          }
+          await saveSettings();
+          notice(`「${domain.name}」已重置 ${n} 项`, "success");
+          void this.renderDomain(pane, domain);
         }
         /* ---------- 移动端：全屏推入式两页（首页搜索 + 域列表 → 推入域设置页） ---------- */
         buildMobile(popup) {
@@ -39933,7 +36279,7 @@ ${text}`;
               if (rows.length) {
                 html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
                 rows.forEach((r) => {
-                  html += mobItemHtml({ id: r.domain.id, icon: r.domain.icon, name: r.name, desc: `${r.domain.name} · ${r.desc}`, kind: "设置" });
+                  html += mobItemHtml({ id: r.domain.id, icon: r.domain.icon, name: r.name, desc: `${r.domain.name} · ${r.desc}`, kind: "设置", row: r.name });
                 });
               }
               if (!doms.length && !rows.length) html = `<div class="bz-sp-mob-empty">没有匹配「${esc(query)}」的设置或域</div>`;
@@ -39941,7 +36287,7 @@ ${text}`;
             }
             list.querySelectorAll(".bz-sp-mob-item").forEach((b) => {
               const d = DOMAINS2.find((x) => x.id === b.dataset.spDomain);
-              if (d) b.addEventListener("click", () => void this.pushDomain(d));
+              if (d) b.addEventListener("click", () => void this.pushDomain(d, b.dataset.spRow));
             });
             mountIcons(list);
           };
@@ -39951,14 +36297,28 @@ ${text}`;
             if (!this.mobPushed) render2(searchIn.value);
           };
         }
-        /** 推入域设置页（全屏页切换；返回/ESC 弹回首页） */
-        async pushDomain(domain) {
+        /** 推入域设置页（全屏页切换；返回/ESC 弹回首页）。
+         *  focusRow（2026-09-12 补）：来自搜索「设置项」命中 → 渲染完成后滚动定位并高亮该行。 */
+        async pushDomain(domain, focusRow) {
           const popup = this.popup;
           this.mobPushed = true;
           popup.querySelector(".bz-sp-mob-title").textContent = domain.name;
           popup.classList.add("bz-sp-mob-pushed");
           const body = popup.querySelector(".bz-sp-mob-page-body");
           await this.renderDomain(body, domain, { withHead: false });
+          if (focusRow) this.focusRowIn(body, focusRow);
+        }
+        /** 滚动定位到指定行并高亮（行名匹配 .bz-sp-set-name；找不到静默跳过）。 */
+        focusRowIn(body, rowName) {
+          const target = [...body.querySelectorAll(".bz-sp-set-row")].find(
+            (el) => {
+              var _a2;
+              return ((_a2 = el.querySelector(".bz-sp-set-name")) == null ? void 0 : _a2.textContent) === rowName;
+            }
+          );
+          if (!target) return;
+          target.classList.add("hit");
+          target.scrollIntoView({ block: "center" });
         }
         /** 弹回首页（作废进行中的域渲染；下次推入重渲） */
         popDomain() {
@@ -40003,17 +36363,17 @@ ${text}`;
     return ui;
   }
   async function ensureSettingsPanel(_app3) {
-    if (initialized7) return;
-    initialized7 = true;
+    if (initialized5) return;
+    initialized5 = true;
   }
   function openSettingsPanel(app, domainId) {
     void ensureSettingsPanel(app).then(() => getUI().open(domainId));
   }
-  var initialized7, ui;
+  var initialized5, ui;
   var init_settings_panel = __esm({
     "src/settings-panel/index.ts"() {
       init_ui13();
-      initialized7 = false;
+      initialized5 = false;
       ui = null;
     }
   });
@@ -40083,6 +36443,10 @@ ${text}`;
     passwordCharset: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+",
     passwordLength: "16",
     securityMode: false,
+    // 外观组（2026-09-12）：布局/主题与 src/settings.ts DEFAULT 同值——缺键 = 主题行 layoutKey
+    // 过滤落空 → 面板主题渲染成空卡组（同 diarySkin 口径）
+    passwordVaultSkin: "default",
+    passwordVaultSkinTheme: "gold",
     // 通知（issue 297，通用域「通知」组）：四键与 src/settings.ts DEFAULT 同值——
     // 壳内 toast 走真 notice.ts（settings-provider 已注入），改档位行为实时生效
     noticeLevel: "all",

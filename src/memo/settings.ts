@@ -119,7 +119,7 @@ export function memoSettingsSchema(): SettingsSchema {
           {
             type: 'textarea',
             name: '自定义场景列表',
-            desc: '场景名用逗号分隔，留空使用默认场景（与备忘录共用）',
+            desc: '场景名用逗号分隔，留空使用默认场景',
             placeholder: '剪藏,工作,学习,生活,代码,公开课',
             binding: { key: 'memoScenarios' },
             onCommit: memoReloadScenes,
@@ -139,7 +139,7 @@ export function memoSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             name: '打开笔记自动提醒',
-            desc: '打开笔记时若笔记有重要或到期的未完成备忘录，自动打开备忘录面板并定位到关联备忘录',
+            desc: '打开笔记时若有重要或到期的备忘录，自动弹出面板并定位到它',
             binding: {
               get: () => getSettings().openNoteReminder !== false,
               set: (v) => {

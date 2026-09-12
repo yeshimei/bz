@@ -351,6 +351,22 @@ export function encryptSettingsSchema(): SettingsSchema {
         ],
       },
       {
+        icon: 'folder-open',
+        // 2026-09-12：组名「存储」→「目录」并提前到「安全」前（全域路径组统一范式：外观 → 目录 → 行为）
+        name: '目录',
+        rows: [
+          // ticket 128：保险库根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
+          {
+            type: 'path',
+            mode: 'single',
+            name: '保险库根文件夹',
+            desc: '加密文件的存放位置',
+            binding: { key: 'encryptRoot' },
+            onCommit: warnReload,
+          },
+        ],
+      },
+      {
         icon: 'shield',
         name: '安全',
         rows: [
@@ -370,21 +386,6 @@ export function encryptSettingsSchema(): SettingsSchema {
               save: () => saveSettings(),
             },
             onChange: warnReload,
-          },
-        ],
-      },
-      {
-        icon: 'folder-open',
-        name: '存储',
-        rows: [
-          // ticket 128：保险库根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
-          {
-            type: 'path',
-            mode: 'single',
-            name: '保险库根目录',
-            desc: '加密文件的存放位置',
-            binding: { key: 'encryptRoot' },
-            onCommit: warnReload,
           },
         ],
       },

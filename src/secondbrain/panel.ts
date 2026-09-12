@@ -22,10 +22,9 @@ import { isMobileEnv } from '../core/mobile';
 import { mountIcons } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
-import { getApp } from '../core/app';
 import { formatRelativeTime } from '../core/utils';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
-import { openSettingsModal, closeSettingsModal } from '../core/settings-modal';
+import { openSettingsModal } from '../core/settings-modal';
 import type { SettingsSchema } from '../core/settings-schema';
 import { buildConfig, IS_MOBILE } from './config';
 import type { VectorStore } from './vector-store';
@@ -57,9 +56,9 @@ export interface PanelOptions {
 }
 
 /**
- * 「重新索引」确认框（flow 弹窗**单源**，2026-09-11）：三处共用同一段文案与动作 ——
- * ① 本面板底部「全量重建」钮 ② 设置页「重新索引」行 ③ 首页入口菜单
- * （bz-secondbrain-rebuild-index，用户要求右键也要先确认）。
+ * 「重新索引」确认框（flow 弹窗**单源**，2026-09-11）：2026-09-12 起两处共用同一段文案与动作 ——
+ * ① 本面板底部「全量重建」钮 ② 首页入口菜单（bz-secondbrain-rebuild-index，用户要求右键也要先确认）。
+ * （原第三处「设置页重新索引行」随设置 schema 的「面板」组一并删除。）
  * 改文案/按钮只改这里，别再各处内联一份。
  */
 export function confirmFullRebuild(): Promise<boolean> {
@@ -653,9 +652,10 @@ export function secondBrainSettingsSchema(): SettingsSchema {
       },
       {
         icon: 'folder-open',
-        name: '基础',
+        // 2026-09-12：组名「基础」→「服务」（内容全是 Ollama 连接与模型，原名字不达意）
+        name: '服务',
         rows: [
-          { type: 'text', name: 'Ollama 本地 URL', binding: { key: 'secondBrainOllamaUrl' }, onChange: trimStore('secondBrainOllamaUrl') },
+          { type: 'text', name: 'Ollama 本地 URL', desc: '本地 Ollama 服务地址，留空用默认端口', binding: { key: 'secondBrainOllamaUrl' }, onChange: trimStore('secondBrainOllamaUrl') },
           // 远程 Ollama URL（移动端）：声明 text 行 + 行内「填入远程 URL」按钮（actions 统一实现，
           // 动作完成后渲染器重读绑定回填显示——custom 输入框引用持快手已退役）
           {
@@ -708,20 +708,20 @@ export function secondBrainSettingsSchema(): SettingsSchema {
             visibleWhen: () => isMobileEnv(),
             desc: '连不上远程库时，在电脑上查看本机 IP 并核对上方地址',
           },
-          { type: 'text', name: 'Embedding 模型', binding: { key: 'secondBrainEmbeddingModel' }, onChange: trimStore('secondBrainEmbeddingModel') },
-          // 白名单目录（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
+          { type: 'text', name: 'Embedding 模型', desc: '向量化用的嵌入模型名，留空用默认', binding: { key: 'secondBrainEmbeddingModel' }, onChange: trimStore('secondBrainEmbeddingModel') },
+          // 白名单文件夹（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
           {
             type: 'path',
             mode: 'multi',
-            name: '白名单目录',
-            desc: '纳入第二大脑检索与候选来源的笔记目录，留空则不索引',
+            name: '白名单文件夹',
+            desc: '纳入第二大脑检索与候选来源的笔记文件夹，留空则不索引',
             binding: pathsOf('secondBrainAllowPaths'),
             pickerTitle: '选择白名单目录',
             pickerDesc: '白名单为目录前缀语义：勾选祖先目录即覆盖其下全部子目录',
             buttonText: '选择',
             emptyText: '暂未选择（留空 = 不索引任何目录）',
           },
-          { type: 'toggle', name: '启用', desc: '仅控制启动时自动加载，关闭后仍可从命令面板手动打开', binding: { key: 'secondBrainEnabled' }, onChange: warnReload },
+          // 「启用」开关已删（2026-09-12 用户拍板：去掉启动开关，启动即无条件自动加载）
         ],
       },
       {
@@ -790,60 +790,32 @@ export function secondBrainSettingsSchema(): SettingsSchema {
         icon: 'search',
         name: '检索',
         rows: [
-          { type: 'text', name: '参考结果数 TopK', binding: { key: 'secondBrainTopK' }, onChange: trimStore('secondBrainTopK') },
-          { type: 'text', name: '对话参考结果数', binding: { key: 'secondBrainChatTopK' }, onChange: trimStore('secondBrainChatTopK') },
-          { type: 'text', name: '段落最小长度', binding: { key: 'secondBrainChunkMinLength' }, onChange: trimStore('secondBrainChunkMinLength') },
-          { type: 'text', name: '上下文限制', binding: { key: 'secondBrainContextLimit' }, onChange: trimStore('secondBrainContextLimit') },
-          { type: 'text', name: '防抖延迟毫秒', binding: { key: 'secondBrainDebounceDelay' }, onChange: trimStore('secondBrainDebounceDelay') },
-          { type: 'text', name: '光标轮询毫秒', binding: { key: 'secondBrainCursorPollInterval' }, onChange: trimStore('secondBrainCursorPollInterval') },
+          // 2026-09-12：检索组六行原本零描述（参数名裸奔），补齐自然句说明
+          { type: 'text', name: '参考结果数 TopK', desc: '参考侧返回的近邻条数，越大越全也越慢', binding: { key: 'secondBrainTopK' }, onChange: trimStore('secondBrainTopK') },
+          { type: 'text', name: '对话参考结果数', desc: '对话时注入上下文的参考条数', binding: { key: 'secondBrainChatTopK' }, onChange: trimStore('secondBrainChatTopK') },
+          { type: 'text', name: '段落最小长度', desc: '短于该字符数的段落不入向量索引', binding: { key: 'secondBrainChunkMinLength' }, onChange: trimStore('secondBrainChunkMinLength') },
+          { type: 'text', name: '上下文限制', desc: '单次注入对话的上下文字符上限', binding: { key: 'secondBrainContextLimit' }, onChange: trimStore('secondBrainContextLimit') },
+          { type: 'text', name: '防抖延迟毫秒', desc: '输入停顿该毫秒数后才开始检索', binding: { key: 'secondBrainDebounceDelay' }, onChange: trimStore('secondBrainDebounceDelay') },
+          { type: 'text', name: '光标轮询毫秒', desc: '光标位置轮询间隔，越小跟随越快', binding: { key: 'secondBrainCursorPollInterval' }, onChange: trimStore('secondBrainCursorPollInterval') },
         ],
       },
       {
         icon: 'message-square',
         name: '对话',
         rows: [
-          { type: 'text', name: '最大历史记录', binding: { key: 'secondBrainMaxHistory' }, onChange: trimStore('secondBrainMaxHistory') },
-          {
-            type: 'button',
-            name: 'AI 通道',
-            // ticket 141：「AI 生成概括」移除后描述同步收敛（仅剩对话走主设置页 AI）
-            desc: '对话统一走主设置页 AI 服务商，Embedding 仍走 Ollama',
-            buttonText: '前往配置',
-            onClick: () => {
-              closeSettingsModal();
-              (getApp() as any).setting?.open?.(); // 打开主设置页「🤖 AI」区块
-            },
-          },
+          { type: 'text', name: '最大历史记录', desc: '对话保留的历史轮数上限', binding: { key: 'secondBrainMaxHistory' }, onChange: trimStore('secondBrainMaxHistory') },
+          // 「AI 通道」跳转按钮已删（2026-09-12 用户拍板）：设置面板不放跳转移交类按钮
         ],
       },
-      {
-        icon: 'layout-dashboard',
-        name: '面板',
-        rows: [
-          // 重新索引（ticket 108）：确认已 flow 化（openFlowDialog），此处仅保留按钮与文案
-          {
-            type: 'button',
-            name: '重新索引',
-            desc: '清空现有向量索引并按当前白名单重嵌入，期间检索降级为文本匹配',
-            buttonText: '开始',
-            onClick: () => {
-              // 确认框走 confirmFullRebuild 单源；确认后关设置弹窗 → 打开主面板进重建视图
-              // （requestRebuildAndOpen 不再二次确认 —— 确认在这里已经做过）
-              void confirmFullRebuild().then((ok) => {
-                if (ok) {
-                  closeSettingsModal();
-                  void import('./index').then((m) => m.requestRebuildAndOpen(getApp()));
-                }
-              });
-            },
-          },
-        ],
-      },
+      // 「面板」组（重新索引按钮行）已删（2026-09-12 用户拍板）：重建入口仍在主面板底部
+      // 「全量重建」与首页入口菜单（confirmFullRebuild 单源三处，此处不再重复暴露）
     ],
   };
 }
 
-/** 第二大脑域设置：基础/自动双链/检索/对话/面板 五组卡片（主面板 ⚙️ 入口；ticket 108 对话组收敛） */
+/** 第二大脑域设置：外观/基础/自动双链/检索/对话 五组卡片（主面板 ⚙️ 入口）。
+ *  2026-09-12 用户拍板三处删除：对话组「AI 通道」跳转行、整组「面板」（重新索引按钮行）、
+ *  基础组「启用」开关（启动常驻，键 secondBrainEnabled 一并退役）。 */
 export function openSecondBrainSettings(_app?: App): void {
   openSettingsModal({ title: '第二大脑设置', maxWidth: 520, schema: secondBrainSettingsSchema() });
 }

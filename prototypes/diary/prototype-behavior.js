@@ -1,4 +1,4 @@
-/* 源指纹 47899948c8630bde · 仓内输入 75 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f35b2ea27a54c9db · 仓内输入 75 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -6310,6 +6310,11 @@ var BZW_diary = (() => {
     });
     currentMask = mask;
     currentPopup = popup;
+    const skinClasses = (opts.skinClassName || "").split(/\s+/).filter(Boolean);
+    if (skinClasses.length) {
+      mask.classList.add(...skinClasses);
+      popup.classList.add(...skinClasses);
+    }
     popup.classList.add("bz-path-picker");
     popup.style.height = "min(560px, 82vh)";
     const head = document.createElement("div");
@@ -9818,6 +9823,22 @@ var BZW_diary = (() => {
           ]
         },
         {
+          icon: "folder-open",
+          // 2026-09-12：组名「存储」→「目录」并提前到「安全」前（全域路径组统一范式：外观 → 目录 → 行为）
+          name: "目录",
+          rows: [
+            // ticket 128：保险库根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
+            {
+              type: "path",
+              mode: "single",
+              name: "保险库根文件夹",
+              desc: "加密文件的存放位置",
+              binding: { key: "encryptRoot" },
+              onCommit: warnReload
+            }
+          ]
+        },
+        {
           icon: "shield",
           name: "安全",
           rows: [
@@ -9837,21 +9858,6 @@ var BZW_diary = (() => {
                 save: () => saveSettings()
               },
               onChange: warnReload
-            }
-          ]
-        },
-        {
-          icon: "folder-open",
-          name: "存储",
-          rows: [
-            // ticket 128：保险库根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
-            {
-              type: "path",
-              mode: "single",
-              name: "保险库根目录",
-              desc: "加密文件的存放位置",
-              binding: { key: "encryptRoot" },
-              onCommit: warnReload
             }
           ]
         },

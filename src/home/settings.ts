@@ -40,8 +40,8 @@ export function homeSettingsSchema(): SettingsSchema {
         rows: [
           {
             type: 'select',
-            name: '字号',
-            desc: '紧凑压信息密度、宽松看得省力。只作用于中间那条时间线。',
+            name: '时间线字号',
+            desc: '紧凑压信息密度，宽松看得省力。只作用于中间那条时间线。',
             binding: { key: 'homeTimelineSize' },
             options: [
               { value: 'compact', label: '紧凑' },
@@ -63,7 +63,7 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'select',
             name: '默认打开日',
-            desc: '打开首页先落在哪天。选「最后有动静」就不会一开就是一片空。',
+            desc: '打开首页先落在哪天，选最后有动静就不会一开是空的。',
             binding: { key: 'homeDefaultDay' },
             options: [
               { value: 'today', label: '今天' },
@@ -73,7 +73,7 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             name: '显示时刻列',
-            desc: '每行左边那列 11:03。关掉整列收起，正文往左靠。',
+            desc: '每行左边显示时刻，关掉整列收起，正文往左靠。',
             binding: { key: 'homeTimelineTime' },
           },
         ],
@@ -85,20 +85,21 @@ export function homeSettingsSchema(): SettingsSchema {
         rows: [
           {
             type: 'toggle',
-            name: '产出',
-            desc: '写下的、收进的、读完的——真正产出东西的动作。',
+            name: '产出动作',
+            desc: '写下的收进的读完的，都是真正产出东西的动作。',
             binding: { key: 'homeTimelineProduce' },
           },
           {
             type: 'toggle',
             name: '状态推进',
-            desc: '加入片单、读到 40%、新增待办这类还没成事实的推进。',
+            desc: '加入片单读到一半新增待办，这类还没成事实的推进。',
             binding: { key: 'homeTimelineProgress' },
           },
           {
             type: 'toggle',
-            name: '点评 ✦',
-            desc: '小橘挂在痕迹下面的那句话（动手早晚、日记连击提醒）。',
+            // 2026-09-12：「点评 ✦」→「小橘点评」（去符号；说明白这句话是谁说的）
+            name: '小橘点评',
+            desc: '小橘挂在痕迹下面的那句话，提醒动手早晚与日记连击。',
             binding: { key: 'homeTimelineNotes' },
           },
         ],
@@ -111,7 +112,7 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             name: '明天预告卡',
-            desc: '右侧那一栏复习/剪藏/日记的预告。不看可以把整栏收掉。',
+            desc: '右侧那一栏复习剪藏与日记的预告，不看可以把整栏收掉。',
             binding: { key: 'homeNextCards' },
           },
         ],

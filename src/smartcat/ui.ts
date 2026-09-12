@@ -252,31 +252,11 @@ export function smartcatSettingsSchema(opts: {
     ],
   };
   // ===== 可视化组（2026-08-23 合并一套：仅保留数据面板入口；入口回调缺省时不挂组）=====
-  const vizGroups: GroupDecl[] = opts.onOpenDashboard
-    ? [
-        {
-          icon: 'bar-chart-3',
-          name: '可视化',
-          rows: [
-            {
-              type: 'button',
-              name: '打开数据面板',
-              desc: '查看小橘的状态全貌与每周懂你报告',
-              buttonText: '打开数据面板',
-              onClick: () => {
-                closeSettingsModal();
-                opts.onOpenDashboard!();
-              },
-            },
-          ],
-        },
-      ]
-    : [];
+  // 2026-09-12：原「可视化」组（仅一个按钮行）并入末尾「数据面板」组——单行按钮不值一个组
   // ===== 移动端组（settingsKeys 外部绑定；desc 为 smartcat 专属文案逐字对齐现状）=====
   return {
     groups: [
       lookGroup,
-      ...vizGroups,
       {
         icon: 'message-circle',
         name: '互动',
@@ -315,20 +295,21 @@ export function smartcatSettingsSchema(opts: {
       // ADR-0069 记忆目录（记忆目录流）：多文件夹选择（core/path-picker 多选），其内笔记进入笔记记忆库
       {
         icon: 'folder-open',
-        name: '记忆目录',
+        // 2026-09-12：组名「记忆目录」→「记忆来源」（组内行同名易混；来源语义更准）
+        name: '记忆来源',
         rows: [
           // 通用 path 行（multi chips，两渲染器统一实现——custom 套 renderPathSettingRow 已退役）
           {
             type: 'path',
             mode: 'multi',
-            name: '记忆目录',
-            desc: '文件夹内的笔记会进入小橘的记忆库，移除目录会清掉对应记忆',
+            name: '记忆文件夹',
+            desc: '文件夹内的笔记会进入小橘的记忆库，移除文件夹会清掉对应记忆',
             binding: {
               get: () => normalizeMemoryDirectories((tryGetSettings() as any).memoryDirectories),
               set: () => {},
               save: () => {},
             },
-            pickerTitle: '选择记忆目录',
+            pickerTitle: '选择记忆文件夹',
             pickerDesc: '选择小橘读取笔记的文件夹（可多选）',
             onChange: (list) => {
               const next = normalizeMemoryDirectories(list);
@@ -370,8 +351,21 @@ export function smartcatSettingsSchema(opts: {
       },
       {
         icon: 'eye',
-        name: '显示',
+        // 2026-09-12：原「可视化」（按钮）+「显示」（开关）合并为一组，挪到面板末尾
+        name: '数据面板',
         rows: [
+          ...(opts.onOpenDashboard
+            ? [{
+                type: 'button' as const,
+                name: '打开数据面板',
+                desc: '查看小橘的状态全貌与每周懂你报告',
+                buttonText: '打开数据面板',
+                onClick: () => {
+                  closeSettingsModal();
+                  opts.onOpenDashboard!();
+                },
+              }]
+            : []),
           { type: 'toggle', name: '显示行为日志', desc: '在数据面板中显示行为日志页签', binding: bindBehaviorOn('showBehaviorLog') },
         ],
       },
