@@ -781,7 +781,11 @@ button.news-close-btn {
     }
 }
 
-/* 通用确认弹窗（core/flow-dialog 流程框，承继旧 core/confirm.ts 的 Q3.js 移植结构；id 保持外部约定；popup 为 mask 子节点，层级由 mask 承载——动态发号见 core/z-order，旧静态档位家族已废除） */
+/* 通用确认弹窗（core/flow-dialog 流程框，承继旧 core/confirm.ts 的 Q3.js 移植结构；id 保持外部约定；popup 为 mask 子节点，层级由 mask 承载——动态发号见 core/z-order，旧静态档位家族已废除）。
+   壳层（底色/描边/圆角/阴影/限高/滚动）不在此声明——issue 291 起流程框与 uiModal 弹窗同挂
+   `.bz-overlay-popup` 共享壳（src/core/ui/components.css），域皮肤类经
+   `.bz-overlay-popup.bz-<域>-skin-*` 复合选择器即可一并覆盖确认框；本段只留流程框版式
+   （居中纵排、400px 宽度上限、24px 内边距）与冻结按钮 id 的样式。 */
 #__shared_confirm_mask__ {
   position: fixed;
   top: 0;
@@ -795,29 +799,26 @@ button.news-close-btn {
   justify-content: center;
 }
 #__shared_confirm_popup__ {
-  position: relative;
-  background: var(--background-primary);
-  border-radius: var(--bz-radius-md);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: var(--bz-space-xl);
-  max-width: 400px;
-  width: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
+#__shared_confirm_popup__.bz-flow-dialog {
+  width: min(400px, calc(100vw - 32px)); /* 设计手册 §9：确认框窄卡定宽 */
+  padding: var(--bz-space-xl);           /* 设计手册 §4.1：确认框 24px 内边距 */
+}
 #__shared_confirm_popup__ h4 {
   margin: 0 0 var(--bz-space-md) 0;
   font-size: 18px;
-  font-weight: 600;
-  color: var(--text-normal);
+  font-weight: var(--bz-weight-semibold);
+  color: var(--bz-text-1);
 }
 #__shared_confirm_popup__ p {
   margin: 0 0 20px 0;
   font-size: var(--bz-font-emphasis);
-  color: var(--text-muted);
-  line-height: 1.5;
+  color: var(--bz-text-2);
+  line-height: var(--bz-leading-normal);
   word-wrap: break-word;
   max-width: 100%;
   white-space: pre-line; /* 消息内 \n 换行按行渲染（B6：删除确认「此操作不可撤销」独立成行） */
@@ -828,27 +829,53 @@ button.news-close-btn {
   justify-content: center;
   width: 100%;
 }
-#__shared_confirm_cancel__ {
-  padding: var(--bz-space-sm) var(--bz-space-xl);
-  border-radius: 6px;
-  border: none;
-  background: var(--background-secondary);
+/* 按钮几何与组件库 .bz-btn 同源（同高/同圆角/同字号），保证确认框与表单弹窗同一套按钮语言 */
+#__shared_confirm_cancel__,
+#__shared_confirm_ok__,
+button.bz-flow-dialog-action {
+  height: var(--bz-control-h);
+  padding: 0 var(--bz-space-lg);
+  border-radius: var(--bz-radius-sm);
+  border: 1px solid transparent;
+  background: var(--bz-surface-2);
+  color: var(--bz-text-1);
+  font-family: inherit;
+  font-size: var(--bz-font-label);
+  font-weight: var(--bz-weight-medium);
+  line-height: var(--bz-leading-tight);
   cursor: pointer;
-  font-size: var(--bz-font-body);
   box-shadow: none;
   flex: 1;
+  white-space: nowrap;
+  transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
 }
-#__shared_confirm_ok__ {
-  padding: var(--bz-space-sm) var(--bz-space-xl);
-  border-radius: 6px;
-  border: none;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  cursor: pointer;
-  font-size: var(--bz-font-body);
-  font-weight: 500;
-  box-shadow: none;
-  flex: 1;
+#__shared_confirm_cancel__:hover,
+button.bz-flow-dialog-action:hover {
+  background: var(--bz-surface-hover);
+}
+#__shared_confirm_ok__,
+button.bz-flow-dialog-action.bz-flow-dialog-cta {
+  background: var(--bz-brand);
+  color: var(--bz-on-brand);
+}
+#__shared_confirm_ok__:hover,
+button.bz-flow-dialog-action.bz-flow-dialog-cta:hover {
+  background: var(--bz-brand-hover);
+}
+button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
+  color: var(--bz-danger);
+}
+/* 慎重决策（设计手册 §9/§10）：主动作为危险动作时，主按钮不默认高亮——双钮同为中性次级样式，
+   只有危险文字用 danger 色（弹窗挂 --danger 修饰；标准双动作按钮不加类，冻结契约不破）。
+   选择器刻意带上 `.bz-flow-dialog` 提一级（1,2,0）——域皮映射按钮时的
+   `#__shared_confirm_popup__.bz-xx-flow-dialog #__shared_confirm_ok__`（1,1,1）压不回高亮，
+   保证「删除不高亮」这条语义不被域皮肤破掉。 */
+#__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__ {
+  background: var(--bz-surface-2);
+  color: var(--bz-danger);
+}
+#__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__:hover {
+  background: var(--bz-surface-hover);
 }
 
 /* 通用遮罩/弹窗（原 core/dom.ts createOverlay 内联；zIndex/width/maxWidth/display 仍为功能性内联） */
@@ -8774,6 +8801,34 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: #161618 !important;
 }
 
+/* ---- 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一） ----
+   删除备忘录 / 删除场景两个确认框经 openFlowDialog({className: skinClass()}) 挂皮肤类。
+   壳层（底色/描边/圆角/阴影）由上方 `.bz-overlay-popup.bz-memo-skin-*` 复合规则自动命中
+   （流程框与 uiModal 同挂 .bz-overlay-popup 共享壳），token 层（--bz-surface-2/--bz-brand/
+   --bz-text-2）也随皮肤走；这里只补皮肤特有的文字与主动作按钮形制——与编辑弹窗里
+   的 `.bz-btn--primary`/`.bz-dialog-title` 逐值同源，保证两处按钮长得一样。 */
+#__shared_confirm_popup__.bz-memo-skin-paper h4 {
+  font-family: var(--bz-skin-serif);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+#__shared_confirm_popup__.bz-memo-skin-paper #__shared_confirm_ok__ {
+  border: 2px solid var(--bz-skin-ink);
+  border-radius: 11px;
+  box-shadow: 3px 3px 0 var(--bz-skin-ink);
+  font-weight: var(--bz-weight-bold);
+}
+#__shared_confirm_popup__.bz-memo-skin-paper #__shared_confirm_ok__:hover { box-shadow: 4px 4px 0 var(--bz-skin-ink); }
+#__shared_confirm_popup__.bz-memo-skin-editorial h4 {
+  font-family: var(--bz-skin-serif);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+#__shared_confirm_popup__.bz-memo-skin-editorial #__shared_confirm_ok__ {
+  font-weight: var(--bz-weight-semibold);
+  letter-spacing: 0.1em;
+}
+
 /* ---- 皮肤选择卡预览（设置面板 .bz-cardpick-prev 变体；复刻各皮肤面板迷你形态） ---- */
 .bz-skinprev-default { background: linear-gradient(150deg, #ffffff, #f0f0f4); }
 .bz-skinprev-default::before {
@@ -9567,6 +9622,56 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-fav-form .bz-fav-btns button:hover { filter: brightness(.97); }
 .bz-fav-form .bz-fav-btns button:disabled { opacity: .55; cursor: default; }
 .bz-fav-form .bz-fav-btns .bz-fav-ai-btn { display: inline-flex; align-items: center; gap: 5px; color: var(--acc); border-color: var(--acc); }
+
+/* ==================== 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一） ====================
+   三处确认框（归档收藏 / 删除收藏 / 放弃未保存草稿，ui.ts）经
+   openFlowDialog({ className: 'bz-fav-flow-dialog bz-fav-scope' }) 与
+   confirmDiscard(..., 'bz-fav-flow-dialog bz-fav-scope') 挂类。为什么必须是这两个类：
+     · `bz-fav-flow-dialog` = 本域确认框专属类，承载下面这套取值；
+     · `bz-fav-scope` = 私有 token（--pop/--pop-ink/--pop-mut/--acc/--fld-bd/--on-acc）的定义者，
+       不命中则本块所有变量解析失败 → 必须跟着传（与 openForm 的
+       `.bz-fav-form-mask bz-fav-scope` 同口径）。
+   取值全部照抄同域表单弹窗 `.bz-fav-form`（styles.css:163 起），让「归档/删除/放弃」三个确认框
+   与「添加·编辑收藏」表单弹窗同皮。core 侧不再自持壳层，底/圆角/阴影由
+   `.bz-overlay-popup` 消费的 --bz-* token 起底，这里用域私有 token 覆写。
+   暗色无需另写块：`.theme-dark .bz-fav-scope`（styles.css:21）整组换 token，本块全引用变量自动反转。 */
+#__shared_confirm_popup__.bz-fav-flow-dialog {
+  /* 亚麻底 + 同款皮：逐值对齐 .bz-fav-form（background: var(--pop)、border-radius: 14px、
+     box-shadow: 0 16px 44px rgba(0,0,0,.32)）。core 流程框固定 24px 内边距与 400px 定宽保留不改。 */
+  background: var(--pop);
+  border-radius: 14px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, .32);
+}
+/* 标题/正文：对齐表单弹窗 h2（--pop-ink + 字距 2px）与字段说明文字（--pop-mut / --pop-faint），
+   让确认框读起来就是同一张亚麻纸上的字。 */
+#__shared_confirm_popup__.bz-fav-flow-dialog h4 {
+  color: var(--pop-ink);
+  letter-spacing: 2px;
+}
+#__shared_confirm_popup__.bz-fav-flow-dialog p {
+  color: var(--pop-mut);
+}
+/* 按钮：逐值对齐表单弹窗 `.bz-fav-form .bz-fav-btns button`（描边 --fld-bd / 底 --fld-bg /
+   字 --chip-ink），主动作取 `.bz-fav-pri`（--acc 底 + --on-acc 字）——即「保存」那枚绿钮。
+   只给颜色不给几何：盒子高度/字号/圆角仍由 core 按组件库 .bz-btn 定（core/styles.css
+   #__shared_confirm_cancel__ 段），故此块不写 height/padding/font-size。 */
+#__shared_confirm_popup__.bz-fav-flow-dialog #__shared_confirm_cancel__ {
+  border-color: var(--fld-bd);
+  background: var(--fld-bg);
+  color: var(--chip-ink);
+}
+#__shared_confirm_popup__.bz-fav-flow-dialog #__shared_confirm_ok__ {
+  border-color: var(--acc);
+  background: var(--acc);
+  color: var(--on-acc);
+}
+/* 危险主动作（删除收藏）：core 的 .bz-flow-dialog--danger 会把主钮降回中性次级样式，
+   本域按同一口径把 danger 文字色交给域 token（--danger 亮暗自动切换），主钮保持亚麻纸底。 */
+#__shared_confirm_popup__.bz-fav-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__ {
+  border-color: var(--fld-bd);
+  background: var(--fld-bg);
+  color: var(--danger);
+}
 
 /* —— 触屏 44px 触控档（磁贴行按钮；延续 issue 219 系列守护口径） —— */
 @media (pointer: coarse) {
@@ -12444,6 +12549,84 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --ls-accent-soft: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent, #b8913e) 70%, white), var(--interactive-accent, #b8913e));
   --ls-seal-radius: 22px;
 }
+
+/* ============ 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一）============
+   两处确认框（首设主密码风险确认 / 清单疑似损坏 → 仍要重设）走 openFlowDialog，
+   popup 挂 document.body —— 脱离 .bz-password-vault 根后 --pwv-* 全部失效（金色主钮
+   会掉回 core 默认品牌色）。故两处传 className: 'bz-pwv-flow-dialog'，本文件补两段：
+   token 层（紧邻）承载域变量，id 选择器段映射域材质与金色按钮语言。 */
+
+/* token 层：把 .bz-password-vault（本文件 :7-23）的私有 token 按同值复制一份到本根。
+   为什么不直接把 .bz-pwv-flow-dialog 加进原选择器列表：那条规则除 token 外还写了容器布局
+   （background / display:flex / padding / 居中），挂到确认框根上会与共享壳的定位双份打架。
+   经查 :7-23 只声明 --pwv-*、未覆盖任何 --bz-*，故此处只搬 --pwv-*（整表照搬防漂移；
+   确认框实际消费 surface/ink/muted/surface2/bad/gold-soft）。 */
+.bz-pwv-flow-dialog {
+  --pwv-bg: var(--background-primary);
+  --pwv-surface: var(--background-secondary);
+  --pwv-surface2: var(--background-modifier-hover);
+  --pwv-ink: var(--text-normal);
+  --pwv-muted: var(--text-muted);
+  --pwv-faint: var(--text-faint);
+  --pwv-line: var(--background-modifier-border);
+  --pwv-gold: var(--interactive-accent);
+  --pwv-gold-soft: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent) 70%, white), var(--interactive-accent));
+  --pwv-gold-ink: var(--interactive-accent);
+  --pwv-ok: var(--color-green);
+  --pwv-bad: var(--text-error);
+  --pwv-warn: var(--color-orange);
+  --pwv-shadow: 0 10px 30px rgba(0, 0, 0, 0.10);
+  --pwv-mono: var(--font-monospace);
+  --pwv-radius: 12px;
+}
+
+/* 壳材质：逐值取自 .bz-password-vault-pop2 .card（本文件 :1598-1607，域内自绘确认框）——
+   底 --pwv-surface / 无描边（只用投影分界）/ 18px 圆角 / 深投影；文字口径同段 .card h3、.msg。
+   共享壳默认（--bz-surface-3 底 + --bz-border 描边 + --bz-radius-md 圆角）是组件库自有调色板，
+   与本域「随 Obsidian 主题变量、金色为强调色」不是一套，覆盖后才与自绘确认框同皮。 */
+#__shared_confirm_popup__.bz-pwv-flow-dialog {
+  background: var(--pwv-surface);
+  border: none;
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+  color: var(--pwv-ink);
+  /* 共享壳内的文字与中性钮消费 --bz-* 组件 token（core/styles.css 的 #__shared_confirm_* 段），
+     整组映射到本域口径：标题 .pop2 .card h3 / 正文 .msg / 取消钮 .pop2 .cancel。
+     --bz-surface-hover 与 --bz-surface-2 同值——本域 chip 底（--pwv-surface2）无更深一档，
+     hover 反馈由下方 opacity 承担（域内 .bz-password-vault-btn:hover 同法）。 */
+  --bz-text-1: var(--pwv-ink);
+  --bz-text-2: var(--pwv-muted);
+  --bz-surface-2: var(--pwv-surface2);
+  --bz-surface-hover: var(--pwv-surface2);
+  --bz-danger: var(--pwv-bad);
+  --bz-radius-sm: 11px; /* 与 .bz-password-vault-pop2 .btns button 的 11px 圆角同源 */
+}
+
+/* 标题：.pop2 .card h3 的 700 字重（字号留 core 的 18px 标题档）；
+   正文字号/行高取 .pop2 .card .msg 的 1.6 档（core 的 leading-normal 同类，显式对齐域口径）。 */
+#__shared_confirm_popup__.bz-pwv-flow-dialog h4 { font-weight: 700; }
+#__shared_confirm_popup__.bz-pwv-flow-dialog p { line-height: 1.6; }
+
+/* 取消钮：底/字色由上方 --bz-* 映射给出（= .pop2 .cancel 的 --pwv-surface2 + --pwv-ink），
+   这里只补域内 hover 语言（透明度反馈），并跟主钮一样加 600 字重。 */
+#__shared_confirm_popup__.bz-pwv-flow-dialog #__shared_confirm_cancel__ { font-weight: 600; }
+#__shared_confirm_popup__.bz-pwv-flow-dialog #__shared_confirm_cancel__:hover { opacity: 0.82; }
+
+/* 金色主钮 = .bz-password-vault-pop2 .ok / .bz-password-vault-btn.gold 的取值：
+   --pwv-gold-soft 渐变实底 + #fff 字 + 金色投影（与色值逐项同源）。
+   守卫 :not(.bz-flow-dialog--danger)：危险主动作时 core 的 bz-flow-dialog--danger 把主钮
+   降级成中性底 + 红字（设计手册 §9/§10 既定口径），域规则不得把它盖回金色 ——
+   本条在危险态下直接不匹配，危险语义与配色原样保留（本域两处确认框主动作均为 cta 非 danger）。 */
+#__shared_confirm_popup__.bz-pwv-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__ {
+  background: var(--pwv-gold-soft);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
+}
+#__shared_confirm_popup__.bz-pwv-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__:hover {
+  background: var(--pwv-gold-soft);
+  opacity: 0.82; /* 同 .bz-password-vault-btn:hover */
+}
 /* ==================== 设置面板域样式（settings-panel，ADR-0080） ====================
  * 拍板重设计（2026-09-07，原型 .zcode/ui-prototypes/settings-5/p1-full.html 定稿）：
  * 布局 = P1 系统面板（顶栏面包屑+搜索 / 左侧四组域导航带项数徽标 / 右侧域页头 + 分组卡行式表单）；
@@ -13751,13 +13934,17 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
  * 口径：标签/徽章字号 ≥11px；不持静态 z-index；触控 44px 档走 .bz-touch-target / min-height。
  */
 
-/* ---- 皮肤 token（面板 + 表单 + 详情 + 右键菜单四壳同源；亮色纸面，暗色见下方夜版组） ----
+/* ---- 皮肤 token（面板 + 表单 + 详情 + 右键菜单 + 确认流程框五壳同源；亮色纸面，暗色见下方夜版组） ----
    菜单/表单/详情挂 body，须自带 token（.bz-bel-menu 经 openItemMenu menuClass 挂上；
-   三者都是 body 后代，.theme-dark 祖先选择器可达） */
+   四者都是 body 后代，.theme-dark 祖先选择器可达）。
+   .bz-bel-flow-dialog（issue 291）：core/flow-dialog 的确认框同样挂 body、脱离面板根，
+   也进这张列表——它消费的是公共 --bz-* token，进组后共享壳 .bz-overlay-popup 的
+   底色/描边/文字与按钮主色自动跟随海报皮，域 CSS 只需补形制（见文末确认流程框段）。 */
 .bz-bel--poster,
 .bz-bel-form,
 .bz-bel-detail,
-.bz-bel-menu {
+.bz-bel-menu,
+.bz-bel-flow-dialog {
   --bz-bel-paper: #f5f2ec;
   --bz-bel-ink: #171512;
   --bz-bel-accent: #e8481f;
@@ -13791,7 +13978,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .theme-dark .bz-bel--poster,
 .theme-dark .bz-bel-form,
 .theme-dark .bz-bel-detail,
-.theme-dark .bz-bel-menu {
+.theme-dark .bz-bel-menu,
+.theme-dark .bz-bel-flow-dialog {
   --bz-bel-paper: #1a1815;
   --bz-bel-ink: #ece7da;
   --bz-bel-accent: #f0603a;
@@ -14110,6 +14298,45 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bel-statuspick .bz-choice-btn.is-on:hover { background: var(--bz-bel-ink) !important; }
 .bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2 { background: var(--bz-bel-accent) !important; color: var(--bz-on-brand, #fff) !important; }
 .bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2:hover { background: var(--bz-bel-accent) !important; }
+
+/* ---- 确认流程框（core/flow-dialog，issue 291：子弹窗统一带皮） ----
+   删除物品确认（ui.ts deleteItem）与「放弃未保存草稿」确认（ui.ts requestCloseBelForm →
+   core/flow-dialog 的 confirmDiscard）都挂 body、脱离面板根，必须显式把皮肤类
+   （.bz-bel-flow-dialog）交给 openFlowDialog，否则这两框掉回 core 裸样式，与同域的
+   「记一笔」表单、「物品详情」不是一套皮。
+   皮肤类已并入上方 token 组选择器列表（亮/暗两份），它消费公共 --bz-* token：共享壳
+   .bz-overlay-popup 的底色/描边/圆角/文字与按钮主色（--bz-brand 赤橙）由此自动跟随海报皮，
+   本段只补「形制」——逐值同源 .bz-bel-form / .bz-bel-detail 的材质语言（2px 墨框 + 方角 +
+   硬偏移阴影）与 .bz-bel-form-title 的标题档。
+   注意：不搬 .bz-bel-form / .bz-bel-detail 的宽高/flex——它们是内容根，套上去会改确认框版式；
+   暗色无需另写规则：本段取值全走 token，上方夜版组已整组翻转（含 --bz-bel-shadow-strong）。 */
+#__shared_confirm_popup__.bz-bel-flow-dialog {
+  background: var(--bz-bel-paper);
+  color: var(--bz-bel-ink);
+  border: 2px solid var(--bz-bel-ink);
+  border-radius: 0;
+  box-shadow: 10px 10px 0 var(--bz-bel-shadow-strong);
+}
+/* 标题：逐值同源 .bz-bel-form-title（22px / 800 / 字距 -0.3px）+ 其墨线收尾；
+   确认框是居中窄卡，墨线随标题自身宽度收尾（不写 align-self/width 撑满整行，避免把表单的
+   整行版式搬过来）。正文 color 不必写：core 用 var(--bz-text-2)，token 组内已是海报墨次强档。 */
+#__shared_confirm_popup__.bz-bel-flow-dialog h4 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--bz-bel-ink);
+  border-bottom: 4px solid var(--bz-bel-ink);
+  padding-bottom: 8px;
+}
+/* 按钮：只补海报字距（.bz-bel-flowbtn / 状态四格 / 菜单项同为 1px 海报字距）。
+   几何与颜色一律不覆写：确认框按钮本就与组件库 .bz-btn 同源（core/styles.css 该段口径），
+   底色/主色由上方 token 组自动跟随（主钮 = --bz-brand 赤橙 + --bz-brand-hover 加深档）。
+   删除确认（danger 主动作）的「主钮保持中性、仅文字用 danger 色」（设计手册 §9/§10）
+   也正因这里不写 background/color 而完整保留。 */
+#__shared_confirm_popup__.bz-bel-flow-dialog #__shared_confirm_cancel__,
+#__shared_confirm_popup__.bz-bel-flow-dialog #__shared_confirm_ok__ {
+  letter-spacing: 1px;
+}
 
 /* ---- 移动端（≤768px = p20 手机壳）----
    容器查询基座：面板与浮层遮罩各为容器（原型评审壳 .demo-mob 396px 由此触发移动端样式，
@@ -14903,6 +15130,55 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-bs-edit-textarea { width: 100%; min-height: 100px; resize: vertical; }
 .bz-bs-edit-btns { margin-top: var(--bz-space-md); }
+
+/* ==================== 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一） ====================
+   删除划线确认框（md / EPUB 两处，notes-ui.ts）经 openFlowDialog({ className: 'bz-bs-flow-dialog ' + bsSkinClass() })
+   挂 skin 类。为什么必须是这个类：
+     · `bz-bs-flow-dialog` = 本域确认框专属类，承载下面这套「确认框专属」纸卡形制；
+     · `bsSkinClass()`（如 `bz-bs-skin-nordic bz-bs-mode-light`）= 五肤×(亮|暗) token 层，
+       就近定义在 popup 自身上，于是共享壳 `.bz-overlay-popup` 消费的 --bz-surface-3/--bz-border/
+       --bz-text-*/--bz-brand 与 --bsw-paper/--bsw-ink/--bsw-muted/--bsw-line 自动跟随 —— 壳层
+       （底色/描边/圆角/阴影/限高）不必在此重写，按钮配色也随 token 走。
+   下面三条 = 视觉映射：套用「同域借书卡详情弹窗」那套纸卡取值，让「删除划线确认」与
+   「点书脊打开的借书卡详情」看起来是同一套东西。暗色无需另写变体：skin 类的
+   `.bz-bs-skin-* .bz-bs-mode-dark` 变体整组换掉 --bsw-*，本块全部引用变量，自动反转。 */
+#__shared_confirm_popup__.bz-bs-flow-dialog {
+  /* 纸卡底/墨线：逐值对齐 `.bz-bs-d-popup.bz-overlay-popup` + `.bz-bs-d-card`（纸面 var(--bsw-paper)、
+     描边 1px var(--bsw-line)）；圆角/阴影沿用共享壳 .bz-overlay-popup 的 --bz-radius-md/--bz-shadow-lg
+     （与借书卡弹窗同一壳源，只换底与描边，不动几何）。 */
+  background: var(--bsw-paper);
+  border-color: var(--bsw-line);
+  /* 字体栈在 .bz-bs-panel 作用域定义，流程框挂 body 取不到 → 在 popup 自带一份，
+     值同 styles.css:24-25 与借书卡标题 `.bz-bs-d-title`。 */
+  --bsw-serif: "Songti SC", "SimSun", "Noto Serif SC", serif;
+  --bsw-sans: "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+/* 标题回归纸张语言：衬线 + 深墨 + 字重 700（借书卡标题 .bz-bs-d-title 同套字体与墨色） */
+#__shared_confirm_popup__.bz-bs-flow-dialog h4 {
+  font-family: var(--bsw-serif);
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--bsw-ink);
+}
+/* 正文/按钮用无衬线正文字（借书卡正文 .bz-bs-detail 同 --bsw-sans 取值）；
+   「此操作不可撤销」的行内提示仍走 core 的 danger 文案色，此处不改语义色。 */
+#__shared_confirm_popup__.bz-bs-flow-dialog p {
+  font-family: var(--bsw-sans);
+  color: var(--bsw-muted);
+}
+/* 按钮形制向纸卡靠：纸面方角（沿用 .bz-bs-d-card 的无圆角纸卡语言），墨=var(--bsw-ink)。
+   只动形制不动几何——高度/内边距/字号仍与组件库 .bz-btn 同源（core/styles.css #__shared_confirm_* 段），
+   保证与借书卡弹窗内的 .bz-btn 长得一样。 */
+#__shared_confirm_popup__.bz-bs-flow-dialog #__shared_confirm_cancel__,
+#__shared_confirm_popup__.bz-bs-flow-dialog #__shared_confirm_ok__ {
+  border-radius: var(--bz-radius-xs);
+  border-color: var(--bsw-line);
+}
+#__shared_confirm_popup__.bz-bs-flow-dialog #__shared_confirm_ok__ {
+  border-color: var(--bsw-ink);
+  font-family: var(--bsw-serif);
+  letter-spacing: 2px;
+}
 
 
 /* ==================== 报告视图（命令 bz-reading-report-open 专用；墙面无入口） ====================
@@ -16985,12 +17261,79 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-kb-window.bz-panel-mtop .bz-kb-part + .bz-kb-part { border-left: 1px solid var(--line); }
 .bz-kb-window.bz-panel-mtop .bz-kb-part.is-on { background: none; color: var(--ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--ink); }
 
+/* ===== 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一）=====
+   三处确认框（中止批量处理 / 删除转文献任务 / 清空历史）走 openFlowDialog，
+   popup 挂 document.body —— 脱离 .kb 后纸墨私有 token 与域弹窗类一并失效。
+   故三处传 className: 'kb bz-kb-flow-dialog'：
+   - 'kb'：变量作用域（本文件开头 :7-33，含 .theme-dark .kb 暗色组）随根带上；
+   - 'bz-kb-flow-dialog'：域弹窗类，供下方 id 选择器把共享壳（.bz-overlay-popup）
+     改写成纸墨材质。
+   只映射「材质 / 文字 / 按钮」三件事——显式不复用 .bz-kb-window / .bz-lit-dialog 的
+   定位与尺寸（那两个类是 position:fixed 居中 + 定宽的浮层几何，确认框已有自己的版式：
+   居中纵排 + 400px 限宽 + 24px 内边距，见 core/styles.css；套上会双份定位）。 */
+
+/* 壳材质：逐值取自 .bz-lit-dialog（本文件「保留弹窗的纸墨皮」段，术语/添加任务弹窗）——
+   底 var(--panel) / 细线 var(--line) / 14px 圆角 / 深投影；字色取 .bz-kb-window 的 var(--ink)。
+   共享壳默认是 --bz-surface-3 底 + --bz-border 边 + --bz-radius-md 圆角（组件库调色板），
+   在纸墨皮里读作「另一套底」，覆盖后才与同域弹窗同皮。 */
+#__shared_confirm_popup__.bz-kb-flow-dialog {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-interface);
+  /* 共享壳内的文字与中性钮消费 --bz-* 组件 token（core/styles.css 的 #__shared_confirm_* 段），
+     那是 bz 自有固定调色板（亮色白底 / 暗色近黑），与纸墨皮不是一套；
+     整组映射到纸面上的私有墨色，否则深色 Obsidian 主题下「浅纸底 + 浅字」不可读
+     （与 issue 257「缺 kb 背景变量失效」同族事故）。 */
+  --bz-text-1: var(--ink);
+  --bz-text-2: var(--ink2);
+  --bz-surface-2: var(--card);
+  --bz-surface-hover: var(--chip);
+  --bz-danger: var(--red);
+  --bz-radius-sm: 9px; /* 与域内 .bz-lit-ghost-btn / .bz-lit-accent-btn 的 9px 圆角同源 */
+  /* 非危险流程框的主动作语言 = .bz-lit-accent-btn 的绿色实底（域内「生成 / 添加」钮）。
+     当前三处确认框主动作均为 danger，core 的 bz-flow-dialog--danger 只消费 --bz-surface-2 /
+     --bz-danger（中性底 + 红线字），与 --bz-brand 无关 —— 既与危险语义不打架，
+     也保证将来加非危险确认框时按钮即刻同皮（无需再写域规则）。 */
+  --bz-brand: var(--green);
+  --bz-on-brand: #fff;
+}
+
+/* 标题：字面语言取术语弹层的 .bz-lit-sheet-title（衬线 + 字距 + 700）；
+   字号仍留 core 的 18px 标题档（词条页的 emphasis 小档不适合确认框）。 */
+#__shared_confirm_popup__.bz-kb-flow-dialog h4 {
+  font-family: 'Noto Serif SC', SimSun, serif;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+/* 正文：次级墨色 var(--ink2)（同 .bz-lit-term-meta-k 一族的次级字号色）；
+   字号/行高沿用 core（15px / leading-normal），只换色。 */
+#__shared_confirm_popup__.bz-kb-flow-dialog p { color: var(--ink2); }
+
+/* 取消钮 = .bz-lit-ghost-btn 的 ghost 档（透底 + var(--line) 细边 + var(--ink2) 字 + 0.08em 字距）；
+   纸墨皮里按钮不铺芯片底，故把共享壳的中性底显式撤成透明。 */
+#__shared_confirm_popup__.bz-kb-flow-dialog #__shared_confirm_cancel__ {
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink2);
+  letter-spacing: 0.08em;
+}
+#__shared_confirm_popup__.bz-kb-flow-dialog #__shared_confirm_cancel__:hover {
+  border-color: var(--accent);
+  background: var(--chip);
+  color: var(--ink);
+}
+
 /* ============================================================
    第二大脑 · 定稿原型主题（issue 251 / ADR-0110）
    三界面：主面板 / AI 对话 / 灵感参考 —— 米白 #fbfaf7 × 红棕 #a33d2a。
    暗色（issue 270，原「固定浅色不随 .theme-dark 反色」拍板作废）：
    七根（三界面 + 移动抽屉/胶囊 + 浮动参考卡/hover 预览两个 body 逸出点）
-   同组 --sb-* 暗色覆盖，亮侧零改动（先例：cinema .cn-skin）。
+   同组 --sb-* 暗色覆盖，亮侧零改动（先例：cinema .cn-skin）；
+   issue 291 起确认流程框（.bz-sb-flow-dialog）并入同两处 token 组（第八项）。
    markup 单源 render.ts；本文件为唯一样式源（bz-sb-* 前缀）。
    移动端抽屉段（bz-sb-mb-*）同皮（issue 251 追加）：吸同一套 token。
    ============================================================ */
@@ -17003,17 +17346,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   display: none !important;
 }
 
-/* ==================== 主题 token（根容器同套：三界面 + 移动抽屉/胶囊 + 双逸出点） ====================
+/* ==================== 主题 token（根容器同套：三界面 + 移动抽屉/胶囊 + 双逸出点 + 确认流程框） ====================
    双逸出点（reference-panel.ts 直挂 document.body，面板树外取不到继承）：
    .bz-sb-ref-card--float 拖出的浮动参考卡、.bz-sb-ref-preview hover 预览——
-   类名自携 token 源（同 cinema .cn-skin 手法），在列时类摘除由浮窗根供给 */
+   类名自携 token 源（同 cinema .cn-skin 手法），在列时类摘除由浮窗根供给。
+   .bz-sb-flow-dialog（issue 291）：core/flow-dialog 的确认框（清空对话 / 重新索引）挂 body、
+   同样在七根之外，进组后域内规则才消费得到 --sb-*（见文末确认流程框段）。 */
 .bz-sb-panel,
 .bz-sb-chat-modal,
 .bz-sb-float-win,
 .bz-sb-mb-sheet,
 .bz-sb-mb-mini,
 .bz-sb-ref-preview,
-.bz-sb-ref-card--float {
+.bz-sb-ref-card--float,
+.bz-sb-flow-dialog {
   --sb-bg: #fbfaf7;
   --sb-card: #ffffff;
   --sb-ink: #211d16;
@@ -17046,7 +17392,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .theme-dark .bz-sb-mb-sheet,
 .theme-dark .bz-sb-mb-mini,
 .theme-dark .bz-sb-ref-preview,
-.theme-dark .bz-sb-ref-card--float {
+.theme-dark .bz-sb-ref-card--float,
+.theme-dark .bz-sb-flow-dialog {
   --sb-bg: #17150f;
   --sb-card: #211d16;
   --sb-ink: #ece7db;
@@ -18646,6 +18993,63 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .theme-dark .bz-sb-panel .bz-sb-pill-dot {
   animation-name: bz-sb-pulse-dark;
+}
+
+/* ==================== 确认流程框（core/flow-dialog，issue 291：子弹窗统一带皮） ====================
+   两个确认框都挂 body、落在七根之外，必须显式把皮肤类交给 openFlowDialog：
+   ① chat-panel.ts confirmClear（清空对话）② panel.ts confirmFullRebuild（重新索引 / 全量重建
+   单源——面板底部、设置页、首页入口三处共用）。
+   皮肤类 .bz-sb-flow-dialog 已并入上方两处 token 组选择器列表；但共享壳 .bz-overlay-popup
+   只认公共 --bz-*（本浮层自携的是私有 --sb-*），所以壳层必须在这里显式映射：
+   逐值同源 .bz-sb-panel / .bz-sb-chat-modal 的壳（米白底 --sb-bg / 1px 细边 --sb-line2 /
+   14px 圆角 / 0 24px 60px 柔影），文字走域墨色，按钮走 .bz-sb-fbtn 一档语言。 */
+#__shared_confirm_popup__.bz-sb-flow-dialog {
+  background: var(--sb-bg);
+  border: 1px solid var(--sb-line2);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px #00000022; /* = .bz-sb-panel / .bz-sb-chat-modal 亮侧壳影 */
+  color: var(--sb-ink);
+}
+/* 标题/正文颜色：core 默认消费 --bz-text-1/--bz-text-2——本浮层只有 --sb-*，若不管会掉回
+   全局主题色（与米白×红棕皮不同源）；改用域墨色两档。字重取 .bz-sb-head-title h3 /
+   .bz-sb-chat-head h3 的 700 档；字号保留 core 确认框的 18px（弹窗标题层级，域内无更贴的一档）。 */
+#__shared_confirm_popup__.bz-sb-flow-dialog h4 {
+  color: var(--sb-ink);
+  font-weight: 700;
+}
+#__shared_confirm_popup__.bz-sb-flow-dialog p {
+  color: var(--sb-ink2);
+}
+/* 按钮：逐值同源 .bz-sb-fbtn（次级：白卡底 + 细边 + 次强字，hover 转红棕）与
+   .bz-sb-fbtn--primary（主钮：深墨实底 + 反白字，暗色下 --sb-dark 转深红棕，hover 转红棕）。
+   height/圆角/字号不覆写——确认框按钮与组件库 .bz-btn 同源（core/styles.css 该段口径）。
+   主动作加 :not(.bz-flow-dialog--danger)：危险主动作时让 core 的「主钮保持中性、仅文字用
+   danger 色」（设计手册 §9/§10）继续生效，不被这里的实底主色盖掉（第二大脑当前两个确认框
+   都非危险动作，此为防回归护栏）。 */
+#__shared_confirm_popup__.bz-sb-flow-dialog #__shared_confirm_cancel__ {
+  background: var(--sb-card);
+  border: 1px solid var(--sb-line2);
+  color: var(--sb-ink3);
+}
+#__shared_confirm_popup__.bz-sb-flow-dialog #__shared_confirm_cancel__:hover {
+  background: var(--sb-card);
+  border-color: var(--sb-acc);
+  color: var(--sb-acc);
+}
+#__shared_confirm_popup__.bz-sb-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__ {
+  background: var(--sb-dark);
+  border-color: var(--sb-dark);
+  color: var(--sb-on-acc);
+}
+#__shared_confirm_popup__.bz-sb-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__:hover {
+  background: var(--sb-acc);
+  border-color: var(--sb-acc);
+  color: #fff;
+}
+/* 暗色壳影加深：与 .theme-dark .bz-sb-panel / .bz-sb-chat-modal 同值
+   （黑影在深炭棕底不可见，域内该档是写死值、不走 token，故此处必须另写一条） */
+.theme-dark #__shared_confirm_popup__.bz-sb-flow-dialog {
+  box-shadow: 0 24px 60px #00000080;
 }
 /**
  * smartcat 域样式（小橘陪伴猫）
