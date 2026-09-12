@@ -157,7 +157,7 @@ export function panelShellHtml(): string {
     </div>`;
 }
 
-/** meta 行 due 注入包（状态/文案由调用方按 settings.memoDueFormat 与当下时刻算好） */
+/** meta 行 due 注入包（状态/文案由调用方按当下时刻算好） */
 export type MetaDue = { status: 'overdue' | 'today' | 'future'; text: string } | null;
 
 /** 卡片 meta 行（顺序对齐 memo buildMeta：课程→脚本→链接→位置→场景→截止→时间） */
