@@ -217,20 +217,20 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
         count: g.querySelector('.bz-settings-group-count')!.textContent,
       }));
     expect(heads).toEqual([
+      // 2026-09-12：原「可视化」组（单按钮行）并入末尾「数据面板」组 → 九组变八组
       { icon: 'palette', name: '外观', count: '1 项' },
-      // 「打开数据面板」为 button 操作行（bz-setting-action-row 豁免徽标计数，ticket 131 声明式语义）
-      { icon: 'bar-chart-3', name: '可视化', count: '0 项' },
       { icon: 'message-circle', name: '互动', count: '4 项' },
       { icon: 'archive', name: '记忆', count: '6 项' },
-      // ADR-0069 记忆目录（记忆目录流）：多文件夹选择（path-picker 多选）
-      { icon: 'folder-open', name: '记忆目录', count: '1 项' },
+      // ADR-0069 记忆目录（记忆目录流）：多文件夹选择（path-picker 多选）；组名改「记忆来源」
+      { icon: 'folder-open', name: '记忆来源', count: '1 项' },
       // P3 新增三组（ticket 123）
       { icon: 'database', name: '存储与记忆', count: '2 项' },
       // ticket 162 记忆巩固精简（反思阈值 + 引用摘录两行；移动端组已挪到面板末尾）
       // ticket 163：+1 反思洞察条数上限（共 3 行）
       { icon: 'moon', name: '记忆巩固', count: '3 项' },
       { icon: 'link', name: '关联', count: '2 项' },
-      { icon: 'eye', name: '显示', count: '1 项' },
+      // 「打开数据面板」为 button 操作行（bz-setting-action-row 豁免徽标计数，ticket 131 声明式语义）
+      { icon: 'eye', name: '数据面板', count: '1 项' },
     ]);
     // 外观组内为色块卡组（choiceCards 标准行），可视化组内仅「打开数据面板」
     expect(popup.querySelector('.bz-settings-group-body .bz-cardpick-card')).not.toBeNull();
@@ -257,7 +257,7 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
     }
   });
 
-  it('可视化组仅有「打开数据面板」1 项、无人格面板', () => {
+  it('数据面板组：按钮行 + 行为日志开关，无人格面板（2026-09-12 并组）', () => {
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     Platform.isMobile = false;
     openSmartcatSettings({
@@ -270,12 +270,13 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       onAppearanceChanged: (skin) => hooks.appearances.push(skin),
     });
     const viz = [...document.querySelectorAll('.bz-settings-group')].find(
-      (g) => g.querySelector('.bz-settings-group-name')!.textContent === '可视化'
+      (g) => g.querySelector('.bz-settings-group-name')!.textContent === '数据面板'
     )! as HTMLElement;
     expect(viz).not.toBeUndefined();
-    // 「打开数据面板」为 button 操作行（actionRow 豁免徽标，ticket 131 声明式语义）
-    expect(viz.querySelector('.bz-settings-group-count')!.textContent).toBe('0 项');
+    // 「打开数据面板」为 button 操作行（actionRow 豁免徽标，ticket 131 声明式语义）→ 组计数只算 toggle 1 项
+    expect(viz.querySelector('.bz-settings-group-count')!.textContent).toBe('1 项');
     expect(viz.querySelector('.setting-item[data-name="打开数据面板"]')).not.toBeNull();
+    expect(viz.querySelector('.setting-item[data-name="显示行为日志"]')).not.toBeNull();
     expect(viz.querySelector('.bz-sc-personality-panel')).toBeNull();
   });
 });

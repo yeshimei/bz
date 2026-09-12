@@ -15,10 +15,10 @@
  * 3. 图标一律 lucide（setIcon/组件库），禁止 emoji 当图标（ui-kit-manual §5）。
  */
 import { getSettings, saveSettings } from '../core/settings-provider';
+import { openPathPicker } from '../core/path-picker';
 import { bindValue } from '../core/settings-schema';
 import type { RowBinding, SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext } from '../core/settings-schema';
 import { setIcon } from 'obsidian';
-import { openDirPicker } from './dir-picker';
 import { notice } from '../core/notice';
 // markup 单源（ADR-0104/0105）：行/组/控件结构串全出自渲染纯层，本文件只留行为绑定
 import * as R from './render';
@@ -145,7 +145,9 @@ function makeInput(opts: {
 
 /**
  * 路径行控件区：chips（已选目录，✕ 移除、文本点击重开选择器）+ 选择按钮（空态显示）。
- * 与 core/path-picker 的 renderPathSettingRow 行为对齐（ticket 133 形态）：
+ * 行内 chips 面板自绘（.bz-sp-chip）；**弹窗** = core 统一选择器 openPathPicker（ADR-0061）+
+ * `.bz-sp-skin` 面板皮肤（ADR-0127：全域单一实现，皮肤随宿主）。行为与 core/path-picker 的
+ * renderPathSettingRow 对齐（ticket 133 形态）：
  * - 空态只显示「选择…/添加…」按钮（无灰字占位 chip）；
  * - 有文件夹 chip（显式值或回落 chip）时按钮移出 DOM，chip 文本点击重开选择器、✕ 清除；
  * - 选择器确定 / ✕ 移除后统一回调 onChange（支持返回 Promise 改写）。
@@ -186,11 +188,16 @@ export function makePathRowCtrl(opts: {
   };
 
   const openPicker = () => {
-    openDirPicker({
-      title: (opts.mode === 'multi' ? '添加文件夹 · ' : '选择文件夹 · ') + (opts.pickerTitle || opts.name),
-      multi: opts.mode === 'multi',
+    const multiMode = opts.mode === 'multi';
+    // 弹窗走 core 统一路径选择器（ADR-0061）——全域单一实现，⚙️ 设置页 / 各域设置弹窗 /
+    // 附件搬移命令 / 本面板同一套 DOM 与行为；面板内观感由 .bz-sp-skin 皮肤类就近覆写（ADR-0127）
+    openPathPicker({
+      title: (multiMode ? '添加文件夹 · ' : '选择文件夹 · ') + (opts.pickerTitle || opts.name),
+      desc: opts.pickerDesc,
+      mode: multiMode ? 'multi' : 'single',
       selected: current,
-      okText: opts.okText,
+      okText: opts.okText || (multiMode ? '添加所选' : '选用'),
+      skinClassName: 'bz-sp-skin',
       onConfirm: (list) => {
         void apply(list);
       },

@@ -1,5 +1,5 @@
-/* 源指纹 8904bff32594f3fc · 仓内输入 81 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts"]*/
+/* 源指纹 c21d28b15ecff9f6 · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/ui-tools.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
   var __create = Object.create;
@@ -14,9 +14,6 @@ var BZW_secondbrain = (() => {
     if (typeof require !== "undefined") return require.apply(this, arguments);
     throw Error('Dynamic require of "' + x + '" is not supported');
   });
-  var __esm = (fn, res) => function __init() {
-    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-  };
   var __commonJS = (cb, mod) => function __require2() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
@@ -41,1359 +38,6 @@ var BZW_secondbrain = (() => {
     mod
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-  // prototypes/secondbrain/fake/fake-obsidian.ts
-  function setIcon(container, iconId) {
-    var _a2;
-    const d = typeof window !== "undefined" && ((_a2 = window.SB_ICONS) == null ? void 0 : _a2[iconId]) || "";
-    if (!d) return;
-    const ns = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(ns, "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("fill", "none");
-    svg.setAttribute("stroke", "currentColor");
-    svg.setAttribute("stroke-width", "2");
-    svg.setAttribute("stroke-linecap", "round");
-    svg.setAttribute("stroke-linejoin", "round");
-    svg.innerHTML = d;
-    container.replaceChildren(svg);
-  }
-  async function requestUrl() {
-    throw new Error("原型环境无 Obsidian requestUrl（fake obsidian）");
-  }
-  var Platform, MarkdownRenderer, Component, FakeVault, FakeApp;
-  var init_fake_obsidian = __esm({
-    "prototypes/secondbrain/fake/fake-obsidian.ts"() {
-      Platform = {
-        isMobile: typeof window !== "undefined" && window.innerWidth <= 768
-      };
-      if (typeof globalThis !== "undefined") {
-        globalThis.obsidian = globalThis.obsidian || { Platform };
-      }
-      MarkdownRenderer = {
-        async render(_app2, md, el) {
-          const html = String(md).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\n/g, "<br>");
-          el.innerHTML = html;
-        }
-      };
-      Component = class {
-        onload() {
-        }
-        unload() {
-        }
-      };
-      FakeVault = class _FakeVault {
-        constructor() {
-          this.listeners = /* @__PURE__ */ new Map();
-          /** 存储面（core/storage jsonFileStore / vector-store 二进制 / 主面板存储占用） */
-          this.adapter = {
-            exists: async (path) => localStorage.getItem(_FakeVault.key(path)) != null,
-            read: async (path) => {
-              const raw = localStorage.getItem(_FakeVault.key(path));
-              if (raw == null) throw new Error("file not found: " + path);
-              return raw;
-            },
-            write: async (path, data) => {
-              localStorage.setItem(_FakeVault.key(path), data);
-            },
-            /** 与 Obsidian adapter.stat 同形：{ size } 或抛错（调用方 try/catch） */
-            stat: async (path) => {
-              const raw = localStorage.getItem(_FakeVault.key(path));
-              if (raw == null) throw new Error("file not found: " + path);
-              return { size: raw.length, type: "file" };
-            },
-            /** 二进制面（vector-store 专用；原型以 base64 存取，行为代码原样跑） */
-            readBinary: async (path) => {
-              const raw = localStorage.getItem(_FakeVault.key(path));
-              if (raw == null) throw new Error("file not found: " + path);
-              const bin = atob(raw);
-              const buf = new ArrayBuffer(bin.length);
-              const view = new Uint8Array(buf);
-              for (let i = 0; i < bin.length; i++) view[i] = bin.charCodeAt(i);
-              return buf;
-            },
-            writeBinary: async (path, data) => {
-              const view = new Uint8Array(data);
-              let bin = "";
-              for (let i = 0; i < view.length; i++) bin += String.fromCharCode(view[i]);
-              localStorage.setItem(_FakeVault.key(path), btoa(bin));
-            }
-          };
-        }
-        static key(path) {
-          return "bz-sb-sim:" + path;
-        }
-        getAbstractFileByPath(path) {
-          const raw = localStorage.getItem(_FakeVault.key(path));
-          return raw == null ? null : { path, content: raw };
-        }
-        /** 白名单扫描面（vector-store.refresh 链）：种子库无 md 笔记 → 无变更，refresh 快速完成 */
-        getMarkdownFiles() {
-          const out = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            if (k && k.startsWith(_FakeVault.key("")) && k.endsWith(".md")) {
-              const path = k.slice(_FakeVault.key("").length);
-              out.push({ path, content: localStorage.getItem(k) || "" });
-            }
-          }
-          return out;
-        }
-        async read(f) {
-          return f.content;
-        }
-        async modify(f, content) {
-          f.content = content;
-          localStorage.setItem(_FakeVault.key(f.path), content);
-        }
-        async create(path, content) {
-          localStorage.setItem(_FakeVault.key(path), content);
-          return { path, content };
-        }
-        async createFolder(_path) {
-          return void 0;
-        }
-        on(evt, cb) {
-          if (!this.listeners.has(evt)) this.listeners.set(evt, []);
-          this.listeners.get(evt).push(cb);
-          return { ref: this.listeners.get(evt).length };
-        }
-        offref(_ref) {
-        }
-        emit(evt, file) {
-          var _a2;
-          for (const cb of (_a2 = this.listeners.get(evt)) != null ? _a2 : []) cb(file);
-        }
-      };
-      FakeApp = class {
-        constructor() {
-          this.vault = new FakeVault();
-          /** 参考面板的光标轮询在无编辑器时静默空转（真行为同语义）；演示检索由 fake-sim 的
-           *  「换一篇当前笔记」驱动 refreshWithDebounce */
-          this.workspace = {
-            activeEditor: null,
-            getActiveFile: () => null,
-            getLeaf: () => ({
-              openFile: async () => {
-              }
-            }),
-            on: () => ({ ref: 0 }),
-            offref() {
-            }
-          };
-        }
-      };
-    }
-  });
-
-  // src/core/app.ts
-  function setApp(app) {
-    _app = app;
-  }
-  function getApp() {
-    if (!_app) {
-      throw new Error("bz: app 未初始化（setApp 未调用）");
-    }
-    return _app;
-  }
-  var _app;
-  var init_app = __esm({
-    "src/core/app.ts"() {
-      _app = null;
-    }
-  });
-
-  // src/core/settings-provider.ts
-  function setSettingsProvider(fn) {
-    _provider = fn;
-  }
-  function setSettingsSaver(fn) {
-    _saver = fn;
-  }
-  function tryGetSettings() {
-    return _provider ? _provider() : {};
-  }
-  var _provider, _saver;
-  var init_settings_provider = __esm({
-    "src/core/settings-provider.ts"() {
-      _provider = null;
-      _saver = null;
-    }
-  });
-
-  // src/core/ai.ts
-  function setAISettingsProvider(fn) {
-    _settingsProvider = fn;
-  }
-  function getQ3Settings() {
-    return _settingsProvider ? _settingsProvider() : {};
-  }
-  function getProviderDescriptor(id) {
-    return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
-  }
-  async function getAIProvider(override) {
-    var _a2, _b2, _c;
-    if (!override && _aiProviderCache) return _aiProviderCache;
-    const cacheable = !override;
-    const cachePut = (p) => {
-      if (cacheable) _aiProviderCache = p;
-      return p;
-    };
-    const s = getQ3Settings();
-    if (override && typeof override === "object" && override.apiKey) {
-      return {
-        endpoint: String(override.endpoint || "https://api.deepseek.com").replace(/\/+$/, ""),
-        apiKey: override.apiKey,
-        model: override.model || void 0,
-        extraHeaders: override.extraHeaders || void 0,
-        contextWindow: override.contextWindow,
-        defaultMaxTokens: override.defaultMaxTokens
-      };
-    }
-    const name = typeof override === "string" && override || s.aiProvider || "opencode-go";
-    const desc = getProviderDescriptor(name);
-    if (name === "custom") {
-      const endpoint = (s.aiCustomEndpoint || "").replace(/\/+$/, "");
-      if (!endpoint || !s.aiCustomApiKey) {
-        throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
-      }
-      return cachePut({
-        endpoint,
-        apiKey: s.aiCustomApiKey,
-        model: s.aiCustomModel || void 0,
-        extraHeaders: desc.extraHeaders,
-        contextWindow: desc.defaultContextWindow,
-        defaultMaxTokens: desc.defaultMaxTokens
-      });
-    }
-    const key = s[desc.apiKeyKey];
-    if (!key && name === "deepseek") {
-      try {
-        const raw = await getApp().vault.adapter.read(".obsidian/plugins/quickadd/data.json");
-        const cfg = JSON.parse(raw);
-        const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
-        if (provider && provider.endpoint && provider.apiKey) {
-          return cachePut({
-            endpoint: String(provider.endpoint).replace(/\/+$/, ""),
-            apiKey: provider.apiKey,
-            contextWindow: desc.defaultContextWindow,
-            defaultMaxTokens: desc.defaultMaxTokens
-          });
-        }
-      } catch (e) {
-      }
-    }
-    if (!key && name !== "ollama") {
-      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
-    }
-    const overrideModel = (_a2 = s.aiModelOverrides) == null ? void 0 : _a2[name];
-    const overrideContext = (_b2 = s.aiContextOverrides) == null ? void 0 : _b2[name];
-    const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
-    return cachePut({
-      endpoint: desc.endpoint,
-      apiKey: key || "",
-      model: overrideModel || desc.model || void 0,
-      noCors: desc.noCors,
-      extraHeaders: desc.extraHeaders,
-      contextWindow: overrideContext || desc.defaultContextWindow,
-      defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens
-    });
-  }
-  function abortError() {
-    const e = new Error("请求已取消");
-    e.name = "AbortError";
-    return e;
-  }
-  function timeoutError() {
-    const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1e3} 秒无响应）`);
-    e.name = "TimeoutError";
-    return e;
-  }
-  async function streamChatCompletions(provider, body, signal, onDelta) {
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${provider.apiKey}`,
-      ...provider.extraHeaders || {}
-    };
-    const controller = new AbortController();
-    const onOuterAbort = () => controller.abort();
-    let outerLinked = false;
-    if (signal) {
-      if (signal.aborted) controller.abort();
-      else {
-        signal.addEventListener("abort", onOuterAbort);
-        outerLinked = true;
-      }
-    }
-    let idleTimer = null;
-    const armIdle = () => {
-      if (idleTimer !== null) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
-    };
-    try {
-      armIdle();
-      const resp = await fetch(`${provider.endpoint}/chat/completions`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-        signal: controller.signal
-      });
-      if (!resp.ok) {
-        let msg = `API ${resp.status}`;
-        try {
-          const err = await resp.json();
-          if (err.error && err.error.message) msg = err.error.message;
-        } catch (e) {
-        }
-        throw new Error(msg);
-      }
-      if (!resp.body || typeof resp.body.getReader !== "function") {
-        const data = await resp.json();
-        return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
-      }
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let full = "", buf = "";
-      while (true) {
-        armIdle();
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        let nl;
-        while ((nl = buf.indexOf("\n")) !== -1) {
-          const line = buf.slice(0, nl).trim();
-          buf = buf.slice(nl + 1);
-          if (!line.startsWith("data:")) continue;
-          const payload = line.slice(5).trim();
-          if (payload === "[DONE]") {
-            try {
-              reader.cancel();
-            } catch (e) {
-            }
-            return full;
-          }
-          try {
-            const chunk = JSON.parse(payload);
-            const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-            if (delta) {
-              full += delta;
-              try {
-                onDelta == null ? void 0 : onDelta(delta);
-              } catch (e) {
-              }
-            }
-          } catch (e) {
-          }
-        }
-      }
-      return full;
-    } catch (e) {
-      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
-      throw e;
-    } finally {
-      if (idleTimer !== null) clearTimeout(idleTimer);
-      if (outerLinked && signal) signal.removeEventListener("abort", onOuterAbort);
-    }
-  }
-  async function chatCompletionsNonStream(provider, body, signal) {
-    if (signal == null ? void 0 : signal.aborted) throw abortError();
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${provider.apiKey}`,
-      ...provider.extraHeaders || {}
-    };
-    const resp = await new Promise((resolve, reject) => {
-      let timer = null;
-      const settle = (fn) => {
-        if (timer !== null) clearTimeout(timer);
-        fn();
-      };
-      timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
-      requestUrl({
-        url: `${provider.endpoint}/chat/completions`,
-        method: "POST",
-        headers,
-        body: JSON.stringify({ ...body, stream: false })
-      }).then(
-        (r) => settle(() => resolve(r)),
-        (e) => settle(() => reject(e))
-      );
-    });
-    if (signal == null ? void 0 : signal.aborted) throw abortError();
-    const data = JSON.parse(resp.text);
-    const errMsg = data.error && (data.error.message || data.error.type) || data.message && data.message;
-    if (errMsg) throw new Error(`API ${resp.status}: ${errMsg}`);
-    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-    if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
-    return content;
-  }
-  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}, defaultMaxTokens = 8192) {
-    const internalDefaultOptions = {
-      modelOptions: {
-        max_tokens: defaultMaxTokens,
-        ...defaultOptions.modelOptions || {}
-      }
-    };
-    const mergedOptions = { ...internalDefaultOptions, ...defaultOptions };
-    if (defaultOptions.modelOptions) {
-      mergedOptions.modelOptions = {
-        ...internalDefaultOptions.modelOptions,
-        ...defaultOptions.modelOptions
-      };
-    }
-    return new AIService(params, defaultModel, mergedOptions);
-  }
-  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AIService;
-  var init_ai = __esm({
-    "src/core/ai.ts"() {
-      init_fake_obsidian();
-      init_app();
-      _settingsProvider = null;
-      AI_PROVIDER_REGISTRY = [
-        {
-          id: "deepseek",
-          label: "DeepSeek",
-          endpoint: "https://api.deepseek.com",
-          model: "",
-          // 空 = 沿用调用方默认模型（原行为：deepseek 不强制模型）
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 65536,
-          apiKeyKey: "deepseekApiKey",
-          apiKeyLabel: "DeepSeek 密钥",
-          apiKeyDesc: "留空则自动回退读取外部配置密钥"
-        },
-        {
-          id: "opencode-go",
-          label: "OpenCode Go",
-          endpoint: "https://opencode.ai/zen/go/v1",
-          model: "deepseek-v4-flash",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "opencodeGoApiKey",
-          apiKeyLabel: "OpenCode 密钥",
-          apiKeyDesc: "在订阅官网获取后填入这里",
-          noCors: true
-        },
-        {
-          id: "openai",
-          label: "OpenAI",
-          endpoint: "https://api.openai.com/v1",
-          model: "gpt-4o-mini",
-          defaultMaxTokens: 16384,
-          defaultContextWindow: 128e3,
-          apiKeyKey: "openaiApiKey",
-          apiKeyLabel: "OpenAI 密钥",
-          apiKeyDesc: "在 OpenAI 官网获取后填入这里"
-        },
-        {
-          id: "anthropic",
-          label: "Anthropic（Claude）",
-          endpoint: "https://api.anthropic.com/v1",
-          model: "claude-sonnet-4-5",
-          defaultMaxTokens: 64e3,
-          // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
-          defaultContextWindow: 2e5,
-          apiKeyKey: "anthropicApiKey",
-          apiKeyLabel: "Anthropic 密钥",
-          apiKeyDesc: "在 Anthropic 官网获取后填入这里",
-          extraHeaders: { "anthropic-version": "2023-06-01" }
-        },
-        {
-          id: "google",
-          label: "Google Gemini",
-          endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
-          model: "gemini-2.0-flash",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 1048576,
-          apiKeyKey: "googleApiKey",
-          apiKeyLabel: "Gemini 密钥",
-          apiKeyDesc: "在 Google AI Studio 获取后填入这里"
-        },
-        {
-          id: "moonshot",
-          label: "Moonshot（Kimi）",
-          endpoint: "https://api.moonshot.cn/v1",
-          model: "kimi-k2-0711-preview",
-          defaultMaxTokens: 131072,
-          // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
-          defaultContextWindow: 131072,
-          apiKeyKey: "moonshotApiKey",
-          apiKeyLabel: "Kimi 密钥",
-          apiKeyDesc: "在 Moonshot 开放平台获取后填入这里"
-        },
-        {
-          id: "zhipu",
-          label: "智谱（GLM）",
-          endpoint: "https://open.bigmodel.cn/api/paas/v4",
-          model: "glm-4-flash",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "zhipuApiKey",
-          apiKeyLabel: "智谱密钥",
-          apiKeyDesc: "在智谱开放平台获取后填入这里"
-        },
-        {
-          id: "dashscope",
-          label: "阿里云百炼（通义）",
-          endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-          model: "qwen-plus",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "dashscopeApiKey",
-          apiKeyLabel: "百炼密钥",
-          apiKeyDesc: "在阿里云百炼获取 API Key 后填入这里"
-        },
-        {
-          id: "siliconflow",
-          label: "硅基流动",
-          endpoint: "https://api.siliconflow.cn/v1",
-          model: "deepseek-ai/DeepSeek-V3",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 65536,
-          apiKeyKey: "siliconflowApiKey",
-          apiKeyLabel: "硅基流动密钥",
-          apiKeyDesc: "在硅基流动官网获取后填入这里"
-        },
-        {
-          id: "openrouter",
-          label: "OpenRouter",
-          endpoint: "https://openrouter.ai/api/v1",
-          model: "deepseek/deepseek-chat",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "openrouterApiKey",
-          apiKeyLabel: "OpenRouter 密钥",
-          apiKeyDesc: "在 OpenRouter 官网获取后填入这里"
-        },
-        {
-          id: "xai",
-          label: "xAI（Grok）",
-          endpoint: "https://api.x.ai/v1",
-          model: "grok-2-latest",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "xaiApiKey",
-          apiKeyLabel: "xAI 密钥",
-          apiKeyDesc: "在 xAI 控制台获取后填入这里"
-        },
-        {
-          id: "groq",
-          label: "Groq",
-          endpoint: "https://api.groq.com/openai/v1",
-          model: "llama-3.3-70b-versatile",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "groqApiKey",
-          apiKeyLabel: "Groq 密钥",
-          apiKeyDesc: "在 Groq 控制台获取后填入这里"
-        },
-        {
-          id: "mistral",
-          label: "Mistral",
-          endpoint: "https://api.mistral.ai/v1",
-          model: "mistral-large-latest",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "mistralApiKey",
-          apiKeyLabel: "Mistral 密钥",
-          apiKeyDesc: "在 Mistral 控制台获取后填入这里"
-        },
-        {
-          id: "together",
-          label: "Together AI",
-          endpoint: "https://api.together.xyz/v1",
-          model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
-          apiKeyKey: "togetherApiKey",
-          apiKeyLabel: "Together 密钥",
-          apiKeyDesc: "在 Together AI 官网获取后填入这里"
-        },
-        {
-          id: "ollama",
-          label: "Ollama（本地）",
-          endpoint: "http://localhost:11434/v1",
-          model: "llama3.1",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 32768,
-          apiKeyKey: "ollamaApiKey",
-          apiKeyLabel: "Ollama 密钥",
-          apiKeyDesc: "本地服务无需密钥，留空即可"
-        },
-        {
-          id: "custom",
-          label: "自定义（OpenAI 兼容）",
-          endpoint: "",
-          model: "",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 32768,
-          apiKeyKey: "aiCustomApiKey",
-          apiKeyLabel: "自定义 API 密钥",
-          apiKeyDesc: "在服务官网获取后填入这里"
-        }
-      ];
-      _aiProviderCache = null;
-      AI_IDLE_TIMEOUT_MS = 6e4;
-      AIService = class {
-        constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
-          this.defaultModel = defaultModel;
-          this.defaultOptions = defaultOptions;
-        }
-        /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
-         *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
-         *  既有调用（不传这两项）行为零变化 */
-        async prompt(promptText, model = this.defaultModel, options = {}) {
-          var _a2;
-          const mergedOptions = this._mergeOptions(options);
-          const provider = await getAIProvider(mergedOptions.provider);
-          const s = getQ3Settings();
-          const isExplicit = model !== this.defaultModel;
-          const effModel = isExplicit ? model : provider.model || model;
-          const mo = mergedOptions.modelOptions || {};
-          const effMaxTokens = (_a2 = mo.max_tokens) != null ? _a2 : provider.defaultMaxTokens || 4096;
-          const body = {
-            model: effModel,
-            messages: [{ role: "user", content: promptText }],
-            max_tokens: effMaxTokens,
-            stream: true
-          };
-          for (const k of Object.keys(mo)) {
-            if (k === "max_tokens") continue;
-            body[k] = mo[k];
-          }
-          const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
-          const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
-          try {
-            const content = provider.noCors ? await chatCompletionsNonStream(provider, body, signal) : await streamChatCompletions(provider, body, signal, onDelta);
-            return content;
-          } catch (streamError) {
-            if (signal == null ? void 0 : signal.aborted) throw streamError;
-            try {
-              const content = await chatCompletionsNonStream(provider, body, signal);
-              return content;
-            } catch (e) {
-              throw new Error(`AI 请求失败: ${streamError.message}（fallback: ${e.message}）`);
-            }
-          }
-        }
-        /** 普通对话模型（deepseek-v4-flash） */
-        async chat(promptText, extraOptions = {}) {
-          return this.prompt(promptText, "deepseek-v4-flash", extraOptions);
-        }
-        /** 推理模型，自动开启思考模式 */
-        async reason(promptText, extraOptions = {}) {
-          const options = this._prepareOptions(extraOptions, { enable_thinking: true });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
-        }
-        /** 联网搜索（实验性，第三方代理平台生效） */
-        async search(promptText, extraOptions = {}) {
-          const options = this._prepareOptions(extraOptions, { search: true });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
-        }
-        /** 要求 AI 返回 JSON 格式（设置 response_format） */
-        async json(promptText, extraOptions = {}) {
-          const options = this._prepareOptions(extraOptions, {
-            response_format: { type: "json_object" }
-          });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
-        }
-        /** 思考 + 联网搜索（实验性） */
-        async reasonAndSearch(promptText, extraOptions = {}) {
-          const options = this._prepareOptions(extraOptions, {
-            enable_thinking: true,
-            search: true
-          });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
-        }
-        setDefaultModel(model) {
-          this.defaultModel = model;
-        }
-        setDefaultOptions(options) {
-          this.defaultOptions = options;
-        }
-        // ---------- 内部辅助方法 ----------
-        _mergeOptions(options) {
-          const merged = { ...this.defaultOptions, ...options };
-          if (this.defaultOptions.modelOptions || options.modelOptions) {
-            merged.modelOptions = {
-              ...this.defaultOptions.modelOptions || {},
-              ...options.modelOptions || {}
-            };
-          }
-          return merged;
-        }
-        /** 准备选项：复制 extraOptions，并设置指定的 modelOptions 字段（用户显式传入优先） */
-        _prepareOptions(extraOptions, modelSettings) {
-          const options = { ...extraOptions };
-          if (!options.modelOptions) options.modelOptions = {};
-          const userModelOpts = options.modelOptions;
-          options.modelOptions = { ...modelSettings, ...userModelOpts };
-          return options;
-        }
-      };
-    }
-  });
-
-  // src/core/z-order.ts
-  function syncAlwaysOnTop() {
-    for (const el of alwaysOnTop) {
-      if (!el.isConnected) {
-        alwaysOnTop.delete(el);
-        continue;
-      }
-      el.style.zIndex = String(zCounter);
-    }
-  }
-  function allocZBlock(n) {
-    const base = ++zCounter;
-    zCounter += n - 1;
-    zCounter++;
-    syncAlwaysOnTop();
-    return base;
-  }
-  function allocZ() {
-    return allocZBlock(1);
-  }
-  function topifyZ(...els) {
-    const live2 = els.filter((el) => !!el);
-    if (live2.length === 0) return;
-    const base = allocZBlock(live2.length);
-    live2.forEach((el, i) => {
-      el.style.zIndex = String(base + i);
-    });
-  }
-  var zCounter, alwaysOnTop;
-  var init_z_order = __esm({
-    "src/core/z-order.ts"() {
-      zCounter = 1e5;
-      alwaysOnTop = /* @__PURE__ */ new Set();
-    }
-  });
-
-  // src/core/notice.ts
-  function maxVisible() {
-    const v = Number(noticePref("noticeMaxVisible"));
-    return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
-  }
-  function notice(msg, type, duration) {
-    notify(msg, { type: type || "info", duration });
-  }
-  function isMobileView() {
-    return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
-  }
-  function defaultVariant() {
-    if (isMobileView()) return "drop";
-    const pos = noticePref("noticePosition");
-    return pos === "top-left" || pos === "bottom-left" ? "slide-left" : "slide-right";
-  }
-  function noticePref(key) {
-    var _a2;
-    try {
-      const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2[key];
-      return typeof v === "string" ? v : void 0;
-    } catch (e) {
-      return void 0;
-    }
-  }
-  function durationGear() {
-    const v = noticePref("noticeDuration");
-    if (v === "quick") return { base: 2e3, persistent: false };
-    if (v === "relaxed") return { base: 5e3, persistent: false };
-    if (v === "persistent") return { base: 3e3, persistent: true };
-    return { base: 3e3, persistent: false };
-  }
-  function defaultDuration(type) {
-    const base = durationGear().base;
-    return type === "error" ? base + 2e3 : base;
-  }
-  function suppressedByLevel(kind, opts) {
-    const level = noticePref("noticeLevel");
-    if (level !== "important" && level !== "error") return false;
-    if (kind === "progress") return false;
-    if (opts && (opts.action || opts.actions && opts.actions.length > 0)) return false;
-    if (level === "error") return kind !== "error";
-    return kind !== "warning" && kind !== "error";
-  }
-  function applyPositionClass(container) {
-    const pos = noticePref("noticePosition");
-    container.classList.remove(...POSITION_CLASSES);
-    const cls = pos === "bottom-right" || pos === "bottom-left" || pos === "top-left" ? `bz-notice-pos--${pos}` : "";
-    if (cls) container.classList.add(cls);
-  }
-  function calcDuration(text, base) {
-    const len = text.length;
-    if (len <= SHORT_THRESHOLD) return base;
-    const extra = (len - SHORT_THRESHOLD) * PER_CHAR_MS;
-    return Math.min(base + extra, 15e3);
-  }
-  function ensureContainer() {
-    let container = document.getElementById("bz-notice-container");
-    if (!container) {
-      container = document.createElement("div");
-      container.id = "bz-notice-container";
-      document.body.appendChild(container);
-    }
-    return container;
-  }
-  function removeInternal(n) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    const i = live.indexOf(n);
-    if (i !== -1) live.splice(i, 1);
-    if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
-  }
-  function evictOldest() {
-    let quota = live.length - maxVisible() + 1;
-    for (let i = 0; quota > 0 && i < live.length; ) {
-      const candidate = live[i];
-      if (candidate.persistent) {
-        i++;
-        continue;
-      }
-      removeInternal(candidate);
-      quota--;
-    }
-  }
-  function applyTypeToEl(n, kind) {
-    const isProgressNow = kind === "progress";
-    n.el.classList.remove(
-      "bz-notice--info",
-      "bz-notice--success",
-      "bz-notice--warning",
-      "bz-notice--error",
-      "bz-notice--pause",
-      "bz-notice--accept",
-      "bz-notice--delete",
-      "bz-notice--confirm",
-      "bz-notice--restore",
-      "bz-notice--skip",
-      "bz-notice--archive",
-      "bz-notice--progress"
-    );
-    n.el.classList.add("bz-notice--" + (isProgressNow ? "progress" : kind));
-    n.iconEl.innerHTML = "";
-    if (isProgressNow) {
-      n.iconEl.innerHTML = SPINNER_SVG;
-    } else {
-      n.iconEl.textContent = ICONS[kind];
-    }
-    n.isProgress = isProgressNow;
-  }
-  function hideNow(n) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    if (!n.el.classList.contains("bz-notice--leaving")) {
-      n.el.classList.add("bz-notice--leaving");
-      const out = OUT_CLASS[n.variant];
-      if (out) n.el.classList.add(out);
-      window.setTimeout(() => removeInternal(n), LEAVE_MS);
-    }
-  }
-  function armTimer(n, kind, explicitDuration, text) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    n.persistent = false;
-    if (kind === "progress") {
-      if (explicitDuration !== void 0 && explicitDuration > 0) {
-        n.timer = window.setTimeout(() => hideNow(n), explicitDuration);
-      } else {
-        n.persistent = true;
-      }
-      return;
-    }
-    const base = defaultDuration(kind);
-    const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
-    if (dur <= 0) {
-      n.persistent = true;
-      return;
-    }
-    if (explicitDuration === void 0 && durationGear().persistent) return;
-    n.timer = window.setTimeout(() => hideNow(n), dur);
-  }
-  function noopHandle() {
-    return {
-      el: document.createElement("div"),
-      setMessage() {
-      },
-      setProgress() {
-      },
-      setType() {
-      },
-      hide() {
-      }
-    };
-  }
-  function appendActionBtn(n, action) {
-    const btn = document.createElement("span");
-    btn.className = "bz-notice-action";
-    btn.setAttribute("role", "button");
-    btn.textContent = action.label;
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (action.onClick) action.onClick();
-      hideNow(n);
-    });
-    n.el.appendChild(btn);
-  }
-  function notify(msg, opts) {
-    const kind = opts && opts.type || "info";
-    if (suppressedByLevel(kind, opts)) return noopHandle();
-    const isProgress = kind === "progress";
-    const type = isProgress ? "info" : kind;
-    const variant = opts && opts.variant || defaultVariant();
-    const container = ensureContainer();
-    applyPositionClass(container);
-    if (opts && opts.dedupeKey) {
-      const key = opts.dedupeKey;
-      const r = recent[key];
-      const now = Date.now();
-      if (r && r.n && r.n.el.isConnected) {
-        r.n.msgEl.textContent = msg;
-        if (r.n.isProgress !== isProgress || r.n.el.classList.contains("bz-notice--" + type) === false) {
-          applyTypeToEl(r.n, kind);
-        }
-        const mergeActions = [];
-        if (opts.action) mergeActions.push(opts.action);
-        if (opts.actions) mergeActions.push(...opts.actions);
-        const existingLabels = new Set(
-          Array.from(r.n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
-        );
-        for (const a of mergeActions) {
-          if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
-        }
-        armTimer(r.n, kind, opts.duration, msg);
-        return noopHandle();
-      }
-      if (r && now - r.at < DEDUPE_WINDOW_MS) {
-        return noopHandle();
-      }
-      recent[key] = { at: now, n: null };
-    }
-    evictOldest();
-    const el = document.createElement("div");
-    el.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
-    el.setAttribute("role", "status");
-    el.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
-    const icon = document.createElement("div");
-    icon.className = "bz-notice-icon";
-    if (isProgress) {
-      icon.innerHTML = SPINNER_SVG;
-    } else {
-      icon.textContent = ICONS[type];
-    }
-    el.appendChild(icon);
-    const body = document.createElement("div");
-    body.className = "bz-notice-body";
-    if (opts && opts.title) {
-      const titleEl = document.createElement("div");
-      titleEl.className = "bz-notice-title";
-      titleEl.textContent = opts.title;
-      body.appendChild(titleEl);
-    }
-    const msgEl = document.createElement("div");
-    msgEl.className = "bz-notice-msg";
-    msgEl.textContent = msg;
-    body.appendChild(msgEl);
-    el.appendChild(body);
-    let progressEl = null;
-    if (isProgress) {
-      progressEl = document.createElement("div");
-      progressEl.className = "bz-notice-progress";
-      el.appendChild(progressEl);
-    }
-    const n = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
-    const actions = [];
-    if (opts && opts.action) actions.push(opts.action);
-    if (opts && opts.actions) {
-      for (const a of opts.actions) {
-        if (!actions.some((x) => x.label === a.label)) actions.push(a);
-      }
-    }
-    for (const a of actions) appendActionBtn(n, a);
-    el.addEventListener("click", () => hideNow(n));
-    container.style.zIndex = String(allocZ());
-    container.appendChild(el);
-    live.push(n);
-    if (opts && opts.dedupeKey) {
-      const r = recent[opts.dedupeKey];
-      if (r) r.n = n;
-    }
-    const fullText = (opts && opts.title ? opts.title + " " : "") + msg;
-    armTimer(n, kind, opts && opts.duration, fullText);
-    return {
-      el,
-      setMessage(text) {
-        n.msgEl.textContent = text;
-      },
-      setType(t) {
-        applyTypeToEl(n, t);
-        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
-      },
-      setProgress(pct) {
-        if (!n.progressEl) return;
-        if (pct === -1) {
-          n.progressEl.classList.add("bz-notice-progress--indeterminate");
-          return;
-        }
-        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
-        const clamped = Math.max(0, Math.min(100, pct));
-        n.progressEl.style.width = clamped + "%";
-        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
-        else n.progressEl.classList.remove("bz-notice-progress--done");
-      },
-      hide() {
-        hideNow(n);
-      }
-    };
-  }
-  var MAX_VISIBLE_DEFAULT, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, OUT_CLASS, POSITION_CLASSES, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
-  var init_notice = __esm({
-    "src/core/notice.ts"() {
-      init_z_order();
-      init_settings_provider();
-      MAX_VISIBLE_DEFAULT = 5;
-      LEAVE_MS = 200;
-      DEDUPE_WINDOW_MS = 3e4;
-      MOBILE_QUERY = "(max-width: 768px)";
-      ICONS = {
-        info: "ℹ️",
-        success: "✅",
-        warning: "⚠️",
-        error: "❌",
-        pause: "⏸️",
-        accept: "✨",
-        delete: "🗑️",
-        confirm: "✓",
-        restore: "↩️",
-        skip: "🚫",
-        archive: "📁"
-      };
-      SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
-      OUT_CLASS = {
-        drop: "bz-notice--out-drop",
-        pop: "bz-notice--out-pop",
-        "slide-left": "bz-notice--out-left",
-        "slide-right": "bz-notice--out-right",
-        bounce: "bz-notice--out-fade",
-        shake: "bz-notice--out-fade"
-      };
-      POSITION_CLASSES = ["bz-notice-pos--bottom-right", "bz-notice-pos--bottom-left", "bz-notice-pos--top-left"];
-      PER_CHAR_MS = 60;
-      SHORT_THRESHOLD = 20;
-      live = [];
-      recent = {};
-    }
-  });
-
-  // src/core/mobile.ts
-  var init_mobile = __esm({
-    "src/core/mobile.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/icon.ts
-  var init_icon = __esm({
-    "src/core/ui/icon.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/icons.ts
-  function uiIconSpan(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-  function mountIcons(root) {
-    root.querySelectorAll("[data-lucide]").forEach((el) => {
-      const name = el.getAttribute("data-lucide") || "";
-      if (!name) return;
-      try {
-        const fresh = uiIconSpan(name);
-        const cls = el.className;
-        if (cls && cls !== "bz-ic") fresh.className = cls;
-        el.replaceWith(fresh);
-      } catch (e) {
-      }
-    });
-  }
-  var init_icons = __esm({
-    "src/core/ui/icons.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/button.ts
-  var init_button = __esm({
-    "src/core/ui/button.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/chip.ts
-  var init_chip = __esm({
-    "src/core/ui/chip.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/setlist.ts
-  var init_setlist = __esm({
-    "src/core/ui/setlist.ts"() {
-    }
-  });
-
-  // src/core/ui/field.ts
-  var init_field = __esm({
-    "src/core/ui/field.ts"() {
-    }
-  });
-
-  // src/core/ui/slider.ts
-  var init_slider = __esm({
-    "src/core/ui/slider.ts"() {
-    }
-  });
-
-  // src/core/ui/empty.ts
-  var init_empty = __esm({
-    "src/core/ui/empty.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/segmented.ts
-  var init_segmented = __esm({
-    "src/core/ui/segmented.ts"() {
-    }
-  });
-
-  // src/core/ui/choice.ts
-  var init_choice = __esm({
-    "src/core/ui/choice.ts"() {
-    }
-  });
-
-  // src/core/ui/cardpick.ts
-  var init_cardpick = __esm({
-    "src/core/ui/cardpick.ts"() {
-    }
-  });
-
-  // src/core/ui/switch.ts
-  var init_switch = __esm({
-    "src/core/ui/switch.ts"() {
-    }
-  });
-
-  // src/core/esc-manager.ts
-  var escManager;
-  var init_esc_manager = __esm({
-    "src/core/esc-manager.ts"() {
-      escManager = (() => {
-        const layers = [];
-        const onKeydown = (e) => {
-          if (e.key !== "Escape") return;
-          for (let i = layers.length - 1; i >= 0; i--) {
-            const L = layers[i];
-            try {
-              if (L.isVisible()) {
-                L.close();
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                return;
-              }
-            } catch (err) {
-              layers.splice(i, 1);
-            }
-          }
-        };
-        if (typeof document !== "undefined") {
-          document.addEventListener("keydown", onKeydown);
-        }
-        return {
-          register(id, layer) {
-            for (let i = layers.length - 1; i >= 0; i--) {
-              if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
-            }
-            const rec = Object.assign({ id }, layer);
-            layers.push(rec);
-            return {
-              unregister: () => {
-                const i = layers.indexOf(rec);
-                if (i !== -1) layers.splice(i, 1);
-              }
-            };
-          },
-          /** 插件卸载时移除全局监听 */
-          destroy() {
-            if (typeof document !== "undefined") {
-              document.removeEventListener("keydown", onKeydown);
-            }
-          }
-        };
-      })();
-    }
-  });
-
-  // src/core/ui/select.ts
-  var init_select = __esm({
-    "src/core/ui/select.ts"() {
-      init_icon();
-      init_esc_manager();
-    }
-  });
-
-  // src/core/ui/search.ts
-  var init_search = __esm({
-    "src/core/ui/search.ts"() {
-      init_icon();
-      init_field();
-    }
-  });
-
-  // src/core/ui/mainhead.ts
-  var init_mainhead = __esm({
-    "src/core/ui/mainhead.ts"() {
-      init_button();
-    }
-  });
-
-  // src/core/ui/rail.ts
-  var init_rail = __esm({
-    "src/core/ui/rail.ts"() {
-      init_fake_obsidian();
-      init_icon();
-    }
-  });
-
-  // src/core/ui/mobstrip.ts
-  var init_mobstrip = __esm({
-    "src/core/ui/mobstrip.ts"() {
-    }
-  });
-
-  // src/core/ui/stat.ts
-  var init_stat = __esm({
-    "src/core/ui/stat.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/progress.ts
-  var init_progress = __esm({
-    "src/core/ui/progress.ts"() {
-    }
-  });
-
-  // src/core/ui/popover.ts
-  var init_popover = __esm({
-    "src/core/ui/popover.ts"() {
-      init_icon();
-      init_esc_manager();
-    }
-  });
-
-  // src/core/ui/suggest.ts
-  var init_suggest = __esm({
-    "src/core/ui/suggest.ts"() {
-    }
-  });
-
-  // src/core/ui/lightbox.ts
-  var init_lightbox = __esm({
-    "src/core/ui/lightbox.ts"() {
-      init_icon();
-      init_esc_manager();
-      init_z_order();
-    }
-  });
-
-  // src/core/ui/modal.ts
-  var init_modal = __esm({
-    "src/core/ui/modal.ts"() {
-      init_esc_manager();
-      init_z_order();
-    }
-  });
-
-  // src/core/dom.ts
-  function createOverlay(opts) {
-    const mask = document.createElement("div");
-    mask.id = opts.maskId;
-    mask.className = "bz-overlay-mask";
-    mask.style.display = "none";
-    mask.onclick = function(e) {
-      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
-    };
-    const popup = document.createElement("div");
-    popup.id = opts.popupId;
-    popup.className = "bz-overlay-popup";
-    popup.style.display = "none";
-    popup.style.width = opts.width || "90%";
-    popup.style.maxWidth = (opts.maxWidth || 400) + "px";
-    topifyZ(mask, popup);
-    return { mask, popup, topify: () => topifyZ(mask, popup) };
-  }
-  var init_dom = __esm({
-    "src/core/dom.ts"() {
-      init_notice();
-      init_z_order();
-    }
-  });
-
-  // src/core/ui/resize.ts
-  var init_resize = __esm({
-    "src/core/ui/resize.ts"() {
-      init_dom();
-    }
-  });
-
-  // src/core/ui/splitter.ts
-  var init_splitter = __esm({
-    "src/core/ui/splitter.ts"() {
-      init_dom();
-    }
-  });
-
-  // src/core/ui/index.ts
-  var init_ui = __esm({
-    "src/core/ui/index.ts"() {
-      init_icon();
-      init_icons();
-      init_button();
-      init_chip();
-      init_setlist();
-      init_field();
-      init_slider();
-      init_empty();
-      init_segmented();
-      init_choice();
-      init_cardpick();
-      init_switch();
-      init_select();
-      init_search();
-      init_mainhead();
-      init_rail();
-      init_mobstrip();
-      init_stat();
-      init_progress();
-      init_popover();
-      init_suggest();
-      init_lightbox();
-      init_modal();
-      init_resize();
-      init_splitter();
-    }
-  });
 
   // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
@@ -5384,7 +4028,1118 @@ var BZW_secondbrain = (() => {
     }
   });
 
+  // prototypes/secondbrain/fake-sim.ts
+  var fake_sim_exports = {};
+  __export(fake_sim_exports, {
+    bootSecondBrainSim: () => bootSecondBrainSim,
+    demoReferenceQuery: () => demoReferenceQuery,
+    openChat: () => openChat,
+    openPanel: () => openPanel,
+    openRef: () => openRef
+  });
+
+  // prototypes/secondbrain/fake/fake-obsidian.ts
+  var Platform = {
+    isMobile: typeof window !== "undefined" && window.innerWidth <= 768
+  };
+  if (typeof globalThis !== "undefined") {
+    globalThis.obsidian = globalThis.obsidian || { Platform };
+  }
+  function setIcon(container, iconId) {
+    var _a2;
+    const d = typeof window !== "undefined" && ((_a2 = window.SB_ICONS) == null ? void 0 : _a2[iconId]) || "";
+    if (!d) return;
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.innerHTML = d;
+    container.replaceChildren(svg);
+  }
+  async function requestUrl() {
+    throw new Error("原型环境无 Obsidian requestUrl（fake obsidian）");
+  }
+  var MarkdownRenderer = {
+    async render(_app2, md, el) {
+      const html = String(md).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\n/g, "<br>");
+      el.innerHTML = html;
+    }
+  };
+  var Component = class {
+    onload() {
+    }
+    unload() {
+    }
+  };
+  var FakeVault = class _FakeVault {
+    constructor() {
+      this.listeners = /* @__PURE__ */ new Map();
+      /** 存储面（core/storage jsonFileStore / vector-store 二进制 / 主面板存储占用） */
+      this.adapter = {
+        exists: async (path) => localStorage.getItem(_FakeVault.key(path)) != null,
+        read: async (path) => {
+          const raw = localStorage.getItem(_FakeVault.key(path));
+          if (raw == null) throw new Error("file not found: " + path);
+          return raw;
+        },
+        write: async (path, data) => {
+          localStorage.setItem(_FakeVault.key(path), data);
+        },
+        /** 与 Obsidian adapter.stat 同形：{ size } 或抛错（调用方 try/catch） */
+        stat: async (path) => {
+          const raw = localStorage.getItem(_FakeVault.key(path));
+          if (raw == null) throw new Error("file not found: " + path);
+          return { size: raw.length, type: "file" };
+        },
+        /** 二进制面（vector-store 专用；原型以 base64 存取，行为代码原样跑） */
+        readBinary: async (path) => {
+          const raw = localStorage.getItem(_FakeVault.key(path));
+          if (raw == null) throw new Error("file not found: " + path);
+          const bin = atob(raw);
+          const buf = new ArrayBuffer(bin.length);
+          const view = new Uint8Array(buf);
+          for (let i = 0; i < bin.length; i++) view[i] = bin.charCodeAt(i);
+          return buf;
+        },
+        writeBinary: async (path, data) => {
+          const view = new Uint8Array(data);
+          let bin = "";
+          for (let i = 0; i < view.length; i++) bin += String.fromCharCode(view[i]);
+          localStorage.setItem(_FakeVault.key(path), btoa(bin));
+        }
+      };
+    }
+    static key(path) {
+      return "bz-sb-sim:" + path;
+    }
+    getAbstractFileByPath(path) {
+      const raw = localStorage.getItem(_FakeVault.key(path));
+      return raw == null ? null : { path, content: raw };
+    }
+    /** 白名单扫描面（vector-store.refresh 链）：种子库无 md 笔记 → 无变更，refresh 快速完成 */
+    getMarkdownFiles() {
+      const out = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(_FakeVault.key("")) && k.endsWith(".md")) {
+          const path = k.slice(_FakeVault.key("").length);
+          out.push({ path, content: localStorage.getItem(k) || "" });
+        }
+      }
+      return out;
+    }
+    async read(f) {
+      return f.content;
+    }
+    async modify(f, content) {
+      f.content = content;
+      localStorage.setItem(_FakeVault.key(f.path), content);
+    }
+    async create(path, content) {
+      localStorage.setItem(_FakeVault.key(path), content);
+      return { path, content };
+    }
+    async createFolder(_path) {
+      return void 0;
+    }
+    on(evt, cb) {
+      if (!this.listeners.has(evt)) this.listeners.set(evt, []);
+      this.listeners.get(evt).push(cb);
+      return { ref: this.listeners.get(evt).length };
+    }
+    offref(_ref) {
+    }
+    emit(evt, file) {
+      var _a2;
+      for (const cb of (_a2 = this.listeners.get(evt)) != null ? _a2 : []) cb(file);
+    }
+  };
+  var FakeApp = class {
+    constructor() {
+      this.vault = new FakeVault();
+      /** 参考面板的光标轮询在无编辑器时静默空转（真行为同语义）；演示检索由 fake-sim 的
+       *  「换一篇当前笔记」驱动 refreshWithDebounce */
+      this.workspace = {
+        activeEditor: null,
+        getActiveFile: () => null,
+        getLeaf: () => ({
+          openFile: async () => {
+          }
+        }),
+        on: () => ({ ref: 0 }),
+        offref() {
+        }
+      };
+    }
+  };
+
+  // src/core/app.ts
+  var _app = null;
+  function setApp(app) {
+    _app = app;
+  }
+  function getApp() {
+    if (!_app) {
+      throw new Error("bz: app 未初始化（setApp 未调用）");
+    }
+    return _app;
+  }
+
+  // src/core/settings-provider.ts
+  var _provider = null;
+  var _saver = null;
+  function setSettingsProvider(fn) {
+    _provider = fn;
+  }
+  function setSettingsSaver(fn) {
+    _saver = fn;
+  }
+  function tryGetSettings() {
+    return _provider ? _provider() : {};
+  }
+
+  // src/core/ai.ts
+  var _settingsProvider = null;
+  function setAISettingsProvider(fn) {
+    _settingsProvider = fn;
+  }
+  function getQ3Settings() {
+    return _settingsProvider ? _settingsProvider() : {};
+  }
+  var AI_PROVIDER_REGISTRY = [
+    {
+      id: "deepseek",
+      label: "DeepSeek",
+      endpoint: "https://api.deepseek.com",
+      model: "",
+      // 空 = 沿用调用方默认模型（原行为：deepseek 不强制模型）
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 65536,
+      apiKeyKey: "deepseekApiKey",
+      apiKeyLabel: "DeepSeek 密钥",
+      apiKeyDesc: "留空则自动回退读取外部配置密钥"
+    },
+    {
+      id: "opencode-go",
+      label: "OpenCode Go",
+      endpoint: "https://opencode.ai/zen/go/v1",
+      model: "deepseek-v4-flash",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 131072,
+      apiKeyKey: "opencodeGoApiKey",
+      apiKeyLabel: "OpenCode 密钥",
+      apiKeyDesc: "在订阅官网获取后填入这里",
+      noCors: true
+    },
+    {
+      id: "openai",
+      label: "OpenAI",
+      endpoint: "https://api.openai.com/v1",
+      model: "gpt-4o-mini",
+      defaultMaxTokens: 16384,
+      defaultContextWindow: 128e3,
+      apiKeyKey: "openaiApiKey",
+      apiKeyLabel: "OpenAI 密钥",
+      apiKeyDesc: "在 OpenAI 官网获取后填入这里"
+    },
+    {
+      id: "anthropic",
+      label: "Anthropic（Claude）",
+      endpoint: "https://api.anthropic.com/v1",
+      model: "claude-sonnet-4-5",
+      defaultMaxTokens: 64e3,
+      // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
+      defaultContextWindow: 2e5,
+      apiKeyKey: "anthropicApiKey",
+      apiKeyLabel: "Anthropic 密钥",
+      apiKeyDesc: "在 Anthropic 官网获取后填入这里",
+      extraHeaders: { "anthropic-version": "2023-06-01" }
+    },
+    {
+      id: "google",
+      label: "Google Gemini",
+      endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
+      model: "gemini-2.0-flash",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 1048576,
+      apiKeyKey: "googleApiKey",
+      apiKeyLabel: "Gemini 密钥",
+      apiKeyDesc: "在 Google AI Studio 获取后填入这里"
+    },
+    {
+      id: "moonshot",
+      label: "Moonshot（Kimi）",
+      endpoint: "https://api.moonshot.cn/v1",
+      model: "kimi-k2-0711-preview",
+      defaultMaxTokens: 131072,
+      // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
+      defaultContextWindow: 131072,
+      apiKeyKey: "moonshotApiKey",
+      apiKeyLabel: "Kimi 密钥",
+      apiKeyDesc: "在 Moonshot 开放平台获取后填入这里"
+    },
+    {
+      id: "zhipu",
+      label: "智谱（GLM）",
+      endpoint: "https://open.bigmodel.cn/api/paas/v4",
+      model: "glm-4-flash",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 131072,
+      apiKeyKey: "zhipuApiKey",
+      apiKeyLabel: "智谱密钥",
+      apiKeyDesc: "在智谱开放平台获取后填入这里"
+    },
+    {
+      id: "dashscope",
+      label: "阿里云百炼（通义）",
+      endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      model: "qwen-plus",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 131072,
+      apiKeyKey: "dashscopeApiKey",
+      apiKeyLabel: "百炼密钥",
+      apiKeyDesc: "在阿里云百炼获取 API Key 后填入这里"
+    },
+    {
+      id: "siliconflow",
+      label: "硅基流动",
+      endpoint: "https://api.siliconflow.cn/v1",
+      model: "deepseek-ai/DeepSeek-V3",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 65536,
+      apiKeyKey: "siliconflowApiKey",
+      apiKeyLabel: "硅基流动密钥",
+      apiKeyDesc: "在硅基流动官网获取后填入这里"
+    },
+    {
+      id: "openrouter",
+      label: "OpenRouter",
+      endpoint: "https://openrouter.ai/api/v1",
+      model: "deepseek/deepseek-chat",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 131072,
+      apiKeyKey: "openrouterApiKey",
+      apiKeyLabel: "OpenRouter 密钥",
+      apiKeyDesc: "在 OpenRouter 官网获取后填入这里"
+    },
+    {
+      id: "xai",
+      label: "xAI（Grok）",
+      endpoint: "https://api.x.ai/v1",
+      model: "grok-2-latest",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 131072,
+      apiKeyKey: "xaiApiKey",
+      apiKeyLabel: "xAI 密钥",
+      apiKeyDesc: "在 xAI 控制台获取后填入这里"
+    },
+    {
+      id: "groq",
+      label: "Groq",
+      endpoint: "https://api.groq.com/openai/v1",
+      model: "llama-3.3-70b-versatile",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 131072,
+      apiKeyKey: "groqApiKey",
+      apiKeyLabel: "Groq 密钥",
+      apiKeyDesc: "在 Groq 控制台获取后填入这里"
+    },
+    {
+      id: "mistral",
+      label: "Mistral",
+      endpoint: "https://api.mistral.ai/v1",
+      model: "mistral-large-latest",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 131072,
+      apiKeyKey: "mistralApiKey",
+      apiKeyLabel: "Mistral 密钥",
+      apiKeyDesc: "在 Mistral 控制台获取后填入这里"
+    },
+    {
+      id: "together",
+      label: "Together AI",
+      endpoint: "https://api.together.xyz/v1",
+      model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 131072,
+      apiKeyKey: "togetherApiKey",
+      apiKeyLabel: "Together 密钥",
+      apiKeyDesc: "在 Together AI 官网获取后填入这里"
+    },
+    {
+      id: "ollama",
+      label: "Ollama（本地）",
+      endpoint: "http://localhost:11434/v1",
+      model: "llama3.1",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 32768,
+      apiKeyKey: "ollamaApiKey",
+      apiKeyLabel: "Ollama 密钥",
+      apiKeyDesc: "本地服务无需密钥，留空即可"
+    },
+    {
+      id: "custom",
+      label: "自定义（OpenAI 兼容）",
+      endpoint: "",
+      model: "",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 32768,
+      apiKeyKey: "aiCustomApiKey",
+      apiKeyLabel: "自定义 API 密钥",
+      apiKeyDesc: "在服务官网获取后填入这里"
+    }
+  ];
+  function getProviderDescriptor(id) {
+    return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
+  }
+  var _aiProviderCache = null;
+  async function getAIProvider(override) {
+    var _a2, _b2, _c;
+    if (!override && _aiProviderCache) return _aiProviderCache;
+    const cacheable = !override;
+    const cachePut = (p) => {
+      if (cacheable) _aiProviderCache = p;
+      return p;
+    };
+    const s = getQ3Settings();
+    if (override && typeof override === "object" && override.apiKey) {
+      return {
+        endpoint: String(override.endpoint || "https://api.deepseek.com").replace(/\/+$/, ""),
+        apiKey: override.apiKey,
+        model: override.model || void 0,
+        extraHeaders: override.extraHeaders || void 0,
+        contextWindow: override.contextWindow,
+        defaultMaxTokens: override.defaultMaxTokens
+      };
+    }
+    const name = typeof override === "string" && override || s.aiProvider || "opencode-go";
+    const desc = getProviderDescriptor(name);
+    if (name === "custom") {
+      const endpoint = (s.aiCustomEndpoint || "").replace(/\/+$/, "");
+      if (!endpoint || !s.aiCustomApiKey) {
+        throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
+      }
+      return cachePut({
+        endpoint,
+        apiKey: s.aiCustomApiKey,
+        model: s.aiCustomModel || void 0,
+        extraHeaders: desc.extraHeaders,
+        contextWindow: desc.defaultContextWindow,
+        defaultMaxTokens: desc.defaultMaxTokens
+      });
+    }
+    const key = s[desc.apiKeyKey];
+    if (!key && name === "deepseek") {
+      try {
+        const raw = await getApp().vault.adapter.read(".obsidian/plugins/quickadd/data.json");
+        const cfg = JSON.parse(raw);
+        const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
+        if (provider && provider.endpoint && provider.apiKey) {
+          return cachePut({
+            endpoint: String(provider.endpoint).replace(/\/+$/, ""),
+            apiKey: provider.apiKey,
+            contextWindow: desc.defaultContextWindow,
+            defaultMaxTokens: desc.defaultMaxTokens
+          });
+        }
+      } catch (e) {
+      }
+    }
+    if (!key && name !== "ollama") {
+      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
+    }
+    const overrideModel = (_a2 = s.aiModelOverrides) == null ? void 0 : _a2[name];
+    const overrideContext = (_b2 = s.aiContextOverrides) == null ? void 0 : _b2[name];
+    const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
+    return cachePut({
+      endpoint: desc.endpoint,
+      apiKey: key || "",
+      model: overrideModel || desc.model || void 0,
+      noCors: desc.noCors,
+      extraHeaders: desc.extraHeaders,
+      contextWindow: overrideContext || desc.defaultContextWindow,
+      defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens
+    });
+  }
+  function abortError() {
+    const e = new Error("请求已取消");
+    e.name = "AbortError";
+    return e;
+  }
+  var AI_IDLE_TIMEOUT_MS = 6e4;
+  function timeoutError() {
+    const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1e3} 秒无响应）`);
+    e.name = "TimeoutError";
+    return e;
+  }
+  async function streamChatCompletions(provider, body, signal, onDelta) {
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${provider.apiKey}`,
+      ...provider.extraHeaders || {}
+    };
+    const controller = new AbortController();
+    const onOuterAbort = () => controller.abort();
+    let outerLinked = false;
+    if (signal) {
+      if (signal.aborted) controller.abort();
+      else {
+        signal.addEventListener("abort", onOuterAbort);
+        outerLinked = true;
+      }
+    }
+    let idleTimer = null;
+    const armIdle = () => {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
+    };
+    try {
+      armIdle();
+      const resp = await fetch(`${provider.endpoint}/chat/completions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      if (!resp.ok) {
+        let msg = `API ${resp.status}`;
+        try {
+          const err = await resp.json();
+          if (err.error && err.error.message) msg = err.error.message;
+        } catch (e) {
+        }
+        throw new Error(msg);
+      }
+      if (!resp.body || typeof resp.body.getReader !== "function") {
+        const data = await resp.json();
+        return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
+      }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let full = "", buf = "";
+      while (true) {
+        armIdle();
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf("\n")) !== -1) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line.startsWith("data:")) continue;
+          const payload = line.slice(5).trim();
+          if (payload === "[DONE]") {
+            try {
+              reader.cancel();
+            } catch (e) {
+            }
+            return full;
+          }
+          try {
+            const chunk = JSON.parse(payload);
+            const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+            if (delta) {
+              full += delta;
+              try {
+                onDelta == null ? void 0 : onDelta(delta);
+              } catch (e) {
+              }
+            }
+          } catch (e) {
+          }
+        }
+      }
+      return full;
+    } catch (e) {
+      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
+      throw e;
+    } finally {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      if (outerLinked && signal) signal.removeEventListener("abort", onOuterAbort);
+    }
+  }
+  async function chatCompletionsNonStream(provider, body, signal) {
+    if (signal == null ? void 0 : signal.aborted) throw abortError();
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${provider.apiKey}`,
+      ...provider.extraHeaders || {}
+    };
+    const resp = await new Promise((resolve, reject) => {
+      let timer = null;
+      const settle = (fn) => {
+        if (timer !== null) clearTimeout(timer);
+        fn();
+      };
+      timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
+      requestUrl({
+        url: `${provider.endpoint}/chat/completions`,
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ...body, stream: false })
+      }).then(
+        (r) => settle(() => resolve(r)),
+        (e) => settle(() => reject(e))
+      );
+    });
+    if (signal == null ? void 0 : signal.aborted) throw abortError();
+    const data = JSON.parse(resp.text);
+    const errMsg = data.error && (data.error.message || data.error.type) || data.message && data.message;
+    if (errMsg) throw new Error(`API ${resp.status}: ${errMsg}`);
+    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
+    return content;
+  }
+  var AIService = class {
+    constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
+      this.defaultModel = defaultModel;
+      this.defaultOptions = defaultOptions;
+    }
+    /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
+     *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
+     *  既有调用（不传这两项）行为零变化 */
+    async prompt(promptText, model = this.defaultModel, options = {}) {
+      var _a2;
+      const mergedOptions = this._mergeOptions(options);
+      const provider = await getAIProvider(mergedOptions.provider);
+      const s = getQ3Settings();
+      const isExplicit = model !== this.defaultModel;
+      const effModel = isExplicit ? model : provider.model || model;
+      const mo = mergedOptions.modelOptions || {};
+      const effMaxTokens = (_a2 = mo.max_tokens) != null ? _a2 : provider.defaultMaxTokens || 4096;
+      const body = {
+        model: effModel,
+        messages: [{ role: "user", content: promptText }],
+        max_tokens: effMaxTokens,
+        stream: true
+      };
+      for (const k of Object.keys(mo)) {
+        if (k === "max_tokens") continue;
+        body[k] = mo[k];
+      }
+      const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
+      const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
+      try {
+        const content = provider.noCors ? await chatCompletionsNonStream(provider, body, signal) : await streamChatCompletions(provider, body, signal, onDelta);
+        return content;
+      } catch (streamError) {
+        if (signal == null ? void 0 : signal.aborted) throw streamError;
+        try {
+          const content = await chatCompletionsNonStream(provider, body, signal);
+          return content;
+        } catch (e) {
+          throw new Error(`AI 请求失败: ${streamError.message}（fallback: ${e.message}）`);
+        }
+      }
+    }
+    /** 普通对话模型（deepseek-v4-flash） */
+    async chat(promptText, extraOptions = {}) {
+      return this.prompt(promptText, "deepseek-v4-flash", extraOptions);
+    }
+    /** 推理模型，自动开启思考模式 */
+    async reason(promptText, extraOptions = {}) {
+      const options = this._prepareOptions(extraOptions, { enable_thinking: true });
+      return this.prompt(promptText, "deepseek-v4-flash", options);
+    }
+    /** 联网搜索（实验性，第三方代理平台生效） */
+    async search(promptText, extraOptions = {}) {
+      const options = this._prepareOptions(extraOptions, { search: true });
+      return this.prompt(promptText, "deepseek-v4-flash", options);
+    }
+    /** 要求 AI 返回 JSON 格式（设置 response_format） */
+    async json(promptText, extraOptions = {}) {
+      const options = this._prepareOptions(extraOptions, {
+        response_format: { type: "json_object" }
+      });
+      return this.prompt(promptText, "deepseek-v4-flash", options);
+    }
+    /** 思考 + 联网搜索（实验性） */
+    async reasonAndSearch(promptText, extraOptions = {}) {
+      const options = this._prepareOptions(extraOptions, {
+        enable_thinking: true,
+        search: true
+      });
+      return this.prompt(promptText, "deepseek-v4-flash", options);
+    }
+    setDefaultModel(model) {
+      this.defaultModel = model;
+    }
+    setDefaultOptions(options) {
+      this.defaultOptions = options;
+    }
+    // ---------- 内部辅助方法 ----------
+    _mergeOptions(options) {
+      const merged = { ...this.defaultOptions, ...options };
+      if (this.defaultOptions.modelOptions || options.modelOptions) {
+        merged.modelOptions = {
+          ...this.defaultOptions.modelOptions || {},
+          ...options.modelOptions || {}
+        };
+      }
+      return merged;
+    }
+    /** 准备选项：复制 extraOptions，并设置指定的 modelOptions 字段（用户显式传入优先） */
+    _prepareOptions(extraOptions, modelSettings) {
+      const options = { ...extraOptions };
+      if (!options.modelOptions) options.modelOptions = {};
+      const userModelOpts = options.modelOptions;
+      options.modelOptions = { ...modelSettings, ...userModelOpts };
+      return options;
+    }
+  };
+  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}, defaultMaxTokens = 8192) {
+    const internalDefaultOptions = {
+      modelOptions: {
+        max_tokens: defaultMaxTokens,
+        ...defaultOptions.modelOptions || {}
+      }
+    };
+    const mergedOptions = { ...internalDefaultOptions, ...defaultOptions };
+    if (defaultOptions.modelOptions) {
+      mergedOptions.modelOptions = {
+        ...internalDefaultOptions.modelOptions,
+        ...defaultOptions.modelOptions
+      };
+    }
+    return new AIService(params, defaultModel, mergedOptions);
+  }
+
+  // src/core/z-order.ts
+  var zCounter = 1e5;
+  var alwaysOnTop = /* @__PURE__ */ new Set();
+  function syncAlwaysOnTop() {
+    for (const el of alwaysOnTop) {
+      if (!el.isConnected) {
+        alwaysOnTop.delete(el);
+        continue;
+      }
+      el.style.zIndex = String(zCounter);
+    }
+  }
+  function allocZBlock(n) {
+    const base = ++zCounter;
+    zCounter += n - 1;
+    zCounter++;
+    syncAlwaysOnTop();
+    return base;
+  }
+  function allocZ() {
+    return allocZBlock(1);
+  }
+  function topifyZ(...els) {
+    const live2 = els.filter((el) => !!el);
+    if (live2.length === 0) return;
+    const base = allocZBlock(live2.length);
+    live2.forEach((el, i) => {
+      el.style.zIndex = String(base + i);
+    });
+  }
+
+  // src/core/notice.ts
+  var MAX_VISIBLE_DEFAULT = 5;
+  function maxVisible() {
+    const v = Number(noticePref("noticeMaxVisible"));
+    return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
+  }
+  var LEAVE_MS = 200;
+  var DEDUPE_WINDOW_MS = 3e4;
+  var MOBILE_QUERY = "(max-width: 768px)";
+  var ICONS = {
+    info: "ℹ️",
+    success: "✅",
+    warning: "⚠️",
+    error: "❌",
+    pause: "⏸️",
+    accept: "✨",
+    delete: "🗑️",
+    confirm: "✓",
+    restore: "↩️",
+    skip: "🚫",
+    archive: "📁"
+  };
+  var SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
+  function notice(msg, type, duration) {
+    notify(msg, { type: type || "info", duration });
+  }
+  function isMobileView() {
+    return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
+  }
+  function defaultVariant() {
+    if (isMobileView()) return "drop";
+    const pos = noticePref("noticePosition");
+    return pos === "top-left" || pos === "bottom-left" ? "slide-left" : "slide-right";
+  }
+  var OUT_CLASS = {
+    drop: "bz-notice--out-drop",
+    pop: "bz-notice--out-pop",
+    "slide-left": "bz-notice--out-left",
+    "slide-right": "bz-notice--out-right",
+    bounce: "bz-notice--out-fade",
+    shake: "bz-notice--out-fade"
+  };
+  function noticePref(key) {
+    var _a2;
+    try {
+      const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2[key];
+      return typeof v === "string" ? v : void 0;
+    } catch (e) {
+      return void 0;
+    }
+  }
+  function durationGear() {
+    const v = noticePref("noticeDuration");
+    if (v === "quick") return { base: 2e3, persistent: false };
+    if (v === "relaxed") return { base: 5e3, persistent: false };
+    if (v === "persistent") return { base: 3e3, persistent: true };
+    return { base: 3e3, persistent: false };
+  }
+  function defaultDuration(type) {
+    const base = durationGear().base;
+    return type === "error" ? base + 2e3 : base;
+  }
+  function suppressedByLevel(kind, opts) {
+    const level = noticePref("noticeLevel");
+    if (level !== "important" && level !== "error") return false;
+    if (kind === "progress") return false;
+    if (opts && (opts.action || opts.actions && opts.actions.length > 0)) return false;
+    if (level === "error") return kind !== "error";
+    return kind !== "warning" && kind !== "error";
+  }
+  var POSITION_CLASSES = ["bz-notice-pos--bottom-right", "bz-notice-pos--bottom-left", "bz-notice-pos--top-left"];
+  function applyPositionClass(container) {
+    const pos = noticePref("noticePosition");
+    container.classList.remove(...POSITION_CLASSES);
+    const cls = pos === "bottom-right" || pos === "bottom-left" || pos === "top-left" ? `bz-notice-pos--${pos}` : "";
+    if (cls) container.classList.add(cls);
+  }
+  var PER_CHAR_MS = 60;
+  var SHORT_THRESHOLD = 20;
+  function calcDuration(text, base) {
+    const len = text.length;
+    if (len <= SHORT_THRESHOLD) return base;
+    const extra = (len - SHORT_THRESHOLD) * PER_CHAR_MS;
+    return Math.min(base + extra, 15e3);
+  }
+  function ensureContainer() {
+    let container = document.getElementById("bz-notice-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "bz-notice-container";
+      document.body.appendChild(container);
+    }
+    return container;
+  }
+  var live = [];
+  var recent = {};
+  function removeInternal(n) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    const i = live.indexOf(n);
+    if (i !== -1) live.splice(i, 1);
+    if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
+  }
+  function evictOldest() {
+    let quota = live.length - maxVisible() + 1;
+    for (let i = 0; quota > 0 && i < live.length; ) {
+      const candidate = live[i];
+      if (candidate.persistent) {
+        i++;
+        continue;
+      }
+      removeInternal(candidate);
+      quota--;
+    }
+  }
+  function applyTypeToEl(n, kind) {
+    const isProgressNow = kind === "progress";
+    n.el.classList.remove(
+      "bz-notice--info",
+      "bz-notice--success",
+      "bz-notice--warning",
+      "bz-notice--error",
+      "bz-notice--pause",
+      "bz-notice--accept",
+      "bz-notice--delete",
+      "bz-notice--confirm",
+      "bz-notice--restore",
+      "bz-notice--skip",
+      "bz-notice--archive",
+      "bz-notice--progress"
+    );
+    n.el.classList.add("bz-notice--" + (isProgressNow ? "progress" : kind));
+    n.iconEl.innerHTML = "";
+    if (isProgressNow) {
+      n.iconEl.innerHTML = SPINNER_SVG;
+    } else {
+      n.iconEl.textContent = ICONS[kind];
+    }
+    n.isProgress = isProgressNow;
+  }
+  function hideNow(n) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    if (!n.el.classList.contains("bz-notice--leaving")) {
+      n.el.classList.add("bz-notice--leaving");
+      const out = OUT_CLASS[n.variant];
+      if (out) n.el.classList.add(out);
+      window.setTimeout(() => removeInternal(n), LEAVE_MS);
+    }
+  }
+  function armTimer(n, kind, explicitDuration, text) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    n.persistent = false;
+    if (kind === "progress") {
+      if (explicitDuration !== void 0 && explicitDuration > 0) {
+        n.timer = window.setTimeout(() => hideNow(n), explicitDuration);
+      } else {
+        n.persistent = true;
+      }
+      return;
+    }
+    const base = defaultDuration(kind);
+    const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
+    if (dur <= 0) {
+      n.persistent = true;
+      return;
+    }
+    if (explicitDuration === void 0 && durationGear().persistent) return;
+    n.timer = window.setTimeout(() => hideNow(n), dur);
+  }
+  function noopHandle() {
+    return {
+      el: document.createElement("div"),
+      setMessage() {
+      },
+      setProgress() {
+      },
+      setType() {
+      },
+      hide() {
+      }
+    };
+  }
+  function appendActionBtn(n, action) {
+    const btn = document.createElement("span");
+    btn.className = "bz-notice-action";
+    btn.setAttribute("role", "button");
+    btn.textContent = action.label;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (action.onClick) action.onClick();
+      hideNow(n);
+    });
+    n.el.appendChild(btn);
+  }
+  function notify(msg, opts) {
+    const kind = opts && opts.type || "info";
+    if (suppressedByLevel(kind, opts)) return noopHandle();
+    const isProgress = kind === "progress";
+    const type = isProgress ? "info" : kind;
+    const variant = opts && opts.variant || defaultVariant();
+    const container = ensureContainer();
+    applyPositionClass(container);
+    if (opts && opts.dedupeKey) {
+      const key = opts.dedupeKey;
+      const r = recent[key];
+      const now = Date.now();
+      if (r && r.n && r.n.el.isConnected) {
+        r.n.msgEl.textContent = msg;
+        if (r.n.isProgress !== isProgress || r.n.el.classList.contains("bz-notice--" + type) === false) {
+          applyTypeToEl(r.n, kind);
+        }
+        const mergeActions = [];
+        if (opts.action) mergeActions.push(opts.action);
+        if (opts.actions) mergeActions.push(...opts.actions);
+        const existingLabels = new Set(
+          Array.from(r.n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
+        );
+        for (const a of mergeActions) {
+          if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
+        }
+        armTimer(r.n, kind, opts.duration, msg);
+        return noopHandle();
+      }
+      if (r && now - r.at < DEDUPE_WINDOW_MS) {
+        return noopHandle();
+      }
+      recent[key] = { at: now, n: null };
+    }
+    evictOldest();
+    const el = document.createElement("div");
+    el.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+    const icon = document.createElement("div");
+    icon.className = "bz-notice-icon";
+    if (isProgress) {
+      icon.innerHTML = SPINNER_SVG;
+    } else {
+      icon.textContent = ICONS[type];
+    }
+    el.appendChild(icon);
+    const body = document.createElement("div");
+    body.className = "bz-notice-body";
+    if (opts && opts.title) {
+      const titleEl = document.createElement("div");
+      titleEl.className = "bz-notice-title";
+      titleEl.textContent = opts.title;
+      body.appendChild(titleEl);
+    }
+    const msgEl = document.createElement("div");
+    msgEl.className = "bz-notice-msg";
+    msgEl.textContent = msg;
+    body.appendChild(msgEl);
+    el.appendChild(body);
+    let progressEl = null;
+    if (isProgress) {
+      progressEl = document.createElement("div");
+      progressEl.className = "bz-notice-progress";
+      el.appendChild(progressEl);
+    }
+    const n = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
+    const actions = [];
+    if (opts && opts.action) actions.push(opts.action);
+    if (opts && opts.actions) {
+      for (const a of opts.actions) {
+        if (!actions.some((x) => x.label === a.label)) actions.push(a);
+      }
+    }
+    for (const a of actions) appendActionBtn(n, a);
+    el.addEventListener("click", () => hideNow(n));
+    container.style.zIndex = String(allocZ());
+    container.appendChild(el);
+    live.push(n);
+    if (opts && opts.dedupeKey) {
+      const r = recent[opts.dedupeKey];
+      if (r) r.n = n;
+    }
+    const fullText = (opts && opts.title ? opts.title + " " : "") + msg;
+    armTimer(n, kind, opts && opts.duration, fullText);
+    return {
+      el,
+      setMessage(text) {
+        n.msgEl.textContent = text;
+      },
+      setType(t) {
+        applyTypeToEl(n, t);
+        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
+      },
+      setProgress(pct) {
+        if (!n.progressEl) return;
+        if (pct === -1) {
+          n.progressEl.classList.add("bz-notice-progress--indeterminate");
+          return;
+        }
+        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
+        const clamped = Math.max(0, Math.min(100, pct));
+        n.progressEl.style.width = clamped + "%";
+        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
+        else n.progressEl.classList.remove("bz-notice-progress--done");
+      },
+      hide() {
+        hideNow(n);
+      }
+    };
+  }
+
+  // src/core/ui/icons.ts
+  function uiIconSpan(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  function mountIcons(root) {
+    root.querySelectorAll("[data-lucide]").forEach((el) => {
+      const name = el.getAttribute("data-lucide") || "";
+      if (!name) return;
+      try {
+        const fresh = uiIconSpan(name);
+        const cls = el.className;
+        if (cls && cls !== "bz-ic") fresh.className = cls;
+        el.replaceWith(fresh);
+      } catch (e) {
+      }
+    });
+  }
+
+  // src/core/esc-manager.ts
+  var escManager = (() => {
+    const layers = [];
+    const onKeydown = (e) => {
+      if (e.key !== "Escape") return;
+      for (let i = layers.length - 1; i >= 0; i--) {
+        const L = layers[i];
+        try {
+          if (L.isVisible()) {
+            L.close();
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return;
+          }
+        } catch (err) {
+          layers.splice(i, 1);
+        }
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("keydown", onKeydown);
+    }
+    return {
+      register(id, layer) {
+        for (let i = layers.length - 1; i >= 0; i--) {
+          if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
+        }
+        const rec = Object.assign({ id }, layer);
+        layers.push(rec);
+        return {
+          unregister: () => {
+            const i = layers.indexOf(rec);
+            if (i !== -1) layers.splice(i, 1);
+          }
+        };
+      },
+      /** 插件卸载时移除全局监听 */
+      destroy() {
+        if (typeof document !== "undefined") {
+          document.removeEventListener("keydown", onKeydown);
+        }
+      }
+    };
+  })();
+
+  // src/core/dom.ts
+  function createOverlay(opts) {
+    const mask = document.createElement("div");
+    mask.id = opts.maskId;
+    mask.className = "bz-overlay-mask";
+    mask.style.display = "none";
+    mask.onclick = function(e) {
+      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
+    };
+    const popup = document.createElement("div");
+    popup.id = opts.popupId;
+    popup.className = "bz-overlay-popup";
+    popup.style.display = "none";
+    popup.style.width = opts.width || "90%";
+    popup.style.maxWidth = (opts.maxWidth || 400) + "px";
+    topifyZ(mask, popup);
+    return { mask, popup, topify: () => topifyZ(mask, popup) };
+  }
+
   // src/core/utils.ts
+  var import_moment = __toESM(require_moment());
   function escapeHtml(str) {
     return str.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
@@ -5445,16 +5200,10 @@ var BZW_secondbrain = (() => {
   function stripMdExt(name) {
     return String(name || "").replace(/\.md$/i, "");
   }
-  var import_moment;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment = __toESM(require_moment());
-      init_fake_obsidian();
-      init_app();
-    }
-  });
 
   // src/core/flow-dialog.ts
+  var FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+  var FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
   function buildFlowDialogParts(title, message, actions) {
     let buttons;
     if (actions.length === 2) {
@@ -5478,6 +5227,7 @@ var BZW_secondbrain = (() => {
     }).join("") + "</div>";
     return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
+  var activeSettle = null;
   function openFlowDialog(opts) {
     if (!opts.actions || opts.actions.length === 0) {
       return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
@@ -5531,50 +5281,6 @@ var BZW_secondbrain = (() => {
       if (focusBtn) focusBtn.focus();
     });
   }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
-      init_utils();
-      init_z_order();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
-    }
-  });
-
-  // src/core/path-picker.ts
-  var init_path_picker = __esm({
-    "src/core/path-picker.ts"() {
-      init_fake_obsidian();
-      init_app();
-      init_dom();
-      init_esc_manager();
-    }
-  });
-
-  // src/core/settings-schema.ts
-  var init_settings_schema = __esm({
-    "src/core/settings-schema.ts"() {
-      init_fake_obsidian();
-      init_settings_provider();
-      init_path_picker();
-      init_settings_modal();
-      init_ui();
-      init_notice();
-    }
-  });
-
-  // src/core/settings-modal.ts
-  var init_settings_modal = __esm({
-    "src/core/settings-modal.ts"() {
-      init_fake_obsidian();
-      init_dom();
-      init_esc_manager();
-      init_mobile();
-      init_settings_schema();
-    }
-  });
 
   // src/core/storage.ts
   function storageDir() {
@@ -5585,6 +5291,7 @@ var BZW_secondbrain = (() => {
     const dir = (base || storageDir()).trim().replace(/\/+$/, "");
     return `${dir}/${name}`;
   }
+  var CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
   function corruptStamp(d = /* @__PURE__ */ new Date()) {
     const p = (n) => String(n).padStart(2, "0");
     return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
@@ -5616,15 +5323,6 @@ var BZW_secondbrain = (() => {
       return null;
     }
   }
-  var CORRUPT_BACKUP_DIR;
-  var init_storage = __esm({
-    "src/core/storage.ts"() {
-      init_app();
-      init_settings_provider();
-      init_notice();
-      CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
-    }
-  });
 
   // src/secondbrain/config.ts
   function buildConfig() {
@@ -5650,28 +5348,12 @@ var BZW_secondbrain = (() => {
       OLLAMA_REMOTE_URL: s.secondBrainRemoteOllamaUrl || ""
     };
   }
-  var _a, _b, IS_MOBILE;
-  var init_config = __esm({
-    "src/secondbrain/config.ts"() {
-      init_settings_provider();
-      init_storage();
-      IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(typeof navigator !== "undefined" ? navigator.userAgent : "") || ((_b = (_a = globalThis.obsidian) == null ? void 0 : _a.Platform) == null ? void 0 : _b.isMobile) === true;
-    }
-  });
-
-  // src/secondbrain/whitelist.ts
-  var init_whitelist = __esm({
-    "src/secondbrain/whitelist.ts"() {
-    }
-  });
-
-  // src/secondbrain/local-ip.ts
-  var init_local_ip = __esm({
-    "src/secondbrain/local-ip.ts"() {
-    }
-  });
+  var _a, _b;
+  var IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(typeof navigator !== "undefined" ? navigator.userAgent : "") || ((_b = (_a = globalThis.obsidian) == null ? void 0 : _a.Platform) == null ? void 0 : _b.isMobile) === true;
 
   // src/secondbrain/store-file.ts
+  var STORE_VERSION = 1;
+  var CHAT_HISTORY_LIMIT = 100;
   function storeDir() {
     return storageDir();
   }
@@ -5681,6 +5363,13 @@ var BZW_secondbrain = (() => {
   function getSecondBrainVecPath() {
     return storageFile("secondbrain.vec");
   }
+  var LEGACY_FILES = [
+    "secondbrain_meta.json",
+    "secondbrain_panel.json",
+    "secondbrain_link_queue.json",
+    "secondbrain_link_state.json"
+  ];
+  var LEGACY_VEC = "secondbrain_vectors.vec";
   function emptyStore() {
     return { version: STORE_VERSION, meta: null, panel: null, link: { queue: [], state: {} }, chatHistory: [] };
   }
@@ -5784,6 +5473,7 @@ var BZW_secondbrain = (() => {
     }
     return true;
   }
+  var chain = Promise.resolve();
   function enqueue(fn) {
     const run = chain.then(fn, fn);
     chain = run.then(
@@ -6117,24 +5807,6 @@ var BZW_secondbrain = (() => {
       s.chatHistory = [];
     }, app);
   }
-  var STORE_VERSION, CHAT_HISTORY_LIMIT, LEGACY_FILES, LEGACY_VEC, chain;
-  var init_store_file = __esm({
-    "src/secondbrain/store-file.ts"() {
-      init_app();
-      init_storage();
-      init_utils();
-      STORE_VERSION = 1;
-      CHAT_HISTORY_LIMIT = 100;
-      LEGACY_FILES = [
-        "secondbrain_meta.json",
-        "secondbrain_panel.json",
-        "secondbrain_link_queue.json",
-        "secondbrain_link_state.json"
-      ];
-      LEGACY_VEC = "secondbrain_vectors.vec";
-      chain = Promise.resolve();
-    }
-  });
 
   // src/secondbrain/render.ts
   function topLevelDir(path) {
@@ -6238,6 +5910,8 @@ var BZW_secondbrain = (() => {
     sortChildren(rootsArr);
     return rootsArr;
   }
+  var SB_PALETTE = ["#0f766e", "#6366f1", "#d97706", "#db2777", "#0e7490", "#7c3aed", "#b45309", "#be185d"];
+  var SB_FALLBACK = "#a39b8c";
   function sbSourceColor(name, order) {
     const i = order.get(name);
     if (i === void 0) return SB_FALLBACK;
@@ -6246,6 +5920,7 @@ var BZW_secondbrain = (() => {
   function escapeHtml2(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   }
+  var ic = (name, size = 15) => `<i data-lucide="${name}" style="width:${size}px;height:${size}px"></i>`;
   function panelShellHtml() {
     return `
   <div class="bz-sb-head">
@@ -6340,6 +6015,7 @@ var BZW_secondbrain = (() => {
   function panelLogHtml(parts) {
     return parts.map((p) => `<span class="bz-sb-log-item${p.warn ? " bz-sb-log-item--warn" : ""}">${escapeHtml2(p.text)}</span>`).join('<span class="bz-sb-log-sep">·</span>');
   }
+  var CHAT_CHIPS = ["为什么会遗忘", "享乐适应", "怎么高效记笔记", "睡不好怎么补救", "闪电", "王阳明"];
   function chatShellHtml(topK) {
     return `
   <div class="bz-sb-chat-head">
@@ -6384,15 +6060,6 @@ var BZW_secondbrain = (() => {
   function refStateHtml(text) {
     return `<div class="bz-sb-ref-empty">${escapeHtml2(text)}</div>`;
   }
-  var SB_PALETTE, SB_FALLBACK, ic, CHAT_CHIPS;
-  var init_render = __esm({
-    "src/secondbrain/render.ts"() {
-      SB_PALETTE = ["#0f766e", "#6366f1", "#d97706", "#db2777", "#0e7490", "#7c3aed", "#b45309", "#be185d"];
-      SB_FALLBACK = "#a39b8c";
-      ic = (name, size = 15) => `<i data-lucide="${name}" style="width:${size}px;height:${size}px"></i>`;
-      CHAT_CHIPS = ["为什么会遗忘", "享乐适应", "怎么高效记笔记", "睡不好怎么补救", "闪电", "王阳明"];
-    }
-  });
 
   // src/secondbrain/panel.ts
   function confirmFullRebuild() {
@@ -6410,476 +6077,455 @@ var BZW_secondbrain = (() => {
       ]
     }).then((v) => v === "ok");
   }
+  var SecondBrainPanel = class {
+    constructor(app, store2, opts) {
+      this.mask = null;
+      this.popup = null;
+      /** ESC 层级句柄（ticket 141 迁移：原私挂 document keydown 废弃） */
+      this.escHandle = null;
+      this.refreshing = false;
+      /** 初始向量化视图进行中标记（ticket 114：runInitialIndexView 持有；进行中重复点击接回进度视图而非静默失效） */
+      this.initializing = false;
+      /** 来源分布树已展开的目录（ticket 108，会话内记忆） */
+      this.expandedDirs = /* @__PURE__ */ new Set();
+      /** 设置页「重新索引」意图标记（ticket 108：确认后打开面板即自动全量重建） */
+      this.rebuildRequested = false;
+      this.app = app;
+      this.store = store2;
+      this.opts = opts;
+    }
+    /** 设置页「重新索引」调用（index.ts 入口转发）：标记意图后打开面板自动跑 */
+    requestRebuild() {
+      this.rebuildRequested = true;
+    }
+    async open() {
+      this.createUI();
+      this.attachEscapeListener();
+      topifyZ(this.mask, this.popup);
+      this.mask.style.display = "block";
+      this.popup.style.display = "flex";
+      await this.render();
+    }
+    close() {
+      this.removeEscapeListener();
+      if (this.mask) this.mask.style.display = "none";
+      if (this.popup) this.popup.style.display = "none";
+    }
+    /** [l2-sb] ESC 关闭走 escManager 层级（ticket 141 迁移）：open 注册、close 注销成对（幂等）——
+     *  ⚙️ 设置弹窗叠开时其 'bz-settings-modal' 层后注册在上，ESC 先关设置、再 ESC 才关面板 */
+    attachEscapeListener() {
+      if (this.escHandle) return;
+      this.escHandle = escManager.register("bz-sb-panel", {
+        isVisible: () => !!this.popup && this.popup.isConnected && this.popup.style.display === "flex",
+        close: () => this.close()
+      });
+    }
+    removeEscapeListener() {
+      var _a2;
+      (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
+      this.escHandle = null;
+    }
+    destroy() {
+      var _a2, _b2;
+      this.removeEscapeListener();
+      (_a2 = this.mask) == null ? void 0 : _a2.remove();
+      (_b2 = this.popup) == null ? void 0 : _b2.remove();
+      this.mask = null;
+      this.popup = null;
+    }
+    /** 打开形态分派：重建意图 → 全量重建进度；空库+初始索引进行中 → 恢复进度（fire-and-forget，不阻塞 panel.open）；空库 → 引导态；
+     *  就绪 + 待处理 → 增量进度；就绪无变更 → 统计（ticket 114 补「空库但 refresh 在途」分支） */
+    async render() {
+      if (this.store.initialLoad) {
+        try {
+          await this.store.initialLoad;
+        } catch (e) {
+        }
+      }
+      const rebuild = this.rebuildRequested;
+      this.rebuildRequested = false;
+      if (rebuild && this.store.isIndexReady()) {
+        await this.runRebuild();
+        return;
+      }
+      if (!this.store.isIndexReady()) {
+        if (this.store.isRefreshing()) {
+          this.enterProgressView("正在初始化向量数据库");
+          void this.runInitialIndexView();
+          return;
+        }
+        this.showInitGuidance();
+        return;
+      }
+      if (this.store.hasPendingChanges()) {
+        await this.runIncremental();
+        return;
+      }
+      this.showContent();
+    }
+    showContent(skipRefresh = false) {
+      var _a2, _b2;
+      const onboard = document.getElementById("bz-sb-onboard");
+      const content = document.getElementById("bz-sb-content");
+      if (onboard) onboard.style.display = "none";
+      if (content) content.style.display = "flex";
+      for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.remove("bz-sb-btn-hidden");
+      if (!skipRefresh && !this.refreshing) void this.autoRefreshThenRender();
+    }
+    /** 空库首次引导：说明 + 开始按钮（进度视图的 init 形态） */
+    showInitGuidance() {
+      var _a2, _b2;
+      const onboard = document.getElementById("bz-sb-onboard");
+      const content = document.getElementById("bz-sb-content");
+      const title = document.getElementById("bz-sb-progress-title");
+      const desc = document.getElementById("bz-sb-onboard-desc");
+      const btn = document.getElementById("bz-sb-init-btn");
+      const box = document.getElementById("bz-sb-init-progress");
+      if (title) title.textContent = "初始化向量数据库";
+      if (desc) desc.style.display = "block";
+      if (btn) {
+        btn.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "开始向量化";
+      }
+      if (box) box.style.display = "none";
+      if (onboard) onboard.style.display = "flex";
+      if (content) content.style.display = "none";
+      for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
+    }
+    /** 进入纯进度形态（自动运行，无按钮；title 由调用方给定） */
+    enterProgressView(titleText, resetStatus = true) {
+      var _a2, _b2;
+      const onboard = document.getElementById("bz-sb-onboard");
+      const content = document.getElementById("bz-sb-content");
+      const title = document.getElementById("bz-sb-progress-title");
+      const desc = document.getElementById("bz-sb-onboard-desc");
+      const btn = document.getElementById("bz-sb-init-btn");
+      const box = document.getElementById("bz-sb-init-progress");
+      const fill = document.getElementById("bz-sb-init-fill");
+      const status = document.getElementById("bz-sb-init-status");
+      if (title) title.textContent = titleText;
+      if (desc) desc.style.display = "none";
+      if (btn) btn.style.display = "none";
+      if (box) box.style.display = "flex";
+      if (fill) fill.style.width = "0%";
+      if (resetStatus && status) status.textContent = "准备中…";
+      if (onboard) onboard.style.display = "flex";
+      if (content) content.style.display = "none";
+      for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
+    }
+    /** 进度回调解析：把 store.updateProgress 文案换算成进度条（面板销毁后不再写 DOM） */
+    progressObserver() {
+      const status = document.getElementById("bz-sb-init-status");
+      const fill = document.getElementById("bz-sb-init-fill");
+      return (msg) => {
+        if (!(status == null ? void 0 : status.isConnected)) return;
+        const m = msg.match(/向量化:\s*(\d+)\/(\d+)/);
+        if (m && Number(m[2]) > 0) {
+          fill.style.width = Math.min(100, Math.round(Number(m[1]) / Number(m[2]) * 100)) + "%";
+        }
+        status.textContent = msg;
+      };
+    }
+    /** 自动增量索引（ticket 108）：有待处理块 → 进度视图 → 完成后统计；
+     *  ticket 3 假成功修复：有失败段 → toast 明示失败数（进度视图随即被内容态替代，仅靠状态行不可见） */
+    async runIncremental() {
+      this.enterProgressView("正在同步索引");
+      let lastMsg = "";
+      try {
+        await this.store.refresh((msg) => {
+          lastMsg = msg;
+          this.progressObserver()(msg);
+        });
+      } catch (e) {
+        console.warn("[secondbrain] 面板增量索引失败", e);
+      }
+      if (!this.store.isIndexReady()) {
+        this.showInitGuidance();
+        return;
+      }
+      this.showContent(true);
+      await this.renderStats();
+      const fail = lastMsg.match(/^⚠️\s*(\d+)\s*段向量化失败/);
+      if (fail) {
+        notice(`第二大脑：${fail[1]} 段向量化失败，请检查 Ollama 服务`, "warning");
+      }
+    }
+    /** 全量重建（ticket 108「重新索引」）：清空 → 整库重嵌 → 统计；失败给原因可重试 */
+    async runRebuild() {
+      this.enterProgressView("正在重建向量数据库");
+      const status = document.getElementById("bz-sb-init-status");
+      this.initializing = true;
+      try {
+        await this.store.rebuildAll(this.progressObserver());
+        if (this.store.isIndexReady()) {
+          this.showContent(true);
+          await this.renderStats();
+        } else {
+          const box = document.getElementById("bz-sb-init-progress");
+          if (box) box.style.display = "flex";
+          if (status) status.textContent = "重建未完成：请确认 Ollama 服务与 Embedding 模型可用后重试";
+          this.revealInitBtn("重试重建");
+        }
+      } catch (e) {
+        console.warn("[secondbrain] 全量重建失败", e);
+        if (status == null ? void 0 : status.isConnected) {
+          status.textContent = "重建失败：" + ((e == null ? void 0 : e.message) || e);
+          this.revealInitBtn("重试重建");
+        }
+      } finally {
+        this.initializing = false;
+      }
+    }
+    /** 组装弹窗 DOM（markup 全部出自 render.ts；本方法只绑定事件） */
+    createUI() {
+      var _a2, _b2, _c, _d, _e, _f;
+      if (this.mask && document.body.contains(this.mask)) return;
+      const mask = document.createElement("div");
+      mask.className = "bz-sb-panel-mask";
+      mask.onclick = () => this.close();
+      const popup = document.createElement("div");
+      popup.className = "bz-sb-panel bz-panel-mtop";
+      popup.innerHTML = panelShellHtml();
+      (_a2 = popup.querySelector("#bz-sb-panel-close")) == null ? void 0 : _a2.addEventListener("click", () => {
+        if (this.expandedDirs.size) {
+          this.expandedDirs.clear();
+          this.renderDist();
+        } else {
+          this.close();
+        }
+      });
+      (_b2 = popup.querySelector("#bz-sb-open-chat")) == null ? void 0 : _b2.addEventListener("click", () => {
+        this.close();
+        this.opts.onOpenChat();
+      });
+      (_c = popup.querySelector("#bz-sb-open-ref")) == null ? void 0 : _c.addEventListener("click", () => {
+        this.close();
+        this.opts.onOpenReference();
+      });
+      (_d = popup.querySelector("#bz-sb-incr")) == null ? void 0 : _d.addEventListener("click", () => {
+        if (this.refreshing || this.initializing) return;
+        void this.runIncremental();
+      });
+      (_e = popup.querySelector("#bz-sb-rebuild")) == null ? void 0 : _e.addEventListener("click", () => {
+        void confirmFullRebuild().then((ok) => {
+          if (ok) void this.runRebuild();
+        });
+      });
+      const initBtn = popup.querySelector("#bz-sb-init-btn");
+      if (initBtn) initBtn.onclick = () => void this.startInitialIndex();
+      (_f = popup.querySelector("#bz-sb-dist")) == null ? void 0 : _f.addEventListener("click", (e) => {
+        const row = e.target.closest(".bz-sb-dist-row--dir");
+        if (!row) return;
+        const path = row.dataset.path;
+        if (!path) return;
+        if (this.expandedDirs.has(path)) this.expandedDirs.delete(path);
+        else this.expandedDirs.add(path);
+        this.renderDist();
+      });
+      document.body.appendChild(mask);
+      document.body.appendChild(popup);
+      this.mask = mask;
+      this.popup = popup;
+    }
+    /** 内容态打开时自动增量刷新，完成后重渲统计（修复：原先渲染不等 refresh，展示的总是上一轮旧数据） */
+    async autoRefreshThenRender() {
+      if (this.refreshing) return;
+      this.refreshing = true;
+      try {
+        await this.store.refresh((msg) => {
+          if (msg.startsWith("向量化:") || msg.startsWith("✅ 向量化完成")) console.log(`[secondbrain] ${msg}`);
+        });
+      } catch (e) {
+        console.warn("[secondbrain] 面板自动刷新失败", e);
+      } finally {
+        this.refreshing = false;
+      }
+      await this.renderStats();
+    }
+    /**
+     * 初始向量化运行器（ticket 114 自按钮处理器抽出共用）：进入进度视图并接住 refresh 实时进度，
+     * 完成切内容态渲染统计；失败给出原因并可重试。
+     * 按钮点击与「关页重开恢复」（render 分派）两条路都走这里——store.refresh 并发去重保证
+     * 重复调用只是把进度回调重新接到同一个进行中的 promise 上，不会二次跑库。
+     * 注意：refresh 全部嵌入失败时不抛错也不登记任何条目（QA 同语义），故以 isIndexReady 判定成败。
+     */
+    async runInitialIndexView() {
+      const status = document.getElementById("bz-sb-init-status");
+      if (!status || !status.isConnected) return;
+      this.enterProgressView("正在初始化向量数据库");
+      this.initializing = true;
+      let sawCountedDone = false;
+      let sawWarning = false;
+      let sawFail = false;
+      try {
+        await this.store.refresh((msg) => {
+          if (!status.isConnected) return;
+          if (msg.startsWith("⚠️")) sawWarning = true;
+          if (msg.includes("段向量化失败")) sawFail = true;
+          if (msg.startsWith("✅ 向量化完成：")) sawCountedDone = true;
+          this.progressObserver()(msg);
+        });
+        if (!status.isConnected) return;
+        if (this.store.isIndexReady()) {
+          this.showContent(true);
+          await this.renderStats();
+        } else if (sawFail || sawCountedDone) {
+          status.textContent = "没有成功向量化任何内容：请确认 Ollama 服务与 Embedding 模型可用" + (IS_MOBILE ? "（移动端需配置「远程 Ollama URL」）" : "") + "后重试";
+          this.revealInitBtn("重试初始化");
+        } else if (sawWarning) {
+          status.textContent = "白名单目录内没有可索引的 Markdown 笔记：请检查 ⚙️ 设置中的「白名单目录」";
+          this.revealInitBtn("重试初始化");
+        } else {
+          status.textContent = "未发现可索引的笔记内容";
+          this.revealInitBtn("重试初始化");
+        }
+      } catch (e) {
+        console.warn("[secondbrain] 初始向量化失败", e);
+        if (status.isConnected) {
+          status.textContent = "初始化失败：" + ((e == null ? void 0 : e.message) || e);
+          this.revealInitBtn("重试初始化");
+        }
+      } finally {
+        this.initializing = false;
+      }
+    }
+    /**
+     * 引导按钮（ticket 107/108；ticket 114 修「点了没反应」）：首次全量向量化。
+     * 已在进行中（关页重开后的引导态残留 / 双击）时不再静默吞掉——只要后台确有 refresh 在跑，
+     * 就切回进度视图接回实时进度；否则维持原守卫语义不动。
+     */
+    startInitialIndex() {
+      if (!document.getElementById("bz-sb-init-progress")) return;
+      if (this.initializing || this.refreshing) {
+        if (this.store.isRefreshing()) void this.runInitialIndexView();
+        return;
+      }
+      void this.runInitialIndexView();
+    }
+    /** 失败路径恢复「开始按钮」可见并复位文案（进度形态时按钮被隐藏） */
+    revealInitBtn(label) {
+      const btn = document.getElementById("bz-sb-init-btn");
+      if (!btn) return;
+      btn.style.display = "block";
+      btn.disabled = false;
+      btn.textContent = label;
+      btn.onclick = () => void this.startInitialIndex();
+    }
+    /** 内容态统计渲染：markup 出 render.ts，本方法只算数与注入 */
+    async renderStats() {
+      var _a2, _b2, _c, _d, _e;
+      const popup = this.popup;
+      if (!popup || !popup.isConnected) return;
+      const CONFIG = buildConfig();
+      let metaBytes = 0;
+      let vecBytes = 0;
+      try {
+        metaBytes = (_b2 = (_a2 = await this.app.vault.adapter.stat(CONFIG.STORE_PATH)) == null ? void 0 : _a2.size) != null ? _b2 : 0;
+      } catch (e) {
+      }
+      try {
+        vecBytes = (_d = (_c = await this.app.vault.adapter.stat(CONFIG.VEC_PATH)) == null ? void 0 : _c.size) != null ? _d : 0;
+      } catch (e) {
+      }
+      const stats = { ...computeStats(this.store.meta), metaBytes, vecBytes };
+      const vecRows = stats.dim && vecBytes > 0 ? this.store.vectors.length / stats.dim : 0;
+      const healthy = vecRows === 0 || vecRows === stats.chunkCount;
+      const fmtBytes = (n) => n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
+      const order = new Map(stats.bySource.map((s, i) => [s.name, i]));
+      const colorOf = (name) => sbSourceColor(name, order);
+      const cnt = popup.querySelector("#bz-sb-cnt");
+      if (cnt) cnt.textContent = `${fmtCompact(stats.noteCount)} 篇 · ${fmtCompact(stats.chunkCount)} 段已入脑`;
+      const pill = popup.querySelector("#bz-sb-pill-txt");
+      if (pill) pill.textContent = healthy ? "索引健康" : `索引偏差 ${Math.abs(vecRows - stats.chunkCount)} 行`;
+      (_e = popup.querySelector(".bz-sb-pill-dot")) == null ? void 0 : _e.classList.toggle("bz-sb-pill-dot--warn", !healthy);
+      const cards = popup.querySelector("#bz-sb-cards");
+      if (cards) {
+        cards.innerHTML = panelCardsHtml([
+          { v: fmtCompact(stats.noteCount), k: "笔记", tip: `共 ${stats.noteCount.toLocaleString()} 篇笔记`, acc: true },
+          { v: fmtCompact(stats.chunkCount), k: "段落", tip: `共 ${stats.chunkCount.toLocaleString()} 个向量块`, acc: true },
+          { v: fmtCompact(stats.totalChars), k: "字符", tip: `共 ${stats.totalChars.toLocaleString()} 字` },
+          { v: stats.dim > 0 ? `${stats.dim} 维` : "—", k: "向量维度", tip: `嵌入模型 ${CONFIG.EMBEDDING_MODEL} · 维度变更需重建索引` },
+          { v: `${stats.avgChunkLen} 字`, k: "平均段长", tip: `平均每篇 ${stats.avgChunksPerNote} 段` },
+          { v: vecBytes ? fmtBytes(metaBytes + vecBytes) : "—", k: "存储占用", tip: `meta ${fmtBytes(metaBytes)} + 向量 ${fmtBytes(vecBytes)}` }
+        ]);
+      }
+      const trend = popup.querySelector("#bz-sb-trend");
+      if (trend) {
+        trend.innerHTML = panelTrendHtml(stats.trend12w);
+        const sum = popup.querySelector("#bz-sb-trend-sum");
+        if (sum) sum.textContent = stats.trend12w.reduce((a, b) => a + b, 0) + " 篇";
+      }
+      this.renderDist();
+      const recentEl = popup.querySelector("#bz-sb-recent");
+      if (recentEl) {
+        recentEl.innerHTML = panelRecentHtml(
+          stats.recent.map((r) => ({
+            path: r.path,
+            name: r.path.split("/").pop() || r.path,
+            chunks: r.chunks,
+            when: formatRelativeTime(r.mtime),
+            color: colorOf(topLevelName(r.path))
+          }))
+        );
+        const recentN = popup.querySelector("#bz-sb-recent-n");
+        if (recentN) recentN.textContent = `最新 ${stats.recent.length} 条`;
+      }
+      const log = popup.querySelector("#bz-sb-log");
+      if (log) {
+        log.innerHTML = panelLogHtml([
+          { text: `上次索引 ${stats.lastIndexedAt ? formatRelativeTime(stats.lastIndexedAt) : "—"}` },
+          { text: healthy ? "索引一致" : `向量 ${Math.round(vecRows)} 行 / 块 ${stats.chunkCount} 个`, warn: !healthy },
+          { text: vecBytes ? `占用 ${fmtBytes(metaBytes + vecBytes)}` : "暂无向量文件" }
+        ]);
+      }
+      mountIcons(popup);
+      void this.loadSummaryAndLinks();
+    }
+    /** 来源树渲染（renderStats 与展开点击共用；展开集会话内记忆） */
+    renderDist() {
+      const popup = this.popup;
+      const dist = popup == null ? void 0 : popup.querySelector("#bz-sb-dist");
+      if (!popup || !dist) return;
+      const tree = buildSourceTree(this.store.meta);
+      const order = new Map(computeStats(this.store.meta).bySource.map((s, i) => [s.name, i]));
+      const colorOf = (name) => sbSourceColor(name, order);
+      const rootMax = Math.max(1, ...tree.map((n) => n.chunks));
+      dist.innerHTML = panelDistHtml(tree, this.expandedDirs, colorOf, rootMax);
+      const distN = popup.querySelector("#bz-sb-dist-n");
+      if (distN) distN.textContent = `${tree.length} 个来源`;
+      mountIcons(dist);
+    }
+    /** AI 库摘要 + 自动建链数（secondbrain.json panel/link 段，异步回填；生成入口已移除，旧值仍可展示） */
+    async loadSummaryAndLinks() {
+      var _a2, _b2, _c;
+      try {
+        const store2 = await loadStore(this.app);
+        const popup = this.popup;
+        if (!popup || !popup.isConnected) return;
+        const summary = ((_a2 = store2.panel) == null ? void 0 : _a2.summary) || "";
+        const aiCard = popup.querySelector("#bz-sb-ai-card");
+        const aiTxt = popup.querySelector("#bz-sb-ai-txt");
+        if (aiCard) aiCard.style.display = summary ? "" : "none";
+        if (aiTxt && summary) {
+          aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store2.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store2.panel.generatedAt) : "");
+        }
+        const linkedTotal = Object.keys(((_c = store2.link) == null ? void 0 : _c.state) || {}).length;
+        const log = popup.querySelector("#bz-sb-log");
+        if (log && linkedTotal) {
+          log.insertAdjacentHTML(
+            "beforeend",
+            `<span class="bz-sb-log-sep">·</span>${panelLogHtml([{ text: `自动建链 ${linkedTotal} 条` }])}`
+          );
+        }
+      } catch (e) {
+      }
+    }
+  };
   function topLevelName(path) {
     const i = path.indexOf("/");
     return i === -1 ? "（根目录）" : path.slice(0, i);
   }
-  var SecondBrainPanel;
-  var init_panel = __esm({
-    "src/secondbrain/panel.ts"() {
-      init_notice();
-      init_z_order();
-      init_mobile();
-      init_ui();
-      init_flow_dialog();
-      init_esc_manager();
-      init_app();
-      init_utils();
-      init_settings_provider();
-      init_settings_modal();
-      init_config();
-      init_whitelist();
-      init_local_ip();
-      init_store_file();
-      init_render();
-      init_render();
-      SecondBrainPanel = class {
-        constructor(app, store2, opts) {
-          this.mask = null;
-          this.popup = null;
-          /** ESC 层级句柄（ticket 141 迁移：原私挂 document keydown 废弃） */
-          this.escHandle = null;
-          this.refreshing = false;
-          /** 初始向量化视图进行中标记（ticket 114：runInitialIndexView 持有；进行中重复点击接回进度视图而非静默失效） */
-          this.initializing = false;
-          /** 来源分布树已展开的目录（ticket 108，会话内记忆） */
-          this.expandedDirs = /* @__PURE__ */ new Set();
-          /** 设置页「重新索引」意图标记（ticket 108：确认后打开面板即自动全量重建） */
-          this.rebuildRequested = false;
-          this.app = app;
-          this.store = store2;
-          this.opts = opts;
-        }
-        /** 设置页「重新索引」调用（index.ts 入口转发）：标记意图后打开面板自动跑 */
-        requestRebuild() {
-          this.rebuildRequested = true;
-        }
-        async open() {
-          this.createUI();
-          this.attachEscapeListener();
-          topifyZ(this.mask, this.popup);
-          this.mask.style.display = "block";
-          this.popup.style.display = "flex";
-          await this.render();
-        }
-        close() {
-          this.removeEscapeListener();
-          if (this.mask) this.mask.style.display = "none";
-          if (this.popup) this.popup.style.display = "none";
-        }
-        /** [l2-sb] ESC 关闭走 escManager 层级（ticket 141 迁移）：open 注册、close 注销成对（幂等）——
-         *  ⚙️ 设置弹窗叠开时其 'bz-settings-modal' 层后注册在上，ESC 先关设置、再 ESC 才关面板 */
-        attachEscapeListener() {
-          if (this.escHandle) return;
-          this.escHandle = escManager.register("bz-sb-panel", {
-            isVisible: () => !!this.popup && this.popup.isConnected && this.popup.style.display === "flex",
-            close: () => this.close()
-          });
-        }
-        removeEscapeListener() {
-          var _a2;
-          (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
-          this.escHandle = null;
-        }
-        destroy() {
-          var _a2, _b2;
-          this.removeEscapeListener();
-          (_a2 = this.mask) == null ? void 0 : _a2.remove();
-          (_b2 = this.popup) == null ? void 0 : _b2.remove();
-          this.mask = null;
-          this.popup = null;
-        }
-        /** 打开形态分派：重建意图 → 全量重建进度；空库+初始索引进行中 → 恢复进度（fire-and-forget，不阻塞 panel.open）；空库 → 引导态；
-         *  就绪 + 待处理 → 增量进度；就绪无变更 → 统计（ticket 114 补「空库但 refresh 在途」分支） */
-        async render() {
-          if (this.store.initialLoad) {
-            try {
-              await this.store.initialLoad;
-            } catch (e) {
-            }
-          }
-          const rebuild = this.rebuildRequested;
-          this.rebuildRequested = false;
-          if (rebuild && this.store.isIndexReady()) {
-            await this.runRebuild();
-            return;
-          }
-          if (!this.store.isIndexReady()) {
-            if (this.store.isRefreshing()) {
-              this.enterProgressView("正在初始化向量数据库");
-              void this.runInitialIndexView();
-              return;
-            }
-            this.showInitGuidance();
-            return;
-          }
-          if (this.store.hasPendingChanges()) {
-            await this.runIncremental();
-            return;
-          }
-          this.showContent();
-        }
-        showContent(skipRefresh = false) {
-          var _a2, _b2;
-          const onboard = document.getElementById("bz-sb-onboard");
-          const content = document.getElementById("bz-sb-content");
-          if (onboard) onboard.style.display = "none";
-          if (content) content.style.display = "flex";
-          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.remove("bz-sb-btn-hidden");
-          if (!skipRefresh && !this.refreshing) void this.autoRefreshThenRender();
-        }
-        /** 空库首次引导：说明 + 开始按钮（进度视图的 init 形态） */
-        showInitGuidance() {
-          var _a2, _b2;
-          const onboard = document.getElementById("bz-sb-onboard");
-          const content = document.getElementById("bz-sb-content");
-          const title = document.getElementById("bz-sb-progress-title");
-          const desc = document.getElementById("bz-sb-onboard-desc");
-          const btn = document.getElementById("bz-sb-init-btn");
-          const box = document.getElementById("bz-sb-init-progress");
-          if (title) title.textContent = "初始化向量数据库";
-          if (desc) desc.style.display = "block";
-          if (btn) {
-            btn.style.display = "block";
-            btn.disabled = false;
-            btn.textContent = "开始向量化";
-          }
-          if (box) box.style.display = "none";
-          if (onboard) onboard.style.display = "flex";
-          if (content) content.style.display = "none";
-          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
-        }
-        /** 进入纯进度形态（自动运行，无按钮；title 由调用方给定） */
-        enterProgressView(titleText, resetStatus = true) {
-          var _a2, _b2;
-          const onboard = document.getElementById("bz-sb-onboard");
-          const content = document.getElementById("bz-sb-content");
-          const title = document.getElementById("bz-sb-progress-title");
-          const desc = document.getElementById("bz-sb-onboard-desc");
-          const btn = document.getElementById("bz-sb-init-btn");
-          const box = document.getElementById("bz-sb-init-progress");
-          const fill = document.getElementById("bz-sb-init-fill");
-          const status = document.getElementById("bz-sb-init-status");
-          if (title) title.textContent = titleText;
-          if (desc) desc.style.display = "none";
-          if (btn) btn.style.display = "none";
-          if (box) box.style.display = "flex";
-          if (fill) fill.style.width = "0%";
-          if (resetStatus && status) status.textContent = "准备中…";
-          if (onboard) onboard.style.display = "flex";
-          if (content) content.style.display = "none";
-          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
-        }
-        /** 进度回调解析：把 store.updateProgress 文案换算成进度条（面板销毁后不再写 DOM） */
-        progressObserver() {
-          const status = document.getElementById("bz-sb-init-status");
-          const fill = document.getElementById("bz-sb-init-fill");
-          return (msg) => {
-            if (!(status == null ? void 0 : status.isConnected)) return;
-            const m = msg.match(/向量化:\s*(\d+)\/(\d+)/);
-            if (m && Number(m[2]) > 0) {
-              fill.style.width = Math.min(100, Math.round(Number(m[1]) / Number(m[2]) * 100)) + "%";
-            }
-            status.textContent = msg;
-          };
-        }
-        /** 自动增量索引（ticket 108）：有待处理块 → 进度视图 → 完成后统计；
-         *  ticket 3 假成功修复：有失败段 → toast 明示失败数（进度视图随即被内容态替代，仅靠状态行不可见） */
-        async runIncremental() {
-          this.enterProgressView("正在同步索引");
-          let lastMsg = "";
-          try {
-            await this.store.refresh((msg) => {
-              lastMsg = msg;
-              this.progressObserver()(msg);
-            });
-          } catch (e) {
-            console.warn("[secondbrain] 面板增量索引失败", e);
-          }
-          if (!this.store.isIndexReady()) {
-            this.showInitGuidance();
-            return;
-          }
-          this.showContent(true);
-          await this.renderStats();
-          const fail = lastMsg.match(/^⚠️\s*(\d+)\s*段向量化失败/);
-          if (fail) {
-            notice(`第二大脑：${fail[1]} 段向量化失败，请检查 Ollama 服务`, "warning");
-          }
-        }
-        /** 全量重建（ticket 108「重新索引」）：清空 → 整库重嵌 → 统计；失败给原因可重试 */
-        async runRebuild() {
-          this.enterProgressView("正在重建向量数据库");
-          const status = document.getElementById("bz-sb-init-status");
-          this.initializing = true;
-          try {
-            await this.store.rebuildAll(this.progressObserver());
-            if (this.store.isIndexReady()) {
-              this.showContent(true);
-              await this.renderStats();
-            } else {
-              const box = document.getElementById("bz-sb-init-progress");
-              if (box) box.style.display = "flex";
-              if (status) status.textContent = "重建未完成：请确认 Ollama 服务与 Embedding 模型可用后重试";
-              this.revealInitBtn("重试重建");
-            }
-          } catch (e) {
-            console.warn("[secondbrain] 全量重建失败", e);
-            if (status == null ? void 0 : status.isConnected) {
-              status.textContent = "重建失败：" + ((e == null ? void 0 : e.message) || e);
-              this.revealInitBtn("重试重建");
-            }
-          } finally {
-            this.initializing = false;
-          }
-        }
-        /** 组装弹窗 DOM（markup 全部出自 render.ts；本方法只绑定事件） */
-        createUI() {
-          var _a2, _b2, _c, _d, _e, _f;
-          if (this.mask && document.body.contains(this.mask)) return;
-          const mask = document.createElement("div");
-          mask.className = "bz-sb-panel-mask";
-          mask.onclick = () => this.close();
-          const popup = document.createElement("div");
-          popup.className = "bz-sb-panel bz-panel-mtop";
-          popup.innerHTML = panelShellHtml();
-          (_a2 = popup.querySelector("#bz-sb-panel-close")) == null ? void 0 : _a2.addEventListener("click", () => {
-            if (this.expandedDirs.size) {
-              this.expandedDirs.clear();
-              this.renderDist();
-            } else {
-              this.close();
-            }
-          });
-          (_b2 = popup.querySelector("#bz-sb-open-chat")) == null ? void 0 : _b2.addEventListener("click", () => {
-            this.close();
-            this.opts.onOpenChat();
-          });
-          (_c = popup.querySelector("#bz-sb-open-ref")) == null ? void 0 : _c.addEventListener("click", () => {
-            this.close();
-            this.opts.onOpenReference();
-          });
-          (_d = popup.querySelector("#bz-sb-incr")) == null ? void 0 : _d.addEventListener("click", () => {
-            if (this.refreshing || this.initializing) return;
-            void this.runIncremental();
-          });
-          (_e = popup.querySelector("#bz-sb-rebuild")) == null ? void 0 : _e.addEventListener("click", () => {
-            void confirmFullRebuild().then((ok) => {
-              if (ok) void this.runRebuild();
-            });
-          });
-          const initBtn = popup.querySelector("#bz-sb-init-btn");
-          if (initBtn) initBtn.onclick = () => void this.startInitialIndex();
-          (_f = popup.querySelector("#bz-sb-dist")) == null ? void 0 : _f.addEventListener("click", (e) => {
-            const row = e.target.closest(".bz-sb-dist-row--dir");
-            if (!row) return;
-            const path = row.dataset.path;
-            if (!path) return;
-            if (this.expandedDirs.has(path)) this.expandedDirs.delete(path);
-            else this.expandedDirs.add(path);
-            this.renderDist();
-          });
-          document.body.appendChild(mask);
-          document.body.appendChild(popup);
-          this.mask = mask;
-          this.popup = popup;
-        }
-        /** 内容态打开时自动增量刷新，完成后重渲统计（修复：原先渲染不等 refresh，展示的总是上一轮旧数据） */
-        async autoRefreshThenRender() {
-          if (this.refreshing) return;
-          this.refreshing = true;
-          try {
-            await this.store.refresh((msg) => {
-              if (msg.startsWith("向量化:") || msg.startsWith("✅ 向量化完成")) console.log(`[secondbrain] ${msg}`);
-            });
-          } catch (e) {
-            console.warn("[secondbrain] 面板自动刷新失败", e);
-          } finally {
-            this.refreshing = false;
-          }
-          await this.renderStats();
-        }
-        /**
-         * 初始向量化运行器（ticket 114 自按钮处理器抽出共用）：进入进度视图并接住 refresh 实时进度，
-         * 完成切内容态渲染统计；失败给出原因并可重试。
-         * 按钮点击与「关页重开恢复」（render 分派）两条路都走这里——store.refresh 并发去重保证
-         * 重复调用只是把进度回调重新接到同一个进行中的 promise 上，不会二次跑库。
-         * 注意：refresh 全部嵌入失败时不抛错也不登记任何条目（QA 同语义），故以 isIndexReady 判定成败。
-         */
-        async runInitialIndexView() {
-          const status = document.getElementById("bz-sb-init-status");
-          if (!status || !status.isConnected) return;
-          this.enterProgressView("正在初始化向量数据库");
-          this.initializing = true;
-          let sawCountedDone = false;
-          let sawWarning = false;
-          let sawFail = false;
-          try {
-            await this.store.refresh((msg) => {
-              if (!status.isConnected) return;
-              if (msg.startsWith("⚠️")) sawWarning = true;
-              if (msg.includes("段向量化失败")) sawFail = true;
-              if (msg.startsWith("✅ 向量化完成：")) sawCountedDone = true;
-              this.progressObserver()(msg);
-            });
-            if (!status.isConnected) return;
-            if (this.store.isIndexReady()) {
-              this.showContent(true);
-              await this.renderStats();
-            } else if (sawFail || sawCountedDone) {
-              status.textContent = "没有成功向量化任何内容：请确认 Ollama 服务与 Embedding 模型可用" + (IS_MOBILE ? "（移动端需配置「远程 Ollama URL」）" : "") + "后重试";
-              this.revealInitBtn("重试初始化");
-            } else if (sawWarning) {
-              status.textContent = "白名单目录内没有可索引的 Markdown 笔记：请检查 ⚙️ 设置中的「白名单目录」";
-              this.revealInitBtn("重试初始化");
-            } else {
-              status.textContent = "未发现可索引的笔记内容";
-              this.revealInitBtn("重试初始化");
-            }
-          } catch (e) {
-            console.warn("[secondbrain] 初始向量化失败", e);
-            if (status.isConnected) {
-              status.textContent = "初始化失败：" + ((e == null ? void 0 : e.message) || e);
-              this.revealInitBtn("重试初始化");
-            }
-          } finally {
-            this.initializing = false;
-          }
-        }
-        /**
-         * 引导按钮（ticket 107/108；ticket 114 修「点了没反应」）：首次全量向量化。
-         * 已在进行中（关页重开后的引导态残留 / 双击）时不再静默吞掉——只要后台确有 refresh 在跑，
-         * 就切回进度视图接回实时进度；否则维持原守卫语义不动。
-         */
-        startInitialIndex() {
-          if (!document.getElementById("bz-sb-init-progress")) return;
-          if (this.initializing || this.refreshing) {
-            if (this.store.isRefreshing()) void this.runInitialIndexView();
-            return;
-          }
-          void this.runInitialIndexView();
-        }
-        /** 失败路径恢复「开始按钮」可见并复位文案（进度形态时按钮被隐藏） */
-        revealInitBtn(label) {
-          const btn = document.getElementById("bz-sb-init-btn");
-          if (!btn) return;
-          btn.style.display = "block";
-          btn.disabled = false;
-          btn.textContent = label;
-          btn.onclick = () => void this.startInitialIndex();
-        }
-        /** 内容态统计渲染：markup 出 render.ts，本方法只算数与注入 */
-        async renderStats() {
-          var _a2, _b2, _c, _d, _e;
-          const popup = this.popup;
-          if (!popup || !popup.isConnected) return;
-          const CONFIG = buildConfig();
-          let metaBytes = 0;
-          let vecBytes = 0;
-          try {
-            metaBytes = (_b2 = (_a2 = await this.app.vault.adapter.stat(CONFIG.STORE_PATH)) == null ? void 0 : _a2.size) != null ? _b2 : 0;
-          } catch (e) {
-          }
-          try {
-            vecBytes = (_d = (_c = await this.app.vault.adapter.stat(CONFIG.VEC_PATH)) == null ? void 0 : _c.size) != null ? _d : 0;
-          } catch (e) {
-          }
-          const stats = { ...computeStats(this.store.meta), metaBytes, vecBytes };
-          const vecRows = stats.dim && vecBytes > 0 ? this.store.vectors.length / stats.dim : 0;
-          const healthy = vecRows === 0 || vecRows === stats.chunkCount;
-          const fmtBytes = (n) => n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
-          const order = new Map(stats.bySource.map((s, i) => [s.name, i]));
-          const colorOf = (name) => sbSourceColor(name, order);
-          const cnt = popup.querySelector("#bz-sb-cnt");
-          if (cnt) cnt.textContent = `${fmtCompact(stats.noteCount)} 篇 · ${fmtCompact(stats.chunkCount)} 段已入脑`;
-          const pill = popup.querySelector("#bz-sb-pill-txt");
-          if (pill) pill.textContent = healthy ? "索引健康" : `索引偏差 ${Math.abs(vecRows - stats.chunkCount)} 行`;
-          (_e = popup.querySelector(".bz-sb-pill-dot")) == null ? void 0 : _e.classList.toggle("bz-sb-pill-dot--warn", !healthy);
-          const cards = popup.querySelector("#bz-sb-cards");
-          if (cards) {
-            cards.innerHTML = panelCardsHtml([
-              { v: fmtCompact(stats.noteCount), k: "笔记", tip: `共 ${stats.noteCount.toLocaleString()} 篇笔记`, acc: true },
-              { v: fmtCompact(stats.chunkCount), k: "段落", tip: `共 ${stats.chunkCount.toLocaleString()} 个向量块`, acc: true },
-              { v: fmtCompact(stats.totalChars), k: "字符", tip: `共 ${stats.totalChars.toLocaleString()} 字` },
-              { v: stats.dim > 0 ? `${stats.dim} 维` : "—", k: "向量维度", tip: `嵌入模型 ${CONFIG.EMBEDDING_MODEL} · 维度变更需重建索引` },
-              { v: `${stats.avgChunkLen} 字`, k: "平均段长", tip: `平均每篇 ${stats.avgChunksPerNote} 段` },
-              { v: vecBytes ? fmtBytes(metaBytes + vecBytes) : "—", k: "存储占用", tip: `meta ${fmtBytes(metaBytes)} + 向量 ${fmtBytes(vecBytes)}` }
-            ]);
-          }
-          const trend = popup.querySelector("#bz-sb-trend");
-          if (trend) {
-            trend.innerHTML = panelTrendHtml(stats.trend12w);
-            const sum = popup.querySelector("#bz-sb-trend-sum");
-            if (sum) sum.textContent = stats.trend12w.reduce((a, b) => a + b, 0) + " 篇";
-          }
-          this.renderDist();
-          const recentEl = popup.querySelector("#bz-sb-recent");
-          if (recentEl) {
-            recentEl.innerHTML = panelRecentHtml(
-              stats.recent.map((r) => ({
-                path: r.path,
-                name: r.path.split("/").pop() || r.path,
-                chunks: r.chunks,
-                when: formatRelativeTime(r.mtime),
-                color: colorOf(topLevelName(r.path))
-              }))
-            );
-            const recentN = popup.querySelector("#bz-sb-recent-n");
-            if (recentN) recentN.textContent = `最新 ${stats.recent.length} 条`;
-          }
-          const log = popup.querySelector("#bz-sb-log");
-          if (log) {
-            log.innerHTML = panelLogHtml([
-              { text: `上次索引 ${stats.lastIndexedAt ? formatRelativeTime(stats.lastIndexedAt) : "—"}` },
-              { text: healthy ? "索引一致" : `向量 ${Math.round(vecRows)} 行 / 块 ${stats.chunkCount} 个`, warn: !healthy },
-              { text: vecBytes ? `占用 ${fmtBytes(metaBytes + vecBytes)}` : "暂无向量文件" }
-            ]);
-          }
-          mountIcons(popup);
-          void this.loadSummaryAndLinks();
-        }
-        /** 来源树渲染（renderStats 与展开点击共用；展开集会话内记忆） */
-        renderDist() {
-          const popup = this.popup;
-          const dist = popup == null ? void 0 : popup.querySelector("#bz-sb-dist");
-          if (!popup || !dist) return;
-          const tree = buildSourceTree(this.store.meta);
-          const order = new Map(computeStats(this.store.meta).bySource.map((s, i) => [s.name, i]));
-          const colorOf = (name) => sbSourceColor(name, order);
-          const rootMax = Math.max(1, ...tree.map((n) => n.chunks));
-          dist.innerHTML = panelDistHtml(tree, this.expandedDirs, colorOf, rootMax);
-          const distN = popup.querySelector("#bz-sb-dist-n");
-          if (distN) distN.textContent = `${tree.length} 个来源`;
-          mountIcons(dist);
-        }
-        /** AI 库摘要 + 自动建链数（secondbrain.json panel/link 段，异步回填；生成入口已移除，旧值仍可展示） */
-        async loadSummaryAndLinks() {
-          var _a2, _b2, _c;
-          try {
-            const store2 = await loadStore(this.app);
-            const popup = this.popup;
-            if (!popup || !popup.isConnected) return;
-            const summary = ((_a2 = store2.panel) == null ? void 0 : _a2.summary) || "";
-            const aiCard = popup.querySelector("#bz-sb-ai-card");
-            const aiTxt = popup.querySelector("#bz-sb-ai-txt");
-            if (aiCard) aiCard.style.display = summary ? "" : "none";
-            if (aiTxt && summary) {
-              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store2.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store2.panel.generatedAt) : "");
-            }
-            const linkedTotal = Object.keys(((_c = store2.link) == null ? void 0 : _c.state) || {}).length;
-            const log = popup.querySelector("#bz-sb-log");
-            if (log && linkedTotal) {
-              log.insertAdjacentHTML(
-                "beforeend",
-                `<span class="bz-sb-log-sep">·</span>${panelLogHtml([{ text: `自动建链 ${linkedTotal} 条` }])}`
-              );
-            }
-          } catch (e) {
-          }
-        }
-      };
-    }
-  });
 
   // src/secondbrain/ui-tools.ts
   function jumpToChunk(file, chunkText, highlight = false) {
@@ -7005,507 +6651,473 @@ var BZW_secondbrain = (() => {
       document.removeEventListener("mouseup", onResizeUp);
     };
   }
-  var init_ui_tools = __esm({
-    "src/secondbrain/ui-tools.ts"() {
-      init_fake_obsidian();
-      init_app();
-    }
-  });
 
   // src/secondbrain/ai.ts
+  var deepseek = null;
   function getDeepseekAI() {
     if (!deepseek) deepseek = createAI({}, "deepseek-v4-flash", {}, 16384);
     return deepseek;
   }
-  var deepseek, AI;
-  var init_ai2 = __esm({
-    "src/secondbrain/ai.ts"() {
-      init_ai();
-      deepseek = null;
-      AI = {
-        /** 统一入口：失败直接抛出，由调用方 toast 报错（不静默回退 Ollama——ticket 108）；
-         *  opts 可选（既有单参调用零兼容负担），透传取消/流式（ticket 141） */
-        async ask(prompt, opts) {
-          return getDeepseekAI().prompt(prompt, void 0, opts != null ? opts : {});
-        }
-      };
+  var AI = {
+    /** 统一入口：失败直接抛出，由调用方 toast 报错（不静默回退 Ollama——ticket 108）；
+     *  opts 可选（既有单参调用零兼容负担），透传取消/流式（ticket 141） */
+    async ask(prompt, opts) {
+      return getDeepseekAI().prompt(prompt, void 0, opts != null ? opts : {});
     }
-  });
+  };
 
   // src/secondbrain/chat-panel.ts
   function welcomeText(topK) {
     return `你好！每次提问会独立检索 ${topK} 条笔记辅助回答。`;
   }
-  var ChatPanel;
-  var init_chat_panel = __esm({
-    "src/secondbrain/chat-panel.ts"() {
-      init_dom();
-      init_esc_manager();
-      init_flow_dialog();
-      init_ui();
-      init_config();
-      init_ui_tools();
-      init_ai2();
-      init_store_file();
-      init_render();
-      ChatPanel = class {
-        constructor(store2, app) {
-          this.history = [];
-          this.escHandle = null;
-          /** 进行中的对话请求（ticket 141）：非空时发送钮呈「停止」态，点击中止 */
-          this.inFlight = null;
-          /** 轮次序号：清空对话 / 销毁后，旧轮的回调不再写 UI 与历史 */
-          this.seq = 0;
-          var _a2, _b2;
-          this.app = app;
-          this.store = store2;
-          const CONFIG = buildConfig();
-          const { mask, popup } = createOverlay({
-            maskId: "bz-sb-chat-mask",
-            popupId: "bz-sb-chat-panel",
-            onMaskClick: () => this.close(),
-            width: "760px",
-            // createOverlay 以内联样式设宽（优先级高于类规则），必须在此定尺寸
-            maxWidth: 760
-          });
-          this.mask = mask;
-          this.popup = popup;
-          this.popup.classList.add("bz-sb-chat-modal");
-          this.popup.innerHTML = chatShellHtml(CONFIG.CHAT_TOP_K);
-          mountIcons(this.popup);
-          this.messagesDiv = this.popup.querySelector("#bz-sb-chat-messages");
-          this.input = this.popup.querySelector("#bz-sb-chat-input");
-          this.sendBtn = this.popup.querySelector("#bz-sb-chat-send");
-          (_a2 = this.popup.querySelector("#bz-sb-chat-clear")) == null ? void 0 : _a2.addEventListener("click", () => void this.confirmClear());
-          this.sendBtn.addEventListener("click", () => {
-            if (this.inFlight) {
-              this.inFlight.abort();
-              return;
-            }
-            void this.sendChatMessage();
-          });
-          this.input.addEventListener("keydown", (e) => {
-            if (e.isComposing || e.keyCode === 229) return;
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              void this.sendChatMessage();
-            }
-          });
-          this.input.addEventListener("input", () => this.autoGrowInput());
-          (_b2 = this.popup.querySelector("#bz-sb-chat-chips")) == null ? void 0 : _b2.addEventListener("click", (e) => {
-            const chip = e.target.closest(".bz-sb-chat-chip");
-            if (!chip || this.inFlight) return;
-            this.input.value = chip.dataset.q || "";
-            void this.sendChatMessage();
-          });
-          this.messagesDiv.addEventListener("click", (e) => {
-            const cite = e.target.closest(".bz-sb-chat-cite");
-            if (!cite) return;
-            const path = cite.dataset.path;
-            const f = path ? this.app.vault.getAbstractFileByPath(path) : null;
-            if (f) void this.app.workspace.getLeaf(false).openFile(f);
-            else if (path) this.appendAiNote("文件不存在或已被移动");
-          });
-          document.body.appendChild(mask);
-          document.body.appendChild(popup);
-          this.escHandle = escManager.register("bz-sb-chat-modal", {
-            isVisible: () => this.popup.style.display === "flex" && !!this.popup.isConnected,
-            close: () => this.close()
-          });
-          this.addChatMessage("assistant", welcomeText(CONFIG.CHAT_TOP_K));
-          this.restorePersistedHistory();
+  var ChatPanel = class {
+    constructor(store2, app) {
+      this.history = [];
+      this.escHandle = null;
+      /** 进行中的对话请求（ticket 141）：非空时发送钮呈「停止」态，点击中止 */
+      this.inFlight = null;
+      /** 轮次序号：清空对话 / 销毁后，旧轮的回调不再写 UI 与历史 */
+      this.seq = 0;
+      var _a2, _b2;
+      this.app = app;
+      this.store = store2;
+      const CONFIG = buildConfig();
+      const { mask, popup } = createOverlay({
+        maskId: "bz-sb-chat-mask",
+        popupId: "bz-sb-chat-panel",
+        onMaskClick: () => this.close(),
+        width: "760px",
+        // createOverlay 以内联样式设宽（优先级高于类规则），必须在此定尺寸
+        maxWidth: 760
+      });
+      this.mask = mask;
+      this.popup = popup;
+      this.popup.classList.add("bz-sb-chat-modal");
+      this.popup.innerHTML = chatShellHtml(CONFIG.CHAT_TOP_K);
+      mountIcons(this.popup);
+      this.messagesDiv = this.popup.querySelector("#bz-sb-chat-messages");
+      this.input = this.popup.querySelector("#bz-sb-chat-input");
+      this.sendBtn = this.popup.querySelector("#bz-sb-chat-send");
+      (_a2 = this.popup.querySelector("#bz-sb-chat-clear")) == null ? void 0 : _a2.addEventListener("click", () => void this.confirmClear());
+      this.sendBtn.addEventListener("click", () => {
+        if (this.inFlight) {
+          this.inFlight.abort();
+          return;
         }
-        get alive() {
-          return !!this.popup.isConnected;
+        void this.sendChatMessage();
+      });
+      this.input.addEventListener("keydown", (e) => {
+        if (e.isComposing || e.keyCode === 229) return;
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          void this.sendChatMessage();
         }
-        /** 显示弹窗并聚焦输入框 */
-        show() {
-          if (!this.alive) return;
-          this.mask.style.display = "block";
-          this.popup.style.display = "flex";
-          this.input.focus();
-        }
-        close() {
-          this.mask.style.display = "none";
-          this.popup.style.display = "none";
-        }
-        /** 完全销毁（unload 调用）：摘 ESC 层、中止在途请求并移除 DOM */
-        destroy() {
-          var _a2, _b2;
-          this.seq++;
-          (_a2 = this.inFlight) == null ? void 0 : _a2.abort();
-          this.inFlight = null;
-          (_b2 = this.escHandle) == null ? void 0 : _b2.unregister();
-          this.escHandle = null;
-          this.mask.remove();
-          this.popup.remove();
-        }
-        /** 历史仅 UI 展示用；裁剪 MAX_HISTORY×2 条，不进 prompt（每问独立检索） */
-        addChatMessage(role, content, hits) {
-          const div = document.createElement("div");
-          div.className = `bz-sb-chat-msg ${role}`;
-          if (role === "assistant") {
-            div.innerHTML = chatAiMsgHtml();
-            const bubble = div.querySelector(".bz-sb-chat-bubble");
-            renderMarkdown(bubble, content, this.app);
-            if (hits == null ? void 0 : hits.length) bubble.insertAdjacentHTML("beforeend", chatCitesHtml(this.citeRows(hits)));
-          } else {
-            div.innerHTML = chatUserMsgHtml();
-            div.querySelector(".bz-sb-chat-bubble").textContent = content;
-          }
-          this.messagesDiv.appendChild(div);
-          this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
-          this.history.push({ role, content });
-          const CONFIG = buildConfig();
-          if (this.history.length > CONFIG.MAX_HISTORY * 2) {
-            this.history = this.history.slice(-CONFIG.MAX_HISTORY * 2);
-          }
-          return div;
-        }
-        /** 引用卡行（来源色点按来源分布序取色板） */
-        citeRows(hits) {
-          const order = new Map(computeStats(this.store.meta).bySource.map((s, i) => [s.name, i]));
-          return hits.slice(0, 5).map((h) => ({
-            path: h.path,
-            pct: Math.round(h.score * 100),
-            color: sbSourceColor(h.path.split("/")[0] || "（根目录）", order)
-          }));
-        }
-        /** 轻量 assistant 提示（不进历史；用于错误/停止等纯 UI 文案之外的补充说明） */
-        appendAiNote(text) {
-          const note = document.createElement("div");
-          note.className = "bz-sb-ref-empty";
-          note.textContent = text;
-          this.messagesDiv.appendChild(note);
-        }
-        // ==================== ticket 141：多行输入 / 取消 / 流式 / 历史持久化 ====================
-        /** textarea 自增高度：随内容长高，CSS max-height 钳制上限，超出内部滚动 */
-        autoGrowInput() {
-          this.input.style.height = "auto";
-          this.input.style.height = this.input.scrollHeight + "px";
-        }
-        /** 每轮写盘（fire-and-forget；失败仅告警，不阻断对话） */
-        persistHistory(entries) {
-          appendChatHistory(entries, this.app).catch(
-            (e) => console.warn("[secondbrain] 对话历史写盘失败", e)
-          );
-        }
-        /** 打开读回持久化历史（旧数据无 chatHistory 段 → []，保持欢迎语，零迁移） */
-        async restorePersistedHistory() {
-          let entries;
-          try {
-            entries = await loadChatHistory(this.app);
-          } catch (e) {
-            console.warn("[secondbrain] 对话历史读回失败", e);
-            return;
-          }
-          if (!entries.length || !this.alive) return;
-          for (const m of entries) this.addChatMessage(m.role, m.content);
-        }
-        async sendChatMessage() {
-          if (this.inFlight) return;
-          const userMsg = this.input.value.trim();
-          if (!userMsg) return;
-          this.input.value = "";
-          this.autoGrowInput();
-          this.addChatMessage("user", userMsg);
-          this.persistHistory([{ role: "user", content: userMsg }]);
-          const CONFIG = buildConfig();
-          const controller = new AbortController();
-          const seq = ++this.seq;
-          this.inFlight = controller;
-          this.sendBtn.disabled = false;
-          this.sendBtn.setAttribute("data-state", "stop");
-          this.sendBtn.title = "停止";
-          const live2 = document.createElement("div");
-          live2.className = "bz-sb-chat-msg assistant";
-          live2.innerHTML = chatAiMsgHtml();
-          live2.querySelector(".bz-sb-chat-bubble").innerHTML = chatThinkingHtml(CONFIG.CHAT_TOP_K);
-          this.messagesDiv.appendChild(live2);
-          this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
-          let acc = "";
-          try {
-            const results = await this.store.search(userMsg, CONFIG.CHAT_TOP_K);
-            if (seq !== this.seq) return;
-            const context = results.length > 0 ? results.map((r) => `[${r.path}] (${Math.round(r.score * 100)}%)
+      });
+      this.input.addEventListener("input", () => this.autoGrowInput());
+      (_b2 = this.popup.querySelector("#bz-sb-chat-chips")) == null ? void 0 : _b2.addEventListener("click", (e) => {
+        const chip = e.target.closest(".bz-sb-chat-chip");
+        if (!chip || this.inFlight) return;
+        this.input.value = chip.dataset.q || "";
+        void this.sendChatMessage();
+      });
+      this.messagesDiv.addEventListener("click", (e) => {
+        const cite = e.target.closest(".bz-sb-chat-cite");
+        if (!cite) return;
+        const path = cite.dataset.path;
+        const f = path ? this.app.vault.getAbstractFileByPath(path) : null;
+        if (f) void this.app.workspace.getLeaf(false).openFile(f);
+        else if (path) this.appendAiNote("文件不存在或已被移动");
+      });
+      document.body.appendChild(mask);
+      document.body.appendChild(popup);
+      this.escHandle = escManager.register("bz-sb-chat-modal", {
+        isVisible: () => this.popup.style.display === "flex" && !!this.popup.isConnected,
+        close: () => this.close()
+      });
+      this.addChatMessage("assistant", welcomeText(CONFIG.CHAT_TOP_K));
+      this.restorePersistedHistory();
+    }
+    get alive() {
+      return !!this.popup.isConnected;
+    }
+    /** 显示弹窗并聚焦输入框 */
+    show() {
+      if (!this.alive) return;
+      this.mask.style.display = "block";
+      this.popup.style.display = "flex";
+      this.input.focus();
+    }
+    close() {
+      this.mask.style.display = "none";
+      this.popup.style.display = "none";
+    }
+    /** 完全销毁（unload 调用）：摘 ESC 层、中止在途请求并移除 DOM */
+    destroy() {
+      var _a2, _b2;
+      this.seq++;
+      (_a2 = this.inFlight) == null ? void 0 : _a2.abort();
+      this.inFlight = null;
+      (_b2 = this.escHandle) == null ? void 0 : _b2.unregister();
+      this.escHandle = null;
+      this.mask.remove();
+      this.popup.remove();
+    }
+    /** 历史仅 UI 展示用；裁剪 MAX_HISTORY×2 条，不进 prompt（每问独立检索） */
+    addChatMessage(role, content, hits) {
+      const div = document.createElement("div");
+      div.className = `bz-sb-chat-msg ${role}`;
+      if (role === "assistant") {
+        div.innerHTML = chatAiMsgHtml();
+        const bubble = div.querySelector(".bz-sb-chat-bubble");
+        renderMarkdown(bubble, content, this.app);
+        if (hits == null ? void 0 : hits.length) bubble.insertAdjacentHTML("beforeend", chatCitesHtml(this.citeRows(hits)));
+      } else {
+        div.innerHTML = chatUserMsgHtml();
+        div.querySelector(".bz-sb-chat-bubble").textContent = content;
+      }
+      this.messagesDiv.appendChild(div);
+      this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
+      this.history.push({ role, content });
+      const CONFIG = buildConfig();
+      if (this.history.length > CONFIG.MAX_HISTORY * 2) {
+        this.history = this.history.slice(-CONFIG.MAX_HISTORY * 2);
+      }
+      return div;
+    }
+    /** 引用卡行（来源色点按来源分布序取色板） */
+    citeRows(hits) {
+      const order = new Map(computeStats(this.store.meta).bySource.map((s, i) => [s.name, i]));
+      return hits.slice(0, 5).map((h) => ({
+        path: h.path,
+        pct: Math.round(h.score * 100),
+        color: sbSourceColor(h.path.split("/")[0] || "（根目录）", order)
+      }));
+    }
+    /** 轻量 assistant 提示（不进历史；用于错误/停止等纯 UI 文案之外的补充说明） */
+    appendAiNote(text) {
+      const note = document.createElement("div");
+      note.className = "bz-sb-ref-empty";
+      note.textContent = text;
+      this.messagesDiv.appendChild(note);
+    }
+    // ==================== ticket 141：多行输入 / 取消 / 流式 / 历史持久化 ====================
+    /** textarea 自增高度：随内容长高，CSS max-height 钳制上限，超出内部滚动 */
+    autoGrowInput() {
+      this.input.style.height = "auto";
+      this.input.style.height = this.input.scrollHeight + "px";
+    }
+    /** 每轮写盘（fire-and-forget；失败仅告警，不阻断对话） */
+    persistHistory(entries) {
+      appendChatHistory(entries, this.app).catch(
+        (e) => console.warn("[secondbrain] 对话历史写盘失败", e)
+      );
+    }
+    /** 打开读回持久化历史（旧数据无 chatHistory 段 → []，保持欢迎语，零迁移） */
+    async restorePersistedHistory() {
+      let entries;
+      try {
+        entries = await loadChatHistory(this.app);
+      } catch (e) {
+        console.warn("[secondbrain] 对话历史读回失败", e);
+        return;
+      }
+      if (!entries.length || !this.alive) return;
+      for (const m of entries) this.addChatMessage(m.role, m.content);
+    }
+    async sendChatMessage() {
+      if (this.inFlight) return;
+      const userMsg = this.input.value.trim();
+      if (!userMsg) return;
+      this.input.value = "";
+      this.autoGrowInput();
+      this.addChatMessage("user", userMsg);
+      this.persistHistory([{ role: "user", content: userMsg }]);
+      const CONFIG = buildConfig();
+      const controller = new AbortController();
+      const seq = ++this.seq;
+      this.inFlight = controller;
+      this.sendBtn.disabled = false;
+      this.sendBtn.setAttribute("data-state", "stop");
+      this.sendBtn.title = "停止";
+      const live2 = document.createElement("div");
+      live2.className = "bz-sb-chat-msg assistant";
+      live2.innerHTML = chatAiMsgHtml();
+      live2.querySelector(".bz-sb-chat-bubble").innerHTML = chatThinkingHtml(CONFIG.CHAT_TOP_K);
+      this.messagesDiv.appendChild(live2);
+      this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
+      let acc = "";
+      try {
+        const results = await this.store.search(userMsg, CONFIG.CHAT_TOP_K);
+        if (seq !== this.seq) return;
+        const context = results.length > 0 ? results.map((r) => `[${r.path}] (${Math.round(r.score * 100)}%)
 ${r.chunk}`).join("\n\n") : "（未找到相关笔记）";
-            const fullPrompt = `你是知识助手。参考笔记库中 ${results.length} 条检索结果回答问题。不相关可忽略。
+        const fullPrompt = `你是知识助手。参考笔记库中 ${results.length} 条检索结果回答问题。不相关可忽略。
 
 【参考内容】
 ${context}
 
 【问题】
 ${userMsg}`;
-            const answer = await AI.ask(fullPrompt, {
-              signal: controller.signal,
-              onDelta: (delta) => {
-                acc += delta;
-                const bubble = live2.querySelector(".bz-sb-chat-bubble");
-                if (bubble) bubble.textContent = acc;
-                this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
-              }
-            });
-            live2.remove();
-            if (seq === this.seq) {
-              this.addChatMessage("assistant", answer, results);
-              this.persistHistory([{ role: "assistant", content: answer }]);
-            }
-          } catch (e) {
-            live2.remove();
-            if (seq !== this.seq) return;
-            if (controller.signal.aborted) {
-              this.addChatMessage("assistant", "已停止生成。");
-            } else {
-              this.addChatMessage("assistant", "出错了：" + ((e == null ? void 0 : e.message) || e));
-            }
-          } finally {
-            if (seq === this.seq) {
-              this.inFlight = null;
-              this.sendBtn.disabled = false;
-              this.sendBtn.removeAttribute("data-state");
-              this.sendBtn.title = "发送";
-            } else if (this.inFlight === controller) {
-              this.inFlight = null;
-            }
+        const answer = await AI.ask(fullPrompt, {
+          signal: controller.signal,
+          onDelta: (delta) => {
+            acc += delta;
+            const bubble = live2.querySelector(".bz-sb-chat-bubble");
+            if (bubble) bubble.textContent = acc;
+            this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
           }
+        });
+        live2.remove();
+        if (seq === this.seq) {
+          this.addChatMessage("assistant", answer, results);
+          this.persistHistory([{ role: "assistant", content: answer }]);
         }
-        /** 「清空对话」（ticket 141）：flow 确认 → 中止在途请求 → 清内存与 UI → 写盘空段 */
-        async confirmClear() {
-          var _a2;
-          const v = await openFlowDialog({
-            title: "清空对话",
-            message: "将清空全部对话历史并写盘，确定继续吗？",
-            // 皮肤类（issue 291）：对话弹窗掉 body 外的确认框不会继承 .bz-sb-chat-modal 的 --sb-*，
-            // 必须显式带 .bz-sb-flow-dialog 才与「清空对话」所在界面同一套米白×红棕皮
-            className: "bz-sb-flow-dialog",
-            actions: [
-              { label: "取消", value: "cancel" },
-              // danger（issue 291 评审补）：清空即抹掉全部对话历史，主按钮中性底 + 红字（手册 §9/§10）
-              { label: "清空", value: "ok", cta: true, danger: true }
-            ]
-          });
-          if (v !== "ok") return;
-          this.seq++;
-          (_a2 = this.inFlight) == null ? void 0 : _a2.abort();
+      } catch (e) {
+        live2.remove();
+        if (seq !== this.seq) return;
+        if (controller.signal.aborted) {
+          this.addChatMessage("assistant", "已停止生成。");
+        } else {
+          this.addChatMessage("assistant", "出错了：" + ((e == null ? void 0 : e.message) || e));
+        }
+      } finally {
+        if (seq === this.seq) {
           this.inFlight = null;
           this.sendBtn.disabled = false;
           this.sendBtn.removeAttribute("data-state");
           this.sendBtn.title = "发送";
-          this.history = [];
-          this.messagesDiv.innerHTML = "";
-          this.addChatMessage("assistant", welcomeText(buildConfig().CHAT_TOP_K));
-          try {
-            await clearChatHistory(this.app);
-          } catch (e) {
-            console.warn("[secondbrain] 对话历史清空写盘失败", e);
-          }
+        } else if (this.inFlight === controller) {
+          this.inFlight = null;
         }
-      };
+      }
     }
-  });
+    /** 「清空对话」（ticket 141）：flow 确认 → 中止在途请求 → 清内存与 UI → 写盘空段 */
+    async confirmClear() {
+      var _a2;
+      const v = await openFlowDialog({
+        title: "清空对话",
+        message: "将清空全部对话历史并写盘，确定继续吗？",
+        // 皮肤类（issue 291）：对话弹窗掉 body 外的确认框不会继承 .bz-sb-chat-modal 的 --sb-*，
+        // 必须显式带 .bz-sb-flow-dialog 才与「清空对话」所在界面同一套米白×红棕皮
+        className: "bz-sb-flow-dialog",
+        actions: [
+          { label: "取消", value: "cancel" },
+          // danger（issue 291 评审补）：清空即抹掉全部对话历史，主按钮中性底 + 红字（手册 §9/§10）
+          { label: "清空", value: "ok", cta: true, danger: true }
+        ]
+      });
+      if (v !== "ok") return;
+      this.seq++;
+      (_a2 = this.inFlight) == null ? void 0 : _a2.abort();
+      this.inFlight = null;
+      this.sendBtn.disabled = false;
+      this.sendBtn.removeAttribute("data-state");
+      this.sendBtn.title = "发送";
+      this.history = [];
+      this.messagesDiv.innerHTML = "";
+      this.addChatMessage("assistant", welcomeText(buildConfig().CHAT_TOP_K));
+      try {
+        await clearChatHistory(this.app);
+      } catch (e) {
+        console.warn("[secondbrain] 对话历史清空写盘失败", e);
+      }
+    }
+  };
 
   // src/secondbrain/float-window.ts
-  var FloatWindow;
-  var init_float_window = __esm({
-    "src/secondbrain/float-window.ts"() {
-      init_esc_manager();
-      init_z_order();
-      init_ui_tools();
-      FloatWindow = class {
-        constructor(title, opts = {}) {
-          this.isHidden = false;
-          this.isMaximized = false;
-          this.onClose = null;
-          this.restoreRect = null;
-          this.hoverExpandTimer = null;
-          this.detachFns = [];
-          this.escHandle = null;
-          this.closed = false;
-          var _a2;
-          this.onClose = opts.onClose || null;
-          this.origWidth = (_a2 = opts.width) != null ? _a2 : 300;
-          this.el = document.createElement("div");
-          this.el.className = "bz-sb-float-win bz-sb-float-enter";
-          this.el.style.width = this.origWidth + "px";
-          this.header = document.createElement("div");
-          this.header.className = "bz-sb-float-head";
-          this.stripEl = document.createElement("span");
-          this.stripEl.className = "bz-sb-float-strip";
-          this.stripEl.textContent = "📖";
-          this.titleEl = document.createElement("span");
-          this.titleEl.className = "bz-sb-float-title";
-          this.titleEl.textContent = title;
-          this.headerRight = document.createElement("div");
-          this.headerRight.className = "bz-sb-float-headright";
-          const resetBtn = document.createElement("button");
-          resetBtn.className = "bz-sb-float-btn";
-          resetBtn.textContent = "🔄";
-          resetBtn.title = "复位位置";
-          resetBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            this.reset();
-          });
-          this.hideBtn = document.createElement("button");
-          this.hideBtn.className = "bz-sb-float-btn";
-          this.hideBtn.textContent = "◀️";
-          this.hideBtn.title = "隐藏到右侧";
-          this.hideBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            this.toggleHide();
-          });
-          if (opts.headerRight) this.headerRight.appendChild(opts.headerRight);
-          const closeBtn = document.createElement("button");
-          closeBtn.className = "bz-sb-float-btn bz-sb-float-btn-close";
-          closeBtn.textContent = "❌";
-          closeBtn.title = "关闭 (Esc)";
-          closeBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            this.close();
-          });
-          this.headerRight.appendChild(resetBtn);
-          this.headerRight.appendChild(this.hideBtn);
-          this.headerRight.appendChild(closeBtn);
-          this.headerRight.addEventListener("mousedown", (e) => e.stopPropagation());
-          this.header.appendChild(this.stripEl);
-          this.header.appendChild(this.titleEl);
-          this.header.appendChild(this.headerRight);
-          this.body = document.createElement("div");
-          this.body.className = "bz-sb-float-body";
-          this.el.appendChild(this.header);
-          this.el.appendChild(this.body);
-          topifyZ(this.el);
-          document.body.appendChild(this.el);
-          this.el.addEventListener(
-            "mousedown",
-            () => {
-              if (!this.el.style.left) {
-                const r = this.el.getBoundingClientRect();
-                this.el.style.left = r.left + "px";
-                this.el.style.top = r.top + "px";
-                this.el.style.right = "auto";
-              }
-            },
-            true
-          );
-          this.detachFns.push(makeDraggable(this.el, this.header));
-          this.detachFns.push(makeResizable(this.el, 30, 180));
-          this.header.addEventListener("dblclick", (e) => {
-            if (e.target instanceof Element && e.target.closest("button")) return;
-            this.toggleMaximize();
-          });
-          this.el.addEventListener("mouseenter", () => {
-            if (this.hoverExpandTimer) clearTimeout(this.hoverExpandTimer);
-            if (this.isHidden) {
-              this.hoverExpandTimer = setTimeout(() => this.show(), 200);
-            }
-          });
-          this.el.addEventListener("mouseleave", () => {
-            if (this.hoverExpandTimer) clearTimeout(this.hoverExpandTimer);
-          });
-          this.escHandle = escManager.register("bz-sb-float-win", {
-            isVisible: () => !!this.el.isConnected,
-            close: () => this.close()
-          });
-        }
-        get alive() {
-          return !!this.el.isConnected;
-        }
-        /** 展开等价于触发一次悬停（隐藏态 200ms 后弹出；QA L1237 同构） */
-        expand() {
-          this.el.dispatchEvent(new Event("mouseenter"));
-        }
-        /** 复位到右贴边基线：清空内联定位回归 CSS 基线 */
-        reset() {
-          const c = this.el;
-          c.style.right = "";
-          c.style.left = "";
-          c.style.top = "";
-          c.style.transform = "";
-          c.style.width = this.origWidth + "px";
-          c.style.height = window.innerHeight + "px";
-          c.classList.remove("bz-sb-float-max");
-          this.isMaximized = false;
-          this.isHidden = false;
-          this.syncHiddenUI(false);
-        }
-        toggleMaximize() {
-          const c = this.el;
-          if (!this.isMaximized) {
-            this.restoreRect = {
-              left: c.style.left,
-              top: c.style.top,
-              right: c.style.right,
-              width: c.style.width,
-              height: c.style.height,
-              transform: c.style.transform
-            };
-            c.style.left = "0";
-            c.style.top = "0";
-            c.style.right = "auto";
-            c.style.width = "100vw";
-            c.style.height = "100vh";
-            c.style.transform = "translateX(0)";
-            c.classList.add("bz-sb-float-max");
-            this.isMaximized = true;
-            this.isHidden = false;
-            this.syncHiddenUI(false);
-          } else {
-            const r = this.restoreRect;
-            if (r) {
-              c.style.left = r.left;
-              c.style.top = r.top;
-              c.style.right = r.right;
-              c.style.width = r.width;
-              c.style.height = r.height;
-              c.style.transform = r.transform || "translateX(0)";
-            }
-            c.classList.remove("bz-sb-float-max");
-            this.restoreRect = null;
-            this.isMaximized = false;
+  var FloatWindow = class {
+    constructor(title, opts = {}) {
+      this.isHidden = false;
+      this.isMaximized = false;
+      this.onClose = null;
+      this.restoreRect = null;
+      this.hoverExpandTimer = null;
+      this.detachFns = [];
+      this.escHandle = null;
+      this.closed = false;
+      var _a2;
+      this.onClose = opts.onClose || null;
+      this.origWidth = (_a2 = opts.width) != null ? _a2 : 300;
+      this.el = document.createElement("div");
+      this.el.className = "bz-sb-float-win bz-sb-float-enter";
+      this.el.style.width = this.origWidth + "px";
+      this.header = document.createElement("div");
+      this.header.className = "bz-sb-float-head";
+      this.stripEl = document.createElement("span");
+      this.stripEl.className = "bz-sb-float-strip";
+      this.stripEl.textContent = "📖";
+      this.titleEl = document.createElement("span");
+      this.titleEl.className = "bz-sb-float-title";
+      this.titleEl.textContent = title;
+      this.headerRight = document.createElement("div");
+      this.headerRight.className = "bz-sb-float-headright";
+      const resetBtn = document.createElement("button");
+      resetBtn.className = "bz-sb-float-btn";
+      resetBtn.textContent = "🔄";
+      resetBtn.title = "复位位置";
+      resetBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.reset();
+      });
+      this.hideBtn = document.createElement("button");
+      this.hideBtn.className = "bz-sb-float-btn";
+      this.hideBtn.textContent = "◀️";
+      this.hideBtn.title = "隐藏到右侧";
+      this.hideBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.toggleHide();
+      });
+      if (opts.headerRight) this.headerRight.appendChild(opts.headerRight);
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "bz-sb-float-btn bz-sb-float-btn-close";
+      closeBtn.textContent = "❌";
+      closeBtn.title = "关闭 (Esc)";
+      closeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.close();
+      });
+      this.headerRight.appendChild(resetBtn);
+      this.headerRight.appendChild(this.hideBtn);
+      this.headerRight.appendChild(closeBtn);
+      this.headerRight.addEventListener("mousedown", (e) => e.stopPropagation());
+      this.header.appendChild(this.stripEl);
+      this.header.appendChild(this.titleEl);
+      this.header.appendChild(this.headerRight);
+      this.body = document.createElement("div");
+      this.body.className = "bz-sb-float-body";
+      this.el.appendChild(this.header);
+      this.el.appendChild(this.body);
+      topifyZ(this.el);
+      document.body.appendChild(this.el);
+      this.el.addEventListener(
+        "mousedown",
+        () => {
+          if (!this.el.style.left) {
+            const r = this.el.getBoundingClientRect();
+            this.el.style.left = r.left + "px";
+            this.el.style.top = r.top + "px";
+            this.el.style.right = "auto";
           }
+        },
+        true
+      );
+      this.detachFns.push(makeDraggable(this.el, this.header));
+      this.detachFns.push(makeResizable(this.el, 30, 180));
+      this.header.addEventListener("dblclick", (e) => {
+        if (e.target instanceof Element && e.target.closest("button")) return;
+        this.toggleMaximize();
+      });
+      this.el.addEventListener("mouseenter", () => {
+        if (this.hoverExpandTimer) clearTimeout(this.hoverExpandTimer);
+        if (this.isHidden) {
+          this.hoverExpandTimer = setTimeout(() => this.show(), 200);
         }
-        toggleHide() {
-          if (this.isMaximized) return;
-          if (this.isHidden) this.show();
-          else this.hide();
-        }
-        /** 收缩为右侧 30px 边条（transform 平移属动态几何） */
-        hide() {
-          if (this.isHidden || this.isMaximized) return;
-          this.isHidden = true;
-          const rect = this.el.getBoundingClientRect();
-          this.el.style.transform = `translateX(${window.innerWidth - rect.left - 30}px)`;
-          this.syncHiddenUI(true);
-        }
-        show() {
-          if (!this.isHidden) return;
-          this.isHidden = false;
-          topifyZ(this.el);
-          this.el.style.transform = "translateX(0)";
-          this.syncHiddenUI(false);
-        }
-        /** 隐藏态 UI：标题/按钮/内容淡出只留 📖 边条标识（视觉切换收敛 CSS hidden 类） */
-        syncHiddenUI(hidden) {
-          this.el.classList.toggle("bz-sb-float-hidden", hidden);
-          this.hideBtn.textContent = hidden ? "▶️" : "◀️";
-          this.hideBtn.title = hidden ? "展开" : "隐藏到右侧";
-        }
-        close() {
-          var _a2, _b2;
-          if (this.closed || !this.alive) return;
-          this.closed = true;
-          this.el.style.opacity = "0";
-          if (this.hoverExpandTimer) clearTimeout(this.hoverExpandTimer);
-          this.detachFns.forEach((fn) => fn());
-          this.detachFns = [];
-          (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
-          this.escHandle = null;
-          setTimeout(() => this.el.remove(), 150);
-          (_b2 = this.onClose) == null ? void 0 : _b2.call(this);
-        }
-      };
+      });
+      this.el.addEventListener("mouseleave", () => {
+        if (this.hoverExpandTimer) clearTimeout(this.hoverExpandTimer);
+      });
+      this.escHandle = escManager.register("bz-sb-float-win", {
+        isVisible: () => !!this.el.isConnected,
+        close: () => this.close()
+      });
     }
-  });
+    get alive() {
+      return !!this.el.isConnected;
+    }
+    /** 展开等价于触发一次悬停（隐藏态 200ms 后弹出；QA L1237 同构） */
+    expand() {
+      this.el.dispatchEvent(new Event("mouseenter"));
+    }
+    /** 复位到右贴边基线：清空内联定位回归 CSS 基线 */
+    reset() {
+      const c = this.el;
+      c.style.right = "";
+      c.style.left = "";
+      c.style.top = "";
+      c.style.transform = "";
+      c.style.width = this.origWidth + "px";
+      c.style.height = window.innerHeight + "px";
+      c.classList.remove("bz-sb-float-max");
+      this.isMaximized = false;
+      this.isHidden = false;
+      this.syncHiddenUI(false);
+    }
+    toggleMaximize() {
+      const c = this.el;
+      if (!this.isMaximized) {
+        this.restoreRect = {
+          left: c.style.left,
+          top: c.style.top,
+          right: c.style.right,
+          width: c.style.width,
+          height: c.style.height,
+          transform: c.style.transform
+        };
+        c.style.left = "0";
+        c.style.top = "0";
+        c.style.right = "auto";
+        c.style.width = "100vw";
+        c.style.height = "100vh";
+        c.style.transform = "translateX(0)";
+        c.classList.add("bz-sb-float-max");
+        this.isMaximized = true;
+        this.isHidden = false;
+        this.syncHiddenUI(false);
+      } else {
+        const r = this.restoreRect;
+        if (r) {
+          c.style.left = r.left;
+          c.style.top = r.top;
+          c.style.right = r.right;
+          c.style.width = r.width;
+          c.style.height = r.height;
+          c.style.transform = r.transform || "translateX(0)";
+        }
+        c.classList.remove("bz-sb-float-max");
+        this.restoreRect = null;
+        this.isMaximized = false;
+      }
+    }
+    toggleHide() {
+      if (this.isMaximized) return;
+      if (this.isHidden) this.show();
+      else this.hide();
+    }
+    /** 收缩为右侧 30px 边条（transform 平移属动态几何） */
+    hide() {
+      if (this.isHidden || this.isMaximized) return;
+      this.isHidden = true;
+      const rect = this.el.getBoundingClientRect();
+      this.el.style.transform = `translateX(${window.innerWidth - rect.left - 30}px)`;
+      this.syncHiddenUI(true);
+    }
+    show() {
+      if (!this.isHidden) return;
+      this.isHidden = false;
+      topifyZ(this.el);
+      this.el.style.transform = "translateX(0)";
+      this.syncHiddenUI(false);
+    }
+    /** 隐藏态 UI：标题/按钮/内容淡出只留 📖 边条标识（视觉切换收敛 CSS hidden 类） */
+    syncHiddenUI(hidden) {
+      this.el.classList.toggle("bz-sb-float-hidden", hidden);
+      this.hideBtn.textContent = hidden ? "▶️" : "◀️";
+      this.hideBtn.title = hidden ? "展开" : "隐藏到右侧";
+    }
+    close() {
+      var _a2, _b2;
+      if (this.closed || !this.alive) return;
+      this.closed = true;
+      this.el.style.opacity = "0";
+      if (this.hoverExpandTimer) clearTimeout(this.hoverExpandTimer);
+      this.detachFns.forEach((fn) => fn());
+      this.detachFns = [];
+      (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
+      this.escHandle = null;
+      setTimeout(() => this.el.remove(), 150);
+      (_b2 = this.onClose) == null ? void 0 : _b2.call(this);
+    }
+  };
 
   // src/secondbrain/context.ts
   function getCurrentContext(ed) {
@@ -7546,852 +7158,801 @@ ${userMsg}`;
       return "";
     }
   }
-  var init_context = __esm({
-    "src/secondbrain/context.ts"() {
-    }
-  });
 
   // src/secondbrain/reference-panel.ts
-  var ReferencePanel;
-  var init_reference_panel = __esm({
-    "src/secondbrain/reference-panel.ts"() {
-      init_utils();
-      init_notice();
-      init_z_order();
-      init_float_window();
-      init_config();
-      init_context();
-      init_ui_tools();
-      init_render();
-      init_ui();
-      ReferencePanel = class {
-        constructor(app, store2, existingWin) {
-          this.lastQuery = "";
-          this.floatingCards = /* @__PURE__ */ new Set();
-          /** 密度态：false=标题+省略内容（默认），true=仅标题（会话内有效，不持久化） */
-          this.denseMode = false;
-          this.isClosed = false;
-          this.pollTimer = null;
-          this.debounceTimer = null;
-          this.hoverTimer = null;
-          this.lastCursor = null;
-          this.vaultRef = null;
-          this.leafRef = null;
-          this.editorRef = null;
-          /** 浮卡拖出跟随的 document 级监听卸载器（close 时兜底清理） */
-          this.activeFollows = /* @__PURE__ */ new Set();
-          /** 每张卡片的未决态清理器：列表整页重建/面板关闭前统一执行——长按计时器不得跨重建存活（左上角幽灵卡根因） */
-          this.cardTeardowns = /* @__PURE__ */ new Map();
-          /** 浮卡的拖拽/缩放 document 级监听卸载器：close 时对仍在漂浮的卡片兜底解绑 */
-          this.floatDetachers = /* @__PURE__ */ new Map();
-          this.app = app;
-          this.store = store2;
-          this.denseBtn = document.createElement("button");
-          this.denseBtn.className = "bz-sb-float-btn";
-          this.denseBtn.innerHTML = '<i data-lucide="file-text"></i>';
-          this.denseBtn.title = "切换：仅标题 / 标题+内容";
-          if (existingWin) {
-            this.fw = existingWin;
-            this.fw.headerRight.appendChild(this.denseBtn);
-          } else {
-            this.fw = new FloatWindow("灵感参考", { headerRight: this.denseBtn, onClose: () => this.destroyResources() });
-          }
-          this.denseBtn.addEventListener("click", () => this.toggleDensity());
-          mountIcons(this.denseBtn);
-          this.resultsDiv = document.createElement("div");
-          this.resultsDiv.className = "bz-sb-ref-list bz-sb-scroll-y";
-          this.fw.body.appendChild(this.resultsDiv);
-          try {
-            this.vaultRef = app.vault.on("modify", (f) => {
-              if (f.extension === "md") this.refreshWithDebounce();
-            });
-            this.leafRef = app.workspace.on("active-leaf-change", () => this.refreshWithDebounce());
-            this.editorRef = app.workspace.on("editor-change", () => this.refreshWithDebounce());
-          } catch (e) {
-          }
-          const CONFIG = buildConfig();
-          this.pollTimer = setInterval(() => {
-            var _a2;
-            if (!this.fw.alive || this.fw.isHidden) return;
-            const ed = (_a2 = app.workspace.activeEditor) == null ? void 0 : _a2.editor;
-            if (!ed) return;
-            const c = ed.getCursor();
-            const k = `${c.line}:${c.ch}`;
-            if (this.lastCursor !== k) {
-              this.lastCursor = k;
-              this.refreshWithDebounce();
-            }
-          }, CONFIG.CURSOR_POLL_INTERVAL);
+  var ReferencePanel = class {
+    constructor(app, store2, existingWin) {
+      this.lastQuery = "";
+      this.floatingCards = /* @__PURE__ */ new Set();
+      /** 密度态：false=标题+省略内容（默认），true=仅标题（会话内有效，不持久化） */
+      this.denseMode = false;
+      this.isClosed = false;
+      this.pollTimer = null;
+      this.debounceTimer = null;
+      this.hoverTimer = null;
+      this.lastCursor = null;
+      this.vaultRef = null;
+      this.leafRef = null;
+      this.editorRef = null;
+      /** 浮卡拖出跟随的 document 级监听卸载器（close 时兜底清理） */
+      this.activeFollows = /* @__PURE__ */ new Set();
+      /** 每张卡片的未决态清理器：列表整页重建/面板关闭前统一执行——长按计时器不得跨重建存活（左上角幽灵卡根因） */
+      this.cardTeardowns = /* @__PURE__ */ new Map();
+      /** 浮卡的拖拽/缩放 document 级监听卸载器：close 时对仍在漂浮的卡片兜底解绑 */
+      this.floatDetachers = /* @__PURE__ */ new Map();
+      this.app = app;
+      this.store = store2;
+      this.denseBtn = document.createElement("button");
+      this.denseBtn.className = "bz-sb-float-btn";
+      this.denseBtn.innerHTML = '<i data-lucide="file-text"></i>';
+      this.denseBtn.title = "切换：仅标题 / 标题+内容";
+      if (existingWin) {
+        this.fw = existingWin;
+        this.fw.headerRight.appendChild(this.denseBtn);
+      } else {
+        this.fw = new FloatWindow("灵感参考", { headerRight: this.denseBtn, onClose: () => this.destroyResources() });
+      }
+      this.denseBtn.addEventListener("click", () => this.toggleDensity());
+      mountIcons(this.denseBtn);
+      this.resultsDiv = document.createElement("div");
+      this.resultsDiv.className = "bz-sb-ref-list bz-sb-scroll-y";
+      this.fw.body.appendChild(this.resultsDiv);
+      try {
+        this.vaultRef = app.vault.on("modify", (f) => {
+          if (f.extension === "md") this.refreshWithDebounce();
+        });
+        this.leafRef = app.workspace.on("active-leaf-change", () => this.refreshWithDebounce());
+        this.editorRef = app.workspace.on("editor-change", () => this.refreshWithDebounce());
+      } catch (e) {
+      }
+      const CONFIG = buildConfig();
+      this.pollTimer = setInterval(() => {
+        var _a2;
+        if (!this.fw.alive || this.fw.isHidden) return;
+        const ed = (_a2 = app.workspace.activeEditor) == null ? void 0 : _a2.editor;
+        if (!ed) return;
+        const c = ed.getCursor();
+        const k = `${c.line}:${c.ch}`;
+        if (this.lastCursor !== k) {
+          this.lastCursor = k;
+          this.refreshWithDebounce();
         }
-        get alive() {
-          return !this.isClosed && this.fw.alive;
-        }
-        expand() {
-          this.fw.expand();
-        }
-        /** 密度切换（ticket 108）：📃 仅标题 / 📑 标题+省略内容；CSS 类整体切换，会话内有效 */
-        toggleDensity() {
-          this.denseMode = !this.denseMode;
-          this.resultsDiv.classList.toggle("bz-sb-ref-dense", this.denseMode);
-          this.denseBtn.innerHTML = `<i data-lucide="${this.denseMode ? "list-tree" : "file-text"}"></i>`;
-          mountIcons(this.denseBtn);
-          this.denseBtn.title = this.denseMode ? "切换：标题+内容" : "切换：仅标题";
-        }
-        refreshWithDebounce() {
-          if (this.isClosed) return;
-          if (this.debounceTimer) clearTimeout(this.debounceTimer);
-          const CONFIG = buildConfig();
-          this.debounceTimer = setTimeout(() => void this.refreshContent(), CONFIG.DEBOUNCE_DELAY);
-        }
-        async refreshContent() {
-          var _a2;
-          if (this.isClosed) return;
-          const ed = (_a2 = this.app.workspace.activeEditor) == null ? void 0 : _a2.editor;
-          if (!ed) {
-            this.resultsDiv.innerHTML = "";
-            return;
-          }
-          const query = getCurrentContext(ed);
-          if (query.length < 2 || query === this.lastQuery) return;
-          this.lastQuery = query;
-          this.showListState("检索中…");
-          let degraded = false;
-          try {
-            const CONFIG = buildConfig();
-            const results = await this.store.search(query, CONFIG.TOP_K, () => {
-              degraded = true;
-            });
-            if (this.isClosed) return;
-            this.renderResults(results);
-            if (degraded) this.appendListHint("⚠ 向量检索暂不可用，已降级为文本匹配");
-          } catch (err) {
-            console.warn("[secondbrain] 参考面板检索失败", err);
-            if (this.isClosed) return;
-            this.showListState("检索失败：请检查 Ollama 服务后重试");
-          }
-        }
-        /** [46] 列表整体占位/错误提示（loading / 失败态，复用空态样式） */
-        showListState(text) {
-          this.cancelPendingCardStates();
-          this.resultsDiv.innerHTML = "";
-          this.resultsDiv.insertAdjacentHTML("beforeend", refStateHtml(text));
-        }
-        /** [46] 降级脚注：不打断结果列表，在列表末追加一行说明 */
-        appendListHint(text) {
-          this.resultsDiv.insertAdjacentHTML("beforeend", refStateHtml(text));
-        }
-        renderResults(results) {
-          var _a2;
-          this.cancelPendingCardStates();
-          this.resultsDiv.innerHTML = "";
-          const currentPath = ((_a2 = this.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) || "";
-          const filtered = (results || []).filter((item) => item.path !== currentPath);
-          if (!filtered.length) {
-            const empty = document.createElement("div");
-            empty.className = "bz-sb-ref-empty";
-            empty.textContent = "暂无相关笔记";
-            this.resultsDiv.appendChild(empty);
-            return;
-          }
-          for (const item of filtered) {
-            this.createResultCard(item);
-          }
-        }
-        /** 列表重建/关闭前清场：取消所有卡片的未决长按与悬停计时（卡片即将被摘除，计时器不得存活） */
-        cancelPendingCardStates() {
-          for (const teardown of this.cardTeardowns.values()) teardown();
-          this.cardTeardowns.clear();
-          if (this.hoverTimer) clearTimeout(this.hoverTimer);
-          this.hoverTimer = null;
-        }
-        /** 单张卡片：悬停预览 / 双击跳转 / 长按浮出拖出独立浮卡 */
-        createResultCard(item) {
-          const panel2 = this;
-          const card = document.createElement("div");
-          card.className = "bz-sb-ref-card";
-          card.innerHTML = refCardHtml(stripMdExt(item.path.replace(/^.*[\\/]/, "")), Math.round(item.score * 100), "#a33d2a");
-          const topRow = card.querySelector(".bz-sb-ref-card-top");
-          const bodyDiv = card.querySelector(".bz-sb-ref-card-body");
-          renderMarkdown(bodyDiv, item.chunk, panel2.app);
-          panel2.resultsDiv.appendChild(card);
-          const isFloating = () => card.classList.contains("bz-sb-ref-card--float");
-          card.addEventListener("mouseenter", () => {
-            var _a2;
-            if (isFloating()) return;
-            clearTimeout((_a2 = panel2.hoverTimer) != null ? _a2 : void 0);
-            panel2.hoverTimer = setTimeout(() => {
-              if (isFloating() || !card.isConnected) return;
-              panel2.showHoverPreview(item, card);
-            }, 300);
-          });
-          card.addEventListener("mouseleave", () => {
-            var _a2;
-            clearTimeout((_a2 = panel2.hoverTimer) != null ? _a2 : void 0);
-            panel2.hoverTimer = null;
-            if (!isFloating()) panel2.hideHoverPreview();
-          });
-          card.addEventListener("dblclick", () => {
-            if (isFloating()) {
-              collapseCard();
-              return;
-            }
-            const file = panel2.app.vault.getAbstractFileByPath(item.path);
-            if (!file) {
-              notice("文件不存在");
-              return;
-            }
-            jumpToChunk(file, item.chunk.slice(0, 30).trim(), true);
-          });
-          let holdTimer = null;
-          let isHeld = false;
-          let holdStartX = 0;
-          let holdStartY = 0;
-          let detachDrag = null;
-          let detachResize = null;
-          let originalNext = null;
-          const cancelHold = () => {
-            if (holdTimer) clearTimeout(holdTimer);
-            holdTimer = null;
-            isHeld = false;
-            card.classList.remove("bz-sb-ref-card--held");
-          };
-          const attachFollow = (sx, sy) => {
-            const r = card.getBoundingClientRect();
-            const baseLeft = r.left;
-            const baseTop = r.top;
-            const move = (e) => {
-              card.style.left = Math.max(0, baseLeft + e.clientX - sx) + "px";
-              card.style.top = Math.max(0, baseTop + e.clientY - sy) + "px";
-            };
-            const detach = () => {
-              document.removeEventListener("mousemove", move);
-              document.removeEventListener("mouseup", up);
-              panel2.activeFollows.delete(detach);
-            };
-            const up = () => detach();
-            document.addEventListener("mousemove", move);
-            document.addEventListener("mouseup", up);
-            panel2.activeFollows.add(detach);
-          };
-          const floatCard = () => {
-            if (!card.isConnected || isFloating()) return;
-            card.classList.add("bz-sb-ref-card--float");
-            card.style.zIndex = String(allocZ());
-            panel2.floatingCards.add(card);
-            panel2.hideHoverPreview();
-            cancelHold();
-            const r = card.getBoundingClientRect();
-            card.style.position = "fixed";
-            card.style.left = r.left + "px";
-            card.style.top = r.top + "px";
-            card.style.width = r.width + "px";
-            originalNext = card.nextElementSibling;
-            document.body.appendChild(card);
-            topRow.classList.add("bz-sb-ref-card-top--grip");
-            detachDrag = makeDraggable(card, topRow);
-            detachResize = makeResizable(card, 180, 120);
-            panel2.floatDetachers.set(card, () => {
-              if (detachDrag) detachDrag();
-              if (detachResize) detachResize();
-            });
-          };
-          const collapseCard = () => {
-            card.classList.remove("bz-sb-ref-card--float");
-            panel2.floatingCards.delete(card);
-            if (detachDrag) detachDrag();
-            if (detachResize) detachResize();
-            detachDrag = null;
-            detachResize = null;
-            panel2.floatDetachers.delete(card);
-            topRow.classList.remove("bz-sb-ref-card-top--grip");
-            card.style.cssText = "";
-            if (originalNext && originalNext.parentNode === panel2.resultsDiv) {
-              panel2.resultsDiv.insertBefore(card, originalNext);
-            } else {
-              panel2.resultsDiv.appendChild(card);
-            }
-            originalNext = null;
-            card.classList.add("bz-sb-ref-card--return");
-            setTimeout(() => card.classList.remove("bz-sb-ref-card--return"), 400);
-          };
-          card.addEventListener("mousedown", (e) => {
-            if (isFloating() || e.button !== 0) return;
-            holdStartX = e.clientX;
-            holdStartY = e.clientY;
-            holdTimer = setTimeout(() => {
-              holdTimer = null;
-              if (!card.isConnected) return;
-              isHeld = true;
-              card.classList.add("bz-sb-ref-card--held");
-              panel2.hideHoverPreview();
-            }, 250);
-          });
-          card.addEventListener("mousemove", (e) => {
-            if (isFloating() || !card.isConnected) return;
-            if (!isHeld) {
-              if (holdTimer && (Math.abs(e.clientX - holdStartX) > 8 || Math.abs(e.clientY - holdStartY) > 8)) {
-                clearTimeout(holdTimer);
-                holdTimer = null;
-              }
-              return;
-            }
-            if (Math.abs(e.clientX - holdStartX) > 15 || Math.abs(e.clientY - holdStartY) > 15) {
-              floatCard();
-              attachFollow(e.clientX, e.clientY);
-            }
-          });
-          card.addEventListener("mouseup", () => {
-            if (isFloating()) return;
-            cancelHold();
-          });
-          card.addEventListener("mouseleave", () => {
-            if (isFloating()) return;
-            if (!card.isConnected) {
-              cancelHold();
-              return;
-            }
-            if (isHeld) {
-              cancelHold();
-              floatCard();
-            }
-          });
-          panel2.cardTeardowns.set(card, () => cancelHold());
-          return card;
-        }
-        /** 悬停预览：带路径与匹配度，按窄窗在屏左/右智能定位（QA L1599-1637） */
-        showHoverPreview(item, cardEl) {
-          this.hideHoverPreview();
-          const refRect = this.fw.el.getBoundingClientRect();
-          const cardRect = cardEl.getBoundingClientRect();
-          const isRightSide = refRect.left > window.innerWidth / 2;
-          const preview = document.createElement("div");
-          preview.className = "bz-sb-ref-preview";
-          preview.style.zIndex = String(allocZ());
-          const PW = 460;
-          let left = isRightSide ? refRect.left - (PW + 8) : refRect.right + 8;
-          left = Math.max(8, Math.min(left, window.innerWidth - PW - 8));
-          preview.style.left = left + "px";
-          this.clampPreviewTop(preview, cardRect.top - 20);
-          const pathLabel = document.createElement("div");
-          pathLabel.className = "bz-sb-ref-preview-path";
-          pathLabel.textContent = item.path;
-          const scoreLabel = document.createElement("div");
-          scoreLabel.className = "bz-sb-ref-preview-score";
-          scoreLabel.textContent = `匹配度 ${Math.round(item.score * 100)}%`;
-          const bodyDiv = document.createElement("div");
-          bodyDiv.className = "bz-sb-ref-preview-body";
-          renderMarkdown(bodyDiv, item.chunk, this.app);
-          preview.appendChild(pathLabel);
-          preview.appendChild(scoreLabel);
-          preview.appendChild(bodyDiv);
-          document.body.appendChild(preview);
-          setTimeout(() => {
-            if (preview.isConnected) this.clampPreviewTop(preview, cardRect.top - 20);
-          }, 120);
-        }
-        /** 不限高随内容生长（ticket 109）：top 钳制进视口，尽量多显示全文 */
-        clampPreviewTop(preview, desiredTop) {
-          const maxTop = window.innerHeight - preview.offsetHeight - 10;
-          preview.style.top = Math.max(10, Math.min(desiredTop, maxTop)) + "px";
-        }
-        hideHoverPreview() {
-          var _a2;
-          document.querySelectorAll(".bz-sb-ref-preview").forEach((el) => el.remove());
-          clearTimeout((_a2 = this.hoverTimer) != null ? _a2 : void 0);
-          this.hoverTimer = null;
-        }
-        /** 关闭并释放全部资源（幂等） */
-        close() {
-          this.destroyResources();
-          this.fw.close();
-        }
-        destroyResources() {
-          var _a2, _b2;
-          if (this.isClosed) return;
-          this.isClosed = true;
-          clearTimeout((_a2 = this.debounceTimer) != null ? _a2 : void 0);
-          clearInterval((_b2 = this.pollTimer) != null ? _b2 : void 0);
-          this.debounceTimer = null;
-          this.pollTimer = null;
-          if (this.vaultRef || this.leafRef || this.editorRef) {
-            try {
-              if (this.vaultRef) this.app.vault.offref(this.vaultRef);
-              if (this.leafRef) this.app.workspace.offref(this.leafRef);
-              if (this.editorRef) this.app.workspace.offref(this.editorRef);
-            } catch (e) {
-            }
-          }
-          this.cancelPendingCardStates();
-          this.hideHoverPreview();
-          for (const detach of this.activeFollows) detach();
-          this.activeFollows.clear();
-          for (const detach of this.floatDetachers.values()) detach();
-          this.floatDetachers.clear();
-          for (const fc of this.floatingCards) fc.remove();
-          this.floatingCards.clear();
-        }
-      };
+      }, CONFIG.CURSOR_POLL_INTERVAL);
     }
-  });
+    get alive() {
+      return !this.isClosed && this.fw.alive;
+    }
+    expand() {
+      this.fw.expand();
+    }
+    /** 密度切换（ticket 108）：📃 仅标题 / 📑 标题+省略内容；CSS 类整体切换，会话内有效 */
+    toggleDensity() {
+      this.denseMode = !this.denseMode;
+      this.resultsDiv.classList.toggle("bz-sb-ref-dense", this.denseMode);
+      this.denseBtn.innerHTML = `<i data-lucide="${this.denseMode ? "list-tree" : "file-text"}"></i>`;
+      mountIcons(this.denseBtn);
+      this.denseBtn.title = this.denseMode ? "切换：标题+内容" : "切换：仅标题";
+    }
+    refreshWithDebounce() {
+      if (this.isClosed) return;
+      if (this.debounceTimer) clearTimeout(this.debounceTimer);
+      const CONFIG = buildConfig();
+      this.debounceTimer = setTimeout(() => void this.refreshContent(), CONFIG.DEBOUNCE_DELAY);
+    }
+    async refreshContent() {
+      var _a2;
+      if (this.isClosed) return;
+      const ed = (_a2 = this.app.workspace.activeEditor) == null ? void 0 : _a2.editor;
+      if (!ed) {
+        this.resultsDiv.innerHTML = "";
+        return;
+      }
+      const query = getCurrentContext(ed);
+      if (query.length < 2 || query === this.lastQuery) return;
+      this.lastQuery = query;
+      this.showListState("检索中…");
+      let degraded = false;
+      try {
+        const CONFIG = buildConfig();
+        const results = await this.store.search(query, CONFIG.TOP_K, () => {
+          degraded = true;
+        });
+        if (this.isClosed) return;
+        this.renderResults(results);
+        if (degraded) this.appendListHint("⚠ 向量检索暂不可用，已降级为文本匹配");
+      } catch (err) {
+        console.warn("[secondbrain] 参考面板检索失败", err);
+        if (this.isClosed) return;
+        this.showListState("检索失败：请检查 Ollama 服务后重试");
+      }
+    }
+    /** [46] 列表整体占位/错误提示（loading / 失败态，复用空态样式） */
+    showListState(text) {
+      this.cancelPendingCardStates();
+      this.resultsDiv.innerHTML = "";
+      this.resultsDiv.insertAdjacentHTML("beforeend", refStateHtml(text));
+    }
+    /** [46] 降级脚注：不打断结果列表，在列表末追加一行说明 */
+    appendListHint(text) {
+      this.resultsDiv.insertAdjacentHTML("beforeend", refStateHtml(text));
+    }
+    renderResults(results) {
+      var _a2;
+      this.cancelPendingCardStates();
+      this.resultsDiv.innerHTML = "";
+      const currentPath = ((_a2 = this.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) || "";
+      const filtered = (results || []).filter((item) => item.path !== currentPath);
+      if (!filtered.length) {
+        const empty = document.createElement("div");
+        empty.className = "bz-sb-ref-empty";
+        empty.textContent = "暂无相关笔记";
+        this.resultsDiv.appendChild(empty);
+        return;
+      }
+      for (const item of filtered) {
+        this.createResultCard(item);
+      }
+    }
+    /** 列表重建/关闭前清场：取消所有卡片的未决长按与悬停计时（卡片即将被摘除，计时器不得存活） */
+    cancelPendingCardStates() {
+      for (const teardown of this.cardTeardowns.values()) teardown();
+      this.cardTeardowns.clear();
+      if (this.hoverTimer) clearTimeout(this.hoverTimer);
+      this.hoverTimer = null;
+    }
+    /** 单张卡片：悬停预览 / 双击跳转 / 长按浮出拖出独立浮卡 */
+    createResultCard(item) {
+      const panel2 = this;
+      const card = document.createElement("div");
+      card.className = "bz-sb-ref-card";
+      card.innerHTML = refCardHtml(stripMdExt(item.path.replace(/^.*[\\/]/, "")), Math.round(item.score * 100), "#a33d2a");
+      const topRow = card.querySelector(".bz-sb-ref-card-top");
+      const bodyDiv = card.querySelector(".bz-sb-ref-card-body");
+      renderMarkdown(bodyDiv, item.chunk, panel2.app);
+      panel2.resultsDiv.appendChild(card);
+      const isFloating = () => card.classList.contains("bz-sb-ref-card--float");
+      card.addEventListener("mouseenter", () => {
+        var _a2;
+        if (isFloating()) return;
+        clearTimeout((_a2 = panel2.hoverTimer) != null ? _a2 : void 0);
+        panel2.hoverTimer = setTimeout(() => {
+          if (isFloating() || !card.isConnected) return;
+          panel2.showHoverPreview(item, card);
+        }, 300);
+      });
+      card.addEventListener("mouseleave", () => {
+        var _a2;
+        clearTimeout((_a2 = panel2.hoverTimer) != null ? _a2 : void 0);
+        panel2.hoverTimer = null;
+        if (!isFloating()) panel2.hideHoverPreview();
+      });
+      card.addEventListener("dblclick", () => {
+        if (isFloating()) {
+          collapseCard();
+          return;
+        }
+        const file = panel2.app.vault.getAbstractFileByPath(item.path);
+        if (!file) {
+          notice("文件不存在");
+          return;
+        }
+        jumpToChunk(file, item.chunk.slice(0, 30).trim(), true);
+      });
+      let holdTimer = null;
+      let isHeld = false;
+      let holdStartX = 0;
+      let holdStartY = 0;
+      let detachDrag = null;
+      let detachResize = null;
+      let originalNext = null;
+      const cancelHold = () => {
+        if (holdTimer) clearTimeout(holdTimer);
+        holdTimer = null;
+        isHeld = false;
+        card.classList.remove("bz-sb-ref-card--held");
+      };
+      const attachFollow = (sx, sy) => {
+        const r = card.getBoundingClientRect();
+        const baseLeft = r.left;
+        const baseTop = r.top;
+        const move = (e) => {
+          card.style.left = Math.max(0, baseLeft + e.clientX - sx) + "px";
+          card.style.top = Math.max(0, baseTop + e.clientY - sy) + "px";
+        };
+        const detach = () => {
+          document.removeEventListener("mousemove", move);
+          document.removeEventListener("mouseup", up);
+          panel2.activeFollows.delete(detach);
+        };
+        const up = () => detach();
+        document.addEventListener("mousemove", move);
+        document.addEventListener("mouseup", up);
+        panel2.activeFollows.add(detach);
+      };
+      const floatCard = () => {
+        if (!card.isConnected || isFloating()) return;
+        card.classList.add("bz-sb-ref-card--float");
+        card.style.zIndex = String(allocZ());
+        panel2.floatingCards.add(card);
+        panel2.hideHoverPreview();
+        cancelHold();
+        const r = card.getBoundingClientRect();
+        card.style.position = "fixed";
+        card.style.left = r.left + "px";
+        card.style.top = r.top + "px";
+        card.style.width = r.width + "px";
+        originalNext = card.nextElementSibling;
+        document.body.appendChild(card);
+        topRow.classList.add("bz-sb-ref-card-top--grip");
+        detachDrag = makeDraggable(card, topRow);
+        detachResize = makeResizable(card, 180, 120);
+        panel2.floatDetachers.set(card, () => {
+          if (detachDrag) detachDrag();
+          if (detachResize) detachResize();
+        });
+      };
+      const collapseCard = () => {
+        card.classList.remove("bz-sb-ref-card--float");
+        panel2.floatingCards.delete(card);
+        if (detachDrag) detachDrag();
+        if (detachResize) detachResize();
+        detachDrag = null;
+        detachResize = null;
+        panel2.floatDetachers.delete(card);
+        topRow.classList.remove("bz-sb-ref-card-top--grip");
+        card.style.cssText = "";
+        if (originalNext && originalNext.parentNode === panel2.resultsDiv) {
+          panel2.resultsDiv.insertBefore(card, originalNext);
+        } else {
+          panel2.resultsDiv.appendChild(card);
+        }
+        originalNext = null;
+        card.classList.add("bz-sb-ref-card--return");
+        setTimeout(() => card.classList.remove("bz-sb-ref-card--return"), 400);
+      };
+      card.addEventListener("mousedown", (e) => {
+        if (isFloating() || e.button !== 0) return;
+        holdStartX = e.clientX;
+        holdStartY = e.clientY;
+        holdTimer = setTimeout(() => {
+          holdTimer = null;
+          if (!card.isConnected) return;
+          isHeld = true;
+          card.classList.add("bz-sb-ref-card--held");
+          panel2.hideHoverPreview();
+        }, 250);
+      });
+      card.addEventListener("mousemove", (e) => {
+        if (isFloating() || !card.isConnected) return;
+        if (!isHeld) {
+          if (holdTimer && (Math.abs(e.clientX - holdStartX) > 8 || Math.abs(e.clientY - holdStartY) > 8)) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+          }
+          return;
+        }
+        if (Math.abs(e.clientX - holdStartX) > 15 || Math.abs(e.clientY - holdStartY) > 15) {
+          floatCard();
+          attachFollow(e.clientX, e.clientY);
+        }
+      });
+      card.addEventListener("mouseup", () => {
+        if (isFloating()) return;
+        cancelHold();
+      });
+      card.addEventListener("mouseleave", () => {
+        if (isFloating()) return;
+        if (!card.isConnected) {
+          cancelHold();
+          return;
+        }
+        if (isHeld) {
+          cancelHold();
+          floatCard();
+        }
+      });
+      panel2.cardTeardowns.set(card, () => cancelHold());
+      return card;
+    }
+    /** 悬停预览：带路径与匹配度，按窄窗在屏左/右智能定位（QA L1599-1637） */
+    showHoverPreview(item, cardEl) {
+      this.hideHoverPreview();
+      const refRect = this.fw.el.getBoundingClientRect();
+      const cardRect = cardEl.getBoundingClientRect();
+      const isRightSide = refRect.left > window.innerWidth / 2;
+      const preview = document.createElement("div");
+      preview.className = "bz-sb-ref-preview";
+      preview.style.zIndex = String(allocZ());
+      const PW = 460;
+      let left = isRightSide ? refRect.left - (PW + 8) : refRect.right + 8;
+      left = Math.max(8, Math.min(left, window.innerWidth - PW - 8));
+      preview.style.left = left + "px";
+      this.clampPreviewTop(preview, cardRect.top - 20);
+      const pathLabel = document.createElement("div");
+      pathLabel.className = "bz-sb-ref-preview-path";
+      pathLabel.textContent = item.path;
+      const scoreLabel = document.createElement("div");
+      scoreLabel.className = "bz-sb-ref-preview-score";
+      scoreLabel.textContent = `匹配度 ${Math.round(item.score * 100)}%`;
+      const bodyDiv = document.createElement("div");
+      bodyDiv.className = "bz-sb-ref-preview-body";
+      renderMarkdown(bodyDiv, item.chunk, this.app);
+      preview.appendChild(pathLabel);
+      preview.appendChild(scoreLabel);
+      preview.appendChild(bodyDiv);
+      document.body.appendChild(preview);
+      setTimeout(() => {
+        if (preview.isConnected) this.clampPreviewTop(preview, cardRect.top - 20);
+      }, 120);
+    }
+    /** 不限高随内容生长（ticket 109）：top 钳制进视口，尽量多显示全文 */
+    clampPreviewTop(preview, desiredTop) {
+      const maxTop = window.innerHeight - preview.offsetHeight - 10;
+      preview.style.top = Math.max(10, Math.min(desiredTop, maxTop)) + "px";
+    }
+    hideHoverPreview() {
+      var _a2;
+      document.querySelectorAll(".bz-sb-ref-preview").forEach((el) => el.remove());
+      clearTimeout((_a2 = this.hoverTimer) != null ? _a2 : void 0);
+      this.hoverTimer = null;
+    }
+    /** 关闭并释放全部资源（幂等） */
+    close() {
+      this.destroyResources();
+      this.fw.close();
+    }
+    destroyResources() {
+      var _a2, _b2;
+      if (this.isClosed) return;
+      this.isClosed = true;
+      clearTimeout((_a2 = this.debounceTimer) != null ? _a2 : void 0);
+      clearInterval((_b2 = this.pollTimer) != null ? _b2 : void 0);
+      this.debounceTimer = null;
+      this.pollTimer = null;
+      if (this.vaultRef || this.leafRef || this.editorRef) {
+        try {
+          if (this.vaultRef) this.app.vault.offref(this.vaultRef);
+          if (this.leafRef) this.app.workspace.offref(this.leafRef);
+          if (this.editorRef) this.app.workspace.offref(this.editorRef);
+        } catch (e) {
+        }
+      }
+      this.cancelPendingCardStates();
+      this.hideHoverPreview();
+      for (const detach of this.activeFollows) detach();
+      this.activeFollows.clear();
+      for (const detach of this.floatDetachers.values()) detach();
+      this.floatDetachers.clear();
+      for (const fc of this.floatingCards) fc.remove();
+      this.floatingCards.clear();
+    }
+  };
 
   // src/secondbrain/mobile-panel.ts
-  var SNAP_MID, SNAP_HIGH, COLLAPSE_THRESHOLD, MobilePanel;
-  var init_mobile_panel = __esm({
-    "src/secondbrain/mobile-panel.ts"() {
-      init_utils();
-      init_esc_manager();
-      init_notice();
-      init_ui();
-      init_config();
-      init_z_order();
-      init_context();
-      init_ui_tools();
-      init_ai2();
-      init_render();
-      init_store_file();
-      SNAP_MID = 45;
-      SNAP_HIGH = 75;
-      COLLAPSE_THRESHOLD = 18;
-      MobilePanel = class {
-        constructor(app, store2) {
-          this.mode = "ref";
-          this.collapsed = false;
-          this.chatHistory = [];
-          this.refResults = [];
-          /** 检索失败提示（ticket 141：不再吞错成「暂无相关笔记」，与桌面参考面板同款文案与形态；成功检索后清空） */
-          this.refError = null;
-          this.chatMessagesDiv = null;
-          this.cursorPoll = null;
-          this.debounceTimer = null;
-          this.evLeaf = null;
-          this.escHandle = null;
-          this.lastCursor = null;
-          this.lastQuery = "";
-          var _a2;
-          this.app = app;
-          this.store = store2;
-          const CONFIG = buildConfig();
-          this.sheet = document.createElement("div");
-          this.sheet.className = "bz-sb-mb-sheet";
-          const topbar = document.createElement("div");
-          topbar.className = "bz-sb-mb-topbar";
-          this.pillRef = document.createElement("button");
-          this.pillRef.className = "bz-sb-mb-pill active";
-          this.pillRef.title = "参考";
-          this.pillRef.setAttribute("aria-label", "参考");
-          this.pillRef.innerHTML = '<i data-lucide="radar"></i>';
-          this.pillChat = document.createElement("button");
-          this.pillChat.className = "bz-sb-mb-pill";
-          this.pillChat.title = "AI";
-          this.pillChat.setAttribute("aria-label", "AI");
-          this.pillChat.innerHTML = '<i data-lucide="message-square"></i>';
-          const dragStrip = document.createElement("div");
-          dragStrip.className = "bz-sb-mb-drag-strip";
-          const dragDot = document.createElement("div");
-          dragDot.className = "bz-sb-mb-drag-dot";
-          dragStrip.appendChild(dragDot);
-          topbar.appendChild(this.pillRef);
-          topbar.appendChild(dragStrip);
-          topbar.appendChild(this.pillChat);
-          this.sheet.appendChild(topbar);
-          mountIcons(topbar);
-          this.body = document.createElement("div");
-          this.body.className = "bz-sb-mb-body bz-sb-scroll-y";
-          this.sheet.appendChild(this.body);
-          this.mini = document.createElement("div");
-          this.mini.className = "bz-sb-mb-mini";
-          const miniDot = document.createElement("span");
-          miniDot.className = "bz-sb-mb-mini-dot";
-          const miniLabel = document.createElement("span");
-          miniLabel.className = "bz-sb-mb-mini-label";
-          miniLabel.textContent = "参考";
-          this.mini.appendChild(miniDot);
-          this.mini.appendChild(miniLabel);
-          document.body.appendChild(this.sheet);
-          document.body.appendChild(this.mini);
-          this.pillRef.addEventListener("click", () => this.switchTab("ref"));
-          this.pillChat.addEventListener("click", () => this.switchTab("chat"));
-          this.mini.addEventListener("click", () => this.expand());
-          void store2.initMobile().catch((e) => console.warn("[secondbrain] initMobile 失败", e));
-          this.escHandle = escManager.register("bz-sb-mb-sheet", {
-            isVisible: () => !this.collapsed && !!this.sheet.isConnected,
-            close: () => this.collapse()
-          });
-          let dragging = false;
-          let dragStartY = 0;
-          let dragStartH = 0;
-          topbar.addEventListener(
-            "touchstart",
-            (e) => {
-              if (this.collapsed) return;
-              dragging = true;
-              dragStartY = e.touches[0].clientY;
-              dragStartH = this.sheet.getBoundingClientRect().height;
-              this.sheet.classList.add("bz-sb-mb-dragging");
-            },
-            { passive: true }
-          );
-          this.onTouchMove = (e) => {
-            if (!dragging) return;
-            const dy = dragStartY - e.touches[0].clientY;
-            const vh = window.innerHeight;
-            const pct = Math.max(6, Math.min(88, (dragStartH + dy) / vh * 100));
-            this.sheet.style.height = pct + "vh";
-          };
-          this.onTouchEnd = () => {
-            if (!dragging) return;
-            dragging = false;
-            this.sheet.classList.remove("bz-sb-mb-dragging");
-            const pct = this.sheet.getBoundingClientRect().height / window.innerHeight * 100;
-            if (pct < COLLAPSE_THRESHOLD) {
-              this.collapse();
-              return;
-            }
-            const closest = Math.abs(SNAP_MID - pct) <= Math.abs(SNAP_HIGH - pct) ? SNAP_MID : SNAP_HIGH;
-            this.sheet.style.height = closest + "vh";
-          };
-          document.addEventListener("touchmove", this.onTouchMove, { passive: true });
-          document.addEventListener("touchend", this.onTouchEnd);
-          this.cursorPoll = setInterval(() => {
-            if (this.collapsed) return;
-            this.checkCursor();
-          }, CONFIG.CURSOR_POLL_INTERVAL);
-          try {
-            this.evLeaf = app.workspace.on("active-leaf-change", () => this.checkCursor());
-          } catch (e) {
+  var SNAP_MID = 45;
+  var SNAP_HIGH = 75;
+  var COLLAPSE_THRESHOLD = 18;
+  var MobilePanel = class {
+    constructor(app, store2) {
+      this.mode = "ref";
+      this.collapsed = false;
+      this.chatHistory = [];
+      this.refResults = [];
+      /** 检索失败提示（ticket 141：不再吞错成「暂无相关笔记」，与桌面参考面板同款文案与形态；成功检索后清空） */
+      this.refError = null;
+      this.chatMessagesDiv = null;
+      this.cursorPoll = null;
+      this.debounceTimer = null;
+      this.evLeaf = null;
+      this.escHandle = null;
+      this.lastCursor = null;
+      this.lastQuery = "";
+      var _a2;
+      this.app = app;
+      this.store = store2;
+      const CONFIG = buildConfig();
+      this.sheet = document.createElement("div");
+      this.sheet.className = "bz-sb-mb-sheet";
+      const topbar = document.createElement("div");
+      topbar.className = "bz-sb-mb-topbar";
+      this.pillRef = document.createElement("button");
+      this.pillRef.className = "bz-sb-mb-pill active";
+      this.pillRef.title = "参考";
+      this.pillRef.setAttribute("aria-label", "参考");
+      this.pillRef.innerHTML = '<i data-lucide="radar"></i>';
+      this.pillChat = document.createElement("button");
+      this.pillChat.className = "bz-sb-mb-pill";
+      this.pillChat.title = "AI";
+      this.pillChat.setAttribute("aria-label", "AI");
+      this.pillChat.innerHTML = '<i data-lucide="message-square"></i>';
+      const dragStrip = document.createElement("div");
+      dragStrip.className = "bz-sb-mb-drag-strip";
+      const dragDot = document.createElement("div");
+      dragDot.className = "bz-sb-mb-drag-dot";
+      dragStrip.appendChild(dragDot);
+      topbar.appendChild(this.pillRef);
+      topbar.appendChild(dragStrip);
+      topbar.appendChild(this.pillChat);
+      this.sheet.appendChild(topbar);
+      mountIcons(topbar);
+      this.body = document.createElement("div");
+      this.body.className = "bz-sb-mb-body bz-sb-scroll-y";
+      this.sheet.appendChild(this.body);
+      this.mini = document.createElement("div");
+      this.mini.className = "bz-sb-mb-mini";
+      const miniDot = document.createElement("span");
+      miniDot.className = "bz-sb-mb-mini-dot";
+      const miniLabel = document.createElement("span");
+      miniLabel.className = "bz-sb-mb-mini-label";
+      miniLabel.textContent = "参考";
+      this.mini.appendChild(miniDot);
+      this.mini.appendChild(miniLabel);
+      document.body.appendChild(this.sheet);
+      document.body.appendChild(this.mini);
+      this.pillRef.addEventListener("click", () => this.switchTab("ref"));
+      this.pillChat.addEventListener("click", () => this.switchTab("chat"));
+      this.mini.addEventListener("click", () => this.expand());
+      void store2.initMobile().catch((e) => console.warn("[secondbrain] initMobile 失败", e));
+      this.escHandle = escManager.register("bz-sb-mb-sheet", {
+        isVisible: () => !this.collapsed && !!this.sheet.isConnected,
+        close: () => this.collapse()
+      });
+      let dragging = false;
+      let dragStartY = 0;
+      let dragStartH = 0;
+      topbar.addEventListener(
+        "touchstart",
+        (e) => {
+          if (this.collapsed) return;
+          dragging = true;
+          dragStartY = e.touches[0].clientY;
+          dragStartH = this.sheet.getBoundingClientRect().height;
+          this.sheet.classList.add("bz-sb-mb-dragging");
+        },
+        { passive: true }
+      );
+      this.onTouchMove = (e) => {
+        if (!dragging) return;
+        const dy = dragStartY - e.touches[0].clientY;
+        const vh = window.innerHeight;
+        const pct = Math.max(6, Math.min(88, (dragStartH + dy) / vh * 100));
+        this.sheet.style.height = pct + "vh";
+      };
+      this.onTouchEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        this.sheet.classList.remove("bz-sb-mb-dragging");
+        const pct = this.sheet.getBoundingClientRect().height / window.innerHeight * 100;
+        if (pct < COLLAPSE_THRESHOLD) {
+          this.collapse();
+          return;
+        }
+        const closest = Math.abs(SNAP_MID - pct) <= Math.abs(SNAP_HIGH - pct) ? SNAP_MID : SNAP_HIGH;
+        this.sheet.style.height = closest + "vh";
+      };
+      document.addEventListener("touchmove", this.onTouchMove, { passive: true });
+      document.addEventListener("touchend", this.onTouchEnd);
+      this.cursorPoll = setInterval(() => {
+        if (this.collapsed) return;
+        this.checkCursor();
+      }, CONFIG.CURSOR_POLL_INTERVAL);
+      try {
+        this.evLeaf = app.workspace.on("active-leaf-change", () => this.checkCursor());
+      } catch (e) {
+      }
+      this.onSelectionChange = () => {
+        setTimeout(() => this.checkCursor(), 50);
+      };
+      document.addEventListener("selectionchange", this.onSelectionChange);
+      this.renderBody();
+      if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => this.expand());
+      else this.expand();
+      const initEd = (_a2 = app.workspace.activeEditor) == null ? void 0 : _a2.editor;
+      if (initEd) {
+        const q = getCurrentContext(initEd);
+        if (q.length >= 2) {
+          this.lastQuery = q;
+          const c = initEd.getCursor();
+          this.lastCursor = `${c.line}:${c.ch}`;
+          void this.refreshResults(q);
+        }
+      }
+      void loadChatHistory(app).then((entries) => {
+        if (!entries.length) return;
+        this.chatHistory = entries.slice(-buildConfig().MAX_HISTORY * 2);
+        if (this.mode === "chat") this.renderBody();
+      }).catch(() => {
+      });
+    }
+    get alive() {
+      return !!this.sheet.isConnected;
+    }
+    /** 展开抽屉（expand 的对外别名，与 FloatWindow.show 语义对齐，index 接线使用） */
+    show() {
+      this.expand();
+    }
+    /** 展开（45vh），隐藏 mini */
+    expand() {
+      this.collapsed = false;
+      topifyZ(this.sheet);
+      this.sheet.classList.remove("bz-sb-mb-dragging");
+      this.sheet.style.height = SNAP_MID + "vh";
+      this.sheet.classList.add("bz-sb-mb-open");
+      this.mini.classList.remove("bz-sb-mb-visible");
+    }
+    /** 收起为底部 mini 胶囊 */
+    collapse() {
+      this.collapsed = true;
+      this.sheet.classList.remove("bz-sb-mb-open");
+      this.sheet.classList.remove("bz-sb-mb-dragging");
+      topifyZ(this.mini);
+      this.mini.classList.add("bz-sb-mb-visible");
+    }
+    updateMiniLabel() {
+      const label = this.mini.querySelector(".bz-sb-mb-mini-label");
+      if (label) label.textContent = this.mode === "ref" ? "参考" : "AI";
+    }
+    switchTab(tab) {
+      this.mode = tab;
+      this.pillRef.classList.toggle("active", tab === "ref");
+      this.pillChat.classList.toggle("active", tab === "chat");
+      this.updateMiniLabel();
+      this.renderBody();
+    }
+    /** 光标变化 → 防抖 → 上下文变化才重新检索（QA L2016-2031） */
+    checkCursor() {
+      var _a2, _b2;
+      const ed = (_a2 = this.app.workspace.activeEditor) == null ? void 0 : _a2.editor;
+      if (!ed) return;
+      const c = ed.getCursor();
+      const k = `${c.line}:${c.ch}`;
+      if (this.lastCursor === k) return;
+      this.lastCursor = k;
+      clearTimeout((_b2 = this.debounceTimer) != null ? _b2 : void 0);
+      this.debounceTimer = setTimeout(() => {
+        void (async () => {
+          const q = getCurrentContext(ed);
+          if (q === this.lastQuery) return;
+          this.lastQuery = q;
+          await this.refreshResults(q);
+        })();
+      }, buildConfig().DEBOUNCE_DELAY);
+    }
+    async refreshResults(query) {
+      const CONFIG = buildConfig();
+      if (!query || query.length < 2) {
+        this.refResults = [];
+        this.refError = null;
+        if (this.mode === "ref") this.renderRefTab();
+        return;
+      }
+      try {
+        this.refResults = await this.store.searchMobile(query, CONFIG.TOP_K);
+        this.refError = null;
+      } catch (e) {
+        console.warn("[secondbrain] 移动端检索失败", e);
+        this.refResults = [];
+        this.refError = "检索失败：请检查 Ollama 服务后重试";
+      }
+      if (this.mode === "ref") this.renderRefTab();
+    }
+    renderBody() {
+      this.body.innerHTML = "";
+      if (this.mode === "ref") this.renderRefTab();
+      else this.renderChatTab();
+    }
+    /** 参考 tab：过滤当前文件 + 单击懒渲染展开 + 长按震动跳转并收起（QA L2050-2100） */
+    renderRefTab() {
+      var _a2;
+      this.body.innerHTML = "";
+      const currentPath = ((_a2 = this.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) || "";
+      const filtered = this.refResults.filter((r) => r.path !== currentPath);
+      if (!filtered.length) {
+        const empty = document.createElement("div");
+        empty.className = "bz-sb-mb-empty";
+        empty.textContent = this.refError || "暂无相关笔记";
+        this.body.appendChild(empty);
+        return;
+      }
+      for (const item of filtered) {
+        const card = document.createElement("div");
+        card.className = "bz-sb-mb-card";
+        const topRow = document.createElement("div");
+        topRow.className = "bz-sb-mb-card-top";
+        const pathDiv = document.createElement("div");
+        pathDiv.className = "bz-sb-mb-card-path";
+        pathDiv.textContent = stripMdExt(item.path.replace(/^.*[\\/]/, ""));
+        const scoreDiv = document.createElement("div");
+        scoreDiv.className = "bz-sb-mb-card-score";
+        scoreDiv.textContent = `${Math.round(item.score * 100)}%`;
+        topRow.appendChild(pathDiv);
+        topRow.appendChild(scoreDiv);
+        card.appendChild(topRow);
+        const bar = document.createElement("div");
+        bar.className = "bz-sb-mb-card-bar";
+        const barFill = document.createElement("span");
+        barFill.style.width = `${Math.round(item.score * 100)}%`;
+        bar.appendChild(barFill);
+        card.appendChild(bar);
+        const chunkDiv = document.createElement("div");
+        chunkDiv.className = "bz-sb-mb-card-chunk";
+        card.appendChild(chunkDiv);
+        this.body.appendChild(card);
+        let expanded = false;
+        let rendered = false;
+        card.addEventListener("click", () => {
+          expanded = !expanded;
+          if (expanded && !rendered) {
+            chunkDiv.innerHTML = "";
+            renderMarkdown(chunkDiv, item.chunk, this.app);
+            rendered = true;
           }
-          this.onSelectionChange = () => {
-            setTimeout(() => this.checkCursor(), 50);
-          };
-          document.addEventListener("selectionchange", this.onSelectionChange);
-          this.renderBody();
-          if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => this.expand());
-          else this.expand();
-          const initEd = (_a2 = app.workspace.activeEditor) == null ? void 0 : _a2.editor;
-          if (initEd) {
-            const q = getCurrentContext(initEd);
-            if (q.length >= 2) {
-              this.lastQuery = q;
-              const c = initEd.getCursor();
-              this.lastCursor = `${c.line}:${c.ch}`;
-              void this.refreshResults(q);
-            }
-          }
-          void loadChatHistory(app).then((entries) => {
-            if (!entries.length) return;
-            this.chatHistory = entries.slice(-buildConfig().MAX_HISTORY * 2);
-            if (this.mode === "chat") this.renderBody();
-          }).catch(() => {
-          });
-        }
-        get alive() {
-          return !!this.sheet.isConnected;
-        }
-        /** 展开抽屉（expand 的对外别名，与 FloatWindow.show 语义对齐，index 接线使用） */
-        show() {
-          this.expand();
-        }
-        /** 展开（45vh），隐藏 mini */
-        expand() {
-          this.collapsed = false;
-          topifyZ(this.sheet);
-          this.sheet.classList.remove("bz-sb-mb-dragging");
-          this.sheet.style.height = SNAP_MID + "vh";
-          this.sheet.classList.add("bz-sb-mb-open");
-          this.mini.classList.remove("bz-sb-mb-visible");
-        }
-        /** 收起为底部 mini 胶囊 */
-        collapse() {
-          this.collapsed = true;
-          this.sheet.classList.remove("bz-sb-mb-open");
-          this.sheet.classList.remove("bz-sb-mb-dragging");
-          topifyZ(this.mini);
-          this.mini.classList.add("bz-sb-mb-visible");
-        }
-        updateMiniLabel() {
-          const label = this.mini.querySelector(".bz-sb-mb-mini-label");
-          if (label) label.textContent = this.mode === "ref" ? "参考" : "AI";
-        }
-        switchTab(tab) {
-          this.mode = tab;
-          this.pillRef.classList.toggle("active", tab === "ref");
-          this.pillChat.classList.toggle("active", tab === "chat");
-          this.updateMiniLabel();
-          this.renderBody();
-        }
-        /** 光标变化 → 防抖 → 上下文变化才重新检索（QA L2016-2031） */
-        checkCursor() {
-          var _a2, _b2;
-          const ed = (_a2 = this.app.workspace.activeEditor) == null ? void 0 : _a2.editor;
-          if (!ed) return;
-          const c = ed.getCursor();
-          const k = `${c.line}:${c.ch}`;
-          if (this.lastCursor === k) return;
-          this.lastCursor = k;
-          clearTimeout((_b2 = this.debounceTimer) != null ? _b2 : void 0);
-          this.debounceTimer = setTimeout(() => {
-            void (async () => {
-              const q = getCurrentContext(ed);
-              if (q === this.lastQuery) return;
-              this.lastQuery = q;
-              await this.refreshResults(q);
-            })();
-          }, buildConfig().DEBOUNCE_DELAY);
-        }
-        async refreshResults(query) {
-          const CONFIG = buildConfig();
-          if (!query || query.length < 2) {
-            this.refResults = [];
-            this.refError = null;
-            if (this.mode === "ref") this.renderRefTab();
-            return;
-          }
-          try {
-            this.refResults = await this.store.searchMobile(query, CONFIG.TOP_K);
-            this.refError = null;
-          } catch (e) {
-            console.warn("[secondbrain] 移动端检索失败", e);
-            this.refResults = [];
-            this.refError = "检索失败：请检查 Ollama 服务后重试";
-          }
-          if (this.mode === "ref") this.renderRefTab();
-        }
-        renderBody() {
-          this.body.innerHTML = "";
-          if (this.mode === "ref") this.renderRefTab();
-          else this.renderChatTab();
-        }
-        /** 参考 tab：过滤当前文件 + 单击懒渲染展开 + 长按震动跳转并收起（QA L2050-2100） */
-        renderRefTab() {
-          var _a2;
-          this.body.innerHTML = "";
-          const currentPath = ((_a2 = this.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) || "";
-          const filtered = this.refResults.filter((r) => r.path !== currentPath);
-          if (!filtered.length) {
-            const empty = document.createElement("div");
-            empty.className = "bz-sb-mb-empty";
-            empty.textContent = this.refError || "暂无相关笔记";
-            this.body.appendChild(empty);
-            return;
-          }
-          for (const item of filtered) {
-            const card = document.createElement("div");
-            card.className = "bz-sb-mb-card";
-            const topRow = document.createElement("div");
-            topRow.className = "bz-sb-mb-card-top";
-            const pathDiv = document.createElement("div");
-            pathDiv.className = "bz-sb-mb-card-path";
-            pathDiv.textContent = stripMdExt(item.path.replace(/^.*[\\/]/, ""));
-            const scoreDiv = document.createElement("div");
-            scoreDiv.className = "bz-sb-mb-card-score";
-            scoreDiv.textContent = `${Math.round(item.score * 100)}%`;
-            topRow.appendChild(pathDiv);
-            topRow.appendChild(scoreDiv);
-            card.appendChild(topRow);
-            const bar = document.createElement("div");
-            bar.className = "bz-sb-mb-card-bar";
-            const barFill = document.createElement("span");
-            barFill.style.width = `${Math.round(item.score * 100)}%`;
-            bar.appendChild(barFill);
-            card.appendChild(bar);
-            const chunkDiv = document.createElement("div");
-            chunkDiv.className = "bz-sb-mb-card-chunk";
-            card.appendChild(chunkDiv);
-            this.body.appendChild(card);
-            let expanded = false;
-            let rendered = false;
-            card.addEventListener("click", () => {
-              expanded = !expanded;
-              if (expanded && !rendered) {
-                chunkDiv.innerHTML = "";
-                renderMarkdown(chunkDiv, item.chunk, this.app);
-                rendered = true;
+          chunkDiv.classList.toggle("expanded", expanded);
+        });
+        let holdTimer = null;
+        card.addEventListener(
+          "touchstart",
+          () => {
+            holdTimer = setTimeout(() => {
+              holdTimer = null;
+              if (navigator.vibrate) navigator.vibrate(30);
+              const file = this.app.vault.getAbstractFileByPath(item.path);
+              if (!file) {
+                notice("文件不存在");
+                return;
               }
-              chunkDiv.classList.toggle("expanded", expanded);
-            });
-            let holdTimer = null;
-            card.addEventListener(
-              "touchstart",
-              () => {
-                holdTimer = setTimeout(() => {
-                  holdTimer = null;
-                  if (navigator.vibrate) navigator.vibrate(30);
-                  const file = this.app.vault.getAbstractFileByPath(item.path);
-                  if (!file) {
-                    notice("文件不存在");
-                    return;
-                  }
-                  jumpToChunk(file, item.chunk.slice(0, 30).trim(), false);
-                  this.collapse();
-                }, 500);
-              },
-              { passive: true }
-            );
-            card.addEventListener("touchend", () => {
-              if (holdTimer) clearTimeout(holdTimer);
-              holdTimer = null;
-            });
-            card.addEventListener("touchmove", () => {
-              if (holdTimer) clearTimeout(holdTimer);
-              holdTimer = null;
-            });
-          }
-        }
-        /** AI tab：桌面同构重排（issue 251 移动对齐）——标签气泡 + 推荐问法 + 带聚焦态输入行 */
-        renderChatTab() {
-          const CONFIG = buildConfig();
-          const chat2 = document.createElement("div");
-          chat2.className = "bz-sb-mb-chat";
-          this.chatMessagesDiv = document.createElement("div");
-          this.chatMessagesDiv.className = "bz-sb-mb-chat-messages bz-sb-scroll-y";
-          chat2.appendChild(this.chatMessagesDiv);
-          const inputArea = document.createElement("div");
-          inputArea.className = "bz-sb-mb-chat-input-area";
-          const inputRow = document.createElement("div");
-          inputRow.className = "bz-sb-mb-chat-input-row";
-          const lens = document.createElement("span");
-          lens.className = "bz-sb-mb-chat-lens";
-          lens.innerHTML = '<i data-lucide="sparkles"></i>';
-          const input = document.createElement("input");
-          input.className = "bz-sb-mb-chat-input";
-          input.type = "text";
-          input.placeholder = "向第二大脑提问，回车发送…";
-          const sendBtn = document.createElement("button");
-          sendBtn.className = "bz-sb-mb-chat-send";
-          sendBtn.setAttribute("aria-label", "发送");
-          sendBtn.title = "发送";
-          sendBtn.innerHTML = '<i data-lucide="send"></i>';
-          inputRow.appendChild(lens);
-          inputRow.appendChild(input);
-          inputRow.appendChild(sendBtn);
-          inputArea.appendChild(inputRow);
-          const chips = document.createElement("div");
-          chips.className = "bz-sb-mb-chat-chips";
-          for (const q of CHAT_CHIPS) {
-            const chip = document.createElement("button");
-            chip.className = "bz-sb-mb-chat-chip";
-            chip.textContent = q;
-            chip.addEventListener("click", () => {
-              if (sendBtn.disabled) return;
-              input.value = q;
-              void send();
-            });
-            chips.appendChild(chip);
-          }
-          inputArea.appendChild(chips);
-          chat2.appendChild(inputArea);
-          this.body.appendChild(chat2);
-          for (const msg of this.chatHistory) this.appendChatMsg(msg.role, msg.content);
-          if (!this.chatHistory.length) {
-            this.appendChatMsg("assistant", `你好！每次提问会独立检索 ${Object.keys(this.store.notes).length} 篇笔记作答。`);
-          }
-          const send = async () => {
-            const text = input.value.trim();
-            if (!text) return;
-            input.value = "";
-            this.appendChatMsg("user", text);
-            this.chatHistory.push({ role: "user", content: text });
-            void appendChatHistory([{ role: "user", content: text }], this.app).catch(() => {
-            });
-            sendBtn.disabled = true;
-            try {
-              const results = await this.store.searchMobile(text, CONFIG.CHAT_TOP_K);
-              const ctx = results.length > 0 ? results.map((r) => `[${r.path}] (${Math.round(r.score * 100)}%)
+              jumpToChunk(file, item.chunk.slice(0, 30).trim(), false);
+              this.collapse();
+            }, 500);
+          },
+          { passive: true }
+        );
+        card.addEventListener("touchend", () => {
+          if (holdTimer) clearTimeout(holdTimer);
+          holdTimer = null;
+        });
+        card.addEventListener("touchmove", () => {
+          if (holdTimer) clearTimeout(holdTimer);
+          holdTimer = null;
+        });
+      }
+    }
+    /** AI tab：桌面同构重排（issue 251 移动对齐）——标签气泡 + 推荐问法 + 带聚焦态输入行 */
+    renderChatTab() {
+      const CONFIG = buildConfig();
+      const chat2 = document.createElement("div");
+      chat2.className = "bz-sb-mb-chat";
+      this.chatMessagesDiv = document.createElement("div");
+      this.chatMessagesDiv.className = "bz-sb-mb-chat-messages bz-sb-scroll-y";
+      chat2.appendChild(this.chatMessagesDiv);
+      const inputArea = document.createElement("div");
+      inputArea.className = "bz-sb-mb-chat-input-area";
+      const inputRow = document.createElement("div");
+      inputRow.className = "bz-sb-mb-chat-input-row";
+      const lens = document.createElement("span");
+      lens.className = "bz-sb-mb-chat-lens";
+      lens.innerHTML = '<i data-lucide="sparkles"></i>';
+      const input = document.createElement("input");
+      input.className = "bz-sb-mb-chat-input";
+      input.type = "text";
+      input.placeholder = "向第二大脑提问，回车发送…";
+      const sendBtn = document.createElement("button");
+      sendBtn.className = "bz-sb-mb-chat-send";
+      sendBtn.setAttribute("aria-label", "发送");
+      sendBtn.title = "发送";
+      sendBtn.innerHTML = '<i data-lucide="send"></i>';
+      inputRow.appendChild(lens);
+      inputRow.appendChild(input);
+      inputRow.appendChild(sendBtn);
+      inputArea.appendChild(inputRow);
+      const chips = document.createElement("div");
+      chips.className = "bz-sb-mb-chat-chips";
+      for (const q of CHAT_CHIPS) {
+        const chip = document.createElement("button");
+        chip.className = "bz-sb-mb-chat-chip";
+        chip.textContent = q;
+        chip.addEventListener("click", () => {
+          if (sendBtn.disabled) return;
+          input.value = q;
+          void send();
+        });
+        chips.appendChild(chip);
+      }
+      inputArea.appendChild(chips);
+      chat2.appendChild(inputArea);
+      this.body.appendChild(chat2);
+      for (const msg of this.chatHistory) this.appendChatMsg(msg.role, msg.content);
+      if (!this.chatHistory.length) {
+        this.appendChatMsg("assistant", `你好！每次提问会独立检索 ${Object.keys(this.store.notes).length} 篇笔记作答。`);
+      }
+      const send = async () => {
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = "";
+        this.appendChatMsg("user", text);
+        this.chatHistory.push({ role: "user", content: text });
+        void appendChatHistory([{ role: "user", content: text }], this.app).catch(() => {
+        });
+        sendBtn.disabled = true;
+        try {
+          const results = await this.store.searchMobile(text, CONFIG.CHAT_TOP_K);
+          const ctx = results.length > 0 ? results.map((r) => `[${r.path}] (${Math.round(r.score * 100)}%)
 ${r.chunk}`).join("\n\n") : "（未找到相关笔记）";
-              const prompt = `你是知识助手。参考 ${results.length} 条检索结果回答。不相关可忽略。
+          const prompt = `你是知识助手。参考 ${results.length} 条检索结果回答。不相关可忽略。
 
 【参考】
 ${ctx}
 
 【问题】
 ${text}`;
-              const answer = await AI.ask(prompt);
-              this.appendChatMsg("assistant", answer);
-              this.chatHistory.push({ role: "assistant", content: answer });
-              void appendChatHistory([{ role: "assistant", content: answer }], this.app).catch(() => {
-              });
-              if (this.chatHistory.length > CONFIG.MAX_HISTORY * 2) {
-                this.chatHistory = this.chatHistory.slice(-CONFIG.MAX_HISTORY * 2);
-              }
-            } catch (e) {
-              this.appendChatMsg("assistant", "出错了：" + ((e == null ? void 0 : e.message) || e));
-            } finally {
-              sendBtn.disabled = false;
-            }
-          };
-          sendBtn.addEventListener("click", () => void send());
-          input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") void send();
+          const answer = await AI.ask(prompt);
+          this.appendChatMsg("assistant", answer);
+          this.chatHistory.push({ role: "assistant", content: answer });
+          void appendChatHistory([{ role: "assistant", content: answer }], this.app).catch(() => {
           });
-          mountIcons(chat2);
-        }
-        appendChatMsg(role, content) {
-          if (!this.chatMessagesDiv) return;
-          const div = document.createElement("div");
-          div.className = `bz-sb-mb-chat-msg ${role}`;
-          const who = document.createElement("div");
-          who.className = "bz-sb-mb-chat-who";
-          who.innerHTML = `<i data-lucide="${role === "user" ? "send" : "brain"}"></i>${role === "user" ? "刚问" : "第二大脑"}`;
-          const bubble = document.createElement("div");
-          bubble.className = "bz-sb-mb-chat-bubble";
-          if (role === "assistant") {
-            renderMarkdown(bubble, content, this.app);
-          } else {
-            bubble.textContent = content;
+          if (this.chatHistory.length > CONFIG.MAX_HISTORY * 2) {
+            this.chatHistory = this.chatHistory.slice(-CONFIG.MAX_HISTORY * 2);
           }
-          div.appendChild(who);
-          div.appendChild(bubble);
-          this.chatMessagesDiv.appendChild(div);
-          mountIcons(div);
-          this.chatMessagesDiv.scrollTop = this.chatMessagesDiv.scrollHeight;
-        }
-        /** 完全关闭（区别于收起）：清理监听与定时器后移除 DOM */
-        close() {
-          var _a2, _b2, _c;
-          (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
-          this.escHandle = null;
-          if (this.evLeaf) {
-            try {
-              this.app.workspace.offref(this.evLeaf);
-            } catch (e) {
-            }
-          }
-          document.removeEventListener("selectionchange", this.onSelectionChange);
-          document.removeEventListener("touchmove", this.onTouchMove);
-          document.removeEventListener("touchend", this.onTouchEnd);
-          clearInterval((_b2 = this.cursorPoll) != null ? _b2 : void 0);
-          clearTimeout((_c = this.debounceTimer) != null ? _c : void 0);
-          this.cursorPoll = null;
-          this.debounceTimer = null;
-          this.sheet.classList.remove("bz-sb-mb-open");
-          this.mini.classList.remove("bz-sb-mb-visible");
-          setTimeout(() => {
-            this.sheet.remove();
-            this.mini.remove();
-          }, 300);
+        } catch (e) {
+          this.appendChatMsg("assistant", "出错了：" + ((e == null ? void 0 : e.message) || e));
+        } finally {
+          sendBtn.disabled = false;
         }
       };
+      sendBtn.addEventListener("click", () => void send());
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") void send();
+      });
+      mountIcons(chat2);
     }
-  });
+    appendChatMsg(role, content) {
+      if (!this.chatMessagesDiv) return;
+      const div = document.createElement("div");
+      div.className = `bz-sb-mb-chat-msg ${role}`;
+      const who = document.createElement("div");
+      who.className = "bz-sb-mb-chat-who";
+      who.innerHTML = `<i data-lucide="${role === "user" ? "send" : "brain"}"></i>${role === "user" ? "刚问" : "第二大脑"}`;
+      const bubble = document.createElement("div");
+      bubble.className = "bz-sb-mb-chat-bubble";
+      if (role === "assistant") {
+        renderMarkdown(bubble, content, this.app);
+      } else {
+        bubble.textContent = content;
+      }
+      div.appendChild(who);
+      div.appendChild(bubble);
+      this.chatMessagesDiv.appendChild(div);
+      mountIcons(div);
+      this.chatMessagesDiv.scrollTop = this.chatMessagesDiv.scrollHeight;
+    }
+    /** 完全关闭（区别于收起）：清理监听与定时器后移除 DOM */
+    close() {
+      var _a2, _b2, _c;
+      (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
+      this.escHandle = null;
+      if (this.evLeaf) {
+        try {
+          this.app.workspace.offref(this.evLeaf);
+        } catch (e) {
+        }
+      }
+      document.removeEventListener("selectionchange", this.onSelectionChange);
+      document.removeEventListener("touchmove", this.onTouchMove);
+      document.removeEventListener("touchend", this.onTouchEnd);
+      clearInterval((_b2 = this.cursorPoll) != null ? _b2 : void 0);
+      clearTimeout((_c = this.debounceTimer) != null ? _c : void 0);
+      this.cursorPoll = null;
+      this.debounceTimer = null;
+      this.sheet.classList.remove("bz-sb-mb-open");
+      this.mini.classList.remove("bz-sb-mb-visible");
+      setTimeout(() => {
+        this.sheet.remove();
+        this.mini.remove();
+      }, 300);
+    }
+  };
 
   // prototypes/secondbrain/fake-sim.ts
-  var fake_sim_exports = {};
-  __export(fake_sim_exports, {
-    bootSecondBrainSim: () => bootSecondBrainSim,
-    demoReferenceQuery: () => demoReferenceQuery,
-    openChat: () => openChat,
-    openPanel: () => openPanel,
-    openRef: () => openRef
-  });
-  init_fake_obsidian();
-  init_app();
-  init_settings_provider();
-  init_ai();
-  init_panel();
-  init_chat_panel();
-  init_reference_panel();
-  init_mobile_panel();
-  init_config();
   var SimVectorStore = class {
     constructor() {
       this.dim = 1024;
@@ -8544,7 +8105,7 @@ ${text}`;
   }
   function injectSettings() {
     const settings = {
-      secondBrainEnabled: true,
+      // secondBrainEnabled 键已退役（2026-09-12 拍板：启动即加载，不再有开关）
       aiProvider: "deepseek",
       // 对话走 deepseek 通道；网络层由 patchFetch 拦截（无真实请求）
       deepseekApiKey: "demo-key",

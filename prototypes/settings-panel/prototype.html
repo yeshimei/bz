@@ -411,7 +411,8 @@
           } catch { return false; }
         })());
 
-        // dir-picker：日记目录 → 打开（先快速首渲染后 adapter 补齐）
+        // 路径选择弹窗：日记目录 → 打开（core openPathPicker 全域单源 + .bz-sp-skin 面板皮肤；
+        // 先快速首渲染后 adapter 补齐）
         // 前置：本节跟着首页域那节跑，面板停在首页页 —— 先切回日记本域（行的归属域），
         // 否则 diaryRow() 永远找不到行（曾以 undefined.querySelector 崩掉整轮自检）。
         const diaryNav = await waitFor(() => dt('.bz-sp-nav-item[data-sp-domain="diary"]'));
@@ -427,27 +428,38 @@
           if (hit) hit.click();
           return !!hit;
         };
-        t('dir-picker 入口在场（有值 chip / 空态按钮二选一）', openDiaryPicker());
-        const pickerRows = () => dtAll('.bz-sp-picker-mask .bz-sp-picker-row');
-        await waitFor(() => dt('.bz-sp-picker-mask'));
-        t('dir-picker 打开（挂 body 弹层）', !!dt('.bz-sp-picker-mask .bz-sp-picker'));
-        // 面包屑回显当前绑定值（种子已设 我的/日记；清空后才会是「未设置」）
-        t('dir-picker 面包屑回显当前值', (() => {
-          const c = dt('.bz-sp-picker-crumb');
-          return !!c && c.textContent.includes('我的') && c.textContent.includes('日记');
+        t('路径选择器入口在场（有值 chip / 空态按钮二选一）', openDiaryPicker());
+        const pickerRows = () => dtAll('.bz-path-picker-row');
+        await waitFor(() => dt('#bz-path-picker-mask'));
+        t('路径选择器打开（core 卡片挂 body，遮罩+弹窗双节点）',
+          !!dt('#bz-path-picker-mask') && !!dt('.bz-path-picker'));
+        // 皮肤通道：弹窗与遮罩都挂 .bz-sp-skin；壳里没有面板根 —— 皮肤类必须自带一份 --sp-*
+        // token 才不透明（未挂 = 引不到变量，整条声明失效）
+        t('选择器带面板皮肤（mask/popup 双挂 .bz-sp-skin）',
+          dt('#bz-path-picker-mask').classList.contains('bz-sp-skin') &&
+          dt('.bz-path-picker').classList.contains('bz-sp-skin'));
+        t('皮肤自带 tokens（--sp-panel/--sp-accent 在弹窗作用域可解析）', (() => {
+          const cs = getComputedStyle(dt('.bz-path-picker'));
+          return !!cs.getPropertyValue('--sp-panel').trim() && !!cs.getPropertyValue('--sp-accent').trim();
         })());
+        // 已选回显：core 选择器用行高亮（row--sel）承载当前绑定值（种子已设 我的/日记）
+        t('选择器回显当前绑定值（已选行高亮 = 我的/日记）',
+          dtAll('.bz-path-picker-row--sel').some((r) => r.dataset.path === '我的/日记'));
         await waitFor(() => pickerRows().length >= 10 && pickerRows().some((r) => r.textContent.includes('信件')));
-        t('dir-picker 降级聚合目录（库根+文件父目录+adapter 补齐）',
+        t('降级聚合目录（库根+文件父目录+adapter 补齐）',
           pickerRows().length >= 10 && pickerRows().some((r) => r.textContent.includes('（库根目录）')) &&
           pickerRows().some((r) => r.textContent.includes('信件')) &&
           pickerRows().some((r) => r.textContent.includes('.ENCRYPT')));
-        pickerRows().find((r) => r.textContent.includes('日记') && r.textContent.includes('我的 /')).click();
-        t('dir-picker 点选高亮+面包屑跟随', dt('.bz-sp-picker-crumb').textContent.includes('我的') && dt('.bz-sp-picker-crumb').textContent.includes('日记'));
-        dt('.bz-sp-picker-mask .bz-sp-picker-foot .bz-sp-btn--primary').click();
+        t('已选置顶（排序首行 = 已选目录）', pickerRows()[0]?.dataset.path === '我的/日记');
+        pickerRows().find((r) => r.dataset.path === '我的/日记').click();
+        t('点选高亮', dtAll('.bz-path-picker-row--sel').some((r) => r.dataset.path === '我的/日记'));
+        t('底部已选信息跟随', dt('.bz-path-picker-selinfo').textContent.includes('我的/日记'));
+        dt('.bz-path-picker-btn--primary').click();
         await waitFor(() => diaryRow().querySelector('.bz-sp-chip'));
-        t('dir-picker 选用落 chip', diaryRow().querySelector('.bz-sp-chip')?.textContent === '我的/日记');
+        t('确定后落 chip', diaryRow().querySelector('.bz-sp-chip')?.textContent === '我的/日记');
         t('路径键直绑落内存设置（diaryDirectory）', sim().diaryDirectory === '我的/日记');
-        t('dir-picker 已关', !dt('.bz-sp-picker-mask'));
+        t('选择器已关（弹窗与遮罩双节点都移除）',
+          !dt('#bz-path-picker-mask') && !dt('.bz-path-picker'));
 
         /* ---------- 桌面：影院——下拉键直绑 + 主题联动单卡（seed cinemaStyle=midnight） ---------- */
         dt('.bz-sp-nav-item[data-sp-domain="cinema"]').click();

@@ -11,7 +11,7 @@
 /* ═══════════ tokens：S1 亚麻暖白（亮皮，默认） ═══════════ */
 .bz-sp-desk,
 .bz-sp-mobile,
-.bz-sp-picker-mask,
+.bz-sp-skin,
 #bz-up-manager-popup,
 #bz-rss-manager-popup,
 #bz-model-picker-popup {
@@ -39,7 +39,7 @@
 /* ═══════════ tokens：S3 炭黑夜航（暗皮，跟随 Obsidian 暗色） ═══════════ */
 .theme-dark .bz-sp-desk,
 .theme-dark .bz-sp-mobile,
-.theme-dark .bz-sp-picker-mask,
+.theme-dark .bz-sp-skin,
 .theme-dark #bz-up-manager-popup,
 .theme-dark #bz-rss-manager-popup,
 .theme-dark #bz-model-picker-popup {
@@ -62,91 +62,90 @@
   --sp-knob: #fff;
 }
 
-/* ═══════════ 域内文件夹选择器（path 行弹层；挂 body 自挂 tokens，不受面板 overflow 裁剪） ═══════════ */
-.bz-sp-picker-mask {
-  position: fixed;
-  inset: 0;
+/* ═══════════ 路径选择弹窗：core 实现 + 面板皮肤（ADR-0127） ═══════════
+ * 弹窗唯一实现 = core/path-picker.ts::openPathPicker（ADR-0061）——⚙️ 原生设置页 / 各域设置
+ * 弹窗 / 附件搬移命令 / 本面板的 path 行共用同一套 DOM 与行为；面板内打开时 renderer 传
+ * skinClassName='bz-sp-skin'。挂 body 的 mask 与 popup 在面板根之外，够不着面板作用域 token →
+ * .bz-sp-skin 已列入上方两份 tokens 挂载组（自带一份 --sp-* 再消费，先例 .bz-item-menu.bz-home-menu）；
+ * 本段只把 core 壳映射成面板材质（底色/描边/圆角/阴影/控件形制），不动 core 的布局与几何。
+ * 宽度仍由 core 内联（440px 卡片）——若要面板级 560px 需给 openPathPicker 加宽度选项。 */
+.bz-sp-skin.bz-overlay-mask {
   background: rgba(20, 15, 8, 0.4);
   backdrop-filter: blur(var(--bz-overlay-blur));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--bz-space-lg);
 }
-.theme-dark .bz-sp-picker-mask { background: rgba(0, 0, 0, 0.62); }
-.bz-sp-picker {
-  width: min(560px, 100%);
-  max-height: min(520px, 78vh);
+.theme-dark .bz-sp-skin.bz-overlay-mask { background: rgba(0, 0, 0, 0.62); }
+.bz-path-picker.bz-sp-skin {
+  /* 面板弹层自身不设内边距——头/搜索/列表/底各自带（core 壳的 24px 内边距在面板里过松） */
+  padding: 0;
   background: var(--sp-panel);
   border: 1px solid var(--sp-line);
   border-radius: 14px;
   box-shadow: var(--sp-shadow);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  max-height: min(520px, 78vh);
 }
-.bz-sp-picker-head { padding: 14px 18px var(--bz-space-sm); font-size: var(--bz-font-body); font-weight: 700; color: var(--sp-ink); }
-.bz-sp-picker-search {
-  margin: 10px auto var(--bz-space-sm);
-  width: calc(100% - 28px);
-  display: flex;
-  align-items: center;
-  gap: var(--bz-space-sm);
+.bz-path-picker.bz-sp-skin .bz-path-picker-head {
+  padding: 14px 18px var(--bz-space-sm);
+  border-bottom-color: var(--sp-line);
+}
+.bz-path-picker.bz-sp-skin .bz-path-picker-title { font-size: var(--bz-font-body); font-weight: 700; color: var(--sp-ink); }
+.bz-path-picker.bz-sp-skin .bz-path-picker-desc { margin-top: var(--bz-space-xs); font-size: 11.5px; color: var(--sp-ink-2); }
+.bz-path-picker.bz-sp-skin .bz-path-picker-search {
+  margin: 10px 14px 0;
+  padding: 6px 14px;
   background: var(--sp-bg);
   border: 1px solid var(--sp-line);
   border-radius: 9px;
-  padding: var(--bz-space-sm) 14px;
-  color: var(--sp-ink-3);
-}
-.bz-sp-picker-search input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 12.5px; color: var(--sp-ink); font-family: inherit; text-align: center; }
-.bz-sp-picker-crumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: var(--bz-space-sm) 18px;
-  border-top: 1px solid var(--sp-line);
-  border-bottom: 1px solid var(--sp-line);
-  background: var(--sp-bg);
-  font-size: 11.5px;
-  color: var(--sp-ink-2);
-}
-.bz-sp-picker-lab { color: var(--sp-ink-3); margin-right: 2px; }
-.bz-sp-picker-sep { opacity: 0.6; }
-.bz-sp-picker-crumb > span:last-child { color: var(--sp-accent); font-weight: 600; }
-.bz-sp-picker-list { flex: 1; overflow-y: auto; padding: var(--bz-space-sm) var(--bz-space-md); }
-.bz-sp-picker-row {
-  display: flex;
-  align-items: center;
-  gap: var(--bz-space-sm);
-  width: 100%;
-  border: 0;
-  background: transparent;
-  font-family: inherit;
   font-size: 12.5px;
   color: var(--sp-ink);
+  text-align: center;
+}
+.bz-path-picker.bz-sp-skin .bz-path-picker-search::placeholder { color: var(--sp-ink-3); }
+.bz-path-picker.bz-sp-skin .bz-path-picker-search:focus { border-color: var(--sp-accent); }
+.bz-path-picker.bz-sp-skin .bz-path-picker-list { margin: 8px 0 0; padding: var(--bz-space-sm) var(--bz-space-md); }
+.bz-path-picker.bz-sp-skin .bz-path-picker-row {
+  gap: var(--bz-space-sm);
   padding: 6px 10px;
-  border-radius: var(--bz-radius-sm);
-  cursor: pointer;
-  text-align: left;
-  position: relative;
+  font-size: 12.5px;
+  color: var(--sp-ink);
 }
-.bz-sp-picker-row:hover { background: var(--sp-accent-soft); }
-.bz-sp-picker-row .bz-ic { width: 14px; height: 14px; color: var(--sp-ink-3); flex: none; }
-.bz-sp-picker-row.sel .bz-ic { color: var(--sp-accent); }
-.bz-sp-picker-row.sel span:first-of-type { color: var(--sp-accent); font-weight: 600; }
-.bz-sp-picker-row .anc {
-  margin-left: auto;
-  font-size: 10px;
-  color: var(--sp-ink-3);
-  opacity: 0.85;
-  font-family: ui-monospace, Consolas, monospace;
-  flex: none;
-  max-width: 46%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.bz-path-picker.bz-sp-skin .bz-path-picker-row:hover { background: var(--sp-accent-soft); }
+.bz-path-picker.bz-sp-skin .bz-path-picker-row--sel {
+  background: var(--sp-accent-soft);
+  color: var(--sp-accent);
+  font-weight: 600;
 }
-.bz-sp-picker-foot { display: flex; justify-content: flex-end; gap: var(--bz-space-sm); padding: 10px 14px; border-top: 1px solid var(--sp-line); }
+.bz-path-picker.bz-sp-skin .bz-path-picker-check {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--sp-line);
+  border-radius: 4px;
+  color: var(--sp-on-accent);
+}
+.bz-path-picker.bz-sp-skin .bz-path-picker-row--sel .bz-path-picker-check {
+  background: var(--sp-accent);
+  border-color: var(--sp-accent);
+}
+.bz-path-picker.bz-sp-skin .bz-path-picker-empty { padding: var(--bz-space-lg) 0; font-size: 12.5px; color: var(--sp-ink-3); }
+.bz-path-picker.bz-sp-skin .bz-path-picker-foot { padding: 10px 14px; border-top-color: var(--sp-line); }
+.bz-path-picker.bz-sp-skin .bz-path-picker-selinfo { font-size: 11.5px; color: var(--sp-ink-3); }
+/* 底部按钮 = 面板 .bz-sp-btn 同形制（次要：panel 底 + line 描边；主：accent 底 + on-accent 字） */
+.bz-path-picker.bz-sp-skin .bz-path-picker-btn {
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 5px var(--bz-space-md);
+  background: var(--sp-panel);
+  border: 1px solid var(--sp-line);
+  color: var(--sp-ink);
+  border-radius: 7px;
+}
+.bz-path-picker.bz-sp-skin .bz-path-picker-btn:hover { background: var(--sp-accent-soft); }
+.bz-path-picker.bz-sp-skin .bz-path-picker-btn--primary {
+  background: var(--sp-accent);
+  border-color: transparent;
+  color: var(--sp-on-accent);
+  font-weight: 600;
+}
+.bz-path-picker.bz-sp-skin .bz-path-picker-btn--primary:hover { background: var(--sp-accent); opacity: 0.92; }
 
 /* ═══════════ 外观域卡片预览（bz-sp-mini prevClass，视觉对照原型 renderMini） ═══════════ */
 /* 经纬：布局缩略 = head 横条 + 左栏竖块 + 主内容块（P1 系统面板形态） */
@@ -327,6 +326,13 @@
     linear-gradient(90deg, #e8e9eb 0 50%, #14161a 50% 100%);
   border-radius: 3px;
 }
+/* 密码本·金印（2026-09-12 补：构图同晨昏族，域色取解锁屏金色印章 #b8913e） */
+.bz-sp-mini.bz-sp-prev-gold {
+  background:
+    radial-gradient(circle at 50% 50%, #b8913e 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f6f1e4 0 50%, #1c1a16 50% 100%);
+  border-radius: 3px;
+}
 /* 内容首页·米白（2026-09-10 补：构图同晨昏，域色取首页 AI 紫 #7a5ce0） */
 .bz-sp-mini.bz-sp-prev-cream {
   background:
@@ -475,6 +481,29 @@
   gap: var(--bz-space-md);
   margin-bottom: 18px;
 }
+/* 页头右侧动作区（2026-09-12：「重置本域」+ 项数/组数徽标；auto 由此承担） */
+.bz-sp-page-acts {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-md);
+}
+/* 页头「重置本域」（破坏性动作，flow 确认在前）：面板小按钮形制，克制不抢眼 */
+.bz-sp-page-reset {
+  font-family: inherit;
+  font-size: 11.5px;
+  line-height: 1;
+  color: var(--sp-ink-2);
+  background: var(--sp-panel);
+  border: 1px solid var(--sp-line);
+  border-radius: 7px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.bz-sp-page-reset:hover {
+  color: var(--sp-ink);
+  border-color: var(--sp-ink-3);
+}
 .bz-sp-page-title {
   font-size: 22px;
   font-weight: 700;
@@ -487,7 +516,6 @@
   padding-bottom: 3px;
 }
 .bz-sp-page-tag {
-  margin-left: auto;
   font-size: 10.5px;
   color: var(--sp-ink-3);
   border: 1px solid var(--sp-line);
@@ -1032,12 +1060,11 @@
 .bz-sp-mob-ic .bz-ic { width: 16px; height: 16px; }
 
 /* ═══════════ 域内自绘控件（原型演示与 renderer 共用；容器前缀防 reset 压制） ═══════════ */
-/* .bz-sp-picker-mask = dir-picker 弹层自挂 scope（挂 body，不在面板三根之内），取消/选用按钮同皮；
-   两个管理弹窗（UP 名单/RSS 订阅，挂 body 自建 overlay）同理入组 */
+/* 两个管理弹窗（UP 名单/RSS 订阅，挂 body 自建 overlay）自挂 scope 携带 tokens，按钮同皮；
+   路径选择弹窗改由 core 实现 + .bz-sp-skin 皮肤承载（见上方选择器段） */
 .bz-sp-desk .bz-sp-btn,
 .bz-sp-mobile .bz-sp-btn,
 .bz-sp-mobile .bz-sp-btn,
-.bz-sp-picker-mask .bz-sp-btn,
 #bz-up-manager-popup .bz-sp-btn,
 #bz-rss-manager-popup .bz-sp-btn {
   font-family: inherit;
@@ -1055,13 +1082,11 @@
 .bz-sp-desk .bz-sp-btn:hover,
 .bz-sp-mobile .bz-sp-btn:hover,
 .bz-sp-mobile .bz-sp-btn:hover,
-.bz-sp-picker-mask .bz-sp-btn:hover,
 #bz-up-manager-popup .bz-sp-btn:hover,
 #bz-rss-manager-popup .bz-sp-btn:hover { background: var(--sp-accent-soft); }
 .bz-sp-desk .bz-sp-btn--primary,
 .bz-sp-mobile .bz-sp-btn--primary,
 .bz-sp-mobile .bz-sp-btn--primary,
-.bz-sp-picker-mask .bz-sp-btn--primary,
 #bz-up-manager-popup .bz-sp-btn--primary,
 #bz-rss-manager-popup .bz-sp-btn--primary {
   background: var(--sp-accent);
@@ -1072,7 +1097,6 @@
 .bz-sp-desk .bz-sp-btn--primary:hover,
 .bz-sp-mobile .bz-sp-btn--primary:hover,
 .bz-sp-mobile .bz-sp-btn--primary:hover,
-.bz-sp-picker-mask .bz-sp-btn--primary:hover,
 #bz-up-manager-popup .bz-sp-btn--primary:hover,
 #bz-rss-manager-popup .bz-sp-btn--primary:hover { background: var(--sp-accent); opacity: 0.92; }
 

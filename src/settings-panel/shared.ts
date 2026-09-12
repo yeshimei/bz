@@ -210,11 +210,14 @@ export function groupCardHtml(icon: string | undefined, name: string, count: str
     `<div class="bz-sp-group-body"></div></section>`;
 }
 
-/** 域页头（域名 + 描述 + 右侧项数/组数徽标）——原型 render desk 分支 */
-export function pageHeadHtml(name: string, desc: string, tag: string): string {
+/** 域页头（域名 + 描述 + 可选「重置本域」按钮 + 右侧项数/组数徽标）——原型 render desk 分支。
+ *  2026-09-12 补 withReset：仅面板域设置页传 true（移动端推入页 withHead=false 不渲染）。 */
+export function pageHeadHtml(name: string, desc: string, tag: string, withReset?: boolean): string {
   return `<div class="bz-sp-page-head"><div><div class="bz-sp-page-title">${esc(name)}</div>` +
     `<div class="bz-sp-page-desc">${esc(desc)}</div></div>` +
-    `<span class="bz-sp-page-tag">${esc(tag)}</span></div>`;
+    `<div class="bz-sp-page-acts">` +
+    (withReset ? `<button type="button" class="bz-sp-page-reset">重置本域</button>` : '') +
+    `<span class="bz-sp-page-tag">${esc(tag)}</span></div></div>`;
 }
 
 /** 加载态（spinner + 文案） */

@@ -349,7 +349,7 @@ describe('bz 骨架冒烟', () => {
 ${failures.join('\n')}`).toEqual([]);
     expect(registeredCommands.length).toBeGreaterThanOrEqual(32);
   }, 15000);
-  it('事件常驻域 onload 注册（autoSummary 开关 / 引用同步无条件常驻 issue 187 / secondBrain 懒加载分支）', async () => {
+  it('事件常驻域 onload 注册（autoSummary 开关 / 引用同步无条件常驻 issue 187 / secondBrain 启动即加载）', async () => {
     delete diskData['bz'];
     diskData['bz'] = { autoSummaryEnabled: true };
     syncSpies.ensureFileSync.mockClear();
@@ -358,7 +358,7 @@ ${failures.join('\n')}`).toEqual([]);
     // 引用同步无条件常驻（issue 187：aiAgentEnabled 开关退役）——
     // memo/favorites 两路文件同步 ensure 各恰好一次，均不抛错
     expect(plugin.settings.autoSummaryEnabled).toBe(true);
-    expect(plugin.settings.secondBrainEnabled).toBe(true);
+    // 第二大脑：2026-09-12 起启动即无条件加载，不再有 secondBrainEnabled 键可断言
     // favorites file-sync 整链随关联笔记退役（ADR-0101），仅剩 memo 一路
     expect(syncSpies.ensureFileSync).toHaveBeenCalledTimes(1);
     expect(syncSpies.ensureFileSync).toHaveBeenCalledWith(app);

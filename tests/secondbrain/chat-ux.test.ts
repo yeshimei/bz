@@ -7,7 +7,7 @@
  * - 流式增量渲染：onDelta 增量写入占位气泡，完成后整段 markdown 重渲；
  * - 历史持久化：secondbrain.json chatHistory 段每轮写盘 / 打开读回渲染 /
  *   旧数据无段兼容（零迁移）；「清空对话」flow 确认后清空并写盘；
- * - 概括移除：主面板无概括区块、无残留导出，设置「AI 通道」描述不再提概括。
+ * - 概括移除：主面板无概括区块、无残留导出；设置 schema 已无「AI 通道」跳转行。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -343,17 +343,14 @@ describe('第二大脑：AI 生成概括移除（ticket 141）', () => {
     expect((panelModule as any).buildSummaryPrompt).toBeUndefined();
   });
 
-  it('设置「AI 通道」描述不再提概括（对话保留）', async () => {
+  it('设置 schema 已无「AI 通道」跳转行；对话组仅留「最大历史记录」（2026-09-12 拍板删除）', async () => {
     const { secondBrainSettingsSchema } = await import('../../src/secondbrain/panel');
     const schema = secondBrainSettingsSchema();
-    let aiRow: any;
-    for (const g of schema.groups) {
-      for (const r of g.rows as any[]) {
-        if (r.name === 'AI 通道') aiRow = r;
-      }
-    }
-    expect(aiRow).toBeTruthy();
-    expect(aiRow.desc).not.toContain('概括');
-    expect(aiRow.desc).toContain('对话');
+    const allRows = schema.groups.flatMap((g) => g.rows as any[]);
+    expect(allRows.some((r) => r.name === 'AI 通道')).toBe(false);
+    // 对话组仍在：只留最大历史记录（跳转类按钮行不留在设置面板）
+    const chat = schema.groups.find((g) => g.name === '对话')!;
+    expect(chat).toBeTruthy();
+    expect(chat.rows.map((r: any) => r.name)).toEqual(['最大历史记录']);
   });
 });

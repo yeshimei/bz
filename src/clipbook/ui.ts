@@ -1258,20 +1258,27 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
         ],
       },
       {
-        icon: 'folder-open',
-        name: '基础',
+        icon: 'eye',
+        // 2026-09-12：原「基础」组拆为「显示」（阅读字号）+「目录」（剪藏文件夹），对齐全域分组范式
+        name: '显示',
         rows: [
           { type: 'select', name: '阅读字号', desc: '桌面阅读面正文字号', binding: { key: 'clipbookReaderFontSize' }, options: [
             { value: 'small', label: '小' },
             { value: 'medium', label: '中' },
             { value: 'large', label: '大' },
           ], onChange: () => applyReaderFontSize() },
-          { type: 'path', mode: 'single', name: '剪藏目录', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
+        ],
+      },
+      {
+        icon: 'folder-open',
+        name: '目录',
+        rows: [
+          { type: 'path', mode: 'single', name: '剪藏文件夹', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
         ],
       },
       {
         icon: 'sparkles',
-        name: '智能',
+        name: '自动摘要',
         rows: [
           {
             type: 'toggle', name: '自动摘要', desc: '新剪藏的文章自动生成 AI 摘要', binding: { key: 'autoSummaryEnabled' },
