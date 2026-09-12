@@ -69,8 +69,13 @@
 
 - `vitest run`（worktree）：`tests/secondbrain/` 25 文件 / 323 用例全绿；全量 294 文件 / 4565 用例中仅 `tests/preview-freshness.test.ts` 8 例红。
 - **该 8 例已定位为环境噪声**：worktree 检出按 `core.autocrlf=true` 写 CRLF，而主仓工作区为 LF（`git status` 干净），源指纹 sha1 因此不等。用 `git stash` 对照实测：基线（不带本次改动）同样 5 例红（home / memo / pomodoro×2 / settings-panel），本次改动新增 3 例（secondbrain / knowledge / clipbook）为**真实滞后**，产物在主仓重出后归零。
-- `tsc --noEmit`：干净。
-- 产物重出与部署在主仓执行（`node scripts/build-preview.mjs secondbrain knowledge clipbook` + `pnpm run build`）——**严禁在 worktree 内构建**（`build-css.mjs` 会写用户 Obsidian 插件目录）。
+- `tsc --noEmit`：干净（worktree 与主仓两次均过）。
+- 主仓全量 `vitest run`（产物重出后）：**293/294 文件通过**；余 2 例 `preview-freshness`（memo / settings-panel）为**并行会话在途改动**（ADR-0127：`src/settings-panel/ui.ts` 等在主仓尚未提交）造成，非本改动引入。
+- 产物重出与部署：`node scripts/build-preview.mjs`（全量）+ `pnpm run build` → `main.js` / `styles.css` 已部署至 Obsidian 插件目录（`E:/Obsidian/叫我包仔/.obsidian/plugins/bz`）。**严禁在 worktree 内构建**（`build-css.mjs` 会写用户插件目录）。
+- ⚠️ 收尾时工作区另有一并行会话（ADR-0127 picker 单源 + 面板皮肤）在途写入 `src/core/path-picker.ts` / `src/settings-panel/*`：
+  - 本改动**必须重出的产物**共 5 个域（由其输入清单含本次改动的源文件反查得出）：clipbook / knowledge / memo / secondbrain / settings-panel；
+  - 其中 4 个（clipbook / memo / secondbrain / settings-panel）与并行会话的改动**同域耦合**——他们的重出范围（clipbook / diary / memo / password-vault / secondbrain / settings-panel）已覆盖这 4 个，收尾后重出即同时吸收两侧改动；
+  - knowledge 是唯一只受本改动影响的域，其产物已单独重出并入库。
 
 ## §6 遗留（下一步）
 
