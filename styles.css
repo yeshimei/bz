@@ -419,10 +419,6 @@ button {
 .setting-item .setting-item-control input[type="text"] {
     min-width: 120px;
 }
-/* ticket 170：UP 主弹窗描述行允许换行（弹窗加宽后文字不再拥挤） */
-#bz-up-manager-popup .setting-item .setting-item-info .setting-item-description {
-    white-space: normal;
-}
 
 
 
@@ -525,6 +521,26 @@ button.news-close-btn {
     transform: translateX(-50%);
     align-items: center;
     top: calc(34px + env(safe-area-inset-top, 0px));
+  }
+}
+/* 桌面四角位置（noticePosition 设置，issue 297；缺省 top-right 不挂类）。
+ * 只在 769px+ 生效：id+类特异性高于移动端媒体查询的纯 id 选择器，不限定会被角类覆盖顶部居中 */
+@media (min-width: 769px) {
+  #bz-notice-container.bz-notice-pos--top-left {
+    left: 16px;
+    right: auto;
+    align-items: flex-start;
+  }
+  #bz-notice-container.bz-notice-pos--bottom-right {
+    top: auto;
+    bottom: 16px;
+  }
+  #bz-notice-container.bz-notice-pos--bottom-left {
+    top: auto;
+    bottom: 16px;
+    left: 16px;
+    right: auto;
+    align-items: flex-start;
   }
 }
 .bz-notice {
@@ -3890,21 +3906,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-weight: var(--bz-weight-medium);
 }
 
-/* ═══════════ 通用列表行 .bz-setlist（core ListRow / 设置面板 ListRow 同构） ═══════════ */
+/* ═══════════ 通用列表行 .bz-setlist（core ListRow / 设置面板 ListRow 同构） ═══════════
+ * 布局变体（2026-09-12 用户拍板：缺省 = chips 流式胶囊）——ListRow.variant 声明，
+ * core 渲染器与面板渲染器同口径；本层只留条目骨架，各变体声明自己的形与面。 */
 .bz-setlist {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 4px 0;
 }
+.bz-setlist:empty { padding: 0; } /* 既无条目也无空态文案（emptyText 未给）时不占位 */
 .bz-setlist-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 36px;
-  padding: 4px 8px;
-  border-radius: var(--bz-radius-sm);
-  background: var(--bz-surface-2);
 }
 .bz-setlist-avatar {
   width: 28px;
@@ -3931,12 +3946,101 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-setlist-remove {
   flex-shrink: 0;
+  font-family: inherit;
+  font-size: var(--bz-font-meta);
+  line-height: 1.4;
+  color: var(--bz-text-2);
+  background: transparent;
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-sm);
+  padding: 2px 10px;
+  height: auto;
+  box-shadow: none;
+  cursor: pointer;
+}
+.bz-setlist-remove:hover {
+  color: var(--bz-text-1);
+  border-color: var(--bz-border-strong);
+  background: transparent;
 }
 .bz-setlist-empty {
   padding: 10px 8px;
   font-size: var(--bz-font-meta);
   color: var(--bz-text-3);
 }
+
+/* ── 布局变体（ListRow.variant 修饰类；两渲染器同口径；缺省 = chips 流式胶囊） ── */
+/* rows：全宽行列表——每条独占一行铺满（信息最全，纵向占位最多） */
+.bz-setlist--rows .bz-setlist-item {
+  min-height: 36px;
+  padding: 4px 8px;
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-surface-2);
+  border: 1px solid var(--bz-border);
+}
+
+/* grid：卡片网格——头像/名称/副文案竖排小卡，名单较长时扫视效率最好 */
+.bz-setlist--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: 8px;
+}
+.bz-setlist--grid .bz-setlist-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 0;
+  padding: 10px;
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-surface-2);
+  border: 1px solid var(--bz-border);
+}
+.bz-setlist--grid .bz-setlist-avatar { width: 34px; height: 34px; }
+.bz-setlist--grid .bz-setlist-text { flex: none; width: 100%; }
+.bz-setlist--grid .bz-setlist-name { font-size: var(--bz-font-label); }
+.bz-setlist--grid .bz-setlist-remove { align-self: flex-end; margin-top: auto; }
+
+/* chips：流式胶囊（缺省）——头像 + 名称行内流式排布，副文案让位悬停提示 */
+.bz-setlist--chips { flex-flow: row wrap; gap: 6px; }
+.bz-setlist--chips .bz-setlist-item {
+  min-height: 0;
+  padding: 3px 5px 3px 4px;
+  border-radius: var(--bz-radius-full);
+  gap: 6px;
+  background: var(--bz-surface-2);
+  border: 1px solid var(--bz-border);
+}
+.bz-setlist--chips .bz-setlist-avatar { width: 22px; height: 22px; }
+.bz-setlist--chips .bz-setlist-text { flex: none; }
+.bz-setlist--chips .bz-setlist-sub { display: none; }
+.bz-setlist--chips .bz-setlist-remove {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--bz-text-3);
+  font-size: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-setlist--chips .bz-setlist-remove::before { content: '×'; font-size: 15px; line-height: 1; }
+.bz-setlist--chips .bz-setlist-remove:hover { color: var(--bz-text-1); }
+
+/* dense：紧密分隔行——无条目底、发丝分隔线，适合长名单密集浏览 */
+.bz-setlist--dense { gap: 0; padding: 0; }
+.bz-setlist--dense .bz-setlist-item {
+  min-height: 32px;
+  padding: 3px 4px;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--bz-border);
+}
+.bz-setlist--dense .bz-setlist-item:first-child { border-top: 0; }
+.bz-setlist--dense .bz-setlist-item:hover { background: var(--bz-surface-2); }
 
 /* ═══════════ 解锁屏（三域共用骨架：保险库 / 密码本 / 加密日记） ═══════════
  * 结构同源、槽位驱动：文案与统计由调用域注入，风格由各域按 --ls-accent 等变量覆盖。
@@ -12681,6 +12785,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-mobile,
 .bz-sp-picker-mask,
 #bz-up-manager-popup,
+#bz-rss-manager-popup,
 #bz-model-picker-popup {
   --sp-bg: #f6f2e9;
   --sp-panel: #fffcf6;
@@ -12708,6 +12813,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .theme-dark .bz-sp-mobile,
 .theme-dark .bz-sp-picker-mask,
 .theme-dark #bz-up-manager-popup,
+.theme-dark #bz-rss-manager-popup,
 .theme-dark #bz-model-picker-popup {
   --sp-bg: #1b1b1f;
   --sp-panel: #242429;
@@ -13219,6 +13325,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-set-row--cards { flex-direction: column; align-items: stretch; gap: var(--bz-space-sm); }
 .bz-sp-set-row--cards > .bz-sp-set-name { font-weight: 600; }
+/* 列表行（通用 .bz-setlist 的行宿主）：名称/描述一行在上，列表占满行宽在下——与 core ⚙️
+   弹窗 ListRow 同构；行体不挂 hover 底（条目自带底），控件区放开整宽防条目横铺出界 */
+.bz-sp-set-row--list { flex-direction: column; align-items: stretch; gap: var(--bz-space-sm); }
+.bz-sp-set-row--list:hover { background: transparent; }
+.bz-sp-set-row--list .bz-sp-set-ctrl { margin-left: 0; width: 100%; min-width: 0; flex-wrap: wrap; }
 /* 设置子项层级降级（enh-sweep-a）：isChild 行弱化、hover 恢复 */
 .bz-sp-desk .bz-sp-set-row.child,
 .bz-sp-mobile .bz-sp-set-row.child,
@@ -13408,11 +13519,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-mobile .bz-input.mono,
 .bz-sp-mobile .bz-input.mono { font-family: ui-monospace, Consolas, monospace; }
 /* 控件长度：面板内 input/select 不定宽（跟随 .bz-select 随内容生长 / input 自身默认），
-   max-width: 100% 防长文案撑破行；搜索胶囊 input（上方裸化块 width:100%）与数字 90px 档不受影响 */
+   max-width: 100% 防长文案撑破行；搜索胶囊 input（上方裸化块 width:100%）与数字 90px 档不受影响；
+   两个管理弹窗（UP 名单/RSS 订阅）行同规则入组 */
 .bz-sp-desk .bz-sp-set-ctrl .bz-input,
 .bz-sp-mobile .bz-sp-set-ctrl .bz-input,
 .bz-sp-desk .bz-sp-set-ctrl .bz-select,
-.bz-sp-mobile .bz-sp-set-ctrl .bz-select { max-width: 100%; }
+.bz-sp-mobile .bz-sp-set-ctrl .bz-select,
+#bz-up-manager-popup .bz-sp-set-ctrl .bz-input,
+#bz-rss-manager-popup .bz-sp-set-ctrl .bz-input { max-width: 100%; }
 
 /* 滑杆行 + 读数徽标 */
 .bz-sp-slider-row { display: flex; align-items: center; gap: 10px; }
@@ -13690,11 +13804,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-mob-ic .bz-ic { width: 16px; height: 16px; }
 
 /* ═══════════ 域内自绘控件（原型演示与 renderer 共用；容器前缀防 reset 压制） ═══════════ */
-/* .bz-sp-picker-mask = dir-picker 弹层自挂 scope（挂 body，不在面板三根之内），取消/选用按钮同皮 */
+/* .bz-sp-picker-mask = dir-picker 弹层自挂 scope（挂 body，不在面板三根之内），取消/选用按钮同皮；
+   两个管理弹窗（UP 名单/RSS 订阅，挂 body 自建 overlay）同理入组 */
 .bz-sp-desk .bz-sp-btn,
 .bz-sp-mobile .bz-sp-btn,
 .bz-sp-mobile .bz-sp-btn,
-.bz-sp-picker-mask .bz-sp-btn {
+.bz-sp-picker-mask .bz-sp-btn,
+#bz-up-manager-popup .bz-sp-btn,
+#bz-rss-manager-popup .bz-sp-btn {
   font-family: inherit;
   font-size: 12.5px;
   background: var(--sp-panel);
@@ -13710,11 +13827,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-desk .bz-sp-btn:hover,
 .bz-sp-mobile .bz-sp-btn:hover,
 .bz-sp-mobile .bz-sp-btn:hover,
-.bz-sp-picker-mask .bz-sp-btn:hover { background: var(--sp-accent-soft); }
+.bz-sp-picker-mask .bz-sp-btn:hover,
+#bz-up-manager-popup .bz-sp-btn:hover,
+#bz-rss-manager-popup .bz-sp-btn:hover { background: var(--sp-accent-soft); }
 .bz-sp-desk .bz-sp-btn--primary,
 .bz-sp-mobile .bz-sp-btn--primary,
 .bz-sp-mobile .bz-sp-btn--primary,
-.bz-sp-picker-mask .bz-sp-btn--primary {
+.bz-sp-picker-mask .bz-sp-btn--primary,
+#bz-up-manager-popup .bz-sp-btn--primary,
+#bz-rss-manager-popup .bz-sp-btn--primary {
   background: var(--sp-accent);
   border-color: transparent;
   color: var(--sp-on-accent);
@@ -13723,13 +13844,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-desk .bz-sp-btn--primary:hover,
 .bz-sp-mobile .bz-sp-btn--primary:hover,
 .bz-sp-mobile .bz-sp-btn--primary:hover,
-.bz-sp-picker-mask .bz-sp-btn--primary:hover { background: var(--sp-accent); opacity: 0.92; }
+.bz-sp-picker-mask .bz-sp-btn--primary:hover,
+#bz-up-manager-popup .bz-sp-btn--primary:hover,
+#bz-rss-manager-popup .bz-sp-btn--primary:hover { background: var(--sp-accent); opacity: 0.92; }
 
-/* custom 插槽内原生 Setting 的按钮（AI「获取模型名」等）与 UP 主名单管理弹窗按钮并入同一观感 */
+/* custom 插槽内原生 Setting 的按钮（AI「获取模型名」等）并入同一观感 */
 .bz-sp-desk .bz-sp-custom-slot .setting-item button,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button,
-#bz-up-manager-popup .setting-item button ,
 #bz-model-picker-popup .setting-item button {
   font-family: inherit;
   font-size: 12.5px;
@@ -13748,15 +13870,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-desk .bz-sp-custom-slot .setting-item button:hover,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button:hover,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button:hover,
-#bz-up-manager-popup .setting-item button:hover ,
 #bz-model-picker-popup .setting-item button:hover { background: var(--sp-accent-soft); }
 
-/* custom 插槽内原生 Setting 行（剪藏数据源组、复习排除名单等）与 UP 弹窗（挂 body 自建
-   overlay）对齐面板行范式：信息左/控件右一行；插件端 Obsidian 行同样被本规则收敛同皮 */
+/* custom 插槽内原生 Setting 行（剪藏数据源组、复习排除名单等）对齐面板行范式：
+   信息左/控件右一行；插件端 Obsidian 行同样被本规则收敛同皮 */
 .bz-sp-desk .bz-sp-custom-slot .setting-item,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item,
-#bz-up-manager-popup .setting-item ,
 #bz-model-picker-popup .setting-item {
   display: flex;
   align-items: center;
@@ -13768,28 +13888,23 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-info,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-info,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-info,
-#bz-up-manager-popup .setting-item-info ,
 #bz-model-picker-popup .setting-item-info { flex: 1; min-width: 0; }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-name,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-name,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-name,
-#bz-up-manager-popup .setting-item-name ,
 #bz-model-picker-popup .setting-item-name { font-size: var(--bz-font-label); font-weight: 600; color: var(--sp-ink); }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-description,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-description,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-description,
-#bz-up-manager-popup .setting-item-description ,
 #bz-model-picker-popup .setting-item-description { font-size: 11.5px; color: var(--sp-ink-2); margin-top: 3px; line-height: 1.45; }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-control,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-control,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-control,
-#bz-up-manager-popup .setting-item-control ,
 #bz-model-picker-popup .setting-item-control { display: flex; align-items: center; gap: var(--bz-space-sm); flex: none; flex-wrap: wrap; justify-content: flex-end; }
 /* 控件内文本输入（插件端 Obsidian addText 无 bz-input 类）：纸底描边同 bz-input */
 .bz-sp-desk .bz-sp-custom-slot .setting-item-control input[type="text"],
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-control input[type="text"],
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-control input[type="text"],
-#bz-up-manager-popup .setting-item-control input[type="text"] ,
 #bz-model-picker-popup .setting-item-control input[type="text"] {
   font-family: inherit;
   font-size: 12.5px;
@@ -13809,7 +13924,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-desk .bz-sp-custom-slot input[type="checkbox"],
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"],
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"],
-#bz-up-manager-popup input[type="checkbox"] ,
 #bz-model-picker-popup input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
@@ -13831,14 +13945,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-desk .bz-sp-custom-slot input[type="checkbox"]:checked,
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"]:checked,
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"]:checked,
-#bz-up-manager-popup input[type="checkbox"]:checked ,
 #bz-model-picker-popup input[type="checkbox"]:checked {
   background-color: var(--sp-accent);
   background-position: calc(100% - 20px) center;
 }
 
-/* UP 主名单管理弹窗（剪藏域自建 overlay）壳色同皮 */
-#bz-up-manager-popup, #bz-model-picker-popup {
+/* UP 主名单 / RSS 订阅管理弹窗（剪藏域自建 overlay）壳色同皮 */
+#bz-up-manager-popup, #bz-rss-manager-popup, #bz-model-picker-popup {
   background: var(--sp-panel);
   border: 1px solid var(--sp-line);
   border-radius: 14px;
@@ -13864,7 +13977,19 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
 }
 #bz-up-manager-popup .bz-settings-title ,
+#bz-rss-manager-popup .bz-settings-title ,
 #bz-model-picker-popup .bz-settings-title { font-size: var(--bz-font-body); font-weight: 700; color: var(--sp-ink); }
+
+/* 两弹窗壳内原生挂色的收口：头描边/内容文字原本挂 Obsidian 原生变量
+   （--background-modifier-border / --text-normal，浏览器或非 Obsidian 宿主即失效）——
+   统一改挂 --sp-*，与面板头卡/正文同皮 */
+#bz-up-manager-popup .bz-settings-header,
+#bz-rss-manager-popup .bz-settings-header { border-bottom-color: var(--sp-line); }
+#bz-up-manager-popup .bz-settings-content,
+#bz-rss-manager-popup .bz-settings-content {
+  background: var(--sp-panel);
+  color: var(--sp-ink);
+}
 
 /* 模型选择器弹窗内部皮收口（ticket 265）：壳体已接 --sp-*，但头部描边 / 内容区 /
    列表行 hover·选中 / 名称·来源小字仍在消费 Obsidian 原生变量（原生 hover 底 /
