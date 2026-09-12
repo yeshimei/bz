@@ -1,5 +1,5 @@
-/* 源指纹 f35b2ea27a54c9db · 仓内输入 75 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
+/* 源指纹 fd6afcb3ba43e982 · 仓内输入 76 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
   var __create = Object.create;
@@ -6074,6 +6074,14 @@ var BZW_diary = (() => {
   });
 
   // src/core/storage.ts
+  function storageDir() {
+    const s = tryGetSettings();
+    return (s && s.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
+  }
+  function storageFile(name, base) {
+    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
+    return `${dir}/${name}`;
+  }
   function enqueueFileTask(filePath, task) {
     var _a;
     const prev = (_a = fileTaskQueues.get(filePath)) != null ? _a : Promise.resolve();
@@ -6088,13 +6096,171 @@ var BZW_diary = (() => {
     });
     return run;
   }
-  var fileTaskQueues;
+  function assertPlainObject(filePath, current) {
+    if (current && typeof current === "object" && !Array.isArray(current)) return current;
+    const got = Array.isArray(current) ? "array" : current === null ? "null" : typeof current;
+    throw new Error("storage: 段级合并写要求对象形态 JSON（" + filePath + " 读到 " + got + "），请先归一文件形态");
+  }
+  function updateFileSections(filePath, writer, opts = {}) {
+    return enqueueFileTask(filePath, async () => {
+      var _a;
+      const store = jsonFileStore(filePath, { ...opts, defaultValue: (_a = opts.defaultValue) != null ? _a : {} });
+      const current = assertPlainObject(filePath, await store.read());
+      const set = await writer(current) || {};
+      const next = { ...current, ...set };
+      await store.write(next);
+      return next;
+    });
+  }
+  function isAlreadyExistsError(e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return /already exist/i.test(msg);
+  }
+  function corruptStamp(d = /* @__PURE__ */ new Date()) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  }
+  function baseNameOf(p) {
+    return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
+  }
+  async function backupOriginal(app, filePath, raw) {
+    try {
+      const f = app.vault.getAbstractFileByPath(filePath);
+      if (!f) return null;
+      const content = raw !== void 0 ? raw : await app.vault.read(f);
+      if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
+        try {
+          await app.vault.createFolder(CORRUPT_BACKUP_DIR);
+        } catch (e) {
+        }
+      }
+      const base = baseNameOf(filePath);
+      const stamp = corruptStamp();
+      let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
+      for (let i = 2; app.vault.getAbstractFileByPath(backupPath); i++) {
+        backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
+      }
+      await app.vault.create(backupPath, content);
+      return backupPath;
+    } catch (e) {
+      console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
+      return null;
+    }
+  }
+  function notifyBackup(filePath, backupPath, cause) {
+    var _a;
+    const now = Date.now();
+    if (now - ((_a = corruptNotifyAt.get(filePath)) != null ? _a : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
+    corruptNotifyAt.set(filePath, now);
+    try {
+      const name = baseNameOf(filePath);
+      const msg = cause === "解析失败" ? `数据文件 ${name} 解析失败，原内容已留档到 ${backupPath}，数据不会丢，已重建默认文件继续使用` : `数据文件 ${name} 写入失败，原内容已留档到 ${backupPath}，数据不会丢，请稍后重试`;
+      notify(msg, { type: "warning" });
+    } catch (e) {
+    }
+  }
+  function serialize(v) {
+    return JSON.stringify(v, null, 2);
+  }
+  function jsonFileStore(filePath, opts = {}) {
+    const resolveApp = () => opts.app || getApp();
+    const resolveDefault = () => {
+      const d = opts.defaultValue;
+      return typeof d === "function" ? d() : d === void 0 ? [] : d;
+    };
+    async function ensureDir(app) {
+      const d = filePath.substring(0, filePath.lastIndexOf("/"));
+      if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
+    }
+    async function createIfMissing(app, content) {
+      await ensureDir(app);
+      try {
+        await app.vault.create(filePath, content);
+        return true;
+      } catch (e) {
+        if (isAlreadyExistsError(e) && app.vault.getAbstractFileByPath(filePath)) return false;
+        throw e;
+      }
+    }
+    async function handleCorrupt(app, err, raw) {
+      var _a;
+      if (((_a = opts.onCorrupt) == null ? void 0 : _a.call(opts, filePath, err)) === false) {
+        return null;
+      }
+      const backupPath = await backupOriginal(app, filePath, raw);
+      if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
+      const f = app.vault.getAbstractFileByPath(filePath);
+      if (f) {
+        await app.vault.modify(f, serialize(resolveDefault()));
+      } else {
+        await createIfMissing(app, serialize(resolveDefault()));
+      }
+      return resolveDefault();
+    }
+    async function modifyWithBackup(app, f, c) {
+      try {
+        await app.vault.modify(f, c);
+      } catch (e) {
+        const backupPath = await backupOriginal(app, filePath);
+        if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
+        throw e;
+      }
+    }
+    return {
+      async read() {
+        const app = resolveApp();
+        let f = app.vault.getAbstractFileByPath(filePath);
+        if (!f) {
+          const created = await createIfMissing(app, serialize(resolveDefault()));
+          if (created) return resolveDefault();
+          f = app.vault.getAbstractFileByPath(filePath);
+          if (!f) return resolveDefault();
+        }
+        const raw = await app.vault.read(f);
+        try {
+          return JSON.parse(raw);
+        } catch (e) {
+          return await handleCorrupt(app, e, raw);
+        }
+      },
+      async write(data) {
+        const app = resolveApp();
+        const c = serialize(data);
+        let f = app.vault.getAbstractFileByPath(filePath);
+        if (f) {
+          if (opts.writeIfChanged) {
+            try {
+              const cur2 = await app.vault.read(f);
+              if (cur2 === c) return;
+            } catch (e) {
+            }
+          }
+          await modifyWithBackup(app, f, c);
+          return;
+        }
+        const created = await createIfMissing(app, c);
+        if (created) return;
+        let cur = app.vault.getAbstractFileByPath(filePath);
+        if (!cur) {
+          const retried = await createIfMissing(app, c);
+          if (retried) return;
+          cur = app.vault.getAbstractFileByPath(filePath);
+          if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
+        }
+        await modifyWithBackup(app, cur, c);
+      }
+    };
+  }
+  var fileTaskQueues, CORRUPT_BACKUP_DIR, CORRUPT_NOTIFY_DEDUPE_MS, corruptNotifyAt;
   var init_storage = __esm({
     "src/core/storage.ts"() {
       init_app();
       init_settings_provider();
       init_notice();
       fileTaskQueues = /* @__PURE__ */ new Map();
+      CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
+      CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
+      corruptNotifyAt = /* @__PURE__ */ new Map();
     }
   });
 
@@ -9645,6 +9811,35 @@ var BZW_diary = (() => {
     }
   });
 
+  // src/core/lock-stats.ts
+  async function readLockStats(kind) {
+    try {
+      const all = await jsonFileStore(lockStatsPath(), { defaultValue: {} }).read();
+      const hit = all[kind];
+      return Array.isArray(hit) && hit.length ? hit : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function writeLockStats(kind, stats) {
+    return updateFileSections(
+      lockStatsPath(),
+      () => {
+        const set = {};
+        set[kind] = stats;
+        return set;
+      },
+      { defaultValue: {}, writeIfChanged: true }
+    ).then(() => void 0);
+  }
+  var lockStatsPath;
+  var init_lock_stats = __esm({
+    "src/core/lock-stats.ts"() {
+      init_storage();
+      lockStatsPath = () => storageFile("lock-stats.json");
+    }
+  });
+
   // src/encrypt/ui.ts
   function statusbarHtml(unlocked) {
     return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
@@ -9896,6 +10091,7 @@ var BZW_diary = (() => {
       init_pw_picker();
       init_vault_assets_view();
       init_lock_screen();
+      init_lock_stats();
       LOCK_KIND_META = {
         vault: {
           icon: "shield",
@@ -9970,7 +10166,7 @@ var BZW_diary = (() => {
           this.idleLockTimer = null;
           /** 上次渲染的资产：资产未变时保留列表头（连同搜索框），避免搜索输入被重建而掉焦点 */
           this._lastRenderedAsset = null;
-          /** 解锁屏统计快照（会话内缓存；冷启动为「—」） */
+          /** 解锁屏统计快照（会话内缓存；冷启动回落 lock-stats.json 上次快照，见 core/lock-stats） */
           this.lockStatsCache = {};
           this._selNoteId = null;
           this._pwEditingId = null;
@@ -10509,8 +10705,8 @@ var BZW_diary = (() => {
         async showPasswordDialog(kind = "vault") {
           const exists = await this.dataManager.exists();
           const meta = LOCK_KIND_META[kind];
+          const stats = this.lockStatsCache[kind] || await readLockStats(kind) || meta.stats.map((s) => ({ ...s, num: "—" }));
           return new Promise((resolve) => {
-            const stats = this.lockStatsCache[kind] || meta.stats.map((s) => ({ ...s, num: "—" }));
             const ls = uiLockScreen({
               kind,
               icon: meta.icon,
@@ -10686,7 +10882,7 @@ var BZW_diary = (() => {
         /**
          * 快照解锁屏统计项（三域各一份）。
          * 清单本身是密文，锁定态无法读计数 —— 故只在解锁期间快照，供下次上锁后的解锁屏显示；
-         * 冷启动（本次会话从未解锁）则回落「—」，不编造数字。
+         * 快照同时写明文档 lock-stats.json（core/lock-stats），冷启动回落上次快照而非「—」。
          */
         captureLockStats() {
           var _a;
@@ -10712,6 +10908,10 @@ var BZW_diary = (() => {
               { num: String(this.pwDataManager.pwData.length), label: "口令条目" },
               { num: String(plats.filter((p) => this.pwDataManager.hasFav(p.platform)).length), label: "收藏" }
             ];
+            for (const k of ["vault", "diary", "password-vault"]) {
+              void writeLockStats(k, this.lockStatsCache[k]).catch(() => {
+              });
+            }
           } catch (e) {
           }
         }
