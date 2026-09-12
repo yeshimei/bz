@@ -83,6 +83,12 @@ export default interface BzSettings {
   memoDefaultPriority: string;
   /** 🆕 新条目默认场景（空=第一个场景） */
   memoDefaultScene: string;
+  /** 🚪 打开面板默认场景：'@last'（上次停留，关面板时记忆）/ '全部' / '今日' / '重要' / 场景名；非法值回落「全部」 */
+  memoOpenScene: string;
+  /** ↩️ 上次停留场景（memoOpenScene='@last' 的取数源；关面板时写入，场景已删则回落「全部」） */
+  memoLastScene: string;
+  /** 🗂️ 已完成折叠区时间窗（天）：'7'/'30'/'90'，'all'=全部不折叠；非法值回落 30 */
+  memoDoneWindow: string;
   // 退役：memoDueFormat（到期时间格式）——口径固定相对，键与设置行一并下线，data.json 残留值忽略
 
   // ===== 📖 日记本（ADR-0115：旧 12 键按消费面收编为 3 键 + 2 跨域读；退役键 data.json 残留值忽略）=====
@@ -503,6 +509,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   memoShowArchivedByDefault: false,
   memoDefaultPriority: 'minor',
   memoDefaultScene: '',
+  memoOpenScene: '@last',
+  memoLastScene: '',
+  memoDoneWindow: '30',
   // memoDueFormat 已退役（到期文案固定相对，2026-09-12 用户拍板）
   // 备忘录面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 720×580）
   memoPanelWidth: 0,

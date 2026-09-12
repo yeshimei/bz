@@ -23,7 +23,10 @@
  *   - 条目右键/长按「专注这个」= 开始一个归属到该备忘录的专注番茄（pomodoro 域动态 import）
  *   - 伪场景：今日 = 只看今天（今日/逾期未完成 + 今天完成）；重要 = 跨场景聚合 star 条目
  *   - 删除接撤销（core notifyUndo，条目插回原位）；composer 保存 toast 挂「补全」直开编辑器
- *   - 已完成折叠区展开默认只列近 30 天，尾部「更早 N 条」放全；空态 = 组件库 .bz-empty 三件套
+ *   - 打开默认场景 = 设置 memoOpenScene（@last 上次停留：关面板记住当下场景，跨开合与重启；
+ *     固定场景/伪场景直用，非法值回落「全部」；提醒 notePath 定位开面板不受其限，恒「全部」）
+ *   - 已完成折叠区时间窗 = 设置 memoDoneWindow（7/30/90 天，全部=不折叠）：窗内完成直列，
+ *     更早的收进尾部「更早 N 条」放全；空态 = 组件库 .bz-empty 三件套
  * 基线：按钮/输入/弹窗/平铺选择走组件库；域内只留备忘录特有布局。
  * 图标：一律 lucide。
  * 数据：与旧 memo 域读写同一 memo.json；后台任务由旧 memo 域执行。
@@ -57,8 +60,6 @@ import { M } from './state';
 const PANEL = { MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
 /** 搜索防抖（180ms，favorites/belongings 同值） */
 const SEARCH_DEBOUNCE_MS = 180;
-/** 已完成折叠区展开默认只列近 30 天，更早的收进「更早 N 条」 */
-const DONE_WINDOW_DAYS = 30;
 /** 搜索防抖计时（打开期间有效，面板关闭清理） */
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -87,6 +88,28 @@ function composerScene(): string {
   const specific =
     M.activeScene !== '全部' && M.activeScene !== '今日' && M.activeScene !== '重要' && scenes.includes(M.activeScene);
   return specific ? M.activeScene : fallbackScene();
+}
+
+/** 已完成折叠区时间窗（设置 memoDoneWindow）：天数；'all'=null（不折叠全列）；非法值回落 30 天 */
+function doneWindowDays(): number | null {
+  const v = tryGetSettings()?.memoDoneWindow;
+  if (v === 'all') return null;
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : 30;
+}
+
+/** 打开面板默认场景（设置 memoOpenScene）：'@last'=取关面板记忆 memoLastScene（issue 293）；
+ *  伪场景/场景名直用；非法值（含场景已删/改名）回落「全部」 */
+function resolveOpenScene(): string {
+  const s = tryGetSettings();
+  const v = s?.memoOpenScene;
+  const scenes = MemoData.getScenarios();
+  const known = (x: string) => x === '全部' || x === '今日' || x === '重要' || scenes.includes(x);
+  if (v === '@last') {
+    const last = s?.memoLastScene;
+    return last && known(last) ? last : '全部';
+  }
+  return v && known(v) ? v : '全部';
 }
 
 // ---------- 剪藏场景剪贴板预填（复用 core 同款 extractUrlAndDisplay + fetchPageTitle，与 memo 域一致） ----------
@@ -296,6 +319,8 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   const sortSetting = tryGetSettings().memoSortMode;
   M.sortMode = sortSetting === 'priority' || sortSetting === 'due' || sortSetting === 'created' ? sortSetting : 'priority';
   M.showDone = tryGetSettings().memoShowArchivedByDefault === true;
+  // 打开默认场景（memoOpenScene）：提醒 notePath 定位恒「全部」——定位靠搜索过滤，场景过滤会把目标条目挡掉
+  M.activeScene = opts?.notePath ? '全部' : resolveOpenScene();
   M.showEarlierDone = false; // 「更早 N 条」每次打开重新收起
   M.pinnedNewId = null;
   M.search = ''; // E8：搜索词跨开合残留——输入框是新的但列表仍被旧关键词过滤（notePath 定位在 loadData 后另行覆写）
@@ -397,7 +422,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
       renderAll();
       return;
     }
-    // 「更早 N 条」：放全 30 天前的已完成条目
+    // 「更早 N 条」：放全时间窗外的已完成条目
     const doneMore = t.closest('[data-memo-donemore]');
     if (doneMore) {
       M.showEarlierDone = true;
@@ -468,6 +493,12 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
 
 export function closeMemoPanel(): void {
   if (M.overlay) {
+    // 上次停留（memoOpenScene='@last' 的取数源）：关面板记住当下场景，下次打开取回
+    const s = tryGetSettings();
+    if (s) {
+      s.memoLastScene = M.activeScene;
+      void saveSettings();
+    }
     M.overlay.remove();
     M.overlay = null;
   }
@@ -619,9 +650,10 @@ function renderContent(): void {
   }
   if (done.length) {
     const open = M.showDone;
-    // 时间界：展开默认只列近 30 天完成的，更早的收进尾部「更早 N 条」（点开放全）
-    const cutoff = moment().subtract(DONE_WINDOW_DAYS, 'days').format('YYYY-MM-DD HH:mm:ss');
-    const recent = done.filter((i) => (i.completed as string) >= cutoff);
+    // 时间界（设置 memoDoneWindow）：展开默认只列时间窗内完成的，更早的收进尾部「更早 N 条」（点开放全；全部=不收）
+    const win = doneWindowDays();
+    const cutoff = win === null ? null : moment().subtract(win, 'days').format('YYYY-MM-DD HH:mm:ss');
+    const recent = cutoff === null ? done : done.filter((i) => (i.completed as string) >= cutoff);
     const earlier = done.length - recent.length;
     const listed = !open || M.showEarlierDone ? done : recent;
     sections.push(doneBarHtml(open, done.length));
