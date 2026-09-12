@@ -391,18 +391,23 @@ describe('保险库增强包（UIManager / Controller）', () => {
     expect(sm.manifest.notes.length).toBe(1); // 条目保留
   });
 
-  it('概览页搜索框生效：输入自动切到加密笔记结果', async () => {
+  it('搜索框在列表头：输入过滤加密笔记，且重建不清掉输入框（概览态无桌面搜索框）', async () => {
     await sm.lockNote({ path: '笔记/GitHub.md', title: 'GitHub 指南', content: '# gh', attachments: [] });
     await sm.lockNote({ path: '笔记/随手.md', title: '随手记', content: '# x', attachments: [] });
     ui.show(); // 默认概览
     await waitFor(() => !!document.querySelector('.bz-vault-detail > .bz-vault-area'));
     expect(ui.asset).toBe('overview');
-    const search = document.querySelector('[data-vault-search]') as HTMLInputElement;
+    // 评审 2026-09-12：搜索框从顶栏下移到「全部加密笔记 N 项」之上 —— 概览态不再有桌面搜索框
+    expect(document.querySelector('[data-vault-search]')).toBeNull();
+    (document.querySelector('[data-asset="note"]') as HTMLElement).click();
+    await waitFor(() => !!document.querySelector('.bz-vault-listcol [data-vault-search]'));
+    const search = document.querySelector('.bz-vault-listcol [data-vault-search]') as HTMLInputElement;
     search.value = 'GitHub';
     search.dispatchEvent(new Event('input'));
     await new Promise((r) => setTimeout(r, 250)); // 防抖
-    expect(ui.asset).toBe('note');
     await waitFor(() => document.querySelectorAll('.bz-vault-listcol .bz-vault-row').length === 1);
     expect(document.querySelector('.bz-vault-listcol .bz-vault-row .t1')!.textContent).toContain('GitHub 指南');
+    // 列表头（含搜索框）在刷新路径上必须复用：重建 = 正在输入的用户掉焦点
+    expect(document.querySelector('.bz-vault-listcol [data-vault-search]')).toBe(search);
   });
 });

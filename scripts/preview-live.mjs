@@ -193,7 +193,12 @@ function watchRoot(rootName, rootPath) {
     if (!isRelevant) return;
     // 监听 = 渲染清单 ∪ 行为清单（favorites 等仅行为域：.ts 变化走行为包重出）
     const domain = rel.split('/')[1];
-    if (!PREVIEW_DOMAINS.includes(domain) && !BEHAVIOR_DOMAINS.includes(domain)) return;
+    const known = PREVIEW_DOMAINS.includes(domain) || BEHAVIOR_DOMAINS.includes(domain);
+    // 清单外的域（如 encrypt 曾长期缺席、或主仓临时新增的域源码）也可能是**别的域产物**的
+    // 内联输入（src/encrypt/** → 保险库/password-vault 行为包）。此前直接 return 会让这类
+    // 改动静默不重出：壳停在旧版且没有任何提示（2026-09-12 接入保险库壳时发现）。
+    // 只有能按产物输入清单反查到依赖域时才继续，避免整棵 src 树任意变更都触发重出。
+    if (!known && !(rel.endsWith('.ts') && dependentDomains(rel, domain).size)) return;
     scheduleReload(rel, domain);
   });
 }
@@ -221,6 +226,7 @@ http.createServer((req, res) => {
       clipbook: ['剪藏本', '未读流 + 网页归档'],
       favorites: ['收藏本', '软木板 · 标签工作台'],
       diary: ['日记本', '媒体墙 · 章节导航（ADR-0115）'],
+      encrypt: ['保险库', '加密笔记 / 日记 · 锁屏 + 体检'],
       home: ['首页', '内容首页 · 活动河'],
       knowledge: ['知识盒', '词典皮三部 · 文献 / 卡片 / 主题'],
       'password-vault': ['密码本', '密码条目 · 金印锁屏 · 演示库密码 demo'],

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>保险库 · 原型预览（真行为单源）</title>
+<!--
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 保险库域 UI 的评审壳（行为单源版，encrypt 域，范式随 password-  │
+  │ vault / clipbook / ADR-0106）。                                         │
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                  │
+  │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
+  │   → ../../src/encrypt/styles.css                                        │
+  │ 行为单源：交互逻辑全部是插件同款 ui.ts 依赖链——经 prototype-behavior.js  │
+  │   （prototypes/encrypt/fake-sim.ts 构建，alias obsidian→公共假层）在下方  │
+  │   两个 iframe 视图里跑真行为；桌面 iframe 1200×800 = 桌面居中卡本体，     │
+  │   移动 iframe 412×915 = styles.css 移动全屏单列态。数据 = localStorage    │
+  │   fake vault（演示库：主密码 demo；种子由真 SafeManager 加密链现场生成，   │
+  │   3 篇加密笔记 + 2 篇加密日记全合成内容，双 iframe 共享同一数据源）。      │
+  │   锁屏安全机制（首设/冷却/失败重试）真码运行。                            │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                      │
+  └────────────────────────────────────────────────────────────────────────┘
+-->
+<link rel="stylesheet" href="../mob-1to1.css">
+<script src="../mob-1to1.js"></script>
+<style>
+  /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
+    background: #e3e0d8; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+
+  /* 桌面外景（真行为 iframe：面板 append iframe body，本体居中卡来自域 styles.css） */
+  .demo-dt { flex: none; width: 1200px; height: 800px; }
+  /* 移动外景：412×915 iframe → 全屏单列态铺满即手机框尺寸 */
+  .demo-mob { width: 412px; height: 915px; border-radius: 26px; overflow: hidden; flex: none;
+    border: 1px solid #d8d1c0; box-shadow: 0 8px 30px rgba(0,0,0,.14); background: #f5f2ec; }
+  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
+
+  /* 评审徽牌（演示壳自用） */
+  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #9a917d; display: flex; gap: 10px; align-items: center;
+    background: rgba(255,255,255,.9); border: 1px solid #d8d1c0; padding: 3px 8px; z-index: 900; }
+  .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
+  .vbadge .ok { color: #3d8f5d; }
+  .vbadge .bad { color: #b3564d; }
+</style>
+</head>
+<body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="保险库·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="保险库·移动"></iframe></div></div>
+
+  <div class="vbadge">保险库 · 真行为单源预览（桌面=真 ui.ts 跑在 1200px，移动=412×915）· 演示库主密码 demo
+    <button id="mobToggle">隐藏移动端</button>
+    <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
+  </div>
+
+<script>
+(function () {
+  /* ==================== 壳基座（仅外景）：两个真行为 iframe ====================
+   * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
+   *  - 重置演示数据（清 bz-sim:* 后重载 iframe —— 种子标记一并清掉，重进即重建演示库）
+   *  - 自检（?selftest=1）：经 iframe contentWindow 访问真 DOM
+   */
+  const dtFrame = () => document.querySelector('#dtHost iframe');
+  const mobFrame = () => document.querySelector('#mobHost iframe');
+  const dtDoc = () => dtFrame().contentDocument;
+  const mobDoc = () => mobFrame().contentDocument;
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
+  // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
+  const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const doc = getDoc();
+        if (doc && doc.querySelector(sel)) return res(doc);
+        if (Date.now() - started > 25000) return rej(new Error('iframe 面板超时'));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
+    };
+    tries();
+  });
+
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const m = document.querySelector('#mobHost');
+    const hidden = m.style.display === 'none';
+    m.style.display = hidden ? '' : 'none';
+    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
+  });
+
+  document.querySelector('#reset').addEventListener('click', () => {
+    const kill = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('bz-sim:')) kill.push(k);
+    }
+    kill.forEach((k) => localStorage.removeItem(k));
+    location.reload();
+  });
+
+  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
+  if (location.search.includes('selftest')) {
+    window.__st = { pass: 0, fail: [] };
+    const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    (async () => {
+      const res = document.querySelector('#stResult');
+      try {
+        // 自检判脏 = 「运行标记」：自检会解锁并可能改动演示库，标记在场说明上一轮跑过，
+        // 清 bz-sim:* 后带 reset=1 重载一次；标记不在场（headless 全新 profile / 首轮）直接跑。
+        const MARK = 'bz-sim:__vlt-selftest-ran';
+        if (localStorage.getItem(MARK) && !location.search.includes('reset=1')) {
+          const kill = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('bz-sim:')) kill.push(k);
+          }
+          kill.forEach((k) => localStorage.removeItem(k));
+          location.search = '?selftest=1&reset=1';
+          return;
+        }
+        localStorage.setItem(MARK, '1');
+
+        // 等两端锁屏（首启要现场建库：5 篇笔记逐篇 PBKDF2 加密，耐心等）
+        const dd = await waitFrame(dtDoc, '.bz-lockscreen-box');
+        const md = await waitFrame(mobDoc, '.bz-lockscreen-box');
+        res.textContent = '…';
+        const dt = (sel) => dd.querySelector(sel);
+        const mob = (sel) => md.querySelector(sel);
+
+        // —— 0. CSS 生效断言（评审壳链路 ../../ 404 曾全绿假象——样式必须真加载）：
+        // 判据取「遮罩不透明」而非硬编颜色：宿主变量名会随宿主主题改版，断言值写死即假红
+        const maskBg = getComputedStyle(dd.querySelector('.bz-overlay-mask')).backgroundColor;
+        t('桌面遮罩不透明（CSS 链生效）', !!maskBg && maskBg !== 'rgba(0, 0, 0, 0)' && maskBg !== 'transparent');
+        t('移动锁屏在场', !!mob('.bz-lockscreen-box'));
+
+        // —— 1. 锁屏（演示库已种子 → 非首设态：标题「保险库已上锁」+ 印章）
+        const lockTitle = dt('[data-ls="title"]')?.textContent || '';
+        t(`桌面锁屏标题=保险库已上锁（实际「${lockTitle}」）`, lockTitle === '保险库已上锁');
+        t('桌面锁屏印章在场', !!dt('.bz-lockscreen-seal'));
+        await sleep(500); // 演示提示由壳侧 setTimeout 注入（真锁屏 markup 不掺演示文案）
+        t('锁屏演示提示在场', !!dt('.bz-vlt-sim-hint'));
+
+        // —— 2. 解锁（主密码 demo；兼容首设态：真首设要两遍输入 + 风险勾选才放行）
+        const unlock = async (doc) => {
+          const q = (s) => doc.querySelector(s);
+          const firstSetup = (q('[data-ls="title"]')?.textContent || '').includes('设置主密码');
+          const visibleInputs = () => [...doc.querySelectorAll('.bz-lockscreen-input')].filter((el) => el.style.display !== 'none');
+          let list = visibleInputs();
+          if (!list.length) return '无密码输入框';
+          list[0].value = 'demo';
+          q('[data-ls="go"]')?.click();
+          if (firstSetup) {
+            await sleep(250);
+            list = visibleInputs();
+            if (list[1]) list[1].value = 'demo';
+            const ack = q('.bz-lockscreen-box input[type="checkbox"]');
+            if (ack) ack.checked = true;
+            q('[data-ls="go"]')?.click();
+          }
+          return firstSetup ? '首设态' : '解锁态';
+        };
+        const r1 = await unlock(dd);
+        await sleep(1200);
+        const err1 = dd.querySelector('[data-ls="err"]')?.textContent || '';
+        t(`桌面解锁后锁屏关闭（${r1}${err1 ? '·' + err1 : ''}）`, !dd.querySelector('.bz-lockscreen-box'));
+        t('桌面面板在场', !!dt('.bz-overlay-popup'));
+
+        // —— 3. 面板骨架：导航两资产 + 计数（3 篇笔记）
+        const navItems = dd.querySelectorAll('.bz-vault-item');
+        t('导航项 ≥ 2（概览/加密笔记）', navItems.length >= 2);
+        t('加密笔记计数=3', dt('[data-cnt="note"]')?.textContent === '3');
+
+        // —— 4. 笔记资产：列表行（3 笔记 + 2 日记条目同为库内资产）
+        const noteNav = dt('[data-asset="note"]');
+        if (noteNav) {
+          noteNav.click();
+          await sleep(250);
+        }
+        const rows = dd.querySelectorAll('[data-note-id], .bz-vault-row, .bz-vault-noterow').length;
+        t(`笔记列表行 ≥ 3（实际 ${rows}）`, rows >= 3);
+
+        // —— 4.5 本轮评审改动（2026-09-12）：副标题/顶栏三按钮/列表头标题计数全去掉，搜索框在列表栏，文案统一「笔记」
+        t('顶栏副标题已去掉', !dt('[data-vault-sub]'));
+        t('顶栏无按钮', !dd.querySelector('.bz-vault-bar button'));
+        t('顶栏已无搜索框', !dt('.bz-vault-bar [data-vault-search]'));
+        t('搜索框在列表栏内', !!dt('.bz-vault-listcol [data-vault-search]'));
+        t('列表头已无标题与计数', !dt('.bz-vault-lc-head .t') && !dt('.bz-vault-lc-head .lc-count'));
+        t('列表头无「全部加密笔记」字样', !(dt('.bz-vault-listcol')?.textContent || '').includes('全部加密笔记'));
+        t('左栏文案=笔记', [...dd.querySelectorAll('.bz-vault-item')].some((el) => (el.textContent || '').trim().startsWith('笔记')));
+        t('详情无三点按钮', !dt('[data-detail="menu"]'));
+
+        // —— 6. 概览跨栏（评审）：切概览 → 中列表栏隐藏，概览铺满中+右
+        dt('[data-asset="overview"]')?.click();
+        await sleep(300);
+        t('概览跨栏（列表栏已隐藏）', !!dd.querySelector('.bz-vault-pane')?.classList.contains('is-overview') &&
+          getComputedStyle(dt('.bz-vault-listcol')).display === 'none');
+        dt('[data-asset="note"]')?.click();
+        await sleep(200);
+
+        // —— 5. 移动端（独立实例：各自解锁）
+        const r2 = await unlock(md);
+        await sleep(1200);
+        t(`移动解锁后锁屏关闭（${r2}）`, !md.querySelector('.bz-lockscreen-box'));
+        t('移动资产分段在场', md.querySelectorAll('[data-masset]').length >= 2);
+
+        document.title = window.__st.fail.length
+          ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
+          : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
+        res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
+        res.className = window.__st.fail.length ? 'bad' : 'ok';
+      } catch (err) {
+        document.title = 'SELFTEST ERR ' + (err && err.message || err);
+        res.textContent = '自检异常';
+        res.className = 'bad';
+      }
+    })();
+  }
+})();
+</script>
+</body>
+</html>
