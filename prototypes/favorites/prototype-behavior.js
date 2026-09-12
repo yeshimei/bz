@@ -1,4 +1,4 @@
-/* 源指纹 9bb33409c760ad08 · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5fb4f76065ce7ee9 · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -4129,14 +4129,21 @@ var BZW_favorites = (() => {
 
   // src/core/settings-provider.ts
   var _provider = null;
+  var _saver = null;
   function setSettingsProvider(fn) {
     _provider = fn;
+  }
+  function saveSettings() {
+    return _saver ? _saver() : Promise.resolve();
   }
   function getSettings() {
     if (!_provider) {
       throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
     }
     return _provider();
+  }
+  function tryGetSettings() {
+    return _provider ? _provider() : {};
   }
 
   // src/favorites/config.ts
@@ -5912,6 +5919,9 @@ var BZW_favorites = (() => {
     del: "trash-2",
     ai: "sparkles"
   };
+  function normalizeFavSort(v) {
+    return v === "old" || v === "title" ? v : "new";
+  }
   function relTime(s) {
     if (!s) return "";
     const d = new Date(s.replace(" ", "T"));
@@ -5954,8 +5964,9 @@ var BZW_favorites = (() => {
   function filteredItems(items, view) {
     let list = poolOf(items, view);
     if (!view.archived && view.tag) list = list.filter((i) => (i.tags || []).includes(view.tag));
-    const byTime = (a, b) => (b.created || "").localeCompare(a.created || "") || (b.id || "").localeCompare(a.id || "");
-    const base = [...list].sort(byTime);
+    const byTimeDesc = (a, b) => (b.created || "").localeCompare(a.created || "") || (b.id || "").localeCompare(a.id || "");
+    const cmp = view.sort === "old" ? (a, b) => (a.created || "").localeCompare(b.created || "") || (a.id || "").localeCompare(b.id || "") : view.sort === "title" ? (a, b) => (a.title || "").localeCompare(b.title || "", "zh-CN") || byTimeDesc(a, b) : byTimeDesc;
+    const base = [...list].sort(cmp);
     const pinned = base.filter((i) => i.pinned);
     const rest = base.filter((i) => !i.pinned);
     return [...pinned, ...rest];
@@ -6061,6 +6072,7 @@ var BZW_favorites = (() => {
     items: [],
     tag: null,
     archived: false,
+    sort: "new",
     renderFn: null
   };
   function resetFavoritesState() {
@@ -6068,7 +6080,20 @@ var BZW_favorites = (() => {
     M.items = [];
     M.tag = null;
     M.archived = false;
+    M.sort = "new";
     M.renderFn = null;
+  }
+  function resolveOpenFilter() {
+    const s = tryGetSettings();
+    const v = s == null ? void 0 : s.favoritesOpenFilter;
+    if (v === "@last") {
+      const last = s == null ? void 0 : s.favoritesLastFilter;
+      if (last === "@archived") return { tag: null, archived: true };
+      if (last && TAGS.some((t) => t.label === last)) return { tag: last, archived: false };
+      return { tag: null, archived: false };
+    }
+    if (v && TAGS.some((t) => t.label === v)) return { tag: v, archived: false };
+    return { tag: null, archived: false };
   }
   var mainEscRegistered = false;
   function ensureFavoritesEsc() {
@@ -6093,6 +6118,7 @@ var BZW_favorites = (() => {
     _ai = ai;
   }
   function openPanel(app, dm, ai) {
+    var _a;
     initFavoritesUI(app, dm, ai);
     if (M.overlay) {
       closePanel();
@@ -6105,6 +6131,10 @@ var BZW_favorites = (() => {
     topifyZ(overlay);
     M.overlay = overlay;
     M.renderFn = () => renderAll();
+    const openFilter = resolveOpenFilter();
+    M.tag = openFilter.tag;
+    M.archived = openFilter.archived;
+    M.sort = normalizeFavSort((_a = tryGetSettings()) == null ? void 0 : _a.favoritesDefaultSort);
     mountIcons(overlay);
     ensureFavoritesEsc();
     overlay.addEventListener("click", (e) => {
@@ -6153,16 +6183,16 @@ var BZW_favorites = (() => {
     longPress(
       content,
       (ev) => {
-        var _a, _b;
-        const card = (_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, "[data-fav-id]");
+        var _a2, _b;
+        const card = (_b = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b.call(_a2, "[data-fav-id]");
         if (!card) return;
         const it = itemById(card.dataset.favId);
         if (it) openMobSheet(it);
       },
       void 0,
       (ev) => {
-        var _a, _b;
-        return isMobileEnv() && !!((_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, "[data-fav-id]"));
+        var _a2, _b;
+        return isMobileEnv() && !!((_b = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b.call(_a2, "[data-fav-id]"));
       }
     );
     void (async () => {
@@ -6172,6 +6202,11 @@ var BZW_favorites = (() => {
   }
   function closePanel() {
     if (M.overlay) {
+      const s = tryGetSettings();
+      if (s) {
+        s.favoritesLastFilter = M.archived ? "@archived" : M.tag || "";
+        void saveSettings();
+      }
       M.overlay.remove();
       M.overlay = null;
     }
@@ -6646,10 +6681,13 @@ GitHub 仓库：${ghInfo.title}
     _ai2 = new FavoritesAIService();
     initFavoritesUI(_app3, _dm2, _ai2);
   }
+  var SIM_SETTINGS = {
+    favoritesOpenFilter: "",
+    favoritesLastFilter: "",
+    favoritesDefaultSort: "new"
+  };
   function injectSettings() {
-    setSettingsProvider(
-      () => ({})
-    );
+    setSettingsProvider(() => SIM_SETTINGS);
   }
   function bootFavoritesSim() {
     const g = window;

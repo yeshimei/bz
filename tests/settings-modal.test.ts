@@ -508,11 +508,12 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     setSettingsSaver(async () => {});
   });
 
-  it('桌面端：外观组（issue 246 占位）落域后 = 单外观组；退役键不回归', () => {
+  it('桌面端：外观组（issue 246 占位）+ 显示组（issue 296）；退役键不回归', () => {
     const schema = favoritesSettingsSchema();
-    // 移动端默认全屏组退役后：仅剩外观组
-    expect(schema.groups).toHaveLength(1);
+    // issue 296 补显示组后：外观 / 显示 两组
+    expect(schema.groups).toHaveLength(2);
     expect(schema.groups[0].name).toBe('外观');
+    expect(schema.groups[1].name).toBe('显示');
     const allRows = schema.groups.flatMap((g) => g.rows) as any[];
     expect(allRows.find((r) => r.binding?.key === 'favoritesTimeFormat')).toBeUndefined();
     expect(allRows.find((r) => r.binding?.key === 'favoritesSortKey')).toBeUndefined();
@@ -521,5 +522,13 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     expect(layout.binding).toMatchObject({ key: 'favoritesSkin' });
     expect(theme.binding).toMatchObject({ key: 'favoritesSkinTheme' });
     expect(theme.layoutKey).toBe('favoritesSkin');
+    // 显示组（issue 296）：打开默认筛选（全部/记住上次/九类标签）+ 默认排序三档
+    const [openFilter, sort] = schema.groups[1].rows as any[];
+    expect(openFilter.binding).toMatchObject({ key: 'favoritesOpenFilter' });
+    expect(openFilter.options.map((o: any) => o.value)).toEqual([
+      '', '@last', 'GitHub', '桌面软件', '网站', '大模型', 'pi', 'Claude', 'skills', '酒馆', 'DeepSeek Harness',
+    ]);
+    expect(sort.binding).toMatchObject({ key: 'favoritesDefaultSort' });
+    expect(sort.options.map((o: any) => o.value)).toEqual(['new', 'old', 'title']);
   });
 });

@@ -104,7 +104,7 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[5]).toBe('5'); // 日记本：ADR-0115 升格后 = 外观 2 + 目录 2 + 显示 1（维护组为按钮行，不计设置项）
     expect(badges[6]).toBe('11'); // 备忘录（todo→memo 正名沿用待办 schema）：11 项（issue 293 增打开默认场景/已完成显示范围；issue 292 退役「到期时间格式」）
     expect(badges[7]).toBe('6'); // 归物本：外观 2 卡 + 显示 3（默认状态筛选/默认排序/金额单位）+ 记一笔 1（issue 294）
-    expect(badges[9]).toBe('2'); // 收藏本：issue 246 补外观组两卡 → 桌面回归列表
+    expect(badges[9]).toBe('4'); // 收藏本：issue 246 外观两卡 + issue 296 显示组两行（打开默认筛选/默认排序）→ 4 项
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
     expect(navIcons.length).toBe(18); // issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17；2026-09-10 内容首页域补入口设置 → 18

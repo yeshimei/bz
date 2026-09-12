@@ -63,12 +63,16 @@ function seedDatabase(): void {
   initFavoritesUI(_app, _dm, _ai);
 }
 
-/** 默认设置（settings-provider 真实现注入；键与插件 data.json 同形） */
+/** 默认设置（settings-provider 真实现注入；键与插件 data.json 同形）。
+ *  必须同一对象引用：closePanel 写回「上次筛选」落在注入对象上，重开面板才取得到（issue 296） */
+const SIM_SETTINGS = {
+  favoritesOpenFilter: '',
+  favoritesLastFilter: '',
+  favoritesDefaultSort: 'new',
+};
+
 function injectSettings(): void {
-  setSettingsProvider(
-    () =>
-      ({} as Record<string, never>) as never
-  );
+  setSettingsProvider(() => SIM_SETTINGS as never);
 }
 
 /** 壳入口：一次性启动（种子 + 注入；幂等） */
