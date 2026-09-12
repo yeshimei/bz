@@ -10752,6 +10752,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #bz-encrypt-popup .bz-vault-health .hd { font-size: var(--bz-font-caption); color: var(--bz-text-2); margin-top: 3px; line-height: 1.5; }
 #bz-encrypt-popup .bz-vault-lockbtn { display: flex; align-items: center; gap: var(--bz-space-sm); padding: 9px var(--bz-space-md); font-size: var(--bz-font-meta); color: var(--bz-text-2); border-top: 1px solid var(--bz-border); cursor: pointer; }
 #bz-encrypt-popup .bz-vault-lockbtn:hover { color: var(--bz-text-1); }
+/* 图标与文字垂直居中（评审：锁图标与「立即上锁」基线不齐）：svg 是 inline 元素，
+   默认按文字基线对齐会偏下——改为 inline-flex 容器 + 块级 svg 后由 flex 居中 */
+#bz-encrypt-popup .bz-vault-lockbtn .lbl { display: inline-flex; align-items: center; gap: 6px; }
+#bz-encrypt-popup .bz-vault-lockbtn .lbl svg { display: block; flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-lockbtn svg { width: 14px; height: 14px; }
 /* 已解锁时长（解锁会话可见性）：等宽数字防跳动 */
 #bz-encrypt-popup .bz-vault-lockbtn .dur { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); font-variant-numeric: tabular-nums; }
@@ -10760,15 +10764,19 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 主区 */
 #bz-encrypt-popup .bz-vault-main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bz-surface-2); }
 #bz-encrypt-popup .bz-vault-bar { display: flex; align-items: center; gap: 10px; padding: var(--bz-space-md) 18px; border-bottom: 1px solid var(--bz-border); }
-#bz-encrypt-popup .bz-vault-bar h1 { font-size: 18px; font-weight: 700; margin: 0; color: var(--bz-text-1); white-space: nowrap; }
-#bz-encrypt-popup .bz-vault-bar .sub { font-size: var(--bz-font-meta); color: var(--bz-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#bz-encrypt-popup .bz-vault-search { flex: 1; max-width: 260px; display: flex; align-items: center; gap: var(--bz-space-sm); background: var(--bz-surface-1); border: 1px solid var(--bz-border); border-radius: 11px; padding: 0 var(--bz-space-md); margin-left: auto; }
+/* h1 flex:1 = 把右侧动作按钮推到最右（原先靠搜索框的 margin-left:auto；搜索框已按评审下移） */
+#bz-encrypt-popup .bz-vault-bar h1 { flex: 1; font-size: 18px; font-weight: 700; margin: 0; color: var(--bz-text-1); white-space: nowrap; }
+/* 搜索框（评审 2026-09-12：顶栏 → 列表头；列表头的标题与计数随后也按评审去掉，
+   现在列表头只剩它一个，占满整行、宽度随列宽自适应） */
+#bz-encrypt-popup .bz-vault-search { flex: 1; display: flex; align-items: center; gap: var(--bz-space-sm); background: var(--bz-surface-1); border: 1px solid var(--bz-border); border-radius: 11px; padding: 0 var(--bz-space-md); margin: 0; }
 #bz-encrypt-popup .bz-vault-search svg { width: 14px; height: 14px; color: var(--bz-text-3); flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-search input { border: none; background: none; flex: 1; padding: 7px 0; font-size: var(--bz-font-label); }
 #bz-encrypt-popup .bz-vault-search input:focus { outline: none; }
 #bz-encrypt-popup .bz-vault-pane { flex: 1; min-height: 0; display: flex; gap: 14px; padding: var(--bz-space-lg) 18px; }
+/* 概览跨栏（评审）：概览横跨中列表 + 右详情——隐藏中列表栏，让概览内容铺满整行 */
+#bz-encrypt-popup .bz-vault-pane.is-overview .bz-vault-listcol { display: none; }
 #bz-encrypt-popup .bz-vault-listcol { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; border: 1px solid var(--bz-border); background: var(--bz-surface-1); border-radius: var(--bz-radius-lg); overflow: hidden; }
-#bz-encrypt-popup .bz-vault-lc-head { display: flex; align-items: center; gap: var(--bz-space-sm); padding: 13px var(--bz-space-lg) var(--bz-space-sm); color: var(--bz-text-1); }
+#bz-encrypt-popup .bz-vault-lc-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bz-space-sm); padding: 10px var(--bz-space-sm) var(--bz-space-sm); color: var(--bz-text-1); }
 #bz-encrypt-popup .bz-vault-lc-head .t { font-size: var(--bz-font-label); font-weight: 700; flex: 1; }
 #bz-encrypt-popup .bz-vault-lc-head .lc-count, #bz-encrypt-popup .bz-vault-lc-head .badge { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 #bz-encrypt-popup .bz-vault-lc-head .lc-add { display: inline-flex; align-items: center; gap: var(--bz-space-xs); font-size: var(--bz-font-meta); font-weight: 600; color: var(--bz-brand); background: color-mix(in srgb, var(--bz-brand) 14%, transparent); border: 1px solid color-mix(in srgb, var(--bz-brand) 30%, transparent); border-radius: var(--bz-radius-full); padding: 3px 11px; cursor: pointer; }
@@ -10801,7 +10809,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #bz-encrypt-popup .bz-vault-dhead .ttl { flex: 1; min-width: 0; }
 #bz-encrypt-popup .bz-vault-dhead .ttl h2 { margin: 0; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-text-1); }
 #bz-encrypt-popup .bz-vault-dhead .ttl .url { font-size: var(--bz-font-caption); color: var(--bz-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-#bz-encrypt-popup .bz-vault-dhead .acts { display: flex; gap: 6px; }
 #bz-encrypt-popup .bz-vault-dcontent { flex: 1; overflow-y: auto; padding: var(--bz-space-lg) 20px 20px; }
 #bz-encrypt-popup .field { margin-bottom: 14px; }
 #bz-encrypt-popup .field .lab { display: flex; justify-content: space-between; font-size: var(--bz-font-caption); letter-spacing: 0.1em; text-transform: uppercase; color: var(--bz-text-3); margin-bottom: 6px; }
