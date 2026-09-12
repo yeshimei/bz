@@ -93,21 +93,25 @@ describe('锁家族修复批（password-vault）', () => {
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'secret' });
     ui.show();
-    await flush();
-    expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0); // 已解锁进入
+    // 域事件驱动的 UI 反应：固定 flush/sleep 在高负载下会读到上一步状态，故对终态做 waitFor（issue 291 §7①）
+    await vi.waitFor(() =>
+      expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0) // 已解锁进入
+    );
 
     // 别域上锁（保险库「立即上锁」/安全模式/日记域走同一条 SafeManager.lock + 域事件）
     sm.lock();
-    await flush();
-    expect(dm.pwData).toEqual([]); // 明文已清
-    expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(2); // 双实例锁屏接管
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(2); // 双实例锁屏接管
+      expect(dm.pwData).toEqual([]); // 明文已清
+    });
     expect(document.querySelector('.bz-password-vault-rows')!.textContent).not.toContain('secret');
 
     // 同会话再解锁 → 列表重载（事件驱动）
     await sm.unlock('pw');
-    await flush();
-    expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0);
-    expect(document.querySelector('.bz-password-vault-rows')!.textContent).toContain('GitHub');
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0);
+      expect(document.querySelector('.bz-password-vault-rows')!.textContent).toContain('GitHub');
+    });
   });
 
   it('E5：添加弹窗密码框默认掩码（type=password），eye 点击切换明文/掩码', async () => {
