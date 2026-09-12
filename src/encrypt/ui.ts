@@ -492,8 +492,16 @@ export class UIManager {
     list: HTMLElement;
     detail: HTMLElement;
     count: HTMLElement;
-    search: HTMLInputElement;
   };
+  /**
+   * 桌面搜索框（评审 2026-09-12：从顶栏下移到「全部加密笔记 N 项」之上）——它现在随
+   * 列表头一起渲染，故不再缓存引用而按需现取；null = 当前资产没有列表头（概览 / 密码）。
+   */
+  private get deskSearch(): HTMLInputElement | null {
+    return this.popup?.querySelector<HTMLInputElement>('[data-vault-search]') ?? null;
+  }
+  /** 上次渲染的资产：资产未变时保留列表头（连同搜索框），避免搜索输入被重建而掉焦点 */
+  private _lastRenderedAsset: VaultAsset | null = null;
   private mob!: {
     body: HTMLElement;
     search: HTMLInputElement;
@@ -516,7 +524,7 @@ export class UIManager {
           </div>
           <div class="bz-vault-item on" data-asset="overview">${vIc('layout-grid', 16)}概览<span class="cnt" data-cnt="overview"></span></div>
           <div class="bz-vault-sec">资产档案</div>
-          <div class="bz-vault-item k-note" data-asset="note">${vIc('file-lock', 16)}加密笔记<span class="cnt" data-cnt="note"></span></div>
+          <div class="bz-vault-item k-note" data-asset="note">${vIc('file-lock', 16)}笔记<span class="cnt" data-cnt="note"></span></div>
           <div class="grow"></div>
           <div class="bz-vault-health" data-act="health-card" title="打开保险库体检">
             <div class="ht"><span class="okdot"></span><span data-health-t>保险库健康</span></div>
@@ -525,13 +533,10 @@ export class UIManager {
           <div class="bz-vault-lockbtn" data-act="lock"><span class="lbl">${vIc('lock', 14)} 立即上锁</span><span class="dur" data-unlock-dur></span><span class="dot"></span></div>
         </div>
         <div class="bz-vault-main">
+          <!-- 顶栏只留标题：右侧三按钮（存入笔记/体检/关闭）按评审去掉——关闭走 Esc 或点遮罩，
+               体检走左栏健康卡，存入笔记走命令「加密当前笔记」，三条入口都不丢 -->
           <div class="bz-vault-bar">
             <h1 data-vault-title>保险库</h1>
-            <div class="sub" data-vault-sub></div>
-            <div class="bz-vault-search">${vIc('search', 14)}<input placeholder="搜索加密笔记…" data-vault-search></div>
-            <button class="bz-vault-ic" data-act="lock-note" title="存入笔记">${vIc('file-lock', 15)}</button>
-            <button class="bz-vault-ic" data-act="health" title="保险库体检">${vIc('stethoscope', 15)}</button>
-            <button class="bz-vault-ic close" data-act="close" title="关闭">${vIc('x', 15)}</button>
           </div>
           <div class="bz-vault-pane">
             <div class="bz-vault-listcol" data-vault-list></div>
@@ -562,7 +567,6 @@ export class UIManager {
       list: desk.querySelector('[data-vault-list]')!,
       detail: desk.querySelector('[data-vault-detail]')!,
       count: desk.querySelector('[data-cnt="overview"]')!,
-      search: desk.querySelector('[data-vault-search]')!,
     };
     const mob = this.popup.querySelector('.bz-vault-mob') as HTMLElement;
     this.mob = {
@@ -593,7 +597,8 @@ export class UIManager {
       this.asset = a;
       lastVisitedAsset = a; // 记住停留资产：下次打开直落
       this.pwState.searchKw = '';
-      this.desk.search.value = '';
+      const headSearch = this.deskSearch;
+      if (headSearch) headSearch.value = '';
       this.mob.search.value = '';
       this.renderAll();
     };
@@ -603,9 +608,8 @@ export class UIManager {
     this.mob.seg.querySelectorAll('.sg').forEach((el) => {
       el.addEventListener('click', () => setAsset((el.getAttribute('data-masset') as VaultAsset) || 'overview'));
     });
-    // 顶栏动作
+    // 动作绑定：顶栏三按钮已按评审去掉，只留左栏「立即上锁」与移动端关闭
     this.popup!.querySelector('[data-act="lock"]')?.addEventListener('click', () => this.lockNow());
-    this.popup!.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hide());
     this.popup!.querySelector('[data-act="mob-close"]')?.addEventListener('click', () => this.hide());
     // 设置入口：顶栏按钮已按原型去掉，改为面板空白处右键菜单。
     // 行/卡（自带条目抽屉）、菜单本体、表单控件不冒泡开面板菜单——否则两级菜单互顶
@@ -616,27 +620,12 @@ export class UIManager {
       e.preventDefault();
       this.openPanelMenu(e.clientX, e.clientY);
     });
-    this.popup!.querySelector('[data-act="health"]')?.addEventListener('click', () => void this.openHealthDialog());
-    // 左栏健康卡：读真实体检状态 + 点击直达体检
+    // 左栏健康卡：读真实体检状态 + 点击直达体检（顶栏体检按钮已按评审删除，这里是唯一入口）
     this.popup!.querySelector('[data-act="health-card"]')?.addEventListener('click', () => void this.openHealthDialog());
-    this.popup!.querySelector('[data-act="lock-note"]')?.addEventListener('click', () => this.onLockCurrentNote?.());
-    // 搜索防抖（资产内过滤）：概览页输入 → 自动切到加密笔记结果（保留关键词）
-    const bindSearch = (input: HTMLInputElement, isMob: boolean) => {
-      input.addEventListener('input', () => {
-        const v = input.value.trim();
-        if (this.asset === 'overview' && v) {
-          this.asset = 'note';
-          lastVisitedAsset = 'note';
-        }
-        this.pwState.searchKw = v;
-        this.desk.search.value = isMob ? v : this.desk.search.value;
-        this.mob.search.value = isMob ? this.mob.search.value : v;
-        if (this.searchTimer) clearTimeout(this.searchTimer);
-        this.searchTimer = setTimeout(() => this.renderAll(), 180);
-      });
-    };
-    bindSearch(this.desk.search, false);
-    bindSearch(this.mob.search, true);
+    // 搜索防抖（资产内过滤）：概览页输入 → 自动切到加密笔记结果（保留关键词）。
+    // 桌面搜索框已下移到列表头里、随渲染重建，故绑定在 renderDeskNotes 里每次重挂；
+    // 这里只挂移动端常驻框（两框共用一个绑定方法，语义不裂）。
+    this.bindSearchInput(this.mob.search, true);
     // 桌面点遮罩关闭
     this.mask!.addEventListener('click', () => {
       if (this.mask!.style.display === 'block') this.hide();
@@ -645,6 +634,30 @@ export class UIManager {
     const bump = () => this.bumpIdleLock();
     this.popup!.addEventListener('pointerdown', bump, true);
     this.popup!.addEventListener('keydown', bump, true);
+  }
+
+  /**
+   * 搜索输入绑定（桌面列表头框 / 移动端常驻框共用一条语义）。
+   * 桌面框随列表头重建，故每次渲染都要重挂一次——抽成方法避免两处逻辑漂移。
+   * @param isMob 输入源是移动端框：决定把关键词同步到哪一侧（桌面框是动态的，现取）
+   */
+  private bindSearchInput(input: HTMLInputElement, isMob: boolean): void {
+    input.addEventListener('input', () => {
+      const v = input.value.trim();
+      if (this.asset === 'overview' && v) {
+        this.asset = 'note';
+        lastVisitedAsset = 'note';
+      }
+      this.pwState.searchKw = v;
+      if (isMob) {
+        const deskSearch = this.deskSearch;
+        if (deskSearch) deskSearch.value = v; // 移动端输入 → 同步桌面框
+      } else {
+        this.mob.search.value = v; // 桌面输入 → 同步移动端框
+      }
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+      this.searchTimer = setTimeout(() => this.renderAll(), 180);
+    });
   }
 
   createMask(id: string): HTMLDivElement {
@@ -1057,7 +1070,7 @@ export class UIManager {
         action: exists ? meta.action : '设置并解锁',
         firstSetup: !exists,
         warningHtml:
-          `${vIc('triangle-alert', 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
+          `${vIc('triangle-alert', 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，库内笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
         ackText: '我已了解：主密码无法找回，遗忘将导致密文永久无法恢复',
         secText: exists ? '主密码不会存储 · 遗忘将无法恢复密文' : '',
         secTone: 'warn',
@@ -1324,12 +1337,18 @@ export class UIManager {
 
   /** 桌面区渲染（中列表 + 右详情按资产分发） */
   private renderDesktop() {
-    this.desk.list.innerHTML = '';
+    // 资产未变时保留列表头（连同搜索框）：搜索/选中触发的重渲染若把输入框一起重建，
+    // 输入焦点与光标会丢——搜索框从顶栏下移到列表头后新增的约束（评审 2026-09-12）。
+    const keepHead = this._lastRenderedAsset === this.asset && (this.asset === 'note' || this.asset === 'diary');
+    if (!keepHead) this.desk.list.innerHTML = '';
     this.desk.detail.innerHTML = '';
     // 离开密码资产时移除密码专用收藏切换钮（顶栏共享）
     if (this.asset !== 'pw') {
       this.popup!.querySelector('.bz-vault-bar [data-act="pw-fav"]')?.remove();
     }
+    // 概览跨栏（评审）：概览横跨中列表 + 右详情两栏
+    this.setOverviewSpan(this.asset === 'overview');
+    this._lastRenderedAsset = this.asset;
     if (this.asset === 'overview') {
       this.renderDeskOverview();
       return;
@@ -1339,21 +1358,23 @@ export class UIManager {
       return;
     }
     const kind: 'note' | 'diary' = this.asset;
-    this.renderDeskNotes(kind);
+    this.renderDeskNotes(kind, keepHead);
   }
 
-  /** 顶栏标题/副标题（各资产渲染器共用出口） */
-  private setVaultHead(title: string, sub: string): void {
+  /** 概览跨栏开关：概览内容横跨「中列表 + 右详情」——隐藏中列表栏，让详情铺满整行 */
+  private setOverviewSpan(on: boolean): void {
+    this.popup!.querySelector('.bz-vault-pane')?.classList.toggle('is-overview', on);
+  }
+
+  /** 顶栏标题（各资产渲染器共用出口）。副标题已按评审去掉——条目数由列表头「N 项」承担 */
+  private setVaultHead(title: string): void {
     (this.popup!.querySelector('[data-vault-title]') as HTMLElement).textContent = title;
-    (this.popup!.querySelector('[data-vault-sub]') as HTMLElement).textContent = sub;
   }
 
   /** 桌面概览：hero 计数 + 统计卡 + 最近 + 体检摘要（点击跳资产/动作） */
   private renderDeskOverview() {
-    const c = this.counts();
     const stats = this.overviewStats();
-    const kb = stats.attBytes > 0 ? (stats.attBytes / 1024).toFixed(1) + ' KB' : '—';
-    this.setVaultHead('保险库', `${c.note} 篇笔记 · ${stats.attachments} 附件 · ${kb} 密文`);
+    this.setVaultHead('保险库');
     const detail = this.desk.detail;
     const area = document.createElement('div');
     area.className = 'bz-vault-area';
@@ -1384,8 +1405,7 @@ export class UIManager {
     const list = this.desk.list;
     const detail = this.desk.detail;
     const kw = this.pwState.searchKw;
-    const c = this.counts();
-    this.setVaultHead('密码', kw ? `${this.pwDataManager.search(kw).length} 条匹配` : `${this.pwDataManager.platforms().length} 平台 · ${c.pw} 账号`);
+    this.setVaultHead('密码');
     // 顶栏追加密码动作按钮（生成/新增在通用 gen 已有——密码视图放专用新增/收藏切换）
     const barActs = this.popup!.querySelector('.bz-vault-bar')!;
     const favBtn = barActs.querySelector('[data-act="pw-fav"]') as HTMLElement | null;
@@ -1424,34 +1444,51 @@ export class UIManager {
   }
 
   /** 桌面加密笔记/日记：列表 + 详情（异步解密日记正文预览） */
-  private renderDeskNotes(kind: 'note' | 'diary') {
+  /**
+   * 桌面加密笔记/日记：列表 + 详情。
+   * @param keepHead 复用已有列表头（资产未变的刷新路径）——搜索框就在列表头里，
+   *   整块重建会让正在输入的用户掉焦点，故只有切资产/首次渲染才重建它。
+   */
+  private renderDeskNotes(kind: 'note' | 'diary', keepHead = false) {
     const list = this.desk.list;
     const detail = this.desk.detail;
     const kw = this.pwState.searchKw;
     let notes = [...this.dataManager.manifest.notes]
       .filter((n) => (kind === 'diary' ? n.kind === 'diary-entry' : n.kind !== 'diary-entry' && n.kind !== 'password-vault'))
       .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-    this.setVaultHead(
-      kind === 'note' ? '加密笔记' : '加密日记',
-      kind === 'note' ? `${notes.length} 篇 · 原路径已移出` : `${notes.length} 篇 · 日记面板「加密」分类移入`
-    );
+    // 顶栏只留标题；列表头按评审再去掉「全部加密笔记 · N 项」，只留搜索框（仅笔记资产）
+    this.setVaultHead(kind === 'note' ? '笔记' : '加密日记');
     if (kw) {
       const lower = kw.toLowerCase();
       notes = notes.filter((n) => (n.title || '').toLowerCase().includes(lower) || (n.path || '').toLowerCase().includes(lower));
     }
-    const listHead = document.createElement('div');
-    listHead.className = 'bz-vault-lc-head';
-    listHead.innerHTML = `<div class="t">${kind === 'note' ? '全部加密笔记' : '加密日记条目'}</div><span class="lc-count">${notes.length} 项</span>`;
-    const listBody = document.createElement('div');
-    listBody.className = 'bz-vault-lc-body';
-    list.appendChild(listHead);
-    list.appendChild(listBody);
+    let listBody = keepHead ? list.querySelector<HTMLElement>('.bz-vault-lc-body') : null;
+    if (!listBody) {
+      list.innerHTML = '';
+      // 列表头按评审去掉标题与计数，只剩搜索框；日记条目视图（无搜索语义）直接无头
+      if (kind === 'note') {
+        const head = document.createElement('div');
+        head.className = 'bz-vault-lc-head';
+        head.innerHTML = `<div class="bz-vault-search">${vIc('search', 14)}<input placeholder="搜索笔记…" data-vault-search></div>`;
+        list.appendChild(head);
+        const headSearch = head.querySelector<HTMLInputElement>('[data-vault-search]');
+        if (headSearch) {
+          headSearch.value = kw;
+          this.bindSearchInput(headSearch, false);
+        }
+      }
+      listBody = document.createElement('div');
+      listBody.className = 'bz-vault-lc-body';
+      list.appendChild(listBody);
+    } else {
+      listBody.innerHTML = '';
+    }
     if (!notes.length) {
       // 空态走组件库 uiEmpty（.bz-empty 基线）
       listBody.replaceChildren(
         uiEmpty(
           kind === 'note'
-            ? { title: '还没有加密笔记', desc: '用「加密当前笔记」把整篇笔记移入保险库' }
+            ? { title: '还没有笔记', desc: '用「加密当前笔记」把整篇笔记移入保险库' }
             : { title: '还没有加密日记', desc: '日记面板把条目改分类为「加密」后移入这里' }
         )
       );
@@ -1478,15 +1515,6 @@ export class UIManager {
 
   private _selNoteId: string | null = null;
 
-  /** 详情 ⋮ → 弹行级抽屉（attachItemActions 需要真实元素承载，临时挂到 detail 根再触发 contextmenu） */
-  private openNoteDetailMenu(note: SafeNote, kind: 'note' | 'diary'): void {
-    const holder = document.createElement('div');
-    holder.style.display = 'none';
-    this.desk.detail.appendChild(holder);
-    this.attachNoteDrawer(holder, note, kind);
-    holder.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }));
-  }
-
   /** 加密笔记/日记详情（异步解密日记正文预览） */
   private renderNoteDetail(detail: HTMLElement, note: SafeNote, kind: 'note' | 'diary') {
     const plain = kind === 'diary' ? this._diaryPlain[note.id] : undefined;
@@ -1506,8 +1534,8 @@ export class UIManager {
     bind('restore-diary', () => this.confirmRestoreDiary(note));
     bind('copy-diary', () => this.copyDiaryText(note));
     bind('destroy-diary', () => this.confirmDestroyDiary(note));
-    // 详情 ⋮ 菜单：复用行右键抽屉（临时载体触发）
-    bind('menu', () => this.openNoteDetailMenu(note, kind));
+    // 详情的 ⋮ 菜单按评审去掉（桌面端右上角三点）：行级操作改从**行右键菜单**进入
+    // （attachNoteDrawer 同一套 attachItemActions，功能不丢，只是不再有第二个入口）
     // 无 kind 过滤（正文预览异步）
     if (kind === 'diary' && !this._diaryPlain[note.id]) {
       void this.dataManager
@@ -1937,11 +1965,14 @@ export class UIManager {
   enterPwQuickAccess(): void {
     if (!this._initialized) return;
     this.setAssetFromNav('note');
-    this.desk.search.value = '';
+    // 搜索框现在在列表头里（随渲染重建）→ 渲染完之后现取；面板尚未渲染时跳过聚焦
+    const search = this.deskSearch;
+    if (!search) return;
+    search.value = '';
     try {
-      this.desk.search.focus({ preventScroll: true } as any);
+      search.focus({ preventScroll: true } as any);
     } catch (e) {
-      this.desk.search.focus();
+      search.focus();
     }
   }
 
@@ -2024,7 +2055,7 @@ export class UIManager {
         uiEmpty(
           kind === 'diary'
             ? { title: '还没有加密日记', desc: '日记面板把条目改分类为「加密」后移入这里' }
-            : { title: '还没有加密笔记', desc: '用「加密当前笔记」把整篇笔记移入保险库' }
+            : { title: '还没有笔记', desc: '用「加密当前笔记」把整篇笔记移入保险库' }
         )
       );
       return;
@@ -2052,7 +2083,7 @@ export class UIManager {
 
   private openNoteMobPage(note: SafeNote, kind: 'note' | 'diary') {
     // 移动端详情 = 全屏二级页（复用桌面详情 HTML，顶部带返回）
-    const { page, body } = this.createMobPage(kind === 'note' ? '加密笔记' : '加密日记');
+    const { page, body } = this.createMobPage(kind === 'note' ? '笔记' : '加密日记');
     body.innerHTML = noteDetailHTML(note, kind);
     // 详情动作（复用 bind 逻辑）
     const bind = (a: string, fn: () => void) => {
@@ -2145,7 +2176,7 @@ export class UIManager {
         .then(() => {
           if (this._selNoteId === note.id) this._selNoteId = null;
           this.renderList();
-          this.toast(`已销毁加密笔记「${note.title}」`);
+          this.toast(`已销毁笔记「${note.title}」`);
         })
         .catch((e: any) => this.toast('销毁失败：' + e.message, true));
     };

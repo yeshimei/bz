@@ -67,10 +67,9 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(document.querySelector('.bz-vault-detail')).toBeTruthy();
     // 滚动修复回归：pw/笔记/日记资产均有独立滚动区容器 .bz-vault-lc-body（CSS 决定滚动）
     // （jsdom 不算样式，computed overflow 恒 visible；结构上滚动区与列头分离即可）
-    // 顶栏动作：设置/生成密码按钮已按原型移除（设置收进面板空白处右键菜单）
-    expect(document.querySelector('[data-act="health"]')).toBeTruthy();
-    expect(document.querySelector('[data-act="lock-note"]')).toBeTruthy();
-    expect(document.querySelector('[data-act="close"]')).toBeTruthy();
+    // 顶栏三按钮（health/lock-note/close）2026-09-12 按评审移除：顶栏只留标题
+    expect(document.querySelector('.bz-vault-bar [data-act]')).toBeNull();
+    expect(document.querySelector('[data-vault-title]')).toBeTruthy();
     expect(document.querySelector('[data-act="settings"]')).toBeNull();
     expect(document.querySelector('[data-act="gen"]')).toBeNull();
     // 面板空白处右键 → 面板菜单（保险库设置/体检入口）
@@ -127,7 +126,7 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(detail.textContent).toContain('主号');
   });
 
-  it('密码搜索：顶栏搜索输入 → 展平账号行过滤', async () => {
+  it('密码搜索：searchKw 直通过滤账号行（pw 视图不再渲染搜索框 UI）', async () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     await dm.addItem({ platform: '微信', account: 'wx', password: 'y' });
     ui.show();
@@ -135,10 +134,11 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     ui.asset = 'pw'; // nav 入口已收敛；密码视图保留，直通置资产回归
     ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
-    const search = document.querySelector('.bz-vault-search input') as HTMLInputElement;
-    search.value = 'GitHub';
-    search.dispatchEvent(new Event('input'));
-    await new Promise((r) => setTimeout(r, 250)); // 防抖
+    // 评审 2026-09-12：搜索框只在笔记资产的列表头渲染，pw 视图（入口已收敛）不再有搜索框
+    expect(document.querySelector('.bz-vault-search')).toBeNull();
+    ui.pwState.searchKw = 'GitHub';
+    ui.renderAll();
+    await new Promise((r) => setTimeout(r, 30));
     const rows = document.querySelectorAll('.bz-vault-listcol .bz-pwv-row');
     expect(rows.length).toBe(1);
     expect(rows[0].textContent).toContain('GitHub');
@@ -199,14 +199,14 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(document.querySelector('.bz-vault-listcol .bz-pwv-plrow .star svg')).toBeTruthy();
   });
 
-  it('加密笔记视图：show 后点「加密笔记」→ 空态提示（无笔记）', async () => {
+  it('加密笔记视图：show 后点「笔记」→ 空态提示（无笔记）', async () => {
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
     const noteItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'note') as HTMLElement;
     noteItem.click();
     await new Promise((r) => setTimeout(r, 20));
     const list = document.querySelector('.bz-vault-listcol')!;
-    expect(list.textContent).toContain('还没有加密笔记');
+    expect(list.textContent).toContain('还没有笔记');
   });
 
   it('未解锁 show → 锁屏接管；解锁后资产视图可用', async () => {
@@ -389,7 +389,7 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     const empty = document.querySelector('.bz-empty') as HTMLElement;
     expect(empty).toBeTruthy();
     expect(empty.querySelector('.bz-empty-ic')).toBeTruthy();
-    expect(empty.querySelector('.bz-empty-title')!.textContent).toBe('还没有加密动态');
+    expect(empty.querySelector('.bz-empty-title')!.textContent).toBe('还没有动态');
     expect(empty.querySelector('.bz-empty-desc')!.textContent).toContain('最近动态在这里显示');
   });
 
