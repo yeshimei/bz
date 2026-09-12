@@ -61,11 +61,17 @@
 - [x] bookshelf / favorites / belongings / secondbrain / knowledge / password-vault 确认框随皮肤（clipbook 原有）
 - [x] 原型产物重出（`node scripts/build-preview.mjs`，新鲜度守卫转绿）
 - [x] 全量门禁：`pnpm test` 292 文件 / 4499 测试全绿 + `tsc --noEmit` 0 错误
-- [ ] 合并回主仓库 → 主仓库 `pnpm run build` 部署 → 清 worktree
+- [x] 合并回主仓库（FF 至 7c4e66f1）→ 主仓库 `pnpm run build` 部署（vault `main.js` + `styles.css` 已更新）→ 部署产物提交 11ea5caa → 清 worktree
 - [x] 文档：ADR-0125、设计手册 §9/§10、CONTEXT.md 词条、ui-kit-manual 弹窗行
 
 ## §6 门禁记录
 
-- `node scripts/build-preview.mjs` → 17 个 prototype-behavior + prototype-render 产物重出。
-- `pnpm test` → **292 文件 / 4499 测试全绿**（首次冷缓存满负载跑时 `tests/home/ui-river.test.ts` 与 `tests/password-vault/review-fix-lock.test.ts` 各 1 例超时型抖动，单独跑与缓存预热后复跑均绿；基线主仓库同批全量亦全绿，判定为环境负载抖动，非本次改动）。
-- `pnpm exec tsc --noEmit` → 0 错误。
+- `node scripts/build-preview.mjs` → prototype-behavior / prototype-render 产物重出（**必须在主仓库重出一次**，见下「发现」②）。
+- `pnpm test` → **292 文件 / 4499 测试全绿**（worktree 缓存预热后复跑）；`pnpm exec tsc --noEmit` → 0 错误。
+- 主仓库部署后复跑同样全绿（分开跑三条可疑文件 49 passed 也全绿）。
+
+## §7 过程中发现的两个既有问题（不在本轮改，记录备查）
+
+① **两例定时型抖动测试**：`tests/home/ui-river.test.ts:58` 与 `tests/password-vault/review-fix-lock.test.ts` 用固定 `setTimeout(20ms)`/`flush()` 等异步装配，在系统高负载（部署后 Obsidian 重新索引整库）下会读到未渲染完成的 DOM 而红（`[data-home-weekday]` 期望 7 实得 0）。单独跑、以及负载正常时的全量跑均绿；与本次改动无关。建议后续把固定 sleep 换成 `vi.waitFor`。
+
+② **`pnpm run build` 不重出「行为预览包」**：`esbuild.config.mjs` 只 `await buildPreview()`（= 各域 `prototype-render.js`），而 `prototype-behavior.js` 由 `build-preview.mjs` 的 CLI 入口调 `buildBehavior()` 产出。于是「改了 src → 只跑 pnpm run build」会让已提交的 behavior 产物滞后 → `tests/preview-freshness.test.ts` 红（14 条里 4 条：home/memo/pomodoro/settings-panel）。修法二选一：`esbuild.config.mjs` 里补 `for (const d of BEHAVIOR_DOMAINS) await buildBehavior(d)`，或把这条约束写进构建脚本注释。另注：`.gitattributes` 只把 `prototypes/**` 钉成 LF，`src/**` 未钉 —— `src/pomodoro/render.ts`/`stats.ts` 在主仓是 LF、在 worktree 检出为 CRLF（autocrlf=true），源指纹按磁盘字节算，故同一份代码在两个检出位置算出的指纹不同（跨位置重出会刷一遍指纹行）。
