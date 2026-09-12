@@ -3,7 +3,8 @@
    三界面：主面板 / AI 对话 / 灵感参考 —— 米白 #fbfaf7 × 红棕 #a33d2a。
    暗色（issue 270，原「固定浅色不随 .theme-dark 反色」拍板作废）：
    七根（三界面 + 移动抽屉/胶囊 + 浮动参考卡/hover 预览两个 body 逸出点）
-   同组 --sb-* 暗色覆盖，亮侧零改动（先例：cinema .cn-skin）。
+   同组 --sb-* 暗色覆盖，亮侧零改动（先例：cinema .cn-skin）；
+   issue 291 起确认流程框（.bz-sb-flow-dialog）并入同两处 token 组（第八项）。
    markup 单源 render.ts；本文件为唯一样式源（bz-sb-* 前缀）。
    移动端抽屉段（bz-sb-mb-*）同皮（issue 251 追加）：吸同一套 token。
    ============================================================ */
@@ -16,17 +17,20 @@
   display: none !important;
 }
 
-/* ==================== 主题 token（根容器同套：三界面 + 移动抽屉/胶囊 + 双逸出点） ====================
+/* ==================== 主题 token（根容器同套：三界面 + 移动抽屉/胶囊 + 双逸出点 + 确认流程框） ====================
    双逸出点（reference-panel.ts 直挂 document.body，面板树外取不到继承）：
    .bz-sb-ref-card--float 拖出的浮动参考卡、.bz-sb-ref-preview hover 预览——
-   类名自携 token 源（同 cinema .cn-skin 手法），在列时类摘除由浮窗根供给 */
+   类名自携 token 源（同 cinema .cn-skin 手法），在列时类摘除由浮窗根供给。
+   .bz-sb-flow-dialog（issue 291）：core/flow-dialog 的确认框（清空对话 / 重新索引）挂 body、
+   同样在七根之外，进组后域内规则才消费得到 --sb-*（见文末确认流程框段）。 */
 .bz-sb-panel,
 .bz-sb-chat-modal,
 .bz-sb-float-win,
 .bz-sb-mb-sheet,
 .bz-sb-mb-mini,
 .bz-sb-ref-preview,
-.bz-sb-ref-card--float {
+.bz-sb-ref-card--float,
+.bz-sb-flow-dialog {
   --sb-bg: #fbfaf7;
   --sb-card: #ffffff;
   --sb-ink: #211d16;
@@ -59,7 +63,8 @@
 .theme-dark .bz-sb-mb-sheet,
 .theme-dark .bz-sb-mb-mini,
 .theme-dark .bz-sb-ref-preview,
-.theme-dark .bz-sb-ref-card--float {
+.theme-dark .bz-sb-ref-card--float,
+.theme-dark .bz-sb-flow-dialog {
   --sb-bg: #17150f;
   --sb-card: #211d16;
   --sb-ink: #ece7db;
@@ -1659,4 +1664,61 @@
 }
 .theme-dark .bz-sb-panel .bz-sb-pill-dot {
   animation-name: bz-sb-pulse-dark;
+}
+
+/* ==================== 确认流程框（core/flow-dialog，issue 291：子弹窗统一带皮） ====================
+   两个确认框都挂 body、落在七根之外，必须显式把皮肤类交给 openFlowDialog：
+   ① chat-panel.ts confirmClear（清空对话）② panel.ts confirmFullRebuild（重新索引 / 全量重建
+   单源——面板底部、设置页、首页入口三处共用）。
+   皮肤类 .bz-sb-flow-dialog 已并入上方两处 token 组选择器列表；但共享壳 .bz-overlay-popup
+   只认公共 --bz-*（本浮层自携的是私有 --sb-*），所以壳层必须在这里显式映射：
+   逐值同源 .bz-sb-panel / .bz-sb-chat-modal 的壳（米白底 --sb-bg / 1px 细边 --sb-line2 /
+   14px 圆角 / 0 24px 60px 柔影），文字走域墨色，按钮走 .bz-sb-fbtn 一档语言。 */
+#__shared_confirm_popup__.bz-sb-flow-dialog {
+  background: var(--sb-bg);
+  border: 1px solid var(--sb-line2);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px #00000022; /* = .bz-sb-panel / .bz-sb-chat-modal 亮侧壳影 */
+  color: var(--sb-ink);
+}
+/* 标题/正文颜色：core 默认消费 --bz-text-1/--bz-text-2——本浮层只有 --sb-*，若不管会掉回
+   全局主题色（与米白×红棕皮不同源）；改用域墨色两档。字重取 .bz-sb-head-title h3 /
+   .bz-sb-chat-head h3 的 700 档；字号保留 core 确认框的 18px（弹窗标题层级，域内无更贴的一档）。 */
+#__shared_confirm_popup__.bz-sb-flow-dialog h4 {
+  color: var(--sb-ink);
+  font-weight: 700;
+}
+#__shared_confirm_popup__.bz-sb-flow-dialog p {
+  color: var(--sb-ink2);
+}
+/* 按钮：逐值同源 .bz-sb-fbtn（次级：白卡底 + 细边 + 次强字，hover 转红棕）与
+   .bz-sb-fbtn--primary（主钮：深墨实底 + 反白字，暗色下 --sb-dark 转深红棕，hover 转红棕）。
+   height/圆角/字号不覆写——确认框按钮与组件库 .bz-btn 同源（core/styles.css 该段口径）。
+   主动作加 :not(.bz-flow-dialog--danger)：危险主动作时让 core 的「主钮保持中性、仅文字用
+   danger 色」（设计手册 §9/§10）继续生效，不被这里的实底主色盖掉（第二大脑当前两个确认框
+   都非危险动作，此为防回归护栏）。 */
+#__shared_confirm_popup__.bz-sb-flow-dialog #__shared_confirm_cancel__ {
+  background: var(--sb-card);
+  border: 1px solid var(--sb-line2);
+  color: var(--sb-ink3);
+}
+#__shared_confirm_popup__.bz-sb-flow-dialog #__shared_confirm_cancel__:hover {
+  background: var(--sb-card);
+  border-color: var(--sb-acc);
+  color: var(--sb-acc);
+}
+#__shared_confirm_popup__.bz-sb-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__ {
+  background: var(--sb-dark);
+  border-color: var(--sb-dark);
+  color: var(--sb-on-acc);
+}
+#__shared_confirm_popup__.bz-sb-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__:hover {
+  background: var(--sb-acc);
+  border-color: var(--sb-acc);
+  color: #fff;
+}
+/* 暗色壳影加深：与 .theme-dark .bz-sb-panel / .bz-sb-chat-modal 同值
+   （黑影在深炭棕底不可见，域内该档是写死值、不走 token，故此处必须另写一条） */
+.theme-dark #__shared_confirm_popup__.bz-sb-flow-dialog {
+  box-shadow: 0 24px 60px #00000080;
 }

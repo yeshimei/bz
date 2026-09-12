@@ -272,6 +272,11 @@ function runAction(it: FavoritesItem, spec: FavActionSpec): void {
     // 归档（ADR-0074 数据仍在 favorites.json）
     void openFlowDialog({
       title: '归档收藏',
+      // issue 291：流程框挂 document.body，不在 .bz-fav-panel 树内——不显式带皮肤类就掉回 core 裸皮。
+      // `bz-fav-flow-dialog` = 本域确认框专属类（styles.css 映射表单弹窗 .bz-fav-form 那套亚麻取值）；
+      // `bz-fav-scope` 必须跟着传：亚麻/暖纸是私有 token（--pop/--pop-ink/--pop-mut/--mask/--acc），
+      // 只在 .bz-fav-scope 命中时才定义，缺它变量全部解析失败。
+      className: 'bz-fav-flow-dialog bz-fav-scope',
       message: `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`,
       actions: [
         { label: '取消', value: 'cancel' },
@@ -285,6 +290,9 @@ function runAction(it: FavoritesItem, spec: FavActionSpec): void {
   } else if (spec.act === 'del') {
     void openFlowDialog({
       title: '删除收藏',
+      // issue 291：与归档确认同一套皮肤类（删除是危险主动作 → core 另挂 bz-flow-dialog--danger，
+      // 与皮肤类并存不冲突）。类含义见归档确认处注释。
+      className: 'bz-fav-flow-dialog bz-fav-scope',
       message: `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`,
       actions: [
         { label: '取消', value: 'cancel' },
@@ -475,8 +483,14 @@ function formDirty(): boolean {
 }
 
 function requestCloseForm(popup: HTMLElement): void {
-  if (formDirty()) confirmDiscard(() => closeForm(popup));
-  else closeForm(popup);
+  // issue 291：放弃草稿确认框同样要带本域皮肤类（第三个参数为 core 新增的 className 透传通道）。
+  // 表单弹窗 openForm 的 mask 挂 body 时已自带 `bz-fav-form-mask` + `bz-fav-scope`，本框若不带，
+  // 同一域里就出现「表单有皮、放弃确认没皮」；与归档/删除确认取同一串类，三框同皮。
+  if (formDirty()) {
+    confirmDiscard(() => closeForm(popup), undefined, 'bz-fav-flow-dialog bz-fav-scope');
+  } else {
+    closeForm(popup);
+  }
 }
 
 function closeForm(popup: HTMLElement): void {

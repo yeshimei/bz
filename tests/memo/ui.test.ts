@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 备忘录（memo）UI 层测试：面板结构/场景栏/编辑器场景联动/添加场景弹窗/右键菜单/勾选完成
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -1163,7 +1163,7 @@ describe('备忘录面板皮肤（issue 210）', () => {
     expect(nums[1].textContent).toBe('3');
   });
 
-  it('弹窗换肤：memoSkin=paper 时编辑器弹窗 popup 挂皮肤类；default 不挂', async () => {
+  it('弹窗换肤：memoSkin=paper 挂纸感；default/未知回落纸感（与面板 applyMemoSkin 同口径，issue 291）', async () => {
     const { app, settings } = seedVault();
     settings.memoSkin = 'paper';
     openMemoPanel(app);
@@ -1180,7 +1180,9 @@ describe('备忘录面板皮肤（issue 210）', () => {
     openMemoPanel(app);
     openEditor(M.items.find((i) => i.id === 'a')!);
     const popup2 = document.querySelector('.bz-overlay-popup') as HTMLElement;
-    expect(popup2.classList.contains('bz-memo-skin-paper')).toBe(false);
+    // 面板在 default 下回落纸感（见上一条用例）——弹窗必须同皮，
+    // 否则就是 issue 291 的「面板有皮、子弹窗没皮」（旧断言 default 不挂 = 该缺陷本身）
+    expect(popup2.classList.contains('bz-memo-skin-paper')).toBe(true);
     expect(popup2.classList.contains('bz-memo-skin-editorial')).toBe(false);
   });
 

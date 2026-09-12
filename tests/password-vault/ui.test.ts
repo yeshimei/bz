@@ -254,4 +254,26 @@ describe('PasswordVaultUIManager', () => {
     page.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(page.classList.contains('open')).toBe(false);
   });
+
+  // issue 291：首设风险确认走 core/flow-dialog（真实实现，本文件未 mock），
+  // 弹窗挂 body —— 必须自带 bz-pwv-flow-dialog 域类，否则金色/材质掉回 core 裸皮。
+  it('首设风险确认框挂 bz-pwv-flow-dialog（域皮随行，与统一壳类共存）', async () => {
+    ui.show(); // 无清单 → 首设态锁屏（双输入）
+    await new Promise((r) => setTimeout(r, 20));
+    const lock = document.querySelector('.bz-password-vault-lock.open') as HTMLElement;
+    expect(lock).toBeTruthy();
+    (lock.querySelector('[data-ls="p1"]') as HTMLInputElement).value = 'abcd';
+    (lock.querySelector('[data-ls="p2"]') as HTMLInputElement).value = 'abcd';
+    (lock.querySelector('[data-ls="go"]') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
+    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    expect(popup.querySelector('h4')!.textContent).toBe('设置主密码');
+    expect(popup.classList.contains('bz-overlay-popup')).toBe(true); // 统一壳（issue 291 核心）
+    expect(popup.classList.contains('bz-flow-dialog')).toBe(true);
+    expect(popup.classList.contains('bz-pwv-flow-dialog')).toBe(true); // 域皮
+    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(false); // cta 主动作 → 金色主钮
+    // 收尾：取消（按取消语义结算并移除 DOM，防污染后续用例）
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
+  });
 });

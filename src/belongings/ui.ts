@@ -603,6 +603,9 @@ async function deleteItem(it: BelongingsItem): Promise<void> {
   const v = await openFlowDialog({
     title: '删除物品',
     message: `确定要删除物品「${it.name}」吗？删除后可在通知中撤销。`,
+    // 皮肤类（issue 291）：确认框挂 body、脱离面板根，必须显式带 .bz-bel-flow-dialog
+    // 才能拿到海报 token（否则掉回 core 裸样式，与「物品详情」不同源）
+    className: 'bz-bel-flow-dialog',
     actions: [
       { label: '取消', value: 'cancel' },
       { label: '删除', value: 'del', danger: true, cta: true },
@@ -697,7 +700,9 @@ function closeBelForm(mask: HTMLElement): void {
 }
 
 function requestCloseBelForm(mask: HTMLElement): void {
-  if (belFormDirty()) confirmDiscard(() => closeBelForm(mask));
+  // 第三个参数 = 皮肤类（issue 291）：confirmDiscard 的确认框同样是 body 弹窗，
+  // 不传就与刚被它拦住的表单弹窗（.bz-bel-form 海报皮）两张脸
+  if (belFormDirty()) confirmDiscard(() => closeBelForm(mask), undefined, 'bz-bel-flow-dialog');
   else closeBelForm(mask);
 }
 

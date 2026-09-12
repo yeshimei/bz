@@ -2,6 +2,8 @@
  * 第二大脑主面板关闭钮「复位优先」回归（clipbook 同款语义，jsdom）：
  * - 来源分布树有展开目录：✕ 第一击全部收起并重绘、面板不关；已收再点 ✕ 才 close()
  * - 无任何展开：✕ 直接关面板（移动端全屏无遮罩可点，关闭钮是唯一入口）
+ * - 追加（issue 291）：panel.ts 单源 confirmFullRebuild 的确认框带域皮肤类 bz-sb-flow-dialog
+ *   （挂 body 的流程框不继承 --sb-*，漏传则掉回 core 裸样式）
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -9,7 +11,7 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import BzSettings, { DEFAULT_SETTINGS } from '../../src/settings';
-import { SecondBrainPanel } from '../../src/secondbrain/panel';
+import { SecondBrainPanel, confirmFullRebuild } from '../../src/secondbrain/panel';
 
 function makeEnv() {
   const vault = new MockVault();
@@ -83,5 +85,24 @@ describe('第二大脑主面板：关闭钮复位优先', () => {
     (document.getElementById('bz-sb-panel-close') as HTMLElement).click();
     expect((document.querySelector('.bz-sb-panel') as HTMLElement).style.display).toBe('none');
     panel.destroy();
+  });
+});
+
+describe('issue 291：确认流程框带皮（core/flow-dialog）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+  });
+
+  it('confirmFullRebuild 单源确认框：popup 带 bz-sb-flow-dialog（挂 body 不继承 --sb-*）', async () => {
+    const p = confirmFullRebuild();
+    const popup = document.getElementById('__shared_confirm_popup__');
+    expect(popup).not.toBeNull();
+    expect(popup!.classList.contains('bz-sb-flow-dialog')).toBe(true);
+    // 共享壳类仍在（流程框与 uiModal 同壳，issue 291 内核口径）
+    expect(popup!.classList.contains('bz-overlay-popup')).toBe(true);
+    expect(popup!.classList.contains('bz-flow-dialog')).toBe(true);
+    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    await expect(p).resolves.toBe(false); // 取消 → false（原语义不变）
   });
 });

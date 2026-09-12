@@ -4,6 +4,8 @@
  * / EPUB 划线弹窗（章节分组/weave-cfi 深链）/ 移动端全屏 / 关面板与卸载不留孤儿弹窗。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { MockVault, mockAppWithVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks, Platform as MockPlatform, hasNotice } from '../mock-obsidian-entry';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -244,6 +246,7 @@ describe('读书笔记弹窗（md 书）', () => {
 
   it('长按日期 → 先关壳弹确认框；确认删除划线并重开（B2），取消则原样重开', async () => {
     vault.files.set('书库/活着.md', NOTE_MD);
+    setSettingsProvider(() => ({ bookTag: 'book', bookshelfSkin: 'noir' }) as any); // issue 291：噪声肤验皮肤类随行
     const app = makeApp(vault);
     showBookNotes(app, '书库/活着.md');
     await new Promise((r) => setTimeout(r, 20));
@@ -253,6 +256,14 @@ describe('读书笔记弹窗（md 书）', () => {
     expect(notesPopup()).toBeNull();
     const okBtn = document.querySelector('#__shared_confirm_ok__') as HTMLElement;
     expect(okBtn).toBeTruthy();
+    // issue 291：确认框带统一壳 + 本域流程框类 + 当前皮肤类（挂 body 不掉回 core 裸皮）
+    const confirmPopup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    expect(confirmPopup.classList.contains('bz-overlay-popup')).toBe(true);
+    expect(confirmPopup.classList.contains('bz-flow-dialog')).toBe(true);
+    expect(confirmPopup.classList.contains('bz-bs-flow-dialog')).toBe(true);
+    expect(confirmPopup.classList.contains('bz-bs-skin-noir')).toBe(true);
+    expect(confirmPopup.classList.contains('bz-bs-mode-light')).toBe(true);
+    expect(okBtn.className).toBe(''); // 冻结契约：标准双动作按钮不加类
     okBtn.click();
     await new Promise((r) => setTimeout(r, 40));
     expect(vault.files.get('书库/活着.md')).not.toContain('data-id="h1"');
@@ -338,12 +349,17 @@ describe('读书笔记弹窗（EPUB）', () => {
 
   it('长按日期 → 确认删除整条划线（weave-data.json 移除）+ 失败重开壳（B2）', async () => {
     vault.files.set('CONFIG/STORAGE/weave-data.json', EPUB_WEAVE());
+    setSettingsProvider(() => ({ bookTag: 'book', bookshelfSkin: 'kraft' }) as any); // issue 291：EPUB 路径同样验皮肤类
     const app = makeApp(vault);
     showEpubBookNotes(app, '书库/悉达多.epub', '悉达多');
     await new Promise((r) => setTimeout(r, 30));
     const dateEl = document.querySelector('.bz-bs-hl-date--pointer') as HTMLElement;
     await longPress(dateEl);
     expect(notesPopup()).toBeNull(); // 先关壳
+    // issue 291：EPUB 删除确认框与 md 路径同壳同皮（挂 body 带 skin 类）
+    const confirmPopup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    expect(confirmPopup.classList.contains('bz-bs-flow-dialog')).toBe(true);
+    expect(confirmPopup.classList.contains('bz-bs-skin-kraft')).toBe(true);
     (document.querySelector('#__shared_confirm_ok__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 40));
     const data = JSON.parse(vault.files.get('CONFIG/STORAGE/weave-data.json')!);
@@ -454,5 +470,41 @@ describe('mockAppWithVault 兼容（bookshelf 主面板数据源贯通读书笔�
     showBookNotes(app, '书库/活着.md', '活着');
     await new Promise((r) => setTimeout(r, 20));
     expect(notesPopup()!.textContent).toContain('《活着》的读书笔记');
+  });
+});
+
+describe('issue 291：删除划线确认框随面板皮肤（样式源文本断言）', () => {
+  const repo = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
+  const bsCss = () => repo('src/bookshelf/styles.css');
+  const notesUi = () => repo('src/bookshelf/notes-ui.ts');
+
+  it('notes-ui.ts 两处删除划线确认框都传了流程框类 + 皮肤类（md / EPUB 双路径）', () => {
+    const src = notesUi();
+    // md 路径（buildMdHighlightBlock）与 EPUB 路径（buildEpubHighlightBlock）各一处
+    expect(src.match(/className: 'bz-bs-flow-dialog ' \+ bsSkinClass\(\)/g)?.length).toBe(2);
+    expect(src).toContain("import { bsSkinClass } from './ui';");
+    // 两处 openFlowDialog 都在（防只改一处后另一处悄悄漏）
+    expect(src.match(/openFlowDialog\(\{/g)?.length).toBe(2);
+  });
+
+  it('styles.css 有 #__shared_confirm_popup__.bz-bs-flow-dialog 规则块（id 提特异性覆盖 core）', () => {
+    const block = bsCss().match(/#__shared_confirm_popup__\.bz-bs-flow-dialog\s*\{([^}]*)\}/);
+    expect(block, '缺 #__shared_confirm_popup__.bz-bs-flow-dialog 块').not.toBeNull();
+    // 纸卡壳取值：底/描边消费 --bsw-* 域变量（借书卡详情弹窗同套 token）
+    expect(block![1]).toContain('background: var(--bsw-paper)');
+    expect(block![1]).toContain('border-color: var(--bsw-line)');
+    // 字体栈在 body 外取不到 → 必须自带（否则衬线标题失效）
+    expect(block![1]).toContain('--bsw-serif');
+    expect(block![1]).toContain('--bsw-sans');
+  });
+
+  it('标题/正文/按钮映射借书卡详情那套取值；暗色不另写块（skin+mode 变体整组换 token）', () => {
+    const css = bsCss();
+    expect(css, '缺标题映射').toMatch(/#__shared_confirm_popup__\.bz-bs-flow-dialog h4\s*\{[^}]*font-family: var\(--bsw-serif\)/);
+    expect(css, '缺正文映射').toMatch(/#__shared_confirm_popup__\.bz-bs-flow-dialog p\s*\{[^}]*font-family: var\(--bsw-sans\)/);
+    expect(css, '缺按钮映射').toMatch(/#__shared_confirm_popup__\.bz-bs-flow-dialog #__shared_confirm_ok__\s*\{[^}]*font-family: var\(--bsw-serif\)/);
+    // 本域亮暗由 `.bz-bs-skin-*` × `.bz-bs-mode-*` 变体承担（skin 类随 bsSkinClass() 一起挂到 popup），
+    // 故确认框不需要也不该另写 .theme-dark 块——有则是把两套口径混用。
+    expect(css).not.toMatch(/\.theme-dark #__shared_confirm_popup__\.bz-bs-flow-dialog/);
   });
 });

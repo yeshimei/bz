@@ -291,6 +291,9 @@ export class ChatPanel {
     const v = await openFlowDialog({
       title: '清空对话',
       message: '将清空全部对话历史并写盘，确定继续吗？',
+      // 皮肤类（issue 291）：对话弹窗掉 body 外的确认框不会继承 .bz-sb-chat-modal 的 --sb-*，
+      // 必须显式带 .bz-sb-flow-dialog 才与「清空对话」所在界面同一套米白×红棕皮
+      className: 'bz-sb-flow-dialog',
       actions: [
         { label: '取消', value: 'cancel' },
         { label: '清空', value: 'ok', cta: true },

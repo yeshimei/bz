@@ -73,6 +73,32 @@ describe('issue 270-A：两肤暗色 token 整组覆盖', () => {
   });
 });
 
+describe('issue 291：确认框随皮肤（流程框与 uiModal 同壳）', () => {
+  it('ui.ts 两个流程框都传了皮肤类（删除备忘录 / 删除场景）', () => {
+    const ui = repo('src/memo/ui.ts');
+    // 两个 openFlowDialog 调用都带 className: skinClass()（漏传即掉回 core 裸皮 —— 本 issue 的缺陷形态）
+    const hits = ui.match(/openFlowDialog\(\{[\s\S]*?\n  \}\);/g) ?? [];
+    expect(hits.length).toBe(2);
+    for (const h of hits) expect(h).toContain('className: skinClass()');
+  });
+
+  it('styles.css 有确认框双肤规则（纸感墨边硬阴影主按钮 + 两肤衬线标题）', () => {
+    const paper = css().match(/#__shared_confirm_popup__\.bz-memo-skin-paper #__shared_confirm_ok__\s*\{[^}]*\}/);
+    expect(paper, '缺纸感确认框主按钮规则').not.toBeNull();
+    expect(paper![0]).toContain('var(--bz-skin-ink)'); // 墨边 + 硬偏移阴影随皮肤 token
+    for (const sel of [
+      '#__shared_confirm_popup__.bz-memo-skin-paper h4',
+      '#__shared_confirm_popup__.bz-memo-skin-editorial h4',
+    ]) {
+      expect(css(), `缺 ${sel}`).toContain(sel);
+    }
+  });
+
+  it('core 侧前提守护：流程框 popup 挂共享壳类 bz-overlay-popup（皮肤壳规则才命中）', () => {
+    expect(repo('src/core/flow-dialog.ts')).toContain("'bz-overlay-popup bz-flow-dialog'");
+  });
+});
+
 describe('issue 270-B：编辑器弹窗四类补样式', () => {
   it('.bz-memo-editor：弹窗内容包裹有纵向排布规则', () => {
     const m = css().match(/\.bz-memo-editor\s*\{[^}]*\}/);

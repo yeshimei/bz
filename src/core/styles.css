@@ -397,7 +397,11 @@ button.news-close-btn {
     }
 }
 
-/* 通用确认弹窗（core/flow-dialog 流程框，承继旧 core/confirm.ts 的 Q3.js 移植结构；id 保持外部约定；popup 为 mask 子节点，层级由 mask 承载——动态发号见 core/z-order，旧静态档位家族已废除） */
+/* 通用确认弹窗（core/flow-dialog 流程框，承继旧 core/confirm.ts 的 Q3.js 移植结构；id 保持外部约定；popup 为 mask 子节点，层级由 mask 承载——动态发号见 core/z-order，旧静态档位家族已废除）。
+   壳层（底色/描边/圆角/阴影/限高/滚动）不在此声明——issue 291 起流程框与 uiModal 弹窗同挂
+   `.bz-overlay-popup` 共享壳（src/core/ui/components.css），域皮肤类经
+   `.bz-overlay-popup.bz-<域>-skin-*` 复合选择器即可一并覆盖确认框；本段只留流程框版式
+   （居中纵排、400px 宽度上限、24px 内边距）与冻结按钮 id 的样式。 */
 #__shared_confirm_mask__ {
   position: fixed;
   top: 0;
@@ -411,29 +415,26 @@ button.news-close-btn {
   justify-content: center;
 }
 #__shared_confirm_popup__ {
-  position: relative;
-  background: var(--background-primary);
-  border-radius: var(--bz-radius-md);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: var(--bz-space-xl);
-  max-width: 400px;
-  width: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
+#__shared_confirm_popup__.bz-flow-dialog {
+  width: min(400px, calc(100vw - 32px)); /* 设计手册 §9：确认框窄卡定宽 */
+  padding: var(--bz-space-xl);           /* 设计手册 §4.1：确认框 24px 内边距 */
+}
 #__shared_confirm_popup__ h4 {
   margin: 0 0 var(--bz-space-md) 0;
   font-size: 18px;
-  font-weight: 600;
-  color: var(--text-normal);
+  font-weight: var(--bz-weight-semibold);
+  color: var(--bz-text-1);
 }
 #__shared_confirm_popup__ p {
   margin: 0 0 20px 0;
   font-size: var(--bz-font-emphasis);
-  color: var(--text-muted);
-  line-height: 1.5;
+  color: var(--bz-text-2);
+  line-height: var(--bz-leading-normal);
   word-wrap: break-word;
   max-width: 100%;
   white-space: pre-line; /* 消息内 \n 换行按行渲染（B6：删除确认「此操作不可撤销」独立成行） */
@@ -444,27 +445,53 @@ button.news-close-btn {
   justify-content: center;
   width: 100%;
 }
-#__shared_confirm_cancel__ {
-  padding: var(--bz-space-sm) var(--bz-space-xl);
-  border-radius: 6px;
-  border: none;
-  background: var(--background-secondary);
+/* 按钮几何与组件库 .bz-btn 同源（同高/同圆角/同字号），保证确认框与表单弹窗同一套按钮语言 */
+#__shared_confirm_cancel__,
+#__shared_confirm_ok__,
+button.bz-flow-dialog-action {
+  height: var(--bz-control-h);
+  padding: 0 var(--bz-space-lg);
+  border-radius: var(--bz-radius-sm);
+  border: 1px solid transparent;
+  background: var(--bz-surface-2);
+  color: var(--bz-text-1);
+  font-family: inherit;
+  font-size: var(--bz-font-label);
+  font-weight: var(--bz-weight-medium);
+  line-height: var(--bz-leading-tight);
   cursor: pointer;
-  font-size: var(--bz-font-body);
   box-shadow: none;
   flex: 1;
+  white-space: nowrap;
+  transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
 }
-#__shared_confirm_ok__ {
-  padding: var(--bz-space-sm) var(--bz-space-xl);
-  border-radius: 6px;
-  border: none;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  cursor: pointer;
-  font-size: var(--bz-font-body);
-  font-weight: 500;
-  box-shadow: none;
-  flex: 1;
+#__shared_confirm_cancel__:hover,
+button.bz-flow-dialog-action:hover {
+  background: var(--bz-surface-hover);
+}
+#__shared_confirm_ok__,
+button.bz-flow-dialog-action.bz-flow-dialog-cta {
+  background: var(--bz-brand);
+  color: var(--bz-on-brand);
+}
+#__shared_confirm_ok__:hover,
+button.bz-flow-dialog-action.bz-flow-dialog-cta:hover {
+  background: var(--bz-brand-hover);
+}
+button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
+  color: var(--bz-danger);
+}
+/* 慎重决策（设计手册 §9/§10）：主动作为危险动作时，主按钮不默认高亮——双钮同为中性次级样式，
+   只有危险文字用 danger 色（弹窗挂 --danger 修饰；标准双动作按钮不加类，冻结契约不破）。
+   选择器刻意带上 `.bz-flow-dialog` 提一级（1,2,0）——域皮映射按钮时的
+   `#__shared_confirm_popup__.bz-xx-flow-dialog #__shared_confirm_ok__`（1,1,1）压不回高亮，
+   保证「删除不高亮」这条语义不被域皮肤破掉。 */
+#__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__ {
+  background: var(--bz-surface-2);
+  color: var(--bz-danger);
+}
+#__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__:hover {
+  background: var(--bz-surface-hover);
 }
 
 /* 通用遮罩/弹窗（原 core/dom.ts createOverlay 内联；zIndex/width/maxWidth/display 仍为功能性内联） */

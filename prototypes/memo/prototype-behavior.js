@@ -1,4 +1,4 @@
-/* 源指纹 a842a3114a984fab · 仓内输入 209 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c1176c97b6194cdd · 仓内输入 209 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -7092,7 +7092,7 @@ var BZW_memo = (() => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
       return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
     }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id };
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
   function openFlowDialog(opts) {
     if (!opts.actions || opts.actions.length === 0) {
@@ -7110,7 +7110,10 @@ var BZW_memo = (() => {
       };
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
-      if (opts.className) popup.classList.add(opts.className);
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
       popup.setAttribute("role", "dialog");
       popup.setAttribute("aria-modal", "true");
       popup.innerHTML = parts.html;
@@ -7144,10 +7147,11 @@ var BZW_memo = (() => {
       if (focusBtn) focusBtn.focus();
     });
   }
-  function confirmDiscard(proceed, message) {
+  function confirmDiscard(proceed, message, className) {
     void openFlowDialog({
       title: "放弃未保存的内容？",
       message: message || "弹窗内有未保存的输入，关闭后将丢失",
+      className,
       actions: [
         { label: "放弃", value: "ok" },
         { label: "继续编辑", value: "cancel" }
@@ -16139,6 +16143,9 @@ ${countsToText(s.missing)}
     const v = await openFlowDialog({
       title: "删除物品",
       message: `确定要删除物品「${it.name}」吗？删除后可在通知中撤销。`,
+      // 皮肤类（issue 291）：确认框挂 body、脱离面板根，必须显式带 .bz-bel-flow-dialog
+      // 才能拿到海报 token（否则掉回 core 裸样式，与「物品详情」不同源）
+      className: "bz-bel-flow-dialog",
       actions: [
         { label: "取消", value: "cancel" },
         { label: "删除", value: "del", danger: true, cta: true }
@@ -16204,7 +16211,7 @@ ${countsToText(s.missing)}
     mask.remove();
   }
   function requestCloseBelForm(mask) {
-    if (belFormDirty()) confirmDiscard(() => closeBelForm(mask));
+    if (belFormDirty()) confirmDiscard(() => closeBelForm(mask), void 0, "bz-bel-flow-dialog");
     else closeBelForm(mask);
   }
   function openForm(it) {
@@ -20611,6 +20618,11 @@ ${sample}`,
           const v = await openFlowDialog({
             title: "中止批量处理？",
             message: "当前正在处理的视频将停止，已成功的保留在列表；未开始的项保持待处理，可稍后继续。",
+            // issue 291：流程框挂 document.body，脱离面板根后纸墨 token 与域弹窗类全部失效。
+            // 必须显式带两个类——'kb' = 纸墨变量作用域（本域 styles.css :7-33，亮暗两档），
+            // 'bz-kb-flow-dialog' = 域弹窗类（供 id 选择器把共享壳改写成本域材质），
+            // 否则本框与同域的「添加文献」「术语录入」弹窗不同皮（缺 'kb' 连底色都失效，同 issue 257 事故）。
+            className: "kb bz-kb-flow-dialog",
             actions: [
               { label: "取消", value: "cancel" },
               { label: "中止", value: "ok", danger: true }
@@ -20624,6 +20636,8 @@ ${sample}`,
           const v = await openFlowDialog({
             title: "删除转文献任务",
             message: "仅从列表移除记录，已生成的文献笔记与视频不受影响。",
+            // issue 291：同上——弹窗挂 body 必须自带 'kb'（token 作用域）+ 'bz-kb-flow-dialog'（域皮）
+            className: "kb bz-kb-flow-dialog",
             actions: [
               { label: "取消", value: "cancel" },
               { label: "删除", value: "ok", danger: true }
@@ -20638,6 +20652,8 @@ ${sample}`,
           const v = await openFlowDialog({
             title: "清空历史",
             message: "将移除全部「成功」归档记录；文献笔记与视频文件保留在原处。",
+            // issue 291：同上——挂 body 的流程框须显式带皮肤类才与「历史」窗口同皮
+            className: "kb bz-kb-flow-dialog",
             actions: [
               { label: "取消", value: "cancel" },
               { label: "清空", value: "ok", danger: true }
@@ -23173,6 +23189,11 @@ ${sample}`,
     } else if (spec.act === "archive") {
       void openFlowDialog({
         title: "归档收藏",
+        // issue 291：流程框挂 document.body，不在 .bz-fav-panel 树内——不显式带皮肤类就掉回 core 裸皮。
+        // `bz-fav-flow-dialog` = 本域确认框专属类（styles.css 映射表单弹窗 .bz-fav-form 那套亚麻取值）；
+        // `bz-fav-scope` 必须跟着传：亚麻/暖纸是私有 token（--pop/--pop-ink/--pop-mut/--mask/--acc），
+        // 只在 .bz-fav-scope 命中时才定义，缺它变量全部解析失败。
+        className: "bz-fav-flow-dialog bz-fav-scope",
         message: `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`,
         actions: [
           { label: "取消", value: "cancel" },
@@ -23186,6 +23207,9 @@ ${sample}`,
     } else if (spec.act === "del") {
       void openFlowDialog({
         title: "删除收藏",
+        // issue 291：与归档确认同一套皮肤类（删除是危险主动作 → core 另挂 bz-flow-dialog--danger，
+        // 与皮肤类并存不冲突）。类含义见归档确认处注释。
+        className: "bz-fav-flow-dialog bz-fav-scope",
         message: `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`,
         actions: [
           { label: "取消", value: "cancel" },
@@ -23324,8 +23348,11 @@ ${sample}`,
     return inputVal(popup, "#fz-title") !== _baseline.title || inputVal(popup, "#fz-url") !== _baseline.url || inputVal(popup, "#fz-desc") !== _baseline.desc || formPinNow(popup) !== _baseline.pinned || formTagsNow(popup) !== _baseline.tags;
   }
   function requestCloseForm(popup) {
-    if (formDirty()) confirmDiscard(() => closeForm(popup));
-    else closeForm(popup);
+    if (formDirty()) {
+      confirmDiscard(() => closeForm(popup), void 0, "bz-fav-flow-dialog bz-fav-scope");
+    } else {
+      closeForm(popup);
+    }
   }
   function closeForm(popup) {
     var _a2;
@@ -30805,6 +30832,9 @@ ${userMsg}`;
           const v = await openFlowDialog({
             title: "清空对话",
             message: "将清空全部对话历史并写盘，确定继续吗？",
+            // 皮肤类（issue 291）：对话弹窗掉 body 外的确认框不会继承 .bz-sb-chat-modal 的 --sb-*，
+            // 必须显式带 .bz-sb-flow-dialog 才与「清空对话」所在界面同一套米白×红棕皮
+            className: "bz-sb-flow-dialog",
             actions: [
               { label: "取消", value: "cancel" },
               { label: "清空", value: "ok", cta: true }
@@ -37537,6 +37567,9 @@ ${text}`;
     return openFlowDialog({
       title: "重新索引",
       message: "将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？",
+      // 皮肤类（issue 291）：确认框挂 body，脱离主面板根，须显式带 .bz-sb-flow-dialog
+      // 才拿到 --sb-* token（否则掉回 core 裸样式）；单源生效于三处入口
+      className: "bz-sb-flow-dialog",
       actions: [
         { label: "取消", value: "cancel" },
         { label: "开始重建", value: "ok", cta: true }
@@ -39636,7 +39669,7 @@ ${text}`;
   }
   function skinClass() {
     const s = tryGetSettings().memoSkin;
-    return s === "paper" || s === "editorial" ? `bz-memo-skin-${s}` : "";
+    return s === "editorial" ? "bz-memo-skin-editorial" : "bz-memo-skin-paper";
   }
   function openMemoPanel(app, opts) {
     if (M.overlay) {
@@ -40083,6 +40116,7 @@ ${text}`;
       title: "删除备忘录",
       message: `确定删除备忘录「${it.title}」吗？
 删除后可在通知中撤销。`,
+      className: skinClass(),
       actions: [
         { label: "取消", value: "cancel" },
         { label: "删除", value: "delete", danger: true, cta: true }
@@ -40709,6 +40743,8 @@ ${text}`;
       message: count > 0 ? `确定删除场景「${scene}」吗？
 其中 ${count} 条备忘录将迁入默认场景「${target}」。` : `确定删除场景「${scene}」吗？
 场景将从设置中移除。`,
+      className: skinClass(),
+      // 挂 body 的流程框须显式带皮肤类（issue 291）
       actions: [
         { label: "取消", value: "cancel" },
         { label: "删除", value: "delete", danger: true, cta: true }

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 备忘录（memo）域 UI：场景工作台（原型 1 定稿形态）
  * 桌面：遮罩 + 720×580 面板（壳 = 组件库 .bz-panel-overlay/.bz-panel-frame，
  *       ADR-0094 接入；ADR-0084：右缘/底缘/右下角拖动缩放，钳制 720×520 ~
@@ -269,10 +269,15 @@ export function applyMemoSkin(skin: unknown): void {
   panel.classList.add(`bz-memo-skin-${v}`);
 }
 
-/** 当前皮肤类名（issue 210）：uiModal 弹窗（编辑器/添加场景/重命名）与面板共用同套皮肤 */
+/**
+ * 当前皮肤类名（issue 210）：挂 body 的浮层（uiModal 弹窗 / 流程框 / 右键菜单 / 抽屉）
+ * 与面板共用同套皮肤。回落口径**必须与 applyMemoSkin 逐字一致**（未知/缺省 → 纸感手账）：
+ * 面板回落纸感而弹窗返回空类的话，弹窗就掉回 core 裸皮——正是 issue 291 要消灭的
+ * 「面板有皮、子弹窗没皮」；且四类浮层都靠这个类才拿得到 --bz-* 皮肤 token。
+ */
 function skinClass(): string {
   const s = tryGetSettings().memoSkin;
-  return s === 'paper' || s === 'editorial' ? `bz-memo-skin-${s}` : '';
+  return s === 'editorial' ? 'bz-memo-skin-editorial' : 'bz-memo-skin-paper';
 }
 
 /**
@@ -807,9 +812,11 @@ async function togglePrio(id: string): Promise<void> {
 
 async function deleteItemConfirm(it: MemoItem): Promise<void> {
   // 三段式确认框：标题 + 问句（名称「」引号）+ 后果说明（删除已接撤销，后果如实说明）
+  // className：流程框挂 body，须显式带皮肤类才与编辑弹窗同皮（issue 291 全域子弹窗统一）
   const ok = await openFlowDialog({
     title: '删除备忘录',
     message: `确定删除备忘录「${it.title}」吗？\n删除后可在通知中撤销。`,
+    className: skinClass(),
     actions: [
       { label: '取消', value: 'cancel' },
       { label: '删除', value: 'delete', danger: true, cta: true },
@@ -1464,6 +1471,7 @@ async function deleteSceneConfirm(scene: string): Promise<void> {
     message: count > 0
       ? `确定删除场景「${scene}」吗？\n其中 ${count} 条备忘录将迁入默认场景「${target}」。`
       : `确定删除场景「${scene}」吗？\n场景将从设置中移除。`,
+    className: skinClass(), // 挂 body 的流程框须显式带皮肤类（issue 291）
     actions: [
       { label: '取消', value: 'cancel' },
       { label: '删除', value: 'delete', danger: true, cta: true },

@@ -65,7 +65,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 开关 | `.bz-sw` | `.on`（role=switch，键盘 Space/Enter） | 40×22 滑块，开 = 品牌实底 |
 | 下拉 | `.bz-select` | `.open`；内 `.bz-select-val`/`.bz-select-car`；弹层 `.bz-select-menu` 内 `.bz-select-item.is-on` + `.bz-select-item-ck` | 单行单选下拉；菜单随最长选项加宽不截断；短选项组优先 `.bz-choice` 平铺 |
 | 灯箱 | `.bz-lightbox` | 内 `.bz-lightbox-head/media/foot/-close` | 全屏看图/视频 |
-| 弹窗 | `.bz-overlay-mask` / `.bz-overlay-popup` | 内 `.bz-dialog-head/-title/-body`；底 `.bz-btn-row` | 居中模态（遮罩点关） |
+| 弹窗 | `.bz-overlay-mask` / `.bz-overlay-popup` | 内 `.bz-dialog-head/-title/-body`；底 `.bz-btn-row`；确认框另有 `.bz-flow-dialog`（版式）/`--danger`（慎重决策中性按钮） | 居中模态（遮罩点关）。**浮层唯一壳**（ADR-0125）：`uiModal` 表单弹窗与 `openFlowDialog` 确认框共用同一套材质；子弹窗挂 body，域皮肤必须经 `className` 显式传入（面板皮肤类不会自动继承） |
 | 滑条 | `.bz-range` | `--lg` | 自绘轨道+滑块；抗 Obsidian 默认 range 外观重置 |
 | 加载 | `.bz-spinner` | `--sm/--lg` | 占位加载态 |
 | 面板壳 | `.bz-panel-overlay` / `.bz-panel-frame` | — | 全屏遮罩+居中主面板骨架（flex 居中，z 经 topifyZ 动态分配）；**新域主面板一律此壳 + `.bz-panel-head` 头行** |

@@ -203,6 +203,56 @@
 .bz-fav-form .bz-fav-btns button:disabled { opacity: .55; cursor: default; }
 .bz-fav-form .bz-fav-btns .bz-fav-ai-btn { display: inline-flex; align-items: center; gap: 5px; color: var(--acc); border-color: var(--acc); }
 
+/* ==================== 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一） ====================
+   三处确认框（归档收藏 / 删除收藏 / 放弃未保存草稿，ui.ts）经
+   openFlowDialog({ className: 'bz-fav-flow-dialog bz-fav-scope' }) 与
+   confirmDiscard(..., 'bz-fav-flow-dialog bz-fav-scope') 挂类。为什么必须是这两个类：
+     · `bz-fav-flow-dialog` = 本域确认框专属类，承载下面这套取值；
+     · `bz-fav-scope` = 私有 token（--pop/--pop-ink/--pop-mut/--acc/--fld-bd/--on-acc）的定义者，
+       不命中则本块所有变量解析失败 → 必须跟着传（与 openForm 的
+       `.bz-fav-form-mask bz-fav-scope` 同口径）。
+   取值全部照抄同域表单弹窗 `.bz-fav-form`（styles.css:163 起），让「归档/删除/放弃」三个确认框
+   与「添加·编辑收藏」表单弹窗同皮。core 侧不再自持壳层，底/圆角/阴影由
+   `.bz-overlay-popup` 消费的 --bz-* token 起底，这里用域私有 token 覆写。
+   暗色无需另写块：`.theme-dark .bz-fav-scope`（styles.css:21）整组换 token，本块全引用变量自动反转。 */
+#__shared_confirm_popup__.bz-fav-flow-dialog {
+  /* 亚麻底 + 同款皮：逐值对齐 .bz-fav-form（background: var(--pop)、border-radius: 14px、
+     box-shadow: 0 16px 44px rgba(0,0,0,.32)）。core 流程框固定 24px 内边距与 400px 定宽保留不改。 */
+  background: var(--pop);
+  border-radius: 14px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, .32);
+}
+/* 标题/正文：对齐表单弹窗 h2（--pop-ink + 字距 2px）与字段说明文字（--pop-mut / --pop-faint），
+   让确认框读起来就是同一张亚麻纸上的字。 */
+#__shared_confirm_popup__.bz-fav-flow-dialog h4 {
+  color: var(--pop-ink);
+  letter-spacing: 2px;
+}
+#__shared_confirm_popup__.bz-fav-flow-dialog p {
+  color: var(--pop-mut);
+}
+/* 按钮：逐值对齐表单弹窗 `.bz-fav-form .bz-fav-btns button`（描边 --fld-bd / 底 --fld-bg /
+   字 --chip-ink），主动作取 `.bz-fav-pri`（--acc 底 + --on-acc 字）——即「保存」那枚绿钮。
+   只给颜色不给几何：盒子高度/字号/圆角仍由 core 按组件库 .bz-btn 定（core/styles.css
+   #__shared_confirm_cancel__ 段），故此块不写 height/padding/font-size。 */
+#__shared_confirm_popup__.bz-fav-flow-dialog #__shared_confirm_cancel__ {
+  border-color: var(--fld-bd);
+  background: var(--fld-bg);
+  color: var(--chip-ink);
+}
+#__shared_confirm_popup__.bz-fav-flow-dialog #__shared_confirm_ok__ {
+  border-color: var(--acc);
+  background: var(--acc);
+  color: var(--on-acc);
+}
+/* 危险主动作（删除收藏）：core 的 .bz-flow-dialog--danger 会把主钮降回中性次级样式，
+   本域按同一口径把 danger 文字色交给域 token（--danger 亮暗自动切换），主钮保持亚麻纸底。 */
+#__shared_confirm_popup__.bz-fav-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__ {
+  border-color: var(--fld-bd);
+  background: var(--fld-bg);
+  color: var(--danger);
+}
+
 /* —— 触屏 44px 触控档（磁贴行按钮；延续 issue 219 系列守护口径） —— */
 @media (pointer: coarse) {
   .bz-fav-scope .bz-fav-tags button { min-height: 44px; }

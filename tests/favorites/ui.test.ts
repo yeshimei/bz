@@ -782,6 +782,59 @@ describe('桌面行动作浮层', () => {
     events.off();
   });
 
+  it('issue 291：三个确认框都带本域皮肤类（bz-fav-flow-dialog + bz-fav-scope），与表单弹窗同皮', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [seedItem({ id: '1', title: '同皮项', url: '', desc: 'x' })]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    const confirm = () => document.getElementById('__shared_confirm_popup__') as HTMLElement;
+
+    // 1) 归档确认：统一壳 + 域流程框类 + 私有 token 作用域类
+    openCardMenu(cards()[0]);
+    await tick(10);
+    clickAction('归档');
+    await tick(10);
+    expect(confirm().classList.contains('bz-overlay-popup')).toBe(true);
+    expect(confirm().classList.contains('bz-fav-flow-dialog')).toBe(true);
+    expect(confirm().classList.contains('bz-fav-scope')).toBe(true);
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await tick(30);
+
+    // 2) 删除确认：危险主动作附加 --danger 修饰，皮肤类仍并存
+    openCardMenu(cards()[0]);
+    await tick(10);
+    clickAction('删除');
+    await tick(10);
+    expect(confirm().classList.contains('bz-fav-flow-dialog')).toBe(true);
+    expect(confirm().classList.contains('bz-fav-scope')).toBe(true);
+    expect(confirm().classList.contains('bz-flow-dialog--danger')).toBe(true);
+    // 冻结契约：标准双动作按钮不加类（皮肤只挂 popup）
+    expect((document.getElementById('__shared_confirm_ok__') as HTMLElement).className).toBe('');
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await tick(30);
+
+    // 3) 放弃未保存草稿确认（confirmDiscard 第三参透传）：点表单遮罩触发脏拦截
+    const addBtn = [...document.querySelectorAll('[data-fav-add]')].find(
+      (b) => (b as HTMLElement).classList.contains('bz-fav-chip-add')
+    ) as HTMLElement;
+    addBtn.click();
+    await tick(10);
+    (document.querySelector('#fz-title') as HTMLInputElement).value = '脏草稿';
+    (document.querySelector('.bz-fav-form-mask') as HTMLElement)
+      .dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    await tick(10);
+    expect(document.querySelector('.bz-fav-form')).not.toBeNull(); // 表单仍在（拦截未直接关）
+    expect(confirm().classList.contains('bz-fav-flow-dialog')).toBe(true);
+    expect(confirm().classList.contains('bz-fav-scope')).toBe(true);
+    expect(confirm().querySelector('h4')!.textContent).toBe('放弃未保存的内容？');
+    // 注意 confirmDiscard 的按钮序与常规确认相反：取消钮 id = 「放弃」，确认钮 id = 「继续编辑」
+    // （安全焦点落在继续编辑，回车不丢草稿）——与既有「有输入点遮罩」用例同口径
+    expect((document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).textContent).toBe('放弃');
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click(); // 放弃
+    await tick(20);
+    expect(document.querySelector('.bz-fav-form')).toBeNull();
+  });
+
   it('删除写盘失败 → notifySaveError，不弹撤销 toast，数据仍在', async () => {
     const ctx = await setup();
     seedVault(ctx.vault, [seedItem({ id: '1', title: '删不掉', url: '', desc: 'x' })]);

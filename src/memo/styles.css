@@ -879,6 +879,34 @@
   color: #161618 !important;
 }
 
+/* ---- 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一） ----
+   删除备忘录 / 删除场景两个确认框经 openFlowDialog({className: skinClass()}) 挂皮肤类。
+   壳层（底色/描边/圆角/阴影）由上方 `.bz-overlay-popup.bz-memo-skin-*` 复合规则自动命中
+   （流程框与 uiModal 同挂 .bz-overlay-popup 共享壳），token 层（--bz-surface-2/--bz-brand/
+   --bz-text-2）也随皮肤走；这里只补皮肤特有的文字与主动作按钮形制——与编辑弹窗里
+   的 `.bz-btn--primary`/`.bz-dialog-title` 逐值同源，保证两处按钮长得一样。 */
+#__shared_confirm_popup__.bz-memo-skin-paper h4 {
+  font-family: var(--bz-skin-serif);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+#__shared_confirm_popup__.bz-memo-skin-paper #__shared_confirm_ok__ {
+  border: 2px solid var(--bz-skin-ink);
+  border-radius: 11px;
+  box-shadow: 3px 3px 0 var(--bz-skin-ink);
+  font-weight: var(--bz-weight-bold);
+}
+#__shared_confirm_popup__.bz-memo-skin-paper #__shared_confirm_ok__:hover { box-shadow: 4px 4px 0 var(--bz-skin-ink); }
+#__shared_confirm_popup__.bz-memo-skin-editorial h4 {
+  font-family: var(--bz-skin-serif);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+#__shared_confirm_popup__.bz-memo-skin-editorial #__shared_confirm_ok__ {
+  font-weight: var(--bz-weight-semibold);
+  letter-spacing: 0.1em;
+}
+
 /* ---- 皮肤选择卡预览（设置面板 .bz-cardpick-prev 变体；复刻各皮肤面板迷你形态） ---- */
 .bz-skinprev-default { background: linear-gradient(150deg, #ffffff, #f0f0f4); }
 .bz-skinprev-default::before {

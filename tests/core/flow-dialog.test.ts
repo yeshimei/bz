@@ -173,6 +173,81 @@ describe('flow-dialog UI 层：三动作扩展', () => {
   });
 });
 
+describe('flow-dialog UI 层：统一弹窗壳 + 危险修饰 + 域皮肤通道（issue 291）', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('popup 挂共享壳类 bz-overlay-popup bz-flow-dialog（与 uiModal 表单弹窗同壳）', () => {
+    void openDouble();
+    const popup = document.getElementById(POPUP_ID)!;
+    expect(popup.classList.contains('bz-overlay-popup')).toBe(true);
+    expect(popup.classList.contains('bz-flow-dialog')).toBe(true);
+    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(false);
+  });
+
+  it('主动作为危险动作 → 挂 bz-flow-dialog--danger，且标准双动作按钮仍不加类（冻结契约不破）', () => {
+    void openFlowDialog({
+      title: '删除备忘录',
+      message: '删除后可在通知中撤销',
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '删除', value: 'delete', danger: true, cta: true },
+      ],
+    });
+    expect(document.getElementById(POPUP_ID)!.classList.contains('bz-flow-dialog--danger')).toBe(true);
+    const btns = [...document.querySelectorAll('.confirm-actions button')] as HTMLElement[];
+    expect(btns.every((b) => b.className === '')).toBe(true);
+  });
+
+  it('危险动作不在主动作位（左侧取消是 danger）→ 不挂 danger 修饰', () => {
+    void openFlowDialog({
+      title: 't',
+      message: 'm',
+      actions: [
+        { label: '取消', value: 'cancel', danger: true },
+        { label: '确定', value: 'ok' },
+      ],
+    });
+    expect(document.getElementById(POPUP_ID)!.classList.contains('bz-flow-dialog--danger')).toBe(false);
+  });
+
+  it('className 选项追加域皮肤类（与共享壳类共存，域皮经 .bz-overlay-popup.bz-<域>-skin-* 命中）', () => {
+    void openFlowDialog({
+      title: 't',
+      message: 'm',
+      className: 'bz-memo-skin-paper',
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '确定', value: 'ok' },
+      ],
+    });
+    const popup = document.getElementById(POPUP_ID)!;
+    expect(popup.classList.contains('bz-overlay-popup')).toBe(true);
+    expect(popup.classList.contains('bz-memo-skin-paper')).toBe(true);
+  });
+
+  it('className 支持多类串（域侧惯例）：逐个 token 追加，不抛 InvalidCharacterError', () => {
+    // 回归：DOMTokenList.add 收到含空格的整串会抛 InvalidCharacterError（弹窗根本建不出来）——
+    // 域侧「皮肤类 + 私有 token 作用域类」写法（如 bookshelf/favorites）曾因此整框炸掉
+    expect(() =>
+      openFlowDialog({
+        title: 't',
+        message: 'm',
+        className: 'bz-fav-flow-dialog bz-fav-scope',
+        actions: [
+          { label: '取消', value: 'cancel' },
+          { label: '确定', value: 'ok' },
+        ],
+      })
+    ).not.toThrow();
+    const popup = document.getElementById(POPUP_ID)!;
+    expect(popup).not.toBeNull();
+    expect(popup.classList.contains('bz-fav-flow-dialog')).toBe(true);
+    expect(popup.classList.contains('bz-fav-scope')).toBe(true);
+  });
+});
+
 describe('flow-dialog UI 层：escapeHtml 防注入（P0-8 承继）', () => {
   beforeEach(() => {
     document.body.innerHTML = '';

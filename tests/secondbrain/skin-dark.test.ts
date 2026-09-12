@@ -7,6 +7,8 @@
  *  3) 暗色装饰档：红棕渐变 / 一次性文字 / 阴影加深 / 脉冲光圈，全部 .theme-dark 前缀；
  *  4) 亮侧零改动守护：亮 token 组原值不变、遮罩亮暗同值、最大化去阴影语义暗色保持；
  *  5) 双逸出点挂载事实守护：浮动卡/hover 预览仍直挂 document.body（token 源靠类名自携）。
+ * 追加（issue 291）：第八项 .bz-sb-flow-dialog（core/flow-dialog 确认框）并入同两处 token 组；
+ * 清单顺序与 styles.css 选择器组逐项对应，漏一项即报错。
  * 样式断言读源文件文本（jsdom 不解析 css 文件；先例 review-fix-b.test.ts）。
  */
 import { describe, it, expect } from 'vitest';
@@ -16,7 +18,8 @@ import { resolve } from 'node:path';
 const repo = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
 const cssFlat = () => repo('src/secondbrain/styles.css').replace(/\s+/g, ' ');
 
-/** 七根：三界面 + 移动抽屉/胶囊 + 双逸出点（顺序须与 styles.css token 组选择器一致） */
+/** 七根 + 确认流程框：三界面 + 移动抽屉/胶囊 + 双逸出点 + flow-dialog
+ *  （顺序须与 styles.css 两个 token 组选择器一致） */
 const ROOTS = [
   '.bz-sb-panel',
   '.bz-sb-chat-modal',
@@ -25,6 +28,7 @@ const ROOTS = [
   '.bz-sb-mb-mini',
   '.bz-sb-ref-preview',
   '.bz-sb-ref-card--float',
+  '.bz-sb-flow-dialog',
 ];
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -36,7 +40,7 @@ const block = (sel: string) => {
 };
 
 describe('issue 270：secondbrain 暗色 token 组', () => {
-  it('七根亮暗各一整组 --sb-* token；暗组深炭棕底 × 红棕提亮档', () => {
+  it('七根 + 确认流程框亮暗各一整组 --sb-* token；暗组深炭棕底 × 红棕提亮档', () => {
     const text = cssFlat();
     const lightSel = ROOTS.map(esc).join(',\\s*');
     const light = text.match(new RegExp(`${lightSel}\\s*\\{[^}]*\\}`));
@@ -120,5 +124,63 @@ describe('issue 270：secondbrain 暗色 token 组', () => {
     const rp = repo('src/secondbrain/reference-panel.ts');
     expect(rp).toMatch(/document\.body\.appendChild\(card\)/);
     expect(rp).toMatch(/document\.body\.appendChild\(preview\)/);
+  });
+});
+
+describe('issue 291：确认流程框带皮（core/flow-dialog）', () => {
+  it('两处调用都传了皮肤类：清空对话（chat-panel）+ 重新索引单源（panel）', () => {
+    expect(repo('src/secondbrain/chat-panel.ts'), '清空对话确认未带皮肤类').toContain(
+      "className: 'bz-sb-flow-dialog'"
+    );
+    expect(repo('src/secondbrain/panel.ts'), '重新索引确认未带皮肤类').toContain(
+      "className: 'bz-sb-flow-dialog'"
+    );
+  });
+
+  it('皮肤类进了亮/暗两处 token 选择器列表（防「传了类但没 token」）', () => {
+    const text = cssFlat();
+    const lightSel = ROOTS.map(esc).join(',\\s*');
+    const light = text.match(new RegExp(`${lightSel}\\s*\\{[^}]*\\}`));
+    expect(light, '亮侧 token 组选择器缺 .bz-sb-flow-dialog').not.toBeNull();
+    const darkSel = ROOTS.map((r) => `\\.theme-dark ${esc(r)}`).join(',\\s*');
+    const dark = text.match(new RegExp(`${darkSel}\\s*\\{[^}]*\\}`));
+    expect(dark, '暗侧 token 组选择器缺 .theme-dark .bz-sb-flow-dialog').not.toBeNull();
+  });
+
+  it('壳层映射规则块就位：逐值同源 .bz-sb-panel / .bz-sb-chat-modal（米白底/细边/14px 圆角/柔影）', () => {
+    const shell = block('#__shared_confirm_popup__.bz-sb-flow-dialog');
+    expect(shell).toContain('background: var(--sb-bg)');
+    expect(shell).toContain('border: 1px solid var(--sb-line2)');
+    expect(shell).toContain('border-radius: 14px');
+    expect(shell).toContain('box-shadow: 0 24px 60px #00000022');
+    expect(shell).toContain('color: var(--sb-ink)');
+  });
+
+  it('标题/正文走域墨色两档（core 默认消费 --bz-text-* —— 本浮层只有 --sb-*，不管会掉回全局主题色）', () => {
+    expect(block('#__shared_confirm_popup__.bz-sb-flow-dialog h4')).toContain('color: var(--sb-ink)');
+    expect(block('#__shared_confirm_popup__.bz-sb-flow-dialog p')).toContain('color: var(--sb-ink2)');
+  });
+
+  it('按钮走 .bz-sb-fbtn 一档语言；主动作带 danger 护栏（危险时让 core 的中性档生效）', () => {
+    const text = cssFlat();
+    expect(block('#__shared_confirm_popup__.bz-sb-flow-dialog #__shared_confirm_cancel__')).toContain(
+      'background: var(--sb-card)'
+    );
+    const ok = text.match(
+      /#__shared_confirm_popup__\.bz-sb-flow-dialog:not\(\.bz-flow-dialog--danger\) #__shared_confirm_ok__ \{[^}]*\}/
+    );
+    expect(ok, '缺主动作按钮规则（或漏 danger 护栏）').not.toBeNull();
+    expect(ok![0]).toContain('background: var(--sb-dark)');
+    expect(ok![0]).toContain('color: var(--sb-on-acc)');
+  });
+
+  it('暗色壳影加深同面板档位（域内该值写死不走 token，故必须另写一条）', () => {
+    expect(block('.theme-dark #__shared_confirm_popup__.bz-sb-flow-dialog')).toContain(
+      'box-shadow: 0 24px 60px #00000080'
+    );
+  });
+
+  it('共享壳契约未被域样式破坏：域内不改写 .bz-overlay-popup 本体', () => {
+    expect(repo('src/secondbrain/styles.css')).not.toMatch(/\.bz-overlay-popup\s*\{/);
   });
 });

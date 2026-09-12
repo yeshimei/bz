@@ -12,6 +12,7 @@ import { Platform, requestUrl } from 'obsidian';
 import { UIManager, knowledgeSettingsSchema } from '../../src/knowledge/ui';
 import { KnowledgeData } from '../../src/knowledge/data';
 import { BatchRunner } from '../../src/knowledge/processor';
+import { openFlowDialog } from '../../src/core/flow-dialog'; // issue 291 断言用（本文件已 vi.mock 为 spy）
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { onDomainEvent } from '../../src/core/domain-bus';
@@ -708,5 +709,29 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('none');
     expect(document.getElementById('knowledge-popup')!.style.display).toBe('flex');
+  });
+
+  // ==================== issue 291：确认框随纸墨皮 ====================
+
+  it('三处确认框都传 className: kb bz-kb-flow-dialog（中止批量 / 删除任务 / 清空历史）', async () => {
+    // 本文件把 src/core/flow-dialog mock 掉了（无真实 popup DOM），故这里断言调用通道的
+    // className 实参（漏传即回归）；popup.classList 与样式规则由 tests/knowledge/skin.test.ts
+    // 的源文本断言覆盖。
+    const flow = openFlowDialog as unknown as ReturnType<typeof vi.fn>;
+    flow.mockClear();
+
+    (BatchRunner as any).running = true;
+    await (ui as any).onAbortBatch();
+    (BatchRunner as any).running = false;
+    await (ui as any).confirmDelete({ id: 'task-x' });
+    await (ui as any).confirmClearHistory();
+
+    expect(flow).toHaveBeenCalledTimes(3);
+    for (const call of flow.mock.calls) {
+      // 'kb' = 纸墨变量作用域（弹窗挂 body 后 var(--panel) 失效即透明底，issue 257 事故）
+      expect(call[0]).toMatchObject({ className: 'kb bz-kb-flow-dialog' });
+      // 主干契约不破：双动作结构（含 danger 标记）不因皮肤类改动
+      expect(call[0].actions).toHaveLength(2);
+    }
   });
 });

@@ -109,6 +109,11 @@ function renderHighlightBlock(hl: any, app: App, filePath: string): HTMLElement 
       closeMdNotesModal();
       void openFlowDialog({
         title: '删除划线',
+        // issue 291：流程框挂 body 就脱离了 .bz-bs-panel 树，不显式带皮肤类就掉回 core 裸皮。
+        // `bz-bs-flow-dialog` = 本域确认框专属类（styles.css 里映射借书卡详情弹窗那套纸卡壳）；
+        // `bsSkinClass()` = 当前五肤+亮暗模式类，让共享壳 .bz-overlay-popup 消费的 --bz-* token
+        // 与 --bsw-* 纸墨变量就近生效——与读书笔记弹窗/借书卡详情弹窗同一套取值。
+        className: 'bz-bs-flow-dialog ' + bsSkinClass(),
         message: '确定要删除该划线及其批注吗？此操作不可撤销。',
         actions: [
           { label: '取消', value: 'cancel' },
@@ -348,6 +353,9 @@ function renderEpubHighlightBlock(
     closeEpubNotesModal();
     void openFlowDialog({
       title: '删除划线',
+      // issue 291：同 md 路径——EPUB 划线删除确认框也必须带皮肤类，否则同一域内
+      // 「读书笔记弹窗有皮、删除确认没皮」。类含义见上方 md 路径注释。
+      className: 'bz-bs-flow-dialog ' + bsSkinClass(),
       message: '确定要删除该划线和想法吗？此操作不可撤销。',
       actions: [
         { label: '取消', value: 'cancel' },

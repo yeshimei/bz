@@ -1,4 +1,4 @@
-/* 源指纹 66bc704342c406a3 · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5fbc11b0d47a2066 · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -6154,7 +6154,7 @@ var BZW_knowledge = (() => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
       return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
     }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id };
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
   var activeSettle = null;
   function openFlowDialog(opts) {
@@ -6173,7 +6173,10 @@ var BZW_knowledge = (() => {
       };
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
-      if (opts.className) popup.classList.add(opts.className);
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
       popup.setAttribute("role", "dialog");
       popup.setAttribute("aria-modal", "true");
       popup.innerHTML = parts.html;
@@ -8072,6 +8075,11 @@ ${sample}`,
       const v = await openFlowDialog({
         title: "中止批量处理？",
         message: "当前正在处理的视频将停止，已成功的保留在列表；未开始的项保持待处理，可稍后继续。",
+        // issue 291：流程框挂 document.body，脱离面板根后纸墨 token 与域弹窗类全部失效。
+        // 必须显式带两个类——'kb' = 纸墨变量作用域（本域 styles.css :7-33，亮暗两档），
+        // 'bz-kb-flow-dialog' = 域弹窗类（供 id 选择器把共享壳改写成本域材质），
+        // 否则本框与同域的「添加文献」「术语录入」弹窗不同皮（缺 'kb' 连底色都失效，同 issue 257 事故）。
+        className: "kb bz-kb-flow-dialog",
         actions: [
           { label: "取消", value: "cancel" },
           { label: "中止", value: "ok", danger: true }
@@ -8085,6 +8093,8 @@ ${sample}`,
       const v = await openFlowDialog({
         title: "删除转文献任务",
         message: "仅从列表移除记录，已生成的文献笔记与视频不受影响。",
+        // issue 291：同上——弹窗挂 body 必须自带 'kb'（token 作用域）+ 'bz-kb-flow-dialog'（域皮）
+        className: "kb bz-kb-flow-dialog",
         actions: [
           { label: "取消", value: "cancel" },
           { label: "删除", value: "ok", danger: true }
@@ -8099,6 +8109,8 @@ ${sample}`,
       const v = await openFlowDialog({
         title: "清空历史",
         message: "将移除全部「成功」归档记录；文献笔记与视频文件保留在原处。",
+        // issue 291：同上——挂 body 的流程框须显式带皮肤类才与「历史」窗口同皮
+        className: "kb bz-kb-flow-dialog",
         actions: [
           { label: "取消", value: "cancel" },
           { label: "清空", value: "ok", danger: true }
