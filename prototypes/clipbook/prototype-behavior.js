@@ -1,5 +1,5 @@
-/* 源指纹 92822119dde35c97 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/settings-panel/dir-picker.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 30a448b776d3f712 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -9386,7 +9386,7 @@ ${sample}`,
               // 术语来源随确认时刻的值落库（ADR-0116）
             });
             this.openNote(path);
-            emitDomainEvent("knowledge:tasks", { kind: "term-generated", term, title: term });
+            emitDomainEvent("knowledge:tasks", { kind: "term-generated", term, title: term, notePath: path });
             this.termPreview = null;
             this.hideTermEntry();
             notice("已生成术语文献笔记：" + term, "success");
@@ -10539,6 +10539,11 @@ ${sample}`,
     });
     currentMask = mask;
     currentPopup = popup;
+    const skinClasses = (opts.skinClassName || "").split(/\s+/).filter(Boolean);
+    if (skinClasses.length) {
+      mask.classList.add(...skinClasses);
+      popup.classList.add(...skinClasses);
+    }
     popup.classList.add("bz-path-picker");
     popup.style.height = "min(560px, 82vh)";
     const head = document.createElement("div");
@@ -11853,209 +11858,6 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
-  // src/settings-panel/dir-picker.ts
-  function openDirPicker(opts) {
-    var _a;
-    const multi = opts.multi === true;
-    const selected = new Set(((_a = opts.selected) != null ? _a : []).filter((x) => x !== void 0));
-    let q2 = "";
-    let dirsCache = [];
-    let dirsLoaded = false;
-    let scanFailed = false;
-    const mask = document.createElement("div");
-    mask.className = "bz-sp-picker-mask";
-    const dlg = document.createElement("div");
-    dlg.className = "bz-sp-picker";
-    const head = document.createElement("div");
-    head.className = "bz-sp-picker-head";
-    const titleEl = document.createElement("b");
-    titleEl.textContent = opts.title;
-    const search = document.createElement("div");
-    search.className = "bz-sp-picker-search";
-    const searchIc = document.createElement("span");
-    searchIc.className = "bz-ic";
-    setIcon(searchIc, "search");
-    const sinp = document.createElement("input");
-    sinp.placeholder = "搜索目录…（命中项保留上级链）";
-    search.append(searchIc, sinp);
-    head.append(titleEl, search);
-    const crumb = document.createElement("div");
-    crumb.className = "bz-sp-picker-crumb";
-    const list = document.createElement("div");
-    list.className = "bz-sp-picker-list";
-    const foot = document.createElement("div");
-    foot.className = "bz-sp-picker-foot";
-    const cancel = document.createElement("button");
-    cancel.type = "button";
-    cancel.className = "bz-sp-btn";
-    cancel.textContent = "取消";
-    const ok = document.createElement("button");
-    ok.type = "button";
-    ok.className = "bz-sp-btn bz-sp-btn--primary";
-    ok.textContent = opts.okText || (multi ? "添加所选" : "选用");
-    let settled = false;
-    const close = (v) => {
-      if (settled) return;
-      settled = true;
-      escHandle2.unregister();
-      mask.remove();
-      if (v !== null) opts.onConfirm(normalizePicked(v));
-    };
-    cancel.addEventListener("click", () => close(null));
-    ok.addEventListener("click", () => close([...selected]));
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) close(null);
-    });
-    const escHandle2 = escManager.register("bz-sp-dir-picker", {
-      isVisible: () => mask.isConnected,
-      close: () => close(null)
-    });
-    function renderCrumb() {
-      crumb.innerHTML = "";
-      const lab = document.createElement("span");
-      lab.className = "bz-sp-picker-lab";
-      lab.textContent = multi ? "已选" : "将选用";
-      crumb.appendChild(lab);
-      const arr = [...selected].filter(Boolean);
-      if (multi) {
-        const v = document.createElement("span");
-        v.textContent = arr.length ? `${arr.length} 个目录` : "尚未选择";
-        crumb.appendChild(v);
-      } else if (!arr.length) {
-        const v = document.createElement("span");
-        v.textContent = "未设置";
-        crumb.appendChild(v);
-      } else {
-        arr[0].split("/").forEach((seg, i) => {
-          if (i) {
-            const sp = document.createElement("span");
-            sp.className = "bz-sp-picker-sep";
-            sp.textContent = "▸";
-            crumb.appendChild(sp);
-          }
-          const sg = document.createElement("span");
-          sg.textContent = seg;
-          crumb.appendChild(sg);
-        });
-      }
-    }
-    function renderList2() {
-      const query = q2.trim().toLowerCase();
-      let items = dirsCache;
-      if (query) {
-        const keep = /* @__PURE__ */ new Set();
-        for (const d of dirsCache) {
-          if (d.toLowerCase().includes(query)) {
-            keep.add(d);
-            const parts = d.split("/");
-            for (let i = 1; i < parts.length; i++) keep.add(parts.slice(0, i).join("/"));
-          }
-        }
-        items = dirsCache.filter((d) => keep.has(d));
-      }
-      items = items.slice().reverse();
-      list.innerHTML = "";
-      if (!dirsLoaded) {
-        if (scanFailed) {
-          const failRow = document.createElement("div");
-          failRow.className = "bz-sp-picker-row";
-          failRow.style.pointerEvents = "none";
-          failRow.style.opacity = "0.55";
-          failRow.textContent = "目录读取失败";
-          const retry = document.createElement("button");
-          retry.type = "button";
-          retry.className = "bz-sp-btn";
-          retry.textContent = "重试";
-          retry.addEventListener("click", () => scanDirs());
-          list.append(failRow, retry);
-          return;
-        }
-        const loading2 = document.createElement("div");
-        loading2.className = "bz-sp-picker-row";
-        loading2.style.pointerEvents = "none";
-        loading2.style.opacity = "0.55";
-        loading2.textContent = "正在读取目录…";
-        list.appendChild(loading2);
-        return;
-      }
-      for (const d of items) {
-        const parts = d.split("/");
-        const rowBtn = document.createElement("button");
-        rowBtn.type = "button";
-        rowBtn.className = "bz-sp-picker-row" + (selected.has(d) ? " sel" : "");
-        const ic = document.createElement("span");
-        ic.className = "bz-ic";
-        setIcon(ic, "folder-open");
-        rowBtn.appendChild(ic);
-        const nm = document.createElement("span");
-        nm.textContent = parts[parts.length - 1] || "（库根目录）";
-        rowBtn.appendChild(nm);
-        const anc = document.createElement("span");
-        anc.className = "anc";
-        anc.textContent = parts.length > 1 ? parts.slice(0, -1).join(" / ") + " /" : "vault 根目录";
-        rowBtn.appendChild(anc);
-        rowBtn.addEventListener("click", () => {
-          if (multi) {
-            if (selected.has(d)) selected.delete(d);
-            else selected.add(d);
-            rowBtn.classList.toggle("sel", selected.has(d));
-          } else {
-            selected.clear();
-            selected.add(d);
-            list.querySelectorAll(".sel").forEach((x) => x.classList.remove("sel"));
-            rowBtn.classList.add("sel");
-          }
-          renderCrumb();
-        });
-        if (!multi) rowBtn.addEventListener("dblclick", () => close([d]));
-        list.appendChild(rowBtn);
-      }
-      if (!items.length) {
-        const empty = document.createElement("div");
-        empty.className = "bz-sp-picker-row";
-        empty.style.pointerEvents = "none";
-        empty.style.opacity = "0.55";
-        empty.textContent = "无匹配目录";
-        list.appendChild(empty);
-      }
-    }
-    foot.append(cancel, ok);
-    dlg.append(head, crumb, list, foot);
-    mask.appendChild(dlg);
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    sinp.addEventListener("input", () => {
-      q2 = sinp.value;
-      renderList2();
-    });
-    renderCrumb();
-    renderList2();
-    function scanDirs() {
-      scanFailed = false;
-      if (!dirsLoaded) renderList2();
-      collectVaultFolders(getApp()).then((dirs) => {
-        if (settled) return;
-        dirsCache = dirs;
-        dirsLoaded = true;
-        renderList2();
-      }).catch(() => {
-        if (settled) return;
-        scanFailed = true;
-        renderList2();
-      });
-    }
-    scanDirs();
-  }
-  var init_dir_picker = __esm({
-    "src/settings-panel/dir-picker.ts"() {
-      init_fake_obsidian();
-      init_app();
-      init_path_picker();
-      init_esc_manager();
-      init_z_order();
-    }
-  });
-
   // src/core/ui/str.ts
   function escapeHtml2(s) {
     return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
@@ -12278,11 +12080,14 @@ ${bodyText.substring(0, 6e3)}`;
       renderChips();
     };
     const openPicker = () => {
-      openDirPicker({
-        title: (opts.mode === "multi" ? "添加文件夹 · " : "选择文件夹 · ") + (opts.pickerTitle || opts.name),
-        multi: opts.mode === "multi",
+      const multiMode = opts.mode === "multi";
+      openPathPicker({
+        title: (multiMode ? "添加文件夹 · " : "选择文件夹 · ") + (opts.pickerTitle || opts.name),
+        desc: opts.pickerDesc,
+        mode: multiMode ? "multi" : "single",
         selected: current,
-        okText: opts.okText,
+        okText: opts.okText || (multiMode ? "添加所选" : "选用"),
+        skinClassName: "bz-sp-skin",
         onConfirm: (list) => {
           void apply(list);
         }
@@ -12791,8 +12596,8 @@ ${bodyText.substring(0, 6e3)}`;
   var init_renderer = __esm({
     "src/settings-panel/renderer.ts"() {
       init_settings_provider();
+      init_path_picker();
       init_settings_schema();
-      init_dir_picker();
       init_notice();
       init_render2();
       init_ui2();
