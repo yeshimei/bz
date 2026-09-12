@@ -1,5 +1,5 @@
-/* 源指纹 a0ab17916cdc9d55 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 932fdbc69e094234 · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -5360,11 +5360,6 @@ var BZW_settings_panel = (() => {
     });
     currentMask = mask;
     currentPopup = popup;
-    const skinClasses = (opts.skinClassName || "").split(/\s+/).filter(Boolean);
-    if (skinClasses.length) {
-      mask.classList.add(...skinClasses);
-      popup.classList.add(...skinClasses);
-    }
     popup.classList.add("bz-path-picker");
     popup.style.height = "min(560px, 82vh)";
     const head = document.createElement("div");
@@ -7783,6 +7778,209 @@ var BZW_settings_panel = (() => {
     }
   });
 
+  // src/settings-panel/dir-picker.ts
+  function openDirPicker(opts) {
+    var _a2;
+    const multi = opts.multi === true;
+    const selected = new Set(((_a2 = opts.selected) != null ? _a2 : []).filter((x) => x !== void 0));
+    let q2 = "";
+    let dirsCache = [];
+    let dirsLoaded = false;
+    let scanFailed = false;
+    const mask = document.createElement("div");
+    mask.className = "bz-sp-picker-mask";
+    const dlg = document.createElement("div");
+    dlg.className = "bz-sp-picker";
+    const head = document.createElement("div");
+    head.className = "bz-sp-picker-head";
+    const titleEl = document.createElement("b");
+    titleEl.textContent = opts.title;
+    const search = document.createElement("div");
+    search.className = "bz-sp-picker-search";
+    const searchIc = document.createElement("span");
+    searchIc.className = "bz-ic";
+    setIcon(searchIc, "search");
+    const sinp = document.createElement("input");
+    sinp.placeholder = "搜索目录…（命中项保留上级链）";
+    search.append(searchIc, sinp);
+    head.append(titleEl, search);
+    const crumb = document.createElement("div");
+    crumb.className = "bz-sp-picker-crumb";
+    const list = document.createElement("div");
+    list.className = "bz-sp-picker-list";
+    const foot = document.createElement("div");
+    foot.className = "bz-sp-picker-foot";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "bz-sp-btn";
+    cancel.textContent = "取消";
+    const ok = document.createElement("button");
+    ok.type = "button";
+    ok.className = "bz-sp-btn bz-sp-btn--primary";
+    ok.textContent = opts.okText || (multi ? "添加所选" : "选用");
+    let settled = false;
+    const close = (v) => {
+      if (settled) return;
+      settled = true;
+      escHandle4.unregister();
+      mask.remove();
+      if (v !== null) opts.onConfirm(normalizePicked(v));
+    };
+    cancel.addEventListener("click", () => close(null));
+    ok.addEventListener("click", () => close([...selected]));
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) close(null);
+    });
+    const escHandle4 = escManager.register("bz-sp-dir-picker", {
+      isVisible: () => mask.isConnected,
+      close: () => close(null)
+    });
+    function renderCrumb() {
+      crumb.innerHTML = "";
+      const lab = document.createElement("span");
+      lab.className = "bz-sp-picker-lab";
+      lab.textContent = multi ? "已选" : "将选用";
+      crumb.appendChild(lab);
+      const arr = [...selected].filter(Boolean);
+      if (multi) {
+        const v = document.createElement("span");
+        v.textContent = arr.length ? `${arr.length} 个目录` : "尚未选择";
+        crumb.appendChild(v);
+      } else if (!arr.length) {
+        const v = document.createElement("span");
+        v.textContent = "未设置";
+        crumb.appendChild(v);
+      } else {
+        arr[0].split("/").forEach((seg, i) => {
+          if (i) {
+            const sp = document.createElement("span");
+            sp.className = "bz-sp-picker-sep";
+            sp.textContent = "▸";
+            crumb.appendChild(sp);
+          }
+          const sg = document.createElement("span");
+          sg.textContent = seg;
+          crumb.appendChild(sg);
+        });
+      }
+    }
+    function renderList2() {
+      const query = q2.trim().toLowerCase();
+      let items = dirsCache;
+      if (query) {
+        const keep = /* @__PURE__ */ new Set();
+        for (const d of dirsCache) {
+          if (d.toLowerCase().includes(query)) {
+            keep.add(d);
+            const parts = d.split("/");
+            for (let i = 1; i < parts.length; i++) keep.add(parts.slice(0, i).join("/"));
+          }
+        }
+        items = dirsCache.filter((d) => keep.has(d));
+      }
+      items = items.slice().reverse();
+      list.innerHTML = "";
+      if (!dirsLoaded) {
+        if (scanFailed) {
+          const failRow = document.createElement("div");
+          failRow.className = "bz-sp-picker-row";
+          failRow.style.pointerEvents = "none";
+          failRow.style.opacity = "0.55";
+          failRow.textContent = "目录读取失败";
+          const retry = document.createElement("button");
+          retry.type = "button";
+          retry.className = "bz-sp-btn";
+          retry.textContent = "重试";
+          retry.addEventListener("click", () => scanDirs());
+          list.append(failRow, retry);
+          return;
+        }
+        const loading2 = document.createElement("div");
+        loading2.className = "bz-sp-picker-row";
+        loading2.style.pointerEvents = "none";
+        loading2.style.opacity = "0.55";
+        loading2.textContent = "正在读取目录…";
+        list.appendChild(loading2);
+        return;
+      }
+      for (const d of items) {
+        const parts = d.split("/");
+        const rowBtn = document.createElement("button");
+        rowBtn.type = "button";
+        rowBtn.className = "bz-sp-picker-row" + (selected.has(d) ? " sel" : "");
+        const ic2 = document.createElement("span");
+        ic2.className = "bz-ic";
+        setIcon(ic2, "folder-open");
+        rowBtn.appendChild(ic2);
+        const nm = document.createElement("span");
+        nm.textContent = parts[parts.length - 1] || "（库根目录）";
+        rowBtn.appendChild(nm);
+        const anc = document.createElement("span");
+        anc.className = "anc";
+        anc.textContent = parts.length > 1 ? parts.slice(0, -1).join(" / ") + " /" : "vault 根目录";
+        rowBtn.appendChild(anc);
+        rowBtn.addEventListener("click", () => {
+          if (multi) {
+            if (selected.has(d)) selected.delete(d);
+            else selected.add(d);
+            rowBtn.classList.toggle("sel", selected.has(d));
+          } else {
+            selected.clear();
+            selected.add(d);
+            list.querySelectorAll(".sel").forEach((x) => x.classList.remove("sel"));
+            rowBtn.classList.add("sel");
+          }
+          renderCrumb();
+        });
+        if (!multi) rowBtn.addEventListener("dblclick", () => close([d]));
+        list.appendChild(rowBtn);
+      }
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "bz-sp-picker-row";
+        empty.style.pointerEvents = "none";
+        empty.style.opacity = "0.55";
+        empty.textContent = "无匹配目录";
+        list.appendChild(empty);
+      }
+    }
+    foot.append(cancel, ok);
+    dlg.append(head, crumb, list, foot);
+    mask.appendChild(dlg);
+    document.body.appendChild(mask);
+    topifyZ(mask);
+    sinp.addEventListener("input", () => {
+      q2 = sinp.value;
+      renderList2();
+    });
+    renderCrumb();
+    renderList2();
+    function scanDirs() {
+      scanFailed = false;
+      if (!dirsLoaded) renderList2();
+      collectVaultFolders(getApp()).then((dirs) => {
+        if (settled) return;
+        dirsCache = dirs;
+        dirsLoaded = true;
+        renderList2();
+      }).catch(() => {
+        if (settled) return;
+        scanFailed = true;
+        renderList2();
+      });
+    }
+    scanDirs();
+  }
+  var init_dir_picker = __esm({
+    "src/settings-panel/dir-picker.ts"() {
+      init_fake_obsidian();
+      init_app();
+      init_path_picker();
+      init_esc_manager();
+      init_z_order();
+    }
+  });
+
   // src/core/ui/str.ts
   function escapeHtml(s) {
     return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
@@ -8053,14 +8251,11 @@ var BZW_settings_panel = (() => {
       renderChips();
     };
     const openPicker = () => {
-      const multiMode = opts.mode === "multi";
-      openPathPicker({
-        title: (multiMode ? "添加文件夹 · " : "选择文件夹 · ") + (opts.pickerTitle || opts.name),
-        desc: opts.pickerDesc,
-        mode: multiMode ? "multi" : "single",
+      openDirPicker({
+        title: (opts.mode === "multi" ? "添加文件夹 · " : "选择文件夹 · ") + (opts.pickerTitle || opts.name),
+        multi: opts.mode === "multi",
         selected: current2,
-        okText: opts.okText || (multiMode ? "添加所选" : "选用"),
-        skinClassName: "bz-sp-skin",
+        okText: opts.okText,
         onConfirm: (list) => {
           void apply(list);
         }
@@ -8569,8 +8764,8 @@ var BZW_settings_panel = (() => {
   var init_renderer = __esm({
     "src/settings-panel/renderer.ts"() {
       init_settings_provider();
-      init_path_picker();
       init_settings_schema();
+      init_dir_picker();
       init_notice();
       init_render2();
       init_ui();
@@ -31498,7 +31693,7 @@ ${text}`;
           if (!this.unlocked || !this.password) throw new Error("未解锁，无法还原笔记");
           const app = getApp();
           const note = this.manifest.notes.find((n) => n.id === noteId);
-          if (!note) throw new Error("未找到该加密笔记");
+          if (!note) throw new Error("未找到该笔记");
           const conflicts = [];
           const total = note.attachments.length + 1;
           let done = 0;
@@ -32868,10 +33063,10 @@ ${text}`;
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
             <div class="mid"><div class="a">${escapeHtml2(r.title)}</div><div class="b">${escapeHtml2(r.sub)}</div></div>
             <span class="tm">${escapeHtml2(r.time)}</span></div>`;
-    }).join("") : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc("lock", 28) + '</span><div class="bz-empty-title">还没有加密动态</div><div class="bz-empty-desc">加密笔记或加密日记后，最近动态在这里显示</div></div>';
+    }).join("") : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc("lock", 28) + '</span><div class="bz-empty-title">还没有动态</div><div class="bz-empty-desc">笔记或日记入库后，最近动态在这里显示</div></div>';
     return `
   <div class="bz-vault-hero">
-    <div class="ht">${vIc("lock", 14)} 保险库已解锁 · 加密笔记集中管理</div>
+    <div class="ht">${vIc("lock", 14)} 保险库已解锁 · 笔记集中管理</div>
     <div class="hn">${counts.note} 项资产${counts.note > 0 ? " · 尽在掌握" : ""}</div>
     <div class="hd">同一把主密码 · AES-256-GCM</div>
     <div class="hbtns">
@@ -32883,7 +33078,7 @@ ${text}`;
     <div class="card" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc("file-lock", 13)}</span>笔记条目</div>
       <div class="num">${counts.note}<small>篇</small></div>
-      <div class="cd">${counts.note ? "正文与附件全量密文" : "还没有加密笔记"}</div>
+      <div class="cd">${counts.note ? "正文与附件全量密文" : "还没有笔记"}</div>
     </div>
     <div class="card" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc("image", 13)}</span>随库附件</div>
@@ -32934,7 +33129,6 @@ ${text}`;
     <div class="bz-vault-dhead">
       <span class="big" style="background:${color}">${vIc(iconName, 21)}</span>
       <div class="ttl"><h2>${escapeHtml2(note.title)}</h2><div class="url">${pathLine}</div></div>
-      <div class="acts"><button class="ic" data-detail="menu" title="更多操作">${vIc("more-h", 15)}</button></div>
     </div>
     <div class="bz-vault-dcontent">
       ${kind === "note" ? `<div class="field"><div class="lab">附件镜像</div><div class="valrow">${attLine}</div></div>
@@ -33478,6 +33672,8 @@ ${text}`;
           this.sessionTimer = null;
           /** 安全模式无交互自动上锁计时器（15 分钟；面板内交互重置） */
           this.idleLockTimer = null;
+          /** 上次渲染的资产：资产未变时保留列表头（连同搜索框），避免搜索输入被重建而掉焦点 */
+          this._lastRenderedAsset = null;
           /** 解锁屏统计快照（会话内缓存；冷启动为「—」） */
           this.lockStatsCache = {};
           this._selNoteId = null;
@@ -33520,6 +33716,14 @@ ${text}`;
           this.unlockCooldownUntil = Date.now() + delaySec * 1e3;
           return delaySec;
         }
+        /**
+         * 桌面搜索框（评审 2026-09-12：从顶栏下移到「全部加密笔记 N 项」之上）——它现在随
+         * 列表头一起渲染，故不再缓存引用而按需现取；null = 当前资产没有列表头（概览 / 密码）。
+         */
+        get deskSearch() {
+          var _a2, _b2;
+          return (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelector("[data-vault-search]")) != null ? _b2 : null;
+        }
         ensureElements() {
           if (this._initialized) return;
           this.mask = this.createMask("bz-encrypt-mask");
@@ -33534,7 +33738,7 @@ ${text}`;
           </div>
           <div class="bz-vault-item on" data-asset="overview">${vIc("layout-grid", 16)}概览<span class="cnt" data-cnt="overview"></span></div>
           <div class="bz-vault-sec">资产档案</div>
-          <div class="bz-vault-item k-note" data-asset="note">${vIc("file-lock", 16)}加密笔记<span class="cnt" data-cnt="note"></span></div>
+          <div class="bz-vault-item k-note" data-asset="note">${vIc("file-lock", 16)}笔记<span class="cnt" data-cnt="note"></span></div>
           <div class="grow"></div>
           <div class="bz-vault-health" data-act="health-card" title="打开保险库体检">
             <div class="ht"><span class="okdot"></span><span data-health-t>保险库健康</span></div>
@@ -33543,13 +33747,10 @@ ${text}`;
           <div class="bz-vault-lockbtn" data-act="lock"><span class="lbl">${vIc("lock", 14)} 立即上锁</span><span class="dur" data-unlock-dur></span><span class="dot"></span></div>
         </div>
         <div class="bz-vault-main">
+          <!-- 顶栏只留标题：右侧三按钮（存入笔记/体检/关闭）按评审去掉——关闭走 Esc 或点遮罩，
+               体检走左栏健康卡，存入笔记走命令「加密当前笔记」，三条入口都不丢 -->
           <div class="bz-vault-bar">
             <h1 data-vault-title>保险库</h1>
-            <div class="sub" data-vault-sub></div>
-            <div class="bz-vault-search">${vIc("search", 14)}<input placeholder="搜索加密笔记…" data-vault-search></div>
-            <button class="bz-vault-ic" data-act="lock-note" title="存入笔记">${vIc("file-lock", 15)}</button>
-            <button class="bz-vault-ic" data-act="health" title="保险库体检">${vIc("stethoscope", 15)}</button>
-            <button class="bz-vault-ic close" data-act="close" title="关闭">${vIc("x", 15)}</button>
           </div>
           <div class="bz-vault-pane">
             <div class="bz-vault-listcol" data-vault-list></div>
@@ -33578,8 +33779,7 @@ ${text}`;
             area: desk.querySelector(".bz-vault-pane"),
             list: desk.querySelector("[data-vault-list]"),
             detail: desk.querySelector("[data-vault-detail]"),
-            count: desk.querySelector('[data-cnt="overview"]'),
-            search: desk.querySelector("[data-vault-search]")
+            count: desk.querySelector('[data-cnt="overview"]')
           };
           const mob = this.popup.querySelector(".bz-vault-mob");
           this.mob = {
@@ -33601,13 +33801,14 @@ ${text}`;
         }
         /** 统一骨架交互：资产导航 / 顶栏动作 / 搜索防抖 / 移动端 seg */
         bindVaultShell() {
-          var _a2, _b2, _c, _d, _e, _f;
+          var _a2, _b2, _c;
           const setAsset = (a) => {
             if (a === "pw" || a === "diary") a = "note";
             this.asset = a;
             lastVisitedAsset = a;
             this.pwState.searchKw = "";
-            this.desk.search.value = "";
+            const headSearch = this.deskSearch;
+            if (headSearch) headSearch.value = "";
             this.mob.search.value = "";
             this.renderAll();
           };
@@ -33618,8 +33819,7 @@ ${text}`;
             el.addEventListener("click", () => setAsset(el.getAttribute("data-masset") || "overview"));
           });
           (_a2 = this.popup.querySelector('[data-act="lock"]')) == null ? void 0 : _a2.addEventListener("click", () => this.lockNow());
-          (_b2 = this.popup.querySelector('[data-act="close"]')) == null ? void 0 : _b2.addEventListener("click", () => this.hide());
-          (_c = this.popup.querySelector('[data-act="mob-close"]')) == null ? void 0 : _c.addEventListener("click", () => this.hide());
+          (_b2 = this.popup.querySelector('[data-act="mob-close"]')) == null ? void 0 : _b2.addEventListener("click", () => this.hide());
           this.popup.addEventListener("contextmenu", (e) => {
             const t = e.target;
             if (!(t instanceof HTMLElement)) return;
@@ -33627,34 +33827,37 @@ ${text}`;
             e.preventDefault();
             this.openPanelMenu(e.clientX, e.clientY);
           });
-          (_d = this.popup.querySelector('[data-act="health"]')) == null ? void 0 : _d.addEventListener("click", () => void this.openHealthDialog());
-          (_e = this.popup.querySelector('[data-act="health-card"]')) == null ? void 0 : _e.addEventListener("click", () => void this.openHealthDialog());
-          (_f = this.popup.querySelector('[data-act="lock-note"]')) == null ? void 0 : _f.addEventListener("click", () => {
-            var _a3;
-            return (_a3 = this.onLockCurrentNote) == null ? void 0 : _a3.call(this);
-          });
-          const bindSearch = (input, isMob) => {
-            input.addEventListener("input", () => {
-              const v = input.value.trim();
-              if (this.asset === "overview" && v) {
-                this.asset = "note";
-                lastVisitedAsset = "note";
-              }
-              this.pwState.searchKw = v;
-              this.desk.search.value = isMob ? v : this.desk.search.value;
-              this.mob.search.value = isMob ? this.mob.search.value : v;
-              if (this.searchTimer) clearTimeout(this.searchTimer);
-              this.searchTimer = setTimeout(() => this.renderAll(), 180);
-            });
-          };
-          bindSearch(this.desk.search, false);
-          bindSearch(this.mob.search, true);
+          (_c = this.popup.querySelector('[data-act="health-card"]')) == null ? void 0 : _c.addEventListener("click", () => void this.openHealthDialog());
+          this.bindSearchInput(this.mob.search, true);
           this.mask.addEventListener("click", () => {
             if (this.mask.style.display === "block") this.hide();
           });
           const bump = () => this.bumpIdleLock();
           this.popup.addEventListener("pointerdown", bump, true);
           this.popup.addEventListener("keydown", bump, true);
+        }
+        /**
+         * 搜索输入绑定（桌面列表头框 / 移动端常驻框共用一条语义）。
+         * 桌面框随列表头重建，故每次渲染都要重挂一次——抽成方法避免两处逻辑漂移。
+         * @param isMob 输入源是移动端框：决定把关键词同步到哪一侧（桌面框是动态的，现取）
+         */
+        bindSearchInput(input, isMob) {
+          input.addEventListener("input", () => {
+            const v = input.value.trim();
+            if (this.asset === "overview" && v) {
+              this.asset = "note";
+              lastVisitedAsset = "note";
+            }
+            this.pwState.searchKw = v;
+            if (isMob) {
+              const deskSearch = this.deskSearch;
+              if (deskSearch) deskSearch.value = v;
+            } else {
+              this.mob.search.value = v;
+            }
+            if (this.searchTimer) clearTimeout(this.searchTimer);
+            this.searchTimer = setTimeout(() => this.renderAll(), 180);
+          });
         }
         createMask(id) {
           const mask = document.createElement("div");
@@ -34020,7 +34223,7 @@ ${text}`;
               stats,
               action: exists ? meta.action : "设置并解锁",
               firstSetup: !exists,
-              warningHtml: `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
+              warningHtml: `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，库内笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
               ackText: "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复",
               secText: exists ? "主密码不会存储 · 遗忘将无法恢复密文" : "",
               secTone: "warn",
@@ -34279,11 +34482,14 @@ ${text}`;
         /** 桌面区渲染（中列表 + 右详情按资产分发） */
         renderDesktop() {
           var _a2;
-          this.desk.list.innerHTML = "";
+          const keepHead = this._lastRenderedAsset === this.asset && (this.asset === "note" || this.asset === "diary");
+          if (!keepHead) this.desk.list.innerHTML = "";
           this.desk.detail.innerHTML = "";
           if (this.asset !== "pw") {
             (_a2 = this.popup.querySelector('.bz-vault-bar [data-act="pw-fav"]')) == null ? void 0 : _a2.remove();
           }
+          this.setOverviewSpan(this.asset === "overview");
+          this._lastRenderedAsset = this.asset;
           if (this.asset === "overview") {
             this.renderDeskOverview();
             return;
@@ -34293,20 +34499,22 @@ ${text}`;
             return;
           }
           const kind = this.asset;
-          this.renderDeskNotes(kind);
+          this.renderDeskNotes(kind, keepHead);
         }
-        /** 顶栏标题/副标题（各资产渲染器共用出口） */
-        setVaultHead(title, sub) {
+        /** 概览跨栏开关：概览内容横跨「中列表 + 右详情」——隐藏中列表栏，让详情铺满整行 */
+        setOverviewSpan(on) {
+          var _a2;
+          (_a2 = this.popup.querySelector(".bz-vault-pane")) == null ? void 0 : _a2.classList.toggle("is-overview", on);
+        }
+        /** 顶栏标题（各资产渲染器共用出口）。副标题已按评审去掉——条目数由列表头「N 项」承担 */
+        setVaultHead(title) {
           this.popup.querySelector("[data-vault-title]").textContent = title;
-          this.popup.querySelector("[data-vault-sub]").textContent = sub;
         }
         /** 桌面概览：hero 计数 + 统计卡 + 最近 + 体检摘要（点击跳资产/动作） */
         renderDeskOverview() {
           var _a2, _b2;
-          const c = this.counts();
           const stats = this.overviewStats();
-          const kb = stats.attBytes > 0 ? (stats.attBytes / 1024).toFixed(1) + " KB" : "—";
-          this.setVaultHead("保险库", `${c.note} 篇笔记 · ${stats.attachments} 附件 · ${kb} 密文`);
+          this.setVaultHead("保险库");
           const detail = this.desk.detail;
           const area = document.createElement("div");
           area.className = "bz-vault-area";
@@ -34337,8 +34545,7 @@ ${text}`;
           const list = this.desk.list;
           const detail = this.desk.detail;
           const kw = this.pwState.searchKw;
-          const c = this.counts();
-          this.setVaultHead("密码", kw ? `${this.pwDataManager.search(kw).length} 条匹配` : `${this.pwDataManager.platforms().length} 平台 · ${c.pw} 账号`);
+          this.setVaultHead("密码");
           const barActs = this.popup.querySelector(".bz-vault-bar");
           const favBtn = barActs.querySelector('[data-act="pw-fav"]');
           const favIcon = vIc(this.pwState.view === "fav" ? "star" : "star-outline", 15);
@@ -34374,30 +34581,45 @@ ${text}`;
           this.pwView.renderDeskDetail(detail, this.pwState);
         }
         /** 桌面加密笔记/日记：列表 + 详情（异步解密日记正文预览） */
-        renderDeskNotes(kind) {
+        /**
+         * 桌面加密笔记/日记：列表 + 详情。
+         * @param keepHead 复用已有列表头（资产未变的刷新路径）——搜索框就在列表头里，
+         *   整块重建会让正在输入的用户掉焦点，故只有切资产/首次渲染才重建它。
+         */
+        renderDeskNotes(kind, keepHead = false) {
           const list = this.desk.list;
           const detail = this.desk.detail;
           const kw = this.pwState.searchKw;
           let notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-          this.setVaultHead(
-            kind === "note" ? "加密笔记" : "加密日记",
-            kind === "note" ? `${notes.length} 篇 · 原路径已移出` : `${notes.length} 篇 · 日记面板「加密」分类移入`
-          );
+          this.setVaultHead(kind === "note" ? "笔记" : "加密日记");
           if (kw) {
             const lower = kw.toLowerCase();
             notes = notes.filter((n) => (n.title || "").toLowerCase().includes(lower) || (n.path || "").toLowerCase().includes(lower));
           }
-          const listHead = document.createElement("div");
-          listHead.className = "bz-vault-lc-head";
-          listHead.innerHTML = `<div class="t">${kind === "note" ? "全部加密笔记" : "加密日记条目"}</div><span class="lc-count">${notes.length} 项</span>`;
-          const listBody = document.createElement("div");
-          listBody.className = "bz-vault-lc-body";
-          list.appendChild(listHead);
-          list.appendChild(listBody);
+          let listBody = keepHead ? list.querySelector(".bz-vault-lc-body") : null;
+          if (!listBody) {
+            list.innerHTML = "";
+            if (kind === "note") {
+              const head = document.createElement("div");
+              head.className = "bz-vault-lc-head";
+              head.innerHTML = `<div class="bz-vault-search">${vIc("search", 14)}<input placeholder="搜索笔记…" data-vault-search></div>`;
+              list.appendChild(head);
+              const headSearch = head.querySelector("[data-vault-search]");
+              if (headSearch) {
+                headSearch.value = kw;
+                this.bindSearchInput(headSearch, false);
+              }
+            }
+            listBody = document.createElement("div");
+            listBody.className = "bz-vault-lc-body";
+            list.appendChild(listBody);
+          } else {
+            listBody.innerHTML = "";
+          }
           if (!notes.length) {
             listBody.replaceChildren(
               uiEmpty(
-                kind === "note" ? { title: "还没有加密笔记", desc: "用「加密当前笔记」把整篇笔记移入保险库" } : { title: "还没有加密日记", desc: "日记面板把条目改分类为「加密」后移入这里" }
+                kind === "note" ? { title: "还没有笔记", desc: "用「加密当前笔记」把整篇笔记移入保险库" } : { title: "还没有加密日记", desc: "日记面板把条目改分类为「加密」后移入这里" }
               )
             );
             return;
@@ -34420,14 +34642,6 @@ ${text}`;
           }
           this.renderNoteDetail(detail, notes.find((n) => n.id === selId) || notes[0], kind);
         }
-        /** 详情 ⋮ → 弹行级抽屉（attachItemActions 需要真实元素承载，临时挂到 detail 根再触发 contextmenu） */
-        openNoteDetailMenu(note, kind) {
-          const holder = document.createElement("div");
-          holder.style.display = "none";
-          this.desk.detail.appendChild(holder);
-          this.attachNoteDrawer(holder, note, kind);
-          holder.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2 }));
-        }
         /** 加密笔记/日记详情（异步解密日记正文预览） */
         renderNoteDetail(detail, note, kind) {
           const plain = kind === "diary" ? this._diaryPlain[note.id] : void 0;
@@ -34448,7 +34662,6 @@ ${text}`;
           bind("restore-diary", () => this.confirmRestoreDiary(note));
           bind("copy-diary", () => this.copyDiaryText(note));
           bind("destroy-diary", () => this.confirmDestroyDiary(note));
-          bind("menu", () => this.openNoteDetailMenu(note, kind));
           if (kind === "diary" && !this._diaryPlain[note.id]) {
             void this.dataManager.decryptNoteBody(note).then((t) => {
               if (t !== null && this.asset === "diary" && this._selNoteId === note.id) {
@@ -34834,11 +35047,13 @@ ${text}`;
         enterPwQuickAccess() {
           if (!this._initialized) return;
           this.setAssetFromNav("note");
-          this.desk.search.value = "";
+          const search = this.deskSearch;
+          if (!search) return;
+          search.value = "";
           try {
-            this.desk.search.focus({ preventScroll: true });
+            search.focus({ preventScroll: true });
           } catch (e) {
-            this.desk.search.focus();
+            search.focus();
           }
         }
         /** 直落上次停留资产（已解锁直接打开面板时；无记忆回落密码资产） */
@@ -34902,7 +35117,7 @@ ${text}`;
           if (!filtered2.length) {
             body.replaceChildren(
               uiEmpty(
-                kind === "diary" ? { title: "还没有加密日记", desc: "日记面板把条目改分类为「加密」后移入这里" } : { title: "还没有加密笔记", desc: "用「加密当前笔记」把整篇笔记移入保险库" }
+                kind === "diary" ? { title: "还没有加密日记", desc: "日记面板把条目改分类为「加密」后移入这里" } : { title: "还没有笔记", desc: "用「加密当前笔记」把整篇笔记移入保险库" }
               )
             );
             return;
@@ -34928,7 +35143,7 @@ ${text}`;
         }
         openNoteMobPage(note, kind) {
           var _a2, _b2;
-          const { page, body } = this.createMobPage(kind === "note" ? "加密笔记" : "加密日记");
+          const { page, body } = this.createMobPage(kind === "note" ? "笔记" : "加密日记");
           body.innerHTML = noteDetailHTML(note, kind);
           const bind = (a, fn) => {
             var _a3;
@@ -35014,7 +35229,7 @@ ${text}`;
             void this.dataManager.removeNote(note.id).then(() => {
               if (this._selNoteId === note.id) this._selNoteId = null;
               this.renderList();
-              this.toast(`已销毁加密笔记「${note.title}」`);
+              this.toast(`已销毁笔记「${note.title}」`);
             }).catch((e) => this.toast("销毁失败：" + e.message, true));
           };
           const submit = async () => {
