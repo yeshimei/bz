@@ -117,7 +117,10 @@ function renderHighlightBlock(hl: any, app: App, filePath: string): HTMLElement 
         message: '确定要删除该划线及其批注吗？此操作不可撤销。',
         actions: [
           { label: '取消', value: 'cancel' },
-          { label: '删除', value: 'ok', cta: true },
+          // danger（issue 291 评审补）：删除类主动作必须标 danger —— 弹窗据此挂
+          // .bz-flow-dialog--danger，主按钮降为中性底 + 红字（设计手册 §9/§10），
+          // 与 belongings/favorites/memo/knowledge 的删除确认同口径。
+          { label: '删除', value: 'ok', cta: true, danger: true },
         ],
       }).then((v) => {
         if (v === 'ok') {
@@ -359,7 +362,8 @@ function renderEpubHighlightBlock(
       message: '确定要删除该划线和想法吗？此操作不可撤销。',
       actions: [
         { label: '取消', value: 'cancel' },
-        { label: '删除', value: 'ok', cta: true },
+        // danger（issue 291 评审补）：同 md 路径——EPUB 划线删除确认也不得高亮删除钮
+        { label: '删除', value: 'ok', cta: true, danger: true },
       ],
     }).then((v) => {
       if (v === 'ok') {

@@ -997,7 +997,8 @@ export class UIManager {
       message: parts.join('、') + '将永久删除，不可恢复',
       actions: [
         { label: '取消', value: 'cancel' },
-        { label: '永久删除', value: 'ok', cta: true },
+        // danger（issue 291 评审补）：永久删除密文/失效条目，主按钮不得高亮（手册 §9/§10）
+        { label: '永久删除', value: 'ok', cta: true, danger: true },
       ],
     }).then((v) => {
       if (v === 'ok') void this.executeHealthCleanup(keys);

@@ -296,7 +296,8 @@ export class ChatPanel {
       className: 'bz-sb-flow-dialog',
       actions: [
         { label: '取消', value: 'cancel' },
-        { label: '清空', value: 'ok', cta: true },
+        // danger（issue 291 评审补）：清空即抹掉全部对话历史，主按钮中性底 + 红字（手册 §9/§10）
+        { label: '清空', value: 'ok', cta: true, danger: true },
       ],
     });
     if (v !== 'ok') return;

@@ -483,12 +483,20 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
 }
 /* 慎重决策（设计手册 §9/§10）：主动作为危险动作时，主按钮不默认高亮——双钮同为中性次级样式，
    只有危险文字用 danger 色（弹窗挂 --danger 修饰；标准双动作按钮不加类，冻结契约不破）。
-   选择器刻意带上 `.bz-flow-dialog` 提一级（1,2,0）——域皮映射按钮时的
-   `#__shared_confirm_popup__.bz-xx-flow-dialog #__shared_confirm_ok__`（1,1,1）压不回高亮，
-   保证「删除不高亮」这条语义不被域皮肤破掉。 */
+   选择器刻意带上 `.bz-flow-dialog` 提一级（2,2,0）——域皮映射按钮时的
+   `#__shared_confirm_popup__.bz-xx-flow-dialog #__shared_confirm_ok__`（2,1,0）压不回高亮，
+   保证「删除不高亮」这条语义不被域皮肤破掉。
+   复位的是「整套中性次级形制」而非只改底色：域皮若给主动作加了提级形制（如 memo 纸感的
+   2px 墨框 + 硬偏移阴影），只压底色会得到「中性底 + 红字 + 仍是凸起墨章」的半吊子中性态
+   （issue 291 评审发现），故 border/border-radius/box-shadow 一并压回 core 次级档。
+   域皮若要保留自有按钮形制（如 clipbook 编辑部方角），须自己写一条 `.bz-flow-dialog--danger`
+   限定的覆写规则（同特异性下域文件后到即胜；favorites 即此范式）。 */
 #__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__ {
   background: var(--bz-surface-2);
   color: var(--bz-danger);
+  border: 1px solid transparent;
+  border-radius: var(--bz-radius-sm);
+  box-shadow: none;
 }
 #__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__:hover {
   background: var(--bz-surface-hover);

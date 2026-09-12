@@ -75,3 +75,26 @@
 ① **两例定时型抖动测试**：`tests/home/ui-river.test.ts:58` 与 `tests/password-vault/review-fix-lock.test.ts` 用固定 `setTimeout(20ms)`/`flush()` 等异步装配，在系统高负载（部署后 Obsidian 重新索引整库）下会读到未渲染完成的 DOM 而红（`[data-home-weekday]` 期望 7 实得 0）。单独跑、以及负载正常时的全量跑均绿；与本次改动无关。建议后续把固定 sleep 换成 `vi.waitFor`。
 
 ② **`pnpm run build` 不重出「行为预览包」**：`esbuild.config.mjs` 只 `await buildPreview()`（= 各域 `prototype-render.js`），而 `prototype-behavior.js` 由 `build-preview.mjs` 的 CLI 入口调 `buildBehavior()` 产出。于是「改了 src → 只跑 pnpm run build」会让已提交的 behavior 产物滞后 → `tests/preview-freshness.test.ts` 红（14 条里 4 条：home/memo/pomodoro/settings-panel）。修法二选一：`esbuild.config.mjs` 里补 `for (const d of BEHAVIOR_DOMAINS) await buildBehavior(d)`，或把这条约束写进构建脚本注释。另注：`.gitattributes` 只把 `prototypes/**` 钉成 LF，`src/**` 未钉 —— `src/pomodoro/render.ts`/`stats.ts` 在主仓是 LF、在 worktree 检出为 CRLF（autocrlf=true），源指纹按磁盘字节算，故同一份代码在两个检出位置算出的指纹不同（跨位置重出会刷一遍指纹行）。
+
+## §8 独立评审与补修（2026-09-12，用户追问「走 review 了吗」后发现漏做）
+
+首轮把 review 省成了自审就直接合并部署。补审按提交区间 `0788a6ec...0326c8de`（54 文件 / +2331 −265）做**两轴独立评审**（Standards 轴 = 仓库文档化规范 + Fowler 气味基线；Spec 轴 = 用户原话 + issue + ADR + 手册 §9），再由主线程逐条复核。
+
+### 8.1 复核证伪的两条（不成立，记录以免后人重复踩）
+
+- **「24px 内边距被 `.bz-overlay-popup{padding:16px}` 压成 16px」**：不成立。新壳规则 `#__shared_confirm_popup__.bz-flow-dialog` 特异性 (1,1,0) 高于 `.bz-overlay-popup` (0,1,0)，与 CSS 聚合顺序无关；`--bz-space-xl` = 24px。
+- **「`createOverlay` 不同壳，三基座同壳未兑现」**：不成立。`src/core/dom.ts:186` 本就 `popup.className = 'bz-overlay-popup'`，三基座同壳成立。
+
+### 8.2 复核成立并已补修
+
+1. **危险中性只落地一半（P0 语义缺口）**：首轮只在 belongings/favorites/knowledge/memo 标了 `danger: true`，**8 处破坏性确认漏标**，主按钮仍品牌色满高亮：bookshelf 删除划线 ×2（md/EPUB）、clipbook 删除条目/删除剪藏 ×2、diary 删除日记、encrypt 永久删除、secondbrain 清空对话、password-vault 仍要重设。已全部补齐（口径与豁免见 ADR-0125 决策 5），password-vault 的 `:not(.bz-flow-dialog--danger)` 守卫从此不再恒真。
+2. **危险态形制残留**：core 危险规则原先只重置 `background/color`，memo 纸感的 ok 形制（`src/memo/styles.css` 2px 墨框 + 11px 圆角 + `3px 3px 0` 硬偏移阴影）在 danger 态残留 → 「中性底 + 红字 + 凸起墨章」。已把 core 危险规则改成**整套**中性次级形制（+ 描边/圆角/阴影复位），并给 clipbook 编辑部皮补 `--danger` 限定覆写（亮/暗两套）以保住它的方角形制。
+3. **Speculative Generality 一条经复核不成立**：`--bz-surface-hover`（password-vault）、`--bz-brand/--bz-on-brand`（knowledge）并非死 token —— 分别被 core 的取消钮 hover 与 `.bz-btn--primary` 消费；只是 knowledge 当前三处全 danger，属备用通路，保留。
+4. **域皮几何违反手册 §4.2/§5.1/§5.2**：成立但**性质是既有域级偏离被本次忠实继承**（`belongings` 2px 墨框/方角 = `.bz-bel-form` 既有形制；`favorites` 14px + 单层硬阴影 = `.bz-fav-form` 既有形制）。已在 ADR-0125 后果段写成**显式豁免**，并记「域皮形制归一」为另批工作，不在 ADR-0125 范围。
+5. **测试固化缺陷**：`tests/password-vault/ui.test.ts` 原注释「cta 主动作 → 金色主钮」把「危险确认不高亮」的反面写成了预期；经裁决区分——「设置主密码」是风险告知门（保留金色主钮），「仍要重设」是破坏性重设（补 `danger`），两处均改为显式用例 + 注释说明口径。
+6. **潜在洞（当前无调用点，未改代码）**：三动作以上分支里 `danger + cta` 的动作仍会被品牌色高亮 —— core 危险复位规则只打 `#__shared_confirm_ok__`（该 id 仅标准双动作分支使用），而 `button.bz-flow-dialog-action.bz-flow-dialog-danger` 那条规则显式 `:not(.bz-flow-dialog-cta)`。将来新增三动作危险确认时须一并补规则。
+
+### 8.3 补修新增/扩展测试
+
+- 新增 `tests/core/flow-dialog-danger-neutral.test.ts`（5 例）：危险规则五项中性值齐全 / 选择器提级 (2,2,0) / hover 不回品牌色 / clipbook 亮暗两套 `--danger` 覆写。
+- 运行时 popup `classList` 断言补齐：`tests/bookshelf/notes-ui.test.ts`（md + EPUB 两处）、`tests/clipbook/enhance.test.ts`（新增「删除条目」用例 + 删除剪藏）、`tests/diary/delete-confirm.test.ts`（新增危险修饰用例）、`tests/encrypt/ui-cov.test.ts`（永久删除）、`tests/secondbrain/chat-ux.test.ts`（清空对话）、`tests/password-vault/ui.test.ts`（新增「仍要重设」用例，含锁屏异步装配的 `vi.waitFor` 口径）。

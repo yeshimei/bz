@@ -273,6 +273,10 @@ describe('第二大脑对话：历史持久化与清空（ticket 141）', () => 
     expect(
       document.getElementById('__shared_confirm_popup__')!.classList.contains('bz-sb-flow-dialog')
     ).toBe(true);
+    // issue 291 评审补：清空对话是破坏性主动作 → 挂危险修饰（主钮中性底 + 红字，手册 §9/§10）
+    expect(
+      document.getElementById('__shared_confirm_popup__')!.classList.contains('bz-flow-dialog--danger')
+    ).toBe(true);
     (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
     await until(() => document.getElementById('__shared_confirm_popup__') === null);
     expect((await persisted()).length).toBe(2);

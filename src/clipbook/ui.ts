@@ -966,7 +966,8 @@ async function deleteNewsItem(a: ClipArticle): Promise<void> {
     message: `确定从收件流删除「${a.title}」吗？删除后可在通知中撤销。`,
     actions: [
       { label: '取消', value: 'cancel' },
-      { label: '删除', value: 'ok', cta: true },
+      // danger（issue 291 评审补）：删除类主动作标 danger → 主钮中性底 + 红字（手册 §9/§10）
+      { label: '删除', value: 'ok', cta: true, danger: true },
     ],
   });
   if (ok !== 'ok') return;
@@ -990,7 +991,8 @@ async function deleteClipNote(a: ClipArticle): Promise<void> {
     message: `确定删除剪藏「${a.title}」吗？文件将移入系统回收站。`,
     actions: [
       { label: '取消', value: 'cancel' },
-      { label: '删除', value: 'ok', cta: true },
+      // danger（issue 291 评审补）：删除剪藏确认同口径
+      { label: '删除', value: 'ok', cta: true, danger: true },
     ],
   });
   if (ok !== 'ok') return;

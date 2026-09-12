@@ -263,6 +263,8 @@ describe('读书笔记弹窗（md 书）', () => {
     expect(confirmPopup.classList.contains('bz-bs-flow-dialog')).toBe(true);
     expect(confirmPopup.classList.contains('bz-bs-skin-noir')).toBe(true);
     expect(confirmPopup.classList.contains('bz-bs-mode-light')).toBe(true);
+    // issue 291 评审补：删除划线是危险主动作 → 挂危险修饰（主钮中性底 + 红字，手册 §9/§10）
+    expect(confirmPopup.classList.contains('bz-flow-dialog--danger')).toBe(true);
     expect(okBtn.className).toBe(''); // 冻结契约：标准双动作按钮不加类
     okBtn.click();
     await new Promise((r) => setTimeout(r, 40));
@@ -360,6 +362,8 @@ describe('读书笔记弹窗（EPUB）', () => {
     const confirmPopup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
     expect(confirmPopup.classList.contains('bz-bs-flow-dialog')).toBe(true);
     expect(confirmPopup.classList.contains('bz-bs-skin-kraft')).toBe(true);
+    // issue 291 评审补：EPUB 路径同样标 danger（删除钮不得高亮）
+    expect(confirmPopup.classList.contains('bz-flow-dialog--danger')).toBe(true);
     (document.querySelector('#__shared_confirm_ok__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 40));
     const data = JSON.parse(vault.files.get('CONFIG/STORAGE/weave-data.json')!);
