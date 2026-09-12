@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 /**
  * clipbook UI 层：RSS 订阅管理弹窗 schema（ADR-0121）——
- * 行形态（info + text 添加行 + list 订阅列表）、添加动作（试拉校验预取名：成功入库/坏址拦截/重复去重）、
+ * 行形态（text 添加行 + list 订阅列表；「守护需更新」提示行已随 2026-09-12 拍板移除）、
+ * 添加动作（试拉校验预取名：成功入库/坏址拦截/重复去重）、
  * 移除联动（removeRssFeed 落盘 + onChanged）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -36,11 +37,11 @@ beforeEach(() => {
 });
 
 describe('rssManagerSettingsSchema（ADR-0121）', () => {
-  it('行形态：守护版本提示 info + 添加 text 行（行内添加按钮）+ 订阅 list 行', () => {
+  it('行形态：添加 text 行（行内添加按钮）+ 订阅 list 行，无 info 提示行', () => {
     const schema = rssManagerSettingsSchema({ feeds: [], onChanged: () => {} });
     expect(schema.groups).toHaveLength(1);
     const rows = schema.groups[0].rows;
-    expect(rowByName(rows, '守护需更新').type).toBe('info');
+    expect(rowByName(rows, '守护需更新')).toBeUndefined();
     const add = rowByName(rows, '添加 RSS 源');
     expect(add.type).toBe('text');
     expect(add.actions[0].text).toBe('添加');

@@ -1,5 +1,5 @@
-/* 源指纹 6c385264d777c9d7 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
+/* 源指纹 63c6c1d39602cda1 · 仓内输入 59 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
   var __create = Object.create;
@@ -5347,6 +5347,64 @@ var BZW_password_vault = (() => {
     return i;
   }
 
+  // src/core/ui/setlist.ts
+  function uiSetlist(opts) {
+    var _a;
+    const variant = (_a = opts.variant) != null ? _a : "chips";
+    const box = document.createElement("div");
+    box.className = `bz-setlist bz-setlist--${variant}${opts.className ? ` ${opts.className}` : ""}`;
+    if (opts.items.length === 0) {
+      if (opts.emptyText) {
+        const empty = document.createElement("div");
+        empty.className = "bz-setlist-empty";
+        empty.textContent = opts.emptyText;
+        box.appendChild(empty);
+      }
+      return box;
+    }
+    for (const it of opts.items) {
+      const item = document.createElement("div");
+      item.className = "bz-setlist-item";
+      item.dataset.key = it.key;
+      if (it.sub) item.title = it.sub;
+      if (it.imageUrl) {
+        const img = document.createElement("img");
+        img.className = "bz-setlist-avatar";
+        img.src = it.imageUrl;
+        img.alt = "";
+        img.onerror = () => img.remove();
+        item.appendChild(img);
+      }
+      const text = document.createElement("div");
+      text.className = "bz-setlist-text";
+      const name = document.createElement("div");
+      name.className = "bz-setlist-name";
+      name.textContent = it.label;
+      text.appendChild(name);
+      if (it.sub) {
+        const sub = document.createElement("div");
+        sub.className = "bz-setlist-sub";
+        sub.textContent = it.sub;
+        text.appendChild(sub);
+      }
+      item.appendChild(text);
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "bz-setlist-remove bz-touch-target--xl";
+      remove.textContent = opts.removeLabel || "移除";
+      if (opts.onRemove) {
+        const key = it.key;
+        remove.addEventListener("click", () => {
+          var _a2;
+          return (_a2 = opts.onRemove) == null ? void 0 : _a2.call(opts, key);
+        });
+      }
+      item.appendChild(remove);
+      box.appendChild(item);
+    }
+    return box;
+  }
+
   // src/core/ui/empty.ts
   function uiEmpty(opts) {
     const el = document.createElement("div");
@@ -6144,69 +6202,32 @@ var BZW_password_vault = (() => {
           const setting = new Setting(wrap).setName(row.name);
           if (row.desc) setting.setDesc(row.desc);
           if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
-          const box = document.createElement("div");
-          box.className = "bz-setlist";
-          wrap.appendChild(box);
           const readItems = () => typeof row.items === "function" ? row.items() : row.items;
           const renderItems = () => {
-            const items = readItems();
-            box.innerHTML = "";
-            if (items.length === 0) {
-              if (row.emptyText) {
-                const empty = document.createElement("div");
-                empty.className = "bz-setlist-empty";
-                empty.textContent = row.emptyText;
-                box.appendChild(empty);
-              }
-              return;
-            }
-            for (const it of items) {
-              const item = document.createElement("div");
-              item.className = "bz-setlist-item";
-              item.dataset.key = it.key;
-              if (it.imageUrl) {
-                const img = document.createElement("img");
-                img.className = "bz-setlist-avatar";
-                img.src = it.imageUrl;
-                img.alt = "";
-                img.onerror = () => img.remove();
-                item.appendChild(img);
-              }
-              const text = document.createElement("div");
-              text.className = "bz-setlist-text";
-              const name = document.createElement("div");
-              name.className = "bz-setlist-name";
-              name.textContent = it.label;
-              text.appendChild(name);
-              if (it.sub) {
-                const sub = document.createElement("div");
-                sub.className = "bz-setlist-sub";
-                sub.textContent = it.sub;
-                text.appendChild(sub);
-              }
-              item.appendChild(text);
-              const remove = document.createElement("button");
-              remove.className = "bz-setlist-remove bz-touch-target--xl";
-              remove.textContent = row.removeLabel || "移除";
-              remove.onclick = () => {
+            var _a3;
+            (_a3 = wrap.querySelector(".bz-setlist")) == null ? void 0 : _a3.remove();
+            wrap.appendChild(uiSetlist({
+              items: readItems(),
+              variant: row.variant,
+              removeLabel: row.removeLabel,
+              emptyText: row.emptyText,
+              onRemove: (key) => {
                 void (async () => {
-                  var _a3;
-                  const remaining = readItems().map((x) => x.key).filter((k) => k !== it.key);
+                  var _a4;
+                  const remaining = readItems().map((x) => x.key).filter((k) => k !== key);
                   try {
-                    await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, remaining, ctx));
+                    await ((_a4 = row.onChange) == null ? void 0 : _a4.call(row, remaining, ctx));
                   } catch (e) {
                     notifySaveError(e, row.name || "列表项");
                   } finally {
-                    renderItems();
                     reevaluate();
                   }
                 })();
-              };
-              item.appendChild(remove);
-              box.appendChild(item);
-            }
+              }
+            }));
           };
           renderItems();
+          customRefreshes.push(renderItems);
           return;
         }
         case "text":

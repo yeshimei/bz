@@ -13,6 +13,7 @@
 .bz-sp-mobile,
 .bz-sp-picker-mask,
 #bz-up-manager-popup,
+#bz-rss-manager-popup,
 #bz-model-picker-popup {
   --sp-bg: #f6f2e9;
   --sp-panel: #fffcf6;
@@ -40,6 +41,7 @@
 .theme-dark .bz-sp-mobile,
 .theme-dark .bz-sp-picker-mask,
 .theme-dark #bz-up-manager-popup,
+.theme-dark #bz-rss-manager-popup,
 .theme-dark #bz-model-picker-popup {
   --sp-bg: #1b1b1f;
   --sp-panel: #242429;
@@ -551,6 +553,11 @@
 }
 .bz-sp-set-row--cards { flex-direction: column; align-items: stretch; gap: var(--bz-space-sm); }
 .bz-sp-set-row--cards > .bz-sp-set-name { font-weight: 600; }
+/* 列表行（通用 .bz-setlist 的行宿主）：名称/描述一行在上，列表占满行宽在下——与 core ⚙️
+   弹窗 ListRow 同构；行体不挂 hover 底（条目自带底），控件区放开整宽防条目横铺出界 */
+.bz-sp-set-row--list { flex-direction: column; align-items: stretch; gap: var(--bz-space-sm); }
+.bz-sp-set-row--list:hover { background: transparent; }
+.bz-sp-set-row--list .bz-sp-set-ctrl { margin-left: 0; width: 100%; min-width: 0; flex-wrap: wrap; }
 /* 设置子项层级降级（enh-sweep-a）：isChild 行弱化、hover 恢复 */
 .bz-sp-desk .bz-sp-set-row.child,
 .bz-sp-mobile .bz-sp-set-row.child,
@@ -740,11 +747,14 @@
 .bz-sp-mobile .bz-input.mono,
 .bz-sp-mobile .bz-input.mono { font-family: ui-monospace, Consolas, monospace; }
 /* 控件长度：面板内 input/select 不定宽（跟随 .bz-select 随内容生长 / input 自身默认），
-   max-width: 100% 防长文案撑破行；搜索胶囊 input（上方裸化块 width:100%）与数字 90px 档不受影响 */
+   max-width: 100% 防长文案撑破行；搜索胶囊 input（上方裸化块 width:100%）与数字 90px 档不受影响；
+   两个管理弹窗（UP 名单/RSS 订阅）行同规则入组 */
 .bz-sp-desk .bz-sp-set-ctrl .bz-input,
 .bz-sp-mobile .bz-sp-set-ctrl .bz-input,
 .bz-sp-desk .bz-sp-set-ctrl .bz-select,
-.bz-sp-mobile .bz-sp-set-ctrl .bz-select { max-width: 100%; }
+.bz-sp-mobile .bz-sp-set-ctrl .bz-select,
+#bz-up-manager-popup .bz-sp-set-ctrl .bz-input,
+#bz-rss-manager-popup .bz-sp-set-ctrl .bz-input { max-width: 100%; }
 
 /* 滑杆行 + 读数徽标 */
 .bz-sp-slider-row { display: flex; align-items: center; gap: 10px; }
@@ -1022,11 +1032,14 @@
 .bz-sp-mob-ic .bz-ic { width: 16px; height: 16px; }
 
 /* ═══════════ 域内自绘控件（原型演示与 renderer 共用；容器前缀防 reset 压制） ═══════════ */
-/* .bz-sp-picker-mask = dir-picker 弹层自挂 scope（挂 body，不在面板三根之内），取消/选用按钮同皮 */
+/* .bz-sp-picker-mask = dir-picker 弹层自挂 scope（挂 body，不在面板三根之内），取消/选用按钮同皮；
+   两个管理弹窗（UP 名单/RSS 订阅，挂 body 自建 overlay）同理入组 */
 .bz-sp-desk .bz-sp-btn,
 .bz-sp-mobile .bz-sp-btn,
 .bz-sp-mobile .bz-sp-btn,
-.bz-sp-picker-mask .bz-sp-btn {
+.bz-sp-picker-mask .bz-sp-btn,
+#bz-up-manager-popup .bz-sp-btn,
+#bz-rss-manager-popup .bz-sp-btn {
   font-family: inherit;
   font-size: 12.5px;
   background: var(--sp-panel);
@@ -1042,11 +1055,15 @@
 .bz-sp-desk .bz-sp-btn:hover,
 .bz-sp-mobile .bz-sp-btn:hover,
 .bz-sp-mobile .bz-sp-btn:hover,
-.bz-sp-picker-mask .bz-sp-btn:hover { background: var(--sp-accent-soft); }
+.bz-sp-picker-mask .bz-sp-btn:hover,
+#bz-up-manager-popup .bz-sp-btn:hover,
+#bz-rss-manager-popup .bz-sp-btn:hover { background: var(--sp-accent-soft); }
 .bz-sp-desk .bz-sp-btn--primary,
 .bz-sp-mobile .bz-sp-btn--primary,
 .bz-sp-mobile .bz-sp-btn--primary,
-.bz-sp-picker-mask .bz-sp-btn--primary {
+.bz-sp-picker-mask .bz-sp-btn--primary,
+#bz-up-manager-popup .bz-sp-btn--primary,
+#bz-rss-manager-popup .bz-sp-btn--primary {
   background: var(--sp-accent);
   border-color: transparent;
   color: var(--sp-on-accent);
@@ -1055,13 +1072,14 @@
 .bz-sp-desk .bz-sp-btn--primary:hover,
 .bz-sp-mobile .bz-sp-btn--primary:hover,
 .bz-sp-mobile .bz-sp-btn--primary:hover,
-.bz-sp-picker-mask .bz-sp-btn--primary:hover { background: var(--sp-accent); opacity: 0.92; }
+.bz-sp-picker-mask .bz-sp-btn--primary:hover,
+#bz-up-manager-popup .bz-sp-btn--primary:hover,
+#bz-rss-manager-popup .bz-sp-btn--primary:hover { background: var(--sp-accent); opacity: 0.92; }
 
-/* custom 插槽内原生 Setting 的按钮（AI「获取模型名」等）与 UP 主名单管理弹窗按钮并入同一观感 */
+/* custom 插槽内原生 Setting 的按钮（AI「获取模型名」等）并入同一观感 */
 .bz-sp-desk .bz-sp-custom-slot .setting-item button,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button,
-#bz-up-manager-popup .setting-item button ,
 #bz-model-picker-popup .setting-item button {
   font-family: inherit;
   font-size: 12.5px;
@@ -1080,15 +1098,13 @@
 .bz-sp-desk .bz-sp-custom-slot .setting-item button:hover,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button:hover,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button:hover,
-#bz-up-manager-popup .setting-item button:hover ,
 #bz-model-picker-popup .setting-item button:hover { background: var(--sp-accent-soft); }
 
-/* custom 插槽内原生 Setting 行（剪藏数据源组、复习排除名单等）与 UP 弹窗（挂 body 自建
-   overlay）对齐面板行范式：信息左/控件右一行；插件端 Obsidian 行同样被本规则收敛同皮 */
+/* custom 插槽内原生 Setting 行（剪藏数据源组、复习排除名单等）对齐面板行范式：
+   信息左/控件右一行；插件端 Obsidian 行同样被本规则收敛同皮 */
 .bz-sp-desk .bz-sp-custom-slot .setting-item,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item,
-#bz-up-manager-popup .setting-item ,
 #bz-model-picker-popup .setting-item {
   display: flex;
   align-items: center;
@@ -1100,28 +1116,23 @@
 .bz-sp-desk .bz-sp-custom-slot .setting-item-info,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-info,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-info,
-#bz-up-manager-popup .setting-item-info ,
 #bz-model-picker-popup .setting-item-info { flex: 1; min-width: 0; }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-name,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-name,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-name,
-#bz-up-manager-popup .setting-item-name ,
 #bz-model-picker-popup .setting-item-name { font-size: var(--bz-font-label); font-weight: 600; color: var(--sp-ink); }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-description,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-description,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-description,
-#bz-up-manager-popup .setting-item-description ,
 #bz-model-picker-popup .setting-item-description { font-size: 11.5px; color: var(--sp-ink-2); margin-top: 3px; line-height: 1.45; }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-control,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-control,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-control,
-#bz-up-manager-popup .setting-item-control ,
 #bz-model-picker-popup .setting-item-control { display: flex; align-items: center; gap: var(--bz-space-sm); flex: none; flex-wrap: wrap; justify-content: flex-end; }
 /* 控件内文本输入（插件端 Obsidian addText 无 bz-input 类）：纸底描边同 bz-input */
 .bz-sp-desk .bz-sp-custom-slot .setting-item-control input[type="text"],
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-control input[type="text"],
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-control input[type="text"],
-#bz-up-manager-popup .setting-item-control input[type="text"] ,
 #bz-model-picker-popup .setting-item-control input[type="text"] {
   font-family: inherit;
   font-size: 12.5px;
@@ -1141,7 +1152,6 @@
 .bz-sp-desk .bz-sp-custom-slot input[type="checkbox"],
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"],
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"],
-#bz-up-manager-popup input[type="checkbox"] ,
 #bz-model-picker-popup input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
@@ -1163,14 +1173,13 @@
 .bz-sp-desk .bz-sp-custom-slot input[type="checkbox"]:checked,
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"]:checked,
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"]:checked,
-#bz-up-manager-popup input[type="checkbox"]:checked ,
 #bz-model-picker-popup input[type="checkbox"]:checked {
   background-color: var(--sp-accent);
   background-position: calc(100% - 20px) center;
 }
 
-/* UP 主名单管理弹窗（剪藏域自建 overlay）壳色同皮 */
-#bz-up-manager-popup, #bz-model-picker-popup {
+/* UP 主名单 / RSS 订阅管理弹窗（剪藏域自建 overlay）壳色同皮 */
+#bz-up-manager-popup, #bz-rss-manager-popup, #bz-model-picker-popup {
   background: var(--sp-panel);
   border: 1px solid var(--sp-line);
   border-radius: 14px;
@@ -1196,7 +1205,19 @@
   }
 }
 #bz-up-manager-popup .bz-settings-title ,
+#bz-rss-manager-popup .bz-settings-title ,
 #bz-model-picker-popup .bz-settings-title { font-size: var(--bz-font-body); font-weight: 700; color: var(--sp-ink); }
+
+/* 两弹窗壳内原生挂色的收口：头描边/内容文字原本挂 Obsidian 原生变量
+   （--background-modifier-border / --text-normal，浏览器或非 Obsidian 宿主即失效）——
+   统一改挂 --sp-*，与面板头卡/正文同皮 */
+#bz-up-manager-popup .bz-settings-header,
+#bz-rss-manager-popup .bz-settings-header { border-bottom-color: var(--sp-line); }
+#bz-up-manager-popup .bz-settings-content,
+#bz-rss-manager-popup .bz-settings-content {
+  background: var(--sp-panel);
+  color: var(--sp-ink);
+}
 
 /* 模型选择器弹窗内部皮收口（ticket 265）：壳体已接 --sp-*，但头部描边 / 内容区 /
    列表行 hover·选中 / 名称·来源小字仍在消费 Obsidian 原生变量（原生 hover 底 /

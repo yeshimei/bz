@@ -2195,21 +2195,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-weight: var(--bz-weight-medium);
 }
 
-/* ═══════════ 通用列表行 .bz-setlist（core ListRow / 设置面板 ListRow 同构） ═══════════ */
+/* ═══════════ 通用列表行 .bz-setlist（core ListRow / 设置面板 ListRow 同构） ═══════════
+ * 布局变体（2026-09-12 用户拍板：缺省 = chips 流式胶囊）——ListRow.variant 声明，
+ * core 渲染器与面板渲染器同口径；本层只留条目骨架，各变体声明自己的形与面。 */
 .bz-setlist {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 4px 0;
 }
+.bz-setlist:empty { padding: 0; } /* 既无条目也无空态文案（emptyText 未给）时不占位 */
 .bz-setlist-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 36px;
-  padding: 4px 8px;
-  border-radius: var(--bz-radius-sm);
-  background: var(--bz-surface-2);
 }
 .bz-setlist-avatar {
   width: 28px;
@@ -2236,12 +2235,101 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-setlist-remove {
   flex-shrink: 0;
+  font-family: inherit;
+  font-size: var(--bz-font-meta);
+  line-height: 1.4;
+  color: var(--bz-text-2);
+  background: transparent;
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-sm);
+  padding: 2px 10px;
+  height: auto;
+  box-shadow: none;
+  cursor: pointer;
+}
+.bz-setlist-remove:hover {
+  color: var(--bz-text-1);
+  border-color: var(--bz-border-strong);
+  background: transparent;
 }
 .bz-setlist-empty {
   padding: 10px 8px;
   font-size: var(--bz-font-meta);
   color: var(--bz-text-3);
 }
+
+/* ── 布局变体（ListRow.variant 修饰类；两渲染器同口径；缺省 = chips 流式胶囊） ── */
+/* rows：全宽行列表——每条独占一行铺满（信息最全，纵向占位最多） */
+.bz-setlist--rows .bz-setlist-item {
+  min-height: 36px;
+  padding: 4px 8px;
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-surface-2);
+  border: 1px solid var(--bz-border);
+}
+
+/* grid：卡片网格——头像/名称/副文案竖排小卡，名单较长时扫视效率最好 */
+.bz-setlist--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: 8px;
+}
+.bz-setlist--grid .bz-setlist-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 0;
+  padding: 10px;
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-surface-2);
+  border: 1px solid var(--bz-border);
+}
+.bz-setlist--grid .bz-setlist-avatar { width: 34px; height: 34px; }
+.bz-setlist--grid .bz-setlist-text { flex: none; width: 100%; }
+.bz-setlist--grid .bz-setlist-name { font-size: var(--bz-font-label); }
+.bz-setlist--grid .bz-setlist-remove { align-self: flex-end; margin-top: auto; }
+
+/* chips：流式胶囊（缺省）——头像 + 名称行内流式排布，副文案让位悬停提示 */
+.bz-setlist--chips { flex-flow: row wrap; gap: 6px; }
+.bz-setlist--chips .bz-setlist-item {
+  min-height: 0;
+  padding: 3px 5px 3px 4px;
+  border-radius: var(--bz-radius-full);
+  gap: 6px;
+  background: var(--bz-surface-2);
+  border: 1px solid var(--bz-border);
+}
+.bz-setlist--chips .bz-setlist-avatar { width: 22px; height: 22px; }
+.bz-setlist--chips .bz-setlist-text { flex: none; }
+.bz-setlist--chips .bz-setlist-sub { display: none; }
+.bz-setlist--chips .bz-setlist-remove {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--bz-text-3);
+  font-size: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-setlist--chips .bz-setlist-remove::before { content: '×'; font-size: 15px; line-height: 1; }
+.bz-setlist--chips .bz-setlist-remove:hover { color: var(--bz-text-1); }
+
+/* dense：紧密分隔行——无条目底、发丝分隔线，适合长名单密集浏览 */
+.bz-setlist--dense { gap: 0; padding: 0; }
+.bz-setlist--dense .bz-setlist-item {
+  min-height: 32px;
+  padding: 3px 4px;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--bz-border);
+}
+.bz-setlist--dense .bz-setlist-item:first-child { border-top: 0; }
+.bz-setlist--dense .bz-setlist-item:hover { background: var(--bz-surface-2); }
 
 /* ═══════════ 解锁屏（三域共用骨架：保险库 / 密码本 / 加密日记） ═══════════
  * 结构同源、槽位驱动：文案与统计由调用域注入，风格由各域按 --ls-accent 等变量覆盖。

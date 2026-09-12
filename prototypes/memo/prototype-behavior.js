@@ -1,5 +1,5 @@
-/* 源指纹 e38be6fa9afb48d5 · 仓内输入 209 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 8086716e30d175e5 · 仓内输入 210 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -5593,6 +5593,68 @@ var BZW_memo = (() => {
     }
   });
 
+  // src/core/ui/setlist.ts
+  function uiSetlist(opts) {
+    var _a2;
+    const variant = (_a2 = opts.variant) != null ? _a2 : "chips";
+    const box = document.createElement("div");
+    box.className = `bz-setlist bz-setlist--${variant}${opts.className ? ` ${opts.className}` : ""}`;
+    if (opts.items.length === 0) {
+      if (opts.emptyText) {
+        const empty = document.createElement("div");
+        empty.className = "bz-setlist-empty";
+        empty.textContent = opts.emptyText;
+        box.appendChild(empty);
+      }
+      return box;
+    }
+    for (const it of opts.items) {
+      const item = document.createElement("div");
+      item.className = "bz-setlist-item";
+      item.dataset.key = it.key;
+      if (it.sub) item.title = it.sub;
+      if (it.imageUrl) {
+        const img = document.createElement("img");
+        img.className = "bz-setlist-avatar";
+        img.src = it.imageUrl;
+        img.alt = "";
+        img.onerror = () => img.remove();
+        item.appendChild(img);
+      }
+      const text = document.createElement("div");
+      text.className = "bz-setlist-text";
+      const name = document.createElement("div");
+      name.className = "bz-setlist-name";
+      name.textContent = it.label;
+      text.appendChild(name);
+      if (it.sub) {
+        const sub = document.createElement("div");
+        sub.className = "bz-setlist-sub";
+        sub.textContent = it.sub;
+        text.appendChild(sub);
+      }
+      item.appendChild(text);
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "bz-setlist-remove bz-touch-target--xl";
+      remove.textContent = opts.removeLabel || "移除";
+      if (opts.onRemove) {
+        const key = it.key;
+        remove.addEventListener("click", () => {
+          var _a3;
+          return (_a3 = opts.onRemove) == null ? void 0 : _a3.call(opts, key);
+        });
+      }
+      item.appendChild(remove);
+      box.appendChild(item);
+    }
+    return box;
+  }
+  var init_setlist = __esm({
+    "src/core/ui/setlist.ts"() {
+    }
+  });
+
   // src/core/ui/field.ts
   function uiInput(opts) {
     const inp = document.createElement("input");
@@ -7032,6 +7094,7 @@ var BZW_memo = (() => {
     uiSearch: () => uiSearch,
     uiSegmented: () => uiSegmented,
     uiSelect: () => uiSelect,
+    uiSetlist: () => uiSetlist,
     uiStat: () => uiStat,
     uiSuggest: () => uiSuggest,
     uiSwitch: () => uiSwitch,
@@ -7043,6 +7106,7 @@ var BZW_memo = (() => {
       init_icons();
       init_button();
       init_chip();
+      init_setlist();
       init_field();
       init_slider();
       init_empty();
@@ -9761,69 +9825,32 @@ var BZW_memo = (() => {
           const setting = new Setting(wrap).setName(row.name);
           if (row.desc) setting.setDesc(row.desc);
           if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
-          const box = document.createElement("div");
-          box.className = "bz-setlist";
-          wrap.appendChild(box);
           const readItems = () => typeof row.items === "function" ? row.items() : row.items;
           const renderItems = () => {
-            const items = readItems();
-            box.innerHTML = "";
-            if (items.length === 0) {
-              if (row.emptyText) {
-                const empty = document.createElement("div");
-                empty.className = "bz-setlist-empty";
-                empty.textContent = row.emptyText;
-                box.appendChild(empty);
-              }
-              return;
-            }
-            for (const it of items) {
-              const item = document.createElement("div");
-              item.className = "bz-setlist-item";
-              item.dataset.key = it.key;
-              if (it.imageUrl) {
-                const img = document.createElement("img");
-                img.className = "bz-setlist-avatar";
-                img.src = it.imageUrl;
-                img.alt = "";
-                img.onerror = () => img.remove();
-                item.appendChild(img);
-              }
-              const text = document.createElement("div");
-              text.className = "bz-setlist-text";
-              const name = document.createElement("div");
-              name.className = "bz-setlist-name";
-              name.textContent = it.label;
-              text.appendChild(name);
-              if (it.sub) {
-                const sub = document.createElement("div");
-                sub.className = "bz-setlist-sub";
-                sub.textContent = it.sub;
-                text.appendChild(sub);
-              }
-              item.appendChild(text);
-              const remove = document.createElement("button");
-              remove.className = "bz-setlist-remove bz-touch-target--xl";
-              remove.textContent = row.removeLabel || "移除";
-              remove.onclick = () => {
+            var _a4;
+            (_a4 = wrap.querySelector(".bz-setlist")) == null ? void 0 : _a4.remove();
+            wrap.appendChild(uiSetlist({
+              items: readItems(),
+              variant: row.variant,
+              removeLabel: row.removeLabel,
+              emptyText: row.emptyText,
+              onRemove: (key) => {
                 void (async () => {
-                  var _a4;
-                  const remaining = readItems().map((x) => x.key).filter((k) => k !== it.key);
+                  var _a5;
+                  const remaining = readItems().map((x) => x.key).filter((k) => k !== key);
                   try {
-                    await ((_a4 = row.onChange) == null ? void 0 : _a4.call(row, remaining, ctx));
+                    await ((_a5 = row.onChange) == null ? void 0 : _a5.call(row, remaining, ctx));
                   } catch (e) {
                     notifySaveError(e, row.name || "列表项");
                   } finally {
-                    renderItems();
                     reevaluate();
                   }
                 })();
-              };
-              item.appendChild(remove);
-              box.appendChild(item);
-            }
+              }
+            }));
           };
           renderItems();
+          customRefreshes.push(renderItems);
           return;
         }
         case "text":
@@ -10122,15 +10149,6 @@ var BZW_memo = (() => {
   function rowBtnHtml(label, cta) {
     return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
   }
-  function listHtml(items, removeLabel = "移除") {
-    if (items.length === 0) return "";
-    return items.map(
-      (it) => `<div class="bz-setlist-item" data-key="${esc(it.key)}">` + (it.imageUrl ? `<img class="bz-setlist-avatar" src="${esc(it.imageUrl)}" alt="">` : "") + `<div class="bz-setlist-text"><div class="bz-setlist-name">${esc(it.label)}</div>` + (it.sub ? `<div class="bz-setlist-sub">${esc(it.sub)}</div>` : "") + `</div><button type="button" class="bz-setlist-remove bz-touch-target--xl">${esc(removeLabel)}</button></div>`
-    ).join("");
-  }
-  function listEmptyHtml(text) {
-    return `<div class="bz-setlist-empty">${esc(text)}</div>`;
-  }
   function badgeHtml(label) {
     return `<span class="bz-badge">${esc(label)}</span>`;
   }
@@ -10245,6 +10263,11 @@ var BZW_memo = (() => {
   });
 
   // src/settings-panel/renderer.ts
+  var renderer_exports = {};
+  __export(renderer_exports, {
+    makePathRowCtrl: () => makePathRowCtrl,
+    renderPanelSchema: () => renderPanelSchema
+  });
   function snapshot() {
     return getSettings();
   }
@@ -10402,7 +10425,11 @@ var BZW_memo = (() => {
     const holder = document.createElement("div");
     holder.innerHTML = rowHtml({
       key: bindKey || rowName || "",
-      cls: row.isChild ? "child" : void 0,
+      cls: [
+        row.isChild ? "child" : "",
+        // 列表行 = 面板行宿主 modifier（名称/描述一行在上，列表占满行宽在下；缺它条目会横铺进右侧控件区）
+        row.type === "list" ? "bz-sp-set-row--list" : ""
+      ].filter(Boolean).join(" ") || void 0,
       isCards: isCardsRow,
       isCustom,
       name: rowName,
@@ -10655,22 +10682,24 @@ var BZW_memo = (() => {
       case "list": {
         const renderItems = () => {
           const items = typeof row.items === "function" ? row.items() : row.items;
-          ctrlEl.innerHTML = items.length > 0 ? listHtml(items, row.removeLabel) : row.emptyText ? listEmptyHtml(row.emptyText) : "";
-          ctrlEl.querySelectorAll(".bz-setlist-item").forEach((itemEl) => {
-            var _a3, _b3;
-            const key = (_a3 = itemEl.dataset.key) != null ? _a3 : "";
-            (_b3 = itemEl.querySelector(".bz-setlist-remove")) == null ? void 0 : _b3.addEventListener("click", () => {
+          ctrlEl.innerHTML = "";
+          ctrlEl.appendChild(uiSetlist({
+            items,
+            variant: row.variant,
+            removeLabel: row.removeLabel,
+            emptyText: row.emptyText,
+            onRemove: (key) => {
               void (async () => {
-                var _a4;
+                var _a3;
                 const cur = (typeof row.items === "function" ? row.items() : row.items).map((x) => x.key);
-                await ((_a4 = row.onChange) == null ? void 0 : _a4.call(row, cur.filter((k) => k !== key), ctx));
-                renderItems();
+                await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, cur.filter((k) => k !== key), ctx));
                 refresh2();
               })();
-            });
-          });
+            }
+          }));
         };
         renderItems();
+        regRefresh == null ? void 0 : regRefresh(renderItems);
         break;
       }
       case "choiceCards": {
@@ -17414,8 +17443,6 @@ ${bodyText.substring(0, 6e3)}`;
         } }
       ];
     }
-    const bilibiliOn = () => box.sources.bilibili === true;
-    const rssOn = () => box.sources.rss === true;
     const sourceBinding = (key) => ({
       get: () => box.sources[key] === true,
       set: (v) => {
@@ -17428,36 +17455,30 @@ ${bodyText.substring(0, 6e3)}`;
     return [
       { type: "toggle", name: "知乎日报", desc: "抓取知乎日报每日文章", binding: sourceBinding("zhihu") },
       { type: "toggle", name: "果壳科学人", desc: "抓取果壳科学人最新文章", binding: sourceBinding("guokr") },
-      { type: "toggle", name: "B站 UP 主", desc: "抓取名单内 UP 主的视频投稿", binding: sourceBinding("bilibili") },
       {
         type: "button",
         name: "UP 主名单",
         desc: upListDesc(),
         buttonText: "管理",
         cta: true,
-        visibleWhen: bilibiliOn,
         onClick: (ctx) => openUpManagerModal({
           ups: [...box.bilibiliUps],
           upInfo: { ...box.bilibiliUpInfo },
-          cookie: box.bilibiliCookie,
           onChanged: async () => {
             const fresh = await readDataSourceState();
             box.bilibiliUps = [...fresh.bilibiliUps];
             box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
-            box.bilibiliCookie = fresh.bilibiliCookie;
             setRowDesc(ctx, upListDesc());
             ctx.refreshVisibility();
           }
         })
       },
-      { type: "toggle", name: "RSS 订阅", desc: "抓取订阅列表内 RSS 源的文章", binding: sourceBinding("rss") },
       {
         type: "button",
         name: "RSS 订阅源",
         desc: rssListDesc(),
         buttonText: "管理",
         cta: true,
-        visibleWhen: rssOn,
         onClick: (ctx) => openRssManagerModal({
           feeds: box.rssFeeds.map((f) => ({ ...f })),
           onChanged: async () => {
@@ -17475,7 +17496,6 @@ ${bodyText.substring(0, 6e3)}`;
         min: 1,
         max: 50,
         step: 1,
-        visibleWhen: bilibiliOn,
         binding: {
           get: () => box.bilibiliMaxItems,
           set: (v) => {
@@ -17501,7 +17521,6 @@ ${bodyText.substring(0, 6e3)}`;
   function upManagerSettingsSchema(opts) {
     const box = {
       inputValue: "",
-      cookieInput: String(opts.cookie || ""),
       ups: [...opts.ups],
       upInfo: { ...opts.upInfo }
     };
@@ -17514,7 +17533,6 @@ ${bodyText.substring(0, 6e3)}`;
             {
               type: "text",
               name: "添加 UP 主",
-              desc: "粘贴主页链接或视频链接，自动解析后入库",
               placeholder: "粘贴链接或 UID",
               binding: {
                 get: () => box.inputValue,
@@ -17531,27 +17549,8 @@ ${bodyText.substring(0, 6e3)}`;
               }]
             },
             {
-              type: "text",
-              name: "B 站 Cookie 可选",
-              desc: cookieDesc(box.cookieInput),
-              placeholder: "粘贴 buvid3 或 SESSDATA 等 Cookie",
-              binding: {
-                get: () => box.cookieInput,
-                set: (v) => {
-                  box.cookieInput = v;
-                },
-                save: () => {
-                }
-              },
-              actions: [
-                { text: "保存", onClick: (value) => saveCookie(value || "", box, opts) },
-                { text: "清除", onClick: () => saveCookie("", box, opts) }
-              ]
-            },
-            {
               type: "list",
               name: "名单列表",
-              desc: "已跟踪的 UP 主，移除后不再抓取其投稿",
               items: () => box.ups.map((uid) => {
                 var _a2;
                 return {
@@ -17583,9 +17582,6 @@ ${bodyText.substring(0, 6e3)}`;
   function upDisplayName(uid, info) {
     return info && info.name ? info.name : `UP ${uid}`;
   }
-  function cookieDesc(current2) {
-    return `遇到风控时需粘贴登录后的 Cookie。当前${current2 ? "已配置" : "未配置"}`;
-  }
   async function addUpUid(raw, box, opts) {
     const input = String(raw || "").trim();
     if (!input) return;
@@ -17604,13 +17600,7 @@ ${bodyText.substring(0, 6e3)}`;
     opts.onChanged();
     notice(`已添加 UP 主 ${uid}`, "success");
   }
-  async function saveCookie(value, box, opts) {
-    await writeBilibiliCookie(value);
-    box.cookieInput = value;
-    opts.onChanged();
-    notice(value ? "B 站 Cookie 已保存" : "已清除 B 站 Cookie，回自动引导", "success");
-  }
-  function openUpManagerModal(opts) {
+  async function openUpManagerModal(opts) {
     let handle = null;
     function close() {
       mask.remove();
@@ -17632,7 +17622,8 @@ ${bodyText.substring(0, 6e3)}`;
     header.appendChild(title);
     const content = document.createElement("div");
     content.className = "bz-settings-content";
-    renderSettingsInto(content, upManagerSettingsSchema(opts));
+    const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
+    renderPanelSchema2(content, upManagerSettingsSchema(opts));
     popup.appendChild(header);
     popup.appendChild(content);
     document.body.appendChild(mask);
@@ -17669,11 +17660,9 @@ ${bodyText.substring(0, 6e3)}`;
           icon: "rss",
           name: "RSS 订阅源",
           rows: [
-            { type: "info", name: "守护需更新", desc: "RSS 抓取由 obsidian-news 守护执行，请更新到最新版并重启守护后生效" },
             {
               type: "text",
               name: "添加 RSS 源",
-              desc: "粘贴 RSS 订阅地址，保存前先试拉校验并读取源名称",
               placeholder: "https://example.com/rss.xml",
               binding: {
                 get: () => box.inputValue,
@@ -17692,7 +17681,6 @@ ${bodyText.substring(0, 6e3)}`;
             {
               type: "list",
               name: "订阅列表",
-              desc: "已订阅的 RSS 源，移除后不再抓取",
               items: () => box.feeds.map((f) => ({
                 key: f.url,
                 label: f.title || f.url,
@@ -17742,7 +17730,7 @@ ${bodyText.substring(0, 6e3)}`;
     opts.onChanged();
     notice(`已订阅 ${title || url}`, "success");
   }
-  function openRssManagerModal(opts) {
+  async function openRssManagerModal(opts) {
     let handle = null;
     function close() {
       mask.remove();
@@ -17763,7 +17751,8 @@ ${bodyText.substring(0, 6e3)}`;
     header.appendChild(title);
     const content = document.createElement("div");
     content.className = "bz-settings-content";
-    renderSettingsInto(content, rssManagerSettingsSchema(opts));
+    const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
+    renderPanelSchema2(content, rssManagerSettingsSchema(opts));
     popup.appendChild(header);
     popup.appendChild(content);
     document.body.appendChild(mask);
@@ -17783,7 +17772,6 @@ ${bodyText.substring(0, 6e3)}`;
       init_settings_common();
       init_dom();
       init_esc_manager();
-      init_settings_schema();
       init_news_source_settings();
       init_news_data();
     }
@@ -22679,10 +22667,7 @@ ${sample}`,
               { value: "medium", label: "中" },
               { value: "large", label: "大" }
             ], onChange: () => applyReaderFontSize() },
-            { type: "path", mode: "single", name: "剪藏目录", desc: "存放网页剪藏文章的文件夹", binding: { key: "articleDirectory" } },
-            { type: "number", name: "面板宽度记忆", desc: "桌面拖拽面板边缘缩放后自动记忆，0 为未拖过", binding: { key: "clipbookPanelWidth" }, min: 0, step: 10 },
-            { type: "number", name: "面板高度记忆", desc: "桌面拖拽面板边缘缩放后自动记忆，0 为未拖过", binding: { key: "clipbookPanelHeight" }, min: 0, step: 10 },
-            { type: "number", name: "目录栏宽度记忆", desc: "拖动目录与阅读分隔线后自动记忆，0 为未拖过", binding: { key: "clipbookMidWidth" }, min: 0, step: 10 }
+            { type: "path", mode: "single", name: "剪藏目录", desc: "存放网页剪藏文章的文件夹", binding: { key: "articleDirectory" } }
           ]
         },
         {

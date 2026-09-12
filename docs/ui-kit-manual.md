@@ -97,6 +97,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 数据表 | `.bz-table` | th/td | 轻量数据表 |
 | 卡片 | `.bz-card` | 内 `.bz-card-header/-title/-sub/-body/-footer` | 通用内容卡 |
 | 列表 | `.bz-list` | 内 `.bz-list-item/-main/-title/-desc/-extra` | 通用列表行 |
+| 可移除列表 | `.bz-setlist` | `--rows/--grid/--chips/--dense`（**缺省 `--chips`**）；内 `.bz-setlist-item/-avatar/-text/-name/-sub/-remove/-empty` | 条目 = 头像可选 + 主文案 + 副文案 + 移除钮；四布局变体（2026-09-12 拍板缺省流式胶囊），chips 不展示副文案→`title` 悬停提示；条目纸底 + 发丝描边（宿主近白底上保形）。**设置类名单一律走 `uiSetlist`，禁手搓条目** |
 | 媒体块 | `.bz-media` | `--4-3/--square`；内 `.bz-media-badge/-dur/-play` | 比例容器+角标/时长/播放钮 |
 | 头像 | `.bz-avatar` | `--sm/--lg/--square` | 32px 圆头像/字徽 |
 | 悬浮按钮 | `.bz-fab` | — | 48px 品牌圆钮 |
@@ -157,6 +158,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | `uiBtnRow` | `(buttons: HTMLElement[], {center?, grow?}?)` | `HTMLDivElement` |
 | `uiDialogActions` | `{okText, okTone?, cancelText?, onOk, onCancel?}` | `{row, cancelBtn, okBtn}` |
 | `uiChip` | `{label, icon?, count?, selected?, removable?, locked?, onClick?, onRemove?}` | `HTMLButtonElement` |
+| `uiSetlist` | `{items: [{key, label, sub?, imageUrl?}], variant?: 'rows'\|'grid'\|'chips'\|'dense', removeLabel?, onRemove?, emptyText?, className?}` | `HTMLDivElement`；可移除列表（缺省 chips 流式胶囊）。**core 设置渲染器与设置面板渲染器唯一 markup/行为源**（2026-09-12 收敛）；域内名单禁手搓条目，移除回调收 key |
 | `uiInput` | `{type?, placeholder?, value?, error?, disabled?, onInput?}` | `HTMLInputElement` |
 | `uiRange` | `{min?, max?, step?, value?, disabled?, className?, onInput?, onChange?}` | `HTMLInputElement` |
 | `uiField` | `{label?, desc?, error?, control}` | `HTMLLabelElement` |

@@ -24,8 +24,8 @@ const WHITELIST = new Set<string>([
 const TARGETS = [
   // clipbook 融合域 schema 取代旧 clippingSettingsSchema（ADR-0085）
   { source: 'clipbook', schema: clipbookSettingsSchema(emptyDataSourceState(true)) },
-  // up-manager 三行全为 custom 插槽（复合控件行 + 动态 desc），无行 name/desc 可 lint
-  { source: 'up-manager', schema: upManagerSettingsSchema({ ups: [], upInfo: {}, cookie: '', onChanged: () => {} }) },
+  // up-manager 全声明行（添加 text + 名单 list），行 name/desc 照常过 lint
+  { source: 'up-manager', schema: upManagerSettingsSchema({ ups: [], upInfo: {}, onChanged: () => {} }) },
   // rss-manager（ADR-0121）：独立管理弹窗 schema，与 up-manager 同批过文案 lint
   { source: 'rss-manager', schema: rssManagerSettingsSchema({ feeds: [], onChanged: () => {} }) },
   { source: 'favorites', schema: favoritesSettingsSchema() },

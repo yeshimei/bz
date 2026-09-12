@@ -1,4 +1,4 @@
-/* 源指纹 f877316b4ab5c26b · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e06352f6bf494578 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/settings-panel/render.ts → window.BZR_settings_panel（评审壳预览包，ADR-0104） */
 var BZR_settings_panel = (() => {
@@ -29,8 +29,6 @@ var BZR_settings_panel = (() => {
     esc: () => esc,
     groupCardHtml: () => groupCardHtml,
     iconSpan: () => iconSpan,
-    listEmptyHtml: () => listEmptyHtml,
-    listHtml: () => listHtml,
     loadingHtml: () => loadingHtml,
     miniHtml: () => miniHtml,
     mobItemHtml: () => mobItemHtml,
@@ -91,15 +89,6 @@ var BZR_settings_panel = (() => {
   }
   function rowBtnHtml(label, cta) {
     return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
-  }
-  function listHtml(items, removeLabel = "移除") {
-    if (items.length === 0) return "";
-    return items.map(
-      (it) => `<div class="bz-setlist-item" data-key="${esc(it.key)}">` + (it.imageUrl ? `<img class="bz-setlist-avatar" src="${esc(it.imageUrl)}" alt="">` : "") + `<div class="bz-setlist-text"><div class="bz-setlist-name">${esc(it.label)}</div>` + (it.sub ? `<div class="bz-setlist-sub">${esc(it.sub)}</div>` : "") + `</div><button type="button" class="bz-setlist-remove bz-touch-target--xl">${esc(removeLabel)}</button></div>`
-    ).join("");
-  }
-  function listEmptyHtml(text) {
-    return `<div class="bz-setlist-empty">${esc(text)}</div>`;
   }
   function badgeHtml(label) {
     return `<span class="bz-badge">${esc(label)}</span>`;

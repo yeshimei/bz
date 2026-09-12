@@ -35,10 +35,6 @@
 .setting-item .setting-item-control input[type="text"] {
     min-width: 120px;
 }
-/* ticket 170：UP 主弹窗描述行允许换行（弹窗加宽后文字不再拥挤） */
-#bz-up-manager-popup .setting-item .setting-item-info .setting-item-description {
-    white-space: normal;
-}
 
 
 

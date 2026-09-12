@@ -81,22 +81,8 @@ export function rowBtnHtml(label: string, cta?: boolean): string {
   return `<button type="button" class="bz-sp-btn${cta ? ' bz-sp-btn--primary' : ''}">${esc(label)}</button>`;
 }
 
-/** 通用列表行控件区（core ListRow 同构；条目 = 头像可选 + 主文案 + 副文案 + 移除按钮，data-key 定位契约） */
-export function listHtml(items: Array<{ key: string; label: string; sub?: string; imageUrl?: string }>, removeLabel = '移除'): string {
-  if (items.length === 0) return '';
-  return items.map((it) =>
-    `<div class="bz-setlist-item" data-key="${esc(it.key)}">` +
-    (it.imageUrl ? `<img class="bz-setlist-avatar" src="${esc(it.imageUrl)}" alt="">` : '') +
-    `<div class="bz-setlist-text"><div class="bz-setlist-name">${esc(it.label)}</div>` +
-    (it.sub ? `<div class="bz-setlist-sub">${esc(it.sub)}</div>` : '') +
-    `</div><button type="button" class="bz-setlist-remove bz-touch-target--xl">${esc(removeLabel)}</button></div>`
-  ).join('');
-}
-
-/** 通用列表行空态（域侧不出条目时由渲染器回退 emptyText） */
-export function listEmptyHtml(text: string): string {
-  return `<div class="bz-setlist-empty">${esc(text)}</div>`;
-}
+/** 通用列表行 markup/行为已收归组件库（core/ui setlist.ts，uiSetlist）——本文件不再持有实现，
+ *  两个渲染器同调该工厂（结构漂移即布局事故，2026-09-12）。 */
 
 /** 信息徽标（info 行） */
 export function badgeHtml(label: string): string {

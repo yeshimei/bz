@@ -11,18 +11,17 @@
  * - 外部数据绑定：news.json 键走 RowBinding 三函数逃生口（get/set 读写字盒、save 落盘），
  *   不占 data.json；显隐联动用闭包捕获字盒（snapshot 只覆盖 data.json，外部行自捕获）；
  * - UP 名单列表：组内只留「管理」按钮行（计数在 desc），增删/配置在独立 UP 主弹窗
- *   （renderSettingsInto 自建 overlay，形态不变）。
+ *   （renderPanelSchema 渲染进自建 overlay，形态不变）。
  */
 import { requestUrl } from 'obsidian';
 import { notice } from '../core/notice';
 import { numStrBinding } from '../core/settings-common';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
-import { renderSettingsInto } from '../core/settings-schema';
 import type { SettingsRow, SettingsRowContext, SettingsSchema } from '../core/settings-schema';
 import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp,
-  writeBilibiliMaxItems, writeBilibiliCookie, addRssFeed, removeRssFeed, type DataSourceState,
+  writeBilibiliMaxItems, addRssFeed, removeRssFeed, type DataSourceState,
 } from './news-source-settings';
 import { resolveUidFromInput, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, type BilibiliUpInfo, type RssFeed } from './news-data';
 
@@ -31,7 +30,7 @@ type DataSourceBox = DataSourceState;
 
 /**
  * 数据源组声明行（入口先 await readDataSourceState() 把状态传进来）：
- * B 站开关关闭 → UP 主名单与抓取条数两行隐藏（visibleWhen 闭包读状态盒）。
+ * B 站/RSS 开关已退役（用户拍板 2026-09-12）——UP 主名单、RSS 订阅源、抓取条数三行常显。
  */
 export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
   const box: DataSourceBox = {
@@ -53,10 +52,8 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
     ];
   }
 
-  const bilibiliOn = () => box.sources.bilibili === true;
-  const rssOn = () => box.sources.rss === true;
-  /** 四源开关绑定：读写字盒 sources 段，落盘整段合并写（数据层只声明 sources 段） */
-  const sourceBinding = (key: 'zhihu' | 'guokr' | 'bilibili' | 'rss') => ({
+  /** 双源开关绑定：读写字盒 sources 段，落盘整段合并写（数据层只声明 sources 段） */
+  const sourceBinding = (key: 'zhihu' | 'guokr') => ({
     get: () => box.sources[key] === true,
     set: (v: boolean) => { box.sources[key] = v; },
     save: () => writeSources({ ...box.sources }),
@@ -75,26 +72,20 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
   return [
     { type: 'toggle', name: '知乎日报', desc: '抓取知乎日报每日文章', binding: sourceBinding('zhihu') },
     { type: 'toggle', name: '果壳科学人', desc: '抓取果壳科学人最新文章', binding: sourceBinding('guokr') },
-    { type: 'toggle', name: 'B站 UP 主', desc: '抓取名单内 UP 主的视频投稿', binding: sourceBinding('bilibili') },
     { type: 'button', name: 'UP 主名单', desc: upListDesc(), buttonText: '管理', cta: true,
-      visibleWhen: bilibiliOn,
       onClick: (ctx) => openUpManagerModal({
         ups: [...box.bilibiliUps],
         upInfo: { ...box.bilibiliUpInfo },
-        cookie: box.bilibiliCookie,
         onChanged: async () => {
           // 增删/配置后重读盘回填状态盒 + 行描述（以磁盘为基底，与写队列串行）
           const fresh = await readDataSourceState();
           box.bilibiliUps = [...fresh.bilibiliUps];
           box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
-          box.bilibiliCookie = fresh.bilibiliCookie;
           setRowDesc(ctx, upListDesc());
           ctx.refreshVisibility();
         },
       }) },
-    { type: 'toggle', name: 'RSS 订阅', desc: '抓取订阅列表内 RSS 源的文章', binding: sourceBinding('rss') },
     { type: 'button', name: 'RSS 订阅源', desc: rssListDesc(), buttonText: '管理', cta: true,
-      visibleWhen: rssOn,
       onClick: (ctx) => openRssManagerModal({
         feeds: box.rssFeeds.map((f) => ({ ...f })),
         onChanged: async () => {
@@ -105,7 +96,6 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
         },
       }) },
     { type: 'number', name: 'B站抓取条数', desc: '每位 UP 主抓取最近动态的条数上限，默认 10', min: 1, max: 50, step: 1,
-      visibleWhen: bilibiliOn,
       binding: {
         get: () => box.bilibiliMaxItems,
         set: (v) => { box.bilibiliMaxItems = v; },
@@ -125,35 +115,35 @@ function setRowDesc(ctx: SettingsRowContext, text: string): void {
 
 // ===== UP 主名单管理弹窗（ticket 126 + 127）=====
 // 独立 overlay——层 10100（设置弹窗 10050 之上、共享确认 10250 之下）；
-// 内容经 renderSettingsInto 渲染进自建 overlay（bz-up-manager-mask/-popup id 与
-// z 序 10100/10101 不变；不换 openSettingsModal——其单例 toggle 语义会顶掉底层剪藏设置弹窗）。
+// 内容 = 设置面板通用渲染器 renderPanelSchema（行/组卡与面板同组件单源，2026-09-12 用户拍板
+// 换离 core 渲染器——此前靠 id 级 CSS 模仿面板皮，模仿不完整即「风格不统一」）；
+// bz-up-manager-mask/-popup id 与 z 序 10100/10101 不变；不换 openSettingsModal——
+// 其单例 toggle 语义会顶掉底层剪藏设置弹窗。
 
 /** UP 弹窗 schema 构建入参（lint 注册时以最小参数调用即可） */
 export interface UpManagerSchemaOptions {
   ups: string[];
   upInfo: Record<string, BilibiliUpInfo>;
-  cookie: string;
   onChanged: () => void;
 }
 
-/** UP 弹窗级可变状态盒：添加/Cookie/名单操作共享（schema 每次打开重建，状态随弹窗生命周期） */
+/** UP 弹窗级可变状态盒：添加/名单操作共享（schema 每次打开重建，状态随弹窗生命周期） */
 interface UpManagerBox {
   inputValue: string;
-  cookieInput: string;
   ups: string[];
   upInfo: Record<string, BilibiliUpInfo>;
 }
 
 /**
- * UP 主名单管理弹窗 schema（全面声明行；原 custom 三行——添加复合行/Cookie 复合行/自绘名单已退役）：
- * 添加行与 Cookie 行 = text + 行内按钮（actions，渲染器统一实现）；名单 = 通用 list 行
+ * UP 主名单管理弹窗 schema（全面声明行；原 custom 三行——添加复合行/Cookie 复合行/自绘名单已退役；
+ * Cookie 可选行与「添加 UP 主」灰字描述随 2026-09-12 用户拍板移除）：
+ * 添加行 = text + 行内按钮（actions，渲染器统一实现）；名单 = 通用 list 行
  * （头像/主副文案/移除，items 函数形式每次移除后以字盒为基底重建）。
  * 原「每日简报」组随每日简报退役删除（ADR-0121）；RSS 订阅管理在独立弹窗（rssManagerSettingsSchema）。
  */
 export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsSchema {
   const box: UpManagerBox = {
     inputValue: '',
-    cookieInput: String(opts.cookie || ''),
     ups: [...opts.ups],
     upInfo: { ...opts.upInfo },
   };
@@ -166,7 +156,6 @@ export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsS
           {
             type: 'text',
             name: '添加 UP 主',
-            desc: '粘贴主页链接或视频链接，自动解析后入库',
             placeholder: '粘贴链接或 UID',
             binding: {
               get: () => box.inputValue,
@@ -180,24 +169,8 @@ export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsS
             }],
           },
           {
-            type: 'text',
-            name: 'B 站 Cookie 可选',
-            desc: cookieDesc(box.cookieInput),
-            placeholder: '粘贴 buvid3 或 SESSDATA 等 Cookie',
-            binding: {
-              get: () => box.cookieInput,
-              set: (v) => { box.cookieInput = v; },
-              save: () => {},
-            },
-            actions: [
-              { text: '保存', onClick: (value) => saveCookie(value || '', box, opts) },
-              { text: '清除', onClick: () => saveCookie('', box, opts) },
-            ],
-          },
-          {
             type: 'list',
             name: '名单列表',
-            desc: '已跟踪的 UP 主，移除后不再抓取其投稿',
             items: () => box.ups.map((uid) => ({
               key: uid,
               label: upDisplayName(uid, box.upInfo[uid]),
@@ -229,11 +202,6 @@ function upDisplayName(uid: string, info?: BilibiliUpInfo): string {
   return info && info.name ? info.name : `UP ${uid}`;
 }
 
-/** Cookie 行描述（当前配置态联动；ticket 127 风控引导精简为自然句，32 字内过文案 lint） */
-function cookieDesc(current: string): string {
-  return `遇到风控时需粘贴登录后的 Cookie。当前${current ? '已配置' : '未配置'}`;
-}
-
 /** 添加动作：解析 UID 入库（去重），回填字盒并联动外部刷新 */
 async function addUpUid(raw: string | undefined, box: UpManagerBox, opts: UpManagerSchemaOptions): Promise<void> {
   const input = String(raw || '').trim();
@@ -254,16 +222,8 @@ async function addUpUid(raw: string | undefined, box: UpManagerBox, opts: UpMana
   notice(`已添加 UP 主 ${uid}`, 'success');
 }
 
-/** Cookie 保存/清除动作：落盘 + 字盒同步 + 描述态由渲染器回填（onChanged 刷外部计数） */
-async function saveCookie(value: string, box: UpManagerBox, opts: UpManagerSchemaOptions): Promise<void> {
-  await writeBilibiliCookie(value);
-  box.cookieInput = value;
-  opts.onChanged();
-  notice(value ? 'B 站 Cookie 已保存' : '已清除 B 站 Cookie，回自动引导', 'success');
-}
-
-/** 打开 UP 主名单管理弹窗：自建 overlay + 声明式内容（ticket 131；z 序与叠加行为零变化） */
-function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, BilibiliUpInfo>; cookie: string; onChanged: () => void }): void {
+/** 打开 UP 主名单管理弹窗：自建 overlay + 面板通用组件渲染（z 序与叠加行为零变化） */
+async function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, BilibiliUpInfo>; onChanged: () => void }): Promise<void> {
   let handle: { unregister(): void } | null = null;
   function close(): void {
     mask.remove();
@@ -287,8 +247,10 @@ function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, Bilibi
   const content = document.createElement('div');
   content.className = 'bz-settings-content';
 
-  // 声明式内容：渲染进自建 overlay（不换 openSettingsModal——单例会顶掉底层剪藏设置弹窗）
-  renderSettingsInto(content, upManagerSettingsSchema(opts));
+  // 内容 = 面板通用渲染器（renderPanelSchema，行/组卡与设置面板同组件单源）；
+  // 懒加载解析跨域环（settings-panel schemaLoaders ←→ 本域管理弹窗，函数级延迟解析）
+  const { renderPanelSchema } = await import('../settings-panel/renderer');
+  renderPanelSchema(content, upManagerSettingsSchema(opts));
 
   popup.appendChild(header);
   popup.appendChild(content);
@@ -337,8 +299,9 @@ async function fetchRssFeedTitle(url: string): Promise<string | null> {
 }
 
 /**
- * RSS 订阅管理弹窗 schema：版本提示 info + 添加行（text + 行内按钮，试拉校验）+
+ * RSS 订阅管理弹窗 schema：添加行（text + 行内按钮，试拉校验）+
  * 通用 list 行（feed 名为主文案、URL 为副文案、移除）。
+ * 原「守护需更新」版本提示行随 2026-09-12 用户拍板移除。
  */
 export function rssManagerSettingsSchema(opts: RssManagerSchemaOptions): SettingsSchema {
   const box: RssManagerBox = {
@@ -351,11 +314,9 @@ export function rssManagerSettingsSchema(opts: RssManagerSchemaOptions): Setting
         icon: 'rss',
         name: 'RSS 订阅源',
         rows: [
-          { type: 'info', name: '守护需更新', desc: 'RSS 抓取由 obsidian-news 守护执行，请更新到最新版并重启守护后生效' },
           {
             type: 'text',
             name: '添加 RSS 源',
-            desc: '粘贴 RSS 订阅地址，保存前先试拉校验并读取源名称',
             placeholder: 'https://example.com/rss.xml',
             binding: {
               get: () => box.inputValue,
@@ -371,7 +332,6 @@ export function rssManagerSettingsSchema(opts: RssManagerSchemaOptions): Setting
           {
             type: 'list',
             name: '订阅列表',
-            desc: '已订阅的 RSS 源，移除后不再抓取',
             items: () => box.feeds.map((f) => ({
               key: f.url,
               label: f.title || f.url,
@@ -424,8 +384,8 @@ async function addRssFeedUrl(raw: string | undefined, box: RssManagerBox, opts: 
   notice(`已订阅 ${title || url}`, 'success');
 }
 
-/** 打开 RSS 订阅管理弹窗：自建 overlay + 声明式内容（范式同 UP 主管理弹窗） */
-function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => void }): void {
+/** 打开 RSS 订阅管理弹窗：自建 overlay + 面板通用组件渲染（范式同 UP 主管理弹窗） */
+async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => void }): Promise<void> {
   let handle: { unregister(): void } | null = null;
   function close(): void {
     mask.remove();
@@ -449,7 +409,8 @@ function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => void }):
   const content = document.createElement('div');
   content.className = 'bz-settings-content';
 
-  renderSettingsInto(content, rssManagerSettingsSchema(opts));
+  const { renderPanelSchema } = await import('../settings-panel/renderer');
+  renderPanelSchema(content, rssManagerSettingsSchema(opts));
 
   popup.appendChild(header);
   popup.appendChild(content);
