@@ -1,4 +1,4 @@
-/* 源指纹 916f02c397287556 · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ca6a3bb439fc8d3f · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -8805,7 +8805,7 @@ ${sample}`,
           // 术语来源随确认时刻的值落库（ADR-0116）
         });
         this.openNote(path);
-        emitDomainEvent("knowledge:tasks", { kind: "term-generated", term, title: term });
+        emitDomainEvent("knowledge:tasks", { kind: "term-generated", term, title: term, notePath: path });
         this.termPreview = null;
         this.hideTermEntry();
         notice("已生成术语文献笔记：" + term, "success");
