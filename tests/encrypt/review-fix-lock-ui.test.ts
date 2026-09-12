@@ -10,6 +10,7 @@ import { SafeManager } from '../../src/encrypt/data';
 import { UIManager } from '../../src/encrypt/ui';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, clearNotices, mockMarkdownRenderer } from '../mock-obsidian-entry';
+import { readLockStats } from '../../src/core/lock-stats';
 
 async function waitFor(cond: () => boolean, timeout = 4000) {
   const start = Date.now();
@@ -72,6 +73,17 @@ describe('锁家族修复批（encrypt UI）', () => {
     (dialog.querySelector('[data-ls="ack"] input') as HTMLInputElement).checked = true;
     confirmBtn.click();
     await waitFor(() => dm.unlocked);
+    void p;
+  });
+
+  it('冷启动解锁屏统计回落 lock-stats.json 快照（ADR-0124 决策 4 修订，issue 299）', async () => {
+    await vault.create('CONFIG/STORAGE/lock-stats.json', JSON.stringify({
+      vault: [{ num: '7', label: '笔记条目' }, { num: '2', label: '随库附件' }, { num: '1.5 KB', label: '附件密文' }],
+    }));
+    const p = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
+    const nums = [...findDialog()!.querySelectorAll('.bz-lockscreen-num')].map((n) => n.textContent);
+    expect(nums).toEqual(['7', '2', '1.5 KB']);
     void p;
   });
 
@@ -161,5 +173,18 @@ describe('锁家族修复批（encrypt UI）', () => {
       vi.useRealTimers();
       mockMarkdownRenderer.render.mockImplementation(prev!);
     }
+  });
+
+  it('解锁态快照落盘 lock-stats.json（captureLockStats 三档合并写，issue 299）', async () => {
+    await dm.unlock('long-enough-pw');
+    ui.show(); // rootVisible + unlocked → renderAll → captureLockStats
+    const start = Date.now();
+    while (!(await readLockStats('vault'))) {
+      if (Date.now() - start > 4000) throw new Error('lock-stats 落盘超时');
+      await new Promise((r) => setTimeout(r, 25));
+    }
+    expect((await readLockStats('vault'))!.map((s) => s.label)).toEqual(['笔记条目', '随库附件', '附件密文']);
+    expect(await readLockStats('diary')).toBeTruthy();
+    expect(await readLockStats('password-vault')).toBeTruthy();
   });
 });
