@@ -1,4 +1,4 @@
-/* 源指纹 60d054a624cedee4 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f2aded306ae8f7b1 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/clipbook/render.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/clipbook/render.ts → window.BZR_clipbook（评审壳预览包，ADR-0104） */
 var BZR_clipbook = (() => {
