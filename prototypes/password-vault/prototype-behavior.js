@@ -1,5 +1,5 @@
-/* 源指纹 8e1f0efa37628758 · 仓内输入 59 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
+/* 源指纹 afe12b4f65a328f9 · 仓内输入 60 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
   var __create = Object.create;
@@ -6581,6 +6581,14 @@ var BZW_password_vault = (() => {
   }
 
   // src/core/storage.ts
+  function storageDir() {
+    const s = tryGetSettings();
+    return (s && s.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
+  }
+  function storageFile(name, base) {
+    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
+    return `${dir}/${name}`;
+  }
   var fileTaskQueues = /* @__PURE__ */ new Map();
   function enqueueFileTask(filePath, task) {
     var _a;
@@ -6595,6 +6603,164 @@ var BZW_password_vault = (() => {
       if (fileTaskQueues.get(filePath) === tail) fileTaskQueues.delete(filePath);
     });
     return run;
+  }
+  function assertPlainObject(filePath, current) {
+    if (current && typeof current === "object" && !Array.isArray(current)) return current;
+    const got = Array.isArray(current) ? "array" : current === null ? "null" : typeof current;
+    throw new Error("storage: 段级合并写要求对象形态 JSON（" + filePath + " 读到 " + got + "），请先归一文件形态");
+  }
+  function updateFileSections(filePath, writer, opts = {}) {
+    return enqueueFileTask(filePath, async () => {
+      var _a;
+      const store = jsonFileStore(filePath, { ...opts, defaultValue: (_a = opts.defaultValue) != null ? _a : {} });
+      const current = assertPlainObject(filePath, await store.read());
+      const set = await writer(current) || {};
+      const next = { ...current, ...set };
+      await store.write(next);
+      return next;
+    });
+  }
+  function isAlreadyExistsError(e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return /already exist/i.test(msg);
+  }
+  var CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
+  var CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
+  var corruptNotifyAt = /* @__PURE__ */ new Map();
+  function corruptStamp(d = /* @__PURE__ */ new Date()) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  }
+  function baseNameOf(p) {
+    return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
+  }
+  async function backupOriginal(app, filePath, raw) {
+    try {
+      const f = app.vault.getAbstractFileByPath(filePath);
+      if (!f) return null;
+      const content = raw !== void 0 ? raw : await app.vault.read(f);
+      if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
+        try {
+          await app.vault.createFolder(CORRUPT_BACKUP_DIR);
+        } catch (e) {
+        }
+      }
+      const base = baseNameOf(filePath);
+      const stamp = corruptStamp();
+      let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
+      for (let i = 2; app.vault.getAbstractFileByPath(backupPath); i++) {
+        backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
+      }
+      await app.vault.create(backupPath, content);
+      return backupPath;
+    } catch (e) {
+      console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
+      return null;
+    }
+  }
+  function notifyBackup(filePath, backupPath, cause) {
+    var _a;
+    const now = Date.now();
+    if (now - ((_a = corruptNotifyAt.get(filePath)) != null ? _a : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
+    corruptNotifyAt.set(filePath, now);
+    try {
+      const name = baseNameOf(filePath);
+      const msg = cause === "解析失败" ? `数据文件 ${name} 解析失败，原内容已留档到 ${backupPath}，数据不会丢，已重建默认文件继续使用` : `数据文件 ${name} 写入失败，原内容已留档到 ${backupPath}，数据不会丢，请稍后重试`;
+      notify(msg, { type: "warning" });
+    } catch (e) {
+    }
+  }
+  function serialize(v) {
+    return JSON.stringify(v, null, 2);
+  }
+  function jsonFileStore(filePath, opts = {}) {
+    const resolveApp = () => opts.app || getApp();
+    const resolveDefault = () => {
+      const d = opts.defaultValue;
+      return typeof d === "function" ? d() : d === void 0 ? [] : d;
+    };
+    async function ensureDir(app) {
+      const d = filePath.substring(0, filePath.lastIndexOf("/"));
+      if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
+    }
+    async function createIfMissing(app, content) {
+      await ensureDir(app);
+      try {
+        await app.vault.create(filePath, content);
+        return true;
+      } catch (e) {
+        if (isAlreadyExistsError(e) && app.vault.getAbstractFileByPath(filePath)) return false;
+        throw e;
+      }
+    }
+    async function handleCorrupt(app, err, raw) {
+      var _a;
+      if (((_a = opts.onCorrupt) == null ? void 0 : _a.call(opts, filePath, err)) === false) {
+        return null;
+      }
+      const backupPath = await backupOriginal(app, filePath, raw);
+      if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
+      const f = app.vault.getAbstractFileByPath(filePath);
+      if (f) {
+        await app.vault.modify(f, serialize(resolveDefault()));
+      } else {
+        await createIfMissing(app, serialize(resolveDefault()));
+      }
+      return resolveDefault();
+    }
+    async function modifyWithBackup(app, f, c) {
+      try {
+        await app.vault.modify(f, c);
+      } catch (e) {
+        const backupPath = await backupOriginal(app, filePath);
+        if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
+        throw e;
+      }
+    }
+    return {
+      async read() {
+        const app = resolveApp();
+        let f = app.vault.getAbstractFileByPath(filePath);
+        if (!f) {
+          const created = await createIfMissing(app, serialize(resolveDefault()));
+          if (created) return resolveDefault();
+          f = app.vault.getAbstractFileByPath(filePath);
+          if (!f) return resolveDefault();
+        }
+        const raw = await app.vault.read(f);
+        try {
+          return JSON.parse(raw);
+        } catch (e) {
+          return await handleCorrupt(app, e, raw);
+        }
+      },
+      async write(data) {
+        const app = resolveApp();
+        const c = serialize(data);
+        let f = app.vault.getAbstractFileByPath(filePath);
+        if (f) {
+          if (opts.writeIfChanged) {
+            try {
+              const cur2 = await app.vault.read(f);
+              if (cur2 === c) return;
+            } catch (e) {
+            }
+          }
+          await modifyWithBackup(app, f, c);
+          return;
+        }
+        const created = await createIfMissing(app, c);
+        if (created) return;
+        let cur = app.vault.getAbstractFileByPath(filePath);
+        if (!cur) {
+          const retried = await createIfMissing(app, c);
+          if (retried) return;
+          cur = app.vault.getAbstractFileByPath(filePath);
+          if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
+        }
+        await modifyWithBackup(app, cur, c);
+      }
+    };
   }
 
   // src/encrypt/data.ts
@@ -9076,6 +9242,29 @@ var BZW_password_vault = (() => {
     };
   }
 
+  // src/core/lock-stats.ts
+  var lockStatsPath = () => storageFile("lock-stats.json");
+  async function readLockStats(kind) {
+    try {
+      const all = await jsonFileStore(lockStatsPath(), { defaultValue: {} }).read();
+      const hit = all[kind];
+      return Array.isArray(hit) && hit.length ? hit : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function writeLockStats(kind, stats) {
+    return updateFileSections(
+      lockStatsPath(),
+      () => {
+        const set = {};
+        set[kind] = stats;
+        return set;
+      },
+      { defaultValue: {}, writeIfChanged: true }
+    ).then(() => void 0);
+  }
+
   // src/encrypt/ui.ts
   var LOCK_KIND_META = {
     vault: {
@@ -9379,7 +9568,7 @@ var BZW_password_vault = (() => {
       this.idleLockTimer = null;
       /** 上次渲染的资产：资产未变时保留列表头（连同搜索框），避免搜索输入被重建而掉焦点 */
       this._lastRenderedAsset = null;
-      /** 解锁屏统计快照（会话内缓存；冷启动为「—」） */
+      /** 解锁屏统计快照（会话内缓存；冷启动回落 lock-stats.json 上次快照，见 core/lock-stats） */
       this.lockStatsCache = {};
       this._selNoteId = null;
       this._pwEditingId = null;
@@ -9918,8 +10107,8 @@ var BZW_password_vault = (() => {
     async showPasswordDialog(kind = "vault") {
       const exists = await this.dataManager.exists();
       const meta = LOCK_KIND_META[kind];
+      const stats = this.lockStatsCache[kind] || await readLockStats(kind) || meta.stats.map((s) => ({ ...s, num: "—" }));
       return new Promise((resolve) => {
-        const stats = this.lockStatsCache[kind] || meta.stats.map((s) => ({ ...s, num: "—" }));
         const ls = uiLockScreen({
           kind,
           icon: meta.icon,
@@ -10095,7 +10284,7 @@ var BZW_password_vault = (() => {
     /**
      * 快照解锁屏统计项（三域各一份）。
      * 清单本身是密文，锁定态无法读计数 —— 故只在解锁期间快照，供下次上锁后的解锁屏显示；
-     * 冷启动（本次会话从未解锁）则回落「—」，不编造数字。
+     * 快照同时写明文档 lock-stats.json（core/lock-stats），冷启动回落上次快照而非「—」。
      */
     captureLockStats() {
       var _a;
@@ -10121,6 +10310,10 @@ var BZW_password_vault = (() => {
           { num: String(this.pwDataManager.pwData.length), label: "口令条目" },
           { num: String(plats.filter((p) => this.pwDataManager.hasFav(p.platform)).length), label: "收藏" }
         ];
+        for (const k of ["vault", "diary", "password-vault"]) {
+          void writeLockStats(k, this.lockStatsCache[k]).catch(() => {
+          });
+        }
       } catch (e) {
       }
     }
@@ -11804,12 +11997,14 @@ var BZW_password_vault = (() => {
       /** 显示锁屏（未解锁态）；锁屏绑定一次 */
       /** 锁屏句柄（desk/mob 双实例各一份；结构由 core/ui/lock-screen 提供，三域同源） */
       this.lockHandles = /* @__PURE__ */ new WeakMap();
-      /** 统计快照：清单是密文，锁定态读不到 —— 用解锁期间的快照，冷启动回落「—」 */
+      /** 统计快照：清单是密文，锁定态读不到 —— 用解锁期间的快照，冷启动回落 lock-stats.json 上次快照 */
       this.pwLockStatsCache = [
         { num: "—", label: "平台" },
         { num: "—", label: "口令条目" },
         { num: "—", label: "收藏" }
       ];
+      /** 冷启动已从 lock-stats.json 回落过（仅首显 hydrate 一次，此后由 captureLockStats 维护） */
+      this.pwLockStatsHydrated = false;
       this.dataManager = dataManager;
       this.config = config;
     }
@@ -12739,12 +12934,21 @@ var BZW_password_vault = (() => {
           { num: String(this.dataManager.pwData.length), label: "口令条目" },
           { num: String(plats.filter((x) => this.dataManager.hasFav(x.platform)).length), label: "收藏" }
         ];
+        void writeLockStats("password-vault", this.pwLockStatsCache).catch(() => {
+        });
       } catch (e) {
       }
     }
+    /** 冷启动从 lock-stats.json 回落上次快照（ADR-0124 决策 4 修订；读到才覆盖「—」初值） */
+    async hydrateLockStats() {
+      if (this.pwLockStatsHydrated) return;
+      this.pwLockStatsHydrated = true;
+      const hit = await readLockStats("password-vault");
+      if (hit) this.pwLockStatsCache = hit;
+    }
     /** 显示锁屏（未解锁态）：core 共享骨架 + 本域口径（平台/口令条目/收藏）与金色风格 */
     showLock() {
-      void this.isFirstTime().then((firstTime) => {
+      void this.hydrateLockStats().then(() => this.isFirstTime()).then((firstTime) => {
         this.root.querySelectorAll(".bz-password-vault-lock").forEach((lockEl) => {
           lockEl.classList.add("open");
           let ls = this.lockHandles.get(lockEl);
