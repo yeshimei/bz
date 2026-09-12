@@ -63,10 +63,10 @@ export function overviewHTML(stats: OverviewStats): string {
             <span class="tm">${escapeHtml(r.time)}</span></div>`;
         })
         .join('')
-    : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc('lock', 28) + '</span><div class="bz-empty-title">还没有加密动态</div><div class="bz-empty-desc">加密笔记或加密日记后，最近动态在这里显示</div></div>';
+    : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc('lock', 28) + '</span><div class="bz-empty-title">还没有动态</div><div class="bz-empty-desc">笔记或日记入库后，最近动态在这里显示</div></div>';
   return `
   <div class="bz-vault-hero">
-    <div class="ht">${vIc('lock', 14)} 保险库已解锁 · 加密笔记集中管理</div>
+    <div class="ht">${vIc('lock', 14)} 保险库已解锁 · 笔记集中管理</div>
     <div class="hn">${counts.note} 项资产${counts.note > 0 ? ' · 尽在掌握' : ''}</div>
     <div class="hd">同一把主密码 · AES-256-GCM</div>
     <div class="hbtns">
@@ -78,7 +78,7 @@ export function overviewHTML(stats: OverviewStats): string {
     <div class="card" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc('file-lock', 13)}</span>笔记条目</div>
       <div class="num">${counts.note}<small>篇</small></div>
-      <div class="cd">${counts.note ? '正文与附件全量密文' : '还没有加密笔记'}</div>
+      <div class="cd">${counts.note ? '正文与附件全量密文' : '还没有笔记'}</div>
     </div>
     <div class="card" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc('image', 13)}</span>随库附件</div>
@@ -142,7 +142,6 @@ export function noteDetailHTML(note: SafeNote, kind: 'note' | 'diary', plainPrev
     <div class="bz-vault-dhead">
       <span class="big" style="background:${color}">${vIc(iconName, 21)}</span>
       <div class="ttl"><h2>${escapeHtml(note.title)}</h2><div class="url">${pathLine}</div></div>
-      <div class="acts"><button class="ic" data-detail="menu" title="更多操作">${vIc('more-h', 15)}</button></div>
     </div>
     <div class="bz-vault-dcontent">
       ${kind === 'note'
