@@ -1,19 +1,14 @@
 /**
  * 日记本（diary）域解析层——原回忆墙升格正名（ADR-0115；ADR-0130 条目文件格式）
  *
- * - parseEntryFile（条目文件，纯函数：frontmatter `日期`+`类型`，日期时间损坏从文件名优雅降级）；
+ * - parseEntryFile（条目文件，纯函数：frontmatter `date`+`type`，日期时间损坏从题目降级）；
  * - parseMovieFile / parseLetterFile（影视/信，读 frontmatter + 文件创建时间）；
  * - parseBookFile（书库，读 completionDate/readingDate/title/bookReview/cover）。
  * 特殊文件解析所需的 getFileFrontmatter 以 app 参数注入（不 import ../diary/app，自包含）。
  * moment 来自 'obsidian'（测试 alias 已替换为 moment）。
  */
 import { moment } from 'obsidian';
-import {
-  DIARY_ENTRY_FILE_RE,
-  parseDiaryEntryFile,
-  isValidDiaryDate,
-  isValidDiaryTime,
-} from '../core/diary-format';
+import { parseDiaryEntryFile, resolveDiaryEntryMeta } from '../core/diary-format';
 import { getTagEmoji } from './config';
 import type { DiaryEntry } from './types';
 
@@ -24,21 +19,16 @@ export function isEncryptedEntry(entry: DiaryEntry): boolean {
 
 /**
  * 解析一篇条目文件为一个 DiaryEntry（ADR-0130：一目一文件）。
- * - 日期时间：frontmatter `日期` 优先；损坏/缺失时从文件名优雅降级（`YYYY-MM-DD HH-MM(-N)`）；
- * - 标签：frontmatter `类型`（标签名列表）；空缺回退 ['日记']；emoji 由标签派生（emoji 表只服务展示）；
+ * - 日期时间：frontmatter `date` 优先；损坏/缺失时从题目优雅降级（`YYMMDDHHmm(-N)`）；
+ * - 标签：frontmatter `type`（标签名列表）；空缺回退 ['日记']；emoji 由标签派生（emoji 表只服务展示）；
  * - 正文：frontmatter 之后的原文（无一级标题概念）；
  * - filename/filePath = 完整 vault 路径，lineNumber 恒 0（行号定位随条目文件化退场）；
  * - 文件名非条目形状或日期非法且 frontmatter 不可信 → null（守卫拒写/加载跳过）。
  */
 export function parseEntryFile(content: string, filePath: string): DiaryEntry | null {
   const parsed = parseDiaryEntryFile(content);
-  const base = (filePath || '').replace(/\\/g, '/').split('/').pop() || '';
-  const fm = parsed.meta;
-  const m = DIARY_ENTRY_FILE_RE.exec(base);
-  const fmName = m && isValidDiaryDate(m[1]) && isValidDiaryTime(`${m[2]}:${m[3]}`)
-    ? { date: m[1], time: `${m[2]}:${m[3]}` }
-    : null;
-  const meta = fm ?? fmName;
+  // 降级唯一入口：属性不可信时日期与时间从题目（YYMMDDHHmm）完整还原
+  const meta = resolveDiaryEntryMeta(filePath, parsed);
   if (!meta) return null;
   const [h = 0, min = 0] = meta.time.split(':').map(Number);
   const tags = parsed.tags.length > 0 ? parsed.tags : ['日记'];

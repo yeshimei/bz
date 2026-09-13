@@ -164,7 +164,7 @@ function notifyTemplateFallback(app: App, reason: string, content: string): void
       {
         label: '写入日记',
         onClick: () => {
-          writeRecapEntry(H.appRef ?? app, content)
+          writeRecapEntry(content)
             .then(() => {
               notifyWritten(H.appRef ?? app);
               void syncAiButton(H.appRef ?? app); // 写入成功 → 按钮变「重新生成」
@@ -204,7 +204,7 @@ async function onGenerateClick(app: App): Promise<void> {
       return;
     }
     if (result.mode === 'ai') {
-      await writeRecapEntry(H.appRef ?? app, result.content);
+      await writeRecapEntry(result.content);
       notifyWritten(H.appRef ?? app);
     } else {
       // 降级：模板不自动写盘，弹通知给「写入日记/复制」

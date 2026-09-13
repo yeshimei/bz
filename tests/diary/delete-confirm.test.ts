@@ -25,9 +25,9 @@ vi.mock('../../src/core/domain-bus', async (importOriginal) => {
   return { ...actual, emitDomainEvent: mocks.emitDomainEvent };
 });
 
-const ENTRY = '我的/日记/2024-01-01 08-00.md';
+const ENTRY = '我的/日记/2401010800.md'; // v3 题目：YYMMDDHHmm
 const LOC = { filename: ENTRY, filePath: ENTRY, date: '2024-01-01', time: '08:00', lineNumber: 0, tags: ['日记'] };
-const ENTRY_TEXT = '---\n日期: 2024-01-01 08:00\n类型:\n  - 日记\n---\n\nA\n';
+const ENTRY_TEXT = '---\ndate: 2024-01-01 08:00\ntype:\n  - 日记\n---\n\nA\n';
 
 let vault: MockVault;
 
