@@ -1,4 +1,4 @@
-/* 源指纹 177004f28df90bb8 · 仓内输入 188 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1f8440c08ada1172 · 仓内输入 188 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -15629,7 +15629,7 @@ ${countsToText(s.missing)}
   }
   function normalizeFetchIntervalMin(raw) {
     const n = Math.floor(Number(raw));
-    return [30, 60, 120, 360].includes(n) ? n : 30;
+    return FETCH_INTERVAL_STEPS.includes(n) ? n : DEFAULT_FETCH_INTERVAL_MIN;
   }
   function wrapArrayToNewsData(articles) {
     const data = emptyData();
@@ -15814,7 +15814,7 @@ ${countsToText(s.missing)}
     const n = Number(String(v || "").trim());
     return Number.isFinite(n) && n > 0 ? n : null;
   }
-  var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS;
+  var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN;
   var init_news_data = __esm({
     "src/clipbook/news-data.ts"() {
       init_app();
@@ -15823,6 +15823,8 @@ ${countsToText(s.missing)}
       STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
       DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
       DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
+      FETCH_INTERVAL_STEPS = [30, 60, 120, 360];
+      DEFAULT_FETCH_INTERVAL_MIN = 30;
     }
   });
 
@@ -15852,7 +15854,7 @@ ${countsToText(s.missing)}
     writeSources: () => writeSources
   });
   function emptyDataSourceState(exists = false) {
-    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0, rssFeeds: [], lastFetchAtMs: 0, fetchIntervalMin: 30 };
+    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", totalArticles: 0, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
   }
   async function readDataSourceState() {
     const res = await readNewsData();
@@ -15862,10 +15864,6 @@ ${countsToText(s.missing)}
     if (!res.ok) {
       return emptyDataSourceState(true);
     }
-    let lastFetchAt = null;
-    for (const a of res.data.articles) {
-      if (a && a.fetchedAt && (!lastFetchAt || String(a.fetchedAt) > lastFetchAt)) lastFetchAt = String(a.fetchedAt);
-    }
     return {
       exists: true,
       sources: { ...res.data.sources },
@@ -15873,10 +15871,9 @@ ${countsToText(s.missing)}
       bilibiliUpInfo: { ...res.data.bilibiliUpInfo },
       bilibiliMaxItems: res.data.bilibiliMaxItems,
       bilibiliCookie: res.data.bilibiliCookie,
-      lastFetchAt,
       totalArticles: res.data.articles.length,
       rssFeeds: [...res.data.rssFeeds],
-      lastFetchAtMs: res.data.lastFetchAt,
+      lastFetchAt: res.data.lastFetchAt,
       fetchIntervalMin: res.data.fetchIntervalMin
     };
   }
@@ -16507,8 +16504,8 @@ ${bodyText.substring(0, 6e3)}`;
           fetchIntervalMin: (_b2 = d.fetchIntervalMin) != null ? _b2 : DEFAULT_FETCH_INTERVAL_MIN
         };
       },
-      write: (set) => enqueueNewsWrite(async () => {
-        await writeNewsDataMerged({ set });
+      write: (intent) => enqueueNewsWrite(async () => {
+        await writeNewsDataMerged(intent);
       })
     };
   }
@@ -16808,7 +16805,7 @@ ${c.trim()}
       }
       if (res.upInfo) upInfo[uid] = res.upInfo;
     }
-    const needsCookieNotice = Object.keys(perUpRejected).length > 0 || articles.length === 0 && !configured;
+    const needsCookieNotice = Object.keys(perUpRejected).length > 0;
     return { articles, upInfo, perUpArticles, perUpRejected, needsCookieNotice };
   }
   async function fetchZhihu(httpGet) {
@@ -16917,7 +16914,7 @@ ${c.trim()}
     const failedSources = [];
     const guokrP = sources.guokr !== false ? fetchGuokr(httpGet, now()) : null;
     const zhihuP = sources.zhihu !== false ? fetchZhihu(httpGet) : null;
-    const biliP = sources.bilibili !== false ? fetchBilibili(disk.bilibiliUps, disk.bilibiliMaxItems, disk.bilibiliCookie, httpGet) : null;
+    const biliP = sources.bilibili !== false && disk.bilibiliUps.length > 0 ? fetchBilibili(disk.bilibiliUps, disk.bilibiliMaxItems, disk.bilibiliCookie, httpGet) : null;
     const rssP = sources.rss !== false && disk.rssFeeds.length > 0 ? fetchRss(disk.rssFeeds, httpGet) : null;
     const guarded = async (p, name, fallback) => {
       if (!p) return null;
@@ -16948,12 +16945,20 @@ ${c.trim()}
     const rssTitleUpdates = rssRes && Object.keys(rssRes.titleUpdates).length > 0 ? disk.rssFeeds.map((f) => rssRes.titleUpdates[f.url] ? { ...f, title: rssRes.titleUpdates[f.url] } : f) : void 0;
     const fetchedAt = localDatetime2(now());
     for (const a of newArticles) a.fetchedAt = fetchedAt;
+    const attempted = [guokrP, zhihuP, biliP, rssP].filter((p) => p !== null).length;
+    const allFailed = attempted > 0 && failedSources.length >= attempted;
+    const finalArticles = [...remaining, ...newArticles];
+    const finalUrls = new Set(finalArticles.map((a) => a.url));
+    const removeArticleKeys = existing.filter((a) => a && a.url && !finalUrls.has(a.url)).map((a) => articleKeyOf(a));
     await deps.store.write({
-      articles: [...remaining, ...newArticles],
-      // UP 主资料与磁盘存量合并（段级合并写按声明段整段覆盖）
-      ...biliRes && Object.keys(biliRes.upInfo).length > 0 ? { bilibiliUpInfo: { ...disk.bilibiliUpInfo, ...biliRes.upInfo } } : {},
-      ...rssTitleUpdates ? { rssFeeds: rssTitleUpdates } : {},
-      lastFetchAt: now()
+      set: {
+        articles: finalArticles,
+        // UP 主资料与磁盘存量合并（段级合并写按声明段整段覆盖）
+        ...biliRes && Object.keys(biliRes.upInfo).length > 0 ? { bilibiliUpInfo: { ...disk.bilibiliUpInfo, ...biliRes.upInfo } } : {},
+        ...rssTitleUpdates ? { rssFeeds: rssTitleUpdates } : {},
+        ...allFailed ? {} : { lastFetchAt: now() }
+      },
+      ...removeArticleKeys.length > 0 ? { removeArticleKeys } : {}
     });
     return {
       added: newArticles.length,
@@ -16984,15 +16989,24 @@ ${c.trim()}
       fetching = false;
     }
   }
+  function notifyManualFetchResult(r) {
+    if (!r) {
+      notice("抓取已在进行中，请稍候", "info");
+      return;
+    }
+    if (r.failedSources.length > 0) return;
+    notice(r.added > 0 ? `已抓取，新增 ${r.added} 篇文章` : "已抓取，暂无新文章", "success");
+  }
   async function fetchNowNews(deps) {
     return executeFetchRound(deps);
   }
-  var WINDOW_MS, RSS_MAX_PER_FEED, FETCH_TIMEOUT_MS, HEADERS, BILIBILI_API, BILIBILI_HOME, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN, fetching, onFetched;
+  var WINDOW_MS, RSS_MAX_PER_FEED, FETCH_TIMEOUT_MS, HEADERS, BILIBILI_API, BILIBILI_HOME, fetching, onFetched;
   var init_news_fetcher = __esm({
     "src/clipbook/news-fetcher.ts"() {
       init_fake_obsidian();
       init_notice();
       init_news_data();
+      init_constants3();
       init_write_queue();
       WINDOW_MS = 24 * 60 * 60 * 1e3;
       RSS_MAX_PER_FEED = 30;
@@ -17003,8 +17017,6 @@ ${c.trim()}
       };
       BILIBILI_API = "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space";
       BILIBILI_HOME = "https://www.bilibili.com/";
-      FETCH_INTERVAL_STEPS = [30, 60, 120, 360];
-      DEFAULT_FETCH_INTERVAL_MIN = 30;
       fetching = false;
       onFetched = null;
     }
@@ -17029,7 +17041,7 @@ ${c.trim()}
     const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
     const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
     const intervalDesc = () => {
-      const t = box.lastFetchAtMs > 0 ? new Date(box.lastFetchAtMs).toLocaleString() : "还没有抓取过";
+      const t = box.lastFetchAt > 0 ? localDatetime2(box.lastFetchAt) : "还没有抓取过";
       return `打开插件或剪藏本时超过该间隔自动抓取，上次抓取 ${t}`;
     };
     return [
@@ -17041,14 +17053,9 @@ ${c.trim()}
         cta: true,
         onClick: async (ctx) => {
           const r = await fetchNowNews();
-          if (!r) {
-            notice("正在抓取中，请稍候", "info");
-            return;
-          }
-          if (r.added > 0) notice(`抓取完成，新增 ${r.added} 篇文章`, "success");
-          else notice("抓取完成，暂无新文章", "success");
+          notifyManualFetchResult(r);
           const fresh = await readDataSourceState();
-          box.lastFetchAtMs = fresh.lastFetchAtMs;
+          box.lastFetchAt = fresh.lastFetchAt;
           box.fetchIntervalMin = fresh.fetchIntervalMin;
           setRowDesc(ctx, intervalDesc());
         }
