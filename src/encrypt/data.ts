@@ -19,6 +19,7 @@ import { getApp } from '../core/app';
 import { emitDomainEvent } from '../core/domain-bus';
 import { CryptoService, clearCryptoKeyCache } from '../core/crypto';
 import { enqueueFileTask } from '../core/storage';
+import { DIARY_ENTRY_FILE_RE, diaryEntryPath, serializeDiaryEntryFile, isValidDiaryDate } from '../core/diary-format';
 
 /** 保险库数据变更通道（ADR-0078：密码本/保险库等外部消费者订阅；写操作后广播） */
 export const ENCRYPT_CHANGED_CHANNEL = 'encrypt:changed' as const;
@@ -1326,107 +1327,72 @@ export class SafeManager {
   }
 
   /**
-   * 加密日记条目还原辅助：把 `# emoji HH:mm\n正文` 块 merge 回目标日期 md 文件。
-   * 解析块首行标题取时间 → 按时间序把块重插进该日期文件（文件已删则新建）；非整文件覆盖（ADR-0017 Q23-A）。
-   * @returns 成功写入返回 true；目标路径被占且非本系统（fingerprint 冲突）由附件层处理，正文 merge 属幂等写回。
+   * 还原日记块 → 条目文件（ADR-0130 v2）：块头 `# 标签名/标签名 HH:mm` + 正文，
+   * 序列化为 frontmatter 条目文件写入 note.path（一目一文件，无「按时间序插块」概念）。
+   * - 同内容幂等跳过（「块已 merge 但清单没保存」的中断残留/重试）；
+   * - 目标被占且内容不同（外来内容）绝不覆盖——后缀让位 `-2/-3…` 新建；
+   * - note.path 为旧格式日期文件路径时兜底换算为条目文件路径（历史清单兼容）。
+   * @returns 成功写入（或幂等跳过）返回 true；路径无法换算日期返回 false。
    */
   private async mergeDiaryBlock(datePath: string, block: string): Promise<boolean> {
     const app = getApp();
     if (!datePath || !block) return false;
-    // 解析块标题 `# emoji HH:mm`
+    // 解析块头 `# 标签名/标签名 HH:mm`（v2 标签名制）
     const md = block.replace(/\r\n/g, '\n');
     const lines = md.split('\n');
-    const headMatch = lines[0] ? lines[0].match(/^#\s+\S+\s+(\d{2}:\d{2})$/) : null;
-    const time = headMatch ? headMatch[1] : null;
-    const timeValue = time ? (parseInt(time.slice(0, 2), 10) * 100 + parseInt(time.slice(3, 5), 10)) : null;
-    if (timeValue === null || Number.isNaN(timeValue)) return false;
+    const headMatch = lines[0] ? lines[0].match(/^#\s+(.+)\s+(\d{2}:\d{2})$/) : null;
+    const time = headMatch ? headMatch[2] : null;
+    if (!headMatch || !time) return false;
+    const tags = headMatch[1].split('/').map((s) => s.trim()).filter(Boolean);
+    if (tags.length === 0) tags.push('日记');
+    const bodyLines: string[] = [];
+    for (let i = 1; i < lines.length; i++) bodyLines.push(lines[i]);
+    while (bodyLines.length && bodyLines[bodyLines.length - 1].trim() === '') bodyLines.pop();
+    while (bodyLines.length && bodyLines[0].trim() === '') bodyLines.shift();
+    const body = bodyLines.join('\n');
 
-    await this.ensureVaultParentFolder(datePath);
-    // D4：读改写整体入 core per-path 串行队列（键 = 日期 md 路径，与 diary 写层 withDateFile
-    // 同队列互斥）——此前绕过 diary 写层直读直写，与写层「旧快照全量重写」交错时
-    // 还原块会被下一次全量写抹掉且清单已删（条目盘上与保险箱同时消失）。
-    // 队列不可重入：本任务体内不再对同路径入队。
-    await enqueueFileTask(datePath, async () => {
-      const existing = app.vault.getAbstractFileByPath(datePath);
-      let existingText = '';
-      if (existing && (existing as any).isFolder !== true) {
-        existingText = await app.vault.read(existing as any);
-      }
-      const existingLines = existingText ? existingText.replace(/\r\n/g, '\n').split('\n') : [];
-
-      // 组装块行：标题行原样保留（`# emoji HH:mm`，不再拼接时间），标题与正文间补空行
-      // （与 writeFile 生成格式一致：# emoji HH:mm → 空行 → 正文）
-      const blockRows: string[] = [lines[0].trim()];
-      const blockLines: string[] = [];
-      for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
-      while (blockLines.length && blockLines[blockLines.length - 1].trim() === '') blockLines.pop();
-      while (blockLines.length && blockLines[0].trim() === '') blockLines.shift();
-      if (blockLines.length) {
-        blockRows.push('');
-        blockRows.push(...blockLines);
-      }
-
-      // 幂等：目标文件已含「标题行 + 正文」一致的块（上次「块已 merge 但清单没保存」的中断残留/重试）
-      // → 视为已完成，跳过防重复插入。
-      // 判重不能只比标题行（P0 回归）：同分钟同标签的两条日记标题行完全相同，仅凭标题跳过
-      // 会把另一条的内容误判为「已还原」——还原块被静默吞掉且照常删镜像删清单，内容永久丢失。
-      // 因此对每个命中标题行，取到下一个标题行为止，与还原块的非空行序列逐行比对：
-      // 正文一致才算已 merge；不一致（同刻另一条）照常按时间序插入。
-      const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
-      const sigLines = (ls: string[]) => ls.map((l) => l.trim()).filter((l) => l !== '');
-      const blockSig = sigLines(blockRows);
-      let alreadyMerged = false;
-      for (let i = 0; i < existingLines.length; i++) {
-        if (existingLines[i].trim() !== lines[0].trim()) continue;
-        const seg: string[] = [];
-        for (let k = i + 1; k < existingLines.length && !headingRe.test(existingLines[k]); k++) seg.push(existingLines[k]);
-        if (sigLines(seg).join('\n') === blockSig.slice(1).join('\n')) {
-          alreadyMerged = true;
-          break;
-        }
-      }
-      if (alreadyMerged) return;
-
-      // 按时间序 merge：找到第一个 timeValue >= 本条的标题行，在其前插入；否则追加到末尾
-      let insertIdx = existingLines.length;
-      for (let i = 0; i < existingLines.length; i++) {
-        const m = existingLines[i].match(headingRe);
-        if (m) {
-          const tv = parseInt(m[1].slice(0, 2), 10) * 100 + parseInt(m[1].slice(3, 5), 10);
-          if (tv >= timeValue) {
-            insertIdx = i;
-            break;
-          }
-        }
-      }
-
-      // 组装新文件内容：前段 + （与前条目分隔空行）+ 本条块 + （与后条目分隔空行）+ 后段
-      const out: string[] = [];
-      for (let i = 0; i < insertIdx; i++) out.push(existingLines[i]);
-      if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== '') out.push('');
-      out.push(...blockRows);
-      if (insertIdx < existingLines.length && existingLines[insertIdx].trim() !== '') out.push('');
-      for (let i = insertIdx; i < existingLines.length; i++) out.push(existingLines[i]);
-
-      // 规整：连续空行折叠为一条、首尾不残留空行
-      const clean: string[] = [];
-      for (const ln of out) {
-        if (ln.trim() === '') {
-          if (clean.length && clean[clean.length - 1] !== '') clean.push('');
-        } else {
-          clean.push(ln);
-        }
-      }
-      while (clean.length && clean[0] === '') clean.shift();
-      while (clean.length && clean[clean.length - 1] === '') clean.pop();
-      const finalText = clean.join('\n');
-
-      if (existing && (existing as any).isFolder !== true) {
-        await app.vault.modify(existing as any, finalText);
+    // 日期与目标路径：basename 应为条目文件形状（ADR-0130）；旧日期文件路径兜底换算
+    const base = datePath.split('/').pop() || '';
+    const dir = datePath.split('/').slice(0, -1).join('/');
+    let date: string | null = null;
+    let targetPath = datePath;
+    const em = DIARY_ENTRY_FILE_RE.exec(base);
+    if (em && isValidDiaryDate(em[1])) {
+      date = em[1];
+    } else {
+      const lm = /^(\d{4}-\d{2}-\d{2})\.md$/.exec(base);
+      if (lm && isValidDiaryDate(lm[1])) {
+        date = lm[1];
+        targetPath = diaryEntryPath(dir, date, time);
       } else {
-        const file = await app.vault.create(datePath, finalText);
-        (app.metadataCache as any)?.trigger?.('changed', file);
+        return false;
       }
+    }
+    if (!date) return false;
+
+    await this.ensureVaultParentFolder(targetPath);
+    // D4：读判写整体入 core per-path 串行队列（键 = 目标条目文件路径，与 diary 写层同队列互斥）。
+    // 队列不可重入：本任务体内不再对同路径入队。
+    await enqueueFileTask(targetPath, async () => {
+      const serialized = serializeDiaryEntryFile({ date, time: time! }, tags, body);
+      const existing = app.vault.getAbstractFileByPath(targetPath);
+      if (existing && (existing as any).isFolder !== true) {
+        const text = await app.vault.read(existing as any);
+        // 幂等：内容一致（含行尾差）视为已 merge
+        if (text.replace(/\n$/, '') === serialized.replace(/\n$/, '')) return;
+        // 外来内容绝不覆盖：后缀让位 `-2/-3…` 新建（同刻第二条还原互不吞）
+        let seq = 2;
+        let alt = diaryEntryPath(dir, date, time!, seq);
+        while (app.vault.getAbstractFileByPath(alt)) {
+          seq += 1;
+          alt = diaryEntryPath(dir, date, time!, seq);
+        }
+        const shifted = await app.vault.create(alt, serialized);
+        (app.metadataCache as any)?.trigger?.('changed', shifted);
+        return;
+      }
+      const file = await app.vault.create(targetPath, serialized);
+      (app.metadataCache as any)?.trigger?.('changed', file);
     });
     return true;
   }

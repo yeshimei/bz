@@ -23,9 +23,9 @@ import { collectRecap } from './aggregate';
 import type { RecapData, RecapDomain, RecapItem, RecapSummary } from './aggregate';
 import {
   entryTextWithoutMarker,
+  findRecapEntryPath,
   generateRecapContent,
   hasRecapEntry,
-  recapDiaryFilePath,
   writeRecapEntry,
 } from './summarize';
 
@@ -135,7 +135,7 @@ function setAiButton(btn: HTMLButtonElement, label: string, loading: boolean): v
   }
 }
 
-/** 成功通知：写入成功 + 「查看」打开当天日记（对齐既有通知动作范式） */
+/** 成功通知：写入成功 + 「查看」打开今天的「今日回顾」条目文件（ADR-0130 一目一文件） */
 function notifyWritten(app: App): void {
   notify('今日总结已写入日记', {
     type: 'success',
@@ -143,7 +143,10 @@ function notifyWritten(app: App): void {
       label: '查看',
       onClick: () => {
         try {
-          void (H.appRef ?? app).workspace.openLinkText(recapDiaryFilePath(Date.now()), '', false, { active: true });
+          void findRecapEntryPath(H.appRef ?? app).then((p) => {
+            if (!p) return;
+            void (H.appRef ?? app).workspace.openLinkText(p.replace(/\.md$/, ''), '', false, { active: true });
+          });
         } catch {
           /* 打开失败静默：日记内容已写好 */
         }

@@ -43,7 +43,7 @@ export function diarySettingsSchema(): SettingsSchema {
         icon: 'wrench',
         name: '维护',
         rows: [
-          { type: 'button', name: '日记解析检测', desc: '扫描所有日记文件，定位未能解析的行，可一键修复标题格式问题', buttonText: '检测日记解析', cta: true, onClick: () => openDiaryRepairModal() },
+          { type: 'button', name: '日记格式体检', desc: '扫描全部日记条目文件，列出格式问题并跳转手工处理', buttonText: '日记格式体检', cta: true, onClick: () => openDiaryRepairModal() },
         ],
       },
     ],

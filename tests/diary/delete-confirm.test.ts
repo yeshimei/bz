@@ -25,7 +25,9 @@ vi.mock('../../src/core/domain-bus', async (importOriginal) => {
   return { ...actual, emitDomainEvent: mocks.emitDomainEvent };
 });
 
-const LOC = { filename: '2024-01-01', date: '2024-01-01', time: '08:00', lineNumber: 1, tags: ['日记'] };
+const ENTRY = '我的/日记/2024-01-01 08-00.md';
+const LOC = { filename: ENTRY, filePath: ENTRY, date: '2024-01-01', time: '08:00', lineNumber: 0, tags: ['日记'] };
+const ENTRY_TEXT = '---\n日期: 2024-01-01 08:00\n类型:\n  - 日记\n---\n\nA\n';
 
 let vault: MockVault;
 
@@ -63,8 +65,8 @@ describe('showConfirm 删除确认（locator 定位）', () => {
   });
 
   it('删除失败（写层抛错）：弹「删除日记失败」错误通知', async () => {
-    vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nA\n');
-    // 写层故障注入：vault.delete 抛错（删到空触发整文件删除分支）
+    vault.files.set(ENTRY, ENTRY_TEXT);
+    // 写层故障注入：vault.delete 抛错（删除条目 = 删除其条目文件）
     (vault as any).delete = async () => {
       throw new Error('disk error');
     };
@@ -75,7 +77,7 @@ describe('showConfirm 删除确认（locator 定位）', () => {
   });
 
   it('取消：不触发删除，文件原样', async () => {
-    vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nA\n');
+    vault.files.set(ENTRY, ENTRY_TEXT);
     showConfirm(LOC);
     await vi.waitFor(() => {
       const b = document.querySelector('#__shared_confirm_cancel__') as HTMLButtonElement | null;
@@ -84,7 +86,7 @@ describe('showConfirm 删除确认（locator 定位）', () => {
       return true;
     });
     await new Promise((r) => setTimeout(r, 30));
-    expect(vault.files.has('我的/日记/2024-01-01.md')).toBe(true);
+    expect(vault.files.has(ENTRY)).toBe(true);
     expect(mocks.emitDomainEvent).not.toHaveBeenCalled();
   });
 

@@ -1,18 +1,19 @@
 /**
  * 日记本（diary）域数据层——原回忆墙升格正名（ADR-0115）
  * 聚合四类内容：日记 + 影视 + 信 + 书，统一按日期时间降序混排。
- * - 日记：`我的/日记/YYYY-MM-DD.md` → parseFile（每文件多条目，filename=dateStr）；
+ * - 日记：`我的/日记/YYYY-MM-DD HH-MM(-N)?.md` → parseEntryFile（ADR-0130 一目一文件，filename=file.path）；
  * - 影视：`我的/影视/*.md` → parseMovieFile（每文件一条，无影评/无观影日期跳过）；
  * - 信：`我的/信/*.md` → parseLetterFile（readonly 跳过）；
  * - 书：`书库/*.md` → parseBookFile（无 completionDate/readingDate 跳过；封面经 extractMedia 提取）。
- * 数据格式冻结：日记每文件多条目，`# emoji序列 HH:mm` 标题行为条目边界（解析逻辑见 ./parser，自包含拷贝自 diary 域）。
+ * 数据格式（ADR-0130）：条目文件，frontmatter `日期`+`类型`，契约单源 core/diary-format.ts（解析见 ./parser，自包含）。
  * 依赖方向（ADR-0002）：core ← config/state ← parser ← store ← ui ← main；本文件不碰 DOM，App 一律参数注入。
  * 自包含：不依赖 ../diary/（用户决策「回忆墙自包含，日后删除日记本域」）——config/parser/types 均在本域内。
  * 媒体 URL 走 vault API（getResourcePath / getFirstLinkpathDest）：原型里硬编码 file:// 路径在 vault 内不可播放，
  * 必须经 Obsidian 资源路径才能被 img/video/audio 加载。
  */
 import type { App, TFile } from 'obsidian';
-import { parseFile, parseMovieFile, parseLetterFile, parseBookFile } from './parser';
+import { parseEntryFile, parseMovieFile, parseLetterFile, parseBookFile } from './parser';
+import { DIARY_ENTRY_FILE_RE, isValidDiaryDate } from '../core/diary-format';
 import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory } from './config';
 import type { DiaryEntry } from './types';
 
@@ -91,16 +92,6 @@ export function stripMediaLinks(content: string): string {
 /** 批量并发读取窗口（日记/影视/信/书共用：控制单批 vault.read 并发量） */
 const READ_BATCH_SIZE = 10;
 
-/** 日记文件名格式：YYYY-MM-DD.md */
-const DIARY_FILE_RE = /^(\d{4}-\d{2}-\d{2})\.md$/;
-
-/** 校验 YYYY-MM-DD 是否为真实日期（2024-13-45 之类匹配正则但非合法日期，跳过） */
-function isValidDateStr(s: string): boolean {
-  const [y, mo, d] = s.split('-').map(Number);
-  const dt = new Date(y, mo - 1, d);
-  return dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === d;
-}
-
 /**
  * 递归枚举目录下全部 .md 文件路径（vault.adapter.list，Obsidian DataAdapter 标准接口；
  * mock vault 与真实 vault 行为一致，且天然支持子目录递归）。
@@ -178,7 +169,7 @@ function toWallEntry(e: DiaryEntry, kind: WallEntry['kind'], dir: string): WallE
     emoji: e.emoji,
     content: e.content,
     // 透传解析层条目的定位/标识信息：供 UI 跳转/动作区分
-    // （日记 filename=dateStr + filePath=完整路径；影视/信/书 filename=完整 vault 路径）
+    // （ADR-0130 起日记/影视/信/书的 filename 均为完整 vault 路径）
     filename: e.filename,
     filePath: e.filePath,
     lineNumber: e.lineNumber,
@@ -194,8 +185,8 @@ function toWallEntry(e: DiaryEntry, kind: WallEntry['kind'], dir: string): WallE
   };
 }
 
-/** 加载日记：diaryDir 下所有 `YYYY-MM-DD.md`（含子目录，递归收集），每文件多条目（kind='diary'）。
- *  条目带 filePath=完整 vault 路径（D2：子目录日期文件的写层动作按路径定位，不再平面误写顶层同名文件）。 */
+/** 加载日记：diaryDir 下所有条目文件（ADR-0130：一目一文件，basename `YYYY-MM-DD HH-MM(-N)`；含子目录递归）。
+ *  每文件一条，filename=file.path（UI 跳转/写层定位依据）。 */
 async function loadDiaryEntries(app: App, diaryDir: string): Promise<WallEntry[]> {
   const vault = app.vault;
   const mdFiles = await mdFilesUnder(app, diaryDir);
@@ -204,14 +195,11 @@ async function loadDiaryEntries(app: App, diaryDir: string): Promise<WallEntry[]
     const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
     const batchResults = await Promise.all(
       batch.map(async (file) => {
-        const m = DIARY_FILE_RE.exec(file.name);
-        if (!m || !isValidDateStr(m[1])) return [];
-        const dateStr = m[1];
+        const m = DIARY_ENTRY_FILE_RE.exec(file.name);
+        if (!m || !isValidDiaryDate(m[1])) return [];
         const content = await vault.read(file);
-        return parseFile(content, dateStr).map((e) => {
-          e.filePath = file.path;
-          return toWallEntry(e, 'diary', diaryDir);
-        });
+        const e = parseEntryFile(content, file.path);
+        return e ? [toWallEntry(e, 'diary', diaryDir)] : [];
       })
     );
     for (const r of batchResults) entries.push(...r);

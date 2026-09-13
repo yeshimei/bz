@@ -30,7 +30,8 @@ import { onDomainEvent } from '../core/domain-bus';
 import type { MovieActionEvent } from './movie-source';
 import { buildMemoStructured, buildMemoDueScanStructured, type MemoActionEvent, type MemoDueLike } from './memo-source';
 import { generateDescription } from './description-generators';
-import { parseDiaryFile, decideDiarySettle, DIARY_SETTLE_MS, buildDiaryTagsStructured, type DiaryEntryLike, type DiaryTagsEvent } from './diary-source';
+import { parseDiaryEntry, decideDiarySettle, DIARY_SETTLE_MS, buildDiaryTagsStructured, type DiaryEntryLike, type DiaryTagsEvent } from './diary-source';
+import { DIARY_ENTRY_FILE_RE } from '../core/diary-format';
 import { noteFirstText, noteFileName, noteBodyText, parseNoteDate, letterReadonly, decideNoteSettle, NOTE_SETTLE_MS, type NoteKind } from './note-source';
 import { DIARY_DIRECTORY } from '../diary/config';
 
@@ -1664,10 +1665,10 @@ function diaryEntryKey(filePath: string, date: string, time: string): string {
   return filePath + DIARY_KEY_SEP + date + DIARY_KEY_SEP + time;
 }
 
-/** 从日记文件路径取日期（`YYYY-MM-DD.md` 文件名 → 'YYYY-MM-DD'；非日期命名返回 null——不跟踪） */
+/** 从条目文件路径取日期（ADR-0130 契约正则 `YYYY-MM-DD HH-MM(-N)`；非条目命名返回 null——不跟踪） */
 function diaryFileDate(filePath: string): string | null {
   const base = (filePath || '').replace(/\\/g, '/').split('/').pop() || '';
-  const m = base.match(/^(\d{4}-\d{2}-\d{2})\.md$/);
+  const m = DIARY_ENTRY_FILE_RE.exec(base);
   return m ? m[1] : null;
 }
 
@@ -1678,31 +1679,32 @@ function diaryDateStr(offset: number, now: Date = new Date()): string {
   return localDayKey(d);
 }
 
-/** 重启基线（ticket 077 + 084d B3）：ensure 时对日记目录「当日 + 前 1 天 + 前 2 天」文件建快照
- * （不产出观察，防重启后旧条目被当首次——补写昨日/前日场景防整文件假首落重复入流）；
+/** 重启基线（ticket 077 + 084d B3）：ensure 时对日记目录「当日 + 前 1 天 + 前 2 天」条目文件建快照
+ * （不产出观察，防重启后旧条目被当首次——补写昨日/前日场景防假首落重复入流）；
  * 更久远文件仍不基线（防启动扫描开销；ADR-0030 已知边界已记）；
- * 有字条目记「已见」（generated=true，后续改动走更新分支）；无字（标题即存）待首落；不装计时器（事件才起动）。 */
+ * 有字条目记「已见」（generated=true，后续改动走更新分支）；无字待首落；不装计时器（事件才起动）。 */
 async function buildDiaryBaseline(): Promise<void> {
   if (!appRef) return;
   const app = appRef;
-  const dir = (DIARY_DIRECTORY || '我的/日记').replace(/\/+$/, '');
   // B3（ticket 084d）：基线窗口 当日 → 当日 + 前 1 天 + 前 2 天（改动最小方案，不再评估 mtime 方案）
   for (let offset = 0; offset <= 2; offset++) {
     const date = diaryDateStr(offset);
-    const filePath = `${dir}/${date}.md`;
-    const file = app.vault.getAbstractFileByPath(filePath);
-    if (!file) continue;
-    let content = '';
-    try { content = await app.vault.read(file as any); } catch { continue; }
-    const tracked = new Map<string, { body: string; tags: string[] }>();
-    for (const e of parseDiaryFile(content)) {
+    for (const f of app.vault.getMarkdownFiles?.() || []) {
+      const m = DIARY_ENTRY_FILE_RE.exec((f.path || '').split('/').pop() || '');
+      if (!m || m[1] !== date) continue;
+      const filePath = f.path;
+      let content = '';
+      try { content = await app.vault.read(f as any); } catch { continue; }
+      const e = parseDiaryEntry(content);
+      if (!e) continue;
+      const tracked = diaryTracked.get(filePath) || new Map<string, { body: string; tags: string[] }>();
       tracked.set(`${date}${DIARY_KEY_SEP}${e.time}`, { body: e.body, tags: e.tags });
+      diaryTracked.set(filePath, tracked);
       const key = diaryEntryKey(filePath, date, e.time);
       if (!diaryTimers.has(key)) {
         diaryTimers.set(key, { timer: null, generated: e.body.length > 0, baseline: e.body, baselineTags: e.tags, accum: 0, lastGeneratedAt: 0 });
       }
     }
-    diaryTracked.set(filePath, tracked);
   }
 }
 
@@ -1746,10 +1748,11 @@ async function settleDiaryEntry(filePath: string, date: string, time: string): P
   }
   let entry: DiaryEntryLike | null = null;
   try {
-    entry = parseDiaryFile(await appRef.vault.read(file as any)).find((e) => e.time === time) || null;
+    entry = parseDiaryEntry(await appRef.vault.read(file as any));
   } catch {
     return; // 瞬态读失败：保留计时/状态（下轮结算或 modify 事件再推进）
   }
+  if (entry && entry.time !== time) entry = null; // 时间错位（文件被换成另一时刻的条目）按消失处理
   // 竞态守卫：结算读文件期间该条被重置（st.timer 非空 → 新计时已接棒）或 unload（表已清）→ 放弃本次结算
   if (diaryTimers.get(key) !== st || st.timer !== null) return;
   if (!entry) {
@@ -1801,21 +1804,20 @@ function appendDiaryDeleteObservation(date: string, time: string): void {
   });
 }
 
-/** 日记 create/modify 新链路（ticket 077）：diff 出变化的条目重置其独立计时；
- *  上次快照存在、这次消失的条目 → 追加删除观察 + 清该条计时（条目级删除感知的最小可靠方案：以每次
- *  modify 的全量解析快照 diff 实现，比正文子串匹配更稳——条目按 (日期, 时间) key 唯一标识）。 */
+/** 日记 create/modify 新链路（ticket 077；ADR-0130 单文件单条目）：解析条目与上次快照 diff，
+ *  变化 → 重置其独立计时；上次有、这次消失 → 追加删除观察 + 清该条计时。 */
 async function handleDiaryVaultActivity(file: any): Promise<void> {
   if (!appRef || !memorySystem || !data?.config?.noteSource) return;
   const filePath = file?.path;
   if (!filePath) return;
   const date = diaryFileDate(filePath);
-  if (!date) return; // 非日期命名文件不跟踪（观察文案需要日期）
+  if (!date) return; // 非条目命名文件不跟踪（观察文案需要日期）
   let content = '';
   try { content = await appRef.vault.read(file as any); } catch { return; }
-  const entries = parseDiaryFile(content);
+  const entry = parseDiaryEntry(content);
   const prev = diaryTracked.get(filePath) || new Map<string, { body: string; tags: string[] }>();
   const cur = new Map<string, { body: string; tags: string[] }>();
-  for (const e of entries) cur.set(`${date}${DIARY_KEY_SEP}${e.time}`, { body: e.body, tags: e.tags });
+  if (entry) cur.set(`${date}${DIARY_KEY_SEP}${entry.time}`, { body: entry.body, tags: entry.tags });
   // 条目级删除：上次快照有、现在消失 → 追加删除观察 + 清该条计时
   for (const key of prev.keys()) {
     if (!cur.has(key)) {

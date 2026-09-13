@@ -50,7 +50,9 @@ function makeBackend(existingRefs: string[] = []) {
   };
 }
 
-const DIARY_CONTENT = '# 📖 08:30\n早晨写了周报\n\n# 🌙 23:10\n夜里读了会书';
+/** 条目文件夹具（ADR-0130 一目一文件：一条日记一个文件） */
+const diaryEntryFile = (time: string, body: string, date = '2026-08-01') =>
+  `---\n日期: ${date} ${time}\n类型:\n  - 日记\n---\n\n${body}\n`;
 const DIRS = ['我的/日记', '笔记'];
 
 describe('isSkippablePath（杂物过滤，ADR-0069 §3）', () => {
@@ -85,15 +87,15 @@ describe('buildSeedsForFile（一篇一条 + 日记拆段）', () => {
     expect(seeds[0].created).toBe('2026-08-29T00:00:00');
   });
 
-  it('日记文件按 `# emoji HH:MM` 拆条：一个时间段一条，refPath=路径#HH:MM，created=日期+时间', () => {
-    const seeds = buildSeedsForFile('我的/日记/2026-08-01.md', DIARY_CONTENT, 1700000000000, DIRS, '我的/日记', '2026-08-29');
-    expect(seeds).toHaveLength(2);
-    expect(seeds[0].refPath).toBe('我的/日记/2026-08-01.md#08:30');
+  it('条目文件一篇一条：refPath=路径#HH:MM，created=日期+时间（ADR-0130）', () => {
+    const path = '我的/日记/2026-08-01 08-30.md';
+    const seeds = buildSeedsForFile(path, diaryEntryFile('08:30', '早晨写了周报'), 1700000000000, DIRS, '我的/日记', '2026-08-29');
+    expect(seeds).toHaveLength(1);
+    expect(seeds[0].refPath).toBe('我的/日记/2026-08-01 08-30.md#08:30');
     expect(seeds[0].locator).toBe('08:30');
     expect(seeds[0].fullText).toBe('早晨写了周报');
     expect(seeds[0].created).toBe('2026-08-01T08:30:00');
     expect(seeds[0].source).toBe('diary');
-    expect(seeds[1].refPath).toBe('我的/日记/2026-08-01.md#23:10');
   });
 
   it('日记目录下非日期命名文件不跟踪；未配置目录/空正文 → 无种子', () => {
@@ -104,8 +106,9 @@ describe('buildSeedsForFile（一篇一条 + 日记拆段）', () => {
 });
 
 describe('diarySeeds 解析异常兜底', () => {
-  it('空内容 → 无条目', () => {
-    expect(diarySeeds('我的/日记/2026-08-01.md', '', '2026-08-01')).toEqual([]);
+  it('空内容/损坏 frontmatter → 无种子', () => {
+    expect(diarySeeds('我的/日记/2026-08-01 08-30.md', '', '2026-08-01')).toEqual([]);
+    expect(diarySeeds('我的/日记/2026-08-01 08-30.md', '随便几行没有 frontmatter', '2026-08-01')).toEqual([]);
   });
 });
 
@@ -116,7 +119,8 @@ describe('noteMemoryToday', () => {
 });
 
 describe('NoteMemorySync（增量同步器）', () => {
-  const SEED_DIR = '我的/日记/2026-08-01.md';
+  const SEED_A = '我的/日记/2026-08-01 08-30.md';
+  const SEED_B = '我的/日记/2026-08-01 23-10.md';
 
   function setup(files: Record<string, string>, dirs: string[] = DIRS, nowMs = 1700000000000) {
     const adapter = makeAdapter(files, { now: () => nowMs, diaryDir: '我的/日记' });
@@ -129,21 +133,22 @@ describe('NoteMemorySync（增量同步器）', () => {
     return { adapter, backend, sync, nowMs };
   }
 
-  it('init 全量扫描建库 + 注入 refResolver（日记段按定位符取段、普通笔记取全文、缺失 null）', async () => {
+  it('init 全量扫描建库 + 注入 refResolver（条目文件按定位符对时间取正文、普通笔记取全文、缺失 null）', async () => {
     const { adapter, backend, sync } = setup({
-      [SEED_DIR]: DIARY_CONTENT,
+      [SEED_A]: diaryEntryFile('08:30', '早晨写了周报'),
+      [SEED_B]: diaryEntryFile('23:10', '夜里读了会书'),
       '笔记/想法.md': '想法正文',
       '.obsidian/x.md': '杂物',
       '笔记/其他.txt': '非md',
     });
     await sync.init();
-    // 杂物与非 md 不入库；日记 2 段 + 普通笔记 1 条
+    // 杂物与非 md 不入库；条目文件 2 篇 + 普通笔记 1 条
     expect(backend.__upserts).toHaveLength(3);
     const resolver = backend.__resolver();
     expect(resolver).toBeTypeOf('function');
     expect(await resolver!('笔记/想法.md')).toBe('想法正文');
-    expect(await resolver!(`${SEED_DIR}#08:30`)).toBe('早晨写了周报');
-    expect(await resolver!(`${SEED_DIR}#99:99`)).toBeNull();
+    expect(await resolver!(`${SEED_A}#08:30`)).toBe('早晨写了周报');
+    expect(await resolver!(`${SEED_A}#99:99`)).toBeNull();
     expect(await resolver!('不存在.md')).toBeNull();
   });
 
@@ -171,24 +176,30 @@ describe('NoteMemorySync（增量同步器）', () => {
     expect(sync.getPending()).toHaveLength(0);
   });
 
-  it('R4 豁免：「今天」的日记段 modify 即时入库', async () => {
+  it('R4 豁免：「今天」的条目文件 modify 即时入库', async () => {
     const today = noteMemoryToday(1700000000000);
-    const path = `我的/日记/${today}.md`;
-    const { adapter, backend, sync } = setup({ [path]: DIARY_CONTENT });
+    const path = `我的/日记/${today} 08-30.md`;
+    const { adapter, backend, sync } = setup({ [path]: diaryEntryFile('08:30', '早晨写了周报', today) });
     await sync.init();
     const n = backend.__upserts.length;
     await sync.onModified(path); // 距上次 0ms，但今日日记即时
     expect(backend.__upserts.length).toBeGreaterThan(n);
   });
 
-  it('delete：按已跟踪 ref 逐条回删（日记段完整删除）', async () => {
-    const { adapter, backend, sync } = setup({ [SEED_DIR]: DIARY_CONTENT });
+  it('delete：按已跟踪 ref 逐条回删（条目文件删除）', async () => {
+    const { adapter, backend, sync } = setup({
+      [SEED_A]: diaryEntryFile('08:30', '早晨写了周报'),
+      [SEED_B]: diaryEntryFile('23:10', '夜里读了会书'),
+    });
     await sync.init();
-    adapter.__delete(SEED_DIR);
-    await sync.onDeleted(SEED_DIR);
-    expect(backend.__removed).toContain(`${SEED_DIR}#08:30`);
-    expect(backend.__removed).toContain(`${SEED_DIR}#23:10`);
-    expect(sync.getTrackedRefs().has(SEED_DIR)).toBe(false);
+    adapter.__delete(SEED_A);
+    adapter.__delete(SEED_B);
+    await sync.onDeleted(SEED_A);
+    await sync.onDeleted(SEED_B);
+    expect(backend.__removed).toContain(`${SEED_A}#08:30`);
+    expect(backend.__removed).toContain(`${SEED_B}#23:10`);
+    expect(sync.getTrackedRefs().has(SEED_A)).toBe(false);
+    expect(sync.getTrackedRefs().has(SEED_B)).toBe(false);
   });
 
   it('delete：未跟踪过的普通笔记按路径兜底回删；非我方文件跳过', async () => {
@@ -230,18 +241,18 @@ describe('NoteMemorySync（增量同步器）', () => {
     expect(backend.__upserts.some((s) => s.refPath === '其他/b.md')).toBe(true);
   });
 
-  it('引用失效自愈：resolver 读不到的条目登记 onStaleRef 并清理（文件删除/日记段消失）', async () => {
+  it('引用失效自愈：resolver 读不到的条目登记 onStaleRef 并清理（文件删除/定位符时间错位）', async () => {
     const stale: string[] = [];
-    const adapter = makeAdapter({ [SEED_DIR]: DIARY_CONTENT, '笔记/a.md': 'a' }, { diaryDir: '我的/日记' });
-    const backend = makeBackend([`${SEED_DIR}#08:30`, `${SEED_DIR}#07:00`, '笔记/a.md', '笔记/已删.md']);
+    const adapter = makeAdapter({ [SEED_A]: diaryEntryFile('08:30', '早晨写了周报'), '笔记/a.md': 'a' }, { diaryDir: '我的/日记' });
+    const backend = makeBackend([`${SEED_A}#08:30`, `${SEED_A}#07:00`, '笔记/a.md', '笔记/已删.md']);
     const sync = new NoteMemorySync({ adapter: adapter as any, backend: backend as any, getDirectories: () => ['笔记'], onStaleRef: (r) => stale.push(r) });
-    // 预置 stale 引用：07:00 段不存在、已删.md 文件不存在
+    // 预置 stale 引用：07:00 定位符与文件 frontmatter 时间错位、已删.md 文件不存在
     await sync.verifyStaleRefs();
-    expect(stale).toContain(`${SEED_DIR}#07:00`);
+    expect(stale).toContain(`${SEED_A}#07:00`);
     expect(stale).toContain('笔记/已删.md');
-    expect(backend.__removed).toContain(`${SEED_DIR}#07:00`);
+    expect(backend.__removed).toContain(`${SEED_A}#07:00`);
     expect(backend.__removed).toContain('笔记/已删.md');
-    expect(stale).not.toContain(`${SEED_DIR}#08:30`);
+    expect(stale).not.toContain(`${SEED_A}#08:30`);
     expect(stale).not.toContain('笔记/a.md');
   });
 

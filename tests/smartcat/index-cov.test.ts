@@ -293,59 +293,62 @@ describe('书评链路（file-open）', () => {
 });
 
 describe('vault 活动路由（diary/note/clipping/短路）', () => {
-  it('日记新链路：基线→新增条目首落→改名迁移→条目删除→文件删除→未跟踪兜底', async () => {
+  it('日记新链路：基线→新增条目首落→改名迁移→条目消失→文件删除→未跟踪兜底', async () => {
     __setDiarySettleMsForTests(30);
     const { app, vault } = makeApp();
     const dir = '我的/日记';
-    const p1 = `${dir}/${todayStr()}.md`;
-    // 改名目标：同目录内另一个合法日期命名（diaryFileDate 只认 YYYY-MM-DD.md）
-    const yest = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const yp = (n: number) => String(n).padStart(2, '0');
-    const p2 = `${dir}/${yest.getFullYear()}-${yp(yest.getMonth() + 1)}-${yp(yest.getDate())}.md`;
-    const entryA = '# 😄 09:00\n今天心情不错，写了点代码。';
-    vault.files.set(p1, entryA);
+    const t = todayStr();
+    const ef = (time: string, body: string): string =>
+      `---\n日期: ${t} ${time}\n类型:\n  - 日记\n---\n\n${body}\n`;
+    // A：基线条目文件（重启基线：已有字 → generated，不产观察）
+    const pA = `${dir}/${t} 09-00.md`;
+    vault.files.set(pA, ef('09:00', '今天心情不错，写了点代码。'));
     await ensureSmartCat(app);
-    // 重启基线：A 已有字 → generated，不装计时器也不产观察
     expect(__getDiaryTimersForTests().size).toBeGreaterThanOrEqual(1);
 
-    // 新增条目 B → 计时器起动 → 静置结算首落观察
-    vault.files.set(p1, entryA + '\n# 🌙 10:00\n晚上记录一条新的想法内容');
-    vault.emit('modify', vault.file(p1));
+    // 新建条目文件 B → 计时器起动 → 静置结算首落观察
+    const pB = `${dir}/${t} 10-00.md`;
+    vault.files.set(pB, ef('10:00', '晚上记录一条新的想法内容'));
+    vault.emit('modify', vault.file(pB));
     await sleep(10); // 事件处理是异步链：先让微任务跑完再查计时表
     expect([...__getDiaryTimersForTests().keys()].some((k) => k.includes('\u000110:00'))).toBe(true);
     await sleep(90);
     let beh: any[] = __getSmartcatInternals().data.memory.behaviorStream;
     // ADR-0069：diary:created 走 behavior 流（富描述在 snapshot.summary）
-    expect(beh.some((m) => m.metadata?.snapshot?.summary?.includes(`你在 ${todayStr()} 10:00 写了一篇日记`))).toBe(true);
+    expect(beh.some((m) => m.metadata?.snapshot?.summary?.includes(`你在 ${t} 10:00 写了一篇日记`))).toBe(true);
 
-    // 新增条目 C → 静置后照常首落（改名前完成结算窗口）
-    vault.files.set(p1, entryA + '\n# 🌙 10:00\n晚上记录一条新的想法内容\n# ✨ 11:00\n再记一条用于改名迁移验证');
-    vault.emit('modify', vault.file(p1));
+    // 新建条目文件 C → 静置后照常首落（改名前完成结算窗口）
+    const pC = `${dir}/${t} 11-00.md`;
+    vault.files.set(pC, ef('11:00', '再记一条用于改名迁移验证'));
+    vault.emit('modify', vault.file(pC));
     await sleep(90);
     beh = __getSmartcatInternals().data.memory.behaviorStream;
-    expect(beh.some((m) => m.metadata?.snapshot?.summary?.includes(`你在 ${todayStr()} 11:00 写了一篇日记`))).toBe(true);
+    expect(beh.some((m) => m.metadata?.snapshot?.summary?.includes(`你在 ${t} 11:00 写了一篇日记`))).toBe(true);
 
-    // 同目录改名 → 计时/跟踪快照 key 迁移到新路径（防假删除重刷首落）
-    await vault.rename(vault.file(p1), p2);
-    vault.emit('rename', vault.file(p2), p1);
+    // 同目录改名（仍为条目文件名形状）→ C 的计时/跟踪快照 key 迁移到新路径（防假删除重刷首落）
+    const pC2 = `${dir}/${t} 11-00-2.md`;
+    await vault.rename(vault.file(pC), pC2);
+    vault.emit('rename', vault.file(pC2), pC);
     await sleep(10);
-    expect([...__getDiaryTimersForTests().keys()].every((k) => k.startsWith(p2 + '\u0001'))).toBe(true);
+    const timers = __getDiaryTimersForTests();
+    expect([...timers.keys()].some((k) => k.startsWith(pC2 + '\u0001'))).toBe(true);
+    expect([...timers.keys()].every((k) => !k.startsWith(pC + '\u0001'))).toBe(true);
 
-    // 条目消失（modify diff）→ 删除观察（behavior 流）+ 计时清理
-    vault.files.set(p2, entryA);
-    vault.emit('modify', vault.file(p2));
+    // 条目消失（modify diff：文件内容换成另一时刻的条目）→ 删除观察（behavior 流）+ 计时清理
+    vault.files.set(pC2, ef('12:00', '换成了另一时刻的条目'));
+    vault.emit('modify', vault.file(pC2));
     await sleep(40);
     beh = __getSmartcatInternals().data.memory.behaviorStream;
-    const yestStr = `${yest.getFullYear()}-${yp(yest.getMonth() + 1)}-${yp(yest.getDate())}`;    expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted')).toBe(true);
+    expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted')).toBe(true);
 
     // 文件删除事件（有跟踪快照）→ 逐条删除观察（behavior 流）
-    vault.emit('delete', { path: p2 });
+    vault.emit('delete', { path: pC2 });
     await sleep(40);
     const beh2 = __getSmartcatInternals().data.memory.behaviorStream;
     expect(beh2.filter((m) => m.source === 'diary' && m.type === 'deleted').length).toBeGreaterThanOrEqual(2);
 
-    // 从未跟踪过的日期文件删除 → 文件级单条兜底（behavior 流）
-    vault.emit('delete', { path: `${dir}/2020-01-01.md` });
+    // 从未跟踪过的条目文件删除 → 文件级单条兜底（behavior 流）
+    vault.emit('delete', { path: `${dir}/2020-01-01 08-00.md` });
     await sleep(40);
     const beh3 = __getSmartcatInternals().data.memory.behaviorStream;
     expect(beh3.some((m) => m.source === 'diary' && m.type === 'deleted')).toBe(true);

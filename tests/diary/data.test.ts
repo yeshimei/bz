@@ -13,8 +13,14 @@ import {
   type WallEntry,
 } from '../../src/diary/data';
 import { parseBookFile, parseLetterFile, parseMovieFile } from '../../src/diary/parser';
+import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 
 const DIARY_DIR = '我的/日记';
+
+/** 条目文件全文便捷构造（走契约序列化，保证测试夹具即生产格式） */
+function entry(date: string, time: string, tags: string[], body: string): string {
+  return serializeDiaryEntryFile({ date, time }, tags, body);
+}
 
 /**
  * 构造一个 mock app（MockVault + mockAppWithVault，与 tests/diary 域同款用法）。
@@ -68,7 +74,7 @@ describe('extractSegments（issue 213：按原文顺序分段）', () => {
 
   it('toWallEntry 派生 segments 字段', async () => {
     const vault = new MockVault();
-    vault.files.set('我的/日记/2024-06-01.md', '# 📖 09:00\n前文\n![[a.jpg]]\n后文\n');
+    vault.files.set('我的/日记/2024-06-01 09-00.md', entry('2024-06-01', '09:00', ['日记'], '前文\n![[a.jpg]]\n后文'));
     const app = mockAppWithVault(vault);
     const entries = await loadWallEntries(app);
     expect(entries[0].segments).toEqual([
@@ -129,10 +135,11 @@ describe('extractMedia', () => {
 });
 
 describe('loadWallEntries', () => {
-  it('读取多天文件，解析条目并提取媒体', async () => {
+  it('读取多个条目文件（一目一文件），解析条目并提取媒体', async () => {
     const app = makeApp({
-      '我的/日记/2024-01-01.md': '# 📖 08:00\n第一天\n![[day1.jpg]]\n\n# ✍️ 09:30\n下午记录\n',
-      '我的/日记/2024-01-02.md': '# 🌙 22:00\n第二天\n![[night.mp4]]\n',
+      '我的/日记/2024-01-01 08-00.md': entry('2024-01-01', '08:00', ['日记'], '第一天\n![[day1.jpg]]'),
+      '我的/日记/2024-01-01 09-30.md': entry('2024-01-01', '09:30', ['随笔'], '下午记录'),
+      '我的/日记/2024-01-02 22-00.md': entry('2024-01-02', '22:00', ['日记'], '第二天\n![[night.mp4]]'),
     });
     const entries = await loadWallEntries(app);
     expect(entries).toHaveLength(3);
@@ -156,12 +163,13 @@ describe('loadWallEntries', () => {
     });
   });
 
-  it('非 YYYY-MM-DD 命名与非法日期的文件跳过', async () => {
+  it('非条目命名/非法日期/旧格式日期文件跳过（ADR-0130 无旧格式兼容）', async () => {
     const app = makeApp({
-      '我的/日记/2024-01-01.md': '# 📖 08:00\n正常\n',
-      '我的/日记/README.md': '# 📖 08:00\n说明文件\n',
-      '我的/日记/2024-13-45.md': '# 📖 08:00\n非法日期\n',
-      '我的/日记/随机笔记.md': '# 📖 08:00\n非日期命名\n',
+      '我的/日记/2024-01-01 08-00.md': entry('2024-01-01', '08:00', ['日记'], '正常'),
+      '我的/日记/2024-01-01.md': entry('2024-01-01', '08:00', ['日记'], '旧格式残留'),
+      '我的/日记/README.md': entry('2024-01-01', '08:00', ['日记'], '说明文件'),
+      '我的/日记/2024-13-45 08-00.md': entry('2024-13-45', '08:00', ['日记'], '非法日期'),
+      '我的/日记/随机笔记.md': entry('2024-01-01', '08:00', ['日记'], '非日期命名'),
     });
     const entries = await loadWallEntries(app);
     expect(entries).toHaveLength(1);
@@ -173,10 +181,10 @@ describe('loadWallEntries', () => {
     expect(await loadWallEntries(app)).toEqual([]);
   });
 
-  it('子目录中的日记文件也会被读取（递归收集）', async () => {
+  it('子目录中的条目文件也会被读取（递归收集）', async () => {
     const app = makeApp({
-      '我的/日记/2024-01-01.md': '# 📖 08:00\n顶层\n',
-      '我的/日记/子目录/2024-01-03.md': '# 📖 08:00\n子目录\n![[sub.png]]\n',
+      '我的/日记/2024-01-01 08-00.md': entry('2024-01-01', '08:00', ['日记'], '顶层'),
+      '我的/日记/子目录/2024-01-03 08-00.md': entry('2024-01-03', '08:00', ['日记'], '子目录\n![[sub.png]]'),
     });
     const entries = await loadWallEntries(app);
     expect(entries.map((e) => e.date)).toEqual(['2024-01-03', '2024-01-01']);
@@ -185,7 +193,7 @@ describe('loadWallEntries', () => {
 
   it('无媒体条目的 content 保留原文（不因提取而改写）', async () => {
     const app = makeApp({
-      '我的/日记/2024-01-05.md': '# 📖 12:00\n只有文字\n![[note.md]]\n',
+      '我的/日记/2024-01-05 12-00.md': entry('2024-01-05', '12:00', ['日记'], '只有文字\n![[note.md]]'),
     });
     const entries = await loadWallEntries(app);
     expect(entries).toHaveLength(1);
@@ -193,9 +201,9 @@ describe('loadWallEntries', () => {
     expect(entries[0].content).toBe('只有文字\n![[note.md]]');
   });
 
-  it('多标签条目透传 tags/emoji', async () => {
+  it('多标签条目透传 tags/emoji（emoji 由标签派生）', async () => {
     const app = makeApp({
-      '我的/日记/2024-06-01.md': '# 📖🌟 09:00\n写诗一首\n',
+      '我的/日记/2024-06-01 09-00.md': entry('2024-06-01', '09:00', ['日记', '诗'], '写诗一首'),
     });
     const entries = await loadWallEntries(app);
     expect(entries[0].tags).toEqual(['日记', '诗']);
@@ -326,30 +334,34 @@ describe('stripMediaLinks', () => {
 });
 
 describe('loadWallEntries 透传 diary 定位字段', () => {
-  it('filename/lineNumber/id 随条目透传（id 沿用 parseFile 生成逻辑，无则置空）', async () => {
+  it('filename/filePath/lineNumber/id 随条目透传（ADR-0130：条目文件路径即锚点）', async () => {
     const app = makeApp({
-      '我的/日记/2024-01-01.md': '# 📖 08:00\n第一天\n![[day1.jpg]]\n',
+      '我的/日记/2024-01-01 08-00.md': entry('2024-01-01', '08:00', ['日记'], '第一天\n![[day1.jpg]]'),
     });
     const entries = await loadWallEntries(app);
     expect(entries).toHaveLength(1);
     const e = entries[0];
-    expect(e.filename).toBe('2024-01-01'); // parseFile 的 filename = dateStr
-    expect(e.lineNumber).toBe(1); // # 标题行号
-    expect(e.id).toBeUndefined(); // parseFile 未生成 id（非影视/信文件）
-    expect(e.noteId).toBeUndefined(); // 非加密条目无保险箱 id（字段透传自 DiaryEntry，加密条目解密时用）
-    expect(e.kind).toBe('diary'); // 日记条目来源类型
+    expect(e.filename).toBe('我的/日记/2024-01-01 08-00.md'); // filename = 完整路径（UI 跳转依据）
+    expect(e.lineNumber).toBe(0); // 行号定位随条目文件化退场
+    expect(e.id).toBeUndefined(); // 日记条目无生成 id（非影视/信/书）
+    expect(e.noteId).toBeUndefined(); // 非加密条目无保险箱 id
+    expect(e.kind).toBe('diary');
     // text 与 content 并存：content 保留原文（复制/跳转），text 供渲染
     expect(e.content).toBe('第一天\n![[day1.jpg]]');
     expect(e.text).toBe('第一天');
   });
 
-  it('多条目各自透传正确行号', async () => {
+  it('两个条目文件各自透传自身路径（单文件单条目，无跨文件串扰）', async () => {
     const app = makeApp({
-      '我的/日记/2024-01-01.md': '# 📖 08:00\n第一条\n\n# ✍️ 09:30\n第二条\n',
+      '我的/日记/2024-01-01 08-00.md': entry('2024-01-01', '08:00', ['日记'], '第一条'),
+      '我的/日记/2024-01-01 09-30.md': entry('2024-01-01', '09:30', ['随笔'], '第二条'),
     });
     const entries = await loadWallEntries(app);
     expect(entries).toHaveLength(2);
-    expect(entries.map((e) => `${e.time}:${e.lineNumber}`)).toEqual(['09:30:4', '08:00:1']);
+    expect(entries.map((e) => `${e.time}:${e.filename}`)).toEqual([
+      '09:30:我的/日记/2024-01-01 09-30.md',
+      '08:00:我的/日记/2024-01-01 08-00.md',
+    ]);
   });
 });
 
@@ -509,8 +521,8 @@ describe('parseMovieFile / parseLetterFile（影视/信 frontmatter 解析）', 
 describe('loadWallEntries 聚合四类（日记+影视+信+书）', () => {
   it('四类内容全部进入并统一按日期时间降序混排，kind 正确', async () => {
     const app = makeApp({
-      // 日记（每文件多条目）
-      '我的/日记/2024-03-10.md': '# 📖 08:00\n春游\n![[day.jpg]]\n',
+      // 日记（条目文件，一目一文件）
+      '我的/日记/2024-03-10 08-00.md': entry('2024-03-10', '08:00', ['日记'], '春游\n![[day.jpg]]'),
       // 影视（frontmatter 影评+观影日期+海报）
       '我的/影视/海边的曼彻斯特.md':
         '---\ntags: [电影]\n影评: 很压抑但真实\n观影日期: 2024-03-11\n海报: poster.jpg\n---\n',
@@ -543,8 +555,12 @@ describe('loadWallEntries 聚合四类（日记+影视+信+书）', () => {
     expect(entries[1].content).toContain('很压抑但真实');
     // 信：readonly 草稿被跳过
     expect(entries[3]).toMatchObject({ tags: ['信'], kind: 'letter', filename: '我的/信/给未来.md' });
-    // 日记：filename=dateStr（与影视/信/书不同——UI 跳转依据）
-    expect(entries[2]).toMatchObject({ kind: 'diary', filename: '2024-03-10', media: [{ name: 'day.jpg', kind: 'img' }] });
+    // 日记：filename=完整路径（与影视/信/书一致——UI 跳转依据）
+    expect(entries[2]).toMatchObject({
+      kind: 'diary',
+      filename: '我的/日记/2024-03-10 08-00.md',
+      media: [{ name: 'day.jpg', kind: 'img' }],
+    });
   });
 
   it('四类目录同时为空（或不存在）安全返回空数组', async () => {
@@ -554,7 +570,7 @@ describe('loadWallEntries 聚合四类（日记+影视+信+书）', () => {
 
   it('只放日记文件时聚合结果仅含日记（目录不存在安全跳过）', async () => {
     const app = makeApp({
-      '我的/日记/2024-01-01.md': '# 📖 08:00\nx\n',
+      '我的/日记/2024-01-01 08-00.md': entry('2024-01-01', '08:00', ['日记'], 'x'),
       // 无书评的书不进回忆墙（与影视影评同口径）；有书评的书正常聚合
       '书库/无评.md': '---\ntitle: a\ncompletionDate: 2024-01-02\n---\n',
       '书库/有评.md': '---\ntitle: b\ncompletionDate: 2024-01-03\nbookReview: 好看\n---\n',

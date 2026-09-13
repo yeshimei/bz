@@ -85,7 +85,7 @@ describe('home 活动河 UI（issue 232）', () => {
   });
 
   it('入口彩点 class（item-1789106079981）：日记动静 ok、剪藏未读/影院在看 warn、重要备忘 hot、规则外域 off', async () => {
-    vault.files.set(`我的/日记/${todayStr()}.md`, '# 🌤 08:30\n记一笔。\n'); // 今日有动静 → diary ok
+    vault.files.set(`我的/日记/${todayStr()} 08-30.md`, '---\n日期: ' + todayStr() + ' 08:30\n类型:\n  - 日记\n---\n\n记一笔。\n'); // 今日有动静 → diary ok
     vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({ articles: [{ read: false }, { read: true }] })); // 未读 > 0 → clipping warn
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
       { title: '重要待办', created: '2026-01-01 09:00:00', completed: null, priority: 'important' }, // 重要未完成 → memo hot

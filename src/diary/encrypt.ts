@@ -7,12 +7,12 @@
  * - 降级/改分类：restoreDiaryEntry 还原附件 + 块 merge 回原 md + 取出即删。
  * 依赖方向（ADR-0002）：store(数据层) ← 本层 ← ui；不挂 window；import 保险箱域（显式跨域 import）。
  */
-import { stripMdExt } from '../core/utils';
 import { getApp } from '../core/app';
 import { getSafeManager } from '../encrypt';
 import { collectNoteAttachmentPaths, kindOf } from '../encrypt/ui';
 import { bytesToBase64, type LockAttachmentInput } from '../encrypt/data';
-import { DIARY_DIRECTORY, ENCRYPT_TAG, getTagEmoji, emojiToTagMap } from './config';
+import { DIARY_ENTRY_FILE_RE, diaryEntryPath } from '../core/diary-format';
+import { DIARY_DIRECTORY, ENCRYPT_TAG, getTagEmoji } from './config';
 import type { DiaryEntry } from './types';
 
 // 加密分类标签名（ADR-0017；写入块标题、参与筛选/计数）——单一来源在 config，此处转出给 UI 层
@@ -79,10 +79,10 @@ export async function encryptEntry(entry: DiaryEntry): Promise<DiaryEntry | null
   if (!safe.unlocked) throw new Error('未解锁，无法加密日记');
 
   const tags = [...new Set([...entry.tags, ENCRYPT_TAG])];
-  const emojiSeq = tags.map((t) => getTagEmoji(t)).join('');
-  const block = `# ${emojiSeq} ${entry.time}\n${entry.content.trim()}`;
-  // 来源文件路径：子目录日期条目用实际路径（D2），缺省顶层 `<日记目录>/<date>.md`
-  const datePath = entry.filePath || `${DIARY_DIRECTORY}/${entry.date}.md`;
+  // 块格式 v2（ADR-0130）：头行 `# 标签名/标签名 HH:mm`——emoji 表不再参与加密链路
+  const block = `# ${tags.join('/')} ${entry.time}\n${entry.content.trim()}`;
+  // 来源条目文件路径：加密时来自条目（filename=完整路径），缺省按目录+日期时间拼
+  const datePath = entry.filePath || diaryEntryPath(DIARY_DIRECTORY, entry.date, entry.time);
   const attachments = await collectAttachmentsForContent(entry.content || '', datePath);
 
   // D9：lockNote 本就返回入库的 SafeNote——不再取 notes[length-1]（耦合「追加在末尾」实现，
@@ -100,7 +100,7 @@ export async function encryptEntry(entry: DiaryEntry): Promise<DiaryEntry | null
   return {
     ...entry,
     tags,
-    emoji: emojiSeq,
+    emoji: tags.map((t) => getTagEmoji(t)).join(''),
     encrypted: true,
     noteId: note.id,
   };
@@ -121,9 +121,10 @@ export async function loadEncryptedEntries(): Promise<DiaryEntry[]> {
     try {
       const plain = await safe.getDiaryEntryPlain(note.id);
       if (plain === null || plain === undefined) continue;
-      // 临时文件名占位：parseFile 需要 dateStr，用它还原 date
-      const date = stripMdExt(note.path.split('/').pop() || '');
-      const entry = parseDiaryBlock(plain, date, note.id);
+      // 日期从来源条目文件路径还原（ADR-0130：note.path = `我的/日记/YYYY-MM-DD HH-MM(-N).md`）
+      const m = DIARY_ENTRY_FILE_RE.exec(note.path.split('/').pop() || '');
+      if (!m) continue;
+      const entry = parseDiaryBlock(plain, m[1], note.id, note.path);
       if (entry) out.push(entry);
     } catch (e) {
       /* 单篇解密失败跳过，不阻断其余 */
@@ -132,43 +133,36 @@ export async function loadEncryptedEntries(): Promise<DiaryEntry[]> {
   return out;
 }
 
-/** 把一个 `# emoji HH:mm\n正文` 块解析成 DiaryEntry（带 encrypted/noteId） */
-function parseDiaryBlock(block: string, date: string, noteId: string): DiaryEntry | null {
+/** 把一个 `# 标签名/标签名 HH:mm\n正文` 块（v2）解析成 DiaryEntry（带 encrypted/noteId） */
+function parseDiaryBlock(block: string, date: string, noteId: string, notePath?: string): DiaryEntry | null {
   const lines = block.replace(/\r\n/g, '\n').split('\n');
-  const m = lines[0]?.match(/^#\s+(\S+)\s+(\d{2}:\d{2})$/);
+  const m = lines[0]?.match(/^#\s+(.+)\s+(\d{2}:\d{2})$/);
   if (!m) return null;
-  const emojiSeq = m[1];
   const time = m[2];
   const [h, min] = time.split(':').map(Number);
   if (Number.isNaN(h) || Number.isNaN(min)) return null;
-  // emoji → 标签（复用日记映射；解析不到则保留原始 emoji 序列为标签名？——这里按 emoji 解析）
-  const tags = emojiTagsToLabels(emojiSeq);
+  // 头行标签名逐个反解（`/` 分隔，去重保序）；空缺回退「日记」
+  const tags: string[] = [];
+  for (const name of m[1].split('/')) {
+    const t = name.trim();
+    if (t && !tags.includes(t)) tags.push(t);
+  }
+  if (tags.length === 0) tags.push('日记');
   const content = lines.slice(1).join('\n').trim();
   return {
     date,
     time,
     timeValue: h * 100 + min,
     tags,
-    emoji: emojiSeq,
+    emoji: tags.map((t) => getTagEmoji(t)).join(''),
     content,
-    filename: date,
+    filename: notePath || date,
+    filePath: notePath,
     lineNumber: 0,
     encrypted: true,
     noteId,
     id: `enc-diary-${noteId}`,
   };
-}
-
-/** emoji 序列 → 标签名（复用日记 emojiToTagMap；未知 emoji 用「日记」兜底） */
-function emojiTagsToLabels(emojiSeq: string): string[] {
-  const tags: string[] = [];
-  const seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-  for (const s of seg.segment(emojiSeq)) {
-    const label = emojiToTagMap[s.segment];
-    if (label && !tags.includes(label)) tags.push(label);
-  }
-  if (tags.length === 0) tags.push('日记');
-  return tags;
 }
 
 // ===== 删除加密条目（永久销毁密文） =====
@@ -182,31 +176,18 @@ export async function deleteEncryptedEntry(noteId: string): Promise<void> {
 // ===== 降级/改分类（恢复 merge 回原 md，取出即删） =====
 
 /**
- * 还原落点按当前日记目录重算（D9 后半）：加密时固化的是「当时」的日记文件路径，
- * 用户改过日记目录/移动过日期文件后直接还原会 merge 进旧目录（墙读新目录 → 条目凭空消失）。
- * 规则：日期形状合法的 diary-entry，若 note.path 指向的文件已不存在或不在当前日记目录下，
- * 改指当前目录下该日期文件的实际位置（无则顶层默认），并尽力落盘清单。
+ * 还原落点按当前日记目录重算（D9 后半）：加密时固化的是「当时」的条目文件路径，
+ * 用户改过日记目录后直接还原会 merge 进旧目录（墙读新目录 → 条目凭空消失）。
+ * 规则（ADR-0130）：basename 为条目文件形状的 diary-entry，只换目录段指向当前日记目录
+ * （同刻冲突由 mergeDiaryBlock 的后缀让位处理）；basename 非条目形状保持原路径不动。
  */
 async function realignRestorePath(noteId: string): Promise<void> {
   const safe = getSafeManager();
   const note = safe.manifest?.notes?.find((n) => n.id === noteId);
   if (!note || note.kind !== 'diary-entry') return;
-  const dateStr = stripMdExt(note.path.split('/').pop() || '');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
-  let target: string | null = null;
-  try {
-    const dirPrefix = `${DIARY_DIRECTORY}/`;
-    const app = getApp();
-    const dateFiles = (app.vault.getMarkdownFiles?.() || [])
-      .map((f: { path: string }) => f.path)
-      .filter((p: string) => p.startsWith(dirPrefix) && p.endsWith(`/${dateStr}.md`));
-    // 优先顶层同名文件（写层新写条目的默认落点），其次目录内已有位置
-    target = dateFiles.includes(`${DIARY_DIRECTORY}/${dateStr}.md`)
-      ? `${DIARY_DIRECTORY}/${dateStr}.md`
-      : dateFiles[0] || `${DIARY_DIRECTORY}/${dateStr}.md`;
-  } catch (e) {
-    return; // vault 枚举不可用：保持原路径（还原行为同旧版）
-  }
+  const base = note.path.split('/').pop() || '';
+  if (!DIARY_ENTRY_FILE_RE.test(base)) return;
+  const target = `${DIARY_DIRECTORY}/${base}`;
   if (target === note.path) return;
   note.path = target;
   try {
@@ -216,19 +197,17 @@ async function realignRestorePath(noteId: string): Promise<void> {
   }
 }
 
-/** 构造还原块：以 newTags 重建标题行（丢弃加密，保留 HH:mm 与正文）。
- *  D10：newTags 滤掉「加密」后为空时兜底「日记」——原样保留会把 🔐 写回标题，
- *  条目被墙永久隐藏且已无 noteId 可再解密。 */
+/** 构造还原块：以 newTags 重建头行（v2 标签名制，丢弃加密，保留 HH:mm 与正文）。
+ *  D10：newTags 滤掉「加密」后为空时兜底「日记」——原样保留会把「加密」写回头行。 */
 async function buildRestoreBlock(noteId: string, newTags?: string[]): Promise<string | null> {
   const plain = await getSafeManager().getDiaryEntryPlain(noteId);
   if (plain === null || plain === undefined) return null;
   const lines = plain.replace(/\r\n/g, '\n').split('\n');
-  const m = lines[0]?.match(/^#\s+\S+\s+(\d{2}:\d{2})$/);
+  const m = lines[0]?.match(/^#\s+.+\s+(\d{2}:\d{2})$/);
   if (!m) return null;
   const kept = (newTags ?? []).filter((t) => t !== ENCRYPT_TAG);
   const seqTags = kept.length > 0 ? kept : ['日记'];
-  const newSeq = seqTags.map((t) => getTagEmoji(t)).join('');
-  return `# ${newSeq} ${m[1]}${lines.length > 1 ? '\n' + lines.slice(1).join('\n') : ''}`;
+  return `# ${seqTags.join('/')} ${m[1]}${lines.length > 1 ? '\n' + lines.slice(1).join('\n') : ''}`;
 }
 
 /**
