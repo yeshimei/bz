@@ -122,7 +122,7 @@ export const DOMAINS: DomainDef[] = [
   { id: 'notice', name: '通知', icon: DOMAIN_ICONS.notice, desc: '通知级别、时长与弹出位置', schemaLoader: schemaLoaders.notice },
   { id: 'ai', name: 'AI', icon: DOMAIN_ICONS.ai, desc: 'AI 服务商与模型配置', schemaLoader: schemaLoaders.ai },
   // diary = ADR-0115 回忆墙升格正名（唯一日记 UI），diary-wall 域退役
-  { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录、写日记与解析检测', schemaLoader: schemaLoaders.diary },
+  { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录、写日记与格式体检', schemaLoader: schemaLoaders.diary },
   { id: 'memo', name: '备忘录', icon: DOMAIN_ICONS.memo, desc: '备忘录工作台与提醒设置', schemaLoader: schemaLoaders.memo },
   { id: 'belongings', name: '归物本', icon: DOMAIN_ICONS.belongings, desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
   { id: 'clipping', name: '剪藏本', icon: DOMAIN_ICONS.clipping, desc: '未读流与剪藏笔记', schemaLoader: schemaLoaders.clipping },

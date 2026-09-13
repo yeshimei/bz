@@ -37,66 +37,76 @@ beforeEach(() => {
   buildTagMaps();
 });
 
-describe('parseEntryFile（ADR-0130 一目一文件）', () => {
-  it('解析标准条目文件：frontmatter 日期+类型，正文原样', () => {
+describe('parseEntryFile（ADR-0131 一目一文件）', () => {
+  it('解析标准条目文件：题目+frontmatter date/type，正文原样', () => {
     const content = entryFile('2024-01-01', '14:30', ['日记'], '今天天气不错');
-    const e = parseEntryFile(content, '我的/日记/2024-01-01 14-30.md');
+    const e = parseEntryFile(content, '我的/日记/2401011430.md');
     expect(e).toMatchObject({
       date: '2024-01-01',
       time: '14:30',
       timeValue: 1430,
       tags: ['日记'],
       emoji: '📖',
-      filename: '我的/日记/2024-01-01 14-30.md',
-      filePath: '我的/日记/2024-01-01 14-30.md',
+      filename: '我的/日记/2401011430.md',
+      filePath: '我的/日记/2401011430.md',
       lineNumber: 0,
     });
     expect(e!.content).toBe('今天天气不错');
   });
 
   it('多类型列表逐项解析，emoji 由标签派生', () => {
-    const e = parseEntryFile(entryFile('2024-01-01', '09:00', ['日记', '诗'], '诗一首'), '我的/日记/2024-01-01 09-00.md');
+    const e = parseEntryFile(entryFile('2024-01-01', '09:00', ['日记', '诗'], '诗一首'), '我的/日记/2401010900.md');
     expect(e!.tags).toEqual(['日记', '诗']);
     expect(e!.emoji).toBe('📖🌟');
   });
 
   it('类型空缺回退「日记」', () => {
-    const content = '---\n日期: 2024-01-01 09:00\n类型:\n---\n\nx';
-    const e = parseEntryFile(content, '我的/日记/2024-01-01 09-00.md');
+    const content = '---\ndate: 2024-01-01 09:00\ntype:\n---\n\nx';
+    const e = parseEntryFile(content, '我的/日记/2401010900.md');
     expect(e!.tags).toEqual(['日记']);
   });
 
-  it('降级：frontmatter 日期损坏 → 从文件名取日期时间，类型保留', () => {
-    const content = '---\n日期: 2024-13-45 99:99\n类型:\n  - 日记\n---\n\n正文';
-    const e = parseEntryFile(content, '我的/日记/2024-01-01 09-00.md');
+  it('降级：frontmatter 日期损坏 → 从题目取日期时间，类型保留', () => {
+    const content = '---\ndate: 2024-13-45 99:99\ntype:\n  - 日记\n---\n\n正文';
+    const e = parseEntryFile(content, '我的/日记/2401010900.md');
+    // v3：属性损坏不再返回 null，日期与时间都从题目（YYMMDDHHmm）还原
     expect(e).not.toBeNull();
     expect(e!.date).toBe('2024-01-01');
     expect(e!.time).toBe('09:00');
     expect(e!.tags).toEqual(['日记']);
   });
 
-  it('同刻序号文件名（-2）正常解析', () => {
-    const e = parseEntryFile(entryFile('2024-08-22', '00:00', ['日记'], '第二条'), '我的/日记/2024-08-22 00-00-2.md');
+  it('旧中文键（日期/类型）按属性不可信处理，走题目降级', () => {
+    const content = '---\n日期: 2024-01-01 09:00\n类型:\n  - 日记\n---\n\n正文';
+    const e = parseEntryFile(content, '我的/日记/2401010900.md');
+    expect(e).not.toBeNull(); // v3：只认英文键，中文键文件按题目降级加载
+    expect(e!.date).toBe('2024-01-01');
+    expect(e!.time).toBe('09:00');
+    expect(e!.tags).toEqual(['日记']); // 类型不可信 → 回退「日记」
+  });
+
+  it('同刻序号题目（-2）正常解析', () => {
+    const e = parseEntryFile(entryFile('2024-08-22', '00:00', ['日记'], '第二条'), '我的/日记/2408220000-2.md');
     expect(e!.date).toBe('2024-08-22');
     expect(e!.time).toBe('00:00');
   });
 
-  it('frontmatter 与文件名都不可信 → null（守卫拒写依据）', () => {
-    expect(parseEntryFile('---\n日期: bad\n类型:\n  - 日记\n---\n\nx', '我的/日记/随手记.md')).toBeNull();
+  it('frontmatter 与题目都不可信 → null（守卫拒写依据）', () => {
+    expect(parseEntryFile('---\ndate: bad\ntype:\n  - 日记\n---\n\nx', '我的/日记/随手记.md')).toBeNull();
   });
 
-  it('旧格式日期文件名 + 无 frontmatter → null（迁移残留不解析，ADR-0130 无旧格式兼容）', () => {
+  it('旧格式日期文件名 + 无 frontmatter → null（迁移残留不解析，ADR-0131 无旧格式兼容）', () => {
     expect(parseEntryFile('# 📖 08:00\n旧格式正文\n', '我的/日记/2024-01-01.md')).toBeNull();
   });
 
   it('正文含一级标题行/分隔线等 markdown 原样保留（正文不参与格式解析）', () => {
     const body = '# 大标题\n\n---\n\n正文继续';
-    const e = parseEntryFile(entryFile('2024-01-01', '08:00', ['日记'], body), '我的/日记/2024-01-01 08-00.md');
+    const e = parseEntryFile(entryFile('2024-01-01', '08:00', ['日记'], body), '我的/日记/2401010800.md');
     expect(e!.content).toBe(body);
   });
 
   it('isEncryptedEntry 检测 🔐', () => {
-    const e = parseEntryFile(entryFile('2024-01-01', '08:00', ['日记'], '🔐secret🔐'), '我的/日记/2024-01-01 08-00.md')!;
+    const e = parseEntryFile(entryFile('2024-01-01', '08:00', ['日记'], '🔐secret🔐'), '我的/日记/2401010800.md')!;
     expect(isEncryptedEntry(e)).toBe(true);
   });
 });

@@ -27,15 +27,12 @@ vi.mock('../../src/core/ai', async (importOriginal) => {
 import { createAI, getAIProvider } from '../../src/core/ai';
 import { RECAP_MARKER } from '../../src/recap/summarize';
 import { H } from '../../src/recap/state';
-import { DIARY_ENTRY_FILE_RE, parseDiaryEntryFile } from '../../src/core/diary-format';
+import { diaryEntryPath, diaryDateFromEntryPath, parseDiaryEntryFile, serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { setDiaryDataMap } from '../../src/diary/store';
 
-/** 当天「日记目录下条目文件」枚举与「今日回顾」条目文件定位（ADR-0130 一目一文件） */
+/** 当天「日记目录下条目文件」枚举与「今日回顾」条目文件定位（ADR-0131 一目一文件，题目 YYMMDDHHmm） */
 function dayFiles(vault: MockVault): string[] {
-  return [...vault.files.keys()].filter((p) => {
-    if (!p.startsWith(`我的/日记/${todayStr()} `)) return false;
-    return DIARY_ENTRY_FILE_RE.test(p.split('/').pop() || '');
-  });
+  return [...vault.files.keys()].filter((p) => p.startsWith('我的/日记/') && diaryDateFromEntryPath(p) === todayStr());
 }
 function recapFile(vault: MockVault): string | null {
   return (
@@ -83,8 +80,8 @@ const AT = (h: number, m: number) => TODAY0 + h * 3600000 + m * 60000;
 function seedDay(vault: StatVault): void {
   const t = todayStr();
   const y = todayStr(-1);
-  vault.files.set(`我的/日记/${t} 09-00.md`, `---\n日期: ${t} 09:00\n类型:\n  - 日记\n---\n\n早读了一会儿\n`);
-  vault.files.set(`我的/日记/${t} 23-10.md`, `---\n日期: ${t} 23:10\n类型:\n  - 日记\n---\n\n睡前记一笔\n`);
+  vault.files.set(diaryEntryPath('我的/日记', t, '09:00'), serializeDiaryEntryFile({ date: t, time: '09:00' }, ['日记'], '早读了一会儿'));
+  vault.files.set(diaryEntryPath('我的/日记', t, '23:10'), serializeDiaryEntryFile({ date: t, time: '23:10' }, ['日记'], '睡前记一笔'));
   vault.files.set('我的/影视/《夜片》.md', '---\ntags:\n- 电影\n观影日期: ' + t + '\n评分: 9\n---\n');
   vault.stats.set('我的/影视/《夜片》.md', { ctime: AT(10, 0), mtime: AT(23, 14) });
   vault.files.set('书库/读完的书.md', '---\ntags:\n- book\nreadingDate: 2026-08-01\ncompletionDate: ' + t + '\n---\n');
@@ -208,7 +205,7 @@ describe('R3 生成今日总结（写进日记）', () => {
   /** 在 seedDay 之上再种一篇已有回顾条目文件（21:45，时刻乱序只为验证解析健壮性） */
   function seedRecap(): void {
     const t = todayStr();
-    vault.files.set(`我的/日记/${t} 21-45.md`, `---\n日期: ${t} 21:45\n类型:\n  - 日记\n---\n\n${RECAP_MARKER}\n下午生成的旧总结\n`);
+    vault.files.set(diaryEntryPath('我的/日记', t, '21:45'), serializeDiaryEntryFile({ date: t, time: '21:45' }, ['日记'], `${RECAP_MARKER}\n下午生成的旧总结`));
   }
 
   /** 打开面板并等采集+按钮探测就绪（按钮启用=链路落定；写路径含首次动态 import diary/store，

@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
+import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
@@ -298,16 +299,17 @@ describe('vault 活动路由（diary/note/clipping/短路）', () => {
     const { app, vault } = makeApp();
     const dir = '我的/日记';
     const t = todayStr();
-    const ef = (time: string, body: string): string =>
-      `---\n日期: ${t} ${time}\n类型:\n  - 日记\n---\n\n${body}\n`;
+    const ef = (time: string, body: string): string => serializeDiaryEntryFile({ date: t, time }, ['日记'], body);
+    // 条目文件路径（v3 题目 YYMMDDHHmm）
+    const ep = (time: string): string => diaryEntryPath(dir, t, time);
     // A：基线条目文件（重启基线：已有字 → generated，不产观察）
-    const pA = `${dir}/${t} 09-00.md`;
+    const pA = ep('09:00');
     vault.files.set(pA, ef('09:00', '今天心情不错，写了点代码。'));
     await ensureSmartCat(app);
     expect(__getDiaryTimersForTests().size).toBeGreaterThanOrEqual(1);
 
     // 新建条目文件 B → 计时器起动 → 静置结算首落观察
-    const pB = `${dir}/${t} 10-00.md`;
+    const pB = ep('10:00');
     vault.files.set(pB, ef('10:00', '晚上记录一条新的想法内容'));
     vault.emit('modify', vault.file(pB));
     await sleep(10); // 事件处理是异步链：先让微任务跑完再查计时表
@@ -318,7 +320,7 @@ describe('vault 活动路由（diary/note/clipping/短路）', () => {
     expect(beh.some((m) => m.metadata?.snapshot?.summary?.includes(`你在 ${t} 10:00 写了一篇日记`))).toBe(true);
 
     // 新建条目文件 C → 静置后照常首落（改名前完成结算窗口）
-    const pC = `${dir}/${t} 11-00.md`;
+    const pC = ep('11:00');
     vault.files.set(pC, ef('11:00', '再记一条用于改名迁移验证'));
     vault.emit('modify', vault.file(pC));
     await sleep(90);
@@ -326,7 +328,7 @@ describe('vault 活动路由（diary/note/clipping/短路）', () => {
     expect(beh.some((m) => m.metadata?.snapshot?.summary?.includes(`你在 ${t} 11:00 写了一篇日记`))).toBe(true);
 
     // 同目录改名（仍为条目文件名形状）→ C 的计时/跟踪快照 key 迁移到新路径（防假删除重刷首落）
-    const pC2 = `${dir}/${t} 11-00-2.md`;
+    const pC2 = diaryEntryPath(dir, t, '11:00', 2); // 同刻 -2 让位题目，仍为条目名形状
     await vault.rename(vault.file(pC), pC2);
     vault.emit('rename', vault.file(pC2), pC);
     await sleep(10);
@@ -348,7 +350,7 @@ describe('vault 活动路由（diary/note/clipping/短路）', () => {
     expect(beh2.filter((m) => m.source === 'diary' && m.type === 'deleted').length).toBeGreaterThanOrEqual(2);
 
     // 从未跟踪过的条目文件删除 → 文件级单条兜底（behavior 流）
-    vault.emit('delete', { path: `${dir}/2020-01-01 08-00.md` });
+    vault.emit('delete', { path: `${dir}/2001010800.md` });
     await sleep(40);
     const beh3 = __getSmartcatInternals().data.memory.behaviorStream;
     expect(beh3.some((m) => m.source === 'diary' && m.type === 'deleted')).toBe(true);

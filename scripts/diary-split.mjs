@@ -3,7 +3,7 @@
  * 日记一目一文件迁移脚本（issue 304 / ADR-0130）。
  *
  * 把「一天一文件多条目」（我的/日记/YYYY-MM-DD.md，`# emoji HH:mm` 头行切条目）
- * 拆分为条目文件（我的/日记/YYYY-MM-DD HH-MM(-N).md，frontmatter 日期+类型）：
+ * 拆分为条目文件（我的/日记/YYMMDDHHmm(-N).md，frontmatter date+type —— ADR-0131）：
  *  1. 逐日期文件解析条目（旧 parser 同语义：emoji 逐字反查标签名、无命中兜底「日记」）；
  *  2. 有「未解析行」（游离正文/时间越界头行）的文件不拆——列入需人工处理清单，绝不静默丢行；
  *  3. 每条目写为条目文件（同刻多条：第 1 条基名、后续 -2/-3…；与磁盘已有文件撞名同样让位）；
@@ -11,6 +11,7 @@
  *     ref.locator（条目时间）重指到该时刻条目文件（无 locator / 该时刻无条目 → 该日期最早条目；
  *     同刻多条取基名），ref.locator 原样保留，原文件留 .bak 备份；
  *  5. 拆分成功的原日期文件归档至 归档/日记/（目标已存在同名则报错停，绝不覆盖）。
+ *  注：v2 旧条目名（YYYY-MM-DD HH-MM）的库用 scripts/diary-restamp.mjs 换名到 v3 题目。
  *
  * 用法：
  *   node scripts/diary-split.mjs [--vault <路径>] [--apply] [--memory-only]
@@ -45,7 +46,7 @@ const EMOJI_TO_TAG = {
 };
 
 const DAY_FILE_RE = /^(\d{4}-\d{2}-\d{2})\.md$/;
-const ENTRY_FILE_RE = /^(\d{4}-\d{2}-\d{2}) (\d{2})-(\d{2})(?:-(\d+))?\.md$/;
+const ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/; // v3 题目：YYMMDDHHmm(-N)
 const HEADING_RE = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
 
 const args = process.argv.slice(2);
@@ -188,9 +189,12 @@ for (const f of dayFiles) {
   plans.push({ ...f, content, entries });
 }
 
-/** 条目文件内容（契约序列化形状：frontmatter 日期+类型、空行、正文、尾换行） */
+/** 题目简写 `YYMMDDHHmm`（与 core/diary-format.ts 契约同形：日期去 `-` 取后 6 位 + 时刻去 `:`） */
+const stampOf = (dateStr, timeStr) => `${dateStr.replace(/-/g, '').slice(2)}${timeStr.replace(':', '')}`;
+
+/** 条目文件内容（契约序列化形状：frontmatter date+type、空行、正文、尾换行） */
 function serializeEntry(dateStr, timeStr, tags, body) {
-  const fmLines = ['---', `日期: ${dateStr} ${timeStr}`, '类型:'];
+  const fmLines = ['---', `date: ${dateStr} ${timeStr}`, 'type:'];
   for (const t of tags) fmLines.push(`  - ${t}`);
   fmLines.push('---', '', body);
   return fmLines.join('\n') + '\n';
@@ -204,10 +208,9 @@ for (const plan of plans) {
   plan.entries.forEach((e) => {
     const n = counter.get(e.time) || 0;
     counter.set(e.time, n + 1);
-    const [h = '00', m = '00'] = e.time.split(':');
     e.seq = n === 0 ? null : n + 1;
-    const mk = (s) => (s ? `${plan.date} ${h}-${m}-${s}.md` : `${plan.date} ${h}-${m}.md`);
-    e.targetRel = mk(e.seq);
+    const stamp = stampOf(plan.date, e.time);
+    e.targetRel = e.seq ? `${stamp}-${e.seq}.md` : `${stamp}.md`;
     // 磁盘已有同名条目文件：内容一致 → 视为已迁移（apply 中断后重跑幂等，不产重复条目）；
     // 内容不同（同刻另有条目）→ 让位至下一序号
     let s = e.seq ? e.seq + 1 : 2;
@@ -217,7 +220,7 @@ for (const plan of plans) {
         e.skip = true;
         break;
       }
-      e.targetRel = `${plan.date} ${h}-${m}-${s}.md`;
+      e.targetRel = `${stamp}-${s}.md`;
       s += 1;
     }
   });
@@ -229,7 +232,7 @@ const skippedCount = plans.reduce((n, pl) => n + pl.entries.filter((e) => e.skip
 // 时间序键：HHMM 数值 + 同刻序号（'-' 的字典序在 '.' 之前，字符串排序会把 '00-00-2.md' 排到 '00-00.md' 前）
 const entrySortKey = (rel) => {
   const em = ENTRY_FILE_RE.exec(String(rel).split('/').pop() || '');
-  return em ? +em[2] * 10000 + +em[3] * 100 + (em[4] ? +em[4] : 1) : 99999999;
+  return em ? Number(em[1] + em[2] + em[3] + em[4] + em[5]) * 10 + (em[6] ? +em[6] : 0) : Number.MAX_SAFE_INTEGER;
 };
 const makeSlot = () => ({ byTime: new Map(), list: [] });
 const sealSlot = (slot) => {
@@ -243,10 +246,12 @@ function diskSlots() {
   if (!fs.existsSync(dir)) return byDate;
   for (const name of fs.readdirSync(dir)) {
     const em = ENTRY_FILE_RE.exec(name);
-    if (!em || !isValidDate(em[1]) || !isValidTime(`${em[2]}:${em[3]}`)) continue;
-    if (!byDate.has(em[1])) byDate.set(em[1], makeSlot());
-    const slot = byDate.get(em[1]);
-    const time = `${em[2]}:${em[3]}`;
+    if (!em) continue;
+    const date = `20${em[1]}-${em[2]}-${em[3]}`;
+    const time = `${em[4]}:${em[5]}`;
+    if (!isValidDate(date) || !isValidTime(time)) continue;
+    if (!byDate.has(date)) byDate.set(date, makeSlot());
+    const slot = byDate.get(date);
     // 同刻多条（基名 + -2…）取基名：'-' 的字典序在 '.' 之前，不能按 readdir 首见定夺
     const cur = slot.byTime.get(time);
     if (!cur || entrySortKey(name) < entrySortKey(cur)) slot.byTime.set(time, name);
@@ -287,7 +292,9 @@ function diaryDateOf(relPath) {
   const dm = DAY_FILE_RE.exec(base);
   if (dm && isValidDate(dm[1])) return dm[1];
   const em = ENTRY_FILE_RE.exec(base);
-  return em && isValidDate(em[1]) ? em[1] : null;
+  if (!em) return null;
+  const date = `20${em[1]}-${em[2]}-${em[3]}`;
+  return isValidDate(date) ? date : null;
 }
 
 let memoryBackup = false;
@@ -407,6 +414,23 @@ if (manual.length) {
   for (const m of manual) report.push(`- \`${m.rel}\`：${m.unparsed} 行未解析`);
   report.push('');
 }
+// 字数守恒核对（issue 304 验收项）：原文正文（去头行、去空白）vs 拆出条目正文（去空白）
+const HEADING_LINE_RE = /^#\s*(?:\S+)+\s+\d{2}:\d{2}.*$/gmu;
+const stripWs = (v) => String(v || '').replace(/\s+/g, '');
+const conservation = plans.map((pl) => {
+  const srcChars = stripWs(pl.content.replace(/\r\n/g, '\n').replace(HEADING_LINE_RE, '')).length;
+  const outChars = stripWs(pl.entries.map((e) => e.body).join('')).length;
+  return { rel: pl.rel, srcChars, outChars, diff: outChars - srcChars };
+});
+const drifted = conservation.filter((c) => c.diff !== 0);
+report.push('## 字数守恒核对（原文正文 vs 拆出条目正文；均去头行与空白）');
+report.push('');
+report.push(`- 原文正文字符合计：${conservation.reduce((n, c) => n + c.srcChars, 0)}`);
+report.push(`- 条目正文字符合计：${conservation.reduce((n, c) => n + c.outChars, 0)}`);
+report.push(`- 不一致文件数：${drifted.length}${drifted.length ? '（逐条列下）' : '（守恒）'}`);
+report.push('');
+for (const d of drifted.slice(0, 50)) report.push(`- \`${d.rel}\`：原文 ${d.srcChars} / 条目 ${d.outChars}（差 ${d.diff}）`);
+report.push('');
 report.push('## 拆分明细');
 report.push('');
 for (const plan of plans) {

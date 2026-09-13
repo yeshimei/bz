@@ -45,9 +45,9 @@ describe('useFileDateTime（默认日期取自当前日记文件）', () => {
     setApp(app);
   }
 
-  it('打开的条目文件（YYYY-MM-DD HH-MM.md）→ 默认日期取该条目日期', () => {
+  it('打开的条目文件（YYMMDDHHmm.md）→ 默认日期取该条目日期', () => {
     setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, useFileDateTime: true }) as any);
-    withActiveFile('我的/日记/2025-06-11 08-30.md', '2025-06-11 08-30');
+    withActiveFile('我的/日记/2506110830.md', '2506110830');
     createAddDialog();
     openAddDialog();
     const value = (document.querySelector('#add-diary-datetime') as HTMLInputElement).value;
@@ -69,7 +69,7 @@ describe('saveNewEntry（写日记弹窗，ADR-0130 建条目文件）', () => {
     openWriteDialog();
     await saveNewEntry();
     expect(getNoticeMessages().join('\n')).toContain('请至少选择一个类型');
-    expect(vault.files.has('我的/日记/2024-01-01 10-30.md')).toBe(false);
+    expect(vault.files.has('我的/日记/2401011030.md')).toBe(false);
   });
 
   it('时间格式非法：提示并不落盘', async () => {
@@ -77,15 +77,15 @@ describe('saveNewEntry（写日记弹窗，ADR-0130 建条目文件）', () => {
     pickType('日记');
     await saveNewEntry();
     expect(getNoticeMessages().join('\n')).toContain('日期时间格式不正确');
-    expect(vault.files.has('我的/日记/2024-01-01 10-30.md')).toBe(false);
+    expect(vault.files.has('我的/日记/2401011030.md')).toBe(false);
   });
 
   it('成功：条目文件落盘（frontmatter 日期+类型）+ 弹窗关闭，不再弹成功通知（收紧通知）', async () => {
     openWriteDialog('2024-01-01 10:30');
     pickType('日记');
     await saveNewEntry();
-    const disk = vault.files.get('我的/日记/2024-01-01 10-30.md')!;
-    expect(disk).toContain('日期: 2024-01-01 10:30');
+    const disk = vault.files.get('我的/日记/2401011030.md')!;
+    expect(disk).toContain('date: 2024-01-01 10:30');
     expect(disk).toContain('  - 日记');
     expect((document.querySelector('#add-diary-popup') as HTMLElement).style.display).toBe('none');
     // 操作结果立即可见（弹窗关、墙已刷新）→ 不弹「已保存日记」
@@ -104,8 +104,8 @@ describe('saveNewEntry（写日记弹窗，ADR-0130 建条目文件）', () => {
     const first = saveNewEntry();
     const second = saveNewEntry(); // 第一笔仍在写盘：直接忽略
     await Promise.all([first, second]);
-    expect(vault.files.has('我的/日记/2024-01-01 10-30.md')).toBe(true);
-    expect(vault.files.has('我的/日记/2024-01-01 10-30-2.md')).toBe(false); // 同刻只有一篇
+    expect(vault.files.has('我的/日记/2401011030.md')).toBe(true);
+    expect(vault.files.has('我的/日记/2401011030-2.md')).toBe(false); // 同刻只有一篇
   });
 
   it('D7 回归：写盘失败（建文件抛错）后防连点标志释放，下一笔可正常保存', async () => {
@@ -118,18 +118,19 @@ describe('saveNewEntry（写日记弹窗，ADR-0130 建条目文件）', () => {
     openWriteDialog('2024-01-01 10:30');
     pickType('日记');
     await saveNewEntry();
-    expect(vault.files.get('我的/日记/2024-01-01 10-30.md')).toContain('日期: 2024-01-01 10:30');
+    expect(vault.files.get('我的/日记/2401011030.md')).toContain('date: 2024-01-01 10:30');
   });
 });
 
 describe('showTagPicker（标签选择器，locator 定位）', () => {
   it('写层未命中：告警「未能在日记数据中定位」且不改盘', async () => {
     vault.files.set(
-      '我的/日记/2024-01-01 08-00.md',
-      '---\n日期: 2024-01-01 08:00\n类型:\n  - 日记\n---\n\nA\n'
+      '我的/日记/2401010800.md',
+      '---\ndate: 2024-01-01 08:00\ntype:\n  - 日记\n---\n\nA\n'
     );
     createTagPicker();
-    showTagPicker({ filename: '2024-01-01', date: '2024-01-01', time: '23:59', lineNumber: 99, tags: ['日记'] });
+    // 定位谓词 = filePath + time（ADR-0131 行号退场）：时刻错位即写层未命中
+    showTagPicker({ filename: '我的/日记/2401010800.md', filePath: '我的/日记/2401010800.md', date: '2024-01-01', time: '23:59', lineNumber: 0, tags: ['日记'] });
     const popup = document.querySelector('#diary-tag-selector-popup') as HTMLElement;
     const save = [...popup.querySelectorAll<HTMLButtonElement>('.diary-tag-selector-actions button')].find((b) => b.textContent === '保存')!;
     const diaryBtn = popup.querySelector<HTMLButtonElement>('.diary-tag-selector-btn[data-tag="日记"]')!;
@@ -140,23 +141,23 @@ describe('showTagPicker（标签选择器，locator 定位）', () => {
     save.click();
     await new Promise((r) => setTimeout(r, 50));
     expect(getNoticeMessages().join('\n')).toContain('未能在日记数据中定位该条目');
-    expect(vault.files.get('我的/日记/2024-01-01 08-00.md')).toContain('  - 日记');
+    expect(vault.files.get('我的/日记/2401010800.md')).toContain('  - 日记');
   });
 
   it('命中条目文件：改盘（frontmatter 类型追加）并发 tags-changed', async () => {
     vault.files.set(
-      '我的/日记/2024-01-01 08-00.md',
-      '---\n日期: 2024-01-01 08:00\n类型:\n  - 日记\n---\n\nA\n'
+      '我的/日记/2401010800.md',
+      '---\ndate: 2024-01-01 08:00\ntype:\n  - 日记\n---\n\nA\n'
     );
     createTagPicker();
-    showTagPicker({ filename: '我的/日记/2024-01-01 08-00.md', date: '2024-01-01', time: '08:00', lineNumber: 0, tags: ['日记'] });
+    showTagPicker({ filename: '我的/日记/2401010800.md', date: '2024-01-01', time: '08:00', lineNumber: 0, tags: ['日记'] });
     const popup = document.querySelector('#diary-tag-selector-popup') as HTMLElement;
     const save = [...popup.querySelectorAll<HTMLButtonElement>('.diary-tag-selector-actions button')].find((b) => b.textContent === '保存')!;
     // 选择器语义：保存时提交全部选中标签——原「日记」保持选中，追加「骑行」
     popup.querySelector<HTMLButtonElement>('.diary-tag-selector-btn[data-tag="骑行"]')!.click();
     save.click();
     await new Promise((r) => setTimeout(r, 50));
-    const disk = vault.files.get('我的/日记/2024-01-01 08-00.md')!;
+    const disk = vault.files.get('我的/日记/2401010800.md')!;
     expect(disk).toContain('  - 日记');
     expect(disk).toContain('  - 骑行');
     expect(getNoticeMessages().join('\n')).not.toContain('未能在日记数据中定位');
@@ -166,13 +167,13 @@ describe('showTagPicker（标签选择器，locator 定位）', () => {
     vi.mock('../../src/diary/ui/entry-actions', () => ({ showConfirm: vi.fn() }));
     const { showConfirm } = await import('../../src/diary/ui/entry-actions');
     vault.files.set(
-      '我的/日记/2024-01-01 08-00.md',
-      '---\n日期: 2024-01-01 08:00\n类型:\n  - 日记\n---\n\nA\n'
+      '我的/日记/2401010800.md',
+      '---\ndate: 2024-01-01 08:00\ntype:\n  - 日记\n---\n\nA\n'
     );
     createTagPicker();
     showTagPicker({
-      filename: '我的/日记/2024-01-01 08-00.md',
-      filePath: '我的/日记/2024-01-01 08-00.md',
+      filename: '我的/日记/2401010800.md',
+      filePath: '我的/日记/2401010800.md',
       date: '2024-01-01',
       time: '08:00',
       lineNumber: 0,
@@ -184,7 +185,7 @@ describe('showTagPicker（标签选择器，locator 定位）', () => {
     expect((document.querySelector('#diary-tag-selector-popup') as HTMLElement).style.display).toBe('none');
     expect(showConfirm).toHaveBeenCalledTimes(1);
     expect((showConfirm as any).mock.calls[0][0]).toMatchObject({
-      filePath: '我的/日记/2024-01-01 08-00.md',
+      filePath: '我的/日记/2401010800.md',
       time: '08:00',
     });
   });
