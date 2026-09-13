@@ -60,6 +60,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-clipbook-open',
   // 未读全部标为已读（2026-09-11 首页入口菜单；跨全库批量已读）
   'bz-clipbook-mark-all-read',
+  // 立即抓取（issue 302 / ADR-0128：插件内抓取的手动入口，忽略间隔）
+  'bz-clipbook-fetch-now',
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要
   'bz-auto-summary-redo',
   // 统一保险库（encrypt 域，ADR-0085）：密码/笔记/日记合一

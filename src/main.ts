@@ -28,6 +28,7 @@ import { openMemoPanel, addMemoItem, addMemoForActiveNote, unloadMemo, ensureMem
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
 import { openClipbook, markAllUnreadRead, unloadClipbook } from './clipbook';
+import { maybeFetchNews, fetchNowNews } from './clipbook/news-fetcher';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
 import { openDiary, openDiaryWrite, unloadDiary } from './diary';
@@ -96,6 +97,13 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-auto-summary-redo', name: '重新生成当前剪藏摘要', icon: DOMAIN_ICONS['auto-summary'], callback: () => void redoSummaryForActiveFile(getApp()) },
   // 未读全部标为已读（2026-09-11 首页入口菜单）：跨全库批量已读，确认框写明篇数
   { id: 'bz-clipbook-mark-all-read', name: '未读全部标为已读', icon: 'check-check', callback: () => markAllUnreadRead() },
+  // 立即抓取（issue 302 / ADR-0128）：插件内抓取的手动入口，忽略间隔
+  { id: 'bz-clipbook-fetch-now', name: '剪藏本抓取新文章', icon: 'rss', callback: () => {
+    void fetchNowNews().then((r) => {
+      // 命令触发无就地可见结果（面板可能没开）：完成态给反馈；面板开着由 reloadIfOpen 同步
+      if (r) notice(r.added > 0 ? `抓取完成，新增 ${r.added} 篇文章` : '抓取完成，暂无新文章', 'success');
+    });
+  } },
 
   // 日记本（diary 域，ADR-0115：原回忆墙升格正名；媒体墙即日记本唯一 UI）
   { id: 'bz-diary-open', name: '日记本', icon: DOMAIN_ICONS.diary, callback: () => openDiary(getApp()) },
@@ -264,6 +272,8 @@ export default class BzPlugin extends Plugin {
       if (this.settings.enableAutoNotify !== false) void ensureReview(this.app);
       // 番茄钟：启动即恢复（load+recover，正在倒计时则后台继续/按设置自动弹窗）
       void ensurePomodoro(this.app);
+      // 聚合讯自动抓取（issue 302 / ADR-0128）：启动延迟一拍后台抓一轮（间隔判定在 fetcher 内）
+      setTimeout(() => { if (!this.unloaded) void maybeFetchNews(); }, 0);
       // 小橘：启动即挂载（smartcatEnabled 开关；桌面宠物常驻）
       if (this.settings.smartcatEnabled) void ensureSmartCat(this.app);
     });
