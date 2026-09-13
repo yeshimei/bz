@@ -14,7 +14,8 @@
  * 种子口径对照（自检断言依赖，改种子先改壳断言）：
  *   日记 518 篇（连击 3、今日未写）· 影院 想看 8 / 在看 2 · 书库 在读 9 / 读完 4
  *   复习 9 张（逾期 1、明天到期 0）· 剪藏未读 12 · 收藏在册 18 · 归物 12 件
- *   今日时间线 9 条（三体 07:42 → 影院已看 21:05），昨日 5 条（写周报初稿 09:00 → 日记 22:15）
+ *   今日时间线 9 条（剪藏保存 07:42 → 影院已看 21:05；另 3 条 news skipped 默认过滤），
+ *   昨日 5 条（备忘录 09:00 → 完成 20:44）——痕迹源 = 小橘行为流（issue 305 / ADR-0132）
  *   规则点评 2 条：首条「早了 78 分钟」（今日首动 07:42 vs 昨日首动 09:00）+ 末条日记连击提醒
  *   番茄钟 state = 暂停中的专注（首页菜单按相位派发**单条** → 显示「继续专注」；
  *   toggleFocusSim 停掉后相位回 idle → 变「开始专注」）
@@ -25,7 +26,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openHome as openHomeReal } from '../../src/home/index';
 
 /** 种子版本（种子形状变化时 +1，触发重灌） */
-const SEED_REV = 6;
+const SEED_REV = 7;
 const SEED_MARK = 'bz-sim:__home_seed';
 const KEY_PREFIX = 'bz-sim:';
 
@@ -316,6 +317,51 @@ function seedPomodoro(out: SeedFile[]): void {
   });
 }
 
+/** 行为流（smartcat-behavior.json，issue 305 / ADR-0132 起 = 时间线痕迹唯一来源）：
+ *  今日 9 条可见（07:42 首 → 21:05 末）+ 午间 3 条已跳过（默认关，验第四类开关）、
+ *  昨日 5 条（09:00 首，供「早了 78 分钟」点评）、前天 1 条 + 大前天 1 条（周历 hit=4 格）。
+ *  文案/时刻与旧 recap 种子对齐（影院已看 21:05、首动 07:42 等壳断言依赖），
+ *  只是痕迹改由行为流条目产出（读书进度/日记/番茄在 ADR-0132 里明确不在时间线）。 */
+function seedBehavior(out: SeedFile[]): void {
+  const beh = (n: number, hm: string, source: string, type: string, name = '', extra: Record<string, unknown> = {}): Record<string, unknown> => ({
+    id: `beh_seed_${n}_${hm.replace(':', '')}_${source}_${type}`,
+    timestamp: new Date(at(n, hm)).toISOString(),
+    type,
+    source,
+    description: `${source}:${type}${name ? ` ${name}` : ''}`,
+    metadata: { entityType: source, action: type, ...(name ? { name } : {}), ...extra },
+  });
+  const items = [
+    // 今日：9 条可见（首 07:42 / 末 21:05）
+    beh(0, '07:42', 'news', 'saved', '为什么深度工作越来越难'),
+    beh(0, '09:05', 'memo', 'added', '给 obsidian 提 issue'),
+    beh(0, '09:10', 'memo', 'completed', '给 obsidian 提 issue'),
+    beh(0, '10:30', 'knowledge', 'term-generated', '间隔重复'),
+    beh(0, '12:20', 'memo', 'added', '预约体检'),
+    beh(0, '14:27', 'favorites', 'added', 'Anthropic 官网'),
+    beh(0, '18:20', 'review', 'started'),
+    beh(0, '20:44', 'memo', 'completed', '写周报初稿'),
+    beh(0, '21:05', 'movie', 'watched', '百年孤独', { rating: 4 }),
+    // 今日已跳过（默认过滤掉：验「跳过痕迹」开关；放在中段，避免点评挂到被过滤的行上）
+    beh(0, '13:00', 'news', 'skipped', '极简主义的陷阱'),
+    beh(0, '13:05', 'news', 'skipped', '数字花园的养护指南'),
+    beh(0, '13:10', 'news', 'skipped', '效率工具断舍离'),
+    // 昨日：5 条（首 09:00 → 点评「早了 78 分钟」的分母）
+    beh(1, '09:00', 'memo', 'added', '写周报初稿'),
+    beh(1, '10:15', 'movie', 'want', '沙丘 2'),
+    beh(1, '14:27', 'knowledge', 'converted', '间隔重复的实践误区'),
+    beh(1, '16:40', 'news', 'saved', '本地优先软件宣言'),
+    beh(1, '20:44', 'memo', 'completed', '清理收件箱'),
+    // 前天 / 大前天：各 1 条（周历 hit 共 4 格）
+    beh(2, '09:00', 'memo', 'added', '回复审稿意见'),
+    beh(3, '09:40', 'knowledge', 'converted', '深入理解计算机系统'),
+  ];
+  out.push({
+    path: 'CONFIG/STORAGE/smartcat-behavior.json',
+    content: JSON.stringify({ version: 1, lastUpdated: new Date(at(0, '21:05')).toISOString(), items }, null, 2),
+  });
+}
+
 function buildSeedFiles(): SeedFile[] {
   const out: SeedFile[] = [];
   seedDiary(out);
@@ -328,6 +374,7 @@ function buildSeedFiles(): SeedFile[] {
   seedBelongings(out);
   seedMemo(out);
   seedPomodoro(out);
+  seedBehavior(out);
   return out;
 }
 

@@ -14,7 +14,7 @@
 import { esc, iconSpan } from '../core/ui/str';
 import { DOMAIN_ICONS } from '../core/domain-icons';
 import type { PomodoroPhase } from '../core/pomodoro-phase';
-import type { RecapItem, RecapSummary } from '../recap/aggregate';
+import type { RecapSummary } from '../recap/aggregate';
 
 // 再出口（壳经 window.BZR_home 取用；插件 ui.ts 亦统一从这里取）
 export { esc, iconSpan };
@@ -316,8 +316,20 @@ export function sheetHeadHtml(d: HomeDomain, data: RiverData): string {
 
 /* ---------- 活动河类型（原 river.ts 纯类型段收编；river.ts re-export 兼容） ---------- */
 
-/** 时间线一条痕迹（recap RecapItem 的域展宽版：memo 保留原名，前端图标/名称映射） */
-export type RiverEvent = RecapItem;
+/** 时间线一条痕迹（issue 305 / ADR-0132：痕迹源 = 小橘行为流，不再是 recap 文件统计）。
+ *  domain = **首页域 id**（cinema/clipping/knowledge…，渲染据此取图标/色/名；行为流 source
+ *  经 behavior-timeline 的映射表归一）；kind 在映射时定死（见 TimelineKind）。 */
+export interface RiverEvent {
+  domain: string;
+  /** 排序与展示时刻（当天窗口内毫秒） */
+  ts: number;
+  /** 时间标签 'HH:mm' */
+  timeLabel: string;
+  /** 一句话正文（如「标记《X》已看」「完成『X』」） */
+  text: string;
+  /** 类别；缺省 = 无 kind 的旧形态，过滤回落文案前缀判类（eventKind） */
+  kind?: TimelineKind | 'skipped';
+}
 
 /** 日记连击态 */
 export interface RiverStreak {
@@ -406,37 +418,42 @@ export interface RiverData {
   pomodoroFocusing: boolean;
 }
 
-/* ---------- 时间线三类（内容过滤 / 范围 / 字号 口径；issue 287，2026-09-11 用户点名） ---------- */
+/* ---------- 时间线类别（内容过滤 / 范围 / 字号 口径；issue 287，2026-09-11 用户点名） ---------- */
 
 /** 时间线一条痕迹的类别（设置面板「时间线内容过滤」的勾选单位）。
  *  分法只认「这条痕迹说了什么」，不认域——同一条日记痕迹永远是 produce，
- *  不会因为改了域清单而换类。 */
+ *  不会因为改了域清单而换类。issue 305 起由行为流映射时定死（见 behavior-timeline）。 */
 export type TimelineKind =
   /** 产出：写出了/收进了/记下了东西（日记条目、剪藏保存、读完一本、看完一部、写完备忘、专注完） */
   | 'produce'
   /** 状态推进：改的是已有东西的状态（加入片单、读到 N%、新增待办、标记在看） */
   | 'progress'
-  /** 小橘点评 ✦（不是痕迹，是挂在痕迹下面的那句话） */
+  /** 点评 ✦：小橘挂在痕迹下面的那句话，以及你给影片打的星级（行为流 movie:rated） */
   | 'note';
 
 /** 三类的中文名（设置面板勾选项文案单源；首页不需要，故只在这边声明） */
-export const TIMELINE_KIND_LABEL: Record<TimelineKind, string> = {
+export const TIMELINE_KIND_LABEL: Record<TimelineKind | 'skipped', string> = {
   produce: '产出',
   progress: '状态推进',
   note: '点评 ✦',
+  skipped: '已跳过',
 };
 
-/** 时间线过滤设置（三个键的读值快照；缺省全开产出/状态推进/点评）
- *  「已跳过」曾占第四格，2026-09-11 用户拍板去掉（数据源在 smartcat 行为流、首页时间线吃不到，
- *  留着只是一个点不动的开关）——见 issue 288。 */
+/** 时间线痕迹的类别集合（三类 + 第四类「已跳过」） */
+export type TimelineEventKind = TimelineKind | 'skipped';
+
+/** 时间线过滤设置（四个键的读值快照；缺省全开产出/状态推进/点评，「已跳过」默认关）
+ *  issue 305 / ADR-0132：时间线痕迹源改吃小橘行为流，「已跳过」回归（issue 288 的
+ *  「行为流数据时间线吃不到」前提反转——数据源已整体替换）。 */
 export interface TimelineFilter {
   produce: boolean;
   progress: boolean;
   notes: boolean;
+  skipped: boolean;
 }
 
 export const DEFAULT_TIMELINE_FILTER: TimelineFilter = {
-  produce: true, progress: true, notes: true,
+  produce: true, progress: true, notes: true, skipped: false,
 };
 
 /** 时间线时间范围（「最近 N 天」的分子；week = 周历窗口全长 7 天） */
@@ -450,10 +467,10 @@ export function timelineRangeDays(range: string | null | undefined): number {
 }
 
 /**
- * 一条 recap 痕迹 → 类别（纯函数，node 可测）。
- * 判据取**文案前缀**而非域：同一域两种动作分属两类是常态
- * （影院「标记已看」= 产出，「加入片单」= 状态推进），只有文案才带这个信息。
- * 域名 → 文案前缀的对应关系见 recap/aggregate.ts 的 buildRecap 各分支。
+ * 旧形态（无 kind）痕迹 → 类别：按**文案前缀**判。
+ * issue 305 起痕迹由行为流映射时直带 kind，本函数只剩两个用途：原型/测试里的手搓数据、
+ * 以及历史存档数据的回落。判据仍取文案——同一域两种动作分属两类是常态
+ * （影院「标记已看」= 产出，「加入片单」= 状态推进）。
  */
 export function timelineKind(text: string): TimelineKind {
   // 状态推进：只有「还没发生成事实」的动作落这里
@@ -465,12 +482,25 @@ export function timelineKind(text: string): TimelineKind {
   return 'produce';
 }
 
-/** 按设置过滤时间线痕迹（纯函数，node 可测）。hiddenKinds 内含的类别整条剔除。 */
-export function filterEvents<T extends { text: string }>(events: T[], filter: TimelineFilter): T[] {
-  return events.filter((e) => {
-    const kind = timelineKind(e.text);
-    return kind === 'progress' ? filter.progress : filter.produce;
-  });
+/** 一条痕迹的类别：事件直带 kind 优先，缺省回落文案前缀判类（纯函数，node 可测）。 */
+export function eventKind(e: { text: string; kind?: string }): TimelineEventKind {
+  const k = e.kind as TimelineEventKind | undefined;
+  return k ?? timelineKind(e.text);
+}
+
+/** 单条痕迹是否该显示（纯函数）：过滤判据单源——filterEvents 与渲染层（flowHtml）共用。 */
+export function eventVisible(e: { text: string; kind?: string }, filter: TimelineFilter): boolean {
+  switch (eventKind(e)) {
+    case 'skipped': return filter.skipped;
+    case 'note': return filter.notes;
+    case 'progress': return filter.progress;
+    default: return filter.produce;
+  }
+}
+
+/** 按设置过滤时间线痕迹（纯函数，node 可测）。 */
+export function filterEvents<T extends { text: string; kind?: string }>(events: T[], filter: TimelineFilter): T[] {
+  return events.filter((e) => eventVisible(e, filter));
 }
 
 /* ---------- 日期/文案小工具 ---------- */

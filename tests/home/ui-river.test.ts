@@ -26,6 +26,34 @@ function yesterdayStr(): string {
   return `${yesterdayDateStr()} 09:00:00`;
 }
 
+/** 今日/昨日的某时刻（行为流条目时刻用运行期 now 派生，与 todayStr()/yesterdayDateStr() 同口径） */
+function todayAt(h: number, m = 0): Date {
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+function yesterdayAt(h: number, m = 0): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+/** 写行为流侧车（issue 305：时间线痕迹源；recap 文件统计只供摘要/计数） */
+function writeBehavior(vault: MockVault, items: Array<{ source: string; type: string; name: string; dt: Date }>): void {
+  vault.files.set('CONFIG/STORAGE/smartcat-behavior.json', JSON.stringify({
+    version: 1,
+    items: items.map(({ source, type, name, dt }) => ({
+      id: `beh_${dt.getTime()}`,
+      timestamp: dt.toISOString(),
+      type,
+      source,
+      description: `${source}:${type} ${name}`,
+      metadata: { entityType: source, action: type, name },
+    })),
+  }));
+}
+
 function recApp(vault: MockVault): any {
   const app = mockAppWithVault(vault) as any;
   app.__executed = [] as string[];
@@ -137,9 +165,7 @@ describe('home 活动河 UI（issue 232）', () => {
   });
 
   it('周历：默认「本周」档出 7 格；缩到「当天」只留今天一格、点过去的天时间线切天', async () => {
-    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
-      { title: '甲', created: yesterdayStr() + ' 09:00:00', completed: null },
-    ]));
+    writeBehavior(vault, [{ source: 'memo', type: 'added', name: '甲', dt: yesterdayAt(9) }]);
     const app = recApp(vault);
     openHome(app);
     await new Promise((r) => setTimeout(r, 20));
@@ -177,9 +203,8 @@ describe('home 活动河 UI（issue 232）', () => {
   });
 
   it('issue 287：时间线内容过滤 / 时刻列 / 字号档 从设置读，关掉即不出（每次开面板现读，无缓存）', async () => {
-    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
-      { title: '甲', created: todayStr() + ' 09:00:00', completed: null }, // 新增备忘录 = 状态推进
-    ]));
+    // 行为流 memo:added → kind=progress（状态推进类）
+    writeBehavior(vault, [{ source: 'memo', type: 'added', name: '甲', dt: todayAt(9) }]);
     setSettingsProvider(() => ({
       ...DEFAULT_SETTINGS,
       homeTimelineProgress: false, // 关掉状态推进 → 唯一的痕迹该被挡掉
@@ -207,9 +232,7 @@ describe('home 活动河 UI（issue 232）', () => {
   });
 
   it('issue 287：默认打开日＝最后有动静 → 开面板落在昨天并高亮那一格', async () => {
-    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
-      { title: '甲', created: yesterdayStr() + ' 09:00:00', completed: null }, // 只有昨天有动静
-    ]));
+    writeBehavior(vault, [{ source: 'memo', type: 'added', name: '甲', dt: yesterdayAt(9) }]); // 只有昨天有动静
     setSettingsProvider(() => ({
       ...DEFAULT_SETTINGS,
       homeTimelineRange: 'week', // 窗口要够宽，昨天才在可选范围内
@@ -224,10 +247,10 @@ describe('home 活动河 UI（issue 232）', () => {
   });
 
   it('时间线查看日随关闭保留、随卸载归零（issue 290 反转：重开停在上次查看日）', async () => {
-    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
-      { title: '甲', created: todayStr() + ' 09:00:00', completed: null },
-      { title: '乙', created: yesterdayStr(), completed: null }, // 昨天也有一条：切过去才有事件可断言
-    ]));
+    writeBehavior(vault, [
+      { source: 'memo', type: 'added', name: '甲', dt: todayAt(9) },
+      { source: 'memo', type: 'added', name: '乙', dt: yesterdayAt(9) }, // 昨天也有一条：切过去才有事件可断言
+    ]);
     const app = recApp(vault);
     openHome(app);
     await new Promise((r) => setTimeout(r, 20));
@@ -271,9 +294,7 @@ describe('home 活动河 UI（issue 232）', () => {
   });
 
   it('issue 290：首次打开秒开——openHome 同步返回即有面板骨架，时间线异步汇入', async () => {
-    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
-      { title: '甲', created: todayStr() + ' 09:00:00', completed: null },
-    ]));
+    writeBehavior(vault, [{ source: 'memo', type: 'added', name: '甲', dt: todayAt(9) }]);
     const app = recApp(vault);
     openHome(app); // 不 await：同步段就该有完整面板壳 + 骨架占位
     const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
@@ -287,7 +308,7 @@ describe('home 活动河 UI（issue 232）', () => {
   });
 
   it('issue 290：关闭保留 DOM——重开复用同一元素秒显旧渲染，动态刷新写入新数据', async () => {
-    const app = recApp(vault); // 初始 memo.json 无今日动静 → 时间线空态
+    const app = recApp(vault); // 初始无行为流文件 → 时间线空态
     openHome(app);
     await new Promise((r) => setTimeout(r, 20));
     const el1 = document.querySelector('.bz-home-overlay') as HTMLElement;
@@ -297,10 +318,8 @@ describe('home 活动河 UI（issue 232）', () => {
     expect(el1.isConnected).toBe(true); // DOM 保留
     expect(el1.style.display).toBe('none');
 
-    // vault 新增今日动静后重开：同一元素、同步恢复显示（秒显旧内容），刷新尚未到达
-    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
-      { title: '新条目', created: todayStr() + ' 10:00:00', completed: null },
-    ]));
+    // 行为流新增今日动静后重开：同一元素、同步恢复显示（秒显旧内容），刷新尚未到达
+    writeBehavior(vault, [{ source: 'memo', type: 'added', name: '新条目', dt: todayAt(10) }]);
     openHome(app);
     expect(document.querySelector('.bz-home-overlay')).toBe(el1); // 复用不重建
     expect(el1.style.display).not.toBe('none');
