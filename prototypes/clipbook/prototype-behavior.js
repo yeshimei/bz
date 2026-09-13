@@ -1,4 +1,4 @@
-/* 源指纹 89bcc7a28e6cb8aa · 仓内输入 80 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d8611014127043e0 · 仓内输入 80 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -5282,17 +5282,25 @@ var BZW_clipbook = (() => {
   async function readNewsData() {
     const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
     let corrupt = false;
+    let readThrew = false;
     const parsed = await jsonFileStore(getNewsFilePath(), {
       defaultValue: () => emptyData(),
       onCorrupt: () => {
         corrupt = true;
         return false;
       }
-    }).read().catch(() => null);
-    if (parsed === null || corrupt) return { ok: false, missing: false, data: emptyData() };
+    }).read().then(
+      (v) => v,
+      () => {
+        readThrew = true;
+        return null;
+      }
+    );
+    if (readThrew) return { ok: false, missing: false, data: emptyData(), corrupt: false };
+    if (corrupt || parsed === null) return { ok: false, missing: false, data: emptyData(), corrupt: true };
     const content = parseNewsFileContent(JSON.stringify(parsed));
-    if (!content) return { ok: false, missing: false, data: emptyData() };
-    return { ok: true, missing, data: content };
+    if (!content) return { ok: false, missing: false, data: emptyData(), corrupt: true };
+    return { ok: true, missing, data: content, corrupt: false };
   }
   async function writeNewsData(data) {
     try {
@@ -5332,6 +5340,15 @@ var BZW_clipbook = (() => {
       if (intent.set[seg] !== void 0) {
         next[seg] = intent.set[seg];
       }
+    }
+    if (intent.patchBilibiliUpInfo) {
+      next.bilibiliUpInfo = { ...next.bilibiliUpInfo, ...intent.patchBilibiliUpInfo };
+    }
+    if (intent.patchRssFeedTitles) {
+      const titles = intent.patchRssFeedTitles;
+      next.rssFeeds = (next.rssFeeds || []).map(
+        (f) => titles[f.url] !== void 0 ? { ...f, title: titles[f.url] } : f
+      );
     }
     await writeNewsData(next);
   }
@@ -5444,6 +5461,8 @@ var BZW_clipbook = (() => {
       try {
         const req = requestUrl({ url, method: "GET", headers: { ...HEADERS, ...headers || {} }, throw: false }).then((resp) => {
           return resp.status >= 200 && resp.status < 300 ? resp.text : null;
+        });
+        req.catch(() => {
         });
         const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), FETCH_TIMEOUT_MS));
         return await Promise.race([req, timer]);
@@ -5708,15 +5727,20 @@ ${c.trim()}
     let offset = "";
     let upInfo = null;
     let rejected = false;
+    let requestFailed = false;
     const headers = cookie ? { Cookie: cookie } : void 0;
     for (let page = 0; page < 50; page++) {
       const url = `${BILIBILI_API}?host_mid=${encodeURIComponent(uid)}&offset=${encodeURIComponent(offset)}&timezone_offset=-480&web_location=333.999`;
       const text = await httpGet(url, headers);
-      if (!text) break;
+      if (!text) {
+        if (page === 0) requestFailed = true;
+        break;
+      }
       let data;
       try {
         data = JSON.parse(text);
       } catch (e) {
+        if (page === 0) requestFailed = true;
         break;
       }
       if (!data || data.code !== 0 || !data.data || !Array.isArray(data.data.items)) {
@@ -5731,7 +5755,7 @@ ${c.trim()}
       offset = data.data.offset || "";
       if (!offset) break;
     }
-    return { articles, upInfo, rejected };
+    return { articles, upInfo, rejected, requestFailed };
   }
   async function defaultBootstrapBilibiliCookie() {
     var _a;
@@ -5748,22 +5772,24 @@ ${c.trim()}
   async function fetchBilibili(upUids, maxItems, cookie, httpGet, bootstrapCookie) {
     const list = upUids || [];
     if (list.length === 0) {
-      return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false };
+      return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false, requestFailed: false };
     }
     const per = Math.max(1, Math.floor(Number(maxItems) || 10));
     const configured = cookie && String(cookie).trim();
     const ck = configured || await (bootstrapCookie || defaultBootstrapBilibiliCookie)();
     if (!ck) {
-      return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: true };
+      return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: true, requestFailed: true };
     }
     const seen = /* @__PURE__ */ new Set();
     const articles = [];
     const upInfo = {};
     const perUpArticles = {};
     const perUpRejected = {};
+    let failedUps = 0;
     for (const uid of list) {
       const res = await fetchBilibiliUp(uid, ck, per, httpGet);
       perUpArticles[uid] = res.articles;
+      if (res.requestFailed) failedUps++;
       if (res.rejected) perUpRejected[uid] = true;
       for (const a of res.articles) {
         if (seen.has(a.url)) continue;
@@ -5773,35 +5799,38 @@ ${c.trim()}
       if (res.upInfo) upInfo[uid] = res.upInfo;
     }
     const needsCookieNotice = Object.keys(perUpRejected).length > 0;
-    return { articles, upInfo, perUpArticles, perUpRejected, needsCookieNotice };
+    const requestFailed = failedUps >= list.length;
+    return { articles, upInfo, perUpArticles, perUpRejected, needsCookieNotice, requestFailed };
   }
   async function fetchZhihu(httpGet) {
     const articles = [];
     const text = await httpGet("https://news-at.zhihu.com/api/4/news/latest");
-    if (!text) return articles;
+    if (!text) throw new Error("知乎日报列表请求失败");
+    let data;
     try {
-      const data = JSON.parse(text);
-      const list = data.stories || [];
-      const rawDate = data.date || "";
-      const formattedDate = rawDate.length === 8 ? `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}` : rawDate;
-      for (const item of list) {
-        const title = item.title || "";
-        const id = item.id || "";
-        const url = item.url || (id ? `https://daily.zhihu.com/story/${id}` : "");
-        if (!title || !url) continue;
-        let body = "", author = null;
-        const detailText = await httpGet(`https://news-at.zhihu.com/api/4/news/${id}`);
-        if (detailText) {
-          try {
-            const detail = JSON.parse(detailText);
-            if (detail.body) body = htmlToMarkdown(detail.body);
-            if (detail.editor_name) author = detail.editor_name;
-          } catch (e) {
-          }
-        }
-        articles.push({ platform: "知乎日报", title, url, author, date: formattedDate || null, body });
-      }
+      data = JSON.parse(text);
     } catch (e) {
+      throw new Error("知乎日报列表解析失败");
+    }
+    const list = data.stories || [];
+    const rawDate = data.date || "";
+    const formattedDate = rawDate.length === 8 ? `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}` : rawDate;
+    for (const item of list) {
+      const title = item.title || "";
+      const id = item.id || "";
+      const url = item.url || (id ? `https://daily.zhihu.com/story/${id}` : "");
+      if (!title || !url) continue;
+      let body = "", author = null;
+      const detailText = await httpGet(`https://news-at.zhihu.com/api/4/news/${id}`);
+      if (detailText) {
+        try {
+          const detail = JSON.parse(detailText);
+          if (detail.body) body = htmlToMarkdown(detail.body);
+          if (detail.editor_name) author = detail.editor_name;
+        } catch (e) {
+        }
+      }
+      articles.push({ platform: "知乎日报", title, url, author, date: formattedDate || null, body });
     }
     return articles;
   }
@@ -5810,12 +5839,12 @@ ${c.trim()}
     const articles = [];
     const cutoff = now - WINDOW_MS;
     const text = await httpGet("https://www.guokr.com/beta/proxy/science_api/articles?offset=0&limit=50");
-    if (!text) return articles;
+    if (!text) throw new Error("果壳科学人列表请求失败");
     let list;
     try {
       list = Object.values(JSON.parse(text));
     } catch (e) {
-      return articles;
+      throw new Error("果壳科学人列表解析失败");
     }
     const seen = /* @__PURE__ */ new Set();
     for (const item of list) {
@@ -5850,11 +5879,17 @@ ${c.trim()}
     const articles = [];
     const perFeed = {};
     const titleUpdates = {};
+    let attempted = 0;
+    let failedRequests = 0;
     for (const feed of feeds || []) {
       const url = String(feed && feed.url || "").trim();
       if (!url) continue;
+      attempted++;
       const xml = await httpGet(url);
-      if (!xml) continue;
+      if (!xml) {
+        failedRequests++;
+        continue;
+      }
       try {
         const feedTitle = String(((_a = xml.match(/<title[^>]*>([\s\S]*?)<\/title>/i)) == null ? void 0 : _a[1]) || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").trim();
         const name = String(feed && feed.title || feedTitle || url).trim();
@@ -5865,7 +5900,7 @@ ${c.trim()}
       } catch (e) {
       }
     }
-    return { articles, perFeed, titleUpdates };
+    return { articles, perFeed, titleUpdates, requestFailed: attempted > 0 && failedRequests === attempted };
   }
   async function runNewsFetchRound(deps) {
     const httpGet = deps.httpGet;
@@ -5892,39 +5927,48 @@ ${c.trim()}
         return fallback;
       }
     };
-    const emptyBili = { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false };
-    const emptyRss = { articles: [], perFeed: {}, titleUpdates: {} };
+    const emptyBili = { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false, requestFailed: false };
+    const emptyRss = { articles: [], perFeed: {}, titleUpdates: {}, requestFailed: false };
     const guokrList = await guarded(guokrP, "果壳科学人", []) || [];
     const zhihuList = await guarded(zhihuP, "知乎日报", []) || [];
     const biliRes = await guarded(biliP, "B站", emptyBili);
     const rssRes = await guarded(rssP, "RSS", emptyRss);
+    if (biliRes && biliRes.requestFailed) failedSources.push("B站");
+    if (rssRes && rssRes.requestFailed) failedSources.push("RSS");
     let newArticles = [guokrList, zhihuList, biliRes ? biliRes.articles : [], rssRes ? rssRes.articles : []].flat().filter((a) => a && !existingUrls.has(a.url));
     newArticles = newArticles.filter((a) => !existingTitles.has(String(a.title || "").trim()));
     const prunedUrls = biliRes ? pruneBilibiliWindow(existing, biliRes.perUpArticles, biliRes.perUpRejected, biliRes.upInfo) : [];
     const prunedSet = new Set(prunedUrls);
-    let remaining = prunedUrls.length > 0 ? existing.filter((a) => !prunedSet.has(a.url)) : existing;
-    const rssPrunedUrls = rssRes ? capRssWindow([...remaining, ...newArticles], rssRes.perFeed, RSS_MAX_PER_FEED) : [];
+    const afterBiliPrune = prunedUrls.length > 0 ? existing.filter((a) => !prunedSet.has(a.url)) : existing;
+    const rssPrunedUrls = rssRes ? capRssWindow([...afterBiliPrune, ...newArticles], rssRes.perFeed, RSS_MAX_PER_FEED) : [];
     if (rssPrunedUrls.length > 0) {
       const rssPrunedSet = new Set(rssPrunedUrls);
-      remaining = remaining.filter((a) => !rssPrunedSet.has(a.url));
       newArticles = newArticles.filter((a) => !rssPrunedSet.has(a.url));
     }
-    const rssTitleUpdates = rssRes && Object.keys(rssRes.titleUpdates).length > 0 ? disk.rssFeeds.map((f) => rssRes.titleUpdates[f.url] ? { ...f, title: rssRes.titleUpdates[f.url] } : f) : void 0;
+    const rssTitlePatches = rssRes && Object.keys(rssRes.titleUpdates).length > 0 ? rssRes.titleUpdates : void 0;
     const fetchedAt = localDatetime2(now());
     for (const a of newArticles) a.fetchedAt = fetchedAt;
     const attempted = [guokrP, zhihuP, biliP, rssP].filter((p) => p !== null).length;
     const allFailed = attempted > 0 && failedSources.length >= attempted;
-    const finalArticles = [...remaining, ...newArticles];
-    const finalUrls = new Set(finalArticles.map((a) => a.url));
-    const removeArticleKeys = existing.filter((a) => a && a.url && !finalUrls.has(a.url)).map((a) => articleKeyOf(a));
+    const prunedUrlSet = /* @__PURE__ */ new Set([...prunedUrls, ...rssPrunedUrls]);
+    const removeArticleKeys = [];
+    const seenRemoveKeys = /* @__PURE__ */ new Set();
+    for (const a of existing) {
+      if (!a || !a.url || !prunedUrlSet.has(a.url)) continue;
+      const k = articleKeyOf(a);
+      if (seenRemoveKeys.has(k)) continue;
+      seenRemoveKeys.add(k);
+      removeArticleKeys.push(k);
+    }
     await deps.store.write({
       set: {
-        articles: finalArticles,
-        // UP 主资料与磁盘存量合并（段级合并写按声明段整段覆盖）
-        ...biliRes && Object.keys(biliRes.upInfo).length > 0 ? { bilibiliUpInfo: { ...disk.bilibiliUpInfo, ...biliRes.upInfo } } : {},
-        ...rssTitleUpdates ? { rssFeeds: rssTitleUpdates } : {},
+        articles: newArticles,
         ...allFailed ? {} : { lastFetchAt: now() }
       },
+      // C26：UP 主资料按条补丁（只声明本轮 uid），不用旧快照拼整段——窗口期内被移除的
+      // UP 资料不再被旧快照复活为本轮没抓到的孤儿条目
+      ...biliRes && Object.keys(biliRes.upInfo).length > 0 ? { patchBilibiliUpInfo: biliRes.upInfo } : {},
+      ...rssTitlePatches ? { patchRssFeedTitles: rssTitlePatches } : {},
       ...removeArticleKeys.length > 0 ? { removeArticleKeys } : {}
     });
     return {
@@ -13442,6 +13486,8 @@ ${bodyText.substring(0, 6e3)}`;
         if (resp.status < 200 || resp.status >= 300) return null;
         if (!looksLikeFeedXml(resp.text)) return null;
         return extractFeedTitleFromXml(resp.text);
+      });
+      req.catch(() => {
       });
       return await Promise.race([req, timer]);
     } catch (e) {
