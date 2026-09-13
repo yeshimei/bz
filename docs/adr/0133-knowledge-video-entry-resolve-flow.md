@@ -32,4 +32,5 @@
 - cookie 明文存插件设置并随 vault 同步（用户环境本已同步 CONFIG/STORAGE，拍板接受）；cookie 过期表现为档位回落固定列表，更新方式 = 重新「从 CLI 导入」或粘贴。
 - 未配 cookie 的移动端设备：档位显示回落固定列表（真档位能力依赖 cookie 同步到达）。
 - 解析按钮取代防抖后，粘贴链接不再自动出信息——多一次点击，换取可控与显式失败态（用户拍板）。
+- **流程要点（实现期发现）**：`prototypes/` 产物的源指纹对**工作区文件字节**敏感（worktree 与主仓库的换行符差异即致指纹不匹配）——worktree 内跑 `node scripts/build-preview.mjs` 得到的产物合并回主仓库后过不了 `preview-freshness` 守卫；`pnpm run build`（esbuild production）只重出 render 产物、不重出 behavior 产物。结论：**原型产物应在主仓库重出**（本次收尾即如此修正）。
 - 术语表：「录入元信息」词条重写；新增「清晰度档位」相关表述。
