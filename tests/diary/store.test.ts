@@ -67,7 +67,7 @@ describe('addEntry（写层：取空闲条目文件名 → 建文件）', () => 
     // '-2' 字典序在 '.' 前：排序后 -2 在前（两文件确为 基名 + -2 各一）；
     // 并发下谁占基名是竞态，断言两条内容各落一个文件、互不覆盖
     expect(paths).toEqual([`我的/日记/${DATE} 00-00-2.md`, `我的/日记/${DATE} 00-00.md`]);
-    const bodies = [vault.files.get(paths[0])!, vault.files.get(paths[1])!].map((t) =>
+    const bodies = [vault.files.get(paths[0]!)!, vault.files.get(paths[1]!)!].map((t) =>
       t.includes('第一条') ? '第一条' : '第二条'
     ).sort();
     expect(bodies).toEqual(['第一条', '第二条']);
