@@ -123,7 +123,7 @@ describe('clipbook UI 桌面三栏', () => {
 
   it('移动端（isMobileEnv）→ mob 容器显示 + 点条目进详情 + 头栏保存钮', async () => {
     boot();
-    // 模拟移动端（isMobileEnv = Platform.isMobile；直接拉高 M.isMobile 需走 UI 分支——用 window 宽判定被 mock 卡，
+    // 模拟移动端（isMobileEnv = Platform.isMobile；旧 M.isMobile 缓存已随 C21 死代码清理退役——用 window 宽判定被 mock 卡，
     // 改走 Platform mock 更稳：直接测 mob DOM 存在与点击流程（桌面下 mob 隐藏但 DOM 可测）
     openClipbook(getApp());
     await vi.waitFor(() => expect(M.open).toBe(true));

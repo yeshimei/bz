@@ -51,6 +51,7 @@ import {
 } from './render';
 import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar } from './loader';
+import { readNewsData } from './news-data';
 import { writeClipNote } from './save';
 import {
   flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession,
@@ -96,8 +97,6 @@ const SPLIT_MIN_READ = 320;
 /** 幂等初始化面板 DOM（首开建结构 + 装载 + 订阅；重复调用只切可见性） */
 export function initPanel(app: any, showNow = false): void {
   M.appRef = app;
-  M.isMobile = (typeof (window as any).Platform !== 'undefined' && !!(window as any).Platform.isMobile)
-    || (navigator && navigator.maxTouchPoints > 0 && (window.innerWidth || 0) <= 768);
   if (!overlayEl) buildDom(app);
   if (showNow) showPanel();
   else void loadIfNeeded();
@@ -309,11 +308,7 @@ function buildDom(app: any): void {
     }
   });
   // 移动：返回（详情屏2 → 屏1，原型文字钮）
-  mobBackBtn!.addEventListener('click', () => {
-    M.mobDetailOpen = false;
-    mobDetailEl!.style.display = 'none';
-    renderAll();
-  });
+  mobBackBtn!.addEventListener('click', () => closeMobDetail());
   // 移动：头栏保存钮（文字钮「存为剪藏 / 已存」）
   mobSaveBtnEl!.addEventListener('click', () => {
     void doSave(M.cur);
@@ -331,11 +326,14 @@ function buildDom(app: any): void {
     if (next) openMobDetail(next.id); else (mobBackBtn as HTMLElement).click();
   });
 
-  // ESC
+  // ESC（C19：详情屏开着时第一层收详情返回列表，再按一次才关面板）
   escKey = 'bz-clipbook';
   escHandle = escManager.register(escKey, {
     isVisible: () => !!overlayEl && overlayEl.style.display !== 'none',
-    close: () => closePanel(),
+    close: () => {
+      if (M.mobDetailOpen) { closeMobDetail(); return; }
+      closePanel();
+    },
   });
   const frameEl = overlayEl.querySelector('.bz-clip-frame') as HTMLElement;
   // 桌面面板拖拽缩放 + 尺寸记忆（enh 包 8 → ADR-0094 persist 选项）：仅桌面写内联宽高——
@@ -409,10 +407,22 @@ function renderAll(): void {
   renderList();
   renderReader();
   renderMobToc();
-  if (M.mobDetailOpen && M.cur) {
-    // 详情保持打开态（数据刷新后重绘正文）
-    renderMobDetail();
+  if (M.mobDetailOpen) {
+    if (M.cur) renderMobDetail();
+    else {
+      // C20：详情开着但当前条目已消失（被删且列表清空 → M.cur=null）→ 收起详情 overlay，
+      // 不留残留的已删文章详情屏（重开面板/返回钮之外的静默收口）
+      M.mobDetailOpen = false;
+      if (mobDetailEl) mobDetailEl.style.display = 'none';
+    }
   }
+}
+
+/** 移动详情屏 → 返回列表（返回钮与 ESC 第一层共用；C19） */
+function closeMobDetail(): void {
+  M.mobDetailOpen = false;
+  if (mobDetailEl) mobDetailEl.style.display = 'none';
+  renderAll();
 }
 
 /** 头行期号（issue 214）：「YYYY 年 M 月 D 日 · 第 N 期」，N = news 总条数（含已处理），随刷新更新 */
@@ -512,11 +522,14 @@ function toggleDeskFold(kind: 'read' | 'saved'): void {
   renderList();
 }
 
-/** 会话边界（ADR-0108）：每次打开面板 = 新会话 = 重排点——递增世代使全部快照失效、折叠默认态复位 */
+/** 会话边界（ADR-0108）：每次打开面板 = 新会话 = 重排点——递增世代使全部快照失效、折叠默认态复位。
+ *  C16：移动端折叠记忆（expandedMobArch）与桌面 deskFoldOpen 同口径在此复位——原实现只在
+ *  卸载时清，重开面板仍停在上次展开的「已读/已收」段；详情往返不经过本函数，态不丢。 */
 function beginSession(): void {
   epochReset();
   deskFoldOpen.clear();
   deskFoldTouched.clear();
+  expandedMobArch.clear();
 }
 
 /** 搜索谓词（中栏列表过滤与 rail 计数共用——issue 206：搜索时各源统计联动） */
@@ -904,6 +917,11 @@ export function invalidateClipBodyCache(path: string): void {
   clipBodyCache.delete(String(path || ''));
 }
 
+/** 测试钩子：正文缓存键快照（C18 回归——rename 必须按 oldPath 失效旧键，否则缓存只增不减） */
+export function __clipBodyCacheKeysForTests(): string[] {
+  return [...clipBodyCache.keys()];
+}
+
 // ---- 阅读字号三档（enh 包 7：小/中/大）----
 // 档位由设置面板「剪藏本 · 基础 · 阅读字号」驱动（阅读面内分段控件已退役），此处只负责落类
 
@@ -971,10 +989,30 @@ async function doMarkRead(a: ClipArticle | null): Promise<void> {
   // F3：已读/已收条目不重复标读——防统计重复计数 + 重复 news:read 事件（smartcat 三跳重复喂），
   // 防「已收」条目 state:'saved' 被覆盖成 'skipped'（日后删除剪藏时该条从已收掉进已读，统计虚增）
   if (a.st !== 'unread') return;
-  const rawBefore = { ...(a.raw || {}) }; // 动作前快照（撤销恢复 read/state/body 用）
-  await flowMarkRead(a);
+  // C32：动作前快照按磁盘现态重取——「打开即已读」已把内存 raw.read 同步置 true（会话读取位），
+  // 直接 {...a.raw} 会把污染态当动作前态，6 秒内撤销「恢复未读」实际仍已读
+  const rawBefore = await rawBeforeFromDisk(a);
+  const res = await flowMarkRead(a);
+  if (!res.changed) {
+    // 盘面已是目标态（落盘窗口内重复标读；flow 内已守卫不发事件）→ 不给假撤销，只收敛显示
+    await refreshAfterAction();
+    return;
+  }
   notifyUndo(`已将「${a.title}」标为已读`, () => void undoMarkRead(rawBefore));
   await refreshAfterAction();
+}
+
+/** 动作前 raw 快照（C32）：以磁盘现态为准（读不到盘/条目不在则回退内存 raw，不阻断动作） */
+async function rawBeforeFromDisk(a: ClipArticle): Promise<any> {
+  const key = articleKeyOf(a.raw || {});
+  try {
+    const res = await readNewsData();
+    const hit = res.ok && !res.missing
+      ? (res.data.articles || []).find((x: any) => articleKeyOf(x) === key)
+      : null;
+    if (hit) return { ...hit };
+  } catch (e) { /* 读盘异常 → 回退内存快照 */ }
+  return { ...(a.raw || {}) };
 }
 
 /** 撤销标记已读（enh 包 5）：恢复动作前条目态 + 统计回退，走串行写回队列 */
@@ -1235,8 +1273,11 @@ function markReadOnOpen(a: ClipArticle): void {
   const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
   if (!raw || raw.read === true) return;
   raw.read = true; // 同步内存位（防重入 + 即时视觉/计数）
-  void flowMarkRead(a).then(() => {
-    // 落盘完成无需额外动作；若期间未重渲（极短窗口），补一次目录/徽标刷新收敛灰显
+  void flowMarkRead(a).then((res) => {
+    // C17：rail 脚注「今日已读」取内存镜像 M.stats.byDate——静默打开即读的 +1 只在磁盘，
+    // 不刷新时脚注停留旧值（到下次装载才追上）。回写落盘声明的统计快照（与磁盘同一口径）。
+    if (res && res.changed && res.stats) M.stats = res.stats;
+    // 若期间未重渲（极短窗口），补一次目录/徽标刷新收敛灰显
     if (M.open && !M.mobDetailOpen) { renderList(); renderRail(); }
   }).catch(() => { /* 落盘失败保持静默（下次装载还原） */ });
 }

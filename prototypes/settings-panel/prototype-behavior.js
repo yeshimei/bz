@@ -1,4 +1,4 @@
-/* 源指纹 dc6c517941fb42e5 · 仓内输入 189 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 94a24ecf84cdb935 · 仓内输入 189 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -17799,8 +17799,7 @@ ${c.trim()}
         cur: null,
         list: [],
         upInfo: {},
-        mobDetailOpen: false,
-        isMobile: false
+        mobDetailOpen: false
       };
     }
   });
@@ -21044,13 +21043,24 @@ ${sample}`,
     const total = (openedAt ? now - openedAt : 0) + accumMs;
     return Math.max(1, Math.round(total / 6e4));
   }
+  function bumpStats(s, action, platform, today, upgraded) {
+    if (!upgraded) {
+      s.totalRead = (Number(s.totalRead) || 0) + 1;
+      if (!s.byPlatform) s.byPlatform = {};
+      if (!s.byDate) s.byDate = {};
+      s.byPlatform[platform] = (Number(s.byPlatform[platform]) || 0) + 1;
+      s.byDate[today] = (Number(s.byDate[today]) || 0) + 1;
+    }
+    if (action === "saved") s.totalSaved = (Number(s.totalSaved) || 0) + 1;
+    else s.totalSkipped = (Number(s.totalSkipped) || 0) + 1;
+  }
   function markHandledAndBump(raw, action) {
     const key = articleKeyOf(raw);
     const platform = raw.platform || "未知";
     const today = localDayKey2();
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok || res.missing) return;
+      if (!res.ok || res.missing) return NO_BUMP;
       let touched = false;
       let changed = false;
       let upgraded = false;
@@ -21065,14 +21075,11 @@ ${sample}`,
         }
         return { ...a, read: true, state: action };
       });
-      if (!touched || !changed) return;
+      if (!touched || !changed) return NO_BUMP;
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      if (!upgraded) s.totalRead = (Number(s.totalRead) || 0) + 1;
-      if (action === "saved") s.totalSaved = (Number(s.totalSaved) || 0) + 1;
-      else s.totalSkipped = (Number(s.totalSkipped) || 0) + 1;
-      s.byPlatform[platform] = (s.byPlatform[platform] || 0) + 1;
-      s.byDate[today] = (s.byDate[today] || 0) + 1;
+      bumpStats(s, action, platform, today, upgraded);
       await writeNewsDataMerged({ set: { articles: list, stats: s } });
+      return { changed: true, upgraded, stats: s };
     });
   }
   function removeArticle(raw) {
@@ -21084,8 +21091,11 @@ ${sample}`,
       await writeNewsDataMerged({ set: { articles: list }, removeArticleKeys: [key] });
     });
   }
+  function buildReadEvt(raw, state2) {
+    return { title: raw.title, platform: raw.platform, state: state2, durationMin: durationMin() };
+  }
   function emitReadEvt(raw, state2) {
-    const evt = { title: raw.title, platform: raw.platform, state: state2, durationMin: durationMin() };
+    const evt = buildReadEvt(raw, state2);
     emitDomainEvent("news", { kind: "read", evt });
     return evt;
   }
@@ -21104,8 +21114,9 @@ ${sample}`,
     try {
       const ok = await writeClipNote(raw);
       if (!ok) return false;
-      await markHandledAndBump(raw, "saved");
-      const evt = emitReadEvt(raw, "saved");
+      const bump = await markHandledAndBump(raw, "saved");
+      const evt = buildReadEvt(raw, "saved");
+      if (bump.changed) emitDomainEvent("news", { kind: "read", evt });
       emitDomainEvent("news", { kind: "saved", evt, clipPath: `${dirOf()}/${String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim()}.md` });
       return true;
     } catch (e) {
@@ -21115,10 +21126,11 @@ ${sample}`,
   }
   async function flowMarkRead(article) {
     const raw = article && article.raw;
-    if (!raw) return;
+    if (!raw) return NO_BUMP;
     pauseReadingSession();
-    await markHandledAndBump(raw, "skipped");
-    emitReadEvt(raw, "skipped");
+    const res = await markHandledAndBump(raw, "skipped");
+    if (res.changed) emitReadEvt(raw, "skipped");
+    return res;
   }
   async function flowDeleteNews(article) {
     const raw = article && article.raw;
@@ -21205,7 +21217,7 @@ ${sample}`,
     const s = tryGetSettings();
     return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
   }
-  var curKey, openedAt, accumMs;
+  var curKey, openedAt, accumMs, NO_BUMP;
   var init_flow = __esm({
     "src/clipbook/flow.ts"() {
       init_app();
@@ -21221,12 +21233,14 @@ ${sample}`,
       curKey = "";
       openedAt = 0;
       accumMs = 0;
+      NO_BUMP = { changed: false, upgraded: false, stats: null };
     }
   });
 
   // src/clipbook/ui.ts
   var ui_exports4 = {};
   __export(ui_exports4, {
+    __clipBodyCacheKeysForTests: () => __clipBodyCacheKeysForTests,
     clipbookSettingsSchema: () => clipbookSettingsSchema,
     closePanel: () => closePanel2,
     initPanel: () => initPanel,
@@ -21239,7 +21253,6 @@ ${sample}`,
   });
   function initPanel(app, showNow = false) {
     M5.appRef = app;
-    M5.isMobile = typeof window.Platform !== "undefined" && !!window.Platform.isMobile || navigator && navigator.maxTouchPoints > 0 && (window.innerWidth || 0) <= 768;
     if (!overlayEl) buildDom(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
@@ -21436,11 +21449,7 @@ ${sample}`,
         closePanel2();
       }
     });
-    mobBackBtn.addEventListener("click", () => {
-      M5.mobDetailOpen = false;
-      mobDetailEl.style.display = "none";
-      renderAll2();
-    });
+    mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       void doSave(M5.cur);
     });
@@ -21465,7 +21474,13 @@ ${sample}`,
     escKey = "bz-clipbook";
     escHandle2 = escManager.register(escKey, {
       isVisible: () => !!overlayEl && overlayEl.style.display !== "none",
-      close: () => closePanel2()
+      close: () => {
+        if (M5.mobDetailOpen) {
+          closeMobDetail();
+          return;
+        }
+        closePanel2();
+      }
     });
     const frameEl = overlayEl.querySelector(".bz-clip-frame");
     if (!isMobileEnv()) {
@@ -21524,9 +21539,18 @@ ${sample}`,
     renderList();
     renderReader();
     renderMobToc();
-    if (M5.mobDetailOpen && M5.cur) {
-      renderMobDetail();
+    if (M5.mobDetailOpen) {
+      if (M5.cur) renderMobDetail();
+      else {
+        M5.mobDetailOpen = false;
+        if (mobDetailEl) mobDetailEl.style.display = "none";
+      }
     }
+  }
+  function closeMobDetail() {
+    M5.mobDetailOpen = false;
+    if (mobDetailEl) mobDetailEl.style.display = "none";
+    renderAll2();
   }
   function renderHeadIssue() {
     const el = overlayEl ? overlayEl.querySelector("[data-clip-issue]") : null;
@@ -21595,6 +21619,7 @@ ${sample}`,
     epochReset();
     deskFoldOpen.clear();
     deskFoldTouched.clear();
+    expandedMobArch.clear();
   }
   function matchesSearch(a) {
     const kw = (searchKw || "").toLowerCase();
@@ -21896,6 +21921,9 @@ ${sample}`,
   function invalidateClipBodyCache(path) {
     clipBodyCache.delete(String(path || ""));
   }
+  function __clipBodyCacheKeysForTests() {
+    return [...clipBodyCache.keys()];
+  }
   function readerFontSize() {
     var _a2;
     const v = String(((_a2 = tryGetSettings()) == null ? void 0 : _a2.clipbookReaderFontSize) || "");
@@ -21941,10 +21969,24 @@ ${sample}`,
   async function doMarkRead(a) {
     if (!a || a.origin !== "news") return;
     if (a.st !== "unread") return;
-    const rawBefore = { ...a.raw || {} };
-    await flowMarkRead(a);
+    const rawBefore = await rawBeforeFromDisk(a);
+    const res = await flowMarkRead(a);
+    if (!res.changed) {
+      await refreshAfterAction();
+      return;
+    }
     notifyUndo(`已将「${a.title}」标为已读`, () => void undoMarkRead(rawBefore));
     await refreshAfterAction();
+  }
+  async function rawBeforeFromDisk(a) {
+    const key = articleKeyOf(a.raw || {});
+    try {
+      const res = await readNewsData();
+      const hit = res.ok && !res.missing ? (res.data.articles || []).find((x) => articleKeyOf(x) === key) : null;
+      if (hit) return { ...hit };
+    } catch (e) {
+    }
+    return { ...a.raw || {} };
   }
   async function undoMarkRead(rawBefore) {
     await flowUndoHandled(rawBefore);
@@ -22179,7 +22221,8 @@ ${sample}`,
     const raw = a.raw || M5.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
-    void flowMarkRead(a).then(() => {
+    void flowMarkRead(a).then((res) => {
+      if (res && res.changed && res.stats) M5.stats = res.stats;
       if (M5.open && !M5.mobDetailOpen) {
         renderList();
         renderRail();
@@ -22326,6 +22369,7 @@ ${sample}`,
       init_render8();
       init_state4();
       init_loader();
+      init_news_data();
       init_flow();
       overlayEl = null;
       railListEl = null;

@@ -6,7 +6,8 @@
  * - 阅读视图条目是纯函数裁剪派生（见 data.ts clipArticle），st 为派生状态。
  */
 
-/** 阅读流状态点：unread 蓝 / reading 琥珀 / read 空心（仅剪藏保留语义）/ saved 绿 */
+/** 阅读流状态点：unread 蓝 / reading 琥珀（遗留态：C29 起无写入方——去在读后侧写不再派生）/
+ *  read 空心（仅剪藏保留语义）/ saved 绿 */
 export type ClipState = 'unread' | 'reading' | 'read' | 'saved';
 
 /** 条目来源：news.json（聚合讯）或剪藏目录（.md frontmatter） */

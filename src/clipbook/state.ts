@@ -41,8 +41,6 @@ export interface ClipbookState {
   upInfo: Record<string, { name?: string; avatar?: string }>;
   /** 移动详情打开态 */
   mobDetailOpen: boolean;
-  /** 移动端环境（初始化判定一次） */
-  isMobile: boolean;
 }
 
 export function defaultSel(): ClipSourceSel {
@@ -63,7 +61,6 @@ export const M: ClipbookState = {
   list: [],
   upInfo: {},
   mobDetailOpen: false,
-  isMobile: false,
 };
 
 /** 卸载时复位（unload 幂等） */

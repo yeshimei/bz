@@ -1,4 +1,4 @@
-/* 源指纹 5ad8fd0fe0b42a46 · 仓内输入 80 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 20c7b8bfe2427e22 · 仓内输入 80 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -10177,13 +10177,24 @@ ${sample}`,
     const total = (openedAt ? now - openedAt : 0) + accumMs;
     return Math.max(1, Math.round(total / 6e4));
   }
+  function bumpStats(s, action, platform, today, upgraded) {
+    if (!upgraded) {
+      s.totalRead = (Number(s.totalRead) || 0) + 1;
+      if (!s.byPlatform) s.byPlatform = {};
+      if (!s.byDate) s.byDate = {};
+      s.byPlatform[platform] = (Number(s.byPlatform[platform]) || 0) + 1;
+      s.byDate[today] = (Number(s.byDate[today]) || 0) + 1;
+    }
+    if (action === "saved") s.totalSaved = (Number(s.totalSaved) || 0) + 1;
+    else s.totalSkipped = (Number(s.totalSkipped) || 0) + 1;
+  }
   function markHandledAndBump(raw, action) {
     const key = articleKeyOf(raw);
     const platform = raw.platform || "未知";
     const today = localDayKey2();
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok || res.missing) return;
+      if (!res.ok || res.missing) return NO_BUMP;
       let touched = false;
       let changed = false;
       let upgraded = false;
@@ -10198,14 +10209,11 @@ ${sample}`,
         }
         return { ...a, read: true, state: action };
       });
-      if (!touched || !changed) return;
+      if (!touched || !changed) return NO_BUMP;
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      if (!upgraded) s.totalRead = (Number(s.totalRead) || 0) + 1;
-      if (action === "saved") s.totalSaved = (Number(s.totalSaved) || 0) + 1;
-      else s.totalSkipped = (Number(s.totalSkipped) || 0) + 1;
-      s.byPlatform[platform] = (s.byPlatform[platform] || 0) + 1;
-      s.byDate[today] = (s.byDate[today] || 0) + 1;
+      bumpStats(s, action, platform, today, upgraded);
       await writeNewsDataMerged({ set: { articles: list, stats: s } });
+      return { changed: true, upgraded, stats: s };
     });
   }
   function removeArticle(raw) {
@@ -10217,8 +10225,11 @@ ${sample}`,
       await writeNewsDataMerged({ set: { articles: list }, removeArticleKeys: [key] });
     });
   }
+  function buildReadEvt(raw, state) {
+    return { title: raw.title, platform: raw.platform, state, durationMin: durationMin() };
+  }
   function emitReadEvt(raw, state) {
-    const evt = { title: raw.title, platform: raw.platform, state, durationMin: durationMin() };
+    const evt = buildReadEvt(raw, state);
     emitDomainEvent("news", { kind: "read", evt });
     return evt;
   }
@@ -10237,8 +10248,9 @@ ${sample}`,
     try {
       const ok = await writeClipNote(raw);
       if (!ok) return false;
-      await markHandledAndBump(raw, "saved");
-      const evt = emitReadEvt(raw, "saved");
+      const bump = await markHandledAndBump(raw, "saved");
+      const evt = buildReadEvt(raw, "saved");
+      if (bump.changed) emitDomainEvent("news", { kind: "read", evt });
       emitDomainEvent("news", { kind: "saved", evt, clipPath: `${dirOf()}/${String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim()}.md` });
       return true;
     } catch (e) {
@@ -10248,10 +10260,11 @@ ${sample}`,
   }
   async function flowMarkRead(article) {
     const raw = article && article.raw;
-    if (!raw) return;
+    if (!raw) return NO_BUMP;
     pauseReadingSession();
-    await markHandledAndBump(raw, "skipped");
-    emitReadEvt(raw, "skipped");
+    const res = await markHandledAndBump(raw, "skipped");
+    if (res.changed) emitReadEvt(raw, "skipped");
+    return res;
   }
   async function flowDeleteNews(article) {
     const raw = article && article.raw;
@@ -10338,7 +10351,7 @@ ${sample}`,
     const s = tryGetSettings();
     return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
   }
-  var curKey, openedAt, accumMs;
+  var curKey, openedAt, accumMs, NO_BUMP;
   var init_flow = __esm({
     "src/clipbook/flow.ts"() {
       init_app();
@@ -10354,6 +10367,7 @@ ${sample}`,
       curKey = "";
       openedAt = 0;
       accumMs = 0;
+      NO_BUMP = { changed: false, upgraded: false, stats: null };
     }
   });
 
@@ -14080,8 +14094,7 @@ ${bodyText.substring(0, 6e3)}`;
         cur: null,
         list: [],
         upInfo: {},
-        mobDetailOpen: false,
-        isMobile: false
+        mobDetailOpen: false
       };
     }
   });
@@ -14235,6 +14248,7 @@ ${bodyText.substring(0, 6e3)}`;
   // src/clipbook/ui.ts
   var ui_exports = {};
   __export(ui_exports, {
+    __clipBodyCacheKeysForTests: () => __clipBodyCacheKeysForTests,
     clipbookSettingsSchema: () => clipbookSettingsSchema,
     closePanel: () => closePanel,
     initPanel: () => initPanel,
@@ -14247,7 +14261,6 @@ ${bodyText.substring(0, 6e3)}`;
   });
   function initPanel(app, showNow = false) {
     M.appRef = app;
-    M.isMobile = typeof window.Platform !== "undefined" && !!window.Platform.isMobile || navigator && navigator.maxTouchPoints > 0 && (window.innerWidth || 0) <= 768;
     if (!overlayEl) buildDom(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
@@ -14444,11 +14457,7 @@ ${bodyText.substring(0, 6e3)}`;
         closePanel();
       }
     });
-    mobBackBtn.addEventListener("click", () => {
-      M.mobDetailOpen = false;
-      mobDetailEl.style.display = "none";
-      renderAll();
-    });
+    mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       void doSave(M.cur);
     });
@@ -14473,7 +14482,13 @@ ${bodyText.substring(0, 6e3)}`;
     escKey = "bz-clipbook";
     escHandle = escManager.register(escKey, {
       isVisible: () => !!overlayEl && overlayEl.style.display !== "none",
-      close: () => closePanel()
+      close: () => {
+        if (M.mobDetailOpen) {
+          closeMobDetail();
+          return;
+        }
+        closePanel();
+      }
     });
     const frameEl = overlayEl.querySelector(".bz-clip-frame");
     if (!isMobileEnv()) {
@@ -14532,9 +14547,18 @@ ${bodyText.substring(0, 6e3)}`;
     renderList();
     renderReader();
     renderMobToc();
-    if (M.mobDetailOpen && M.cur) {
-      renderMobDetail();
+    if (M.mobDetailOpen) {
+      if (M.cur) renderMobDetail();
+      else {
+        M.mobDetailOpen = false;
+        if (mobDetailEl) mobDetailEl.style.display = "none";
+      }
     }
+  }
+  function closeMobDetail() {
+    M.mobDetailOpen = false;
+    if (mobDetailEl) mobDetailEl.style.display = "none";
+    renderAll();
   }
   function renderHeadIssue() {
     const el = overlayEl ? overlayEl.querySelector("[data-clip-issue]") : null;
@@ -14603,6 +14627,7 @@ ${bodyText.substring(0, 6e3)}`;
     epochReset();
     deskFoldOpen.clear();
     deskFoldTouched.clear();
+    expandedMobArch.clear();
   }
   function matchesSearch(a) {
     const kw = (searchKw || "").toLowerCase();
@@ -14904,6 +14929,9 @@ ${bodyText.substring(0, 6e3)}`;
   function invalidateClipBodyCache(path) {
     clipBodyCache.delete(String(path || ""));
   }
+  function __clipBodyCacheKeysForTests() {
+    return [...clipBodyCache.keys()];
+  }
   function readerFontSize() {
     var _a;
     const v = String(((_a = tryGetSettings()) == null ? void 0 : _a.clipbookReaderFontSize) || "");
@@ -14949,10 +14977,24 @@ ${bodyText.substring(0, 6e3)}`;
   async function doMarkRead(a) {
     if (!a || a.origin !== "news") return;
     if (a.st !== "unread") return;
-    const rawBefore = { ...a.raw || {} };
-    await flowMarkRead(a);
+    const rawBefore = await rawBeforeFromDisk(a);
+    const res = await flowMarkRead(a);
+    if (!res.changed) {
+      await refreshAfterAction();
+      return;
+    }
     notifyUndo(`已将「${a.title}」标为已读`, () => void undoMarkRead(rawBefore));
     await refreshAfterAction();
+  }
+  async function rawBeforeFromDisk(a) {
+    const key = articleKeyOf(a.raw || {});
+    try {
+      const res = await readNewsData();
+      const hit = res.ok && !res.missing ? (res.data.articles || []).find((x) => articleKeyOf(x) === key) : null;
+      if (hit) return { ...hit };
+    } catch (e) {
+    }
+    return { ...a.raw || {} };
   }
   async function undoMarkRead(rawBefore) {
     await flowUndoHandled(rawBefore);
@@ -15187,7 +15229,8 @@ ${bodyText.substring(0, 6e3)}`;
     const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
-    void flowMarkRead(a).then(() => {
+    void flowMarkRead(a).then((res) => {
+      if (res && res.changed && res.stats) M.stats = res.stats;
       if (M.open && !M.mobDetailOpen) {
         renderList();
         renderRail();
@@ -15334,6 +15377,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_render3();
       init_state();
       init_loader();
+      init_news_data();
       init_flow();
       overlayEl = null;
       railListEl = null;
@@ -15533,10 +15577,12 @@ ${bodyText.substring(0, 6e3)}`;
       const s = tryGetSettings();
       return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
     };
-    const schedule = (path) => {
+    const schedule = (path, stalePath) => {
       if (path) invalidateClipBodyCache(path);
+      if (stalePath) invalidateClipBodyCache(stalePath);
       const d = dir();
-      if (path && !path.startsWith(d + "/")) return;
+      const inDir = (p) => !!p && p.startsWith(d + "/");
+      if (path && !inDir(path) && !inDir(stalePath)) return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         void reloadIfOpen();
@@ -15545,7 +15591,7 @@ ${bodyText.substring(0, 6e3)}`;
     onDomainEvent("clipping:file-created", (e) => schedule(e && e.path));
     onDomainEvent("clipping:file-modified", (e) => schedule(e && e.path));
     onDomainEvent("clipping:file-deleted", (e) => schedule(e && e.path));
-    onDomainEvent("clipping:file-renamed", (e) => schedule(e && e.newPath));
+    onDomainEvent("clipping:file-renamed", (e) => schedule(e && e.newPath, e && e.oldPath));
   }
 
   // prototypes/clipbook/fake-sim.ts

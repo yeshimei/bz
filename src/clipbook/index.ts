@@ -88,10 +88,16 @@ function registerAutoRefresh(app: App): void {
     const s = tryGetSettings() as any;
     return ((s && s.articleDirectory) || '归档/网页剪藏').replace(/\/+$/, '');
   };
-  const schedule = (path?: string) => {
+  /** 缓存失效 + 目录内变更防抖刷新。
+   *  C18：rename 携带 oldPath——正文缓存键是**旧路径**（notePath 快照），只失效 newPath 等于没失效
+   *  （旧键常驻内存，重命名回原名会读到陈旧正文）；且「移出剪藏目录」的改名 newPath 不在目录内，
+   *  旧路径条目却已消失，命中判定必须新旧都看，否则面板留着幽灵条目。 */
+  const schedule = (path?: string, stalePath?: string) => {
     if (path) invalidateClipBodyCache(path); // 正文缓存失效（enh 包 3：clipping:file-modified 等）
+    if (stalePath) invalidateClipBodyCache(stalePath);
     const d = dir();
-    if (path && !path.startsWith(d + '/')) return;
+    const inDir = (p?: string) => !!p && p.startsWith(d + '/');
+    if (path && !inDir(path) && !inDir(stalePath)) return;
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       void reloadIfOpen();
@@ -100,5 +106,5 @@ function registerAutoRefresh(app: App): void {
   onDomainEvent<{ path: string }>('clipping:file-created', (e) => schedule(e && e.path));
   onDomainEvent<{ path: string }>('clipping:file-modified', (e) => schedule(e && e.path));
   onDomainEvent<{ path: string }>('clipping:file-deleted', (e) => schedule(e && e.path));
-  onDomainEvent<{ oldPath: string; newPath: string }>('clipping:file-renamed', (e) => schedule(e && e.newPath));
+  onDomainEvent<{ oldPath: string; newPath: string }>('clipping:file-renamed', (e) => schedule(e && e.newPath, e && e.oldPath));
 }
