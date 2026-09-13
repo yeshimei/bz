@@ -172,6 +172,8 @@ export function closePanel(): void {
   panelSplit?.flush(); // 关面板即落盘分割线宽度（同上语义）
   M.open = false;
   M.mobDetailOpen = false;
+  // C7：移动详情 overlay 的 DOM 显示态同步复位——原实现只清布尔，重开面板会直接落在上次的详情屏
+  if (mobDetailEl) mobDetailEl.style.display = 'none';
   if (overlayEl) overlayEl.style.display = 'none';
 }
 
@@ -588,11 +590,15 @@ function renderRail(): void {
     let sel: any = null;
     try { sel = JSON.parse(row.dataset.src || 'null'); } catch (e) { return; }
     if (!sel) return;
+    // C1：site 行必须进 site 源分支——原三元链缺该分支时落 {kind:'all'}，站点右键「全部标为已读（N 篇）」
+    // 的 N 变成**全库未读**数、确认框却写「把「某站点」的 N 篇…」，一次确认把整个未读流标读
     const source = sel.kind === 'clip'
       ? { kind: 'clip' as const }
       : sel.kind === 'inbox'
         ? { kind: 'inbox' as const, platform: String(sel.platform || ''), up: sel.up ? String(sel.up) : undefined }
-        : { kind: 'all' as const };
+        : sel.kind === 'site'
+          ? { kind: 'site' as const, site: String(sel.site || '') }
+          : { kind: 'all' as const };
     const actions = buildRailActions(String(row.title || ''), source);
     if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ''), menuClass: 'bz-clip-menu-editorial' });
   });
@@ -646,7 +652,8 @@ function renderList(): void {
     const list = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo).filter((a) => !searchKw || matchesSearch(a));
     if (!list.length) {
       listEl.innerHTML = '';
-      listEl.appendChild(uiEmpty({ icon: 'scissors', title: '剪藏本为空' }));
+      // C15：搜索零命中走「查无此条」（news 源同态文案），不误报「剪藏本为空」
+      listEl.appendChild(uiEmpty({ icon: 'scissors', title: searchKw ? '查无此条' : '剪藏本为空' }));
       M.cur = null;
       if (readerEl) renderReader();
       return;
@@ -790,7 +797,10 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
   if (a.st !== 'saved') {
     out.push({ icon: 'download', label: '保存到剪藏本', title: '保存为正式剪藏', onClick: () => void doSave(a) });
   }
-  out.push({ icon: 'check', label: '标记为已读', title: '不再出现在收件流', onClick: () => void doMarkRead(a) });
+  // C14：已读/已收条目不再挂「标记为已读」——doMarkRead 的 st!=='unread' 守卫会静默吞掉，菜单不给无效入口
+  if (a.st === 'unread') {
+    out.push({ icon: 'check', label: '标记为已读', title: '不再出现在收件流', onClick: () => void doMarkRead(a) });
+  }
   out.push({ icon: 'trash-2', label: '删除', kind: 'danger', title: '从收件流删除', onClick: () => deleteNewsItem(a) });
   return out;
 }
@@ -806,6 +816,9 @@ async function hydrateArticleMarkdown(el: HTMLElement, md: string, sourcePath: s
   } catch { /* 渲染失败 → 纯文本兜底 */ }
   if (!alive()) return;
   if (!el.querySelector('*') || !el.textContent?.trim()) el.textContent = md;
+  // C6：bindImgFallback 在异步水合之前跑过（当时容器里还没有 img）——水合产出后才插入的图片
+  // 需补挂失败监听，否则外链图加载失败留裂图（issue 206 全链路失效）
+  bindImgFallback(el);
 }
 
 /** 正文图片加载失败隐藏（外链图缓存失效/断网时不留裂图；MarkdownRenderer 产出的 img 无专属类，按容器取） */
@@ -877,6 +890,9 @@ async function loadClipBody(a: ClipArticle): Promise<void> {
       md.innerHTML = `<p class="dim">（笔记暂无正文）</p>`;
       return;
     }
+    // C5：MarkdownRenderer.render 是**追加**语义（铁律 6）——水合前清掉「正在读取剪藏正文…」占位，
+    // 否则正文顶部永久残留占位一行；占位只承担「无正文可渲染」终态，不与水合共存
+    md.innerHTML = '';
     void hydrateArticleMarkdown(md, body, path, () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
 }
@@ -903,9 +919,16 @@ function applyReaderFontSize(): void {
 
 // ---- 阅读动线（去在读后：无自动落读；条目切换靠 ←→/jk 与显式「标记为已读」动作） ----
 
-/** ←→/jk 条目切换（右栏聚焦时；阅读顺序 = 未读桶快照序，与目录常显同序） */
+/** ←→/jk 条目切换（右栏聚焦时）。C8：步进集必须与目录同集——
+ *  搜索态 = 命中平铺集（防切到不在命中列表、目录无高亮的条目）；剪藏本源 = 平铺列表
+ *  （原 dirFor().unread 对 clip 源恒空，j/k 静默无效）；其余 news 源 = 未读桶快照序。 */
 function stepArticle(delta: number): void {
-  const list = dirFor(currentSrc()).unread;
+  const src = currentSrc();
+  const list = searchKw
+    ? M.list
+    : src.kind === 'clip'
+      ? currentList()
+      : dirFor(src).unread;
   if (!list.length) return;
   const idx = M.cur ? list.findIndex((x) => x.id === M.cur!.id) : -1;
   const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
@@ -1230,7 +1253,8 @@ function renderMobDetail(): void {
   }
   const mdBody = a.origin === 'news' ? a.body : '';
   const note = mdBody ? '' : (a.origin === 'clip' ? '剪藏笔记正文请在 Obsidian 中打开' : '正文已清空');
-  const idx = mobItemOrder.indexOf(a);
+  // C13：按 id 查——mobItemOrder 是快照重建的实例、M.cur 来自 queryBySource 新建实例，indexOf 身份失配
+  const idx = mobItemOrder.findIndex((x) => x.id === a.id);
   const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : '';
   // 详情正文 markup 单源 render.ts（m3 原型屏2）；markdown 交 MarkdownRenderer 异步水合
   const detailBody = mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement;

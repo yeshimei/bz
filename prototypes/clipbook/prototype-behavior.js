@@ -1,4 +1,4 @@
-/* 源指纹 d8611014127043e0 · 仓内输入 80 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7ca41b755991da73 · 仓内输入 80 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -14311,6 +14311,7 @@ ${bodyText.substring(0, 6e3)}`;
     panelSplit == null ? void 0 : panelSplit.flush();
     M.open = false;
     M.mobDetailOpen = false;
+    if (mobDetailEl) mobDetailEl.style.display = "none";
     if (overlayEl) overlayEl.style.display = "none";
   }
   function unloadPanel() {
@@ -14658,7 +14659,7 @@ ${bodyText.substring(0, 6e3)}`;
         return;
       }
       if (!sel) return;
-      const source = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : { kind: "all" };
+      const source = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : sel.kind === "site" ? { kind: "site", site: String(sel.site || "") } : { kind: "all" };
       const actions = buildRailActions(String(row.title || ""), source);
       if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ""), menuClass: "bz-clip-menu-editorial" });
     });
@@ -14696,7 +14697,7 @@ ${bodyText.substring(0, 6e3)}`;
       const list = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
-        listEl.appendChild(uiEmpty({ icon: "scissors", title: "剪藏本为空" }));
+        listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
         M.cur = null;
         if (readerEl) renderReader();
         return;
@@ -14821,7 +14822,9 @@ ${bodyText.substring(0, 6e3)}`;
     if (a.st !== "saved") {
       out.push({ icon: "download", label: "保存到剪藏本", title: "保存为正式剪藏", onClick: () => void doSave(a) });
     }
-    out.push({ icon: "check", label: "标记为已读", title: "不再出现在收件流", onClick: () => void doMarkRead(a) });
+    if (a.st === "unread") {
+      out.push({ icon: "check", label: "标记为已读", title: "不再出现在收件流", onClick: () => void doMarkRead(a) });
+    }
     out.push({ icon: "trash-2", label: "删除", kind: "danger", title: "从收件流删除", onClick: () => deleteNewsItem(a) });
     return out;
   }
@@ -14835,6 +14838,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
     if (!alive()) return;
     if (!el.querySelector("*") || !((_a = el.textContent) == null ? void 0 : _a.trim())) el.textContent = md;
+    bindImgFallback(el);
   }
   function bindImgFallback(container) {
     container.querySelectorAll("img").forEach((img) => {
@@ -14897,6 +14901,7 @@ ${bodyText.substring(0, 6e3)}`;
         md.innerHTML = `<p class="dim">（笔记暂无正文）</p>`;
         return;
       }
+      md.innerHTML = "";
       void hydrateArticleMarkdown(md, body, path, () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(md));
     }
   }
@@ -14915,7 +14920,8 @@ ${bodyText.substring(0, 6e3)}`;
     readerEl.classList.toggle("fs-lg", fs === "large");
   }
   function stepArticle(delta) {
-    const list = dirFor(currentSrc()).unread;
+    const src = currentSrc();
+    const list = searchKw ? M.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
     if (!list.length) return;
     const idx = M.cur ? list.findIndex((x) => x.id === M.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
@@ -15205,7 +15211,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
     const mdBody = a.origin === "news" ? a.body : "";
     const note = mdBody ? "" : a.origin === "clip" ? "剪藏笔记正文请在 Obsidian 中打开" : "正文已清空";
-    const idx = mobItemOrder.indexOf(a);
+    const idx = mobItemOrder.findIndex((x) => x.id === a.id);
     const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : "";
     const detailBody = mobDetailEl.querySelector("[data-clip-mob-detail-body]");
     detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), note, seq });

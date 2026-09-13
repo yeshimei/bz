@@ -1,6 +1,6 @@
 /**
  * 剪藏流家族修复批（review-all-bugs.md 第四节 F1-F15）UI 层回归：
- * - F3：已读条目右键「标记为已读」被 UI 守卫拦下（不重复计数/不发 news:read）；
+ * - F3/C14：已读条目右键不再挂「标记为已读」（原守卫会静默吞掉）——不重复计数/不发 news:read；
  * - F4：剪藏本源搜索重选中条目后右栏同步渲染（防「高亮 A 读 B」）；
  * - F9：自动摘要失败通知「重试」走队列去重，双击只跑一次 AI；
  * - F11：番茄钟「重置」生效即落盘（重启不复活旧计时）；
@@ -48,7 +48,7 @@ const pomoDisk = (vault: MockVault) => JSON.parse(vault.files.get(getPomodoroFil
 /** 落盘屏障：随队列排空此前的 void save()（不落额外数据） */
 const flushPomo = (vault: MockVault) => enqueueFileTask(getPomodoroFilePath(), async () => { void vault; });
 
-describe('F3：已读条目「标记为已读」被 UI 守卫拦下', () => {
+describe('F3/C14：已读条目不再给「标记为已读」入口', () => {
   beforeEach(() => {
     resetObsidianMocks();
     document.body.innerHTML = '';
@@ -59,7 +59,7 @@ describe('F3：已读条目「标记为已读」被 UI 守卫拦下', () => {
     try { unloadClipbook(); } catch { /* 幂等 */ }
   });
 
-  it('右键已读条目点「标记为已读」→ 不发 news:read、统计不变', async () => {
+  it('右键已读条目 → 菜单无「标记为已读」；不发 news:read、统计不变', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), JSON.stringify({
       articles: [
@@ -87,11 +87,10 @@ describe('F3：已读条目「标记为已读」被 UI 守卫拦下', () => {
       const sp = el.querySelectorAll('span');
       return sp.length > 0 && sp[sp.length - 1].textContent === '标记为已读';
     });
-    expect(target, '已读条目菜单仍含「标记为已读」入口').toBeTruthy();
-    target!.click();
+    expect(target, '已读条目菜单不应再含「标记为已读」入口').toBeUndefined();
     await drainNewsWritesForTests();
     off();
-    expect(readEvents).toHaveLength(0); // 修复前重复发 news:read（smartcat 三跳重复喂）
+    expect(readEvents).toHaveLength(0); // 修复前入口挂着、点击被守卫吞掉；C14 起入口不再挂，两条路径都发不出 news:read
     const disk = clipDisk(vault);
     expect(disk.articles[0].state).toBe('skipped');
     expect(disk.stats.totalRead).toBe(3); // 修复前重复 +1
