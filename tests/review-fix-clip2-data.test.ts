@@ -27,7 +27,7 @@ import { getNewsFilePath } from '../src/clipbook/news-data';
 import { writeClipNote } from '../src/clipbook/save';
 import { stripClipChrome } from '../src/clipbook/md';
 import { clipbookFilePath, readClipbookData, updateClipbookData } from '../src/clipbook/data';
-import { flowToggleReading, flowDeleteNews } from '../src/clipbook/flow';
+import { flowDeleteNews } from '../src/clipbook/flow';
 
 /** news.json 种子（lastFetchAt 非 0 拦住 openClipbook 的自动抓取，同 enhance.test.ts 口径） */
 const NEWS_SEED = JSON.stringify({
@@ -172,9 +172,14 @@ describe('C30 侧写写盘失败上抛', () => {
 });
 
 describe('C31 savedArchive 遗留兼容段', () => {
-  it('现有写入动线（在读切换/删除）不产出该段；读侧判定通道保留', async () => {
+  it('现有写入动线（侧写/删除）不产出该段；读侧判定通道保留', async () => {
     boot();
-    await flowToggleReading({ raw: { url: 'https://x.com/1', title: 't' } });
+    // C29 起「在读切换」动线退役（flowToggleReading 已删）：以侧写队列原语复刻遗留 override 写入，
+    // 验证删除动线仍会清理该键且不产出 savedArchive 段
+    await updateClipbookData((d) => ({
+      ...d,
+      articleOverrides: { ...d.articleOverrides, 'url:https://x.com/1': { reading: true } },
+    }));
     await flowDeleteNews({ raw: { url: 'https://x.com/1', title: 't' } });
     const sidecar = await readClipbookData();
     expect(sidecar.savedArchive).toEqual([]);

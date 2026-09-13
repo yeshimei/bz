@@ -5,10 +5,10 @@
  * - 保存（save）：B站视频 → 文献盒（ADR-0068，openKnowledgeAddTask 不标已读）；
  *   普通文章 → 写剪藏笔记（save.ts），成功后标 news 已处理（read+saved、stats +1、
  *   发 news:read/saved 域事件——smartcat 行为流三跳 + auto-summary 补全依赖）。
- * - 已读（skip）：标 news 已处理（read+skipped、stats +1、发 news:read）。
+ * - 已读（skip）：标 news 已处理（read+skipped、stats +1、发 news:read；C32 起仅在本轮
+ *   真的写盘时发——重复标读（盘面已达成目标态）不重复喂 smartcat 行为流）。
  * - 正文保留（issue 274）：已处理不再删 body——会话目录已读/已收条目点开仍可阅全文；
  *   超龄条目由保留策略整条清理（news-data applyRetention）。
- * - 在读（reading）：仅落 clipbook.json 侧写（news.json 无在读位）。
  * - 阅读时长：右栏/详情停留会话累计（对齐 ticket 076 openedAt/accumMs 语义，整分钟 ≥1）。
  *
  * 本层负责编排 + 落盘串行队列；store.ts 提供原语。
@@ -69,19 +69,46 @@ export function __readingSessionStateForTests(): { curKey: string; accumMs: numb
 // 队列本体在 write-queue.ts（loader / news-source-settings / store 写回共用同一条链，
 // 防「插件多写方互相覆盖 + 对守护进程无合并」——P1 审查项）；此处只封装本域动作。
 
+/** 单篇已处理落盘结果（C17/C32）：
+ *  - changed = 本轮真的写了状态（false = 盘面已是目标态，F3 守卫拦截、未写盘）；
+ *  - upgraded = skipped→saved 升级路径（C11：不重复计已读/分布）；
+ *  - stats = 本轮声明的 stats 快照（未写盘 null）——UI 内存镜像（M.stats）据此与磁盘对齐。 */
+export interface HandledBump {
+  changed: boolean;
+  upgraded: boolean;
+  stats: any | null;
+}
+
+const NO_BUMP: HandledBump = { changed: false, upgraded: false, stats: null };
+
+/** 统计桶增量（markHandledAndBump 落盘口径）：C11——upgraded（已读未收补收）只推进已收桶，
+ *  已读计数与平台/日期分布不重复计（常见动线「打开未读（分布 +1）→ 保存到剪藏本（升级）」
+ *  原实现 byPlatform/byDate 再 +1，rail 脚注「今日已读」一篇计两次）。 */
+function bumpStats(s: any, action: 'saved' | 'skipped', platform: string, today: string, upgraded: boolean): void {
+  if (!upgraded) {
+    s.totalRead = (Number(s.totalRead) || 0) + 1;
+    if (!s.byPlatform) s.byPlatform = {};
+    if (!s.byDate) s.byDate = {};
+    s.byPlatform[platform] = (Number(s.byPlatform[platform]) || 0) + 1;
+    s.byDate[today] = (Number(s.byDate[today]) || 0) + 1;
+  }
+  if (action === 'saved') s.totalSaved = (Number(s.totalSaved) || 0) + 1;
+  else s.totalSkipped = (Number(s.totalSkipped) || 0) + 1;
+}
+
 /** 写单篇已处理 + 统计 +1（合并为一次读改写，旧实现拆两次放大与 daemon 的竞态窗口）：
  *  read + state（issue 274：正文保留不清——已读/已收条目在会话目录点开仍可阅全文）；
  *  统计段与 articles 段在同一队列步内声明改动，写盘经
  *  writeNewsDataMerged 与磁盘做段级合并（daemon 新增文章不丢）。
  *  返回队列 Promise（enh 包：调用方 await 后再刷新内存面，防读到旧态——原 void 语义下
  *  UI「标记已读 → 重读」存在写盘未完成的竞态窗口） */
-function markHandledAndBump(raw: any, action: 'saved' | 'skipped'): Promise<void> {
+function markHandledAndBump(raw: any, action: 'saved' | 'skipped'): Promise<HandledBump> {
   const key = articleKeyOf(raw);
   const platform = raw.platform || '未知';
   const today = localDayKey();
   return enqueueNewsWrite(async () => {
     const res = await readNewsData();
-    if (!res.ok || res.missing) return;
+    if (!res.ok || res.missing) return NO_BUMP;
     let touched = false; // F5：条目已被清理/删除（未命中）不加统计、不空写
     let changed = false; // F3：目标态已达成不改写不计数——重复「标已读」不重复计统计，saved 态不被覆盖成 skipped
     let upgraded = false; // review：已读未收（skipped）补收进剪藏本 → 只推进状态桶，不重复计已读
@@ -96,14 +123,11 @@ function markHandledAndBump(raw: any, action: 'saved' | 'skipped'): Promise<void
       }
       return { ...a, read: true, state: action };
     });
-    if (!touched || !changed) return;
+    if (!touched || !changed) return NO_BUMP;
     const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    if (!upgraded) s.totalRead = (Number(s.totalRead) || 0) + 1;
-    if (action === 'saved') s.totalSaved = (Number(s.totalSaved) || 0) + 1;
-    else s.totalSkipped = (Number(s.totalSkipped) || 0) + 1;
-    s.byPlatform[platform] = (s.byPlatform[platform] || 0) + 1;
-    s.byDate[today] = (s.byDate[today] || 0) + 1;
+    bumpStats(s, action, platform, today, upgraded);
     await writeNewsDataMerged({ set: { articles: list, stats: s } });
+    return { changed: true, upgraded, stats: s };
   });
 }
 
@@ -119,8 +143,12 @@ function removeArticle(raw: any): Promise<void> {
 }
 
 // ---------- 行为流事件（smartcat 依赖契约，对齐旧 reader） ----------
+function buildReadEvt(raw: any, state: 'saved' | 'skipped'): NewsReadEvent {
+  return { title: raw.title, platform: raw.platform, state, durationMin: durationMin() };
+}
+
 function emitReadEvt(raw: any, state: 'saved' | 'skipped'): NewsReadEvent {
-  const evt: NewsReadEvent = { title: raw.title, platform: raw.platform, state, durationMin: durationMin() };
+  const evt = buildReadEvt(raw, state);
   emitDomainEvent('news', { kind: 'read', evt });
   return evt;
 }
@@ -147,8 +175,11 @@ export async function flowSave(article: any): Promise<boolean> {
     const ok = await writeClipNote(raw); // 内部 notice 成功/失败；false = 空标题/取消覆盖/写盘异常
     if (!ok) return false; // 未写盘 → 不标已处理、不进行为流（防文章被静默消费）
     // 写成功 → 标已处理 + 统计（单次读改写；writeClipNote 用传入 raw，标记同样适用）
-    await markHandledAndBump(raw, 'saved');
-    const evt = emitReadEvt(raw, 'saved');
+    const bump = await markHandledAndBump(raw, 'saved');
+    // C32：read 事件仅在本轮真的落盘时发——「已存再存」等守卫拦截轮不重复喂行为流。
+    // news:saved 保持恒发：笔记本轮确实写出（覆盖场景同样要登记 auto-summary 补全）。
+    const evt = buildReadEvt(raw, 'saved');
+    if (bump.changed) emitDomainEvent('news', { kind: 'read', evt });
     // 保存联动 auto-summary：登记待补全（smartcat 订阅该剪藏 modify 补全 / 2 分钟降级）
     emitDomainEvent('news', { kind: 'saved', evt, clipPath: `${dirOf()}/${String(raw.title || '').replace(/[\\/:*?"<>|]/g, '').trim()}.md` });
     return true;
@@ -158,34 +189,16 @@ export async function flowSave(article: any): Promise<boolean> {
   }
 }
 
-/** 标记已读（skip 语义：read+skipped 骨架，行为流 news:skipped） */
-export async function flowMarkRead(article: any): Promise<void> {
+/** 标记已读（skip 语义：read+skipped 骨架，行为流 news:skipped）。
+ *  C32：emitReadEvt 仅在本轮真的落盘（changed）时发——「打开即已读」落盘窗口内再手动标读，
+ *  盘面已是目标态（F3 守卫拦截）不再重复喂 smartcat 同篇 news:read。返回落盘结果供 UI 取快照。 */
+export async function flowMarkRead(article: any): Promise<HandledBump> {
   const raw = article && article.raw;
-  if (!raw) return;
+  if (!raw) return NO_BUMP;
   pauseReadingSession();
-  await markHandledAndBump(raw, 'skipped');
-  emitReadEvt(raw, 'skipped');
-}
-
-/** 在读切换（仅侧写；返回新状态 'reading' | 'unread'）。
- *  D2 收编：读改写入 per-path 串行队列（updateClipbookData），并发切换不同条目不互踩 */
-export async function flowToggleReading(article: any): Promise<'reading' | 'unread'> {
-  const raw = article && article.raw;
-  if (!raw) return 'unread';
-  const key = articleKeyOf(raw);
-  let st: 'reading' | 'unread' = 'reading';
-  await updateClipbookData((sidecar) => {
-    const cur = sidecar.articleOverrides[key];
-    const next: Record<string, { reading?: boolean }> = { ...sidecar.articleOverrides };
-    if (cur && cur.reading === true) {
-      delete next[key];
-      st = 'unread';
-    } else {
-      next[key] = { reading: true };
-    }
-    return { ...sidecar, articleOverrides: next };
-  });
-  return st;
+  const res = await markHandledAndBump(raw, 'skipped');
+  if (res.changed) emitReadEvt(raw, 'skipped');
+  return res;
 }
 
 /** 删除 news 条目（从 news.json 移除；侧写 override 同步清理） */

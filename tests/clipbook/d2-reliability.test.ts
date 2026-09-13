@@ -16,7 +16,25 @@ import { enqueueFileTask, jsonFileStore } from '../../src/core/storage';
 import { getNewsFilePath, readNewsData, writeNewsDataMerged } from '../../src/clipbook/news-data';
 import { readClipbookData, updateClipbookData, clipbookFilePath } from '../../src/clipbook/data';
 import { enqueueNewsWrite, drainNewsWritesForTests } from '../../src/clipbook/write-queue';
-import { flowToggleReading } from '../../src/clipbook/flow';
+import { articleKeyOf } from '../../src/clipbook/constants';
+
+/** 侧写读改写载体（C29：flow.flowToggleReading 已删——articleOverrides 无生产写入方）。
+ *  本组用例验证的是侧写队列 updateClipbookData 本身，故以同款「队列内基于磁盘现值翻转
+ *  reading 位」复刻该动线，保持并发/坏文件用例载体与修复前等价。 */
+function toggleReadingInSidecar(url: string): Promise<'reading' | 'unread'> {
+  const key = articleKeyOf({ url });
+  let st: 'reading' | 'unread' = 'reading';
+  return updateClipbookData((sidecar) => {
+    const next: Record<string, { reading?: boolean }> = { ...sidecar.articleOverrides };
+    if (next[key] && next[key].reading === true) {
+      delete next[key];
+      st = 'unread';
+    } else {
+      next[key] = { reading: true };
+    }
+    return { ...sidecar, articleOverrides: next };
+  }).then(() => st);
+}
 
 function seedNews(vault: MockVault, articles: any[], extra: Record<string, any> = {}): void {
   vault.files.set(
@@ -79,23 +97,23 @@ describe('news.json 写队列收编（core per-path 队列）', () => {
 });
 
 describe('clipbook.json 侧写读改写收编（updateClipbookData）', () => {
-  it('①并发在读切换不同条目：双方都落盘（裸读改写会互相覆盖）', async () => {
+  it('①并发读改写不同条目：双方都落盘（裸读改写会互相覆盖）', async () => {
     const vault = new MockVault();
     setApp(mockAppWithVault(vault));
     vault.files.set(clipbookFilePath(), JSON.stringify({ articleOverrides: {}, savedArchive: [], order: [] }));
     await Promise.all([
-      flowToggleReading({ raw: art('https://gk.com/1') }),
-      flowToggleReading({ raw: art('https://gk.com/2') }),
+      toggleReadingInSidecar('https://gk.com/1'),
+      toggleReadingInSidecar('https://gk.com/2'),
     ]);
     const sidecar = await readClipbookData();
     expect(Object.keys(sidecar.articleOverrides).sort()).toEqual(['url:https://gk.com/1', 'url:https://gk.com/2']);
   });
 
-  it('①同条目连续两次切换：reading → unread（队列内基于磁盘现值翻转）', async () => {
+  it('①同条目连续两次读改写：reading → unread（队列内基于磁盘现值翻转）', async () => {
     const vault = new MockVault();
     setApp(mockAppWithVault(vault));
-    expect(await flowToggleReading({ raw: art('https://gk.com/1') })).toBe('reading');
-    expect(await flowToggleReading({ raw: art('https://gk.com/1') })).toBe('unread');
+    expect(await toggleReadingInSidecar('https://gk.com/1')).toBe('reading');
+    expect(await toggleReadingInSidecar('https://gk.com/1')).toBe('unread');
     const sidecar = await readClipbookData();
     expect(sidecar.articleOverrides).toEqual({});
   });
@@ -111,8 +129,8 @@ describe('clipbook.json 侧写读改写收编（updateClipbookData）', () => {
     const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/clipbook.json.'));
     expect(backups).toHaveLength(1);
     expect(vault.files.get(backups[0])).toBe(broken);
-    // 降级后域功能可用：在读切换正常落盘
-    expect(await flowToggleReading({ raw: art('https://gk.com/9') })).toBe('reading');
+    // 降级后域功能可用：侧写读改写正常落盘
+    expect(await toggleReadingInSidecar('https://gk.com/9')).toBe('reading');
     const sidecar = await updateClipbookData((d) => d);
     expect(Object.keys(sidecar.articleOverrides)).toEqual(['url:https://gk.com/9']);
   });

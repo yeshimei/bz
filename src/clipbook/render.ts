@@ -5,8 +5,8 @@
  * 左 rail 点线索引行 / 中栏目录条目 / 右栏阅读面 / 移动源胶囊与列表与详情正文。
  * 原型 × 插件 markup 单源：
  *   - 插件侧：ui.ts 直接 import（事件绑定/core 服务/数据读写留 ui.ts）；
- *   - 评审壳侧：esbuild 打成 IIFE → 同目录 prototype-render.js（window.BZR_clipbook）；
- *     行为单源（ADR-0106）后壳直接跑真 ui.ts，markup 天然同源。
+ *   - 评审壳侧：esbuild 打成 IIFE → prototypes/clipbook/prototype-render.js（window.BZR_clipbook，
+ *     产物路径见 scripts/build-preview.mjs）；行为单源（ADR-0106）后壳直接跑真 ui.ts，markup 天然同源。
  *
  * 纯度契约（tests/core/render-purity.test.ts 守卫，违者门禁红）：
  *   - import 白名单：`../core/ui/str`（零依赖字符串工具）、`./types`（type-only）、
@@ -122,12 +122,8 @@ export function siteTint(site: string): string {
   return `hsl(${h % 360}, 42%, 52%)`;
 }
 
-/** 移动条目状态点 */
-export function dotHtml(st: string): string {
-  return `<span class="bz-clip-dot ${st}"></span>`;
-}
-
-/** 状态章（移动详情）：状态 → { 图标, 色类 } */
+/** 状态章（移动详情）：状态 → { 图标, 色类 }（保留：与 styles.css 的 .bz-clip-art-flag 档同源，
+ *  现渲染面已不挂章——「打开即已读」让位后语义冗余，纯层口径函数留作既有测试锚） */
 export function stateFlag(st: string): { icon: string; cls: string } {
   if (st === 'saved') return { icon: ICO.check, cls: 'ok' };
   if (st === 'reading') return { icon: ICO.book, cls: 'warn' };
