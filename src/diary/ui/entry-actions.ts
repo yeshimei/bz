@@ -15,10 +15,11 @@ import { deleteEncryptedEntry } from '../encrypt';
 import type { DiaryEntryLocator } from './dialogs';
 import { buildLocatorPredicateFor } from './locator';
 
-/** 条目锚点面：filename（日期串）或 filePath（完整路径，子目录日期文件）二选一 */
+/** 条目锚点面：filename（日期串或完整路径）或 filePath（完整路径）二选一；
+ *  ADR-0130 起条目即文件，emoji/time 不再参与锚点构造（字段保留兼容旧调用面） */
 export interface DiaryAnchorRef {
   filename: string;
-  /** 完整 vault 路径（D2：子目录日期文件跳转/双链按实际路径构建，不再平面拼顶层） */
+  /** 完整 vault 路径（条目文件定位依据） */
   filePath?: string;
   emoji: string;
   time: string;
@@ -29,11 +30,9 @@ function diaryEntryFilePath(entry: DiaryAnchorRef): string {
   return entry.filePath || `${DIARY_DIRECTORY}/${entry.filename}.md`;
 }
 
-/** 跳转普通日记条目原文：打开 `<日记路径>#<emoji 时间>` 标题锚点 */
+/** 跳转日记条目原文（ADR-0130 一目一文件）：直接打开条目文件 */
 export async function jumpToDiaryEntry(entry: DiaryAnchorRef): Promise<void> {
   const filePath = diaryEntryFilePath(entry);
-  const anchor = `${entry.emoji} ${entry.time}`; // 例如 "📖 14:30"
-  const link = `${stripMdExt(filePath)}#${anchor}`;
 
   // 检查文件是否存在
   const file = getApp().vault.getAbstractFileByPath(filePath) as any;
@@ -42,13 +41,12 @@ export async function jumpToDiaryEntry(entry: DiaryAnchorRef): Promise<void> {
     return;
   }
 
-  // 打开文件并滚动到对应的标题位置
-  await getApp().workspace.openLinkText(link, '', false, { active: true });
+  await getApp().workspace.openLinkText(stripMdExt(filePath), '', false, { active: true });
 }
 
-/** 复制普通日记条目的双链引用（`[[日记路径不带扩展名#emoji 时间]]`） */
+/** 复制日记条目的双链引用（`[[条目文件路径不带扩展名]]`） */
 export async function copyDiaryLink(entry: DiaryAnchorRef): Promise<void> {
-  const link = `[[${stripMdExt(diaryEntryFilePath(entry))}#${entry.emoji} ${entry.time}]]`;
+  const link = `[[${stripMdExt(diaryEntryFilePath(entry))}]]`;
   await navigator.clipboard.writeText(link);
   notice(`已复制双链引用：${link}`, 'success');
 }

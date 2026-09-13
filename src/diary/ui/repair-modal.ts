@@ -1,25 +1,21 @@
 /**
- * 日记解析检测面板（ticket 121，ADR-0054；issue 256 随写链路迁入新 diary 域）。
- * 手动驱动：仅经设置面板「日记本」页维护组「检测日记解析」按钮打开；启动不自动触发（UX-9 toast 已移除）。
- * 打开即逐文件扫描（进度条）→ 汇报两区：
- *  - 可自动修复：头行补空格/时间补零，展示修改前后，确认后一键批量写回（正文归位不改写）；
- *  - 不可自动修复：时间越界标题行/游离正文，点击打开文件并定位到行手工改。
+ * 日记格式体检面板（ADR-0130 重定义；原「解析检测 + 一键修复」随条目文件化退役为只读体检）。
+ * 手动驱动：仅经设置面板「日记本」页维护组「日记格式体检」按钮打开；启动不自动触发。
+ * 打开即逐文件体检（进度条）→ 汇报清单：
+ *  - 旧格式残留（legacy）/ 解析失败（unparsable）/ 属性与文件名不一致（name-mismatch）；
+ *  - 每行点击打开文件（不定位行——条目文件小，肉眼即见），修复由用户手工完成（面板不改写任何内容）。
  */
 import { createOverlay } from '../../core/dom';
 import { escManager } from '../../core/esc-manager';
-import { openFlowDialog } from '../../core/flow-dialog';
-import { notice } from '../../core/notice';
 import { getApp } from '../../core/app';
-import { enqueueFileTask } from '../../core/storage';
 import { DIARY_DIRECTORY } from '../config';
-import { scanUnparsed, applyRepairs, type UnparsedScan } from '../repair';
+import { lintEntryFile, LINT_REASON_TEXT, type DiaryLintItem, type DiaryLintReason } from '../repair';
 
 const BATCH_CONCURRENCY = 10;
 
 interface ScannedFile {
-  file: any;
   path: string;
-  scan: UnparsedScan;
+  reason: DiaryLintReason | null;
 }
 
 function findDirRecursive(node: any, target: string): any | null {
@@ -33,8 +29,7 @@ function findDirRecursive(node: any, target: string): any | null {
   return null;
 }
 
-/** 递归收集日记目录下全部 .md（含子目录；D3：子目录日记同样被守卫拒写，
- *  只扫顶层会让子目录的未解析行永远「检测不出、修不了」，该日期永久写不进） */
+/** 递归收集日记目录下全部 .md（含子目录） */
 async function collectDiaryFiles(): Promise<any[]> {
   const app = getApp();
   let dir = app.vault.getAbstractFileByPath(DIARY_DIRECTORY) as any;
@@ -69,7 +64,7 @@ async function runScan(
       batch.map(async (file: any, idx: number) => {
         const content = await app.vault.read(file);
         if (isAlive()) onProgress(Math.min(i + idx + 1, total), total, file.name);
-        return { file, path: file.path, scan: scanUnparsed(content) };
+        return { path: file.path, reason: lintEntryFile(file.path, content) };
       })
     );
     scanned.push(...results);
@@ -77,38 +72,22 @@ async function runScan(
   return scanned;
 }
 
-const REASON_TEXT: Record<string, string> = {
-  'time-oob': '时间越界',
-  'free-text': '游离正文（条目前）',
-};
-
-/** 打开文件并定位到行（memo 域 openLinkedNote 同款：openFile 后取 view.editor setCursor） */
-async function openAtLine(path: string, line: number): Promise<void> {
+/** 打开文件（定位到顶部；条目文件短小，不定位行） */
+async function openAtTop(path: string): Promise<void> {
   const app = getApp();
   const file = app.vault.getAbstractFileByPath(path);
-  if (!file) {
-    notice('日记文件不存在');
-    return;
-  }
+  if (!file) return;
   const leaf = app.workspace.getLeaf();
   await leaf.openFile(file as any);
-  const locate = (view: any) => {
-    const editor = view && view.editor;
-    if (!editor) return false;
-    const target = Math.max(0, line - 1);
-    editor.focus();
-    editor.setCursor(target, 0);
-    editor.scrollIntoView({ from: { line: target, ch: 0 }, to: { line: target, ch: 0 } }, true);
-    return true;
-  };
-  if (!locate((leaf as any).view)) {
-    // 编辑器尚未就绪兜底
-    setTimeout(() => locate((leaf as any).view), 250);
+  const view: any = leaf.view;
+  if (view && view.editor) {
+    view.editor.focus();
+    view.editor.setCursor(0, 0);
+    view.editor.scrollIntoView({ from: { line: 0, ch: 0 }, to: { line: 0, ch: 0 } }, true);
   }
 }
 
 export function openDiaryRepairModal(): void {
-  const app = getApp();
   const { mask, popup } = createOverlay({
     maskId: 'bz-diary-repair-mask',
     popupId: 'bz-diary-repair-popup',
@@ -121,7 +100,7 @@ export function openDiaryRepairModal(): void {
   header.className = 'bz-settings-header';
   const title = document.createElement('h3');
   title.className = 'bz-settings-title';
-  title.textContent = '日记解析检测';
+  title.textContent = '日记格式体检';
   header.appendChild(title);
 
   const content = document.createElement('div');
@@ -156,7 +135,7 @@ export function openDiaryRepairModal(): void {
   fill.className = 'bz-diary-repair-progress-fill';
   const ptext = document.createElement('div');
   ptext.className = 'bz-diary-repair-progress-text';
-  ptext.textContent = '正在解析日记文件…';
+  ptext.textContent = '正在体检日记文件…';
   track.appendChild(fill);
   progressWrap.appendChild(track);
   progressWrap.appendChild(ptext);
@@ -167,146 +146,53 @@ export function openDiaryRepairModal(): void {
     content.appendChild(progressWrap);
     progressWrap.style.display = 'none';
 
-    const repairs = scanned.filter((s) => s.scan.repairs.length > 0);
-    const freeFiles = scanned.filter((s) => s.scan.freeTexts.length > 0);
-    const repairCount = repairs.reduce((n, s) => n + s.scan.repairs.length, 0);
-    const freeCount = freeFiles.reduce((n, s) => n + s.scan.freeTexts.length, 0);
+    const items: DiaryLintItem[] = [];
+    for (const s of scanned) {
+      if (s.reason) items.push({ path: s.path, reason: s.reason, detail: LINT_REASON_TEXT[s.reason] });
+    }
 
     const summary = document.createElement('div');
     summary.className = 'bz-diary-repair-summary';
-    if (repairCount === 0 && freeCount === 0) {
-      summary.textContent = `共扫描 ${scanned.length} 个日记文件：全部正常解析`;
-    } else {
-      summary.textContent =
-        `共扫描 ${scanned.length} 个日记文件：${repairs.length} 个文件可自动修复（${repairCount} 处），` +
-        `${freeFiles.length} 个文件需手动处理（${freeCount} 行）。`;
-    }
+    summary.textContent =
+      items.length === 0
+        ? `共体检 ${scanned.length} 个日记文件：全部健康`
+        : `共体检 ${scanned.length} 个日记文件：${items.length} 个需要处理（点击条目打开文件手工处理，面板不改写内容）。`;
     content.appendChild(summary);
 
-    // 可自动修复区
-    if (repairs.length > 0) {
+    // 按原因分组展示（legacy → unparsable → name-mismatch）
+    const order: DiaryLintReason[] = ['legacy', 'unparsable', 'name-mismatch'];
+    for (const reason of order) {
+      const group = items.filter((i) => i.reason === reason);
+      if (group.length === 0) continue;
       const sec = document.createElement('div');
       sec.className = 'bz-diary-repair-section-title';
-      const name = document.createElement('span');
-      name.textContent = `可自动修复（${repairCount} 处）`;
-      const fixBtn = document.createElement('button');
-      fixBtn.className = 'bz-button';
-      fixBtn.textContent = `一键修复 ${repairCount} 处`;
-      fixBtn.addEventListener('click', () => confirmFix(scanned, repairs));
-      sec.appendChild(name);
-      sec.appendChild(fixBtn);
+      sec.textContent = `${LINT_REASON_TEXT[reason]}（${group.length}）`;
       content.appendChild(sec);
 
-      for (const f of repairs) {
-        const fileBox = document.createElement('div');
-        fileBox.className = 'bz-diary-repair-file';
-        const head = document.createElement('div');
-        head.className = 'bz-diary-repair-file-head';
-        head.textContent = f.path;
-        fileBox.appendChild(head);
-        for (const r of f.scan.repairs) {
-          const row = document.createElement('div');
-          row.className = 'bz-diary-repair-row';
-          row.append(document.createTextNode(`第 ${r.line} 行（${r.kind === 'space' ? '补空格' : '时间补零'}）：`));
-          const before = document.createElement('code');
-          before.textContent = r.before;
-          const arrow = document.createElement('span');
-          arrow.textContent = ' → ';
-          const after = document.createElement('code');
-          after.textContent = r.after;
-          row.append(before, arrow, after);
-          fileBox.appendChild(row);
-        }
-        content.appendChild(fileBox);
+      for (const item of group) {
+        const row = document.createElement('div');
+        row.className = 'bz-diary-repair-row';
+        const link = document.createElement('span');
+        link.className = 'bz-diary-repair-link';
+        link.textContent = item.path.split('/').pop() || item.path;
+        link.addEventListener('click', () => void openAtTop(item.path));
+        const snippet = document.createElement('span');
+        snippet.className = 'bz-diary-repair-snippet';
+        snippet.textContent = item.path;
+        row.append(link, snippet);
+        content.appendChild(row);
       }
     }
 
-    // 需手动处理区
-    if (freeFiles.length > 0) {
-      const sec = document.createElement('div');
-      sec.className = 'bz-diary-repair-section-title';
-      sec.textContent = `需手动处理（${freeCount} 行）`;
-      content.appendChild(sec);
-
-      for (const f of freeFiles) {
-        const fileBox = document.createElement('div');
-        fileBox.className = 'bz-diary-repair-file';
-        const head = document.createElement('div');
-        head.className = 'bz-diary-repair-file-head';
-        head.textContent = f.path;
-        fileBox.appendChild(head);
-        for (const ft of f.scan.freeTexts) {
-          const row = document.createElement('div');
-          row.className = 'bz-diary-repair-row';
-          const link = document.createElement('span');
-          link.className = 'bz-diary-repair-link';
-          link.textContent = `第 ${ft.line} 行（${REASON_TEXT[ft.reason] || ft.reason}）`;
-          link.addEventListener('click', () => void openAtLine(f.path, ft.line));
-          const snippet = document.createElement('span');
-          snippet.className = 'bz-diary-repair-snippet';
-          snippet.textContent = ft.text.slice(0, 60) + (ft.text.length > 60 ? '…' : '');
-          row.append(link, snippet);
-          fileBox.appendChild(row);
-        }
-        content.appendChild(fileBox);
-      }
-    }
-
-    // 底栏：重新检测
+    // 底栏：重新体检
     const again = document.createElement('button');
     again.className = 'bz-button';
-    again.textContent = '重新检测';
+    again.textContent = '重新体检';
     again.addEventListener('click', () => void startScan());
     const bar = document.createElement('div');
     bar.className = 'bz-diary-repair-footer';
     bar.appendChild(again);
     content.appendChild(bar);
-  };
-
-  const confirmFix = (scanned: ScannedFile[], repairs: ScannedFile[]): void => {
-    const count = repairs.reduce((n, s) => n + s.scan.repairs.length, 0);
-    void openFlowDialog({
-      title: '修复日记标题格式',
-      message:
-        `将修改 ${repairs.length} 个日记文件中的 ${count} 处标题行：` +
-        `补空格/时间补零使其符合「# emoji HH:mm」格式，正文内容不变。` +
-        `修改不可撤销，可通过 Obsidian 文件历史恢复。`,
-      actions: [
-        { label: '取消', value: 'cancel' },
-        { label: '修复', value: 'ok', cta: true },
-      ],
-    }).then((v) => {
-      if (v === 'ok') void runFix(scanned, repairs);
-    });
-  };
-
-  const runFix = async (scanned: ScannedFile[], repairs: ScannedFile[]): Promise<void> => {
-    let fixed = 0;
-    let failed = 0;
-    for (const f of repairs) {
-      try {
-        // D4（review-all-bugs 二节）：读改写包进与目标文件同路径的 core 串行队列——
-        // 与 diary 写层/encrypt mergeDiaryBlock 等同路径队列任务 FIFO 互斥，修复不再被
-        // 「旧快照全量重写」交错抹掉（也不抹掉并发方写入的内容）；不同文件各自入队，互不阻塞
-        const changed = await enqueueFileTask(f.path, async () => {
-          const content = await app.vault.read(f.file);
-          const next = applyRepairs(content, f.scan.repairs);
-          if (next === content) return 0;
-          await app.vault.modify(f.file, next);
-          return f.scan.repairs.length;
-        });
-        fixed += changed;
-      } catch (e) {
-        failed += f.scan.repairs.length;
-        console.warn('[diary] 修复失败', f.path, e);
-      }
-    }
-    if (failed === 0) {
-      notice(`已修复 ${fixed} 处未解析行`, 'success');
-    } else {
-      notice(`修复 ${fixed} 处成功、${failed} 处失败`, 'warning');
-    }
-    await startScan();
   };
 
   async function startScan(): Promise<void> {
@@ -318,7 +204,7 @@ export function openDiaryRepairModal(): void {
       () => mask.isConnected,
       (done, total, label) => {
         fill.style.width = `${Math.round((done / total) * 100)}%`;
-        ptext.textContent = `正在解析 ${label}（${done}/${total}）…`;
+        ptext.textContent = `正在体检 ${label}（${done}/${total}）…`;
       }
     );
     if (!mask.isConnected) return;

@@ -1,17 +1,20 @@
 /**
- * 日记本（diary）域解析层——原回忆墙升格正名（ADR-0115）
+ * 日记本（diary）域解析层——原回忆墙升格正名（ADR-0115；ADR-0130 条目文件格式）
  *
- * 从 src/diary/parser.ts 拷贝（用户决策「回忆墙自包含，日后删除日记本域」）：
- * - parseFile（日记，纯函数：`# emoji序列 HH:mm` 标题切分，不依赖 app 注入）；
+ * - parseEntryFile（条目文件，纯函数：frontmatter `日期`+`类型`，日期时间损坏从文件名优雅降级）；
  * - parseMovieFile / parseLetterFile（影视/信，读 frontmatter + 文件创建时间）；
- * - 新增 parseBookFile（书库，读 completionDate/readingDate/title/bookReview/cover）。
+ * - parseBookFile（书库，读 completionDate/readingDate/title/bookReview/cover）。
  * 特殊文件解析所需的 getFileFrontmatter 以 app 参数注入（不 import ../diary/app，自包含）。
  * moment 来自 'obsidian'（测试 alias 已替换为 moment）。
  */
-/** 标题行正则（`# <emoji+> HH:mm`；smartcat/diary-source 同源引用，防双侧漂移） */
-export const HEADING_REGEX = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
 import { moment } from 'obsidian';
-import { emojiToTagMap, getTagEmoji } from './config';
+import {
+  DIARY_ENTRY_FILE_RE,
+  parseDiaryEntryFile,
+  isValidDiaryDate,
+  isValidDiaryTime,
+} from '../core/diary-format';
+import { getTagEmoji } from './config';
 import type { DiaryEntry } from './types';
 
 /** 加密条目：内容含 🔐 的条目在列表中隐藏，但保留在数据映射中防止写入丢失 */
@@ -20,106 +23,36 @@ export function isEncryptedEntry(entry: DiaryEntry): boolean {
 }
 
 /**
- * 解析日记文件内容（按 `# emoji序列 HH:mm` 标题切分条目）。
- * UX-9：顺带统计「未能解析的行」数（游离于首个条目之前的非空行、时间越界的条目标题行），
- * 不改解析结果、不动数据格式；onUnparsed 收到非零值时由调用方汇总提示。
+ * 解析一篇条目文件为一个 DiaryEntry（ADR-0130：一目一文件）。
+ * - 日期时间：frontmatter `日期` 优先；损坏/缺失时从文件名优雅降级（`YYYY-MM-DD HH-MM(-N)`）；
+ * - 标签：frontmatter `类型`（标签名列表）；空缺回退 ['日记']；emoji 由标签派生（emoji 表只服务展示）；
+ * - 正文：frontmatter 之后的原文（无一级标题概念）；
+ * - filename/filePath = 完整 vault 路径，lineNumber 恒 0（行号定位随条目文件化退场）；
+ * - 文件名非条目形状或日期非法且 frontmatter 不可信 → null（守卫拒写/加载跳过）。
  */
-export function parseFile(content: string, dateStr: string, onUnparsed?: (unparsedLineCount: number) => void): DiaryEntry[] {
-  const entries: DiaryEntry[] = [];
-  const lines = content.split('\n');
-  let currentEntry: DiaryEntry | null = null;
-  let contentLines: string[] = [];
-  let unparsedLines = 0;
-
-  const headingRegex = HEADING_REGEX;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const headingMatch = line.match(headingRegex);
-
-    if (headingMatch) {
-      if (currentEntry) {
-        currentEntry.content = contentLines.join('\n').trim();
-        entries.push(currentEntry);
-        contentLines = [];
-      }
-
-      const emojiSequence = headingMatch[1];
-      const time = headingMatch[2];
-
-      const [hours, minutes] = time.split(':').map(Number);
-      if (isNaN(hours) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-        // 时间越界的条目标题行：跳过（原行为），计入未解析行
-        unparsedLines++;
-        continue;
-      }
-
-      const timeValue = hours * 100 + minutes;
-
-      // 使用 emoji 映射解析每个 emoji 对应的标签
-      const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-      const segments = segmenter.segment(emojiSequence);
-      const tags: string[] = [];
-      for (const seg of segments) {
-        const ch = seg.segment;
-        const mappedTag = emojiToTagMap[ch];
-        if (mappedTag) {
-          tags.push(mappedTag);
-        }
-      }
-      if (tags.length === 0) {
-        tags.push('日记');
-      }
-
-      currentEntry = {
-        date: dateStr,
-        time: time,
-        timeValue: timeValue,
-        tags: tags,
-        emoji: emojiSequence,
-        content: '',
-        filename: dateStr,
-        lineNumber: i + 1,
-      };
-    } else if (currentEntry) {
-      if (line.trim() === '' && i + 1 < lines.length && lines[i + 1].match(/^#\s/)) {
-        currentEntry.content = contentLines.join('\n').trim();
-        entries.push(currentEntry);
-        currentEntry = null;
-        contentLines = [];
-      } else {
-        contentLines.push(line);
-      }
-    } else if (line.trim() !== '') {
-      // 首个条目之前游离的非空行：无法归属任何条目（原行为静默丢弃），计入未解析行
-      unparsedLines++;
-    }
-  }
-
-  if (currentEntry) {
-    currentEntry.content = contentLines.join('\n').trim();
-    entries.push(currentEntry);
-  }
-
-  // UX-9：有未解析行才回调（零值时免打扰）
-  if (onUnparsed && unparsedLines > 0) onUnparsed(unparsedLines);
-
-  // 向后兼容旧数据
-  for (const entry of entries) {
-    if ((entry as any).type !== undefined) {
-      entry.tags = [(entry as any).type];
-      delete (entry as any).type;
-      // 旧 type 字段条目：emoji 与换算后的标签重同步
-      entry.emoji = entry.tags.map((tag) => getTagEmoji(tag)).join('');
-    }
-    if (!entry.tags || entry.tags.length === 0) {
-      entry.tags = ['日记'];
-    }
-    // D11：emoji 保留标题行原始序列——标签反解不出的 emoji（如配置外的 🐲）不再被重生成
-    // 映射值抹掉；跳转锚点/双链以 `emoji + 时间` 对准文件实际标题，改后会定位不到标题。
-  }
-
-  return entries;
+export function parseEntryFile(content: string, filePath: string): DiaryEntry | null {
+  const parsed = parseDiaryEntryFile(content);
+  const base = (filePath || '').replace(/\\/g, '/').split('/').pop() || '';
+  const fm = parsed.meta;
+  const m = DIARY_ENTRY_FILE_RE.exec(base);
+  const fmName = m && isValidDiaryDate(m[1]) && isValidDiaryTime(`${m[2]}:${m[3]}`)
+    ? { date: m[1], time: `${m[2]}:${m[3]}` }
+    : null;
+  const meta = fm ?? fmName;
+  if (!meta) return null;
+  const [h = 0, min = 0] = meta.time.split(':').map(Number);
+  const tags = parsed.tags.length > 0 ? parsed.tags : ['日记'];
+  return {
+    date: meta.date,
+    time: meta.time,
+    timeValue: h * 100 + min,
+    tags,
+    emoji: tags.map((tag) => getTagEmoji(tag)).join(''),
+    content: parsed.body,
+    filename: filePath,
+    filePath,
+    lineNumber: 0,
+  };
 }
 
 /** 获取文件 frontmatter（无则返回 null）；app 由调用方注入（不依赖 diary/app 单例） */
