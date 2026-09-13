@@ -18,6 +18,7 @@
  *   - --apply 实际写盘；检测到 Obsidian 正在运行直接拒绝（插件运行时会竞写 smartcat-memory.json
  *     并对新条目文件重复入库——必须在 Obsidian 关闭后执行）。
  *   - --memory-only：只重写记忆引用（条目文件已拆完后的补救/重跑），不写条目文件、不归档。
+ *   - --skip-obsidian-check：跳过 Obsidian 进程检测（仅限测试/进程检测不可用的环境，慎用）。
  *   - 先迁移后部署：新解析层不做旧格式兼容，旧格式文件在插件内不可见。
  */
 
@@ -72,10 +73,22 @@ const isValidTime = (s) => {
   return !!m && +m[1] <= 23 && +m[2] <= 59;
 };
 
+// 与旧解析器同款：按 grapheme（用户感知字符）切分。'✍️'=U+270D+U+FE0F、'🧑‍🎨'=ZWJ 三码点，
+// 按码点迭代会把变体选择符/ZWJ 序列拆碎——轻则反查失配回落「日记」（随笔/代码/信/博物馆/旅游全丢），
+// 重则误命中片段（艺术 → 🎨 动漫）。旧 parser 用 Intl.Segmenter，迁移脚本必须同口径。
+const graphemeSegmenter =
+  typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function'
+    ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+    : null;
+if (!graphemeSegmenter) {
+  console.error('需要支持 Intl.Segmenter 的 Node（16+）才能正确切分 emoji 头行；请升级 Node 后重试。');
+  process.exit(1);
+}
+
 function tagsFromEmojiSeq(seq) {
   const tags = [];
-  for (const ch of Array.from(seq)) {
-    const tag = EMOJI_TO_TAG[ch];
+  for (const g of graphemeSegmenter.segment(seq)) {
+    const tag = EMOJI_TO_TAG[g.segment];
     if (tag && !tags.includes(tag)) tags.push(tag);
   }
   return tags.length ? tags : ['日记'];

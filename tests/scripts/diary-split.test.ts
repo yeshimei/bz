@@ -109,6 +109,22 @@ describe('diary-split 迁移脚本', () => {
     expect(memoryEntries().every((m) => !/ \d{2}-\d{2}-\d+\.md$/.test(m.ref.path))).toBe(true);
   });
 
+  it('emoji 头行按 grapheme 切分：多码点 emoji 不丢标签、不误命中片段', () => {
+    makeVault('# ✍️ 10:00\n随笔内容\n# ⚙️ 11:00\n代码内容\n# 📸✈️ 12:00\n旅行照片\n# 🧑‍🎨 13:00\n艺术内容\n');
+    run('--apply');
+
+    // 变体选择符（U+FE0F）：按码点迭代会拆碎 → 反查失配回落「日记」
+    expect(read('我的/日记/2025-06-11 10-00.md')).toContain('  - 随笔');
+    expect(read('我的/日记/2025-06-11 10-00.md')).not.toContain('  - 日记');
+    expect(read('我的/日记/2025-06-11 11-00.md')).toContain('  - 代码');
+    // 组合头行：📸 命中、✈️ 不丢
+    expect(read('我的/日记/2025-06-11 12-00.md')).toContain('  - 摄影');
+    expect(read('我的/日记/2025-06-11 12-00.md')).toContain('  - 旅游');
+    // ZWJ 序列（U+1F9D1 U+200D U+1F3A8）：按码点会误命中尾段 🎨 → 错标「动漫」
+    expect(read('我的/日记/2025-06-11 13-00.md')).toContain('  - 艺术');
+    expect(read('我的/日记/2025-06-11 13-00.md')).not.toContain('  - 动漫');
+  });
+
   it('记忆重写留 .bak 快照（内容为改写前原文）', () => {
     makeVault();
     run('--apply');
