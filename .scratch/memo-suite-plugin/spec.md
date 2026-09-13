@@ -1144,3 +1144,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > ① **锁屏统计明文落盘（300 / ADR-0124 决策 4 修订）**：备忘「把解锁界面的统计信息放到明文数据文件中」（「文明」为「明文」笔误）。新增 `core/lock-stats.ts` 读写 `CONFIG/STORAGE/lock-stats.json`（键 = LockScreenKind，段级合并写 + writeIfChanged）；encrypt `captureLockStats` 三档算齐后 fire-and-forget 落盘、`showPasswordDialog` 兜底链 会话缓存→文件→「—」；password-vault 首显 hydrate 一次 + 解锁态落盘本档；diary 复用 encrypt 解锁屏零改动生效。取舍：明文计数暴露条目规模（元数据级）有意接受；文件缺失仍「—」不编造数字（ADR-0124 底线保留）。
 > ② **剪藏本文章标题降档（301）**：桌面 `.bz-clip-art-title` 24px→`var(--bz-font-display)`（20px）、移动 `.bz-clip-mob-d-title` 33px→27px（与桌面同比例）。判读=文章标题；顶栏刊名不动（09-10 刚按用户拍板 21→17，备忘晚于该决策）。回归锁 `tests/clipbook/title-type.test.ts`（readFileSync 选择器切块断言，仿 review-mobile-type 先例）。
 > ③ **首页时间线字体（memo item-1789127591011）**：调研判定已交付——提交 8fccf9a5（09-11 20:18「桌面端时间线字号降档」，home/styles.css V6：正文 14.5→13.5、时间戳 12.5→11 等）晚于 memo 创建 25 分钟，纯闭环不改码。
+
+### 聚合讯抓取迁入插件内，PM2 守护退役（issue 302 / ADR-0128，2026-09-13）
+
+> grill-with-docs 三轮拍板：四源实测 requestUrl 通道全通（知乎 latest/detail API、果壳 science_api、B站动态带 news.json cookie、RSS），抓取核心自 tools/news-watcher/watcher.js 移植为 src/clipbook/news-fetcher.ts（依赖注入 httpGet = requestUrl 适配；rss-parser/turndown 换轻量 XML 解析 + watcher 自带正则版 htmlToMarkdown；存储走 readNewsData/writeNewsDataMerged 串行合并写）。触发 = 插件 onload + 打开剪藏本时后台抓一轮（间隔档位 30 分钟/1 小时/2 小时/6 小时，news.json fetchIntervalMin 段随库同步，默认 30 分钟下限 30）+ 手动命令 bz-clipbook-fetch-now 忽略间隔；news.json 新增 lastFetchAt 段做间隔判定（零新增轮不反复触发）。通知静默仅失败时报（B站风控/无 cookie 明确提示）。PM2 只停进程，包与源码留存可回滚；ADR-0008 标注方向部分废弃。正文照搬全量逐篇抓（离线可读，移动端后台串行不阻塞 UI）。
