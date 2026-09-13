@@ -356,33 +356,128 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect((popup.querySelector('#lit-btn-video-run') as HTMLButtonElement).textContent).toBe('▶️');
   });
 
-  it('添加弹窗：校验 + 整片/剪辑开关 + 保存入库（宽松时间归一）', async () => {
+  it('添加弹窗（ADR-0133）：解析按钮 → 信息区/分P 下拉 → 整片保存入库（净化 URL）', async () => {
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) {
+        return httpResp(200, JSON.stringify({ code: 0, data: {
+          title: '解析出的标题', owner: { mid: 1, name: '解析UP' }, duration: 300,
+          pages: [
+            { cid: 11, page: 1, part: '第一集', duration: 120 },
+            { cid: 12, page: 2, part: '第二集', duration: 180 },
+          ],
+        } }));
+      }
+      return httpResp(404, '');
+    });
     ui.showVideoEntry();
     await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
     (document.getElementById('lit-btn-video-add') as HTMLElement).click();
     const popup = document.getElementById('knowledge-add-popup')!;
     await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
-    expect(document.getElementById('lit-add-clip-fields')!.style.display).toBe('block');
+    // 空链接保存 → 校验提示
     (document.getElementById('lit-add-save') as HTMLElement).click();
     expect(getNoticeMessages().join('\n')).toContain('请填写视频链接');
-    (document.getElementById('lit-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1test';
-    (document.getElementById('lit-add-start') as HTMLInputElement).value = '12.2';
-    (document.getElementById('lit-add-end') as HTMLInputElement).value = '1:02:03';
+    // 填链接 → 解析按钮（无防抖：不点不解析）
+    const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
+    urlInput.value = 'https://www.bilibili.com/video/BV1testaaaaa/?spm_id_from=333.0';
+    expect(document.getElementById('lit-add-info')!.style.display).toBe('none'); // 未解析：信息区隐藏
+    (document.getElementById('lit-add-resolve') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('lit-add-ititle')!.textContent).toBe('解析出的标题'));
+    expect(urlInput.value).toBe('https://www.bilibili.com/video/BV1testaaaaa/'); // 解析时净化写回
+    expect(document.getElementById('lit-add-iuploader')!.textContent).toBe('解析UP');
+    // 多 P → 下拉可见（P{n} · part · 时长），默认 P1
+    const pageSel = document.getElementById('lit-add-page') as HTMLSelectElement;
+    expect(document.getElementById('lit-add-page-row')!.style.display).not.toBe('none');
+    expect(pageSel.options.length).toBe(2);
+    expect(pageSel.options[0].textContent).toBe('P1 · 第一集 · 2:00');
+    // 范围默认全选（P1 量程 120s）
+    expect((document.getElementById('lit-add-start') as HTMLInputElement).value).toBe('0:00');
+    expect((document.getElementById('lit-add-end') as HTMLInputElement).value).toBe('2:00');
+    // 保存（整片）
     (document.getElementById('lit-add-save') as HTMLElement).click();
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-taskcard').length).toBe(1));
-    expect(document.querySelector('.bz-kb-taskcard')!.textContent).toContain('12:02 ~ 1:02:03');
-    (document.querySelector('#lit-add-range button[data-range="whole"]') as HTMLElement).click();
-    expect(document.getElementById('lit-add-clip-fields')!.style.display).toBe('none');
+    const tasks = await KnowledgeData.loadTasks();
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].url).toBe('https://www.bilibili.com/video/BV1testaaaaa/');
+    expect(tasks[0].start).toBeNull();
+    expect(tasks[0].end).toBeNull();
+    expect(tasks[0].title).toBe('解析出的标题');
+    expect(tasks[0].uploader).toBe('解析UP');
+    expect(tasks[0].duration).toBe(120);
+    expect(tasks[0].page).toBeNull();
+    expect(document.querySelector('.bz-kb-taskcard')!.textContent).toContain('整片');
   });
 
-  it('录入 URL 防抖回填（issue 278）：净化写回 + view API 只补空；手填标题不覆盖；编辑态同款', async () => {
-    vi.useFakeTimers();
-    // 宽松 mock 类型（先例随 tests/clipbook/rss-ui.test.ts）：罐头免 RequestUrlResponse 形状体操
+  it('范围选择（ADR-0133）：时间框提交钳制 + ↑/↓ 微调 + 剪辑范围落库与整片重置', async () => {
     const reqMock = requestUrl as ReturnType<typeof vi.fn>;
     reqMock.mockImplementation(async (opts: any) => {
       const url = String(opts?.url ?? '');
       if (url.includes('web-interface/view')) {
-        return httpResp(200, JSON.stringify({ code: 0, data: { title: '解析出的标题', owner: { mid: 1, name: '解析UP' } } }));
+        return httpResp(200, JSON.stringify({ code: 0, data: {
+          title: '单P视频', owner: { mid: 1, name: 'UP' }, duration: 300,
+          pages: [{ cid: 9, page: 1, part: '', duration: 300 }],
+        } }));
+      }
+      return httpResp(404, '');
+    });
+    ui.showVideoEntry();
+    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
+    urlInput.value = 'https://www.bilibili.com/video/BV1rangeaaaa';
+    (document.getElementById('lit-add-resolve') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('lit-add-ititle')!.textContent).toBe('单P视频'));
+    // 单 P：分P 字段隐藏（下拉与数字框都不可见）
+    expect(document.getElementById('lit-add-page-row')!.style.display).toBe('none');
+    expect(document.getElementById('lit-add-pagenum-row')!.style.display).toBe('none');
+    const startInput = document.getElementById('lit-add-start') as HTMLInputElement;
+    const endInput = document.getElementById('lit-add-end') as HTMLInputElement;
+    // 时间框提交：宽松输入归一 + 钳制
+    startInput.value = '1:00';
+    startInput.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(startInput.value).toBe('1:00');
+    // ↑ 键 ±1 秒
+    startInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    expect(startInput.value).toBe('1:01');
+    startInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', shiftKey: true, bubbles: true }));
+    expect(startInput.value).toBe('0:51');
+    // 非法输入 → 回填旧值（不改变状态）
+    startInput.value = '乱码';
+    startInput.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(startInput.value).toBe('0:51');
+    // 剪辑范围保存（非全选）→ start/end 落库
+    (document.getElementById('lit-add-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-taskcard').length).toBe(1));
+    let tasks = await KnowledgeData.loadTasks();
+    expect(tasks[0].start).toBe('0:51');
+    expect(tasks[0].end).toBe('5:00');
+    // 编辑态回显 + 「整片」重置 → 保存落 null
+    ui.showAddDialog(tasks[0]);
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    expect((document.getElementById('lit-add-start') as HTMLInputElement).value).toBe('0:51');
+    (document.getElementById('lit-add-whole') as HTMLElement).click();
+    expect((document.getElementById('lit-add-start') as HTMLInputElement).value).toBe('0:00');
+    expect((document.getElementById('lit-add-end') as HTMLInputElement).value).toBe('5:00');
+    (document.getElementById('lit-add-save') as HTMLElement).click();
+    await vi.waitFor(async () => {
+      tasks = await KnowledgeData.loadTasks();
+      expect(tasks[0].start).toBeNull();
+    });
+    expect(tasks[0].end).toBeNull();
+  });
+
+  it('解析式录入（ADR-0133）：净化写回 + 只读信息区；改动输入作废旧信息；失败进失败态可手填', async () => {
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    let failMode = false;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (failMode) return httpResp(500, '');
+      if (url.includes('web-interface/view')) {
+        return httpResp(200, JSON.stringify({ code: 0, data: {
+          title: '解析出的标题', owner: { mid: 1, name: '解析UP' }, duration: 300,
+          pages: [{ cid: 9, page: 1, part: '', duration: 300 }],
+        } }));
       }
       return httpResp(404, '');
     });
@@ -390,91 +485,191 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
       ui.showVideoEntry();
       (document.getElementById('lit-btn-video-add') as HTMLElement).click();
       const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
-      const titleInput = document.getElementById('lit-add-vtitle') as HTMLInputElement;
-      const upInput = document.getElementById('lit-add-uploader') as HTMLInputElement;
-      titleInput.value = '手填标题';
       urlInput.value = 'https://www.bilibili.com/video/BV1awbg6XELn/?spm_id_from=333.0&vd_source=abc';
-      urlInput.dispatchEvent(new Event('input', { bubbles: true }));
-      await vi.advanceTimersByTimeAsync(450); // 防抖到点：净化写回 + 抓元信息
+      (document.getElementById('lit-add-resolve') as HTMLElement).click();
+      await vi.waitFor(() => expect(document.getElementById('lit-add-ititle')!.textContent).toBe('解析出的标题'));
       expect(urlInput.value).toBe('https://www.bilibili.com/video/BV1awbg6XELn/'); // 追踪参数已剥
-      expect(titleInput.value).toBe('手填标题'); // 只补空：手填值不被覆盖
-      expect(upInput.value).toBe('解析UP'); // 空字段 → 回填
-      // 编辑态同款：预填任务 URL（程序赋值不触发解析），改 URL 后照样净化 + 回填空字段
-      ui.hideAddDialog();
-      ui.showAddDialog({ id: 'knowledge-task-x', url: 'https://www.bilibili.com/video/BV1old/?spm_id_from=9', title: '编辑手填' } as any);
-      const eUrl = document.getElementById('lit-add-url') as HTMLInputElement;
-      const eTitle = document.getElementById('lit-add-vtitle') as HTMLInputElement;
-      const eUp = document.getElementById('lit-add-uploader') as HTMLInputElement;
-      expect(eUrl.value).toBe('https://www.bilibili.com/video/BV1old/?spm_id_from=9'); // 预填不自动解析
-      eUrl.value = 'https://www.bilibili.com/video/BV1awbg6XELn?vd_source=z';
-      eUrl.dispatchEvent(new Event('input', { bubbles: true }));
-      await vi.advanceTimersByTimeAsync(450);
-      expect(eUrl.value).toBe('https://www.bilibili.com/video/BV1awbg6XELn');
-      expect(eTitle.value).toBe('编辑手填'); // 编辑态已有值不覆盖
-      expect(eUp.value).toBe('解析UP'); // 编辑态空字段照样回填
-    } finally {
-      vi.useRealTimers();
-      reqMock.mockImplementation(async () => httpResp(200, ''));
-    }
-  });
-
-  it('录入 URL 过期响应丢弃（issue 278）：改输入后旧响应不回填，新响应照常', async () => {
-    vi.useFakeTimers();
-    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
-    const resolvers: Array<(v: any) => void> = [];
-    reqMock.mockImplementation(() => new Promise<any>((res) => { resolvers.push(res); }));
-    try {
-      ui.showVideoEntry();
-      (document.getElementById('lit-btn-video-add') as HTMLElement).click();
-      const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
-      const titleInput = document.getElementById('lit-add-vtitle') as HTMLInputElement;
-      urlInput.value = 'https://www.bilibili.com/video/BV1aaaaaaaaa/?spm_id_from=1';
+      expect(document.getElementById('lit-add-iuploader')!.textContent).toBe('解析UP');
+      // 改动输入 → 作废已解析信息（需重新解析）
+      urlInput.value = 'https://www.bilibili.com/video/BV1otheraaaa';
       urlInput.dispatchEvent(new Event('input', { bubbles: true }));
-      await vi.advanceTimersByTimeAsync(450); // 第一次解析在途（净化写回已发生）
-      expect(urlInput.value).toBe('https://www.bilibili.com/video/BV1aaaaaaaaa/');
-      // 改输入：第一次响应作废
-      urlInput.value = 'https://www.bilibili.com/video/BV1bbbbbbbbb/';
-      urlInput.dispatchEvent(new Event('input', { bubbles: true }));
-      await vi.advanceTimersByTimeAsync(450); // 第二次解析在途
-      resolvers[0](httpResp(200, JSON.stringify({ code: 0, data: { title: '过期标题', owner: { mid: 1, name: '过期UP' } } })));
-      await vi.advanceTimersByTimeAsync(0);
-      expect(titleInput.value).toBe(''); // 旧响应被丢弃，未回填
-      resolvers[1](httpResp(200, JSON.stringify({ code: 0, data: { title: '新鲜标题', owner: { mid: 2, name: '新鲜UP' } } })));
-      await vi.advanceTimersByTimeAsync(0);
-      expect(titleInput.value).toBe('新鲜标题');
-      // 再起一次在途解析后关弹窗：序列失效——迟到的响应不得写进已隐藏弹层（issue 278）
-      const upInput = document.getElementById('lit-add-uploader') as HTMLInputElement;
-      urlInput.value = 'https://www.bilibili.com/video/BV1ccccccccc/';
-      urlInput.dispatchEvent(new Event('input', { bubbles: true }));
-      await vi.advanceTimersByTimeAsync(450); // 第三次解析在途
-      ui.hideAddDialog();
-      resolvers[2](httpResp(200, JSON.stringify({ code: 0, data: { title: '迟到标题', owner: { mid: 3, name: '迟到UP' } } })));
-      await vi.advanceTimersByTimeAsync(0);
-      expect(upInput.value).toBe('新鲜UP'); // 已回填值不被迟到响应覆盖
-      expect(titleInput.value).toBe('新鲜标题');
-    } finally {
-      vi.useRealTimers();
-      reqMock.mockImplementation(async () => httpResp(200, ''));
-    }
-  });
-
-  it('粘贴后立即保存仍写净化 URL（issue 278：保存兜底，不等防抖）', async () => {
-    vi.useFakeTimers();
-    try {
-      ui.showVideoEntry();
-      (document.getElementById('lit-btn-video-add') as HTMLElement).click();
-      const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
-      urlInput.value = 'https://www.bilibili.com/video/BV1save/?spm_id_from=7&vd_source=x';
-      // 不触发 input、不等防抖，直接切整片保存
-      (document.querySelector('#lit-add-range button[data-range="whole"]') as HTMLElement).click();
+      expect(document.getElementById('lit-add-info')!.style.display).toBe('none');
+      expect(document.getElementById('lit-add-rstate')!.style.display).toBe('none');
+      // 解析失败 → 失败态（原因 + 可手填分P 数字框）
+      failMode = true;
+      (document.getElementById('lit-add-resolve') as HTMLElement).click();
+      await vi.waitFor(() => expect(document.getElementById('lit-add-rstate')!.textContent).toContain('解析失败'));
+      expect(document.getElementById('lit-add-pagenum-row')!.style.display).not.toBe('none');
+      expect(document.getElementById('lit-add-page-row')!.style.display).toBe('none');
+      // 失败态可保存（标题/UP 留空，卡片回落显示链接）
       (document.getElementById('lit-add-save') as HTMLElement).click();
-      await vi.advanceTimersByTimeAsync(0);
+      await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-taskcard').length).toBe(1));
       const tasks = await KnowledgeData.loadTasks();
       expect(tasks).toHaveLength(1);
-      expect(tasks[0].url).toBe('https://www.bilibili.com/video/BV1save/'); // 落库即净化值
+      expect(tasks[0].title).toBeNull();
+      expect(tasks[0].url).toBe('https://www.bilibili.com/video/BV1otheraaaa');
     } finally {
-      vi.useRealTimers();
+      reqMock.mockImplementation(async () => httpResp(200, ''));
     }
+  });
+
+  it('解析序列号（ADR-0133）：过期响应不回填/不渲染，新解析照常；关弹窗后迟到响应丢弃', async () => {
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    const pending: Array<(v: any) => void> = [];
+    reqMock.mockImplementation((opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) return new Promise<any>((res) => { pending.push(res); });
+      return Promise.resolve(httpResp(404, ''));
+    });
+    try {
+      ui.showVideoEntry();
+      (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+      const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
+      urlInput.value = 'https://www.bilibili.com/video/BV1aaaaaaaaa/';
+      (document.getElementById('lit-add-resolve') as HTMLElement).click();
+      await vi.waitFor(() => expect(pending.length).toBe(1));
+      // 改输入（input：在途解析作废、按钮恢复可用）→ 重新解析
+      urlInput.value = 'https://www.bilibili.com/video/BV1bbbbbbbbb/';
+      urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+      (document.getElementById('lit-add-resolve') as HTMLElement).click();
+      await vi.waitFor(() => expect(pending.length).toBe(2));
+      pending[0](httpResp(200, JSON.stringify({ code: 0, data: { title: '过期标题', owner: { name: '过期UP' }, duration: 10 } })));
+      await new Promise((r) => setTimeout(r, 0));
+      expect(document.getElementById('lit-add-ititle')!.textContent).not.toBe('过期标题'); // 旧响应被丢弃
+      pending[1](httpResp(200, JSON.stringify({ code: 0, data: { title: '新鲜标题', owner: { name: '新鲜UP' }, duration: 10 } })));
+      await vi.waitFor(() => expect(document.getElementById('lit-add-ititle')!.textContent).toBe('新鲜标题'));
+      // 再起在途解析后关弹窗：序列失效——迟到响应不得写进已隐藏弹层
+      urlInput.value = 'https://www.bilibili.com/video/BV1ccccccccc/';
+      urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+      (document.getElementById('lit-add-resolve') as HTMLElement).click();
+      await vi.waitFor(() => expect(pending.length).toBe(3));
+      ui.hideAddDialog();
+      pending[2](httpResp(200, JSON.stringify({ code: 0, data: { title: '迟到标题', owner: { name: '迟到UP' }, duration: 10 } })));
+      await new Promise((r) => setTimeout(r, 0));
+      expect(document.getElementById('lit-add-ititle')!.textContent).not.toBe('迟到标题');
+    } finally {
+      reqMock.mockImplementation(async () => httpResp(200, ''));
+    }
+  });
+
+  it('粘贴后立即保存仍写净化 URL（ADR-0133：保存兜底，未解析也可存）', async () => {
+    ui.showVideoEntry();
+    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
+    urlInput.value = 'https://www.bilibili.com/video/BV1saveaaaaa/?spm_id_from=7&vd_source=x';
+    // 不点解析、不等任何防抖，直接保存
+    (document.getElementById('lit-add-save') as HTMLElement).click();
+    await vi.waitFor(async () => {
+      const tasks = await KnowledgeData.loadTasks();
+      expect(tasks).toHaveLength(1);
+    });
+    const tasks = await KnowledgeData.loadTasks();
+    expect(tasks[0].url).toBe('https://www.bilibili.com/video/BV1saveaaaaa/'); // 落库即净化值
+  });
+
+  it('清晰度下拉（ADR-0133）：无实测档位 → 固定三项默认全局档；有实测档位 → 档位列表 + 全局档不可用回落最高可用 + 提示', async () => {
+    settings.knowledgeQuality = '1080';
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) return httpResp(200, JSON.stringify({ code: 0, data: { title: 'T', owner: { name: 'U' }, duration: 100, pages: [{ cid: 1, page: 1, part: '', duration: 100 }] } }));
+      if (url.includes('web-interface/nav')) return httpResp(200, JSON.stringify({ code: 0, data: { isLogin: true } }));
+      if (url.includes('player/playurl')) return httpResp(200, JSON.stringify({ code: 0, data: { dash: { video: [{ height: 720 }, { height: 480 }] } } }));
+      return httpResp(404, '');
+    });
+    ui.showVideoEntry();
+    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    const sel = document.getElementById('lit-add-quality') as HTMLSelectElement;
+    // 未解析（无实测档位）→ 固定三项 + 默认全局档
+    expect([...sel.options].map((o) => o.value)).toEqual(['highest', '1080', '720']);
+    expect(sel.value).toBe('1080');
+    // 配 cookie + 解析 → 实测档位替换列表；全局 1080 不可用 → 回落最高可用 720 + 提示
+    settings.bilibiliCookie = 'SESSDATA=x';
+    (document.getElementById('lit-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1qualityaa';
+    (document.getElementById('lit-add-resolve') as HTMLElement).click();
+    await vi.waitFor(() => expect([...sel.options].map((o) => o.value)).toEqual(['highest', '720', '480']));
+    expect(sel.value).toBe('720');
+    const hint = document.getElementById('lit-add-rhint')!;
+    expect(hint.style.display).not.toBe('none');
+    expect(hint.textContent).toContain('720P');
+  });
+
+  it('打开面板自动重抓（ADR-0133）：缺标题任务补信息落库、不自动处理；已尝试的 id 会话内不重复请求', async () => {
+    await KnowledgeData.addTask({ url: 'https://www.bilibili.com/video/BV1backfilla' });
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) return httpResp(200, JSON.stringify({ code: 0, data: { title: '补回的标题', owner: { name: '补回的UP' }, duration: 88, pages: [{ cid: 5, page: 1, part: '', duration: 88 }] } }));
+      return httpResp(404, '');
+    });
+    ui.showVideoEntry();
+    await vi.waitFor(async () => {
+      const tasks = await KnowledgeData.loadTasks();
+      expect(tasks[0].title).toBe('补回的标题');
+    });
+    const tasks = await KnowledgeData.loadTasks();
+    expect(tasks[0].uploader).toBe('补回的UP');
+    expect(tasks[0].duration).toBe(88);
+    expect(tasks[0].status).toBe('pending'); // 不自动处理（ADR-0133 拍板：保存与打开面板均不触发处理）
+    // 再次打开面板：已尝试过的 id 不再请求（backfillTried 会话级）
+    const calls = reqMock.mock.calls.length;
+    ui.hideVideo();
+    ui.showVideoEntry();
+    await new Promise((r) => setTimeout(r, 400));
+    expect(reqMock.mock.calls.length).toBe(calls);
+  });
+
+  it('切 P（ADR-0133）：量程随该 P 重置为全选；档位重查过 nav 门禁；未登录清档回落固定列表', async () => {
+    settings.bilibiliCookie = 'SESSDATA=x';
+    settings.knowledgeQuality = 'highest';
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    let loggedIn = true;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) return httpResp(200, JSON.stringify({ code: 0, data: { title: 'T', owner: { name: 'U' }, duration: 300, pages: [
+        { cid: 11, page: 1, part: 'A', duration: 120 },
+        { cid: 12, page: 2, part: 'B', duration: 180 },
+      ] } }));
+      if (url.includes('web-interface/nav')) return httpResp(200, JSON.stringify({ code: 0, data: { isLogin: loggedIn } }));
+      if (url.includes('player/playurl')) return httpResp(200, JSON.stringify({ code: 0, data: { dash: { video: [{ height: 1080 }, { height: 480 }] } } }));
+      return httpResp(404, '');
+    });
+    ui.showVideoEntry();
+    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    (document.getElementById('lit-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1switchpaa';
+    (document.getElementById('lit-add-resolve') as HTMLElement).click();
+    const sel = document.getElementById('lit-add-quality') as HTMLSelectElement;
+    await vi.waitFor(() => expect([...sel.options].map((o) => o.value)).toEqual(['highest', '1080', '480']));
+    // 切 P2：量程随该 P 重置为全选（180s = 3:00）
+    const pageSel = document.getElementById('lit-add-page') as HTMLSelectElement;
+    pageSel.value = '2';
+    pageSel.dispatchEvent(new Event('change', { bubbles: true }));
+    expect((document.getElementById('lit-add-end') as HTMLInputElement).value).toBe('3:00');
+    expect((document.getElementById('lit-add-start') as HTMLInputElement).value).toBe('0:00');
+    // 登录态失效后切回 P1：清档回落固定列表（不留 P2 的实测档位当真）
+    loggedIn = false;
+    pageSel.value = '1';
+    pageSel.dispatchEvent(new Event('change', { bubbles: true }));
+    await vi.waitFor(() => expect([...sel.options].map((o) => o.value)).toEqual(['highest', '1080', '720']));
+  });
+
+  it('编辑态自动重抓（ADR-0133）：打开弹窗即抓取并落库（只补缺失、范围不动）', async () => {
+    const t = await KnowledgeData.addTask({ url: 'https://www.bilibili.com/video/BV1editaaaaa' });
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) return httpResp(200, JSON.stringify({ code: 0, data: { title: '编辑补回标题', owner: { name: '编辑补回UP' }, duration: 90, pages: [{ cid: 3, page: 1, part: '', duration: 90 }] } }));
+      return httpResp(404, '');
+    });
+    ui.showAddDialog(t);
+    await vi.waitFor(async () => {
+      const tasks = await KnowledgeData.loadTasks();
+      expect(tasks[0].title).toBe('编辑补回标题');
+    });
+    const tasks = await KnowledgeData.loadTasks();
+    expect(tasks[0].uploader).toBe('编辑补回UP');
+    expect(tasks[0].duration).toBe(90);
+    expect(tasks[0].start).toBeNull(); // 结果落库不写范围（保留任务原值/用户编辑）
   });
 
   it('历史：🕘 打开 + 归档分组 + 计数；清空历史（确认后清空）', async () => {

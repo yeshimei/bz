@@ -76,7 +76,7 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
   it('单页平铺：无 tab；分组卡片（带 icon）：AI + 数据存储路径 + 通知（issue 297 补通知组）', () => {
     expect(tab.containerEl.querySelectorAll('.bz-tab').length).toBe(0);
     const groupNames = [...tab.containerEl.querySelectorAll('.bz-settings-group-name')].map((t) => t.textContent);
-    expect(groupNames).toEqual(['AI', '数据存储路径', '通知']);
+    expect(groupNames).toEqual(['AI 与凭据', '数据存储路径', '通知']); // ADR-0133：AI 组改名并收编凭据
     const groupIcons = [...tab.containerEl.querySelectorAll('.bz-settings-group-icon')].map((i) => i.getAttribute('data-icon'));
     expect(groupIcons).toEqual(['sparkles', 'folder-open', 'bell']);
   });

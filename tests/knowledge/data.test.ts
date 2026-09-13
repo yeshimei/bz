@@ -1,12 +1,47 @@
 // @vitest-environment node
 /**
  * 文献盒数据层测试（视频转文献，literature 域；ADR-0066 正名，ADR-0072 迁出）：
- * 时间格式校验、knowledge.json CRUD、状态流转、清空已完成（只清成功）。
+ * 时间格式校验、knowledge.json CRUD、状态流转、清空已完成（只清成功）；
+ * ADR-0133 追加：秒 ↔ 时间文本 helper（范围条与时间框联动用）。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { KnowledgeData, isValidTime, isTerminal, normalizeUrl, normalizeLooseTime } from '../../src/knowledge/data';
+import { KnowledgeData, isValidTime, isTerminal, normalizeUrl, normalizeLooseTime, secToTimeText, timeTextToSec } from '../../src/knowledge/data';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
+
+describe('secToTimeText / timeTextToSec（ADR-0133 范围条 ↔ 时间框）', () => {
+  it('secToTimeText：<1h → M:SS；≥1h → H:MM:SS；非法/负/空 → 0:00', () => {
+    expect(secToTimeText(0)).toBe('0:00');
+    expect(secToTimeText(59)).toBe('0:59');
+    expect(secToTimeText(60)).toBe('1:00');
+    expect(secToTimeText(754)).toBe('12:34');
+    expect(secToTimeText(3600)).toBe('1:00:00');
+    expect(secToTimeText(3661)).toBe('1:01:01');
+    expect(secToTimeText(3661.6)).toBe('1:01:02'); // 四舍五入到秒
+    expect(secToTimeText(-5)).toBe('0:00');
+    expect(secToTimeText(NaN)).toBe('0:00');
+    expect(secToTimeText(null)).toBe('0:00');
+    expect(secToTimeText(undefined)).toBe('0:00');
+  });
+
+  it('timeTextToSec：规范 M:SS / H:MM:SS 与宽松输入（单数字按分钟）→ 秒；空/非法 → null', () => {
+    expect(timeTextToSec('0:00')).toBe(0);
+    expect(timeTextToSec('12:34')).toBe(754);
+    expect(timeTextToSec('1:01:01')).toBe(3661);
+    expect(timeTextToSec('12')).toBe(720); // 宽松：单数字按分钟（normalizeLooseTime 口径）
+    expect(timeTextToSec('12.2')).toBe(722); // 12 分 02 秒
+    expect(timeTextToSec('1:30:05.5')).toBe(5406); // 小数秒四舍五入
+    expect(timeTextToSec('')).toBeNull();
+    expect(timeTextToSec(null)).toBeNull();
+    expect(timeTextToSec('乱码')).toBeNull();
+  });
+
+  it('往返一致：sec → text → sec', () => {
+    for (const s of [0, 1, 59, 60, 754, 3599, 3600, 3661, 86399]) {
+      expect(timeTextToSec(secToTimeText(s))).toBe(s);
+    }
+  });
+});
 
 describe('isValidTime', () => {
   it('空/null/空白 = 合法（整片不剪辑）', () => {

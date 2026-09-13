@@ -774,9 +774,11 @@ async function runBatch(task, deps = {}) {
   const pageNum = Number(task && task.page)
   const selPage = Number.isFinite(pageNum) && pageNum >= 1 ? (info.pages || [])[pageNum - 1] : null
   const playCid = selPage && selPage.cid ? selPage.cid : info.cid
-  // 清晰度设置项（task.options.quality）：720/1080 精确档，highest/缺省跟随 parse 最高可用
+  // 清晰度设置项（task.options.quality）：具体档位数字串（720/1080/480/360…）精确命中；
+  // highest/缺省跟随 parse 最高可用（ADR-0133：档位从 720/1080 两档扩展为任意数字串）
   const qOpt = task && task.options ? task.options.quality : undefined
-  const height = qOpt === '720' ? 720 : qOpt === '1080' ? 1080 : (deps.quality || info.maxHeight)
+  const qNum = /^\d+$/.test(String(qOpt || '')) ? Number(qOpt) : 0
+  const height = qNum > 0 ? qNum : (deps.quality || info.maxHeight)
   const cachedPath = cachePath(conf, cacheKey(bvid, playCid, height))
   const originalPath = path.join(tmpDir, `bili_${Date.now()}.mp4`)
   if (fs.existsSync(cachedPath)) {
