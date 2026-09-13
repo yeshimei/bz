@@ -681,23 +681,86 @@
 }
 .bz-lit-dialog input:focus, .bz-lit-dialog select:focus { border-color: var(--accent); }
 
-.bz-lit-range-toggle { display: inline-flex; background: var(--chip); border-radius: var(--bz-radius-sm); padding: 2px; flex: none; }
-.bz-lit-range-toggle button {
-  border: 0;
+/* 解析按钮（ADR-0133：链接行右侧，描边次级档；整片/剪辑 toggle 样式随 toggle 退役删除） */
+#lit-add-resolve {
+  flex: none;
+  border: 1px solid var(--accent);
   background: none;
-  padding: 5px 13px;
+  color: var(--accent);
+  border-radius: var(--bz-radius-sm);
+  padding: var(--bz-space-sm) 14px;
   font-size: var(--bz-font-meta);
-  border-radius: 6px;
-  color: var(--ink2);
+  letter-spacing: 0.1em;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
 }
-.bz-lit-range-toggle button.active {
+#lit-add-resolve:hover { background: var(--chip); }
+#lit-add-resolve:disabled { opacity: 0.55; cursor: default; }
+
+/* 解析态提示行（解析中灰字 / 失败红字，ADR-0133） */
+.bz-lit-rstate { margin-top: var(--bz-space-sm); font-size: var(--bz-font-meta); color: var(--ink2); line-height: 1.7; }
+.bz-lit-rstate.is-error { color: var(--red); }
+
+/* 只读信息区（标题 / UP 主，ADR-0133：标题与 UP 主输入框退役后的展示位） */
+.bz-lit-info {
+  margin-top: var(--bz-space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--bz-radius-sm);
+  background: var(--card);
+  padding: var(--bz-space-sm) 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bz-lit-info-line { display: flex; gap: 8px; font-size: var(--bz-font-meta); line-height: 1.6; min-width: 0; }
+.bz-lit-info-k { flex: none; color: var(--ink3); letter-spacing: 0.08em; }
+.bz-lit-info-v { color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 范围区（ADR-0133：双把手 + 时间框 + 整片重置） */
+.bz-lit-range-area { margin-top: var(--bz-space-md); }
+.bz-lit-range-head { display: flex; align-items: center; justify-content: space-between; }
+.bz-lit-range-head label { font-size: 11.5px; color: var(--ink2); }
+#lit-add-whole {
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink2);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: var(--bz-font-meta);
+  cursor: pointer;
+  font-family: inherit;
+}
+#lit-add-whole:hover { background: var(--chip); color: var(--ink); }
+.bz-lit-rhint { margin-top: var(--bz-space-sm); font-size: var(--bz-font-meta); color: var(--ink3); line-height: 1.7; }
+
+/* 双把手范围条（自绘，range-bar.ts）：把手是唯一手势目标（touch-action:none），轨道不接管滚动 */
+.bz-lit-rb { margin-top: 10px; padding: 10px 0 4px; }
+.bz-lit-rb.is-disabled { display: none; }
+.bz-lit-rb-track { position: relative; height: 6px; border-radius: 3px; background: var(--chip); margin: 0 9px; }
+.bz-lit-rb-fill { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 3px; }
+.bz-lit-rb-handle {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  transform: translateY(-50%);
+  border-radius: 50%;
   background: var(--panel);
-  color: var(--ink);
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: ew-resize;
+  touch-action: none;
+  outline: none;
+  box-sizing: border-box;
+}
+.bz-lit-rb-handle:focus-visible { box-shadow: 0 0 0 3px var(--chip); }
+
+/* 移动端：把手加大 + 轨道两端留白加宽（触屏可抓） */
+@media (max-width: 768px) {
+  .bz-lit-rb-track { margin: 0 13px; }
+  .bz-lit-rb-handle { width: 26px; height: 26px; margin-left: -13px; }
 }
 
 .bz-lit-accent-btn {

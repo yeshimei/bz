@@ -189,6 +189,8 @@ export default interface BzSettings {
   cinemaApizeroKey: string;
   /** 影院抓取：豆瓣 Cookie（搜索页风控时提高成功率，可选） */
   cinemaDoubanCookie: string;
+  /** B站 Cookie（ADR-0133 知识盒视频档位查询；「AI 与凭据」组设置项，桌面端可从 CLI 导入） */
+  bilibiliCookie: string;
   /** 📦 归物本：默认状态筛选（空串=全部，其余 using/idle/sold/discard；非法值回落全部。issue 194） */
   belongingsDefaultStatus: string;
   /** 📦 归物本：默认排序（recent 最近购入 / price 投入最高 / daily 日均最高；非法值回落 recent。issue 294） */
@@ -612,6 +614,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   cinemaStyle: 'midnight',
   cinemaApizeroKey: '',
   cinemaDoubanCookie: '',
+  bilibiliCookie: '',
 
   // 做题家（设置并入复习计划 tab）
   enableMultipleChoice: true,

@@ -1,12 +1,14 @@
 // @vitest-environment node
 /**
- * 视频录入元信息抓取测试（src/knowledge/video-meta.ts，issue 278）：
+ * 视频录入元信息抓取测试（src/knowledge/video-meta.ts，issue 278 / ADR-0133）：
  * parseBvid 各形态、view API 成功/风控/网络异常/超时、页面标题兜底（剔 B 站尾巴）、
- * 双失败 null、非 B 站 URL 零请求（联网范围仅限 B 站域，b23.tv 短链命中）、非 URL 文本零请求。mock requestUrl 走共用 obsidian 替身。
+ * 双失败 null、非 B 站 URL 零请求（联网范围仅限 B 站域，b23.tv 短链命中）、非 URL 文本零请求；
+ * ADR-0133 扩展：pages/duration 净化、cookie 登录态校验（nav）、实测档位（playurl）、resolveVideo 组合。
+ * mock requestUrl 走共用 obsidian 替身。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { requestUrl } from 'obsidian';
-import { parseBvid, fetchVideoMeta } from '../../src/knowledge/video-meta';
+import { parseBvid, fetchVideoMeta, isCookieLoggedIn, fetchVideoQualities, resolveVideo } from '../../src/knowledge/video-meta';
 
 // 宽松 mock 类型（先例随 tests/clipbook/rss-ui.test.ts）：罐头只补 status/text，免 RequestUrlResponse 形状体操
 const reqMock = requestUrl as ReturnType<typeof vi.fn>;
@@ -131,5 +133,139 @@ describe('fetchVideoMeta', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+});
+
+describe('view API 扩展解析（ADR-0133：pages 与 duration）', () => {
+  beforeEach(() => {
+    reqMock.mockReset();
+    reqMock.mockImplementation(async () => httpResp(200, ''));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('pages 净化：page 缺省按序补 / part 缺省空串 / duration 缺省回落总时长 / 无 cid 剔除', async () => {
+    reqMock.mockImplementationOnce(async () => viewResp(0, {
+      title: '多P视频', owner: { name: 'UP' }, duration: 300,
+      pages: [
+        { cid: 11, page: 1, part: '第一集', duration: 120 },
+        { cid: 12, part: '第二集' },
+        { page: 3, part: '缺cid' },
+      ],
+    }));
+    expect(await fetchVideoMeta('BV1xx411c7mD')).toEqual({
+      title: '多P视频',
+      uploader: 'UP',
+      duration: 300,
+      pages: [
+        { page: 1, part: '第一集', duration: 120, cid: 11 },
+        { page: 2, part: '第二集', duration: 300, cid: 12 },
+      ],
+    });
+    expect(reqMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('单 P 视频：pages 单项照常返回；非数 duration 不落 key', async () => {
+    reqMock.mockImplementationOnce(async () => viewResp(0, {
+      title: '单P', owner: { name: 'UP' }, duration: 'abc',
+      pages: [{ cid: 7, page: 1, part: '', duration: 0 }],
+    }));
+    const meta = await fetchVideoMeta('BV1xx411c7mD');
+    expect(meta!.duration).toBeUndefined();
+    expect(meta!.pages).toEqual([{ page: 1, part: '', duration: 0, cid: 7 }]);
+  });
+
+  it('pages 全无效（无 cid）→ 不落 pages；title/owner 仍在 → 整体成功', async () => {
+    reqMock.mockImplementationOnce(async () => viewResp(0, { title: 'T', owner: { name: 'U' }, pages: [{ part: 'x' }] }));
+    const meta = await fetchVideoMeta('BV1xx411c7mD');
+    expect(meta!.pages).toBeUndefined();
+    expect(meta!.title).toBe('T');
+  });
+});
+
+describe('cookie 登录态与实测档位（ADR-0133）', () => {
+  beforeEach(() => {
+    reqMock.mockReset();
+    reqMock.mockImplementation(async () => httpResp(200, ''));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('isCookieLoggedIn：空 cookie 零请求；isLogin=true → true；false / 异常 → false', async () => {
+    expect(await isCookieLoggedIn('')).toBe(false);
+    expect(await isCookieLoggedIn('   ')).toBe(false);
+    expect(reqMock).not.toHaveBeenCalled();
+
+    reqMock.mockImplementationOnce(async () => httpResp(200, JSON.stringify({ code: 0, data: { isLogin: true } })));
+    expect(await isCookieLoggedIn('SESSDATA=x')).toBe(true);
+    expect(String((reqMock.mock.calls[0][0] as any).url)).toBe('https://api.bilibili.com/x/web-interface/nav');
+    expect((reqMock.mock.calls[0][0] as any).headers).toEqual({ Cookie: 'SESSDATA=x' });
+
+    reqMock.mockImplementationOnce(async () => httpResp(200, JSON.stringify({ code: 0, data: { isLogin: false } })));
+    expect(await isCookieLoggedIn('SESSDATA=x')).toBe(false);
+
+    reqMock.mockRejectedValueOnce(new Error('炸'));
+    expect(await isCookieLoggedIn('SESSDATA=x')).toBe(false);
+  });
+
+  it('fetchVideoQualities：dash.video → height 降序去重；无 cookie / 无 dash / 空集 → null', async () => {
+    expect(await fetchVideoQualities('BV1xx411c7mD', 1, '')).toBeNull();
+    expect(await fetchVideoQualities('BV1xx411c7mD', 0, 'SESSDATA=x')).toBeNull();
+    expect(reqMock).not.toHaveBeenCalled();
+
+    reqMock.mockImplementationOnce(async () => httpResp(200, JSON.stringify({
+      code: 0,
+      data: { dash: { video: [{ height: 720 }, { height: 1080 }, { height: 720, codecs: 'hevc' }, { height: 360 }] } },
+    })));
+    expect(await fetchVideoQualities('BV1xx411c7mD', 137, 'SESSDATA=x')).toEqual([1080, 720, 360]);
+    expect(String((reqMock.mock.calls[0][0] as any).url)).toContain('/x/player/playurl?bvid=BV1xx411c7mD&cid=137');
+
+    reqMock.mockImplementationOnce(async () => httpResp(200, JSON.stringify({ code: 0, data: {} })));
+    expect(await fetchVideoQualities('BV1xx411c7mD', 137, 'SESSDATA=x')).toBeNull();
+
+    reqMock.mockImplementationOnce(async () => viewResp(-403));
+    expect(await fetchVideoQualities('BV1xx411c7mD', 137, 'SESSDATA=x')).toBeNull();
+  });
+
+  it('resolveVideo：meta 双失败 → null（不发档位请求）；无 cookie → qualities null；登录态有效 → 按选中 P 的 cid 查询', async () => {
+    // meta 双失败（view 404 + 页面 404）
+    reqMock.mockImplementation(async () => httpResp(404, ''));
+    expect(await resolveVideo('https://www.bilibili.com/video/BV1awbg6XELn/', 'SESSDATA=x')).toBeNull();
+    expect(reqMock).toHaveBeenCalledTimes(2);
+
+    // 无 cookie：只发 view 一次请求
+    reqMock.mockReset();
+    reqMock.mockImplementationOnce(async () => viewResp(0, { title: 'T', owner: { name: 'U' }, duration: 300, pages: [{ cid: 1, page: 1, part: '', duration: 100 }, { cid: 2, page: 2, part: '', duration: 200 }] }));
+    const r1 = await resolveVideo('BV1xx411c7mD', '');
+    expect(r1!.meta.title).toBe('T');
+    expect(r1!.qualities).toBeNull();
+    expect(reqMock).toHaveBeenCalledTimes(1);
+
+    // 有 cookie + 登录有效：view → nav → playurl（pageIndex=1 → 用 P2 的 cid=2）
+    reqMock.mockReset();
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) return viewResp(0, { title: 'T', owner: { name: 'U' }, duration: 300, pages: [{ cid: 1, page: 1, part: '', duration: 100 }, { cid: 2, page: 2, part: '', duration: 200 }] });
+      if (url.includes('web-interface/nav')) return httpResp(200, JSON.stringify({ code: 0, data: { isLogin: true } }));
+      if (url.includes('player/playurl')) return httpResp(200, JSON.stringify({ code: 0, data: { dash: { video: [{ height: 1080 }, { height: 480 }] } } }));
+      return httpResp(404, '');
+    });
+    const r2 = await resolveVideo('BV1xx411c7mD', 'SESSDATA=x', 1);
+    expect(r2!.qualities).toEqual([1080, 480]);
+    expect(String((reqMock.mock.calls[2][0] as any).url)).toContain('cid=2');
+
+    // cookie 未登录：nav 判否 → 不发 playurl，qualities null
+    reqMock.mockReset();
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) return viewResp(0, { title: 'T', owner: { name: 'U' }, duration: 10, pages: [{ cid: 9, page: 1, part: '', duration: 10 }] });
+      if (url.includes('web-interface/nav')) return httpResp(200, JSON.stringify({ code: 0, data: { isLogin: false } }));
+      return httpResp(404, '');
+    });
+    const r3 = await resolveVideo('BV1xx411c7mD', 'expired');
+    expect(r3!.qualities).toBeNull();
+    expect(reqMock).toHaveBeenCalledTimes(2); // view + nav，无 playurl
   });
 });

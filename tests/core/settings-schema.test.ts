@@ -20,16 +20,17 @@ describe('mainSettingsSchema：主设置页两区块', () => {
   const schema = mainSettingsSchema();
 
   it('ticket 170：两区块升级为分组卡片（带 icon），标题不带 emoji 前缀（emoji 由分组卡图标呈现，防两遍；issue 297 通用域补通知组）', () => {
-    expect(schema.groups.map((g) => g.name)).toEqual(['AI', '数据存储路径', '通知']);
+    expect(schema.groups.map((g) => g.name)).toEqual(['AI 与凭据', '数据存储路径', '通知']); // ADR-0133：AI 组改名并收编凭据
     expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'folder-open', 'bell']);
   });
 
-  it('AI 区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行 + per-provider 配置三行（ticket 171/172；issue 187 删自定义模型行）', () => {
+  it('AI 与凭据区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行 + per-provider 配置三行 + 凭据三行（ticket 171/172；issue 187 删自定义模型行；ADR-0133 收编 B站 Cookie/影院两项）', () => {
     const rows = schema.groups[0].rows;
     // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行（每行 text）+ 自定义端点/密钥（text×2）
     //         + per-provider 配置三行（声明式重写后模型行同为标准 text + actions；上下文/最大输出 token number）
+    //         + 凭据三行（B站 Cookie / ApiZero Key / 豆瓣 Cookie，ADR-0133）
     const nonCustom = AI_PROVIDER_REGISTRY.filter((p) => p.id !== 'custom');
-    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'number', 'number'];
+    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'number', 'number', 'text', 'text', 'text'];
     expect(rows.map((r) => r.type)).toEqual(types);
     // 密钥行标题来自注册表 apiKeyLabel（含 deepseek/opencode-go，顺序与注册表一致）
     const names = rows.map((r) => (r as { name: string }).name);
@@ -38,6 +39,7 @@ describe('mainSettingsSchema：主设置页两区块', () => {
       'AI 服务商', ...keyNames,
       '自定义 API 地址', '自定义 API 密钥',
       '模型名称', '上下文窗口', '最大输出 token',
+      'B站 Cookie', 'ApiZero Key', '豆瓣 Cookie',
     ]);
     const [provider, ...rest] = rows as Array<{
       binding?: { key: string };

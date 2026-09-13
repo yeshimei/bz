@@ -21,13 +21,41 @@
 
 import { AI_PROVIDER_REGISTRY, getProviderDescriptor } from './ai';
 import { notice } from './notice';
-import { tryGetSettings, saveSettings } from './settings-provider';
+import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
 import { fetchProviderModels, providerDescriptorOf } from './ai-models';
 import { openModelPicker } from './settings-model-picker';
 import type { NumberRow, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
 /** 存储路径改动防错提示（f1；正文不带 emoji，铁律 7）——文案逐字冻结，勿改 */
 export const STORAGE_PATH_COMMIT_NOTICE = '存储路径已修改：仅改路径，文件不会自动迁移，旧数据需自行迁移；重载插件后生效。';
+
+/** 桌面端判定（ADR-0133；零依赖版，口径同 core/mobile 的 window.require 门禁——
+ *  本模块须保持 node 环境可安全加载，故不 import obsidian 侧模块、并显式防 window 缺失） */
+function isDesktopShell(): boolean {
+  if (typeof window === 'undefined') return false;
+  const w = window as any;
+  return !!(w && typeof w.require === 'function');
+}
+
+/** 「从 CLI 导入」：读 CLI 凭据文件 ~/.bilibili-cookies.json 填入 B站 Cookie（ADR-0133；失败静默提示） */
+function importCliBilibiliCookie(): void {
+  if (typeof window === 'undefined') return;
+  const w = window as any;
+  try {
+    const fs = w.require('fs');
+    const os = w.require('os');
+    const path = w.require('path');
+    const file = path.join(os.homedir(), '.bilibili-cookies.json');
+    const json = JSON.parse(String(fs.readFileSync(file, 'utf8')));
+    const cookie = String((json && json.cookie) || '').trim();
+    if (!cookie) { notice('CLI cookie 文件里没有 cookie', 'warning'); return; }
+    getSettings().bilibiliCookie = cookie;
+    void saveSettings();
+    notice('已导入 B站 Cookie', 'success');
+  } catch {
+    notice('导入失败：找不到 CLI 的 ~/.bilibili-cookies.json', 'error');
+  }
+}
 
 /** per-provider 覆盖 map 键集合（ticket 172） */
 type OverrideMapKey = 'aiModelOverrides' | 'aiContextOverrides' | 'aiMaxTokensOverrides';
@@ -203,18 +231,42 @@ function aiGroupRows(): SettingsRow[] {
     providerNumberConfigRow('context'),
     providerNumberConfigRow('maxTokens'),
   );
+  // 凭据行（ADR-0133：「AI 与凭据」组收编）——B站 Cookie（知识盒档位查询；桌面端可从 CLI 导入）
+  // + 影院 ApiZero Key / 豆瓣 Cookie（原影院「数据抓取」组挪入）
+  rows.push(
+    {
+      type: 'text',
+      name: 'B站 Cookie',
+      desc: '视频录入解析清晰度档位用，留空则档位回落固定列表',
+      binding: { key: 'bilibiliCookie' },
+      actions: isDesktopShell() ? [{ text: '从 CLI 导入', onClick: () => importCliBilibiliCookie() }] : [],
+    },
+    {
+      type: 'text',
+      name: 'ApiZero Key',
+      desc: '豆瓣字段接口的密钥，不填时字段走豆瓣演职员接口兜底',
+      binding: { key: 'cinemaApizeroKey' },
+    },
+    {
+      type: 'text',
+      name: '豆瓣 Cookie',
+      desc: '搜索被风控时粘贴浏览器Cookie可提高成功率，不填也能抓',
+      binding: { key: 'cinemaDoubanCookie' },
+    },
+  );
   return rows;
 }
 
 /** 采样参数组已于 2026-09-08 拍板退役（原 issue 187 四键：温度/top_p/频率惩罚/存在惩罚） */
 
-/** AI 设置组（issue 186：设置面板拆独立域；⚙️ 主设置页与本域共用同一组定义） */
+/** AI 与凭据设置组（issue 186：设置面板拆独立域；⚙️ 主设置页与本域共用同一组定义。
+ *  ADR-0133：组名「AI」→「AI 与凭据」，收编影院 ApiZero Key / 豆瓣 Cookie 与 B站 Cookie） */
 export function aiSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
         icon: 'sparkles',
-        name: 'AI',
+        name: 'AI 与凭据',
         rows: aiGroupRows(),
       },
     ],

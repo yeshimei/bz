@@ -3,6 +3,30 @@
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
 
+## Issue 306 — 知识盒视频录入改链接解析式（ADR-0133）
+
+**状态：门禁**（全量 4750 测试绿 + tsc 0 错；待合并部署）
+
+- [x] 拍板链（grill-with-docs 四轮，2026-09-14）：解析按钮替 450ms 防抖；只读信息区（标题/UP/分 P 下拉/时长）；
+      双把手进度条 + 时间框双向联动（↑/↓ ±1s，Shift ±10）；失败态手填分 P 与时间范围、下次打开自动重抓并替换显示；
+      抓取成功即落库（只补缺失）；单 P 隐藏分 P 字段；B站 cookie 内置插件设置支持移动端（设置行「从 CLI 导入」）；
+      AI 组改名「AI 与凭据」并收编影院 ApiZero Key / 豆瓣 Cookie；档位默认全局档（不可用回落最高可用并提示）；
+      两端统一「保存」仅入队不自动处理；打开主面板对缺标题任务自动重抓
+- [x] 实测支撑：view API 单响应含 pages/duration（现 video-meta 已在调同一接口，零新增请求；54P 全量返回、时长逐项求和一致）；
+      未登录 playurl 档位上限 720P（账号级限制与视频无关）；带登录 cookie 完整档位（[1080,720,480,360]）；
+      **实现期实测确认免 wbi 签名**（未签名带 cookie 即通，不移植 wbi/md5）；档位采用前置 nav 登录态校验
+- [x] 实现：`src/knowledge/range-bar.ts`（新，自绘双把手：set 钳制 / 键盘 / pointer 拖拽 / touch-action 仲裁）；
+      `video-meta.ts`（pages/duration 净化 + isCookieLoggedIn + fetchVideoQualities + resolveVideo 组合）；
+      `ui.ts` 弹窗重构（解析态机 + 序列号过期丢弃 + 自动重抓不阻塞保存 + 卡片分 P/时长）；
+      `data.ts`（secToTimeText/timeTextToSec + duration 字段）；`settings.ts`（bilibiliCookie 键）；
+      `settings-main-schema.ts`（AI 与凭据组 + 从 CLI 导入按钮）；`cinema/settings.ts`（两项挪走）；
+      `tools/bili-downloader/core.js`（quality 映射任意档位数字串）
+- [x] 测试：知识盒域 166 passed（data helper 往返 / range-bar / 解析态机 / 范围联动 / 档位默认规则 / 自动重抓）；
+      设置面测试适配（组名/徽标/组序/行序）；原型产物重出（knowledge 等 7 域）
+- [x] 文档：ADR-0133、CONTEXT（录入元信息重写 + 清晰度档位 + 凭据）、spec、issues/306
+- [ ] 合并回主仓库 → 主仓库构建部署 → 清理 worktree
+
+
 ## Issue 266 — 备忘录移动端真全屏三处 UI 缺陷（ADR-0120）
 
 **状态：已交付**

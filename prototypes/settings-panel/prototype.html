@@ -211,10 +211,11 @@
         await waitFor(() => badgeOf('global') !== '·' && badgeOf('global') !== '');
         t('通用徽标=1', badgeOf('global') === '1');
         t('设置徽标=2（外观独立域）', badgeOf('appearance') === '2');
-        // AI=5：4 常显（服务商/模型名称/上下文窗口/最大输出 token）+ deepseek 密钥行
-        // （seed aiProvider=deepseek，visibleWhen 门控放行）。**不是 9**：采样参数组 4 行已于
-        // 2026-09-08 拍板退役（schema 注释），旧断言按 9 是那批行还在时的口径。
-        t('AI徽标=5（含 seed deepseek 密钥行门控放行）', badgeOf('ai') === '5');
+        // AI 徽标：4 常显（服务商/模型名称/上下文窗口/最大输出 token）+ deepseek 密钥行
+        // （seed aiProvider=deepseek，visibleWhen 门控放行）+ ADR-0133 三项凭据
+        // （B站 Cookie / ApiZero Key / 豆瓣 Cookie 自影院「数据抓取」组收编）。
+        // **不是 9**：采样参数组 4 行已于 2026-09-08 拍板退役（schema 注释），旧断言按 9 是那批行还在时的口径。
+        t('AI徽标=8（含 seed deepseek 密钥行门控放行 + ADR-0133 三项凭据）', badgeOf('ai') === '8');
         t('归物本徽标=3（移动端组桌面门控不计）', badgeOf('belongings') === '3');
         t('默认域=通用（数据存储路径组）', await waitFor(() => dt('.bz-sp-pane .bz-sp-group-name')?.textContent === '数据存储路径') !== null);
         // 路径行控件二态（renderer.ts path 分支）：有值 → chip 回显（点文本重开），空值 → 「选择…」按钮。

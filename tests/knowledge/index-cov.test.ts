@@ -30,7 +30,7 @@ describe('openKnowledgeAddTask（聚合讯「保存至文献」入口，ticket 1
     document.body.innerHTML = '';
   });
 
-  it('ensure 幂等初始化 → 视频录入面板叠开添加弹窗，预填链接/标题/UP主（新增模式标题）', async () => {
+  it('ensure 幂等初始化 → 视频录入面板叠开添加弹窗，预填链接 + 只读信息区标题/UP主（新增模式无编辑标签）', async () => {
     resetObsidianMocks();
     const vault = new MockVault();
     const app = mockAppWithVault(vault) as any;
@@ -43,8 +43,10 @@ describe('openKnowledgeAddTask（聚合讯「保存至文献」入口，ticket 1
     await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
     await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
     expect((document.getElementById('lit-add-url') as HTMLInputElement).value).toBe('https://www.bilibili.com/video/BV1xx411c7mD');
-    expect((document.getElementById('lit-add-vtitle') as HTMLInputElement).value).toBe('某视频');
-    expect((document.getElementById('lit-add-uploader') as HTMLInputElement).value).toBe('UP主甲');
+    // 预填标题/UP 落只读信息区（ADR-0133：标题与 UP 主输入框退役）
+    expect(document.getElementById('lit-add-info')!.style.display).not.toBe('none');
+    expect(document.getElementById('lit-add-ititle')!.textContent).toBe('某视频');
+    expect(document.getElementById('lit-add-iuploader')!.textContent).toBe('UP主甲');
     // ticket 143：无标题，新增模式无编辑标签
     expect(document.getElementById('lit-add-title')).toBeNull();
     expect(document.getElementById('lit-add-mode')!.style.display).toBe('none');

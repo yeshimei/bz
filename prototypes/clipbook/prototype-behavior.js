@@ -1,5 +1,5 @@
-/* 源指纹 8bfc58d0e8b03ff3 · 仓内输入 80 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 a2ef43bc7b8ff771 · 仓内输入 81 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -6394,6 +6394,23 @@ ${body}`;
   function normalizeUrl(raw) {
     return normalizeSourceUrl(cleanUrlText(raw));
   }
+  function secToTimeText(sec) {
+    const s = Number.isFinite(Number(sec)) && Number(sec) > 0 ? Math.round(Number(sec)) : 0;
+    const h = Math.floor(s / 3600);
+    const m = Math.floor(s % 3600 / 60);
+    const ss = s % 60;
+    const pad = (n) => String(n).padStart(2, "0");
+    return h > 0 ? `${h}:${pad(m)}:${pad(ss)}` : `${m}:${pad(ss)}`;
+  }
+  function timeTextToSec(t) {
+    const canon = normalizeLooseTime(t);
+    if (!canon) return null;
+    const parts = canon.split(":").map((p) => Number(p));
+    if (parts.some((n) => !Number.isFinite(n) || n < 0)) return null;
+    if (parts.length === 3) return Math.round(parts[0] * 3600 + parts[1] * 60 + parts[2]);
+    if (parts.length === 2) return Math.round(parts[0] * 60 + parts[1]);
+    return Math.round(parts[0]);
+  }
   var import_moment2, TIME_RE, KnowledgeData;
   var init_data2 = __esm({
     "src/knowledge/data.ts"() {
@@ -6476,7 +6493,8 @@ ${body}`;
                 archived: item.archived === true,
                 archivedAt: item.archivedAt || null,
                 quality: item.quality || null,
-                page: Number.isInteger(item.page) && Number(item.page) > 0 ? Number(item.page) : null
+                page: Number.isInteger(item.page) && Number(item.page) > 0 ? Number(item.page) : null,
+                duration: Number.isFinite(Number(item.duration)) && Number(item.duration) > 0 ? Math.round(Number(item.duration)) : null
               };
             });
             if (needWrite) await this.write(raw);
@@ -6503,7 +6521,8 @@ ${body}`;
             archived: false,
             archivedAt: null,
             quality: input.quality || null,
-            page: Number.isInteger(input.page) && Number(input.page) > 0 ? Number(input.page) : null
+            page: Number.isInteger(input.page) && Number(input.page) > 0 ? Number(input.page) : null,
+            duration: Number.isFinite(Number(input.duration)) && Number(input.duration) > 0 ? Math.round(Number(input.duration)) : null
           };
           return this._mutate((data) => {
             data.push(task);
@@ -8229,28 +8248,67 @@ ${sample}`,
     const m = String(input != null ? input : "").match(BVID_RE);
     return m ? m[0] : null;
   }
+  function withTimeout2(p, ms) {
+    let timer = null;
+    const timeout = new Promise((resolve2) => {
+      timer = setTimeout(() => resolve2(null), ms);
+    });
+    const done = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+    return Promise.race([p, timeout]).then(
+      (v) => {
+        done();
+        return v === null ? null : v;
+      },
+      (e) => {
+        done();
+        throw e;
+      }
+    );
+  }
+  function parseJson(resp) {
+    if (!resp || resp.status < 200 || resp.status >= 300) return null;
+    try {
+      return JSON.parse(resp.text);
+    } catch (e) {
+      return null;
+    }
+  }
+  function posInt(v) {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+  }
   async function fetchFromViewApi(bvid) {
     try {
-      const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), VIEW_TIMEOUT_MS));
-      const req = requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: "GET" }).then(
-        (resp) => {
-          if (!resp || resp.status < 200 || resp.status >= 300) return null;
-          let json = null;
-          try {
-            json = JSON.parse(resp.text);
-          } catch (e) {
-            return null;
-          }
-          if (!json || json.code !== 0 || !json.data) return null;
-          const title = typeof json.data.title === "string" ? json.data.title.trim() : "";
-          const ownerName = json.data.owner && typeof json.data.owner.name === "string" ? json.data.owner.name.trim() : "";
-          const meta = {};
-          if (title) meta.title = title;
-          if (ownerName) meta.uploader = ownerName;
-          return title || ownerName ? meta : null;
-        }
-      );
-      return await Promise.race([req, timer]);
+      const json = parseJson(await withTimeout2(requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: "GET" }), VIEW_TIMEOUT_MS));
+      if (!json || json.code !== 0 || !json.data) return null;
+      const d = json.data;
+      const title = typeof d.title === "string" ? d.title.trim() : "";
+      const ownerName = d.owner && typeof d.owner.name === "string" ? d.owner.name.trim() : "";
+      const meta = {};
+      if (title) meta.title = title;
+      if (ownerName) meta.uploader = ownerName;
+      const duration = posInt(d.duration);
+      if (duration) meta.duration = duration;
+      let pages = [];
+      if (Array.isArray(d.pages)) {
+        d.pages.forEach((p, i) => {
+          const cid = posInt(p && p.cid);
+          if (!cid) return;
+          pages.push({
+            page: posInt(p.page) || i + 1,
+            part: typeof p.part === "string" ? p.part.trim() : "",
+            duration: posInt(p.duration) || duration,
+            cid
+          });
+        });
+      }
+      if (pages.length) meta.pages = pages;
+      return meta.title || meta.uploader || meta.pages ? meta : null;
     } catch (e) {
       return null;
     }
@@ -8278,7 +8336,52 @@ ${sample}`,
     if (!isBiliUrl(url)) return null;
     return await fetchFromPageTitle(url);
   }
-  var BVID_RE, BILI_HOST_RE, VIEW_TIMEOUT_MS;
+  async function isCookieLoggedIn(cookie) {
+    const c = String(cookie != null ? cookie : "").trim();
+    if (!c) return false;
+    try {
+      const json = parseJson(await withTimeout2(
+        requestUrl({ url: "https://api.bilibili.com/x/web-interface/nav", method: "GET", headers: { Cookie: c } }),
+        NAV_TIMEOUT_MS
+      ));
+      return !!(json && json.code === 0 && json.data && json.data.isLogin === true);
+    } catch (e) {
+      return false;
+    }
+  }
+  async function fetchVideoQualities(bvid, cid, cookie) {
+    const c = String(cookie != null ? cookie : "").trim();
+    if (!c || !bvid || !posInt(cid)) return null;
+    try {
+      const url = `https://api.bilibili.com/x/player/playurl?bvid=${bvid}&cid=${posInt(cid)}&qn=127&fnval=4048&fourk=1`;
+      const json = parseJson(await withTimeout2(
+        requestUrl({ url, method: "GET", headers: { Cookie: c } }),
+        QUALITY_TIMEOUT_MS
+      ));
+      const videos = json && json.code === 0 && json.data && json.data.dash ? json.data.dash.video : null;
+      if (!Array.isArray(videos)) return null;
+      const heights = Array.from(new Set(videos.map((f) => posInt(f && f.height)).filter((h) => h > 0))).sort((a, b) => b - a);
+      return heights.length ? heights : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  async function fetchCheckedQualities(bvid, cid, cookie) {
+    const c = String(cookie != null ? cookie : "").trim();
+    if (!c || !bvid || !posInt(cid)) return null;
+    if (!await isCookieLoggedIn(c)) return null;
+    return await fetchVideoQualities(bvid, cid, c);
+  }
+  async function resolveVideo(input, cookie, pageIndex = 0) {
+    const meta = await fetchVideoMeta(input);
+    if (!meta) return null;
+    const bvid = parseBvid(input);
+    const pages = meta.pages || [];
+    const sel = pages[pageIndex] || pages[0];
+    const qualities = bvid && sel && sel.cid ? await fetchCheckedQualities(bvid, sel.cid, cookie) : null;
+    return { meta, qualities };
+  }
+  var BVID_RE, BILI_HOST_RE, VIEW_TIMEOUT_MS, QUALITY_TIMEOUT_MS, NAV_TIMEOUT_MS;
   var init_video_meta = __esm({
     "src/knowledge/video-meta.ts"() {
       init_fake_obsidian();
@@ -8287,6 +8390,119 @@ ${sample}`,
       BVID_RE = /BV[0-9A-Za-z]{10}/;
       BILI_HOST_RE = /(^|\.)(bilibili\.com|b23\.tv)$/i;
       VIEW_TIMEOUT_MS = 1e4;
+      QUALITY_TIMEOUT_MS = 1e4;
+      NAV_TIMEOUT_MS = 1e4;
+    }
+  });
+
+  // src/knowledge/range-bar.ts
+  var RangeBar;
+  var init_range_bar = __esm({
+    "src/knowledge/range-bar.ts"() {
+      RangeBar = class {
+        constructor(opts) {
+          this.total = 0;
+          this.start = 0;
+          this.end = 0;
+          this.onChange = opts.onChange;
+          this.el = document.createElement("div");
+          this.el.className = "bz-lit-rb";
+          this.track = document.createElement("div");
+          this.track.className = "bz-lit-rb-track";
+          this.fill = document.createElement("div");
+          this.fill.className = "bz-lit-rb-fill";
+          this.hStart = this._makeHandle("start", "开始把手");
+          this.hEnd = this._makeHandle("end", "结束把手");
+          this.track.appendChild(this.fill);
+          this.track.appendChild(this.hStart);
+          this.track.appendChild(this.hEnd);
+          this.el.appendChild(this.track);
+        }
+        _makeHandle(which, label) {
+          const h = document.createElement("div");
+          h.className = `bz-lit-rb-handle bz-lit-rb-${which === "start" ? "hs" : "he"}`;
+          h.setAttribute("role", "slider");
+          h.setAttribute("aria-label", label);
+          h.tabIndex = 0;
+          h.addEventListener("pointerdown", (e) => this._beginDrag(e, which));
+          h.addEventListener("keydown", (e) => this._onKey(e, which));
+          return h;
+        }
+        /** 重设量程与值（秒；整数化 + 钳制），只重绘不回调 */
+        set(totalSec, startSec, endSec) {
+          this.total = Math.max(0, Math.round(totalSec) || 0);
+          let s = Math.max(0, Math.min(Math.round(startSec) || 0, this.total));
+          let e = Math.max(0, Math.min(Math.round(endSec) || 0, this.total));
+          if (this.total >= 2) {
+            s = Math.min(s, this.total - 1);
+            e = Math.max(e, Math.min(this.total, s + 1));
+          }
+          this.start = s;
+          this.end = e;
+          this._paint();
+        }
+        /** 拖拽中更新（内部用，立即回调） */
+        _apply(s, e) {
+          this.start = s;
+          this.end = e;
+          this._paint();
+          this.onChange(s, e);
+        }
+        _paint() {
+          const T = this.total || 1;
+          const sp = this.total > 0 ? this.start / T * 100 : 0;
+          const ep = this.total > 0 ? this.end / T * 100 : 100;
+          this.hStart.style.left = `${sp}%`;
+          this.hEnd.style.left = `${ep}%`;
+          this.fill.style.left = `${sp}%`;
+          this.fill.style.width = `${Math.max(0, ep - sp)}%`;
+          for (const [h, v] of [[this.hStart, this.start], [this.hEnd, this.end]]) {
+            h.setAttribute("aria-valuemin", "0");
+            h.setAttribute("aria-valuemax", String(this.total));
+            h.setAttribute("aria-valuenow", String(v));
+          }
+          this.el.classList.toggle("is-disabled", this.total < 2);
+        }
+        _beginDrag(e, which) {
+          if (this.total < 2 || e.button !== 0) return;
+          e.preventDefault();
+          const handle = e.currentTarget;
+          try {
+            handle.setPointerCapture(e.pointerId);
+          } catch (e2) {
+          }
+          const rect0 = this.track.getBoundingClientRect();
+          const grabSec = which === "start" ? this.start : this.end;
+          const grabX = rect0.left + (rect0.width > 0 ? grabSec / this.total * rect0.width : 0);
+          const offset = e.clientX - grabX;
+          const move = (ev) => {
+            const rect = this.track.getBoundingClientRect();
+            const ratio = rect.width > 0 ? (ev.clientX - offset - rect.left) / rect.width : 0;
+            const sec = Math.round(Math.max(0, Math.min(1, ratio)) * this.total);
+            if (which === "start") this._apply(Math.max(0, Math.min(sec, this.end - 1)), this.end);
+            else this._apply(this.start, Math.min(this.total, Math.max(sec, this.start + 1)));
+          };
+          const up = () => {
+            handle.removeEventListener("pointermove", move);
+            handle.removeEventListener("pointerup", up);
+            handle.removeEventListener("pointercancel", up);
+          };
+          handle.addEventListener("pointermove", move);
+          handle.addEventListener("pointerup", up);
+          handle.addEventListener("pointercancel", up);
+        }
+        _onKey(e, which) {
+          if (this.total < 2) return;
+          const step = e.shiftKey ? 10 : 1;
+          let delta = 0;
+          if (e.key === "ArrowLeft" || e.key === "ArrowDown") delta = -step;
+          else if (e.key === "ArrowRight" || e.key === "ArrowUp") delta = step;
+          else return;
+          e.preventDefault();
+          if (which === "start") this._apply(Math.max(0, Math.min(this.start + delta, this.end - 1)), this.end);
+          else this._apply(this.start, Math.min(this.total, Math.max(this.end + delta, this.start + 1)));
+        }
+      };
     }
   });
 
@@ -8415,6 +8631,7 @@ ${sample}`,
       init_note_gen();
       init_source();
       init_video_meta();
+      init_range_bar();
       STATUS_META = {
         pending: { label: "待处理", cls: "bz-kb-pending" },
         processing: { label: "处理中", cls: "bz-kb-processing" },
@@ -8455,9 +8672,27 @@ ${sample}`,
           // ---- 添加任务弹窗 / 历史弹窗 ----
           this.addMask = null;
           this.addPopup = null;
-          /** 录入 URL 防抖定时器与解析序列号（issue 278：450ms 防抖回填 + 过期响应丢弃） */
-          this.addUrlTimer = null;
+          // ---- 添加弹窗解析态（ADR-0133：解析按钮 + 只读信息区 + 双把手范围）----
+          /** 解析序列号：新解析/关弹窗使在途响应过期（回填前校验丢弃） */
           this.addUrlSeq = 0;
+          /** 解析中（解析按钮 loading、保存禁用） */
+          this.addResolving = false;
+          /** 解析成功的信息（null = 未解析 / 失败态） */
+          this.addMeta = null;
+          /** 实测清晰度档位（null = 未取到 → 固定列表回落） */
+          this.addQualities = null;
+          /** 当前选中分 P（1 起） */
+          this.addPage = 1;
+          /** 当前 P 时长（秒；0 = 未知 → 进度条不可用、只出时间框） */
+          this.addDuration = 0;
+          /** 范围选择（秒；全选 = 整片） */
+          this.addStart = 0;
+          this.addEnd = 0;
+          /** 双把手范围条实例（重建时销毁旧的） */
+          this.addBar = null;
+          /** 主面板自动重抓（ADR-0133）：进行中标记 + 已尝试任务 id 集（防重入/防重复请求） */
+          this.backfillRunning = false;
+          this.backfillTried = /* @__PURE__ */ new Set();
           this.historyMask = null;
           this.historyPopup = null;
           this.historyList = null;
@@ -9101,7 +9336,7 @@ ${sample}`,
           };
           q(p, "#lit-btn-video-history").onclick = () => this.showHistory();
         }
-        /** 打开视频录入面板；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口） */
+        /** 打开视频录入面板；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口）；打开即自动重抓缺信息任务（ADR-0133） */
         showVideoEntry(prefill) {
           var _a, _b;
           if (!this.videoPopup || !this.videoMask) return;
@@ -9109,7 +9344,37 @@ ${sample}`,
           this.videoMask.style.display = "block";
           this.videoPopup.style.display = "flex";
           void this.refreshVideoPanel();
+          void this.backfillVideoTasks();
           if (prefill) this.showAddDialog({ url: prefill.url, title: (_a = prefill.title) != null ? _a : null, uploader: (_b = prefill.uploader) != null ? _b : null });
+        }
+        /**
+         * 打开面板时的自动重抓（ADR-0133）：对缺标题任务串行补信息（标题/UP/时长，只补缺失），
+         * 成功即落库；任务间 300ms 间隔防风控；已尝试过的 id 会话内不再重试，失败静默。
+         */
+        async backfillVideoTasks() {
+          var _a;
+          if (this.backfillRunning) return;
+          this.backfillRunning = true;
+          try {
+            const tasks = await KnowledgeData.loadTasks();
+            const todo = tasks.filter((t) => !t.archived && !t.title && t.url && !this.backfillTried.has(t.id));
+            if (todo.length) {
+              const cookie = String(((_a = tryGetSettings()) == null ? void 0 : _a.bilibiliCookie) || "");
+              for (const t of todo) {
+                this.backfillTried.add(t.id);
+                try {
+                  const res = await resolveVideo(t.url, cookie, Math.max(0, (t.page || 1) - 1));
+                  if (res) await this._persistResolved(t, res);
+                } catch (e) {
+                }
+                await new Promise((r) => setTimeout(r, 300));
+              }
+              await this.refreshVideoPanel();
+            }
+          } catch (e) {
+          } finally {
+            this.backfillRunning = false;
+          }
         }
         hideVideo() {
           if (this.videoMask) this.videoMask.style.display = "none";
@@ -9174,7 +9439,9 @@ ${sample}`,
           card.className = "bz-kb-taskcard";
           card.dataset.id = task.id;
           const meta = (_a = STATUS_META[task.status]) != null ? _a : STATUS_META.pending;
-          const timeText = task.start && task.end ? `${task.start} ~ ${task.end}` : "整片";
+          const pageTag = task.page && task.page > 1 ? `P${task.page} · ` : "";
+          const timeText = task.start && task.end ? `${pageTag}${task.start} ~ ${task.end}` : `${pageTag}整片`;
+          const durText = task.duration ? ` · ${secToTimeText(task.duration)}` : "";
           const linkLine = task.title ? `<a class="bz-kb-tlink" href="${esc(task.url)}" title="${esc(task.url)}">${esc(task.title)}</a>` : `<span class="bz-kb-turl" title="${esc(task.url)}">${esc(shortUrlText(task.url))}</span>`;
           const upText = task.uploader ? ` · UP主 ${esc(task.uploader)}` : "";
           card.innerHTML = `
@@ -9182,7 +9449,7 @@ ${sample}`,
         <span class="bz-kb-status ${meta.cls}">${meta.label}</span>
         ${linkLine}
       </div>
-      <div class="bz-kb-tmeta">${timeText}${upText}${task.remark ? " · " + esc(task.remark) : ""}</div>
+      <div class="bz-kb-tmeta">${timeText}${durText}${upText}${task.remark ? " · " + esc(task.remark) : ""}</div>
       ${task.status === "processing" ? this.runState.has(task.id) ? '<div class="bz-kb-progress-box"></div>' : task.reason ? `<div class="bz-kb-progress">${esc(task.reason)}</div>` : "" : ""}
       ${task.status === "failed" && task.reason ? `<div class="bz-kb-progress bz-kb-progress-error" title="${esc(task.reason)}">${esc(humanizeError(task.reason))}</div>` : ""}
       ${task.status === "success" && task.notePath ? `<div class="bz-kb-notepath">📄 ${esc(task.notePath)}</div>` : ""}`;
@@ -9374,36 +9641,39 @@ ${sample}`,
         <label>视频链接 / BV 号</label>
         <div class="bz-lit-url-row">
           <input id="lit-add-url" type="text">
-          <div class="bz-lit-range-toggle" id="lit-add-range">
-            <button type="button" data-range="whole">整片</button>
-            <button type="button" data-range="clip">剪辑片段</button>
-          </div>
+          <button id="lit-add-resolve" type="button">解析</button>
         </div>
       </div>
-      <div class="bz-lit-form-row">
-        <div class="bz-lit-form-col"><label>视频标题（可选）</label>
-          <input id="lit-add-vtitle" type="text"></div>
-        <div class="bz-lit-form-col"><label>UP主（可选）</label>
-          <input id="lit-add-uploader" type="text"></div>
+      <div id="lit-add-rstate" class="bz-lit-rstate" style="display:none;"></div>
+      <div id="lit-add-info" class="bz-lit-info" style="display:none;">
+        <div class="bz-lit-info-line"><span class="bz-lit-info-k">标题</span><span class="bz-lit-info-v" id="lit-add-ititle"></span></div>
+        <div class="bz-lit-info-line"><span class="bz-lit-info-k">UP 主</span><span class="bz-lit-info-v" id="lit-add-iuploader"></span></div>
       </div>
-      <div class="bz-lit-form-row">
-        <div class="bz-lit-form-col"><label>下载清晰度</label>
-          <select id="lit-add-quality">
-            <option value="">跟随全局设置</option>
-            <option value="highest">最高</option>
-            <option value="1080">1080P</option>
-            <option value="720">720P</option>
-          </select></div>
-        <div class="bz-lit-form-col"><label>分P</label>
-          <input id="lit-add-page" type="number" min="1" step="1"></div>
+      <div class="bz-lit-form-col" id="lit-add-page-row" style="display:none;">
+        <label>分P</label>
+        <select id="lit-add-page"></select>
       </div>
-      <div id="lit-add-clip-fields" style="display:none;">
+      <div class="bz-lit-form-col" id="lit-add-pagenum-row" style="display:none;">
+        <label>分P</label>
+        <input id="lit-add-page-num" type="number" min="1" step="1">
+      </div>
+      <div class="bz-lit-range-area">
+        <div class="bz-lit-range-head">
+          <label>剪辑范围</label>
+          <button id="lit-add-whole" type="button">整片</button>
+        </div>
+        <div id="lit-add-rb"></div>
         <div class="bz-lit-form-row">
           <div class="bz-lit-form-col"><label>开始时间</label>
             <input id="lit-add-start" type="text"></div>
           <div class="bz-lit-form-col"><label>结束时间</label>
             <input id="lit-add-end" type="text"></div>
         </div>
+      </div>
+      <div class="bz-lit-form-col">
+        <label>下载清晰度</label>
+        <select id="lit-add-quality"></select>
+        <div id="lit-add-rhint" class="bz-lit-rhint" style="display:none;"></div>
       </div>
       <div class="bz-lit-form-actions">
         <button id="lit-add-save" class="bz-lit-accent-btn">保存</button>
@@ -9413,32 +9683,64 @@ ${sample}`,
           this.addMask = addMask;
           this.addPopup = popup;
           q(popup, "#lit-add-save").onclick = () => void this._handleAddSave();
-          const rangeBox = q(popup, "#lit-add-range");
-          if (rangeBox) {
-            rangeBox.addEventListener("click", (e) => {
-              const btn = e.target.closest("button[data-range]");
-              if (btn) this._setAddRangeMode(btn.getAttribute("data-range") === "clip" ? "clip" : "whole");
+          q(popup, "#lit-add-resolve").onclick = () => void this._handleResolve();
+          q(popup, "#lit-add-whole").onclick = () => this._resetAddRange();
+          const addUrlInput = q(popup, "#lit-add-url");
+          if (addUrlInput) {
+            addUrlInput.addEventListener("input", () => {
+              this.addUrlSeq++;
+              this.addResolving = false;
+              this._setResolveState(null);
+              if (this.addMeta || this.addDuration > 0) {
+                this.addMeta = null;
+                this.addQualities = null;
+                this.addDuration = 0;
+                this.addStart = 0;
+                this.addEnd = 0;
+                this.addPage = 1;
+              }
+              this._renderAdd();
+            });
+            addUrlInput.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (this.addResolving) return;
+                void this._handleResolve();
+              }
             });
           }
-          for (const sel of ["#lit-add-url", "#lit-add-vtitle", "#lit-add-uploader", "#lit-add-page", "#lit-add-start", "#lit-add-end"]) {
-            (_a = q(popup, sel)) == null ? void 0 : _a.addEventListener("keydown", (e) => {
+          (_a = q(popup, "#lit-add-page")) == null ? void 0 : _a.addEventListener("change", (e) => {
+            void this._switchAddPage(Number(e.target.value) || 1);
+          });
+          for (const [sel, which] of [["#lit-add-start", "start"], ["#lit-add-end", "end"]]) {
+            const input = q(popup, sel);
+            if (!input) continue;
+            input.addEventListener("change", () => this._commitTimeInput(which));
+            input.addEventListener("keydown", (e) => {
+              if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                e.preventDefault();
+                this._nudgeTime(which, e.key === "ArrowUp" ? 1 : -1, e.shiftKey ? 10 : 1);
+              } else if (e.key === "Enter") {
+                e.preventDefault();
+                this._commitTimeInput(which, true);
+                void this._handleAddSave();
+              }
+            });
+          }
+          const numInput = q(popup, "#lit-add-page-num");
+          if (numInput) {
+            numInput.addEventListener("input", () => {
+              const n = Number(numInput.value.trim());
+              this.addPage = Number.isInteger(n) && n > 0 ? n : 1;
+            });
+            numInput.addEventListener("keydown", (e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
                 void this._handleAddSave();
               }
             });
           }
-          const addUrlInput = q(popup, "#lit-add-url");
-          if (addUrlInput) {
-            addUrlInput.addEventListener("input", () => {
-              if (this.addUrlTimer) clearTimeout(this.addUrlTimer);
-              this.addUrlSeq++;
-              this.addUrlTimer = setTimeout(() => {
-                this.addUrlTimer = null;
-                void this.addUrlResolve(addUrlInput);
-              }, 450);
-            });
-          }
+          this._renderAdd();
         }
         showAddDialog(editItem) {
           var _a, _b, _c, _d, _e, _f, _g;
@@ -9448,13 +9750,19 @@ ${sample}`,
           const modeTag = q(this.addPopup, "#lit-add-mode");
           if (modeTag) modeTag.style.display = this.editingId ? "inline-block" : "none";
           q(this.addPopup, "#lit-add-url").value = (_b = editItem == null ? void 0 : editItem.url) != null ? _b : "";
-          q(this.addPopup, "#lit-add-start").value = (_c = editItem == null ? void 0 : editItem.start) != null ? _c : "";
-          q(this.addPopup, "#lit-add-end").value = (_d = editItem == null ? void 0 : editItem.end) != null ? _d : "";
-          q(this.addPopup, "#lit-add-quality").value = (_e = editItem == null ? void 0 : editItem.quality) != null ? _e : "";
-          q(this.addPopup, "#lit-add-page").value = (editItem == null ? void 0 : editItem.page) ? String(editItem.page) : "";
-          q(this.addPopup, "#lit-add-vtitle").value = (_f = editItem == null ? void 0 : editItem.title) != null ? _f : "";
-          q(this.addPopup, "#lit-add-uploader").value = (_g = editItem == null ? void 0 : editItem.uploader) != null ? _g : "";
-          this._setAddRangeMode(this.editingId ? (editItem == null ? void 0 : editItem.start) || (editItem == null ? void 0 : editItem.end) ? "clip" : "whole" : "clip");
+          this.addMeta = editItem && (editItem.title || editItem.uploader) ? { title: editItem.title || void 0, uploader: editItem.uploader || void 0 } : null;
+          this.addQualities = null;
+          this.addResolving = false;
+          this.addPage = (editItem == null ? void 0 : editItem.page) && editItem.page > 0 ? editItem.page : 1;
+          this.addDuration = (editItem == null ? void 0 : editItem.duration) && editItem.duration > 0 ? editItem.duration : 0;
+          this.addStart = (_d = timeTextToSec((_c = editItem == null ? void 0 : editItem.start) != null ? _c : "")) != null ? _d : 0;
+          this.addEnd = (_f = timeTextToSec((_e = editItem == null ? void 0 : editItem.end) != null ? _e : "")) != null ? _f : this.addDuration;
+          this._setResolveState(null);
+          this._renderAdd(this.editingId !== null);
+          if (editItem == null ? void 0 : editItem.quality) {
+            const qSel = q(this.addPopup, "#lit-add-quality");
+            if (qSel) qSel.value = editItem.quality;
+          }
           const fail = q(this.addPopup, "#lit-add-fail");
           if (fail) {
             const reason = (editItem == null ? void 0 : editItem.status) === "failed" ? editItem.reason || "" : "";
@@ -9467,98 +9775,380 @@ ${sample}`,
           this.addPopup.style.display = "flex";
           const urlInput = q(this.addPopup, "#lit-add-url");
           if (urlInput) setTimeout(() => urlInput.focus(), 100);
+          if (((_g = editItem == null ? void 0 : editItem.url) != null ? _g : "").trim()) void this._handleResolve({ auto: true });
         }
-        _setAddRangeMode(mode) {
-          if (!this.addPopup) return;
-          const box = q(this.addPopup, "#lit-add-range");
-          if (box) {
-            for (const btn of Array.from(box.querySelectorAll("button[data-range]"))) {
-              btn.classList.toggle("active", btn.getAttribute("data-range") === mode);
+        /** 弹窗全量重绘（ADR-0133 状态单源）：信息区 / 分P 控件 / 范围条 / 档位下拉 / 按钮态 */
+        _renderAdd(preserveQuality = false) {
+          var _a, _b;
+          const popup = this.addPopup;
+          if (!popup) return;
+          const prevQuality = preserveQuality ? (_b = (_a = q(popup, "#lit-add-quality")) == null ? void 0 : _a.value) != null ? _b : null : null;
+          const meta = this.addMeta;
+          const pages = (meta == null ? void 0 : meta.pages) || [];
+          const multi = pages.length > 1;
+          const info = q(popup, "#lit-add-info");
+          if (info) info.style.display = meta && (meta.title || meta.uploader) ? "" : "none";
+          const tEl = q(popup, "#lit-add-ititle");
+          if (tEl) {
+            tEl.textContent = (meta == null ? void 0 : meta.title) || "（未取到标题）";
+            tEl.title = (meta == null ? void 0 : meta.title) || "";
+          }
+          const uEl = q(popup, "#lit-add-iuploader");
+          if (uEl) {
+            uEl.textContent = (meta == null ? void 0 : meta.uploader) || "（未取到）";
+            uEl.title = (meta == null ? void 0 : meta.uploader) || "";
+          }
+          const pageRow = q(popup, "#lit-add-page-row");
+          const numRow = q(popup, "#lit-add-pagenum-row");
+          if (pageRow) pageRow.style.display = multi ? "" : "none";
+          if (numRow) numRow.style.display = pages.length ? "none" : "";
+          const sel = q(popup, "#lit-add-page");
+          if (multi && sel) {
+            sel.innerHTML = pages.map((p) => `<option value="${p.page}">${esc(this._pageLabel(p))}</option>`).join("");
+            sel.value = String(this.addPage);
+          }
+          const num = q(popup, "#lit-add-page-num");
+          if (num && !pages.length) num.value = this.addPage > 1 ? String(this.addPage) : "";
+          this._rebuildBar();
+          this._paintRange();
+          this._renderQualitySelect(prevQuality);
+          const rBtn = q(popup, "#lit-add-resolve");
+          if (rBtn) {
+            rBtn.disabled = this.addResolving;
+            rBtn.textContent = this.addResolving ? "解析中…" : "解析";
+          }
+          const sBtn = q(popup, "#lit-add-save");
+          if (sBtn) sBtn.disabled = this.addResolving;
+        }
+        /** 分P 下拉项文案：P{n} · {标题} · {时长}（时长未知省略） */
+        _pageLabel(p) {
+          const parts = [`P${p.page}`];
+          if (p.part) parts.push(p.part);
+          if (p.duration > 0) parts.push(secToTimeText(p.duration));
+          return parts.join(" · ");
+        }
+        /** 档位标签：4K / 2K / {h}P（口径随 CLI qualityLabel，不带帧率） */
+        _heightLabel(h) {
+          return h >= 2160 ? "4K" : h >= 1440 ? "2K" : `${h}P`;
+        }
+        /**
+         * 清晰度下拉重绘（ADR-0133）：有实测档位 → [最高, 实测各档]，默认选中全局设置对应的具体档
+         * （不可用回落最高可用 + 提示）；无实测档位 → 固定 [最高, 1080P, 720P]，默认全局档。
+         * prevValue 仍在新列表内时优先保留（编辑态回显 / 切 P 重查）。
+         */
+        _renderQualitySelect(prevValue) {
+          var _a;
+          const popup = this.addPopup;
+          if (!popup) return;
+          const sel = q(popup, "#lit-add-quality");
+          if (!sel) return;
+          const hint = q(popup, "#lit-add-rhint");
+          const globalQ = String(((_a = tryGetSettings()) == null ? void 0 : _a.knowledgeQuality) || "highest");
+          const heights = this.addQualities;
+          const opts = [];
+          let def = "highest";
+          let hintText = "";
+          if (heights && heights.length) {
+            opts.push({ value: "highest", label: "最高" });
+            for (const h of heights) opts.push({ value: String(h), label: this._heightLabel(h) });
+            const gv = /^\d+$/.test(globalQ) ? Number(globalQ) : 0;
+            if (gv) {
+              if (heights.includes(gv)) def = String(gv);
+              else {
+                def = String(heights[0]);
+                hintText = `全局 ${gv}P 在该视频不可用，已选最高可用 ${heights[0]}P`;
+              }
+            }
+          } else {
+            opts.push({ value: "highest", label: "最高" }, { value: "1080", label: "1080P" }, { value: "720", label: "720P" });
+            if (/^\d+$/.test(globalQ) && (globalQ === "1080" || globalQ === "720")) def = globalQ;
+          }
+          const keep = prevValue && opts.some((o) => o.value === prevValue) ? prevValue : null;
+          sel.innerHTML = opts.map((o) => `<option value="${o.value}">${o.label}</option>`).join("");
+          sel.value = keep || def;
+          if (hint) {
+            hint.style.display = hintText ? "" : "none";
+            hint.textContent = hintText;
+          }
+        }
+        /** 范围条重建（量程 < 2 秒 = 无进度条：失败态/未知时长只出时间框）；实例在宿主上时只 set 复用（重绘不摘把手） */
+        _rebuildBar() {
+          const popup = this.addPopup;
+          if (!popup) return;
+          const host = q(popup, "#lit-add-rb");
+          if (!host) return;
+          if (this.addDuration < 2) {
+            host.innerHTML = "";
+            host.style.display = "none";
+            this.addBar = null;
+            return;
+          }
+          host.style.display = "";
+          if (this.addBar && this.addBar.el.parentElement === host) {
+            this.addBar.set(this.addDuration, this.addStart, this.addEnd);
+            return;
+          }
+          host.innerHTML = "";
+          const bar = new RangeBar({
+            onChange: (s, e) => {
+              this.addStart = s;
+              this.addEnd = e;
+              this._paintRange();
+            }
+          });
+          bar.set(this.addDuration, this.addStart, this.addEnd);
+          host.appendChild(bar.el);
+          this.addBar = bar;
+        }
+        /** 范围值 → 进度条 + 时间框（`only` = 只重写该框、不碰另一个——防覆盖用户正在输入的框；null = 两个都写） */
+        _paintRange(only = null) {
+          const popup = this.addPopup;
+          if (!popup) return;
+          if (this.addBar && this.addDuration >= 2) this.addBar.set(this.addDuration, this.addStart, this.addEnd);
+          const sEl = q(popup, "#lit-add-start");
+          const eEl = q(popup, "#lit-add-end");
+          if (sEl && only !== "end") sEl.value = this.addStart > 0 || this.addDuration > 0 ? secToTimeText(this.addStart) : "";
+          if (eEl && only !== "start") eEl.value = this.addEnd > 0 ? secToTimeText(this.addEnd) : "";
+        }
+        /** 「整片」一键重置（ADR-0133）：有量程 → 全选；无时长 → 清空时间框 */
+        _resetAddRange() {
+          this.addStart = 0;
+          this.addEnd = this.addDuration > 0 ? this.addDuration : 0;
+          this._paintRange();
+        }
+        /** 时间框提交（blur/回车）：宽松解析 → 钳制到量程 → 回写状态与把手；非法值时回填旧值 */
+        _commitTimeInput(which, silent = false) {
+          const popup = this.addPopup;
+          if (!popup) return;
+          const input = q(popup, which === "start" ? "#lit-add-start" : "#lit-add-end");
+          if (!input) return;
+          const raw = input.value.trim();
+          const sec = timeTextToSec(raw);
+          if (sec === null) {
+            if (raw && !silent) notice("时间格式看不懂：支持 12.2 / 12-2 / 1:30:05 等，单个数字按分钟算", "error");
+            input.value = this.addDuration > 0 ? secToTimeText(which === "start" ? this.addStart : this.addEnd) : "";
+            return;
+          }
+          if (which === "start") this.addStart = Math.max(0, Math.min(sec, this.addDuration > 0 ? this.addEnd - 1 : Number.MAX_SAFE_INTEGER));
+          else this.addEnd = Math.min(this.addDuration > 0 ? this.addDuration : Number.MAX_SAFE_INTEGER, Math.max(sec, this.addDuration > 0 ? this.addStart + 1 : 0));
+          this._paintRange(which);
+        }
+        /** 时间框 ↑/↓ 微调（ADR-0133：一次 1 秒，Shift ±10） */
+        _nudgeTime(which, dir, step) {
+          if (which === "start") this.addStart = Math.max(0, Math.min(this.addStart + dir * step, this.addDuration > 0 ? this.addEnd - 1 : Number.MAX_SAFE_INTEGER));
+          else this.addEnd = Math.min(this.addDuration > 0 ? this.addDuration : Number.MAX_SAFE_INTEGER, Math.max(this.addEnd + dir * step, this.addDuration > 0 ? this.addStart + 1 : 0));
+          this._paintRange(which);
+        }
+        /** 解析态提示行（解析中/失败原因；null = 隐藏） */
+        _setResolveState(text, kind = "error") {
+          const el = this.addPopup ? q(this.addPopup, "#lit-add-rstate") : null;
+          if (!el) return;
+          el.style.display = text ? "" : "none";
+          el.textContent = text || "";
+          el.classList.toggle("is-error", !!text && kind === "error");
+        }
+        /** 分P 切换（ADR-0133）：量程与范围重置为全选，档位按该 P 的 cid 静默重查（未登录/失败 → 清档回落固定列表） */
+        async _switchAddPage(p) {
+          var _a, _b, _c, _d, _e, _f;
+          const popup = this.addPopup;
+          if (!popup) return;
+          this.addPage = p;
+          const pages = ((_a = this.addMeta) == null ? void 0 : _a.pages) || [];
+          const sel = pages.find((x) => x.page === p) || pages[0];
+          const dur = (sel == null ? void 0 : sel.duration) || ((_b = this.addMeta) == null ? void 0 : _b.duration) || 0;
+          this.addDuration = dur;
+          this.addStart = 0;
+          this.addEnd = dur;
+          this._rebuildBar();
+          this._paintRange();
+          const cookie = String(((_c = tryGetSettings()) == null ? void 0 : _c.bilibiliCookie) || "");
+          const bvid = parseBvid(((_d = q(popup, "#lit-add-url")) == null ? void 0 : _d.value) || "");
+          if (!cookie || !bvid || !(sel == null ? void 0 : sel.cid)) return;
+          const cur = (_f = (_e = q(popup, "#lit-add-quality")) == null ? void 0 : _e.value) != null ? _f : null;
+          const qualities = await fetchCheckedQualities(bvid, sel.cid, cookie);
+          if (this.addPopup !== popup || this.addPage !== p) return;
+          this.addQualities = qualities;
+          this._renderQualitySelect(cur);
+        }
+        /**
+         * 「解析」按钮 / 打开弹窗自动重抓（ADR-0133）：净化写回 → resolveVideo（meta + 实测档位）→ 渲染。
+         * 手动解析：按钮 loading + 保存禁用；自动重抓：全程静默、不阻塞保存（失败保留已有值）。
+         * 手动解析失败进失败态（可手填分 P 与时间范围）；编辑态自动重抓成功 → 即落库（只补缺失字段）。
+         */
+        async _handleResolve(opts) {
+          var _a;
+          const popup = this.addPopup;
+          if (!popup) return;
+          const urlInput = q(popup, "#lit-add-url");
+          if (!urlInput) return;
+          const cleaned = normalizeSourceUrl(urlInput.value.trim());
+          if (!cleaned) {
+            if (!(opts == null ? void 0 : opts.auto)) {
+              notice("请填写视频链接或 BV 号", "error");
+              urlInput.focus();
+            }
+            return;
+          }
+          if (cleaned !== urlInput.value) urlInput.value = cleaned;
+          const seq = ++this.addUrlSeq;
+          const manual = !(opts == null ? void 0 : opts.auto);
+          if (manual) {
+            this.addResolving = true;
+            this._setResolveState("解析中…", "busy");
+            this._renderAdd(true);
+          }
+          const cookie = String(((_a = tryGetSettings()) == null ? void 0 : _a.bilibiliCookie) || "");
+          const res = await resolveVideo(cleaned, cookie, Math.max(0, this.addPage - 1));
+          if (seq !== this.addUrlSeq || this.addPopup !== popup) return;
+          this.addResolving = false;
+          if (!res) {
+            if (!(opts == null ? void 0 : opts.auto)) {
+              this.addMeta = null;
+              this.addQualities = null;
+              this.addDuration = 0;
+              this.addStart = 0;
+              this.addEnd = 0;
+              this._setResolveState("解析失败：拿不到视频信息（网络不可达 / 视频被删 / 非 B 站链接）——可手动填写分 P 与时间范围");
+            }
+            this._renderAdd(true);
+            return;
+          }
+          this._setResolveState(null);
+          this._applyResolved(res);
+          this._renderAdd((opts == null ? void 0 : opts.auto) === true);
+          if (opts == null ? void 0 : opts.auto) {
+            const editId = this.editingId;
+            if (editId) {
+              const tasks = await KnowledgeData.loadTasks();
+              const cur = tasks.find((t) => t.id === editId);
+              if (cur && this.editingId === editId && this.addPopup === popup) await this._persistResolved(cur, res);
             }
           }
-          const clipFields = q(this.addPopup, "#lit-add-clip-fields");
-          if (clipFields) clipFields.style.display = mode === "clip" ? "block" : "none";
+        }
+        /** 解析结果落地到弹窗状态：分 P 校正 / 量程 / 范围（首次拿到时长 → 全选；已有范围 → 钳制保持） */
+        _applyResolved(res) {
+          var _a, _b;
+          const meta = res.meta;
+          const pages = meta.pages || [];
+          if (pages.length > 1) {
+            if (!pages.some((p) => p.page === this.addPage)) this.addPage = pages[0].page;
+          } else {
+            this.addPage = (_b = (_a = pages[0]) == null ? void 0 : _a.page) != null ? _b : 1;
+          }
+          const sel = pages.find((p) => p.page === this.addPage) || pages[0];
+          const newDur = (sel == null ? void 0 : sel.duration) || meta.duration || 0;
+          const dur = newDur > 0 ? newDur : this.addDuration;
+          const hadRange = this.addDuration > 0;
+          this.addMeta = meta;
+          this.addQualities = res.qualities || null;
+          this.addDuration = dur;
+          if (dur > 0) {
+            if (hadRange) {
+              this.addStart = Math.max(0, Math.min(this.addStart, dur - 1));
+              this.addEnd = Math.min(dur, Math.max(this.addEnd, this.addStart + 1));
+            } else {
+              this.addStart = 0;
+              this.addEnd = dur;
+            }
+          }
+        }
+        /** 抓取成功即落库（ADR-0133）：只补缺失字段（标题/UP/时长），失败静默不打断录入 */
+        async _persistResolved(task, res) {
+          try {
+            const patch = {};
+            const meta = res.meta;
+            if (!task.title && meta.title) patch.title = meta.title;
+            if (!task.uploader && meta.uploader) patch.uploader = meta.uploader;
+            const pages = meta.pages || [];
+            const pageIdx = Math.max(0, (task.page || 1) - 1);
+            const sel = pages[pageIdx] || pages[0];
+            const dur = (sel && sel.duration > 0 ? sel.duration : 0) || meta.duration || 0;
+            if (!task.duration && dur > 0) patch.duration = dur;
+            if (!Object.keys(patch).length) return;
+            await KnowledgeData.updateTask(task.id, patch);
+            if (this.videoPopup && this.videoPopup.style.display === "flex") await this.refreshVideoPanel();
+          } catch (e) {
+          }
         }
         hideAddDialog() {
           if (this.addMask) this.addMask.style.display = "none";
           if (this.addPopup) this.addPopup.style.display = "none";
           this.editingId = null;
           this.addUrlReset();
+          this.addMeta = null;
+          this.addQualities = null;
+          this.addResolving = false;
+          this.addPage = 1;
+          this.addDuration = 0;
+          this.addStart = 0;
+          this.addEnd = 0;
+          this.addBar = null;
+          const qSel = this.addPopup ? q(this.addPopup, "#lit-add-quality") : null;
+          if (qSel) qSel.innerHTML = "";
         }
-        /** 录入 URL 解析清理：防抖定时器归零 + 序列号失效在途响应（开/关弹窗共用） */
+        /** 录入解析清理：序列号失效在途响应（开/关弹窗共用，ADR-0133） */
         addUrlReset() {
-          if (this.addUrlTimer) {
-            clearTimeout(this.addUrlTimer);
-            this.addUrlTimer = null;
-          }
           this.addUrlSeq++;
         }
-        /**
-         * 录入 URL 防抖触发（issue 278）：先净化写回（值有变才写，用户可见），再抓元信息。
-         * 回填只补空字段（trim 后为空才算空）；序列号 + 输入值双校验丢弃过期响应；全程静默。
-         */
-        async addUrlResolve(input) {
-          const popup = this.addPopup;
-          if (!popup) return;
-          const seq = this.addUrlSeq;
-          const cleaned = normalizeSourceUrl(input.value);
-          if (cleaned && cleaned !== input.value) input.value = cleaned;
-          const meta = await fetchVideoMeta(cleaned);
-          if (seq !== this.addUrlSeq || this.addPopup !== popup || input.value !== cleaned) return;
-          const titleEl = q(popup, "#lit-add-vtitle");
-          const upEl = q(popup, "#lit-add-uploader");
-          if ((meta == null ? void 0 : meta.title) && titleEl && !titleEl.value.trim()) titleEl.value = meta.title;
-          if ((meta == null ? void 0 : meta.uploader) && upEl && !upEl.value.trim()) upEl.value = meta.uploader;
-        }
         async _handleAddSave() {
-          var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
+          var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
           if (!this.addPopup) return;
+          if (this.addResolving) {
+            notice("解析中，请稍候", "info");
+            return;
+          }
           const url = normalizeSourceUrl(((_b = (_a = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _a.value) != null ? _b : "").trim());
-          const clipMode = ((_d = (_c = q(this.addPopup, "#lit-add-range")) == null ? void 0 : _c.querySelector("button[data-range].active")) == null ? void 0 : _d.getAttribute("data-range")) === "clip";
-          const startRaw = ((_f = (_e = q(this.addPopup, "#lit-add-start")) == null ? void 0 : _e.value) != null ? _f : "").trim();
-          const endRaw = ((_h = (_g = q(this.addPopup, "#lit-add-end")) == null ? void 0 : _g.value) != null ? _h : "").trim();
-          const start = clipMode ? normalizeLooseTime(startRaw) : "";
-          const end = clipMode ? normalizeLooseTime(endRaw) : "";
-          const quality = ((_j = (_i = q(this.addPopup, "#lit-add-quality")) == null ? void 0 : _i.value) != null ? _j : "").trim() || null;
-          const pageRaw = ((_l = (_k = q(this.addPopup, "#lit-add-page")) == null ? void 0 : _k.value) != null ? _l : "").trim();
-          const vtitle = ((_n = (_m = q(this.addPopup, "#lit-add-vtitle")) == null ? void 0 : _m.value) != null ? _n : "").trim();
-          const uploader = ((_p = (_o = q(this.addPopup, "#lit-add-uploader")) == null ? void 0 : _o.value) != null ? _p : "").trim();
-          const focusField = (sel) => {
-            var _a2;
-            return (_a2 = q(this.addPopup, sel)) == null ? void 0 : _a2.focus();
-          };
           if (!url) {
             notice("请填写视频链接或 BV 号", "error");
-            focusField("#lit-add-url");
+            (_c = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _c.focus();
             return;
           }
-          if (clipMode && !startRaw && !endRaw) {
-            notice("剪辑片段需填写开始与结束时间", "error");
-            focusField("#lit-add-start");
-            return;
-          }
-          if (start === null || end === null) {
-            notice("时间格式看不懂：支持 12.2 / 12-2 / 1:30:05 等，单个数字按分钟算", "error");
-            focusField(start === null ? "#lit-add-start" : "#lit-add-end");
-            return;
-          }
-          if (!start && end || start && !end) {
-            notice("开始与结束时间需成对填写", "error");
-            focusField(start ? "#lit-add-end" : "#lit-add-start");
-            return;
-          }
-          let page = null;
-          if (pageRaw) {
-            const n = Number(pageRaw);
-            if (!Number.isInteger(n) || n < 1) {
-              notice("分P 应为正整数（留空 = 第 1 P）", "error");
-              focusField("#lit-add-page");
+          this._commitTimeInput("start", true);
+          this._commitTimeInput("end", true);
+          const dur = this.addDuration;
+          const whole = this.addStart <= 0 && (dur > 0 ? this.addEnd >= dur : this.addEnd <= 0);
+          let start = null;
+          let end = null;
+          if (!whole) {
+            if (!(this.addStart > 0) || !(this.addEnd > 0)) {
+              notice("开始与结束时间需成对填写", "error");
               return;
             }
-            page = n;
+            if (this.addStart >= this.addEnd) {
+              notice("结束时间需大于开始时间", "error");
+              return;
+            }
+            start = secToTimeText(this.addStart);
+            end = secToTimeText(this.addEnd);
           }
+          let page = null;
+          const pages = ((_d = this.addMeta) == null ? void 0 : _d.pages) || [];
+          if (pages.length > 1) {
+            page = this.addPage > 1 ? this.addPage : null;
+          } else if (!pages.length) {
+            const raw = ((_f = (_e = q(this.addPopup, "#lit-add-page-num")) == null ? void 0 : _e.value) != null ? _f : "").trim();
+            if (raw) {
+              const n = Number(raw);
+              if (!Number.isInteger(n) || n < 1) {
+                notice("分P 应为正整数（留空 = 第 1 P）", "error");
+                (_g = q(this.addPopup, "#lit-add-page-num")) == null ? void 0 : _g.focus();
+                return;
+              }
+              page = n > 1 ? n : null;
+            }
+          }
+          const quality = ((_i = (_h = q(this.addPopup, "#lit-add-quality")) == null ? void 0 : _h.value) != null ? _i : "").trim() || null;
           try {
-            const patch = { url, start: start || null, end: end || null, quality, page, title: vtitle || null, uploader: uploader || null };
+            const patch = {
+              url,
+              start,
+              end,
+              quality,
+              page,
+              title: ((_j = this.addMeta) == null ? void 0 : _j.title) || null,
+              uploader: ((_k = this.addMeta) == null ? void 0 : _k.uploader) || null,
+              duration: dur > 0 ? dur : null
+            };
             if (this.editingId) {
               await KnowledgeData.updateTask(this.editingId, patch);
             } else {
@@ -9567,7 +10157,7 @@ ${sample}`,
             this.hideAddDialog();
             await this.refreshVideoPanel();
           } catch (e) {
-            notice("保存失败：" + ((_q = e == null ? void 0 : e.message) != null ? _q : String(e)), "error");
+            notice("保存失败：" + ((_l = e == null ? void 0 : e.message) != null ? _l : String(e)), "error");
           }
         }
         // ==================== 历史弹窗 ====================

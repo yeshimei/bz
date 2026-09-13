@@ -35,8 +35,10 @@ export interface KnowledgeTask {
   archived: boolean;
   /** 归档时间（=成功时刻），未归档为 null */
   archivedAt: string | null;
-  /** 下载清晰度任务级覆盖（null/'highest'/'1080'/'720'；null=跟随全局设置，ADR-0067） */
+  /** 下载清晰度任务级覆盖（null=跟随全局设置；'highest' 或具体档位数字串如 '1080'/'720'/'480'，ADR-0067/ADR-0133） */
   quality: string | null;
   /** 分P 序号（1 起；null=第 1 P，ADR-0067） */
   page: number | null;
+  /** 视频时长（秒）——该任务将下载的那个分 P 的时长（多 P 时随 page 取）；解析落库，编辑回显进度条与卡片展示用；null = 未知（ADR-0133） */
+  duration: number | null;
 }

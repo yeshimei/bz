@@ -54,7 +54,8 @@ export type IconName = string;
 /**
  * 知识盒原型无真实网络凭据：fetch 流式失败后降级走到这里（core/ai 非流式路径）。
  * 按提示词特征识别三类调用并回放演示级结果；其余请求抛错走各自降级。
- * B 站 view API 罐头（issue 278）：视频录入 URL 防抖回填在评审壳可见——bvid → 演示标题/UP主。
+ * B 站 view API 罐头（issue 278 / ADR-0133）：视频录入「解析」在评审壳可见——bvid → 演示标题/UP主
+ * + duration 与三段 pages（多 P 下拉 + 双把手范围条可演示；档位查询要 cookie，原型不配故走固定列表回落）。
  */
 export async function requestUrl(opts?: { url?: string; body?: string }): Promise<{ status: number; text: string }> {
   const url = String(opts?.url ?? '');
@@ -69,6 +70,12 @@ export async function requestUrl(opts?: { url?: string; body?: string }): Promis
           bvid: view[1],
           title: `（演示标题）${view[1]}：一条可回放的 B 站视频`,
           owner: { mid: 42, name: '演示 UP 主' },
+          duration: 1800,
+          pages: [
+            { cid: 1, page: 1, part: '上集 · 开场', duration: 720 },
+            { cid: 2, page: 2, part: '中集 · 展开', duration: 600 },
+            { cid: 3, page: 3, part: '下集 · 收尾', duration: 480 },
+          ],
         },
       }),
     };
