@@ -1,5 +1,5 @@
-/* 源指纹 ebddfdf8af9f78e2 · 仓内输入 187 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 177004f28df90bb8 · 仓内输入 188 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -15580,7 +15580,7 @@ ${countsToText(s.missing)}
     return storageFile("news.json");
   }
   function emptyData() {
-    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [] };
+    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
   }
   function parseRssFeeds(raw) {
     var _a2, _b2;
@@ -15627,6 +15627,10 @@ ${countsToText(s.missing)}
   function parseBilibiliCookie(raw) {
     return typeof raw === "string" ? raw.trim() : "";
   }
+  function normalizeFetchIntervalMin(raw) {
+    const n = Math.floor(Number(raw));
+    return [30, 60, 120, 360].includes(n) ? n : 30;
+  }
   function wrapArrayToNewsData(articles) {
     const data = emptyData();
     data.articles = Array.isArray(articles) ? articles : [];
@@ -15669,7 +15673,9 @@ ${countsToText(s.missing)}
         bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
         bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
         sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES },
-        rssFeeds: parseRssFeeds(obj.rssFeeds)
+        rssFeeds: parseRssFeeds(obj.rssFeeds),
+        lastFetchAt: Number(obj.lastFetchAt) > 0 ? Math.floor(Number(obj.lastFetchAt)) : 0,
+        fetchIntervalMin: normalizeFetchIntervalMin(obj.fetchIntervalMin)
       };
     }
     return null;
@@ -15723,7 +15729,7 @@ ${countsToText(s.missing)}
       }
       next.articles = merged;
     }
-    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds"]) {
+    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds", "lastFetchAt", "fetchIntervalMin"]) {
       if (intent.set[seg] !== void 0) {
         next[seg] = intent.set[seg];
       }
@@ -15842,10 +15848,11 @@ ${countsToText(s.missing)}
     removeRssFeed: () => removeRssFeed,
     writeBilibiliCookie: () => writeBilibiliCookie,
     writeBilibiliMaxItems: () => writeBilibiliMaxItems,
+    writeFetchInterval: () => writeFetchInterval,
     writeSources: () => writeSources
   });
   function emptyDataSourceState(exists = false) {
-    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0, rssFeeds: [] };
+    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0, rssFeeds: [], lastFetchAtMs: 0, fetchIntervalMin: 30 };
   }
   async function readDataSourceState() {
     const res = await readNewsData();
@@ -15868,7 +15875,9 @@ ${countsToText(s.missing)}
       bilibiliCookie: res.data.bilibiliCookie,
       lastFetchAt,
       totalArticles: res.data.articles.length,
-      rssFeeds: [...res.data.rssFeeds]
+      rssFeeds: [...res.data.rssFeeds],
+      lastFetchAtMs: res.data.lastFetchAt,
+      fetchIntervalMin: res.data.fetchIntervalMin
     };
   }
   async function writeSources(sources) {
@@ -15904,6 +15913,14 @@ ${countsToText(s.missing)}
       const res = await readNewsData();
       if (!res.ok) return;
       await writeNewsDataMerged({ set: { bilibiliCookie: c } });
+    });
+  }
+  async function writeFetchInterval(v) {
+    const n = normalizeFetchIntervalMin(v);
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return;
+      await writeNewsDataMerged({ set: { fetchIntervalMin: n } });
     });
   }
   async function addRssFeed(url, title) {
@@ -16457,26 +16474,551 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
+  // src/clipbook/news-fetcher.ts
+  function requestUrlHttpGet() {
+    return async (url, headers) => {
+      try {
+        const req = requestUrl({ url, method: "GET", headers: { ...HEADERS, ...headers || {} }, throw: false }).then((resp) => {
+          return resp.status >= 200 && resp.status < 300 ? resp.text : null;
+        });
+        const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), FETCH_TIMEOUT_MS));
+        return await Promise.race([req, timer]);
+      } catch (e) {
+        return null;
+      }
+    };
+  }
+  function defaultFetchStore() {
+    return {
+      read: async () => {
+        var _a2, _b2;
+        const res = await readNewsData();
+        if (!res.ok) return null;
+        const d = res.data;
+        return {
+          articles: d.articles,
+          sources: { ...d.sources },
+          bilibiliUps: [...d.bilibiliUps],
+          bilibiliMaxItems: d.bilibiliMaxItems,
+          bilibiliCookie: d.bilibiliCookie,
+          bilibiliUpInfo: { ...d.bilibiliUpInfo },
+          rssFeeds: d.rssFeeds.map((f) => ({ ...f })),
+          lastFetchAt: (_a2 = d.lastFetchAt) != null ? _a2 : 0,
+          fetchIntervalMin: (_b2 = d.fetchIntervalMin) != null ? _b2 : DEFAULT_FETCH_INTERVAL_MIN
+        };
+      },
+      write: (set) => enqueueNewsWrite(async () => {
+        await writeNewsDataMerged({ set });
+      })
+    };
+  }
+  function localDatetime2(ts = Date.now()) {
+    const d = new Date(ts);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+  function htmlToMarkdown(html) {
+    let md = html;
+    md = md.replace(/<script[\s\S]*?<\/script>/gi, "");
+    md = md.replace(/<style[\s\S]*?<\/style>/gi, "");
+    md = md.replace(/<nav[\s\S]*?<\/nav>/gi, "");
+    md = md.replace(/<footer[\s\S]*?<\/footer>/gi, "");
+    md = md.replace(/<!--[\s\S]*?-->/g, "");
+    md = md.replace(/<img[^>]*(?:src|data-src)=["']([^"']+)["'][^>]*\/?>/gi, (m, src) => {
+      const altM = m.match(/alt=["']([^"']*)["']/i);
+      return `![${altM ? altM[1].replace(/\s+/g, " ").trim() : ""}](${src})`;
+    });
+    md = md.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, (_, t) => `
+# ${t.trim()}
+`);
+    md = md.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, t) => `
+## ${t.trim()}
+`);
+    md = md.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, t) => `
+### ${t.trim()}
+`);
+    md = md.replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, (_, t) => `
+#### ${t.trim()}
+`);
+    md = md.replace(/<(?:strong|b)>([\s\S]*?)<\/(?:strong|b)>/gi, "**$1**");
+    md = md.replace(/<(?:em|i)>([\s\S]*?)<\/(?:em|i)>/gi, "*$1*");
+    md = md.replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, url, text) => {
+      const cleanText = text.replace(/<[^>]+>/g, "").trim();
+      return cleanText ? `[${cleanText}](${url})` : "";
+    });
+    md = md.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "- $1\n");
+    md = md.replace(/<\/?[ou]l[^>]*>/gi, "\n");
+    md = md.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, t) => "\n" + t.trim().split("\n").map((l) => `> ${l.trim()}`).join("\n") + "\n");
+    md = md.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/gi, (_, c) => `
+\`\`\`
+${c.trim()}
+\`\`\`
+`);
+    md = md.replace(/<code>([\s\S]*?)<\/code>/gi, "`$1`");
+    md = md.replace(/<pre>([\s\S]*?)<\/pre>/gi, (_, c) => `
+\`\`\`
+${c.trim()}
+\`\`\`
+`);
+    md = md.replace(/<hr[^>]*\/?>/gi, "\n---\n");
+    md = md.replace(/<figure[^>]*>/gi, "\n");
+    md = md.replace(/<\/figure>/gi, "\n");
+    md = md.replace(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/gi, "\n> $1\n");
+    md = md.replace(/<\/p>/gi, "\n\n");
+    md = md.replace(/<br\s*\/?>/gi, "\n");
+    md = md.replace(/<div[^>]*>/gi, "\n");
+    md = md.replace(/\r\n/g, "\n");
+    md = md.replace(/\r/g, "\n");
+    const codeBlocks = [];
+    md = md.replace(/\n(`{3}[\s\S]*?`{3})\n/g, (_, code) => {
+      codeBlocks.push(code);
+      return `
+%%CODEBLOCK_${codeBlocks.length - 1}%%
+`;
+    });
+    const inlineMedia = [];
+    md = md.replace(/(!?\[[^\]]*\]\([^)]*\))/g, (_, m) => {
+      inlineMedia.push(m);
+      return `%%MEDIA_${inlineMedia.length - 1}%%`;
+    });
+    md = md.replace(/<[^>]+>/g, "");
+    md = md.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+    md = md.replace(/%%MEDIA_(\d+)%%/g, (_, i) => inlineMedia[+i] || "");
+    md = md.replace(/%%CODEBLOCK_(\d+)%%/g, (_, i) => codeBlocks[+i] || "");
+    md = md.replace(/\*\*\*\*/g, "** **");
+    md = md.replace(/\n{3,}/g, "\n\n").replace(/[ \t]+\n/g, "\n");
+    md = md.replace(/^ +/gm, "");
+    return md.trim();
+  }
+  function extractGuokrContent(html) {
+    const i = html.indexOf("window.INITIAL_STORE=");
+    if (i >= 0) {
+      const j = html.indexOf("<\/script>", i);
+      if (j > i) {
+        try {
+          const raw = html.slice(i + "window.INITIAL_STORE=".length, j).trim().replace(/;\s*$/, "");
+          const store2 = JSON.parse(raw);
+          const art = store2.articleStore && store2.articleStore.article;
+          if (art && art.content) return art.content;
+        } catch (e) {
+        }
+      }
+    }
+    return null;
+  }
+  function decodeXmlEntities(s) {
+    return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ").replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16))).replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n))).replace(/&amp;/g, "&");
+  }
+  function tagText(block, tag) {
+    const re = new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, "i");
+    const m = block.match(re);
+    if (!m) return null;
+    const cdata = m[1].match(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/);
+    const raw = cdata ? cdata[1] : m[1].replace(/<[^>]+>/g, "");
+    return decodeXmlEntities(raw).trim() || null;
+  }
+  function parseRssXml(xml) {
+    const out = [];
+    const blocks = String(xml || "").match(/<(?:item|entry)[\s>][\s\S]*?<\/(?:item|entry)>/gi) || [];
+    for (const block of blocks) {
+      const title = tagText(block, "title") || "";
+      let link = tagText(block, "link") || "";
+      if (!link) {
+        const hrefM = block.match(/<link[^>]*href=["']([^"']+)["']/i);
+        link = hrefM ? decodeXmlEntities(hrefM[1]).trim() : "";
+      }
+      const guid = tagText(block, "guid") || tagText(block, "id") || "";
+      const pubDate = tagText(block, "pubDate") || tagText(block, "published") || tagText(block, "updated") || "";
+      const content = tagText(block, "content:encoded") || tagText(block, "content") || "";
+      const summary = tagText(block, "description") || tagText(block, "summary") || "";
+      if (!title && !link) continue;
+      out.push({ title, link, guid, pubDate, content, summary });
+    }
+    return out;
+  }
+  function buildRssArticle(it, feedName) {
+    if (!it) return null;
+    const url = String(it.link || it.guid || "").trim();
+    if (!url) return null;
+    const rawTitle = String(it.title || "").trim();
+    const title = /^\d{4}-\d{2}-\d{2}$/.test(rawTitle) ? `${rawTitle} · ${feedName}` : rawTitle || feedName;
+    const content = String(it.content || it.summary || "").trim();
+    const body = content ? htmlToMarkdown(content) : "";
+    let date = "";
+    if (it.pubDate) {
+      const d = new Date(it.pubDate);
+      if (!isNaN(d.getTime())) date = localDatetime2(d.getTime());
+    }
+    return { platform: feedName, title, url, author: feedName, date, body };
+  }
+  function capRssWindow(allArticles, perFeedArticles, cap = RSS_MAX_PER_FEED) {
+    const pruned = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const [name, arts] of Object.entries(perFeedArticles || {})) {
+      if (!Array.isArray(arts) || arts.length === 0) continue;
+      const pool = (allArticles || []).filter((a) => a && a.platform === name && !seen.has(a.url));
+      const keep = pool.slice().sort((x, y) => String(y.date || "").localeCompare(String(x.date || ""))).slice(0, cap);
+      const keepUrls = new Set(keep.map((a) => a.url));
+      for (const a of pool) {
+        if (!keepUrls.has(a.url)) {
+          seen.add(a.url);
+          pruned.push(a.url);
+        }
+      }
+    }
+    return pruned;
+  }
+  function buildBilibiliArticle(it, cutoffMs) {
+    if (!it || it.type !== "DYNAMIC_TYPE_AV") return null;
+    const author = it.modules && it.modules.module_author || {};
+    const dyn = it.modules && it.modules.module_dynamic || {};
+    const desc = it.modules && it.modules.module_desc || {};
+    const archive = dyn.major && dyn.major.archive || null;
+    if (!archive || !archive.bvid || !archive.title) return null;
+    const pubTs = Number(author.pub_ts || 0);
+    if (!pubTs || isNaN(pubTs)) return null;
+    if (cutoffMs && pubTs * 1e3 < cutoffMs) return null;
+    const url = `https://www.bilibili.com/video/${archive.bvid}`;
+    const cover = String(archive.cover || "").replace(/^http:/, "https:");
+    const descText = String(desc.desc || "").trim();
+    const intro = descText || String(archive.desc || "").trim();
+    const body = [
+      intro ? `${intro}
+
+` : "",
+      cover ? `![封面](${cover})
+
+` : "",
+      `🔗 观看：[${String(archive.title)}](${url})${archive.duration_text ? `（时长 ${archive.duration_text}）` : ""}`
+    ].join("").trim();
+    const date = localDatetime2(pubTs * 1e3);
+    return { platform: "B站", title: String(archive.title), url, author: String(author.name || ""), date, body };
+  }
+  function extractUpInfo(items) {
+    for (const it of items || []) {
+      const author = it && it.modules && it.modules.module_author;
+      if (!author) continue;
+      if (author.name || author.face) {
+        const info = {};
+        if (author.name) info.name = String(author.name);
+        if (author.face) info.avatar = String(author.face).replace(/^http:/, "https:");
+        return info;
+      }
+    }
+    return null;
+  }
+  function collectBilibiliBatch(items, limit, out) {
+    for (const it of items || []) {
+      if (out.length >= limit) return true;
+      const a = buildBilibiliArticle(it, null);
+      if (!a) continue;
+      out.push(a);
+    }
+    return out.length >= limit;
+  }
+  function pruneBilibiliWindow(existingArticles, perUpArticles, perUpRejected, upInfo) {
+    const pruned = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const [uid, arts] of Object.entries(perUpArticles || {})) {
+      if (!Array.isArray(arts) || arts.length === 0) continue;
+      if (perUpRejected && perUpRejected[uid]) continue;
+      const name = upInfo && upInfo[uid] && upInfo[uid].name;
+      if (!name) continue;
+      const windowUrls = new Set(arts.map((a) => a.url));
+      const oldest = arts.map((a) => String(a.date || "")).sort()[0];
+      if (!oldest) continue;
+      for (const a of existingArticles || []) {
+        if (!a || a.platform !== "B站" || a.author !== name) continue;
+        if (windowUrls.has(a.url) || seen.has(a.url)) continue;
+        if (a.date && String(a.date) < oldest) {
+          seen.add(a.url);
+          pruned.push(a.url);
+        }
+      }
+    }
+    return pruned;
+  }
+  async function fetchBilibiliUp(uid, cookie, maxItems, httpGet) {
+    const articles = [];
+    const limit = Math.max(1, Math.floor(Number(maxItems) || 10));
+    let offset = "";
+    let upInfo = null;
+    let rejected = false;
+    const headers = cookie ? { Cookie: cookie } : void 0;
+    for (let page = 0; page < 50; page++) {
+      const url = `${BILIBILI_API}?host_mid=${encodeURIComponent(uid)}&offset=${encodeURIComponent(offset)}&timezone_offset=-480&web_location=333.999`;
+      const text = await httpGet(url, headers);
+      if (!text) break;
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        break;
+      }
+      if (!data || data.code !== 0 || !data.data || !Array.isArray(data.data.items)) {
+        if (data && data.code !== 0 && data.code !== void 0) rejected = true;
+        break;
+      }
+      const items = data.data.items || [];
+      if (items.length === 0) break;
+      if (!upInfo) upInfo = extractUpInfo(items);
+      if (collectBilibiliBatch(items, limit, articles)) break;
+      if (!data.data.has_more) break;
+      offset = data.data.offset || "";
+      if (!offset) break;
+    }
+    return { articles, upInfo, rejected };
+  }
+  async function defaultBootstrapBilibiliCookie() {
+    var _a2;
+    try {
+      const resp = await requestUrl({ url: BILIBILI_HOME, method: "GET", headers: HEADERS, throw: false });
+      if (resp.status < 200 || resp.status >= 300) return null;
+      const raw = String(((_a2 = resp.headers) == null ? void 0 : _a2["set-cookie"]) || "");
+      const cookies = raw.split(/,(?=[^;]+?=)/).map((c) => String(c).split(";")[0].trim()).filter((c) => /^[^=]+=/.test(c));
+      return cookies.length > 0 ? cookies.join("; ") : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  async function fetchBilibili(upUids, maxItems, cookie, httpGet, bootstrapCookie) {
+    const list = upUids || [];
+    if (list.length === 0) {
+      return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false };
+    }
+    const per = Math.max(1, Math.floor(Number(maxItems) || 10));
+    const configured = cookie && String(cookie).trim();
+    const ck = configured || await (bootstrapCookie || defaultBootstrapBilibiliCookie)();
+    if (!ck) {
+      return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: true };
+    }
+    const seen = /* @__PURE__ */ new Set();
+    const articles = [];
+    const upInfo = {};
+    const perUpArticles = {};
+    const perUpRejected = {};
+    for (const uid of list) {
+      const res = await fetchBilibiliUp(uid, ck, per, httpGet);
+      perUpArticles[uid] = res.articles;
+      if (res.rejected) perUpRejected[uid] = true;
+      for (const a of res.articles) {
+        if (seen.has(a.url)) continue;
+        seen.add(a.url);
+        articles.push(a);
+      }
+      if (res.upInfo) upInfo[uid] = res.upInfo;
+    }
+    const needsCookieNotice = Object.keys(perUpRejected).length > 0 || articles.length === 0 && !configured;
+    return { articles, upInfo, perUpArticles, perUpRejected, needsCookieNotice };
+  }
+  async function fetchZhihu(httpGet) {
+    const articles = [];
+    const text = await httpGet("https://news-at.zhihu.com/api/4/news/latest");
+    if (!text) return articles;
+    try {
+      const data = JSON.parse(text);
+      const list = data.stories || [];
+      const rawDate = data.date || "";
+      const formattedDate = rawDate.length === 8 ? `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}` : rawDate;
+      for (const item of list) {
+        const title = item.title || "";
+        const id = item.id || "";
+        const url = item.url || (id ? `https://daily.zhihu.com/story/${id}` : "");
+        if (!title || !url) continue;
+        let body = "", author = null;
+        const detailText = await httpGet(`https://news-at.zhihu.com/api/4/news/${id}`);
+        if (detailText) {
+          try {
+            const detail = JSON.parse(detailText);
+            if (detail.body) body = htmlToMarkdown(detail.body);
+            if (detail.editor_name) author = detail.editor_name;
+          } catch (e) {
+          }
+        }
+        articles.push({ platform: "知乎日报", title, url, author, date: formattedDate || null, body });
+      }
+    } catch (e) {
+    }
+    return articles;
+  }
+  async function fetchGuokr(httpGet, now = Date.now()) {
+    var _a2, _b2, _c;
+    const articles = [];
+    const cutoff = now - WINDOW_MS;
+    const text = await httpGet("https://www.guokr.com/beta/proxy/science_api/articles?offset=0&limit=50");
+    if (!text) return articles;
+    let list;
+    try {
+      list = Object.values(JSON.parse(text));
+    } catch (e) {
+      return articles;
+    }
+    const seen = /* @__PURE__ */ new Set();
+    for (const item of list) {
+      const published = new Date(item.date_published).getTime();
+      if (!item.date_published || isNaN(published)) continue;
+      if (published < cutoff) continue;
+      const id = String(item.id || "");
+      const title = item.title || "";
+      const url = `https://www.guokr.com/article/${id}`;
+      if (!id || !title || seen.has(url)) continue;
+      seen.add(url);
+      const author = ((_b2 = (_a2 = item.authors) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.nickname) || ((_c = item.author) == null ? void 0 : _c.nickname) || null;
+      let body = "";
+      const html = await httpGet(url);
+      if (html) {
+        const content = extractGuokrContent(html);
+        if (content) body = htmlToMarkdown(content);
+      }
+      articles.push({
+        platform: "果壳科学人",
+        title,
+        url,
+        author,
+        date: item.date_published.replace("T", " ").substring(0, 19),
+        body
+      });
+    }
+    return articles;
+  }
+  async function fetchRss(feeds, httpGet) {
+    var _a2;
+    const articles = [];
+    const perFeed = {};
+    const titleUpdates = {};
+    for (const feed of feeds || []) {
+      const url = String(feed && feed.url || "").trim();
+      if (!url) continue;
+      const xml = await httpGet(url);
+      if (!xml) continue;
+      try {
+        const feedTitle = String(((_a2 = xml.match(/<title[^>]*>([\s\S]*?)<\/title>/i)) == null ? void 0 : _a2[1]) || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").trim();
+        const name = String(feed && feed.title || feedTitle || url).trim();
+        if (!feed.title && feedTitle) titleUpdates[url] = feedTitle;
+        const items = parseRssXml(xml).map((it) => buildRssArticle(it, name)).filter(Boolean);
+        perFeed[name] = items;
+        articles.push(...items);
+      } catch (e) {
+      }
+    }
+    return { articles, perFeed, titleUpdates };
+  }
+  async function runNewsFetchRound(deps) {
+    const httpGet = deps.httpGet;
+    const now = deps.now || Date.now;
+    const disk = await deps.store.read();
+    if (!disk) {
+      return { added: 0, prunedBilibili: 0, prunedRss: 0, failedSources: ["读取 news.json 失败"], needsCookieNotice: false };
+    }
+    const existing = disk.articles;
+    const existingUrls = new Set(existing.map((a) => a.url));
+    const existingTitles = new Set(existing.map((a) => String(a.title || "").trim()));
+    const sources = disk.sources || { zhihu: true, guokr: true, bilibili: true, rss: true };
+    const failedSources = [];
+    const guokrP = sources.guokr !== false ? fetchGuokr(httpGet, now()) : null;
+    const zhihuP = sources.zhihu !== false ? fetchZhihu(httpGet) : null;
+    const biliP = sources.bilibili !== false ? fetchBilibili(disk.bilibiliUps, disk.bilibiliMaxItems, disk.bilibiliCookie, httpGet) : null;
+    const rssP = sources.rss !== false && disk.rssFeeds.length > 0 ? fetchRss(disk.rssFeeds, httpGet) : null;
+    const guarded = async (p, name, fallback) => {
+      if (!p) return null;
+      try {
+        return await p;
+      } catch (e) {
+        failedSources.push(name);
+        return fallback;
+      }
+    };
+    const emptyBili = { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false };
+    const emptyRss = { articles: [], perFeed: {}, titleUpdates: {} };
+    const guokrList = await guarded(guokrP, "果壳科学人", []) || [];
+    const zhihuList = await guarded(zhihuP, "知乎日报", []) || [];
+    const biliRes = await guarded(biliP, "B站", emptyBili);
+    const rssRes = await guarded(rssP, "RSS", emptyRss);
+    let newArticles = [guokrList, zhihuList, biliRes ? biliRes.articles : [], rssRes ? rssRes.articles : []].flat().filter((a) => a && !existingUrls.has(a.url));
+    newArticles = newArticles.filter((a) => !existingTitles.has(String(a.title || "").trim()));
+    const prunedUrls = biliRes ? pruneBilibiliWindow(existing, biliRes.perUpArticles, biliRes.perUpRejected, biliRes.upInfo) : [];
+    const prunedSet = new Set(prunedUrls);
+    let remaining = prunedUrls.length > 0 ? existing.filter((a) => !prunedSet.has(a.url)) : existing;
+    const rssPrunedUrls = rssRes ? capRssWindow([...remaining, ...newArticles], rssRes.perFeed, RSS_MAX_PER_FEED) : [];
+    if (rssPrunedUrls.length > 0) {
+      const rssPrunedSet = new Set(rssPrunedUrls);
+      remaining = remaining.filter((a) => !rssPrunedSet.has(a.url));
+      newArticles = newArticles.filter((a) => !rssPrunedSet.has(a.url));
+    }
+    const rssTitleUpdates = rssRes && Object.keys(rssRes.titleUpdates).length > 0 ? disk.rssFeeds.map((f) => rssRes.titleUpdates[f.url] ? { ...f, title: rssRes.titleUpdates[f.url] } : f) : void 0;
+    const fetchedAt = localDatetime2(now());
+    for (const a of newArticles) a.fetchedAt = fetchedAt;
+    await deps.store.write({
+      articles: [...remaining, ...newArticles],
+      // UP 主资料与磁盘存量合并（段级合并写按声明段整段覆盖）
+      ...biliRes && Object.keys(biliRes.upInfo).length > 0 ? { bilibiliUpInfo: { ...disk.bilibiliUpInfo, ...biliRes.upInfo } } : {},
+      ...rssTitleUpdates ? { rssFeeds: rssTitleUpdates } : {},
+      lastFetchAt: now()
+    });
+    return {
+      added: newArticles.length,
+      prunedBilibili: prunedUrls.length,
+      prunedRss: rssPrunedUrls.length,
+      failedSources,
+      needsCookieNotice: biliRes ? biliRes.needsCookieNotice : false
+    };
+  }
+  async function executeFetchRound(deps) {
+    if (fetching) return null;
+    fetching = true;
+    try {
+      const r = await runNewsFetchRound({
+        httpGet: (deps == null ? void 0 : deps.httpGet) || requestUrlHttpGet(),
+        store: (deps == null ? void 0 : deps.store) || defaultFetchStore(),
+        now: deps == null ? void 0 : deps.now
+      });
+      if (r.failedSources.length > 0) {
+        notice(`聚合讯抓取部分失败：${r.failedSources.join("、")}`, "warning");
+      }
+      if (r.needsCookieNotice) {
+        notice("B站接口被风控拦截，请在剪藏本设置的数据源中更新 B站 Cookie", "warning");
+      }
+      if (onFetched) onFetched(r);
+      return r;
+    } finally {
+      fetching = false;
+    }
+  }
+  async function fetchNowNews(deps) {
+    return executeFetchRound(deps);
+  }
+  var WINDOW_MS, RSS_MAX_PER_FEED, FETCH_TIMEOUT_MS, HEADERS, BILIBILI_API, BILIBILI_HOME, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN, fetching, onFetched;
+  var init_news_fetcher = __esm({
+    "src/clipbook/news-fetcher.ts"() {
+      init_fake_obsidian();
+      init_notice();
+      init_news_data();
+      init_write_queue();
+      WINDOW_MS = 24 * 60 * 60 * 1e3;
+      RSS_MAX_PER_FEED = 30;
+      FETCH_TIMEOUT_MS = 15e3;
+      HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
+      };
+      BILIBILI_API = "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space";
+      BILIBILI_HOME = "https://www.bilibili.com/";
+      FETCH_INTERVAL_STEPS = [30, 60, 120, 360];
+      DEFAULT_FETCH_INTERVAL_MIN = 30;
+      fetching = false;
+      onFetched = null;
+    }
+  });
+
   // src/clipbook/news-sources-group.ts
   function dataSourceGroupRows(init) {
     const box = {
       ...init,
       sources: { ...init.sources },
       bilibiliUps: [...init.bilibiliUps],
-      bilibiliUpInfo: { ...init.bilibiliUpInfo }
+      bilibiliUpInfo: { ...init.bilibiliUpInfo },
+      rssFeeds: init.rssFeeds.map((f) => ({ ...f }))
     };
-    if (!box.exists) {
-      return [
-        { type: "info", name: "尚未启用新闻数据源", desc: "聚合讯数据由外部「数据源守护」进程（obsidian-news）抓取入库。安装并启动后此处会显示数据源设置。" },
-        { type: "button", name: "安装数据源", buttonText: "复制安装命令", cta: true, onClick: () => {
-          const cmd = "npm install -g @jwbz/obsidian-news && obsidian-news start";
-          navigator.clipboard.writeText(cmd).then(
-            () => notice("安装命令已复制", "success"),
-            () => notice("复制失败，请手动复制", "error")
-          );
-        } }
-      ];
-    }
     const sourceBinding = (key) => ({
       get: () => box.sources[key] === true,
       set: (v) => {
@@ -16486,7 +17028,44 @@ ${bodyText.substring(0, 6e3)}`;
     });
     const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
     const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
+    const intervalDesc = () => {
+      const t = box.lastFetchAtMs > 0 ? new Date(box.lastFetchAtMs).toLocaleString() : "还没有抓取过";
+      return `打开插件或剪藏本时超过该间隔自动抓取，上次抓取 ${t}`;
+    };
     return [
+      {
+        type: "button",
+        name: "立即抓取",
+        desc: intervalDesc(),
+        buttonText: "抓取",
+        cta: true,
+        onClick: async (ctx) => {
+          const r = await fetchNowNews();
+          if (!r) {
+            notice("正在抓取中，请稍候", "info");
+            return;
+          }
+          if (r.added > 0) notice(`抓取完成，新增 ${r.added} 篇文章`, "success");
+          else notice("抓取完成，暂无新文章", "success");
+          const fresh = await readDataSourceState();
+          box.lastFetchAtMs = fresh.lastFetchAtMs;
+          box.fetchIntervalMin = fresh.fetchIntervalMin;
+          setRowDesc(ctx, intervalDesc());
+        }
+      },
+      {
+        type: "select",
+        name: "抓取间隔",
+        desc: "打开插件或剪藏本时超过该间隔才自动抓取，最短 30 分钟",
+        options: FETCH_INTERVAL_STEPS.map((m) => ({ value: String(m), label: m >= 60 ? `${m / 60} 小时` : `${m} 分钟` })),
+        binding: {
+          get: () => String(box.fetchIntervalMin),
+          set: (v) => {
+            box.fetchIntervalMin = normalizeFetchIntervalMin(v);
+          },
+          save: () => writeFetchInterval(box.fetchIntervalMin)
+        }
+      },
       { type: "toggle", name: "知乎日报", desc: "抓取知乎日报每日文章", binding: sourceBinding("zhihu") },
       { type: "toggle", name: "果壳科学人", desc: "抓取果壳科学人最新文章", binding: sourceBinding("guokr") },
       {
@@ -16807,6 +17386,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_dom();
       init_esc_manager();
       init_news_source_settings();
+      init_news_fetcher();
       init_news_data();
     }
   });
