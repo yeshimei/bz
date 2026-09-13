@@ -48,7 +48,7 @@ export function parseEntryFile(content: string, filePath: string): DiaryEntry | 
     timeValue: h * 100 + min,
     tags,
     emoji: tags.map((tag) => getTagEmoji(tag)).join(''),
-    content: parsed.body,
+    content: parsed.body.trim(),
     filename: filePath,
     filePath,
     lineNumber: 0,

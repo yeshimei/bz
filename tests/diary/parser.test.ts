@@ -2,7 +2,8 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { buildTagMaps } from '../../src/diary/config';
-import { parseFile, parseMovieFile, parseLetterFile, parseNaturalTime, isEncryptedEntry } from '../../src/diary/parser';
+import { parseEntryFile, parseMovieFile, parseLetterFile, parseNaturalTime, isEncryptedEntry } from '../../src/diary/parser';
+import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 
 /** 构造测试用 mock app（同时挂到 core/app 供域内 getApp 路径使用，并返回实例供解析函数显式传入） */
 let app: any;
@@ -27,114 +28,76 @@ function makeFile(path: string, ctime: number, basename?: string) {
   };
 }
 
+/** 条目文件全文便捷构造（走契约序列化，保证测试夹具即生产格式） */
+function entryFile(date: string, time: string, tags: string[], body: string): string {
+  return serializeDiaryEntryFile({ date, time }, tags, body);
+}
+
 beforeEach(() => {
   buildTagMaps();
 });
 
-describe('parseFile', () => {
-  it('解析标准标题行条目', () => {
-    const entries = parseFile('# 📖 14:30\n今天天气不错\n', '2024-01-01');
-    expect(entries).toHaveLength(1);
-    expect(entries[0]).toMatchObject({
+describe('parseEntryFile（ADR-0130 一目一文件）', () => {
+  it('解析标准条目文件：frontmatter 日期+类型，正文原样', () => {
+    const content = entryFile('2024-01-01', '14:30', ['日记'], '今天天气不错');
+    const e = parseEntryFile(content, '我的/日记/2024-01-01 14-30.md');
+    expect(e).toMatchObject({
       date: '2024-01-01',
       time: '14:30',
       timeValue: 1430,
       tags: ['日记'],
-      filename: '2024-01-01',
-      lineNumber: 1,
+      emoji: '📖',
+      filename: '我的/日记/2024-01-01 14-30.md',
+      filePath: '我的/日记/2024-01-01 14-30.md',
+      lineNumber: 0,
     });
-    expect(entries[0].content).toBe('今天天气不错');
+    expect(e!.content).toBe('今天天气不错');
   });
 
-  it('emoji 序列解析为多标签', () => {
-    const entries = parseFile('# 📖🌟 09:00\n诗一首\n', '2024-01-01');
-    expect(entries[0].tags).toEqual(['日记', '诗']);
-    expect(entries[0].emoji).toBe('📖🌟');
+  it('多类型列表逐项解析，emoji 由标签派生', () => {
+    const e = parseEntryFile(entryFile('2024-01-01', '09:00', ['日记', '诗'], '诗一首'), '我的/日记/2024-01-01 09-00.md');
+    expect(e!.tags).toEqual(['日记', '诗']);
+    expect(e!.emoji).toBe('📖🌟');
   });
 
-  it('未知 emoji 回退「日记」', () => {
-    const entries = parseFile('# 😵 09:00\nx\n', '2024-01-01');
-    expect(entries[0].tags).toEqual(['日记']);
+  it('类型空缺回退「日记」', () => {
+    const content = '---\n日期: 2024-01-01 09:00\n类型:\n---\n\nx';
+    const e = parseEntryFile(content, '我的/日记/2024-01-01 09-00.md');
+    expect(e!.tags).toEqual(['日记']);
   });
 
-  it('D11 回归：emoji 保留标题行原始序列（配置外 emoji 不被重生成映射值抹掉，锚点对得准文件）', () => {
-    const entries = parseFile('# 🐲📖 09:00\n龙抬头\n', '2024-01-01');
-    expect(entries[0].tags).toEqual(['日记']); // 🐲 不在映射表：标签只解析出「日记」
-    expect(entries[0].emoji).toBe('🐲📖'); // emoji 字段保留原始序列：跳转/双链锚点与文件标题一致
-    const entries2 = parseFile('# 😵 09:00\nx\n', '2024-01-01');
-    expect(entries2[0].emoji).toBe('😵'); // 兜底「日记」标签同样不抹原始 emoji
+  it('降级：frontmatter 日期损坏 → 从文件名取日期时间，类型保留', () => {
+    const content = '---\n日期: 2024-13-45 99:99\n类型:\n  - 日记\n---\n\n正文';
+    const e = parseEntryFile(content, '我的/日记/2024-01-01 09-00.md');
+    expect(e).not.toBeNull();
+    expect(e!.date).toBe('2024-01-01');
+    expect(e!.time).toBe('09:00');
+    expect(e!.tags).toEqual(['日记']);
   });
 
-  it('时间越界行跳过', () => {
-    const entries = parseFile('# 📖 25:99\nx\n# 📖 08:00\n正常\n', '2024-01-01');
-    expect(entries).toHaveLength(1);
-    expect(entries[0].time).toBe('08:00');
+  it('同刻序号文件名（-2）正常解析', () => {
+    const e = parseEntryFile(entryFile('2024-08-22', '00:00', ['日记'], '第二条'), '我的/日记/2024-08-22 00-00-2.md');
+    expect(e!.date).toBe('2024-08-22');
+    expect(e!.time).toBe('00:00');
   });
 
-  it('空行分段：多个条目', () => {
-    const content = '# 📖 08:00\n第一条\n\n# ✍️ 09:00\n第二条\n';
-    const entries = parseFile(content, '2024-01-01');
-    expect(entries).toHaveLength(2);
-    expect(entries[0].content).toBe('第一条');
-    expect(entries[1].content).toBe('第二条');
-    expect(entries[1].tags).toEqual(['随笔']);
+  it('frontmatter 与文件名都不可信 → null（守卫拒写依据）', () => {
+    expect(parseEntryFile('---\n日期: bad\n类型:\n  - 日记\n---\n\nx', '我的/日记/随手记.md')).toBeNull();
   });
 
-  it('向后兼容旧 type 字段', () => {
-    // 旧格式可能用 type；解析后 tags 取自 type
-    const entries = parseFile('# 📖 08:00\n内容\n', '2024-01-01');
-    entries[0].tags = ['书'];
-    (entries[0] as any).type = undefined;
-    // 模拟：直接验证 type 兼容逻辑——构造带 type 的条目
-    const e2 = parseFile('# 📖 08:00\n内容\n', '2024-01-01');
-    (e2[0] as any).type = '电影';
-    // 触发兼容分支需要重新解析，这里验证解析本身不依赖 type
-    expect(e2[0].tags).toEqual(['日记']);
+  it('旧格式日期文件名 + 无 frontmatter → null（迁移残留不解析，ADR-0130 无旧格式兼容）', () => {
+    expect(parseEntryFile('# 📖 08:00\n旧格式正文\n', '我的/日记/2024-01-01.md')).toBeNull();
   });
 
-  it('空内容文件返回空数组', () => {
-    expect(parseFile('', '2024-01-01')).toEqual([]);
+  it('正文含一级标题行/分隔线等 markdown 原样保留（正文不参与格式解析）', () => {
+    const body = '# 大标题\n\n---\n\n正文继续';
+    const e = parseEntryFile(entryFile('2024-01-01', '08:00', ['日记'], body), '我的/日记/2024-01-01 08-00.md');
+    expect(e!.content).toBe(body);
   });
 
   it('isEncryptedEntry 检测 🔐', () => {
-    const e = parseFile('# 📖 08:00\n🔐secret🔐\n', '2024-01-01')[0];
+    const e = parseEntryFile(entryFile('2024-01-01', '08:00', ['日记'], '🔐secret🔐'), '我的/日记/2024-01-01 08-00.md')!;
     expect(isEncryptedEntry(e)).toBe(true);
-  });
-});
-
-describe('parseFile 未解析行统计（UX-9）', () => {
-  it('全可解析文件不回调（计为零，免打扰）', () => {
-    const cb = vi.fn();
-    parseFile('# 📖 08:00\n内容\n', '2024-01-01', cb);
-    expect(cb).not.toHaveBeenCalled();
-  });
-
-  it('首个条目之前游离的非空行计入未解析行，解析结果不变', () => {
-    const cb = vi.fn();
-    const entries = parseFile('游离说明文字\n# 📖 08:00\n内容\n', '2024-01-01', cb);
-    expect(entries).toHaveLength(1);
-    expect(entries[0].content).toBe('内容');
-    expect(entries[0].time).toBe('08:00');
-    expect(cb).toHaveBeenCalledWith(1);
-  });
-
-  it('时间越界的条目标题行计入未解析行（其后孤儿正文行同样无法归属）', () => {
-    const cb = vi.fn();
-    const entries = parseFile('# 📖 25:99\nx\n# 📖 08:00\n正常\n', '2024-01-01', cb);
-    expect(entries).toHaveLength(1);
-    expect(entries[0].time).toBe('08:00');
-    expect(cb).toHaveBeenCalledWith(2); // 越界标题行 + 孤儿正文行 x
-  });
-
-  it('首行空行不计未解析；多处游离行累计', () => {
-    const cb = vi.fn();
-    parseFile('\n\n游离一\n游离二\n# 📖 08:00\n内容\n', '2024-01-01', cb);
-    expect(cb).toHaveBeenCalledWith(2);
-  });
-
-  it('未传回调不统计（兼容旧调用）', () => {
-    const entries = parseFile('游离文字\n# 📖 08:00\n内容\n', '2024-01-01');
-    expect(entries).toHaveLength(1);
   });
 });
 
