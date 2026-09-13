@@ -202,8 +202,8 @@ export class NoteMemorySync {
       if (!noteMemoryDiaryDate(path)) return content; // 非条目文件：整文返回
       try {
         const parsed = parseDiaryEntryFile(content);
-        // 定位符 = 条目时间（ADR-0130）；时间一致且有正文才命中
-        return parsed.meta && parsed.meta.time === locator && parsed.body.trim() ? parsed.body : null;
+        // 定位符 = 条目时间（ADR-0130）；时间一致且有正文才命中（trim 与种子 fullText 同口径）
+        return parsed.meta && parsed.meta.time === locator && parsed.body.trim() ? parsed.body.trim() : null;
       } catch {
         return content;
       }

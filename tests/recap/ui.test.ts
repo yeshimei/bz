@@ -25,10 +25,27 @@ vi.mock('../../src/core/ai', async (importOriginal) => {
 });
 
 import { createAI, getAIProvider } from '../../src/core/ai';
-import { recapDiaryFilePath, RECAP_MARKER } from '../../src/recap/summarize';
+import { RECAP_MARKER } from '../../src/recap/summarize';
 import { H } from '../../src/recap/state';
-import { parseFile } from '../../src/diary/parser';
+import { DIARY_ENTRY_FILE_RE, parseDiaryEntryFile } from '../../src/core/diary-format';
 import { setDiaryDataMap } from '../../src/diary/store';
+
+const mockedCreateAI = vi.mocked(createAI);
+const mockedGetProvider = vi.mocked(getAIProvider);
+
+/** 当天「日记目录下条目文件」枚举与「今日回顾」条目文件定位（ADR-0130 一目一文件） */
+function dayFiles(vault: MockVault): string[] {
+  return [...vault.files.keys()].filter((p) => {
+    if (!p.startsWith(`我的/日记/${todayStr()} `)) return false;
+    return DIARY_ENTRY_FILE_RE.test(p.split('/').pop() || '');
+  });
+}
+function recapFile(vault: MockVault): string | null {
+  return (
+    dayFiles(vault).find((p) => parseDiaryEntryFile(vault.files.get(p)!).body.trimStart().startsWith(RECAP_MARKER)) ??
+    null
+  );
+}
 
 const mockedCreateAI = vi.mocked(createAI);
 const mockedGetProvider = vi.mocked(getAIProvider);
@@ -69,7 +86,8 @@ const AT = (h: number, m: number) => TODAY0 + h * 3600000 + m * 60000;
 function seedDay(vault: StatVault): void {
   const t = todayStr();
   const y = todayStr(-1);
-  vault.files.set(`我的/日记/${t}.md`, '# 📖 09:00\n\n早读了一会儿\n\n# 📖 23:10\n\n睡前记一笔');
+  vault.files.set(`我的/日记/${t} 09-00.md`, `---\n日期: ${t} 09:00\n类型:\n  - 日记\n---\n\n早读了一会儿\n`);
+  vault.files.set(`我的/日记/${t} 23-10.md`, `---\n日期: ${t} 23:10\n类型:\n  - 日记\n---\n\n睡前记一笔\n`);
   vault.files.set('我的/影视/《夜片》.md', '---\ntags:\n- 电影\n观影日期: ' + t + '\n评分: 9\n---\n');
   vault.stats.set('我的/影视/《夜片》.md', { ctime: AT(10, 0), mtime: AT(23, 14) });
   vault.files.set('书库/读完的书.md', '---\ntags:\n- book\nreadingDate: 2026-08-01\ncompletionDate: ' + t + '\n---\n');
@@ -189,12 +207,11 @@ describe('今日回顾面板（recap 域）', () => {
 
 describe('R3 生成今日总结（写进日记）', () => {
   let vault: StatVault;
-  const diaryPath = (): string => recapDiaryFilePath(Date.now());
 
-  /** 在 seedDay 之上再种一条已有回顾条目（21:45，时刻乱序只为验证解析健壮性） */
+  /** 在 seedDay 之上再种一篇已有回顾条目文件（21:45，时刻乱序只为验证解析健壮性） */
   function seedRecap(): void {
-    const p = `我的/日记/${todayStr()}.md`;
-    vault.files.set(p, (vault.files.get(p) ?? '') + `\n\n# 📖 21:45\n\n${RECAP_MARKER}\n下午生成的旧总结`);
+    const t = todayStr();
+    vault.files.set(`我的/日记/${t} 21-45.md`, `---\n日期: ${t} 21:45\n类型:\n  - 日记\n---\n\n${RECAP_MARKER}\n下午生成的旧总结\n`);
   }
 
   /** 打开面板并等采集+按钮探测就绪（按钮启用=链路落定；写路径含首次动态 import diary/store，
@@ -254,19 +271,21 @@ describe('R3 生成今日总结（写进日记）', () => {
     const ai = await openReady(app);
     ai.click();
     await waitForIdle();
-    // 写入：恰好一条回顾条目，正文=AI 总结+关键数字行
-    const content = vault.files.get(diaryPath()) ?? '';
+    // 写入：恰好一篇回顾条目文件，正文=AI 总结+关键数字行
+    const p = recapFile(vault)!;
+    expect(p).toBeTruthy();
+    const content = vault.files.get(p)!;
     expect(content).toContain('今天你早读了很久');
     expect(content).toContain('今日数字：日记 2 条');
-    const parsed = parseFile(content, todayStr());
-    expect(parsed.filter((e) => e.content.trimStart().startsWith(RECAP_MARKER))).toHaveLength(1);
-    // 通知 + 查看动作打开当天日记
+    expect(parseDiaryEntryFile(content).body.trimStart().startsWith(RECAP_MARKER)).toBe(true);
+    // 通知 + 查看动作打开当天回顾条目文件
     expect(hasNotice('今日总结已写入日记')).toBe(true);
     const viewBtn = [...document.querySelectorAll('.bz-notice-action')].find(
       (el) => el.textContent === '查看'
     ) as HTMLElement;
     viewBtn.click();
-    expect(opened).toEqual([diaryPath()]);
+    await vi.waitFor(() => expect(opened.length).toBe(1));
+    expect(opened[0]).toBe(p.replace(/\.md$/, ''));
     // 按钮态（sync 探测落定后变「重新生成」）
     await vi.waitFor(() => expect(ai.textContent).toBe('重新生成'));
     expect(ai.disabled).toBe(false);
@@ -279,7 +298,7 @@ describe('R3 生成今日总结（写进日记）', () => {
     ai.click();
     await waitForIdle();
     // 未自动写盘
-    expect(vault.files.get(diaryPath()) ?? '').not.toContain(RECAP_MARKER);
+    expect(recapFile(vault)).toBeNull();
     // 人话降级通知 + 双动作
     expect(hasNotice(/未配置 AI 服务/)).toBe(true);
     const labels = [...document.querySelectorAll('.bz-notice-action')].map((el) => el.textContent);
@@ -289,10 +308,10 @@ describe('R3 生成今日总结（写进日记）', () => {
       (el) => el.textContent === '写入日记'
     ) as HTMLElement;
     writeBtn.click();
-    await vi.waitFor(() => expect(vault.files.get(diaryPath()) ?? '').toContain(RECAP_MARKER));
-    const content = vault.files.get(diaryPath()) ?? '';
+    await vi.waitFor(() => expect(recapFile(vault)).toBeTruthy());
+    const content = vault.files.get(recapFile(vault)!)!;
     expect(content).toContain('今天：日记 2 条'); // 模板句（无 AI 文案）
-    expect(parseFile(content, todayStr()).filter((e) => e.content.trimStart().startsWith(RECAP_MARKER))).toHaveLength(1);
+    expect(dayFiles(vault).filter((f) => parseDiaryEntryFile(vault.files.get(f)!).body.trimStart().startsWith(RECAP_MARKER))).toHaveLength(1);
   });
 
   it('生成进行中再点：忽略重复点击（AI 只请求一次），完成后写入一条', async () => {
@@ -311,7 +330,7 @@ describe('R3 生成今日总结（写进日记）', () => {
     expect(chat).toHaveBeenCalledTimes(1);
     resolveChat('今天你过得很踏实。');
     await waitForIdle();
-    expect(parseFile(vault.files.get(diaryPath()) ?? '', todayStr())).toHaveLength(3); // 2 普通 + 1 回顾
+    expect(dayFiles(vault)).toHaveLength(3); // 2 普通 + 1 回顾（各一篇条目文件）
   });
 
   it('生成中关面板再重开：请求落定后新面板按钮恢复可用（不卡死 disabled）', async () => {

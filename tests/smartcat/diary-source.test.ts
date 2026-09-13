@@ -1,51 +1,50 @@
 // @vitest-environment node
 /**
- * 日记观察文案/解析/判定纯函数层（ticket 077，ADR-0030）：
- * 解析（标题行/多分类/正文全量/无正文）、判定（首落有字门/空标题不落/累计 >50 更新/≤50 不生成）、
+ * 日记观察文案/解析/判定纯函数层（ticket 077，ADR-0030；ADR-0130 一目一文件）：
+ * 解析（frontmatter 类型/正文全量/损坏降级 null）、判定（首落有字门/空正文不落/累计 >50 更新/≤50 不生成）、
  * 文案（首次/更新带分类变化/删除/文件级删除兜底）。集成链路见 diary-action.test.ts。
  */
 import { describe, it, expect } from 'vitest';
 import {
-  parseDiaryFile, decideDiarySettle, diaryFirstText, diaryUpdateText,
+  parseDiaryEntry, decideDiarySettle, diaryFirstText, diaryUpdateText,
   diaryDeleteText, diaryDeleteFileText, diaryCharCount, DIARY_UPDATE_THRESHOLD,
   type DiarySettleState,
 } from '../../src/smartcat/diary-source';
+import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 
-describe('parseDiaryFile（解析日记 md）', () => {
-  it('单条目：标题行 + 正文', () => {
-    expect(parseDiaryFile('# 📖 14:30\n今天天气不错\n')).toEqual([
-      { time: '14:30', tags: ['日记'], body: '今天天气不错' },
-    ]);
+const entry = (time: string, tags: string[], body: string, date = '2026-08-24') =>
+  serializeDiaryEntryFile({ date, time }, tags, body);
+
+describe('parseDiaryEntry（解析条目文件）', () => {
+  it('单条目：frontmatter 时间+类型，正文全量', () => {
+    expect(parseDiaryEntry(entry('14:30', ['日记'], '今天天气不错'))).toEqual({
+      time: '14:30',
+      tags: ['日记'],
+      body: '今天天气不错',
+    });
   });
 
-  it('多条目：按 `# emoji HH:mm` 标题切分', () => {
-    const entries = parseDiaryFile('# 📖 08:00\n第一条\n\n# ✍️ 09:00\n第二条\n');
-    expect(entries).toEqual([
-      { time: '08:00', tags: ['日记'], body: '第一条' },
-      { time: '09:00', tags: ['随笔'], body: '第二条' },
-    ]);
+  it('多类型列表逐项解析（主/二级都列）', () => {
+    expect(parseDiaryEntry(entry('23:05', ['日记', '猫'], '写了猫'))!.tags).toEqual(['日记', '猫']);
+    expect(parseDiaryEntry(entry('09:00', ['收藏', '咪咪'], '收藏'))!.tags).toEqual(['收藏', '咪咪']);
   });
 
-  it('多 emoji 标题 → 分类逐个反查（主/二级都列）', () => {
-    expect(parseDiaryFile('# 📖🐱 23:05\n写了猫\n')[0].tags).toEqual(['日记', '猫']);
-    // 二级标签（收藏 > 咪咪）
-    expect(parseDiaryFile('# ⭐🐈 09:00\n收藏\n')[0].tags).toEqual(['收藏', '咪咪']);
-  });
-
-  it('无命中 emoji 回退「日记」（对齐 diary/parser 默认）', () => {
-    expect(parseDiaryFile('# 😵 09:00\nx\n')[0].tags).toEqual(['日记']);
+  it('类型空缺回退「日记」', () => {
+    const content = '---\n日期: 2026-08-24 09:00\n类型:\n---\n\nx';
+    expect(parseDiaryEntry(content)!.tags).toEqual(['日记']);
   });
 
   it('正文全量不截断（多行/多段保留，仅去首尾空白）', () => {
     const body = '第一行\n\n第二行\n# 非标题行（无时间）也算正文\n末尾';
-    const entries = parseDiaryFile(`# 📖 08:00\n${body}\n`);
-    expect(entries[0].body).toBe(body.trim());
+    const parsed = parseDiaryEntry(entry('08:00', ['日记'], body));
+    expect(parsed!.body).toBe(body);
   });
 
-  it('只有标题（正文空）→ body 空串；空内容 → 空数组', () => {
-    expect(parseDiaryFile('# 📖 08:00\n')[0].body).toBe('');
-    expect(parseDiaryFile('')).toEqual([]);
-    expect(parseDiaryFile('随便几行没有标题\n')).toEqual([]);
+  it('只有 frontmatter（正文空）→ body 空串；frontmatter 日期损坏 → null；无 frontmatter → null', () => {
+    expect(parseDiaryEntry(entry('08:00', ['日记'], ''))!.body).toBe('');
+    expect(parseDiaryEntry('')).toBeNull();
+    expect(parseDiaryEntry('---\n日期: 2026-13-45 99:99\n类型:\n  - 日记\n---\n\n正文')).toBeNull();
+    expect(parseDiaryEntry('随便几行没有 frontmatter\n')).toBeNull();
   });
 });
 

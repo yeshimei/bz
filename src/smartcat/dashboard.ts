@@ -685,7 +685,7 @@ async function resolveMemoryDetail(app: App, ref: { path: string; locator?: stri
     if (!ref.locator) return content;
     if (!noteMemoryDiaryDate(filePath)) return content;
     const parsed = parseDiaryEntryFile(content);
-    return parsed.meta && parsed.meta.time === ref.locator && parsed.body.trim() ? parsed.body : null;
+    return parsed.meta && parsed.meta.time === ref.locator && parsed.body.trim() ? parsed.body.trim() : null;
   } catch { return null; }
 }
 
