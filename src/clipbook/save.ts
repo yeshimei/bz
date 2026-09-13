@@ -19,8 +19,10 @@ import { tryGetSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
 import { localDatetime, toDatetime } from './constants';
 
+// C27：先转义反斜杠（\ → \\）再转义引号/换行——否则 url/author/summary 含 `\` 时
+// 产出 `\\"` 之类被 YAML 当转义序列解读，值读取时变形
 const yamlEscape = (v: any): string =>
-  String(v ?? '').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ');
+  String(v ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ');
 
 /** 剪藏目录（读设置 articleDirectory，缺省回退常量——与 news/reader CLIP_DIR 同默认） */
 export function clipDirOf(): string {
@@ -51,9 +53,11 @@ export async function writeClipNote(raw: any, dirOverride?: string): Promise<boo
   const tagsYaml = (raw.tags || []).map((t: string) => `  - "${yamlEscape(t)}"`).join('\n');
   const now = localDatetime();
   const pubDate = raw.date ? toDatetime(String(raw.date)) : '';
+  // C10：剥离外壳必须锚定串首（去 m 标志）——带 m 时 `^` 匹配任意行首，正文中两条
+  // `---` 分隔线之间的整段会被当 frontmatter 静默删掉（已复现：intro/中段/outro 丢中段）
   const body = String(raw.body || '')
-    .replace(/^\s*---[\s\S]*?---\s*/m, '')
-    .replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, '')
+    .replace(/^\s*---[\s\S]*?---\s*/, '')
+    .replace(/^\s*```dataviewjs[\s\S]*?```\s*/, '')
     .trim();
 
   const md = `---

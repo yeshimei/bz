@@ -50,7 +50,7 @@ import {
   deskFoldRowHtml, foldBodyHtml, ICO,
 } from './render';
 import { M, resetClipbookState } from './state';
-import { readNewsAndSidecar, clipDir } from './loader';
+import { readNewsAndSidecar } from './loader';
 import { writeClipNote } from './save';
 import {
   flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession,
@@ -96,7 +96,6 @@ const SPLIT_MIN_READ = 320;
 /** 幂等初始化面板 DOM（首开建结构 + 装载 + 订阅；重复调用只切可见性） */
 export function initPanel(app: any, showNow = false): void {
   M.appRef = app;
-  M.dir = clipDir();
   M.isMobile = (typeof (window as any).Platform !== 'undefined' && !!(window as any).Platform.isMobile)
     || (navigator && navigator.maxTouchPoints > 0 && (window.innerWidth || 0) <= 768);
   if (!overlayEl) buildDom(app);
@@ -129,7 +128,10 @@ function loadIfNeeded(): Promise<void> {
   if (!M.open && overlayEl) return Promise.resolve();
   loading = true;
   loadPromise = readNewsAndSidecar()
-    .then(() => {
+    .then((res) => {
+      // C9：news.json 损坏（status='corrupt'）不再静默——否则面板呈现「暂无内容」假空态，
+      // 用户误以为数据全丢。missing（首用引导）语义不动。
+      if (res && res.status === 'corrupt') notice('news.json 损坏，未加载（原文件已保留）', 'error');
       dirty = false; loaded = true; beginSession(); renderAll();
     })
     .catch((e) => { console.error('[剪藏本] 装载失败', e); notice('剪藏本数据读取失败', 'error'); })
@@ -1349,15 +1351,12 @@ export async function openSettings(app: any): Promise<void> {
     maxWidth: 560,
     schema,
     onClose: () => {
-      // 目录变更检测：重设 M.dir 并全量重载
-      const s = tryGetSettings() as any;
-      const next = ((s && s.articleDirectory) || '归档/网页剪藏').replace(/\/+$/, '');
-      if (next !== M.dir) {
-        M.dir = next;
-        M.clipNotes = null;
-        M.clipUrls = new Set();
-        void reloadIfOpen();
-      }
+      // C12：剪藏目录以设置为唯一真理源（loader 每次扫描直读 clipDir()，无 M.dir 缓存）——
+      // 关闭设置弹窗即清目录快照并重载：域内改「剪藏文件夹」与设置面板域改键（无域内通知）
+      // 两条路径归一，重开面板/下次扫描即生效
+      M.clipNotes = null;
+      M.clipUrls = new Set();
+      void reloadIfOpen();
     },
   });
 }
