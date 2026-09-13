@@ -1162,3 +1162,12 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 日记题目改数字简写 + frontmatter 键英文化（issue 305 / ADR-0131，2026-09-13）
 
 > 用户拍板链：① 题目时间的英文冒号诉求 → 实测 `12:23.md` 在 E: 盘（exFAT，NTFS 同理）写入 ENOENT（`:` 为驱动器保留符兼 NTFS ADS 分隔符），全角 `：` 可行但不合「英文冒号」初衷 → 用户改拍数字简写 `YYMMDDHHmm`（`2026-06-13 12:23` → `2606131223`）；② frontmatter 属性名英文化（`日期`→`date`、`类型`→`type`）。契约 v3（`src/core/diary-format.ts`）：题目正则/命名/解析、键常量、可读时间戳 helper（`diaryStampText`/`parseDiaryStamp`）、frontmatter 原值读取（`readDiaryFrontmatterFieldRaw`）、旧日期文件名正则（`DIARY_LEGACY_FILE_RE`）、**降级单源 `resolveDiaryEntryMeta`**（属性优先、题目兜底——题目自带完整时间戳故降级零信息损失）。ADR-0130 只要求 diary 域降级，本版推到全部消费方：smartcat 观察链路（`parseDiaryEntry(content, filePath)` 签名带上路径）、记忆链（种子/解析器/存活判定/详情解析）、recap、加密还原，口径全域一致。体检 `name-mismatch` 升为「完整时间戳比较」（题目含时刻，任一不一致即双轨冲突）。不做旧中文键兼容：旧键文件按属性不可信走题目降级 + 体检报出。顺带整改 review 遗留的格式知识泄漏（消费方自拆正则/自拼时间戳全部收编 helper）与死代码（store 零消费者兼容导出、`findDiaryEntry` 的 `lineNumber` 死参、`writeRecapEntry` 的 `app` 死参、locator 行号分支退役、两处 `${date}.md` 死兜底、两条死 CSS）。迁移双脚本：`diary-split.mjs`（旧「一天一文件」→ v3 条目，新增字数守恒核对段）与新增 `diary-restamp.mjs`（v2 条目 → v3 题目 + 键英文化 + 记忆引用改指，dry-run 默认/幂等/Obsidian 关闭拦截）。契约破坏性变更：迁移与插件部署同批（关 Obsidian → restamp → build 部署 → 重开）。
+
+### 首页时间线改吃小橘行为流（issue 304 / ADR-0130，2026-09-13）
+
+> 影院批量回填触发 recap 文件推导误报事故（ctime/mtime 口径对外部改动脆弱）后的架构替换拍板：时间线痕迹源整体从 collectRecap 换成 smartcat-behavior.json（只读契约），映射表覆盖 movie/news/memo/knowledge/literature/favorites/bili-downloader/review 八源（宁缺勿假，diary/flash/chat 无有效动作不进）；内容过滤组恢复第四项「已跳过」（homeTimelineSkipped 默认关，news skipped 111 条量级大）；过滤从文案前缀判类改事件直带 kind。recap 保留计数/周历 hit/日记连击/摘要职责。issue 288「已跳过吃不到行为流」前提反转回写。行为流 30 天/1000 条滚动窗口成为时间线自然边界。
+
+### 知识盒视频录入改链接解析式：解析按钮 + 分P/时长/档位 + 双把手进度条（issue 306 / ADR-0133，2026-09-14）
+
+> 用户拍板链（grill-with-docs 四轮）：① 单输入框 +「解析」按钮（450ms 防抖退役）→ 只读信息区（标题 / UP 主 / 分 P 下拉 / 时长），标题与 UP 主输入框删除；② 精细调整 = 时间框双向联动 + ↑/↓ 键一次 1 秒；③ 失败态手填分 P 与时间范围（分 P 数字框、进度条不可用）、下次打开弹窗自动重抓并替换显示；④ 整片/剪辑 toggle 退役，双把手进度条常显（默认全选 = 整片）；⑤ 抓取成功即落库（只补缺失、不重置手填）；⑥ 单 P 隐藏分 P 字段；⑦ B 站 cookie 内置插件设置、支持移动端（设置行带「从 CLI 导入」读 ~/.bilibili-cookies.json）；⑧ 设置面板 AI 组改名「AI 与凭据」并收编影院 ApiZero Key / 豆瓣 Cookie 两项；⑨ 档位默认选中全局设置对应的具体档位（不可用取最高可用并提示）；⑩ 保存按钮两端统一「保存」、都只入队不自动处理（否决首轮「保存即处理」选择，▶️ 批量角色不变）；⑪ 打开主面板对缺标题任务自动重抓、不自动处理。实测支撑：view API 单响应即含 pages/duration（现 video-meta 已在调同一接口，零新增请求；54P 视频全量返回、时长逐项求和一致）；未登录 playurl 档位受账号级限制（上限 720P），带登录 cookie 的 wbi playurl 返回完整档位（实测 [1080,720,480,360]）；CLI ~/.bilibili-cookies.json 含登录 cookie（SESSDATA）；wbi 签名 md5 用纯 JS 实现（移动端无 Node crypto，两端单源）。配套：KnowledgeTask 新增 duration 字段、CLI quality 映射扩展支持任意档位数字串、术语表「录入元信息」重写 + 新增「清晰度档位」「凭据」词条。
+
