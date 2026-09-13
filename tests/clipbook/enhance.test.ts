@@ -28,6 +28,10 @@ function seedVault(): MockVault {
     stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
     bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',
     sources: { zhihu: true, guokr: true, bilibili: true },
+    // C3 跟进：seed 最近抓取锚点拦住 openClipbook 的自动抓取——本文件是 UI/撤销回归，
+    // 不关心抓取；且 requestUrl mock 返回空文本在 C3 语义下会如实报「抓取部分失败」，
+    // 干扰按首个通知断言的用例
+    lastFetchAt: Date.now(),
   }));
   vault.files.set('归档/网页剪藏/剪藏笔记A.md', CLIP_A);
   return vault;

@@ -36,7 +36,9 @@ function makeStore(disk: FetchDiskState, written: NewsWriteIntent[] = []): Fetch
   };
 }
 
-const okHttpGet = async () => '';
+/** C3 语义跟进：四源列表级成功响应须是合法 JSON（空串会被判列表失败进 failedSources，
+ *  全失败轮不推进 lastFetchAt）——「成功但无内容」的 fake 用 '{}'（zhihu stories=[] / guokr 列表空） */
+const okHttpGet = async () => '{}';
 
 beforeEach(() => {
   resetObsidianMocks();
@@ -56,7 +58,7 @@ describe('maybeFetchNews 间隔判定', () => {
     const written: NewsWriteIntent[] = [];
     const store = makeStore(fakeDisk({ lastFetchAt: 0 }), written);
     let calls = 0;
-    const r = await maybeFetchNews({ httpGet: async () => { calls++; return ''; }, store, now: () => 10_000_000 });
+    const r = await maybeFetchNews({ httpGet: async () => { calls++; return '{}'; }, store, now: () => 10_000_000 });
     expect(r).not.toBeNull();
     expect(calls).toBeGreaterThan(0);
     expect(written.length).toBe(1);
@@ -97,7 +99,7 @@ describe('fetchNowNews 手动触发与互斥', () => {
     const store = makeStore(fakeDisk(), written);
     let release!: () => void;
     const gate = new Promise<void>((resolve) => { release = resolve; });
-    const slowHttpGet = async () => { await gate; return ''; };
+    const slowHttpGet = async () => { await gate; return '{}'; };
     const first = fetchNowNews({ httpGet: slowHttpGet, store });
     // 轮内：手动与自动都拿不到执行权
     expect(await fetchNowNews({ httpGet: okHttpGet, store })).toBeNull();

@@ -64,6 +64,10 @@ export interface ReadNewsResult {
   ok: boolean;
   missing: boolean;
   data: NewsData;
+  /** C24：JSON 损坏态（解析失败/无效形态，持久态不清盘）才置 true；
+   *  读抛错（Syncthing 占用等瞬时 IO，可重试）同样 ok:false 但 corrupt:false——消费方可据此
+   *  区分「稍后重试可自愈」与「数据损坏需人工介入」 */
+  corrupt: boolean;
 }
 
 function emptyData(): NewsData {
@@ -209,23 +213,33 @@ export function parseNewsFileContent(raw: string): NewsData | null {
 
 /** 读 news.json → 四段（含旧数组自动包裹迁移）；采用磁盘为基底，双写者各自保留非本域段。
  *  统一数据读写层：缺失 → 建空数据文件但 missing:true（首用引导）；
- *  损坏 → 不清盘（保持原文件原样——崩溃半截 JSON 保护既有设计），返回错误态 */
+ *  损坏 → 不清盘（保持原文件原样——崩溃半截 JSON 保护既有设计），返回错误态（corrupt:true）；
+ *  读抛错（瞬时 IO，可重试）同样返回错误态但 corrupt:false（C24：不再与损坏态混归） */
 export async function readNewsData(): Promise<ReadNewsResult> {
   const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
   let corrupt = false;
+  let readThrew = false; // C24：read 抛错 = 瞬时 IO（可重试），区别于 onCorrupt 的 JSON 损坏态
   const parsed = await jsonFileStore<any>(getNewsFilePath(), {
     defaultValue: () => emptyData(),
     onCorrupt: () => {
       corrupt = true;
       return false;
     },
-  }).read().catch(() => null);
-  if (parsed === null || corrupt) return { ok: false, missing: false, data: emptyData() };
+  }).read().then(
+    (v) => v,
+    () => {
+      readThrew = true;
+      return null;
+    },
+  );
+  // 失败态一律 missing:false（既有分类不变：jsonFileStore 缺失时会自建，抛错多因文件在而读不动）
+  if (readThrew) return { ok: false, missing: false, data: emptyData(), corrupt: false };
+  if (corrupt || parsed === null) return { ok: false, missing: false, data: emptyData(), corrupt: true };
   // 走 parseNewsFileContent 做各段归一（parseBilibiliUpInfo 统一 https、parseBilibiliMaxItems 夹取 1-50 等）。
   // stringify 再 parse 会丢 articles 里 body:undefined 的键——但 body 本就是 delete 后的预期状态，无碍。
   const content = parseNewsFileContent(JSON.stringify(parsed));
-  if (!content) return { ok: false, missing: false, data: emptyData() };
-  return { ok: true, missing, data: content };
+  if (!content) return { ok: false, missing: false, data: emptyData(), corrupt: true };
+  return { ok: true, missing, data: content, corrupt: false };
 }
 
 /** 写回 news.json 四段（整段覆盖；调用方负责先读盘保留非本域段；静默吞错保持现状） */
@@ -237,10 +251,17 @@ export async function writeNewsData(data: NewsData): Promise<void> {
 
 /** 合并写回意图：只声明本次真正改动的段；未声明段一律取磁盘现值 */
 export interface NewsWriteIntent {
-  /** 本次写声明的改动段（articles 段与磁盘按 articleKeyOf 并集，声明条目胜出） */
+  /** 本次写声明的改动段（articles 段与磁盘按 articleKeyOf 并集，声明条目同 key 胜出） */
   set: Partial<NewsData>;
   /** articles 删除意图（articleKeyOf 列表）：并集合并时从磁盘侧一并剔除，防删除条目被磁盘旧值复活 */
   removeArticleKeys?: string[];
+  /** C26：bilibiliUpInfo 按条补丁（uid → 资料）——与写入时磁盘现值按键合并。
+   *  不用旧快照拼整段 set.bilibiliUpInfo 声明：抓取窗口期内被 removeBilibiliUp 删掉的
+   *  UP 资料（本轮未抓到的 uid）不会被旧快照整段复活 */
+  patchBilibiliUpInfo?: Record<string, BilibiliUpInfo>;
+  /** C26：rssFeeds 标题按条补丁（url → title）——只改写入时磁盘现值中对应条目。
+   *  抓取窗口期内被移除/新增的订阅源不随旧快照整段声明复活/丢失 */
+  patchRssFeedTitles?: Record<string, string>;
 }
 
 /**
@@ -285,6 +306,17 @@ export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<void
     if (intent.set[seg] !== undefined) {
       (next as any)[seg] = intent.set[seg];
     }
+  }
+  // C26：按条补丁段——基于写入时重读的磁盘现值逐条合并（区别于 set 的整段覆盖），
+  // 抓取轮窗口期内的并发名单/订阅增删不被旧快照整段声明复活或回退
+  if (intent.patchBilibiliUpInfo) {
+    next.bilibiliUpInfo = { ...next.bilibiliUpInfo, ...intent.patchBilibiliUpInfo };
+  }
+  if (intent.patchRssFeedTitles) {
+    const titles = intent.patchRssFeedTitles;
+    next.rssFeeds = (next.rssFeeds || []).map((f) =>
+      titles[f.url] !== undefined ? { ...f, title: titles[f.url] } : f
+    );
   }
   await writeNewsData(next);
 }
