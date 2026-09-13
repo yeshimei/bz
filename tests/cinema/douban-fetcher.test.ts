@@ -2,20 +2,24 @@
 /**
  * 影院豆瓣抓取核心测试（issue 303 / ADR-0129，jsdom：端到端用 vault.process/writeBinary）：
  * - 纯函数：parseSearchResults / searchLooksBlocked（风控检测）/ upgradePosterUrl /
- *   extractSid / parseCelebrities / extractMovieName / updateFrontmatterFields /
- *   insertPosterEmbed（正则口径对齐 douban-client.js / note-processor.js）；
+ *   extractSid / parseCelebrities / extractMovieName / normalizeListValue（C2 逗号归一）/
+ *   updateFrontmatterFields（C3 换行单行化 / C8 ifMissing 缺失才填）/ insertPosterEmbed
+ *   （C4 无尾换行形态；正则口径对齐 douban-client.js / note-processor.js）；
  * - ApiZero 客户端：字段解析 / code!=0 错误态 → null；
  * - fetchNoteDouban 端到端（fake 注入）：ApiZero 主链 / 无 key rexxar 兜底 /
  *   ApiZero 缺导演主演 rexxar 补 / 搜索风控 → blocked / 无结果 → notfound /
- *   海报下载写盘 + embed 插入 / 已齐全跳过 / 存量退役字段不覆盖。
+ *   网络异常 → network（C6）/ 海报下载失败 → network、写盘失败 → write（C6 拆分）/
+ *   海报下载写盘 + embed 插入 / 已齐全跳过 / 存量退役字段不覆盖 /
+ *   C1 剧集不写季集 / C8 抓取中途用户手改不被覆盖 / C9 六字段缺失才填。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MockVault, mockAppWithVault } from '../mock-vault';
+import { MockVault, mockAppWithVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import {
   parseSearchResults, searchLooksBlocked, upgradePosterUrl, extractSid, parseCelebrities,
-  extractMovieName, updateFrontmatterFields, insertPosterEmbed, fetchApizeroInfo, fetchNoteDouban,
+  extractMovieName, normalizeListValue, updateFrontmatterFields, insertPosterEmbed,
+  fetchApizeroInfo, fetchNoteDouban,
   POSTER_FOLDER, type HttpGet, type DoubanFetchDeps,
 } from '../../src/cinema/douban-fetcher';
 
@@ -85,6 +89,17 @@ describe('parseCelebrities（照搬守护口径）', () => {
   });
 });
 
+describe('normalizeListValue（C2：ApiZero 逗号 → 消费端 " / " 切分口径）', () => {
+  it('半角/全角逗号及后置空格归一为 " / "；已是 " / " 不重复替换', () => {
+    expect(normalizeListValue('吴京, 刘德华')).toBe('吴京 / 刘德华');
+    expect(normalizeListValue('科幻,灾难')).toBe('科幻 / 灾难');
+    expect(normalizeListValue('科幻， 灾难')).toBe('科幻 / 灾难');
+    expect(normalizeListValue('科幻，灾难,剧情')).toBe('科幻 / 灾难 / 剧情');
+    expect(normalizeListValue('科幻 / 灾难')).toBe('科幻 / 灾难');
+    expect(normalizeListValue('郭帆')).toBe('郭帆');
+  });
+});
+
 describe('updateFrontmatterFields / insertPosterEmbed（note-processor 口径）', () => {
   it('新字段插 tags 列表后；已有字段原地更新；空值跳过', () => {
     const content = '---\ntags:\n  - 电影\n评分: 8\n---\n正文';
@@ -102,10 +117,43 @@ describe('updateFrontmatterFields / insertPosterEmbed（note-processor 口径）
     expect(next).toMatch(/^---\n豆瓣链接: "https:\/\/movie\.douban\.com\/subject\/1\/"\n---\n正文/);
   });
 
+  it('C3：值含换行 → 序列化单行化（不裸写 \n 进 frontmatter），值可读回', () => {
+    const content = '---\ntags: [电影]\n---\n正文';
+    const next = updateFrontmatterFields(content, { '热门短评': '第一行\n第二行\r\n第三行' });
+    // 该行单行化（无裸换行），多行压成单空格
+    expect(next).toMatch(/^热门短评: "第一行 第二行 第三行"$/m);
+    // 写回结果仍是可解析的 frontmatter + 原正文
+    const fm = parseFrontmatter(next);
+    expect(fm?.['热门短评']).toBe('第一行 第二行 第三行');
+    expect(next.endsWith('正文')).toBe(true);
+  });
+
+  it('C8：ifMissing 字段已有值则跳过（不覆盖），缺失则写入', () => {
+    const content = '---\ntags: [电影]\n豆瓣评分: 9.9\n---\n正文';
+    const next = updateFrontmatterFields(content, {
+      '豆瓣评分': { value: '8.3', ifMissing: true },
+      '导演': { value: '郭帆', ifMissing: true },
+    });
+    expect(next).toMatch(/^豆瓣评分: 9\.9$/m); // 已有值保留
+    expect(next).toContain('导演: 郭帆');       // 缺失则写入
+  });
+
   it('insertPosterEmbed 插到 frontmatter 后；已存在跳过', () => {
     const content = '---\ntags: [电影]\n---\n正文';
     expect(insertPosterEmbed(content, 'CONFIG/MOVIE POSTER/a.jpg')).toBe('---\ntags: [电影]\n---\n![[CONFIG/MOVIE POSTER/a.jpg]]\n正文');
     expect(insertPosterEmbed(insertPosterEmbed(content, 'a'), 'a')).toBe(insertPosterEmbed(content, 'a'));
+  });
+
+  it('C4：FM 闭合 --- 无尾换行（恰为文件末行）→ 补换行后 embed 居 FM 后，frontmatter 仍居首，且不重复插入', () => {
+    const content = '---\ntags: [电影]\n---'; // 无尾换行：FM 即文件末尾
+    const once = insertPosterEmbed(content, 'CONFIG/MOVIE POSTER/a.jpg');
+    expect(once.startsWith('---')).toBe(true); // frontmatter 仍居首（旧缺陷：embed 插到首行、FM 失效）
+    const fmEnd = once.indexOf('\n---\n');
+    expect(fmEnd).toBeGreaterThan(0); // FM 闭合行仍存在
+    expect(once.indexOf('![[CONFIG/MOVIE POSTER/a.jpg]]')).toBeGreaterThan(fmEnd); // embed 在 FM 之后
+    expect(parseFrontmatter(once)).not.toBeNull(); // frontmatter 仍可解析
+    // 已有 embed 不重复插入
+    expect(insertPosterEmbed(once, 'CONFIG/MOVIE POSTER/a.jpg')).toBe(once);
   });
 });
 
@@ -195,7 +243,8 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(content).toContain('豆瓣链接: "https://movie.douban.com/subject/35267208/"');
     expect(content).toContain('豆瓣评分: 8.3');
     expect(content).toContain('导演: 郭帆');
-    expect(content).toContain('主演: "吴京, 刘德华"');
+    expect(content).toContain('主演: "吴京 / 刘德华"'); // C2：ApiZero 逗号归一为 " / "（消费端切分口径）
+    expect((parseFrontmatter(content)?.['主演'] as string).split(' / ')).toHaveLength(2);
     expect(content).toContain('类型: 科幻');
     expect(content).toContain('制片国家/地区: 中国大陆');
     expect(content).toContain('片长: 173分钟');
@@ -204,6 +253,9 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(content).toContain('热门短评: 好看');
     expect(content).not.toMatch(/^季集:/m);
     expect(content).toContain('![[CONFIG/MOVIE POSTER/流浪地球2_1700000000000.jpg]]');
+    // C4：夹具即 FM 无尾换行形态——frontmatter 仍居首，embed 位于 FM 闭合之后
+    expect(content.startsWith('---')).toBe(true);
+    expect(content.indexOf('![[')).toBeGreaterThan(content.indexOf('\n---'));
     // ApiZero 有导演/主演 → 不调 rexxar，无编剧字段
     expect(content).not.toContain('编剧');
     expect(vault.binaryFiles.get(`${POSTER_FOLDER}/流浪地球2_1700000000000.jpg`)?.length).toBe(1024);
@@ -241,7 +293,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(content).toContain('主演: 吴京');   // rexxar 补主演
   });
 
-  it('搜索风控 → blocked；无结果 → notfound；海报下载失败 → write', async () => {
+  it('搜索风控 → blocked；无结果 → notfound；海报下载失败 → network、写盘失败 → write（C6 拆分）', async () => {
     const vault = new MockVault();
     vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'k' });
@@ -255,7 +307,26 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
 
     deps.httpGet = async () => SEARCH_HTML;
     deps.downloadBinary = async () => null;
+    expect(await runOn(vault, deps)).toEqual({ ok: false, reason: 'network' }); // C6：下载失败 ≠ 写盘失败
+
+    deps.downloadBinary = async () => { throw new Error('ECONNRESET'); };
+    expect(await runOn(vault, deps)).toEqual({ ok: false, reason: 'network' }); // C6：网络异常不再被吞成风控
+
+    deps.downloadBinary = async () => new ArrayBuffer(1);
+    deps.mkdir = async () => { throw new Error('disk full'); };
     expect(await runOn(vault, deps)).toEqual({ ok: false, reason: 'write' });
+  });
+
+  it('C6：搜索 httpGet reject → network（不误报风控）；返回 null 仍 → blocked（原语义不变）', async () => {
+    const vault = new MockVault();
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    const { deps } = makeDeps({ vault, apizeroKey: 'k' });
+
+    deps.httpGet = async () => { throw new Error('ECONNREFUSED'); };
+    expect(await runOn(vault, deps)).toEqual({ ok: false, reason: 'network' });
+
+    deps.httpGet = async () => null;
+    expect(await runOn(vault, deps)).toEqual({ ok: false, reason: 'blocked' });
   });
 
   it('已齐全跳过（零网络）；海报已有只补字段（不重下海报不重复 embed）', async () => {
@@ -282,7 +353,8 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     await runOn(vault2, d2.deps);
     expect(downloads).toBe(0); // 已有海报不重下（防孤儿文件与重复 embed）
     expect(vault2.files.get(FILE_PATH)).toContain('豆瓣链接: "https://movie.douban.com/subject/35267208/"');
-    expect(vault2.files.get(FILE_PATH)).toContain('海报: "CONFIG/MOVIE POSTER/old.jpg"'); // 旧值经格式化重写为引号形态
+    // C9：海报字段缺失才填——已有旧值原样保留（不再经格式化重写）
+    expect(vault2.files.get(FILE_PATH)).toContain('海报: CONFIG/MOVIE POSTER/old.jpg');
     expect(vault2.files.get(FILE_PATH)).not.toContain('![[');
   });
 
@@ -298,7 +370,77 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(content).toContain('简介: 旧简介');
     expect(content).toContain('上映日期: 2023-01-22'); // 已有具体日期不被年份降级覆盖
     expect(content).toMatch(/^季集: "3"/m); // 已有季集不动
-    expect(content).toContain('上映日期: 2023-01-22'); // 已有具体日期不被年份降级覆盖
-    expect(content).toMatch(/^季集: "3"/m); // 已有季集不动
+  });
+
+  it('C1：is_tv 剧集不写季集（ApiZero episodes 是总集数非季数，撤回该扩展）', async () => {
+    const vault = new MockVault();
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    const vaultDeps = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1) });
+    vaultDeps.deps.httpGet = async (url) => {
+      if (url.includes('douban.com/search')) return SEARCH_HTML;
+      if (url.includes('apizero.cn')) {
+        return JSON.stringify({ code: 0, data: { score: '8.3', director: '某导演', actor: '某主演', douban_url: 'https://movie.douban.com/subject/35267208/', is_tv: true, episodes: '24' } });
+      }
+      return null;
+    };
+    const r = await runOn(vault, vaultDeps.deps);
+    expect(r).toEqual({ ok: true });
+    const content = vault.files.get(FILE_PATH)!;
+    // 回归防复发：写入 24 会被 analysis.ts 追剧深度展示为「24 季」
+    expect(content).not.toMatch(/^季集:/m);
+  });
+
+  it('C3：ApiZero 热门短评含换行 → 写回单行化，frontmatter 可解析、值可读回', async () => {
+    const vault = new MockVault();
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    const vaultDeps = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1) });
+    vaultDeps.deps.httpGet = async (url) => {
+      if (url.includes('douban.com/search')) return SEARCH_HTML;
+      if (url.includes('apizero.cn')) {
+        return JSON.stringify({ code: 0, data: { score: '8.3', douban_url: 'https://movie.douban.com/subject/35267208/', short_comment: '神作\n后半段直接封神', comment_author: '某甲' } });
+      }
+      return null;
+    };
+    await runOn(vault, vaultDeps.deps);
+    const content = vault.files.get(FILE_PATH)!;
+    // 短评行内无裸换行（裸 \n 会破坏 YAML 解析、影片从面板消失）
+    expect(content).toMatch(/^热门短评: "神作 后半段直接封神"$/m);
+    expect(parseFrontmatter(content)?.['热门短评']).toBe('神作 后半段直接封神');
+  });
+
+  it('C8：抓取中途文件被用户手改（补填字段/贴海报）→ 写回基于 fresh 内容复核，用户值保留', async () => {
+    const vault = new MockVault();
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    const vaultDeps = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1) });
+    // 在搜索之后、写回之前（ApiZero 响应时机）模拟用户手改：补填上映日期/热门短评/贴海报
+    const baseGet = vaultDeps.deps.httpGet;
+    let mutated = false;
+    vaultDeps.deps.httpGet = async (url, headers) => {
+      const r = await baseGet(url, headers);
+      if (!mutated && url.includes('apizero.cn')) {
+        mutated = true;
+        const cur = vault.files.get(FILE_PATH)!;
+        vault.files.set(FILE_PATH, cur.replace('---\n', '---\n上映日期: 2020-05-15\n热门短评: 用户手评\n海报: CONFIG/MOVIE POSTER/用户.jpg\n'));
+      }
+      return r;
+    };
+    const r = await runOn(vault, vaultDeps.deps);
+    expect(r).toEqual({ ok: true });
+    const content = vault.files.get(FILE_PATH)!;
+    expect(content).toContain('上映日期: 2020-05-15');   // 用户值不被年份覆盖
+    expect(content).toContain('热门短评: 用户手评');     // 用户值不被短评覆盖
+    expect(content).toContain('海报: CONFIG/MOVIE POSTER/用户.jpg'); // 用户贴的海报不被下载路径覆盖
+    expect(content).not.toContain('![[');               // 已有海报 → 不插 embed
+  });
+
+  it('C9：六字段缺失才填——已有豆瓣评分/导演/主演不被 ApiZero 覆盖', async () => {
+    const vault = new MockVault();
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n豆瓣评分: 9.9\n导演: 用户手改\n主演: "用户 / 手选"\n---');
+    const { deps } = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1) });
+    await runOn(vault, deps);
+    const content = vault.files.get(FILE_PATH)!;
+    expect(content).toContain('豆瓣评分: 9.9');
+    expect(content).toContain('导演: 用户手改');
+    expect(content).toContain('主演: "用户 / 手选"');
   });
 });
