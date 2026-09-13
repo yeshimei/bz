@@ -1,5 +1,5 @@
-/* 源指纹 664b7e216d38d8a9 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 da3f50bfe99b9192 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -5999,127 +5999,149 @@ var BZW_cinema = (() => {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  // src/cinema/douban-queue.ts
-  var FETCH_GAP_MS = 15e3;
-  var FETCH_TIMEOUT_MS = 3 * 60 * 1e3;
-  var queue = [];
-  var pending = /* @__PURE__ */ new Map();
-  var attempted = /* @__PURE__ */ new Set();
-  var cancelled = /* @__PURE__ */ new Set();
-  var failedNames = [];
-  var pumping = false;
-  var cliPath = null;
-  var cliUnavailableNotified = false;
-  var nodePath = null;
-  var nodeUnavailableNotified = false;
-  var spawnFn = null;
-  var gapMs = FETCH_GAP_MS;
-  var refreshDelayMs = 1500;
-  var POLL_COMPLETE_MS = 3e3;
-  var pollCompleteMs = POLL_COMPLETE_MS;
-  var activeKill = null;
-  function getChildProcess() {
-    const w = window;
-    if (!w.require) return null;
+  // src/cinema/douban-fetcher.ts
+  var POSTER_FOLDER = "CONFIG/MOVIE POSTER";
+  function extractMovieName(filename) {
+    const basename = filename.replace(/\.md$/i, "");
+    const m = basename.match(/《(.+)》/);
+    return m ? m[1] : basename;
+  }
+  function parseSearchResults(html) {
+    const results = [];
+    const itemRegex = /class="result"[\s\S]*?<div class="pic">[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>[\s\S]*?<img[^>]*src="([^"]*)"[^>]*>[\s\S]*?<div class="title">[\s\S]*?<a[^>]*>([^<]+)<\/a>/g;
+    let match;
+    while ((match = itemRegex.exec(html)) !== null) {
+      const rawUrl = match[1];
+      const posterUrl2 = match[2];
+      const title = match[3].trim();
+      const urlMatch = rawUrl.match(/url=([^&]+)/);
+      const detailUrl = urlMatch ? decodeURIComponent(urlMatch[1]) : rawUrl;
+      results.push({ title, detailUrl, posterUrl: posterUrl2 });
+    }
+    return results;
+  }
+  function searchLooksBlocked(html) {
+    if (!html) return true;
+    if (html.length < 8e3) return true;
+    return !html.includes('class="result"') && !html.includes("没有找到") && !html.includes("没有相关的搜索结果");
+  }
+  function upgradePosterUrl(url) {
+    return url.replace("s_ratio_poster", "l_ratio_poster");
+  }
+  function extractSid(detailUrl) {
+    const m = detailUrl.match(/subject\/(\d+)/);
+    return m ? m[1] : null;
+  }
+  function parseCelebrities(data) {
+    if (!data || data.msg) return { directors: "", writers: "", casts: "" };
+    const directors = (data.directors || []).map((d) => d.name || d).join(" / ");
+    const ws = (data.celebrities || []).filter((c) => (c.roles || []).some((r) => /编剧/.test(r)));
+    const writers = ws.map((w) => w.name).join(" / ");
+    const actors = data.actors || [];
+    const casts = actors.length ? (typeof actors[0] === "object" ? actors.slice(0, 6).map((a) => a.name || "").filter(Boolean) : actors.slice(0, 6)).join(" / ") : "";
+    return { directors, writers, casts };
+  }
+  async function fetchApizeroInfo(sid, key, httpGet2) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+    const text = await httpGet2(`https://v1.apizero.cn/api/douban-movie?id=${encodeURIComponent(sid)}`, {
+      Authorization: `Bearer ${key}`
+    });
+    if (!text) return null;
     try {
-      return w.require("child_process");
+      const j = JSON.parse(text);
+      if (!j || j.code !== 0 || !j.data) return null;
+      const d = j.data;
+      return {
+        name: String((_a = d.name) != null ? _a : ""),
+        year: String((_b = d.year) != null ? _b : ""),
+        score: String((_c = d.score) != null ? _c : ""),
+        director: String((_d = d.director) != null ? _d : ""),
+        actor: String((_e = d.actor) != null ? _e : ""),
+        genre: String((_f = d.genre) != null ? _f : ""),
+        area: String((_g = d.area) != null ? _g : ""),
+        duration: String((_h = d.duration) != null ? _h : ""),
+        episodes: String((_i = d.episodes) != null ? _i : ""),
+        isTv: d.is_tv === true,
+        doubanUrl: String(d.douban_url || `https://movie.douban.com/subject/${sid}/`)
+      };
     } catch (e) {
       return null;
     }
   }
-  function resolveCli() {
-    if (cliPath !== null) return cliPath;
-    const cp = getChildProcess();
-    if (!cp) {
-      cliPath = "";
-      return "";
-    }
-    try {
-      const npmRoot = cp.execSync("npm root -g", { encoding: "utf-8", timeout: 1e4 }).trim();
-      const fs = window.require("fs");
-      const path = window.require("path");
-      const candidate = path.join(npmRoot, "@jwbz", "obsidian-douban-poster", "cli.js");
-      if (fs.existsSync(candidate)) {
-        cliPath = candidate;
-        return candidate;
+  async function fetchCelebrities(sid, httpGet2, cookie) {
+    const headers = { Referer: `https://m.douban.com/movie/subject/${sid}/` };
+    if (cookie) headers.Cookie = cookie;
+    for (const type of ["tv", "movie"]) {
+      const text = await httpGet2(`https://m.douban.com/rexxar/api/v2/${type}/${sid}/celebrities`, headers);
+      if (text && text.length > 150) {
+        try {
+          const data = JSON.parse(text);
+          if (!data.msg) {
+            const c = parseCelebrities(data);
+            return { ...c, mediaType: type };
+          }
+        } catch (e) {
+        }
       }
-    } catch (e) {
     }
-    cliPath = "";
-    if (!cliUnavailableNotified) {
-      cliUnavailableNotified = true;
-      notice("豆瓣抓取不可用：未找到全局安装的 douban-poster（npm i -g @jwbz/obsidian-douban-poster 后重载插件）", "error");
-    }
-    return "";
+    return null;
   }
-  function resolveNode() {
-    if (nodePath !== null) return nodePath;
-    const cp = getChildProcess();
-    if (!cp) {
-      nodePath = "";
-      return "";
-    }
-    try {
-      const out = cp.execSync("node -p process.execPath", { encoding: "utf-8", timeout: 1e4 }).trim();
-      if (out) {
-        nodePath = out;
-        return out;
+  function updateFrontmatterFields(content, fields) {
+    const fmMatch = content.match(/^(---\r?\n)([\s\S]*?)(\r?\n---)/);
+    if (!fmMatch) {
+      const fmLines = ["---"];
+      for (const [k, v] of Object.entries(fields)) {
+        if (v) fmLines.push(`${k}: ${formatYamlValue(v)}`);
       }
-    } catch (e) {
+      fmLines.push("---");
+      return fmLines.join("\n") + "\n" + content;
     }
-    nodePath = "";
-    if (!nodeUnavailableNotified) {
-      nodeUnavailableNotified = true;
-      notice("豆瓣抓取不可用：未找到系统 Node.js（安装 node 后重载 Obsidian）", "error");
+    const header = fmMatch[1];
+    const footer = fmMatch[3];
+    const rest = content.slice(fmMatch[0].length);
+    const lines = fmMatch[2].split(/\r?\n/);
+    let insertIdx = lines.length;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].match(/^\s+- /)) insertIdx = i + 1;
     }
-    return "";
-  }
-  async function defaultSpawn(cliJs, notePath) {
-    const cp = getChildProcess();
-    const node = resolveNode();
-    if (!cp || !node) throw new Error("spawn 环境不可用");
-    const child = cp.spawn(node, [cliJs, "fetch", notePath], {
-      windowsHide: true,
-      stdio: "ignore"
-    });
-    activeKill = () => {
-      try {
-        child.kill();
-      } catch (e) {
+    const existingKeys = /* @__PURE__ */ new Set();
+    for (const line of lines) {
+      const m = line.match(/^([^:]+):/);
+      if (m) existingKeys.add(m[1].trim());
+    }
+    const newLines = [];
+    for (const [key, val] of Object.entries(fields)) {
+      if (val && val !== "") {
+        if (existingKeys.has(key)) {
+          for (let i = 0; i < lines.length; i++) {
+            if (lines[i].match(new RegExp(`^${key}:`))) {
+              lines[i] = `${key}: ${formatYamlValue(val)}`;
+              break;
+            }
+          }
+        } else {
+          newLines.push(`${key}: ${formatYamlValue(val)}`);
+        }
       }
-    };
-    await waitForExit(child, FETCH_TIMEOUT_MS, () => child.kill());
-    activeKill = null;
-  }
-  function absPath(app, path) {
-    try {
-      const adapter = (app == null ? void 0 : app.vault).adapter;
-      if (adapter == null ? void 0 : adapter.getFullPath) return adapter.getFullPath(path);
-    } catch (e) {
     }
-    return path;
+    if (newLines.length > 0) lines.splice(insertIdx, 0, ...newLines);
+    return header + lines.join("\n") + footer + rest;
   }
-  function waitForExit(child, timeoutMs, kill) {
-    return new Promise((resolve) => {
-      let done = false;
-      const finish = () => {
-        if (done) return;
-        done = true;
-        resolve();
-      };
-      const killer = setTimeout(() => {
-        kill();
-        finish();
-      }, timeoutMs);
-      child.on("close", () => {
-        clearTimeout(killer);
-        finish();
-      });
-      child.on("error", () => {
-        clearTimeout(killer);
-        finish();
-      });
-    });
+  function formatYamlValue(val) {
+    const s = String(val);
+    if (/[:"\-#[\]{}|>'?]/.test(s) || s.includes(" ")) {
+      return '"' + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+    }
+    return s;
+  }
+  function insertPosterEmbed(content, posterPath) {
+    const embedLink = `![[${posterPath}]]`;
+    if (content.includes(embedLink)) return content;
+    const fmMatch = content.match(/^(---\r?\n[\s\S]*?\r?\n---)\r?\n/);
+    if (fmMatch) {
+      return fmMatch[0] + embedLink + "\n" + content.slice(fmMatch[0].length);
+    }
+    return embedLink + "\n" + content;
   }
   function fieldValue(content, key) {
     const m = content.match(new RegExp(`^${key}:[ \\t]*(.*)$`, "m"));
@@ -6127,16 +6149,139 @@ var BZW_cinema = (() => {
     const v = m[1].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1").trim();
     return v || null;
   }
-  async function fetchComplete(app, file) {
-    if (!app) return false;
+  async function fetchNoteDouban(app, file, deps) {
+    var _a;
+    const name = extractMovieName(file.name);
+    let content;
     try {
-      const content = await app.vault.read(file);
-      const poster = fieldValue(content, "海报");
-      const url = fieldValue(content, "豆瓣链接");
-      return !!(poster && url && /^https?:\/\//.test(url));
+      content = await app.vault.read(file);
     } catch (e) {
-      return false;
+      return { ok: false, reason: "network" };
     }
+    const hasPoster = !!fieldValue(content, "海报");
+    const doubanUrlRaw = fieldValue(content, "豆瓣链接");
+    const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
+    if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
+    const searchHeaders = { Referer: "https://movie.douban.com/", "Accept-Language": "zh-CN,zh;q=0.9" };
+    if (deps.doubanCookie) searchHeaders.Cookie = deps.doubanCookie;
+    let html;
+    try {
+      html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, searchHeaders);
+    } catch (e) {
+      return { ok: false, reason: "network" };
+    }
+    if (searchLooksBlocked(html)) return { ok: false, reason: "blocked" };
+    const results = parseSearchResults(html);
+    if (results.length === 0) return { ok: false, reason: "notfound" };
+    const first = results[0];
+    const sid = extractSid(first.detailUrl);
+    if (!sid) return { ok: false, reason: "notfound" };
+    let posterRelative = fieldValue(content, "海报");
+    if (!hasPoster && first.posterUrl) {
+      try {
+        const buf = await deps.downloadBinary(upgradePosterUrl(first.posterUrl), { Referer: "https://movie.douban.com/" });
+        if (!buf) return { ok: false, reason: "write" };
+        await deps.mkdir(POSTER_FOLDER);
+        const ext = ((_a = first.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)) == null ? void 0 : _a[1]) || "jpg";
+        const safeName = name.replace(/[/\\:*?"<>|]/g, "_");
+        const fileName = `${safeName}_${(deps.now || Date.now)()}.${ext}`;
+        posterRelative = `${POSTER_FOLDER}/${fileName}`;
+        await deps.writeBinary(posterRelative, buf);
+      } catch (e) {
+        return { ok: false, reason: "write" };
+      }
+    }
+    const fields = {};
+    if (posterRelative) fields["海报"] = posterRelative;
+    fields["豆瓣链接"] = first.detailUrl;
+    let az = null;
+    if (deps.apizeroKey) {
+      az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
+      if (az) {
+        if (az.score) fields["豆瓣评分"] = az.score;
+        if (az.director) fields["导演"] = az.director;
+        if (az.actor) fields["主演"] = az.actor;
+        if (az.genre) fields["类型"] = az.genre;
+        if (az.area) fields["制片国家/地区"] = az.area;
+        if (az.duration) fields["片长"] = az.duration;
+      }
+    }
+    const needCelebrities = !az || !az.director || !az.actor;
+    if (needCelebrities) {
+      const cel = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+      if (cel) {
+        if (!fields["导演"] && cel.directors) fields["导演"] = cel.directors;
+        if (cel.writers) fields["编剧"] = cel.writers;
+        if (!fields["主演"] && cel.casts) fields["主演"] = cel.casts;
+      }
+    }
+    try {
+      await app.vault.process(file, (c) => {
+        let next = updateFrontmatterFields(c, fields);
+        if (posterRelative && !hasPoster) next = insertPosterEmbed(next, posterRelative);
+        return next;
+      });
+    } catch (e) {
+      return { ok: false, reason: "write" };
+    }
+    return { ok: true };
+  }
+
+  // src/cinema/douban-queue.ts
+  var FETCH_GAP_MS = 15e3;
+  var FETCH_TIMEOUT_MS = 3 * 60 * 1e3;
+  var HTTP_TIMEOUT_MS = 15e3;
+  var queue = [];
+  var pending = /* @__PURE__ */ new Map();
+  var attempted = /* @__PURE__ */ new Set();
+  var cancelled = /* @__PURE__ */ new Set();
+  var failedNames = [];
+  var blockedNames = [];
+  var pumping = false;
+  var fetchFn = null;
+  var gapMs = FETCH_GAP_MS;
+  var refreshDelayMs = 1500;
+  async function httpGet(url, headers) {
+    try {
+      const req = requestUrl({ url, method: "GET", headers, throw: false }).then((resp) => {
+        return resp.status >= 200 && resp.status < 300 ? resp.text : null;
+      });
+      const timer = new Promise((resolve) => setTimeout(() => resolve(null), HTTP_TIMEOUT_MS));
+      return await Promise.race([req, timer]);
+    } catch (e) {
+      return null;
+    }
+  }
+  async function downloadBinary(url, headers) {
+    try {
+      const req = requestUrl({ url, method: "GET", headers, throw: false }).then((resp) => {
+        return resp.status >= 200 && resp.status < 300 ? resp.arrayBuffer : null;
+      });
+      const timer = new Promise((resolve) => setTimeout(() => resolve(null), HTTP_TIMEOUT_MS * 2));
+      return await Promise.race([req, timer]);
+    } catch (e) {
+      return null;
+    }
+  }
+  function fetchDepsFromSettings(app) {
+    var _a;
+    const s = (_a = tryGetSettings()) != null ? _a : {};
+    const adapter = app.vault.adapter;
+    const uaHeaders = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" };
+    return {
+      httpGet: (url, headers) => httpGet(url, { ...uaHeaders, ...headers || {} }),
+      downloadBinary: (url, headers) => downloadBinary(url, { ...uaHeaders, ...headers || {} }),
+      writeBinary: async (path, data) => {
+        if (!(adapter == null ? void 0 : adapter.writeBinary)) throw new Error("adapter.writeBinary 不可用");
+        await adapter.writeBinary(path, data);
+      },
+      mkdir: async (path) => {
+        var _a2;
+        await ((_a2 = adapter == null ? void 0 : adapter.mkdir) == null ? void 0 : _a2.call(adapter, path));
+      },
+      apizeroKey: typeof s.cinemaApizeroKey === "string" ? s.cinemaApizeroKey.trim() : "",
+      doubanCookie: typeof s.cinemaDoubanCookie === "string" ? s.cinemaDoubanCookie.trim() : ""
+    };
   }
   function isFetching(path) {
     if (!path) return false;
@@ -6146,7 +6291,6 @@ var BZW_cinema = (() => {
   }
   function enqueueDoubanFetch(file, name) {
     if (!file) return false;
-    if (!resolveCli() || !resolveNode()) return false;
     const key = file.path;
     if (attempted.has(key)) return false;
     attempted.add(key);
@@ -6173,24 +6317,21 @@ var BZW_cinema = (() => {
     }
     if (added > 0 && M.currentOverlay) (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
   }
-  async function waitCompleteOrExit(entry, running) {
-    let settled = false;
-    return new Promise((resolve) => {
-      const finish = (v) => {
-        if (settled) return;
-        settled = true;
-        clearInterval(timer);
-        resolve(v);
-      };
-      const timer = setInterval(() => {
-        void fetchComplete(M.appRef, entry.file).then((ok) => {
-          if (!ok) return;
-          activeKill == null ? void 0 : activeKill();
-          finish(true);
-        });
-      }, pollCompleteMs);
-      running.then((ok) => finish(ok), () => finish(false));
-    });
+  async function runOne(entry) {
+    const fn = fetchFn != null ? fetchFn : defaultFetchNote;
+    try {
+      return await Promise.race([
+        fn(entry.file, entry.name),
+        new Promise((resolve) => setTimeout(() => resolve({ ok: false, reason: "network" }), FETCH_TIMEOUT_MS))
+      ]);
+    } catch (e) {
+      return { ok: false, reason: "network" };
+    }
+  }
+  async function defaultFetchNote(file, _name) {
+    const app = M.appRef;
+    if (!app) return { ok: false, reason: "network" };
+    return fetchNoteDouban(app, file, fetchDepsFromSettings(app));
   }
   async function pump() {
     if (pumping) return;
@@ -6201,20 +6342,27 @@ var BZW_cinema = (() => {
         const entry = queue.shift();
         if (!first) await sleep(gapMs);
         first = false;
-        const ok = await waitCompleteOrExit(entry, runOne(entry));
+        const r = await runOne(entry);
         pending.delete(entry.file.path);
         if (cancelled.delete(entry.file.path)) {
           refreshAfterFetch();
           continue;
         }
-        if (!ok) failedNames.push(entry.name);
+        if (!r.ok) {
+          if (r.reason === "blocked") blockedNames.push(entry.name);
+          else failedNames.push(entry.name);
+        }
         refreshAfterFetch();
       }
     } finally {
       pumping = false;
     }
+    if (blockedNames.length > 0) {
+      notice(`豆瓣风控拦截，以下影片本轮未抓到：${blockedNames.join("、")}（重开面板会自动重试）`, "error");
+      blockedNames = [];
+    }
     if (failedNames.length > 0) {
-      notice(`以下影片豆瓣信息获取失败：${failedNames.join("、")}（重启 Obsidian 后会自动重试）`, "error");
+      notice(`以下影片豆瓣信息获取失败：${failedNames.join("、")}（重开面板会自动重试）`, "error");
       failedNames.length = 0;
     }
   }
@@ -6229,17 +6377,6 @@ var BZW_cinema = (() => {
       rebuildItems(M.appRef);
       (_b2 = (_a2 = M).renderFn) == null ? void 0 : _b2.call(_a2);
     }, refreshDelayMs);
-  }
-  async function runOne(entry) {
-    const cli = resolveCli();
-    if (!cli) return false;
-    const spawn = spawnFn != null ? spawnFn : defaultSpawn;
-    try {
-      await spawn(cli, absPath(M.appRef, entry.file.path));
-    } catch (e) {
-      return false;
-    }
-    return fetchComplete(M.appRef, entry.file);
   }
 
   // src/cinema/recommend.ts

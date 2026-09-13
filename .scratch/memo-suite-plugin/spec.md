@@ -1148,3 +1148,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 聚合讯抓取迁入插件内，PM2 守护退役（issue 302 / ADR-0128，2026-09-13）
 
 > grill-with-docs 三轮拍板：四源实测 requestUrl 通道全通（知乎 latest/detail API、果壳 science_api、B站动态带 news.json cookie、RSS），抓取核心自 tools/news-watcher/watcher.js 移植为 src/clipbook/news-fetcher.ts（依赖注入 httpGet = requestUrl 适配；rss-parser/turndown 换轻量 XML 解析 + watcher 自带正则版 htmlToMarkdown；存储走 readNewsData/writeNewsDataMerged 串行合并写）。触发 = 插件 onload + 打开剪藏本时后台抓一轮（间隔档位 30 分钟/1 小时/2 小时/6 小时，news.json fetchIntervalMin 段随库同步，默认 30 分钟下限 30）+ 手动命令 bz-clipbook-fetch-now 忽略间隔；news.json 新增 lastFetchAt 段做间隔判定（零新增轮不反复触发）。通知静默仅失败时报（B站风控/无 cookie 明确提示）。PM2 只停进程，包与源码留存可回滚；ADR-0008 标注方向部分废弃。正文照搬全量逐篇抓（离线可读，移动端后台串行不阻塞 UI）。
+
+### 影院豆瓣抓取迁入插件：字段走 ApiZero、海报走豆瓣（issue 303 / ADR-0129，2026-09-13）
+
+> 实测选型后拍板：ApiZero（apizero.cn 豆瓣电影信息接口，免费 key 1000 次/日）补详情字段（评分/导演/主演/类型/地区/片长），豆瓣搜索页（含海报缩略 URL）+ 图 CDN 与详情页是不同风控面且实测畅通——海报走豆瓣、字段走 ApiZero 首选、rexxar 演职员兜底（编剧唯一来源）、设置页提供 key 与豆瓣 Cookie 设置项（随库同步）。抓取核心自 tools/obsidian-douban-poster 移植为 src/cinema/douban-fetcher.ts（requestUrl 适配依赖注入，parseSearchResults/upgradePosterUrl/parseCelebrities 照搬，详情页 HTML 退役）；douban-queue 执行器换插件内 fetchNote（完成信号=返回值，字段落盘轮询兜底退役），移动端队列首次启用。字段契约收缩：语言/又名/IMDb/简介/上映日期五字段不再抓取（存量不动）。spawn 链退役（全局包留存可手动），ADR-0113 执行层标注被取代。
