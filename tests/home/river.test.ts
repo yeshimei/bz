@@ -1,8 +1,8 @@
 // @vitest-environment node
 /**
- * 内容首页（home 域）活动河数据层测试（issue 232）：
+ * 内容首页（home 域）活动河数据层测试（issue 232；issue 305 时间线痕迹源替换）：
  * 规则纯函数（buildNotes/buildPreviews/buildDots/riverCountText）+ collectRiver
- * 只读采集集成（MockVault；时间线复用 recap、计数各源容错、日记连击、不建文件）。
+ * 只读采集集成（MockVault；时间线吃小橘行为流、计数各源容错、日记连击、不建文件）。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -17,6 +17,23 @@ import type { RiverData } from '../../src/home/river';
 
 const NOW = new Date(2026, 8, 7, 21, 36).getTime(); // 2026-09-07 周一晚
 const DAY = 86400000;
+
+/** 行为流原始条目（issue 305：时间线痕迹源） */
+function beh(source: string, type: string, name: string, dt: Date, extra: Record<string, unknown> = {}) {
+  return {
+    id: `beh_${dt.getTime()}`,
+    timestamp: dt.toISOString(),
+    type,
+    source,
+    description: `${source}:${type} ${name}`,
+    metadata: { entityType: source, action: type, name, ...extra },
+  };
+}
+
+/** 写行为流侧车文件（vault 内存 mock） */
+function writeBehavior(vault: MockVault, items: unknown[]): void {
+  vault.files.set('CONFIG/STORAGE/smartcat-behavior.json', JSON.stringify({ version: 1, items }));
+}
 
 function emptyRiver(): RiverData {
   const emptyDay = (ds: string) => ({ dateStr: ds, events: [], summary: { diary: 0, movies: 0, books: 0, memoDone: 0, memoCreated: 0, pomodoros: 0, pomodoroMinutes: 0 }, firstTs: null });
@@ -277,9 +294,7 @@ describe('collectRiver（只读采集集成）', () => {
   });
 
   it('周历 7 天窗口：今天在前、hit=当天有动静、label=MM-DD', async () => {
-    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
-      { title: '甲', created: '2026-09-06 09:00:00', completed: null },
-    ]));
+    writeBehavior(vault, [beh('memo', 'added', '甲', new Date(2026, 8, 6, 9, 0))]);
     const data = await collectRiver(mockAppWithVault(vault) as any, NOW);
     expect(data.days.length).toBe(7);
     expect(data.days[0].dateStr).toBe(dateStrOf(NOW));
@@ -287,20 +302,43 @@ describe('collectRiver（只读采集集成）', () => {
     expect(data.week[0].dateStr).toBe(dateStrOf(NOW));
     expect(data.week[0].label).toBe('09-07');
     expect(data.week[0].hit).toBe(false); // 今天无动静
-    expect(data.week[1].hit).toBe(true); // 昨天（09-06）有新增备忘录
+    expect(data.week[1].hit).toBe(true); // 昨天（09-06）行为流有新增备忘录
     expect(data.week.map((w) => w.dayOfMonth)).toEqual([7, 6, 5, 4, 3, 2, 1]);
   });
 
-  it('时间线接通：今天完成备忘录 + 新增备忘录派生 memoCreated（复用 recap 口径）', async () => {
+  it('时间线接通：行为流动作进时间线 + memoCreated 由「新增备忘录」前缀派生（issue 305）', async () => {
+    writeBehavior(vault, [
+      beh('memo', 'added', '甲', new Date(2026, 8, 7, 9, 0)),
+      beh('memo', 'completed', '甲', new Date(2026, 8, 7, 10, 0)),
+      beh('memo', 'added', '乙', new Date(2026, 8, 7, 11, 0)),
+      beh('movie', 'watched', '沙丘', new Date(2026, 8, 7, 20, 0), { rating: 8 }),
+      beh('movie', 'deleted', '噪音', new Date(2026, 8, 7, 20, 30)), // 删除动作不进时间线
+      beh('news', 'skipped', '某篇', new Date(2026, 8, 7, 12, 0)),
+    ]);
+    // recap 侧继续供摘要数字（完成 1 条 → memoDone；文件统计口径不受影响）
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
       { title: '甲', created: '2026-09-07 09:00:00', completed: '2026-09-07 10:00:00' },
       { title: '乙', created: '2026-09-07 11:00:00', completed: null },
     ]));
     const data = await collectRiver(mockAppWithVault(vault) as any, NOW);
-    expect(data.today.events.map((e) => e.text)).toEqual(['新增备忘录『甲』', '完成『甲』', '新增备忘录『乙』']);
+    expect(data.today.events.map((e) => e.text)).toEqual([
+      '新增备忘录『甲』', '完成『甲』', '新增备忘录『乙』', '已跳过『某篇』', '标记《沙丘》已看',
+    ]);
+    expect(data.today.events.map((e) => e.kind)).toEqual(['progress', 'produce', 'progress', 'skipped', 'produce']);
+    // 域归口：行为流 source → 首页域 id（渲染徽标/彩点 hasEvent 认这个）
+    expect([...new Set(data.today.events.map((e) => e.domain))]).toEqual(['memo', 'clipping', 'cinema']);
     expect(data.today.summary.memoDone).toBe(1);
     expect(data.today.summary.memoCreated).toBe(2);
-    expect(data.today.firstTs).not.toBeNull();
+    expect(data.today.firstTs).toBe(new Date(2026, 8, 7, 9, 0).getTime());
+  });
+
+  it('影院批量回填免疫（issue 305 事故回归）：外部改笔记不进时间线，摘要口径照旧', async () => {
+    // 观影日期=今天 + 已看 → recap 摘要 movies 仍计 1（文件统计职责保留），但时间线条目为零
+    vault.files.set('我的/影视/《批量回填》.md', `---\ntags:\n- 电影\n评分: 8\n观影日期: ${dateStrOf(NOW)}\n---\n`);
+    const data = await collectRiver(mockAppWithVault(vault) as any, NOW);
+    expect(data.today.summary.movies).toBe(1);
+    expect(data.today.events).toEqual([]);
+    expect(data.week[0].hit).toBe(false);
   });
 
   it('备忘录重要筛选（item-1789106079981）：memoUrgentOpen 只数未完成的重要条，memoOpen 保持全量口径', async () => {

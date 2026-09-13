@@ -98,9 +98,18 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             // 2026-09-12：「点评 ✦」→「小橘点评」（去符号；说明白这句话是谁说的）
+            // issue 305 / ADR-0132：点评类含行为流的星级评价（movie:rated），描述同步覆盖
             name: '小橘点评',
-            desc: '小橘挂在痕迹下面的那句话，提醒动手早晚与日记连击。',
+            desc: '小橘挂在痕迹下面的那句话，也包括你给影片打的星级。',
             binding: { key: 'homeTimelineNotes' },
+          },
+          {
+            // issue 305 / ADR-0132：时间线改吃行为流，已跳过回归（默认关——聚合讯跳过量级大）
+            // 题名「跳过痕迹」：遵循设置项题名 4-8 字规范（lint），与同组「产出动作/状态推进」同构
+            type: 'toggle',
+            name: '跳过痕迹',
+            desc: '聚合讯里跳过的文章痕迹，量比较大，默认不显示。',
+            binding: { key: 'homeTimelineSkipped' },
           },
         ],
       },
