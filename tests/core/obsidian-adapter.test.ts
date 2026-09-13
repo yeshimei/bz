@@ -60,10 +60,10 @@ describe('obsidian-adapter', () => {
   it('create：md 文件恒发通用兜底事件，命中日记目录另发语义事件且附带 date', () => {
     const rec = record('vault:md-created', 'diary:file-created', 'flash:file-created');
     attachObsidianAdapter({ vault }, vi.fn());
-    vault.fire('create', { path: '我的/日记/2026-08-23.md', extension: 'md' });
-    expect(rec.payloadsOf('vault:md-created')).toEqual([{ path: '我的/日记/2026-08-23.md' }]);
+    vault.fire('create', { path: '我的/日记/2026-08-23 12-32.md', extension: 'md' });
+    expect(rec.payloadsOf('vault:md-created')).toEqual([{ path: '我的/日记/2026-08-23 12-32.md' }]);
     expect(rec.payloadsOf('diary:file-created')).toEqual([
-      { path: '我的/日记/2026-08-23.md', date: '2026-08-23' },
+      { path: '我的/日记/2026-08-23 12-32.md', date: '2026-08-23' },
     ]);
     expect(rec.names()).toHaveLength(2); // 无多余事件
     rec.stop();
@@ -161,9 +161,9 @@ describe('obsidian-adapter', () => {
   it('rename 到日记目录：语义事件附带新路径日期', () => {
     const rec = record('diary:file-renamed');
     attachObsidianAdapter({ vault }, vi.fn());
-    vault.fire('rename', { path: '我的/日记/2026-01-03.md', extension: 'md' }, '我的/日记/2026-01-02.md');
+    vault.fire('rename', { path: '我的/日记/2026-01-03 09-30.md', extension: 'md' }, '我的/日记/2026-01-02 21-05.md');
     expect(rec.payloadsOf('diary:file-renamed')).toEqual([
-      { oldPath: '我的/日记/2026-01-02.md', newPath: '我的/日记/2026-01-03.md', movedOut: false, date: '2026-01-03' },
+      { oldPath: '我的/日记/2026-01-02 21-05.md', newPath: '我的/日记/2026-01-03 09-30.md', movedOut: false, date: '2026-01-03' },
     ]);
     rec.stop();
   });

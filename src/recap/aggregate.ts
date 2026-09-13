@@ -6,9 +6,9 @@
  * 各源独立容错——某源读取失败记入 failed（摘要显示 N/A），不拖垮整面板。
  *
  * 数据源逐项口径：
- *  - diary     当天日记文件（YYYY-MM-DD.md）parseFile 解析条目（diary 数据层只读复用，
- *              同日记本域先例，ADR-0115 正名后归 diary）；时间轴聚合一行「新增 N 条」（时刻取当天最后一条；
- *              加密条目同日记本口径不可见不计数）
+ *  - diary     当天条目文件（`YYYY-MM-DD HH-MM(-N).md`，ADR-0130）parseEntryFile 逐篇解析
+ *              （diary 数据层只读复用，同日记本域先例，ADR-0115 正名后归 diary）；时间轴聚合一行
+ *              「新增 N 条」（时刻取当天最后一条；加密条目同日记本口径不可见不计数）
  *  - cinema    影院目录：观影日期=今天 → 「标记已看」（带星级，评分制同影院）；
  *              无观影日期而笔记创建在今天 → 「加入片单」
  *  - bookshelf 书架墙 md + EPUB：completionDate=今天 → 「读完」；在读且笔记改动在今天
@@ -23,7 +23,8 @@ import { tryGetSettings } from '../core/settings-provider';
 import { storageFile } from '../core/storage';
 import { localDayKey } from '../core/utils';
 import { parseLocalDay } from '../home/weekly';
-import { parseFile, isEncryptedEntry } from '../diary/parser';
+import { parseEntryFile, isEncryptedEntry } from '../diary/parser';
+import { DIARY_ENTRY_FILE_RE } from '../core/diary-format';
 import { parseMovieFile } from '../cinema/data';
 import { STATUS_WATCHED, getStarString } from '../cinema/constants';
 import { scanMarkdownBooks, loadEpubItems } from '../bookshelf/data';
@@ -290,19 +291,23 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
     pomodoros: [],
   };
 
-  // 日记：当天文件解析条目（加密条目同日记本口径不可见）。
+  // 日记：当天条目文件逐篇解析（ADR-0130 一目一文件；加密条目同日记本口径不可见）。
   // R1：过滤口径对齐墙（ui.ts filtered）——「加密」标签命中同样隐藏，只查正文 🔐 会把
-  // 标题带 🔐、正文无 🔐 的条目计进回顾却在墙上隐藏，摘要对不上。
+  // 内容带 🔐 的条目计进回顾却在墙上隐藏，摘要对不上。
   try {
     const dir = settingDir(['diaryDirectory'], '我的/日记');
     const dateStr = localDayStr(now);
-    const f = fileIfExists(app, `${dir}/${dateStr}.md`);
-    if (f) {
-      const entries = parseFile(await app.vault.read(f), dateStr).filter(
-        (e) => !isEncryptedEntry(e) && !e.tags.includes('加密')
-      );
-      sources.diaryTimes = entries.map((e) => e.time);
+    const times: string[] = [];
+    for (const f of app.vault.getMarkdownFiles?.() || []) {
+      if (!f.path.startsWith(`${dir}/`)) continue;
+      const m = DIARY_ENTRY_FILE_RE.exec(f.path.split('/').pop() || '');
+      if (!m || m[1] !== dateStr) continue;
+      const e = parseEntryFile(await app.vault.read(f as TFile), f.path);
+      if (!e) continue;
+      if (isEncryptedEntry(e) || e.tags.includes('加密')) continue;
+      times.push(e.time);
     }
+    sources.diaryTimes = times;
   } catch {
     failed.push('diary');
   }

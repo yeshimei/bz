@@ -1,5 +1,5 @@
-/* 源指纹 02bd622c42bb3a33 · 仓内输入 192 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 81b90d4c871580a7 · 仓内输入 193 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -4257,6 +4257,49 @@ var BZW_memo = (() => {
   var init_domain_bus = __esm({
     "src/core/domain-bus.ts"() {
       channels = /* @__PURE__ */ new Map();
+    }
+  });
+
+  // src/core/diary-format.ts
+  function diaryEntryBaseName(dateStr, timeStr, seq) {
+    const [h = "00", m = "00"] = timeStr.split(":");
+    return seq && seq > 1 ? `${dateStr} ${h}-${m}-${seq}` : `${dateStr} ${h}-${m}`;
+  }
+  function diaryEntryPath(dir, dateStr, timeStr, seq) {
+    return `${dir}/${diaryEntryBaseName(dateStr, timeStr, seq)}.md`;
+  }
+  function diaryDateFromEntryPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = base.match(DIARY_ENTRY_FILE_RE);
+    return m ? m[1] : null;
+  }
+  function isValidDiaryDate(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1) return false;
+    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return d <= days[mo - 1];
+  }
+  function isValidDiaryTime(s) {
+    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
+  }
+  function serializeDiaryEntryFile(meta, tags, content) {
+    const lines = ["---", `日期: ${meta.date} ${meta.time}`, "类型:"];
+    for (const t of tags) lines.push(`  - ${t}`);
+    lines.push("---", "", content);
+    let out = lines.join("\n");
+    if (!out.endsWith("\n")) out += "\n";
+    return out;
+  }
+  var DIARY_ENTRY_FILE_RE;
+  var init_diary_format = __esm({
+    "src/core/diary-format.ts"() {
+      DIARY_ENTRY_FILE_RE = /^(\d{4}-\d{2}-\d{2}) (\d{2})-(\d{2})(?:-(\d+))?\.md$/;
     }
   });
 
@@ -13871,85 +13914,42 @@ ${countsToText(s.missing)}
   });
 
   // src/diary/repair.ts
-  function parseTime(t) {
-    const [hh, mm] = t.split(":").map(Number);
-    if (isNaN(hh) || hh < 0 || hh > 23 || isNaN(mm) || mm < 0 || mm > 59) return null;
-    return { h: hh, m: mm };
+  function frontmatterDateRaw(content) {
+    const text = (content || "").replace(/\r\n/g, "\n");
+    if (!text.startsWith("---\n")) return null;
+    const end = text.indexOf("\n---", 4);
+    if (end < 0) return null;
+    const m = /^日期:[^\S\n]*(.+)$/m.exec(text.slice(4, end));
+    return m ? m[1].trim() : null;
   }
-  function scanUnparsed(content) {
-    const lines = content.replace(/\r\n/g, "\n").split("\n");
-    const repairs = [];
-    const freeTexts = [];
-    const pendingFree = [];
-    let entered = false;
-    let firstRepairLine = Infinity;
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (!entered && line.trim() === "") continue;
-      let m = line.match(HEADING_RE);
-      if (m) {
-        if (parseTime(m[2])) {
-          entered = true;
-          continue;
-        }
-        freeTexts.push({ line: i + 1, text: line, reason: "time-oob" });
-        continue;
-      }
-      if (entered) continue;
-      m = line.match(NO_SPACE_RE);
-      if (m) {
-        const time = m[2];
-        if (parseTime(time)) {
-          const after = line.replace(NO_SPACE_RE, "# $1 $2");
-          repairs.push({ line: i + 1, kind: "space", before: line, after });
-          if (firstRepairLine === Infinity) firstRepairLine = i + 1;
-          entered = true;
-          continue;
-        }
-        freeTexts.push({ line: i + 1, text: line, reason: "time-oob" });
-        continue;
-      }
-      m = line.match(SHORT_TIME_RE);
-      if (m) {
-        const after = line.replace(
-          SHORT_TIME_RE,
-          (_f, emoji, h, mi) => `# ${emoji} ${h.padStart(2, "0")}:${mi.padStart(2, "0")}`
-        );
-        if (parseTime(`${m[2].padStart(2, "0")}:${m[3].padStart(2, "0")}`)) {
-          repairs.push({ line: i + 1, kind: "pad-time", before: line, after });
-          if (firstRepairLine === Infinity) firstRepairLine = i + 1;
-          entered = true;
-          continue;
-        }
-        freeTexts.push({ line: i + 1, text: line, reason: "time-oob" });
-        continue;
-      }
-      pendingFree.push({ line: i + 1, text: line, reason: "free-text" });
-    }
-    for (const pf of pendingFree) {
-      if (pf.line < firstRepairLine) freeTexts.push(pf);
-    }
-    return { repairs, freeTexts };
+  function parseDateTimeValue(raw) {
+    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(raw || "");
+    if (!m) return null;
+    return isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
   }
-  function applyRepairs(content, repairs) {
-    const lines = content.split("\n");
-    for (const r of repairs) {
-      const idx = r.line - 1;
-      if (idx < 0 || idx >= lines.length) continue;
-      const raw = lines[idx];
-      const stripped = raw.endsWith("\r") ? raw.slice(0, -1) : raw;
-      if (stripped === r.before) {
-        lines[idx] = r.after + (raw.endsWith("\r") ? "\r" : "");
-      }
-    }
-    return lines.join("\n");
+  function lintEntryFile(path, content) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    if (/^\d{4}-\d{2}-\d{2}\.md$/.test(base)) return "legacy";
+    const raw = frontmatterDateRaw(content);
+    const fmMeta = raw ? parseDateTimeValue(raw) : null;
+    const m = DIARY_ENTRY_FILE_RE.exec(base);
+    const fileDate = m && isValidDiaryDate(m[1]) && isValidDiaryTime(`${m[2]}:${m[3]}`) ? m[1] : null;
+    if (raw && !fmMeta && !fileDate) return "unparsable";
+    if (!fmMeta && !fileDate) return "unparsable";
+    if (fmMeta && fileDate && fmMeta.date !== fileDate) return "name-mismatch";
+    if (raw && !fmMeta && fileDate) return "unparsable";
+    if (fmMeta && !fileDate) return "name-mismatch";
+    return null;
   }
-  var HEADING_RE, NO_SPACE_RE, SHORT_TIME_RE;
+  var LINT_REASON_TEXT;
   var init_repair = __esm({
     "src/diary/repair.ts"() {
-      HEADING_RE = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
-      NO_SPACE_RE = /^#\s*((?:\S+)+)(\d{2}:\d{2})/u;
-      SHORT_TIME_RE = /^#\s*((?:\S+)+)\s+(\d{1,2}):(\d{1,2})/u;
+      init_diary_format();
+      LINT_REASON_TEXT = {
+        legacy: "旧格式日期文件（未迁移）",
+        unparsable: "无法解析为条目",
+        "name-mismatch": "属性日期与文件名不一致"
+      };
     }
   });
 
@@ -13995,37 +13995,27 @@ ${countsToText(s.missing)}
         batch.map(async (file, idx) => {
           const content = await app.vault.read(file);
           if (isAlive()) onProgress(Math.min(i + idx + 1, total), total, file.name);
-          return { file, path: file.path, scan: scanUnparsed(content) };
+          return { path: file.path, reason: lintEntryFile(file.path, content) };
         })
       );
       scanned.push(...results);
     }
     return scanned;
   }
-  async function openAtLine(path, line) {
+  async function openAtTop(path) {
     const app = getApp();
     const file = app.vault.getAbstractFileByPath(path);
-    if (!file) {
-      notice("日记文件不存在");
-      return;
-    }
+    if (!file) return;
     const leaf = app.workspace.getLeaf();
     await leaf.openFile(file);
-    const locate = (view) => {
-      const editor = view && view.editor;
-      if (!editor) return false;
-      const target = Math.max(0, line - 1);
-      editor.focus();
-      editor.setCursor(target, 0);
-      editor.scrollIntoView({ from: { line: target, ch: 0 }, to: { line: target, ch: 0 } }, true);
-      return true;
-    };
-    if (!locate(leaf.view)) {
-      setTimeout(() => locate(leaf.view), 250);
+    const view = leaf.view;
+    if (view && view.editor) {
+      view.editor.focus();
+      view.editor.setCursor(0, 0);
+      view.editor.scrollIntoView({ from: { line: 0, ch: 0 }, to: { line: 0, ch: 0 } }, true);
     }
   }
   function openDiaryRepairModal() {
-    const app = getApp();
     const { mask, popup } = createOverlay({
       maskId: "bz-diary-repair-mask",
       popupId: "bz-diary-repair-popup",
@@ -14036,7 +14026,7 @@ ${countsToText(s.missing)}
     header.className = "bz-settings-header";
     const title = document.createElement("h3");
     title.className = "bz-settings-title";
-    title.textContent = "日记解析检测";
+    title.textContent = "日记格式体检";
     header.appendChild(title);
     const content = document.createElement("div");
     content.className = "bz-settings-content";
@@ -14065,7 +14055,7 @@ ${countsToText(s.missing)}
     fill.className = "bz-diary-repair-progress-fill";
     const ptext = document.createElement("div");
     ptext.className = "bz-diary-repair-progress-text";
-    ptext.textContent = "正在解析日记文件…";
+    ptext.textContent = "正在体检日记文件…";
     track.appendChild(fill);
     progressWrap.appendChild(track);
     progressWrap.appendChild(ptext);
@@ -14074,127 +14064,44 @@ ${countsToText(s.missing)}
       content.innerHTML = "";
       content.appendChild(progressWrap);
       progressWrap.style.display = "none";
-      const repairs = scanned.filter((s) => s.scan.repairs.length > 0);
-      const freeFiles = scanned.filter((s) => s.scan.freeTexts.length > 0);
-      const repairCount = repairs.reduce((n, s) => n + s.scan.repairs.length, 0);
-      const freeCount = freeFiles.reduce((n, s) => n + s.scan.freeTexts.length, 0);
+      const items = [];
+      for (const s of scanned) {
+        if (s.reason) items.push({ path: s.path, reason: s.reason, detail: LINT_REASON_TEXT[s.reason] });
+      }
       const summary = document.createElement("div");
       summary.className = "bz-diary-repair-summary";
-      if (repairCount === 0 && freeCount === 0) {
-        summary.textContent = `共扫描 ${scanned.length} 个日记文件：全部正常解析`;
-      } else {
-        summary.textContent = `共扫描 ${scanned.length} 个日记文件：${repairs.length} 个文件可自动修复（${repairCount} 处），${freeFiles.length} 个文件需手动处理（${freeCount} 行）。`;
-      }
+      summary.textContent = items.length === 0 ? `共体检 ${scanned.length} 个日记文件：全部健康` : `共体检 ${scanned.length} 个日记文件：${items.length} 个需要处理（点击条目打开文件手工处理，面板不改写内容）。`;
       content.appendChild(summary);
-      if (repairs.length > 0) {
+      const order = ["legacy", "unparsable", "name-mismatch"];
+      for (const reason of order) {
+        const group = items.filter((i) => i.reason === reason);
+        if (group.length === 0) continue;
         const sec = document.createElement("div");
         sec.className = "bz-diary-repair-section-title";
-        const name = document.createElement("span");
-        name.textContent = `可自动修复（${repairCount} 处）`;
-        const fixBtn = document.createElement("button");
-        fixBtn.className = "bz-button";
-        fixBtn.textContent = `一键修复 ${repairCount} 处`;
-        fixBtn.addEventListener("click", () => confirmFix2(scanned, repairs));
-        sec.appendChild(name);
-        sec.appendChild(fixBtn);
+        sec.textContent = `${LINT_REASON_TEXT[reason]}（${group.length}）`;
         content.appendChild(sec);
-        for (const f of repairs) {
-          const fileBox = document.createElement("div");
-          fileBox.className = "bz-diary-repair-file";
-          const head = document.createElement("div");
-          head.className = "bz-diary-repair-file-head";
-          head.textContent = f.path;
-          fileBox.appendChild(head);
-          for (const r of f.scan.repairs) {
-            const row = document.createElement("div");
-            row.className = "bz-diary-repair-row";
-            row.append(document.createTextNode(`第 ${r.line} 行（${r.kind === "space" ? "补空格" : "时间补零"}）：`));
-            const before = document.createElement("code");
-            before.textContent = r.before;
-            const arrow = document.createElement("span");
-            arrow.textContent = " → ";
-            const after = document.createElement("code");
-            after.textContent = r.after;
-            row.append(before, arrow, after);
-            fileBox.appendChild(row);
-          }
-          content.appendChild(fileBox);
-        }
-      }
-      if (freeFiles.length > 0) {
-        const sec = document.createElement("div");
-        sec.className = "bz-diary-repair-section-title";
-        sec.textContent = `需手动处理（${freeCount} 行）`;
-        content.appendChild(sec);
-        for (const f of freeFiles) {
-          const fileBox = document.createElement("div");
-          fileBox.className = "bz-diary-repair-file";
-          const head = document.createElement("div");
-          head.className = "bz-diary-repair-file-head";
-          head.textContent = f.path;
-          fileBox.appendChild(head);
-          for (const ft of f.scan.freeTexts) {
-            const row = document.createElement("div");
-            row.className = "bz-diary-repair-row";
-            const link = document.createElement("span");
-            link.className = "bz-diary-repair-link";
-            link.textContent = `第 ${ft.line} 行（${REASON_TEXT[ft.reason] || ft.reason}）`;
-            link.addEventListener("click", () => void openAtLine(f.path, ft.line));
-            const snippet = document.createElement("span");
-            snippet.className = "bz-diary-repair-snippet";
-            snippet.textContent = ft.text.slice(0, 60) + (ft.text.length > 60 ? "…" : "");
-            row.append(link, snippet);
-            fileBox.appendChild(row);
-          }
-          content.appendChild(fileBox);
+        for (const item of group) {
+          const row = document.createElement("div");
+          row.className = "bz-diary-repair-row";
+          const link = document.createElement("span");
+          link.className = "bz-diary-repair-link";
+          link.textContent = item.path.split("/").pop() || item.path;
+          link.addEventListener("click", () => void openAtTop(item.path));
+          const snippet = document.createElement("span");
+          snippet.className = "bz-diary-repair-snippet";
+          snippet.textContent = item.path;
+          row.append(link, snippet);
+          content.appendChild(row);
         }
       }
       const again = document.createElement("button");
       again.className = "bz-button";
-      again.textContent = "重新检测";
+      again.textContent = "重新体检";
       again.addEventListener("click", () => void startScan());
       const bar = document.createElement("div");
       bar.className = "bz-diary-repair-footer";
       bar.appendChild(again);
       content.appendChild(bar);
-    };
-    const confirmFix2 = (scanned, repairs) => {
-      const count = repairs.reduce((n, s) => n + s.scan.repairs.length, 0);
-      void openFlowDialog({
-        title: "修复日记标题格式",
-        message: `将修改 ${repairs.length} 个日记文件中的 ${count} 处标题行：补空格/时间补零使其符合「# emoji HH:mm」格式，正文内容不变。修改不可撤销，可通过 Obsidian 文件历史恢复。`,
-        actions: [
-          { label: "取消", value: "cancel" },
-          { label: "修复", value: "ok", cta: true }
-        ]
-      }).then((v) => {
-        if (v === "ok") void runFix(scanned, repairs);
-      });
-    };
-    const runFix = async (scanned, repairs) => {
-      let fixed = 0;
-      let failed = 0;
-      for (const f of repairs) {
-        try {
-          const changed = await enqueueFileTask(f.path, async () => {
-            const content2 = await app.vault.read(f.file);
-            const next = applyRepairs(content2, f.scan.repairs);
-            if (next === content2) return 0;
-            await app.vault.modify(f.file, next);
-            return f.scan.repairs.length;
-          });
-          fixed += changed;
-        } catch (e) {
-          failed += f.scan.repairs.length;
-          console.warn("[diary] 修复失败", f.path, e);
-        }
-      }
-      if (failed === 0) {
-        notice(`已修复 ${fixed} 处未解析行`, "success");
-      } else {
-        notice(`修复 ${fixed} 处成功、${failed} 处失败`, "warning");
-      }
-      await startScan();
     };
     async function startScan() {
       progressWrap.style.display = "block";
@@ -14205,7 +14112,7 @@ ${countsToText(s.missing)}
         () => mask.isConnected,
         (done, total, label) => {
           fill.style.width = `${Math.round(done / total * 100)}%`;
-          ptext.textContent = `正在解析 ${label}（${done}/${total}）…`;
+          ptext.textContent = `正在体检 ${label}（${done}/${total}）…`;
         }
       );
       if (!mask.isConnected) return;
@@ -14213,22 +14120,15 @@ ${countsToText(s.missing)}
     }
     void startScan();
   }
-  var BATCH_CONCURRENCY, REASON_TEXT;
+  var BATCH_CONCURRENCY;
   var init_repair_modal = __esm({
     "src/diary/ui/repair-modal.ts"() {
       init_dom();
       init_esc_manager();
-      init_flow_dialog();
-      init_notice();
       init_app();
-      init_storage();
       init_config3();
       init_repair();
       BATCH_CONCURRENCY = 10;
-      REASON_TEXT = {
-        "time-oob": "时间越界",
-        "free-text": "游离正文（条目前）"
-      };
     }
   });
 
@@ -14268,7 +14168,7 @@ ${countsToText(s.missing)}
           icon: "wrench",
           name: "维护",
           rows: [
-            { type: "button", name: "日记解析检测", desc: "扫描所有日记文件，定位未能解析的行，可一键修复标题格式问题", buttonText: "检测日记解析", cta: true, onClick: () => openDiaryRepairModal() }
+            { type: "button", name: "日记格式体检", desc: "扫描全部日记条目文件，列出格式问题并跳转手工处理", buttonText: "日记格式体检", cta: true, onClick: () => openDiaryRepairModal() }
           ]
         }
       ]
@@ -30294,6 +30194,7 @@ ${n.content.slice(0, 2e3)}
       init_domain_bus();
       init_crypto();
       init_storage();
+      init_diary_format();
       ENCRYPT_CHANGED_CHANNEL = "encrypt:changed";
       ENCRYPT_UNLOCK_CHANGED_CHANNEL = "encrypt:unlock-changed";
       RAND_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
@@ -31234,85 +31135,65 @@ ${n.content.slice(0, 2e3)}
           return this.decryptNoteBody(note);
         }
         /**
-         * 加密日记条目还原辅助：把 `# emoji HH:mm\n正文` 块 merge 回目标日期 md 文件。
-         * 解析块首行标题取时间 → 按时间序把块重插进该日期文件（文件已删则新建）；非整文件覆盖（ADR-0017 Q23-A）。
-         * @returns 成功写入返回 true；目标路径被占且非本系统（fingerprint 冲突）由附件层处理，正文 merge 属幂等写回。
+         * 还原日记块 → 条目文件（ADR-0130 v2）：块头 `# 标签名/标签名 HH:mm` + 正文，
+         * 序列化为 frontmatter 条目文件写入 note.path（一目一文件，无「按时间序插块」概念）。
+         * - 同内容幂等跳过（「块已 merge 但清单没保存」的中断残留/重试）；
+         * - 目标被占且内容不同（外来内容）绝不覆盖——后缀让位 `-2/-3…` 新建；
+         * - note.path 为旧格式日期文件路径时兜底换算为条目文件路径（历史清单兼容）。
+         * @returns 成功写入（或幂等跳过）返回 true；路径无法换算日期返回 false。
          */
         async mergeDiaryBlock(datePath, block) {
           const app = getApp();
           if (!datePath || !block) return false;
           const md = block.replace(/\r\n/g, "\n");
           const lines = md.split("\n");
-          const headMatch = lines[0] ? lines[0].match(/^#\s+\S+\s+(\d{2}:\d{2})$/) : null;
-          const time = headMatch ? headMatch[1] : null;
-          const timeValue = time ? parseInt(time.slice(0, 2), 10) * 100 + parseInt(time.slice(3, 5), 10) : null;
-          if (timeValue === null || Number.isNaN(timeValue)) return false;
-          await this.ensureVaultParentFolder(datePath);
-          await enqueueFileTask(datePath, async () => {
-            var _a2, _b2;
-            const existing = app.vault.getAbstractFileByPath(datePath);
-            let existingText = "";
-            if (existing && existing.isFolder !== true) {
-              existingText = await app.vault.read(existing);
-            }
-            const existingLines = existingText ? existingText.replace(/\r\n/g, "\n").split("\n") : [];
-            const blockRows = [lines[0].trim()];
-            const blockLines = [];
-            for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
-            while (blockLines.length && blockLines[blockLines.length - 1].trim() === "") blockLines.pop();
-            while (blockLines.length && blockLines[0].trim() === "") blockLines.shift();
-            if (blockLines.length) {
-              blockRows.push("");
-              blockRows.push(...blockLines);
-            }
-            const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
-            const sigLines = (ls) => ls.map((l) => l.trim()).filter((l) => l !== "");
-            const blockSig = sigLines(blockRows);
-            let alreadyMerged = false;
-            for (let i = 0; i < existingLines.length; i++) {
-              if (existingLines[i].trim() !== lines[0].trim()) continue;
-              const seg = [];
-              for (let k = i + 1; k < existingLines.length && !headingRe.test(existingLines[k]); k++) seg.push(existingLines[k]);
-              if (sigLines(seg).join("\n") === blockSig.slice(1).join("\n")) {
-                alreadyMerged = true;
-                break;
-              }
-            }
-            if (alreadyMerged) return;
-            let insertIdx = existingLines.length;
-            for (let i = 0; i < existingLines.length; i++) {
-              const m = existingLines[i].match(headingRe);
-              if (m) {
-                const tv = parseInt(m[1].slice(0, 2), 10) * 100 + parseInt(m[1].slice(3, 5), 10);
-                if (tv >= timeValue) {
-                  insertIdx = i;
-                  break;
-                }
-              }
-            }
-            const out = [];
-            for (let i = 0; i < insertIdx; i++) out.push(existingLines[i]);
-            if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== "") out.push("");
-            out.push(...blockRows);
-            if (insertIdx < existingLines.length && existingLines[insertIdx].trim() !== "") out.push("");
-            for (let i = insertIdx; i < existingLines.length; i++) out.push(existingLines[i]);
-            const clean = [];
-            for (const ln of out) {
-              if (ln.trim() === "") {
-                if (clean.length && clean[clean.length - 1] !== "") clean.push("");
-              } else {
-                clean.push(ln);
-              }
-            }
-            while (clean.length && clean[0] === "") clean.shift();
-            while (clean.length && clean[clean.length - 1] === "") clean.pop();
-            const finalText = clean.join("\n");
-            if (existing && existing.isFolder !== true) {
-              await app.vault.modify(existing, finalText);
+          const headMatch = lines[0] ? lines[0].match(/^#\s+(.+)\s+(\d{2}:\d{2})$/) : null;
+          const time = headMatch ? headMatch[2] : null;
+          if (!headMatch || !time) return false;
+          const tags = headMatch[1].split("/").map((s) => s.trim()).filter(Boolean);
+          if (tags.length === 0) tags.push("日记");
+          const bodyLines = [];
+          for (let i = 1; i < lines.length; i++) bodyLines.push(lines[i]);
+          while (bodyLines.length && bodyLines[bodyLines.length - 1].trim() === "") bodyLines.pop();
+          while (bodyLines.length && bodyLines[0].trim() === "") bodyLines.shift();
+          const body = bodyLines.join("\n");
+          const base = datePath.split("/").pop() || "";
+          const dir = datePath.split("/").slice(0, -1).join("/");
+          let date = null;
+          let targetPath = datePath;
+          const em = DIARY_ENTRY_FILE_RE.exec(base);
+          if (em && isValidDiaryDate(em[1])) {
+            date = em[1];
+          } else {
+            const lm = /^(\d{4}-\d{2}-\d{2})\.md$/.exec(base);
+            if (lm && isValidDiaryDate(lm[1])) {
+              date = lm[1];
+              targetPath = diaryEntryPath(dir, date, time);
             } else {
-              const file = await app.vault.create(datePath, finalText);
-              (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", file);
+              return false;
             }
+          }
+          if (!date) return false;
+          await this.ensureVaultParentFolder(targetPath);
+          await enqueueFileTask(targetPath, async () => {
+            var _a2, _b2, _c, _d;
+            const serialized = serializeDiaryEntryFile({ date, time }, tags, body);
+            const existing = app.vault.getAbstractFileByPath(targetPath);
+            if (existing && existing.isFolder !== true) {
+              const text = await app.vault.read(existing);
+              if (text.replace(/\n$/, "") === serialized.replace(/\n$/, "")) return;
+              let seq = 2;
+              let alt = diaryEntryPath(dir, date, time, seq);
+              while (app.vault.getAbstractFileByPath(alt)) {
+                seq += 1;
+                alt = diaryEntryPath(dir, date, time, seq);
+              }
+              const shifted = await app.vault.create(alt, serialized);
+              (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", shifted);
+              return;
+            }
+            const file = await app.vault.create(targetPath, serialized);
+            (_d = (_c = app.metadataCache) == null ? void 0 : _c.trigger) == null ? void 0 : _d.call(_c, "changed", file);
           });
           return true;
         }
@@ -38184,6 +38065,7 @@ ${n.content.slice(0, 2e3)}
 
   // src/core/path-classify.ts
   init_settings_provider();
+  init_diary_format();
   function normalizeDir(dir) {
     return (dir || "").trim().replace(/\\/g, "/").replace(/\/+$/, "");
   }
@@ -38211,9 +38093,7 @@ ${n.content.slice(0, 2e3)}
     return null;
   }
   function diaryDateFromPath(path) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    const m = base.match(/^(\d{4}-\d{2}-\d{2})\.md$/);
-    return m ? m[1] : null;
+    return diaryDateFromEntryPath(path);
   }
 
   // src/core/obsidian-adapter.ts

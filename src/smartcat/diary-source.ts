@@ -5,21 +5,20 @@
  * 观察是**静态快照**，只有「新增」「新增更新」两种产出（无覆盖、无引用、无动态读取）。
  * 本模块为纯函数层（可测）：解析日记 md → 条目；结算判定（首落有字门 / 累计 >50 才更新）；观察文案（首次/更新/删除）。
  *
- * 数据格式零改动：`我的/日记/YYYY-MM-DD.md` 条目标题为 `# <emoji 序列> HH:mm`，正文标题行之后全量不截断。
- * emoji → 分类名映射 **import src/diary/config 的 emojiToTagMap**（单向域间 import，对齐 movie→smartcat 先例；
- * diary/config 只依赖 diary/types，无环；若未来形成循环依赖则内置映射表并注明来源）。
- * 分类语义对齐 diary/parser.parseFile：标题行 emoji 逐个反查分类名（主/二级都列），无命中回退「日记」。
+ * 数据格式（ADR-0130）：一目一文件——条目文件 frontmatter `日期`+`类型`，正文即内容；
+ * 本模块解析经 core/diary-format.ts 契约单源（parseDiaryEntryFile），分类名即 frontmatter `类型`
+ * 标签名列表（无命中回退「日记」），emoji 表不再参与解析。
  */
-import { emojiToTagMap } from '../diary/config';
+import { parseDiaryEntryFile } from '../core/diary-format';
 import type { StructuredMeta } from './types';
 
 /** 日记条目（smartcat 侧精简形状：只取观察所需字段） */
 export interface DiaryEntryLike {
-  /** 时间 HH:mm（标题行） */
+  /** 时间 HH:mm（frontmatter `日期`） */
   time: string;
-  /** 分类名（主/二级都列，标题行 emoji 序列逐个反查） */
+  /** 分类名（frontmatter `类型` 标签名列表） */
   tags: string[];
-  /** 正文（标题行之后到下一标题行/末尾，全量不截断；仅去首尾空白） */
+  /** 正文（frontmatter 之后全量不截断；仅去首尾空白） */
   body: string;
 }
 
@@ -29,49 +28,23 @@ export const DIARY_SETTLE_MS = 10 * 60 * 1000;
 /** 更新观察累计字数阈值（累计 >50 字才生成更新观察；=50 不生成） */
 export const DIARY_UPDATE_THRESHOLD = 50;
 
-// 标题行正则收口 diary/parser（HEADING_REGEX 同源，防双侧漂移） 
-import { HEADING_REGEX as HEADING_RE } from '../diary/parser';
-
 /** 字符数（中文按字符计：按码点切分，代理对 emoji 记 1 字；对齐 ticket「中文按字符数」语义） */
 export function diaryCharCount(s: string): number {
   return Array.from(s || '').length;
 }
 
-/** 标题行 emoji 序列逐个反查分类名（grapheme 切分，对齐 diary/parser：无命中回退「日记」） */
-function tagsFromEmojiSeq(seq: string): string[] {
-  const tags: string[] = [];
-  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-  for (const seg of segmenter.segment(seq)) {
-    const tag = emojiToTagMap[seg.segment];
-    if (tag) tags.push(tag);
-  }
-  return tags.length ? tags : ['日记'];
-}
-
-/** 解析日记 md → 条目数组（纯函数）。正文 = 标题行之后到下一标题行/末尾，全量不截断（仅去首尾空白）。 */
-export function parseDiaryFile(content: string): DiaryEntryLike[] {
-  const entries: DiaryEntryLike[] = [];
-  const lines = (content || '').split('\n');
-  let current: DiaryEntryLike | null = null;
-  let bodyLines: string[] = [];
-  for (const line of lines) {
-    const m = line.match(HEADING_RE);
-    if (m) {
-      if (current) {
-        current.body = bodyLines.join('\n').trim();
-        entries.push(current);
-        bodyLines = [];
-      }
-      current = { time: m[2], tags: tagsFromEmojiSeq(m[1]), body: '' };
-    } else if (current) {
-      bodyLines.push(line);
-    }
-  }
-  if (current) {
-    current.body = bodyLines.join('\n').trim();
-    entries.push(current);
-  }
-  return entries;
+/**
+ * 解析条目文件全文 → 单条目（纯函数，ADR-0130 一目一文件）。
+ * frontmatter `日期` 缺失/损坏（meta null）→ null（该文件不产出观察）；类型空缺回退「日记」。
+ */
+export function parseDiaryEntry(content: string): DiaryEntryLike | null {
+  const parsed = parseDiaryEntryFile(content);
+  if (!parsed.meta) return null;
+  return {
+    time: parsed.meta.time,
+    tags: parsed.tags.length ? parsed.tags : ['日记'],
+    body: parsed.body.trim(),
+  };
 }
 
 // ---------------- 结算状态与判定（纯函数可测） ----------------

@@ -11,15 +11,14 @@
  *     全程走 diary 写层 API（listDateEntries/addEntry/removeDiaryEntries，函数级动态 import，
  *     不改 src/diary 任何文件——ADR-0115 正名后写层即回忆墙域的守卫写盘）；替换语义 = 先插新条目再删旧条目
  *     （失败顺序的安全性：插入失败旧内容原样保留；删除失败最多暂时叠条，下次生成自愈，
- *      任意一步失败文件都是 diary 写层全量重写的合法形态，不会写坏用户日记）。
+ *      任意一步失败文件都是条目文件合法形态，不会写坏用户日记）。
  *
- * 条目标识（重要）：日记标签靠 emoji 往返（parser emojiToTagMap），「今日回顾」不在标签配置里，
- * 写盘后 emoji 回落 📖、重解析变回「日记」标签——故用正文首行标记「【今日回顾】」做稳定标识，
- * 写入标签用常规 ['日记']，往返无损。
+ * 条目标识：正文首行标记「【今日回顾】」做稳定标识（ADR-0130 起正文不参与格式解析，
+ * 一级标题行也安全，但标记仍是跨域识别的最稳依据）；写入标签用常规 ['日记']。
  */
 import type { App, TFile } from 'obsidian';
 import { createAI, getAIProvider } from '../core/ai';
-import { parseFile } from '../diary/parser';
+import { DIARY_ENTRY_FILE_RE, parseDiaryEntryFile } from '../core/diary-format';
 import type { DiaryEntry } from '../diary/types';
 import { fmtHM, localDayStr, settingDir } from './aggregate';
 import type { RecapData, RecapSummary, RecapDomain } from './aggregate';
@@ -78,17 +77,10 @@ export function buildSummaryPrompt(digest: string): string {
   ].join('\n');
 }
 
-/** AI 返回消毒：日记条目正文里的行首 markdown 标题行会在重解析时出事——
- *  `# 📖 09:00` 形被 parseFile 误切成新条目；不带时间的 `# 标题` 行（前有空行）更隐蔽：
- *  空行 + `#` 开头会提前闭合当前条目（尾部正文丢失），该行及其后正文全部计成「无法解析行」，
- *  写守卫从此锁死当天、一键修复也修不了。一律把行首 `#{1,6} ` 的半角 # 换成全角＃
- *  （总结是纯文本，不影响阅读）。 */
+/** AI 返回净化：trim 即可——ADR-0130 起条目正文不参与格式解析，行首 markdown 标题行安全
+ *  （旧格式下行首 `# ` 会被头行正则误切，需全角化消毒；条目文件化后该坑不复存在）。 */
 export function sanitizeSummaryText(text: string): string {
-  return text
-    .split('\n')
-    .map((line) => (/^#{1,6}\s/.test(line) ? line.replace(/^#+/, (h) => '＃'.repeat(h.length)) : line))
-    .join('\n')
-    .trim();
+  return String(text || '').trim();
 }
 
 /** 组装写入条目的完整正文：标记行 + 正文（+ AI 模式的末尾关键数字行） */
@@ -179,57 +171,60 @@ export async function generateRecapContent(data: RecapData): Promise<RecapGenera
   }
 }
 
-/* ---------- 日记写入 / 替换（全程 diary 既有 API，函数级动态 import） ---------- */
+/* ---------- 日记写入 / 替换 / 探活（全程 diary 既有 API，函数级动态 import） ---------- */
 
 export type RecapWriteOutcome = 'written' | 'replaced';
 
-/** 当天日记文件路径（diaryDirectory 设置口径，与 diary/store DIARY_DIRECTORY 同源设置键） */
-export function recapDiaryFilePath(now: number): string {
-  return `${settingDir(['diaryDirectory'], '我的/日记')}/${localDayStr(now)}.md`;
+/**
+ * 查找今天「今日回顾」条目文件路径（ADR-0130 一目一文件；命中返回完整路径，无则 null）。
+ * 只读扫描：日期文件名前缀圈定当日条目 → 逐篇读正文首行标记。
+ */
+export async function findRecapEntryPath(app: App, now: number = Date.now()): Promise<string | null> {
+  try {
+    const dir = settingDir(['diaryDirectory'], '我的/日记');
+    const dateStr = localDayStr(now);
+    const files = ((app.vault as any).getMarkdownFiles?.() || []) as { path: string }[];
+    const candidates = files
+      .map((f) => f.path)
+      .filter((p) => {
+        if (!p.startsWith(`${dir}/`)) return false;
+        const m = DIARY_ENTRY_FILE_RE.exec(p.split('/').pop() || '');
+        return !!m && m[1] === dateStr;
+      });
+    for (const p of candidates) {
+      const f = app.vault.getAbstractFileByPath(p) as TFile | null;
+      if (!f) continue;
+      const parsed = parseDiaryEntryFile(await app.vault.read(f));
+      if (parsed.body.trimStart().startsWith(RECAP_MARKER)) return p;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**
  * 把总结写进当天日记（一条「今日回顾」条目；同日已有 → 替换不叠条）。
  * 安全顺序：先插新条目（失败=旧内容原样保留）→ 再删旧条目（失败=暂时叠条，下次生成自愈）。
- * 写前用 parseFile 的未解析行口径预检（同 diary writeFile 守卫）：磁盘有无法解析的行时拒写并给人话指引，
- * 避免触发 diary 拒写守卫后内存与磁盘口径分叉。
  *
  * @returns 'replaced' = 替换了已有条目；'written' = 新写入
  */
 export async function writeRecapEntry(app: App, content: string, now: number = Date.now()): Promise<RecapWriteOutcome> {
+  void app; // 写层自持 app（getApp 单例），入参保留兼容旧调用面
   const dateStr = localDayStr(now);
-  const filePath = recapDiaryFilePath(now);
 
-  // 写前预检：磁盘存在无法解析的行 → 拒处理（同 diary 写守卫口径，避免丢行/口径分叉）
-  const file = app.vault.getAbstractFileByPath(filePath) as TFile | null;
-  if (file) {
-    let unparsed = 0;
-    try {
-      parseFile(await app.vault.read(file), dateStr, (n) => (unparsed = n));
-    } catch {
-      /* 读失败不拦截：写路径自身有失败兜底 */
-    }
-    if (unparsed > 0) {
-      throw new Error(
-        `「${dateStr}」有 ${unparsed} 行内容无法解析，本次没有写入。请先在日记本设置中运行「检测日记解析」修复后再试。`
-      );
-    }
-  }
-
-  // 函数级动态 import（依赖方向 ADR-0002：recap ← diary 延迟解析；不改 diary 任何文件）。
-  // 新写层每次操作前自行从磁盘同步该日期（日记本从未打开过也能安全全量重写），无需预刷新。
+  // 函数级动态 import（依赖方向 ADR-0002：recap ← diary 延迟解析；不改 diary 任何文件）
   const store = await import('../diary/store');
 
   const timeStr = fmtHM(now);
   // 探旧（守卫拒读 → 视为无旧条目；后续 addEntry 会在同一守卫上先失败）
   const hadOld = (await store.listDateEntries(dateStr).catch(() => [] as DiaryEntry[])).some(isRecapEntry);
 
-  // 先插新（diary addEntry：磁盘同步 + map 插入 + 全量重写，写前守卫拒未解析行）
+  // 先插新（diary addEntry：队列内取空闲条目文件名后建文件）
   await store.addEntry(dateStr, timeStr, ['日记'], content);
 
   // 再删旧（失败不致命：文件合法，最多暂时叠条；下次生成会再清）。
-  // 旧条目按「今日回顾」标记定位，排除刚插入的新条目（同刻同文）；删除在写层队列内
-  // 重新磁盘同步后按行号定位，插入导致的行号位移不影响。
+  // 旧条目按「今日回顾」标记定位，排除刚插入的新条目（同刻同文）；删除在写层队列内按谓词定位。
   try {
     await store.removeDiaryEntries(dateStr, (e) => isRecapEntry(e) && !(e.time === timeStr && e.content === content.trim()));
   } catch (e) {
@@ -240,13 +235,5 @@ export async function writeRecapEntry(app: App, content: string, now: number = D
 
 /** 今天是否已写过「今日回顾」条目（头行按钮「生成今日总结/重新生成」的判定依据；只读） */
 export async function hasRecapEntry(app: App, now: number = Date.now()): Promise<boolean> {
-  try {
-    const filePath = recapDiaryFilePath(now);
-    const file = app.vault.getAbstractFileByPath(filePath) as TFile | null;
-    if (!file) return false;
-    const parsed = parseFile(await app.vault.read(file), localDayStr(now));
-    return parsed.some(isRecapEntry);
-  } catch {
-    return false;
-  }
+  return (await findRecapEntryPath(app, now)) !== null;
 }

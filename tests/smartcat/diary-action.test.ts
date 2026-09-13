@@ -1,8 +1,8 @@
 import { todayStr } from '../helpers/date';
 /**
- * 日记观察集成（ticket 077，ADR-0030）：ensure 后模拟日记 create/modify/delete/rename →
+ * 日记观察集成（ticket 077，ADR-0030；ADR-0130 一目一文件）：ensure 后模拟条目文件 create/modify/delete/rename →
  * 每条独立 10 分钟结算（测试注入 60ms 真实 timer，规避 fake timers 与反射调度相互作用）。
- * 覆盖：首次（首落有字）/ 累计 >50 更新 / ≤50 不生成（计入累计）/ 空标题不落 / 条目级删除追加 /
+ * 覆盖：首次（首落有字）/ 累计 >50 更新 / ≤50 不生成（计入累计）/ 空正文不落 / 条目文件删除追加 /
  * 文件删除（逐条 + 文件级兜底）/ noteSource 关静默 / 多条目独立计时 / 重启基线不落首落 / unload 清理。
  * ticket 084d 修复：B1 settle 真删除 vs 瞬态读失败分离；B2 rename 计时/快照 key 迁移与移出目录删除；
  * B3 基线扩窗（当日+前 2 天）；B4 累计 delta 钳位 ≥0。
@@ -21,6 +21,15 @@ import {
 } from '../../src/smartcat/index';
 
 let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
+
+/** 条目文件路径（ADR-0130：路径含时刻，`YYYY-MM-DD HH-MM.md`） */
+function entryPath(date: string, time: string): string {
+  return `我的/日记/${date} ${time.replace(':', '-')}.md`;
+}
+/** 条目文件全文（frontmatter 日期+类型 + 正文） */
+function entryFile(time: string, body: string, tags: string[] = ['日记'], date = '2026-08-24'): string {
+  return `---\n日期: ${date} ${time}\n类型:\n${tags.map((t) => `  - ${t}`).join('\n')}\n---\n\n${body}\n`;
+}
 
 function makeApp() {
   const vault = new MockVault();
@@ -54,8 +63,6 @@ const readStream = (): any[] => __getSmartcatInternals().data.memory.memoryStrea
 const readBehavior = (): any[] => __getSmartcatInternals().data.memory.behaviorStream;
 const timerKey = (path: string, date: string, time: string) => `${path}\u0001${date}\u0001${time}`;
 
-/** 今天日期（本地时区，与 index diaryTodayStr 同语义——重启基线测试用） */
-
 /** 距今 offset 天日期（本地时区，与 index diaryDateStr 同语义——基线扩窗测试用） */
 function dateOffset(offset: number): string {
   const d = new Date();
@@ -72,13 +79,13 @@ beforeEach(() => {
   __setDiarySettleMsForTests(60); // 注入短计时（unload 会复位，须在 unload 之后设置）
 });
 
-describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
+describe('日记观察（per-entry 10 分钟结算，ticket 077；条目文件口径）', () => {
   it('首次：有字条目静置结算 → 新增观察（source diary），计时结束', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
-    vault.files.set(path, '# 📖 23:05\n今天写了很多内容\n');
+    const path = entryPath(date, '23:05');
+    vault.files.set(path, entryFile('23:05', '今天写了很多内容', ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     // ADR-0069：diary:created 走 behavior 流（富描述写入 snapshot.summary 由 metadata 承载）
@@ -96,15 +103,15 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
-    vault.files.set(path, `# 📖 23:05\n${'早'.repeat(60)}\n`);
+    const path = entryPath(date, '23:05');
+    vault.files.set(path, entryFile('23:05', '早'.repeat(60), ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     let beh = readBehavior();
     expect(beh[beh.length - 1].type).toBe('created');
     expect(beh[beh.length - 1].metadata.snapshot.summary).toBe('你在 2026-08-24 23:05 写了一篇日记（分类：日记）：' + '早'.repeat(60));
     // 续写 +70 → 累计 70 >50 → 更新观察（原观察保留）
-    vault.files.set(path, `# 📖 23:05\n${'早'.repeat(130)}\n`);
+    vault.files.set(path, entryFile('23:05', '早'.repeat(130), ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     beh = readBehavior();
@@ -118,20 +125,20 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
-    vault.files.set(path, `# 📖 23:05\n${'早'.repeat(60)}\n`);
+    const path = entryPath(date, '23:05');
+    vault.files.set(path, entryFile('23:05', '早'.repeat(60), ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     expect(readBehavior().length).toBe(1);
     // +30（累计 30 ≤50）→ 不生成
-    vault.files.set(path, `# 📖 23:05\n${'早'.repeat(90)}\n`);
+    vault.files.set(path, entryFile('23:05', '早'.repeat(90), ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     expect(readBehavior().length).toBe(1);
     const key = timerKey(path, date, '23:05');
     expect(__getDiaryTimersForTests().get(key)?.accum).toBe(30);
     // 再 +40（累计 30+70=100 >50）→ 更新
-    vault.files.set(path, `# 📖 23:05\n${'早'.repeat(130)}\n`);
+    vault.files.set(path, entryFile('23:05', '早'.repeat(130), ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     const beh = readBehavior();
@@ -141,17 +148,17 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     expect(__getDiaryTimersForTests().get(key)?.accum).toBe(0); // 更新后累计归零
   });
 
-  it('空标题不落：只有标题的条目结算不生成；补正文后才首落', async () => {
+  it('空正文不落：只有 frontmatter 的条目结算不生成；补正文后才首落', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
-    vault.files.set(path, '# 📖 08:00\n');
+    const path = entryPath(date, '08:00');
+    vault.files.set(path, entryFile('08:00', '', ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     expect(readBehavior().length).toBe(0);
     // 补正文 → 走首落（不是「你更新了日记」）
-    vault.files.set(path, '# 📖 08:00\n写了点东西\n');
+    vault.files.set(path, entryFile('08:00', '写了点东西', ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     const beh = readBehavior();
@@ -160,45 +167,49 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     expect(beh[0].metadata.snapshot.summary).toBe('你在 2026-08-24 08:00 写了一篇日记（分类：日记）：写了点东西');
   });
 
-  it('多条目独立计时：新增另一条只另起该条计时，其它条目不被重置/重新观察', async () => {
+  it('多条目独立计时：新增另一篇条目文件只另起该条计时，其它条目不被重置/重新观察', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
-    vault.files.set(path, '# 📖 08:00\n第一条\n');
-    vault.emit('modify', vault.file(path));
+    const pathA = entryPath(date, '08:00');
+    vault.files.set(pathA, entryFile('08:00', '第一条', ['日记'], date));
+    vault.emit('modify', vault.file(pathA));
     await waitSettle();
     let beh = readBehavior();
     expect(beh.length).toBe(1);
     expect(beh[0].metadata.snapshot.summary).toBe('你在 2026-08-24 08:00 写了一篇日记（分类：日记）：第一条');
-    // 新增第二条（第一条未改动）→ 只有第二条另起计时
-    vault.files.set(path, '# 📖 08:00\n第一条\n# ✍️ 09:00\n第二条\n');
-    vault.emit('modify', vault.file(path));
+    // 新建第二篇条目文件（第一篇未改动）→ 只有第二条另起计时
+    const pathB = entryPath(date, '09:00');
+    vault.files.set(pathB, entryFile('09:00', '第二条', ['随笔'], date));
+    vault.emit('modify', vault.file(pathB));
     await flush();
     const timers = __getDiaryTimersForTests();
     expect(timers.size).toBe(2);
-    const a = timers.get(timerKey(path, date, '08:00'))!;
-    const b = timers.get(timerKey(path, date, '09:00'))!;
+    const a = timers.get(timerKey(pathA, date, '08:00'))!;
+    const b = timers.get(timerKey(pathB, date, '09:00'))!;
     expect(a.generated).toBe(true); // 第一条已结算，未被动（基线保留）
     expect(b.generated).toBe(false); // 第二条新装计时，待首落
     await waitSettle();
     beh = readBehavior();
     expect(beh.length).toBe(2);
-    expect(beh[beh.length - 1].metadata.snapshot.summary).toBe('你在 2026-08-24 09:00 写了一篇日记（分类：随笔）：第二条'); // ✍️ → 随笔
+    expect(beh[beh.length - 1].metadata.snapshot.summary).toBe('你在 2026-08-24 09:00 写了一篇日记（分类：随笔）：第二条');
     expect(beh.some((m) => m.metadata.snapshot.summary.includes('第一条'))).toBe(true); // 第一条未被重新观察
   });
 
-  it('条目级删除：modify diff 发现上次快照的条目消失 → 追加删除观察（behavior 流）+ 清该条计时', async () => {
+  it('条目文件删除：delete 事件按跟踪快照追加删除观察（behavior 流）+ 清该条计时', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
-    vault.files.set(path, '# 📖 08:00\n第一条\n# ✍️ 09:00\n第二条\n');
-    vault.emit('modify', vault.file(path));
+    const pathA = entryPath(date, '08:00');
+    const pathB = entryPath(date, '09:00');
+    vault.files.set(pathA, entryFile('08:00', '第一条', ['日记'], date));
+    vault.files.set(pathB, entryFile('09:00', '第二条', ['随笔'], date));
+    vault.emit('modify', vault.file(pathA));
+    vault.emit('modify', vault.file(pathB));
     await flush(); // 两条计时装上
-    // 删除第二条（整块移除）
-    vault.files.set(path, '# 📖 08:00\n第一条\n');
-    vault.emit('modify', vault.file(path));
+    // 删除第二篇条目文件（= 删除该条）
+    vault.files.delete(pathB);
+    vault.emit('delete', vault.file(pathB));
     await settle();
     // P2a：diary:deleted 路由到 behavior 流
     const beh = readBehavior();
@@ -208,25 +219,30 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     expect(__getDiaryTimersForTests().size).toBe(1); // 第一条计时保留，第二条已清
   });
 
-  it('文件删除：跟踪过快照的文件删整文件 → 逐条追加删除观察（behavior 流）；从未跟踪过 → 文件级单条兜底', async () => {
+  it('文件删除：跟踪过的条目文件删除 → 逐条追加删除观察（behavior 流）；从未跟踪过 → 文件级单条兜底', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
-    vault.files.set(path, '# 📖 08:00\n第一条\n# ✍️ 09:00\n第二条\n');
-    vault.emit('modify', vault.file(path));
+    const pathA = entryPath(date, '08:00');
+    const pathB = entryPath(date, '09:00');
+    vault.files.set(pathA, entryFile('08:00', '第一条', ['日记'], date));
+    vault.files.set(pathB, entryFile('09:00', '第二条', ['随笔'], date));
+    vault.emit('modify', vault.file(pathA));
+    vault.emit('modify', vault.file(pathB));
     await flush();
-    vault.files.delete(path);
-    vault.emit('delete', vault.file(path));
+    vault.files.delete(pathA);
+    vault.files.delete(pathB);
+    vault.emit('delete', vault.file(pathA));
+    vault.emit('delete', vault.file(pathB));
     await settle();
     // P2a：diary:deleted 路由到 behavior 流
     const beh = readBehavior();
     expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted' && m.description.includes('08:00'))).toBe(true);
     expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted' && m.description.includes('09:00'))).toBe(true);
     expect(__getDiaryTimersForTests().size).toBe(0);
-    // 从未跟踪过的旧文件删除 → 文件级兜底（仅日期）
-    const oldPath = '我的/日记/2020-01-05.md';
-    vault.files.set(oldPath, '# 📖 08:00\n旧内容\n');
+    // 从未跟踪过的旧条目文件删除 → 文件级兜底（仅日期）
+    const oldPath = entryPath('2020-01-05', '08:00');
+    vault.files.set(oldPath, entryFile('08:00', '旧内容', ['日记'], '2020-01-05'));
     vault.files.delete(oldPath);
     vault.emit('delete', vault.file(oldPath));
     await settle();
@@ -236,16 +252,16 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     expect(lastBeh.type).toBe('deleted');
   });
 
-  it('重启基线：ensure 当日文件建快照不产出；改动 >50 字后走更新分支（不落首落）', async () => {
+  it('重启基线：ensure 当日条目文件建快照不产出；改动 >50 字后走更新分支（不落首落）', async () => {
     const { app, vault } = makeApp();
     const today = todayStr();
-    const path = `我的/日记/${today}.md`;
-    vault.files.set(path, `# 📖 10:00\n${'旧'.repeat(20)}\n`);
+    const path = entryPath(today, '10:00');
+    vault.files.set(path, entryFile('10:00', '旧'.repeat(20), ['日记'], today));
     await ensureSmartCat(app); // 基线扫描（不产出观察）
     expect(readBehavior().length).toBe(0);
     expect(__getDiaryTimersForTests().get(timerKey(path, today, '10:00'))?.generated).toBe(true);
     // 改正文 +60 → 更新观察（不是「写了一篇日记」）
-    vault.files.set(path, `# 📖 10:00\n${'旧'.repeat(20)}${'新'.repeat(60)}\n`);
+    vault.files.set(path, entryFile('10:00', '旧'.repeat(20) + '新'.repeat(60), ['日记'], today));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     const beh = readBehavior();
@@ -260,8 +276,8 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     await ensureSmartCat(app);
     const data: any = __getSmartcatInternals().data;
     data.config.noteSource = false;
-    const path = '我的/日记/2026-08-24.md';
-    vault.files.set(path, '# 📖 08:00\n第一条\n');
+    const path = entryPath('2026-08-24', '08:00');
+    vault.files.set(path, entryFile('08:00', '第一条', ['日记'], '2026-08-24'));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     expect(readStream().length).toBe(0);
@@ -275,8 +291,8 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
   it('unload 清理计时表（定时器 + 记录全清）', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
-    const path = '我的/日记/2026-08-24.md';
-    vault.files.set(path, '# 📖 08:00\n第一条\n');
+    const path = entryPath('2026-08-24', '08:00');
+    vault.files.set(path, entryFile('08:00', '第一条', ['日记'], '2026-08-24'));
     vault.emit('modify', vault.file(path));
     await flush();
     expect(__getDiaryTimersForTests().size).toBe(1);
@@ -288,8 +304,8 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
-    vault.files.set(path, '# 📖 08:00\n第一条\n');
+    const path = entryPath(date, '08:00');
+    vault.files.set(path, entryFile('08:00', '第一条', ['日记'], date));
     vault.emit('modify', vault.file(path));
     await flush(); // 计时已装（未到结算）
     vault.files.delete(path); // 不 emit delete —— 只走 settle 的 getAbstractFileByPath null 兜底
@@ -312,13 +328,13 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
-    vault.files.set(path, '# 📖 23:05\n第一条\n');
+    const path = entryPath(date, '23:05');
+    vault.files.set(path, entryFile('23:05', '第一条', ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     expect(readBehavior().length).toBe(1); // 首落已产
     // 再改一次（read 成功 → 重新装计时）
-    vault.files.set(path, '# 📖 23:05\n第一条\n补充\n');
+    vault.files.set(path, entryFile('23:05', '第一条\n补充', ['日记'], date));
     vault.emit('modify', vault.file(path));
     await flush();
     // 接下来 settle 的 read 抛错（瞬态 IO）→ 不判删除、保留记录等下轮
@@ -330,13 +346,13 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     expect(__getDiaryTimersForTests().has(timerKey(path, date, '23:05'))).toBe(true);
   });
 
-  it('B2：diary 同目录 rename → diaryTimers/diaryTracked key 迁移（不产删除、不重刷首落）', async () => {
+  it('B2：diary 同目录 rename（条目文件名形状合法）→ diaryTimers/diaryTracked key 迁移（不产删除、不重刷首落）', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
-    const newPath = `我的/日记/${date}-改名.md`; // 仍在 diary 目录
-    vault.files.set(path, '# 📖 08:00\n第一条\n');
+    const path = entryPath(date, '08:00');
+    const newPath = entryPath(date, '08:00').replace('.md', '-2.md'); // 同刻序号名，仍为条目文件形状
+    vault.files.set(path, entryFile('08:00', '第一条', ['日记'], date));
     vault.emit('modify', vault.file(path));
     await flush();
     expect(__getDiaryTimersForTests().has(timerKey(path, date, '08:00'))).toBe(true);
@@ -357,36 +373,42 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
-    vault.files.set(path, '# 📖 08:00\n第一条\n# ✍️ 09:00\n第二条\n');
-    vault.emit('modify', vault.file(path));
+    const pathA = entryPath(date, '08:00');
+    const pathB = entryPath(date, '09:00');
+    vault.files.set(pathA, entryFile('08:00', '第一条', ['日记'], date));
+    vault.files.set(pathB, entryFile('09:00', '第二条', ['随笔'], date));
+    vault.emit('modify', vault.file(pathA));
+    vault.emit('modify', vault.file(pathB));
     await flush();
     const outPath = '归档/旧日记.md'; // classifyPath null（移出观察域）
-    await vault.rename(vault.file(path), outPath);
-    vault.emit('rename', vault.file(outPath), path);
+    await vault.rename(vault.file(pathA), outPath);
+    vault.emit('rename', vault.file(outPath), pathA);
+    await vault.rename(vault.file(pathB), '归档/旧日记2.md');
+    vault.emit('rename', vault.file('归档/旧日记2.md'), pathB);
     await settle();
     // P2a：diary:deleted 路由到 behavior 流
     const beh = readBehavior();
     expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted' && m.description.includes('08:00'))).toBe(true);
     expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted' && m.description.includes('09:00'))).toBe(true);
     expect(__getDiaryTimersForTests().size).toBe(0);
-    expect(__getDiaryTrackedForTests().has(path)).toBe(false);
+    expect(__getDiaryTrackedForTests().has(pathA)).toBe(false);
+    expect(__getDiaryTrackedForTests().has(pathB)).toBe(false);
   });
 
-  it('B3：重启基线扩窗——昨日/前日文件建快照不产出；补写走更新分支（防假首落）', async () => {
+  it('B3：重启基线扩窗——昨日/前日条目文件建快照不产出；补写走更新分支（防假首落）', async () => {
     const { app, vault } = makeApp();
     const y = dateOffset(1);
     const y2 = dateOffset(2);
-    const py = `我的/日记/${y}.md`;
-    const py2 = `我的/日记/${y2}.md`;
-    vault.files.set(py, `# 📖 09:00\n${'昨'.repeat(20)}\n`);
-    vault.files.set(py2, `# 📖 07:00\n${'前'.repeat(20)}\n`);
+    const py = entryPath(y, '09:00');
+    const py2 = entryPath(y2, '07:00');
+    vault.files.set(py, entryFile('09:00', '昨'.repeat(20), ['日记'], y));
+    vault.files.set(py2, entryFile('07:00', '前'.repeat(20), ['日记'], y2));
     await ensureSmartCat(app); // 基线扫描（不产出观察）
     expect(readBehavior().length).toBe(0);
     expect(__getDiaryTimersForTests().get(timerKey(py, y, '09:00'))?.generated).toBe(true);
     expect(__getDiaryTimersForTests().get(timerKey(py2, y2, '07:00'))?.generated).toBe(true);
     // 补写昨日 → 更新分支（不是「写了一篇日记」）
-    vault.files.set(py, `# 📖 09:00\n${'昨'.repeat(20)}${'补'.repeat(60)}\n`);
+    vault.files.set(py, entryFile('09:00', '昨'.repeat(20) + '补'.repeat(60), ['日记'], y));
     vault.emit('modify', vault.file(py));
     await waitSettle();
     const beh = readBehavior();
@@ -400,20 +422,20 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
-    const path = `我的/日记/${date}.md`;
+    const path = entryPath(date, '23:05');
     const key = timerKey(path, date, '23:05');
-    vault.files.set(path, `# 📖 23:05\n${'早'.repeat(60)}\n`);
+    vault.files.set(path, entryFile('23:05', '早'.repeat(60), ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle(); // 首落 60 字
     expect(readBehavior().length).toBe(1);
     // 大删 40 → 剩 20：负 delta 钳位 0（旧行为累计 -40，补写被长期压制）
-    vault.files.set(path, `# 📖 23:05\n${'早'.repeat(20)}\n`);
+    vault.files.set(path, entryFile('23:05', '早'.repeat(20), ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     expect(readBehavior().length).toBe(1);
     expect(__getDiaryTimersForTests().get(key)?.accum).toBe(0);
     // 补写 +100 → 120 字：delta 120-60=60 → 累计 60 >50 → 更新（旧行为：-40+60=20 被压制）
-    vault.files.set(path, `# 📖 23:05\n${'早'.repeat(120)}\n`);
+    vault.files.set(path, entryFile('23:05', '早'.repeat(120), ['日记'], date));
     vault.emit('modify', vault.file(path));
     await waitSettle();
     const beh = readBehavior();
