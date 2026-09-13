@@ -24,6 +24,7 @@ import { collectRecap } from '../recap/aggregate';
 import type { RecapItem, RecapSummary } from '../recap/aggregate';
 import { tryGetSettings } from '../core/settings-provider';
 import { storageFile } from '../core/storage';
+import { diaryDateFromEntryPath } from '../core/diary-format';
 import { reviewApp } from '../review/app';
 import type { ReviewItem } from '../review/data';
 import { parseMovieFile } from '../cinema/data';
@@ -179,12 +180,11 @@ async function collectFocusing(): Promise<boolean> {
   }
 }
 
-/** 某日期是否已有日记条目（ADR-0130：目录下条目文件名日期前缀 `YYYY-MM-DD HH-MM(-N)` 任一命中） */
+/** 某日期是否已有日记条目（ADR-0130：目录下条目文件日期命中；格式知识单源在 core/diary-format） */
 function hasDiaryDay(app: App, dir: string, date: string): boolean {
-  const re = new RegExp('^' + date + ' \\d{2}-\\d{2}(-\\d+)?\\.md$');
   return app.vault
     .getMarkdownFiles()
-    .some((f) => f.path.startsWith(dir + '/') && re.test(f.path.split('/').pop() || ''));
+    .some((f) => f.path.startsWith(dir + '/') && diaryDateFromEntryPath(f.path) === date);
 }
 
 /** 日记总数（目录前缀 md 数，含子目录）+ 写作连击（今天未写不算断） */

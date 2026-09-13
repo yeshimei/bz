@@ -5,6 +5,8 @@
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
+import { DEFAULT_SETTINGS } from '../../src/settings';
 import { applyDirectories, resetTagsConfig } from '../../src/diary/config';
 import { createAddDialog, createTagPicker, openAddDialog, saveNewEntry, showTagPicker } from '../../src/diary/ui/dialogs';
 import { clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
@@ -34,6 +36,33 @@ function pickType(label: string): void {
   );
   btn!.click();
 }
+
+describe('useFileDateTime（默认日期取自当前日记文件）', () => {
+  /** 模拟「当前打开某个文件」的编辑视图（mockAppWithVault 默认无活动视图） */
+  function withActiveFile(path: string, basename: string): void {
+    const app = mockAppWithVault(vault) as any;
+    app.workspace.getActiveViewOfType = () => ({ file: { path, basename } });
+    setApp(app);
+  }
+
+  it('打开的条目文件（YYYY-MM-DD HH-MM.md）→ 默认日期取该条目日期', () => {
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, useFileDateTime: true }) as any);
+    withActiveFile('我的/日记/2025-06-11 08-30.md', '2025-06-11 08-30');
+    createAddDialog();
+    openAddDialog();
+    const value = (document.querySelector('#add-diary-datetime') as HTMLInputElement).value;
+    expect(value.startsWith('2025-06-11 ')).toBe(true);
+  });
+
+  it('日记目录下非条目文件 → 保持当前时间（不再吞掉设置、也不误取）', () => {
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, useFileDateTime: true }) as any);
+    withActiveFile('我的/日记/其他/随手记.md', '随手记');
+    createAddDialog();
+    openAddDialog();
+    const value = (document.querySelector('#add-diary-datetime') as HTMLInputElement).value;
+    expect(value.startsWith('2025-06-11')).toBe(false);
+  });
+});
 
 describe('saveNewEntry（写日记弹窗，ADR-0130 建条目文件）', () => {
   it('未选类型：提示并不落盘', async () => {
