@@ -1,4 +1,4 @@
-/* 源指纹 5f3170928f9c7825 · 仓内输入 189 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 dc6c517941fb42e5 · 仓内输入 189 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -17341,7 +17341,7 @@ ${c.trim()}
 
   // src/clipbook/md.ts
   function stripClipChrome(raw) {
-    return String(raw || "").replace(/^\s*---[\s\S]*?---/, "").replace(/```dataviewjs[\s\S]*?```/g, "").trim();
+    return String(raw || "").replace(/^\s*---\r?\n(?:[\s\S]*?\r?\n)?---\s*/, "").replace(/```dataviewjs[\s\S]*?```/g, "").trim();
   }
   var init_md = __esm({
     "src/clipbook/md.ts"() {
@@ -17789,7 +17789,6 @@ ${c.trim()}
       M5 = {
         appRef: null,
         overlay: null,
-        dir: "归档/网页剪藏",
         open: false,
         articles: [],
         stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
@@ -17822,10 +17821,7 @@ ${c.trim()}
     return resolve(data || {});
   }
   async function writeClipbookData(data) {
-    try {
-      await jsonFileStore(clipbookFilePath(), { defaultValue: () => emptySidecar() }).write(data);
-    } catch (e) {
-    }
+    await jsonFileStore(clipbookFilePath(), { defaultValue: () => emptySidecar() }).write(data);
   }
   function updateClipbookData(mutate) {
     return enqueueFileTask(clipbookFilePath(), async () => {
@@ -17966,7 +17962,7 @@ ${c.trim()}
       await enqueueNewsWrite(() => writeNewsDataMerged({ set, removeArticleKeys: removedKeys }));
     }
     const sidecar = await readClipbookData();
-    const clipNotes = await scanClipDirectory(M5.dir || clipDir(), {
+    const clipNotes = await scanClipDirectory(clipDir(), {
       vault: getApp().vault
     });
     const clipUrls = clipUrlSet2(clipNotes || []);
@@ -18013,7 +18009,7 @@ ${c.trim()}
     const tagsYaml = (raw.tags || []).map((t) => `  - "${yamlEscape(t)}"`).join("\n");
     const now = localDatetime();
     const pubDate = raw.date ? toDatetime(String(raw.date)) : "";
-    const body = String(raw.body || "").replace(/^\s*---[\s\S]*?---\s*/m, "").replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, "").trim();
+    const body = String(raw.body || "").replace(/^\s*---[\s\S]*?---\s*/, "").replace(/^\s*```dataviewjs[\s\S]*?```\s*/, "").trim();
     const md = `---
 url: "${yamlEscape(raw.url || "")}"
 author: "${yamlEscape(raw.author || "")}"
@@ -18100,7 +18096,7 @@ ${body}`;
       init_settings_provider();
       init_notice();
       init_constants3();
-      yamlEscape = (v) => String(v != null ? v : "").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
+      yamlEscape = (v) => String(v != null ? v : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
     }
   });
 
@@ -21243,7 +21239,6 @@ ${sample}`,
   });
   function initPanel(app, showNow = false) {
     M5.appRef = app;
-    M5.dir = clipDir();
     M5.isMobile = typeof window.Platform !== "undefined" && !!window.Platform.isMobile || navigator && navigator.maxTouchPoints > 0 && (window.innerWidth || 0) <= 768;
     if (!overlayEl) buildDom(app);
     if (showNow) showPanel();
@@ -21264,7 +21259,8 @@ ${sample}`,
     if (loading) return loadPromise || Promise.resolve();
     if (!M5.open && overlayEl) return Promise.resolve();
     loading = true;
-    loadPromise = readNewsAndSidecar().then(() => {
+    loadPromise = readNewsAndSidecar().then((res) => {
+      if (res && res.status === "corrupt") notice("news.json 损坏，未加载（原文件已保留）", "error");
       dirty = false;
       loaded = true;
       beginSession();
@@ -22301,14 +22297,9 @@ ${sample}`,
       maxWidth: 560,
       schema,
       onClose: () => {
-        const s = tryGetSettings();
-        const next = (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-        if (next !== M5.dir) {
-          M5.dir = next;
-          M5.clipNotes = null;
-          M5.clipUrls = /* @__PURE__ */ new Set();
-          void reloadIfOpen();
-        }
+        M5.clipNotes = null;
+        M5.clipUrls = /* @__PURE__ */ new Set();
+        void reloadIfOpen();
       }
     });
   }

@@ -19,8 +19,6 @@ export interface ClipbookState {
   appRef: App | null;
   /** 面板根（overlay 容器） */
   overlay: HTMLElement | null;
-  /** 剪藏目录（读设置） */
-  dir: string;
   /** 面板可见性（dom 挂载即显示；关闭=移除 overlay——打开重新渲染） */
   open: boolean;
   /** news.json 文章（内存面，未处理 + 已处理骨架） */
@@ -54,7 +52,6 @@ export function defaultSel(): ClipSourceSel {
 export const M: ClipbookState = {
   appRef: null,
   overlay: null,
-  dir: '归档/网页剪藏',
   open: false,
   articles: [],
   stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },

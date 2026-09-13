@@ -14,7 +14,9 @@
  */
 export function stripClipChrome(raw: string): string {
   return String(raw || '')
-    .replace(/^\s*---[\s\S]*?---/, '')
+    // C28：闭合 `---` 按行锚定（\n--- 行首）——原实现按首次出现匹配，frontmatter 值里
+    // 含 `---` 时提前截断，右栏正文顶部露 YAML 残渣（与 C27 写侧同根因链）
+    .replace(/^\s*---\r?\n(?:[\s\S]*?\r?\n)?---\s*/, '')
     .replace(/```dataviewjs[\s\S]*?```/g, '')
     .trim();
 }
