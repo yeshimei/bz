@@ -1,5 +1,7 @@
 # 0008 — 聚合讯数据源守护独立为 npm 包（ADR-0007 方向延伸）
 
+> **状态：方向部分废弃（2026-09-13）**——抓取已迁回插件内（ADR-0128），PM2 守护进程停止，npm 包与 tools/news-watcher/ 源码留存可回滚。
+
 ## Context
 
 聚合讯阅读流的数据源 `CONFIG/STORAGE/news.json` 此前由 vault 内嵌脚本 `CONFIG/SCRIPTS/NodeJs/news-watcher/watcher.js` 守护：每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报），URL + 标题双去重后追加入库。
