@@ -7,15 +7,15 @@
  *    setRefResolver；listRefPaths 为本流打桩假设——合并时由 memory.ts 补齐，可选）；
  *  - 首启全量扫描：遍历配置目录（一条笔记只归一个目录，按配置顺序首个匹配；跳过 .obsidian/
  *    模板/.safe.enc 等杂物，只认 .md）；
- *  - 日记特殊处理：DIARY_DIRECTORY 下按 diary parser `# <emoji> HH:MM` 拆条——一个时间段 =
- *    一条记忆，refPath =「路径#HH:MM」，created = 文件名日期 + 段落时间（R7：decay 按真实日期）；
- *    其余笔记一篇一条，created 取 mtime（不可得用当天）；
+ *  - 日记特殊处理（ADR-0130 一目一文件）：DIARY_DIRECTORY 下条目文件一篇 = 一条记忆，
+ *    refPath =「路径#HH:MM」（定位符 = frontmatter 时间），created = 文件名日期 + 条目时间
+ *    （R7：decay 按真实日期）；其余笔记一篇一条，created 取 mtime（不可得用当天）；
  *  - 增量：modify 按 mtime 节流（R4：距上次 ≥10min 才重入库，期间变更合并 pending；「今天」的
  *    日记段即时）；delete → removeMemoryByRef；rename → 删旧 ref + 读新文件重新 upsert（R6）；
  *    目录从设置移除 → 清其名下全部条目；
  *  - 引用失效自愈：resolver/getFile 返回 null 的条目登记（onStaleRef）并清理。
  */
-import { parseFile } from '../diary/parser';
+import { parseDiaryEntryFile, diaryDateFromEntryPath } from '../core/diary-format';
 
 /** 记忆入库种子（memory.ts 契约 API 入参，签名冻结） */
 export interface NoteMemorySeed {
@@ -90,11 +90,9 @@ export function resolveOwnerDir(path: string, dirs: string[]): string | null {
   return null;
 }
 
-/** 日记文件名日期（`YYYY-MM-DD.md` → 'YYYY-MM-DD'；非日期命名 → null） */
+/** 日记条目文件名日期（ADR-0130 契约正则；非条目命名 → null，core/diary-format 单源） */
 export function noteMemoryDiaryDate(path: string): string | null {
-  const base = normPath(path).split('/').pop() || '';
-  const m = base.match(/^(\d{4}-\d{2}-\d{2})\.md$/);
-  return m ? m[1] : null;
+  return diaryDateFromEntryPath(path);
 }
 
 /** 归属分类：日记（按段拆条）| 普通笔记 | 非我方（未配置/杂物/非日记日期命名的日记目录文件） */
@@ -122,27 +120,28 @@ export function noteMemoryToday(now: number): string {
   return `${dt.getFullYear()}-${p2(dt.getMonth() + 1)}-${p2(dt.getDate())}`;
 }
 
-/** 日记文件拆条（复用 diary parser）：有正文的每个时间段 = 一条种子 */
+/** 日记条目文件 → 单条种子（ADR-0130 一目一文件；frontmatter 损坏/正文空 → []） */
 export function diarySeeds(path: string, content: string, date: string): NoteMemorySeed[] {
-  let entries: ReturnType<typeof parseFile>;
+  let time: string | null = null;
+  let body = '';
   try {
-    entries = parseFile(content, date);
+    const parsed = parseDiaryEntryFile(content);
+    if (!parsed.meta) return []; // 日期不可信：不产种子（对齐观察链路「不跟踪」）
+    time = parsed.meta.time;
+    body = parsed.body.trim();
   } catch {
     return []; // 解析异常按无条目（不阻塞扫描）
   }
-  const seeds: NoteMemorySeed[] = [];
-  for (const e of entries) {
-    const text = String(e.content || '').trim();
-    if (!text) continue;
-    seeds.push({
-      refPath: `${path}#${e.time}`,
-      locator: e.time,
-      fullText: text,
-      created: `${date}T${e.time}:00`, // 文件名日期 + 段落时间（R7：decay 按真实日记日期）
+  if (!body) return [];
+  return [
+    {
+      refPath: `${path}#${time}`,
+      locator: time!,
+      fullText: body,
+      created: `${date}T${time}:00`, // 文件名日期 + 条目时间（R7：decay 按真实日记日期）
       source: 'diary',
-    });
-  }
-  return seeds;
+    },
+  ];
 }
 
 /** 单文件 → 入库种子列表（未命中/杂物/空正文 → []） */
@@ -200,11 +199,11 @@ export class NoteMemorySync {
       const content = await this.deps.adapter.readFile(path);
       if (content == null) return null;
       if (!locator) return content;
-      const date = noteMemoryDiaryDate(path);
-      if (!date) return content;
+      if (!noteMemoryDiaryDate(path)) return content; // 非条目文件：整文返回
       try {
-        const seg = parseFile(content, date).find((e) => e.time === locator);
-        return seg && seg.content.trim() ? seg.content : null;
+        const parsed = parseDiaryEntryFile(content);
+        // 定位符 = 条目时间（ADR-0130）；时间一致且有正文才命中
+        return parsed.meta && parsed.meta.time === locator && parsed.body.trim() ? parsed.body : null;
       } catch {
         return content;
       }
@@ -343,16 +342,16 @@ export class NoteMemorySync {
     }
   }
 
-  /** 日记段 ref 存活判定：定位符时段落正文仍存在 */
+  /** 日记段 ref 存活判定：定位符（条目时间）与文件 frontmatter 一致且正文非空 */
   private async refSegmentAlive(ref: string): Promise<boolean> {
     const i = ref.indexOf('#');
     if (i === -1) return true;
     const content = await this.deps.adapter.readFile(ref.slice(0, i));
     if (content == null) return false;
-    const date = noteMemoryDiaryDate(ref.slice(0, i));
-    if (!date) return true;
+    if (!noteMemoryDiaryDate(ref.slice(0, i))) return true;
     try {
-      return parseFile(content, date).some((e) => e.time === ref.slice(i + 1) && e.content.trim());
+      const parsed = parseDiaryEntryFile(content);
+      return !!parsed.meta && parsed.meta.time === ref.slice(i + 1) && !!parsed.body.trim();
     } catch {
       return true; // 解析异常按存活（不误删）
     }

@@ -44,7 +44,7 @@ import { sourceLabel, formatRelativeTime, emotionDensityStats } from './memory';
 import { noteMemoryDiaryDate } from './note-memory';
 // ticket 163：来源分布按「记忆目录」的追查目录分行（标签随设置走）
 import { normalizeMemoryDirectories } from './config';
-import { parseFile } from '../diary/parser';
+import { parseDiaryEntryFile } from '../core/diary-format';
 import { buildInsightShortIndex, isSupersededInsight, MANUAL_SUPERSEDED_BY, sanitizeInsightTheme } from './insight-version';
 import { lazyAttachment, buildAbsenceCard } from './absence'; // ticket 093：读侧依恋视图 + 缺席状态卡
 import { readQuietMode } from './quiet-gate'; // ticket 095：安静陪伴期状态（097 A2 chip 只读消费）
@@ -674,7 +674,7 @@ function renderPersonality(pane: HTMLElement, data: SmartCatData): void {
   pane.appendChild(trailCard.root);
 }
 
-/** 引用型条目 → 笔记正文（日记带定位符按 diary parser 拆回该时间段；null = 文件失效）。
+/** 引用型条目 → 笔记正文（日记带定位符按 ADR-0130 契约对时间取条目正文；null = 文件失效）。
  *  路径按首个 # 截断：旧 sidecar 的 ref.path 曾带定位符尾巴（#时:分），容错兼容。 */
 async function resolveMemoryDetail(app: App, ref: { path: string; locator?: string }): Promise<string | null> {
   try {
@@ -683,10 +683,9 @@ async function resolveMemoryDetail(app: App, ref: { path: string; locator?: stri
     if (!f) return null;
     const content = await (app.vault.read as (f: any) => Promise<string>)(f);
     if (!ref.locator) return content;
-    const date = noteMemoryDiaryDate(filePath);
-    if (!date) return content;
-    const seg = parseFile(content, date).find((e) => e.time === ref.locator);
-    return seg && seg.content.trim() ? seg.content : null;
+    if (!noteMemoryDiaryDate(filePath)) return content;
+    const parsed = parseDiaryEntryFile(content);
+    return parsed.meta && parsed.meta.time === ref.locator && parsed.body.trim() ? parsed.body : null;
   } catch { return null; }
 }
 

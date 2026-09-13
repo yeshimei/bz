@@ -23,7 +23,8 @@ import { tryGetSettings } from '../core/settings-provider';
 import { storageFile } from '../core/storage';
 import { localDayKey } from '../core/utils';
 import { parseLocalDay } from '../home/weekly';
-import { parseFile, isEncryptedEntry } from '../diary/parser';
+import { parseEntryFile, isEncryptedEntry } from '../diary/parser';
+import { DIARY_ENTRY_FILE_RE } from '../core/diary-format';
 import { parseMovieFile } from '../cinema/data';
 import { STATUS_WATCHED, getStarString } from '../cinema/constants';
 import { scanMarkdownBooks, loadEpubItems } from '../bookshelf/data';
@@ -290,19 +291,23 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
     pomodoros: [],
   };
 
-  // 日记：当天文件解析条目（加密条目同日记本口径不可见）。
+  // 日记：当天条目文件逐篇解析（ADR-0130 一目一文件；加密条目同日记本口径不可见）。
   // R1：过滤口径对齐墙（ui.ts filtered）——「加密」标签命中同样隐藏，只查正文 🔐 会把
-  // 标题带 🔐、正文无 🔐 的条目计进回顾却在墙上隐藏，摘要对不上。
+  // 内容带 🔐 的条目计进回顾却在墙上隐藏，摘要对不上。
   try {
     const dir = settingDir(['diaryDirectory'], '我的/日记');
     const dateStr = localDayStr(now);
-    const f = fileIfExists(app, `${dir}/${dateStr}.md`);
-    if (f) {
-      const entries = parseFile(await app.vault.read(f), dateStr).filter(
-        (e) => !isEncryptedEntry(e) && !e.tags.includes('加密')
-      );
-      sources.diaryTimes = entries.map((e) => e.time);
+    const times: string[] = [];
+    for (const f of app.vault.getMarkdownFiles?.() || []) {
+      if (!f.path.startsWith(`${dir}/`)) continue;
+      const m = DIARY_ENTRY_FILE_RE.exec(f.path.split('/').pop() || '');
+      if (!m || m[1] !== dateStr) continue;
+      const e = parseEntryFile(await app.vault.read(f as TFile), f.path);
+      if (!e) continue;
+      if (isEncryptedEntry(e) || e.tags.includes('加密')) continue;
+      times.push(e.time);
     }
+    sources.diaryTimes = times;
   } catch {
     failed.push('diary');
   }
