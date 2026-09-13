@@ -1,8 +1,8 @@
 /**
- * 日记本条目动作回归（ADR-0115 定位重构：filename+lineNumber 谓词写层，id 断层根治）：
+ * 日记本条目动作回归（ADR-0115 / ADR-0131 定位重构：filePath+time 谓词写层，行号退场）：
  * - 复制双链：普通条目由 entry-actions 本地拼锚点双链；影视/信/书按文件路径拼（无 diary state 依赖）；
  * - 删除：locator 对象传 entry-actions showConfirm（加密分支在 actions 内分流）；
- * - 加密：写层 findDiaryEntry 反查真实条目入库 + removeDiaryEntries 摘除原块（文件实变断言）；
+ * - 加密：写层 findDiaryEntry 反查真实条目入库 + removeDiaryEntries 摘除原条目文件（文件实变断言）；
  * - 影视/信/书特殊条目：菜单与抽屉屏蔽「加密」「删除」（对齐旧面板 !special 语义）。
  */
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
@@ -79,8 +79,8 @@ beforeEach(async () => {
   });
   vault = new MockVault();
   vault.files.set(
-    '我的/日记/2026-08-19 23-02.md',
-    '---\n日期: 2026-08-19 23:02\n类型:\n  - 日记\n---\n\n被猫盯着\n'
+    '我的/日记/2608192302.md',
+    '---\ndate: 2026-08-19 23:02\ntype:\n  - 日记\n---\n\n被猫盯着\n'
   );
   vault.files.set('我的/影视/film.md', '---\n影评: 好看\n观影日期: 2026-08-19\ntags: [电影]\n---\n');
   const app = mockAppWithVault(vault);
@@ -112,7 +112,7 @@ function menuButton(menu: HTMLElement, label: string): HTMLElement | null {
 }
 
 describe('日记本条目动作（ADR-0115 定位重构）', () => {
-  it('普通日记条目「复制双链」：entry-actions 收到 filename+filePath+emoji+time（ADR-0130：filename 即条目文件路径）', async () => {
+  it('普通日记条目「复制双链」：entry-actions 收到 filename+filePath+emoji+time（ADR-0131：filename 即条目文件路径）', async () => {
     await openAndWait();
     const item = document.querySelector('.bz-diary-desk .bz-diary-item') as HTMLElement;
     const menu = openMenu(item);
@@ -120,8 +120,8 @@ describe('日记本条目动作（ADR-0115 定位重构）', () => {
     btn.click();
     await waitFor(() => mocks.copyDiaryLink.mock.calls.length > 0);
     expect(mocks.copyDiaryLink).toHaveBeenCalledWith({
-      filename: '我的/日记/2026-08-19 23-02.md',
-      filePath: '我的/日记/2026-08-19 23-02.md',
+      filename: '我的/日记/2608192302.md',
+      filePath: '我的/日记/2608192302.md',
       emoji: '📖',
       time: '23:02',
     });
@@ -136,8 +136,8 @@ describe('日记本条目动作（ADR-0115 定位重构）', () => {
     expect(mocks.showConfirm).toHaveBeenCalledTimes(1);
     const loc = mocks.showConfirm.mock.calls[0][0];
     expect(loc).toMatchObject({
-      filename: '我的/日记/2026-08-19 23-02.md',
-      filePath: '我的/日记/2026-08-19 23-02.md',
+      filename: '我的/日记/2608192302.md',
+      filePath: '我的/日记/2608192302.md',
       date: '2026-08-19',
       time: '23:02',
       lineNumber: 0,
@@ -149,16 +149,16 @@ describe('日记本条目动作（ADR-0115 定位重构）', () => {
     const item = document.querySelector('.bz-diary-desk .bz-diary-item') as HTMLElement;
     const menu = openMenu(item);
     menuButton(menu, '加密')!.click();
-    await waitFor(() => vault.files.get('我的/日记/2026-08-19 23-02.md') === undefined);
+    await waitFor(() => vault.files.get('我的/日记/2608192302.md') === undefined);
     expect(mocks.ensureSafeUnlocked).toHaveBeenCalled();
     // encryptEntry 收到写层反查出的真实条目（filename=条目文件路径、time 与磁盘一致）
     expect(mocks.encryptEntry.mock.calls[0][0]).toMatchObject({
-      filename: '我的/日记/2026-08-19 23-02.md',
+      filename: '我的/日记/2608192302.md',
       time: '23:02',
       lineNumber: 0,
     });
     // 原条目文件已删除（一目一文件：摘除 = 删文件）
-    expect(vault.files.has('我的/日记/2026-08-19 23-02.md')).toBe(false);
+    expect(vault.files.has('我的/日记/2608192302.md')).toBe(false);
   });
 
   it('加密反查失败（磁盘无对应文件）：提示找不到原文条目，不入库', async () => {
@@ -175,7 +175,7 @@ describe('日记本条目动作（ADR-0115 定位重构）', () => {
     // 密文入库后、摘除前原文件消失 → removeDiaryEntries 返回 0（旧实现只弹提示不回滚，
     // 保险箱与原文双份并存，解锁后同条出现两次且重试越积越多）
     mocks.encryptEntry.mockImplementation(async (entry: any) => {
-      vault.files.delete(entry.filePath || `我的/日记/${entry.date}.md`);
+      vault.files.delete(entry.filePath || '我的/日记/2608192302.md');
       return { encrypted: true, noteId: 'note-d5' };
     });
     const item = document.querySelector('.bz-diary-desk .bz-diary-item') as HTMLElement;

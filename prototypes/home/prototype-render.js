@@ -1,4 +1,4 @@
-/* 源指纹 709712a37e951ddc · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e8842d3b28ccf6fa · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -42,6 +42,8 @@ var BZR_home = (() => {
     dotOf: () => dotOf,
     entriesHtml: () => entriesHtml,
     esc: () => esc,
+    eventKind: () => eventKind,
+    eventVisible: () => eventVisible,
     filterEvents: () => filterEvents,
     flowHtml: () => flowHtml,
     headDateText: () => headDateText,
@@ -289,12 +291,14 @@ var BZR_home = (() => {
   var TIMELINE_KIND_LABEL = {
     produce: "产出",
     progress: "状态推进",
-    note: "点评 ✦"
+    note: "点评 ✦",
+    skipped: "已跳过"
   };
   var DEFAULT_TIMELINE_FILTER = {
     produce: true,
     progress: true,
-    notes: true
+    notes: true,
+    skipped: false
   };
   function timelineRangeDays(range) {
     if (range === "3d") return 3;
@@ -305,11 +309,24 @@ var BZR_home = (() => {
     if (text.startsWith("新增备忘录") || text.includes("加入片单") || text.includes("读到 ")) return "progress";
     return "produce";
   }
+  function eventKind(e) {
+    const k = e.kind;
+    return k != null ? k : timelineKind(e.text);
+  }
+  function eventVisible(e, filter) {
+    switch (eventKind(e)) {
+      case "skipped":
+        return filter.skipped;
+      case "note":
+        return filter.notes;
+      case "progress":
+        return filter.progress;
+      default:
+        return filter.produce;
+    }
+  }
   function filterEvents(events, filter) {
-    return events.filter((e) => {
-      const kind = timelineKind(e.text);
-      return kind === "progress" ? filter.progress : filter.produce;
-    });
+    return events.filter((e) => eventVisible(e, filter));
   }
   function p2(n) {
     return String(n).padStart(2, "0");
@@ -470,7 +487,7 @@ var BZR_home = (() => {
     const day = (_c = data.days.find((d) => d.dateStr === view)) != null ? _c : data.today;
     const isToday = day.dateStr === data.today.dateStr;
     const notes = isToday && filter.notes ? buildNotes(data) : [];
-    const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => timelineKind(e.text) === "progress" ? filter.progress : filter.produce);
+    const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => eventVisible(e, filter));
     const body = kept.map(({ e, i }) => {
       var _a2, _b2, _c2, _d, _e;
       const note = notes.find((n) => n.index === i);

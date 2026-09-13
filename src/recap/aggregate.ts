@@ -6,7 +6,7 @@
  * 各源独立容错——某源读取失败记入 failed（摘要显示 N/A），不拖垮整面板。
  *
  * 数据源逐项口径：
- *  - diary     当天条目文件（`YYYY-MM-DD HH-MM(-N).md`，ADR-0130）parseEntryFile 逐篇解析
+ *  - diary     当天条目文件（`YYMMDDHHmm(-N).md`，ADR-0130/0131）parseEntryFile 逐篇解析
  *              （diary 数据层只读复用，同日记本域先例，ADR-0115 正名后归 diary）；时间轴聚合一行
  *              「新增 N 条」（时刻取当天最后一条；加密条目同日记本口径不可见不计数）
  *  - cinema    影院目录：观影日期=今天 → 「标记已看」（带星级，评分制同影院）；
@@ -24,7 +24,7 @@ import { storageFile } from '../core/storage';
 import { localDayKey } from '../core/utils';
 import { parseLocalDay } from '../home/weekly';
 import { parseEntryFile, isEncryptedEntry } from '../diary/parser';
-import { DIARY_ENTRY_FILE_RE } from '../core/diary-format';
+import { diaryDateFromEntryPath } from '../core/diary-format';
 import { parseMovieFile } from '../cinema/data';
 import { STATUS_WATCHED, getStarString } from '../cinema/constants';
 import { scanMarkdownBooks, loadEpubItems } from '../bookshelf/data';
@@ -300,8 +300,7 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
     const times: string[] = [];
     for (const f of app.vault.getMarkdownFiles?.() || []) {
       if (!f.path.startsWith(`${dir}/`)) continue;
-      const m = DIARY_ENTRY_FILE_RE.exec(f.path.split('/').pop() || '');
-      if (!m || m[1] !== dateStr) continue;
+      if (diaryDateFromEntryPath(f.path) !== dateStr) continue;
       const e = parseEntryFile(await app.vault.read(f as TFile), f.path);
       if (!e) continue;
       if (isEncryptedEntry(e) || e.tags.includes('加密')) continue;

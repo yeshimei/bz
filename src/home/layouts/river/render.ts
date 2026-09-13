@@ -6,7 +6,7 @@
 import {
   esc, iconSpan, DOMAIN_MAP, domainColor, visibleDomains,
   buildDots, buildNotes, buildPreviews, dotOf, riverCountText,
-  DEFAULT_TIMELINE_FILTER, timelineKind,
+  DEFAULT_TIMELINE_FILTER, eventVisible,
   type RiverData, type RiverWeekDay, type TimelineFilter,
 } from '../../shared';
 
@@ -95,6 +95,7 @@ export interface FlowOpts {
  * 过滤在**渲染层**做（不是在采集层）：切开关要即时可见，重采一遍 vault 太贵，
  * 而痕迹本身已在 RiverData.days 里。代价是 summary/彩点仍按全量算——这是有意的，
  * 「今天有动静」不该因为我关了「已跳过」就变暗。
+ * 判据 = shared.eventVisible（事件直带 kind 优先，见 issue 305 / ADR-0132）。
  * 过滤后当天为空 + 原本有痕迹 → 给「被过滤掉了」的专属空态，别让用户以为数据丢了。
  */
 export function flowHtml(data: RiverData, view: string, opts: FlowOpts = {}): string {
@@ -110,7 +111,7 @@ export function flowHtml(data: RiverData, view: string, opts: FlowOpts = {}): st
   // 点评的 index 指向**过滤前**的事件下标，故过滤前先把 index 带上，过滤后再丢弃
   const kept = day.events
     .map((e, i) => ({ e, i }))
-    .filter(({ e }) => (timelineKind(e.text) === 'progress' ? filter.progress : filter.produce));
+    .filter(({ e }) => eventVisible(e, filter));
   const body = kept.map(({ e, i }) => {
     const note = notes.find((n) => n.index === i);
     const lastDiary = i === kept[kept.length - 1]?.i && note && note.text.indexOf('日记') >= 0 ? ' bz-home-ev--warn' : '';

@@ -391,14 +391,14 @@ describe('最近记忆正文直出', () => {
   it('引用型条目直出 vault 正文（条目文件按定位符对时间取正文），meta 显详细日期；旧脏路径（带 #定位符尾巴）容错；失效显降级文案', async () => {
     const d = fixtureData();
     d.memory.memoryStream = [
-      { id: 'm1', created: '2026-08-29T09:30:00', lastAccessed: '2026-08-29T09:30:00', description: '我的/日记/2026-08-29 09-30.md#09:30', importance: 0.8, type: 'observation', source: 'diary', ref: { path: '我的/日记/2026-08-29 09-30.md', locator: '09:30' } },
-      { id: 'm2', created: '2026-08-29T10:00:00', lastAccessed: '2026-08-29T10:00:00', description: '我的/日记/2026-08-29 10-00.md#10:00#10:00', importance: 0.7, type: 'observation', source: 'diary', ref: { path: '我的/日记/2026-08-29 10-00.md#10:00', locator: '10:00' } },
+      { id: 'm1', created: '2026-08-29T09:30:00', lastAccessed: '2026-08-29T09:30:00', description: '我的/日记/2608290930.md#09:30', importance: 0.8, type: 'observation', source: 'diary', ref: { path: '我的/日记/2608290930.md', locator: '09:30' } },
+      { id: 'm2', created: '2026-08-29T10:00:00', lastAccessed: '2026-08-29T10:00:00', description: '我的/日记/2608291000.md#10:00#10:00', importance: 0.7, type: 'observation', source: 'diary', ref: { path: '我的/日记/2608291000.md#10:00', locator: '10:00' } },
       { id: 'm3', created: '2026-08-29T11:00:00', lastAccessed: '2026-08-29T11:00:00', description: '归档/旧笔记.md', importance: 0.5, type: 'observation', source: 'note', ref: { path: '归档/已删除.md' } },
     ];
     const { app, vault } = makeApp(d);
-    // ADR-0130 条目文件：一篇一时刻
-    vault.create('我的/日记/2026-08-29 09-30.md', '---\n日期: 2026-08-29 09:30\n类型:\n  - 日记\n---\n\n早上去跑了五公里，神清气爽。\n');
-    vault.create('我的/日记/2026-08-29 10-00.md', '---\n日期: 2026-08-29 10:00\n类型:\n  - 日记\n---\n\n睡前读了半小时书。\n');
+    // ADR-0131 条目文件：一篇一时刻（题目 YYMMDDHHmm）
+    vault.create('我的/日记/2608290930.md', '---\ndate: 2026-08-29 09:30\ntype:\n  - 日记\n---\n\n早上去跑了五公里，神清气爽。\n');
+    vault.create('我的/日记/2608291000.md', '---\ndate: 2026-08-29 10:00\ntype:\n  - 日记\n---\n\n睡前读了半小时书。\n');
     await openSmartcatDashboard(app as any);
     const popup = document.getElementById('smartcat-dashboard-panel')!;
     (popup.querySelector('[data-tab="memory"]') as HTMLElement).click();

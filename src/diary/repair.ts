@@ -4,13 +4,21 @@
  *
  * 三类体检项（口径从严，与运行时宽降级互补）：
  * - legacy：旧格式日期文件（`YYYY-MM-DD.md`）仍留在日记目录（未迁移/误归档）；
- * - unparsable：文件名非条目形状或日期非法，且 frontmatter `日期` 缺失/损坏——运行时该文件
- *   不会出现在墙上（parseEntryFile 返回 null）；若文件名合法仅属性损坏，运行时已按文件名
- *   降级加载，但属性与文件名双轨不一致仍是隐患，体检从严上报；
- * - name-mismatch：frontmatter `日期` 与文件名日期都能解析但不一致（其一必错，需人工裁决）。
+ * - unparsable：题目非条目形状或日历时刻非法，且 frontmatter `date` 缺失/损坏——运行时该文件
+ *   不会出现在墙上（parseEntryFile 返回 null）；若题目合法仅属性损坏，运行时已按题目降级加载，
+ *   但属性与题目双轨不一致仍是隐患，体检从严上报；
+ * - name-mismatch：frontmatter `date` 与题目（YYMMDDHHmm）都能解析但日期或时刻不一致
+ *   （其一必错，需人工裁决）。
  */
 
-import { DIARY_ENTRY_FILE_RE, isValidDiaryDate, isValidDiaryTime } from '../core/diary-format';
+import {
+  DIARY_DATE_KEY,
+  DIARY_LEGACY_FILE_RE,
+  diaryMetaFromEntryPath,
+  diaryStampText,
+  parseDiaryStamp,
+  readDiaryFrontmatterFieldRaw,
+} from '../core/diary-format';
 
 export type DiaryLintReason = 'unparsable' | 'legacy' | 'name-mismatch';
 
@@ -25,44 +33,35 @@ export interface DiaryLintItem {
 export const LINT_REASON_TEXT: Record<DiaryLintReason, string> = {
   legacy: '旧格式日期文件（未迁移）',
   unparsable: '无法解析为条目',
-  'name-mismatch': '属性日期与文件名不一致',
+  'name-mismatch': '属性时间与题目不一致',
 };
-
-/** 提取 frontmatter `日期` 行原始值（无 frontmatter / 无该键返回 null） */
-function frontmatterDateRaw(content: string): string | null {
-  const text = (content || '').replace(/\r\n/g, '\n');
-  if (!text.startsWith('---\n')) return null;
-  const end = text.indexOf('\n---', 4);
-  if (end < 0) return null;
-  const m = /^日期:[^\S\n]*(.+)$/m.exec(text.slice(4, end));
-  return m ? m[1].trim() : null;
-}
-
-/** 解析 `YYYY-MM-DD HH:mm` 为合法元组；形状/日历/时刻任一非法返回 null */
-function parseDateTimeValue(raw: string): { date: string; time: string } | null {
-  const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(raw || '');
-  if (!m) return null;
-  return isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
-}
 
 /**
  * 体检单个文件（纯函数）：返回体检项 reason，格式健康返回 null。
  * 路径仅需能取 basename（完整 vault 路径或纯文件名均可）。
+ * 原始值读取与时间戳解析都走契约（readDiaryFrontmatterFieldRaw / parseDiaryStamp）——体检「从严」
+ * 与运行时「从宽降级」用的是同一套格式知识，只是判定口径不同。
  */
 export function lintEntryFile(path: string, content: string): DiaryLintReason | null {
   const base = (path || '').replace(/\\/g, '/').split('/').pop() || '';
-  if (/^\d{4}-\d{2}-\d{2}\.md$/.test(base)) return 'legacy';
+  if (DIARY_LEGACY_FILE_RE.test(base)) return 'legacy';
 
-  const raw = frontmatterDateRaw(content);
-  const fmMeta = raw ? parseDateTimeValue(raw) : null;
-  const m = DIARY_ENTRY_FILE_RE.exec(base);
-  const fileDate = m && isValidDiaryDate(m[1]) && isValidDiaryTime(`${m[2]}:${m[3]}`) ? m[1] : null;
+  const raw = readDiaryFrontmatterFieldRaw(content, DIARY_DATE_KEY);
+  const rawLegacyKey = readDiaryFrontmatterFieldRaw(content, '日期'); // ADR-0131 前的中文键（已不认）
+  const fmMeta = raw ? parseDiaryStamp(raw) : null;
+  const fileMeta = diaryMetaFromEntryPath(base);
 
-  if (raw && !fmMeta && !fileDate) return 'unparsable'; // 属性损坏且文件名救不回
-  if (!fmMeta && !fileDate) return 'unparsable'; // 无属性且文件名非条目形状/日期非法
-  if (fmMeta && fileDate && fmMeta.date !== fileDate) return 'name-mismatch';
-  if (raw && !fmMeta && fileDate) return 'unparsable'; // 属性存在但损坏（运行时按文件名降级，体检从严）
-  if (fmMeta && !fileDate) return 'name-mismatch'; // 属性合法但文件名非条目形状
+  // 旧中文键残留（题目可能合法→运行时按题目降级，但属性已是死数据，体检从严报出）
+  if (rawLegacyKey && !raw) return 'unparsable';
+
+  if (raw && !fmMeta && !fileMeta) return 'unparsable'; // 属性损坏且题目救不回
+  if (!fmMeta && !fileMeta) return 'unparsable'; // 无属性且题目非条目形状/日历时刻非法
+  if (raw && !fmMeta && fileMeta) return 'unparsable'; // 属性存在但损坏（运行时按题目降级，体检从严）
+  if (fmMeta && !fileMeta) return 'name-mismatch'; // 属性合法但题目非条目形状
+  // 题目承载完整时间戳（YYMMDDHHmm）：日期或时刻任一不一致都判双轨冲突
+  if (fmMeta && fileMeta && diaryStampText(fmMeta.date, fmMeta.time) !== diaryStampText(fileMeta.date, fileMeta.time)) {
+    return 'name-mismatch';
+  }
   return null;
 }
 

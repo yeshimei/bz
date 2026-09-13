@@ -23,7 +23,7 @@ export interface DiaryEntry {
   filename: string;
   /** 来源文件完整 vault 路径（子目录日期文件定位/写回依据；顶层日记与影视/信/书也填充） */
   filePath?: string;
-  /** 在文件中的行号（# 标题行） */
+  /** 在文件中的行号（ADR-0131 条目文件化后恒 0；字段保留兼容旧调用面） */
   lineNumber: number;
   /** 稳定 id */
   id?: string;

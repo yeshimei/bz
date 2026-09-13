@@ -422,29 +422,29 @@ describe('SafeManager 进度回调（onProgress）', () => {
 
   it('lockNote kind=diary-entry：不删整 md 原文件、清单带 kind 标记', async () => {
     makeApp(vault);
-    vault.create('我的/日记/2025-06-01.md', '# 📖 08:00\n正文\n');
+    vault.create('我的/日记/2506010800.md', '---\ndate: 2025-06-01 08:00\ntype:\n  - 日记\n---\n\n正文\n');
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await sm.lockNote({
-      path: '我的/日记/2025-06-01.md',
+      path: '我的/日记/2506010800.md',
       title: '2025-06-01 · 08:00 日记',
       kind: 'diary-entry',
       content: '# 📖🔐 08:00\n正文',
       attachments: [],
     });
     // 整 md 不被删除（日记条目块由日记域自摘除）
-    expect(vault.getAbstractFileByPath('我的/日记/2025-06-01.md')).toBeTruthy();
+    expect(vault.getAbstractFileByPath('我的/日记/2506010800.md')).toBeTruthy();
     expect(note.kind).toBe('diary-entry');
     expect(sm.manifest.notes.some((n) => n.id === note.id && n.kind === 'diary-entry')).toBe(true);
   });
 
-  it('restoreDiaryEntry：还原块序列化为条目文件写入来源路径（ADR-0130）', async () => {
+  it('restoreDiaryEntry：还原块序列化为条目文件写入来源路径（ADR-0131）', async () => {
     makeApp(vault);
-    vault.create('我的/日记/2025-06-01 07-00.md', '---\n日期: 2025-06-01 07:00\n类型:\n  - 日记\n---\n\n早起\n');
+    vault.create('我的/日记/2506010700.md', '---\ndate: 2025-06-01 07:00\ntype:\n  - 日记\n---\n\n早起\n');
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await sm.lockNote({
-      path: '我的/日记/2025-06-01 09-00.md',
+      path: '我的/日记/2506010900.md',
       title: '2025-06-01 · 09:00 日记',
       kind: 'diary-entry',
       content: '# 日记/加密 09:00\n上午写',
@@ -454,12 +454,12 @@ describe('SafeManager 进度回调（onProgress）', () => {
     const ok = await sm.restoreDiaryEntry(note.id, '# 日记 09:00\n上午写');
     expect(ok).toBe(true);
     // 还原 = 新条目文件（frontmatter 类型重建为 日记，正文原样）
-    const md = vault.files.get('我的/日记/2025-06-01 09-00.md')!;
-    expect(md).toContain('日期: 2025-06-01 09:00');
+    const md = vault.files.get('我的/日记/2506010900.md')!;
+    expect(md).toContain('date: 2025-06-01 09:00');
     expect(md).toContain('  - 日记');
     expect(md).toContain('上午写');
     // 同日另一条目文件不受影响
-    expect(vault.files.get('我的/日记/2025-06-01 07-00.md')).toContain('早起');
+    expect(vault.files.get('我的/日记/2506010700.md')).toContain('早起');
     // 取出即删：清单不再含有该条
     expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(false);
   });
@@ -469,7 +469,7 @@ describe('SafeManager 进度回调（onProgress）', () => {
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await sm.lockNote({
-      path: '我的/日记/2025-06-02 10-30.md',
+      path: '我的/日记/2506021030.md',
       title: '2025-06-02 · 10:30 日记',
       kind: 'diary-entry',
       content: '# 随笔/加密 10:30\n随笔',
@@ -477,16 +477,16 @@ describe('SafeManager 进度回调（onProgress）', () => {
     });
     const ok = await sm.restoreDiaryEntry(note.id, '# 随笔 10:30\n随笔');
     expect(ok).toBe(true);
-    const md = vault.files.get('我的/日记/2025-06-02 10-30.md')!;
-    expect(md).toContain('日期: 2025-06-02 10:30');
+    const md = vault.files.get('我的/日记/2506021030.md')!;
+    expect(md).toContain('date: 2025-06-02 10:30');
     expect(md).toContain('  - 随笔');
     expect(md).toContain('随笔');
   });
 
   it('restoreDiaryEntry 幂等：目标条目文件已含相同内容（中断残留）→ 跳过不重复写，仍成功清理', async () => {
     makeApp(vault);
-    const target = '我的/日记/2025-06-01 09-00.md';
-    vault.create('我的/日记/2025-06-01 07-00.md', '---\n日期: 2025-06-01 07:00\n类型:\n  - 日记\n---\n\n早起\n');
+    const target = '我的/日记/2506010900.md';
+    vault.create('我的/日记/2506010700.md', '---\ndate: 2025-06-01 07:00\ntype:\n  - 日记\n---\n\n早起\n');
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await sm.lockNote({
@@ -497,13 +497,13 @@ describe('SafeManager 进度回调（onProgress）', () => {
       attachments: [],
     });
     // 模拟「块已 merge 但清单没保存」的残留现场：目标条目文件已是还原后的形态
-    const restored = '---\n日期: 2025-06-01 09:00\n类型:\n  - 日记\n---\n\n上午写\n';
+    const restored = '---\ndate: 2025-06-01 09:00\ntype:\n  - 日记\n---\n\n上午写\n';
     vault.create(target, restored);
     const ok = await sm.restoreDiaryEntry(note.id, '# 日记 09:00\n上午写');
     expect(ok).toBe(true);
     // 幂等：内容一致跳过（文件未被重复改写），同日另一条目不受影响
     expect(vault.files.get(target)).toBe(restored);
-    expect(vault.files.has('我的/日记/2025-06-01 09-00-2.md')).toBe(false);
+    expect(vault.files.has('我的/日记/2506010900-2.md')).toBe(false);
     expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(false);
   });
 
@@ -511,11 +511,11 @@ describe('SafeManager 进度回调（onProgress）', () => {
     makeApp(vault);
     // 同刻两条（一目一文件时代 = 同刻 -2 让位）：目标路径已被「甲写的」占用，
     // 还原「乙写的」绝不覆盖 → 让位 -2 新建，两条内容都在盘上
-    vault.create('我的/日记/2025-06-01 09-00.md', '---\n日期: 2025-06-01 09:00\n类型:\n  - 日记\n---\n\n甲写的\n');
+    vault.create('我的/日记/2506010900.md', '---\ndate: 2025-06-01 09:00\ntype:\n  - 日记\n---\n\n甲写的\n');
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await sm.lockNote({
-      path: '我的/日记/2025-06-01 09-00.md',
+      path: '我的/日记/2506010900.md',
       title: '2025-06-01 · 09:00 日记',
       kind: 'diary-entry',
       content: '# 日记/加密 09:00\n乙写的',
@@ -523,8 +523,8 @@ describe('SafeManager 进度回调（onProgress）', () => {
     });
     const ok = await sm.restoreDiaryEntry(note.id, '# 日记 09:00\n乙写的');
     expect(ok).toBe(true);
-    expect(vault.files.get('我的/日记/2025-06-01 09-00.md')).toContain('甲写的'); // 占用者原样
-    expect(vault.files.get('我的/日记/2025-06-01 09-00-2.md')).toContain('乙写的'); // 还原让位落新文件
+    expect(vault.files.get('我的/日记/2506010900.md')).toContain('甲写的'); // 占用者原样
+    expect(vault.files.get('我的/日记/2506010900-2.md')).toContain('乙写的'); // 还原让位落新文件
     // 取出即删语义不变
     expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(false);
   });

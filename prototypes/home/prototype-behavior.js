@@ -1,5 +1,5 @@
-/* 源指纹 357065b0732810f3 · 仓内输入 99 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
+/* 源指纹 0b6373c4ff924c1d · 仓内输入 100 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -5170,28 +5170,28 @@ var BZW_home = (() => {
     return inp;
   }
   function uiField(opts) {
-    const wrap = document.createElement("label");
-    wrap.className = "bz-field";
+    const wrap2 = document.createElement("label");
+    wrap2.className = "bz-field";
     if (opts.label) {
       const l = document.createElement("span");
       l.className = "bz-field-label";
       l.textContent = opts.label;
-      wrap.appendChild(l);
+      wrap2.appendChild(l);
     }
-    wrap.appendChild(opts.control);
+    wrap2.appendChild(opts.control);
     if (opts.error) {
       if (opts.control.classList.contains("bz-input")) opts.control.classList.add("bz-input--error");
       const e = document.createElement("span");
       e.className = "bz-field-error";
       e.textContent = opts.error;
-      wrap.appendChild(e);
+      wrap2.appendChild(e);
     } else if (opts.desc) {
       const d = document.createElement("span");
       d.className = "bz-field-desc";
       d.textContent = opts.desc;
-      wrap.appendChild(d);
+      wrap2.appendChild(d);
     }
-    return wrap;
+    return wrap2;
   }
   var init_field = __esm({
     "src/core/ui/field.ts"() {
@@ -13183,7 +13183,8 @@ ${n.content.slice(0, 2e3)}
   var DEFAULT_TIMELINE_FILTER = {
     produce: true,
     progress: true,
-    notes: true
+    notes: true,
+    skipped: false
   };
   function timelineRangeDays(range) {
     if (range === "3d") return 3;
@@ -13193,6 +13194,22 @@ ${n.content.slice(0, 2e3)}
   function timelineKind(text) {
     if (text.startsWith("新增备忘录") || text.includes("加入片单") || text.includes("读到 ")) return "progress";
     return "produce";
+  }
+  function eventKind(e) {
+    const k = e.kind;
+    return k != null ? k : timelineKind(e.text);
+  }
+  function eventVisible(e, filter) {
+    switch (eventKind(e)) {
+      case "skipped":
+        return filter.skipped;
+      case "note":
+        return filter.notes;
+      case "progress":
+        return filter.progress;
+      default:
+        return filter.produce;
+    }
   }
   function p2(n) {
     return String(n).padStart(2, "0");
@@ -13314,6 +13331,101 @@ ${n.content.slice(0, 2e3)}
 
   // src/home/weekly.ts
   init_settings_provider();
+
+  // src/core/diary-format.ts
+  var DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
+  var DIARY_DATE_KEY = "date";
+  var DIARY_TYPE_KEY = "type";
+  function diaryMetaFromEntryPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_ENTRY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `20${m[1]}-${m[2]}-${m[3]}`;
+    const time = `${m[4]}:${m[5]}`;
+    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
+    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
+  }
+  function diaryDateFromEntryPath(path) {
+    var _a, _b;
+    return (_b = (_a = diaryMetaFromEntryPath(path)) == null ? void 0 : _a.date) != null ? _b : null;
+  }
+  function resolveDiaryEntryMeta(path, parsed) {
+    var _a;
+    return (_a = parsed.meta) != null ? _a : diaryMetaFromEntryPath(path);
+  }
+  function parseDiaryStamp(value) {
+    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(String(value || "").trim());
+    return m && isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
+  }
+  function isValidDiaryDate(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1) return false;
+    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return d <= days[mo - 1];
+  }
+  function isValidDiaryTime(s) {
+    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
+  }
+  function unquote(v) {
+    const t = v.trim();
+    if (t.length >= 2 && (t.startsWith('"') && t.endsWith('"') || t.startsWith("'") && t.endsWith("'"))) {
+      return t.slice(1, -1);
+    }
+    return t;
+  }
+  function parseDiaryEntryFile(content) {
+    const text = (content || "").replace(/\r\n/g, "\n");
+    if (!text.startsWith("---\n")) return { meta: null, tags: [], body: content || "" };
+    const end = text.indexOf("\n---", 4);
+    if (end < 0) return { meta: null, tags: [], body: content || "" };
+    const afterClose = text.slice(end + 4);
+    if (afterClose && !afterClose.startsWith("\n")) return { meta: null, tags: [], body: content || "" };
+    const fmText = text.slice(4, end);
+    let body = afterClose;
+    if (body.startsWith("\n")) body = body.slice(1);
+    if (body.startsWith("\n")) body = body.slice(1);
+    let meta = null;
+    const tags = [];
+    let inTags = false;
+    for (const line of fmText.split("\n")) {
+      const tagItem = /^\s+-\s*(.*)$/.exec(line);
+      if (inTags && tagItem) {
+        const v = unquote(tagItem[1]);
+        if (v) tags.push(v);
+        continue;
+      }
+      inTags = false;
+      const kv = /^([^:]+):(.*)$/.exec(line);
+      if (!kv) continue;
+      const key = kv[1].trim();
+      const val = kv[2].trim();
+      if (key === DIARY_DATE_KEY) {
+        meta = parseDiaryStamp(unquote(val));
+      } else if (key === DIARY_TYPE_KEY) {
+        inTags = true;
+        if (val.startsWith("[") && val.endsWith("]")) {
+          for (const item of val.slice(1, -1).split(",")) {
+            const v = unquote(item);
+            if (v) tags.push(v);
+          }
+          inTags = false;
+        } else if (val) {
+          const v = unquote(val);
+          if (v) tags.push(v);
+          inTags = false;
+        }
+      }
+    }
+    return { meta, tags, body };
+  }
+
+  // src/home/weekly.ts
   init_storage();
 
   // src/cinema/constants.ts
@@ -13648,82 +13760,6 @@ ${n.content.slice(0, 2e3)}
   // src/diary/parser.ts
   init_fake_obsidian();
 
-  // src/core/diary-format.ts
-  var DIARY_ENTRY_FILE_RE = /^(\d{4}-\d{2}-\d{2}) (\d{2})-(\d{2})(?:-(\d+))?\.md$/;
-  function diaryDateFromEntryPath(path) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    const m = base.match(DIARY_ENTRY_FILE_RE);
-    return m ? m[1] : null;
-  }
-  function isValidDiaryDate(s) {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    const y = Number(m[1]);
-    const mo = Number(m[2]);
-    const d = Number(m[3]);
-    if (mo < 1 || mo > 12 || d < 1) return false;
-    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    return d <= days[mo - 1];
-  }
-  function isValidDiaryTime(s) {
-    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
-  }
-  function unquote(v) {
-    const t = v.trim();
-    if (t.length >= 2 && (t.startsWith('"') && t.endsWith('"') || t.startsWith("'") && t.endsWith("'"))) {
-      return t.slice(1, -1);
-    }
-    return t;
-  }
-  function parseDiaryEntryFile(content) {
-    const text = (content || "").replace(/\r\n/g, "\n");
-    if (!text.startsWith("---\n")) return { meta: null, tags: [], body: content || "" };
-    const end = text.indexOf("\n---", 4);
-    if (end < 0) return { meta: null, tags: [], body: content || "" };
-    const afterClose = text.slice(end + 4);
-    if (afterClose && !afterClose.startsWith("\n")) return { meta: null, tags: [], body: content || "" };
-    const fmText = text.slice(4, end);
-    let body = afterClose;
-    if (body.startsWith("\n")) body = body.slice(1);
-    if (body.startsWith("\n")) body = body.slice(1);
-    let meta = null;
-    const tags = [];
-    let inTags = false;
-    for (const line of fmText.split("\n")) {
-      const tagItem = /^\s+-\s*(.*)$/.exec(line);
-      if (inTags && tagItem) {
-        const v = unquote(tagItem[1]);
-        if (v) tags.push(v);
-        continue;
-      }
-      inTags = false;
-      const kv = /^([^:]+):(.*)$/.exec(line);
-      if (!kv) continue;
-      const key = kv[1].trim();
-      const val = kv[2].trim();
-      if (key === "日期") {
-        const dm = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(unquote(val));
-        if (dm && isValidDiaryDate(dm[1]) && isValidDiaryTime(dm[2])) meta = { date: dm[1], time: dm[2] };
-      } else if (key === "类型") {
-        inTags = true;
-        if (val.startsWith("[") && val.endsWith("]")) {
-          for (const item of val.slice(1, -1).split(",")) {
-            const v = unquote(item);
-            if (v) tags.push(v);
-          }
-          inTags = false;
-        } else if (val) {
-          const v = unquote(val);
-          if (v) tags.push(v);
-          inTags = false;
-        }
-      }
-    }
-    return { meta, tags, body };
-  }
-
   // src/diary/config.ts
   var DEFAULT_TAGS_CONFIG = {
     日记: { emoji: "📖" },
@@ -13806,11 +13842,7 @@ ${n.content.slice(0, 2e3)}
   }
   function parseEntryFile(content, filePath) {
     const parsed = parseDiaryEntryFile(content);
-    const base = (filePath || "").replace(/\\/g, "/").split("/").pop() || "";
-    const fm2 = parsed.meta;
-    const m = DIARY_ENTRY_FILE_RE.exec(base);
-    const fmName = m && isValidDiaryDate(m[1]) && isValidDiaryTime(`${m[2]}:${m[3]}`) ? { date: m[1], time: `${m[2]}:${m[3]}` } : null;
-    const meta = fm2 != null ? fm2 : fmName;
+    const meta = resolveDiaryEntryMeta(filePath, parsed);
     if (!meta) return null;
     const [h = 0, min = 0] = meta.time.split(":").map(Number);
     const tags = parsed.tags.length > 0 ? parsed.tags : ["日记"];
@@ -13986,8 +14018,7 @@ ${n.content.slice(0, 2e3)}
       const times = [];
       for (const f of ((_b = (_a = app.vault).getMarkdownFiles) == null ? void 0 : _b.call(_a)) || []) {
         if (!f.path.startsWith(`${dir}/`)) continue;
-        const m = DIARY_ENTRY_FILE_RE.exec(f.path.split("/").pop() || "");
-        if (!m || m[1] !== dateStr) continue;
+        if (diaryDateFromEntryPath(f.path) !== dateStr) continue;
         const e = parseEntryFile(await app.vault.read(f), f.path);
         if (!e) continue;
         if (isEncryptedEntry(e) || e.tags.includes("加密")) continue;
@@ -14068,6 +14099,123 @@ ${n.content.slice(0, 2e3)}
     }
     const { summary, items } = buildRecap(sources, range);
     return { summary, items, failed };
+  }
+
+  // src/home/behavior-timeline.ts
+  init_storage();
+  var BEHAVIOR_SIDECAR = "smartcat-behavior.json";
+  var SOURCE_DOMAIN = {
+    movie: "cinema",
+    news: "clipping",
+    memo: "memo",
+    knowledge: "knowledge",
+    literature: "knowledge",
+    "bili-downloader": "knowledge",
+    favorites: "favorites",
+    review: "review",
+    diary: "diary",
+    pomodoro: "pomodoro",
+    belongings: "belongings",
+    library: "bookshelf"
+  };
+  function behaviorSourceDomain(source) {
+    var _a;
+    return (_a = SOURCE_DOMAIN[source]) != null ? _a : source;
+  }
+  function normalizeBehaviorItem(raw) {
+    var _a, _b, _c;
+    if (!raw || typeof raw !== "object") return null;
+    const it = raw;
+    const source = typeof it.source === "string" ? it.source : "";
+    const type = typeof it.type === "string" ? it.type : "";
+    if (!source || !type) return null;
+    const ts = Date.parse(String((_a = it.timestamp) != null ? _a : ""));
+    if (!Number.isFinite(ts)) return null;
+    const meta = (_b = it.metadata) != null ? _b : {};
+    let name = typeof meta.name === "string" ? meta.name.trim() : "";
+    if (!name) {
+      const desc = String((_c = it.description) != null ? _c : "");
+      name = desc.replace(/^[a-z-]+:[a-z-]+\s*/i, "").trim();
+    }
+    const rating = typeof meta.rating === "number" && Number.isFinite(meta.rating) ? meta.rating : null;
+    return { source, type, name, rating, ts };
+  }
+  var wrap = (name, open, close) => name ? `${open}${name}${close}` : "";
+  function mapBehaviorEvent(item) {
+    const time = new Date(item.ts);
+    const p23 = (n) => String(n).padStart(2, "0");
+    const timeLabel = `${p23(time.getHours())}:${p23(time.getMinutes())}`;
+    const base = { domain: behaviorSourceDomain(item.source), ts: item.ts, timeLabel };
+    const key = `${item.source}:${item.type}`;
+    if (key === "review:started") return { ...base, kind: "produce", text: "开始复习" };
+    const name = item.name.trim();
+    if (!name) return null;
+    switch (key) {
+      case "movie:want":
+        return { ...base, kind: "progress", text: `${wrap(name, "《", "》")}加入片单` };
+      case "movie:watching":
+        return { ...base, kind: "progress", text: `开始看${wrap(name, "《", "》")}` };
+      case "movie:watched":
+        return { ...base, kind: "produce", text: `标记${wrap(name, "《", "》")}已看` };
+      case "movie:rated":
+        return { ...base, kind: "note", text: `评价${wrap(name, "《", "》")}${item.rating !== null ? ` ★${item.rating}` : ""}` };
+      case "news:saved":
+        return { ...base, kind: "produce", text: `收藏文章${wrap(name, "『", "』")}` };
+      case "news:skipped":
+        return { ...base, kind: "skipped", text: `已跳过${wrap(name, "『", "』")}` };
+      case "memo:added":
+        return { ...base, kind: "progress", text: `新增备忘录『${name}』` };
+      case "memo:completed":
+        return { ...base, kind: "produce", text: `完成『${name}』` };
+      case "knowledge:term-generated":
+      case "literature:term-generated":
+        return { ...base, kind: "produce", text: `生成术语${wrap(name, "『", "』")}` };
+      case "knowledge:converted":
+      case "literature:converted":
+        return { ...base, kind: "produce", text: `转化${wrap(name, "『", "』")}` };
+      case "favorites:added":
+        return { ...base, kind: "produce", text: `收藏站点${wrap(name, "『", "』")}` };
+      case "bili-downloader:added":
+        return { ...base, kind: "progress", text: `添加下载${wrap(name, "『", "』")}` };
+      case "bili-downloader:converted":
+        return { ...base, kind: "produce", text: `下载完成${wrap(name, "『", "』")}` };
+      default:
+        return null;
+    }
+  }
+  async function readBehaviorItems(app) {
+    try {
+      const filePath = storageFile(BEHAVIOR_SIDECAR);
+      if (!app.vault.getAbstractFileByPath(filePath)) return [];
+      const f = app.vault.getAbstractFileByPath(filePath);
+      const parsed = JSON.parse(await app.vault.read(f));
+      const items = parsed == null ? void 0 : parsed.items;
+      if (!Array.isArray(items)) return [];
+      return items.map(normalizeBehaviorItem).filter((x) => x !== null);
+    } catch (e) {
+      return [];
+    }
+  }
+  function dateStrOf2(ts) {
+    const d = new Date(ts);
+    const p23 = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p23(d.getMonth() + 1)}-${p23(d.getDate())}`;
+  }
+  function behaviorToDays(items, now, days) {
+    const out = [];
+    for (let i = 0; i < days; i++) {
+      const dayTs = now - i * 864e5;
+      const day = dateStrOf2(dayTs);
+      const events = [];
+      for (const item of items) {
+        if (dateStrOf2(item.ts) !== day) continue;
+        const ev = mapBehaviorEvent(item);
+        if (ev) events.push(ev);
+      }
+      events.sort((a, b) => a.ts - b.ts);
+      out.push({ dateStr: day, events });
+    }
+    return out;
   }
 
   // src/home/river.ts
@@ -14692,10 +14840,10 @@ ${n.content.slice(0, 2e3)}
 
   // src/home/river.ts
   var DAY_MS2 = 864e5;
-  function toRiverDay(dateStr, summary, items) {
-    const events = [...items].sort((a, b) => a.ts - b.ts);
-    const full = { ...summary, memoCreated: events.filter((e) => e.text.startsWith("新增备忘录")).length };
-    return { dateStr, events, summary: full, firstTs: events.length ? events[0].ts : null };
+  function toRiverDay(dateStr, summary, events) {
+    const sorted = [...events].sort((a, b) => a.ts - b.ts);
+    const full = { ...summary, memoCreated: sorted.filter((e) => e.text.startsWith("新增备忘录")).length };
+    return { dateStr, events: sorted, summary: full, firstTs: sorted.length ? sorted[0].ts : null };
   }
   function settingDir2(keys, def) {
     const s = tryGetSettings();
@@ -14809,9 +14957,14 @@ ${n.content.slice(0, 2e3)}
   }
   async function collectRiver(app, now = Date.now()) {
     const DAYS_N = 7;
-    const dayRecaps = await Promise.all(
-      Array.from({ length: DAYS_N }, (_, i) => collectRecap(app, now - i * DAY_MS2).catch(() => null))
-    );
+    const [dayRecaps, behaviorItems] = await Promise.all([
+      Promise.all(
+        Array.from({ length: DAYS_N }, (_, i) => collectRecap(app, now - i * DAY_MS2).catch(() => null))
+      ),
+      // 时间线痕迹源 = 小橘行为流（issue 305 / ADR-0132）：文件推导口径退役，外部改动免疫
+      readBehaviorItems(app).catch(() => [])
+    ]);
+    const behaviorDays = behaviorToDays(behaviorItems, now, DAYS_N);
     const counts = { ...EMPTY_COUNTS };
     const safe = (fn) => Promise.resolve().then(fn).catch(() => void 0);
     const [, focusing] = await Promise.all([
@@ -14835,8 +14988,8 @@ ${n.content.slice(0, 2e3)}
     }
     const days = dayRecaps.map(
       (r, i) => {
-        var _a, _b;
-        return toRiverDay(dateStrOf(now - i * DAY_MS2), (_a = r == null ? void 0 : r.summary) != null ? _a : EMPTY_SUMMARY, (_b = r == null ? void 0 : r.items) != null ? _b : []);
+        var _a, _b, _c;
+        return toRiverDay(dateStrOf(now - i * DAY_MS2), (_a = r == null ? void 0 : r.summary) != null ? _a : EMPTY_SUMMARY, (_c = (_b = behaviorDays[i]) == null ? void 0 : _b.events) != null ? _c : []);
       }
     );
     const WD = ["日", "一", "二", "三", "四", "五", "六"];
@@ -14929,11 +15082,11 @@ ${n.content.slice(0, 2e3)}
     const filter = (_a = opts.filter) != null ? _a : DEFAULT_TIMELINE_FILTER;
     const showTime = opts.showTime !== false;
     const size = (_b = opts.size) != null ? _b : "normal";
-    const wrap = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + "</div>";
+    const wrap2 = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + "</div>";
     const day = (_c = data.days.find((d) => d.dateStr === view)) != null ? _c : data.today;
     const isToday = day.dateStr === data.today.dateStr;
     const notes = isToday && filter.notes ? buildNotes(data) : [];
-    const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => timelineKind(e.text) === "progress" ? filter.progress : filter.produce);
+    const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => eventVisible(e, filter));
     const body = kept.map(({ e, i }) => {
       var _a2, _b2, _c2, _d, _e;
       const note = notes.find((n) => n.index === i);
@@ -14944,11 +15097,11 @@ ${n.content.slice(0, 2e3)}
       const dmIcon = (_e = (_d = DOMAIN_MAP.get(memoId)) == null ? void 0 : _d.icon) != null ? _e : "";
       return '<div class="bz-home-ev' + lastDiary + '">' + (showTime ? '<span class="bz-home-ev-tm">' + esc(e.timeLabel) + "</span>" : "") + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
     }).join("");
-    if (kept.length) return wrap(body);
+    if (kept.length) return wrap2(body);
     if (day.events.length) {
-      return wrap('<div class="bz-home-flow-empty">这一天有痕迹，但都被「内容过滤」挡掉了。<br>去 <b>设置 → 首页 → 内容过滤</b> 把想看的类别勾上。</div>');
+      return wrap2('<div class="bz-home-flow-empty">这一天有痕迹，但都被「内容过滤」挡掉了。<br>去 <b>设置 → 首页 → 内容过滤</b> 把想看的类别勾上。</div>');
     }
-    return wrap('<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>');
+    return wrap2('<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>');
   }
   function nextHtml(data, enabled = true) {
     if (!enabled) return "";
@@ -14976,7 +15129,8 @@ ${n.content.slice(0, 2e3)}
     const filter = {
       produce: bool(s.homeTimelineProduce, DEFAULT_TIMELINE_FILTER.produce),
       progress: bool(s.homeTimelineProgress, DEFAULT_TIMELINE_FILTER.progress),
-      notes: bool(s.homeTimelineNotes, DEFAULT_TIMELINE_FILTER.notes)
+      notes: bool(s.homeTimelineNotes, DEFAULT_TIMELINE_FILTER.notes),
+      skipped: bool(s.homeTimelineSkipped, DEFAULT_TIMELINE_FILTER.skipped)
     };
     const range = (_a = str(s.homeTimelineRange)) != null ? _a : "week";
     return {
@@ -15250,7 +15404,7 @@ ${n.content.slice(0, 2e3)}
   }
 
   // prototypes/home/fake-sim.ts
-  var SEED_REV = 6;
+  var SEED_REV = 7;
   var SEED_MARK = "bz-sim:__home_seed";
   var KEY_PREFIX2 = "bz-sim:";
   var p22 = (n) => String(n).padStart(2, "0");
@@ -15280,21 +15434,35 @@ ${lines.join("\n")}
 `;
   }
   function seedDiary(out) {
-    const dayFile = (n, times) => {
+    const entryFile = (n, time) => {
+      const d = dstr(n);
+      const stamp = `${d.slice(2, 4)}${d.slice(5, 7)}${d.slice(8, 10)}${time.replace(":", "")}`;
       out.push({
-        path: `我的/日记/${dstr(n)}.md`,
-        content: times.map((t) => `# 🌤 ${t}
+        path: `我的/日记/${stamp}.md`,
+        content: `---
+date: ${d} ${time}
+type:
+  - 日记
+---
+
 记一笔。
-`).join("\n"),
-        ctime: at(n, "08:00"),
-        mtime: at(n, times[times.length - 1])
+`,
+        ctime: at(n, time),
+        mtime: at(n, time)
       });
     };
-    dayFile(1, ["08:30", "22:15"]);
-    dayFile(2, ["09:00"]);
-    dayFile(3, ["21:00"]);
+    entryFile(1, "08:30");
+    entryFile(1, "22:15");
+    entryFile(2, "09:00");
+    entryFile(3, "21:00");
     for (let n = 7; n <= 521; n++) {
-      out.push({ path: `我的/日记/${dstr(n)}.md`, content: "", ctime: at(n, "12:00"), mtime: at(n, "12:00") });
+      const d = dstr(n);
+      out.push({
+        path: `我的/日记/${d.slice(2, 4)}${d.slice(5, 7)}${d.slice(8, 10)}1200.md`,
+        content: "",
+        ctime: at(n, "12:00"),
+        mtime: at(n, "12:00")
+      });
     }
   }
   function seedCinema(out) {
@@ -15498,6 +15666,45 @@ ${lines.join("\n")}
       )
     });
   }
+  function seedBehavior(out) {
+    const beh = (n, hm, source, type, name = "", extra = {}) => ({
+      id: `beh_seed_${n}_${hm.replace(":", "")}_${source}_${type}`,
+      timestamp: new Date(at(n, hm)).toISOString(),
+      type,
+      source,
+      description: `${source}:${type}${name ? ` ${name}` : ""}`,
+      metadata: { entityType: source, action: type, ...name ? { name } : {}, ...extra }
+    });
+    const items = [
+      // 今日：9 条可见（首 07:42 / 末 21:05）
+      beh(0, "07:42", "news", "saved", "为什么深度工作越来越难"),
+      beh(0, "09:05", "memo", "added", "给 obsidian 提 issue"),
+      beh(0, "09:10", "memo", "completed", "给 obsidian 提 issue"),
+      beh(0, "10:30", "knowledge", "term-generated", "间隔重复"),
+      beh(0, "12:20", "memo", "added", "预约体检"),
+      beh(0, "14:27", "favorites", "added", "Anthropic 官网"),
+      beh(0, "18:20", "review", "started"),
+      beh(0, "20:44", "memo", "completed", "写周报初稿"),
+      beh(0, "21:05", "movie", "watched", "百年孤独", { rating: 4 }),
+      // 今日已跳过（默认过滤掉：验「跳过痕迹」开关；放在中段，避免点评挂到被过滤的行上）
+      beh(0, "13:00", "news", "skipped", "极简主义的陷阱"),
+      beh(0, "13:05", "news", "skipped", "数字花园的养护指南"),
+      beh(0, "13:10", "news", "skipped", "效率工具断舍离"),
+      // 昨日：5 条（首 09:00 → 点评「早了 78 分钟」的分母）
+      beh(1, "09:00", "memo", "added", "写周报初稿"),
+      beh(1, "10:15", "movie", "want", "沙丘 2"),
+      beh(1, "14:27", "knowledge", "converted", "间隔重复的实践误区"),
+      beh(1, "16:40", "news", "saved", "本地优先软件宣言"),
+      beh(1, "20:44", "memo", "completed", "清理收件箱"),
+      // 前天 / 大前天：各 1 条（周历 hit 共 4 格）
+      beh(2, "09:00", "memo", "added", "回复审稿意见"),
+      beh(3, "09:40", "knowledge", "converted", "深入理解计算机系统")
+    ];
+    out.push({
+      path: "CONFIG/STORAGE/smartcat-behavior.json",
+      content: JSON.stringify({ version: 1, lastUpdated: new Date(at(0, "21:05")).toISOString(), items }, null, 2)
+    });
+  }
   function buildSeedFiles() {
     const out = [];
     seedDiary(out);
@@ -15510,6 +15717,7 @@ ${lines.join("\n")}
     seedBelongings(out);
     seedMemo(out);
     seedPomodoro(out);
+    seedBehavior(out);
     return out;
   }
   function wipeSimKeys() {
