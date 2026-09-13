@@ -1,5 +1,5 @@
 /**
- * 写层守卫通知（ADR-0130 语义，jsdom）：
+ * 写层守卫通知（ADR-0131 语义，jsdom）：
  * - 操作目标解析不出条目（非条目文件名/日期非法）时弹 warning 人话通知（点明文件与「日记格式体检」入口）；
  * - 读盘失败弹 error 人话通知（D1：直接写会覆盖整篇日记）；
  * - 干净文件操作不弹守卫通知。
@@ -39,22 +39,22 @@ describe('写层守卫人话通知（条目文件口径）', () => {
 
   it('读盘失败：弹 error 点明「直接写会覆盖整篇日记」', async () => {
     const content = serializeDiaryEntryFile({ date: '2024-02-02', time: '08:00' }, ['日记'], '第一条');
-    vault.files.set('我的/日记/2024-02-02 08-00.md', content);
+    vault.files.set('我的/日记/2402020800.md', content);
     const realRead = vault.read.bind(vault);
     vi.spyOn(vault, 'read').mockImplementation(async (f: any) => {
-      if (f.path === '我的/日记/2024-02-02 08-00.md') throw new Error('EBUSY');
+      if (f.path === '我的/日记/2402020800.md') throw new Error('EBUSY');
       return realRead(f);
     });
     await removeDiaryEntries('2024-02-02', () => true);
     const msgs = getNoticeMessages().join('\n');
     expect(msgs).toContain('读取失败');
     expect(msgs).toContain('覆盖整篇日记');
-    expect(vault.files.has('我的/日记/2024-02-02 08-00.md')).toBe(true); // 文件原样保留
+    expect(vault.files.has('我的/日记/2402020800.md')).toBe(true); // 文件原样保留
   });
 
   it('干净文件写与删不弹守卫通知', async () => {
     vault.files.set(
-      '我的/日记/2024-01-02 08-00.md',
+      '我的/日记/2401020800.md',
       serializeDiaryEntryFile({ date: '2024-01-02', time: '08:00' }, ['日记'], '干净')
     );
     await addEntry('2024-01-02', '09:00', ['日记'], '新');

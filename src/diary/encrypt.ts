@@ -11,7 +11,12 @@ import { getApp } from '../core/app';
 import { getSafeManager } from '../encrypt';
 import { collectNoteAttachmentPaths, kindOf } from '../encrypt/ui';
 import { bytesToBase64, type LockAttachmentInput } from '../encrypt/data';
-import { DIARY_ENTRY_FILE_RE, diaryEntryPath } from '../core/diary-format';
+import {
+  diaryEntryPath,
+  diaryMetaFromEntryPath,
+  parseDiaryBlockHeader,
+  serializeDiaryBlockHeader,
+} from '../core/diary-format';
 import { DIARY_DIRECTORY, ENCRYPT_TAG, getTagEmoji } from './config';
 import type { DiaryEntry } from './types';
 
@@ -80,7 +85,7 @@ export async function encryptEntry(entry: DiaryEntry): Promise<DiaryEntry | null
 
   const tags = [...new Set([...entry.tags, ENCRYPT_TAG])];
   // 块格式 v2（ADR-0130）：头行 `# 标签名/标签名 HH:mm`——emoji 表不再参与加密链路
-  const block = `# ${tags.join('/')} ${entry.time}\n${entry.content.trim()}`;
+  const block = `${serializeDiaryBlockHeader(tags, entry.time)}\n${entry.content.trim()}`;
   // 来源条目文件路径：加密时来自条目（filename=完整路径），缺省按目录+日期时间拼
   const datePath = entry.filePath || diaryEntryPath(DIARY_DIRECTORY, entry.date, entry.time);
   const attachments = await collectAttachmentsForContent(entry.content || '', datePath);
@@ -121,10 +126,10 @@ export async function loadEncryptedEntries(): Promise<DiaryEntry[]> {
     try {
       const plain = await safe.getDiaryEntryPlain(note.id);
       if (plain === null || plain === undefined) continue;
-      // 日期从来源条目文件路径还原（ADR-0130：note.path = `我的/日记/YYYY-MM-DD HH-MM(-N).md`）
-      const m = DIARY_ENTRY_FILE_RE.exec(note.path.split('/').pop() || '');
-      if (!m) continue;
-      const entry = parseDiaryBlock(plain, m[1], note.id, note.path);
+      // 日期从来源条目文件路径还原（ADR-0131：note.path = `我的/日记/YYMMDDHHmm(-N).md`）
+      const meta = diaryMetaFromEntryPath(note.path);
+      if (!meta) continue;
+      const entry = parseDiaryBlock(plain, meta.date, note.id, note.path);
       if (entry) out.push(entry);
     } catch (e) {
       /* 单篇解密失败跳过，不阻断其余 */
@@ -136,18 +141,13 @@ export async function loadEncryptedEntries(): Promise<DiaryEntry[]> {
 /** 把一个 `# 标签名/标签名 HH:mm\n正文` 块（v2）解析成 DiaryEntry（带 encrypted/noteId） */
 function parseDiaryBlock(block: string, date: string, noteId: string, notePath?: string): DiaryEntry | null {
   const lines = block.replace(/\r\n/g, '\n').split('\n');
-  const m = lines[0]?.match(/^#\s+(.+)\s+(\d{2}:\d{2})$/);
-  if (!m) return null;
-  const time = m[2];
+  const head = parseDiaryBlockHeader(lines[0] ?? '');
+  if (!head) return null;
+  const time = head.time;
   const [h, min] = time.split(':').map(Number);
   if (Number.isNaN(h) || Number.isNaN(min)) return null;
-  // 头行标签名逐个反解（`/` 分隔，去重保序）；空缺回退「日记」
-  const tags: string[] = [];
-  for (const name of m[1].split('/')) {
-    const t = name.trim();
-    if (t && !tags.includes(t)) tags.push(t);
-  }
-  if (tags.length === 0) tags.push('日记');
+  // 头行标签名由契约解析（`/` 分隔，去重保序）；空缺回退「日记」
+  const tags: string[] = head.tags.length ? [...head.tags] : ['日记'];
   const content = lines.slice(1).join('\n').trim();
   return {
     date,
@@ -186,7 +186,7 @@ async function realignRestorePath(noteId: string): Promise<void> {
   const note = safe.manifest?.notes?.find((n) => n.id === noteId);
   if (!note || note.kind !== 'diary-entry') return;
   const base = note.path.split('/').pop() || '';
-  if (!DIARY_ENTRY_FILE_RE.test(base)) return;
+  if (!diaryMetaFromEntryPath(base)) return;
   const target = `${DIARY_DIRECTORY}/${base}`;
   if (target === note.path) return;
   note.path = target;
@@ -203,11 +203,11 @@ async function buildRestoreBlock(noteId: string, newTags?: string[]): Promise<st
   const plain = await getSafeManager().getDiaryEntryPlain(noteId);
   if (plain === null || plain === undefined) return null;
   const lines = plain.replace(/\r\n/g, '\n').split('\n');
-  const m = lines[0]?.match(/^#\s+.+\s+(\d{2}:\d{2})$/);
-  if (!m) return null;
+  const head = parseDiaryBlockHeader(lines[0] ?? '');
+  if (!head) return null;
   const kept = (newTags ?? []).filter((t) => t !== ENCRYPT_TAG);
   const seqTags = kept.length > 0 ? kept : ['日记'];
-  return `# ${seqTags.join('/')} ${m[1]}${lines.length > 1 ? '\n' + lines.slice(1).join('\n') : ''}`;
+  return `${serializeDiaryBlockHeader(seqTags, head.time)}${lines.length > 1 ? '\n' + lines.slice(1).join('\n') : ''}`;
 }
 
 /**

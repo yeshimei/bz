@@ -73,20 +73,30 @@ interface SeedFile {
 
 /** 日记：连击 3 天（昨天起算）+ 515 天历史（总数 518）；今天故意不写 → 连击提醒/彩点 warn */
 function seedDiary(out: SeedFile[]): void {
-  const dayFile = (n: number, times: string[]): void => {
+  /** 一文件一条目（ADR-0131 题目 YYMMDDHHmm + date/type 属性；真实现按此口径解析） */
+  const entryFile = (n: number, time: string): void => {
+    const d = dstr(n);
+    const stamp = `${d.slice(2, 4)}${d.slice(5, 7)}${d.slice(8, 10)}${time.replace(':', '')}`;
     out.push({
-      path: `我的/日记/${dstr(n)}.md`,
-      content: times.map((t) => `# 🌤 ${t}\n记一笔。\n`).join('\n'),
-      ctime: at(n, '08:00'),
-      mtime: at(n, times[times.length - 1]),
+      path: `我的/日记/${stamp}.md`,
+      content: `---\ndate: ${d} ${time}\ntype:\n  - 日记\n---\n\n记一笔。\n`,
+      ctime: at(n, time),
+      mtime: at(n, time),
     });
   };
-  dayFile(1, ['08:30', '22:15']);
-  dayFile(2, ['09:00']);
-  dayFile(3, ['21:00']);
-  // 历史：n=7..521 共 515 天（空内容真实文件名，仅参与 diaryTotal/wall 计数；recap 窗口外不解析）
+  entryFile(1, '08:30');
+  entryFile(1, '22:15');
+  entryFile(2, '09:00');
+  entryFile(3, '21:00');
+  // 历史：n=7..521 共 515 天（空内容真实题目，仅参与 diaryTotal/wall 计数；recap 窗口外不解析）
   for (let n = 7; n <= 521; n++) {
-    out.push({ path: `我的/日记/${dstr(n)}.md`, content: '', ctime: at(n, '12:00'), mtime: at(n, '12:00') });
+    const d = dstr(n);
+    out.push({
+      path: `我的/日记/${d.slice(2, 4)}${d.slice(5, 7)}${d.slice(8, 10)}1200.md`,
+      content: '',
+      ctime: at(n, '12:00'),
+      mtime: at(n, '12:00'),
+    });
   }
 }
 

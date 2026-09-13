@@ -44,7 +44,7 @@ import { sourceLabel, formatRelativeTime, emotionDensityStats } from './memory';
 import { noteMemoryDiaryDate } from './note-memory';
 // ticket 163：来源分布按「记忆目录」的追查目录分行（标签随设置走）
 import { normalizeMemoryDirectories } from './config';
-import { parseDiaryEntryFile } from '../core/diary-format';
+import { parseDiaryEntryFile, resolveDiaryEntryMeta } from '../core/diary-format';
 import { buildInsightShortIndex, isSupersededInsight, MANUAL_SUPERSEDED_BY, sanitizeInsightTheme } from './insight-version';
 import { lazyAttachment, buildAbsenceCard } from './absence'; // ticket 093：读侧依恋视图 + 缺席状态卡
 import { readQuietMode } from './quiet-gate'; // ticket 095：安静陪伴期状态（097 A2 chip 只读消费）
@@ -685,7 +685,8 @@ async function resolveMemoryDetail(app: App, ref: { path: string; locator?: stri
     if (!ref.locator) return content;
     if (!noteMemoryDiaryDate(filePath)) return content;
     const parsed = parseDiaryEntryFile(content);
-    return parsed.meta && parsed.meta.time === ref.locator && parsed.body.trim() ? parsed.body.trim() : null;
+    const meta = resolveDiaryEntryMeta(filePath, parsed); // 属性损坏按题目降级（与记忆链同口径）
+    return meta && meta.time === ref.locator && parsed.body.trim() ? parsed.body.trim() : null;
   } catch { return null; }
 }
 

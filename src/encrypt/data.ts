@@ -19,7 +19,13 @@ import { getApp } from '../core/app';
 import { emitDomainEvent } from '../core/domain-bus';
 import { CryptoService, clearCryptoKeyCache } from '../core/crypto';
 import { enqueueFileTask } from '../core/storage';
-import { DIARY_ENTRY_FILE_RE, diaryEntryPath, serializeDiaryEntryFile, isValidDiaryDate } from '../core/diary-format';
+import {
+  diaryDateFromLegacyPath,
+  diaryEntryPath,
+  diaryMetaFromEntryPath,
+  parseDiaryBlockHeader,
+  serializeDiaryEntryFile,
+} from '../core/diary-format';
 
 /** 保险库数据变更通道（ADR-0078：密码本/保险库等外部消费者订阅；写操作后广播） */
 export const ENCRYPT_CHANGED_CHANNEL = 'encrypt:changed' as const;
@@ -1340,29 +1346,27 @@ export class SafeManager {
     // 解析块头 `# 标签名/标签名 HH:mm`（v2 标签名制）
     const md = block.replace(/\r\n/g, '\n');
     const lines = md.split('\n');
-    const headMatch = lines[0] ? lines[0].match(/^#\s+(.+)\s+(\d{2}:\d{2})$/) : null;
-    const time = headMatch ? headMatch[2] : null;
-    if (!headMatch || !time) return false;
-    const tags = headMatch[1].split('/').map((s) => s.trim()).filter(Boolean);
-    if (tags.length === 0) tags.push('日记');
+    const head = parseDiaryBlockHeader(lines[0] ?? '');
+    if (!head) return false;
+    const time = head.time;
+    const tags = head.tags.length ? [...head.tags] : ['日记'];
     const bodyLines: string[] = [];
     for (let i = 1; i < lines.length; i++) bodyLines.push(lines[i]);
     while (bodyLines.length && bodyLines[bodyLines.length - 1].trim() === '') bodyLines.pop();
     while (bodyLines.length && bodyLines[0].trim() === '') bodyLines.shift();
     const body = bodyLines.join('\n');
 
-    // 日期与目标路径：basename 应为条目文件形状（ADR-0130）；旧日期文件路径兜底换算
-    const base = datePath.split('/').pop() || '';
+    // 日期与目标路径：题目应为条目形状（ADR-0131）；加密时固化的旧日期文件路径兜底换算成条目路径
     const dir = datePath.split('/').slice(0, -1).join('/');
+    const meta = diaryMetaFromEntryPath(datePath);
     let date: string | null = null;
     let targetPath = datePath;
-    const em = DIARY_ENTRY_FILE_RE.exec(base);
-    if (em && isValidDiaryDate(em[1])) {
-      date = em[1];
+    if (meta) {
+      date = meta.date;
     } else {
-      const lm = /^(\d{4}-\d{2}-\d{2})\.md$/.exec(base);
-      if (lm && isValidDiaryDate(lm[1])) {
-        date = lm[1];
+      const legacyDate = diaryDateFromLegacyPath(datePath);
+      if (legacyDate) {
+        date = legacyDate;
         targetPath = diaryEntryPath(dir, date, time);
       } else {
         return false;

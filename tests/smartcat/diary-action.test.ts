@@ -1,6 +1,6 @@
 import { todayStr } from '../helpers/date';
 /**
- * 日记观察集成（ticket 077，ADR-0030；ADR-0130 一目一文件）：ensure 后模拟条目文件 create/modify/delete/rename →
+ * 日记观察集成（ticket 077，ADR-0030；ADR-0131 一目一文件）：ensure 后模拟条目文件 create/modify/delete/rename →
  * 每条独立 10 分钟结算（测试注入 60ms 真实 timer，规避 fake timers 与反射调度相互作用）。
  * 覆盖：首次（首落有字）/ 累计 >50 更新 / ≤50 不生成（计入累计）/ 空正文不落 / 条目文件删除追加 /
  * 文件删除（逐条 + 文件级兜底）/ noteSource 关静默 / 多条目独立计时 / 重启基线不落首落 / unload 清理。
@@ -10,6 +10,7 @@ import { todayStr } from '../helpers/date';
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
+import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
@@ -22,13 +23,13 @@ import {
 
 let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
 
-/** 条目文件路径（ADR-0130：路径含时刻，`YYYY-MM-DD HH-MM.md`） */
+/** 条目文件路径（ADR-0131：题目 `YYMMDDHHmm(-N)` 数字简写） */
 function entryPath(date: string, time: string): string {
-  return `我的/日记/${date} ${time.replace(':', '-')}.md`;
+  return diaryEntryPath('我的/日记', date, time);
 }
-/** 条目文件全文（frontmatter 日期+类型 + 正文） */
+/** 条目文件全文（frontmatter date/type + 正文；走契约序列化，夹具即生产格式） */
 function entryFile(time: string, body: string, tags: string[] = ['日记'], date = '2026-08-24'): string {
-  return `---\n日期: ${date} ${time}\n类型:\n${tags.map((t) => `  - ${t}`).join('\n')}\n---\n\n${body}\n`;
+  return serializeDiaryEntryFile({ date, time }, tags, body);
 }
 
 function makeApp() {
