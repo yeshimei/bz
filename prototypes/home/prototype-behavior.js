@@ -1,4 +1,4 @@
-/* 源指纹 357065b0732810f3 · 仓内输入 99 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7769d239c671ef86 · 仓内输入 99 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -13314,6 +13314,101 @@ ${n.content.slice(0, 2e3)}
 
   // src/home/weekly.ts
   init_settings_provider();
+
+  // src/core/diary-format.ts
+  var DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
+  var DIARY_DATE_KEY = "date";
+  var DIARY_TYPE_KEY = "type";
+  function diaryMetaFromEntryPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_ENTRY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `20${m[1]}-${m[2]}-${m[3]}`;
+    const time = `${m[4]}:${m[5]}`;
+    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
+    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
+  }
+  function diaryDateFromEntryPath(path) {
+    var _a, _b;
+    return (_b = (_a = diaryMetaFromEntryPath(path)) == null ? void 0 : _a.date) != null ? _b : null;
+  }
+  function resolveDiaryEntryMeta(path, parsed) {
+    var _a;
+    return (_a = parsed.meta) != null ? _a : diaryMetaFromEntryPath(path);
+  }
+  function parseDiaryStamp(value) {
+    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(String(value || "").trim());
+    return m && isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
+  }
+  function isValidDiaryDate(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1) return false;
+    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return d <= days[mo - 1];
+  }
+  function isValidDiaryTime(s) {
+    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
+  }
+  function unquote(v) {
+    const t = v.trim();
+    if (t.length >= 2 && (t.startsWith('"') && t.endsWith('"') || t.startsWith("'") && t.endsWith("'"))) {
+      return t.slice(1, -1);
+    }
+    return t;
+  }
+  function parseDiaryEntryFile(content) {
+    const text = (content || "").replace(/\r\n/g, "\n");
+    if (!text.startsWith("---\n")) return { meta: null, tags: [], body: content || "" };
+    const end = text.indexOf("\n---", 4);
+    if (end < 0) return { meta: null, tags: [], body: content || "" };
+    const afterClose = text.slice(end + 4);
+    if (afterClose && !afterClose.startsWith("\n")) return { meta: null, tags: [], body: content || "" };
+    const fmText = text.slice(4, end);
+    let body = afterClose;
+    if (body.startsWith("\n")) body = body.slice(1);
+    if (body.startsWith("\n")) body = body.slice(1);
+    let meta = null;
+    const tags = [];
+    let inTags = false;
+    for (const line of fmText.split("\n")) {
+      const tagItem = /^\s+-\s*(.*)$/.exec(line);
+      if (inTags && tagItem) {
+        const v = unquote(tagItem[1]);
+        if (v) tags.push(v);
+        continue;
+      }
+      inTags = false;
+      const kv = /^([^:]+):(.*)$/.exec(line);
+      if (!kv) continue;
+      const key = kv[1].trim();
+      const val = kv[2].trim();
+      if (key === DIARY_DATE_KEY) {
+        meta = parseDiaryStamp(unquote(val));
+      } else if (key === DIARY_TYPE_KEY) {
+        inTags = true;
+        if (val.startsWith("[") && val.endsWith("]")) {
+          for (const item of val.slice(1, -1).split(",")) {
+            const v = unquote(item);
+            if (v) tags.push(v);
+          }
+          inTags = false;
+        } else if (val) {
+          const v = unquote(val);
+          if (v) tags.push(v);
+          inTags = false;
+        }
+      }
+    }
+    return { meta, tags, body };
+  }
+
+  // src/home/weekly.ts
   init_storage();
 
   // src/cinema/constants.ts
@@ -13648,82 +13743,6 @@ ${n.content.slice(0, 2e3)}
   // src/diary/parser.ts
   init_fake_obsidian();
 
-  // src/core/diary-format.ts
-  var DIARY_ENTRY_FILE_RE = /^(\d{4}-\d{2}-\d{2}) (\d{2})-(\d{2})(?:-(\d+))?\.md$/;
-  function diaryDateFromEntryPath(path) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    const m = base.match(DIARY_ENTRY_FILE_RE);
-    return m ? m[1] : null;
-  }
-  function isValidDiaryDate(s) {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    const y = Number(m[1]);
-    const mo = Number(m[2]);
-    const d = Number(m[3]);
-    if (mo < 1 || mo > 12 || d < 1) return false;
-    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    return d <= days[mo - 1];
-  }
-  function isValidDiaryTime(s) {
-    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
-  }
-  function unquote(v) {
-    const t = v.trim();
-    if (t.length >= 2 && (t.startsWith('"') && t.endsWith('"') || t.startsWith("'") && t.endsWith("'"))) {
-      return t.slice(1, -1);
-    }
-    return t;
-  }
-  function parseDiaryEntryFile(content) {
-    const text = (content || "").replace(/\r\n/g, "\n");
-    if (!text.startsWith("---\n")) return { meta: null, tags: [], body: content || "" };
-    const end = text.indexOf("\n---", 4);
-    if (end < 0) return { meta: null, tags: [], body: content || "" };
-    const afterClose = text.slice(end + 4);
-    if (afterClose && !afterClose.startsWith("\n")) return { meta: null, tags: [], body: content || "" };
-    const fmText = text.slice(4, end);
-    let body = afterClose;
-    if (body.startsWith("\n")) body = body.slice(1);
-    if (body.startsWith("\n")) body = body.slice(1);
-    let meta = null;
-    const tags = [];
-    let inTags = false;
-    for (const line of fmText.split("\n")) {
-      const tagItem = /^\s+-\s*(.*)$/.exec(line);
-      if (inTags && tagItem) {
-        const v = unquote(tagItem[1]);
-        if (v) tags.push(v);
-        continue;
-      }
-      inTags = false;
-      const kv = /^([^:]+):(.*)$/.exec(line);
-      if (!kv) continue;
-      const key = kv[1].trim();
-      const val = kv[2].trim();
-      if (key === "日期") {
-        const dm = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(unquote(val));
-        if (dm && isValidDiaryDate(dm[1]) && isValidDiaryTime(dm[2])) meta = { date: dm[1], time: dm[2] };
-      } else if (key === "类型") {
-        inTags = true;
-        if (val.startsWith("[") && val.endsWith("]")) {
-          for (const item of val.slice(1, -1).split(",")) {
-            const v = unquote(item);
-            if (v) tags.push(v);
-          }
-          inTags = false;
-        } else if (val) {
-          const v = unquote(val);
-          if (v) tags.push(v);
-          inTags = false;
-        }
-      }
-    }
-    return { meta, tags, body };
-  }
-
   // src/diary/config.ts
   var DEFAULT_TAGS_CONFIG = {
     日记: { emoji: "📖" },
@@ -13806,11 +13825,7 @@ ${n.content.slice(0, 2e3)}
   }
   function parseEntryFile(content, filePath) {
     const parsed = parseDiaryEntryFile(content);
-    const base = (filePath || "").replace(/\\/g, "/").split("/").pop() || "";
-    const fm2 = parsed.meta;
-    const m = DIARY_ENTRY_FILE_RE.exec(base);
-    const fmName = m && isValidDiaryDate(m[1]) && isValidDiaryTime(`${m[2]}:${m[3]}`) ? { date: m[1], time: `${m[2]}:${m[3]}` } : null;
-    const meta = fm2 != null ? fm2 : fmName;
+    const meta = resolveDiaryEntryMeta(filePath, parsed);
     if (!meta) return null;
     const [h = 0, min = 0] = meta.time.split(":").map(Number);
     const tags = parsed.tags.length > 0 ? parsed.tags : ["日记"];
@@ -13986,8 +14001,7 @@ ${n.content.slice(0, 2e3)}
       const times = [];
       for (const f of ((_b = (_a = app.vault).getMarkdownFiles) == null ? void 0 : _b.call(_a)) || []) {
         if (!f.path.startsWith(`${dir}/`)) continue;
-        const m = DIARY_ENTRY_FILE_RE.exec(f.path.split("/").pop() || "");
-        if (!m || m[1] !== dateStr) continue;
+        if (diaryDateFromEntryPath(f.path) !== dateStr) continue;
         const e = parseEntryFile(await app.vault.read(f), f.path);
         if (!e) continue;
         if (isEncryptedEntry(e) || e.tags.includes("加密")) continue;
@@ -15280,21 +15294,35 @@ ${lines.join("\n")}
 `;
   }
   function seedDiary(out) {
-    const dayFile = (n, times) => {
+    const entryFile = (n, time) => {
+      const d = dstr(n);
+      const stamp = `${d.slice(2, 4)}${d.slice(5, 7)}${d.slice(8, 10)}${time.replace(":", "")}`;
       out.push({
-        path: `我的/日记/${dstr(n)}.md`,
-        content: times.map((t) => `# 🌤 ${t}
+        path: `我的/日记/${stamp}.md`,
+        content: `---
+date: ${d} ${time}
+type:
+  - 日记
+---
+
 记一笔。
-`).join("\n"),
-        ctime: at(n, "08:00"),
-        mtime: at(n, times[times.length - 1])
+`,
+        ctime: at(n, time),
+        mtime: at(n, time)
       });
     };
-    dayFile(1, ["08:30", "22:15"]);
-    dayFile(2, ["09:00"]);
-    dayFile(3, ["21:00"]);
+    entryFile(1, "08:30");
+    entryFile(1, "22:15");
+    entryFile(2, "09:00");
+    entryFile(3, "21:00");
     for (let n = 7; n <= 521; n++) {
-      out.push({ path: `我的/日记/${dstr(n)}.md`, content: "", ctime: at(n, "12:00"), mtime: at(n, "12:00") });
+      const d = dstr(n);
+      out.push({
+        path: `我的/日记/${d.slice(2, 4)}${d.slice(5, 7)}${d.slice(8, 10)}1200.md`,
+        content: "",
+        ctime: at(n, "12:00"),
+        mtime: at(n, "12:00")
+      });
     }
   }
   function seedCinema(out) {

@@ -1,4 +1,4 @@
-/* 源指纹 c7f4eb9e43bda26d · 仓内输入 77 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 07c8f6f29d7c4f8d · 仓内输入 77 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -5986,16 +5986,44 @@ var BZW_diary = (() => {
 
   // src/core/diary-format.ts
   function diaryEntryBaseName(dateStr, timeStr, seq) {
-    const [h = "00", m = "00"] = timeStr.split(":");
-    return seq && seq > 1 ? `${dateStr} ${h}-${m}-${seq}` : `${dateStr} ${h}-${m}`;
+    const d = String(dateStr || "").replace(/-/g, "");
+    const t = String(timeStr || "").replace(/:/g, "");
+    const stamp = `${d.slice(2, 8)}${t.slice(0, 4)}`;
+    return seq && seq > 1 ? `${stamp}-${seq}` : stamp;
   }
   function diaryEntryPath(dir, dateStr, timeStr, seq) {
     return `${dir}/${diaryEntryBaseName(dateStr, timeStr, seq)}.md`;
   }
-  function diaryDateFromEntryPath(path) {
+  function diaryMetaFromEntryPath(path) {
     const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    const m = base.match(DIARY_ENTRY_FILE_RE);
-    return m ? m[1] : null;
+    const m = DIARY_ENTRY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `20${m[1]}-${m[2]}-${m[3]}`;
+    const time = `${m[4]}:${m[5]}`;
+    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
+    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
+  }
+  function diaryDateFromLegacyPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_LEGACY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `${m[1]}-${m[2]}-${m[3]}`;
+    return isValidDiaryDate(date) ? date : null;
+  }
+  function diaryDateFromEntryPath(path) {
+    var _a, _b;
+    return (_b = (_a = diaryMetaFromEntryPath(path)) == null ? void 0 : _a.date) != null ? _b : null;
+  }
+  function resolveDiaryEntryMeta(path, parsed) {
+    var _a;
+    return (_a = parsed.meta) != null ? _a : diaryMetaFromEntryPath(path);
+  }
+  function diaryStampText(date, time) {
+    return `${date} ${time}`;
+  }
+  function parseDiaryStamp(value) {
+    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(String(value || "").trim());
+    return m && isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
   }
   function isValidDiaryDate(s) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
@@ -6013,7 +6041,7 @@ var BZW_diary = (() => {
     return Number(m[1]) <= 23 && Number(m[2]) <= 59;
   }
   function serializeDiaryEntryFile(meta, tags, content) {
-    const lines = ["---", `日期: ${meta.date} ${meta.time}`, "类型:"];
+    const lines = ["---", `${DIARY_DATE_KEY}: ${diaryStampText(meta.date, meta.time)}`, `${DIARY_TYPE_KEY}:`];
     for (const t of tags) lines.push(`  - ${t}`);
     lines.push("---", "", content);
     let out = lines.join("\n");
@@ -6026,6 +6054,19 @@ var BZW_diary = (() => {
       return t.slice(1, -1);
     }
     return t;
+  }
+  function serializeDiaryBlockHeader(tags, time) {
+    return `# ${tags.join("/")} ${time}`;
+  }
+  function parseDiaryBlockHeader(line) {
+    const m = /^#\s+(.+)\s+(\d{2}:\d{2})$/.exec(String(line || "").trim());
+    if (!m) return null;
+    const tags = [];
+    for (const name of m[1].split("/")) {
+      const t = name.trim();
+      if (t && !tags.includes(t)) tags.push(t);
+    }
+    return { tags, time: m[2] };
   }
   function parseDiaryEntryFile(content) {
     const text = (content || "").replace(/\r\n/g, "\n");
@@ -6053,10 +6094,9 @@ var BZW_diary = (() => {
       if (!kv) continue;
       const key = kv[1].trim();
       const val = kv[2].trim();
-      if (key === "日期") {
-        const dm = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(unquote(val));
-        if (dm && isValidDiaryDate(dm[1]) && isValidDiaryTime(dm[2])) meta = { date: dm[1], time: dm[2] };
-      } else if (key === "类型") {
+      if (key === DIARY_DATE_KEY) {
+        meta = parseDiaryStamp(unquote(val));
+      } else if (key === DIARY_TYPE_KEY) {
         inTags = true;
         if (val.startsWith("[") && val.endsWith("]")) {
           for (const item of val.slice(1, -1).split(",")) {
@@ -6073,10 +6113,13 @@ var BZW_diary = (() => {
     }
     return { meta, tags, body };
   }
-  var DIARY_ENTRY_FILE_RE;
+  var DIARY_ENTRY_FILE_RE, DIARY_LEGACY_FILE_RE, DIARY_DATE_KEY, DIARY_TYPE_KEY;
   var init_diary_format = __esm({
     "src/core/diary-format.ts"() {
-      DIARY_ENTRY_FILE_RE = /^(\d{4}-\d{2}-\d{2}) (\d{2})-(\d{2})(?:-(\d+))?\.md$/;
+      DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
+      DIARY_LEGACY_FILE_RE = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
+      DIARY_DATE_KEY = "date";
+      DIARY_TYPE_KEY = "type";
     }
   });
 
@@ -8418,31 +8461,30 @@ var BZW_diary = (() => {
          * @returns 成功写入（或幂等跳过）返回 true；路径无法换算日期返回 false。
          */
         async mergeDiaryBlock(datePath, block) {
+          var _a;
           const app = getApp();
           if (!datePath || !block) return false;
           const md = block.replace(/\r\n/g, "\n");
           const lines = md.split("\n");
-          const headMatch = lines[0] ? lines[0].match(/^#\s+(.+)\s+(\d{2}:\d{2})$/) : null;
-          const time = headMatch ? headMatch[2] : null;
-          if (!headMatch || !time) return false;
-          const tags = headMatch[1].split("/").map((s) => s.trim()).filter(Boolean);
-          if (tags.length === 0) tags.push("日记");
+          const head = parseDiaryBlockHeader((_a = lines[0]) != null ? _a : "");
+          if (!head) return false;
+          const time = head.time;
+          const tags = head.tags.length ? [...head.tags] : ["日记"];
           const bodyLines = [];
           for (let i = 1; i < lines.length; i++) bodyLines.push(lines[i]);
           while (bodyLines.length && bodyLines[bodyLines.length - 1].trim() === "") bodyLines.pop();
           while (bodyLines.length && bodyLines[0].trim() === "") bodyLines.shift();
           const body = bodyLines.join("\n");
-          const base = datePath.split("/").pop() || "";
           const dir = datePath.split("/").slice(0, -1).join("/");
+          const meta = diaryMetaFromEntryPath(datePath);
           let date = null;
           let targetPath = datePath;
-          const em = DIARY_ENTRY_FILE_RE.exec(base);
-          if (em && isValidDiaryDate(em[1])) {
-            date = em[1];
+          if (meta) {
+            date = meta.date;
           } else {
-            const lm = /^(\d{4}-\d{2}-\d{2})\.md$/.exec(base);
-            if (lm && isValidDiaryDate(lm[1])) {
-              date = lm[1];
+            const legacyDate = diaryDateFromLegacyPath(datePath);
+            if (legacyDate) {
+              date = legacyDate;
               targetPath = diaryEntryPath(dir, date, time);
             } else {
               return false;
@@ -8451,7 +8493,7 @@ var BZW_diary = (() => {
           if (!date) return false;
           await this.ensureVaultParentFolder(targetPath);
           await enqueueFileTask(targetPath, async () => {
-            var _a, _b, _c, _d;
+            var _a2, _b, _c, _d;
             const serialized = serializeDiaryEntryFile({ date, time }, tags, body);
             const existing = app.vault.getAbstractFileByPath(targetPath);
             if (existing && existing.isFolder !== true) {
@@ -8464,7 +8506,7 @@ var BZW_diary = (() => {
                 alt = diaryEntryPath(dir, date, time, seq);
               }
               const shifted = await app.vault.create(alt, serialized);
-              (_b = (_a = app.metadataCache) == null ? void 0 : _a.trigger) == null ? void 0 : _b.call(_a, "changed", shifted);
+              (_b = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b.call(_a2, "changed", shifted);
               return;
             }
             const file = await app.vault.create(targetPath, serialized);
@@ -12686,11 +12728,7 @@ var BZW_diary = (() => {
   init_diary_format();
   function parseEntryFile(content, filePath) {
     const parsed = parseDiaryEntryFile(content);
-    const base = (filePath || "").replace(/\\/g, "/").split("/").pop() || "";
-    const fm = parsed.meta;
-    const m = DIARY_ENTRY_FILE_RE.exec(base);
-    const fmName = m && isValidDiaryDate(m[1]) && isValidDiaryTime(`${m[2]}:${m[3]}`) ? { date: m[1], time: `${m[2]}:${m[3]}` } : null;
-    const meta = fm != null ? fm : fmName;
+    const meta = resolveDiaryEntryMeta(filePath, parsed);
     if (!meta) return null;
     const [h = 0, min = 0] = meta.time.split(":").map(Number);
     const tags = parsed.tags.length > 0 ? parsed.tags : ["日记"];
@@ -13018,8 +13056,7 @@ ${String(review).trim()}`;
       const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
       const batchResults = await Promise.all(
         batch.map(async (file) => {
-          const m = DIARY_ENTRY_FILE_RE.exec(file.name);
-          if (!m || !isValidDiaryDate(m[1])) return [];
+          if (!diaryMetaFromEntryPath(file.name)) return [];
           const content = await vault.read(file);
           const e = parseEntryFile(content, file.path);
           return e ? [toWallEntry(e, "diary", diaryDir)] : [];
@@ -13468,9 +13505,8 @@ ${String(review).trim()}`;
     var _a, _b;
     const dirPrefix = `${DIARY_DIRECTORY}/`;
     return (((_b = (_a = getApp().vault).getMarkdownFiles) == null ? void 0 : _b.call(_a)) || []).map((f) => f.path).filter((p) => {
-      if (!p.startsWith(dirPrefix)) return false;
-      const m = DIARY_ENTRY_FILE_RE.exec(p.split("/").pop() || "");
-      return !!m && m[1] === dateStr;
+      var _a2;
+      return p.startsWith(dirPrefix) && ((_a2 = diaryMetaFromEntryPath(p)) == null ? void 0 : _a2.date) === dateStr;
     });
   }
   async function readEntryCtxInQueue(filePath) {
@@ -13502,23 +13538,6 @@ ${String(review).trim()}`;
   }
   async function withEntryFile(filePath, task) {
     return enqueueFileTask(filePath, async () => task(await readEntryCtxInQueue(filePath)));
-  }
-  async function listDateEntries(dateStr, opts) {
-    if (opts == null ? void 0 : opts.filePath) {
-      return withEntryFile(opts.filePath, ({ entry }) => entry ? [{ ...entry }] : []);
-    }
-    const out = [];
-    for (const p of listDateEntryPaths(dateStr)) {
-      try {
-        const es = await withEntryFile(p, ({ entry }) => entry ? [{ ...entry }] : []);
-        out.push(...es);
-      } catch (e) {
-        if (isDiaryReadFailure(e) || e instanceof UnparsedLineError) continue;
-        throw e;
-      }
-    }
-    out.sort((a, b) => a.timeValue - b.timeValue);
-    return out;
   }
   async function addEntry(dateStr, timeStr, tagsArray, content, opts) {
     const [hours = 0, minutes = 0] = timeStr.split(":").map(Number);
@@ -13609,7 +13628,7 @@ ${String(review).trim()}`;
     }
     return null;
   }
-  async function findDiaryEntry(filename, lineNumber = 0) {
+  async function findDiaryEntry(filename) {
     if (!filename || !filename.includes("/")) return null;
     try {
       return await withEntryFile(filename, ({ entry }) => entry ? { ...entry } : null);
@@ -13653,7 +13672,7 @@ ${String(review).trim()}`;
     const safe = getSafeManager();
     if (!safe.unlocked) throw new Error("未解锁，无法加密日记");
     const tags = [.../* @__PURE__ */ new Set([...entry.tags, ENCRYPT_TAG])];
-    const block = `# ${tags.join("/")} ${entry.time}
+    const block = `${serializeDiaryBlockHeader(tags, entry.time)}
 ${entry.content.trim()}`;
     const datePath = entry.filePath || diaryEntryPath(DIARY_DIRECTORY, entry.date, entry.time);
     const attachments = await collectAttachmentsForContent(entry.content || "", datePath);
@@ -13683,9 +13702,9 @@ ${entry.content.trim()}`;
       try {
         const plain = await safe.getDiaryEntryPlain(note.id);
         if (plain === null || plain === void 0) continue;
-        const m = DIARY_ENTRY_FILE_RE.exec(note.path.split("/").pop() || "");
-        if (!m) continue;
-        const entry = parseDiaryBlock(plain, m[1], note.id, note.path);
+        const meta = diaryMetaFromEntryPath(note.path);
+        if (!meta) continue;
+        const entry = parseDiaryBlock(plain, meta.date, note.id, note.path);
         if (entry) out.push(entry);
       } catch (e) {
       }
@@ -13695,17 +13714,12 @@ ${entry.content.trim()}`;
   function parseDiaryBlock(block, date, noteId, notePath) {
     var _a;
     const lines = block.replace(/\r\n/g, "\n").split("\n");
-    const m = (_a = lines[0]) == null ? void 0 : _a.match(/^#\s+(.+)\s+(\d{2}:\d{2})$/);
-    if (!m) return null;
-    const time = m[2];
+    const head = parseDiaryBlockHeader((_a = lines[0]) != null ? _a : "");
+    if (!head) return null;
+    const time = head.time;
     const [h, min] = time.split(":").map(Number);
     if (Number.isNaN(h) || Number.isNaN(min)) return null;
-    const tags = [];
-    for (const name of m[1].split("/")) {
-      const t = name.trim();
-      if (t && !tags.includes(t)) tags.push(t);
-    }
-    if (tags.length === 0) tags.push("日记");
+    const tags = head.tags.length ? [...head.tags] : ["日记"];
     const content = lines.slice(1).join("\n").trim();
     return {
       date,
@@ -13733,7 +13747,7 @@ ${entry.content.trim()}`;
     const note = (_b = (_a = safe.manifest) == null ? void 0 : _a.notes) == null ? void 0 : _b.find((n) => n.id === noteId);
     if (!note || note.kind !== "diary-entry") return;
     const base = note.path.split("/").pop() || "";
-    if (!DIARY_ENTRY_FILE_RE.test(base)) return;
+    if (!diaryMetaFromEntryPath(base)) return;
     const target = `${DIARY_DIRECTORY}/${base}`;
     if (target === note.path) return;
     note.path = target;
@@ -13747,11 +13761,11 @@ ${entry.content.trim()}`;
     const plain = await getSafeManager().getDiaryEntryPlain(noteId);
     if (plain === null || plain === void 0) return null;
     const lines = plain.replace(/\r\n/g, "\n").split("\n");
-    const m = (_a = lines[0]) == null ? void 0 : _a.match(/^#\s+.+\s+(\d{2}:\d{2})$/);
-    if (!m) return null;
+    const head = parseDiaryBlockHeader((_a = lines[0]) != null ? _a : "");
+    if (!head) return null;
     const kept = (newTags != null ? newTags : []).filter((t) => t !== ENCRYPT_TAG);
     const seqTags = kept.length > 0 ? kept : ["日记"];
-    return `# ${seqTags.join("/")} ${m[1]}${lines.length > 1 ? "\n" + lines.slice(1).join("\n") : ""}`;
+    return `${serializeDiaryBlockHeader(seqTags, head.time)}${lines.length > 1 ? "\n" + lines.slice(1).join("\n") : ""}`;
   }
   async function reclassifyEntry(noteId, newTags) {
     await realignRestorePath(noteId);
@@ -14337,18 +14351,8 @@ ${entry.content.trim()}`;
   init_utils();
 
   // src/diary/ui/locator.ts
-  async function buildLocatorPredicateFor(dateStr, loc) {
-    let uniqueTime = true;
-    try {
-      const entries = await listDateEntries(dateStr, { filePath: loc.filePath });
-      uniqueTime = entries.filter((e) => e.time === loc.time).length === 1;
-    } catch (e) {
-    }
-    return (e) => (
-      // loc 未带 filePath（旧定位面/兜底调用方）：不按路径过滤，行为同旧版；
-      // 带了则严格限定来源文件（D2：同刻兜底不跨文件误命中）
-      (loc.filePath ? e.filePath === loc.filePath : true) && e.time === loc.time && (uniqueTime || e.lineNumber === loc.lineNumber)
-    );
+  function buildLocatorPredicateFor(_dateStr, loc) {
+    return (e) => (!loc.filePath || e.filePath === loc.filePath) && e.time === loc.time;
   }
 
   // src/diary/ui/entry-actions.ts
@@ -14483,8 +14487,8 @@ ${entry.content.trim()}`;
     if (mask) mask.style.display = "none";
     if (popup) popup.style.display = "none";
   }
-  async function handleTagPickerSave(loc, selTagNames, isEncryptedEntry2) {
-    if (isEncryptedEntry2) {
+  async function handleTagPickerSave(loc, selTagNames, isEncryptedEntry) {
+    if (isEncryptedEntry) {
       const proceed = await openFlowDialog({
         title: "改分类",
         message: "将解密此日记并恢复为普通条目，是否继续？",
@@ -15309,7 +15313,7 @@ ${entry.content.trim()}`;
         return;
       }
       try {
-        const sourcePath = e.filename && e.filename.includes("/") ? e.filename : `${DIARY_DIRECTORY}/${e.date}.md`;
+        const sourcePath = e.filePath || e.filename || "";
         const comp = new Component();
         try {
           container.textContent = "";
@@ -16250,7 +16254,7 @@ ${entry.content.trim()}`;
         const { ensureSafeUnlocked: ensureSafeUnlocked2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
         const unlocked = await ensureSafeUnlocked2("diary");
         if (!unlocked) return;
-        const entry = await findDiaryEntry(e.filePath || e.filename || e.date, e.lineNumber || 0);
+        const entry = await findDiaryEntry(e.filePath || e.filename || e.date);
         if (!entry) {
           notice("找不到原文条目，无法加密", "error");
           return;

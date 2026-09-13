@@ -15,7 +15,7 @@
  *    目录从设置移除 → 清其名下全部条目；
  *  - 引用失效自愈：resolver/getFile 返回 null 的条目登记（onStaleRef）并清理。
  */
-import { parseDiaryEntryFile, diaryDateFromEntryPath } from '../core/diary-format';
+import { parseDiaryEntryFile, diaryDateFromEntryPath, resolveDiaryEntryMeta } from '../core/diary-format';
 
 /** 记忆入库种子（memory.ts 契约 API 入参，签名冻结） */
 export interface NoteMemorySeed {
@@ -120,14 +120,15 @@ export function noteMemoryToday(now: number): string {
   return `${dt.getFullYear()}-${p2(dt.getMonth() + 1)}-${p2(dt.getDate())}`;
 }
 
-/** 日记条目文件 → 单条种子（ADR-0130 一目一文件；frontmatter 损坏/正文空 → []） */
+/** 日记条目文件 → 单条种子（ADR-0130 一目一文件；属性损坏按题目降级；正文空 → []） */
 export function diarySeeds(path: string, content: string, date: string): NoteMemorySeed[] {
   let time: string | null = null;
   let body = '';
   try {
     const parsed = parseDiaryEntryFile(content);
-    if (!parsed.meta) return []; // 日期不可信：不产种子（对齐观察链路「不跟踪」）
-    time = parsed.meta.time;
+    const meta = resolveDiaryEntryMeta(path, parsed);
+    if (!meta) return []; // 属性与题目都不可信：不产种子（对齐观察链路「不跟踪」）
+    time = meta.time;
     body = parsed.body.trim();
   } catch {
     return []; // 解析异常按无条目（不阻塞扫描）
@@ -202,8 +203,10 @@ export class NoteMemorySync {
       if (!noteMemoryDiaryDate(path)) return content; // 非条目文件：整文返回
       try {
         const parsed = parseDiaryEntryFile(content);
-        // 定位符 = 条目时间（ADR-0130）；时间一致且有正文才命中（trim 与种子 fullText 同口径）
-        return parsed.meta && parsed.meta.time === locator && parsed.body.trim() ? parsed.body.trim() : null;
+        const meta = resolveDiaryEntryMeta(path, parsed);
+        // 定位符 = 条目时间（ADR-0130；属性损坏按题目降级）；时间一致且有正文才命中
+        //（trim 与种子 fullText 同口径）
+        return meta && meta.time === locator && parsed.body.trim() ? parsed.body.trim() : null;
       } catch {
         return content;
       }
@@ -342,16 +345,18 @@ export class NoteMemorySync {
     }
   }
 
-  /** 日记段 ref 存活判定：定位符（条目时间）与文件 frontmatter 一致且正文非空 */
+  /** 日记段 ref 存活判定：定位符（条目时间）与条目时间（属性优先、题目降级）一致且正文非空 */
   private async refSegmentAlive(ref: string): Promise<boolean> {
     const i = ref.indexOf('#');
     if (i === -1) return true;
-    const content = await this.deps.adapter.readFile(ref.slice(0, i));
+    const path = ref.slice(0, i);
+    const content = await this.deps.adapter.readFile(path);
     if (content == null) return false;
-    if (!noteMemoryDiaryDate(ref.slice(0, i))) return true;
+    if (!noteMemoryDiaryDate(path)) return true;
     try {
       const parsed = parseDiaryEntryFile(content);
-      return !!parsed.meta && parsed.meta.time === ref.slice(i + 1) && !!parsed.body.trim();
+      const meta = resolveDiaryEntryMeta(path, parsed);
+      return !!meta && meta.time === ref.slice(i + 1) && !!parsed.body.trim();
     } catch {
       return true; // 解析异常按存活（不误删）
     }

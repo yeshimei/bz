@@ -31,7 +31,7 @@ import type { MovieActionEvent } from './movie-source';
 import { buildMemoStructured, buildMemoDueScanStructured, type MemoActionEvent, type MemoDueLike } from './memo-source';
 import { generateDescription } from './description-generators';
 import { parseDiaryEntry, decideDiarySettle, DIARY_SETTLE_MS, buildDiaryTagsStructured, type DiaryEntryLike, type DiaryTagsEvent } from './diary-source';
-import { DIARY_ENTRY_FILE_RE } from '../core/diary-format';
+import { diaryDateFromEntryPath } from '../core/diary-format';
 import { noteFirstText, noteFileName, noteBodyText, parseNoteDate, letterReadonly, decideNoteSettle, NOTE_SETTLE_MS, type NoteKind } from './note-source';
 import { DIARY_DIRECTORY } from '../diary/config';
 
@@ -1665,11 +1665,9 @@ function diaryEntryKey(filePath: string, date: string, time: string): string {
   return filePath + DIARY_KEY_SEP + date + DIARY_KEY_SEP + time;
 }
 
-/** 从条目文件路径取日期（ADR-0130 契约正则 `YYYY-MM-DD HH-MM(-N)`；非条目命名返回 null——不跟踪） */
+/** 从条目文件路径取日期（ADR-0131 契约；非条目命名返回 null——不跟踪） */
 function diaryFileDate(filePath: string): string | null {
-  const base = (filePath || '').replace(/\\/g, '/').split('/').pop() || '';
-  const m = DIARY_ENTRY_FILE_RE.exec(base);
-  return m ? m[1] : null;
+  return diaryDateFromEntryPath(filePath);
 }
 
 /** 距今 offset 天日期（YYYY-MM-DD，本地时区；对齐 memoTodayStr 语义） */
@@ -1690,12 +1688,11 @@ async function buildDiaryBaseline(): Promise<void> {
   for (let offset = 0; offset <= 2; offset++) {
     const date = diaryDateStr(offset);
     for (const f of app.vault.getMarkdownFiles?.() || []) {
-      const m = DIARY_ENTRY_FILE_RE.exec((f.path || '').split('/').pop() || '');
-      if (!m || m[1] !== date) continue;
+      if (diaryDateFromEntryPath(f.path || '') !== date) continue;
       const filePath = f.path;
       let content = '';
       try { content = await app.vault.read(f as any); } catch { continue; }
-      const e = parseDiaryEntry(content);
+      const e = parseDiaryEntry(content, filePath);
       if (!e) continue;
       const tracked = diaryTracked.get(filePath) || new Map<string, { body: string; tags: string[] }>();
       tracked.set(`${date}${DIARY_KEY_SEP}${e.time}`, { body: e.body, tags: e.tags });
@@ -1748,7 +1745,7 @@ async function settleDiaryEntry(filePath: string, date: string, time: string): P
   }
   let entry: DiaryEntryLike | null = null;
   try {
-    entry = parseDiaryEntry(await appRef.vault.read(file as any));
+    entry = parseDiaryEntry(await appRef.vault.read(file as any), filePath);
   } catch {
     return; // 瞬态读失败：保留计时/状态（下轮结算或 modify 事件再推进）
   }
@@ -1814,7 +1811,7 @@ async function handleDiaryVaultActivity(file: any): Promise<void> {
   if (!date) return; // 非条目命名文件不跟踪（观察文案需要日期）
   let content = '';
   try { content = await appRef.vault.read(file as any); } catch { return; }
-  const entry = parseDiaryEntry(content);
+  const entry = parseDiaryEntry(content, filePath);
   const prev = diaryTracked.get(filePath) || new Map<string, { body: string; tags: string[] }>();
   const cur = new Map<string, { body: string; tags: string[] }>();
   if (entry) cur.set(`${date}${DIARY_KEY_SEP}${entry.time}`, { body: entry.body, tags: entry.tags });

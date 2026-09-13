@@ -152,8 +152,9 @@ describe('本周备忘录（memoWeekStats：完成/创建两项独立）', () =>
 });
 
 describe('本周日记（countDiaryThisWeek）', () => {
-  it('文件名 YYYY-MM-DD 落本周计数；上周日/非日期名忽略', () => {
-    const names = ['2026-09-02', '2026-08-31', '2026-08-30', '2026-09-06', '杂记'];
+  it('条目题目 YYMMDDHHmm 落本周计数；上周日/非条目名忽略', () => {
+    // v3：题目为纯数字简写（Obsidian basename 不含 .md，入参同样如此）
+    const names = ['2609021200', '2608310800', '2608301500', '2609062300', '杂记'];
     expect(countDiaryThisWeek(names, currentWeekRange(WED))).toBe(3);
     expect(countDiaryThisWeek([], currentWeekRange(WED))).toBe(0);
   });
@@ -218,10 +219,10 @@ describe('collectWeeklyStat（只读采集集成）', () => {
       { created: '2026-09-02 08:00:00', completed: '2026-09-03 20:00:00' },
       { created: '2026-08-29 10:00:00', completed: '2026-09-02 11:00:00' },
     ]));
-    // 日记：本周 2 条 + 上周日 1 条
-    vault.files.set('我的/日记/2026-09-01.md', '周一');
-    vault.files.set('我的/日记/2026-09-02.md', '周三');
-    vault.files.set('我的/日记/2026-08-30.md', '上周日');
+    // 日记：本周 2 条 + 上周日 1 条（题目 YYMMDDHHmm）
+    vault.files.set('我的/日记/2609010800.md', '周一');
+    vault.files.set('我的/日记/2609021200.md', '周三');
+    vault.files.set('我的/日记/2608301500.md', '上周日');
 
     const stat = await collectWeeklyStat(mockAppWithVault(vault) as any, WED);
     expect(stat.movies).toBe(1);

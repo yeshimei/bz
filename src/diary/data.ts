@@ -1,11 +1,11 @@
 /**
  * 日记本（diary）域数据层——原回忆墙升格正名（ADR-0115）
  * 聚合四类内容：日记 + 影视 + 信 + 书，统一按日期时间降序混排。
- * - 日记：`我的/日记/YYYY-MM-DD HH-MM(-N)?.md` → parseEntryFile（ADR-0130 一目一文件，filename=file.path）；
+ * - 日记：`我的/日记/YYMMDDHHmm(-N)?.md` → parseEntryFile（ADR-0130/0131 一目一文件，filename=file.path）；
  * - 影视：`我的/影视/*.md` → parseMovieFile（每文件一条，无影评/无观影日期跳过）；
  * - 信：`我的/信/*.md` → parseLetterFile（readonly 跳过）；
  * - 书：`书库/*.md` → parseBookFile（无 completionDate/readingDate 跳过；封面经 extractMedia 提取）。
- * 数据格式（ADR-0130）：条目文件，frontmatter `日期`+`类型`，契约单源 core/diary-format.ts（解析见 ./parser，自包含）。
+ * 数据格式（ADR-0130/0131）：条目文件，frontmatter `date`+`type`，契约单源 core/diary-format.ts（解析见 ./parser，自包含）。
  * 依赖方向（ADR-0002）：core ← config/state ← parser ← store ← ui ← main；本文件不碰 DOM，App 一律参数注入。
  * 自包含：不依赖 ../diary/（用户决策「回忆墙自包含，日后删除日记本域」）——config/parser/types 均在本域内。
  * 媒体 URL 走 vault API（getResourcePath / getFirstLinkpathDest）：原型里硬编码 file:// 路径在 vault 内不可播放，
@@ -13,7 +13,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { parseEntryFile, parseMovieFile, parseLetterFile, parseBookFile } from './parser';
-import { DIARY_ENTRY_FILE_RE, isValidDiaryDate } from '../core/diary-format';
+import { diaryMetaFromEntryPath } from '../core/diary-format';
 import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory } from './config';
 import type { DiaryEntry } from './types';
 
@@ -185,7 +185,7 @@ function toWallEntry(e: DiaryEntry, kind: WallEntry['kind'], dir: string): WallE
   };
 }
 
-/** 加载日记：diaryDir 下所有条目文件（ADR-0130：一目一文件，basename `YYYY-MM-DD HH-MM(-N)`；含子目录递归）。
+/** 加载日记：diaryDir 下所有条目文件（ADR-0130/0131：一目一文件，题目 `YYMMDDHHmm(-N)`；含子目录递归）。
  *  每文件一条，filename=file.path（UI 跳转/写层定位依据）。 */
 async function loadDiaryEntries(app: App, diaryDir: string): Promise<WallEntry[]> {
   const vault = app.vault;
@@ -195,8 +195,7 @@ async function loadDiaryEntries(app: App, diaryDir: string): Promise<WallEntry[]
     const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
     const batchResults = await Promise.all(
       batch.map(async (file) => {
-        const m = DIARY_ENTRY_FILE_RE.exec(file.name);
-        if (!m || !isValidDiaryDate(m[1])) return [];
+        if (!diaryMetaFromEntryPath(file.name)) return [];
         const content = await vault.read(file);
         const e = parseEntryFile(content, file.path);
         return e ? [toWallEntry(e, 'diary', diaryDir)] : [];
