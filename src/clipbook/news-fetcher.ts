@@ -42,6 +42,9 @@ export function requestUrlHttpGet(): HttpGet {
       const req = requestUrl({ url, method: 'GET', headers: { ...HEADERS, ...(headers || {}) }, throw: false }).then((resp) => {
         return resp.status >= 200 && resp.status < 300 ? resp.text : null;
       });
+      // C23：超时胜出后 req 若迟到 reject 会成为 unhandled rejection——挂空 catch 兜底
+      //（race 尚在等待时 rejection 仍由下方 await 经外层 try 捕获，行为不变）
+      req.catch(() => {});
       const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), FETCH_TIMEOUT_MS));
       return await Promise.race([req, timer]);
     } catch {
@@ -68,8 +71,10 @@ export interface FetchDiskState {
 export interface FetchStoreDeps {
   /** 读库快照；读失败返回 null（放弃本轮） */
   read: () => Promise<FetchDiskState | null>;
-  /** 合并写意图（须在串行队列内）：articles 为本轮最终全集；removeArticleKeys 声明窗口裁剪
-   *  删除（writeNewsDataMerged 是磁盘∪声明并集，不声明删除则被裁条目从磁盘复活——P1 修复）；
+  /** 合并写意图（须在串行队列内）：articles 只声明**本轮新增**条目——磁盘存量不进声明
+   *  （writeNewsDataMerged 是磁盘∪声明并集，未声明条目按磁盘保留），抓取窗口期内的并发
+   *  用户写（标读/删除/保留清理）不被旧快照回退/复活（C2）；窗口裁剪删除走 removeArticleKeys
+   *  声明（不声明则被裁条目从磁盘复活）；UP 资料/RSS 标题走按条补丁（C26）；
    *  lastFetchAt 仅在非全源失败轮声明（全失败轮不推进锚点，下次打开即重试） */
   write: (intent: NewsWriteIntent & { set: { articles: any[]; lastFetchAt?: number } }) => Promise<void>;
 }
@@ -358,25 +363,35 @@ export interface BilibiliUpResult {
   articles: any[];
   upInfo: { name?: string; avatar?: string } | null;
   rejected: boolean;
+  /** C3：列表请求失败（首页请求 null / 解析失败）——区别于风控 rejected（服务端可达） */
+  requestFailed: boolean;
 }
 
 /** 单个 UP 主动态翻页抓取（仅视频投稿；收「最近 N 条」窗口）；
- *  rejected = 接口被风控拦截（code 非 0），交上层通知更新 Cookie */
+ *  rejected = 接口被风控拦截（code 非 0），交上层通知更新 Cookie；
+ *  requestFailed = 首页列表请求失败（httpGet null / 响应解析失败），交上层计入 failedSources */
 export async function fetchBilibiliUp(uid: string, cookie: string, maxItems: number, httpGet: HttpGet): Promise<BilibiliUpResult> {
   const articles: any[] = [];
   const limit = Math.max(1, Math.floor(Number(maxItems) || 10));
   let offset = '';
   let upInfo: { name?: string; avatar?: string } | null = null;
   let rejected = false;
+  let requestFailed = false;
   const headers = cookie ? { Cookie: cookie } : undefined;
 
   // 安全翻页上限（防异常接口死循环）
   for (let page = 0; page < 50; page++) {
     const url = `${BILIBILI_API}?host_mid=${encodeURIComponent(uid)}&offset=${encodeURIComponent(offset)}&timezone_offset=-480&web_location=333.999`;
     const text = await httpGet(url, headers);
-    if (!text) break;
+    if (!text) {
+      if (page === 0) requestFailed = true; // 首页列表请求失败（后续页失败按部分成功处理）
+      break;
+    }
     let data: any;
-    try { data = JSON.parse(text); } catch { break; }
+    try { data = JSON.parse(text); } catch {
+      if (page === 0) requestFailed = true;
+      break;
+    }
     if (!data || data.code !== 0 || !data.data || !Array.isArray(data.data.items)) {
       if (data && data.code !== 0 && data.code !== undefined) rejected = true;
       break;
@@ -390,7 +405,7 @@ export async function fetchBilibiliUp(uid: string, cookie: string, maxItems: num
     offset = data.data.offset || '';
     if (!offset) break;
   }
-  return { articles, upInfo, rejected };
+  return { articles, upInfo, rejected, requestFailed };
 }
 
 /** B站未登录 Cookie 引导：GET 主页收 Set-Cookie（buvid3 等），规避 API 风控 412；尽力而为 */
@@ -417,6 +432,9 @@ export interface BilibiliFetchResult {
   perUpRejected: Record<string, boolean>;
   /** 是否需要提示用户配置 Cookie（风控拦截或匿名 Cookie 空手而归） */
   needsCookieNotice: boolean;
+  /** C3：源级列表请求失败 = 全部 UP 的列表请求都失败（含 Cookie 引导失败——主页都不可达）；
+   *  风控 rejected 不算（服务端可达，走 needsCookieNotice 提示，ADR-0128 通知收窄） */
+  requestFailed: boolean;
 }
 
 /** B站源：cookie 引导 + 逐 UP 抓「最近 N 条」窗口（不走 24h 窗口；对库去重交 runNewsFetchRound）。
@@ -425,22 +443,25 @@ export interface BilibiliFetchResult {
 export async function fetchBilibili(upUids: string[], maxItems: number, cookie: string, httpGet: HttpGet, bootstrapCookie?: () => Promise<string | null>): Promise<BilibiliFetchResult> {
   const list = upUids || [];
   if (list.length === 0) {
-    return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false };
+    return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false, requestFailed: false };
   }
   const per = Math.max(1, Math.floor(Number(maxItems) || 10));
   const configured = cookie && String(cookie).trim();
   const ck = configured || (await (bootstrapCookie || defaultBootstrapBilibiliCookie)());
   if (!ck) {
-    return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: true };
+    // C3：连 Cookie 引导主页请求都失败 = 本源零数据（计入源级请求失败；needsCookieNotice 照常提示）
+    return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: true, requestFailed: true };
   }
   const seen = new Set<string>();
   const articles: any[] = [];
   const upInfo: Record<string, { name?: string; avatar?: string }> = {};
   const perUpArticles: Record<string, any[]> = {};
   const perUpRejected: Record<string, boolean> = {};
+  let failedUps = 0;
   for (const uid of list) {
     const res = await fetchBilibiliUp(uid, ck, per, httpGet);
     perUpArticles[uid] = res.articles;
+    if (res.requestFailed) failedUps++;
     if (res.rejected) perUpRejected[uid] = true;
     for (const a of res.articles) {
       if (seen.has(a.url)) continue;
@@ -450,55 +471,62 @@ export async function fetchBilibili(upUids: string[], maxItems: number, cookie: 
     if (res.upInfo) upInfo[uid] = res.upInfo;
   }
   const needsCookieNotice = Object.keys(perUpRejected).length > 0;
-  return { articles, upInfo, perUpArticles, perUpRejected, needsCookieNotice };
+  // C3：全部 UP 的列表请求都失败 → 源级失败（传导 failedSources）；部分失败仍算源可用
+  const requestFailed = failedUps >= list.length;
+  return { articles, upInfo, perUpArticles, perUpRejected, needsCookieNotice, requestFailed };
 }
 
 // ---------- 知乎 / 果壳（照搬守护） ----------
 
-/** 知乎日报：官方 API 当天全部 stories + 逐篇 detail 正文 */
+/** 知乎日报：官方 API 当天全部 stories + 逐篇 detail 正文。
+ *  C3：列表级失败（请求 null / 解析失败）上抛——runNewsFetchRound 的 guarded 计入 failedSources，
+ *  allFailed 据此不推进 lastFetchAt（此前吞成空数组被当成功，断网轮压满档位不重试） */
 export async function fetchZhihu(httpGet: HttpGet): Promise<any[]> {
   const articles: any[] = [];
   const text = await httpGet('https://news-at.zhihu.com/api/4/news/latest');
-  if (!text) return articles;
-
+  if (!text) throw new Error('知乎日报列表请求失败');
+  let data: any;
   try {
-    const data = JSON.parse(text);
-    const list = data.stories || [];
-    const rawDate = data.date || '';
-    const formattedDate = rawDate.length === 8
-      ? `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}`
-      : rawDate;
+    data = JSON.parse(text);
+  } catch {
+    throw new Error('知乎日报列表解析失败');
+  }
+  const list = data.stories || [];
+  const rawDate = data.date || '';
+  const formattedDate = rawDate.length === 8
+    ? `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}`
+    : rawDate;
 
-    for (const item of list) {
-      const title = item.title || '';
-      const id = item.id || '';
-      const url = item.url || (id ? `https://daily.zhihu.com/story/${id}` : '');
-      if (!title || !url) continue;
+  for (const item of list) {
+    const title = item.title || '';
+    const id = item.id || '';
+    const url = item.url || (id ? `https://daily.zhihu.com/story/${id}` : '');
+    if (!title || !url) continue;
 
-      let body = '', author: string | null = null;
-      const detailText = await httpGet(`https://news-at.zhihu.com/api/4/news/${id}`);
-      if (detailText) {
-        try {
-          const detail = JSON.parse(detailText);
-          if (detail.body) body = htmlToMarkdown(detail.body);
-          if (detail.editor_name) author = detail.editor_name;
-        } catch { /* 单篇 detail 失败按无正文入库 */ }
-      }
-      articles.push({ platform: '知乎日报', title, url, author, date: formattedDate || null, body });
+    let body = '', author: string | null = null;
+    const detailText = await httpGet(`https://news-at.zhihu.com/api/4/news/${id}`);
+    if (detailText) {
+      try {
+        const detail = JSON.parse(detailText);
+        if (detail.body) body = htmlToMarkdown(detail.body);
+        if (detail.editor_name) author = detail.editor_name;
+      } catch { /* 单篇 detail 失败按无正文入库 */ }
     }
-  } catch { /* 列表失败静默，外层按失败源计数 */ }
+    articles.push({ platform: '知乎日报', title, url, author, date: formattedDate || null, body });
+  }
   return articles;
 }
 
-/** 果壳科学人：新站 API 单次拉全量，过滤最近 24h + 逐篇 INITIAL_STORE 正文（对库去重交上层） */
+/** 果壳科学人：新站 API 单次拉全量，过滤最近 24h + 逐篇 INITIAL_STORE 正文（对库去重交上层）。
+ *  C3：列表级失败（请求 null / 解析失败）上抛进 failedSources，单篇正文失败仍按无正文入库 */
 export async function fetchGuokr(httpGet: HttpGet, now: number = Date.now()): Promise<any[]> {
   const articles: any[] = [];
   const cutoff = now - WINDOW_MS;
 
   const text = await httpGet('https://www.guokr.com/beta/proxy/science_api/articles?offset=0&limit=50');
-  if (!text) return articles;
+  if (!text) throw new Error('果壳科学人列表请求失败');
   let list: any[];
-  try { list = Object.values(JSON.parse(text)); } catch { return articles; }
+  try { list = Object.values(JSON.parse(text)); } catch { throw new Error('果壳科学人列表解析失败'); }
 
   const seen = new Set<string>(); // 批内去重（API 可能返回重复数据）
   for (const item of list) {
@@ -528,16 +556,21 @@ export async function fetchGuokr(httpGet: HttpGet, now: number = Date.now()): Pr
   return articles;
 }
 
-/** RSS 源：逐 feed 拉取解析；单 feed 失败只跳过不中断 */
-export async function fetchRss(feeds: RssFeed[], httpGet: HttpGet): Promise<{ articles: any[]; perFeed: Record<string, any[]>; titleUpdates: Record<string, string> }> {
+/** RSS 源：逐 feed 拉取解析；单 feed 失败只跳过不中断。
+ *  C3：requestFailed = 全部已尝试 feed 的列表请求都失败（httpGet null）——传导 failedSources；
+ *  部分失败仍算源可用（单 feed 订阅时等同源级失败） */
+export async function fetchRss(feeds: RssFeed[], httpGet: HttpGet): Promise<{ articles: any[]; perFeed: Record<string, any[]>; titleUpdates: Record<string, string>; requestFailed: boolean }> {
   const articles: any[] = [];
   const perFeed: Record<string, any[]> = {};
   const titleUpdates: Record<string, string> = {};
+  let attempted = 0;
+  let failedRequests = 0;
   for (const feed of feeds || []) {
     const url = String((feed && feed.url) || '').trim();
     if (!url) continue;
+    attempted++;
     const xml = await httpGet(url);
-    if (!xml) continue;
+    if (!xml) { failedRequests++; continue; } // C3：列表请求失败计数（请求失败 ≠ 解析失败）
     try {
       const feedTitle = String(xml.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '')
         .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]+>/g, '').trim();
@@ -548,9 +581,9 @@ export async function fetchRss(feeds: RssFeed[], httpGet: HttpGet): Promise<{ ar
         .filter(Boolean);
       perFeed[name] = items;
       articles.push(...items);
-    } catch { /* 单 feed 解析失败跳过 */ }
+    } catch { /* 单 feed 解析失败跳过（服务端可达，不计请求失败） */ }
   }
-  return { articles, perFeed, titleUpdates };
+  return { articles, perFeed, titleUpdates, requestFailed: attempted > 0 && failedRequests === attempted };
 }
 
 // ---------- 抓取与入库（照搬守护 checkAndFetch，存储换插件合并写） ----------
@@ -591,7 +624,8 @@ export async function runNewsFetchRound(deps: RunFetchDeps): Promise<NewsFetchRe
   const biliP = sources.bilibili !== false && disk.bilibiliUps.length > 0 ? fetchBilibili(disk.bilibiliUps, disk.bilibiliMaxItems, disk.bilibiliCookie, httpGet) : null;
   const rssP = sources.rss !== false && disk.rssFeeds.length > 0 ? fetchRss(disk.rssFeeds, httpGet) : null;
 
-  // 单源抛错只记失败源不中断本轮（fetchXxx 内部已吞网络错，这里兜防御性异常）
+  // 单源抛错只记失败源不中断本轮：列表级失败已在源内上抛（C3——知乎/果壳列表请求与解析、
+  // B站/RSS 全量请求失败经 requestFailed 标志传导），这里兜其余防御性异常
   const guarded = async <T>(p: Promise<T> | null, name: string, fallback: T): Promise<T | null> => {
     if (!p) return null;
     try {
@@ -601,12 +635,16 @@ export async function runNewsFetchRound(deps: RunFetchDeps): Promise<NewsFetchRe
       return fallback;
     }
   };
-  const emptyBili: BilibiliFetchResult = { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false };
-  const emptyRss = { articles: [] as any[], perFeed: {} as Record<string, any[]>, titleUpdates: {} as Record<string, string> };
+  const emptyBili: BilibiliFetchResult = { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false, requestFailed: false };
+  const emptyRss = { articles: [] as any[], perFeed: {} as Record<string, any[]>, titleUpdates: {} as Record<string, string>, requestFailed: false };
   const guokrList = (await guarded(guokrP, '果壳科学人', [] as any[])) || [];
   const zhihuList = (await guarded(zhihuP, '知乎日报', [] as any[])) || [];
   const biliRes = await guarded(biliP, 'B站', emptyBili);
   const rssRes = await guarded(rssP, 'RSS', emptyRss);
+  // C3：源内吞掉的列表级请求失败（全 UP/全 feed 请求 null）补记进 failedSources——
+  // allFailed 检测由此活起来（此前四源吞成空数组，断网轮被当成功）
+  if (biliRes && biliRes.requestFailed) failedSources.push('B站');
+  if (rssRes && rssRes.requestFailed) failedSources.push('RSS');
 
   let newArticles = [guokrList, zhihuList, biliRes ? biliRes.articles : [], rssRes ? rssRes.articles : []]
     .flat()
@@ -618,47 +656,50 @@ export async function runNewsFetchRound(deps: RunFetchDeps): Promise<NewsFetchRe
   // B站窗口裁剪：每 UP 库内只保留最近 N 条（风控轮不裁）
   const prunedUrls = biliRes ? pruneBilibiliWindow(existing, biliRes.perUpArticles, biliRes.perUpRejected, biliRes.upInfo) : [];
   const prunedSet = new Set(prunedUrls);
-  let remaining = prunedUrls.length > 0 ? existing.filter((a) => !prunedSet.has(a.url)) : existing;
+  // 裁后存量只作 RSS 裁剪的口径池用（C2：不再进写声明——磁盘存量由合并写按磁盘保留）
+  const afterBiliPrune = prunedUrls.length > 0 ? existing.filter((a) => !prunedSet.has(a.url)) : existing;
 
   // RSS 窗口裁剪：每 feed 平台库内只保留最近 30 条
-  const rssPrunedUrls = rssRes ? capRssWindow([...remaining, ...newArticles], rssRes.perFeed, RSS_MAX_PER_FEED) : [];
+  const rssPrunedUrls = rssRes ? capRssWindow([...afterBiliPrune, ...newArticles], rssRes.perFeed, RSS_MAX_PER_FEED) : [];
   if (rssPrunedUrls.length > 0) {
     const rssPrunedSet = new Set(rssPrunedUrls);
-    remaining = remaining.filter((a) => !rssPrunedSet.has(a.url));
     newArticles = newArticles.filter((a) => !rssPrunedSet.has(a.url));
   }
 
-  // 缺失 title 的 feed 用 feed 自带标题回填
-  const rssTitleUpdates = rssRes && Object.keys(rssRes.titleUpdates).length > 0
-    ? disk.rssFeeds.map((f) => (rssRes.titleUpdates[f.url] ? { ...f, title: rssRes.titleUpdates[f.url] } : f))
-    : undefined;
+  // 缺失 title 的 feed 用 feed 自带标题回填（C26：按条补丁声明，不用旧快照拼整段 rssFeeds）
+  const rssTitlePatches = rssRes && Object.keys(rssRes.titleUpdates).length > 0 ? rssRes.titleUpdates : undefined;
 
   const fetchedAt = localDatetime(now());
   for (const a of newArticles) a.fetchedAt = fetchedAt;
 
-  // 全部已尝试源失败 → 不推进 lastFetchAt（下次打开即重试，不等满档位）
+  // 全部已尝试源失败 → 不推进 lastFetchAt（下次打开即重试，不等满档位；C3 后检测真正生效）
   const attempted = [guokrP, zhihuP, biliP, rssP].filter((p) => p !== null).length;
   const allFailed = attempted > 0 && failedSources.length >= attempted;
 
-  const finalArticles = [...remaining, ...newArticles];
-
-  // 窗口裁剪走 removeArticleKeys 显式删除（合并写为磁盘∪声明并集，只换 articles 会复活被裁条目）：
-  // 口径 = 磁盘有而本轮终集没有的 url 一律声明删除（覆盖 B站/RSS 两套窗口裁剪）
-  const finalUrls = new Set(finalArticles.map((a) => a.url));
-  const removeArticleKeys = existing
-    .filter((a) => a && a.url && !finalUrls.has(a.url))
-    .map((a) => articleKeyOf(a)); // removeArticleKeys 口径 = articleKeyOf 键（news-data 合并写按此匹配）
+  // C2：抓取写只声明本轮新增 articles + 窗口裁剪删除意图——合并写为磁盘∪声明并集，
+  // 未声明的磁盘条目按磁盘保留（窗口期内用户的标读/删除/保留清理不被旧快照回退/复活）。
+  // 窗口裁剪口径 = B站/RSS 两套裁剪判出的待裁 url，走 removeArticleKeys 显式删除
+  //（不声明删除则被裁条目从磁盘复活——P1 同源病灶）
+  const prunedUrlSet = new Set([...prunedUrls, ...rssPrunedUrls]);
+  const removeArticleKeys: string[] = [];
+  const seenRemoveKeys = new Set<string>();
+  for (const a of existing) {
+    if (!a || !a.url || !prunedUrlSet.has(a.url)) continue;
+    const k = articleKeyOf(a); // removeArticleKeys 口径 = articleKeyOf 键（news-data 合并写按此匹配）
+    if (seenRemoveKeys.has(k)) continue;
+    seenRemoveKeys.add(k);
+    removeArticleKeys.push(k);
+  }
 
   await deps.store.write({
     set: {
-      articles: finalArticles,
-      // UP 主资料与磁盘存量合并（段级合并写按声明段整段覆盖）
-      ...(biliRes && Object.keys(biliRes.upInfo).length > 0
-        ? { bilibiliUpInfo: { ...disk.bilibiliUpInfo, ...biliRes.upInfo } }
-        : {}),
-      ...(rssTitleUpdates ? { rssFeeds: rssTitleUpdates } : {}),
+      articles: newArticles,
       ...(allFailed ? {} : { lastFetchAt: now() }),
     },
+    // C26：UP 主资料按条补丁（只声明本轮 uid），不用旧快照拼整段——窗口期内被移除的
+    // UP 资料不再被旧快照复活为本轮没抓到的孤儿条目
+    ...(biliRes && Object.keys(biliRes.upInfo).length > 0 ? { patchBilibiliUpInfo: biliRes.upInfo } : {}),
+    ...(rssTitlePatches ? { patchRssFeedTitles: rssTitlePatches } : {}),
     ...(removeArticleKeys.length > 0 ? { removeArticleKeys } : {}),
   });
 
