@@ -26,6 +26,10 @@
 - **设置**（影院设置组新增「数据抓取」组）：ApiZero Key（text，默认空）、豆瓣 Cookie（text，默认空，可选）。key 存 data.json（随库同步），**不进仓库**；部署时由会话直接写入 vault data.json。
 - **spawn 链退役**：插件不再 spawn；全局包 `@jwbz/obsidian-douban-poster` 与 `tools/obsidian-douban-poster/` 留存（手动 CLI 仍可用，对齐 ADR-0128 news 先例）；ADR-0113 标注执行层被本决策取代。
 
+## 修订（2026-09-13，ApiZero 字段扩展）
+
+- 用户发现 ApiZero 返回 16 字段未被吃满，拍板三扩：**上映日期←year**（仅年份，缺失才填，与存量 YYYY-MM-DD 混排有意接受）、**季集←episodes**（仅 `is_tv=true` 剧集且缺失才填——季集是观影报告统计源字段，此前 487/677 条缺失）、**热门短评←short_comment**（新增 frontmatter 字段，缺失才填）。语言/又名/IMDb/简介四字段维持退役不变。历史存量不回改，全库回填由会话一次性执行。
+
 ## Consequences
 
 - 移动端影院抓取首次可用（新片即抓，不再等 PC 补抓）。
