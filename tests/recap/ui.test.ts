@@ -30,9 +30,6 @@ import { H } from '../../src/recap/state';
 import { DIARY_ENTRY_FILE_RE, parseDiaryEntryFile } from '../../src/core/diary-format';
 import { setDiaryDataMap } from '../../src/diary/store';
 
-const mockedCreateAI = vi.mocked(createAI);
-const mockedGetProvider = vi.mocked(getAIProvider);
-
 /** 当天「日记目录下条目文件」枚举与「今日回顾」条目文件定位（ADR-0130 一目一文件） */
 function dayFiles(vault: MockVault): string[] {
   return [...vault.files.keys()].filter((p) => {

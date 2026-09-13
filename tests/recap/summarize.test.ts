@@ -162,9 +162,9 @@ describe('sanitizeSummaryText / buildEntryContent / isRecapEntry', () => {
   it('标记识别与去除（复制动作取去标记的可读文本）', () => {
     const content = buildEntryContent('正文', DATA.summary, EMPTY_FAILED, { withNumbers: false });
     const parsed = parseDiaryEntryFile(serializeDiaryEntryFile({ date: '2026-09-04', time: '12:00' }, ['日记'], content));
-    const entry = { content: parsed.body, tags: ['日记'] } as never;
+    const entry: any = { content: parsed.body, tags: ['日记'] };
     expect(isRecapEntry(entry)).toBe(true);
-    expect(isRecapEntry({ ...entry, content: '普通日记' } as never)).toBe(false);
+    expect(isRecapEntry({ ...entry, content: '普通日记' })).toBe(false);
     expect(entryTextWithoutMarker(content)).toBe('正文');
   });
 });
