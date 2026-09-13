@@ -169,6 +169,9 @@ describe('豆瓣抓取队列（douban-queue，ADR-0129 执行器=插件内 fetch
 
     expect(hasNotice(/豆瓣信息获取失败/)).toBe(true);
     expect(getNoticeMessages().some((m) => m.includes('小众片A') && m.includes('小众片B'))).toBe(true);
+    // C5：重开面板 sweep 会被会话去重拦下、不会重试——文案如实指向重启重载
+    expect(getNoticeMessages().some((m) => m.includes('重启 Obsidian（重载插件）后会自动重试'))).toBe(true);
+    expect(getNoticeMessages().some((m) => m.includes('重开面板会自动重试'))).toBe(false);
   });
 
   it('风控失败单独聚合：文案含「豆瓣风控」且与一般失败分开', async () => {
@@ -189,6 +192,8 @@ describe('豆瓣抓取队列（douban-queue，ADR-0129 执行器=插件内 fetch
     expect(hasNotice(/豆瓣信息获取失败/)).toBe(true);
     expect(getNoticeMessages().some((m) => m.includes('风控片') && m.includes('豆瓣风控'))).toBe(true);
     expect(getNoticeMessages().some((m) => m.includes('普通失败片') && m.includes('豆瓣风控'))).toBe(false);
+    // C5：风控文案同步更正（重开面板不会重试，重启重载才会）
+    expect(getNoticeMessages().some((m) => m.includes('豆瓣风控') && m.includes('重启 Obsidian（重载插件）后会自动重试'))).toBe(true);
   });
 
   it('移动端启用（ADR-0129）：无 child_process 环境照常入队执行', async () => {
@@ -232,6 +237,41 @@ describe('豆瓣抓取队列（douban-queue，ADR-0129 执行器=插件内 fetch
     expect(isFetching(path)).toBe(true);
     await vi.advanceTimersByTimeAsync(FETCH_TIMEOUT_MS + 30_000 + 1);
     expect(isFetching(path)).toBe(false);
+  });
+
+  it('C7：长队尾条目 loading 不提前过期（未开抓放宽时限；开抓后回归单条时限）', async () => {
+    vi.useFakeTimers();
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    for (let i = 0; i < 20; i++) {
+      vault.files.set(`我的/影视/《片${i}》.md`, '---\ntags: [电影]\n评分: 8\n---');
+    }
+    M.appRef = app;
+    rebuildItems(app);
+    const lastPath = M.items[M.items.length - 1].file!.path;
+    const startedPaths: string[] = [];
+    configureFetchQueue({
+      gapMs: 15000, // 真实间隔：20 条队尾要等 ~4.5min 才开抓
+      refreshDelayMs: 0,
+      fetch: async (file) => {
+        startedPaths.push(file.path);
+        if (file.path === lastPath) return new Promise<DoubanFetchOutcome>(() => {}); // 尾条目悬挂
+        return okOutcome();
+      },
+    });
+
+    sweepDoubanFetch(app);
+    // 推进 250s（已超单条 3min+30s 时限）：尾条目仍在队列未开抓，loading 不应消失
+    await vi.advanceTimersByTimeAsync(250_000);
+    expect(startedPaths).not.toContain(lastPath);
+    expect(isFetching(lastPath)).toBe(true); // 修复前：入队时刻打点已过期 → false
+    // 推进到尾条目真正开抓（≈300s），打点已刷新
+    await vi.advanceTimersByTimeAsync(55_000);
+    expect(startedPaths).toContain(lastPath);
+    expect(isFetching(lastPath)).toBe(true);
+    // 开抓后再推 3.5min → 单条时限过期（执行器挂死 loading 也不永转）
+    await vi.advanceTimersByTimeAsync(FETCH_TIMEOUT_MS + 30_000 + 1);
+    expect(isFetching(lastPath)).toBe(false);
   });
 
   it('单条硬超时：执行器悬挂超过 FETCH_TIMEOUT_MS 按失败收（Promise.race 兜底）', async () => {
@@ -341,5 +381,15 @@ describe('G8：删除影片出队豆瓣抓取队列', () => {
     await settle();
     expect(fetched.length).toBe(1); // 只有甲被抓
     expect(getNoticeMessages().join('\n')).not.toContain('乙');
+  });
+
+  it('C10：删除影片清除会话去重标记，同名重建可再入队补抓', async () => {
+    const vault = new MockVault();
+    const [a] = seedTwo(vault);
+    configureFetchQueue({ ...TEST_HOOKS, fetch: async () => okOutcome() });
+    expect(enqueueDoubanFetch(a.file!, '甲')).toBe(true);
+    dequeueDoubanFetch(a.file!.path); // 删除（出队 + cancelled + attempted 清除）
+    // 同名重建（路径相同）再入队：修复前 attempted 残留 → 永不补抓
+    expect(enqueueDoubanFetch(a.file!, '甲')).toBe(true);
   });
 });

@@ -33,12 +33,16 @@ export type FetchNote = (file: TFile, name: string) => Promise<DoubanFetchOutcom
 const queue: QueueEntry[] = [];
 /** 卡片 loading 驱动：抓取中的笔记路径 → 入队时刻（时限兜底用，见 isFetching） */
 const pending = new Map<string, number>();
+/** C7：路径 → 入队时刻队列中的前方条目数（快照）——仍在队列未开抓的条目按
+ *  「入队时刻 + 快照 × 间隔 + 单条超时 + 余量」放宽 loading 时限；开抓（出队）即清除，
+ *  此后回归单条时限。快照不随中途出队收缩（偏保守，loading 至多多挂片刻，无害） */
+const waitAhead = new Map<string, number>();
 /** 会话内去重：已入队/已处理过的路径，同会话不重复补抓 */
 const attempted = new Set<string>();
 /** G8：已删除影片的取消集合——正在抓取时影片被删，完成后不再记失败 */
 const cancelled = new Set<string>();
 const failedNames: string[] = [];
-/** 风控失败单独聚合（文案区分：等下轮自动重试，非数据缺失） */
+/** 风控失败单独聚合（文案区分：重启 Obsidian 重载插件后随 sweep 自动重试，非数据缺失） */
 let blockedNames: string[] = [];
 let pumping = false;
 /** 测试注入 */
@@ -49,29 +53,24 @@ let refreshDelayMs = 1500;
 
 // ---------- requestUrl 适配（生产默认 HTTP 通道） ----------
 
-/** 带 15s 超时的 requestUrl GET；非 2xx → null（风控/404 统一 null，由调用方判形态） */
+/** 带 15s 超时的 requestUrl GET；非 2xx / 超时 → null（由调用方判形态）；
+ *  网络异常向上抛（审查 C6：吞成 null 会被 searchLooksBlocked 误判为风控拦截） */
 async function httpGet(url: string, headers?: Record<string, string>): Promise<string | null> {
-  try {
-    const req = requestUrl({ url, method: 'GET', headers, throw: false }).then((resp) => {
-      return resp.status >= 200 && resp.status < 300 ? resp.text : null;
-    });
-    const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), HTTP_TIMEOUT_MS));
-    return await Promise.race([req, timer]);
-  } catch {
-    return null;
-  }
+  const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), HTTP_TIMEOUT_MS));
+  const req = requestUrl({ url, method: 'GET', headers, throw: false }).then((resp) => {
+    return resp.status >= 200 && resp.status < 300 ? resp.text : null;
+  });
+  req.catch(() => {}); // race 选中 timer 时消化 rejection，防 unhandled
+  return await Promise.race([req, timer]);
 }
 
 async function downloadBinary(url: string, headers?: Record<string, string>): Promise<ArrayBuffer | null> {
-  try {
-    const req = requestUrl({ url, method: 'GET', headers, throw: false }).then((resp) => {
-      return resp.status >= 200 && resp.status < 300 ? resp.arrayBuffer : null;
-    });
-    const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), HTTP_TIMEOUT_MS * 2));
-    return await Promise.race([req, timer]);
-  } catch {
-    return null;
-  }
+  const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), HTTP_TIMEOUT_MS * 2));
+  const req = requestUrl({ url, method: 'GET', headers, throw: false }).then((resp) => {
+    return resp.status >= 200 && resp.status < 300 ? resp.arrayBuffer : null;
+  });
+  req.catch(() => {}); // 同上
+  return await Promise.race([req, timer]);
 }
 
 /** 从插件设置读抓取配置（ApiZero Key / 豆瓣 Cookie，随库同步移动端） */
@@ -106,12 +105,15 @@ export function configureFetchQueue(hooks: {
 }
 
 /** 卡片 loading 查询：该笔记是否在抓取中。
- *  时限兜底：超过「单条超时 + 余量」的 pending 记过期——执行器挂死时 loading 也不永转 */
+ *  时限兜底：开抓后超过「单条超时 + 余量」的 pending 记过期——执行器挂死时 loading 也不永转。
+ *  仍在队列未开抓的条目放宽为「入队时刻 + 入队时前方条目数 × 间隔 + 单条超时 + 余量」
+ *  （审查 C7：长队尾条目按入队时刻的单条时限会在开抓前就过期、spinner 提前消失） */
 export function isFetching(path: string | null | undefined): boolean {
   if (!path) return false;
   const at = pending.get(path);
   if (!at) return false;
-  return Date.now() - at < FETCH_TIMEOUT_MS + 30_000;
+  const ahead = waitAhead.get(path) ?? 0;
+  return Date.now() - at < ahead * gapMs + FETCH_TIMEOUT_MS + 30_000;
 }
 
 /** 入队（会话内去重）；全平台启用（ADR-0129：requestUrl 移动端可用）。返回是否真入队 */
@@ -121,19 +123,23 @@ export function enqueueDoubanFetch(file: TFile | null, name: string): boolean {
   if (attempted.has(key)) return false;
   attempted.add(key);
   pending.set(key, Date.now());
+  waitAhead.set(key, queue.length); // push 前长度 = 前方条目数（快照，见 isFetching C7）
   queue.push({ file, name });
   void pump();
   return true;
 }
 
 /** G8：删除影片时出队——未开始的条目移出队列、loading 撤销；正在抓取的条目记入取消集合，
- *  完成后不再聚合计入失败通知（文件已删，「重启后会自动重试」的文案对它不成立） */
+ *  完成后不再聚合计入失败通知（文件已删，「重启后会自动重试」的文案对它不成立）。
+ *  同时清除会话去重标记（审查 C10）：删除后同名重建的影片允许重新入队补抓 */
 export function dequeueDoubanFetch(path: string | null | undefined): void {
   if (!path) return;
   const at = queue.findIndex((e) => e.file.path === path);
   if (at >= 0) queue.splice(at, 1);
   pending.delete(path);
+  waitAhead.delete(path);
   cancelled.add(path);
+  attempted.delete(path);
 }
 
 /** 面板打开扫描：未齐条目（缺海报或缺豆瓣链接）入队补抓；有新增即触发一次渲染（loading 首帧可见） */
@@ -175,10 +181,15 @@ async function pump(): Promise<void> {
     let first = true;
     while (queue.length > 0) {
       const entry = queue.shift()!;
+      // C7：出队即刷新打点并清除队列等待预算——loading 时限从「真正开抓」起算，
+      // 长队尾条目不再按入队时刻提前过期
+      pending.set(entry.file.path, Date.now());
+      waitAhead.delete(entry.file.path);
       if (!first) await sleep(gapMs);
       first = false;
       const r = await runOne(entry);
       pending.delete(entry.file.path);
+      waitAhead.delete(entry.file.path);
       // G8：已删除影片的条目完成后不记失败（取消集合消费后即清，防集合增长）
       if (cancelled.delete(entry.file.path)) {
         refreshAfterFetch();
@@ -193,13 +204,14 @@ async function pump(): Promise<void> {
   } finally {
     pumping = false;
   }
-  // 失败聚合通知：风控与一般失败分开文案（风控等下轮自动重试，非数据缺失）
+  // 失败聚合通知：风控与一般失败分开文案。
+  //  会话去重只在插件卸载时重置，重开面板 sweep 会被拦下、不会重试（C5：文案如实）
   if (blockedNames.length > 0) {
-    notice(`豆瓣风控拦截，以下影片本轮未抓到：${blockedNames.join('、')}（重开面板会自动重试）`, 'error');
+    notice(`豆瓣风控拦截，以下影片本轮未抓到：${blockedNames.join('、')}（重启 Obsidian（重载插件）后会自动重试）`, 'error');
     blockedNames = [];
   }
   if (failedNames.length > 0) {
-    notice(`以下影片豆瓣信息获取失败：${failedNames.join('、')}（重开面板会自动重试）`, 'error');
+    notice(`以下影片豆瓣信息获取失败：${failedNames.join('、')}（重启 Obsidian（重载插件）后会自动重试）`, 'error');
     failedNames.length = 0;
   }
 }
@@ -221,6 +233,7 @@ function refreshAfterFetch(): void {
 export function shutdownDoubanQueue(): void {
   queue.length = 0;
   pending.clear();
+  waitAhead.clear();
   attempted.clear();
   cancelled.clear();
   failedNames.length = 0;
