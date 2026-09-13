@@ -53,7 +53,7 @@ export interface NewsData {
   sources: NewsSources;
   /** RSS 订阅列表（ADR-0121） */
   rssFeeds: RssFeed[];
-  /** 最近自动抓取时间（epoch ms，issue 302 / ADR-0128：插件内抓取的间隔判定锚点） */
+  /** 最近抓取时间（epoch ms，issue 302 / ADR-0128：插件内抓取的间隔判定锚点；全部源失败轮不推进，防失败后等满档位才重试） */
   lastFetchAt: number;
   /** 抓取间隔档位（分钟，合法 30/60/120/360，issue 302 / ADR-0128） */
   fetchIntervalMin: number;
@@ -133,10 +133,14 @@ export function parseBilibiliCookie(raw: unknown): string {
   return typeof raw === 'string' ? raw.trim() : '';
 }
 
-/** 纯函数：抓取间隔档位容错归一（合法 30/60/120/360，其余回退 30；issue 302 / ADR-0128） */
+/** 抓取间隔合法档位（分钟，ADR-0128 用户拍板四档，下限 30）——单源定义 */
+export const FETCH_INTERVAL_STEPS = [30, 60, 120, 360];
+export const DEFAULT_FETCH_INTERVAL_MIN = 30;
+
+/** 纯函数：抓取间隔档位容错归一（合法档位外一律回退 30；issue 302 / ADR-0128） */
 export function normalizeFetchIntervalMin(raw: unknown): number {
   const n = Math.floor(Number(raw));
-  return [30, 60, 120, 360].includes(n) ? n : 30;
+  return FETCH_INTERVAL_STEPS.includes(n) ? n : DEFAULT_FETCH_INTERVAL_MIN;
 }
 
 /** 纯函数：旧纯数组 → 四段包裹（articles 原样，stats 默认，名单空，源全开） */
