@@ -154,12 +154,17 @@ const dateCount = new Map();
 for (const f of dayFiles) dateCount.set(f.date, (dateCount.get(f.date) || 0) + 1);
 
 const plans = [];   // { date, rel, entries:[{time,tags,body,targetRel}] }
-const manual = [];  // { rel, unparsed }
+const manual = [];  // { rel, unparsed }（有未解析行：不拆，防丢行）
+const emptyFiles = []; // 空文件（无可解析条目且无未解析行）：无内容可拆，apply 时直接归档
 for (const f of dayFiles) {
   const content = fs.readFileSync(f.full, 'utf8');
   const { entries, unparsed } = parseDayFile(content);
-  if (unparsed > 0 || entries.length === 0) {
-    manual.push({ rel: f.rel, unparsed, empty: entries.length === 0 });
+  if (unparsed > 0) {
+    manual.push({ rel: f.rel, unparsed });
+    continue;
+  }
+  if (entries.length === 0) {
+    emptyFiles.push(f.rel);
     continue;
   }
   plans.push({ ...f, content, entries });
@@ -259,12 +264,17 @@ if (APPLY) {
       created.push(e.targetRel);
     }
   }
-  // 归档原日期文件
+  // 归档原日期文件（拆分成功的 + 空文件——无内容可拆，一并归档收口）
   fs.mkdirSync(p(ARCHIVE_DIR), { recursive: true });
-  for (const plan of plans) {
+  for (const plan of [...plans]) {
     const dest = p(ARCHIVE_DIR, `${plan.date}.md`);
     if (fs.existsSync(dest)) throw new Error(`归档目标已存在，拒绝覆盖: 归档/日记/${plan.date}.md`);
     fs.renameSync(plan.full, dest);
+  }
+  for (const rel of emptyFiles) {
+    const dest = p(ARCHIVE_DIR, rel);
+    if (fs.existsSync(dest)) throw new Error(`归档目标已存在，拒绝覆盖: 归档/日记/${rel}`);
+    fs.renameSync(p(DIARY_DIR, rel), dest);
   }
 }
 
@@ -286,15 +296,22 @@ report.push(`|---|---|`);
 report.push(`| 日期文件（待拆） | ${dayFiles.length} |`);
 report.push(`| 拆出条目 | ${plans.reduce((n, pl) => n + pl.entries.length, 0)} |`);
 report.push(`| 已是条目文件（跳过） | ${entryFiles.length} |`);
-report.push(`| 需人工处理（未解析行/空文件） | ${manual.length} |`);
+report.push(`| 空文件（直接归档） | ${emptyFiles.length} |`);
+report.push(`| 需人工处理（未解析行，不拆） | ${manual.length} |`);
 report.push(`| 非日期命名（不动） | ${otherFiles.length} |`);
 report.push(`| smartcat 记忆引用重写 | ${memoryCount} |`);
 report.push(`| smartcat 备份 | ${memoryBackup ? 'smartcat-memory.json.bak-diary-split' : '（dry-run 不写）'} |`);
 report.push('');
-if (manual.length) {
-  report.push('## 需人工处理（不拆，防丢行）');
+if (emptyFiles.length) {
+  report.push('## 空文件（无可解析条目、无未解析行——apply 时直接归档）');
   report.push('');
-  for (const m of manual) report.push(`- \`${m.rel}\`：${m.empty ? '无可解析条目' : `${m.unparsed} 行未解析`}`);
+  for (const rel of emptyFiles) report.push(`- \`${rel}\``);
+  report.push('');
+}
+if (manual.length) {
+  report.push('## 需人工处理（有未解析行，不拆防丢行）');
+  report.push('');
+  for (const m of manual) report.push(`- \`${m.rel}\`：${m.unparsed} 行未解析`);
   report.push('');
 }
 report.push('## 拆分明细');
