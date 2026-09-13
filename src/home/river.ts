@@ -16,7 +16,8 @@
  *  - 计数复用各域既有口径：cinema 评分三分（同 snapshot）、bookshelf md+EPUB 状态三分
  *    （同 bookshelf 域）、review 到期/逾期（同 snapshot reviewApp.loadItems）、
  *    clipping 未读 = news.json !read 计数、favorites/belongings 同 snapshot；
- *  - 日记连击：日记目录「YYYY-MM-DD.md」从今天往回连续存在的天数（今天未写不断签）。
+ *  - 日记连击：日记目录「YYYY-MM-DD HH-MM(-N).md」条目文件名日期前缀，从今天往回连续存在的天数
+ *    （今天未写不断签；ADR-0130 一目一文件口径）。
  */
 import type { App, TFile } from 'obsidian';
 import { collectRecap } from '../recap/aggregate';
@@ -178,7 +179,15 @@ async function collectFocusing(): Promise<boolean> {
   }
 }
 
-/** 日记总数（目录前缀递归 md 数，含子目录）+ 写作连击（今天未写不算断） */
+/** 某日期是否已有日记条目（ADR-0130：目录下条目文件名日期前缀 `YYYY-MM-DD HH-MM(-N)` 任一命中） */
+function hasDiaryDay(app: App, dir: string, date: string): boolean {
+  const re = new RegExp('^' + date + ' \\d{2}-\\d{2}(-\\d+)?\\.md$');
+  return app.vault
+    .getMarkdownFiles()
+    .some((f) => f.path.startsWith(dir + '/') && re.test(f.path.split('/').pop() || ''));
+}
+
+/** 日记总数（目录前缀 md 数，含子目录）+ 写作连击（今天未写不算断） */
 function collectDiary(app: App, now: number, c: RiverCounts): RiverStreak {
   const dir = settingDir(['diaryDirectory'], '我的/日记');
   try {
@@ -186,10 +195,10 @@ function collectDiary(app: App, now: number, c: RiverCounts): RiverStreak {
   } catch {
     /* 目录读取失败：总数留 0 */
   }
-  const writtenToday = fileExists(app, `${dir}/${dateStrOf(now)}.md`);
+  const writtenToday = hasDiaryDay(app, dir, dateStrOf(now));
   let streak = 0;
   // 今天已写从今天起算；未写从昨天起算（连击不断签），再往回数连续日期
-  for (let t = writtenToday ? now : now - DAY_MS; fileExists(app, `${dir}/${dateStrOf(t)}.md`); t -= DAY_MS) {
+  for (let t = writtenToday ? now : now - DAY_MS; hasDiaryDay(app, dir, dateStrOf(t)); t -= DAY_MS) {
     streak++;
   }
   return { diaryStreak: streak, diaryWrittenToday: writtenToday };
