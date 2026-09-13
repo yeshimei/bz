@@ -11,7 +11,8 @@
  */
 import { requestUrl } from 'obsidian';
 import { notice } from '../core/notice';
-import { readNewsData, writeNewsDataMerged, normalizeFetchIntervalMin, type NewsSources, type RssFeed } from './news-data';
+import { readNewsData, writeNewsDataMerged, normalizeFetchIntervalMin, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN, type NewsSources, type NewsWriteIntent, type RssFeed } from './news-data';
+import { articleKeyOf } from './constants';
 import { enqueueNewsWrite } from './write-queue';
 
 // ---------- 常量（对齐守护） ----------
@@ -27,9 +28,8 @@ const HEADERS: Record<string, string> = {
 const BILIBILI_API = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space';
 const BILIBILI_HOME = 'https://www.bilibili.com/';
 
-/** 抓取间隔合法档位（分钟，ADR-0128 用户拍板四档，下限 30）；归一逻辑单源在 news-data */
-export const FETCH_INTERVAL_STEPS = [30, 60, 120, 360];
-export const DEFAULT_FETCH_INTERVAL_MIN = 30;
+// 抓取间隔档位/归一单源在 news-data（FETCH_INTERVAL_STEPS / normalizeFetchIntervalMin），此处按需转出
+export { FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN };
 
 // ---------- HTTP 通道 ----------
 
@@ -68,8 +68,10 @@ export interface FetchDiskState {
 export interface FetchStoreDeps {
   /** 读库快照；读失败返回 null（放弃本轮） */
   read: () => Promise<FetchDiskState | null>;
-  /** 段级合并写（须在串行队列内）：articles 为本轮最终全集，其余按声明覆盖 */
-  write: (set: { articles: any[]; bilibiliUpInfo?: Record<string, { name?: string; avatar?: string }>; rssFeeds?: RssFeed[]; lastFetchAt: number }) => Promise<void>;
+  /** 合并写意图（须在串行队列内）：articles 为本轮最终全集；removeArticleKeys 声明窗口裁剪
+   *  删除（writeNewsDataMerged 是磁盘∪声明并集，不声明删除则被裁条目从磁盘复活——P1 修复）；
+   *  lastFetchAt 仅在非全源失败轮声明（全失败轮不推进锚点，下次打开即重试） */
+  write: (intent: NewsWriteIntent & { set: { articles: any[]; lastFetchAt?: number } }) => Promise<void>;
 }
 
 /** 生产存储适配：readNewsData / writeNewsDataMerged（串行队列） */
@@ -87,12 +89,12 @@ export function defaultFetchStore(): FetchStoreDeps {
         bilibiliCookie: d.bilibiliCookie,
         bilibiliUpInfo: { ...d.bilibiliUpInfo },
         rssFeeds: d.rssFeeds.map((f) => ({ ...f })),
-        lastFetchAt: (d as any).lastFetchAt ?? 0,
-        fetchIntervalMin: (d as any).fetchIntervalMin ?? DEFAULT_FETCH_INTERVAL_MIN,
+        lastFetchAt: d.lastFetchAt ?? 0,
+        fetchIntervalMin: d.fetchIntervalMin ?? DEFAULT_FETCH_INTERVAL_MIN,
       };
     },
-    write: (set) => enqueueNewsWrite(async () => {
-      await writeNewsDataMerged({ set: set as any });
+    write: (intent) => enqueueNewsWrite(async () => {
+      await writeNewsDataMerged(intent);
     }),
   };
 }
@@ -418,7 +420,8 @@ export interface BilibiliFetchResult {
 }
 
 /** B站源：cookie 引导 + 逐 UP 抓「最近 N 条」窗口（不走 24h 窗口；对库去重交 runNewsFetchRound）。
- *  bootstrapCookie 缺省走 requestUrl 引导（测试注入 fake） */
+ *  needsCookieNotice 仅风控拦截（rejected）或 cookie 引导失败为真——匿名 cookie 正常抓到 0 条
+ *  与「UP 没发新动态」同貌，不误报（ADR-0128 通知收窄）。bootstrapCookie 缺省走 requestUrl（测试注入 fake） */
 export async function fetchBilibili(upUids: string[], maxItems: number, cookie: string, httpGet: HttpGet, bootstrapCookie?: () => Promise<string | null>): Promise<BilibiliFetchResult> {
   const list = upUids || [];
   if (list.length === 0) {
@@ -446,21 +449,8 @@ export async function fetchBilibili(upUids: string[], maxItems: number, cookie: 
     }
     if (res.upInfo) upInfo[uid] = res.upInfo;
   }
-  const needsCookieNotice = Object.keys(perUpRejected).length > 0
-    || (articles.length === 0 && !configured);
+  const needsCookieNotice = Object.keys(perUpRejected).length > 0;
   return { articles, upInfo, perUpArticles, perUpRejected, needsCookieNotice };
-}
-
-/** requestUrl 版 Set-Cookie 捕获（headers 为小写键对象，多枚 set-cookie 可能逗号拼接） */
-function bootstrapBilibiliCookieViaRequestUrl(httpGet: HttpGet) {
-  return async (url: string, capture: (status: number, headers: Record<string, string>) => string | null): Promise<string | null> => {
-    try {
-      const resp = await requestUrl({ url, method: 'GET', headers: HEADERS, throw: false });
-      return capture(resp.status, (resp as any).headers || {});
-    } catch {
-      return null;
-    }
-  };
 }
 
 // ---------- 知乎 / 果壳（照搬守护） ----------
@@ -597,7 +587,8 @@ export async function runNewsFetchRound(deps: RunFetchDeps): Promise<NewsFetchRe
 
   const guokrP = sources.guokr !== false ? fetchGuokr(httpGet, now()) : null;
   const zhihuP = sources.zhihu !== false ? fetchZhihu(httpGet) : null;
-  const biliP = sources.bilibili !== false ? fetchBilibili(disk.bilibiliUps, disk.bilibiliMaxItems, disk.bilibiliCookie, httpGet) : null;
+  // 名单为空视同源未启用（与守护「无 UP 主名单，跳过」口径一致，且参与 attempted 全失败判定）
+  const biliP = sources.bilibili !== false && disk.bilibiliUps.length > 0 ? fetchBilibili(disk.bilibiliUps, disk.bilibiliMaxItems, disk.bilibiliCookie, httpGet) : null;
   const rssP = sources.rss !== false && disk.rssFeeds.length > 0 ? fetchRss(disk.rssFeeds, httpGet) : null;
 
   // 单源抛错只记失败源不中断本轮（fetchXxx 内部已吞网络错，这里兜防御性异常）
@@ -645,14 +636,30 @@ export async function runNewsFetchRound(deps: RunFetchDeps): Promise<NewsFetchRe
   const fetchedAt = localDatetime(now());
   for (const a of newArticles) a.fetchedAt = fetchedAt;
 
+  // 全部已尝试源失败 → 不推进 lastFetchAt（下次打开即重试，不等满档位）
+  const attempted = [guokrP, zhihuP, biliP, rssP].filter((p) => p !== null).length;
+  const allFailed = attempted > 0 && failedSources.length >= attempted;
+
+  const finalArticles = [...remaining, ...newArticles];
+
+  // 窗口裁剪走 removeArticleKeys 显式删除（合并写为磁盘∪声明并集，只换 articles 会复活被裁条目）：
+  // 口径 = 磁盘有而本轮终集没有的 url 一律声明删除（覆盖 B站/RSS 两套窗口裁剪）
+  const finalUrls = new Set(finalArticles.map((a) => a.url));
+  const removeArticleKeys = existing
+    .filter((a) => a && a.url && !finalUrls.has(a.url))
+    .map((a) => articleKeyOf(a)); // removeArticleKeys 口径 = articleKeyOf 键（news-data 合并写按此匹配）
+
   await deps.store.write({
-    articles: [...remaining, ...newArticles],
-    // UP 主资料与磁盘存量合并（段级合并写按声明段整段覆盖）
-    ...(biliRes && Object.keys(biliRes.upInfo).length > 0
-      ? { bilibiliUpInfo: { ...disk.bilibiliUpInfo, ...biliRes.upInfo } }
-      : {}),
-    ...(rssTitleUpdates ? { rssFeeds: rssTitleUpdates } : {}),
-    lastFetchAt: now(),
+    set: {
+      articles: finalArticles,
+      // UP 主资料与磁盘存量合并（段级合并写按声明段整段覆盖）
+      ...(biliRes && Object.keys(biliRes.upInfo).length > 0
+        ? { bilibiliUpInfo: { ...disk.bilibiliUpInfo, ...biliRes.upInfo } }
+        : {}),
+      ...(rssTitleUpdates ? { rssFeeds: rssTitleUpdates } : {}),
+      ...(allFailed ? {} : { lastFetchAt: now() }),
+    },
+    ...(removeArticleKeys.length > 0 ? { removeArticleKeys } : {}),
   });
 
   return {
@@ -707,6 +714,18 @@ export async function maybeFetchNews(deps?: Partial<RunFetchDeps>): Promise<News
   const now = deps?.now || Date.now;
   if (now() - disk.lastFetchAt < intervalMin * 60 * 1000) return null;
   return executeFetchRound(deps);
+}
+
+/** 手动触发结果反馈（命令 / 设置「立即抓取」共用；CONTEXT 通知文案：完成态动词「已」）：
+ *  抓取中 → info；部分失败 → 静默（executeFetchRound 已发 warning，不叠加 success）；
+ *  成功 → success 计数（手动触发无就地可见结果，保留反馈——ADR-0128） */
+export function notifyManualFetchResult(r: NewsFetchResult | null): void {
+  if (!r) {
+    notice('抓取已在进行中，请稍候', 'info');
+    return;
+  }
+  if (r.failedSources.length > 0) return;
+  notice(r.added > 0 ? `已抓取，新增 ${r.added} 篇文章` : '已抓取，暂无新文章', 'success');
 }
 
 /** 手动触发（bz-clipbook-fetch-now / 设置组「立即抓取」）：忽略间隔立即抓 */
