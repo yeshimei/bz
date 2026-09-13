@@ -148,7 +148,7 @@ function makeDeps(over: {
   const searchHtml = SEARCH_HTML;
   const apizeroJson = JSON.stringify({
     code: 0, msg: '成功',
-    data: { douban_id: '35267208', name: '流浪地球2', year: '2023', score: '8.3', director: '郭帆', actor: '吴京, 刘德华', genre: '科幻', area: '中国大陆', duration: '173分钟', episodes: '', is_tv: false, douban_url: 'https://movie.douban.com/subject/35267208/' },
+    data: { douban_id: '35267208', name: '流浪地球2', year: '2023', score: '8.3', director: '郭帆', actor: '吴京, 刘德华', genre: '科幻', area: '中国大陆', duration: '173分钟', episodes: '', is_tv: false, short_comment: '好看', comment_author: '某甲', douban_url: 'https://movie.douban.com/subject/35267208/' },
   });
   const rexxarJson = JSON.stringify({
     total: 40, padding: 'x'.repeat(400),
@@ -199,6 +199,10 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(content).toContain('类型: 科幻');
     expect(content).toContain('制片国家/地区: 中国大陆');
     expect(content).toContain('片长: 173分钟');
+    // 字段扩展（ADR-0129 修订）：电影 is_tv=false 不写季集；上映日期降级年份；热门短评带出
+    expect(content).toContain('上映日期: 2023');
+    expect(content).toContain('热门短评: 好看');
+    expect(content).not.toMatch(/^季集:/m);
     expect(content).toContain('![[CONFIG/MOVIE POSTER/流浪地球2_1700000000000.jpg]]');
     // ApiZero 有导演/主演 → 不调 rexxar，无编剧字段
     expect(content).not.toContain('编剧');
@@ -282,9 +286,9 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(vault2.files.get(FILE_PATH)).not.toContain('![[');
   });
 
-  it('存量退役字段（语言/又名/IMDb/简介）不被清除', async () => {
+  it('存量退役字段（语言/又名/IMDb/简介）不被清除；已有上映日期/季集不被覆盖', async () => {
     const vault = new MockVault();
-    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n语言: 汉语\n又名: 流浪地球贰\nIMDb: tt123\n简介: 旧简介\n---');
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n语言: 汉语\n又名: 流浪地球贰\nIMDb: tt123\n简介: 旧简介\n上映日期: 2023-01-22\n季集: "3"\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(1) });
     await runOn(vault, deps);
     const content = vault.files.get(FILE_PATH)!;
@@ -292,5 +296,9 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(content).toContain('又名: 流浪地球贰');
     expect(content).toContain('IMDb: tt123');
     expect(content).toContain('简介: 旧简介');
+    expect(content).toContain('上映日期: 2023-01-22'); // 已有具体日期不被年份降级覆盖
+    expect(content).toMatch(/^季集: "3"/m); // 已有季集不动
+    expect(content).toContain('上映日期: 2023-01-22'); // 已有具体日期不被年份降级覆盖
+    expect(content).toMatch(/^季集: "3"/m); // 已有季集不动
   });
 });

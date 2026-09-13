@@ -1,7 +1,8 @@
 /**
  * 影院豆瓣抓取核心（issue 303 / ADR-0129）：自 tools/obsidian-douban-poster 移植入插件。
  * 字段链（用户拍板）：搜索豆瓣（搜索页正则解析）→ **ApiZero 豆瓣电影信息接口**（评分/导演/
- * 主演/类型/地区/片长首选，key 设置项）→ rexxar 演职员兜底（缺导演/主演或需编剧时）；
+ * 主演/类型/地区/片长首选 + 上映日期←year/季集←episodes(仅剧集)/热门短评，key 设置项）
+ * → rexxar 演职员兜底（缺导演/主演或需编剧时）；
  * 海报走豆瓣（搜索页提 URL → upgradePosterUrl 高清 → writeBinary 写盘）。
  * 豆瓣详情页 HTML 退役（字段已由 ApiZero 承接）；移动端同源可用。
  * 纯逻辑 + 依赖注入（httpGet / downloadBinary），node 环境可测。
@@ -120,6 +121,9 @@ export interface ApizeroInfo {
   episodes: string;
   isTv: boolean;
   doubanUrl: string;
+  /** 热门短评 + 作者（issue 303 字段扩展，ADR-0129 修订：可选风味字段） */
+  shortComment: string;
+  commentAuthor: string;
 }
 
 /** ApiZero 豆瓣电影信息接口（v1.apizero.cn/api/douban-movie?id=<sid>，Bearer key）。
@@ -145,6 +149,8 @@ export async function fetchApizeroInfo(sid: string, key: string, httpGet: HttpGe
       episodes: String(d.episodes ?? ''),
       isTv: d.is_tv === true,
       doubanUrl: String(d.douban_url || `https://movie.douban.com/subject/${sid}/`),
+      shortComment: String(d.short_comment ?? ''),
+      commentAuthor: String(d.comment_author ?? ''),
     };
   } catch {
     return null;
@@ -314,6 +320,11 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
       if (az.genre) fields['类型'] = az.genre;
       if (az.area) fields['制片国家/地区'] = az.area;
       if (az.duration) fields['片长'] = az.duration;
+      // issue 303 字段扩展（ADR-0129 修订，用户拍板三扩）：上映日期降级年份、
+      // 剧集补季集（is_tv 才写，防电影误填）、热门短评（缺失才填，不改已有值）
+      if (!fieldValue(content, '上映日期') && az.year) fields['上映日期'] = az.year;
+      if (az.isTv && az.episodes && !fieldValue(content, '季集')) fields['季集'] = az.episodes;
+      if (az.shortComment && !fieldValue(content, '热门短评')) fields['热门短评'] = az.shortComment;
     }
   }
   const needCelebrities = !az || !az.director || !az.actor;
