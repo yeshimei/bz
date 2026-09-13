@@ -1,4 +1,4 @@
-/* 源指纹 0f762224b6250548 · 仓内输入 193 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c75d091a1b435132 · 仓内输入 193 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -16812,79 +16812,85 @@ ${countsToText(s.missing)}
     };
   }
   async function writeSources(sources) {
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return;
+      if (!res.ok) return false;
       await writeNewsDataMerged({ set: { sources: { ...sources } } });
+      return true;
     });
   }
   async function addBilibiliUp(uid) {
     const id = String(uid || "").trim();
-    if (!id) return false;
+    if (!id) return "invalid";
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return false;
-      if (res.data.bilibiliUps.includes(id)) return false;
+      if (!res.ok) return "read-failed";
+      if (res.data.bilibiliUps.includes(id)) return "exists";
       await writeNewsDataMerged({ set: { bilibiliUps: [...res.data.bilibiliUps, id] } });
-      return true;
+      return "added";
     });
   }
   async function writeBilibiliMaxItems(v) {
     const n = Math.floor(Number(v));
     const maxItems = Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return;
+      if (!res.ok) return false;
       await writeNewsDataMerged({ set: { bilibiliMaxItems: maxItems } });
+      return true;
     });
   }
   async function writeBilibiliCookie(cookie) {
     const c = String(cookie || "").trim();
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return;
+      if (!res.ok) return false;
       await writeNewsDataMerged({ set: { bilibiliCookie: c } });
+      return true;
     });
   }
   async function writeFetchInterval(v) {
     const n = normalizeFetchIntervalMin(v);
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return;
+      if (!res.ok) return false;
       await writeNewsDataMerged({ set: { fetchIntervalMin: n } });
+      return true;
     });
   }
   async function addRssFeed(url, title) {
     const u = normalizeRssFeedUrl(url);
-    if (!u) return false;
+    if (!u) return "invalid";
     const t = String(title || "").trim();
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return false;
-      if (res.data.rssFeeds.some((f) => f.url === u)) return false;
+      if (!res.ok) return "read-failed";
+      if (res.data.rssFeeds.some((f) => f.url === u)) return "exists";
       const feed = t ? { url: u, title: t } : { url: u };
       await writeNewsDataMerged({ set: { rssFeeds: [...res.data.rssFeeds, feed] } });
-      return true;
+      return "added";
     });
   }
   async function removeRssFeed(url) {
     const u = String(url || "").trim();
-    if (!u) return;
-    await enqueueNewsWrite(async () => {
+    if (!u) return false;
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok || res.missing) return;
+      if (!res.ok) return false;
       await writeNewsDataMerged({ set: { rssFeeds: res.data.rssFeeds.filter((f) => f.url !== u) } });
+      return true;
     });
   }
   async function removeBilibiliUp(uid) {
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok || res.missing) return;
+      if (!res.ok) return false;
       const info = { ...res.data.bilibiliUpInfo };
       delete info[uid];
       await writeNewsDataMerged({
         set: { bilibiliUps: res.data.bilibiliUps.filter((u) => u !== uid), bilibiliUpInfo: info }
       });
+      return true;
     });
   }
   var init_news_source_settings = __esm({
@@ -17965,7 +17971,9 @@ ${c.trim()}
       set: (v) => {
         box.sources[key] = v;
       },
-      save: () => writeSources({ ...box.sources })
+      save: async () => {
+        if (!await writeSources({ ...box.sources })) notifyWriteFailed("数据源开关");
+      }
     });
     const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
     const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
@@ -17999,7 +18007,9 @@ ${c.trim()}
           set: (v) => {
             box.fetchIntervalMin = normalizeFetchIntervalMin(v);
           },
-          save: () => writeFetchInterval(box.fetchIntervalMin)
+          save: async () => {
+            if (!await writeFetchInterval(box.fetchIntervalMin)) notifyWriteFailed("抓取间隔");
+          }
         }
       },
       { type: "toggle", name: "知乎日报", desc: "抓取知乎日报每日文章", binding: sourceBinding("zhihu") },
@@ -18050,7 +18060,9 @@ ${c.trim()}
           set: (v) => {
             box.bilibiliMaxItems = v;
           },
-          save: () => writeBilibiliMaxItems(box.bilibiliMaxItems)
+          save: async () => {
+            if (!await writeBilibiliMaxItems(box.bilibiliMaxItems)) notifyWriteFailed("B站抓取条数");
+          }
         }
       },
       {
@@ -18066,6 +18078,9 @@ ${c.trim()}
   function setRowDesc(ctx, text) {
     const el = ctx.rowEl.querySelector(".bz-sp-set-desc") || ctx.rowEl.querySelector(".setting-item-description");
     if (el) el.textContent = text;
+  }
+  function notifyWriteFailed(what) {
+    notice(`写入失败（${what}）：news.json 不可读或已损坏`, "error");
   }
   function upManagerSettingsSchema(opts) {
     const box = {
@@ -18110,18 +18125,23 @@ ${c.trim()}
                 };
               }),
               emptyText: "暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加",
-              onChange: (keys) => {
-                void (async () => {
-                  const removed = box.ups.filter((u) => !keys.includes(u));
-                  for (const uid of removed) {
-                    await removeBilibiliUp(uid);
-                    box.ups = box.ups.filter((u) => u !== uid);
-                    delete box.upInfo[uid];
-                    notice(`已移除 UP 主 ${uid}`, "success");
+              // 返回 Promise 与 RSS 订阅行同口径：渲染器待落盘完成后重读重建——否则字盒变更晚于
+              // refresh，写失败保留的条目（或已移除条目）在弹窗内回显不准
+              onChange: (keys) => (async () => {
+                const removed = box.ups.filter((u) => !keys.includes(u));
+                let changed = false;
+                for (const uid of removed) {
+                  if (!await removeBilibiliUp(uid)) {
+                    notifyWriteFailed(`移除 UP 主 ${uid}`);
+                    continue;
                   }
-                  if (removed.length > 0) opts.onChanged();
-                })();
-              }
+                  box.ups = box.ups.filter((u) => u !== uid);
+                  delete box.upInfo[uid];
+                  changed = true;
+                  notice(`已移除 UP 主 ${uid}`, "success");
+                }
+                if (changed) opts.onChanged();
+              })()
             }
           ]
         }
@@ -18139,22 +18159,34 @@ ${c.trim()}
       notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
       return;
     }
-    const added = await addBilibiliUp(uid);
-    if (!added) {
-      notice("该 UP 主已在名单中", "info");
-      return;
+    const outcome = await addBilibiliUp(uid);
+    switch (outcome) {
+      case "added":
+        box.inputValue = "";
+        box.ups = [...box.ups, uid];
+        opts.onChanged();
+        notice(`已添加 UP 主 ${uid}`, "success");
+        return;
+      case "exists":
+        notice("该 UP 主已在名单中", "info");
+        return;
+      case "invalid":
+        notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
+        return;
+      default:
+        notifyWriteFailed("添加 UP 主");
+        return;
     }
-    box.inputValue = "";
-    box.ups = [...box.ups, uid];
-    opts.onChanged();
-    notice(`已添加 UP 主 ${uid}`, "success");
   }
   async function openUpManagerModal(opts) {
+    if (upManagerOpen || document.getElementById("bz-up-manager-mask")) return;
+    upManagerOpen = true;
     let handle = null;
     function close() {
       mask.remove();
       popup.remove();
       if (handle) handle.unregister();
+      upManagerOpen = false;
     }
     const { mask, popup } = createOverlay({
       maskId: "bz-up-manager-mask",
@@ -18171,8 +18203,13 @@ ${c.trim()}
     header.appendChild(title);
     const content = document.createElement("div");
     content.className = "bz-settings-content";
-    const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
-    renderPanelSchema2(content, upManagerSettingsSchema(opts));
+    try {
+      const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
+      renderPanelSchema2(content, upManagerSettingsSchema(opts));
+    } catch (e) {
+      close();
+      throw e;
+    }
     popup.appendChild(header);
     popup.appendChild(content);
     document.body.appendChild(mask);
@@ -18240,12 +18277,17 @@ ${c.trim()}
               emptyText: "暂无订阅源，在上方粘贴 RSS 地址添加",
               onChange: (keys) => (async () => {
                 const removed = box.feeds.filter((f) => !keys.includes(f.url));
+                let changed = false;
                 for (const f of removed) {
-                  await removeRssFeed(f.url);
+                  if (!await removeRssFeed(f.url)) {
+                    notifyWriteFailed(`移除 RSS 源 ${f.title || f.url}`);
+                    continue;
+                  }
                   box.feeds = box.feeds.filter((x) => x.url !== f.url);
+                  changed = true;
                   notice(`已移除 RSS 源 ${f.title || f.url}`, "success");
                 }
-                if (removed.length > 0) opts.onChanged();
+                if (changed) opts.onChanged();
               })()
             }
           ]
@@ -18271,22 +18313,34 @@ ${c.trim()}
       notice("试拉失败：地址不可达或不是有效的 RSS 源，未添加", "error");
       return;
     }
-    const added = await addRssFeed(url, title);
-    if (!added) {
-      notice("该 RSS 源已在订阅列表中", "info");
-      return;
+    const outcome = await addRssFeed(url, title);
+    switch (outcome) {
+      case "added":
+        box.inputValue = "";
+        box.feeds = [...box.feeds, { url, title }];
+        opts.onChanged();
+        notice(`已订阅 ${title || url}`, "success");
+        return;
+      case "exists":
+        notice("该 RSS 源已在订阅列表中", "info");
+        return;
+      case "invalid":
+        notice("无效的 RSS 地址，请粘贴 http/https 开头的订阅链接", "error");
+        return;
+      default:
+        notifyWriteFailed("添加 RSS 源");
+        return;
     }
-    box.inputValue = "";
-    box.feeds = [...box.feeds, { url, title }];
-    opts.onChanged();
-    notice(`已订阅 ${title || url}`, "success");
   }
   async function openRssManagerModal(opts) {
+    if (rssManagerOpen || document.getElementById("bz-rss-manager-mask")) return;
+    rssManagerOpen = true;
     let handle = null;
     function close() {
       mask.remove();
       popup.remove();
       if (handle) handle.unregister();
+      rssManagerOpen = false;
     }
     const { mask, popup } = createOverlay({
       maskId: "bz-rss-manager-mask",
@@ -18302,8 +18356,13 @@ ${c.trim()}
     header.appendChild(title);
     const content = document.createElement("div");
     content.className = "bz-settings-content";
-    const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
-    renderPanelSchema2(content, rssManagerSettingsSchema(opts));
+    try {
+      const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
+      renderPanelSchema2(content, rssManagerSettingsSchema(opts));
+    } catch (e) {
+      close();
+      throw e;
+    }
     popup.appendChild(header);
     popup.appendChild(content);
     document.body.appendChild(mask);
@@ -18316,6 +18375,7 @@ ${c.trim()}
     });
     handle = handleReg;
   }
+  var upManagerOpen, rssManagerOpen;
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
       init_fake_obsidian();
@@ -18326,6 +18386,8 @@ ${c.trim()}
       init_news_source_settings();
       init_news_fetcher();
       init_news_data();
+      upManagerOpen = false;
+      rssManagerOpen = false;
     }
   });
 
