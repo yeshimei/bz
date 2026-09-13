@@ -53,6 +53,10 @@ export interface NewsData {
   sources: NewsSources;
   /** RSS 订阅列表（ADR-0121） */
   rssFeeds: RssFeed[];
+  /** 最近自动抓取时间（epoch ms，issue 302 / ADR-0128：插件内抓取的间隔判定锚点） */
+  lastFetchAt: number;
+  /** 抓取间隔档位（分钟，合法 30/60/120/360，issue 302 / ADR-0128） */
+  fetchIntervalMin: number;
 }
 
 /** 读取失败 / 文件缺失的区分（首用引导 vs 错误态沿用 reader 语义） */
@@ -63,7 +67,7 @@ export interface ReadNewsResult {
 }
 
 function emptyData(): NewsData {
-  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, rssFeeds: [] };
+  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
 }
 
 /** 纯函数：RSS 订阅列表容错解析（ADR-0121）：非数组 → []；条目须含合法 url，title 去空白可缺省 */
@@ -129,6 +133,12 @@ export function parseBilibiliCookie(raw: unknown): string {
   return typeof raw === 'string' ? raw.trim() : '';
 }
 
+/** 纯函数：抓取间隔档位容错归一（合法 30/60/120/360，其余回退 30；issue 302 / ADR-0128） */
+export function normalizeFetchIntervalMin(raw: unknown): number {
+  const n = Math.floor(Number(raw));
+  return [30, 60, 120, 360].includes(n) ? n : 30;
+}
+
 /** 纯函数：旧纯数组 → 四段包裹（articles 原样，stats 默认，名单空，源全开） */
 export function wrapArrayToNewsData(articles: any[]): NewsData {
   const data = emptyData();
@@ -186,6 +196,8 @@ export function parseNewsFileContent(raw: string): NewsData | null {
         ? { ...DEFAULT_SOURCES, ...(obj.sources as Record<string, boolean>) }
         : { ...DEFAULT_SOURCES },
       rssFeeds: parseRssFeeds(obj.rssFeeds),
+      lastFetchAt: Number(obj.lastFetchAt) > 0 ? Math.floor(Number(obj.lastFetchAt)) : 0,
+      fetchIntervalMin: normalizeFetchIntervalMin(obj.fetchIntervalMin),
     };
   }
   return null;
@@ -265,7 +277,7 @@ export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<void
     }
     next.articles = merged;
   }
-  for (const seg of ['stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds'] as const) {
+  for (const seg of ['stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds', 'lastFetchAt', 'fetchIntervalMin'] as const) {
     if (intent.set[seg] !== undefined) {
       (next as any)[seg] = intent.set[seg];
     }

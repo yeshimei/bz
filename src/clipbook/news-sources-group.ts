@@ -2,6 +2,8 @@
  * 剪藏本设置「数据源」组（ticket 124，ADR-0060；自旧 clipping 域迁入 clipbook，ADR-0086）：
  * news.json 存在 → 三源开关 + UP 主名单管理 + B站抓取条数 + 保留天数；缺失 → 安装引导行。
  * 数据操作走 ./news-source-settings（串行队列 + 段级合并写盘）。
+ * 抓取自插件内完成（issue 302 / ADR-0128）：抓取间隔 select + 立即抓取按钮；
+ * 原「安装外部数据源守护」引导分支退役。
  *
  * 声明式重写（推翻 ticket 131 的 custom 插槽方案）：全组输出标准声明行（toggle/number/
  * button/info），与其他设置组同一渲染链（core ⚙️ 弹窗 + 设置面板两端同 schema 同视觉）。
@@ -21,9 +23,10 @@ import { escManager } from '../core/esc-manager';
 import type { SettingsRow, SettingsRowContext, SettingsSchema } from '../core/settings-schema';
 import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp,
-  writeBilibiliMaxItems, addRssFeed, removeRssFeed, type DataSourceState,
+  writeBilibiliMaxItems, addRssFeed, removeRssFeed, writeFetchInterval, type DataSourceState,
 } from './news-source-settings';
-import { resolveUidFromInput, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, type BilibiliUpInfo, type RssFeed } from './news-data';
+import { fetchNowNews, FETCH_INTERVAL_STEPS } from './news-fetcher';
+import { resolveUidFromInput, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, normalizeFetchIntervalMin, type BilibiliUpInfo, type RssFeed } from './news-data';
 
 /** 状态盒（构建期快照的可变副本）：三函数绑定 get/set 读它，save 经数据层落盘 */
 type DataSourceBox = DataSourceState;
@@ -38,20 +41,8 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
     sources: { ...init.sources },
     bilibiliUps: [...init.bilibiliUps],
     bilibiliUpInfo: { ...init.bilibiliUpInfo },
+    rssFeeds: init.rssFeeds.map((f) => ({ ...f })),
   };
-  if (!box.exists) {
-    return [
-      { type: 'info', name: '尚未启用新闻数据源', desc: '聚合讯数据由外部「数据源守护」进程（obsidian-news）抓取入库。安装并启动后此处会显示数据源设置。' },
-      { type: 'button', name: '安装数据源', buttonText: '复制安装命令', cta: true, onClick: () => {
-        const cmd = 'npm install -g @jwbz/obsidian-news && obsidian-news start';
-        navigator.clipboard.writeText(cmd).then(
-          () => notice('安装命令已复制', 'success'),
-          () => notice('复制失败，请手动复制', 'error')
-        );
-      } },
-    ];
-  }
-
   /** 双源开关绑定：读写字盒 sources 段，落盘整段合并写（数据层只声明 sources 段） */
   const sourceBinding = (key: 'zhihu' | 'guokr') => ({
     get: () => box.sources[key] === true,
@@ -69,7 +60,33 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
       ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗`
       : '暂未订阅 RSS 源，添加与移除在管理弹窗';
 
+  /** 抓取间隔描述（动态展示当前档位语义） */
+  const intervalDesc = () => {
+    const t = box.lastFetchAtMs > 0 ? new Date(box.lastFetchAtMs).toLocaleString() : '还没有抓取过';
+    return `打开插件或剪藏本时超过该间隔自动抓取，上次抓取 ${t}`;
+  };
   return [
+    { type: 'button', name: '立即抓取', desc: intervalDesc(), buttonText: '抓取', cta: true,
+      onClick: async (ctx) => {
+        const r = await fetchNowNews();
+        if (!r) {
+          notice('正在抓取中，请稍候', 'info');
+          return;
+        }
+        if (r.added > 0) notice(`抓取完成，新增 ${r.added} 篇文章`, 'success');
+        else notice('抓取完成，暂无新文章', 'success');
+        const fresh = await readDataSourceState();
+        box.lastFetchAtMs = fresh.lastFetchAtMs;
+        box.fetchIntervalMin = fresh.fetchIntervalMin;
+        setRowDesc(ctx, intervalDesc());
+      } },
+    { type: 'select', name: '抓取间隔', desc: '打开插件或剪藏本时超过该间隔才自动抓取，最短 30 分钟',
+      options: FETCH_INTERVAL_STEPS.map((m) => ({ value: String(m), label: m >= 60 ? `${m / 60} 小时` : `${m} 分钟` })),
+      binding: {
+        get: () => String(box.fetchIntervalMin),
+        set: (v) => { box.fetchIntervalMin = normalizeFetchIntervalMin(v); },
+        save: () => writeFetchInterval(box.fetchIntervalMin),
+      } },
     { type: 'toggle', name: '知乎日报', desc: '抓取知乎日报每日文章', binding: sourceBinding('zhihu') },
     { type: 'toggle', name: '果壳科学人', desc: '抓取果壳科学人最新文章', binding: sourceBinding('guokr') },
     { type: 'button', name: 'UP 主名单', desc: upListDesc(), buttonText: '管理', cta: true,
