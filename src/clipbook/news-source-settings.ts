@@ -3,7 +3,7 @@
  * 检测 news.json 存在性、读/写 sources 开关与 bilibiliUps 名单、最近抓取时间。
  * 纯数据层（无 DOM），供 src/clipbook/news-sources-group.ts 设置组调用。
  */
-import { readNewsData, writeNewsDataMerged, DEFAULT_SOURCES, normalizeRssFeedUrl, type BilibiliUpInfo, type RssFeed } from './news-data';
+import { readNewsData, writeNewsDataMerged, DEFAULT_SOURCES, normalizeRssFeedUrl, normalizeFetchIntervalMin, type BilibiliUpInfo, type RssFeed } from './news-data';
 import { enqueueNewsWrite } from './write-queue';
 
 export interface DataSourceState {
@@ -20,13 +20,17 @@ export interface DataSourceState {
   /** 最近抓取时间（articles 最新 fetchedAt；无文章返回 null） */
   lastFetchAt: string | null;
   totalArticles: number;
-  /** RSS 订阅列表（ADR-0121：news.json rssFeeds 段，插件写守护读） */
+  /** RSS 订阅列表（ADR-0121：news.json rssFeeds 段） */
   rssFeeds: RssFeed[];
+  /** 最近自动抓取时间（epoch ms；issue 302 / ADR-0128 间隔判定锚点） */
+  lastFetchAtMs: number;
+  /** 抓取间隔档位（分钟，30/60/120/360） */
+  fetchIntervalMin: number;
 }
 
 /** 空数据源状态（news.json 缺失/损坏时的回退值；schema 构建与测试共用） */
 export function emptyDataSourceState(exists = false): DataSourceState {
-  return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', lastFetchAt: null, totalArticles: 0, rssFeeds: [] };
+  return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', lastFetchAt: null, totalArticles: 0, rssFeeds: [], lastFetchAtMs: 0, fetchIntervalMin: 30 };
 }
 
 /** 读数据源状态（检测 + sources + 名单 + UP 资料 + B站配置 + 最近抓取时间） */
@@ -52,6 +56,8 @@ export async function readDataSourceState(): Promise<DataSourceState> {
     lastFetchAt,
     totalArticles: res.data.articles.length,
     rssFeeds: [...res.data.rssFeeds],
+    lastFetchAtMs: res.data.lastFetchAt,
+    fetchIntervalMin: res.data.fetchIntervalMin,
   };
 }
 
@@ -95,6 +101,16 @@ export async function writeBilibiliCookie(cookie: string): Promise<void> {
     const res = await readNewsData();
     if (!res.ok) return;
     await writeNewsDataMerged({ set: { bilibiliCookie: c } });
+  });
+}
+
+/** 写抓取间隔档位（issue 302 / ADR-0128；非法回退 30；串行队列 + 段级合并） */
+export async function writeFetchInterval(v: string | number): Promise<void> {
+  const n = normalizeFetchIntervalMin(v);
+  await enqueueNewsWrite(async () => {
+    const res = await readNewsData();
+    if (!res.ok) return;
+    await writeNewsDataMerged({ set: { fetchIntervalMin: n } });
   });
 }
 

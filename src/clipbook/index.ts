@@ -11,6 +11,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { readNewsData } from './news-data';
+import { maybeFetchNews, setNewsFetchDoneListener } from './news-fetcher';
 import { flowMarkAllRead } from './flow';
 import { initPanel, showPanel, unloadPanel, reloadIfOpen, invalidateClipBodyCache } from './ui';
 
@@ -23,10 +24,14 @@ export function openClipbook(app: App): void {
   if (!initialized) {
     initialized = true;
     registerAutoRefresh(app);
+    // 抓到新文章后面板开着就刷新（issue 302 / ADR-0128；数据层经回调反向通知，不直接依赖 UI）
+    setNewsFetchDoneListener(() => reloadIfOpen());
     initPanel(app, true);
   } else {
     showPanel();
   }
+  // 打开即后台抓一轮（间隔判定在 fetcher 内；启动触发走 main.ts onload）
+  void maybeFetchNews();
 }
 
 /**
