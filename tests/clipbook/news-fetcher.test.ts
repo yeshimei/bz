@@ -259,6 +259,25 @@ describe('runNewsFetchRound + defaultFetchStore（集成）', () => {
     expect(r.added).toBe(1);
   });
 
+  it('B站窗口裁剪真实落盘（P1 回归）：窗口外老条目从磁盘删除，非仅视图裁剪', async () => {
+    const vault = new MockVault();
+    setApp(mockAppWithVault(vault));
+    const now = new Date(2026, 8, 13, 12, 0, 0).getTime();
+    seedVault(vault, {
+      sources: { zhihu: false, guokr: false, bilibili: true, rss: false },
+      bilibiliUps: ['1001'],
+      bilibiliCookie: 'ck',
+      articles: [{ platform: 'B站', author: 'UP甲', url: 'https://www.bilibili.com/video/BVold', date: '2026-09-01 00:00:00' }],
+    });
+    const httpGet = makeHttpGet({
+      bili: { code: 0, data: { items: [{ type: 'DYNAMIC_TYPE_AV', modules: { module_author: { name: 'UP甲', pub_ts: Math.floor(now / 1000) - 3600 }, module_dynamic: { major: { archive: { bvid: 'BVnew', title: '新视频', desc: '', cover: '' } }, module_desc: { desc: '' } } } }], has_more: false, offset: '' } },
+    });
+    await runNewsFetchRound({ httpGet, store: defaultFetchStore(), now: () => now });
+    const urls = disk(vault).articles.map((a: any) => a.url);
+    expect(urls).toContain('https://www.bilibili.com/video/BVnew');
+    expect(urls).not.toContain('https://www.bilibili.com/video/BVold'); // writeNewsDataMerged 并集复活即回归
+  });
+
   it('B站风控 rejected：窗口不裁 + needsCookieNotice；源开关关闭则跳过', async () => {
     const vault = new MockVault();
     setApp(mockAppWithVault(vault));
