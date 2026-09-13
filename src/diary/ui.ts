@@ -24,7 +24,7 @@
  *
  * 写链路（issue 256 迁入本域）：✏️写日记接 ./ui/dialogs openAddDialog（滚轮年份范围取自当前数据）；
  * 改标签/删除/加密/解密经 ./ui/dialogs showTagPicker 与 ./ui/entry-actions（写层守卫 + 串行队列），
- * 动作结果经域事件（diary:entry-added/tags-changed/entry-deleted/entry-decrypted/encrypted-purged/file-vacated）
+ * 动作结果经域事件（diary:entry-added/tags-changed/entry-deleted/entry-decrypted/encrypted-purged）
  * 防抖重载本墙。旧编辑面板的「在日记本中查看」动作随域退役（墙即日记本，无处可看）。
  * 条目动作（issue 198 批次 A 收敛）：桌面右键 = core item-actions 跟手菜单（.bz-item-menu）；
  * 移动端长按 = 共享 .bz-sheet 底部抽屉（单击入口已按 2026-09-11 评审取消，动作集与菜单不合并）。
@@ -1846,7 +1846,7 @@ export class DiaryAppController {
         notice('已复制双链引用', 'success');
         return;
       }
-      // 普通日记条目：emoji+时间 即标题锚点，直接构建双链（写层同源解析，无需反查；子目录带 filePath，D2）
+      // 普通日记条目：ADR-0130 一目一文件，双链即条目文件本身（无标题锚点）
       await copyDiaryLink({ filename: e.filename || e.date, filePath: e.filePath, emoji: e.emoji, time: e.time });
     } catch (err) {
       notice('复制双链失败', 'error');
@@ -2142,8 +2142,9 @@ export class DiaryAppController {
 
   /**
    * 写链路域事件回刷（issue 256）：entry-added/tags-changed/entry-deleted/entry-decrypted/
-   * encrypted-purged/file-vacated 六通道防抖 loadAndRender——写日记命令（域外弹窗保存）、
-   * recap 写回、整文件删除（vault 只发 delete 无 modify，DW3 通道收不到）等路径统一收口。
+   * encrypted-purged 五通道防抖 loadAndRender——写日记命令（域外弹窗保存）、recap 写回、
+   * 条目删除等路径统一收口（ADR-0130：file-vacated 通道随条目文件化退役，删除由 UI 层
+   * entry-deleted 通知）。
    */
   private subscribeWriteEvents(): void {
     if (this._writeOff) return;
@@ -2153,7 +2154,6 @@ export class DiaryAppController {
       'diary:entry-deleted',
       'diary:entry-decrypted',
       'diary:encrypted-purged',
-      'diary:file-vacated',
     ] as const;
     const offs = chs.map((ch) =>
       onDomainEvent(ch, () => {

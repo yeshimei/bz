@@ -1,33 +1,40 @@
 /**
- * 日记写层（issue 256 写链路迁入）：唯一有权改写日记 md 的模块。
+ * 日记写层（issue 256 写链路迁入；ADR-0130 重写为条目文件粒度）：唯一有权改写日记 md 的模块。
  *
- * 写模型：diaryDataMap（文件路径 → 条目数组）不再是常驻全量缓存——每次写操作在
- * core per-path 串行队列（enqueueFileTask，键 = 日记文件路径）内「磁盘同步 → 守卫 →
- * 变更 → 全量重写」一气呵成（D3 可靠写契约收口：守卫读与写同队列互斥，TOCTOU 无窗口）。
- * 磁盘同步即守卫：parseFile 的 onUnparsed 口径在同步时计量，命中未解析行即拒处理并
- * 人话指引「检测日记解析」（与丢失口径严格一致，直接写会永久抹掉这些行）；
- * 读盘失败同样中止任务（D1：视为空文件会删掉/覆盖整天日记）。
- *
- * 条目定位：filePath + lineNumber（writeFile 落盘时把 map 条目行号与磁盘标题行一一对应，
- * P1-12 同 time 多条不再靠 time 唯一定位；D2 子目录日期文件按完整路径读写，与顶层同名文件互不串扰）；
- * 行号失配回退「同 time 仅一条」/ 内容匹配。
- * 动作完成后发域事件（diary:entry-added / entry-deleted / tags-changed / file-vacated），
- * 墙与其他消费者自行刷新；本模块不碰 DOM、不挂监听。
+ * 写模型（ADR-0130）：一条日记 = 一个条目文件 `我的/日记/YYYY-MM-DD HH-MM(-N)?.md`，
+ * frontmatter `日期`+`类型`，正文即内容。所有写操作在 core per-path 串行队列
+ * （enqueueFileTask，键 = 条目文件路径）内「磁盘同步 → 变更 → 落盘」一气呵成
+ * （D3 可靠写契约收口不变：守卫读与写同队列互斥，TOCTOU 无窗口）。
+ * - 新建（addEntry）：按日期串行（队列键 = `<目录>/<date>` 伪路径），队内取空闲文件名
+ *   （撞名循环，同刻第二篇落 `-2` 后缀）后 vault.create——先建后写全程在同一串行键内，无同刻竞态；
+ * - 改标签（updateDiaryTags）：只重写 frontmatter，正文一字不动；
+ * - 删除（removeDiaryEntries）：条目文件整文件删除（删除条目 = 删除其文件）。
+ * 磁盘同步即守卫：读盘失败抛 DiaryFileReadError 中止任务（D1：视为空文件会删掉整篇日记）；
+ * 文件存在但解析不出条目（文件名非条目形状/日期非法，frontmatter 损坏已由文件名降级兜住）
+ * 抛 UnparsedLineError 拒处理——直接写会永久抹掉原文。运行时宽（降级）、体检严（repair lint）。
+ * 动作完成后发域事件（diary:entry-added / tags-changed），墙与其他消费者自行刷新；
+ * 本模块不碰 DOM、不挂监听。
  */
-import { stripMdExt } from '../core/utils';
+import { getApp } from '../core/app';
 import { notify } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { enqueueFileTask } from '../core/storage';
-import { getApp } from '../core/app';
+import {
+  DIARY_ENTRY_FILE_RE,
+  diaryEntryPath,
+  parseDiaryEntryFile,
+  serializeDiaryEntryFile,
+  isValidDiaryDate,
+  isValidDiaryTime,
+} from '../core/diary-format';
 import { DIARY_DIRECTORY, getTagEmoji } from './config';
-import { isEncryptedEntry, parseFile } from './parser';
+import { isEncryptedEntry, parseEntryFile } from './parser';
 import type { DiaryEntry } from './types';
 
 /**
  * 文件路径 → 条目数组 的写模型映射（最近一次操作该文件时的内存快照；
  * 每次写前都会从磁盘重新同步，此 map 仅供调用方读取复用，不保证跨操作新鲜）。
- * 键 = 文件完整路径（D2：子目录日期文件与顶层同名日期文件互不串扰）。
- * 加密条目不在 md 中、不进此 map（加密可见性由墙的 mergeEncryptedEntries 负责）。
+ * 键 = 条目文件完整路径。加密条目不在 md 中、不进此 map（加密可见性由墙的 mergeEncryptedEntries 负责）。
  */
 export let diaryDataMap: Map<string, DiaryEntry[]> | null = null;
 
@@ -35,7 +42,7 @@ export function setDiaryDataMap(map: Map<string, DiaryEntry[]> | null) {
   diaryDataMap = map;
 }
 
-/** 「无法解析行」警告 toast（无 DOM 环境/通知容器缺失时静默；dedupeKey 防反复触发刷屏） */
+/** 「不可解析」警告 toast（无 DOM 环境/通知容器缺失时静默；dedupeKey 防反复触发刷屏） */
 function warnUnparsed(msg: string, dedupeKey?: string) {
   try {
     notify(msg, { type: 'warning', dedupeKey });
@@ -53,18 +60,18 @@ function warnReadFailed(msg: string, dedupeKey?: string) {
   }
 }
 
-/** 守卫拒绝错误：调用方可识别后静默（人话通知已发） */
+/** 守卫拒绝错误：调用方可识别后静默（人话通知已发）。count 沿用旧行数口径（条目文件恒 1） */
 export class UnparsedLineError extends Error {
   constructor(public dateStr: string, public count: number) {
-    super(`「${dateStr}」有 ${count} 行内容无法解析，已拒绝处理`);
+    super(`「${dateStr}」无法解析为日记条目，已拒绝处理`);
     this.name = 'UnparsedLineError';
   }
 }
 
 /**
- * 读盘失败错误（D1 修复）：读失败若视为空文件，删除路径会在空数组上「跑完」把整天日记文件
- * 删掉、写路径会用只有新条目的内容覆盖当天全部日记。现改为抛错中止队列任务（与守卫拒写同待遇），
- * 调用方经 isDiaryReadFailure 识别后静默（人话通知已由写层发出）。
+ * 读盘失败错误（D1 修复）：读失败若视为空文件，删除路径会误删、写路径会覆盖整篇日记。
+ * 现改为抛错中止队列任务（与守卫拒写同待遇），调用方经 isDiaryReadFailure 识别后静默
+ * （人话通知已由写层发出）。
  */
 export class DiaryFileReadError extends Error {
   constructor(public filePath: string, public cause_: unknown) {
@@ -78,125 +85,89 @@ export function isDiaryReadFailure(e: unknown): boolean {
   return e instanceof DiaryFileReadError;
 }
 
-/** 日期写操作的目标文件引用（filePath 缺省 = 顶层 `<日记目录>/<date>.md`） */
+/** 日期写操作的目标文件引用（ADR-0130：条目在目录下平铺，filePath 缺省按日期枚举） */
 export interface DateWriteOptions {
-  /** 目标文件完整 vault 路径（子目录日期文件必传，D2：写回原文件而非顶层同名文件） */
+  /** 目标条目文件完整 vault 路径（定位到具体文件时必传） */
   filePath?: string;
 }
 
-/** 解析日期写操作引用：dateStr + filePath（缺省拼顶层路径） */
-function resolveDateRef(dateStr: string, opts?: DateWriteOptions): { dateStr: string; filePath: string } {
-  return { dateStr, filePath: opts?.filePath || `${DIARY_DIRECTORY}/${dateStr}.md` };
+/** 枚举某日期的全部条目文件路径（日记目录下平铺 + 子目录递归场景，basename 形状 + 日期双重过滤） */
+function listDateEntryPaths(dateStr: string): string[] {
+  const dirPrefix = `${DIARY_DIRECTORY}/`;
+  return (getApp().vault.getMarkdownFiles?.() || [])
+    .map((f: { path: string }) => f.path)
+    .filter((p: string) => {
+      if (!p.startsWith(dirPrefix)) return false;
+      const m = DIARY_ENTRY_FILE_RE.exec(p.split('/').pop() || '');
+      return !!m && m[1] === dateStr;
+    });
 }
 
-interface SyncedDate {
-  entries: DiaryEntry[];
-  exists: boolean;
-}
-
-/**
- * 队列内磁盘同步：读磁盘 → parseFile 计量未解析行 → 命中即抛 UnparsedLineError（拒处理）。
- * 文件不存在返回空数组（新文件）；读失败抛 DiaryFileReadError 中止任务（D1：直接写会用
- * 「只有新条目」的全文覆盖/清空整天日记）。同步结果回写 diaryDataMap（键 = 文件路径，供调用方读快照）。
- */
-async function syncDateFromDisk(ref: { dateStr: string; filePath: string }): Promise<SyncedDate> {
-  const file = getApp().vault.getAbstractFileByPath(ref.filePath) as any;
-  if (!file) {
-    if (diaryDataMap) diaryDataMap.delete(ref.filePath);
-    return { entries: [], exists: false };
-  }
-  let unparsed = 0;
-  let entries: DiaryEntry[] = [];
-  try {
-    const content = await getApp().vault.read(file);
-    entries = parseFile(content, ref.dateStr, (n) => (unparsed = n));
-  } catch (e) {
-    warnReadFailed(
-      `「${ref.dateStr}」日记读取失败，本次修改没有执行（直接写会覆盖整篇日记）。请稍后重试。`,
-      `diary-read-failed-${ref.filePath}`
-    );
-    throw new DiaryFileReadError(ref.filePath, e);
-  }
-  if (unparsed > 0) {
-    warnUnparsed(
-      `「${ref.dateStr}」有 ${unparsed} 行内容无法解析，本次修改没有写入文件` +
-        `（直接处理会丢失这些行）。请先在日记本设置中运行「检测日记解析」修复后再试。`,
-      `diary-write-refused-${ref.filePath}`
-    );
-    throw new UnparsedLineError(ref.dateStr, unparsed);
-  }
-  if (!diaryDataMap) setDiaryDataMap(new Map());
-  for (const e of entries) e.filePath = ref.filePath; // 条目回填来源路径（定位谓词用）
-  if (entries.length === 0) diaryDataMap!.delete(ref.filePath);
-  else diaryDataMap!.set(ref.filePath, entries);
-  return { entries, exists: true };
+/** 队列任务上下文：file=null 表示文件不存在（新建场景由调用方另行处理） */
+interface EntryFileCtx {
+  file: any;
+  content: string;
+  entry: DiaryEntry | null;
 }
 
 /**
- * 同步结果按时间序序列化为文件全文（纯计算，不碰 vault）。
- * 空数组表示「整文件删除」，由调用方（队列回调）执行。
- * 稳定标识：写盘时把每个 map 条目的行号与磁盘标题行一一对应（P1-12：同 time 多条不再靠 time 唯一定位）
+ * 串行队列壳：读盘 → 解析 → task，全在同一队列任务内（守卫读与写互斥，TOCTOU 无窗口）。
+ * - 读失败抛 DiaryFileReadError；文件存在但解析不出条目抛 UnparsedLineError（人话通知已发）；
+ * - 解析成功回写 diaryDataMap 快照（键 = 文件路径）。
  */
-function serializeDateFile(entries: DiaryEntry[]): string {
-  entries.sort((a, b) => a.timeValue - b.timeValue);
-  let headingCursor = 0;
-  const fileLines = entries
-    .map((entry) => {
-      const emojiSeq = entry.tags.map((tag) => getTagEmoji(tag)).join('');
-      const lines = [`# ${emojiSeq} ${entry.time}`, ''];
-      if (entry.content.trim()) lines.push(entry.content.trim());
-      lines.push('');
-      entry.lineNumber = headingCursor + 1;
-      headingCursor += lines.length;
-      return lines;
-    })
-    .flat()
-    .slice(0, -1);
-  return fileLines.join('\n');
-}
-
-/**
- * 串行队列壳：同步 → 守卫 → task（拿到可变条目数组）→ 落盘，全在同一队列任务内。
- * 队列键 = 目标文件路径（子目录日期文件与顶层同名文件各自串行，互不阻塞也互不误写）。
- * 落盘 IO 刻意写在 enqueueFileTask 回调的词法区域内——D3 直写守门视队列内 IO 为契约内实现，
- * 抽成独立函数会让写脱离区域而被判裸直写（写必须在队列内，与守卫读互斥才能消 TOCTOU 窗口）。
- */
-async function withDateFile<T>(
-  ref: { dateStr: string; filePath: string },
-  task: (entries: DiaryEntry[]) => T | Promise<T>
-): Promise<T> {
-  const filePath = ref.filePath;
+async function withEntryFile<T>(filePath: string, task: (ctx: EntryFileCtx) => T | Promise<T>): Promise<T> {
   return enqueueFileTask(filePath, async () => {
-    const { entries } = await syncDateFromDisk(ref);
-    const result = await task(entries);
     const file = getApp().vault.getAbstractFileByPath(filePath) as any;
-    if (entries.length === 0) {
-      if (file) await getApp().vault.delete(file);
-      return result;
+    let content = '';
+    if (file) {
+      try {
+        content = await getApp().vault.read(file);
+      } catch (e) {
+        warnReadFailed(
+          `「${filePath.split('/').pop()}」日记读取失败，本次修改没有执行（直接写会覆盖整篇日记）。请稍后重试。`,
+          `diary-read-failed-${filePath}`
+        );
+        throw new DiaryFileReadError(filePath, e);
+      }
     }
-    const finalContent = serializeDateFile(entries);
-    try {
-      if (file) await getApp().vault.modify(file, finalContent);
-      else await getApp().vault.create(filePath, finalContent);
-    } catch (error) {
-      console.error(`重新生成文件 ${filePath} 失败:`, error);
-      throw error;
+    const entry = file ? parseEntryFile(content, filePath) : null;
+    if (file && !entry) {
+      warnUnparsed(
+        `「${filePath.split('/').pop()}」无法解析为日记条目（文件名非条目形状或日期非法），本次修改没有执行。` +
+          `请先在日记本设置中运行「日记格式体检」排查。`,
+        `diary-write-refused-${filePath}`
+      );
+      throw new UnparsedLineError(filePath.split('/').pop() || filePath, 1);
     }
-    return result;
+    if (!diaryDataMap) setDiaryDataMap(new Map());
+    if (file && entry) diaryDataMap!.set(filePath, [entry]);
+    else diaryDataMap!.delete(filePath);
+    return task({ file, content, entry });
   });
 }
 
-/** 读快照：磁盘同步后返回该日期条目副本（不落盘；供 recap 等预读，守卫命中同样拒读） */
+/** 读快照：返回该日期全部条目副本（不落盘；供 locator/recap 等预读）。
+ *  opts.filePath：只读指定条目文件；缺省枚举该日期全部条目文件（按时间升序）。 */
 export async function listDateEntries(dateStr: string, opts?: DateWriteOptions): Promise<DiaryEntry[]> {
-  const ref = resolveDateRef(dateStr, opts);
-  return enqueueFileTask(ref.filePath, async () => {
-    const { entries } = await syncDateFromDisk(ref);
-    return entries.map((e) => ({ ...e }));
-  });
+  if (opts?.filePath) {
+    return withEntryFile(opts.filePath, ({ entry }) => (entry ? [{ ...entry }] : []));
+  }
+  const out: DiaryEntry[] = [];
+  for (const p of listDateEntryPaths(dateStr)) {
+    try {
+      const es = await withEntryFile(p, ({ entry }) => (entry ? [{ ...entry }] : []));
+      out.push(...es);
+    } catch (e) {
+      if (isDiaryReadFailure(e) || e instanceof UnparsedLineError) continue; // 单文件异常不阻断整读
+      throw e;
+    }
+  }
+  out.sort((a, b) => a.timeValue - b.timeValue);
+  return out;
 }
 
-/** 添加新日记条目（原 addEntry 语义：map 插入 + 全量重写；时间序插入位）。
- *  opts.filePath：写入子目录日期文件（D2）；缺省写顶层 `<日记目录>/<date>.md`（新写条目默认落点）。 */
+/** 添加新日记条目：按日期串行取空闲文件名（同刻第二篇落 `-2` 后缀）后建文件。
+ *  opts.filePath 只取其目录作为落点（条目文件一篇一条，不向已有文件追加）。 */
 export async function addEntry(
   dateStr: string,
   timeStr: string,
@@ -204,70 +175,79 @@ export async function addEntry(
   content: string,
   opts?: DateWriteOptions
 ): Promise<DiaryEntry> {
-  const [hours, minutes] = timeStr.split(':').map(Number);
+  const [hours = 0, minutes = 0] = timeStr.split(':').map(Number);
   const timeValue = hours * 100 + minutes;
+  const dir = opts?.filePath ? opts.filePath.split('/').slice(0, -1).join('/') : DIARY_DIRECTORY;
+  // 串行键 = 目录/日期伪路径：同日新建互斥，撞名复检在任务内完成
+  const addKey = `${dir}/${dateStr}`;
 
-  const newEntry: DiaryEntry = {
-    date: dateStr,
-    time: timeStr,
-    timeValue: timeValue,
-    tags: tagsArray,
-    emoji: '',
-    content: content.trim(),
-    filename: dateStr,
-    lineNumber: 0,
-  };
-  newEntry.emoji = tagsArray.map((tag) => getTagEmoji(tag)).join('');
-
-  await withDateFile(resolveDateRef(dateStr, opts), (entries) => {
-    let insertIndex = entries.findIndex((e) => e.timeValue > timeValue);
-    if (insertIndex === -1) insertIndex = entries.length;
-    entries.splice(insertIndex, 0, newEntry);
+  const created = await enqueueFileTask(addKey, async () => {
+    let seq = 1;
+    let filePath = diaryEntryPath(dir, dateStr, timeStr, seq);
+    while (getApp().vault.getAbstractFileByPath(filePath)) {
+      seq += 1;
+      filePath = diaryEntryPath(dir, dateStr, timeStr, seq);
+    }
+    const finalContent = serializeDiaryEntryFile({ date: dateStr, time: timeStr }, tagsArray, content.trim());
+    try {
+      await getApp().vault.create(filePath, finalContent);
+    } catch (error) {
+      console.error(`创建条目文件 ${filePath} 失败:`, error);
+      throw error;
+    }
+    const entry: DiaryEntry = {
+      date: dateStr,
+      time: timeStr,
+      timeValue,
+      tags: tagsArray,
+      emoji: tagsArray.map((tag) => getTagEmoji(tag)).join(''),
+      content: content.trim(),
+      filename: filePath,
+      filePath,
+      lineNumber: 0,
+      id: `${dateStr}-${timeStr.replace(/:/g, '-')}-${Date.now()}`,
+    };
+    if (!diaryDataMap) setDiaryDataMap(new Map());
+    diaryDataMap!.set(filePath, [entry]);
+    return entry;
   });
 
-  const finalEntry = { ...newEntry };
-  finalEntry.id = `${dateStr}-${timeStr.replace(/:/g, '-')}-${Date.now()}`;
   emitDomainEvent('diary:entry-added', { date: dateStr, time: timeStr, tags: tagsArray, content: content.trim() });
-  return finalEntry;
+  return created;
 }
 
 /**
- * 删除匹配条目（原 deleteEntry 语义，定位从 id 改为谓词——wall/recap 各自携带定位字段）。
- * opts.filePath：子目录日期文件（D2）；缺省操作顶层 `<日记目录>/<date>.md`。
- * 返回删除条数；删除后该日期无条目时整文件删除并发 diary:file-vacated。
+ * 删除匹配条目（定位谓词由调用方闭包，locator 行号兜底语义沿用）。
+ * 命中即整文件删除；解析失败/不匹配的文件跳过不动。返回删除条数。
  */
 export async function removeDiaryEntries(
   dateStr: string,
   match: (e: DiaryEntry) => boolean,
   opts?: DateWriteOptions
 ): Promise<number> {
-  let removed: DiaryEntry[] = [];
-  let vacated = false;
-
-  await withDateFile(resolveDateRef(dateStr, opts), (entries) => {
-    removed = entries.filter(match);
-    if (removed.length === 0) return;
-    for (const r of removed) {
-      const idx = entries.indexOf(r);
-      if (idx !== -1) entries.splice(idx, 1);
+  const paths = opts?.filePath ? [opts.filePath] : listDateEntryPaths(dateStr);
+  let removed = 0;
+  for (const p of paths) {
+    try {
+      const del = await withEntryFile(p, async ({ file, entry }) => {
+        if (!file || !entry || !match(entry)) return false;
+        await getApp().vault.delete(file);
+        if (diaryDataMap) diaryDataMap.delete(p);
+        return true;
+      });
+      if (del) removed += 1;
+    } catch (e) {
+      if (isDiaryReadFailure(e) || e instanceof UnparsedLineError) continue; // 异常文件不阻断整删
+      throw e;
     }
-    vacated = entries.length === 0;
-  });
-
-  if (removed.length === 0) return 0;
-
-  if (vacated) {
-    // 结构性事实：该日期整文件已清空删除（意图类事件 entry-deleted 由 UI 确认回调负责，此处不发）
-    emitDomainEvent('diary:file-vacated', { date: dateStr });
   }
-  return removed.length;
+  return removed;
 }
 
 /**
- * 更新条目标签（原 updateTags 语义，定位 = filePath+lineNumber 谓词由调用方闭包）。
- * opts.filePath：子目录日期文件（D2）；缺省操作顶层 `<日记目录>/<date>.md`。
- * 命中 0 条返回 false（数据未加载/被加密链路换血等——不再盲写旧数据）。
- * 成功发 diary:tags-changed。
+ * 更新条目标签（定位 = 谓词，filePath 限定由调用方传入）。
+ * 命中即重写 frontmatter（正文不动）；标签未变化等价成功不写盘；命中 0 条返回 null。
+ * 成功（含变化）发 diary:tags-changed。
  */
 export async function updateDiaryTags(
   dateStr: string,
@@ -275,59 +255,48 @@ export async function updateDiaryTags(
   newTags: string[],
   opts?: DateWriteOptions
 ): Promise<DiaryEntry | null> {
-  // 闭包内赋值的宿主对象（TS 对闭包赋值的收窄不回流的 workaround：直接变量会被窄化为 never）
-  const res: { oldTags: string[]; changed: boolean; entry: DiaryEntry | null } = { oldTags: [], changed: false, entry: null };
-
-  await withDateFile(resolveDateRef(dateStr, opts), (entries) => {
-    const hit = entries.find(match) ?? null;
-    if (!hit) return;
-    res.entry = hit;
-    if (hit.tags.length === newTags.length && hit.tags.every((t) => newTags.includes(t))) {
-      return; // 标签未变化：等价成功，不写盘
+  const paths = opts?.filePath ? [opts.filePath] : listDateEntryPaths(dateStr);
+  for (const p of paths) {
+    let hit: { entry: DiaryEntry; from: string[]; changed: boolean } | null = null;
+    try {
+      hit = await withEntryFile(p, async ({ file, content, entry }) => {
+        if (!file || !entry || !match(entry)) return null;
+        const changed = !(entry.tags.length === newTags.length && entry.tags.every((t) => newTags.includes(t)));
+        if (!changed) return { entry, from: [...entry.tags], changed: false };
+        const body = parseDiaryEntryFile(content).body;
+        await getApp().vault.modify(file, serializeDiaryEntryFile({ date: entry.date, time: entry.time }, newTags, body));
+        const from = [...entry.tags];
+        entry.tags = [...newTags];
+        entry.emoji = newTags.map((tag) => getTagEmoji(tag)).join('');
+        if (diaryDataMap) diaryDataMap.set(p, [entry]);
+        return { entry, from, changed: true };
+      });
+    } catch (e) {
+      if (isDiaryReadFailure(e) || e instanceof UnparsedLineError) continue;
+      throw e;
     }
-    res.oldTags = [...hit.tags];
-    hit.tags = newTags;
-    hit.emoji = newTags.map((tag) => getTagEmoji(tag)).join('');
-    res.changed = true;
-  });
-
-  if (!res.entry) return null;
-  if (res.changed) {
-    // 动作埋点：标签变更写盘成功
-    emitDomainEvent('diary:tags-changed', {
-      date: res.entry.date,
-      time: res.entry.time,
-      from: res.oldTags,
-      to: newTags,
-    });
+    if (hit) {
+      if (hit.changed) {
+        emitDomainEvent('diary:tags-changed', { date: hit.entry.date, time: hit.entry.time, from: hit.from, to: newTags });
+      }
+      return hit.entry;
+    }
   }
-  return res.entry;
+  return null;
 }
 
 /**
- * 按 filePath+lineNumber 反查条目（墙动作入口；墙与写层同源解析、行号一致）。
- * 入参兼容两种形状：日期串（→ 顶层 `<日记目录>/<date>.md`）或完整 vault 路径（子目录日期文件，D2）。
- * 先查 diaryDataMap 快照，未命中做一次该文件磁盘同步后重查（替代旧「全量 loadAll 兜底」）。
+ * 按完整路径反查条目（墙动作入口；条目文件的 filename 即完整路径）。
+ * 入参兼容旧形状：日期串（无 `/`）在新格式下无对应文件 → null。
  */
-export async function findDiaryEntry(filename: string, lineNumber: number): Promise<DiaryEntry | null> {
-  const filePath = filename.includes('/') ? filename : `${DIARY_DIRECTORY}/${filename}.md`;
-  const dateStr = stripMdExt(filePath.split('/').pop()!);
-  const lookup = (map: Map<string, DiaryEntry[]> | null): DiaryEntry | null => {
-    const entries = map?.get(filePath);
-    if (!entries) return null;
-    return (
-      entries.find((e) => e.filePath === filePath && e.lineNumber === lineNumber) ??
-      null
-    );
-  };
-  const hit = lookup(diaryDataMap);
-  if (hit) return hit;
+export async function findDiaryEntry(filename: string, lineNumber = 0): Promise<DiaryEntry | null> {
+  void lineNumber; // ADR-0130：行号定位退场（locator 按 filePath+time），参数保留兼容旧调用面
+  if (!filename || !filename.includes('/')) return null;
   try {
-    await listDateEntries(dateStr, { filePath });
+    return await withEntryFile(filename, ({ entry }) => (entry ? { ...entry } : null));
   } catch (e) {
     return null; // 守卫拒读/读失败：动作不可用（人话通知已由写层发出）
   }
-  return lookup(diaryDataMap);
 }
 
 /** 守卫拒绝的统一静默处理（UI 层 catch 后判断：人话通知已由写层发出，不再叠加） */
@@ -338,3 +307,4 @@ export function isUnparsedRefusal(e: unknown): boolean {
 // ===== 兼容导出（原 store 面名；encrypt 编排等内部消费） =====
 
 export { isEncryptedEntry };
+export { isValidDiaryDate, isValidDiaryTime };
