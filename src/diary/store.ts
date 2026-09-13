@@ -111,39 +111,42 @@ interface EntryFileCtx {
 }
 
 /**
- * 串行队列壳：读盘 → 解析 → task，全在同一队列任务内（守卫读与写互斥，TOCTOU 无窗口）。
- * - 读失败抛 DiaryFileReadError；文件存在但解析不出条目抛 UnparsedLineError（人话通知已发）；
+ * 队列内守卫读（只读）：必须在 enqueueFileTask 回调内首行调用（守卫读与后续写同任务互斥）。
+ * - 读失败发通知抛 DiaryFileReadError；文件存在但解析不出条目发通知抛 UnparsedLineError；
  * - 解析成功回写 diaryDataMap 快照（键 = 文件路径）。
  */
-async function withEntryFile<T>(filePath: string, task: (ctx: EntryFileCtx) => T | Promise<T>): Promise<T> {
-  return enqueueFileTask(filePath, async () => {
-    const file = getApp().vault.getAbstractFileByPath(filePath) as any;
-    let content = '';
-    if (file) {
-      try {
-        content = await getApp().vault.read(file);
-      } catch (e) {
-        warnReadFailed(
-          `「${filePath.split('/').pop()}」日记读取失败，本次修改没有执行（直接写会覆盖整篇日记）。请稍后重试。`,
-          `diary-read-failed-${filePath}`
-        );
-        throw new DiaryFileReadError(filePath, e);
-      }
-    }
-    const entry = file ? parseEntryFile(content, filePath) : null;
-    if (file && !entry) {
-      warnUnparsed(
-        `「${filePath.split('/').pop()}」无法解析为日记条目（文件名非条目形状或日期非法），本次修改没有执行。` +
-          `请先在日记本设置中运行「日记格式体检」排查。`,
-        `diary-write-refused-${filePath}`
+async function readEntryCtxInQueue(filePath: string): Promise<EntryFileCtx> {
+  const file = getApp().vault.getAbstractFileByPath(filePath) as any;
+  let content = '';
+  if (file) {
+    try {
+      content = await getApp().vault.read(file);
+    } catch (e) {
+      warnReadFailed(
+        `「${filePath.split('/').pop()}」日记读取失败，本次修改没有执行（直接写会覆盖整篇日记）。请稍后重试。`,
+        `diary-read-failed-${filePath}`
       );
-      throw new UnparsedLineError(filePath.split('/').pop() || filePath, 1);
+      throw new DiaryFileReadError(filePath, e);
     }
-    if (!diaryDataMap) setDiaryDataMap(new Map());
-    if (file && entry) diaryDataMap!.set(filePath, [entry]);
-    else diaryDataMap!.delete(filePath);
-    return task({ file, content, entry });
-  });
+  }
+  const entry = file ? parseEntryFile(content, filePath) : null;
+  if (file && !entry) {
+    warnUnparsed(
+      `「${filePath.split('/').pop()}」无法解析为日记条目（文件名非条目形状或日期非法），本次修改没有执行。` +
+        `请先在日记本设置中运行「日记格式体检」排查。`,
+      `diary-write-refused-${filePath}`
+    );
+    throw new UnparsedLineError(filePath.split('/').pop() || filePath, 1);
+  }
+  if (!diaryDataMap) setDiaryDataMap(new Map());
+  if (file && entry) diaryDataMap!.set(filePath, [entry]);
+  else diaryDataMap!.delete(filePath);
+  return { file, content, entry };
+}
+
+/** 只读场景的队列壳（listDateEntries/findDiaryEntry）：读在队列内，与写路径 FIFO 互斥 */
+async function withEntryFile<T>(filePath: string, task: (ctx: EntryFileCtx) => T | Promise<T>): Promise<T> {
+  return enqueueFileTask(filePath, async () => task(await readEntryCtxInQueue(filePath)));
 }
 
 /** 读快照：返回该日期全部条目副本（不落盘；供 locator/recap 等预读）。
@@ -229,7 +232,9 @@ export async function removeDiaryEntries(
   let removed = 0;
   for (const p of paths) {
     try {
-      const del = await withEntryFile(p, async ({ file, entry }) => {
+      const del = await enqueueFileTask(p, async () => {
+        // 写在队列回调词法区域内（D3 直写守门契约内实现）：守卫读 + 删除文件一气呵成
+        const { file, entry } = await readEntryCtxInQueue(p);
         if (!file || !entry || !match(entry)) return false;
         await getApp().vault.delete(file);
         if (diaryDataMap) diaryDataMap.delete(p);
@@ -259,7 +264,9 @@ export async function updateDiaryTags(
   for (const p of paths) {
     let hit: { entry: DiaryEntry; from: string[]; changed: boolean } | null = null;
     try {
-      hit = await withEntryFile(p, async ({ file, content, entry }) => {
+      hit = await enqueueFileTask(p, async () => {
+        // 写在队列回调词法区域内（D3 直写守门契约内实现）：守卫读 + 仅重写 frontmatter
+        const { file, content, entry } = await readEntryCtxInQueue(p);
         if (!file || !entry || !match(entry)) return null;
         const changed = !(entry.tags.length === newTags.length && entry.tags.every((t) => newTags.includes(t)));
         if (!changed) return { entry, from: [...entry.tags], changed: false };
