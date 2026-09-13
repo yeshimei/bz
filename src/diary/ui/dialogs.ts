@@ -13,6 +13,7 @@ import { notice } from '../../core/notice';
 import { openFlowDialog } from '../../core/flow-dialog';
 import { getApp } from '../../core/app';
 import { tryGetSettings } from '../../core/settings-provider';
+import { diaryDateFromEntryPath } from '../../core/diary-format';
 import {
   DIARY_DIRECTORY,
   getSortedTagsForAddDialog,
@@ -352,10 +353,10 @@ export function openAddDialog(opts?: { yearRange?: { min: number; max: number } 
     if (activeView && activeView.file) {
       const file = activeView.file;
       if (file.path.startsWith(DIARY_DIRECTORY)) {
-        const fileName = file.basename;
-        if (/^\d{4}-\d{2}-\d{2}$/.test(fileName)) {
-          defaultDateStr = fileName;
-        }
+        // 条目文件（YYYY-MM-DD HH-MM(-N).md）取日期段：格式知识单源在 core/diary-format
+        // （传完整 path：TFile.basename 不含 .md，契约正则要求扩展名）
+        const entryDate = diaryDateFromEntryPath(file.path);
+        if (entryDate) defaultDateStr = entryDate;
       }
     }
   }
