@@ -152,33 +152,34 @@ describe('锁家族修复批（encrypt 数据层）', () => {
     expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(true);
   });
 
-  it('D4：mergeDiaryBlock（经 restoreDiaryEntry）读改写与同路径队列任务互斥——双方内容都落盘', async () => {
+  it('D4：mergeDiaryBlock（经 restoreDiaryEntry）读判写与同路径队列任务互斥——双方内容都落盘', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
+    const target = '我的/日记/2025-06-01 08-00.md';
     const note = await sm.lockNote({
-      path: '我的/日记/2025-06-01.md',
-      title: '2025-06-01',
+      path: target,
+      title: '2025-06-01 · 08:00 日记',
       kind: 'diary-entry',
-      content: '# 📝 08:00\n晨间记录。',
+      content: '# 日记/加密 08:00\n晨间记录。',
       attachments: [],
     });
 
-    // 模拟 diary 写层慢任务先占住同路径队列（此前 mergeDiaryBlock 绕过队列，读旧写新互吞）
+    // 模拟 diary 写层慢任务先占住同路径队列（还原排队在后，不与写层交错互吞）
     let release!: () => void;
     const gate = new Promise<void>((r) => (release = r));
-    const otherWrite = enqueueFileTask('我的/日记/2025-06-01.md', async () => {
-      await gate; // 队列被占住：此期间还原若不排队就会读到空文件、写后被覆盖
-      await vault.create('我的/日记/2025-06-01.md', '写层全量重写的当天内容');
+    const otherWrite = enqueueFileTask(target, async () => {
+      await gate; // 队列被占住：还原任务排队等写层完成
+      await vault.create(target, '---\n日期: 2025-06-01 08:00\n类型:\n  - 日记\n---\n\n写层重建的条目内容\n');
     });
 
-    const restoreP = sm.restoreDiaryEntry(note.id, '# 📝 08:00\n晨间记录。');
+    const restoreP = sm.restoreDiaryEntry(note.id, '# 日记 08:00\n晨间记录。');
     release();
     const [ok] = await Promise.all([restoreP, otherWrite]);
 
     expect(ok).toBe(true);
-    const final = vault.files.get('我的/日记/2025-06-01.md')!;
-    expect(final).toContain('写层全量重写的当天内容'); // 写层内容未被还原覆盖
-    expect(final).toContain('晨间记录。'); // 还原块未被写层抹掉
+    // 同路径互斥且不互吞：写层内容落在目标路径；还原发现被外来内容占用 → 后缀让位 -2
+    expect(vault.files.get(target)).toContain('写层重建的条目内容');
+    expect(vault.files.get('我的/日记/2025-06-01 08-00-2.md')).toContain('晨间记录。');
   });
 });

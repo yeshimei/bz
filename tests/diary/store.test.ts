@@ -64,10 +64,14 @@ describe('addEntry（写层：取空闲条目文件名 → 建文件）', () => 
       addEntry(DATE, '00:00', ['日记'], '第二条'),
     ]);
     const paths = [a.filePath, b.filePath].sort();
-    // '-2' 字典序在 '.' 前：排序后 -2 在前（两文件确为 基名 + -2 各一）
+    // '-2' 字典序在 '.' 前：排序后 -2 在前（两文件确为 基名 + -2 各一）；
+    // 并发下谁占基名是竞态，断言两条内容各落一个文件、互不覆盖
     expect(paths).toEqual([`我的/日记/${DATE} 00-00-2.md`, `我的/日记/${DATE} 00-00.md`]);
-    expect(vault.files.get(paths[0])).toContain('第一条');
-    expect(vault.files.get(paths[1])).toContain('第二条');
+    const bodies = [vault.files.get(paths[0])!, vault.files.get(paths[1])!].map((t) =>
+      t.includes('第一条') ? '第一条' : '第二条'
+    ).sort();
+    expect(bodies).toEqual(['第一条', '第二条']);
+    expect(a.filePath).not.toBe(b.filePath);
   });
 
   it('撞上磁盘已有文件（外来内容）也让位，绝不覆盖', async () => {
