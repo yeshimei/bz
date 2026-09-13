@@ -101,7 +101,11 @@ export function parseDiaryEntryFile(content: string): ParsedDiaryEntryFile {
   const afterClose = text.slice(end + 4);
   if (afterClose && !afterClose.startsWith('\n')) return { meta: null, tags: [], body: content || '' };
   const fmText = text.slice(4, end);
-  const body = afterClose.startsWith('\n') ? afterClose.replace(/^\n/, '') : afterClose;
+  // 正文 = 关闭行之后：剥掉 `---` 行终止换行 + 恰一个空行分隔（serialize 的固定格式）；
+  // 正文自身的首个空行只被吃掉一层（serialize(以空行开头的正文) 往返稳定）
+  let body = afterClose;
+  if (body.startsWith('\n')) body = body.slice(1);
+  if (body.startsWith('\n')) body = body.slice(1);
 
   let meta: DiaryEntryMeta | null = null;
   const tags: string[] = [];
