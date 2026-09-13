@@ -1,10 +1,11 @@
 /**
  * 影院豆瓣抓取核心（issue 303 / ADR-0129）：自 tools/obsidian-douban-poster 移植入插件。
  * 字段链（用户拍板）：搜索豆瓣（搜索页正则解析）→ **ApiZero 豆瓣电影信息接口**（评分/导演/
- * 主演/类型/地区/片长首选 + 上映日期←year/季集←episodes(仅剧集)/热门短评，key 设置项）
- * → rexxar 演职员兜底（缺导演/主演或需编剧时）；
- * 海报走豆瓣（搜索页提 URL → upgradePosterUrl 高清 → writeBinary 写盘）。
+ * 主演/类型/地区/片长首选 + 上映日期←year/热门短评，key 设置项）→ rexxar 演职员兜底
+ * （缺导演/主演或需编剧时）；海报走豆瓣（搜索页提 URL → upgradePosterUrl 高清 → writeBinary 写盘）。
  * 豆瓣详情页 HTML 退役（字段已由 ApiZero 承接）；移动端同源可用。
+ * 写回口径（审查 C8/C9 拍板）：除豆瓣链接（修正脏值）外一律「缺失才填」——已有值
+ * （含用户手工修正）不覆盖；ApiZero 逗号列表值写入前归一化为消费端的 ` / ` 切分口径（C2）。
  * 纯逻辑 + 依赖注入（httpGet / downloadBinary），node 环境可测。
  */
 import type { App, TFile } from 'obsidian';
@@ -81,6 +82,13 @@ export function upgradePosterUrl(url: string): string {
   return url.replace('s_ratio_poster', 'l_ratio_poster');
 }
 
+/** 纯函数：列表值归一化（审查 C2）——ApiZero 的 actor/genre/director/area 是逗号分隔，
+ *  消费端（analysis.ts splitAdd、recommend.ts topBy）按 ` / ` 切分：全/半角逗号及其后空格
+ *  统一改写为 ` / `；已含 ` / ` 的值不受影响（无逗号则原样返回，不重复替换） */
+export function normalizeListValue(val: string): string {
+  return val.replace(/[,，]\s*/g, ' / ');
+}
+
 /** 从详情页 URL 提取 subject ID */
 export function extractSid(detailUrl: string): string | null {
   const m = detailUrl.match(/subject\/(\d+)/);
@@ -118,6 +126,7 @@ export interface ApizeroInfo {
   genre: string;
   area: string;
   duration: string;
+  /** ApiZero 返回为总集数，非季数，勿作季集写入（审查 C1 撤回：季集是季数口径，见 ADR-0129 修订更正） */
   episodes: string;
   isTv: boolean;
   doubanUrl: string;
@@ -182,13 +191,20 @@ export type DoubanFetchOutcome =
   | { ok: true; skipped?: boolean }
   | { ok: false; reason: 'blocked' | 'notfound' | 'network' | 'write' };
 
+/** 字段值形态：string = 已有则原地更新；{ value, ifMissing } = 仅当字段缺失时写入（审查
+ *  C8/C9 拍板口径：防重抓覆盖用户手工修正，缺失才填） */
+export type FmFieldSpec = string | { value: string; ifMissing: boolean };
+
 /** frontmatter 更新（纯函数，照搬 note-processor updateFrontmatterFields 的行级口径）：
- *  已有字段原地更新、新字段插到 tags 列表后；空值跳过 */
-export function updateFrontmatterFields(content: string, fields: Record<string, string>): string {
+ *  string 字段已有则原地更新、新字段插到 tags 列表后；ifMissing 字段已有则跳过；空值跳过。
+ *  「已有」判断基于本函数收到的 content——调用方传入 process 回调的 fresh 内容即天然完成
+ *  「写回前基于最新内容复核」（C8） */
+export function updateFrontmatterFields(content: string, fields: Record<string, FmFieldSpec>): string {
   const fmMatch = content.match(/^(---\r?\n)([\s\S]*?)(\r?\n---)/);
   if (!fmMatch) {
     const fmLines = ['---'];
-    for (const [k, v] of Object.entries(fields)) {
+    for (const [k, spec] of Object.entries(fields)) {
+      const v = typeof spec === 'string' ? spec : spec.value;
       if (v) fmLines.push(`${k}: ${formatYamlValue(v)}`);
     }
     fmLines.push('---');
@@ -209,40 +225,51 @@ export function updateFrontmatterFields(content: string, fields: Record<string, 
     if (m) existingKeys.add(m[1].trim());
   }
   const newLines: string[] = [];
-  for (const [key, val] of Object.entries(fields)) {
-    if (val && val !== '') {
-      if (existingKeys.has(key)) {
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].match(new RegExp(`^${key}:`))) {
-            lines[i] = `${key}: ${formatYamlValue(val)}`;
-            break;
-          }
+  for (const [key, spec] of Object.entries(fields)) {
+    const val = typeof spec === 'string' ? spec : spec.value;
+    if (!val || val === '') continue;
+    if (existingKeys.has(key)) {
+      // 缺失才填（C8/C9）：已有值不动，保留用户手改与存量
+      if (typeof spec !== 'string' && spec.ifMissing) continue;
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].match(new RegExp(`^${key}:`))) {
+          lines[i] = `${key}: ${formatYamlValue(val)}`;
+          break;
         }
-      } else {
-        newLines.push(`${key}: ${formatYamlValue(val)}`);
       }
+    } else {
+      newLines.push(`${key}: ${formatYamlValue(val)}`);
     }
   }
   if (newLines.length > 0) lines.splice(insertIdx, 0, ...newLines);
   return header + lines.join('\n') + footer + rest;
 }
 
-/** YAML 值序列化（照搬 formatYamlValue）：含特殊字符/空格双引号包裹并转义 */
+/** YAML 值序列化（照搬 formatYamlValue）：含特殊字符/空格双引号包裹并转义。
+ *  换行先行单行化（审查 C3）：裸 \n/\r 进 frontmatter 会破坏 YAML 解析、影片从面板消失 */
 function formatYamlValue(val: string): string {
-  const s = String(val);
+  let s = String(val);
+  if (/[\r\n]/.test(s)) s = s.replace(/[ \t]*[\r\n]+[ \t]*/g, ' ');
   if (/[:"\-#[\]{}|>'?]/.test(s) || s.includes(' ')) {
     return '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
   }
   return s;
 }
 
-/** 正文 frontmatter 后插入海报 embed（纯函数，照搬 insertPosterEmbed；已存在跳过） */
+/** 正文 frontmatter 后插入海报 embed（纯函数，照搬 insertPosterEmbed；已存在跳过）。
+ *  兼容 FM 闭合 --- 恰为文件末行（无尾换行）形态（审查 C4）：补换行后 embed 仍插在
+ *  frontmatter 之后，frontmatter 保持居首有效 */
 export function insertPosterEmbed(content: string, posterPath: string): string {
   const embedLink = `![[${posterPath}]]`;
   if (content.includes(embedLink)) return content;
-  const fmMatch = content.match(/^(---\r?\n[\s\S]*?\r?\n---)\r?\n/);
+  const fmMatch = content.match(/^(---\r?\n[\s\S]*?\r?\n---)(\r?\n)?/);
   if (fmMatch) {
-    return fmMatch[0] + embedLink + '\n' + content.slice(fmMatch[0].length);
+    if (fmMatch[2]) {
+      // FM 后已有换行：embed 紧跟 FM 闭合行
+      return fmMatch[0] + embedLink + '\n' + content.slice(fmMatch[0].length);
+    }
+    // FM 即文件末尾（无尾换行）：先补换行再插 embed，结果首字符仍是 `---`
+    return fmMatch[1] + '\n' + embedLink + '\n' + content.slice(fmMatch[1].length);
   }
   return embedLink + '\n' + content;
 }
@@ -258,7 +285,9 @@ function fieldValue(content: string, key: string): string | null {
 /**
  * 单条笔记抓取（队列执行器注入点；成功 = 海报与豆瓣链接都写齐或本已齐全）。
  * 链路：搜索（风控检测）→ 海报下载写盘（无海报时）→ ApiZero 字段 + rexxar 兜底 → frontmatter 写入。
- * 海报下载/写盘失败 → 整条失败（write）；搜索风控 → blocked（上层聚合文案区分提示）。
+ * 搜索失败/网络异常 → network；搜索风控 → blocked；海报下载失败 → network；写盘失败 → write。
+ * 写回经 vault.process：字段一律「缺失才填」并基于回调内 fresh 内容复核（C8），
+ * 抓取期间用户手改不会被覆盖。
  */
 export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDeps): Promise<DoubanFetchOutcome> {
   const name = extractMovieName(file.name);
@@ -273,7 +302,7 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
   const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
   if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
 
-  // 1. 搜索（豆瓣搜索页；Cookie 注入）
+  // 1. 搜索（豆瓣搜索页；Cookie 注入）。网络异常上抛接住归 network（C6：不与风控混淆）
   const searchHeaders: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
   if (deps.doubanCookie) searchHeaders.Cookie = deps.doubanCookie;
   let html: string | null;
@@ -289,12 +318,18 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
   const sid = extractSid(first.detailUrl);
   if (!sid) return { ok: false, reason: 'notfound' };
 
-  // 2. 海报（无海报时：高清 URL → 二进制 → 写盘 → frontmatter + 正文 embed）
+  // 2. 海报（无海报时：高清 URL → 二进制 → 写盘 → frontmatter + 正文 embed）。
+  //  下载失败（抛错/null）归 network，写盘失败归 write（C6：下载与落盘失败语义拆分）
   let posterRelative = fieldValue(content, '海报');
   if (!hasPoster && first.posterUrl) {
+    let buf: ArrayBuffer | null;
     try {
-      const buf = await deps.downloadBinary(upgradePosterUrl(first.posterUrl), { Referer: 'https://movie.douban.com/' });
-      if (!buf) return { ok: false, reason: 'write' };
+      buf = await deps.downloadBinary(upgradePosterUrl(first.posterUrl), { Referer: 'https://movie.douban.com/' });
+    } catch {
+      return { ok: false, reason: 'network' };
+    }
+    if (!buf) return { ok: false, reason: 'network' };
+    try {
       await deps.mkdir(POSTER_FOLDER);
       const ext = first.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)?.[1] || 'jpg';
       const safeName = name.replace(/[/\\:*?"<>|]/g, '_');
@@ -306,42 +341,45 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
     }
   }
 
-  // 3. 字段：ApiZero 首选 → rexxar 兜底（缺导演/主演或需编剧）
-  const fields: Record<string, string> = {};
-  if (posterRelative) fields['海报'] = posterRelative;
+  // 3. 字段：ApiZero 首选 → rexxar 兜底（缺导演/主演或需编剧）。
+  //  口径（C9）：除豆瓣链接（修正脏值）外一律缺失才填——「已有」判断交给写回时基于
+  //  fresh 内容复核（C8），此处不再依赖抓取开始时的快照
+  const fields: Record<string, FmFieldSpec> = {};
+  if (posterRelative) fields['海报'] = { value: posterRelative, ifMissing: true };
   fields['豆瓣链接'] = first.detailUrl;
   let az: ApizeroInfo | null = null;
   if (deps.apizeroKey) {
     az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
     if (az) {
-      if (az.score) fields['豆瓣评分'] = az.score;
-      if (az.director) fields['导演'] = az.director;
-      if (az.actor) fields['主演'] = az.actor;
-      if (az.genre) fields['类型'] = az.genre;
-      if (az.area) fields['制片国家/地区'] = az.area;
-      if (az.duration) fields['片长'] = az.duration;
-      // issue 303 字段扩展（ADR-0129 修订，用户拍板三扩）：上映日期降级年份、
-      // 剧集补季集（is_tv 才写，防电影误填）、热门短评（缺失才填，不改已有值）
-      if (!fieldValue(content, '上映日期') && az.year) fields['上映日期'] = az.year;
-      if (az.isTv && az.episodes && !fieldValue(content, '季集')) fields['季集'] = az.episodes;
-      if (az.shortComment && !fieldValue(content, '热门短评')) fields['热门短评'] = az.shortComment;
+      if (az.score) fields['豆瓣评分'] = { value: az.score, ifMissing: true };
+      if (az.director) fields['导演'] = { value: normalizeListValue(az.director), ifMissing: true };
+      if (az.actor) fields['主演'] = { value: normalizeListValue(az.actor), ifMissing: true };
+      if (az.genre) fields['类型'] = { value: normalizeListValue(az.genre), ifMissing: true };
+      if (az.area) fields['制片国家/地区'] = { value: normalizeListValue(az.area), ifMissing: true };
+      if (az.duration) fields['片长'] = { value: az.duration, ifMissing: true };
+      // issue 303 字段扩展（ADR-0129 修订）：上映日期降级年份、热门短评，均缺失才填。
+      // 季集←episodes 已撤回（C1）：episodes 是总集数非季数，勿写入
+      if (az.year) fields['上映日期'] = { value: az.year, ifMissing: true };
+      if (az.shortComment) fields['热门短评'] = { value: az.shortComment, ifMissing: true };
     }
   }
   const needCelebrities = !az || !az.director || !az.actor;
   if (needCelebrities) {
     const cel = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
     if (cel) {
-      if (!fields['导演'] && cel.directors) fields['导演'] = cel.directors;
-      if (cel.writers) fields['编剧'] = cel.writers;
-      if (!fields['主演'] && cel.casts) fields['主演'] = cel.casts;
+      if (!fields['导演'] && cel.directors) fields['导演'] = { value: cel.directors, ifMissing: true };
+      if (cel.writers) fields['编剧'] = { value: cel.writers, ifMissing: true };
+      if (!fields['主演'] && cel.casts) fields['主演'] = { value: cel.casts, ifMissing: true };
     }
   }
 
-  // 4. 写入（vault.process 原子读改写；海报 embed 先于字段更新算好内容一次写）
+  // 4. 写入（vault.process 原子读改写；海报 embed 先于字段更新算好内容一次写）。
+  //  fresh 复核（C8）：缺失才填由 updateFrontmatterFields 基于 c 复核；embed 仅当
+  //  fresh 内容确无海报字段时插入（抓取中途用户贴海报则跳过）
   try {
     await app.vault.process(file, (c) => {
       let next = updateFrontmatterFields(c, fields);
-      if (posterRelative && !hasPoster) next = insertPosterEmbed(next, posterRelative);
+      if (posterRelative && !hasPoster && !fieldValue(c, '海报')) next = insertPosterEmbed(next, posterRelative);
       return next;
     });
   } catch {
