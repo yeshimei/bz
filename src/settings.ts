@@ -185,6 +185,10 @@ export default interface BzSettings {
   cinemaGridColumns: string;
   /** 面板风格（issue 236 / ADR-0103）：midnight/gazette/booth */
   cinemaStyle: string;
+  /** 影院抓取：ApiZero Key（豆瓣字段接口，apizero.cn；空 = 字段走豆瓣演职员兜底，ADR-0129） */
+  cinemaApizeroKey: string;
+  /** 影院抓取：豆瓣 Cookie（搜索页风控时提高成功率，可选） */
+  cinemaDoubanCookie: string;
   /** 📦 归物本：默认状态筛选（空串=全部，其余 using/idle/sold/discard；非法值回落全部。issue 194） */
   belongingsDefaultStatus: string;
   /** 📦 归物本：默认排序（recent 最近购入 / price 投入最高 / daily 日均最高；非法值回落 recent。issue 294） */
@@ -605,6 +609,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   cinemaStatusFilter: '',
   cinemaGridColumns: '5',
   cinemaStyle: 'midnight',
+  cinemaApizeroKey: '',
+  cinemaDoubanCookie: '',
 
   // 做题家（设置并入复习计划 tab）
   enableMultipleChoice: true,

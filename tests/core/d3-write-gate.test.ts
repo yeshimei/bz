@@ -79,6 +79,14 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     reason: '影视笔记 md 用户文档写（AI 推荐一键想看建条，含防重名前置拦截）',
   },
   {
+    file: /^src\/cinema\/douban-fetcher\.ts$/,
+    reason: '影视笔记 md 用户文档写（ADR-0129 抓取回填 frontmatter + 正文海报 embed，vault.process 原子读改写，口径同 cinema/ui）',
+  },
+  {
+    file: /^src\/cinema\/douban-queue\.ts$/,
+    reason: '海报图片二进制附件写（ADR-0129 adapter.writeBinary 至 CONFIG/MOVIE POSTER，用户附件非插件私有数据，同 vector-store 先例）',
+  },
+  {
     file: /^src\/bookshelf\/notes\.ts$/,
     reason: '书评/划线 md 用户笔记写，vault.process 原子读改写（audit D 已收口，Obsidian 内建单步语义）',
   },
