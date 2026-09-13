@@ -53,20 +53,21 @@ describe('数据源组 schema 形态（声明式重写）', () => {
     const rows = dataSourceGroupRows(state);
     expect(rows.length).toBeGreaterThanOrEqual(6);
     expect(rows.some((r) => r.type === 'custom')).toBe(false);
-    // ADR-0121 后 RSS 管理行入组；2026-09-12 B站/RSS 开关退役 → 两 toggle + 两管理行 + 两 number
-    expect(rows.map((r) => r.type)).toEqual(['toggle', 'toggle', 'button', 'button', 'number', 'number']);
+    // ADR-0121 后 RSS 管理行入组；2026-09-12 B站/RSS 开关退役；issue 302 头部插入立即抓取按钮 + 抓取间隔 select
+    expect(rows.map((r) => r.type)).toEqual(['button', 'select', 'toggle', 'toggle', 'button', 'button', 'number', 'number']);
     expect(rowByName(rows, '每日简报名单')).toBeUndefined();
     expect(rowByName(rows, 'RSS 订阅源').buttonText).toBe('管理');
   });
 
-  it('news.json 缺失：安装引导（info + 复制安装命令按钮）', async () => {
+  it('news.json 缺失：安装引导退役，仍给完整声明行（含立即抓取与抓取间隔，issue 302 / ADR-0128）', async () => {
     setApp(mockAppWithVault(new MockVault())); // 显式空 vault（隔离上一用例的 app 残留）
     const state = await readDataSourceState();
     expect(state.exists).toBe(false);
     const rows = dataSourceGroupRows(state);
-    const info = rowByName(rows, '尚未启用新闻数据源');
-    expect(info.type).toBe('info');
-    expect(rowByName(rows, '安装数据源').buttonText).toBe('复制安装命令');
+    expect(rowByName(rows, '尚未启用新闻数据源')).toBeUndefined();
+    expect(rowByName(rows, '安装数据源')).toBeUndefined();
+    expect(rowByName(rows, '立即抓取').buttonText).toBe('抓取');
+    expect(rowByName(rows, '抓取间隔').options.map((o: any) => o.value)).toEqual(['30', '60', '120', '360']);
   });
 
   it('clipbookSettingsSchema 组装：数据源组消费预载状态（外部 news.json 键不进 data.json）', async () => {
@@ -99,6 +100,19 @@ describe('数据源组三函数绑定（news.json 落盘）', () => {
     b.set(25);
     await b.save();
     expect(diskJson(vault).bilibiliMaxItems).toBe(25);
+  });
+
+  it('抓取间隔：select 档位 set/save 落盘 fetchIntervalMin（非法值回退 30）', async () => {
+    const vault = seedDisk();
+    const rows = dataSourceGroupRows(await readDataSourceState());
+    const b = rowByName(rows, '抓取间隔').binding;
+    expect(b.get()).toBe('30');
+    b.set('120');
+    expect(b.get()).toBe('120');
+    await b.save();
+    expect(diskJson(vault).fetchIntervalMin).toBe(120);
+    b.set('17');
+    expect(b.get()).toBe('30'); // 非法档位归一
   });
 
   it('未保存文章保留天数：numStrBinding（data.json string 键，显示数字）', async () => {
