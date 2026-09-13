@@ -16,18 +16,16 @@ import {
   EMPTY_SUMMARY, EMPTY_SOURCES,
 } from '../../src/recap/aggregate';
 import type { RecapSources } from '../../src/recap/aggregate';
+import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-format';
 
 const DAY0 = new Date(2026, 8, 4).getTime(); // 当天 0 点
 const NEXT0 = new Date(2026, 8, 5).getTime(); // 次日 0 点
 const NOON = new Date(2026, 8, 4, 12, 0).getTime(); // 当天中午
 const AT = (h: number, m: number) => new Date(2026, 8, 4, h, m).getTime();
 
-/** 条目文件夹具（ADR-0130 一目一文件；tags 默认「日记」可覆盖） */
+/** 条目文件夹具（ADR-0131 一目一文件；tags 默认「日记」可覆盖；走契约序列化保证夹具即生产格式） */
 function entryFile(date: string, time: string, body: string, tags: string[] = ['日记']): string {
-  const lines = ['---', `日期: ${date} ${time}`, '类型:'];
-  for (const tag of tags) lines.push(`  - ${tag}`);
-  lines.push('---', '', body);
-  return lines.join('\n') + '\n';
+  return serializeDiaryEntryFile({ date, time }, tags, body);
 }
 
 /** 带数字 stat 的 vault（MockVault 默认 stat 是 Promise，测 mtime/ctime 痕迹时刻用） */
@@ -209,10 +207,10 @@ describe('collectRecap（只读采集集成）', () => {
     const t = todayStr();
     const y = todayStr(-1);
     // 日记（条目文件，一目一文件）：当天 2 条可见（09:00 / 23:10）+ 1 条加密（正文含 🔐，同日记本口径不可见不计数）
-    vault.files.set(`我的/日记/${t} 09-00.md`, entryFile(t, '09:00', '早读了一会儿'));
-    vault.files.set(`我的/日记/${t} 12-00.md`, entryFile(t, '12:00', '🔐这条加密了'));
-    vault.files.set(`我的/日记/${t} 23-10.md`, entryFile(t, '23:10', '睡前记一笔'));
-    vault.files.set(`我的/日记/${y} 08-00.md`, entryFile(y, '08:00', '昨天的'));
+    vault.files.set(diaryEntryPath('我的/日记', t, '09:00'), entryFile(t, '09:00', '早读了一会儿'));
+    vault.files.set(diaryEntryPath('我的/日记', t, '12:00'), entryFile(t, '12:00', '🔐这条加密了'));
+    vault.files.set(diaryEntryPath('我的/日记', t, '23:10'), entryFile(t, '23:10', '睡前记一笔'));
+    vault.files.set(diaryEntryPath('我的/日记', y, '08:00'), entryFile(y, '08:00', '昨天的'));
     // 影视：1 部今天标记已看（mtime 今天 23:14）+ 1 部今天创建的想看 + 1 部昨天已看
     vault.files.set('我的/影视/《夜片》.md', '---\ntags:\n- 电影\n观影日期: ' + t + '\n评分: 9\n---\n');
     vault.files.set('我的/影视/《新片单》.md', '---\ntags:\n- 电影\n评分: -1\n---\n');
@@ -259,7 +257,7 @@ describe('collectRecap（只读采集集成）', () => {
   it('坏数据容错：memo.json / pomodoro.json 解析失败 → 该域记 failed（摘要 N/A 的依据），其余域不受牵连', async () => {
     vault.files.set('CONFIG/STORAGE/memo.json', '{{{bad json');
     vault.files.set('CONFIG/STORAGE/pomodoro.json', 'not-json-at-all');
-    vault.files.set(`我的/日记/${todayStr()} 09-00.md`, entryFile(todayStr(), '09:00', '还活着'));
+    vault.files.set(diaryEntryPath('我的/日记', todayStr(), '09:00'), entryFile(todayStr(), '09:00', '还活着'));
     const data = await collectRecap(mockAppWithVault(vault) as any);
     expect(data.failed.sort()).toEqual(['memo', 'pomodoro']);
     expect(data.summary.diary).toBe(1);
@@ -268,8 +266,8 @@ describe('collectRecap（只读采集集成）', () => {
 
   it('R1 回归：加密过滤口径对齐墙——「加密」标签条目、正文带 🔐 条目同样不计数', async () => {
     // 旧口径只查正文 🔐：标签「加密」的条目被回顾计数、却在墙上隐藏 → 摘要对不上
-    vault.files.set(`我的/日记/${todayStr()} 12-00.md`, entryFile(todayStr(), '12:00', '正文没有🔐标记', ['日记', '加密']));
-    vault.files.set(`我的/日记/${todayStr()} 20-00.md`, entryFile(todayStr(), '20:00', '普通条目'));
+    vault.files.set(diaryEntryPath('我的/日记', todayStr(), '12:00'), entryFile(todayStr(), '12:00', '正文没有🔐标记', ['日记', '加密']));
+    vault.files.set(diaryEntryPath('我的/日记', todayStr(), '20:00'), entryFile(todayStr(), '20:00', '普通条目'));
     const data = await collectRecap(mockAppWithVault(vault) as any);
     expect(data.summary.diary).toBe(1); // 只有 20:00 普通条目计数
     expect(data.items).toHaveLength(1);

@@ -353,7 +353,7 @@ export function openAddDialog(opts?: { yearRange?: { min: number; max: number } 
     if (activeView && activeView.file) {
       const file = activeView.file;
       if (file.path.startsWith(DIARY_DIRECTORY)) {
-        // 条目文件（YYYY-MM-DD HH-MM(-N).md）取日期段：格式知识单源在 core/diary-format
+        // 条目文件（YYMMDDHHmm(-N).md）取日期段：格式知识单源在 core/diary-format
         // （传完整 path：TFile.basename 不含 .md，契约正则要求扩展名）
         const entryDate = diaryDateFromEntryPath(file.path);
         if (entryDate) defaultDateStr = entryDate;

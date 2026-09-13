@@ -33,8 +33,8 @@ beforeEach(() => {
 });
 
 const DATE = '2024-01-01';
-const E1 = `我的/日记/${DATE} 08-00.md`;
-const E2 = `我的/日记/${DATE} 09-05.md`;
+const E1 = '我的/日记/2401010800.md'; // v3 题目：YYMMDDHHmm
+const E2 = '我的/日记/2401010905.md';
 const fm = (time: string, tags: string[], body: string) => serializeDiaryEntryFile({ date: DATE, time }, tags, body);
 
 describe('addEntry（写层：取空闲条目文件名 → 建文件）', () => {
@@ -66,7 +66,7 @@ describe('addEntry（写层：取空闲条目文件名 → 建文件）', () => 
     const paths = [a.filePath, b.filePath].sort();
     // '-2' 字典序在 '.' 前：排序后 -2 在前（两文件确为 基名 + -2 各一）；
     // 并发下谁占基名是竞态，断言两条内容各落一个文件、互不覆盖
-    expect(paths).toEqual([`我的/日记/${DATE} 00-00-2.md`, `我的/日记/${DATE} 00-00.md`]);
+    expect(paths).toEqual(['我的/日记/2401010000-2.md', '我的/日记/2401010000.md']);
     const bodies = [vault.files.get(paths[0]!)!, vault.files.get(paths[1]!)!].map((t) =>
       t.includes('第一条') ? '第一条' : '第二条'
     ).sort();
@@ -78,7 +78,7 @@ describe('addEntry（写层：取空闲条目文件名 → 建文件）', () => 
     makeVault({ [E1]: fm('08:00', ['日记'], '已有内容') });
     await addEntry(DATE, '08:00', ['日记'], '新来的');
     expect(vault.files.get(E1)).toContain('已有内容');
-    expect(vault.files.has(`我的/日记/${DATE} 08-00-2.md`)).toBe(true);
+    expect(vault.files.has('我的/日记/2401010800-2.md')).toBe(true);
   });
 
   it('发 diary:entry-added 事件（载荷 date/time/tags/content）', async () => {
@@ -115,14 +115,14 @@ describe('removeDiaryEntries（删条目 = 删条目文件）', () => {
   });
 
   it('同刻两条（-2）只删谓词命中的那条', async () => {
-    const E1b = `我的/日记/${DATE} 00-00-2.md`;
+    const E1b = '我的/日记/2401010000-2.md';
     makeVault({
-      [`我的/日记/${DATE} 00-00.md`]: fm('00:00', ['日记'], '第一条'),
+      '我的/日记/2401010000.md': fm('00:00', ['日记'], '第一条'),
       [E1b]: serializeDiaryEntryFile({ date: DATE, time: '00:00' }, ['日记'], '第二条'),
     });
     const n = await removeDiaryEntries(DATE, (e) => e.content === '第二条');
     expect(n).toBe(1);
-    expect(vault.files.get(`我的/日记/${DATE} 00-00.md`)).toContain('第一条');
+    expect(vault.files.get('我的/日记/2401010000.md')).toContain('第一条');
     expect(vault.files.has(E1b)).toBe(false);
   });
 });
@@ -138,7 +138,7 @@ describe('updateDiaryTags（只重写 frontmatter，正文一字不动）', () =
     expect(updated?.tags).toEqual(['骑行']);
     expect(updated?.emoji).toBe('🚴');
     const disk = vault.files.get(E1)!;
-    expect(disk).toContain('日期: 2024-01-01 08:00');
+    expect(disk).toContain('date: 2024-01-01 08:00');
     expect(disk).toContain('  - 骑行');
     expect(disk).toContain('A'); // 正文不动
     expect(seen[0]).toMatchObject({ date: DATE, time: '08:00', from: ['日记'], to: ['骑行'] });
@@ -163,9 +163,9 @@ describe('updateDiaryTags（只重写 frontmatter，正文一字不动）', () =
 describe('findDiaryEntry / listDateEntries', () => {
   it('完整路径命中；旧日期串形状返回 null（条目文件化后无对应文件）', async () => {
     makeVault({ [E1]: fm('08:00', ['日记'], 'A') });
-    const hit = await findDiaryEntry(E1, 0);
+    const hit = await findDiaryEntry(E1);
     expect(hit).toMatchObject({ time: '08:00', content: 'A', filePath: E1 });
-    expect(await findDiaryEntry(DATE, 1)).toBeNull();
+    expect(await findDiaryEntry(DATE)).toBeNull();
   });
 
   it('listDateEntries 按时间升序返回当日全部条目（副本，不影响 map）', async () => {
@@ -185,8 +185,8 @@ describe('findDiaryEntry / listDateEntries', () => {
 });
 
 describe('守卫语义（ADR-0130：宽运行时降级 / 异常文件跳过不阻断）', () => {
-  it('frontmatter 日期损坏 → 从文件名降级，读写照常', async () => {
-    const corrupt = '---\n日期: 2024-13-45 99:99\n类型:\n  - 日记\n---\n\n正文';
+  it('frontmatter 日期损坏 → 从题目降级，读写照常', async () => {
+    const corrupt = '---\ndate: 2024-13-45 99:99\ntype:\n  - 日记\n---\n\n正文';
     makeVault({ [E1]: corrupt });
     const entries = await listDateEntries(DATE);
     expect(entries).toHaveLength(1);
@@ -233,8 +233,8 @@ describe('D3 串行队列语义收口', () => {
   it('同日并发两次 addEntry（不同时刻）：两文件齐落', async () => {
     makeVault({});
     await Promise.all([addEntry(DATE, '09:00', ['日记'], 'B'), addEntry(DATE, '10:00', ['日记'], 'C')]);
-    expect(vault.files.get(`我的/日记/${DATE} 09-00.md`)).toContain('B');
-    expect(vault.files.get(`我的/日记/${DATE} 10-00.md`)).toContain('C');
+    expect(vault.files.get('我的/日记/2401010900.md')).toContain('B');
+    expect(vault.files.get('我的/日记/2401011000.md')).toContain('C');
   });
 
   it('不同日期并行写互不影响', async () => {
@@ -243,13 +243,13 @@ describe('D3 串行队列语义收口', () => {
       addEntry('2024-01-01', '09:00', ['日记'], 'B'),
       addEntry('2024-01-02', '08:00', ['日记'], 'Y'),
     ]);
-    expect(vault.files.get('我的/日记/2024-01-01 09-00.md')).toContain('B');
-    expect(vault.files.get('我的/日记/2024-01-02 08-00.md')).toContain('Y');
+    expect(vault.files.get('我的/日记/2401010900.md')).toContain('B');
+    expect(vault.files.get('我的/日记/2401020800.md')).toContain('Y');
   });
 });
 
 describe('子目录落点（opts.filePath 只取其目录）', () => {
-  const NESTED = `我的/日记/旧/${DATE} 08-00.md`;
+  const NESTED = '我的/日记/旧/2401010800.md';
 
   it('listDateEntries 带 filePath 读子目录条目文件；与顶层互不串扰', async () => {
     makeVault({ [E1]: fm('08:00', ['日记'], '顶层'), [NESTED]: fm('08:00', ['日记'], '子目录') });
@@ -262,7 +262,7 @@ describe('子目录落点（opts.filePath 只取其目录）', () => {
 
   it('删子目录条目文件：动的是子目录文件，顶层原样保留', async () => {
     makeVault({ [E1]: fm('08:00', ['日记'], '顶层'), [NESTED]: fm('08:00', ['日记'], '子目录') });
-    const hit = await findDiaryEntry(NESTED, 0);
+    const hit = await findDiaryEntry(NESTED);
     expect(hit!.content).toBe('子目录');
     const removed = await removeDiaryEntries(DATE, (e) => e.filePath === NESTED, { filePath: NESTED });
     expect(removed).toBe(1);
@@ -281,7 +281,7 @@ describe('子目录落点（opts.filePath 只取其目录）', () => {
   it('addEntry 带 opts.filePath：新条目落子目录，顶层不误建', async () => {
     makeVault({ [NESTED]: fm('08:00', ['日记'], '子目录') });
     await addEntry(DATE, '09:00', ['日记'], '新条目', { filePath: NESTED });
-    expect(vault.files.get(`我的/日记/旧/${DATE} 09-00.md`)).toContain('新条目');
+    expect(vault.files.get('我的/日记/旧/2401010900.md')).toContain('新条目');
     expect(vault.files.has(E2)).toBe(false);
   });
 });

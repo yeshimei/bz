@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * 日记一目一文件迁移脚本（scripts/diary-split.mjs / issue 304 / ADR-0130）回归测试。
+ * 日记一目一文件迁移脚本（scripts/diary-split.mjs / issue 304 / ADR-0131）回归测试。
  *
  * 真实 vault 上跑过一次后发现：记忆引用重写用正则扫 JSON 文本，`ref.path` 那处后面不跟
  * `#locator`（locator 是独立字段）而命中「该日期最早条目」兜底分支——`#15:12` 的引用被写
@@ -20,7 +20,7 @@ const SCRIPT = path.join(ROOT, 'scripts/diary-split.mjs');
 
 const DAY_FILE = '我的/日记/2025-06-11.md';
 const MEMORY_FILE = 'CONFIG/STORAGE/smartcat-memory.json';
-/** 两个同刻条目：基名 + -2（迁移后 15-12 的引用应落在基名条目） */
+/** 两个同刻条目：基名 + -2（迁移后 15:12 的引用应落在基名条目 `2506111512.md`） */
 const DAY_CONTENT = '# 📖 09:00\n早上写的\n# 📖 15:12\n下午写的\n# 📖 15:12\n下午又写\n';
 /** m1 带 locator（= 非最早时刻 → 旧实现写错的那类）；m2 无 locator（兜底最早条目） */
 const MEMORY_CONTENT = JSON.stringify(
@@ -76,18 +76,26 @@ afterEach(() => {
 });
 
 describe('diary-split 迁移脚本', () => {
-  it('拆分：每条目一文件（同刻 -2 让位）、原日期文件归档、条目内容与 head 行一致', () => {
+  it('拆分：每条目一文件（题目 YYMMDDHHmm、同刻 -2 让位）、原日期文件归档、条目内容与 head 行一致', () => {
     makeVault();
     run('--apply');
 
-    expect(read('我的/日记/2025-06-11 09-00.md')).toBe(
-      '---\n日期: 2025-06-11 09:00\n类型:\n  - 日记\n---\n\n早上写的\n'
+    expect(read('我的/日记/2506110900.md')).toBe(
+      '---\ndate: 2025-06-11 09:00\ntype:\n  - 日记\n---\n\n早上写的\n'
     );
-    expect(read('我的/日记/2025-06-11 15-12.md')).toContain('下午写的');
-    expect(read('我的/日记/2025-06-11 15-12-2.md')).toContain('下午又写');
+    expect(read('我的/日记/2506111512.md')).toContain('下午写的');
+    expect(read('我的/日记/2506111512-2.md')).toContain('下午又写');
     // 原文件归档、原位不残留（新解析层不做旧格式兼容）
     expect(exists(DAY_FILE)).toBe(false);
     expect(read('归档/日记/2025-06-11.md')).toBe(DAY_CONTENT);
+  });
+
+  it('报告：字数守恒核对段（原文正文 = 拆出条目正文，无差）', () => {
+    makeVault();
+    run('--apply');
+    const report = read('.scratch/diary-split-report.md');
+    expect(report).toContain('## 字数守恒核对');
+    expect(report).toContain('不一致文件数：0（守恒）');
   });
 
   it('回归：ref.path 按 ref.locator 指向该时刻条目（旧实现一律写当天最早条目）', () => {
@@ -95,18 +103,18 @@ describe('diary-split 迁移脚本', () => {
     run('--apply');
 
     const [m1, m2, m3] = memoryEntries();
-    // 15:12 不是当天最早（09:00 才是）——旧实现这里写成 2025-06-11 09-00.md
-    expect(m1.ref.path).toBe('我的/日记/2025-06-11 15-12.md');
+    // 15:12 不是当天最早（09:00 才是）——旧实现这里写成当天最早条目
+    expect(m1.ref.path).toBe('我的/日记/2506111512.md');
     expect(m1.ref.locator).toBe('15:12');
-    expect(m1.description).toBe('我的/日记/2025-06-11 15-12.md#15:12');
+    expect(m1.description).toBe('我的/日记/2506111512.md#15:12');
     // 无 locator → 该日期最早条目；同刻多条 → 基名条目（'-2' 让位）
-    expect(m2.ref.path).toBe('我的/日记/2025-06-11 09-00.md');
-    expect(m2.description).toBe('我的/日记/2025-06-11 09-00.md');
+    expect(m2.ref.path).toBe('我的/日记/2506110900.md');
+    expect(m2.description).toBe('我的/日记/2506110900.md');
     // 非日记记忆不动
     expect(m3.ref.path).toBe('我的/其他/随笔.md');
     expect(m3.description).toBe('我的/其他/随笔.md');
-    // 同刻多条一律取基名条目（'-2' 文件不抢引用——'-' 的字典序在 '.' 之前，别按 readdir 首见）
-    expect(memoryEntries().every((m) => !/ \d{2}-\d{2}-\d+\.md$/.test(m.ref.path))).toBe(true);
+    // 同刻多条一律取基名条目（'-2' 文件不抢引用）
+    expect(memoryEntries().every((m) => !/-\d+\.md$/.test(m.ref.path))).toBe(true);
   });
 
   it('emoji 头行按 grapheme 切分：多码点 emoji 不丢标签、不误命中片段', () => {
@@ -114,15 +122,15 @@ describe('diary-split 迁移脚本', () => {
     run('--apply');
 
     // 变体选择符（U+FE0F）：按码点迭代会拆碎 → 反查失配回落「日记」
-    expect(read('我的/日记/2025-06-11 10-00.md')).toContain('  - 随笔');
-    expect(read('我的/日记/2025-06-11 10-00.md')).not.toContain('  - 日记');
-    expect(read('我的/日记/2025-06-11 11-00.md')).toContain('  - 代码');
+    expect(read('我的/日记/2506111000.md')).toContain('  - 随笔');
+    expect(read('我的/日记/2506111000.md')).not.toContain('  - 日记');
+    expect(read('我的/日记/2506111100.md')).toContain('  - 代码');
     // 组合头行：📸 命中、✈️ 不丢
-    expect(read('我的/日记/2025-06-11 12-00.md')).toContain('  - 摄影');
-    expect(read('我的/日记/2025-06-11 12-00.md')).toContain('  - 旅游');
+    expect(read('我的/日记/2506111200.md')).toContain('  - 摄影');
+    expect(read('我的/日记/2506111200.md')).toContain('  - 旅游');
     // ZWJ 序列（U+1F9D1 U+200D U+1F3A8）：按码点会误命中尾段 🎨 → 错标「动漫」
-    expect(read('我的/日记/2025-06-11 13-00.md')).toContain('  - 艺术');
-    expect(read('我的/日记/2025-06-11 13-00.md')).not.toContain('  - 动漫');
+    expect(read('我的/日记/2506111300.md')).toContain('  - 艺术');
+    expect(read('我的/日记/2506111300.md')).not.toContain('  - 动漫');
   });
 
   it('记忆重写留 .bak 快照（内容为改写前原文）', () => {
@@ -140,19 +148,20 @@ describe('diary-split 迁移脚本', () => {
     expect(read(MEMORY_FILE)).toBe(after);
   });
 
-  it('重跑幂等：apply 中断（归档冲突）后重跑不产重复条目', () => {
+  it('重跑幂等：apply 中断（归档冲突）后重跑不产重复条目，「跳过已存在」计数如实', () => {
     makeVault();
     write('归档/日记/2025-06-11.md', '占位\n'); // 预置归档冲突：apply 写完条目文件后在归档步抛错
     expect(() => run('--apply')).toThrow();
-    expect(read('我的/日记/2025-06-11 09-00.md')).toContain('早上写的');
+    expect(read('我的/日记/2506110900.md')).toContain('早上写的');
 
     fs.rmSync(path.join(vault, '归档/日记/2025-06-11.md')); // 处理冲突后重跑
-    run('--apply');
+    const out = run('--apply');
+    expect(out).toContain('跳过已存在 3'); // 三条条目盘上同内容 → 本次全部跳过
     // 无 -2 重复条目（旧实现对已落盘条目一律让位）；原日期文件照常归档
     expect(fs.readdirSync(path.join(vault, '我的/日记')).sort()).toEqual([
-      '2025-06-11 09-00.md',
-      '2025-06-11 15-12-2.md',
-      '2025-06-11 15-12.md',
+      '2506110900.md',
+      '2506111512-2.md',
+      '2506111512.md',
     ]);
     expect(read('归档/日记/2025-06-11.md')).toBe(DAY_CONTENT);
   });
@@ -161,7 +170,7 @@ describe('diary-split 迁移脚本', () => {
     makeVault();
     const out = run();
     expect(out).toContain('dry-run');
-    expect(exists('我的/日记/2025-06-11 09-00.md')).toBe(false);
+    expect(exists('我的/日记/2506110900.md')).toBe(false);
     expect(read(DAY_FILE)).toBe(DAY_CONTENT);
     expect(read(MEMORY_FILE)).toBe(MEMORY_CONTENT);
     expect(exists(`${MEMORY_FILE}.bak-diary-split`)).toBe(false);
@@ -171,7 +180,7 @@ describe('diary-split 迁移脚本', () => {
     makeVault('游离正文\n# 📖 09:00\n早上写的\n');
     const out = run('--apply');
     expect(out).toContain('需人工处理: 1');
-    expect(exists('我的/日记/2025-06-11 09-00.md')).toBe(false);
+    expect(exists('我的/日记/2506110900.md')).toBe(false);
     expect(read(DAY_FILE)).toBe('游离正文\n# 📖 09:00\n早上写的\n'); // 原文件不动
     expect(exists('归档/日记/2025-06-11.md')).toBe(false); // 未拆分 → 不归档
   });

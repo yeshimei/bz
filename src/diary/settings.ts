@@ -3,7 +3,7 @@
  * 「外观」沿用 issue 246 范式（diarySkin 布局行「媒体墙」+ diarySkinTheme 主题行「画廊白」layoutKey 联动）；
  * 「目录」仅日记/信两键（影视走影院域 cinemaFolderPath、书库走书架墙域 resolveFolderPath，跨域读）；
  * 「显示」useFileDateTime（写日记弹窗时间口径）；
- * 「维护」日记解析检测按钮（修复弹窗入口落设置页）。
+ * 「维护」日记格式体检按钮（只读体检面板入口落设置页）。
  * ⚙️ 弹窗 / 设置面板「日记本」页共用本 schema。
  */
 import type { SettingsSchema } from '../core/settings-schema';

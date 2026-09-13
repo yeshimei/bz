@@ -16,7 +16,7 @@
  *  - 计数复用各域既有口径：cinema 评分三分（同 snapshot）、bookshelf md+EPUB 状态三分
  *    （同 bookshelf 域）、review 到期/逾期（同 snapshot reviewApp.loadItems）、
  *    clipping 未读 = news.json !read 计数、favorites/belongings 同 snapshot；
- *  - 日记连击：日记目录「YYYY-MM-DD HH-MM(-N).md」条目文件名日期前缀，从今天往回连续存在的天数
+ *  - 日记连击：日记目录「YYMMDDHHmm(-N).md」条目题目日期，从今天往回连续存在的天数
  *    （今天未写不断签；ADR-0130 一目一文件口径）。
  */
 import type { App, TFile } from 'obsidian';

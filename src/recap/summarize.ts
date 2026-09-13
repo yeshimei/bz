@@ -18,7 +18,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { createAI, getAIProvider } from '../core/ai';
-import { DIARY_ENTRY_FILE_RE, parseDiaryEntryFile } from '../core/diary-format';
+import { diaryDateFromEntryPath, parseDiaryEntryFile } from '../core/diary-format';
 import type { DiaryEntry } from '../diary/types';
 import { fmtHM, localDayStr, settingDir } from './aggregate';
 import type { RecapData, RecapSummary, RecapDomain } from './aggregate';
@@ -100,7 +100,12 @@ export function buildEntryContent(
 
 /** 是否「今日回顾」条目（正文首行标记；trim 容忍写盘/解析的空白差异） */
 export function isRecapEntry(e: DiaryEntry): boolean {
-  return typeof e.content === 'string' && e.content.trimStart().startsWith(RECAP_MARKER);
+  return isRecapMarkedText(e.content);
+}
+
+/** 正文是否带「今日回顾」标记（解析层与条目层共用同一判定；content 与 body 两处调用） */
+export function isRecapMarkedText(text: string): boolean {
+  return typeof text === 'string' && text.trimStart().startsWith(RECAP_MARKER);
 }
 
 /** 去掉标记行后的可读文本（复制动作用） */
@@ -186,16 +191,12 @@ export async function findRecapEntryPath(app: App, now: number = Date.now()): Pr
     const files = ((app.vault as any).getMarkdownFiles?.() || []) as { path: string }[];
     const candidates = files
       .map((f) => f.path)
-      .filter((p) => {
-        if (!p.startsWith(`${dir}/`)) return false;
-        const m = DIARY_ENTRY_FILE_RE.exec(p.split('/').pop() || '');
-        return !!m && m[1] === dateStr;
-      });
+      .filter((p) => p.startsWith(`${dir}/`) && diaryDateFromEntryPath(p) === dateStr);
     for (const p of candidates) {
       const f = app.vault.getAbstractFileByPath(p) as TFile | null;
       if (!f) continue;
       const parsed = parseDiaryEntryFile(await app.vault.read(f));
-      if (parsed.body.trimStart().startsWith(RECAP_MARKER)) return p;
+      if (isRecapMarkedText(parsed.body)) return p;
     }
     return null;
   } catch {
@@ -209,8 +210,7 @@ export async function findRecapEntryPath(app: App, now: number = Date.now()): Pr
  *
  * @returns 'replaced' = 替换了已有条目；'written' = 新写入
  */
-export async function writeRecapEntry(app: App, content: string, now: number = Date.now()): Promise<RecapWriteOutcome> {
-  void app; // 写层自持 app（getApp 单例），入参保留兼容旧调用面
+export async function writeRecapEntry(content: string, now: number = Date.now()): Promise<RecapWriteOutcome> {
   const dateStr = localDayStr(now);
 
   // 函数级动态 import（依赖方向 ADR-0002：recap ← diary 延迟解析；不改 diary 任何文件）

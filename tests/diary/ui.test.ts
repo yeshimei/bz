@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { setApp } from '../../src/core/app';
 import { applyDirectories, emojiToTagMap } from '../../src/diary/config';
-import { serializeDiaryEntryFile } from '../../src/core/diary-format';
+import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, Platform } from '../mock-obsidian-entry';
 import { DiaryAppController } from '../../src/diary/ui';
@@ -113,12 +113,12 @@ beforeEach(async () => {
   vault = new MockVault();
   // 三个日期：2026-08-19（图片/视频/音频媒体）、2026-06-11（摄影带图）、2026-06-12（纯文字对谈）
   vault.files.set(
-    '我的/日记/2026-08-19 23-02.md',
+    '我的/日记/2608192302.md',
     seed('2026-08-19', '23:02', '📖', '上厕所时被猫盯着。\n![[IMG_20260819_164331.jpg]]\n![[VID_20260819_231437.mp4]]\n![[2026年05月30日 11点05分.m4a]]')
   );
-  vault.files.set('我的/日记/2026-06-11 21-29.md', seed('2026-06-11', '21:29', '📸', '![[IMG_20260611_211240.jpg]]'));
+  vault.files.set('我的/日记/2606112129.md', seed('2026-06-11', '21:29', '📸', '![[IMG_20260611_211240.jpg]]'));
   vault.files.set(
-    '我的/日记/2026-06-12 20-33.md',
+    '我的/日记/2606122033.md',
     seed('2026-06-12', '20:33', '🤝', '"又有了新的小想法。"一首新的诗朗诵。')
   );
   const app = mockAppWithVault(vault);
@@ -394,7 +394,7 @@ describe('回忆墙 UI', () => {
   });
 
   it('章节栏视频格：从头到尾不出现播放角标；小图落地后格内只有图', async () => {
-    vault.files.set('我的/日记/2026-06-12 09-00.md', seed('2026-06-12', '09:00', '🎬', '![[VID_20260612_090000.mp4]]'));
+    vault.files.set('我的/日记/2606120900.md', seed('2026-06-12', '09:00', '🎬', '![[VID_20260612_090000.mp4]]'));
     const c = await openAndWait();
     const rail = document.querySelector('.bz-diary-desk .bz-diary-rail') as HTMLElement;
     const cell = rail.querySelector('.bz-diary-month-thumb--v') as HTMLElement;
@@ -740,9 +740,9 @@ describe('回忆墙 UI', () => {
     // mock 数据：两条 🀄（四川 子标签）+ 一条 📖（普通日记）——点子标签「四川」后应只剩四川条目
     const c = DiaryAppController.getInstance();
     const v2 = new MockVault();
-    v2.files.set('我的/日记/2026-08-19 23-02.md', seed('2026-08-19', '23:02', '🀄', '![[IMG_x.jpg]]'));
-    v2.files.set('我的/日记/2026-06-11 21-29.md', seed('2026-06-11', '21:29', '🀄', '![[IMG_y.jpg]]'));
-    v2.files.set('我的/日记/2026-06-12 20-33.md', seed('2026-06-12', '20:33', '📖', '普通日记'));
+    v2.files.set('我的/日记/2608192302.md', seed('2026-08-19', '23:02', '🀄', '![[IMG_x.jpg]]'));
+    v2.files.set('我的/日记/2606112129.md', seed('2026-06-11', '21:29', '🀄', '![[IMG_y.jpg]]'));
+    v2.files.set('我的/日记/2606122033.md', seed('2026-06-12', '20:33', '📖', '普通日记'));
     const v2app = mockAppWithVault(v2);
     setApp(v2app);
     setApp(v2app);
@@ -816,8 +816,8 @@ describe('回忆墙 UI', () => {
     await openAndWait();
     const app = (await import('../../src/core/app')).getApp();
     // 新增一天日记 → modify 事件（真实场景：外部编辑既有文件，此处新增文件内容验证重读链路）
-    vault.files.set('我的/日记/2026-09-01 08-00.md', seed('2026-09-01', '08:00', '📝', '新日记条目。'));
-    const file = (app.vault as any).file('我的/日记/2026-09-01 08-00.md');
+    vault.files.set('我的/日记/2609010800.md', seed('2026-09-01', '08:00', '📝', '新日记条目。'));
+    const file = (app.vault as any).file('我的/日记/2609010800.md');
     (app.vault as any).emit('modify', file);
     await waitFor(() => {
       const heads = document.querySelectorAll('.bz-diary-desk .bz-diary-day-head');
@@ -909,7 +909,8 @@ describe('回忆墙 UI', () => {
     // 私有夹具：去年的今天（pickOnThisDay 口径）带图日记
     const now = new Date();
     const mmdd = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    vault.files.set(`我的/日记/${now.getFullYear() - 1}-${mmdd} 08-00.md`, seed(`${now.getFullYear() - 1}-${mmdd}`, '08:00', '📸', '去年今日\n![[old.jpg]]'));
+    const lastYearKey = `${now.getFullYear() - 1}-${mmdd}`;
+    vault.files.set(diaryEntryPath('我的/日记', lastYearKey, '08:00'), seed(lastYearKey, '08:00', '📸', '去年今日\n![[old.jpg]]'));
     const c = await openAndWait();
     expect(document.querySelector('.bz-diary-memories')).toBeTruthy();
     // 点时光条卡 → 灯箱序列 = 该条目媒体
@@ -1004,8 +1005,8 @@ describe('回忆墙 UI', () => {
   it('issue 218：长文跨栏卡——≥800 字整卡跨全宽、卡内分栏、媒体横排网格；短文维持三栏小卡', async () => {
     // 私有夹具：一篇 1200 字长文（带媒体）+ 一篇 1200 字纯文字长文
     const long = '文'.repeat(1200);
-    vault.files.set('我的/日记/2026-07-01 09-00.md', seed('2026-07-01', '09:00', '📖', `${long}\n![[IMG_20260701_090000.jpg]]`));
-    vault.files.set('我的/日记/2026-07-02 10-00.md', seed('2026-07-02', '10:00', '📖', long));
+    vault.files.set('我的/日记/2607010900.md', seed('2026-07-01', '09:00', '📖', `${long}\n![[IMG_20260701_090000.jpg]]`));
+    vault.files.set('我的/日记/2607021000.md', seed('2026-07-02', '10:00', '📖', long));
     await openAndWait();
     const wall = document.querySelector('.bz-diary-desk .bz-diary-wall') as HTMLElement;
     const wide = wall.querySelectorAll('.bz-diary-wide');
@@ -1030,7 +1031,7 @@ describe('回忆墙 UI', () => {
 
   it('issue 210：章节栏视频缩略懒加载——无 IO 直挂 src + preload=auto，且格内无播放角标', async () => {
     // 本例私有夹具：beforeEach 每例重建 vault，加一条纯视频日记不影响他例
-    vault.files.set('我的/日记/2026-06-10 10-00.md', seed('2026-06-10', '10:00', '🎬', '![[VID_20260610_100000.mp4]]'));
+    vault.files.set('我的/日记/2606101000.md', seed('2026-06-10', '10:00', '🎬', '![[VID_20260610_100000.mp4]]'));
     await openAndWait();
     const rail = document.querySelector('.bz-diary-desk .bz-diary-rail') as HTMLElement;
     const vt = rail.querySelectorAll('.bz-diary-month-thumb--v');
@@ -1103,7 +1104,7 @@ describe('回忆墙 UI', () => {
 
   it('增强 #2：章节栏年份分组——跨年处插年份标签，data-month 定位不变', async () => {
     // 追加一条 2025 年日记制造跨年
-    vault.files.set('我的/日记/2025-12-01 09-00.md', seed('2025-12-01', '09:00', '📖', '去年今日。'));
+    vault.files.set('我的/日记/2512010900.md', seed('2025-12-01', '09:00', '📖', '去年今日。'));
     await openAndWait();
     const rail = document.querySelector('.bz-diary-desk .bz-diary-rail')!;
     const years = Array.from(rail.querySelectorAll<HTMLElement>('.bz-diary-rail-year')).map((y) => y.textContent);
@@ -1133,10 +1134,11 @@ describe('回忆墙 UI', () => {
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
     const lastYear = now.getFullYear() - 1;
-    vault.files.set(`我的/日记/${lastYear}-${mm}-${dd} 08-00.md`, seed(`${lastYear}-${mm}-${dd}`, '08:00', '📸', '去年今天拍的照片。\n![[old_photo.jpg]]'));
+    const lastYearKey = `${lastYear}-${mm}-${dd}`;
+    vault.files.set(diaryEntryPath('我的/日记', lastYearKey, '08:00'), seed(lastYearKey, '08:00', '📸', '去年今天拍的照片。\n![[old_photo.jpg]]'));
     const yest = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
     const yestKey = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, '0')}-${String(yest.getDate()).padStart(2, '0')}`;
-    vault.files.set(`我的/日记/${yestKey} 21-00.md`, seed(yestKey, '21:00', '📖', '昨天的事。'));
+    vault.files.set(diaryEntryPath('我的/日记', yestKey, '21:00'), seed(yestKey, '21:00', '📖', '昨天的事。'));
     await openAndWait();
     const desk = document.querySelector('.bz-diary-desk')!;
     const memories = desk.querySelector('.bz-diary-memories') as HTMLElement;
@@ -1158,9 +1160,10 @@ describe('回忆墙 UI', () => {
     const now = new Date();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
+    const lastYearKey = `${now.getFullYear() - 1}-${mm}-${dd}`;
     vault.files.set(
-      `我的/日记/${now.getFullYear() - 1}-${mm}-${dd} 08-00.md`,
-      seed(`${now.getFullYear() - 1}-${mm}-${dd}`, '08:00', '🎬', '去年今天拍的视频。\n![[VID_20250910_080000.mp4]]')
+      diaryEntryPath('我的/日记', lastYearKey, '08:00'),
+      seed(lastYearKey, '08:00', '🎬', '去年今天拍的视频。\n![[VID_20250910_080000.mp4]]')
     );
     await openAndWait();
     const cell = document.querySelector('.bz-diary-desk .bz-diary-memory') as HTMLElement;

@@ -13,6 +13,7 @@ import {
   NOTE_MEMORY_THROTTLE_MS,
   type NoteMemorySeed,
 } from '../../src/smartcat/note-memory';
+import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-format';
 
 /** 内存 vault 桩 */
 function makeAdapter(files: Record<string, string>, opts: { now?: () => number; diaryDir?: string } = {}) {
@@ -50,9 +51,9 @@ function makeBackend(existingRefs: string[] = []) {
   };
 }
 
-/** 条目文件夹具（ADR-0130 一目一文件：一条日记一个文件） */
+/** 条目文件夹具（ADR-0131 一目一文件：一条日记一个文件；走契约序列化） */
 const diaryEntryFile = (time: string, body: string, date = '2026-08-01') =>
-  `---\n日期: ${date} ${time}\n类型:\n  - 日记\n---\n\n${body}\n`;
+  serializeDiaryEntryFile({ date, time }, ['日记'], body);
 const DIRS = ['我的/日记', '笔记'];
 
 describe('isSkippablePath（杂物过滤，ADR-0069 §3）', () => {
@@ -87,11 +88,11 @@ describe('buildSeedsForFile（一篇一条 + 日记拆段）', () => {
     expect(seeds[0].created).toBe('2026-08-29T00:00:00');
   });
 
-  it('条目文件一篇一条：refPath=路径#HH:MM，created=日期+时间（ADR-0130）', () => {
-    const path = '我的/日记/2026-08-01 08-30.md';
+  it('条目文件一篇一条：refPath=路径#HH:MM，created=日期+时间（ADR-0131）', () => {
+    const path = '我的/日记/2608010830.md';
     const seeds = buildSeedsForFile(path, diaryEntryFile('08:30', '早晨写了周报'), 1700000000000, DIRS, '我的/日记', '2026-08-29');
     expect(seeds).toHaveLength(1);
-    expect(seeds[0].refPath).toBe('我的/日记/2026-08-01 08-30.md#08:30');
+    expect(seeds[0].refPath).toBe('我的/日记/2608010830.md#08:30');
     expect(seeds[0].locator).toBe('08:30');
     expect(seeds[0].fullText).toBe('早晨写了周报');
     expect(seeds[0].created).toBe('2026-08-01T08:30:00');
@@ -105,10 +106,18 @@ describe('buildSeedsForFile（一篇一条 + 日记拆段）', () => {
   });
 });
 
-describe('diarySeeds 解析异常兜底', () => {
-  it('空内容/损坏 frontmatter → 无种子', () => {
-    expect(diarySeeds('我的/日记/2026-08-01 08-30.md', '', '2026-08-01')).toEqual([]);
-    expect(diarySeeds('我的/日记/2026-08-01 08-30.md', '随便几行没有 frontmatter', '2026-08-01')).toEqual([]);
+describe('diarySeeds 解析兜底（ADR-0131：属性不可信按题目降级）', () => {
+  it('空内容 → 无种子；属性与题目都不可信 → 无种子', () => {
+    expect(diarySeeds('我的/日记/2608010830.md', '', '2026-08-01')).toEqual([]);
+    expect(diarySeeds('我的/日记/随手记.md', '随便几行没有 frontmatter', '2026-08-01')).toEqual([]);
+  });
+
+  it('属性损坏但题目合法 → 按题目降级产种子（正文取全文，不再丢条目）', () => {
+    const seeds = diarySeeds('我的/日记/2608010830.md', '随便几行没有 frontmatter', '2026-08-01');
+    // v3：属性不可信时从题目（YYMMDDHHmm）还原时间，不再返回 []
+    expect(seeds).toHaveLength(1);
+    expect(seeds[0].refPath).toBe('我的/日记/2608010830.md#08:30');
+    expect(seeds[0].fullText).toBe('随便几行没有 frontmatter');
   });
 });
 
@@ -119,8 +128,8 @@ describe('noteMemoryToday', () => {
 });
 
 describe('NoteMemorySync（增量同步器）', () => {
-  const SEED_A = '我的/日记/2026-08-01 08-30.md';
-  const SEED_B = '我的/日记/2026-08-01 23-10.md';
+  const SEED_A = '我的/日记/2608010830.md'; // v3 题目：YYMMDDHHmm
+  const SEED_B = '我的/日记/2608012310.md';
 
   function setup(files: Record<string, string>, dirs: string[] = DIRS, nowMs = 1700000000000) {
     const adapter = makeAdapter(files, { now: () => nowMs, diaryDir: '我的/日记' });
@@ -178,7 +187,7 @@ describe('NoteMemorySync（增量同步器）', () => {
 
   it('R4 豁免：「今天」的条目文件 modify 即时入库', async () => {
     const today = noteMemoryToday(1700000000000);
-    const path = `我的/日记/${today} 08-30.md`;
+    const path = diaryEntryPath('我的/日记', today, '08:30');
     const { adapter, backend, sync } = setup({ [path]: diaryEntryFile('08:30', '早晨写了周报', today) });
     await sync.init();
     const n = backend.__upserts.length;
