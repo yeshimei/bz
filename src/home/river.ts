@@ -12,16 +12,18 @@
  *  - 各源独立容错，某源失败回落空值不拖垮整面板。
  *
  * 数据源口径：
- *  - 时间线（今天/昨天）复用 recap collectRecap（五域痕迹聚合，anchor 参数天然支持昨天）；
+ *  - 时间线痕迹 = 小橘行为流（issue 305 / ADR-0132，映射见 ./behavior-timeline；外部文件改动免疫）；
+ *  - 时间线所在天的摘要 summary 仍由 recap collectRecap（五域文件统计）供给，anchor 天然支持任意天；
  *  - 计数复用各域既有口径：cinema 评分三分（同 snapshot）、bookshelf md+EPUB 状态三分
  *    （同 bookshelf 域）、review 到期/逾期（同 snapshot reviewApp.loadItems）、
  *    clipping 未读 = news.json !read 计数、favorites/belongings 同 snapshot；
- *  - 日记连击：日记目录「YYYY-MM-DD HH-MM(-N).md」条目文件名日期前缀，从今天往回连续存在的天数
+ *  - 日记连击：日记目录「YYMMDDHHmm(-N).md」条目题目日期，从今天往回连续存在的天数
  *    （今天未写不断签；ADR-0130 一目一文件口径）。
  */
 import type { App, TFile } from 'obsidian';
 import { collectRecap } from '../recap/aggregate';
-import type { RecapItem, RecapSummary } from '../recap/aggregate';
+import { behaviorToDays, readBehaviorItems, type TimelineEvent } from './behavior-timeline';
+import type { RecapSummary } from '../recap/aggregate';
 import { tryGetSettings } from '../core/settings-provider';
 import { storageFile } from '../core/storage';
 import { diaryDateFromEntryPath } from '../core/diary-format';
@@ -48,13 +50,14 @@ export type {
 
 const DAY_MS = 86400000;
 
-/* ---------- RecapItem → RiverDay ---------- */
+/* ---------- 行为流事件 → RiverDay ---------- */
 
-function toRiverDay(dateStr: string, summary: RecapSummary, items: RecapItem[]): RiverDay {
-  const events = [...items].sort((a, b) => a.ts - b.ts);
-  // memoCreated：recap 摘要没有，由「新增备忘录」痕迹数派生（buildRecap 文案契约）
-  const full: RiverSummary = { ...summary, memoCreated: events.filter((e) => e.text.startsWith('新增备忘录')).length };
-  return { dateStr, events, summary: full, firstTs: events.length ? events[0].ts : null };
+/** 一天的时间线：事件升序 + memoCreated 派生（行为流「新增备忘录」文案前缀契约）。
+ *  summary 数字仍来自 recap（issue 305 / ADR-0132：只换痕迹源，不动计数面）。 */
+function toRiverDay(dateStr: string, summary: RecapSummary, events: TimelineEvent[]): RiverDay {
+  const sorted = [...events].sort((a, b) => a.ts - b.ts);
+  const full: RiverSummary = { ...summary, memoCreated: sorted.filter((e) => e.text.startsWith('新增备忘录')).length };
+  return { dateStr, events: sorted, summary: full, firstTs: sorted.length ? sorted[0].ts : null };
 }
 
 /* ---------- 小工具（本地副本防跨文件牵连，同 recap 口径） ---------- */
@@ -210,9 +213,14 @@ function collectDiary(app: App, now: number, c: RiverCounts): RiverStreak {
 export async function collectRiver(app: App, now: number = Date.now()): Promise<RiverData> {
   // 本周 7 天窗口（今天~6 天前）一次并行采集；recap anchor 参数天然支持任意天
   const DAYS_N = 7;
-  const dayRecaps = await Promise.all(
-    Array.from({ length: DAYS_N }, (_, i) => collectRecap(app, now - i * DAY_MS).catch(() => null))
-  );
+  const [dayRecaps, behaviorItems] = await Promise.all([
+    Promise.all(
+      Array.from({ length: DAYS_N }, (_, i) => collectRecap(app, now - i * DAY_MS).catch(() => null))
+    ),
+    // 时间线痕迹源 = 小橘行为流（issue 305 / ADR-0132）：文件推导口径退役，外部改动免疫
+    readBehaviorItems(app).catch(() => []),
+  ]);
+  const behaviorDays = behaviorToDays(behaviorItems, now, DAYS_N);
 
   const counts: RiverCounts = { ...EMPTY_COUNTS };
   const safe = (fn: () => void | Promise<void>): Promise<void> =>
@@ -242,8 +250,10 @@ export async function collectRiver(app: App, now: number = Date.now()): Promise<
     /* 连击计算失败回落空 */
   }
 
-  const days = dayRecaps.map((r, i) =>
-    toRiverDay(dateStrOf(now - i * DAY_MS), r?.summary ?? EMPTY_SUMMARY, r?.items ?? [])
+  // 时间线痕迹源 = 小橘行为流（issue 305 / ADR-0132）：recap 只继续供 summary/周历 hit，
+  // items 不再进时间线——文件推导口径退役，外部批量改动不再产生任何时间线条目。
+  const days: RiverDay[] = dayRecaps.map((r, i) =>
+    toRiverDay(dateStrOf(now - i * DAY_MS), r?.summary ?? EMPTY_SUMMARY, behaviorDays[i]?.events ?? [])
   );
   const WD = ['日', '一', '二', '三', '四', '五', '六'];
   const week: RiverWeekDay[] = days.map((d) => {

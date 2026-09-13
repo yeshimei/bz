@@ -1,8 +1,8 @@
 /**
  * 日记写层（issue 256 写链路迁入；ADR-0130 重写为条目文件粒度）：唯一有权改写日记 md 的模块。
  *
- * 写模型（ADR-0130）：一条日记 = 一个条目文件 `我的/日记/YYYY-MM-DD HH-MM(-N)?.md`，
- * frontmatter `日期`+`类型`，正文即内容。所有写操作在 core per-path 串行队列
+ * 写模型（ADR-0130/0131）：一条日记 = 一个条目文件 `我的/日记/YYMMDDHHmm(-N)?.md`，
+ * frontmatter `date`+`type`，正文即内容。所有写操作在 core per-path 串行队列
  * （enqueueFileTask，键 = 条目文件路径）内「磁盘同步 → 变更 → 落盘」一气呵成
  * （D3 可靠写契约收口不变：守卫读与写同队列互斥，TOCTOU 无窗口）。
  * - 新建（addEntry）：按日期串行（队列键 = `<目录>/<date>` 伪路径），队内取空闲文件名
@@ -20,15 +20,13 @@ import { notify } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { enqueueFileTask } from '../core/storage';
 import {
-  DIARY_ENTRY_FILE_RE,
   diaryEntryPath,
+  diaryMetaFromEntryPath,
   parseDiaryEntryFile,
   serializeDiaryEntryFile,
-  isValidDiaryDate,
-  isValidDiaryTime,
 } from '../core/diary-format';
 import { DIARY_DIRECTORY, getTagEmoji } from './config';
-import { isEncryptedEntry, parseEntryFile } from './parser';
+import { parseEntryFile } from './parser';
 import type { DiaryEntry } from './types';
 
 /**
@@ -96,11 +94,7 @@ function listDateEntryPaths(dateStr: string): string[] {
   const dirPrefix = `${DIARY_DIRECTORY}/`;
   return (getApp().vault.getMarkdownFiles?.() || [])
     .map((f: { path: string }) => f.path)
-    .filter((p: string) => {
-      if (!p.startsWith(dirPrefix)) return false;
-      const m = DIARY_ENTRY_FILE_RE.exec(p.split('/').pop() || '');
-      return !!m && m[1] === dateStr;
-    });
+    .filter((p: string) => p.startsWith(dirPrefix) && diaryMetaFromEntryPath(p)?.date === dateStr);
 }
 
 /** 队列任务上下文：file=null 表示文件不存在（新建场景由调用方另行处理） */
@@ -296,8 +290,7 @@ export async function updateDiaryTags(
  * 按完整路径反查条目（墙动作入口；条目文件的 filename 即完整路径）。
  * 入参兼容旧形状：日期串（无 `/`）在新格式下无对应文件 → null。
  */
-export async function findDiaryEntry(filename: string, lineNumber = 0): Promise<DiaryEntry | null> {
-  void lineNumber; // ADR-0130：行号定位退场（locator 按 filePath+time），参数保留兼容旧调用面
+export async function findDiaryEntry(filename: string): Promise<DiaryEntry | null> {
   if (!filename || !filename.includes('/')) return null;
   try {
     return await withEntryFile(filename, ({ entry }) => (entry ? { ...entry } : null));
@@ -311,7 +304,3 @@ export function isUnparsedRefusal(e: unknown): boolean {
   return e instanceof UnparsedLineError;
 }
 
-// ===== 兼容导出（原 store 面名；encrypt 编排等内部消费） =====
-
-export { isEncryptedEntry };
-export { isValidDiaryDate, isValidDiaryTime };

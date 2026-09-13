@@ -1,4 +1,4 @@
-/* 源指纹 94a24ecf84cdb935 · 仓内输入 189 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 2c38c855f7d42c8f · 仓内输入 189 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -12238,9 +12238,18 @@ ${countsToText(s.missing)}
             {
               type: "toggle",
               // 2026-09-12：「点评 ✦」→「小橘点评」（去符号；说明白这句话是谁说的）
+              // issue 305 / ADR-0132：点评类含行为流的星级评价（movie:rated），描述同步覆盖
               name: "小橘点评",
-              desc: "小橘挂在痕迹下面的那句话，提醒动手早晚与日记连击。",
+              desc: "小橘挂在痕迹下面的那句话，也包括你给影片打的星级。",
               binding: { key: "homeTimelineNotes" }
+            },
+            {
+              // issue 305 / ADR-0132：时间线改吃行为流，已跳过回归（默认关——聚合讯跳过量级大）
+              // 题名「跳过痕迹」：遵循设置项题名 4-8 字规范（lint），与同组「产出动作/状态推进」同构
+              type: "toggle",
+              name: "跳过痕迹",
+              desc: "聚合讯里跳过的文章痕迹，量比较大，默认不显示。",
+              binding: { key: "homeTimelineSkipped" }
             }
           ]
         },
@@ -12366,11 +12375,36 @@ ${countsToText(s.missing)}
 
   // src/core/diary-format.ts
   function diaryEntryBaseName(dateStr, timeStr, seq) {
-    const [h = "00", m = "00"] = timeStr.split(":");
-    return seq && seq > 1 ? `${dateStr} ${h}-${m}-${seq}` : `${dateStr} ${h}-${m}`;
+    const d = String(dateStr || "").replace(/-/g, "");
+    const t = String(timeStr || "").replace(/:/g, "");
+    const stamp = `${d.slice(2, 8)}${t.slice(0, 4)}`;
+    return seq && seq > 1 ? `${stamp}-${seq}` : stamp;
   }
   function diaryEntryPath(dir, dateStr, timeStr, seq) {
     return `${dir}/${diaryEntryBaseName(dateStr, timeStr, seq)}.md`;
+  }
+  function diaryMetaFromEntryPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_ENTRY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `20${m[1]}-${m[2]}-${m[3]}`;
+    const time = `${m[4]}:${m[5]}`;
+    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
+    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
+  }
+  function diaryDateFromLegacyPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_LEGACY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `${m[1]}-${m[2]}-${m[3]}`;
+    return isValidDiaryDate(date) ? date : null;
+  }
+  function diaryStampText(date, time) {
+    return `${date} ${time}`;
+  }
+  function parseDiaryStamp(value) {
+    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(String(value || "").trim());
+    return m && isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
   }
   function isValidDiaryDate(s) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
@@ -12388,46 +12422,58 @@ ${countsToText(s.missing)}
     return Number(m[1]) <= 23 && Number(m[2]) <= 59;
   }
   function serializeDiaryEntryFile(meta, tags, content) {
-    const lines = ["---", `日期: ${meta.date} ${meta.time}`, "类型:"];
+    const lines = ["---", `${DIARY_DATE_KEY}: ${diaryStampText(meta.date, meta.time)}`, `${DIARY_TYPE_KEY}:`];
     for (const t of tags) lines.push(`  - ${t}`);
     lines.push("---", "", content);
     let out = lines.join("\n");
     if (!out.endsWith("\n")) out += "\n";
     return out;
   }
-  var DIARY_ENTRY_FILE_RE;
-  var init_diary_format = __esm({
-    "src/core/diary-format.ts"() {
-      DIARY_ENTRY_FILE_RE = /^(\d{4}-\d{2}-\d{2}) (\d{2})-(\d{2})(?:-(\d+))?\.md$/;
+  function parseDiaryBlockHeader(line) {
+    const m = /^#\s+(.+)\s+(\d{2}:\d{2})$/.exec(String(line || "").trim());
+    if (!m) return null;
+    const tags = [];
+    for (const name of m[1].split("/")) {
+      const t = name.trim();
+      if (t && !tags.includes(t)) tags.push(t);
     }
-  });
-
-  // src/diary/repair.ts
-  function frontmatterDateRaw(content) {
+    return { tags, time: m[2] };
+  }
+  function readDiaryFrontmatterFieldRaw(content, key) {
     const text = (content || "").replace(/\r\n/g, "\n");
     if (!text.startsWith("---\n")) return null;
     const end = text.indexOf("\n---", 4);
     if (end < 0) return null;
-    const m = /^日期:[^\S\n]*(.+)$/m.exec(text.slice(4, end));
+    const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const m = new RegExp(`^${safeKey}:[^\\S\\n]*(.*)$`, "m").exec(text.slice(4, end));
     return m ? m[1].trim() : null;
   }
-  function parseDateTimeValue(raw) {
-    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(raw || "");
-    if (!m) return null;
-    return isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
-  }
+  var DIARY_ENTRY_FILE_RE, DIARY_LEGACY_FILE_RE, DIARY_DATE_KEY, DIARY_TYPE_KEY;
+  var init_diary_format = __esm({
+    "src/core/diary-format.ts"() {
+      DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
+      DIARY_LEGACY_FILE_RE = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
+      DIARY_DATE_KEY = "date";
+      DIARY_TYPE_KEY = "type";
+    }
+  });
+
+  // src/diary/repair.ts
   function lintEntryFile(path, content) {
     const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    if (/^\d{4}-\d{2}-\d{2}\.md$/.test(base)) return "legacy";
-    const raw = frontmatterDateRaw(content);
-    const fmMeta = raw ? parseDateTimeValue(raw) : null;
-    const m = DIARY_ENTRY_FILE_RE.exec(base);
-    const fileDate = m && isValidDiaryDate(m[1]) && isValidDiaryTime(`${m[2]}:${m[3]}`) ? m[1] : null;
-    if (raw && !fmMeta && !fileDate) return "unparsable";
-    if (!fmMeta && !fileDate) return "unparsable";
-    if (fmMeta && fileDate && fmMeta.date !== fileDate) return "name-mismatch";
-    if (raw && !fmMeta && fileDate) return "unparsable";
-    if (fmMeta && !fileDate) return "name-mismatch";
+    if (DIARY_LEGACY_FILE_RE.test(base)) return "legacy";
+    const raw = readDiaryFrontmatterFieldRaw(content, DIARY_DATE_KEY);
+    const rawLegacyKey = readDiaryFrontmatterFieldRaw(content, "日期");
+    const fmMeta = raw ? parseDiaryStamp(raw) : null;
+    const fileMeta = diaryMetaFromEntryPath(base);
+    if (rawLegacyKey && !raw) return "unparsable";
+    if (raw && !fmMeta && !fileMeta) return "unparsable";
+    if (!fmMeta && !fileMeta) return "unparsable";
+    if (raw && !fmMeta && fileMeta) return "unparsable";
+    if (fmMeta && !fileMeta) return "name-mismatch";
+    if (fmMeta && fileMeta && diaryStampText(fmMeta.date, fmMeta.time) !== diaryStampText(fileMeta.date, fileMeta.time)) {
+      return "name-mismatch";
+    }
     return null;
   }
   var LINT_REASON_TEXT;
@@ -12437,7 +12483,7 @@ ${countsToText(s.missing)}
       LINT_REASON_TEXT = {
         legacy: "旧格式日期文件（未迁移）",
         unparsable: "无法解析为条目",
-        "name-mismatch": "属性日期与文件名不一致"
+        "name-mismatch": "属性时间与题目不一致"
       };
     }
   });
@@ -15790,79 +15836,85 @@ ${countsToText(s.missing)}
     };
   }
   async function writeSources(sources) {
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return;
+      if (!res.ok) return false;
       await writeNewsDataMerged({ set: { sources: { ...sources } } });
+      return true;
     });
   }
   async function addBilibiliUp(uid) {
     const id = String(uid || "").trim();
-    if (!id) return false;
+    if (!id) return "invalid";
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return false;
-      if (res.data.bilibiliUps.includes(id)) return false;
+      if (!res.ok) return "read-failed";
+      if (res.data.bilibiliUps.includes(id)) return "exists";
       await writeNewsDataMerged({ set: { bilibiliUps: [...res.data.bilibiliUps, id] } });
-      return true;
+      return "added";
     });
   }
   async function writeBilibiliMaxItems(v) {
     const n = Math.floor(Number(v));
     const maxItems = Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return;
+      if (!res.ok) return false;
       await writeNewsDataMerged({ set: { bilibiliMaxItems: maxItems } });
+      return true;
     });
   }
   async function writeBilibiliCookie(cookie) {
     const c = String(cookie || "").trim();
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return;
+      if (!res.ok) return false;
       await writeNewsDataMerged({ set: { bilibiliCookie: c } });
+      return true;
     });
   }
   async function writeFetchInterval(v) {
     const n = normalizeFetchIntervalMin(v);
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return;
+      if (!res.ok) return false;
       await writeNewsDataMerged({ set: { fetchIntervalMin: n } });
+      return true;
     });
   }
   async function addRssFeed(url, title) {
     const u = normalizeRssFeedUrl(url);
-    if (!u) return false;
+    if (!u) return "invalid";
     const t = String(title || "").trim();
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok) return false;
-      if (res.data.rssFeeds.some((f) => f.url === u)) return false;
+      if (!res.ok) return "read-failed";
+      if (res.data.rssFeeds.some((f) => f.url === u)) return "exists";
       const feed = t ? { url: u, title: t } : { url: u };
       await writeNewsDataMerged({ set: { rssFeeds: [...res.data.rssFeeds, feed] } });
-      return true;
+      return "added";
     });
   }
   async function removeRssFeed(url) {
     const u = String(url || "").trim();
-    if (!u) return;
-    await enqueueNewsWrite(async () => {
+    if (!u) return false;
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok || res.missing) return;
+      if (!res.ok) return false;
       await writeNewsDataMerged({ set: { rssFeeds: res.data.rssFeeds.filter((f) => f.url !== u) } });
+      return true;
     });
   }
   async function removeBilibiliUp(uid) {
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok || res.missing) return;
+      if (!res.ok) return false;
       const info = { ...res.data.bilibiliUpInfo };
       delete info[uid];
       await writeNewsDataMerged({
         set: { bilibiliUps: res.data.bilibiliUps.filter((u) => u !== uid), bilibiliUpInfo: info }
       });
+      return true;
     });
   }
   var init_news_source_settings = __esm({
@@ -16975,7 +17027,9 @@ ${c.trim()}
       set: (v) => {
         box.sources[key] = v;
       },
-      save: () => writeSources({ ...box.sources })
+      save: async () => {
+        if (!await writeSources({ ...box.sources })) notifyWriteFailed("数据源开关");
+      }
     });
     const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
     const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
@@ -17009,7 +17063,9 @@ ${c.trim()}
           set: (v) => {
             box.fetchIntervalMin = normalizeFetchIntervalMin(v);
           },
-          save: () => writeFetchInterval(box.fetchIntervalMin)
+          save: async () => {
+            if (!await writeFetchInterval(box.fetchIntervalMin)) notifyWriteFailed("抓取间隔");
+          }
         }
       },
       { type: "toggle", name: "知乎日报", desc: "抓取知乎日报每日文章", binding: sourceBinding("zhihu") },
@@ -17060,7 +17116,9 @@ ${c.trim()}
           set: (v) => {
             box.bilibiliMaxItems = v;
           },
-          save: () => writeBilibiliMaxItems(box.bilibiliMaxItems)
+          save: async () => {
+            if (!await writeBilibiliMaxItems(box.bilibiliMaxItems)) notifyWriteFailed("B站抓取条数");
+          }
         }
       },
       {
@@ -17076,6 +17134,9 @@ ${c.trim()}
   function setRowDesc(ctx, text) {
     const el = ctx.rowEl.querySelector(".bz-sp-set-desc") || ctx.rowEl.querySelector(".setting-item-description");
     if (el) el.textContent = text;
+  }
+  function notifyWriteFailed(what) {
+    notice(`写入失败（${what}）：news.json 不可读或已损坏`, "error");
   }
   function upManagerSettingsSchema(opts) {
     const box = {
@@ -17120,18 +17181,23 @@ ${c.trim()}
                 };
               }),
               emptyText: "暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加",
-              onChange: (keys) => {
-                void (async () => {
-                  const removed = box.ups.filter((u) => !keys.includes(u));
-                  for (const uid of removed) {
-                    await removeBilibiliUp(uid);
-                    box.ups = box.ups.filter((u) => u !== uid);
-                    delete box.upInfo[uid];
-                    notice(`已移除 UP 主 ${uid}`, "success");
+              // 返回 Promise 与 RSS 订阅行同口径：渲染器待落盘完成后重读重建——否则字盒变更晚于
+              // refresh，写失败保留的条目（或已移除条目）在弹窗内回显不准
+              onChange: (keys) => (async () => {
+                const removed = box.ups.filter((u) => !keys.includes(u));
+                let changed = false;
+                for (const uid of removed) {
+                  if (!await removeBilibiliUp(uid)) {
+                    notifyWriteFailed(`移除 UP 主 ${uid}`);
+                    continue;
                   }
-                  if (removed.length > 0) opts.onChanged();
-                })();
-              }
+                  box.ups = box.ups.filter((u) => u !== uid);
+                  delete box.upInfo[uid];
+                  changed = true;
+                  notice(`已移除 UP 主 ${uid}`, "success");
+                }
+                if (changed) opts.onChanged();
+              })()
             }
           ]
         }
@@ -17149,22 +17215,34 @@ ${c.trim()}
       notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
       return;
     }
-    const added = await addBilibiliUp(uid);
-    if (!added) {
-      notice("该 UP 主已在名单中", "info");
-      return;
+    const outcome = await addBilibiliUp(uid);
+    switch (outcome) {
+      case "added":
+        box.inputValue = "";
+        box.ups = [...box.ups, uid];
+        opts.onChanged();
+        notice(`已添加 UP 主 ${uid}`, "success");
+        return;
+      case "exists":
+        notice("该 UP 主已在名单中", "info");
+        return;
+      case "invalid":
+        notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
+        return;
+      default:
+        notifyWriteFailed("添加 UP 主");
+        return;
     }
-    box.inputValue = "";
-    box.ups = [...box.ups, uid];
-    opts.onChanged();
-    notice(`已添加 UP 主 ${uid}`, "success");
   }
   async function openUpManagerModal(opts) {
+    if (upManagerOpen || document.getElementById("bz-up-manager-mask")) return;
+    upManagerOpen = true;
     let handle = null;
     function close() {
       mask.remove();
       popup.remove();
       if (handle) handle.unregister();
+      upManagerOpen = false;
     }
     const { mask, popup } = createOverlay({
       maskId: "bz-up-manager-mask",
@@ -17181,8 +17259,13 @@ ${c.trim()}
     header.appendChild(title);
     const content = document.createElement("div");
     content.className = "bz-settings-content";
-    const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
-    renderPanelSchema2(content, upManagerSettingsSchema(opts));
+    try {
+      const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
+      renderPanelSchema2(content, upManagerSettingsSchema(opts));
+    } catch (e) {
+      close();
+      throw e;
+    }
     popup.appendChild(header);
     popup.appendChild(content);
     document.body.appendChild(mask);
@@ -17250,12 +17333,17 @@ ${c.trim()}
               emptyText: "暂无订阅源，在上方粘贴 RSS 地址添加",
               onChange: (keys) => (async () => {
                 const removed = box.feeds.filter((f) => !keys.includes(f.url));
+                let changed = false;
                 for (const f of removed) {
-                  await removeRssFeed(f.url);
+                  if (!await removeRssFeed(f.url)) {
+                    notifyWriteFailed(`移除 RSS 源 ${f.title || f.url}`);
+                    continue;
+                  }
                   box.feeds = box.feeds.filter((x) => x.url !== f.url);
+                  changed = true;
                   notice(`已移除 RSS 源 ${f.title || f.url}`, "success");
                 }
-                if (removed.length > 0) opts.onChanged();
+                if (changed) opts.onChanged();
               })()
             }
           ]
@@ -17281,22 +17369,34 @@ ${c.trim()}
       notice("试拉失败：地址不可达或不是有效的 RSS 源，未添加", "error");
       return;
     }
-    const added = await addRssFeed(url, title);
-    if (!added) {
-      notice("该 RSS 源已在订阅列表中", "info");
-      return;
+    const outcome = await addRssFeed(url, title);
+    switch (outcome) {
+      case "added":
+        box.inputValue = "";
+        box.feeds = [...box.feeds, { url, title }];
+        opts.onChanged();
+        notice(`已订阅 ${title || url}`, "success");
+        return;
+      case "exists":
+        notice("该 RSS 源已在订阅列表中", "info");
+        return;
+      case "invalid":
+        notice("无效的 RSS 地址，请粘贴 http/https 开头的订阅链接", "error");
+        return;
+      default:
+        notifyWriteFailed("添加 RSS 源");
+        return;
     }
-    box.inputValue = "";
-    box.feeds = [...box.feeds, { url, title }];
-    opts.onChanged();
-    notice(`已订阅 ${title || url}`, "success");
   }
   async function openRssManagerModal(opts) {
+    if (rssManagerOpen || document.getElementById("bz-rss-manager-mask")) return;
+    rssManagerOpen = true;
     let handle = null;
     function close() {
       mask.remove();
       popup.remove();
       if (handle) handle.unregister();
+      rssManagerOpen = false;
     }
     const { mask, popup } = createOverlay({
       maskId: "bz-rss-manager-mask",
@@ -17312,8 +17412,13 @@ ${c.trim()}
     header.appendChild(title);
     const content = document.createElement("div");
     content.className = "bz-settings-content";
-    const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
-    renderPanelSchema2(content, rssManagerSettingsSchema(opts));
+    try {
+      const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
+      renderPanelSchema2(content, rssManagerSettingsSchema(opts));
+    } catch (e) {
+      close();
+      throw e;
+    }
     popup.appendChild(header);
     popup.appendChild(content);
     document.body.appendChild(mask);
@@ -17326,6 +17431,7 @@ ${c.trim()}
     });
     handle = handleReg;
   }
+  var upManagerOpen, rssManagerOpen;
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
       init_fake_obsidian();
@@ -17336,6 +17442,8 @@ ${c.trim()}
       init_news_source_settings();
       init_news_fetcher();
       init_news_data();
+      upManagerOpen = false;
+      rssManagerOpen = false;
     }
   });
 
@@ -31356,31 +31464,30 @@ ${n.content.slice(0, 2e3)}
          * @returns 成功写入（或幂等跳过）返回 true；路径无法换算日期返回 false。
          */
         async mergeDiaryBlock(datePath, block) {
+          var _a2;
           const app = getApp();
           if (!datePath || !block) return false;
           const md = block.replace(/\r\n/g, "\n");
           const lines = md.split("\n");
-          const headMatch = lines[0] ? lines[0].match(/^#\s+(.+)\s+(\d{2}:\d{2})$/) : null;
-          const time = headMatch ? headMatch[2] : null;
-          if (!headMatch || !time) return false;
-          const tags = headMatch[1].split("/").map((s) => s.trim()).filter(Boolean);
-          if (tags.length === 0) tags.push("日记");
+          const head = parseDiaryBlockHeader((_a2 = lines[0]) != null ? _a2 : "");
+          if (!head) return false;
+          const time = head.time;
+          const tags = head.tags.length ? [...head.tags] : ["日记"];
           const bodyLines = [];
           for (let i = 1; i < lines.length; i++) bodyLines.push(lines[i]);
           while (bodyLines.length && bodyLines[bodyLines.length - 1].trim() === "") bodyLines.pop();
           while (bodyLines.length && bodyLines[0].trim() === "") bodyLines.shift();
           const body = bodyLines.join("\n");
-          const base = datePath.split("/").pop() || "";
           const dir = datePath.split("/").slice(0, -1).join("/");
+          const meta = diaryMetaFromEntryPath(datePath);
           let date = null;
           let targetPath = datePath;
-          const em = DIARY_ENTRY_FILE_RE.exec(base);
-          if (em && isValidDiaryDate(em[1])) {
-            date = em[1];
+          if (meta) {
+            date = meta.date;
           } else {
-            const lm = /^(\d{4}-\d{2}-\d{2})\.md$/.exec(base);
-            if (lm && isValidDiaryDate(lm[1])) {
-              date = lm[1];
+            const legacyDate = diaryDateFromLegacyPath(datePath);
+            if (legacyDate) {
+              date = legacyDate;
               targetPath = diaryEntryPath(dir, date, time);
             } else {
               return false;
@@ -31389,7 +31496,7 @@ ${n.content.slice(0, 2e3)}
           if (!date) return false;
           await this.ensureVaultParentFolder(targetPath);
           await enqueueFileTask(targetPath, async () => {
-            var _a2, _b2, _c, _d;
+            var _a3, _b2, _c, _d;
             const serialized = serializeDiaryEntryFile({ date, time }, tags, body);
             const existing = app.vault.getAbstractFileByPath(targetPath);
             if (existing && existing.isFolder !== true) {
@@ -31402,7 +31509,7 @@ ${n.content.slice(0, 2e3)}
                 alt = diaryEntryPath(dir, date, time, seq);
               }
               const shifted = await app.vault.create(alt, serialized);
-              (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.trigger) == null ? void 0 : _b2.call(_a2, "changed", shifted);
+              (_b2 = (_a3 = app.metadataCache) == null ? void 0 : _a3.trigger) == null ? void 0 : _b2.call(_a3, "changed", shifted);
               return;
             }
             const file = await app.vault.create(targetPath, serialized);
@@ -36286,6 +36393,7 @@ ${n.content.slice(0, 2e3)}
         homeTimelineSize: "normal",
         homeTimelineRange: "week",
         homeTimelineProduce: true,
+        homeTimelineSkipped: false,
         homeTimelineProgress: true,
         homeTimelineNotes: true,
         homeDefaultDay: "today",
@@ -36479,7 +36587,7 @@ ${n.content.slice(0, 2e3)}
         { id: "notice", name: "通知", icon: DOMAIN_ICONS.notice, desc: "通知级别、时长与弹出位置", schemaLoader: schemaLoaders.notice },
         { id: "ai", name: "AI", icon: DOMAIN_ICONS.ai, desc: "AI 服务商与模型配置", schemaLoader: schemaLoaders.ai },
         // diary = ADR-0115 回忆墙升格正名（唯一日记 UI），diary-wall 域退役
-        { id: "diary", name: "日记本", icon: DOMAIN_ICONS.diary, desc: "日记目录、写日记与解析检测", schemaLoader: schemaLoaders.diary },
+        { id: "diary", name: "日记本", icon: DOMAIN_ICONS.diary, desc: "日记目录、写日记与格式体检", schemaLoader: schemaLoaders.diary },
         { id: "memo", name: "备忘录", icon: DOMAIN_ICONS.memo, desc: "备忘录工作台与提醒设置", schemaLoader: schemaLoaders.memo },
         { id: "belongings", name: "归物本", icon: DOMAIN_ICONS.belongings, desc: "物品登记与查找", schemaLoader: schemaLoaders.belongings },
         { id: "clipping", name: "剪藏本", icon: DOMAIN_ICONS.clipping, desc: "未读流与剪藏笔记", schemaLoader: schemaLoaders.clipping },
@@ -37065,8 +37173,8 @@ ${n.content.slice(0, 2e3)}
     noticeMaxVisible: "5"
   };
   var SEED_FILES = [
-    ["我的/日记/2026-09-01.md", "# 日记\n\n演示日记。"],
-    ["我的/日记/2026-09-07.md", "# 日记\n\n演示日记。"],
+    ["我的/日记/2609011200.md", "---\ndate: 2026-09-01 12:00\ntype:\n  - 日记\n---\n\n演示日记。\n"],
+    ["我的/日记/2609071200.md", "---\ndate: 2026-09-07 12:00\ntype:\n  - 日记\n---\n\n演示日记。\n"],
     ["书库/三体.md", "---\ntitle: 三体\n---\n\n演示藏书。"],
     ["我的/影视/流浪地球2.md", "---\ntitle: 流浪地球2\n---\n\n演示影视条目。"],
     ["归档/网页剪藏/示例文章.md", "# 示例文章\n\n演示剪藏。"],

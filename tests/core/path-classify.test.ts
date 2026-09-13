@@ -117,19 +117,19 @@ describe('classifyFilePath（settings 注入自定义目录）', () => {
 });
 
 describe('diaryDateFromPath', () => {
-  it('正例：条目文件 basename `YYYY-MM-DD HH-MM(-N).md` 取出日期（ADR-0130）', () => {
-    expect(diaryDateFromPath('我的/日记/2026-08-23 09-30.md')).toBe('2026-08-23');
-    expect(diaryDateFromPath('我的/日记/2026-08-23 09-30-2.md')).toBe('2026-08-23'); // 同刻序号
-    expect(diaryDateFromPath('2026-01-02 00-00.md')).toBe('2026-01-02'); // 无目录裸 basename
-    expect(diaryDateFromPath('我的\\日记\\2024-12-31 23-59.md')).toBe('2024-12-31'); // 反斜杠
+  it('正例：条目文件题目 `YYMMDDHHmm(-N).md` 取出日期（ADR-0131）', () => {
+    expect(diaryDateFromPath('我的/日记/2608230930.md')).toBe('2026-08-23');
+    expect(diaryDateFromPath('我的/日记/2608230930-2.md')).toBe('2026-08-23'); // 同刻序号
+    expect(diaryDateFromPath('2601020000.md')).toBe('2026-01-02'); // 无目录裸 basename
+    expect(diaryDateFromPath('我的\\日记\\2412312359.md')).toBe('2024-12-31'); // 反斜杠
   });
 
-  it('反例：非条目命名/旧日期文件/错误格式/非 md 返回 null', () => {
+  it('反例：非条目命名/旧日期文件/错误格式/日历非法/非 md 返回 null', () => {
     expect(diaryDateFromPath('我的/日记/随笔.md')).toBeNull();
-    expect(diaryDateFromPath('我的/日记/2026-08-23.md')).toBeNull(); // 旧格式日期文件（ADR-0130 起不再识别）
-    expect(diaryDateFromPath('我的/日记/2026-08-23 09-30.txt')).toBeNull(); // 非 md 后缀
-    expect(diaryDateFromPath('我的/日记/2026-8-23 09-30.md')).toBeNull(); // 月未补零
-    expect(diaryDateFromPath('我的/日记/20260823 09-30.md')).toBeNull(); // 无连字符
+    expect(diaryDateFromPath('我的/日记/2026-08-23.md')).toBeNull(); // 旧格式日期文件（ADR-0131 起不再识别）
+    expect(diaryDateFromPath('我的/日记/2608230930.txt')).toBeNull(); // 非 md 后缀
+    expect(diaryDateFromPath('我的/日记/2608230930-2-3.md')).toBeNull(); // 序号形状非法
+    expect(diaryDateFromPath('我的/日记/2602311200.md')).toBeNull(); // 2 月 31 日：日历非法
     expect(diaryDateFromPath('')).toBeNull();
   });
 });

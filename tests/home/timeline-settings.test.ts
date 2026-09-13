@@ -1,10 +1,8 @@
 /**
- * 首页时间线设置纯层契约（issue 287，2026-09-11 用户点名六项）：
- *  - timelineKind：痕迹 → 类别（产出 / 状态推进）。判据是**文案前缀**不是域——
- *    同一域两种动作分属两类（影院「标记已看」= 产出，「加入片场」= 状态推进），
- *    只有文案才带这个信息。本表与 recap/aggregate.ts buildRecap 各分支一一对应，
- *    那边改了文案（如「加入片单」多两个字）这里必须同步，否则过滤会静默失效。
- *  - filterEvents：按勾选剔除整条。
+ * 首页时间线设置纯层契约（issue 287，2026-09-11 用户点名六项；issue 305 痕迹源替换）：
+ *  - timelineKind：**旧形态**（无 kind）痕迹 → 类别，按文案前缀判；行为流事件由映射时直带
+ *    kind（eventKind 优先取它），本函数只剩手搓数据/存档回落用途。
+ *  - filterEvents / eventVisible：按勾选剔除整条（四类：产出 / 状态推进 / 点评 / 已跳过）。
  *  - timelineRangeDays：范围档 → 天数。
  *  - flowHtml：过滤后空态要给「被挡掉了」的专属文案，不能让用户以为数据丢了；
  *    时刻列开关 / 字号档要落到 data 属性上（样式在 CSS 里）。
@@ -12,16 +10,17 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  timelineKind, filterEvents, timelineRangeDays,
+  timelineKind, filterEvents, eventKind, timelineRangeDays,
   DEFAULT_TIMELINE_FILTER, EMPTY_COUNTS,
 } from '../../src/home/shared';
-import type { RiverData, TimelineFilter } from '../../src/home/shared';
+import type { RiverData, RiverEvent, TimelineFilter } from '../../src/home/shared';
 import { flowHtml, nextHtml } from '../../src/home/render';
 
 const F = (over: Partial<TimelineFilter> = {}): TimelineFilter => ({ ...DEFAULT_TIMELINE_FILTER, ...over });
 
-/** 一条 recap 痕迹的最小形状（timeLabel + text 是渲染真吃的两个字段） */
-const ev = (text: string, timeLabel = '11:03') => ({ domain: 'memo' as const, ts: 0, timeLabel, text });
+/** 一条痕迹的最小形状（timeLabel + text 是渲染真吃的两个字段；kind 缺省 = 旧形态回落判类） */
+const ev = (text: string, timeLabel = '11:03', kind?: RiverEvent['kind']): RiverEvent =>
+  ({ domain: 'memo', ts: 0, timeLabel, text, ...(kind ? { kind } : {}) });
 
 function river(events: Array<{ text: string }>): RiverData {
   const day = {
@@ -79,10 +78,37 @@ describe('首页时间线设置（issue 287）', () => {
     expect(DEFAULT_SETTINGS.homeTimelineRange).toBe('week');
   });
 
-  it('「已跳过」已退役：过滤类型里没有它，痕迹也不会被判成它', () => {
-    expect(Object.keys(DEFAULT_TIMELINE_FILTER).sort()).toEqual(['notes', 'produce', 'progress']);
-    // 剪藏跳过的文案即便出现，也只会落到 produce/progress 两档之一（不存在第三档）
-    expect(['produce', 'progress']).toContain(timelineKind('跳过《某篇》'));
+  it('「已跳过」回归第四类（issue 305 / ADR-0132）：开关默认关、打开才显示', () => {
+    expect(Object.keys(DEFAULT_TIMELINE_FILTER).sort()).toEqual(['notes', 'produce', 'progress', 'skipped']);
+    expect(DEFAULT_TIMELINE_FILTER.skipped).toBe(false);
+    const evs = [ev('收藏文章『某篇』', '11:03', 'produce'), ev('已跳过『某篇』', '11:04', 'skipped')];
+    // 默认关：跳过痕迹不出（聚合讯跳过量级大）
+    expect(filterEvents(evs, F()).map((e) => e.text)).toEqual(['收藏文章『某篇』']);
+    expect(filterEvents(evs, F({ skipped: true })).map((e) => e.text)).toEqual(['收藏文章『某篇』', '已跳过『某篇』']);
+  });
+
+  it('kind 直判优先（行为流事件）：文案像「状态推进」但 kind=produce 也按 produce 走', () => {
+    // 旧回落判类会把它判成 progress（「新增备忘录」前缀）；行为流直带 kind 后以 kind 为准
+    const e = ev('新增备忘录『甲』', '11:03', 'produce');
+    expect(eventKind(e)).toBe('produce');
+    expect(filterEvents([e], F({ progress: false })).length).toBe(1);
+    expect(filterEvents([e], F({ produce: false })).length).toBe(0);
+  });
+
+  it('点评类含星级评价（movie:rated）：关「小橘点评」整条评价不显示', () => {
+    const rated = ev('评价《沙丘》 ★4', '21:30', 'note');
+    expect(eventKind(rated)).toBe('note');
+    expect(filterEvents([rated], F()).length).toBe(1);
+    expect(filterEvents([rated], F({ notes: false })).length).toBe(0);
+  });
+
+  it('flowHtml：只被「已跳过」过滤光的一天 → 专属空态（不是「还没有留下痕迹」）', () => {
+    const html = flowHtml(river([ev('已跳过『某篇』', '11:04', 'skipped')]), '2026-09-11', { filter: F() });
+    expect(html).toContain('内容过滤');
+    expect(html).not.toContain('这一天还没有留下痕迹');
+    // 打开「已跳过」→ 痕迹上河
+    const on = flowHtml(river([ev('已跳过『某篇』', '11:04', 'skipped')]), '2026-09-11', { filter: F({ skipped: true }) });
+    expect(on).toContain('已跳过『某篇』');
   });
 
   it('flowHtml：痕迹被过滤光 → 专属空态（明确告知「东西在，只是没显示」）', () => {

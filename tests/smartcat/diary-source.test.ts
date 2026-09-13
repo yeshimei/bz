@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
- * 日记观察文案/解析/判定纯函数层（ticket 077，ADR-0030；ADR-0130 一目一文件）：
- * 解析（frontmatter 类型/正文全量/损坏降级 null）、判定（首落有字门/空正文不落/累计 >50 更新/≤50 不生成）、
+ * 日记观察文案/解析/判定纯函数层（ticket 077，ADR-0030；ADR-0131 一目一文件）：
+ * 解析（frontmatter 类型/正文全量/属性损坏按题目降级/null）、判定（首落有字门/空正文不落/累计 >50 更新/≤50 不生成）、
  * 文案（首次/更新带分类变化/删除/文件级删除兜底）。集成链路见 diary-action.test.ts。
  */
 import { describe, it, expect } from 'vitest';
@@ -10,14 +10,16 @@ import {
   diaryDeleteText, diaryDeleteFileText, diaryCharCount, DIARY_UPDATE_THRESHOLD,
   type DiarySettleState,
 } from '../../src/smartcat/diary-source';
-import { serializeDiaryEntryFile } from '../../src/core/diary-format';
+import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-format';
 
 const entry = (time: string, tags: string[], body: string, date = '2026-08-24') =>
   serializeDiaryEntryFile({ date, time }, tags, body);
+/** 条目文件路径（v3 题目 YYMMDDHHmm；属性损坏时的降级依据） */
+const pathOf = (time: string, date = '2026-08-24') => diaryEntryPath('我的/日记', date, time);
 
 describe('parseDiaryEntry（解析条目文件）', () => {
   it('单条目：frontmatter 时间+类型，正文全量', () => {
-    expect(parseDiaryEntry(entry('14:30', ['日记'], '今天天气不错'))).toEqual({
+    expect(parseDiaryEntry(entry('14:30', ['日记'], '今天天气不错'), pathOf('14:30'))).toEqual({
       time: '14:30',
       tags: ['日记'],
       body: '今天天气不错',
@@ -25,26 +27,32 @@ describe('parseDiaryEntry（解析条目文件）', () => {
   });
 
   it('多类型列表逐项解析（主/二级都列）', () => {
-    expect(parseDiaryEntry(entry('23:05', ['日记', '猫'], '写了猫'))!.tags).toEqual(['日记', '猫']);
-    expect(parseDiaryEntry(entry('09:00', ['收藏', '咪咪'], '收藏'))!.tags).toEqual(['收藏', '咪咪']);
+    expect(parseDiaryEntry(entry('23:05', ['日记', '猫'], '写了猫'), pathOf('23:05'))!.tags).toEqual(['日记', '猫']);
+    expect(parseDiaryEntry(entry('09:00', ['收藏', '咪咪'], '收藏'), pathOf('09:00'))!.tags).toEqual(['收藏', '咪咪']);
   });
 
   it('类型空缺回退「日记」', () => {
-    const content = '---\n日期: 2026-08-24 09:00\n类型:\n---\n\nx';
-    expect(parseDiaryEntry(content)!.tags).toEqual(['日记']);
+    const content = '---\ndate: 2026-08-24 09:00\ntype:\n---\n\nx';
+    expect(parseDiaryEntry(content, pathOf('09:00'))!.tags).toEqual(['日记']);
   });
 
   it('正文全量不截断（多行/多段保留，仅去首尾空白）', () => {
     const body = '第一行\n\n第二行\n# 非标题行（无时间）也算正文\n末尾';
-    const parsed = parseDiaryEntry(entry('08:00', ['日记'], body));
+    const parsed = parseDiaryEntry(entry('08:00', ['日记'], body), pathOf('08:00'));
     expect(parsed!.body).toBe(body);
   });
 
-  it('只有 frontmatter（正文空）→ body 空串；frontmatter 日期损坏 → null；无 frontmatter → null', () => {
-    expect(parseDiaryEntry(entry('08:00', ['日记'], ''))!.body).toBe('');
-    expect(parseDiaryEntry('')).toBeNull();
-    expect(parseDiaryEntry('---\n日期: 2026-13-45 99:99\n类型:\n  - 日记\n---\n\n正文')).toBeNull();
-    expect(parseDiaryEntry('随便几行没有 frontmatter\n')).toBeNull();
+  it('只有 frontmatter（正文空）→ body 空串；无 frontmatter 且题目非条目形状 → null', () => {
+    expect(parseDiaryEntry(entry('08:00', ['日记'], ''), pathOf('08:00'))!.body).toBe('');
+    expect(parseDiaryEntry('', '我的/日记/随手记.md')).toBeNull();
+    expect(parseDiaryEntry('随便几行没有 frontmatter\n', '我的/日记/随手记.md')).toBeNull();
+  });
+
+  it('属性损坏按题目降级（不再 null）；题目也非法 → null', () => {
+    const broken = '---\ndate: 2026-13-45 99:99\ntype:\n  - 日记\n---\n\n正文';
+    // v3：属性损坏按题目（YYMMDDHHmm）降级，time 从题目还原
+    expect(parseDiaryEntry(broken, pathOf('09:00'))).toMatchObject({ time: '09:00', tags: ['日记'], body: '正文' });
+    expect(parseDiaryEntry(broken, '我的/日记/随手记.md')).toBeNull();
   });
 });
 

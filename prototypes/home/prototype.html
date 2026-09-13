@@ -139,7 +139,7 @@
         let mark = null;
         try { mark = JSON.parse(localStorage.getItem('bz-sim:__home_seed') || 'null'); } catch { mark = null; }
         const today = (() => { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; })();
-        if (!mark || mark.seededOn !== today || mark.rev !== 6) {
+        if (!mark || mark.seededOn !== today || mark.rev !== 7) {
           if (!location.search.includes('reset=1')) {
             B.resetHomeSim();
             location.search = '?selftest=1&reset=1';

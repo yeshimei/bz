@@ -59,6 +59,7 @@ function readHomeSettings(): { filter: TimelineFilter; flow: FlowOpts; rangeDays
     produce: bool(s.homeTimelineProduce, DEFAULT_TIMELINE_FILTER.produce),
     progress: bool(s.homeTimelineProgress, DEFAULT_TIMELINE_FILTER.progress),
     notes: bool(s.homeTimelineNotes, DEFAULT_TIMELINE_FILTER.notes),
+    skipped: bool(s.homeTimelineSkipped, DEFAULT_TIMELINE_FILTER.skipped),
   };
   // 范围缺省 = week（用户 2026-09-11 拍板：默认能往回翻整周）；老 data.json 无此键时同样落 week
   const range = str(s.homeTimelineRange) ?? 'week';

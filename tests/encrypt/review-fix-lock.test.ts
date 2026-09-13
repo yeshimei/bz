@@ -156,7 +156,7 @@ describe('锁家族修复批（encrypt 数据层）', () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
-    const target = '我的/日记/2025-06-01 08-00.md';
+    const target = '我的/日记/2506010800.md'; // v3 题目：YYMMDDHHmm
     const note = await sm.lockNote({
       path: target,
       title: '2025-06-01 · 08:00 日记',
@@ -170,7 +170,7 @@ describe('锁家族修复批（encrypt 数据层）', () => {
     const gate = new Promise<void>((r) => (release = r));
     const otherWrite = enqueueFileTask(target, async () => {
       await gate; // 队列被占住：还原任务排队等写层完成
-      await vault.create(target, '---\n日期: 2025-06-01 08:00\n类型:\n  - 日记\n---\n\n写层重建的条目内容\n');
+      await vault.create(target, '---\ndate: 2025-06-01 08:00\ntype:\n  - 日记\n---\n\n写层重建的条目内容\n');
     });
 
     const restoreP = sm.restoreDiaryEntry(note.id, '# 日记 08:00\n晨间记录。');
@@ -180,6 +180,6 @@ describe('锁家族修复批（encrypt 数据层）', () => {
     expect(ok).toBe(true);
     // 同路径互斥且不互吞：写层内容落在目标路径；还原发现被外来内容占用 → 后缀让位 -2
     expect(vault.files.get(target)).toContain('写层重建的条目内容');
-    expect(vault.files.get('我的/日记/2025-06-01 08-00-2.md')).toContain('晨间记录。');
+    expect(vault.files.get('我的/日记/2506010800-2.md')).toContain('晨间记录。');
   });
 });
