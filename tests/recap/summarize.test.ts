@@ -1,10 +1,11 @@
 // @vitest-environment node
 /**
- * 今日回顾 R3 数据层测试：一键生成总结写进日记。
- *  - 纯函数：数字段/数字行/降级模板/AI 提示词/正文消毒/条目正文组装/标记识别
+ * 今日回顾 R3 数据层测试：一键生成总结写进日记（ADR-0130 条目文件口径）。
+ *  - 纯函数：数字段/数字行/降级模板/AI 提示词/净化（trim）/条目正文组装/标记识别
  *  - generateRecapContent：AI 成功、AI 失败降级模板不写盘、AI 空内容降级、未配置降级、五域全失败
- *  - writeRecapEntry（真实 diary store 集成）：新写入、同日替换不叠条、同分钟替换、
- *    叠条遗留清理、未解析行拒写、写盘失败旧内容保留
+ *  - writeRecapEntry / hasRecapEntry / findRecapEntryPath（真实 diary store 集成）：
+ *    新写入（新条目文件）、同日替换不叠条、同分钟替换、叠条遗留清理、
+ *    旧格式残留不阻断写入、写盘失败旧内容保留
  * AI 调用一律 mock（core/ai），不真发请求。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -14,7 +15,7 @@ import { DEFAULT_SETTINGS } from '../../src/settings';
 import { setApp as setDiaryApp } from '../../src/core/app';
 import { setDiaryDataMap } from '../../src/diary/store';
 import { resetTagsConfig } from '../../src/diary/config';
-import { parseFile } from '../../src/diary/parser';
+import { DIARY_ENTRY_FILE_RE, parseDiaryEntryFile, serializeDiaryEntryFile } from '../../src/core/diary-format';
 
 vi.mock('../../src/core/ai', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/core/ai')>();
@@ -27,12 +28,12 @@ import {
   buildRecapDigest,
   buildSummaryPrompt,
   entryTextWithoutMarker,
+  findRecapEntryPath,
   generateRecapContent,
   hasRecapEntry,
   isRecapEntry,
   numbersLine,
   numbersSegments,
-  recapDiaryFilePath,
   sanitizeSummaryText,
   templateSummary,
   writeRecapEntry,
@@ -48,6 +49,16 @@ const mockedGetProvider = vi.mocked(getAIProvider);
 const NOW = new Date();
 NOW.setHours(12, 0, 0, 0);
 const NOW_MS = NOW.getTime();
+
+/** 当天日期串与回顾条目落点路径（writeRecapEntry 经 diary store addEntry 落 `<日记目录>/YYYY-MM-DD 12-00.md`） */
+function dayKey(): string {
+  const d = new Date(NOW_MS);
+  const p2 = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+}
+function recapPath(): string {
+  return `我的/日记/${dayKey()} 12-00.md`;
+}
 
 const EMPTY_FAILED: never[] = [];
 
@@ -129,24 +140,11 @@ describe('buildRecapDigest / buildSummaryPrompt', () => {
 });
 
 describe('sanitizeSummaryText / buildEntryContent / isRecapEntry', () => {
-  it('行首「# … HH:mm」日记标题形消毒为全角＃（防重解析被误切成新条目）', () => {
-    expect(sanitizeSummaryText('今天很充实。\n# 📖 09:00\n晚安')).toBe('今天很充实。\n＃ 📖 09:00\n晚安');
-    expect(sanitizeSummaryText('普通 # 标记 不动')).toContain('# 标记');
-  });
-
-  it('D8 回归：行首任意「#{1,6} 」标题形（含不带时间的 # 标题）都转全角，重解析不再锁死当天', () => {
-    // 不带时间的 `# 标题` 行（前有空行）：旧消毒放过 → 空行+# 行提前闭合条目，
-    // 该行及之后正文全部计成未解析行 → 写守卫锁死当天、一键修复修不了
-    const out = sanitizeSummaryText('总结开头\n\n# 标题\n后续正文\n\n## 小节\n尾');
-    expect(out).toBe('总结开头\n\n＃ 标题\n后续正文\n\n＃＃ 小节\n尾');
-    // 消毒后的正文写进日记条目重解析：不再产生未解析行、条目完整
-    const content = buildEntryContent(out, DATA.summary, EMPTY_FAILED, { withNumbers: false });
-    let unparsed = 0;
-    const parsed = parseFile(`# 📖 21:00\n\n${content}\n`, '2026-09-04', (n) => (unparsed = n));
-    expect(unparsed).toBe(0);
-    expect(parsed).toHaveLength(1);
-    expect(parsed[0].content).toContain('＃ 标题');
-    expect(parsed[0].content).toContain('尾');
+  it('净化 = trim：正文行首 # 标题形原样保留（ADR-0130 条目正文不参与格式解析，消毒坑退役）', () => {
+    const raw = '今天很充实。\n# 📖 09:00\n晚安\n';
+    expect(sanitizeSummaryText(raw)).toBe(raw.trim());
+    const parsed = parseDiaryEntryFile(serializeDiaryEntryFile({ date: '2026-09-04', time: '21:00' }, ['日记'], raw));
+    expect(parsed.body).toContain('# 📖 09:00'); // 正文里的标题行安全保留
   });
 
   it('AI 模式正文 = 标记行 + 正文 + 空行 + 关键数字行；模板模式无数字行', () => {
@@ -163,10 +161,10 @@ describe('sanitizeSummaryText / buildEntryContent / isRecapEntry', () => {
 
   it('标记识别与去除（复制动作取去标记的可读文本）', () => {
     const content = buildEntryContent('正文', DATA.summary, EMPTY_FAILED, { withNumbers: false });
-    const parsed = parseFile(`# 📖 12:00\n\n${content}\n`, '2026-09-04');
-    expect(parsed).toHaveLength(1);
-    expect(isRecapEntry(parsed[0])).toBe(true);
-    expect(isRecapEntry({ ...parsed[0], content: '普通日记' } as never)).toBe(false);
+    const parsed = parseDiaryEntryFile(serializeDiaryEntryFile({ date: '2026-09-04', time: '12:00' }, ['日记'], content));
+    const entry = { content: parsed.body, tags: ['日记'] } as never;
+    expect(isRecapEntry(entry)).toBe(true);
+    expect(isRecapEntry({ ...entry, content: '普通日记' } as never)).toBe(false);
     expect(entryTextWithoutMarker(content)).toBe('正文');
   });
 });
@@ -239,18 +237,23 @@ describe('generateRecapContent', () => {
   });
 });
 
-/* ---------- writeRecapEntry / hasRecapEntry（真实 diary store 集成） ---------- */
+/* ---------- writeRecapEntry / hasRecapEntry / findRecapEntryPath（真实 diary store 集成） ---------- */
 
-describe('writeRecapEntry（diary 写入 API 集成）', () => {
+describe('writeRecapEntry（diary 写入 API 集成，条目文件粒度）', () => {
   let vault: MockVault;
 
-  /** 种当天日记：1 条普通条目 + 0~N 条已有回顾条目 */
-  function seedDay(recapHeads: string[] = []): void {
-    const parts: string[] = ['# 📖 09:00', '', '早读了一会儿', ''];
-    for (const head of recapHeads) {
-      parts.push(head, '', `${RECAP_MARKER}\n昨天生成的旧总结`, '');
-    }
-    vault.files.set(recapDiaryFilePath(NOW_MS), parts.join('\n').trimEnd() + '\n');
+  /** 当天全部条目文件路径（文件名日期圈定） */
+  function dayFiles(): string[] {
+    return [...vault.files.keys()].filter((p) => {
+      if (!p.startsWith('我的/日记/')) return false;
+      const m = DIARY_ENTRY_FILE_RE.exec(p.split('/').pop() || '');
+      return !!m && m[1] === dayKey();
+    });
+  }
+
+  /** 当天「今日回顾」条目文件数（逐篇按正文首行标记判定） */
+  function recapFiles(): string[] {
+    return dayFiles().filter((p) => parseDiaryEntryFile(vault.files.get(p)!).body.trimStart().startsWith(RECAP_MARKER));
   }
 
   const NEW_CONTENT = buildEntryContent('今天你过得很踏实。', DATA.summary, EMPTY_FAILED, { withNumbers: true });
@@ -260,78 +263,69 @@ describe('writeRecapEntry（diary 写入 API 集成）', () => {
     setDiaryApp({ vault } as never);
   });
 
-  function dayContent(): string {
-    return vault.files.get(recapDiaryFilePath(NOW_MS)) ?? '';
-  }
-
-  function recapCountIn(content: string): number {
-    return parseFile(content, 'x').filter(isRecapEntry).length;
-  }
-
-  it('当天无日记文件：新写入一条回顾条目（标记 + 正文 + 关键数字行），返回 written', async () => {
+  it('当天无日记文件：新写入一条回顾条目文件（frontmatter + 标记 + 正文 + 关键数字行），返回 written', async () => {
     const r = await writeRecapEntry({ vault } as never, NEW_CONTENT, NOW_MS);
     expect(r).toBe('written');
-    const content = dayContent();
+    const content = vault.files.get(recapPath())!;
+    expect(content).toContain(`日期: ${dayKey()} 12:00`);
     expect(content).toContain(RECAP_MARKER);
     expect(content).toContain('今天你过得很踏实。');
     expect(content.trimEnd().endsWith('今日数字：日记 2 条 · 影视 1 部 · 读完 1 本 · 完成 1 个备忘录 · 番茄 1 个 25 分钟')).toBe(true);
-    expect(recapCountIn(content)).toBe(1);
+    expect(recapFiles()).toHaveLength(1);
     expect(await hasRecapEntry({ vault } as never, NOW_MS)).toBe(true);
+    expect(await findRecapEntryPath({ vault } as never, NOW_MS)).toBe(recapPath());
   });
 
   it('已有普通条目 + 1 条旧回顾：替换不叠条，普通条目原样保留，返回 replaced', async () => {
-    seedDay(['# 📖 21:30']);
+    vault.files.set(`我的/日记/${dayKey()} 09-00.md`, serializeDiaryEntryFile({ date: dayKey(), time: '09:00' }, ['日记'], '早读了一会儿'));
+    vault.files.set(`我的/日记/${dayKey()} 21-30.md`, serializeDiaryEntryFile({ date: dayKey(), time: '21:30' }, ['日记'], `${RECAP_MARKER}\n昨天生成的旧总结`));
     const r = await writeRecapEntry({ vault } as never, NEW_CONTENT, NOW_MS);
     expect(r).toBe('replaced');
-    const content = dayContent();
-    expect(recapCountIn(content)).toBe(1);
-    expect(content).toContain('早读了一会儿'); // 普通条目无损
-    expect(content).toContain('今天你过得很踏实。'); // 新内容
-    expect(content).not.toContain('昨天生成的旧总结'); // 旧内容被替换
-    // 重解析结构合法：两条目（09:00 普通 + 12:00 回顾）
-    const parsed = parseFile(content, 'x');
-    expect(parsed.map((e) => e.time)).toEqual(['09:00', '12:00']);
+    expect(recapFiles()).toHaveLength(1); // 旧回顾文件已删，只留新写入
+    expect(vault.files.get(`我的/日记/${dayKey()} 09-00.md`)).toContain('早读了一会儿'); // 普通条目无损
+    expect(vault.files.get(recapPath())).toContain('今天你过得很踏实。'); // 新内容
+    expect(vault.files.has(`我的/日记/${dayKey()} 21-30.md`)).toBe(false); // 旧条目文件被删
   });
 
-  it('同分钟重生成（新条目与旧条目同时刻）：仍只留一条', async () => {
-    seedDay(['# 📖 12:00']); // 旧回顾恰好也是 12:00
+  it('同分钟重生成（新条目与旧条目同时刻）：仍只留一篇（新条目让位 -2，旧文件删除）', async () => {
+    vault.files.set(recapPath(), serializeDiaryEntryFile({ date: dayKey(), time: '12:00' }, ['日记'], `${RECAP_MARKER}\n昨天生成的旧总结`));
     const r = await writeRecapEntry({ vault } as never, NEW_CONTENT, NOW_MS);
     expect(r).toBe('replaced');
-    const content = dayContent();
-    expect(recapCountIn(content)).toBe(1);
-    expect(content).toContain('今天你过得很踏实。');
-    expect(content).not.toContain('昨天生成的旧总结');
+    expect(recapFiles()).toHaveLength(1);
+    const files = recapFiles();
+    expect(files[0]).toBe(`我的/日记/${dayKey()} 12-00-2.md`); // 撞名让位：新条目落 -2，旧 12-00 已删
+    expect(vault.files.get(files[0])).toContain('今天你过得很踏实。');
+    expect(vault.files.get(files[0])).not.toContain('昨天生成的旧总结');
+    expect(vault.files.has(recapPath())).toBe(false);
   });
 
-  it('历史叠条遗留（2 条旧回顾）：一次生成全部清掉只留新的一条', async () => {
-    seedDay(['# 📖 08:30', '# 📖 21:30']);
+  it('历史叠条遗留（2 篇旧回顾文件）：一次生成全部清掉只留新的一篇', async () => {
+    vault.files.set(`我的/日记/${dayKey()} 08-30.md`, serializeDiaryEntryFile({ date: dayKey(), time: '08:30' }, ['日记'], `${RECAP_MARKER}\n旧总结一`));
+    vault.files.set(`我的/日记/${dayKey()} 21-30.md`, serializeDiaryEntryFile({ date: dayKey(), time: '21:30' }, ['日记'], `${RECAP_MARKER}\n旧总结二`));
     const r = await writeRecapEntry({ vault } as never, NEW_CONTENT, NOW_MS);
     expect(r).toBe('replaced');
-    expect(recapCountIn(dayContent())).toBe(1);
+    expect(recapFiles()).toHaveLength(1);
   });
 
-  it('磁盘有无法解析的行：拒写并给人话指引，文件一字不动', async () => {
-    seedDay();
-    // 文件开头塞一行游离内容（parseFile 计未解析行的口径）
-    const before = dayContent();
-    vault.files.set(recapDiaryFilePath(NOW_MS), '游离的一行\n' + before);
-    await expect(writeRecapEntry({ vault } as never, NEW_CONTENT, NOW_MS)).rejects.toThrow(/无法解析/);
-    expect(dayContent()).toBe('游离的一行\n' + before); // 未写坏
+  it('旧格式日期文件残留不阻断写入（无未解析行守卫概念，残留交由体检/迁移处理）', async () => {
+    vault.files.set(`我的/日记/${dayKey()}.md`, '# 📖 08:00\n旧格式残留正文\n');
+    const before = vault.files.get(`我的/日记/${dayKey()}.md`);
+    const r = await writeRecapEntry({ vault } as never, NEW_CONTENT, NOW_MS);
+    expect(r).toBe('written');
+    expect(vault.files.get(`我的/日记/${dayKey()}.md`)).toBe(before); // 残留文件原样不动
+    expect(recapFiles()).toHaveLength(1);
   });
 
-  it('写盘失败（addEntry 抛错）：错误上抛，旧回顾条目原样保留（不丢用户内容）', async () => {
-    seedDay(['# 📖 21:30']);
-    const before = dayContent();
-    const origModify = vault.modify.bind(vault);
-    vault.modify = vi.fn(async () => {
-      throw new Error('磁盘已满');
-    });
+  it('写盘失败（addEntry 建文件抛错）：错误上抛，旧回顾条目原样保留（不丢用户内容）', async () => {
+    vault.files.set(`我的/日记/${dayKey()} 21-30.md`, serializeDiaryEntryFile({ date: dayKey(), time: '21:30' }, ['日记'], `${RECAP_MARKER}\n昨天生成的旧总结`));
+    const before = vault.files.get(`我的/日记/${dayKey()} 21-30.md`);
+    vi.spyOn(vault, 'create').mockRejectedValue(new Error('磁盘已满'));
     await expect(writeRecapEntry({ vault } as never, NEW_CONTENT, NOW_MS)).rejects.toThrow('磁盘已满');
-    expect(dayContent()).toBe(before); // 插入失败 → 旧内容原样（未写坏）
-    vault.modify = origModify;
+    expect(vault.files.get(`我的/日记/${dayKey()} 21-30.md`)).toBe(before); // 旧内容原样
   });
 
   it('当天无文件时 hasRecapEntry=false；探测异常不炸（返回 false）', async () => {
     expect(await hasRecapEntry({ vault } as never, NOW_MS)).toBe(false);
+    expect(await findRecapEntryPath({ vault } as never, NOW_MS)).toBeNull();
   });
 });
