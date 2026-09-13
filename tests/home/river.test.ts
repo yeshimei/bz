@@ -246,13 +246,13 @@ describe('collectRiver（只读采集集成）', () => {
     const d0 = dateStrOf(NOW);
     const d1 = dateStrOf(NOW - DAY);
     const d2 = dateStrOf(NOW - 2 * DAY);
-    vault.files.set(`我的/日记/${d1}.md`, '昨天');
-    vault.files.set(`我的/日记/${d2}.md`, '前天');
+    vault.files.set(`我的/日记/${d1} 08-30.md`, '昨天');
+    vault.files.set(`我的/日记/${d2} 21-05.md`, '前天');
     let r = collectRiver(mockAppWithVault(vault) as any, NOW);
     // 连击计算在 collectDiary（同步路径），Promise 包装后仍可断言
     return r.then((data) => {
       expect(data.streak).toEqual({ diaryStreak: 2, diaryWrittenToday: false });
-      vault.files.set(`我的/日记/${d0}.md`, '今天');
+      vault.files.set(`我的/日记/${d0} 23-02.md`, '今天');
       return collectRiver(mockAppWithVault(vault) as any, NOW);
     }).then((data) => {
       expect(data.streak).toEqual({ diaryStreak: 3, diaryWrittenToday: true });
