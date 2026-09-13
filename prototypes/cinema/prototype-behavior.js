@@ -1,4 +1,4 @@
-/* 源指纹 e452e9b845822627 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 00e0e50014b58adc · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -6028,6 +6028,9 @@ var BZW_cinema = (() => {
   function upgradePosterUrl(url) {
     return url.replace("s_ratio_poster", "l_ratio_poster");
   }
+  function normalizeListValue(val) {
+    return val.replace(/[,，]\s*/g, " / ");
+  }
   function extractSid(detailUrl) {
     const m = detailUrl.match(/subject\/(\d+)/);
     return m ? m[1] : null;
@@ -6092,7 +6095,8 @@ var BZW_cinema = (() => {
     const fmMatch = content.match(/^(---\r?\n)([\s\S]*?)(\r?\n---)/);
     if (!fmMatch) {
       const fmLines = ["---"];
-      for (const [k, v] of Object.entries(fields)) {
+      for (const [k, spec] of Object.entries(fields)) {
+        const v = typeof spec === "string" ? spec : spec.value;
         if (v) fmLines.push(`${k}: ${formatYamlValue(v)}`);
       }
       fmLines.push("---");
@@ -6112,25 +6116,27 @@ var BZW_cinema = (() => {
       if (m) existingKeys.add(m[1].trim());
     }
     const newLines = [];
-    for (const [key, val] of Object.entries(fields)) {
-      if (val && val !== "") {
-        if (existingKeys.has(key)) {
-          for (let i = 0; i < lines.length; i++) {
-            if (lines[i].match(new RegExp(`^${key}:`))) {
-              lines[i] = `${key}: ${formatYamlValue(val)}`;
-              break;
-            }
+    for (const [key, spec] of Object.entries(fields)) {
+      const val = typeof spec === "string" ? spec : spec.value;
+      if (!val || val === "") continue;
+      if (existingKeys.has(key)) {
+        if (typeof spec !== "string" && spec.ifMissing) continue;
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].match(new RegExp(`^${key}:`))) {
+            lines[i] = `${key}: ${formatYamlValue(val)}`;
+            break;
           }
-        } else {
-          newLines.push(`${key}: ${formatYamlValue(val)}`);
         }
+      } else {
+        newLines.push(`${key}: ${formatYamlValue(val)}`);
       }
     }
     if (newLines.length > 0) lines.splice(insertIdx, 0, ...newLines);
     return header + lines.join("\n") + footer + rest;
   }
   function formatYamlValue(val) {
-    const s = String(val);
+    let s = String(val);
+    if (/[\r\n]/.test(s)) s = s.replace(/[ \t]*[\r\n]+[ \t]*/g, " ");
     if (/[:"\-#[\]{}|>'?]/.test(s) || s.includes(" ")) {
       return '"' + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
     }
@@ -6139,9 +6145,12 @@ var BZW_cinema = (() => {
   function insertPosterEmbed(content, posterPath) {
     const embedLink = `![[${posterPath}]]`;
     if (content.includes(embedLink)) return content;
-    const fmMatch = content.match(/^(---\r?\n[\s\S]*?\r?\n---)\r?\n/);
+    const fmMatch = content.match(/^(---\r?\n[\s\S]*?\r?\n---)(\r?\n)?/);
     if (fmMatch) {
-      return fmMatch[0] + embedLink + "\n" + content.slice(fmMatch[0].length);
+      if (fmMatch[2]) {
+        return fmMatch[0] + embedLink + "\n" + content.slice(fmMatch[0].length);
+      }
+      return fmMatch[1] + "\n" + embedLink + "\n" + content.slice(fmMatch[1].length);
     }
     return embedLink + "\n" + content;
   }
@@ -6180,9 +6189,14 @@ var BZW_cinema = (() => {
     if (!sid) return { ok: false, reason: "notfound" };
     let posterRelative = fieldValue(content, "海报");
     if (!hasPoster && first.posterUrl) {
+      let buf;
       try {
-        const buf = await deps.downloadBinary(upgradePosterUrl(first.posterUrl), { Referer: "https://movie.douban.com/" });
-        if (!buf) return { ok: false, reason: "write" };
+        buf = await deps.downloadBinary(upgradePosterUrl(first.posterUrl), { Referer: "https://movie.douban.com/" });
+      } catch (e) {
+        return { ok: false, reason: "network" };
+      }
+      if (!buf) return { ok: false, reason: "network" };
+      try {
         await deps.mkdir(POSTER_FOLDER);
         const ext = ((_a = first.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)) == null ? void 0 : _a[1]) || "jpg";
         const safeName = name.replace(/[/\\:*?"<>|]/g, "_");
@@ -6194,36 +6208,35 @@ var BZW_cinema = (() => {
       }
     }
     const fields = {};
-    if (posterRelative) fields["海报"] = posterRelative;
+    if (posterRelative) fields["海报"] = { value: posterRelative, ifMissing: true };
     fields["豆瓣链接"] = first.detailUrl;
     let az = null;
     if (deps.apizeroKey) {
       az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
       if (az) {
-        if (az.score) fields["豆瓣评分"] = az.score;
-        if (az.director) fields["导演"] = az.director;
-        if (az.actor) fields["主演"] = az.actor;
-        if (az.genre) fields["类型"] = az.genre;
-        if (az.area) fields["制片国家/地区"] = az.area;
-        if (az.duration) fields["片长"] = az.duration;
-        if (!fieldValue(content, "上映日期") && az.year) fields["上映日期"] = az.year;
-        if (az.isTv && az.episodes && !fieldValue(content, "季集")) fields["季集"] = az.episodes;
-        if (az.shortComment && !fieldValue(content, "热门短评")) fields["热门短评"] = az.shortComment;
+        if (az.score) fields["豆瓣评分"] = { value: az.score, ifMissing: true };
+        if (az.director) fields["导演"] = { value: normalizeListValue(az.director), ifMissing: true };
+        if (az.actor) fields["主演"] = { value: normalizeListValue(az.actor), ifMissing: true };
+        if (az.genre) fields["类型"] = { value: normalizeListValue(az.genre), ifMissing: true };
+        if (az.area) fields["制片国家/地区"] = { value: normalizeListValue(az.area), ifMissing: true };
+        if (az.duration) fields["片长"] = { value: az.duration, ifMissing: true };
+        if (az.year) fields["上映日期"] = { value: az.year, ifMissing: true };
+        if (az.shortComment) fields["热门短评"] = { value: az.shortComment, ifMissing: true };
       }
     }
     const needCelebrities = !az || !az.director || !az.actor;
     if (needCelebrities) {
       const cel = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
       if (cel) {
-        if (!fields["导演"] && cel.directors) fields["导演"] = cel.directors;
-        if (cel.writers) fields["编剧"] = cel.writers;
-        if (!fields["主演"] && cel.casts) fields["主演"] = cel.casts;
+        if (!fields["导演"] && cel.directors) fields["导演"] = { value: cel.directors, ifMissing: true };
+        if (cel.writers) fields["编剧"] = { value: cel.writers, ifMissing: true };
+        if (!fields["主演"] && cel.casts) fields["主演"] = { value: cel.casts, ifMissing: true };
       }
     }
     try {
       await app.vault.process(file, (c) => {
         let next = updateFrontmatterFields(c, fields);
-        if (posterRelative && !hasPoster) next = insertPosterEmbed(next, posterRelative);
+        if (posterRelative && !hasPoster && !fieldValue(c, "海报")) next = insertPosterEmbed(next, posterRelative);
         return next;
       });
     } catch (e) {
@@ -6238,6 +6251,7 @@ var BZW_cinema = (() => {
   var HTTP_TIMEOUT_MS = 15e3;
   var queue = [];
   var pending = /* @__PURE__ */ new Map();
+  var waitAhead = /* @__PURE__ */ new Map();
   var attempted = /* @__PURE__ */ new Set();
   var cancelled = /* @__PURE__ */ new Set();
   var failedNames = [];
@@ -6247,26 +6261,22 @@ var BZW_cinema = (() => {
   var gapMs = FETCH_GAP_MS;
   var refreshDelayMs = 1500;
   async function httpGet(url, headers) {
-    try {
-      const req = requestUrl({ url, method: "GET", headers, throw: false }).then((resp) => {
-        return resp.status >= 200 && resp.status < 300 ? resp.text : null;
-      });
-      const timer = new Promise((resolve) => setTimeout(() => resolve(null), HTTP_TIMEOUT_MS));
-      return await Promise.race([req, timer]);
-    } catch (e) {
-      return null;
-    }
+    const timer = new Promise((resolve) => setTimeout(() => resolve(null), HTTP_TIMEOUT_MS));
+    const req = requestUrl({ url, method: "GET", headers, throw: false }).then((resp) => {
+      return resp.status >= 200 && resp.status < 300 ? resp.text : null;
+    });
+    req.catch(() => {
+    });
+    return await Promise.race([req, timer]);
   }
   async function downloadBinary(url, headers) {
-    try {
-      const req = requestUrl({ url, method: "GET", headers, throw: false }).then((resp) => {
-        return resp.status >= 200 && resp.status < 300 ? resp.arrayBuffer : null;
-      });
-      const timer = new Promise((resolve) => setTimeout(() => resolve(null), HTTP_TIMEOUT_MS * 2));
-      return await Promise.race([req, timer]);
-    } catch (e) {
-      return null;
-    }
+    const timer = new Promise((resolve) => setTimeout(() => resolve(null), HTTP_TIMEOUT_MS * 2));
+    const req = requestUrl({ url, method: "GET", headers, throw: false }).then((resp) => {
+      return resp.status >= 200 && resp.status < 300 ? resp.arrayBuffer : null;
+    });
+    req.catch(() => {
+    });
+    return await Promise.race([req, timer]);
   }
   function fetchDepsFromSettings(app) {
     var _a;
@@ -6289,10 +6299,12 @@ var BZW_cinema = (() => {
     };
   }
   function isFetching(path) {
+    var _a;
     if (!path) return false;
     const at = pending.get(path);
     if (!at) return false;
-    return Date.now() - at < FETCH_TIMEOUT_MS + 3e4;
+    const ahead = (_a = waitAhead.get(path)) != null ? _a : 0;
+    return Date.now() - at < ahead * gapMs + FETCH_TIMEOUT_MS + 3e4;
   }
   function enqueueDoubanFetch(file, name) {
     if (!file) return false;
@@ -6300,6 +6312,7 @@ var BZW_cinema = (() => {
     if (attempted.has(key)) return false;
     attempted.add(key);
     pending.set(key, Date.now());
+    waitAhead.set(key, queue.length);
     queue.push({ file, name });
     void pump();
     return true;
@@ -6309,7 +6322,9 @@ var BZW_cinema = (() => {
     const at = queue.findIndex((e) => e.file.path === path);
     if (at >= 0) queue.splice(at, 1);
     pending.delete(path);
+    waitAhead.delete(path);
     cancelled.add(path);
+    attempted.delete(path);
   }
   function sweepDoubanFetch(_app2) {
     var _a, _b;
@@ -6345,10 +6360,13 @@ var BZW_cinema = (() => {
       let first = true;
       while (queue.length > 0) {
         const entry = queue.shift();
+        pending.set(entry.file.path, Date.now());
+        waitAhead.delete(entry.file.path);
         if (!first) await sleep(gapMs);
         first = false;
         const r = await runOne(entry);
         pending.delete(entry.file.path);
+        waitAhead.delete(entry.file.path);
         if (cancelled.delete(entry.file.path)) {
           refreshAfterFetch();
           continue;
@@ -6363,11 +6381,11 @@ var BZW_cinema = (() => {
       pumping = false;
     }
     if (blockedNames.length > 0) {
-      notice(`豆瓣风控拦截，以下影片本轮未抓到：${blockedNames.join("、")}（重开面板会自动重试）`, "error");
+      notice(`豆瓣风控拦截，以下影片本轮未抓到：${blockedNames.join("、")}（重启 Obsidian（重载插件）后会自动重试）`, "error");
       blockedNames = [];
     }
     if (failedNames.length > 0) {
-      notice(`以下影片豆瓣信息获取失败：${failedNames.join("、")}（重开面板会自动重试）`, "error");
+      notice(`以下影片豆瓣信息获取失败：${failedNames.join("、")}（重启 Obsidian（重载插件）后会自动重试）`, "error");
       failedNames.length = 0;
     }
   }

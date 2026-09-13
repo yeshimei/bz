@@ -15,7 +15,7 @@
 ## 决策
 
 - **抓取核心移植**：`tools/obsidian-douban-poster/douban-client.js` 移植为 `src/cinema/douban-fetcher.ts`（依赖注入 `httpGet` / `downloadBinary`，生产 = requestUrl 适配，15s 单请求超时）。照搬：`parseSearchResults`（搜索页正则）、`extractSid`、`upgradePosterUrl`（s_ratio→l_ratio 高清）、`parseCelebrities`（rexxar 演职员）。**豆瓣详情页 HTML 不再抓取**（`parseSubjectMeta` 不移植——字段已由 ApiZero 承接）。
-- **字段链**（写 frontmatter，口径与 pipeline.js 一致）：
+- **字段链**（写 frontmatter，已有值不覆盖、缺失才填——防重抓覆盖手工修正）：
   - 首选 ApiZero：豆瓣评分(score)/导演(director)/主演(actor)/类型(genre)/制片国家/地区(area)/片长(duration)；集数与 is_tv 不写 frontmatter（现状无对应字段消费）。
   - 兜底 rexxar（`m.douban.com/rexxar/api/v2/{tv,movie}/<sid>/celebrities`，tv 优先 404 判电影）：ApiZero 未配置或缺导演/主演时调用，另提供**编剧**(writers)——ApiZero 无此字段。
   - **契约收缩**：语言/又名/IMDb/简介/上映日期(具体日期) 五字段不再抓取（ApiZero 无、详情页退役；风控下现状本就常年空）。存量字段不清理、不覆盖。
@@ -30,6 +30,12 @@
 
 - 用户发现 ApiZero 返回 16 字段未被吃满，拍板三扩：**上映日期←year**（仅年份，缺失才填，与存量 YYYY-MM-DD 混排有意接受）、**季集←episodes**（仅 `is_tv=true` 剧集且缺失才填——季集是观影报告统计源字段，此前 487/677 条缺失）、**热门短评←short_comment**（新增 frontmatter 字段，缺失才填）。语言/又名/IMDb/简介四字段维持退役不变。历史存量不回改，全库回填由会话一次性执行。
 
+### 修订更正（2026-09-13，抓取写回链路审查 C1/C9）
+
+- 三扩中「**季集←episodes**」一项**作废**：ApiZero 的 `episodes` 语义为**总集数**而非季数（官方接口描述「集数（剧集）」、本决策 Context 调研记录「返回…集数…」、豆瓣公开 API 语义三路一致），而消费端 analysis.ts「追剧深度」按季数解析（`季集` 首个数字 = 季数），写入 24 会被展示为「24 季」。`ApizeroInfo.episodes` 字段类型保留（注释标明总集数，勿作季集写入），frontmatter 不写季集。
+- 「上映日期←year」「热门短评←short_comment」两项扩展保留。
+- 同批审查 C9 拍板：豆瓣评分/导演/主演/类型/制片国家/地区/片长六字段一律改「**缺失才填**」（与 C8 同机制：缺失判断在写回时基于 fresh 内容复核），已有值不再覆盖。
+
 ## Consequences
 
 - 移动端影院抓取首次可用（新片即抓，不再等 PC 补抓）。
@@ -37,3 +43,4 @@
 - 字段契约收缩五项（语言/又名/IMDb/简介/上映日期），存量笔记字段保留；如需这些字段未来可评估 ApiZero 是否上新子接口或另立源。
 - ApiZero 成为字段链单点依赖（第三方平台，99.9% SLA 自报）：key 失效/额度耗尽 → 自动落 rexxar 兜底，评分缺失可感知（失败聚合通知不弹——字段部分缺失不算失败，海报+豆瓣链接齐即完成）。
 - 豆瓣搜索页仍是全链入口单点：被风控时本轮全失败（可感知文案），会话首轮自动重试的既有自愈节奏不变。
+- 六字段与扩展字段一律缺失才填（审查 C9）：防重抓覆盖用户手工修正；代价是豆瓣评分等已有值的更新需手工修改、或删掉该字段后重抓。
