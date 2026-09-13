@@ -837,7 +837,7 @@ export class DiaryAppController {
       return;
     }
     try {
-      const sourcePath = e.filename && e.filename.includes('/') ? e.filename : `${DIARY_DIRECTORY}/${e.date}.md`;
+      const sourcePath = e.filePath || e.filename || '';
       const comp = new Component();
       try {
         container.textContent = '';
@@ -1893,7 +1893,7 @@ export class DiaryAppController {
       const { ensureSafeUnlocked } = await import('../encrypt') as typeof import('../encrypt');
       const unlocked = await ensureSafeUnlocked('diary'); // 加密的是日记条目，解锁屏走 diary 域口径（与 519 行入口同文案）
       if (!unlocked) return;
-      const entry = await findDiaryEntry(e.filePath || e.filename || e.date, e.lineNumber || 0);
+      const entry = await findDiaryEntry(e.filePath || e.filename || e.date);
       if (!entry) {
         notice('找不到原文条目，无法加密', 'error');
         return;

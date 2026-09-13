@@ -1605,7 +1605,7 @@
 }
 
 
-/* ==================== 日记解析检测面板（ticket 121，ADR-0054；入口落设置页维护组） ==================== */
+/* ==================== 日记格式体检面板（ADR-0130 起只读体检；入口落设置页维护组） ==================== */
 .bz-diary-repair-progress {
   margin: var(--bz-space-md) 0 var(--bz-space-lg);
 }
@@ -1635,15 +1635,6 @@
   justify-content: space-between;
   font-weight: 600;
   margin: 14px 0 6px;
-}
-.bz-diary-repair-file {
-  margin: 6px 0;
-  padding: 6px 10px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 6px;
-}
-.bz-diary-repair-file-head {
-  font-weight: 600;
 }
 .bz-diary-repair-snippet {
   opacity: 0.75;

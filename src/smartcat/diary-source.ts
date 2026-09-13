@@ -5,18 +5,18 @@
  * 观察是**静态快照**，只有「新增」「新增更新」两种产出（无覆盖、无引用、无动态读取）。
  * 本模块为纯函数层（可测）：解析日记 md → 条目；结算判定（首落有字门 / 累计 >50 才更新）；观察文案（首次/更新/删除）。
  *
- * 数据格式（ADR-0130）：一目一文件——条目文件 frontmatter `日期`+`类型`，正文即内容；
- * 本模块解析经 core/diary-format.ts 契约单源（parseDiaryEntryFile），分类名即 frontmatter `类型`
+ * 数据格式（ADR-0130/0131）：一目一文件——条目文件 frontmatter `date`+`type`，正文即内容；
+ * 本模块解析经 core/diary-format.ts 契约单源（parseDiaryEntryFile），分类名即 frontmatter `type`
  * 标签名列表（无命中回退「日记」），emoji 表不再参与解析。
  */
-import { parseDiaryEntryFile } from '../core/diary-format';
+import { parseDiaryEntryFile, resolveDiaryEntryMeta } from '../core/diary-format';
 import type { StructuredMeta } from './types';
 
 /** 日记条目（smartcat 侧精简形状：只取观察所需字段） */
 export interface DiaryEntryLike {
-  /** 时间 HH:mm（frontmatter `日期`） */
+  /** 时间 HH:mm（frontmatter `date`） */
   time: string;
-  /** 分类名（frontmatter `类型` 标签名列表） */
+  /** 分类名（frontmatter `type` 标签名列表） */
   tags: string[];
   /** 正文（frontmatter 之后全量不截断；仅去首尾空白） */
   body: string;
@@ -35,13 +35,15 @@ export function diaryCharCount(s: string): number {
 
 /**
  * 解析条目文件全文 → 单条目（纯函数，ADR-0130 一目一文件）。
- * frontmatter `日期` 缺失/损坏（meta null）→ null（该文件不产出观察）；类型空缺回退「日记」。
+ * frontmatter `date` 缺失/损坏 → 从题目（YYMMDDHHmm）降级（与日记墙同口径，属性坏了不丢观察）；
+ * 题目也不是条目形状（两处都不可信）→ null（该文件不产出观察）；类型空缺回退「日记」。
  */
-export function parseDiaryEntry(content: string): DiaryEntryLike | null {
+export function parseDiaryEntry(content: string, filePath: string): DiaryEntryLike | null {
   const parsed = parseDiaryEntryFile(content);
-  if (!parsed.meta) return null;
+  const meta = resolveDiaryEntryMeta(filePath, parsed);
+  if (!meta) return null;
   return {
-    time: parsed.meta.time,
+    time: meta.time,
     tags: parsed.tags.length ? parsed.tags : ['日记'],
     body: parsed.body.trim(),
   };

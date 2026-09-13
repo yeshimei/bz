@@ -81,14 +81,15 @@ describe('clipbook/news-data RSS 段（ADR-0121）', () => {
 });
 
 describe('clipbook/news-source-settings RSS 增删（ADR-0121）', () => {
-  it('addRssFeed：非法 url → false；新增去重；title 可缺省', async () => {
+  it('addRssFeed：非法 url → invalid；新增去重（added/exists）；title 可缺省', async () => {
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), JSON.stringify({ articles: [], stats: {}, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: {}, rssFeeds: [] }));
     setApp(mockAppWithVault(vault));
-    expect(await addRssFeed('not-a-url')).toBe(false);
-    expect(await addRssFeed('https://daily.juya.uk/rss.xml', '橘鸦AI早报')).toBe(true);
-    expect(await addRssFeed(' https://daily.juya.uk/rss.xml ', '橘鸦AI早报')).toBe(false); // 归一后去重
-    expect(await addRssFeed('https://b.com/rss.xml')).toBe(true);
+    // C4：返回值区分四义（invalid/exists/added/read-failed），不再用布尔混同「已存在」与「读盘失败」
+    expect(await addRssFeed('not-a-url')).toBe('invalid');
+    expect(await addRssFeed('https://daily.juya.uk/rss.xml', '橘鸦AI早报')).toBe('added');
+    expect(await addRssFeed(' https://daily.juya.uk/rss.xml ', '橘鸦AI早报')).toBe('exists'); // 归一后去重
+    expect(await addRssFeed('https://b.com/rss.xml')).toBe('added');
     const st = await readDataSourceState();
     expect(st.rssFeeds).toEqual([
       { url: 'https://daily.juya.uk/rss.xml', title: '橘鸦AI早报' },

@@ -23,7 +23,7 @@ import { getSafeManager, unloadEncrypt } from '../../src/encrypt';
 import { EncryptAppController } from '../../src/encrypt/ui';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, clearNotices } from '../mock-obsidian-entry';
-import { serializeDiaryEntryFile } from '../../src/core/diary-format';
+import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-format';
 
 let vault: MockVault;
 
@@ -44,7 +44,7 @@ beforeEach(async () => {
   setDiaryDataMap(null);
   vault = new MockVault();
   vault.files.set(
-    '我的/日记/2024-01-01 08-00.md',
+    '我的/日记/2401010800.md',
     serializeDiaryEntryFile({ date: '2024-01-01', time: '08:00' }, ['日记'], '第一条日记')
   );
   const app = mockAppWithVault(vault);
@@ -77,7 +77,7 @@ async function unlockSafe() {
 function plainEntry(overrides: Partial<Record<string, any>> = {}) {
   const date = overrides.date ?? '2024-01-01';
   const time = overrides.time ?? '08:00';
-  const path = `我的/日记/${date} ${time.replace(':', '-')}.md`;
+  const path = diaryEntryPath('我的/日记', date, time); // v3 题目：YYMMDDHHmm
   return {
     id: 'p1', date, time, timeValue: 800,
     tags: ['日记'], emoji: '📖', content: '第一条日记', filename: path, filePath: path, lineNumber: 0,
@@ -161,12 +161,12 @@ describe('loadEncryptedEntries 防御分支', () => {
     const res = await encryptEntry(plainEntry());
     expect(res).not.toBeNull();
     const realNote = sm.manifest.notes[sm.manifest.notes.length - 1];
-    expect(realNote.path).toBe('我的/日记/2024-01-01 08-00.md'); // 来源即条目文件路径
+    expect(realNote.path).toBe('我的/日记/2401010800.md'); // 来源即条目文件路径
     // 混入三类脏数据（脏数据 path 用条目文件形状，确保走到各自的防御分支）
     sm.manifest.notes.push(
-      { id: 'f-kind', kind: 'other', path: '我的/日记/2024-01-02 09-00.md', attachments: [] } as any,
-      { id: 'f-null', kind: 'diary-entry', path: '我的/日记/2024-01-02 09-00.md', attachments: [] } as any,
-      { id: 'f-throw', kind: 'diary-entry', path: '我的/日记/2024-01-02 09-00.md', attachments: [] } as any
+      { id: 'f-kind', kind: 'other', path: '我的/日记/2401020900.md', attachments: [] } as any,
+      { id: 'f-null', kind: 'diary-entry', path: '我的/日记/2401020900.md', attachments: [] } as any,
+      { id: 'f-throw', kind: 'diary-entry', path: '我的/日记/2401020900.md', attachments: [] } as any
     );
     const spy = vi.spyOn(sm, 'getDiaryEntryPlain').mockImplementation(async (id: string) => {
       if (id === realNote.id) return '# 坏标题没有时间\n正文'; // 解析不出 DiaryEntry
@@ -215,11 +215,11 @@ describe('reclassifyEntry 分支（还原 = merge 成条目文件，ADR-0130）'
     const ok = await reclassifyEntry(res!.noteId!, []);
     expect(ok).toBe(true);
     await waitFor(() => sm.manifest.notes.length === 0);
-    const md = vault.files.get('我的/日记/2024-01-01 21-00.md')!;
+    const md = vault.files.get('我的/日记/2401012100.md')!;
     expect(md).toContain('要还原的日记');
     // 空标签兜底「日记」：条目文件 frontmatter 类型重建为 日记，不残留「加密」
     //（残留会被墙按「加密」永久隐藏且无 noteId 可再解密）
-    expect(md).toContain('日期: 2024-01-01 21:00');
+    expect(md).toContain('date: 2024-01-01 21:00');
     expect(md).toContain('  - 日记');
     expect(md).not.toContain('加密');
   });
@@ -231,7 +231,7 @@ describe('reclassifyEntry 分支（还原 = merge 成条目文件，ADR-0130）'
     const note = sm.manifest.notes.find((n: any) => n.id === res!.noteId);
     expect(note).toBeTruthy();
     expect(note!.kind).toBe('diary-entry');
-    expect(note!.path).toBe('我的/日记/2024-01-01 08-00.md');
+    expect(note!.path).toBe('我的/日记/2401010800.md');
   });
 
   it('D9 回归：日记目录变更后解密还原按当前目录重算落点（realign 只换目录段）', async () => {
@@ -240,12 +240,12 @@ describe('reclassifyEntry 分支（还原 = merge 成条目文件，ADR-0130）'
     expect(res).not.toBeNull();
     const note = sm.manifest.notes.find((n: any) => n.id === res!.noteId)!;
     // 模拟用户改日记目录：note.path 还指着旧目录（basename 为条目文件形状 → realign 换目录段）
-    note.path = '我的/日记/2024-01-01 21-00.md';
+    note.path = '我的/日记/2401012100.md';
     await applyDirectories({ diaryDirectory: '日记本' });
     const ok = await reclassifyEntry(res!.noteId!, ['日记']);
     expect(ok).toBe(true);
     await waitFor(() => sm.manifest.notes.length === 0);
-    expect(vault.files.get('日记本/2024-01-01 21-00.md')).toContain('要还原的日记');
+    expect(vault.files.get('日记本/2401012100.md')).toContain('要还原的日记');
     applyDirectories({});
   });
 
@@ -258,7 +258,7 @@ describe('reclassifyEntry 分支（还原 = merge 成条目文件，ADR-0130）'
     const ok = await reclassifyEntry(res!.noteId!, ['日记']);
     expect(ok).toBe(true);
     await waitFor(() => sm.manifest.notes.length === 0);
-    expect(vault.files.get('我的/日记/2024-01-01 21-00.md')).toContain('要还原的日记');
+    expect(vault.files.get('我的/日记/2401012100.md')).toContain('要还原的日记');
   });
 
   it('明文异常（无标题行）→ 返回 false 且清单不变', async () => {
@@ -285,8 +285,8 @@ describe('reclassifyEntry 分支（还原 = merge 成条目文件，ADR-0130）'
     expect(ok).toBe(true);
     spy.mockRestore();
     await waitFor(() => sm.manifest.notes.length === 0);
-    const md = vault.files.get('我的/日记/2024-01-01 23-45.md')!;
-    expect(md).toContain('日期: 2024-01-01 23:45');
+    const md = vault.files.get('我的/日记/2401012345.md')!;
+    expect(md).toContain('date: 2024-01-01 23:45');
     expect(md).toContain('  - 诗'); // 新标签写入 frontmatter 类型
   });
 });

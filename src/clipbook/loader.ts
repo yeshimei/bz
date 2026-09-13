@@ -89,8 +89,9 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
 
   // 侧写
   const sidecar = await readClipbookData();
-  // 剪藏目录扫描
-  const clipNotes = await scanClipDirectory(M.dir || clipDir(), {
+  // 剪藏目录扫描（C12：每次直读 clipDir() 实时值——原 M.dir 缓存只在 initPanel 与域内设置
+  // 弹窗 onClose 赋值，设置面板域改「剪藏文件夹」后扫描仍扫旧目录，读写路径不对称）
+  const clipNotes = await scanClipDirectory(clipDir(), {
     vault: getApp().vault,
   });
   const clipUrls = clipUrlSet(clipNotes || []);

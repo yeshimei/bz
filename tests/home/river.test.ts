@@ -6,6 +6,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
+import { diaryEntryPath } from '../../src/core/diary-format';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
@@ -263,13 +264,14 @@ describe('collectRiver（只读采集集成）', () => {
     const d0 = dateStrOf(NOW);
     const d1 = dateStrOf(NOW - DAY);
     const d2 = dateStrOf(NOW - 2 * DAY);
-    vault.files.set(`我的/日记/${d1} 08-30.md`, '昨天');
-    vault.files.set(`我的/日记/${d2} 21-05.md`, '前天');
+    // v3 题目（YYMMDDHHmm）经契约 helper 生成，保证夹具即生产格式
+    vault.files.set(diaryEntryPath('我的/日记', d1, '08:30'), '昨天');
+    vault.files.set(diaryEntryPath('我的/日记', d2, '21:05'), '前天');
     let r = collectRiver(mockAppWithVault(vault) as any, NOW);
     // 连击计算在 collectDiary（同步路径），Promise 包装后仍可断言
     return r.then((data) => {
       expect(data.streak).toEqual({ diaryStreak: 2, diaryWrittenToday: false });
-      vault.files.set(`我的/日记/${d0} 23-02.md`, '今天');
+      vault.files.set(diaryEntryPath('我的/日记', d0, '23:02'), '今天');
       return collectRiver(mockAppWithVault(vault) as any, NOW);
     }).then((data) => {
       expect(data.streak).toEqual({ diaryStreak: 3, diaryWrittenToday: true });

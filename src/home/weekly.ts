@@ -13,10 +13,11 @@
  *  - pomodoro pomodoro.json history：完成时刻落本周条数 + duration 秒折分钟
  *  - memo     memo.json（memo 同源）：completed 落本周=完成数，created 落本周=创建数
  *             （完成率 P%=完成/创建，创建 0 则 UI 侧只显示完成数）
- *  - diary    日记目录条目文件名（`YYYY-MM-DD HH-MM(-N).md` 日期前缀，ADR-0130）落本周条数
+ *  - diary    日记目录条目文件名（题目 `YYMMDDHHmm(-N)`，ADR-0130/0131）落本周条数
  */
 import type { App, TFile } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
+import { diaryDateFromEntryPath } from '../core/diary-format';
 import { storageFile } from '../core/storage';
 import { parseMovieFile } from '../cinema/data';
 import { STATUS_WATCHED } from '../cinema/constants';
@@ -134,9 +135,10 @@ export function memoWeekStats(
   return { done, created };
 }
 
-/** 本周日记计数（纯函数）：条目文件名日期前缀（'YYYY-MM-DD HH-MM…'，ADR-0130）落本周的条数；非日期名忽略 */
+/** 本周日记计数（纯函数）：条目题目（`YYMMDDHHmm`，ADR-0130/0131）里的日期落本周的条数；非条目名忽略。
+ *  入参是 Obsidian basename（不含扩展名），契约正则要求 `.md` 故补上再取日期。 */
 export function countDiaryThisWeek(basenames: string[], range: WeekRange): number {
-  return basenames.filter((n) => inWeek(parseLocalDay(n), range)).length;
+  return basenames.filter((n) => inWeek(parseLocalDay(diaryDateFromEntryPath(`${n}.md`)), range)).length;
 }
 
 /* ---------- 采集 helpers（与 snapshot.ts 同款只读口径；本地副本防跨文件牵连） ---------- */
@@ -241,7 +243,7 @@ export async function collectWeeklyStat(app: App, now: number = Date.now()): Pro
     /* 读失败：回落 0 */
   }
 
-  // 日记：条目文件名日期前缀落本周（ADR-0130）
+  // 日记：条目题目（YYMMDDHHmm）里的日期落本周（ADR-0130/0131）
   try {
     const dir = settingDir(['diaryDirectory'], '我的/日记');
     out.diary = countDiaryThisWeek(dirMdBasenames(app, dir), range);
