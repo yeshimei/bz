@@ -1,4 +1,4 @@
-/* 源指纹 da3f50bfe99b9192 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e452e9b845822627 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -6042,7 +6042,7 @@ var BZW_cinema = (() => {
     return { directors, writers, casts };
   }
   async function fetchApizeroInfo(sid, key, httpGet2) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
     const text = await httpGet2(`https://v1.apizero.cn/api/douban-movie?id=${encodeURIComponent(sid)}`, {
       Authorization: `Bearer ${key}`
     });
@@ -6062,7 +6062,9 @@ var BZW_cinema = (() => {
         duration: String((_h = d.duration) != null ? _h : ""),
         episodes: String((_i = d.episodes) != null ? _i : ""),
         isTv: d.is_tv === true,
-        doubanUrl: String(d.douban_url || `https://movie.douban.com/subject/${sid}/`)
+        doubanUrl: String(d.douban_url || `https://movie.douban.com/subject/${sid}/`),
+        shortComment: String((_j = d.short_comment) != null ? _j : ""),
+        commentAuthor: String((_k = d.comment_author) != null ? _k : "")
       };
     } catch (e) {
       return null;
@@ -6204,6 +6206,9 @@ var BZW_cinema = (() => {
         if (az.genre) fields["类型"] = az.genre;
         if (az.area) fields["制片国家/地区"] = az.area;
         if (az.duration) fields["片长"] = az.duration;
+        if (!fieldValue(content, "上映日期") && az.year) fields["上映日期"] = az.year;
+        if (az.isTv && az.episodes && !fieldValue(content, "季集")) fields["季集"] = az.episodes;
+        if (az.shortComment && !fieldValue(content, "热门短评")) fields["热门短评"] = az.shortComment;
       }
     }
     const needCelebrities = !az || !az.director || !az.actor;
