@@ -25,8 +25,8 @@ import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp,
   writeBilibiliMaxItems, addRssFeed, removeRssFeed, writeFetchInterval, type DataSourceState,
 } from './news-source-settings';
-import { fetchNowNews, FETCH_INTERVAL_STEPS } from './news-fetcher';
-import { resolveUidFromInput, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, normalizeFetchIntervalMin, type BilibiliUpInfo, type RssFeed } from './news-data';
+import { fetchNowNews, notifyManualFetchResult, localDatetime } from './news-fetcher';
+import { resolveUidFromInput, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, normalizeFetchIntervalMin, FETCH_INTERVAL_STEPS, type BilibiliUpInfo, type RssFeed } from './news-data';
 
 /** 状态盒（构建期快照的可变副本）：三函数绑定 get/set 读它，save 经数据层落盘 */
 type DataSourceBox = DataSourceState;
@@ -60,23 +60,18 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
       ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗`
       : '暂未订阅 RSS 源，添加与移除在管理弹窗';
 
-  /** 抓取间隔描述（动态展示当前档位语义） */
+  /** 抓取间隔描述（动态展示当前档位语义；时间走 localDatetime 免斜杠串） */
   const intervalDesc = () => {
-    const t = box.lastFetchAtMs > 0 ? new Date(box.lastFetchAtMs).toLocaleString() : '还没有抓取过';
+    const t = box.lastFetchAt > 0 ? localDatetime(box.lastFetchAt) : '还没有抓取过';
     return `打开插件或剪藏本时超过该间隔自动抓取，上次抓取 ${t}`;
   };
   return [
     { type: 'button', name: '立即抓取', desc: intervalDesc(), buttonText: '抓取', cta: true,
       onClick: async (ctx) => {
         const r = await fetchNowNews();
-        if (!r) {
-          notice('正在抓取中，请稍候', 'info');
-          return;
-        }
-        if (r.added > 0) notice(`抓取完成，新增 ${r.added} 篇文章`, 'success');
-        else notice('抓取完成，暂无新文章', 'success');
+        notifyManualFetchResult(r);
         const fresh = await readDataSourceState();
-        box.lastFetchAtMs = fresh.lastFetchAtMs;
+        box.lastFetchAt = fresh.lastFetchAt;
         box.fetchIntervalMin = fresh.fetchIntervalMin;
         setRowDesc(ctx, intervalDesc());
       } },

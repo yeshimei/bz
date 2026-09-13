@@ -12,13 +12,13 @@ news.json 此前由 PM2 守护（@jwbz/obsidian-news）抓取，移动端无抓�
 
 1. **`src/clipbook/news-fetcher.ts`（新）**：移植 watcher.js 抓取核心——
    - 依赖注入：`httpGet`（生产 = requestUrl 适配，15s 超时、非 2xx → null）、存储走 `readNewsData`/`writeNewsDataMerged`（串行队列）。
-   - 四源：fetchZhihu（latest + 逐篇 detail）、fetchGuokr（science_api + 逐篇 INITIAL_STORE 正文）、fetchBilibili（cookie 引导 + 每 UP 最近 N 条窗口 + 裁剪 + 风控标记）、fetchRss（轻量 XML 解析，`content:encoded` → description 兜底，htmlToMarkdown 转 md，每 feed 30 条窗口裁剪 + 标题回填）。
+   - 四源：fetchZhihu（latest——API 本身只吐当天无 24h 过滤，忠实守护口径 + 逐篇 detail）、fetchGuokr（science_api + 24h 窗口 + 逐篇 INITIAL_STORE 正文）、fetchBilibili（cookie 引导 + 每 UP 最近 N 条窗口 + 裁剪 + 风控标记）、fetchRss（轻量 XML 解析，`content:encoded` → description 兜底，htmlToMarkdown 转 md，每 feed 30 条窗口裁剪 + 标题回填）。
    - 纯函数（buildRssArticle/buildBilibiliArticle/collectBilibiliBatch/pruneBilibiliWindow/capRssWindow/htmlToMarkdown/localDatetime 等）逐条照搬，node 环境可测。
    - 24h 窗口（知乎/果壳）、URL+标题双去重、fetchedAt 打标照搬。
 2. **news.json 段扩展**：`lastFetchAt`（epoch ms）+ `fetchIntervalMin`（30/60/120/360，回退 30）；parseNewsFileContent / writeNewsDataMerged 段清单 / DataSourceState 同步。
-3. **触发链**：`maybeFetchNews`（间隔判定 + running 互斥）挂 main.ts onload（onLayoutReady 后延迟）与 openClipbook；命令 `bz-clipbook-fetch-now` 跳间隔立即抓；完成刷新未读流。
+3. **触发链**：`maybeFetchNews`（间隔判定 + running 互斥；全源失败轮不推进 lastFetchAt，下次打开即重试）挂 main.ts onload（onLayoutReady 后延迟）与 openClipbook；命令 `bz-clipbook-fetch-now` 跳间隔立即抓；完成刷新未读流。
 4. **设置组**（news-sources-group.ts）：新增「抓取间隔」select 行；安装引导分支退役（news.json 缺失 → 正常行 +「立即抓取」按钮）。
-5. **通知**：成功静默；B站风控/无 cookie、全源失败时 notice（正文无 emoji）。
+5. **通知**：自动抓取成功静默、失败即通知（单源失败点名，依 ADR-0128）；手动触发（命令/设置按钮）完成态给一次反馈（「已抓取…」，CONTEXT 完成态动词「已」口径），部分失败轮不叠加 success。B站通知仅风控拦截（rejected）报（匿名 cookie 正常 0 条与 UP 无动态同貌，不误报）。
 6. **测试**：news-fetcher 数据层（四源纯函数 + 端到端 fake httpGet 入库）、触发间隔判定、设置组 UI 行、smoke 同步。
 7. **部署后动作**：主仓 `pnpm run build`；停 PM2 `news-watcher` 进程（包留存）。
 

@@ -28,7 +28,7 @@ import { openMemoPanel, addMemoItem, addMemoForActiveNote, unloadMemo, ensureMem
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
 import { openClipbook, markAllUnreadRead, unloadClipbook } from './clipbook';
-import { maybeFetchNews, fetchNowNews } from './clipbook/news-fetcher';
+import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipbook/news-fetcher';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
 import { openDiary, openDiaryWrite, unloadDiary } from './diary';
@@ -99,10 +99,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-clipbook-mark-all-read', name: '未读全部标为已读', icon: 'check-check', callback: () => markAllUnreadRead() },
   // 立即抓取（issue 302 / ADR-0128）：插件内抓取的手动入口，忽略间隔
   { id: 'bz-clipbook-fetch-now', name: '剪藏本抓取新文章', icon: 'rss', callback: () => {
-    void fetchNowNews().then((r) => {
-      // 命令触发无就地可见结果（面板可能没开）：完成态给反馈；面板开着由 reloadIfOpen 同步
-      if (r) notice(r.added > 0 ? `抓取完成，新增 ${r.added} 篇文章` : '抓取完成，暂无新文章', 'success');
-    });
+    // 命令触发无就地可见结果（面板可能没开）：完成态给反馈；面板开着由 reloadIfOpen 同步
+    void fetchNowNews().then(notifyManualFetchResult);
   } },
 
   // 日记本（diary 域，ADR-0115：原回忆墙升格正名；媒体墙即日记本唯一 UI）

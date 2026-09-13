@@ -17,20 +17,18 @@ export interface DataSourceState {
   bilibiliMaxItems: number;
   /** 用户配置的 B 站 Cookie（ticket 127：API 风控 412 时使用；缺省空串走自动引导） */
   bilibiliCookie: string;
-  /** 最近抓取时间（articles 最新 fetchedAt；无文章返回 null） */
-  lastFetchAt: string | null;
   totalArticles: number;
   /** RSS 订阅列表（ADR-0121：news.json rssFeeds 段） */
   rssFeeds: RssFeed[];
-  /** 最近自动抓取时间（epoch ms；issue 302 / ADR-0128 间隔判定锚点） */
-  lastFetchAtMs: number;
+  /** 最近抓取时间（epoch ms；issue 302 / ADR-0128 间隔判定锚点；0 = 从未抓取） */
+  lastFetchAt: number;
   /** 抓取间隔档位（分钟，30/60/120/360） */
   fetchIntervalMin: number;
 }
 
 /** 空数据源状态（news.json 缺失/损坏时的回退值；schema 构建与测试共用） */
 export function emptyDataSourceState(exists = false): DataSourceState {
-  return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', lastFetchAt: null, totalArticles: 0, rssFeeds: [], lastFetchAtMs: 0, fetchIntervalMin: 30 };
+  return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', totalArticles: 0, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
 }
 
 /** 读数据源状态（检测 + sources + 名单 + UP 资料 + B站配置 + 最近抓取时间） */
@@ -42,10 +40,6 @@ export async function readDataSourceState(): Promise<DataSourceState> {
   if (!res.ok) {
     return emptyDataSourceState(true);
   }
-  let lastFetchAt: string | null = null;
-  for (const a of res.data.articles) {
-    if (a && a.fetchedAt && (!lastFetchAt || String(a.fetchedAt) > lastFetchAt)) lastFetchAt = String(a.fetchedAt);
-  }
   return {
     exists: true,
     sources: { ...res.data.sources },
@@ -53,10 +47,9 @@ export async function readDataSourceState(): Promise<DataSourceState> {
     bilibiliUpInfo: { ...res.data.bilibiliUpInfo },
     bilibiliMaxItems: res.data.bilibiliMaxItems,
     bilibiliCookie: res.data.bilibiliCookie,
-    lastFetchAt,
     totalArticles: res.data.articles.length,
     rssFeeds: [...res.data.rssFeeds],
-    lastFetchAtMs: res.data.lastFetchAt,
+    lastFetchAt: res.data.lastFetchAt,
     fetchIntervalMin: res.data.fetchIntervalMin,
   };
 }
