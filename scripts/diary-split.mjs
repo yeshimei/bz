@@ -188,6 +188,14 @@ for (const f of dayFiles) {
   plans.push({ ...f, content, entries });
 }
 
+/** 条目文件内容（契约序列化形状：frontmatter 日期+类型、空行、正文、尾换行） */
+function serializeEntry(dateStr, timeStr, tags, body) {
+  const fmLines = ['---', `日期: ${dateStr} ${timeStr}`, '类型:'];
+  for (const t of tags) fmLines.push(`  - ${t}`);
+  fmLines.push('---', '', body);
+  return fmLines.join('\n') + '\n';
+}
+
 // 目标路径分配（按日期分组序号 + 磁盘撞名让位；dry-run 用纯计算让位只考虑脚本内序号）
 const perDate = new Map(); // date -> Map(time -> count)
 for (const plan of plans) {
@@ -200,14 +208,22 @@ for (const plan of plans) {
     e.seq = n === 0 ? null : n + 1;
     const mk = (s) => (s ? `${plan.date} ${h}-${m}-${s}.md` : `${plan.date} ${h}-${m}.md`);
     e.targetRel = mk(e.seq);
-    // 磁盘已有同名条目文件（重跑/既有条目）：让位至下一序号
+    // 磁盘已有同名条目文件：内容一致 → 视为已迁移（apply 中断后重跑幂等，不产重复条目）；
+    // 内容不同（同刻另有条目）→ 让位至下一序号
     let s = e.seq ? e.seq + 1 : 2;
     while (fs.existsSync(p(DIARY_DIR, e.targetRel))) {
+      const existing = fs.readFileSync(p(DIARY_DIR, e.targetRel), 'utf8');
+      if (existing === serializeEntry(plan.date, e.time, e.tags, e.body)) {
+        e.skip = true;
+        break;
+      }
       e.targetRel = `${plan.date} ${h}-${m}-${s}.md`;
       s += 1;
     }
   });
 }
+/** 本次因「盘上已有同内容条目」而跳过的条目数（重跑幂等：apply 中断后重跑不产重复） */
+const skippedCount = plans.reduce((n, pl) => n + pl.entries.filter((e) => e.skip).length, 0);
 
 // ===== 条目映射（日期/时刻 → 条目文件名） =====
 // 时间序键：HHMM 数值 + 同刻序号（'-' 的字典序在 '.' 之前，字符串排序会把 '00-00-2.md' 排到 '00-00.md' 前）
@@ -333,12 +349,10 @@ const created = [];
 if (APPLY && !MEMORY_ONLY) {
   for (const plan of plans) {
     for (const e of plan.entries) {
-      const fmLines = ['---', `日期: ${plan.date} ${e.time}`, '类型:'];
-      for (const t of e.tags) fmLines.push(`  - ${t}`);
-      fmLines.push('---', '', e.body);
+      if (e.skip) continue; // 重跑：同内容条目已在盘上（幂等，见目标分配处）
       const target = p(DIARY_DIR, e.targetRel);
       if (fs.existsSync(target)) throw new Error(`目标已存在（不应发生）: ${e.targetRel}`);
-      atomicWrite(target, fmLines.join('\n') + '\n');
+      atomicWrite(target, serializeEntry(plan.date, e.time, e.tags, e.body));
       created.push(e.targetRel);
     }
   }
@@ -373,6 +387,7 @@ report.push(`| 项目 | 数量 |`);
 report.push(`|---|---|`);
 report.push(`| 日期文件（待拆） | ${dayFiles.length} |`);
 report.push(`| 拆出条目 | ${plans.reduce((n, pl) => n + pl.entries.length, 0)} |`);
+report.push(`| 已存在同内容条目（重跑跳过） | ${skippedCount} |`);
 report.push(`| 已是条目文件（跳过） | ${entryFiles.length} |`);
 report.push(`| 空文件（直接归档） | ${emptyFiles.length} |`);
 report.push(`| 需人工处理（未解析行，不拆） | ${manual.length} |`);
@@ -411,7 +426,7 @@ if (otherFiles.length) {
 const reportFile = p('.scratch', 'diary-split-report.md');
 fs.writeFileSync(reportFile, report.join('\n'), 'utf8');
 
-console.log(`日期文件: ${dayFiles.length}，拆出条目: ${plans.reduce((n, pl) => n + pl.entries.length, 0)}`);
+console.log(`日期文件: ${dayFiles.length}，拆出条目: ${plans.reduce((n, pl) => n + pl.entries.length, 0)}（跳过已存在 ${skippedCount}）`);
 console.log(`需人工处理: ${manual.length}，smartcat 记忆条目重写: ${memoryCount}`);
 console.log(`报告: .scratch/diary-split-report.md`);
 if (!APPLY) console.log('\n（dry-run 未改动任何文件；确认报告后加 --apply 执行，须先关闭 Obsidian）');
