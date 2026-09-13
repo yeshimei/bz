@@ -140,6 +140,23 @@ describe('diary-split 迁移脚本', () => {
     expect(read(MEMORY_FILE)).toBe(after);
   });
 
+  it('重跑幂等：apply 中断（归档冲突）后重跑不产重复条目', () => {
+    makeVault();
+    write('归档/日记/2025-06-11.md', '占位\n'); // 预置归档冲突：apply 写完条目文件后在归档步抛错
+    expect(() => run('--apply')).toThrow();
+    expect(read('我的/日记/2025-06-11 09-00.md')).toContain('早上写的');
+
+    fs.rmSync(path.join(vault, '归档/日记/2025-06-11.md')); // 处理冲突后重跑
+    run('--apply');
+    // 无 -2 重复条目（旧实现对已落盘条目一律让位）；原日期文件照常归档
+    expect(fs.readdirSync(path.join(vault, '我的/日记')).sort()).toEqual([
+      '2025-06-11 09-00.md',
+      '2025-06-11 15-12-2.md',
+      '2025-06-11 15-12.md',
+    ]);
+    expect(read('归档/日记/2025-06-11.md')).toBe(DAY_CONTENT);
+  });
+
   it('dry-run 不写盘：条目未拆、原文件在、记忆引用未改', () => {
     makeVault();
     const out = run();
