@@ -1,11 +1,10 @@
 /**
- * 豆瓣抓取队列测试（ADR-0113 / issue 255 / issue 256 修订）：
- * sweep 入队口径 / 会话去重 / spawn 完成验证清 pending / 失败聚合通知 / 硬超时杀进程 / 移动端禁用
- * issue 256：spawn 收宿主绝对路径（adapter.getFullPath）/ 完成后重建渲染 / 入口双探测（cli+node）
+ * 豆瓣抓取队列测试（ADR-0113 / issue 255-256；ADR-0129 执行层迁入插件重写）：
+ * sweep 入队口径 / 会话去重 / 执行器完成清 pending / 失败聚合通知（风控分文案）/
+ * 硬超时 / **移动端启用**（spawn 退役：CLI/node 探测、绝对路径契约、退出信号轮询全部退役）
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { EventEmitter } from 'node:events';
-import { MockVault, mockAppWithVault, parseFrontmatter } from '../mock-vault';
+import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 import { M, resetCinemaState, type CinemaItem } from '../../src/cinema/state';
 import { pcardHtml } from '../../src/cinema/shared';
@@ -17,32 +16,34 @@ import {
   isFetching,
   shutdownDoubanQueue,
   configureFetchQueue,
-  waitForExit,
   FETCH_TIMEOUT_MS,
+  type FetchNote,
 } from '../../src/cinema/douban-queue';
+import type { DoubanFetchOutcome } from '../../src/cinema/douban-fetcher';
 
 /** 等串行队列跑完（跨多个宏任务跳，25ms 足够 gapMs=refreshDelayMs=0 的链路收敛） */
 const settle = () => new Promise((r) => setTimeout(r, 25));
 
-/** mock adapter 的绝对路径前缀（见 mock-vault getFullPath），spawn 收绝对路径需映射回相对取内容 */
-const toRel = (p: string) => p.replace(/^\/mock-vault-root\//, '');
-
-/** 假 spawn：成功形态——向笔记追加 海报/豆瓣链接 字段（模拟工具写回） */
-function makeSuccessSpawn(vault: MockVault) {
-  const spawned: string[] = [];
-  const spawn = async (_cli: string, notePath: string) => {
-    spawned.push(notePath);
-    const rel = toRel(notePath);
-    const content = vault.files.get(rel) ?? '';
-    if (!/^海报:/m.test(content)) vault.files.set(rel, `${content.replace(/\n*$/, '\n')}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+/** 假执行器：成功形态——向笔记追加 海报/豆瓣链接 字段（模拟 fetcher 写回） */
+function makeSuccessFetch(vault: MockVault) {
+  const fetched: string[] = [];
+  const fetch: FetchNote = async (file) => {
+    fetched.push(file.path);
+    const content = vault.files.get(file.path) ?? '';
+    if (!/^海报:/m.test(content)) {
+      vault.files.set(file.path, `${content.replace(/\n*$/, '\n')}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+    }
+    return { ok: true };
   };
-  return { spawned, spawn };
+  return { fetched, fetch };
 }
 
-/** 测试注入基线：jsdom 无 window.require，node/CLI 路径必须注入；刷新延迟归零供 settle 消化 */
-const TEST_HOOKS = { cli: 'C:/fake/cli.js', node: 'C:/fake/node.exe', gapMs: 0, refreshDelayMs: 0 };
+/** 测试注入基线：刷新延迟归零供 settle 消化 */
+const TEST_HOOKS = { gapMs: 0, refreshDelayMs: 0 };
 
-describe('豆瓣抓取队列（douban-queue）', () => {
+const okOutcome = (): DoubanFetchOutcome => ({ ok: true });
+
+describe('豆瓣抓取队列（douban-queue，ADR-0129 执行器=插件内 fetch）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetCinemaState();
@@ -56,7 +57,7 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     vi.useRealTimers();
   });
 
-  it('sweep：缺海报或缺链接的条目入队（继承守护全责），齐全条目不碰；spawn 收宿主绝对路径', async () => {
+  it('sweep：缺海报或缺链接的条目入队（继承守护全责），齐全条目不碰', async () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《全缺》.md', '---\ntags: [电影]\n评分: 8\n---');
     vault.files.set('我的/影视/《有海报缺链接》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
@@ -64,37 +65,35 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     const app = mockAppWithVault(vault);
     M.appRef = app;
     rebuildItems(app);
-    const { spawned, spawn } = makeSuccessSpawn(vault);
-    configureFetchQueue({ ...TEST_HOOKS, spawn });
+    const { fetched, fetch } = makeSuccessFetch(vault);
+    configureFetchQueue({ ...TEST_HOOKS, fetch });
 
     sweepDoubanFetch(app);
     await settle();
 
-    expect(spawned).toHaveLength(2);
-    // issue 256：相对路径会被 CLI 拼到影片目录下双拼——必须是 adapter 解析的宿主绝对路径
-    for (const p of spawned) expect(p).toMatch(/^\/mock-vault-root\//);
-    expect(spawned.some((p) => p.includes('《全缺》'))).toBe(true);
-    expect(spawned.some((p) => p.includes('《有海报缺链接》'))).toBe(true);
-    expect(spawned.some((p) => p.includes('《齐全》'))).toBe(false);
+    expect(fetched).toHaveLength(2);
+    expect(fetched.some((p) => p.includes('《全缺》'))).toBe(true);
+    expect(fetched.some((p) => p.includes('《有海报缺链接》'))).toBe(true);
+    expect(fetched.some((p) => p.includes('《齐全》'))).toBe(false);
     // 完成后 loading 清除
     expect(isFetching('我的/影视/《全缺》.md')).toBe(false);
   });
 
-  it('会话内去重：第二次 sweep 零新 spawn', async () => {
+  it('会话内去重：第二次 sweep 零新抓取', async () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《缺信息》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
     const app = mockAppWithVault(vault);
     rebuildItems(app);
-    const { spawned, spawn } = makeSuccessSpawn(vault);
-    configureFetchQueue({ ...TEST_HOOKS, spawn });
+    const { fetched, fetch } = makeSuccessFetch(vault);
+    configureFetchQueue({ ...TEST_HOOKS, fetch });
 
     sweepDoubanFetch(app);
     await settle();
-    expect(spawned).toHaveLength(1);
+    expect(fetched).toHaveLength(1);
     // 成功后条目已齐；再扫一遍（即便条目仍缺也去重）零新增
     sweepDoubanFetch(app);
     await settle();
-    expect(spawned).toHaveLength(1);
+    expect(fetched).toHaveLength(1);
   });
 
   it('抓取中 isFetching=true，完成后清除；重开面板（再 sweep）不重复', async () => {
@@ -108,10 +107,11 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     const gate = new Promise<void>((r) => (release = r));
     configureFetchQueue({
       ...TEST_HOOKS,
-      spawn: async (_cli, notePath) => {
+      fetch: async (file) => {
         await gate;
-        const rel = toRel(notePath);
-        vault.files.set(rel, `${vault.files.get(rel) ?? ''}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+        const content = vault.files.get(file.path) ?? '';
+        vault.files.set(file.path, `${content}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+        return okOutcome();
       },
     });
 
@@ -138,10 +138,11 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     const gate = new Promise<void>((r) => (release = r));
     configureFetchQueue({
       ...TEST_HOOKS,
-      spawn: async (_cli, notePath) => {
+      fetch: async (file) => {
         await gate;
-        const rel = toRel(notePath);
-        vault.files.set(rel, `${vault.files.get(rel) ?? ''}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+        const content = vault.files.get(file.path) ?? '';
+        vault.files.set(file.path, `${content}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+        return okOutcome();
       },
     });
 
@@ -155,13 +156,13 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     expect(renderFn).toHaveBeenCalledTimes(3);
   });
 
-  it('spawn 成功但字段未到齐（搜索无结果）→ 失败聚合一条错误通知（含片名）', async () => {
+  it('执行器返回失败 → 失败聚合一条错误通知（含片名）', async () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《小众片A》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
     vault.files.set('我的/影视/《小众片B》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
     const app = mockAppWithVault(vault);
     rebuildItems(app);
-    configureFetchQueue({ ...TEST_HOOKS, spawn: async () => {} });
+    configureFetchQueue({ ...TEST_HOOKS, fetch: async () => ({ ok: false, reason: 'notfound' }) });
 
     sweepDoubanFetch(app);
     await settle();
@@ -170,65 +171,55 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     expect(getNoticeMessages().some((m) => m.includes('小众片A') && m.includes('小众片B'))).toBe(true);
   });
 
-  it('CLI 不可用（未配置）→ 入队静默跳过，零 spawn 零通知', async () => {
+  it('风控失败单独聚合：文案含「豆瓣风控」且与一般失败分开', async () => {
     const vault = new MockVault();
-    vault.files.set('我的/影视/《缺信息》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
+    vault.files.set('我的/影视/《风控片》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
+    vault.files.set('我的/影视/《普通失败片》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
     const app = mockAppWithVault(vault);
-    rebuildItems(app);
-    const spawn = vi.fn();
-    configureFetchQueue({ cli: '', spawn });
-    // 注：cli '' 语义=探测过但不可用（jsdom 无 window.require ≈ 移动端静默禁用）
-
-    sweepDoubanFetch(app);
-    await settle();
-
-    expect(spawn).not.toHaveBeenCalled();
-    expect(getNoticeMessages()).toEqual([]);
-  });
-
-  it('node 不可用（显式 \'\'）→ 入队静默跳过（缺 Node 环境不当抓取失败上报）', async () => {
-    const vault = new MockVault();
-    vault.files.set('我的/影视/《缺信息》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
-    const app = mockAppWithVault(vault);
-    rebuildItems(app);
-    const spawn = vi.fn();
-    // node '' 语义=探测过但不可用（jsdom 无 window.require ≈ 移动端/无 Node 静默禁用）
-    configureFetchQueue({ cli: 'C:/fake/cli.js', node: '', spawn, gapMs: 0, refreshDelayMs: 0 });
-
-    sweepDoubanFetch(app);
-    await settle();
-
-    expect(spawn).not.toHaveBeenCalled();
-  });
-
-  it('完成信号兜底：spawn 迟迟不退出但字段落盘 → 轮询清 loading（用户实测退出信号丢失形态）', async () => {
-    const vault = new MockVault();
-    const path = '我的/影视/《信号丢失》.md';
-    vault.files.set(path, '---\ntags: [电影]\n评分: 8\n---');
-    const app = mockAppWithVault(vault);
-    M.appRef = app;
     rebuildItems(app);
     configureFetchQueue({
       ...TEST_HOOKS,
-      pollMs: 10,
-      spawn: async (_cli, notePath) => {
-        // 字段先落盘，进程永不退出（模拟宿主内 spawn 退出事件丢失/CLI 收尾迟滞）
-        const rel = toRel(notePath);
-        vault.files.set(rel, `${(vault.files.get(rel) ?? '').replace(/\n*$/, '\n')}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
-        await new Promise(() => {});
-      },
+      fetch: async (file) => (file.name.includes('风控') ? { ok: false, reason: 'blocked' } : { ok: false, reason: 'notfound' }),
     });
 
     sweepDoubanFetch(app);
-    expect(isFetching(path)).toBe(true);
-    for (let i = 0; i < 100 && isFetching(path); i++) await new Promise((r) => setTimeout(r, 10));
-    expect(isFetching(path)).toBe(false);
-    // 轮询收尾算成功：不进失败聚合通知
     await settle();
-    expect(hasNotice(/豆瓣信息获取失败/)).toBe(false);
+
+    expect(hasNotice(/豆瓣风控拦截/)).toBe(true);
+    expect(hasNotice(/豆瓣信息获取失败/)).toBe(true);
+    expect(getNoticeMessages().some((m) => m.includes('风控片') && m.includes('豆瓣风控'))).toBe(true);
+    expect(getNoticeMessages().some((m) => m.includes('普通失败片') && m.includes('豆瓣风控'))).toBe(false);
   });
 
-  it('isFetching 时限兜底：pending 超过单条超时 + 余量即视为过期（双信号全失 loading 不永转）', async () => {
+  it('移动端启用（ADR-0129）：无 child_process 环境照常入队执行', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《移动端新片》.md', '---\ntags: [电影]\n评分: 8\n---');
+    const app = mockAppWithVault(vault);
+    M.appRef = app;
+    rebuildItems(app);
+    const { fetched, fetch } = makeSuccessFetch(vault);
+    configureFetchQueue({ ...TEST_HOOKS, fetch });
+
+    // jsdom 无 window.require（≈移动端），旧 CLI 探测在此会静默禁用——现应照常入队
+    expect(enqueueDoubanFetch(M.items[0].file!, '移动端新片')).toBe(true);
+    await settle();
+    expect(fetched).toHaveLength(1);
+  });
+
+  it('执行器抛异常按失败处理，不炸队列', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《抛异常》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
+    const app = mockAppWithVault(vault);
+    rebuildItems(app);
+    configureFetchQueue({ ...TEST_HOOKS, fetch: async () => { throw new Error('boom'); } });
+
+    sweepDoubanFetch(app);
+    await settle();
+    expect(hasNotice(/豆瓣信息获取失败/)).toBe(true);
+    expect(isFetching('我的/影视/《抛异常》.md')).toBe(false);
+  });
+
+  it('isFetching 时限兜底：pending 超过单条超时 + 余量即视为过期（执行器挂死 loading 不永转）', async () => {
     vi.useFakeTimers();
     const vault = new MockVault();
     const path = '我的/影视/《超时》.md';
@@ -236,45 +227,41 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     const app = mockAppWithVault(vault);
     M.appRef = app;
     rebuildItems(app);
-    configureFetchQueue({ ...TEST_HOOKS, spawn: () => new Promise(() => {}) });
+    configureFetchQueue({ ...TEST_HOOKS, fetch: () => new Promise(() => {}) });
     sweepDoubanFetch(app);
     expect(isFetching(path)).toBe(true);
     await vi.advanceTimersByTimeAsync(FETCH_TIMEOUT_MS + 30_000 + 1);
     expect(isFetching(path)).toBe(false);
   });
 
-  it('waitForExit：正常退出 clearTimeout 不杀；超时 kill 兜底并 resolve', async () => {
+  it('单条硬超时：执行器悬挂超过 FETCH_TIMEOUT_MS 按失败收（Promise.race 兜底）', async () => {
     vi.useFakeTimers();
-    const child = new EventEmitter();
-    const kill = vi.fn();
-    const p = waitForExit(child, FETCH_TIMEOUT_MS, kill);
-    child.emit('close');
-    await expect(p).resolves.toBeUndefined();
-    expect(kill).not.toHaveBeenCalled();
-
-    const child2 = new EventEmitter();
-    const kill2 = vi.fn();
-    const p2 = waitForExit(child2, FETCH_TIMEOUT_MS, kill2);
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《悬挂》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
+    const app = mockAppWithVault(vault);
+    rebuildItems(app);
+    configureFetchQueue({ ...TEST_HOOKS, fetch: () => new Promise<DoubanFetchOutcome>(() => {}) });
+    sweepDoubanFetch(app);
     await vi.advanceTimersByTimeAsync(FETCH_TIMEOUT_MS + 1);
-    await expect(p2).resolves.toBeUndefined();
-    expect(kill2).toHaveBeenCalledTimes(1);
+    // fake timers 下 settle 的真实 setTimeout 永不到点——先回真实时钟再等队列收尾
+    vi.useRealTimers();
+    await settle();
+    expect(hasNotice(/豆瓣信息获取失败/)).toBe(true);
   });
 });
 
 describe('豆瓣抓取队列·frontmatter 契约', () => {
-  it('完成验证容忍 YAML 引号（工具写入形态）', () => {
+  it('完成验证容忍 YAML 引号（fetcher 写入形态）', () => {
     const vault = new MockVault();
     vault.files.set(
       '我的/影视/《引号》.md',
       '---\ntags: [电影]\n评分: 8\n海报: "CONFIG/MOVIE POSTER/a.jpg"\n豆瓣链接: "https://movie.douban.com/subject/1/"\n---',
     );
-    const fm = parseFrontmatter(vault.files.get('我的/影视/《引号》.md')!);
-    expect(String(fm!['海报'])).toContain('CONFIG/MOVIE POSTER');
-    expect(String(fm!['豆瓣链接'])).toContain('https://');
+    expect(vault.files.get('我的/影视/《引号》.md')).toContain('海报: "CONFIG/MOVIE POSTER/a.jpg"');
   });
 
   it('enqueueDoubanFetch：file 为 null 静默跳过', () => {
-    configureFetchQueue({ ...TEST_HOOKS, spawn: async () => {} });
+    configureFetchQueue({ ...TEST_HOOKS, fetch: async () => okOutcome() });
     expect(() => enqueueDoubanFetch(null, 'X')).not.toThrow();
   });
 
@@ -289,7 +276,6 @@ describe('豆瓣抓取队列·frontmatter 契约', () => {
     expect(pcardHtml(it, null, false)).not.toContain('pw-fetch');
   });
 });
-
 
 describe('G8：删除影片出队豆瓣抓取队列', () => {
   beforeEach(() => {
@@ -320,31 +306,32 @@ describe('G8：删除影片出队豆瓣抓取队列', () => {
     const gate = new Promise<void>((r) => {
       release = r;
     });
-    configureFetchQueue({ ...TEST_HOOKS, spawn: () => gate });
+    configureFetchQueue({ ...TEST_HOOKS, fetch: () => gate.then(() => ({ ok: false, reason: 'notfound' as const })) });
     expect(enqueueDoubanFetch(a.file!, '甲')).toBe(true);
     expect(isFetching(a.file!.path)).toBe(true);
     // 模拟删除成功（openConfirm → dequeueDoubanFetch）
     dequeueDoubanFetch(a.file!.path);
     expect(isFetching(a.file!.path)).toBe(false); // pending 撤销（loading 不再挂）
-    release(); // spawn 退出（抓不到已删文件 → 失败形态）
+    release(); // 执行器返回（抓不到已删文件 → 失败形态）
     await settle();
     // 失败聚合通知不含已删片名（旧缺陷：十几秒后弹「以下影片获取失败：《甲》」且「重启后会自动重试」不实）
     expect(getNoticeMessages().join('\n')).not.toContain('甲');
   });
 
-  it('排队中（未开始）的影片被删除 → 移出队列零 spawn', async () => {
+  it('排队中（未开始）的影片被删除 → 移出队列零抓取', async () => {
     const vault = new MockVault();
     const [a, b] = seedTwo(vault);
-    const spawned: string[] = [];
+    const fetched: string[] = [];
     let release!: () => void;
     const gate = new Promise<void>((r) => {
       release = r;
     });
     configureFetchQueue({
       ...TEST_HOOKS,
-      spawn: async (_cli: string, p: string) => {
-        spawned.push(p);
+      fetch: async (file) => {
+        fetched.push(file.path);
         await gate;
+        return { ok: false, reason: 'notfound' };
       },
     });
     enqueueDoubanFetch(a.file!, '甲');
@@ -352,7 +339,7 @@ describe('G8：删除影片出队豆瓣抓取队列', () => {
     dequeueDoubanFetch(b.file!.path); // 删除乙
     release(); // 甲完成，队列继续
     await settle();
-    expect(spawned.length).toBe(1); // 只有甲被抓
+    expect(fetched.length).toBe(1); // 只有甲被抓
     expect(getNoticeMessages().join('\n')).not.toContain('乙');
   });
 });

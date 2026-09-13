@@ -42,6 +42,14 @@ export function cinemaSettingsSchema(): SettingsSchema {
         ],
       },
       {
+        icon: 'rss',
+        name: '数据抓取',
+        rows: [
+          { type: 'text', name: 'ApiZero Key', desc: '豆瓣字段接口的密钥，不填时字段走豆瓣演职员接口兜底', binding: { key: 'cinemaApizeroKey' } },
+          { type: 'text', name: '豆瓣 Cookie', desc: '搜索被风控时粘贴浏览器Cookie可提高成功率，不填也能抓', binding: { key: 'cinemaDoubanCookie' } },
+        ],
+      },
+      {
         icon: 'eye',
         name: '显示',
         rows: [
