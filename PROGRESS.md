@@ -5,7 +5,7 @@
 
 ## Issue 306 — 知识盒视频录入改链接解析式（ADR-0133）
 
-**状态：门禁**（全量 4750 测试绿 + tsc 0 错；待合并部署）
+**状态：已交付**（全量 4752 测试绿 + tsc 0 错 + 真机 CDP 自检 13/13；2026-09-14 合并并构建部署）
 
 - [x] 拍板链（grill-with-docs 四轮，2026-09-14）：解析按钮替 450ms 防抖；只读信息区（标题/UP/分 P 下拉/时长）；
       双把手进度条 + 时间框双向联动（↑/↓ ±1s，Shift ±10）；失败态手填分 P 与时间范围、下次打开自动重抓并替换显示；
@@ -21,10 +21,10 @@
       `data.ts`（secToTimeText/timeTextToSec + duration 字段）；`settings.ts`（bilibiliCookie 键）；
       `settings-main-schema.ts`（AI 与凭据组 + 从 CLI 导入按钮）；`cinema/settings.ts`（两项挪走）；
       `tools/bili-downloader/core.js`（quality 映射任意档位数字串）
-- [x] 测试：知识盒域 166 passed（data helper 往返 / range-bar / 解析态机 / 范围联动 / 档位默认规则 / 自动重抓）；
+- [x] 测试：知识盒域 168 passed（data helper 往返 / range-bar / 解析态机 / 范围联动 / 档位默认规则 / 自动重抓 / 切P门禁 / 编辑态落库）；
       设置面测试适配（组名/徽标/组序/行序）；原型产物重出（knowledge 等 7 域）
 - [x] 文档：ADR-0133、CONTEXT（录入元信息重写 + 清晰度档位 + 凭据）、spec、issues/306
-- [ ] 合并回主仓库 → 主仓库构建部署 → 清理 worktree
+- [x] 合并回主仓库（675fead6）→ 主仓库构建部署（58801457）→ 清理 worktree
 
 
 ## Issue 266 — 备忘录移动端真全屏三处 UI 缺陷（ADR-0120）
