@@ -184,6 +184,11 @@ describe('buildBehaviorWording：knowledge（知识盒，ADR-0066/0072/0112）',
     expect(buildBehaviorWording(item)).toBe('你为「习得性无助」生成了一篇术语文献');
   });
 
+  it('knowledge:image-generated → 你把「图题」读成了一篇图版文献', () => {
+    const item = makeItem('knowledge', 'image-generated', { entityType: 'knowledge', action: 'image-generated', name: '窗外的树' });
+    expect(buildBehaviorWording(item)).toBe('你把「窗外的树」读成了一篇图版文献');
+  });
+
   it('遗留 literature / bili-downloader 存量条目同样命中（别名兼容，ADR-0072/0112）', () => {
     expect(buildBehaviorWording(makeItem('literature', 'converted', { entityType: 'literature', action: 'converted', name: '旧视频笔记' }))).toBe('你把《旧视频笔记》转成了文献');
     expect(buildBehaviorWording(makeItem('bili-downloader', 'converted', { entityType: 'bili', action: 'converted', name: '更旧视频笔记' }))).toBe('你把《更旧视频笔记》转成了文献');

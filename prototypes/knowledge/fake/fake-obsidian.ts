@@ -82,13 +82,52 @@ export async function requestUrl(opts?: { url?: string; body?: string }): Promis
   }
   if (!/chat\/completions/.test(url)) throw new Error('原型环境无网络请求（fake obsidian requestUrl）');
   let prompt = '';
+  /** 多模态部件里真的收到了几张图（issue 312 图版：评审壳要能证明图确实发到了 AI 层） */
+  let imgCount = 0;
+  let imgChars = 0;
   try {
-    const body = JSON.parse(String(opts?.body ?? '{}')) as { messages?: Array<{ content?: string }> };
-    prompt = (body.messages || []).map((m) => String(m.content ?? '')).join('\n');
+    const body = JSON.parse(String(opts?.body ?? '{}')) as { messages?: Array<{ content?: unknown }> };
+    const texts: string[] = [];
+    for (const m of body.messages || []) {
+      const c = m?.content;
+      if (typeof c === 'string') { texts.push(c); continue; }
+      if (!Array.isArray(c)) continue;
+      // 带图消息：content 是 OpenAI 多模态数组（{type:'text'} / {type:'image_url'}）
+      for (const part of c) {
+        const p = part as { type?: string; text?: string; image_url?: { url?: string } } | null;
+        if (!p) continue;
+        if (p.type === 'text') texts.push(String(p.text ?? ''));
+        else if (p.type === 'image_url') { imgCount++; imgChars += String(p.image_url?.url ?? '').length; }
+      }
+    }
+    prompt = texts.join('\n');
   } catch { /* 原样空提示词 */ }
   let content: string;
+  const passage = /把下方这段文字整理成一篇文献笔记/.exec(prompt);
   const term = /为术语「([^」]+)」生成一篇文献笔记/.exec(prompt);
-  if (term) {
+  const img = /看这张图片|看下面这 \d+ 张图片/.exec(prompt);
+  if (img) {
+    // 图版录入（issue 312；多图 issue 313）：读图 → 演示级「自动图题 + 读图解读 + 领域」；
+    // 回包里带上实际收到的图片数量与 base64 长度，自检据此断言「图真的走到了 AI 层」
+    const domains = /从以下领域选一个最贴近的：([^；」]+)/.exec(prompt);
+    const domain = domains ? domains[1].split('、')[0] : '艺术';
+    const multi = imgCount > 1;
+    content = JSON.stringify({
+      title: `（演示图题）${multi ? `${imgCount} 张图` : '一张图'}的内容整理`,
+      summary: `（演示读图）已收到图片（${imgCount} 张，base64 ${imgChars} 字符）——这里回放的是图版录入的读图结果，用于评审拖图 / 粘贴 / 多图、自动图题与关联行；图片本体在确认写入时落进图片目录（默认文献目录下的 assets/，可在设置里改）。`,
+      domain,
+    });
+  } else if (passage) {
+    // 段落录入（issue 309）：一段文字 → 演示级「自动标题 + 整理正文 + 领域」
+    const src = (/【原文】\n([\s\S]+)/.exec(prompt)?.[1] ?? '').replace(/\s+/g, ' ').trim();
+    const domains = /从以下领域选一个最贴近的：([^；」]+)/.exec(prompt);
+    const domain = domains ? domains[1].split('、')[0] : '心理';
+    content = JSON.stringify({
+      title: `（演示标题）${src.slice(0, 14)}${src.length > 14 ? '…' : ''}的要点整理`,
+      summary: `（演示整理）${src.slice(0, 120)}……原型环境由 fake AI 罐头回放生成，用于评审段落录入、自动标题与关联行交互。`,
+      domain,
+    });
+  } else if (term) {
     const domains = /从以下领域选一个最贴近的：([^；」]+)/.exec(prompt);
     const domain = domains ? domains[1].split('、')[0] : '心理';
     content = JSON.stringify({
@@ -119,10 +158,12 @@ export class MarkdownRenderer {
     const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
     const inline = (s: string): string => {
       let t = esc(s);
-      t = t.replace(/!\[\[([^\]]+)\]\]/g, (_m, p1: string) =>
-        /\.(mp4|webm|mkv)$/i.test(p1)
-          ? '<video controls preload="metadata" src="./assets/demo.mp4"></video>'
-          : `<span class="bz-kb-cite">${p1}</span>`);
+      t = t.replace(/!\[\[([^\]]+)\]\]/g, (_m, p1: string) => {
+        if (/\.(mp4|webm|mkv)$/i.test(p1)) return '<video controls preload="metadata" src="./assets/demo.mp4"></video>';
+        const url = fakeResourceUrl(p1); // 图版落盘的图片本体（data URL）
+        if (url) return `<img class="bz-kb-embed-img" src="${url}" alt="">`;
+        return `<span class="bz-kb-cite">${p1}</span>`;
+      });
       t = t.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_m, p1: string, p2: string) => `<span class="bz-kb-cite">${p2 || p1}</span>`);
       t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
       t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -141,7 +182,10 @@ export class MarkdownRenderer {
         if (/\.(mp4|webm|mkv)$/i.test(fullEmbed[1])) {
           out.push('<video controls preload="metadata" src="./assets/demo.mp4"></video>');
         } else {
-          out.push(`<p><span class="bz-kb-cite">${esc(fullEmbed[1])}</span></p>`);
+          // 图片嵌入（图版）：壳里的图片本体就是 data URL，直接出 <img>（评审壳要看得见图）
+          const imgUrl = fakeResourceUrl(fullEmbed[1]);
+          if (imgUrl) out.push(`<p><img class="bz-kb-embed-img" src="${imgUrl}" alt=""></p>`);
+          else out.push(`<p><span class="bz-kb-cite">${esc(fullEmbed[1])}</span></p>`);
         }
         continue;
       }
@@ -213,9 +257,56 @@ export function encodeSeedFile(content: string, stat?: { ctime?: number; mtime?:
   return JSON.stringify(env);
 }
 
+/**
+ * 壳内文件内容直读（localStorage 封套解包）——图片资源解析用（issue 312）。
+ * 落盘的二进制在壳里就是 data URL 字符串，故这里原样返回；不存在返回空串。
+ */
+export function fakeFileContent(path: string): string {
+  const raw = localStorage.getItem(KEY_PREFIX + path);
+  if (raw == null) return '';
+  try {
+    const env = JSON.parse(raw) as Envelope | null;
+    if (env && typeof env === 'object' && typeof env.c === 'string') return env.c;
+  } catch {
+    /* 纯文本内容原样 */
+  }
+  return raw;
+}
+
+/** 图片资源 URL（data URL）：笔记正文 `![[…]]` 与面板缩略图共用；非图片资源返回空串 */
+export function fakeResourceUrl(path: string): string {
+  const v = fakeFileContent(path);
+  return /^data:image\//i.test(v) ? v : '';
+}
+
+/** Uint8Array → base64（分块防大图爆栈，同 core/ai imageDataUrl 的做法） */
+function bytesToBase64(u8: Uint8Array): string {
+  let bin = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < u8.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + CHUNK)) as unknown as number[]);
+  }
+  return btoa(bin);
+}
+
 export class FakeVault {
   static key(path: string): string {
     return KEY_PREFIX + path;
+  }
+
+  getResourcePath(file: { path?: string } | string): string {
+    const path = typeof file === 'string' ? file : String(file?.path ?? '');
+    return path ? fakeResourceUrl(path) : '';
+  }
+
+  /** 二进制落盘（图版 issue 312）：壳里存成 data URL，getResourcePath / MarkdownRenderer 直接可用 */
+  async createBinary(path: string, data: ArrayBuffer): Promise<FakeFile> {
+    const u8 = data instanceof Uint8Array ? data : new Uint8Array(data);
+    const ext = String(path).split('.').pop()?.toLowerCase() || '';
+    const mime = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : `image/${ext || 'png'}`;
+    const raw = encodeSeedFile(`data:${mime};base64,${bytesToBase64(u8)}`);
+    localStorage.setItem(KEY_PREFIX + path, raw);
+    return this.toFile(path, raw);
   }
 
   /** localStorage 封套 → FakeFile（内容内藏，read 吐 content） */

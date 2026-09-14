@@ -89,6 +89,7 @@ describe('mapBehaviorEvent（ADR-0132 映射表）', () => {
     expect(mapBehaviorEvent(item('knowledge', 'term-generated', '熵'))).toMatchObject({ domain: 'knowledge', kind: 'produce', text: '生成术语『熵』' });
     expect(mapBehaviorEvent(item('literature', 'term-generated', '熵'))).toMatchObject({ domain: 'knowledge', kind: 'produce', text: '生成术语『熵』' });
     expect(mapBehaviorEvent(item('knowledge', 'converted', '一部视频'))).toMatchObject({ kind: 'produce', text: '转化『一部视频』' });
+    expect(mapBehaviorEvent(item('knowledge', 'image-generated', '窗外的树'))).toMatchObject({ kind: 'produce', text: '读图『窗外的树』' });
     expect(mapBehaviorEvent(item('literature', 'converted', '一部视频'))).toMatchObject({ kind: 'produce', text: '转化『一部视频』' });
   });
 

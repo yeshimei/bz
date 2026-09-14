@@ -2,7 +2,8 @@
 /**
  * 文献笔记生成层测试（src/knowledge/note-gen.ts）：
  * parseDomainList / chunkTranscript / parseAiJson / parseFrontmatter / injectFrontmatter 纯函数，
- * generateVideoNote / generateTermDraft / generateTermNote 生成链路（AI 打桩 + MockVault 落盘断言），
+ * generateVideoNote / generateTermDraft / generateTermNote / generateImageDraft / generateImageNote
+ * 生成链路（AI 打桩 + MockVault 落盘断言；图版含图片本体 createBinary），
  * 以及 backfillNotes 超时跳过继续（ticket 138 §1.3）。
  * 纯数据层：无 DOM，node 环境直跑。
  */
@@ -20,6 +21,9 @@ import {
   generateTermDraft,
   summarizeTermSummary,
   generateTermNote,
+  generateImageDraft,
+  generateImageNote,
+  resolveImageDir,
   backfillNotes,
 } from '../../src/knowledge/note-gen';
 
@@ -493,5 +497,175 @@ describe('backfillNotes（旧笔记自动补全；ticket 138 §1.3：单次 AI �
 
     expect(res).toEqual({ scanned: 1, filled: 0, aiSkipped: true });
     expect(vault.files.get('文献盒/F.md')).not.toContain('domain');
+  });
+});
+
+
+// ==================== 图版（issue 312；多图与目录设置 issue 313） ====================
+
+describe('generateImageDraft（图版读图草稿：走多模态通道，不落盘）', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    const vault = new MockVault();
+    setApp({ vault } as any);
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeDomainList: '艺术, 历史' }) as any);
+  });
+
+  it('单图走 {text, images} 多模态输入（文本带读图指令、images 恰一项）', async () => {
+    aiStub.json.mockResolvedValueOnce('{"title":"图题","summary":"解读","domain":"艺术"}');
+
+    const draft = await generateImageDraft(['data:image/png;base64,AAAB']);
+
+    expect(draft).toEqual({ title: '图题', summary: '解读', domain: '艺术' });
+    const arg: any = aiStub.json.mock.calls[0][0];
+    expect(typeof arg).toBe('object'); // 不是纯文本串——带图必须走 content 数组的入参形态
+    expect(arg.images).toEqual(['data:image/png;base64,AAAB']);
+    expect(arg.text).toContain('看这张图片');
+    expect(arg.text).toContain('艺术、历史'); // 领域词表进提示词
+  });
+
+  it('多图（issue 313）：一次全投，提示词改成「作为一组」并标出张数', async () => {
+    aiStub.json.mockResolvedValueOnce('{"title":"组图题","summary":"解读","domain":"艺术"}');
+
+    await generateImageDraft(['data:image/png;base64,AAA', 'data:image/jpeg;base64,BBB', 'data:image/webp;base64,CCC']);
+
+    const arg: any = aiStub.json.mock.calls[0][0];
+    expect(arg.images).toHaveLength(3); // 三张一起发，不拆请求
+    expect(arg.images[2]).toBe('data:image/webp;base64,CCC');
+    expect(arg.text).toContain('看下面这 3 张图片');
+    expect(arg.text).toContain('作为一组');
+  });
+
+  it('空图 / 空白项 → 抛错且不调用 AI（过滤后为空也算空）', async () => {
+    await expect(generateImageDraft([])).rejects.toThrow('图片为空');
+    await expect(generateImageDraft(['  ', ''])).rejects.toThrow('图片为空');
+    expect(aiStub.json).not.toHaveBeenCalled();
+  });
+});
+
+describe('generateImageNote（图版文献：图片本体 + 五键 frontmatter + 先文字后图片）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vault = new MockVault();
+    setApp({ vault } as any);
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeDomainList: '' }) as any);
+  });
+
+  afterEach(() => {
+    setSettingsProvider(() => ({} ) as any);
+  });
+
+  const bytesOf = (n: number) => new Uint8Array(Array.from({ length: n }, (_v, i) => i + 1)).buffer;
+  const imgs = (...list: Array<[number, string]>) => list.map(([n, ext]) => ({ bytes: bytesOf(n), ext }));
+
+  it('图片本体落 <文献目录>/assets/、笔记落文献目录；正文文字在上、图片在下', async () => {
+    const path = await generateImageNote({
+      title: '窗外的树',
+      summary: '一张树的照片',
+      domain: '自然',
+      images: imgs([4, 'png']),
+    });
+
+    expect(path).toBe('文献盒/窗外的树.md');
+    expect(vault.binaryFiles.has('文献盒/assets/窗外的树.png')).toBe(true);
+    expect(Array.from(vault.binaryFiles.get('文献盒/assets/窗外的树.png')!)).toEqual([1, 2, 3, 4]);
+    const content = vault.files.get(path)!;
+    const fm = vaultParseFrontmatter(content)!;
+    expect(fm.title).toBe('窗外的树');
+    expect(fm.type).toBe('image');
+    expect(fm.domain).toBe('自然');
+    expect(fm.date).toBeTruthy();
+    // 不得混入其它文献类型的键
+    expect(fm.term).toBeUndefined();
+    expect(fm.url).toBeUndefined();
+    expect(fm.tags).toBeUndefined();
+    // 正文 = 全路径嵌入（裸名会指错同名图）+ 读图解读，解读在前、嵌入在后（issue 313）
+    expect(content).toContain('![[文献盒/assets/窗外的树.png]]');
+    expect(content).toContain('一张树的照片');
+    expect(content.indexOf('一张树的照片')).toBeLessThan(content.indexOf('![[文献盒/assets/窗外的树.png]]'));
+  });
+
+  it('多图（issue 313）：逐张落盘 + 逐条嵌入，顺序与传入一致且全在文字之后', async () => {
+    const path = await generateImageNote({
+      title: '三张写生',
+      summary: '一组三张的写生记录',
+      images: imgs([2, 'png'], [3, 'jpg'], [4, 'webp']),
+    });
+
+    expect(vault.binaryFiles.has('文献盒/assets/三张写生.png')).toBe(true);
+    expect(vault.binaryFiles.has('文献盒/assets/三张写生.jpg')).toBe(true);
+    expect(vault.binaryFiles.has('文献盒/assets/三张写生.webp')).toBe(true);
+    const content = vault.files.get(path)!;
+    const i1 = content.indexOf('![[文献盒/assets/三张写生.png]]');
+    const i2 = content.indexOf('![[文献盒/assets/三张写生.jpg]]');
+    const i3 = content.indexOf('![[文献盒/assets/三张写生.webp]]');
+    expect(i1).toBeGreaterThan(-1);
+    expect(i1).toBeLessThan(i2);
+    expect(i2).toBeLessThan(i3);
+    expect(content.indexOf('一组三张的写生记录')).toBeLessThan(i1); // 文字仍在上
+  });
+
+  it('图片目录可由设置指定（issue 313）；留空回落到 <文献目录>/assets', async () => {
+    expect(resolveImageDir({ knowledgeDirectory: '文献盒' })).toBe('文献盒/assets');
+    expect(resolveImageDir({ knowledgeDirectory: '文献盒', knowledgeImageFolder: '  ' })).toBe('文献盒/assets');
+    expect(resolveImageDir({ knowledgeDirectory: '文献盒', knowledgeImageFolder: '/附图/' })).toBe('附图'); // 两侧斜杠归一
+    expect(resolveImageDir({ knowledgeImageFolder: '我的/图片' })).toBe('我的/图片'); // 指定即完全以它为准
+
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeImageFolder: '附图' }) as any);
+    const path = await generateImageNote({ title: '手稿', summary: '解读', images: imgs([1, 'png']) });
+
+    expect(vault.binaryFiles.has('附图/手稿.png')).toBe(true);
+    expect(vault.binaryFiles.has('文献盒/assets/手稿.png')).toBe(false);
+    expect(vault.files.get(path)).toContain('![[附图/手稿.png]]'); // 嵌入随目录一起变
+  });
+
+  it('重名：图片与笔记各自加序号，互不覆盖（同扩展名才判重）', async () => {
+    const p1 = await generateImageNote({ title: '窗外的树', summary: 'A', images: imgs([2, 'png']) });
+    const p2 = await generateImageNote({ title: '窗外的树', summary: 'B', images: imgs([3, 'png']) });
+    const p3 = await generateImageNote({ title: '窗外的树', summary: 'C', images: imgs([4, 'jpg']) });
+
+    expect(p1).toBe('文献盒/窗外的树.md');
+    expect(p2).toBe('文献盒/窗外的树_2.md');
+    expect(vault.binaryFiles.has('文献盒/assets/窗外的树.png')).toBe(true);
+    expect(vault.binaryFiles.has('文献盒/assets/窗外的树_2.png')).toBe(true);
+    // 换扩展名 = 另一个文件，不占用序号（同名 png 已存在也不影响 jpg）；图与笔记各自独立判重
+    expect(vault.binaryFiles.has('文献盒/assets/窗外的树.jpg')).toBe(true);
+    expect(p3).toBe('文献盒/窗外的树_3.md');
+    expect(vault.files.get(p1)).toContain('A');
+    expect(vault.files.get(p2)).toContain('B');
+  });
+
+  it('来源按 ADR-0116 落 source/sourceTitle（内部笔记 = 原生双链）', async () => {
+    const path = await generateImageNote({
+      title: '手稿页',
+      summary: '解读',
+      images: imgs([1, 'webp']),
+      source: { kind: 'note', path: '我的/日记/2026-09-14.md' },
+    });
+
+    const content = vault.files.get(path)!;
+    expect(content).toContain('source: "[[我的/日记/2026-09-14.md|2026-09-14]]"');
+    expect(vault.binaryFiles.has('文献盒/assets/手稿页.webp')).toBe(true);
+  });
+
+  it('标题与解读全空 → 抛错不落盘（既不写图也不写笔记）', async () => {
+    await expect(generateImageNote({ title: ' ', summary: '', images: imgs([1, 'png']) }))
+      .rejects.toThrow('图版为空');
+    expect(vault.binaryFiles.size).toBe(0);
+    expect(vault.getMarkdownFiles()).toHaveLength(0);
+  });
+
+  it('一张图都没有 → 抛错不落盘（空笔记比拒写更糟）', async () => {
+    await expect(generateImageNote({ title: '有题无图', summary: '解读', images: [] }))
+      .rejects.toThrow('图版没有图片');
+    expect(vault.getMarkdownFiles()).toHaveLength(0);
+  });
+
+  it('标题缺失但解读有内容 → 用解读首句兜底命名（不阻断落盘）', async () => {
+    const path = await generateImageNote({ title: '', summary: '某张旧照片的内容说明', images: imgs([1, 'png']) });
+    expect(path).toBe('文献盒/某张旧照片的内容说明.md');
+    expect(vault.binaryFiles.has('文献盒/assets/某张旧照片的内容说明.png')).toBe(true);
   });
 });

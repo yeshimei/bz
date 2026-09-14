@@ -18,8 +18,6 @@
  *   创建 / 修改 / 队列消费三条自动路径对 **related 非空** 的笔记一律跳过（`skipped-related`，队列条目顺带移除）；
  *   手动命令 bz-secondbrain-rebuild-links 传 respectRelated:false 豁免（显式意图强制重跑）；
  * - 死链清理：关联范围（linkAgentScopes）各笔记 related 中指向不存在文件的条目移除；encrypt 锁定文件一律跳过。
- * - 文献笔记生成即跑（issue 298）：知识盒生成视频/术语文献笔记后经 'knowledge:tasks' 域事件调
- *   processNoteNow 立即建链（不等约 60 秒批次防抖、不受 linkAgentScopes 限制，串行锁排队）。
  */
 import { stripMdExt } from '../../core/utils';
 import type { App, TFile } from 'obsidian';
@@ -265,6 +263,84 @@ export class LinkAgent {
     // 自写触发的 modify 事件后续经基准过滤掉，防止自触发死循环）
     await this.recordLinkBaseline(path);
     return { status: 'done', created };
+  }
+
+  /**
+   * 关联预演（issue 309）：**只算不写**——近邻检索 + AI 裁判，返回命中的目标（含展示名）。
+   * 知识盒录入面板在「AI 出内容之后、确认写入之前」调它，把关联过程就地展示出来；
+   * 草稿尚未落盘，故 selfPath 传空串（自身不可能出现在候选里），提示词的「新笔记」卡用伪文件
+   * （标题取草稿标题；frontmatter 读不到即退化为纯标题卡）。
+   * 经串行锁执行（与监听批次 / 补链 / 单篇即时建链互斥）；
+   * embedding 不可达 → queued（与服务不可达同语义：不是失败，服务恢复后可重算）；裁判失败 → failed。
+   */
+  async previewLinks(
+    content: string,
+    title = ''
+  ): Promise<{ status: 'done'; picks: Array<{ path: string; title: string }> } | { status: 'queued' } | { status: 'skipped' } | { status: 'failed'; error: string }> {
+    const s = tryGetSettings() as any;
+    if (s.linkAgentEnabled === false) return { status: 'skipped' };
+    const text = String(content || '').trim();
+    if (!text) return { status: 'done', picks: [] };
+    return this.runSerial(async () => {
+      try {
+        await this.store.refresh();
+      } catch (e) {
+        console.warn('[link-agent] 预演前刷新索引失败', e);
+      }
+      let candidates: SearchHit[] = [];
+      try {
+        candidates = await this.findCandidates('', text);
+      } catch {
+        return { status: 'queued' as const }; // 检索不可达：按「服务不可达」处理，不冒充失败
+      }
+      if (!candidates.length) return { status: 'done' as const, picks: [] };
+      const ghost = { path: '', basename: title || '待落盘草稿', extension: 'md' } as unknown as TFile;
+      let answer = '';
+      try {
+        answer = await AI.ask(this.buildJudgePrompt(ghost, text, candidates));
+      } catch (e) {
+        return { status: 'failed' as const, error: e instanceof Error ? e.message : String(e) };
+      }
+      const picks = parseJudgeOutput(answer, candidates.length)
+        .map((p) => candidates[p.id - 1])
+        .filter((c) => !!c && !!c.path && !!this.app.vault.getAbstractFileByPath(c.path));
+      return {
+        status: 'done' as const,
+        picks: picks.map((c) => ({ path: c.path, title: this.linkTitleOf(c.path) })),
+      };
+    });
+  }
+
+  /**
+   * 写入预演结果（issue 309）：确认写入落盘后调用——把预览阶段选中的目标写进该篇 related，
+   * 并记基准哈希（自写 related 触发的 modify 事件后续被过滤，不循环重跑）。
+   * 幂等、单侧、上限截断在写入侧兜底（同 writeRelated 契约）。
+   */
+  async applyLinks(path: string, targetPaths: string[]): Promise<ProcessOutcome> {
+    const s = tryGetSettings() as any;
+    if (s.linkAgentEnabled === false) return { status: 'skipped' };
+    const file = this.app.vault.getAbstractFileByPath(path) as TFile | null;
+    if (!file || file.extension !== 'md') return { status: 'skipped' };
+    return this.runSerial(async () => {
+      const targets = [...new Set((targetPaths || []).filter((p) => !!p && p !== path && !!this.app.vault.getAbstractFileByPath(p)))];
+      const created = await this.writeRelated(file, targets);
+      await this.recordLinkBaseline(path);
+      return { status: 'done' as const, created };
+    });
+  }
+
+  /** 候选路径 → 展示名（frontmatter.title 优先、退回文件名；文件缺失退回路径） */
+  private linkTitleOf(path: string): string {
+    const f = this.app.vault.getAbstractFileByPath(path) as TFile | null;
+    if (!f) return path;
+    try {
+      const fm = this.app.metadataCache.getFileCache(f)?.frontmatter as Record<string, unknown> | undefined;
+      const t = fm ? (fm.title ?? fm['标题']) : '';
+      if (typeof t === 'string' && t.trim()) return t.trim();
+    } catch {
+      /* 缓存缺失：退回文件名 */
+    }
+    return f.basename;
   }
 
   /**

@@ -142,6 +142,14 @@ describe('KnowledgeData（knowledge.json）', () => {
     expect(all[0].id).toBe(t.id);
   });
 
+  it('非数组形状（手改/旧格式对象）按空库读取，不再 data.push is not a function（issue 310）', async () => {
+    await KnowledgeData.write({ version: '1.0', tasks: [] } as any);
+    expect(await KnowledgeData.loadTasks()).toEqual([]);
+    // 仍可正常追加（写事务以数组形状覆盖）
+    const t = await KnowledgeData.addTask({ url: 'https://www.bilibili.com/video/BV1shapedata' });
+    expect((await KnowledgeData.loadTasks()).map((x) => x.id)).toEqual([t.id]);
+  });
+
   it('缺字段的旧/手改数据 loadTasks 统一补默认（零迁移）', async () => {
     await KnowledgeData.write([{ id: 'legacy-1', url: 'BV1xx411c7mD' }]);
     const all = await KnowledgeData.loadTasks();

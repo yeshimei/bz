@@ -418,6 +418,8 @@ export default interface BzSettings {
   knowledgeCardboxDirectory: string;
   knowledgeTopicDirectory: string;
   knowledgeDirectory: string;
+  /** 文献盒：图版图片落地目录（issue 313；留空 = `<文献目录>/assets`） */
+  knowledgeImageFolder: string;
   /** 文献盒：领域词表（逗号分隔；空 = AI 自由写，ticket 136/ADR-0073） */
   knowledgeDomainList: string;
   /** 文献盒：ffmpeg 路径（原工具 rc ffmpegPath，ticket 136 全并进设置） */
@@ -741,6 +743,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   knowledgeCardboxDirectory: '卡片盒',
   knowledgeTopicDirectory: '主题盒',
   knowledgeDirectory: '文献盒',
+  knowledgeImageFolder: '',
   knowledgeDomainList: '',
   knowledgeFfmpegPath: 'ffmpeg',
   knowledgeFfprobePath: 'ffprobe',

@@ -108,9 +108,13 @@ describe('批 B-4：z-index 静态大数收口（ADR-0067）', () => {
       const rule = css.match(new RegExp(`${sel.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*\\{[^}]*\\}`));
       expect(rule, sel).toBeTruthy();
     }
-    // 五处显示路径均动态发号（遮罩在前本体在后）
+    // 四处显示路径均动态发号（遮罩在前本体在后）：主窗 / 处理面板（内含历史视图）/ 录入弹层 / 名词·段落弹层。
+    // 原第五处「历史窗」已于 issue 310 复核并入处理面板（同面板视图切换），窗口本身删掉。
     const ui = repo('src/knowledge/ui.ts');
-    expect(ui.match(/topifyZ\(/g)!.length).toBeGreaterThanOrEqual(5);
+    for (const pair of ['this.mask, this.popup', 'this.videoMask, this.videoPopup', 'this.addMask, this.addPopup', 'this.termMask, this.termPopup']) {
+      expect(ui, pair).toContain(`topifyZ(${pair})`);
+    }
+    expect(ui.match(/topifyZ\(/g)!.length).toBe(4);
   });
 
   it('secondbrain：mini 胶囊静态档清零，collapse() 显示时 topifyZ 发号', () => {

@@ -1,20 +1,34 @@
 /**
  * 知识盒（knowledge 域）UI —— ADR-0112 三部重构（原型为唯一真理）：
- * 部壹·文献（两种录入进货 + 文献词典列表 + 预览/提炼成卡）、部贰·卡片（卡片盒扫描展示）、
+ * 部壹·文献（四种录入进货 + 文献词典列表 + 预览/提炼成卡）、部贰·卡片（卡片盒扫描展示）、
  * 部叁·主题（主题笔记仅展示，写作与检索归 Obsidian + 第二大脑）。
  * 知识盒只整理关联：文献→卡片 = 连一张旧卡 + 一句为什么（related 键，源文献自动互链）。
- * 保留承继：术语生成面板（ticket 142/155 简洁版契约 + ADR-0116 可选「来源」行）、视频任务队列（ticket 146 单钮态机/148 纯 emoji）、
- * 添加弹窗校验、历史分组、ESC 分层、topifyZ、域事件刷新（knowledge:tasks / knowledge:file-*）。
+ * 录入入口四名词（issue 309/312；顺序 2026-09-14 复核为 图版在影像之前）：名词（一个词）/ 段落（一段文字，AI 自动出标题）/ 影像（B 站视频任务）/
+ * 图版（拖入或粘贴图片，AI 读图成文，issue 312；**可多张**，issue 313）。名词 / 段落 / 图版共用一个面板壳
+ * （同壳三态：单行 input / 多行 textarea / 图片拖入区 + 来源行一致）。关联时机 = **AI 出内容即起跑**：
+ * 属性区「关联」行走「分析中… → 关联名」，分析期间重新生成 / 总结 / 确认写入全部禁用；确认写入把
+ * 结果写进新笔记 related 后**直接关窗**。面板不设取消钮（退出走点遮罩 / ESC），也不自动打开笔记。
+ * 事件刷新：knowledge:tasks（视频 converted/failed + 本域生成事件，小橘行为流亦订阅此通道）。
+ * 影像两个界面（issue 310 + 2026-09-14 复核）：**录入界面**（主窗「影像」按钮 / 命令 / 聚合讯直达；
+ * 词典皮行内标签行，初始只出链接行，解析跑完才展开信息 / 分P / 剪辑 / 清晰度 / 保存；标题栏不放出口钮
+ * ——保存即落队列并打开**处理面板**）→ **处理面板**（任务列表 + 图标钮：新增 / 批量 play↔square / 历史；
+ * 历史是**同一面板内的第二视图**，不在新弹窗里——切过去题字换「历 史」、图标组只留返回箭头）。
+ * 两界面的头部同用主窗词典头（.bz-kb-head + 题字，左列计数 / 右列图标组），图标一律 lucide
+ * （iconSpan 占位 + mountIcons 兑现，无 emoji）。
  * 移除（ADR-0112 原型拍板）：领域筛选/搜索/双击打开/抽屉/面板内设置按钮（设置走设置面板域）。
  */
-import { Component, MarkdownRenderer, type App } from 'obsidian';
+import { Component, MarkdownRenderer, setIcon, type App } from 'obsidian';
+import { imageDataUrl, imageExtOfMime, imageMimeOfPath } from '../core/ai';
 import type { SettingsSchema } from '../core/settings-schema';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
+import { getLinkBridge } from '../core/link-now';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
 import { escapeHtml, fetchPageTitle, formatRelativeTime, stripMdExt } from '../core/utils';
+import { iconSpan } from '../core/ui/str';
+import { mountIcons } from '../core/ui/icons';
 import { uiSuggest } from '../core/ui/suggest';
 import { topifyZ } from '../core/z-order';
 import { emitDomainEvent, onDomainEvent } from '../core/domain-bus';
@@ -23,10 +37,25 @@ import type BzSettings from '../settings';
 import { KnowledgeData, normalizeLooseTime, secToTimeText, timeTextToSec } from './data';
 import type { KnowledgeTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
-import { backfillNotes, generateTermDraft, generateTermNote, summarizeTermSummary } from './note-gen';
+import { backfillNotes, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, resolveImageDir, summarizeTermSummary } from './note-gen';
 import { cleanSourceTitle, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, type TermSource } from './source';
 import { fetchCheckedQualities, fetchVideoMeta, parseBvid, resolveVideo, type ResolvedVideo, type VideoMeta } from './video-meta';
 import { RangeBar } from './range-bar';
+
+/** 文献类型 → 紧凑行名（issue 309/312 四类：名词 / 段落 / 影像 / 图版；未知类型按名词兜底）；
+ *  行内标签（字距版）与紧凑写法同源派生，别再各写一份映射（review 2026-09-14） */
+function litKindPlain(type: string): string {
+  if (type === 'video') return '影像';
+  if (type === 'passage') return '段落';
+  if (type === 'image') return '图版';
+  return '名词';
+}
+/** 同一映射的行内标签（每字间加空格的「词典字距」排版） */
+function litKindLabel(type: string): string {
+  return litKindPlain(type).split('').join(' ');
+}
+/** 图版单次录入的图片张数上限（issue 313）：一次 AI 请求的图片数封顶，避免大图组拖垮上行与费用 */
+const IMAGE_ENTRY_MAX = 9;
 
 interface StatusMeta { label: string; cls: string; }
 const STATUS_META: Record<KnowledgeTask['status'], StatusMeta> = {
@@ -40,6 +69,34 @@ function q<T extends HTMLElement>(root: HTMLElement, sel: string): T | null {
   return root.querySelector(sel) as T | null;
 }
 
+/**
+ * 从剪贴板取图片文件（issue 312 图版；多图 issue 313：一次粘贴可带多张）
+ * 优先 items（截图粘贴常带 image/png，且 files 在部分环境为空），再退回 files；
+ * 两条路都取到内容时按 items 优先（同一批图可能两边都有，避免收两遍）。无图返回空数组。
+ */
+function clipboardImageFiles(dt: DataTransfer | null): File[] {
+  if (!dt) return [];
+  const out: File[] = [];
+  const items = dt.items;
+  if (items) {
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      if (it?.kind === 'file' && /^image\//i.test(it.type)) {
+        const f = it.getAsFile();
+        if (f) out.push(f);
+      }
+    }
+  }
+  if (out.length) return out;
+  const files = dt.files;
+  if (files) {
+    for (let i = 0; i < files.length; i++) {
+      if (/^image\//i.test(files[i]?.type || '')) out.push(files[i]);
+    }
+  }
+  return out;
+}
+
 /** HTML 转义（进度文案来自外部进程 stdout，统一转义防注入；core escapeHtml 转发壳） */
 function esc(s: unknown): string {
   return escapeHtml(String(s ?? ''));
@@ -49,6 +106,31 @@ function esc(s: unknown): string {
 function shortNoteName(path: string): string {
   const base = String(path || '').replace(/\\/g, '/').split('/').pop() || '';
   return stripMdExt(base) || String(path || '');
+}
+
+/**
+ * frontmatter.related 展示名解析（行扫描实现；issue 309 起预览「关联」区与录入面板关联行共用）：
+ * 只认 `related:` 起头的列表项 `- "[[路径|名]]"`，取别名优先、否则取去目录去 .md 的文件名
+ * （展示名不长成路径）；遇非列表项即结束。
+ */
+export function parseRelatedNames(text: string): string[] {
+  const lines = String(text ?? '').split(/\r?\n/);
+  if (lines[0]?.trim() !== '---') return [];
+  const out: string[] = [];
+  let inRelated = false;
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim() === '---') break;
+    if (/^related:/.test(line)) { inRelated = true; continue; }
+    if (!inRelated) continue;
+    if (/^\s+-\s/.test(line)) {
+      const mm = line.match(/^\s*-\s*"?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]"?\s*$/);
+      if (mm) out.push(mm[2] || shortNoteName(mm[1]));
+    } else if (line.trim() !== '') {
+      break; // related 列表结束
+    }
+  }
+  return out;
 }
 
 /** 失败原因白话化：外部工具 stderr / AI 报错多为英文原文，行内映射为中文白话；未命中返回截断原文 */
@@ -239,6 +321,10 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
         icon: 'folder-open', name: '目录与分类',
         rows: [
           { type: 'path', mode: 'single', name: '文献文件夹', desc: '文献笔记所在文件夹，部壹扫描这里', binding: { key: 'knowledgeDirectory' } },
+          { type: 'path', mode: 'single', name: '图版图片文件夹', desc: '图版录入的图片落地位置，留空默认放文献文件夹下的 assets',
+            binding: { key: 'knowledgeImageFolder' },
+            // 空值 = 回落到文献文件夹下的 assets（把「实际会落到哪」显式显示出来，不让人猜）
+            fallbackValue: () => resolveImageDir(tryGetSettings() || {}) },
           { type: 'path', mode: 'single', name: '卡片文件夹', desc: '你自己写的卡片笔记所在文件夹，部贰扫描后把提炼的卡落在这里', binding: { key: 'knowledgeCardboxDirectory' } },
           { type: 'path', mode: 'single', name: '主题文件夹', desc: '主题笔记所在文件夹，部叁仅作展示不影响写作', binding: { key: 'knowledgeTopicDirectory' } },
           { type: 'textarea', name: '领域词表', desc: '逗号分隔的领域词，留空则 AI 自由写领域', binding: { key: 'knowledgeDomainList' }, placeholder: '物理,医学,计算机,经济…' },
@@ -297,11 +383,13 @@ export class UIManager {
   private loadedCardDir = '';
   private loadedTopicDir = '';
   private backfilledDir = '';
-  // ---- 视频录入面板（任务队列）----
+  // ---- 影像：录入弹层 / 处理面板（内含历史视图）（issue 310）----
   videoMask: HTMLElement | null = null;
   videoPopup: HTMLElement | null = null;
   videoList: HTMLElement | null = null;
-  // ---- 添加任务弹窗 / 历史弹窗 ----
+  /** 批量钮的图标容器（play ↔ square 就地换字符，issue 310 去 emoji） */
+  private runIcon: HTMLElement | null = null;
+  // ---- 添加任务弹窗 ----
   addMask: HTMLElement | null = null;
   addPopup: HTMLElement | null = null;
   // ---- 添加弹窗解析态（ADR-0133：解析按钮 + 只读信息区 + 双把手范围）----
@@ -309,6 +397,12 @@ export class UIManager {
   private addUrlSeq = 0;
   /** 解析中（解析按钮 loading、保存禁用） */
   private addResolving = false;
+  /**
+   * 下半个表单是否展开（issue 310：录入界面初始**只显示链接行**，解析跑完才展开
+   * 信息 / 分P / 剪辑 / 清晰度 / 保存）。置 true 的时机：解析流程结束（成功或失败）、
+   * 编辑既有任务（已有数据）；置 false：新开弹窗、链接被改动（旧信息作废，需重新解析）。
+   */
+  private addRevealed = false;
   /** 解析成功的信息（null = 未解析 / 失败态） */
   private addMeta: VideoMeta | null = null;
   /** 实测清晰度档位（null = 未取到 → 固定列表回落） */
@@ -325,22 +419,43 @@ export class UIManager {
   /** 主面板自动重抓（ADR-0133）：进行中标记 + 已尝试任务 id 集（防重入/防重复请求） */
   private backfillRunning = false;
   private backfillTried = new Set<string>();
-  historyMask: HTMLElement | null = null;
-  historyPopup: HTMLElement | null = null;
-  historyList: HTMLElement | null = null;
-  // ---- 术语生成面板 ----
+  /** 处理面板当前视图：tasks=任务队列 / history=归档（2026-09-14 复核起同面板切换，无独立历史窗） */
+  private videoView: 'tasks' | 'history' = 'tasks';
+  // ---- 文字录入面板（名词 / 段落 / 图版同壳三态，issue 309/312）----
   termMask: HTMLElement | null = null;
   termPopup: HTMLElement | null = null;
-  private termPreview: { domain: string; body: string } | null = null;
+  /** 当前录入态：term = 一个词（名词）/ passage = 一段文字（段落）/ image = 一张图（图版） */
+  private entryMode: 'term' | 'passage' | 'image' = 'term';
+  private termPreview: { domain: string; body: string; title?: string } | null = null;
   private termGenerating = false;
   private termSummarizing = false;
   private termHasDraft = false;
-  private termSource: TermSource | null = null; // 术语来源（ADR-0116；null = 未填）
+  private termSource: TermSource | null = null; // 来源（名词/段落/图版共用行，ADR-0116；null = 未填）
+  /**
+   * 图版待落盘图片（issue 312；多图 issue 313）：拖入/粘贴/选择后**只留在内存**
+   * （bytes 原样 + 预览用 data URL），确认写入时才 createBinary 进图片目录——
+   * 与「草稿不落盘」同口径，取消不留孤儿文件。顺序 = 用户放入顺序（就是笔记里的图片顺序）。
+   */
+  private entryImages: Array<{ mime: string; bytes: ArrayBuffer; dataUrl: string }> = [];
+  /** 关联行状态机：idle（未生成）→ loading（预演中）→ done/empty/queued/failed/off */
+  private entryRelState: 'idle' | 'loading' | 'done' | 'empty' | 'queued' | 'failed' | 'off' = 'idle';
+  /** 关联行结果文案（done 时 = 关联标题顿号串） */
+  private entryRelText = '';
+  /** 预演命中的目标路径（确认写入时据此写 related，不重跑检索与裁判） */
+  private entryPreviewPicks: string[] = [];
+  /** 预演是否已给出确定结果（done）——确定过就连「0 命中」也算结论，写入时不再重跑管线 */
+  private entryPreviewDone = false;
+  /** 在跑的预演（确认写入前等它落地，避免白跑一次完整管线） */
+  private entryRelPending: Promise<void> | null = null;
+  /** 预演序号：重新生成 / 关闭面板让在途结果作废（晚到的响应不得覆盖新状态） */
+  private entryRelSeq = 0;
   private termSrcSuggest: ReturnType<typeof uiSuggest> | null = null;
   private termSrcTimer: ReturnType<typeof setTimeout> | null = null;
 
   private editingId: string | null = null;
   private onKeydown: (e: KeyboardEvent) => void = () => {};
+  /** Ctrl+V 粘贴截图监听（issue 312；document 级，图版态才接管——见 createTermUI） */
+  private onPaste: (e: ClipboardEvent) => void = () => {};
   private batchAbortLabel: '终止' | '终止整批' | null = null;
   private runState = new Map<string, RowRunState>();
   private runTimer: ReturnType<typeof setInterval> | null = null;
@@ -355,15 +470,16 @@ export class UIManager {
     this.createMainUI();
     this.createVideoUI();
     this.createAddDialog();
-    this.createHistoryUI();
     this.createTermUI();
     this.onKeydown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      // ESC 关最上层：术语面板 → 历史弹窗 → 添加弹窗 → 视频面板 → 主面板
+      // ESC 关最上层：术语面板 → 添加弹窗 → 处理面板（历史视图先退回队列）→ 主面板
       if (this.termPopup && this.termPopup.style.display === 'flex') this.hideTermEntry();
-      else if (this.historyPopup && this.historyPopup.style.display === 'flex') this.hideHistory();
       else if (this.addPopup && this.addPopup.style.display === 'flex') this.hideAddDialog();
-      else if (this.videoPopup && this.videoPopup.style.display === 'flex') this.hideVideo();
+      else if (this.videoPopup && this.videoPopup.style.display === 'flex') {
+        if (this.videoView === 'history') this.switchVideoView('tasks');
+        else this.hideVideo();
+      }
       else if (this.popup && this.popup.style.display === 'flex') this.hideMain();
     };
     document.addEventListener('keydown', this.onKeydown);
@@ -426,7 +542,9 @@ export class UIManager {
     const act = t.getAttribute('data-kb-act');
     if (act === 'part') { this.part = (t.getAttribute('data-part') as 'z1' | 'z2' | 'z3') || 'z1'; void this.refreshCurrent(); this.syncPartButtons(); }
     else if (act === 'term-entry') this.showTermEntry();
+    else if (act === 'passage-entry') this.showPassageEntry();
     else if (act === 'video-entry') this.showVideoEntry();
+    else if (act === 'image-entry') this.showImageEntry();
     else if (act === 'lit-peek') { const p = t.getAttribute('data-path') || ''; const n = this.allNotes.find((x) => x.path === p); if (n) void this.openPreview(n); }
     else if (act === 'card-peek') { const p = t.getAttribute('data-path') || ''; const c = this.allCards.find((x) => x.path === p); if (c) void this.openPreview(c, 'card'); }
     else if (act === 'topic-open') { const p = t.getAttribute('data-path') || ''; const tp = this.allTopics.find((x) => x.path === p); if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, 'topic'); }
@@ -527,7 +645,7 @@ export class UIManager {
     if (!this.contentEl) return;
     const rows = this.allNotes.map((n, i) => {
       const no = String(i + 1).padStart(2, '0');
-      const kind = n.type === 'video' ? '影 像' : '词 条';
+      const kind = litKindLabel(n.type);
       return `<div class="bz-kb-lexrow" data-kb-act="lit-peek" data-path="${esc(n.path)}">
         <div class="bz-kb-hw"><span class="bz-kb-w">${esc(n.title)}</span><span class="bz-kb-pos ${n.type === 'video' ? 'hot' : ''}">${kind}</span><span class="bz-kb-dom">${esc(n.domain || '未分类')}</span></div>
         <div class="bz-kb-tail"><span class="bz-kb-meta">LIT-${no} · ${esc(n.date || '')}</span></div>
@@ -536,10 +654,12 @@ export class UIManager {
     this.contentEl.innerHTML = `
       <div class="bz-kb-pd">
         <div class="bz-kb-entryrow">
-          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，当场落成一张术语卡</span></button>
-          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>丢进来一个 B 站链接，文献笔记自动长出来</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>名词</b></button>
+          <button class="bz-kb-entrybtn" data-kb-act="passage-entry"><b>段落</b></button>
+          <button class="bz-kb-entrybtn" data-kb-act="image-entry"><b>图版</b></button>
+          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>影像</b></button>
         </div>
-        ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的两种录入开始。</div>'}
+        ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的四种录入开始。</div>'}
       </div>`;
   }
 
@@ -567,7 +687,7 @@ export class UIManager {
       ? { title: '卡片预览 · 卡片盒', badge: '卡 片', hot: false }
       : kind === 'topic'
         ? { title: '主题预览 · 主题笔记', badge: '主 题', hot: false }
-        : { title: `文献预览 · ${n.type === 'video' ? '影像' : '词条'}`, badge: n.type === 'video' ? '影 像' : '词 条', hot: n.type === 'video' };
+        : { title: `文献预览 · ${litKindPlain(n.type || '')}`, badge: litKindLabel(n.type || ''), hot: n.type === 'video' };
     this.openSheet(this.sheetWrap(head.title, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
         <span class="bz-kb-pos ${head.hot ? 'hot' : ''}">${head.badge}</span>
@@ -768,29 +888,10 @@ export class UIManager {
     if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
   }
 
-  /** 读笔记 frontmatter related 展示名列表（预览「关联」区；行扫描实现） */
+  /** 读笔记 frontmatter related 展示名列表（预览「关联」区；解析见 parseRelatedNames） */
   private async noteRels(n: PreviewEntry): Promise<string[]> {
     try {
-      const app = getApp();
-      const text = await app.vault.read(n.file);
-      const lines = text.split(/\r?\n/);
-      if (lines[0]?.trim() !== '---') return [];
-      const out: string[] = [];
-      let inRelated = false;
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i];
-        if (line.trim() === '---') break;
-        if (/^related:/.test(line)) { inRelated = true; continue; }
-        if (inRelated) {
-          if (/^\s+-\s/.test(line)) {
-            const mm = line.match(/^\s*-\s*"?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]"?\s*$/);
-            if (mm) out.push(mm[2] || mm[1]);
-          } else if (line.trim() !== '') {
-            break; // related 列表结束
-          }
-        }
-      }
-      return out;
+      return parseRelatedNames(await getApp().vault.read(n.file));
     } catch { return []; }
   }
 
@@ -901,7 +1002,7 @@ export class UIManager {
     this.fileListenerAttached = true;
   }
 
-  // ==================== 视频录入面板（任务队列） ====================
+  // ==================== 影像 · 处理队列面板（issue 310） ====================
 
   createVideoUI(): void {
     const mask = document.createElement('div');
@@ -913,14 +1014,24 @@ export class UIManager {
     popup.id = 'knowledge-video-popup';
     popup.className = 'bz-kb-window kb';
     popup.style.display = 'none';
+    // 头部与主窗同款词典头（issue 310）：中列题字 + 左列状态计数 + 右列图标组
+    // （2026-09-14 复核：计数与按钮左右对调——说明性文字在左，可操作钮在右）。
+    // 处理 / 历史是**同一面板内的两个视图**（2026-09-14 复核：历史不再另开弹窗）：
+    // 切到历史时题字换「历 史」、图标组只留返回箭头。
+    // 图标一律 lucide（emoji 退役，issue 310）：markup 出 `<i data-lucide>` 占位，挂 DOM 后 mountIcons 兑现。
     const header = document.createElement('div');
-    header.className = 'bz-kb-vhead';
+    header.className = 'bz-kb-head';
     header.innerHTML = `
-      <h3 class="bz-kb-vtitle">视频录入</h3>
+      <div class="bz-kb-vmeta" id="lit-video-counts"></div>
+      <div class="bz-kb-brand">
+        <div class="bz-kb-top">VIDEO · TO LITERATURE</div>
+        <div class="bz-kb-title">影 像</div>
+      </div>
       <div class="bz-lit-head-btns">
-        <button id="lit-btn-video-add" title="添加转文献任务">➕</button>
-        <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">▶️</button>
-        <button id="lit-btn-video-history" title="历史">🕘</button>
+        <button id="lit-btn-video-add" title="新增影像">${iconSpan('plus')}</button>
+        <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">${iconSpan('play')}</button>
+        <button id="lit-btn-video-history" title="历史">${iconSpan('history')}</button>
+        <button id="lit-btn-video-back" title="返回处理队列" style="display:none;">${iconSpan('arrow-left')}</button>
       </div>`;
     const list = document.createElement('div');
     list.id = 'knowledge-video-list';
@@ -932,14 +1043,11 @@ export class UIManager {
     this.videoMask = mask;
     this.videoPopup = popup;
     this.videoList = list;
+    mountIcons(popup); // `<i data-lucide>` 占位 → 真 SVG（两端同源，core/ui icons）
+    // 运行钮的图标容器（单钮态机 play ↔ square 就地换图标，不走 innerHTML 重排）
+    this.runIcon = q<HTMLElement>(popup, '#lit-btn-video-run .bz-ic');
     this._bindVideoHeaderEvents();
-    // 移动端仅 ➕ + ✕（批量与历史隐藏——移动端无处理能力）
-    if (isMobileEnv()) {
-      const run = q<HTMLButtonElement>(popup, '#lit-btn-video-run');
-      const history = q<HTMLButtonElement>(popup, '#lit-btn-video-history');
-      if (run) run.style.display = 'none';
-      if (history) history.style.display = 'none';
-    }
+    this._syncVideoHead(); // 初始 = 处理视图（首帧即把移动端不支持的批量 / 历史钮藏好）
   }
 
   private _bindVideoHeaderEvents(): void {
@@ -951,17 +1059,73 @@ export class UIManager {
       else void this.onRunBatch();
     };
     q<HTMLButtonElement>(p, '#lit-btn-video-history')!.onclick = () => this.showHistory();
+    q<HTMLButtonElement>(p, '#lit-btn-video-back')!.onclick = () => this.switchVideoView('tasks');
   }
 
-  /** 打开视频录入面板；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口）；打开即自动重抓缺信息任务（ADR-0133） */
+  /**
+   * 处理面板头部同步（issue 310 复核）：按当前视图换题字与图标组——
+   * 处理视图 = 新增 / 批量 / 历史；历史视图 = 只留返回箭头（退回处理队列）。
+   * 移动端无批处理能力：批量与历史钮恒藏（故历史视图在移动端不可达）。
+   */
+  private _syncVideoHead(): void {
+    const p = this.videoPopup;
+    if (!p) return;
+    const inHistory = this.videoView === 'history';
+    const mobile = isMobileEnv();
+    const title = q<HTMLElement>(p, '.bz-kb-title');
+    const top = q<HTMLElement>(p, '.bz-kb-top');
+    if (title) title.textContent = inHistory ? '历 史' : '影 像';
+    if (top) top.textContent = inHistory ? 'VIDEO · ARCHIVE' : 'VIDEO · TO LITERATURE';
+    const show = (sel: string, v: boolean): void => {
+      const el = q<HTMLElement>(p, sel);
+      if (el) el.style.display = v ? '' : 'none';
+    };
+    show('#lit-btn-video-add', !inHistory);
+    show('#lit-btn-video-run', !inHistory && !mobile);
+    show('#lit-btn-video-history', !inHistory && !mobile);
+    show('#lit-btn-video-back', inHistory);
+  }
+
+  /**
+   * 打开「影像」录入界面（issue 310：主窗入口 / 命令 / 聚合讯直达录入界面，
+   * 不再先落到处理队列；处理队列与历史从**保存后**进入——保存即落队列并打开处理面板）。
+   * prefill 存在则预填链接（聚合讯「保存至文献」入口，ADR-0068；有链接即自动解析）。
+   */
   showVideoEntry(prefill?: { url: string; title?: string | null; uploader?: string | null }): void {
+    this.showAddDialog(prefill ? { url: prefill.url, title: prefill.title ?? null, uploader: prefill.uploader ?? null } : undefined);
+  }
+
+  /** 打开「影像 · 处理」队列面板（面板默认视图）；打开即自动重抓缺信息任务（ADR-0133） */
+  showVideoTasks(): void {
     if (!this.videoPopup || !this.videoMask) return;
+    this.videoView = 'tasks';
+    this._showVideoWindow();
+    void this.backfillVideoTasks();
+  }
+
+  /**
+   * 切到「历史」视图（2026-09-14 复核）：历史在**同一个面板内**打开，不再另开弹窗——
+   * 题字换「历 史」、图标组只留返回箭头、计数换「共 N 条」。
+   */
+  showHistory(): void {
+    if (!this.videoPopup || !this.videoMask) return;
+    this.videoView = 'history';
+    this._showVideoWindow();
+  }
+
+  /** 面板内视图切换（处理 ⇄ 历史） */
+  private switchVideoView(view: 'tasks' | 'history'): void {
+    this.videoView = view;
+    void this.refreshVideoPanel();
+  }
+
+  /** 面板显示 + 按当前视图重绘（两个入口共用的收尾） */
+  private _showVideoWindow(): void {
+    if (!this.videoMask || !this.videoPopup) return;
     topifyZ(this.videoMask, this.videoPopup);
     this.videoMask.style.display = 'block';
     this.videoPopup.style.display = 'flex';
     void this.refreshVideoPanel();
-    void this.backfillVideoTasks();
-    if (prefill) this.showAddDialog({ url: prefill.url, title: prefill.title ?? null, uploader: prefill.uploader ?? null });
   }
 
   /**
@@ -998,21 +1162,24 @@ export class UIManager {
   async refreshVideoPanel(): Promise<void> {
     const tasks = await KnowledgeData.loadTasks();
     if (!this.videoList) return;
+    this._syncVideoHead();
     this.videoList.innerHTML = '';
+    if (this.videoView === 'history') { this.renderHistory(tasks); return; }
     const active = tasks.filter((t) => !t.archived);
     const running = BatchRunner.running;
     if (running) {
       const idx = active.findIndex((t) => t.status === 'processing');
       const banner = document.createElement('div');
       banner.className = 'bz-kb-banner';
-      banner.textContent = idx >= 0 ? `⏳ 正在处理 第 ${idx + 1}/${active.length} 部…` : '⏳ 正在准备处理…';
+      banner.innerHTML = `${iconSpan('loader')} ${idx >= 0 ? `正在处理 第 ${idx + 1}/${active.length} 部…` : '正在准备处理…'}`;
+      mountIcons(banner);
       this.videoList.appendChild(banner);
     }
     this._syncStatusCounts(active);
     if (active.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'bz-kb-empty';
-      empty.textContent = '暂无转文献任务。点击 ➕ 添加视频链接与起止时间，回到桌面端即可批量处理。';
+      empty.textContent = '暂无转文献任务。点右上角加号添加视频链接与起止时间，回到桌面端即可批量处理。';
       this.videoList.appendChild(empty);
       this._syncRunButton(active);
       return;
@@ -1032,7 +1199,7 @@ export class UIManager {
     el.textContent = parts.join(' · ');
   }
 
-  /** 单钮态机：空闲「▶️」/运行中「⏹」（终止靠 title hover 区分），移动端整钮隐藏 */
+  /** 单钮态机：空闲 play / 运行中 square（终止靠 title hover 区分），移动端整钮隐藏 */
   private _syncRunButton(tasks: KnowledgeTask[]): void {
     if (!this.videoPopup) return;
     const run = q<HTMLButtonElement>(this.videoPopup, '#lit-btn-video-run');
@@ -1042,11 +1209,11 @@ export class UIManager {
     if (running) {
       run.disabled = false;
       const retry = this.batchAbortLabel === '终止整批';
-      run.textContent = '⏹';
+      if (this.runIcon) setIcon(this.runIcon, 'square');
       run.title = retry ? '中止整批（处理失败任务中）' : '中止批量处理';
     } else {
       run.disabled = !hasWork;
-      run.textContent = '▶️';
+      if (this.runIcon) setIcon(this.runIcon, 'play');
       run.title = '批量处理（桌面端）';
     }
   }
@@ -1071,7 +1238,8 @@ export class UIManager {
       <div class="bz-kb-tmeta">${timeText}${durText}${upText}${task.remark ? ' · ' + esc(task.remark) : ''}</div>
       ${task.status === 'processing' ? (this.runState.has(task.id) ? '<div class="bz-kb-progress-box"></div>' : (task.reason ? `<div class="bz-kb-progress">${esc(task.reason)}</div>` : '')) : ''}
       ${task.status === 'failed' && task.reason ? `<div class="bz-kb-progress bz-kb-progress-error" title="${esc(task.reason)}">${esc(humanizeError(task.reason))}</div>` : ''}
-      ${task.status === 'success' && task.notePath ? `<div class="bz-kb-notepath">📄 ${esc(task.notePath)}</div>` : ''}`;
+      ${task.status === 'success' && task.notePath ? `<div class="bz-kb-notepath">${iconSpan('file-text')} ${esc(task.notePath)}</div>` : ''}`;
+    mountIcons(card);
     const actions = this.buildCardActions(task);
     if (actions.length) attachItemActions(card, actions);
     const titleLink = q<HTMLAnchorElement>(card, '.bz-kb-tlink');
@@ -1127,7 +1295,8 @@ export class UIManager {
     box.innerHTML = `
       <div class="bz-kb-steps">${segs.join('<span class="bz-kb-step-arrow">→</span>')}${pct != null ? ` <span class="bz-kb-step-pct">${Math.round(pct)}%</span>` : ''}</div>
       ${bar}
-      <div class="bz-kb-elapsed">⌛ ${fmtElapsed(Date.now() - st.startAt)}</div>`;
+      <div class="bz-kb-elapsed">${iconSpan('timer')} ${fmtElapsed(Date.now() - st.startAt)}</div>`;
+    mountIcons(box);
   }
 
   private startRunTimer(): void {
@@ -1219,14 +1388,13 @@ export class UIManager {
     if (v !== 'ok') return;
     await KnowledgeData.deleteTask(task.id);
     await this.refreshVideoPanel();
-    await this.refreshHistory();
   }
 
   private async confirmClearHistory(): Promise<void> {
     const v = await openFlowDialog({
       title: '清空历史',
       message: '将移除全部「成功」归档记录；文献笔记与视频文件保留在原处。',
-      // issue 291：同上——挂 body 的流程框须显式带皮肤类才与「历史」窗口同皮
+      // issue 291：同上——挂 body 的流程框须显式带皮肤类才与「处理面板」同皮
       className: 'kb bz-kb-flow-dialog',
       actions: [
         { label: '取消', value: 'cancel' },
@@ -1235,10 +1403,10 @@ export class UIManager {
     });
     if (v !== 'ok') return;
     await KnowledgeData.clearHistory();
-    await this.refreshHistory();
+    await this.refreshVideoPanel();
   }
 
-  // ==================== 添加任务弹窗 ====================
+  // ==================== 影像 · 录入界面（词典皮 + 解析后展开，issue 310） ====================
 
   createAddDialog(): void {
     const addMask = document.createElement('div');
@@ -1250,50 +1418,55 @@ export class UIManager {
     popup.id = 'knowledge-add-popup';
     popup.className = 'bz-lit-dialog kb'; // kb：纸墨皮变量作用域（缺此背景 var(--panel) 失效成透明，issue 257）
     popup.style.display = 'none';
-    // ADR-0133：单框 + 解析按钮 → 只读信息区（标题/UP/分P 下拉）→ 双把手范围 + 时间框 → 清晰度；两端统一「保存」
+    // 词典皮（issue 310：与名词/段落录入同壳）：标题栏 → 链接行 + 解析 →
+    // 「解析完成后」才展开的下半个表单（只读信息 / 分P / 剪辑 / 清晰度 / 保存）。
+    // ADR-0133 的解析式录入契约不变（单框 + 解析按钮 → 只读信息 → 双把手范围 + 时间框 → 清晰度）。
+    // 标题栏不放出口（issue 310 复核）：处理队列与历史随「保存」进入（保存即落队列并打开处理面板）。
     popup.innerHTML = `
-      <div id="lit-add-mode" class="bz-lit-mode-tag" style="display:none;">编辑任务</div>
+      <div class="bz-lit-sheet-head">
+        <span class="bz-lit-sheet-title">影 像</span>
+        <span id="lit-add-mode" class="bz-lit-mode-tag" style="display:none;">编辑任务</span>
+      </div>
       <div id="lit-add-fail" class="bz-lit-form-alert" style="display:none;"></div>
-      <div class="bz-lit-form-col bz-lit-url-col">
-        <label>视频链接 / BV 号</label>
-        <div class="bz-lit-url-row">
-          <input id="lit-add-url" type="text">
-          <button id="lit-add-resolve" type="button">解析</button>
-        </div>
+      <div class="bz-lit-term-row">
+        <span class="bz-lit-term-meta-k">链接</span>
+        <input id="lit-add-url" type="text" autocomplete="off">
+        <button id="lit-add-resolve" type="button">解析</button>
       </div>
       <div id="lit-add-rstate" class="bz-lit-rstate" style="display:none;"></div>
-      <div id="lit-add-info" class="bz-lit-info" style="display:none;">
-        <div class="bz-lit-info-line"><span class="bz-lit-info-k">标题</span><span class="bz-lit-info-v" id="lit-add-ititle"></span></div>
-        <div class="bz-lit-info-line"><span class="bz-lit-info-k">UP 主</span><span class="bz-lit-info-v" id="lit-add-iuploader"></span></div>
-      </div>
-      <div class="bz-lit-form-col" id="lit-add-page-row" style="display:none;">
-        <label>分P</label>
-        <select id="lit-add-page"></select>
-      </div>
-      <div class="bz-lit-form-col" id="lit-add-pagenum-row" style="display:none;">
-        <label>分P</label>
-        <input id="lit-add-page-num" type="number" min="1" step="1">
-      </div>
-      <div class="bz-lit-range-area">
-        <div class="bz-lit-range-head">
-          <label>剪辑范围</label>
+      <div id="lit-add-more" style="display:none;">
+        <div class="bz-lit-term-row">
+          <span class="bz-lit-term-meta-k">标题</span>
+          <span id="lit-add-ititle" class="bz-lit-term-meta-v"></span>
+        </div>
+        <div class="bz-lit-term-row">
+          <span class="bz-lit-term-meta-k">UP 主</span>
+          <span id="lit-add-iuploader" class="bz-lit-term-meta-v"></span>
+        </div>
+        <div class="bz-lit-term-row" id="lit-add-page-row" style="display:none;">
+          <span class="bz-lit-term-meta-k">分P</span>
+          <select id="lit-add-page"></select>
+        </div>
+        <div class="bz-lit-term-row" id="lit-add-pagenum-row" style="display:none;">
+          <span class="bz-lit-term-meta-k">分P</span>
+          <input id="lit-add-page-num" type="number" min="1" step="1">
+        </div>
+        <div class="bz-lit-term-row">
+          <span class="bz-lit-term-meta-k">剪辑</span>
+          <input id="lit-add-start" type="text" autocomplete="off">
+          <span class="bz-lit-range-dash">~</span>
+          <input id="lit-add-end" type="text" autocomplete="off">
           <button id="lit-add-whole" type="button">整片</button>
         </div>
         <div id="lit-add-rb"></div>
-        <div class="bz-lit-form-row">
-          <div class="bz-lit-form-col"><label>开始时间</label>
-            <input id="lit-add-start" type="text"></div>
-          <div class="bz-lit-form-col"><label>结束时间</label>
-            <input id="lit-add-end" type="text"></div>
+        <div class="bz-lit-term-row">
+          <span class="bz-lit-term-meta-k">清晰度</span>
+          <select id="lit-add-quality"></select>
         </div>
-      </div>
-      <div class="bz-lit-form-col">
-        <label>下载清晰度</label>
-        <select id="lit-add-quality"></select>
         <div id="lit-add-rhint" class="bz-lit-rhint" style="display:none;"></div>
-      </div>
-      <div class="bz-lit-form-actions">
-        <button id="lit-add-save" class="bz-lit-accent-btn">保存</button>
+        <div class="bz-lit-term-actions">
+          <button id="lit-add-save" class="bz-lit-accent-btn">保存</button>
+        </div>
       </div>`;
     document.body.appendChild(addMask);
     document.body.appendChild(popup);
@@ -1309,6 +1482,7 @@ export class UIManager {
         this.addUrlSeq++; // 在途解析过期（回填前序列号校验丢弃）
         this.addResolving = false; // 改输入 = 放弃在途解析：按钮恢复可用
         this._setResolveState(null);
+        this.addRevealed = false; // 链接变了 → 下半表单收起，须重新解析（issue 310）
         if (this.addMeta || this.addDuration > 0) {
           this.addMeta = null;
           this.addQualities = null;
@@ -1361,6 +1535,8 @@ export class UIManager {
     if (!this.addPopup || !this.addMask) return;
     this.addUrlReset(); // 开弹窗使在途解析过期（ADR-0133）
     this.editingId = editItem?.id ?? null;
+    // 编辑既有任务：数据本来就有 → 直接展开下半表单（不逼用户为了看一眼再去点解析，issue 310）
+    this.addRevealed = !!this.editingId;
     const modeTag = q<HTMLElement>(this.addPopup, '#lit-add-mode');
     if (modeTag) modeTag.style.display = this.editingId ? 'inline-block' : 'none';
     (q<HTMLInputElement>(this.addPopup, '#lit-add-url')!).value = editItem?.url ?? '';
@@ -1404,9 +1580,10 @@ export class UIManager {
     const meta = this.addMeta;
     const pages = meta?.pages || [];
     const multi = pages.length > 1;
+    // 下半表单总闸（issue 310）：未解析 = 只有链接行可见（保存随之不可达 → 先解析是唯一路径）
+    const more = q<HTMLElement>(popup, '#lit-add-more');
+    if (more) more.style.display = this.addRevealed ? 'block' : 'none';
     // 信息区（标题 / UP 主只读；缺项显示占位）
-    const info = q<HTMLElement>(popup, '#lit-add-info');
-    if (info) info.style.display = meta && (meta.title || meta.uploader) ? '' : 'none';
     const tEl = q<HTMLElement>(popup, '#lit-add-ititle');
     if (tEl) { tEl.textContent = meta?.title || '（未取到标题）'; tEl.title = meta?.title || ''; }
     const uEl = q<HTMLElement>(popup, '#lit-add-iuploader');
@@ -1608,6 +1785,7 @@ export class UIManager {
     const res = await resolveVideo(cleaned, cookie, Math.max(0, this.addPage - 1));
     if (seq !== this.addUrlSeq || this.addPopup !== popup) return; // 过期响应丢弃：busy 态由输入处理/关闭/新解析各自收尾
     this.addResolving = false;
+    this.addRevealed = true; // 解析跑完（无论成功失败）→ 展开下半表单（issue 310）
     if (!res) {
       if (!opts?.auto) {
         this.addMeta = null;
@@ -1689,6 +1867,7 @@ export class UIManager {
     this.addMeta = null;
     this.addQualities = null;
     this.addResolving = false;
+    this.addRevealed = false;
     this.addPage = 1;
     this.addDuration = 0;
     this.addStart = 0;
@@ -1738,6 +1917,7 @@ export class UIManager {
       }
     }
     const quality = (q<HTMLSelectElement>(this.addPopup, '#lit-add-quality')?.value ?? '').trim() || null;
+    const editing = this.editingId;
     try {
       const patch = {
         url,
@@ -1749,74 +1929,34 @@ export class UIManager {
         uploader: this.addMeta?.uploader || null,
         duration: dur > 0 ? dur : null,
       };
-      if (this.editingId) {
-        await KnowledgeData.updateTask(this.editingId, patch);
+      if (editing) {
+        await KnowledgeData.updateTask(editing, patch);
       } else {
         await KnowledgeData.addTask(patch);
       }
       this.hideAddDialog();
-      await this.refreshVideoPanel();
+      // 保存后落到「处理」队列（issue 310：录入界面不再兼作列表，给出明确的落点与反馈）
+      notice(editing ? '任务已更新' : '已加入影像处理队列', 'success');
+      this.showVideoTasks();
     } catch (e: any) {
       notice('保存失败：' + (e?.message ?? String(e)), 'error');
     }
   }
 
-  // ==================== 历史弹窗 ====================
+  // ==================== 历史（处理面板内的第二视图，2026-09-14 复核） ====================
 
-  createHistoryUI(): void {
-    const mask = document.createElement('div');
-    mask.id = 'knowledge-history-mask';
-    mask.className = 'bz-kb-mask';
-    mask.style.display = 'none';
-    mask.onclick = () => this.hideHistory();
-    const popup = document.createElement('div');
-    popup.id = 'knowledge-history-popup';
-    popup.className = 'bz-kb-window kb';
-    popup.style.display = 'none';
-    const toolbar = document.createElement('div');
-    toolbar.className = 'bz-kb-vhead';
-    const counts = document.createElement('span');
-    counts.id = 'lit-history-counts';
-    counts.className = 'bz-kb-vmeta';
-    toolbar.appendChild(counts);
-    const list = document.createElement('div');
-    list.id = 'knowledge-history-list';
-    list.className = 'bz-kb-list';
-    popup.appendChild(toolbar);
-    popup.appendChild(list);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    this.historyMask = mask;
-    this.historyPopup = popup;
-    this.historyList = list;
-  }
-
-  showHistory(): void {
-    if (!this.historyPopup || !this.historyMask) return;
-    topifyZ(this.historyMask, this.historyPopup);
-    this.historyMask.style.display = 'block';
-    this.historyPopup.style.display = 'flex';
-    void this.refreshHistory();
-  }
-
-  hideHistory(): void {
-    if (this.historyMask) this.historyMask.style.display = 'none';
-    if (this.historyPopup) this.historyPopup.style.display = 'none';
-  }
-
-  private async refreshHistory(): Promise<void> {
-    if (!this.historyList) return;
-    const tasks = await KnowledgeData.loadTasks();
-    if (!this.historyList) return;
-    this.historyList.innerHTML = '';
+  /** 归档行渲染进面板内容区（`tasks` 由调用方一次读库后传入，避免一次刷新读两遍） */
+  private renderHistory(tasks: KnowledgeTask[]): void {
+    if (!this.videoList) return;
+    this.videoList.innerHTML = '';
     const rows = tasks.filter((t) => t.archived);
-    const countsEl = this.historyPopup ? q<HTMLElement>(this.historyPopup, '#lit-history-counts') : null;
-    if (countsEl) countsEl.textContent = `🕘 历史 · 共 ${rows.length} 条`;
+    const countsEl = this.videoPopup ? q<HTMLElement>(this.videoPopup, '#lit-video-counts') : null;
+    if (countsEl) countsEl.textContent = `共 ${rows.length} 条`;
     if (rows.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'bz-kb-empty';
       empty.textContent = '暂无历史记录。成功的任务完成时会自动归档到这里。';
-      this.historyList.appendChild(empty);
+      this.videoList.appendChild(empty);
       return;
     }
     const groups = new Map<string, KnowledgeTask[]>();
@@ -1835,7 +1975,7 @@ export class UIManager {
       const lb = String(b[b.length - 1]?.processedAt || b[b.length - 1]?.created || '');
       return lb.localeCompare(la);
     });
-    for (const g of sortedGroups) this.historyList.appendChild(this.renderHistoryGroup(g));
+    for (const g of sortedGroups) this.videoList.appendChild(this.renderHistoryGroup(g));
   }
 
   private renderHistoryGroup(group: KnowledgeTask[]): HTMLElement {
@@ -1855,7 +1995,8 @@ export class UIManager {
     for (const task of group) {
       const line = document.createElement('div');
       line.className = 'bz-kb-hnote';
-      line.innerHTML = `📄 ${esc(shortNoteName(task.notePath || ''))}<span class="bz-kb-hnote-time">⏱ ${esc(formatRelativeTime(task.processedAt || task.created || ''))}</span>`;
+      line.innerHTML = `${iconSpan('file-text')} ${esc(shortNoteName(task.notePath || ''))}<span class="bz-kb-hnote-time">${iconSpan('clock')} ${esc(formatRelativeTime(task.processedAt || task.created || ''))}</span>`;
+      mountIcons(line);
       line.addEventListener('click', () => { if (task.notePath) this.openNote(task.notePath); });
       const actions: ItemAction[] = [];
       if (task.notePath) actions.push({ icon: 'book-open', label: '打开文献笔记', onClick: () => this.openNote(task.notePath!) });
@@ -1869,7 +2010,7 @@ export class UIManager {
     return card;
   }
 
-  // ==================== 术语生成面板（文字录入；142 简洁版 + 155 总结） ====================
+  // ============ 录入面板：名词 / 段落 / 图版同壳三态（142 简洁版 + 155 总结 + issue 309/312） ============
 
   createTermUI(): void {
     const mask = document.createElement('div');
@@ -1880,18 +2021,33 @@ export class UIManager {
     const popup = document.createElement('div');
     popup.id = 'knowledge-term-popup';
     popup.className = 'bz-lit-dialog bz-lit-term-dialog kb'; // kb：纸墨皮变量作用域（缺此背景 var(--panel) 失效成透明，issue 257）
+    popup.setAttribute('data-lit-entry', 'term'); // 同壳三态：term=一个词 / passage=一段文字 / image=一张图（issue 309/312）
     popup.style.display = 'none';
     const body = document.createElement('div');
     body.className = 'bz-lit-term-body';
-    // 词典皮（issue 258/快改批）：标题栏+✕ / 术语与来源同款行内标签行 / 生成+取消；
-    // 预览态：属性卡+内容卡+总结/确认写入。说明行与试试示例已按用户复核移除。
+    // 词典皮（issue 258/快改批 + issue 309/312 同壳三态）：标题栏+✕ 已退役 / 输入行与来源行同款
+    // 标签行 / 生成；预览态：属性卡（含「关联」行）+ 内容卡 + 总结/确认写入。
+    // 三态只差第一行控件（单行 input / 多行 textarea / 图片拖入区）与属性首行（名词文本 vs 可改标题），
+    // 由 popup 上的 data-lit-entry 切换 `.bz-lit-term-only` / `.bz-lit-passage-only` / `.bz-lit-image-only`。
     body.innerHTML = `
       <div class="bz-lit-sheet-head">
-        <span class="bz-lit-sheet-title">文字录入 · 术语</span>
+        <span class="bz-lit-sheet-title" id="lit-entry-title">名词</span>
       </div>
-      <div class="bz-lit-term-row">
-        <span class="bz-lit-term-meta-k">术语</span>
+      <div class="bz-lit-term-row bz-lit-term-only">
+        <span class="bz-lit-term-meta-k">名词</span>
         <input id="lit-term-input" type="text" autocomplete="off">
+      </div>
+      <div class="bz-lit-term-row bz-lit-passage-only">
+        <span class="bz-lit-term-meta-k">段落</span>
+        <textarea id="lit-passage-input" rows="6" placeholder="粘贴一段文字…"></textarea>
+      </div>
+      <div class="bz-lit-term-row bz-lit-image-only">
+        <span class="bz-lit-term-meta-k">图版</span>
+        <div id="lit-image-drop" class="bz-lit-drop" tabindex="0" role="button">
+          <div id="lit-image-grid" class="bz-lit-drop-grid" style="display:none;"></div>
+          <span id="lit-image-hint" class="bz-lit-drop-hint">拖入图片，或 Ctrl+V 粘贴截图</span>
+        </div>
+        <input id="lit-image-file" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple style="display:none;">
       </div>
       <div class="bz-lit-term-row">
         <span class="bz-lit-term-meta-k">来源</span>
@@ -1900,15 +2056,16 @@ export class UIManager {
       </div>
       <div class="bz-lit-term-actions">
         <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
-        <button id="lit-term-cancel" class="bz-lit-ghost-btn">取消</button>
       </div>
       <div id="lit-term-preview" style="display:none;">
         <div class="bz-lit-term-card">
           <div class="bz-lit-term-meta">
-            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">术语</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row bz-lit-term-only"><span class="bz-lit-term-meta-k">名词</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row bz-lit-titled-only"><span class="bz-lit-term-meta-k">标题</span><input id="lit-entry-meta-title" type="text" autocomplete="off"></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
+            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">关联</span><span id="lit-term-meta-rel" class="bz-lit-term-meta-v bz-lit-rel-idle">待写入</span></div>
           </div>
         </div>
         <div class="bz-lit-term-card">
@@ -1927,12 +2084,51 @@ export class UIManager {
     // 统一遮罩点关（issue 271）：✕ 已退役，点遮罩即收起
     mask.addEventListener('click', (e) => { if (e.target === mask) this.hideTermEntry(); });
     q<HTMLButtonElement>(popup, '#lit-term-generate')!.onclick = () => void this.onTermGenerate();
-    q<HTMLButtonElement>(popup, '#lit-term-cancel')!.onclick = () => this.hideTermEntry();
     q<HTMLButtonElement>(popup, '#lit-term-regenerate')!.onclick = () => void this.onTermSummarize();
     q<HTMLButtonElement>(popup, '#lit-term-save')!.onclick = () => void this.onTermConfirm();
     q<HTMLInputElement>(popup, '#lit-term-input')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); void this.onTermGenerate(); }
     });
+    // 段落是多行输入：回车用于换行，Ctrl/Cmd + Enter 才触发生成
+    q<HTMLTextAreaElement>(popup, '#lit-passage-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void this.onTermGenerate(); }
+    });
+    // 图版图片行（issue 312；多图 issue 313）：拖入 / 点选文件 / Ctrl+V 粘贴三条路都收，
+    // 一次可给多张（拖一组、选择器多选、剪贴板多图），统一落进 acceptImageFiles
+    const zone = q<HTMLElement>(popup, '#lit-image-drop');
+    const fileInput = q<HTMLInputElement>(popup, '#lit-image-file');
+    if (zone && fileInput) {
+      zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('is-over'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('is-over'));
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('is-over');
+        const files = Array.from((e as DragEvent).dataTransfer?.files || []);
+        if (files.length) void this.acceptImageFiles(files);
+      });
+      zone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => {
+        const files = Array.from(fileInput.files || []);
+        fileInput.value = ''; // 复位：同一文件再选一次也要能触发 change
+        if (files.length) void this.acceptImageFiles(files);
+      });
+      // 缩略图上的 ✕ 删除单张（事件委托：缩略图每次重建，逐个挂监听会漏）
+      q<HTMLElement>(popup, '#lit-image-grid')?.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement)?.closest?.('[data-lit-image-remove]') as HTMLElement | null;
+        if (!btn) return;
+        e.stopPropagation(); // 别顺手弹出文件选择器
+        this.removeEntryImage(Number(btn.getAttribute('data-lit-image-remove')));
+      });
+    }
+    // Ctrl+V 粘贴截图：面板开着且当前是图版态才接管（document 级——粘贴焦点可能在弹层任意处）
+    this.onPaste = (e: ClipboardEvent) => {
+      if (!this.termPopup || this.termPopup.style.display !== 'flex' || this.entryMode !== 'image') return;
+      const files = clipboardImageFiles(e.clipboardData);
+      if (!files.length) return;
+      e.preventDefault();
+      void this.acceptImageFiles(files);
+    };
+    document.addEventListener('paste', this.onPaste);
     // 来源行事件（ADR-0116）
     const srcInput = q<HTMLInputElement>(popup, '#lit-term-src');
     if (srcInput) {
@@ -1979,15 +2175,44 @@ export class UIManager {
   }
 
   /**
-   * 打开术语录入弹层；term 预填（命令带选中词时自动生成）；src 预填来源（ADR-0116——
+   * 打开「名词」录入（一个词）；term 预填（命令带选中词时自动生成）；src 预填来源（ADR-0116——
    * 仅命令入口带当前笔记，主窗按钮入口不预填）。
    */
   showTermEntry(term?: string, src?: TermSource | null): void {
+    this.showEntry('term', term, src);
+  }
+
+  /** 打开「段落」录入（一段文字，AI 自动出标题）；来源行与名词同构（ADR-0116） */
+  showPassageEntry(src?: TermSource | null): void {
+    this.showEntry('passage', '', src);
+  }
+
+  /** 打开「图版」录入（可放多张图，AI 读图成文，issue 312/313）；来源行与名词/段落同构（ADR-0116） */
+  showImageEntry(src?: TermSource | null): void {
+    this.showEntry('image', '', src);
+  }
+
+  /**
+   * 同壳三态入口（issue 309/312）：三种录入态共用一套 DOM，只切 `data-lit-entry` 与首行控件——
+   * 名词=单行 input（有预填即自动生成），段落=多行 textarea（回车换行，Ctrl/Cmd+回车生成），
+   * 图版=图片拖入区（拖/点选/Ctrl+V 三条路都收，**可多张**，图只在内存，确认写入才落盘）。
+   * 每次打开即回到全新态：草稿清空、来源清空、图片清空、关联行归位到「待写入」。
+   */
+  private showEntry(mode: 'term' | 'passage' | 'image', text?: string, src?: TermSource | null): void {
     if (!this.termPopup || !this.termMask) return;
+    this.entryMode = mode;
     this.termPreview = null;
     this.termHasDraft = false;
+    this.resetEntryRel();
+    this.clearEntryImage();
+    this.termPopup.setAttribute('data-lit-entry', mode);
+    const titleEl = q<HTMLElement>(this.termPopup, '#lit-entry-title');
+    if (titleEl) titleEl.textContent = mode === 'passage' ? '段落' : mode === 'image' ? '图版' : '名词';
     const input = q<HTMLInputElement>(this.termPopup, '#lit-term-input');
-    if (input) input.value = (term ?? '').trim();
+    const area = q<HTMLTextAreaElement>(this.termPopup, '#lit-passage-input');
+    const value = (text ?? '').trim();
+    if (input) input.value = mode === 'term' ? value : '';
+    if (area) area.value = mode === 'passage' ? value : '';
     this.termSrcReset(q<HTMLInputElement>(this.termPopup, '#lit-term-src'));
     if (src) this.termSrcSet(src, q<HTMLInputElement>(this.termPopup, '#lit-term-src'));
     this.setTermPreviewVisible(false);
@@ -1995,8 +2220,109 @@ export class UIManager {
     topifyZ(this.termMask, this.termPopup);
     this.termMask.style.display = 'block';
     this.termPopup.style.display = 'flex';
-    if (input && !input.value) setTimeout(() => input.focus(), 100);
-    if (input && input.value) void this.onTermGenerate();
+    const zone = q<HTMLElement>(this.termPopup, '#lit-image-drop');
+    const focusEl: HTMLElement | null = mode === 'passage' ? area : mode === 'image' ? zone : input;
+    if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
+    if (mode === 'term' && value) void this.onTermGenerate();
+  }
+
+  // ---------- 图版图片收发（issue 312；多图 issue 313） ----------
+
+  /**
+   * 收下若干张图（拖入 / 点选 / 粘贴共用，一次可多张）：格式与体积在 core/ai 侧校验
+   * （只认 PNG/JPEG/GIF/WebP、单图 ≤32MiB），不合规的那张就地提示并跳过，其余照收。
+   * **追加到列表尾部** = 笔记里的图片顺序就是放入顺序；上限 IMAGE_ENTRY_MAX 张。
+   * 收下后**作废已有草稿**（图组变了，旧解读不再对应）：预览收起、关联行归位。
+   */
+  private async acceptImageFiles(files: File[]): Promise<void> {
+    if (!this.termPopup || this.entryMode !== 'image' || !files.length) return;
+    if (this.termGenerating) return; // 正在读图：等它出结果，避免半途改图造成错配
+    let hitLimit = false;
+    let added = 0;
+    for (const file of files) {
+      if (this.entryImages.length >= IMAGE_ENTRY_MAX) { hitLimit = true; break; }
+      const item = await this.readImageFile(file);
+      if (!this.termPopup || this.entryMode !== 'image') return; // 异步期间面板已切换/关闭
+      if (!item) continue;
+      this.entryImages.push(item);
+      added++;
+    }
+    if (hitLimit) notice(`一次最多放 ${IMAGE_ENTRY_MAX} 张图`, 'error');
+    if (!added) return;
+    this.renderEntryImage();
+    this.draftInvalidate();
+  }
+
+  /** 单张校验与读取（MIME 白名单 / 读失败 / 转 data URL 失败均就地提示并返回 null） */
+  private async readImageFile(file: File): Promise<{ mime: string; bytes: ArrayBuffer; dataUrl: string } | null> {
+    const mime = (String(file.type || '').toLowerCase() === 'image/jpg'
+      ? 'image/jpeg'
+      : String(file.type || '').toLowerCase()) || imageMimeOfPath(file.name) || '';
+    if (!imageExtOfMime(mime)) { notice('只支持 PNG / JPEG / GIF / WebP 图片', 'error'); return null; }
+    let bytes: ArrayBuffer;
+    try {
+      bytes = await file.arrayBuffer();
+    } catch {
+      notice('读取图片失败', 'error');
+      return null;
+    }
+    try {
+      return { mime, bytes, dataUrl: imageDataUrl(bytes, mime) };
+    } catch (e: any) {
+      notice(String(e?.message ?? e ?? '图片不可用'), 'error');
+      return null;
+    }
+  }
+
+  /** 删掉第 i 张（缩略图上的 ✕）：同样作废已有草稿（图组变了） */
+  private removeEntryImage(i: number): void {
+    if (!Number.isInteger(i) || i < 0 || i >= this.entryImages.length) return;
+    if (this.termGenerating) return; // 读图中不删，避免图文错配
+    this.entryImages.splice(i, 1);
+    this.renderEntryImage();
+    this.draftInvalidate();
+  }
+
+  /** 草稿失效（图组 / 输入变了）：预览收起、生成按钮复位、关联行归位到「待写入」 */
+  private draftInvalidate(): void {
+    this.termPreview = null;
+    this.termHasDraft = false;
+    this.setTermPreviewVisible(false);
+    this.setTermGenLoading(false);
+    this.resetEntryRel();
+  }
+
+  /** 图片行渲染：有图显示缩略图网格（每张带 ✕，可继续加），无图回到提示文案 */
+  private renderEntryImage(): void {
+    if (!this.termPopup) return;
+    const grid = q<HTMLElement>(this.termPopup, '#lit-image-grid');
+    const hint = q<HTMLElement>(this.termPopup, '#lit-image-hint');
+    const list = this.entryImages;
+    if (grid) {
+      if (list.length) {
+        grid.style.display = '';
+        // data URL 是本地自己生成的 base64，仅含 [A-Za-z0-9+/=;,] 与 MIME 前缀，可安全内联
+        grid.innerHTML = list.map((im, i) => `<div class="bz-lit-drop-item">
+            <img src="${im.dataUrl}" alt="">
+            <button type="button" data-lit-image-remove="${i}" title="移除这张" aria-label="移除这张">${iconSpan('x')}</button>
+          </div>`).join('');
+        mountIcons(grid); // `<i data-lucide>` 占位 → 真 SVG（innerHTML 重建后必须重挂，issue 313）
+      } else {
+        grid.style.display = 'none';
+        grid.innerHTML = '';
+      }
+    }
+    if (hint) {
+      hint.textContent = list.length
+        ? `已放 ${list.length} 张 · 继续拖入 / 粘贴，或点此添加`
+        : '拖入图片，或 Ctrl+V 粘贴截图（可多张）';
+    }
+  }
+
+  /** 图片状态清空（关面板 / 重开 / 写入完成后）——内存里的字节一并丢掉，不留孤儿文件 */
+  private clearEntryImage(): void {
+    this.entryImages = [];
+    this.renderEntryImage();
   }
 
   /** 来源状态清空（chip 收起、输入框复位、计时器/联想层归零）——每次打开弹层即全新 */
@@ -2094,6 +2420,163 @@ export class UIManager {
     if (regen) regen.disabled = loading;
     const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
     if (save) save.disabled = loading;
+    // 生成结束但关联还在分析中 → 这三个按钮继续保持禁用（见 setEntryRelBusy）
+    if (!loading) this.setEntryRelBusy(this.entryRelState === 'loading');
+  }
+
+  /**
+   * 关联分析期间的按钮闸门（issue 309）：分析未出结果时禁止「重新生成」「总结」「确认写入」——
+   * 前者会作废在途结果、后者要用分析结果落库，都不能与正在跑的预演并行。
+   */
+  private setEntryRelBusy(busy: boolean): void {
+    if (!this.termPopup) return;
+    const gen = q<HTMLButtonElement>(this.termPopup, '#lit-term-generate');
+    if (gen) gen.disabled = busy;
+    const regen = q<HTMLButtonElement>(this.termPopup, '#lit-term-regenerate');
+    if (regen) regen.disabled = busy;
+    const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
+    if (save) save.disabled = busy;
+  }
+
+  /**
+   * 关联行渲染（issue 309）：按 entryRelState 出文案与墨色档；两类录入共用同一行。
+   * loading 态给一条滑动的墨色小条 + 「分析中…」——建链要跑近邻检索与 AI 裁判，
+   * 面板必须让「正在跑」这件事看得见（而不是一行静止的灰字）。
+   */
+  private entryRelRefresh(): void {
+    const el = this.termPopup ? q<HTMLElement>(this.termPopup, '#lit-term-meta-rel') : null;
+    if (!el) return;
+    el.className = 'bz-lit-term-meta-v';
+    const st = this.entryRelState;
+    if (st === 'loading') {
+      el.classList.add('bz-lit-rel-idle');
+      el.innerHTML = '<span class="bz-lit-rel-bar" aria-hidden="true"></span>分析中…';
+      return;
+    }
+    if (st === 'done') { el.classList.add('bz-lit-rel-ok'); el.textContent = this.entryRelText || '已建立关联'; return; }
+    if (st === 'empty') { el.classList.add('bz-lit-rel-idle'); el.textContent = '暂无关联'; return; }
+    if (st === 'queued') { el.classList.add('bz-lit-rel-idle'); el.textContent = '向量服务不可达，已入队'; return; }
+    if (st === 'failed') { el.classList.add('bz-lit-rel-err'); el.textContent = '关联失败'; return; }
+    if (st === 'off') { el.classList.add('bz-lit-rel-idle'); el.textContent = '自动双链未开启'; return; }
+    el.classList.add('bz-lit-rel-idle');
+    el.textContent = '—';
+  }
+
+  /** 关联行与预演状态整体复位（打开/关闭面板、出新草稿共用）：在途预演作废、结果清空、回到起点 */
+  private resetEntryRel(): void {
+    this.entryRelSeq++; // 在途预演的晚到响应据此丢弃
+    this.entryRelPending = null;
+    this.entryPreviewPicks = [];
+    this.entryPreviewDone = false;
+    this.entryRelText = '';
+    this.setEntryRel('idle');
+    // 复位 = 没有在跑的预演 → 顺带解除闸门。必须在这里做：作废在途预演后它的 finally 会因序号
+    // 不匹配而**不再解除**，若只靠它解锁，按钮会永久停在禁用态（图版换图即这条路，issue 312）。
+    this.setEntryRelBusy(false);
+  }
+
+  /** 关联行状态切换（单一出口，避免各处直接改字段后忘记重绘） */
+  private setEntryRel(st: 'idle' | 'loading' | 'done' | 'empty' | 'queued' | 'failed' | 'off'): void {
+    this.entryRelState = st;
+    this.entryRelRefresh();
+  }
+
+  /**
+   * 关联预演（issue 309）：AI 出内容后**立刻**跑——近邻检索 + AI 裁判，**只算不写**（草稿尚未落盘，
+   * 故走 preview 而非 now）。属性区「关联」行就地走 loading → 关联名，这正是「生成完就看得到过程」。
+   * 序号守卫：重新生成 / 关面板让在途结果作废，晚到的响应不得覆盖新状态。
+   */
+  private async runEntryRelPreview(content: string, title: string): Promise<void> {
+    const bridge = getLinkBridge();
+    const seq = ++this.entryRelSeq;
+    this.entryPreviewPicks = [];
+    if (!bridge) { this.setEntryRel('off'); return; }
+    this.entryRelText = '';
+    this.setEntryRel('loading');
+    this.setEntryRelBusy(true); // 分析中：重新生成 / 总结 / 确认写入全部禁用
+    try {
+      const out = await bridge.preview(content, title);
+      if (seq !== this.entryRelSeq) return; // 已有更新的预演（重新生成）/ 面板已重置
+      if (out.status === 'done') {
+        this.entryPreviewDone = true;
+        this.entryPreviewPicks = out.picks.map((p) => p.path);
+        this.entryRelText = out.picks.map((p) => p.title).join(' · ');
+        this.setEntryRel(out.picks.length ? 'done' : 'empty');
+      } else if (out.status === 'queued') this.setEntryRel('queued');
+      else if (out.status === 'skipped') this.setEntryRel('off');
+      else this.setEntryRel('failed');
+    } catch {
+      if (seq === this.entryRelSeq) this.setEntryRel('failed');
+    } finally {
+      if (seq === this.entryRelSeq) this.setEntryRelBusy(false);
+    }
+  }
+
+  /**
+   * 兜底建链（issue 309）：没有可用预演结果时，落盘后跑完整单篇管线（bridge.now）。
+   * 通道未注入（自动双链关闭 / 第二大脑未启用 / 原型壳未接线）→ 显式呈现「自动双链未开启」。
+   */
+  private async runEntryLinkNow(path: string): Promise<void> {
+    const bridge = getLinkBridge();
+    if (!bridge) { this.setEntryRel('off'); return; }
+    this.entryRelText = '';
+    this.setEntryRel('loading');
+    try {
+      const out = await bridge.now(path);
+      if (out.status === 'done' || out.status === 'skipped-related') {
+        // skipped-related = 该篇已带 related（尊重门）→ 直接把既有链显示出来
+        const rels = await this.readRelatedTitles(path);
+        this.entryRelText = rels.join(' · ');
+        this.setEntryRel(rels.length ? 'done' : 'empty');
+      } else if (out.status === 'queued') this.setEntryRel('queued');
+      else if (out.status === 'skipped') this.setEntryRel('off');
+      else this.setEntryRel('failed');
+    } catch {
+      this.setEntryRel('failed');
+    }
+  }
+
+  /**
+   * 确认写入后的关联落库（issue 309）：预演命中的目标**直接写进 related**（不重跑检索与裁判，
+   * 面板上已经显示过的结果原样落地）；没有可用预演（通道未接线 / 未命中 / 预演失败）→ 兜底跑完整管线。
+   */
+  private async commitEntryLinks(path: string): Promise<void> {
+    try {
+      await this.entryRelPending; // 用户可能没等预演跑完就点了写入
+    } catch {
+      /* 预演异常：交给兜底路径 */
+    }
+    const picks = this.entryPreviewPicks;
+    const bridge = getLinkBridge();
+    if (bridge && this.entryPreviewDone && !picks.length) {
+      // 预演已给出确定结论「无关联」→ 写入时不再重跑管线（用户看到的分析结果就是最终依据）
+      this.setEntryRel('empty');
+      return;
+    }
+    if (bridge && picks.length) {
+      this.setEntryRel('loading');
+      try {
+        const out = await bridge.apply(path, picks);
+        if (out.status === 'done') {
+          const rels = await this.readRelatedTitles(path);
+          this.entryRelText = rels.join(' · ');
+          this.setEntryRel(rels.length ? 'done' : 'empty');
+          return;
+        }
+      } catch {
+        /* 写入异常：走兜底 */
+      }
+    }
+    await this.runEntryLinkNow(path);
+  }
+
+  /** 读某篇笔记 frontmatter.related 的展示名列表（建链后就地显示 + 预览「关联」区共用解析） */
+  private async readRelatedTitles(path: string): Promise<string[]> {
+    try {
+      const file = getApp().vault.getAbstractFileByPath(path);
+      if (!file) return [];
+      return parseRelatedNames(await getApp().vault.read(file as any));
+    } catch { return []; }
   }
 
   private setTermSummarizing(s: boolean): void {
@@ -2104,6 +2587,21 @@ export class UIManager {
     if (save) save.disabled = s;
     const gen = q<HTMLButtonElement>(this.termPopup, '#lit-term-generate');
     if (gen) gen.disabled = s;
+    // 总结结束但关联随即重跑 → 这三个按钮继续保持禁用
+    if (!s) this.setEntryRelBusy(this.entryRelState === 'loading');
+  }
+
+  /** 当前录入的头部标题：段落取属性卡里（可改）的标题，名词取输入框的词 */
+  private entryHeadTitle(): string {
+    if (!this.termPopup) return '';
+    return this.entryTitled
+      ? (q<HTMLInputElement>(this.termPopup, '#lit-entry-meta-title')?.value ?? '').trim()
+      : (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
+  }
+
+  /** 属性首行是否「可改标题」态（段落 / 图版共用；名词的属性首行是只读的名词文本） */
+  private get entryTitled(): boolean {
+    return this.entryMode === 'passage' || this.entryMode === 'image';
   }
 
   private noticeTermError(e: unknown): void {
@@ -2117,13 +2615,45 @@ export class UIManager {
 
   private async onTermGenerate(): Promise<void> {
     if (!this.termPopup || this.termGenerating) return;
-    const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
-    if (!term) { notice('请输入术语', 'error'); return; }
+    const mode = this.entryMode;
+    if (mode === 'image') { await this.onImageGenerate(); return; }
+    const passage = mode === 'passage';
+    const text = passage
+      ? (q<HTMLTextAreaElement>(this.termPopup, '#lit-passage-input')?.value ?? '').trim()
+      : (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
+    if (!text) { notice(passage ? '请粘贴要整理的段落' : '请输入名词', 'error'); return; }
     this.termGenerating = true;
     this.setTermGenLoading(true);
     try {
-      const draft = await generateTermDraft(term);
+      const draft: { summary: string; domain: string; title?: string } = passage
+        ? await generatePassageDraft(text)
+        : await generateTermDraft(text);
       this.presentTermPreview(draft);
+      // 生成出内容即起关联预演（issue 309）：**不 await** —— 面板先回到可操作态，
+      // 属性区「关联」行自己走 loading → 完成显示；确认写入时再等它落地。
+      this.entryRelPending = this.runEntryRelPreview(draft.summary, this.entryHeadTitle() || text);
+    } catch (e) {
+      this.noticeTermError(e);
+    } finally {
+      this.termGenerating = false;
+      this.setTermGenLoading(false);
+    }
+  }
+
+  /**
+   * 图版读图（issue 312；多图 issue 313）：图片 data URL 列表一次投给多模态模型
+   * （core/ai 的 `{text, images}` 通道），出标题 / 领域 / 解读正文后与其余两态走同一套预览 + 关联预演。
+   */
+  private async onImageGenerate(): Promise<void> {
+    if (!this.termPopup || this.termGenerating) return;
+    const images = this.entryImages;
+    if (!images.length) { notice('请先拖入或粘贴图片', 'error'); return; }
+    this.termGenerating = true;
+    this.setTermGenLoading(true);
+    try {
+      const draft = await generateImageDraft(images.map((im) => im.dataUrl));
+      this.presentTermPreview(draft);
+      this.entryRelPending = this.runEntryRelPreview(draft.summary, this.entryHeadTitle());
     } catch (e) {
       this.noticeTermError(e);
     } finally {
@@ -2142,6 +2672,8 @@ export class UIManager {
       this.termPreview.body = summarized;
       const contentEl = q<HTMLElement>(this.termPopup, '#lit-term-content');
       if (contentEl) contentEl.textContent = summarized;
+      // 正文变了 → 关联重新分析（issue 309：重新生成 / 总结都要重跑预演）
+      this.entryRelPending = this.runEntryRelPreview(summarized, this.entryHeadTitle());
     } catch (e) {
       this.noticeTermError(e);
     } finally {
@@ -2150,19 +2682,27 @@ export class UIManager {
     }
   }
 
-  private presentTermPreview(draft: { summary: string; domain: string }): void {
-    this.termPreview = { domain: draft.domain, body: draft.summary };
+  private presentTermPreview(draft: { summary: string; domain: string; title?: string }): void {
+    this.termPreview = { domain: draft.domain, body: draft.summary, title: draft.title };
     this.termHasDraft = true;
     if (!this.termPopup) return;
-    const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
-    const termEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-term');
-    if (termEl) termEl.textContent = term || '—';
+    if (this.entryTitled) {
+      // 段落 / 图版：AI 自动标题写进属性首行（可改）
+      const titleInput = q<HTMLInputElement>(this.termPopup, '#lit-entry-meta-title');
+      if (titleInput) titleInput.value = draft.title || '';
+    } else {
+      const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
+      const termEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-term');
+      if (termEl) termEl.textContent = term || '—';
+    }
     const domainEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-domain');
     if (domainEl) domainEl.textContent = draft.domain || '—';
     const dateEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-date');
     if (dateEl) dateEl.textContent = dateStamp();
     const contentEl = q<HTMLElement>(this.termPopup, '#lit-term-content');
     if (contentEl) contentEl.textContent = draft.summary;
+    // 新草稿 = 关联行回到起点，上一次的写入出口与在途预演一并作废
+    this.resetEntryRel();
     this.setTermPreviewVisible(true);
     const prev = q<HTMLElement>(this.termPopup, '#lit-term-preview');
     prev?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' }); // 移动端软键盘下让预览进入视口
@@ -2170,37 +2710,72 @@ export class UIManager {
 
   private async onTermConfirm(): Promise<void> {
     if (!this.termPopup || this.termGenerating) return;
-    const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
-    if (!term) { notice('请输入术语', 'error'); return; }
-    if (!this.termPreview) { notice('请先点击「生成」获取简介预览', 'info'); return; }
+    const mode = this.entryMode;
+    const source = this.termSource; // 来源随确认时刻的值落库（ADR-0116）
+    if (!this.termPreview) { notice('请先点击「生成」获取预览', 'info'); return; }
+    const summary = this.termPreview.body;
+    const domain = this.termPreview.domain;
+    let term = '';
+    let title = '';
+    if (this.entryTitled) {
+      title = (q<HTMLInputElement>(this.termPopup, '#lit-entry-meta-title')?.value ?? '').trim();
+      if (!title) { notice('标题不能为空', 'error'); return; }
+    } else {
+      term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
+      if (!term) { notice('请输入名词', 'error'); return; }
+    }
+    // 图版必须带着图走（预览存在但图被清掉 = 状态错位，宁可拒写也不留无图笔记）
+    const images = this.entryImages;
+    if (mode === 'image' && !images.length) { notice('图片已丢失，请重新拖入', 'error'); return; }
     this.termGenerating = true;
     this.setTermGenLoading(true);
+    const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
+    if (save) save.textContent = '写入中…';
     try {
-      const path = await generateTermNote({
-        term,
-        summary: this.termPreview.body,
-        domain: this.termPreview.domain,
-        source: this.termSource, // 术语来源随确认时刻的值落库（ADR-0116）
-      });
-      this.openNote(path);
-      emitDomainEvent('knowledge:tasks', { kind: 'term-generated', term, title: term, notePath: path });
-      this.termPreview = null;
+      let path: string;
+      if (mode === 'image') {
+        // 图版：图片本体逐张与笔记一并落盘（note-gen 负责命名、去重与写唯一路径）
+        path = await generateImageNote({
+          title,
+          summary,
+          domain,
+          source,
+          images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || 'png' })),
+        });
+        emitDomainEvent('knowledge:tasks', { kind: 'image-generated', title, notePath: path });
+        await this.commitEntryLinks(path);
+        this.clearEntryImage(); // 字节已进 vault，内存副本立刻丢掉
+        notice('已生成图版文献笔记：' + title, 'success');
+      } else {
+        path = mode === 'passage'
+          ? await generatePassageNote({ title, summary, domain, source })
+          : await generateTermNote({ term, summary, domain, source });
+        emitDomainEvent('knowledge:tasks', mode === 'passage'
+          ? { kind: 'passage-generated', title, notePath: path }
+          : { kind: 'term-generated', term, title: term, notePath: path });
+        // 关联落库（issue 309）：预演结果写进 related；写完**直接关窗**（面板不逗留展示结果）
+        await this.commitEntryLinks(path);
+        notice(mode === 'passage' ? '已生成段落文献笔记：' + title : '已生成名词文献笔记：' + term, 'success');
+      }
       this.hideTermEntry();
-      notice('已生成术语文献笔记：' + term, 'success');
     } catch (e) {
       this.noticeTermError(e);
     } finally {
       this.termGenerating = false;
+      if (save) save.textContent = '确认写入';
       this.setTermGenLoading(false);
     }
   }
 
   hideTermEntry(): void {
     this.termPreview = null;
+    this.resetEntryRel();
+    this.clearEntryImage();
     const srcInput = this.termPopup ? q<HTMLInputElement>(this.termPopup, '#lit-term-src') : null;
     this.termSrcReset(srcInput);
     if (this.termMask) this.termMask.style.display = 'none';
     if (this.termPopup) this.termPopup.style.display = 'none';
+    void this.refreshCurrent();
   }
 
   // ==================== 通用小工具 ====================
@@ -2212,7 +2787,6 @@ export class UIManager {
       void app.workspace.getLeaf(false).openFile(file as any);
       this.hideMain();
       this.hideVideo();
-      this.hideHistory();
     } else {
       notice('文献笔记不存在：' + path, 'error');
     }
@@ -2248,8 +2822,11 @@ export class UIManager {
     this.fileListenerRefs = [];
     this.fileListenerAttached = false;
     document.removeEventListener('keydown', this.onKeydown);
+    document.removeEventListener('paste', this.onPaste); // issue 312：图版粘贴监听随面板销毁卸载
+    this.onPaste = () => {};
     this.termPreview = null;
-    for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.historyMask, this.historyPopup, this.termMask, this.termPopup]) {
+    this.entryImages = [];
+    for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.termMask, this.termPopup]) {
       if (el && el.parentNode) el.parentNode.removeChild(el);
     }
     this.mask = null;
@@ -2260,9 +2837,6 @@ export class UIManager {
     this.videoList = null;
     this.addMask = null;
     this.addPopup = null;
-    this.historyMask = null;
-    this.historyPopup = null;
-    this.historyList = null;
     this.termMask = null;
     this.termPopup = null;
   }

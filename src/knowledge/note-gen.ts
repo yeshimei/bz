@@ -4,6 +4,10 @@
  *   正文 = 润色转录 + 视频双链——ticket 151 补回：videoPath 非空时正文尾部嵌 `![[路径]]`，
  *   ADR-0066「保留视频原件」关（keepVideo=false）时 videoPath 为 null，无视频段）
  * - 术语文献（type: term，frontmatter 五键：title/type/domain/term/date + 可选 source/sourceTitle（术语来源，ADR-0116），正文=一段百科式简介）
+ * - 段落文献（type: passage，issue 309：用户粘一段文字 → AI 自动出标题 + 领域 + 整理正文；
+ *   frontmatter 五键同术语结构，无 term 键，正文=原文事实的整理，不得添加原文没有的信息）
+ * - 图版文献（type: image，issue 312：拖入/粘贴一张图 → AI 读图出标题 + 领域 + 解读正文；
+ *   图片本体落 `<文献目录>/assets/`，正文 = 图片嵌入 + 解读，嵌入写 vault 相对全路径）
  * - 旧笔记自动补全（type 启发式 + domain AI，补过落库不重复）
  */
 import { createAI } from '../core/ai';
@@ -255,8 +259,177 @@ export async function generateTermNote(opts: {
   return writeUniqueNote(String(s.knowledgeDirectory || '文献盒'), sanitizeMdTitle(term), body);
 }
 
-// ---------- 旧笔记自动补全（type 启发式 + domain AI） ----------
+/** 段落 AI 整理提示词（预览/落盘共用；issue 309） */
+function passagePrompt(text: string, list: string[]): string {
+  return `你是文献整理助手。把下方这段文字整理成一篇文献笔记。只输出 JSON，不要任何解释：
+{"title":"15-30字的中文完整陈述句，概括这段文字在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"整理后的正文（保留原文的全部事实与要点，删去口水话、重复表述，可分自然段）","domain": ${domainInstruction(list)}}
+硬约束：正文只能来自原文，不得添加原文没有的事实、数字或结论，不得写成读后感。所有字段一律使用简体中文。
 
+【原文】
+${text}`;
+}
+
+/**
+ * 段落 AI 草稿（issue 309，纯生成不落盘）：一段文字 → 自动标题 + 领域 + 整理正文，
+ * 供段落面板预览（三项纯内存可改）；确认写入才调 generatePassageNote 落盘。
+ * 上限 30 万字拒收由面板负责，此处只做空值校验。
+ */
+export async function generatePassageDraft(text: string): Promise<{ title: string; summary: string; domain: string }> {
+  const ai = createAI();
+  const s = tryGetSettings();
+  const list = parseDomainList(s.knowledgeDomainList);
+  const t = String(text || '').trim();
+  if (!t) throw new Error('段落为空');
+  const raw = await ai.json(passagePrompt(t, list), { modelOptions: { max_tokens: 4096 } });
+  const meta = parseAiJson(raw);
+  return {
+    title: String(meta?.title || '').trim(),
+    summary: String(meta?.summary || '').trim(),
+    domain: String(meta?.domain || '').trim(),
+  };
+}
+
+/**
+ * 生成段落文献笔记（issue 309）：frontmatter（title/type: passage/domain/date + 可选 source/sourceTitle）
+ * + 整理正文落盘，返回 vault 相对笔记路径。
+ * 可选 summary/domain 传入即**跳过 AI、所见即所得**（同术语口径：确认写入不重跑 AI）；
+ * 标题缺失时回退目录内的首句兜底命名（不阻断落盘）。
+ */
+export async function generatePassageNote(opts: {
+  title: string;
+  summary?: string;
+  domain?: string;
+  source?: TermSource | null;
+}): Promise<string> {
+  const s = tryGetSettings();
+  const title = String(opts.title || '').trim();
+  const summary = String(opts.summary ?? '').trim();
+  if (!title && !summary) throw new Error('段落为空');
+  const domain = String(opts.domain ?? '').trim();
+  const fm = [
+    '---',
+    `title: ${quoteYaml(title || summary.slice(0, 30))}`,
+    'type: passage',
+    `domain: ${quoteYaml(domain)}`,
+    `date: ${quoteYaml(nowStamp())}`,
+  ];
+  const src = serializeTermSource(opts.source);
+  if (src) {
+    fm.push(`source: ${quoteYaml(src.source)}`);
+    if (src.sourceTitle) fm.push(`sourceTitle: ${quoteYaml(src.sourceTitle)}`);
+  }
+  fm.push('---');
+  const body = [fm.join('\n'), summary].filter(Boolean).join('\n\n');
+  return writeUniqueNote(String(s.knowledgeDirectory || '文献盒'), sanitizeMdTitle(title || summary), body);
+}
+
+// ---------- 图版（issue 312：图片 → 读图成文；图片本体与笔记同域落盘） ----------
+
+/** 图片本体落盘目录名（文献笔记旁的 assets/：与笔记同域，删笔记不留下跨域悬挂引用） */
+export const IMAGE_ASSETS_DIR = 'assets';
+
+/** 写唯一路径二进制（永不覆盖；目录不存在自动建）——writeUniqueNote 的二进制版（issue 312） */
+export async function writeUniqueBinary(dir: string, baseName: string, ext: string, bytes: ArrayBuffer): Promise<string> {
+  const app = getApp();
+  const folder = String(dir || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  let path = `${folder}/${baseName}.${ext}`;
+  for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName}_${i}.${ext}`;
+  try {
+    const exists = await app.vault.adapter.exists(folder);
+    if (!exists) await app.vault.createFolder(folder);
+  } catch { /* 目录已存在等 */ }
+  await app.vault.createBinary(path, bytes);
+  return path;
+}
+
+/** 图版读图提示词（issue 312；多图 issue 313：一组图合成一篇；JSON 契约与名词/段落一致） */
+function imagePrompt(list: string[], count: number): string {
+  const multi = count > 1;
+  const scope = multi
+    ? `看下面这 ${count} 张图片，把它们**作为一组**生成一篇文献笔记`
+    : '看这张图片，为它生成一篇文献笔记';
+  const bodyAsk = multi
+    ? '对这组图的整理说明（150-300字简体中文，连贯成文）：先说这组图共同在讲什么，再按图交代各自可见的内容与信息，图中含文字则整理其要点'
+    : '对这张图的整理说明（150-300字简体中文，连贯成文）：图中含文字则整理其要点，是照片、示意图或图表则客观描述其可见内容与信息';
+  return `你是文献整理助手。${scope}。只输出 JSON，不要任何解释：
+{"title":"15-30字的中文完整陈述句，概括${multi ? '这组图' : '这张图'}在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"${bodyAsk}","domain": ${domainInstruction(list)}}
+硬约束：只能写图中确实能看到的内容，不得臆测、不得补充图中没有的事实与数字、不得写成观后感。所有字段一律使用简体中文。`;
+}
+
+/**
+ * 图版 AI 草稿（issue 312，纯生成不落盘）：图片 data URL 列表（多图 issue 313）→ 自动标题 +
+ * 领域 + 解读正文，供图版面板预览（三项纯内存可改）；确认写入才调 generateImageNote 落盘。
+ * 走 core/ai 的多模态通道（issue 311：content 数组 + image_url，DeepSeek V4.1-Flash 原生读图）。
+ */
+export async function generateImageDraft(imageUrls: string[]): Promise<{ title: string; summary: string; domain: string }> {
+  const ai = createAI();
+  const s = tryGetSettings();
+  const list = parseDomainList(s.knowledgeDomainList);
+  const urls = (Array.isArray(imageUrls) ? imageUrls : []).map((u) => String(u || '').trim()).filter(Boolean);
+  if (!urls.length) throw new Error('图片为空');
+  const raw = await ai.json({ text: imagePrompt(list, urls.length), images: urls }, { modelOptions: { max_tokens: 4096 } });
+  const meta = parseAiJson(raw);
+  return {
+    title: String(meta?.title || '').trim(),
+    summary: String(meta?.summary || '').trim(),
+    domain: String(meta?.domain || '').trim(),
+  };
+}
+
+/** 图版图片落地目录：设置优先，留空回落到文献目录下的 assets/（issue 313） */
+export function resolveImageDir(settings: { knowledgeImageFolder?: string; knowledgeDirectory?: string }): string {
+  const configured = String(settings?.knowledgeImageFolder || '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  if (configured) return configured;
+  const dir = String(settings?.knowledgeDirectory || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '') || '文献盒';
+  return `${dir}/${IMAGE_ASSETS_DIR}`;
+}
+
+/**
+ * 生成图版文献笔记（issue 312；多图与目录可配见 issue 313）：**先把图片本体逐张写进
+ * 图片目录**（默认 `<文献目录>/assets/`，可用设置 `knowledgeImageFolder` 改；文件名取最终标题、
+ * 永不覆盖），再写笔记（frontmatter title/type: image/domain/date + 可选 source/sourceTitle；
+ * 正文 = **先文字后图片**——读图解读在上、图片嵌入在下）。
+ * 嵌入用全路径而非裸文件名：库里同名图很常见，裸名会指错。返回笔记路径。
+ */
+export async function generateImageNote(opts: {
+  title: string;
+  summary?: string;
+  domain?: string;
+  /** 图片本体列表（确认写入时才落盘；面板内的 data URL 只用于预览与投喂 AI） */
+  images: Array<{ bytes: ArrayBuffer; ext: string }>;
+  source?: TermSource | null;
+}): Promise<string> {
+  const s = tryGetSettings();
+  const title = String(opts.title || '').trim();
+  const summary = String(opts.summary ?? '').trim();
+  if (!title && !summary) throw new Error('图版为空');
+  const images = (Array.isArray(opts.images) ? opts.images : []).filter((im) => im && im.bytes);
+  if (!images.length) throw new Error('图版没有图片');
+  const dir = String(s.knowledgeDirectory || '文献盒');
+  const name = sanitizeMdTitle(title || summary.slice(0, 30));
+  const imageRoot = resolveImageDir(s);
+  const imagePaths: string[] = [];
+  for (const im of images) imagePaths.push(await writeUniqueBinary(imageRoot, name, im.ext || 'png', im.bytes));
+  const domain = String(opts.domain ?? '').trim();
+  const fm = [
+    '---',
+    `title: ${quoteYaml(title || name)}`,
+    'type: image',
+    `domain: ${quoteYaml(domain)}`,
+    `date: ${quoteYaml(nowStamp())}`,
+  ];
+  const src = serializeTermSource(opts.source);
+  if (src) {
+    fm.push(`source: ${quoteYaml(src.source)}`);
+    if (src.sourceTitle) fm.push(`sourceTitle: ${quoteYaml(src.sourceTitle)}`);
+  }
+  fm.push('---');
+  // 文字在上、图片在下（issue 313 用户拍板）
+  const body = [fm.join('\n'), summary, ...imagePaths.map((p) => `![[${p}]]`)].filter(Boolean).join('\n\n');
+  return writeUniqueNote(dir, name, body);
+}
+
+// ---------- 旧笔记自动补全（type 启发式 + domain AI） ----------
 /** 轻量解析 frontmatter（仅取键值字符串；P3-3：value 剥一层引号，避免 `type: "video"` 判定为缺 type 重复注入） */
 export function parseFrontmatter(content: string): Record<string, string> {
   const out: Record<string, string> = {};

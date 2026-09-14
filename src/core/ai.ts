@@ -8,6 +8,9 @@
  * 策略模式（ticket 170）：提供商由 AI_PROVIDER_REGISTRY 注册表描述（默认端点/模型/密钥键/默认
  * maxTokens），getAIProvider 查表解析；新增提供商 = 注册表加一行（含设置页密钥行文案自动生成），
  * 解析与设置页零分支改动；custom 走用户自填 endpoint/model，可覆盖任意 OpenAI 兼容服务无需改码。
+ * 图像输入（issue 311）：`prompt` 除纯文本外也收 `{text, images}`，带图时 content 走 OpenAI
+ * 多模态数组（`image_url`）；本地图用 `imageDataUrl` 转 base64 data URL（DeepSeek V4.1-Flash
+ * 只收公网 https 或 base64，格式限 JPEG/PNG/GIF/WebP）。纯文本调用报文与旧版逐字节一致。
  */
 import { requestUrl } from 'obsidian';
 import { getApp } from './app';
@@ -391,16 +394,34 @@ function abortError(): Error {
  */
 export const AI_IDLE_TIMEOUT_MS = 60000;
 
+/** 带图请求的空闲超时：图片以 base64 进请求体（可达数 MB），上行慢时 60s 不够用（issue 311） */
+export const AI_IMAGE_IDLE_TIMEOUT_MS = 180000;
+
 /** 超时异常（TimeoutError 语义，区别于用户取消的 AbortError——超时允许走 requestUrl 兜底重试） */
-function timeoutError(): Error {
-  const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1000} 秒无响应）`);
+function timeoutError(idleMs: number = AI_IDLE_TIMEOUT_MS): Error {
+  const e = new Error(`AI 请求超时（${Math.round(idleMs / 1000)} 秒无响应）`);
   e.name = 'TimeoutError';
   return e;
 }
 
+/**
+ * 本次请求的空闲超时：带图请求放宽到 180s。
+ * 图片走 base64 塞在请求体里，可达数 MB——上行慢时「建连不回包」的等待远超 60s，
+ * 用默认阈值会把正常上传误判成超时（它还算 TimeoutError，会再走一次 requestUrl 重发，等于白传两遍）。
+ */
+function idleTimeoutOf(body: any): number {
+  const msgs = Array.isArray(body?.messages) ? body.messages : [];
+  const hasImage = msgs.some(
+    (m: any) => Array.isArray(m?.content) && m.content.some((p: any) => p?.type === 'image_url')
+  );
+  return hasImage ? AI_IMAGE_IDLE_TIMEOUT_MS : AI_IDLE_TIMEOUT_MS;
+}
+
 /** SSE 流式解析（fetch + ReadableStream）；signal 可中止，onDelta 逐段增量回调（ticket 141）。
- *  内部 AbortController 组合外部 signal 与空闲超时（C1）：建连不回包 / 流中途停发超 60s 即中止 */
+ *  内部 AbortController 组合外部 signal 与空闲超时（C1）：建连不回包 / 流中途停发超时即中止
+ *  （带图请求阈值放宽，见 idleTimeoutOf） */
 async function streamChatCompletions(provider: AIProvider, body: any, signal?: AbortSignal, onDelta?: (delta: string) => void): Promise<string> {
+  const idleMs = idleTimeoutOf(body);
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${provider.apiKey}`,
@@ -420,7 +441,7 @@ async function streamChatCompletions(provider: AIProvider, body: any, signal?: A
   let idleTimer: ReturnType<typeof setTimeout> | null = null;
   const armIdle = () => {
     if (idleTimer !== null) clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
+    idleTimer = setTimeout(() => controller.abort(), idleMs);
   };
   try {
     armIdle();
@@ -474,7 +495,7 @@ async function streamChatCompletions(provider: AIProvider, body: any, signal?: A
   } catch (e: any) {
     // 超时中止（内部 controller 触发且外部 signal 未取消）→ 人话超时错误（TimeoutError，
     // 非 AbortError——prompt 层按可兜底失败处理，requestUrl 通道重试一次）
-    if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
+    if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError(idleMs);
     throw e;
   } finally {
     if (idleTimer !== null) clearTimeout(idleTimer);
@@ -487,6 +508,7 @@ async function streamChatCompletions(provider: AIProvider, body: any, signal?: A
  *  调用方不再永久转圈（底层连接无法显式取消，迟到结果由 race 消费侧丢弃不产生 unhandled rejection） */
 async function chatCompletionsNonStream(provider: AIProvider, body: any, signal?: AbortSignal): Promise<string> {
   if (signal?.aborted) throw abortError();
+  const idleMs = idleTimeoutOf(body);
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${provider.apiKey}`,
@@ -498,7 +520,7 @@ async function chatCompletionsNonStream(provider: AIProvider, body: any, signal?
       if (timer !== null) clearTimeout(timer);
       fn();
     };
-    timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
+    timer = setTimeout(() => settle(() => reject(timeoutError(idleMs))), idleMs);
     requestUrl({
       url: `${provider.endpoint}/chat/completions`,
       method: 'POST',
@@ -519,6 +541,86 @@ async function chatCompletionsNonStream(provider: AIProvider, body: any, signal?
   return content;
 }
 
+// ---------------- 图像输入（issue 311） ----------------
+
+/**
+ * 一次用户消息：纯文本（string —— 与旧版报文逐字节一致）或「文本 + 若干图」。
+ * 带图时走 OpenAI 多模态 content 数组，与 DeepSeek V4.1-Flash（2026-09-10 起的原生视觉）同形。
+ */
+export type AIInput = string | { text: string; images?: string[] };
+
+/** 图片部件的 url：公网 https 直链（≤8192 字符）或 data URL（本地图，单图 ≤32MiB） */
+export interface AIImageInput {
+  url: string;
+}
+
+/** OpenAI 兼容 content 数组的部件（仅带图时才用到） */
+export type AIContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: AIImageInput };
+
+/** DeepSeek Vision 接受的格式（其余如 svg / avif / bmp 需先转码）→ MIME */
+const AI_IMAGE_MIME: Record<string, string> = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp',
+};
+
+/** 单图字节上限 32 MiB（DeepSeek Vision 文档口径）；超限应在调用方压缩后再发 */
+export const AI_IMAGE_MAX_BYTES = 32 * 1024 * 1024;
+
+/** 路径 / 文件名 → 受支持的图片 MIME；非支持格式返回 null（调用方据此提示或转码） */
+export function imageMimeOfPath(path: string): string | null {
+  const ext = String(path || '').split('.').pop()?.toLowerCase() || '';
+  return AI_IMAGE_MIME[ext] || null;
+}
+
+/**
+ * 受支持的图片 MIME → 落盘扩展名（`image/jpeg` → `jpg`）；非支持 MIME 返回 null。
+ * `imageMimeOfPath` 的逆函数：图片本体落盘（issue 312 图版）时需要按 MIME 定名。
+ */
+export function imageExtOfMime(mime: string): string | null {
+  const m = String(mime || '').toLowerCase();
+  for (const [ext, known] of Object.entries(AI_IMAGE_MIME)) {
+    if (known === m && ext !== 'jpeg') return ext; // jpeg 归一到 jpg（同一个 MIME 的两个别名，取短名）
+  }
+  return null;
+}
+
+/**
+ * 图片字节 → data URL。本地图唯一可行的投喂方式（DeepSeek 只收公网 https 或 base64）。
+ * 分块 fromCharCode 防止大图爆栈；空图与超 32 MiB 直接抛错（由调用方决定压缩还是换图）。
+ */
+export function imageDataUrl(bytes: ArrayBuffer | Uint8Array, mime: string): string {
+  const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  if (u8.byteLength === 0) throw new Error('图片内容为空');
+  if (u8.byteLength > AI_IMAGE_MAX_BYTES) {
+    throw new Error(`图片过大（${Math.round(u8.byteLength / 1024 / 1024)} MiB），上限 ${AI_IMAGE_MAX_BYTES / 1024 / 1024} MiB`);
+  }
+  let bin = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < u8.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + CHUNK)) as unknown as number[]);
+  }
+  return `data:${mime};base64,${btoa(bin)}`;
+}
+
+/**
+ * 用户消息内容体：纯文本 → 字符串（旧报文不变）；带图 → 多模态数组（文本在前、图在后；
+ * DeepSeek 文档示例把图放在前面，顺序对结果无影响）。空串 / 非串图片项一律丢弃；
+ * 全被丢弃时退回纯文本，避免发出无内容的图片组。
+ */
+function buildUserContent(input: AIInput): string | AIContentPart[] {
+  if (typeof input === 'string') return input;
+  const text = String(input?.text ?? '');
+  const images = (Array.isArray(input?.images) ? input.images : [])
+    .map((u) => String(u ?? '').trim())
+    .filter((u) => u.length > 0);
+  if (!images.length) return text;
+  return [
+    { type: 'text', text },
+    ...images.map<AIContentPart>((url) => ({ type: 'image_url', image_url: { url } })),
+  ];
+}
+
 // ---------------- AIService ----------------
 
 export interface AIOptions {
@@ -537,9 +639,10 @@ export class AIService {
   }
 
   /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
+   *  input 为字符串（纯文本，报文同旧版）或 {text, images}（带图 → 多模态 content 数组）；
    *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
    *  既有调用（不传这两项）行为零变化 */
-  async prompt(promptText: string, model: string = this.defaultModel, options: AIOptions = {}): Promise<string> {
+  async prompt(input: AIInput, model: string = this.defaultModel, options: AIOptions = {}): Promise<string> {
     const mergedOptions = this._mergeOptions(options);
     const provider = await getAIProvider(mergedOptions.provider);
     const s = getQ3Settings();
@@ -552,7 +655,7 @@ export class AIService {
     const effMaxTokens = mo.max_tokens ?? (provider.defaultMaxTokens || 4096);
     const body: Record<string, any> = {
       model: effModel,
-      messages: [{ role: 'user', content: promptText }],
+      messages: [{ role: 'user', content: buildUserContent(input) }],
       max_tokens: effMaxTokens,
       stream: true,
     };
@@ -581,38 +684,38 @@ export class AIService {
     }
   }
 
-  /** 普通对话模型（deepseek-v4-flash） */
-  async chat(promptText: string, extraOptions: AIOptions = {}): Promise<string> {
-    return this.prompt(promptText, 'deepseek-v4-flash', extraOptions);
+  /** 普通对话模型（deepseek-v4-flash；收纯文本或 {text, images}） */
+  async chat(input: AIInput, extraOptions: AIOptions = {}): Promise<string> {
+    return this.prompt(input, 'deepseek-v4-flash', extraOptions);
   }
 
   /** 推理模型，自动开启思考模式 */
-  async reason(promptText: string, extraOptions: AIOptions = {}): Promise<string> {
+  async reason(input: AIInput, extraOptions: AIOptions = {}): Promise<string> {
     const options = this._prepareOptions(extraOptions, { enable_thinking: true });
-    return this.prompt(promptText, 'deepseek-v4-flash', options);
+    return this.prompt(input, 'deepseek-v4-flash', options);
   }
 
   /** 联网搜索（实验性，第三方代理平台生效） */
-  async search(promptText: string, extraOptions: AIOptions = {}): Promise<string> {
+  async search(input: AIInput, extraOptions: AIOptions = {}): Promise<string> {
     const options = this._prepareOptions(extraOptions, { search: true });
-    return this.prompt(promptText, 'deepseek-v4-flash', options);
+    return this.prompt(input, 'deepseek-v4-flash', options);
   }
 
-  /** 要求 AI 返回 JSON 格式（设置 response_format） */
-  async json(promptText: string, extraOptions: AIOptions = {}): Promise<string> {
+  /** 要求 AI 返回 JSON 格式（设置 response_format；知识盒等域走这条，故同样要能吃图） */
+  async json(input: AIInput, extraOptions: AIOptions = {}): Promise<string> {
     const options = this._prepareOptions(extraOptions, {
       response_format: { type: 'json_object' },
     });
-    return this.prompt(promptText, 'deepseek-v4-flash', options);
+    return this.prompt(input, 'deepseek-v4-flash', options);
   }
 
   /** 思考 + 联网搜索（实验性） */
-  async reasonAndSearch(promptText: string, extraOptions: AIOptions = {}): Promise<string> {
+  async reasonAndSearch(input: AIInput, extraOptions: AIOptions = {}): Promise<string> {
     const options = this._prepareOptions(extraOptions, {
       enable_thinking: true,
       search: true,
     });
-    return this.prompt(promptText, 'deepseek-v4-flash', options);
+    return this.prompt(input, 'deepseek-v4-flash', options);
   }
 
   setDefaultModel(model: string) {

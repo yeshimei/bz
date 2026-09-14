@@ -1,6 +1,6 @@
 /**
  * issue 270 knowledge 三处无样式 UI 补齐回归：
- * - .bz-kb-brand（主壳面板头品牌区，ui.ts 桌面/移动两处）、.bz-lit-run-btn（视频批量处理钮 ▶️/⏹）、
+ * - .bz-kb-brand（主壳面板头品牌区，ui.ts 桌面/移动两处）、.bz-lit-run-btn（影像批量处理钮 play/square 图标）、
  *   .bz-lit-ghost-btn（术语弹窗取消钮，与 .bz-lit-accent-btn 成对）在 src/knowledge/styles.css 有域内规则；
  * - 全部走 kb 纸墨皮 token（--ink/--ink2/--ink3/--line/--chip/--accent，.theme-dark .kb 自动暗色），新规则零硬编码色。
  * 样式断言读源文件文本（jsdom 不解析 css 文件；先例 review-fix-b.test.ts）。
@@ -14,11 +14,13 @@ const kbCss = () => repo('src/knowledge/styles.css');
 const noHex = (rule: string) => expect(rule).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
 
 describe('issue 270：knowledge 三处无样式 UI 补齐', () => {
-  it('ui.ts 三处类钩子仍在（DOM 结构不动，样式全落域内 styles.css）', () => {
+  it('ui.ts 类钩子仍在（DOM 结构不动，样式全落域内 styles.css）', () => {
     const ui = repo('src/knowledge/ui.ts');
     expect(ui).toContain('class="bz-kb-brand"');
     expect(ui).toContain('bz-lit-run-btn');
-    expect(ui).toContain('bz-lit-ghost-btn');
+    // issue 309 复核：术语/段落录入面板的取消钮与「打开笔记」钮均退役（退出走点遮罩 / ESC，
+    // 写入即关窗）→ .bz-lit-ghost-btn 暂只作为域内 ghost 按钮档保留，DOM 侧无消费方
+    expect(ui).not.toContain('lit-term-cancel');
   });
 
   it('.bz-kb-brand：品牌区 flex 锁定居中 + accent 点墨短线（::after），零硬编码色', () => {

@@ -1,8 +1,8 @@
 /**
  * literature 域（文献盒）入口：ADR-0072 自 bili-downloader 迁出。
- * 主面板 = 文献目录下的文献笔记列表（右上角：文字录入 / 视频录入 / 设置，见 ui.ts）；
+ * 主面板 = 文献目录下的文献笔记列表（部壹三入口：术语 / 段落 / 影像，见 ui.ts）；
  * 视频转文献批处理的 AI/笔记落盘在插件侧（ADR-0071），CLI 只产转录临时文件 + 交付视频。
- * 数据 CONFIG/STORAGE/literature.json（视频任务）；术语生成不留任务记录（ticket 136 §2）。
+ * 数据 CONFIG/STORAGE/literature.json（视频任务）；术语与段落生成不留任务记录（ticket 136 §2）。
  */
 import type { App } from 'obsidian';
 import { MarkdownView } from 'obsidian';
@@ -37,9 +37,9 @@ export function openKnowledgePanel(app: App): void {
 }
 
 /**
- * 打开「视频录入」面板并预填（聚合讯「保存至文献」入口，ADR-0068）。
- * 注意：该入口打开的是视频录入面板（任务队列 + 添加转文献任务弹窗），而非文献列表主面板；
- * prefill 含链接/标题/UP主 时输入框预填。层级/ESC 由面板自理，调用方不碰。
+ * 打开「影像」录入界面并预填（聚合讯「保存至文献」入口，ADR-0068；命令 bz-knowledge-note-video）。
+ * 注意：该入口直达**录入界面**（issue 310 起与主窗「影像」按钮同路径；处理队列 / 历史由录入界面头行两个钮进入），
+ * 而非文献列表主面板；prefill 含链接/标题/UP主 时预填并自动解析。层级/ESC 由弹层自理，调用方不碰。
  */
 export function openKnowledgeAddTask(app: App, prefill?: { url: string; title?: string | null; uploader?: string | null }): void {
   ensureKnowledge(app);
@@ -47,11 +47,11 @@ export function openKnowledgeAddTask(app: App, prefill?: { url: string; title?: 
 }
 
 /**
- * 术语生成入口（bz-knowledge-note-term 命令回调）：打开「文字录入」面板（ticket 136 §6）。
+ * 名词生成入口（bz-knowledge-note-term 命令回调）：打开「名词」录入面板（ticket 136 §6）。
  * 显式 term 预填输入框；为空时读取当前激活 Markdown 编辑器选区预填（选中词），
  * 无选区则空输入框手动填。
  * 来源预填（ADR-0116）：命令入口带当前活动笔记上下文（选中词场景十有八九出自正在读的这篇）——
- * 以该笔记为可选「来源」（内部笔记方向），可一键清除；主窗「文字录入」按钮入口不带上下文、不预填。
+ * 以该笔记为可选「来源」（内部笔记方向），可一键清除；主窗「名词」按钮入口不带上下文、不预填。
  */
 export function openTermNote(app: App, term?: string): void {
   ensureKnowledge(app);
