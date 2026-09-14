@@ -327,10 +327,10 @@ describe('降级与设置开关', () => {
     expect((await readSuggestCache()).cards).toEqual({});
   });
 
-  it('knowledgeMountAutoSuggest 关闭：被调用时返回空（cached）；显式 force 才继续', async () => {
+  it('knowledgeMountAutoSuggest 关闭：被调用时返回 off（不冒充已缓存）；显式 force 才继续', async () => {
     setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', knowledgeMountAutoSuggest: false }) as any);
     const off = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
-    expect(off).toEqual({ status: 'cached', suggestions: [] });
+    expect(off).toEqual({ status: 'off', suggestions: [] });
     expect(mocks.search).not.toHaveBeenCalled();
     const forced = await generateSuggestions(`${CARDBOX}/A.md`, ctx, { force: true });
     expect(forced.status).toBe('fresh');
@@ -383,18 +383,32 @@ describe('mergeSuggestions（幽灵节点 + 虚线边）与 clearSuggestCache', 
     expect(mergeSuggestions(tree, { status: 'cached', suggestions: [] }).nodes).toHaveLength(2);
   });
 
-  it('clearSuggestCache：清空全部建议片（含处置留档），此后重新生成', async () => {
-    vault.files.set(`${CARDBOX}/A.md`, BODY_A);
+  it('clearSuggestCache：只清候选与生成时间，fixed/dismissed 留档保留 → 同一条不再出现', async () => {
+    vault.files.set(`${CARDBOX}/A.md`, BODY_ONE);
     mocks.search.mockResolvedValue([{ path: '文献盒/目标一.md', chunk: '一', score: 0.9 }]);
     mocks.json.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '理由' }]));
     const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
     await markSuggestion(`${CARDBOX}/A.md`, run.suggestions[0], 'dismissed', ctx);
-    expect((await readSuggestCache()).cards[`${CARDBOX}/A.md`].suggestions).toHaveLength(1);
 
     await clearSuggestCache();
-    expect((await readSuggestCache()).cards).toEqual({});
+    const entry = (await readSuggestCache()).cards[`${CARDBOX}/A.md`];
+    expect(entry.bodyHash).toBe(''); // 片失效 → 下次必然重算
+    expect(entry.generatedAt).toBe(0);
+    expect(entry.suggestions.map((s) => s.state)).toEqual(['dismissed']); // 留档保留
+
+    // 重算：候选被否决表挡在送审之前 → 同一条「锚点 → 目标」不再出现（ADR-0139 §3 永久不再推）
+    mocks.json.mockClear();
     const again = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
     expect(again.status).toBe('fresh');
-    expect(again.suggestions).toHaveLength(1);
+    expect(again.suggestions).toEqual([]);
+    expect(mocks.json).not.toHaveBeenCalled();
+
+    // 无任何留档的片整片删除（纯 pending 缓存被清干净）
+    vault.files.set(`${CARDBOX}/B.md`, BODY_B);
+    expect((await generateSuggestions(`${CARDBOX}/B.md`, ctx)).suggestions).toHaveLength(1);
+    await clearSuggestCache();
+    const after = await readSuggestCache();
+    expect(after.cards[`${CARDBOX}/B.md`]).toBeUndefined();
+    expect(after.cards[`${CARDBOX}/A.md`].suggestions).toHaveLength(1);
   });
 });
