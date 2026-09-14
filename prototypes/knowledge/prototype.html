@@ -332,6 +332,14 @@
         return dtDoc().querySelector('#lit-add-end').value === '10:00';
       })());
       t('解析全程无 toast', !dtDoc().querySelector('.bz-notice'));
+// ---- ADR-0134：b23.tv 短链 → 落地页 og:url 补出 bvid → 写回规范链接（下载器只认 BV 号） ----
+      urlInput.value = 'https://b23.tv/AtDgBVH';
+      urlInput.dispatchEvent(new Event('input', { bubbles: true })); // 改输入作废上一条解析结果
+      dtDoc().querySelector('#lit-add-resolve').click();
+      await wait(() => (urlInput.value === 'https://www.bilibili.com/video/BV1awbg6XELn/' ? urlInput : null), '短链写回规范链接');
+      t('短链解析写回规范链接', urlInput.value === 'https://www.bilibili.com/video/BV1awbg6XELn/');
+      t('短链解析信息区 UP主', (dtDoc().querySelector('#lit-add-iuploader').textContent || '') === '演示 UP 主');
+      t('短链解析多 P 下拉就位（3 项）', dtDoc().querySelectorAll('#lit-add-page option').length === 3);
       // 保存 → 落到处理队列（种子 4 行 + 新增 1 行）
       dtDoc().querySelector('#lit-add-save').click();
       const cards = await wait(() => {
