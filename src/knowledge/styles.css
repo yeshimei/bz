@@ -256,6 +256,9 @@
   color: var(--panel, #f6f3ea);
   font-weight: 600;
 }
+/* 索引未统计（扫描失败）：置灰不可点，不给「灯亮着却不筛」的假状态 */
+.bz-kb-cfilter:disabled { cursor: default; opacity: 0.6; }
+.bz-kb-cfilter:disabled:hover { border-color: var(--line, var(--bz-border, #ddd6c4)); color: var(--ink3, var(--bz-text-3, #9b9484)); }
 
 /* 行尾引用计数徽标（0 不渲染）：被 N 处用户双链（正文 wikilink + related + mounted）指到 */
 .bz-kb-refbadge {
