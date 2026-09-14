@@ -1,5 +1,5 @@
-/* 源指纹 7eb58793343901e8 · 仓内输入 124 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 c9a807ee2399f573 · 仓内输入 89 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -44,8 +44,8 @@ var BZW_clipbook = (() => {
 
   // prototypes/clipbook/fake/fake-obsidian.ts
   function setIcon(container, iconId) {
-    var _a2;
-    const d = typeof window !== "undefined" && ((_a2 = window.CLIP_ICONS) == null ? void 0 : _a2[iconId]) || "";
+    var _a;
+    const d = typeof window !== "undefined" && ((_a = window.CLIP_ICONS) == null ? void 0 : _a[iconId]) || "";
     if (!d) return;
     const ns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(ns, "svg");
@@ -95,10 +95,10 @@ var BZW_clipbook = (() => {
     return fm;
   }
   function splitFrontmatter(content) {
-    var _a2;
+    var _a;
     const m = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n([\s\S]*))?$/.exec(content);
     if (!m) return { frontmatter: null, body: content };
-    return { frontmatter: parseYaml(m[1]), body: (_a2 = m[2]) != null ? _a2 : "" };
+    return { frontmatter: parseYaml(m[1]), body: (_a = m[2]) != null ? _a : "" };
   }
   function seedVaultFile(path, content, ctime) {
     localStorage.setItem(LS_PREFIX + path, content);
@@ -260,8 +260,8 @@ var BZW_clipbook = (() => {
           this.listeners.clear();
         }
         emit(evt, ...args) {
-          var _a2;
-          for (const cb of (_a2 = this.listeners.get(evt)) != null ? _a2 : []) cb(...args);
+          var _a;
+          for (const cb of (_a = this.listeners.get(evt)) != null ? _a : []) cb(...args);
         }
       };
       FakeApp = class {
@@ -369,42 +369,6 @@ var BZW_clipbook = (() => {
     }
   });
 
-  // src/core/diary-format.ts
-  function diaryMetaFromEntryPath(path) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    const m = DIARY_ENTRY_FILE_RE.exec(base);
-    if (!m) return null;
-    const date = `20${m[1]}-${m[2]}-${m[3]}`;
-    const time = `${m[4]}:${m[5]}`;
-    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
-    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
-  }
-  function diaryDateFromEntryPath(path) {
-    var _a2, _b2;
-    return (_b2 = (_a2 = diaryMetaFromEntryPath(path)) == null ? void 0 : _a2.date) != null ? _b2 : null;
-  }
-  function isValidDiaryDate(s) {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    const y = Number(m[1]);
-    const mo = Number(m[2]);
-    const d = Number(m[3]);
-    if (mo < 1 || mo > 12 || d < 1) return false;
-    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    return d <= days[mo - 1];
-  }
-  function isValidDiaryTime(s) {
-    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
-  }
-  var DIARY_ENTRY_FILE_RE;
-  var init_diary_format = __esm({
-    "src/core/diary-format.ts"() {
-      DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
-    }
-  });
-
   // src/core/z-order.ts
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
@@ -469,9 +433,9 @@ var BZW_clipbook = (() => {
     return pos === "top-left" || pos === "bottom-left" ? "slide-left" : "slide-right";
   }
   function noticePref(key) {
-    var _a2;
+    var _a;
     try {
-      const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2[key];
+      const v = (_a = tryGetSettings()) == null ? void 0 : _a[key];
       return typeof v === "string" ? v : void 0;
     } catch (e) {
       return void 0;
@@ -5020,8 +4984,8 @@ var BZW_clipbook = (() => {
     return `${dir}/${name}`;
   }
   function enqueueFileTask(filePath, task) {
-    var _a2;
-    const prev = (_a2 = fileTaskQueues.get(filePath)) != null ? _a2 : Promise.resolve();
+    var _a;
+    const prev = (_a = fileTaskQueues.get(filePath)) != null ? _a : Promise.resolve();
     const run = prev.then(task, task);
     const tail = run.then(
       () => void 0,
@@ -5069,9 +5033,9 @@ var BZW_clipbook = (() => {
     }
   }
   function notifyBackup(filePath, backupPath, cause) {
-    var _a2;
+    var _a;
     const now = Date.now();
-    if (now - ((_a2 = corruptNotifyAt.get(filePath)) != null ? _a2 : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
+    if (now - ((_a = corruptNotifyAt.get(filePath)) != null ? _a : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
     corruptNotifyAt.set(filePath, now);
     try {
       const name = baseNameOf(filePath);
@@ -5104,8 +5068,8 @@ var BZW_clipbook = (() => {
       }
     }
     async function handleCorrupt(app, err, raw) {
-      var _a2;
-      if (((_a2 = opts.onCorrupt) == null ? void 0 : _a2.call(opts, filePath, err)) === false) {
+      var _a;
+      if (((_a = opts.onCorrupt) == null ? void 0 : _a.call(opts, filePath, err)) === false) {
         return null;
       }
       const backupPath = await backupOriginal(app, filePath, raw);
@@ -5229,14 +5193,14 @@ var BZW_clipbook = (() => {
     return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
   }
   function parseRssFeeds(raw) {
-    var _a2, _b2;
+    var _a, _b;
     if (!Array.isArray(raw)) return [];
     const out = [];
     for (const it of raw) {
       if (!it || typeof it !== "object") continue;
-      const url = String((_a2 = it.url) != null ? _a2 : "").trim();
+      const url = String((_a = it.url) != null ? _a : "").trim();
       if (!url) continue;
-      const title = String((_b2 = it.title) != null ? _b2 : "").trim();
+      const title = String((_b = it.title) != null ? _b : "").trim();
       out.push(title ? { url, title } : { url });
     }
     return out;
@@ -5356,12 +5320,12 @@ var BZW_clipbook = (() => {
     }
   }
   async function writeNewsDataMerged(intent) {
-    var _a2;
+    var _a;
     const res = await readNewsData();
     if (!res.ok) return;
     const base = res.data;
     const next = { ...base };
-    if (intent.set.articles || ((_a2 = intent.removeArticleKeys) == null ? void 0 : _a2.length)) {
+    if (intent.set.articles || ((_a = intent.removeArticleKeys) == null ? void 0 : _a.length)) {
       const patchList = intent.set.articles || [];
       const removeKeys = new Set(intent.removeArticleKeys || []);
       const patchByKey = /* @__PURE__ */ new Map();
@@ -5414,7 +5378,7 @@ var BZW_clipbook = (() => {
     return m ? m[1] : null;
   }
   async function resolveUidFromInput(text) {
-    var _a2;
+    var _a;
     const local = parseUidFromText(text);
     if (local) return local;
     const bvid = parseBvidFromText(text);
@@ -5429,7 +5393,7 @@ var BZW_clipbook = (() => {
       clearTimeout(timer);
       if (!resp.ok) return null;
       const json = await resp.json();
-      const mid = json && json.data && json.data.owner ? String((_a2 = json.data.owner.mid) != null ? _a2 : "") : "";
+      const mid = json && json.data && json.data.owner ? String((_a = json.data.owner.mid) != null ? _a : "") : "";
       return mid || null;
     } catch (e) {
       return null;
@@ -5521,7 +5485,7 @@ var BZW_clipbook = (() => {
   function defaultFetchStore() {
     return {
       read: async () => {
-        var _a2, _b2;
+        var _a, _b;
         const res = await readNewsData();
         if (!res.ok) return null;
         const d = res.data;
@@ -5533,8 +5497,8 @@ var BZW_clipbook = (() => {
           bilibiliCookie: d.bilibiliCookie,
           bilibiliUpInfo: { ...d.bilibiliUpInfo },
           rssFeeds: d.rssFeeds.map((f) => ({ ...f })),
-          lastFetchAt: (_a2 = d.lastFetchAt) != null ? _a2 : 0,
-          fetchIntervalMin: (_b2 = d.fetchIntervalMin) != null ? _b2 : DEFAULT_FETCH_INTERVAL_MIN
+          lastFetchAt: (_a = d.lastFetchAt) != null ? _a : 0,
+          fetchIntervalMin: (_b = d.fetchIntervalMin) != null ? _b : DEFAULT_FETCH_INTERVAL_MIN
         };
       },
       write: (intent) => enqueueNewsWrite(async () => {
@@ -5627,8 +5591,8 @@ ${c.trim()}
       if (j > i) {
         try {
           const raw = html.slice(i + "window.INITIAL_STORE=".length, j).trim().replace(/;\s*$/, "");
-          const store2 = JSON.parse(raw);
-          const art = store2.articleStore && store2.articleStore.article;
+          const store = JSON.parse(raw);
+          const art = store.articleStore && store.articleStore.article;
           if (art && art.content) return art.content;
         } catch (e) {
         }
@@ -5805,11 +5769,11 @@ ${c.trim()}
     return { articles, upInfo, rejected, requestFailed };
   }
   async function defaultBootstrapBilibiliCookie() {
-    var _a2;
+    var _a;
     try {
       const resp = await requestUrl({ url: BILIBILI_HOME, method: "GET", headers: HEADERS, throw: false });
       if (resp.status < 200 || resp.status >= 300) return null;
-      const raw = String(((_a2 = resp.headers) == null ? void 0 : _a2["set-cookie"]) || "");
+      const raw = String(((_a = resp.headers) == null ? void 0 : _a["set-cookie"]) || "");
       const cookies = raw.split(/,(?=[^;]+?=)/).map((c) => String(c).split(";")[0].trim()).filter((c) => /^[^=]+=/.test(c));
       return cookies.length > 0 ? cookies.join("; ") : null;
     } catch (e) {
@@ -5882,7 +5846,7 @@ ${c.trim()}
     return articles;
   }
   async function fetchGuokr(httpGet, now = Date.now()) {
-    var _a2, _b2, _c;
+    var _a, _b, _c;
     const articles = [];
     const cutoff = now - WINDOW_MS;
     const text = await httpGet("https://www.guokr.com/beta/proxy/science_api/articles?offset=0&limit=50");
@@ -5903,7 +5867,7 @@ ${c.trim()}
       const url = `https://www.guokr.com/article/${id}`;
       if (!id || !title || seen.has(url)) continue;
       seen.add(url);
-      const author = ((_b2 = (_a2 = item.authors) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.nickname) || ((_c = item.author) == null ? void 0 : _c.nickname) || null;
+      const author = ((_b = (_a = item.authors) == null ? void 0 : _a[0]) == null ? void 0 : _b.nickname) || ((_c = item.author) == null ? void 0 : _c.nickname) || null;
       let body = "";
       const html = await httpGet(url);
       if (html) {
@@ -5922,7 +5886,7 @@ ${c.trim()}
     return articles;
   }
   async function fetchRss(feeds, httpGet) {
-    var _a2;
+    var _a;
     const articles = [];
     const perFeed = {};
     const titleUpdates = {};
@@ -5938,7 +5902,7 @@ ${c.trim()}
         continue;
       }
       try {
-        const feedTitle = String(((_a2 = xml.match(/<title[^>]*>([\s\S]*?)<\/title>/i)) == null ? void 0 : _a2[1]) || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").trim();
+        const feedTitle = String(((_a = xml.match(/<title[^>]*>([\s\S]*?)<\/title>/i)) == null ? void 0 : _a[1]) || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").trim();
         const name = String(feed && feed.title || feedTitle || url).trim();
         if (!feed.title && feedTitle) titleUpdates[url] = feedTitle;
         const items = parseRssXml(xml).map((it) => buildRssArticle(it, name)).filter(Boolean);
@@ -6052,8 +6016,8 @@ ${c.trim()}
   }
   async function maybeFetchNews(deps) {
     if (fetching) return null;
-    const store2 = (deps == null ? void 0 : deps.store) || defaultFetchStore();
-    const disk = await store2.read();
+    const store = (deps == null ? void 0 : deps.store) || defaultFetchStore();
+    const disk = await store.read();
     if (!disk) return null;
     const intervalMin = normalizeFetchIntervalMin(disk.fetchIntervalMin);
     const now = (deps == null ? void 0 : deps.now) || Date.now;
@@ -6387,7 +6351,7 @@ ${body}`;
     return t.trim();
   }
   function serializeTermSource(src) {
-    var _a2;
+    var _a;
     if (!src) return null;
     if (src.kind === "external") {
       const url = normalizeSourceUrl(src.url);
@@ -6397,7 +6361,7 @@ ${body}`;
       if (title) out.sourceTitle = title;
       return out;
     }
-    const path = String((_a2 = src.path) != null ? _a2 : "").trim();
+    const path = String((_a = src.path) != null ? _a : "").trim();
     if (!path) return null;
     const name = noteSourceName(path, src.name);
     return { source: `[[${path}|${name}]]` };
@@ -6497,8 +6461,8 @@ ${body}`;
         },
         /** 惰性 store 获取：init 前调用时按当前设置补建（消除 init 前 _store 空指针） */
         _ensureStore() {
-          var _a2;
-          if (!this._store) this.init({ storagePath: (_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath });
+          var _a;
+          if (!this._store) this.init({ storagePath: (_a = tryGetSettings()) == null ? void 0 : _a.storagePath });
           return this._store;
         },
         /**
@@ -6559,12 +6523,12 @@ ${body}`;
         },
         /** 追加一条待处理任务（队列尾 = 处理顺序尾） */
         addTask(input) {
-          var _a2, _b2, _c, _d, _e;
+          var _a, _b, _c, _d, _e;
           const task = {
             id: generateId("knowledge-task"),
             url: normalizeUrl(input.url),
-            start: ((_a2 = input.start) == null ? void 0 : _a2.trim()) || null,
-            end: ((_b2 = input.end) == null ? void 0 : _b2.trim()) || null,
+            start: ((_a = input.start) == null ? void 0 : _a.trim()) || null,
+            end: ((_b = input.end) == null ? void 0 : _b.trim()) || null,
             status: "pending",
             reason: null,
             remark: ((_c = input.remark) == null ? void 0 : _c.trim()) || null,
@@ -6626,7 +6590,7 @@ ${body}`;
     return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
   }
   async function getAIProvider(override) {
-    var _a2, _b2, _c;
+    var _a, _b, _c;
     if (!override && _aiProviderCache) return _aiProviderCache;
     const cacheable = !override;
     const cachePut = (p) => {
@@ -6680,8 +6644,8 @@ ${body}`;
     if (!key && name !== "ollama") {
       throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
     }
-    const overrideModel = (_a2 = s.aiModelOverrides) == null ? void 0 : _a2[name];
-    const overrideContext = (_b2 = s.aiContextOverrides) == null ? void 0 : _b2[name];
+    const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
+    const overrideContext = (_b = s.aiContextOverrides) == null ? void 0 : _b[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
     return cachePut({
       endpoint: desc.endpoint,
@@ -6831,8 +6795,8 @@ ${body}`;
     return content;
   }
   function imageMimeOfPath(path) {
-    var _a2;
-    const ext = ((_a2 = String(path || "").split(".").pop()) == null ? void 0 : _a2.toLowerCase()) || "";
+    var _a;
+    const ext = ((_a = String(path || "").split(".").pop()) == null ? void 0 : _a.toLowerCase()) || "";
     return AI_IMAGE_MIME[ext] || null;
   }
   function imageExtOfMime(mime) {
@@ -6856,9 +6820,9 @@ ${body}`;
     return `data:${mime};base64,${btoa(bin)}`;
   }
   function buildUserContent(input) {
-    var _a2;
+    var _a;
     if (typeof input === "string") return input;
-    const text = String((_a2 = input == null ? void 0 : input.text) != null ? _a2 : "");
+    const text = String((_a = input == null ? void 0 : input.text) != null ? _a : "");
     const images = (Array.isArray(input == null ? void 0 : input.images) ? input.images : []).map((u) => String(u != null ? u : "").trim()).filter((u) => u.length > 0);
     if (!images.length) return text;
     return [
@@ -7092,14 +7056,14 @@ ${body}`;
          *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
          *  既有调用（不传这两项）行为零变化 */
         async prompt(input, model = this.defaultModel, options = {}) {
-          var _a2;
+          var _a;
           const mergedOptions = this._mergeOptions(options);
           const provider = await getAIProvider(mergedOptions.provider);
           const s = getQ3Settings();
           const isExplicit = model !== this.defaultModel;
           const effModel = isExplicit ? model : provider.model || model;
           const mo = mergedOptions.modelOptions || {};
-          const effMaxTokens = (_a2 = mo.max_tokens) != null ? _a2 : provider.defaultMaxTokens || 4096;
+          const effMaxTokens = (_a = mo.max_tokens) != null ? _a : provider.defaultMaxTokens || 4096;
           const body = {
             model: effModel,
             messages: [{ role: "user", content: buildUserContent(input) }],
@@ -7612,9 +7576,9 @@ ${body}`;
 
   // src/core/ui/suggest.ts
   function uiSuggest(opts) {
-    var _a2;
+    var _a;
     const anchor = opts.anchor;
-    const max = (_a2 = opts.max) != null ? _a2 : 30;
+    const max = (_a = opts.max) != null ? _a : 30;
     let layer = null;
     let skipNextOpen = false;
     const close = () => {
@@ -7633,10 +7597,10 @@ ${body}`;
       close();
     };
     const pick = (raw) => {
-      var _a3;
+      var _a2;
       anchor.value = raw;
       close();
-      (_a3 = opts.onPick) == null ? void 0 : _a3.call(opts, raw);
+      (_a2 = opts.onPick) == null ? void 0 : _a2.call(opts, raw);
       if (document.activeElement !== anchor) {
         skipNextOpen = true;
         anchor.focus();
@@ -7653,7 +7617,7 @@ ${body}`;
       }
       layer.replaceChildren();
       matched.forEach((raw) => {
-        var _a3;
+        var _a2;
         const b = document.createElement("button");
         b.type = "button";
         b.className = "bz-popover-item";
@@ -7661,7 +7625,7 @@ ${body}`;
         b.setAttribute("role", "option");
         const on = raw === cur;
         if (on) b.classList.add("is-on");
-        const icon = (_a3 = opts.iconOf) == null ? void 0 : _a3.call(opts, raw);
+        const icon = (_a2 = opts.iconOf) == null ? void 0 : _a2.call(opts, raw);
         if (icon) {
           const ic = document.createElement("span");
           ic.className = "bz-suggest-ic";
@@ -7694,16 +7658,16 @@ ${body}`;
       draw();
     };
     const activeIdx = () => {
-      var _a3;
-      return [...(_a3 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a3 : []].findIndex((o) => o.classList.contains("is-on"));
+      var _a2;
+      return [...(_a2 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a2 : []].findIndex((o) => o.classList.contains("is-on"));
     };
     const moveActive = (to) => {
-      var _a3, _b2;
-      const items = [...(_a3 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a3 : []];
+      var _a2, _b;
+      const items = [...(_a2 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a2 : []];
       if (!items.length) return;
       const next = items[Math.max(0, Math.min(items.length - 1, to))];
       items.forEach((o) => o.classList.toggle("is-on", o === next));
-      (_b2 = next.scrollIntoView) == null ? void 0 : _b2.call(next, { block: "nearest" });
+      (_b = next.scrollIntoView) == null ? void 0 : _b.call(next, { block: "nearest" });
     };
     anchor.addEventListener("focus", open);
     anchor.addEventListener("input", () => {
@@ -7916,7 +7880,7 @@ ${t}`,
     return s;
   }
   async function generateTermNote(opts) {
-    var _a2;
+    var _a;
     const s = tryGetSettings();
     const term = String(opts.term || "").trim();
     if (!term) throw new Error("术语为空");
@@ -7928,7 +7892,7 @@ ${t}`,
       domain = draft.domain;
     } else {
       summary = String(opts.summary).trim();
-      domain = String((_a2 = opts.domain) != null ? _a2 : "").trim();
+      domain = String((_a = opts.domain) != null ? _a : "").trim();
     }
     const fm = [
       "---",
@@ -7970,12 +7934,12 @@ ${text}`;
     };
   }
   async function generatePassageNote(opts) {
-    var _a2, _b2;
+    var _a, _b;
     const s = tryGetSettings();
     const title = String(opts.title || "").trim();
-    const summary = String((_a2 = opts.summary) != null ? _a2 : "").trim();
+    const summary = String((_a = opts.summary) != null ? _a : "").trim();
     if (!title && !summary) throw new Error("段落为空");
-    const domain = String((_b2 = opts.domain) != null ? _b2 : "").trim();
+    const domain = String((_b = opts.domain) != null ? _b : "").trim();
     const fm = [
       "---",
       `title: ${quoteYaml(title || summary.slice(0, 30))}`,
@@ -8034,10 +7998,10 @@ ${text}`;
     return `${dir}/${IMAGE_ASSETS_DIR}`;
   }
   async function generateImageNote(opts) {
-    var _a2, _b2;
+    var _a, _b;
     const s = tryGetSettings();
     const title = String(opts.title || "").trim();
-    const summary = String((_a2 = opts.summary) != null ? _a2 : "").trim();
+    const summary = String((_a = opts.summary) != null ? _a : "").trim();
     if (!title && !summary) throw new Error("图版为空");
     const images = (Array.isArray(opts.images) ? opts.images : []).filter((im) => im && im.bytes);
     if (!images.length) throw new Error("图版没有图片");
@@ -8046,7 +8010,7 @@ ${text}`;
     const imageRoot = resolveImageDir(s);
     const imagePaths = [];
     for (const im of images) imagePaths.push(await writeUniqueBinary(imageRoot, name, im.ext || "png", im.bytes));
-    const domain = String((_b2 = opts.domain) != null ? _b2 : "").trim();
+    const domain = String((_b = opts.domain) != null ? _b : "").trim();
     const fm = [
       "---",
       `title: ${quoteYaml(title || name)}`,
@@ -8064,14 +8028,14 @@ ${text}`;
     return writeUniqueNote(dir, name, body);
   }
   function parseFrontmatter(content) {
-    var _a2;
+    var _a;
     const out = {};
     const m = String(content || "").match(/^---\r?\n([\s\S]*?)\r?\n---/);
     if (!m) return out;
     for (const line of m[1].split(/\r?\n/)) {
       const kv = line.match(/^([A-Za-z\u4e00-\u9fa5_]+):\s*(.*)$/);
       if (kv) {
-        const raw = String((_a2 = kv[2]) != null ? _a2 : "").trim();
+        const raw = String((_a = kv[2]) != null ? _a : "").trim();
         const quoted = raw.startsWith('"') && raw.endsWith('"') || raw.startsWith("'") && raw.endsWith("'");
         out[kv[1].trim()] = quoted ? raw.slice(1, -1) : raw;
       }
@@ -8096,10 +8060,10 @@ ${head}
 ${content || ""}`;
   }
   async function backfillNotes(opts = {}) {
-    var _a2, _b2;
+    var _a, _b;
     const app = getApp();
     const s = tryGetSettings();
-    const aiTimeoutMs = (_a2 = opts.aiTimeoutMs) != null ? _a2 : BACKFILL_AI_TIMEOUT_MS;
+    const aiTimeoutMs = (_a = opts.aiTimeoutMs) != null ? _a : BACKFILL_AI_TIMEOUT_MS;
     const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
     const files = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
     const needDomain = [];
@@ -8143,7 +8107,7 @@ ${sample}`,
             aiTimeoutMs,
             "领域判定"
           );
-          const domain = String(((_b2 = parseAiJson(raw)) == null ? void 0 : _b2.domain) || "").trim();
+          const domain = String(((_b = parseAiJson(raw)) == null ? void 0 : _b.domain) || "").trim();
           if (domain) {
             await app.vault.modify(file, injectFrontmatter(latest, [`domain:${domain}`]));
             filled++;
@@ -8199,9 +8163,9 @@ ${sample}`,
     }
   }
   function getVaultBasePath() {
-    var _a2, _b2, _c;
+    var _a, _b, _c;
     try {
-      const bp = (_c = (_b2 = (_a2 = getApp().vault) == null ? void 0 : _a2.adapter) == null ? void 0 : _b2.getBasePath) == null ? void 0 : _c.call(_b2);
+      const bp = (_c = (_b = (_a = getApp().vault) == null ? void 0 : _a.adapter) == null ? void 0 : _b.getBasePath) == null ? void 0 : _c.call(_b);
       return typeof bp === "string" ? bp : "";
     } catch (e) {
       return "";
@@ -8291,17 +8255,17 @@ ${sample}`,
         },
         /** 中止整批：杀死当前子进程，未开始项保持待处理，当前项由 close 标记失败「已中止」 */
         abort() {
-          var _a2, _b2;
+          var _a, _b;
           this.aborted = true;
           try {
-            (_b2 = (_a2 = this._child) == null ? void 0 : _a2.kill) == null ? void 0 : _b2.call(_a2);
+            (_b = (_a = this._child) == null ? void 0 : _a.kill) == null ? void 0 : _b.call(_a);
           } catch (e) {
           }
         },
         /** 单部执行：spawn → 解析步骤/进度/信息/结果行 → CLI 终态 → 插件侧 AI 阶段 → 落库；Promise 在终态落库后 resolve */
         _runOne(cp, task, events, onEnd) {
           return new Promise((resolve2) => {
-            var _a2, _b2, _c, _d;
+            var _a, _b, _c, _d;
             const s = tryGetSettings();
             const nonEmpty = (v) => {
               const t = typeof v === "string" ? v.trim() : "";
@@ -8309,8 +8273,8 @@ ${sample}`,
             };
             const taskJson = JSON.stringify({
               url: task.url,
-              start: (_a2 = task.start) != null ? _a2 : null,
-              end: (_b2 = task.end) != null ? _b2 : null,
+              start: (_a = task.start) != null ? _a : null,
+              end: (_b = task.end) != null ? _b : null,
               page: task.page && task.page > 0 ? task.page : null,
               options: {
                 quality: task.quality || s && s.knowledgeQuality || "highest",
@@ -8483,7 +8447,7 @@ ${sample}`,
         },
         /** 终态落库 + 事件（resolve 于落库完成后）；成功 → 自动归档历史（archived+归档时间，ADR-0067） */
         async _finish(task, events, onEnd, ok, reason, notePath, videoPath) {
-          var _a2;
+          var _a;
           task.status = ok ? "success" : "failed";
           task.reason = reason;
           task.notePath = ok ? notePath : task.notePath;
@@ -8513,7 +8477,7 @@ ${sample}`,
           if (ok) {
             emitDomainEvent("knowledge:tasks", { kind: "converted", id: task.id, url: task.url, notePath: task.notePath });
           } else {
-            emitDomainEvent("knowledge:tasks", { kind: "failed", id: task.id, url: task.url, notePath: (_a2 = task.notePath) != null ? _a2 : null });
+            emitDomainEvent("knowledge:tasks", { kind: "failed", id: task.id, url: task.url, notePath: (_a = task.notePath) != null ? _a : null });
           }
           onEnd(ok);
         }
@@ -8594,8 +8558,8 @@ ${sample}`,
     return typeof v === "number" && Number.isFinite(v) ? v : fallback;
   }
   function mountCtx(app) {
-    var _a2;
-    const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
+    var _a;
+    const s = (_a = tryGetSettings()) != null ? _a : {};
     return {
       app: app != null ? app : safeApp(),
       cardboxDir: normDir(s == null ? void 0 : s.knowledgeCardboxDirectory, DEFAULT_CARDBOX) || DEFAULT_CARDBOX,
@@ -8603,26 +8567,26 @@ ${sample}`,
     };
   }
   function allFiles(ctx) {
-    var _a2;
-    const v = (_a2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a2.vault;
+    var _a;
+    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
     const files = typeof (v == null ? void 0 : v.getFiles) === "function" ? v.getFiles() : null;
     return Array.isArray(files) ? files.filter((f) => f && f.path) : [];
   }
   function mdFiles(ctx) {
-    var _a2;
-    const v = (_a2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a2.vault;
+    var _a;
+    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
     const files = typeof (v == null ? void 0 : v.getMarkdownFiles) === "function" ? v.getMarkdownFiles() : allFiles(ctx).filter((f) => f.extension === "md");
     return (Array.isArray(files) ? files.filter((f) => f && f.path) : []).slice().sort((a, b) => String(a.path).localeCompare(String(b.path)));
   }
   async function readText(file, ctx) {
-    var _a2, _b2, _c, _d, _e, _f, _g;
-    const v = (_a2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a2.vault;
+    var _a, _b, _c, _d, _e, _f, _g;
+    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
     if (!v || file === null || file === void 0) return "";
     let target = file;
     if (typeof file === "string") {
       const p = normSlashes(file);
       if (!p) return "";
-      target = (_e = (_d = (_b2 = v.getAbstractFileByPath) == null ? void 0 : _b2.call(v, p)) != null ? _d : (_c = v.getFileByPath) == null ? void 0 : _c.call(v, p)) != null ? _e : p;
+      target = (_e = (_d = (_b = v.getAbstractFileByPath) == null ? void 0 : _b.call(v, p)) != null ? _d : (_c = v.getFileByPath) == null ? void 0 : _c.call(v, p)) != null ? _e : p;
     }
     try {
       if (typeof v.cachedRead === "function") return String((_f = await v.cachedRead(target)) != null ? _f : "");
@@ -8676,7 +8640,7 @@ ${sample}`,
     return "note";
   }
   function findBySameName(target, ctx) {
-    var _a2;
+    var _a;
     const t = normSlashes(target).trim();
     if (!t) return null;
     const files = allFiles(ctx);
@@ -8685,14 +8649,14 @@ ${sample}`,
     const exact = files.filter((f) => pathKey(f.path) === wantFull).map((f) => normSlashes(f.path));
     const named = files.filter((f) => stemOf(f.path).toLowerCase() === wantBase).map((f) => normSlashes(f.path));
     const pool = (exact.length ? exact : named).slice().sort(byDepthThenPath);
-    return (_a2 = pool[0]) != null ? _a2 : null;
+    return (_a = pool[0]) != null ? _a : null;
   }
   function resolveLinkPath(target, ctx, sourcePath) {
-    var _a2, _b2, _c, _d;
+    var _a, _b, _c, _d;
     const t = String(target != null ? target : "").trim();
     if (!t) return null;
     try {
-      const dest = (_d = (_c = (_b2 = (_a2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a2.metadataCache) == null ? void 0 : _b2.getFirstLinkpathDest) == null ? void 0 : _c.call(_b2, t, sourcePath)) != null ? _d : null;
+      const dest = (_d = (_c = (_b = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.metadataCache) == null ? void 0 : _b.getFirstLinkpathDest) == null ? void 0 : _c.call(_b, t, sourcePath)) != null ? _d : null;
       const p = dest && typeof dest === "object" ? dest.path : typeof dest === "string" ? dest : null;
       if (p) return normSlashes(String(p));
     } catch (e) {
@@ -8700,15 +8664,15 @@ ${sample}`,
     return findBySameName(t, ctx);
   }
   async function resolveMountLinks(links, ctx, sourcePath = "") {
-    var _a2, _b2;
+    var _a, _b;
     const out = [];
     const seen = /* @__PURE__ */ new Set();
-    const dir = (_a2 = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a2 : "";
+    const dir = (_a = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a : "";
     for (const link of links != null ? links : []) {
       if (!link) continue;
       const path = resolveLinkPath(link.target, ctx, sourcePath);
       const kind = classifyKind(link.target, link.subpath, link.embed, path, dir);
-      const key = path ? `${pathKey(path)}#${((_b2 = link.subpath) != null ? _b2 : "").toLowerCase()}` : `missing:${linkKey(link.target, link.subpath)}`;
+      const key = path ? `${pathKey(path)}#${((_b = link.subpath) != null ? _b : "").toLowerCase()}` : `missing:${linkKey(link.target, link.subpath)}`;
       if (seen.has(key)) continue;
       seen.add(key);
       out.push({ ...link, path, missing: !path, kind });
@@ -8716,9 +8680,9 @@ ${sample}`,
     return out;
   }
   function relocateAnchor(body, anchor) {
-    var _a2;
+    var _a;
     const src = String(body != null ? body : "");
-    const text = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "");
+    const text = String((_a = anchor == null ? void 0 : anchor.text) != null ? _a : "");
     if (!text) return null;
     const exact = src.indexOf(text);
     if (exact >= 0) return exact;
@@ -8765,16 +8729,16 @@ ${sample}`,
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
   function headingSnippet(lines, heading, cache) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     const want = heading.trim().toLowerCase();
     const hs = Array.isArray(cache == null ? void 0 : cache.headings) ? cache.headings : null;
     if (hs) {
       const idx = hs.findIndex((h) => {
-        var _a3;
-        return String((_a3 = h == null ? void 0 : h.heading) != null ? _a3 : "").trim().toLowerCase() === want;
+        var _a2;
+        return String((_a2 = h == null ? void 0 : h.heading) != null ? _a2 : "").trim().toLowerCase() === want;
       });
       if (idx >= 0) {
-        const start = numOr((_c = (_b2 = (_a2 = hs[idx]) == null ? void 0 : _a2.position) == null ? void 0 : _b2.start) == null ? void 0 : _c.line, -1);
+        const start = numOr((_c = (_b = (_a = hs[idx]) == null ? void 0 : _a.position) == null ? void 0 : _b.start) == null ? void 0 : _c.line, -1);
         if (start >= 0) {
           const level = numOr((_d = hs[idx]) == null ? void 0 : _d.level, 1);
           let end = lines.length;
@@ -8804,9 +8768,9 @@ ${sample}`,
     return null;
   }
   function blockSnippet(lines, id, cache) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     const re = new RegExp(`(^|\\s)\\^${escapeRe(id)}(\\s|$)`);
-    const start = numOr((_d = (_c = (_b2 = (_a2 = cache == null ? void 0 : cache.blocks) == null ? void 0 : _a2[id]) == null ? void 0 : _b2.position) == null ? void 0 : _c.start) == null ? void 0 : _d.line, -1);
+    const start = numOr((_d = (_c = (_b = (_a = cache == null ? void 0 : cache.blocks) == null ? void 0 : _a[id]) == null ? void 0 : _b.position) == null ? void 0 : _c.start) == null ? void 0 : _d.line, -1);
     if (start >= 0) {
       const end = numOr((_h = (_g = (_f = (_e = cache == null ? void 0 : cache.blocks) == null ? void 0 : _e[id]) == null ? void 0 : _f.position) == null ? void 0 : _g.end) == null ? void 0 : _h.line, start);
       const text = lines.slice(start, end + 1).join("\n").replace(re, " ");
@@ -8822,25 +8786,25 @@ ${sample}`,
     return null;
   }
   async function readSubpathBody(file, subpath, ctx) {
-    var _a2, _b2, _c, _d;
+    var _a, _b, _c, _d;
     const sp = String(subpath != null ? subpath : "").trim().replace(/^#/, "").trim();
     if (!sp) return null;
-    const path = typeof file === "string" ? normSlashes(file) : normSlashes((_a2 = file == null ? void 0 : file.path) != null ? _a2 : "");
+    const path = typeof file === "string" ? normSlashes(file) : normSlashes((_a = file == null ? void 0 : file.path) != null ? _a : "");
     if (!path) return null;
     const content = await readText(file, ctx);
     if (!content) return null;
     const lines = String(content).split(/\r?\n/);
-    const cache = (_d = (_c = (_b2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b2.metadataCache) == null ? void 0 : _c.getFileCache) == null ? void 0 : _d.call(_c, typeof file === "string" ? path : file);
+    const cache = (_d = (_c = (_b = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b.metadataCache) == null ? void 0 : _c.getFileCache) == null ? void 0 : _d.call(_c, typeof file === "string" ? path : file);
     if (sp.startsWith("^")) return blockSnippet(lines, sp.slice(1), cache);
     return headingSnippet(lines, sp, cache);
   }
   async function findSameNameNote(cardPath, ctx) {
-    var _a2;
+    var _a;
     const stem = stemOf(cardPath).toLowerCase();
     if (!stem) return null;
     const dir = normDir(ctx == null ? void 0 : ctx.litDir, "");
     const hits = mdFiles(ctx).filter((f) => inDir(f.path, dir) && stemOf(f.path).toLowerCase() === stem).map((f) => normSlashes(f.path)).sort(byDepthThenPath);
-    return (_a2 = hits[0]) != null ? _a2 : null;
+    return (_a = hits[0]) != null ? _a : null;
   }
   function fmListLineInner(line) {
     const m = /^\s*-\s*(.*?)\s*$/.exec(line);
@@ -8850,9 +8814,9 @@ ${sample}`,
     return mm ? mm[1].trim() : v.trim();
   }
   function fmList(text, key) {
-    var _a2;
+    var _a;
     const lines = String(text != null ? text : "").split(/\r?\n/);
-    if (((_a2 = lines[0]) == null ? void 0 : _a2.trim()) !== "---") return [];
+    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return [];
     const head = new RegExp(`^${key}\\s*:`);
     const out = [];
     let inList = false;
@@ -8878,14 +8842,14 @@ ${sample}`,
     if (!scan.bodies.has(key)) scan.bodies.set(key, await bodyOf(path, scan.ctx));
     return scan.bodies.get(key);
   }
-  function itemFromLink(text, source, ctx, sourcePath) {
-    var _a2;
+  function itemFromLink(text, source2, ctx, sourcePath) {
+    var _a;
     const { target, alias, subpath } = splitLinkText(text);
     if (!target) return null;
     const path = resolveLinkPath(target, ctx, sourcePath);
     return {
-      source,
-      kind: classifyKind(target, subpath, false, path, (_a2 = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a2 : ""),
+      source: source2,
+      kind: classifyKind(target, subpath, false, path, (_a = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a : ""),
       target,
       path,
       subpath,
@@ -8915,8 +8879,8 @@ ${sample}`,
     }
     const seen = /* @__PURE__ */ new Set();
     const deduped = items.filter((it) => {
-      var _a2;
-      const k = `${it.source}:${it.path ? `${pathKey(it.path)}#${((_a2 = it.subpath) != null ? _a2 : "").toLowerCase()}` : `missing#${linkKey(it.target, it.subpath)}`}`;
+      var _a;
+      const k = `${it.source}:${it.path ? `${pathKey(it.path)}#${((_a = it.subpath) != null ? _a : "").toLowerCase()}` : `missing#${linkKey(it.target, it.subpath)}`}`;
       if (seen.has(k)) return false;
       seen.add(k);
       return true;
@@ -8937,8 +8901,8 @@ ${sample}`,
     return out;
   }
   function itemId(it) {
-    var _a2;
-    const p = (_a2 = it.path) != null ? _a2 : it.target;
+    var _a;
+    const p = (_a = it.path) != null ? _a : it.target;
     return it.subpath ? `${p}#${it.subpath}` : p;
   }
   function isSelfItem(it, nodePath) {
@@ -8962,9 +8926,9 @@ ${sample}`,
     };
   }
   async function materialize(scan, it, depth, parent, upstream) {
-    var _a2, _b2, _c, _d, _e, _f, _g;
+    var _a, _b, _c, _d, _e, _f, _g;
     if (upstream) {
-      const path2 = normSlashes((_b2 = (_a2 = it.container) != null ? _a2 : it.path) != null ? _b2 : it.target);
+      const path2 = normSlashes((_b = (_a = it.container) != null ? _a : it.path) != null ? _b : it.target);
       return {
         id: path2,
         path: path2,
@@ -9004,8 +8968,8 @@ ${sample}`,
     };
   }
   async function buildMountTree(cardPath, opts) {
-    var _a2, _b2, _c, _d;
-    const ctx = (_a2 = opts == null ? void 0 : opts.ctx) != null ? _a2 : mountCtx();
+    var _a, _b, _c, _d;
+    const ctx = (_a = opts == null ? void 0 : opts.ctx) != null ? _a : mountCtx();
     const direction = (opts == null ? void 0 : opts.direction) === "upstream" ? "upstream" : "downstream";
     const upstream = direction === "upstream";
     const rootPath = normSlashes(String(cardPath != null ? cardPath : "")).replace(/^\/+|\/+$/g, "");
@@ -9044,7 +9008,7 @@ ${sample}`,
       const items = upstream ? await inboundItems(scan, node.path) : await outboundItems(scan, node.path);
       for (const it of items) {
         if (!upstream && isSelfItem(it, node.path)) continue;
-        const id = upstream ? normSlashes((_c = (_b2 = it.container) != null ? _b2 : it.path) != null ? _c : it.target) : itemId(it);
+        const id = upstream ? normSlashes((_c = (_b = it.container) != null ? _b : it.path) != null ? _c : it.target) : itemId(it);
         let child = (_d = nodes.get(id)) != null ? _d : null;
         let fresh = false;
         if (!child) {
@@ -9066,13 +9030,13 @@ ${sample}`,
     const firstIdx = new Map(order.map((id, i) => [id, i]));
     const list = order.map((id) => nodes.get(id)).filter(Boolean);
     list.sort((a, b) => {
-      var _a3, _b3;
-      return a.depth - b.depth || ((_a3 = firstIdx.get(a.id)) != null ? _a3 : 0) - ((_b3 = firstIdx.get(b.id)) != null ? _b3 : 0);
+      var _a2, _b2;
+      return a.depth - b.depth || ((_a2 = firstIdx.get(a.id)) != null ? _a2 : 0) - ((_b2 = firstIdx.get(b.id)) != null ? _b2 : 0);
     });
     const pos = new Map(list.map((n, i) => [n.id, i]));
     const sortedEdges = edges.slice().sort((a, b) => {
-      var _a3, _b3, _c2, _d2;
-      return ((_a3 = pos.get(a.from)) != null ? _a3 : -1) - ((_b3 = pos.get(b.from)) != null ? _b3 : -1) || ((_c2 = pos.get(a.to)) != null ? _c2 : -1) - ((_d2 = pos.get(b.to)) != null ? _d2 : -1);
+      var _a2, _b2, _c2, _d2;
+      return ((_a2 = pos.get(a.from)) != null ? _a2 : -1) - ((_b2 = pos.get(b.from)) != null ? _b2 : -1) || ((_c2 = pos.get(a.to)) != null ? _c2 : -1) - ((_d2 = pos.get(b.to)) != null ? _d2 : -1);
     });
     return { root: root.id, direction, nodes: list, edges: sortedEdges };
   }
@@ -9774,11 +9738,11 @@ ${sample}`,
     return solve;
   }
   function routeEdges(boxes, edges, opts) {
-    var _a2;
+    var _a;
     const out = new Array(edges.length);
     if (edges.length === 0) return out;
     const { CS, INF, STUB, PORT_PAD, PORT_MIN, ASTAR_MAX_NODES } = ROUTE_PARAMS;
-    const strategy = (_a2 = opts == null ? void 0 : opts.strategy) != null ? _a2 : "astar";
+    const strategy = (_a = opts == null ? void 0 : opts.strategy) != null ? _a : "astar";
     const nodes = boxes.map((b) => ({ box: b, rect: rectOf(b) }));
     const byId = /* @__PURE__ */ new Map();
     for (const n of nodes) if (!byId.has(n.box.id)) byId.set(n.box.id, n);
@@ -9958,1768 +9922,14 @@ ${sample}`,
     }
   });
 
-  // src/secondbrain/config.ts
-  var _a, _b, IS_MOBILE;
-  var init_config = __esm({
-    "src/secondbrain/config.ts"() {
-      init_settings_provider();
-      init_storage();
-      IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(typeof navigator !== "undefined" ? navigator.userAgent : "") || ((_b = (_a = globalThis.obsidian) == null ? void 0 : _a.Platform) == null ? void 0 : _b.isMobile) === true;
-    }
-  });
-
-  // src/secondbrain/store-file.ts
-  var chain;
-  var init_store_file = __esm({
-    "src/secondbrain/store-file.ts"() {
-      init_app();
-      init_storage();
-      init_utils();
-      chain = Promise.resolve();
-    }
-  });
-
-  // src/secondbrain/binary.ts
-  var init_binary = __esm({
-    "src/secondbrain/binary.ts"() {
-    }
-  });
-
-  // src/secondbrain/chunk.ts
-  var init_chunk = __esm({
-    "src/secondbrain/chunk.ts"() {
-      init_utils();
-    }
-  });
-
-  // src/secondbrain/vptree.ts
-  var init_vptree = __esm({
-    "src/secondbrain/vptree.ts"() {
-    }
-  });
-
-  // src/secondbrain/parallel.ts
-  var init_parallel = __esm({
-    "src/secondbrain/parallel.ts"() {
-    }
-  });
-
-  // src/secondbrain/tfidf.ts
-  var TFIDF_STOP_WORDS, STOP_SET;
-  var init_tfidf = __esm({
-    "src/secondbrain/tfidf.ts"() {
-      TFIDF_STOP_WORDS = "的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等";
-      STOP_SET = new Set(TFIDF_STOP_WORDS);
-    }
-  });
-
-  // src/secondbrain/text-search.ts
-  var STOP_WORDS;
-  var init_text_search = __esm({
-    "src/secondbrain/text-search.ts"() {
-      STOP_WORDS = new Set("的了是在我有和人这中大为上个国不以到说时要就出会也年对自其");
-    }
-  });
-
-  // src/secondbrain/ollama.ts
-  var init_ollama = __esm({
-    "src/secondbrain/ollama.ts"() {
-      init_config();
-    }
-  });
-
-  // src/secondbrain/vector-store.ts
-  var init_vector_store = __esm({
-    "src/secondbrain/vector-store.ts"() {
-      init_config();
-      init_store_file();
-      init_binary();
-      init_chunk();
-      init_vptree();
-      init_parallel();
-      init_tfidf();
-      init_text_search();
-      init_ollama();
-      init_utils();
-    }
-  });
-
-  // src/secondbrain/ai.ts
-  var init_ai2 = __esm({
-    "src/secondbrain/ai.ts"() {
-      init_ai();
-    }
-  });
-
-  // src/core/ui/icon.ts
-  function uiIcon(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-  var init_icon = __esm({
-    "src/core/ui/icon.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/button.ts
-  var init_button = __esm({
-    "src/core/ui/button.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/chip.ts
-  var init_chip = __esm({
-    "src/core/ui/chip.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/setlist.ts
-  function uiSetlist(opts) {
-    var _a2;
-    const variant = (_a2 = opts.variant) != null ? _a2 : "chips";
-    const box = document.createElement("div");
-    box.className = `bz-setlist bz-setlist--${variant}${opts.className ? ` ${opts.className}` : ""}`;
-    if (opts.items.length === 0) {
-      if (opts.emptyText) {
-        const empty = document.createElement("div");
-        empty.className = "bz-setlist-empty";
-        empty.textContent = opts.emptyText;
-        box.appendChild(empty);
-      }
-      return box;
-    }
-    for (const it of opts.items) {
-      const item = document.createElement("div");
-      item.className = "bz-setlist-item";
-      item.dataset.key = it.key;
-      if (it.sub) item.title = it.sub;
-      if (it.imageUrl) {
-        const img = document.createElement("img");
-        img.className = "bz-setlist-avatar";
-        img.src = it.imageUrl;
-        img.alt = "";
-        img.onerror = () => img.remove();
-        item.appendChild(img);
-      }
-      const text = document.createElement("div");
-      text.className = "bz-setlist-text";
-      const name = document.createElement("div");
-      name.className = "bz-setlist-name";
-      name.textContent = it.label;
-      text.appendChild(name);
-      if (it.sub) {
-        const sub = document.createElement("div");
-        sub.className = "bz-setlist-sub";
-        sub.textContent = it.sub;
-        text.appendChild(sub);
-      }
-      item.appendChild(text);
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "bz-setlist-remove bz-touch-target--xl";
-      remove.textContent = opts.removeLabel || "移除";
-      if (opts.onRemove) {
-        const key = it.key;
-        remove.addEventListener("click", () => {
-          var _a3;
-          return (_a3 = opts.onRemove) == null ? void 0 : _a3.call(opts, key);
-        });
-      }
-      item.appendChild(remove);
-      box.appendChild(item);
-    }
-    return box;
-  }
-  var init_setlist = __esm({
-    "src/core/ui/setlist.ts"() {
-    }
-  });
-
-  // src/core/ui/field.ts
-  var init_field = __esm({
-    "src/core/ui/field.ts"() {
-    }
-  });
-
-  // src/core/ui/slider.ts
-  var init_slider = __esm({
-    "src/core/ui/slider.ts"() {
-    }
-  });
-
-  // src/core/ui/empty.ts
-  function uiEmpty(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-empty";
-    if (opts.icon) {
-      const ic = uiIcon(opts.icon);
-      ic.classList.add("bz-empty-ic");
-      el.appendChild(ic);
-    }
-    const t = document.createElement("div");
-    t.className = "bz-empty-title";
-    t.textContent = opts.title;
-    el.appendChild(t);
-    if (opts.desc) {
-      const d = document.createElement("div");
-      d.className = "bz-empty-desc";
-      d.textContent = opts.desc;
-      el.appendChild(d);
-    }
-    if (opts.actions) el.appendChild(opts.actions);
-    return el;
-  }
-  var init_empty = __esm({
-    "src/core/ui/empty.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/segmented.ts
-  var init_segmented = __esm({
-    "src/core/ui/segmented.ts"() {
-    }
-  });
-
-  // src/core/ui/choice.ts
-  var init_choice = __esm({
-    "src/core/ui/choice.ts"() {
-    }
-  });
-
-  // src/core/ui/cardpick.ts
-  function uiCardChoice(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-cardpick" + (opts.className ? " " + opts.className : "");
-    el.setAttribute("role", "radiogroup");
-    if (opts.label) el.setAttribute("aria-label", opts.label);
-    const btns = /* @__PURE__ */ new Map();
-    let cur = opts.value;
-    const sync = (v) => {
-      cur = v;
-      btns.forEach((b, val) => {
-        const on = val === v;
-        b.classList.toggle("is-on", on);
-        b.setAttribute("aria-checked", String(on));
-      });
-    };
-    opts.options.forEach((o) => {
-      const card = document.createElement("button");
-      card.type = "button";
-      card.className = "bz-cardpick-card" + (o.value === opts.value ? " is-on" : "");
-      card.dataset.value = String(o.value);
-      card.setAttribute("role", "radio");
-      card.setAttribute("aria-checked", String(o.value === opts.value));
-      const prev = document.createElement("div");
-      prev.className = "bz-cardpick-prev" + (o.prevClass ? ` ${o.prevClass}` : "");
-      prev.setAttribute("aria-hidden", "true");
-      prev.style.height = "62px";
-      const name = document.createElement("span");
-      name.className = "bz-cardpick-name";
-      name.textContent = o.label;
-      card.append(prev, name);
-      card.addEventListener("click", () => {
-        if (cur === o.value) return;
-        sync(o.value);
-        opts.onChange(o.value);
-      });
-      btns.set(o.value, card);
-      el.appendChild(card);
-    });
-    el.addEventListener("keydown", (e) => {
-      var _a2;
-      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-      const list = opts.options.map((o) => o.value);
-      const idx = list.indexOf(cur);
-      const next = e.key === "ArrowRight" ? (idx + 1) % list.length : (idx - 1 + list.length) % list.length;
-      (_a2 = btns.get(list[next])) == null ? void 0 : _a2.focus();
-      e.preventDefault();
-    });
-    return { el, setValue: sync };
-  }
-  var init_cardpick = __esm({
-    "src/core/ui/cardpick.ts"() {
-    }
-  });
-
-  // src/core/ui/switch.ts
-  var init_switch = __esm({
-    "src/core/ui/switch.ts"() {
-    }
-  });
-
-  // src/core/ui/select.ts
-  var init_select = __esm({
-    "src/core/ui/select.ts"() {
-      init_icon();
-      init_esc_manager();
-    }
-  });
-
-  // src/core/ui/search.ts
-  var init_search = __esm({
-    "src/core/ui/search.ts"() {
-      init_icon();
-      init_field();
-    }
-  });
-
-  // src/core/ui/mainhead.ts
-  var init_mainhead = __esm({
-    "src/core/ui/mainhead.ts"() {
-      init_button();
-    }
-  });
-
-  // src/core/ui/rail.ts
-  var init_rail = __esm({
-    "src/core/ui/rail.ts"() {
-      init_fake_obsidian();
-      init_icon();
-    }
-  });
-
-  // src/core/ui/mobstrip.ts
-  var init_mobstrip = __esm({
-    "src/core/ui/mobstrip.ts"() {
-    }
-  });
-
-  // src/core/ui/stat.ts
-  var init_stat = __esm({
-    "src/core/ui/stat.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/progress.ts
-  var init_progress = __esm({
-    "src/core/ui/progress.ts"() {
-    }
-  });
-
-  // src/core/ui/popover.ts
-  var init_popover = __esm({
-    "src/core/ui/popover.ts"() {
-      init_icon();
-      init_esc_manager();
-    }
-  });
-
-  // src/core/ui/lightbox.ts
-  var init_lightbox = __esm({
-    "src/core/ui/lightbox.ts"() {
-      init_icon();
-      init_esc_manager();
-      init_z_order();
-    }
-  });
-
-  // src/core/ui/modal.ts
-  var init_modal = __esm({
-    "src/core/ui/modal.ts"() {
-      init_esc_manager();
-      init_z_order();
-    }
-  });
-
-  // src/core/ui/resize.ts
-  function hitRegion(rect, x, y, edge) {
-    const onE = x >= rect.width - edge;
-    const onS = y >= rect.height - edge;
-    const onW = x <= edge;
-    const onN = y <= edge;
-    if (onE && onS) return "se";
-    if (onE && !onW) return "e";
-    if (onS && !onN) return "s";
-    return null;
-  }
-  function uiResizable(el, opts = {}) {
-    var _a2, _b2, _c, _d, _e;
-    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
-    if (isCoarse) {
-      return { flush: () => {
-      }, detach: () => {
-      } };
-    }
-    const edge = (_a2 = opts.edge) != null ? _a2 : 8;
-    const minW = (_b2 = opts.minW) != null ? _b2 : 320;
-    const minH = (_c = opts.minH) != null ? _c : 240;
-    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
-    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
-    let dir = null;
-    let dragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startW = 0;
-    let startH = 0;
-    const cap = (isW) => {
-      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
-      return Math.floor(Math.min(isW ? maxW : maxH, view));
-    };
-    const persist = opts.persist;
-    let persistTimer = null;
-    let lastW = 0;
-    let lastH = 0;
-    if (persist == null ? void 0 : persist.load) {
-      const saved = persist.load();
-      if (saved && saved.w > 0 && saved.h > 0) {
-        lastW = Math.min(Math.max(saved.w, minW), cap(true));
-        lastH = Math.min(Math.max(saved.h, minH), cap(false));
-        el.style.width = lastW + "px";
-        el.style.height = lastH + "px";
-      }
-    }
-    const regionAt = (e) => {
-      const rect = el.getBoundingClientRect();
-      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
-    };
-    const setCursor = (d) => {
-      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
-    };
-    const onHover = (e) => {
-      if (dragging) return;
-      setCursor(regionAt(e));
-    };
-    const onDragMove = (e) => {
-      if (!dragging) return;
-      e.preventDefault();
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      let w = dir === "e" || dir === "se" ? startW + dx : startW;
-      let h = dir === "s" || dir === "se" ? startH + dy : startH;
-      w = Math.min(Math.max(w, minW), cap(true));
-      h = Math.min(Math.max(h, minH), cap(false));
-      el.style.width = w + "px";
-      el.style.height = h + "px";
-      if (opts.onChange) opts.onChange(w, h);
-      if (persist == null ? void 0 : persist.save) {
-        lastW = w;
-        lastH = h;
-        if (persistTimer !== null) clearTimeout(persistTimer);
-        persistTimer = setTimeout(() => {
-          var _a3;
-          persistTimer = null;
-          (_a3 = persist.save) == null ? void 0 : _a3.call(persist, w, h);
-        }, 300);
-      }
-    };
-    const onMouseLeave = () => {
-      if (!dragging) setCursor(null);
-    };
-    const onMouseDown = (e) => {
-      const d = regionAt(e);
-      if (!d) return;
-      e.preventDefault();
-      dir = d;
-      dragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startW = el.getBoundingClientRect().width;
-      startH = el.getBoundingClientRect().height;
-      document.body.style.userSelect = "none";
-    };
-    const onMouseUp = () => {
-      if (!dragging) return;
-      dragging = false;
-      dir = null;
-      document.body.style.userSelect = "";
-      setCursor(null);
-      swallowNextClick();
-    };
-    el.addEventListener("mousemove", onHover);
-    el.addEventListener("mouseleave", onMouseLeave);
-    el.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("mousemove", onDragMove);
-    document.addEventListener("mouseup", onMouseUp);
-    const flush = () => {
-      if (persistTimer === null) return;
-      clearTimeout(persistTimer);
-      persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
-    };
-    return {
-      flush,
-      detach: () => {
-        flush();
-        el.removeEventListener("mousemove", onHover);
-        el.removeEventListener("mouseleave", onMouseLeave);
-        el.removeEventListener("mousedown", onMouseDown);
-        document.removeEventListener("mousemove", onDragMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        document.body.style.userSelect = "";
-        setCursor(null);
-      }
-    };
-  }
-  var init_resize = __esm({
-    "src/core/ui/resize.ts"() {
-      init_dom();
-    }
-  });
-
-  // src/core/ui/splitter.ts
-  function uiVSplitter(opts) {
-    var _a2, _b2;
-    const left = opts.left;
-    const minLeft = (_a2 = opts.minLeft) != null ? _a2 : 220;
-    const minRight = (_b2 = opts.minRight) != null ? _b2 : 320;
-    const persist = opts.persist;
-    const el = document.createElement("div");
-    el.className = "bz-vsplit";
-    el.setAttribute("role", "separator");
-    el.setAttribute("aria-orientation", "vertical");
-    el.title = "拖动调整两侧宽度";
-    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
-    if (isCoarse) {
-      return { el, restore: () => {
-      }, flush: () => {
-      }, detach: () => {
-      } };
-    }
-    let dragging = false;
-    let startX = 0;
-    let startW = 0;
-    let persistTimer = null;
-    let lastW = 0;
-    let restored = false;
-    const availW = () => {
-      const parent = left.parentElement;
-      if (!parent) return 0;
-      return parent.clientWidth - el.offsetWidth;
-    };
-    const clampW = (w) => {
-      const avail = availW();
-      const max = avail > 0 ? avail - minRight : Number.POSITIVE_INFINITY;
-      return Math.min(Math.max(w, minLeft), Math.max(minLeft, max));
-    };
-    const applyW = (w) => {
-      left.style.width = w + "px";
-    };
-    const debSave = (w) => {
-      if (!(persist == null ? void 0 : persist.save)) return;
-      lastW = w;
-      if (persistTimer !== null) clearTimeout(persistTimer);
-      persistTimer = setTimeout(() => {
-        var _a3;
-        persistTimer = null;
-        (_a3 = persist.save) == null ? void 0 : _a3.call(persist, w);
-      }, 300);
-    };
-    const restore = () => {
-      if (restored || !(persist == null ? void 0 : persist.load) || !el.isConnected) return;
-      if (availW() <= 0) return;
-      const saved = persist.load();
-      restored = true;
-      if (saved != null && saved > 0) {
-        const w = clampW(saved);
-        applyW(w);
-        lastW = w;
-      }
-    };
-    const onDragMove = (e) => {
-      if (!dragging) return;
-      e.preventDefault();
-      const w = clampW(startW + (e.clientX - startX));
-      if (w === lastW) return;
-      applyW(w);
-      lastW = w;
-      if (opts.onChange) opts.onChange(w);
-      debSave(w);
-    };
-    const onMouseDown = (e) => {
-      if (e.button !== 0) return;
-      e.preventDefault();
-      dragging = true;
-      startX = e.clientX;
-      startW = left.getBoundingClientRect().width;
-      el.classList.add("is-drag");
-      document.body.style.userSelect = "none";
-    };
-    const onMouseUp = () => {
-      if (!dragging) return;
-      dragging = false;
-      el.classList.remove("is-drag");
-      document.body.style.userSelect = "";
-      swallowNextClick();
-    };
-    document.addEventListener("mousemove", onDragMove);
-    el.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("mouseup", onMouseUp);
-    const flush = () => {
-      if (persistTimer === null) return;
-      clearTimeout(persistTimer);
-      persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && lastW > 0) persist.save(lastW);
-    };
-    return {
-      el,
-      restore,
-      flush,
-      detach: () => {
-        flush();
-        document.removeEventListener("mousemove", onDragMove);
-        el.removeEventListener("mousedown", onMouseDown);
-        document.removeEventListener("mouseup", onMouseUp);
-        document.body.style.userSelect = "";
-        el.classList.remove("is-drag");
-      }
-    };
-  }
-  var init_splitter = __esm({
-    "src/core/ui/splitter.ts"() {
-      init_dom();
-    }
-  });
-
-  // src/core/ui/index.ts
-  var init_ui = __esm({
-    "src/core/ui/index.ts"() {
-      init_icon();
-      init_icons();
-      init_button();
-      init_chip();
-      init_setlist();
-      init_field();
-      init_slider();
-      init_empty();
-      init_segmented();
-      init_choice();
-      init_cardpick();
-      init_switch();
-      init_select();
-      init_search();
-      init_mainhead();
-      init_rail();
-      init_mobstrip();
-      init_stat();
-      init_progress();
-      init_popover();
-      init_suggest();
-      init_lightbox();
-      init_modal();
-      init_resize();
-      init_splitter();
-    }
-  });
-
-  // src/core/path-picker.ts
-  function isExcludedPath(p) {
-    if (!p) return false;
-    for (const seg of p.split("/")) {
-      if (EXCLUDED_DIR_NAMES.has(seg)) return true;
-    }
-    return false;
-  }
-  function foldersFromFiles(paths) {
-    const out = /* @__PURE__ */ new Set([""]);
-    for (const p of paths) {
-      if (isExcludedPath(p)) continue;
-      const sep = p.lastIndexOf("/");
-      if (sep === -1) continue;
-      let dir = p.slice(0, sep);
-      while (dir) {
-        if (!isExcludedPath(dir)) out.add(dir);
-        const i = dir.lastIndexOf("/");
-        dir = i === -1 ? "" : dir.slice(0, i);
-      }
-    }
-    return [...out].sort();
-  }
-  async function collectVaultFolders(app) {
-    var _a2, _b2, _c, _d;
-    const out = /* @__PURE__ */ new Set([""]);
-    try {
-      const files = ((_c = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
-      for (const p of foldersFromFiles(files)) out.add(p);
-    } catch (e) {
-    }
-    const adapter = (_d = app == null ? void 0 : app.vault) == null ? void 0 : _d.adapter;
-    if (adapter && typeof adapter.list === "function") {
-      const walk = async (dir, depth) => {
-        var _a3;
-        if (depth > 40) return;
-        let listed = null;
-        try {
-          listed = await adapter.list(dir);
-        } catch (e) {
-          if (dir === "") {
-            try {
-              listed = await adapter.list("/");
-            } catch (e2) {
-              return;
-            }
-          } else {
-            return;
-          }
-        }
-        for (const f of (_a3 = listed == null ? void 0 : listed.folders) != null ? _a3 : []) {
-          const p = String(f).replace(/^\/+|\/+$/g, "");
-          if (!p) continue;
-          if (isExcludedPath(p)) continue;
-          if (!out.has(p)) out.add(p);
-          await walk(p, depth + 1);
-        }
-      };
-      try {
-        await walk("", 0);
-      } catch (e) {
-      }
-    }
-    return [...out].sort();
-  }
-  function normalizePicked(list) {
-    const out = [];
-    for (const item of list) {
-      const raw = String(item);
-      if (raw === "") {
-        if (!out.includes("")) out.push("");
-        continue;
-      }
-      const trimmed = raw.trim();
-      if (trimmed === "") continue;
-      const p = trimmed.replace(/^\/+|\/+$/g, "");
-      if (p === "") {
-        if (!out.includes("")) out.push("");
-        continue;
-      }
-      if (!out.includes(p)) out.push(p);
-    }
-    return out;
-  }
-  function renderPathChips(container, selected, onChange, emptyText = "未选择", onChipClick) {
-    container.innerHTML = "";
-    container.classList.add("bz-path-picker-chips");
-    if (selected.length === 0) {
-      if (!emptyText) return;
-      const empty = document.createElement("span");
-      empty.className = "bz-path-picker-chips-empty";
-      empty.textContent = emptyText;
-      container.appendChild(empty);
-      return;
-    }
-    for (const path of selected) {
-      const label = path === "" ? "（库根目录）" : path;
-      const chip2 = document.createElement("span");
-      chip2.className = "bz-path-picker-chip" + (onChipClick ? " bz-path-picker-chip--click" : "");
-      chip2.title = label;
-      const name = document.createElement("span");
-      name.className = "bz-path-picker-chip-name";
-      name.textContent = label;
-      if (onChipClick) name.onclick = () => onChipClick(path);
-      const x = document.createElement("button");
-      x.className = "bz-path-picker-chip-x";
-      x.textContent = "✕";
-      x.setAttribute("aria-label", `移除 ${label}`);
-      x.onclick = () => onChange(selected.filter((p) => p !== path));
-      chip2.appendChild(name);
-      chip2.appendChild(x);
-      container.appendChild(chip2);
-    }
-  }
-  function renderPathSettingRow(opts) {
-    const readValue = () => {
-      const v = opts.value;
-      return Array.isArray(v) ? [...v] : v ? [v] : [];
-    };
-    let current = readValue();
-    const setting = new Setting(opts.parent).setName(opts.name);
-    if (opts.desc) setting.setDesc(opts.desc);
-    setting.settingEl.classList.add("bz-path-picker-setting-row");
-    const chipsWrap = document.createElement("div");
-    chipsWrap.className = "bz-path-picker-chips--setting";
-    const apply = (list) => {
-      const res = opts.onChange(list);
-      if (res && typeof res.then === "function") {
-        return Promise.resolve(res).then((final) => {
-          current = Array.isArray(final) ? final : list;
-          renderAll2();
-        });
-      }
-      current = Array.isArray(res) ? res : list;
-      renderAll2();
-    };
-    const openPicker = () => openPathPicker({
-      title: opts.pickerTitle || opts.name,
-      desc: opts.pickerDesc,
-      mode: opts.mode,
-      selected: current,
-      okText: opts.okText,
-      onConfirm: (list) => {
-        void apply(list);
-      }
-    });
-    const render = () => renderPathChips(chipsWrap, current, (next) => {
-      void apply(next);
-    }, "", openPicker);
-    let btn = null;
-    setting.addButton((b) => {
-      b.setButtonText(opts.buttonText || (opts.mode === "multi" ? "添加…" : "选择…")).onClick(openPicker);
-      b.buttonEl.classList.add("bz-path-picker-btn--slim");
-      btn = b.buttonEl;
-    });
-    const control = setting.settingEl.querySelector(".setting-item-control");
-    if (control) control.appendChild(chipsWrap);
-    const syncBtn = () => {
-      setting.settingEl.dataset.filled = current.length > 0 ? "1" : "0";
-      if (!btn || !control) return;
-      if (current.length === 0) {
-        if (!btn.isConnected) control.appendChild(btn);
-      } else if (btn.isConnected) {
-        btn.remove();
-      }
-    };
-    const renderAll2 = () => {
-      syncBtn();
-      render();
-    };
-    const refresh = () => {
-      current = readValue();
-      renderAll2();
-    };
-    renderAll2();
-    return { refresh, settingEl: setting.settingEl };
-  }
-  function closePathPicker() {
-    if (currentMask) {
-      currentMask.remove();
-      currentMask = null;
-    }
-    if (currentPopup) {
-      currentPopup.remove();
-      currentPopup = null;
-    }
-    if (currentHandle) {
-      currentHandle.unregister();
-      currentHandle = null;
-    }
-    if (focusTimer !== null) {
-      window.clearTimeout(focusTimer);
-      focusTimer = null;
-    }
-  }
-  function openPathPicker(opts) {
-    var _a2, _b2, _c;
-    closePathPicker();
-    const app = getApp();
-    const mode = opts.mode || "single";
-    const selected = new Set(normalizePicked(opts.selected || []));
-    const pinnedAtOpen = [...selected];
-    const { mask, popup } = createOverlay({
-      maskId: "bz-path-picker-mask",
-      popupId: "bz-path-picker-popup",
-      // ticket 133：桌面/移动端统一一张居中卡——左右各 16px 外边距，宽视口封顶 440px（不分两套样式）
-      width: "min(calc(100vw - 32px), 440px)",
-      maxWidth: 440,
-      onMaskClick: () => closePathPicker()
-    });
-    currentMask = mask;
-    currentPopup = popup;
-    const skinClasses = (opts.skinClassName || "").split(/\s+/).filter(Boolean);
-    if (skinClasses.length) {
-      mask.classList.add(...skinClasses);
-      popup.classList.add(...skinClasses);
-    }
-    popup.classList.add("bz-path-picker");
-    popup.style.height = "min(560px, 82vh)";
-    const head = document.createElement("div");
-    head.className = "bz-path-picker-head";
-    const title = document.createElement("h3");
-    title.className = "bz-path-picker-title";
-    title.textContent = opts.title || "选择文件夹";
-    head.appendChild(title);
-    if (opts.desc) {
-      const desc = document.createElement("div");
-      desc.className = "bz-path-picker-desc";
-      desc.textContent = opts.desc;
-      head.appendChild(desc);
-    }
-    const search = document.createElement("input");
-    search.type = "text";
-    search.className = "bz-path-picker-search";
-    search.placeholder = "搜索目录…";
-    search.spellcheck = false;
-    search.setAttribute("aria-label", "搜索目录");
-    const listEl2 = document.createElement("div");
-    listEl2.className = "bz-path-picker-list";
-    const state2 = { folders: [], q: "" };
-    const foot = document.createElement("div");
-    foot.className = "bz-path-picker-foot";
-    const selinfo = document.createElement("span");
-    selinfo.className = "bz-path-picker-selinfo";
-    const btns = document.createElement("div");
-    btns.className = "bz-path-picker-foot-btns";
-    foot.appendChild(selinfo);
-    foot.appendChild(btns);
-    const mkBtn = (label, primary, onclick) => {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.className = "bz-path-picker-btn" + (primary ? " bz-path-picker-btn--primary" : "");
-      b.onclick = onclick;
-      btns.appendChild(b);
-      return b;
-    };
-    if (mode === "multi") mkBtn("清空", false, () => {
-      selected.clear();
-      renderList2();
-      updateSel();
-    });
-    mkBtn(opts.okText || "下一步", true, () => {
-      const list = normalizePicked([...selected]);
-      closePathPicker();
-      opts.onConfirm(list);
-    });
-    function orderedList() {
-      const pinned = [];
-      const rest = [];
-      const pinSet = new Set(pinnedAtOpen);
-      for (const f of state2.folders) {
-        if (pinSet.has(f)) pinned.push(f);
-        else rest.push(f);
-      }
-      const rootIdx = rest.indexOf("");
-      const root = rootIdx >= 0 ? rest.splice(rootIdx, 1)[0] : null;
-      rest.reverse();
-      return [...pinned, ...root === null ? [] : [root], ...rest];
-    }
-    function renderList2() {
-      listEl2.innerHTML = "";
-      const q2 = state2.q.trim().toLowerCase();
-      const exact = !!q2 && state2.folders.includes(q2);
-      const LIMIT = 300;
-      let n = 0;
-      let total = 0;
-      for (const folder of orderedList()) {
-        if (q2 && !exact && !folder.toLowerCase().includes(q2)) continue;
-        total++;
-        if (n >= LIMIT) continue;
-        n++;
-        const on = selected.has(folder);
-        const row = document.createElement("div");
-        row.className = "bz-path-picker-row" + (on ? " bz-path-picker-row--sel" : "");
-        row.dataset.path = folder;
-        row.setAttribute("role", mode === "multi" ? "checkbox" : "option");
-        row.setAttribute("aria-checked", on ? "true" : "false");
-        const box = document.createElement("span");
-        box.className = "bz-path-picker-check";
-        box.textContent = on ? "✓" : "";
-        const name = document.createElement("span");
-        name.className = "bz-path-picker-name";
-        name.textContent = folder === "" ? "（库根目录）" : folder;
-        name.title = folder === "" ? "（库根目录）" : folder;
-        row.appendChild(box);
-        row.appendChild(name);
-        row.onclick = () => {
-          if (mode === "single") {
-            selected.clear();
-            selected.add(folder);
-          } else if (selected.has(folder)) {
-            selected.delete(folder);
-          } else {
-            selected.add(folder);
-          }
-          renderList2();
-          updateSel();
-        };
-        listEl2.appendChild(row);
-      }
-      if (!total) {
-        const empty = document.createElement("div");
-        empty.className = "bz-path-picker-empty";
-        empty.textContent = "没有匹配的目录";
-        listEl2.appendChild(empty);
-      } else if (total > LIMIT) {
-        const more = document.createElement("div");
-        more.className = "bz-path-picker-empty";
-        more.textContent = `已显示前 ${LIMIT} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
-        listEl2.appendChild(more);
-      }
-    }
-    function updateSel() {
-      if (mode === "single") {
-        const first = [...selected][0];
-        selinfo.textContent = first === void 0 ? "未选择" : first === "" ? "已选（库根目录）" : `已选 ${first}`;
-      } else {
-        selinfo.textContent = `已选 ${selected.size} 项`;
-      }
-    }
-    search.oninput = () => {
-      state2.q = search.value;
-      renderList2();
-    };
-    try {
-      const files = ((_c = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
-      state2.folders = foldersFromFiles(files);
-    } catch (e) {
-    }
-    void collectVaultFolders(app).then((folders) => {
-      if (!mask.isConnected) return;
-      state2.folders = folders;
-      popup.dataset.ready = "1";
-      renderList2();
-    });
-    renderList2();
-    updateSel();
-    popup.append(head, search, listEl2, foot);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    currentHandle = escManager.register("bz-path-picker", {
-      isVisible: () => !!currentMask,
-      close: () => closePathPicker()
-    });
-    focusTimer = window.setTimeout(() => {
-      focusTimer = null;
-      if (mask.isConnected) search.focus();
-    }, 30);
-  }
-  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer;
-  var init_path_picker = __esm({
-    "src/core/path-picker.ts"() {
-      init_fake_obsidian();
-      init_app();
-      init_dom();
-      init_esc_manager();
-      EXCLUDED_DIR_NAMES = /* @__PURE__ */ new Set([".obsidian", ".trash", "node_modules", ".git"]);
-      currentMask = null;
-      currentPopup = null;
-      currentHandle = null;
-      focusTimer = null;
-    }
-  });
-
-  // src/core/settings-schema.ts
-  function bindValue(binding) {
-    if ("key" in binding) {
-      const key = binding.key;
-      return {
-        read: () => getSettings()[key],
-        write: (v) => {
-          getSettings()[key] = v;
-        },
-        persist: () => saveSettings()
-      };
-    }
-    return { read: () => binding.get(), write: (v) => binding.set(v), persist: () => binding.save() };
-  }
-  function currentSnapshot() {
-    return tryGetSettings();
-  }
-  function parseClampedNumber(raw, min, max) {
-    const trimmed = raw.trim();
-    if (trimmed === "") return null;
-    const n = Number(trimmed);
-    if (!Number.isFinite(n)) return null;
-    let out = n;
-    if (min !== void 0) out = Math.max(min, out);
-    if (max !== void 0) out = Math.min(max, out);
-    return out;
-  }
-  function renderSettingsInto(container, schema) {
-    var _a2;
-    const entries = [];
-    const customRefreshes = [];
-    const reevaluate = () => {
-      const snap = currentSnapshot();
-      for (const e of entries) {
-        e.el.classList.toggle("bz-setting-hidden", e.visibleWhen ? !e.visibleWhen(snap) : false);
-      }
-      for (const fn of customRefreshes) {
-        try {
-          fn();
-        } catch (e) {
-        }
-      }
-      refreshSettingsGroupCounts(container);
-      markSettingSplitRows(container);
-    };
-    const newRowSetting = (body, row) => {
-      const setting = new Setting(body).setName(row.name);
-      if (row.desc) setting.setDesc(row.desc);
-      if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
-      return setting;
-    };
-    const renderTextualRow = (body, row) => {
-      var _a3;
-      const ctx = { rowEl: body, refreshVisibility: reevaluate };
-      const setting = newRowSetting(body, row);
-      const isNumber = row.type === "number";
-      const acc = isNumber ? bindValue(row.binding) : bindValue(row.binding);
-      const changeCb = row.onChange;
-      const initial = String((_a3 = acc.read()) != null ? _a3 : "");
-      let pending = null;
-      let last = initial;
-      let dirty2 = false;
-      const warn = new CommitWarn(initial, row.onCommit);
-      const commit = () => {
-        if (pending !== null) {
-          clearTimeout(pending);
-          pending = null;
-        }
-        if (!dirty2) return;
-        void acc.persist();
-        warn.fire(last);
-        reevaluate();
-      };
-      let currentText = null;
-      const addInto = (t) => {
-        currentText = t;
-        t.setValue(initial);
-        const place = (snap) => typeof row.placeholder === "function" ? row.placeholder(snap) : row.placeholder;
-        const applyPlaceholder = () => {
-          if (t.setPlaceholder) {
-            const p = place(currentSnapshot());
-            if (p !== void 0) t.setPlaceholder(p);
-          }
-        };
-        applyPlaceholder();
-        t.onChange((v) => {
-          dirty2 = true;
-          if (isNumber) {
-            const n = parseClampedNumber(v, row.min, row.max);
-            if (n === null) return;
-            acc.write(n);
-          } else {
-            acc.write(v);
-          }
-          last = v;
-          changeCb == null ? void 0 : changeCb(isNumber ? acc.read() : v, ctx);
-          if (pending !== null) clearTimeout(pending);
-          pending = setTimeout(commit, TEXT_COMMIT_DELAY);
-        });
-        const inputEl = t.inputEl;
-        if (inputEl) {
-          if (isNumber) {
-            const num2 = row;
-            inputEl.type = "number";
-            if (num2.min !== void 0) inputEl.min = String(num2.min);
-            if (num2.max !== void 0) inputEl.max = String(num2.max);
-            if (num2.step !== void 0) inputEl.step = String(num2.step);
-          }
-          inputEl.addEventListener("blur", commit);
-          if (row.type !== "textarea") {
-            inputEl.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") commit();
-            });
-          }
-        }
-        if (typeof row.placeholder === "function") {
-          const origReevaluate = ctx.refreshVisibility;
-          ctx.refreshVisibility = () => {
-            applyPlaceholder();
-            origReevaluate();
-          };
-        }
-        if (row.refreshKey !== void 0) {
-          const ref = row.refreshKey;
-          customRefreshes.push(() => {
-            if (currentText) {
-              const snap = currentSnapshot();
-              const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
-              if (currentText.setValue) {
-                dirty2 = false;
-                currentText.setValue(String(fresh != null ? fresh : ""));
-              }
-            }
-          });
-        }
-      };
-      const actions = row.actions;
-      if (actions) {
-        for (const a of actions) {
-          setting.addButton((b) => {
-            if (a.cta) b.setCta();
-            b.setButtonText(a.text).onClick(() => {
-              void (async () => {
-                var _a4;
-                await a.onClick(last, ctx);
-                if (currentText && currentText.setValue) {
-                  dirty2 = false;
-                  currentText.setValue(String((_a4 = acc.read()) != null ? _a4 : ""));
-                }
-                reevaluate();
-              })();
-            });
-          });
-        }
-      }
-      if (row.type === "text") setting.addText(addInto);
-      else if (row.type === "textarea") setting.addTextArea(addInto);
-      else setting.addText(addInto);
-    };
-    const renderRow2 = (body, rowArg, parentToggleKey) => {
-      var _a3, _b2, _c;
-      const ctx = { rowEl: body, refreshVisibility: reevaluate };
-      let row = rowArg;
-      if (row.isChild && parentToggleKey) {
-        row = {
-          ...row,
-          visibleWhen: (snap) => snap[parentToggleKey] === true && (rowArg.visibleWhen ? rowArg.visibleWhen(snap) : true)
-        };
-      }
-      switch (row.type) {
-        case "custom": {
-          const wrap = document.createElement("div");
-          body.appendChild(wrap);
-          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
-          row.render(wrap, { rowEl: wrap, refreshVisibility: reevaluate });
-          if (row.onRefresh) customRefreshes.push(() => row.onRefresh({ rowEl: wrap, refreshVisibility: reevaluate }));
-          return;
-        }
-        case "path": {
-          const acc = bindValue(row.binding);
-          const multi = row.mode === "multi";
-          const initialRaw = acc.read();
-          const initialKey = multi ? JSON.stringify(initialRaw != null ? initialRaw : []) : String(initialRaw != null ? initialRaw : "");
-          const warn = new CommitWarn(initialKey, row.onCommit);
-          const wrap = document.createElement("div");
-          body.appendChild(wrap);
-          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
-          renderPathSettingRow({
-            parent: wrap,
-            name: row.name,
-            desc: row.desc,
-            mode: row.mode,
-            value: multi ? Array.isArray(initialRaw) ? [...initialRaw] : [] : String(initialRaw != null ? initialRaw : ""),
-            pickerTitle: row.pickerTitle,
-            pickerDesc: row.pickerDesc,
-            buttonText: row.buttonText,
-            okText: row.okText,
-            emptyText: row.emptyText,
-            onChange: (list) => {
-              var _a4;
-              const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
-              acc.write(v);
-              void acc.persist();
-              const res = (_a4 = row.onChange) == null ? void 0 : _a4.call(row, list, ctx);
-              warn.fire(multi ? JSON.stringify(v) : String(v));
-              reevaluate();
-              if (res && typeof res.then === "function") {
-                return Promise.resolve(res).then(
-                  (final) => Array.isArray(final) ? final : list
-                );
-              }
-              return Array.isArray(res) ? res : void 0;
-            }
-          });
-          return;
-        }
-        case "toggle": {
-          const acc = bindValue(row.binding);
-          const setting = newRowSetting(body, row);
-          setting.addToggle(
-            (t) => t.setValue(acc.read() === true).onChange(async (v) => {
-              var _a4;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
-            })
-          );
-          return;
-        }
-        case "select": {
-          const acc = bindValue(row.binding);
-          const setting = newRowSetting(body, row);
-          setting.addDropdown((dd) => {
-            var _a4;
-            for (const opt of row.options) dd.addOption(opt.value, opt.label);
-            dd.setValue(String((_a4 = acc.read()) != null ? _a4 : "") || row.options[0].value);
-            dd.onChange(async (v) => {
-              var _a5;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a5 = row.onChange) == null ? void 0 : _a5.call(row, v, ctx);
-            });
-          });
-          return;
-        }
-        case "choiceCards": {
-          const acc = bindValue(row.binding);
-          const setting = newRowSetting(body, row);
-          const pick = uiCardChoice({
-            value: String((_a3 = acc.read()) != null ? _a3 : "") || row.options[0].value,
-            options: row.options,
-            label: row.name,
-            onChange: async (v) => {
-              var _a4;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
-            }
-          });
-          setting.controlEl.appendChild(pick.el);
-          return;
-        }
-        case "slider": {
-          const acc = bindValue(row.binding);
-          const setting = newRowSetting(body, row);
-          setting.addSlider((sl) => {
-            var _a4;
-            sl.setLimits(row.min, row.max, (_a4 = row.step) != null ? _a4 : 1);
-            sl.setValue(Number(acc.read()) || 0);
-            sl.setDynamicTooltip();
-            sl.onChange(async (v) => {
-              var _a5;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a5 = row.onChange) == null ? void 0 : _a5.call(row, v, ctx);
-            });
-          });
-          for (const a of (_b2 = row.actions) != null ? _b2 : []) {
-            setting.addButton((b) => {
-              if (a.cta) b.setCta();
-              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
-            });
-          }
-          return;
-        }
-        case "button": {
-          const setting = newRowSetting(body, row);
-          setting.addButton((b) => {
-            if (row.cta) b.setCta();
-            b.setButtonText(row.buttonText).onClick(() => row.onClick(ctx));
-          });
-          setting.settingEl.classList.add("bz-setting-action-row");
-          return;
-        }
-        case "info": {
-          const setting = newRowSetting(body, row);
-          for (const a of (_c = row.actions) != null ? _c : []) {
-            setting.addButton((b) => {
-              if (a.cta) b.setCta();
-              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
-            });
-          }
-          return;
-        }
-        case "list": {
-          const wrap = document.createElement("div");
-          wrap.className = "bz-setlist-wrap";
-          body.appendChild(wrap);
-          const setting = new Setting(wrap).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
-          const readItems = () => typeof row.items === "function" ? row.items() : row.items;
-          const renderItems = () => {
-            var _a4;
-            (_a4 = wrap.querySelector(".bz-setlist")) == null ? void 0 : _a4.remove();
-            wrap.appendChild(uiSetlist({
-              items: readItems(),
-              variant: row.variant,
-              removeLabel: row.removeLabel,
-              emptyText: row.emptyText,
-              onRemove: (key) => {
-                void (async () => {
-                  var _a5;
-                  const remaining = readItems().map((x) => x.key).filter((k) => k !== key);
-                  try {
-                    await ((_a5 = row.onChange) == null ? void 0 : _a5.call(row, remaining, ctx));
-                  } catch (e) {
-                    notifySaveError(e, row.name || "列表项");
-                  } finally {
-                    reevaluate();
-                  }
-                })();
-              }
-            }));
-          };
-          renderItems();
-          customRefreshes.push(renderItems);
-          return;
-        }
-        case "text":
-        case "textarea":
-        case "number":
-          renderTextualRow(body, row);
-          return;
-      }
-    };
-    const renderGroupRows = (body, rows) => {
-      var _a3, _b2;
-      const firstToggleKey = (_b2 = (_a3 = rows.find((r) => r.type === "toggle" && "key" in r.binding)) == null ? void 0 : _a3.binding.key) != null ? _b2 : null;
-      for (const row of rows) renderRow2(body, row, firstToggleKey);
-    };
-    for (const group of schema.groups) {
-      if (group.icon) {
-        const body = createSettingsGroup(container, { icon: group.icon, name: group.name });
-        const groupEl = (_a2 = body.parentElement) != null ? _a2 : container;
-        if (group.visibleWhen) entries.push({ el: groupEl, visibleWhen: group.visibleWhen });
-        renderGroupRows(body, group.rows);
-      } else {
-        const title = document.createElement("div");
-        title.className = "bz-setting-section-title";
-        title.textContent = group.name;
-        container.appendChild(title);
-        if (group.visibleWhen) entries.push({ el: title, visibleWhen: group.visibleWhen });
-        renderGroupRows(container, group.rows);
-      }
-    }
-    reevaluate();
-    return { refresh: reevaluate };
-  }
-  var TEXT_COMMIT_DELAY, CommitWarn;
-  var init_settings_schema = __esm({
-    "src/core/settings-schema.ts"() {
-      init_fake_obsidian();
-      init_settings_provider();
-      init_path_picker();
-      init_settings_modal();
-      init_ui();
-      init_notice();
-      TEXT_COMMIT_DELAY = 800;
-      CommitWarn = class {
-        constructor(initial, onCommit) {
-          this.initial = initial;
-          this.onCommit = onCommit;
-          this.warnedInitial = null;
-        }
-        fire(current) {
-          if (!this.onCommit) return;
-          if (current !== this.initial) {
-            if (this.warnedInitial !== this.initial) {
-              this.warnedInitial = this.initial;
-              this.onCommit();
-            }
-          } else {
-            this.warnedInitial = null;
-          }
-        }
-      };
-    }
-  });
-
-  // src/core/settings-modal.ts
-  function createSettingsGroup(container, opts) {
-    const group = document.createElement("div");
-    group.className = "bz-settings-group";
-    const head = document.createElement("div");
-    head.className = "bz-settings-group-head";
-    const icon = document.createElement("span");
-    icon.className = "bz-settings-group-icon";
-    setIcon(icon, opts.icon);
-    const name = document.createElement("span");
-    name.className = "bz-settings-group-name";
-    name.textContent = opts.name;
-    const count = document.createElement("span");
-    count.className = "bz-settings-group-count";
-    count.textContent = "0 项";
-    head.append(icon, name, count);
-    const body = document.createElement("div");
-    body.className = "bz-settings-group-body";
-    group.append(head, body);
-    container.appendChild(group);
-    return body;
-  }
-  function isItemHidden(el) {
-    let cur = el;
-    while (cur && cur !== document.body) {
-      if (cur.classList.contains("bz-setting-hidden")) return true;
-      if (cur.style.display === "none") return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-  function refreshSettingsGroupCounts(content) {
-    content.querySelectorAll(".bz-settings-group").forEach((g) => {
-      const body = g.querySelector(".bz-settings-group-body");
-      const countEl = g.querySelector(".bz-settings-group-count");
-      if (!body || !countEl) return;
-      const n = [...body.querySelectorAll(".setting-item")].filter((el) => {
-        const h = el;
-        return !h.classList.contains("bz-setting-action-row") && !isItemHidden(h);
-      }).length;
-      countEl.textContent = `${n} 项`;
-      countEl.style.display = n > 0 ? "" : "none";
-    });
-  }
-  function markSettingSplitRows(container) {
-    container.querySelectorAll(".setting-item").forEach((el) => {
-      if (el.classList.contains("bz-path-picker-setting-row")) return;
-      const ctl = el.querySelector(".setting-item-control");
-      el.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
-    });
-  }
-  function closeSettingsModal() {
-    var _a2;
-    if (currentModal) {
-      const m = currentModal;
-      currentModal = null;
-      m.dispose();
-      (_a2 = m.onClose) == null ? void 0 : _a2.call(m);
-    }
-  }
-  function openSettingsModal(opts) {
-    var _a2;
-    closeSettingsModal();
-    const prevActive = document.activeElement;
-    const { mask, popup } = createOverlay({
-      maskId: "bz-settings-modal-mask",
-      popupId: "bz-settings-modal-popup",
-      // z-index 动态发号（ADR-0067）：原静态层规家族表随动态层级制退役，
-      // 全站规则只有一条——谁后显示谁在上（settings-modal 每次打开新建 DOM，创建即显示）
-      maxWidth: opts.maxWidth,
-      onMaskClick: () => closeSettingsModal()
-    });
-    const header = document.createElement("div");
-    header.className = "bz-settings-header";
-    const title = document.createElement("h3");
-    title.className = "bz-settings-title";
-    title.textContent = opts.title;
-    header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    renderSettingsInto(content, (_a2 = opts.schema) != null ? _a2 : { groups: [] });
-    const hasVisibleItem = Array.from(content.querySelectorAll(".setting-item")).some(
-      (el) => !el.classList.contains("bz-setting-action-row") && !isItemHidden(el)
-    );
-    if (!hasVisibleItem) {
-      content.innerHTML = "";
-      const empty = document.createElement("div");
-      empty.className = "bz-settings-empty";
-      empty.textContent = opts.emptyText || "暂无设置项";
-      if (opts.emptyDesc) {
-        const desc = document.createElement("div");
-        desc.className = "bz-settings-empty-desc";
-        desc.textContent = opts.emptyDesc;
-        empty.appendChild(desc);
-      }
-      content.appendChild(empty);
-    }
-    popup.appendChild(header);
-    popup.appendChild(content);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-modal", "true");
-    const firstFocusable = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR)).find((el) => {
-      if (isItemHidden(el)) return false;
-      if (isMobileEnv()) {
-        const tag = el.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return false;
-      }
-      return true;
-    });
-    if (firstFocusable) firstFocusable.focus();
-    const handle = escManager.register("bz-settings-modal", {
-      isVisible: () => !!currentModal,
-      close: () => closeSettingsModal()
-    });
-    currentModal = {
-      mask,
-      popup,
-      onClose: opts.onClose,
-      dispose: () => {
-        mask.remove();
-        popup.remove();
-        handle.unregister();
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-    };
-  }
-  var FOCUSABLE_SELECTOR, currentModal;
-  var init_settings_modal = __esm({
-    "src/core/settings-modal.ts"() {
-      init_fake_obsidian();
-      init_dom();
-      init_esc_manager();
-      init_mobile();
-      init_settings_schema();
-      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-      currentModal = null;
-    }
-  });
-
-  // src/secondbrain/whitelist.ts
-  var init_whitelist = __esm({
-    "src/secondbrain/whitelist.ts"() {
-    }
-  });
-
-  // src/secondbrain/local-ip.ts
-  var init_local_ip = __esm({
-    "src/secondbrain/local-ip.ts"() {
-    }
-  });
-
-  // src/secondbrain/render.ts
-  var init_render = __esm({
-    "src/secondbrain/render.ts"() {
-    }
-  });
-
-  // src/secondbrain/panel.ts
-  var init_panel = __esm({
-    "src/secondbrain/panel.ts"() {
-      init_notice();
-      init_z_order();
-      init_mobile();
-      init_ui();
-      init_flow_dialog();
-      init_esc_manager();
-      init_utils();
-      init_settings_provider();
-      init_settings_modal();
-      init_config();
-      init_whitelist();
-      init_local_ip();
-      init_store_file();
-      init_render();
-      init_render();
-    }
-  });
-
-  // src/secondbrain/ui-tools.ts
-  var init_ui_tools = __esm({
-    "src/secondbrain/ui-tools.ts"() {
-      init_fake_obsidian();
-      init_app();
-    }
-  });
-
-  // src/secondbrain/float-window.ts
-  var init_float_window = __esm({
-    "src/secondbrain/float-window.ts"() {
-      init_esc_manager();
-      init_z_order();
-      init_ui_tools();
-    }
-  });
-
-  // src/secondbrain/context.ts
-  var init_context = __esm({
-    "src/secondbrain/context.ts"() {
-    }
-  });
-
-  // src/secondbrain/reference-panel.ts
-  var init_reference_panel = __esm({
-    "src/secondbrain/reference-panel.ts"() {
-      init_utils();
-      init_notice();
-      init_z_order();
-      init_float_window();
-      init_config();
-      init_context();
-      init_ui_tools();
-      init_render();
-      init_ui();
-    }
-  });
-
-  // src/secondbrain/chat-panel.ts
-  var init_chat_panel = __esm({
-    "src/secondbrain/chat-panel.ts"() {
-      init_dom();
-      init_esc_manager();
-      init_flow_dialog();
-      init_ui();
-      init_config();
-      init_ui_tools();
-      init_ai2();
-      init_store_file();
-      init_render();
-    }
-  });
-
-  // src/secondbrain/mobile-panel.ts
-  var init_mobile_panel = __esm({
-    "src/secondbrain/mobile-panel.ts"() {
-      init_utils();
-      init_esc_manager();
-      init_notice();
-      init_ui();
-      init_config();
-      init_z_order();
-      init_context();
-      init_ui_tools();
-      init_ai2();
-      init_render();
-      init_store_file();
-    }
-  });
-
-  // src/secondbrain/link-agent/data.ts
-  var init_data3 = __esm({
-    "src/secondbrain/link-agent/data.ts"() {
-      init_utils();
-      init_store_file();
-      init_settings_provider();
-    }
-  });
-
-  // src/secondbrain/link-agent/pipeline.ts
-  var JUDGE_PROMPT_PREFIX;
-  var init_pipeline = __esm({
-    "src/secondbrain/link-agent/pipeline.ts"() {
-      init_utils();
-      init_notice();
-      init_settings_provider();
-      init_config();
-      init_ai2();
-      init_data3();
-      JUDGE_PROMPT_PREFIX = [
-        "你是笔记库的双链裁判。给定一篇新笔记的档案卡和若干候选笔记的档案卡，",
-        "逐一判断候选与新笔记是否存在实质的知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。",
-        "标准：只链实质关联，存疑不链；宁缺勿滥。",
-        '输出要求：严格 JSON 数组 [{"id":<候选编号>,"reason":"一句话理由"}]，按关联强度降序；无关联输出 []；不要输出 JSON 以外的任何文字。'
-      ].join("");
-    }
-  });
-
-  // src/secondbrain/link-agent/watch.ts
-  var LINK_SWEEP_INTERVAL_MS;
-  var init_watch = __esm({
-    "src/secondbrain/link-agent/watch.ts"() {
-      init_domain_bus();
-      init_notice();
-      init_settings_provider();
-      init_config();
-      init_data3();
-      init_pipeline();
-      LINK_SWEEP_INTERVAL_MS = 30 * 60 * 1e3;
-    }
-  });
-
-  // src/secondbrain/index.ts
+  // src/secondbrain/readonly.ts
   function exportVectorSearch() {
-    if (!store) return null;
-    const s = store;
-    return {
-      isIndexReady: () => s.isIndexReady(),
-      search: (query, topK) => s.search(query, topK)
-    };
+    return source;
   }
-  var store;
-  var init_secondbrain = __esm({
-    "src/secondbrain/index.ts"() {
-      init_domain_bus();
-      init_notice();
-      init_link_now();
-      init_settings_provider();
-      init_config();
-      init_vector_store();
-      init_ai2();
-      init_panel();
-      init_reference_panel();
-      init_chat_panel();
-      init_mobile_panel();
-      init_pipeline();
-      init_watch();
-      store = null;
+  var source;
+  var init_readonly = __esm({
+    "src/secondbrain/readonly.ts"() {
+      source = null;
     }
   });
 
@@ -11775,8 +9985,8 @@ ${sample}`,
     return String(path != null ? path : "").replace(/\\/g, "/").replace(/^\.\//, "").replace(/\.md$/i, "").trim().toLowerCase();
   }
   function suggestKey(s) {
-    var _a2;
-    return normalizeAnchorText((_a2 = s.anchor) == null ? void 0 : _a2.text) + "\0" + normalizeTargetPath(s.target);
+    var _a;
+    return normalizeAnchorText((_a = s.anchor) == null ? void 0 : _a.text) + "\0" + normalizeTargetPath(s.target);
   }
   function matchesExisting(target, existing) {
     const t = normalizeTargetPath(target);
@@ -11886,7 +10096,7 @@ ${sample}`,
     return out;
   }
   function buildJudgePrompt(anchors, candidates) {
-    const lines = [JUDGE_PROMPT_PREFIX2, "", "## 锚点与候选"];
+    const lines = [JUDGE_PROMPT_PREFIX, "", "## 锚点与候选"];
     for (let i = 0; i < anchors.length; i++) {
       lines.push(`### a${i + 1}：${anchors[i].text}`);
       const group = candidates.filter((c) => c.anchorIdx === i);
@@ -11902,7 +10112,7 @@ ${sample}`,
     return lines.join("\n");
   }
   function parseJudgePicks(raw) {
-    var _a2;
+    var _a;
     const cleaned = String(raw || "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
     let arr = null;
     try {
@@ -11930,25 +10140,25 @@ ${sample}`,
         anchor,
         target,
         score: Math.max(0, Math.min(1, score)),
-        reason: String((_a2 = it.reason) != null ? _a2 : "").replace(/\s+/g, " ").trim().slice(0, REASON_MAX_CHARS)
+        reason: String((_a = it.reason) != null ? _a : "").replace(/\s+/g, " ").trim().slice(0, REASON_MAX_CHARS)
       });
     }
     return out;
   }
   async function generateSuggestions(cardPath, ctx, opts) {
-    var _a2, _b2, _c, _d;
+    var _a, _b, _c, _d;
     const empty = (status) => ({ status, suggestions: [] });
     if (isMobileEnv()) return empty("no-index");
     const searchApi = exportVectorSearch();
     if (!searchApi || !searchApi.isIndexReady()) return empty("no-index");
-    const auto = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeMountAutoSuggest) !== false;
+    const auto = ((_a = tryGetSettings()) == null ? void 0 : _a.knowledgeMountAutoSuggest) !== false;
     if (!auto && !(opts == null ? void 0 : opts.force)) return empty("off");
     try {
       await getAIProvider();
     } catch (e) {
       return empty("no-ai");
     }
-    const file = (_d = (_c = (_b2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b2.vault) == null ? void 0 : _c.getAbstractFileByPath) == null ? void 0 : _d.call(_c, cardPath);
+    const file = (_d = (_c = (_b = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b.vault) == null ? void 0 : _c.getAbstractFileByPath) == null ? void 0 : _d.call(_c, cardPath);
     let content = "";
     if (file) {
       try {
@@ -12039,7 +10249,7 @@ ${sample}`,
     return { status: "fresh", suggestions, generatedAt };
   }
   function mergeSuggestions(tree, run) {
-    var _a2;
+    var _a;
     const nodes = Array.isArray(tree == null ? void 0 : tree.nodes) ? tree.nodes : [];
     const edges = Array.isArray(tree == null ? void 0 : tree.edges) ? tree.edges : [];
     const rootNode2 = nodes.find((n) => n.id === (tree == null ? void 0 : tree.root));
@@ -12062,7 +10272,7 @@ ${sample}`,
         kind: s.kind,
         source: "ai",
         depth: rootDepth + 1,
-        anchor: (_a2 = s.anchor) != null ? _a2 : null,
+        anchor: (_a = s.anchor) != null ? _a : null,
         missing: false,
         suggested: true,
         attached: false,
@@ -12073,7 +10283,7 @@ ${sample}`,
     }
     return { ...tree, nodes: [...nodes, ...ghostNodes], edges: [...edges, ...ghostEdges] };
   }
-  var SUGGEST_MIN_SCORE, SUGGEST_MIN_ANCHOR_CHARS, SUGGEST_MAX_ANCHORS, SUGGEST_TOPK, SUGGEST_PER_ANCHOR_CANDIDATES, SUGGEST_MAX_CANDIDATES, SUGGEST_JUDGE_MAX_TOKENS, REASON_MAX_CHARS, SUGGEST_CACHE_FILE, HAS_MEANING_RE, WIKILINK_RE, LEADING_MARK_RE, JUDGE_PROMPT_PREFIX2;
+  var SUGGEST_MIN_SCORE, SUGGEST_MIN_ANCHOR_CHARS, SUGGEST_MAX_ANCHORS, SUGGEST_TOPK, SUGGEST_PER_ANCHOR_CANDIDATES, SUGGEST_MAX_CANDIDATES, SUGGEST_JUDGE_MAX_TOKENS, REASON_MAX_CHARS, SUGGEST_CACHE_FILE, HAS_MEANING_RE, WIKILINK_RE, LEADING_MARK_RE, JUDGE_PROMPT_PREFIX;
   var init_mount_suggest = __esm({
     "src/knowledge/mount-suggest.ts"() {
       init_ai();
@@ -12081,7 +10291,7 @@ ${sample}`,
       init_settings_provider();
       init_storage();
       init_utils();
-      init_secondbrain();
+      init_readonly();
       SUGGEST_MIN_SCORE = 0.7;
       SUGGEST_MIN_ANCHOR_CHARS = 6;
       SUGGEST_MAX_ANCHORS = 12;
@@ -12094,7 +10304,7 @@ ${sample}`,
       HAS_MEANING_RE = /[\p{L}\p{N}]/u;
       WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
       LEADING_MARK_RE = /^(?:#{1,6}\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
-      JUDGE_PROMPT_PREFIX2 = [
+      JUDGE_PROMPT_PREFIX = [
         "你是卡片盒挂载树的建议裁判。给定一张主卡正文里的若干锚点（词/句），以及每个锚点经向量召回得到的候选目标，",
         "逐一判断「锚点」与「候选目标」是否存在实质知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。",
         "标准：只推实质关联，弱关联（仅任务级/提及级）不推，存疑不推；宁缺勿滥。",
@@ -12106,8 +10316,8 @@ ${sample}`,
 
   // src/knowledge/mount-canvas.ts
   function mountKindColor(kind) {
-    var _a2;
-    const fallback = (_a2 = KIND_COLOR[kind]) != null ? _a2 : KIND_COLOR.para;
+    var _a;
+    const fallback = (_a = KIND_COLOR[kind]) != null ? _a : KIND_COLOR.para;
     return `var(--bz-kb-mt-c-${kind}, ${fallback})`;
   }
   function clampMountScale(scale) {
@@ -12137,18 +10347,18 @@ ${sample}`,
     return `[[${core}]]`;
   }
   function crumbTrail(nodes, id) {
-    var _a2, _b2;
+    var _a, _b;
     if (!id) return [];
     const byId = new Map(nodes.map((n) => [n.id, n]));
-    const chain2 = [];
+    const chain = [];
     const seen = /* @__PURE__ */ new Set();
-    let cur = (_a2 = byId.get(id)) != null ? _a2 : null;
+    let cur = (_a = byId.get(id)) != null ? _a : null;
     while (cur && !seen.has(cur.id)) {
       seen.add(cur.id);
-      chain2.unshift(cur);
-      cur = cur.parent ? (_b2 = byId.get(cur.parent)) != null ? _b2 : null : null;
+      chain.unshift(cur);
+      cur = cur.parent ? (_b = byId.get(cur.parent)) != null ? _b : null : null;
     }
-    return chain2;
+    return chain;
   }
   function lineageOf(edges, id) {
     const push = (map, key, val) => {
@@ -12164,12 +10374,12 @@ ${sample}`,
       push(par, e.to, e.from);
     }
     const walk = (map) => {
-      var _a2;
+      var _a;
       const out = /* @__PURE__ */ new Set([id]);
       const stack = [id];
       while (stack.length) {
         const cur = stack.pop();
-        for (const next of (_a2 = map.get(cur)) != null ? _a2 : []) {
+        for (const next of (_a = map.get(cur)) != null ? _a : []) {
           if (out.has(next)) continue;
           out.add(next);
           stack.push(next);
@@ -12180,8 +10390,8 @@ ${sample}`,
     return { anc: walk(par), desc: walk(chd) };
   }
   function anchorNeedles(anchor) {
-    var _a2;
-    const raw = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "");
+    var _a;
+    const raw = String((_a = anchor == null ? void 0 : anchor.text) != null ? _a : "");
     if (!raw) return [];
     const out = [raw];
     if (raw.includes("[[")) {
@@ -12204,14 +10414,14 @@ ${sample}`,
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
   function insertLinkAtAnchor(body, anchor, link) {
-    var _a2, _b2, _c;
+    var _a, _b, _c;
     const src = String(body != null ? body : "");
     const wiki = `[[${String(link != null ? link : "").trim().replace(/\.md$/i, "")}]]`;
     if (wiki === "[[]]") return src;
     if (alreadyLinked(src, link)) return src;
-    const text = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "").trim();
+    const text = String((_a = anchor == null ? void 0 : anchor.text) != null ? _a : "").trim();
     if (text) {
-      const at = relocateAnchor(src, { from: (_b2 = anchor == null ? void 0 : anchor.from) != null ? _b2 : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
+      const at = relocateAnchor(src, { from: (_b = anchor == null ? void 0 : anchor.from) != null ? _b : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
       if (at !== null && at >= 0) return src.slice(0, at + text.length) + wiki + src.slice(at + text.length);
       const compact = text.replace(/\s+/g, "");
       const flat = src.replace(/\s+/g, "");
@@ -12242,14 +10452,14 @@ ${sample}`,
 `;
   }
   function defaultDeps(over) {
-    var _a2, _b2, _c, _d;
+    var _a, _b, _c, _d;
     return {
-      measure: (_a2 = over == null ? void 0 : over.measure) != null ? _a2 : (el) => ({ w: el.offsetWidth || 0, h: el.offsetHeight || 0 }),
-      notice: (_b2 = over == null ? void 0 : over.notice) != null ? _b2 : (msg, type) => notice(msg, type != null ? type : "info"),
+      measure: (_a = over == null ? void 0 : over.measure) != null ? _a : (el) => ({ w: el.offsetWidth || 0, h: el.offsetHeight || 0 }),
+      notice: (_b = over == null ? void 0 : over.notice) != null ? _b : (msg, type) => notice(msg, type != null ? type : "info"),
       openNote: (_c = over == null ? void 0 : over.openNote) != null ? _c : (path) => {
-        var _a3, _b3, _c2;
+        var _a2, _b2, _c2;
         try {
-          void ((_c2 = (_b3 = (_a3 = getApp()) == null ? void 0 : _a3.workspace) == null ? void 0 : _b3.openLinkText) == null ? void 0 : _c2.call(_b3, path, "", false, { active: true }));
+          void ((_c2 = (_b2 = (_a2 = getApp()) == null ? void 0 : _a2.workspace) == null ? void 0 : _b2.openLinkText) == null ? void 0 : _c2.call(_b2, path, "", false, { active: true }));
         } catch (e) {
         }
       },
@@ -12257,10 +10467,10 @@ ${sample}`,
     };
   }
   async function writeClipboard(text) {
-    var _a2, _b2;
+    var _a, _b;
     try {
       const nav = typeof navigator !== "undefined" ? navigator : null;
-      if ((_a2 = nav == null ? void 0 : nav.clipboard) == null ? void 0 : _a2.writeText) {
+      if ((_a = nav == null ? void 0 : nav.clipboard) == null ? void 0 : _a.writeText) {
         await nav.clipboard.writeText(text);
         return;
       }
@@ -12273,7 +10483,7 @@ ${sample}`,
       ta.style.opacity = "0";
       document.body.appendChild(ta);
       ta.select();
-      (_b2 = document.execCommand) == null ? void 0 : _b2.call(document, "copy");
+      (_b = document.execCommand) == null ? void 0 : _b.call(document, "copy");
       ta.remove();
     } catch (e) {
     }
@@ -12357,8 +10567,8 @@ ${sample}`,
   }
   function bindShellEvents(st) {
     st.win.addEventListener("click", (e) => {
-      var _a2, _b2;
-      const btn = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-mt-act]");
+      var _a, _b;
+      const btn = (_b = (_a = e.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, "[data-mt-act]");
       if (!btn) return;
       const act = btn.getAttribute("data-mt-act") || "";
       if (act === "close") closeMountTree();
@@ -12381,11 +10591,11 @@ ${sample}`,
     });
     const canvas = st.canvasEl;
     canvas.addEventListener("pointerdown", (e) => {
-      var _a2, _b2, _c, _d;
+      var _a, _b, _c, _d;
       if (st.menu) closeMenu();
       st.longPressFired = false;
       st.downPt = { x: num(e.clientX), y: num(e.clientY) };
-      st.downNode = (_c = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, ".bz-kb-mt-node")) != null ? _c : null;
+      st.downNode = (_c = (_b = (_a = e.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".bz-kb-mt-node")) != null ? _c : null;
       st.drag = { x: num(e.clientX), y: num(e.clientY), tx: st.tx, ty: st.ty };
       try {
         (_d = canvas.setPointerCapture) == null ? void 0 : _d.call(canvas, e.pointerId);
@@ -12418,13 +10628,13 @@ ${sample}`,
     canvas.addEventListener("pointerup", endDrag);
     canvas.addEventListener("pointercancel", endDrag);
     canvas.addEventListener("click", (e) => {
-      var _a2, _b2, _c;
+      var _a, _b, _c;
       if (st.longPressFired) {
         st.longPressFired = false;
         return;
       }
       if (st.downPt && Math.hypot(num(e.clientX) - st.downPt.x, num(e.clientY) - st.downPt.y) > DRAG_SLOP) return;
-      const nodeEl = (_c = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, ".bz-kb-mt-node")) != null ? _c : st.downNode;
+      const nodeEl = (_c = (_b = (_a = e.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".bz-kb-mt-node")) != null ? _c : st.downNode;
       const id = (nodeEl == null ? void 0 : nodeEl.getAttribute("data-mt-id")) || "";
       st.selected = id && st.selected !== id ? id : null;
       applySelection(st);
@@ -12433,17 +10643,17 @@ ${sample}`,
     canvas.addEventListener(
       "wheel",
       (e) => {
-        var _a2, _b2, _c, _d;
-        (_a2 = e.preventDefault) == null ? void 0 : _a2.call(e);
-        const rect = (_c = (_b2 = canvas.getBoundingClientRect) == null ? void 0 : _b2.call(canvas)) != null ? _c : { left: 0, top: 0 };
+        var _a, _b, _c, _d;
+        (_a = e.preventDefault) == null ? void 0 : _a.call(e);
+        const rect = (_c = (_b = canvas.getBoundingClientRect) == null ? void 0 : _b.call(canvas)) != null ? _c : { left: 0, top: 0 };
         zoomAt(st, num(e.clientX) - num(rect.left), num(e.clientY) - num(rect.top), ((_d = e.deltaY) != null ? _d : 0) < 0 ? 1.1 : 0.9);
       },
       { passive: false }
     );
     canvas.addEventListener("contextmenu", (e) => {
-      var _a2, _b2, _c, _d, _e, _f;
-      (_a2 = e.preventDefault) == null ? void 0 : _a2.call(e);
-      const nodeEl = (_d = (_c = (_b2 = e.target) == null ? void 0 : _b2.closest) == null ? void 0 : _c.call(_b2, ".bz-kb-mt-node")) != null ? _d : null;
+      var _a, _b, _c, _d, _e, _f;
+      (_a = e.preventDefault) == null ? void 0 : _a.call(e);
+      const nodeEl = (_d = (_c = (_b = e.target) == null ? void 0 : _b.closest) == null ? void 0 : _c.call(_b, ".bz-kb-mt-node")) != null ? _d : null;
       if (nodeEl) {
         openNodeMenu(nodeEl.getAttribute("data-mt-id") || "", num(e.clientX), num(e.clientY));
         return;
@@ -12461,8 +10671,8 @@ ${sample}`,
     canvas.addEventListener(
       "touchstart",
       (e) => {
-        var _a2;
-        if (((_a2 = e.touches) == null ? void 0 : _a2.length) === 2) {
+        var _a;
+        if (((_a = e.touches) == null ? void 0 : _a.length) === 2) {
           cancelLongPress(st);
           st.pinch = { d: touchDistance(e.touches), scale: st.scale };
         }
@@ -12472,9 +10682,9 @@ ${sample}`,
     canvas.addEventListener(
       "touchmove",
       (e) => {
-        var _a2, _b2, _c, _d;
-        if (!st.pinch || ((_a2 = e.touches) == null ? void 0 : _a2.length) !== 2) return;
-        (_b2 = e.preventDefault) == null ? void 0 : _b2.call(e);
+        var _a, _b, _c, _d;
+        if (!st.pinch || ((_a = e.touches) == null ? void 0 : _a.length) !== 2) return;
+        (_b = e.preventDefault) == null ? void 0 : _b.call(e);
         const d = touchDistance(e.touches);
         if (!st.pinch.d) return;
         const rect = (_d = (_c = canvas.getBoundingClientRect) == null ? void 0 : _c.call(canvas)) != null ? _d : { left: 0, top: 0 };
@@ -12489,14 +10699,14 @@ ${sample}`,
       st.pinch = null;
     });
     st.win.addEventListener("mouseover", (e) => {
-      var _a2, _b2, _c;
+      var _a, _b, _c;
       const el = e.target;
-      const dot = (_a2 = el == null ? void 0 : el.closest) == null ? void 0 : _a2.call(el, "[data-mt-edge]");
+      const dot = (_a = el == null ? void 0 : el.closest) == null ? void 0 : _a.call(el, "[data-mt-edge]");
       if (dot) {
         setHover(st, dot.getAttribute("data-mt-edge") || "", true);
         return;
       }
-      const edgeEl = (_b2 = el == null ? void 0 : el.closest) == null ? void 0 : _b2.call(el, ".bz-kb-mt-edge");
+      const edgeEl = (_b = el == null ? void 0 : el.closest) == null ? void 0 : _b.call(el, ".bz-kb-mt-edge");
       if (edgeEl) {
         setHover(st, edgeEl.getAttribute("data-mt-key") || "", true);
         return;
@@ -12505,9 +10715,9 @@ ${sample}`,
       if (nodeEl) setHover(st, edgeKeyTo(st, nodeEl.getAttribute("data-mt-id") || ""), true);
     });
     st.win.addEventListener("mouseout", (e) => {
-      var _a2;
+      var _a;
       const el = e.target;
-      if ((_a2 = el == null ? void 0 : el.closest) == null ? void 0 : _a2.call(el, "[data-mt-edge], .bz-kb-mt-edge, .bz-kb-mt-node")) setHover(st, "", false);
+      if ((_a = el == null ? void 0 : el.closest) == null ? void 0 : _a.call(el, "[data-mt-edge], .bz-kb-mt-edge, .bz-kb-mt-node")) setHover(st, "", false);
     });
   }
   function num(v) {
@@ -12538,7 +10748,7 @@ ${sample}`,
     return !!state && state.mask.style.display !== "none";
   }
   function closeMountTree() {
-    var _a2;
+    var _a;
     const st = state;
     if (!st) return;
     closeMenu();
@@ -12549,7 +10759,7 @@ ${sample}`,
     st.token++;
     st.loading = false;
     st.loadingEl.style.display = "none";
-    (_a2 = st.esc) == null ? void 0 : _a2.unregister();
+    (_a = st.esc) == null ? void 0 : _a.unregister();
     st.esc = null;
   }
   async function openMountTree(cardPath, opts) {
@@ -12592,7 +10802,7 @@ ${sample}`,
     await load(st, force);
   }
   async function load(st, force) {
-    var _a2;
+    var _a;
     const token = ++st.token;
     const path = st.cardPath;
     const direction = st.direction;
@@ -12612,7 +10822,7 @@ ${sample}`,
       tree = { root: path, direction, nodes: [], edges: [] };
     }
     if (token !== st.token) return;
-    const autoOn = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeMountAutoSuggest) !== false;
+    const autoOn = ((_a = tryGetSettings()) == null ? void 0 : _a.knowledgeMountAutoSuggest) !== false;
     let run = null;
     if (autoOn) {
       run = await runSuggest(st, path, ctx, force);
@@ -12658,12 +10868,12 @@ ${sample}`,
     renderTop(st);
   }
   function renderTop(st) {
-    var _a2, _b2, _c;
-    const rootNode2 = (_a2 = st.tree.nodes.find((n) => n.id === st.tree.root)) != null ? _a2 : null;
-    const crumbs = crumbTrail(st.tree.nodes, (_b2 = st.selected) != null ? _b2 : st.tree.root);
-    const chain2 = crumbs.length ? crumbs : rootNode2 ? [rootNode2] : [];
-    st.win.querySelector("#bz-kb-mt-crumbs").innerHTML = chain2.map((n, i) => {
-      const last = i === chain2.length - 1;
+    var _a, _b, _c;
+    const rootNode2 = (_a = st.tree.nodes.find((n) => n.id === st.tree.root)) != null ? _a : null;
+    const crumbs = crumbTrail(st.tree.nodes, (_b = st.selected) != null ? _b : st.tree.root);
+    const chain = crumbs.length ? crumbs : rootNode2 ? [rootNode2] : [];
+    st.win.querySelector("#bz-kb-mt-crumbs").innerHTML = chain.map((n, i) => {
+      const last = i === chain.length - 1;
       const label = escapeHtml(displayTitle(n));
       const sep = i === 0 ? "" : '<span class="bz-kb-mt-sep">›</span>';
       if (last && !st.selected) return `${sep}<span class="bz-kb-mt-crumb is-cur">${label}</span>`;
@@ -12689,10 +10899,10 @@ ${sample}`,
     return Math.max(0, laid - Math.min(laid, LAYOUT_PARAMS.MAX_NODES));
   }
   function requestBuildIndex(st) {
-    var _a2;
+    var _a;
     try {
       const app = getApp();
-      if (typeof ((_a2 = app == null ? void 0 : app.commands) == null ? void 0 : _a2.executeCommandById) === "function") {
+      if (typeof ((_a = app == null ? void 0 : app.commands) == null ? void 0 : _a.executeCommandById) === "function") {
         app.commands.executeCommandById("bz-secondbrain-rebuild-index");
         st.deps.notice("已转交「重建索引」——建完回到白板点「重新生成」");
         return;
@@ -12702,14 +10912,14 @@ ${sample}`,
     st.deps.notice("未建向量索引：请先在第二大脑执行「重建索引」，再回白板点「重新生成」");
   }
   async function renderCanvas(st) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     const worldEl = st.worldEl;
     for (const el of Array.from(worldEl.querySelectorAll(".bz-kb-mt-node"))) el.remove();
     st.svg.innerHTML = "";
     st.cards.clear();
     st.sizes.clear();
     st.edges = [];
-    const nodes = (_a2 = st.tree.nodes) != null ? _a2 : [];
+    const nodes = (_a = st.tree.nodes) != null ? _a : [];
     if (nodes.length === 0) {
       st.world = { w: CANVAS_FALLBACK_W, h: CANVAS_FALLBACK_H };
       syncWorld(st);
@@ -12731,7 +10941,7 @@ ${sample}`,
       if (!el) continue;
       const raw = st.deps.measure(el, node.kind);
       const w = (raw == null ? void 0 : raw.w) && raw.w > 0 ? raw.w : widthOf(st, node);
-      const h = (raw == null ? void 0 : raw.h) && raw.h > 0 ? raw.h : (_b2 = HEIGHT_BY_KIND[node.kind]) != null ? _b2 : HEIGHT_BY_KIND.card;
+      const h = (raw == null ? void 0 : raw.h) && raw.h > 0 ? raw.h : (_b = HEIGHT_BY_KIND[node.kind]) != null ? _b : HEIGHT_BY_KIND.card;
       st.sizes.set(node.id, { w, h });
     }
     const laid = nodes.filter((n) => !n.attached && st.sizes.has(n.id));
@@ -12795,9 +11005,9 @@ ${sample}`,
     applySelection(st);
   }
   function widthOf(st, node) {
-    var _a2;
+    var _a;
     if (node.id && node.id === st.tree.root) return WIDTH_ROOT;
-    return (_a2 = WIDTH_BY_KIND[node.kind]) != null ? _a2 : WIDTH_BY_KIND.card;
+    return (_a = WIDTH_BY_KIND[node.kind]) != null ? _a : WIDTH_BY_KIND.card;
   }
   function syncWorld(st) {
     const { w, h } = st.world;
@@ -12809,7 +11019,7 @@ ${sample}`,
     applyTransform(st);
   }
   function buildCard(st, node, rootId) {
-    var _a2, _b2, _c;
+    var _a, _b, _c;
     const el = document.createElement("div");
     const ghost = st.ghosts.has(node.id);
     const stale = !!node.missing || ghost && !ghostTargetExists(st, node);
@@ -12833,8 +11043,8 @@ ${sample}`,
     ttl.title = "点击标题折 / 展这张卡";
     ttl.setAttribute("data-mt-fold", "1");
     head.appendChild(ttl);
-    head.appendChild(chip(node.source === "ai" ? "AI 建议" : (_a2 = KIND_LABEL[node.kind]) != null ? _a2 : "", "kind"));
-    if (node.source && node.source !== "ai") head.appendChild(chip((_b2 = SOURCE_LABEL[node.source]) != null ? _b2 : "", `src src-${node.source}`));
+    head.appendChild(chip(node.source === "ai" ? "AI 建议" : (_a = KIND_LABEL[node.kind]) != null ? _a : "", "kind"));
+    if (node.source && node.source !== "ai") head.appendChild(chip((_b = SOURCE_LABEL[node.source]) != null ? _b : "", `src src-${node.source}`));
     if (node.id === rootId) head.appendChild(chip("主 卡", "root"));
     if (ghost) {
       const reason = ((_c = st.ghosts.get(node.id)) == null ? void 0 : _c.reason) || "";
@@ -12867,7 +11077,7 @@ ${sample}`,
     return s;
   }
   async function fillBody(st, node, cardEl) {
-    var _a2;
+    var _a;
     const bodyEl = cardEl.querySelector(".bz-kb-mt-body");
     if (!bodyEl) return;
     if (node.attached && st.folded.has(node.id)) return;
@@ -12889,7 +11099,7 @@ ${sample}`,
       bodyEl.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
       return;
     }
-    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    const app = (_a = st.ctx.app) != null ? _a : getApp();
     let ok = false;
     if (app == null ? void 0 : app.vault) {
       try {
@@ -12938,10 +11148,10 @@ ${sample}`,
     return out;
   }
   function tagBodyLinks(st, node, bodyEl) {
-    var _a2;
+    var _a;
     const links = Array.from(bodyEl.querySelectorAll("a.internal-link, a[data-href]"));
     if (!links.length) return;
-    const outgoing = ((_a2 = st.tree.edges) != null ? _a2 : []).filter(
+    const outgoing = ((_a = st.tree.edges) != null ? _a : []).filter(
       (e) => (st.direction === "downstream" ? e.from : e.to) === node.id
     );
     if (!outgoing.length) return;
@@ -12969,11 +11179,11 @@ ${sample}`,
     return null;
   }
   function ghostTargetExists(st, node) {
-    var _a2, _b2, _c;
+    var _a, _b, _c;
     if (!node.suggested) return true;
-    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    const app = (_a = st.ctx.app) != null ? _a : getApp();
     try {
-      return !!((_c = (_b2 = app == null ? void 0 : app.vault) == null ? void 0 : _b2.getAbstractFileByPath) == null ? void 0 : _c.call(_b2, node.path));
+      return !!((_c = (_b = app == null ? void 0 : app.vault) == null ? void 0 : _b.getAbstractFileByPath) == null ? void 0 : _c.call(_b, node.path));
     } catch (e) {
       return true;
     }
@@ -12987,15 +11197,15 @@ ${sample}`,
     return map;
   }
   function placeAnchors(st, list, keys) {
-    var _a2, _b2, _c, _d;
+    var _a, _b, _c, _d;
     const out = /* @__PURE__ */ new Map();
     const cursor = /* @__PURE__ */ new Map();
     const kindById = new Map(st.tree.nodes.map((n) => [n.id, n.kind]));
     for (const e of list) {
       const id = edgeId(e.from, e.to);
-      const key = (_a2 = keys.get(id)) != null ? _a2 : "";
+      const key = (_a = keys.get(id)) != null ? _a : "";
       const bearerId = st.direction === "downstream" ? e.from : e.to;
-      const colorKind = (_b2 = kindById.get(st.direction === "downstream" ? e.to : e.from)) != null ? _b2 : "para";
+      const colorKind = (_b = kindById.get(st.direction === "downstream" ? e.to : e.from)) != null ? _b : "para";
       const cardEl = st.cards.get(bearerId);
       if (!cardEl || cardEl.style.display === "none") continue;
       const bodyEl = cardEl.querySelector(".bz-kb-mt-body");
@@ -13007,11 +11217,11 @@ ${sample}`,
     return out;
   }
   function measureDot(st, cardEl, bodyEl, anchor, key, colorKind, cursor) {
-    var _a2;
+    var _a;
     if (!anchor) return null;
     const needles = anchorNeedles(anchor);
     if (needles.length === 0) return null;
-    const dot = insertAnchorDot(bodyEl, needles, key, (_a2 = cursor.get(bodyEl)) != null ? _a2 : 0);
+    const dot = insertAnchorDot(bodyEl, needles, key, (_a = cursor.get(bodyEl)) != null ? _a : 0);
     if (!dot) return null;
     cursor.set(bodyEl, Number(dot.getAttribute("data-mt-at") || 0));
     dot.style.color = mountKindColor(colorKind);
@@ -13026,7 +11236,7 @@ ${sample}`,
     };
   }
   function insertAnchorDot(bodyEl, needles, key, from) {
-    var _a2;
+    var _a;
     const idx = textIndexOf(bodyEl);
     const hit = locateInText(idx.text, needles, from);
     if (!hit) return null;
@@ -13041,11 +11251,11 @@ ${sample}`,
     dot.setAttribute("data-mt-edge", key);
     dot.setAttribute("data-mt-at", String(hit.at + hit.len));
     dot.setAttribute("title", "挂载点：这条线从这句话扯出");
-    (_a2 = after.parentNode) == null ? void 0 : _a2.insertBefore(dot, tail);
+    (_a = after.parentNode) == null ? void 0 : _a.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
-    var _a2;
+    var _a;
     const walker = document.createTreeWalker(
       container,
       4
@@ -13055,7 +11265,7 @@ ${sample}`,
     let text = "";
     let cur = walker.nextNode();
     while (cur) {
-      const data = (_a2 = cur.data) != null ? _a2 : "";
+      const data = (_a = cur.data) != null ? _a : "";
       if (data) {
         parts.push({ node: cur, start: text.length });
         text += data;
@@ -13080,7 +11290,7 @@ ${sample}`,
     return null;
   }
   function drawEdges(st) {
-    var _a2;
+    var _a;
     const boxes = [];
     for (const n of st.tree.nodes) {
       if (n.attached) continue;
@@ -13091,7 +11301,7 @@ ${sample}`,
       boxes.push({ id: n.id, x: p.x, y: p.y, w: s.w, h: s.h });
     }
     const boxIds = new Set(boxes.map((b) => b.id));
-    const list = ((_a2 = st.tree.edges) != null ? _a2 : []).filter((e) => boxIds.has(e.from) && boxIds.has(e.to));
+    const list = ((_a = st.tree.edges) != null ? _a : []).filter((e) => boxIds.has(e.from) && boxIds.has(e.to));
     st.edges = [];
     if (list.length === 0) {
       st.svg.innerHTML = "";
@@ -13100,11 +11310,11 @@ ${sample}`,
     const keys = domKeys(list);
     const anchors = placeAnchors(st, list, keys);
     const inputs = list.map((e) => {
-      var _a3;
+      var _a2;
       return {
         from: e.from,
         to: e.to,
-        anchor: (_a3 = anchors.get(edgeId(e.from, e.to))) != null ? _a3 : null
+        anchor: (_a2 = anchors.get(edgeId(e.from, e.to))) != null ? _a2 : null
       };
     });
     const routed = routeEdges(boxes, inputs);
@@ -13112,13 +11322,13 @@ ${sample}`,
     const suggestedOf = new Map(list.map((e) => [edgeId(e.from, e.to), !!e.suggested]));
     let html = "";
     routed.forEach((r, i) => {
-      var _a3, _b2, _c, _d;
+      var _a2, _b, _c, _d;
       if (!(r == null ? void 0 : r.d)) return;
       const id = edgeId(r.from, r.to);
-      const key = (_a3 = keys.get(id)) != null ? _a3 : `e${i}`;
+      const key = (_a2 = keys.get(id)) != null ? _a2 : `e${i}`;
       const bearerId = st.direction === "downstream" ? r.from : r.to;
       const otherId = st.direction === "downstream" ? r.to : r.from;
-      (_b2 = st.cards.get(bearerId)) == null ? void 0 : _b2.querySelectorAll("[data-mt-to]").forEach((el) => {
+      (_b = st.cards.get(bearerId)) == null ? void 0 : _b.querySelectorAll("[data-mt-to]").forEach((el) => {
         if (el.getAttribute("data-mt-to") === otherId) el.setAttribute("data-mt-edge", key);
       });
       const colorKind = (_c = kindById.get(st.direction === "downstream" ? r.to : r.from)) != null ? _c : "para";
@@ -13146,16 +11356,16 @@ ${sample}`,
     return { x, y };
   }
   function edgeKeyTo(st, nodeId) {
-    var _a2;
+    var _a;
     if (!nodeId) return "";
     const hit = st.edges.find((e) => st.direction === "downstream" ? e.to === nodeId : e.from === nodeId);
-    return (_a2 = hit == null ? void 0 : hit.key) != null ? _a2 : "";
+    return (_a = hit == null ? void 0 : hit.key) != null ? _a : "";
   }
   function applySelection(st) {
-    var _a2, _b2;
+    var _a, _b;
     const sel = st.selected;
-    const dockSelected = !!sel && !!((_a2 = st.cards.get(sel)) == null ? void 0 : _a2.classList.contains("is-dock"));
-    const set = sel && !dockSelected ? lineageOf((_b2 = st.tree.edges) != null ? _b2 : [], sel) : null;
+    const dockSelected = !!sel && !!((_a = st.cards.get(sel)) == null ? void 0 : _a.classList.contains("is-dock"));
+    const set = sel && !dockSelected ? lineageOf((_b = st.tree.edges) != null ? _b : [], sel) : null;
     for (const [id, el] of st.cards) {
       el.classList.remove("is-sel", "is-anc", "is-desc", "is-dim");
       if (!set || el.classList.contains("is-dock")) continue;
@@ -13177,7 +11387,7 @@ ${sample}`,
     }
   }
   function setHover(st, key, on) {
-    var _a2;
+    var _a;
     if (!key) {
       st.win.querySelectorAll(".is-hot").forEach((el) => el.classList.remove("is-hot"));
       return;
@@ -13189,7 +11399,7 @@ ${sample}`,
       st.svg.querySelector(`.bz-kb-mt-edge[data-mt-key="${cssEscape(key)}"]`),
       st.svg.querySelector(`.bz-kb-mt-edot[data-mt-key="${cssEscape(key)}"]`),
       ...Array.from(st.win.querySelectorAll(`[data-mt-edge="${cssEscape(key)}"]`)),
-      (_a2 = st.cards.get(otherId)) != null ? _a2 : null
+      (_a = st.cards.get(otherId)) != null ? _a : null
     ];
     for (const el of list) {
       if (!el) continue;
@@ -13233,14 +11443,14 @@ ${sample}`,
     applyTransform(st);
   }
   function openNodeMenu(nodeId, x, y) {
-    var _a2, _b2, _c, _d, _e;
+    var _a, _b, _c, _d, _e;
     const st = state;
     if (!st || !nodeId) return;
     const node = st.tree.nodes.find((n) => n.id === nodeId);
     if (!node) return;
     closeMenu();
-    const ghost = (_a2 = st.ghosts.get(nodeId)) != null ? _a2 : null;
-    const litChild = (_b2 = st.tree.nodes.find((n) => n.attached && n.parent === nodeId)) != null ? _b2 : null;
+    const ghost = (_a = st.ghosts.get(nodeId)) != null ? _a : null;
+    const litChild = (_b = st.tree.nodes.find((n) => n.attached && n.parent === nodeId)) != null ? _b : null;
     const isAttachment = node.kind === "image" || node.kind === "video";
     const entries = [
       { act: "open", label: "打开笔记", disabled: !!node.missing },
@@ -13294,9 +11504,9 @@ ${sample}`,
     menu.style.top = `${top}px`;
     st.menu = menu;
     const outside = (ev) => {
-      var _a3, _b3;
+      var _a2, _b2;
       if (!st.menu) return;
-      if ((_b3 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b3.call(_a3, "#bz-kb-mt-ctx")) return;
+      if ((_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "#bz-kb-mt-ctx")) return;
       closeMenu();
     };
     setOutsideHandler(outside);
@@ -13307,9 +11517,9 @@ ${sample}`,
     document.addEventListener("pointerdown", fn, true);
   }
   function closeMenu() {
-    var _a2;
+    var _a;
     const st = state;
-    (_a2 = st == null ? void 0 : st.menu) == null ? void 0 : _a2.remove();
+    (_a = st == null ? void 0 : st.menu) == null ? void 0 : _a.remove();
     if (st) st.menu = null;
     if (menuOutsideHandler) {
       document.removeEventListener("pointerdown", menuOutsideHandler, true);
@@ -13352,16 +11562,16 @@ ${sample}`,
     }
   }
   async function pinSuggestion(st, ghost) {
-    var _a2, _b2;
+    var _a, _b;
     const rootPath = st.tree.root;
-    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    const app = (_a = st.ctx.app) != null ? _a : getApp();
     const link = ghost.target.replace(/\.md$/i, "");
     let found = false;
     let changed = false;
     try {
       await enqueueFileTask(rootPath, async () => {
-        var _a3, _b3;
-        const file = (_b3 = (_a3 = app == null ? void 0 : app.vault) == null ? void 0 : _a3.getAbstractFileByPath) == null ? void 0 : _b3.call(_a3, rootPath);
+        var _a2, _b2;
+        const file = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, rootPath);
         if (!file) return;
         found = true;
         const text = await app.vault.read(file);
@@ -13372,7 +11582,7 @@ ${sample}`,
         }
       });
     } catch (e) {
-      st.deps.notice(`固定失败：${(_b2 = e == null ? void 0 : e.message) != null ? _b2 : String(e)}`, "error");
+      st.deps.notice(`固定失败：${(_b = e == null ? void 0 : e.message) != null ? _b : String(e)}`, "error");
       return;
     }
     if (!found) {
@@ -13395,9 +11605,9 @@ ${sample}`,
     return "ai:" + ghost.target;
   }
   async function dismissSuggestion(st, ghost) {
-    var _a2;
+    var _a;
     const rootPath = st.tree.root;
-    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    const app = (_a = st.ctx.app) != null ? _a : getApp();
     try {
       await markSuggestion(rootPath, ghost, "dismissed", { app, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
     } catch (e) {
@@ -13614,12 +11824,12 @@ ${sample}`,
     }
   }
   async function fetchFromPage(url) {
-    var _a2;
+    var _a;
     let html = "";
     try {
       const resp = await withTimeout2(requestUrl({ url, method: "GET", headers: { ...PAGE_HEADERS } }), VIEW_TIMEOUT_MS);
       if (!resp || resp.status < 200 || resp.status >= 300) return null;
-      html = String((_a2 = resp.text) != null ? _a2 : "");
+      html = String((_a = resp.text) != null ? _a : "");
     } catch (e) {
       return null;
     }
@@ -13852,7 +12062,7 @@ ${sample}`,
     return root.querySelector(sel);
   }
   function clipboardImageFiles(dt) {
-    var _a2;
+    var _a;
     if (!dt) return [];
     const out = [];
     const items = dt.items;
@@ -13869,7 +12079,7 @@ ${sample}`,
     const files = dt.files;
     if (files) {
       for (let i = 0; i < files.length; i++) {
-        if (/^image\//i.test(((_a2 = files[i]) == null ? void 0 : _a2.type) || "")) out.push(files[i]);
+        if (/^image\//i.test(((_a = files[i]) == null ? void 0 : _a.type) || "")) out.push(files[i]);
       }
     }
     return out;
@@ -13882,9 +12092,9 @@ ${sample}`,
     return stripMdExt(base) || String(path || "");
   }
   function parseRelatedNames(text) {
-    var _a2;
+    var _a;
     const lines = String(text != null ? text : "").split(/\r?\n/);
-    if (((_a2 = lines[0]) == null ? void 0 : _a2.trim()) !== "---") return [];
+    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return [];
     const out = [];
     let inRelated = false;
     for (let i = 1; i < lines.length; i++) {
@@ -13977,9 +12187,9 @@ ${sample}`,
     return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
   }
   function appendRelatedLine(text, link) {
-    var _a2;
+    var _a;
     const lines = text.split(/\r?\n/);
-    if (((_a2 = lines[0]) == null ? void 0 : _a2.trim()) !== "---") return text;
+    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return text;
     let close = -1;
     let relatedAt = -1;
     for (let i = 1; i < lines.length; i++) {
@@ -14000,7 +12210,7 @@ ${sample}`,
     return lines.join("\n");
   }
   var IMAGE_ENTRY_MAX, STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager;
-  var init_ui2 = __esm({
+  var init_ui = __esm({
     "src/knowledge/ui.ts"() {
       init_fake_obsidian();
       init_ai();
@@ -14160,7 +12370,7 @@ ${sample}`,
         }
         // ==================== 主壳（三部） ====================
         createMainUI() {
-          var _a2;
+          var _a;
           if (this.mask && this.mask.isConnected || this.popup && this.popup.isConnected) return;
           const mask = document.createElement("div");
           mask.id = "knowledge-mask";
@@ -14202,7 +12412,7 @@ ${sample}`,
           this.popup = popup;
           this.contentEl = q(popup, "#kb-sc");
           popup.addEventListener("click", (e) => this.onShellClick(e));
-          (_a2 = this.contentEl) == null ? void 0 : _a2.addEventListener("scroll", () => this.onContentScroll());
+          (_a = this.contentEl) == null ? void 0 : _a.addEventListener("scroll", () => this.onContentScroll());
           this.attachFileListener();
         }
         /** 主壳点击委托（部切换 / 录入入口 / 文献行 / 主题行 / 返回） */
@@ -14426,13 +12636,13 @@ ${sample}`,
           this.editor = { source: n, pick: null, why: whySug, title: n.title };
         }
         syncSaveBtn() {
-          var _a2;
-          const btn = (_a2 = this.popup) == null ? void 0 : _a2.querySelector("[data-kb-act=card-save]");
+          var _a;
+          const btn = (_a = this.popup) == null ? void 0 : _a.querySelector("[data-kb-act=card-save]");
           if (btn && this.editor) btn.disabled = !(this.editor.pick && this.editor.why.trim());
         }
         /** 落卡：写卡片盒笔记（category=领域、related=源文献）+ 源文献 related 追加新卡（互链） */
         async saveCard() {
-          var _a2;
+          var _a;
           if (!this.editor || !this.editor.pick || !this.editor.why.trim()) return;
           const app = getApp();
           const s = tryGetSettings();
@@ -14471,12 +12681,12 @@ ${sample}`,
               this.renderCards();
             }
           } catch (e) {
-            notice("落卡失败：" + ((_a2 = e == null ? void 0 : e.message) != null ? _a2 : String(e)), "error");
+            notice("落卡失败：" + ((_a = e == null ? void 0 : e.message) != null ? _a : String(e)), "error");
           }
         }
         /** 部贰卡片扫描（存量零迁移：领域读序 domain → category → 未分类） */
         async loadCards(dir) {
-          var _a2;
+          var _a;
           const app = getApp();
           this.loadedCardDir = dir;
           const prefix = dir + "/";
@@ -14488,7 +12698,7 @@ ${sample}`,
               const fm = cache && cache.frontmatter || {};
               let created = 0;
               try {
-                created = ((_a2 = f.stat) == null ? void 0 : _a2.ctime) ? new Date(f.stat.ctime).valueOf() : 0;
+                created = ((_a = f.stat) == null ? void 0 : _a.ctime) ? new Date(f.stat.ctime).valueOf() : 0;
               } catch (e) {
                 created = 0;
               }
@@ -14537,10 +12747,10 @@ ${sample}`,
           const prefix = dir + "/";
           const mdFiles2 = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
           const out = mdFiles2.map((f) => {
-            var _a2;
+            var _a;
             let created = 0;
             try {
-              created = ((_a2 = f.stat) == null ? void 0 : _a2.mtime) ? new Date(f.stat.mtime).valueOf() : 0;
+              created = ((_a = f.stat) == null ? void 0 : _a.mtime) ? new Date(f.stat.mtime).valueOf() : 0;
             } catch (e) {
               created = 0;
             }
@@ -14582,7 +12792,7 @@ ${sample}`,
           ovl.className = "bz-kb-ovl";
           ovl.innerHTML = `<div class="bz-kb-sheet">${html}</div>`;
           ovl.addEventListener("click", (e) => {
-            var _a2, _b2;
+            var _a, _b;
             const t = e.target.closest("[data-kb-act],[data-kb-close]");
             if (e.target === ovl || t && t.hasAttribute("data-kb-close")) {
               this.closeSheet();
@@ -14591,7 +12801,7 @@ ${sample}`,
             if (!t) return;
             const act = t.getAttribute("data-kb-act");
             if (act === "card-new") {
-              const w = ((_b2 = (_a2 = t.closest(".bz-kb-sheet")) == null ? void 0 : _a2.querySelector(".bz-kb-hw .bz-kb-w")) == null ? void 0 : _b2.textContent) || "";
+              const w = ((_b = (_a = t.closest(".bz-kb-sheet")) == null ? void 0 : _a.querySelector(".bz-kb-hw .bz-kb-w")) == null ? void 0 : _b.textContent) || "";
               const n = this.allNotes.find((x) => x.title === w);
               if (n) void this.openCardEditor(n);
             } else if (act === "card-save") {
@@ -14620,8 +12830,8 @@ ${sample}`,
           this.syncSaveBtn();
         }
         closeSheet() {
-          var _a2;
-          (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
+          var _a;
+          (_a = this.popup) == null ? void 0 : _a.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
           this.editor = null;
         }
         sheetWrap(title, body) {
@@ -14775,8 +12985,8 @@ ${sample}`,
          * prefill 存在则预填链接（聚合讯「保存至文献」入口，ADR-0068；有链接即自动解析）。
          */
         showVideoEntry(prefill) {
-          var _a2, _b2;
-          this.showAddDialog(prefill ? { url: prefill.url, title: (_a2 = prefill.title) != null ? _a2 : null, uploader: (_b2 = prefill.uploader) != null ? _b2 : null } : void 0);
+          var _a, _b;
+          this.showAddDialog(prefill ? { url: prefill.url, title: (_a = prefill.title) != null ? _a : null, uploader: (_b = prefill.uploader) != null ? _b : null } : void 0);
         }
         /** 打开「影像 · 处理」队列面板（面板默认视图）；打开即自动重抓缺信息任务（ADR-0133） */
         showVideoTasks() {
@@ -14815,14 +13025,14 @@ ${sample}`,
          * 已成功的任务只补信息、不改 url（成败判别口径随 `isTerminal` 的「成功」侧）。
          */
         async backfillVideoTasks() {
-          var _a2;
+          var _a;
           if (this.backfillRunning) return;
           this.backfillRunning = true;
           try {
             const tasks = await KnowledgeData.loadTasks();
             const todo = tasks.filter((t) => !t.archived && t.url && !this.backfillTried.has(t.id) && (!t.title || t.status !== "success" && needsBvidRepair(t.url)));
             if (todo.length) {
-              const cookie = String(((_a2 = tryGetSettings()) == null ? void 0 : _a2.bilibiliCookie) || "");
+              const cookie = String(((_a = tryGetSettings()) == null ? void 0 : _a.bilibiliCookie) || "");
               for (const t of todo) {
                 this.backfillTried.add(t.id);
                 try {
@@ -14903,11 +13113,11 @@ ${sample}`,
           }
         }
         renderRow(task) {
-          var _a2;
+          var _a;
           const card = document.createElement("div");
           card.className = "bz-kb-taskcard";
           card.dataset.id = task.id;
-          const meta = (_a2 = STATUS_META[task.status]) != null ? _a2 : STATUS_META.pending;
+          const meta = (_a = STATUS_META[task.status]) != null ? _a : STATUS_META.pending;
           const pageTag = task.page && task.page > 1 ? `P${task.page} · ` : "";
           const timeText = task.start && task.end ? `${pageTag}${task.start} ~ ${task.end}` : `${pageTag}整片`;
           const durText = task.duration ? ` · ${secToTimeText(task.duration)}` : "";
@@ -15094,7 +13304,7 @@ ${sample}`,
         }
         // ==================== 影像 · 录入界面（词典皮 + 解析后展开，issue 310） ====================
         createAddDialog() {
-          var _a2;
+          var _a;
           const addMask = document.createElement("div");
           addMask.id = "knowledge-add-mask";
           addMask.className = "bz-kb-mask";
@@ -15182,7 +13392,7 @@ ${sample}`,
               }
             });
           }
-          (_a2 = q(popup, "#lit-add-page")) == null ? void 0 : _a2.addEventListener("change", (e) => {
+          (_a = q(popup, "#lit-add-page")) == null ? void 0 : _a.addEventListener("change", (e) => {
             void this._switchAddPage(Number(e.target.value) || 1);
           });
           for (const [sel, which] of [["#lit-add-start", "start"], ["#lit-add-end", "end"]]) {
@@ -15216,14 +13426,14 @@ ${sample}`,
           this._renderAdd();
         }
         showAddDialog(editItem) {
-          var _a2, _b2, _c, _d, _e, _f, _g;
+          var _a, _b, _c, _d, _e, _f, _g;
           if (!this.addPopup || !this.addMask) return;
           this.addUrlReset();
-          this.editingId = (_a2 = editItem == null ? void 0 : editItem.id) != null ? _a2 : null;
+          this.editingId = (_a = editItem == null ? void 0 : editItem.id) != null ? _a : null;
           this.addRevealed = !!this.editingId;
           const modeTag = q(this.addPopup, "#lit-add-mode");
           if (modeTag) modeTag.style.display = this.editingId ? "inline-block" : "none";
-          q(this.addPopup, "#lit-add-url").value = (_b2 = editItem == null ? void 0 : editItem.url) != null ? _b2 : "";
+          q(this.addPopup, "#lit-add-url").value = (_b = editItem == null ? void 0 : editItem.url) != null ? _b : "";
           this.addMeta = editItem && (editItem.title || editItem.uploader) ? { title: editItem.title || void 0, uploader: editItem.uploader || void 0 } : null;
           this.addQualities = null;
           this.addResolving = false;
@@ -15253,10 +13463,10 @@ ${sample}`,
         }
         /** 弹窗全量重绘（ADR-0133 状态单源）：信息区 / 分P 控件 / 范围条 / 档位下拉 / 按钮态 */
         _renderAdd(preserveQuality = false) {
-          var _a2, _b2;
+          var _a, _b;
           const popup = this.addPopup;
           if (!popup) return;
-          const prevQuality = preserveQuality ? (_b2 = (_a2 = q(popup, "#lit-add-quality")) == null ? void 0 : _a2.value) != null ? _b2 : null : null;
+          const prevQuality = preserveQuality ? (_b = (_a = q(popup, "#lit-add-quality")) == null ? void 0 : _a.value) != null ? _b : null : null;
           const meta = this.addMeta;
           const pages = (meta == null ? void 0 : meta.pages) || [];
           const multi = pages.length > 1;
@@ -15311,13 +13521,13 @@ ${sample}`,
          * prevValue 仍在新列表内时优先保留（编辑态回显 / 切 P 重查）。
          */
         _renderQualitySelect(prevValue) {
-          var _a2;
+          var _a;
           const popup = this.addPopup;
           if (!popup) return;
           const sel = q(popup, "#lit-add-quality");
           if (!sel) return;
           const hint = q(popup, "#lit-add-rhint");
-          const globalQ = String(((_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeQuality) || "highest");
+          const globalQ = String(((_a = tryGetSettings()) == null ? void 0 : _a.knowledgeQuality) || "highest");
           const heights = this.addQualities;
           const opts = [];
           let def = "highest";
@@ -15423,13 +13633,13 @@ ${sample}`,
         }
         /** 分P 切换（ADR-0133）：量程与范围重置为全选，档位按该 P 的 cid 静默重查（未登录/失败 → 清档回落固定列表） */
         async _switchAddPage(p) {
-          var _a2, _b2, _c, _d, _e, _f, _g;
+          var _a, _b, _c, _d, _e, _f, _g;
           const popup = this.addPopup;
           if (!popup) return;
           this.addPage = p;
-          const pages = ((_a2 = this.addMeta) == null ? void 0 : _a2.pages) || [];
+          const pages = ((_a = this.addMeta) == null ? void 0 : _a.pages) || [];
           const sel = pages.find((x) => x.page === p) || pages[0];
-          const dur = (sel == null ? void 0 : sel.duration) || ((_b2 = this.addMeta) == null ? void 0 : _b2.duration) || 0;
+          const dur = (sel == null ? void 0 : sel.duration) || ((_b = this.addMeta) == null ? void 0 : _b.duration) || 0;
           this.addDuration = dur;
           this.addStart = 0;
           this.addEnd = dur;
@@ -15451,7 +13661,7 @@ ${sample}`,
          * 手动解析失败进失败态（可手填分 P 与时间范围）；编辑态自动重抓成功 → 即落库（只补缺失字段）。
          */
         async _handleResolve(opts) {
-          var _a2;
+          var _a;
           const popup = this.addPopup;
           if (!popup) return;
           const urlInput = q(popup, "#lit-add-url");
@@ -15472,7 +13682,7 @@ ${sample}`,
             this._setResolveState("解析中…", "busy");
             this._renderAdd(true);
           }
-          const cookie = String(((_a2 = tryGetSettings()) == null ? void 0 : _a2.bilibiliCookie) || "");
+          const cookie = String(((_a = tryGetSettings()) == null ? void 0 : _a.bilibiliCookie) || "");
           const res = await resolveVideo(cleaned, cookie, Math.max(0, this.addPage - 1));
           if (seq !== this.addUrlSeq || this.addPopup !== popup) return;
           this.addResolving = false;
@@ -15504,13 +13714,13 @@ ${sample}`,
         }
         /** 解析结果落地到弹窗状态：分 P 校正 / 量程 / 范围（首次拿到时长 → 全选；已有范围 → 钳制保持） */
         _applyResolved(res) {
-          var _a2, _b2;
+          var _a, _b;
           const meta = res.meta;
           const pages = meta.pages || [];
           if (pages.length > 1) {
             if (!pages.some((p) => p.page === this.addPage)) this.addPage = pages[0].page;
           } else {
-            this.addPage = (_b2 = (_a2 = pages[0]) == null ? void 0 : _a2.page) != null ? _b2 : 1;
+            this.addPage = (_b = (_a = pages[0]) == null ? void 0 : _a.page) != null ? _b : 1;
           }
           const sel = pages.find((p) => p.page === this.addPage) || pages[0];
           const newDur = (sel == null ? void 0 : sel.duration) || meta.duration || 0;
@@ -15570,13 +13780,13 @@ ${sample}`,
           this.addUrlSeq++;
         }
         async _handleAddSave() {
-          var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
+          var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
           if (!this.addPopup) return;
           if (this.addResolving) {
             notice("解析中，请稍候", "info");
             return;
           }
-          let url = normalizeSourceUrl(((_b2 = (_a2 = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim());
+          let url = normalizeSourceUrl(((_b = (_a = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _a.value) != null ? _b : "").trim());
           if (!url) {
             notice("请填写视频链接或 BV 号", "error");
             (_c = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _c.focus();
@@ -15670,8 +13880,8 @@ ${sample}`,
             return g;
           });
           sortedGroups.sort((a, b) => {
-            var _a2, _b2, _c, _d;
-            const la = String(((_a2 = a[a.length - 1]) == null ? void 0 : _a2.processedAt) || ((_b2 = a[a.length - 1]) == null ? void 0 : _b2.created) || "");
+            var _a, _b, _c, _d;
+            const la = String(((_a = a[a.length - 1]) == null ? void 0 : _a.processedAt) || ((_b = a[a.length - 1]) == null ? void 0 : _b.created) || "");
             const lb = String(((_c = b[b.length - 1]) == null ? void 0 : _c.processedAt) || ((_d = b[b.length - 1]) == null ? void 0 : _d.created) || "");
             return lb.localeCompare(la);
           });
@@ -15713,7 +13923,7 @@ ${sample}`,
         }
         // ============ 录入面板：名词 / 段落 / 图版同壳三态（142 简洁版 + 155 总结 + issue 309/312） ============
         createTermUI() {
-          var _a2, _b2, _c;
+          var _a, _b, _c;
           const mask = document.createElement("div");
           mask.id = "knowledge-term-mask";
           mask.className = "bz-kb-mask";
@@ -15784,13 +13994,13 @@ ${sample}`,
           q(popup, "#lit-term-generate").onclick = () => void this.onTermGenerate();
           q(popup, "#lit-term-regenerate").onclick = () => void this.onTermSummarize();
           q(popup, "#lit-term-save").onclick = () => void this.onTermConfirm();
-          (_a2 = q(popup, "#lit-term-input")) == null ? void 0 : _a2.addEventListener("keydown", (e) => {
+          (_a = q(popup, "#lit-term-input")) == null ? void 0 : _a.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
               e.preventDefault();
               void this.onTermGenerate();
             }
           });
-          (_b2 = q(popup, "#lit-passage-input")) == null ? void 0 : _b2.addEventListener("keydown", (e) => {
+          (_b = q(popup, "#lit-passage-input")) == null ? void 0 : _b.addEventListener("keydown", (e) => {
             if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
               e.preventDefault();
               void this.onTermGenerate();
@@ -15805,10 +14015,10 @@ ${sample}`,
             });
             zone.addEventListener("dragleave", () => zone.classList.remove("is-over"));
             zone.addEventListener("drop", (e) => {
-              var _a3;
+              var _a2;
               e.preventDefault();
               zone.classList.remove("is-over");
-              const files = Array.from(((_a3 = e.dataTransfer) == null ? void 0 : _a3.files) || []);
+              const files = Array.from(((_a2 = e.dataTransfer) == null ? void 0 : _a2.files) || []);
               if (files.length) void this.acceptImageFiles(files);
             });
             zone.addEventListener("click", () => fileInput.click());
@@ -15818,8 +14028,8 @@ ${sample}`,
               if (files.length) void this.acceptImageFiles(files);
             });
             (_c = q(popup, "#lit-image-grid")) == null ? void 0 : _c.addEventListener("click", (e) => {
-              var _a3, _b3;
-              const btn = (_b3 = (_a3 = e.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b3.call(_a3, "[data-lit-image-remove]");
+              var _a2, _b2;
+              const btn = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-lit-image-remove]");
               if (!btn) return;
               e.stopPropagation();
               this.removeEntryImage(Number(btn.getAttribute("data-lit-image-remove")));
@@ -15950,7 +14160,7 @@ ${sample}`,
         }
         /** 单张校验与读取（MIME 白名单 / 读失败 / 转 data URL 失败均就地提示并返回 null） */
         async readImageFile(file) {
-          var _a2, _b2;
+          var _a, _b;
           const mime = (String(file.type || "").toLowerCase() === "image/jpg" ? "image/jpeg" : String(file.type || "").toLowerCase()) || imageMimeOfPath(file.name) || "";
           if (!imageExtOfMime(mime)) {
             notice("只支持 PNG / JPEG / GIF / WebP 图片", "error");
@@ -15966,7 +14176,7 @@ ${sample}`,
           try {
             return { mime, bytes, dataUrl: imageDataUrl(bytes, mime) };
           } catch (e) {
-            notice(String((_b2 = (_a2 = e == null ? void 0 : e.message) != null ? _a2 : e) != null ? _b2 : "图片不可用"), "error");
+            notice(String((_b = (_a = e == null ? void 0 : e.message) != null ? _a : e) != null ? _b : "图片不可用"), "error");
             return null;
           }
         }
@@ -16296,9 +14506,9 @@ ${sample}`,
         }
         /** 当前录入的头部标题：段落取属性卡里（可改）的标题，名词取输入框的词 */
         entryHeadTitle() {
-          var _a2, _b2, _c, _d;
+          var _a, _b, _c, _d;
           if (!this.termPopup) return "";
-          return this.entryTitled ? ((_b2 = (_a2 = q(this.termPopup, "#lit-entry-meta-title")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
+          return this.entryTitled ? ((_b = (_a = q(this.termPopup, "#lit-entry-meta-title")) == null ? void 0 : _a.value) != null ? _b : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
         }
         /** 属性首行是否「可改标题」态（段落 / 图版共用；名词的属性首行是只读的名词文本） */
         get entryTitled() {
@@ -16313,7 +14523,7 @@ ${sample}`,
           }
         }
         async onTermGenerate() {
-          var _a2, _b2, _c, _d;
+          var _a, _b, _c, _d;
           if (!this.termPopup || this.termGenerating) return;
           const mode = this.entryMode;
           if (mode === "image") {
@@ -16321,7 +14531,7 @@ ${sample}`,
             return;
           }
           const passage = mode === "passage";
-          const text = passage ? ((_b2 = (_a2 = q(this.termPopup, "#lit-passage-input")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
+          const text = passage ? ((_b = (_a = q(this.termPopup, "#lit-passage-input")) == null ? void 0 : _a.value) != null ? _b : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
           if (!text) {
             notice(passage ? "请粘贴要整理的段落" : "请输入名词", "error");
             return;
@@ -16385,7 +14595,7 @@ ${sample}`,
           }
         }
         presentTermPreview(draft) {
-          var _a2, _b2, _c;
+          var _a, _b, _c;
           this.termPreview = { domain: draft.domain, body: draft.summary, title: draft.title };
           this.termHasDraft = true;
           if (!this.termPopup) return;
@@ -16393,7 +14603,7 @@ ${sample}`,
             const titleInput = q(this.termPopup, "#lit-entry-meta-title");
             if (titleInput) titleInput.value = draft.title || "";
           } else {
-            const term = ((_b2 = (_a2 = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim();
+            const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
             const termEl = q(this.termPopup, "#lit-term-meta-term");
             if (termEl) termEl.textContent = term || "—";
           }
@@ -16409,10 +14619,10 @@ ${sample}`,
           (_c = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _c.call(prev, { behavior: "smooth", block: "nearest" });
         }
         async onTermConfirm() {
-          var _a2, _b2, _c, _d;
+          var _a, _b, _c, _d;
           if (!this.termPopup || this.termGenerating) return;
           const mode = this.entryMode;
-          const source = this.termSource;
+          const source2 = this.termSource;
           if (!this.termPreview) {
             notice("请先点击「生成」获取预览", "info");
             return;
@@ -16422,7 +14632,7 @@ ${sample}`,
           let term = "";
           let title = "";
           if (this.entryTitled) {
-            title = ((_b2 = (_a2 = q(this.termPopup, "#lit-entry-meta-title")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim();
+            title = ((_b = (_a = q(this.termPopup, "#lit-entry-meta-title")) == null ? void 0 : _a.value) != null ? _b : "").trim();
             if (!title) {
               notice("标题不能为空", "error");
               return;
@@ -16450,7 +14660,7 @@ ${sample}`,
                 title,
                 summary,
                 domain,
-                source,
+                source: source2,
                 images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || "png" }))
               });
               emitDomainEvent("knowledge:tasks", { kind: "image-generated", title, notePath: path });
@@ -16458,7 +14668,7 @@ ${sample}`,
               this.clearEntryImage();
               notice("已生成图版文献笔记：" + title, "success");
             } else {
-              path = mode === "passage" ? await generatePassageNote({ title, summary, domain, source }) : await generateTermNote({ term, summary, domain, source });
+              path = mode === "passage" ? await generatePassageNote({ title, summary, domain, source: source2 }) : await generateTermNote({ term, summary, domain, source: source2 });
               emitDomainEvent("knowledge:tasks", mode === "passage" ? { kind: "passage-generated", title, notePath: path } : { kind: "term-generated", term, title: term, notePath: path });
               await this.commitEntryLinks(path);
               notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
@@ -16513,7 +14723,7 @@ ${sample}`,
           }
         }
         destroy() {
-          var _a2;
+          var _a;
           this.clearRunTimer();
           this.runState.clear();
           if (this.termSrcTimer) {
@@ -16522,7 +14732,7 @@ ${sample}`,
           }
           this.addUrlReset();
           try {
-            (_a2 = this.termSrcSuggest) == null ? void 0 : _a2.detach();
+            (_a = this.termSrcSuggest) == null ? void 0 : _a.detach();
           } catch (e) {
           }
           this.termSrcSuggest = null;
@@ -16572,10 +14782,10 @@ ${sample}`,
     unloadKnowledge: () => unloadKnowledge
   });
   function ensureKnowledge(app) {
-    var _a2;
+    var _a;
     if (initialized) return;
     try {
-      KnowledgeData.init({ storagePath: (_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath });
+      KnowledgeData.init({ storagePath: (_a = tryGetSettings()) == null ? void 0 : _a.storagePath });
       uiManager = new UIManager(app);
       initialized = true;
     } catch (e) {
@@ -16592,13 +14802,13 @@ ${sample}`,
     uiManager == null ? void 0 : uiManager.showVideoEntry(prefill);
   }
   function openTermNote(app, term) {
-    var _a2, _b2;
+    var _a, _b;
     ensureKnowledge(app);
     let t = term == null ? void 0 : term.trim();
     let src;
     if (!t) {
       const view = app.workspace.getActiveViewOfType(MarkdownView);
-      t = ((_b2 = (_a2 = view == null ? void 0 : view.editor) == null ? void 0 : _a2.getSelection()) == null ? void 0 : _b2.trim()) || void 0;
+      t = ((_b = (_a = view == null ? void 0 : view.editor) == null ? void 0 : _a.getSelection()) == null ? void 0 : _b.trim()) || void 0;
       const file = view == null ? void 0 : view.file;
       if (file && file.extension === "md") src = { kind: "note", path: file.path };
     }
@@ -16615,7 +14825,7 @@ ${sample}`,
       init_fake_obsidian();
       init_settings_provider();
       init_data2();
-      init_ui2();
+      init_ui();
       initialized = false;
       uiManager = null;
     }
@@ -16833,6 +15043,1498 @@ ${sample}`,
       openedAt = 0;
       accumMs = 0;
       NO_BUMP = { changed: false, upgraded: false, stats: null };
+    }
+  });
+
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  var init_icon = __esm({
+    "src/core/ui/icon.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/button.ts
+  var init_button = __esm({
+    "src/core/ui/button.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/chip.ts
+  var init_chip = __esm({
+    "src/core/ui/chip.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/setlist.ts
+  function uiSetlist(opts) {
+    var _a;
+    const variant = (_a = opts.variant) != null ? _a : "chips";
+    const box = document.createElement("div");
+    box.className = `bz-setlist bz-setlist--${variant}${opts.className ? ` ${opts.className}` : ""}`;
+    if (opts.items.length === 0) {
+      if (opts.emptyText) {
+        const empty = document.createElement("div");
+        empty.className = "bz-setlist-empty";
+        empty.textContent = opts.emptyText;
+        box.appendChild(empty);
+      }
+      return box;
+    }
+    for (const it of opts.items) {
+      const item = document.createElement("div");
+      item.className = "bz-setlist-item";
+      item.dataset.key = it.key;
+      if (it.sub) item.title = it.sub;
+      if (it.imageUrl) {
+        const img = document.createElement("img");
+        img.className = "bz-setlist-avatar";
+        img.src = it.imageUrl;
+        img.alt = "";
+        img.onerror = () => img.remove();
+        item.appendChild(img);
+      }
+      const text = document.createElement("div");
+      text.className = "bz-setlist-text";
+      const name = document.createElement("div");
+      name.className = "bz-setlist-name";
+      name.textContent = it.label;
+      text.appendChild(name);
+      if (it.sub) {
+        const sub = document.createElement("div");
+        sub.className = "bz-setlist-sub";
+        sub.textContent = it.sub;
+        text.appendChild(sub);
+      }
+      item.appendChild(text);
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "bz-setlist-remove bz-touch-target--xl";
+      remove.textContent = opts.removeLabel || "移除";
+      if (opts.onRemove) {
+        const key = it.key;
+        remove.addEventListener("click", () => {
+          var _a2;
+          return (_a2 = opts.onRemove) == null ? void 0 : _a2.call(opts, key);
+        });
+      }
+      item.appendChild(remove);
+      box.appendChild(item);
+    }
+    return box;
+  }
+  var init_setlist = __esm({
+    "src/core/ui/setlist.ts"() {
+    }
+  });
+
+  // src/core/ui/field.ts
+  var init_field = __esm({
+    "src/core/ui/field.ts"() {
+    }
+  });
+
+  // src/core/ui/slider.ts
+  var init_slider = __esm({
+    "src/core/ui/slider.ts"() {
+    }
+  });
+
+  // src/core/ui/empty.ts
+  function uiEmpty(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-empty";
+    if (opts.icon) {
+      const ic = uiIcon(opts.icon);
+      ic.classList.add("bz-empty-ic");
+      el.appendChild(ic);
+    }
+    const t = document.createElement("div");
+    t.className = "bz-empty-title";
+    t.textContent = opts.title;
+    el.appendChild(t);
+    if (opts.desc) {
+      const d = document.createElement("div");
+      d.className = "bz-empty-desc";
+      d.textContent = opts.desc;
+      el.appendChild(d);
+    }
+    if (opts.actions) el.appendChild(opts.actions);
+    return el;
+  }
+  var init_empty = __esm({
+    "src/core/ui/empty.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/segmented.ts
+  var init_segmented = __esm({
+    "src/core/ui/segmented.ts"() {
+    }
+  });
+
+  // src/core/ui/choice.ts
+  var init_choice = __esm({
+    "src/core/ui/choice.ts"() {
+    }
+  });
+
+  // src/core/ui/cardpick.ts
+  function uiCardChoice(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-cardpick" + (opts.className ? " " + opts.className : "");
+    el.setAttribute("role", "radiogroup");
+    if (opts.label) el.setAttribute("aria-label", opts.label);
+    const btns = /* @__PURE__ */ new Map();
+    let cur = opts.value;
+    const sync = (v) => {
+      cur = v;
+      btns.forEach((b, val) => {
+        const on = val === v;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-checked", String(on));
+      });
+    };
+    opts.options.forEach((o) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "bz-cardpick-card" + (o.value === opts.value ? " is-on" : "");
+      card.dataset.value = String(o.value);
+      card.setAttribute("role", "radio");
+      card.setAttribute("aria-checked", String(o.value === opts.value));
+      const prev = document.createElement("div");
+      prev.className = "bz-cardpick-prev" + (o.prevClass ? ` ${o.prevClass}` : "");
+      prev.setAttribute("aria-hidden", "true");
+      prev.style.height = "62px";
+      const name = document.createElement("span");
+      name.className = "bz-cardpick-name";
+      name.textContent = o.label;
+      card.append(prev, name);
+      card.addEventListener("click", () => {
+        if (cur === o.value) return;
+        sync(o.value);
+        opts.onChange(o.value);
+      });
+      btns.set(o.value, card);
+      el.appendChild(card);
+    });
+    el.addEventListener("keydown", (e) => {
+      var _a;
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      const list = opts.options.map((o) => o.value);
+      const idx = list.indexOf(cur);
+      const next = e.key === "ArrowRight" ? (idx + 1) % list.length : (idx - 1 + list.length) % list.length;
+      (_a = btns.get(list[next])) == null ? void 0 : _a.focus();
+      e.preventDefault();
+    });
+    return { el, setValue: sync };
+  }
+  var init_cardpick = __esm({
+    "src/core/ui/cardpick.ts"() {
+    }
+  });
+
+  // src/core/ui/switch.ts
+  var init_switch = __esm({
+    "src/core/ui/switch.ts"() {
+    }
+  });
+
+  // src/core/ui/select.ts
+  var init_select = __esm({
+    "src/core/ui/select.ts"() {
+      init_icon();
+      init_esc_manager();
+    }
+  });
+
+  // src/core/ui/search.ts
+  var init_search = __esm({
+    "src/core/ui/search.ts"() {
+      init_icon();
+      init_field();
+    }
+  });
+
+  // src/core/ui/mainhead.ts
+  var init_mainhead = __esm({
+    "src/core/ui/mainhead.ts"() {
+      init_button();
+    }
+  });
+
+  // src/core/ui/rail.ts
+  var init_rail = __esm({
+    "src/core/ui/rail.ts"() {
+      init_fake_obsidian();
+      init_icon();
+    }
+  });
+
+  // src/core/ui/mobstrip.ts
+  var init_mobstrip = __esm({
+    "src/core/ui/mobstrip.ts"() {
+    }
+  });
+
+  // src/core/ui/stat.ts
+  var init_stat = __esm({
+    "src/core/ui/stat.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/progress.ts
+  var init_progress = __esm({
+    "src/core/ui/progress.ts"() {
+    }
+  });
+
+  // src/core/ui/popover.ts
+  var init_popover = __esm({
+    "src/core/ui/popover.ts"() {
+      init_icon();
+      init_esc_manager();
+    }
+  });
+
+  // src/core/ui/lightbox.ts
+  var init_lightbox = __esm({
+    "src/core/ui/lightbox.ts"() {
+      init_icon();
+      init_esc_manager();
+      init_z_order();
+    }
+  });
+
+  // src/core/ui/modal.ts
+  var init_modal = __esm({
+    "src/core/ui/modal.ts"() {
+      init_esc_manager();
+      init_z_order();
+    }
+  });
+
+  // src/core/ui/resize.ts
+  function hitRegion(rect, x, y, edge) {
+    const onE = x >= rect.width - edge;
+    const onS = y >= rect.height - edge;
+    const onW = x <= edge;
+    const onN = y <= edge;
+    if (onE && onS) return "se";
+    if (onE && !onW) return "e";
+    if (onS && !onN) return "s";
+    return null;
+  }
+  function uiResizable(el, opts = {}) {
+    var _a, _b, _c, _d, _e;
+    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) {
+      return { flush: () => {
+      }, detach: () => {
+      } };
+    }
+    const edge = (_a = opts.edge) != null ? _a : 8;
+    const minW = (_b = opts.minW) != null ? _b : 320;
+    const minH = (_c = opts.minH) != null ? _c : 240;
+    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
+    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
+    let dir = null;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startW = 0;
+    let startH = 0;
+    const cap = (isW) => {
+      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
+      return Math.floor(Math.min(isW ? maxW : maxH, view));
+    };
+    const persist = opts.persist;
+    let persistTimer = null;
+    let lastW = 0;
+    let lastH = 0;
+    if (persist == null ? void 0 : persist.load) {
+      const saved = persist.load();
+      if (saved && saved.w > 0 && saved.h > 0) {
+        lastW = Math.min(Math.max(saved.w, minW), cap(true));
+        lastH = Math.min(Math.max(saved.h, minH), cap(false));
+        el.style.width = lastW + "px";
+        el.style.height = lastH + "px";
+      }
+    }
+    const regionAt = (e) => {
+      const rect = el.getBoundingClientRect();
+      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
+    };
+    const setCursor = (d) => {
+      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
+    };
+    const onHover = (e) => {
+      if (dragging) return;
+      setCursor(regionAt(e));
+    };
+    const onDragMove = (e) => {
+      if (!dragging) return;
+      e.preventDefault();
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      let w = dir === "e" || dir === "se" ? startW + dx : startW;
+      let h = dir === "s" || dir === "se" ? startH + dy : startH;
+      w = Math.min(Math.max(w, minW), cap(true));
+      h = Math.min(Math.max(h, minH), cap(false));
+      el.style.width = w + "px";
+      el.style.height = h + "px";
+      if (opts.onChange) opts.onChange(w, h);
+      if (persist == null ? void 0 : persist.save) {
+        lastW = w;
+        lastH = h;
+        if (persistTimer !== null) clearTimeout(persistTimer);
+        persistTimer = setTimeout(() => {
+          var _a2;
+          persistTimer = null;
+          (_a2 = persist.save) == null ? void 0 : _a2.call(persist, w, h);
+        }, 300);
+      }
+    };
+    const onMouseLeave = () => {
+      if (!dragging) setCursor(null);
+    };
+    const onMouseDown = (e) => {
+      const d = regionAt(e);
+      if (!d) return;
+      e.preventDefault();
+      dir = d;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startW = el.getBoundingClientRect().width;
+      startH = el.getBoundingClientRect().height;
+      document.body.style.userSelect = "none";
+    };
+    const onMouseUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      dir = null;
+      document.body.style.userSelect = "";
+      setCursor(null);
+      swallowNextClick();
+    };
+    el.addEventListener("mousemove", onHover);
+    el.addEventListener("mouseleave", onMouseLeave);
+    el.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onDragMove);
+    document.addEventListener("mouseup", onMouseUp);
+    const flush = () => {
+      if (persistTimer === null) return;
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      if ((persist == null ? void 0 : persist.save) && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
+    };
+    return {
+      flush,
+      detach: () => {
+        flush();
+        el.removeEventListener("mousemove", onHover);
+        el.removeEventListener("mouseleave", onMouseLeave);
+        el.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.userSelect = "";
+        setCursor(null);
+      }
+    };
+  }
+  var init_resize = __esm({
+    "src/core/ui/resize.ts"() {
+      init_dom();
+    }
+  });
+
+  // src/core/ui/splitter.ts
+  function uiVSplitter(opts) {
+    var _a, _b;
+    const left = opts.left;
+    const minLeft = (_a = opts.minLeft) != null ? _a : 220;
+    const minRight = (_b = opts.minRight) != null ? _b : 320;
+    const persist = opts.persist;
+    const el = document.createElement("div");
+    el.className = "bz-vsplit";
+    el.setAttribute("role", "separator");
+    el.setAttribute("aria-orientation", "vertical");
+    el.title = "拖动调整两侧宽度";
+    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) {
+      return { el, restore: () => {
+      }, flush: () => {
+      }, detach: () => {
+      } };
+    }
+    let dragging = false;
+    let startX = 0;
+    let startW = 0;
+    let persistTimer = null;
+    let lastW = 0;
+    let restored = false;
+    const availW = () => {
+      const parent = left.parentElement;
+      if (!parent) return 0;
+      return parent.clientWidth - el.offsetWidth;
+    };
+    const clampW = (w) => {
+      const avail = availW();
+      const max = avail > 0 ? avail - minRight : Number.POSITIVE_INFINITY;
+      return Math.min(Math.max(w, minLeft), Math.max(minLeft, max));
+    };
+    const applyW = (w) => {
+      left.style.width = w + "px";
+    };
+    const debSave = (w) => {
+      if (!(persist == null ? void 0 : persist.save)) return;
+      lastW = w;
+      if (persistTimer !== null) clearTimeout(persistTimer);
+      persistTimer = setTimeout(() => {
+        var _a2;
+        persistTimer = null;
+        (_a2 = persist.save) == null ? void 0 : _a2.call(persist, w);
+      }, 300);
+    };
+    const restore = () => {
+      if (restored || !(persist == null ? void 0 : persist.load) || !el.isConnected) return;
+      if (availW() <= 0) return;
+      const saved = persist.load();
+      restored = true;
+      if (saved != null && saved > 0) {
+        const w = clampW(saved);
+        applyW(w);
+        lastW = w;
+      }
+    };
+    const onDragMove = (e) => {
+      if (!dragging) return;
+      e.preventDefault();
+      const w = clampW(startW + (e.clientX - startX));
+      if (w === lastW) return;
+      applyW(w);
+      lastW = w;
+      if (opts.onChange) opts.onChange(w);
+      debSave(w);
+    };
+    const onMouseDown = (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      dragging = true;
+      startX = e.clientX;
+      startW = left.getBoundingClientRect().width;
+      el.classList.add("is-drag");
+      document.body.style.userSelect = "none";
+    };
+    const onMouseUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove("is-drag");
+      document.body.style.userSelect = "";
+      swallowNextClick();
+    };
+    document.addEventListener("mousemove", onDragMove);
+    el.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mouseup", onMouseUp);
+    const flush = () => {
+      if (persistTimer === null) return;
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      if ((persist == null ? void 0 : persist.save) && lastW > 0) persist.save(lastW);
+    };
+    return {
+      el,
+      restore,
+      flush,
+      detach: () => {
+        flush();
+        document.removeEventListener("mousemove", onDragMove);
+        el.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.userSelect = "";
+        el.classList.remove("is-drag");
+      }
+    };
+  }
+  var init_splitter = __esm({
+    "src/core/ui/splitter.ts"() {
+      init_dom();
+    }
+  });
+
+  // src/core/ui/index.ts
+  var init_ui2 = __esm({
+    "src/core/ui/index.ts"() {
+      init_icon();
+      init_icons();
+      init_button();
+      init_chip();
+      init_setlist();
+      init_field();
+      init_slider();
+      init_empty();
+      init_segmented();
+      init_choice();
+      init_cardpick();
+      init_switch();
+      init_select();
+      init_search();
+      init_mainhead();
+      init_rail();
+      init_mobstrip();
+      init_stat();
+      init_progress();
+      init_popover();
+      init_suggest();
+      init_lightbox();
+      init_modal();
+      init_resize();
+      init_splitter();
+    }
+  });
+
+  // src/core/path-picker.ts
+  function isExcludedPath(p) {
+    if (!p) return false;
+    for (const seg of p.split("/")) {
+      if (EXCLUDED_DIR_NAMES.has(seg)) return true;
+    }
+    return false;
+  }
+  function foldersFromFiles(paths) {
+    const out = /* @__PURE__ */ new Set([""]);
+    for (const p of paths) {
+      if (isExcludedPath(p)) continue;
+      const sep = p.lastIndexOf("/");
+      if (sep === -1) continue;
+      let dir = p.slice(0, sep);
+      while (dir) {
+        if (!isExcludedPath(dir)) out.add(dir);
+        const i = dir.lastIndexOf("/");
+        dir = i === -1 ? "" : dir.slice(0, i);
+      }
+    }
+    return [...out].sort();
+  }
+  async function collectVaultFolders(app) {
+    var _a, _b, _c, _d;
+    const out = /* @__PURE__ */ new Set([""]);
+    try {
+      const files = ((_c = (_b = (_a = app == null ? void 0 : app.vault) == null ? void 0 : _a.getFiles) == null ? void 0 : _b.call(_a)) != null ? _c : []).map((f) => f.path);
+      for (const p of foldersFromFiles(files)) out.add(p);
+    } catch (e) {
+    }
+    const adapter = (_d = app == null ? void 0 : app.vault) == null ? void 0 : _d.adapter;
+    if (adapter && typeof adapter.list === "function") {
+      const walk = async (dir, depth) => {
+        var _a2;
+        if (depth > 40) return;
+        let listed = null;
+        try {
+          listed = await adapter.list(dir);
+        } catch (e) {
+          if (dir === "") {
+            try {
+              listed = await adapter.list("/");
+            } catch (e2) {
+              return;
+            }
+          } else {
+            return;
+          }
+        }
+        for (const f of (_a2 = listed == null ? void 0 : listed.folders) != null ? _a2 : []) {
+          const p = String(f).replace(/^\/+|\/+$/g, "");
+          if (!p) continue;
+          if (isExcludedPath(p)) continue;
+          if (!out.has(p)) out.add(p);
+          await walk(p, depth + 1);
+        }
+      };
+      try {
+        await walk("", 0);
+      } catch (e) {
+      }
+    }
+    return [...out].sort();
+  }
+  function normalizePicked(list) {
+    const out = [];
+    for (const item of list) {
+      const raw = String(item);
+      if (raw === "") {
+        if (!out.includes("")) out.push("");
+        continue;
+      }
+      const trimmed = raw.trim();
+      if (trimmed === "") continue;
+      const p = trimmed.replace(/^\/+|\/+$/g, "");
+      if (p === "") {
+        if (!out.includes("")) out.push("");
+        continue;
+      }
+      if (!out.includes(p)) out.push(p);
+    }
+    return out;
+  }
+  function renderPathChips(container, selected, onChange, emptyText = "未选择", onChipClick) {
+    container.innerHTML = "";
+    container.classList.add("bz-path-picker-chips");
+    if (selected.length === 0) {
+      if (!emptyText) return;
+      const empty = document.createElement("span");
+      empty.className = "bz-path-picker-chips-empty";
+      empty.textContent = emptyText;
+      container.appendChild(empty);
+      return;
+    }
+    for (const path of selected) {
+      const label = path === "" ? "（库根目录）" : path;
+      const chip2 = document.createElement("span");
+      chip2.className = "bz-path-picker-chip" + (onChipClick ? " bz-path-picker-chip--click" : "");
+      chip2.title = label;
+      const name = document.createElement("span");
+      name.className = "bz-path-picker-chip-name";
+      name.textContent = label;
+      if (onChipClick) name.onclick = () => onChipClick(path);
+      const x = document.createElement("button");
+      x.className = "bz-path-picker-chip-x";
+      x.textContent = "✕";
+      x.setAttribute("aria-label", `移除 ${label}`);
+      x.onclick = () => onChange(selected.filter((p) => p !== path));
+      chip2.appendChild(name);
+      chip2.appendChild(x);
+      container.appendChild(chip2);
+    }
+  }
+  function renderPathSettingRow(opts) {
+    const readValue = () => {
+      const v = opts.value;
+      return Array.isArray(v) ? [...v] : v ? [v] : [];
+    };
+    let current = readValue();
+    const setting = new Setting(opts.parent).setName(opts.name);
+    if (opts.desc) setting.setDesc(opts.desc);
+    setting.settingEl.classList.add("bz-path-picker-setting-row");
+    const chipsWrap = document.createElement("div");
+    chipsWrap.className = "bz-path-picker-chips--setting";
+    const apply = (list) => {
+      const res = opts.onChange(list);
+      if (res && typeof res.then === "function") {
+        return Promise.resolve(res).then((final) => {
+          current = Array.isArray(final) ? final : list;
+          renderAll2();
+        });
+      }
+      current = Array.isArray(res) ? res : list;
+      renderAll2();
+    };
+    const openPicker = () => openPathPicker({
+      title: opts.pickerTitle || opts.name,
+      desc: opts.pickerDesc,
+      mode: opts.mode,
+      selected: current,
+      okText: opts.okText,
+      onConfirm: (list) => {
+        void apply(list);
+      }
+    });
+    const render = () => renderPathChips(chipsWrap, current, (next) => {
+      void apply(next);
+    }, "", openPicker);
+    let btn = null;
+    setting.addButton((b) => {
+      b.setButtonText(opts.buttonText || (opts.mode === "multi" ? "添加…" : "选择…")).onClick(openPicker);
+      b.buttonEl.classList.add("bz-path-picker-btn--slim");
+      btn = b.buttonEl;
+    });
+    const control = setting.settingEl.querySelector(".setting-item-control");
+    if (control) control.appendChild(chipsWrap);
+    const syncBtn = () => {
+      setting.settingEl.dataset.filled = current.length > 0 ? "1" : "0";
+      if (!btn || !control) return;
+      if (current.length === 0) {
+        if (!btn.isConnected) control.appendChild(btn);
+      } else if (btn.isConnected) {
+        btn.remove();
+      }
+    };
+    const renderAll2 = () => {
+      syncBtn();
+      render();
+    };
+    const refresh = () => {
+      current = readValue();
+      renderAll2();
+    };
+    renderAll2();
+    return { refresh, settingEl: setting.settingEl };
+  }
+  function closePathPicker() {
+    if (currentMask) {
+      currentMask.remove();
+      currentMask = null;
+    }
+    if (currentPopup) {
+      currentPopup.remove();
+      currentPopup = null;
+    }
+    if (currentHandle) {
+      currentHandle.unregister();
+      currentHandle = null;
+    }
+    if (focusTimer !== null) {
+      window.clearTimeout(focusTimer);
+      focusTimer = null;
+    }
+  }
+  function openPathPicker(opts) {
+    var _a, _b, _c;
+    closePathPicker();
+    const app = getApp();
+    const mode = opts.mode || "single";
+    const selected = new Set(normalizePicked(opts.selected || []));
+    const pinnedAtOpen = [...selected];
+    const { mask, popup } = createOverlay({
+      maskId: "bz-path-picker-mask",
+      popupId: "bz-path-picker-popup",
+      // ticket 133：桌面/移动端统一一张居中卡——左右各 16px 外边距，宽视口封顶 440px（不分两套样式）
+      width: "min(calc(100vw - 32px), 440px)",
+      maxWidth: 440,
+      onMaskClick: () => closePathPicker()
+    });
+    currentMask = mask;
+    currentPopup = popup;
+    const skinClasses = (opts.skinClassName || "").split(/\s+/).filter(Boolean);
+    if (skinClasses.length) {
+      mask.classList.add(...skinClasses);
+      popup.classList.add(...skinClasses);
+    }
+    popup.classList.add("bz-path-picker");
+    popup.style.height = "min(560px, 82vh)";
+    const head = document.createElement("div");
+    head.className = "bz-path-picker-head";
+    const title = document.createElement("h3");
+    title.className = "bz-path-picker-title";
+    title.textContent = opts.title || "选择文件夹";
+    head.appendChild(title);
+    if (opts.desc) {
+      const desc = document.createElement("div");
+      desc.className = "bz-path-picker-desc";
+      desc.textContent = opts.desc;
+      head.appendChild(desc);
+    }
+    const search = document.createElement("input");
+    search.type = "text";
+    search.className = "bz-path-picker-search";
+    search.placeholder = "搜索目录…";
+    search.spellcheck = false;
+    search.setAttribute("aria-label", "搜索目录");
+    const listEl2 = document.createElement("div");
+    listEl2.className = "bz-path-picker-list";
+    const state2 = { folders: [], q: "" };
+    const foot = document.createElement("div");
+    foot.className = "bz-path-picker-foot";
+    const selinfo = document.createElement("span");
+    selinfo.className = "bz-path-picker-selinfo";
+    const btns = document.createElement("div");
+    btns.className = "bz-path-picker-foot-btns";
+    foot.appendChild(selinfo);
+    foot.appendChild(btns);
+    const mkBtn = (label, primary, onclick) => {
+      const b = document.createElement("button");
+      b.textContent = label;
+      b.className = "bz-path-picker-btn" + (primary ? " bz-path-picker-btn--primary" : "");
+      b.onclick = onclick;
+      btns.appendChild(b);
+      return b;
+    };
+    if (mode === "multi") mkBtn("清空", false, () => {
+      selected.clear();
+      renderList2();
+      updateSel();
+    });
+    mkBtn(opts.okText || "下一步", true, () => {
+      const list = normalizePicked([...selected]);
+      closePathPicker();
+      opts.onConfirm(list);
+    });
+    function orderedList() {
+      const pinned = [];
+      const rest = [];
+      const pinSet = new Set(pinnedAtOpen);
+      for (const f of state2.folders) {
+        if (pinSet.has(f)) pinned.push(f);
+        else rest.push(f);
+      }
+      const rootIdx = rest.indexOf("");
+      const root = rootIdx >= 0 ? rest.splice(rootIdx, 1)[0] : null;
+      rest.reverse();
+      return [...pinned, ...root === null ? [] : [root], ...rest];
+    }
+    function renderList2() {
+      listEl2.innerHTML = "";
+      const q2 = state2.q.trim().toLowerCase();
+      const exact = !!q2 && state2.folders.includes(q2);
+      const LIMIT = 300;
+      let n = 0;
+      let total = 0;
+      for (const folder of orderedList()) {
+        if (q2 && !exact && !folder.toLowerCase().includes(q2)) continue;
+        total++;
+        if (n >= LIMIT) continue;
+        n++;
+        const on = selected.has(folder);
+        const row = document.createElement("div");
+        row.className = "bz-path-picker-row" + (on ? " bz-path-picker-row--sel" : "");
+        row.dataset.path = folder;
+        row.setAttribute("role", mode === "multi" ? "checkbox" : "option");
+        row.setAttribute("aria-checked", on ? "true" : "false");
+        const box = document.createElement("span");
+        box.className = "bz-path-picker-check";
+        box.textContent = on ? "✓" : "";
+        const name = document.createElement("span");
+        name.className = "bz-path-picker-name";
+        name.textContent = folder === "" ? "（库根目录）" : folder;
+        name.title = folder === "" ? "（库根目录）" : folder;
+        row.appendChild(box);
+        row.appendChild(name);
+        row.onclick = () => {
+          if (mode === "single") {
+            selected.clear();
+            selected.add(folder);
+          } else if (selected.has(folder)) {
+            selected.delete(folder);
+          } else {
+            selected.add(folder);
+          }
+          renderList2();
+          updateSel();
+        };
+        listEl2.appendChild(row);
+      }
+      if (!total) {
+        const empty = document.createElement("div");
+        empty.className = "bz-path-picker-empty";
+        empty.textContent = "没有匹配的目录";
+        listEl2.appendChild(empty);
+      } else if (total > LIMIT) {
+        const more = document.createElement("div");
+        more.className = "bz-path-picker-empty";
+        more.textContent = `已显示前 ${LIMIT} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
+        listEl2.appendChild(more);
+      }
+    }
+    function updateSel() {
+      if (mode === "single") {
+        const first = [...selected][0];
+        selinfo.textContent = first === void 0 ? "未选择" : first === "" ? "已选（库根目录）" : `已选 ${first}`;
+      } else {
+        selinfo.textContent = `已选 ${selected.size} 项`;
+      }
+    }
+    search.oninput = () => {
+      state2.q = search.value;
+      renderList2();
+    };
+    try {
+      const files = ((_c = (_b = (_a = app == null ? void 0 : app.vault) == null ? void 0 : _a.getFiles) == null ? void 0 : _b.call(_a)) != null ? _c : []).map((f) => f.path);
+      state2.folders = foldersFromFiles(files);
+    } catch (e) {
+    }
+    void collectVaultFolders(app).then((folders) => {
+      if (!mask.isConnected) return;
+      state2.folders = folders;
+      popup.dataset.ready = "1";
+      renderList2();
+    });
+    renderList2();
+    updateSel();
+    popup.append(head, search, listEl2, foot);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    currentHandle = escManager.register("bz-path-picker", {
+      isVisible: () => !!currentMask,
+      close: () => closePathPicker()
+    });
+    focusTimer = window.setTimeout(() => {
+      focusTimer = null;
+      if (mask.isConnected) search.focus();
+    }, 30);
+  }
+  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer;
+  var init_path_picker = __esm({
+    "src/core/path-picker.ts"() {
+      init_fake_obsidian();
+      init_app();
+      init_dom();
+      init_esc_manager();
+      EXCLUDED_DIR_NAMES = /* @__PURE__ */ new Set([".obsidian", ".trash", "node_modules", ".git"]);
+      currentMask = null;
+      currentPopup = null;
+      currentHandle = null;
+      focusTimer = null;
+    }
+  });
+
+  // src/core/settings-schema.ts
+  function bindValue(binding) {
+    if ("key" in binding) {
+      const key = binding.key;
+      return {
+        read: () => getSettings()[key],
+        write: (v) => {
+          getSettings()[key] = v;
+        },
+        persist: () => saveSettings()
+      };
+    }
+    return { read: () => binding.get(), write: (v) => binding.set(v), persist: () => binding.save() };
+  }
+  function currentSnapshot() {
+    return tryGetSettings();
+  }
+  function parseClampedNumber(raw, min, max) {
+    const trimmed = raw.trim();
+    if (trimmed === "") return null;
+    const n = Number(trimmed);
+    if (!Number.isFinite(n)) return null;
+    let out = n;
+    if (min !== void 0) out = Math.max(min, out);
+    if (max !== void 0) out = Math.min(max, out);
+    return out;
+  }
+  function renderSettingsInto(container, schema) {
+    var _a;
+    const entries = [];
+    const customRefreshes = [];
+    const reevaluate = () => {
+      const snap = currentSnapshot();
+      for (const e of entries) {
+        e.el.classList.toggle("bz-setting-hidden", e.visibleWhen ? !e.visibleWhen(snap) : false);
+      }
+      for (const fn of customRefreshes) {
+        try {
+          fn();
+        } catch (e) {
+        }
+      }
+      refreshSettingsGroupCounts(container);
+      markSettingSplitRows(container);
+    };
+    const newRowSetting = (body, row) => {
+      const setting = new Setting(body).setName(row.name);
+      if (row.desc) setting.setDesc(row.desc);
+      if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+      return setting;
+    };
+    const renderTextualRow = (body, row) => {
+      var _a2;
+      const ctx = { rowEl: body, refreshVisibility: reevaluate };
+      const setting = newRowSetting(body, row);
+      const isNumber = row.type === "number";
+      const acc = isNumber ? bindValue(row.binding) : bindValue(row.binding);
+      const changeCb = row.onChange;
+      const initial = String((_a2 = acc.read()) != null ? _a2 : "");
+      let pending = null;
+      let last = initial;
+      let dirty2 = false;
+      const warn = new CommitWarn(initial, row.onCommit);
+      const commit = () => {
+        if (pending !== null) {
+          clearTimeout(pending);
+          pending = null;
+        }
+        if (!dirty2) return;
+        void acc.persist();
+        warn.fire(last);
+        reevaluate();
+      };
+      let currentText = null;
+      const addInto = (t) => {
+        currentText = t;
+        t.setValue(initial);
+        const place = (snap) => typeof row.placeholder === "function" ? row.placeholder(snap) : row.placeholder;
+        const applyPlaceholder = () => {
+          if (t.setPlaceholder) {
+            const p = place(currentSnapshot());
+            if (p !== void 0) t.setPlaceholder(p);
+          }
+        };
+        applyPlaceholder();
+        t.onChange((v) => {
+          dirty2 = true;
+          if (isNumber) {
+            const n = parseClampedNumber(v, row.min, row.max);
+            if (n === null) return;
+            acc.write(n);
+          } else {
+            acc.write(v);
+          }
+          last = v;
+          changeCb == null ? void 0 : changeCb(isNumber ? acc.read() : v, ctx);
+          if (pending !== null) clearTimeout(pending);
+          pending = setTimeout(commit, TEXT_COMMIT_DELAY);
+        });
+        const inputEl = t.inputEl;
+        if (inputEl) {
+          if (isNumber) {
+            const num2 = row;
+            inputEl.type = "number";
+            if (num2.min !== void 0) inputEl.min = String(num2.min);
+            if (num2.max !== void 0) inputEl.max = String(num2.max);
+            if (num2.step !== void 0) inputEl.step = String(num2.step);
+          }
+          inputEl.addEventListener("blur", commit);
+          if (row.type !== "textarea") {
+            inputEl.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") commit();
+            });
+          }
+        }
+        if (typeof row.placeholder === "function") {
+          const origReevaluate = ctx.refreshVisibility;
+          ctx.refreshVisibility = () => {
+            applyPlaceholder();
+            origReevaluate();
+          };
+        }
+        if (row.refreshKey !== void 0) {
+          const ref = row.refreshKey;
+          customRefreshes.push(() => {
+            if (currentText) {
+              const snap = currentSnapshot();
+              const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
+              if (currentText.setValue) {
+                dirty2 = false;
+                currentText.setValue(String(fresh != null ? fresh : ""));
+              }
+            }
+          });
+        }
+      };
+      const actions = row.actions;
+      if (actions) {
+        for (const a of actions) {
+          setting.addButton((b) => {
+            if (a.cta) b.setCta();
+            b.setButtonText(a.text).onClick(() => {
+              void (async () => {
+                var _a3;
+                await a.onClick(last, ctx);
+                if (currentText && currentText.setValue) {
+                  dirty2 = false;
+                  currentText.setValue(String((_a3 = acc.read()) != null ? _a3 : ""));
+                }
+                reevaluate();
+              })();
+            });
+          });
+        }
+      }
+      if (row.type === "text") setting.addText(addInto);
+      else if (row.type === "textarea") setting.addTextArea(addInto);
+      else setting.addText(addInto);
+    };
+    const renderRow2 = (body, rowArg, parentToggleKey) => {
+      var _a2, _b, _c;
+      const ctx = { rowEl: body, refreshVisibility: reevaluate };
+      let row = rowArg;
+      if (row.isChild && parentToggleKey) {
+        row = {
+          ...row,
+          visibleWhen: (snap) => snap[parentToggleKey] === true && (rowArg.visibleWhen ? rowArg.visibleWhen(snap) : true)
+        };
+      }
+      switch (row.type) {
+        case "custom": {
+          const wrap = document.createElement("div");
+          body.appendChild(wrap);
+          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
+          row.render(wrap, { rowEl: wrap, refreshVisibility: reevaluate });
+          if (row.onRefresh) customRefreshes.push(() => row.onRefresh({ rowEl: wrap, refreshVisibility: reevaluate }));
+          return;
+        }
+        case "path": {
+          const acc = bindValue(row.binding);
+          const multi = row.mode === "multi";
+          const initialRaw = acc.read();
+          const initialKey = multi ? JSON.stringify(initialRaw != null ? initialRaw : []) : String(initialRaw != null ? initialRaw : "");
+          const warn = new CommitWarn(initialKey, row.onCommit);
+          const wrap = document.createElement("div");
+          body.appendChild(wrap);
+          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
+          renderPathSettingRow({
+            parent: wrap,
+            name: row.name,
+            desc: row.desc,
+            mode: row.mode,
+            value: multi ? Array.isArray(initialRaw) ? [...initialRaw] : [] : String(initialRaw != null ? initialRaw : ""),
+            pickerTitle: row.pickerTitle,
+            pickerDesc: row.pickerDesc,
+            buttonText: row.buttonText,
+            okText: row.okText,
+            emptyText: row.emptyText,
+            onChange: (list) => {
+              var _a3;
+              const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
+              acc.write(v);
+              void acc.persist();
+              const res = (_a3 = row.onChange) == null ? void 0 : _a3.call(row, list, ctx);
+              warn.fire(multi ? JSON.stringify(v) : String(v));
+              reevaluate();
+              if (res && typeof res.then === "function") {
+                return Promise.resolve(res).then(
+                  (final) => Array.isArray(final) ? final : list
+                );
+              }
+              return Array.isArray(res) ? res : void 0;
+            }
+          });
+          return;
+        }
+        case "toggle": {
+          const acc = bindValue(row.binding);
+          const setting = newRowSetting(body, row);
+          setting.addToggle(
+            (t) => t.setValue(acc.read() === true).onChange(async (v) => {
+              var _a3;
+              acc.write(v);
+              reevaluate();
+              await acc.persist();
+              (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+            })
+          );
+          return;
+        }
+        case "select": {
+          const acc = bindValue(row.binding);
+          const setting = newRowSetting(body, row);
+          setting.addDropdown((dd) => {
+            var _a3;
+            for (const opt of row.options) dd.addOption(opt.value, opt.label);
+            dd.setValue(String((_a3 = acc.read()) != null ? _a3 : "") || row.options[0].value);
+            dd.onChange(async (v) => {
+              var _a4;
+              acc.write(v);
+              reevaluate();
+              await acc.persist();
+              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
+            });
+          });
+          return;
+        }
+        case "choiceCards": {
+          const acc = bindValue(row.binding);
+          const setting = newRowSetting(body, row);
+          const pick = uiCardChoice({
+            value: String((_a2 = acc.read()) != null ? _a2 : "") || row.options[0].value,
+            options: row.options,
+            label: row.name,
+            onChange: async (v) => {
+              var _a3;
+              acc.write(v);
+              reevaluate();
+              await acc.persist();
+              (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+            }
+          });
+          setting.controlEl.appendChild(pick.el);
+          return;
+        }
+        case "slider": {
+          const acc = bindValue(row.binding);
+          const setting = newRowSetting(body, row);
+          setting.addSlider((sl) => {
+            var _a3;
+            sl.setLimits(row.min, row.max, (_a3 = row.step) != null ? _a3 : 1);
+            sl.setValue(Number(acc.read()) || 0);
+            sl.setDynamicTooltip();
+            sl.onChange(async (v) => {
+              var _a4;
+              acc.write(v);
+              reevaluate();
+              await acc.persist();
+              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
+            });
+          });
+          for (const a of (_b = row.actions) != null ? _b : []) {
+            setting.addButton((b) => {
+              if (a.cta) b.setCta();
+              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
+            });
+          }
+          return;
+        }
+        case "button": {
+          const setting = newRowSetting(body, row);
+          setting.addButton((b) => {
+            if (row.cta) b.setCta();
+            b.setButtonText(row.buttonText).onClick(() => row.onClick(ctx));
+          });
+          setting.settingEl.classList.add("bz-setting-action-row");
+          return;
+        }
+        case "info": {
+          const setting = newRowSetting(body, row);
+          for (const a of (_c = row.actions) != null ? _c : []) {
+            setting.addButton((b) => {
+              if (a.cta) b.setCta();
+              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
+            });
+          }
+          return;
+        }
+        case "list": {
+          const wrap = document.createElement("div");
+          wrap.className = "bz-setlist-wrap";
+          body.appendChild(wrap);
+          const setting = new Setting(wrap).setName(row.name);
+          if (row.desc) setting.setDesc(row.desc);
+          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
+          const readItems = () => typeof row.items === "function" ? row.items() : row.items;
+          const renderItems = () => {
+            var _a3;
+            (_a3 = wrap.querySelector(".bz-setlist")) == null ? void 0 : _a3.remove();
+            wrap.appendChild(uiSetlist({
+              items: readItems(),
+              variant: row.variant,
+              removeLabel: row.removeLabel,
+              emptyText: row.emptyText,
+              onRemove: (key) => {
+                void (async () => {
+                  var _a4;
+                  const remaining = readItems().map((x) => x.key).filter((k) => k !== key);
+                  try {
+                    await ((_a4 = row.onChange) == null ? void 0 : _a4.call(row, remaining, ctx));
+                  } catch (e) {
+                    notifySaveError(e, row.name || "列表项");
+                  } finally {
+                    reevaluate();
+                  }
+                })();
+              }
+            }));
+          };
+          renderItems();
+          customRefreshes.push(renderItems);
+          return;
+        }
+        case "text":
+        case "textarea":
+        case "number":
+          renderTextualRow(body, row);
+          return;
+      }
+    };
+    const renderGroupRows = (body, rows) => {
+      var _a2, _b;
+      const firstToggleKey = (_b = (_a2 = rows.find((r) => r.type === "toggle" && "key" in r.binding)) == null ? void 0 : _a2.binding.key) != null ? _b : null;
+      for (const row of rows) renderRow2(body, row, firstToggleKey);
+    };
+    for (const group of schema.groups) {
+      if (group.icon) {
+        const body = createSettingsGroup(container, { icon: group.icon, name: group.name });
+        const groupEl = (_a = body.parentElement) != null ? _a : container;
+        if (group.visibleWhen) entries.push({ el: groupEl, visibleWhen: group.visibleWhen });
+        renderGroupRows(body, group.rows);
+      } else {
+        const title = document.createElement("div");
+        title.className = "bz-setting-section-title";
+        title.textContent = group.name;
+        container.appendChild(title);
+        if (group.visibleWhen) entries.push({ el: title, visibleWhen: group.visibleWhen });
+        renderGroupRows(container, group.rows);
+      }
+    }
+    reevaluate();
+    return { refresh: reevaluate };
+  }
+  var TEXT_COMMIT_DELAY, CommitWarn;
+  var init_settings_schema = __esm({
+    "src/core/settings-schema.ts"() {
+      init_fake_obsidian();
+      init_settings_provider();
+      init_path_picker();
+      init_settings_modal();
+      init_ui2();
+      init_notice();
+      TEXT_COMMIT_DELAY = 800;
+      CommitWarn = class {
+        constructor(initial, onCommit) {
+          this.initial = initial;
+          this.onCommit = onCommit;
+          this.warnedInitial = null;
+        }
+        fire(current) {
+          if (!this.onCommit) return;
+          if (current !== this.initial) {
+            if (this.warnedInitial !== this.initial) {
+              this.warnedInitial = this.initial;
+              this.onCommit();
+            }
+          } else {
+            this.warnedInitial = null;
+          }
+        }
+      };
+    }
+  });
+
+  // src/core/settings-modal.ts
+  function createSettingsGroup(container, opts) {
+    const group = document.createElement("div");
+    group.className = "bz-settings-group";
+    const head = document.createElement("div");
+    head.className = "bz-settings-group-head";
+    const icon = document.createElement("span");
+    icon.className = "bz-settings-group-icon";
+    setIcon(icon, opts.icon);
+    const name = document.createElement("span");
+    name.className = "bz-settings-group-name";
+    name.textContent = opts.name;
+    const count = document.createElement("span");
+    count.className = "bz-settings-group-count";
+    count.textContent = "0 项";
+    head.append(icon, name, count);
+    const body = document.createElement("div");
+    body.className = "bz-settings-group-body";
+    group.append(head, body);
+    container.appendChild(group);
+    return body;
+  }
+  function isItemHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function refreshSettingsGroupCounts(content) {
+    content.querySelectorAll(".bz-settings-group").forEach((g) => {
+      const body = g.querySelector(".bz-settings-group-body");
+      const countEl = g.querySelector(".bz-settings-group-count");
+      if (!body || !countEl) return;
+      const n = [...body.querySelectorAll(".setting-item")].filter((el) => {
+        const h = el;
+        return !h.classList.contains("bz-setting-action-row") && !isItemHidden(h);
+      }).length;
+      countEl.textContent = `${n} 项`;
+      countEl.style.display = n > 0 ? "" : "none";
+    });
+  }
+  function markSettingSplitRows(container) {
+    container.querySelectorAll(".setting-item").forEach((el) => {
+      if (el.classList.contains("bz-path-picker-setting-row")) return;
+      const ctl = el.querySelector(".setting-item-control");
+      el.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
+    });
+  }
+  function closeSettingsModal() {
+    var _a;
+    if (currentModal) {
+      const m = currentModal;
+      currentModal = null;
+      m.dispose();
+      (_a = m.onClose) == null ? void 0 : _a.call(m);
+    }
+  }
+  function openSettingsModal(opts) {
+    var _a;
+    closeSettingsModal();
+    const prevActive = document.activeElement;
+    const { mask, popup } = createOverlay({
+      maskId: "bz-settings-modal-mask",
+      popupId: "bz-settings-modal-popup",
+      // z-index 动态发号（ADR-0067）：原静态层规家族表随动态层级制退役，
+      // 全站规则只有一条——谁后显示谁在上（settings-modal 每次打开新建 DOM，创建即显示）
+      maxWidth: opts.maxWidth,
+      onMaskClick: () => closeSettingsModal()
+    });
+    const header = document.createElement("div");
+    header.className = "bz-settings-header";
+    const title = document.createElement("h3");
+    title.className = "bz-settings-title";
+    title.textContent = opts.title;
+    header.appendChild(title);
+    const content = document.createElement("div");
+    content.className = "bz-settings-content";
+    renderSettingsInto(content, (_a = opts.schema) != null ? _a : { groups: [] });
+    const hasVisibleItem = Array.from(content.querySelectorAll(".setting-item")).some(
+      (el) => !el.classList.contains("bz-setting-action-row") && !isItemHidden(el)
+    );
+    if (!hasVisibleItem) {
+      content.innerHTML = "";
+      const empty = document.createElement("div");
+      empty.className = "bz-settings-empty";
+      empty.textContent = opts.emptyText || "暂无设置项";
+      if (opts.emptyDesc) {
+        const desc = document.createElement("div");
+        desc.className = "bz-settings-empty-desc";
+        desc.textContent = opts.emptyDesc;
+        empty.appendChild(desc);
+      }
+      content.appendChild(empty);
+    }
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    const firstFocusable = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR)).find((el) => {
+      if (isItemHidden(el)) return false;
+      if (isMobileEnv()) {
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return false;
+      }
+      return true;
+    });
+    if (firstFocusable) firstFocusable.focus();
+    const handle = escManager.register("bz-settings-modal", {
+      isVisible: () => !!currentModal,
+      close: () => closeSettingsModal()
+    });
+    currentModal = {
+      mask,
+      popup,
+      onClose: opts.onClose,
+      dispose: () => {
+        mask.remove();
+        popup.remove();
+        handle.unregister();
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+    };
+  }
+  var FOCUSABLE_SELECTOR, currentModal;
+  var init_settings_modal = __esm({
+    "src/core/settings-modal.ts"() {
+      init_fake_obsidian();
+      init_dom();
+      init_esc_manager();
+      init_mobile();
+      init_settings_schema();
+      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      currentModal = null;
     }
   });
 
@@ -17161,7 +16863,7 @@ ${bodyText.substring(0, 6e3)}`;
     });
   }
   async function drainQueue() {
-    var _a2;
+    var _a;
     if (draining) return;
     draining = true;
     try {
@@ -17174,7 +16876,7 @@ ${bodyText.substring(0, 6e3)}`;
         } catch (e) {
         } finally {
           processingPaths.delete(job.file.path);
-          (_a2 = job.resolve) == null ? void 0 : _a2.call(job);
+          (_a = job.resolve) == null ? void 0 : _a.call(job);
         }
       }
     } finally {
@@ -17226,10 +16928,10 @@ ${bodyText.substring(0, 6e3)}`;
   function scheduleRegister(app) {
     const ai = createAI();
     registerTimer = setTimeout(() => {
-      var _a2;
+      var _a;
       registerTimer = null;
       if (!vaultRef) return;
-      const timing = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.autoSummaryTiming) || "immediate";
+      const timing = ((_a = tryGetSettings()) == null ? void 0 : _a.autoSummaryTiming) || "immediate";
       if (timing !== "lazy") {
         fileListenerRef = vaultRef.on("create", (file) => queueProcess(app, ai, file));
       }
@@ -17524,7 +17226,7 @@ ${bodyText.substring(0, 6e3)}`;
     }).join("") + `</div>`;
   }
   function rowHtml(vm) {
-    var _a2, _b2;
+    var _a, _b;
     const cls = ["bz-sp-set-row"];
     if (vm.cls) cls.push(vm.cls);
     if (vm.isCards) cls.push("bz-sp-set-row--cards");
@@ -17533,12 +17235,12 @@ ${bodyText.substring(0, 6e3)}`;
     const name = vm.name ? `<div class="bz-sp-set-name">${esc(vm.name)}</div>` : "";
     const desc = vm.desc ? `<div class="bz-sp-set-desc">${esc(vm.desc)}</div>` : "";
     if (vm.isCustom) {
-      return `${open}<div class="bz-sp-set-info">${name}${desc}</div>${(_a2 = vm.ctrlHtml) != null ? _a2 : ""}</div>`;
+      return `${open}<div class="bz-sp-set-info">${name}${desc}</div>${(_a = vm.ctrlHtml) != null ? _a : ""}</div>`;
     }
     const note = vm.note ? `<div class="bz-sp-set-note">↳ ${esc(vm.note)}</div>` : "";
     const info = `<div class="bz-sp-set-info">${name}${desc}${note}</div>`;
     const ctrlCls = vm.isCards ? "bz-sp-set-cards" : "bz-sp-set-ctrl";
-    return `${open}${info}<div class="${ctrlCls}">${(_b2 = vm.ctrlHtml) != null ? _b2 : ""}</div></div>`;
+    return `${open}${info}<div class="${ctrlCls}">${(_b = vm.ctrlHtml) != null ? _b : ""}</div></div>`;
   }
   function groupCardHtml(icon, name, count) {
     const ic = icon ? iconSpan(icon, "bz-sp-group-icon") : "";
@@ -17551,17 +17253,17 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/settings-panel/layouts/jingwei/render.ts
-  var init_render2 = __esm({
+  var init_render = __esm({
     "src/settings-panel/layouts/jingwei/render.ts"() {
       init_str();
     }
   });
 
   // src/settings-panel/render.ts
-  var init_render3 = __esm({
+  var init_render2 = __esm({
     "src/settings-panel/render.ts"() {
       init_shared();
-      init_render2();
+      init_render();
     }
   });
 
@@ -17583,10 +17285,10 @@ ${bodyText.substring(0, 6e3)}`;
   function regRefreshDisplay(regRefresh, ref, input) {
     if (!regRefresh || ref === void 0) return;
     regRefresh(() => {
-      var _a2;
+      var _a;
       const snap = snapshot();
       const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
-      (_a2 = displaySetters.get(input)) == null ? void 0 : _a2(String(fresh != null ? fresh : ""));
+      (_a = displaySetters.get(input)) == null ? void 0 : _a(String(fresh != null ? fresh : ""));
     });
   }
   function makeInput(opts) {
@@ -17713,9 +17415,9 @@ ${bodyText.substring(0, 6e3)}`;
       const btn = holder.firstElementChild;
       btn.addEventListener("click", () => {
         void (async () => {
-          var _a2, _b2;
+          var _a, _b;
           await a.onClick(input.value, ctx);
-          (_b2 = displaySetters.get(input)) == null ? void 0 : _b2(String((_a2 = acc.read()) != null ? _a2 : ""));
+          (_b = displaySetters.get(input)) == null ? void 0 : _b(String((_a = acc.read()) != null ? _a : ""));
           refresh();
         })();
       });
@@ -17723,9 +17425,9 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function renderRow(row, refresh, regRefresh) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
     const rowName = row.name;
-    const bindKey = (_a2 = row.binding) == null ? void 0 : _a2.key;
+    const bindKey = (_a = row.binding) == null ? void 0 : _a.key;
     const isCustom = row.type === "custom";
     const isCardsRow = row.type === "choiceCards";
     const holder = document.createElement("div");
@@ -17752,7 +17454,7 @@ ${bodyText.substring(0, 6e3)}`;
         ctrlEl.innerHTML = toggleHtml(acc.read() === true);
         const sw = ctrlEl.querySelector(".bz-sw");
         sw.addEventListener("click", () => {
-          var _a3;
+          var _a2;
           const v = !sw.classList.contains("on");
           try {
             acc.write(v);
@@ -17763,7 +17465,7 @@ ${bodyText.substring(0, 6e3)}`;
           sw.classList.toggle("on", v);
           sw.setAttribute("aria-checked", String(v));
           void acc.persist();
-          (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+          (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
           refresh();
         });
         break;
@@ -17771,7 +17473,7 @@ ${bodyText.substring(0, 6e3)}`;
       case "text": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const warn = new SpCommitWarn(String((_b2 = acc.read()) != null ? _b2 : ""), row.onCommit);
+        const warn = new SpCommitWarn(String((_b = acc.read()) != null ? _b : ""), row.onCommit);
         const input = makeInput({
           value: (_c = acc.read()) != null ? _c : "",
           mono: !!row.mono,
@@ -17779,10 +17481,10 @@ ${bodyText.substring(0, 6e3)}`;
           secret: !!row.secret,
           placeholder: ph,
           onCommit: (v) => {
-            var _a3;
+            var _a2;
             acc.write(v);
             void acc.persist();
-            (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+            (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
             warn.fire(v);
           }
         });
@@ -17835,7 +17537,7 @@ ${bodyText.substring(0, 6e3)}`;
           min: row.min,
           max: row.max,
           onCommit: (raw) => {
-            var _a3;
+            var _a2;
             if (raw.trim() === "") return;
             let v = Number(raw);
             if (Number.isNaN(v)) v = 0;
@@ -17843,7 +17545,7 @@ ${bodyText.substring(0, 6e3)}`;
             if (row.max !== void 0 && v > row.max) v = row.max;
             acc.write(v);
             void acc.persist();
-            (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+            (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
             warn.fire(raw);
           }
         });
@@ -17861,7 +17563,7 @@ ${bodyText.substring(0, 6e3)}`;
         const sel = ctrlEl.querySelector(".bz-select");
         const vspan = sel.querySelector(".bz-select-val");
         sel.addEventListener("click", () => {
-          var _a3;
+          var _a2;
           if (sel.querySelector(".bz-select-menu")) return;
           const group = sel.closest(".bz-sp-group");
           if (group) {
@@ -17869,8 +17571,8 @@ ${bodyText.substring(0, 6e3)}`;
             group.style.zIndex = "10";
           }
           const closeMenu2 = () => {
-            var _a4;
-            (_a4 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a4.remove();
+            var _a3;
+            (_a3 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a3.remove();
             if (group && !group.querySelector(".bz-select-menu")) {
               group.style.overflow = "";
               group.style.zIndex = "";
@@ -17883,12 +17585,12 @@ ${bodyText.substring(0, 6e3)}`;
           setTimeout(() => document.addEventListener("click", h));
           const menu = document.createElement("div");
           menu.className = "bz-select-menu";
-          const curNow = String((_a3 = acc.read()) != null ? _a3 : "") || options[0] && options[0].value || "";
+          const curNow = String((_a2 = acc.read()) != null ? _a2 : "") || options[0] && options[0].value || "";
           menu.innerHTML = options.map((o) => selectItemHtml(o.label, o.value === curNow)).join("");
           menu.querySelectorAll(".bz-select-item").forEach((it, i) => {
             const o = options[i];
             it.addEventListener("click", (ev) => {
-              var _a4;
+              var _a3;
               ev.stopPropagation();
               try {
                 acc.write(o.value);
@@ -17900,7 +17602,7 @@ ${bodyText.substring(0, 6e3)}`;
               closeMenu2();
               vspan.textContent = labelOf(o.value);
               void acc.persist();
-              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, o.value, ctx);
+              (_a3 = row.onChange) == null ? void 0 : _a3.call(row, o.value, ctx);
               refresh();
             });
           });
@@ -17916,12 +17618,12 @@ ${bodyText.substring(0, 6e3)}`;
         const range = ctrlEl.querySelector('input[type="range"]');
         const em = ctrlEl.querySelector(".bz-sp-slider-val");
         range.addEventListener("input", () => {
-          var _a3;
+          var _a2;
           em.textContent = range.value;
           const v = Number(range.value);
           acc.write(v);
           void acc.persist();
-          (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+          (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
         });
         for (const a of (_m = row.actions) != null ? _m : []) {
           const holder2 = document.createElement("div");
@@ -17952,11 +17654,11 @@ ${bodyText.substring(0, 6e3)}`;
           okText: row.okText,
           fallbackChip: typeof fallbackFn === "function" ? fallbackFn() : "",
           onChange: (list) => {
-            var _a3;
+            var _a2;
             const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
             acc.write(v);
             void acc.persist();
-            const res = (_a3 = row.onChange) == null ? void 0 : _a3.call(row, list, ctx);
+            const res = (_a2 = row.onChange) == null ? void 0 : _a2.call(row, list, ctx);
             warn.fire(multi ? JSON.stringify(v) : String(v));
             if (res && typeof res.then === "function") {
               return Promise.resolve(res).then(
@@ -17996,9 +17698,9 @@ ${bodyText.substring(0, 6e3)}`;
             emptyText: row.emptyText,
             onRemove: (key) => {
               void (async () => {
-                var _a3;
+                var _a2;
                 const cur = (typeof row.items === "function" ? row.items() : row.items).map((x) => x.key);
-                await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, cur.filter((k) => k !== key), ctx));
+                await ((_a2 = row.onChange) == null ? void 0 : _a2.call(row, cur.filter((k) => k !== key), ctx));
                 refresh();
               })();
             }
@@ -18027,9 +17729,9 @@ ${bodyText.substring(0, 6e3)}`;
         const wrap = ctrlEl.querySelector(".bz-sp-cardpick");
         wrap.querySelectorAll(".bz-sp-cardpick-card").forEach((c) => {
           c.addEventListener("click", () => {
-            var _a3, _b3, _c2;
+            var _a2, _b2, _c2;
             try {
-              acc.write((_a3 = c.dataset.spCard) != null ? _a3 : "");
+              acc.write((_a2 = c.dataset.spCard) != null ? _a2 : "");
             } catch (e) {
               notifyWriteError(e);
               return;
@@ -18037,7 +17739,7 @@ ${bodyText.substring(0, 6e3)}`;
             wrap.querySelectorAll(".is-on").forEach((x) => x.classList.remove("is-on"));
             c.classList.add("is-on");
             void acc.persist();
-            (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b3 = c.dataset.spCard) != null ? _b3 : "", ctx);
+            (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b2 = c.dataset.spCard) != null ? _b2 : "", ctx);
             refresh();
           });
         });
@@ -18119,13 +17821,13 @@ ${bodyText.substring(0, 6e3)}`;
         applyCond(el, cond);
       });
       container.querySelectorAll(".bz-sp-group").forEach((card) => {
-        var _a2;
-        (_a2 = groupCountUpdaters.get(card)) == null ? void 0 : _a2();
+        var _a;
+        (_a = groupCountUpdaters.get(card)) == null ? void 0 : _a();
       });
       for (const fn of valueRefreshes) fn();
     };
     schema.groups.forEach((g) => {
-      var _a2, _b2;
+      var _a, _b;
       const card = renderGroup(container, g, refresh, (fn) => valueRefreshes.push(fn));
       card.dataset.spGroup = g.name;
       const groupVw = g.visibleWhen;
@@ -18134,12 +17836,12 @@ ${bodyText.substring(0, 6e3)}`;
         visibleConditions.set(card, groupVw);
         card.style.display = groupVw(snapshot()) ? "" : "none";
       }
-      const parentToggleKey = (_b2 = (_a2 = g.rows.find(
+      const parentToggleKey = (_b = (_a = g.rows.find(
         (pr) => {
-          var _a3;
-          return pr.type === "toggle" && typeof ((_a3 = pr.binding) == null ? void 0 : _a3.key) === "string";
+          var _a2;
+          return pr.type === "toggle" && typeof ((_a2 = pr.binding) == null ? void 0 : _a2.key) === "string";
         }
-      )) == null ? void 0 : _a2.binding.key) != null ? _b2 : null;
+      )) == null ? void 0 : _a.binding.key) != null ? _b : null;
       g.rows.forEach((r, i) => {
         const rowEl = card.querySelectorAll(".bz-sp-set-row")[i];
         if (!rowEl) return;
@@ -18166,8 +17868,8 @@ ${bodyText.substring(0, 6e3)}`;
       init_path_picker();
       init_settings_schema();
       init_notice();
-      init_render3();
-      init_ui();
+      init_render2();
+      init_ui2();
       SpCommitWarn = class {
         constructor(initial, onCommit) {
           this.initial = initial;
@@ -18350,12 +18052,12 @@ ${bodyText.substring(0, 6e3)}`;
               type: "list",
               name: "名单列表",
               items: () => box.ups.map((uid) => {
-                var _a2;
+                var _a;
                 return {
                   key: uid,
                   label: upDisplayName(uid, box.upInfo[uid]),
                   sub: `UID ${uid}`,
-                  imageUrl: (_a2 = box.upInfo[uid]) == null ? void 0 : _a2.avatar
+                  imageUrl: (_a = box.upInfo[uid]) == null ? void 0 : _a.avatar
                 };
               }),
               emptyText: "暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加",
@@ -18740,35 +18442,35 @@ ${bodyText.substring(0, 6e3)}`;
     for (const n of notes) if (n && n.url) s.add(String(n.url));
     return s;
   }
-  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}) {
-    if (source.kind === "clip") {
+  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
+    if (source2.kind === "clip") {
       return (clipNotes || []).map((n) => clipFromNote(n));
     }
     const pool = (articles || []).filter((a) => !a.read);
     const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
-    if (source.kind === "site") {
-      const s = normSite(source.site);
+    if (source2.kind === "site") {
+      const s = normSite(source2.site);
       const newsPart = pool.filter((a) => normSite(siteName(a)) === s).map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap })).filter((a) => a.st !== "saved");
       const clipPart = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
       return [...newsPart, ...clipPart].sort((a, b) => b.timeTs - a.timeTs);
     }
     let out = [];
-    if (source.kind === "all") {
+    if (source2.kind === "all") {
       out = pool.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
     } else {
-      const isBili = source.platform === "B站";
+      const isBili = source2.platform === "B站";
       const list = pool.filter((a) => {
         const p = platformOf(a);
-        if (p !== source.platform) return false;
-        if (isBili && source.up && String(a.author || "") !== source.up) return false;
+        if (p !== source2.platform) return false;
+        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
         return true;
       });
       out = list.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
     }
     return out.filter((a) => a.st !== "saved").sort((a, b) => b.timeTs - a.timeTs);
   }
-  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}) {
-    if (source.kind === "clip") {
+  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
+    if (source2.kind === "clip") {
       return (clipNotes || []).map((n) => clipFromNote(n));
     }
     const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
@@ -18776,19 +18478,19 @@ ${bodyText.substring(0, 6e3)}`;
     const mapNews = (a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap });
     let news = [];
     let clips = [];
-    if (source.kind === "all") {
+    if (source2.kind === "all") {
       news = (articles || []).filter((a) => !isClippedNews(a));
-    } else if (source.kind === "site") {
-      const s = normSite(source.site);
+    } else if (source2.kind === "site") {
+      const s = normSite(source2.site);
       news = (articles || []).filter((a) => !isClippedNews(a) && normSite(siteName(a)) === s);
       clips = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
     } else {
-      const isBili = source.platform === "B站";
+      const isBili = source2.platform === "B站";
       news = (articles || []).filter((a) => {
         if (isClippedNews(a)) return false;
         const p = platformOf(a);
-        if (p !== source.platform) return false;
-        if (isBili && source.up && String(a.author || "") !== source.up) return false;
+        if (p !== source2.platform) return false;
+        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
         return true;
       });
     }
@@ -19024,7 +18726,7 @@ ${bodyText.substring(0, 6e3)}`;
   `;
   }
   var ICO;
-  var init_render4 = __esm({
+  var init_render3 = __esm({
     "src/clipbook/render.ts"() {
       init_str();
       ICO = {
@@ -19092,10 +18794,10 @@ ${bodyText.substring(0, 6e3)}`;
 
   // src/clipbook/scan.ts
   function defaultCache(f) {
-    var _a2;
+    var _a;
     try {
       const app = getApp();
-      if (app && typeof ((_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) === "function") {
+      if (app && typeof ((_a = app.metadataCache) == null ? void 0 : _a.getFileCache) === "function") {
         return app.metadataCache.getFileCache(f);
       }
     } catch (e) {
@@ -19166,7 +18868,7 @@ ${bodyText.substring(0, 6e3)}`;
     return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
   }
   async function readNewsAndSidecar() {
-    var _a2;
+    var _a;
     const res = await readNewsData();
     if (res.missing) {
       M.articles = [];
@@ -19185,7 +18887,7 @@ ${bodyText.substring(0, 6e3)}`;
       return { status: "corrupt", articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
-    const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
+    const days = (_a = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a : 30;
     let data = res.data;
     const cleaned = applyRetention(data.articles, days, days);
     const retentionChanged = cleaned.length !== data.articles.length;
@@ -19626,11 +19328,11 @@ ${bodyText.substring(0, 6e3)}`;
     return a.title.toLowerCase().includes(kw) || a.summary.toLowerCase().includes(kw) || a.site.toLowerCase().includes(kw) || a.srcName.toLowerCase().includes(kw) || a.author.toLowerCase().includes(kw) || a.tags.some((t) => t.toLowerCase().includes(kw));
   }
   function renderRail() {
-    var _a2, _b2, _c, _d;
+    var _a, _b, _c, _d;
     if (!railListEl) return;
     const arts = M.articles;
     const clipNotes = M.clipNotes || [];
-    const countOf = (source) => queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source, M.upInfo).filter(matchesSearch).length;
+    const countOf = (source2) => queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source2, M.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
     let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M.sel.kind === "all", "");
     for (const row of aggregateSites(arts, clipNotes, new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
@@ -19644,7 +19346,7 @@ ${bodyText.substring(0, 6e3)}`;
     for (const a of arts) {
       if (!a.read && a.platform === "B站" && a.author) {
         const uid = String(a.author);
-        const backfilled = (_b2 = (_a2 = M.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
+        const backfilled = (_b = (_a = M.upInfo) == null ? void 0 : _a[uid]) == null ? void 0 : _b.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
       }
     }
@@ -19671,13 +19373,13 @@ ${bodyText.substring(0, 6e3)}`;
         return;
       }
       if (!sel) return;
-      const source = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : sel.kind === "site" ? { kind: "site", site: String(sel.site || "") } : { kind: "all" };
-      const actions = buildRailActions(String(row.title || ""), source);
+      const source2 = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : sel.kind === "site" ? { kind: "site", site: String(sel.site || "") } : { kind: "all" };
+      const actions = buildRailActions(String(row.title || ""), source2);
       if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ""), menuClass: "bz-clip-menu-editorial" });
     });
   }
-  function buildRailActions(label, source) {
-    const unreadList = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo).filter((a) => a.origin === "news");
+  function buildRailActions(label, source2) {
+    const unreadList = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source2, M.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -19841,7 +19543,7 @@ ${bodyText.substring(0, 6e3)}`;
     return out;
   }
   async function hydrateArticleMarkdown(el, md, sourcePath, alive) {
-    var _a2;
+    var _a;
     try {
       const comp = new Component();
       await MarkdownRenderer.render(getApp(), md, el, sourcePath, comp);
@@ -19849,7 +19551,7 @@ ${bodyText.substring(0, 6e3)}`;
     } catch (e) {
     }
     if (!alive()) return;
-    if (!el.querySelector("*") || !((_a2 = el.textContent) == null ? void 0 : _a2.trim())) el.textContent = md;
+    if (!el.querySelector("*") || !((_a = el.textContent) == null ? void 0 : _a.trim())) el.textContent = md;
     bindImgFallback(el);
   }
   function bindImgFallback(container) {
@@ -19924,8 +19626,8 @@ ${bodyText.substring(0, 6e3)}`;
     return [...clipBodyCache.keys()];
   }
   function readerFontSize() {
-    var _a2;
-    const v = String(((_a2 = tryGetSettings()) == null ? void 0 : _a2.clipbookReaderFontSize) || "");
+    var _a;
+    const v = String(((_a = tryGetSettings()) == null ? void 0 : _a.clipbookReaderFontSize) || "");
     return v === "small" || v === "large" ? v : "medium";
   }
   function applyReaderFontSize() {
@@ -20096,8 +19798,8 @@ ${bodyText.substring(0, 6e3)}`;
     void saveSettings();
   }
   function savedSplitWidth() {
-    var _a2;
-    const v = Number((_a2 = tryGetSettings()) == null ? void 0 : _a2.clipbookMidWidth) || 0;
+    var _a;
+    const v = Number((_a = tryGetSettings()) == null ? void 0 : _a.clipbookMidWidth) || 0;
     return v > 0 ? v : null;
   }
   function rememberSplitWidth(w) {
@@ -20351,7 +20053,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_fake_obsidian();
       init_app();
       init_notice();
-      init_ui();
+      init_ui2();
       init_utils();
       init_mobile();
       init_esc_manager();
@@ -20365,7 +20067,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_news_source_settings();
       init_md();
       init_store();
-      init_render4();
+      init_render3();
       init_state();
       init_loader();
       init_news_data();
@@ -20428,7 +20130,39 @@ ${bodyText.substring(0, 6e3)}`;
 
   // src/core/path-classify.ts
   init_settings_provider();
-  init_diary_format();
+
+  // src/core/diary-format.ts
+  var DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
+  function diaryMetaFromEntryPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_ENTRY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `20${m[1]}-${m[2]}-${m[3]}`;
+    const time = `${m[4]}:${m[5]}`;
+    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
+    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
+  }
+  function diaryDateFromEntryPath(path) {
+    var _a, _b;
+    return (_b = (_a = diaryMetaFromEntryPath(path)) == null ? void 0 : _a.date) != null ? _b : null;
+  }
+  function isValidDiaryDate(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1) return false;
+    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return d <= days[mo - 1];
+  }
+  function isValidDiaryTime(s) {
+    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
+  }
+
+  // src/core/path-classify.ts
   function normalizeDir(dir) {
     return (dir || "").trim().replace(/\\/g, "/").replace(/\/+$/, "");
   }
