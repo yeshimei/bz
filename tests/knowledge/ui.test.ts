@@ -11,6 +11,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Platform, requestUrl } from 'obsidian';
 import { UIManager, knowledgeSettingsSchema } from '../../src/knowledge/ui';
 import { KnowledgeData } from '../../src/knowledge/data';
+import { parseBvid } from '../../src/knowledge/video-meta';
 import { BatchRunner } from '../../src/knowledge/processor';
 import { openFlowDialog } from '../../src/core/flow-dialog'; // issue 291 断言用（本文件已 vi.mock 为 spy）
 import { setApp } from '../../src/core/app';
@@ -466,6 +467,119 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(tasks[0].title).toBe('失语者的声音');
     expect(tasks[0].uploader).toBe('央视频');
     expect(tasks[0].page).toBe(2);
+  });
+
+  it('短链 bvid 兜底隔离（ADR-0134）：URL 里没有 BV 字样时，切 P 靠 meta.bvid 查档', async () => {
+    settings.bilibiliCookie = 'SESSDATA=x';
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.startsWith('https://b23.tv/')) return httpResp(200, LANDING_HTML);
+      if (url.includes('web-interface/view')) return httpResp(200, JSON.stringify({ code: -412, message: '风控', data: null }));
+      if (url.includes('web-interface/nav')) return httpResp(200, JSON.stringify({ code: 0, data: { isLogin: true } }));
+      if (url.includes('player/playurl')) return httpResp(200, JSON.stringify({ code: 0, data: { dash: { video: [{ height: 720 }] } } }));
+      return httpResp(404, '');
+    });
+    ui.showVideoEntry();
+    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
+    urlInput.value = 'https://b23.tv/AtDgBVH';
+    (document.getElementById('lit-add-resolve') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('lit-add-ititle')!.textContent).toBe('失语者的声音'));
+    // 换回短链形态（不派发 input：addMeta 保留，模拟「写回未落 / 存量短链任务」）
+    urlInput.value = 'https://b23.tv/AtDgBVH';
+    expect(parseBvid(urlInput.value)).toBeNull();
+    reqMock.mockClear();
+    const pageSel = document.getElementById('lit-add-page') as HTMLSelectElement;
+    pageSel.value = '2';
+    pageSel.dispatchEvent(new Event('change', { bubbles: true }));
+    await vi.waitFor(() => expect(reqMock.mock.calls.some((c) => String(c[0]?.url).includes('playurl'))).toBe(true));
+    const playurl = reqMock.mock.calls.map((c) => String(c[0]?.url)).find((u) => u.includes('playurl'))!;
+    expect(playurl).toContain('bvid=BV1shortlink&cid=12'); // bvid 来自 meta.bvid，不是 URL
+  });
+
+  it('在途解析遇用户改输入（ADR-0134 写回保护）：迟到响应不改写输入框、不渲染信息区', async () => {
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    let release: (() => void) | null = null;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.startsWith('https://b23.tv/')) {
+        await new Promise<void>((r) => { release = r; });
+        return httpResp(200, LANDING_HTML);
+      }
+      return httpResp(404, '');
+    });
+    ui.showVideoEntry();
+    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
+    urlInput.value = 'https://b23.tv/AtDgBVH';
+    (document.getElementById('lit-add-resolve') as HTMLElement).click();
+    await vi.waitFor(() => expect(release).not.toBeNull());
+    urlInput.value = 'https://b23.tv/OtherLink1';
+    urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+    release!();
+    await new Promise((r) => setTimeout(r, 60));
+    expect(urlInput.value).toBe('https://b23.tv/OtherLink1'); // 迟到响应不写回
+    expect(document.getElementById('lit-add-info')!.style.display).toBe('none');
+    expect(document.getElementById('lit-add-ititle')!.textContent).not.toBe('失语者的声音');
+  });
+
+  it('切 P 档位查询带序列号判据（ADR-0134 收口）：查询期间改输入 → 迟到档位不渲染', async () => {
+    settings.bilibiliCookie = 'SESSDATA=x';
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    let playCalls = 0;
+    let releasePlay: (() => void) | null = null;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) return httpResp(200, JSON.stringify({ code: 0, data: {
+        title: 'T', owner: { name: 'U' }, duration: 300,
+        pages: [{ cid: 11, page: 1, part: 'A', duration: 120 }, { cid: 12, page: 2, part: 'B', duration: 180 }],
+      } }));
+      if (url.includes('web-interface/nav')) return httpResp(200, JSON.stringify({ code: 0, data: { isLogin: true } }));
+      if (url.includes('player/playurl')) {
+        playCalls += 1;
+        if (playCalls === 3) await new Promise<void>((r) => { releasePlay = r; }); // 第三次（切回 P1）挂起
+        const heights = playCalls === 1 ? [{ height: 1080 }] : [{ height: 480 }];
+        return httpResp(200, JSON.stringify({ code: 0, data: { dash: { video: heights } } }));
+      }
+      return httpResp(404, '');
+    });
+    ui.showVideoEntry();
+    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
+    urlInput.value = 'https://www.bilibili.com/video/BV1switchpaa';
+    (document.getElementById('lit-add-resolve') as HTMLElement).click();
+    const sel = document.getElementById('lit-add-quality') as HTMLSelectElement;
+    await vi.waitFor(() => expect([...sel.options].map((o) => o.value)).toEqual(['highest', '1080']));
+    const pageSel = document.getElementById('lit-add-page') as HTMLSelectElement;
+    pageSel.value = '2';
+    pageSel.dispatchEvent(new Event('change', { bubbles: true }));
+    await vi.waitFor(() => expect([...sel.options].map((o) => o.value)).toEqual(['highest', '480']));
+    // 切回 P1（查询挂起中）→ 改输入：addPage 被重置为 1，单靠 addPage 判据拦不住这次迟到响应
+    pageSel.value = '1';
+    pageSel.dispatchEvent(new Event('change', { bubbles: true }));
+    await vi.waitFor(() => expect(releasePlay).not.toBeNull());
+    urlInput.value = 'https://www.bilibili.com/video/BV1otherlink';
+    urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+    releasePlay!();
+    await new Promise((r) => setTimeout(r, 60));
+    expect([...sel.options].map((o) => o.value)).toEqual(['highest', '1080', '720']); // 迟到档位（480）被丢弃，回落固定列表
+  });
+
+  it('自动重抓收口（ADR-0134）：非 B 站任务与已成功的任务不纳入（不改 URL、零请求）', async () => {
+    await KnowledgeData.addTask({ url: 'https://www.youtube.com/watch?v=abc', title: 'YouTube 任务' });
+    await KnowledgeData.addTask({ url: 'https://b23.tv/DoneTask1', title: '已完成短链任务' });
+    const seeded = await KnowledgeData.loadTasks();
+    await KnowledgeData.updateTask(seeded[1].id, { status: 'success' });
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    reqMock.mockImplementation(async () => httpResp(404, ''));
+    reqMock.mockClear(); // 只数本用例的请求（前序用例的调用史会留着）
+    ui.showVideoEntry();
+    await new Promise((r) => setTimeout(r, 500));
+    expect(reqMock.mock.calls.map((c) => String(c[0]?.url))).toEqual([]);
+    const after = await KnowledgeData.loadTasks();
+    expect(after[0].url).toBe('https://www.youtube.com/watch?v=abc');
+    expect(after[1].url).toBe('https://b23.tv/DoneTask1');
   });
 
   it('范围选择（ADR-0133）：时间框提交钳制 + ↑/↓ 微调 + 剪辑范围落库与整片重置', async () => {

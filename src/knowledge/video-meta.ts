@@ -10,7 +10,8 @@
  * cookie 缺 / 失效 / 接口失败 → qualities = null（调用方回落固定档位列表），全程静默。
  *
  * 短链（ADR-0134）：b23.tv 分享链路的 BV 号不在 URL 里，requestUrl 响应又不暴露重定向目标——
- * 改为从**跟随后的落地页 HTML** 取：og:url 的 BV 号 + `__INITIAL_STATE__`（桌面 videoData /
+ * 改为从**跟随后的落地页 HTML** 取：og:url **路径段** `/video/BV…`（列表/收藏夹页的 `?bvid=` 推荐位不算）
+ * + `__INITIAL_STATE__`（桌面 videoData /
  * 手机 video.viewInfo，字段与 view API data 同名，实测三方 title/owner/duration/pages 完全对齐）。
  * 于是短链「标题/UP主/分P/时长」一次页面请求拿全，且 API 不可达时仍不残缺；meta.bvid 一并回传给调用方
  * （切 P 查档位、短链写回规范链接都靠它）。
@@ -108,7 +109,7 @@ function metaFromVideoData(d: any): VideoMeta | null {
   const meta: VideoMeta = {};
   const title = typeof d.title === 'string' ? d.title.trim() : '';
   const ownerName = d.owner && typeof d.owner.name === 'string' ? d.owner.name.trim() : '';
-  const bvid = typeof d.bvid === 'string' && BVID_EXACT_RE.test(d.bvid.trim()) ? d.bvid.trim() : '';
+  const bvid = bvidFromVideoData(d);
   if (title) meta.title = title;
   if (ownerName) meta.uploader = ownerName;
   if (bvid) meta.bvid = bvid;
@@ -173,15 +174,30 @@ function extractInitialState(html: string): unknown | null {
   try { return JSON.parse(html.slice(start, end)); } catch { return null; }
 }
 
-/** 页面 HTML → bvid：og:url 优先（分享短链跟随后的落地页带），退 state 里的 "bvid" 字段；无 → null */
-export function parseBvidFromHtml(html: string): string | null {
+/** 视频数据体里的 bvid（整串精确校验，防 "BV…x" 之类半截串）；无/非法 → null */
+function bvidFromVideoData(d: any): string | null {
+  const b = d && typeof d.bvid === 'string' ? d.bvid.trim() : '';
+  return BVID_EXACT_RE.test(b) ? b : null;
+}
+
+/**
+ * og:url 的**路径段**里才是本页视频——`/video/BV…`。
+ * 只认路径段：列表页/收藏夹页的 og:url 形如 `/list/ml123?oid=…&bvid=BV…`（推荐位），
+ * 命中它会把用户链接悄悄改写成无关视频（review 307）。
+ */
+function bvidFromOgUrl(html: string): string | null {
   const og = /og:url["']?\s+content=["']([^"']+)["']/i.exec(html);
-  if (og) {
-    const m = og[1].match(BVID_RE);
-    if (m) return m[0];
-  }
-  const st = /"bvid"\s*:\s*"(BV[0-9A-Za-z]{10})"/.exec(html);
-  return st ? st[1] : null;
+  if (!og) return null;
+  const m = /\/video\/(BV[0-9A-Za-z]{10})/.exec(og[1]);
+  return m ? m[1] : null;
+}
+
+/**
+ * 页面 HTML → bvid：og:url 路径段优先，退 `__INITIAL_STATE__` 里**已解析出的视频数据体**的 bvid。
+ * 不做全页 `"bvid"` 正则——非视频页（列表/收藏夹/番剧）正文里的 bvid 属于别的视频。
+ */
+export function parseBvidFromHtml(html: string): string | null {
+  return bvidFromOgUrl(html) || bvidFromVideoData(videoDataFromState(extractInitialState(html)));
 }
 
 /** B 站 view API：10s 超时（Promise.race，范式随 clipbook fetchRssFeedTitle）；非 2xx/code!==0/异常 → null */
@@ -202,8 +218,8 @@ const PAGE_HEADERS = {
 };
 
 /**
- * B 站页面抓取（一次请求，10s 超时）：bvid（og:url / state）+ meta
- * （`__INITIAL_STATE__` 优先，退化到 <title> 清洗；两者皆无 → meta null，bvid 仍回传）。
+ * B 站页面抓取（一次请求，10s 超时）：bvid（og:url 路径段 / 视频 state）+ meta
+ * （`__INITIAL_STATE__` 优先，退化到 <title> 清洗；两者皆无但有 bvid → 只回 bvid 的 meta）。
  * 页面完全不可达 → null（调用方按既有降级链收尾）。
  */
 async function fetchFromPage(url: string): Promise<{ bvid: string | null; meta: VideoMeta | null } | null> {
@@ -216,23 +232,28 @@ async function fetchFromPage(url: string): Promise<{ bvid: string | null; meta: 
     return null;
   }
   if (!html) return null;
-  const bvid = parseBvidFromHtml(html);
-  const viaState = metaFromVideoData(videoDataFromState(extractInitialState(html)));
+  const state = extractInitialState(html);
+  const videoData = videoDataFromState(state);
+  const viaState = metaFromVideoData(videoData);
+  const bvid = bvidFromOgUrl(html) || bvidFromVideoData(videoData);
   if (viaState) return { bvid: bvid || viaState.bvid || null, meta: viaState };
   const t = /<title[^>]*>([^<]*)<\/title>/i.exec(html);
   const title = t && t[1] ? cleanSourceTitle(t[1].trim()) : '';
   if (title) return { bvid, meta: bvid ? { title, bvid } : { title } };
+  // 无 state 也无标题：仍回传 bvid（调用方据此写回规范链接、按页型继续走 API），meta 为空
   return { bvid, meta: null };
 }
 
 /**
  * 输入 → 元信息（静默降级，联网范围仅限 B 站域）：
  * - B 站 video 链接 / 裸 BV 号 → view API，失败（含超时/风控）→ 页面（state 优先，退化标题）；
- * - B 站域 URL 但无 BV 字样（b23.tv 分享短链、space 主页）→ 抓页面拿 bvid（og:url/state）→ 再走 view API，
- *   API 不可用则直接用页面 state 的 title/uploader/pages/duration（ADR-0134）；
+ * - B 站域 URL 但无 BV 字样（b23.tv 分享短链、space 主页）→ 抓页面拿 bvid（og:url 路径段 / 视频 state）
+ *   → 再走 view API，API 不可用则直接用页面 state 的 title/uploader/pages/duration（ADR-0134）；
  * - 非 B 站 http(s) URL → null 零请求（只净化，净化在调用方/落库收口）；
  * - 非 URL 文本 → null，零网络请求。
- * 已知的 bvid 一律回填到 meta.bvid（调用方据此查档位 / 写回规范链接）。
+ * 成功判据：拿到 bvid **或** meta 有内容（只回 bvid 的 meta 也算成功——调用方据此写回规范链接）；
+ * 已知的 bvid 一律回填到 meta.bvid。两者皆无 → null（调用方进失败态）。
+ * 注：降级链最坏耗时 = 页面 10s + view API 10s + nav 10s + playurl 10s（每级各自超时，超时只放弃结果不中断请求）。
  */
 export async function fetchVideoMeta(input: string): Promise<VideoMeta | null> {
   const text = String(input ?? '').trim();
@@ -244,8 +265,9 @@ export async function fetchVideoMeta(input: string): Promise<VideoMeta | null> {
     if (!isBiliUrl(text)) return null; // 裸 BV 号：无页面可抓
     const page = await fetchFromPage(text);
     if (!page) return null;
-    if (!page.meta) return null;
-    return { ...page.meta, bvid: page.meta.bvid || page.bvid || bvid };
+    if (!page.meta && !page.bvid) return null; // 页面也没认出本视频（无 og:url 路径段 / 无 state / 无标题）→ 失败态
+    const known = page.bvid || bvid;
+    return { ...(page.meta || {}), bvid: (page.meta && page.meta.bvid) || known };
   }
   if (!isUrlLikeSourceText(text)) return null; // 非 URL 文本：不联网
   const url = /^https?:\/\//i.test(text) ? text : `https://${text}`;
@@ -256,8 +278,18 @@ export async function fetchVideoMeta(input: string): Promise<VideoMeta | null> {
     const viaApi = await fetchFromViewApi(page.bvid);
     if (viaApi) return { ...viaApi, bvid: viaApi.bvid || page.bvid };
   }
-  if (!page.meta) return null;
+  if (!page.meta) return page.bvid ? { bvid: page.bvid } : null;
   return page.bvid && !page.meta.bvid ? { ...page.meta, bvid: page.bvid } : page.meta;
+}
+
+/**
+ * 「链接需要修成规范 BV 链接」判据（ADR-0134，调用方 backfill / 落库修补共用）：
+ * B 站域且 URL 里没有 BV 号（b23.tv 短链等）——非 B 站链接（YouTube 等）不算，
+ * 免得每次开面板都空跑一轮、更免得把无关链接改写。
+ */
+export function needsBvidRepair(url: string): boolean {
+  const text = String(url ?? '').trim();
+  return !!text && isBiliUrl(text) && !parseBvid(text);
 }
 
 /**

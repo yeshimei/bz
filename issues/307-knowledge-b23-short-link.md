@@ -38,6 +38,21 @@
 - 测试：`video-meta.test.ts` 15→24（短链/state 兜底/手机形态/坏 JSON/API 失败回退）；
   `ui.test.ts` 33→35（短链解析写回 + 切 P 查档 + 落库规范 URL；存量短链任务自愈）。
 
+## 独立 review 结论与修复（2026-09-14）
+
+- **P2（已修）bvid 提取无页面类型限定**：实测 `https://www.bilibili.com/list/ml…` 的 `og:url` 带
+  `?bvid=` 查询串、正文另有推荐位 `"bvid"` —— 会把用户链接/存量任务 URL 静默改写成无关视频。
+  修法：og:url 只认 **`/video/BV…` 路径段**；state 的 bvid 只从 `videoData` / `video.viewInfo` 取
+  （全页 `"bvid"` 正则删除）；新增 `needsBvidRepair(url)`（B 站域且 URL 无 BV）作 backfill/落库判据，
+  非 B 站任务不进队列、已成功任务不改 url。补「非视频 B 站页 → 只给标题、URL 不变」测试。
+- **P3（已修/已收口）**：① 成功判据明确为「拿到 bvid 或 meta 有内容」（bvid-only meta 也算成功，
+  页面完全认不出本视频才失败）——补 bvid-only 用例；② backfill 域/状态收口（见上）；③ `_switchAddPage`
+  档位查询补 `addUrlSeq` 判据（切 P 后改输入的迟到档位不再渲染，测试已证明「去掉判据即红」）；
+  ④ 补齐 state 边界用例（og:url 无 BV 但 state 有、手机页无 og:url、字符串含 `{}`/转义、marker 后无 `{`）
+  与 `resolveVideo` 短链请求顺序断言；⑤ 写回规范链接的「在途响应不改写输入框」补测；
+  ⑥ `meta.bvid` 兜底补隔离用例（把输入框换回短链形态再切 P）。
+- P3-1（短链最坏 40s 超时）不改行为，已写进 ADR 后果段与函数注释（每级 10s 各自超时）。
+
 ## 门禁
 
 - worktree：`pnpm test` 全绿（除 `preview-freshness` 6 例——worktree CRLF 检出导致的既有环境现象，

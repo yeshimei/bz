@@ -165,9 +165,13 @@ describe('b23.tv 短链与落地页 state（ADR-0134）', () => {
     vi.useRealTimers();
   });
 
-  it('parseBvidFromHtml：og:url 优先 / state 的 bvid 字段兜底 / 都没有 → null', () => {
+  it('parseBvidFromHtml：og:url 的 /video/ 路径段优先 / 视频 state 的 bvid 兜底 / 都不算 → null', () => {
     expect(parseBvidFromHtml('<meta property="og:url" content="https://www.bilibili.com/video/BV1awbg6XELn/">')).toBe('BV1awbg6XELn');
-    expect(parseBvidFromHtml('window.__INITIAL_STATE__={"bvid":"BV1xx411c7mD"}')).toBe('BV1xx411c7mD');
+    expect(parseBvidFromHtml('window.__INITIAL_STATE__={"videoData":{"bvid":"BV1xx411c7mD"}}')).toBe('BV1xx411c7mD');
+    expect(parseBvidFromHtml('window.__INITIAL_STATE__={"video":{"viewInfo":{"bvid":"BV1xx411c7mD"}}}')).toBe('BV1xx411c7mD');
+    // 列表页 og:url 的 ?bvid= 查询串不是本页视频；裸 "bvid" 全文匹配已废弃（推荐位会误命中）
+    expect(parseBvidFromHtml('<meta property="og:url" content="https://www.bilibili.com/list/ml1?bvid=BV1dG7N6nEQ7">')).toBeNull();
+    expect(parseBvidFromHtml('<script>window.__INITIAL_STATE__={"bvid":"BV1xx411c7mD"}</script>')).toBeNull();
     expect(parseBvidFromHtml('<html><head><title>无 BV 的页面</title></head></html>')).toBeNull();
   });
 
@@ -250,21 +254,79 @@ describe('b23.tv 短链与落地页 state（ADR-0134）', () => {
     });
   });
 
-  it('resolveVideo：短链也能查档位（bvid 由 meta 补出，不再依赖输入里的 BV 字样）', async () => {
+  it('非视频 B 站页（列表/收藏夹）不得把推荐位的 bvid 当本页视频（review 307 P2）', async () => {
+    // 实测形状：og:url 是 /list/ml… 且带 ?bvid= 查询串，正文另有 "bvid" 推荐位
+    const listHtml = '<html><head><title>我的收藏夹_哔哩哔哩_bilibili</title>'
+      + '<meta property="og:url" content="https://www.bilibili.com/list/ml123456789?oid=1&amp;bvid=BV1dG7N6nEQ7"></head>'
+      + '<body><script>window.__INITIAL_STATE__=' + JSON.stringify({ listData: { items: [{ bvid: 'BV1dG7N6nEQ7' }] } }) + ';</script></body></html>';
     reqMock.mockImplementation(async (opts: any) => {
       const url = String(opts?.url ?? '');
-      if (url.startsWith('https://b23.tv/')) {
-        return deskPage('BV1awbg6XELn', { title: 'T', owner: { name: 'U' }, duration: 100, pages: [{ cid: 5, page: 1, part: '', duration: 100 }] });
-      }
+      if (url.includes('/list/ml123456789') || url.startsWith('https://b23.tv/')) return httpResp(200, listHtml);
+      return httpResp(404, '');
+    });
+    // 短链落到列表页：只给标题，不产出 bvid（也就不改 URL、不拿无关视频的 meta）
+    expect(await fetchVideoMeta('https://b23.tv/AtDgBVH')).toEqual({ title: '我的收藏夹' });
+    // 直接粘列表页：同上
+    expect(await fetchVideoMeta('https://www.bilibili.com/list/ml123456789')).toEqual({ title: '我的收藏夹' });
+    expect(reqMock.mock.calls.every((c) => !String(c[0]?.url).includes('web-interface/view'))).toBe(true); // 一次 view API 都没发
+  });
+
+  it('og:url 无 BV 但 state 有 videoData.bvid → 用 state 的（含手机页无 og:url 形态）', async () => {
+    reqMock.mockImplementationOnce(async () => httpResp(200,
+      '<html><head><title>页标题</title></head><body><script>window.__INITIAL_STATE__={"videoData":{"bvid":"BV1awbg6XELn","title":"标题","owner":{"name":"UP"}}}</script></body></html>'));
+    reqMock.mockImplementationOnce(async () => viewResp(-412));
+    expect(await fetchVideoMeta('https://b23.tv/AtDgBVH')).toEqual({ bvid: 'BV1awbg6XELn', title: '标题', uploader: 'UP' });
+
+    // 手机页无 og:url：bvid 从 video.viewInfo 取
+    reqMock.mockImplementationOnce(async () => httpResp(200,
+      '<html><head><title>手机页</title></head><body><script>window.__INITIAL_STATE__={"video":{"viewInfo":{"bvid":"BV1xx411c7mD","title":"手机标题","owner":{"name":"手机UP"}}}}</script></body></html>'));
+    reqMock.mockImplementationOnce(async () => viewResp(-412));
+    expect(await fetchVideoMeta('https://b23.tv/xyz7890')).toEqual({ bvid: 'BV1xx411c7mD', title: '手机标题', uploader: '手机UP' });
+  });
+
+  it('state 里的字符串含花括号/转义引号：平衡扫描照常取整段（json 自校验）', async () => {
+    const tricky = { videoData: { bvid: 'BV1awbg6XELn', title: '带 } 和 { 和 " 的标题', owner: { name: 'UP' }, duration: 30 } };
+    reqMock.mockImplementationOnce(async () => httpResp(200,
+      `<html><head><title>页</title></head><body><script>window.__INITIAL_STATE__=${JSON.stringify(tricky)};var a={};</script></body></html>`));
+    reqMock.mockImplementationOnce(async () => viewResp(-412));
+    const meta = await fetchVideoMeta('https://b23.tv/AtDgBVH');
+    expect(meta!.title).toBe('带 } 和 { 和 " 的标题');
+    expect(meta!.bvid).toBe('BV1awbg6XELn');
+  });
+
+  it('marker 后无 `{` → 不炸不误取（回落 <title>）', async () => {
+    reqMock.mockImplementationOnce(async () => httpResp(200,
+      '<html><head><title>怪页 _哔哩哔哩_bilibili</title></head><body><script>window.__INITIAL_STATE__ = null;</script></body></html>'));
+    expect(await fetchVideoMeta('https://b23.tv/AtDgBVH')).toEqual({ title: '怪页' });
+  });
+
+  it('只有 og:url 的 /video/BV…（页面无 state、无 <title>）→ 仍算成功：回 bvid-only meta', async () => {
+    reqMock.mockImplementationOnce(async () => httpResp(200,
+      '<html><head><meta property="og:url" content="https://www.bilibili.com/video/BV1awbg6XELn/"></head><body>拦截页</body></html>'));
+    reqMock.mockImplementationOnce(async () => viewResp(-412));
+    expect(await fetchVideoMeta('https://b23.tv/AtDgBVH')).toEqual({ bvid: 'BV1awbg6XELn' });
+    // 裸 BV 输入 + API 失败 + 页面同样只给 bvid → 也回 bvid-only（不再误判失败）
+    reqMock.mockImplementationOnce(async () => viewResp(-412));
+    reqMock.mockImplementationOnce(async () => httpResp(200,
+      '<html><head><meta property="og:url" content="https://www.bilibili.com/video/BV1awbg6XELn/"></head><body>拦截页</body></html>'));
+    expect(await fetchVideoMeta('https://www.bilibili.com/video/BV1awbg6XELn/')).toEqual({ bvid: 'BV1awbg6XELn' });
+  });
+
+  it('resolveVideo：短链档位链路的请求顺序（页面 → view → nav → playurl）', async () => {
+    const seen: string[] = [];
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      seen.push(url);
+      if (url.startsWith('https://b23.tv/')) return deskPage('BV1awbg6XELn', { title: 'T', owner: { name: 'U' }, duration: 100, pages: [{ cid: 5, page: 1, part: '', duration: 100 }] });
+      if (url.includes('web-interface/view')) return viewResp(0, { bvid: 'BV1awbg6XELn', title: 'T', owner: { name: 'U' }, duration: 100, pages: [{ cid: 5, page: 1, part: '', duration: 100 }] });
       if (url.includes('web-interface/nav')) return httpResp(200, JSON.stringify({ code: 0, data: { isLogin: true } }));
-      if (url.includes('player/playurl')) return httpResp(200, JSON.stringify({ code: 0, data: { dash: { video: [{ height: 1080 }, { height: 480 }] } } }));
+      if (url.includes('player/playurl')) return httpResp(200, JSON.stringify({ code: 0, data: { dash: { video: [{ height: 720 }] } } }));
       return httpResp(404, '');
     });
     const r = await resolveVideo('https://b23.tv/AtDgBVH', 'SESSDATA=x');
-    expect(r!.meta.bvid).toBe('BV1awbg6XELn');
-    expect(r!.qualities).toEqual([1080, 480]);
-    const last = reqMock.mock.calls[reqMock.mock.calls.length - 1][0] as any;
-    expect(String(last.url)).toContain('playurl?bvid=BV1awbg6XELn&cid=5');
+    expect(r!.qualities).toEqual([720]);
+    expect(seen.map((u) => (u.startsWith('https://b23.tv/') ? 'page' : u.includes('web-interface/view') ? 'view' : u.includes('web-interface/nav') ? 'nav' : 'playurl')))
+      .toEqual(['page', 'view', 'nav', 'playurl']);
   });
 });
 
