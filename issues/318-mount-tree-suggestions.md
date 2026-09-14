@@ -1,6 +1,6 @@
 # 318 挂载树·建议链路：生成、缓存、否决记录与降级
 
-- 状态：待开工
+- 状态：已交付（`src/knowledge/mount-suggest.ts`：分句 → 第二大脑块级向量召回 → LLM 裁判 → 过滤（否决/已固定/弱关联/已存在双链）+ 域内单文件缓存按 `bodyHash` 逐卡失效 + 否决留档永久不再推 + 缺索引降级；`tests/knowledge/mount-suggest.test.ts` 18 用例）
 - 关联：ADR-0138 ／ ADR-0139 §3 ／ spec §数据模型 ／ `src/secondbrain/vector-store.ts:538`（新开只读导出）／ `src/core/ai`
 - 依赖：314、315
 
