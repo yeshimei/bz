@@ -48,6 +48,7 @@ const MAIN_CARD = [
   '嵌入 ![[附件/图.png]] 与 ![[附件/片.mp4]]。',
   '引用 [[文献盒/背景.md#要点]] 与 [[文献盒/背景.md#^blk1]]。',
   '盒外 [[我的/日记/x.md]]，断链 [[不存在的卡]]。',
+  '显式双链同名文献 [[文献盒/主卡.md]] 也不该拉线。',
 ].join('\n');
 
 const NOTE_BG = [
@@ -362,6 +363,36 @@ describe('mounted 读写（315，纯字符串）', () => {
   it('追加→删除往返回到原文', () => {
     expect(removeMount(writeMount(FM_TEXT, '卡片盒/乙卡|乙'), '卡片盒/乙卡|乙')).toBe(FM_TEXT);
   });
+
+  it('去重/删除只认卡片本体：`[[甲卡#标题]]` 与 `[[甲卡|别名]]` 同一条', () => {
+    const withSub = ['---', 'mounted:', '  - "[[卡片盒/甲卡#标题|甲]]"', '---', '', '正文'].join('\n');
+    expect(readMounts(withSub)).toEqual(['卡片盒/甲卡']); // readMounts 剥 subpath/别名
+    expect(writeMount(withSub, '卡片盒/甲卡')).toBe(withSub); // 幂等
+    expect(writeMount(withSub, '卡片盒/甲卡.md|甲')).toBe(withSub); // 去 .md 同一条
+    expect(writeMount(FM_TEXT, '卡片盒/甲卡#标题')).toBe(FM_TEXT); // 已有本体 → 不重复追加
+    expect(readMounts(removeMount(withSub, '卡片盒/甲卡'))).toEqual([]); // 删得掉
+  });
+
+  it('键下有空行也能去重/删除（空行不结束列表，不吞后面的键）', () => {
+    const spaced = ['---', 'mounted:', '', '  - "[[卡片盒/甲卡|甲]]"', 'related:', '  - "[[文献盒/源.md|源]]"', '---', '', '正文'].join('\n');
+    expect(readMounts(spaced)).toEqual(['卡片盒/甲卡']);
+    expect(writeMount(spaced, '卡片盒/甲卡|别名不同')).toBe(spaced); // 空行后的项也认得出
+    const added = writeMount(spaced, '卡片盒/乙卡|乙');
+    expect(readMounts(added)).toEqual(['卡片盒/甲卡', '卡片盒/乙卡']);
+    expect(added).toContain('related:\n  - "[[文献盒/源.md|源]]"'); // 后面的键没被吞
+    const removed = removeMount(spaced, '卡片盒/甲卡');
+    expect(removed).not.toContain('mounted:');
+    expect(removed).toContain('related:'); // 空行随空列表一起清掉，别的键留着
+  });
+
+  it('空目标（空串/空白/`[[]]`）不写脏行也不误删', () => {
+    expect(writeMount(FM_TEXT, '')).toBe(FM_TEXT);
+    expect(writeMount(FM_TEXT, '   ')).toBe(FM_TEXT);
+    expect(writeMount(FM_TEXT, '[[]]')).toBe(FM_TEXT);
+    expect(writeMount(FM_TEXT, '|别名')).toBe(FM_TEXT);
+    expect(removeMount(FM_TEXT, '')).toBe(FM_TEXT);
+    expect(readMounts(FM_TEXT)).toEqual(['卡片盒/甲卡']); // 原文未动
+  });
 });
 
 describe('readRelated（315）', () => {
@@ -429,7 +460,11 @@ describe('buildMountTree：三源 + 六类 + 剪线（315）', () => {
       '卡片盒/甲卡.md>卡片盒/丁卡.md',
     ]);
     for (const e of tree.edges) expect(depthOf(tree, e.to)!).toBeGreaterThan(depthOf(tree, e.from)!);
-    expect(tree.edges.some((e) => e.to === '文献盒/主卡.md')).toBe(false); // 同名文献不产边
+    // 同名文献不产边：正文里**显式**写了 `[[文献盒/主卡.md]]` 也不拉线（attached 恒无边）
+    expect(byId.get('文献盒/主卡.md')!.attached).toBe(true);
+    expect(tree.edges.some((e) => e.to === '文献盒/主卡.md')).toBe(false);
+    expect(tree.edges.some((e) => e.from === '文献盒/主卡.md')).toBe(false);
+    expect(tree.edges).toHaveLength(11);
   });
 
   it('剪线三类：回指（甲卡→主卡）、同代互指（甲卡→乙卡）、逆流（丁卡→背景）都不画', async () => {

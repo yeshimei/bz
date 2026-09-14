@@ -494,21 +494,23 @@ function fmList(text: string, key: string): string[] {
   }
   return out;
 }
-/** 挂载项去重键：剥 `[[ ]]`/引号、剥别名与子路径、去 .md、大小写不敏感 */
+/** 挂载项去重键：剥 `[[ ]]`/引号、**只认卡片本体**（别名与 subpath 一并剥掉，与 readMounts 同口径）、去 .md、大小写不敏感 */
 function mountKey(link: string): string {
   const inner = String(link ?? '').trim().replace(/^\[\[/, '').replace(/\]\]$/, '');
-  const { target, subpath } = splitLinkText(inner);
-  return `${pathKey(target)}#${(subpath ?? '').toLowerCase()}`;
+  return pathKey(splitLinkText(inner).target.trim());
 }
 /**
  * frontmatter 列表键的**纯字符串**增删（appendRelatedLine 同路子；不碰其它键）。
  * `add` 幂等（同目标已存在 → 原样返回）；`remove` 删掉全部同目标行，列表清空则连键行一起删。
- * 无 frontmatter / 键为内联非空列表（`mounted: [a, b]`）→ 原样返回（不猜用户手写格式）。
+ * 去重/删除**只认卡片本体**（`[[甲卡#标题]]` 与 `[[甲卡|别名]]` 同一条）；键下允许空行（空行不结束列表）。
+ * 无 frontmatter / 空目标 / 键为内联非空列表（`mounted: [a, b]`）→ 原样返回（不写脏行、不猜用户手写格式）。
  */
 function fmListWrite(text: string, key: string, value: string, mode: 'add' | 'remove'): string {
   const src = String(text ?? '');
   const lines = src.split(/\r?\n/);
   if (lines[0]?.trim() !== '---') return src;
+  const valueKey = mountKey(value);
+  if (!valueKey) return src; // 空目标（''/'[[]]'）：不写 `- "[[]]"` 脏行，也不误删
   let close = -1;
   let at = -1;
   const head = new RegExp(`^${key}\\s*:`);
@@ -522,13 +524,21 @@ function fmListWrite(text: string, key: string, value: string, mode: 'add' | 're
   if (close === -1) return src;
   const inline = at >= 0 ? lines[at].slice(lines[at].indexOf(':') + 1).trim() : '';
   if (at >= 0 && inline && inline !== '[]') return src; // 内联非空列表：不动
+  // 列表区间：从键行后到**最后一条列表项**（容忍项之间/键后的空行；遇下一条键即结束）
   let to = at + 1;
-  if (at >= 0) while (to < close && fmListLineInner(lines[to]) !== null) to++;
+  if (at >= 0) {
+    let lastItem = -1;
+    for (let i = at + 1; i < close; i++) {
+      if (fmListLineInner(lines[i]) !== null) lastItem = i;
+      else if (lines[i].trim() !== '') break;
+    }
+    if (lastItem >= 0) to = lastItem + 1;
+  }
   const kept: string[] = [];
   let hit = false;
   for (let i = at + 1; i < to; i++) {
     const inner = fmListLineInner(lines[i]);
-    if (inner !== null && mountKey(inner) === mountKey(value)) {
+    if (inner !== null && mountKey(inner) === valueKey) {
       hit = true;
       continue; // 去重 / 删除
     }
@@ -544,8 +554,11 @@ function fmListWrite(text: string, key: string, value: string, mode: 'add' | 're
     return next.join('\n');
   }
   if (!hit || at === -1) return src;
-  const next = [...lines.slice(0, at), ...(kept.length ? [lines[at], ...kept] : []), ...lines.slice(to)];
-  return next.join('\n');
+  if (!kept.some((l) => fmListLineInner(l) !== null)) {
+    // 列表已空：键行与区间内空行一起删
+    return [...lines.slice(0, at), ...lines.slice(to)].join('\n');
+  }
+  return [...lines.slice(0, at + 1), ...kept, ...lines.slice(to)].join('\n');
 }
 
 /** frontmatter `mounted` 的**目标路径**列表（别名/子路径剥除；非卡片由调用方保证） */
@@ -805,8 +818,9 @@ export async function buildMountTree(cardPath: string, opts: { direction: MountD
         order.push(child.id);
         fresh = true;
       }
-      // 边：可达（树内）+ 非回指（BFS 最短 depth）+ 严格跨代（depth(to) > depth(from)）
-      if (child.depth > node.depth) {
+      // 边：可达（树内）+ 非回指（BFS 最短 depth）+ 严格跨代（depth(to) > depth(from)）；
+      // 同名文献（attached）**恒不拉线**（ADR-0137 §4「文献不拉线」）——正文显式双链到同名文献也不产边
+      if (!child.attached && child.depth > node.depth) {
         const ek = `${node.id}\u0000${child.id}`;
         if (!edgeKeys.has(ek)) {
           edgeKeys.add(ek);
