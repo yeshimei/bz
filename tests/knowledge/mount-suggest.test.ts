@@ -9,12 +9,14 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   search: vi.fn(),
-  json: vi.fn(),
+  judge: vi.fn(),
+  /** 哨兵：裁判**不得**走 json()（带了 response_format=json_object 模型会吐 {"type":"json_object"} 空壳） */
+  jsonForced: vi.fn(),
   aiOk: true,
 }));
 
 vi.mock('../../src/core/ai', () => ({
-  createAI: () => ({ json: mocks.json }),
+  createAI: () => ({ prompt: mocks.judge, json: mocks.jsonForced }),
   getAIProvider: async () => {
     if (!mocks.aiOk) throw new Error('未配置 API Key');
     return { endpoint: 'https://example.invalid', apiKey: 'test-key' };
@@ -70,7 +72,7 @@ beforeEach(() => {
   setApp(app);
   setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
   mocks.search.mockReset();
-  mocks.json.mockReset();
+  mocks.judge.mockReset();
   mocks.aiOk = true;
   setVectorSearchSource({ isIndexReady: () => true, search: mocks.search }); // 假检索面注入（叶子桥，无需 mock 整条 index）
   (Platform as any).isMobile = false;
@@ -90,12 +92,14 @@ describe('splitAnchors（分句/分词切分）', () => {
       '短。',
       '---',
       '- 列表项也是一个足够长的句子；',
+      '> [!quote] 引用块里的 callout 标记也不算锚点内容；',
     ].join('\n');
     const anchors = splitAnchors(body);
     expect(anchors.map((a) => a.text)).toEqual([
       '卡片盒是思考的组织核心',
       'It overlaps with statistics nicely',
       '列表项也是一个足够长的句子',
+      '引用块里的 callout 标记也不算锚点内容',
     ]);
     expect(body.slice(anchors[0].from, anchors[0].to)).toBe('卡片盒是思考的组织核心');
     expect(body.slice(anchors[2].from, anchors[2].to)).toBe('列表项也是一个足够长的句子');
@@ -193,7 +197,7 @@ describe('generateSuggestions（生成 + 缓存 + 逐卡失效）', () => {
     vault.files.set(`${CARDBOX}/A.md`, BODY_A);
     vault.files.set(`${CARDBOX}/B.md`, BODY_B);
     mocks.search.mockResolvedValue([{ path: '文献盒/目标一.md', chunk: '目标一的一段', score: 0.9 }]);
-    mocks.json.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '同一主题' }]));
+    mocks.judge.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '同一主题' }]));
   });
 
   it('首跑 fresh 并落缓存；二跑 cached 不重复检索；改哪张卡只失效那张', async () => {
@@ -249,37 +253,37 @@ describe('generateSuggestions（生成 + 缓存 + 逐卡失效）', () => {
       { path: '文献盒/目标一.md', chunk: '一', score: 0.9 },
       { path: '文献盒/已删除.md', chunk: '二', score: 0.8 },
     ]);
-    mocks.json.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '不该出现' }]));
+    mocks.judge.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '不该出现' }]));
     const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
     expect(run.status).toBe('fresh');
     expect(run.suggestions).toEqual([]);
-    expect(mocks.json).not.toHaveBeenCalled(); // 候选全被过滤，无需裁判
+    expect(mocks.judge).not.toHaveBeenCalled(); // 候选全被过滤，无需裁判
   });
 
   it('裁判回答不可用（散文 / 空串 / 认不出）→ no-answer 且不落缓存；下次重开仍重跑', async () => {
-    mocks.json.mockResolvedValue('抱歉，我无法判断。');
+    mocks.judge.mockResolvedValue('抱歉，我无法判断。');
     const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
     expect(run).toEqual({ status: 'no-answer', suggestions: [] });
     expect((await readSuggestCache()).cards).toEqual({});
     // 空回答（思考吃光预算：finish_reason=length、content 空串）同语义
-    mocks.json.mockResolvedValue('');
+    mocks.judge.mockResolvedValue('');
     expect((await generateSuggestions(`${CARDBOX}/A.md`, ctx)).status).toBe('no-answer');
     // 形状对不上（编号认不出）也不冒充「没有关联」
-    mocks.json.mockResolvedValue(JSON.stringify([{ a: 'x', b: 'y' }]));
+    mocks.judge.mockResolvedValue(JSON.stringify([{ a: 'x', b: 'y' }]));
     expect((await generateSuggestions(`${CARDBOX}/A.md`, ctx)).status).toBe('no-answer');
     expect((await readSuggestCache()).cards).toEqual({});
 
     // 裁判调用失败（通道不可用）→ no-ai，同样不落缓存；网络故障不重复打（只 1 次）
-    mocks.json.mockReset();
-    mocks.json.mockRejectedValue(new Error('网络不可达'));
+    mocks.judge.mockReset();
+    mocks.judge.mockRejectedValue(new Error('网络不可达'));
     expect((await generateSuggestions(`${CARDBOX}/A.md`, ctx)).status).toBe('no-ai');
-    expect(mocks.json).toHaveBeenCalledTimes(1);
+    expect(mocks.judge).toHaveBeenCalledTimes(1);
     expect((await readSuggestCache()).cards).toEqual({});
   });
 
   it('裁判按 a1/t2 标签作答、或被 json_object 包壳 → 照样认出来（2026-09-14 实机回归）', async () => {
     // ① 标签形态（实机原文：{"anchor":"a1","target":"t2",…}）
-    mocks.json.mockResolvedValue(
+    mocks.judge.mockResolvedValue(
       JSON.stringify([{ anchor: 'a1', target: 't2', score: 0.9, reason: '同一主题' }])
     );
     mocks.search.mockResolvedValue([
@@ -291,7 +295,7 @@ describe('generateSuggestions（生成 + 缓存 + 逐卡失效）', () => {
     expect(run.suggestions.map((s) => s.target)).toEqual(['文献盒/目标二.md']); // a1×t2 落在第二个候选
     // ② 外层包壳（response_format=json_object 实测形态）
     await clearSuggestCache();
-    mocks.json.mockResolvedValue(
+    mocks.judge.mockResolvedValue(
       JSON.stringify({ type: 'json_object', content: JSON.stringify([{ anchor: 1, target: 't2', score: 0.9, reason: '同主题' }]) })
     );
     const run2 = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
@@ -299,28 +303,15 @@ describe('generateSuggestions（生成 + 缓存 + 逐卡失效）', () => {
     expect(run2.suggestions).toHaveLength(1);
   });
 
-  it('裁判调用：思考不关、预算拉满（128K + reasoning_effort=max）；被拒则去掉刻度重试一次', async () => {
-    mocks.json.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '同上' }]));
+  it('裁判调用：走 prompt 纯文本通道（不带 json_object）、思考默认档、预算给足 128K', async () => {
+    mocks.judge.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '同上' }]));
     await generateSuggestions(`${CARDBOX}/A.md`, ctx);
-    const opts = mocks.json.mock.calls[0][1] as { modelOptions: Record<string, unknown> };
+    expect(mocks.jsonForced).not.toHaveBeenCalled(); // 哨兵：不得改用 json()（实测会吐空壳 → 零建议）
+    const opts = mocks.judge.mock.calls[0][2] as { modelOptions: Record<string, unknown> }; // prompt(input, model, options)
     expect(opts.modelOptions.max_tokens).toBe(SUGGEST_JUDGE_MAX_TOKENS);
     expect(opts.modelOptions.max_tokens).toBeGreaterThanOrEqual(131072);
-    expect(opts.modelOptions.reasoning_effort).toBe('max');
-    expect(opts.modelOptions.thinking).toBeUndefined(); // 绝不关思考（用户拍板质量优先）
-
-    // 服务商不认 reasoning_effort（400）→ 去掉该字段重试，仍能出建议
-    await clearSuggestCache();
-    mocks.json.mockReset();
-    mocks.json
-      .mockRejectedValueOnce(new Error('API 400: Unrecognized request argument'))
-      .mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '重试成功' }]));
-    const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
-    expect(run.status).toBe('fresh');
-    expect(run.suggestions).toHaveLength(1);
-    expect(mocks.json).toHaveBeenCalledTimes(2);
-    const retry = mocks.json.mock.calls[1][1] as { modelOptions: Record<string, unknown> };
-    expect(retry.modelOptions.reasoning_effort).toBeUndefined();
-    expect(retry.modelOptions.max_tokens).toBe(SUGGEST_JUDGE_MAX_TOKENS);
+    expect(opts.modelOptions.thinking).toBeUndefined(); // 绝不关思考
+    expect(opts.modelOptions.reasoning_effort).toBeUndefined(); // 也不额外加压（默认档，别把单卡拖到两分钟）
   });
 
   it('缓存版本不符（旧口径的零候选片）→ 视为失效重跑，不靠用户手清', async () => {
@@ -331,7 +322,7 @@ describe('generateSuggestions（生成 + 缓存 + 逐卡失效）', () => {
     expect(cacheValid({ ...oldEntry, ver: SUGGEST_CACHE_VERSION } as never, String(hash31(body)))).toBe(true);
     vault.files.set(`CONFIG/STORAGE/${SUGGEST_CACHE_FILE}`, JSON.stringify({ cards: { [`${CARDBOX}/A.md`]: oldEntry } }));
 
-    mocks.json.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '重跑出来' }]));
+    mocks.judge.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '重跑出来' }]));
     const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
     expect(run.status).toBe('fresh'); // 不是 cached——旧片不认
     expect(run.suggestions).toHaveLength(1);
@@ -365,7 +356,7 @@ describe('markSuggestion（固定/取消都留档，取消进否决表）', () =
       { path: '文献盒/目标一.md', chunk: '一', score: 0.9 },
       { path: '文献盒/目标二.md', chunk: '二', score: 0.85 },
     ]);
-    mocks.json.mockResolvedValue(
+    mocks.judge.mockResolvedValue(
       JSON.stringify([
         { anchor: 1, target: 1, score: 0.9, reason: '理由一' },
         { anchor: 1, target: 2, score: 0.85, reason: '理由二' },
@@ -386,11 +377,11 @@ describe('markSuggestion（固定/取消都留档，取消进否决表）', () =
     expect(states).toContainEqual(['文献盒/目标二.md', 'fixed']);
 
     // 强制重跑：两条配对都被挡在送审之前（否决 + 已固定），处置留档仍在
-    mocks.json.mockClear();
+    mocks.judge.mockClear();
     const rerun = await generateSuggestions(`${CARDBOX}/A.md`, ctx, { force: true });
     expect(rerun.status).toBe('fresh');
     expect(rerun.suggestions).toEqual([]);
-    expect(mocks.json).not.toHaveBeenCalled();
+    expect(mocks.judge).not.toHaveBeenCalled();
     const after = await readSuggestCache();
     expect(after.cards[`${CARDBOX}/A.md`].suggestions.filter((s) => s.state !== 'pending')).toHaveLength(2);
 
@@ -411,7 +402,7 @@ describe('markSuggestion（固定/取消都留档，取消进否决表）', () =
     const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
     expect(run.status).toBe('fresh');
     expect(run.suggestions.map((s) => s.target)).toEqual(['文献盒/目标二.md']);
-    expect(mocks.json).toHaveBeenCalledTimes(1);
+    expect(mocks.judge).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -419,7 +410,7 @@ describe('降级与设置开关', () => {
   beforeEach(() => {
     vault.files.set(`${CARDBOX}/A.md`, BODY_A);
     mocks.search.mockResolvedValue([{ path: '文献盒/目标一.md', chunk: '一', score: 0.9 }]);
-    mocks.json.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '理由' }]));
+    mocks.judge.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '理由' }]));
   });
 
   it('无向量索引（未注册/未就绪）→ no-index，空候选，不检索不落缓存', async () => {
@@ -507,7 +498,7 @@ describe('mergeSuggestions（幽灵节点 + 虚线边）与 clearSuggestCache', 
   it('clearSuggestCache：只清候选与生成时间，fixed/dismissed 留档保留 → 同一条不再出现', async () => {
     vault.files.set(`${CARDBOX}/A.md`, BODY_ONE);
     mocks.search.mockResolvedValue([{ path: '文献盒/目标一.md', chunk: '一', score: 0.9 }]);
-    mocks.json.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '理由' }]));
+    mocks.judge.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '理由' }]));
     const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
     await markSuggestion(`${CARDBOX}/A.md`, run.suggestions[0], 'dismissed', ctx);
 
@@ -518,11 +509,11 @@ describe('mergeSuggestions（幽灵节点 + 虚线边）与 clearSuggestCache', 
     expect(entry.suggestions.map((s) => s.state)).toEqual(['dismissed']); // 留档保留
 
     // 重算：候选被否决表挡在送审之前 → 同一条「锚点 → 目标」不再出现（ADR-0139 §3 永久不再推）
-    mocks.json.mockClear();
+    mocks.judge.mockClear();
     const again = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
     expect(again.status).toBe('fresh');
     expect(again.suggestions).toEqual([]);
-    expect(mocks.json).not.toHaveBeenCalled();
+    expect(mocks.judge).not.toHaveBeenCalled();
 
     // 无任何留档的片整片删除（纯 pending 缓存被清干净）
     vault.files.set(`${CARDBOX}/B.md`, BODY_B);
