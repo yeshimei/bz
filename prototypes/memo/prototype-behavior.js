@@ -1,5 +1,5 @@
-/* 源指纹 ad776ae65e9d154d · 仓内输入 195 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 4a07fe882a1af4c0 · 仓内输入 216 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -4466,6 +4466,12 @@ var BZW_memo = (() => {
     if (!f) return false;
     return path === f || path.startsWith(f + "/");
   }
+  function hash31(str) {
+    let h = 0;
+    const t = String(str || "");
+    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
+    return h >>> 0;
+  }
   function yieldToMainThread(timeoutMs = 200) {
     return new Promise((resolve2) => {
       if (typeof window === "undefined") {
@@ -4935,11 +4941,11 @@ var BZW_memo = (() => {
   function updateFileSections(filePath, writer, opts = {}) {
     return enqueueFileTask(filePath, async () => {
       var _a2;
-      const store2 = jsonFileStore(filePath, { ...opts, defaultValue: (_a2 = opts.defaultValue) != null ? _a2 : {} });
-      const current2 = assertPlainObject(filePath, await store2.read());
+      const store3 = jsonFileStore(filePath, { ...opts, defaultValue: (_a2 = opts.defaultValue) != null ? _a2 : {} });
+      const current2 = assertPlainObject(filePath, await store3.read());
       const set = await writer(current2) || {};
       const next = { ...current2, ...set };
-      await store2.write(next);
+      await store3.write(next);
       return next;
     });
   }
@@ -13014,8 +13020,8 @@ ${countsToText(s.missing)}
     const restored = /* @__PURE__ */ new Map();
     const fixed = await enqueueFileTask(file, async () => {
       var _a2;
-      const store2 = jsonFileStore(file, { defaultValue: [] });
-      const data = await store2.read();
+      const store3 = jsonFileStore(file, { defaultValue: [] });
+      const data = await store3.read();
       const want = new Set(ids);
       let n = 0;
       for (const it of data) {
@@ -13026,7 +13032,7 @@ ${countsToText(s.missing)}
         it.linkedNote = null;
         n += 1;
       }
-      if (n > 0) await store2.write(data);
+      if (n > 0) await store3.write(data);
       return n;
     });
     return {
@@ -13036,13 +13042,13 @@ ${countsToText(s.missing)}
         if (!restored.size) return;
         await enqueueFileTask(file, async () => {
           var _a2;
-          const store2 = jsonFileStore(file, { defaultValue: [] });
-          const data = await store2.read();
+          const store3 = jsonFileStore(file, { defaultValue: [] });
+          const data = await store3.read();
           for (const it of data) {
             if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
             it.linkedNote = (_a2 = restored.get(String(it.id))) != null ? _a2 : null;
           }
-          await store2.write(data);
+          await store3.write(data);
         });
       }
     };
@@ -13050,10 +13056,10 @@ ${countsToText(s.missing)}
   async function fixClipbook(app, file, urls) {
     const removed = [];
     const fixed = await enqueueFileTask(file, async () => {
-      const store2 = jsonFileStore(file, {
+      const store3 = jsonFileStore(file, {
         defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
       });
-      const data = await store2.read();
+      const data = await store3.read();
       const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
       const want = new Set(urls);
       const kept = [];
@@ -13069,7 +13075,7 @@ ${countsToText(s.missing)}
       });
       if (n > 0) {
         data.savedArchive = kept;
-        await store2.write(data);
+        await store3.write(data);
       }
       return n;
     });
@@ -13079,17 +13085,17 @@ ${countsToText(s.missing)}
       undo: async () => {
         if (!removed.length) return;
         await enqueueFileTask(file, async () => {
-          const store2 = jsonFileStore(file, {
+          const store3 = jsonFileStore(file, {
             defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
           });
-          const data = await store2.read();
+          const data = await store3.read();
           const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
           for (const r of removed) {
             const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
             list.splice(at, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
           }
           data.savedArchive = list;
-          await store2.write(data);
+          await store3.write(data);
         });
       }
     };
@@ -17615,8 +17621,8 @@ ${c.trim()}
       if (j > i) {
         try {
           const raw = html.slice(i + "window.INITIAL_STORE=".length, j).trim().replace(/;\s*$/, "");
-          const store2 = JSON.parse(raw);
-          const art = store2.articleStore && store2.articleStore.article;
+          const store3 = JSON.parse(raw);
+          const art = store3.articleStore && store3.articleStore.article;
           if (art && art.content) return art.content;
         } catch (e) {
         }
@@ -20925,6 +20931,17 @@ ${sample}`,
               buttonText: "清空历史",
               onClick: () => {
                 if (opts == null ? void 0 : opts.onClearHistory) void opts.onClearHistory();
+              }
+            },
+            // 挂载树（issue 318）：自动跑建议开关 + 建议缓存维护（ADR-0139 §3）
+            { type: "toggle", name: "挂载建议", desc: "打开挂载树时自动跑 AI 语义建议，关闭则只看双链", binding: { key: "knowledgeMountAutoSuggest" } },
+            {
+              type: "button",
+              name: "清空建议缓存",
+              desc: "清空候选与生成时间，保留已固定和已取消的留档",
+              buttonText: "清空建议缓存",
+              onClick: () => {
+                if (opts == null ? void 0 : opts.onClearSuggestCache) void opts.onClearSuggestCache();
               }
             }
           ]
@@ -30401,22 +30418,22 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
     let anyLegacy = false;
-    const store2 = emptyStore();
+    const store3 = emptyStore();
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
       const raw = await readJsonIfExists(app, legacyPath).catch(() => null);
       if (raw === null) continue;
       anyLegacy = true;
-      if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store2.meta = raw;
-      else if (name === "secondbrain_panel.json" && raw && typeof raw === "object") store2.panel = raw;
+      if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store3.meta = raw;
+      else if (name === "secondbrain_panel.json" && raw && typeof raw === "object") store3.panel = raw;
       else if (name === "secondbrain_link_queue.json") {
-        if (Array.isArray(raw)) store2.link.queue = raw;
+        if (Array.isArray(raw)) store3.link.queue = raw;
       } else if (name === "secondbrain_link_state.json") {
-        if (raw && typeof raw === "object" && !Array.isArray(raw)) store2.link.state = raw;
+        if (raw && typeof raw === "object" && !Array.isArray(raw)) store3.link.state = raw;
       }
     }
     if (!anyLegacy) return false;
-    await adapter.write(storePath, JSON.stringify(store2));
+    await adapter.write(storePath, JSON.stringify(store3));
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
       try {
@@ -30643,23 +30660,23 @@ ${n.content.slice(0, 2e3)}
       }
     }
   }
-  async function reconcileConflicts(a, store2) {
+  async function reconcileConflicts(a, store3) {
     var _a2;
     const adapter = (_a2 = a == null ? void 0 : a.vault) == null ? void 0 : _a2.adapter;
-    if (!adapter || typeof adapter.list !== "function") return store2;
+    if (!adapter || typeof adapter.list !== "function") return store3;
     let listed = [];
     try {
       const r = await adapter.list(storeDir());
       listed = Array.isArray(r == null ? void 0 : r.files) ? r.files : [];
     } catch (e) {
-      return store2;
+      return store3;
     }
     const conflictJson = listed.filter((f) => isConflictJsonName(f.split("/").pop() || f));
     const conflictVec = listed.filter((f) => isConflictVecName(f.split("/").pop() || f));
-    if (!conflictJson.length && !conflictVec.length) return store2;
-    const primaryMeta = store2.meta;
+    if (!conflictJson.length && !conflictVec.length) return store3;
+    const primaryMeta = store3.meta;
     const conflictMetas = [];
-    let merged = store2;
+    let merged = store3;
     let jsonMerged = false;
     for (const name of conflictJson) {
       try {
@@ -30742,8 +30759,8 @@ ${n.content.slice(0, 2e3)}
   }
   async function readStoreRaw(app) {
     const a = resolveApp(app);
-    const store2 = await readStoreRawInner(a);
-    return reconcileConflicts(a, store2);
+    const store3 = await readStoreRawInner(a);
+    return reconcileConflicts(a, store3);
   }
   async function saveStoreRaw(data, app) {
     var _a2;
@@ -31259,7 +31276,7 @@ ${n.content.slice(0, 2e3)}
       init_render13();
       init_render13();
       SecondBrainPanel = class {
-        constructor(app, store2, opts) {
+        constructor(app, store3, opts) {
           this.mask = null;
           this.popup = null;
           /** ESC 层级句柄（ticket 141 迁移：原私挂 document keydown 废弃） */
@@ -31272,7 +31289,7 @@ ${n.content.slice(0, 2e3)}
           /** 设置页「重新索引」意图标记（ticket 108：确认后打开面板即自动全量重建） */
           this.rebuildRequested = false;
           this.app = app;
-          this.store = store2;
+          this.store = store3;
           this.opts = opts;
         }
         /** 设置页「重新索引」调用（index.ts 入口转发）：标记意图后打开面板自动跑 */
@@ -31681,17 +31698,17 @@ ${n.content.slice(0, 2e3)}
         async loadSummaryAndLinks() {
           var _a2, _b2, _c;
           try {
-            const store2 = await loadStore(this.app);
+            const store3 = await loadStore(this.app);
             const popup = this.popup;
             if (!popup || !popup.isConnected) return;
-            const summary = ((_a2 = store2.panel) == null ? void 0 : _a2.summary) || "";
+            const summary = ((_a2 = store3.panel) == null ? void 0 : _a2.summary) || "";
             const aiCard = popup.querySelector("#bz-sb-ai-card");
             const aiTxt = popup.querySelector("#bz-sb-ai-txt");
             if (aiCard) aiCard.style.display = summary ? "" : "none";
             if (aiTxt && summary) {
-              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store2.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store2.panel.generatedAt) : "");
+              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store3.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store3.panel.generatedAt) : "");
             }
-            const linkedTotal = Object.keys(((_c = store2.link) == null ? void 0 : _c.state) || {}).length;
+            const linkedTotal = Object.keys(((_c = store3.link) == null ? void 0 : _c.state) || {}).length;
             const log = popup.querySelector("#bz-sb-log");
             if (log && linkedTotal) {
               log.insertAdjacentHTML(
@@ -36799,6 +36816,627 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/secondbrain/binary.ts
+  var init_binary = __esm({
+    "src/secondbrain/binary.ts"() {
+    }
+  });
+
+  // src/secondbrain/chunk.ts
+  var init_chunk = __esm({
+    "src/secondbrain/chunk.ts"() {
+      init_utils();
+    }
+  });
+
+  // src/secondbrain/vptree.ts
+  var init_vptree = __esm({
+    "src/secondbrain/vptree.ts"() {
+    }
+  });
+
+  // src/secondbrain/parallel.ts
+  var init_parallel = __esm({
+    "src/secondbrain/parallel.ts"() {
+    }
+  });
+
+  // src/secondbrain/tfidf.ts
+  var TFIDF_STOP_WORDS, STOP_SET;
+  var init_tfidf = __esm({
+    "src/secondbrain/tfidf.ts"() {
+      TFIDF_STOP_WORDS = "的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等";
+      STOP_SET = new Set(TFIDF_STOP_WORDS);
+    }
+  });
+
+  // src/secondbrain/text-search.ts
+  var STOP_WORDS;
+  var init_text_search = __esm({
+    "src/secondbrain/text-search.ts"() {
+      STOP_WORDS = new Set("的了是在我有和人这中大为上个国不以到说时要就出会也年对自其");
+    }
+  });
+
+  // src/secondbrain/ollama.ts
+  var init_ollama = __esm({
+    "src/secondbrain/ollama.ts"() {
+      init_config4();
+    }
+  });
+
+  // src/secondbrain/vector-store.ts
+  var init_vector_store = __esm({
+    "src/secondbrain/vector-store.ts"() {
+      init_config4();
+      init_store_file();
+      init_binary();
+      init_chunk();
+      init_vptree();
+      init_parallel();
+      init_tfidf();
+      init_text_search();
+      init_ollama();
+      init_utils();
+    }
+  });
+
+  // src/secondbrain/ai.ts
+  var init_ai3 = __esm({
+    "src/secondbrain/ai.ts"() {
+      init_ai();
+    }
+  });
+
+  // src/secondbrain/ui-tools.ts
+  var init_ui_tools = __esm({
+    "src/secondbrain/ui-tools.ts"() {
+      init_fake_obsidian();
+      init_app();
+    }
+  });
+
+  // src/secondbrain/float-window.ts
+  var init_float_window = __esm({
+    "src/secondbrain/float-window.ts"() {
+      init_esc_manager();
+      init_z_order();
+      init_ui_tools();
+    }
+  });
+
+  // src/secondbrain/context.ts
+  var init_context = __esm({
+    "src/secondbrain/context.ts"() {
+    }
+  });
+
+  // src/secondbrain/reference-panel.ts
+  var init_reference_panel = __esm({
+    "src/secondbrain/reference-panel.ts"() {
+      init_utils();
+      init_notice();
+      init_z_order();
+      init_float_window();
+      init_config4();
+      init_context();
+      init_ui_tools();
+      init_render13();
+      init_ui();
+    }
+  });
+
+  // src/secondbrain/chat-panel.ts
+  var init_chat_panel = __esm({
+    "src/secondbrain/chat-panel.ts"() {
+      init_dom();
+      init_esc_manager();
+      init_flow_dialog();
+      init_ui();
+      init_config4();
+      init_ui_tools();
+      init_ai3();
+      init_store_file();
+      init_render13();
+    }
+  });
+
+  // src/secondbrain/mobile-panel.ts
+  var init_mobile_panel = __esm({
+    "src/secondbrain/mobile-panel.ts"() {
+      init_utils();
+      init_esc_manager();
+      init_notice();
+      init_ui();
+      init_config4();
+      init_z_order();
+      init_context();
+      init_ui_tools();
+      init_ai3();
+      init_render13();
+      init_store_file();
+    }
+  });
+
+  // src/secondbrain/link-agent/data.ts
+  var init_data10 = __esm({
+    "src/secondbrain/link-agent/data.ts"() {
+      init_utils();
+      init_store_file();
+      init_settings_provider();
+    }
+  });
+
+  // src/secondbrain/link-agent/pipeline.ts
+  var JUDGE_PROMPT_PREFIX;
+  var init_pipeline = __esm({
+    "src/secondbrain/link-agent/pipeline.ts"() {
+      init_utils();
+      init_notice();
+      init_settings_provider();
+      init_config4();
+      init_ai3();
+      init_data10();
+      JUDGE_PROMPT_PREFIX = [
+        "你是笔记库的双链裁判。给定一篇新笔记的档案卡和若干候选笔记的档案卡，",
+        "逐一判断候选与新笔记是否存在实质的知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。",
+        "标准：只链实质关联，存疑不链；宁缺勿滥。",
+        '输出要求：严格 JSON 数组 [{"id":<候选编号>,"reason":"一句话理由"}]，按关联强度降序；无关联输出 []；不要输出 JSON 以外的任何文字。'
+      ].join("");
+    }
+  });
+
+  // src/secondbrain/link-agent/watch.ts
+  var LINK_SWEEP_INTERVAL_MS;
+  var init_watch2 = __esm({
+    "src/secondbrain/link-agent/watch.ts"() {
+      init_domain_bus();
+      init_notice();
+      init_settings_provider();
+      init_config4();
+      init_data10();
+      init_pipeline();
+      LINK_SWEEP_INTERVAL_MS = 30 * 60 * 1e3;
+    }
+  });
+
+  // src/secondbrain/index.ts
+  function exportVectorSearch() {
+    if (!store2) return null;
+    const s = store2;
+    return {
+      isIndexReady: () => s.isIndexReady(),
+      search: (query, topK) => s.search(query, topK)
+    };
+  }
+  var store2;
+  var init_secondbrain = __esm({
+    "src/secondbrain/index.ts"() {
+      init_domain_bus();
+      init_notice();
+      init_link_now();
+      init_settings_provider();
+      init_config4();
+      init_vector_store();
+      init_ai3();
+      init_panel();
+      init_reference_panel();
+      init_chat_panel();
+      init_mobile_panel();
+      init_pipeline();
+      init_watch2();
+      store2 = null;
+    }
+  });
+
+  // src/knowledge/mount-suggest.ts
+  var mount_suggest_exports = {};
+  __export(mount_suggest_exports, {
+    SUGGEST_CACHE_FILE: () => SUGGEST_CACHE_FILE,
+    SUGGEST_MAX_ANCHORS: () => SUGGEST_MAX_ANCHORS,
+    SUGGEST_MAX_CANDIDATES: () => SUGGEST_MAX_CANDIDATES,
+    SUGGEST_MIN_ANCHOR_CHARS: () => SUGGEST_MIN_ANCHOR_CHARS,
+    SUGGEST_MIN_SCORE: () => SUGGEST_MIN_SCORE,
+    SUGGEST_PER_ANCHOR_CANDIDATES: () => SUGGEST_PER_ANCHOR_CANDIDATES,
+    SUGGEST_TOPK: () => SUGGEST_TOPK,
+    cacheValid: () => cacheValid,
+    clearSuggestCache: () => clearSuggestCache,
+    filterSuggestions: () => filterSuggestions,
+    generateSuggestions: () => generateSuggestions,
+    markSuggestion: () => markSuggestion,
+    mergeSuggestions: () => mergeSuggestions,
+    readSuggestCache: () => readSuggestCache,
+    splitAnchors: () => splitAnchors,
+    suggestKey: () => suggestKey
+  });
+  function nextIsBoundary(text, i) {
+    if (i >= text.length) return true;
+    return /\s/.test(text[i]);
+  }
+  function wikiDisplay(inner) {
+    const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : inner;
+    const afterBlock = afterAlias.includes("^") ? afterAlias.slice(0, afterAlias.indexOf("^")) : afterAlias;
+    const noHead = afterBlock.includes("#") ? afterBlock.slice(afterBlock.lastIndexOf("#") + 1) : afterBlock;
+    return noHead || afterAlias || inner;
+  }
+  function cleanAnchorText(raw) {
+    return raw.replace(/!\[\[[^\[\]]*\]\]/g, " ").replace(/\[\[([^\[\]]+)\]\]/g, (_m, inner) => wikiDisplay(inner)).replace(/`+/g, "").replace(/\*\*|__/g, "").replace(/\s+/g, " ").trim();
+  }
+  function pushAnchor(out, text, from, to) {
+    let s = from;
+    let e = to;
+    while (s < e && /\s/.test(text[s])) s++;
+    while (e > s && /\s/.test(text[e - 1])) e--;
+    const lead = text.slice(s, e).match(LEADING_MARK_RE);
+    if (lead) s += lead[0].length;
+    if (s >= e) return;
+    const cleaned = cleanAnchorText(text.slice(s, e));
+    if (!cleaned) return;
+    if ([...cleaned].length < SUGGEST_MIN_ANCHOR_CHARS) return;
+    if (!HAS_MEANING_RE.test(cleaned)) return;
+    out.push({ from: s, to: e, text: cleaned });
+  }
+  function splitAnchors(body) {
+    const text = String(body != null ? body : "");
+    const out = [];
+    let start = 0;
+    for (let i = 0; i <= text.length; i++) {
+      const ch = i === text.length ? "" : text[i];
+      let boundary = i === text.length;
+      if (!boundary) {
+        if (ch === "\n" || ch === "。" || ch === "！" || ch === "？" || ch === "；" || ch === "…" || ch === "!") boundary = true;
+        else if (ch === "." || ch === "?" || ch === ";") boundary = nextIsBoundary(text, i + 1);
+      }
+      if (!boundary) continue;
+      pushAnchor(out, text, start, i);
+      start = i + 1;
+    }
+    return out;
+  }
+  function normalizeAnchorText(text) {
+    return String(text != null ? text : "").replace(/\s+/g, " ").replace(/^[\s"'“”‘’《》〈〉「」『』]+/, "").replace(/[\s"'“”‘’《》〈〉「」『』]+$/, "").trim().toLowerCase();
+  }
+  function normalizeTargetPath(path) {
+    return String(path != null ? path : "").replace(/\\/g, "/").replace(/^\.\//, "").replace(/\.md$/i, "").trim().toLowerCase();
+  }
+  function suggestKey(s) {
+    var _a2;
+    return normalizeAnchorText((_a2 = s.anchor) == null ? void 0 : _a2.text) + "\0" + normalizeTargetPath(s.target);
+  }
+  function matchesExisting(target, existing) {
+    const t = normalizeTargetPath(target);
+    if (!t) return false;
+    const tBase = t.includes("/") ? t.slice(t.lastIndexOf("/") + 1) : t;
+    for (const raw of existing) {
+      const e = normalizeTargetPath(raw);
+      if (!e) continue;
+      if (e === t || e === tBase) return true;
+    }
+    return false;
+  }
+  function filterSuggestions(list, opts) {
+    const dismissed = new Set(((opts == null ? void 0 : opts.dismissed) || []).map((k) => String(k).trim().toLowerCase()));
+    const existing = (opts == null ? void 0 : opts.existing) || [];
+    const minScore = Number.isFinite(opts == null ? void 0 : opts.minScore) ? Number(opts == null ? void 0 : opts.minScore) : SUGGEST_MIN_SCORE;
+    const seen = /* @__PURE__ */ new Set();
+    const out = [];
+    for (const s of list || []) {
+      if (!s || !s.target) continue;
+      if (s.state === "dismissed" || s.state === "fixed") continue;
+      if (!(Number(s.score) >= minScore)) continue;
+      const key = suggestKey(s);
+      if (dismissed.has(key) || seen.has(key)) continue;
+      if (existing.length > 0 && matchesExisting(s.target, existing)) continue;
+      seen.add(key);
+      out.push(s);
+    }
+    return out;
+  }
+  function cacheStore() {
+    return jsonFileStore(storageFile(SUGGEST_CACHE_FILE), { defaultValue: () => ({ cards: {} }) });
+  }
+  async function readSuggestCache() {
+    const data = await cacheStore().read();
+    const cards = data && typeof data === "object" && data.cards && typeof data.cards === "object" && !Array.isArray(data.cards) ? data.cards : {};
+    return { cards };
+  }
+  function mutateSuggestCache(fn) {
+    const path = storageFile(SUGGEST_CACHE_FILE);
+    return enqueueFileTask(path, async () => {
+      const file = await readSuggestCache();
+      const result = await fn(file);
+      await cacheStore().write(file);
+      return result;
+    });
+  }
+  async function clearSuggestCache() {
+    await mutateSuggestCache((file) => {
+      for (const [path, entry] of Object.entries(file.cards || {})) {
+        const kept = ((entry == null ? void 0 : entry.suggestions) || []).filter((s) => s && s.state !== "pending");
+        if (kept.length === 0) delete file.cards[path];
+        else file.cards[path] = { bodyHash: "", generatedAt: 0, suggestions: kept };
+      }
+    });
+  }
+  function cacheValid(entry, bodyHash) {
+    return !!entry && !!bodyHash && typeof entry.bodyHash === "string" && entry.bodyHash === bodyHash;
+  }
+  function collectDismissedKeys(file) {
+    const out = [];
+    for (const entry of Object.values(file.cards || {})) {
+      for (const s of (entry == null ? void 0 : entry.suggestions) || []) {
+        if ((s == null ? void 0 : s.state) === "dismissed") out.push(suggestKey(s));
+      }
+    }
+    return out;
+  }
+  function collectFixedKeys(entry) {
+    return ((entry == null ? void 0 : entry.suggestions) || []).filter((s) => (s == null ? void 0 : s.state) === "fixed").map(suggestKey);
+  }
+  function persistCardCache(cardPath, bodyHash, generatedAt, suggestions) {
+    return mutateSuggestCache((file) => {
+      const prev = file.cards[cardPath];
+      const kept = ((prev == null ? void 0 : prev.suggestions) || []).filter((s) => s && s.state !== "pending");
+      const keptKeys = new Set(kept.map(suggestKey));
+      const fresh = suggestions.filter((s) => !keptKeys.has(suggestKey(s)));
+      file.cards[cardPath] = { bodyHash, generatedAt, suggestions: [...kept, ...fresh] };
+    }).then(() => void 0);
+  }
+  async function markSuggestion(cardPath, s, state2, ctx) {
+    if (!cardPath || !s || !s.target) return;
+    const key = suggestKey(s);
+    const now = Date.now();
+    await mutateSuggestCache((file) => {
+      const prev = file.cards[cardPath];
+      const entry = prev && typeof prev === "object" && Array.isArray(prev.suggestions) ? prev : { bodyHash: "", generatedAt: now, suggestions: [] };
+      const idx = entry.suggestions.findIndex((it) => suggestKey(it) === key);
+      const marked = { ...idx >= 0 ? entry.suggestions[idx] : s, state: state2 };
+      if (idx >= 0) entry.suggestions[idx] = marked;
+      else entry.suggestions.push(marked);
+      file.cards[cardPath] = entry;
+    });
+  }
+  function stripFrontmatter2(content) {
+    return String(content != null ? content : "").replace(/^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, "");
+  }
+  function kindOfTarget(path, ctx) {
+    if (isUnderFolder((ctx == null ? void 0 : ctx.cardboxDir) || "", path)) return "card";
+    if (isUnderFolder((ctx == null ? void 0 : ctx.litDir) || "", path)) return "para";
+    return "note";
+  }
+  function displayName(path) {
+    const base = String(path || "").split("/").pop() || String(path || "");
+    return stripMdExt(base);
+  }
+  function collectExistingTargets(body) {
+    const text = String(body != null ? body : "");
+    const out = [];
+    WIKILINK_RE.lastIndex = 0;
+    let m;
+    while ((m = WIKILINK_RE.exec(text)) !== null) {
+      const target = m[1].split("|")[0].split("#")[0].trim();
+      if (target) out.push(target);
+    }
+    return out;
+  }
+  function buildJudgePrompt(anchors, candidates) {
+    const lines = [JUDGE_PROMPT_PREFIX2, "", "## 锚点与候选"];
+    for (let i = 0; i < anchors.length; i++) {
+      lines.push(`### a${i + 1}：${anchors[i].text}`);
+      const group = candidates.filter((c) => c.anchorIdx === i);
+      if (group.length === 0) {
+        lines.push("-（无候选）");
+        continue;
+      }
+      for (const c of group) {
+        const snippet = c.snippet ? "｜" + c.snippet.replace(/\s+/g, " ") : "";
+        lines.push(`- t${c.localIdx + 1}：${displayName(c.path)}（${c.path}）${snippet}`);
+      }
+    }
+    return lines.join("\n");
+  }
+  function parseJudgePicks(raw) {
+    var _a2;
+    const cleaned = String(raw || "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
+    let arr = null;
+    try {
+      arr = JSON.parse(cleaned);
+    } catch (e) {
+      const m = cleaned.match(/\[[\s\S]*\]/);
+      if (m) {
+        try {
+          arr = JSON.parse(m[0]);
+        } catch (e2) {
+          arr = null;
+        }
+      }
+    }
+    if (!Array.isArray(arr)) return [];
+    const out = [];
+    for (const item of arr) {
+      const it = item;
+      if (!it || typeof it !== "object") continue;
+      const anchor = Number(it.anchor);
+      const target = Number(it.target);
+      const score = Number(it.score);
+      if (!Number.isInteger(anchor) || !Number.isInteger(target) || !Number.isFinite(score)) continue;
+      out.push({
+        anchor,
+        target,
+        score: Math.max(0, Math.min(1, score)),
+        reason: String((_a2 = it.reason) != null ? _a2 : "").replace(/\s+/g, " ").trim().slice(0, REASON_MAX_CHARS)
+      });
+    }
+    return out;
+  }
+  async function generateSuggestions(cardPath, ctx, opts) {
+    var _a2, _b2, _c, _d;
+    const empty = (status) => ({ status, suggestions: [] });
+    if (isMobileEnv()) return empty("no-index");
+    const searchApi = exportVectorSearch();
+    if (!searchApi || !searchApi.isIndexReady()) return empty("no-index");
+    const auto = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeMountAutoSuggest) !== false;
+    if (!auto && !(opts == null ? void 0 : opts.force)) return empty("off");
+    try {
+      await getAIProvider();
+    } catch (e) {
+      return empty("no-ai");
+    }
+    const file = (_d = (_c = (_b2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b2.vault) == null ? void 0 : _c.getAbstractFileByPath) == null ? void 0 : _d.call(_c, cardPath);
+    let content = "";
+    if (file) {
+      try {
+        content = await ctx.app.vault.read(file);
+      } catch (e) {
+        console.warn("[mount-suggest] 主卡读取失败", e);
+      }
+    }
+    const body = stripFrontmatter2(content);
+    if (!body.trim()) return empty("fresh");
+    const bodyHash = String(hash31(body));
+    const cacheFile = await readSuggestCache();
+    const entry = cacheFile.cards[cardPath];
+    const dismissed = collectDismissedKeys(cacheFile);
+    const existing = collectExistingTargets(body);
+    if (!(opts == null ? void 0 : opts.force) && cacheValid(entry, bodyHash)) {
+      return {
+        status: "cached",
+        suggestions: filterSuggestions(entry.suggestions, { dismissed, existing, minScore: SUGGEST_MIN_SCORE }),
+        generatedAt: entry.generatedAt
+      };
+    }
+    const anchors = splitAnchors(body).slice(0, SUGGEST_MAX_ANCHORS);
+    if (anchors.length === 0) {
+      const generatedAt2 = Date.now();
+      await persistCardCache(cardPath, bodyHash, generatedAt2, []);
+      return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
+    }
+    const dismissedSet = new Set(dismissed);
+    const fixedSet = new Set(collectFixedKeys(entry));
+    const candidates = [];
+    const seenPair = /* @__PURE__ */ new Set();
+    let searchFailed = false;
+    outer: for (let i = 0; i < anchors.length; i++) {
+      let hits = [];
+      try {
+        hits = await searchApi.search(anchors[i].text, SUGGEST_TOPK) || [];
+      } catch (e) {
+        console.warn("[mount-suggest] 向量检索失败，按降级处理", e);
+        searchFailed = true;
+        break;
+      }
+      let local = 0;
+      for (const hit of hits) {
+        if (!hit || !hit.path || hit.path === cardPath) continue;
+        const pairKey = suggestKey({ anchor: anchors[i], target: hit.path });
+        if (dismissedSet.has(pairKey) || fixedSet.has(pairKey)) continue;
+        if (matchesExisting(hit.path, existing)) continue;
+        if (seenPair.has(pairKey)) continue;
+        if (!ctx.app.vault.getAbstractFileByPath(hit.path)) continue;
+        seenPair.add(pairKey);
+        candidates.push({
+          anchorIdx: i,
+          localIdx: local,
+          path: hit.path,
+          kind: kindOfTarget(hit.path, ctx),
+          snippet: String(hit.chunk || "").slice(0, 200)
+        });
+        local++;
+        if (local >= SUGGEST_PER_ANCHOR_CANDIDATES) break;
+        if (candidates.length >= SUGGEST_MAX_CANDIDATES) break outer;
+      }
+    }
+    if (searchFailed) return empty("no-index");
+    if (candidates.length === 0) {
+      const generatedAt2 = Date.now();
+      await persistCardCache(cardPath, bodyHash, generatedAt2, []);
+      return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
+    }
+    let raw = "";
+    try {
+      raw = await createAI().json(buildJudgePrompt(anchors, candidates), { modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS } });
+    } catch (e) {
+      console.warn("[mount-suggest] AI 裁判失败", e);
+      return empty("no-ai");
+    }
+    const judged = [];
+    for (const pick of parseJudgePicks(raw)) {
+      if (pick.score < SUGGEST_MIN_SCORE) continue;
+      const a = anchors[pick.anchor - 1];
+      const c = candidates.find((it) => it.anchorIdx === pick.anchor - 1 && it.localIdx === pick.target - 1);
+      if (!a || !c) continue;
+      judged.push({ anchor: { ...a }, target: c.path, kind: c.kind, reason: pick.reason, score: pick.score, state: "pending" });
+    }
+    const suggestions = filterSuggestions(judged, { dismissed, existing, minScore: SUGGEST_MIN_SCORE });
+    const generatedAt = Date.now();
+    await persistCardCache(cardPath, bodyHash, generatedAt, suggestions);
+    return { status: "fresh", suggestions, generatedAt };
+  }
+  function mergeSuggestions(tree, run) {
+    var _a2;
+    const nodes = Array.isArray(tree == null ? void 0 : tree.nodes) ? tree.nodes : [];
+    const edges = Array.isArray(tree == null ? void 0 : tree.edges) ? tree.edges : [];
+    const rootNode = nodes.find((n) => n.id === (tree == null ? void 0 : tree.root));
+    const rootDepth = rootNode ? rootNode.depth : 0;
+    const rootPath = rootNode ? normalizeTargetPath(rootNode.path) : "";
+    const known = new Set(nodes.map((n) => normalizeTargetPath(n.path)));
+    const ghostNodes = [];
+    const ghostEdges = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const s of (run == null ? void 0 : run.suggestions) || []) {
+      if (!s || !s.target) continue;
+      const key = normalizeTargetPath(s.target);
+      if (!key || key === rootPath || known.has(key) || seen.has(key)) continue;
+      seen.add(key);
+      const id = "ai:" + s.target;
+      ghostNodes.push({
+        id,
+        path: s.target,
+        title: displayName(s.target),
+        kind: s.kind,
+        source: "ai",
+        depth: rootDepth + 1,
+        anchor: (_a2 = s.anchor) != null ? _a2 : null,
+        missing: false,
+        suggested: true,
+        attached: false,
+        body: null
+      });
+      ghostEdges.push({ from: tree.root, to: id, suggested: true });
+    }
+    return { ...tree, nodes: [...nodes, ...ghostNodes], edges: [...edges, ...ghostEdges] };
+  }
+  var SUGGEST_MIN_SCORE, SUGGEST_MIN_ANCHOR_CHARS, SUGGEST_MAX_ANCHORS, SUGGEST_TOPK, SUGGEST_PER_ANCHOR_CANDIDATES, SUGGEST_MAX_CANDIDATES, SUGGEST_JUDGE_MAX_TOKENS, REASON_MAX_CHARS, SUGGEST_CACHE_FILE, HAS_MEANING_RE, WIKILINK_RE, LEADING_MARK_RE, JUDGE_PROMPT_PREFIX2;
+  var init_mount_suggest = __esm({
+    "src/knowledge/mount-suggest.ts"() {
+      init_ai();
+      init_mobile();
+      init_settings_provider();
+      init_storage();
+      init_utils();
+      init_secondbrain();
+      SUGGEST_MIN_SCORE = 0.7;
+      SUGGEST_MIN_ANCHOR_CHARS = 6;
+      SUGGEST_MAX_ANCHORS = 12;
+      SUGGEST_TOPK = 8;
+      SUGGEST_PER_ANCHOR_CANDIDATES = 3;
+      SUGGEST_MAX_CANDIDATES = 24;
+      SUGGEST_JUDGE_MAX_TOKENS = 2048;
+      REASON_MAX_CHARS = 80;
+      SUGGEST_CACHE_FILE = "mount-suggest.json";
+      HAS_MEANING_RE = /[\p{L}\p{N}]/u;
+      WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
+      LEADING_MARK_RE = /^(?:#{1,6}\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
+      JUDGE_PROMPT_PREFIX2 = [
+        "你是卡片盒挂载树的建议裁判。给定一张主卡正文里的若干锚点（词/句），以及每个锚点经向量召回得到的候选目标，",
+        "逐一判断「锚点」与「候选目标」是否存在实质知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。",
+        "标准：只推实质关联，弱关联（仅任务级/提及级）不推，存疑不推；宁缺勿滥。",
+        '输出要求：严格 JSON 数组 [{"anchor":<锚点编号>,"target":<候选编号>,"score":<0到1的关联分>,"reason":"一句话理由"}]，按关联强度降序；',
+        `分数低于 ${SUGGEST_MIN_SCORE} 的一律不要输出；无关联输出 []；不要输出 JSON 以外的任何文字。`
+      ].join("");
+    }
+  });
+
   // src/smartcat/config.ts
   function defaultConfig() {
     return {
@@ -37131,7 +37769,7 @@ ${n.content.slice(0, 2e3)}
     await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app }).write(data);
   }
   var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS;
-  var init_data10 = __esm({
+  var init_data11 = __esm({
     "src/smartcat/data.ts"() {
       init_storage();
       init_config5();
@@ -37756,6 +38394,8 @@ ${n.content.slice(0, 2e3)}
         knowledgeWhisperModel: "small",
         knowledgeCacheDir: "",
         knowledgeCacheRetentionDays: 7,
+        // 挂载树 AI 语义建议（issue 318）：默认开（打开白板即跑；缓存命中则无感）
+        knowledgeMountAutoSuggest: true,
         // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
         settingsPanelLayout: "jingwei",
         settingsPanelSkin: "chenhun",
@@ -37896,14 +38536,22 @@ ${n.content.slice(0, 2e3)}
         pomodoro: async () => (await Promise.resolve().then(() => (init_ui2(), ui_exports2))).pomodoroSettingsSchema(),
         encrypt: async () => (await Promise.resolve().then(() => (init_ui10(), ui_exports8))).encryptSettingsSchema(),
         "password-vault": async () => (await Promise.resolve().then(() => (init_settings6(), settings_exports6))).passwordVaultSettingsSchema(),
-        knowledge: async () => (await Promise.resolve().then(() => (init_ui5(), ui_exports4))).knowledgeSettingsSchema(),
+        knowledge: async () => {
+          const { knowledgeSettingsSchema: knowledgeSettingsSchema2 } = await Promise.resolve().then(() => (init_ui5(), ui_exports4));
+          return knowledgeSettingsSchema2({
+            onClearSuggestCache: async () => {
+              const { clearSuggestCache: clearSuggestCache2 } = await Promise.resolve().then(() => (init_mount_suggest(), mount_suggest_exports));
+              await clearSuggestCache2();
+            }
+          });
+        },
         smartcat: async () => {
-          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data10(), data_exports));
+          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui11(), ui_exports9));
           const app = getApp();
           const data = await loadSmartCatData2(app);
           const saveConfig = async (config) => {
-            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data10(), data_exports));
+            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
             data.config = config;
             await saveSmartCatData2(app, data);
           };
