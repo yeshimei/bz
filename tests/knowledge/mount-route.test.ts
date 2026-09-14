@@ -145,8 +145,39 @@ function penetrations(edge: RouteEdgeInput, routed: RoutedEdge, boxes: RouteBox[
   return bad;
 }
 
+/**
+ * 端点桩与首跳/收尾段的专项检查（源卡/目标卡也不豁免）：
+ * 段 1 = 出盒桩 E→E1、末段 = 入卡桩 T1→T；退化段（0 长桩）按点包含判定。
+ */
+function endpointStubIssues(edge: RouteEdgeInput, routed: RoutedEdge, boxes: RouteBox[]): string[] {
+  const bad: string[] = [];
+  const segs = parseD(routed.d);
+  const probe = (si: number, label: string): void => {
+    const s = segs[si];
+    if (!s) return;
+    const degenerate = s.kind === 'L' && s.p.x === s.q.x && s.p.y === s.q.y;
+    for (const b of boxes) {
+      const r = rectOf(b);
+      const hit = degenerate
+        ? s.kind === 'L' && inRect(s.p, r)
+        : s.kind === 'L'
+          ? segPenetrates(s.p, s.q, r)
+          : cubicPenetrates(s, r);
+      if (hit) bad.push(`${edge.from}→${edge.to} ${label} 段${si}(${s.kind}) 进入 ${b.id}`);
+    }
+  };
+  probe(1, '出盒桩');
+  probe(segs.length - 1, '入卡桩');
+  return bad;
+}
+
 function mkBox(id: string, x: number, y: number, w: number, h: number): RouteBox {
   return { id, x, y, w, h };
+}
+
+/** 测试自造布局用的锚点：盒子内圈（离四边 ≥18px），保证出盒点不需要端角钳制 */
+function innerAnchor(b: RouteBox): LayoutPoint {
+  return { x: b.x + b.w * 0.3, y: b.y + b.h * 0.4 };
 }
 
 const boxMap = (boxes: RouteBox[]): Map<string, RouteBox> => {
@@ -441,6 +472,131 @@ describe('routeEdges 拥挤样例（16 卡 24 边）', () => {
       const m = Math.min(S.x - src.x, src.x + src.w - S.x, S.y - src.y, src.y + src.h - S.y);
       expect(Math.hypot(E.x - S.x, E.y - S.y)).toBeLessThanOrEqual(m + 0.2);
     });
+  });
+});
+
+/* ============================ 贴边（1–11px 缝）：端点桩不许插进邻卡 ============================ */
+
+describe('routeEdges 贴边缝', () => {
+  it('审查复现 A/B 6px 缝：出盒边后移（最近边的 12px 桩会插进邻卡）', () => {
+    const a = mkBox('A', 0, 0, 100, 120);
+    const b = mkBox('B', 106, 40, 80, 80);
+    const edges: RouteEdgeInput[] = [{ from: 'A', to: 'B', anchor: { x: 70, y: 60 } }];
+    const boxes = [a, b];
+    const r = routeEdges(boxes, edges)[0];
+    expect(r.exit).toBe('T'); // R 边外侧 6px 就是 B → 退到上边
+    expect(r.fallback).toBe(false);
+    expect(penetrations(edges[0], r, boxes)).toEqual([]);
+    expect(endpointStubIssues(edges[0], r, boxes)).toEqual([]);
+    // 出盒桩确实指向卡外、且没插进 B
+    const segs = parseD(r.d);
+    const E1 = segs[1].q;
+    expect(inRect(E1, rectOf(b))).toBe(false);
+  });
+
+  it('出盒：缝 1–11px 时改走干净边；缝 ≥12px 仍走最近边（最近优先不被破坏）', () => {
+    for (const g of [1, 2, 3, 5, 8, 11]) {
+      const a = mkBox('A', 0, 0, 140, 160);
+      const blk = mkBox('X', 140 + g, 40, 120, 80); // 右外侧 g px
+      const tgt = mkBox('T', 700, 0, 120, 160);
+      const edges: RouteEdgeInput[] = [{ from: 'A', to: 'T', anchor: { x: 120, y: 80 } }];
+      const boxes = [a, blk, tgt];
+      const r = routeEdges(boxes, edges)[0];
+      expect(r.exit).not.toBe('R'); // 12px 桩会插进 X → 后移
+      expect(r.fallback).toBe(false);
+      expect(penetrations(edges[0], r, boxes)).toEqual([]);
+      expect(endpointStubIssues(edges[0], r, boxes)).toEqual([]);
+      const E = parseD(r.d)[0].q;
+      expect(inRect(E, rectOf(blk))).toBe(false);
+    }
+    for (const g of [12, 16, 24]) {
+      const a = mkBox('A', 0, 0, 140, 160);
+      const blk = mkBox('X', 140 + g, 40, 120, 80);
+      const tgt = mkBox('T', 700, 0, 120, 160);
+      const edges: RouteEdgeInput[] = [{ from: 'A', to: 'T', anchor: { x: 120, y: 80 } }];
+      const boxes = [a, blk, tgt];
+      const r = routeEdges(boxes, edges)[0];
+      expect(r.exit).toBe('R'); // 缝隙够宽 → 最近的右边照走
+      expect(endpointStubIssues(edges[0], r, boxes)).toEqual([]);
+      expect(penetrations(edges[0], r, boxes)).toEqual([]);
+    }
+  });
+
+  it('入卡：缝 1–11px 时改走干净边', () => {
+    for (const g of [1, 3, 6, 11]) {
+      const src = mkBox('S', 0, 0, 160, 200);
+      const tgt = mkBox('T', 600, 0, 200, 200);
+      const blk = mkBox('X', 600 - g - 60, 60, 60, 80); // 左外侧 g px
+      const edges: RouteEdgeInput[] = [{ from: 'S', to: 'T', anchor: { x: 120, y: 100 } }];
+      const boxes = [src, tgt, blk];
+      const r = routeEdges(boxes, edges)[0];
+      expect(r.entry).not.toBe('L'); // 入卡桩会插进 X → 换边
+      expect(r.fallback).toBe(false);
+      expect(penetrations(edges[0], r, boxes)).toEqual([]);
+      expect(endpointStubIssues(edges[0], r, boxes)).toEqual([]);
+    }
+  });
+
+  it('桩长收缩：四面贴边围死时桩缩到「缝隙−1」并落在卡外', () => {
+    const g = 6;
+    const c = mkBox('c', 400, 400, 200, 200);
+    const blocker = [
+      mkBox('up', 300, 400 - g - 200, 400, 200),
+      mkBox('down', 300, 600 + g, 400, 200),
+      mkBox('left', 400 - g - 300, 300, 300, 400),
+      mkBox('right', 600 + g, 300, 300, 400),
+    ];
+    const src = mkBox('s', 0, 0, 160, 160);
+    const boxes = [c, ...blocker, src];
+    const edges: RouteEdgeInput[] = [{ from: 's', to: 'c', anchor: { x: 80, y: 80 } }];
+    const r = routeEdges(boxes, edges)[0];
+    // 目标被贴边围死：A* 无解 → 降级，但端点桩仍必须干净（不许插进任何卡）
+    expect(r.fallback).toBe(true);
+    expect(parseD(r.d).length).toBeGreaterThan(0);
+    expect(endpointStubIssues(edges[0], r, boxes)).toEqual([]);
+    const segs = parseD(r.d);
+    const T = segs[segs.length - 1].q;
+    const T1 = segs[segs.length - 2].q;
+    expect(Math.hypot(T1.x - T.x, T1.y - T.y)).toBeCloseTo(g - 1, 1); // 缝隙−1 的收缩桩
+  });
+
+  it('紧布局扫描：多组缝宽下所有非降级边 0 穿卡（端点桩与首跳/收尾都在内）', () => {
+    const tightLayout = (gap: number): { boxes: RouteBox[]; edges: RouteEdgeInput[] } => {
+      const widths = [180, 150, 200, 160, 140];
+      const boxes: RouteBox[] = [];
+      const edges: RouteEdgeInput[] = [];
+      let x1 = 0;
+      for (let i = 0; i < 5; i++) {
+        boxes.push(mkBox(`top${i}`, x1, 0, widths[i], 150));
+        x1 += widths[i] + (i % 2 === 0 ? gap : 240);
+      }
+      let x2 = 60;
+      for (let i = 0; i < 5; i++) {
+        const w = widths[(i + 2) % 5];
+        boxes.push(mkBox(`bot${i}`, x2, 400, w, 170));
+        x2 += w + (i % 2 === 0 ? 260 : gap);
+      }
+      for (let i = 0; i < 4; i++) {
+        edges.push({ from: `top${i}`, to: `bot${i}`, anchor: innerAnchor(boxes[i]) });
+        edges.push({ from: `bot${i}`, to: `top${i + 1}`, anchor: innerAnchor(boxes[5 + i]) });
+      }
+      edges.push({ from: 'top4', to: 'bot4', anchor: innerAnchor(boxes[4]) });
+      return { boxes, edges };
+    };
+    let cleanEdges = 0;
+    for (const gap of [1, 2, 4, 7, 11, 16, 24, 40]) {
+      const { boxes, edges } = tightLayout(gap);
+      const routed = routeEdges(boxes, edges);
+      const bad: string[] = [];
+      routed.forEach((r, i) => {
+        if (r.fallback) return; // 降级边按约定可能擦卡（渲染层虚线），只扫非降级边
+        cleanEdges++;
+        bad.push(...penetrations(edges[i], r, boxes));
+        bad.push(...endpointStubIssues(edges[i], r, boxes));
+      });
+      expect(bad).toEqual([]);
+    }
+    expect(cleanEdges).toBeGreaterThanOrEqual(8); // 扫描不是空转
   });
 });
 
