@@ -701,7 +701,7 @@ function isSelfItem(it: MountItem, nodePath: string): boolean {
   return pathKey(it.target) === pathKey(nodePath) || stemOf(it.target).toLowerCase() === stemOf(nodePath).toLowerCase();
 }
 
-/** 主卡节点（root：source self、kind card、depth 0） */
+/** 主卡节点（root：source self、kind card、depth 0、parent null） */
 async function rootNode(path: string, scan: Scan): Promise<MountNode> {
   return {
     id: path,
@@ -714,12 +714,13 @@ async function rootNode(path: string, scan: Scan): Promise<MountNode> {
     missing: false,
     suggested: false,
     attached: false,
+    parent: null,
     body: await scanBody(scan, path),
   };
 }
 
-/** 节点的 kind/body/title 定型（下游：目标；上游：承载挂载项的笔记） */
-async function materialize(scan: Scan, it: MountItem, depth: number, upstream: boolean): Promise<MountNode> {
+/** 节点的 kind/body/title 定型（下游：目标；上游：承载挂载项的笔记）；`parent` = BFS 发现它的上一环 */
+async function materialize(scan: Scan, it: MountItem, depth: number, parent: string, upstream: boolean): Promise<MountNode> {
   if (upstream) {
     const path = normSlashes(it.container ?? it.path ?? it.target);
     return {
@@ -733,6 +734,7 @@ async function materialize(scan: Scan, it: MountItem, depth: number, upstream: b
       missing: false,
       suggested: false,
       attached: false,
+      parent,
       body: await scanBody(scan, path),
     };
   }
@@ -755,14 +757,16 @@ async function materialize(scan: Scan, it: MountItem, depth: number, upstream: b
     missing: it.missing,
     suggested: false,
     attached: false,
+    parent,
     body,
   };
 }
 
 /**
  * 主卡 → 挂载树（三源汇总 + 六类形态；可达／非回指／严格跨代；方向翻转同一构建器）。
- * - root = 主卡自身（source `self`、kind `card`、depth 0）
- * - 同名文献：`source: 'sameName'`、`attached: true`、depth = 父 + 1、**不进 edges**（两个方向都吸附）
+ * - root = 主卡自身（source `self`、kind `card`、depth 0、**parent null**）
+ * - 同名文献：`source: 'sameName'`、`attached: true`、depth = 父 + 1、**parent = 所属卡片**、**不进 edges**（两个方向都吸附）
+ * - `parent` = BFS 发现它的上一环（下游 = 链接来源卡；上游 = 它挂到的那张卡）；同一节点多来源取首见
  * - 双链 → `'link'`（带 anchor）；related → `'related'`；frontmatter mounted → `'manual'`
  * - 只有卡片节点继续展开；同一目标全树只出现一次（BFS 最短 depth）；自链剪掉
  * - 边恒 `depth(to) > depth(from)`（契约不变式）；`direction: 'upstream'` 时 from = 被挂方、to = 挂载方
@@ -800,6 +804,7 @@ export async function buildMountTree(cardPath: string, opts: { direction: MountD
         missing: false,
         suggested: false,
         attached: true,
+        parent: node.id, // 同名文献吸附在**所属卡片**下（不是根、也不为 null）
         body: await scanBody(scan, sameNote),
       };
       nodes.set(child.id, child);
@@ -813,7 +818,7 @@ export async function buildMountTree(cardPath: string, opts: { direction: MountD
       let child = nodes.get(id) ?? null;
       let fresh = false;
       if (!child) {
-        child = await materialize(scan, it, node.depth + 1, upstream);
+        child = await materialize(scan, it, node.depth + 1, node.id, upstream);
         nodes.set(child.id, child);
         order.push(child.id);
         fresh = true;
