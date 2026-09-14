@@ -34,7 +34,7 @@ import { Component, MarkdownRenderer } from 'obsidian';
 import { getApp } from '../core/app';
 import { escManager, type EscHandle } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
-import { notice } from '../core/notice';
+import { notice, type NoticeType } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import { enqueueFileTask } from '../core/storage';
 import { escapeHtml } from '../core/utils';
@@ -132,12 +132,12 @@ const SOURCE_LABEL: Record<string, string> = {
  * 对外 API
  * ------------------------------------------------------------------ */
 
-/** 白板依赖接缝（测试注入；生产走默认实现） */
+/** 依赖接缝（测试注入；生产走默认实现）。`notice` 第二参 = core/notice 语义档（域内先例 ui.ts） */
 export interface MountCanvasDeps {
   /** 尺寸测量接缝：jsdom 里 offsetWidth 恒 0，测试注入固定尺寸；默认读 DOM */
   measure?: (el: HTMLElement, kind: MountKind) => { w: number; h: number };
-  /** 通知（测试用） */
-  notice?: (msg: string) => void;
+  /** 通知（测试用；`type` 缺省 info，成功动作走 success） */
+  notice?: (msg: string, type?: NoticeType) => void;
   /** 打开笔记（测试用） */
   openNote?: (path: string) => void;
   /** 写剪贴板（测试用） */
@@ -146,7 +146,7 @@ export interface MountCanvasDeps {
 
 interface ResolvedDeps {
   measure: (el: HTMLElement, kind: MountKind) => { w: number; h: number };
-  notice: (msg: string) => void;
+  notice: (msg: string, type?: NoticeType) => void;
   openNote: (path: string) => void;
   writeClipboard: (text: string) => Promise<void>;
 }
@@ -375,7 +375,7 @@ function defaultDeps(over?: MountCanvasDeps): ResolvedDeps {
     measure:
       over?.measure ??
       ((el: HTMLElement) => ({ w: el.offsetWidth || 0, h: el.offsetHeight || 0 })),
-    notice: over?.notice ?? ((msg: string) => notice(msg, 'info')),
+    notice: over?.notice ?? ((msg: string, type?: NoticeType) => notice(msg, type ?? 'info')),
     openNote:
       over?.openNote ??
       ((path: string) => {
@@ -513,7 +513,14 @@ function bindShellEvents(st: CanvasState): void {
     else if (act === 'crumb') {
       const path = btn.getAttribute('data-path') || '';
       const id = btn.getAttribute('data-id') || '';
-      if (!path || id === st.tree.root) return;
+      if (!path) return;
+      if (id === st.tree.root) {
+        // 点的是当前主卡（链首）：不重开，但要把选中态收掉（否则点了没反应）
+        st.selected = null;
+        applySelection(st);
+        renderTop(st);
+        return;
+      }
       void openMountTree(path, { direction: st.direction, deps: depsOf(st) });
     } else if (act === 'build-index') requestBuildIndex(st);
   });
@@ -705,7 +712,9 @@ export function closeMountTree(): void {
   st.win.style.display = 'none';
   st.selected = null;
   st.token++; // 在途载入作废
+  // 关闭即收掉「生成中」遮罩：在途载入被 token 作废后没人再负责隐藏它（关掉再开会看到永久「生成中」）
   st.loading = false;
+  st.loadingEl.style.display = 'none';
   st.esc?.unregister();
   st.esc = null;
 }
@@ -742,7 +751,12 @@ export async function openMountTree(
       },
     });
   }
-  if (path === st.cardPath && direction === st.direction && st.tree.nodes.length && !opts?.force) {
+  // 「抬层」早退只认**同一张树**：`st.cardPath` 可能在上一轮载入被换根后与画布不一致
+  // （换根 → 载入途中关闭 → 再开同一路径），只看 cardPath 会把上一张卡的画布当成新结果端出去。
+  const sameTree =
+    path === st.cardPath && direction === st.direction && st.tree.root === path && st.tree.nodes.length > 0;
+  if (sameTree && !st.loading && !opts?.force) {
+    st.loadingEl.style.display = 'none';
     renderTop(st);
     return;
   }
@@ -1138,7 +1152,10 @@ async function fillBody(st: CanvasState, node: MountNode, cardEl: HTMLElement): 
     }
   }
   // 兜底判据 =「是否产出元素」（嵌入型正文渲染成功也可能无文本，见 ADR-0122）
-  if (ok && bodyEl.querySelector('*')) return;
+  if (ok && bodyEl.querySelector('*')) {
+    tagBodyLinks(st, node, bodyEl);
+    return;
+  }
   bodyEl.textContent = '';
   for (const part of md.split(/\r?\n\r?\n+/)) {
     const t = part.trim();
@@ -1147,6 +1164,69 @@ async function fillBody(st: CanvasState, node: MountNode, cardEl: HTMLElement): 
     p.className = 'bz-kb-mt-ptext';
     p.textContent = t;
     bodyEl.appendChild(p);
+  }
+  tagBodyLinks(st, node, bodyEl);
+}
+
+/* ---------- 正文双链 → 悬停联动的「文字」这条腿 ---------- */
+
+/** 引用比较键：统一斜杠、去 `./` 与 `.md`、大小写不敏感（Obsidian 的 data-href 写法不一） */
+function normRef(v: unknown): string {
+  return String(v ?? '')
+    .trim()
+    .replace(/\\/g, '/')
+    .replace(/^\.\//, '')
+    .replace(/\.md$/i, '')
+    .replace(/^\/+/, '')
+    .toLowerCase();
+}
+
+/** 目标节点的可匹配标识：路径 / id（含 `#子路径`）/ 标题 / 基名 的多种写法 */
+function refKeys(node: MountNode): Set<string> {
+  const out = new Set<string>();
+  const add = (v: unknown): void => {
+    const k = normRef(v);
+    if (k) out.add(k);
+  };
+  add(node.path);
+  add(node.id);
+  add(node.title);
+  const base = String(node.path || '').replace(/\\/g, '/').split('/').pop() || '';
+  add(base);
+  const hash = String(node.id).indexOf('#');
+  if (hash >= 0) {
+    const sub = String(node.id).slice(hash);
+    add(base.replace(/\.md$/i, '') + sub);
+  }
+  return out;
+}
+
+/**
+ * 正文里的双链（真 Obsidian 渲染出的 `a.internal-link`）打上 `data-mt-to`（= 该链接指向的节点 id）。
+ * 悬停「双链文字」这条腿靠它：drawEdges 拿到最终 DOM 键后再回填 `data-mt-edge`。
+ * 匹配不上（别名 / 盒外路径写法）的链接不打标——正文照常、只是没有联动。
+ */
+function tagBodyLinks(st: CanvasState, node: MountNode, bodyEl: HTMLElement): void {
+  const links = Array.from(bodyEl.querySelectorAll<HTMLAnchorElement>('a.internal-link, a[data-href]'));
+  if (!links.length) return;
+  const outgoing = (st.tree.edges ?? []).filter(
+    (e) => (st.direction === 'downstream' ? e.from : e.to) === node.id,
+  );
+  if (!outgoing.length) return;
+  for (const a of links) {
+    const href = normRef(a.getAttribute('data-href') || a.getAttribute('href') || '');
+    if (!href) continue;
+    for (const e of outgoing) {
+      const otherId = st.direction === 'downstream' ? e.to : e.from;
+      const other = st.tree.nodes.find((n) => n.id === otherId);
+      if (!other) continue;
+      const keys = refKeys(other);
+      const hit = [...keys].some((k) => k === href || k.endsWith('/' + href) || href.endsWith('/' + k));
+      if (hit) {
+        a.setAttribute('data-mt-to', otherId);
+        break;
+      }
+    }
   }
 }
 
@@ -1335,6 +1415,12 @@ function drawEdges(st: CanvasState): void {
     if (!r?.d) return;
     const id = edgeId(r.from, r.to);
     const key = keys.get(id) ?? `e${i}`;
+    // 正文里的双链文字回填 DOM 键（悬停三方联动的「文字」这条腿；fillBody 时打过 data-mt-to）
+    const bearerId = st.direction === 'downstream' ? r.from : r.to;
+    const otherId = st.direction === 'downstream' ? r.to : r.from;
+    st.cards.get(bearerId)?.querySelectorAll('[data-mt-to]').forEach((el) => {
+      if (el.getAttribute('data-mt-to') === otherId) el.setAttribute('data-mt-edge', key);
+    });
     const colorKind = (kindById.get(st.direction === 'downstream' ? r.to : r.from) ?? 'para') as MountKind;
     const color = mountKindColor(colorKind);
     const isSug = suggestedOf.get(id) ?? false;
@@ -1376,10 +1462,13 @@ function edgeKeyTo(st: CanvasState, nodeId: string): string {
 
 function applySelection(st: CanvasState): void {
   const sel = st.selected;
-  const set = sel ? lineageOf(st.tree.edges ?? [], sel) : null;
+  // 吸附文献**不参与血缘高亮**（ADR-0137 §4）：选中它时整图保持原样（选中态只服务面包屑 / 菜单），
+  // 否则 lineageOf 只剩它自己 → 其余全被压成 is-dim、所有边 is-off（整图变暗）
+  const dockSelected = !!sel && !!st.cards.get(sel)?.classList.contains('is-dock');
+  const set = sel && !dockSelected ? lineageOf(st.tree.edges ?? [], sel) : null;
   for (const [id, el] of st.cards) {
     el.classList.remove('is-sel', 'is-anc', 'is-desc', 'is-dim');
-    if (!set || el.classList.contains('is-dock')) continue; // 文献不参与血缘高亮
+    if (!set || el.classList.contains('is-dock')) continue;
     if (id === sel) el.classList.add('is-sel');
     else if (set.anc.has(id)) el.classList.add('is-anc');
     else if (set.desc.has(id)) el.classList.add('is-desc');
@@ -1406,10 +1495,11 @@ function setHover(st: CanvasState, key: string, on: boolean): void {
   const edge = st.edges.find((e) => e.key === key);
   if (!edge) return;
   const otherId = st.direction === 'downstream' ? edge.to : edge.from;
+  // 三方联动：连线 / 锚点圆点 / **正文里的双链文字**（同一 data-mt-edge）/ 目标卡
   const list = [
     st.svg.querySelector(`.bz-kb-mt-edge[data-mt-key="${cssEscape(key)}"]`),
     st.svg.querySelector(`.bz-kb-mt-edot[data-mt-key="${cssEscape(key)}"]`),
-    st.win.querySelector(`.bz-kb-mt-anch[data-mt-edge="${cssEscape(key)}"]`),
+    ...Array.from(st.win.querySelectorAll(`[data-mt-edge="${cssEscape(key)}"]`)),
     st.cards.get(otherId) ?? null,
   ];
   for (const el of list) {
@@ -1582,8 +1672,8 @@ function runMenuAction(
     const text = mountLinkText(node);
     void st.deps
       .writeClipboard(text)
-      .then(() => st.deps.notice(`已复制：${text}`))
-      .catch(() => st.deps.notice('复制失败：剪贴板不可用'));
+      .then(() => st.deps.notice(`已复制：${text}`, 'success'))
+      .catch(() => st.deps.notice('复制失败：剪贴板不可用', 'error'));
     return;
   }
   if (act === 'root') {
@@ -1612,24 +1702,28 @@ async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<v
   const rootPath = st.tree.root;
   const app: any = st.ctx.app ?? getApp();
   const link = ghost.target.replace(/\.md$/i, '');
-  let wrote = false;
+  let found = false;
+  let changed = false;
   try {
     // D3 可靠写契约：用户文档的「读-改-写」走 core/storage 的 per-path 串行队列（enqueueFileTask），
     // 与提炼成卡 / 自动摘要 / 用户手编等写方串行，避免同文件互吞
     await enqueueFileTask(rootPath, async () => {
       const file = app?.vault?.getAbstractFileByPath?.(rootPath);
       if (!file) return;
+      found = true;
       const text = await app.vault.read(file);
       const next = insertLinkAtAnchor(text, ghost.anchor, link);
-      if (next !== text) await app.vault.modify(file, next);
-      wrote = true;
+      if (next !== text) {
+        await app.vault.modify(file, next);
+        changed = true;
+      }
     });
   } catch (e: any) {
-    st.deps.notice(`固定失败：${e?.message ?? String(e)}`);
+    st.deps.notice(`固定失败：${e?.message ?? String(e)}`, 'error');
     return;
   }
-  if (!wrote) {
-    st.deps.notice('固定失败：读不到主卡文件');
+  if (!found) {
+    st.deps.notice('固定失败：读不到主卡文件', 'error');
     return;
   }
   try {
@@ -1639,7 +1733,11 @@ async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<v
   }
   if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
   st.ghosts.delete(ghostId(ghost));
-  st.deps.notice(`已固定：正文写入 [[${link}]]`);
+  // 幂等早退（正文里已有这条双链）与真写入分开报：不谎报「正文已写入」
+  st.deps.notice(
+    changed ? `已固定：正文写入 [[${link}]]` : `已固定：正文里已有 [[${link}]]，本次只留档`,
+    'success',
+  );
   await rebuildTreeOnly(st);
 }
 
@@ -1658,7 +1756,7 @@ async function dismissSuggestion(st: CanvasState, ghost: MountSuggestion): Promi
     /* 留档失败：本图仍移除，下次生成可能重推 */
   }
   if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
-  st.deps.notice('已取消建议：永久不再推荐这条');
+  st.deps.notice('已取消建议：永久不再推荐这条', 'success');
   await rebuildTreeOnly(st);
 }
 
@@ -1666,8 +1764,10 @@ async function dismissSuggestion(st: CanvasState, ghost: MountSuggestion): Promi
 export function destroyMountTree(): void {
   const st = state;
   if (!st) return;
+  closeMenu(); // 菜单开着时卸载：连 document 级「点外关闭」监听一起摘掉
   st.esc?.unregister();
   st.esc = null;
+  st.token++; // 在途载入作废（别让它在 DOM 摘除后继续写状态）
   cancelLongPress(st);
   st.mask.remove();
   st.win.remove();
