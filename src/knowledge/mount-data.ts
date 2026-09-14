@@ -14,6 +14,7 @@
  *    「指向任何笔记」，盒外来源标注是后续项（ADR-0138 §5），不是断链。
  * 2. 自链（目标 = 承载它的卡自身，含 `[[本卡#标题]]`）在**树构建**阶段剪掉（不产节点、不产边）；
  *    解析层（`parseMountLinks` / `resolveMountLinks`）照常产出（测试即断言这一点）。
+ *    引用计数与孤儿判定同样**不计自链**（与剪线口径一致：自链不是挂载、也不构成被引）。
  * 3. 边恒为「深度递增」：`depth(to) > depth(from)`（契约不变式）。下游 from = 挂载方、to = 被挂目标；
  *    上游（看谁挂了我）同一条关系记成 from = 被挂方、to = 挂载方。于是**`anchor` 恒指「承载该挂载项的
  *    那篇笔记」正文里的位置**：下游在 `from` 节点正文里，上游在 `to` 节点正文里（渲染层按 direction 取）。
@@ -854,8 +855,8 @@ export async function buildMountTree(cardPath: string, opts: { direction: MountD
 
 /**
  * 引用计数（**只数用户双链**：正文 wikilink + related + mounted 指向该卡的总数）；
- * 不数同名文献、不数 AI 建议。键 = 卡片盒里的卡片路径（含 0），值 = 指向它的项数
- * （同一文件内重复指向同一目标只计 1——挂载项按目标去重）。
+ * 不数同名文献、不数 AI 建议、**不数自链**（`[[本卡…]]` 与剪线口径一致）。
+ * 键 = 卡片盒里的卡片路径（含 0），值 = 指向它的项数（同一文件内重复指向同一目标只计 1——挂载项按目标去重）。
  */
 export async function refCounts(ctx: MountCtx): Promise<Record<string, number>> {
   const scan = newScan(ctx);
@@ -867,6 +868,7 @@ export async function refCounts(ctx: MountCtx): Promise<Record<string, number>> 
     const items = await outboundItems(scan, f.path);
     for (const it of items) {
       if (!it.path) continue;
+      if (samePath(it.path, f.path)) continue; // 自链不算被引（与树内剪线、inboundItems 排除自链同口径）
       const card = byKey.get(pathKey(it.path));
       if (card) counts[card] = (counts[card] ?? 0) + 1;
     }
@@ -876,17 +878,20 @@ export async function refCounts(ctx: MountCtx): Promise<Record<string, number>> 
 
 /**
  * 孤儿卡（列表筛选 + 行标记）：卡片盒里**既无入链也无挂载**的卡——
- * 即引用计数为 0 且自身挂载项（正文双链 / related / mounted）全空；
+ * 即引用计数为 0 且自身挂载项（正文双链 / related / mounted）**去掉自链后**全空；
  * 同名文献的存在不解除孤儿（同名对齐不是双链）。按路径排序，同输入必得同输出。
+ *
+ * `counts` 可选：调用方（面板）已算过引用计数时传入即可**复用**，省掉一遍整库扫描；
+ * 缺省仍自行调用 `refCounts(ctx)`（向后兼容，单测与其它调用方无需改）。
  */
-export async function orphanCards(ctx: MountCtx): Promise<string[]> {
+export async function orphanCards(ctx: MountCtx, counts?: Record<string, number>): Promise<string[]> {
   const scan = newScan(ctx);
-  const counts = await refCounts(ctx);
+  const refs = counts ?? (await refCounts(ctx));
   const out: string[] = [];
   for (const card of cardFiles(ctx)) {
     const path = normSlashes(card.path);
-    if ((counts[path] ?? 0) > 0) continue;
-    const items = await outboundItems(scan, path);
+    if ((refs[path] ?? 0) > 0) continue;
+    const items = (await outboundItems(scan, path)).filter((it) => !isSelfItem(it, path));
     if (items.length) continue;
     out.push(path);
   }

@@ -1,6 +1,6 @@
 # 316 挂载树·画布一：力导向布局与 A* 避障连线
 
-- 状态：待开工
+- 状态：已交付（`src/knowledge/mount-layout.ts` 力导向网状布局（确定性种子）+ `mount-geom.ts` 几何 + `mount-route.ts` 就近出盒/18px 栅格 A* 避障/逐段平滑；`tests/knowledge/mount-layout.test.ts` 20 用例 + `mount-route.test.ts` 23 用例）
 - 关联：spec §界面 ／ `HANDOFF.md` §3.1–3.2（参数与踩坑）／ 移植源 `.scratch/mount-canvas/transformer-real.html`
 - 依赖：314（节点数据形状）
 

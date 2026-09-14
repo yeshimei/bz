@@ -656,4 +656,25 @@ describe('refCounts / orphanCards（315）', () => {
     makeApp({ '卡片盒/主卡.md': '正文 [[早就删掉的卡]]。' });
     expect(await orphanCards(mountCtx())).toEqual([]);
   });
+
+  it('自链不计入被引、也不算「有挂载」（与树内剪线同口径）', async () => {
+    makeApp({
+      '卡片盒/自恋卡.md': '自恋卡正文 [[自恋卡]] 只指自己。',
+      '卡片盒/被指卡.md': '被指卡正文。',
+      '卡片盒/他卡.md': '他卡正文 [[被指卡]]。',
+    });
+    const counts = await refCounts(mountCtx());
+    expect(counts['卡片盒/自恋卡.md']).toBe(0); // 自链不算被引
+    expect(counts['卡片盒/被指卡.md']).toBe(1); // 他卡的双链照常算
+    // 自链也不构成「有挂载」：只指自己的卡仍是孤儿；有入链的不是
+    expect(await orphanCards(mountCtx())).toEqual(['卡片盒/自恋卡.md']);
+  });
+
+  it('orphanCards 可复用外部 counts（缺省仍自算，两种调用结果一致）', async () => {
+    makeApp(countFiles());
+    const counts = await refCounts(mountCtx());
+    const want = ['卡片盒/同名.md', '卡片盒/孤立.md'].sort();
+    expect(await orphanCards(mountCtx(), counts)).toEqual(want);
+    expect(await orphanCards(mountCtx())).toEqual(want);
+  });
 });

@@ -1,6 +1,6 @@
 # 315 挂载树·数据层二：同名文献对齐、手动挂载 mounted、引用计数与孤儿卡
 
-- 状态：待开工
+- 状态：已交付（`mount-data.ts`：`findSameNameNote` 同名对齐（顺序无关）、`readMounts`／`writeMount`／`removeMount` 纯字符串 frontmatter 读写、`readRelated`、`buildMountTree` 三源/可达/非回指/严格跨代/方向翻转、`refCounts`／`orphanCards`（自链不计被引、`counts` 可选复用）；这些用例与 314 同在 `tests/knowledge/mount-data.test.ts`（现共 43 用例））
 - 关联：ADR-0137 §1/§2 ／ spec ／ 共享契约 `src/knowledge/mount-types.ts` ／ 新增 `src/knowledge/mount-data.ts` ／ `src/knowledge/ui.ts:116`（`parseRelatedNames` 同路子）
 - 依赖：314
 

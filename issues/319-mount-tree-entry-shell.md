@@ -1,6 +1,6 @@
 # 319 挂载树·入口与壳：全屏白板、命令与进度
 
-- 状态：待开工
+- 状态：已交付（分支 `feat/mount-canvas`，待集成合入 master：卡片列表行与预览弹层「看挂载树」入口 + 全屏白板壳（`.bz-kb-mask`/`.bz-kb-window`，不注册 ItemView）+ `src/main.ts` 命令 `bz-knowledge-mount-tree`／`bz-knowledge-mount-refresh`；`tests/knowledge/mount-canvas.test.ts` 等覆盖）
 - 关联：spec §界面 ／ `src/knowledge/ui.ts`（`openPreview:667` ／ `openSheet:899` ／ `createMainUI:490` ／ `topifyZ`）／ `src/main.ts:161`
 - 依赖：316、317、318
 

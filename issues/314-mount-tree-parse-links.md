@@ -1,6 +1,6 @@
 # 314 挂载树·数据层一：正文双链解析与六类形态
 
-- 状态：待开工
+- 状态：已交付（`src/knowledge/mount-types.ts` 共享契约 + `mount-data.ts` 解析层 `parseMountLinks`／`classifyKind`／`readSubpathBody`／`relocateAnchor`；`tests/knowledge/mount-data.test.ts` 覆盖六类／别名／全路径／大小写／重复／自链／断链与锚点重定位——该文件现共 43 用例，含 315 的计数与孤儿）
 - 关联：ADR-0137 §3 ／ spec `.scratch/mount-canvas/spec.md` ／ 共享契约 `src/knowledge/mount-types.ts` ／ 新增 `src/knowledge/mount-data.ts`（`data.ts` 已被文献盒任务管理器占用）／ 测试 `tests/knowledge/mount-data.test.ts`
 - 依赖：无（本包第一张卡）
 

@@ -228,6 +228,61 @@
   letter-spacing: 0.08em;
 }
 
+/* ===== 列表侧挂载标记（issue 320；ADR-0138 §5：引用计数 / 孤儿卡）=====
+   核色走主题变量兜底链（`.kb` 作用域 → 组件 token → 字面色），随明暗主题走。 */
+/* 部贰工具行：孤儿筛选芯片 + 卡片总数 */
+.bz-kb-cbar {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm, 8px);
+  margin: 0 0 var(--bz-space-md, 14px);
+}
+
+.bz-kb-cfilter {
+  border: 1px solid var(--line, var(--bz-border, #ddd6c4));
+  border-radius: 3px;
+  background: none;
+  color: var(--ink3, var(--bz-text-3, #9b9484));
+  font-family: inherit;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.bz-kb-cfilter:hover { border-color: var(--accent, #3a5f8a); color: var(--ink, #26231c); }
+.bz-kb-cfilter.is-on {
+  background: var(--ink, #26231c);
+  border-color: var(--ink, #26231c);
+  color: var(--panel, #f6f3ea);
+  font-weight: 600;
+}
+/* 索引未统计（扫描失败）：置灰不可点，不给「灯亮着却不筛」的假状态 */
+.bz-kb-cfilter:disabled { cursor: default; opacity: 0.6; }
+.bz-kb-cfilter:disabled:hover { border-color: var(--line, var(--bz-border, #ddd6c4)); color: var(--ink3, var(--bz-text-3, #9b9484)); }
+
+/* 行尾引用计数徽标（0 不渲染）：被 N 处用户双链（正文 wikilink + related + mounted）指到 */
+.bz-kb-refbadge {
+  margin-left: auto;
+  border: 1px solid var(--line, var(--bz-border, #ddd6c4));
+  border-radius: 3px;
+  padding: 1px 7px;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--ink3, var(--bz-text-3, #9b9484));
+  white-space: nowrap;
+}
+
+/* 孤儿行标记：既无入链也无挂载（行首小签，与「新 落」同排；色取主题琥珀） */
+.bz-kb-orphan {
+  border: 1px solid var(--amber, #b8862e);
+  border-radius: 3px;
+  padding: 1px 7px;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--amber, #b8862e);
+  white-space: nowrap;
+}
+
 /* ===== 部壹录入入口（四枚名词按钮：名词 / 段落 / 图版 / 影像；只出单字词标签，无说明小字） ===== */
 .bz-kb-entryrow { display: flex; gap: var(--bz-space-md); margin: var(--bz-space-xs) 0 2px; }
 
