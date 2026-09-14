@@ -1,4 +1,4 @@
-/* 源指纹 23c3fdfd2cde04cc · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f528596d18247f3d · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -5734,12 +5734,20 @@ var BZW_review = (() => {
     e.name = "AbortError";
     return e;
   }
-  function timeoutError() {
-    const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1e3} 秒无响应）`);
+  function timeoutError(idleMs = AI_IDLE_TIMEOUT_MS) {
+    const e = new Error(`AI 请求超时（${Math.round(idleMs / 1e3)} 秒无响应）`);
     e.name = "TimeoutError";
     return e;
   }
+  function idleTimeoutOf(body) {
+    const msgs = Array.isArray(body == null ? void 0 : body.messages) ? body.messages : [];
+    const hasImage = msgs.some(
+      (m) => Array.isArray(m == null ? void 0 : m.content) && m.content.some((p) => (p == null ? void 0 : p.type) === "image_url")
+    );
+    return hasImage ? AI_IMAGE_IDLE_TIMEOUT_MS : AI_IDLE_TIMEOUT_MS;
+  }
   async function streamChatCompletions(provider, body, signal, onDelta) {
+    const idleMs = idleTimeoutOf(body);
     const headers = {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${provider.apiKey}`,
@@ -5758,7 +5766,7 @@ var BZW_review = (() => {
     let idleTimer = null;
     const armIdle = () => {
       if (idleTimer !== null) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
+      idleTimer = setTimeout(() => controller.abort(), idleMs);
     };
     try {
       armIdle();
@@ -5818,7 +5826,7 @@ var BZW_review = (() => {
       }
       return full;
     } catch (e) {
-      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
+      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError(idleMs);
       throw e;
     } finally {
       if (idleTimer !== null) clearTimeout(idleTimer);
@@ -5827,6 +5835,7 @@ var BZW_review = (() => {
   }
   async function chatCompletionsNonStream(provider, body, signal) {
     if (signal == null ? void 0 : signal.aborted) throw abortError();
+    const idleMs = idleTimeoutOf(body);
     const headers = {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${provider.apiKey}`,
@@ -5838,7 +5847,7 @@ var BZW_review = (() => {
         if (timer !== null) clearTimeout(timer);
         fn();
       };
-      timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
+      timer = setTimeout(() => settle(() => reject(timeoutError(idleMs))), idleMs);
       requestUrl({
         url: `${provider.endpoint}/chat/completions`,
         method: "POST",
@@ -5857,6 +5866,17 @@ var BZW_review = (() => {
     if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
     return content;
   }
+  function buildUserContent(input) {
+    var _a;
+    if (typeof input === "string") return input;
+    const text = String((_a = input == null ? void 0 : input.text) != null ? _a : "");
+    const images = (Array.isArray(input == null ? void 0 : input.images) ? input.images : []).map((u) => String(u != null ? u : "").trim()).filter((u) => u.length > 0);
+    if (!images.length) return text;
+    return [
+      { type: "text", text },
+      ...images.map((url) => ({ type: "image_url", image_url: { url } }))
+    ];
+  }
   function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}, defaultMaxTokens = 8192) {
     const internalDefaultOptions = {
       modelOptions: {
@@ -5873,7 +5893,7 @@ var BZW_review = (() => {
     }
     return new AIService(params, defaultModel, mergedOptions);
   }
-  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AIService;
+  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MAX_BYTES, AIService;
   var init_ai = __esm({
     "src/core/ai.ts"() {
       init_fake_obsidian();
@@ -6064,15 +6084,18 @@ var BZW_review = (() => {
       ];
       _aiProviderCache = null;
       AI_IDLE_TIMEOUT_MS = 6e4;
+      AI_IMAGE_IDLE_TIMEOUT_MS = 18e4;
+      AI_IMAGE_MAX_BYTES = 32 * 1024 * 1024;
       AIService = class {
         constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
           this.defaultModel = defaultModel;
           this.defaultOptions = defaultOptions;
         }
         /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
+         *  input 为字符串（纯文本，报文同旧版）或 {text, images}（带图 → 多模态 content 数组）；
          *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
          *  既有调用（不传这两项）行为零变化 */
-        async prompt(promptText, model = this.defaultModel, options = {}) {
+        async prompt(input, model = this.defaultModel, options = {}) {
           var _a;
           const mergedOptions = this._mergeOptions(options);
           const provider = await getAIProvider(mergedOptions.provider);
@@ -6083,7 +6106,7 @@ var BZW_review = (() => {
           const effMaxTokens = (_a = mo.max_tokens) != null ? _a : provider.defaultMaxTokens || 4096;
           const body = {
             model: effModel,
-            messages: [{ role: "user", content: promptText }],
+            messages: [{ role: "user", content: buildUserContent(input) }],
             max_tokens: effMaxTokens,
             stream: true
           };
@@ -6106,34 +6129,34 @@ var BZW_review = (() => {
             }
           }
         }
-        /** 普通对话模型（deepseek-v4-flash） */
-        async chat(promptText, extraOptions = {}) {
-          return this.prompt(promptText, "deepseek-v4-flash", extraOptions);
+        /** 普通对话模型（deepseek-v4-flash；收纯文本或 {text, images}） */
+        async chat(input, extraOptions = {}) {
+          return this.prompt(input, "deepseek-v4-flash", extraOptions);
         }
         /** 推理模型，自动开启思考模式 */
-        async reason(promptText, extraOptions = {}) {
+        async reason(input, extraOptions = {}) {
           const options = this._prepareOptions(extraOptions, { enable_thinking: true });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
+          return this.prompt(input, "deepseek-v4-flash", options);
         }
         /** 联网搜索（实验性，第三方代理平台生效） */
-        async search(promptText, extraOptions = {}) {
+        async search(input, extraOptions = {}) {
           const options = this._prepareOptions(extraOptions, { search: true });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
+          return this.prompt(input, "deepseek-v4-flash", options);
         }
-        /** 要求 AI 返回 JSON 格式（设置 response_format） */
-        async json(promptText, extraOptions = {}) {
+        /** 要求 AI 返回 JSON 格式（设置 response_format；知识盒等域走这条，故同样要能吃图） */
+        async json(input, extraOptions = {}) {
           const options = this._prepareOptions(extraOptions, {
             response_format: { type: "json_object" }
           });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
+          return this.prompt(input, "deepseek-v4-flash", options);
         }
         /** 思考 + 联网搜索（实验性） */
-        async reasonAndSearch(promptText, extraOptions = {}) {
+        async reasonAndSearch(input, extraOptions = {}) {
           const options = this._prepareOptions(extraOptions, {
             enable_thinking: true,
             search: true
           });
-          return this.prompt(promptText, "deepseek-v4-flash", options);
+          return this.prompt(input, "deepseek-v4-flash", options);
         }
         setDefaultModel(model) {
           this.defaultModel = model;
