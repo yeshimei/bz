@@ -72,6 +72,8 @@ export interface MountNode {
   suggested: boolean;
   /** 吸附在父节点正下方、不拉线（仅同名文献） */
   attached: boolean;
+  /** 父节点 id（BFS 发现它的那一步的上一环，恒比自身更靠近根）；根为 null；同名文献为所属卡片 */
+  parent: string | null;
   /** 画布上节点体内要显示的正文：卡片 = 完整正文；head/para = 片段；image/video = null */
   body: string | null;
 }

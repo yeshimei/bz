@@ -108,6 +108,23 @@ async function mountLinks(body: string, sourcePath: string, ctx = mountCtx()) {
 const ids = (t: MountTree) => t.nodes.map((n) => n.id);
 const edgePairs = (t: MountTree) => t.edges.map((e) => `${e.from}>${e.to}`);
 const depthOf = (t: MountTree, id: string) => t.nodes.find((n) => n.id === id)?.depth;
+/** parent 链自检：根为 null；每个节点沿 parent 上溯必须回到根，且层数 = depth（面包屑可据此回溯） */
+function assertParentChain(t: MountTree) {
+  const byId = new Map(t.nodes.map((n) => [n.id, n]));
+  expect(byId.get(t.root)!.parent).toBeNull();
+  for (const n of t.nodes) {
+    let cur = n;
+    let hops = 0;
+    while (cur.parent !== null) {
+      const p = byId.get(cur.parent);
+      expect(p, `${cur.id} 的父节点 ${cur.parent} 必须在树内`).toBeTruthy();
+      cur = p!;
+      hops++;
+    }
+    expect(cur.id).toBe(t.root);
+    expect(hops).toBe(n.depth);
+  }
+}
 
 beforeEach(() => {
   makeApp({});
@@ -429,9 +446,9 @@ describe('buildMountTree：三源 + 六类 + 剪线（315）', () => {
       '卡片盒/丁卡.md',
     ]);
     const byId = new Map(tree.nodes.map((n) => [n.id, n]));
-    expect(byId.get('卡片盒/主卡.md')).toMatchObject({ kind: 'card', source: 'self', depth: 0, attached: false, missing: false });
+    expect(byId.get('卡片盒/主卡.md')).toMatchObject({ kind: 'card', source: 'self', depth: 0, attached: false, missing: false, parent: null });
     expect(byId.get('卡片盒/主卡.md')!.body).toContain('主卡正文第一句');
-    expect(byId.get('文献盒/主卡.md')).toMatchObject({ kind: 'note', source: 'sameName', attached: true, depth: 1, anchor: null });
+    expect(byId.get('文献盒/主卡.md')).toMatchObject({ kind: 'note', source: 'sameName', attached: true, depth: 1, anchor: null, parent: '卡片盒/主卡.md' });
     expect(byId.get('卡片盒/甲卡.md')).toMatchObject({ source: 'link', kind: 'card', depth: 1 });
     expect(byId.get('卡片盒/甲卡.md')!.anchor!.text).toBe('[[卡片盒/甲卡|甲]]');
     expect(byId.get('文献盒/背景.md')).toMatchObject({ source: 'link', kind: 'note', depth: 1 });
@@ -465,6 +482,20 @@ describe('buildMountTree：三源 + 六类 + 剪线（315）', () => {
     expect(tree.edges.some((e) => e.to === '文献盒/主卡.md')).toBe(false);
     expect(tree.edges.some((e) => e.from === '文献盒/主卡.md')).toBe(false);
     expect(tree.edges).toHaveLength(11);
+    // parent：多层节点（丁卡 = 甲卡的子）指向发现它的上一环，全树上溯都能回到根
+    expect(byId.get('卡片盒/丁卡.md')!.parent).toBe('卡片盒/甲卡.md');
+    expect(byId.get('卡片盒/甲卡.md')!.parent).toBe('卡片盒/主卡.md');
+    assertParentChain(tree);
+  });
+
+  it('parent 链：多层「孙卡」沿 parent 上溯层数 = depth，且回到 root', async () => {
+    makeApp({ '卡片盒/A.md': 'A [[B|乙]]', '卡片盒/B.md': 'B [[C]]', '卡片盒/C.md': 'C [[D]]', '卡片盒/D.md': 'D 到底了' });
+    const tree = await buildMountTree('卡片盒/A.md', { direction: 'downstream', ctx: mountCtx() });
+    const byId = new Map(tree.nodes.map((n) => [n.id, n]));
+    expect(byId.get('卡片盒/B.md')).toMatchObject({ parent: '卡片盒/A.md', depth: 1 });
+    expect(byId.get('卡片盒/C.md')).toMatchObject({ parent: '卡片盒/B.md', depth: 2 });
+    expect(byId.get('卡片盒/D.md')).toMatchObject({ parent: '卡片盒/C.md', depth: 3 });
+    assertParentChain(tree);
   });
 
   it('剪线三类：回指（甲卡→主卡）、同代互指（甲卡→乙卡）、逆流（丁卡→背景）都不画', async () => {
@@ -569,6 +600,11 @@ describe('buildMountTree：三源 + 六类 + 剪线（315）', () => {
     ]);
     expect(tree.edges).toHaveLength(3); // 同名文献不产边
     for (const e of tree.edges) expect(depthOf(tree, e.to)!).toBeGreaterThan(depthOf(tree, e.from)!);
+    // parent：上游方向同样给链路（上卡挂到主卡、上上卡挂到上卡），同名文献仍是「所属卡片」
+    expect(byId.get('文献盒/主卡.md')!.parent).toBe('卡片盒/主卡.md');
+    expect(byId.get('卡片盒/上卡.md')!.parent).toBe('卡片盒/主卡.md');
+    expect(byId.get('卡片盒/上上卡.md')!.parent).toBe('卡片盒/上卡.md');
+    assertParentChain(tree);
   });
 
   it('上游方向同样剪线：互指环只留跨代那一根（回指不画）', async () => {
