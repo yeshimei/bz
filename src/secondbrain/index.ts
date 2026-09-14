@@ -20,7 +20,7 @@ import { notice } from '../core/notice';
 import { setLinkBridge } from '../core/link-now';
 import { tryGetSettings } from '../core/settings-provider';
 import { IS_MOBILE } from './config';
-import { VectorStore } from './vector-store';
+import { VectorStore, type SearchHit } from './vector-store';
 import { resetDeepseekAI } from './ai';
 import { SecondBrainPanel, confirmFullRebuild } from './panel';
 import { ReferencePanel } from './reference-panel';
@@ -135,6 +135,27 @@ export function unloadSecondBrain(): void {
   appRef = null;
   initialized = false;
   resetDeepseekAI();
+}
+
+/** 只读检索面（issue 318：知识盒挂载树建议链路用；不暴露 VectorStore 本体，取不到写入口） */
+export interface ReadonlyVectorSearch {
+  /** 索引是否就绪（未建 / 已降级 → false；调用方据此降级，不自动建索引） */
+  isIndexReady(): boolean;
+  /** 块级检索（桌面向量优先、异常降级文本；移动端由调用方自行降级） */
+  search(query: string, topK?: number): Promise<SearchHit[]>;
+}
+
+/**
+ * 取第二大脑只读检索面（issue 318）。未初始化 / 已卸载返回 null。
+ * 只读：不暴露 store 私有变量与任何写入口（refresh / rebuildAll 等），知识盒据此跑语义建议的向量召回。
+ */
+export function exportVectorSearch(): ReadonlyVectorSearch | null {
+  if (!store) return null;
+  const s = store;
+  return {
+    isIndexReady: () => s.isIndexReady(),
+    search: (query: string, topK?: number) => s.search(query, topK),
+  };
 }
 
 function ensureReference(): void {

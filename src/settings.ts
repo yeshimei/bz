@@ -434,6 +434,8 @@ export default interface BzSettings {
   knowledgeCacheDir: string;
   /** 文献盒：缓存保留天数（原工具 rc cacheRetentionDays） */
   knowledgeCacheRetentionDays: number;
+  /** 文献盒：打开挂载树时自动跑 AI 语义建议（默认开；关闭后仍可用顶栏「重新生成」手动跑，issue 318） */
+  knowledgeMountAutoSuggest: boolean;
 
   // ===== 🐱 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴）=====
   /** 小橘启用开关（l7A）：仅控制启动时自动加载（猫容器挂载/常驻行为），关闭后仍可从命令面板手动打开 */
@@ -751,6 +753,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   knowledgeWhisperModel: 'small',
   knowledgeCacheDir: '',
   knowledgeCacheRetentionDays: 7,
+  // 挂载树 AI 语义建议（issue 318）：默认开（打开白板即跑；缓存命中则无感）
+  knowledgeMountAutoSuggest: true,
   // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
   settingsPanelLayout: 'jingwei',
   settingsPanelSkin: 'chenhun',
