@@ -231,6 +231,8 @@ WORDING['secondbrain:*'] = (s) => (s.name ? `你在第二大脑记录了「${s.n
 registerEntity('knowledge', {
   converted: (s) => `你把《${s.name || '一部视频'}》转成了文献`,
   'term-generated': (s) => `你为「${s.name || '一个术语'}」生成了一篇术语文献`,
+  'passage-generated': (s) => `你把「${s.name || '一段文字'}」整理成了一篇段落文献`,   // issue 309 段落录入
+  'image-generated': (s) => `你把「${s.name || '一张图'}」读成了一篇图版文献`,   // issue 312 图版录入
   added: (s) => `你添加了转文献任务（${s.name || 'BV 视频'}）`,   // 遗留：旧 added 存量条目
 }, ['knowledge', 'literature', 'bili', 'bili-downloader'], (s) => `知识盒动态：${s.name || '一部视频'}`);
 

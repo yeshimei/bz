@@ -4,7 +4,11 @@
  *   提炼成卡（源链+领域自动带、连一张旧卡、为什么相关、落卡写卡片盒+源文献互链）/ 部贰卡片列表 /
  *   部叁主题展示（列表 + 只读渲染）。
  * - 视频录入面板：按钮组、单钮态机、添加弹窗校验/入库、行内时间线（STEP_DONE_MAP + 百分比仅下载）、历史分组与清空。
- * - 术语面板（ticket 142/155 契约）：简洁版结构、预填自动生成、确认写入（事件+打开）、无预览提示。
+ * - 术语面板（ticket 142/155 契约 + issue 309 同壳双态）：简洁版结构、预填自动生成、确认写入
+ *   （落盘 + 域事件 + 关联行）、无预览提示；段落录入（多行 → AI 自动标题 → type: passage）。
+ * - 关联行（issue 309）：**生成出内容即**经 core/link-now 通道起跑关联预演（只算不写），
+ *   loading → 完成后就地显示；确认写入只把预演结果落库（不重跑检索与裁判）；
+ *   通道未注入（自动双链关闭）时显式呈现「自动双链未开启」。
  * - ESC 分层、设置 schema 四组（含卡片/主题目录新键）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -13,6 +17,7 @@ import { UIManager, knowledgeSettingsSchema } from '../../src/knowledge/ui';
 import { KnowledgeData } from '../../src/knowledge/data';
 import { BatchRunner } from '../../src/knowledge/processor';
 import { openFlowDialog } from '../../src/core/flow-dialog'; // issue 291 断言用（本文件已 vi.mock 为 spy）
+import { setLinkBridge } from '../../src/core/link-now';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { onDomainEvent } from '../../src/core/domain-bus';
@@ -22,6 +27,11 @@ import { clearNotices, getNoticeMessages, mockMarkdownRenderer, resetObsidianMoc
 const noteGen = vi.hoisted(() => ({
   generateTermNote: vi.fn(),
   generateTermDraft: vi.fn(),
+  generatePassageNote: vi.fn(),
+  generatePassageDraft: vi.fn(),
+  generateImageNote: vi.fn(),
+  generateImageDraft: vi.fn(),
+  resolveImageDir: vi.fn(() => '文献盒/assets'),
   summarizeTermSummary: vi.fn(),
   backfillNotes: vi.fn(),
 }));
@@ -116,17 +126,26 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     setSettingsSaver(async () => {});
     noteGen.generateTermNote.mockReset();
     noteGen.generateTermDraft.mockReset();
+    noteGen.generatePassageNote.mockReset();
+    noteGen.generatePassageDraft.mockReset();
+    noteGen.generateImageNote.mockReset();
+    noteGen.generateImageDraft.mockReset();
     noteGen.summarizeTermSummary.mockReset();
     noteGen.backfillNotes.mockReset();
     noteGen.generateTermDraft.mockResolvedValue({ summary: 'AI 简介', domain: '心理' });
     noteGen.summarizeTermSummary.mockResolvedValue('精简版简介');
     noteGen.generateTermNote.mockResolvedValue('文献盒/松果体.md');
+    noteGen.generatePassageDraft.mockResolvedValue({ title: '自动标题', summary: '整理正文', domain: '社会' });
+    noteGen.generatePassageNote.mockResolvedValue('文献盒/自动标题.md');
+    noteGen.generateImageDraft.mockResolvedValue({ title: '自动图题', summary: '读图解读', domain: '艺术' });
+    noteGen.generateImageNote.mockResolvedValue('文献盒/自动图题.md');
     noteGen.backfillNotes.mockResolvedValue({ scanned: 0, filled: 0, aiSkipped: false });
     (BatchRunner as any).running = false;
     ui = new UIManager(app);
   });
 
   afterEach(() => {
+    setLinkBridge(null); // 关联行通道是模块级单例：用例间不串
     ui.destroy();
     (Platform as any).isMobile = false;
     document.body.innerHTML = '';
@@ -134,15 +153,20 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
 
   // ==================== 主壳 ====================
 
-  it('showMain 渲染三部壳：词典头「知识盒」+ 三部按钮 + 部壹录入入口（两种来源）', async () => {
+  it('showMain 渲染三部壳：词典头「知识盒」+ 三部按钮 + 部壹四种录入入口（名词 / 段落 / 图版 / 影像）', async () => {
     ui.showMain();
     await vi.waitFor(() => expect(document.getElementById('knowledge-popup')!.style.display).toBe('flex'));
     const popup = document.getElementById('knowledge-popup')!;
     expect(popup.querySelector('.bz-kb-title')!.textContent).toBe('知 识 盒');
     const parts = Array.from(popup.querySelectorAll<HTMLElement>('.bz-kb-part')).map((b) => b.textContent);
     expect(parts).toEqual(['部壹 · 文献', '部贰 · 卡片', '部叁 · 主题']);
+    // issue 309/312/313：入口名收成简单名词（名词 / 段落 / 图版 / 影像——图版排在影像之前，2026-09-14 复核改序），
+    // 入口下不再带灰色说明小字
     const entries = Array.from(popup.querySelectorAll<HTMLElement>('.bz-kb-entrybtn b')).map((b) => b.textContent);
-    expect(entries).toEqual(['文字录入 · 术语', '视频录入 · 任务']);
+    expect(entries).toEqual(['名词', '段落', '图版', '影像']);
+    expect(popup.querySelectorAll('.bz-kb-entrybtn span').length).toBe(0);
+    const acts = Array.from(popup.querySelectorAll<HTMLElement>('.bz-kb-entrybtn')).map((b) => b.getAttribute('data-kb-act'));
+    expect(acts).toEqual(['term-entry', 'passage-entry', 'image-entry', 'video-entry']);
     await vi.waitFor(() => expect(popup.querySelector('.bz-kb-sc')!.textContent).toContain('还没有文献笔记'));
   });
 
@@ -311,32 +335,45 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(document.querySelector('.bz-kb-sheet')!.querySelector('[data-lit-src-url]')).toBeNull();
   });
 
-  it('录入入口：术语面板 / 视频面板叠开', async () => {
+  it('录入入口：名词面板 / 影像直达录入界面（issue 310：不再先落处理队列）', async () => {
     ui.showMain();
     await vi.waitFor(() => expect(document.querySelector('[data-kb-act=term-entry]')).toBeTruthy());
     (document.querySelector('[data-kb-act=term-entry]') as HTMLElement).click();
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     ui.hideTermEntry();
     (document.querySelector('[data-kb-act=video-entry]') as HTMLElement).click();
-    await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('none'); // 处理队列不再自动叠开
   });
 
   // ==================== 视频录入 ====================
 
-  it('视频面板：➕/▶️/🕘 按钮组（✕ 退役 issue 271）；单钮态机（空队列禁用；运行 ⏹）；行内时间线（STEP_DONE_MAP + 百分比仅下载）', async () => {
-    ui.showVideoEntry();
+  it('影像处理面板：词典头（题字「影 像」）+ 新增/批量/历史 图标钮（✕ 退役 issue 271；emoji 退役 issue 310）；单钮态机（空队列禁用；运行换停止图标）；行内时间线（STEP_DONE_MAP + 百分比仅下载）', async () => {
+    ui.showVideoTasks();
     await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
     const popup = document.getElementById('knowledge-video-popup')!;
-    expect(popup.querySelector('.bz-kb-vtitle')!.textContent).toBe('视频录入');
+    expect(popup.querySelector('.bz-kb-title')!.textContent!.replace(/\s/g, '')).toBe('影像');
+    expect(popup.querySelector('.bz-kb-head')).toBeTruthy(); // 与主窗同一套词典头（issue 310）
     expect(popup.querySelector('#lit-btn-video-add')).toBeTruthy();
     expect(popup.querySelector('#lit-btn-video-run')).toBeTruthy();
     expect(popup.querySelector('#lit-btn-video-history')).toBeTruthy();
     expect(popup.querySelector('#lit-btn-video-close')).toBeNull(); // issue 271：✕ 退役
+    // 头部左右分工（2026-09-14 复核）：左列状态计数、右列图标组（两者原先相反）
+    const head = popup.querySelector('.bz-kb-head')!;
+    expect(head.children[0].id).toBe('lit-video-counts');
+    expect(head.children[head.children.length - 1].className).toBe('bz-lit-head-btns');
+    expect((document.getElementById('lit-btn-video-back') as HTMLElement).style.display).toBe('none'); // 处理视图无返回钮
+    // 图标化（issue 310）：三个钮里是 lucide 图标 span（mock 记 data-icon），正文不再有 emoji 字形
+    expect(popup.querySelector('#lit-btn-video-add .bz-ic')!.getAttribute('data-icon')).toBe('plus');
+    expect(popup.querySelector('#lit-btn-video-history .bz-ic')!.getAttribute('data-icon')).toBe('history');
+    expect(popup.querySelector('#lit-btn-video-run .bz-ic')!.getAttribute('data-icon')).toBe('play');
+    expect(/[➕▶⏹🕘⌛⏳📄⏱]/.test(popup.textContent || '')).toBe(false);
     await vi.waitFor(() => expect((popup.querySelector('#lit-btn-video-run') as HTMLButtonElement).disabled).toBe(true));
     const t = await KnowledgeData.addTask({ url: 'https://www.bilibili.com/video/BV1abc', start: '00:00:10', end: '00:00:30' });
     await KnowledgeData.updateTask(t.id, { status: 'processing' });
     (ui as any).runState.set(t.id, { steps: ['解析视频信息', '下载视频', 'AI 生成文献笔记中', '笔记落盘中'], phase: 'download', pct: 42, startAt: Date.now() });
     await ui.refreshVideoPanel();
+    expect(popup.querySelector('#lit-video-counts')!.textContent).toBe('1 处理中'); // 左列状态计数（2026-09-14 复核换到左侧）
     (ui as any).updateRowProgress(t.id);
     const card = popup.querySelector('.bz-kb-taskcard')!;
     expect(card.querySelector('.bz-kb-status')!.textContent).toBe('处理中');
@@ -345,18 +382,18 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(card.textContent).toContain('✓ 已生成文献笔记');
     expect(card.querySelector('.bz-kb-step-pct')!.textContent).toBe('42%');
     expect(card.querySelector('.bz-kb-progress-track')!.innerHTML).toContain('width:42%');
-    expect(card.textContent).toContain('✓ 已生成文献笔记');
+    expect(card.querySelector('.bz-kb-elapsed .bz-ic')!.getAttribute('data-icon')).toBe('timer');
     (BatchRunner as any).running = true;
     await ui.refreshVideoPanel();
     const run = popup.querySelector('#lit-btn-video-run') as HTMLButtonElement;
-    expect(run.textContent).toBe('⏹');
+    expect(popup.querySelector('#lit-btn-video-run .bz-ic')!.getAttribute('data-icon')).toBe('square'); // 运行中 = 停止图标
     expect(run.disabled).toBe(false);
     (BatchRunner as any).running = false;
     await ui.refreshVideoPanel();
-    expect((popup.querySelector('#lit-btn-video-run') as HTMLButtonElement).textContent).toBe('▶️');
+    expect(popup.querySelector('#lit-btn-video-run .bz-ic')!.getAttribute('data-icon')).toBe('play');
   });
 
-  it('添加弹窗（ADR-0133）：解析按钮 → 信息区/分P 下拉 → 整片保存入库（净化 URL）', async () => {
+  it('影像录入界面（ADR-0133 + issue 310）：未解析只出链接行 → 解析后展开下半表单 → 整片保存入库（净化 URL）', async () => {
     const reqMock = requestUrl as ReturnType<typeof vi.fn>;
     reqMock.mockImplementation(async (opts: any) => {
       const url = String(opts?.url ?? '');
@@ -371,20 +408,21 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
       }
       return httpResp(404, '');
     });
-    ui.showVideoEntry();
-    await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
-    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    ui.showVideoEntry(); // 影像入口直达录入界面（issue 310）
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
     const popup = document.getElementById('knowledge-add-popup')!;
-    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
-    // 空链接保存 → 校验提示
-    (document.getElementById('lit-add-save') as HTMLElement).click();
-    expect(getNoticeMessages().join('\n')).toContain('请填写视频链接');
-    // 填链接 → 解析按钮（无防抖：不点不解析）
+    expect(popup.querySelector('.bz-lit-sheet-title')!.textContent!.replace(/\s/g, '')).toBe('影像');
+    expect(popup.querySelector('.bz-lit-term-row .bz-lit-term-meta-k')!.textContent).toBe('链接');
+    // 未解析：下半表单（信息 / 分P / 剪辑 / 清晰度 / 保存）整体收起
+    const more = document.getElementById('lit-add-more')!;
+    expect(more.style.display).toBe('none');
+    expect(more.querySelector('#lit-add-save')).toBeTruthy(); // 保存钮在下半表单内 → 未解析不可达
     const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
     urlInput.value = 'https://www.bilibili.com/video/BV1testaaaaa/?spm_id_from=333.0';
-    expect(document.getElementById('lit-add-info')!.style.display).toBe('none'); // 未解析：信息区隐藏
+    expect(more.style.display).toBe('none');
     (document.getElementById('lit-add-resolve') as HTMLElement).click();
     await vi.waitFor(() => expect(document.getElementById('lit-add-ititle')!.textContent).toBe('解析出的标题'));
+    expect(more.style.display).not.toBe('none'); // 解析跑完 → 展开
     expect(urlInput.value).toBe('https://www.bilibili.com/video/BV1testaaaaa/'); // 解析时净化写回
     expect(document.getElementById('lit-add-iuploader')!.textContent).toBe('解析UP');
     // 多 P → 下拉可见（P{n} · part · 时长），默认 P1
@@ -395,9 +433,11 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     // 范围默认全选（P1 量程 120s）
     expect((document.getElementById('lit-add-start') as HTMLInputElement).value).toBe('0:00');
     expect((document.getElementById('lit-add-end') as HTMLInputElement).value).toBe('2:00');
-    // 保存（整片）
+    // 保存（整片）→ 关弹窗并落到处理队列
     (document.getElementById('lit-add-save') as HTMLElement).click();
-    await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-taskcard').length).toBe(1));
+    await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
+    await vi.waitFor(() => expect(document.querySelectorAll('#knowledge-video-list .bz-kb-taskcard').length).toBe(1));
+    expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('none');
     const tasks = await KnowledgeData.loadTasks();
     expect(tasks).toHaveLength(1);
     expect(tasks[0].url).toBe('https://www.bilibili.com/video/BV1testaaaaa/');
@@ -407,7 +447,33 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(tasks[0].uploader).toBe('解析UP');
     expect(tasks[0].duration).toBe(120);
     expect(tasks[0].page).toBeNull();
-    expect(document.querySelector('.bz-kb-taskcard')!.textContent).toContain('整片');
+    expect(document.querySelector('#knowledge-video-list .bz-kb-taskcard')!.textContent).toContain('整片');
+  });
+
+  it('录入界面标题栏不放出口（issue 310 复核）：处理队列与历史随「保存」进入', async () => {
+    ui.showVideoEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    const popup = document.getElementById('knowledge-add-popup')!;
+    expect(popup.querySelector('.bz-lit-head-btns')).toBeNull(); // 右上角两个钮已退役
+    expect(document.getElementById('lit-add-tasks')).toBeNull();
+    expect(document.getElementById('lit-add-history')).toBeNull();
+    // 处理队列仍可达：保存 → 关窗 + 打开处理面板（另一个用例断言落库；此处断言窗口切换）
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) return httpResp(200, JSON.stringify({ code: 0, data: { title: 'T', owner: { name: 'U' }, duration: 60, pages: [{ cid: 1, page: 1, part: '', duration: 60 }] } }));
+      return httpResp(404, '');
+    });
+    try {
+      (document.getElementById('lit-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1notoolbar';
+      (document.getElementById('lit-add-resolve') as HTMLElement).click();
+      await vi.waitFor(() => expect(document.getElementById('lit-add-more')!.style.display).not.toBe('none'));
+      (document.getElementById('lit-add-save') as HTMLElement).click();
+      await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
+      expect(popup.style.display).toBe('none');
+    } finally {
+      reqMock.mockImplementation(async () => httpResp(200, ''));
+    }
   });
 
   it('范围选择（ADR-0133）：时间框提交钳制 + ↑/↓ 微调 + 剪辑范围落库与整片重置', async () => {
@@ -423,7 +489,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
       return httpResp(404, '');
     });
     ui.showVideoEntry();
-    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
     const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
     urlInput.value = 'https://www.bilibili.com/video/BV1rangeaaaa';
     (document.getElementById('lit-add-resolve') as HTMLElement).click();
@@ -483,17 +549,17 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     });
     try {
       ui.showVideoEntry();
-      (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+      await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
       const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
       urlInput.value = 'https://www.bilibili.com/video/BV1awbg6XELn/?spm_id_from=333.0&vd_source=abc';
       (document.getElementById('lit-add-resolve') as HTMLElement).click();
       await vi.waitFor(() => expect(document.getElementById('lit-add-ititle')!.textContent).toBe('解析出的标题'));
       expect(urlInput.value).toBe('https://www.bilibili.com/video/BV1awbg6XELn/'); // 追踪参数已剥
       expect(document.getElementById('lit-add-iuploader')!.textContent).toBe('解析UP');
-      // 改动输入 → 作废已解析信息（需重新解析）
+      // 改动输入 → 作废已解析信息（需重新解析）：下半表单整体收起（issue 310）
       urlInput.value = 'https://www.bilibili.com/video/BV1otheraaaa';
       urlInput.dispatchEvent(new Event('input', { bubbles: true }));
-      expect(document.getElementById('lit-add-info')!.style.display).toBe('none');
+      expect(document.getElementById('lit-add-more')!.style.display).toBe('none');
       expect(document.getElementById('lit-add-rstate')!.style.display).toBe('none');
       // 解析失败 → 失败态（原因 + 可手填分P 数字框）
       failMode = true;
@@ -523,7 +589,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     });
     try {
       ui.showVideoEntry();
-      (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+      await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
       const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
       urlInput.value = 'https://www.bilibili.com/video/BV1aaaaaaaaa/';
       (document.getElementById('lit-add-resolve') as HTMLElement).click();
@@ -552,19 +618,37 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     }
   });
 
-  it('粘贴后立即保存仍写净化 URL（ADR-0133：保存兜底，未解析也可存）', async () => {
-    ui.showVideoEntry();
-    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
-    const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
-    urlInput.value = 'https://www.bilibili.com/video/BV1saveaaaaa/?spm_id_from=7&vd_source=x';
-    // 不点解析、不等任何防抖，直接保存
-    (document.getElementById('lit-add-save') as HTMLElement).click();
-    await vi.waitFor(async () => {
-      const tasks = await KnowledgeData.loadTasks();
-      expect(tasks).toHaveLength(1);
+  it('未解析不可保存（issue 310 改口径）：保存钮在收起的下半表单内；解析后展开且写净化 URL', async () => {
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) return httpResp(200, JSON.stringify({ code: 0, data: { title: 'T', owner: { name: 'U' }, duration: 100, pages: [{ cid: 1, page: 1, part: '', duration: 100 }] } }));
+      return httpResp(404, '');
     });
-    const tasks = await KnowledgeData.loadTasks();
-    expect(tasks[0].url).toBe('https://www.bilibili.com/video/BV1saveaaaaa/'); // 落库即净化值
+    try {
+      ui.showVideoEntry();
+      await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+      const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
+      urlInput.value = 'https://www.bilibili.com/video/BV1saveaaaaa/?spm_id_from=7&vd_source=x';
+      // 未解析：保存钮被收起的容器包住（界面上不可达——可见性由 #lit-add-more 统一控制）
+      const more = document.getElementById('lit-add-more')!;
+      expect(more.style.display).toBe('none');
+      expect(more.contains(document.getElementById('lit-add-save'))).toBe(true);
+      expect(more.contains(document.getElementById('lit-add-quality'))).toBe(true);
+      // 解析 → 表单展开 + URL 净化写回；落库取净化值
+      (document.getElementById('lit-add-resolve') as HTMLElement).click();
+      await vi.waitFor(() => expect(document.getElementById('lit-add-more')!.style.display).not.toBe('none'));
+      expect(urlInput.value).toBe('https://www.bilibili.com/video/BV1saveaaaaa/');
+      (document.getElementById('lit-add-save') as HTMLElement).click();
+      await vi.waitFor(async () => {
+        const tasks = await KnowledgeData.loadTasks();
+        expect(tasks).toHaveLength(1);
+      });
+      const tasks = await KnowledgeData.loadTasks();
+      expect(tasks[0].url).toBe('https://www.bilibili.com/video/BV1saveaaaaa/'); // 落库即净化值
+    } finally {
+      reqMock.mockImplementation(async () => httpResp(200, ''));
+    }
   });
 
   it('清晰度下拉（ADR-0133）：无实测档位 → 固定三项默认全局档；有实测档位 → 档位列表 + 全局档不可用回落最高可用 + 提示', async () => {
@@ -578,7 +662,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
       return httpResp(404, '');
     });
     ui.showVideoEntry();
-    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
     const sel = document.getElementById('lit-add-quality') as HTMLSelectElement;
     // 未解析（无实测档位）→ 固定三项 + 默认全局档
     expect([...sel.options].map((o) => o.value)).toEqual(['highest', '1080', '720']);
@@ -602,7 +686,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
       if (url.includes('web-interface/view')) return httpResp(200, JSON.stringify({ code: 0, data: { title: '补回的标题', owner: { name: '补回的UP' }, duration: 88, pages: [{ cid: 5, page: 1, part: '', duration: 88 }] } }));
       return httpResp(404, '');
     });
-    ui.showVideoEntry();
+    ui.showVideoTasks(); // 自动重抓挂在「处理」面板打开时（issue 310）
     await vi.waitFor(async () => {
       const tasks = await KnowledgeData.loadTasks();
       expect(tasks[0].title).toBe('补回的标题');
@@ -614,7 +698,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     // 再次打开面板：已尝试过的 id 不再请求（backfillTried 会话级）
     const calls = reqMock.mock.calls.length;
     ui.hideVideo();
-    ui.showVideoEntry();
+    ui.showVideoTasks();
     await new Promise((r) => setTimeout(r, 400));
     expect(reqMock.mock.calls.length).toBe(calls);
   });
@@ -635,7 +719,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
       return httpResp(404, '');
     });
     ui.showVideoEntry();
-    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
     (document.getElementById('lit-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1switchpaa';
     (document.getElementById('lit-add-resolve') as HTMLElement).click();
     const sel = document.getElementById('lit-add-quality') as HTMLSelectElement;
@@ -672,23 +756,40 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(tasks[0].start).toBeNull(); // 结果落库不写范围（保留任务原值/用户编辑）
   });
 
-  it('历史：🕘 打开 + 归档分组 + 计数；清空历史（确认后清空）', async () => {
+  it('历史：面板内切换（不另开弹窗）+ 归档分组 + 计数；返回箭头回队列；清空历史（确认后清空）', async () => {
     const a = await KnowledgeData.addTask({ url: 'https://www.bilibili.com/video/BV1aaa', start: '00:00:10', end: '00:00:20', title: '视频甲', uploader: 'UP甲' });
     const a2 = await KnowledgeData.addTask({ url: 'https://www.bilibili.com/video/BV1aaa', start: '00:01:00', end: '00:01:30', title: '视频甲' });
     await KnowledgeData.updateTask(a2.id, { archived: true, processedAt: '2026-09-01 11:00:00', notePath: '文献盒/视频甲2.md' });
     await KnowledgeData.updateTask(a.id, { archived: true, processedAt: '2026-09-01 10:00:00', notePath: '文献盒/视频甲.md' });
     const b = await KnowledgeData.addTask({ url: 'https://www.bilibili.com/video/BV1bbb', title: '视频乙' });
     await KnowledgeData.updateTask(b.id, { archived: true, processedAt: '2026-09-02 10:00:00', notePath: '文献盒/视频乙.md' });
-    ui.showHistory();
-    await vi.waitFor(() => expect(document.getElementById('knowledge-history-popup')!.style.display).toBe('flex'));
-    await vi.waitFor(() => expect(document.getElementById('lit-history-counts')!.textContent).toContain('共 3 条'));
-    expect(document.querySelectorAll('.bz-kb-hgroup').length).toBe(2);
-    expect(document.querySelectorAll('.bz-kb-hnote').length).toBe(3);
-    expect(document.getElementById('knowledge-history-list')!.textContent).toContain('视频甲');
-    const schema = knowledgeSettingsSchema({ onClearHistory: async () => { await KnowledgeData.clearHistory(); await (ui as any).refreshHistory(); } });
+    ui.showVideoTasks();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
+    const popup = document.getElementById('knowledge-video-popup')!;
+    (document.getElementById('lit-btn-video-history') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('lit-video-counts')!.textContent).toContain('共 3 条'));
+    // 2026-09-14 复核：历史进同一面板（无独立历史窗），题字换「历 史」、图标组只留返回箭头
+    expect(document.getElementById('knowledge-history-popup')).toBeNull();
+    expect(popup.querySelector('.bz-kb-title')!.textContent!.replace(/\s/g, '')).toBe('历史');
+    expect((document.getElementById('lit-btn-video-add') as HTMLElement).style.display).toBe('none');
+    expect((document.getElementById('lit-btn-video-run') as HTMLElement).style.display).toBe('none');
+    expect((document.getElementById('lit-btn-video-history') as HTMLElement).style.display).toBe('none');
+    expect((document.getElementById('lit-btn-video-back') as HTMLElement).style.display).not.toBe('none');
+    expect(document.querySelectorAll('#knowledge-video-list .bz-kb-hgroup').length).toBe(2);
+    expect(document.querySelectorAll('#knowledge-video-list .bz-kb-hnote').length).toBe(3);
+    expect(document.getElementById('knowledge-video-list')!.textContent).toContain('视频甲');
+    // 返回箭头 → 回到任务队列视图（题字与图标组复位，计数换回状态口径）
+    (document.getElementById('lit-btn-video-back') as HTMLElement).click();
+    await vi.waitFor(() => expect(popup.querySelector('.bz-kb-title')!.textContent!.replace(/\s/g, '')).toBe('影像'));
+    expect((document.getElementById('lit-btn-video-back') as HTMLElement).style.display).toBe('none');
+    expect((document.getElementById('lit-btn-video-history') as HTMLElement).style.display).not.toBe('none');
+    // 清空历史后视图内计数归零
+    (document.getElementById('lit-btn-video-history') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('lit-video-counts')!.textContent).toContain('共 3 条'));
+    const schema = knowledgeSettingsSchema({ onClearHistory: async () => { await KnowledgeData.clearHistory(); await ui.refreshVideoPanel(); } });
     const row = schema.groups.flatMap((g) => g.rows).find((r) => (r as any).name === '清空历史') as any;
     await row.onClick();
-    await vi.waitFor(() => expect(document.getElementById('lit-history-counts')!.textContent).toContain('共 0 条'));
+    await vi.waitFor(() => expect(document.getElementById('lit-video-counts')!.textContent).toContain('共 0 条'));
   });
 
   // ==================== 术语面板（142/155 契约 + 258 完整词典皮） ====================
@@ -700,44 +801,327 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex'));
     const popup = document.getElementById('knowledge-term-popup')!;
     // 词典皮：衬线标题栏（✕ 已退役 issue 271）；术语/来源同款行内标签（快改批：统一排版，试试示例与说明行已删）
-    expect(popup.querySelector('.bz-lit-sheet-title')!.textContent).toBe('文字录入 · 术语');
+    expect(popup.querySelector('.bz-lit-sheet-title')!.textContent).toBe('名词');
+    expect(popup.getAttribute('data-lit-entry')).toBe('term'); // 同壳双态（issue 309）
     expect(popup.querySelector('[data-term-close]')).toBeNull();
+    // 同壳双态：两条录入行同壳共存（名词态由 .bz-lit-passage-only 隐藏）——DOM 上三行标签齐备
     const labels = Array.from(popup.querySelectorAll<HTMLElement>('.bz-lit-term-row .bz-lit-term-meta-k')).map((x) => x.textContent);
-    expect(labels).toEqual(['术语', '来源']);
+    expect(labels).toEqual(['名词', '段落', '图版', '来源']); // 三类录入行同壳共存（非当前态由 data-lit-entry 隐藏）
     expect(popup.querySelector('label')).toBeNull();
     expect((document.getElementById('lit-term-input') as HTMLInputElement).placeholder).toBe('');
     expect(popup.querySelector('.bz-lit-term-note')).toBeNull();
-    expect(popup.querySelector('#lit-term-cancel')).toBeTruthy();
+    // issue 309 复核：取消按钮与「打开笔记」按钮均退役（退出走点遮罩 / ESC，写入即关窗）
+    expect(popup.querySelector('#lit-term-cancel')).toBeNull();
+    expect(popup.querySelector('#lit-term-open')).toBeNull();
     expect(popup.querySelector('#lit-term-try')).toBeNull();
     // 预览属性卡 + 内容卡
     expect(popup.querySelector('#lit-term-meta-term')!.textContent).toBe('松果体');
     expect(popup.querySelector('#lit-term-meta-domain')!.textContent).toBe('心理');
     expect(popup.querySelector('#lit-term-content')!.textContent).toBe('AI 简介');
-    // 点遮罩与 取消 都能关弹层（issue 271：✕ 退役）
+    // 退出只剩两条道：点遮罩、ESC（✕ / 取消按钮都退役）
     (document.getElementById('knowledge-term-mask') as HTMLElement).click();
     expect(popup.style.display).toBe('none');
     ui.showTermEntry();
     await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
-    (document.getElementById('lit-term-cancel') as HTMLElement).click();
+    ui.hideTermEntry();
     expect(popup.style.display).toBe('none');
   });
 
-  it('确认写入：按预览值落盘一次 + 打开笔记 + term-generated 事件；无预览提示先生成', async () => {
+  it('确认写入：按预览值落盘一次 + term-generated 事件 + 关联落库后直接关窗', async () => {
     const seen: string[] = [];
+    const applies: Array<[string, string[]]> = [];
+    setLinkBridge({
+      preview: async () => ({ status: 'done' as const, picks: [{ path: '卡片盒/睡眠卫生.md', title: '睡眠卫生' }] }),
+      apply: async (path: string, picks: string[]) => { applies.push([path, picks]); return { status: 'done' as const, created: picks.length }; },
+      now: async () => ({ status: 'done' as const, created: 0 }),
+    });
+    noteGen.generateTermNote.mockResolvedValueOnce('文献盒/松果体.md');
     onDomainEvent('knowledge:tasks', (evt: any) => { if (evt.kind === 'term-generated') seen.push(evt.term); });
     ui.showTermEntry();
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     (document.getElementById('lit-term-input') as HTMLInputElement).value = '褪黑素';
     (document.getElementById('lit-term-save') as HTMLElement).click();
-    expect(getNoticeMessages().join('\n')).toContain('请先点击「生成」');
-    vault.files.set('文献盒/松果体.md', '---\ntitle: 松果体\ntype: term\ndomain: 医学\n---\n\n简介');
+    expect(getNoticeMessages().join('\\n')).toContain('请先点击「生成」');
     await (ui as any).onTermGenerate();
     (document.getElementById('lit-term-save') as HTMLElement).click();
     await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalled());
     // ADR-0116：未填来源 → source 显式 null（数据契约），键不落盘由 note-gen 层保证
     expect(noteGen.generateTermNote).toHaveBeenCalledWith({ term: '褪黑素', summary: 'AI 简介', domain: '心理', source: null });
-    expect(openFile).toHaveBeenCalled();
     await vi.waitFor(() => expect(seen).toEqual(['褪黑素']));
+    // issue 309 复核：预演结果随写入落库（apply 而非重算），写完直接关窗、也不自动打开笔记
+    await vi.waitFor(() => expect(applies).toEqual([['文献盒/松果体.md', ['卡片盒/睡眠卫生.md']]]));
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
+    expect(openFile).not.toHaveBeenCalled();
+  });
+
+  it('通道未注入（自动双链关闭）：关联行显式「自动双链未开启」，确认写入照常落盘并关窗', async () => {
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '褪黑素';
+    await (ui as any).onTermGenerate();
+    expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('自动双链未开启');
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalled());
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
+  });
+
+  it('关联分析中禁用「重新生成 / 总结 / 确认写入」；总结后正文变了 → 再次重跑预演', async () => {
+    const previews: string[] = [];
+    const releases: Array<(v: any) => void> = [];
+    setLinkBridge({
+      preview: (content: string) => { previews.push(content); return new Promise((r) => releases.push(r)); },
+      apply: async () => ({ status: 'done' as const, created: 0 }),
+      now: async () => ({ status: 'done' as const, created: 0 }),
+    });
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '心流';
+    await (ui as any).onTermGenerate(); // 生成完即起预演（挂在 loading 上，未落地）
+    const gen = document.getElementById('lit-term-generate') as HTMLButtonElement;
+    const regen = document.getElementById('lit-term-regenerate') as HTMLButtonElement;
+    const save = document.getElementById('lit-term-save') as HTMLButtonElement;
+    expect(previews).toEqual(['AI 简介']);
+    expect([gen.disabled, regen.disabled, save.disabled]).toEqual([true, true, true]); // 分析中：三个按钮全禁
+    releases.shift()!({ status: 'done', picks: [] });
+    await vi.waitFor(() => expect(save.disabled).toBe(false)); // 分析落地 → 恢复可用
+    expect([gen.disabled, regen.disabled]).toEqual([false, false]);
+    // 总结 → 正文被改写 → 关联重新分析（回到禁用态）
+    await (ui as any).onTermSummarize();
+    expect(previews).toEqual(['AI 简介', '精简版简介']);
+    expect([gen.disabled, regen.disabled, save.disabled]).toEqual([true, true, true]);
+    releases.shift()!({ status: 'done', picks: [] });
+    await vi.waitFor(() => expect(save.disabled).toBe(false));
+  });
+
+  it('段落录入（issue 309）：同壳切到 passage + 多行输入 → AI 自动标题 → 按标题落 type: passage', async () => {
+    const seen: Array<Record<string, unknown>> = [];
+    onDomainEvent('knowledge:tasks', (evt: any) => { if (evt.kind === 'passage-generated') seen.push(evt); });
+    ui.showPassageEntry();
+    const popup = document.getElementById('knowledge-term-popup')!;
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    expect(popup.getAttribute('data-lit-entry')).toBe('passage');
+    expect(popup.querySelector('.bz-lit-sheet-title')!.textContent).toBe('段落');
+    // 空段落拒收
+    (document.getElementById('lit-term-generate') as HTMLElement).click();
+    expect(getNoticeMessages().join('\n')).toContain('请粘贴要整理的段落');
+    (document.getElementById('lit-passage-input') as HTMLTextAreaElement).value = '  一段关于城市化的文字。  ';
+    await (ui as any).onTermGenerate();
+    expect(noteGen.generatePassageDraft).toHaveBeenCalledWith('一段关于城市化的文字。'); // 首尾空白已裁
+    // 标题自动填入属性卡（可改）
+    expect((document.getElementById('lit-entry-meta-title') as HTMLInputElement).value).toBe('自动标题');
+    // 改写标题后落盘（所见即所得：不重跑 AI）
+    (document.getElementById('lit-entry-meta-title') as HTMLInputElement).value = '城市化的三种动力';
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(noteGen.generatePassageNote).toHaveBeenCalled());
+    expect(noteGen.generatePassageNote).toHaveBeenCalledWith({
+      title: '城市化的三种动力',
+      summary: '整理正文',
+      domain: '社会',
+      source: null,
+    });
+    await vi.waitFor(() => expect(seen.map((e) => e.title)).toEqual(['城市化的三种动力']));
+  });
+
+  // ==================== 图版录入（issue 312；多图 issue 313） ====================
+
+  /** 造一张可被收图链路收下的图片 File（字节内容不参与断言，只要非空 + MIME 合法） */
+  function pngFile(name = 'plate.png', type = 'image/png') {
+    return new File([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], name, { type });
+  }
+
+  /** 造带 clipboardData 的 paste 事件（jsdom 无 DataTransfer，手挂 items/files —— 同 favorites 域做法） */
+  function pasteImageEvent(files: File[]): ClipboardEvent {
+    const ev = new Event('paste', { bubbles: true, cancelable: true }) as any;
+    ev.clipboardData = {
+      items: files.map((f) => ({ kind: 'file', type: f.type, getAsFile: () => f })),
+      files,
+    };
+    return ev as ClipboardEvent;
+  }
+
+  const thumbs = () => Array.from(document.querySelectorAll<HTMLImageElement>('#lit-image-grid .bz-lit-drop-item img'));
+
+  it('图版录入（issue 313）：多张图同壳进面板 → 一次投给 AI → 按标题落 type: image + 图片本体全落盘', async () => {
+    const seen: Array<Record<string, unknown>> = [];
+    onDomainEvent('knowledge:tasks', (evt: any) => { if (evt.kind === 'image-generated') seen.push(evt); });
+    ui.showImageEntry();
+    const popup = document.getElementById('knowledge-term-popup')!;
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    expect(popup.getAttribute('data-lit-entry')).toBe('image');
+    expect(popup.querySelector('.bz-lit-sheet-title')!.textContent).toBe('图版');
+    // 没图点生成 → 拒收（不发 AI）
+    (document.getElementById('lit-term-generate') as HTMLElement).click();
+    expect(getNoticeMessages().join('\n')).toContain('请先拖入或粘贴图片');
+    expect(noteGen.generateImageDraft).not.toHaveBeenCalled();
+    // 收图（拖入 / 点选 / 粘贴三路共用同一处理器；一次可进多张，也支持分次追加）
+    await (ui as any).acceptImageFiles([pngFile('a.png'), pngFile('b.jpg', 'image/jpeg')]);
+    expect(document.getElementById('lit-image-grid')!.style.display).not.toBe('none');
+    expect(thumbs()).toHaveLength(2);
+    expect(thumbs()[0].src.startsWith('data:image/png;base64,')).toBe(true);
+    expect(thumbs()[1].src.startsWith('data:image/jpeg;base64,')).toBe(true);
+    expect(document.getElementById('lit-image-hint')!.textContent).toContain('已放 2 张');
+    await (ui as any).acceptImageFiles([pngFile('c.webp', 'image/webp')]); // 追加第三张
+    expect(thumbs()).toHaveLength(3);
+    // 读图：AI 拿到的是**全部** data URL；此刻一个文件都没落盘（图只在内存）
+    await (ui as any).onTermGenerate();
+    expect(noteGen.generateImageDraft).toHaveBeenCalledWith(thumbs().map((t) => t.src));
+    expect(noteGen.generateImageNote).not.toHaveBeenCalled();
+    expect((document.getElementById('lit-entry-meta-title') as HTMLInputElement).value).toBe('自动图题');
+    expect(document.getElementById('lit-term-content')!.textContent).toBe('读图解读');
+    expect(document.getElementById('lit-term-meta-domain')!.textContent).toBe('艺术');
+    // 确认写入：三张图的本体 + 笔记一并落盘（bytes 与扩展名交给 note-gen，顺序 = 放入顺序）
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(noteGen.generateImageNote).toHaveBeenCalled());
+    const arg = noteGen.generateImageNote.mock.calls[0][0];
+    expect(arg.title).toBe('自动图题');
+    expect(arg.summary).toBe('读图解读');
+    expect(arg.domain).toBe('艺术');
+    expect(arg.source).toBeNull();
+    expect(arg.images.map((im: any) => im.ext)).toEqual(['png', 'jpg', 'webp']);
+    expect(arg.images[0].bytes.byteLength).toBe(8);
+    await vi.waitFor(() => expect(seen.map((e) => e.title)).toEqual(['自动图题']));
+    // 写完直接关窗 + 内存里的图字节清掉（不留悬挂副本）
+    await vi.waitFor(() => expect(popup.style.display).toBe('none'));
+    expect((ui as any).entryImages).toEqual([]);
+    expect(document.getElementById('lit-image-grid')!.style.display).toBe('none');
+  });
+
+  it('图版：非 PNG/JPEG/GIF/WebP 那张被跳过，其余照收；加图 / 删图都作废旧草稿', async () => {
+    ui.showImageEntry();
+    const popup = document.getElementById('knowledge-term-popup')!;
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    // 一批里混一张 svg：只跳它，合法那张照样进
+    await (ui as any).acceptImageFiles([new File([new Uint8Array([1, 2])], 'a.svg', { type: 'image/svg+xml' }), pngFile('ok.png')]);
+    expect(getNoticeMessages().join('\n')).toContain('只支持 PNG / JPEG / GIF / WebP 图片');
+    expect(thumbs()).toHaveLength(1);
+    // 生成 → 预览可见；再追加一张 → 旧草稿失效（预览收起 + 关联行归位）
+    await (ui as any).onTermGenerate();
+    expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex');
+    expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('自动双链未开启'); // 通道未注入
+    await (ui as any).acceptImageFiles([pngFile('b.jpg', 'image/jpeg')]);
+    expect(document.getElementById('lit-term-preview')!.style.display).toBe('none');
+    expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('—');
+    expect(thumbs()).toHaveLength(2);
+    // 缩略图上的 ✕：删掉第 1 张（同样作废草稿），剩下的自动补位
+    await (ui as any).onTermGenerate();
+    expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex');
+    (document.querySelector('[data-lit-image-remove="0"]') as HTMLElement).click();
+    expect(thumbs()).toHaveLength(1);
+    expect(thumbs()[0].src.startsWith('data:image/jpeg;base64,')).toBe(true); // 留下的是后加的 jpg
+    expect(document.getElementById('lit-term-preview')!.style.display).toBe('none');
+    // 全部删光 → 回到提示态；点生成被拒
+    (document.querySelector('[data-lit-image-remove="0"]') as HTMLElement).click();
+    expect(thumbs()).toHaveLength(0);
+    expect(document.getElementById('lit-image-hint')!.textContent).toContain('拖入图片');
+    (document.getElementById('lit-term-generate') as HTMLElement).click();
+    expect(getNoticeMessages().join('\n')).toContain('请先拖入或粘贴图片');
+    // 标题被清空 → 拒写（图版必须有标题；属性卡标题是它落盘的文件名）
+    await (ui as any).acceptImageFiles([pngFile('c.png')]);
+    await (ui as any).onTermGenerate();
+    (document.getElementById('lit-entry-meta-title') as HTMLInputElement).value = '';
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    expect(getNoticeMessages().join('\n')).toContain('标题不能为空');
+    expect(noteGen.generateImageNote).not.toHaveBeenCalled();
+  });
+
+  it('图版：单次最多 9 张（多余不发、不走 AI），且只读提示一次', async () => {
+    ui.showImageEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    await (ui as any).acceptImageFiles(Array.from({ length: 12 }, (_v, i) => pngFile(`p${i}.png`)));
+    expect(thumbs()).toHaveLength(9);
+    expect(getNoticeMessages().join('\n')).toContain('一次最多放 9 张图');
+  });
+
+  it('图版：分析中加图 / 删图 → 作废在途预演并解除按钮闸门（不能停在禁用态）', async () => {
+    let release!: (v: any) => void;
+    setLinkBridge({
+      preview: () => new Promise((r) => { release = r; }),
+      apply: async () => ({ status: 'done' as const, created: 0 }),
+      now: async () => ({ status: 'done' as const, created: 0 }),
+    });
+    ui.showImageEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    await (ui as any).acceptImageFiles([pngFile('a.png'), pngFile('b.png')]);
+    await (ui as any).onTermGenerate();
+    const gen = document.getElementById('lit-term-generate') as HTMLButtonElement;
+    const save = document.getElementById('lit-term-save') as HTMLButtonElement;
+    expect([gen.disabled, save.disabled]).toEqual([true, true]); // 分析中：闸门落下
+    await (ui as any).acceptImageFiles([pngFile('c.png')]); // 加图 = 作废在途预演
+    expect([gen.disabled, save.disabled]).toEqual([false, false]); // 闸门必须跟着解除
+    release({ status: 'done', picks: [{ path: '卡片盒/旧.md', title: '旧' }] }); // 晚到响应不得回改状态
+    await new Promise((r) => setTimeout(r, 10));
+    expect([gen.disabled, save.disabled]).toEqual([false, false]);
+    expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('—'); // 关联行也不被晚到结果污染
+    // 删一张同样解闸（复跑一遍，压在闸门落下的时刻）
+    await (ui as any).onTermGenerate();
+    expect([gen.disabled, save.disabled]).toEqual([true, true]);
+    (document.querySelector('[data-lit-image-remove="0"]') as HTMLElement).click();
+    expect([gen.disabled, save.disabled]).toEqual([false, false]);
+    release({ status: 'done', picks: [] });
+  });
+
+  it('图版：Ctrl+V 粘贴截图只在图版态接管（名词 / 段落态不抢粘贴），多图一次进', async () => {
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    document.dispatchEvent(pasteImageEvent([pngFile()]));
+    await new Promise((r) => setTimeout(r, 10));
+    expect((ui as any).entryImages).toEqual([]); // 名词态：粘贴不被接管
+    ui.showImageEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    document.dispatchEvent(pasteImageEvent([pngFile('shot1.png'), pngFile('shot2.png')]));
+    await vi.waitFor(() => expect(thumbs()).toHaveLength(2));
+    // 关面板：内存图随关窗清空
+    ui.hideTermEntry();
+    expect((ui as any).entryImages).toEqual([]);
+  });
+
+  it('关联行（issue 309）：生成出内容即起跑预演 → 分析中… → 完成后就地显示；确认写入只落库不重算', async () => {
+    const previews: Array<[string, string | undefined]> = [];
+    const applies: Array<[string, string[]]> = [];
+    let release!: (v: any) => void;
+    setLinkBridge({
+      preview: (content: string, title?: string) => {
+        previews.push([content, title]);
+        return new Promise((r) => { release = r; });
+      },
+      apply: async (path: string, picks: string[]) => { applies.push([path, picks]); return { status: 'done', created: picks.length }; },
+      now: async () => ({ status: 'done', created: 0 }),
+    });
+    noteGen.generateTermNote.mockResolvedValueOnce('文献盒/松果体.md');
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '松果体';
+    await (ui as any).onTermGenerate();
+    // 生成出内容的那一刻就进预演（此时草稿还没落盘、也没写任何文件）
+    expect(previews).toEqual([['AI 简介', '松果体']]);
+    expect(noteGen.generateTermNote).not.toHaveBeenCalled();
+    expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('分析中…');
+    release({ status: 'done', picks: [{ path: '卡片盒/睡眠卫生.md', title: '睡眠卫生' }] });
+    await vi.waitFor(() => expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('睡眠卫生'));
+    // 确认写入：落盘 + 只写预演结果（apply 而非 now —— 不重跑检索与裁判）
+    vault.files.set('文献盒/松果体.md', '---\ntitle: 松果体\nrelated:\n  - "[[卡片盒/睡眠卫生|睡眠卫生]]"\n---\n\n简介');
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(applies.length).toBe(1));
+    expect(applies[0]).toEqual(['文献盒/松果体.md', ['卡片盒/睡眠卫生.md']]);
+  });
+
+  it('关联行：零命中 → 「暂无关联」；检索不可达 → 「已入队」（均由预演直接给出）', async () => {
+    const bridgeOf = (preview: () => Promise<any>) => ({
+      preview,
+      apply: async () => ({ status: 'done' as const, created: 0 }),
+      now: async () => ({ status: 'done' as const, created: 0 }),
+    });
+    setLinkBridge(bridgeOf(async () => ({ status: 'done', picks: [] })));
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '空命中';
+    await (ui as any).onTermGenerate();
+    await vi.waitFor(() => expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('暂无关联'));
+    setLinkBridge(bridgeOf(async () => ({ status: 'queued' })));
+    ui.showTermEntry();
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '不可达';
+    await (ui as any).onTermGenerate();
+    await vi.waitFor(() => expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('向量服务不可达，已入队'));
   });
 
   // ==================== 术语来源（ADR-0116） ====================
@@ -745,7 +1129,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
   it('来源行 UI + kb 作用域：术语/添加弹层挂 .kb（纸墨皮背景修复）；URL 回车 → 外部 chip + meta 第 4 行 + 落 source', async () => {
     const termPopup = document.getElementById('knowledge-term-popup')!;
     const addPopup = document.getElementById('knowledge-add-popup')!;
-    // issue 257：术语/添加弹层缺 .kb（纸墨皮变量作用域）→ var(--panel) 失效背景透明；历史/视频窗本就有 kb
+    // issue 257：术语/添加弹层缺 .kb（纸墨皮变量作用域）→ var(--panel) 失效背景透明；视频窗（含历史视图）本就有 kb
     expect(termPopup.classList.contains('kb')).toBe(true);
     expect(addPopup.classList.contains('kb')).toBe(true);
     expect(document.getElementById('knowledge-video-popup')!.classList.contains('kb')).toBe(true);
@@ -889,18 +1273,30 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(dirRows).toContain('knowledgeCardboxDirectory');
     expect(dirRows).toContain('knowledgeTopicDirectory');
     expect((schema.groups[1].rows[0] as any).binding.key).toBe('knowledgeDirectory');
+    // issue 313：图版图片目录可配，空值时 chips 区显示实际生效目录（同书库 fallbackValue 先例）
+    expect(dirRows).toContain('knowledgeImageFolder');
+    const imgRow = schema.groups[1].rows.find((r) => (r as any).binding?.key === 'knowledgeImageFolder') as any;
+    expect(imgRow.type).toBe('path');
+    expect(typeof imgRow.fallbackValue).toBe('function');
+    expect(imgRow.fallbackValue()).toBe('文献盒/assets'); // note-gen 在本文件被 mock：这里验的是接线
   });
 
-  it('ESC 分层：术语 → 视频 → 主面板 逐层关', async () => {
+  it('ESC 分层：术语 → 视频 → 主面板 逐层关；历史视图先退回队列', async () => {
     ui.showMain();
     await vi.waitFor(() => expect(document.getElementById('knowledge-popup')!.style.display).toBe('flex'));
-    ui.showVideoEntry();
+    ui.showVideoTasks();
     await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
     ui.showTermEntry();
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none');
     expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex');
+    // 面板内历史视图：一次 ESC 退回处理队列，面板不关
+    ui.showHistory();
+    await vi.waitFor(() => expect((document.getElementById('lit-btn-video-back') as HTMLElement).style.display).not.toBe('none'));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex');
+    await vi.waitFor(() => expect((document.getElementById('lit-btn-video-back') as HTMLElement).style.display).toBe('none'));
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('none');
     expect(document.getElementById('knowledge-popup')!.style.display).toBe('flex');

@@ -110,6 +110,10 @@ export function mapBehaviorEvent(item: BehaviorItemLite): TimelineEvent | null {
     case 'knowledge:term-generated':
     case 'literature:term-generated':
       return { ...base, kind: 'produce', text: `生成术语${wrap(name, '『', '』')}` };
+    case 'knowledge:passage-generated':   // issue 309 段落录入
+      return { ...base, kind: 'produce', text: `整理段落${wrap(name, '『', '』')}` };
+    case 'knowledge:image-generated':     // issue 312 图版录入
+      return { ...base, kind: 'produce', text: `读图${wrap(name, '『', '』')}` };
     case 'knowledge:converted':
     case 'literature:converted':
       return { ...base, kind: 'produce', text: `转化${wrap(name, '『', '』')}` };

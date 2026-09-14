@@ -1335,9 +1335,12 @@ function notifyLiteratureAction(evt: KnowledgeActionEvent): void {
   void memorySystem.addObservation('knowledge', { structured });
 }
 
-/** 文献盒事件防重键：converted=url+notePath（重试/重复转换不重复计）；term-generated=term（同词连点一次算一次） */
+/** 文献盒事件防重键：converted=url+notePath（重试/重复转换不重复计）；term-generated=term（同词连点一次算一次）；
+ *  passage / image-generated=标题（同名一次算一次，issue 309/312） */
 function literatureActionKey(evt: KnowledgeActionEvent): string {
-  return evt.kind === 'converted' ? `${evt.url}|${evt.notePath ?? ''}` : String(evt.term || '');
+  if (evt.kind === 'converted') return `${evt.url}|${evt.notePath ?? ''}`;
+  if (evt.kind === 'term-generated') return String(evt.term || '');
+  return String(evt.title || evt.notePath || '');
 }
 
 // ------------- ADR-0069 行为流全量盘点补齐（日记分类调整 / 剪藏删除） -------------

@@ -1,18 +1,22 @@
 /**
  * 文献盒动作观察（literature 域 → 小橘行为流；ADR-0066 起建、ADR-0067 语义充实、ADR-0072 迁出为新域）
- * literature 域（视频批处理引擎 / 术语生成流程）经 emitDomainEvent('knowledge:tasks', evt) 派发 → 总线订阅进入，
+ * literature 域（视频批处理引擎 / 术语与段落生成流程）经 emitDomainEvent('knowledge:tasks', evt) 派发 → 总线订阅进入，
  * 本模块构造 StructuredMeta 供 addObservation(source, { structured }) 路由到行为流。
  * ticket 136 用户拍板：只收「视频转文献成功（converted）+ 术语生成成功（term-generated）」两个节点；
+ * issue 309 段落录入新增第三类（passage-generated，与术语同族）；
+ * issue 312 图版录入新增第四类（image-generated，同上）；
  * 添加任务/解析/编辑/失败事件返回 null（不进小橘）。行为流 = 轻量记录、不向量化（ticket 123 知识内容口径）。
  */
 import { stripMdExt } from '../core/utils';
 import type { StructuredMeta } from './types';
 
 /** 文献盒动作事件（literature 域 emitDomainEvent('knowledge:tasks', evt) 载荷；ADR-0066/0072）
- *  notePath（issue 298）：两类成功事件均携带落盘笔记路径——第二大脑自动双链据此即时建链 */
+ *  notePath：四类成功事件均携带落盘笔记路径——录入面板据此同步建链（issue 309 显式通道） */
 export type KnowledgeActionEvent =
   | { kind: 'converted'; id?: string; url: string; notePath?: string | null }
-  | { kind: 'term-generated'; id?: string; term: string; title?: string | null; notePath?: string | null };
+  | { kind: 'term-generated'; id?: string; term: string; title?: string | null; notePath?: string | null }
+  | { kind: 'passage-generated'; id?: string; title?: string | null; notePath?: string | null }
+  | { kind: 'image-generated'; id?: string; title?: string | null; notePath?: string | null };
 
 /** 从 url 提取 BV 号（BV1xx411c7mD）；失败返回空串 */
 function bvOf(url: string): string {
@@ -46,6 +50,26 @@ export function buildKnowledgeStructured(evt: KnowledgeActionEvent): StructuredM
       name: String(evt.term || '').trim() || '术语',
       id: evt.id,
       extras: { term: evt.term, title: evt.title ?? null },
+    };
+  }
+  // issue 309：段落录入（AI 自动出标题）与术语同族——行为流记一条「段落生成」
+  if (evt.kind === 'passage-generated') {
+    return {
+      entityType: 'knowledge',
+      action: 'passage-generated',
+      name: String(evt.title || '').trim() || '段落',
+      id: evt.id,
+      extras: { title: evt.title ?? null, notePath: evt.notePath ?? null },
+    };
+  }
+  // issue 312：图版录入（AI 读图成文）同族——行为流记一条「图版生成」
+  if (evt.kind === 'image-generated') {
+    return {
+      entityType: 'knowledge',
+      action: 'image-generated',
+      name: String(evt.title || '').trim() || '图版',
+      id: evt.id,
+      extras: { title: evt.title ?? null, notePath: evt.notePath ?? null },
     };
   }
   return null;

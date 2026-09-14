@@ -130,8 +130,14 @@ export const KnowledgeData = {
     return this._store!;
   },
 
+  /**
+   * 读整表（形状兜底，issue 310）：文件被手改/旧格式写成非数组时按空库读取——
+   * 不兜底的话 `data.push is not a function` 会直接打断面板刷新与保存（用户实测踩到）。
+   * 读取本身不改盘；但 loadTasks/增删改都走 `_mutate`（读→改→写），首次调用即把文件收敛回数组形状。
+   */
   async read(): Promise<any[]> {
-    return this._ensureStore().read();
+    const data = await this._ensureStore().read();
+    return Array.isArray(data) ? data : [];
   },
   async write(data: any): Promise<void> {
     return this._ensureStore().write(data);

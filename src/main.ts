@@ -159,9 +159,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-pomodoro-pause', name: '暂停/继续专注', icon: 'pause', callback: () => togglePause(getApp()) },
   // 知识盒（knowledge 域，ADR-0112 三部：部壹文献录入与提炼 · 部贰卡片 · 部叁主题展示）
   { id: 'bz-knowledge-open', name: '知识盒', icon: DOMAIN_ICONS.knowledge, callback: () => openKnowledgePanel(getApp()) },
-  { id: 'bz-knowledge-note-term', name: '术语生成文献笔记', icon: 'book-type', callback: () => openTermNote(getApp()) },
-  // 视频生成文献笔记（2026-09-10：首页入口菜单联动，打开视频录入面板——链接/标题由面板内填或预填）
-  { id: 'bz-knowledge-note-video', name: '视频生成文献笔记', icon: 'list-video', callback: () => openKnowledgeAddTask(getApp()) },
+  { id: 'bz-knowledge-note-term', name: '名词生成文献笔记', icon: 'book-type', callback: () => openTermNote(getApp()) },
+  // 影像生成文献笔记（2026-09-10 首页入口菜单联动；issue 310 起直达影像录入界面——链接由面板内填或预填）
+  { id: 'bz-knowledge-note-video', name: '影像生成文献笔记', icon: 'list-video', callback: () => openKnowledgeAddTask(getApp()) },
   // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹，fileManager 自动更新内部链接）
   { id: ATTACH_COMMAND_ID, name: '移动附件', icon: DOMAIN_ICONS.attach, callback: () => openAttachMove(getApp()) },
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）

@@ -249,8 +249,8 @@ export const DOMAIN_MENU: Record<string, DomainMenuAction[]> = {
     { label: '未读全部标为已读', commandId: 'bz-clipbook-mark-all-read', icon: 'check-check', kind: 'danger', keepHome: true },
   ],
   knowledge: [
-    { label: '术语生成文献笔记', commandId: 'bz-knowledge-note-term', icon: 'file-text' },
-    { label: '视频生成文献笔记', commandId: 'bz-knowledge-note-video', icon: 'list-video' },
+    { label: '名词生成文献笔记', commandId: 'bz-knowledge-note-term', icon: 'file-text' },
+    { label: '影像生成文献笔记', commandId: 'bz-knowledge-note-video', icon: 'list-video' },
   ],
   bookshelf: [
     { label: '阅读分析报告', commandId: 'bz-reading-report-open', icon: 'bar-chart-3' },

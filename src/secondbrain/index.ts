@@ -9,13 +9,15 @@
  * - ticket 111：自动双链管线（link agent）——linkAgentEnabled 开关注册监听与队列消费；
  * - ticket 115：启动存量补链（队列消费后串行）+ 手动命令 bz-secondbrain-link-all 兜底；
  * - ticket 119（v1.4）：正文大改自动重跑——修改监听按基准哈希过滤，内容实质变化才重跑建链；
- * - issue 298：文献笔记生成即跑——知识盒生成视频/术语文献笔记后经 'knowledge:tasks' 立即建链
- *   （不等批次防抖、不受关联范围限制）；
+ * - issue 309：文献笔记建链改走显式通道——getLinkBridge() 给知识盒录入面板三段能力：
+ *   preview（AI 出内容即起跑预演，草稿未落盘也能算）/ apply（落盘后写预演结果）/ now（兜底单篇管线），
+ *   面板内 loading → 完成后就地显示关联；原「生成即跑」的 'knowledge:tasks' 订阅已删除；
  * - unload 全量清理：定时器、订阅、面板 DOM、DeepSeek 服务、link agent。
  */
 import type { App } from 'obsidian';
 import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
+import { setLinkBridge } from '../core/link-now';
 import { tryGetSettings } from '../core/settings-provider';
 import { IS_MOBILE } from './config';
 import { VectorStore } from './vector-store';
@@ -25,7 +27,7 @@ import { ReferencePanel } from './reference-panel';
 import { ChatPanel } from './chat-panel';
 import { MobilePanel } from './mobile-panel';
 import { LinkAgent } from './link-agent/pipeline';
-import { LinkAgentWatcher, startQueueConsumption, startStartupBackfill } from './link-agent/watch';
+import { LinkAgentWatcher, createLinkBridge, startQueueConsumption, startStartupBackfill } from './link-agent/watch';
 
 let appRef: App | null = null;
 let store: VectorStore | null = null;
@@ -82,9 +84,11 @@ export function ensureSecondBrain(app: App): void {
   try {
     if ((tryGetSettings() as any).linkAgentEnabled !== false) {
       linkAgent = new LinkAgent({ app, store: s });
-      // initialLoad 传入监听器：文献笔记生成即跑链路先等索引装载完成（issue 298）
+      // initialLoad 传入监听器：显式建链通道先等索引装载完成（issue 309）
       linkWatcher = new LinkAgentWatcher(app, linkAgent, s.initialLoad);
       linkWatcher.start();
+      // issue 309：知识盒录入面板的自动双链通道（预演 / 落盘后写入 / 兜底单篇建链）
+      setLinkBridge(createLinkBridge(linkAgent, s.initialLoad));
       // 域初始化发现队列非空且 embedding 可达 → 自动消费，无需询问；
       // 队列消费之后串行执行存量补链（ticket 115：关联范围内缺 related 的存量笔记批量建链，
       // 补链目标排除队列内待重试条目避免重复算力；启动路径全程静默——批次进度/完成 toast 均不弹，
@@ -126,6 +130,7 @@ export function unloadSecondBrain(): void {
   linkWatcher?.destroy();
   linkWatcher = null;
   linkAgent = null;
+  setLinkBridge(null);
   store = null;
   appRef = null;
   initialized = false;

@@ -7,8 +7,10 @@
  * - 存量补链（ticket 115）：目标清单扫描 / 可达门 / 队列排除 / 串行锁；命令 bz-secondbrain-link-all 守卫分支；
  * - 正文大改自动重跑（v1.4/ticket 119）：成功建链后记基准哈希；修改过滤（实质变化才重跑）；
  *   修改监听聚合与删除清基准；自写 related 不触发循环重跑。
- * - 文献笔记生成即跑（issue 298）：knowledge:tasks 的 converted / term-generated → 立即 processNoteNow
- *   （不等防抖、不受范围限制）；载荷守卫、装载等待、索引白名单一次性引导、即时反馈通知。
+ * - 自动双链通道（issue 309）：createLinkBridge 三段能力——preview（草稿未落盘也能算关联，
+ *   生成后立刻跑）/ apply（落盘后写预演结果）/ now（兜底单篇管线）；装载等待、索引白名单
+ *   一次性引导、返回值透传。原「knowledge:tasks 订阅生成即跑」（issue 298）已删除。
+ * - processNoteNow 自身的通知门（issue 298 保留）：新建 N / 入队 / 失败三态 toast（通道调用传 silent）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -24,6 +26,7 @@ import {
   LinkAgentWatcher,
   __resetLinkAgentGuideForTests,
   __setLinkCleanDebounceMsForTests,
+  createLinkBridge,
   startQueueConsumption,
   startStartupBackfill,
 } from '../../src/secondbrain/link-agent/watch';
@@ -1035,9 +1038,9 @@ describe('命令 bz-secondbrain-link-all 守卫分支', () => {
   });
 });
 
-// ---------------- 文献笔记生成即跑（issue 298） ----------------
+// ---------------- 自动双链通道（issue 309） ----------------
 
-describe('文献笔记生成即跑：knowledge:tasks → 立即建链', () => {
+describe('自动双链通道 createLinkBridge：知识盒录入面板的三段能力', () => {
   beforeEach(() => {
     resetObsidianMocks();
     clearDomainEvents();
@@ -1049,140 +1052,83 @@ describe('文献笔记生成即跑：knowledge:tasks → 立即建链', () => {
     setSettingsSaver(() => Promise.resolve());
   });
 
-  function makeWatcher(vault: MockVault, initialLoad?: Promise<void> | null) {
+  function makeBridge(initialLoad?: Promise<void> | null) {
+    const vault = new MockVault();
     const app = mockAppWithVault(vault);
     setApp(app as any);
     const agent = {
-      processBatch: vi.fn(async () => ({ total: 0, processed: 0, created: 0, queued: 0, failed: 0 })),
       processNoteNow: vi.fn(async () => ({ status: 'done', created: 1 })),
-      cleanDeadLinks: vi.fn(async () => 0),
-      filterChangedForRelink: vi.fn(async (paths: string[]) => paths),
-      dropLinkBaseline: vi.fn(async () => {}),
+      previewLinks: vi.fn(async () => ({ status: 'done', picks: [{ path: '卡片盒/A.md', title: 'A' }] })),
+      applyLinks: vi.fn(async () => ({ status: 'done', created: 2 })),
     } as any;
-    const watcher = new LinkAgentWatcher(app as any, agent, initialLoad);
-    return { vault, agent, watcher };
+    const bridge = createLinkBridge(agent, initialLoad);
+    return { vault, app, agent, bridge };
   }
 
-  it('converted 事件立即触发：不等防抖窗口，且不受 linkAgentScopes 范围限制', async () => {
-    const { vault, agent, watcher } = makeWatcher(new MockVault());
-    vault.files.set('文献盒/新文献.md', 'x');
-    // 范围只含卡片盒：生成即跑属显式意图，照常触发（不等 30ms 防抖窗口）
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '卡片盒' }));
-    watcher.start();
-    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/新文献.md' });
-    await new Promise((r) => setTimeout(r, 5));
-    expect(agent.processNoteNow).toHaveBeenCalledWith('文献盒/新文献.md');
-    expect(agent.processBatch).not.toHaveBeenCalled(); // 走即时入口而非批次
-    watcher.destroy();
-  });
-
-  it('term-generated 携带 notePath 触发；旧载荷（缺 notePath）忽略', async () => {
-    const { vault, agent, watcher } = makeWatcher(new MockVault());
-    vault.files.set('文献盒/习得性无助.md', 'x');
-    watcher.start();
-    emitDomainEvent('knowledge:tasks', { kind: 'term-generated', term: '习得性无助', title: '习得性无助' });
-    await new Promise((r) => setTimeout(r, 5));
-    expect(agent.processNoteNow).not.toHaveBeenCalled();
-    emitDomainEvent('knowledge:tasks', {
-      kind: 'term-generated',
-      term: '习得性无助',
-      title: '习得性无助',
-      notePath: '文献盒/习得性无助.md',
-    });
-    await new Promise((r) => setTimeout(r, 5));
-    expect(agent.processNoteNow).toHaveBeenCalledWith('文献盒/习得性无助.md');
-    watcher.destroy();
-  });
-
-  it('failed 事件与文件不存在：一律不触发（notePath 可能是失败任务的旧值）', async () => {
-    const { vault, agent, watcher } = makeWatcher(new MockVault());
-    vault.files.set('文献盒/在.md', 'x');
-    watcher.start();
-    emitDomainEvent('knowledge:tasks', { kind: 'failed', url: 'BV1xx411c7mD', notePath: '文献盒/在.md' });
-    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/没了.md' });
-    emitDomainEvent('knowledge:tasks', { kind: 'added', url: 'BV1xx411c7mD', notePath: '文献盒/在.md' });
-    await new Promise((r) => setTimeout(r, 5));
-    expect(agent.processNoteNow).not.toHaveBeenCalled();
-    watcher.destroy();
-  });
-
-  it('linkAgentEnabled=false：start 不订阅，生成事件无任何反应', async () => {
-    const { vault, agent, watcher } = makeWatcher(new MockVault());
-    vault.files.set('文献盒/X.md', 'x');
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentEnabled: false }));
-    watcher.start();
-    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
-    await new Promise((r) => setTimeout(r, 5));
-    expect(agent.processNoteNow).not.toHaveBeenCalled();
-    watcher.destroy();
-  });
-
-  it('先等索引装载完成再跑（避免与 load 并发读半装载索引）', async () => {
+  it('preview：等索引装载完成后调 previewLinks（草稿未落盘也能算关联）', async () => {
     let release!: () => void;
     const gate = new Promise<void>((r) => {
       release = r;
     });
-    const { vault, agent, watcher } = makeWatcher(new MockVault(), gate);
-    vault.files.set('文献盒/X.md', 'x');
-    watcher.start();
-    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
+    const { agent, bridge } = makeBridge(gate);
+    const p = bridge.preview('一段草稿正文', '草稿标题');
     await new Promise((r) => setTimeout(r, 5));
-    expect(agent.processNoteNow).not.toHaveBeenCalled(); // 装载未完成
+    expect(agent.previewLinks).not.toHaveBeenCalled(); // 装载未完成
     release();
-    await new Promise((r) => setTimeout(r, 5));
-    expect(agent.processNoteNow).toHaveBeenCalledWith('文献盒/X.md');
-    watcher.destroy();
+    const out = await p;
+    expect(agent.previewLinks).toHaveBeenCalledWith('一段草稿正文', '草稿标题');
+    expect(out).toEqual({ status: 'done', picks: [{ path: '卡片盒/A.md', title: 'A' }] });
   });
 
-  it('装载失败不阻断：initialLoad reject 后照常跑管线', async () => {
-    const { vault, agent, watcher } = makeWatcher(new MockVault(), Promise.reject(new Error('装载失败')));
+  it('apply：落盘后把预演结果写进 related（返回写入条数）', async () => {
+    const { vault, agent, bridge } = makeBridge(null);
+    vault.files.set('文献盒/新文献.md', 'x');
+    const out = await bridge.apply('文献盒/新文献.md', ['卡片盒/A.md', '卡片盒/B.md']);
+    expect(agent.applyLinks).toHaveBeenCalledWith('文献盒/新文献.md', ['卡片盒/A.md', '卡片盒/B.md']);
+    expect(out).toEqual({ status: 'done', created: 2 });
+  });
+
+  it('now：兜底单篇管线，通知静默（进度由面板呈现）', async () => {
+    const { vault, agent, bridge } = makeBridge(null);
+    vault.files.set('文献盒/新文献.md', 'x');
+    await bridge.now('文献盒/新文献.md');
+    expect(agent.processNoteNow).toHaveBeenCalledWith('文献盒/新文献.md', { silent: true });
+  });
+
+  it('装载失败不阻断：照常跑（preview / now）', async () => {
+    const { vault, agent, bridge } = makeBridge(Promise.reject(new Error('装载失败')));
     vault.files.set('文献盒/X.md', 'x');
-    watcher.start();
-    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
-    await new Promise((r) => setTimeout(r, 5));
-    expect(agent.processNoteNow).toHaveBeenCalledWith('文献盒/X.md');
-    watcher.destroy();
+    await bridge.now('文献盒/X.md');
+    await bridge.preview('正文');
+    expect(agent.processNoteNow).toHaveBeenCalled();
+    expect(agent.previewLinks).toHaveBeenCalledWith('正文', undefined);
   });
 
-  it('索引白名单未覆盖该目录：一次性提示；已覆盖则零提示', async () => {
-    const miss = makeWatcher(new MockVault());
-    miss.vault.files.set('文献盒/X.md', 'x');
+  it('空路径：直接返回零新建且不触发管线（防误调）', async () => {
+    const { agent, bridge } = makeBridge(null);
+    expect(await bridge.now('   ')).toEqual({ status: 'done', created: 0 });
+    expect(await bridge.apply('  ', ['卡片盒/A.md'])).toEqual({ status: 'done', created: 0 });
+    expect(agent.processNoteNow).not.toHaveBeenCalled();
+    expect(agent.applyLinks).not.toHaveBeenCalled();
+  });
+
+  it('索引白名单未覆盖该目录：一次性提示；已覆盖则零提示（落盘类调用）', async () => {
     setSettingsProvider(() => ({ ...baseSettings(), secondBrainAllowPaths: '卡片盒' }));
-    miss.watcher.start();
-    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
-    await new Promise((r) => setTimeout(r, 5));
+    const miss = makeBridge(null);
+    miss.vault.files.set('文献盒/X.md', 'x');
+    await miss.bridge.now('文献盒/X.md');
     const hinted = () => getNoticeMessages().filter((m) => m.includes('文献笔记目录'));
     expect(hinted().length).toBe(1);
     expect(hinted()[0]).toContain('文献盒');
-    // 会话级一次性：第二个事件不再提示
-    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
-    await new Promise((r) => setTimeout(r, 5));
+    await miss.bridge.now('文献盒/X.md');
     expect(hinted().length).toBe(1);
-    miss.watcher.destroy();
 
-    // 白名单已含文献盒：零提示
-    clearDomainEvents();
-    clearNotices(); // 前一段的提示不串到本段（notices 累积）
-    const hit = makeWatcher(new MockVault());
+    clearNotices();
+    const hit = makeBridge(null);
     hit.vault.files.set('文献盒/X.md', 'x');
     setSettingsProvider(() => ({ ...baseSettings(), secondBrainAllowPaths: '文献盒' }));
-    hit.watcher.start();
-    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
-    await new Promise((r) => setTimeout(r, 5));
+    await hit.bridge.now('文献盒/X.md');
     expect(hinted().length).toBe(0);
-    hit.watcher.destroy();
-  });
-
-  it('白名单为空（默认）同样提示：不索引任何目录即候选检索必然落空', async () => {
-    const { vault, agent, watcher } = makeWatcher(new MockVault());
-    vault.files.set('文献盒/X.md', 'x');
-    setSettingsProvider(() => ({ ...baseSettings(), secondBrainAllowPaths: '' }));
-    watcher.start();
-    emitDomainEvent('knowledge:tasks', { kind: 'converted', url: 'BV1xx411c7mD', notePath: '文献盒/X.md' });
-    await new Promise((r) => setTimeout(r, 5));
-    expect(getNoticeMessages().some((m) => m.includes('文献笔记目录'))).toBe(true);
-    expect(agent.processNoteNow).toHaveBeenCalled(); // 提示不阻断管线
-    watcher.destroy();
   });
 });
 

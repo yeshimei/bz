@@ -17,13 +17,109 @@
  */
 import { FakeApp, encodeSeedFile } from './fake/fake-obsidian';
 import { setApp } from '../../src/core/app';
+import { setLinkBridge } from '../../src/core/link-now';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { setAISettingsProvider } from '../../src/core/ai';
 import { KnowledgeData } from '../../src/knowledge/data';
 import { UIManager } from '../../src/knowledge/ui';
 
-const SEED_MARKER = 'bz-sim:__kb_seed_v1';
+const SEED_MARKER = 'bz-sim:__kb_seed_v2';
 const key = (path: string): string => `bz-sim:${path}`;
+
+/**
+ * 影像任务种子（issue 310）：让「处理」与「历史」两个界面在评审壳里有真数据——
+ * 一行处理中（带步骤文案）/ 两行待处理（一行信息齐备、一行只有链接走打开面板自动重抓）/
+ * 一行失败（带原因）+ 三条已归档（两条同链接 = 历史分组）。
+ * 状态口径同 ADR-0067：主列表只含 待处理 / 处理中 / 失败，成功即归档进历史。
+ */
+const SEED_TASKS: Array<Record<string, unknown>> = [
+  {
+    id: 'kb-demo-processing',
+    url: 'https://www.bilibili.com/video/BV1awbg6XELn/',
+    start: '00:00:00', end: '00:12:00',
+    status: 'processing',
+    reason: 'AI 生成文献笔记中',
+    remark: null,
+    notePath: null, videoPath: null,
+    created: '2026-09-13 21:40:12', processedAt: null,
+    title: 'CBTI：告别失眠的认知行为疗法', uploader: '演示 UP 主',
+    archived: false, archivedAt: null,
+    quality: '1080', page: 1, duration: 720,
+  },
+  {
+    id: 'kb-demo-pending-info',
+    url: 'https://www.bilibili.com/video/BV1mepartial01/',
+    start: '00:01:30', end: '00:04:00',
+    status: 'pending',
+    reason: null, remark: '睡前看的那期',
+    notePath: null, videoPath: null,
+    created: '2026-09-13 22:05:40', processedAt: null,
+    title: '（演示）多 P 视频 · 只看中集片段', uploader: '演示 UP 主',
+    archived: false, archivedAt: null,
+    quality: '720', page: 2, duration: 600,
+  },
+  {
+    id: 'kb-demo-pending-bare',
+    url: 'https://www.bilibili.com/video/BV1nometadata/',
+    start: null, end: null,
+    status: 'pending',
+    reason: null, remark: null,
+    notePath: null, videoPath: null,
+    created: '2026-09-14 08:02:11', processedAt: null,
+    title: null, uploader: null,
+    archived: false, archivedAt: null,
+    quality: null, page: null, duration: null,
+  },
+  {
+    id: 'kb-demo-failed',
+    url: 'https://www.bilibili.com/video/BV1failcase01/',
+    start: null, end: null,
+    status: 'failed',
+    reason: 'yt-dlp 下载失败：HTTP Error 403 Forbidden（示例原因，评审壳不真跑管线）',
+    remark: null,
+    notePath: null, videoPath: null,
+    created: '2026-09-13 19:20:00', processedAt: '2026-09-13 19:21:35',
+    title: '（演示）一条失败的任务', uploader: '演示 UP 主',
+    archived: false, archivedAt: null,
+    quality: null, page: null, duration: 1800,
+  },
+  {
+    id: 'kb-demo-arch-1',
+    url: 'https://www.bilibili.com/video/BV1awbg6XELn/',
+    start: null, end: null,
+    status: 'success',
+    reason: null, remark: null,
+    notePath: '文献盒/CBTI.md', videoPath: 'CONFIG/APPENDIX/CBTI演示.mp4',
+    created: '2026-09-04 07:40:00', processedAt: '2026-09-04 07:47:38',
+    title: 'CBTI：告别失眠的认知行为疗法', uploader: '演示 UP 主',
+    archived: true, archivedAt: '2026-09-04 07:47:38',
+    quality: 'highest', page: null, duration: 1800,
+  },
+  {
+    id: 'kb-demo-arch-2',
+    url: 'https://www.bilibili.com/video/BV1awbg6XELn/',
+    start: '00:12:00', end: '00:20:00',
+    status: 'success',
+    reason: null, remark: null,
+    notePath: '文献盒/CBTI 睡眠限制一节.md', videoPath: 'CONFIG/APPENDIX/CBTI-切片.mp4',
+    created: '2026-09-10 22:30:00', processedAt: '2026-09-10 22:41:07',
+    title: 'CBTI：告别失眠的认知行为疗法', uploader: '演示 UP 主',
+    archived: true, archivedAt: '2026-09-10 22:41:07',
+    quality: '1080', page: null, duration: 1800,
+  },
+  {
+    id: 'kb-demo-arch-3',
+    url: 'https://www.bilibili.com/video/BV1sleepless9/',
+    start: null, end: null,
+    status: 'success',
+    reason: null, remark: null,
+    notePath: '文献盒/昼夜节律.md', videoPath: 'CONFIG/APPENDIX/昼夜节律.mp4',
+    created: '2026-09-03 21:00:00', processedAt: '2026-09-03 21:10:00',
+    title: '（演示）昼夜节律与睡眠', uploader: '另一演示 UP 主',
+    archived: true, archivedAt: '2026-09-03 21:10:00',
+    quality: '720', page: null, duration: 900,
+  },
+];
 
 /** 种子笔记（文献目录词典行 + 关联互链 + 来源样例；ctime 控制部壹排序，新→旧） */
 const SEED_NOTES: Array<{ path: string; ctime: number; content: string }> = [
@@ -154,11 +250,30 @@ date: "2026-09-01 12:00:00"
   },
 ];
 
+/**
+ * 任务种子兜底（每次都查，不受种子标记保护）：任务文件必须是**数组**——
+ * 数据层按数组 `.map()`/`.push()` 消费，形状不对时保存会报 `data.push is not a function`
+ * （旧版种子写成 `{version,tasks:[]}` 对象即此下场）。是数组就原样留（含用户新加的任务）。
+ */
+function ensureTaskSeedShape(): void {
+  const taskKey = key('CONFIG/STORAGE/knowledge.json');
+  const raw = localStorage.getItem(taskKey);
+  if (raw) {
+    try {
+      const env = JSON.parse(raw) as { c?: string };
+      const inner = JSON.parse(String(env?.c ?? ''));
+      if (Array.isArray(inner)) return;
+    } catch { /* 落到重写 */ }
+  }
+  localStorage.setItem(taskKey, encodeSeedFile(JSON.stringify(SEED_TASKS)));
+}
+
 /** 首启种子（有标记不覆盖——评审壳内落卡/录入的编辑可持久；壳「重置」清 bz-sim:* 后重播） */
 function seedVault(): void {
+  ensureTaskSeedShape();
   if (localStorage.getItem(SEED_MARKER)) return;
   for (const n of SEED_NOTES) localStorage.setItem(key(n.path), encodeSeedFile(n.content, { ctime: n.ctime, mtime: n.ctime }));
-  localStorage.setItem(key('CONFIG/STORAGE/knowledge.json'), encodeSeedFile(JSON.stringify({ version: '1.0', tasks: [] })));
+  localStorage.setItem(key('CONFIG/STORAGE/knowledge.json'), encodeSeedFile(JSON.stringify(SEED_TASKS)));
   localStorage.setItem(SEED_MARKER, new Date().toISOString());
 }
 
@@ -193,6 +308,151 @@ function injectSettings(): void {
 
 let ui: UIManager | null = null;
 
+// ---------------- 图版演示图（issue 312） ----------------
+
+/**
+ * 给图版面板的拖入区补一个壳专用的「载入示例图」按钮：评审时不必真去截图/找图，
+ * 点一下就有一张图进来（**可连点**，第 2、3 张换配色与题字，用于看多图）。按钮走的是
+ * **真实 drop 事件**（DataTransfer + File）——与手动拖入完全同一条产品路径，不是给面板开后门。
+ */
+function injectDemoPlate(): void {
+  const zone = document.getElementById('lit-image-drop');
+  if (!zone || zone.querySelector('[data-demo-plate]')) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.setAttribute('data-demo-plate', '1');
+  btn.textContent = '载入示例图';
+  btn.title = '点一下加一张（可连点，演示多图）';
+  btn.style.cssText =
+    'border:1px solid var(--line);background:none;color:var(--ink3);font:11px/1.6 inherit;padding:2px 10px;border-radius:999px;cursor:pointer;';
+  // 拦掉冒泡：拖入区的 click 会打开文件选择器，示例图按钮不该顺手弹一次
+  btn.addEventListener('click', (e) => { e.stopPropagation(); void loadDemoPlate(); });
+  zone.appendChild(btn);
+}
+
+/** 示例图画布配色（多图时逐张换天色，缩略图并排也分得清） */
+const DEMO_PLATE_PALETTES: Array<[string, string, string, string, string]> = [
+  ['#2b3a55', '#8f6a63', '#d9b18a', '#f2d9a8', '落日与山脊'],
+  ['#2f4a44', '#7d9c8b', '#cfe0cf', '#f4f0d8', '晨雾与松林'],
+  ['#1b2338', '#3d4a72', '#7f8fbf', '#e8ecf7', '夜色与湖面'],
+];
+
+/** 画一张示例图并转成 PNG 文件（序号只影响配色与题字） */
+async function makeDemoPlateFile(seed: number): Promise<File | null> {
+  const [sky0, sky1, sky2, sun, title] = DEMO_PLATE_PALETTES[seed % DEMO_PLATE_PALETTES.length];
+  const canvas = document.createElement('canvas');
+  canvas.width = 240;
+  canvas.height = 160;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  // 一张有明显内容可读的画：天幕渐变 + 落日 + 两重山脊 + 题字
+  const sky = ctx.createLinearGradient(0, 0, 0, 160);
+  sky.addColorStop(0, sky0);
+  sky.addColorStop(0.55, sky1);
+  sky.addColorStop(1, sky2);
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, 240, 160);
+  ctx.fillStyle = sun;
+  ctx.beginPath();
+  ctx.arc(168, 78, 22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#3c4a63';
+  ctx.beginPath();
+  ctx.moveTo(0, 160);
+  ctx.lineTo(58, 96);
+  ctx.lineTo(116, 160);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#28324a';
+  ctx.beginPath();
+  ctx.moveTo(84, 160);
+  ctx.lineTo(160, 108);
+  ctx.lineTo(240, 160);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  ctx.font = '13px "Microsoft YaHei", sans-serif';
+  ctx.fillText(`示例图版 ${seed + 1} · ${title}`, 12, 150);
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/png'));
+  if (!blob) return null;
+  return new File([blob], `demo-plate-${seed + 1}.png`, { type: 'image/png' });
+}
+
+/**
+ * 造示例图并经**真实 drop 事件**送进图版面板（自检也直接调它）。
+ * count > 1 时一次塞多张（issue 313：评审「一组图合成一篇」的多图流程）。
+ */
+export async function loadDemoPlate(count = 1): Promise<void> {
+  bootKnowledgeSim();
+  const zone = document.getElementById('lit-image-drop');
+  if (!zone) return;
+  const dt = new DataTransfer();
+  for (let i = 0; i < Math.max(1, count); i++) {
+    const file = await makeDemoPlateFile(i);
+    if (file) dt.items.add(file);
+  }
+  if (!dt.items.length) return;
+  zone.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+}
+
+/** 演示级自动双链候选（issue 309）：评审壳没有第二大脑 / 向量服务，用种子卡片充当
+ *  「近邻检索 → AI 裁判」的结果，让属性区关联行的 loading → 完成显示在原型里真实可见。 */
+const fakeLinkCandidates: Array<{ path: string; title: string }> = [
+  { path: '卡片盒/多重记忆系统.md', title: '多重记忆系统' },
+  { path: '卡片盒/认知行为疗法.md', title: '认知行为疗法' },
+  { path: '卡片盒/间隔重复.md', title: '间隔重复' },
+];
+
+/**
+ * 注入演示级自动双链通道（issue 309）：评审壳没有第二大脑 / 向量服务，用种子卡片充当
+ * 「近邻检索 → AI 裁判」的结果，让「生成内容即起跑 → 属性区关联行分析中… → 完成后直接显示」
+ * 这套过程在原型里真实可见。
+ * - preview：延迟 ~2.6s（模拟管线耗时，看得清 loading）；返回固定 1~2 张种子卡片；
+ * - apply：确认写入落盘后把预演结果写进 frontmatter.related（真写入，故预览「关联」区也读得到）；
+ * - now：兜底路径（等价于直接建链）。
+ */
+function injectFakeLinkNow(app: FakeApp): void {
+  /** 剥掉 head 里既有的 related 段（键行 + 其列表项），避免二次写入产生重复键 */
+  const stripRelated = (head: string): string => {
+    const out: string[] = [];
+    let skipping = false;
+    for (const line of head.split('\n')) {
+      if (/^related:/.test(line)) { skipping = true; continue; }
+      if (skipping) {
+        if (/^\s+-\s/.test(line) || line.trim() === '') continue;
+        skipping = false;
+      }
+      if (line.trim() !== '') out.push(line);
+    }
+    return out.join('\n');
+  };
+  const candidates = (): Array<{ path: string; title: string }> =>
+    fakeLinkCandidates.filter((c) => !!app.vault.getAbstractFileByPath(c.path)).slice(0, 2);
+  const writeLinks = async (path: string, picks: Array<{ path: string; title: string }>): Promise<number> => {
+    const file = app.vault.getAbstractFileByPath(path);
+    if (!file || !picks.length) return 0;
+    const text = await app.vault.read(file);
+    const lines = picks.map((c) => `  - "[[${c.path}|${c.title}]]"`).join('\n');
+    const next = /^---\n[\s\S]*?\n---/.test(text)
+      ? text.replace(/^---\n([\s\S]*?)\n---/, (_m, head: string) => `---\n${stripRelated(head)}\nrelated:\n${lines}\n---`)
+      : `---\nrelated:\n${lines}\n---\n\n${text}`;
+    if (next !== text) await app.vault.modify(file, next);
+    return picks.length;
+  };
+  setLinkBridge({
+    preview: async () => {
+      await new Promise((r) => setTimeout(r, 2600));
+      return { status: 'done' as const, picks: candidates() };
+    },
+    apply: async (path: string, targetPaths: string[]) => {
+      const map = new Map(fakeLinkCandidates.map((c) => [c.path, c.title]));
+      const picks = targetPaths.map((p) => ({ path: p, title: map.get(p) || p }));
+      return { status: 'done' as const, created: await writeLinks(path, picks) };
+    },
+    now: async (path: string) => ({ status: 'done' as const, created: await writeLinks(path, candidates()) }),
+  });
+}
+
 /** 壳入口：一次性启动（种子 + 注入 + 构造真 UIManager；幂等） */
 export function bootKnowledgeSim(): void {
   const g = window as unknown as { __bzKbSimBooted?: boolean };
@@ -202,8 +462,10 @@ export function bootKnowledgeSim(): void {
   const app = new FakeApp();
   setApp(app as never);
   injectSettings();
+  injectFakeLinkNow(app);
   KnowledgeData.init({ storagePath: 'CONFIG/STORAGE' });
   ui = new UIManager(app as never);
+  injectDemoPlate();
 }
 
 /** 等价插件 bz-knowledge-open：打开主面板（部壹文献） */
@@ -218,10 +480,34 @@ export function openTerm(term?: string): void {
   ui?.showTermEntry(term);
 }
 
-/** 等价插件「视频录入 · 任务」按钮：打开视频任务面板 */
-export function openVideo(): void {
+/** 等价「段落」入口（issue 309）：打开段落录入弹层（同壳三态之一） */
+export function openPassage(): void {
   bootKnowledgeSim();
-  ui?.showVideoEntry();
+  ui?.showPassageEntry();
+}
+
+/** 等价主窗「图版」按钮（issue 312）：打开图版录入弹层（同壳三态的第三态） */
+export function openImage(): void {
+  bootKnowledgeSim();
+  ui?.showImageEntry();
+}
+
+/** 等价主窗「影像」按钮 / 聚合讯「保存至文献」：打开影像**录入**界面（issue 310 起直达录入） */
+export function openVideo(prefill?: { url: string; title?: string | null; uploader?: string | null }): void {
+  bootKnowledgeSim();
+  ui?.showVideoEntry(prefill);
+}
+
+/** 等价录入界面头行「处理」按钮：打开影像处理队列面板 */
+export function openVideoTasks(): void {
+  bootKnowledgeSim();
+  ui?.showVideoTasks();
+}
+
+/** 等价处理面板头行「历史」按钮：切到面板内的历史视图（2026-09-14 复核起同面板切换，非独立弹窗） */
+export function openVideoHistory(): void {
+  bootKnowledgeSim();
+  ui?.showHistory();
 }
 
 /** 壳约定别名（prototype-view 调 BZW_knowledge.boot()） */

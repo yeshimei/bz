@@ -295,7 +295,8 @@
       t('正文只出现一份（单源渲染，无预填第二份）', count(text, MARK) === 1);
       t('mp4 嵌入语法不再以字面残留（渲染器吃掉）', count(text, '![') === 0);
       t('视频嵌入在位（fake 渲染器 demo 片段映射）', !!body.querySelector('video[src*="demo.mp4"]'));
-      // ---- ADR-0133：链接解析式录入（解析按钮 → 信息区/分P 下拉/双把手范围条，view 罐头含 pages/duration） ----
+      // ---- ADR-0133 + issue 310：链接解析式录入（影像入口**直达录入界面**；未解析只出链接行，
+      //      解析跑完才展开信息区/分P/范围/清晰度/保存；保存后落到处理队列） ----
       const ovl = dtDoc().querySelector('.bz-kb-ovl');
       if (ovl) ovl.click(); // 关预览弹层
       await wait(() => {
@@ -303,10 +304,14 @@
         if (!entry) return null;
         entry.click();
         return entry;
-      }, '视频录入入口');
-      const addBtn = await wait(() => dtDoc().querySelector('#lit-btn-video-add'), '视频添加按钮');
-      addBtn.click();
+      }, '影像录入入口');
       const urlInput = await wait(() => dtDoc().querySelector('#lit-add-url'), '录入 URL 输入框');
+      const addPopup = dtDoc().querySelector('#knowledge-add-popup');
+      t('影像入口直达录入界面（不经处理队列）', addPopup.style.display === 'flex' && dtDoc().querySelector('#knowledge-video-popup').style.display === 'none');
+      t('录入界面与名词/段落同壳（词典皮标题栏 + 行内标签行）', !!addPopup.querySelector('.bz-lit-sheet-title') && !!addPopup.querySelector('.bz-lit-term-row .bz-lit-term-meta-k'));
+      t('未解析：下半表单未展开（只见链接行）', dtDoc().querySelector('#lit-add-more').style.display === 'none');
+      const saveBtn = dtDoc().querySelector('#lit-add-save');
+      t('未解析：保存钮不可见（随下半表单收起）', !saveBtn || saveBtn.offsetParent === null || dtDoc().querySelector('#lit-add-more').style.display === 'none');
       urlInput.value = 'https://www.bilibili.com/video/BV1awbg6XELn/?spm_id_from=333.1391.0.0&vd_source=15205b8944be621a94fb0bf0efdb81f3';
       dtDoc().querySelector('#lit-add-resolve').click();
       const infoTitle = await wait(() => {
@@ -314,6 +319,7 @@
         return el && (el.textContent || '').indexOf('BV1awbg6XELn') >= 0 ? el : null;
       }, '信息区标题（解析回包）');
       t('URL 净化写回（追踪参数剥除）', urlInput.value === 'https://www.bilibili.com/video/BV1awbg6XELn/');
+      t('解析完成 → 下半表单展开', dtDoc().querySelector('#lit-add-more').style.display !== 'none');
       t('信息区标题（view API 罐头）', (infoTitle.textContent || '').indexOf('BV1awbg6XELn') >= 0);
       t('信息区 UP主', (dtDoc().querySelector('#lit-add-iuploader').textContent || '') === '演示 UP 主');
       t('多 P 下拉就位（3 项）', dtDoc().querySelectorAll('#lit-add-page option').length === 3);
@@ -326,6 +332,99 @@
         return dtDoc().querySelector('#lit-add-end').value === '10:00';
       })());
       t('解析全程无 toast', !dtDoc().querySelector('.bz-notice'));
+      // 保存 → 落到处理队列（种子 4 行 + 新增 1 行）
+      dtDoc().querySelector('#lit-add-save').click();
+      const cards = await wait(() => {
+        const list = dtDoc().querySelectorAll('#knowledge-video-list .bz-kb-taskcard');
+        return list.length >= 5 ? list : null;
+      }, '保存后处理队列卡片');
+      t('保存 → 落到处理队列（新任务进列）', cards.length >= 5);
+      t('处理界面与主窗同款词典头（题字「影 像」）', (dtDoc().querySelector('#knowledge-video-popup .bz-kb-title')?.textContent || '').replace(/\s/g, '') === '影像');
+      // issue 310：图标化（四个钮都是 lucide svg，正文无 emoji 字形）
+      t('处理面板图标钮全为 lucide svg（新增/批量/历史/返回）', dtDoc().querySelectorAll('#knowledge-video-popup .bz-lit-head-btns button svg').length === 4);
+      t('处理界面正文无 emoji 字形', !/[➕▶⏹⏳⌛⏱🕘📄]/.test(dtDoc().querySelector('#knowledge-video-popup').textContent || ''));
+      // 2026-09-14 复核：头部左右分工（左列计数、右列图标组）+ 面板比主窗小一号（不完全遮挡）
+      const vhead = dtDoc().querySelector('#knowledge-video-popup .bz-kb-head');
+      t('处理面板头：左列计数 / 右列图标组', vhead.children[0].id === 'lit-video-counts' && vhead.children[vhead.children.length - 1].className === 'bz-lit-head-btns');
+      const vRect = dtDoc().querySelector('#knowledge-video-popup').getBoundingClientRect();
+      const mRect = dtDoc().querySelector('#knowledge-popup').getBoundingClientRect();
+      t('处理面板比主窗小一号，主窗仍露在外面', vRect.width < mRect.width && vRect.height < mRect.height && vRect.left > mRect.left && vRect.top > mRect.top);
+      // 录入界面不再放出口钮（issue 310 复核）
+      dtDoc().querySelector('#lit-btn-video-add').click();
+      await wait(() => (dtDoc().querySelector('#knowledge-add-popup').style.display === 'flex' ? true : null), '再次打开录入界面');
+      t('录入界面标题栏无出口钮', !dtDoc().querySelector('#knowledge-add-popup .bz-lit-head-btns'));
+      // 2026-09-14 复核：点「历史」在同一面板内切视图（不再另开弹窗）
+      dtDoc().querySelector('#knowledge-add-mask').click();
+      dtDoc().querySelector('#lit-btn-video-history').click();
+      const groups = await wait(() => {
+        const g = dtDoc().querySelectorAll('#knowledge-video-list .bz-kb-hgroup');
+        return g.length >= 2 ? g : null;
+      }, '历史分组');
+      t('历史：同面板内打开（无独立历史窗）', !dtDoc().querySelector('#knowledge-history-popup') && dtDoc().querySelector('#knowledge-video-popup').style.display === 'flex');
+      t('历史视图：题字「历 史」+ 计数「共 3 条」+ 归档分组（同链接一组）', (dtDoc().querySelector('#knowledge-video-popup .bz-kb-title')?.textContent || '').replace(/\s/g, '') === '历史' && (dtDoc().querySelector('#lit-video-counts')?.textContent || '').indexOf('共 3 条') >= 0 && groups.length === 2);
+      t('历史视图：图标组只留返回箭头', dtDoc().querySelector('#lit-btn-video-add').style.display === 'none' && dtDoc().querySelector('#lit-btn-video-back').style.display !== 'none');
+      dtDoc().querySelector('#lit-btn-video-back').click();
+      const backCards = await wait(() => {
+        const list = dtDoc().querySelectorAll('#knowledge-video-list .bz-kb-taskcard');
+        return list.length >= 5 ? list : null;
+      }, '返回处理队列（任务卡片回列表）');
+      t('返回箭头 → 回到处理队列（题字复位 + 列表复原）', backCards.length >= 5 && (dtDoc().querySelector('#knowledge-video-popup .bz-kb-title')?.textContent || '').replace(/\s/g, '') === '影像');
+      // ---- issue 312/313：图版（第四类录入；拖入 / 粘贴**多张**图 → AI 读图成文 → 图片与笔记一并落盘） ----
+      dtDoc().querySelector('#knowledge-video-mask').click(); // 收起影像处理面板，回主窗
+      const entryBtns = dtDoc().querySelectorAll('.bz-kb-entrybtn');
+      t('部壹入口四枚，图版排在影像之前（2026-09-14 复核改序）', entryBtns.length === 4 && (entryBtns[2].textContent || '').trim() === '图版' && (entryBtns[3].textContent || '').trim() === '影像');
+      entryBtns[2].click();
+      await wait(() => (dtDoc().querySelector('#knowledge-term-popup').style.display === 'flex' ? true : null), '图版录入面板');
+      const tPopup = dtDoc().querySelector('#knowledge-term-popup');
+      t('图版面板：同壳第三态（data-lit-entry=image + 题字「图版」）', tPopup.getAttribute('data-lit-entry') === 'image' && tPopup.querySelector('#lit-entry-title').textContent === '图版');
+      t('图版面板：拖入区就位，来源行与名词/段落同构', !!tPopup.querySelector('#lit-image-drop') && !!tPopup.querySelector('#lit-term-src'));
+      tPopup.querySelector('#lit-term-generate').click(); // 没图就点生成 → 应被拒
+      // 注意：通知会堆叠且先前步骤的 toast 可能仍在（querySelector 取到的是最旧那条）→ 全量扫
+      const notices = Array.prototype.map.call(dtDoc().querySelectorAll('.bz-notice'), (n) => n.textContent || '');
+      t('未放图点生成 → 提示「请先拖入或粘贴图片」', notices.some((s) => s.indexOf('请先拖入或粘贴图片') >= 0));
+      // 多图（issue 313）：一次 drop 两张（壳专用画布图，走**真实 drop 事件**，与手动拖入同一条路径）
+      await dtDoc().defaultView.BZW_knowledge.loadDemoPlate(2);
+      const thumbs = await wait(() => {
+        const list = tPopup.querySelectorAll('#lit-image-grid .bz-lit-drop-item img');
+        return list.length === 2 && (list[0].getAttribute('src') || '').indexOf('data:image/png') === 0 ? list : null;
+      }, '两张示例图进面板（缩略图网格就位）');
+      t('多图：两张示例图经一次 drop 进面板（网格两张 + hint 报数）', thumbs.length === 2 && (tPopup.querySelector('#lit-image-hint')?.textContent || '').indexOf('已放 2 张') >= 0);
+      t('多图：每张缩略图带一个 ✕ 移除钮', tPopup.querySelectorAll('#lit-image-grid .bz-lit-drop-item [data-lit-image-remove]').length === 2);
+      // 删掉第 1 张 → 只剩 1 张；再补一张 → 回到 2 张（增删都作废草稿，重跑读图）
+      tPopup.querySelector('[data-lit-image-remove="0"]').click();
+      await new Promise((r) => setTimeout(r, 200));
+      t('多图：点 ✕ 删掉一张后只剩 1 张', tPopup.querySelectorAll('#lit-image-grid .bz-lit-drop-item img').length === 1);
+      await dtDoc().defaultView.BZW_knowledge.loadDemoPlate(1);
+      await wait(() => {
+        const list = tPopup.querySelectorAll('#lit-image-grid .bz-lit-drop-item img');
+        return list.length === 2 ? list : null;
+      }, '再补一张回到两张');
+      tPopup.querySelector('#lit-term-generate').click();
+      const imgTitle = await wait(() => {
+        const el = tPopup.querySelector('#lit-entry-meta-title');
+        return el && (el.value || '').indexOf('演示图题') >= 0 ? el : null;
+      }, '读图结果（自动图题）');
+      t('读图出自动图题（属性首行可改）', (imgTitle.value || '').indexOf('（演示图题）') === 0);
+      // 罐头回包里带着「实际收到的图片数量」→ 证明图片确实经多模态走到了 AI 层
+      t('多图确实发到 AI 层（回包报出收到 2 张）', (tPopup.querySelector('#lit-term-content')?.textContent || '').indexOf('已收到图片（2 张') >= 0);
+      const relDone = await wait(() => {
+        const el = tPopup.querySelector('#lit-term-meta-rel');
+        const txt = (el?.textContent || '').trim();
+        return txt && txt.indexOf('分析中') < 0 && txt !== '—' ? el : null;
+      }, '图版关联行完成');
+      t('图版关联行：生成即起跑 → 完成后就地显示卡名', !!relDone);
+      tPopup.querySelector('#lit-term-save').click();
+      const imgRow = await wait(() => {
+        const rows = dtDoc().querySelectorAll('.bz-kb-lexrow');
+        const hit = Array.prototype.find.call(rows, (r) => (r.querySelector('.bz-kb-pos')?.textContent || '').indexOf('图') >= 0);
+        return hit || null;
+      }, '图版笔记进部壹列表');
+      t('确认写入 → 关窗 + 图版笔记进列表（类型标签「图 版」）', tPopup.style.display === 'none' && !!imgRow);
+      imgRow.click();
+      const pvBody = await wait(() => dtDoc().querySelector('#bz-kb-preview-body'), '图版预览正文');
+      await new Promise((r) => setTimeout(r, 400)); // 等异步 Markdown 渲染落定
+      t('图版笔记正文：两张图片嵌入都渲染成真 <img>（图片本体已落盘可预览）', pvBody.querySelectorAll('img.bz-kb-embed-img').length === 2);
+      t('图版笔记正文顺序：文字在上、图片在下（issue 313）', pvBody.innerHTML.indexOf('演示读图') >= 0 && pvBody.innerHTML.indexOf('演示读图') < pvBody.innerHTML.indexOf('bz-kb-embed-img'));
     } catch (e) {
       t('自检流程异常：' + ((e && e.message) || e), false);
     }

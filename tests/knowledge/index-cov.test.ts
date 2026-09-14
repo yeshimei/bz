@@ -3,7 +3,7 @@
  * openKnowledgeAddTask（聚合讯「保存至文献」入口，ticket 134/ADR-0068）、
  * openTermNote（bz-knowledge-note-term 命令：MarkdownView 类右值 + 选区预填，ticket 138 §1.1）、
  * 与 unloadKnowledge 卸载。
- * ticket 136 改版：入口打开的是「视频录入」面板（任务队列 + 叠开添加弹窗），id 前缀改 literature-/lit-；
+ * ticket 136 改版：入口打开的是「影像」录入界面（issue 310 起直达录入，不再先落处理队列），id 前缀改 literature-/lit-；
  * （原 bz-bili-open 网页版启动器用例已随网页版移除，ticket 136）
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
@@ -30,7 +30,7 @@ describe('openKnowledgeAddTask（聚合讯「保存至文献」入口，ticket 1
     document.body.innerHTML = '';
   });
 
-  it('ensure 幂等初始化 → 视频录入面板叠开添加弹窗，预填链接 + 只读信息区标题/UP主（新增模式无编辑标签）', async () => {
+  it('ensure 幂等初始化 → 直达影像录入界面，预填链接 + 只读信息区标题/UP主（新增模式无编辑标签）', async () => {
     resetObsidianMocks();
     const vault = new MockVault();
     const app = mockAppWithVault(vault) as any;
@@ -40,11 +40,11 @@ describe('openKnowledgeAddTask（聚合讯「保存至文献」入口，ticket 1
 
     openKnowledgeAddTask(app, { url: 'https://www.bilibili.com/video/BV1xx411c7mD', title: '某视频', uploader: 'UP主甲' });
 
-    await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
+    // issue 310：聚合讯入口与主窗「影像」一致——直达录入界面，不再先落处理队列
     await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('none');
     expect((document.getElementById('lit-add-url') as HTMLInputElement).value).toBe('https://www.bilibili.com/video/BV1xx411c7mD');
-    // 预填标题/UP 落只读信息区（ADR-0133：标题与 UP 主输入框退役）
-    expect(document.getElementById('lit-add-info')!.style.display).not.toBe('none');
+    // 预填标题/UP 落只读信息行（ADR-0133：标题与 UP 主输入框退役）
     expect(document.getElementById('lit-add-ititle')!.textContent).toBe('某视频');
     expect(document.getElementById('lit-add-iuploader')!.textContent).toBe('UP主甲');
     // ticket 143：无标题，新增模式无编辑标签
@@ -52,7 +52,7 @@ describe('openKnowledgeAddTask（聚合讯「保存至文献」入口，ticket 1
     expect(document.getElementById('lit-add-mode')!.style.display).toBe('none');
   });
 
-  it('无 prefill：仅打开视频录入面板，不叠开添加弹窗', async () => {
+  it('无 prefill：打开影像录入界面（空表单，未解析）', async () => {
     resetObsidianMocks();
     const vault = new MockVault();
     const app = mockAppWithVault(vault) as any;
@@ -62,8 +62,10 @@ describe('openKnowledgeAddTask（聚合讯「保存至文献」入口，ticket 1
 
     openKnowledgeAddTask(app);
 
-    await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
-    expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('none');
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('none');
+    expect((document.getElementById('lit-add-url') as HTMLInputElement).value).toBe('');
+    expect(document.getElementById('lit-add-more')!.style.display).toBe('none'); // 未解析：只见链接行
   });
 });
 

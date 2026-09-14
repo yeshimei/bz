@@ -80,6 +80,20 @@ describe('notifyLiteratureAction（文献盒动作观察，knowledge:tasks 域�
     expect(last.metadata.extras).toEqual({ term: '习得性无助', title: '习得性无助' });
   });
 
+  it('图版生成成功（image-generated）→ 行为流条目，name=标题（issue 312）', async () => {
+    const { app } = makeApp();
+    await ensureSmartCat(app);
+    emitDomainEvent('knowledge:tasks', { kind: 'image-generated', title: '窗外的树', notePath: '文献盒/窗外的树.md' });
+    await settle();
+    const beh: any[] = __getSmartcatInternals().data.memory.behaviorStream;
+    const last = beh[beh.length - 1];
+    expect(last.source).toBe('knowledge');
+    expect(last.type).toBe('image-generated');
+    expect(last.metadata.entityType).toBe('knowledge');
+    expect(last.metadata.name).toBe('窗外的树');
+    expect(last.metadata.extras).toEqual({ title: '窗外的树', notePath: '文献盒/窗外的树.md' });
+  });
+
   it('添加/编辑/失败事件不进行为流（ticket 136 只收 converted/term-generated）', async () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
