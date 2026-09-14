@@ -581,6 +581,7 @@ export function mergeSuggestions(tree: MountTree, run: SuggestRun): MountTree {
       suggested: true,
       attached: false,
       body: null,
+      parent: tree.root,
     });
     ghostEdges.push({ from: tree.root, to: id, suggested: true });
   }

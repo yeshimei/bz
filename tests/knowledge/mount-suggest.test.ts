@@ -344,8 +344,8 @@ describe('mergeSuggestions（幽灵节点 + 虚线边）与 clearSuggestCache', 
       root: 'r',
       direction: 'downstream',
       nodes: [
-        { id: 'r', path: `${CARDBOX}/A.md`, title: 'A', kind: 'card', source: 'self', depth: 0, anchor: null, missing: false, suggested: false, attached: false, body: '正文' },
-        { id: 'n1', path: '文献盒/目标一.md', title: '目标一', kind: 'para', source: 'link', depth: 1, anchor: null, missing: false, suggested: false, attached: false, body: null },
+        { id: 'r', path: `${CARDBOX}/A.md`, title: 'A', kind: 'card', source: 'self', depth: 0, anchor: null, missing: false, suggested: false, attached: false, body: '正文', parent: null },
+        { id: 'n1', path: '文献盒/目标一.md', title: '目标一', kind: 'para', source: 'link', depth: 1, anchor: null, missing: false, suggested: false, attached: false, body: null, parent: 'r' },
       ],
       edges: [{ from: 'r', to: 'n1', suggested: false }],
     };
