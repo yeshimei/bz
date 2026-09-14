@@ -6,7 +6,19 @@
  * - 缓存：`CONFIG/STORAGE/mount-suggest.json`（storageFile + jsonFileStore + enqueueFileTask 写事务），
  *   按主卡路径分片，`bodyHash`（core/utils hash31）逐卡失效——改哪张卡只重跑那张；坏文件按既有降级语义；
  * - 否决：点过「取消」的「锚点 → 目标」永久不再推（生成阶段先过滤）；「固定」也留档并过滤（不重复推）；
- * - 降级：移动端 / 无可用向量索引 / 无可用 AI 通道 → 不跑建议、**不自动建索引**，返回空候选与非 fresh 状态。
+ * - 降级：移动端 / 无可用向量索引 / 无可用 AI 通道 → 不跑建议、**不自动建索引**，返回空候选与非 fresh 状态；
+ *   裁判回答不可用（空串 / 认不出一条）→ `no-answer`，同样**不落缓存**（瞬时故障不污染以后的白板）。
+ *
+ * 2026-09-14 实机排障（用户报「打开白板没有任何 AI 建议」）：三处叠加，全是「答案拿到手却被丢掉」——
+ * ① 模型按 prompt 里的标签形状作答（`"anchor":"a1","target":"t2"`），旧解析只认整数，逐条丢弃；
+ * ② 带思考的模型（DeepSeek-V4.1-Flash）实测把 2048 / 8192 的预算全烧在 reasoning 上
+ *    （finish_reason=length、content 空串）→ **不关思考**（保持默认档），把 `max_tokens` 提到 128K
+ *    让思考跑完再出答案（`reasoning_effort: max` 试过，单卡 120s 太慢，用户否掉）；
+ * ③ `response_format: json_object`（旧代码走 `createAI().json()`）与「输出数组」的 prompt 相互打架，
+ *    实测模型会吐 `{"type": "json_object"}` 空壳、或把数组包进外层对象
+ *    （`{"type":"json_object","content":"[…]"}`）→ 改用 prompt 纯文本通道，解析仍先脱壳再取数组。
+ * 三处叠加后「空结果」还会被当成 fresh 落缓存（bodyHash 有效 ⇒ 以后每次都是「已缓存建议」零候选），
+ * 故本轮把无回答单列为 `no-answer` 不落缓存，并加 `SUGGEST_CACHE_VERSION` 让旧口径的缓存片自动失效。
  *
  * 依赖：core（ai / storage / mobile / settings-provider / utils）+ 第二大脑只读检索桥
  * （`secondbrain/readonly` 的叶子模块；**勿**值导入 `secondbrain/index`——会把整条 UI 栈拖进构建闭包）；
@@ -54,12 +66,22 @@ export const SUGGEST_TOPK = 8;
 /** 每个锚点最多送审的候选目标数 / 送审候选总数上限（裁判 prompt 体积闸） */
 export const SUGGEST_PER_ANCHOR_CANDIDATES = 3;
 export const SUGGEST_MAX_CANDIDATES = 24;
-/** 裁判输出 token 上限（纯 JSON 数组，够 24 条理由） */
-const SUGGEST_JUDGE_MAX_TOKENS = 2048;
+/**
+ * 裁判调用参数（2026-09-14 用户拍板）：**思考不关**（默认档，不额外加压——`reasoning_effort: max` 实测单卡 120s，太久），
+ * 但预算给满：DeepSeek-V4.1 官方口径——上下文 1M、max_tokens 上限 384K（393216），思考模式默认输出预算 64K。
+ * 这里给 128K：裁判答案本身只有 ~3K token，余量全留给思考。（旧值 2048 实测被 reasoning 吃光：
+ * finish_reason=length、content 空串 ⇒ 白板零建议。）
+ */
+export const SUGGEST_JUDGE_MAX_TOKENS = 131072;
 /** 一句话理由长度上限（超长截断，防 UI 溢出） */
 const REASON_MAX_CHARS = 80;
 /** 建议缓存文件名（域内单文件，ADR-0139 §3） */
 export const SUGGEST_CACHE_FILE = 'mount-suggest.json';
+/**
+ * 缓存格式版本：解析/取数口径变更即 +1，旧片（无 `ver` 或版本不符）一律按失效处理——
+ * 免去「用户手动清缓存」，也让 2026-09-14 那批「正确答案被解析丢掉」的零候选片自动重跑。
+ */
+export const SUGGEST_CACHE_VERSION = 2;
 /** 锚点文本最短长度之外还需含文字/数字（纯符号、纯标点、表格分隔线一律不是锚点） */
 const HAS_MEANING_RE = /[\p{L}\p{N}]/u;
 /** 正文双链（含嵌入；解析口径最小化——只用于「目标已是双链」过滤，完整解析归 mount-data 314） */
@@ -73,8 +95,8 @@ function nextIsBoundary(text: string, i: number): boolean {
   return /\s/.test(text[i]);
 }
 
-/** markdown 行首标记（标题井号 / 列表符 / 有序序号 / 引用符）——不算锚点内容 */
-const LEADING_MARK_RE = /^(?:#{1,6}\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
+/** markdown 行首标记（标题井号 / 列表符 / 有序序号 / 引用符 / callout 标记 `[!quote]`）——不算锚点内容 */
+const LEADING_MARK_RE = /^(?:#{1,6}\s*|\[![^\]]*\]\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
 /** `[[目标|别名#小节^块]]` → 可读显示文本（别名 > 小节 > 目标名） */
 function wikiDisplay(inner: string): string {
   const afterAlias = inner.includes('|') ? inner.slice(inner.lastIndexOf('|') + 1) : inner;
@@ -122,7 +144,8 @@ export function splitAnchors(body: string): AnchorRef[] {
     const ch = i === text.length ? '' : text[i];
     let boundary = i === text.length;
     if (!boundary) {
-      if (ch === '\n' || ch === '。' || ch === '！' || ch === '？' || ch === '；' || ch === '…' || ch === '!') boundary = true;
+      if (ch === '\n' || ch === '。' || ch === '！' || ch === '？' || ch === '；' || ch === '…') boundary = true;
+      else if (ch === '!') boundary = text[i - 1] !== '[' && text[i + 1] !== '['; // callout `[!quote]` 与嵌入 `![[…]]` 里的 `!` 不是句读
       else if (ch === '.' || ch === '?' || ch === ';') boundary = nextIsBoundary(text, i + 1);
     }
     if (!boundary) continue;
@@ -240,14 +263,23 @@ export async function clearSuggestCache(): Promise<void> {
     for (const [path, entry] of Object.entries(file.cards || {})) {
       const kept = (entry?.suggestions || []).filter((s) => s && s.state !== 'pending');
       if (kept.length === 0) delete file.cards[path];
-      else file.cards[path] = { bodyHash: '', generatedAt: 0, suggestions: kept };
+      else file.cards[path] = { bodyHash: '', generatedAt: 0, suggestions: kept, ver: SUGGEST_CACHE_VERSION };
     }
   });
 }
 
-/** 缓存是否对该卡有效：`bodyHash` 相等（空 hash = 永远无效，供无生成记录的留档片使用） */
+/**
+ * 缓存是否对该卡有效：版本相符（`SUGGEST_CACHE_VERSION`）**且** `bodyHash` 相等
+ * （空 hash = 永远无效，供无生成记录的留档片使用）。
+ */
 export function cacheValid(entry: SuggestCardCache | undefined, bodyHash: string): boolean {
-  return !!entry && !!bodyHash && typeof entry.bodyHash === 'string' && entry.bodyHash === bodyHash;
+  return (
+    !!entry &&
+    entry.ver === SUGGEST_CACHE_VERSION &&
+    !!bodyHash &&
+    typeof entry.bodyHash === 'string' &&
+    entry.bodyHash === bodyHash
+  );
 }
 
 /** 全库否决键集合（跨卡生效：同一「锚点 → 目标」被取消过就永不再推——ADR-0139 §3） */
@@ -273,7 +305,7 @@ function persistCardCache(cardPath: string, bodyHash: string, generatedAt: numbe
     const kept = (prev?.suggestions || []).filter((s) => s && s.state !== 'pending');
     const keptKeys = new Set(kept.map(suggestKey));
     const fresh = suggestions.filter((s) => !keptKeys.has(suggestKey(s)));
-    file.cards[cardPath] = { bodyHash, generatedAt, suggestions: [...kept, ...fresh] };
+    file.cards[cardPath] = { bodyHash, generatedAt, suggestions: [...kept, ...fresh], ver: SUGGEST_CACHE_VERSION };
   }).then(() => undefined);
 }
 
@@ -297,7 +329,7 @@ export async function markSuggestion(
     const entry: SuggestCardCache =
       prev && typeof prev === 'object' && Array.isArray(prev.suggestions)
         ? prev
-        : { bodyHash: '', generatedAt: now, suggestions: [] };
+        : { bodyHash: '', generatedAt: now, suggestions: [], ver: SUGGEST_CACHE_VERSION };
     const idx = entry.suggestions.findIndex((it) => suggestKey(it) === key);
     const marked: MountSuggestion = { ...(idx >= 0 ? entry.suggestions[idx] : s), state };
     if (idx >= 0) entry.suggestions[idx] = marked;
@@ -383,29 +415,80 @@ interface JudgePick {
   reason: string;
 }
 
-/** 裁判输出解析（剥代码围栏 + 提取数组；坏输出按 [] 处理，不抛错打断白板） */
-function parseJudgePicks(raw: string): JudgePick[] {
-  const cleaned = String(raw || '').replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
-  let arr: unknown = null;
+/** 裁判回答的解析结果：`found` 区分「模型确实说了没有关联（`[]`）」与「回答根本没法用」 */
+export interface JudgeParse {
+  /** 从回答里挖出了 JSON 数组（`[]` 也算挖到） */
+  found: boolean;
+  /** 数组条数（0 = 空数组） */
+  count: number;
+  /** 结构可用的条目（编号认得出、分数是数） */
+  picks: JudgePick[];
+}
+
+/** 编号取数：`1` / `"1"` / `"a1"` / `"t2"` / `"#3"` 一律取其中的整数（模型常照 prompt 的 a1/t2 标签作答） */
+function pickIndex(v: unknown): number {
+  if (typeof v === 'number') return Number.isInteger(v) ? v : NaN;
+  const m = String(v ?? '').trim().match(/\d+/);
+  return m ? parseInt(m[0], 10) : NaN;
+}
+
+/**
+ * 从任意形状里挖出数组：裸数组 / 外层对象的数组字段（含 `content` 里再套一段 JSON 字符串的
+ * `response_format` 包壳：`{"type":"json_object","content":"[{…}]"}`）。挖不到返回 null。
+ */
+function digArray(value: unknown, depth = 0): unknown[] | null {
+  if (Array.isArray(value)) return value;
+  if (depth > 3) return null;
+  if (typeof value === 'string') {
+    const s = value.trim();
+    if (!s.startsWith('[') && !s.startsWith('{')) return null;
+    try {
+      return digArray(JSON.parse(s), depth + 1);
+    } catch {
+      return null;
+    }
+  }
+  if (!value || typeof value !== 'object') return null;
+  const obj = value as Record<string, unknown>;
+  for (const key of ['suggestions', 'picks', 'result', 'items', 'data', 'list', 'content']) {
+    const hit = digArray(obj[key], depth + 1);
+    if (hit) return hit;
+  }
+  for (const v of Object.values(obj)) {
+    const hit = digArray(v, depth + 1);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/**
+ * 裁判输出解析（剥代码围栏 + 脱壳取数组 + 标签编号取整；认不出的条目逐条丢弃，不抛错打断白板）。
+ * `found=false` ⇒ 回答里根本没有数组（空串 / 散文 / 截断），调用方按 `no-answer` 降级且不落缓存。
+ */
+export function parseJudgePicks(raw: string): JudgeParse {
+  const text = String(raw ?? '').replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
+  if (!text) return { found: false, count: 0, picks: [] };
+  let value: unknown = null;
   try {
-    arr = JSON.parse(cleaned);
+    value = JSON.parse(text);
   } catch {
-    const m = cleaned.match(/\[[\s\S]*\]/);
+    const m = text.match(/\[[\s\S]*\]/); // 前后夹解释文字 → 抠出第一个数组再试
     if (m) {
       try {
-        arr = JSON.parse(m[0]);
+        value = JSON.parse(m[0]);
       } catch {
-        arr = null;
+        value = null;
       }
     }
   }
-  if (!Array.isArray(arr)) return [];
+  const arr = digArray(value);
+  if (!arr) return { found: false, count: 0, picks: [] };
   const out: JudgePick[] = [];
   for (const item of arr) {
-    const it = item as { anchor?: unknown; target?: unknown; score?: unknown; reason?: unknown } | null;
-    if (!it || typeof it !== 'object') continue;
-    const anchor = Number(it.anchor);
-    const target = Number(it.target);
+    if (!item || typeof item !== 'object') continue;
+    const it = item as { anchor?: unknown; target?: unknown; score?: unknown; reason?: unknown };
+    const anchor = pickIndex(it.anchor);
+    const target = pickIndex(it.target);
     const score = Number(it.score);
     if (!Number.isInteger(anchor) || !Number.isInteger(target) || !Number.isFinite(score)) continue;
     out.push({
@@ -415,15 +498,16 @@ function parseJudgePicks(raw: string): JudgePick[] {
       reason: String(it.reason ?? '').replace(/\s+/g, ' ').trim().slice(0, REASON_MAX_CHARS),
     });
   }
-  return out;
+  return { found: true, count: arr.length, picks: out };
 }
 
 /**
- * 生成建议：缓存命中（bodyHash 相等且非 force）→ 直接返回 cached；
+ * 生成建议：缓存命中（bodyHash 相等、版本相符且非 force）→ 直接返回 cached；
  * 未命中 → 分句 → 向量召回 → LLM 裁判 → 过滤（否决/已固定/弱关联/已存在双链）→ 落缓存。
- * 降级三分支（不跑建议、不自动建索引、不落缓存）：移动端 / 无可用向量索引 → no-index；无可用 AI 通道 → no-ai。
+ * 降级（都不跑建议、不自动建索引、**不落缓存**）：移动端 / 无可用向量索引 → no-index；无可用 AI 通道 → no-ai；
+ * 裁判回答不可用（空回答或整批认不出）→ no-answer（下次重开重试，不冒充「已缓存建议」）。
  * 设置开关关闭且非 force → 'off'（渲染层据此显示「自动建议已关闭」，不要冒充「已缓存」）；显式 force 照跑。
- * 检索或裁判失败同样按降级返回且**不落缓存**（瞬时故障不污染以后的白板）。
+ * 检索失败同样按降级返回且不落缓存（瞬时故障不污染以后的白板）。
  */
 export async function generateSuggestions(
   cardPath: string,
@@ -524,16 +608,29 @@ export async function generateSuggestions(
     return { status: 'fresh', suggestions: [], generatedAt };
   }
 
-  // ⑦ LLM 裁判（core/ai 统一通道）：一句话理由 + 关联分；失败按 no-ai 处理且不落缓存
+  // ⑦ LLM 裁判（core/ai 统一通道）：一句话理由 + 关联分。
+  //   走 **prompt 纯文本通道**，绝不用 json()：`response_format: json_object` 与「输出数组」的 prompt
+  //   相互打架，实测模型会吐 `{"type": "json_object"}` 空壳（零建议）——建链 agent 的裁判同款口径。
+  //   思考不关（默认档），预算给足 128K 让思考跑完再出答案。
   let raw = '';
   try {
-    raw = await createAI().json(buildJudgePrompt(anchors, candidates), { modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS } });
+    raw = await createAI().prompt(buildJudgePrompt(anchors, candidates), undefined, {
+      modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS },
+    });
   } catch (e) {
     console.warn('[mount-suggest] AI 裁判失败', e);
     return empty('no-ai');
   }
+  const parsed = parseJudgePicks(raw);
+  if (!parsed.found || (parsed.count > 0 && parsed.picks.length === 0)) {
+    // 空回答（思考吃光预算 / 截断）或整批认不出（形状对不上）——都不是「没有关联」，别冒充，也别落缓存
+    console.warn(
+      `[mount-suggest] 裁判回答不可用（${raw ? `${raw.length} 字` : '空'}，数组 ${parsed.count} 条）：${String(raw).slice(0, 120)}`
+    );
+    return empty('no-answer');
+  }
   const judged: MountSuggestion[] = [];
-  for (const pick of parseJudgePicks(raw)) {
+  for (const pick of parsed.picks) {
     if (pick.score < SUGGEST_MIN_SCORE) continue; // 弱关联不显示、存疑不链（ADR-0138）
     const a = anchors[pick.anchor - 1];
     const c = candidates.find((it) => it.anchorIdx === pick.anchor - 1 && it.localIdx === pick.target - 1);

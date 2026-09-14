@@ -232,6 +232,8 @@ export function mountStatusText(status: SuggestStatus): string {
       return '未建向量索引 · 只画双链';
     case 'no-ai':
       return 'AI 不可用 · 只画双链';
+    case 'no-answer':
+      return 'AI 未给出可用建议 · 只画双链（可点「重新生成」）';
     default:
       return '生成中 · 等建议齐再开';
   }
