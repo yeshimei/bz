@@ -253,7 +253,8 @@ describe('runNewsFetchRound + defaultFetchStore（集成）', () => {
     const vault = new MockVault();
     setApp(mockAppWithVault(vault));
     seedVault(vault, {});
-    const httpGet = makeHttpGet({ failZhihu: true, guokr: [{ id: 'g1', title: '果壳文', date_published: '2026-09-13T10:00:00Z' }] });
+    // 果壳样本走「最近 24 小时滚动窗口」（news-fetcher WINDOW_MS）：日期必须相对 now，写死会在第二天越窗
+    const httpGet = makeHttpGet({ failZhihu: true, guokr: [{ id: 'g1', title: '果壳文', date_published: new Date(Date.now() - 3600_000).toISOString() }] });
     const r = await runNewsFetchRound({ httpGet, store: defaultFetchStore(), now: () => Date.now() });
     expect(r.failedSources).toContain('知乎日报');
     expect(r.added).toBe(1);
