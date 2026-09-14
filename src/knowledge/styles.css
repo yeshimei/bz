@@ -1376,6 +1376,19 @@
 .bz-kb-mt-body { margin-top: 6px; }
 .bz-kb-mt-node.is-folded .bz-kb-mt-body { display: none; }
 .bz-kb-mt-body p { font-size: 13px; line-height: 1.75; color: var(--ink2); margin: 6px 0 2px; }
+/* 正文里的双链（真 Obsidian 渲染出 a.internal-link）：悬停联动这条腿由 JS 挂 data-mt-edge，
+   高亮态与悬停态同皮（原型 .lnk:hover 的底 + 线加粗在 setHover 里给） */
+.bz-kb-mt-body .internal-link {
+  color: var(--accent);
+  border-bottom: 1px dashed var(--accent);
+  border-radius: 3px;
+  padding: 1px 2px;
+  cursor: pointer;
+}
+.bz-kb-mt-body .internal-link:hover,
+.bz-kb-mt-body .internal-link.is-hot {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
 .bz-kb-mt-body :is(h1, h2, h3, h4, h5, h6) { font-size: 13.5px; color: var(--accent); margin: 8px 0 4px; }
 .bz-kb-mt-body :is(ul, ol) { margin: 4px 0 4px 18px; font-size: 13px; color: var(--ink2); }
 .bz-kb-mt-body blockquote {

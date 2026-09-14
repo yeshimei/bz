@@ -13,7 +13,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Platform } from 'obsidian';
 import BzPlugin from '../../src/main';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { clearNotices, hasNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { clearNotices, hasNotice, mockMarkdownRenderer, resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { KnowledgeData } from '../../src/knowledge/data';
@@ -87,6 +87,36 @@ function seedVault(vault: MockVault): void {
   vault.files.set('附件/视频.mp4', 'binary');
 }
 
+/** 共享 mock 的原始 render 实现（本文件内局部替换后还原） */
+const ORIGINAL_RENDER = mockMarkdownRenderer.render.getMockImplementation()!;
+
+/**
+ * 极简 markdown 替身：把 `[[目标|别名]]` 渲染成 `<a class="internal-link" data-href="目标">别名</a>`
+ * （真 Obsidian 的渲染产物同形）——「悬停双链文字」这条腿只有在真有链接元素时才验得出来。
+ */
+function renderWithLinks(md: string, el: HTMLElement): void {
+  const block = document.createElement('div');
+  const re = /\[\[([^\[\]]+?)\]\]/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(md)) !== null) {
+    if (m.index > last) block.appendChild(document.createTextNode(md.slice(last, m.index)));
+    const inner = m[1];
+    const bar = inner.indexOf('|');
+    const target = (bar >= 0 ? inner.slice(0, bar) : inner).split('#')[0].trim();
+    const label = (bar >= 0 ? inner.slice(bar + 1) : inner).trim();
+    const a = document.createElement('a');
+    a.className = 'internal-link';
+    a.setAttribute('data-href', target);
+    a.setAttribute('href', target);
+    a.textContent = label || target;
+    block.appendChild(a);
+    last = m.index + m[0].length;
+  }
+  if (last < md.length) block.appendChild(document.createTextNode(md.slice(last)));
+  el.appendChild(block);
+}
+
 function makeApp(vault: MockVault) {
   const base = mockAppWithVault(vault) as any;
   const executeCommandById = vi.fn();
@@ -106,14 +136,18 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
   let app: any;
   let executeCommandById: ReturnType<typeof vi.fn>;
   let settings: Record<string, any>;
-  let notices: string[];
+  /** 通知（正文 + 语义档；issue 319 复用 core/notice 的 success / error 档） */
+  let noticeCalls: Array<{ msg: string; type?: string }>;
   let opened: string[];
   let copied: string[];
+
+  const said = (frag: string): boolean => noticeCalls.some((n) => n.msg.includes(frag));
+  const typeOf = (frag: string): string | undefined => noticeCalls.find((n) => n.msg.includes(frag))?.type;
 
   /** 注入接缝：固定尺寸（jsdom 量不到）+ 通知 / 打开笔记 / 剪贴板全部可断言 */
   const deps = () => ({
     measure: () => ({ w: 240, h: 120 }),
-    notice: (msg: string) => notices.push(msg),
+    notice: (msg: string, type?: string) => noticeCalls.push({ msg, type }),
     openNote: (path: string) => opened.push(path),
     writeClipboard: async (text: string) => {
       copied.push(text);
@@ -122,6 +156,7 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
   const open = (path: string, opts: Record<string, any> = {}) => openMountTree(path, { deps: deps(), ...opts });
 
   const win = (): HTMLElement => document.getElementById('bz-kb-mt-window')!;
+  const loading = (): HTMLElement => document.getElementById('bz-kb-mt-loading') as HTMLElement;
   const card = (id: string): HTMLElement | null => win().querySelector<HTMLElement>(`.bz-kb-mt-node[data-mt-id="${id}"]`);
   const menuItems = (): HTMLButtonElement[] =>
     Array.from(document.querySelectorAll<HTMLButtonElement>('#bz-kb-mt-ctx [data-mt-menu]'));
@@ -129,6 +164,10 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
   const fireCtx = (el: HTMLElement | null): void => {
     expect(el).toBeTruthy();
     el!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 40 }));
+  };
+  const rootId = (): string | null => document.querySelector('.bz-kb-mt-node.is-root')?.getAttribute('data-mt-id') ?? null;
+  const clickCard = (id: string): void => {
+    card(id)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   };
 
   beforeEach(() => {
@@ -149,7 +188,7 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     };
     setSettingsProvider(() => settings as any);
     setSettingsSaver(async () => {});
-    notices = [];
+    noticeCalls = [];
     opened = [];
     copied = [];
     suggestMock.generateSuggestions.mockReset().mockResolvedValue({ status: 'cached', suggestions: [] });
@@ -160,6 +199,8 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
   afterEach(() => {
     destroyMountTree();
     (Platform as any).isMobile = false;
+    // 极简 markdown 替身只在本文件的「双链文字」用例里装，用完还原共享 mock
+    mockMarkdownRenderer.render.mockImplementation(ORIGINAL_RENDER);
     document.body.innerHTML = '';
   });
 
@@ -184,6 +225,27 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
 
     await open(ROOT);
     expect(mountTreeOpen()).toBe(true);
+  });
+
+  it('关掉再开同一张卡：不复用旧树、不留「生成中」遮罩（审查回归）', async () => {
+    await open(ROOT);
+    closeMountTree();
+    await open(ROOT);
+    expect(mountTreeOpen()).toBe(true);
+    expect(mountTreeRoot()).toBe(ROOT);
+    expect(rootId()).toBe(ROOT);
+    expect(loading().style.display).toBe('none');
+  });
+
+  it('换根途中关闭再开：抬层早退只认「同一张树」，不端出上一张卡的画布（审查回归）', async () => {
+    await open(ROOT);
+    // 换根是命令式发起（不 await）：载入在途时关闭，`st.cardPath` 已是新卡、`st.tree` 还是旧树
+    void openMountTree('卡片盒/子卡.md', { deps: deps() });
+    closeMountTree();
+    await open('卡片盒/子卡.md');
+    await vi.waitFor(() => expect(rootId()).toBe('卡片盒/子卡.md'));
+    expect(mountTreeRoot()).toBe('卡片盒/子卡.md');
+    expect(loading().style.display).toBe('none');
   });
 
   it('六类节点齐备 + 失效灰节点 + 文献吸附（正下方 8px、默认折起、不拉线）', async () => {
@@ -263,6 +325,36 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     expect(win().querySelector('.bz-kb-mt-edge.is-hot')).toBeNull();
   });
 
+  it('悬停正文双链文字：该链接 / 其连线 / 目标卡一起点亮（原型 .lnk:hover 这条腿）', async () => {
+    // 真 Obsidian 会把 [[…]] 渲染成 a.internal-link，mock 默认是纯文本 → 这里局部换成同形替身
+    mockMarkdownRenderer.render.mockImplementation(async (_app: any, md: string, el: HTMLElement) => {
+      renderWithLinks(String(md ?? ''), el);
+    });
+    await open(ROOT);
+    const link = card(ROOT)!.querySelector<HTMLAnchorElement>('a.internal-link[data-href="子卡"]');
+    expect(link).toBeTruthy();
+    const key = link!.getAttribute('data-mt-edge');
+    expect(key).toBeTruthy(); // 正文双链已回填 DOM 键
+
+    link!.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(link!.className).toContain('is-hot');
+    expect(card('卡片盒/子卡.md')!.className).toContain('is-hot');
+    expect(win().querySelector(`.bz-kb-mt-edge[data-mt-key="${key}"]`)!.getAttribute('class')).toContain('is-hot');
+
+    link!.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+    expect(link!.className).not.toContain('is-hot');
+    expect(card('卡片盒/子卡.md')!.className).not.toContain('is-hot');
+  });
+
+  it('点吸附文献（attached）：不触发血缘高亮、整图不变暗（选中态只服务面包屑 / 菜单）', async () => {
+    await open(ROOT);
+    clickCard('文献盒/主卡.md');
+    expect(win().querySelectorAll('.bz-kb-mt-node.is-dim').length).toBe(0);
+    expect(win().querySelectorAll('.bz-kb-mt-node.is-sel').length).toBe(0);
+    expect(win().querySelectorAll('.bz-kb-mt-edge.is-off').length).toBe(0);
+    expect(mountTreeRoot()).toBe(ROOT); // 选中吸附项不换根
+  });
+
   /* ==================== 右键菜单 ==================== */
 
   it('右键菜单：八项动作齐备；非建议禁用固定/取消/看理由，无同名文献禁用看文献笔记，主卡与失效节点禁用改根', async () => {
@@ -292,7 +384,8 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     expect(byAct('lit').disabled).toBe(false);
     byAct('copy').click();
     await vi.waitFor(() => expect(copied).toEqual(['[[卡片盒/主卡]]']));
-    expect(notices.some((n) => n.includes('已复制'))).toBe(true);
+    expect(said('已复制')).toBe(true);
+    expect(typeOf('已复制')).toBe('success'); // 通知语义照域内先例（ui.ts 落卡用 success）
 
     // 失效节点：打开 / 改根 / 翻向全禁用（不自动清理，等体检）
     fireCtx(card('不存在'));
@@ -336,14 +429,15 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     expect(byAct('dismiss').disabled).toBe(false);
     expect(byAct('why').disabled).toBe(false);
     byAct('why').click();
-    expect(notices.some((n) => n.includes('建议理由：两卡同讲注意力机制'))).toBe(true);
+    expect(said('建议理由：两卡同讲注意力机制')).toBe(true);
 
     // 取消：留档 dismissed + 本图移除（不再画虚线）
     fireCtx(card(ghostId));
     byAct('dismiss').click();
     await vi.waitFor(() => expect(document.querySelector('.bz-kb-mt-node.is-ghost')).toBeNull());
     expect(suggestMock.markSuggestion).toHaveBeenCalledWith(ROOT, expect.objectContaining({ target: '文献盒/建议目标.md' }), 'dismissed', expect.anything());
-    expect(notices.some((n) => n.includes('已取消建议'))).toBe(true);
+    expect(said('已取消建议')).toBe(true);
+    expect(typeOf('已取消建议')).toBe('success');
 
     // 固定：正文锚点处写 [[文献盒/建议目标]]（去 .md），frontmatter 不动；留档 fixed
     suggestMock.generateSuggestions.mockResolvedValue({
@@ -366,7 +460,28 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     expect(vault.files.get(ROOT)!).toContain('主卡正文一句话[[文献盒/建议目标]]');
     expect(vault.files.get(ROOT)!.startsWith('---\ntitle: "主卡"\n')).toBe(true);
     expect(suggestMock.markSuggestion).toHaveBeenCalledWith(ROOT, expect.objectContaining({ target: '文献盒/建议目标.md' }), 'fixed', expect.anything());
-    await vi.waitFor(() => expect(notices.some((n) => n.includes('已固定'))).toBe(true));
+    await vi.waitFor(() => expect(said('已固定')).toBe(true));
+    expect(typeOf('已固定')).toBe('success');
+    expect(said('正文写入 [[文献盒/建议目标]]')).toBe(true);
+  });
+
+  it('固定幂等：正文里已经有该双链时不谎报写入（提示只留档，且不重复插一条）', async () => {
+    vault.files.set('文献盒/建议目标.md', '建议目标的正文。');
+    suggestMock.generateSuggestions.mockResolvedValue({
+      status: 'fresh',
+      suggestions: [
+        { anchor: { from: 0, to: 8, text: '主卡正文一句话' }, target: '文献盒/建议目标.md', kind: 'card', reason: '理由', score: 0.8, state: 'pending' },
+      ],
+    });
+    await open(ROOT);
+    // 白板开着时用户自己把双链写进正文了 → 固定动作落到幂等早退分支
+    vault.files.set(ROOT, vault.files.get(ROOT)!.replace('主卡正文一句话', '主卡正文一句话 [[文献盒/建议目标]]'));
+    fireCtx(card('ai:文献盒/建议目标.md'));
+    byAct('pin').click();
+    await vi.waitFor(() => expect(said('已固定')).toBe(true));
+    expect(said('本次只留档')).toBe(true);
+    expect(said('正文写入')).toBe(false);
+    expect(vault.files.get(ROOT)!.match(/\[\[文献盒\/建议目标\]\]/g)!.length).toBe(1);
   });
 
   it('建议目标已不在库里（缓存命中的残留）→ 渲染层复核存在性，画成灰节点', async () => {
@@ -386,17 +501,27 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
 
   it('面包屑：选中卡片出「主卡 › 当前」链，点面包屑换根重开', async () => {
     await open(ROOT);
-    card('卡片盒/子卡.md')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    clickCard('卡片盒/子卡.md');
     const crumbs = (): string[] =>
       Array.from(document.querySelectorAll('#bz-kb-mt-crumbs .bz-kb-mt-crumb')).map((c) => c.textContent || '');
     expect(crumbs()).toEqual(['主卡', '子卡']);
 
     (document.querySelector('#bz-kb-mt-crumbs [data-mt-act=crumb][data-id="卡片盒/子卡.md"]') as HTMLElement).click();
-    await vi.waitFor(() =>
-      expect(document.querySelector('.bz-kb-mt-node.is-root')!.getAttribute('data-mt-id')).toBe('卡片盒/子卡.md'),
-    );
+    await vi.waitFor(() => expect(rootId()).toBe('卡片盒/子卡.md'));
     expect(mountTreeRoot()).toBe('卡片盒/子卡.md');
     expect(crumbs()).toEqual(['子卡']); // 换根后选中态清空
+  });
+
+  it('选中态下点链首面包屑（= 当前主卡）：清掉选中态，不重开（点了要有反应）', async () => {
+    await open(ROOT);
+    clickCard('卡片盒/子卡.md');
+    expect(card('卡片盒/子卡.md')!.className).toContain('is-sel');
+    const first = document.querySelector('#bz-kb-mt-crumbs [data-mt-act=crumb][data-id="卡片盒/主卡.md"]');
+    expect(first).toBeTruthy();
+    (first as HTMLElement).click();
+    expect(win().querySelectorAll('.bz-kb-mt-node.is-sel').length).toBe(0);
+    expect(win().querySelectorAll('.bz-kb-mt-node.is-dim').length).toBe(0);
+    expect(mountTreeRoot()).toBe(ROOT);
   });
 
   it('方向翻转：右键「看谁挂了我」→ 换根并翻向上游，顶栏方向常显', async () => {
@@ -507,6 +632,17 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     expect(scale()).toBeCloseTo(base, 5);
   });
 
+  it('destroyMountTree：菜单开着时卸载也清干净（不留菜单与「点外关闭」监听）', async () => {
+    await open(ROOT);
+    fireCtx(card(ROOT));
+    expect(document.getElementById('bz-kb-mt-ctx')).toBeTruthy();
+    destroyMountTree();
+    expect(document.getElementById('bz-kb-mt-ctx')).toBeNull();
+    expect(document.getElementById('bz-kb-mt-mask')).toBeNull();
+    expect(document.getElementById('bz-kb-mt-window')).toBeNull();
+    expect(mountTreeOpen()).toBe(false);
+  });
+
   /* ==================== 入口（317/319 三步可达） ==================== */
 
   it('入口：卡片列表行与卡片预览弹层各一粒「看挂载树」，都开同一张白板', async () => {
@@ -526,6 +662,7 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
       // ① 卡片列表行那粒
       (cardRow()!.querySelector('[data-kb-act=mount-tree]') as HTMLElement).click();
       await vi.waitFor(() => expect(mountTreeOpen()).toBe(true));
+      await vi.waitFor(() => expect(rootId()).toBe(ROOT)); // 载入结算完再关，别把在途载入漏给下一个用例
       expect(mountTreeRoot()).toBe(ROOT);
       closeMountTree();
 
@@ -536,6 +673,7 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
       expect(btn).toBeTruthy();
       btn.click();
       await vi.waitFor(() => expect(mountTreeOpen()).toBe(true));
+      await vi.waitFor(() => expect(rootId()).toBe(ROOT));
       expect(mountTreeRoot()).toBe(ROOT);
       expect(document.querySelector('.bz-kb-ovl')).toBeTruthy(); // 主窗与预览仍在
     } finally {
@@ -564,28 +702,34 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
       expect(refresh.icon).toBe('refresh-cw');
 
       cmd.callback();
-      await vi.waitFor(() => expect(mountTreeOpen()).toBe(true));
+      await vi.waitFor(() => expect(rootId()).toBe(ROOT)); // 渲染完成（不是只等 mask 可见）
+      await vi.waitFor(() => expect(suggestMock.generateSuggestions).toHaveBeenCalled()); // 建议链路已起跑
       expect(mountTreeRoot()).toBe(ROOT);
       closeMountTree();
 
-      // 无打开笔记：只提示、不开板
+      // 无打开笔记：只提示、不开板（先把上一步的在途链路清零，断言才是确定性的）
+      suggestMock.generateSuggestions.mockClear();
       pluginApp.workspace.getActiveFile = () => null;
       clearNotices();
       cmd.callback();
       expect(hasNotice('看挂载树：先打开一张笔记，它会作为主卡')).toBe(true);
       expect(mountTreeOpen()).toBe(false);
 
-      // 重跑建议：没开白板 → 提示
+      // 重跑建议：没开白板 → 提示（等通知落地，再看建议链路确实没被调用）
       clearNotices();
       refresh.callback();
-      expect(hasNotice('重跑挂载建议：先打开一张挂载树白板')).toBe(true);
+      await vi.waitFor(() => expect(hasNotice('重跑挂载建议：先打开一张挂载树白板')).toBe(true));
+      expect(mountTreeOpen()).toBe(false);
       expect(suggestMock.generateSuggestions).not.toHaveBeenCalled();
 
-      // 开着白板重跑 → force 重跑当前主卡
+      // 同一张卡再开一次 = 抬层（不重跑建议）；要重跑走 refresh 命令
       pluginApp.workspace.getActiveFile = () => ({ path: ROOT, extension: 'md' });
       cmd.callback();
       await vi.waitFor(() => expect(mountTreeOpen()).toBe(true));
-      suggestMock.generateSuggestions.mockClear();
+      await vi.waitFor(() => expect(rootId()).toBe(ROOT));
+      expect(suggestMock.generateSuggestions).not.toHaveBeenCalled();
+
+      // 重跑：force 重跑当前主卡
       refresh.callback();
       await vi.waitFor(() => expect(suggestMock.generateSuggestions).toHaveBeenCalledWith(ROOT, expect.anything(), { force: true }));
     } finally {
