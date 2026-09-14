@@ -1,20 +1,28 @@
 /**
- * 视频录入元信息抓取（issue 278 / ADR-0122 拍板要点 5；issue 306 / ADR-0133 改链接解析式）：
- * 「解析」按钮触发的降级链——B 站 view API（title/owner/pages/duration）→ 页面 <title> 清洗 → 失败态。
+ * 视频录入元信息抓取（issue 278 / ADR-0122 拍板要点 5；issue 306 / ADR-0133 改链接解析式；
+ * issue 307 / ADR-0134 补 b23.tv 短链解析）：
+ * 「解析」按钮触发的降级链——B 站 view API（title/owner/pages/duration）→ 页面 HTML
+ * → 页面 <title> 清洗 → 失败态。
  * 净化单源 = normalizeSourceUrl（source.ts），本模块只抓不落库；全程零 notice（调用方按结果渲染）。
  * 联网范围仅限 B 站域（bilibili.com / b23.tv）：非 B 站链接只净化（调用方/落库收口）、零请求（Q4 拍板）。
  * 清晰度档位（ADR-0133）：x/player/playurl（fnval=4048 取 dash）带设置项 cookie——实测未签名即可拿完整档位；
  * 无 cookie 时受 B 站账号级限制只给 720P 以下（采用会误导），故档位查询前置 nav 登录态校验。
  * cookie 缺 / 失效 / 接口失败 → qualities = null（调用方回落固定档位列表），全程静默。
- * 已知限制：b23.tv 老式随机码短链拿不到重定向目标（requestUrl 响应无 url 字段），只抓标题、UP主 留空——
- * 下载阶段 CLI 的 [bz-info] 会按「只补空」补齐（processor.ts 同口径）。
+ *
+ * 短链（ADR-0134）：b23.tv 分享链路的 BV 号不在 URL 里，requestUrl 响应又不暴露重定向目标——
+ * 改为从**跟随后的落地页 HTML** 取：og:url 的 BV 号 + `__INITIAL_STATE__`（桌面 videoData /
+ * 手机 video.viewInfo，字段与 view API data 同名，实测三方 title/owner/duration/pages 完全对齐）。
+ * 于是短链「标题/UP主/分P/时长」一次页面请求拿全，且 API 不可达时仍不残缺；meta.bvid 一并回传给调用方
+ * （切 P 查档位、短链写回规范链接都靠它）。
  */
 import { requestUrl } from 'obsidian';
-import { fetchPageTitle } from '../core/utils';
 import { cleanSourceTitle, isUrlLikeSourceText } from './source';
 
 /** view API 的 bvid 判据：统一 10 位（仓内另有 {8,12} 展示用与 CLI {10} 写法，本模块为唯一解析口径） */
 const BVID_RE = /BV[0-9A-Za-z]{10}/;
+
+/** 整串精确判据（页面 state 的 bvid 字段校验用；BVID_RE 是提取口径，不锚定首尾） */
+const BVID_EXACT_RE = /^BV[0-9A-Za-z]{10}$/;
 
 /** B 站域判据：只有 B 站链接联网抓取（含短链 b23.tv；子域如 space.bilibili.com 命中） */
 const BILI_HOST_RE = /(^|\.)(bilibili\.com|b23\.tv)$/i;
@@ -50,6 +58,11 @@ export interface VideoMeta {
   duration?: number;
   /** 分 P 列表（view API data.pages；单 P 视频也会有一项） */
   pages?: VideoPage[];
+  /**
+   * BV 号（ADR-0134：短链场景由页面 og:url / state 补出，调用方凭它查档位、写回规范链接）。
+   * 抓取失败或页面无 BV 时缺省。
+   */
+  bvid?: string;
 }
 
 /** 一次解析的全量产物（ADR-0133：meta + 实测档位） */
@@ -86,56 +99,140 @@ function posInt(v: unknown): number {
   return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
 }
 
+/**
+ * 视频数据体（view API data / 桌面页 __INITIAL_STATE__.videoData / 手机页 __INITIAL_STATE__.video.viewInfo）
+ * → VideoMeta；三处字段同名，故净化单源在这里。title/uploader/pages 全空 → null（调用方继续降级）。
+ */
+function metaFromVideoData(d: any): VideoMeta | null {
+  if (!d || typeof d !== 'object') return null;
+  const meta: VideoMeta = {};
+  const title = typeof d.title === 'string' ? d.title.trim() : '';
+  const ownerName = d.owner && typeof d.owner.name === 'string' ? d.owner.name.trim() : '';
+  const bvid = typeof d.bvid === 'string' && BVID_EXACT_RE.test(d.bvid.trim()) ? d.bvid.trim() : '';
+  if (title) meta.title = title;
+  if (ownerName) meta.uploader = ownerName;
+  if (bvid) meta.bvid = bvid;
+  const duration = posInt(d.duration);
+  if (duration) meta.duration = duration;
+  let pages: VideoPage[] = [];
+  if (Array.isArray(d.pages)) {
+    d.pages.forEach((p: any, i: number) => {
+      const cid = posInt(p && p.cid);
+      if (!cid) return;
+      pages.push({
+        page: posInt(p.page) || i + 1,
+        part: typeof p.part === 'string' ? p.part.trim() : '',
+        duration: posInt(p.duration) || duration,
+        cid,
+      });
+    });
+  }
+  if (pages.length) meta.pages = pages;
+  return meta.title || meta.uploader || meta.pages ? meta : null;
+}
+
+/** page state 里的视频数据体：桌面 videoData / 手机 video.viewInfo（ADR-0134 实测同口径）；无 → null */
+function videoDataFromState(state: unknown): any {
+  const s = state as any;
+  if (!s || typeof s !== 'object') return null;
+  if (s.videoData && typeof s.videoData === 'object') return s.videoData;
+  const v = s.video;
+  if (v && typeof v === 'object' && v.viewInfo && typeof v.viewInfo === 'object') return v.viewInfo;
+  return null;
+}
+
+/**
+ * `__INITIAL_STATE__` JSON 片段抽取：页面把大 JSON 直接内联在脚本里、后面紧跟别的语句，
+ * 非贪婪正则会截到第一个 `}` 就断——改用平衡括号扫描（字符串/转义感知）；解析失败 → null。
+ */
+function extractInitialState(html: string): unknown | null {
+  const i = html.indexOf('__INITIAL_STATE__');
+  if (i < 0) return null;
+  const start = html.indexOf('{', i);
+  if (start < 0) return null;
+  let depth = 0;
+  let end = -1;
+  let inStr = false;
+  let esc = false;
+  for (let k = start; k < html.length; k++) {
+    const ch = html[k];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === '\\') esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) { end = k + 1; break; }
+    }
+  }
+  if (end < 0) return null;
+  try { return JSON.parse(html.slice(start, end)); } catch { return null; }
+}
+
+/** 页面 HTML → bvid：og:url 优先（分享短链跟随后的落地页带），退 state 里的 "bvid" 字段；无 → null */
+export function parseBvidFromHtml(html: string): string | null {
+  const og = /og:url["']?\s+content=["']([^"']+)["']/i.exec(html);
+  if (og) {
+    const m = og[1].match(BVID_RE);
+    if (m) return m[0];
+  }
+  const st = /"bvid"\s*:\s*"(BV[0-9A-Za-z]{10})"/.exec(html);
+  return st ? st[1] : null;
+}
+
 /** B 站 view API：10s 超时（Promise.race，范式随 clipbook fetchRssFeedTitle）；非 2xx/code!==0/异常 → null */
 async function fetchFromViewApi(bvid: string): Promise<VideoMeta | null> {
   try {
     const json = parseJson(await withTimeout(requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: 'GET' }), VIEW_TIMEOUT_MS));
     if (!json || json.code !== 0 || !json.data) return null;
-    const d = json.data;
-    const title = typeof d.title === 'string' ? d.title.trim() : '';
-    const ownerName = d.owner && typeof d.owner.name === 'string' ? d.owner.name.trim() : '';
-    const meta: VideoMeta = {};
-    if (title) meta.title = title;
-    if (ownerName) meta.uploader = ownerName;
-    const duration = posInt(d.duration);
-    if (duration) meta.duration = duration;
-    let pages: VideoPage[] = [];
-    if (Array.isArray(d.pages)) {
-      d.pages.forEach((p: any, i: number) => {
-        const cid = posInt(p && p.cid);
-        if (!cid) return;
-        pages.push({
-          page: posInt(p.page) || i + 1,
-          part: typeof p.part === 'string' ? p.part.trim() : '',
-          duration: posInt(p.duration) || duration,
-          cid,
-        });
-      });
-    }
-    if (pages.length) meta.pages = pages;
-    return meta.title || meta.uploader || meta.pages ? meta : null;
+    return metaFromVideoData(json.data);
   } catch {
     return null;
   }
 }
 
-/** 页面标题兜底（B 站页面——view API 失败的 video 链接、无 BV 字样的 B 站短链/主页——共用）：fetchPageTitle + 剥站点尾巴；拿不到 → null */
-async function fetchFromPageTitle(url: string): Promise<VideoMeta | null> {
+/** 页面抓取的请求头：桌面 UA 才稳定拿到带 __INITIAL_STATE__ 的 SSR 页（无 UA 时 B 站可能回拦截页） */
+const PAGE_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+  Referer: 'https://www.bilibili.com/',
+};
+
+/**
+ * B 站页面抓取（一次请求，10s 超时）：bvid（og:url / state）+ meta
+ * （`__INITIAL_STATE__` 优先，退化到 <title> 清洗；两者皆无 → meta null，bvid 仍回传）。
+ * 页面完全不可达 → null（调用方按既有降级链收尾）。
+ */
+async function fetchFromPage(url: string): Promise<{ bvid: string | null; meta: VideoMeta | null } | null> {
+  let html = '';
   try {
-    const raw = await fetchPageTitle(url);
-    const title = raw ? cleanSourceTitle(raw) : '';
-    return title ? { title } : null;
+    const resp: any = await withTimeout(requestUrl({ url, method: 'GET', headers: { ...PAGE_HEADERS } }), VIEW_TIMEOUT_MS);
+    if (!resp || resp.status < 200 || resp.status >= 300) return null;
+    html = String(resp.text ?? '');
   } catch {
     return null;
   }
+  if (!html) return null;
+  const bvid = parseBvidFromHtml(html);
+  const viaState = metaFromVideoData(videoDataFromState(extractInitialState(html)));
+  if (viaState) return { bvid: bvid || viaState.bvid || null, meta: viaState };
+  const t = /<title[^>]*>([^<]*)<\/title>/i.exec(html);
+  const title = t && t[1] ? cleanSourceTitle(t[1].trim()) : '';
+  if (title) return { bvid, meta: bvid ? { title, bvid } : { title } };
+  return { bvid, meta: null };
 }
 
 /**
  * 输入 → 元信息（静默降级，联网范围仅限 B 站域）：
- * - B 站 video 链接 / 裸 BV 号 → view API，失败（含超时/风控）→ 页面标题兜底（仅输入本身是 B 站 http(s) 链接时有页面可抓，裸 BV 号到顶）；
- * - B 站域 URL 但无 BV 字样（b23.tv 短链、space 主页）→ 只走标题兜底，uploader 留空；
+ * - B 站 video 链接 / 裸 BV 号 → view API，失败（含超时/风控）→ 页面（state 优先，退化标题）；
+ * - B 站域 URL 但无 BV 字样（b23.tv 分享短链、space 主页）→ 抓页面拿 bvid（og:url/state）→ 再走 view API，
+ *   API 不可用则直接用页面 state 的 title/uploader/pages/duration（ADR-0134）；
  * - 非 B 站 http(s) URL → null 零请求（只净化，净化在调用方/落库收口）；
  * - 非 URL 文本 → null，零网络请求。
+ * 已知的 bvid 一律回填到 meta.bvid（调用方据此查档位 / 写回规范链接）。
  */
 export async function fetchVideoMeta(input: string): Promise<VideoMeta | null> {
   const text = String(input ?? '').trim();
@@ -143,13 +240,24 @@ export async function fetchVideoMeta(input: string): Promise<VideoMeta | null> {
   const bvid = parseBvid(text);
   if (bvid) {
     const viaApi = await fetchFromViewApi(bvid);
-    if (viaApi) return viaApi;
-    return isBiliUrl(text) ? await fetchFromPageTitle(text) : null;
+    if (viaApi) return { ...viaApi, bvid: viaApi.bvid || bvid };
+    if (!isBiliUrl(text)) return null; // 裸 BV 号：无页面可抓
+    const page = await fetchFromPage(text);
+    if (!page) return null;
+    if (!page.meta) return null;
+    return { ...page.meta, bvid: page.meta.bvid || page.bvid || bvid };
   }
   if (!isUrlLikeSourceText(text)) return null; // 非 URL 文本：不联网
   const url = /^https?:\/\//i.test(text) ? text : `https://${text}`;
   if (!isBiliUrl(url)) return null; // 非 B 站链接：只净化零请求（Q4 拍板）
-  return await fetchFromPageTitle(url);
+  const page = await fetchFromPage(url);
+  if (!page) return null;
+  if (page.bvid) {
+    const viaApi = await fetchFromViewApi(page.bvid);
+    if (viaApi) return { ...viaApi, bvid: viaApi.bvid || page.bvid };
+  }
+  if (!page.meta) return null;
+  return page.bvid && !page.meta.bvid ? { ...page.meta, bvid: page.bvid } : page.meta;
 }
 
 /**
@@ -208,13 +316,13 @@ export async function fetchCheckedQualities(bvid: string, cid: number, cookie: s
 /**
  * 一次解析（ADR-0133 弹窗「解析」按钮的完整链路）：meta（三级降级）+ 实测档位（可选）。
  * - meta 为 null → 整体 null（调用方进失败态）；
- * - 档位仅在「有 bvid + 有 cookie + 登录态有效 + 有该 P 的 cid」时查询，其余情况 qualities = null（静默）；
+ * - 档位仅在「有 bvid（含短链从页面补出的）+ 有 cookie + 登录态有效 + 有该 P 的 cid」时查询，其余情况 qualities = null（静默）；
  * - pageIndex：用第几个分 P 的 cid 查档位（0 起；缺省第 1 P）——切 P 时调用方走 fetchCheckedQualities 单独重查。
  */
 export async function resolveVideo(input: string, cookie: string, pageIndex = 0): Promise<ResolvedVideo | null> {
   const meta = await fetchVideoMeta(input);
   if (!meta) return null;
-  const bvid = parseBvid(input);
+  const bvid = meta.bvid || parseBvid(input);
   const pages = meta.pages || [];
   const sel = pages[pageIndex] || pages[0];
   const qualities = bvid && sel && sel.cid ? await fetchCheckedQualities(bvid, sel.cid, cookie) : null;

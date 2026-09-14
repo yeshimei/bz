@@ -24,7 +24,7 @@ import { KnowledgeData, normalizeLooseTime, secToTimeText, timeTextToSec } from 
 import type { KnowledgeTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
 import { backfillNotes, generateTermDraft, generateTermNote, summarizeTermSummary } from './note-gen';
-import { cleanSourceTitle, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, type TermSource } from './source';
+import { canonicalVideoUrl, cleanSourceTitle, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, type TermSource } from './source';
 import { fetchCheckedQualities, fetchVideoMeta, parseBvid, resolveVideo, type ResolvedVideo, type VideoMeta } from './video-meta';
 import { RangeBar } from './range-bar';
 
@@ -967,13 +967,15 @@ export class UIManager {
   /**
    * 打开面板时的自动重抓（ADR-0133）：对缺标题任务串行补信息（标题/UP/时长，只补缺失），
    * 成功即落库；任务间 300ms 间隔防风控；已尝试过的 id 会话内不再重试，失败静默。
+   * ADR-0134：链接里没有 BV 号（b23.tv 短链）的任务一并重抓——顺手把 url 修成规范链接，
+   * 否则下载阶段认不出 BV 号（存量任务也据此自愈）。
    */
   private async backfillVideoTasks(): Promise<void> {
     if (this.backfillRunning) return;
     this.backfillRunning = true;
     try {
       const tasks = await KnowledgeData.loadTasks();
-      const todo = tasks.filter((t) => !t.archived && !t.title && t.url && !this.backfillTried.has(t.id));
+      const todo = tasks.filter((t) => !t.archived && t.url && !this.backfillTried.has(t.id) && (!t.title || !parseBvid(t.url)));
       if (todo.length) {
         const cookie = String(tryGetSettings()?.bilibiliCookie || '');
         for (const t of todo) {
@@ -1571,7 +1573,8 @@ export class UIManager {
     this._rebuildBar();
     this._paintRange();
     const cookie = String(tryGetSettings()?.bilibiliCookie || '');
-    const bvid = parseBvid(q<HTMLInputElement>(popup, '#lit-add-url')?.value || '');
+    // 短链（b23.tv）链接里没有 BV 号：用解析出的 meta.bvid（ADR-0134）
+    const bvid = this.addMeta?.bvid || parseBvid(q<HTMLInputElement>(popup, '#lit-add-url')?.value || '');
     if (!cookie || !bvid || !sel?.cid) return;
     const cur = q<HTMLSelectElement>(popup, '#lit-add-quality')?.value ?? null;
     const qualities = await fetchCheckedQualities(bvid, sel.cid, cookie);
@@ -1622,6 +1625,8 @@ export class UIManager {
     }
     this._setResolveState(null);
     this._applyResolved(res);
+    // 短链（b23.tv 分享链接）写回规范链接：用户看得见落地目标，下载器也才认得出 BV 号（ADR-0134）
+    if (res.meta.bvid && !parseBvid(cleaned)) urlInput.value = canonicalVideoUrl(res.meta.bvid);
     this._renderAdd(opts?.auto === true);
     if (opts?.auto) {
       const editId = this.editingId; // await 前捕获：期间换任务/关弹窗即作废（review 306）
@@ -1666,6 +1671,8 @@ export class UIManager {
     try {
       const patch: Partial<KnowledgeTask> = {};
       const meta = res.meta;
+      // 存量短链任务顺手修 URL（老链接只存了 b23.tv，下载阶段认不出 BV 号；ADR-0134）
+      if (meta.bvid && !parseBvid(task.url)) patch.url = canonicalVideoUrl(meta.bvid);
       if (!task.title && meta.title) patch.title = meta.title;
       if (!task.uploader && meta.uploader) patch.uploader = meta.uploader;
       // duration 语义 = 该任务将下载的那个分 P 的时长（多 P 时按 task.page 取，与弹窗保存同口径）
@@ -1708,8 +1715,11 @@ export class UIManager {
     if (!this.addPopup) return;
     if (this.addResolving) { notice('解析中，请稍候', 'info'); return; }
     // 保存前净化兜底（ADR-0133）：裸 BV 号/非 http 文本原样
-    const url = normalizeSourceUrl((q<HTMLInputElement>(this.addPopup, '#lit-add-url')?.value ?? '').trim());
+    let url = normalizeSourceUrl((q<HTMLInputElement>(this.addPopup, '#lit-add-url')?.value ?? '').trim());
     if (!url) { notice('请填写视频链接或 BV 号', 'error'); q<HTMLInputElement>(this.addPopup, '#lit-add-url')?.focus(); return; }
+    // 解析过但链接里没有 BV 号（b23.tv 短链）→ 按解析出的 bvid 落库规范链接（ADR-0134）
+    const resolvedBvid = this.addMeta?.bvid;
+    if (resolvedBvid && !parseBvid(url)) url = canonicalVideoUrl(resolvedBvid);
     // 时间框现值先提交进状态（防用户输入后直接点保存）
     this._commitTimeInput('start', true);
     this._commitTimeInput('end', true);

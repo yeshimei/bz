@@ -97,6 +97,19 @@ function httpResp(status: number, text: string): any {
   };
 }
 
+/** ADR-0134 落地页罐头：og:url + `__INITIAL_STATE__`（桌面 videoData 形态，字段同 view API data） */
+const LANDING_HTML = '<html><head><title>落地页标题 _哔哩哔哩_bilibili</title>'
+  + '<meta property="og:url" content="https://www.bilibili.com/video/BV1shortlink/"></head><body><script>'
+  + 'window.__INITIAL_STATE__=' + JSON.stringify({
+    videoData: {
+      bvid: 'BV1shortlink', title: '失语者的声音', owner: { name: '央视频' }, duration: 300,
+      pages: [
+        { cid: 11, page: 1, part: '上集', duration: 120 },
+        { cid: 12, page: 2, part: '下集', duration: 180 },
+      ],
+    },
+  }) + ';(function(){})();</script></body></html>';
+
 describe('知识盒 UI（ADR-0112 三部）', () => {
   let vault: MockVault;
   let openFile: ReturnType<typeof vi.fn>;
@@ -410,6 +423,51 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(document.querySelector('.bz-kb-taskcard')!.textContent).toContain('整片');
   });
 
+  it('b23.tv 短链（ADR-0134）：落地页 state 补全信息、输入框写回规范链接、切 P 查档、落库规范 URL', async () => {
+    settings.bilibiliCookie = 'SESSDATA=x';
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    // 落地页罐头：og:url + __INITIAL_STATE__（桌面 videoData 形态，字段同 view API data）
+    const landing = LANDING_HTML;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.startsWith('https://b23.tv/')) return httpResp(200, landing);
+      if (url.includes('web-interface/view')) return httpResp(200, JSON.stringify({ code: -412, message: '风控', data: null })); // API 不可用 → 落地页 state 顶上
+      if (url.includes('web-interface/nav')) return httpResp(200, JSON.stringify({ code: 0, data: { isLogin: true } }));
+      if (url.includes('player/playurl')) return httpResp(200, JSON.stringify({ code: 0, data: { dash: { video: [{ height: 720 }, { height: 360 }] } } }));
+      return httpResp(404, '');
+    });
+    ui.showVideoEntry();
+    (document.getElementById('lit-btn-video-add') as HTMLElement).click();
+    const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
+    urlInput.value = 'https://b23.tv/AtDgBVH';
+    (document.getElementById('lit-add-resolve') as HTMLElement).click();
+    // 短链 → 标题/UP主/分P/时长全给（不靠 view API）
+    await vi.waitFor(() => expect(document.getElementById('lit-add-ititle')!.textContent).toBe('失语者的声音'));
+    expect(document.getElementById('lit-add-iuploader')!.textContent).toBe('央视频');
+    expect(urlInput.value).toBe('https://www.bilibili.com/video/BV1shortlink/'); // 写回规范链接
+    const pageSel = document.getElementById('lit-add-page') as HTMLSelectElement;
+    expect([...pageSel.options].map((o) => o.textContent)).toEqual(['P1 · 上集 · 2:00', 'P2 · 下集 · 3:00']);
+    // 档位：bvid 由 meta 补出 → nav 门禁后查到实测档位
+    const qSel = document.getElementById('lit-add-quality') as HTMLSelectElement;
+    await vi.waitFor(() => expect([...qSel.options].map((o) => o.value)).toEqual(['highest', '720', '360']));
+    // 切 P2：链接里没有 BV 字样，仍靠 meta.bvid 查（cid=12）
+    pageSel.value = '2';
+    pageSel.dispatchEvent(new Event('change', { bubbles: true }));
+    expect((document.getElementById('lit-add-end') as HTMLInputElement).value).toBe('3:00');
+    await vi.waitFor(() => {
+      const last = reqMock.mock.calls[reqMock.mock.calls.length - 1][0] as any;
+      expect(String(last.url)).toContain('playurl?bvid=BV1shortlink&cid=12');
+    });
+    // 保存 → 落库规范链接（下载器只认链接里的 BV 号）
+    (document.getElementById('lit-add-save') as HTMLElement).click();
+    await vi.waitFor(async () => expect((await KnowledgeData.loadTasks()).length).toBe(1));
+    const tasks = await KnowledgeData.loadTasks();
+    expect(tasks[0].url).toBe('https://www.bilibili.com/video/BV1shortlink/');
+    expect(tasks[0].title).toBe('失语者的声音');
+    expect(tasks[0].uploader).toBe('央视频');
+    expect(tasks[0].page).toBe(2);
+  });
+
   it('范围选择（ADR-0133）：时间框提交钳制 + ↑/↓ 微调 + 剪辑范围落库与整片重置', async () => {
     const reqMock = requestUrl as ReturnType<typeof vi.fn>;
     reqMock.mockImplementation(async (opts: any) => {
@@ -617,6 +675,29 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     ui.showVideoEntry();
     await new Promise((r) => setTimeout(r, 400));
     expect(reqMock.mock.calls.length).toBe(calls);
+  });
+
+  it('存量短链任务（ADR-0134）：已带标题但 url 里没有 BV → 打开面板自动重抓时修成规范链接', async () => {
+    await KnowledgeData.addTask({ url: 'https://b23.tv/AtDgBVH', title: '已有标题' });
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.startsWith('https://b23.tv/')) return httpResp(200, LANDING_HTML);
+      if (url.includes('web-interface/view')) return httpResp(200, JSON.stringify({ code: 0, data: {
+        bvid: 'BV1shortlink', title: '落地页标题', owner: { name: '央视频' }, duration: 100,
+        pages: [{ cid: 11, page: 1, part: '', duration: 100 }],
+      } }));
+      return httpResp(404, '');
+    });
+    ui.showVideoEntry();
+    await vi.waitFor(async () => {
+      const t = (await KnowledgeData.loadTasks())[0];
+      expect(t.url).toBe('https://www.bilibili.com/video/BV1shortlink/');
+    });
+    const t = (await KnowledgeData.loadTasks())[0];
+    expect(t.title).toBe('已有标题'); // 只补缺失：已有标题不被覆盖
+    expect(t.uploader).toBe('央视频');
+    expect(t.status).toBe('pending'); // 修链接不触发处理
   });
 
   it('切 P（ADR-0133）：量程随该 P 重置为全选；档位重查过 nav 门禁；未登录清档回落固定列表', async () => {
