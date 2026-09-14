@@ -16,6 +16,7 @@
       路径解析走 `metadataCache.getFirstLinkpathDest`，盒外/不存在标 `missing`。
 - [ ] `classifyKind(target, subpath, raw)`：归入六类（note／head／para／image／video／card）；**卡片判定**：目标在卡片盒目录内（`cardboxDirOf()`）。
 - [ ] `resolveBlockRef(file, blockId)` / 标题引用取 `metadataCache` headings 的内容范围（供画布显示那一段）。
+      **交付项名以实现为准**：块引用与标题片段合并为一个入口 `readSubpathBody(file, subpath, ctx)`（`src/knowledge/mount-data.ts`），不再单独出 `resolveBlockRef`。
 - [ ] 锚点**可重定位**：记文本片段而非只记字节偏移，编辑/换行后按内容匹配（ADR-0138 后果节）。
 - [ ] 测试（`// @vitest-environment node`）：六类各一例 + 别名/全路径/大小写/重复/自链 + 断链（盒外、已删）。
 
