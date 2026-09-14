@@ -68,6 +68,15 @@ export function normalizeSourceUrl(input: string): string {
   return scheme + host + path + (kept.length ? '?' + kept.join('&') : '') + (hash ?? '');
 }
 
+/**
+ * 规范视频链接（ADR-0134）：短链（b23.tv）解析出 bvid 后，弹窗写回与落库都用它——
+ * 下载器只认链接里的 BV 号（tools/bili-downloader extractBv），短链进队列会在下载阶段报「无法识别 BV 号」。
+ * 幂等：喂回来的规范链接与 normalizeSourceUrl 的输出同形。
+ */
+export function canonicalVideoUrl(bvid: string): string {
+  return `https://www.bilibili.com/video/${String(bvid ?? '').trim()}/`;
+}
+
 /** 实体最小解码（fetchPageTitle 取的是原始 <title> 文本） */
 function decodeHtmlEntities(s: string): string {
   return s

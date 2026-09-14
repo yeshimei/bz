@@ -56,9 +56,28 @@ export type IconName = string;
  * 按提示词特征识别三类调用并回放演示级结果；其余请求抛错走各自降级。
  * B 站 view API 罐头（issue 278 / ADR-0133）：视频录入「解析」在评审壳可见——bvid → 演示标题/UP主
  * + duration 与三段 pages（多 P 下拉 + 双把手范围条可演示；档位查询要 cookie，原型不配故走固定列表回落）。
+ * b23.tv 短链罐头（ADR-0134）：回放落地页 HTML（og:url + `__INITIAL_STATE__`）——评审壳里能看到
+ * 「短链 → 补出 bvid → 写回规范链接」，无需真跑重定向。
  */
 export async function requestUrl(opts?: { url?: string; body?: string }): Promise<{ status: number; text: string }> {
   const url = String(opts?.url ?? '');
+  if (/^https:\/\/(www\.)?b23\.tv\//.test(url)) {
+    return {
+      status: 200,
+      text: '<html><head><title>（演示）短链落地页_哔哩哔哩_bilibili</title>'
+        + '<meta property="og:url" content="https://www.bilibili.com/video/BV1awbg6XELn/"></head><body><script>'
+        + 'window.__INITIAL_STATE__=' + JSON.stringify({
+          videoData: {
+            bvid: 'BV1awbg6XELn', title: '（演示）短链落地页', owner: { name: '短链 UP 主' }, duration: 1800,
+            pages: [
+              { cid: 1, page: 1, part: '上集 · 开场', duration: 720 },
+              { cid: 2, page: 2, part: '中集 · 展开', duration: 600 },
+              { cid: 3, page: 3, part: '下集 · 收尾', duration: 480 },
+            ],
+          },
+        }) + ';(function(){})();</script></body></html>',
+    };
+  }
   const view = /web-interface\/view\?bvid=(BV[0-9A-Za-z]{10})/.exec(url);
   if (view) {
     return {
