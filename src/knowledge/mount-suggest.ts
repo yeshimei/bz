@@ -8,7 +8,8 @@
  * - 否决：点过「取消」的「锚点 → 目标」永久不再推（生成阶段先过滤）；「固定」也留档并过滤（不重复推）；
  * - 降级：移动端 / 无可用向量索引 / 无可用 AI 通道 → 不跑建议、**不自动建索引**，返回空候选与非 fresh 状态。
  *
- * 依赖：core（ai / storage / mobile / settings-provider / utils）+ 第二大脑只读检索面（index.exportVectorSearch）；
+ * 依赖：core（ai / storage / mobile / settings-provider / utils）+ 第二大脑只读检索桥
+ * （`secondbrain/readonly` 的叶子模块；**勿**值导入 `secondbrain/index`——会把整条 UI 栈拖进构建闭包）；
  * 契约类型只认 `./mount-types`（module 之间不 import 实现）。
  */
 import { createAI, getAIProvider } from '../core/ai';
@@ -16,7 +17,7 @@ import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { hash31, isUnderFolder, stripMdExt } from '../core/utils';
-import { exportVectorSearch } from '../secondbrain/index';
+import { exportVectorSearch } from '../secondbrain/readonly';
 import type {
   AnchorRef,
   MountEdge,
