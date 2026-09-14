@@ -1,4 +1,4 @@
-/* 源指纹 e8842d3b28ccf6fa · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f1b0d4201281fc0c · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -224,8 +224,8 @@ var BZR_home = (() => {
       { label: "未读全部标为已读", commandId: "bz-clipbook-mark-all-read", icon: "check-check", kind: "danger", keepHome: true }
     ],
     knowledge: [
-      { label: "术语生成文献笔记", commandId: "bz-knowledge-note-term", icon: "file-text" },
-      { label: "视频生成文献笔记", commandId: "bz-knowledge-note-video", icon: "list-video" }
+      { label: "名词生成文献笔记", commandId: "bz-knowledge-note-term", icon: "file-text" },
+      { label: "影像生成文献笔记", commandId: "bz-knowledge-note-video", icon: "list-video" }
     ],
     bookshelf: [
       { label: "阅读分析报告", commandId: "bz-reading-report-open", icon: "bar-chart-3" },

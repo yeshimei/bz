@@ -1,5 +1,5 @@
-/* 源指纹 3e4b2a633c9f461e · 仓内输入 23 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts"]*/
+/* 源指纹 a9d6788bd30da3ae · 仓内输入 26 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
   var __create = Object.create;
@@ -4033,9 +4033,14 @@ var BZW_knowledge = (() => {
   __export(fake_sim_exports, {
     boot: () => boot,
     bootKnowledgeSim: () => bootKnowledgeSim,
+    loadDemoPlate: () => loadDemoPlate,
+    openImage: () => openImage,
     openPanel: () => openPanel,
+    openPassage: () => openPassage,
     openTerm: () => openTerm,
-    openVideo: () => openVideo
+    openVideo: () => openVideo,
+    openVideoHistory: () => openVideoHistory,
+    openVideoTasks: () => openVideoTasks
   });
 
   // prototypes/knowledge/fake/fake-obsidian.ts
@@ -4059,7 +4064,7 @@ var BZW_knowledge = (() => {
     container.replaceChildren(svg);
   }
   async function requestUrl(opts) {
-    var _a, _b;
+    var _a, _b, _c, _d, _e, _f, _g;
     const url = String((_a = opts == null ? void 0 : opts.url) != null ? _a : "");
     if (/^https:\/\/(www\.)?b23\.tv\//.test(url)) {
       return {
@@ -4102,17 +4107,54 @@ var BZW_knowledge = (() => {
     }
     if (!/chat\/completions/.test(url)) throw new Error("原型环境无网络请求（fake obsidian requestUrl）");
     let prompt = "";
+    let imgCount = 0;
+    let imgChars = 0;
     try {
       const body = JSON.parse(String((_b = opts == null ? void 0 : opts.body) != null ? _b : "{}"));
-      prompt = (body.messages || []).map((m) => {
-        var _a2;
-        return String((_a2 = m.content) != null ? _a2 : "");
-      }).join("\n");
+      const texts = [];
+      for (const m of body.messages || []) {
+        const c = m == null ? void 0 : m.content;
+        if (typeof c === "string") {
+          texts.push(c);
+          continue;
+        }
+        if (!Array.isArray(c)) continue;
+        for (const part of c) {
+          const p = part;
+          if (!p) continue;
+          if (p.type === "text") texts.push(String((_c = p.text) != null ? _c : ""));
+          else if (p.type === "image_url") {
+            imgCount++;
+            imgChars += String((_e = (_d = p.image_url) == null ? void 0 : _d.url) != null ? _e : "").length;
+          }
+        }
+      }
+      prompt = texts.join("\n");
     } catch (e) {
     }
     let content;
+    const passage = /把下方这段文字整理成一篇文献笔记/.exec(prompt);
     const term = /为术语「([^」]+)」生成一篇文献笔记/.exec(prompt);
-    if (term) {
+    const img = /看这张图片|看下面这 \d+ 张图片/.exec(prompt);
+    if (img) {
+      const domains = /从以下领域选一个最贴近的：([^；」]+)/.exec(prompt);
+      const domain = domains ? domains[1].split("、")[0] : "艺术";
+      const multi = imgCount > 1;
+      content = JSON.stringify({
+        title: `（演示图题）${multi ? `${imgCount} 张图` : "一张图"}的内容整理`,
+        summary: `（演示读图）已收到图片（${imgCount} 张，base64 ${imgChars} 字符）——这里回放的是图版录入的读图结果，用于评审拖图 / 粘贴 / 多图、自动图题与关联行；图片本体在确认写入时落进图片目录（默认文献目录下的 assets/，可在设置里改）。`,
+        domain
+      });
+    } else if (passage) {
+      const src = ((_g = (_f = /【原文】\n([\s\S]+)/.exec(prompt)) == null ? void 0 : _f[1]) != null ? _g : "").replace(/\s+/g, " ").trim();
+      const domains = /从以下领域选一个最贴近的：([^；」]+)/.exec(prompt);
+      const domain = domains ? domains[1].split("、")[0] : "心理";
+      content = JSON.stringify({
+        title: `（演示标题）${src.slice(0, 14)}${src.length > 14 ? "…" : ""}的要点整理`,
+        summary: `（演示整理）${src.slice(0, 120)}……原型环境由 fake AI 罐头回放生成，用于评审段落录入、自动标题与关联行交互。`,
+        domain
+      });
+    } else if (term) {
       const domains = /从以下领域选一个最贴近的：([^；」]+)/.exec(prompt);
       const domain = domains ? domains[1].split("、")[0] : "心理";
       content = JSON.stringify({
@@ -4136,7 +4178,12 @@ var BZW_knowledge = (() => {
       const esc2 = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
       const inline = (s) => {
         let t = esc2(s);
-        t = t.replace(/!\[\[([^\]]+)\]\]/g, (_m, p1) => /\.(mp4|webm|mkv)$/i.test(p1) ? '<video controls preload="metadata" src="./assets/demo.mp4"></video>' : `<span class="bz-kb-cite">${p1}</span>`);
+        t = t.replace(/!\[\[([^\]]+)\]\]/g, (_m, p1) => {
+          if (/\.(mp4|webm|mkv)$/i.test(p1)) return '<video controls preload="metadata" src="./assets/demo.mp4"></video>';
+          const url = fakeResourceUrl(p1);
+          if (url) return `<img class="bz-kb-embed-img" src="${url}" alt="">`;
+          return `<span class="bz-kb-cite">${p1}</span>`;
+        });
         t = t.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_m, p1, p2) => `<span class="bz-kb-cite">${p2 || p1}</span>`);
         t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
         t = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
@@ -4163,7 +4210,9 @@ var BZW_knowledge = (() => {
           if (/\.(mp4|webm|mkv)$/i.test(fullEmbed[1])) {
             out.push('<video controls preload="metadata" src="./assets/demo.mp4"></video>');
           } else {
-            out.push(`<p><span class="bz-kb-cite">${esc2(fullEmbed[1])}</span></p>`);
+            const imgUrl = fakeResourceUrl(fullEmbed[1]);
+            if (imgUrl) out.push(`<p><img class="bz-kb-embed-img" src="${imgUrl}" alt=""></p>`);
+            else out.push(`<p><span class="bz-kb-cite">${esc2(fullEmbed[1])}</span></p>`);
           }
           continue;
         }
@@ -4225,6 +4274,28 @@ var BZW_knowledge = (() => {
     const env = { c: content, ct: (_a = stat == null ? void 0 : stat.ctime) != null ? _a : now, mt: (_c = (_b = stat == null ? void 0 : stat.mtime) != null ? _b : stat == null ? void 0 : stat.ctime) != null ? _c : now };
     return JSON.stringify(env);
   }
+  function fakeFileContent(path) {
+    const raw = localStorage.getItem(KEY_PREFIX + path);
+    if (raw == null) return "";
+    try {
+      const env = JSON.parse(raw);
+      if (env && typeof env === "object" && typeof env.c === "string") return env.c;
+    } catch (e) {
+    }
+    return raw;
+  }
+  function fakeResourceUrl(path) {
+    const v = fakeFileContent(path);
+    return /^data:image\//i.test(v) ? v : "";
+  }
+  function bytesToBase64(u8) {
+    let bin = "";
+    const CHUNK = 32768;
+    for (let i = 0; i < u8.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + CHUNK)));
+    }
+    return btoa(bin);
+  }
   var FakeVault = class _FakeVault {
     constructor() {
       this.adapter = {
@@ -4243,6 +4314,21 @@ var BZW_knowledge = (() => {
     }
     static key(path) {
       return KEY_PREFIX + path;
+    }
+    getResourcePath(file) {
+      var _a;
+      const path = typeof file === "string" ? file : String((_a = file == null ? void 0 : file.path) != null ? _a : "");
+      return path ? fakeResourceUrl(path) : "";
+    }
+    /** 二进制落盘（图版 issue 312）：壳里存成 data URL，getResourcePath / MarkdownRenderer 直接可用 */
+    async createBinary(path, data) {
+      var _a;
+      const u8 = data instanceof Uint8Array ? data : new Uint8Array(data);
+      const ext = ((_a = String(path).split(".").pop()) == null ? void 0 : _a.toLowerCase()) || "";
+      const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext || "png"}`;
+      const raw = encodeSeedFile(`data:${mime};base64,${bytesToBase64(u8)}`);
+      localStorage.setItem(KEY_PREFIX + path, raw);
+      return this.toFile(path, raw);
     }
     /** localStorage 封套 → FakeFile（内容内藏，read 吐 content） */
     toFile(path, raw) {
@@ -4394,6 +4480,15 @@ var BZW_knowledge = (() => {
       throw new Error("bz: app 未初始化（setApp 未调用）");
     }
     return _app;
+  }
+
+  // src/core/link-now.ts
+  var _bridge = null;
+  function setLinkBridge(bridge) {
+    _bridge = bridge;
+  }
+  function getLinkBridge() {
+    return _bridge;
   }
 
   // src/core/settings-provider.ts
@@ -4674,12 +4769,21 @@ var BZW_knowledge = (() => {
     return e;
   }
   var AI_IDLE_TIMEOUT_MS = 6e4;
-  function timeoutError() {
-    const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1e3} 秒无响应）`);
+  var AI_IMAGE_IDLE_TIMEOUT_MS = 18e4;
+  function timeoutError(idleMs = AI_IDLE_TIMEOUT_MS) {
+    const e = new Error(`AI 请求超时（${Math.round(idleMs / 1e3)} 秒无响应）`);
     e.name = "TimeoutError";
     return e;
   }
+  function idleTimeoutOf(body) {
+    const msgs = Array.isArray(body == null ? void 0 : body.messages) ? body.messages : [];
+    const hasImage = msgs.some(
+      (m) => Array.isArray(m == null ? void 0 : m.content) && m.content.some((p) => (p == null ? void 0 : p.type) === "image_url")
+    );
+    return hasImage ? AI_IMAGE_IDLE_TIMEOUT_MS : AI_IDLE_TIMEOUT_MS;
+  }
   async function streamChatCompletions(provider, body, signal, onDelta) {
+    const idleMs = idleTimeoutOf(body);
     const headers = {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${provider.apiKey}`,
@@ -4698,7 +4802,7 @@ var BZW_knowledge = (() => {
     let idleTimer = null;
     const armIdle = () => {
       if (idleTimer !== null) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
+      idleTimer = setTimeout(() => controller.abort(), idleMs);
     };
     try {
       armIdle();
@@ -4758,7 +4862,7 @@ var BZW_knowledge = (() => {
       }
       return full;
     } catch (e) {
-      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
+      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError(idleMs);
       throw e;
     } finally {
       if (idleTimer !== null) clearTimeout(idleTimer);
@@ -4767,6 +4871,7 @@ var BZW_knowledge = (() => {
   }
   async function chatCompletionsNonStream(provider, body, signal) {
     if (signal == null ? void 0 : signal.aborted) throw abortError();
+    const idleMs = idleTimeoutOf(body);
     const headers = {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${provider.apiKey}`,
@@ -4778,7 +4883,7 @@ var BZW_knowledge = (() => {
         if (timer !== null) clearTimeout(timer);
         fn();
       };
-      timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
+      timer = setTimeout(() => settle(() => reject(timeoutError(idleMs))), idleMs);
       requestUrl({
         url: `${provider.endpoint}/chat/completions`,
         method: "POST",
@@ -4797,15 +4902,60 @@ var BZW_knowledge = (() => {
     if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
     return content;
   }
+  var AI_IMAGE_MIME = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    gif: "image/gif",
+    webp: "image/webp"
+  };
+  var AI_IMAGE_MAX_BYTES = 32 * 1024 * 1024;
+  function imageMimeOfPath(path) {
+    var _a;
+    const ext = ((_a = String(path || "").split(".").pop()) == null ? void 0 : _a.toLowerCase()) || "";
+    return AI_IMAGE_MIME[ext] || null;
+  }
+  function imageExtOfMime(mime) {
+    const m = String(mime || "").toLowerCase();
+    for (const [ext, known] of Object.entries(AI_IMAGE_MIME)) {
+      if (known === m && ext !== "jpeg") return ext;
+    }
+    return null;
+  }
+  function imageDataUrl(bytes, mime) {
+    const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    if (u8.byteLength === 0) throw new Error("图片内容为空");
+    if (u8.byteLength > AI_IMAGE_MAX_BYTES) {
+      throw new Error(`图片过大（${Math.round(u8.byteLength / 1024 / 1024)} MiB），上限 ${AI_IMAGE_MAX_BYTES / 1024 / 1024} MiB`);
+    }
+    let bin = "";
+    const CHUNK = 32768;
+    for (let i = 0; i < u8.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + CHUNK)));
+    }
+    return `data:${mime};base64,${btoa(bin)}`;
+  }
+  function buildUserContent(input) {
+    var _a;
+    if (typeof input === "string") return input;
+    const text = String((_a = input == null ? void 0 : input.text) != null ? _a : "");
+    const images = (Array.isArray(input == null ? void 0 : input.images) ? input.images : []).map((u) => String(u != null ? u : "").trim()).filter((u) => u.length > 0);
+    if (!images.length) return text;
+    return [
+      { type: "text", text },
+      ...images.map((url) => ({ type: "image_url", image_url: { url } }))
+    ];
+  }
   var AIService = class {
     constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
       this.defaultModel = defaultModel;
       this.defaultOptions = defaultOptions;
     }
     /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
+     *  input 为字符串（纯文本，报文同旧版）或 {text, images}（带图 → 多模态 content 数组）；
      *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
      *  既有调用（不传这两项）行为零变化 */
-    async prompt(promptText, model = this.defaultModel, options = {}) {
+    async prompt(input, model = this.defaultModel, options = {}) {
       var _a;
       const mergedOptions = this._mergeOptions(options);
       const provider = await getAIProvider(mergedOptions.provider);
@@ -4816,7 +4966,7 @@ var BZW_knowledge = (() => {
       const effMaxTokens = (_a = mo.max_tokens) != null ? _a : provider.defaultMaxTokens || 4096;
       const body = {
         model: effModel,
-        messages: [{ role: "user", content: promptText }],
+        messages: [{ role: "user", content: buildUserContent(input) }],
         max_tokens: effMaxTokens,
         stream: true
       };
@@ -4839,34 +4989,34 @@ var BZW_knowledge = (() => {
         }
       }
     }
-    /** 普通对话模型（deepseek-v4-flash） */
-    async chat(promptText, extraOptions = {}) {
-      return this.prompt(promptText, "deepseek-v4-flash", extraOptions);
+    /** 普通对话模型（deepseek-v4-flash；收纯文本或 {text, images}） */
+    async chat(input, extraOptions = {}) {
+      return this.prompt(input, "deepseek-v4-flash", extraOptions);
     }
     /** 推理模型，自动开启思考模式 */
-    async reason(promptText, extraOptions = {}) {
+    async reason(input, extraOptions = {}) {
       const options = this._prepareOptions(extraOptions, { enable_thinking: true });
-      return this.prompt(promptText, "deepseek-v4-flash", options);
+      return this.prompt(input, "deepseek-v4-flash", options);
     }
     /** 联网搜索（实验性，第三方代理平台生效） */
-    async search(promptText, extraOptions = {}) {
+    async search(input, extraOptions = {}) {
       const options = this._prepareOptions(extraOptions, { search: true });
-      return this.prompt(promptText, "deepseek-v4-flash", options);
+      return this.prompt(input, "deepseek-v4-flash", options);
     }
-    /** 要求 AI 返回 JSON 格式（设置 response_format） */
-    async json(promptText, extraOptions = {}) {
+    /** 要求 AI 返回 JSON 格式（设置 response_format；知识盒等域走这条，故同样要能吃图） */
+    async json(input, extraOptions = {}) {
       const options = this._prepareOptions(extraOptions, {
         response_format: { type: "json_object" }
       });
-      return this.prompt(promptText, "deepseek-v4-flash", options);
+      return this.prompt(input, "deepseek-v4-flash", options);
     }
     /** 思考 + 联网搜索（实验性） */
-    async reasonAndSearch(promptText, extraOptions = {}) {
+    async reasonAndSearch(input, extraOptions = {}) {
       const options = this._prepareOptions(extraOptions, {
         enable_thinking: true,
         search: true
       });
-      return this.prompt(promptText, "deepseek-v4-flash", options);
+      return this.prompt(input, "deepseek-v4-flash", options);
     }
     setDefaultModel(model) {
       this.defaultModel = model;
@@ -5642,8 +5792,14 @@ var BZW_knowledge = (() => {
       if (!this._store) this.init({ storagePath: (_a = tryGetSettings()) == null ? void 0 : _a.storagePath });
       return this._store;
     },
+    /**
+     * 读整表（形状兜底，issue 310）：文件被手改/旧格式写成非数组时按空库读取——
+     * 不兜底的话 `data.push is not a function` 会直接打断面板刷新与保存（用户实测踩到）。
+     * 读取本身不改盘；但 loadTasks/增删改都走 `_mutate`（读→改→写），首次调用即把文件收敛回数组形状。
+     */
     async read() {
-      return this._ensureStore().read();
+      const data = await this._ensureStore().read();
+      return Array.isArray(data) ? data : [];
     },
     async write(data) {
       return this._ensureStore().write(data);
@@ -6298,6 +6454,32 @@ var BZW_knowledge = (() => {
     });
   }
 
+  // src/core/ui/str.ts
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+
+  // src/core/ui/icons.ts
+  function uiIconSpan(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  function mountIcons(root) {
+    root.querySelectorAll("[data-lucide]").forEach((el) => {
+      const name = el.getAttribute("data-lucide") || "";
+      if (!name) return;
+      try {
+        const fresh = uiIconSpan(name);
+        const cls = el.className;
+        if (cls && cls !== "bz-ic") fresh.className = cls;
+        el.replaceWith(fresh);
+      } catch (e) {
+      }
+    });
+  }
+
   // src/core/ui/suggest.ts
   function uiSuggest(opts) {
     var _a;
@@ -6662,6 +6844,123 @@ ${t}`,
     fm.push("---");
     const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
     return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(term), body);
+  }
+  function passagePrompt(text, list) {
+    return `你是文献整理助手。把下方这段文字整理成一篇文献笔记。只输出 JSON，不要任何解释：
+{"title":"15-30字的中文完整陈述句，概括这段文字在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"整理后的正文（保留原文的全部事实与要点，删去口水话、重复表述，可分自然段）","domain": ${domainInstruction(list)}}
+硬约束：正文只能来自原文，不得添加原文没有的事实、数字或结论，不得写成读后感。所有字段一律使用简体中文。
+
+【原文】
+${text}`;
+  }
+  async function generatePassageDraft(text) {
+    const ai = createAI();
+    const s = tryGetSettings();
+    const list = parseDomainList(s.knowledgeDomainList);
+    const t = String(text || "").trim();
+    if (!t) throw new Error("段落为空");
+    const raw = await ai.json(passagePrompt(t, list), { modelOptions: { max_tokens: 4096 } });
+    const meta = parseAiJson(raw);
+    return {
+      title: String((meta == null ? void 0 : meta.title) || "").trim(),
+      summary: String((meta == null ? void 0 : meta.summary) || "").trim(),
+      domain: String((meta == null ? void 0 : meta.domain) || "").trim()
+    };
+  }
+  async function generatePassageNote(opts) {
+    var _a, _b;
+    const s = tryGetSettings();
+    const title = String(opts.title || "").trim();
+    const summary = String((_a = opts.summary) != null ? _a : "").trim();
+    if (!title && !summary) throw new Error("段落为空");
+    const domain = String((_b = opts.domain) != null ? _b : "").trim();
+    const fm = [
+      "---",
+      `title: ${quoteYaml(title || summary.slice(0, 30))}`,
+      "type: passage",
+      `domain: ${quoteYaml(domain)}`,
+      `date: ${quoteYaml(nowStamp())}`
+    ];
+    const src = serializeTermSource(opts.source);
+    if (src) {
+      fm.push(`source: ${quoteYaml(src.source)}`);
+      if (src.sourceTitle) fm.push(`sourceTitle: ${quoteYaml(src.sourceTitle)}`);
+    }
+    fm.push("---");
+    const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
+    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title || summary), body);
+  }
+  var IMAGE_ASSETS_DIR = "assets";
+  async function writeUniqueBinary(dir, baseName, ext, bytes) {
+    const app = getApp();
+    const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    let path = `${folder}/${baseName}.${ext}`;
+    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName}_${i}.${ext}`;
+    try {
+      const exists = await app.vault.adapter.exists(folder);
+      if (!exists) await app.vault.createFolder(folder);
+    } catch (e) {
+    }
+    await app.vault.createBinary(path, bytes);
+    return path;
+  }
+  function imagePrompt(list, count) {
+    const multi = count > 1;
+    const scope = multi ? `看下面这 ${count} 张图片，把它们**作为一组**生成一篇文献笔记` : "看这张图片，为它生成一篇文献笔记";
+    const bodyAsk = multi ? "对这组图的整理说明（150-300字简体中文，连贯成文）：先说这组图共同在讲什么，再按图交代各自可见的内容与信息，图中含文字则整理其要点" : "对这张图的整理说明（150-300字简体中文，连贯成文）：图中含文字则整理其要点，是照片、示意图或图表则客观描述其可见内容与信息";
+    return `你是文献整理助手。${scope}。只输出 JSON，不要任何解释：
+{"title":"15-30字的中文完整陈述句，概括${multi ? "这组图" : "这张图"}在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"${bodyAsk}","domain": ${domainInstruction(list)}}
+硬约束：只能写图中确实能看到的内容，不得臆测、不得补充图中没有的事实与数字、不得写成观后感。所有字段一律使用简体中文。`;
+  }
+  async function generateImageDraft(imageUrls) {
+    const ai = createAI();
+    const s = tryGetSettings();
+    const list = parseDomainList(s.knowledgeDomainList);
+    const urls = (Array.isArray(imageUrls) ? imageUrls : []).map((u) => String(u || "").trim()).filter(Boolean);
+    if (!urls.length) throw new Error("图片为空");
+    const raw = await ai.json({ text: imagePrompt(list, urls.length), images: urls }, { modelOptions: { max_tokens: 4096 } });
+    const meta = parseAiJson(raw);
+    return {
+      title: String((meta == null ? void 0 : meta.title) || "").trim(),
+      summary: String((meta == null ? void 0 : meta.summary) || "").trim(),
+      domain: String((meta == null ? void 0 : meta.domain) || "").trim()
+    };
+  }
+  function resolveImageDir(settings) {
+    const configured = String((settings == null ? void 0 : settings.knowledgeImageFolder) || "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    if (configured) return configured;
+    const dir = String((settings == null ? void 0 : settings.knowledgeDirectory) || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
+    return `${dir}/${IMAGE_ASSETS_DIR}`;
+  }
+  async function generateImageNote(opts) {
+    var _a, _b;
+    const s = tryGetSettings();
+    const title = String(opts.title || "").trim();
+    const summary = String((_a = opts.summary) != null ? _a : "").trim();
+    if (!title && !summary) throw new Error("图版为空");
+    const images = (Array.isArray(opts.images) ? opts.images : []).filter((im) => im && im.bytes);
+    if (!images.length) throw new Error("图版没有图片");
+    const dir = String(s.knowledgeDirectory || "文献盒");
+    const name = sanitizeMdTitle(title || summary.slice(0, 30));
+    const imageRoot = resolveImageDir(s);
+    const imagePaths = [];
+    for (const im of images) imagePaths.push(await writeUniqueBinary(imageRoot, name, im.ext || "png", im.bytes));
+    const domain = String((_b = opts.domain) != null ? _b : "").trim();
+    const fm = [
+      "---",
+      `title: ${quoteYaml(title || name)}`,
+      "type: image",
+      `domain: ${quoteYaml(domain)}`,
+      `date: ${quoteYaml(nowStamp())}`
+    ];
+    const src = serializeTermSource(opts.source);
+    if (src) {
+      fm.push(`source: ${quoteYaml(src.source)}`);
+      if (src.sourceTitle) fm.push(`sourceTitle: ${quoteYaml(src.sourceTitle)}`);
+    }
+    fm.push("---");
+    const body = [fm.join("\n"), summary, ...imagePaths.map((p) => `![[${p}]]`)].filter(Boolean).join("\n\n");
+    return writeUniqueNote(dir, name, body);
   }
   function parseFrontmatter2(content) {
     var _a;
@@ -7444,6 +7743,16 @@ ${sample}`,
   };
 
   // src/knowledge/ui.ts
+  function litKindPlain(type) {
+    if (type === "video") return "影像";
+    if (type === "passage") return "段落";
+    if (type === "image") return "图版";
+    return "名词";
+  }
+  function litKindLabel(type) {
+    return litKindPlain(type).split("").join(" ");
+  }
+  var IMAGE_ENTRY_MAX = 9;
   var STATUS_META = {
     pending: { label: "待处理", cls: "bz-kb-pending" },
     processing: { label: "处理中", cls: "bz-kb-processing" },
@@ -7453,12 +7762,58 @@ ${sample}`,
   function q(root, sel) {
     return root.querySelector(sel);
   }
+  function clipboardImageFiles(dt) {
+    var _a;
+    if (!dt) return [];
+    const out = [];
+    const items = dt.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        if ((it == null ? void 0 : it.kind) === "file" && /^image\//i.test(it.type)) {
+          const f = it.getAsFile();
+          if (f) out.push(f);
+        }
+      }
+    }
+    if (out.length) return out;
+    const files = dt.files;
+    if (files) {
+      for (let i = 0; i < files.length; i++) {
+        if (/^image\//i.test(((_a = files[i]) == null ? void 0 : _a.type) || "")) out.push(files[i]);
+      }
+    }
+    return out;
+  }
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
   }
   function shortNoteName(path) {
     const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
     return stripMdExt(base) || String(path || "");
+  }
+  function parseRelatedNames(text) {
+    var _a;
+    const lines = String(text != null ? text : "").split(/\r?\n/);
+    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return [];
+    const out = [];
+    let inRelated = false;
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim() === "---") break;
+      if (/^related:/.test(line)) {
+        inRelated = true;
+        continue;
+      }
+      if (!inRelated) continue;
+      if (/^\s+-\s/.test(line)) {
+        const mm = line.match(/^\s*-\s*"?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]"?\s*$/);
+        if (mm) out.push(mm[2] || shortNoteName(mm[1]));
+      } else if (line.trim() !== "") {
+        break;
+      }
+    }
+    return out;
   }
   function humanizeError(reason) {
     const s = String(reason != null ? reason : "").trim();
@@ -7582,11 +7937,13 @@ ${sample}`,
       this.loadedCardDir = "";
       this.loadedTopicDir = "";
       this.backfilledDir = "";
-      // ---- 视频录入面板（任务队列）----
+      // ---- 影像：录入弹层 / 处理面板（内含历史视图）（issue 310）----
       this.videoMask = null;
       this.videoPopup = null;
       this.videoList = null;
-      // ---- 添加任务弹窗 / 历史弹窗 ----
+      /** 批量钮的图标容器（play ↔ square 就地换字符，issue 310 去 emoji） */
+      this.runIcon = null;
+      // ---- 添加任务弹窗 ----
       this.addMask = null;
       this.addPopup = null;
       // ---- 添加弹窗解析态（ADR-0133：解析按钮 + 只读信息区 + 双把手范围）----
@@ -7594,6 +7951,12 @@ ${sample}`,
       this.addUrlSeq = 0;
       /** 解析中（解析按钮 loading、保存禁用） */
       this.addResolving = false;
+      /**
+       * 下半个表单是否展开（issue 310：录入界面初始**只显示链接行**，解析跑完才展开
+       * 信息 / 分P / 剪辑 / 清晰度 / 保存）。置 true 的时机：解析流程结束（成功或失败）、
+       * 编辑既有任务（已有数据）；置 false：新开弹窗、链接被改动（旧信息作废，需重新解析）。
+       */
+      this.addRevealed = false;
       /** 解析成功的信息（null = 未解析 / 失败态） */
       this.addMeta = null;
       /** 实测清晰度档位（null = 未取到 → 固定列表回落） */
@@ -7610,22 +7973,44 @@ ${sample}`,
       /** 主面板自动重抓（ADR-0133）：进行中标记 + 已尝试任务 id 集（防重入/防重复请求） */
       this.backfillRunning = false;
       this.backfillTried = /* @__PURE__ */ new Set();
-      this.historyMask = null;
-      this.historyPopup = null;
-      this.historyList = null;
-      // ---- 术语生成面板 ----
+      /** 处理面板当前视图：tasks=任务队列 / history=归档（2026-09-14 复核起同面板切换，无独立历史窗） */
+      this.videoView = "tasks";
+      // ---- 文字录入面板（名词 / 段落 / 图版同壳三态，issue 309/312）----
       this.termMask = null;
       this.termPopup = null;
+      /** 当前录入态：term = 一个词（名词）/ passage = 一段文字（段落）/ image = 一张图（图版） */
+      this.entryMode = "term";
       this.termPreview = null;
       this.termGenerating = false;
       this.termSummarizing = false;
       this.termHasDraft = false;
       this.termSource = null;
-      // 术语来源（ADR-0116；null = 未填）
+      // 来源（名词/段落/图版共用行，ADR-0116；null = 未填）
+      /**
+       * 图版待落盘图片（issue 312；多图 issue 313）：拖入/粘贴/选择后**只留在内存**
+       * （bytes 原样 + 预览用 data URL），确认写入时才 createBinary 进图片目录——
+       * 与「草稿不落盘」同口径，取消不留孤儿文件。顺序 = 用户放入顺序（就是笔记里的图片顺序）。
+       */
+      this.entryImages = [];
+      /** 关联行状态机：idle（未生成）→ loading（预演中）→ done/empty/queued/failed/off */
+      this.entryRelState = "idle";
+      /** 关联行结果文案（done 时 = 关联标题顿号串） */
+      this.entryRelText = "";
+      /** 预演命中的目标路径（确认写入时据此写 related，不重跑检索与裁判） */
+      this.entryPreviewPicks = [];
+      /** 预演是否已给出确定结果（done）——确定过就连「0 命中」也算结论，写入时不再重跑管线 */
+      this.entryPreviewDone = false;
+      /** 在跑的预演（确认写入前等它落地，避免白跑一次完整管线） */
+      this.entryRelPending = null;
+      /** 预演序号：重新生成 / 关闭面板让在途结果作废（晚到的响应不得覆盖新状态） */
+      this.entryRelSeq = 0;
       this.termSrcSuggest = null;
       this.termSrcTimer = null;
       this.editingId = null;
       this.onKeydown = () => {
+      };
+      /** Ctrl+V 粘贴截图监听（issue 312；document 级，图版态才接管——见 createTermUI） */
+      this.onPaste = () => {
       };
       this.batchAbortLabel = null;
       this.runState = /* @__PURE__ */ new Map();
@@ -7640,15 +8025,15 @@ ${sample}`,
       this.createMainUI();
       this.createVideoUI();
       this.createAddDialog();
-      this.createHistoryUI();
       this.createTermUI();
       this.onKeydown = (e) => {
         if (e.key !== "Escape") return;
         if (this.termPopup && this.termPopup.style.display === "flex") this.hideTermEntry();
-        else if (this.historyPopup && this.historyPopup.style.display === "flex") this.hideHistory();
         else if (this.addPopup && this.addPopup.style.display === "flex") this.hideAddDialog();
-        else if (this.videoPopup && this.videoPopup.style.display === "flex") this.hideVideo();
-        else if (this.popup && this.popup.style.display === "flex") this.hideMain();
+        else if (this.videoPopup && this.videoPopup.style.display === "flex") {
+          if (this.videoView === "history") this.switchVideoView("tasks");
+          else this.hideVideo();
+        } else if (this.popup && this.popup.style.display === "flex") this.hideMain();
       };
       document.addEventListener("keydown", this.onKeydown);
     }
@@ -7709,7 +8094,9 @@ ${sample}`,
         void this.refreshCurrent();
         this.syncPartButtons();
       } else if (act === "term-entry") this.showTermEntry();
+      else if (act === "passage-entry") this.showPassageEntry();
       else if (act === "video-entry") this.showVideoEntry();
+      else if (act === "image-entry") this.showImageEntry();
       else if (act === "lit-peek") {
         const p = t.getAttribute("data-path") || "";
         const n = this.allNotes.find((x) => x.path === p);
@@ -7817,7 +8204,7 @@ ${sample}`,
       if (!this.contentEl) return;
       const rows = this.allNotes.map((n, i) => {
         const no = String(i + 1).padStart(2, "0");
-        const kind = n.type === "video" ? "影 像" : "词 条";
+        const kind = litKindLabel(n.type);
         return `<div class="bz-kb-lexrow" data-kb-act="lit-peek" data-path="${esc(n.path)}">
         <div class="bz-kb-hw"><span class="bz-kb-w">${esc(n.title)}</span><span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${kind}</span><span class="bz-kb-dom">${esc(n.domain || "未分类")}</span></div>
         <div class="bz-kb-tail"><span class="bz-kb-meta">LIT-${no} · ${esc(n.date || "")}</span></div>
@@ -7826,10 +8213,12 @@ ${sample}`,
       this.contentEl.innerHTML = `
       <div class="bz-kb-pd">
         <div class="bz-kb-entryrow">
-          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，当场落成一张术语卡</span></button>
-          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>丢进来一个 B 站链接，文献笔记自动长出来</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>名词</b></button>
+          <button class="bz-kb-entrybtn" data-kb-act="passage-entry"><b>段落</b></button>
+          <button class="bz-kb-entrybtn" data-kb-act="image-entry"><b>图版</b></button>
+          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>影像</b></button>
         </div>
-        ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的两种录入开始。</div>'}
+        ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的四种录入开始。</div>'}
       </div>`;
     }
     /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
@@ -7845,7 +8234,7 @@ ${sample}`,
       const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc(b)}</p>`).join("") || "<p>（无正文）</p>";
       const rels = await this.noteRels(n);
       const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.url)}" href="#">${esc(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>` : "";
-      const head = kind === "card" ? { title: "卡片预览 · 卡片盒", badge: "卡 片", hot: false } : kind === "topic" ? { title: "主题预览 · 主题笔记", badge: "主 题", hot: false } : { title: `文献预览 · ${n.type === "video" ? "影像" : "词条"}`, badge: n.type === "video" ? "影 像" : "词 条", hot: n.type === "video" };
+      const head = kind === "card" ? { title: "卡片预览 · 卡片盒", badge: "卡 片", hot: false } : kind === "topic" ? { title: "主题预览 · 主题笔记", badge: "主 题", hot: false } : { title: `文献预览 · ${litKindPlain(n.type || "")}`, badge: litKindLabel(n.type || ""), hot: n.type === "video" };
       this.openSheet(this.sheetWrap(head.title, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
         <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
@@ -8053,33 +8442,10 @@ ${sample}`,
       const dir = cardboxDirOf(tryGetSettings());
       if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
     }
-    /** 读笔记 frontmatter related 展示名列表（预览「关联」区；行扫描实现） */
+    /** 读笔记 frontmatter related 展示名列表（预览「关联」区；解析见 parseRelatedNames） */
     async noteRels(n) {
-      var _a;
       try {
-        const app = getApp();
-        const text = await app.vault.read(n.file);
-        const lines = text.split(/\r?\n/);
-        if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return [];
-        const out = [];
-        let inRelated = false;
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i];
-          if (line.trim() === "---") break;
-          if (/^related:/.test(line)) {
-            inRelated = true;
-            continue;
-          }
-          if (inRelated) {
-            if (/^\s+-\s/.test(line)) {
-              const mm = line.match(/^\s*-\s*"?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]"?\s*$/);
-              if (mm) out.push(mm[2] || mm[1]);
-            } else if (line.trim() !== "") {
-              break;
-            }
-          }
-        }
-        return out;
+        return parseRelatedNames(await getApp().vault.read(n.file));
       } catch (e) {
         return [];
       }
@@ -8205,7 +8571,7 @@ ${sample}`,
       ];
       this.fileListenerAttached = true;
     }
-    // ==================== 视频录入面板（任务队列） ====================
+    // ==================== 影像 · 处理队列面板（issue 310） ====================
     createVideoUI() {
       const mask = document.createElement("div");
       mask.id = "knowledge-video-mask";
@@ -8217,13 +8583,18 @@ ${sample}`,
       popup.className = "bz-kb-window kb";
       popup.style.display = "none";
       const header = document.createElement("div");
-      header.className = "bz-kb-vhead";
+      header.className = "bz-kb-head";
       header.innerHTML = `
-      <h3 class="bz-kb-vtitle">视频录入</h3>
+      <div class="bz-kb-vmeta" id="lit-video-counts"></div>
+      <div class="bz-kb-brand">
+        <div class="bz-kb-top">VIDEO · TO LITERATURE</div>
+        <div class="bz-kb-title">影 像</div>
+      </div>
       <div class="bz-lit-head-btns">
-        <button id="lit-btn-video-add" title="添加转文献任务">➕</button>
-        <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">▶️</button>
-        <button id="lit-btn-video-history" title="历史">🕘</button>
+        <button id="lit-btn-video-add" title="新增影像">${iconSpan("plus")}</button>
+        <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">${iconSpan("play")}</button>
+        <button id="lit-btn-video-history" title="历史">${iconSpan("history")}</button>
+        <button id="lit-btn-video-back" title="返回处理队列" style="display:none;">${iconSpan("arrow-left")}</button>
       </div>`;
       const list = document.createElement("div");
       list.id = "knowledge-video-list";
@@ -8235,13 +8606,10 @@ ${sample}`,
       this.videoMask = mask;
       this.videoPopup = popup;
       this.videoList = list;
+      mountIcons(popup);
+      this.runIcon = q(popup, "#lit-btn-video-run .bz-ic");
       this._bindVideoHeaderEvents();
-      if (isMobileEnv()) {
-        const run = q(popup, "#lit-btn-video-run");
-        const history = q(popup, "#lit-btn-video-history");
-        if (run) run.style.display = "none";
-        if (history) history.style.display = "none";
-      }
+      this._syncVideoHead();
     }
     _bindVideoHeaderEvents() {
       const p = this.videoPopup;
@@ -8252,17 +8620,68 @@ ${sample}`,
         else void this.onRunBatch();
       };
       q(p, "#lit-btn-video-history").onclick = () => this.showHistory();
+      q(p, "#lit-btn-video-back").onclick = () => this.switchVideoView("tasks");
     }
-    /** 打开视频录入面板；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口）；打开即自动重抓缺信息任务（ADR-0133） */
+    /**
+     * 处理面板头部同步（issue 310 复核）：按当前视图换题字与图标组——
+     * 处理视图 = 新增 / 批量 / 历史；历史视图 = 只留返回箭头（退回处理队列）。
+     * 移动端无批处理能力：批量与历史钮恒藏（故历史视图在移动端不可达）。
+     */
+    _syncVideoHead() {
+      const p = this.videoPopup;
+      if (!p) return;
+      const inHistory = this.videoView === "history";
+      const mobile = isMobileEnv();
+      const title = q(p, ".bz-kb-title");
+      const top = q(p, ".bz-kb-top");
+      if (title) title.textContent = inHistory ? "历 史" : "影 像";
+      if (top) top.textContent = inHistory ? "VIDEO · ARCHIVE" : "VIDEO · TO LITERATURE";
+      const show = (sel, v) => {
+        const el = q(p, sel);
+        if (el) el.style.display = v ? "" : "none";
+      };
+      show("#lit-btn-video-add", !inHistory);
+      show("#lit-btn-video-run", !inHistory && !mobile);
+      show("#lit-btn-video-history", !inHistory && !mobile);
+      show("#lit-btn-video-back", inHistory);
+    }
+    /**
+     * 打开「影像」录入界面（issue 310：主窗入口 / 命令 / 聚合讯直达录入界面，
+     * 不再先落到处理队列；处理队列与历史从**保存后**进入——保存即落队列并打开处理面板）。
+     * prefill 存在则预填链接（聚合讯「保存至文献」入口，ADR-0068；有链接即自动解析）。
+     */
     showVideoEntry(prefill) {
       var _a, _b;
+      this.showAddDialog(prefill ? { url: prefill.url, title: (_a = prefill.title) != null ? _a : null, uploader: (_b = prefill.uploader) != null ? _b : null } : void 0);
+    }
+    /** 打开「影像 · 处理」队列面板（面板默认视图）；打开即自动重抓缺信息任务（ADR-0133） */
+    showVideoTasks() {
       if (!this.videoPopup || !this.videoMask) return;
+      this.videoView = "tasks";
+      this._showVideoWindow();
+      void this.backfillVideoTasks();
+    }
+    /**
+     * 切到「历史」视图（2026-09-14 复核）：历史在**同一个面板内**打开，不再另开弹窗——
+     * 题字换「历 史」、图标组只留返回箭头、计数换「共 N 条」。
+     */
+    showHistory() {
+      if (!this.videoPopup || !this.videoMask) return;
+      this.videoView = "history";
+      this._showVideoWindow();
+    }
+    /** 面板内视图切换（处理 ⇄ 历史） */
+    switchVideoView(view) {
+      this.videoView = view;
+      void this.refreshVideoPanel();
+    }
+    /** 面板显示 + 按当前视图重绘（两个入口共用的收尾） */
+    _showVideoWindow() {
+      if (!this.videoMask || !this.videoPopup) return;
       topifyZ(this.videoMask, this.videoPopup);
       this.videoMask.style.display = "block";
       this.videoPopup.style.display = "flex";
       void this.refreshVideoPanel();
-      void this.backfillVideoTasks();
-      if (prefill) this.showAddDialog({ url: prefill.url, title: (_a = prefill.title) != null ? _a : null, uploader: (_b = prefill.uploader) != null ? _b : null });
     }
     /**
      * 打开面板时的自动重抓（ADR-0133）：对缺标题任务串行补信息（标题/UP/时长，只补缺失），
@@ -8303,21 +8722,27 @@ ${sample}`,
     async refreshVideoPanel() {
       const tasks = await KnowledgeData.loadTasks();
       if (!this.videoList) return;
+      this._syncVideoHead();
       this.videoList.innerHTML = "";
+      if (this.videoView === "history") {
+        this.renderHistory(tasks);
+        return;
+      }
       const active = tasks.filter((t) => !t.archived);
       const running = BatchRunner.running;
       if (running) {
         const idx = active.findIndex((t) => t.status === "processing");
         const banner = document.createElement("div");
         banner.className = "bz-kb-banner";
-        banner.textContent = idx >= 0 ? `⏳ 正在处理 第 ${idx + 1}/${active.length} 部…` : "⏳ 正在准备处理…";
+        banner.innerHTML = `${iconSpan("loader")} ${idx >= 0 ? `正在处理 第 ${idx + 1}/${active.length} 部…` : "正在准备处理…"}`;
+        mountIcons(banner);
         this.videoList.appendChild(banner);
       }
       this._syncStatusCounts(active);
       if (active.length === 0) {
         const empty = document.createElement("div");
         empty.className = "bz-kb-empty";
-        empty.textContent = "暂无转文献任务。点击 ➕ 添加视频链接与起止时间，回到桌面端即可批量处理。";
+        empty.textContent = "暂无转文献任务。点右上角加号添加视频链接与起止时间，回到桌面端即可批量处理。";
         this.videoList.appendChild(empty);
         this._syncRunButton(active);
         return;
@@ -8335,7 +8760,7 @@ ${sample}`,
       if (count("failed")) parts.push(`${count("failed")} 失败`);
       el.textContent = parts.join(" · ");
     }
-    /** 单钮态机：空闲「▶️」/运行中「⏹」（终止靠 title hover 区分），移动端整钮隐藏 */
+    /** 单钮态机：空闲 play / 运行中 square（终止靠 title hover 区分），移动端整钮隐藏 */
     _syncRunButton(tasks) {
       if (!this.videoPopup) return;
       const run = q(this.videoPopup, "#lit-btn-video-run");
@@ -8345,11 +8770,11 @@ ${sample}`,
       if (running) {
         run.disabled = false;
         const retry = this.batchAbortLabel === "终止整批";
-        run.textContent = "⏹";
+        if (this.runIcon) setIcon(this.runIcon, "square");
         run.title = retry ? "中止整批（处理失败任务中）" : "中止批量处理";
       } else {
         run.disabled = !hasWork;
-        run.textContent = "▶️";
+        if (this.runIcon) setIcon(this.runIcon, "play");
         run.title = "批量处理（桌面端）";
       }
     }
@@ -8372,7 +8797,8 @@ ${sample}`,
       <div class="bz-kb-tmeta">${timeText}${durText}${upText}${task.remark ? " · " + esc(task.remark) : ""}</div>
       ${task.status === "processing" ? this.runState.has(task.id) ? '<div class="bz-kb-progress-box"></div>' : task.reason ? `<div class="bz-kb-progress">${esc(task.reason)}</div>` : "" : ""}
       ${task.status === "failed" && task.reason ? `<div class="bz-kb-progress bz-kb-progress-error" title="${esc(task.reason)}">${esc(humanizeError(task.reason))}</div>` : ""}
-      ${task.status === "success" && task.notePath ? `<div class="bz-kb-notepath">📄 ${esc(task.notePath)}</div>` : ""}`;
+      ${task.status === "success" && task.notePath ? `<div class="bz-kb-notepath">${iconSpan("file-text")} ${esc(task.notePath)}</div>` : ""}`;
+      mountIcons(card);
       const actions = this.buildCardActions(task);
       if (actions.length) attachItemActions(card, actions);
       const titleLink = q(card, ".bz-kb-tlink");
@@ -8425,7 +8851,8 @@ ${sample}`,
       box.innerHTML = `
       <div class="bz-kb-steps">${segs.join('<span class="bz-kb-step-arrow">→</span>')}${pct != null ? ` <span class="bz-kb-step-pct">${Math.round(pct)}%</span>` : ""}</div>
       ${bar}
-      <div class="bz-kb-elapsed">⌛ ${fmtElapsed(Date.now() - st.startAt)}</div>`;
+      <div class="bz-kb-elapsed">${iconSpan("timer")} ${fmtElapsed(Date.now() - st.startAt)}</div>`;
+      mountIcons(box);
     }
     startRunTimer() {
       this.clearRunTimer();
@@ -8525,13 +8952,12 @@ ${sample}`,
       if (v !== "ok") return;
       await KnowledgeData.deleteTask(task.id);
       await this.refreshVideoPanel();
-      await this.refreshHistory();
     }
     async confirmClearHistory() {
       const v = await openFlowDialog({
         title: "清空历史",
         message: "将移除全部「成功」归档记录；文献笔记与视频文件保留在原处。",
-        // issue 291：同上——挂 body 的流程框须显式带皮肤类才与「历史」窗口同皮
+        // issue 291：同上——挂 body 的流程框须显式带皮肤类才与「处理面板」同皮
         className: "kb bz-kb-flow-dialog",
         actions: [
           { label: "取消", value: "cancel" },
@@ -8540,9 +8966,9 @@ ${sample}`,
       });
       if (v !== "ok") return;
       await KnowledgeData.clearHistory();
-      await this.refreshHistory();
+      await this.refreshVideoPanel();
     }
-    // ==================== 添加任务弹窗 ====================
+    // ==================== 影像 · 录入界面（词典皮 + 解析后展开，issue 310） ====================
     createAddDialog() {
       var _a;
       const addMask = document.createElement("div");
@@ -8555,48 +8981,50 @@ ${sample}`,
       popup.className = "bz-lit-dialog kb";
       popup.style.display = "none";
       popup.innerHTML = `
-      <div id="lit-add-mode" class="bz-lit-mode-tag" style="display:none;">编辑任务</div>
+      <div class="bz-lit-sheet-head">
+        <span class="bz-lit-sheet-title">影 像</span>
+        <span id="lit-add-mode" class="bz-lit-mode-tag" style="display:none;">编辑任务</span>
+      </div>
       <div id="lit-add-fail" class="bz-lit-form-alert" style="display:none;"></div>
-      <div class="bz-lit-form-col bz-lit-url-col">
-        <label>视频链接 / BV 号</label>
-        <div class="bz-lit-url-row">
-          <input id="lit-add-url" type="text">
-          <button id="lit-add-resolve" type="button">解析</button>
-        </div>
+      <div class="bz-lit-term-row">
+        <span class="bz-lit-term-meta-k">链接</span>
+        <input id="lit-add-url" type="text" autocomplete="off">
+        <button id="lit-add-resolve" type="button">解析</button>
       </div>
       <div id="lit-add-rstate" class="bz-lit-rstate" style="display:none;"></div>
-      <div id="lit-add-info" class="bz-lit-info" style="display:none;">
-        <div class="bz-lit-info-line"><span class="bz-lit-info-k">标题</span><span class="bz-lit-info-v" id="lit-add-ititle"></span></div>
-        <div class="bz-lit-info-line"><span class="bz-lit-info-k">UP 主</span><span class="bz-lit-info-v" id="lit-add-iuploader"></span></div>
-      </div>
-      <div class="bz-lit-form-col" id="lit-add-page-row" style="display:none;">
-        <label>分P</label>
-        <select id="lit-add-page"></select>
-      </div>
-      <div class="bz-lit-form-col" id="lit-add-pagenum-row" style="display:none;">
-        <label>分P</label>
-        <input id="lit-add-page-num" type="number" min="1" step="1">
-      </div>
-      <div class="bz-lit-range-area">
-        <div class="bz-lit-range-head">
-          <label>剪辑范围</label>
+      <div id="lit-add-more" style="display:none;">
+        <div class="bz-lit-term-row">
+          <span class="bz-lit-term-meta-k">标题</span>
+          <span id="lit-add-ititle" class="bz-lit-term-meta-v"></span>
+        </div>
+        <div class="bz-lit-term-row">
+          <span class="bz-lit-term-meta-k">UP 主</span>
+          <span id="lit-add-iuploader" class="bz-lit-term-meta-v"></span>
+        </div>
+        <div class="bz-lit-term-row" id="lit-add-page-row" style="display:none;">
+          <span class="bz-lit-term-meta-k">分P</span>
+          <select id="lit-add-page"></select>
+        </div>
+        <div class="bz-lit-term-row" id="lit-add-pagenum-row" style="display:none;">
+          <span class="bz-lit-term-meta-k">分P</span>
+          <input id="lit-add-page-num" type="number" min="1" step="1">
+        </div>
+        <div class="bz-lit-term-row">
+          <span class="bz-lit-term-meta-k">剪辑</span>
+          <input id="lit-add-start" type="text" autocomplete="off">
+          <span class="bz-lit-range-dash">~</span>
+          <input id="lit-add-end" type="text" autocomplete="off">
           <button id="lit-add-whole" type="button">整片</button>
         </div>
         <div id="lit-add-rb"></div>
-        <div class="bz-lit-form-row">
-          <div class="bz-lit-form-col"><label>开始时间</label>
-            <input id="lit-add-start" type="text"></div>
-          <div class="bz-lit-form-col"><label>结束时间</label>
-            <input id="lit-add-end" type="text"></div>
+        <div class="bz-lit-term-row">
+          <span class="bz-lit-term-meta-k">清晰度</span>
+          <select id="lit-add-quality"></select>
         </div>
-      </div>
-      <div class="bz-lit-form-col">
-        <label>下载清晰度</label>
-        <select id="lit-add-quality"></select>
         <div id="lit-add-rhint" class="bz-lit-rhint" style="display:none;"></div>
-      </div>
-      <div class="bz-lit-form-actions">
-        <button id="lit-add-save" class="bz-lit-accent-btn">保存</button>
+        <div class="bz-lit-term-actions">
+          <button id="lit-add-save" class="bz-lit-accent-btn">保存</button>
+        </div>
       </div>`;
       document.body.appendChild(addMask);
       document.body.appendChild(popup);
@@ -8611,6 +9039,7 @@ ${sample}`,
           this.addUrlSeq++;
           this.addResolving = false;
           this._setResolveState(null);
+          this.addRevealed = false;
           if (this.addMeta || this.addDuration > 0) {
             this.addMeta = null;
             this.addQualities = null;
@@ -8667,6 +9096,7 @@ ${sample}`,
       if (!this.addPopup || !this.addMask) return;
       this.addUrlReset();
       this.editingId = (_a = editItem == null ? void 0 : editItem.id) != null ? _a : null;
+      this.addRevealed = !!this.editingId;
       const modeTag = q(this.addPopup, "#lit-add-mode");
       if (modeTag) modeTag.style.display = this.editingId ? "inline-block" : "none";
       q(this.addPopup, "#lit-add-url").value = (_b = editItem == null ? void 0 : editItem.url) != null ? _b : "";
@@ -8706,8 +9136,8 @@ ${sample}`,
       const meta = this.addMeta;
       const pages = (meta == null ? void 0 : meta.pages) || [];
       const multi = pages.length > 1;
-      const info = q(popup, "#lit-add-info");
-      if (info) info.style.display = meta && (meta.title || meta.uploader) ? "" : "none";
+      const more = q(popup, "#lit-add-more");
+      if (more) more.style.display = this.addRevealed ? "block" : "none";
       const tEl = q(popup, "#lit-add-ititle");
       if (tEl) {
         tEl.textContent = (meta == null ? void 0 : meta.title) || "（未取到标题）";
@@ -8922,6 +9352,7 @@ ${sample}`,
       const res = await resolveVideo(cleaned, cookie, Math.max(0, this.addPage - 1));
       if (seq !== this.addUrlSeq || this.addPopup !== popup) return;
       this.addResolving = false;
+      this.addRevealed = true;
       if (!res) {
         if (!(opts == null ? void 0 : opts.auto)) {
           this.addMeta = null;
@@ -9001,6 +9432,7 @@ ${sample}`,
       this.addMeta = null;
       this.addQualities = null;
       this.addResolving = false;
+      this.addRevealed = false;
       this.addPage = 1;
       this.addDuration = 0;
       this.addStart = 0;
@@ -9063,6 +9495,7 @@ ${sample}`,
         }
       }
       const quality = ((_j = (_i = q(this.addPopup, "#lit-add-quality")) == null ? void 0 : _i.value) != null ? _j : "").trim() || null;
+      const editing = this.editingId;
       try {
         const patch = {
           url,
@@ -9074,69 +9507,31 @@ ${sample}`,
           uploader: ((_l = this.addMeta) == null ? void 0 : _l.uploader) || null,
           duration: dur > 0 ? dur : null
         };
-        if (this.editingId) {
-          await KnowledgeData.updateTask(this.editingId, patch);
+        if (editing) {
+          await KnowledgeData.updateTask(editing, patch);
         } else {
           await KnowledgeData.addTask(patch);
         }
         this.hideAddDialog();
-        await this.refreshVideoPanel();
+        notice(editing ? "任务已更新" : "已加入影像处理队列", "success");
+        this.showVideoTasks();
       } catch (e) {
         notice("保存失败：" + ((_m = e == null ? void 0 : e.message) != null ? _m : String(e)), "error");
       }
     }
-    // ==================== 历史弹窗 ====================
-    createHistoryUI() {
-      const mask = document.createElement("div");
-      mask.id = "knowledge-history-mask";
-      mask.className = "bz-kb-mask";
-      mask.style.display = "none";
-      mask.onclick = () => this.hideHistory();
-      const popup = document.createElement("div");
-      popup.id = "knowledge-history-popup";
-      popup.className = "bz-kb-window kb";
-      popup.style.display = "none";
-      const toolbar = document.createElement("div");
-      toolbar.className = "bz-kb-vhead";
-      const counts = document.createElement("span");
-      counts.id = "lit-history-counts";
-      counts.className = "bz-kb-vmeta";
-      toolbar.appendChild(counts);
-      const list = document.createElement("div");
-      list.id = "knowledge-history-list";
-      list.className = "bz-kb-list";
-      popup.appendChild(toolbar);
-      popup.appendChild(list);
-      document.body.appendChild(mask);
-      document.body.appendChild(popup);
-      this.historyMask = mask;
-      this.historyPopup = popup;
-      this.historyList = list;
-    }
-    showHistory() {
-      if (!this.historyPopup || !this.historyMask) return;
-      topifyZ(this.historyMask, this.historyPopup);
-      this.historyMask.style.display = "block";
-      this.historyPopup.style.display = "flex";
-      void this.refreshHistory();
-    }
-    hideHistory() {
-      if (this.historyMask) this.historyMask.style.display = "none";
-      if (this.historyPopup) this.historyPopup.style.display = "none";
-    }
-    async refreshHistory() {
-      if (!this.historyList) return;
-      const tasks = await KnowledgeData.loadTasks();
-      if (!this.historyList) return;
-      this.historyList.innerHTML = "";
+    // ==================== 历史（处理面板内的第二视图，2026-09-14 复核） ====================
+    /** 归档行渲染进面板内容区（`tasks` 由调用方一次读库后传入，避免一次刷新读两遍） */
+    renderHistory(tasks) {
+      if (!this.videoList) return;
+      this.videoList.innerHTML = "";
       const rows = tasks.filter((t) => t.archived);
-      const countsEl = this.historyPopup ? q(this.historyPopup, "#lit-history-counts") : null;
-      if (countsEl) countsEl.textContent = `🕘 历史 · 共 ${rows.length} 条`;
+      const countsEl = this.videoPopup ? q(this.videoPopup, "#lit-video-counts") : null;
+      if (countsEl) countsEl.textContent = `共 ${rows.length} 条`;
       if (rows.length === 0) {
         const empty = document.createElement("div");
         empty.className = "bz-kb-empty";
         empty.textContent = "暂无历史记录。成功的任务完成时会自动归档到这里。";
-        this.historyList.appendChild(empty);
+        this.videoList.appendChild(empty);
         return;
       }
       const groups = /* @__PURE__ */ new Map();
@@ -9156,7 +9551,7 @@ ${sample}`,
         const lb = String(((_c = b[b.length - 1]) == null ? void 0 : _c.processedAt) || ((_d = b[b.length - 1]) == null ? void 0 : _d.created) || "");
         return lb.localeCompare(la);
       });
-      for (const g of sortedGroups) this.historyList.appendChild(this.renderHistoryGroup(g));
+      for (const g of sortedGroups) this.videoList.appendChild(this.renderHistoryGroup(g));
     }
     renderHistoryGroup(group) {
       const head = group[0];
@@ -9173,7 +9568,8 @@ ${sample}`,
       for (const task of group) {
         const line = document.createElement("div");
         line.className = "bz-kb-hnote";
-        line.innerHTML = `📄 ${esc(shortNoteName(task.notePath || ""))}<span class="bz-kb-hnote-time">⏱ ${esc(formatRelativeTime(task.processedAt || task.created || ""))}</span>`;
+        line.innerHTML = `${iconSpan("file-text")} ${esc(shortNoteName(task.notePath || ""))}<span class="bz-kb-hnote-time">${iconSpan("clock")} ${esc(formatRelativeTime(task.processedAt || task.created || ""))}</span>`;
+        mountIcons(line);
         line.addEventListener("click", () => {
           if (task.notePath) this.openNote(task.notePath);
         });
@@ -9191,9 +9587,9 @@ ${sample}`,
       };
       return card;
     }
-    // ==================== 术语生成面板（文字录入；142 简洁版 + 155 总结） ====================
+    // ============ 录入面板：名词 / 段落 / 图版同壳三态（142 简洁版 + 155 总结 + issue 309/312） ============
     createTermUI() {
-      var _a;
+      var _a, _b, _c;
       const mask = document.createElement("div");
       mask.id = "knowledge-term-mask";
       mask.className = "bz-kb-mask";
@@ -9202,16 +9598,29 @@ ${sample}`,
       const popup = document.createElement("div");
       popup.id = "knowledge-term-popup";
       popup.className = "bz-lit-dialog bz-lit-term-dialog kb";
+      popup.setAttribute("data-lit-entry", "term");
       popup.style.display = "none";
       const body = document.createElement("div");
       body.className = "bz-lit-term-body";
       body.innerHTML = `
       <div class="bz-lit-sheet-head">
-        <span class="bz-lit-sheet-title">文字录入 · 术语</span>
+        <span class="bz-lit-sheet-title" id="lit-entry-title">名词</span>
       </div>
-      <div class="bz-lit-term-row">
-        <span class="bz-lit-term-meta-k">术语</span>
+      <div class="bz-lit-term-row bz-lit-term-only">
+        <span class="bz-lit-term-meta-k">名词</span>
         <input id="lit-term-input" type="text" autocomplete="off">
+      </div>
+      <div class="bz-lit-term-row bz-lit-passage-only">
+        <span class="bz-lit-term-meta-k">段落</span>
+        <textarea id="lit-passage-input" rows="6" placeholder="粘贴一段文字…"></textarea>
+      </div>
+      <div class="bz-lit-term-row bz-lit-image-only">
+        <span class="bz-lit-term-meta-k">图版</span>
+        <div id="lit-image-drop" class="bz-lit-drop" tabindex="0" role="button">
+          <div id="lit-image-grid" class="bz-lit-drop-grid" style="display:none;"></div>
+          <span id="lit-image-hint" class="bz-lit-drop-hint">拖入图片，或 Ctrl+V 粘贴截图</span>
+        </div>
+        <input id="lit-image-file" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple style="display:none;">
       </div>
       <div class="bz-lit-term-row">
         <span class="bz-lit-term-meta-k">来源</span>
@@ -9220,15 +9629,16 @@ ${sample}`,
       </div>
       <div class="bz-lit-term-actions">
         <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
-        <button id="lit-term-cancel" class="bz-lit-ghost-btn">取消</button>
       </div>
       <div id="lit-term-preview" style="display:none;">
         <div class="bz-lit-term-card">
           <div class="bz-lit-term-meta">
-            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">术语</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row bz-lit-term-only"><span class="bz-lit-term-meta-k">名词</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row bz-lit-titled-only"><span class="bz-lit-term-meta-k">标题</span><input id="lit-entry-meta-title" type="text" autocomplete="off"></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
+            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">关联</span><span id="lit-term-meta-rel" class="bz-lit-term-meta-v bz-lit-rel-idle">待写入</span></div>
           </div>
         </div>
         <div class="bz-lit-term-card">
@@ -9248,7 +9658,6 @@ ${sample}`,
         if (e.target === mask) this.hideTermEntry();
       });
       q(popup, "#lit-term-generate").onclick = () => void this.onTermGenerate();
-      q(popup, "#lit-term-cancel").onclick = () => this.hideTermEntry();
       q(popup, "#lit-term-regenerate").onclick = () => void this.onTermSummarize();
       q(popup, "#lit-term-save").onclick = () => void this.onTermConfirm();
       (_a = q(popup, "#lit-term-input")) == null ? void 0 : _a.addEventListener("keydown", (e) => {
@@ -9257,6 +9666,49 @@ ${sample}`,
           void this.onTermGenerate();
         }
       });
+      (_b = q(popup, "#lit-passage-input")) == null ? void 0 : _b.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          void this.onTermGenerate();
+        }
+      });
+      const zone = q(popup, "#lit-image-drop");
+      const fileInput = q(popup, "#lit-image-file");
+      if (zone && fileInput) {
+        zone.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          zone.classList.add("is-over");
+        });
+        zone.addEventListener("dragleave", () => zone.classList.remove("is-over"));
+        zone.addEventListener("drop", (e) => {
+          var _a2;
+          e.preventDefault();
+          zone.classList.remove("is-over");
+          const files = Array.from(((_a2 = e.dataTransfer) == null ? void 0 : _a2.files) || []);
+          if (files.length) void this.acceptImageFiles(files);
+        });
+        zone.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", () => {
+          const files = Array.from(fileInput.files || []);
+          fileInput.value = "";
+          if (files.length) void this.acceptImageFiles(files);
+        });
+        (_c = q(popup, "#lit-image-grid")) == null ? void 0 : _c.addEventListener("click", (e) => {
+          var _a2, _b2;
+          const btn = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-lit-image-remove]");
+          if (!btn) return;
+          e.stopPropagation();
+          this.removeEntryImage(Number(btn.getAttribute("data-lit-image-remove")));
+        });
+      }
+      this.onPaste = (e) => {
+        if (!this.termPopup || this.termPopup.style.display !== "flex" || this.entryMode !== "image") return;
+        const files = clipboardImageFiles(e.clipboardData);
+        if (!files.length) return;
+        e.preventDefault();
+        void this.acceptImageFiles(files);
+      };
+      document.addEventListener("paste", this.onPaste);
       const srcInput = q(popup, "#lit-term-src");
       if (srcInput) {
         srcInput.addEventListener("input", () => {
@@ -9297,15 +9749,41 @@ ${sample}`,
       });
     }
     /**
-     * 打开术语录入弹层；term 预填（命令带选中词时自动生成）；src 预填来源（ADR-0116——
+     * 打开「名词」录入（一个词）；term 预填（命令带选中词时自动生成）；src 预填来源（ADR-0116——
      * 仅命令入口带当前笔记，主窗按钮入口不预填）。
      */
     showTermEntry(term, src) {
+      this.showEntry("term", term, src);
+    }
+    /** 打开「段落」录入（一段文字，AI 自动出标题）；来源行与名词同构（ADR-0116） */
+    showPassageEntry(src) {
+      this.showEntry("passage", "", src);
+    }
+    /** 打开「图版」录入（可放多张图，AI 读图成文，issue 312/313）；来源行与名词/段落同构（ADR-0116） */
+    showImageEntry(src) {
+      this.showEntry("image", "", src);
+    }
+    /**
+     * 同壳三态入口（issue 309/312）：三种录入态共用一套 DOM，只切 `data-lit-entry` 与首行控件——
+     * 名词=单行 input（有预填即自动生成），段落=多行 textarea（回车换行，Ctrl/Cmd+回车生成），
+     * 图版=图片拖入区（拖/点选/Ctrl+V 三条路都收，**可多张**，图只在内存，确认写入才落盘）。
+     * 每次打开即回到全新态：草稿清空、来源清空、图片清空、关联行归位到「待写入」。
+     */
+    showEntry(mode, text, src) {
       if (!this.termPopup || !this.termMask) return;
+      this.entryMode = mode;
       this.termPreview = null;
       this.termHasDraft = false;
+      this.resetEntryRel();
+      this.clearEntryImage();
+      this.termPopup.setAttribute("data-lit-entry", mode);
+      const titleEl = q(this.termPopup, "#lit-entry-title");
+      if (titleEl) titleEl.textContent = mode === "passage" ? "段落" : mode === "image" ? "图版" : "名词";
       const input = q(this.termPopup, "#lit-term-input");
-      if (input) input.value = (term != null ? term : "").trim();
+      const area = q(this.termPopup, "#lit-passage-input");
+      const value = (text != null ? text : "").trim();
+      if (input) input.value = mode === "term" ? value : "";
+      if (area) area.value = mode === "passage" ? value : "";
       this.termSrcReset(q(this.termPopup, "#lit-term-src"));
       if (src) this.termSrcSet(src, q(this.termPopup, "#lit-term-src"));
       this.setTermPreviewVisible(false);
@@ -9313,8 +9791,104 @@ ${sample}`,
       topifyZ(this.termMask, this.termPopup);
       this.termMask.style.display = "block";
       this.termPopup.style.display = "flex";
-      if (input && !input.value) setTimeout(() => input.focus(), 100);
-      if (input && input.value) void this.onTermGenerate();
+      const zone = q(this.termPopup, "#lit-image-drop");
+      const focusEl = mode === "passage" ? area : mode === "image" ? zone : input;
+      if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
+      if (mode === "term" && value) void this.onTermGenerate();
+    }
+    // ---------- 图版图片收发（issue 312；多图 issue 313） ----------
+    /**
+     * 收下若干张图（拖入 / 点选 / 粘贴共用，一次可多张）：格式与体积在 core/ai 侧校验
+     * （只认 PNG/JPEG/GIF/WebP、单图 ≤32MiB），不合规的那张就地提示并跳过，其余照收。
+     * **追加到列表尾部** = 笔记里的图片顺序就是放入顺序；上限 IMAGE_ENTRY_MAX 张。
+     * 收下后**作废已有草稿**（图组变了，旧解读不再对应）：预览收起、关联行归位。
+     */
+    async acceptImageFiles(files) {
+      if (!this.termPopup || this.entryMode !== "image" || !files.length) return;
+      if (this.termGenerating) return;
+      let hitLimit = false;
+      let added = 0;
+      for (const file of files) {
+        if (this.entryImages.length >= IMAGE_ENTRY_MAX) {
+          hitLimit = true;
+          break;
+        }
+        const item = await this.readImageFile(file);
+        if (!this.termPopup || this.entryMode !== "image") return;
+        if (!item) continue;
+        this.entryImages.push(item);
+        added++;
+      }
+      if (hitLimit) notice(`一次最多放 ${IMAGE_ENTRY_MAX} 张图`, "error");
+      if (!added) return;
+      this.renderEntryImage();
+      this.draftInvalidate();
+    }
+    /** 单张校验与读取（MIME 白名单 / 读失败 / 转 data URL 失败均就地提示并返回 null） */
+    async readImageFile(file) {
+      var _a, _b;
+      const mime = (String(file.type || "").toLowerCase() === "image/jpg" ? "image/jpeg" : String(file.type || "").toLowerCase()) || imageMimeOfPath(file.name) || "";
+      if (!imageExtOfMime(mime)) {
+        notice("只支持 PNG / JPEG / GIF / WebP 图片", "error");
+        return null;
+      }
+      let bytes;
+      try {
+        bytes = await file.arrayBuffer();
+      } catch (e) {
+        notice("读取图片失败", "error");
+        return null;
+      }
+      try {
+        return { mime, bytes, dataUrl: imageDataUrl(bytes, mime) };
+      } catch (e) {
+        notice(String((_b = (_a = e == null ? void 0 : e.message) != null ? _a : e) != null ? _b : "图片不可用"), "error");
+        return null;
+      }
+    }
+    /** 删掉第 i 张（缩略图上的 ✕）：同样作废已有草稿（图组变了） */
+    removeEntryImage(i) {
+      if (!Number.isInteger(i) || i < 0 || i >= this.entryImages.length) return;
+      if (this.termGenerating) return;
+      this.entryImages.splice(i, 1);
+      this.renderEntryImage();
+      this.draftInvalidate();
+    }
+    /** 草稿失效（图组 / 输入变了）：预览收起、生成按钮复位、关联行归位到「待写入」 */
+    draftInvalidate() {
+      this.termPreview = null;
+      this.termHasDraft = false;
+      this.setTermPreviewVisible(false);
+      this.setTermGenLoading(false);
+      this.resetEntryRel();
+    }
+    /** 图片行渲染：有图显示缩略图网格（每张带 ✕，可继续加），无图回到提示文案 */
+    renderEntryImage() {
+      if (!this.termPopup) return;
+      const grid = q(this.termPopup, "#lit-image-grid");
+      const hint = q(this.termPopup, "#lit-image-hint");
+      const list = this.entryImages;
+      if (grid) {
+        if (list.length) {
+          grid.style.display = "";
+          grid.innerHTML = list.map((im, i) => `<div class="bz-lit-drop-item">
+            <img src="${im.dataUrl}" alt="">
+            <button type="button" data-lit-image-remove="${i}" title="移除这张" aria-label="移除这张">${iconSpan("x")}</button>
+          </div>`).join("");
+          mountIcons(grid);
+        } else {
+          grid.style.display = "none";
+          grid.innerHTML = "";
+        }
+      }
+      if (hint) {
+        hint.textContent = list.length ? `已放 ${list.length} 张 · 继续拖入 / 粘贴，或点此添加` : "拖入图片，或 Ctrl+V 粘贴截图（可多张）";
+      }
+    }
+    /** 图片状态清空（关面板 / 重开 / 写入完成后）——内存里的字节一并丢掉，不留孤儿文件 */
+    clearEntryImage() {
+      this.entryImages = [];
+      this.renderEntryImage();
     }
     /** 来源状态清空（chip 收起、输入框复位、计时器/联想层归零）——每次打开弹层即全新 */
     termSrcReset(input) {
@@ -9412,6 +9986,176 @@ ${sample}`,
       if (regen) regen.disabled = loading;
       const save = q(this.termPopup, "#lit-term-save");
       if (save) save.disabled = loading;
+      if (!loading) this.setEntryRelBusy(this.entryRelState === "loading");
+    }
+    /**
+     * 关联分析期间的按钮闸门（issue 309）：分析未出结果时禁止「重新生成」「总结」「确认写入」——
+     * 前者会作废在途结果、后者要用分析结果落库，都不能与正在跑的预演并行。
+     */
+    setEntryRelBusy(busy) {
+      if (!this.termPopup) return;
+      const gen = q(this.termPopup, "#lit-term-generate");
+      if (gen) gen.disabled = busy;
+      const regen = q(this.termPopup, "#lit-term-regenerate");
+      if (regen) regen.disabled = busy;
+      const save = q(this.termPopup, "#lit-term-save");
+      if (save) save.disabled = busy;
+    }
+    /**
+     * 关联行渲染（issue 309）：按 entryRelState 出文案与墨色档；两类录入共用同一行。
+     * loading 态给一条滑动的墨色小条 + 「分析中…」——建链要跑近邻检索与 AI 裁判，
+     * 面板必须让「正在跑」这件事看得见（而不是一行静止的灰字）。
+     */
+    entryRelRefresh() {
+      const el = this.termPopup ? q(this.termPopup, "#lit-term-meta-rel") : null;
+      if (!el) return;
+      el.className = "bz-lit-term-meta-v";
+      const st = this.entryRelState;
+      if (st === "loading") {
+        el.classList.add("bz-lit-rel-idle");
+        el.innerHTML = '<span class="bz-lit-rel-bar" aria-hidden="true"></span>分析中…';
+        return;
+      }
+      if (st === "done") {
+        el.classList.add("bz-lit-rel-ok");
+        el.textContent = this.entryRelText || "已建立关联";
+        return;
+      }
+      if (st === "empty") {
+        el.classList.add("bz-lit-rel-idle");
+        el.textContent = "暂无关联";
+        return;
+      }
+      if (st === "queued") {
+        el.classList.add("bz-lit-rel-idle");
+        el.textContent = "向量服务不可达，已入队";
+        return;
+      }
+      if (st === "failed") {
+        el.classList.add("bz-lit-rel-err");
+        el.textContent = "关联失败";
+        return;
+      }
+      if (st === "off") {
+        el.classList.add("bz-lit-rel-idle");
+        el.textContent = "自动双链未开启";
+        return;
+      }
+      el.classList.add("bz-lit-rel-idle");
+      el.textContent = "—";
+    }
+    /** 关联行与预演状态整体复位（打开/关闭面板、出新草稿共用）：在途预演作废、结果清空、回到起点 */
+    resetEntryRel() {
+      this.entryRelSeq++;
+      this.entryRelPending = null;
+      this.entryPreviewPicks = [];
+      this.entryPreviewDone = false;
+      this.entryRelText = "";
+      this.setEntryRel("idle");
+      this.setEntryRelBusy(false);
+    }
+    /** 关联行状态切换（单一出口，避免各处直接改字段后忘记重绘） */
+    setEntryRel(st) {
+      this.entryRelState = st;
+      this.entryRelRefresh();
+    }
+    /**
+     * 关联预演（issue 309）：AI 出内容后**立刻**跑——近邻检索 + AI 裁判，**只算不写**（草稿尚未落盘，
+     * 故走 preview 而非 now）。属性区「关联」行就地走 loading → 关联名，这正是「生成完就看得到过程」。
+     * 序号守卫：重新生成 / 关面板让在途结果作废，晚到的响应不得覆盖新状态。
+     */
+    async runEntryRelPreview(content, title) {
+      const bridge = getLinkBridge();
+      const seq = ++this.entryRelSeq;
+      this.entryPreviewPicks = [];
+      if (!bridge) {
+        this.setEntryRel("off");
+        return;
+      }
+      this.entryRelText = "";
+      this.setEntryRel("loading");
+      this.setEntryRelBusy(true);
+      try {
+        const out = await bridge.preview(content, title);
+        if (seq !== this.entryRelSeq) return;
+        if (out.status === "done") {
+          this.entryPreviewDone = true;
+          this.entryPreviewPicks = out.picks.map((p) => p.path);
+          this.entryRelText = out.picks.map((p) => p.title).join(" · ");
+          this.setEntryRel(out.picks.length ? "done" : "empty");
+        } else if (out.status === "queued") this.setEntryRel("queued");
+        else if (out.status === "skipped") this.setEntryRel("off");
+        else this.setEntryRel("failed");
+      } catch (e) {
+        if (seq === this.entryRelSeq) this.setEntryRel("failed");
+      } finally {
+        if (seq === this.entryRelSeq) this.setEntryRelBusy(false);
+      }
+    }
+    /**
+     * 兜底建链（issue 309）：没有可用预演结果时，落盘后跑完整单篇管线（bridge.now）。
+     * 通道未注入（自动双链关闭 / 第二大脑未启用 / 原型壳未接线）→ 显式呈现「自动双链未开启」。
+     */
+    async runEntryLinkNow(path) {
+      const bridge = getLinkBridge();
+      if (!bridge) {
+        this.setEntryRel("off");
+        return;
+      }
+      this.entryRelText = "";
+      this.setEntryRel("loading");
+      try {
+        const out = await bridge.now(path);
+        if (out.status === "done" || out.status === "skipped-related") {
+          const rels = await this.readRelatedTitles(path);
+          this.entryRelText = rels.join(" · ");
+          this.setEntryRel(rels.length ? "done" : "empty");
+        } else if (out.status === "queued") this.setEntryRel("queued");
+        else if (out.status === "skipped") this.setEntryRel("off");
+        else this.setEntryRel("failed");
+      } catch (e) {
+        this.setEntryRel("failed");
+      }
+    }
+    /**
+     * 确认写入后的关联落库（issue 309）：预演命中的目标**直接写进 related**（不重跑检索与裁判，
+     * 面板上已经显示过的结果原样落地）；没有可用预演（通道未接线 / 未命中 / 预演失败）→ 兜底跑完整管线。
+     */
+    async commitEntryLinks(path) {
+      try {
+        await this.entryRelPending;
+      } catch (e) {
+      }
+      const picks = this.entryPreviewPicks;
+      const bridge = getLinkBridge();
+      if (bridge && this.entryPreviewDone && !picks.length) {
+        this.setEntryRel("empty");
+        return;
+      }
+      if (bridge && picks.length) {
+        this.setEntryRel("loading");
+        try {
+          const out = await bridge.apply(path, picks);
+          if (out.status === "done") {
+            const rels = await this.readRelatedTitles(path);
+            this.entryRelText = rels.join(" · ");
+            this.setEntryRel(rels.length ? "done" : "empty");
+            return;
+          }
+        } catch (e) {
+        }
+      }
+      await this.runEntryLinkNow(path);
+    }
+    /** 读某篇笔记 frontmatter.related 的展示名列表（建链后就地显示 + 预览「关联」区共用解析） */
+    async readRelatedTitles(path) {
+      try {
+        const file = getApp().vault.getAbstractFileByPath(path);
+        if (!file) return [];
+        return parseRelatedNames(await getApp().vault.read(file));
+      } catch (e) {
+        return [];
+      }
     }
     setTermSummarizing(s) {
       if (!this.termPopup) return;
@@ -9424,6 +10168,17 @@ ${sample}`,
       if (save) save.disabled = s;
       const gen = q(this.termPopup, "#lit-term-generate");
       if (gen) gen.disabled = s;
+      if (!s) this.setEntryRelBusy(this.entryRelState === "loading");
+    }
+    /** 当前录入的头部标题：段落取属性卡里（可改）的标题，名词取输入框的词 */
+    entryHeadTitle() {
+      var _a, _b, _c, _d;
+      if (!this.termPopup) return "";
+      return this.entryTitled ? ((_b = (_a = q(this.termPopup, "#lit-entry-meta-title")) == null ? void 0 : _a.value) != null ? _b : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
+    }
+    /** 属性首行是否「可改标题」态（段落 / 图版共用；名词的属性首行是只读的名词文本） */
+    get entryTitled() {
+      return this.entryMode === "passage" || this.entryMode === "image";
     }
     noticeTermError(e) {
       const msg = String(e && e.message || e || "未知错误");
@@ -9434,18 +10189,49 @@ ${sample}`,
       }
     }
     async onTermGenerate() {
-      var _a, _b;
+      var _a, _b, _c, _d;
       if (!this.termPopup || this.termGenerating) return;
-      const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
-      if (!term) {
-        notice("请输入术语", "error");
+      const mode = this.entryMode;
+      if (mode === "image") {
+        await this.onImageGenerate();
+        return;
+      }
+      const passage = mode === "passage";
+      const text = passage ? ((_b = (_a = q(this.termPopup, "#lit-passage-input")) == null ? void 0 : _a.value) != null ? _b : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
+      if (!text) {
+        notice(passage ? "请粘贴要整理的段落" : "请输入名词", "error");
         return;
       }
       this.termGenerating = true;
       this.setTermGenLoading(true);
       try {
-        const draft = await generateTermDraft(term);
+        const draft = passage ? await generatePassageDraft(text) : await generateTermDraft(text);
         this.presentTermPreview(draft);
+        this.entryRelPending = this.runEntryRelPreview(draft.summary, this.entryHeadTitle() || text);
+      } catch (e) {
+        this.noticeTermError(e);
+      } finally {
+        this.termGenerating = false;
+        this.setTermGenLoading(false);
+      }
+    }
+    /**
+     * 图版读图（issue 312；多图 issue 313）：图片 data URL 列表一次投给多模态模型
+     * （core/ai 的 `{text, images}` 通道），出标题 / 领域 / 解读正文后与其余两态走同一套预览 + 关联预演。
+     */
+    async onImageGenerate() {
+      if (!this.termPopup || this.termGenerating) return;
+      const images = this.entryImages;
+      if (!images.length) {
+        notice("请先拖入或粘贴图片", "error");
+        return;
+      }
+      this.termGenerating = true;
+      this.setTermGenLoading(true);
+      try {
+        const draft = await generateImageDraft(images.map((im) => im.dataUrl));
+        this.presentTermPreview(draft);
+        this.entryRelPending = this.runEntryRelPreview(draft.summary, this.entryHeadTitle());
       } catch (e) {
         this.noticeTermError(e);
       } finally {
@@ -9466,6 +10252,7 @@ ${sample}`,
         this.termPreview.body = summarized;
         const contentEl = q(this.termPopup, "#lit-term-content");
         if (contentEl) contentEl.textContent = summarized;
+        this.entryRelPending = this.runEntryRelPreview(summarized, this.entryHeadTitle());
       } catch (e) {
         this.noticeTermError(e);
       } finally {
@@ -9475,62 +10262,101 @@ ${sample}`,
     }
     presentTermPreview(draft) {
       var _a, _b, _c;
-      this.termPreview = { domain: draft.domain, body: draft.summary };
+      this.termPreview = { domain: draft.domain, body: draft.summary, title: draft.title };
       this.termHasDraft = true;
       if (!this.termPopup) return;
-      const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
-      const termEl = q(this.termPopup, "#lit-term-meta-term");
-      if (termEl) termEl.textContent = term || "—";
+      if (this.entryTitled) {
+        const titleInput = q(this.termPopup, "#lit-entry-meta-title");
+        if (titleInput) titleInput.value = draft.title || "";
+      } else {
+        const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
+        const termEl = q(this.termPopup, "#lit-term-meta-term");
+        if (termEl) termEl.textContent = term || "—";
+      }
       const domainEl = q(this.termPopup, "#lit-term-meta-domain");
       if (domainEl) domainEl.textContent = draft.domain || "—";
       const dateEl = q(this.termPopup, "#lit-term-meta-date");
       if (dateEl) dateEl.textContent = dateStamp();
       const contentEl = q(this.termPopup, "#lit-term-content");
       if (contentEl) contentEl.textContent = draft.summary;
+      this.resetEntryRel();
       this.setTermPreviewVisible(true);
       const prev = q(this.termPopup, "#lit-term-preview");
       (_c = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _c.call(prev, { behavior: "smooth", block: "nearest" });
     }
     async onTermConfirm() {
-      var _a, _b;
+      var _a, _b, _c, _d;
       if (!this.termPopup || this.termGenerating) return;
-      const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
-      if (!term) {
-        notice("请输入术语", "error");
+      const mode = this.entryMode;
+      const source = this.termSource;
+      if (!this.termPreview) {
+        notice("请先点击「生成」获取预览", "info");
         return;
       }
-      if (!this.termPreview) {
-        notice("请先点击「生成」获取简介预览", "info");
+      const summary = this.termPreview.body;
+      const domain = this.termPreview.domain;
+      let term = "";
+      let title = "";
+      if (this.entryTitled) {
+        title = ((_b = (_a = q(this.termPopup, "#lit-entry-meta-title")) == null ? void 0 : _a.value) != null ? _b : "").trim();
+        if (!title) {
+          notice("标题不能为空", "error");
+          return;
+        }
+      } else {
+        term = ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
+        if (!term) {
+          notice("请输入名词", "error");
+          return;
+        }
+      }
+      const images = this.entryImages;
+      if (mode === "image" && !images.length) {
+        notice("图片已丢失，请重新拖入", "error");
         return;
       }
       this.termGenerating = true;
       this.setTermGenLoading(true);
+      const save = q(this.termPopup, "#lit-term-save");
+      if (save) save.textContent = "写入中…";
       try {
-        const path = await generateTermNote({
-          term,
-          summary: this.termPreview.body,
-          domain: this.termPreview.domain,
-          source: this.termSource
-          // 术语来源随确认时刻的值落库（ADR-0116）
-        });
-        this.openNote(path);
-        emitDomainEvent("knowledge:tasks", { kind: "term-generated", term, title: term, notePath: path });
-        this.termPreview = null;
+        let path;
+        if (mode === "image") {
+          path = await generateImageNote({
+            title,
+            summary,
+            domain,
+            source,
+            images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || "png" }))
+          });
+          emitDomainEvent("knowledge:tasks", { kind: "image-generated", title, notePath: path });
+          await this.commitEntryLinks(path);
+          this.clearEntryImage();
+          notice("已生成图版文献笔记：" + title, "success");
+        } else {
+          path = mode === "passage" ? await generatePassageNote({ title, summary, domain, source }) : await generateTermNote({ term, summary, domain, source });
+          emitDomainEvent("knowledge:tasks", mode === "passage" ? { kind: "passage-generated", title, notePath: path } : { kind: "term-generated", term, title: term, notePath: path });
+          await this.commitEntryLinks(path);
+          notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
+        }
         this.hideTermEntry();
-        notice("已生成术语文献笔记：" + term, "success");
       } catch (e) {
         this.noticeTermError(e);
       } finally {
         this.termGenerating = false;
+        if (save) save.textContent = "确认写入";
         this.setTermGenLoading(false);
       }
     }
     hideTermEntry() {
       this.termPreview = null;
+      this.resetEntryRel();
+      this.clearEntryImage();
       const srcInput = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
       this.termSrcReset(srcInput);
       if (this.termMask) this.termMask.style.display = "none";
       if (this.termPopup) this.termPopup.style.display = "none";
+      void this.refreshCurrent();
     }
     // ==================== 通用小工具 ====================
     openNote(path) {
@@ -9540,7 +10366,6 @@ ${sample}`,
         void app.workspace.getLeaf(false).openFile(file);
         this.hideMain();
         this.hideVideo();
-        this.hideHistory();
       } else {
         notice("文献笔记不存在：" + path, "error");
       }
@@ -9590,8 +10415,12 @@ ${sample}`,
       this.fileListenerRefs = [];
       this.fileListenerAttached = false;
       document.removeEventListener("keydown", this.onKeydown);
+      document.removeEventListener("paste", this.onPaste);
+      this.onPaste = () => {
+      };
       this.termPreview = null;
-      for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.historyMask, this.historyPopup, this.termMask, this.termPopup]) {
+      this.entryImages = [];
+      for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.termMask, this.termPopup]) {
         if (el && el.parentNode) el.parentNode.removeChild(el);
       }
       this.mask = null;
@@ -9602,17 +10431,156 @@ ${sample}`,
       this.videoList = null;
       this.addMask = null;
       this.addPopup = null;
-      this.historyMask = null;
-      this.historyPopup = null;
-      this.historyList = null;
       this.termMask = null;
       this.termPopup = null;
     }
   };
 
   // prototypes/knowledge/fake-sim.ts
-  var SEED_MARKER = "bz-sim:__kb_seed_v1";
+  var SEED_MARKER = "bz-sim:__kb_seed_v2";
   var key = (path) => `bz-sim:${path}`;
+  var SEED_TASKS = [
+    {
+      id: "kb-demo-processing",
+      url: "https://www.bilibili.com/video/BV1awbg6XELn/",
+      start: "00:00:00",
+      end: "00:12:00",
+      status: "processing",
+      reason: "AI 生成文献笔记中",
+      remark: null,
+      notePath: null,
+      videoPath: null,
+      created: "2026-09-13 21:40:12",
+      processedAt: null,
+      title: "CBTI：告别失眠的认知行为疗法",
+      uploader: "演示 UP 主",
+      archived: false,
+      archivedAt: null,
+      quality: "1080",
+      page: 1,
+      duration: 720
+    },
+    {
+      id: "kb-demo-pending-info",
+      url: "https://www.bilibili.com/video/BV1mepartial01/",
+      start: "00:01:30",
+      end: "00:04:00",
+      status: "pending",
+      reason: null,
+      remark: "睡前看的那期",
+      notePath: null,
+      videoPath: null,
+      created: "2026-09-13 22:05:40",
+      processedAt: null,
+      title: "（演示）多 P 视频 · 只看中集片段",
+      uploader: "演示 UP 主",
+      archived: false,
+      archivedAt: null,
+      quality: "720",
+      page: 2,
+      duration: 600
+    },
+    {
+      id: "kb-demo-pending-bare",
+      url: "https://www.bilibili.com/video/BV1nometadata/",
+      start: null,
+      end: null,
+      status: "pending",
+      reason: null,
+      remark: null,
+      notePath: null,
+      videoPath: null,
+      created: "2026-09-14 08:02:11",
+      processedAt: null,
+      title: null,
+      uploader: null,
+      archived: false,
+      archivedAt: null,
+      quality: null,
+      page: null,
+      duration: null
+    },
+    {
+      id: "kb-demo-failed",
+      url: "https://www.bilibili.com/video/BV1failcase01/",
+      start: null,
+      end: null,
+      status: "failed",
+      reason: "yt-dlp 下载失败：HTTP Error 403 Forbidden（示例原因，评审壳不真跑管线）",
+      remark: null,
+      notePath: null,
+      videoPath: null,
+      created: "2026-09-13 19:20:00",
+      processedAt: "2026-09-13 19:21:35",
+      title: "（演示）一条失败的任务",
+      uploader: "演示 UP 主",
+      archived: false,
+      archivedAt: null,
+      quality: null,
+      page: null,
+      duration: 1800
+    },
+    {
+      id: "kb-demo-arch-1",
+      url: "https://www.bilibili.com/video/BV1awbg6XELn/",
+      start: null,
+      end: null,
+      status: "success",
+      reason: null,
+      remark: null,
+      notePath: "文献盒/CBTI.md",
+      videoPath: "CONFIG/APPENDIX/CBTI演示.mp4",
+      created: "2026-09-04 07:40:00",
+      processedAt: "2026-09-04 07:47:38",
+      title: "CBTI：告别失眠的认知行为疗法",
+      uploader: "演示 UP 主",
+      archived: true,
+      archivedAt: "2026-09-04 07:47:38",
+      quality: "highest",
+      page: null,
+      duration: 1800
+    },
+    {
+      id: "kb-demo-arch-2",
+      url: "https://www.bilibili.com/video/BV1awbg6XELn/",
+      start: "00:12:00",
+      end: "00:20:00",
+      status: "success",
+      reason: null,
+      remark: null,
+      notePath: "文献盒/CBTI 睡眠限制一节.md",
+      videoPath: "CONFIG/APPENDIX/CBTI-切片.mp4",
+      created: "2026-09-10 22:30:00",
+      processedAt: "2026-09-10 22:41:07",
+      title: "CBTI：告别失眠的认知行为疗法",
+      uploader: "演示 UP 主",
+      archived: true,
+      archivedAt: "2026-09-10 22:41:07",
+      quality: "1080",
+      page: null,
+      duration: 1800
+    },
+    {
+      id: "kb-demo-arch-3",
+      url: "https://www.bilibili.com/video/BV1sleepless9/",
+      start: null,
+      end: null,
+      status: "success",
+      reason: null,
+      remark: null,
+      notePath: "文献盒/昼夜节律.md",
+      videoPath: "CONFIG/APPENDIX/昼夜节律.mp4",
+      created: "2026-09-03 21:00:00",
+      processedAt: "2026-09-03 21:10:00",
+      title: "（演示）昼夜节律与睡眠",
+      uploader: "另一演示 UP 主",
+      archived: true,
+      archivedAt: "2026-09-03 21:10:00",
+      quality: "720",
+      page: null,
+      duration: 900
+    }
+  ];
   var SEED_NOTES = [
     {
       path: "文献盒/CBTI.md",
@@ -9740,10 +10708,25 @@ date: "2026-09-01 12:00:00"
 心流（flow）：全情投入、忘却时间的最优体验状态——术语录入「内部笔记来源」的联想目标。`
     }
   ];
+  function ensureTaskSeedShape() {
+    var _a;
+    const taskKey = key("CONFIG/STORAGE/knowledge.json");
+    const raw = localStorage.getItem(taskKey);
+    if (raw) {
+      try {
+        const env = JSON.parse(raw);
+        const inner = JSON.parse(String((_a = env == null ? void 0 : env.c) != null ? _a : ""));
+        if (Array.isArray(inner)) return;
+      } catch (e) {
+      }
+    }
+    localStorage.setItem(taskKey, encodeSeedFile(JSON.stringify(SEED_TASKS)));
+  }
   function seedVault() {
+    ensureTaskSeedShape();
     if (localStorage.getItem(SEED_MARKER)) return;
     for (const n of SEED_NOTES) localStorage.setItem(key(n.path), encodeSeedFile(n.content, { ctime: n.ctime, mtime: n.ctime }));
-    localStorage.setItem(key("CONFIG/STORAGE/knowledge.json"), encodeSeedFile(JSON.stringify({ version: "1.0", tasks: [] })));
+    localStorage.setItem(key("CONFIG/STORAGE/knowledge.json"), encodeSeedFile(JSON.stringify(SEED_TASKS)));
     localStorage.setItem(SEED_MARKER, (/* @__PURE__ */ new Date()).toISOString());
   }
   function injectSettings() {
@@ -9774,6 +10757,130 @@ date: "2026-09-01 12:00:00"
     setAISettingsProvider(() => settings);
   }
   var ui = null;
+  function injectDemoPlate() {
+    const zone = document.getElementById("lit-image-drop");
+    if (!zone || zone.querySelector("[data-demo-plate]")) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.setAttribute("data-demo-plate", "1");
+    btn.textContent = "载入示例图";
+    btn.title = "点一下加一张（可连点，演示多图）";
+    btn.style.cssText = "border:1px solid var(--line);background:none;color:var(--ink3);font:11px/1.6 inherit;padding:2px 10px;border-radius:999px;cursor:pointer;";
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      void loadDemoPlate();
+    });
+    zone.appendChild(btn);
+  }
+  var DEMO_PLATE_PALETTES = [
+    ["#2b3a55", "#8f6a63", "#d9b18a", "#f2d9a8", "落日与山脊"],
+    ["#2f4a44", "#7d9c8b", "#cfe0cf", "#f4f0d8", "晨雾与松林"],
+    ["#1b2338", "#3d4a72", "#7f8fbf", "#e8ecf7", "夜色与湖面"]
+  ];
+  async function makeDemoPlateFile(seed) {
+    const [sky0, sky1, sky2, sun, title] = DEMO_PLATE_PALETTES[seed % DEMO_PLATE_PALETTES.length];
+    const canvas = document.createElement("canvas");
+    canvas.width = 240;
+    canvas.height = 160;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    const sky = ctx.createLinearGradient(0, 0, 0, 160);
+    sky.addColorStop(0, sky0);
+    sky.addColorStop(0.55, sky1);
+    sky.addColorStop(1, sky2);
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 240, 160);
+    ctx.fillStyle = sun;
+    ctx.beginPath();
+    ctx.arc(168, 78, 22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#3c4a63";
+    ctx.beginPath();
+    ctx.moveTo(0, 160);
+    ctx.lineTo(58, 96);
+    ctx.lineTo(116, 160);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#28324a";
+    ctx.beginPath();
+    ctx.moveTo(84, 160);
+    ctx.lineTo(160, 108);
+    ctx.lineTo(240, 160);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.92)";
+    ctx.font = '13px "Microsoft YaHei", sans-serif';
+    ctx.fillText(`示例图版 ${seed + 1} · ${title}`, 12, 150);
+    const blob = await new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
+    if (!blob) return null;
+    return new File([blob], `demo-plate-${seed + 1}.png`, { type: "image/png" });
+  }
+  async function loadDemoPlate(count = 1) {
+    bootKnowledgeSim();
+    const zone = document.getElementById("lit-image-drop");
+    if (!zone) return;
+    const dt = new DataTransfer();
+    for (let i = 0; i < Math.max(1, count); i++) {
+      const file = await makeDemoPlateFile(i);
+      if (file) dt.items.add(file);
+    }
+    if (!dt.items.length) return;
+    zone.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+  }
+  var fakeLinkCandidates = [
+    { path: "卡片盒/多重记忆系统.md", title: "多重记忆系统" },
+    { path: "卡片盒/认知行为疗法.md", title: "认知行为疗法" },
+    { path: "卡片盒/间隔重复.md", title: "间隔重复" }
+  ];
+  function injectFakeLinkNow(app) {
+    const stripRelated = (head) => {
+      const out = [];
+      let skipping = false;
+      for (const line of head.split("\n")) {
+        if (/^related:/.test(line)) {
+          skipping = true;
+          continue;
+        }
+        if (skipping) {
+          if (/^\s+-\s/.test(line) || line.trim() === "") continue;
+          skipping = false;
+        }
+        if (line.trim() !== "") out.push(line);
+      }
+      return out.join("\n");
+    };
+    const candidates = () => fakeLinkCandidates.filter((c) => !!app.vault.getAbstractFileByPath(c.path)).slice(0, 2);
+    const writeLinks = async (path, picks) => {
+      const file = app.vault.getAbstractFileByPath(path);
+      if (!file || !picks.length) return 0;
+      const text = await app.vault.read(file);
+      const lines = picks.map((c) => `  - "[[${c.path}|${c.title}]]"`).join("\n");
+      const next = /^---\n[\s\S]*?\n---/.test(text) ? text.replace(/^---\n([\s\S]*?)\n---/, (_m, head) => `---
+${stripRelated(head)}
+related:
+${lines}
+---`) : `---
+related:
+${lines}
+---
+
+${text}`;
+      if (next !== text) await app.vault.modify(file, next);
+      return picks.length;
+    };
+    setLinkBridge({
+      preview: async () => {
+        await new Promise((r) => setTimeout(r, 2600));
+        return { status: "done", picks: candidates() };
+      },
+      apply: async (path, targetPaths) => {
+        const map = new Map(fakeLinkCandidates.map((c) => [c.path, c.title]));
+        const picks = targetPaths.map((p) => ({ path: p, title: map.get(p) || p }));
+        return { status: "done", created: await writeLinks(path, picks) };
+      },
+      now: async (path) => ({ status: "done", created: await writeLinks(path, candidates()) })
+    });
+  }
   function bootKnowledgeSim() {
     const g = window;
     if (g.__bzKbSimBooted) return;
@@ -9782,8 +10889,10 @@ date: "2026-09-01 12:00:00"
     const app = new FakeApp();
     setApp(app);
     injectSettings();
+    injectFakeLinkNow(app);
     KnowledgeData.init({ storagePath: "CONFIG/STORAGE" });
     ui = new UIManager(app);
+    injectDemoPlate();
   }
   function openPanel() {
     bootKnowledgeSim();
@@ -9793,9 +10902,25 @@ date: "2026-09-01 12:00:00"
     bootKnowledgeSim();
     ui == null ? void 0 : ui.showTermEntry(term);
   }
-  function openVideo() {
+  function openPassage() {
     bootKnowledgeSim();
-    ui == null ? void 0 : ui.showVideoEntry();
+    ui == null ? void 0 : ui.showPassageEntry();
+  }
+  function openImage() {
+    bootKnowledgeSim();
+    ui == null ? void 0 : ui.showImageEntry();
+  }
+  function openVideo(prefill) {
+    bootKnowledgeSim();
+    ui == null ? void 0 : ui.showVideoEntry(prefill);
+  }
+  function openVideoTasks() {
+    bootKnowledgeSim();
+    ui == null ? void 0 : ui.showVideoTasks();
+  }
+  function openVideoHistory() {
+    bootKnowledgeSim();
+    ui == null ? void 0 : ui.showHistory();
   }
   var boot = bootKnowledgeSim;
   return __toCommonJS(fake_sim_exports);

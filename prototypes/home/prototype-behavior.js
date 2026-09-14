@@ -1,4 +1,4 @@
-/* 源指纹 0b6373c4ff924c1d · 仓内输入 100 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 859183c7d488a67d · 仓内输入 100 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -8193,12 +8193,20 @@ var BZW_home = (() => {
     e.name = "AbortError";
     return e;
   }
-  function timeoutError() {
-    const e = new Error(`AI 请求超时（${AI_IDLE_TIMEOUT_MS / 1e3} 秒无响应）`);
+  function timeoutError(idleMs = AI_IDLE_TIMEOUT_MS) {
+    const e = new Error(`AI 请求超时（${Math.round(idleMs / 1e3)} 秒无响应）`);
     e.name = "TimeoutError";
     return e;
   }
+  function idleTimeoutOf(body) {
+    const msgs = Array.isArray(body == null ? void 0 : body.messages) ? body.messages : [];
+    const hasImage = msgs.some(
+      (m) => Array.isArray(m == null ? void 0 : m.content) && m.content.some((p) => (p == null ? void 0 : p.type) === "image_url")
+    );
+    return hasImage ? AI_IMAGE_IDLE_TIMEOUT_MS : AI_IDLE_TIMEOUT_MS;
+  }
   async function streamChatCompletions(provider, body, signal, onDelta) {
+    const idleMs = idleTimeoutOf(body);
     const headers = {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${provider.apiKey}`,
@@ -8217,7 +8225,7 @@ var BZW_home = (() => {
     let idleTimer = null;
     const armIdle = () => {
       if (idleTimer !== null) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => controller.abort(), AI_IDLE_TIMEOUT_MS);
+      idleTimer = setTimeout(() => controller.abort(), idleMs);
     };
     try {
       armIdle();
@@ -8277,7 +8285,7 @@ var BZW_home = (() => {
       }
       return full;
     } catch (e) {
-      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError();
+      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError(idleMs);
       throw e;
     } finally {
       if (idleTimer !== null) clearTimeout(idleTimer);
@@ -8286,6 +8294,7 @@ var BZW_home = (() => {
   }
   async function chatCompletionsNonStream(provider, body, signal) {
     if (signal == null ? void 0 : signal.aborted) throw abortError();
+    const idleMs = idleTimeoutOf(body);
     const headers = {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${provider.apiKey}`,
@@ -8297,7 +8306,7 @@ var BZW_home = (() => {
         if (timer !== null) clearTimeout(timer);
         fn();
       };
-      timer = setTimeout(() => settle(() => reject(timeoutError())), AI_IDLE_TIMEOUT_MS);
+      timer = setTimeout(() => settle(() => reject(timeoutError(idleMs))), idleMs);
       requestUrl({
         url: `${provider.endpoint}/chat/completions`,
         method: "POST",
@@ -8316,6 +8325,17 @@ var BZW_home = (() => {
     if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
     return content;
   }
+  function buildUserContent(input) {
+    var _a;
+    if (typeof input === "string") return input;
+    const text = String((_a = input == null ? void 0 : input.text) != null ? _a : "");
+    const images = (Array.isArray(input == null ? void 0 : input.images) ? input.images : []).map((u) => String(u != null ? u : "").trim()).filter((u) => u.length > 0);
+    if (!images.length) return text;
+    return [
+      { type: "text", text },
+      ...images.map((url) => ({ type: "image_url", image_url: { url } }))
+    ];
+  }
   function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}, defaultMaxTokens = 8192) {
     const internalDefaultOptions = {
       modelOptions: {
@@ -8332,7 +8352,7 @@ var BZW_home = (() => {
     }
     return new AIService(params, defaultModel, mergedOptions);
   }
-  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AIService;
+  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MAX_BYTES, AIService;
   var init_ai = __esm({
     "src/core/ai.ts"() {
       init_fake_obsidian();
@@ -8523,15 +8543,18 @@ var BZW_home = (() => {
       ];
       _aiProviderCache = null;
       AI_IDLE_TIMEOUT_MS = 6e4;
+      AI_IMAGE_IDLE_TIMEOUT_MS = 18e4;
+      AI_IMAGE_MAX_BYTES = 32 * 1024 * 1024;
       AIService = class {
         constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
           this.defaultModel = defaultModel;
           this.defaultOptions = defaultOptions;
         }
         /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
+         *  input 为字符串（纯文本，报文同旧版）或 {text, images}（带图 → 多模态 content 数组）；
          *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
          *  既有调用（不传这两项）行为零变化 */
-        async prompt(promptText, model = this.defaultModel, options2 = {}) {
+        async prompt(input, model = this.defaultModel, options2 = {}) {
           var _a;
           const mergedOptions = this._mergeOptions(options2);
           const provider = await getAIProvider(mergedOptions.provider);
@@ -8542,7 +8565,7 @@ var BZW_home = (() => {
           const effMaxTokens = (_a = mo.max_tokens) != null ? _a : provider.defaultMaxTokens || 4096;
           const body = {
             model: effModel,
-            messages: [{ role: "user", content: promptText }],
+            messages: [{ role: "user", content: buildUserContent(input) }],
             max_tokens: effMaxTokens,
             stream: true
           };
@@ -8565,34 +8588,34 @@ var BZW_home = (() => {
             }
           }
         }
-        /** 普通对话模型（deepseek-v4-flash） */
-        async chat(promptText, extraOptions = {}) {
-          return this.prompt(promptText, "deepseek-v4-flash", extraOptions);
+        /** 普通对话模型（deepseek-v4-flash；收纯文本或 {text, images}） */
+        async chat(input, extraOptions = {}) {
+          return this.prompt(input, "deepseek-v4-flash", extraOptions);
         }
         /** 推理模型，自动开启思考模式 */
-        async reason(promptText, extraOptions = {}) {
+        async reason(input, extraOptions = {}) {
           const options2 = this._prepareOptions(extraOptions, { enable_thinking: true });
-          return this.prompt(promptText, "deepseek-v4-flash", options2);
+          return this.prompt(input, "deepseek-v4-flash", options2);
         }
         /** 联网搜索（实验性，第三方代理平台生效） */
-        async search(promptText, extraOptions = {}) {
+        async search(input, extraOptions = {}) {
           const options2 = this._prepareOptions(extraOptions, { search: true });
-          return this.prompt(promptText, "deepseek-v4-flash", options2);
+          return this.prompt(input, "deepseek-v4-flash", options2);
         }
-        /** 要求 AI 返回 JSON 格式（设置 response_format） */
-        async json(promptText, extraOptions = {}) {
+        /** 要求 AI 返回 JSON 格式（设置 response_format；知识盒等域走这条，故同样要能吃图） */
+        async json(input, extraOptions = {}) {
           const options2 = this._prepareOptions(extraOptions, {
             response_format: { type: "json_object" }
           });
-          return this.prompt(promptText, "deepseek-v4-flash", options2);
+          return this.prompt(input, "deepseek-v4-flash", options2);
         }
         /** 思考 + 联网搜索（实验性） */
-        async reasonAndSearch(promptText, extraOptions = {}) {
+        async reasonAndSearch(input, extraOptions = {}) {
           const options2 = this._prepareOptions(extraOptions, {
             enable_thinking: true,
             search: true
           });
-          return this.prompt(promptText, "deepseek-v4-flash", options2);
+          return this.prompt(input, "deepseek-v4-flash", options2);
         }
         setDefaultModel(model) {
           this.defaultModel = model;
@@ -13116,8 +13139,8 @@ ${n.content.slice(0, 2e3)}
       { label: "未读全部标为已读", commandId: "bz-clipbook-mark-all-read", icon: "check-check", kind: "danger", keepHome: true }
     ],
     knowledge: [
-      { label: "术语生成文献笔记", commandId: "bz-knowledge-note-term", icon: "file-text" },
-      { label: "视频生成文献笔记", commandId: "bz-knowledge-note-video", icon: "list-video" }
+      { label: "名词生成文献笔记", commandId: "bz-knowledge-note-term", icon: "file-text" },
+      { label: "影像生成文献笔记", commandId: "bz-knowledge-note-video", icon: "list-video" }
     ],
     bookshelf: [
       { label: "阅读分析报告", commandId: "bz-reading-report-open", icon: "bar-chart-3" },
@@ -14170,6 +14193,10 @@ ${n.content.slice(0, 2e3)}
       case "knowledge:term-generated":
       case "literature:term-generated":
         return { ...base, kind: "produce", text: `生成术语${wrap(name, "『", "』")}` };
+      case "knowledge:passage-generated":
+        return { ...base, kind: "produce", text: `整理段落${wrap(name, "『", "』")}` };
+      case "knowledge:image-generated":
+        return { ...base, kind: "produce", text: `读图${wrap(name, "『", "』")}` };
       case "knowledge:converted":
       case "literature:converted":
         return { ...base, kind: "produce", text: `转化${wrap(name, "『", "』")}` };
