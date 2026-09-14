@@ -56,6 +56,8 @@ import { openPomodoro, unloadPomodoro, ensurePomodoro, toggleFocus, skipBreak, t
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // 知识盒（knowledge 域，ADR-0072 自 bili-downloader 迁出、ADR-0112 三部重构；网页版已移除，见 tools/bili-downloader）
 import { openKnowledgePanel, openTermNote, openKnowledgeAddTask, unloadKnowledge } from './knowledge';
+// 挂载树白板（knowledge 域，issues 317/319）：两个命令直达 + 卸载清理（自绘遮罩挂 body，卸载必须摘）
+import { destroyMountTree, openMountTree, refreshMountTree } from './knowledge/mount-canvas';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 右键菜单）
 import { openAttachMove, ensureAttachFileMenu, ATTACH_COMMAND_ID } from './attach';
 // 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板）
@@ -162,6 +164,17 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-knowledge-note-term', name: '名词生成文献笔记', icon: 'book-type', callback: () => openTermNote(getApp()) },
   // 影像生成文献笔记（2026-09-10 首页入口菜单联动；issue 310 起直达影像录入界面——链接由面板内填或预填）
   { id: 'bz-knowledge-note-video', name: '影像生成文献笔记', icon: 'list-video', callback: () => openKnowledgeAddTask(getApp()) },
+  // 看挂载树（issue 319）：主卡 = 当前打开的笔记；没有打开的笔记就只提示（不猜主卡）
+  { id: 'bz-knowledge-mount-tree', name: '看挂载树', icon: 'network', callback: () => {
+    const file: any = getApp()?.workspace?.getActiveFile?.();
+    if (!file || file.extension !== 'md') {
+      notice('看挂载树：先打开一张笔记，它会作为主卡', 'info');
+      return;
+    }
+    void openMountTree(String(file.path));
+  } },
+  // 重跑挂载建议（issue 319）：当前白板主卡的建议重跑；没开白板就提示
+  { id: 'bz-knowledge-mount-refresh', name: '重跑挂载建议', icon: 'refresh-cw', callback: () => void refreshMountTree() },
   // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹，fileManager 自动更新内部链接）
   { id: ATTACH_COMMAND_ID, name: '移动附件', icon: DOMAIN_ICONS.attach, callback: () => openAttachMove(getApp()) },
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）
@@ -328,6 +341,8 @@ export default class BzPlugin extends Plugin {
     unloadAutoSummary();
     // 文献盒（ADR-0072 迁出：面板 DOM + 模块单例复位）
     unloadKnowledge();
+    // 挂载树白板（issues 317/319）：自绘遮罩/大窗直接挂 body，禁用插件时必须摘干净
+    destroyMountTree();
     // 域事件总线收口：摘除 vault 订阅点 + 清空全部域事件订阅（总线为进程内单例，随插件卸载全量清空）
     detachObsidianAdapter();
     clearDomainEvents();
