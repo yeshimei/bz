@@ -37,6 +37,7 @@ import type BzSettings from '../settings';
 import { KnowledgeData, normalizeLooseTime, secToTimeText, timeTextToSec } from './data';
 import type { KnowledgeTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
+import { openMountTree } from './mount-canvas';
 import { backfillNotes, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, resolveImageDir, summarizeTermSummary } from './note-gen';
 import { canonicalVideoUrl, cleanSourceTitle, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, type TermSource } from './source';
 import { fetchCheckedQualities, fetchVideoMeta, needsBvidRepair, parseBvid, resolveVideo, type ResolvedVideo, type VideoMeta } from './video-meta';
@@ -553,6 +554,8 @@ export class UIManager {
     else if (act === 'image-entry') this.showImageEntry();
     else if (act === 'lit-peek') { const p = t.getAttribute('data-path') || ''; const n = this.allNotes.find((x) => x.path === p); if (n) void this.openPreview(n); }
     else if (act === 'card-peek') { const p = t.getAttribute('data-path') || ''; const c = this.allCards.find((x) => x.path === p); if (c) void this.openPreview(c, 'card'); }
+    // 看挂载树（issue 319）：卡片列表行 / 卡片预览弹层共用一个分支——以该笔记为主卡开全屏白板
+    else if (act === 'mount-tree') { const p = t.getAttribute('data-path') || ''; if (p) void openMountTree(p); }
     else if (act === 'topic-open') { const p = t.getAttribute('data-path') || ''; const tp = this.allTopics.find((x) => x.path === p); if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, 'topic'); }
     else if (act === 'kb-close') this.hideMain(); // 移动端全屏主窗出口（ADR-0116：手机无 ESC/遮罩边缘）
   }
@@ -698,7 +701,7 @@ export class UIManager {
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
         <span class="bz-kb-pos ${head.hot ? 'hot' : ''}">${head.badge}</span>
         <span class="bz-kb-dom">${esc(n.domain || '未分类')}</span></div>
-      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || '')}</span></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || '')}</span><button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(n.path)}" title="以这篇为主卡打开挂载树">看挂载树</button></div>
       <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join('')}</div>` : ''}
       ${srcHtml}`));
@@ -839,7 +842,7 @@ export class UIManager {
     const shown = this.allCards.slice(0, this.cardsShown);
     const rows = shown.map((c) => `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc(c.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ''}<span class="bz-kb-dom">${esc(c.domain)}</span></div>
-      <div class="bz-kb-tail"><span>${c.review ? '复习中 · 到期由闹钟安排' : '未入复习'}</span><span style="margin-left:auto">连 1 张旧卡</span></div>
+      <div class="bz-kb-tail"><span>${c.review ? '复习中 · 到期由闹钟安排' : '未入复习'}</span><span style="margin-left:auto">连 1 张旧卡</span><button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
     </div>`).join('');
     const rest = this.allCards.length - shown.length;
     this.contentEl.innerHTML = `<div class="bz-kb-pd">

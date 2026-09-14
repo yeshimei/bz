@@ -22,6 +22,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { setAISettingsProvider } from '../../src/core/ai';
 import { KnowledgeData } from '../../src/knowledge/data';
 import { UIManager } from '../../src/knowledge/ui';
+import * as mountCanvas from '../../src/knowledge/mount-canvas';
 
 const SEED_MARKER = 'bz-sim:__kb_seed_v2';
 const key = (path: string): string => `bz-sim:${path}`;
@@ -508,6 +509,16 @@ export function openVideoTasks(): void {
 export function openVideoHistory(): void {
   bootKnowledgeSim();
   ui?.showHistory();
+}
+
+/**
+ * 等价插件 `bz-knowledge-mount-tree`（issues 317/319）：以种子卡片为主卡开挂载树白板。
+ * 评审壳控制台调 `BZW_knowledge.openMountTree('卡片盒/间隔重复.md')` 看六类节点 / 血缘高亮 /
+ * 面包屑 / 右键菜单；壳里没有向量索引，建议链路按 `no-index` 降级（只画双链 + 顶栏提示），不联网。
+ */
+export function openMountTree(cardPath = '卡片盒/间隔重复.md'): void {
+  bootKnowledgeSim();
+  void mountCanvas.openMountTree(cardPath);
 }
 
 /** 壳约定别名（prototype-view 调 BZW_knowledge.boot()） */
