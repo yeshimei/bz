@@ -1612,6 +1612,7 @@ async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<v
   const rootPath = st.tree.root;
   const app: any = st.ctx.app ?? getApp();
   const link = ghost.target.replace(/\.md$/i, '');
+  let wrote = false;
   try {
     // D3 可靠写契约：用户文档的「读-改-写」走 core/storage 的 per-path 串行队列（enqueueFileTask），
     // 与提炼成卡 / 自动摘要 / 用户手编等写方串行，避免同文件互吞
@@ -1621,12 +1622,13 @@ async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<v
       const text = await app.vault.read(file);
       const next = insertLinkAtAnchor(text, ghost.anchor, link);
       if (next !== text) await app.vault.modify(file, next);
+      wrote = true;
     });
   } catch (e: any) {
     st.deps.notice(`固定失败：${e?.message ?? String(e)}`);
     return;
   }
-  if (!app?.vault?.getAbstractFileByPath?.(rootPath)) {
+  if (!wrote) {
     st.deps.notice('固定失败：读不到主卡文件');
     return;
   }
