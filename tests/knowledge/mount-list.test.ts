@@ -180,6 +180,23 @@ describe('挂载树·列表侧（issue 320）', () => {
     expect(chip().classList.contains('is-on')).toBe(true);
   });
 
+  it('issue 323 增量渲染：滚动加载只追加新行，已渲染的行不被重建', async () => {
+    for (let i = 0; i < 100; i++) vault.files.set(`卡片盒/卡${String(i).padStart(3, '0')}.md`, `卡${i}正文。`);
+    await openCards(80); // 首屏仍是 80 行
+    await waitIndex();
+    const firstRow = row('卡片盒/甲卡.md');
+    const more = () => document.querySelector('[data-kb-act=cards-more]') as HTMLElement;
+    expect(more().textContent).toContain('还有 24 张'); // 104 - 80
+
+    // 滚动到底 → 只追加新行（旧口径会整表 innerHTML 重建，已渲染行全换成新节点）
+    sc().dispatchEvent(new Event('scroll'));
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-lexrow').length).toBe(104));
+    expect(row('卡片盒/甲卡.md')).toBe(firstRow); // 同一个 DOM 节点：没被重建
+    expect(more().style.display).toBe('none'); // 页脚原地收起
+    // 徽标落地后不丢（增量追加的行也带徽标）
+    expect(row('卡片盒/甲卡.md').querySelector('.bz-kb-refbadge')!.textContent).toBe('被引 2');
+  });
+
   it('扫描失败降级：芯片置灰显「未统计」，列表照常渲染、不出徽标不筛', async () => {
     scan.fail = true;
     await openCards(4);
@@ -193,30 +210,30 @@ describe('挂载树·列表侧（issue 320）', () => {
     expect(chip().classList.contains('is-on')).toBe(false);
   });
 
-  it('整库扫描每轮 refresh 只走一遍：counts 交给 orphanCards 复用（Vault 调用差值实测）', async () => {
+  it('issue 323 挂载索引会话缓存：切部来回不重扫整库（切换卡顿的根因已修）', async () => {
     await openCards();
     await waitIndex();
+    expect(scan.refCounts).toBe(1);
+    expect(scan.orphanCards).toBe(1);
+
+    // 切到部壹再切回部贰：命中会话缓存，整库一次都不扫（旧口径每轮 refresh 都重扫 1500+ 文件）
     const md = vi.spyOn(vault, 'getMarkdownFiles');
     const read = vi.spyOn(vault, 'cachedRead');
-    const ref0 = scan.refCounts;
-    const orph0 = scan.orphanCards;
-    const done0 = scan.orphanCardsDone;
     (document.querySelector('[data-part=z1]') as HTMLElement).click();
     (document.querySelector('[data-part=z2]') as HTMLElement).click();
-    await vi.waitFor(() => expect(scan.orphanCardsDone).toBe(done0 + 1)); // 本轮扫描全部落地
-    expect(scan.refCounts - ref0).toBe(1);
-    expect(scan.orphanCards - orph0).toBe(1);
-    // 单遍口径（4 张卡）：目录枚举 3 次（refCounts 的 cardFiles + mdFiles、orphanCards 的 cardFiles）、
-    // 正文读 6 次（4 张各 1 次 + 2 个零计数候选复查）。双遍会是 5 次目录枚举 / 10+ 次读。
-    expect(md.mock.calls.length).toBe(3);
-    expect(read.mock.calls.length).toBe(6);
-    // 重渲染（筛选切换 / 分页）复用缓存，不再有任何读取
-    const mdAfter = md.mock.calls.length;
-    const readAfter = read.mock.calls.length;
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-lexrow').length).toBe(4));
+    expect(scan.refCounts).toBe(1);
+    expect(scan.orphanCards).toBe(1);
+    expect(md.mock.calls.length).toBe(0);
+    expect(read.mock.calls.length).toBe(0);
+    // 会话缓存渲染：徽标照常在（不是重新扫出来的）
+    expect(row('卡片盒/甲卡.md').querySelector('.bz-kb-refbadge')!.textContent).toBe('被引 2');
+
+    // 重渲染（筛选切换来回）也复用缓存，不再有任何读取
     chip().click();
     chip().click();
-    expect(md.mock.calls.length).toBe(mdAfter);
-    expect(read.mock.calls.length).toBe(readAfter);
+    expect(md.mock.calls.length).toBe(0);
+    expect(read.mock.calls.length).toBe(0);
   });
 
   it('落卡后索引只重算一次：新卡即时带徽标（源文献互链已计入）', async () => {

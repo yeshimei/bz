@@ -42,7 +42,18 @@ import { topifyZ } from '../core/z-order';
 import { buildMountTree, mountCtx, relocateAnchor, type MountCtx } from './mount-data';
 import { LAYOUT_PARAMS, layoutTree } from './mount-layout';
 import { routeEdges } from './mount-route';
-import { generateSuggestions, markSuggestion, mergeSuggestions } from './mount-suggest';
+import {
+  ensureSuggestionBlockId,
+  generateSuggestions,
+  isWordAnchor,
+  markSuggestion,
+  mergeSuggestions,
+  replaceAnchorWithAlias,
+  suggestionId,
+  suggestionLink,
+  suggestionUnitMarkdown,
+  suggestProgressPercent,
+} from './mount-suggest';
 import type {
   AnchorRef,
   MountDirection,
@@ -52,8 +63,10 @@ import type {
   MountSuggestion,
   MountTree,
   RoutedEdge,
+  SuggestProgress,
   SuggestRun,
   SuggestStatus,
+  SuggestUnit,
 } from './mount-types';
 
 /* ------------------------------------------------------------------ *
@@ -194,6 +207,14 @@ interface CanvasState {
   worldEl: HTMLElement;
   svg: SVGSVGElement;
   loadingEl: HTMLElement;
+  /** 进度条填充（issue 322：AI 进度可视化） */
+  progressBar: HTMLElement | null;
+  /** 阶段文字（不逐 token 刷屏，只按阶段/步数更新） */
+  progressText: HTMLElement | null;
+  /** 计时（秒） */
+  progressTimer: HTMLElement | null;
+  timerId: ReturnType<typeof setInterval> | null;
+  startedAt: number;
 }
 
 let state: CanvasState | null = null;
@@ -234,8 +255,9 @@ export function mountStatusText(status: SuggestStatus): string {
       return 'AI 不可用 · 只画双链';
     case 'no-answer':
       return 'AI 未给出可用建议 · 只画双链（可点「重新生成」）';
+    // 321 起建议是**后台并入**：真实双链已经上屏，这句话不再是「等建议齐再开」
     default:
-      return '生成中 · 等建议齐再开';
+      return '生成中 · 真实双链已上屏';
   }
 }
 
@@ -444,7 +466,10 @@ function buildShell(): CanvasState | null {
     </div>
     <div class="bz-kb-mt-canvas" id="bz-kb-mt-canvas">
       <div class="bz-kb-mt-world" id="bz-kb-mt-world"></div>
-      <div class="bz-kb-mt-loading" id="bz-kb-mt-loading" style="display:none">生成中 · 等建议齐再开白板…</div>
+      <div class="bz-kb-mt-loading" id="bz-kb-mt-loading" style="display:none">
+        <div class="bz-kb-mt-pbar"><i class="bz-kb-mt-pbar-fill" id="bz-kb-mt-pbar"></i></div>
+        <div class="bz-kb-mt-pline"><span class="bz-kb-mt-pstage" id="bz-kb-mt-pstage">准备生成建议</span><span class="bz-kb-mt-ptimer" id="bz-kb-mt-ptimer">0s</span></div>
+      </div>
     </div>
     <div class="bz-kb-mt-zoomer">
       <button class="bz-kb-mt-zbtn bz-touch-target" data-mt-act="zoom-in" title="放大">＋</button>
@@ -495,6 +520,11 @@ function buildShell(): CanvasState | null {
     worldEl,
     svg,
     loadingEl: win.querySelector<HTMLElement>('#bz-kb-mt-loading')!,
+    progressBar: win.querySelector<HTMLElement>('#bz-kb-mt-pbar'),
+    progressText: win.querySelector<HTMLElement>('#bz-kb-mt-pstage'),
+    progressTimer: win.querySelector<HTMLElement>('#bz-kb-mt-ptimer'),
+    timerId: null,
+    startedAt: 0,
   };
   state = st;
   bindShellEvents(st);
@@ -714,9 +744,8 @@ export function closeMountTree(): void {
   st.win.style.display = 'none';
   st.selected = null;
   st.token++; // 在途载入作废
-  // 关闭即收掉「生成中」遮罩：在途载入被 token 作废后没人再负责隐藏它（关掉再开会看到永久「生成中」）
-  st.loading = false;
-  st.loadingEl.style.display = 'none';
+  // 关闭即收掉进度遮罩：在途载入被 token 作废后没人再负责隐藏它（关掉再开会看到永久「生成中」）
+  hideProgress(st);
   st.esc?.unregister();
   st.esc = null;
 }
@@ -758,7 +787,7 @@ export async function openMountTree(
   const sameTree =
     path === st.cardPath && direction === st.direction && st.tree.root === path && st.tree.nodes.length > 0;
   if (sameTree && !st.loading && !opts?.force) {
-    st.loadingEl.style.display = 'none';
+    hideProgress(st);
     renderTop(st);
     return;
   }
@@ -798,7 +827,11 @@ async function load(st: CanvasState, force: boolean): Promise<void> {
   st.cards.clear();
   st.ghosts = new Map();
   st.run = null;
-  st.loadingEl.style.display = '';
+  // 包 C（issue 322）：换卡**先清画布**——旧视图不再有机会残留。
+  // 旧口径要等建议生成完（40–60s）才在 renderCanvas 里清，换卡后旧卡节点一直挂在画布上。
+  // `st.tree` 同时重置为「当前卡的空树」：顶栏/面包屑立即切到新卡，不残留上一张树的节点。
+  st.tree = { root: path, direction, nodes: [], edges: [] };
+  clearCanvas(st);
   renderTop(st);
 
   const ctx = mountCtx();
@@ -810,36 +843,108 @@ async function load(st: CanvasState, force: boolean): Promise<void> {
     tree = { root: path, direction, nodes: [], edges: [] };
   }
   if (token !== st.token) return;
-
-  // 建议链路：开关关闭就不调（顶栏明说）
-  const autoOn = (tryGetSettings() as { knowledgeMountAutoSuggest?: boolean } | null)?.knowledgeMountAutoSuggest !== false;
-  let run: SuggestRun | null = null;
-  if (autoOn) {
-    run = await runSuggest(st, path, ctx, force);
-    if (token !== st.token) return;
-  }
-  st.run = run;
+  // 渐进呈现第一步：树建完**立即**画真实双链（不等建议），用户秒级看到新卡
   st.tree = tree;
-  if (run && run.suggestions.length) {
-    for (const s of run.suggestions) {
-      if (s?.target) st.ghosts.set('ai:' + s.target, s);
-    }
-    st.tree = mergeSuggestions(tree, run);
-  }
-  st.loading = false;
-  st.loadingEl.style.display = 'none';
   await renderCanvas(st);
   renderTop(st);
   fit();
+  if (token !== st.token) return;
+
+  // 建议链路：开关关闭就不调（顶栏明说）
+  const autoOn = (tryGetSettings() as { knowledgeMountAutoSuggest?: boolean } | null)?.knowledgeMountAutoSuggest !== false;
+  st.loading = false;
+  if (!autoOn) {
+    hideProgress(st);
+    renderTop(st);
+    return;
+  }
+  showProgress(st);
+  let run: SuggestRun | null = null;
+  try {
+    run = await runSuggest(st, path, ctx, force, (p) => {
+      if (token === st.token) setProgress(st, p);
+    });
+  } finally {
+    if (token === st.token) hideProgress(st);
+  }
+  if (token !== st.token) return;
+  st.run = run;
+  if (run && run.suggestions.length) {
+    for (const s of run.suggestions) {
+      if (s?.target) st.ghosts.set(suggestionId(s), s);
+    }
+    st.tree = mergeSuggestions(tree, run);
+    // 渐进呈现第二步：建议就绪后并入幽灵节点重画（保留用户已调过的缩放/平移，不重新 fit）
+    await renderCanvas(st);
+  } else {
+    st.tree = tree;
+  }
+  renderTop(st);
 }
 
-/** 建议生成（异常一律按 AI 不可用降级，不打断白板） */
-async function runSuggest(st: CanvasState, path: string, ctx: MountCtx, force: boolean): Promise<SuggestRun> {
+/* ---------- 进度条（issue 322：AI 进度可视化） ---------- */
+
+/** 起进度：遮罩显示 + 计时起跑（只在真的要跑建议时才调，避免「一闪而过」） */
+function showProgress(st: CanvasState): void {
+  st.loading = true;
+  st.loadingEl.style.display = '';
+  st.startedAt = Date.now();
+  if (st.progressBar) st.progressBar.style.width = '4%';
+  if (st.progressText) st.progressText.textContent = '准备生成建议';
+  if (st.progressTimer) st.progressTimer.textContent = '0s';
+  stopTimer(st);
+  st.timerId = setInterval(() => {
+    const el = st.progressTimer;
+    if (el) el.textContent = `${Math.round((Date.now() - st.startedAt) / 1000)}s`;
+  }, 500);
+}
+
+/** 阶段推进：DOM 直改（不整面板重渲染、不逐 token 刷屏） */
+function setProgress(st: CanvasState, p: SuggestProgress): void {
+  if (st.progressBar) st.progressBar.style.width = `${Math.min(100, Math.max(4, suggestProgressPercent(p)))}%`;
+  if (st.progressText) st.progressText.textContent = p.label || '生成中…';
+}
+
+/** 收进度：停表 + 隐藏（关闭白板 / 载入作废 / 链路结束都要走） */
+function hideProgress(st: CanvasState): void {
+  stopTimer(st);
+  st.loading = false;
+  st.loadingEl.style.display = 'none';
+}
+
+function stopTimer(st: CanvasState): void {
+  if (st.timerId) clearInterval(st.timerId);
+  st.timerId = null;
+}
+
+/** 清画布（换卡 / 重跑前的第一步：DOM 与内存集合一起清） */
+function clearCanvas(st: CanvasState): void {
+  for (const el of Array.from(st.worldEl.querySelectorAll('.bz-kb-mt-node'))) el.remove();
+  st.svg.innerHTML = '';
+  st.cards.clear();
+  st.sizes.clear();
+  st.edges = [];
+  st.pos = {};
+}
+
+/** 建议生成（异常一律按 AI 不可用降级，不打断白板）；`onProgress` 由三段链路驱动 */
+async function runSuggest(
+  st: CanvasState,
+  path: string,
+  ctx: MountCtx,
+  force: boolean,
+  onProgress: (p: SuggestProgress) => void
+): Promise<SuggestRun> {
   try {
     return await generateSuggestions(
       path,
-      { app: ctx.app, cardboxDir: ctx.cardboxDir, litDir: ctx.litDir },
-      { force },
+      {
+        app: ctx.app,
+        cardboxDir: ctx.cardboxDir,
+        litDir: ctx.litDir,
+        topicDir: (tryGetSettings() as { knowledgeTopicDirectory?: string } | null)?.knowledgeTopicDirectory || '主题盒',
+      },
+      { force, onProgress },
     );
   } catch {
     return { status: 'no-ai', suggestions: [] };
@@ -1132,7 +1237,10 @@ async function fillBody(st: CanvasState, node: MountNode, cardEl: HTMLElement): 
     bodyEl.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml(node.path)}</div>`;
     return;
   }
-  const md = bodyMarkdown(st, node);
+  const app: any = st.ctx.app ?? getApp();
+  const ghost = st.ghosts.get(node.id);
+  // 幽灵节点：现读目标文件的**单元原文**（整篇 / 小节 / 摘录所在块）+ 理由（ADR-0140：长文不受索引截断影响）
+  const md = ghost ? await suggestionUnitMarkdown(app, ghost) : bodyMarkdown(st, node);
   if (md === null) {
     bodyEl.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
     return;
@@ -1141,7 +1249,6 @@ async function fillBody(st: CanvasState, node: MountNode, cardEl: HTMLElement): 
     bodyEl.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
     return;
   }
-  const app: any = st.ctx.app ?? getApp();
   let ok = false;
   if (app?.vault) {
     try {
@@ -1232,7 +1339,7 @@ function tagBodyLinks(st: CanvasState, node: MountNode, bodyEl: HTMLElement): vo
   }
 }
 
-/** 卡片正文来源（幽灵节点 = 建议理由；其余取 data 层给的 body） */
+/** 卡片正文来源（幽灵节点走 suggestionUnitMarkdown——现读单元；其余取 data 层给的 body） */
 function bodyMarkdown(st: CanvasState, node: MountNode): string | null {
   if (node.missing) return null;
   const ghost = st.ghosts.get(node.id);
@@ -1699,11 +1806,30 @@ function runMenuAction(
   }
 }
 
-/** 固定：缓存留档 + 锚点处写 `[[目标]]`（用户显式动作；AI 绝不自动写） */
+/**
+ * 固定：缓存留档 + 按**建议单元**写链接（用户显式动作；AI 绝不自动写）。
+ *
+ * 三形态（ADR-0140 决策 3）：整篇 `[[路径]]` / 标题 `[[路径#标题]]` / 段落 `[[路径#^块id]]`。
+ * 段落要先向目标笔记补写确定性块 id（`ensureSuggestionBlockId`，幂等，插件首次写非主卡文件）；
+ * 词级 / 表格行锚点走**别名替换** `[[目标|原词]]`，不做句中追加。
+ * 证据失效（标题不存在 / 摘录定位不到 / 块 id 写不进去）一律降级整篇——绝不写瞎链接。
+ */
 async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<void> {
   const rootPath = st.tree.root;
   const app: any = st.ctx.app ?? getApp();
-  const link = ghost.target.replace(/\.md$/i, '');
+  let unit: SuggestUnit = ghost.unit === 'heading' || ghost.unit === 'paragraph' ? ghost.unit : 'whole';
+  let subpath = String(ghost.subpath ?? '').trim();
+  if (unit === 'paragraph') {
+    const got = ghost.quote ? await ensureSuggestionBlockId(app, ghost.target, ghost.quote) : { blockId: '', ok: false };
+    if (got.ok && got.blockId) subpath = got.blockId;
+    else unit = 'whole'; // 摘录定位不到 / 写不进去 → 降级整篇
+  } else if (unit === 'heading' && !subpath) {
+    unit = 'whole';
+  }
+  const linkInner = linkTargetOf(ghost.target, unit, subpath); // `路径#^块id` / `路径#标题` / `路径`（不含方括号）
+  const anchorText = String(ghost.anchor?.text ?? '').trim();
+  /** 实际写入的链接文本（别名替换时是 `[[目标|原词]]`——通知要照实说，不谎报） */
+  let written = `[[${linkInner}]]`;
   let found = false;
   let changed = false;
   try {
@@ -1714,7 +1840,13 @@ async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<v
       if (!file) return;
       found = true;
       const text = await app.vault.read(file);
-      const next = insertLinkAtAnchor(text, ghost.anchor, link);
+      // 表格行锚点（清洗后仍残留 `|`）或词级锚点 → 别名替换；否则句中追加
+      const rowLike = String(ghost.anchor?.text ?? '').includes('|');
+      const aliasNext = isWordAnchor(ghost.anchor, rowLike)
+        ? replaceAnchorWithAlias(text, ghost.anchor, ghost.target, subRef(unit, subpath))
+        : null;
+      if (aliasNext !== null) written = `[[${linkInner}|${anchorText}]]`;
+      const next = aliasNext ?? insertLinkAtAnchor(text, ghost.anchor, linkInner);
       if (next !== text) {
         await app.vault.modify(file, next);
         changed = true;
@@ -1733,19 +1865,32 @@ async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<v
   } catch {
     /* 留档失败不影响正文已写入的事实 */
   }
-  if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
-  st.ghosts.delete(ghostId(ghost));
+  const gid = suggestionId(ghost);
+  if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => suggestionId(s) !== gid) };
+  st.ghosts.delete(gid);
   // 幂等早退（正文里已有这条双链）与真写入分开报：不谎报「正文已写入」
   st.deps.notice(
-    changed ? `已固定：正文写入 [[${link}]]` : `已固定：正文里已有 [[${link}]]，本次只留档`,
+    changed ? `已固定：正文写入 ${written}` : `已固定：正文里已有 [[${linkInner}]]，本次只留档`,
     'success',
   );
   await rebuildTreeOnly(st);
 }
 
-/** 幽灵节点 id（与 mergeSuggestions 同口径） */
+/** 落链接的**目标串**（不含方括号）：`路径` / `路径#标题` / `路径#^块id` */
+function linkTargetOf(target: string, unit: SuggestUnit, subpath: string): string {
+  const wiki = suggestionLink({ target, unit, subpath });
+  return wiki.replace(/^\[\[/, '').replace(/\]\]$/, '');
+}
+
+/** 别名替换与追加共用的子路径写法：标题 = `标题`，段落 = `^块id` */
+function subRef(unit: SuggestUnit, subpath: string): string {
+  if (!subpath) return '';
+  return unit === 'paragraph' ? (subpath.startsWith('^') ? subpath : `^${subpath}`) : subpath;
+}
+
+/** 幽灵节点 id（与 mergeSuggestions 同口径：统一走 mount-suggest 的 suggestionId） */
 function ghostId(ghost: Pick<MountSuggestion, 'target'>): string {
-  return 'ai:' + ghost.target;
+  return suggestionId(ghost);
 }
 
 /** 取消：缓存留档（永久不再推）+ 本图移除幽灵节点 */
@@ -1757,7 +1902,8 @@ async function dismissSuggestion(st: CanvasState, ghost: MountSuggestion): Promi
   } catch {
     /* 留档失败：本图仍移除，下次生成可能重推 */
   }
-  if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
+  if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => suggestionId(s) !== suggestionId(ghost)) };
+  st.ghosts.delete(suggestionId(ghost));
   st.deps.notice('已取消建议：永久不再推荐这条', 'success');
   await rebuildTreeOnly(st);
 }
@@ -1770,6 +1916,7 @@ export function destroyMountTree(): void {
   st.esc?.unregister();
   st.esc = null;
   st.token++; // 在途载入作废（别让它在 DOM 摘除后继续写状态）
+  stopTimer(st); // 卸载时连计时器一起摘（否则 setInterval 会一直写已移除的 DOM）
   cancelLongPress(st);
   st.mask.remove();
   st.win.remove();

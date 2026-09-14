@@ -166,11 +166,31 @@ export interface RoutedEdge extends LayoutEdge {
   fallback: boolean;
 }
 
-/* ---------- 建议链路（318） ---------- */
+/* ---------- 建议链路（318 / 321 三段式，ADR-0140） ---------- */
 
-/** 一条候选：「锚点 → 目标」+ 一句话理由（ADR-0138/0139） */
+/**
+ * 建议目标单元粒度（ADR-0140 决策 1）：
+ * - `whole` 整篇笔记（`[[路径]]`）；
+ * - `heading` 某个标题下的小节（`[[路径#标题]]`）；
+ * - `paragraph` 某一段（`[[路径#^块id]]`，固定时补写块 id）。
+ * 缺省（旧缓存片 / 降级兜底）按 `whole` 处理。
+ */
+export type SuggestUnit = 'whole' | 'heading' | 'paragraph';
+
+/** 建议链路阶段（ADR-0140 决策 5：白板进度条与动态文字由它驱动） */
+export type SuggestStage = 'query' | 'recall' | 'adopt' | 'locate' | 'save';
+
+/** 进度回调入参：`done/total` 只在有明确步数的阶段给（检索 / 定位官） */
+export interface SuggestProgress {
+  stage: SuggestStage;
+  label: string;
+  done?: number;
+  total?: number;
+}
+
+/** 一条候选：「锚点 → 目标」+ 一句话理由（ADR-0138/0139）；321 起带目标单元 */
 export interface MountSuggestion {
-  /** 源卡正文中的锚点（以 text 重定位） */
+  /** 源卡正文中的锚点（以 text 重定位；**必须是主卡正文原文**——ADR-0140 硬约束 ①） */
   anchor: AnchorRef;
   /** 目标库内路径 */
   target: string;
@@ -179,6 +199,17 @@ export interface MountSuggestion {
   reason: string;
   score: number;
   state: SuggestState;
+  /** 目标单元粒度；缺省按 `whole` */
+  unit?: SuggestUnit;
+  /** `unit='heading'` 时的小节标题**原文**（落链接前必须校验存在，不存在降级整篇） */
+  heading?: string;
+  /** `unit='paragraph'` 时的原文摘录（回定位证据；渲染后文本 ≠ 原文是常态，三级回定位） */
+  quote?: string;
+  /**
+   * 落链接用的子路径（不含 `#`）：heading = 标题原文；paragraph = 块 id（`bz-`+hash8，
+   * **固定时才补写**到目标笔记，故缓存片里通常为 ''）；whole = ''。
+   */
+  subpath?: string;
 }
 
 /** 单张主卡的建议缓存片（按 `bodyHash` 逐卡失效：改哪张卡只重跑那张） */

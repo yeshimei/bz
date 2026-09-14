@@ -384,9 +384,20 @@ export class UIManager {
   private allNotes: KnowledgeNoteEntry[] = [];
   private allCards: CardEntry[] = [];
   private allTopics: TopicEntry[] = [];
+  /** 已渲染的卡片行数（issue 323：翻页只**追加**新行，不再整表 innerHTML 重建） */
   private cardsShown = 0;
-  /** 挂载引用索引（issue 320）：整库扫描**每轮只算一次**，行徽标 / 孤儿筛选 / 行标记共用这份缓存 */
+  /** 卡片行容器（与表头/页脚分离，追加与徽标补丁都打在它身上） */
+  private cardRowsEl: HTMLElement | null = null;
+  /**
+   * 挂载引用索引（issue 320 / 323）：整库扫描一次并**缓存到面板对象上**——
+   * 行引用计数徽标（refCounts）、孤儿筛选与行标记（orphanCards）共用这一份；
+   * counts 算好后**传给 orphanCards 复用**（其内部不再自行复算一遍）。
+   *
+   * 323 起改**面板会话缓存 + 脏标记**：切到卡片部不再整库重扫（1503+ 文件逐个解析出站链是切换卡顿的大头），
+   * 只有**落卡 / 库内文件变更 / 目录变更 / 显式刷新**才置脏重算。
+   */
   private mountIndex: { counts: Record<string, number>; orphans: Set<string> } | null = null;
+  private mountIndexDirty = true;
   /** 部贰「只看孤儿」筛选开关（内存态，重渲染 / 换部来回都保留） */
   private cardOrphanOnly = false;
   private editor: { source: KnowledgeNoteEntry; pick: string | null; why: string; title: string } | null = null;
@@ -564,8 +575,7 @@ export class UIManager {
     else if (act === 'cards-orphan') {
       if (!this.mountIndex) return; // 索引未统计（扫描失败）：芯片置灰，不给假状态
       this.cardOrphanOnly = !this.cardOrphanOnly;
-      this.cardsShown = 0; // 回收分页到首屏（≤80 时与 renderCards 的 Math.max 等价，>80 时切回第一页）
-      this.renderCards();
+      this.renderCards(); // 池随筛选变化 → 重建（内部回收到首屏 80 行）
     }
     else if (act === 'topic-open') { const p = t.getAttribute('data-path') || ''; const tp = this.allTopics.find((x) => x.path === p); if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, 'topic'); }
     else if (act === 'kb-close') this.hideMain(); // 移动端全屏主窗出口（ADR-0116：手机无 ESC/遮罩边缘）
@@ -604,12 +614,12 @@ export class UIManager {
       this.renderLiterature();
     } else if (this.part === 'z2') {
       const dir = cardboxDirOf(s);
-      if (this.loadedCardDir && this.loadedCardDir !== dir) this.allCards = [];
+      if (this.loadedCardDir && this.loadedCardDir !== dir) { this.allCards = []; this.markCardsDirty(); }
       await this.loadCards(dir);
-      this.cardsShown = 0;
       this.renderCards(); // 首屏先出卡片行：不把列表卡在整库扫描上
-      await this.loadMountIndex(); // 每轮 refresh 只算一次（徽标 / 孤儿筛选 / 行标记共用）
-      if (this.part === 'z2') this.renderCards(); // 扫描落地后补徽标 / 孤儿标记 / 筛选计数
+      if (this.part !== 'z2') return;
+      if (this.mountIndexDirty) await this.loadMountIndex(); // 会话缓存：只有脏了才整库重扫（issue 323）
+      if (this.part === 'z2') this.applyMountIndex(); // 扫描落地后补徽标 / 孤儿标记 / 筛选计数
     } else {
       const dir = topicDirOf(s);
       if (this.loadedTopicDir && this.loadedTopicDir !== dir) this.allTopics = [];
@@ -817,7 +827,8 @@ export class UIManager {
       this.editor = null;
       this.closeSheet();
       notice('已落卡 卡片盒/' + base + '.md · 它随时被任何笔记引用', 'success');
-      if (this.part === 'z2') { this.cardsShown = 0; await this.loadMountIndex(); this.renderCards(); }
+      // 落卡 = 索引脏点：新卡改变了全库引用图，必须重算（issue 323：其它情况一律走会话缓存）
+      if (this.part === 'z2') { this.markCardsDirty(); await this.loadMountIndex(); this.renderCards(); }
     } catch (e: any) {
       notice('落卡失败：' + (e?.message ?? String(e)), 'error');
     }
@@ -852,9 +863,11 @@ export class UIManager {
   /**
    * 挂载引用索引（issue 320；ADR-0138 §5 同包四项）：整库扫描一次并**缓存到面板对象上**——
    * 行引用计数徽标（refCounts）、孤儿筛选与行标记（orphanCards）共用这一份；
-   * counts 算好后**传给 orphanCards 复用**（其内部不再自行复算一遍），整轮 refresh 只走一遍整库扫描。
-   * 每轮 refresh 重算（改链 / 改名 / 增删卡即时跟随），行渲染里不再各算一次。
-   * 扫描异常按空索引降级：芯片显「未统计」并置灰，列表照常渲染。
+   * counts 算好后**传给 orphanCards 复用**（其内部不再自行复算一遍）。
+   *
+   * **323 起按面板会话缓存 + 脏标记**：切到「卡片」部不再整库重扫（1500+ 文件逐个解析出站链
+   * 是切换卡顿的最大头），只有**落卡 / 库内文件变更 / 目录变更 / 显式刷新**才置脏重算。
+   * 扫描异常按空索引降级：芯片显「未统计」并置灰，列表照常渲染（异常时留脏，下次再试）。
    */
   private async loadMountIndex(): Promise<void> {
     try {
@@ -864,34 +877,163 @@ export class UIManager {
     } catch {
       this.mountIndex = null;
     }
+    if (this.mountIndex) this.mountIndexDirty = false;
   }
 
+  /** 卡片列表与挂载索引一起置脏（落卡 / 库内文件变更 / 目录变更 → 下次进部贰重算） */
+  private markCardsDirty(): void {
+    this.mountIndexDirty = true;
+    this.cardsShown = 0;
+    this.cardRowsEl = null;
+  }
+
+  /** 当前筛选后的卡片池（只有孤儿筛选依赖挂载索引；不筛选时池 = 全部卡片） */
+  private cardPool(): CardEntry[] {
+    const idx = this.mountIndex;
+    return this.cardOrphanOnly && idx ? this.allCards.filter((c) => idx.orphans.has(c.path)) : this.allCards;
+  }
+
+  /** 表头芯片（原地同步：索引落地后只改这一个节点，不重建整表） */
+  private cardBarHtml(): string {
+    const idx = this.mountIndex;
+    return `<div class="bz-kb-cbar"><button class="bz-kb-cfilter${this.cardOrphanOnly ? ' is-on' : ''}" data-kb-act="cards-orphan"${
+      idx ? '' : ' disabled'
+    } title="${idx ? '只列既无入链也无挂载的卡' : '挂载索引未统计（扫描失败）'}">孤 儿${
+      idx ? ` · ${idx.orphans.size}` : ' · 未统计'
+    }</button><span class="bz-kb-meta">全部 ${this.allCards.length} 张</span></div>`;
+  }
+
+  /** 单行 HTML（全量重建与增量追加共用同一份模板） */
+  private cardRowHtml(c: CardEntry): string {
+    const idx = this.mountIndex;
+    const n = idx?.counts[c.path] ?? 0; // 引用计数：0 不出徽标更干净（只数用户双链）
+    const orphan = idx?.orphans.has(c.path) ?? false;
+    return `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc(c.path)}">
+      <div class="bz-kb-hw"><span class="bz-kb-w">${esc(c.title)}</span>${
+        this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ''
+      }${orphan ? '<span class="bz-kb-orphan" title="既无入链也无挂载">孤 儿</span>' : ''}<span class="bz-kb-dom">${esc(
+      c.domain
+    )}</span></div>
+      <div class="bz-kb-tail"><span>${c.review ? '复习中 · 到期由闹钟安排' : '未入复习'}</span>${
+        n > 0 ? `<span class="bz-kb-refbadge" title="被 ${n} 处用户双链引用">被引 ${n}</span>` : ''
+      }<button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
+    </div>`;
+  }
+
+  /**
+   * 全量重建（换部 / 换筛选 / 落卡）：只搭表头 + 空行容器 + 页脚，行由 `appendCardRows` 追加。
+   * 此后翻页与徽标落地都**不再**走 innerHTML 全表重建（issue 323：滚动到底反复触发时 O(n²) 抖动）。
+   */
   private renderCards(): void {
     if (!this.contentEl) return;
-    this.cardsShown = Math.max(this.cardsShown, 80);
-    const idx = this.mountIndex;
-    const pool = this.cardOrphanOnly && idx ? this.allCards.filter((c) => idx.orphans.has(c.path)) : this.allCards;
-    const shown = pool.slice(0, this.cardsShown);
-    const rows = shown.map((c) => {
-      const n = idx?.counts[c.path] ?? 0; // 引用计数：0 不出徽标更干净（只数用户双链）
-      const orphan = idx?.orphans.has(c.path) ?? false;
-      return `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc(c.path)}">
-      <div class="bz-kb-hw"><span class="bz-kb-w">${esc(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ''}${orphan ? '<span class="bz-kb-orphan" title="既无入链也无挂载">孤 儿</span>' : ''}<span class="bz-kb-dom">${esc(c.domain)}</span></div>
-      <div class="bz-kb-tail"><span>${c.review ? '复习中 · 到期由闹钟安排' : '未入复习'}</span>${n > 0 ? `<span class="bz-kb-refbadge" title="被 ${n} 处用户双链引用">被引 ${n}</span>` : ''}<button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
-    </div>`;
-    }).join('');
-    const rest = pool.length - shown.length;
     this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-cbar"><button class="bz-kb-cfilter${this.cardOrphanOnly ? ' is-on' : ''}" data-kb-act="cards-orphan"${idx ? '' : ' disabled'} title="${idx ? '只列既无入链也无挂载的卡' : '挂载索引未统计（扫描失败）'}">孤 儿${idx ? ` · ${idx.orphans.size}` : ' · 未统计'}</button><span class="bz-kb-meta">全部 ${this.allCards.length} 张</span></div>
-      ${rows || `<div class="bz-kb-empty">${this.cardOrphanOnly ? '没有孤儿卡——每张卡都有人挂或挂着谁。' : '卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。'}</div>`}
-      ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ''}
+      ${this.cardBarHtml()}
+      <div class="bz-kb-rows" id="kb-card-rows"></div>
+      <div class="bz-kb-empty" id="kb-card-more" data-kb-act="cards-more" style="display:none"></div>
     </div>`;
+    this.cardRowsEl = q<HTMLElement>(this.contentEl, '#kb-card-rows');
+    this.cardsShown = 0;
+    this.appendCardRows(80); // 首屏 80 行（口径不变）
+  }
+
+  /** 追加 n 行（增量：已渲染的行不动，滚动位置与 DOM 节点都保住） */
+  private appendCardRows(n: number): void {
+    const rowsEl = this.cardRowsEl;
+    if (!rowsEl) return;
+    const pool = this.cardPool();
+    if (pool.length === 0) {
+      rowsEl.innerHTML = `<div class="bz-kb-empty">${
+        this.cardOrphanOnly ? '没有孤儿卡——每张卡都有人挂或挂着谁。' : '卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。'
+      }</div>`;
+      this.cardsShown = 0;
+      this.updateCardMore(pool);
+      return;
+    }
+    const from = Math.max(0, this.cardsShown);
+    const to = Math.min(pool.length, from + n);
+    if (to > from) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = pool.slice(from, to).map((c) => this.cardRowHtml(c)).join('');
+      const frag = document.createDocumentFragment();
+      while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+      rowsEl.appendChild(frag);
+      this.cardsShown = to;
+    }
+    this.updateCardMore(pool);
+  }
+
+  /** 页脚「还有 N 张」原地更新（不重渲整表） */
+  private updateCardMore(pool: CardEntry[]): void {
+    const moreEl = this.contentEl ? q<HTMLElement>(this.contentEl, '#kb-card-more') : null;
+    if (!moreEl) return;
+    const rest = pool.length - this.cardsShown;
+    moreEl.style.display = rest > 0 ? '' : 'none';
+    moreEl.textContent = rest > 0 ? `↓ 还有 ${rest} 张，滚动或点此加载` : '';
+  }
+
+  /** 索引落地后**原地**补徽标与孤儿标记（按行 querySelector 定位，不重建已渲染行） */
+  private patchCardBadges(): void {
+    const rowsEl = this.cardRowsEl;
+    const idx = this.mountIndex;
+    if (!rowsEl || !idx) return;
+    for (const row of Array.from(rowsEl.querySelectorAll<HTMLElement>('.bz-kb-lexrow'))) {
+      const path = row.getAttribute('data-path') || '';
+      if (idx.orphans.has(path)) {
+        const hw = row.querySelector<HTMLElement>('.bz-kb-hw');
+        if (hw && !hw.querySelector('.bz-kb-orphan')) {
+          const span = document.createElement('span');
+          span.className = 'bz-kb-orphan';
+          span.title = '既无入链也无挂载';
+          span.textContent = '孤 儿';
+          const dom = hw.querySelector('.bz-kb-dom');
+          if (dom) hw.insertBefore(span, dom);
+          else hw.appendChild(span);
+        }
+      }
+      const n = idx.counts[path] ?? 0;
+      if (n > 0) {
+        const tail = row.querySelector<HTMLElement>('.bz-kb-tail');
+        if (tail && !tail.querySelector('.bz-kb-refbadge')) {
+          const b = document.createElement('span');
+          b.className = 'bz-kb-refbadge';
+          b.title = `被 ${n} 处用户双链引用`;
+          b.textContent = `被引 ${n}`;
+          const btn = tail.querySelector('.bz-kb-mt-openbtn');
+          if (btn) tail.insertBefore(b, btn);
+          else tail.appendChild(b);
+        }
+      }
+    }
+  }
+
+  /** 芯片原地同步（索引落地时改这一个节点：计数 / 置灰 / 点亮，不重建整表） */
+  private syncCardChip(): void {
+    const chip = this.contentEl ? this.contentEl.querySelector<HTMLElement>('[data-kb-act="cards-orphan"]') : null;
+    if (!chip) return;
+    const idx = this.mountIndex;
+    chip.classList.toggle('is-on', this.cardOrphanOnly);
+    chip.textContent = `孤 儿${idx ? ` · ${idx.orphans.size}` : ' · 未统计'}`;
+    chip.setAttribute('title', idx ? '只列既无入链也无挂载的卡' : '挂载索引未统计（扫描失败）');
+    (chip as HTMLButtonElement).disabled = !idx;
+  }
+
+  /**
+   * 索引落地：孤儿筛选开着时**池会变** → 全量重建；否则只打徽标补丁 + 更新页脚
+   * （保住已渲染行与滚动位置——issue 323 的第二处根因）。
+   */
+  private applyMountIndex(): void {
+    this.syncCardChip();
+    if (!this.mountIndex) return; // 扫描失败：芯片显「未统计」并置灰，列表照常
+    if (this.cardOrphanOnly) this.renderCards();
+    else {
+      this.patchCardBadges();
+      this.updateCardMore(this.cardPool());
+    }
   }
 
   private moreCards(): void {
-    if (this.cardsShown >= this.allCards.length) return;
-    this.cardsShown += 80;
-    this.renderCards();
+    if (this.cardsShown >= this.cardPool().length) return;
+    this.appendCardRows(80);
   }
 
   private onContentScroll(): void {
@@ -1024,6 +1166,8 @@ export class UIManager {
     this.loadedLitDir = '';
     this.loadedCardDir = '';
     this.loadedTopicDir = '';
+    // 库内笔记改了 → 引用图可能变 → 挂载索引置脏（下次进卡片部重算一次，切部本身不重算——issue 323）
+    this.mountIndexDirty = true;
   }
 
   private attachFileListener(): void {
