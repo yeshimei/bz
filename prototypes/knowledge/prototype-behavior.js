@@ -1,4 +1,4 @@
-/* 源指纹 6217af0a3c6ee56f · 仓内输入 33 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 cbb0e87eee31662d · 仓内输入 33 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -8883,7 +8883,6 @@ ${sample}`,
   var SUGGEST_PER_ANCHOR_CANDIDATES = 3;
   var SUGGEST_MAX_CANDIDATES = 24;
   var SUGGEST_JUDGE_MAX_TOKENS = 131072;
-  var JUDGE_EFFORT = { reasoning_effort: "max" };
   var REASON_MAX_CHARS = 80;
   var SUGGEST_CACHE_FILE = "mount-suggest.json";
   var SUGGEST_CACHE_VERSION = 2;
@@ -8893,7 +8892,7 @@ ${sample}`,
     if (i >= text.length) return true;
     return /\s/.test(text[i]);
   }
-  var LEADING_MARK_RE = /^(?:#{1,6}\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
+  var LEADING_MARK_RE = /^(?:#{1,6}\s*|\[![^\]]*\]\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
   function wikiDisplay(inner) {
     const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : inner;
     const afterBlock = afterAlias.includes("^") ? afterAlias.slice(0, afterAlias.indexOf("^")) : afterAlias;
@@ -8925,7 +8924,8 @@ ${sample}`,
       const ch = i === text.length ? "" : text[i];
       let boundary = i === text.length;
       if (!boundary) {
-        if (ch === "\n" || ch === "。" || ch === "！" || ch === "？" || ch === "；" || ch === "…" || ch === "!") boundary = true;
+        if (ch === "\n" || ch === "。" || ch === "！" || ch === "？" || ch === "；" || ch === "…") boundary = true;
+        else if (ch === "!") boundary = text[i - 1] !== "[" && text[i + 1] !== "[";
         else if (ch === "." || ch === "?" || ch === ";") boundary = nextIsBoundary(text, i + 1);
       }
       if (!boundary) continue;
@@ -9222,23 +9222,14 @@ ${sample}`,
       await persistCardCache(cardPath, bodyHash, generatedAt2, []);
       return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
     }
-    const judge = (modelOptions) => createAI().json(buildJudgePrompt(anchors, candidates), { modelOptions });
     let raw = "";
     try {
-      raw = await judge({ max_tokens: SUGGEST_JUDGE_MAX_TOKENS, ...JUDGE_EFFORT });
+      raw = await createAI().prompt(buildJudgePrompt(anchors, candidates), void 0, {
+        modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS }
+      });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (!/400|unrecognized|unknown|unsupported|invalid/i.test(msg)) {
-        console.warn("[mount-suggest] AI 裁判失败", e);
-        return empty("no-ai");
-      }
-      console.warn("[mount-suggest] 裁判首次调用被拒，去掉思考刻度重试", e);
-      try {
-        raw = await judge({ max_tokens: SUGGEST_JUDGE_MAX_TOKENS });
-      } catch (e2) {
-        console.warn("[mount-suggest] AI 裁判失败", e2);
-        return empty("no-ai");
-      }
+      console.warn("[mount-suggest] AI 裁判失败", e);
+      return empty("no-ai");
     }
     const parsed = parseJudgePicks(raw);
     if (!parsed.found || parsed.count > 0 && parsed.picks.length === 0) {

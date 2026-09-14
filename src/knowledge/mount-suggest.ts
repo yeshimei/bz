@@ -12,10 +12,11 @@
  * 2026-09-14 实机排障（用户报「打开白板没有任何 AI 建议」）：三处叠加，全是「答案拿到手却被丢掉」——
  * ① 模型按 prompt 里的标签形状作答（`"anchor":"a1","target":"t2"`），旧解析只认整数，逐条丢弃；
  * ② 带思考的模型（DeepSeek-V4.1-Flash）实测把 2048 / 8192 的预算全烧在 reasoning 上
- *    （finish_reason=length、content 空串）→ **不关思考**（用户拍板质量优先），把 `max_tokens` 提到
- *    128K 并 `reasoning_effort: 'max'`，让思考跑完再出答案；
- * ③ `response_format: json_object` 下模型可能把数组包进外层对象（`{"type":"json_object","content":"[…]"}`）
- *    → 解析先脱壳再取数组。
+ *    （finish_reason=length、content 空串）→ **不关思考**（保持默认档），把 `max_tokens` 提到 128K
+ *    让思考跑完再出答案（`reasoning_effort: max` 试过，单卡 120s 太慢，用户否掉）；
+ * ③ `response_format: json_object`（旧代码走 `createAI().json()`）与「输出数组」的 prompt 相互打架，
+ *    实测模型会吐 `{"type": "json_object"}` 空壳、或把数组包进外层对象
+ *    （`{"type":"json_object","content":"[…]"}`）→ 改用 prompt 纯文本通道，解析仍先脱壳再取数组。
  * 三处叠加后「空结果」还会被当成 fresh 落缓存（bodyHash 有效 ⇒ 以后每次都是「已缓存建议」零候选），
  * 故本轮把无回答单列为 `no-answer` 不落缓存，并加 `SUGGEST_CACHE_VERSION` 让旧口径的缓存片自动失效。
  *
@@ -66,17 +67,12 @@ export const SUGGEST_TOPK = 8;
 export const SUGGEST_PER_ANCHOR_CANDIDATES = 3;
 export const SUGGEST_MAX_CANDIDATES = 24;
 /**
- * 裁判调用参数（2026-09-14 用户拍板：**思考不能关、要足够聪明**，预算拉满——质量优先于等待时长）。
- * DeepSeek-V4.1 官方口径：上下文 1M、max_tokens 上限 384K（393216）；思考模式默认输出预算 64K，
- * `reasoning_effort: 'max'` 时为 128K。这里给满 128K：裁判答案本身只有 ~3K token，余量全留给思考。
- * （旧值 2048 实测被 reasoning 吃光：finish_reason=length、content 空串 ⇒ 白板零建议。）
+ * 裁判调用参数（2026-09-14 用户拍板）：**思考不关**（默认档，不额外加压——`reasoning_effort: max` 实测单卡 120s，太久），
+ * 但预算给满：DeepSeek-V4.1 官方口径——上下文 1M、max_tokens 上限 384K（393216），思考模式默认输出预算 64K。
+ * 这里给 128K：裁判答案本身只有 ~3K token，余量全留给思考。（旧值 2048 实测被 reasoning 吃光：
+ * finish_reason=length、content 空串 ⇒ 白板零建议。）
  */
 export const SUGGEST_JUDGE_MAX_TOKENS = 131072;
-/**
- * 思考强度（DeepSeek 侧字段 `reasoning_effort`：none/low/high/max，默认 high）。
- * 非 DeepSeek 服务商不认该字段：坏响应忽略、400 拒绝则由调用处去掉它重试一次。
- */
-const JUDGE_EFFORT = { reasoning_effort: 'max' } as const;
 /** 一句话理由长度上限（超长截断，防 UI 溢出） */
 const REASON_MAX_CHARS = 80;
 /** 建议缓存文件名（域内单文件，ADR-0139 §3） */
@@ -99,8 +95,8 @@ function nextIsBoundary(text: string, i: number): boolean {
   return /\s/.test(text[i]);
 }
 
-/** markdown 行首标记（标题井号 / 列表符 / 有序序号 / 引用符）——不算锚点内容 */
-const LEADING_MARK_RE = /^(?:#{1,6}\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
+/** markdown 行首标记（标题井号 / 列表符 / 有序序号 / 引用符 / callout 标记 `[!quote]`）——不算锚点内容 */
+const LEADING_MARK_RE = /^(?:#{1,6}\s*|\[![^\]]*\]\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
 /** `[[目标|别名#小节^块]]` → 可读显示文本（别名 > 小节 > 目标名） */
 function wikiDisplay(inner: string): string {
   const afterAlias = inner.includes('|') ? inner.slice(inner.lastIndexOf('|') + 1) : inner;
@@ -148,7 +144,8 @@ export function splitAnchors(body: string): AnchorRef[] {
     const ch = i === text.length ? '' : text[i];
     let boundary = i === text.length;
     if (!boundary) {
-      if (ch === '\n' || ch === '。' || ch === '！' || ch === '？' || ch === '；' || ch === '…' || ch === '!') boundary = true;
+      if (ch === '\n' || ch === '。' || ch === '！' || ch === '？' || ch === '；' || ch === '…') boundary = true;
+      else if (ch === '!') boundary = text[i - 1] !== '[' && text[i + 1] !== '['; // callout `[!quote]` 与嵌入 `![[…]]` 里的 `!` 不是句读
       else if (ch === '.' || ch === '?' || ch === ';') boundary = nextIsBoundary(text, i + 1);
     }
     if (!boundary) continue;
@@ -611,27 +608,18 @@ export async function generateSuggestions(
     return { status: 'fresh', suggestions: [], generatedAt };
   }
 
-  // ⑦ LLM 裁判（core/ai 统一通道）：一句话理由 + 关联分。思考**不关**（用户拍板质量优先），预算给满 128K。
-  //   首次带 reasoning_effort（DeepSeek 侧刻度）；被服务商拒（400）→ 去掉该字段按提供方默认重试一次。
-  const judge = (modelOptions: Record<string, unknown>): Promise<string> =>
-    createAI().json(buildJudgePrompt(anchors, candidates), { modelOptions });
+  // ⑦ LLM 裁判（core/ai 统一通道）：一句话理由 + 关联分。
+  //   走 **prompt 纯文本通道**，绝不用 json()：`response_format: json_object` 与「输出数组」的 prompt
+  //   相互打架，实测模型会吐 `{"type": "json_object"}` 空壳（零建议）——建链 agent 的裁判同款口径。
+  //   思考不关（默认档），预算给足 128K 让思考跑完再出答案。
   let raw = '';
   try {
-    raw = await judge({ max_tokens: SUGGEST_JUDGE_MAX_TOKENS, ...JUDGE_EFFORT });
+    raw = await createAI().prompt(buildJudgePrompt(anchors, candidates), undefined, {
+      modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS },
+    });
   } catch (e) {
-    // 只在「请求形状被拒」（400/不认识的参数）时去掉刻度重试一次；网络类故障不重复打
-    const msg = e instanceof Error ? e.message : String(e);
-    if (!/400|unrecognized|unknown|unsupported|invalid/i.test(msg)) {
-      console.warn('[mount-suggest] AI 裁判失败', e);
-      return empty('no-ai');
-    }
-    console.warn('[mount-suggest] 裁判首次调用被拒，去掉思考刻度重试', e);
-    try {
-      raw = await judge({ max_tokens: SUGGEST_JUDGE_MAX_TOKENS });
-    } catch (e2) {
-      console.warn('[mount-suggest] AI 裁判失败', e2);
-      return empty('no-ai');
-    }
+    console.warn('[mount-suggest] AI 裁判失败', e);
+    return empty('no-ai');
   }
   const parsed = parseJudgePicks(raw);
   if (!parsed.found || (parsed.count > 0 && parsed.picks.length === 0)) {
