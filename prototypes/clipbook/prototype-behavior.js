@@ -1,4 +1,4 @@
-/* 源指纹 703ac2677a9103ac · 仓内输入 81 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 176b1fd619de2bd9 · 仓内输入 81 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -6326,6 +6326,9 @@ ${body}`;
     });
     return scheme + host + path + (kept.length ? "?" + kept.join("&") : "") + (hash != null ? hash : "");
   }
+  function canonicalVideoUrl(bvid) {
+    return `https://www.bilibili.com/video/${String(bvid != null ? bvid : "").trim()}/`;
+  }
   function decodeHtmlEntities(s) {
     return s.replace(/&quot;/gi, '"').replace(/&#0?39;/g, "'").replace(/&apos;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&");
   }
@@ -8282,45 +8285,114 @@ ${sample}`,
     const n = Number(v);
     return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
   }
-  async function fetchFromViewApi(bvid) {
-    try {
-      const json = parseJson(await withTimeout2(requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: "GET" }), VIEW_TIMEOUT_MS));
-      if (!json || json.code !== 0 || !json.data) return null;
-      const d = json.data;
-      const title = typeof d.title === "string" ? d.title.trim() : "";
-      const ownerName = d.owner && typeof d.owner.name === "string" ? d.owner.name.trim() : "";
-      const meta = {};
-      if (title) meta.title = title;
-      if (ownerName) meta.uploader = ownerName;
-      const duration = posInt(d.duration);
-      if (duration) meta.duration = duration;
-      let pages = [];
-      if (Array.isArray(d.pages)) {
-        d.pages.forEach((p, i) => {
-          const cid = posInt(p && p.cid);
-          if (!cid) return;
-          pages.push({
-            page: posInt(p.page) || i + 1,
-            part: typeof p.part === "string" ? p.part.trim() : "",
-            duration: posInt(p.duration) || duration,
-            cid
-          });
+  function metaFromVideoData(d) {
+    if (!d || typeof d !== "object") return null;
+    const meta = {};
+    const title = typeof d.title === "string" ? d.title.trim() : "";
+    const ownerName = d.owner && typeof d.owner.name === "string" ? d.owner.name.trim() : "";
+    const bvid = bvidFromVideoData(d);
+    if (title) meta.title = title;
+    if (ownerName) meta.uploader = ownerName;
+    if (bvid) meta.bvid = bvid;
+    const duration = posInt(d.duration);
+    if (duration) meta.duration = duration;
+    let pages = [];
+    if (Array.isArray(d.pages)) {
+      d.pages.forEach((p, i) => {
+        const cid = posInt(p && p.cid);
+        if (!cid) return;
+        pages.push({
+          page: posInt(p.page) || i + 1,
+          part: typeof p.part === "string" ? p.part.trim() : "",
+          duration: posInt(p.duration) || duration,
+          cid
         });
+      });
+    }
+    if (pages.length) meta.pages = pages;
+    return meta.title || meta.uploader || meta.pages ? meta : null;
+  }
+  function videoDataFromState(state) {
+    const s = state;
+    if (!s || typeof s !== "object") return null;
+    if (s.videoData && typeof s.videoData === "object") return s.videoData;
+    const v = s.video;
+    if (v && typeof v === "object" && v.viewInfo && typeof v.viewInfo === "object") return v.viewInfo;
+    return null;
+  }
+  function extractInitialState(html) {
+    const i = html.indexOf("__INITIAL_STATE__");
+    if (i < 0) return null;
+    const start = html.indexOf("{", i);
+    if (start < 0) return null;
+    let depth = 0;
+    let end = -1;
+    let inStr = false;
+    let esc3 = false;
+    for (let k = start; k < html.length; k++) {
+      const ch = html[k];
+      if (inStr) {
+        if (esc3) esc3 = false;
+        else if (ch === "\\") esc3 = true;
+        else if (ch === '"') inStr = false;
+        continue;
       }
-      if (pages.length) meta.pages = pages;
-      return meta.title || meta.uploader || meta.pages ? meta : null;
+      if (ch === '"') inStr = true;
+      else if (ch === "{") depth++;
+      else if (ch === "}") {
+        depth--;
+        if (depth === 0) {
+          end = k + 1;
+          break;
+        }
+      }
+    }
+    if (end < 0) return null;
+    try {
+      return JSON.parse(html.slice(start, end));
     } catch (e) {
       return null;
     }
   }
-  async function fetchFromPageTitle(url) {
+  function bvidFromVideoData(d) {
+    const b = d && typeof d.bvid === "string" ? d.bvid.trim() : "";
+    return BVID_EXACT_RE.test(b) ? b : null;
+  }
+  function bvidFromOgUrl(html) {
+    const og = /og:url["']?\s+content=["']([^"']+)["']/i.exec(html);
+    if (!og) return null;
+    const m = /\/video\/(BV[0-9A-Za-z]{10})/.exec(og[1]);
+    return m ? m[1] : null;
+  }
+  async function fetchFromViewApi(bvid) {
     try {
-      const raw = await fetchPageTitle(url);
-      const title = raw ? cleanSourceTitle(raw) : "";
-      return title ? { title } : null;
+      const json = parseJson(await withTimeout2(requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: "GET" }), VIEW_TIMEOUT_MS));
+      if (!json || json.code !== 0 || !json.data) return null;
+      return metaFromVideoData(json.data);
     } catch (e) {
       return null;
     }
+  }
+  async function fetchFromPage(url) {
+    var _a;
+    let html = "";
+    try {
+      const resp = await withTimeout2(requestUrl({ url, method: "GET", headers: { ...PAGE_HEADERS } }), VIEW_TIMEOUT_MS);
+      if (!resp || resp.status < 200 || resp.status >= 300) return null;
+      html = String((_a = resp.text) != null ? _a : "");
+    } catch (e) {
+      return null;
+    }
+    if (!html) return null;
+    const state = extractInitialState(html);
+    const videoData = videoDataFromState(state);
+    const viaState = metaFromVideoData(videoData);
+    const bvid = bvidFromOgUrl(html) || bvidFromVideoData(videoData);
+    if (viaState) return { bvid: bvid || viaState.bvid || null, meta: viaState };
+    const t = /<title[^>]*>([^<]*)<\/title>/i.exec(html);
+    const title = t && t[1] ? cleanSourceTitle(t[1].trim()) : "";
+    if (title) return { bvid, meta: bvid ? { title, bvid } : { title } };
+    return { bvid, meta: null };
   }
   async function fetchVideoMeta(input) {
     const text = String(input != null ? input : "").trim();
@@ -8328,13 +8400,29 @@ ${sample}`,
     const bvid = parseBvid(text);
     if (bvid) {
       const viaApi = await fetchFromViewApi(bvid);
-      if (viaApi) return viaApi;
-      return isBiliUrl(text) ? await fetchFromPageTitle(text) : null;
+      if (viaApi) return { ...viaApi, bvid: viaApi.bvid || bvid };
+      if (!isBiliUrl(text)) return null;
+      const page2 = await fetchFromPage(text);
+      if (!page2) return null;
+      if (!page2.meta && !page2.bvid) return null;
+      const known = page2.bvid || bvid;
+      return { ...page2.meta || {}, bvid: page2.meta && page2.meta.bvid || known };
     }
     if (!isUrlLikeSourceText(text)) return null;
     const url = /^https?:\/\//i.test(text) ? text : `https://${text}`;
     if (!isBiliUrl(url)) return null;
-    return await fetchFromPageTitle(url);
+    const page = await fetchFromPage(url);
+    if (!page) return null;
+    if (page.bvid) {
+      const viaApi = await fetchFromViewApi(page.bvid);
+      if (viaApi) return { ...viaApi, bvid: viaApi.bvid || page.bvid };
+    }
+    if (!page.meta) return page.bvid ? { bvid: page.bvid } : null;
+    return page.bvid && !page.meta.bvid ? { ...page.meta, bvid: page.bvid } : page.meta;
+  }
+  function needsBvidRepair(url) {
+    const text = String(url != null ? url : "").trim();
+    return !!text && isBiliUrl(text) && !parseBvid(text);
   }
   async function isCookieLoggedIn(cookie) {
     const c = String(cookie != null ? cookie : "").trim();
@@ -8375,23 +8463,27 @@ ${sample}`,
   async function resolveVideo(input, cookie, pageIndex = 0) {
     const meta = await fetchVideoMeta(input);
     if (!meta) return null;
-    const bvid = parseBvid(input);
+    const bvid = meta.bvid || parseBvid(input);
     const pages = meta.pages || [];
     const sel = pages[pageIndex] || pages[0];
     const qualities = bvid && sel && sel.cid ? await fetchCheckedQualities(bvid, sel.cid, cookie) : null;
     return { meta, qualities };
   }
-  var BVID_RE, BILI_HOST_RE, VIEW_TIMEOUT_MS, QUALITY_TIMEOUT_MS, NAV_TIMEOUT_MS;
+  var BVID_RE, BVID_EXACT_RE, BILI_HOST_RE, VIEW_TIMEOUT_MS, QUALITY_TIMEOUT_MS, NAV_TIMEOUT_MS, PAGE_HEADERS;
   var init_video_meta = __esm({
     "src/knowledge/video-meta.ts"() {
       init_fake_obsidian();
-      init_utils();
       init_source();
       BVID_RE = /BV[0-9A-Za-z]{10}/;
+      BVID_EXACT_RE = /^BV[0-9A-Za-z]{10}$/;
       BILI_HOST_RE = /(^|\.)(bilibili\.com|b23\.tv)$/i;
       VIEW_TIMEOUT_MS = 1e4;
       QUALITY_TIMEOUT_MS = 1e4;
       NAV_TIMEOUT_MS = 1e4;
+      PAGE_HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        Referer: "https://www.bilibili.com/"
+      };
     }
   });
 
@@ -9350,6 +9442,9 @@ ${sample}`,
         /**
          * 打开面板时的自动重抓（ADR-0133）：对缺标题任务串行补信息（标题/UP/时长，只补缺失），
          * 成功即落库；任务间 300ms 间隔防风控；已尝试过的 id 会话内不再重试，失败静默。
+         * ADR-0134：链接里没有 BV 号的 **B 站**任务（b23.tv 短链）一并重抓——顺手把 url 修成规范链接，
+         * 否则下载阶段认不出 BV 号（存量任务也据此自愈）。非 B 站链接（YouTube 等）不纳入；
+         * 已成功的任务只补信息、不改 url（成败判别口径随 `isTerminal` 的「成功」侧）。
          */
         async backfillVideoTasks() {
           var _a;
@@ -9357,7 +9452,7 @@ ${sample}`,
           this.backfillRunning = true;
           try {
             const tasks = await KnowledgeData.loadTasks();
-            const todo = tasks.filter((t) => !t.archived && !t.title && t.url && !this.backfillTried.has(t.id));
+            const todo = tasks.filter((t) => !t.archived && t.url && !this.backfillTried.has(t.id) && (!t.title || t.status !== "success" && needsBvidRepair(t.url)));
             if (todo.length) {
               const cookie = String(((_a = tryGetSettings()) == null ? void 0 : _a.bilibiliCookie) || "");
               for (const t of todo) {
@@ -9949,7 +10044,7 @@ ${sample}`,
         }
         /** 分P 切换（ADR-0133）：量程与范围重置为全选，档位按该 P 的 cid 静默重查（未登录/失败 → 清档回落固定列表） */
         async _switchAddPage(p) {
-          var _a, _b, _c, _d, _e, _f;
+          var _a, _b, _c, _d, _e, _f, _g;
           const popup = this.addPopup;
           if (!popup) return;
           this.addPage = p;
@@ -9962,11 +10057,12 @@ ${sample}`,
           this._rebuildBar();
           this._paintRange();
           const cookie = String(((_c = tryGetSettings()) == null ? void 0 : _c.bilibiliCookie) || "");
-          const bvid = parseBvid(((_d = q(popup, "#lit-add-url")) == null ? void 0 : _d.value) || "");
+          const bvid = ((_d = this.addMeta) == null ? void 0 : _d.bvid) || parseBvid(((_e = q(popup, "#lit-add-url")) == null ? void 0 : _e.value) || "");
           if (!cookie || !bvid || !(sel == null ? void 0 : sel.cid)) return;
-          const cur = (_f = (_e = q(popup, "#lit-add-quality")) == null ? void 0 : _e.value) != null ? _f : null;
+          const cur = (_g = (_f = q(popup, "#lit-add-quality")) == null ? void 0 : _f.value) != null ? _g : null;
+          const seq = this.addUrlSeq;
           const qualities = await fetchCheckedQualities(bvid, sel.cid, cookie);
-          if (this.addPopup !== popup || this.addPage !== p) return;
+          if (this.addPopup !== popup || this.addPage !== p || this.addUrlSeq !== seq) return;
           this.addQualities = qualities;
           this._renderQualitySelect(cur);
         }
@@ -10015,6 +10111,7 @@ ${sample}`,
           }
           this._setResolveState(null);
           this._applyResolved(res);
+          if (res.meta.bvid && !parseBvid(cleaned)) urlInput.value = canonicalVideoUrl(res.meta.bvid);
           this._renderAdd((opts == null ? void 0 : opts.auto) === true);
           if (opts == null ? void 0 : opts.auto) {
             const editId = this.editingId;
@@ -10057,6 +10154,7 @@ ${sample}`,
           try {
             const patch = {};
             const meta = res.meta;
+            if (meta.bvid && needsBvidRepair(task.url)) patch.url = canonicalVideoUrl(meta.bvid);
             if (!task.title && meta.title) patch.title = meta.title;
             if (!task.uploader && meta.uploader) patch.uploader = meta.uploader;
             const pages = meta.pages || [];
@@ -10091,18 +10189,20 @@ ${sample}`,
           this.addUrlSeq++;
         }
         async _handleAddSave() {
-          var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+          var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
           if (!this.addPopup) return;
           if (this.addResolving) {
             notice("解析中，请稍候", "info");
             return;
           }
-          const url = normalizeSourceUrl(((_b = (_a = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _a.value) != null ? _b : "").trim());
+          let url = normalizeSourceUrl(((_b = (_a = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _a.value) != null ? _b : "").trim());
           if (!url) {
             notice("请填写视频链接或 BV 号", "error");
             (_c = q(this.addPopup, "#lit-add-url")) == null ? void 0 : _c.focus();
             return;
           }
+          const resolvedBvid = (_d = this.addMeta) == null ? void 0 : _d.bvid;
+          if (resolvedBvid && needsBvidRepair(url)) url = canonicalVideoUrl(resolvedBvid);
           this._commitTimeInput("start", true);
           this._commitTimeInput("end", true);
           const dur = this.addDuration;
@@ -10122,22 +10222,22 @@ ${sample}`,
             end = secToTimeText(this.addEnd);
           }
           let page = null;
-          const pages = ((_d = this.addMeta) == null ? void 0 : _d.pages) || [];
+          const pages = ((_e = this.addMeta) == null ? void 0 : _e.pages) || [];
           if (pages.length > 1) {
             page = this.addPage > 1 ? this.addPage : null;
           } else if (!pages.length) {
-            const raw = ((_f = (_e = q(this.addPopup, "#lit-add-page-num")) == null ? void 0 : _e.value) != null ? _f : "").trim();
+            const raw = ((_g = (_f = q(this.addPopup, "#lit-add-page-num")) == null ? void 0 : _f.value) != null ? _g : "").trim();
             if (raw) {
               const n = Number(raw);
               if (!Number.isInteger(n) || n < 1) {
                 notice("分P 应为正整数（留空 = 第 1 P）", "error");
-                (_g = q(this.addPopup, "#lit-add-page-num")) == null ? void 0 : _g.focus();
+                (_h = q(this.addPopup, "#lit-add-page-num")) == null ? void 0 : _h.focus();
                 return;
               }
               page = n > 1 ? n : null;
             }
           }
-          const quality = ((_i = (_h = q(this.addPopup, "#lit-add-quality")) == null ? void 0 : _h.value) != null ? _i : "").trim() || null;
+          const quality = ((_j = (_i = q(this.addPopup, "#lit-add-quality")) == null ? void 0 : _i.value) != null ? _j : "").trim() || null;
           try {
             const patch = {
               url,
@@ -10145,8 +10245,8 @@ ${sample}`,
               end,
               quality,
               page,
-              title: ((_j = this.addMeta) == null ? void 0 : _j.title) || null,
-              uploader: ((_k = this.addMeta) == null ? void 0 : _k.uploader) || null,
+              title: ((_k = this.addMeta) == null ? void 0 : _k.title) || null,
+              uploader: ((_l = this.addMeta) == null ? void 0 : _l.uploader) || null,
               duration: dur > 0 ? dur : null
             };
             if (this.editingId) {
@@ -10157,7 +10257,7 @@ ${sample}`,
             this.hideAddDialog();
             await this.refreshVideoPanel();
           } catch (e) {
-            notice("保存失败：" + ((_l = e == null ? void 0 : e.message) != null ? _l : String(e)), "error");
+            notice("保存失败：" + ((_m = e == null ? void 0 : e.message) != null ? _m : String(e)), "error");
           }
         }
         // ==================== 历史弹窗 ====================
