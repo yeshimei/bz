@@ -1,5 +1,5 @@
-/* 源指纹 75d3bb6083d2288e · 仓内输入 216 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 e8069ee8ff2fdf62 · 仓内输入 202 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -4941,11 +4941,11 @@ var BZW_memo = (() => {
   function updateFileSections(filePath, writer, opts = {}) {
     return enqueueFileTask(filePath, async () => {
       var _a2;
-      const store3 = jsonFileStore(filePath, { ...opts, defaultValue: (_a2 = opts.defaultValue) != null ? _a2 : {} });
-      const current2 = assertPlainObject(filePath, await store3.read());
+      const store2 = jsonFileStore(filePath, { ...opts, defaultValue: (_a2 = opts.defaultValue) != null ? _a2 : {} });
+      const current2 = assertPlainObject(filePath, await store2.read());
       const set = await writer(current2) || {};
       const next = { ...current2, ...set };
-      await store3.write(next);
+      await store2.write(next);
       return next;
     });
   }
@@ -5637,10 +5637,10 @@ var BZW_memo = (() => {
     if (opts.disabled) b.disabled = true;
     if (opts.icon) {
       if (opts.chip) {
-        const chip = document.createElement("span");
-        chip.className = "bz-btn-chip";
-        chip.appendChild(uiIcon(opts.icon));
-        b.appendChild(chip);
+        const chip2 = document.createElement("span");
+        chip2.className = "bz-btn-chip";
+        chip2.appendChild(uiIcon(opts.icon));
+        b.appendChild(chip2);
       } else {
         b.appendChild(uiIcon(opts.icon));
       }
@@ -6506,27 +6506,27 @@ var BZW_memo = (() => {
     el.className = "bz-mobstrip";
     const chips = /* @__PURE__ */ new Map();
     const setValue = (id) => {
-      chips.forEach((chip) => chip.classList.toggle("is-on", chip.dataset.id === id));
+      chips.forEach((chip2) => chip2.classList.toggle("is-on", chip2.dataset.id === id));
     };
     opts.items.forEach((it) => {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "bz-mobstrip-chip";
-      chip.dataset.id = it.id;
+      const chip2 = document.createElement("button");
+      chip2.type = "button";
+      chip2.className = "bz-mobstrip-chip";
+      chip2.dataset.id = it.id;
       if (it.dot) {
         const dot = document.createElement("span");
         dot.className = "bz-mobstrip-dot";
         dot.style.setProperty("--bz-rail-tint", it.dot);
-        chip.appendChild(dot);
+        chip2.appendChild(dot);
       }
-      chip.appendChild(document.createTextNode(it.label));
-      chip.addEventListener("click", () => {
+      chip2.appendChild(document.createTextNode(it.label));
+      chip2.addEventListener("click", () => {
         var _a2;
         setValue(it.id);
         (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, it.id);
       });
-      chips.set(it.id, chip);
-      el.appendChild(chip);
+      chips.set(it.id, chip2);
+      el.appendChild(chip2);
     });
     setValue(opts.value);
     return { el, setValue };
@@ -6548,10 +6548,10 @@ var BZW_memo = (() => {
     if (opts.icon) label.appendChild(uiIcon(opts.icon));
     label.appendChild(document.createTextNode(opts.label));
     el.appendChild(label);
-    const num = document.createElement("span");
-    num.className = "bz-stat-num";
-    num.textContent = String(opts.num);
-    el.appendChild(num);
+    const num2 = document.createElement("span");
+    num2.className = "bz-stat-num";
+    num2.textContent = String(opts.num);
+    el.appendChild(num2);
     if (opts.hint) {
       const hint = document.createElement("span");
       hint.className = "bz-stat-hint";
@@ -8007,10 +8007,10 @@ var BZW_memo = (() => {
   function createInitialState() {
     return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
   }
-  function resumePhase(state2, now) {
+  function resumePhase(state3, now) {
     return {
-      state: { ...state2, paused: false, pausedBy: void 0, remaining: 0, endTime: now + state2.remaining * 1e3 },
-      event: { type: "started", phase: state2.phase }
+      state: { ...state3, paused: false, pausedBy: void 0, remaining: 0, endTime: now + state3.remaining * 1e3 },
+      event: { type: "started", phase: state3.phase }
     };
   }
   function activePhase(phase) {
@@ -8024,23 +8024,23 @@ var BZW_memo = (() => {
   function breakPhase(count, d) {
     return count >= d.longBreakInterval ? "long-break" : "short-break";
   }
-  function startPhase(state2, phase, now, d) {
+  function startPhase(state3, phase, now, d) {
     return {
-      state: { ...state2, phase, endTime: now + phaseDurationSec(phase, d) * 1e3, paused: false, pausedBy: void 0, remaining: 0 },
+      state: { ...state3, phase, endTime: now + phaseDurationSec(phase, d) * 1e3, paused: false, pausedBy: void 0, remaining: 0 },
       event: { type: "started", phase }
     };
   }
-  function completePhase(state2, now, d, o) {
-    const phase = state2.phase;
+  function completePhase(state3, now, d, o) {
+    const phase = state3.phase;
     const isFocus = phase === "focus";
-    let count = state2.cycleFocusCount;
+    let count = state3.cycleFocusCount;
     let historyEntry;
     let longBreak = false;
     if (isFocus) {
       count += 1;
       longBreak = count >= d.longBreakInterval;
       if (longBreak) count = 0;
-      historyEntry = { ts: now, duration: d.workMin * 60, ...state2.task ? { task: state2.task } : {} };
+      historyEntry = { ts: now, duration: d.workMin * 60, ...state3.task ? { task: state3.task } : {} };
     }
     let next;
     let autoStarted = false;
@@ -8056,7 +8056,7 @@ var BZW_memo = (() => {
       next = "focus";
       autoStarted = o.autoCycle;
     }
-    const { task: _settled, ...rest } = state2;
+    const { task: _settled, ...rest } = state3;
     const nextState = { ...rest, phase: next, cycleFocusCount: count };
     const res = autoStarted ? startPhase(nextState, next, now, d) : {
       state: { ...nextState, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
@@ -8074,57 +8074,57 @@ var BZW_memo = (() => {
       }
     };
   }
-  function transition(state2, action, now, d, o) {
+  function transition(state3, action, now, d, o) {
     if (action === "start") {
-      if (state2.paused) return resumePhase(state2, now);
-      if (state2.endTime !== null) return { state: state2, event: { type: "none" } };
-      const phase = activePhase(state2.phase);
-      return startPhase(state2, phase, now, d);
+      if (state3.paused) return resumePhase(state3, now);
+      if (state3.endTime !== null) return { state: state3, event: { type: "none" } };
+      const phase = activePhase(state3.phase);
+      return startPhase(state3, phase, now, d);
     }
     if (action === "pause") {
-      if (state2.endTime === null) return { state: state2, event: { type: "none" } };
-      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
+      if (state3.endTime === null) return { state: state3, event: { type: "none" } };
+      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
       return {
         // 手动暂停：清除可能残留的冻结来源标记（pausedBy 只在冻结暂停期间有效）
-        state: { ...state2, paused: true, pausedBy: void 0, remaining: Math.ceil((state2.endTime - now) / 1e3), endTime: null },
+        state: { ...state3, paused: true, pausedBy: void 0, remaining: Math.ceil((state3.endTime - now) / 1e3), endTime: null },
         event: { type: "none" }
       };
     }
     if (action === "resume") {
-      if (!state2.paused) return { state: state2, event: { type: "none" } };
-      return resumePhase(state2, now);
+      if (!state3.paused) return { state: state3, event: { type: "none" } };
+      return resumePhase(state3, now);
     }
     if (action === "reset") {
-      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
-      const phase = activePhase(state2.phase);
+      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
+      const phase = activePhase(state3.phase);
       return {
-        state: { ...state2, phase, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(phase, d) },
+        state: { ...state3, phase, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(phase, d) },
         event: { type: "none" }
       };
     }
     if (action === "skip") {
-      if (o.forceFocus && state2.phase === "focus") return { state: state2, event: { type: "none" } };
-      const phase = activePhase(state2.phase);
+      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
+      const phase = activePhase(state3.phase);
       let next;
-      if (phase === "focus") next = o.autoSkipBreak ? "focus" : breakPhase(state2.cycleFocusCount, d);
+      if (phase === "focus") next = o.autoSkipBreak ? "focus" : breakPhase(state3.cycleFocusCount, d);
       else next = "focus";
-      const { task: _dropped, ...rest } = state2;
+      const { task: _dropped, ...rest } = state3;
       return {
         state: { ...rest, phase: next, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(next, d) },
         event: { type: "phase-completed", completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false }
       };
     }
     if (action === "tick") {
-      if (state2.endTime === null || now < state2.endTime) return { state: state2, event: { type: "none" } };
-      return completePhase(state2, now, d, o);
+      if (state3.endTime === null || now < state3.endTime) return { state: state3, event: { type: "none" } };
+      return completePhase(state3, now, d, o);
     }
-    return { state: state2, event: { type: "none" } };
+    return { state: state3, event: { type: "none" } };
   }
   function idleState() {
     return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
   }
-  function recover(state2, history2, now, d, o) {
-    if (state2.endTime === null || now < state2.endTime) return { state: state2, history: history2.slice(), events: [] };
+  function recover(state3, history2, now, d, o) {
+    if (state3.endTime === null || now < state3.endTime) return { state: state3, history: history2.slice(), events: [] };
     return { state: idleState(), history: history2.slice(), events: [] };
   }
   var PHASES;
@@ -8152,13 +8152,13 @@ var BZW_memo = (() => {
   function normalizeData(raw) {
     const def = defaultPomodoroData();
     if (!raw || typeof raw !== "object") return def;
-    const state2 = normalizeState(raw.state);
+    const state3 = normalizeState(raw.state);
     const history2 = Array.isArray(raw.history) ? raw.history.filter((h) => h && typeof h.ts === "number" && typeof h.duration === "number").map((h) => ({
       ts: h.ts,
       duration: h.duration,
       ...typeof h.task === "string" && h.task ? { task: h.task } : {}
     })) : [];
-    return { version: 1, state: state2, history: history2 };
+    return { version: 1, state: state3, history: history2 };
   }
   function normalizeState(raw) {
     const def = createInitialState();
@@ -8309,13 +8309,13 @@ var BZW_memo = (() => {
   });
 
   // src/pomodoro/statusbar.ts
-  function syncPomodoroStatusBar(state2, remainSec) {
+  function syncPomodoroStatusBar(state3, remainSec) {
     if (!statusEl) return;
-    const running2 = state2.endTime !== null;
-    const paused = !running2 && state2.paused;
+    const running2 = state3.endTime !== null;
+    const paused = !running2 && state3.paused;
     statusEl.classList.toggle("pomodoro-statusbar-idle", !running2 && !paused);
     statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
-    statusEl.title = state2.task ? `番茄钟：${state2.task}` : "番茄钟";
+    statusEl.title = state3.task ? `番茄钟：${state3.task}` : "番茄钟";
     if (textSpan) {
       if (running2) {
         const m = Math.floor(remainSec / 60);
@@ -8436,16 +8436,16 @@ var BZW_memo = (() => {
   }
   function durations() {
     const s = tryGetSettings();
-    const num = (v, def) => {
+    const num2 = (v, def) => {
       const n = parseInt(v != null ? v : "", 10);
       return Number.isFinite(n) && n > 0 ? n : def;
     };
     const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
     return {
-      workMin: preset ? preset.workMin : num(s.pomodoroWorkMin, 25),
-      shortBreakMin: preset ? preset.shortBreakMin : num(s.pomodoroShortBreakMin, 5),
-      longBreakMin: preset ? preset.longBreakMin : num(s.pomodoroLongBreakMin, 15),
-      longBreakInterval: num(s.pomodoroLongBreakInterval, 4)
+      workMin: preset ? preset.workMin : num2(s.pomodoroWorkMin, 25),
+      shortBreakMin: preset ? preset.shortBreakMin : num2(s.pomodoroShortBreakMin, 5),
+      longBreakMin: preset ? preset.longBreakMin : num2(s.pomodoroLongBreakMin, 15),
+      longBreakInterval: num2(s.pomodoroLongBreakInterval, 4)
     };
   }
   function options() {
@@ -8770,9 +8770,9 @@ var BZW_memo = (() => {
                 var _a2, _b2;
                 const s = tryGetSettings();
                 const cur = String((_a2 = s.pomodoroSkinTheme) != null ? _a2 : "");
-                const fit = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
-                if (!fit.some((o) => o.value === cur)) {
-                  s.pomodoroSkinTheme = ((_b2 = fit[0]) != null ? _b2 : SKIN_THEME_OPTIONS[0]).value;
+                const fit2 = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
+                if (!fit2.some((o) => o.value === cur)) {
+                  s.pomodoroSkinTheme = ((_b2 = fit2[0]) != null ? _b2 : SKIN_THEME_OPTIONS[0]).value;
                   saveSettings();
                 }
                 render();
@@ -9235,9 +9235,9 @@ var BZW_memo = (() => {
     }
     for (const path of selected) {
       const label = path === "" ? "（库根目录）" : path;
-      const chip = document.createElement("span");
-      chip.className = "bz-path-picker-chip" + (onChipClick ? " bz-path-picker-chip--click" : "");
-      chip.title = label;
+      const chip2 = document.createElement("span");
+      chip2.className = "bz-path-picker-chip" + (onChipClick ? " bz-path-picker-chip--click" : "");
+      chip2.title = label;
       const name = document.createElement("span");
       name.className = "bz-path-picker-chip-name";
       name.textContent = label;
@@ -9247,9 +9247,9 @@ var BZW_memo = (() => {
       x.textContent = "✕";
       x.setAttribute("aria-label", `移除 ${label}`);
       x.onclick = () => onChange(selected.filter((p) => p !== path));
-      chip.appendChild(name);
-      chip.appendChild(x);
-      container.appendChild(chip);
+      chip2.appendChild(name);
+      chip2.appendChild(x);
+      container.appendChild(chip2);
     }
   }
   function renderPathSettingRow(opts) {
@@ -9377,7 +9377,7 @@ var BZW_memo = (() => {
     search.setAttribute("aria-label", "搜索目录");
     const listEl2 = document.createElement("div");
     listEl2.className = "bz-path-picker-list";
-    const state2 = { folders: [], q: "" };
+    const state3 = { folders: [], q: "" };
     const foot = document.createElement("div");
     foot.className = "bz-path-picker-foot";
     const selinfo = document.createElement("span");
@@ -9408,7 +9408,7 @@ var BZW_memo = (() => {
       const pinned = [];
       const rest = [];
       const pinSet = new Set(pinnedAtOpen);
-      for (const f of state2.folders) {
+      for (const f of state3.folders) {
         if (pinSet.has(f)) pinned.push(f);
         else rest.push(f);
       }
@@ -9419,8 +9419,8 @@ var BZW_memo = (() => {
     }
     function renderList2() {
       listEl2.innerHTML = "";
-      const q2 = state2.q.trim().toLowerCase();
-      const exact = !!q2 && state2.folders.includes(q2);
+      const q2 = state3.q.trim().toLowerCase();
+      const exact = !!q2 && state3.folders.includes(q2);
       const LIMIT2 = 300;
       let n = 0;
       let total = 0;
@@ -9479,17 +9479,17 @@ var BZW_memo = (() => {
       }
     }
     search.oninput = () => {
-      state2.q = search.value;
+      state3.q = search.value;
       renderList2();
     };
     try {
       const files = ((_c = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
-      state2.folders = foldersFromFiles(files);
+      state3.folders = foldersFromFiles(files);
     } catch (e) {
     }
     void collectVaultFolders(app).then((folders) => {
       if (!mask.isConnected) return;
-      state2.folders = folders;
+      state3.folders = folders;
       popup.dataset.ready = "1";
       renderList2();
     });
@@ -9771,11 +9771,11 @@ var BZW_memo = (() => {
         const inputEl = t.inputEl;
         if (inputEl) {
           if (isNumber) {
-            const num = row;
+            const num2 = row;
             inputEl.type = "number";
-            if (num.min !== void 0) inputEl.min = String(num.min);
-            if (num.max !== void 0) inputEl.max = String(num.max);
-            if (num.step !== void 0) inputEl.step = String(num.step);
+            if (num2.min !== void 0) inputEl.min = String(num2.min);
+            if (num2.max !== void 0) inputEl.max = String(num2.max);
+            if (num2.step !== void 0) inputEl.step = String(num2.step);
           }
           inputEl.addEventListener("blur", commit);
           if (row.type !== "textarea") {
@@ -10331,11 +10331,11 @@ var BZW_memo = (() => {
       }
       for (const path of current2) {
         const label = path === "" ? "（库根目录）" : path;
-        const chip = document.createElement("span");
-        chip.className = "bz-sp-chip";
-        chip.title = label;
-        chip.textContent = label;
-        chip.addEventListener("click", openPicker);
+        const chip2 = document.createElement("span");
+        chip2.className = "bz-sp-chip";
+        chip2.title = label;
+        chip2.textContent = label;
+        chip2.addEventListener("click", openPicker);
         if (multi) {
           const x = document.createElement("i");
           x.className = "x";
@@ -10344,9 +10344,9 @@ var BZW_memo = (() => {
             ev.stopPropagation();
             void apply(current2.filter((p) => p !== path));
           });
-          chip.appendChild(x);
+          chip2.appendChild(x);
         }
-        ctrl.appendChild(chip);
+        ctrl.appendChild(chip2);
       }
       const empty = !current2.length && !opts.fallbackChip;
       if (empty) {
@@ -10521,7 +10521,7 @@ var BZW_memo = (() => {
             group.style.overflow = "visible";
             group.style.zIndex = "10";
           }
-          const closeMenu = () => {
+          const closeMenu2 = () => {
             var _a4;
             (_a4 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a4.remove();
             if (group && !group.querySelector(".bz-select-menu")) {
@@ -10531,7 +10531,7 @@ var BZW_memo = (() => {
             document.removeEventListener("click", h);
           };
           const h = (ev) => {
-            if (!sel.contains(ev.target)) closeMenu();
+            if (!sel.contains(ev.target)) closeMenu2();
           };
           setTimeout(() => document.addEventListener("click", h));
           const menu = document.createElement("div");
@@ -10547,10 +10547,10 @@ var BZW_memo = (() => {
                 acc.write(o.value);
               } catch (e) {
                 notifyWriteError(e);
-                closeMenu();
+                closeMenu2();
                 return;
               }
-              closeMenu();
+              closeMenu2();
               vspan.textContent = labelOf(o.value);
               void acc.persist();
               (_a4 = row.onChange) == null ? void 0 : _a4.call(row, o.value, ctx);
@@ -13020,8 +13020,8 @@ ${countsToText(s.missing)}
     const restored = /* @__PURE__ */ new Map();
     const fixed = await enqueueFileTask(file, async () => {
       var _a2;
-      const store3 = jsonFileStore(file, { defaultValue: [] });
-      const data = await store3.read();
+      const store2 = jsonFileStore(file, { defaultValue: [] });
+      const data = await store2.read();
       const want = new Set(ids);
       let n = 0;
       for (const it of data) {
@@ -13032,7 +13032,7 @@ ${countsToText(s.missing)}
         it.linkedNote = null;
         n += 1;
       }
-      if (n > 0) await store3.write(data);
+      if (n > 0) await store2.write(data);
       return n;
     });
     return {
@@ -13042,13 +13042,13 @@ ${countsToText(s.missing)}
         if (!restored.size) return;
         await enqueueFileTask(file, async () => {
           var _a2;
-          const store3 = jsonFileStore(file, { defaultValue: [] });
-          const data = await store3.read();
+          const store2 = jsonFileStore(file, { defaultValue: [] });
+          const data = await store2.read();
           for (const it of data) {
             if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
             it.linkedNote = (_a2 = restored.get(String(it.id))) != null ? _a2 : null;
           }
-          await store3.write(data);
+          await store2.write(data);
         });
       }
     };
@@ -13056,10 +13056,10 @@ ${countsToText(s.missing)}
   async function fixClipbook(app, file, urls) {
     const removed = [];
     const fixed = await enqueueFileTask(file, async () => {
-      const store3 = jsonFileStore(file, {
+      const store2 = jsonFileStore(file, {
         defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
       });
-      const data = await store3.read();
+      const data = await store2.read();
       const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
       const want = new Set(urls);
       const kept = [];
@@ -13075,7 +13075,7 @@ ${countsToText(s.missing)}
       });
       if (n > 0) {
         data.savedArchive = kept;
-        await store3.write(data);
+        await store2.write(data);
       }
       return n;
     });
@@ -13085,17 +13085,17 @@ ${countsToText(s.missing)}
       undo: async () => {
         if (!removed.length) return;
         await enqueueFileTask(file, async () => {
-          const store3 = jsonFileStore(file, {
+          const store2 = jsonFileStore(file, {
             defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
           });
-          const data = await store3.read();
+          const data = await store2.read();
           const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
           for (const r of removed) {
             const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
             list.splice(at, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
           }
           data.savedArchive = list;
-          await store3.write(data);
+          await store2.write(data);
         });
       }
     };
@@ -14138,12 +14138,12 @@ ${countsToText(s.missing)}
   }
   async function runScan(isAlive, onProgress) {
     const app = getApp();
-    const mdFiles = await collectDiaryFiles();
-    const total = mdFiles.length;
+    const mdFiles2 = await collectDiaryFiles();
+    const total = mdFiles2.length;
     const scanned = [];
-    for (let i = 0; i < mdFiles.length; i += BATCH_CONCURRENCY) {
+    for (let i = 0; i < mdFiles2.length; i += BATCH_CONCURRENCY) {
       if (!isAlive()) return scanned;
-      const batch = mdFiles.slice(i, i + BATCH_CONCURRENCY);
+      const batch = mdFiles2.slice(i, i + BATCH_CONCURRENCY);
       const results = await Promise.all(
         batch.map(async (file, idx) => {
           const content = await app.vault.read(file);
@@ -15419,7 +15419,7 @@ ${countsToText(s.missing)}
   function kpisHtml(items, unit = "cny") {
     const gone = items.filter(isExited);
     const recover2 = gone.reduce((s, i) => s + (Number(i.sold_price) || 0), 0);
-    const kpi = (num, label, opts = {}) => `<div class="bz-bel-kpi${opts.hero ? " bz-bel-kpi--hero" : ""}${opts.click ? " bz-bel-kpi--click" : ""}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ""}><b>${num}</b><span>${esc(label)}</span></div>`;
+    const kpi = (num2, label, opts = {}) => `<div class="bz-bel-kpi${opts.hero ? " bz-bel-kpi--hero" : ""}${opts.click ? " bz-bel-kpi--click" : ""}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ""}><b>${num2}</b><span>${esc(label)}</span></div>`;
     return kpi(String(stockCount(items)), "在库件数", { hero: true, click: true }) + kpi(moneyShort(totalAssets(items), unit), "在库投入", { click: true }) + kpi(moneyWith(avgDailyCost(items).toFixed(2), unit), "日均成本") + kpi(`${gone.length} 件 · ${moneyShort(recover2, unit)}`, "已离场 · 回收");
   }
   function stampCount(items) {
@@ -15911,9 +15911,9 @@ ${countsToText(s.missing)}
         closePanel();
         return;
       }
-      const chip = t.closest("[data-bel-st]");
-      if (chip) {
-        applyStatusFilter(chip.dataset.belSt);
+      const chip2 = t.closest("[data-bel-st]");
+      if (chip2) {
+        applyStatusFilter(chip2.dataset.belSt);
         return;
       }
       const segBtn = t.closest(".bz-segmented-btn");
@@ -16845,8 +16845,8 @@ ${countsToText(s.missing)}
         kept.push(a);
         continue;
       }
-      const state2 = a.state === "saved" ? "saved" : "skipped";
-      const days = state2 === "saved" ? savedDays : skippedDays;
+      const state3 = a.state === "saved" ? "saved" : "skipped";
+      const days = state3 === "saved" ? savedDays : skippedDays;
       if (!Number.isFinite(days) || days <= 0) {
         kept.push(a);
         continue;
@@ -17621,8 +17621,8 @@ ${c.trim()}
       if (j > i) {
         try {
           const raw = html.slice(i + "window.INITIAL_STORE=".length, j).trim().replace(/;\s*$/, "");
-          const store3 = JSON.parse(raw);
-          const art = store3.articleStore && store3.articleStore.article;
+          const store2 = JSON.parse(raw);
+          const art = store2.articleStore && store2.articleStore.article;
           if (art && art.content) return art.content;
         } catch (e) {
         }
@@ -18623,35 +18623,35 @@ ${c.trim()}
     for (const n of notes) if (n && n.url) s.add(String(n.url));
     return s;
   }
-  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}) {
-    if (source.kind === "clip") {
+  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
+    if (source2.kind === "clip") {
       return (clipNotes || []).map((n) => clipFromNote(n));
     }
     const pool = (articles || []).filter((a) => !a.read);
     const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
-    if (source.kind === "site") {
-      const s = normSite(source.site);
+    if (source2.kind === "site") {
+      const s = normSite(source2.site);
       const newsPart = pool.filter((a) => normSite(siteName(a)) === s).map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap })).filter((a) => a.st !== "saved");
       const clipPart = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
       return [...newsPart, ...clipPart].sort((a, b) => b.timeTs - a.timeTs);
     }
     let out = [];
-    if (source.kind === "all") {
+    if (source2.kind === "all") {
       out = pool.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
     } else {
-      const isBili = source.platform === "B站";
+      const isBili = source2.platform === "B站";
       const list = pool.filter((a) => {
         const p = platformOf(a);
-        if (p !== source.platform) return false;
-        if (isBili && source.up && String(a.author || "") !== source.up) return false;
+        if (p !== source2.platform) return false;
+        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
         return true;
       });
       out = list.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
     }
     return out.filter((a) => a.st !== "saved").sort((a, b) => b.timeTs - a.timeTs);
   }
-  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}) {
-    if (source.kind === "clip") {
+  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
+    if (source2.kind === "clip") {
       return (clipNotes || []).map((n) => clipFromNote(n));
     }
     const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
@@ -18659,19 +18659,19 @@ ${c.trim()}
     const mapNews = (a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap });
     let news = [];
     let clips = [];
-    if (source.kind === "all") {
+    if (source2.kind === "all") {
       news = (articles || []).filter((a) => !isClippedNews(a));
-    } else if (source.kind === "site") {
-      const s = normSite(source.site);
+    } else if (source2.kind === "site") {
+      const s = normSite(source2.site);
       news = (articles || []).filter((a) => !isClippedNews(a) && normSite(siteName(a)) === s);
       clips = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
     } else {
-      const isBili = source.platform === "B站";
+      const isBili = source2.platform === "B站";
       news = (articles || []).filter((a) => {
         if (isClippedNews(a)) return false;
         const p = platformOf(a);
-        if (p !== source.platform) return false;
-        if (isBili && source.up && String(a.author || "") !== source.up) return false;
+        if (p !== source2.platform) return false;
+        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
         return true;
       });
     }
@@ -19060,10 +19060,10 @@ ${c.trim()}
   async function scanClipDirectory(dirPath, deps) {
     const dir = deps.vault.getAbstractFileByPath(dirPath);
     if (!dir || !Array.isArray(dir.children)) return null;
-    const mdFiles = dir.children.filter((f) => f && f.extension === "md");
+    const mdFiles2 = dir.children.filter((f) => f && f.extension === "md");
     const parse = deps.parse || ((f) => parseClipFile(f));
     const notes = [];
-    for (const f of mdFiles) {
+    for (const f of mdFiles2) {
       try {
         const n = parse(f);
         if (n) notes.push(n);
@@ -19637,11 +19637,11 @@ ${body}`;
       );
     });
   }
-  async function writeUniqueNote(dir, baseName, content) {
+  async function writeUniqueNote(dir, baseName2, content) {
     const app = getApp();
     const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    let path = `${folder}/${baseName}.md`;
-    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName}_${i}.md`;
+    let path = `${folder}/${baseName2}.md`;
+    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.md`;
     try {
       const exists = await app.vault.adapter.exists(folder);
       if (!exists) await app.vault.createFolder(folder);
@@ -19810,11 +19810,11 @@ ${text}`;
     const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
     return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title || summary), body);
   }
-  async function writeUniqueBinary(dir, baseName, ext, bytes) {
+  async function writeUniqueBinary(dir, baseName2, ext, bytes) {
     const app = getApp();
     const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    let path = `${folder}/${baseName}.${ext}`;
-    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName}_${i}.${ext}`;
+    let path = `${folder}/${baseName2}.${ext}`;
+    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
     try {
       const exists = await app.vault.adapter.exists(folder);
       if (!exists) await app.vault.createFolder(folder);
@@ -20339,6 +20339,3241 @@ ${sample}`,
     }
   });
 
+  // src/knowledge/mount-data.ts
+  function normSlashes(s) {
+    return String(s != null ? s : "").replace(/\\/g, "/");
+  }
+  function normDir(raw, fallback) {
+    const s = normSlashes(raw).trim();
+    if (!s) return fallback;
+    return s.replace(/^\/+|\/+$/g, "");
+  }
+  function baseName(path) {
+    const p = normSlashes(path);
+    return p.split("/").pop() || "";
+  }
+  function stripMd(name) {
+    return String(name != null ? name : "").replace(/\.md$/i, "");
+  }
+  function stemOf(path) {
+    const b = baseName(path);
+    return stripMd(b) || b;
+  }
+  function extOf(name) {
+    const b = baseName(name).toLowerCase();
+    const i = b.lastIndexOf(".");
+    return i > 0 ? b.slice(i + 1) : "";
+  }
+  function pathKey(path) {
+    return stripMd(normSlashes(path)).toLowerCase();
+  }
+  function inDir(path, dir) {
+    const d = normDir(dir, "");
+    const p = normSlashes(path);
+    if (!d) return true;
+    return p === d || p.startsWith(d + "/");
+  }
+  function samePath(a, b) {
+    return pathKey(a) === pathKey(b);
+  }
+  function byDepthThenPath(a, b) {
+    const da = normSlashes(a).split("/").length;
+    const db = normSlashes(b).split("/").length;
+    return da - db || a.localeCompare(b);
+  }
+  function stripFrontmatter(text) {
+    const src = String(text != null ? text : "");
+    const m = src.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+    return (m ? src.slice(m[0].length) : src).replace(/^\r?\n+/, "");
+  }
+  function splitLinkText(inner) {
+    const raw = String(inner != null ? inner : "").trim();
+    const bar = raw.indexOf("|");
+    const left = bar >= 0 ? raw.slice(0, bar) : raw;
+    const aliasRaw = bar >= 0 ? raw.slice(bar + 1).trim() : "";
+    const hash = left.indexOf("#");
+    return {
+      target: (hash >= 0 ? left.slice(0, hash) : left).trim(),
+      alias: aliasRaw || null,
+      subpath: hash >= 0 ? left.slice(hash + 1).trim() || null : null
+    };
+  }
+  function linkKey(target, subpath) {
+    return `${target.trim().toLowerCase()}#${(subpath != null ? subpath : "").trim().toLowerCase()}`;
+  }
+  function safeApp() {
+    try {
+      return getApp();
+    } catch (e) {
+      return null;
+    }
+  }
+  function numOr(v, fallback) {
+    return typeof v === "number" && Number.isFinite(v) ? v : fallback;
+  }
+  function mountCtx(app) {
+    var _a2;
+    const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
+    return {
+      app: app != null ? app : safeApp(),
+      cardboxDir: normDir(s == null ? void 0 : s.knowledgeCardboxDirectory, DEFAULT_CARDBOX) || DEFAULT_CARDBOX,
+      litDir: normDir(s == null ? void 0 : s.knowledgeDirectory, DEFAULT_LIT) || DEFAULT_LIT
+    };
+  }
+  function allFiles(ctx) {
+    var _a2;
+    const v = (_a2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a2.vault;
+    const files = typeof (v == null ? void 0 : v.getFiles) === "function" ? v.getFiles() : null;
+    return Array.isArray(files) ? files.filter((f) => f && f.path) : [];
+  }
+  function mdFiles(ctx) {
+    var _a2;
+    const v = (_a2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a2.vault;
+    const files = typeof (v == null ? void 0 : v.getMarkdownFiles) === "function" ? v.getMarkdownFiles() : allFiles(ctx).filter((f) => f.extension === "md");
+    return (Array.isArray(files) ? files.filter((f) => f && f.path) : []).slice().sort((a, b) => String(a.path).localeCompare(String(b.path)));
+  }
+  async function readText(file, ctx) {
+    var _a2, _b2, _c, _d, _e, _f, _g;
+    const v = (_a2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a2.vault;
+    if (!v || file === null || file === void 0) return "";
+    let target = file;
+    if (typeof file === "string") {
+      const p = normSlashes(file);
+      if (!p) return "";
+      target = (_e = (_d = (_b2 = v.getAbstractFileByPath) == null ? void 0 : _b2.call(v, p)) != null ? _d : (_c = v.getFileByPath) == null ? void 0 : _c.call(v, p)) != null ? _e : p;
+    }
+    try {
+      if (typeof v.cachedRead === "function") return String((_f = await v.cachedRead(target)) != null ? _f : "");
+      if (typeof v.read === "function") return String((_g = await v.read(target)) != null ? _g : "");
+    } catch (e) {
+    }
+    return "";
+  }
+  async function bodyOf(path, ctx) {
+    return stripFrontmatter(await readText(path, ctx));
+  }
+  function parseMountLinks(body) {
+    const src = String(body != null ? body : "");
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    const re = /(!?)\[\[([^\[\]]+?)\]\]/g;
+    let m;
+    while ((m = re.exec(src)) !== null) {
+      const raw = m[0];
+      const embed = m[1] === "!";
+      const { target, alias, subpath } = splitLinkText(m[2]);
+      if (!target) continue;
+      const key = linkKey(target, subpath);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        raw,
+        target,
+        alias,
+        subpath,
+        embed,
+        kind: classifyKind(target, subpath, embed, null, ""),
+        missing: false,
+        path: null,
+        anchor: { from: m.index, to: m.index + raw.length, text: raw }
+      });
+    }
+    return out;
+  }
+  function classifyKind(target, subpath, embed, path, cardboxDir) {
+    const t = String(target != null ? target : "").trim();
+    const p = path && String(path).trim() ? normSlashes(String(path)) : null;
+    const exts = [p ? extOf(p) : "", extOf(t)].filter(Boolean);
+    if (exts.some((e) => IMAGE_EXTS.has(e))) return "image";
+    if (exts.some((e) => VIDEO_EXTS.has(e))) return "video";
+    const dir = normDir(cardboxDir, "");
+    if (p && dir && (p === dir || p.startsWith(dir + "/"))) return "card";
+    const sp = String(subpath != null ? subpath : "").trim().replace(/^#/, "").trim();
+    if (sp.startsWith("^")) return "para";
+    if (sp) return "head";
+    return "note";
+  }
+  function findBySameName(target, ctx) {
+    var _a2;
+    const t = normSlashes(target).trim();
+    if (!t) return null;
+    const files = allFiles(ctx);
+    const wantFull = pathKey(t);
+    const wantBase = stripMd(baseName(t)).toLowerCase();
+    const exact = files.filter((f) => pathKey(f.path) === wantFull).map((f) => normSlashes(f.path));
+    const named = files.filter((f) => stemOf(f.path).toLowerCase() === wantBase).map((f) => normSlashes(f.path));
+    const pool = (exact.length ? exact : named).slice().sort(byDepthThenPath);
+    return (_a2 = pool[0]) != null ? _a2 : null;
+  }
+  function resolveLinkPath(target, ctx, sourcePath) {
+    var _a2, _b2, _c, _d;
+    const t = String(target != null ? target : "").trim();
+    if (!t) return null;
+    try {
+      const dest = (_d = (_c = (_b2 = (_a2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a2.metadataCache) == null ? void 0 : _b2.getFirstLinkpathDest) == null ? void 0 : _c.call(_b2, t, sourcePath)) != null ? _d : null;
+      const p = dest && typeof dest === "object" ? dest.path : typeof dest === "string" ? dest : null;
+      if (p) return normSlashes(String(p));
+    } catch (e) {
+    }
+    return findBySameName(t, ctx);
+  }
+  async function resolveMountLinks(links, ctx, sourcePath = "") {
+    var _a2, _b2;
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    const dir = (_a2 = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a2 : "";
+    for (const link of links != null ? links : []) {
+      if (!link) continue;
+      const path = resolveLinkPath(link.target, ctx, sourcePath);
+      const kind = classifyKind(link.target, link.subpath, link.embed, path, dir);
+      const key = path ? `${pathKey(path)}#${((_b2 = link.subpath) != null ? _b2 : "").toLowerCase()}` : `missing:${linkKey(link.target, link.subpath)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ ...link, path, missing: !path, kind });
+    }
+    return out;
+  }
+  function relocateAnchor(body, anchor) {
+    var _a2;
+    const src = String(body != null ? body : "");
+    const text = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "");
+    if (!text) return null;
+    const exact = src.indexOf(text);
+    if (exact >= 0) return exact;
+    const flat = flattenWs(src);
+    const needle = flattenWs(text).text;
+    if (!needle) return null;
+    const at = flat.text.indexOf(needle);
+    return at < 0 ? null : flat.map[at];
+  }
+  function flattenWs(s) {
+    const map = [];
+    let text = "";
+    for (let i = 0; i < s.length; i++) {
+      if (/\s/.test(s[i])) continue;
+      map.push(i);
+      text += s[i];
+    }
+    return { text, map };
+  }
+  function joinSnippet(chunk) {
+    const text = chunk.join("\n").replace(/^\s*\n+/, "").replace(/\s+$/, "");
+    return text.trim() ? text : null;
+  }
+  function splitBlocks(lines) {
+    const out = [];
+    let cur = [];
+    let start = 0;
+    const flush = (end) => {
+      if (cur.length) out.push({ start, end, text: cur.join("\n") });
+      cur = [];
+    };
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() === "") {
+        flush(i);
+        continue;
+      }
+      if (!cur.length) start = i;
+      cur.push(lines[i]);
+    }
+    flush(lines.length);
+    return out;
+  }
+  function escapeRe(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  function headingSnippet(lines, heading, cache) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    const want = heading.trim().toLowerCase();
+    const hs = Array.isArray(cache == null ? void 0 : cache.headings) ? cache.headings : null;
+    if (hs) {
+      const idx = hs.findIndex((h) => {
+        var _a3;
+        return String((_a3 = h == null ? void 0 : h.heading) != null ? _a3 : "").trim().toLowerCase() === want;
+      });
+      if (idx >= 0) {
+        const start = numOr((_c = (_b2 = (_a2 = hs[idx]) == null ? void 0 : _a2.position) == null ? void 0 : _b2.start) == null ? void 0 : _c.line, -1);
+        if (start >= 0) {
+          const level = numOr((_d = hs[idx]) == null ? void 0 : _d.level, 1);
+          let end = lines.length;
+          for (let j = idx + 1; j < hs.length; j++) {
+            if (numOr((_e = hs[j]) == null ? void 0 : _e.level, 1) <= level) {
+              end = numOr((_h = (_g = (_f = hs[j]) == null ? void 0 : _f.position) == null ? void 0 : _g.start) == null ? void 0 : _h.line, lines.length);
+              break;
+            }
+          }
+          return joinSnippet(lines.slice(start + 1, end));
+        }
+      }
+    }
+    for (let i = 0; i < lines.length; i++) {
+      const m = /^(#{1,6})\s+(.*?)\s*#*\s*$/.exec(lines[i]);
+      if (!m || m[2].trim().toLowerCase() !== want) continue;
+      let end = lines.length;
+      for (let j = i + 1; j < lines.length; j++) {
+        const mm = /^(#{1,6})\s+/.exec(lines[j]);
+        if (mm && mm[1].length <= m[1].length) {
+          end = j;
+          break;
+        }
+      }
+      return joinSnippet(lines.slice(i + 1, end));
+    }
+    return null;
+  }
+  function blockSnippet(lines, id, cache) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    const re = new RegExp(`(^|\\s)\\^${escapeRe(id)}(\\s|$)`);
+    const start = numOr((_d = (_c = (_b2 = (_a2 = cache == null ? void 0 : cache.blocks) == null ? void 0 : _a2[id]) == null ? void 0 : _b2.position) == null ? void 0 : _c.start) == null ? void 0 : _d.line, -1);
+    if (start >= 0) {
+      const end = numOr((_h = (_g = (_f = (_e = cache == null ? void 0 : cache.blocks) == null ? void 0 : _e[id]) == null ? void 0 : _f.position) == null ? void 0 : _g.end) == null ? void 0 : _h.line, start);
+      const text = lines.slice(start, end + 1).join("\n").replace(re, " ");
+      return joinSnippet([text]);
+    }
+    const blocks = splitBlocks(lines);
+    for (let i = 0; i < blocks.length; i++) {
+      const text = blocks[i].text;
+      if (!re.test(text)) continue;
+      if (!text.replace(re, " ").trim() && i > 0) return joinSnippet([blocks[i - 1].text]);
+      return joinSnippet([text.replace(re, " ").trim()]);
+    }
+    return null;
+  }
+  async function readSubpathBody(file, subpath, ctx) {
+    var _a2, _b2, _c, _d;
+    const sp = String(subpath != null ? subpath : "").trim().replace(/^#/, "").trim();
+    if (!sp) return null;
+    const path = typeof file === "string" ? normSlashes(file) : normSlashes((_a2 = file == null ? void 0 : file.path) != null ? _a2 : "");
+    if (!path) return null;
+    const content = await readText(file, ctx);
+    if (!content) return null;
+    const lines = String(content).split(/\r?\n/);
+    const cache = (_d = (_c = (_b2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b2.metadataCache) == null ? void 0 : _c.getFileCache) == null ? void 0 : _d.call(_c, typeof file === "string" ? path : file);
+    if (sp.startsWith("^")) return blockSnippet(lines, sp.slice(1), cache);
+    return headingSnippet(lines, sp, cache);
+  }
+  async function findSameNameNote(cardPath, ctx) {
+    var _a2;
+    const stem = stemOf(cardPath).toLowerCase();
+    if (!stem) return null;
+    const dir = normDir(ctx == null ? void 0 : ctx.litDir, "");
+    const hits = mdFiles(ctx).filter((f) => inDir(f.path, dir) && stemOf(f.path).toLowerCase() === stem).map((f) => normSlashes(f.path)).sort(byDepthThenPath);
+    return (_a2 = hits[0]) != null ? _a2 : null;
+  }
+  function fmListLineInner(line) {
+    const m = /^\s*-\s*(.*?)\s*$/.exec(line);
+    if (!m) return null;
+    const v = m[1].replace(/^["']|["']$/g, "").replace(/^["']|["']$/g, "");
+    const mm = v.match(/\[\[([^\]]+)\]\]/);
+    return mm ? mm[1].trim() : v.trim();
+  }
+  function fmList(text, key) {
+    var _a2;
+    const lines = String(text != null ? text : "").split(/\r?\n/);
+    if (((_a2 = lines[0]) == null ? void 0 : _a2.trim()) !== "---") return [];
+    const head = new RegExp(`^${key}\\s*:`);
+    const out = [];
+    let inList = false;
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim() === "---") break;
+      if (head.test(line)) {
+        inList = true;
+        continue;
+      }
+      if (!inList) continue;
+      const inner = fmListLineInner(line);
+      if (inner !== null) out.push(inner);
+      else if (line.trim() !== "") break;
+    }
+    return out;
+  }
+  function newScan(ctx) {
+    return { ctx, items: /* @__PURE__ */ new Map(), bodies: /* @__PURE__ */ new Map() };
+  }
+  async function scanBody(scan, path) {
+    const key = pathKey(path);
+    if (!scan.bodies.has(key)) scan.bodies.set(key, await bodyOf(path, scan.ctx));
+    return scan.bodies.get(key);
+  }
+  function itemFromLink(text, source2, ctx, sourcePath) {
+    var _a2;
+    const { target, alias, subpath } = splitLinkText(text);
+    if (!target) return null;
+    const path = resolveLinkPath(target, ctx, sourcePath);
+    return {
+      source: source2,
+      kind: classifyKind(target, subpath, false, path, (_a2 = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a2 : ""),
+      target,
+      path,
+      subpath,
+      alias,
+      anchor: null,
+      missing: !path
+    };
+  }
+  async function outboundItems(scan, path) {
+    const key = pathKey(path);
+    const cached = scan.items.get(key);
+    if (cached) return cached;
+    const text = await readText(path, scan.ctx);
+    scan.bodies.set(key, stripFrontmatter(text));
+    const items = [];
+    const links = await resolveMountLinks(parseMountLinks(stripFrontmatter(text)), scan.ctx, path);
+    for (const l of links) {
+      items.push({ source: "link", kind: l.kind, target: l.target, path: l.path, subpath: l.subpath, alias: l.alias, anchor: l.anchor, missing: l.missing });
+    }
+    for (const t of fmList(text, "related")) {
+      const it = itemFromLink(t, "related", scan.ctx, path);
+      if (it) items.push(it);
+    }
+    for (const t of fmList(text, "mounted")) {
+      const it = itemFromLink(t, "manual", scan.ctx, path);
+      if (it) items.push(it);
+    }
+    const seen = /* @__PURE__ */ new Set();
+    const deduped = items.filter((it) => {
+      var _a2;
+      const k = `${it.source}:${it.path ? `${pathKey(it.path)}#${((_a2 = it.subpath) != null ? _a2 : "").toLowerCase()}` : `missing#${linkKey(it.target, it.subpath)}`}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    scan.items.set(key, deduped);
+    return deduped;
+  }
+  async function inboundItems(scan, targetPath) {
+    const out = [];
+    for (const f of mdFiles(scan.ctx)) {
+      if (samePath(f.path, targetPath)) continue;
+      const items = await outboundItems(scan, f.path);
+      for (const it of items) {
+        if (!it.path || !samePath(it.path, targetPath)) continue;
+        out.push({ ...it, container: normSlashes(f.path) });
+      }
+    }
+    return out;
+  }
+  function itemId2(it) {
+    var _a2;
+    const p = (_a2 = it.path) != null ? _a2 : it.target;
+    return it.subpath ? `${p}#${it.subpath}` : p;
+  }
+  function isSelfItem(it, nodePath) {
+    if (it.path) return samePath(it.path, nodePath);
+    return pathKey(it.target) === pathKey(nodePath) || stemOf(it.target).toLowerCase() === stemOf(nodePath).toLowerCase();
+  }
+  async function rootNode(path, scan) {
+    return {
+      id: path,
+      path,
+      title: stemOf(path),
+      kind: "card",
+      source: "self",
+      depth: 0,
+      anchor: null,
+      missing: false,
+      suggested: false,
+      attached: false,
+      parent: null,
+      body: await scanBody(scan, path)
+    };
+  }
+  async function materialize(scan, it, depth, parent, upstream) {
+    var _a2, _b2, _c, _d, _e, _f, _g;
+    if (upstream) {
+      const path2 = normSlashes((_b2 = (_a2 = it.container) != null ? _a2 : it.path) != null ? _b2 : it.target);
+      return {
+        id: path2,
+        path: path2,
+        title: stemOf(path2),
+        kind: classifyKind(path2, null, false, path2, (_d = (_c = scan.ctx) == null ? void 0 : _c.cardboxDir) != null ? _d : ""),
+        source: it.source,
+        depth,
+        anchor: it.anchor,
+        missing: false,
+        suggested: false,
+        attached: false,
+        parent,
+        body: await scanBody(scan, path2)
+      };
+    }
+    const path = (_e = it.path) != null ? _e : it.target;
+    let body = null;
+    if (it.path && (it.kind === "note" || it.kind === "card")) body = await scanBody(scan, it.path);
+    else if (it.path && (it.kind === "head" || it.kind === "para") && it.subpath) body = await readSubpathBody({ path: it.path }, it.subpath, scan.ctx);
+    let title;
+    if (it.kind === "head") title = (_f = it.subpath) != null ? _f : stemOf(path);
+    else if (it.kind === "para") title = (body ? body.split("\n")[0].trim().slice(0, 24) : "") || `^${String((_g = it.subpath) != null ? _g : "").replace(/^\^/, "")}`;
+    else title = it.missing ? it.target : baseName(path) || it.target;
+    return {
+      id: itemId2(it),
+      path,
+      title,
+      kind: it.kind,
+      source: it.source,
+      depth,
+      anchor: it.anchor,
+      missing: it.missing,
+      suggested: false,
+      attached: false,
+      parent,
+      body
+    };
+  }
+  async function buildMountTree(cardPath, opts) {
+    var _a2, _b2, _c, _d;
+    const ctx = (_a2 = opts == null ? void 0 : opts.ctx) != null ? _a2 : mountCtx();
+    const direction = (opts == null ? void 0 : opts.direction) === "upstream" ? "upstream" : "downstream";
+    const upstream = direction === "upstream";
+    const rootPath = normSlashes(String(cardPath != null ? cardPath : "")).replace(/^\/+|\/+$/g, "");
+    const scan = newScan(ctx);
+    const nodes = /* @__PURE__ */ new Map();
+    const order = [];
+    const edges = [];
+    const edgeKeys = /* @__PURE__ */ new Set();
+    const root = await rootNode(rootPath, scan);
+    nodes.set(root.id, root);
+    order.push(root.id);
+    const queue2 = [root.id];
+    while (queue2.length) {
+      const node = nodes.get(queue2.shift());
+      if (node.kind !== "card" || node.missing) continue;
+      const sameNote = await findSameNameNote(node.path, ctx);
+      if (sameNote && !nodes.has(sameNote)) {
+        const child = {
+          id: sameNote,
+          path: sameNote,
+          title: stemOf(sameNote),
+          kind: classifyKind(sameNote, null, false, sameNote, ctx.cardboxDir),
+          source: "sameName",
+          depth: node.depth + 1,
+          anchor: null,
+          missing: false,
+          suggested: false,
+          attached: true,
+          parent: node.id,
+          // 同名文献吸附在**所属卡片**下（不是根、也不为 null）
+          body: await scanBody(scan, sameNote)
+        };
+        nodes.set(child.id, child);
+        order.push(child.id);
+      }
+      const items = upstream ? await inboundItems(scan, node.path) : await outboundItems(scan, node.path);
+      for (const it of items) {
+        if (!upstream && isSelfItem(it, node.path)) continue;
+        const id = upstream ? normSlashes((_c = (_b2 = it.container) != null ? _b2 : it.path) != null ? _c : it.target) : itemId2(it);
+        let child = (_d = nodes.get(id)) != null ? _d : null;
+        let fresh = false;
+        if (!child) {
+          child = await materialize(scan, it, node.depth + 1, node.id, upstream);
+          nodes.set(child.id, child);
+          order.push(child.id);
+          fresh = true;
+        }
+        if (!child.attached && child.depth > node.depth) {
+          const ek = `${node.id}\0${child.id}`;
+          if (!edgeKeys.has(ek)) {
+            edgeKeys.add(ek);
+            edges.push({ from: node.id, to: child.id, suggested: false });
+          }
+        }
+        if (fresh && child.kind === "card" && !child.missing) queue2.push(child.id);
+      }
+    }
+    const firstIdx = new Map(order.map((id, i) => [id, i]));
+    const list = order.map((id) => nodes.get(id)).filter(Boolean);
+    list.sort((a, b) => {
+      var _a3, _b3;
+      return a.depth - b.depth || ((_a3 = firstIdx.get(a.id)) != null ? _a3 : 0) - ((_b3 = firstIdx.get(b.id)) != null ? _b3 : 0);
+    });
+    const pos = new Map(list.map((n, i) => [n.id, i]));
+    const sortedEdges = edges.slice().sort((a, b) => {
+      var _a3, _b3, _c2, _d2;
+      return ((_a3 = pos.get(a.from)) != null ? _a3 : -1) - ((_b3 = pos.get(b.from)) != null ? _b3 : -1) || ((_c2 = pos.get(a.to)) != null ? _c2 : -1) - ((_d2 = pos.get(b.to)) != null ? _d2 : -1);
+    });
+    return { root: root.id, direction, nodes: list, edges: sortedEdges };
+  }
+  var DEFAULT_CARDBOX, DEFAULT_LIT, IMAGE_EXTS, VIDEO_EXTS;
+  var init_mount_data = __esm({
+    "src/knowledge/mount-data.ts"() {
+      init_app();
+      init_settings_provider();
+      DEFAULT_CARDBOX = "卡片盒";
+      DEFAULT_LIT = "文献盒";
+      IMAGE_EXTS = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "avif"]);
+      VIDEO_EXTS = /* @__PURE__ */ new Set(["mp4", "webm", "mov", "mkv", "avi"]);
+    }
+  });
+
+  // src/knowledge/mount-layout.ts
+  function positiveSize(v) {
+    return Number.isFinite(v) && v > 0 ? v : 1;
+  }
+  function resolveMaxNodes(v) {
+    if (v === void 0 || !Number.isFinite(v)) return LAYOUT_PARAMS.MAX_NODES;
+    return Math.max(0, Math.floor(v));
+  }
+  function buildNodes(boxes, count) {
+    const nodes = [];
+    for (let i = 0; i < count; i++) {
+      const b = boxes[i];
+      nodes.push({
+        id: b.id,
+        w: positiveSize(b.w),
+        h: positiveSize(b.h),
+        depth: Number.isFinite(b.depth) ? Math.max(0, Math.floor(b.depth)) : 0,
+        active: true,
+        x: 0,
+        y: 0
+      });
+    }
+    return nodes;
+  }
+  function seedPositions(nodes) {
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      const ang = i * GOLDEN_ANGLE_RAD;
+      const r = SEED_BASE_R + SEED_STEP_R * Math.sqrt(i);
+      n.x = Math.cos(ang) * r + n.w / 2;
+      n.y = Math.sin(ang) * r + n.h / 2;
+    }
+  }
+  function markActive(nodes, viewport) {
+    if (!viewport) return;
+    const { x, y, w, h } = viewport;
+    if (![x, y, w, h].every((v) => Number.isFinite(v)) || w <= 0 || h <= 0) return;
+    for (const n of nodes) {
+      n.active = n.x + n.w / 2 >= x && n.x - n.w / 2 <= x + w && n.y + n.h / 2 >= y && n.y - n.h / 2 <= y + h;
+    }
+    if (nodes.every((n) => !n.active)) {
+      for (const n of nodes) n.active = true;
+    }
+  }
+  function buildLinks(nodes, edges) {
+    const indexById = /* @__PURE__ */ new Map();
+    for (let i = 0; i < nodes.length; i++) indexById.set(nodes[i].id, i);
+    const links = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const e of edges) {
+      if (!e) continue;
+      const a = indexById.get(e.from);
+      const b = indexById.get(e.to);
+      if (a === void 0 || b === void 0 || a === b) continue;
+      const key = a + ">" + b;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      links.push({ a, b });
+    }
+    return links;
+  }
+  function relax(nodes, links) {
+    const n = nodes.length;
+    const fx = new Float64Array(n);
+    const fy = new Float64Array(n);
+    const ITER = LAYOUT_PARAMS.ITER;
+    const REP = LAYOUT_PARAMS.REP;
+    const PAD = LAYOUT_PARAMS.PAD;
+    for (let it = 0; it < ITER; it++) {
+      const cool = 1 - it / ITER * COOL_SPAN;
+      fx.fill(0);
+      fy.fill(0);
+      for (let i = 0; i < n; i++) {
+        const A = nodes[i];
+        if (!A.active) continue;
+        for (let j = i + 1; j < n; j++) {
+          const B = nodes[j];
+          if (!B.active) continue;
+          const dx = B.x - A.x;
+          const dy = B.y - A.y;
+          const d = Math.hypot(dx, dy) || 1;
+          const need = (A.w + A.h) / 4 + (B.w + B.h) / 4 + NEED_GAP;
+          if (d > LAYOUT_PARAMS.CUTOFF * need) continue;
+          const rep = REP * REP / d * (d < need ? REP_OVERLAP_BOOST : 1);
+          const ux = dx / d;
+          const uy = dy / d;
+          fx[i] -= ux * rep;
+          fy[i] -= uy * rep;
+          fx[j] += ux * rep;
+          fy[j] += uy * rep;
+        }
+      }
+      for (const l of links) {
+        const A = nodes[l.a];
+        const B = nodes[l.b];
+        if (!A.active || !B.active) continue;
+        const dx = B.x - A.x;
+        const dy = B.y - A.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const rest = (A.w + A.h) / 4 + (B.w + B.h) / 4 + LAYOUT_PARAMS.REST;
+        const att = (d - rest) * SPRING_K;
+        const ux = dx / d;
+        const uy = dy / d;
+        fx[l.a] += ux * att;
+        fy[l.a] += uy * att;
+        fx[l.b] -= ux * att;
+        fy[l.b] -= uy * att;
+        const minDx = (A.w + B.w) / 2 + ORDER_GAP;
+        if (B.x - A.x < minDx) {
+          const push = (minDx - (B.x - A.x)) * ORDER_K;
+          fx[l.b] += push;
+          fx[l.a] -= push;
+        }
+      }
+      let gx = 0;
+      let gy = 0;
+      for (const node of nodes) {
+        gx += node.x;
+        gy += node.y;
+      }
+      gx /= n;
+      gy /= n;
+      for (let i = 0; i < n; i++) {
+        const node = nodes[i];
+        if (!node.active) continue;
+        const want = PAD + node.w / 2 + node.depth * LAYOUT_PARAMS.X_STEP;
+        fx[i] += (want - node.x) * ANCHOR_K;
+        fx[i] += (gx - node.x) * GRAVITY_X;
+        fy[i] += (gy - node.y) * GRAVITY_Y;
+      }
+      for (let i = 0; i < n; i++) {
+        const node = nodes[i];
+        if (!node.active) continue;
+        const f = Math.hypot(fx[i], fy[i]) || 1;
+        const cap = STEP_COOL * cool + STEP_BASE;
+        const k = f > cap ? cap / f : 1;
+        node.x += fx[i] * k * STEP_SCALE;
+        node.y += fy[i] * k * STEP_SCALE;
+      }
+    }
+  }
+  function pushRound(nodes, gapX, gapY, eps) {
+    const n = nodes.length;
+    let moved = false;
+    for (let i = 0; i < n; i++) {
+      const A = nodes[i];
+      if (!A.active) continue;
+      for (let j = i + 1; j < n; j++) {
+        const B = nodes[j];
+        if (!B.active) continue;
+        const ox = (A.w + B.w) / 2 + gapX - Math.abs(B.x - A.x);
+        const oy = (A.h + B.h) / 2 + gapY - Math.abs(B.y - A.y);
+        if (ox <= eps || oy <= eps) continue;
+        moved = true;
+        if (ox <= oy) {
+          const s = (B.x >= A.x ? 1 : -1) * (ox / 2);
+          A.x -= s;
+          B.x += s;
+        } else {
+          const s = (B.y >= A.y ? 1 : -1) * (oy / 2);
+          A.y -= s;
+          B.y += s;
+        }
+      }
+    }
+    return moved;
+  }
+  function separate(nodes) {
+    for (let round = 0; round < SEPARATE_ROUNDS; round++) {
+      if (!pushRound(nodes, SEPARATE_GAP_X, SEPARATE_GAP_Y, 0)) return;
+    }
+    resolveResidual(nodes);
+  }
+  function resolveResidual(nodes) {
+    const n = nodes.length;
+    for (let round = 0; round < RESIDUAL_ROUNDS; round++) {
+      if (!pushRound(nodes, 0, 0, RESIDUAL_EPS)) return;
+    }
+    for (let sweep = 0; sweep < n; sweep++) {
+      let moved = false;
+      for (let j = 1; j < n; j++) {
+        const B = nodes[j];
+        if (!B.active) continue;
+        for (let i = 0; i < j; i++) {
+          const A = nodes[i];
+          if (!A.active) continue;
+          const ox = (A.w + B.w) / 2 - Math.abs(B.x - A.x);
+          const oy = (A.h + B.h) / 2 - Math.abs(B.y - A.y);
+          if (ox <= RESIDUAL_EPS || oy <= RESIDUAL_EPS) continue;
+          const want = A.x + A.w / 2 + B.w / 2 + RESIDUAL_GAP;
+          if (want > B.x) {
+            B.x = want;
+            moved = true;
+          }
+        }
+      }
+      if (!moved) break;
+    }
+  }
+  function finalize(nodes, culled) {
+    let minLeft = Infinity;
+    let minTop = Infinity;
+    for (const n of nodes) {
+      if (n.x - n.w / 2 < minLeft) minLeft = n.x - n.w / 2;
+      if (n.y - n.h / 2 < minTop) minTop = n.y - n.h / 2;
+    }
+    const shiftX = LAYOUT_PARAMS.PAD - minLeft;
+    const shiftY = LAYOUT_PARAMS.PAD - minTop;
+    const pos = {};
+    let right = LAYOUT_PARAMS.PAD;
+    let bottom = LAYOUT_PARAMS.PAD;
+    for (const n of nodes) {
+      const x = n.x - n.w / 2 + shiftX;
+      const y = n.y - n.h / 2 + shiftY;
+      pos[n.id] = { x, y };
+      if (x + n.w > right) right = x + n.w;
+      if (y + n.h > bottom) bottom = y + n.h;
+    }
+    return { pos, world: { w: right + LAYOUT_PARAMS.PAD, h: bottom + LAYOUT_PARAMS.PAD }, culled };
+  }
+  function layoutTree(boxes, edges, opts) {
+    const maxNodes = resolveMaxNodes(opts == null ? void 0 : opts.maxNodes);
+    const keptCount = Math.min(boxes.length, maxNodes);
+    const culled = [];
+    for (let i = keptCount; i < boxes.length; i++) culled.push(boxes[i].id);
+    const nodes = buildNodes(boxes, keptCount);
+    if (nodes.length === 0) {
+      return { pos: {}, world: { w: LAYOUT_PARAMS.PAD * 2, h: LAYOUT_PARAMS.PAD * 2 }, culled };
+    }
+    seedPositions(nodes);
+    markActive(nodes, opts == null ? void 0 : opts.viewport);
+    relax(nodes, buildLinks(nodes, edges));
+    separate(nodes);
+    return finalize(nodes, culled);
+  }
+  var LAYOUT_PARAMS, NEED_GAP, REP_OVERLAP_BOOST, SPRING_K, ORDER_GAP, ORDER_K, ANCHOR_K, GRAVITY_X, GRAVITY_Y, COOL_SPAN, STEP_COOL, STEP_BASE, STEP_SCALE, SEPARATE_ROUNDS, SEPARATE_GAP_X, SEPARATE_GAP_Y, RESIDUAL_EPS, RESIDUAL_GAP, RESIDUAL_ROUNDS, SEED_BASE_R, SEED_STEP_R, GOLDEN_ANGLE_RAD;
+  var init_mount_layout = __esm({
+    "src/knowledge/mount-layout.ts"() {
+      LAYOUT_PARAMS = {
+        /** 斥力系数：rep = REP²/d，近距（d < need）×2.4 */
+        REP: 150,
+        /** Hooke 弹簧自然长度：rest = half(A)+half(B)+REST */
+        REST: 160,
+        /** 远距斥力截断倍数（× 作用半径 need），不截断图会炸开 */
+        CUTOFF: 2.5,
+        /** 每代 x 弱锚步长（只防漂移，单向流方向由「子卡在父卡右侧」软约束给） */
+        X_STEP: 640,
+        /** 退火轮数 */
+        ITER: 420,
+        /** 世界内边距：归一化基准（左/上）+ 右/下余量 */
+        PAD: 60,
+        /** 默认布局上限，超过按输入序降级进 `culled`（spec 风险 1） */
+        MAX_NODES: 120
+      };
+      NEED_GAP = 90;
+      REP_OVERLAP_BOOST = 2.4;
+      SPRING_K = 0.34;
+      ORDER_GAP = 56;
+      ORDER_K = 0.16;
+      ANCHOR_K = 0.012;
+      GRAVITY_X = 0.03;
+      GRAVITY_Y = 0.06;
+      COOL_SPAN = 0.85;
+      STEP_COOL = 12;
+      STEP_BASE = 3;
+      STEP_SCALE = 0.5;
+      SEPARATE_ROUNDS = 60;
+      SEPARATE_GAP_X = 40;
+      SEPARATE_GAP_Y = 34;
+      RESIDUAL_EPS = 1e-3;
+      RESIDUAL_GAP = 1;
+      RESIDUAL_ROUNDS = 300;
+      SEED_BASE_R = 150;
+      SEED_STEP_R = 46;
+      GOLDEN_ANGLE_RAD = 137.5 * Math.PI / 180;
+    }
+  });
+
+  // src/knowledge/mount-geom.ts
+  function rectOf(b) {
+    return { left: b.x, top: b.y, right: b.x + b.w, bottom: b.y + b.h };
+  }
+  function segRectHit(p, q2, r, margin = 0) {
+    const dx = q2.x - p.x;
+    const dy = q2.y - p.y;
+    const pv = [-dx, dx, -dy, dy];
+    const qv = [
+      p.x - (r.left - margin),
+      r.right + margin - p.x,
+      p.y - (r.top - margin),
+      r.bottom + margin - p.y
+    ];
+    let t0 = 0;
+    let t1 = 1;
+    for (let k = 0; k < 4; k++) {
+      if (pv[k] === 0) {
+        if (qv[k] < 0) return false;
+      } else {
+        const t = qv[k] / pv[k];
+        if (pv[k] < 0) {
+          if (t > t1) return false;
+          if (t > t0) t0 = t;
+        } else {
+          if (t < t0) return false;
+          if (t < t1) t1 = t;
+        }
+      }
+    }
+    return t1 > 0 && t0 < 1;
+  }
+  function cubicHit(r, P, c1, c2, Q, margin = 0) {
+    const len = Math.hypot(c1.x - P.x, c1.y - P.y) + Math.hypot(c2.x - c1.x, c2.y - c1.y) + Math.hypot(Q.x - c2.x, Q.y - c2.y);
+    const n = Math.max(4, Math.min(2e3, Math.ceil(len / 2)));
+    const left = r.left - margin;
+    const right = r.right + margin;
+    const top = r.top - margin;
+    const bottom = r.bottom + margin;
+    for (let i = 1; i < n; i++) {
+      const t = i / n;
+      const u = 1 - t;
+      const a = u * u * u;
+      const b = 3 * u * u * t;
+      const c = 3 * u * t * t;
+      const d = t * t * t;
+      const x = a * P.x + b * c1.x + c * c2.x + d * Q.x;
+      const y = a * P.y + b * c1.y + c * c2.y + d * Q.y;
+      if (x > left && x < right && y > top && y < bottom) return true;
+    }
+    return false;
+  }
+  var init_mount_geom = __esm({
+    "src/knowledge/mount-geom.ts"() {
+    }
+  });
+
+  // src/knowledge/mount-route.ts
+  function clamp(v, a, b) {
+    return v < a ? a : v > b ? b : v;
+  }
+  function exitCandidates(S, sb, portPad) {
+    const ye = clamp(S.y, sb.top + portPad, sb.bottom - portPad);
+    const xe = clamp(S.x, sb.left + portPad, sb.right - portPad);
+    const cands = [
+      { side: "L", d: S.x - sb.left, E: { x: sb.left, y: ye }, nOut: { x: -1, y: 0 } },
+      { side: "R", d: sb.right - S.x, E: { x: sb.right, y: ye }, nOut: { x: 1, y: 0 } },
+      { side: "T", d: S.y - sb.top, E: { x: xe, y: sb.top }, nOut: { x: 0, y: -1 } },
+      { side: "B", d: sb.bottom - S.y, E: { x: xe, y: sb.bottom }, nOut: { x: 0, y: 1 } }
+    ];
+    const order = ["L", "R", "T", "B"];
+    return cands.sort((a, b) => a.d !== b.d ? a.d - b.d : order.indexOf(a.side) - order.indexOf(b.side));
+  }
+  function entrySideOrder(b, a) {
+    const ax = (a.left + a.right) / 2;
+    const ay = (a.top + a.bottom) / 2;
+    const bcx = (b.left + b.right) / 2;
+    const bcy = (b.top + b.bottom) / 2;
+    const cands = [
+      { s: "L", d: Math.hypot(b.left - ax, bcy - ay) },
+      { s: "T", d: Math.hypot(bcx - ax, b.top - ay) },
+      { s: "B", d: Math.hypot(bcx - ax, b.bottom - ay) },
+      { s: "R", d: Math.hypot(b.right - ax, bcy - ay) }
+    ];
+    const order = ["L", "T", "B", "R"];
+    cands.sort((p, q2) => p.d !== q2.d ? p.d - q2.d : order.indexOf(p.s) - order.indexOf(q2.s));
+    return cands.map((c) => c.s);
+  }
+  function sidePortAndNormal(side, b, portPad) {
+    const vert = side === "L" || side === "R";
+    if (vert) {
+      const lo2 = b.top + portPad;
+      const hi2 = b.bottom - portPad;
+      return {
+        T: { x: side === "L" ? b.left : b.right, y: clamp((b.top + b.bottom) / 2, lo2, hi2) },
+        nOut: { x: side === "L" ? -1 : 1, y: 0 }
+      };
+    }
+    const lo = b.left + portPad;
+    const hi = b.right - portPad;
+    return {
+      T: { x: clamp((b.left + b.right) / 2, lo, hi), y: side === "T" ? b.top : b.bottom },
+      nOut: { x: 0, y: side === "T" ? -1 : 1 }
+    };
+  }
+  function along(p, dir, k) {
+    return { x: p.x + dir.x * k, y: p.y + dir.y * k };
+  }
+  function rayCardDistance(p, dir, rects, margin) {
+    const len = Math.hypot(dir.x, dir.y);
+    if (!(len > 0)) return Infinity;
+    const ux = dir.x / len;
+    const uy = dir.y / len;
+    const EPS = 1e-6;
+    let best = Infinity;
+    for (let i = 0; i < rects.length; i++) {
+      const r = rects[i];
+      const l = r.left - margin;
+      const rr = r.right + margin;
+      const t = r.top - margin;
+      const b = r.bottom + margin;
+      let t0 = 0;
+      let t1 = Infinity;
+      if (ux === 0) {
+        if (p.x <= l || p.x >= rr) continue;
+      } else {
+        const a = (l - p.x) / ux;
+        const c = (rr - p.x) / ux;
+        t0 = Math.max(t0, Math.min(a, c));
+        t1 = Math.min(t1, Math.max(a, c));
+      }
+      if (uy === 0) {
+        if (p.y <= t || p.y >= b) continue;
+      } else {
+        const a = (t - p.y) / uy;
+        const c = (b - p.y) / uy;
+        t0 = Math.max(t0, Math.min(a, c));
+        t1 = Math.min(t1, Math.max(a, c));
+      }
+      if (t1 <= EPS || t0 > t1) continue;
+      const d = Math.max(t0, 0);
+      if (d < best) best = d;
+    }
+    return best;
+  }
+  function stubDirty(p0, p1, rects) {
+    if (Math.abs(p1.x - p0.x) < 1e-9 && Math.abs(p1.y - p0.y) < 1e-9) {
+      for (let i = 0; i < rects.length; i++) {
+        const r = rects[i];
+        if (p0.x > r.left && p0.x < r.right && p0.y > r.top && p0.y < r.bottom) return true;
+      }
+      return false;
+    }
+    return segHitsAny(p0, p1, rects, 0);
+  }
+  function polylineClean(pts, rects) {
+    for (let i = 0; i + 1 < pts.length; i++) if (segHitsAny(pts[i], pts[i + 1], rects, 0)) return false;
+    return true;
+  }
+  function spread(vals, lo, hi, min) {
+    if (hi < lo) {
+      const mid = (lo + hi) / 2;
+      lo = mid;
+      hi = mid;
+    }
+    for (let i = 0; i < vals.length; i++) vals[i] = clamp(vals[i], lo, hi);
+    for (let i = 1; i < vals.length; i++) if (vals[i] - vals[i - 1] < min) vals[i] = vals[i - 1] + min;
+    const over = vals.length > 0 ? vals[vals.length - 1] - hi : 0;
+    if (over > 0) {
+      for (let i = 0; i < vals.length; i++) vals[i] -= over;
+      for (let i = 1; i < vals.length; i++) if (vals[i] - vals[i - 1] < min) vals[i] = vals[i - 1] + min;
+    }
+  }
+  function segHitsAny(p, q2, rects, margin) {
+    for (let i = 0; i < rects.length; i++) {
+      if (segRectHit(p, q2, rects[i], margin)) return true;
+    }
+    return false;
+  }
+  function curveHitsAny(P, c1, c2, Q, rects, margin) {
+    for (let i = 0; i < rects.length; i++) {
+      if (cubicHit(rects[i], P, c1, c2, Q, margin)) return true;
+    }
+    return false;
+  }
+  function pull(pts, rects, margin) {
+    const out = [pts[0]];
+    let i = 0;
+    while (i < pts.length - 1) {
+      let j = pts.length - 1;
+      for (; j > i + 1; j--) {
+        if (!segHitsAny(pts[i], pts[j], rects, margin)) break;
+      }
+      out.push(pts[j]);
+      i = j;
+    }
+    return out;
+  }
+  function isCurve(it) {
+    return it.b !== void 0;
+  }
+  function pt(p) {
+    return p.x.toFixed(1) + " " + p.y.toFixed(1);
+  }
+  function pathD(items) {
+    let d = "M" + pt(items[0]);
+    for (let i = 1; i < items.length; i++) {
+      const it = items[i];
+      if (isCurve(it)) d += " C" + pt(it.b[1]) + " " + pt(it.b[2]) + " " + pt(it.b[3]);
+      else d += " L" + pt(it);
+    }
+    return d;
+  }
+  function buildAstar(rects, cs, inf) {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const r of rects) {
+      if (r.left < minX) minX = r.left;
+      if (r.top < minY) minY = r.top;
+      if (r.right > maxX) maxX = r.right;
+      if (r.bottom > maxY) maxY = r.bottom;
+    }
+    if (!Number.isFinite(minX) || !Number.isFinite(minY)) return null;
+    const margin = GRID_MARGIN_CELLS * cs;
+    const ox = minX - margin;
+    const oy = minY - margin;
+    const gcols = Math.max(4, Math.ceil((maxX + margin - ox) / cs));
+    const grows = Math.max(4, Math.ceil((maxY + margin - oy) / cs));
+    if (gcols * grows > MAX_GRID_CELLS) return null;
+    const blocked = new Uint8Array(gcols * grows);
+    const inBounds = (x, y) => x >= 0 && y >= 0 && x < gcols && y < grows;
+    const cx = (ix) => ox + ix * cs + cs / 2;
+    const cy = (iy) => oy + iy * cs + cs / 2;
+    const colOf = (px) => Math.floor((px - ox) / cs);
+    const rowOf = (py) => Math.floor((py - oy) / cs);
+    for (let x = 0; x < gcols; x++) {
+      blocked[x] = 1;
+      blocked[(grows - 1) * gcols + x] = 1;
+    }
+    for (let y = 0; y < grows; y++) {
+      blocked[y * gcols] = 1;
+      blocked[y * gcols + gcols - 1] = 1;
+    }
+    for (const r of rects) {
+      const y0 = Math.max(0, Math.floor((r.top - inf - cs / 2 - oy) / cs));
+      const y1 = Math.min(grows - 1, Math.ceil((r.bottom + inf - cs / 2 - oy) / cs));
+      for (let iy = y0; iy <= y1; iy++) {
+        const py = cy(iy);
+        if (py < r.top - inf || py > r.bottom + inf) continue;
+        const x0 = Math.max(0, Math.floor((r.left - inf - cs / 2 - ox) / cs));
+        const x1 = Math.min(gcols - 1, Math.ceil((r.right + inf - cs / 2 - ox) / cs));
+        for (let ix = x0; ix <= x1; ix++) {
+          const px = cx(ix);
+          if (px >= r.left - inf && px <= r.right + inf) blocked[iy * gcols + ix] = 1;
+        }
+      }
+    }
+    const scratch = [];
+    function cellInCard(ix, iy) {
+      const px = cx(ix);
+      const py = cy(iy);
+      for (let i = 0; i < rects.length; i++) {
+        const r = rects[i];
+        if (px > r.left && px < r.right && py > r.top && py < r.bottom) return true;
+      }
+      return false;
+    }
+    function free(idx, ix, iy) {
+      if (!inBounds(ix, iy)) return;
+      if (cellInCard(ix, iy)) return;
+      if (blocked[idx]) {
+        blocked[idx] = 0;
+        scratch.push(idx);
+      }
+    }
+    function openCell(p, dir) {
+      const cxi = clamp(colOf(p.x), 0, gcols - 1);
+      const cyi = clamp(rowOf(p.y), 0, grows - 1);
+      for (let y = cyi - 2; y <= cyi + 2; y++) {
+        for (let x = cxi - 2; x <= cxi + 2; x++) free(y * gcols + x, x, y);
+      }
+      for (let k = 1; k <= 6; k++) {
+        const ex = cxi + Math.round((dir.x || 0) * k);
+        const ey = cyi + Math.round((dir.y || 0) * k);
+        if (!inBounds(ex, ey)) break;
+        let reached = false;
+        for (let y = ey - 1; y <= ey + 1; y++) {
+          for (let x = ex - 1; x <= ex + 1; x++) {
+            if (inBounds(x, y) && !cellInCard(x, y) && !blocked[y * gcols + x]) reached = true;
+            free(y * gcols + x, x, y);
+          }
+        }
+        if (reached) break;
+      }
+    }
+    function restore() {
+      for (let i = 0; i < scratch.length; i++) blocked[scratch[i]] = 1;
+      scratch.length = 0;
+    }
+    function walkable(ix, iy) {
+      return !cellInCard(ix, iy) && !blocked[iy * gcols + ix];
+    }
+    function snapCell(p) {
+      const cxi = clamp(colOf(p.x), 0, gcols - 1);
+      const cyi = clamp(rowOf(p.y), 0, grows - 1);
+      if (walkable(cxi, cyi) && !segHitsAny(p, { x: cx(cxi), y: cy(cyi) }, rects, 0)) {
+        return { x: cxi, y: cyi };
+      }
+      let fallback = null;
+      let fbDist = Infinity;
+      for (let ri = 0; ri < SNAP_RADII.length; ri++) {
+        const rad = SNAP_RADII[ri];
+        let best = null;
+        let bestD = Infinity;
+        for (let y = Math.max(0, cyi - rad); y <= Math.min(grows - 1, cyi + rad); y++) {
+          for (let x = Math.max(0, cxi - rad); x <= Math.min(gcols - 1, cxi + rad); x++) {
+            if (!walkable(x, y)) continue;
+            const d = (x - cxi) * (x - cxi) + (y - cyi) * (y - cyi);
+            if (d < fbDist) {
+              fbDist = d;
+              fallback = { x, y };
+            }
+            if (d < bestD && !segHitsAny(p, { x: cx(x), y: cy(y) }, rects, 0)) {
+              bestD = d;
+              best = { x, y };
+            }
+          }
+        }
+        if (best) return best;
+      }
+      return fallback;
+    }
+    const DX = [0, 1, 0, -1, 1, 1, -1, -1];
+    const DY = [-1, 0, 1, 0, -1, 1, 1, -1];
+    function solve(a, b, dirA, dirB) {
+      openCell(a, dirA);
+      openCell(b, dirB);
+      const sC = snapCell(a);
+      const gC = snapCell(b);
+      if (!sC || !gC) {
+        restore();
+        return null;
+      }
+      const n = gcols * grows;
+      const start = sC.y * gcols + sC.x;
+      const goal = gC.y * gcols + gC.x;
+      const dist = new Float64Array(n);
+      dist.fill(Infinity);
+      const prev = new Int32Array(n);
+      prev.fill(-1);
+      const done = new Uint8Array(n);
+      const buckets = [];
+      let maxc = 0;
+      let found = false;
+      dist[start] = 0;
+      buckets[0] = [start];
+      for (let c = 0; c <= maxc && !found; c++) {
+        const q2 = buckets[c];
+        if (!q2) continue;
+        for (let qi = 0; qi < q2.length; qi++) {
+          const cur = q2[qi];
+          if (done[cur]) continue;
+          done[cur] = 1;
+          if (cur === goal) {
+            found = true;
+            break;
+          }
+          const ix = cur % gcols;
+          const iy = (cur - ix) / gcols;
+          for (let d = 0; d < 8; d++) {
+            const nx = ix + DX[d];
+            const ny = iy + DY[d];
+            if (!inBounds(nx, ny)) continue;
+            const ni = ny * gcols + nx;
+            if (blocked[ni]) continue;
+            const diag = DX[d] !== 0 && DY[d] !== 0;
+            if (diag && (blocked[iy * gcols + nx] || blocked[ny * gcols + ix])) continue;
+            const nc = c + (diag ? 14 : 10);
+            if (nc < dist[ni]) {
+              dist[ni] = nc;
+              prev[ni] = cur;
+              if (!buckets[nc]) buckets[nc] = [];
+              buckets[nc].push(ni);
+              if (nc > maxc) maxc = nc;
+            }
+          }
+        }
+      }
+      restore();
+      if (!found) return null;
+      const points = [];
+      let k = goal;
+      while (k >= 0) {
+        const kx = k % gcols;
+        const ky = (k - kx) / gcols;
+        points.push({ x: cx(kx), y: cy(ky) });
+        k = prev[k];
+      }
+      points.reverse();
+      points.unshift({ x: a.x, y: a.y });
+      points.push({ x: b.x, y: b.y });
+      return points;
+    }
+    return solve;
+  }
+  function routeEdges(boxes, edges, opts) {
+    var _a2;
+    const out = new Array(edges.length);
+    if (edges.length === 0) return out;
+    const { CS, INF, STUB, PORT_PAD, PORT_MIN, ASTAR_MAX_NODES } = ROUTE_PARAMS;
+    const strategy = (_a2 = opts == null ? void 0 : opts.strategy) != null ? _a2 : "astar";
+    const nodes = boxes.map((b) => ({ box: b, rect: rectOf(b) }));
+    const byId = /* @__PURE__ */ new Map();
+    for (const n of nodes) if (!byId.has(n.box.id)) byId.set(n.box.id, n);
+    const rects = nodes.map((n) => n.rect);
+    const jobs = [];
+    const groupKeys = [];
+    const groups = /* @__PURE__ */ new Map();
+    edges.forEach((e, idx) => {
+      const src = byId.get(e.from);
+      const dst = byId.get(e.to);
+      if (!src || !dst) {
+        out[idx] = { from: e.from, to: e.to, d: "", exit: "L", entry: "L", fallback: true };
+        return;
+      }
+      const order = entrySideOrder(dst.rect, src.rect);
+      let entry = order[0];
+      let clean = false;
+      for (const side of order) {
+        const { T, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+        if (rayCardDistance(T, nOut, rects, 0) >= STUB) {
+          entry = side;
+          clean = true;
+          break;
+        }
+      }
+      if (!clean) {
+        for (const side of order) {
+          const { T, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+          if (rayCardDistance(T, nOut, rects, 0) >= 1) {
+            entry = side;
+            clean = true;
+            break;
+          }
+        }
+      }
+      const key = dst.box.id + "\0" + entry;
+      let g = groups.get(key);
+      if (!g) {
+        g = [];
+        groups.set(key, g);
+        groupKeys.push(key);
+      }
+      const job = {
+        idx,
+        edge: e,
+        src,
+        dst,
+        entry,
+        T: { x: 0, y: 0 },
+        nIn: { x: 0, y: 0 },
+        T1: { x: 0, y: 0 },
+        stub: STUB,
+        clean
+      };
+      g.push(job);
+      jobs.push(job);
+    });
+    for (const key of groupKeys) {
+      const g = groups.get(key);
+      const side = g[0].entry;
+      const b = g[0].dst.rect;
+      const vert = side === "L" || side === "R";
+      const lo = vert ? b.top + PORT_PAD : b.left + PORT_PAD;
+      const hi = vert ? b.bottom - PORT_PAD : b.right - PORT_PAD;
+      const coord = (j) => vert ? (j.src.rect.top + j.src.rect.bottom) / 2 : (j.src.rect.left + j.src.rect.right) / 2;
+      const sorted = g.slice().sort((a, c) => {
+        const d = coord(a) - coord(c);
+        if (d < 0) return -1;
+        if (d > 0) return 1;
+        if (a.edge.from !== c.edge.from) return a.edge.from < c.edge.from ? -1 : 1;
+        if (a.edge.to !== c.edge.to) return a.edge.to < c.edge.to ? -1 : 1;
+        return a.idx - c.idx;
+      });
+      const mid = vert ? (b.top + b.bottom) / 2 : (b.left + b.right) / 2;
+      const vals = [];
+      for (let i = 0; i < sorted.length; i++) vals.push(mid + (i - (sorted.length - 1) / 2) * PORT_MIN);
+      spread(vals, lo, hi, PORT_MIN);
+      sorted.forEach((j, i) => {
+        const v = vals[i];
+        j.T = vert ? { x: side === "L" ? b.left : b.right, y: v } : { x: v, y: side === "T" ? b.top : b.bottom };
+        j.nIn = vert ? { x: side === "L" ? 1 : -1, y: 0 } : { x: 0, y: side === "T" ? 1 : -1 };
+        const nOut = { x: -j.nIn.x, y: -j.nIn.y };
+        const gap = rayCardDistance(j.T, nOut, rects, 0);
+        if (gap >= STUB) j.stub = STUB;
+        else if (gap >= 1) j.stub = Math.max(0, gap - 1);
+        else {
+          j.stub = 0;
+          j.clean = false;
+        }
+        j.T1 = along(j.T, nOut, j.stub);
+      });
+    }
+    const astar = strategy === "astar" && nodes.length > 0 && boxes.length <= ASTAR_MAX_NODES ? buildAstar(rects, CS, INF) : null;
+    for (const j of jobs) {
+      const e = j.edge;
+      const sb = j.src.rect;
+      const S = e.anchor && Number.isFinite(e.anchor.x) && Number.isFinite(e.anchor.y) ? { x: e.anchor.x, y: e.anchor.y } : { x: sb.left, y: sb.top + 26 };
+      const cands = exitCandidates(S, sb, PORT_PAD);
+      let pick = null;
+      let stub = STUB;
+      for (const c of cands) {
+        if (rayCardDistance(c.E, c.nOut, rects, 0) >= STUB) {
+          pick = c;
+          break;
+        }
+      }
+      if (!pick) {
+        for (const c of cands) {
+          const gap = rayCardDistance(c.E, c.nOut, rects, 0);
+          if (gap >= 1) {
+            pick = c;
+            stub = Math.max(0, gap - 1);
+            break;
+          }
+        }
+      }
+      const exitClean = pick !== null;
+      if (!pick) {
+        pick = cands[0];
+        stub = 0;
+      }
+      const exit = pick.side;
+      const E = pick.E;
+      const nOut = pick.nOut;
+      const E1 = along(E, nOut, stub);
+      const T = j.T;
+      const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
+      const T1 = j.T1;
+      const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
+      let dirty2 = !exitClean || !j.clean || stubDirty(E, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E, E1];
+      if (raw) {
+        const base = pull(raw, rects, PULL_MARGIN);
+        if (!polylineClean(base, rects)) dirty2 = true;
+        for (let i = 0; i < base.length - 1; i++) {
+          const P0 = base[i];
+          const P3 = base[i + 1];
+          const len = Math.hypot(P3.x - P0.x, P3.y - P0.y) || 1;
+          let done = false;
+          for (let si = 0; si < TANGENT_SCALES.length && !done; si++) {
+            const sc = TANGENT_SCALES[si];
+            const c1 = i === 0 ? { x: P0.x + nOut.x * len * 0.34 * sc, y: P0.y + nOut.y * len * 0.34 * sc } : { x: P0.x + (P3.x - base[i - 1].x) / 6 * sc, y: P0.y + (P3.y - base[i - 1].y) / 6 * sc };
+            const c2 = i === base.length - 2 ? { x: P3.x - j.nIn.x * len * 0.34 * sc, y: P3.y - j.nIn.y * len * 0.34 * sc } : { x: P3.x - (base[i + 2].x - P0.x) / 6 * sc, y: P3.y - (base[i + 2].y - P0.y) / 6 * sc };
+            if (!curveHitsAny(P0, c1, c2, P3, rects, SMOOTH_MARGIN)) {
+              items.push({ b: [P0, c1, c2, P3] });
+              done = true;
+            }
+          }
+          if (!done) items.push(P3);
+        }
+      } else {
+        items.push(T1);
+      }
+      items.push(T);
+      out[j.idx] = {
+        from: e.from,
+        to: e.to,
+        d: pathD(items),
+        exit,
+        entry: j.entry,
+        fallback: !raw || dirty2
+      };
+    }
+    return out;
+  }
+  var ROUTE_PARAMS, PULL_MARGIN, SMOOTH_MARGIN, TANGENT_SCALES, GRID_MARGIN_CELLS, SNAP_RADII, MAX_GRID_CELLS;
+  var init_mount_route = __esm({
+    "src/knowledge/mount-route.ts"() {
+      init_mount_geom();
+      ROUTE_PARAMS = { CS: 18, INF: 8, STUB: 12, PORT_PAD: 18, PORT_MIN: 14, ASTAR_MAX_NODES: 120 };
+      PULL_MARGIN = 5;
+      SMOOTH_MARGIN = 2;
+      TANGENT_SCALES = [1, 0.55, 0.3];
+      GRID_MARGIN_CELLS = 8;
+      SNAP_RADII = [3, 6, 9];
+      MAX_GRID_CELLS = 2e6;
+    }
+  });
+
+  // src/secondbrain/readonly.ts
+  function exportVectorSearch() {
+    return source;
+  }
+  var source;
+  var init_readonly = __esm({
+    "src/secondbrain/readonly.ts"() {
+      source = null;
+    }
+  });
+
+  // src/knowledge/mount-suggest.ts
+  var mount_suggest_exports = {};
+  __export(mount_suggest_exports, {
+    SUGGEST_CACHE_FILE: () => SUGGEST_CACHE_FILE,
+    SUGGEST_MAX_ANCHORS: () => SUGGEST_MAX_ANCHORS,
+    SUGGEST_MAX_CANDIDATES: () => SUGGEST_MAX_CANDIDATES,
+    SUGGEST_MIN_ANCHOR_CHARS: () => SUGGEST_MIN_ANCHOR_CHARS,
+    SUGGEST_MIN_SCORE: () => SUGGEST_MIN_SCORE,
+    SUGGEST_PER_ANCHOR_CANDIDATES: () => SUGGEST_PER_ANCHOR_CANDIDATES,
+    SUGGEST_TOPK: () => SUGGEST_TOPK,
+    cacheValid: () => cacheValid,
+    clearSuggestCache: () => clearSuggestCache,
+    filterSuggestions: () => filterSuggestions,
+    generateSuggestions: () => generateSuggestions,
+    markSuggestion: () => markSuggestion,
+    mergeSuggestions: () => mergeSuggestions,
+    readSuggestCache: () => readSuggestCache,
+    splitAnchors: () => splitAnchors,
+    suggestKey: () => suggestKey
+  });
+  function nextIsBoundary(text, i) {
+    if (i >= text.length) return true;
+    return /\s/.test(text[i]);
+  }
+  function wikiDisplay(inner) {
+    const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : inner;
+    const afterBlock = afterAlias.includes("^") ? afterAlias.slice(0, afterAlias.indexOf("^")) : afterAlias;
+    const noHead = afterBlock.includes("#") ? afterBlock.slice(afterBlock.lastIndexOf("#") + 1) : afterBlock;
+    return noHead || afterAlias || inner;
+  }
+  function cleanAnchorText(raw) {
+    return raw.replace(/!\[\[[^\[\]]*\]\]/g, " ").replace(/\[\[([^\[\]]+)\]\]/g, (_m, inner) => wikiDisplay(inner)).replace(/`+/g, "").replace(/\*\*|__/g, "").replace(/\s+/g, " ").trim();
+  }
+  function pushAnchor(out, text, from, to) {
+    let s = from;
+    let e = to;
+    while (s < e && /\s/.test(text[s])) s++;
+    while (e > s && /\s/.test(text[e - 1])) e--;
+    const lead = text.slice(s, e).match(LEADING_MARK_RE);
+    if (lead) s += lead[0].length;
+    if (s >= e) return;
+    const cleaned = cleanAnchorText(text.slice(s, e));
+    if (!cleaned) return;
+    if ([...cleaned].length < SUGGEST_MIN_ANCHOR_CHARS) return;
+    if (!HAS_MEANING_RE.test(cleaned)) return;
+    out.push({ from: s, to: e, text: cleaned });
+  }
+  function splitAnchors(body) {
+    const text = String(body != null ? body : "");
+    const out = [];
+    let start = 0;
+    for (let i = 0; i <= text.length; i++) {
+      const ch = i === text.length ? "" : text[i];
+      let boundary = i === text.length;
+      if (!boundary) {
+        if (ch === "\n" || ch === "。" || ch === "！" || ch === "？" || ch === "；" || ch === "…" || ch === "!") boundary = true;
+        else if (ch === "." || ch === "?" || ch === ";") boundary = nextIsBoundary(text, i + 1);
+      }
+      if (!boundary) continue;
+      pushAnchor(out, text, start, i);
+      start = i + 1;
+    }
+    return out;
+  }
+  function normalizeAnchorText(text) {
+    return String(text != null ? text : "").replace(/\s+/g, " ").replace(/^[\s"'“”‘’《》〈〉「」『』]+/, "").replace(/[\s"'“”‘’《》〈〉「」『』]+$/, "").trim().toLowerCase();
+  }
+  function normalizeTargetPath(path) {
+    return String(path != null ? path : "").replace(/\\/g, "/").replace(/^\.\//, "").replace(/\.md$/i, "").trim().toLowerCase();
+  }
+  function suggestKey(s) {
+    var _a2;
+    return normalizeAnchorText((_a2 = s.anchor) == null ? void 0 : _a2.text) + "\0" + normalizeTargetPath(s.target);
+  }
+  function matchesExisting(target, existing) {
+    const t = normalizeTargetPath(target);
+    if (!t) return false;
+    const tBase = t.includes("/") ? t.slice(t.lastIndexOf("/") + 1) : t;
+    for (const raw of existing) {
+      const e = normalizeTargetPath(raw);
+      if (!e) continue;
+      if (e === t || e === tBase) return true;
+    }
+    return false;
+  }
+  function filterSuggestions(list, opts) {
+    const dismissed = new Set(((opts == null ? void 0 : opts.dismissed) || []).map((k) => String(k).trim().toLowerCase()));
+    const existing = (opts == null ? void 0 : opts.existing) || [];
+    const minScore = Number.isFinite(opts == null ? void 0 : opts.minScore) ? Number(opts == null ? void 0 : opts.minScore) : SUGGEST_MIN_SCORE;
+    const seen = /* @__PURE__ */ new Set();
+    const out = [];
+    for (const s of list || []) {
+      if (!s || !s.target) continue;
+      if (s.state === "dismissed" || s.state === "fixed") continue;
+      if (!(Number(s.score) >= minScore)) continue;
+      const key = suggestKey(s);
+      if (dismissed.has(key) || seen.has(key)) continue;
+      if (existing.length > 0 && matchesExisting(s.target, existing)) continue;
+      seen.add(key);
+      out.push(s);
+    }
+    return out;
+  }
+  function cacheStore() {
+    return jsonFileStore(storageFile(SUGGEST_CACHE_FILE), { defaultValue: () => ({ cards: {} }) });
+  }
+  async function readSuggestCache() {
+    const data = await cacheStore().read();
+    const cards = data && typeof data === "object" && data.cards && typeof data.cards === "object" && !Array.isArray(data.cards) ? data.cards : {};
+    return { cards };
+  }
+  function mutateSuggestCache(fn) {
+    const path = storageFile(SUGGEST_CACHE_FILE);
+    return enqueueFileTask(path, async () => {
+      const file = await readSuggestCache();
+      const result = await fn(file);
+      await cacheStore().write(file);
+      return result;
+    });
+  }
+  async function clearSuggestCache() {
+    await mutateSuggestCache((file) => {
+      for (const [path, entry] of Object.entries(file.cards || {})) {
+        const kept = ((entry == null ? void 0 : entry.suggestions) || []).filter((s) => s && s.state !== "pending");
+        if (kept.length === 0) delete file.cards[path];
+        else file.cards[path] = { bodyHash: "", generatedAt: 0, suggestions: kept };
+      }
+    });
+  }
+  function cacheValid(entry, bodyHash) {
+    return !!entry && !!bodyHash && typeof entry.bodyHash === "string" && entry.bodyHash === bodyHash;
+  }
+  function collectDismissedKeys(file) {
+    const out = [];
+    for (const entry of Object.values(file.cards || {})) {
+      for (const s of (entry == null ? void 0 : entry.suggestions) || []) {
+        if ((s == null ? void 0 : s.state) === "dismissed") out.push(suggestKey(s));
+      }
+    }
+    return out;
+  }
+  function collectFixedKeys(entry) {
+    return ((entry == null ? void 0 : entry.suggestions) || []).filter((s) => (s == null ? void 0 : s.state) === "fixed").map(suggestKey);
+  }
+  function persistCardCache(cardPath, bodyHash, generatedAt, suggestions) {
+    return mutateSuggestCache((file) => {
+      const prev = file.cards[cardPath];
+      const kept = ((prev == null ? void 0 : prev.suggestions) || []).filter((s) => s && s.state !== "pending");
+      const keptKeys = new Set(kept.map(suggestKey));
+      const fresh = suggestions.filter((s) => !keptKeys.has(suggestKey(s)));
+      file.cards[cardPath] = { bodyHash, generatedAt, suggestions: [...kept, ...fresh] };
+    }).then(() => void 0);
+  }
+  async function markSuggestion(cardPath, s, state3, ctx) {
+    if (!cardPath || !s || !s.target) return;
+    const key = suggestKey(s);
+    const now = Date.now();
+    await mutateSuggestCache((file) => {
+      const prev = file.cards[cardPath];
+      const entry = prev && typeof prev === "object" && Array.isArray(prev.suggestions) ? prev : { bodyHash: "", generatedAt: now, suggestions: [] };
+      const idx = entry.suggestions.findIndex((it) => suggestKey(it) === key);
+      const marked = { ...idx >= 0 ? entry.suggestions[idx] : s, state: state3 };
+      if (idx >= 0) entry.suggestions[idx] = marked;
+      else entry.suggestions.push(marked);
+      file.cards[cardPath] = entry;
+    });
+  }
+  function stripFrontmatter2(content) {
+    return String(content != null ? content : "").replace(/^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, "");
+  }
+  function kindOfTarget(path, ctx) {
+    if (isUnderFolder((ctx == null ? void 0 : ctx.cardboxDir) || "", path)) return "card";
+    if (isUnderFolder((ctx == null ? void 0 : ctx.litDir) || "", path)) return "para";
+    return "note";
+  }
+  function displayName(path) {
+    const base = String(path || "").split("/").pop() || String(path || "");
+    return stripMdExt(base);
+  }
+  function collectExistingTargets(body) {
+    const text = String(body != null ? body : "");
+    const out = [];
+    WIKILINK_RE.lastIndex = 0;
+    let m;
+    while ((m = WIKILINK_RE.exec(text)) !== null) {
+      const target = m[1].split("|")[0].split("#")[0].trim();
+      if (target) out.push(target);
+    }
+    return out;
+  }
+  function buildJudgePrompt(anchors, candidates) {
+    const lines = [JUDGE_PROMPT_PREFIX, "", "## 锚点与候选"];
+    for (let i = 0; i < anchors.length; i++) {
+      lines.push(`### a${i + 1}：${anchors[i].text}`);
+      const group = candidates.filter((c) => c.anchorIdx === i);
+      if (group.length === 0) {
+        lines.push("-（无候选）");
+        continue;
+      }
+      for (const c of group) {
+        const snippet = c.snippet ? "｜" + c.snippet.replace(/\s+/g, " ") : "";
+        lines.push(`- t${c.localIdx + 1}：${displayName(c.path)}（${c.path}）${snippet}`);
+      }
+    }
+    return lines.join("\n");
+  }
+  function parseJudgePicks(raw) {
+    var _a2;
+    const cleaned = String(raw || "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
+    let arr = null;
+    try {
+      arr = JSON.parse(cleaned);
+    } catch (e) {
+      const m = cleaned.match(/\[[\s\S]*\]/);
+      if (m) {
+        try {
+          arr = JSON.parse(m[0]);
+        } catch (e2) {
+          arr = null;
+        }
+      }
+    }
+    if (!Array.isArray(arr)) return [];
+    const out = [];
+    for (const item of arr) {
+      const it = item;
+      if (!it || typeof it !== "object") continue;
+      const anchor = Number(it.anchor);
+      const target = Number(it.target);
+      const score = Number(it.score);
+      if (!Number.isInteger(anchor) || !Number.isInteger(target) || !Number.isFinite(score)) continue;
+      out.push({
+        anchor,
+        target,
+        score: Math.max(0, Math.min(1, score)),
+        reason: String((_a2 = it.reason) != null ? _a2 : "").replace(/\s+/g, " ").trim().slice(0, REASON_MAX_CHARS)
+      });
+    }
+    return out;
+  }
+  async function generateSuggestions(cardPath, ctx, opts) {
+    var _a2, _b2, _c, _d;
+    const empty = (status) => ({ status, suggestions: [] });
+    if (isMobileEnv()) return empty("no-index");
+    const searchApi = exportVectorSearch();
+    if (!searchApi || !searchApi.isIndexReady()) return empty("no-index");
+    const auto = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeMountAutoSuggest) !== false;
+    if (!auto && !(opts == null ? void 0 : opts.force)) return empty("off");
+    try {
+      await getAIProvider();
+    } catch (e) {
+      return empty("no-ai");
+    }
+    const file = (_d = (_c = (_b2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b2.vault) == null ? void 0 : _c.getAbstractFileByPath) == null ? void 0 : _d.call(_c, cardPath);
+    let content = "";
+    if (file) {
+      try {
+        content = await ctx.app.vault.read(file);
+      } catch (e) {
+        console.warn("[mount-suggest] 主卡读取失败", e);
+      }
+    }
+    const body = stripFrontmatter2(content);
+    if (!body.trim()) return empty("fresh");
+    const bodyHash = String(hash31(body));
+    const cacheFile = await readSuggestCache();
+    const entry = cacheFile.cards[cardPath];
+    const dismissed = collectDismissedKeys(cacheFile);
+    const existing = collectExistingTargets(body);
+    if (!(opts == null ? void 0 : opts.force) && cacheValid(entry, bodyHash)) {
+      return {
+        status: "cached",
+        suggestions: filterSuggestions(entry.suggestions, { dismissed, existing, minScore: SUGGEST_MIN_SCORE }),
+        generatedAt: entry.generatedAt
+      };
+    }
+    const anchors = splitAnchors(body).slice(0, SUGGEST_MAX_ANCHORS);
+    if (anchors.length === 0) {
+      const generatedAt2 = Date.now();
+      await persistCardCache(cardPath, bodyHash, generatedAt2, []);
+      return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
+    }
+    const dismissedSet = new Set(dismissed);
+    const fixedSet = new Set(collectFixedKeys(entry));
+    const candidates = [];
+    const seenPair = /* @__PURE__ */ new Set();
+    let searchFailed = false;
+    outer: for (let i = 0; i < anchors.length; i++) {
+      let hits = [];
+      try {
+        hits = await searchApi.search(anchors[i].text, SUGGEST_TOPK) || [];
+      } catch (e) {
+        console.warn("[mount-suggest] 向量检索失败，按降级处理", e);
+        searchFailed = true;
+        break;
+      }
+      let local = 0;
+      for (const hit of hits) {
+        if (!hit || !hit.path || hit.path === cardPath) continue;
+        const pairKey = suggestKey({ anchor: anchors[i], target: hit.path });
+        if (dismissedSet.has(pairKey) || fixedSet.has(pairKey)) continue;
+        if (matchesExisting(hit.path, existing)) continue;
+        if (seenPair.has(pairKey)) continue;
+        if (!ctx.app.vault.getAbstractFileByPath(hit.path)) continue;
+        seenPair.add(pairKey);
+        candidates.push({
+          anchorIdx: i,
+          localIdx: local,
+          path: hit.path,
+          kind: kindOfTarget(hit.path, ctx),
+          snippet: String(hit.chunk || "").slice(0, 200)
+        });
+        local++;
+        if (local >= SUGGEST_PER_ANCHOR_CANDIDATES) break;
+        if (candidates.length >= SUGGEST_MAX_CANDIDATES) break outer;
+      }
+    }
+    if (searchFailed) return empty("no-index");
+    if (candidates.length === 0) {
+      const generatedAt2 = Date.now();
+      await persistCardCache(cardPath, bodyHash, generatedAt2, []);
+      return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
+    }
+    let raw = "";
+    try {
+      raw = await createAI().json(buildJudgePrompt(anchors, candidates), { modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS } });
+    } catch (e) {
+      console.warn("[mount-suggest] AI 裁判失败", e);
+      return empty("no-ai");
+    }
+    const judged = [];
+    for (const pick of parseJudgePicks(raw)) {
+      if (pick.score < SUGGEST_MIN_SCORE) continue;
+      const a = anchors[pick.anchor - 1];
+      const c = candidates.find((it) => it.anchorIdx === pick.anchor - 1 && it.localIdx === pick.target - 1);
+      if (!a || !c) continue;
+      judged.push({ anchor: { ...a }, target: c.path, kind: c.kind, reason: pick.reason, score: pick.score, state: "pending" });
+    }
+    const suggestions = filterSuggestions(judged, { dismissed, existing, minScore: SUGGEST_MIN_SCORE });
+    const generatedAt = Date.now();
+    await persistCardCache(cardPath, bodyHash, generatedAt, suggestions);
+    return { status: "fresh", suggestions, generatedAt };
+  }
+  function mergeSuggestions(tree, run) {
+    var _a2;
+    const nodes = Array.isArray(tree == null ? void 0 : tree.nodes) ? tree.nodes : [];
+    const edges = Array.isArray(tree == null ? void 0 : tree.edges) ? tree.edges : [];
+    const rootNode2 = nodes.find((n) => n.id === (tree == null ? void 0 : tree.root));
+    const rootDepth = rootNode2 ? rootNode2.depth : 0;
+    const rootPath = rootNode2 ? normalizeTargetPath(rootNode2.path) : "";
+    const known = new Set(nodes.map((n) => normalizeTargetPath(n.path)));
+    const ghostNodes = [];
+    const ghostEdges = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const s of (run == null ? void 0 : run.suggestions) || []) {
+      if (!s || !s.target) continue;
+      const key = normalizeTargetPath(s.target);
+      if (!key || key === rootPath || known.has(key) || seen.has(key)) continue;
+      seen.add(key);
+      const id = "ai:" + s.target;
+      ghostNodes.push({
+        id,
+        path: s.target,
+        title: displayName(s.target),
+        kind: s.kind,
+        source: "ai",
+        depth: rootDepth + 1,
+        anchor: (_a2 = s.anchor) != null ? _a2 : null,
+        missing: false,
+        suggested: true,
+        attached: false,
+        body: null,
+        parent: tree.root
+      });
+      ghostEdges.push({ from: tree.root, to: id, suggested: true });
+    }
+    return { ...tree, nodes: [...nodes, ...ghostNodes], edges: [...edges, ...ghostEdges] };
+  }
+  var SUGGEST_MIN_SCORE, SUGGEST_MIN_ANCHOR_CHARS, SUGGEST_MAX_ANCHORS, SUGGEST_TOPK, SUGGEST_PER_ANCHOR_CANDIDATES, SUGGEST_MAX_CANDIDATES, SUGGEST_JUDGE_MAX_TOKENS, REASON_MAX_CHARS, SUGGEST_CACHE_FILE, HAS_MEANING_RE, WIKILINK_RE, LEADING_MARK_RE, JUDGE_PROMPT_PREFIX;
+  var init_mount_suggest = __esm({
+    "src/knowledge/mount-suggest.ts"() {
+      init_ai();
+      init_mobile();
+      init_settings_provider();
+      init_storage();
+      init_utils();
+      init_readonly();
+      SUGGEST_MIN_SCORE = 0.7;
+      SUGGEST_MIN_ANCHOR_CHARS = 6;
+      SUGGEST_MAX_ANCHORS = 12;
+      SUGGEST_TOPK = 8;
+      SUGGEST_PER_ANCHOR_CANDIDATES = 3;
+      SUGGEST_MAX_CANDIDATES = 24;
+      SUGGEST_JUDGE_MAX_TOKENS = 2048;
+      REASON_MAX_CHARS = 80;
+      SUGGEST_CACHE_FILE = "mount-suggest.json";
+      HAS_MEANING_RE = /[\p{L}\p{N}]/u;
+      WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
+      LEADING_MARK_RE = /^(?:#{1,6}\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
+      JUDGE_PROMPT_PREFIX = [
+        "你是卡片盒挂载树的建议裁判。给定一张主卡正文里的若干锚点（词/句），以及每个锚点经向量召回得到的候选目标，",
+        "逐一判断「锚点」与「候选目标」是否存在实质知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。",
+        "标准：只推实质关联，弱关联（仅任务级/提及级）不推，存疑不推；宁缺勿滥。",
+        '输出要求：严格 JSON 数组 [{"anchor":<锚点编号>,"target":<候选编号>,"score":<0到1的关联分>,"reason":"一句话理由"}]，按关联强度降序；',
+        `分数低于 ${SUGGEST_MIN_SCORE} 的一律不要输出；无关联输出 []；不要输出 JSON 以外的任何文字。`
+      ].join("");
+    }
+  });
+
+  // src/knowledge/mount-canvas.ts
+  function mountKindColor(kind) {
+    var _a2;
+    const fallback = (_a2 = KIND_COLOR[kind]) != null ? _a2 : KIND_COLOR.para;
+    return `var(--bz-kb-mt-c-${kind}, ${fallback})`;
+  }
+  function clampMountScale(scale) {
+    if (!Number.isFinite(scale)) return 1;
+    return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, scale));
+  }
+  function mountStatusText(status) {
+    switch (status) {
+      case "cached":
+        return "已缓存建议";
+      case "fresh":
+        return "新生成建议";
+      case "off":
+        return "自动建议已关闭";
+      case "no-index":
+        return "未建向量索引 · 只画双链";
+      case "no-ai":
+        return "AI 不可用 · 只画双链";
+      default:
+        return "生成中 · 等建议齐再开";
+    }
+  }
+  function mountLinkText(node) {
+    const raw = String((node.missing ? node.path : node.id) || node.path || "").trim();
+    const core = raw.replace(/\.md$/i, "");
+    if (node.kind === "image" || node.kind === "video") return `![[${raw}]]`;
+    return `[[${core}]]`;
+  }
+  function crumbTrail(nodes, id) {
+    var _a2, _b2;
+    if (!id) return [];
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const chain2 = [];
+    const seen = /* @__PURE__ */ new Set();
+    let cur = (_a2 = byId.get(id)) != null ? _a2 : null;
+    while (cur && !seen.has(cur.id)) {
+      seen.add(cur.id);
+      chain2.unshift(cur);
+      cur = cur.parent ? (_b2 = byId.get(cur.parent)) != null ? _b2 : null : null;
+    }
+    return chain2;
+  }
+  function lineageOf(edges, id) {
+    const push = (map, key, val) => {
+      const list = map.get(key);
+      if (list) list.push(val);
+      else map.set(key, [val]);
+    };
+    const par = /* @__PURE__ */ new Map();
+    const chd = /* @__PURE__ */ new Map();
+    for (const e of edges != null ? edges : []) {
+      if (!e) continue;
+      push(chd, e.from, e.to);
+      push(par, e.to, e.from);
+    }
+    const walk = (map) => {
+      var _a2;
+      const out = /* @__PURE__ */ new Set([id]);
+      const stack = [id];
+      while (stack.length) {
+        const cur = stack.pop();
+        for (const next of (_a2 = map.get(cur)) != null ? _a2 : []) {
+          if (out.has(next)) continue;
+          out.add(next);
+          stack.push(next);
+        }
+      }
+      return out;
+    };
+    return { anc: walk(par), desc: walk(chd) };
+  }
+  function anchorNeedles(anchor) {
+    var _a2;
+    const raw = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "");
+    if (!raw) return [];
+    const out = [raw];
+    if (raw.includes("[[")) {
+      const display = raw.replace(/!?\[\[([^\[\]]+)\]\]/g, (_m, inner) => {
+        const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : inner;
+        const noBlock = afterAlias.includes("^") ? afterAlias.slice(0, afterAlias.indexOf("^")) : afterAlias;
+        const noHead = noBlock.includes("#") ? noBlock.slice(noBlock.lastIndexOf("#") + 1) : noBlock;
+        return noHead || afterAlias || inner;
+      });
+      if (display && display !== raw) out.push(display);
+    }
+    return out;
+  }
+  function alreadyLinked(body, link) {
+    const target = String(link != null ? link : "").trim().replace(/\.md$/i, "");
+    if (!target) return true;
+    return new RegExp(`!?\\[\\[${escapeRegExp(target)}(\\||#|\\]\\])`, "i").test(body);
+  }
+  function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  function insertLinkAtAnchor(body, anchor, link) {
+    var _a2, _b2, _c;
+    const src = String(body != null ? body : "");
+    const wiki = `[[${String(link != null ? link : "").trim().replace(/\.md$/i, "")}]]`;
+    if (wiki === "[[]]") return src;
+    if (alreadyLinked(src, link)) return src;
+    const text = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "").trim();
+    if (text) {
+      const at = relocateAnchor(src, { from: (_b2 = anchor == null ? void 0 : anchor.from) != null ? _b2 : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
+      if (at !== null && at >= 0) return src.slice(0, at + text.length) + wiki + src.slice(at + text.length);
+      const compact = text.replace(/\s+/g, "");
+      const flat = src.replace(/\s+/g, "");
+      for (const len of [10, 6, 4, 2]) {
+        const head = compact.slice(0, len);
+        if (head.length < len && len > 2) continue;
+        const hit = head ? flat.indexOf(head) : -1;
+        if (hit < 0) continue;
+        let count = 0;
+        let pos = -1;
+        for (let i = 0; i < src.length; i++) {
+          if (/\s/.test(src[i])) continue;
+          if (count === hit) {
+            pos = i;
+            break;
+          }
+          count++;
+        }
+        if (pos < 0) continue;
+        const tail = src.slice(pos, Math.min(src.length, pos + 300));
+        const m = /[。！？；…!?;\n]/.exec(tail);
+        const end = m ? pos + m.index + 1 : Math.min(src.length, pos + head.length);
+        return src.slice(0, end) + wiki + src.slice(end);
+      }
+    }
+    const trimmed = src.replace(/\s+$/, "");
+    return `${trimmed}${trimmed ? "\n" : ""}${wiki}
+`;
+  }
+  function defaultDeps(over) {
+    var _a2, _b2, _c, _d;
+    return {
+      measure: (_a2 = over == null ? void 0 : over.measure) != null ? _a2 : (el) => ({ w: el.offsetWidth || 0, h: el.offsetHeight || 0 }),
+      notice: (_b2 = over == null ? void 0 : over.notice) != null ? _b2 : (msg, type) => notice(msg, type != null ? type : "info"),
+      openNote: (_c = over == null ? void 0 : over.openNote) != null ? _c : (path) => {
+        var _a3, _b3, _c2;
+        try {
+          void ((_c2 = (_b3 = (_a3 = getApp()) == null ? void 0 : _a3.workspace) == null ? void 0 : _b3.openLinkText) == null ? void 0 : _c2.call(_b3, path, "", false, { active: true }));
+        } catch (e) {
+        }
+      },
+      writeClipboard: (_d = over == null ? void 0 : over.writeClipboard) != null ? _d : (text) => writeClipboard(text)
+    };
+  }
+  async function writeClipboard(text) {
+    var _a2, _b2;
+    try {
+      const nav = typeof navigator !== "undefined" ? navigator : null;
+      if ((_a2 = nav == null ? void 0 : nav.clipboard) == null ? void 0 : _a2.writeText) {
+        await nav.clipboard.writeText(text);
+        return;
+      }
+    } catch (e) {
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      (_b2 = document.execCommand) == null ? void 0 : _b2.call(document, "copy");
+      ta.remove();
+    } catch (e) {
+    }
+  }
+  function buildShell() {
+    if (state2) return state2;
+    if (typeof document === "undefined") return null;
+    const mask = document.createElement("div");
+    mask.id = MASK_ID;
+    mask.className = "bz-kb-mask bz-kb-mt-mask";
+    mask.style.display = "none";
+    mask.addEventListener("click", () => closeMountTree());
+    const win = document.createElement("div");
+    win.id = WIN_ID;
+    win.className = "bz-kb-window kb bz-kb-mt-window";
+    if (isMobileEnv()) win.classList.add("bz-panel-mtop");
+    win.style.display = "none";
+    win.innerHTML = `
+    <div class="bz-kb-mt-top">
+      <div class="bz-kb-mt-crumbs" id="bz-kb-mt-crumbs"></div>
+      <div class="bz-kb-mt-dir" id="bz-kb-mt-dir"></div>
+      <button class="bz-kb-mt-btn" data-mt-act="refresh" title="重跑当前主卡的挂载建议">重新生成</button>
+      <div class="bz-kb-mt-status" id="bz-kb-mt-status"></div>
+      <button class="bz-kb-mt-close bz-touch-target bz-touch-target--lg" data-mt-act="close" title="关闭挂载树">✕</button>
+    </div>
+    <div class="bz-kb-mt-canvas" id="bz-kb-mt-canvas">
+      <div class="bz-kb-mt-world" id="bz-kb-mt-world"></div>
+      <div class="bz-kb-mt-loading" id="bz-kb-mt-loading" style="display:none">生成中 · 等建议齐再开白板…</div>
+    </div>
+    <div class="bz-kb-mt-zoomer">
+      <button class="bz-kb-mt-zbtn bz-touch-target" data-mt-act="zoom-in" title="放大">＋</button>
+      <button class="bz-kb-mt-zbtn bz-touch-target" data-mt-act="zoom-out" title="缩小">−</button>
+      <button class="bz-kb-mt-zbtn bz-touch-target" data-mt-act="zoom-fit" title="适应窗口">⟲</button>
+    </div>
+    <div class="bz-kb-mt-hint" id="bz-kb-mt-hint"></div>`;
+    document.body.appendChild(mask);
+    document.body.appendChild(win);
+    const canvasEl = win.querySelector("#bz-kb-mt-canvas");
+    const worldEl = win.querySelector("#bz-kb-mt-world");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "bz-kb-mt-lines");
+    worldEl.appendChild(svg);
+    const st = {
+      cardPath: "",
+      direction: "downstream",
+      deps: defaultDeps(),
+      ctx: mountCtx(),
+      tree: { root: "", direction: "downstream", nodes: [], edges: [] },
+      run: null,
+      ghosts: /* @__PURE__ */ new Map(),
+      token: 0,
+      loading: false,
+      sizes: /* @__PURE__ */ new Map(),
+      pos: {},
+      world: { w: CANVAS_FALLBACK_W, h: CANVAS_FALLBACK_H },
+      edges: [],
+      cards: /* @__PURE__ */ new Map(),
+      folded: /* @__PURE__ */ new Set(),
+      selected: null,
+      scale: 1,
+      tx: 0,
+      ty: 0,
+      drag: null,
+      downPt: null,
+      downNode: null,
+      longPressTimer: null,
+      longPressFired: false,
+      pinch: null,
+      menu: null,
+      esc: null,
+      mask,
+      win,
+      canvasEl,
+      worldEl,
+      svg,
+      loadingEl: win.querySelector("#bz-kb-mt-loading")
+    };
+    state2 = st;
+    bindShellEvents(st);
+    return st;
+  }
+  function bindShellEvents(st) {
+    st.win.addEventListener("click", (e) => {
+      var _a2, _b2;
+      const btn = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-mt-act]");
+      if (!btn) return;
+      const act = btn.getAttribute("data-mt-act") || "";
+      if (act === "close") closeMountTree();
+      else if (act === "refresh") void reload(true);
+      else if (act === "zoom-in") zoomAtCenter(ZOOM_STEP);
+      else if (act === "zoom-out") zoomAtCenter(1 / ZOOM_STEP);
+      else if (act === "zoom-fit") fit();
+      else if (act === "crumb") {
+        const path = btn.getAttribute("data-path") || "";
+        const id = btn.getAttribute("data-id") || "";
+        if (!path) return;
+        if (id === st.tree.root) {
+          st.selected = null;
+          applySelection(st);
+          renderTop(st);
+          return;
+        }
+        void openMountTree(path, { direction: st.direction, deps: depsOf(st) });
+      } else if (act === "build-index") requestBuildIndex(st);
+    });
+    const canvas = st.canvasEl;
+    canvas.addEventListener("pointerdown", (e) => {
+      var _a2, _b2, _c, _d;
+      if (st.menu) closeMenu();
+      st.longPressFired = false;
+      st.downPt = { x: num(e.clientX), y: num(e.clientY) };
+      st.downNode = (_c = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, ".bz-kb-mt-node")) != null ? _c : null;
+      st.drag = { x: num(e.clientX), y: num(e.clientY), tx: st.tx, ty: st.ty };
+      try {
+        (_d = canvas.setPointerCapture) == null ? void 0 : _d.call(canvas, e.pointerId);
+      } catch (e2) {
+      }
+      if (isMobileEnv() && st.downNode) {
+        const x = num(e.clientX);
+        const y = num(e.clientY);
+        const id = st.downNode.getAttribute("data-mt-id") || "";
+        st.longPressTimer = setTimeout(() => {
+          st.longPressTimer = null;
+          st.longPressFired = true;
+          openNodeMenu(id, x, y);
+        }, LONG_PRESS_MS);
+      }
+    });
+    canvas.addEventListener("pointermove", (e) => {
+      if (!st.drag) return;
+      const dx = num(e.clientX) - st.drag.x;
+      const dy = num(e.clientY) - st.drag.y;
+      if (st.longPressTimer && Math.hypot(dx, dy) > LONG_PRESS_SLOP) cancelLongPress(st);
+      st.tx = st.drag.tx + dx;
+      st.ty = st.drag.ty + dy;
+      applyTransform(st);
+    });
+    const endDrag = () => {
+      cancelLongPress(st);
+      st.drag = null;
+    };
+    canvas.addEventListener("pointerup", endDrag);
+    canvas.addEventListener("pointercancel", endDrag);
+    canvas.addEventListener("click", (e) => {
+      var _a2, _b2, _c;
+      if (st.longPressFired) {
+        st.longPressFired = false;
+        return;
+      }
+      if (st.downPt && Math.hypot(num(e.clientX) - st.downPt.x, num(e.clientY) - st.downPt.y) > DRAG_SLOP) return;
+      const nodeEl = (_c = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, ".bz-kb-mt-node")) != null ? _c : st.downNode;
+      const id = (nodeEl == null ? void 0 : nodeEl.getAttribute("data-mt-id")) || "";
+      st.selected = id && st.selected !== id ? id : null;
+      applySelection(st);
+      renderTop(st);
+    });
+    canvas.addEventListener(
+      "wheel",
+      (e) => {
+        var _a2, _b2, _c, _d;
+        (_a2 = e.preventDefault) == null ? void 0 : _a2.call(e);
+        const rect = (_c = (_b2 = canvas.getBoundingClientRect) == null ? void 0 : _b2.call(canvas)) != null ? _c : { left: 0, top: 0 };
+        zoomAt(st, num(e.clientX) - num(rect.left), num(e.clientY) - num(rect.top), ((_d = e.deltaY) != null ? _d : 0) < 0 ? 1.1 : 0.9);
+      },
+      { passive: false }
+    );
+    canvas.addEventListener("contextmenu", (e) => {
+      var _a2, _b2, _c, _d, _e, _f;
+      (_a2 = e.preventDefault) == null ? void 0 : _a2.call(e);
+      const nodeEl = (_d = (_c = (_b2 = e.target) == null ? void 0 : _b2.closest) == null ? void 0 : _c.call(_b2, ".bz-kb-mt-node")) != null ? _d : null;
+      if (nodeEl) {
+        openNodeMenu(nodeEl.getAttribute("data-mt-id") || "", num(e.clientX), num(e.clientY));
+        return;
+      }
+      const edgeEl = (_f = (_e = e.target) == null ? void 0 : _e.closest) == null ? void 0 : _f.call(_e, ".bz-kb-mt-edge");
+      const key = (edgeEl == null ? void 0 : edgeEl.getAttribute("data-mt-key")) || "";
+      const hit = st.edges.find((x) => x.key === key);
+      if (hit) {
+        const targetId = st.direction === "downstream" ? hit.to : hit.from;
+        openNodeMenu(targetId, num(e.clientX), num(e.clientY));
+        return;
+      }
+      if (st.menu) closeMenu();
+    });
+    canvas.addEventListener(
+      "touchstart",
+      (e) => {
+        var _a2;
+        if (((_a2 = e.touches) == null ? void 0 : _a2.length) === 2) {
+          cancelLongPress(st);
+          st.pinch = { d: touchDistance(e.touches), scale: st.scale };
+        }
+      },
+      { passive: true }
+    );
+    canvas.addEventListener(
+      "touchmove",
+      (e) => {
+        var _a2, _b2, _c, _d;
+        if (!st.pinch || ((_a2 = e.touches) == null ? void 0 : _a2.length) !== 2) return;
+        (_b2 = e.preventDefault) == null ? void 0 : _b2.call(e);
+        const d = touchDistance(e.touches);
+        if (!st.pinch.d) return;
+        const rect = (_d = (_c = canvas.getBoundingClientRect) == null ? void 0 : _c.call(canvas)) != null ? _d : { left: 0, top: 0 };
+        const cx = (num(e.touches[0].clientX) + num(e.touches[1].clientX)) / 2 - num(rect.left);
+        const cy = (num(e.touches[0].clientY) + num(e.touches[1].clientY)) / 2 - num(rect.top);
+        const want = st.pinch.scale * (d / st.pinch.d);
+        zoomAtAbsolute(st, cx, cy, want);
+      },
+      { passive: false }
+    );
+    canvas.addEventListener("touchend", () => {
+      st.pinch = null;
+    });
+    st.win.addEventListener("mouseover", (e) => {
+      var _a2, _b2, _c;
+      const el = e.target;
+      const dot = (_a2 = el == null ? void 0 : el.closest) == null ? void 0 : _a2.call(el, "[data-mt-edge]");
+      if (dot) {
+        setHover(st, dot.getAttribute("data-mt-edge") || "", true);
+        return;
+      }
+      const edgeEl = (_b2 = el == null ? void 0 : el.closest) == null ? void 0 : _b2.call(el, ".bz-kb-mt-edge");
+      if (edgeEl) {
+        setHover(st, edgeEl.getAttribute("data-mt-key") || "", true);
+        return;
+      }
+      const nodeEl = (_c = el == null ? void 0 : el.closest) == null ? void 0 : _c.call(el, ".bz-kb-mt-node");
+      if (nodeEl) setHover(st, edgeKeyTo(st, nodeEl.getAttribute("data-mt-id") || ""), true);
+    });
+    st.win.addEventListener("mouseout", (e) => {
+      var _a2;
+      const el = e.target;
+      if ((_a2 = el == null ? void 0 : el.closest) == null ? void 0 : _a2.call(el, "[data-mt-edge], .bz-kb-mt-edge, .bz-kb-mt-node")) setHover(st, "", false);
+    });
+  }
+  function num(v) {
+    return typeof v === "number" && Number.isFinite(v) ? v : 0;
+  }
+  function displayTitle(node) {
+    return String(node.title || node.path || node.id).replace(/\.md$/i, "");
+  }
+  function touchDistance(touches) {
+    const [a, b] = [touches[0], touches[1]];
+    return Math.hypot(num(a.clientX) - num(b.clientX), num(a.clientY) - num(b.clientY));
+  }
+  function cancelLongPress(st) {
+    if (st.longPressTimer) {
+      clearTimeout(st.longPressTimer);
+      st.longPressTimer = null;
+    }
+  }
+  function depsOf(st) {
+    return {
+      measure: st.deps.measure,
+      notice: st.deps.notice,
+      openNote: st.deps.openNote,
+      writeClipboard: st.deps.writeClipboard
+    };
+  }
+  function mountTreeOpen() {
+    return !!state2 && state2.mask.style.display !== "none";
+  }
+  function closeMountTree() {
+    var _a2;
+    const st = state2;
+    if (!st) return;
+    closeMenu();
+    cancelLongPress(st);
+    st.mask.style.display = "none";
+    st.win.style.display = "none";
+    st.selected = null;
+    st.token++;
+    st.loading = false;
+    st.loadingEl.style.display = "none";
+    (_a2 = st.esc) == null ? void 0 : _a2.unregister();
+    st.esc = null;
+  }
+  async function openMountTree(cardPath, opts) {
+    const path = String(cardPath != null ? cardPath : "").trim();
+    const st = buildShell();
+    if (!st) return;
+    if (!path) {
+      defaultDeps(opts == null ? void 0 : opts.deps).notice("看挂载树：这张卡没有可解析的路径");
+      return;
+    }
+    const direction = (opts == null ? void 0 : opts.direction) === "upstream" ? "upstream" : "downstream";
+    st.deps = defaultDeps(opts == null ? void 0 : opts.deps);
+    topifyZ(st.mask, st.win);
+    st.mask.style.display = "block";
+    st.win.style.display = "flex";
+    if (!st.esc) {
+      st.esc = escManager.register(ESC_ID, {
+        isVisible: () => mountTreeOpen() || !!st.menu,
+        close: () => {
+          if (st.menu) closeMenu();
+          else closeMountTree();
+        }
+      });
+    }
+    const sameTree = path === st.cardPath && direction === st.direction && st.tree.root === path && st.tree.nodes.length > 0;
+    if (sameTree && !st.loading && !(opts == null ? void 0 : opts.force)) {
+      st.loadingEl.style.display = "none";
+      renderTop(st);
+      return;
+    }
+    st.cardPath = path;
+    st.direction = direction;
+    st.selected = null;
+    st.folded = /* @__PURE__ */ new Set();
+    await load(st, !!(opts == null ? void 0 : opts.force));
+  }
+  async function reload(force) {
+    const st = state2;
+    if (!st) return;
+    await load(st, force);
+  }
+  async function load(st, force) {
+    var _a2;
+    const token = ++st.token;
+    const path = st.cardPath;
+    const direction = st.direction;
+    st.loading = true;
+    st.edges = [];
+    st.cards.clear();
+    st.ghosts = /* @__PURE__ */ new Map();
+    st.run = null;
+    st.loadingEl.style.display = "";
+    renderTop(st);
+    const ctx = mountCtx();
+    st.ctx = ctx;
+    let tree;
+    try {
+      tree = await buildMountTree(path, { direction, ctx });
+    } catch (e) {
+      tree = { root: path, direction, nodes: [], edges: [] };
+    }
+    if (token !== st.token) return;
+    const autoOn = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeMountAutoSuggest) !== false;
+    let run = null;
+    if (autoOn) {
+      run = await runSuggest(st, path, ctx, force);
+      if (token !== st.token) return;
+    }
+    st.run = run;
+    st.tree = tree;
+    if (run && run.suggestions.length) {
+      for (const s of run.suggestions) {
+        if (s == null ? void 0 : s.target) st.ghosts.set("ai:" + s.target, s);
+      }
+      st.tree = mergeSuggestions(tree, run);
+    }
+    st.loading = false;
+    st.loadingEl.style.display = "none";
+    await renderCanvas(st);
+    renderTop(st);
+    fit();
+  }
+  async function runSuggest(st, path, ctx, force) {
+    try {
+      return await generateSuggestions(
+        path,
+        { app: ctx.app, cardboxDir: ctx.cardboxDir, litDir: ctx.litDir },
+        { force }
+      );
+    } catch (e) {
+      return { status: "no-ai", suggestions: [] };
+    }
+  }
+  async function rebuildTreeOnly(st) {
+    const token = ++st.token;
+    const path = st.cardPath;
+    let tree;
+    try {
+      tree = await buildMountTree(path, { direction: st.direction, ctx: st.ctx });
+    } catch (e) {
+      return;
+    }
+    if (token !== st.token) return;
+    st.tree = st.run && st.run.suggestions.length ? mergeSuggestions(tree, st.run) : tree;
+    await renderCanvas(st);
+    renderTop(st);
+  }
+  function renderTop(st) {
+    var _a2, _b2, _c;
+    const rootNode2 = (_a2 = st.tree.nodes.find((n) => n.id === st.tree.root)) != null ? _a2 : null;
+    const crumbs = crumbTrail(st.tree.nodes, (_b2 = st.selected) != null ? _b2 : st.tree.root);
+    const chain2 = crumbs.length ? crumbs : rootNode2 ? [rootNode2] : [];
+    st.win.querySelector("#bz-kb-mt-crumbs").innerHTML = chain2.map((n, i) => {
+      const last = i === chain2.length - 1;
+      const label = escapeHtml(displayTitle(n));
+      const sep = i === 0 ? "" : '<span class="bz-kb-mt-sep">›</span>';
+      if (last && !st.selected) return `${sep}<span class="bz-kb-mt-crumb is-cur">${label}</span>`;
+      return `${sep}<button class="bz-kb-mt-crumb bz-touch-target" data-mt-act="crumb" data-path="${escapeHtml(n.path)}" data-id="${escapeHtml(n.id)}" title="以《${label}》为主卡重开">${label}</button>`;
+    }).join("");
+    const dirEl = st.win.querySelector("#bz-kb-mt-dir");
+    dirEl.textContent = st.direction === "upstream" ? "上游 · 谁挂了我" : "下游 · 我挂了谁";
+    dirEl.setAttribute("data-mt-dir", st.direction);
+    const statusEl2 = st.win.querySelector("#bz-kb-mt-status");
+    const culled = st.sizes.size ? countCulled(st) : 0;
+    let text;
+    let extra = "";
+    if (st.loading) text = mountStatusText("generating");
+    else if (st.run) text = mountStatusText(st.run.status);
+    else text = "本卡建议未跑（自动建议已关闭）";
+    if (!st.loading && culled > 0) extra = `<span class="bz-kb-mt-kind">· 图大，已按 ${LAYOUT_PARAMS.MAX_NODES} 张封顶</span>`;
+    statusEl2.innerHTML = `<span class="bz-kb-mt-status-t">${escapeHtml(text)}</span>${extra}${!st.loading && ((_c = st.run) == null ? void 0 : _c.status) === "no-index" ? '<button class="bz-kb-mt-btn is-mini" data-mt-act="build-index" title="打开第二大脑重建索引（绝不自动建）">去建索引</button>' : ""}`;
+    const hint = st.win.querySelector("#bz-kb-mt-hint");
+    hint.textContent = isMobileEnv() ? "点卡片血缘高亮 · 长按卡片出菜单 · 双指缩放 · 单指拖拽平移" : "点卡片血缘高亮（再点取消）· 右键菜单 · 拖拽平移 · 滚轮缩放 · 点标题折/展";
+  }
+  function countCulled(st) {
+    const laid = st.tree.nodes.filter((n) => !n.attached && st.sizes.has(n.id)).length;
+    return Math.max(0, laid - Math.min(laid, LAYOUT_PARAMS.MAX_NODES));
+  }
+  function requestBuildIndex(st) {
+    var _a2;
+    try {
+      const app = getApp();
+      if (typeof ((_a2 = app == null ? void 0 : app.commands) == null ? void 0 : _a2.executeCommandById) === "function") {
+        app.commands.executeCommandById("bz-secondbrain-rebuild-index");
+        st.deps.notice("已转交「重建索引」——建完回到白板点「重新生成」");
+        return;
+      }
+    } catch (e) {
+    }
+    st.deps.notice("未建向量索引：请先在第二大脑执行「重建索引」，再回白板点「重新生成」");
+  }
+  async function renderCanvas(st) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    const worldEl = st.worldEl;
+    for (const el of Array.from(worldEl.querySelectorAll(".bz-kb-mt-node"))) el.remove();
+    st.svg.innerHTML = "";
+    st.cards.clear();
+    st.sizes.clear();
+    st.edges = [];
+    const nodes = (_a2 = st.tree.nodes) != null ? _a2 : [];
+    if (nodes.length === 0) {
+      st.world = { w: CANVAS_FALLBACK_W, h: CANVAS_FALLBACK_H };
+      syncWorld(st);
+      return;
+    }
+    for (const n of nodes) if (n.attached && !st.folded.has(n.id)) st.folded.add(n.id);
+    const rootId = st.tree.root;
+    const jobs = [];
+    for (const node of nodes) {
+      const el = buildCard(st, node, rootId);
+      worldEl.appendChild(el);
+      st.cards.set(node.id, el);
+      jobs.push(fillBody(st, node, el));
+    }
+    worldEl.appendChild(st.svg);
+    await Promise.all(jobs);
+    for (const node of nodes) {
+      const el = st.cards.get(node.id);
+      if (!el) continue;
+      const raw = st.deps.measure(el, node.kind);
+      const w = (raw == null ? void 0 : raw.w) && raw.w > 0 ? raw.w : widthOf(st, node);
+      const h = (raw == null ? void 0 : raw.h) && raw.h > 0 ? raw.h : (_b2 = HEIGHT_BY_KIND[node.kind]) != null ? _b2 : HEIGHT_BY_KIND.card;
+      st.sizes.set(node.id, { w, h });
+    }
+    const laid = nodes.filter((n) => !n.attached && st.sizes.has(n.id));
+    const boxIds = new Set(laid.map((n) => n.id));
+    const boxes = laid.map((n) => {
+      const s = st.sizes.get(n.id);
+      return { id: n.id, w: s.w, h: s.h, depth: n.depth, kind: n.kind };
+    });
+    const layoutEdges = [];
+    for (const e of (_c = st.tree.edges) != null ? _c : []) {
+      if (boxIds.has(e.from) && boxIds.has(e.to)) layoutEdges.push({ from: e.from, to: e.to });
+    }
+    const layout = layoutTree(boxes, layoutEdges);
+    st.pos = layout.pos;
+    st.world = { w: layout.world.w, h: layout.world.h };
+    for (const n of laid) {
+      const el = st.cards.get(n.id);
+      const p = layout.pos[n.id];
+      if (!p) {
+        el.style.display = "none";
+        continue;
+      }
+      el.style.left = `${p.x}px`;
+      el.style.top = `${p.y}px`;
+    }
+    const dockGroups = /* @__PURE__ */ new Map();
+    for (const n of nodes) {
+      if (!n.attached || !n.parent) continue;
+      if (!dockGroups.has(n.parent)) dockGroups.set(n.parent, []);
+      dockGroups.get(n.parent).push(n);
+    }
+    for (const [parentId, group] of dockGroups) {
+      const parentPos = layout.pos[parentId];
+      const parentEl = st.cards.get(parentId);
+      if (!parentPos || !parentEl || parentEl.style.display === "none") {
+        for (const n of group) {
+          const el = st.cards.get(n.id);
+          if (el) el.style.display = "none";
+        }
+        continue;
+      }
+      const pw = (_e = (_d = st.sizes.get(parentId)) == null ? void 0 : _d.w) != null ? _e : widthOf(st, { id: parentId, kind: "card" });
+      const ph = (_g = (_f = st.sizes.get(parentId)) == null ? void 0 : _f.h) != null ? _g : HEIGHT_BY_KIND.card;
+      let top = parentPos.y + ph + DOCK_GAP;
+      let right = parentPos.x + pw;
+      for (const n of group) {
+        const el = st.cards.get(n.id);
+        const size = st.sizes.get(n.id);
+        if (!el) continue;
+        el.style.left = `${parentPos.x}px`;
+        el.style.top = `${top}px`;
+        el.style.width = `${pw}px`;
+        if (size) size.w = pw;
+        top += ((_h = size == null ? void 0 : size.h) != null ? _h : HEIGHT_BY_KIND.note) + DOCK_GAP;
+        if (top > st.world.h) st.world.h = top;
+      }
+      if (right > st.world.w) st.world.w = right;
+    }
+    syncWorld(st);
+    drawEdges(st);
+    applySelection(st);
+  }
+  function widthOf(st, node) {
+    var _a2;
+    if (node.id && node.id === st.tree.root) return WIDTH_ROOT;
+    return (_a2 = WIDTH_BY_KIND[node.kind]) != null ? _a2 : WIDTH_BY_KIND.card;
+  }
+  function syncWorld(st) {
+    const { w, h } = st.world;
+    st.worldEl.style.width = `${w}px`;
+    st.worldEl.style.height = `${h}px`;
+    st.svg.setAttribute("width", String(w));
+    st.svg.setAttribute("height", String(h));
+    st.svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    applyTransform(st);
+  }
+  function buildCard(st, node, rootId) {
+    var _a2, _b2, _c;
+    const el = document.createElement("div");
+    const ghost = st.ghosts.has(node.id);
+    const stale = !!node.missing || ghost && !ghostTargetExists(st, node);
+    const classes = ["bz-kb-mt-node", `is-${node.kind}`];
+    if (stale) classes.push("is-missing");
+    if (node.attached) classes.push("is-dock");
+    if (node.source === "sameName") classes.push("is-lit");
+    if (ghost) classes.push("is-ghost");
+    if (node.id === rootId) classes.push("is-root");
+    if (st.folded.has(node.id)) classes.push("is-folded");
+    el.className = classes.join(" ");
+    el.setAttribute("data-mt-id", node.id);
+    el.setAttribute("data-mt-kind", node.kind);
+    el.setAttribute("data-mt-source", node.source);
+    el.style.width = `${widthOf(st, node)}px`;
+    const head = document.createElement("div");
+    head.className = "bz-kb-mt-head";
+    const ttl = document.createElement("span");
+    ttl.className = "bz-kb-mt-ttl";
+    ttl.textContent = stale ? `${displayTitle(node)}（失效）` : displayTitle(node);
+    ttl.title = "点击标题折 / 展这张卡";
+    ttl.setAttribute("data-mt-fold", "1");
+    head.appendChild(ttl);
+    head.appendChild(chip(node.source === "ai" ? "AI 建议" : (_a2 = KIND_LABEL[node.kind]) != null ? _a2 : "", "kind"));
+    if (node.source && node.source !== "ai") head.appendChild(chip((_b2 = SOURCE_LABEL[node.source]) != null ? _b2 : "", `src src-${node.source}`));
+    if (node.id === rootId) head.appendChild(chip("主 卡", "root"));
+    if (ghost) {
+      const reason = ((_c = st.ghosts.get(node.id)) == null ? void 0 : _c.reason) || "";
+      if (reason) {
+        const why = chip("看理由", "why");
+        why.setAttribute("data-mt-why", reason);
+        why.title = reason;
+        head.appendChild(why);
+      }
+    }
+    el.appendChild(head);
+    const body = document.createElement("div");
+    body.className = "bz-kb-mt-body";
+    el.appendChild(body);
+    ttl.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (st.folded.has(node.id)) st.folded.delete(node.id);
+      else st.folded.add(node.id);
+      const folded = st.folded.has(node.id);
+      el.classList.toggle("is-folded", folded);
+      const body2 = el.querySelector(".bz-kb-mt-body");
+      if (!folded && body2 && !body2.querySelector("*")) void fillBody(st, node, el);
+    });
+    return el;
+  }
+  function chip(text, kind) {
+    const s = document.createElement("span");
+    s.className = `bz-kb-mt-chip ${kind}`;
+    s.textContent = text;
+    return s;
+  }
+  async function fillBody(st, node, cardEl) {
+    var _a2;
+    const bodyEl2 = cardEl.querySelector(".bz-kb-mt-body");
+    if (!bodyEl2) return;
+    if (node.attached && st.folded.has(node.id)) return;
+    const stale = !!node.missing || st.ghosts.has(node.id) && !ghostTargetExists(st, node);
+    if (stale) {
+      bodyEl2.innerHTML = '<div class="bz-kb-mt-ph is-missing">失效：目标已不存在（改名或删除后残留）</div>';
+      return;
+    }
+    if (node.kind === "image" || node.kind === "video") {
+      bodyEl2.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml(node.path)}</div>`;
+      return;
+    }
+    const md = bodyMarkdown(st, node);
+    if (md === null) {
+      bodyEl2.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
+      return;
+    }
+    if (!md.trim()) {
+      bodyEl2.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
+      return;
+    }
+    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    let ok = false;
+    if (app == null ? void 0 : app.vault) {
+      try {
+        const comp = new Component();
+        await MarkdownRenderer.render(app, md, bodyEl2, node.path, comp);
+        comp.unload();
+        ok = true;
+      } catch (e) {
+        ok = false;
+      }
+    }
+    if (ok && bodyEl2.querySelector("*")) {
+      tagBodyLinks(st, node, bodyEl2);
+      return;
+    }
+    bodyEl2.textContent = "";
+    for (const part of md.split(/\r?\n\r?\n+/)) {
+      const t = part.trim();
+      if (!t) continue;
+      const p = document.createElement("div");
+      p.className = "bz-kb-mt-ptext";
+      p.textContent = t;
+      bodyEl2.appendChild(p);
+    }
+    tagBodyLinks(st, node, bodyEl2);
+  }
+  function normRef(v) {
+    return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\.\//, "").replace(/\.md$/i, "").replace(/^\/+/, "").toLowerCase();
+  }
+  function refKeys(node) {
+    const out = /* @__PURE__ */ new Set();
+    const add = (v) => {
+      const k = normRef(v);
+      if (k) out.add(k);
+    };
+    add(node.path);
+    add(node.id);
+    add(node.title);
+    const base = String(node.path || "").replace(/\\/g, "/").split("/").pop() || "";
+    add(base);
+    const hash = String(node.id).indexOf("#");
+    if (hash >= 0) {
+      const sub = String(node.id).slice(hash);
+      add(base.replace(/\.md$/i, "") + sub);
+    }
+    return out;
+  }
+  function tagBodyLinks(st, node, bodyEl2) {
+    var _a2;
+    const links = Array.from(bodyEl2.querySelectorAll("a.internal-link, a[data-href]"));
+    if (!links.length) return;
+    const outgoing = ((_a2 = st.tree.edges) != null ? _a2 : []).filter(
+      (e) => (st.direction === "downstream" ? e.from : e.to) === node.id
+    );
+    if (!outgoing.length) return;
+    for (const a of links) {
+      const href = normRef(a.getAttribute("data-href") || a.getAttribute("href") || "");
+      if (!href) continue;
+      for (const e of outgoing) {
+        const otherId = st.direction === "downstream" ? e.to : e.from;
+        const other = st.tree.nodes.find((n) => n.id === otherId);
+        if (!other) continue;
+        const keys = refKeys(other);
+        const hit = [...keys].some((k) => k === href || k.endsWith("/" + href) || href.endsWith("/" + k));
+        if (hit) {
+          a.setAttribute("data-mt-to", otherId);
+          break;
+        }
+      }
+    }
+  }
+  function bodyMarkdown(st, node) {
+    if (node.missing) return null;
+    const ghost = st.ghosts.get(node.id);
+    if (ghost) return `> ${ghost.reason || "AI 建议：这张卡与主卡有实质关联。"}`;
+    if (node.body && node.body.trim()) return node.body;
+    return null;
+  }
+  function ghostTargetExists(st, node) {
+    var _a2, _b2, _c;
+    if (!node.suggested) return true;
+    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    try {
+      return !!((_c = (_b2 = app == null ? void 0 : app.vault) == null ? void 0 : _b2.getAbstractFileByPath) == null ? void 0 : _c.call(_b2, node.path));
+    } catch (e) {
+      return true;
+    }
+  }
+  function edgeId(from, to) {
+    return `${from}\0${to}`;
+  }
+  function domKeys(list) {
+    const map = /* @__PURE__ */ new Map();
+    list.forEach((e, i) => map.set(edgeId(e.from, e.to), `e${i}`));
+    return map;
+  }
+  function placeAnchors(st, list, keys) {
+    var _a2, _b2, _c, _d;
+    const out = /* @__PURE__ */ new Map();
+    const cursor = /* @__PURE__ */ new Map();
+    const kindById = new Map(st.tree.nodes.map((n) => [n.id, n.kind]));
+    for (const e of list) {
+      const id = edgeId(e.from, e.to);
+      const key = (_a2 = keys.get(id)) != null ? _a2 : "";
+      const bearerId = st.direction === "downstream" ? e.from : e.to;
+      const colorKind = (_b2 = kindById.get(st.direction === "downstream" ? e.to : e.from)) != null ? _b2 : "para";
+      const cardEl = st.cards.get(bearerId);
+      if (!cardEl || cardEl.style.display === "none") continue;
+      const bodyEl2 = cardEl.querySelector(".bz-kb-mt-body");
+      if (!bodyEl2) continue;
+      const anchor = (_d = (_c = st.tree.nodes.find((n) => n.id === e.to)) == null ? void 0 : _c.anchor) != null ? _d : null;
+      const point = measureDot(st, cardEl, bodyEl2, anchor, key, colorKind, cursor);
+      if (point) out.set(id, point);
+    }
+    return out;
+  }
+  function measureDot(st, cardEl, bodyEl2, anchor, key, colorKind, cursor) {
+    var _a2;
+    if (!anchor) return null;
+    const needles = anchorNeedles(anchor);
+    if (needles.length === 0) return null;
+    const dot = insertAnchorDot(bodyEl2, needles, key, (_a2 = cursor.get(bodyEl2)) != null ? _a2 : 0);
+    if (!dot) return null;
+    cursor.set(bodyEl2, Number(dot.getAttribute("data-mt-at") || 0));
+    dot.style.color = mountKindColor(colorKind);
+    const nodeId = cardEl.getAttribute("data-mt-id") || "";
+    const base = st.pos[nodeId];
+    const size = st.sizes.get(nodeId);
+    if (!base || !size) return null;
+    if (!dot.offsetWidth && !dot.offsetHeight) return null;
+    return {
+      x: base.x + dot.offsetLeft + dot.offsetWidth / 2,
+      y: base.y + dot.offsetTop + dot.offsetHeight / 2
+    };
+  }
+  function insertAnchorDot(bodyEl2, needles, key, from) {
+    var _a2;
+    const idx = textIndexOf(bodyEl2);
+    const hit = locateInText(idx.text, needles, from);
+    if (!hit) return null;
+    const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
+    if (!part) return null;
+    const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
+    const after = part.node.splitText(offset);
+    const len = Math.min(hit.len, after.data.length);
+    const tail = after.splitText(len);
+    const dot = document.createElement("i");
+    dot.className = "bz-kb-mt-anch";
+    dot.setAttribute("data-mt-edge", key);
+    dot.setAttribute("data-mt-at", String(hit.at + hit.len));
+    dot.setAttribute("title", "挂载点：这条线从这句话扯出");
+    (_a2 = after.parentNode) == null ? void 0 : _a2.insertBefore(dot, tail);
+    return dot;
+  }
+  function textIndexOf(container) {
+    var _a2;
+    const walker = document.createTreeWalker(
+      container,
+      4
+      /* NodeFilter.SHOW_TEXT */
+    );
+    const parts = [];
+    let text = "";
+    let cur = walker.nextNode();
+    while (cur) {
+      const data = (_a2 = cur.data) != null ? _a2 : "";
+      if (data) {
+        parts.push({ node: cur, start: text.length });
+        text += data;
+      }
+      cur = walker.nextNode();
+    }
+    return { text, parts };
+  }
+  function locateInText(text, needles, from) {
+    if (!text) return null;
+    const start = Math.min(Math.max(0, from), text.length);
+    for (const needle of needles) {
+      if (!needle) continue;
+      const seg = text.slice(start);
+      if (seg) {
+        const rel = relocateAnchor(seg, { from: 0, to: needle.length, text: needle });
+        if (rel !== null && rel >= 0) return { at: start + rel, len: needle.length };
+      }
+      const abs = relocateAnchor(text, { from: 0, to: needle.length, text: needle });
+      if (abs !== null && abs >= 0) return { at: abs, len: needle.length };
+    }
+    return null;
+  }
+  function drawEdges(st) {
+    var _a2;
+    const boxes = [];
+    for (const n of st.tree.nodes) {
+      if (n.attached) continue;
+      const p = st.pos[n.id];
+      const s = st.sizes.get(n.id);
+      const el = st.cards.get(n.id);
+      if (!p || !s || !el || el.style.display === "none") continue;
+      boxes.push({ id: n.id, x: p.x, y: p.y, w: s.w, h: s.h });
+    }
+    const boxIds = new Set(boxes.map((b) => b.id));
+    const list = ((_a2 = st.tree.edges) != null ? _a2 : []).filter((e) => boxIds.has(e.from) && boxIds.has(e.to));
+    st.edges = [];
+    if (list.length === 0) {
+      st.svg.innerHTML = "";
+      return;
+    }
+    const keys = domKeys(list);
+    const anchors = placeAnchors(st, list, keys);
+    const inputs = list.map((e) => {
+      var _a3;
+      return {
+        from: e.from,
+        to: e.to,
+        anchor: (_a3 = anchors.get(edgeId(e.from, e.to))) != null ? _a3 : null
+      };
+    });
+    const routed = routeEdges(boxes, inputs);
+    const kindById = new Map(st.tree.nodes.map((n) => [n.id, n.kind]));
+    const suggestedOf = new Map(list.map((e) => [edgeId(e.from, e.to), !!e.suggested]));
+    let html = "";
+    routed.forEach((r, i) => {
+      var _a3, _b2, _c, _d;
+      if (!(r == null ? void 0 : r.d)) return;
+      const id = edgeId(r.from, r.to);
+      const key = (_a3 = keys.get(id)) != null ? _a3 : `e${i}`;
+      const bearerId = st.direction === "downstream" ? r.from : r.to;
+      const otherId = st.direction === "downstream" ? r.to : r.from;
+      (_b2 = st.cards.get(bearerId)) == null ? void 0 : _b2.querySelectorAll("[data-mt-to]").forEach((el) => {
+        if (el.getAttribute("data-mt-to") === otherId) el.setAttribute("data-mt-edge", key);
+      });
+      const colorKind = (_c = kindById.get(st.direction === "downstream" ? r.to : r.from)) != null ? _c : "para";
+      const color = mountKindColor(colorKind);
+      const isSug = (_d = suggestedOf.get(id)) != null ? _d : false;
+      const isFb = !!r.fallback;
+      const entry = lastPoint(r.d);
+      const cls = `bz-kb-mt-edge${isSug ? " is-sug" : ""}${isFb ? " is-fb" : ""}`;
+      html += `<path class="${cls}" data-mt-key="${key}" data-i="${i}" d="${r.d}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.6"${isSug || isFb ? ' stroke-dasharray="6 5"' : ""}/>`;
+      if (entry) {
+        html += `<circle class="bz-kb-mt-edot" data-mt-key="${key}" cx="${entry.x.toFixed(1)}" cy="${entry.y.toFixed(
+          1
+        )}" r="3" fill="${isSug ? "none" : color}" stroke="${isSug ? color : "none"}" stroke-width="1.5" opacity="0.85"/>`;
+      }
+      st.edges.push({ ...r, key, color, suggested: isSug });
+    });
+    st.svg.innerHTML = html;
+  }
+  function lastPoint(d) {
+    const m = /(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*$/.exec(d);
+    if (!m) return null;
+    const x = Number(m[1]);
+    const y = Number(m[2]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return { x, y };
+  }
+  function edgeKeyTo(st, nodeId) {
+    var _a2;
+    if (!nodeId) return "";
+    const hit = st.edges.find((e) => st.direction === "downstream" ? e.to === nodeId : e.from === nodeId);
+    return (_a2 = hit == null ? void 0 : hit.key) != null ? _a2 : "";
+  }
+  function applySelection(st) {
+    var _a2, _b2;
+    const sel = st.selected;
+    const dockSelected = !!sel && !!((_a2 = st.cards.get(sel)) == null ? void 0 : _a2.classList.contains("is-dock"));
+    const set = sel && !dockSelected ? lineageOf((_b2 = st.tree.edges) != null ? _b2 : [], sel) : null;
+    for (const [id, el] of st.cards) {
+      el.classList.remove("is-sel", "is-anc", "is-desc", "is-dim");
+      if (!set || el.classList.contains("is-dock")) continue;
+      if (id === sel) el.classList.add("is-sel");
+      else if (set.anc.has(id)) el.classList.add("is-anc");
+      else if (set.desc.has(id)) el.classList.add("is-desc");
+      else el.classList.add("is-dim");
+    }
+    for (const e of st.edges) {
+      const path = st.svg.querySelector(`.bz-kb-mt-edge[data-mt-key="${cssEscape(e.key)}"]`);
+      if (!path) continue;
+      path.classList.remove("is-anc", "is-desc", "is-off");
+      if (!set) continue;
+      const isAnc = set.anc.has(e.from) && (e.to === sel || set.anc.has(e.to));
+      const isDesc = (e.from === sel || set.desc.has(e.from)) && set.desc.has(e.to);
+      if (isAnc) path.classList.add("is-anc");
+      else if (isDesc) path.classList.add("is-desc");
+      else path.classList.add("is-off");
+    }
+  }
+  function setHover(st, key, on) {
+    var _a2;
+    if (!key) {
+      st.win.querySelectorAll(".is-hot").forEach((el) => el.classList.remove("is-hot"));
+      return;
+    }
+    const edge = st.edges.find((e) => e.key === key);
+    if (!edge) return;
+    const otherId = st.direction === "downstream" ? edge.to : edge.from;
+    const list = [
+      st.svg.querySelector(`.bz-kb-mt-edge[data-mt-key="${cssEscape(key)}"]`),
+      st.svg.querySelector(`.bz-kb-mt-edot[data-mt-key="${cssEscape(key)}"]`),
+      ...Array.from(st.win.querySelectorAll(`[data-mt-edge="${cssEscape(key)}"]`)),
+      (_a2 = st.cards.get(otherId)) != null ? _a2 : null
+    ];
+    for (const el of list) {
+      if (!el) continue;
+      el.classList.toggle("is-hot", on);
+    }
+  }
+  function cssEscape(s) {
+    return String(s).replace(/["\\]/g, "\\$&");
+  }
+  function applyTransform(st) {
+    st.worldEl.style.transform = `translate(${st.tx}px, ${st.ty}px) scale(${st.scale})`;
+  }
+  function zoomAt(st, px, py, factor) {
+    zoomAtAbsolute(st, px, py, st.scale * factor);
+  }
+  function zoomAtAbsolute(st, px, py, want) {
+    const ns = clampMountScale(want);
+    const k = ns / st.scale;
+    st.tx = px - (px - st.tx) * k;
+    st.ty = py - (py - st.ty) * k;
+    st.scale = ns;
+    applyTransform(st);
+  }
+  function zoomAtCenter(factor) {
+    const st = state2;
+    if (!st) return;
+    const w = st.canvasEl.clientWidth || CANVAS_FALLBACK_W;
+    const h = st.canvasEl.clientHeight || CANVAS_FALLBACK_H;
+    zoomAt(st, w / 2, h / 2, factor);
+  }
+  function fit() {
+    const st = state2;
+    if (!st) return;
+    const cw = st.canvasEl.clientWidth || CANVAS_FALLBACK_W;
+    const ch = st.canvasEl.clientHeight || CANVAS_FALLBACK_H;
+    const w = Math.max(1, st.world.w);
+    const h = Math.max(1, st.world.h);
+    st.scale = Math.min(ZOOM_FIT_MAX, Math.max(ZOOM_MIN, Math.min((cw - FIT_PAD) / w, (ch - FIT_PAD) / h)));
+    st.tx = (cw - w * st.scale) / 2;
+    st.ty = (ch - h * st.scale) / 2;
+    applyTransform(st);
+  }
+  function openNodeMenu(nodeId, x, y) {
+    var _a2, _b2, _c, _d, _e;
+    const st = state2;
+    if (!st || !nodeId) return;
+    const node = st.tree.nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+    closeMenu();
+    const ghost = (_a2 = st.ghosts.get(nodeId)) != null ? _a2 : null;
+    const litChild = (_b2 = st.tree.nodes.find((n) => n.attached && n.parent === nodeId)) != null ? _b2 : null;
+    const isAttachment = node.kind === "image" || node.kind === "video";
+    const entries = [
+      { act: "open", label: "打开笔记", disabled: !!node.missing },
+      { act: "lit", label: "看文献笔记", disabled: !litChild, title: litChild ? litChild.path : "这篇卡片没有同名文献" },
+      { act: "copy", label: "复制双链", disabled: false },
+      { act: "root", label: "设为主卡", disabled: !!node.missing || isAttachment || node.id === st.tree.root },
+      { act: "who", label: "看谁挂了我（翻向上游）", disabled: !!node.missing || isAttachment },
+      { act: "pin", label: "固定（正文写入双链）", disabled: !ghost },
+      { act: "dismiss", label: "取消建议", disabled: !ghost },
+      { act: "why", label: "看理由", disabled: !ghost }
+    ];
+    const menu = document.createElement("div");
+    menu.className = "bz-kb-mt-ctx";
+    menu.id = "bz-kb-mt-ctx";
+    const head = document.createElement("div");
+    head.className = "bz-kb-mt-ctx-head";
+    head.textContent = displayTitle(node);
+    menu.appendChild(head);
+    if (ghost == null ? void 0 : ghost.reason) {
+      const reason = document.createElement("div");
+      reason.className = "bz-kb-mt-ctx-reason";
+      reason.textContent = ghost.reason;
+      menu.appendChild(reason);
+    }
+    for (const item of entries) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "bz-kb-mt-ctx-item";
+      b.setAttribute("data-mt-menu", item.act);
+      b.textContent = item.label;
+      if (item.disabled) {
+        b.disabled = true;
+        b.classList.add("is-dis");
+      }
+      if (item.title) b.title = item.title;
+      b.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (item.disabled) return;
+        closeMenu();
+        runMenuAction(st, item.act, node, ghost);
+      });
+      menu.appendChild(b);
+    }
+    st.win.appendChild(menu);
+    const rect = (_e = (_d = (_c = st.win).getBoundingClientRect) == null ? void 0 : _d.call(_c)) != null ? _e : { left: 0, top: 0, width: CANVAS_FALLBACK_W, height: CANVAS_FALLBACK_H };
+    const mw = menu.offsetWidth || 240;
+    const mh = menu.offsetHeight || 280;
+    const left = Math.max(8, Math.min(x - num(rect.left), (rect.width || CANVAS_FALLBACK_W) - mw - 8));
+    const top = Math.max(8, Math.min(y - num(rect.top), (rect.height || CANVAS_FALLBACK_H) - mh - 8));
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    st.menu = menu;
+    const outside = (ev) => {
+      var _a3, _b3;
+      if (!st.menu) return;
+      if ((_b3 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b3.call(_a3, "#bz-kb-mt-ctx")) return;
+      closeMenu();
+    };
+    setOutsideHandler(outside);
+  }
+  function setOutsideHandler(fn) {
+    if (menuOutsideHandler) document.removeEventListener("pointerdown", menuOutsideHandler, true);
+    menuOutsideHandler = fn;
+    document.addEventListener("pointerdown", fn, true);
+  }
+  function closeMenu() {
+    var _a2;
+    const st = state2;
+    (_a2 = st == null ? void 0 : st.menu) == null ? void 0 : _a2.remove();
+    if (st) st.menu = null;
+    if (menuOutsideHandler) {
+      document.removeEventListener("pointerdown", menuOutsideHandler, true);
+      menuOutsideHandler = null;
+    }
+  }
+  function runMenuAction(st, act, node, ghost) {
+    if (act === "open") {
+      st.deps.openNote(node.path);
+      return;
+    }
+    if (act === "lit") {
+      const lit = st.tree.nodes.find((n) => n.attached && n.parent === node.id);
+      if (lit) st.deps.openNote(lit.path);
+      return;
+    }
+    if (act === "copy") {
+      const text = mountLinkText(node);
+      void st.deps.writeClipboard(text).then(() => st.deps.notice(`已复制：${text}`, "success")).catch(() => st.deps.notice("复制失败：剪贴板不可用", "error"));
+      return;
+    }
+    if (act === "root") {
+      void openMountTree(node.path, { direction: st.direction, deps: depsOf(st) });
+      return;
+    }
+    if (act === "who") {
+      void openMountTree(node.path, { direction: "upstream", deps: depsOf(st) });
+      return;
+    }
+    if (act === "why") {
+      if (ghost) st.deps.notice(`建议理由：${ghost.reason || "（无理由）"}`);
+      return;
+    }
+    if (act === "pin" && ghost) {
+      void pinSuggestion(st, ghost);
+      return;
+    }
+    if (act === "dismiss" && ghost) {
+      void dismissSuggestion(st, ghost);
+    }
+  }
+  async function pinSuggestion(st, ghost) {
+    var _a2, _b2;
+    const rootPath = st.tree.root;
+    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    const link = ghost.target.replace(/\.md$/i, "");
+    let found = false;
+    let changed = false;
+    try {
+      await enqueueFileTask(rootPath, async () => {
+        var _a3, _b3;
+        const file = (_b3 = (_a3 = app == null ? void 0 : app.vault) == null ? void 0 : _a3.getAbstractFileByPath) == null ? void 0 : _b3.call(_a3, rootPath);
+        if (!file) return;
+        found = true;
+        const text = await app.vault.read(file);
+        const next = insertLinkAtAnchor(text, ghost.anchor, link);
+        if (next !== text) {
+          await app.vault.modify(file, next);
+          changed = true;
+        }
+      });
+    } catch (e) {
+      st.deps.notice(`固定失败：${(_b2 = e == null ? void 0 : e.message) != null ? _b2 : String(e)}`, "error");
+      return;
+    }
+    if (!found) {
+      st.deps.notice("固定失败：读不到主卡文件", "error");
+      return;
+    }
+    try {
+      await markSuggestion(rootPath, ghost, "fixed", { app, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
+    } catch (e) {
+    }
+    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
+    st.ghosts.delete(ghostId(ghost));
+    st.deps.notice(
+      changed ? `已固定：正文写入 [[${link}]]` : `已固定：正文里已有 [[${link}]]，本次只留档`,
+      "success"
+    );
+    await rebuildTreeOnly(st);
+  }
+  function ghostId(ghost) {
+    return "ai:" + ghost.target;
+  }
+  async function dismissSuggestion(st, ghost) {
+    var _a2;
+    const rootPath = st.tree.root;
+    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    try {
+      await markSuggestion(rootPath, ghost, "dismissed", { app, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
+    } catch (e) {
+    }
+    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
+    st.deps.notice("已取消建议：永久不再推荐这条", "success");
+    await rebuildTreeOnly(st);
+  }
+  var MASK_ID, WIN_ID, ESC_ID, CANVAS_FALLBACK_W, CANVAS_FALLBACK_H, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP, ZOOM_FIT_MAX, FIT_PAD, DRAG_SLOP, LONG_PRESS_MS, LONG_PRESS_SLOP, DOCK_GAP, WIDTH_ROOT, WIDTH_BY_KIND, HEIGHT_BY_KIND, KIND_COLOR, KIND_LABEL, SOURCE_LABEL, state2, menuOutsideHandler;
+  var init_mount_canvas = __esm({
+    "src/knowledge/mount-canvas.ts"() {
+      init_fake_obsidian();
+      init_app();
+      init_esc_manager();
+      init_mobile();
+      init_notice();
+      init_settings_provider();
+      init_storage();
+      init_utils();
+      init_z_order();
+      init_mount_data();
+      init_mount_layout();
+      init_mount_route();
+      init_mount_suggest();
+      MASK_ID = "bz-kb-mt-mask";
+      WIN_ID = "bz-kb-mt-window";
+      ESC_ID = "bz-kb-mt";
+      CANVAS_FALLBACK_W = 960;
+      CANVAS_FALLBACK_H = 620;
+      ZOOM_MIN = 0.3;
+      ZOOM_MAX = 2.5;
+      ZOOM_STEP = 1.2;
+      ZOOM_FIT_MAX = 1.15;
+      FIT_PAD = 90;
+      DRAG_SLOP = 6;
+      LONG_PRESS_MS = 500;
+      LONG_PRESS_SLOP = 10;
+      DOCK_GAP = 8;
+      WIDTH_ROOT = 560;
+      WIDTH_BY_KIND = {
+        card: 470,
+        note: 430,
+        head: 400,
+        para: 380,
+        image: 320,
+        video: 320
+      };
+      HEIGHT_BY_KIND = {
+        card: 220,
+        note: 190,
+        head: 170,
+        para: 160,
+        image: 130,
+        video: 130
+      };
+      KIND_COLOR = {
+        note: "#5dcaa5",
+        head: "#6ea8e8",
+        card: "#a99ef0",
+        para: "#8b8c94",
+        image: "#d9a441",
+        video: "#d4537e"
+      };
+      KIND_LABEL = {
+        card: "卡片",
+        note: "整篇",
+        head: "标题",
+        para: "段落",
+        image: "图片",
+        video: "视频"
+      };
+      SOURCE_LABEL = {
+        self: "主卡",
+        sameName: "文献",
+        link: "双链",
+        related: "关联",
+        manual: "手动",
+        ai: "AI 建议"
+      };
+      state2 = null;
+      menuOutsideHandler = null;
+    }
+  });
+
   // src/knowledge/video-meta.ts
   function isBiliUrl(text) {
     const m = text.match(/^https?:\/\/([^/?#]+)/i);
@@ -20409,8 +23644,8 @@ ${sample}`,
     if (pages.length) meta.pages = pages;
     return meta.title || meta.uploader || meta.pages ? meta : null;
   }
-  function videoDataFromState(state2) {
-    const s = state2;
+  function videoDataFromState(state3) {
+    const s = state3;
     if (!s || typeof s !== "object") return null;
     if (s.videoData && typeof s.videoData === "object") return s.videoData;
     const v = s.video;
@@ -20481,8 +23716,8 @@ ${sample}`,
       return null;
     }
     if (!html) return null;
-    const state2 = extractInitialState(html);
-    const videoData = videoDataFromState(state2);
+    const state3 = extractInitialState(html);
+    const videoData = videoDataFromState(state3);
     const viaState = metaFromVideoData(videoData);
     const bvid = bvidFromOgUrl(html) || bvidFromVideoData(videoData);
     if (viaState) return { bvid: bvid || viaState.bvid || null, meta: viaState };
@@ -20837,7 +24072,7 @@ ${sample}`,
     const d2 = new Date(s);
     return d2.valueOf();
   }
-  function stripFrontmatter(text) {
+  function stripFrontmatter3(text) {
     const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
     return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
   }
@@ -20969,6 +24204,7 @@ ${sample}`,
       init_app();
       init_data7();
       init_processor2();
+      init_mount_canvas();
       init_note_gen();
       init_source();
       init_video_meta();
@@ -21175,6 +24411,9 @@ ${sample}`,
             const p = t.getAttribute("data-path") || "";
             const c = this.allCards.find((x) => x.path === p);
             if (c) void this.openPreview(c, "card");
+          } else if (act === "mount-tree") {
+            const p = t.getAttribute("data-path") || "";
+            if (p) void openMountTree(p);
           } else if (act === "topic-open") {
             const p = t.getAttribute("data-path") || "";
             const tp = this.allTopics.find((x) => x.path === p);
@@ -21227,9 +24466,9 @@ ${sample}`,
           const app = getApp();
           this.loadedLitDir = dir;
           const prefix = dir + "/";
-          const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+          const mdFiles2 = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
           const entries = [];
-          for (const f of mdFiles) {
+          for (const f of mdFiles2) {
             const e = await this.parseNoteFile(f);
             if (e) entries.push(e);
           }
@@ -21300,7 +24539,7 @@ ${sample}`,
           } catch (e) {
             raw = "";
           }
-          const body = stripFrontmatter(raw);
+          const body = stripFrontmatter3(raw);
           const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc2(b)}</p>`).join("") || "<p>（无正文）</p>";
           const rels = await this.noteRels(n);
           const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.url)}" href="#">${esc2(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.source)}" href="#">${esc2(n.sourceTitle || n.source)}</a></div>` : "";
@@ -21309,7 +24548,7 @@ ${sample}`,
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc2(n.title)}</span>
         <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
         <span class="bz-kb-dom">${esc2(n.domain || "未分类")}</span></div>
-      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc2(n.date || "")}</span></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc2(n.date || "")}</span><button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc2(n.path)}" title="以这篇为主卡打开挂载树">看挂载树</button></div>
       <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
@@ -21426,9 +24665,9 @@ ${sample}`,
           const app = getApp();
           this.loadedCardDir = dir;
           const prefix = dir + "/";
-          const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+          const mdFiles2 = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
           const out = [];
-          for (const f of mdFiles) {
+          for (const f of mdFiles2) {
             try {
               const cache = app.metadataCache.getFileCache(f);
               const fm = cache && cache.frontmatter || {};
@@ -21458,7 +24697,7 @@ ${sample}`,
           const shown = this.allCards.slice(0, this.cardsShown);
           const rows = shown.map((c) => `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc2(c.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}<span class="bz-kb-dom">${esc2(c.domain)}</span></div>
-      <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span></div>
+      <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span><button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc2(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
     </div>`).join("");
           const rest = this.allCards.length - shown.length;
           this.contentEl.innerHTML = `<div class="bz-kb-pd">
@@ -21481,8 +24720,8 @@ ${sample}`,
           const app = getApp();
           this.loadedTopicDir = dir;
           const prefix = dir + "/";
-          const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
-          const out = mdFiles.map((f) => {
+          const mdFiles2 = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+          const out = mdFiles2.map((f) => {
             var _a2;
             let created = 0;
             try {
@@ -22227,8 +25466,8 @@ ${sample}`,
             sel.innerHTML = pages.map((p) => `<option value="${p.page}">${esc2(this._pageLabel(p))}</option>`).join("");
             sel.value = String(this.addPage);
           }
-          const num = q(popup, "#lit-add-page-num");
-          if (num && !pages.length) num.value = this.addPage > 1 ? String(this.addPage) : "";
+          const num2 = q(popup, "#lit-add-page-num");
+          if (num2 && !pages.length) num2.value = this.addPage > 1 ? String(this.addPage) : "";
           this._rebuildBar();
           this._paintRange();
           this._renderQualitySelect(prevQuality);
@@ -23007,20 +26246,20 @@ ${sample}`,
         renderTermSrcChip(input) {
           const popup = this.termPopup;
           if (!popup) return;
-          const chip = q(popup, "#lit-term-src-chip");
-          if (!chip) return;
+          const chip2 = q(popup, "#lit-term-src-chip");
+          if (!chip2) return;
           const src = this.termSource;
           if (!src) {
-            chip.style.display = "none";
-            chip.textContent = "";
+            chip2.style.display = "none";
+            chip2.textContent = "";
             if (input) input.style.display = "";
             return;
           }
           const isNote = src.kind === "note";
           const label = isNote ? noteSourceName(src.path) : src.title || shortUrlText(src.url);
-          chip.title = isNote ? src.path : src.url;
-          chip.style.display = "inline-flex";
-          chip.innerHTML = `<b>${isNote ? "内 部" : "外 部"}</b><span>${esc2(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
+          chip2.title = isNote ? src.path : src.url;
+          chip2.style.display = "inline-flex";
+          chip2.innerHTML = `<b>${isNote ? "内 部" : "外 部"}</b><span>${esc2(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
           if (input) input.style.display = "none";
         }
         /** 预览属性卡第 4 行「来源」：有来源显行（可点开），无来源隐行 */
@@ -23358,7 +26597,7 @@ ${sample}`,
           var _a2, _b2, _c, _d;
           if (!this.termPopup || this.termGenerating) return;
           const mode = this.entryMode;
-          const source = this.termSource;
+          const source2 = this.termSource;
           if (!this.termPreview) {
             notice("请先点击「生成」获取预览", "info");
             return;
@@ -23396,7 +26635,7 @@ ${sample}`,
                 title,
                 summary,
                 domain,
-                source,
+                source: source2,
                 images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || "png" }))
               });
               emitDomainEvent("knowledge:tasks", { kind: "image-generated", title, notePath: path });
@@ -23404,7 +26643,7 @@ ${sample}`,
               this.clearEntryImage();
               notice("已生成图版文献笔记：" + title, "success");
             } else {
-              path = mode === "passage" ? await generatePassageNote({ title, summary, domain, source }) : await generateTermNote({ term, summary, domain, source });
+              path = mode === "passage" ? await generatePassageNote({ title, summary, domain, source: source2 }) : await generateTermNote({ term, summary, domain, source: source2 });
               emitDomainEvent("knowledge:tasks", mode === "passage" ? { kind: "passage-generated", title, notePath: path } : { kind: "term-generated", term, title: term, notePath: path });
               await this.commitEntryLinks(path);
               notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
@@ -23636,11 +26875,11 @@ ${sample}`,
       await writeNewsDataMerged({ set: { articles: list }, removeArticleKeys: [key] });
     });
   }
-  function buildReadEvt(raw, state2) {
-    return { title: raw.title, platform: raw.platform, state: state2, durationMin: durationMin() };
+  function buildReadEvt(raw, state3) {
+    return { title: raw.title, platform: raw.platform, state: state3, durationMin: durationMin() };
   }
-  function emitReadEvt(raw, state2) {
-    const evt = buildReadEvt(raw, state2);
+  function emitReadEvt(raw, state3) {
+    const evt = buildReadEvt(raw, state3);
     emitDomainEvent("news", { kind: "read", evt });
     return evt;
   }
@@ -24176,7 +27415,7 @@ ${sample}`,
     if (!railListEl) return;
     const arts = M5.articles;
     const clipNotes = M5.clipNotes || [];
-    const countOf = (source) => queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, source, M5.upInfo).filter(matchesSearch).length;
+    const countOf = (source2) => queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, source2, M5.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
     let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M5.sel.kind === "all", "");
     for (const row of aggregateSites(arts, clipNotes, new Set((M5.sidecar.savedArchive || []).map((x) => x.url)), M5.clipUrls)) {
@@ -24217,13 +27456,13 @@ ${sample}`,
         return;
       }
       if (!sel) return;
-      const source = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : sel.kind === "site" ? { kind: "site", site: String(sel.site || "") } : { kind: "all" };
-      const actions = buildRailActions(String(row.title || ""), source);
+      const source2 = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : sel.kind === "site" ? { kind: "site", site: String(sel.site || "") } : { kind: "all" };
+      const actions = buildRailActions(String(row.title || ""), source2);
       if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ""), menuClass: "bz-clip-menu-editorial" });
     });
   }
-  function buildRailActions(label, source) {
-    const unreadList = queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], source, M5.upInfo).filter((a) => a.origin === "news");
+  function buildRailActions(label, source2) {
+    const unreadList = queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], source2, M5.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -25353,7 +28592,7 @@ ${sample}`,
       console.error("[favorites-load]", e);
     }
   }
-  async function reload() {
+  async function reload2() {
     var _a2;
     await loadItems();
     (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
@@ -25391,7 +28630,7 @@ ${sample}`,
         it.pinned = prev;
         notifySaveError(e, "置顶收藏");
       }).finally(() => {
-        void reload();
+        void reload2();
       });
     } else if (spec.act === "edit") {
       openForm2(it);
@@ -25464,13 +28703,13 @@ ${sample}`,
     try {
       await dataManagerOf().update(it.id, { archived: true, archivedAt: localNow() });
       emitDomainEvent("favorites", { kind: "archive", title: it.title });
-      await reload();
+      await reload2();
       notifyUndo(`已归档收藏「${it.title}」`, () => {
         void (async () => {
           try {
             await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
             emitDomainEvent("favorites", { kind: "unarchive", title: it.title });
-            await reload();
+            await reload2();
           } catch (e) {
             notifySaveError(e, "恢复收藏");
           }
@@ -25484,7 +28723,7 @@ ${sample}`,
     try {
       await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
       emitDomainEvent("favorites", { kind: "unarchive", title: it.title });
-      await reload();
+      await reload2();
       notice(`已取消归档，「${it.title}」回到主列表`, "success");
     } catch (e) {
       notifySaveError(e, "取消归档");
@@ -25495,12 +28734,12 @@ ${sample}`,
     try {
       await dataManagerOf().delete(it.id);
       emitDomainEvent("favorites", { kind: "delete", title: it.title });
-      await reload();
+      await reload2();
       notifyUndo(`已删除收藏「${it.title}」`, () => {
         void (async () => {
           try {
             await dataManagerOf().restoreItem(snapshot2);
-            await reload();
+            await reload2();
           } catch (e) {
             notifySaveError(e, "恢复收藏");
           }
@@ -25783,7 +29022,7 @@ GitHub 仓库：${ghInfo.title}
         emitDomainEvent("favorites", { kind: "add", item: data });
       }
       closeForm(popup);
-      await reload();
+      await reload2();
     } catch (e) {
       notice(`保存失败：${(e == null ? void 0 : e.message) || "未知错误"}`, "error");
       saveBtn.disabled = false;
@@ -26097,14 +29336,14 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/review/fsrs.ts
-  function scheduleNext(state2, rating, now, w = DEFAULT_W) {
+  function scheduleNext(state3, rating, now, w = DEFAULT_W) {
     const fsrs = new FSRS(w);
-    if (state2.phase !== "fsrs" && state2.stage < LADDER_MAX) {
+    if (state3.phase !== "fsrs" && state3.stage < LADDER_MAX) {
       let target;
-      if (rating === "again") target = Math.max(0, state2.stage - 1);
-      else if (rating === "hard") target = state2.stage;
-      else if (rating === "good") target = state2.stage + 1;
-      else target = state2.stage + 2;
+      if (rating === "again") target = Math.max(0, state3.stage - 1);
+      else if (rating === "hard") target = state3.stage;
+      else if (rating === "good") target = state3.stage + 1;
+      else target = state3.stage + 2;
       target = Math.max(0, Math.min(target, LADDER_MAX));
       if (target >= LADDER_MAX) {
         const S2 = fsrs.initS(rating);
@@ -26137,20 +29376,20 @@ GitHub 仓库：${ghInfo.title}
         historyDifficulty: null
       };
     }
-    const S = state2.stability || 1;
-    const D = state2.difficulty || 0.3;
-    const last = state2.lastReviewed || state2.reviewStart;
+    const S = state3.stability || 1;
+    const D = state3.difficulty || 0.3;
+    const last = state3.lastReviewed || state3.reviewStart;
     const t = last ? (now.getTime() - new Date(last).getTime()) / 864e5 : 0;
     const R = fsrs.R(t, S);
     const result = fsrs.nextInterval(S, D, rating, R);
     return {
-      stage: state2.stage,
+      stage: state3.stage,
       phase: "fsrs",
       stability: Math.round(result.S * 100) / 100,
       difficulty: Math.round(result.D * 100) / 100,
       intervalDays: result.days,
       enteringFsrs: false,
-      historyStage: state2.stage + 1,
+      historyStage: state3.stage + 1,
       R,
       historyStability: Math.round(result.S * 100) / 100,
       historyDifficulty: Math.round(result.D * 100) / 100
@@ -26222,8 +29461,8 @@ GitHub 仓库：${ghInfo.title}
     if (!data || !Array.isArray(data.w) || data.w.length < 8) return null;
     return data;
   }
-  async function saveFittedParams(app, fit) {
-    await enqueueFileTask(getReviewFitFilePath(), () => jsonFileStore(getReviewFitFilePath()).write(fit));
+  async function saveFittedParams(app, fit2) {
+    await enqueueFileTask(getReviewFitFilePath(), () => jsonFileStore(getReviewFitFilePath()).write(fit2));
   }
   var ReviewDataManager;
   var init_data8 = __esm({
@@ -29321,12 +32560,12 @@ ${n.content.slice(0, 2e3)}
     uiManager: () => uiManager2,
     unloadReview: () => unloadReview
   });
-  function listen(source, event, cb) {
-    const ref = source.on(event, cb);
+  function listen(source2, event, cb) {
+    const ref = source2.on(event, cb);
     if (!ref) return;
     unsubscribers.push(() => {
       var _a2;
-      return (_a2 = source.offref) == null ? void 0 : _a2.call(source, ref);
+      return (_a2 = source2.offref) == null ? void 0 : _a2.call(source2, ref);
     });
   }
   function listenBus(channel, cb) {
@@ -29620,8 +32859,8 @@ ${n.content.slice(0, 2e3)}
         /** ADR-0077：加载拟合参数到 _fittedW（无则 null 回退默认）；ensureReview 启动时调用 */
         async loadFitParams(app) {
           try {
-            const fit = await loadFittedParams(app);
-            this._fittedW = fit ? mergeFittedW(fit.w) : null;
+            const fit2 = await loadFittedParams(app);
+            this._fittedW = fit2 ? mergeFittedW(fit2.w) : null;
           } catch (e) {
             this._fittedW = null;
           }
@@ -30418,22 +33657,22 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
     let anyLegacy = false;
-    const store3 = emptyStore();
+    const store2 = emptyStore();
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
       const raw = await readJsonIfExists(app, legacyPath).catch(() => null);
       if (raw === null) continue;
       anyLegacy = true;
-      if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store3.meta = raw;
-      else if (name === "secondbrain_panel.json" && raw && typeof raw === "object") store3.panel = raw;
+      if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store2.meta = raw;
+      else if (name === "secondbrain_panel.json" && raw && typeof raw === "object") store2.panel = raw;
       else if (name === "secondbrain_link_queue.json") {
-        if (Array.isArray(raw)) store3.link.queue = raw;
+        if (Array.isArray(raw)) store2.link.queue = raw;
       } else if (name === "secondbrain_link_state.json") {
-        if (raw && typeof raw === "object" && !Array.isArray(raw)) store3.link.state = raw;
+        if (raw && typeof raw === "object" && !Array.isArray(raw)) store2.link.state = raw;
       }
     }
     if (!anyLegacy) return false;
-    await adapter.write(storePath, JSON.stringify(store3));
+    await adapter.write(storePath, JSON.stringify(store2));
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
       try {
@@ -30507,10 +33746,10 @@ ${n.content.slice(0, 2e3)}
         queue2.push(q2);
       }
     }
-    const state2 = { ...primary.link.state };
+    const state3 = { ...primary.link.state };
     for (const [path, s] of Object.entries(conflict.link.state)) {
-      const cur = state2[path];
-      if (!cur || s.linkedAt && (!cur.linkedAt || s.linkedAt > cur.linkedAt)) state2[path] = s;
+      const cur = state3[path];
+      if (!cur || s.linkedAt && (!cur.linkedAt || s.linkedAt > cur.linkedAt)) state3[path] = s;
     }
     const histSeen = new Set(primary.chatHistory.map((e) => e.role + "\0" + e.content));
     const chatHistory = [...primary.chatHistory];
@@ -30522,7 +33761,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     const chatTrimmed = chatHistory.slice(-CHAT_HISTORY_LIMIT);
-    return { version: primary.version, meta, panel, link: { queue: queue2, state: state2 }, chatHistory: chatTrimmed };
+    return { version: primary.version, meta, panel, link: { queue: queue2, state: state3 }, chatHistory: chatTrimmed };
   }
   function buildRowOffsets(meta) {
     const map = /* @__PURE__ */ new Map();
@@ -30660,23 +33899,23 @@ ${n.content.slice(0, 2e3)}
       }
     }
   }
-  async function reconcileConflicts(a, store3) {
+  async function reconcileConflicts(a, store2) {
     var _a2;
     const adapter = (_a2 = a == null ? void 0 : a.vault) == null ? void 0 : _a2.adapter;
-    if (!adapter || typeof adapter.list !== "function") return store3;
+    if (!adapter || typeof adapter.list !== "function") return store2;
     let listed = [];
     try {
       const r = await adapter.list(storeDir());
       listed = Array.isArray(r == null ? void 0 : r.files) ? r.files : [];
     } catch (e) {
-      return store3;
+      return store2;
     }
     const conflictJson = listed.filter((f) => isConflictJsonName(f.split("/").pop() || f));
     const conflictVec = listed.filter((f) => isConflictVecName(f.split("/").pop() || f));
-    if (!conflictJson.length && !conflictVec.length) return store3;
-    const primaryMeta = store3.meta;
+    if (!conflictJson.length && !conflictVec.length) return store2;
+    const primaryMeta = store2.meta;
     const conflictMetas = [];
-    let merged = store3;
+    let merged = store2;
     let jsonMerged = false;
     for (const name of conflictJson) {
       try {
@@ -30759,8 +33998,8 @@ ${n.content.slice(0, 2e3)}
   }
   async function readStoreRaw(app) {
     const a = resolveApp(app);
-    const store3 = await readStoreRawInner(a);
-    return reconcileConflicts(a, store3);
+    const store2 = await readStoreRawInner(a);
+    return reconcileConflicts(a, store2);
   }
   async function saveStoreRaw(data, app) {
     var _a2;
@@ -31276,7 +34515,7 @@ ${n.content.slice(0, 2e3)}
       init_render13();
       init_render13();
       SecondBrainPanel = class {
-        constructor(app, store3, opts) {
+        constructor(app, store2, opts) {
           this.mask = null;
           this.popup = null;
           /** ESC 层级句柄（ticket 141 迁移：原私挂 document keydown 废弃） */
@@ -31289,7 +34528,7 @@ ${n.content.slice(0, 2e3)}
           /** 设置页「重新索引」意图标记（ticket 108：确认后打开面板即自动全量重建） */
           this.rebuildRequested = false;
           this.app = app;
-          this.store = store3;
+          this.store = store2;
           this.opts = opts;
         }
         /** 设置页「重新索引」调用（index.ts 入口转发）：标记意图后打开面板自动跑 */
@@ -31698,17 +34937,17 @@ ${n.content.slice(0, 2e3)}
         async loadSummaryAndLinks() {
           var _a2, _b2, _c;
           try {
-            const store3 = await loadStore(this.app);
+            const store2 = await loadStore(this.app);
             const popup = this.popup;
             if (!popup || !popup.isConnected) return;
-            const summary = ((_a2 = store3.panel) == null ? void 0 : _a2.summary) || "";
+            const summary = ((_a2 = store2.panel) == null ? void 0 : _a2.summary) || "";
             const aiCard = popup.querySelector("#bz-sb-ai-card");
             const aiTxt = popup.querySelector("#bz-sb-ai-txt");
             if (aiCard) aiCard.style.display = summary ? "" : "none";
             if (aiTxt && summary) {
-              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store3.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store3.panel.generatedAt) : "");
+              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store2.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store2.panel.generatedAt) : "");
             }
-            const linkedTotal = Object.keys(((_c = store3.link) == null ? void 0 : _c.state) || {}).length;
+            const linkedTotal = Object.keys(((_c = store2.link) == null ? void 0 : _c.state) || {}).length;
             const log = popup.querySelector("#bz-sb-log");
             if (log && linkedTotal) {
               log.insertAdjacentHTML(
@@ -32638,8 +35877,8 @@ ${n.content.slice(0, 2e3)}
               }
             }
             if (!manifestSaved && note) {
-              const ghostId = note.id;
-              const idx = this.manifest.notes.findIndex((n) => n.id === ghostId);
+              const ghostId2 = note.id;
+              const idx = this.manifest.notes.findIndex((n) => n.id === ghostId2);
               if (idx !== -1) this.manifest.notes.splice(idx, 1);
             }
             throw e;
@@ -33898,28 +37137,28 @@ ${n.content.slice(0, 2e3)}
     search.setAttribute("aria-label", "搜索密码条目");
     const listEl2 = document.createElement("div");
     listEl2.className = "bz-encrypt-pwqp-list";
-    const state2 = { hits: [], active: 0 };
+    const state3 = { hits: [], active: 0 };
     const setActive = (i) => {
       var _a2;
-      if (!state2.hits.length) return;
-      state2.active = Math.max(0, Math.min(state2.hits.length - 1, i));
+      if (!state3.hits.length) return;
+      state3.active = Math.max(0, Math.min(state3.hits.length - 1, i));
       listEl2.querySelectorAll(".bz-popover-item").forEach((el, k) => {
-        el.classList.toggle("is-on", k === state2.active);
+        el.classList.toggle("is-on", k === state3.active);
       });
       (_a2 = listEl2.querySelector(".bz-popover-item.is-on")) == null ? void 0 : _a2.scrollIntoView({ block: "nearest" });
     };
     const renderList2 = () => {
       listEl2.innerHTML = "";
-      state2.hits = fuzzyFilterEntries(entries, search.value.trim());
-      state2.active = 0;
-      if (!state2.hits.length) {
+      state3.hits = fuzzyFilterEntries(entries, search.value.trim());
+      state3.active = 0;
+      if (!state3.hits.length) {
         const empty = document.createElement("div");
         empty.className = "bz-popover-empty";
         empty.textContent = "没有匹配的密码条目";
         listEl2.appendChild(empty);
         return;
       }
-      const shown = state2.hits.slice(0, LIMIT);
+      const shown = state3.hits.slice(0, LIMIT);
       shown.forEach((d, i) => {
         const row = document.createElement("div");
         row.className = "bz-popover-item" + (i === 0 ? " is-on" : "");
@@ -33945,10 +37184,10 @@ ${n.content.slice(0, 2e3)}
         });
         listEl2.appendChild(row);
       });
-      if (state2.hits.length > LIMIT) {
+      if (state3.hits.length > LIMIT) {
         const more = document.createElement("div");
         more.className = "bz-popover-empty";
-        more.textContent = `已显示前 ${LIMIT} 条（共 ${state2.hits.length} 条命中），请输入关键词缩小范围`;
+        more.textContent = `已显示前 ${LIMIT} 条（共 ${state3.hits.length} 条命中），请输入关键词缩小范围`;
         listEl2.appendChild(more);
       }
     };
@@ -33956,13 +37195,13 @@ ${n.content.slice(0, 2e3)}
     search.addEventListener("keydown", (e) => {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setActive(state2.active + 1);
+        setActive(state3.active + 1);
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setActive(state2.active - 1);
+        setActive(state3.active - 1);
       } else if (e.key === "Enter") {
         e.preventDefault();
-        const d = state2.hits[state2.active];
+        const d = state3.hits[state3.active];
         if (d) {
           closePasswordQuickPicker();
           onPick(d);
@@ -34156,13 +37395,13 @@ ${n.content.slice(0, 2e3)}
       (list || []).forEach((s) => {
         const card = document.createElement("div");
         card.className = "bz-lockscreen-stat";
-        const num = document.createElement("b");
-        num.className = "bz-lockscreen-num";
-        num.textContent = s.num;
+        const num2 = document.createElement("b");
+        num2.className = "bz-lockscreen-num";
+        num2.textContent = s.num;
         const lab = document.createElement("span");
         lab.className = "bz-lockscreen-label";
         lab.textContent = s.label;
-        card.appendChild(num);
+        card.appendChild(num2);
         card.appendChild(lab);
         statsWrap.appendChild(card);
       });
@@ -36816,628 +40055,6 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
-  // src/secondbrain/binary.ts
-  var init_binary = __esm({
-    "src/secondbrain/binary.ts"() {
-    }
-  });
-
-  // src/secondbrain/chunk.ts
-  var init_chunk = __esm({
-    "src/secondbrain/chunk.ts"() {
-      init_utils();
-    }
-  });
-
-  // src/secondbrain/vptree.ts
-  var init_vptree = __esm({
-    "src/secondbrain/vptree.ts"() {
-    }
-  });
-
-  // src/secondbrain/parallel.ts
-  var init_parallel = __esm({
-    "src/secondbrain/parallel.ts"() {
-    }
-  });
-
-  // src/secondbrain/tfidf.ts
-  var TFIDF_STOP_WORDS, STOP_SET;
-  var init_tfidf = __esm({
-    "src/secondbrain/tfidf.ts"() {
-      TFIDF_STOP_WORDS = "的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等";
-      STOP_SET = new Set(TFIDF_STOP_WORDS);
-    }
-  });
-
-  // src/secondbrain/text-search.ts
-  var STOP_WORDS;
-  var init_text_search = __esm({
-    "src/secondbrain/text-search.ts"() {
-      STOP_WORDS = new Set("的了是在我有和人这中大为上个国不以到说时要就出会也年对自其");
-    }
-  });
-
-  // src/secondbrain/ollama.ts
-  var init_ollama = __esm({
-    "src/secondbrain/ollama.ts"() {
-      init_config4();
-    }
-  });
-
-  // src/secondbrain/vector-store.ts
-  var init_vector_store = __esm({
-    "src/secondbrain/vector-store.ts"() {
-      init_config4();
-      init_store_file();
-      init_binary();
-      init_chunk();
-      init_vptree();
-      init_parallel();
-      init_tfidf();
-      init_text_search();
-      init_ollama();
-      init_utils();
-    }
-  });
-
-  // src/secondbrain/ai.ts
-  var init_ai3 = __esm({
-    "src/secondbrain/ai.ts"() {
-      init_ai();
-    }
-  });
-
-  // src/secondbrain/ui-tools.ts
-  var init_ui_tools = __esm({
-    "src/secondbrain/ui-tools.ts"() {
-      init_fake_obsidian();
-      init_app();
-    }
-  });
-
-  // src/secondbrain/float-window.ts
-  var init_float_window = __esm({
-    "src/secondbrain/float-window.ts"() {
-      init_esc_manager();
-      init_z_order();
-      init_ui_tools();
-    }
-  });
-
-  // src/secondbrain/context.ts
-  var init_context = __esm({
-    "src/secondbrain/context.ts"() {
-    }
-  });
-
-  // src/secondbrain/reference-panel.ts
-  var init_reference_panel = __esm({
-    "src/secondbrain/reference-panel.ts"() {
-      init_utils();
-      init_notice();
-      init_z_order();
-      init_float_window();
-      init_config4();
-      init_context();
-      init_ui_tools();
-      init_render13();
-      init_ui();
-    }
-  });
-
-  // src/secondbrain/chat-panel.ts
-  var init_chat_panel = __esm({
-    "src/secondbrain/chat-panel.ts"() {
-      init_dom();
-      init_esc_manager();
-      init_flow_dialog();
-      init_ui();
-      init_config4();
-      init_ui_tools();
-      init_ai3();
-      init_store_file();
-      init_render13();
-    }
-  });
-
-  // src/secondbrain/mobile-panel.ts
-  var init_mobile_panel = __esm({
-    "src/secondbrain/mobile-panel.ts"() {
-      init_utils();
-      init_esc_manager();
-      init_notice();
-      init_ui();
-      init_config4();
-      init_z_order();
-      init_context();
-      init_ui_tools();
-      init_ai3();
-      init_render13();
-      init_store_file();
-    }
-  });
-
-  // src/secondbrain/link-agent/data.ts
-  var init_data10 = __esm({
-    "src/secondbrain/link-agent/data.ts"() {
-      init_utils();
-      init_store_file();
-      init_settings_provider();
-    }
-  });
-
-  // src/secondbrain/link-agent/pipeline.ts
-  var JUDGE_PROMPT_PREFIX;
-  var init_pipeline = __esm({
-    "src/secondbrain/link-agent/pipeline.ts"() {
-      init_utils();
-      init_notice();
-      init_settings_provider();
-      init_config4();
-      init_ai3();
-      init_data10();
-      JUDGE_PROMPT_PREFIX = [
-        "你是笔记库的双链裁判。给定一篇新笔记的档案卡和若干候选笔记的档案卡，",
-        "逐一判断候选与新笔记是否存在实质的知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。",
-        "标准：只链实质关联，存疑不链；宁缺勿滥。",
-        '输出要求：严格 JSON 数组 [{"id":<候选编号>,"reason":"一句话理由"}]，按关联强度降序；无关联输出 []；不要输出 JSON 以外的任何文字。'
-      ].join("");
-    }
-  });
-
-  // src/secondbrain/link-agent/watch.ts
-  var LINK_SWEEP_INTERVAL_MS;
-  var init_watch2 = __esm({
-    "src/secondbrain/link-agent/watch.ts"() {
-      init_domain_bus();
-      init_notice();
-      init_settings_provider();
-      init_config4();
-      init_data10();
-      init_pipeline();
-      LINK_SWEEP_INTERVAL_MS = 30 * 60 * 1e3;
-    }
-  });
-
-  // src/secondbrain/index.ts
-  function exportVectorSearch() {
-    if (!store2) return null;
-    const s = store2;
-    return {
-      isIndexReady: () => s.isIndexReady(),
-      search: (query, topK) => s.search(query, topK)
-    };
-  }
-  var store2;
-  var init_secondbrain = __esm({
-    "src/secondbrain/index.ts"() {
-      init_domain_bus();
-      init_notice();
-      init_link_now();
-      init_settings_provider();
-      init_config4();
-      init_vector_store();
-      init_ai3();
-      init_panel();
-      init_reference_panel();
-      init_chat_panel();
-      init_mobile_panel();
-      init_pipeline();
-      init_watch2();
-      store2 = null;
-    }
-  });
-
-  // src/knowledge/mount-suggest.ts
-  var mount_suggest_exports = {};
-  __export(mount_suggest_exports, {
-    SUGGEST_CACHE_FILE: () => SUGGEST_CACHE_FILE,
-    SUGGEST_MAX_ANCHORS: () => SUGGEST_MAX_ANCHORS,
-    SUGGEST_MAX_CANDIDATES: () => SUGGEST_MAX_CANDIDATES,
-    SUGGEST_MIN_ANCHOR_CHARS: () => SUGGEST_MIN_ANCHOR_CHARS,
-    SUGGEST_MIN_SCORE: () => SUGGEST_MIN_SCORE,
-    SUGGEST_PER_ANCHOR_CANDIDATES: () => SUGGEST_PER_ANCHOR_CANDIDATES,
-    SUGGEST_TOPK: () => SUGGEST_TOPK,
-    cacheValid: () => cacheValid,
-    clearSuggestCache: () => clearSuggestCache,
-    filterSuggestions: () => filterSuggestions,
-    generateSuggestions: () => generateSuggestions,
-    markSuggestion: () => markSuggestion,
-    mergeSuggestions: () => mergeSuggestions,
-    readSuggestCache: () => readSuggestCache,
-    splitAnchors: () => splitAnchors,
-    suggestKey: () => suggestKey
-  });
-  function nextIsBoundary(text, i) {
-    if (i >= text.length) return true;
-    return /\s/.test(text[i]);
-  }
-  function wikiDisplay(inner) {
-    const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : inner;
-    const afterBlock = afterAlias.includes("^") ? afterAlias.slice(0, afterAlias.indexOf("^")) : afterAlias;
-    const noHead = afterBlock.includes("#") ? afterBlock.slice(afterBlock.lastIndexOf("#") + 1) : afterBlock;
-    return noHead || afterAlias || inner;
-  }
-  function cleanAnchorText(raw) {
-    return raw.replace(/!\[\[[^\[\]]*\]\]/g, " ").replace(/\[\[([^\[\]]+)\]\]/g, (_m, inner) => wikiDisplay(inner)).replace(/`+/g, "").replace(/\*\*|__/g, "").replace(/\s+/g, " ").trim();
-  }
-  function pushAnchor(out, text, from, to) {
-    let s = from;
-    let e = to;
-    while (s < e && /\s/.test(text[s])) s++;
-    while (e > s && /\s/.test(text[e - 1])) e--;
-    const lead = text.slice(s, e).match(LEADING_MARK_RE);
-    if (lead) s += lead[0].length;
-    if (s >= e) return;
-    const cleaned = cleanAnchorText(text.slice(s, e));
-    if (!cleaned) return;
-    if ([...cleaned].length < SUGGEST_MIN_ANCHOR_CHARS) return;
-    if (!HAS_MEANING_RE.test(cleaned)) return;
-    out.push({ from: s, to: e, text: cleaned });
-  }
-  function splitAnchors(body) {
-    const text = String(body != null ? body : "");
-    const out = [];
-    let start = 0;
-    for (let i = 0; i <= text.length; i++) {
-      const ch = i === text.length ? "" : text[i];
-      let boundary = i === text.length;
-      if (!boundary) {
-        if (ch === "\n" || ch === "。" || ch === "！" || ch === "？" || ch === "；" || ch === "…" || ch === "!") boundary = true;
-        else if (ch === "." || ch === "?" || ch === ";") boundary = nextIsBoundary(text, i + 1);
-      }
-      if (!boundary) continue;
-      pushAnchor(out, text, start, i);
-      start = i + 1;
-    }
-    return out;
-  }
-  function normalizeAnchorText(text) {
-    return String(text != null ? text : "").replace(/\s+/g, " ").replace(/^[\s"'“”‘’《》〈〉「」『』]+/, "").replace(/[\s"'“”‘’《》〈〉「」『』]+$/, "").trim().toLowerCase();
-  }
-  function normalizeTargetPath(path) {
-    return String(path != null ? path : "").replace(/\\/g, "/").replace(/^\.\//, "").replace(/\.md$/i, "").trim().toLowerCase();
-  }
-  function suggestKey(s) {
-    var _a2;
-    return normalizeAnchorText((_a2 = s.anchor) == null ? void 0 : _a2.text) + "\0" + normalizeTargetPath(s.target);
-  }
-  function matchesExisting(target, existing) {
-    const t = normalizeTargetPath(target);
-    if (!t) return false;
-    const tBase = t.includes("/") ? t.slice(t.lastIndexOf("/") + 1) : t;
-    for (const raw of existing) {
-      const e = normalizeTargetPath(raw);
-      if (!e) continue;
-      if (e === t || e === tBase) return true;
-    }
-    return false;
-  }
-  function filterSuggestions(list, opts) {
-    const dismissed = new Set(((opts == null ? void 0 : opts.dismissed) || []).map((k) => String(k).trim().toLowerCase()));
-    const existing = (opts == null ? void 0 : opts.existing) || [];
-    const minScore = Number.isFinite(opts == null ? void 0 : opts.minScore) ? Number(opts == null ? void 0 : opts.minScore) : SUGGEST_MIN_SCORE;
-    const seen = /* @__PURE__ */ new Set();
-    const out = [];
-    for (const s of list || []) {
-      if (!s || !s.target) continue;
-      if (s.state === "dismissed" || s.state === "fixed") continue;
-      if (!(Number(s.score) >= minScore)) continue;
-      const key = suggestKey(s);
-      if (dismissed.has(key) || seen.has(key)) continue;
-      if (existing.length > 0 && matchesExisting(s.target, existing)) continue;
-      seen.add(key);
-      out.push(s);
-    }
-    return out;
-  }
-  function cacheStore() {
-    return jsonFileStore(storageFile(SUGGEST_CACHE_FILE), { defaultValue: () => ({ cards: {} }) });
-  }
-  async function readSuggestCache() {
-    const data = await cacheStore().read();
-    const cards = data && typeof data === "object" && data.cards && typeof data.cards === "object" && !Array.isArray(data.cards) ? data.cards : {};
-    return { cards };
-  }
-  function mutateSuggestCache(fn) {
-    const path = storageFile(SUGGEST_CACHE_FILE);
-    return enqueueFileTask(path, async () => {
-      const file = await readSuggestCache();
-      const result = await fn(file);
-      await cacheStore().write(file);
-      return result;
-    });
-  }
-  async function clearSuggestCache() {
-    await mutateSuggestCache((file) => {
-      for (const [path, entry] of Object.entries(file.cards || {})) {
-        const kept = ((entry == null ? void 0 : entry.suggestions) || []).filter((s) => s && s.state !== "pending");
-        if (kept.length === 0) delete file.cards[path];
-        else file.cards[path] = { bodyHash: "", generatedAt: 0, suggestions: kept };
-      }
-    });
-  }
-  function cacheValid(entry, bodyHash) {
-    return !!entry && !!bodyHash && typeof entry.bodyHash === "string" && entry.bodyHash === bodyHash;
-  }
-  function collectDismissedKeys(file) {
-    const out = [];
-    for (const entry of Object.values(file.cards || {})) {
-      for (const s of (entry == null ? void 0 : entry.suggestions) || []) {
-        if ((s == null ? void 0 : s.state) === "dismissed") out.push(suggestKey(s));
-      }
-    }
-    return out;
-  }
-  function collectFixedKeys(entry) {
-    return ((entry == null ? void 0 : entry.suggestions) || []).filter((s) => (s == null ? void 0 : s.state) === "fixed").map(suggestKey);
-  }
-  function persistCardCache(cardPath, bodyHash, generatedAt, suggestions) {
-    return mutateSuggestCache((file) => {
-      const prev = file.cards[cardPath];
-      const kept = ((prev == null ? void 0 : prev.suggestions) || []).filter((s) => s && s.state !== "pending");
-      const keptKeys = new Set(kept.map(suggestKey));
-      const fresh = suggestions.filter((s) => !keptKeys.has(suggestKey(s)));
-      file.cards[cardPath] = { bodyHash, generatedAt, suggestions: [...kept, ...fresh] };
-    }).then(() => void 0);
-  }
-  async function markSuggestion(cardPath, s, state2, ctx) {
-    if (!cardPath || !s || !s.target) return;
-    const key = suggestKey(s);
-    const now = Date.now();
-    await mutateSuggestCache((file) => {
-      const prev = file.cards[cardPath];
-      const entry = prev && typeof prev === "object" && Array.isArray(prev.suggestions) ? prev : { bodyHash: "", generatedAt: now, suggestions: [] };
-      const idx = entry.suggestions.findIndex((it) => suggestKey(it) === key);
-      const marked = { ...idx >= 0 ? entry.suggestions[idx] : s, state: state2 };
-      if (idx >= 0) entry.suggestions[idx] = marked;
-      else entry.suggestions.push(marked);
-      file.cards[cardPath] = entry;
-    });
-  }
-  function stripFrontmatter2(content) {
-    return String(content != null ? content : "").replace(/^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, "");
-  }
-  function kindOfTarget(path, ctx) {
-    if (isUnderFolder((ctx == null ? void 0 : ctx.cardboxDir) || "", path)) return "card";
-    if (isUnderFolder((ctx == null ? void 0 : ctx.litDir) || "", path)) return "para";
-    return "note";
-  }
-  function displayName(path) {
-    const base = String(path || "").split("/").pop() || String(path || "");
-    return stripMdExt(base);
-  }
-  function collectExistingTargets(body) {
-    const text = String(body != null ? body : "");
-    const out = [];
-    WIKILINK_RE.lastIndex = 0;
-    let m;
-    while ((m = WIKILINK_RE.exec(text)) !== null) {
-      const target = m[1].split("|")[0].split("#")[0].trim();
-      if (target) out.push(target);
-    }
-    return out;
-  }
-  function buildJudgePrompt(anchors, candidates) {
-    const lines = [JUDGE_PROMPT_PREFIX2, "", "## 锚点与候选"];
-    for (let i = 0; i < anchors.length; i++) {
-      lines.push(`### a${i + 1}：${anchors[i].text}`);
-      const group = candidates.filter((c) => c.anchorIdx === i);
-      if (group.length === 0) {
-        lines.push("-（无候选）");
-        continue;
-      }
-      for (const c of group) {
-        const snippet = c.snippet ? "｜" + c.snippet.replace(/\s+/g, " ") : "";
-        lines.push(`- t${c.localIdx + 1}：${displayName(c.path)}（${c.path}）${snippet}`);
-      }
-    }
-    return lines.join("\n");
-  }
-  function parseJudgePicks(raw) {
-    var _a2;
-    const cleaned = String(raw || "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
-    let arr = null;
-    try {
-      arr = JSON.parse(cleaned);
-    } catch (e) {
-      const m = cleaned.match(/\[[\s\S]*\]/);
-      if (m) {
-        try {
-          arr = JSON.parse(m[0]);
-        } catch (e2) {
-          arr = null;
-        }
-      }
-    }
-    if (!Array.isArray(arr)) return [];
-    const out = [];
-    for (const item of arr) {
-      const it = item;
-      if (!it || typeof it !== "object") continue;
-      const anchor = Number(it.anchor);
-      const target = Number(it.target);
-      const score = Number(it.score);
-      if (!Number.isInteger(anchor) || !Number.isInteger(target) || !Number.isFinite(score)) continue;
-      out.push({
-        anchor,
-        target,
-        score: Math.max(0, Math.min(1, score)),
-        reason: String((_a2 = it.reason) != null ? _a2 : "").replace(/\s+/g, " ").trim().slice(0, REASON_MAX_CHARS)
-      });
-    }
-    return out;
-  }
-  async function generateSuggestions(cardPath, ctx, opts) {
-    var _a2, _b2, _c, _d;
-    const empty = (status) => ({ status, suggestions: [] });
-    if (isMobileEnv()) return empty("no-index");
-    const searchApi = exportVectorSearch();
-    if (!searchApi || !searchApi.isIndexReady()) return empty("no-index");
-    const auto = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeMountAutoSuggest) !== false;
-    if (!auto && !(opts == null ? void 0 : opts.force)) return empty("off");
-    try {
-      await getAIProvider();
-    } catch (e) {
-      return empty("no-ai");
-    }
-    const file = (_d = (_c = (_b2 = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b2.vault) == null ? void 0 : _c.getAbstractFileByPath) == null ? void 0 : _d.call(_c, cardPath);
-    let content = "";
-    if (file) {
-      try {
-        content = await ctx.app.vault.read(file);
-      } catch (e) {
-        console.warn("[mount-suggest] 主卡读取失败", e);
-      }
-    }
-    const body = stripFrontmatter2(content);
-    if (!body.trim()) return empty("fresh");
-    const bodyHash = String(hash31(body));
-    const cacheFile = await readSuggestCache();
-    const entry = cacheFile.cards[cardPath];
-    const dismissed = collectDismissedKeys(cacheFile);
-    const existing = collectExistingTargets(body);
-    if (!(opts == null ? void 0 : opts.force) && cacheValid(entry, bodyHash)) {
-      return {
-        status: "cached",
-        suggestions: filterSuggestions(entry.suggestions, { dismissed, existing, minScore: SUGGEST_MIN_SCORE }),
-        generatedAt: entry.generatedAt
-      };
-    }
-    const anchors = splitAnchors(body).slice(0, SUGGEST_MAX_ANCHORS);
-    if (anchors.length === 0) {
-      const generatedAt2 = Date.now();
-      await persistCardCache(cardPath, bodyHash, generatedAt2, []);
-      return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
-    }
-    const dismissedSet = new Set(dismissed);
-    const fixedSet = new Set(collectFixedKeys(entry));
-    const candidates = [];
-    const seenPair = /* @__PURE__ */ new Set();
-    let searchFailed = false;
-    outer: for (let i = 0; i < anchors.length; i++) {
-      let hits = [];
-      try {
-        hits = await searchApi.search(anchors[i].text, SUGGEST_TOPK) || [];
-      } catch (e) {
-        console.warn("[mount-suggest] 向量检索失败，按降级处理", e);
-        searchFailed = true;
-        break;
-      }
-      let local = 0;
-      for (const hit of hits) {
-        if (!hit || !hit.path || hit.path === cardPath) continue;
-        const pairKey = suggestKey({ anchor: anchors[i], target: hit.path });
-        if (dismissedSet.has(pairKey) || fixedSet.has(pairKey)) continue;
-        if (matchesExisting(hit.path, existing)) continue;
-        if (seenPair.has(pairKey)) continue;
-        if (!ctx.app.vault.getAbstractFileByPath(hit.path)) continue;
-        seenPair.add(pairKey);
-        candidates.push({
-          anchorIdx: i,
-          localIdx: local,
-          path: hit.path,
-          kind: kindOfTarget(hit.path, ctx),
-          snippet: String(hit.chunk || "").slice(0, 200)
-        });
-        local++;
-        if (local >= SUGGEST_PER_ANCHOR_CANDIDATES) break;
-        if (candidates.length >= SUGGEST_MAX_CANDIDATES) break outer;
-      }
-    }
-    if (searchFailed) return empty("no-index");
-    if (candidates.length === 0) {
-      const generatedAt2 = Date.now();
-      await persistCardCache(cardPath, bodyHash, generatedAt2, []);
-      return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
-    }
-    let raw = "";
-    try {
-      raw = await createAI().json(buildJudgePrompt(anchors, candidates), { modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS } });
-    } catch (e) {
-      console.warn("[mount-suggest] AI 裁判失败", e);
-      return empty("no-ai");
-    }
-    const judged = [];
-    for (const pick of parseJudgePicks(raw)) {
-      if (pick.score < SUGGEST_MIN_SCORE) continue;
-      const a = anchors[pick.anchor - 1];
-      const c = candidates.find((it) => it.anchorIdx === pick.anchor - 1 && it.localIdx === pick.target - 1);
-      if (!a || !c) continue;
-      judged.push({ anchor: { ...a }, target: c.path, kind: c.kind, reason: pick.reason, score: pick.score, state: "pending" });
-    }
-    const suggestions = filterSuggestions(judged, { dismissed, existing, minScore: SUGGEST_MIN_SCORE });
-    const generatedAt = Date.now();
-    await persistCardCache(cardPath, bodyHash, generatedAt, suggestions);
-    return { status: "fresh", suggestions, generatedAt };
-  }
-  function mergeSuggestions(tree, run) {
-    var _a2;
-    const nodes = Array.isArray(tree == null ? void 0 : tree.nodes) ? tree.nodes : [];
-    const edges = Array.isArray(tree == null ? void 0 : tree.edges) ? tree.edges : [];
-    const rootNode = nodes.find((n) => n.id === (tree == null ? void 0 : tree.root));
-    const rootDepth = rootNode ? rootNode.depth : 0;
-    const rootPath = rootNode ? normalizeTargetPath(rootNode.path) : "";
-    const known = new Set(nodes.map((n) => normalizeTargetPath(n.path)));
-    const ghostNodes = [];
-    const ghostEdges = [];
-    const seen = /* @__PURE__ */ new Set();
-    for (const s of (run == null ? void 0 : run.suggestions) || []) {
-      if (!s || !s.target) continue;
-      const key = normalizeTargetPath(s.target);
-      if (!key || key === rootPath || known.has(key) || seen.has(key)) continue;
-      seen.add(key);
-      const id = "ai:" + s.target;
-      ghostNodes.push({
-        id,
-        path: s.target,
-        title: displayName(s.target),
-        kind: s.kind,
-        source: "ai",
-        depth: rootDepth + 1,
-        anchor: (_a2 = s.anchor) != null ? _a2 : null,
-        missing: false,
-        suggested: true,
-        attached: false,
-        body: null,
-        parent: tree.root
-      });
-      ghostEdges.push({ from: tree.root, to: id, suggested: true });
-    }
-    return { ...tree, nodes: [...nodes, ...ghostNodes], edges: [...edges, ...ghostEdges] };
-  }
-  var SUGGEST_MIN_SCORE, SUGGEST_MIN_ANCHOR_CHARS, SUGGEST_MAX_ANCHORS, SUGGEST_TOPK, SUGGEST_PER_ANCHOR_CANDIDATES, SUGGEST_MAX_CANDIDATES, SUGGEST_JUDGE_MAX_TOKENS, REASON_MAX_CHARS, SUGGEST_CACHE_FILE, HAS_MEANING_RE, WIKILINK_RE, LEADING_MARK_RE, JUDGE_PROMPT_PREFIX2;
-  var init_mount_suggest = __esm({
-    "src/knowledge/mount-suggest.ts"() {
-      init_ai();
-      init_mobile();
-      init_settings_provider();
-      init_storage();
-      init_utils();
-      init_secondbrain();
-      SUGGEST_MIN_SCORE = 0.7;
-      SUGGEST_MIN_ANCHOR_CHARS = 6;
-      SUGGEST_MAX_ANCHORS = 12;
-      SUGGEST_TOPK = 8;
-      SUGGEST_PER_ANCHOR_CANDIDATES = 3;
-      SUGGEST_MAX_CANDIDATES = 24;
-      SUGGEST_JUDGE_MAX_TOKENS = 2048;
-      REASON_MAX_CHARS = 80;
-      SUGGEST_CACHE_FILE = "mount-suggest.json";
-      HAS_MEANING_RE = /[\p{L}\p{N}]/u;
-      WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
-      LEADING_MARK_RE = /^(?:#{1,6}\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
-      JUDGE_PROMPT_PREFIX2 = [
-        "你是卡片盒挂载树的建议裁判。给定一张主卡正文里的若干锚点（词/句），以及每个锚点经向量召回得到的候选目标，",
-        "逐一判断「锚点」与「候选目标」是否存在实质知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。",
-        "标准：只推实质关联，弱关联（仅任务级/提及级）不推，存疑不推；宁缺勿滥。",
-        '输出要求：严格 JSON 数组 [{"anchor":<锚点编号>,"target":<候选编号>,"score":<0到1的关联分>,"reason":"一句话理由"}]，按关联强度降序；',
-        `分数低于 ${SUGGEST_MIN_SCORE} 的一律不要输出；无关联输出 []；不要输出 JSON 以外的任何文字。`
-      ].join("");
-    }
-  });
-
   // src/smartcat/config.ts
   function defaultConfig() {
     return {
@@ -37498,11 +40115,11 @@ ${n.content.slice(0, 2e3)}
 
   // src/smartcat/character.ts
   function randomOceanSeed() {
-    const clamp = (v) => Math.min(0.9, Math.max(0.1, v));
+    const clamp2 = (v) => Math.min(0.9, Math.max(0.1, v));
     const g = () => {
       const r1 = Math.max(1e-9, Math.random());
       const r2 = Math.max(1e-9, Math.random());
-      return clamp(0.5 + 0.15 * Math.sqrt(-2 * Math.log(r1)) * Math.cos(2 * Math.PI * r2));
+      return clamp2(0.5 + 0.15 * Math.sqrt(-2 * Math.log(r1)) * Math.cos(2 * Math.PI * r2));
     };
     return {
       openness: g(),
@@ -37770,7 +40387,7 @@ ${n.content.slice(0, 2e3)}
     await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app }).write(data);
   }
   var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS;
-  var init_data11 = __esm({
+  var init_data10 = __esm({
     "src/smartcat/data.ts"() {
       init_storage();
       init_config5();
@@ -38520,8 +41137,8 @@ ${n.content.slice(0, 2e3)}
         // 数据源组为声明行（外部 news.json 状态），先读盘预载再建 schema
         clipping: async () => {
           const { readDataSourceState: readDataSourceState2 } = await Promise.resolve().then(() => (init_news_source_settings(), news_source_settings_exports));
-          const state2 = await readDataSourceState2();
-          return (await Promise.resolve().then(() => (init_ui6(), ui_exports5))).clipbookSettingsSchema(state2);
+          const state3 = await readDataSourceState2();
+          return (await Promise.resolve().then(() => (init_ui6(), ui_exports5))).clipbookSettingsSchema(state3);
         },
         favorites: async () => (await Promise.resolve().then(() => (init_ui7(), ui_exports6))).favoritesSettingsSchema(),
         cinema: async () => (await Promise.resolve().then(() => (init_settings4(), settings_exports4))).cinemaSettingsSchema(),
@@ -38547,12 +41164,12 @@ ${n.content.slice(0, 2e3)}
           });
         },
         smartcat: async () => {
-          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
+          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data10(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui11(), ui_exports9));
           const app = getApp();
           const data = await loadSmartCatData2(app);
           const saveConfig = async (config) => {
-            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
+            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data10(), data_exports));
             data.config = config;
             await saveSmartCatData2(app, data);
           };

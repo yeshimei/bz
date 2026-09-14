@@ -1,5 +1,5 @@
-/* 源指纹 8ccd29d40a4728c9 · 仓内输入 26 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts"]*/
+/* 源指纹 08490ca3a1054418 · 仓内输入 33 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
   var __create = Object.create;
@@ -4035,6 +4035,7 @@ var BZW_knowledge = (() => {
     bootKnowledgeSim: () => bootKnowledgeSim,
     loadDemoPlate: () => loadDemoPlate,
     openImage: () => openImage,
+    openMountTree: () => openMountTree2,
     openPanel: () => openPanel,
     openPassage: () => openPassage,
     openTerm: () => openTerm,
@@ -5410,6 +5411,14 @@ var BZW_knowledge = (() => {
   }
 
   // src/core/storage.ts
+  function storageDir() {
+    const s = tryGetSettings();
+    return (s && s.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
+  }
+  function storageFile(name, base) {
+    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
+    return `${dir}/${name}`;
+  }
   var fileTaskQueues = /* @__PURE__ */ new Map();
   function enqueueFileTask(filePath, task) {
     var _a;
@@ -5643,6 +5652,17 @@ var BZW_knowledge = (() => {
   }
   function stripMdExt(name) {
     return String(name || "").replace(/\.md$/i, "");
+  }
+  function isUnderFolder(folder, path) {
+    const f = (folder || "").trim().replace(/\/+$/, "");
+    if (!f) return false;
+    return path === f || path.startsWith(f + "/");
+  }
+  function hash31(str) {
+    let h = 0;
+    const t = String(str || "");
+    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
+    return h >>> 0;
   }
 
   // src/knowledge/source.ts
@@ -6717,11 +6737,11 @@ var BZW_knowledge = (() => {
       );
     });
   }
-  async function writeUniqueNote(dir, baseName, content) {
+  async function writeUniqueNote(dir, baseName2, content) {
     const app = getApp();
     const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    let path = `${folder}/${baseName}.md`;
-    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName}_${i}.md`;
+    let path = `${folder}/${baseName2}.md`;
+    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.md`;
     try {
       const exists = await app.vault.adapter.exists(folder);
       if (!exists) await app.vault.createFolder(folder);
@@ -6891,11 +6911,11 @@ ${text}`;
     return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title || summary), body);
   }
   var IMAGE_ASSETS_DIR = "assets";
-  async function writeUniqueBinary(dir, baseName, ext, bytes) {
+  async function writeUniqueBinary(dir, baseName2, ext, bytes) {
     const app = getApp();
     const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    let path = `${folder}/${baseName}.${ext}`;
-    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName}_${i}.${ext}`;
+    let path = `${folder}/${baseName2}.${ext}`;
+    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
     try {
       const exists = await app.vault.adapter.exists(folder);
       if (!exists) await app.vault.createFolder(folder);
@@ -7398,6 +7418,3157 @@ ${sample}`,
     }
   };
 
+  // src/knowledge/mount-data.ts
+  var DEFAULT_CARDBOX = "卡片盒";
+  var DEFAULT_LIT = "文献盒";
+  var IMAGE_EXTS = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "avif"]);
+  var VIDEO_EXTS = /* @__PURE__ */ new Set(["mp4", "webm", "mov", "mkv", "avi"]);
+  function normSlashes(s) {
+    return String(s != null ? s : "").replace(/\\/g, "/");
+  }
+  function normDir(raw, fallback) {
+    const s = normSlashes(raw).trim();
+    if (!s) return fallback;
+    return s.replace(/^\/+|\/+$/g, "");
+  }
+  function baseName(path) {
+    const p = normSlashes(path);
+    return p.split("/").pop() || "";
+  }
+  function stripMd(name) {
+    return String(name != null ? name : "").replace(/\.md$/i, "");
+  }
+  function stemOf(path) {
+    const b = baseName(path);
+    return stripMd(b) || b;
+  }
+  function extOf(name) {
+    const b = baseName(name).toLowerCase();
+    const i = b.lastIndexOf(".");
+    return i > 0 ? b.slice(i + 1) : "";
+  }
+  function pathKey(path) {
+    return stripMd(normSlashes(path)).toLowerCase();
+  }
+  function inDir(path, dir) {
+    const d = normDir(dir, "");
+    const p = normSlashes(path);
+    if (!d) return true;
+    return p === d || p.startsWith(d + "/");
+  }
+  function samePath(a, b) {
+    return pathKey(a) === pathKey(b);
+  }
+  function byDepthThenPath(a, b) {
+    const da = normSlashes(a).split("/").length;
+    const db = normSlashes(b).split("/").length;
+    return da - db || a.localeCompare(b);
+  }
+  function stripFrontmatter(text) {
+    const src = String(text != null ? text : "");
+    const m = src.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+    return (m ? src.slice(m[0].length) : src).replace(/^\r?\n+/, "");
+  }
+  function splitLinkText(inner) {
+    const raw = String(inner != null ? inner : "").trim();
+    const bar = raw.indexOf("|");
+    const left = bar >= 0 ? raw.slice(0, bar) : raw;
+    const aliasRaw = bar >= 0 ? raw.slice(bar + 1).trim() : "";
+    const hash = left.indexOf("#");
+    return {
+      target: (hash >= 0 ? left.slice(0, hash) : left).trim(),
+      alias: aliasRaw || null,
+      subpath: hash >= 0 ? left.slice(hash + 1).trim() || null : null
+    };
+  }
+  function linkKey(target, subpath) {
+    return `${target.trim().toLowerCase()}#${(subpath != null ? subpath : "").trim().toLowerCase()}`;
+  }
+  function safeApp() {
+    try {
+      return getApp();
+    } catch (e) {
+      return null;
+    }
+  }
+  function numOr(v, fallback) {
+    return typeof v === "number" && Number.isFinite(v) ? v : fallback;
+  }
+  function mountCtx(app) {
+    var _a;
+    const s = (_a = tryGetSettings()) != null ? _a : {};
+    return {
+      app: app != null ? app : safeApp(),
+      cardboxDir: normDir(s == null ? void 0 : s.knowledgeCardboxDirectory, DEFAULT_CARDBOX) || DEFAULT_CARDBOX,
+      litDir: normDir(s == null ? void 0 : s.knowledgeDirectory, DEFAULT_LIT) || DEFAULT_LIT
+    };
+  }
+  function allFiles(ctx) {
+    var _a;
+    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
+    const files = typeof (v == null ? void 0 : v.getFiles) === "function" ? v.getFiles() : null;
+    return Array.isArray(files) ? files.filter((f) => f && f.path) : [];
+  }
+  function mdFiles(ctx) {
+    var _a;
+    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
+    const files = typeof (v == null ? void 0 : v.getMarkdownFiles) === "function" ? v.getMarkdownFiles() : allFiles(ctx).filter((f) => f.extension === "md");
+    return (Array.isArray(files) ? files.filter((f) => f && f.path) : []).slice().sort((a, b) => String(a.path).localeCompare(String(b.path)));
+  }
+  async function readText(file, ctx) {
+    var _a, _b, _c, _d, _e, _f, _g;
+    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
+    if (!v || file === null || file === void 0) return "";
+    let target = file;
+    if (typeof file === "string") {
+      const p = normSlashes(file);
+      if (!p) return "";
+      target = (_e = (_d = (_b = v.getAbstractFileByPath) == null ? void 0 : _b.call(v, p)) != null ? _d : (_c = v.getFileByPath) == null ? void 0 : _c.call(v, p)) != null ? _e : p;
+    }
+    try {
+      if (typeof v.cachedRead === "function") return String((_f = await v.cachedRead(target)) != null ? _f : "");
+      if (typeof v.read === "function") return String((_g = await v.read(target)) != null ? _g : "");
+    } catch (e) {
+    }
+    return "";
+  }
+  async function bodyOf(path, ctx) {
+    return stripFrontmatter(await readText(path, ctx));
+  }
+  function parseMountLinks(body) {
+    const src = String(body != null ? body : "");
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    const re = /(!?)\[\[([^\[\]]+?)\]\]/g;
+    let m;
+    while ((m = re.exec(src)) !== null) {
+      const raw = m[0];
+      const embed = m[1] === "!";
+      const { target, alias, subpath } = splitLinkText(m[2]);
+      if (!target) continue;
+      const key2 = linkKey(target, subpath);
+      if (seen.has(key2)) continue;
+      seen.add(key2);
+      out.push({
+        raw,
+        target,
+        alias,
+        subpath,
+        embed,
+        kind: classifyKind(target, subpath, embed, null, ""),
+        missing: false,
+        path: null,
+        anchor: { from: m.index, to: m.index + raw.length, text: raw }
+      });
+    }
+    return out;
+  }
+  function classifyKind(target, subpath, embed, path, cardboxDir) {
+    const t = String(target != null ? target : "").trim();
+    const p = path && String(path).trim() ? normSlashes(String(path)) : null;
+    const exts = [p ? extOf(p) : "", extOf(t)].filter(Boolean);
+    if (exts.some((e) => IMAGE_EXTS.has(e))) return "image";
+    if (exts.some((e) => VIDEO_EXTS.has(e))) return "video";
+    const dir = normDir(cardboxDir, "");
+    if (p && dir && (p === dir || p.startsWith(dir + "/"))) return "card";
+    const sp = String(subpath != null ? subpath : "").trim().replace(/^#/, "").trim();
+    if (sp.startsWith("^")) return "para";
+    if (sp) return "head";
+    return "note";
+  }
+  function findBySameName(target, ctx) {
+    var _a;
+    const t = normSlashes(target).trim();
+    if (!t) return null;
+    const files = allFiles(ctx);
+    const wantFull = pathKey(t);
+    const wantBase = stripMd(baseName(t)).toLowerCase();
+    const exact = files.filter((f) => pathKey(f.path) === wantFull).map((f) => normSlashes(f.path));
+    const named = files.filter((f) => stemOf(f.path).toLowerCase() === wantBase).map((f) => normSlashes(f.path));
+    const pool = (exact.length ? exact : named).slice().sort(byDepthThenPath);
+    return (_a = pool[0]) != null ? _a : null;
+  }
+  function resolveLinkPath(target, ctx, sourcePath) {
+    var _a, _b, _c, _d;
+    const t = String(target != null ? target : "").trim();
+    if (!t) return null;
+    try {
+      const dest = (_d = (_c = (_b = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.metadataCache) == null ? void 0 : _b.getFirstLinkpathDest) == null ? void 0 : _c.call(_b, t, sourcePath)) != null ? _d : null;
+      const p = dest && typeof dest === "object" ? dest.path : typeof dest === "string" ? dest : null;
+      if (p) return normSlashes(String(p));
+    } catch (e) {
+    }
+    return findBySameName(t, ctx);
+  }
+  async function resolveMountLinks(links, ctx, sourcePath = "") {
+    var _a, _b;
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    const dir = (_a = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a : "";
+    for (const link of links != null ? links : []) {
+      if (!link) continue;
+      const path = resolveLinkPath(link.target, ctx, sourcePath);
+      const kind = classifyKind(link.target, link.subpath, link.embed, path, dir);
+      const key2 = path ? `${pathKey(path)}#${((_b = link.subpath) != null ? _b : "").toLowerCase()}` : `missing:${linkKey(link.target, link.subpath)}`;
+      if (seen.has(key2)) continue;
+      seen.add(key2);
+      out.push({ ...link, path, missing: !path, kind });
+    }
+    return out;
+  }
+  function relocateAnchor(body, anchor) {
+    var _a;
+    const src = String(body != null ? body : "");
+    const text = String((_a = anchor == null ? void 0 : anchor.text) != null ? _a : "");
+    if (!text) return null;
+    const exact = src.indexOf(text);
+    if (exact >= 0) return exact;
+    const flat = flattenWs(src);
+    const needle = flattenWs(text).text;
+    if (!needle) return null;
+    const at = flat.text.indexOf(needle);
+    return at < 0 ? null : flat.map[at];
+  }
+  function flattenWs(s) {
+    const map = [];
+    let text = "";
+    for (let i = 0; i < s.length; i++) {
+      if (/\s/.test(s[i])) continue;
+      map.push(i);
+      text += s[i];
+    }
+    return { text, map };
+  }
+  function joinSnippet(chunk) {
+    const text = chunk.join("\n").replace(/^\s*\n+/, "").replace(/\s+$/, "");
+    return text.trim() ? text : null;
+  }
+  function splitBlocks(lines) {
+    const out = [];
+    let cur = [];
+    let start = 0;
+    const flush = (end) => {
+      if (cur.length) out.push({ start, end, text: cur.join("\n") });
+      cur = [];
+    };
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() === "") {
+        flush(i);
+        continue;
+      }
+      if (!cur.length) start = i;
+      cur.push(lines[i]);
+    }
+    flush(lines.length);
+    return out;
+  }
+  function escapeRe(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  function headingSnippet(lines, heading, cache) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const want = heading.trim().toLowerCase();
+    const hs = Array.isArray(cache == null ? void 0 : cache.headings) ? cache.headings : null;
+    if (hs) {
+      const idx = hs.findIndex((h) => {
+        var _a2;
+        return String((_a2 = h == null ? void 0 : h.heading) != null ? _a2 : "").trim().toLowerCase() === want;
+      });
+      if (idx >= 0) {
+        const start = numOr((_c = (_b = (_a = hs[idx]) == null ? void 0 : _a.position) == null ? void 0 : _b.start) == null ? void 0 : _c.line, -1);
+        if (start >= 0) {
+          const level = numOr((_d = hs[idx]) == null ? void 0 : _d.level, 1);
+          let end = lines.length;
+          for (let j = idx + 1; j < hs.length; j++) {
+            if (numOr((_e = hs[j]) == null ? void 0 : _e.level, 1) <= level) {
+              end = numOr((_h = (_g = (_f = hs[j]) == null ? void 0 : _f.position) == null ? void 0 : _g.start) == null ? void 0 : _h.line, lines.length);
+              break;
+            }
+          }
+          return joinSnippet(lines.slice(start + 1, end));
+        }
+      }
+    }
+    for (let i = 0; i < lines.length; i++) {
+      const m = /^(#{1,6})\s+(.*?)\s*#*\s*$/.exec(lines[i]);
+      if (!m || m[2].trim().toLowerCase() !== want) continue;
+      let end = lines.length;
+      for (let j = i + 1; j < lines.length; j++) {
+        const mm = /^(#{1,6})\s+/.exec(lines[j]);
+        if (mm && mm[1].length <= m[1].length) {
+          end = j;
+          break;
+        }
+      }
+      return joinSnippet(lines.slice(i + 1, end));
+    }
+    return null;
+  }
+  function blockSnippet(lines, id, cache) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const re = new RegExp(`(^|\\s)\\^${escapeRe(id)}(\\s|$)`);
+    const start = numOr((_d = (_c = (_b = (_a = cache == null ? void 0 : cache.blocks) == null ? void 0 : _a[id]) == null ? void 0 : _b.position) == null ? void 0 : _c.start) == null ? void 0 : _d.line, -1);
+    if (start >= 0) {
+      const end = numOr((_h = (_g = (_f = (_e = cache == null ? void 0 : cache.blocks) == null ? void 0 : _e[id]) == null ? void 0 : _f.position) == null ? void 0 : _g.end) == null ? void 0 : _h.line, start);
+      const text = lines.slice(start, end + 1).join("\n").replace(re, " ");
+      return joinSnippet([text]);
+    }
+    const blocks = splitBlocks(lines);
+    for (let i = 0; i < blocks.length; i++) {
+      const text = blocks[i].text;
+      if (!re.test(text)) continue;
+      if (!text.replace(re, " ").trim() && i > 0) return joinSnippet([blocks[i - 1].text]);
+      return joinSnippet([text.replace(re, " ").trim()]);
+    }
+    return null;
+  }
+  async function readSubpathBody(file, subpath, ctx) {
+    var _a, _b, _c, _d;
+    const sp = String(subpath != null ? subpath : "").trim().replace(/^#/, "").trim();
+    if (!sp) return null;
+    const path = typeof file === "string" ? normSlashes(file) : normSlashes((_a = file == null ? void 0 : file.path) != null ? _a : "");
+    if (!path) return null;
+    const content = await readText(file, ctx);
+    if (!content) return null;
+    const lines = String(content).split(/\r?\n/);
+    const cache = (_d = (_c = (_b = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b.metadataCache) == null ? void 0 : _c.getFileCache) == null ? void 0 : _d.call(_c, typeof file === "string" ? path : file);
+    if (sp.startsWith("^")) return blockSnippet(lines, sp.slice(1), cache);
+    return headingSnippet(lines, sp, cache);
+  }
+  async function findSameNameNote(cardPath, ctx) {
+    var _a;
+    const stem = stemOf(cardPath).toLowerCase();
+    if (!stem) return null;
+    const dir = normDir(ctx == null ? void 0 : ctx.litDir, "");
+    const hits = mdFiles(ctx).filter((f) => inDir(f.path, dir) && stemOf(f.path).toLowerCase() === stem).map((f) => normSlashes(f.path)).sort(byDepthThenPath);
+    return (_a = hits[0]) != null ? _a : null;
+  }
+  function fmListLineInner(line) {
+    const m = /^\s*-\s*(.*?)\s*$/.exec(line);
+    if (!m) return null;
+    const v = m[1].replace(/^["']|["']$/g, "").replace(/^["']|["']$/g, "");
+    const mm = v.match(/\[\[([^\]]+)\]\]/);
+    return mm ? mm[1].trim() : v.trim();
+  }
+  function fmList(text, key2) {
+    var _a;
+    const lines = String(text != null ? text : "").split(/\r?\n/);
+    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return [];
+    const head = new RegExp(`^${key2}\\s*:`);
+    const out = [];
+    let inList = false;
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim() === "---") break;
+      if (head.test(line)) {
+        inList = true;
+        continue;
+      }
+      if (!inList) continue;
+      const inner = fmListLineInner(line);
+      if (inner !== null) out.push(inner);
+      else if (line.trim() !== "") break;
+    }
+    return out;
+  }
+  function newScan(ctx) {
+    return { ctx, items: /* @__PURE__ */ new Map(), bodies: /* @__PURE__ */ new Map() };
+  }
+  async function scanBody(scan, path) {
+    const key2 = pathKey(path);
+    if (!scan.bodies.has(key2)) scan.bodies.set(key2, await bodyOf(path, scan.ctx));
+    return scan.bodies.get(key2);
+  }
+  function itemFromLink(text, source2, ctx, sourcePath) {
+    var _a;
+    const { target, alias, subpath } = splitLinkText(text);
+    if (!target) return null;
+    const path = resolveLinkPath(target, ctx, sourcePath);
+    return {
+      source: source2,
+      kind: classifyKind(target, subpath, false, path, (_a = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a : ""),
+      target,
+      path,
+      subpath,
+      alias,
+      anchor: null,
+      missing: !path
+    };
+  }
+  async function outboundItems(scan, path) {
+    const key2 = pathKey(path);
+    const cached = scan.items.get(key2);
+    if (cached) return cached;
+    const text = await readText(path, scan.ctx);
+    scan.bodies.set(key2, stripFrontmatter(text));
+    const items = [];
+    const links = await resolveMountLinks(parseMountLinks(stripFrontmatter(text)), scan.ctx, path);
+    for (const l of links) {
+      items.push({ source: "link", kind: l.kind, target: l.target, path: l.path, subpath: l.subpath, alias: l.alias, anchor: l.anchor, missing: l.missing });
+    }
+    for (const t of fmList(text, "related")) {
+      const it = itemFromLink(t, "related", scan.ctx, path);
+      if (it) items.push(it);
+    }
+    for (const t of fmList(text, "mounted")) {
+      const it = itemFromLink(t, "manual", scan.ctx, path);
+      if (it) items.push(it);
+    }
+    const seen = /* @__PURE__ */ new Set();
+    const deduped = items.filter((it) => {
+      var _a;
+      const k = `${it.source}:${it.path ? `${pathKey(it.path)}#${((_a = it.subpath) != null ? _a : "").toLowerCase()}` : `missing#${linkKey(it.target, it.subpath)}`}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    scan.items.set(key2, deduped);
+    return deduped;
+  }
+  async function inboundItems(scan, targetPath) {
+    const out = [];
+    for (const f of mdFiles(scan.ctx)) {
+      if (samePath(f.path, targetPath)) continue;
+      const items = await outboundItems(scan, f.path);
+      for (const it of items) {
+        if (!it.path || !samePath(it.path, targetPath)) continue;
+        out.push({ ...it, container: normSlashes(f.path) });
+      }
+    }
+    return out;
+  }
+  function itemId(it) {
+    var _a;
+    const p = (_a = it.path) != null ? _a : it.target;
+    return it.subpath ? `${p}#${it.subpath}` : p;
+  }
+  function isSelfItem(it, nodePath) {
+    if (it.path) return samePath(it.path, nodePath);
+    return pathKey(it.target) === pathKey(nodePath) || stemOf(it.target).toLowerCase() === stemOf(nodePath).toLowerCase();
+  }
+  async function rootNode(path, scan) {
+    return {
+      id: path,
+      path,
+      title: stemOf(path),
+      kind: "card",
+      source: "self",
+      depth: 0,
+      anchor: null,
+      missing: false,
+      suggested: false,
+      attached: false,
+      parent: null,
+      body: await scanBody(scan, path)
+    };
+  }
+  async function materialize(scan, it, depth, parent, upstream) {
+    var _a, _b, _c, _d, _e, _f, _g;
+    if (upstream) {
+      const path2 = normSlashes((_b = (_a = it.container) != null ? _a : it.path) != null ? _b : it.target);
+      return {
+        id: path2,
+        path: path2,
+        title: stemOf(path2),
+        kind: classifyKind(path2, null, false, path2, (_d = (_c = scan.ctx) == null ? void 0 : _c.cardboxDir) != null ? _d : ""),
+        source: it.source,
+        depth,
+        anchor: it.anchor,
+        missing: false,
+        suggested: false,
+        attached: false,
+        parent,
+        body: await scanBody(scan, path2)
+      };
+    }
+    const path = (_e = it.path) != null ? _e : it.target;
+    let body = null;
+    if (it.path && (it.kind === "note" || it.kind === "card")) body = await scanBody(scan, it.path);
+    else if (it.path && (it.kind === "head" || it.kind === "para") && it.subpath) body = await readSubpathBody({ path: it.path }, it.subpath, scan.ctx);
+    let title;
+    if (it.kind === "head") title = (_f = it.subpath) != null ? _f : stemOf(path);
+    else if (it.kind === "para") title = (body ? body.split("\n")[0].trim().slice(0, 24) : "") || `^${String((_g = it.subpath) != null ? _g : "").replace(/^\^/, "")}`;
+    else title = it.missing ? it.target : baseName(path) || it.target;
+    return {
+      id: itemId(it),
+      path,
+      title,
+      kind: it.kind,
+      source: it.source,
+      depth,
+      anchor: it.anchor,
+      missing: it.missing,
+      suggested: false,
+      attached: false,
+      parent,
+      body
+    };
+  }
+  async function buildMountTree(cardPath, opts) {
+    var _a, _b, _c, _d;
+    const ctx = (_a = opts == null ? void 0 : opts.ctx) != null ? _a : mountCtx();
+    const direction = (opts == null ? void 0 : opts.direction) === "upstream" ? "upstream" : "downstream";
+    const upstream = direction === "upstream";
+    const rootPath = normSlashes(String(cardPath != null ? cardPath : "")).replace(/^\/+|\/+$/g, "");
+    const scan = newScan(ctx);
+    const nodes = /* @__PURE__ */ new Map();
+    const order = [];
+    const edges = [];
+    const edgeKeys = /* @__PURE__ */ new Set();
+    const root = await rootNode(rootPath, scan);
+    nodes.set(root.id, root);
+    order.push(root.id);
+    const queue = [root.id];
+    while (queue.length) {
+      const node = nodes.get(queue.shift());
+      if (node.kind !== "card" || node.missing) continue;
+      const sameNote = await findSameNameNote(node.path, ctx);
+      if (sameNote && !nodes.has(sameNote)) {
+        const child = {
+          id: sameNote,
+          path: sameNote,
+          title: stemOf(sameNote),
+          kind: classifyKind(sameNote, null, false, sameNote, ctx.cardboxDir),
+          source: "sameName",
+          depth: node.depth + 1,
+          anchor: null,
+          missing: false,
+          suggested: false,
+          attached: true,
+          parent: node.id,
+          // 同名文献吸附在**所属卡片**下（不是根、也不为 null）
+          body: await scanBody(scan, sameNote)
+        };
+        nodes.set(child.id, child);
+        order.push(child.id);
+      }
+      const items = upstream ? await inboundItems(scan, node.path) : await outboundItems(scan, node.path);
+      for (const it of items) {
+        if (!upstream && isSelfItem(it, node.path)) continue;
+        const id = upstream ? normSlashes((_c = (_b = it.container) != null ? _b : it.path) != null ? _c : it.target) : itemId(it);
+        let child = (_d = nodes.get(id)) != null ? _d : null;
+        let fresh = false;
+        if (!child) {
+          child = await materialize(scan, it, node.depth + 1, node.id, upstream);
+          nodes.set(child.id, child);
+          order.push(child.id);
+          fresh = true;
+        }
+        if (!child.attached && child.depth > node.depth) {
+          const ek = `${node.id}\0${child.id}`;
+          if (!edgeKeys.has(ek)) {
+            edgeKeys.add(ek);
+            edges.push({ from: node.id, to: child.id, suggested: false });
+          }
+        }
+        if (fresh && child.kind === "card" && !child.missing) queue.push(child.id);
+      }
+    }
+    const firstIdx = new Map(order.map((id, i) => [id, i]));
+    const list = order.map((id) => nodes.get(id)).filter(Boolean);
+    list.sort((a, b) => {
+      var _a2, _b2;
+      return a.depth - b.depth || ((_a2 = firstIdx.get(a.id)) != null ? _a2 : 0) - ((_b2 = firstIdx.get(b.id)) != null ? _b2 : 0);
+    });
+    const pos = new Map(list.map((n, i) => [n.id, i]));
+    const sortedEdges = edges.slice().sort((a, b) => {
+      var _a2, _b2, _c2, _d2;
+      return ((_a2 = pos.get(a.from)) != null ? _a2 : -1) - ((_b2 = pos.get(b.from)) != null ? _b2 : -1) || ((_c2 = pos.get(a.to)) != null ? _c2 : -1) - ((_d2 = pos.get(b.to)) != null ? _d2 : -1);
+    });
+    return { root: root.id, direction, nodes: list, edges: sortedEdges };
+  }
+
+  // src/knowledge/mount-layout.ts
+  var LAYOUT_PARAMS = {
+    /** 斥力系数：rep = REP²/d，近距（d < need）×2.4 */
+    REP: 150,
+    /** Hooke 弹簧自然长度：rest = half(A)+half(B)+REST */
+    REST: 160,
+    /** 远距斥力截断倍数（× 作用半径 need），不截断图会炸开 */
+    CUTOFF: 2.5,
+    /** 每代 x 弱锚步长（只防漂移，单向流方向由「子卡在父卡右侧」软约束给） */
+    X_STEP: 640,
+    /** 退火轮数 */
+    ITER: 420,
+    /** 世界内边距：归一化基准（左/上）+ 右/下余量 */
+    PAD: 60,
+    /** 默认布局上限，超过按输入序降级进 `culled`（spec 风险 1） */
+    MAX_NODES: 120
+  };
+  var NEED_GAP = 90;
+  var REP_OVERLAP_BOOST = 2.4;
+  var SPRING_K = 0.34;
+  var ORDER_GAP = 56;
+  var ORDER_K = 0.16;
+  var ANCHOR_K = 0.012;
+  var GRAVITY_X = 0.03;
+  var GRAVITY_Y = 0.06;
+  var COOL_SPAN = 0.85;
+  var STEP_COOL = 12;
+  var STEP_BASE = 3;
+  var STEP_SCALE = 0.5;
+  var SEPARATE_ROUNDS = 60;
+  var SEPARATE_GAP_X = 40;
+  var SEPARATE_GAP_Y = 34;
+  var RESIDUAL_EPS = 1e-3;
+  var RESIDUAL_GAP = 1;
+  var RESIDUAL_ROUNDS = 300;
+  var SEED_BASE_R = 150;
+  var SEED_STEP_R = 46;
+  var GOLDEN_ANGLE_RAD = 137.5 * Math.PI / 180;
+  function positiveSize(v) {
+    return Number.isFinite(v) && v > 0 ? v : 1;
+  }
+  function resolveMaxNodes(v) {
+    if (v === void 0 || !Number.isFinite(v)) return LAYOUT_PARAMS.MAX_NODES;
+    return Math.max(0, Math.floor(v));
+  }
+  function buildNodes(boxes, count) {
+    const nodes = [];
+    for (let i = 0; i < count; i++) {
+      const b = boxes[i];
+      nodes.push({
+        id: b.id,
+        w: positiveSize(b.w),
+        h: positiveSize(b.h),
+        depth: Number.isFinite(b.depth) ? Math.max(0, Math.floor(b.depth)) : 0,
+        active: true,
+        x: 0,
+        y: 0
+      });
+    }
+    return nodes;
+  }
+  function seedPositions(nodes) {
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      const ang = i * GOLDEN_ANGLE_RAD;
+      const r = SEED_BASE_R + SEED_STEP_R * Math.sqrt(i);
+      n.x = Math.cos(ang) * r + n.w / 2;
+      n.y = Math.sin(ang) * r + n.h / 2;
+    }
+  }
+  function markActive(nodes, viewport) {
+    if (!viewport) return;
+    const { x, y, w, h } = viewport;
+    if (![x, y, w, h].every((v) => Number.isFinite(v)) || w <= 0 || h <= 0) return;
+    for (const n of nodes) {
+      n.active = n.x + n.w / 2 >= x && n.x - n.w / 2 <= x + w && n.y + n.h / 2 >= y && n.y - n.h / 2 <= y + h;
+    }
+    if (nodes.every((n) => !n.active)) {
+      for (const n of nodes) n.active = true;
+    }
+  }
+  function buildLinks(nodes, edges) {
+    const indexById = /* @__PURE__ */ new Map();
+    for (let i = 0; i < nodes.length; i++) indexById.set(nodes[i].id, i);
+    const links = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const e of edges) {
+      if (!e) continue;
+      const a = indexById.get(e.from);
+      const b = indexById.get(e.to);
+      if (a === void 0 || b === void 0 || a === b) continue;
+      const key2 = a + ">" + b;
+      if (seen.has(key2)) continue;
+      seen.add(key2);
+      links.push({ a, b });
+    }
+    return links;
+  }
+  function relax(nodes, links) {
+    const n = nodes.length;
+    const fx = new Float64Array(n);
+    const fy = new Float64Array(n);
+    const ITER = LAYOUT_PARAMS.ITER;
+    const REP = LAYOUT_PARAMS.REP;
+    const PAD = LAYOUT_PARAMS.PAD;
+    for (let it = 0; it < ITER; it++) {
+      const cool = 1 - it / ITER * COOL_SPAN;
+      fx.fill(0);
+      fy.fill(0);
+      for (let i = 0; i < n; i++) {
+        const A = nodes[i];
+        if (!A.active) continue;
+        for (let j = i + 1; j < n; j++) {
+          const B = nodes[j];
+          if (!B.active) continue;
+          const dx = B.x - A.x;
+          const dy = B.y - A.y;
+          const d = Math.hypot(dx, dy) || 1;
+          const need = (A.w + A.h) / 4 + (B.w + B.h) / 4 + NEED_GAP;
+          if (d > LAYOUT_PARAMS.CUTOFF * need) continue;
+          const rep = REP * REP / d * (d < need ? REP_OVERLAP_BOOST : 1);
+          const ux = dx / d;
+          const uy = dy / d;
+          fx[i] -= ux * rep;
+          fy[i] -= uy * rep;
+          fx[j] += ux * rep;
+          fy[j] += uy * rep;
+        }
+      }
+      for (const l of links) {
+        const A = nodes[l.a];
+        const B = nodes[l.b];
+        if (!A.active || !B.active) continue;
+        const dx = B.x - A.x;
+        const dy = B.y - A.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const rest = (A.w + A.h) / 4 + (B.w + B.h) / 4 + LAYOUT_PARAMS.REST;
+        const att = (d - rest) * SPRING_K;
+        const ux = dx / d;
+        const uy = dy / d;
+        fx[l.a] += ux * att;
+        fy[l.a] += uy * att;
+        fx[l.b] -= ux * att;
+        fy[l.b] -= uy * att;
+        const minDx = (A.w + B.w) / 2 + ORDER_GAP;
+        if (B.x - A.x < minDx) {
+          const push = (minDx - (B.x - A.x)) * ORDER_K;
+          fx[l.b] += push;
+          fx[l.a] -= push;
+        }
+      }
+      let gx = 0;
+      let gy = 0;
+      for (const node of nodes) {
+        gx += node.x;
+        gy += node.y;
+      }
+      gx /= n;
+      gy /= n;
+      for (let i = 0; i < n; i++) {
+        const node = nodes[i];
+        if (!node.active) continue;
+        const want = PAD + node.w / 2 + node.depth * LAYOUT_PARAMS.X_STEP;
+        fx[i] += (want - node.x) * ANCHOR_K;
+        fx[i] += (gx - node.x) * GRAVITY_X;
+        fy[i] += (gy - node.y) * GRAVITY_Y;
+      }
+      for (let i = 0; i < n; i++) {
+        const node = nodes[i];
+        if (!node.active) continue;
+        const f = Math.hypot(fx[i], fy[i]) || 1;
+        const cap = STEP_COOL * cool + STEP_BASE;
+        const k = f > cap ? cap / f : 1;
+        node.x += fx[i] * k * STEP_SCALE;
+        node.y += fy[i] * k * STEP_SCALE;
+      }
+    }
+  }
+  function pushRound(nodes, gapX, gapY, eps) {
+    const n = nodes.length;
+    let moved = false;
+    for (let i = 0; i < n; i++) {
+      const A = nodes[i];
+      if (!A.active) continue;
+      for (let j = i + 1; j < n; j++) {
+        const B = nodes[j];
+        if (!B.active) continue;
+        const ox = (A.w + B.w) / 2 + gapX - Math.abs(B.x - A.x);
+        const oy = (A.h + B.h) / 2 + gapY - Math.abs(B.y - A.y);
+        if (ox <= eps || oy <= eps) continue;
+        moved = true;
+        if (ox <= oy) {
+          const s = (B.x >= A.x ? 1 : -1) * (ox / 2);
+          A.x -= s;
+          B.x += s;
+        } else {
+          const s = (B.y >= A.y ? 1 : -1) * (oy / 2);
+          A.y -= s;
+          B.y += s;
+        }
+      }
+    }
+    return moved;
+  }
+  function separate(nodes) {
+    for (let round = 0; round < SEPARATE_ROUNDS; round++) {
+      if (!pushRound(nodes, SEPARATE_GAP_X, SEPARATE_GAP_Y, 0)) return;
+    }
+    resolveResidual(nodes);
+  }
+  function resolveResidual(nodes) {
+    const n = nodes.length;
+    for (let round = 0; round < RESIDUAL_ROUNDS; round++) {
+      if (!pushRound(nodes, 0, 0, RESIDUAL_EPS)) return;
+    }
+    for (let sweep = 0; sweep < n; sweep++) {
+      let moved = false;
+      for (let j = 1; j < n; j++) {
+        const B = nodes[j];
+        if (!B.active) continue;
+        for (let i = 0; i < j; i++) {
+          const A = nodes[i];
+          if (!A.active) continue;
+          const ox = (A.w + B.w) / 2 - Math.abs(B.x - A.x);
+          const oy = (A.h + B.h) / 2 - Math.abs(B.y - A.y);
+          if (ox <= RESIDUAL_EPS || oy <= RESIDUAL_EPS) continue;
+          const want = A.x + A.w / 2 + B.w / 2 + RESIDUAL_GAP;
+          if (want > B.x) {
+            B.x = want;
+            moved = true;
+          }
+        }
+      }
+      if (!moved) break;
+    }
+  }
+  function finalize(nodes, culled) {
+    let minLeft = Infinity;
+    let minTop = Infinity;
+    for (const n of nodes) {
+      if (n.x - n.w / 2 < minLeft) minLeft = n.x - n.w / 2;
+      if (n.y - n.h / 2 < minTop) minTop = n.y - n.h / 2;
+    }
+    const shiftX = LAYOUT_PARAMS.PAD - minLeft;
+    const shiftY = LAYOUT_PARAMS.PAD - minTop;
+    const pos = {};
+    let right = LAYOUT_PARAMS.PAD;
+    let bottom = LAYOUT_PARAMS.PAD;
+    for (const n of nodes) {
+      const x = n.x - n.w / 2 + shiftX;
+      const y = n.y - n.h / 2 + shiftY;
+      pos[n.id] = { x, y };
+      if (x + n.w > right) right = x + n.w;
+      if (y + n.h > bottom) bottom = y + n.h;
+    }
+    return { pos, world: { w: right + LAYOUT_PARAMS.PAD, h: bottom + LAYOUT_PARAMS.PAD }, culled };
+  }
+  function layoutTree(boxes, edges, opts) {
+    const maxNodes = resolveMaxNodes(opts == null ? void 0 : opts.maxNodes);
+    const keptCount = Math.min(boxes.length, maxNodes);
+    const culled = [];
+    for (let i = keptCount; i < boxes.length; i++) culled.push(boxes[i].id);
+    const nodes = buildNodes(boxes, keptCount);
+    if (nodes.length === 0) {
+      return { pos: {}, world: { w: LAYOUT_PARAMS.PAD * 2, h: LAYOUT_PARAMS.PAD * 2 }, culled };
+    }
+    seedPositions(nodes);
+    markActive(nodes, opts == null ? void 0 : opts.viewport);
+    relax(nodes, buildLinks(nodes, edges));
+    separate(nodes);
+    return finalize(nodes, culled);
+  }
+
+  // src/knowledge/mount-geom.ts
+  function rectOf(b) {
+    return { left: b.x, top: b.y, right: b.x + b.w, bottom: b.y + b.h };
+  }
+  function segRectHit(p, q2, r, margin = 0) {
+    const dx = q2.x - p.x;
+    const dy = q2.y - p.y;
+    const pv = [-dx, dx, -dy, dy];
+    const qv = [
+      p.x - (r.left - margin),
+      r.right + margin - p.x,
+      p.y - (r.top - margin),
+      r.bottom + margin - p.y
+    ];
+    let t0 = 0;
+    let t1 = 1;
+    for (let k = 0; k < 4; k++) {
+      if (pv[k] === 0) {
+        if (qv[k] < 0) return false;
+      } else {
+        const t = qv[k] / pv[k];
+        if (pv[k] < 0) {
+          if (t > t1) return false;
+          if (t > t0) t0 = t;
+        } else {
+          if (t < t0) return false;
+          if (t < t1) t1 = t;
+        }
+      }
+    }
+    return t1 > 0 && t0 < 1;
+  }
+  function cubicHit(r, P, c1, c2, Q, margin = 0) {
+    const len = Math.hypot(c1.x - P.x, c1.y - P.y) + Math.hypot(c2.x - c1.x, c2.y - c1.y) + Math.hypot(Q.x - c2.x, Q.y - c2.y);
+    const n = Math.max(4, Math.min(2e3, Math.ceil(len / 2)));
+    const left = r.left - margin;
+    const right = r.right + margin;
+    const top = r.top - margin;
+    const bottom = r.bottom + margin;
+    for (let i = 1; i < n; i++) {
+      const t = i / n;
+      const u = 1 - t;
+      const a = u * u * u;
+      const b = 3 * u * u * t;
+      const c = 3 * u * t * t;
+      const d = t * t * t;
+      const x = a * P.x + b * c1.x + c * c2.x + d * Q.x;
+      const y = a * P.y + b * c1.y + c * c2.y + d * Q.y;
+      if (x > left && x < right && y > top && y < bottom) return true;
+    }
+    return false;
+  }
+
+  // src/knowledge/mount-route.ts
+  var ROUTE_PARAMS = { CS: 18, INF: 8, STUB: 12, PORT_PAD: 18, PORT_MIN: 14, ASTAR_MAX_NODES: 120 };
+  var PULL_MARGIN = 5;
+  var SMOOTH_MARGIN = 2;
+  var TANGENT_SCALES = [1, 0.55, 0.3];
+  var GRID_MARGIN_CELLS = 8;
+  var SNAP_RADII = [3, 6, 9];
+  var MAX_GRID_CELLS = 2e6;
+  function clamp(v, a, b) {
+    return v < a ? a : v > b ? b : v;
+  }
+  function exitCandidates(S, sb, portPad) {
+    const ye = clamp(S.y, sb.top + portPad, sb.bottom - portPad);
+    const xe = clamp(S.x, sb.left + portPad, sb.right - portPad);
+    const cands = [
+      { side: "L", d: S.x - sb.left, E: { x: sb.left, y: ye }, nOut: { x: -1, y: 0 } },
+      { side: "R", d: sb.right - S.x, E: { x: sb.right, y: ye }, nOut: { x: 1, y: 0 } },
+      { side: "T", d: S.y - sb.top, E: { x: xe, y: sb.top }, nOut: { x: 0, y: -1 } },
+      { side: "B", d: sb.bottom - S.y, E: { x: xe, y: sb.bottom }, nOut: { x: 0, y: 1 } }
+    ];
+    const order = ["L", "R", "T", "B"];
+    return cands.sort((a, b) => a.d !== b.d ? a.d - b.d : order.indexOf(a.side) - order.indexOf(b.side));
+  }
+  function entrySideOrder(b, a) {
+    const ax = (a.left + a.right) / 2;
+    const ay = (a.top + a.bottom) / 2;
+    const bcx = (b.left + b.right) / 2;
+    const bcy = (b.top + b.bottom) / 2;
+    const cands = [
+      { s: "L", d: Math.hypot(b.left - ax, bcy - ay) },
+      { s: "T", d: Math.hypot(bcx - ax, b.top - ay) },
+      { s: "B", d: Math.hypot(bcx - ax, b.bottom - ay) },
+      { s: "R", d: Math.hypot(b.right - ax, bcy - ay) }
+    ];
+    const order = ["L", "T", "B", "R"];
+    cands.sort((p, q2) => p.d !== q2.d ? p.d - q2.d : order.indexOf(p.s) - order.indexOf(q2.s));
+    return cands.map((c) => c.s);
+  }
+  function sidePortAndNormal(side, b, portPad) {
+    const vert = side === "L" || side === "R";
+    if (vert) {
+      const lo2 = b.top + portPad;
+      const hi2 = b.bottom - portPad;
+      return {
+        T: { x: side === "L" ? b.left : b.right, y: clamp((b.top + b.bottom) / 2, lo2, hi2) },
+        nOut: { x: side === "L" ? -1 : 1, y: 0 }
+      };
+    }
+    const lo = b.left + portPad;
+    const hi = b.right - portPad;
+    return {
+      T: { x: clamp((b.left + b.right) / 2, lo, hi), y: side === "T" ? b.top : b.bottom },
+      nOut: { x: 0, y: side === "T" ? -1 : 1 }
+    };
+  }
+  function along(p, dir, k) {
+    return { x: p.x + dir.x * k, y: p.y + dir.y * k };
+  }
+  function rayCardDistance(p, dir, rects, margin) {
+    const len = Math.hypot(dir.x, dir.y);
+    if (!(len > 0)) return Infinity;
+    const ux = dir.x / len;
+    const uy = dir.y / len;
+    const EPS = 1e-6;
+    let best = Infinity;
+    for (let i = 0; i < rects.length; i++) {
+      const r = rects[i];
+      const l = r.left - margin;
+      const rr = r.right + margin;
+      const t = r.top - margin;
+      const b = r.bottom + margin;
+      let t0 = 0;
+      let t1 = Infinity;
+      if (ux === 0) {
+        if (p.x <= l || p.x >= rr) continue;
+      } else {
+        const a = (l - p.x) / ux;
+        const c = (rr - p.x) / ux;
+        t0 = Math.max(t0, Math.min(a, c));
+        t1 = Math.min(t1, Math.max(a, c));
+      }
+      if (uy === 0) {
+        if (p.y <= t || p.y >= b) continue;
+      } else {
+        const a = (t - p.y) / uy;
+        const c = (b - p.y) / uy;
+        t0 = Math.max(t0, Math.min(a, c));
+        t1 = Math.min(t1, Math.max(a, c));
+      }
+      if (t1 <= EPS || t0 > t1) continue;
+      const d = Math.max(t0, 0);
+      if (d < best) best = d;
+    }
+    return best;
+  }
+  function stubDirty(p0, p1, rects) {
+    if (Math.abs(p1.x - p0.x) < 1e-9 && Math.abs(p1.y - p0.y) < 1e-9) {
+      for (let i = 0; i < rects.length; i++) {
+        const r = rects[i];
+        if (p0.x > r.left && p0.x < r.right && p0.y > r.top && p0.y < r.bottom) return true;
+      }
+      return false;
+    }
+    return segHitsAny(p0, p1, rects, 0);
+  }
+  function polylineClean(pts, rects) {
+    for (let i = 0; i + 1 < pts.length; i++) if (segHitsAny(pts[i], pts[i + 1], rects, 0)) return false;
+    return true;
+  }
+  function spread(vals, lo, hi, min) {
+    if (hi < lo) {
+      const mid = (lo + hi) / 2;
+      lo = mid;
+      hi = mid;
+    }
+    for (let i = 0; i < vals.length; i++) vals[i] = clamp(vals[i], lo, hi);
+    for (let i = 1; i < vals.length; i++) if (vals[i] - vals[i - 1] < min) vals[i] = vals[i - 1] + min;
+    const over = vals.length > 0 ? vals[vals.length - 1] - hi : 0;
+    if (over > 0) {
+      for (let i = 0; i < vals.length; i++) vals[i] -= over;
+      for (let i = 1; i < vals.length; i++) if (vals[i] - vals[i - 1] < min) vals[i] = vals[i - 1] + min;
+    }
+  }
+  function segHitsAny(p, q2, rects, margin) {
+    for (let i = 0; i < rects.length; i++) {
+      if (segRectHit(p, q2, rects[i], margin)) return true;
+    }
+    return false;
+  }
+  function curveHitsAny(P, c1, c2, Q, rects, margin) {
+    for (let i = 0; i < rects.length; i++) {
+      if (cubicHit(rects[i], P, c1, c2, Q, margin)) return true;
+    }
+    return false;
+  }
+  function pull(pts, rects, margin) {
+    const out = [pts[0]];
+    let i = 0;
+    while (i < pts.length - 1) {
+      let j = pts.length - 1;
+      for (; j > i + 1; j--) {
+        if (!segHitsAny(pts[i], pts[j], rects, margin)) break;
+      }
+      out.push(pts[j]);
+      i = j;
+    }
+    return out;
+  }
+  function isCurve(it) {
+    return it.b !== void 0;
+  }
+  function pt(p) {
+    return p.x.toFixed(1) + " " + p.y.toFixed(1);
+  }
+  function pathD(items) {
+    let d = "M" + pt(items[0]);
+    for (let i = 1; i < items.length; i++) {
+      const it = items[i];
+      if (isCurve(it)) d += " C" + pt(it.b[1]) + " " + pt(it.b[2]) + " " + pt(it.b[3]);
+      else d += " L" + pt(it);
+    }
+    return d;
+  }
+  function buildAstar(rects, cs, inf) {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const r of rects) {
+      if (r.left < minX) minX = r.left;
+      if (r.top < minY) minY = r.top;
+      if (r.right > maxX) maxX = r.right;
+      if (r.bottom > maxY) maxY = r.bottom;
+    }
+    if (!Number.isFinite(minX) || !Number.isFinite(minY)) return null;
+    const margin = GRID_MARGIN_CELLS * cs;
+    const ox = minX - margin;
+    const oy = minY - margin;
+    const gcols = Math.max(4, Math.ceil((maxX + margin - ox) / cs));
+    const grows = Math.max(4, Math.ceil((maxY + margin - oy) / cs));
+    if (gcols * grows > MAX_GRID_CELLS) return null;
+    const blocked = new Uint8Array(gcols * grows);
+    const inBounds = (x, y) => x >= 0 && y >= 0 && x < gcols && y < grows;
+    const cx = (ix) => ox + ix * cs + cs / 2;
+    const cy = (iy) => oy + iy * cs + cs / 2;
+    const colOf = (px) => Math.floor((px - ox) / cs);
+    const rowOf = (py) => Math.floor((py - oy) / cs);
+    for (let x = 0; x < gcols; x++) {
+      blocked[x] = 1;
+      blocked[(grows - 1) * gcols + x] = 1;
+    }
+    for (let y = 0; y < grows; y++) {
+      blocked[y * gcols] = 1;
+      blocked[y * gcols + gcols - 1] = 1;
+    }
+    for (const r of rects) {
+      const y0 = Math.max(0, Math.floor((r.top - inf - cs / 2 - oy) / cs));
+      const y1 = Math.min(grows - 1, Math.ceil((r.bottom + inf - cs / 2 - oy) / cs));
+      for (let iy = y0; iy <= y1; iy++) {
+        const py = cy(iy);
+        if (py < r.top - inf || py > r.bottom + inf) continue;
+        const x0 = Math.max(0, Math.floor((r.left - inf - cs / 2 - ox) / cs));
+        const x1 = Math.min(gcols - 1, Math.ceil((r.right + inf - cs / 2 - ox) / cs));
+        for (let ix = x0; ix <= x1; ix++) {
+          const px = cx(ix);
+          if (px >= r.left - inf && px <= r.right + inf) blocked[iy * gcols + ix] = 1;
+        }
+      }
+    }
+    const scratch = [];
+    function cellInCard(ix, iy) {
+      const px = cx(ix);
+      const py = cy(iy);
+      for (let i = 0; i < rects.length; i++) {
+        const r = rects[i];
+        if (px > r.left && px < r.right && py > r.top && py < r.bottom) return true;
+      }
+      return false;
+    }
+    function free(idx, ix, iy) {
+      if (!inBounds(ix, iy)) return;
+      if (cellInCard(ix, iy)) return;
+      if (blocked[idx]) {
+        blocked[idx] = 0;
+        scratch.push(idx);
+      }
+    }
+    function openCell(p, dir) {
+      const cxi = clamp(colOf(p.x), 0, gcols - 1);
+      const cyi = clamp(rowOf(p.y), 0, grows - 1);
+      for (let y = cyi - 2; y <= cyi + 2; y++) {
+        for (let x = cxi - 2; x <= cxi + 2; x++) free(y * gcols + x, x, y);
+      }
+      for (let k = 1; k <= 6; k++) {
+        const ex = cxi + Math.round((dir.x || 0) * k);
+        const ey = cyi + Math.round((dir.y || 0) * k);
+        if (!inBounds(ex, ey)) break;
+        let reached = false;
+        for (let y = ey - 1; y <= ey + 1; y++) {
+          for (let x = ex - 1; x <= ex + 1; x++) {
+            if (inBounds(x, y) && !cellInCard(x, y) && !blocked[y * gcols + x]) reached = true;
+            free(y * gcols + x, x, y);
+          }
+        }
+        if (reached) break;
+      }
+    }
+    function restore() {
+      for (let i = 0; i < scratch.length; i++) blocked[scratch[i]] = 1;
+      scratch.length = 0;
+    }
+    function walkable(ix, iy) {
+      return !cellInCard(ix, iy) && !blocked[iy * gcols + ix];
+    }
+    function snapCell(p) {
+      const cxi = clamp(colOf(p.x), 0, gcols - 1);
+      const cyi = clamp(rowOf(p.y), 0, grows - 1);
+      if (walkable(cxi, cyi) && !segHitsAny(p, { x: cx(cxi), y: cy(cyi) }, rects, 0)) {
+        return { x: cxi, y: cyi };
+      }
+      let fallback = null;
+      let fbDist = Infinity;
+      for (let ri = 0; ri < SNAP_RADII.length; ri++) {
+        const rad = SNAP_RADII[ri];
+        let best = null;
+        let bestD = Infinity;
+        for (let y = Math.max(0, cyi - rad); y <= Math.min(grows - 1, cyi + rad); y++) {
+          for (let x = Math.max(0, cxi - rad); x <= Math.min(gcols - 1, cxi + rad); x++) {
+            if (!walkable(x, y)) continue;
+            const d = (x - cxi) * (x - cxi) + (y - cyi) * (y - cyi);
+            if (d < fbDist) {
+              fbDist = d;
+              fallback = { x, y };
+            }
+            if (d < bestD && !segHitsAny(p, { x: cx(x), y: cy(y) }, rects, 0)) {
+              bestD = d;
+              best = { x, y };
+            }
+          }
+        }
+        if (best) return best;
+      }
+      return fallback;
+    }
+    const DX = [0, 1, 0, -1, 1, 1, -1, -1];
+    const DY = [-1, 0, 1, 0, -1, 1, 1, -1];
+    function solve(a, b, dirA, dirB) {
+      openCell(a, dirA);
+      openCell(b, dirB);
+      const sC = snapCell(a);
+      const gC = snapCell(b);
+      if (!sC || !gC) {
+        restore();
+        return null;
+      }
+      const n = gcols * grows;
+      const start = sC.y * gcols + sC.x;
+      const goal = gC.y * gcols + gC.x;
+      const dist = new Float64Array(n);
+      dist.fill(Infinity);
+      const prev = new Int32Array(n);
+      prev.fill(-1);
+      const done = new Uint8Array(n);
+      const buckets = [];
+      let maxc = 0;
+      let found = false;
+      dist[start] = 0;
+      buckets[0] = [start];
+      for (let c = 0; c <= maxc && !found; c++) {
+        const q2 = buckets[c];
+        if (!q2) continue;
+        for (let qi = 0; qi < q2.length; qi++) {
+          const cur = q2[qi];
+          if (done[cur]) continue;
+          done[cur] = 1;
+          if (cur === goal) {
+            found = true;
+            break;
+          }
+          const ix = cur % gcols;
+          const iy = (cur - ix) / gcols;
+          for (let d = 0; d < 8; d++) {
+            const nx = ix + DX[d];
+            const ny = iy + DY[d];
+            if (!inBounds(nx, ny)) continue;
+            const ni = ny * gcols + nx;
+            if (blocked[ni]) continue;
+            const diag = DX[d] !== 0 && DY[d] !== 0;
+            if (diag && (blocked[iy * gcols + nx] || blocked[ny * gcols + ix])) continue;
+            const nc = c + (diag ? 14 : 10);
+            if (nc < dist[ni]) {
+              dist[ni] = nc;
+              prev[ni] = cur;
+              if (!buckets[nc]) buckets[nc] = [];
+              buckets[nc].push(ni);
+              if (nc > maxc) maxc = nc;
+            }
+          }
+        }
+      }
+      restore();
+      if (!found) return null;
+      const points = [];
+      let k = goal;
+      while (k >= 0) {
+        const kx = k % gcols;
+        const ky = (k - kx) / gcols;
+        points.push({ x: cx(kx), y: cy(ky) });
+        k = prev[k];
+      }
+      points.reverse();
+      points.unshift({ x: a.x, y: a.y });
+      points.push({ x: b.x, y: b.y });
+      return points;
+    }
+    return solve;
+  }
+  function routeEdges(boxes, edges, opts) {
+    var _a;
+    const out = new Array(edges.length);
+    if (edges.length === 0) return out;
+    const { CS, INF, STUB, PORT_PAD, PORT_MIN, ASTAR_MAX_NODES } = ROUTE_PARAMS;
+    const strategy = (_a = opts == null ? void 0 : opts.strategy) != null ? _a : "astar";
+    const nodes = boxes.map((b) => ({ box: b, rect: rectOf(b) }));
+    const byId = /* @__PURE__ */ new Map();
+    for (const n of nodes) if (!byId.has(n.box.id)) byId.set(n.box.id, n);
+    const rects = nodes.map((n) => n.rect);
+    const jobs = [];
+    const groupKeys = [];
+    const groups = /* @__PURE__ */ new Map();
+    edges.forEach((e, idx) => {
+      const src = byId.get(e.from);
+      const dst = byId.get(e.to);
+      if (!src || !dst) {
+        out[idx] = { from: e.from, to: e.to, d: "", exit: "L", entry: "L", fallback: true };
+        return;
+      }
+      const order = entrySideOrder(dst.rect, src.rect);
+      let entry = order[0];
+      let clean = false;
+      for (const side of order) {
+        const { T, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+        if (rayCardDistance(T, nOut, rects, 0) >= STUB) {
+          entry = side;
+          clean = true;
+          break;
+        }
+      }
+      if (!clean) {
+        for (const side of order) {
+          const { T, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+          if (rayCardDistance(T, nOut, rects, 0) >= 1) {
+            entry = side;
+            clean = true;
+            break;
+          }
+        }
+      }
+      const key2 = dst.box.id + "\0" + entry;
+      let g = groups.get(key2);
+      if (!g) {
+        g = [];
+        groups.set(key2, g);
+        groupKeys.push(key2);
+      }
+      const job = {
+        idx,
+        edge: e,
+        src,
+        dst,
+        entry,
+        T: { x: 0, y: 0 },
+        nIn: { x: 0, y: 0 },
+        T1: { x: 0, y: 0 },
+        stub: STUB,
+        clean
+      };
+      g.push(job);
+      jobs.push(job);
+    });
+    for (const key2 of groupKeys) {
+      const g = groups.get(key2);
+      const side = g[0].entry;
+      const b = g[0].dst.rect;
+      const vert = side === "L" || side === "R";
+      const lo = vert ? b.top + PORT_PAD : b.left + PORT_PAD;
+      const hi = vert ? b.bottom - PORT_PAD : b.right - PORT_PAD;
+      const coord = (j) => vert ? (j.src.rect.top + j.src.rect.bottom) / 2 : (j.src.rect.left + j.src.rect.right) / 2;
+      const sorted = g.slice().sort((a, c) => {
+        const d = coord(a) - coord(c);
+        if (d < 0) return -1;
+        if (d > 0) return 1;
+        if (a.edge.from !== c.edge.from) return a.edge.from < c.edge.from ? -1 : 1;
+        if (a.edge.to !== c.edge.to) return a.edge.to < c.edge.to ? -1 : 1;
+        return a.idx - c.idx;
+      });
+      const mid = vert ? (b.top + b.bottom) / 2 : (b.left + b.right) / 2;
+      const vals = [];
+      for (let i = 0; i < sorted.length; i++) vals.push(mid + (i - (sorted.length - 1) / 2) * PORT_MIN);
+      spread(vals, lo, hi, PORT_MIN);
+      sorted.forEach((j, i) => {
+        const v = vals[i];
+        j.T = vert ? { x: side === "L" ? b.left : b.right, y: v } : { x: v, y: side === "T" ? b.top : b.bottom };
+        j.nIn = vert ? { x: side === "L" ? 1 : -1, y: 0 } : { x: 0, y: side === "T" ? 1 : -1 };
+        const nOut = { x: -j.nIn.x, y: -j.nIn.y };
+        const gap = rayCardDistance(j.T, nOut, rects, 0);
+        if (gap >= STUB) j.stub = STUB;
+        else if (gap >= 1) j.stub = Math.max(0, gap - 1);
+        else {
+          j.stub = 0;
+          j.clean = false;
+        }
+        j.T1 = along(j.T, nOut, j.stub);
+      });
+    }
+    const astar = strategy === "astar" && nodes.length > 0 && boxes.length <= ASTAR_MAX_NODES ? buildAstar(rects, CS, INF) : null;
+    for (const j of jobs) {
+      const e = j.edge;
+      const sb = j.src.rect;
+      const S = e.anchor && Number.isFinite(e.anchor.x) && Number.isFinite(e.anchor.y) ? { x: e.anchor.x, y: e.anchor.y } : { x: sb.left, y: sb.top + 26 };
+      const cands = exitCandidates(S, sb, PORT_PAD);
+      let pick = null;
+      let stub = STUB;
+      for (const c of cands) {
+        if (rayCardDistance(c.E, c.nOut, rects, 0) >= STUB) {
+          pick = c;
+          break;
+        }
+      }
+      if (!pick) {
+        for (const c of cands) {
+          const gap = rayCardDistance(c.E, c.nOut, rects, 0);
+          if (gap >= 1) {
+            pick = c;
+            stub = Math.max(0, gap - 1);
+            break;
+          }
+        }
+      }
+      const exitClean = pick !== null;
+      if (!pick) {
+        pick = cands[0];
+        stub = 0;
+      }
+      const exit = pick.side;
+      const E = pick.E;
+      const nOut = pick.nOut;
+      const E1 = along(E, nOut, stub);
+      const T = j.T;
+      const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
+      const T1 = j.T1;
+      const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
+      let dirty = !exitClean || !j.clean || stubDirty(E, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E, E1];
+      if (raw) {
+        const base = pull(raw, rects, PULL_MARGIN);
+        if (!polylineClean(base, rects)) dirty = true;
+        for (let i = 0; i < base.length - 1; i++) {
+          const P0 = base[i];
+          const P3 = base[i + 1];
+          const len = Math.hypot(P3.x - P0.x, P3.y - P0.y) || 1;
+          let done = false;
+          for (let si = 0; si < TANGENT_SCALES.length && !done; si++) {
+            const sc = TANGENT_SCALES[si];
+            const c1 = i === 0 ? { x: P0.x + nOut.x * len * 0.34 * sc, y: P0.y + nOut.y * len * 0.34 * sc } : { x: P0.x + (P3.x - base[i - 1].x) / 6 * sc, y: P0.y + (P3.y - base[i - 1].y) / 6 * sc };
+            const c2 = i === base.length - 2 ? { x: P3.x - j.nIn.x * len * 0.34 * sc, y: P3.y - j.nIn.y * len * 0.34 * sc } : { x: P3.x - (base[i + 2].x - P0.x) / 6 * sc, y: P3.y - (base[i + 2].y - P0.y) / 6 * sc };
+            if (!curveHitsAny(P0, c1, c2, P3, rects, SMOOTH_MARGIN)) {
+              items.push({ b: [P0, c1, c2, P3] });
+              done = true;
+            }
+          }
+          if (!done) items.push(P3);
+        }
+      } else {
+        items.push(T1);
+      }
+      items.push(T);
+      out[j.idx] = {
+        from: e.from,
+        to: e.to,
+        d: pathD(items),
+        exit,
+        entry: j.entry,
+        fallback: !raw || dirty
+      };
+    }
+    return out;
+  }
+
+  // src/secondbrain/readonly.ts
+  var source = null;
+  function exportVectorSearch() {
+    return source;
+  }
+
+  // src/knowledge/mount-suggest.ts
+  var SUGGEST_MIN_SCORE = 0.7;
+  var SUGGEST_MIN_ANCHOR_CHARS = 6;
+  var SUGGEST_MAX_ANCHORS = 12;
+  var SUGGEST_TOPK = 8;
+  var SUGGEST_PER_ANCHOR_CANDIDATES = 3;
+  var SUGGEST_MAX_CANDIDATES = 24;
+  var SUGGEST_JUDGE_MAX_TOKENS = 2048;
+  var REASON_MAX_CHARS = 80;
+  var SUGGEST_CACHE_FILE = "mount-suggest.json";
+  var HAS_MEANING_RE = /[\p{L}\p{N}]/u;
+  var WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
+  function nextIsBoundary(text, i) {
+    if (i >= text.length) return true;
+    return /\s/.test(text[i]);
+  }
+  var LEADING_MARK_RE = /^(?:#{1,6}\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
+  function wikiDisplay(inner) {
+    const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : inner;
+    const afterBlock = afterAlias.includes("^") ? afterAlias.slice(0, afterAlias.indexOf("^")) : afterAlias;
+    const noHead = afterBlock.includes("#") ? afterBlock.slice(afterBlock.lastIndexOf("#") + 1) : afterBlock;
+    return noHead || afterAlias || inner;
+  }
+  function cleanAnchorText(raw) {
+    return raw.replace(/!\[\[[^\[\]]*\]\]/g, " ").replace(/\[\[([^\[\]]+)\]\]/g, (_m, inner) => wikiDisplay(inner)).replace(/`+/g, "").replace(/\*\*|__/g, "").replace(/\s+/g, " ").trim();
+  }
+  function pushAnchor(out, text, from, to) {
+    let s = from;
+    let e = to;
+    while (s < e && /\s/.test(text[s])) s++;
+    while (e > s && /\s/.test(text[e - 1])) e--;
+    const lead = text.slice(s, e).match(LEADING_MARK_RE);
+    if (lead) s += lead[0].length;
+    if (s >= e) return;
+    const cleaned = cleanAnchorText(text.slice(s, e));
+    if (!cleaned) return;
+    if ([...cleaned].length < SUGGEST_MIN_ANCHOR_CHARS) return;
+    if (!HAS_MEANING_RE.test(cleaned)) return;
+    out.push({ from: s, to: e, text: cleaned });
+  }
+  function splitAnchors(body) {
+    const text = String(body != null ? body : "");
+    const out = [];
+    let start = 0;
+    for (let i = 0; i <= text.length; i++) {
+      const ch = i === text.length ? "" : text[i];
+      let boundary = i === text.length;
+      if (!boundary) {
+        if (ch === "\n" || ch === "。" || ch === "！" || ch === "？" || ch === "；" || ch === "…" || ch === "!") boundary = true;
+        else if (ch === "." || ch === "?" || ch === ";") boundary = nextIsBoundary(text, i + 1);
+      }
+      if (!boundary) continue;
+      pushAnchor(out, text, start, i);
+      start = i + 1;
+    }
+    return out;
+  }
+  function normalizeAnchorText(text) {
+    return String(text != null ? text : "").replace(/\s+/g, " ").replace(/^[\s"'“”‘’《》〈〉「」『』]+/, "").replace(/[\s"'“”‘’《》〈〉「」『』]+$/, "").trim().toLowerCase();
+  }
+  function normalizeTargetPath(path) {
+    return String(path != null ? path : "").replace(/\\/g, "/").replace(/^\.\//, "").replace(/\.md$/i, "").trim().toLowerCase();
+  }
+  function suggestKey(s) {
+    var _a;
+    return normalizeAnchorText((_a = s.anchor) == null ? void 0 : _a.text) + "\0" + normalizeTargetPath(s.target);
+  }
+  function matchesExisting(target, existing) {
+    const t = normalizeTargetPath(target);
+    if (!t) return false;
+    const tBase = t.includes("/") ? t.slice(t.lastIndexOf("/") + 1) : t;
+    for (const raw of existing) {
+      const e = normalizeTargetPath(raw);
+      if (!e) continue;
+      if (e === t || e === tBase) return true;
+    }
+    return false;
+  }
+  function filterSuggestions(list, opts) {
+    const dismissed = new Set(((opts == null ? void 0 : opts.dismissed) || []).map((k) => String(k).trim().toLowerCase()));
+    const existing = (opts == null ? void 0 : opts.existing) || [];
+    const minScore = Number.isFinite(opts == null ? void 0 : opts.minScore) ? Number(opts == null ? void 0 : opts.minScore) : SUGGEST_MIN_SCORE;
+    const seen = /* @__PURE__ */ new Set();
+    const out = [];
+    for (const s of list || []) {
+      if (!s || !s.target) continue;
+      if (s.state === "dismissed" || s.state === "fixed") continue;
+      if (!(Number(s.score) >= minScore)) continue;
+      const key2 = suggestKey(s);
+      if (dismissed.has(key2) || seen.has(key2)) continue;
+      if (existing.length > 0 && matchesExisting(s.target, existing)) continue;
+      seen.add(key2);
+      out.push(s);
+    }
+    return out;
+  }
+  function cacheStore() {
+    return jsonFileStore(storageFile(SUGGEST_CACHE_FILE), { defaultValue: () => ({ cards: {} }) });
+  }
+  async function readSuggestCache() {
+    const data = await cacheStore().read();
+    const cards = data && typeof data === "object" && data.cards && typeof data.cards === "object" && !Array.isArray(data.cards) ? data.cards : {};
+    return { cards };
+  }
+  function mutateSuggestCache(fn) {
+    const path = storageFile(SUGGEST_CACHE_FILE);
+    return enqueueFileTask(path, async () => {
+      const file = await readSuggestCache();
+      const result = await fn(file);
+      await cacheStore().write(file);
+      return result;
+    });
+  }
+  function cacheValid(entry, bodyHash) {
+    return !!entry && !!bodyHash && typeof entry.bodyHash === "string" && entry.bodyHash === bodyHash;
+  }
+  function collectDismissedKeys(file) {
+    const out = [];
+    for (const entry of Object.values(file.cards || {})) {
+      for (const s of (entry == null ? void 0 : entry.suggestions) || []) {
+        if ((s == null ? void 0 : s.state) === "dismissed") out.push(suggestKey(s));
+      }
+    }
+    return out;
+  }
+  function collectFixedKeys(entry) {
+    return ((entry == null ? void 0 : entry.suggestions) || []).filter((s) => (s == null ? void 0 : s.state) === "fixed").map(suggestKey);
+  }
+  function persistCardCache(cardPath, bodyHash, generatedAt, suggestions) {
+    return mutateSuggestCache((file) => {
+      const prev = file.cards[cardPath];
+      const kept = ((prev == null ? void 0 : prev.suggestions) || []).filter((s) => s && s.state !== "pending");
+      const keptKeys = new Set(kept.map(suggestKey));
+      const fresh = suggestions.filter((s) => !keptKeys.has(suggestKey(s)));
+      file.cards[cardPath] = { bodyHash, generatedAt, suggestions: [...kept, ...fresh] };
+    }).then(() => void 0);
+  }
+  async function markSuggestion(cardPath, s, state2, ctx) {
+    if (!cardPath || !s || !s.target) return;
+    const key2 = suggestKey(s);
+    const now = Date.now();
+    await mutateSuggestCache((file) => {
+      const prev = file.cards[cardPath];
+      const entry = prev && typeof prev === "object" && Array.isArray(prev.suggestions) ? prev : { bodyHash: "", generatedAt: now, suggestions: [] };
+      const idx = entry.suggestions.findIndex((it) => suggestKey(it) === key2);
+      const marked = { ...idx >= 0 ? entry.suggestions[idx] : s, state: state2 };
+      if (idx >= 0) entry.suggestions[idx] = marked;
+      else entry.suggestions.push(marked);
+      file.cards[cardPath] = entry;
+    });
+  }
+  function stripFrontmatter2(content) {
+    return String(content != null ? content : "").replace(/^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, "");
+  }
+  function kindOfTarget(path, ctx) {
+    if (isUnderFolder((ctx == null ? void 0 : ctx.cardboxDir) || "", path)) return "card";
+    if (isUnderFolder((ctx == null ? void 0 : ctx.litDir) || "", path)) return "para";
+    return "note";
+  }
+  function displayName(path) {
+    const base = String(path || "").split("/").pop() || String(path || "");
+    return stripMdExt(base);
+  }
+  function collectExistingTargets(body) {
+    const text = String(body != null ? body : "");
+    const out = [];
+    WIKILINK_RE.lastIndex = 0;
+    let m;
+    while ((m = WIKILINK_RE.exec(text)) !== null) {
+      const target = m[1].split("|")[0].split("#")[0].trim();
+      if (target) out.push(target);
+    }
+    return out;
+  }
+  var JUDGE_PROMPT_PREFIX = [
+    "你是卡片盒挂载树的建议裁判。给定一张主卡正文里的若干锚点（词/句），以及每个锚点经向量召回得到的候选目标，",
+    "逐一判断「锚点」与「候选目标」是否存在实质知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。",
+    "标准：只推实质关联，弱关联（仅任务级/提及级）不推，存疑不推；宁缺勿滥。",
+    '输出要求：严格 JSON 数组 [{"anchor":<锚点编号>,"target":<候选编号>,"score":<0到1的关联分>,"reason":"一句话理由"}]，按关联强度降序；',
+    `分数低于 ${SUGGEST_MIN_SCORE} 的一律不要输出；无关联输出 []；不要输出 JSON 以外的任何文字。`
+  ].join("");
+  function buildJudgePrompt(anchors, candidates) {
+    const lines = [JUDGE_PROMPT_PREFIX, "", "## 锚点与候选"];
+    for (let i = 0; i < anchors.length; i++) {
+      lines.push(`### a${i + 1}：${anchors[i].text}`);
+      const group = candidates.filter((c) => c.anchorIdx === i);
+      if (group.length === 0) {
+        lines.push("-（无候选）");
+        continue;
+      }
+      for (const c of group) {
+        const snippet = c.snippet ? "｜" + c.snippet.replace(/\s+/g, " ") : "";
+        lines.push(`- t${c.localIdx + 1}：${displayName(c.path)}（${c.path}）${snippet}`);
+      }
+    }
+    return lines.join("\n");
+  }
+  function parseJudgePicks(raw) {
+    var _a;
+    const cleaned = String(raw || "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
+    let arr = null;
+    try {
+      arr = JSON.parse(cleaned);
+    } catch (e) {
+      const m = cleaned.match(/\[[\s\S]*\]/);
+      if (m) {
+        try {
+          arr = JSON.parse(m[0]);
+        } catch (e2) {
+          arr = null;
+        }
+      }
+    }
+    if (!Array.isArray(arr)) return [];
+    const out = [];
+    for (const item of arr) {
+      const it = item;
+      if (!it || typeof it !== "object") continue;
+      const anchor = Number(it.anchor);
+      const target = Number(it.target);
+      const score = Number(it.score);
+      if (!Number.isInteger(anchor) || !Number.isInteger(target) || !Number.isFinite(score)) continue;
+      out.push({
+        anchor,
+        target,
+        score: Math.max(0, Math.min(1, score)),
+        reason: String((_a = it.reason) != null ? _a : "").replace(/\s+/g, " ").trim().slice(0, REASON_MAX_CHARS)
+      });
+    }
+    return out;
+  }
+  async function generateSuggestions(cardPath, ctx, opts) {
+    var _a, _b, _c, _d;
+    const empty = (status) => ({ status, suggestions: [] });
+    if (isMobileEnv()) return empty("no-index");
+    const searchApi = exportVectorSearch();
+    if (!searchApi || !searchApi.isIndexReady()) return empty("no-index");
+    const auto = ((_a = tryGetSettings()) == null ? void 0 : _a.knowledgeMountAutoSuggest) !== false;
+    if (!auto && !(opts == null ? void 0 : opts.force)) return empty("off");
+    try {
+      await getAIProvider();
+    } catch (e) {
+      return empty("no-ai");
+    }
+    const file = (_d = (_c = (_b = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b.vault) == null ? void 0 : _c.getAbstractFileByPath) == null ? void 0 : _d.call(_c, cardPath);
+    let content = "";
+    if (file) {
+      try {
+        content = await ctx.app.vault.read(file);
+      } catch (e) {
+        console.warn("[mount-suggest] 主卡读取失败", e);
+      }
+    }
+    const body = stripFrontmatter2(content);
+    if (!body.trim()) return empty("fresh");
+    const bodyHash = String(hash31(body));
+    const cacheFile = await readSuggestCache();
+    const entry = cacheFile.cards[cardPath];
+    const dismissed = collectDismissedKeys(cacheFile);
+    const existing = collectExistingTargets(body);
+    if (!(opts == null ? void 0 : opts.force) && cacheValid(entry, bodyHash)) {
+      return {
+        status: "cached",
+        suggestions: filterSuggestions(entry.suggestions, { dismissed, existing, minScore: SUGGEST_MIN_SCORE }),
+        generatedAt: entry.generatedAt
+      };
+    }
+    const anchors = splitAnchors(body).slice(0, SUGGEST_MAX_ANCHORS);
+    if (anchors.length === 0) {
+      const generatedAt2 = Date.now();
+      await persistCardCache(cardPath, bodyHash, generatedAt2, []);
+      return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
+    }
+    const dismissedSet = new Set(dismissed);
+    const fixedSet = new Set(collectFixedKeys(entry));
+    const candidates = [];
+    const seenPair = /* @__PURE__ */ new Set();
+    let searchFailed = false;
+    outer: for (let i = 0; i < anchors.length; i++) {
+      let hits = [];
+      try {
+        hits = await searchApi.search(anchors[i].text, SUGGEST_TOPK) || [];
+      } catch (e) {
+        console.warn("[mount-suggest] 向量检索失败，按降级处理", e);
+        searchFailed = true;
+        break;
+      }
+      let local = 0;
+      for (const hit of hits) {
+        if (!hit || !hit.path || hit.path === cardPath) continue;
+        const pairKey = suggestKey({ anchor: anchors[i], target: hit.path });
+        if (dismissedSet.has(pairKey) || fixedSet.has(pairKey)) continue;
+        if (matchesExisting(hit.path, existing)) continue;
+        if (seenPair.has(pairKey)) continue;
+        if (!ctx.app.vault.getAbstractFileByPath(hit.path)) continue;
+        seenPair.add(pairKey);
+        candidates.push({
+          anchorIdx: i,
+          localIdx: local,
+          path: hit.path,
+          kind: kindOfTarget(hit.path, ctx),
+          snippet: String(hit.chunk || "").slice(0, 200)
+        });
+        local++;
+        if (local >= SUGGEST_PER_ANCHOR_CANDIDATES) break;
+        if (candidates.length >= SUGGEST_MAX_CANDIDATES) break outer;
+      }
+    }
+    if (searchFailed) return empty("no-index");
+    if (candidates.length === 0) {
+      const generatedAt2 = Date.now();
+      await persistCardCache(cardPath, bodyHash, generatedAt2, []);
+      return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
+    }
+    let raw = "";
+    try {
+      raw = await createAI().json(buildJudgePrompt(anchors, candidates), { modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS } });
+    } catch (e) {
+      console.warn("[mount-suggest] AI 裁判失败", e);
+      return empty("no-ai");
+    }
+    const judged = [];
+    for (const pick of parseJudgePicks(raw)) {
+      if (pick.score < SUGGEST_MIN_SCORE) continue;
+      const a = anchors[pick.anchor - 1];
+      const c = candidates.find((it) => it.anchorIdx === pick.anchor - 1 && it.localIdx === pick.target - 1);
+      if (!a || !c) continue;
+      judged.push({ anchor: { ...a }, target: c.path, kind: c.kind, reason: pick.reason, score: pick.score, state: "pending" });
+    }
+    const suggestions = filterSuggestions(judged, { dismissed, existing, minScore: SUGGEST_MIN_SCORE });
+    const generatedAt = Date.now();
+    await persistCardCache(cardPath, bodyHash, generatedAt, suggestions);
+    return { status: "fresh", suggestions, generatedAt };
+  }
+  function mergeSuggestions(tree, run) {
+    var _a;
+    const nodes = Array.isArray(tree == null ? void 0 : tree.nodes) ? tree.nodes : [];
+    const edges = Array.isArray(tree == null ? void 0 : tree.edges) ? tree.edges : [];
+    const rootNode2 = nodes.find((n) => n.id === (tree == null ? void 0 : tree.root));
+    const rootDepth = rootNode2 ? rootNode2.depth : 0;
+    const rootPath = rootNode2 ? normalizeTargetPath(rootNode2.path) : "";
+    const known = new Set(nodes.map((n) => normalizeTargetPath(n.path)));
+    const ghostNodes = [];
+    const ghostEdges = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const s of (run == null ? void 0 : run.suggestions) || []) {
+      if (!s || !s.target) continue;
+      const key2 = normalizeTargetPath(s.target);
+      if (!key2 || key2 === rootPath || known.has(key2) || seen.has(key2)) continue;
+      seen.add(key2);
+      const id = "ai:" + s.target;
+      ghostNodes.push({
+        id,
+        path: s.target,
+        title: displayName(s.target),
+        kind: s.kind,
+        source: "ai",
+        depth: rootDepth + 1,
+        anchor: (_a = s.anchor) != null ? _a : null,
+        missing: false,
+        suggested: true,
+        attached: false,
+        body: null,
+        parent: tree.root
+      });
+      ghostEdges.push({ from: tree.root, to: id, suggested: true });
+    }
+    return { ...tree, nodes: [...nodes, ...ghostNodes], edges: [...edges, ...ghostEdges] };
+  }
+
+  // src/knowledge/mount-canvas.ts
+  var MASK_ID = "bz-kb-mt-mask";
+  var WIN_ID = "bz-kb-mt-window";
+  var ESC_ID = "bz-kb-mt";
+  var CANVAS_FALLBACK_W = 960;
+  var CANVAS_FALLBACK_H = 620;
+  var ZOOM_MIN = 0.3;
+  var ZOOM_MAX = 2.5;
+  var ZOOM_STEP = 1.2;
+  var ZOOM_FIT_MAX = 1.15;
+  var FIT_PAD = 90;
+  var DRAG_SLOP = 6;
+  var LONG_PRESS_MS = 500;
+  var LONG_PRESS_SLOP = 10;
+  var DOCK_GAP = 8;
+  var WIDTH_ROOT = 560;
+  var WIDTH_BY_KIND = {
+    card: 470,
+    note: 430,
+    head: 400,
+    para: 380,
+    image: 320,
+    video: 320
+  };
+  var HEIGHT_BY_KIND = {
+    card: 220,
+    note: 190,
+    head: 170,
+    para: 160,
+    image: 130,
+    video: 130
+  };
+  var KIND_COLOR = {
+    note: "#5dcaa5",
+    head: "#6ea8e8",
+    card: "#a99ef0",
+    para: "#8b8c94",
+    image: "#d9a441",
+    video: "#d4537e"
+  };
+  var KIND_LABEL = {
+    card: "卡片",
+    note: "整篇",
+    head: "标题",
+    para: "段落",
+    image: "图片",
+    video: "视频"
+  };
+  var SOURCE_LABEL = {
+    self: "主卡",
+    sameName: "文献",
+    link: "双链",
+    related: "关联",
+    manual: "手动",
+    ai: "AI 建议"
+  };
+  var state = null;
+  function mountKindColor(kind) {
+    var _a;
+    const fallback = (_a = KIND_COLOR[kind]) != null ? _a : KIND_COLOR.para;
+    return `var(--bz-kb-mt-c-${kind}, ${fallback})`;
+  }
+  function clampMountScale(scale) {
+    if (!Number.isFinite(scale)) return 1;
+    return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, scale));
+  }
+  function mountStatusText(status) {
+    switch (status) {
+      case "cached":
+        return "已缓存建议";
+      case "fresh":
+        return "新生成建议";
+      case "off":
+        return "自动建议已关闭";
+      case "no-index":
+        return "未建向量索引 · 只画双链";
+      case "no-ai":
+        return "AI 不可用 · 只画双链";
+      default:
+        return "生成中 · 等建议齐再开";
+    }
+  }
+  function mountLinkText(node) {
+    const raw = String((node.missing ? node.path : node.id) || node.path || "").trim();
+    const core = raw.replace(/\.md$/i, "");
+    if (node.kind === "image" || node.kind === "video") return `![[${raw}]]`;
+    return `[[${core}]]`;
+  }
+  function crumbTrail(nodes, id) {
+    var _a, _b;
+    if (!id) return [];
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const chain = [];
+    const seen = /* @__PURE__ */ new Set();
+    let cur = (_a = byId.get(id)) != null ? _a : null;
+    while (cur && !seen.has(cur.id)) {
+      seen.add(cur.id);
+      chain.unshift(cur);
+      cur = cur.parent ? (_b = byId.get(cur.parent)) != null ? _b : null : null;
+    }
+    return chain;
+  }
+  function lineageOf(edges, id) {
+    const push = (map, key2, val) => {
+      const list = map.get(key2);
+      if (list) list.push(val);
+      else map.set(key2, [val]);
+    };
+    const par = /* @__PURE__ */ new Map();
+    const chd = /* @__PURE__ */ new Map();
+    for (const e of edges != null ? edges : []) {
+      if (!e) continue;
+      push(chd, e.from, e.to);
+      push(par, e.to, e.from);
+    }
+    const walk = (map) => {
+      var _a;
+      const out = /* @__PURE__ */ new Set([id]);
+      const stack = [id];
+      while (stack.length) {
+        const cur = stack.pop();
+        for (const next of (_a = map.get(cur)) != null ? _a : []) {
+          if (out.has(next)) continue;
+          out.add(next);
+          stack.push(next);
+        }
+      }
+      return out;
+    };
+    return { anc: walk(par), desc: walk(chd) };
+  }
+  function anchorNeedles(anchor) {
+    var _a;
+    const raw = String((_a = anchor == null ? void 0 : anchor.text) != null ? _a : "");
+    if (!raw) return [];
+    const out = [raw];
+    if (raw.includes("[[")) {
+      const display = raw.replace(/!?\[\[([^\[\]]+)\]\]/g, (_m, inner) => {
+        const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : inner;
+        const noBlock = afterAlias.includes("^") ? afterAlias.slice(0, afterAlias.indexOf("^")) : afterAlias;
+        const noHead = noBlock.includes("#") ? noBlock.slice(noBlock.lastIndexOf("#") + 1) : noBlock;
+        return noHead || afterAlias || inner;
+      });
+      if (display && display !== raw) out.push(display);
+    }
+    return out;
+  }
+  function alreadyLinked(body, link) {
+    const target = String(link != null ? link : "").trim().replace(/\.md$/i, "");
+    if (!target) return true;
+    return new RegExp(`!?\\[\\[${escapeRegExp(target)}(\\||#|\\]\\])`, "i").test(body);
+  }
+  function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  function insertLinkAtAnchor(body, anchor, link) {
+    var _a, _b, _c;
+    const src = String(body != null ? body : "");
+    const wiki = `[[${String(link != null ? link : "").trim().replace(/\.md$/i, "")}]]`;
+    if (wiki === "[[]]") return src;
+    if (alreadyLinked(src, link)) return src;
+    const text = String((_a = anchor == null ? void 0 : anchor.text) != null ? _a : "").trim();
+    if (text) {
+      const at = relocateAnchor(src, { from: (_b = anchor == null ? void 0 : anchor.from) != null ? _b : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
+      if (at !== null && at >= 0) return src.slice(0, at + text.length) + wiki + src.slice(at + text.length);
+      const compact = text.replace(/\s+/g, "");
+      const flat = src.replace(/\s+/g, "");
+      for (const len of [10, 6, 4, 2]) {
+        const head = compact.slice(0, len);
+        if (head.length < len && len > 2) continue;
+        const hit = head ? flat.indexOf(head) : -1;
+        if (hit < 0) continue;
+        let count = 0;
+        let pos = -1;
+        for (let i = 0; i < src.length; i++) {
+          if (/\s/.test(src[i])) continue;
+          if (count === hit) {
+            pos = i;
+            break;
+          }
+          count++;
+        }
+        if (pos < 0) continue;
+        const tail = src.slice(pos, Math.min(src.length, pos + 300));
+        const m = /[。！？；…!?;\n]/.exec(tail);
+        const end = m ? pos + m.index + 1 : Math.min(src.length, pos + head.length);
+        return src.slice(0, end) + wiki + src.slice(end);
+      }
+    }
+    const trimmed = src.replace(/\s+$/, "");
+    return `${trimmed}${trimmed ? "\n" : ""}${wiki}
+`;
+  }
+  function defaultDeps(over) {
+    var _a, _b, _c, _d;
+    return {
+      measure: (_a = over == null ? void 0 : over.measure) != null ? _a : (el) => ({ w: el.offsetWidth || 0, h: el.offsetHeight || 0 }),
+      notice: (_b = over == null ? void 0 : over.notice) != null ? _b : (msg, type) => notice(msg, type != null ? type : "info"),
+      openNote: (_c = over == null ? void 0 : over.openNote) != null ? _c : (path) => {
+        var _a2, _b2, _c2;
+        try {
+          void ((_c2 = (_b2 = (_a2 = getApp()) == null ? void 0 : _a2.workspace) == null ? void 0 : _b2.openLinkText) == null ? void 0 : _c2.call(_b2, path, "", false, { active: true }));
+        } catch (e) {
+        }
+      },
+      writeClipboard: (_d = over == null ? void 0 : over.writeClipboard) != null ? _d : (text) => writeClipboard(text)
+    };
+  }
+  async function writeClipboard(text) {
+    var _a, _b;
+    try {
+      const nav = typeof navigator !== "undefined" ? navigator : null;
+      if ((_a = nav == null ? void 0 : nav.clipboard) == null ? void 0 : _a.writeText) {
+        await nav.clipboard.writeText(text);
+        return;
+      }
+    } catch (e) {
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      (_b = document.execCommand) == null ? void 0 : _b.call(document, "copy");
+      ta.remove();
+    } catch (e) {
+    }
+  }
+  function buildShell() {
+    if (state) return state;
+    if (typeof document === "undefined") return null;
+    const mask = document.createElement("div");
+    mask.id = MASK_ID;
+    mask.className = "bz-kb-mask bz-kb-mt-mask";
+    mask.style.display = "none";
+    mask.addEventListener("click", () => closeMountTree());
+    const win = document.createElement("div");
+    win.id = WIN_ID;
+    win.className = "bz-kb-window kb bz-kb-mt-window";
+    if (isMobileEnv()) win.classList.add("bz-panel-mtop");
+    win.style.display = "none";
+    win.innerHTML = `
+    <div class="bz-kb-mt-top">
+      <div class="bz-kb-mt-crumbs" id="bz-kb-mt-crumbs"></div>
+      <div class="bz-kb-mt-dir" id="bz-kb-mt-dir"></div>
+      <button class="bz-kb-mt-btn" data-mt-act="refresh" title="重跑当前主卡的挂载建议">重新生成</button>
+      <div class="bz-kb-mt-status" id="bz-kb-mt-status"></div>
+      <button class="bz-kb-mt-close bz-touch-target bz-touch-target--lg" data-mt-act="close" title="关闭挂载树">✕</button>
+    </div>
+    <div class="bz-kb-mt-canvas" id="bz-kb-mt-canvas">
+      <div class="bz-kb-mt-world" id="bz-kb-mt-world"></div>
+      <div class="bz-kb-mt-loading" id="bz-kb-mt-loading" style="display:none">生成中 · 等建议齐再开白板…</div>
+    </div>
+    <div class="bz-kb-mt-zoomer">
+      <button class="bz-kb-mt-zbtn bz-touch-target" data-mt-act="zoom-in" title="放大">＋</button>
+      <button class="bz-kb-mt-zbtn bz-touch-target" data-mt-act="zoom-out" title="缩小">−</button>
+      <button class="bz-kb-mt-zbtn bz-touch-target" data-mt-act="zoom-fit" title="适应窗口">⟲</button>
+    </div>
+    <div class="bz-kb-mt-hint" id="bz-kb-mt-hint"></div>`;
+    document.body.appendChild(mask);
+    document.body.appendChild(win);
+    const canvasEl = win.querySelector("#bz-kb-mt-canvas");
+    const worldEl = win.querySelector("#bz-kb-mt-world");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "bz-kb-mt-lines");
+    worldEl.appendChild(svg);
+    const st = {
+      cardPath: "",
+      direction: "downstream",
+      deps: defaultDeps(),
+      ctx: mountCtx(),
+      tree: { root: "", direction: "downstream", nodes: [], edges: [] },
+      run: null,
+      ghosts: /* @__PURE__ */ new Map(),
+      token: 0,
+      loading: false,
+      sizes: /* @__PURE__ */ new Map(),
+      pos: {},
+      world: { w: CANVAS_FALLBACK_W, h: CANVAS_FALLBACK_H },
+      edges: [],
+      cards: /* @__PURE__ */ new Map(),
+      folded: /* @__PURE__ */ new Set(),
+      selected: null,
+      scale: 1,
+      tx: 0,
+      ty: 0,
+      drag: null,
+      downPt: null,
+      downNode: null,
+      longPressTimer: null,
+      longPressFired: false,
+      pinch: null,
+      menu: null,
+      esc: null,
+      mask,
+      win,
+      canvasEl,
+      worldEl,
+      svg,
+      loadingEl: win.querySelector("#bz-kb-mt-loading")
+    };
+    state = st;
+    bindShellEvents(st);
+    return st;
+  }
+  function bindShellEvents(st) {
+    st.win.addEventListener("click", (e) => {
+      var _a, _b;
+      const btn = (_b = (_a = e.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, "[data-mt-act]");
+      if (!btn) return;
+      const act = btn.getAttribute("data-mt-act") || "";
+      if (act === "close") closeMountTree();
+      else if (act === "refresh") void reload(true);
+      else if (act === "zoom-in") zoomAtCenter(ZOOM_STEP);
+      else if (act === "zoom-out") zoomAtCenter(1 / ZOOM_STEP);
+      else if (act === "zoom-fit") fit();
+      else if (act === "crumb") {
+        const path = btn.getAttribute("data-path") || "";
+        const id = btn.getAttribute("data-id") || "";
+        if (!path) return;
+        if (id === st.tree.root) {
+          st.selected = null;
+          applySelection(st);
+          renderTop(st);
+          return;
+        }
+        void openMountTree(path, { direction: st.direction, deps: depsOf(st) });
+      } else if (act === "build-index") requestBuildIndex(st);
+    });
+    const canvas = st.canvasEl;
+    canvas.addEventListener("pointerdown", (e) => {
+      var _a, _b, _c, _d;
+      if (st.menu) closeMenu();
+      st.longPressFired = false;
+      st.downPt = { x: num(e.clientX), y: num(e.clientY) };
+      st.downNode = (_c = (_b = (_a = e.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".bz-kb-mt-node")) != null ? _c : null;
+      st.drag = { x: num(e.clientX), y: num(e.clientY), tx: st.tx, ty: st.ty };
+      try {
+        (_d = canvas.setPointerCapture) == null ? void 0 : _d.call(canvas, e.pointerId);
+      } catch (e2) {
+      }
+      if (isMobileEnv() && st.downNode) {
+        const x = num(e.clientX);
+        const y = num(e.clientY);
+        const id = st.downNode.getAttribute("data-mt-id") || "";
+        st.longPressTimer = setTimeout(() => {
+          st.longPressTimer = null;
+          st.longPressFired = true;
+          openNodeMenu(id, x, y);
+        }, LONG_PRESS_MS);
+      }
+    });
+    canvas.addEventListener("pointermove", (e) => {
+      if (!st.drag) return;
+      const dx = num(e.clientX) - st.drag.x;
+      const dy = num(e.clientY) - st.drag.y;
+      if (st.longPressTimer && Math.hypot(dx, dy) > LONG_PRESS_SLOP) cancelLongPress(st);
+      st.tx = st.drag.tx + dx;
+      st.ty = st.drag.ty + dy;
+      applyTransform(st);
+    });
+    const endDrag = () => {
+      cancelLongPress(st);
+      st.drag = null;
+    };
+    canvas.addEventListener("pointerup", endDrag);
+    canvas.addEventListener("pointercancel", endDrag);
+    canvas.addEventListener("click", (e) => {
+      var _a, _b, _c;
+      if (st.longPressFired) {
+        st.longPressFired = false;
+        return;
+      }
+      if (st.downPt && Math.hypot(num(e.clientX) - st.downPt.x, num(e.clientY) - st.downPt.y) > DRAG_SLOP) return;
+      const nodeEl = (_c = (_b = (_a = e.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".bz-kb-mt-node")) != null ? _c : st.downNode;
+      const id = (nodeEl == null ? void 0 : nodeEl.getAttribute("data-mt-id")) || "";
+      st.selected = id && st.selected !== id ? id : null;
+      applySelection(st);
+      renderTop(st);
+    });
+    canvas.addEventListener(
+      "wheel",
+      (e) => {
+        var _a, _b, _c, _d;
+        (_a = e.preventDefault) == null ? void 0 : _a.call(e);
+        const rect = (_c = (_b = canvas.getBoundingClientRect) == null ? void 0 : _b.call(canvas)) != null ? _c : { left: 0, top: 0 };
+        zoomAt(st, num(e.clientX) - num(rect.left), num(e.clientY) - num(rect.top), ((_d = e.deltaY) != null ? _d : 0) < 0 ? 1.1 : 0.9);
+      },
+      { passive: false }
+    );
+    canvas.addEventListener("contextmenu", (e) => {
+      var _a, _b, _c, _d, _e, _f;
+      (_a = e.preventDefault) == null ? void 0 : _a.call(e);
+      const nodeEl = (_d = (_c = (_b = e.target) == null ? void 0 : _b.closest) == null ? void 0 : _c.call(_b, ".bz-kb-mt-node")) != null ? _d : null;
+      if (nodeEl) {
+        openNodeMenu(nodeEl.getAttribute("data-mt-id") || "", num(e.clientX), num(e.clientY));
+        return;
+      }
+      const edgeEl = (_f = (_e = e.target) == null ? void 0 : _e.closest) == null ? void 0 : _f.call(_e, ".bz-kb-mt-edge");
+      const key2 = (edgeEl == null ? void 0 : edgeEl.getAttribute("data-mt-key")) || "";
+      const hit = st.edges.find((x) => x.key === key2);
+      if (hit) {
+        const targetId = st.direction === "downstream" ? hit.to : hit.from;
+        openNodeMenu(targetId, num(e.clientX), num(e.clientY));
+        return;
+      }
+      if (st.menu) closeMenu();
+    });
+    canvas.addEventListener(
+      "touchstart",
+      (e) => {
+        var _a;
+        if (((_a = e.touches) == null ? void 0 : _a.length) === 2) {
+          cancelLongPress(st);
+          st.pinch = { d: touchDistance(e.touches), scale: st.scale };
+        }
+      },
+      { passive: true }
+    );
+    canvas.addEventListener(
+      "touchmove",
+      (e) => {
+        var _a, _b, _c, _d;
+        if (!st.pinch || ((_a = e.touches) == null ? void 0 : _a.length) !== 2) return;
+        (_b = e.preventDefault) == null ? void 0 : _b.call(e);
+        const d = touchDistance(e.touches);
+        if (!st.pinch.d) return;
+        const rect = (_d = (_c = canvas.getBoundingClientRect) == null ? void 0 : _c.call(canvas)) != null ? _d : { left: 0, top: 0 };
+        const cx = (num(e.touches[0].clientX) + num(e.touches[1].clientX)) / 2 - num(rect.left);
+        const cy = (num(e.touches[0].clientY) + num(e.touches[1].clientY)) / 2 - num(rect.top);
+        const want = st.pinch.scale * (d / st.pinch.d);
+        zoomAtAbsolute(st, cx, cy, want);
+      },
+      { passive: false }
+    );
+    canvas.addEventListener("touchend", () => {
+      st.pinch = null;
+    });
+    st.win.addEventListener("mouseover", (e) => {
+      var _a, _b, _c;
+      const el = e.target;
+      const dot = (_a = el == null ? void 0 : el.closest) == null ? void 0 : _a.call(el, "[data-mt-edge]");
+      if (dot) {
+        setHover(st, dot.getAttribute("data-mt-edge") || "", true);
+        return;
+      }
+      const edgeEl = (_b = el == null ? void 0 : el.closest) == null ? void 0 : _b.call(el, ".bz-kb-mt-edge");
+      if (edgeEl) {
+        setHover(st, edgeEl.getAttribute("data-mt-key") || "", true);
+        return;
+      }
+      const nodeEl = (_c = el == null ? void 0 : el.closest) == null ? void 0 : _c.call(el, ".bz-kb-mt-node");
+      if (nodeEl) setHover(st, edgeKeyTo(st, nodeEl.getAttribute("data-mt-id") || ""), true);
+    });
+    st.win.addEventListener("mouseout", (e) => {
+      var _a;
+      const el = e.target;
+      if ((_a = el == null ? void 0 : el.closest) == null ? void 0 : _a.call(el, "[data-mt-edge], .bz-kb-mt-edge, .bz-kb-mt-node")) setHover(st, "", false);
+    });
+  }
+  function num(v) {
+    return typeof v === "number" && Number.isFinite(v) ? v : 0;
+  }
+  function displayTitle(node) {
+    return String(node.title || node.path || node.id).replace(/\.md$/i, "");
+  }
+  function touchDistance(touches) {
+    const [a, b] = [touches[0], touches[1]];
+    return Math.hypot(num(a.clientX) - num(b.clientX), num(a.clientY) - num(b.clientY));
+  }
+  function cancelLongPress(st) {
+    if (st.longPressTimer) {
+      clearTimeout(st.longPressTimer);
+      st.longPressTimer = null;
+    }
+  }
+  function depsOf(st) {
+    return {
+      measure: st.deps.measure,
+      notice: st.deps.notice,
+      openNote: st.deps.openNote,
+      writeClipboard: st.deps.writeClipboard
+    };
+  }
+  function mountTreeOpen() {
+    return !!state && state.mask.style.display !== "none";
+  }
+  function closeMountTree() {
+    var _a;
+    const st = state;
+    if (!st) return;
+    closeMenu();
+    cancelLongPress(st);
+    st.mask.style.display = "none";
+    st.win.style.display = "none";
+    st.selected = null;
+    st.token++;
+    st.loading = false;
+    st.loadingEl.style.display = "none";
+    (_a = st.esc) == null ? void 0 : _a.unregister();
+    st.esc = null;
+  }
+  async function openMountTree(cardPath, opts) {
+    const path = String(cardPath != null ? cardPath : "").trim();
+    const st = buildShell();
+    if (!st) return;
+    if (!path) {
+      defaultDeps(opts == null ? void 0 : opts.deps).notice("看挂载树：这张卡没有可解析的路径");
+      return;
+    }
+    const direction = (opts == null ? void 0 : opts.direction) === "upstream" ? "upstream" : "downstream";
+    st.deps = defaultDeps(opts == null ? void 0 : opts.deps);
+    topifyZ(st.mask, st.win);
+    st.mask.style.display = "block";
+    st.win.style.display = "flex";
+    if (!st.esc) {
+      st.esc = escManager.register(ESC_ID, {
+        isVisible: () => mountTreeOpen() || !!st.menu,
+        close: () => {
+          if (st.menu) closeMenu();
+          else closeMountTree();
+        }
+      });
+    }
+    const sameTree = path === st.cardPath && direction === st.direction && st.tree.root === path && st.tree.nodes.length > 0;
+    if (sameTree && !st.loading && !(opts == null ? void 0 : opts.force)) {
+      st.loadingEl.style.display = "none";
+      renderTop(st);
+      return;
+    }
+    st.cardPath = path;
+    st.direction = direction;
+    st.selected = null;
+    st.folded = /* @__PURE__ */ new Set();
+    await load(st, !!(opts == null ? void 0 : opts.force));
+  }
+  async function reload(force) {
+    const st = state;
+    if (!st) return;
+    await load(st, force);
+  }
+  async function load(st, force) {
+    var _a;
+    const token = ++st.token;
+    const path = st.cardPath;
+    const direction = st.direction;
+    st.loading = true;
+    st.edges = [];
+    st.cards.clear();
+    st.ghosts = /* @__PURE__ */ new Map();
+    st.run = null;
+    st.loadingEl.style.display = "";
+    renderTop(st);
+    const ctx = mountCtx();
+    st.ctx = ctx;
+    let tree;
+    try {
+      tree = await buildMountTree(path, { direction, ctx });
+    } catch (e) {
+      tree = { root: path, direction, nodes: [], edges: [] };
+    }
+    if (token !== st.token) return;
+    const autoOn = ((_a = tryGetSettings()) == null ? void 0 : _a.knowledgeMountAutoSuggest) !== false;
+    let run = null;
+    if (autoOn) {
+      run = await runSuggest(st, path, ctx, force);
+      if (token !== st.token) return;
+    }
+    st.run = run;
+    st.tree = tree;
+    if (run && run.suggestions.length) {
+      for (const s of run.suggestions) {
+        if (s == null ? void 0 : s.target) st.ghosts.set("ai:" + s.target, s);
+      }
+      st.tree = mergeSuggestions(tree, run);
+    }
+    st.loading = false;
+    st.loadingEl.style.display = "none";
+    await renderCanvas(st);
+    renderTop(st);
+    fit();
+  }
+  async function runSuggest(st, path, ctx, force) {
+    try {
+      return await generateSuggestions(
+        path,
+        { app: ctx.app, cardboxDir: ctx.cardboxDir, litDir: ctx.litDir },
+        { force }
+      );
+    } catch (e) {
+      return { status: "no-ai", suggestions: [] };
+    }
+  }
+  async function rebuildTreeOnly(st) {
+    const token = ++st.token;
+    const path = st.cardPath;
+    let tree;
+    try {
+      tree = await buildMountTree(path, { direction: st.direction, ctx: st.ctx });
+    } catch (e) {
+      return;
+    }
+    if (token !== st.token) return;
+    st.tree = st.run && st.run.suggestions.length ? mergeSuggestions(tree, st.run) : tree;
+    await renderCanvas(st);
+    renderTop(st);
+  }
+  function renderTop(st) {
+    var _a, _b, _c;
+    const rootNode2 = (_a = st.tree.nodes.find((n) => n.id === st.tree.root)) != null ? _a : null;
+    const crumbs = crumbTrail(st.tree.nodes, (_b = st.selected) != null ? _b : st.tree.root);
+    const chain = crumbs.length ? crumbs : rootNode2 ? [rootNode2] : [];
+    st.win.querySelector("#bz-kb-mt-crumbs").innerHTML = chain.map((n, i) => {
+      const last = i === chain.length - 1;
+      const label = escapeHtml(displayTitle(n));
+      const sep = i === 0 ? "" : '<span class="bz-kb-mt-sep">›</span>';
+      if (last && !st.selected) return `${sep}<span class="bz-kb-mt-crumb is-cur">${label}</span>`;
+      return `${sep}<button class="bz-kb-mt-crumb bz-touch-target" data-mt-act="crumb" data-path="${escapeHtml(n.path)}" data-id="${escapeHtml(n.id)}" title="以《${label}》为主卡重开">${label}</button>`;
+    }).join("");
+    const dirEl = st.win.querySelector("#bz-kb-mt-dir");
+    dirEl.textContent = st.direction === "upstream" ? "上游 · 谁挂了我" : "下游 · 我挂了谁";
+    dirEl.setAttribute("data-mt-dir", st.direction);
+    const statusEl = st.win.querySelector("#bz-kb-mt-status");
+    const culled = st.sizes.size ? countCulled(st) : 0;
+    let text;
+    let extra = "";
+    if (st.loading) text = mountStatusText("generating");
+    else if (st.run) text = mountStatusText(st.run.status);
+    else text = "本卡建议未跑（自动建议已关闭）";
+    if (!st.loading && culled > 0) extra = `<span class="bz-kb-mt-kind">· 图大，已按 ${LAYOUT_PARAMS.MAX_NODES} 张封顶</span>`;
+    statusEl.innerHTML = `<span class="bz-kb-mt-status-t">${escapeHtml(text)}</span>${extra}${!st.loading && ((_c = st.run) == null ? void 0 : _c.status) === "no-index" ? '<button class="bz-kb-mt-btn is-mini" data-mt-act="build-index" title="打开第二大脑重建索引（绝不自动建）">去建索引</button>' : ""}`;
+    const hint = st.win.querySelector("#bz-kb-mt-hint");
+    hint.textContent = isMobileEnv() ? "点卡片血缘高亮 · 长按卡片出菜单 · 双指缩放 · 单指拖拽平移" : "点卡片血缘高亮（再点取消）· 右键菜单 · 拖拽平移 · 滚轮缩放 · 点标题折/展";
+  }
+  function countCulled(st) {
+    const laid = st.tree.nodes.filter((n) => !n.attached && st.sizes.has(n.id)).length;
+    return Math.max(0, laid - Math.min(laid, LAYOUT_PARAMS.MAX_NODES));
+  }
+  function requestBuildIndex(st) {
+    var _a;
+    try {
+      const app = getApp();
+      if (typeof ((_a = app == null ? void 0 : app.commands) == null ? void 0 : _a.executeCommandById) === "function") {
+        app.commands.executeCommandById("bz-secondbrain-rebuild-index");
+        st.deps.notice("已转交「重建索引」——建完回到白板点「重新生成」");
+        return;
+      }
+    } catch (e) {
+    }
+    st.deps.notice("未建向量索引：请先在第二大脑执行「重建索引」，再回白板点「重新生成」");
+  }
+  async function renderCanvas(st) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const worldEl = st.worldEl;
+    for (const el of Array.from(worldEl.querySelectorAll(".bz-kb-mt-node"))) el.remove();
+    st.svg.innerHTML = "";
+    st.cards.clear();
+    st.sizes.clear();
+    st.edges = [];
+    const nodes = (_a = st.tree.nodes) != null ? _a : [];
+    if (nodes.length === 0) {
+      st.world = { w: CANVAS_FALLBACK_W, h: CANVAS_FALLBACK_H };
+      syncWorld(st);
+      return;
+    }
+    for (const n of nodes) if (n.attached && !st.folded.has(n.id)) st.folded.add(n.id);
+    const rootId = st.tree.root;
+    const jobs = [];
+    for (const node of nodes) {
+      const el = buildCard(st, node, rootId);
+      worldEl.appendChild(el);
+      st.cards.set(node.id, el);
+      jobs.push(fillBody(st, node, el));
+    }
+    worldEl.appendChild(st.svg);
+    await Promise.all(jobs);
+    for (const node of nodes) {
+      const el = st.cards.get(node.id);
+      if (!el) continue;
+      const raw = st.deps.measure(el, node.kind);
+      const w = (raw == null ? void 0 : raw.w) && raw.w > 0 ? raw.w : widthOf(st, node);
+      const h = (raw == null ? void 0 : raw.h) && raw.h > 0 ? raw.h : (_b = HEIGHT_BY_KIND[node.kind]) != null ? _b : HEIGHT_BY_KIND.card;
+      st.sizes.set(node.id, { w, h });
+    }
+    const laid = nodes.filter((n) => !n.attached && st.sizes.has(n.id));
+    const boxIds = new Set(laid.map((n) => n.id));
+    const boxes = laid.map((n) => {
+      const s = st.sizes.get(n.id);
+      return { id: n.id, w: s.w, h: s.h, depth: n.depth, kind: n.kind };
+    });
+    const layoutEdges = [];
+    for (const e of (_c = st.tree.edges) != null ? _c : []) {
+      if (boxIds.has(e.from) && boxIds.has(e.to)) layoutEdges.push({ from: e.from, to: e.to });
+    }
+    const layout = layoutTree(boxes, layoutEdges);
+    st.pos = layout.pos;
+    st.world = { w: layout.world.w, h: layout.world.h };
+    for (const n of laid) {
+      const el = st.cards.get(n.id);
+      const p = layout.pos[n.id];
+      if (!p) {
+        el.style.display = "none";
+        continue;
+      }
+      el.style.left = `${p.x}px`;
+      el.style.top = `${p.y}px`;
+    }
+    const dockGroups = /* @__PURE__ */ new Map();
+    for (const n of nodes) {
+      if (!n.attached || !n.parent) continue;
+      if (!dockGroups.has(n.parent)) dockGroups.set(n.parent, []);
+      dockGroups.get(n.parent).push(n);
+    }
+    for (const [parentId, group] of dockGroups) {
+      const parentPos = layout.pos[parentId];
+      const parentEl = st.cards.get(parentId);
+      if (!parentPos || !parentEl || parentEl.style.display === "none") {
+        for (const n of group) {
+          const el = st.cards.get(n.id);
+          if (el) el.style.display = "none";
+        }
+        continue;
+      }
+      const pw = (_e = (_d = st.sizes.get(parentId)) == null ? void 0 : _d.w) != null ? _e : widthOf(st, { id: parentId, kind: "card" });
+      const ph = (_g = (_f = st.sizes.get(parentId)) == null ? void 0 : _f.h) != null ? _g : HEIGHT_BY_KIND.card;
+      let top = parentPos.y + ph + DOCK_GAP;
+      let right = parentPos.x + pw;
+      for (const n of group) {
+        const el = st.cards.get(n.id);
+        const size = st.sizes.get(n.id);
+        if (!el) continue;
+        el.style.left = `${parentPos.x}px`;
+        el.style.top = `${top}px`;
+        el.style.width = `${pw}px`;
+        if (size) size.w = pw;
+        top += ((_h = size == null ? void 0 : size.h) != null ? _h : HEIGHT_BY_KIND.note) + DOCK_GAP;
+        if (top > st.world.h) st.world.h = top;
+      }
+      if (right > st.world.w) st.world.w = right;
+    }
+    syncWorld(st);
+    drawEdges(st);
+    applySelection(st);
+  }
+  function widthOf(st, node) {
+    var _a;
+    if (node.id && node.id === st.tree.root) return WIDTH_ROOT;
+    return (_a = WIDTH_BY_KIND[node.kind]) != null ? _a : WIDTH_BY_KIND.card;
+  }
+  function syncWorld(st) {
+    const { w, h } = st.world;
+    st.worldEl.style.width = `${w}px`;
+    st.worldEl.style.height = `${h}px`;
+    st.svg.setAttribute("width", String(w));
+    st.svg.setAttribute("height", String(h));
+    st.svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    applyTransform(st);
+  }
+  function buildCard(st, node, rootId) {
+    var _a, _b, _c;
+    const el = document.createElement("div");
+    const ghost = st.ghosts.has(node.id);
+    const stale = !!node.missing || ghost && !ghostTargetExists(st, node);
+    const classes = ["bz-kb-mt-node", `is-${node.kind}`];
+    if (stale) classes.push("is-missing");
+    if (node.attached) classes.push("is-dock");
+    if (node.source === "sameName") classes.push("is-lit");
+    if (ghost) classes.push("is-ghost");
+    if (node.id === rootId) classes.push("is-root");
+    if (st.folded.has(node.id)) classes.push("is-folded");
+    el.className = classes.join(" ");
+    el.setAttribute("data-mt-id", node.id);
+    el.setAttribute("data-mt-kind", node.kind);
+    el.setAttribute("data-mt-source", node.source);
+    el.style.width = `${widthOf(st, node)}px`;
+    const head = document.createElement("div");
+    head.className = "bz-kb-mt-head";
+    const ttl = document.createElement("span");
+    ttl.className = "bz-kb-mt-ttl";
+    ttl.textContent = stale ? `${displayTitle(node)}（失效）` : displayTitle(node);
+    ttl.title = "点击标题折 / 展这张卡";
+    ttl.setAttribute("data-mt-fold", "1");
+    head.appendChild(ttl);
+    head.appendChild(chip(node.source === "ai" ? "AI 建议" : (_a = KIND_LABEL[node.kind]) != null ? _a : "", "kind"));
+    if (node.source && node.source !== "ai") head.appendChild(chip((_b = SOURCE_LABEL[node.source]) != null ? _b : "", `src src-${node.source}`));
+    if (node.id === rootId) head.appendChild(chip("主 卡", "root"));
+    if (ghost) {
+      const reason = ((_c = st.ghosts.get(node.id)) == null ? void 0 : _c.reason) || "";
+      if (reason) {
+        const why = chip("看理由", "why");
+        why.setAttribute("data-mt-why", reason);
+        why.title = reason;
+        head.appendChild(why);
+      }
+    }
+    el.appendChild(head);
+    const body = document.createElement("div");
+    body.className = "bz-kb-mt-body";
+    el.appendChild(body);
+    ttl.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (st.folded.has(node.id)) st.folded.delete(node.id);
+      else st.folded.add(node.id);
+      const folded = st.folded.has(node.id);
+      el.classList.toggle("is-folded", folded);
+      const body2 = el.querySelector(".bz-kb-mt-body");
+      if (!folded && body2 && !body2.querySelector("*")) void fillBody(st, node, el);
+    });
+    return el;
+  }
+  function chip(text, kind) {
+    const s = document.createElement("span");
+    s.className = `bz-kb-mt-chip ${kind}`;
+    s.textContent = text;
+    return s;
+  }
+  async function fillBody(st, node, cardEl) {
+    var _a;
+    const bodyEl = cardEl.querySelector(".bz-kb-mt-body");
+    if (!bodyEl) return;
+    if (node.attached && st.folded.has(node.id)) return;
+    const stale = !!node.missing || st.ghosts.has(node.id) && !ghostTargetExists(st, node);
+    if (stale) {
+      bodyEl.innerHTML = '<div class="bz-kb-mt-ph is-missing">失效：目标已不存在（改名或删除后残留）</div>';
+      return;
+    }
+    if (node.kind === "image" || node.kind === "video") {
+      bodyEl.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml(node.path)}</div>`;
+      return;
+    }
+    const md = bodyMarkdown(st, node);
+    if (md === null) {
+      bodyEl.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
+      return;
+    }
+    if (!md.trim()) {
+      bodyEl.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
+      return;
+    }
+    const app = (_a = st.ctx.app) != null ? _a : getApp();
+    let ok = false;
+    if (app == null ? void 0 : app.vault) {
+      try {
+        const comp = new Component();
+        await MarkdownRenderer.render(app, md, bodyEl, node.path, comp);
+        comp.unload();
+        ok = true;
+      } catch (e) {
+        ok = false;
+      }
+    }
+    if (ok && bodyEl.querySelector("*")) {
+      tagBodyLinks(st, node, bodyEl);
+      return;
+    }
+    bodyEl.textContent = "";
+    for (const part of md.split(/\r?\n\r?\n+/)) {
+      const t = part.trim();
+      if (!t) continue;
+      const p = document.createElement("div");
+      p.className = "bz-kb-mt-ptext";
+      p.textContent = t;
+      bodyEl.appendChild(p);
+    }
+    tagBodyLinks(st, node, bodyEl);
+  }
+  function normRef(v) {
+    return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\.\//, "").replace(/\.md$/i, "").replace(/^\/+/, "").toLowerCase();
+  }
+  function refKeys(node) {
+    const out = /* @__PURE__ */ new Set();
+    const add = (v) => {
+      const k = normRef(v);
+      if (k) out.add(k);
+    };
+    add(node.path);
+    add(node.id);
+    add(node.title);
+    const base = String(node.path || "").replace(/\\/g, "/").split("/").pop() || "";
+    add(base);
+    const hash = String(node.id).indexOf("#");
+    if (hash >= 0) {
+      const sub = String(node.id).slice(hash);
+      add(base.replace(/\.md$/i, "") + sub);
+    }
+    return out;
+  }
+  function tagBodyLinks(st, node, bodyEl) {
+    var _a;
+    const links = Array.from(bodyEl.querySelectorAll("a.internal-link, a[data-href]"));
+    if (!links.length) return;
+    const outgoing = ((_a = st.tree.edges) != null ? _a : []).filter(
+      (e) => (st.direction === "downstream" ? e.from : e.to) === node.id
+    );
+    if (!outgoing.length) return;
+    for (const a of links) {
+      const href = normRef(a.getAttribute("data-href") || a.getAttribute("href") || "");
+      if (!href) continue;
+      for (const e of outgoing) {
+        const otherId = st.direction === "downstream" ? e.to : e.from;
+        const other = st.tree.nodes.find((n) => n.id === otherId);
+        if (!other) continue;
+        const keys = refKeys(other);
+        const hit = [...keys].some((k) => k === href || k.endsWith("/" + href) || href.endsWith("/" + k));
+        if (hit) {
+          a.setAttribute("data-mt-to", otherId);
+          break;
+        }
+      }
+    }
+  }
+  function bodyMarkdown(st, node) {
+    if (node.missing) return null;
+    const ghost = st.ghosts.get(node.id);
+    if (ghost) return `> ${ghost.reason || "AI 建议：这张卡与主卡有实质关联。"}`;
+    if (node.body && node.body.trim()) return node.body;
+    return null;
+  }
+  function ghostTargetExists(st, node) {
+    var _a, _b, _c;
+    if (!node.suggested) return true;
+    const app = (_a = st.ctx.app) != null ? _a : getApp();
+    try {
+      return !!((_c = (_b = app == null ? void 0 : app.vault) == null ? void 0 : _b.getAbstractFileByPath) == null ? void 0 : _c.call(_b, node.path));
+    } catch (e) {
+      return true;
+    }
+  }
+  function edgeId(from, to) {
+    return `${from}\0${to}`;
+  }
+  function domKeys(list) {
+    const map = /* @__PURE__ */ new Map();
+    list.forEach((e, i) => map.set(edgeId(e.from, e.to), `e${i}`));
+    return map;
+  }
+  function placeAnchors(st, list, keys) {
+    var _a, _b, _c, _d;
+    const out = /* @__PURE__ */ new Map();
+    const cursor = /* @__PURE__ */ new Map();
+    const kindById = new Map(st.tree.nodes.map((n) => [n.id, n.kind]));
+    for (const e of list) {
+      const id = edgeId(e.from, e.to);
+      const key2 = (_a = keys.get(id)) != null ? _a : "";
+      const bearerId = st.direction === "downstream" ? e.from : e.to;
+      const colorKind = (_b = kindById.get(st.direction === "downstream" ? e.to : e.from)) != null ? _b : "para";
+      const cardEl = st.cards.get(bearerId);
+      if (!cardEl || cardEl.style.display === "none") continue;
+      const bodyEl = cardEl.querySelector(".bz-kb-mt-body");
+      if (!bodyEl) continue;
+      const anchor = (_d = (_c = st.tree.nodes.find((n) => n.id === e.to)) == null ? void 0 : _c.anchor) != null ? _d : null;
+      const point = measureDot(st, cardEl, bodyEl, anchor, key2, colorKind, cursor);
+      if (point) out.set(id, point);
+    }
+    return out;
+  }
+  function measureDot(st, cardEl, bodyEl, anchor, key2, colorKind, cursor) {
+    var _a;
+    if (!anchor) return null;
+    const needles = anchorNeedles(anchor);
+    if (needles.length === 0) return null;
+    const dot = insertAnchorDot(bodyEl, needles, key2, (_a = cursor.get(bodyEl)) != null ? _a : 0);
+    if (!dot) return null;
+    cursor.set(bodyEl, Number(dot.getAttribute("data-mt-at") || 0));
+    dot.style.color = mountKindColor(colorKind);
+    const nodeId = cardEl.getAttribute("data-mt-id") || "";
+    const base = st.pos[nodeId];
+    const size = st.sizes.get(nodeId);
+    if (!base || !size) return null;
+    if (!dot.offsetWidth && !dot.offsetHeight) return null;
+    return {
+      x: base.x + dot.offsetLeft + dot.offsetWidth / 2,
+      y: base.y + dot.offsetTop + dot.offsetHeight / 2
+    };
+  }
+  function insertAnchorDot(bodyEl, needles, key2, from) {
+    var _a;
+    const idx = textIndexOf(bodyEl);
+    const hit = locateInText(idx.text, needles, from);
+    if (!hit) return null;
+    const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
+    if (!part) return null;
+    const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
+    const after = part.node.splitText(offset);
+    const len = Math.min(hit.len, after.data.length);
+    const tail = after.splitText(len);
+    const dot = document.createElement("i");
+    dot.className = "bz-kb-mt-anch";
+    dot.setAttribute("data-mt-edge", key2);
+    dot.setAttribute("data-mt-at", String(hit.at + hit.len));
+    dot.setAttribute("title", "挂载点：这条线从这句话扯出");
+    (_a = after.parentNode) == null ? void 0 : _a.insertBefore(dot, tail);
+    return dot;
+  }
+  function textIndexOf(container) {
+    var _a;
+    const walker = document.createTreeWalker(
+      container,
+      4
+      /* NodeFilter.SHOW_TEXT */
+    );
+    const parts = [];
+    let text = "";
+    let cur = walker.nextNode();
+    while (cur) {
+      const data = (_a = cur.data) != null ? _a : "";
+      if (data) {
+        parts.push({ node: cur, start: text.length });
+        text += data;
+      }
+      cur = walker.nextNode();
+    }
+    return { text, parts };
+  }
+  function locateInText(text, needles, from) {
+    if (!text) return null;
+    const start = Math.min(Math.max(0, from), text.length);
+    for (const needle of needles) {
+      if (!needle) continue;
+      const seg = text.slice(start);
+      if (seg) {
+        const rel = relocateAnchor(seg, { from: 0, to: needle.length, text: needle });
+        if (rel !== null && rel >= 0) return { at: start + rel, len: needle.length };
+      }
+      const abs = relocateAnchor(text, { from: 0, to: needle.length, text: needle });
+      if (abs !== null && abs >= 0) return { at: abs, len: needle.length };
+    }
+    return null;
+  }
+  function drawEdges(st) {
+    var _a;
+    const boxes = [];
+    for (const n of st.tree.nodes) {
+      if (n.attached) continue;
+      const p = st.pos[n.id];
+      const s = st.sizes.get(n.id);
+      const el = st.cards.get(n.id);
+      if (!p || !s || !el || el.style.display === "none") continue;
+      boxes.push({ id: n.id, x: p.x, y: p.y, w: s.w, h: s.h });
+    }
+    const boxIds = new Set(boxes.map((b) => b.id));
+    const list = ((_a = st.tree.edges) != null ? _a : []).filter((e) => boxIds.has(e.from) && boxIds.has(e.to));
+    st.edges = [];
+    if (list.length === 0) {
+      st.svg.innerHTML = "";
+      return;
+    }
+    const keys = domKeys(list);
+    const anchors = placeAnchors(st, list, keys);
+    const inputs = list.map((e) => {
+      var _a2;
+      return {
+        from: e.from,
+        to: e.to,
+        anchor: (_a2 = anchors.get(edgeId(e.from, e.to))) != null ? _a2 : null
+      };
+    });
+    const routed = routeEdges(boxes, inputs);
+    const kindById = new Map(st.tree.nodes.map((n) => [n.id, n.kind]));
+    const suggestedOf = new Map(list.map((e) => [edgeId(e.from, e.to), !!e.suggested]));
+    let html = "";
+    routed.forEach((r, i) => {
+      var _a2, _b, _c, _d;
+      if (!(r == null ? void 0 : r.d)) return;
+      const id = edgeId(r.from, r.to);
+      const key2 = (_a2 = keys.get(id)) != null ? _a2 : `e${i}`;
+      const bearerId = st.direction === "downstream" ? r.from : r.to;
+      const otherId = st.direction === "downstream" ? r.to : r.from;
+      (_b = st.cards.get(bearerId)) == null ? void 0 : _b.querySelectorAll("[data-mt-to]").forEach((el) => {
+        if (el.getAttribute("data-mt-to") === otherId) el.setAttribute("data-mt-edge", key2);
+      });
+      const colorKind = (_c = kindById.get(st.direction === "downstream" ? r.to : r.from)) != null ? _c : "para";
+      const color = mountKindColor(colorKind);
+      const isSug = (_d = suggestedOf.get(id)) != null ? _d : false;
+      const isFb = !!r.fallback;
+      const entry = lastPoint(r.d);
+      const cls = `bz-kb-mt-edge${isSug ? " is-sug" : ""}${isFb ? " is-fb" : ""}`;
+      html += `<path class="${cls}" data-mt-key="${key2}" data-i="${i}" d="${r.d}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.6"${isSug || isFb ? ' stroke-dasharray="6 5"' : ""}/>`;
+      if (entry) {
+        html += `<circle class="bz-kb-mt-edot" data-mt-key="${key2}" cx="${entry.x.toFixed(1)}" cy="${entry.y.toFixed(
+          1
+        )}" r="3" fill="${isSug ? "none" : color}" stroke="${isSug ? color : "none"}" stroke-width="1.5" opacity="0.85"/>`;
+      }
+      st.edges.push({ ...r, key: key2, color, suggested: isSug });
+    });
+    st.svg.innerHTML = html;
+  }
+  function lastPoint(d) {
+    const m = /(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*$/.exec(d);
+    if (!m) return null;
+    const x = Number(m[1]);
+    const y = Number(m[2]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return { x, y };
+  }
+  function edgeKeyTo(st, nodeId) {
+    var _a;
+    if (!nodeId) return "";
+    const hit = st.edges.find((e) => st.direction === "downstream" ? e.to === nodeId : e.from === nodeId);
+    return (_a = hit == null ? void 0 : hit.key) != null ? _a : "";
+  }
+  function applySelection(st) {
+    var _a, _b;
+    const sel = st.selected;
+    const dockSelected = !!sel && !!((_a = st.cards.get(sel)) == null ? void 0 : _a.classList.contains("is-dock"));
+    const set = sel && !dockSelected ? lineageOf((_b = st.tree.edges) != null ? _b : [], sel) : null;
+    for (const [id, el] of st.cards) {
+      el.classList.remove("is-sel", "is-anc", "is-desc", "is-dim");
+      if (!set || el.classList.contains("is-dock")) continue;
+      if (id === sel) el.classList.add("is-sel");
+      else if (set.anc.has(id)) el.classList.add("is-anc");
+      else if (set.desc.has(id)) el.classList.add("is-desc");
+      else el.classList.add("is-dim");
+    }
+    for (const e of st.edges) {
+      const path = st.svg.querySelector(`.bz-kb-mt-edge[data-mt-key="${cssEscape(e.key)}"]`);
+      if (!path) continue;
+      path.classList.remove("is-anc", "is-desc", "is-off");
+      if (!set) continue;
+      const isAnc = set.anc.has(e.from) && (e.to === sel || set.anc.has(e.to));
+      const isDesc = (e.from === sel || set.desc.has(e.from)) && set.desc.has(e.to);
+      if (isAnc) path.classList.add("is-anc");
+      else if (isDesc) path.classList.add("is-desc");
+      else path.classList.add("is-off");
+    }
+  }
+  function setHover(st, key2, on) {
+    var _a;
+    if (!key2) {
+      st.win.querySelectorAll(".is-hot").forEach((el) => el.classList.remove("is-hot"));
+      return;
+    }
+    const edge = st.edges.find((e) => e.key === key2);
+    if (!edge) return;
+    const otherId = st.direction === "downstream" ? edge.to : edge.from;
+    const list = [
+      st.svg.querySelector(`.bz-kb-mt-edge[data-mt-key="${cssEscape(key2)}"]`),
+      st.svg.querySelector(`.bz-kb-mt-edot[data-mt-key="${cssEscape(key2)}"]`),
+      ...Array.from(st.win.querySelectorAll(`[data-mt-edge="${cssEscape(key2)}"]`)),
+      (_a = st.cards.get(otherId)) != null ? _a : null
+    ];
+    for (const el of list) {
+      if (!el) continue;
+      el.classList.toggle("is-hot", on);
+    }
+  }
+  function cssEscape(s) {
+    return String(s).replace(/["\\]/g, "\\$&");
+  }
+  function applyTransform(st) {
+    st.worldEl.style.transform = `translate(${st.tx}px, ${st.ty}px) scale(${st.scale})`;
+  }
+  function zoomAt(st, px, py, factor) {
+    zoomAtAbsolute(st, px, py, st.scale * factor);
+  }
+  function zoomAtAbsolute(st, px, py, want) {
+    const ns = clampMountScale(want);
+    const k = ns / st.scale;
+    st.tx = px - (px - st.tx) * k;
+    st.ty = py - (py - st.ty) * k;
+    st.scale = ns;
+    applyTransform(st);
+  }
+  function zoomAtCenter(factor) {
+    const st = state;
+    if (!st) return;
+    const w = st.canvasEl.clientWidth || CANVAS_FALLBACK_W;
+    const h = st.canvasEl.clientHeight || CANVAS_FALLBACK_H;
+    zoomAt(st, w / 2, h / 2, factor);
+  }
+  function fit() {
+    const st = state;
+    if (!st) return;
+    const cw = st.canvasEl.clientWidth || CANVAS_FALLBACK_W;
+    const ch = st.canvasEl.clientHeight || CANVAS_FALLBACK_H;
+    const w = Math.max(1, st.world.w);
+    const h = Math.max(1, st.world.h);
+    st.scale = Math.min(ZOOM_FIT_MAX, Math.max(ZOOM_MIN, Math.min((cw - FIT_PAD) / w, (ch - FIT_PAD) / h)));
+    st.tx = (cw - w * st.scale) / 2;
+    st.ty = (ch - h * st.scale) / 2;
+    applyTransform(st);
+  }
+  function openNodeMenu(nodeId, x, y) {
+    var _a, _b, _c, _d, _e;
+    const st = state;
+    if (!st || !nodeId) return;
+    const node = st.tree.nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+    closeMenu();
+    const ghost = (_a = st.ghosts.get(nodeId)) != null ? _a : null;
+    const litChild = (_b = st.tree.nodes.find((n) => n.attached && n.parent === nodeId)) != null ? _b : null;
+    const isAttachment = node.kind === "image" || node.kind === "video";
+    const entries = [
+      { act: "open", label: "打开笔记", disabled: !!node.missing },
+      { act: "lit", label: "看文献笔记", disabled: !litChild, title: litChild ? litChild.path : "这篇卡片没有同名文献" },
+      { act: "copy", label: "复制双链", disabled: false },
+      { act: "root", label: "设为主卡", disabled: !!node.missing || isAttachment || node.id === st.tree.root },
+      { act: "who", label: "看谁挂了我（翻向上游）", disabled: !!node.missing || isAttachment },
+      { act: "pin", label: "固定（正文写入双链）", disabled: !ghost },
+      { act: "dismiss", label: "取消建议", disabled: !ghost },
+      { act: "why", label: "看理由", disabled: !ghost }
+    ];
+    const menu = document.createElement("div");
+    menu.className = "bz-kb-mt-ctx";
+    menu.id = "bz-kb-mt-ctx";
+    const head = document.createElement("div");
+    head.className = "bz-kb-mt-ctx-head";
+    head.textContent = displayTitle(node);
+    menu.appendChild(head);
+    if (ghost == null ? void 0 : ghost.reason) {
+      const reason = document.createElement("div");
+      reason.className = "bz-kb-mt-ctx-reason";
+      reason.textContent = ghost.reason;
+      menu.appendChild(reason);
+    }
+    for (const item of entries) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "bz-kb-mt-ctx-item";
+      b.setAttribute("data-mt-menu", item.act);
+      b.textContent = item.label;
+      if (item.disabled) {
+        b.disabled = true;
+        b.classList.add("is-dis");
+      }
+      if (item.title) b.title = item.title;
+      b.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (item.disabled) return;
+        closeMenu();
+        runMenuAction(st, item.act, node, ghost);
+      });
+      menu.appendChild(b);
+    }
+    st.win.appendChild(menu);
+    const rect = (_e = (_d = (_c = st.win).getBoundingClientRect) == null ? void 0 : _d.call(_c)) != null ? _e : { left: 0, top: 0, width: CANVAS_FALLBACK_W, height: CANVAS_FALLBACK_H };
+    const mw = menu.offsetWidth || 240;
+    const mh = menu.offsetHeight || 280;
+    const left = Math.max(8, Math.min(x - num(rect.left), (rect.width || CANVAS_FALLBACK_W) - mw - 8));
+    const top = Math.max(8, Math.min(y - num(rect.top), (rect.height || CANVAS_FALLBACK_H) - mh - 8));
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    st.menu = menu;
+    const outside = (ev) => {
+      var _a2, _b2;
+      if (!st.menu) return;
+      if ((_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "#bz-kb-mt-ctx")) return;
+      closeMenu();
+    };
+    setOutsideHandler(outside);
+  }
+  var menuOutsideHandler = null;
+  function setOutsideHandler(fn) {
+    if (menuOutsideHandler) document.removeEventListener("pointerdown", menuOutsideHandler, true);
+    menuOutsideHandler = fn;
+    document.addEventListener("pointerdown", fn, true);
+  }
+  function closeMenu() {
+    var _a;
+    const st = state;
+    (_a = st == null ? void 0 : st.menu) == null ? void 0 : _a.remove();
+    if (st) st.menu = null;
+    if (menuOutsideHandler) {
+      document.removeEventListener("pointerdown", menuOutsideHandler, true);
+      menuOutsideHandler = null;
+    }
+  }
+  function runMenuAction(st, act, node, ghost) {
+    if (act === "open") {
+      st.deps.openNote(node.path);
+      return;
+    }
+    if (act === "lit") {
+      const lit = st.tree.nodes.find((n) => n.attached && n.parent === node.id);
+      if (lit) st.deps.openNote(lit.path);
+      return;
+    }
+    if (act === "copy") {
+      const text = mountLinkText(node);
+      void st.deps.writeClipboard(text).then(() => st.deps.notice(`已复制：${text}`, "success")).catch(() => st.deps.notice("复制失败：剪贴板不可用", "error"));
+      return;
+    }
+    if (act === "root") {
+      void openMountTree(node.path, { direction: st.direction, deps: depsOf(st) });
+      return;
+    }
+    if (act === "who") {
+      void openMountTree(node.path, { direction: "upstream", deps: depsOf(st) });
+      return;
+    }
+    if (act === "why") {
+      if (ghost) st.deps.notice(`建议理由：${ghost.reason || "（无理由）"}`);
+      return;
+    }
+    if (act === "pin" && ghost) {
+      void pinSuggestion(st, ghost);
+      return;
+    }
+    if (act === "dismiss" && ghost) {
+      void dismissSuggestion(st, ghost);
+    }
+  }
+  async function pinSuggestion(st, ghost) {
+    var _a, _b;
+    const rootPath = st.tree.root;
+    const app = (_a = st.ctx.app) != null ? _a : getApp();
+    const link = ghost.target.replace(/\.md$/i, "");
+    let found = false;
+    let changed = false;
+    try {
+      await enqueueFileTask(rootPath, async () => {
+        var _a2, _b2;
+        const file = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, rootPath);
+        if (!file) return;
+        found = true;
+        const text = await app.vault.read(file);
+        const next = insertLinkAtAnchor(text, ghost.anchor, link);
+        if (next !== text) {
+          await app.vault.modify(file, next);
+          changed = true;
+        }
+      });
+    } catch (e) {
+      st.deps.notice(`固定失败：${(_b = e == null ? void 0 : e.message) != null ? _b : String(e)}`, "error");
+      return;
+    }
+    if (!found) {
+      st.deps.notice("固定失败：读不到主卡文件", "error");
+      return;
+    }
+    try {
+      await markSuggestion(rootPath, ghost, "fixed", { app, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
+    } catch (e) {
+    }
+    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
+    st.ghosts.delete(ghostId(ghost));
+    st.deps.notice(
+      changed ? `已固定：正文写入 [[${link}]]` : `已固定：正文里已有 [[${link}]]，本次只留档`,
+      "success"
+    );
+    await rebuildTreeOnly(st);
+  }
+  function ghostId(ghost) {
+    return "ai:" + ghost.target;
+  }
+  async function dismissSuggestion(st, ghost) {
+    var _a;
+    const rootPath = st.tree.root;
+    const app = (_a = st.ctx.app) != null ? _a : getApp();
+    try {
+      await markSuggestion(rootPath, ghost, "dismissed", { app, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
+    } catch (e) {
+    }
+    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
+    st.deps.notice("已取消建议：永久不再推荐这条", "success");
+    await rebuildTreeOnly(st);
+  }
+
   // src/knowledge/video-meta.ts
   var BVID_RE = /BV[0-9A-Za-z]{10}/;
   var BVID_EXACT_RE = /^BV[0-9A-Za-z]{10}$/;
@@ -7474,8 +10645,8 @@ ${sample}`,
     if (pages.length) meta.pages = pages;
     return meta.title || meta.uploader || meta.pages ? meta : null;
   }
-  function videoDataFromState(state) {
-    const s = state;
+  function videoDataFromState(state2) {
+    const s = state2;
     if (!s || typeof s !== "object") return null;
     if (s.videoData && typeof s.videoData === "object") return s.videoData;
     const v = s.video;
@@ -7550,8 +10721,8 @@ ${sample}`,
       return null;
     }
     if (!html) return null;
-    const state = extractInitialState(html);
-    const videoData = videoDataFromState(state);
+    const state2 = extractInitialState(html);
+    const videoData = videoDataFromState(state2);
     const viaState = metaFromVideoData(videoData);
     const bvid = bvidFromOgUrl(html) || bvidFromVideoData(videoData);
     if (viaState) return { bvid: bvid || viaState.bvid || null, meta: viaState };
@@ -7893,7 +11064,7 @@ ${sample}`,
     const d2 = new Date(s);
     return d2.valueOf();
   }
-  function stripFrontmatter(text) {
+  function stripFrontmatter3(text) {
     const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
     return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
   }
@@ -8105,6 +11276,9 @@ ${sample}`,
         const p = t.getAttribute("data-path") || "";
         const c = this.allCards.find((x) => x.path === p);
         if (c) void this.openPreview(c, "card");
+      } else if (act === "mount-tree") {
+        const p = t.getAttribute("data-path") || "";
+        if (p) void openMountTree(p);
       } else if (act === "topic-open") {
         const p = t.getAttribute("data-path") || "";
         const tp = this.allTopics.find((x) => x.path === p);
@@ -8157,9 +11331,9 @@ ${sample}`,
       const app = getApp();
       this.loadedLitDir = dir;
       const prefix = dir + "/";
-      const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+      const mdFiles2 = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
       const entries = [];
-      for (const f of mdFiles) {
+      for (const f of mdFiles2) {
         const e = await this.parseNoteFile(f);
         if (e) entries.push(e);
       }
@@ -8230,7 +11404,7 @@ ${sample}`,
       } catch (e) {
         raw = "";
       }
-      const body = stripFrontmatter(raw);
+      const body = stripFrontmatter3(raw);
       const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc(b)}</p>`).join("") || "<p>（无正文）</p>";
       const rels = await this.noteRels(n);
       const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.url)}" href="#">${esc(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>` : "";
@@ -8239,7 +11413,7 @@ ${sample}`,
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
         <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
         <span class="bz-kb-dom">${esc(n.domain || "未分类")}</span></div>
-      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || "")}</span></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || "")}</span><button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(n.path)}" title="以这篇为主卡打开挂载树">看挂载树</button></div>
       <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
@@ -8356,9 +11530,9 @@ ${sample}`,
       const app = getApp();
       this.loadedCardDir = dir;
       const prefix = dir + "/";
-      const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+      const mdFiles2 = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
       const out = [];
-      for (const f of mdFiles) {
+      for (const f of mdFiles2) {
         try {
           const cache = app.metadataCache.getFileCache(f);
           const fm = cache && cache.frontmatter || {};
@@ -8388,7 +11562,7 @@ ${sample}`,
       const shown = this.allCards.slice(0, this.cardsShown);
       const rows = shown.map((c) => `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc(c.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}<span class="bz-kb-dom">${esc(c.domain)}</span></div>
-      <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span></div>
+      <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span><button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
     </div>`).join("");
       const rest = this.allCards.length - shown.length;
       this.contentEl.innerHTML = `<div class="bz-kb-pd">
@@ -8411,8 +11585,8 @@ ${sample}`,
       const app = getApp();
       this.loadedTopicDir = dir;
       const prefix = dir + "/";
-      const mdFiles = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
-      const out = mdFiles.map((f) => {
+      const mdFiles2 = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+      const out = mdFiles2.map((f) => {
         var _a;
         let created = 0;
         try {
@@ -9157,8 +12331,8 @@ ${sample}`,
         sel.innerHTML = pages.map((p) => `<option value="${p.page}">${esc(this._pageLabel(p))}</option>`).join("");
         sel.value = String(this.addPage);
       }
-      const num = q(popup, "#lit-add-page-num");
-      if (num && !pages.length) num.value = this.addPage > 1 ? String(this.addPage) : "";
+      const num2 = q(popup, "#lit-add-page-num");
+      if (num2 && !pages.length) num2.value = this.addPage > 1 ? String(this.addPage) : "";
       this._rebuildBar();
       this._paintRange();
       this._renderQualitySelect(prevQuality);
@@ -9937,20 +13111,20 @@ ${sample}`,
     renderTermSrcChip(input) {
       const popup = this.termPopup;
       if (!popup) return;
-      const chip = q(popup, "#lit-term-src-chip");
-      if (!chip) return;
+      const chip2 = q(popup, "#lit-term-src-chip");
+      if (!chip2) return;
       const src = this.termSource;
       if (!src) {
-        chip.style.display = "none";
-        chip.textContent = "";
+        chip2.style.display = "none";
+        chip2.textContent = "";
         if (input) input.style.display = "";
         return;
       }
       const isNote = src.kind === "note";
       const label = isNote ? noteSourceName(src.path) : src.title || shortUrlText(src.url);
-      chip.title = isNote ? src.path : src.url;
-      chip.style.display = "inline-flex";
-      chip.innerHTML = `<b>${isNote ? "内 部" : "外 部"}</b><span>${esc(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
+      chip2.title = isNote ? src.path : src.url;
+      chip2.style.display = "inline-flex";
+      chip2.innerHTML = `<b>${isNote ? "内 部" : "外 部"}</b><span>${esc(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
       if (input) input.style.display = "none";
     }
     /** 预览属性卡第 4 行「来源」：有来源显行（可点开），无来源隐行 */
@@ -10288,7 +13462,7 @@ ${sample}`,
       var _a, _b, _c, _d;
       if (!this.termPopup || this.termGenerating) return;
       const mode = this.entryMode;
-      const source = this.termSource;
+      const source2 = this.termSource;
       if (!this.termPreview) {
         notice("请先点击「生成」获取预览", "info");
         return;
@@ -10326,7 +13500,7 @@ ${sample}`,
             title,
             summary,
             domain,
-            source,
+            source: source2,
             images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || "png" }))
           });
           emitDomainEvent("knowledge:tasks", { kind: "image-generated", title, notePath: path });
@@ -10334,7 +13508,7 @@ ${sample}`,
           this.clearEntryImage();
           notice("已生成图版文献笔记：" + title, "success");
         } else {
-          path = mode === "passage" ? await generatePassageNote({ title, summary, domain, source }) : await generateTermNote({ term, summary, domain, source });
+          path = mode === "passage" ? await generatePassageNote({ title, summary, domain, source: source2 }) : await generateTermNote({ term, summary, domain, source: source2 });
           emitDomainEvent("knowledge:tasks", mode === "passage" ? { kind: "passage-generated", title, notePath: path } : { kind: "term-generated", term, title: term, notePath: path });
           await this.commitEntryLinks(path);
           notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
@@ -10921,6 +14095,10 @@ ${text}`;
   function openVideoHistory() {
     bootKnowledgeSim();
     ui == null ? void 0 : ui.showHistory();
+  }
+  function openMountTree2(cardPath = "卡片盒/间隔重复.md") {
+    bootKnowledgeSim();
+    void openMountTree(cardPath);
   }
   var boot = bootKnowledgeSim;
   return __toCommonJS(fake_sim_exports);
