@@ -1,6 +1,6 @@
 # 317 挂载树·画布二：六类节点渲染、右键菜单、面包屑与方向翻转
 
-- 状态：已交付（分支 `feat/mount-canvas`，待集成合入 master：`src/knowledge/mount-canvas.ts` 六类节点渲染/锚点/血缘高亮/悬停三方联动/右键菜单/面包屑与反向视图；`tests/knowledge/mount-canvas.test.ts` 24 用例 + `mount-canvas-pure.test.ts` 20 用例）
+- 状态：已交付（已合入 master：`src/knowledge/mount-canvas.ts` 六类节点渲染/锚点/血缘高亮/悬停三方联动/右键菜单/面包屑与反向视图；`tests/knowledge/mount-canvas.test.ts` 24 用例 + `mount-canvas-pure.test.ts` 20 用例）
 - 关联：spec §界面 ／ ADR-0122（`MarkdownRenderer.render` 追加语义）／ `src/knowledge/styles.css`
 - 依赖：316
 
