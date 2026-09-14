@@ -93,6 +93,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-knowledge-open', 'bz-knowledge-note-term',
   // 视频生成文献笔记（2026-09-10：首页入口菜单联动）
   'bz-knowledge-note-video',
+  // 挂载树白板（issues 317/319）：看挂载树（主卡 = 当前打开的笔记）/ 重跑挂载建议
+  'bz-knowledge-mount-tree', 'bz-knowledge-mount-refresh',
   'bz-attach-move',
   // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记 + 快速复制密码
   // 注意：bz-encrypt-lock 是历史遗留 id，实际动作是「加密当前笔记」；

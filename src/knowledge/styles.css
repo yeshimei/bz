@@ -1155,3 +1155,403 @@
   color: var(--ink);
 }
 
+
+/* ============================================================
+ * 挂载树白板（issues 317 / 319）· 类名一律 bz-kb-mt-* 前缀
+ *
+ * 视觉真源 = `.scratch/mount-canvas/transformer-real.html`（用户已验收观感）：
+ * 力导向网状 + 就近出盒 A* 曲线、锚点圆点、血缘高亮（祖先琥珀 / 后代青）、
+ * 悬停三方联动、缩放器 ＋ − ⟲。
+ * 与原型的两处有意差异（见 317 报告）：
+ *   ① 画布底走本域纸墨皮（var(--panel)/var(--line)）而非原型的近黑底——
+ *      bz 知识盒是纸面语言且要同时吃亮/暗主题（暗色由 .theme-dark .kb 自动接管）；
+ *   ② 线色与血缘色仍取原型色值，但包一层主题变量兜底链（--bz-kb-mt-c-*）。
+ * 滚动条不自造（ADR-0122 通杀）：画布 overflow:hidden + 平移，不产生滚动条。
+ * ============================================================ */
+
+/* 线色 = 目标内容形态（原型 §3.2 色板）；血缘高亮琥珀 / 青 */
+.bz-kb-mt-window {
+  --bz-kb-mt-c-note: #5dcaa5;
+  --bz-kb-mt-c-head: #6ea8e8;
+  --bz-kb-mt-c-card: #a99ef0;
+  --bz-kb-mt-c-para: #8b8c94;
+  --bz-kb-mt-c-image: #d9a441;
+  --bz-kb-mt-c-video: #d4537e;
+  --bz-kb-mt-anc: #e2a93b;
+  --bz-kb-mt-desc: #45b8e0;
+}
+
+/* ===== 大窗：比主窗更大更满（桌面居中，移动端 bz-panel-mtop 真全屏） ===== */
+.bz-kb-mt-window {
+  width: min(1280px, calc(100vw - 40px));
+  height: min(860px, calc(100vh - 40px));
+}
+.bz-kb-mt-window.bz-panel-mtop {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: env(safe-area-inset-bottom, 0);
+  transform: none;
+  width: 100vw;
+  height: auto;
+  border-radius: 0;
+  border: 0;
+}
+
+/* ===== 顶栏：面包屑 + 方向 + 重新生成 + 建议状态 + 关闭 ===== */
+.bz-kb-mt-top {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 3px double var(--ink2);
+  min-width: 0;
+}
+.bz-kb-mt-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--bz-font-meta);
+  color: var(--ink2);
+}
+.bz-kb-mt-crumb {
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--accent);
+  padding: 3px 6px;
+  border-radius: var(--bz-radius-sm);
+  cursor: pointer;
+  max-width: 16em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-kb-mt-crumb:hover { background: var(--chip); color: var(--ink); }
+.bz-kb-mt-crumb.is-cur { color: var(--ink); font-weight: 600; }
+.bz-kb-mt-sep { color: var(--ink3); padding: 0 1px; }
+.bz-kb-mt-dir {
+  margin-left: auto;
+  flex: none;
+  font-size: var(--bz-font-meta);
+  color: var(--ink2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+.bz-kb-mt-dir[data-mt-dir='upstream'] { color: var(--amber); border-color: var(--amber); }
+.bz-kb-mt-btn {
+  flex: none;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink2);
+  font: inherit;
+  font-size: var(--bz-font-meta);
+  padding: 4px 10px;
+  border-radius: var(--bz-radius-sm);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+}
+.bz-kb-mt-btn:hover { background: var(--chip); color: var(--ink); border-color: var(--accent); }
+.bz-kb-mt-btn.is-mini { padding: 1px 8px; margin-left: 6px; font-size: 11px; }
+.bz-kb-mt-status {
+  flex: none;
+  display: flex;
+  align-items: center;
+  font-size: var(--bz-font-meta);
+  color: var(--ink3);
+  white-space: nowrap;
+}
+.bz-kb-mt-close {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink2);
+  font-size: var(--bz-font-emphasis);
+  line-height: 1;
+  border-radius: var(--bz-radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-kb-mt-close:hover { background: var(--chip); color: var(--ink); }
+
+/* ===== 画布（拖拽平移 / 滚轮缩放；无滚动条） ===== */
+.bz-kb-mt-canvas {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  cursor: grab;
+  background: var(--card);
+}
+.bz-kb-mt-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  background-image: radial-gradient(var(--line) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.bz-kb-mt-loading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: var(--bz-font-meta);
+  color: var(--ink2);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--bz-radius-sm);
+  padding: 8px 16px;
+}
+/* 连线层浮于卡片之上：**不写静态 z-index**（ADR-0067 域内禁止），靠 DOM 次序——
+   渲染层每轮把 <svg> 移到 world 末位（见 mount-canvas.ts renderCanvas） */
+.bz-kb-mt-lines {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.bz-kb-mt-edge { pointer-events: stroke; cursor: pointer; }
+.bz-kb-mt-edge.is-fb { opacity: 0.28; }
+.bz-kb-mt-edge.is-off { opacity: 0.07; }
+.bz-kb-mt-edge.is-anc { stroke: var(--bz-kb-mt-anc) !important; stroke-width: 2; opacity: 0.95; }
+.bz-kb-mt-edge.is-desc { stroke: var(--bz-kb-mt-desc) !important; stroke-width: 2; opacity: 0.95; }
+.bz-kb-mt-edge.is-hot { stroke-width: 3; opacity: 1; }
+.bz-kb-mt-edot.is-hot { r: 4.5; }
+
+/* ===== 卡片（六类形态一个壳；正文完整常显，标题行可折） ===== */
+.bz-kb-mt-node {
+  position: absolute;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  transition: opacity var(--bz-dur-fast);
+}
+.bz-kb-mt-node.is-card { border-left: 3px solid var(--bz-kb-mt-c-card); }
+.bz-kb-mt-node.is-note { border-left: 3px solid var(--bz-kb-mt-c-note); }
+.bz-kb-mt-node.is-head { border-left: 3px solid var(--bz-kb-mt-c-head); }
+.bz-kb-mt-node.is-para { border-left: 3px solid var(--bz-kb-mt-c-para); }
+.bz-kb-mt-node.is-image { border-left: 3px solid var(--bz-kb-mt-c-image); }
+.bz-kb-mt-node.is-video { border-left: 3px solid var(--bz-kb-mt-c-video); }
+.bz-kb-mt-node.is-root { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.26); }
+
+.bz-kb-mt-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bz-kb-mt-ttl {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+}
+.bz-kb-mt-ttl:hover { border-bottom-color: var(--ink3); }
+.bz-kb-mt-chip {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--ink3);
+  white-space: nowrap;
+}
+.bz-kb-mt-chip.src-link { color: var(--accent); border-color: var(--accent); }
+.bz-kb-mt-chip.src-related { color: var(--ink2); }
+.bz-kb-mt-chip.src-manual { color: var(--green); border-color: var(--green); }
+.bz-kb-mt-chip.src-sameName { color: var(--ink3); border-style: dashed; }
+.bz-kb-mt-chip.root { color: var(--ink); border-color: var(--ink2); letter-spacing: 0.08em; }
+.bz-kb-mt-chip.why { color: var(--amber); border-color: var(--amber); cursor: pointer; }
+
+.bz-kb-mt-body { margin-top: 6px; }
+.bz-kb-mt-node.is-folded .bz-kb-mt-body { display: none; }
+.bz-kb-mt-body p { font-size: 13px; line-height: 1.75; color: var(--ink2); margin: 6px 0 2px; }
+/* 正文里的双链（真 Obsidian 渲染出 a.internal-link）：悬停联动这条腿由 JS 挂 data-mt-edge，
+   高亮态与悬停态同皮（原型 .lnk:hover 的底 + 线加粗在 setHover 里给） */
+.bz-kb-mt-body .internal-link {
+  color: var(--accent);
+  border-bottom: 1px dashed var(--accent);
+  border-radius: 3px;
+  padding: 1px 2px;
+  cursor: pointer;
+}
+.bz-kb-mt-body .internal-link:hover,
+.bz-kb-mt-body .internal-link.is-hot {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.bz-kb-mt-body :is(h1, h2, h3, h4, h5, h6) { font-size: 13.5px; color: var(--accent); margin: 8px 0 4px; }
+.bz-kb-mt-body :is(ul, ol) { margin: 4px 0 4px 18px; font-size: 13px; color: var(--ink2); }
+.bz-kb-mt-body blockquote {
+  margin: 4px 0;
+  padding: 2px 0 2px 10px;
+  border-left: 3px solid var(--bz-kb-mt-c-image);
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.bz-kb-mt-ptext { font-size: 13px; line-height: 1.75; color: var(--ink2); margin: 6px 0 2px; }
+.bz-kb-mt-ph {
+  margin-top: 6px;
+  min-height: 60px;
+  border-radius: 6px;
+  border: 1px dashed var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--ink3);
+  padding: 6px 10px;
+  text-align: center;
+  word-break: break-all;
+}
+.bz-kb-mt-ph.is-missing { border-color: var(--ink3); }
+
+/* 失效灰节点（不自动清理，等体检） */
+.bz-kb-mt-node.is-missing {
+  background: var(--chip);
+  border-style: dashed;
+  opacity: 0.72;
+}
+.bz-kb-mt-node.is-missing .bz-kb-mt-ttl { color: var(--ink3); }
+
+/* 幽灵节点（AI 建议，虚线；不落盘） */
+.bz-kb-mt-node.is-ghost {
+  border-style: dashed;
+  border-color: var(--bz-kb-mt-c-image);
+  background: color-mix(in srgb, var(--bz-kb-mt-c-image) 7%, var(--panel));
+}
+
+/* 文献吸附（没有边框、整体往后退，只在卡片正下方露出标题行） */
+.bz-kb-mt-node.is-dock {
+  background: var(--chip);
+  border: 1px solid var(--line);
+  box-shadow: none;
+  padding: 8px 14px;
+}
+.bz-kb-mt-node.is-dock .bz-kb-mt-ttl { font-size: 13px; color: var(--ink2); }
+.bz-kb-mt-node.is-dock .bz-kb-mt-body p { font-size: 12px; }
+
+/* 血缘高亮（祖先琥珀 / 后代青 / 其余降透明度；被选卡 = 纸面下的实墨框） */
+.bz-kb-mt-node.is-sel { border-color: var(--ink); }
+.bz-kb-mt-node.is-anc { border-color: var(--bz-kb-mt-anc); }
+.bz-kb-mt-node.is-desc { border-color: var(--bz-kb-mt-desc); }
+.bz-kb-mt-node.is-dim { opacity: 0.22; }
+.bz-kb-mt-node.is-hot { border-color: var(--ink); opacity: 1; }
+
+/* 锚点圆点（连线的精确起点；色随线色 currentColor，悬停填充） */
+.bz-kb-mt-anch {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-left: 4px;
+  border: 1.5px solid currentColor;
+  background: transparent;
+  vertical-align: 1px;
+}
+.bz-kb-mt-anch.is-hot { background: currentColor; }
+
+/* ===== 缩放器 + 提示行 ===== */
+.bz-kb-mt-zoomer {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.bz-kb-mt-zbtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+.bz-kb-mt-zbtn:hover { background: var(--chip); }
+.bz-kb-mt-hint {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  max-width: 60%;
+  font-size: 11.5px;
+  color: var(--ink3);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+
+/* ===== 右键 / 长按菜单（含禁用态；建议节点顶部显示理由） ===== */
+.bz-kb-mt-ctx {
+  position: absolute;
+  min-width: 230px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+.bz-kb-mt-ctx-head {
+  font-size: 11.5px;
+  color: var(--ink3);
+  padding: 4px 8px 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-kb-mt-ctx-reason {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--amber);
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+  white-space: pre-wrap;
+}
+.bz-kb-mt-ctx-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.bz-kb-mt-ctx-item:hover { background: var(--chip); }
+.bz-kb-mt-ctx-item.is-dis { opacity: 0.4; cursor: default; }
+.bz-kb-mt-ctx-item.is-dis:hover { background: none; }
+
+/* ===== 入口按钮（卡片列表行 + 卡片预览弹层；issue 319） ===== */
+.bz-kb-mt-openbtn {
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink2);
+  font: inherit;
+  font-size: var(--bz-font-meta);
+  padding: 2px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.bz-kb-mt-openbtn:hover { background: var(--chip); color: var(--ink); border-color: var(--accent); }
