@@ -1171,3 +1171,22 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 
 > 用户拍板链（grill-with-docs 四轮）：① 单输入框 +「解析」按钮（450ms 防抖退役）→ 只读信息区（标题 / UP 主 / 分 P 下拉 / 时长），标题与 UP 主输入框删除；② 精细调整 = 时间框双向联动 + ↑/↓ 键一次 1 秒；③ 失败态手填分 P 与时间范围（分 P 数字框、进度条不可用）、下次打开弹窗自动重抓并替换显示；④ 整片/剪辑 toggle 退役，双把手进度条常显（默认全选 = 整片）；⑤ 抓取成功即落库（只补缺失、不重置手填）；⑥ 单 P 隐藏分 P 字段；⑦ B 站 cookie 内置插件设置、支持移动端（设置行带「从 CLI 导入」读 ~/.bilibili-cookies.json）；⑧ 设置面板 AI 组改名「AI 与凭据」并收编影院 ApiZero Key / 豆瓣 Cookie 两项；⑨ 档位默认选中全局设置对应的具体档位（不可用取最高可用并提示）；⑩ 保存按钮两端统一「保存」、都只入队不自动处理（否决首轮「保存即处理」选择，▶️ 批量角色不变）；⑪ 打开主面板对缺标题任务自动重抓、不自动处理。实测支撑：view API 单响应即含 pages/duration（现 video-meta 已在调同一接口，零新增请求；54P 视频全量返回、时长逐项求和一致）；未登录 playurl 档位受账号级限制（上限 720P），带登录 cookie 的 playurl 返回完整档位（实测 [1080,720,480,360]）；实现期实测确认 **免 wbi 签名**（未签名带 cookie 即通，不移植 wbi/md5）；档位采用前置 nav 登录态校验（未登录档位不采用）。CLI ~/.bilibili-cookies.json 含登录 cookie（SESSDATA）。配套：KnowledgeTask 新增 duration 字段、CLI quality 映射扩展支持任意档位数字串、术语表「录入元信息」重写 + 新增「清晰度档位」「凭据」词条。
 
+
+### 知识盒视频录入 b23.tv 短链解析：落地页补全 + 写回规范链接（issue 307 / ADR-0134，2026-09-14）
+
+> 用户手机端实测反馈：App 分享的短链（`https://b23.tv/AtDgBVH`）解析后只有标题，UP主/分P/档位全缺。实测
+> 定位**与移动端无关**（桌面同链接同表现）——是 ADR-0133 明写的「b23.tv 短链只抓标题」限制。落地页 HTML 里其实
+> 什么都带：`og:url` 有 BV 号，`__INITIAL_STATE__`（桌面 `videoData` / 手机 `video.viewInfo`，字段与 view API `data`
+> 同名）给全 title/owner/duration/pages —— 多 P 视频（BV1yuY96rEL7，4P）三方逐字段比对完全一致。
+>
+> 改动：**短链 → 抓落地页拿 bvid → 走 view API**（API 不可用直接用落地页 state；再不行退回 `<title>` 清洗），
+> 页面请求带桌面 UA + Referer（桌面 UA 才稳定拿 SSR 页）；`metaFromVideoData` 把三处字段净化收成单源；
+> `VideoMeta.bvid` 回传（切 P 查档 / 写规范链接都靠它）；**解析成功写回规范链接**
+> `https://www.bilibili.com/video/BV…/`（下载器 `extractBv` 只认 URL 里的 BV 号，短链进队列会在下载阶段报
+> 「无法识别 BV 号」），保存落库同形态；**存量短链任务由打开面板的自动重抓自愈**（backfill 筛选条件从
+> 「缺标题」扩为「缺标题或 URL 无 BV」，`_persistResolved` 顺手补 url、只补不覆盖）。`normalizeSourceUrl` 语义不动
+> （净化层保持纯函数，短链展开是联网解析成功后的行为）。
+>
+> 门禁：video-meta 测试 15→24、ui 33→35（新增短链写回/切 P 查档/落库规范 URL/存量自愈）；原型 fake 加 b23 落地页
+> 罐头，CDP 自检 knowledge 16/16。已知依赖：B 站页面结构（`og:url` + `__INITIAL_STATE__` 字段名）变化时降级回
+> `<title>`（回到 ADR-0133 限制态，不会更差）。

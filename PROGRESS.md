@@ -3,6 +3,27 @@
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
 
+## Issue 307 — b23.tv 短链解析：落地页补全元信息 + 写回规范链接（ADR-0134）
+
+**状态：门禁**（worktree 全量绿（除产物指纹环境项）+ tsc 0 错 + 真网络端到端核对 + 原型自检 16/16；待合并 + 主仓库产物重出）
+
+- [x] 反馈（用户手机端实测，2026-09-14）：App 分享短链 `https://b23.tv/AtDgBVH` 解析后只有标题，
+      UP主「（未取到）」/分P 空框/清晰度只剩「最高」
+- [x] 根因：**与移动端无关**——短链 URL 无 BV 字样 → 只走 ADR-0133 明写的「页面 `<title>` 清洗」兜底；
+      实测落地页 HTML 里其实带 `og:url`（BV 号）与 `__INITIAL_STATE__`（桌面 `videoData` / 手机 `video.viewInfo`，
+      字段与 view API `data` 同名；多 P 视频三方逐字段比对一致）；同根因第二处伤：下载器 `extractBv` 只认
+      URL 里的 BV 号，短链任务进队列后在下载阶段报「无法识别 BV 号」
+- [x] 实现：`video-meta.ts`（parseBvidFromHtml / extractInitialState 平衡括号扫描 / videoDataFromState /
+      metaFromVideoData 净化单源 / fetchFromPage 带桌面 UA+Referer；降级链 view API → 落地页 state → `<title>`
+      → 失败态；`VideoMeta.bvid` 回传；resolveVideo 用 meta.bvid 查档）；`source.ts` canonicalVideoUrl；
+      `ui.ts`（解析成功写回规范链接 / 切 P 用 meta.bvid / 保存落库规范 URL / backfill 筛选扩为「缺标题或 URL 无 BV」
+      + `_persistResolved` 补 url → 存量短链任务自愈）
+- [x] 测试：video-meta 15→24、ui 33→35（短链 state 补全 / 手机形态 / 坏 JSON / API 失败回退 / 写回规范链接 /
+      切 P 查档 / 落库规范 URL / 存量自愈）；**真网络端到端核对**（真实短链 → 标题+央视频+BV1twYY6dEwB+199s，
+      cookie 下档位 [1080,720,480,360]，完整链接仍单请求）；原型 fake 加 b23 落地页罐头，CDP 自检 knowledge 16/16
+- [x] 文档：ADR-0134、CONTEXT（录入元信息补短链路径 + 新增「短链解析」词条）、spec、issues/307
+
+
 ## Issue 306 — 知识盒视频录入改链接解析式（ADR-0133）
 
 **状态：已交付**（全量 4752 测试绿 + tsc 0 错 + 真机 CDP 自检 13/13；2026-09-14 合并并构建部署）
