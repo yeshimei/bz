@@ -20,7 +20,8 @@ import { notice } from '../core/notice';
 import { setLinkBridge } from '../core/link-now';
 import { tryGetSettings } from '../core/settings-provider';
 import { IS_MOBILE } from './config';
-import { VectorStore, type SearchHit } from './vector-store';
+import { VectorStore } from './vector-store';
+import { setVectorSearchSource } from './readonly';
 import { resetDeepseekAI } from './ai';
 import { SecondBrainPanel, confirmFullRebuild } from './panel';
 import { ReferencePanel } from './reference-panel';
@@ -53,6 +54,11 @@ export function ensureSecondBrain(app: App): void {
   appRef = app;
   const s = new VectorStore(app);
   store = s;
+  // issue 318：注册只读检索桥（窄口叶子模块；消费方值导入本 index 会把整条 UI 栈拖进构建闭包，见 readonly.ts）
+  setVectorSearchSource({
+    isIndexReady: () => !!store?.isIndexReady(),
+    search: (query: string, topK?: number) => (store ? store.search(query, topK) : Promise.resolve([])),
+  });
   // ticket 107：load 完成信号挂到 store 上，主面板打开时等待它——避免启动竞态下
   // 读到尚未装载的空库而误入引导态
   s.initialLoad = (async () => {
@@ -132,31 +138,14 @@ export function unloadSecondBrain(): void {
   linkAgent = null;
   setLinkBridge(null);
   store = null;
+  setVectorSearchSource(null); // issue 318：卸载即撤销只读检索桥（未初始化/已卸载取到 null）
   appRef = null;
   initialized = false;
   resetDeepseekAI();
 }
 
-/** 只读检索面（issue 318：知识盒挂载树建议链路用；不暴露 VectorStore 本体，取不到写入口） */
-export interface ReadonlyVectorSearch {
-  /** 索引是否就绪（未建 / 已降级 → false；调用方据此降级，不自动建索引） */
-  isIndexReady(): boolean;
-  /** 块级检索（桌面向量优先、异常降级文本；移动端由调用方自行降级） */
-  search(query: string, topK?: number): Promise<SearchHit[]>;
-}
-
-/**
- * 取第二大脑只读检索面（issue 318）。未初始化 / 已卸载返回 null。
- * 只读：不暴露 store 私有变量与任何写入口（refresh / rebuildAll 等），知识盒据此跑语义建议的向量召回。
- */
-export function exportVectorSearch(): ReadonlyVectorSearch | null {
-  if (!store) return null;
-  const s = store;
-  return {
-    isIndexReady: () => s.isIndexReady(),
-    search: (query: string, topK?: number) => s.search(query, topK),
-  };
-}
+/** 只读检索面（issue 318）：类型出口留在 index（对外 API 不破）；实现与取用走叶子模块 readonly.ts */
+export type { ReadonlyVectorSearch } from './readonly';
 
 function ensureReference(): void {
   if (!appRef || !store) return;

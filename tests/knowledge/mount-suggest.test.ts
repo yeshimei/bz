@@ -11,11 +11,6 @@ const mocks = vi.hoisted(() => ({
   search: vi.fn(),
   json: vi.fn(),
   aiOk: true,
-  api: null as { isIndexReady: () => boolean; search: (q: string, k?: number) => Promise<any[]> } | null,
-}));
-
-vi.mock('../../src/secondbrain/index', () => ({
-  exportVectorSearch: () => mocks.api,
 }));
 
 vi.mock('../../src/core/ai', () => ({
@@ -31,6 +26,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { hash31 } from '../../src/core/utils';
+import { setVectorSearchSource } from '../../src/secondbrain/readonly';
 import {
   SUGGEST_MIN_SCORE,
   cacheValid,
@@ -72,13 +68,14 @@ beforeEach(() => {
   mocks.search.mockReset();
   mocks.json.mockReset();
   mocks.aiOk = true;
-  mocks.api = { isIndexReady: () => true, search: mocks.search };
+  setVectorSearchSource({ isIndexReady: () => true, search: mocks.search }); // 假检索面注入（叶子桥，无需 mock 整条 index）
   (Platform as any).isMobile = false;
   ctx = { app, cardboxDir: CARDBOX, litDir: LIT };
 });
 
 afterEach(() => {
   setSettingsProvider(() => ({}) as any);
+  setVectorSearchSource(null); // 复位检索桥（未注册 = 无索引降级）
   (Platform as any).isMobile = false;
 });
 
@@ -301,10 +298,10 @@ describe('降级与设置开关', () => {
     mocks.json.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '理由' }]));
   });
 
-  it('无向量索引（未初始化/未就绪）→ no-index，空候选，不检索不落缓存', async () => {
-    mocks.api = null;
+  it('无向量索引（未注册/未就绪）→ no-index，空候选，不检索不落缓存', async () => {
+    setVectorSearchSource(null); // 未注册（第二大脑未初始化/已卸载）
     expect(await generateSuggestions(`${CARDBOX}/A.md`, ctx)).toEqual({ status: 'no-index', suggestions: [] });
-    mocks.api = { isIndexReady: () => false, search: mocks.search };
+    setVectorSearchSource({ isIndexReady: () => false, search: mocks.search }); // 已注册但未就绪
     const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
     expect(run.status).toBe('no-index');
     expect(run.suggestions).toEqual([]);
