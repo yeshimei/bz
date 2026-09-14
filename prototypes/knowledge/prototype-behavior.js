@@ -1,4 +1,4 @@
-/* 源指纹 ba7d471b9897d032 · 仓内输入 33 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6217af0a3c6ee56f · 仓内输入 33 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -39,9 +39,9 @@ var BZW_knowledge = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -8882,9 +8882,11 @@ ${sample}`,
   var SUGGEST_TOPK = 8;
   var SUGGEST_PER_ANCHOR_CANDIDATES = 3;
   var SUGGEST_MAX_CANDIDATES = 24;
-  var SUGGEST_JUDGE_MAX_TOKENS = 2048;
+  var SUGGEST_JUDGE_MAX_TOKENS = 131072;
+  var JUDGE_EFFORT = { reasoning_effort: "max" };
   var REASON_MAX_CHARS = 80;
   var SUGGEST_CACHE_FILE = "mount-suggest.json";
+  var SUGGEST_CACHE_VERSION = 2;
   var HAS_MEANING_RE = /[\p{L}\p{N}]/u;
   var WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
   function nextIsBoundary(text, i) {
@@ -8989,7 +8991,7 @@ ${sample}`,
     });
   }
   function cacheValid(entry, bodyHash) {
-    return !!entry && !!bodyHash && typeof entry.bodyHash === "string" && entry.bodyHash === bodyHash;
+    return !!entry && entry.ver === SUGGEST_CACHE_VERSION && !!bodyHash && typeof entry.bodyHash === "string" && entry.bodyHash === bodyHash;
   }
   function collectDismissedKeys(file) {
     const out = [];
@@ -9009,7 +9011,7 @@ ${sample}`,
       const kept = ((prev == null ? void 0 : prev.suggestions) || []).filter((s) => s && s.state !== "pending");
       const keptKeys = new Set(kept.map(suggestKey));
       const fresh = suggestions.filter((s) => !keptKeys.has(suggestKey(s)));
-      file.cards[cardPath] = { bodyHash, generatedAt, suggestions: [...kept, ...fresh] };
+      file.cards[cardPath] = { bodyHash, generatedAt, suggestions: [...kept, ...fresh], ver: SUGGEST_CACHE_VERSION };
     }).then(() => void 0);
   }
   async function markSuggestion(cardPath, s, state2, ctx) {
@@ -9018,7 +9020,7 @@ ${sample}`,
     const now = Date.now();
     await mutateSuggestCache((file) => {
       const prev = file.cards[cardPath];
-      const entry = prev && typeof prev === "object" && Array.isArray(prev.suggestions) ? prev : { bodyHash: "", generatedAt: now, suggestions: [] };
+      const entry = prev && typeof prev === "object" && Array.isArray(prev.suggestions) ? prev : { bodyHash: "", generatedAt: now, suggestions: [], ver: SUGGEST_CACHE_VERSION };
       const idx = entry.suggestions.findIndex((it) => suggestKey(it) === key2);
       const marked = { ...idx >= 0 ? entry.suggestions[idx] : s, state: state2 };
       if (idx >= 0) entry.suggestions[idx] = marked;
@@ -9072,29 +9074,60 @@ ${sample}`,
     }
     return lines.join("\n");
   }
+  function pickIndex(v) {
+    if (typeof v === "number") return Number.isInteger(v) ? v : NaN;
+    const m = String(v != null ? v : "").trim().match(/\d+/);
+    return m ? parseInt(m[0], 10) : NaN;
+  }
+  function digArray(value, depth = 0) {
+    if (Array.isArray(value)) return value;
+    if (depth > 3) return null;
+    if (typeof value === "string") {
+      const s = value.trim();
+      if (!s.startsWith("[") && !s.startsWith("{")) return null;
+      try {
+        return digArray(JSON.parse(s), depth + 1);
+      } catch (e) {
+        return null;
+      }
+    }
+    if (!value || typeof value !== "object") return null;
+    const obj = value;
+    for (const key2 of ["suggestions", "picks", "result", "items", "data", "list", "content"]) {
+      const hit = digArray(obj[key2], depth + 1);
+      if (hit) return hit;
+    }
+    for (const v of Object.values(obj)) {
+      const hit = digArray(v, depth + 1);
+      if (hit) return hit;
+    }
+    return null;
+  }
   function parseJudgePicks(raw) {
     var _a;
-    const cleaned = String(raw || "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
-    let arr = null;
+    const text = String(raw != null ? raw : "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
+    if (!text) return { found: false, count: 0, picks: [] };
+    let value = null;
     try {
-      arr = JSON.parse(cleaned);
+      value = JSON.parse(text);
     } catch (e) {
-      const m = cleaned.match(/\[[\s\S]*\]/);
+      const m = text.match(/\[[\s\S]*\]/);
       if (m) {
         try {
-          arr = JSON.parse(m[0]);
+          value = JSON.parse(m[0]);
         } catch (e2) {
-          arr = null;
+          value = null;
         }
       }
     }
-    if (!Array.isArray(arr)) return [];
+    const arr = digArray(value);
+    if (!arr) return { found: false, count: 0, picks: [] };
     const out = [];
     for (const item of arr) {
+      if (!item || typeof item !== "object") continue;
       const it = item;
-      if (!it || typeof it !== "object") continue;
-      const anchor = Number(it.anchor);
-      const target = Number(it.target);
+      const anchor = pickIndex(it.anchor);
+      const target = pickIndex(it.target);
       const score = Number(it.score);
       if (!Number.isInteger(anchor) || !Number.isInteger(target) || !Number.isFinite(score)) continue;
       out.push({
@@ -9104,7 +9137,7 @@ ${sample}`,
         reason: String((_a = it.reason) != null ? _a : "").replace(/\s+/g, " ").trim().slice(0, REASON_MAX_CHARS)
       });
     }
-    return out;
+    return { found: true, count: arr.length, picks: out };
   }
   async function generateSuggestions(cardPath, ctx, opts) {
     var _a, _b, _c, _d;
@@ -9189,15 +9222,33 @@ ${sample}`,
       await persistCardCache(cardPath, bodyHash, generatedAt2, []);
       return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
     }
+    const judge = (modelOptions) => createAI().json(buildJudgePrompt(anchors, candidates), { modelOptions });
     let raw = "";
     try {
-      raw = await createAI().json(buildJudgePrompt(anchors, candidates), { modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS } });
+      raw = await judge({ max_tokens: SUGGEST_JUDGE_MAX_TOKENS, ...JUDGE_EFFORT });
     } catch (e) {
-      console.warn("[mount-suggest] AI 裁判失败", e);
-      return empty("no-ai");
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!/400|unrecognized|unknown|unsupported|invalid/i.test(msg)) {
+        console.warn("[mount-suggest] AI 裁判失败", e);
+        return empty("no-ai");
+      }
+      console.warn("[mount-suggest] 裁判首次调用被拒，去掉思考刻度重试", e);
+      try {
+        raw = await judge({ max_tokens: SUGGEST_JUDGE_MAX_TOKENS });
+      } catch (e2) {
+        console.warn("[mount-suggest] AI 裁判失败", e2);
+        return empty("no-ai");
+      }
+    }
+    const parsed = parseJudgePicks(raw);
+    if (!parsed.found || parsed.count > 0 && parsed.picks.length === 0) {
+      console.warn(
+        `[mount-suggest] 裁判回答不可用（${raw ? `${raw.length} 字` : "空"}，数组 ${parsed.count} 条）：${String(raw).slice(0, 120)}`
+      );
+      return empty("no-answer");
     }
     const judged = [];
-    for (const pick of parseJudgePicks(raw)) {
+    for (const pick of parsed.picks) {
       if (pick.score < SUGGEST_MIN_SCORE) continue;
       const a = anchors[pick.anchor - 1];
       const c = candidates.find((it) => it.anchorIdx === pick.anchor - 1 && it.localIdx === pick.target - 1);
@@ -9323,6 +9374,8 @@ ${sample}`,
         return "未建向量索引 · 只画双链";
       case "no-ai":
         return "AI 不可用 · 只画双链";
+      case "no-answer":
+        return "AI 未给出可用建议 · 只画双链（可点「重新生成」）";
       default:
         return "生成中 · 等建议齐再开";
     }

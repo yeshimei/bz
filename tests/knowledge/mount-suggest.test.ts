@@ -28,6 +28,9 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { hash31 } from '../../src/core/utils';
 import { setVectorSearchSource } from '../../src/secondbrain/readonly';
 import {
+  SUGGEST_CACHE_FILE,
+  SUGGEST_CACHE_VERSION,
+  SUGGEST_JUDGE_MAX_TOKENS,
   SUGGEST_MIN_SCORE,
   cacheValid,
   clearSuggestCache,
@@ -35,6 +38,7 @@ import {
   generateSuggestions,
   markSuggestion,
   mergeSuggestions,
+  parseJudgePicks,
   readSuggestCache,
   splitAnchors,
   suggestKey,
@@ -104,6 +108,54 @@ describe('splitAnchors（分句/分词切分）', () => {
     expect(anchors[0].text).toBe('看这张 别名卡片 的论述是否成立，重点在后面');
     expect(splitAnchors('')).toEqual([]);
     expect(splitAnchors('***\n\n###\n')).toEqual([]);
+  });
+});
+
+describe('parseJudgePicks（脱壳 / 标签编号 / 坏条目逐条丢）', () => {
+  it('裸数组、代码围栏、前后夹解释文字都认', () => {
+    const one = JSON.stringify([{ anchor: 1, target: 2, score: 0.9, reason: '理由' }]);
+    expect(parseJudgePicks(one)).toMatchObject({ found: true, count: 1 });
+    expect(parseJudgePicks(one).picks[0]).toMatchObject({ anchor: 1, target: 2, score: 0.9, reason: '理由' });
+    expect(parseJudgePicks('```json\n' + one + '\n```').picks).toHaveLength(1);
+    expect(parseJudgePicks('好的，结果如下：\n' + one + '\n以上。').picks).toHaveLength(1);
+  });
+
+  it('a1/t2 标签、字符串数字、#3 混排一律取整（实机原文形态）', () => {
+    const raw = JSON.stringify([
+      { anchor: 'a1', target: 't2', score: '0.88', reason: '标签形态' },
+      { anchor: 'A2', target: '#3', score: 0.7, reason: '大小写与井号' },
+      { anchor: '3', target: 1, score: 0.6, reason: '字符串数字' },
+    ]);
+    const parsed = parseJudgePicks(raw);
+    expect(parsed.found).toBe(true);
+    expect(parsed.picks.map((p) => [p.anchor, p.target])).toEqual([
+      [1, 2],
+      [2, 3],
+      [3, 1],
+    ]);
+    expect(parsed.picks[0].score).toBe(0.88);
+  });
+
+  it('json_object 包壳（content 里再套 JSON 字符串）脱壳取数组', () => {
+    const inner = JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '包壳内' }]);
+    const envelope = JSON.stringify({ type: 'json_object', content: inner });
+    expect(parseJudgePicks(envelope).picks).toHaveLength(1);
+    expect(parseJudgePicks(JSON.stringify({ suggestions: [{ anchor: 'a1', target: 't1', score: 0.8, reason: '字段名' }] })).picks).toHaveLength(1);
+  });
+
+  it('空回答 / 散文 / 认不出条目的数组 → found 或 picks 分得清', () => {
+    expect(parseJudgePicks('')).toEqual({ found: false, count: 0, picks: [] });
+    expect(parseJudgePicks('抱歉，我无法判断。')).toEqual({ found: false, count: 0, picks: [] });
+    expect(parseJudgePicks('[{"foo":1}]')).toEqual({ found: true, count: 1, picks: [] });
+    expect(parseJudgePicks('[]')).toEqual({ found: true, count: 0, picks: [] });
+    // 分数越界钳制、理由截断、坏条目丢
+    const parsed = parseJudgePicks(
+      JSON.stringify([{ anchor: 1, target: 1, score: 9, reason: 'x'.repeat(200) }, null, { anchor: 'a', target: 'b', score: 0.9 }])
+    );
+    expect(parsed.count).toBe(3);
+    expect(parsed.picks).toHaveLength(1);
+    expect(parsed.picks[0].score).toBe(1);
+    expect(parsed.picks[0].reason).toHaveLength(80);
   });
 });
 
@@ -204,16 +256,88 @@ describe('generateSuggestions（生成 + 缓存 + 逐卡失效）', () => {
     expect(mocks.json).not.toHaveBeenCalled(); // 候选全被过滤，无需裁判
   });
 
-  it('裁判输出坏 JSON → 空结果落缓存；裁判调用失败 → no-ai 且不落缓存', async () => {
+  it('裁判回答不可用（散文 / 空串 / 认不出）→ no-answer 且不落缓存；下次重开仍重跑', async () => {
     mocks.json.mockResolvedValue('抱歉，我无法判断。');
     const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
-    expect(run).toEqual({ status: 'fresh', suggestions: [], generatedAt: expect.any(Number) });
-    expect((await generateSuggestions(`${CARDBOX}/A.md`, ctx)).status).toBe('cached');
+    expect(run).toEqual({ status: 'no-answer', suggestions: [] });
+    expect((await readSuggestCache()).cards).toEqual({});
+    // 空回答（思考吃光预算：finish_reason=length、content 空串）同语义
+    mocks.json.mockResolvedValue('');
+    expect((await generateSuggestions(`${CARDBOX}/A.md`, ctx)).status).toBe('no-answer');
+    // 形状对不上（编号认不出）也不冒充「没有关联」
+    mocks.json.mockResolvedValue(JSON.stringify([{ a: 'x', b: 'y' }]));
+    expect((await generateSuggestions(`${CARDBOX}/A.md`, ctx)).status).toBe('no-answer');
+    expect((await readSuggestCache()).cards).toEqual({});
 
-    await clearSuggestCache();
+    // 裁判调用失败（通道不可用）→ no-ai，同样不落缓存；网络故障不重复打（只 1 次）
+    mocks.json.mockReset();
     mocks.json.mockRejectedValue(new Error('网络不可达'));
     expect((await generateSuggestions(`${CARDBOX}/A.md`, ctx)).status).toBe('no-ai');
+    expect(mocks.json).toHaveBeenCalledTimes(1);
     expect((await readSuggestCache()).cards).toEqual({});
+  });
+
+  it('裁判按 a1/t2 标签作答、或被 json_object 包壳 → 照样认出来（2026-09-14 实机回归）', async () => {
+    // ① 标签形态（实机原文：{"anchor":"a1","target":"t2",…}）
+    mocks.json.mockResolvedValue(
+      JSON.stringify([{ anchor: 'a1', target: 't2', score: 0.9, reason: '同一主题' }])
+    );
+    mocks.search.mockResolvedValue([
+      { path: '文献盒/目标一.md', chunk: '一', score: 0.9 },
+      { path: '文献盒/目标二.md', chunk: '二', score: 0.85 },
+    ]);
+    const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
+    expect(run.status).toBe('fresh');
+    expect(run.suggestions.map((s) => s.target)).toEqual(['文献盒/目标二.md']); // a1×t2 落在第二个候选
+    // ② 外层包壳（response_format=json_object 实测形态）
+    await clearSuggestCache();
+    mocks.json.mockResolvedValue(
+      JSON.stringify({ type: 'json_object', content: JSON.stringify([{ anchor: 1, target: 't2', score: 0.9, reason: '同主题' }]) })
+    );
+    const run2 = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
+    expect(run2.status).toBe('fresh');
+    expect(run2.suggestions).toHaveLength(1);
+  });
+
+  it('裁判调用：思考不关、预算拉满（128K + reasoning_effort=max）；被拒则去掉刻度重试一次', async () => {
+    mocks.json.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '同上' }]));
+    await generateSuggestions(`${CARDBOX}/A.md`, ctx);
+    const opts = mocks.json.mock.calls[0][1] as { modelOptions: Record<string, unknown> };
+    expect(opts.modelOptions.max_tokens).toBe(SUGGEST_JUDGE_MAX_TOKENS);
+    expect(opts.modelOptions.max_tokens).toBeGreaterThanOrEqual(131072);
+    expect(opts.modelOptions.reasoning_effort).toBe('max');
+    expect(opts.modelOptions.thinking).toBeUndefined(); // 绝不关思考（用户拍板质量优先）
+
+    // 服务商不认 reasoning_effort（400）→ 去掉该字段重试，仍能出建议
+    await clearSuggestCache();
+    mocks.json.mockReset();
+    mocks.json
+      .mockRejectedValueOnce(new Error('API 400: Unrecognized request argument'))
+      .mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '重试成功' }]));
+    const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
+    expect(run.status).toBe('fresh');
+    expect(run.suggestions).toHaveLength(1);
+    expect(mocks.json).toHaveBeenCalledTimes(2);
+    const retry = mocks.json.mock.calls[1][1] as { modelOptions: Record<string, unknown> };
+    expect(retry.modelOptions.reasoning_effort).toBeUndefined();
+    expect(retry.modelOptions.max_tokens).toBe(SUGGEST_JUDGE_MAX_TOKENS);
+  });
+
+  it('缓存版本不符（旧口径的零候选片）→ 视为失效重跑，不靠用户手清', async () => {
+    const body = vault.files.get(`${CARDBOX}/A.md`)!;
+    // 手工造一条旧格式缓存片：bodyHash 对得上、但没有 ver（= 2026-09-14 那批「答案被解析丢掉」的零候选片）
+    const oldEntry = { bodyHash: String(hash31(body)), generatedAt: 1, suggestions: [] };
+    expect(cacheValid(oldEntry as never, String(hash31(body)))).toBe(false);
+    expect(cacheValid({ ...oldEntry, ver: SUGGEST_CACHE_VERSION } as never, String(hash31(body)))).toBe(true);
+    vault.files.set(`CONFIG/STORAGE/${SUGGEST_CACHE_FILE}`, JSON.stringify({ cards: { [`${CARDBOX}/A.md`]: oldEntry } }));
+
+    mocks.json.mockResolvedValue(JSON.stringify([{ anchor: 1, target: 1, score: 0.9, reason: '重跑出来' }]));
+    const run = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
+    expect(run.status).toBe('fresh'); // 不是 cached——旧片不认
+    expect(run.suggestions).toHaveLength(1);
+    const cache = await readSuggestCache();
+    expect(cache.cards[`${CARDBOX}/A.md`].ver).toBe(SUGGEST_CACHE_VERSION); // 重跑后落成新版本片
+    expect((await generateSuggestions(`${CARDBOX}/A.md`, ctx)).status).toBe('cached');
   });
 
   it('向量检索抛错 → no-index 且不落缓存（瞬时故障不污染缓存）', async () => {
