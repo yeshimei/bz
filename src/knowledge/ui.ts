@@ -558,7 +558,12 @@ export class UIManager {
     else if (act === 'image-entry') this.showImageEntry();
     else if (act === 'lit-peek') { const p = t.getAttribute('data-path') || ''; const n = this.allNotes.find((x) => x.path === p); if (n) void this.openPreview(n); }
     else if (act === 'card-peek') { const p = t.getAttribute('data-path') || ''; const c = this.allCards.find((x) => x.path === p); if (c) void this.openPreview(c, 'card'); }
-    else if (act === 'cards-orphan') { this.cardOrphanOnly = !this.cardOrphanOnly; this.cardsShown = 0; this.renderCards(); }
+    else if (act === 'cards-orphan') {
+      if (!this.mountIndex) return; // 索引未统计（扫描失败）：芯片置灰，不给假状态
+      this.cardOrphanOnly = !this.cardOrphanOnly;
+      this.cardsShown = 0; // 回收分页到首屏（≤80 时与 renderCards 的 Math.max 等价，>80 时切回第一页）
+      this.renderCards();
+    }
     else if (act === 'topic-open') { const p = t.getAttribute('data-path') || ''; const tp = this.allTopics.find((x) => x.path === p); if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, 'topic'); }
     else if (act === 'kb-close') this.hideMain(); // 移动端全屏主窗出口（ADR-0116：手机无 ESC/遮罩边缘）
   }
@@ -844,14 +849,15 @@ export class UIManager {
   /**
    * 挂载引用索引（issue 320；ADR-0138 §5 同包四项）：整库扫描一次并**缓存到面板对象上**——
    * 行引用计数徽标（refCounts）、孤儿筛选与行标记（orphanCards）共用这一份；
+   * counts 算好后**传给 orphanCards 复用**（其内部不再自行复算一遍），整轮 refresh 只走一遍整库扫描。
    * 每轮 refresh 重算（改链 / 改名 / 增删卡即时跟随），行渲染里不再各算一次。
-   * 扫描异常按空索引降级（不出徽标、筛选空开），列表照常渲染。
+   * 扫描异常按空索引降级：芯片显「未统计」并置灰，列表照常渲染。
    */
   private async loadMountIndex(): Promise<void> {
     try {
       const ctx = mountCtx();
       const counts = await refCounts(ctx);
-      this.mountIndex = { counts, orphans: new Set(await orphanCards(ctx)) };
+      this.mountIndex = { counts, orphans: new Set(await orphanCards(ctx, counts)) };
     } catch {
       this.mountIndex = null;
     }
@@ -873,7 +879,7 @@ export class UIManager {
     }).join('');
     const rest = pool.length - shown.length;
     this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-cbar"><button class="bz-kb-cfilter${this.cardOrphanOnly ? ' is-on' : ''}" data-kb-act="cards-orphan" title="只列既无入链也无挂载的卡">孤 儿${idx ? ` · ${idx.orphans.size}` : ''}</button><span class="bz-kb-meta">全部 ${this.allCards.length} 张</span></div>
+      <div class="bz-kb-cbar"><button class="bz-kb-cfilter${this.cardOrphanOnly ? ' is-on' : ''}" data-kb-act="cards-orphan"${idx ? '' : ' disabled'} title="${idx ? '只列既无入链也无挂载的卡' : '挂载索引未统计（扫描失败）'}">孤 儿${idx ? ` · ${idx.orphans.size}` : ' · 未统计'}</button><span class="bz-kb-meta">全部 ${this.allCards.length} 张</span></div>
       ${rows || `<div class="bz-kb-empty">${this.cardOrphanOnly ? '没有孤儿卡——每张卡都有人挂或挂着谁。' : '卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。'}</div>`}
       ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ''}
     </div>`;
