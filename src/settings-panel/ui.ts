@@ -92,7 +92,16 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   pomodoro: async () => (await import('../pomodoro/ui')).pomodoroSettingsSchema(),
   encrypt: async () => (await import('../encrypt/ui')).encryptSettingsSchema(),
   'password-vault': async () => (await import('../password-vault/settings')).passwordVaultSettingsSchema(),
-  knowledge: async () => (await import('../knowledge/ui')).knowledgeSettingsSchema(),
+  knowledge: async () => {
+    const { knowledgeSettingsSchema } = await import('../knowledge/ui');
+    // 清空建议缓存（挂载树 issue 318）：域内单文件缓存的清空入口，接线口径同「清空历史」回调
+    return knowledgeSettingsSchema({
+      onClearSuggestCache: async () => {
+        const { clearSuggestCache } = await import('../knowledge/mount-suggest');
+        await clearSuggestCache();
+      },
+    });
+  },
   smartcat: async () => {
     const { loadSmartCatData } = await import('../smartcat/data');
     const { smartcatSettingsSchema } = await import('../smartcat/ui');

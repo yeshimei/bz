@@ -306,7 +306,7 @@ interface TopicEntry {
 }
 
 /** 知识盒设置 schema（声明式四组；ADR-0112 更名并新增卡片/主题目录） */
-export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | Promise<void> }): SettingsSchema {
+export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | Promise<void>; onClearSuggestCache?: () => void | Promise<void> }): SettingsSchema {
   return {
     groups: [
       {
@@ -359,6 +359,12 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
           {
             type: 'button', name: '清空历史', desc: '移除全部成功归档的转文献记录，文献笔记与视频文件保留在库中',
             buttonText: '清空历史', onClick: () => { if (opts?.onClearHistory) void opts.onClearHistory(); },
+          },
+          // 挂载树（issue 318）：自动跑建议开关 + 建议缓存维护（ADR-0139 §3）
+          { type: 'toggle', name: '挂载建议', desc: '打开挂载树时自动跑 AI 语义建议，关闭则只看双链', binding: { key: 'knowledgeMountAutoSuggest' } },
+          {
+            type: 'button', name: '清空建议缓存', desc: '清空候选与生成时间，保留已固定和已取消的留档',
+            buttonText: '清空建议缓存', onClick: () => { if (opts?.onClearSuggestCache) void opts.onClearSuggestCache(); },
           },
         ],
       },
