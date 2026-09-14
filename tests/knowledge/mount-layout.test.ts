@@ -61,7 +61,7 @@ function centerOf(box: LayoutBox, pos: Record<string, LayoutPoint>): LayoutPoint
   return { x: pos[box.id].x + box.w / 2, y: pos[box.id].y + box.h / 2 };
 }
 
-/** 返回重叠对（容差 1px：间距 ≥ -1 才算「不重叠」，允许 1px 内贴合） */
+/** 返回重叠对（容差 1e-3px，与实现的 RESIDUAL_EPS 同口径：只允许亚像素级贴合） */
 function overlapPairs(boxes: LayoutBox[], pos: Record<string, LayoutPoint>): string[] {
   const bad: string[] = [];
   for (let i = 0; i < boxes.length; i++) {
@@ -72,10 +72,39 @@ function overlapPairs(boxes: LayoutBox[], pos: Record<string, LayoutPoint>): str
       const b = centerOf(B, pos);
       const dx = Math.abs(b.x - a.x);
       const dy = Math.abs(b.y - a.y);
-      if (dx < (A.w + B.w) / 2 - 1 && dy < (A.h + B.h) / 2 - 1) bad.push(A.id + '×' + B.id);
+      if (dx < (A.w + B.w) / 2 - 1e-3 && dy < (A.h + B.h) / 2 - 1e-3) bad.push(A.id + '×' + B.id);
     }
   }
   return bad;
+}
+
+/** 最大互穿深度（px）；≤1e-3 即视为零重叠 */
+function maxPenetration(boxes: LayoutBox[], pos: Record<string, LayoutPoint>): number {
+  let worst = 0;
+  for (let i = 0; i < boxes.length; i++) {
+    for (let j = i + 1; j < boxes.length; j++) {
+      const A = boxes[i];
+      const B = boxes[j];
+      const a = centerOf(A, pos);
+      const b = centerOf(B, pos);
+      const ox = (A.w + B.w) / 2 - Math.abs(b.x - a.x);
+      const oy = (A.h + B.h) / 2 - Math.abs(b.y - a.y);
+      if (ox > 0 && oy > 0) worst = Math.max(worst, Math.min(ox, oy));
+    }
+  }
+  return worst;
+}
+
+/** 「子卡在父卡右侧」满足率（中心 x 比较，宽松指标） */
+function childRightRatio(boxes: LayoutBox[], edges: LayoutEdge[], pos: Record<string, LayoutPoint>): number {
+  let ok = 0;
+  for (const e of edges) {
+    const A = boxes.find((b) => b.id === e.from);
+    const B = boxes.find((b) => b.id === e.to);
+    if (!A || !B) continue;
+    if (centerOf(B, pos).x > centerOf(A, pos).x) ok++;
+  }
+  return edges.length ? ok / edges.length : 1;
 }
 
 function expectAllFinite(boxes: LayoutBox[], pos: Record<string, LayoutPoint>): void {
@@ -157,18 +186,20 @@ describe('输入序：种子与降级都按输入 BFS 序取下标', () => {
 /* ---------- 3. 零重叠 ---------- */
 
 describe('零重叠（60 轮最小穿透轴硬推开）', () => {
-  it('15 节点 / 4 层样例：任意两盒不重叠（容差 1px）', () => {
+  it('15 节点 / 4 层样例：任意两盒不重叠（容差 1e-3px）', () => {
     const { boxes, edges } = fixtureMultiLayer();
     const res = layoutTree(boxes, edges);
     expectAllFinite(boxes, res.pos);
     expect(overlapPairs(boxes, res.pos)).toEqual([]);
+    expect(maxPenetration(boxes, res.pos)).toBeLessThanOrEqual(1e-3);
   });
 
-  it('20 节点链式样例：任意两盒不重叠（容差 1px）', () => {
+  it('20 节点链式样例：任意两盒不重叠（容差 1e-3px）', () => {
     const { boxes, edges } = fixtureChain(20);
     const res = layoutTree(boxes, edges);
     expectAllFinite(boxes, res.pos);
     expect(overlapPairs(boxes, res.pos)).toEqual([]);
+    expect(maxPenetration(boxes, res.pos)).toBeLessThanOrEqual(1e-3);
   });
 });
 
@@ -273,17 +304,45 @@ describe('边界：单节点 / 深链 / 孤立节点 / 脏输入', () => {
 
 /* ---------- 7. 软约束 / 视口接口 ---------- */
 
+/** 100 节点宽树（根 + 12 叉逐层展开，depth ≤ 4），给「大图退化」断言当夹具 */
+function fixtureWideTree(n = 100, fan = 12): { boxes: LayoutBox[]; edges: LayoutEdge[] } {
+  const boxes: LayoutBox[] = [];
+  const edges: LayoutEdge[] = [];
+  for (let i = 0; i < n; i++) {
+    boxes.push({
+      id: 'w' + i,
+      w: 300 + ((i * 7) % 5) * 40,
+      h: 120 + ((i * 11) % 4) * 60,
+      depth: i === 0 ? 0 : 1 + ((i - 1) % 4),
+      kind: 'card',
+    });
+  }
+  for (let i = 1; i < n; i++) edges.push({ from: 'w' + Math.floor((i - 1) / fan), to: 'w' + i });
+  return { boxes, edges };
+}
+
 describe('软约束与视口接口', () => {
-  it('「子卡在父卡右侧」软约束生效：同代际多数节点 x 大于父节点 x（宽松断言）', () => {
+  it('「子卡在父卡右侧」软约束生效：15 节点样例全部满足（宽松下界 0.8）', () => {
     const { boxes, edges } = fixtureMultiLayer();
     const res = layoutTree(boxes, edges);
-    let ok = 0;
-    for (const e of edges) {
-      const A = boxes.find((b) => b.id === e.from)!;
-      const B = boxes.find((b) => b.id === e.to)!;
-      if (centerOf(B, res.pos).x > centerOf(A, res.pos).x) ok++;
-    }
-    expect(ok / edges.length).toBeGreaterThanOrEqual(0.8);
+    expect(childRightRatio(boxes, edges, res.pos)).toBeGreaterThanOrEqual(0.8);
+  });
+
+  it('大图（≥100 节点）方向约束不被兜底破坏：满足率仍过半（下界 0.4，实测 0.53–0.70）', () => {
+    const wide = fixtureWideTree(100);
+    const wideRes = layoutTree(wide.boxes, wide.edges);
+    expect(childRightRatio(wide.boxes, wide.edges, wideRes.pos)).toBeGreaterThanOrEqual(0.4);
+
+    const star: LayoutBox[] = [];
+    const starEdges: LayoutEdge[] = [];
+    for (let i = 0; i < 120; i++) star.push({ id: 's' + i, w: 560, h: 300, depth: i === 0 ? 0 : 1, kind: 'card' });
+    for (let i = 1; i < 120; i++) starEdges.push({ from: 's0', to: 's' + i });
+    const starRes = layoutTree(star, starEdges);
+    expect(childRightRatio(star, starEdges, starRes.pos)).toBeGreaterThanOrEqual(0.4);
+
+    const chain = fixtureChain(120);
+    const chainRes = layoutTree(chain.boxes, chain.edges);
+    expect(childRightRatio(chain.boxes, chain.edges, chainRes.pos)).toBeGreaterThanOrEqual(0.4);
   });
 
   it('viewport 接口：视口内的节点照全量施力，视口外节点保持种子位；两次调用仍确定', () => {
@@ -305,6 +364,18 @@ describe('软约束与视口接口', () => {
       expect(a.pos[bx.id].x + bx.w).toBeLessThanOrEqual(a.world.w - LAYOUT_PARAMS.PAD + 1e-6);
       expect(a.pos[bx.id].y + bx.h).toBeLessThanOrEqual(a.world.h - LAYOUT_PARAMS.PAD + 1e-6);
     }
+  });
+
+  it('viewport 只是降级开关、不是可视区：未命中节点全在 pos 里且允许互相重叠（钉死语义，防 317 误用）', () => {
+    const { boxes, edges } = fixtureWideTree(100);
+    const res = layoutTree(boxes, edges, { viewport: { x: 0, y: 0, w: 900, h: 900 } });
+    // 全部节点都有坐标（未命中者留在种子位）
+    expect(Object.keys(res.pos)).toHaveLength(100);
+    expectAllFinite(boxes, res.pos);
+    // 允许重叠：这正是「不可当可视区用」的证据（全量路径则为零）
+    expect(overlapPairs(boxes, res.pos).length).toBeGreaterThan(0);
+    expect(maxPenetration(boxes, res.pos)).toBeGreaterThan(1);
+    expect(overlapPairs(boxes, layoutTree(boxes, edges).pos)).toEqual([]);
   });
 
   it('viewport 覆盖全部节点时与不传 viewport 等价', () => {

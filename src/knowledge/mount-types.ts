@@ -114,7 +114,13 @@ export interface LayoutPoint {
   y: number;
 }
 
-/** 布局选项。`viewport` 供视口裁剪（未关联节点不参与斥力/弹簧），`maxNodes` 触发降级（spec 风险 1） */
+/**
+ * 布局选项。`viewport` 只服务**超大图降级**（spec 风险 1）：按**种子位**判定哪些节点参与施力，
+ * 未命中视口的节点原样留在种子位——**它们彼此之间以及与参与节点都可能重叠**（实测 100 节点
+ * 传 900×900 会留下数百对重叠），所以**不可当可视区/裁剪区用**；要按可视区渲染，请由渲染层
+ * 自己用 `pos` + `world` 裁剪。默认 `null` = 全量布局（正常路径，零重叠保证只在这个路径上有）。
+ * `maxNodes` 触发降级：超过时只布局前 N 个（按 BFS 序）、其余进 `culled`。
+ */
 export interface LayoutOptions {
   viewport?: { x: number; y: number; w: number; h: number } | null;
   /** 超过此数只布局前 N 个（按 BFS 序）、其余进 `culled` */
