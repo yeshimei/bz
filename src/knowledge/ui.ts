@@ -363,7 +363,7 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
           // 挂载树（issue 318）：自动跑建议开关 + 建议缓存维护（ADR-0139 §3）
           { type: 'toggle', name: '挂载建议', desc: '打开挂载树时自动跑 AI 语义建议，关闭则只看双链', binding: { key: 'knowledgeMountAutoSuggest' } },
           {
-            type: 'button', name: '清空建议缓存', desc: '删除已生成的挂载建议，下次打开挂载树时重新计算',
+            type: 'button', name: '清空建议缓存', desc: '清空候选与生成时间，保留已固定和已取消的留档',
             buttonText: '清空建议缓存', onClick: () => { if (opts?.onClearSuggestCache) void opts.onClearSuggestCache(); },
           },
         ],

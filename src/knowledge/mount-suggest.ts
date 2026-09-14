@@ -228,10 +228,19 @@ function mutateSuggestCache<T>(fn: (file: SuggestCacheFile) => T | Promise<T>): 
   });
 }
 
-/** 清空建议缓存（设置页「清空建议缓存」按钮；含已固定/已否决的留档一并清除） */
+/**
+ * 清空建议缓存（设置页「清空建议缓存」按钮）：**只清候选与生成时间**——各片 `bodyHash` 置空
+ * （下次生成必然重算）、`generatedAt` 归零、`state==='pending'` 的候选移除；
+ * `fixed` / `dismissed` 留档**长期保留**（ADR-0139 §3：取消过的「锚点 → 目标」永久不再推），
+ * 且它们随片一起保住否决表；无任何留档的片整片删除。
+ */
 export async function clearSuggestCache(): Promise<void> {
   await mutateSuggestCache((file) => {
-    file.cards = {};
+    for (const [path, entry] of Object.entries(file.cards || {})) {
+      const kept = (entry?.suggestions || []).filter((s) => s && s.state !== 'pending');
+      if (kept.length === 0) delete file.cards[path];
+      else file.cards[path] = { bodyHash: '', generatedAt: 0, suggestions: kept };
+    }
   });
 }
 
@@ -412,6 +421,7 @@ function parseJudgePicks(raw: string): JudgePick[] {
  * 生成建议：缓存命中（bodyHash 相等且非 force）→ 直接返回 cached；
  * 未命中 → 分句 → 向量召回 → LLM 裁判 → 过滤（否决/已固定/弱关联/已存在双链）→ 落缓存。
  * 降级三分支（不跑建议、不自动建索引、不落缓存）：移动端 / 无可用向量索引 → no-index；无可用 AI 通道 → no-ai。
+ * 设置开关关闭且非 force → 'off'（渲染层据此显示「自动建议已关闭」，不要冒充「已缓存」）；显式 force 照跑。
  * 检索或裁判失败同样按降级返回且**不落缓存**（瞬时故障不污染以后的白板）。
  */
 export async function generateSuggestions(
@@ -428,7 +438,7 @@ export async function generateSuggestions(
 
   // ② 设置开关（knowledgeMountAutoSuggest，默认开）：关闭时渲染层不该调用；被调用时只有显式重跑（force）才继续
   const auto = (tryGetSettings() as { knowledgeMountAutoSuggest?: boolean } | null)?.knowledgeMountAutoSuggest !== false;
-  if (!auto && !opts?.force) return empty('cached');
+  if (!auto && !opts?.force) return empty('off');
 
   // ③ 无可用 AI 通道 → no-ai（先于读卡与缓存：通道不可用不再端出旧建议）
   try {
