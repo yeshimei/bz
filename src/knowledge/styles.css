@@ -1361,12 +1361,39 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  min-width: 240px;
   font-size: var(--bz-font-meta);
   color: var(--ink2);
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--bz-radius-sm);
-  padding: 8px 16px;
+  padding: 10px 14px;
+}
+/* 进度条（issue 322：AI 三段链路的进度可视化）——bar 宽度由 JS 按阶段直改 */
+.bz-kb-mt-pbar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.bz-kb-mt-pbar-fill {
+  display: block;
+  height: 100%;
+  width: 4%;
+  border-radius: 2px;
+  background: var(--accent, var(--ink2));
+  transition: width 0.2s ease;
+}
+.bz-kb-mt-pline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+}
+.bz-kb-mt-ptimer {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink3, var(--ink2));
 }
 /* 连线层浮于卡片之上：**不写静态 z-index**（ADR-0067 域内禁止），靠 DOM 次序——
    渲染层每轮把 <svg> 移到 world 末位（见 mount-canvas.ts renderCanvas） */

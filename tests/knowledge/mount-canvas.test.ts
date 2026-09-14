@@ -26,6 +26,7 @@ import {
   mountTreeRoot,
   openMountTree,
 } from '../../src/knowledge/mount-canvas';
+import { suggestionId } from '../../src/knowledge/mount-suggest';
 
 /* ---------- 建议链路替身（真实 mergeSuggestions 保留） ---------- */
 const suggestMock = vi.hoisted(() => ({
@@ -456,13 +457,132 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     await open(ROOT, { force: true });
     fireCtx(card(ghostId));
     byAct('pin').click();
-    await vi.waitFor(() => expect(vault.files.get(ROOT)!).toContain('[[文献盒/建议目标]]'));
-    expect(vault.files.get(ROOT)!).toContain('主卡正文一句话[[文献盒/建议目标]]');
+    // 词级锚点（≤12 字）→ **别名替换** `[[目标|原词]]`（ADR-0140 决策 3：不做句中追加）
+    await vi.waitFor(() => expect(vault.files.get(ROOT)!).toContain('[[文献盒/建议目标|主卡正文一句话]]'));
+    expect(vault.files.get(ROOT)!).toContain('[[文献盒/建议目标|主卡正文一句话]]：先看 [[子卡]] 这张卡。');
     expect(vault.files.get(ROOT)!.startsWith('---\ntitle: "主卡"\n')).toBe(true);
     expect(suggestMock.markSuggestion).toHaveBeenCalledWith(ROOT, expect.objectContaining({ target: '文献盒/建议目标.md' }), 'fixed', expect.anything());
     await vi.waitFor(() => expect(said('已固定')).toBe(true));
     expect(typeOf('已固定')).toBe('success');
-    expect(said('正文写入 [[文献盒/建议目标]]')).toBe(true);
+    expect(said('正文写入 [[文献盒/建议目标|主卡正文一句话]]')).toBe(true);
+  });
+
+  it('issue 322 渐进呈现：换卡先清画布；建议还在跑时新卡真实双链已上屏', async () => {
+    await open(ROOT);
+    expect(card(ROOT)).toBeTruthy();
+
+    // 建议链路挂住（模拟 40–60s 生成中）：旧口径要等它跑完才清画布，旧卡节点会一直挂着
+    let release: (v: unknown) => void = () => {};
+    suggestMock.generateSuggestions.mockImplementation(() => new Promise((r) => { release = r; }));
+    const pending = open('卡片盒/子卡.md');
+    // 建议还在跑：新卡的真实双链已经上屏，旧视图（主卡为根）已被清掉
+    await vi.waitFor(() => expect(rootId()).toBe('卡片盒/子卡.md'));
+    expect(card('卡片盒/子卡.md')).toBeTruthy();
+    expect(card(ROOT)?.classList.contains('is-root')).toBe(false); // 旧卡的「主卡」徽章不再在
+    expect((document.getElementById('bz-kb-mt-loading') as HTMLElement).style.display).not.toBe('none'); // 进度还在跑
+    release({ status: 'fresh', suggestions: [] });
+    await pending;
+  });
+
+  it('issue 322 进度：onProgress 驱动进度条宽度与阶段文字；链路结束即收起', async () => {
+    suggestMock.generateSuggestions.mockImplementation(async (_p: string, _c: unknown, opts: any) => {
+      opts?.onProgress?.({ stage: 'query', label: '查询官：为正文片段生成检索查询', done: 2, total: 2 });
+      opts?.onProgress?.({ stage: 'locate', label: '定位官：现读全文定粒度（1/3）', done: 1, total: 3 });
+      return { status: 'fresh', suggestions: [] };
+    });
+    await open(ROOT);
+    const bar = document.getElementById('bz-kb-mt-pbar') as HTMLElement;
+    const stage = document.getElementById('bz-kb-mt-pstage') as HTMLElement;
+    expect(stage.textContent).toBe('定位官：现读全文定粒度（1/3）');
+    const w = parseInt(bar.style.width, 10);
+    expect(w).toBeGreaterThan(0);
+    expect(w).toBeLessThanOrEqual(100);
+    // 链路结束 → 进度遮罩收起（不留常驻「生成中」）
+    expect((document.getElementById('bz-kb-mt-loading') as HTMLElement).style.display).toBe('none');
+  });
+
+  it('ADR-0140 幽灵正文 = 现读单元原文（小节）+ 理由（长文不受索引截断影响）', async () => {
+    const target = '文献盒/小节目标.md';
+    vault.files.set(target, '# 总则\n\n总述一段。\n\n## 巴纳姆效应\n\n人们倾向于认为模糊描述精准对应自己，这是关键句。\n\n## 其它\n\n其它内容。');
+    suggestMock.generateSuggestions.mockResolvedValue({
+      status: 'fresh',
+      suggestions: [
+        {
+          anchor: { from: 0, to: 6, text: '主卡正文一句话' },
+          target,
+          kind: 'head',
+          reason: '小节相关',
+          score: 0.9,
+          state: 'pending',
+          unit: 'heading',
+          heading: '巴纳姆效应',
+          subpath: '巴纳姆效应',
+        },
+      ],
+    });
+    await open(ROOT);
+    const body = card(`ai:${target}#${suggestionId({ target, subpath: '巴纳姆效应' }).split('#')[1]}`)?.querySelector('.bz-kb-mt-body');
+    expect(body?.textContent).toContain('小节相关'); // 理由
+    expect(body?.textContent).toContain('人们倾向于认为模糊描述精准对应自己'); // 该小节原文
+    expect(body?.textContent).not.toContain('其它内容。'); // 不是整篇
+  });
+
+  it('ADR-0140 固定三形态：标题写 [[路径#标题]]；段落先补 ^bz- 块 id 再写 [[路径#^块id]]', async () => {
+    const target = '文献盒/小节目标.md';
+    const quote = '人们倾向于认为模糊描述精准对应自己，这是关键句。';
+    vault.files.set(target, `# 总则\n\n总述一段。\n\n## 巴纳姆效应\n\n${quote}\n\n## 其它\n\n其它内容。`);
+    // 长锚点（>12 字）→ 走句中追加，不触发别名替换
+    const anchorText = '人们在算命时倾向于认为模糊的人格描述精准对应自己';
+    vault.files.set(ROOT, `---\ntitle: "主卡"\n---\n\n${anchorText}，这是主卡的句子。`);
+
+    // ① 标题形态
+    suggestMock.generateSuggestions.mockResolvedValue({
+      status: 'fresh',
+      suggestions: [
+        {
+          anchor: { from: 0, to: anchorText.length, text: anchorText },
+          target,
+          kind: 'head',
+          reason: '小节相关',
+          score: 0.9,
+          state: 'pending',
+          unit: 'heading',
+          heading: '巴纳姆效应',
+          subpath: '巴纳姆效应',
+        },
+      ],
+    });
+    await open(ROOT, { force: true });
+    fireCtx(card(suggestionId({ target, subpath: '巴纳姆效应' })));
+    byAct('pin').click();
+    await vi.waitFor(() => expect(vault.files.get(ROOT)!).toContain('[[文献盒/小节目标#巴纳姆效应]]'));
+    expect(said('正文写入 [[文献盒/小节目标#巴纳姆效应]]')).toBe(true);
+    expect(vault.files.get(target)!).not.toContain('^bz-'); // 标题形态不动目标文件
+
+    // ② 段落形态（换一个目标：① 已固定的目标进了真实双链，不会再被当建议推）
+    const target2 = '文献盒/段落目标.md';
+    vault.files.set(target2, `# 总则\n\n总述一段。\n\n## 巴纳姆效应\n\n${quote}\n\n## 其它\n\n其它内容。`);
+    suggestMock.generateSuggestions.mockResolvedValue({
+      status: 'fresh',
+      suggestions: [
+        {
+          anchor: { from: 0, to: anchorText.length, text: anchorText },
+          target: target2,
+          kind: 'para',
+          reason: '段落相关',
+          score: 0.9,
+          state: 'pending',
+          unit: 'paragraph',
+          quote,
+        },
+      ],
+    });
+    await open(ROOT, { force: true });
+    fireCtx(card(suggestionId({ target: target2, quote })));
+    byAct('pin').click();
+    await vi.waitFor(() => expect(vault.files.get(ROOT)!).toContain('[[文献盒/段落目标#^bz-'));
+    expect(vault.files.get(target2)!).toContain('^bz-'); // 块 id 挂在段落尾
+    expect(vault.files.get(target2)!).toContain(`${quote} ^bz-`); // 块 id 挂在段落尾（原文不动）
   });
 
   it('固定幂等：正文里已经有该双链时不谎报写入（提示只留档，且不重复插一条）', async () => {
@@ -536,8 +656,8 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     expect(dir().textContent).toContain('上游');
     expect(mountTreeRoot()).toBe('卡片盒/子卡.md');
     expect(mountTreeDirection()).toBe('upstream');
-    // 上游树：主卡作为「谁挂了它」的挂载方出现在图上
-    expect(card(ROOT)).toBeTruthy();
+    // 上游树：主卡作为「谁挂了它」的挂载方出现在图上（渐进呈现：树一建完就上屏）
+    await vi.waitFor(() => expect(card(ROOT)).toBeTruthy());
     expect(win().querySelectorAll('.bz-kb-mt-edge').length).toBeGreaterThan(0);
   });
 
@@ -729,9 +849,15 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
       await vi.waitFor(() => expect(rootId()).toBe(ROOT));
       expect(suggestMock.generateSuggestions).not.toHaveBeenCalled();
 
-      // 重跑：force 重跑当前主卡
+      // 重跑：force 重跑当前主卡（321 起第三个参数还带 onProgress 回调，故用 objectContaining）
       refresh.callback();
-      await vi.waitFor(() => expect(suggestMock.generateSuggestions).toHaveBeenCalledWith(ROOT, expect.anything(), { force: true }));
+      await vi.waitFor(() =>
+        expect(suggestMock.generateSuggestions).toHaveBeenCalledWith(
+          ROOT,
+          expect.anything(),
+          expect.objectContaining({ force: true }),
+        )
+      );
     } finally {
       await plugin.onunload();
     }
