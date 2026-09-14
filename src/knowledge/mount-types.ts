@@ -22,8 +22,9 @@ export type MountDirection = 'downstream' | 'upstream';
 /** 建议处置态（ADR-0139 §3）：待定 / 已固定（写 wikilink 留档）/ 已取消（永不再推） */
 export type SuggestState = 'pending' | 'fixed' | 'dismissed';
 
-/** 建议链路状态（顶栏显示用）：生成中 / 命中缓存 / 新生成 / 自动建议关闭 / 无向量索引（降级）/ 无可用 AI（降级） */
-export type SuggestStatus = 'generating' | 'cached' | 'fresh' | 'off' | 'no-index' | 'no-ai';
+/** 建议链路状态（顶栏显示用）：生成中 / 命中缓存 / 新生成 / 自动建议关闭 / 无向量索引（降级）/
+ *  无可用 AI（降级）/ 裁判没给出可用回答（降级，不落缓存、下次重开重试） */
+export type SuggestStatus = 'generating' | 'cached' | 'fresh' | 'off' | 'no-index' | 'no-ai' | 'no-answer';
 
 /** 锚点：正文里的一段文字。**以 text 重定位**，from/to 只是当次解析的偏移（ADR-0138 后果节） */
 export interface AnchorRef {
@@ -185,6 +186,8 @@ export interface SuggestCardCache {
   bodyHash: string;
   generatedAt: number;
   suggestions: MountSuggestion[];
+  /** 缓存格式版本（`SUGGEST_CACHE_VERSION`）：解析/取数口径变更后旧片自动失效重跑，不靠用户手清 */
+  ver?: number;
 }
 
 /** 建议缓存文件（域内单文件，如 `CONFIG/STORAGE/mount-suggest.json`） */
