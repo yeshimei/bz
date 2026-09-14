@@ -1,6 +1,7 @@
 # 318 挂载树·建议链路：生成、缓存、否决记录与降级
 
-- 状态：已交付（`src/knowledge/mount-suggest.ts`：分句 → 第二大脑块级向量召回 → LLM 裁判 → 过滤（否决/已固定/弱关联/已存在双链）+ 域内单文件缓存按 `bodyHash` 逐卡失效 + 否决留档永久不再推 + 缺索引降级；`tests/knowledge/mount-suggest.test.ts` 18 用例）
+- 状态：已交付（`src/knowledge/mount-suggest.ts`：分句 → 第二大脑块级向量召回 → LLM 裁判 → 过滤（否决/已固定/弱关联/已存在双链）+ 域内单文件缓存按 `bodyHash` 逐卡失效 + 否决留档永久不再推 + 缺索引降级；`tests/knowledge/mount-suggest.test.ts` 25 用例）
+- 2026-09-14 实机修复（用户报「打开白板没有任何 AI 建议」）：三处叠加，且都把已拿到手的答案丢掉——① 模型按 prompt 的 `a1`/`t2` 标签作答，旧解析只认整数，逐条丢弃；② 带思考的 DeepSeek-V4.1-Flash 把 2048 / 8192 的预算全烧在 reasoning 上（`finish_reason=length`、content 空串）；③ `response_format: json_object` 与「输出数组」的 prompt 打架，模型吐 `{"type": "json_object"}` 空壳。新口径：裁判走 **prompt 纯文本通道**（不强制 json_object，同建链 agent）+ 容错解析（脱壳 / 标签编号 / 代码围栏 / 夹叙文字）+ 预算 128K（官方上限 384K；`reasoning_effort: max` 单卡 120s 已否，**思考不关、默认档**）+ 无回答单列 `no-answer` **不落缓存** + `SUGGEST_CACHE_VERSION=2` 让旧口径缓存片自动失效重跑；顺带修 `splitAnchors` 把 callout `[!quote]` 的 `!` 当句读（锚点被切成 `quote] …`）。真库端到端（真索引 + 真模型）：自证预言卡 59s / 5 条、马斯洛卡 6 条。
 - 关联：ADR-0138 ／ ADR-0139 §3 ／ spec §数据模型 ／ `src/secondbrain/vector-store.ts:538`（新开只读导出）／ `src/core/ai`
 - 依赖：314、315
 
