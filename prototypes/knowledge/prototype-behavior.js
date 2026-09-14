@@ -1,4 +1,4 @@
-/* 源指纹 08490ca3a1054418 · 仓内输入 33 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ba7d471b9897d032 · 仓内输入 33 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -6657,6 +6657,602 @@ var BZW_knowledge = (() => {
     };
   }
 
+  // src/knowledge/mount-data.ts
+  var DEFAULT_CARDBOX = "卡片盒";
+  var DEFAULT_LIT = "文献盒";
+  var IMAGE_EXTS = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "avif"]);
+  var VIDEO_EXTS = /* @__PURE__ */ new Set(["mp4", "webm", "mov", "mkv", "avi"]);
+  function normSlashes(s) {
+    return String(s != null ? s : "").replace(/\\/g, "/");
+  }
+  function normDir(raw, fallback) {
+    const s = normSlashes(raw).trim();
+    if (!s) return fallback;
+    return s.replace(/^\/+|\/+$/g, "");
+  }
+  function baseName(path) {
+    const p = normSlashes(path);
+    return p.split("/").pop() || "";
+  }
+  function stripMd(name) {
+    return String(name != null ? name : "").replace(/\.md$/i, "");
+  }
+  function stemOf(path) {
+    const b = baseName(path);
+    return stripMd(b) || b;
+  }
+  function extOf(name) {
+    const b = baseName(name).toLowerCase();
+    const i = b.lastIndexOf(".");
+    return i > 0 ? b.slice(i + 1) : "";
+  }
+  function pathKey(path) {
+    return stripMd(normSlashes(path)).toLowerCase();
+  }
+  function inDir(path, dir) {
+    const d = normDir(dir, "");
+    const p = normSlashes(path);
+    if (!d) return true;
+    return p === d || p.startsWith(d + "/");
+  }
+  function samePath(a, b) {
+    return pathKey(a) === pathKey(b);
+  }
+  function byDepthThenPath(a, b) {
+    const da = normSlashes(a).split("/").length;
+    const db = normSlashes(b).split("/").length;
+    return da - db || a.localeCompare(b);
+  }
+  function stripFrontmatter(text) {
+    const src = String(text != null ? text : "");
+    const m = src.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+    return (m ? src.slice(m[0].length) : src).replace(/^\r?\n+/, "");
+  }
+  function splitLinkText(inner) {
+    const raw = String(inner != null ? inner : "").trim();
+    const bar = raw.indexOf("|");
+    const left = bar >= 0 ? raw.slice(0, bar) : raw;
+    const aliasRaw = bar >= 0 ? raw.slice(bar + 1).trim() : "";
+    const hash = left.indexOf("#");
+    return {
+      target: (hash >= 0 ? left.slice(0, hash) : left).trim(),
+      alias: aliasRaw || null,
+      subpath: hash >= 0 ? left.slice(hash + 1).trim() || null : null
+    };
+  }
+  function linkKey(target, subpath) {
+    return `${target.trim().toLowerCase()}#${(subpath != null ? subpath : "").trim().toLowerCase()}`;
+  }
+  function safeApp() {
+    try {
+      return getApp();
+    } catch (e) {
+      return null;
+    }
+  }
+  function numOr(v, fallback) {
+    return typeof v === "number" && Number.isFinite(v) ? v : fallback;
+  }
+  function mountCtx(app) {
+    var _a;
+    const s = (_a = tryGetSettings()) != null ? _a : {};
+    return {
+      app: app != null ? app : safeApp(),
+      cardboxDir: normDir(s == null ? void 0 : s.knowledgeCardboxDirectory, DEFAULT_CARDBOX) || DEFAULT_CARDBOX,
+      litDir: normDir(s == null ? void 0 : s.knowledgeDirectory, DEFAULT_LIT) || DEFAULT_LIT
+    };
+  }
+  function allFiles(ctx) {
+    var _a;
+    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
+    const files = typeof (v == null ? void 0 : v.getFiles) === "function" ? v.getFiles() : null;
+    return Array.isArray(files) ? files.filter((f) => f && f.path) : [];
+  }
+  function mdFiles(ctx) {
+    var _a;
+    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
+    const files = typeof (v == null ? void 0 : v.getMarkdownFiles) === "function" ? v.getMarkdownFiles() : allFiles(ctx).filter((f) => f.extension === "md");
+    return (Array.isArray(files) ? files.filter((f) => f && f.path) : []).slice().sort((a, b) => String(a.path).localeCompare(String(b.path)));
+  }
+  function cardFiles(ctx) {
+    const dir = normDir(ctx == null ? void 0 : ctx.cardboxDir, "");
+    return mdFiles(ctx).filter((f) => inDir(f.path, dir));
+  }
+  async function readText(file, ctx) {
+    var _a, _b, _c, _d, _e, _f, _g;
+    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
+    if (!v || file === null || file === void 0) return "";
+    let target = file;
+    if (typeof file === "string") {
+      const p = normSlashes(file);
+      if (!p) return "";
+      target = (_e = (_d = (_b = v.getAbstractFileByPath) == null ? void 0 : _b.call(v, p)) != null ? _d : (_c = v.getFileByPath) == null ? void 0 : _c.call(v, p)) != null ? _e : p;
+    }
+    try {
+      if (typeof v.cachedRead === "function") return String((_f = await v.cachedRead(target)) != null ? _f : "");
+      if (typeof v.read === "function") return String((_g = await v.read(target)) != null ? _g : "");
+    } catch (e) {
+    }
+    return "";
+  }
+  async function bodyOf(path, ctx) {
+    return stripFrontmatter(await readText(path, ctx));
+  }
+  function parseMountLinks(body) {
+    const src = String(body != null ? body : "");
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    const re = /(!?)\[\[([^\[\]]+?)\]\]/g;
+    let m;
+    while ((m = re.exec(src)) !== null) {
+      const raw = m[0];
+      const embed = m[1] === "!";
+      const { target, alias, subpath } = splitLinkText(m[2]);
+      if (!target) continue;
+      const key2 = linkKey(target, subpath);
+      if (seen.has(key2)) continue;
+      seen.add(key2);
+      out.push({
+        raw,
+        target,
+        alias,
+        subpath,
+        embed,
+        kind: classifyKind(target, subpath, embed, null, ""),
+        missing: false,
+        path: null,
+        anchor: { from: m.index, to: m.index + raw.length, text: raw }
+      });
+    }
+    return out;
+  }
+  function classifyKind(target, subpath, embed, path, cardboxDir) {
+    const t = String(target != null ? target : "").trim();
+    const p = path && String(path).trim() ? normSlashes(String(path)) : null;
+    const exts = [p ? extOf(p) : "", extOf(t)].filter(Boolean);
+    if (exts.some((e) => IMAGE_EXTS.has(e))) return "image";
+    if (exts.some((e) => VIDEO_EXTS.has(e))) return "video";
+    const dir = normDir(cardboxDir, "");
+    if (p && dir && (p === dir || p.startsWith(dir + "/"))) return "card";
+    const sp = String(subpath != null ? subpath : "").trim().replace(/^#/, "").trim();
+    if (sp.startsWith("^")) return "para";
+    if (sp) return "head";
+    return "note";
+  }
+  function findBySameName(target, ctx) {
+    var _a;
+    const t = normSlashes(target).trim();
+    if (!t) return null;
+    const files = allFiles(ctx);
+    const wantFull = pathKey(t);
+    const wantBase = stripMd(baseName(t)).toLowerCase();
+    const exact = files.filter((f) => pathKey(f.path) === wantFull).map((f) => normSlashes(f.path));
+    const named = files.filter((f) => stemOf(f.path).toLowerCase() === wantBase).map((f) => normSlashes(f.path));
+    const pool = (exact.length ? exact : named).slice().sort(byDepthThenPath);
+    return (_a = pool[0]) != null ? _a : null;
+  }
+  function resolveLinkPath(target, ctx, sourcePath) {
+    var _a, _b, _c, _d;
+    const t = String(target != null ? target : "").trim();
+    if (!t) return null;
+    try {
+      const dest = (_d = (_c = (_b = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.metadataCache) == null ? void 0 : _b.getFirstLinkpathDest) == null ? void 0 : _c.call(_b, t, sourcePath)) != null ? _d : null;
+      const p = dest && typeof dest === "object" ? dest.path : typeof dest === "string" ? dest : null;
+      if (p) return normSlashes(String(p));
+    } catch (e) {
+    }
+    return findBySameName(t, ctx);
+  }
+  async function resolveMountLinks(links, ctx, sourcePath = "") {
+    var _a, _b;
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    const dir = (_a = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a : "";
+    for (const link of links != null ? links : []) {
+      if (!link) continue;
+      const path = resolveLinkPath(link.target, ctx, sourcePath);
+      const kind = classifyKind(link.target, link.subpath, link.embed, path, dir);
+      const key2 = path ? `${pathKey(path)}#${((_b = link.subpath) != null ? _b : "").toLowerCase()}` : `missing:${linkKey(link.target, link.subpath)}`;
+      if (seen.has(key2)) continue;
+      seen.add(key2);
+      out.push({ ...link, path, missing: !path, kind });
+    }
+    return out;
+  }
+  function relocateAnchor(body, anchor) {
+    var _a;
+    const src = String(body != null ? body : "");
+    const text = String((_a = anchor == null ? void 0 : anchor.text) != null ? _a : "");
+    if (!text) return null;
+    const exact = src.indexOf(text);
+    if (exact >= 0) return exact;
+    const flat = flattenWs(src);
+    const needle = flattenWs(text).text;
+    if (!needle) return null;
+    const at = flat.text.indexOf(needle);
+    return at < 0 ? null : flat.map[at];
+  }
+  function flattenWs(s) {
+    const map = [];
+    let text = "";
+    for (let i = 0; i < s.length; i++) {
+      if (/\s/.test(s[i])) continue;
+      map.push(i);
+      text += s[i];
+    }
+    return { text, map };
+  }
+  function joinSnippet(chunk) {
+    const text = chunk.join("\n").replace(/^\s*\n+/, "").replace(/\s+$/, "");
+    return text.trim() ? text : null;
+  }
+  function splitBlocks(lines) {
+    const out = [];
+    let cur = [];
+    let start = 0;
+    const flush = (end) => {
+      if (cur.length) out.push({ start, end, text: cur.join("\n") });
+      cur = [];
+    };
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() === "") {
+        flush(i);
+        continue;
+      }
+      if (!cur.length) start = i;
+      cur.push(lines[i]);
+    }
+    flush(lines.length);
+    return out;
+  }
+  function escapeRe(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  function headingSnippet(lines, heading, cache) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const want = heading.trim().toLowerCase();
+    const hs = Array.isArray(cache == null ? void 0 : cache.headings) ? cache.headings : null;
+    if (hs) {
+      const idx = hs.findIndex((h) => {
+        var _a2;
+        return String((_a2 = h == null ? void 0 : h.heading) != null ? _a2 : "").trim().toLowerCase() === want;
+      });
+      if (idx >= 0) {
+        const start = numOr((_c = (_b = (_a = hs[idx]) == null ? void 0 : _a.position) == null ? void 0 : _b.start) == null ? void 0 : _c.line, -1);
+        if (start >= 0) {
+          const level = numOr((_d = hs[idx]) == null ? void 0 : _d.level, 1);
+          let end = lines.length;
+          for (let j = idx + 1; j < hs.length; j++) {
+            if (numOr((_e = hs[j]) == null ? void 0 : _e.level, 1) <= level) {
+              end = numOr((_h = (_g = (_f = hs[j]) == null ? void 0 : _f.position) == null ? void 0 : _g.start) == null ? void 0 : _h.line, lines.length);
+              break;
+            }
+          }
+          return joinSnippet(lines.slice(start + 1, end));
+        }
+      }
+    }
+    for (let i = 0; i < lines.length; i++) {
+      const m = /^(#{1,6})\s+(.*?)\s*#*\s*$/.exec(lines[i]);
+      if (!m || m[2].trim().toLowerCase() !== want) continue;
+      let end = lines.length;
+      for (let j = i + 1; j < lines.length; j++) {
+        const mm = /^(#{1,6})\s+/.exec(lines[j]);
+        if (mm && mm[1].length <= m[1].length) {
+          end = j;
+          break;
+        }
+      }
+      return joinSnippet(lines.slice(i + 1, end));
+    }
+    return null;
+  }
+  function blockSnippet(lines, id, cache) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const re = new RegExp(`(^|\\s)\\^${escapeRe(id)}(\\s|$)`);
+    const start = numOr((_d = (_c = (_b = (_a = cache == null ? void 0 : cache.blocks) == null ? void 0 : _a[id]) == null ? void 0 : _b.position) == null ? void 0 : _c.start) == null ? void 0 : _d.line, -1);
+    if (start >= 0) {
+      const end = numOr((_h = (_g = (_f = (_e = cache == null ? void 0 : cache.blocks) == null ? void 0 : _e[id]) == null ? void 0 : _f.position) == null ? void 0 : _g.end) == null ? void 0 : _h.line, start);
+      const text = lines.slice(start, end + 1).join("\n").replace(re, " ");
+      return joinSnippet([text]);
+    }
+    const blocks = splitBlocks(lines);
+    for (let i = 0; i < blocks.length; i++) {
+      const text = blocks[i].text;
+      if (!re.test(text)) continue;
+      if (!text.replace(re, " ").trim() && i > 0) return joinSnippet([blocks[i - 1].text]);
+      return joinSnippet([text.replace(re, " ").trim()]);
+    }
+    return null;
+  }
+  async function readSubpathBody(file, subpath, ctx) {
+    var _a, _b, _c, _d;
+    const sp = String(subpath != null ? subpath : "").trim().replace(/^#/, "").trim();
+    if (!sp) return null;
+    const path = typeof file === "string" ? normSlashes(file) : normSlashes((_a = file == null ? void 0 : file.path) != null ? _a : "");
+    if (!path) return null;
+    const content = await readText(file, ctx);
+    if (!content) return null;
+    const lines = String(content).split(/\r?\n/);
+    const cache = (_d = (_c = (_b = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b.metadataCache) == null ? void 0 : _c.getFileCache) == null ? void 0 : _d.call(_c, typeof file === "string" ? path : file);
+    if (sp.startsWith("^")) return blockSnippet(lines, sp.slice(1), cache);
+    return headingSnippet(lines, sp, cache);
+  }
+  async function findSameNameNote(cardPath, ctx) {
+    var _a;
+    const stem = stemOf(cardPath).toLowerCase();
+    if (!stem) return null;
+    const dir = normDir(ctx == null ? void 0 : ctx.litDir, "");
+    const hits = mdFiles(ctx).filter((f) => inDir(f.path, dir) && stemOf(f.path).toLowerCase() === stem).map((f) => normSlashes(f.path)).sort(byDepthThenPath);
+    return (_a = hits[0]) != null ? _a : null;
+  }
+  function fmListLineInner(line) {
+    const m = /^\s*-\s*(.*?)\s*$/.exec(line);
+    if (!m) return null;
+    const v = m[1].replace(/^["']|["']$/g, "").replace(/^["']|["']$/g, "");
+    const mm = v.match(/\[\[([^\]]+)\]\]/);
+    return mm ? mm[1].trim() : v.trim();
+  }
+  function fmList(text, key2) {
+    var _a;
+    const lines = String(text != null ? text : "").split(/\r?\n/);
+    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return [];
+    const head = new RegExp(`^${key2}\\s*:`);
+    const out = [];
+    let inList = false;
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim() === "---") break;
+      if (head.test(line)) {
+        inList = true;
+        continue;
+      }
+      if (!inList) continue;
+      const inner = fmListLineInner(line);
+      if (inner !== null) out.push(inner);
+      else if (line.trim() !== "") break;
+    }
+    return out;
+  }
+  function newScan(ctx) {
+    return { ctx, items: /* @__PURE__ */ new Map(), bodies: /* @__PURE__ */ new Map() };
+  }
+  async function scanBody(scan, path) {
+    const key2 = pathKey(path);
+    if (!scan.bodies.has(key2)) scan.bodies.set(key2, await bodyOf(path, scan.ctx));
+    return scan.bodies.get(key2);
+  }
+  function itemFromLink(text, source2, ctx, sourcePath) {
+    var _a;
+    const { target, alias, subpath } = splitLinkText(text);
+    if (!target) return null;
+    const path = resolveLinkPath(target, ctx, sourcePath);
+    return {
+      source: source2,
+      kind: classifyKind(target, subpath, false, path, (_a = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a : ""),
+      target,
+      path,
+      subpath,
+      alias,
+      anchor: null,
+      missing: !path
+    };
+  }
+  async function outboundItems(scan, path) {
+    const key2 = pathKey(path);
+    const cached = scan.items.get(key2);
+    if (cached) return cached;
+    const text = await readText(path, scan.ctx);
+    scan.bodies.set(key2, stripFrontmatter(text));
+    const items = [];
+    const links = await resolveMountLinks(parseMountLinks(stripFrontmatter(text)), scan.ctx, path);
+    for (const l of links) {
+      items.push({ source: "link", kind: l.kind, target: l.target, path: l.path, subpath: l.subpath, alias: l.alias, anchor: l.anchor, missing: l.missing });
+    }
+    for (const t of fmList(text, "related")) {
+      const it = itemFromLink(t, "related", scan.ctx, path);
+      if (it) items.push(it);
+    }
+    for (const t of fmList(text, "mounted")) {
+      const it = itemFromLink(t, "manual", scan.ctx, path);
+      if (it) items.push(it);
+    }
+    const seen = /* @__PURE__ */ new Set();
+    const deduped = items.filter((it) => {
+      var _a;
+      const k = `${it.source}:${it.path ? `${pathKey(it.path)}#${((_a = it.subpath) != null ? _a : "").toLowerCase()}` : `missing#${linkKey(it.target, it.subpath)}`}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    scan.items.set(key2, deduped);
+    return deduped;
+  }
+  async function inboundItems(scan, targetPath) {
+    const out = [];
+    for (const f of mdFiles(scan.ctx)) {
+      if (samePath(f.path, targetPath)) continue;
+      const items = await outboundItems(scan, f.path);
+      for (const it of items) {
+        if (!it.path || !samePath(it.path, targetPath)) continue;
+        out.push({ ...it, container: normSlashes(f.path) });
+      }
+    }
+    return out;
+  }
+  function itemId(it) {
+    var _a;
+    const p = (_a = it.path) != null ? _a : it.target;
+    return it.subpath ? `${p}#${it.subpath}` : p;
+  }
+  function isSelfItem(it, nodePath) {
+    if (it.path) return samePath(it.path, nodePath);
+    return pathKey(it.target) === pathKey(nodePath) || stemOf(it.target).toLowerCase() === stemOf(nodePath).toLowerCase();
+  }
+  async function rootNode(path, scan) {
+    return {
+      id: path,
+      path,
+      title: stemOf(path),
+      kind: "card",
+      source: "self",
+      depth: 0,
+      anchor: null,
+      missing: false,
+      suggested: false,
+      attached: false,
+      parent: null,
+      body: await scanBody(scan, path)
+    };
+  }
+  async function materialize(scan, it, depth, parent, upstream) {
+    var _a, _b, _c, _d, _e, _f, _g;
+    if (upstream) {
+      const path2 = normSlashes((_b = (_a = it.container) != null ? _a : it.path) != null ? _b : it.target);
+      return {
+        id: path2,
+        path: path2,
+        title: stemOf(path2),
+        kind: classifyKind(path2, null, false, path2, (_d = (_c = scan.ctx) == null ? void 0 : _c.cardboxDir) != null ? _d : ""),
+        source: it.source,
+        depth,
+        anchor: it.anchor,
+        missing: false,
+        suggested: false,
+        attached: false,
+        parent,
+        body: await scanBody(scan, path2)
+      };
+    }
+    const path = (_e = it.path) != null ? _e : it.target;
+    let body = null;
+    if (it.path && (it.kind === "note" || it.kind === "card")) body = await scanBody(scan, it.path);
+    else if (it.path && (it.kind === "head" || it.kind === "para") && it.subpath) body = await readSubpathBody({ path: it.path }, it.subpath, scan.ctx);
+    let title;
+    if (it.kind === "head") title = (_f = it.subpath) != null ? _f : stemOf(path);
+    else if (it.kind === "para") title = (body ? body.split("\n")[0].trim().slice(0, 24) : "") || `^${String((_g = it.subpath) != null ? _g : "").replace(/^\^/, "")}`;
+    else title = it.missing ? it.target : baseName(path) || it.target;
+    return {
+      id: itemId(it),
+      path,
+      title,
+      kind: it.kind,
+      source: it.source,
+      depth,
+      anchor: it.anchor,
+      missing: it.missing,
+      suggested: false,
+      attached: false,
+      parent,
+      body
+    };
+  }
+  async function buildMountTree(cardPath, opts) {
+    var _a, _b, _c, _d;
+    const ctx = (_a = opts == null ? void 0 : opts.ctx) != null ? _a : mountCtx();
+    const direction = (opts == null ? void 0 : opts.direction) === "upstream" ? "upstream" : "downstream";
+    const upstream = direction === "upstream";
+    const rootPath = normSlashes(String(cardPath != null ? cardPath : "")).replace(/^\/+|\/+$/g, "");
+    const scan = newScan(ctx);
+    const nodes = /* @__PURE__ */ new Map();
+    const order = [];
+    const edges = [];
+    const edgeKeys = /* @__PURE__ */ new Set();
+    const root = await rootNode(rootPath, scan);
+    nodes.set(root.id, root);
+    order.push(root.id);
+    const queue = [root.id];
+    while (queue.length) {
+      const node = nodes.get(queue.shift());
+      if (node.kind !== "card" || node.missing) continue;
+      const sameNote = await findSameNameNote(node.path, ctx);
+      if (sameNote && !nodes.has(sameNote)) {
+        const child = {
+          id: sameNote,
+          path: sameNote,
+          title: stemOf(sameNote),
+          kind: classifyKind(sameNote, null, false, sameNote, ctx.cardboxDir),
+          source: "sameName",
+          depth: node.depth + 1,
+          anchor: null,
+          missing: false,
+          suggested: false,
+          attached: true,
+          parent: node.id,
+          // 同名文献吸附在**所属卡片**下（不是根、也不为 null）
+          body: await scanBody(scan, sameNote)
+        };
+        nodes.set(child.id, child);
+        order.push(child.id);
+      }
+      const items = upstream ? await inboundItems(scan, node.path) : await outboundItems(scan, node.path);
+      for (const it of items) {
+        if (!upstream && isSelfItem(it, node.path)) continue;
+        const id = upstream ? normSlashes((_c = (_b = it.container) != null ? _b : it.path) != null ? _c : it.target) : itemId(it);
+        let child = (_d = nodes.get(id)) != null ? _d : null;
+        let fresh = false;
+        if (!child) {
+          child = await materialize(scan, it, node.depth + 1, node.id, upstream);
+          nodes.set(child.id, child);
+          order.push(child.id);
+          fresh = true;
+        }
+        if (!child.attached && child.depth > node.depth) {
+          const ek = `${node.id}\0${child.id}`;
+          if (!edgeKeys.has(ek)) {
+            edgeKeys.add(ek);
+            edges.push({ from: node.id, to: child.id, suggested: false });
+          }
+        }
+        if (fresh && child.kind === "card" && !child.missing) queue.push(child.id);
+      }
+    }
+    const firstIdx = new Map(order.map((id, i) => [id, i]));
+    const list = order.map((id) => nodes.get(id)).filter(Boolean);
+    list.sort((a, b) => {
+      var _a2, _b2;
+      return a.depth - b.depth || ((_a2 = firstIdx.get(a.id)) != null ? _a2 : 0) - ((_b2 = firstIdx.get(b.id)) != null ? _b2 : 0);
+    });
+    const pos = new Map(list.map((n, i) => [n.id, i]));
+    const sortedEdges = edges.slice().sort((a, b) => {
+      var _a2, _b2, _c2, _d2;
+      return ((_a2 = pos.get(a.from)) != null ? _a2 : -1) - ((_b2 = pos.get(b.from)) != null ? _b2 : -1) || ((_c2 = pos.get(a.to)) != null ? _c2 : -1) - ((_d2 = pos.get(b.to)) != null ? _d2 : -1);
+    });
+    return { root: root.id, direction, nodes: list, edges: sortedEdges };
+  }
+  async function refCounts(ctx) {
+    var _a;
+    const scan = newScan(ctx);
+    const cards = cardFiles(ctx);
+    const byKey = new Map(cards.map((c) => [pathKey(c.path), normSlashes(c.path)]));
+    const counts = {};
+    for (const c of cards) counts[normSlashes(c.path)] = 0;
+    for (const f of mdFiles(ctx)) {
+      const items = await outboundItems(scan, f.path);
+      for (const it of items) {
+        if (!it.path) continue;
+        if (samePath(it.path, f.path)) continue;
+        const card = byKey.get(pathKey(it.path));
+        if (card) counts[card] = ((_a = counts[card]) != null ? _a : 0) + 1;
+      }
+    }
+    return counts;
+  }
+  async function orphanCards(ctx, counts) {
+    var _a;
+    const scan = newScan(ctx);
+    const refs = counts != null ? counts : await refCounts(ctx);
+    const out = [];
+    for (const card of cardFiles(ctx)) {
+      const path = normSlashes(card.path);
+      if (((_a = refs[path]) != null ? _a : 0) > 0) continue;
+      const items = (await outboundItems(scan, path)).filter((it) => !isSelfItem(it, path));
+      if (items.length) continue;
+      out.push(path);
+    }
+    return out.sort();
+  }
+
   // src/knowledge/note-gen.ts
   function parseDomainList(raw) {
     return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
@@ -7417,566 +8013,6 @@ ${sample}`,
       onEnd(ok);
     }
   };
-
-  // src/knowledge/mount-data.ts
-  var DEFAULT_CARDBOX = "卡片盒";
-  var DEFAULT_LIT = "文献盒";
-  var IMAGE_EXTS = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "avif"]);
-  var VIDEO_EXTS = /* @__PURE__ */ new Set(["mp4", "webm", "mov", "mkv", "avi"]);
-  function normSlashes(s) {
-    return String(s != null ? s : "").replace(/\\/g, "/");
-  }
-  function normDir(raw, fallback) {
-    const s = normSlashes(raw).trim();
-    if (!s) return fallback;
-    return s.replace(/^\/+|\/+$/g, "");
-  }
-  function baseName(path) {
-    const p = normSlashes(path);
-    return p.split("/").pop() || "";
-  }
-  function stripMd(name) {
-    return String(name != null ? name : "").replace(/\.md$/i, "");
-  }
-  function stemOf(path) {
-    const b = baseName(path);
-    return stripMd(b) || b;
-  }
-  function extOf(name) {
-    const b = baseName(name).toLowerCase();
-    const i = b.lastIndexOf(".");
-    return i > 0 ? b.slice(i + 1) : "";
-  }
-  function pathKey(path) {
-    return stripMd(normSlashes(path)).toLowerCase();
-  }
-  function inDir(path, dir) {
-    const d = normDir(dir, "");
-    const p = normSlashes(path);
-    if (!d) return true;
-    return p === d || p.startsWith(d + "/");
-  }
-  function samePath(a, b) {
-    return pathKey(a) === pathKey(b);
-  }
-  function byDepthThenPath(a, b) {
-    const da = normSlashes(a).split("/").length;
-    const db = normSlashes(b).split("/").length;
-    return da - db || a.localeCompare(b);
-  }
-  function stripFrontmatter(text) {
-    const src = String(text != null ? text : "");
-    const m = src.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
-    return (m ? src.slice(m[0].length) : src).replace(/^\r?\n+/, "");
-  }
-  function splitLinkText(inner) {
-    const raw = String(inner != null ? inner : "").trim();
-    const bar = raw.indexOf("|");
-    const left = bar >= 0 ? raw.slice(0, bar) : raw;
-    const aliasRaw = bar >= 0 ? raw.slice(bar + 1).trim() : "";
-    const hash = left.indexOf("#");
-    return {
-      target: (hash >= 0 ? left.slice(0, hash) : left).trim(),
-      alias: aliasRaw || null,
-      subpath: hash >= 0 ? left.slice(hash + 1).trim() || null : null
-    };
-  }
-  function linkKey(target, subpath) {
-    return `${target.trim().toLowerCase()}#${(subpath != null ? subpath : "").trim().toLowerCase()}`;
-  }
-  function safeApp() {
-    try {
-      return getApp();
-    } catch (e) {
-      return null;
-    }
-  }
-  function numOr(v, fallback) {
-    return typeof v === "number" && Number.isFinite(v) ? v : fallback;
-  }
-  function mountCtx(app) {
-    var _a;
-    const s = (_a = tryGetSettings()) != null ? _a : {};
-    return {
-      app: app != null ? app : safeApp(),
-      cardboxDir: normDir(s == null ? void 0 : s.knowledgeCardboxDirectory, DEFAULT_CARDBOX) || DEFAULT_CARDBOX,
-      litDir: normDir(s == null ? void 0 : s.knowledgeDirectory, DEFAULT_LIT) || DEFAULT_LIT
-    };
-  }
-  function allFiles(ctx) {
-    var _a;
-    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
-    const files = typeof (v == null ? void 0 : v.getFiles) === "function" ? v.getFiles() : null;
-    return Array.isArray(files) ? files.filter((f) => f && f.path) : [];
-  }
-  function mdFiles(ctx) {
-    var _a;
-    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
-    const files = typeof (v == null ? void 0 : v.getMarkdownFiles) === "function" ? v.getMarkdownFiles() : allFiles(ctx).filter((f) => f.extension === "md");
-    return (Array.isArray(files) ? files.filter((f) => f && f.path) : []).slice().sort((a, b) => String(a.path).localeCompare(String(b.path)));
-  }
-  async function readText(file, ctx) {
-    var _a, _b, _c, _d, _e, _f, _g;
-    const v = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.vault;
-    if (!v || file === null || file === void 0) return "";
-    let target = file;
-    if (typeof file === "string") {
-      const p = normSlashes(file);
-      if (!p) return "";
-      target = (_e = (_d = (_b = v.getAbstractFileByPath) == null ? void 0 : _b.call(v, p)) != null ? _d : (_c = v.getFileByPath) == null ? void 0 : _c.call(v, p)) != null ? _e : p;
-    }
-    try {
-      if (typeof v.cachedRead === "function") return String((_f = await v.cachedRead(target)) != null ? _f : "");
-      if (typeof v.read === "function") return String((_g = await v.read(target)) != null ? _g : "");
-    } catch (e) {
-    }
-    return "";
-  }
-  async function bodyOf(path, ctx) {
-    return stripFrontmatter(await readText(path, ctx));
-  }
-  function parseMountLinks(body) {
-    const src = String(body != null ? body : "");
-    const out = [];
-    const seen = /* @__PURE__ */ new Set();
-    const re = /(!?)\[\[([^\[\]]+?)\]\]/g;
-    let m;
-    while ((m = re.exec(src)) !== null) {
-      const raw = m[0];
-      const embed = m[1] === "!";
-      const { target, alias, subpath } = splitLinkText(m[2]);
-      if (!target) continue;
-      const key2 = linkKey(target, subpath);
-      if (seen.has(key2)) continue;
-      seen.add(key2);
-      out.push({
-        raw,
-        target,
-        alias,
-        subpath,
-        embed,
-        kind: classifyKind(target, subpath, embed, null, ""),
-        missing: false,
-        path: null,
-        anchor: { from: m.index, to: m.index + raw.length, text: raw }
-      });
-    }
-    return out;
-  }
-  function classifyKind(target, subpath, embed, path, cardboxDir) {
-    const t = String(target != null ? target : "").trim();
-    const p = path && String(path).trim() ? normSlashes(String(path)) : null;
-    const exts = [p ? extOf(p) : "", extOf(t)].filter(Boolean);
-    if (exts.some((e) => IMAGE_EXTS.has(e))) return "image";
-    if (exts.some((e) => VIDEO_EXTS.has(e))) return "video";
-    const dir = normDir(cardboxDir, "");
-    if (p && dir && (p === dir || p.startsWith(dir + "/"))) return "card";
-    const sp = String(subpath != null ? subpath : "").trim().replace(/^#/, "").trim();
-    if (sp.startsWith("^")) return "para";
-    if (sp) return "head";
-    return "note";
-  }
-  function findBySameName(target, ctx) {
-    var _a;
-    const t = normSlashes(target).trim();
-    if (!t) return null;
-    const files = allFiles(ctx);
-    const wantFull = pathKey(t);
-    const wantBase = stripMd(baseName(t)).toLowerCase();
-    const exact = files.filter((f) => pathKey(f.path) === wantFull).map((f) => normSlashes(f.path));
-    const named = files.filter((f) => stemOf(f.path).toLowerCase() === wantBase).map((f) => normSlashes(f.path));
-    const pool = (exact.length ? exact : named).slice().sort(byDepthThenPath);
-    return (_a = pool[0]) != null ? _a : null;
-  }
-  function resolveLinkPath(target, ctx, sourcePath) {
-    var _a, _b, _c, _d;
-    const t = String(target != null ? target : "").trim();
-    if (!t) return null;
-    try {
-      const dest = (_d = (_c = (_b = (_a = ctx == null ? void 0 : ctx.app) == null ? void 0 : _a.metadataCache) == null ? void 0 : _b.getFirstLinkpathDest) == null ? void 0 : _c.call(_b, t, sourcePath)) != null ? _d : null;
-      const p = dest && typeof dest === "object" ? dest.path : typeof dest === "string" ? dest : null;
-      if (p) return normSlashes(String(p));
-    } catch (e) {
-    }
-    return findBySameName(t, ctx);
-  }
-  async function resolveMountLinks(links, ctx, sourcePath = "") {
-    var _a, _b;
-    const out = [];
-    const seen = /* @__PURE__ */ new Set();
-    const dir = (_a = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a : "";
-    for (const link of links != null ? links : []) {
-      if (!link) continue;
-      const path = resolveLinkPath(link.target, ctx, sourcePath);
-      const kind = classifyKind(link.target, link.subpath, link.embed, path, dir);
-      const key2 = path ? `${pathKey(path)}#${((_b = link.subpath) != null ? _b : "").toLowerCase()}` : `missing:${linkKey(link.target, link.subpath)}`;
-      if (seen.has(key2)) continue;
-      seen.add(key2);
-      out.push({ ...link, path, missing: !path, kind });
-    }
-    return out;
-  }
-  function relocateAnchor(body, anchor) {
-    var _a;
-    const src = String(body != null ? body : "");
-    const text = String((_a = anchor == null ? void 0 : anchor.text) != null ? _a : "");
-    if (!text) return null;
-    const exact = src.indexOf(text);
-    if (exact >= 0) return exact;
-    const flat = flattenWs(src);
-    const needle = flattenWs(text).text;
-    if (!needle) return null;
-    const at = flat.text.indexOf(needle);
-    return at < 0 ? null : flat.map[at];
-  }
-  function flattenWs(s) {
-    const map = [];
-    let text = "";
-    for (let i = 0; i < s.length; i++) {
-      if (/\s/.test(s[i])) continue;
-      map.push(i);
-      text += s[i];
-    }
-    return { text, map };
-  }
-  function joinSnippet(chunk) {
-    const text = chunk.join("\n").replace(/^\s*\n+/, "").replace(/\s+$/, "");
-    return text.trim() ? text : null;
-  }
-  function splitBlocks(lines) {
-    const out = [];
-    let cur = [];
-    let start = 0;
-    const flush = (end) => {
-      if (cur.length) out.push({ start, end, text: cur.join("\n") });
-      cur = [];
-    };
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].trim() === "") {
-        flush(i);
-        continue;
-      }
-      if (!cur.length) start = i;
-      cur.push(lines[i]);
-    }
-    flush(lines.length);
-    return out;
-  }
-  function escapeRe(s) {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  }
-  function headingSnippet(lines, heading, cache) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
-    const want = heading.trim().toLowerCase();
-    const hs = Array.isArray(cache == null ? void 0 : cache.headings) ? cache.headings : null;
-    if (hs) {
-      const idx = hs.findIndex((h) => {
-        var _a2;
-        return String((_a2 = h == null ? void 0 : h.heading) != null ? _a2 : "").trim().toLowerCase() === want;
-      });
-      if (idx >= 0) {
-        const start = numOr((_c = (_b = (_a = hs[idx]) == null ? void 0 : _a.position) == null ? void 0 : _b.start) == null ? void 0 : _c.line, -1);
-        if (start >= 0) {
-          const level = numOr((_d = hs[idx]) == null ? void 0 : _d.level, 1);
-          let end = lines.length;
-          for (let j = idx + 1; j < hs.length; j++) {
-            if (numOr((_e = hs[j]) == null ? void 0 : _e.level, 1) <= level) {
-              end = numOr((_h = (_g = (_f = hs[j]) == null ? void 0 : _f.position) == null ? void 0 : _g.start) == null ? void 0 : _h.line, lines.length);
-              break;
-            }
-          }
-          return joinSnippet(lines.slice(start + 1, end));
-        }
-      }
-    }
-    for (let i = 0; i < lines.length; i++) {
-      const m = /^(#{1,6})\s+(.*?)\s*#*\s*$/.exec(lines[i]);
-      if (!m || m[2].trim().toLowerCase() !== want) continue;
-      let end = lines.length;
-      for (let j = i + 1; j < lines.length; j++) {
-        const mm = /^(#{1,6})\s+/.exec(lines[j]);
-        if (mm && mm[1].length <= m[1].length) {
-          end = j;
-          break;
-        }
-      }
-      return joinSnippet(lines.slice(i + 1, end));
-    }
-    return null;
-  }
-  function blockSnippet(lines, id, cache) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
-    const re = new RegExp(`(^|\\s)\\^${escapeRe(id)}(\\s|$)`);
-    const start = numOr((_d = (_c = (_b = (_a = cache == null ? void 0 : cache.blocks) == null ? void 0 : _a[id]) == null ? void 0 : _b.position) == null ? void 0 : _c.start) == null ? void 0 : _d.line, -1);
-    if (start >= 0) {
-      const end = numOr((_h = (_g = (_f = (_e = cache == null ? void 0 : cache.blocks) == null ? void 0 : _e[id]) == null ? void 0 : _f.position) == null ? void 0 : _g.end) == null ? void 0 : _h.line, start);
-      const text = lines.slice(start, end + 1).join("\n").replace(re, " ");
-      return joinSnippet([text]);
-    }
-    const blocks = splitBlocks(lines);
-    for (let i = 0; i < blocks.length; i++) {
-      const text = blocks[i].text;
-      if (!re.test(text)) continue;
-      if (!text.replace(re, " ").trim() && i > 0) return joinSnippet([blocks[i - 1].text]);
-      return joinSnippet([text.replace(re, " ").trim()]);
-    }
-    return null;
-  }
-  async function readSubpathBody(file, subpath, ctx) {
-    var _a, _b, _c, _d;
-    const sp = String(subpath != null ? subpath : "").trim().replace(/^#/, "").trim();
-    if (!sp) return null;
-    const path = typeof file === "string" ? normSlashes(file) : normSlashes((_a = file == null ? void 0 : file.path) != null ? _a : "");
-    if (!path) return null;
-    const content = await readText(file, ctx);
-    if (!content) return null;
-    const lines = String(content).split(/\r?\n/);
-    const cache = (_d = (_c = (_b = ctx == null ? void 0 : ctx.app) == null ? void 0 : _b.metadataCache) == null ? void 0 : _c.getFileCache) == null ? void 0 : _d.call(_c, typeof file === "string" ? path : file);
-    if (sp.startsWith("^")) return blockSnippet(lines, sp.slice(1), cache);
-    return headingSnippet(lines, sp, cache);
-  }
-  async function findSameNameNote(cardPath, ctx) {
-    var _a;
-    const stem = stemOf(cardPath).toLowerCase();
-    if (!stem) return null;
-    const dir = normDir(ctx == null ? void 0 : ctx.litDir, "");
-    const hits = mdFiles(ctx).filter((f) => inDir(f.path, dir) && stemOf(f.path).toLowerCase() === stem).map((f) => normSlashes(f.path)).sort(byDepthThenPath);
-    return (_a = hits[0]) != null ? _a : null;
-  }
-  function fmListLineInner(line) {
-    const m = /^\s*-\s*(.*?)\s*$/.exec(line);
-    if (!m) return null;
-    const v = m[1].replace(/^["']|["']$/g, "").replace(/^["']|["']$/g, "");
-    const mm = v.match(/\[\[([^\]]+)\]\]/);
-    return mm ? mm[1].trim() : v.trim();
-  }
-  function fmList(text, key2) {
-    var _a;
-    const lines = String(text != null ? text : "").split(/\r?\n/);
-    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return [];
-    const head = new RegExp(`^${key2}\\s*:`);
-    const out = [];
-    let inList = false;
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i];
-      if (line.trim() === "---") break;
-      if (head.test(line)) {
-        inList = true;
-        continue;
-      }
-      if (!inList) continue;
-      const inner = fmListLineInner(line);
-      if (inner !== null) out.push(inner);
-      else if (line.trim() !== "") break;
-    }
-    return out;
-  }
-  function newScan(ctx) {
-    return { ctx, items: /* @__PURE__ */ new Map(), bodies: /* @__PURE__ */ new Map() };
-  }
-  async function scanBody(scan, path) {
-    const key2 = pathKey(path);
-    if (!scan.bodies.has(key2)) scan.bodies.set(key2, await bodyOf(path, scan.ctx));
-    return scan.bodies.get(key2);
-  }
-  function itemFromLink(text, source2, ctx, sourcePath) {
-    var _a;
-    const { target, alias, subpath } = splitLinkText(text);
-    if (!target) return null;
-    const path = resolveLinkPath(target, ctx, sourcePath);
-    return {
-      source: source2,
-      kind: classifyKind(target, subpath, false, path, (_a = ctx == null ? void 0 : ctx.cardboxDir) != null ? _a : ""),
-      target,
-      path,
-      subpath,
-      alias,
-      anchor: null,
-      missing: !path
-    };
-  }
-  async function outboundItems(scan, path) {
-    const key2 = pathKey(path);
-    const cached = scan.items.get(key2);
-    if (cached) return cached;
-    const text = await readText(path, scan.ctx);
-    scan.bodies.set(key2, stripFrontmatter(text));
-    const items = [];
-    const links = await resolveMountLinks(parseMountLinks(stripFrontmatter(text)), scan.ctx, path);
-    for (const l of links) {
-      items.push({ source: "link", kind: l.kind, target: l.target, path: l.path, subpath: l.subpath, alias: l.alias, anchor: l.anchor, missing: l.missing });
-    }
-    for (const t of fmList(text, "related")) {
-      const it = itemFromLink(t, "related", scan.ctx, path);
-      if (it) items.push(it);
-    }
-    for (const t of fmList(text, "mounted")) {
-      const it = itemFromLink(t, "manual", scan.ctx, path);
-      if (it) items.push(it);
-    }
-    const seen = /* @__PURE__ */ new Set();
-    const deduped = items.filter((it) => {
-      var _a;
-      const k = `${it.source}:${it.path ? `${pathKey(it.path)}#${((_a = it.subpath) != null ? _a : "").toLowerCase()}` : `missing#${linkKey(it.target, it.subpath)}`}`;
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-    scan.items.set(key2, deduped);
-    return deduped;
-  }
-  async function inboundItems(scan, targetPath) {
-    const out = [];
-    for (const f of mdFiles(scan.ctx)) {
-      if (samePath(f.path, targetPath)) continue;
-      const items = await outboundItems(scan, f.path);
-      for (const it of items) {
-        if (!it.path || !samePath(it.path, targetPath)) continue;
-        out.push({ ...it, container: normSlashes(f.path) });
-      }
-    }
-    return out;
-  }
-  function itemId(it) {
-    var _a;
-    const p = (_a = it.path) != null ? _a : it.target;
-    return it.subpath ? `${p}#${it.subpath}` : p;
-  }
-  function isSelfItem(it, nodePath) {
-    if (it.path) return samePath(it.path, nodePath);
-    return pathKey(it.target) === pathKey(nodePath) || stemOf(it.target).toLowerCase() === stemOf(nodePath).toLowerCase();
-  }
-  async function rootNode(path, scan) {
-    return {
-      id: path,
-      path,
-      title: stemOf(path),
-      kind: "card",
-      source: "self",
-      depth: 0,
-      anchor: null,
-      missing: false,
-      suggested: false,
-      attached: false,
-      parent: null,
-      body: await scanBody(scan, path)
-    };
-  }
-  async function materialize(scan, it, depth, parent, upstream) {
-    var _a, _b, _c, _d, _e, _f, _g;
-    if (upstream) {
-      const path2 = normSlashes((_b = (_a = it.container) != null ? _a : it.path) != null ? _b : it.target);
-      return {
-        id: path2,
-        path: path2,
-        title: stemOf(path2),
-        kind: classifyKind(path2, null, false, path2, (_d = (_c = scan.ctx) == null ? void 0 : _c.cardboxDir) != null ? _d : ""),
-        source: it.source,
-        depth,
-        anchor: it.anchor,
-        missing: false,
-        suggested: false,
-        attached: false,
-        parent,
-        body: await scanBody(scan, path2)
-      };
-    }
-    const path = (_e = it.path) != null ? _e : it.target;
-    let body = null;
-    if (it.path && (it.kind === "note" || it.kind === "card")) body = await scanBody(scan, it.path);
-    else if (it.path && (it.kind === "head" || it.kind === "para") && it.subpath) body = await readSubpathBody({ path: it.path }, it.subpath, scan.ctx);
-    let title;
-    if (it.kind === "head") title = (_f = it.subpath) != null ? _f : stemOf(path);
-    else if (it.kind === "para") title = (body ? body.split("\n")[0].trim().slice(0, 24) : "") || `^${String((_g = it.subpath) != null ? _g : "").replace(/^\^/, "")}`;
-    else title = it.missing ? it.target : baseName(path) || it.target;
-    return {
-      id: itemId(it),
-      path,
-      title,
-      kind: it.kind,
-      source: it.source,
-      depth,
-      anchor: it.anchor,
-      missing: it.missing,
-      suggested: false,
-      attached: false,
-      parent,
-      body
-    };
-  }
-  async function buildMountTree(cardPath, opts) {
-    var _a, _b, _c, _d;
-    const ctx = (_a = opts == null ? void 0 : opts.ctx) != null ? _a : mountCtx();
-    const direction = (opts == null ? void 0 : opts.direction) === "upstream" ? "upstream" : "downstream";
-    const upstream = direction === "upstream";
-    const rootPath = normSlashes(String(cardPath != null ? cardPath : "")).replace(/^\/+|\/+$/g, "");
-    const scan = newScan(ctx);
-    const nodes = /* @__PURE__ */ new Map();
-    const order = [];
-    const edges = [];
-    const edgeKeys = /* @__PURE__ */ new Set();
-    const root = await rootNode(rootPath, scan);
-    nodes.set(root.id, root);
-    order.push(root.id);
-    const queue = [root.id];
-    while (queue.length) {
-      const node = nodes.get(queue.shift());
-      if (node.kind !== "card" || node.missing) continue;
-      const sameNote = await findSameNameNote(node.path, ctx);
-      if (sameNote && !nodes.has(sameNote)) {
-        const child = {
-          id: sameNote,
-          path: sameNote,
-          title: stemOf(sameNote),
-          kind: classifyKind(sameNote, null, false, sameNote, ctx.cardboxDir),
-          source: "sameName",
-          depth: node.depth + 1,
-          anchor: null,
-          missing: false,
-          suggested: false,
-          attached: true,
-          parent: node.id,
-          // 同名文献吸附在**所属卡片**下（不是根、也不为 null）
-          body: await scanBody(scan, sameNote)
-        };
-        nodes.set(child.id, child);
-        order.push(child.id);
-      }
-      const items = upstream ? await inboundItems(scan, node.path) : await outboundItems(scan, node.path);
-      for (const it of items) {
-        if (!upstream && isSelfItem(it, node.path)) continue;
-        const id = upstream ? normSlashes((_c = (_b = it.container) != null ? _b : it.path) != null ? _c : it.target) : itemId(it);
-        let child = (_d = nodes.get(id)) != null ? _d : null;
-        let fresh = false;
-        if (!child) {
-          child = await materialize(scan, it, node.depth + 1, node.id, upstream);
-          nodes.set(child.id, child);
-          order.push(child.id);
-          fresh = true;
-        }
-        if (!child.attached && child.depth > node.depth) {
-          const ek = `${node.id}\0${child.id}`;
-          if (!edgeKeys.has(ek)) {
-            edgeKeys.add(ek);
-            edges.push({ from: node.id, to: child.id, suggested: false });
-          }
-        }
-        if (fresh && child.kind === "card" && !child.missing) queue.push(child.id);
-      }
-    }
-    const firstIdx = new Map(order.map((id, i) => [id, i]));
-    const list = order.map((id) => nodes.get(id)).filter(Boolean);
-    list.sort((a, b) => {
-      var _a2, _b2;
-      return a.depth - b.depth || ((_a2 = firstIdx.get(a.id)) != null ? _a2 : 0) - ((_b2 = firstIdx.get(b.id)) != null ? _b2 : 0);
-    });
-    const pos = new Map(list.map((n, i) => [n.id, i]));
-    const sortedEdges = edges.slice().sort((a, b) => {
-      var _a2, _b2, _c2, _d2;
-      return ((_a2 = pos.get(a.from)) != null ? _a2 : -1) - ((_b2 = pos.get(b.from)) != null ? _b2 : -1) || ((_c2 = pos.get(a.to)) != null ? _c2 : -1) - ((_d2 = pos.get(b.to)) != null ? _d2 : -1);
-    });
-    return { root: root.id, direction, nodes: list, edges: sortedEdges };
-  }
 
   // src/knowledge/mount-layout.ts
   var LAYOUT_PARAMS = {
@@ -11102,6 +11138,10 @@ ${sample}`,
       this.allCards = [];
       this.allTopics = [];
       this.cardsShown = 0;
+      /** 挂载引用索引（issue 320）：整库扫描**每轮只算一次**，行徽标 / 孤儿筛选 / 行标记共用这份缓存 */
+      this.mountIndex = null;
+      /** 部贰「只看孤儿」筛选开关（内存态，重渲染 / 换部来回都保留） */
+      this.cardOrphanOnly = false;
       this.editor = null;
       this.sessionNewPaths = /* @__PURE__ */ new Set();
       this.loadedLitDir = "";
@@ -11279,6 +11319,11 @@ ${sample}`,
       } else if (act === "mount-tree") {
         const p = t.getAttribute("data-path") || "";
         if (p) void openMountTree(p);
+      } else if (act === "cards-orphan") {
+        if (!this.mountIndex) return;
+        this.cardOrphanOnly = !this.cardOrphanOnly;
+        this.cardsShown = 0;
+        this.renderCards();
       } else if (act === "topic-open") {
         const p = t.getAttribute("data-path") || "";
         const tp = this.allTopics.find((x) => x.path === p);
@@ -11319,6 +11364,8 @@ ${sample}`,
         await this.loadCards(dir);
         this.cardsShown = 0;
         this.renderCards();
+        await this.loadMountIndex();
+        if (this.part === "z2") this.renderCards();
       } else {
         const dir = topicDirOf(s);
         if (this.loadedTopicDir && this.loadedTopicDir !== dir) this.allTopics = [];
@@ -11518,6 +11565,7 @@ ${sample}`,
         notice("已落卡 卡片盒/" + base + ".md · 它随时被任何笔记引用", "success");
         if (this.part === "z2") {
           this.cardsShown = 0;
+          await this.loadMountIndex();
           this.renderCards();
         }
       } catch (e) {
@@ -11556,17 +11604,41 @@ ${sample}`,
       out.sort((a, b) => b.created - a.created || a.path.localeCompare(b.path));
       this.allCards = out;
     }
+    /**
+     * 挂载引用索引（issue 320；ADR-0138 §5 同包四项）：整库扫描一次并**缓存到面板对象上**——
+     * 行引用计数徽标（refCounts）、孤儿筛选与行标记（orphanCards）共用这一份；
+     * counts 算好后**传给 orphanCards 复用**（其内部不再自行复算一遍），整轮 refresh 只走一遍整库扫描。
+     * 每轮 refresh 重算（改链 / 改名 / 增删卡即时跟随），行渲染里不再各算一次。
+     * 扫描异常按空索引降级：芯片显「未统计」并置灰，列表照常渲染。
+     */
+    async loadMountIndex() {
+      try {
+        const ctx = mountCtx();
+        const counts = await refCounts(ctx);
+        this.mountIndex = { counts, orphans: new Set(await orphanCards(ctx, counts)) };
+      } catch (e) {
+        this.mountIndex = null;
+      }
+    }
     renderCards() {
       if (!this.contentEl) return;
       this.cardsShown = Math.max(this.cardsShown, 80);
-      const shown = this.allCards.slice(0, this.cardsShown);
-      const rows = shown.map((c) => `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc(c.path)}">
-      <div class="bz-kb-hw"><span class="bz-kb-w">${esc(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}<span class="bz-kb-dom">${esc(c.domain)}</span></div>
-      <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span><button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
-    </div>`).join("");
-      const rest = this.allCards.length - shown.length;
+      const idx = this.mountIndex;
+      const pool = this.cardOrphanOnly && idx ? this.allCards.filter((c) => idx.orphans.has(c.path)) : this.allCards;
+      const shown = pool.slice(0, this.cardsShown);
+      const rows = shown.map((c) => {
+        var _a, _b;
+        const n = (_a = idx == null ? void 0 : idx.counts[c.path]) != null ? _a : 0;
+        const orphan = (_b = idx == null ? void 0 : idx.orphans.has(c.path)) != null ? _b : false;
+        return `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc(c.path)}">
+      <div class="bz-kb-hw"><span class="bz-kb-w">${esc(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}${orphan ? '<span class="bz-kb-orphan" title="既无入链也无挂载">孤 儿</span>' : ""}<span class="bz-kb-dom">${esc(c.domain)}</span></div>
+      <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span>${n > 0 ? `<span class="bz-kb-refbadge" title="被 ${n} 处用户双链引用">被引 ${n}</span>` : ""}<button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
+    </div>`;
+      }).join("");
+      const rest = pool.length - shown.length;
       this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      ${rows || '<div class="bz-kb-empty">卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。</div>'}
+      <div class="bz-kb-cbar"><button class="bz-kb-cfilter${this.cardOrphanOnly ? " is-on" : ""}" data-kb-act="cards-orphan"${idx ? "" : " disabled"} title="${idx ? "只列既无入链也无挂载的卡" : "挂载索引未统计（扫描失败）"}">孤 儿${idx ? ` · ${idx.orphans.size}` : " · 未统计"}</button><span class="bz-kb-meta">全部 ${this.allCards.length} 张</span></div>
+      ${rows || `<div class="bz-kb-empty">${this.cardOrphanOnly ? "没有孤儿卡——每张卡都有人挂或挂着谁。" : "卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。"}</div>`}
       ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ""}
     </div>`;
     }
