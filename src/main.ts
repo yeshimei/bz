@@ -19,7 +19,7 @@ import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-ad
 import { renderSettingsInto } from './core/settings-schema';
 import { mainSettingsSchema } from './core/settings-main-schema';
 
-import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys } from './settings';
+import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings } from './settings';
 
 // 备忘录（memo 域，ADR-0092 旧备忘录域退役后 memo.json 唯一属主，ADR-0117 正名：UI/交互/写盘/引用同步归本域；
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
@@ -47,15 +47,14 @@ import {
   openSecondBrainPanel,
   openSecondBrainReference,
   openSecondBrainChat,
-  rebuildSecondBrainLinks,
-  runSecondBrainLinkAll,
   rebuildSecondBrainIndex,
   unloadSecondBrain,
+  ensureSecondBrain,
 } from './secondbrain';
 import { openPomodoro, unloadPomodoro, ensurePomodoro, toggleFocus, skipBreak, togglePause } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // 知识盒（knowledge 域，ADR-0072 自 bili-downloader 迁出、ADR-0112 三部重构；网页版已移除，见 tools/bili-downloader）
-import { openKnowledgePanel, openTermNote, openKnowledgeAddTask, unloadKnowledge } from './knowledge';
+import { openKnowledgePanel, openTermNote, openKnowledgeAddTask, unloadKnowledge, relinkActiveNote, linkAllInBoxes } from './knowledge';
 // 挂载树白板（knowledge 域，issues 317/319）：两个命令直达 + 卸载清理（自绘遮罩挂 body，卸载必须摘）
 import { destroyMountTree, openMountTree, refreshMountTree } from './knowledge/mount-canvas';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 右键菜单）
@@ -146,11 +145,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // f7：与「第二大脑面板」区分——本命令打开参考侧边栏（右侧窄窗/移动端抽屉参考 tab）
   { id: 'bz-secondbrain-open', name: '第二大脑参考', icon: 'zap', callback: () => openSecondBrainReference(getApp()) },
   { id: 'bz-secondbrain-chat', name: '第二大脑对话', icon: 'message-circle', callback: () => openSecondBrainChat(getApp()) },
-  // 自动双链（ticket 111）：当前笔记重跑一次关联（正文大改后的手动兜底入口）
-  { id: 'bz-secondbrain-rebuild-links', name: '重跑当前笔记关联', icon: 'link', callback: () => rebuildSecondBrainLinks(getApp()) },
-  // 自动双链（ticket 115）：存量未连接笔记手动批量补链（启动自动补链的显式兜底）
-  { id: 'bz-secondbrain-link-all', name: '为未关联笔记批量补链', icon: 'link-2', callback: () => runSecondBrainLinkAll(getApp()) },
   // 重建索引（2026-09-11 首页入口菜单）：全库重建向量索引（函数早已存在，此前无命令入口）
+  // 留第二大脑——它是检索本体，不是关联（ADR-0141 §1）
   { id: 'bz-secondbrain-rebuild-index', name: '重建索引', icon: 'refresh-cw', callback: () => rebuildSecondBrainIndex(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, callback: () => openPomodoro(getApp()) },
@@ -164,6 +160,17 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-knowledge-note-term', name: '名词生成文献笔记', icon: 'book-type', callback: () => openTermNote(getApp()) },
   // 影像生成文献笔记（2026-09-10 首页入口菜单联动；issue 310 起直达影像录入界面——链接由面板内填或预填）
   { id: 'bz-knowledge-note-video', name: '影像生成文献笔记', icon: 'list-video', callback: () => openKnowledgeAddTask(getApp()) },
+  // 自动关联（ADR-0141 §1：功能归属迁入知识盒，引擎留第二大脑；命令身份改 bz-knowledge-*）
+  // 重跑当前笔记关联：正文大改后的手动兜底；范围恒为三个盒子，盒外笔记直接拒绝
+  { id: 'bz-knowledge-relink', name: '重跑当前笔记关联', icon: 'link', callback: () => {
+    ensureSecondBrain(getApp()); // 通道由第二大脑域注入（幂等）；未就绪时命令内会明确提示
+    void relinkActiveNote(getApp());
+  } },
+  // 为未关联笔记批量补链：启动自动补链的显式兜底入口（三个盒子内缺关联的笔记）
+  { id: 'bz-knowledge-link-all', name: '为未关联笔记批量补链', icon: 'link-2', callback: () => {
+    ensureSecondBrain(getApp());
+    void linkAllInBoxes();
+  } },
   // 看挂载树（issue 319）：主卡 = 当前打开的笔记；没有打开的笔记就只提示（不猜主卡）
   { id: 'bz-knowledge-mount-tree', name: '看挂载树', icon: 'network', callback: () => {
     const file: any = getApp()?.workspace?.getActiveFile?.();
@@ -222,8 +229,10 @@ export default class BzPlugin extends Plugin {
     // issue 260 正名迁移：旧 todo* 面板设置键就地改名（读旧写新删旧）；
     // C16：发生迁移即调度落盘——原先只改内存，data.json 旧键长期残留、每次启动重复迁移
     const memoKeysMigrated = migrateMemoSettingKeys(loaded);
+    // ADR-0141 迁移：自动关联范围键退役（恒为三盒）+ 索引白名单里的三盒条目剔除
+    const autoLinkMigrated = migrateAutoLinkSettings(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
-    if (memoKeysMigrated) {
+    if (memoKeysMigrated || autoLinkMigrated) {
       void this.saveSettings().catch((e) => console.error('[bz] 设置键迁移落盘失败:', e));
     }
     setApp(this.app);

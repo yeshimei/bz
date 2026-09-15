@@ -4,6 +4,7 @@
  * 分句、稳定键、过滤（否决/已固定/弱关联/已存在双链）、缓存读写与逐卡失效、处置留档与否决表、
  * 降级三分支（无索引/移动端/无 AI）、幽灵节点并树、清空缓存；
  * 321 新增：三段解析器、召回聚合（范围闸/自指/去重/多样性保底）、三级回定位、标题校验降级、
+ * ADR-0142：召回范围闸改**卡片盒白名单**（取代 0140 的排除式），目标一律是卡片盒里的另一张卡；
  * 三形态链接、块 id 幂等、别名替换、suggestionId 单元粒度、onProgress 阶段。
  *
  * AI 与向量检索全程 mock（不联网、不真调模型）。三段链路按**调用次序**供回答：
@@ -79,8 +80,8 @@ const ANCHOR_A2 = '这是第二段足够长的锚点句子';
 const BODY_A = `${ANCHOR_A1}。${ANCHOR_A2}。`;
 const BODY_ONE = `${ANCHOR_A1}。`; // 单锚点正文（处置配对断言用）
 const BODY_B = '乙卡正文：这是唯一一段足够长的锚点句子。';
-const T1 = '文献盒/目标一.md';
-const T2 = '文献盒/目标二.md';
+const T1 = `${CARDBOX}/目标一.md`;
+const T2 = `${CARDBOX}/目标二.md`;
 
 let vault: MockVault;
 let ctx: SuggestCtx;
@@ -242,42 +243,57 @@ describe('三段解析器（标签 / 围栏 / 包壳 / 空回答）', () => {
 });
 
 describe('aggregatePool（范围闸 / 自指 / 同笔记去重 / 多样性保底）', () => {
-  it('范围闸只排除归档与网页剪藏；自指剔除；同笔记合并留最高分块', () => {
+  it('范围闸只收卡片盒之内（ADR-0142）；自指剔除；同笔记合并留最高分块', () => {
     const hits = [
       { seg: 0, query: 'q1', path: '归档/网页剪藏/噪声一.md', score: 0.99, chunk: '噪声' },
-      { seg: 0, query: 'q1', path: '归档/旧物.md', score: 0.98, chunk: '归档' },
+      { seg: 0, query: 'q1', path: '文献盒/文献邻居.md', score: 0.98, chunk: '盒外' },
+      { seg: 0, query: 'q1', path: '主题盒/巴纳姆效应.md', score: 0.975, chunk: '盒外' },
       { seg: 0, query: 'q1', path: `${CARDBOX}/A.md`, score: 0.97, chunk: '自指' }, // 主卡自身
       { seg: 0, query: 'q1', path: T1, score: 0.8, chunk: '块的低分片段' },
       { seg: 0, query: 'q2', path: T1, score: 0.95, chunk: '块的高分片段' },
-      { seg: 1, query: 'q1', path: '主题盒/巴纳姆效应.md', score: 0.7, chunk: '主题盒邻居' },
+      { seg: 1, query: 'q1', path: `${CARDBOX}/子/同盒邻居.md`, score: 0.7, chunk: '同盒邻居' },
     ];
     const pool = aggregatePool(hits, { selfPath: `${CARDBOX}/A.md` });
     const paths = pool.map((p) => p.path);
     expect(paths).not.toContain('归档/网页剪藏/噪声一.md');
-    expect(paths).not.toContain('归档/旧物.md');
+    expect(paths).not.toContain('文献盒/文献邻居.md'); // 白名单式：文献盒不再是召回目标
+    expect(paths).not.toContain('主题盒/巴纳姆效应.md'); // 主题盒同样不在白名单
     expect(paths).not.toContain(`${CARDBOX}/A.md`);
-    expect(paths).toContain('主题盒/巴纳姆效应.md'); // 范围闸是排除式：主题盒真邻居保留
+    expect(paths).toContain(`${CARDBOX}/子/同盒邻居.md`); // 卡片盒子目录递归命中
     const t1 = pool.find((p) => p.path === T1)!;
     expect(t1.hitCount).toBe(2); // 双查询并集
     expect(t1.maxScore).toBe(0.95);
     expect(t1.snippet).toBe('块的高分片段');
   });
 
+  it('卡片盒为空（或其他目录当卡片盒）：盒外一律不进池，且不报错', () => {
+    const hits = [
+      { seg: 0, query: 'q1', path: '文献盒/某篇.md', score: 0.9, chunk: 'a' },
+      { seg: 0, query: 'q1', path: '主题盒/某题.md', score: 0.85, chunk: 'b' },
+    ];
+    // ADR-0142 §3：空卡片盒 = 空建议集（正常空态，不得回退全库召回）
+    expect(aggregatePool(hits, { cardboxDir: '空卡片盒' })).toEqual([]);
+    expect(aggregatePool(hits, { cardboxDir: '主题盒' }).map((p) => p.path)).toEqual(['主题盒/某题.md']);
+  });
+
   it('排序「命中次数 → 最高分」+ 每片段最优保底（不能只看命中次数）', () => {
     // 泛泛被两个片段命中但分低；巴纳姆只被片段 1 命中但分高 → 保底让它进池（不被命中数挤出）
     const hits = [
-      { seg: 0, query: 'q1', path: '文献盒/泛泛.md', score: 0.5, chunk: 'a' },
-      { seg: 1, query: 'q1', path: '文献盒/泛泛.md', score: 0.5, chunk: 'a' },
-      { seg: 1, query: 'q1', path: '主题盒/巴纳姆效应.md', score: 0.93, chunk: 'b' },
-      { seg: 2, query: 'q1', path: '文献盒/另一个.md', score: 0.6, chunk: 'c' },
+      { seg: 0, query: 'q1', path: `${CARDBOX}/泛泛.md`, score: 0.5, chunk: 'a' },
+      { seg: 1, query: 'q1', path: `${CARDBOX}/泛泛.md`, score: 0.5, chunk: 'a' },
+      { seg: 1, query: 'q1', path: `${CARDBOX}/巴纳姆效应.md`, score: 0.93, chunk: 'b' },
+      { seg: 2, query: 'q1', path: `${CARDBOX}/另一个.md`, score: 0.6, chunk: 'c' },
     ];
     // 池只放 2 条：命中数最高的「泛泛」+ 片段 1 的最优「巴纳姆」（另一个被裁掉）
-    expect(aggregatePool(hits, { limit: 2 }).map((p) => p.path)).toEqual(['文献盒/泛泛.md', '主题盒/巴纳姆效应.md']);
+    expect(aggregatePool(hits, { limit: 2 }).map((p) => p.path)).toEqual([
+      `${CARDBOX}/泛泛.md`,
+      `${CARDBOX}/巴纳姆效应.md`,
+    ]);
     // 池够大时按「命中次数 → 最高分」排
     expect(aggregatePool(hits, { limit: 10 }).map((p) => p.path)).toEqual([
-      '文献盒/泛泛.md',
-      '主题盒/巴纳姆效应.md',
-      '文献盒/另一个.md',
+      `${CARDBOX}/泛泛.md`,
+      `${CARDBOX}/巴纳姆效应.md`,
+      `${CARDBOX}/另一个.md`,
     ]);
   });
 });
@@ -348,10 +364,10 @@ describe('sliceUnitText（幽灵节点正文：整篇 / 小节 / 摘录所在块
 describe('suggestionLink（三形态落链接）与 blockIdFor / ensureSuggestionBlockId（幂等）', () => {
   it('整篇 `[[路径]]` / 标题 `[[路径#标题]]` / 段落 `[[路径#^块id]]`；缺证据降级整篇', () => {
     expect(suggestionLink({ target: T1, unit: 'whole' })).toBe(`[[${T1.replace(/\.md$/, '')}]]`);
-    expect(suggestionLink({ target: T1, unit: 'heading', subpath: '巴纳姆效应' })).toBe('[[文献盒/目标一#巴纳姆效应]]');
-    expect(suggestionLink({ target: T1, unit: 'paragraph', subpath: 'bz-1a2b3c4' })).toBe('[[文献盒/目标一#^bz-1a2b3c4]]');
-    expect(suggestionLink({ target: T1, unit: 'heading', subpath: '' })).toBe('[[文献盒/目标一]]'); // 标题校验失败 → 整篇
-    expect(suggestionLink({ target: T1, unit: 'paragraph', subpath: '' })).toBe('[[文献盒/目标一]]'); // 段落没定位到 → 整篇
+    expect(suggestionLink({ target: T1, unit: 'heading', subpath: '巴纳姆效应' })).toBe('[[卡片盒/目标一#巴纳姆效应]]');
+    expect(suggestionLink({ target: T1, unit: 'paragraph', subpath: 'bz-1a2b3c4' })).toBe('[[卡片盒/目标一#^bz-1a2b3c4]]');
+    expect(suggestionLink({ target: T1, unit: 'heading', subpath: '' })).toBe('[[卡片盒/目标一]]'); // 标题校验失败 → 整篇
+    expect(suggestionLink({ target: T1, unit: 'paragraph', subpath: '' })).toBe('[[卡片盒/目标一]]'); // 段落没定位到 → 整篇
   });
 
   it('块 id 确定性（`bz-` + 路径与段落文本哈希 8 位）', () => {
@@ -397,7 +413,7 @@ describe('锚点别名套句：原地换成 `[[目标|原句]]`（不做句中�
       `这里谈到[[${T1.replace(/\.md$/, '')}|证实偏差]]的危害。`
     );
     expect(replaceAnchorWithAlias(body, { from: 4, to: 8, text: '证实偏差' }, T1, '^bz-abc')).toBe(
-      '这里谈到[[文献盒/目标一#^bz-abc|证实偏差]]的危害。'
+      '这里谈到[[卡片盒/目标一#^bz-abc|证实偏差]]的危害。'
     );
     expect(replaceAnchorWithAlias(`已链过 [[${T1.replace(/\.md$/, '')}]] 了，证实偏差`, { from: 0, to: 4, text: '证实偏差' }, T1)).toContain(
       `[[${T1.replace(/\.md$/, '')}]]`
@@ -488,15 +504,23 @@ describe('collectExistingTargets（(path, subpath) 粒度判重）', () => {
   });
 });
 
-describe('inRecallScope（召回范围闸：只排除归档 / 网页剪藏）', () => {
-  it('卡片盒 / 文献盒 / 主题盒都在范围内；归档与网页剪藏不在', () => {
+describe('inRecallScope（召回范围闸：只有卡片盒之内，ADR-0142 修订 ADR-0140）', () => {
+  it('卡片盒（含子目录）算；文献盒 / 主题盒 / 归档 / 剪藏 / 其它一律不算', () => {
     expect(inRecallScope(`${CARDBOX}/A.md`)).toBe(true);
-    expect(inRecallScope(`${LIT}/某篇.md`)).toBe(true);
-    expect(inRecallScope('主题盒/巴纳姆效应.md')).toBe(true);
+    expect(inRecallScope(`${CARDBOX}/子/B.md`)).toBe(true);
+    // ADR-0142 §2：卡到文献 / 主题靠固定挂载与用户自己写的正文双链，不由 AI 推建议
+    expect(inRecallScope(`${LIT}/某篇.md`)).toBe(false);
+    expect(inRecallScope('主题盒/巴纳姆效应.md')).toBe(false);
     expect(inRecallScope('归档/网页剪藏/噪声.md')).toBe(false);
-    expect(inRecallScope('归档/旧物.md')).toBe(false);
     expect(inRecallScope('网页剪藏/某.md')).toBe(false);
+    expect(inRecallScope('书库/某书.md')).toBe(false);
     expect(inRecallScope('')).toBe(false);
+  });
+
+  it('卡片盒目录可显式传入（跟随设置值，不写死缺省名）', () => {
+    expect(inRecallScope('卡片盒2/X.md', '卡片盒2')).toBe(true);
+    expect(inRecallScope('卡片盒2/X.md', '卡片盒')).toBe(false);
+    expect(inRecallScope('卡片盒2/X.md', '')).toBe(false);
   });
 });
 
@@ -525,7 +549,7 @@ describe('generateSuggestions（三段式 + 缓存 + 逐卡失效）', () => {
     expect(run1.suggestions).toHaveLength(1);
     expect(run1.suggestions[0]).toMatchObject({
       target: T1,
-      kind: 'note', // 文献盒整篇 = note（321 起不再一律判 para）
+      kind: 'card', // ADR-0142：建议目标限卡片盒 → 整篇一律判 card（321 起不再一律判 para）
       score: 0.9,
       reason: '同一主题',
       state: 'pending',
@@ -580,7 +604,7 @@ describe('generateSuggestions（三段式 + 缓存 + 逐卡失效）', () => {
     const ok = await generateSuggestions(`${CARDBOX}/A.md`, ctx);
     expect(ok.suggestions).toHaveLength(1);
     expect(ok.suggestions[0]).toMatchObject({ unit: 'heading', heading: '巴纳姆效应', subpath: '巴纳姆效应', kind: 'head' });
-    expect(suggestionLink(ok.suggestions[0])).toBe('[[文献盒/目标一#巴纳姆效应]]');
+    expect(suggestionLink(ok.suggestions[0])).toBe('[[卡片盒/目标一#巴纳姆效应]]');
 
     // ② 标题不存在 → 降级整篇
     aiPass(
@@ -589,7 +613,7 @@ describe('generateSuggestions（三段式 + 缓存 + 逐卡失效）', () => {
     );
     const degraded = await generateSuggestions(`${CARDBOX}/A.md`, ctx, { force: true });
     expect(degraded.suggestions[0]).toMatchObject({ unit: 'whole', heading: '', subpath: '' });
-    expect(suggestionLink(degraded.suggestions[0])).toBe('[[文献盒/目标一]]');
+    expect(suggestionLink(degraded.suggestions[0])).toBe('[[卡片盒/目标一]]');
   });
 
   it('段落形态：摘录能回定位就留证据（块 id 固定时才写）；定位不到 → 降级整篇', async () => {

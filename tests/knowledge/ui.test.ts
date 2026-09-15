@@ -9,7 +9,7 @@
  * - 关联行（issue 309）：**生成出内容即**经 core/link-now 通道起跑关联预演（只算不写），
  *   loading → 完成后就地显示；确认写入只把预演结果落库（不重跑检索与裁判）；
  *   通道未注入（自动双链关闭）时显式呈现「自动双链未开启」。
- * - ESC 分层、设置 schema 四组（含卡片/主题目录新键）。
+ * - ESC 分层、设置 schema 五组（含卡片/主题目录新键 + ADR-0141 的「自动关联」组）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Platform, requestUrl } from 'obsidian';
@@ -1028,6 +1028,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     const seen: string[] = [];
     const applies: Array<[string, string[]]> = [];
     setLinkBridge({
+      backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
       preview: async () => ({ status: 'done' as const, picks: [{ path: '卡片盒/睡眠卫生.md', title: '睡眠卫生' }] }),
       apply: async (path: string, picks: string[]) => { applies.push([path, picks]); return { status: 'done' as const, created: picks.length }; },
       now: async () => ({ status: 'done' as const, created: 0 }),
@@ -1066,6 +1067,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     const previews: string[] = [];
     const releases: Array<(v: any) => void> = [];
     setLinkBridge({
+      backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
       preview: (content: string) => { previews.push(content); return new Promise((r) => releases.push(r)); },
       apply: async () => ({ status: 'done' as const, created: 0 }),
       now: async () => ({ status: 'done' as const, created: 0 }),
@@ -1232,6 +1234,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
   it('图版：分析中加图 / 删图 → 作废在途预演并解除按钮闸门（不能停在禁用态）', async () => {
     let release!: (v: any) => void;
     setLinkBridge({
+      backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
       preview: () => new Promise((r) => { release = r; }),
       apply: async () => ({ status: 'done' as const, created: 0 }),
       now: async () => ({ status: 'done' as const, created: 0 }),
@@ -1277,6 +1280,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     const applies: Array<[string, string[]]> = [];
     let release!: (v: any) => void;
     setLinkBridge({
+      backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
       preview: (content: string, title?: string) => {
         previews.push([content, title]);
         return new Promise((r) => { release = r; });
@@ -1307,6 +1311,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
       preview,
       apply: async () => ({ status: 'done' as const, created: 0 }),
       now: async () => ({ status: 'done' as const, created: 0 }),
+      backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
     });
     setLinkBridge(bridgeOf(async () => ({ status: 'done', picks: [] })));
     ui.showTermEntry();
@@ -1463,9 +1468,9 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
 
   // ==================== 设置 schema / ESC ====================
 
-  it('knowledgeSettingsSchema：四组（目录与分类含卡片/主题目录新键、视频处理、工具、维护）+ 清空历史回调', async () => {
+  it('knowledgeSettingsSchema：五组（目录与分类含卡片/主题目录新键、自动关联、视频处理、工具、维护）+ 清空历史回调', async () => {
     const schema = knowledgeSettingsSchema();
-    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录与分类', '视频处理', '工具', '维护']);
+    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录与分类', '自动关联', '视频处理', '工具', '维护']);
     const dirRows = schema.groups[1].rows.map((r) => (r as any).binding?.key);
     expect(dirRows).toContain('knowledgeCardboxDirectory');
     expect(dirRows).toContain('knowledgeTopicDirectory');
@@ -1476,6 +1481,25 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(imgRow.type).toBe('path');
     expect(typeof imgRow.fallbackValue).toBe('function');
     expect(imgRow.fallbackValue()).toBe('文献盒/assets'); // note-gen 在本文件被 mock：这里验的是接线
+  });
+
+  it('「自动关联」组（ADR-0141 §1/§2）：六行绑定 linkAgent* 键，且没有「关联范围」行', () => {
+    const schema = knowledgeSettingsSchema();
+    const group = schema.groups.find((g) => g.name === '自动关联')!;
+    expect(group).toBeTruthy();
+    const rows = group.rows as any[];
+    // 总开关 + 五条明细（顺序即面板顺序）
+    expect(rows[0].type).toBe('toggle');
+    expect(rows[0].name).toBe('自动关联');
+    expect(rows[0].binding.get()).toBe(true); // 缺省开语义（键缺失视为开）
+    const names = rows.map((r) => r.name);
+    expect(names).toEqual(['自动关联', '单篇候选数量 TopK', '每篇关联上限', '完成通知', '失效关联自动清理', '已有关联不再建链']);
+    // 明细绑定的是第二大脑那七个键里的六个（键名不改，ADR-0141 §7）
+    const boundKeys = rows.slice(1).map((r) => r.binding?.key ?? r.binding?.get?.toString() ?? '');
+    expect(boundKeys.length).toBe(5);
+    for (const r of rows.slice(1)) expect(r.isChild).toBe(true);
+    // 范围恒为三个盒子，不再有范围行（ADR-0141 §2）
+    expect(names).not.toContain('关联范围');
   });
 
   it('ESC 分层：术语 → 视频 → 主面板 逐层关；历史视图先退回队列', async () => {

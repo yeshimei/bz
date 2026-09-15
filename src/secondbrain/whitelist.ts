@@ -1,9 +1,9 @@
 /**
- * 白名单目录工具（ticket 114）：第二大脑白名单（secondBrainAllowPaths）与
- * 自动双链范围（linkAgentScopes）共用的解析/规范化/格式化与 vault 目录聚合。
+ * 白名单目录工具（ticket 114）：第二大脑「额外检索目录」（secondBrainAllowPaths）的
+ * 解析/规范化/格式化与 vault 目录聚合；config.parseAllowPaths 也复用本模块的拆分口径。
  *
- * 存储格式冻结：设置键内仍是英文逗号分隔的路径字符串（buildConfig.ALLOW_PATHS
- * 与 link-agent/watch 的消费方零改动），本模块只做录入侧的体验增强。
+ * 存储格式冻结：设置键内仍是英文逗号分隔的路径字符串（buildConfig.ALLOW_PATHS 的消费方零改动），
+ * 本模块只做录入侧的体验增强。ADR-0141 §2 起自动关联范围恒为三个盒子，不再有范围键要解析。
  */
 
 /** 单个可选条目：目录（含其全部子目录笔记数）或库根级单文件 */

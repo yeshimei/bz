@@ -3,10 +3,16 @@
  * 主面板 = 文献目录下的文献笔记列表（部壹三入口：术语 / 段落 / 影像，见 ui.ts）；
  * 视频转文献批处理的 AI/笔记落盘在插件侧（ADR-0071），CLI 只产转录临时文件 + 交付视频。
  * 数据 CONFIG/STORAGE/literature.json（视频任务）；术语与段落生成不留任务记录（ticket 136 §2）。
+ *
+ * ADR-0141 §1：自动关联的两条命令（bz-knowledge-relink / bz-knowledge-link-all）随功能归属迁入本域——
+ * 引擎与向量索引仍留第二大脑，本域只经 core/link-now 的 LinkBridge 消费（ADR-0002 域隔离）。
+ * 关联范围恒为三个盒子（ADR-0141 §2），盒外笔记由实现侧拒绝（out-of-scope），此处只按结果提示。
  */
 import type { App } from 'obsidian';
 import { MarkdownView } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
+import { getLinkBridge } from '../core/link-now';
+import { notice } from '../core/notice';
 import { KnowledgeData } from './data';
 import { UIManager } from './ui';
 
@@ -67,6 +73,86 @@ export function openTermNote(app: App, term?: string): void {
     if (file && (file as any).extension === 'md') src = { kind: 'note', path: file.path };
   }
   uiManager?.showTermEntry(t, src);
+}
+
+/**
+ * 取自动关联通道（三处命令共用）：总开关关掉 / 通道未接线 → 提示并返回 null。
+ * 未接线的原因通常是第二大脑域尚未初始化——命令回调由 main.ts 先 ensureSecondBrain（幂等）再进来。
+ */
+function takeLinkBridge(): ReturnType<typeof getLinkBridge> {
+  if ((tryGetSettings() as any).linkAgentEnabled === false) {
+    notice('自动关联已在知识盒设置中关闭', 'info');
+    return null;
+  }
+  const bridge = getLinkBridge();
+  if (!bridge) {
+    notice('自动关联暂不可用：第二大脑尚未就绪', 'warning');
+    return null;
+  }
+  return bridge;
+}
+
+/**
+ * 命令 bz-knowledge-relink（ADR-0141 §1，原 bz-secondbrain-rebuild-links）：对当前打开的笔记
+ * 重跑一次关联（正文大改后的手动兜底入口）。
+ * 范围口径已反转（ADR-0141 §2）：**手动不再豁免**——盒外笔记直接拒绝并提示；
+ * v1.7/ticket 167 的「手动重跑始终强制」保留（force 跳过「已有 related 不建链」尊重门）。
+ */
+export async function relinkActiveNote(app: App): Promise<void> {
+  const file = app.workspace.getActiveFile?.() as { path: string } | null;
+  if (!file) {
+    notice('请先打开一个笔记', 'info');
+    return;
+  }
+  const bridge = takeLinkBridge();
+  if (!bridge) return;
+  try {
+    const outcome = await bridge.now(file.path, { force: true });
+    if (outcome.status === 'done') {
+      notice(outcome.created > 0 ? `已新建关联 ${outcome.created} 条` : '未发现实质关联，未新建', 'success');
+    } else if (outcome.status === 'queued') {
+      notice('embedding 服务不可达，已加入待处理队列，服务可达后自动处理', 'info');
+    } else if (outcome.status === 'out-of-scope') {
+      notice('该笔记不在三个盒子内：自动关联只在文献盒、卡片盒、主题盒里生效', 'info');
+    } else if (outcome.status === 'failed') {
+      notice(`关联处理失败：${outcome.error}`, 'error');
+    } else {
+      notice('该笔记暂无法处理（文件缺失、非 Markdown 或位于加密目录）', 'info');
+    }
+  } catch (e) {
+    console.warn('[knowledge] 重跑关联失败', e);
+    notice(`关联处理失败：${e instanceof Error ? e.message : String(e)}`, 'error');
+  }
+}
+
+/**
+ * 命令 bz-knowledge-link-all（ADR-0141 §1，原 bz-secondbrain-link-all）：对三个盒子内
+ * **所有未连接（缺 related）的笔记**手动批量补链——启动自动补链的显式兜底入口，
+ * 同路径同串行锁；embedding 不可达 / 无目标均明确通知。
+ */
+export async function linkAllInBoxes(): Promise<void> {
+  const bridge = takeLinkBridge();
+  if (!bridge) return;
+  try {
+    const result = await bridge.backfill();
+    if (result.status === 'done') {
+      notice(
+        result.created > 0
+          ? `批量补链完成：处理 ${result.processed} 篇 / 新建关联 ${result.created} 条`
+          : '批量补链完成：未发现实质关联，未新建',
+        'success'
+      );
+    } else if (result.status === 'unreachable') {
+      notice('embedding 服务不可达，无法补链；服务恢复后可在下次启动自动补链', 'info');
+    } else if (result.status === 'no-targets') {
+      notice('当前无待补链笔记：三个盒子内未连接的笔记已处理完', 'info');
+    } else {
+      notice('批量补链跳过（自动关联已关闭）', 'info');
+    }
+  } catch (e) {
+    console.warn('[knowledge] 批量补链失败', e);
+    notice(`批量补链失败：${e instanceof Error ? e.message : String(e)}`, 'error');
+  }
 }
 
 /** 卸载（main.ts onunload 调用；幂等空清理） */
