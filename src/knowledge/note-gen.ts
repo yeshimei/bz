@@ -13,16 +13,12 @@
 import { createAI } from '../core/ai';
 import { getApp } from '../core/app';
 import { tryGetSettings } from '../core/settings-provider';
-import { serializeTermSource, type TermSource } from './source';
+import type { App } from 'obsidian';
+import { quoteYaml, serializeTermSource, upgradeSourceLine, type TermSource } from './source';
 
 /** 领域词表解析（逗号/顿号分隔、去空、去重）；空 → [] = AI 自由写 */
 export function parseDomainList(raw: string | undefined | null): string[] {
   return [...new Set(String(raw ?? '').split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
-}
-
-/** frontmatter 引号包裹（对齐 auto-summary YAML 风格，防冒号/引号破坏结构） */
-function quoteYaml(s: unknown): string {
-  return '"' + String(s ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
 }
 
 /** 文件命名清洗：Windows 非法字符 + 空白折叠 + 截断 50 + 空兜底 */
@@ -356,8 +352,10 @@ export async function writeUniqueBinary(dir: string, baseName: string, ext: stri
   return path;
 }
 
-/** 图版读图提示词（issue 312；多图 issue 313：一组图合成一篇；JSON 契约与名词/段落一致） */
-function imagePrompt(list: string[], count: number): string {
+/** 图版读图提示词（issue 312；多图 issue 313：一组图合成一篇；JSON 契约与名词/段落一致）。
+ *  descs（ADR-0145）：已填的逐图描述作为「用户图注」节喂给模型，标题/领域/解读更贴合；
+ *  按图片序号对应列出，空白描述不列，全空则不加节（既有调用不传 descs 同样无节）。 */
+function imagePrompt(list: string[], count: number, descs?: string[]): string {
   const multi = count > 1;
   const scope = multi
     ? `看下面这 ${count} 张图片，把它们**作为一组**生成一篇文献笔记`
@@ -365,23 +363,39 @@ function imagePrompt(list: string[], count: number): string {
   const bodyAsk = multi
     ? '对这组图的整理说明（150-300字简体中文，连贯成文）：先说这组图共同在讲什么，再按图交代各自可见的内容与信息，图中含文字则整理其要点'
     : '对这张图的整理说明（150-300字简体中文，连贯成文）：图中含文字则整理其要点，是照片、示意图或图表则客观描述其可见内容与信息';
-  return `你是文献整理助手。${scope}。只输出 JSON，不要任何解释：
+  let prompt = `你是文献整理助手。${scope}。只输出 JSON，不要任何解释：
 {"title":"15-30字的中文完整陈述句，概括${multi ? '这组图' : '这张图'}在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"${bodyAsk}","domain": ${domainInstruction(list)}}
 硬约束：只能写图中确实能看到的内容，不得臆测、不得补充图中没有的事实与数字、不得写成观后感。所有字段一律使用简体中文。`;
+  const notes = (Array.isArray(descs) ? descs : [])
+    .map((d, i) => ({ n: i + 1, d: String(d ?? '').trim() }))
+    .filter((x) => x.d);
+  if (notes.length) {
+    prompt += `\n\n【用户图注】用户为其中部分图片写的描述，解读请贴合这些关注点：\n${notes.map((x) => `第 ${x.n} 张：${x.d}`).join('\n')}`;
+  }
+  return prompt;
 }
 
 /**
  * 图版 AI 草稿（issue 312，纯生成不落盘）：图片 data URL 列表（多图 issue 313）→ 自动标题 +
  * 领域 + 解读正文，供图版面板预览（三项纯内存可改）；确认写入才调 generateImageNote 落盘。
- * 走 core/ai 的多模态通道（issue 311：content 数组 + image_url，DeepSeek V4.1-Flash 原生读图）。
+ * 可选 descs（issue 329 / ADR-0145）：与 imageUrls 按位对应的用户图注，进入「用户图注」节
+ * 作为读图上下文（全空无节）。走 core/ai 的多模态通道（issue 311：content 数组 + image_url）。
  */
-export async function generateImageDraft(imageUrls: string[]): Promise<{ title: string; summary: string; domain: string }> {
+export async function generateImageDraft(imageUrls: string[], descs?: string[]): Promise<{ title: string; summary: string; domain: string }> {
   const ai = createAI();
   const s = tryGetSettings();
   const list = parseDomainList(s.knowledgeDomainList);
-  const urls = (Array.isArray(imageUrls) ? imageUrls : []).map((u) => String(u || '').trim()).filter(Boolean);
-  if (!urls.length) throw new Error('图片为空');
-  const raw = await ai.json({ text: imagePrompt(list, urls.length), images: urls }, { modelOptions: { max_tokens: 4096 } });
+  // url 与图注成对过滤：无效 url 剔除时其图注一并剔除，保住逐位对应关系
+  const pairs = (Array.isArray(imageUrls) ? imageUrls : []).map((u, i) => ({
+    url: String(u || '').trim(),
+    desc: String((Array.isArray(descs) ? descs[i] : '') ?? '').trim(),
+  }));
+  const valid = pairs.filter((p) => p.url);
+  if (!valid.length) throw new Error('图片为空');
+  const raw = await ai.json(
+    { text: imagePrompt(list, valid.length, valid.map((p) => p.desc)), images: valid.map((p) => p.url) },
+    { modelOptions: { max_tokens: 4096 } },
+  );
   const meta = parseAiJson(raw);
   return {
     title: String(meta?.title || '').trim(),
@@ -403,14 +417,16 @@ export function resolveImageDir(settings: { knowledgeImageFolder?: string; knowl
  * 图片目录**（默认 `<文献目录>/assets/`，可用设置 `knowledgeImageFolder` 改；文件名取最终标题、
  * 永不覆盖），再写笔记（frontmatter title/type: image/domain/date + 可选 source/sourceTitle；
  * 正文 = **先文字后图片**——读图解读在上、图片嵌入在下）。
+ * 图片行语法分叉（ADR-0145）：该张有描述 → `![[路径|描述]]`，无描述 → `![[路径]]`，多图逐张
+ * 对应；描述唯一载体是正文图片语法，**不设 frontmatter 键**。
  * 嵌入用全路径而非裸文件名：库里同名图很常见，裸名会指错。返回笔记路径。
  */
 export async function generateImageNote(opts: {
   title: string;
   summary?: string;
   domain?: string;
-  /** 图片本体列表（确认写入时才落盘；面板内的 data URL 只用于预览与投喂 AI） */
-  images: Array<{ bytes: ArrayBuffer; ext: string }>;
+  /** 图片本体列表（确认写入时才落盘；面板内的 data URL 只用于预览与投喂 AI）；desc = 该张用户图注（可选，ADR-0145） */
+  images: Array<{ bytes: ArrayBuffer; ext: string; desc?: string }>;
   source?: TermSource | null;
 }): Promise<string> {
   const s = tryGetSettings();
@@ -438,9 +454,38 @@ export async function generateImageNote(opts: {
     if (src.sourceTitle) fm.push(`sourceTitle: ${quoteYaml(src.sourceTitle)}`);
   }
   fm.push('---');
-  // 文字在上、图片在下（issue 313 用户拍板）
-  const body = [fm.join('\n'), summary, ...imagePaths.map((p) => `![[${p}]]`)].filter(Boolean).join('\n\n');
+  // 文字在上、图片在下（issue 313 用户拍板）；图片行按有无描述分叉（ADR-0145）
+  const imageLines = imagePaths.map((p, i) => {
+    const desc = String(images[i]?.desc ?? '').trim();
+    return desc ? `![[${p}|${desc}]]` : `![[${p}]]`;
+  });
+  const body = [fm.join('\n'), summary, ...imageLines].filter(Boolean).join('\n\n');
   return writeUniqueNote(dir, name, body);
+}
+
+/**
+ * source 升级 · 文件半边（issue 329 / ADR-0144 §5「保存物化回写」；index.ts 跨域门面转发至此）：
+ * 读目标笔记 → source.ts 的 upgradeSourceLine 做行级改写 → 写回。落位 note-gen 的口径：
+ * 与 generate* 落盘同属「文献/笔记类用户文档写」（一次性读写，无竞态面）。
+ * 返回 true = 已是内部形态（幂等，零写盘）或改写写盘成功；文件缺失 / 读失败 / 无可升级的
+ * source（无 frontmatter、无 source 行、既非内部也非外链）返回 false 静默。
+ */
+export async function upgradeNoteSourceInFile(app: App, notePath: string, internalLink: string): Promise<boolean> {
+  const path = String(notePath || '').trim();
+  const link = String(internalLink || '').trim();
+  if (!path || !link) return false;
+  const file = app.vault.getAbstractFileByPath(path);
+  if (!file || (file as any).isFolder) return false; // 缺文件：静默
+  let content: string;
+  try {
+    content = await app.vault.read(file as any);
+  } catch {
+    return false;
+  }
+  const upgraded = upgradeSourceLine(content, link);
+  if (upgraded === null) return false; // 无 frontmatter / 无 source / 既非内部也非外链
+  if (upgraded !== content) await app.vault.modify(file as any, upgraded);
+  return true;
 }
 
 // ---------- 旧笔记自动补全（type 启发式 + domain AI） ----------

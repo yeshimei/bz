@@ -1242,9 +1242,9 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(document.getElementById('lit-image-hint')!.textContent).toContain('已放 2 张');
     await (ui as any).acceptImageFiles([pngFile('c.webp', 'image/webp')]); // 追加第三张
     expect(thumbs()).toHaveLength(3);
-    // 读图：AI 拿到的是**全部** data URL；此刻一个文件都没落盘（图只在内存）
+    // 读图：AI 拿到的是**全部** data URL（issue 329 起 descs 随行，无描述 = 空串数组，prompt 无图注节）；此刻一个文件都没落盘（图只在内存）
     await (ui as any).onTermGenerate();
-    expect(noteGen.generateImageDraft).toHaveBeenCalledWith(thumbs().map((t) => t.src));
+    expect(noteGen.generateImageDraft).toHaveBeenCalledWith(thumbs().map((t) => t.src), ['', '', '']);
     expect(noteGen.generateImageNote).not.toHaveBeenCalled();
     expect((document.getElementById('lit-entry-meta-title') as HTMLInputElement).value).toBe('自动图题');
     expect(document.getElementById('lit-term-content')!.textContent).toBe('读图解读');
@@ -1710,6 +1710,141 @@ describe('录入面板关闭二次确认 + 生成后开笔记（issue 326）', (
     (document.getElementById('lit-term-save') as HTMLElement).click();
     await vi.waitFor(() => expect(openFile).toHaveBeenCalledWith(expect.objectContaining({ path: '文献盒/自动标题.md' })));
     expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none');
+  });
+
+  // ==================== issue 329：逐图描述 / 录入预填 / onCreated / 预览直达 ====================
+
+  it('图版逐图描述（ADR-0145）：每图一框 → 输入进内存 → 读图 prompt 带图注 → 落盘带 desc；删图连描述一起没', async () => {
+    ui.showImageEntry();
+    const popup = document.getElementById('knowledge-term-popup')!;
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    await (ui as any).acceptImageFiles([pngFile('a.png'), pngFile('b.png')]);
+    // 每张图一个描述框（≤9 张逐张对应，单图即一框）
+    let inputs = Array.from(document.querySelectorAll<HTMLInputElement>('[data-lit-image-desc]'));
+    expect(inputs).toHaveLength(2);
+    inputs[0].value = '窗外的树';
+    inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+    expect((ui as any).entryImages[0].desc).toBe('窗外的树');
+    expect((ui as any).entryImages[1].desc).toBe('');
+    // 读图：描述列表按位随 data URL 一起投给 AI
+    await (ui as any).onTermGenerate();
+    expect(noteGen.generateImageDraft).toHaveBeenCalledWith(expect.any(Array), ['窗外的树', '']);
+    // 确认写入：desc 原样交给 note-gen（语法分叉由 note-gen 负责）
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(noteGen.generateImageNote).toHaveBeenCalled());
+    expect(noteGen.generateImageNote.mock.calls[0][0].images.map((im: any) => im.desc)).toEqual(['窗外的树', '']);
+    // 重开面板即全新态：描述一并清空
+    ui.showImageEntry();
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    expect((ui as any).entryImages).toEqual([]);
+    // 删图连描述一起没；加图作废旧草稿时其余描述跨重绘保留
+    await (ui as any).acceptImageFiles([pngFile('c.png'), pngFile('d.png')]);
+    inputs = Array.from(document.querySelectorAll<HTMLInputElement>('[data-lit-image-desc]'));
+    inputs[0].value = '第一张图注';
+    inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+    inputs[1].value = '第二张图注';
+    inputs[1].dispatchEvent(new Event('input', { bubbles: true }));
+    (document.querySelector('[data-lit-image-remove="0"]') as HTMLElement).click();
+    expect((ui as any).entryImages).toHaveLength(1);
+    expect((ui as any).entryImages[0].desc).toBe('第二张图注'); // 第 0 张连描述一起没，第 1 张补位保留
+    expect(document.querySelector<HTMLInputElement>('[data-lit-image-desc]')!.value).toBe('第二张图注');
+    // 描述框点击不冒泡到拖入区（点框写字不会顺手弹文件选择器）
+    const fileInput = document.getElementById('lit-image-file') as HTMLInputElement;
+    const clickSpy = vi.spyOn(fileInput, 'click');
+    document.querySelector<HTMLInputElement>('[data-lit-image-desc]')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(clickSpy).not.toHaveBeenCalled();
+  });
+
+  it('图版预填（issue 329）：showImageEntry opts.images data URL 进内存（同构校验跳过非法 + 9 张上限）', async () => {
+    const bytes = [137, 80, 78, 71, 13, 10, 26, 10];
+    let bin = '';
+    for (const b of bytes) bin += String.fromCharCode(b);
+    const pngDataUrl = 'data:image/png;base64,' + btoa(bin);
+    ui.showImageEntry(undefined, { images: [pngDataUrl, 'data:image/svg+xml;base64,AAAA', '不是 data URL'] });
+    const popup = document.getElementById('knowledge-term-popup')!;
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    await vi.waitFor(() => expect(thumbs()).toHaveLength(1)); // svg / 非 data URL 静默跳过
+    expect(thumbs()[0].src).toBe(pngDataUrl);
+    expect(getNoticeMessages().join('\n')).toContain('只支持 PNG / JPEG / GIF / WebP 图片');
+    // 上限同构：一次喂 12 张 → 收 9 张 + 一次提示
+    clearNotices();
+    ui.showImageEntry(undefined, { images: Array.from({ length: 12 }, () => pngDataUrl) });
+    await vi.waitFor(() => expect(thumbs()).toHaveLength(9));
+    expect(getNoticeMessages().join('\n')).toContain('一次最多放 9 张图');
+  });
+
+  it('onCreated（issue 329）：写入成功回调 notePath 且**不自动打开笔记**；写入失败不回调', async () => {
+    const onCreated = vi.fn();
+    ui.showImageEntry(undefined, { onCreated });
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    await (ui as any).acceptImageFiles([pngFile('a.png')]);
+    await (ui as any).onTermGenerate();
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(onCreated).toHaveBeenCalledWith('文献盒/自动图题.md'));
+    expect(openFile).not.toHaveBeenCalled(); // ADR-0144 工具框流程：不自动打开
+    expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none');
+    // 失败路径：note-gen 抛错 → 通知生成失败、面板保留、onCreated 不触发
+    const onCreated2 = vi.fn();
+    noteGen.generateImageNote.mockRejectedValueOnce(new Error('磁盘已满'));
+    ui.showImageEntry(undefined, { onCreated: onCreated2 });
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    await (ui as any).acceptImageFiles([pngFile('b.png')]);
+    await (ui as any).onTermGenerate();
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(getNoticeMessages().join('\n')).toContain('生成失败'));
+    expect(onCreated2).not.toHaveBeenCalled();
+  });
+
+  it('预填 term 命中重名（ADR-0143 继承，issue 329）：确认写入拒写、onCreated 不触发（剪藏本预填同样生效）', async () => {
+    noteGen.findDuplicateTermNote.mockReturnValueOnce('文献盒/黑洞.md');
+    const onCreated = vi.fn();
+    ui.showTermEntry('黑洞', { kind: 'external', url: 'https://x.com/a' }, { onCreated });
+    const popup = document.getElementById('knowledge-term-popup')!;
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex')); // 预填自动生成完成
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(noteGen.generateTermNote).not.toHaveBeenCalled();
+    expect(onCreated).not.toHaveBeenCalled();
+    expect(getNoticeMessages().join('\n')).toContain('已存在同名文献笔记');
+    expect(popup.style.display).toBe('flex'); // 面板保留，改名即可重试
+  });
+
+  it('来源预填带 title（issue 329）：不重复抓页面标题；无 title 才走抓取', async () => {
+    (requestUrl as any).mockClear();
+    ui.showTermEntry('词', { kind: 'external', url: 'https://x.com/a', title: '已有标题' });
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(requestUrl).not.toHaveBeenCalled();
+    expect(document.getElementById('lit-term-src-chip')!.textContent).toContain('已有标题');
+    // 无 title：照旧异步抓（requestUrl 发出）
+    ui.showTermEntry('词二', { kind: 'external', url: 'https://x.com/b' });
+    await vi.waitFor(() => expect(requestUrl).toHaveBeenCalled());
+  });
+
+  it('openPreviewByPath（issue 329）：按 path 直达文献预览——主面板不出场落独立宿主，ADR-0122 渲染入口照走', async () => {
+    vault.files.set('文献盒/手稿.md', noteMd({ title: '手稿', type: 'image', domain: '自然', body: '解读正文与图片。' }));
+    const ok = await ui.openPreviewByPath('文献盒/手稿.md');
+    expect(ok).toBe(true);
+    const ovl = document.querySelector('.bz-kb-ovl') as HTMLElement;
+    expect(ovl).toBeTruthy();
+    expect(ovl.parentElement!.className).toContain('bz-kb-sheet-host'); // 主窗未显示 → 独立宿主
+    expect(document.getElementById('knowledge-popup')!.style.display).not.toBe('flex'); // 主面板不出场
+    expect(ovl.textContent).toContain('手稿');
+    await vi.waitFor(() => expect(ovl.textContent).toContain('解读正文与图片。')); // 正文经 MarkdownRenderer 渲染
+    expect(mockMarkdownRenderer.render).toHaveBeenCalledWith(expect.anything(), '解读正文与图片。', expect.anything(), '文献盒/手稿.md', expect.anything());
+    // 点外关闭：弹层与独立宿主一并撤除
+    ovl.click();
+    expect(document.querySelector('.bz-kb-ovl')).toBeNull();
+    expect(document.querySelector('.bz-kb-sheet-host')).toBeNull();
+  });
+
+  it('openPreviewByPath：不在文献目录 / 缺文件 / 非 md → false（不落弹层）', async () => {
+    vault.files.set('别的目录/笔记.md', noteMd({ title: '别家笔记' }));
+    expect(await ui.openPreviewByPath('别的目录/笔记.md')).toBe(false);
+    expect(await ui.openPreviewByPath('文献盒/不存在.md')).toBe(false);
+    expect(await ui.openPreviewByPath('')).toBe(false);
+    expect(document.querySelector('.bz-kb-ovl')).toBeNull();
   });
 
   it('影像录入：输入过链接 → ESC 确认（文案「影像信息还没保存」）；纯打开未动 → ESC 直关', async () => {

@@ -12,6 +12,8 @@ import {
   cleanSourceTitle,
   noteSourceName,
   serializeTermSource,
+  isInternalSourceValue,
+  upgradeSourceLine,
 } from '../../src/knowledge/source';
 
 describe('isUrlLikeSourceText（整串无空白 + URL/域名样式 → 外部链接；其余归笔记搜索）', () => {
@@ -129,5 +131,71 @@ describe('cleanSourceTitle（站点尾巴剥除 + 实体解码，issue 257 补�
 
   it('实体解码 + 空白折叠', () => {
     expect(cleanSourceTitle('A &amp; B&quot;C&quot;&nbsp; D')).toBe('A & B"C" D');
+  });
+});
+
+// ==================== source 升级（issue 329 / ADR-0144 §5 保存物化回写） ====================
+
+/** 术语笔记罐头：source 行由参数注入（generate* 落盘形态 = 引号包裹） */
+const termNote = (sourceLine: string) =>
+  ['---', 'title: "某名词"', 'type: term', sourceLine, 'sourceTitle: "页面标题"', 'date: "2026-09-15 10:00:00"', '---', '', '正文一段。', '', '正文二段。'].join('\n');
+
+describe('isInternalSourceValue（内部双链形态判据）', () => {
+  it('[[ 开头 → 内部；URL / 手写文字 / 空 → 非内部', () => {
+    expect(isInternalSourceValue('[[归档/网页剪藏/文章.md|文章标题]]')).toBe(true);
+    expect(isInternalSourceValue('  [[a.md]]  ')).toBe(true);
+    expect(isInternalSourceValue('https://x.com/a')).toBe(false);
+    expect(isInternalSourceValue('随手写的文字')).toBe(false);
+    expect(isInternalSourceValue('')).toBe(false);
+  });
+});
+
+describe('upgradeSourceLine（外链 source → 内部双链；只动 source 一行）', () => {
+  it('外链 URL → 改写为内部双链（quoteYaml 引号包裹，与 generate 落盘同范式）', () => {
+    const out = upgradeSourceLine(termNote('source: "https://zhuanlan.zhihu.com/p/123"'), '[[归档/网页剪藏/文章.md|文章标题]]');
+    expect(out).not.toBeNull();
+    expect(out).toContain('source: "[[归档/网页剪藏/文章.md|文章标题]]"');
+  });
+
+  it('手术边界：sourceTitle 与其余 frontmatter 键、正文零扰动', () => {
+    const content = termNote('source: "https://zhuanlan.zhihu.com/p/123"');
+    const out = upgradeSourceLine(content, '[[剪藏/a.md|a]]')!;
+    expect(out).toContain('title: "某名词"');
+    expect(out).toContain('type: term');
+    expect(out).toContain('sourceTitle: "页面标题"');
+    expect(out).toContain('date: "2026-09-15 10:00:00"');
+    expect(out).toContain('正文一段。');
+    expect(out).toContain('正文二段。');
+    // 全文只出现一次 source 键行
+    expect(out.match(/^source:/gm)).toHaveLength(1);
+  });
+
+  it('已是内部双链 → 幂等原样返回（同一内容，不产生新串）', () => {
+    const content = termNote('source: "[[归档/网页剪藏/文章.md|文章标题]]"');
+    expect(upgradeSourceLine(content, '[[x.md|x]]')).toBe(content);
+  });
+
+  it('无 frontmatter / 无 source 行 / source 既非内部也非外链 → null（无可升级，不得写盘）', () => {
+    expect(upgradeSourceLine('没有 frontmatter 的正文', '[[x.md|x]]')).toBeNull();
+    expect(upgradeSourceLine('---\ntitle: "t"\n---\n\n正文', '[[x.md|x]]')).toBeNull();
+    expect(upgradeSourceLine(termNote('source: "随手写的文字"'), '[[x.md|x]]')).toBeNull();
+    expect(upgradeSourceLine(termNote('source: ""'), '[[x.md|x]]')).toBeNull();
+    expect(upgradeSourceLine(termNote('source: "https://x.com/a"'), '   ')).toBeNull(); // 空链接拒绝
+  });
+
+  it('未加引号 / 无协议域名形态的 source 行同样识别升级；正文里出现 source: 字样不误伤', () => {
+    expect(upgradeSourceLine(termNote('source: b23.tv/abcDEF'), '[[a.md|a]]'))
+      .toContain('source: "[[a.md|a]]"');
+    expect(upgradeSourceLine(termNote('source: https://x.com/a'), '[[a.md|a]]'))
+      .toContain('source: "[[a.md|a]]"');
+    // source 行出现在正文（frontmatter 之外）不升级：frontmatter 内无 source → null
+    expect(upgradeSourceLine('---\ntitle: "t"\n---\n\n正文里提到 source: https://x.com/a', '[[a.md|a]]')).toBeNull();
+  });
+
+  it('CRLF 文件行尾保真：整体回写不悄悄改行尾', () => {
+    const crlf = termNote('source: "https://x.com/a"').replace(/\n/g, '\r\n');
+    const out = upgradeSourceLine(crlf, '[[a.md|a]]')!;
+    expect(out).toContain('\r\n');
+    expect(out).toContain('source: "[[a.md|a]]"');
   });
 });

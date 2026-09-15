@@ -108,13 +108,15 @@ describe('批 B-4：z-index 静态大数收口（ADR-0067）', () => {
       const rule = css.match(new RegExp(`${sel.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*\\{[^}]*\\}`));
       expect(rule, sel).toBeTruthy();
     }
-    // 四处显示路径均动态发号（遮罩在前本体在后）：主窗 / 处理面板（内含历史视图）/ 录入弹层 / 名词·段落弹层。
-    // 原第五处「历史窗」已于 issue 310 复核并入处理面板（同面板视图切换），窗口本身删掉。
+    // 五处显示路径均动态发号（遮罩在前本体在后）：主窗 / 处理面板（内含历史视图）/ 录入弹层 / 名词·段落弹层 /
+    // 独立弹层宿主（issue 329 文献预览直达——主面板不在场时的全屏定位底座，显示时同样发号）。
+    // 原「历史窗」已于 issue 310 复核并入处理面板（同面板视图切换），窗口本身删掉。
     const ui = repo('src/knowledge/ui.ts');
     for (const pair of ['this.mask, this.popup', 'this.videoMask, this.videoPopup', 'this.addMask, this.addPopup', 'this.termMask, this.termPopup']) {
       expect(ui, pair).toContain(`topifyZ(${pair})`);
     }
-    expect(ui.match(/topifyZ\(/g)!.length).toBe(4);
+    expect(ui, '独立弹层宿主（issue 329）').toContain('topifyZ(host)');
+    expect(ui.match(/topifyZ\(/g)!.length).toBe(5);
   });
 
   it('secondbrain：mini 胶囊静态档清零，collapse() 显示时 topifyZ 发号', () => {
