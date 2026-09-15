@@ -35,11 +35,11 @@ function buttonOf(el: HTMLElement): any {
   return (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function' && !c.inputEl && !c.value);
 }
 
-/** 渲染 AI 组（与主设置页同 schema） */
+/** 渲染 AI 页（与主设置页同 schema；issue 330 拆组后模型行在「模型配置」组，渲前三组） */
 function renderAIGroup(): HTMLElement {
   const schema = mainSettingsSchema();
   const container = document.createElement('div');
-  renderSettingsInto(container, { groups: [schema.groups[0]] });
+  renderSettingsInto(container, { groups: schema.groups.slice(0, 3) });
   return container;
 }
 

@@ -1233,3 +1233,14 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > 保存图片落「剪藏图片文件夹」（clipbookImageFolder，留空回落 articleDirectory/assets），
 > 已保存条目立即换链、未保存仅落盘。图版逐图描述框（≤9 逐张对应），写入 `![[路径|描述]]`
 > （描述占嵌入尺寸位，依赖用户侧渲染插件显示），描述喂读图 AI，不设 frontmatter 键。
+
+### 设置面板 AI 页重新分组：三卡拆分 + Cookie 行换多行文本框（issue 330，2026-09-16）
+
+> 用户拍板：「把设置面板当中 AI 的重新分组，有些地方应该用文本框，而不是输入框。」AI 页（原
+> ADR-0133「AI 与凭据」单组 11 行）拆为「服务商」（下拉+各家密钥+custom 端点/密钥，visibleWhen
+> 随行走）/「模型配置」（模型名称+上下文窗口+最大输出 token，refreshKey 跨组联动不变）/
+> 「数据源凭据」（B站 Cookie+ApiZero Key+豆瓣 Cookie，非 AI 第三方凭据独立成卡）三组；键与
+> 行为零变化。B站 Cookie / 豆瓣 Cookie 行由单行输入框换 textarea（Cookie 串动辄上千字符，多行
+> 便于粘贴与检查；ApiZero Key 短令牌保持单行）——TextAreaRow 行型补 actions 字段（两渲染器同
+> 口径，按钮在多行文本左侧），B站行「从 CLI 导入」按钮由此保留。mock 层 addTextArea 同步复刻
+> 真实 textarea 元素。

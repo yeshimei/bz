@@ -16,30 +16,26 @@ function snapOf(partial: Partial<SettingsSnapshot>): SettingsSnapshot {
   return partial as SettingsSnapshot;
 }
 
-describe('mainSettingsSchema：主设置页两区块', () => {
+describe('mainSettingsSchema：主设置页区块（issue 330 起 AI 页拆三组）', () => {
   const schema = mainSettingsSchema();
 
-  it('ticket 170：两区块升级为分组卡片（带 icon），标题不带 emoji 前缀（emoji 由分组卡图标呈现，防两遍；issue 297 通用域补通知组）', () => {
-    expect(schema.groups.map((g) => g.name)).toEqual(['AI 与凭据', '数据存储路径', '通知']); // ADR-0133：AI 组改名并收编凭据
-    expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'folder-open', 'bell']);
+  it('issue 330：五个分组卡片（带 icon）——服务商/模型配置/数据源凭据 + 数据存储路径 + 通知', () => {
+    expect(schema.groups.map((g) => g.name)).toEqual(['服务商', '模型配置', '数据源凭据', '数据存储路径', '通知']);
+    expect(schema.groups.map((g) => g.icon)).toEqual(['plug-zap', 'cpu', 'key-round', 'folder-open', 'bell']);
   });
 
-  it('AI 与凭据区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行 + per-provider 配置三行 + 凭据三行（ticket 171/172；issue 187 删自定义模型行；ADR-0133 收编 B站 Cookie/影院两项）', () => {
+  it('服务商组：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行（ticket 171；issue 187 删自定义模型行；visibleWhen 随 aiProvider）', () => {
     const rows = schema.groups[0].rows;
     // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行（每行 text）+ 自定义端点/密钥（text×2）
-    //         + per-provider 配置三行（声明式重写后模型行同为标准 text + actions；上下文/最大输出 token number）
-    //         + 凭据三行（B站 Cookie / ApiZero Key / 豆瓣 Cookie，ADR-0133）
     const nonCustom = AI_PROVIDER_REGISTRY.filter((p) => p.id !== 'custom');
-    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'number', 'number', 'text', 'text', 'text'];
+    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text'];
     expect(rows.map((r) => r.type)).toEqual(types);
-    // 密钥行标题来自注册表 apiKeyLabel（含 deepseek/opencode-go，顺序与注册表一致）
+    // 密钥行标题来自注册表 apiKeyLabel（顺序与注册表一致）
     const names = rows.map((r) => (r as { name: string }).name);
     const keyNames = nonCustom.map((p) => p.apiKeyLabel);
     expect(names).toEqual([
       'AI 服务商', ...keyNames,
       '自定义 API 地址', '自定义 API 密钥',
-      '模型名称', '上下文窗口', '最大输出 token',
-      'B站 Cookie', 'ApiZero Key', '豆瓣 Cookie',
     ]);
     const [provider, ...rest] = rows as Array<{
       binding?: { key: string };
@@ -59,21 +55,6 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     }>;
     expect(customEndpoint.binding).toEqual({ key: 'aiCustomEndpoint' });
     expect(customKey.binding).toEqual({ key: 'aiCustomApiKey' });
-    // per-provider 配置三行：模型行标准 text（三函数绑定 + actions 行内按钮，常显）；上下文/最大输出 token number 行
-    const [modelRow, ctxRow, maxTokensRow] = rest.slice(nonCustom.length + 2) as Array<{
-      name: string;
-      type: string;
-      binding?: { key: string } | { get: () => unknown; set: (v: unknown) => void; save: () => unknown };
-      visibleWhen?: (s: SettingsSnapshot) => boolean;
-    }>;
-    expect([modelRow.name, ctxRow.name, maxTokensRow.name]).toEqual(['模型名称', '上下文窗口', '最大输出 token']);
-    expect([modelRow.type, ctxRow.type, maxTokensRow.type]).toEqual(['text', 'number', 'number']);
-    expect(modelRow.visibleWhen).toBeUndefined(); // 常显（无 visibleWhen）
-    expect((modelRow as any).actions?.map((a: { text: string }) => a.text)).toEqual(['获取模型名']); // 行内按钮
-    // 标准 number 行：三函数 binding（读写当前 provider 覆盖）+ 无 key 直绑
-    expect('key' in ctxRow.binding!).toBe(false);
-    expect('get' in ctxRow.binding!).toBe(true);
-    expect(ctxRow.visibleWhen).toBeUndefined();
     // 显隐（ticket 170/171）：deepseek 显示 DeepSeek 行；opencode-go 显示 OpenCode 行；custom 显示自定义两行
     const findKey = (key: string) => {
       const idx = nonCustom.findIndex((p) => p.apiKeyKey === key);
@@ -97,8 +78,54 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     expect(openaiVw(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
   });
 
+  it('模型配置组（issue 330 拆组）：模型名称 text（三函数绑定 + 获取模型名按钮）+ 上下文/最大输出 token number（ticket 172）', () => {
+    const rows = schema.groups[1].rows as Array<{
+      name: string;
+      type: string;
+      binding?: { key: string } | { get: () => unknown; set: (v: unknown) => void; save: () => unknown };
+      visibleWhen?: (s: SettingsSnapshot) => boolean;
+      refreshKey?: unknown;
+    }>;
+    expect(rows.map((r) => r.name)).toEqual(['模型名称', '上下文窗口', '最大输出 token']);
+    expect(rows.map((r) => r.type)).toEqual(['text', 'number', 'number']);
+    // 三行均常显（无 visibleWhen）——随服务商切换的联动走 refreshKey，跨组生效（issue 330）
+    rows.forEach((r) => {
+      expect(r.visibleWhen).toBeUndefined();
+      expect(typeof r.refreshKey).toBe('function');
+      expect('key' in r.binding!).toBe(false);
+      expect('get' in r.binding!).toBe(true);
+    });
+    // 模型行内嵌「获取模型名」按钮
+    expect((rows[0] as any).actions?.map((a: { text: string }) => a.text)).toEqual(['获取模型名']);
+  });
+
+  it('数据源凭据组（issue 330 拆组）：B站 Cookie/豆瓣 Cookie 换 textarea，ApiZero Key 保持单行；桌面端 B站行带「从 CLI 导入」', () => {
+    const rows = schema.groups[2].rows;
+    expect(rows.map((r) => r.type)).toEqual(['textarea', 'text', 'textarea']);
+    const [bili, apizero, douban] = rows as Array<{
+      name: string;
+      binding?: { key: string };
+      actions?: Array<{ text: string }>;
+      placeholder?: string;
+    }>;
+    expect([bili.name, apizero.name, douban.name]).toEqual(['B站 Cookie', 'ApiZero Key', '豆瓣 Cookie']);
+    expect(bili.binding).toEqual({ key: 'bilibiliCookie' });
+    expect(apizero.binding).toEqual({ key: 'cinemaApizeroKey' });
+    expect(douban.binding).toEqual({ key: 'cinemaDoubanCookie' });
+    // 非桌面（node 环境无 window.require）：CLI 导入按钮不渲染（ADR-0133 零依赖判定口径）
+    expect(bili.actions).toEqual([]);
+    // 桌面端：按钮在场（textarea 行 actions 与 text 行同口径，issue 330）
+    (globalThis as unknown as { window: unknown }).window = { require: () => ({}) };
+    try {
+      const desktopRows = mainSettingsSchema().groups[2].rows as Array<{ actions?: Array<{ text: string }> }>;
+      expect(desktopRows[0].actions?.map((a) => a.text)).toEqual(['从 CLI 导入']);
+    } finally {
+      delete (globalThis as unknown as { window?: unknown }).window;
+    }
+  });
+
   it('数据存储路径区块：path 单选行（键直绑）+ onCommit 提示文案逐字冻结', () => {
-    const row = schema.groups[1].rows[0] as {
+    const row = schema.groups[3].rows[0] as {
       type: string;
       mode: string;
       name: string;
