@@ -51,6 +51,8 @@ import {
   replaceAnchorWithAlias,
   suggestionId,
   suggestionLink,
+  suggestionLinkTarget,
+  suggestionSubpath,
   suggestionUnitMarkdown,
   suggestProgressPercent,
 } from './mount-suggest';
@@ -1826,7 +1828,8 @@ async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<v
   } else if (unit === 'heading' && !subpath) {
     unit = 'whole';
   }
-  const linkInner = linkTargetOf(ghost.target, unit, subpath); // `路径#^块id` / `路径#标题` / `路径`（不含方括号）
+  const shape = { target: ghost.target, unit, subpath };
+  const linkInner = suggestionLinkTarget(shape); // `路径#^块id` / `路径#标题` / `路径`（不含方括号）
   const anchorText = String(ghost.anchor?.text ?? '').trim();
   /** 实际写入的链接文本（别名替换时是 `[[目标|原词]]`——通知要照实说，不谎报） */
   let written = `[[${linkInner}]]`;
@@ -1843,7 +1846,7 @@ async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<v
       // 表格行锚点（清洗后仍残留 `|`）或词级锚点 → 别名替换；否则句中追加
       const rowLike = String(ghost.anchor?.text ?? '').includes('|');
       const aliasNext = isWordAnchor(ghost.anchor, rowLike)
-        ? replaceAnchorWithAlias(text, ghost.anchor, ghost.target, subRef(unit, subpath))
+        ? replaceAnchorWithAlias(text, ghost.anchor, ghost.target, suggestionSubpath(shape))
         : null;
       if (aliasNext !== null) written = `[[${linkInner}|${anchorText}]]`;
       const next = aliasNext ?? insertLinkAtAnchor(text, ghost.anchor, linkInner);
@@ -1874,23 +1877,6 @@ async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<v
     'success',
   );
   await rebuildTreeOnly(st);
-}
-
-/** 落链接的**目标串**（不含方括号）：`路径` / `路径#标题` / `路径#^块id` */
-function linkTargetOf(target: string, unit: SuggestUnit, subpath: string): string {
-  const wiki = suggestionLink({ target, unit, subpath });
-  return wiki.replace(/^\[\[/, '').replace(/\]\]$/, '');
-}
-
-/** 别名替换与追加共用的子路径写法：标题 = `标题`，段落 = `^块id` */
-function subRef(unit: SuggestUnit, subpath: string): string {
-  if (!subpath) return '';
-  return unit === 'paragraph' ? (subpath.startsWith('^') ? subpath : `^${subpath}`) : subpath;
-}
-
-/** 幽灵节点 id（与 mergeSuggestions 同口径：统一走 mount-suggest 的 suggestionId） */
-function ghostId(ghost: Pick<MountSuggestion, 'target'>): string {
-  return suggestionId(ghost);
 }
 
 /** 取消：缓存留档（永久不再推）+ 本图移除幽灵节点 */

@@ -132,10 +132,12 @@ export const WORD_ANCHOR_MAX_CHARS = 12;
 
 /* ---------------- 通用小工具 ---------------- */
 
-/** 8 位 36 进制短哈希（块 id / 建议 id 的去重型后缀，确定性） */
+/** 8 位 36 进制短哈希（块 id / 建议 id 的去重型后缀，确定性）：32 位切成两个 16 位各转 base36（各满 4 位） */
 function hash8(s: string): string {
   const h = hash31(String(s ?? '')) >>> 0;
-  return h.toString(36).padStart(7, '0').slice(0, 8);
+  const hi = (h >>> 16) & 0xffff;
+  const lo = h & 0xffff;
+  return hi.toString(36).padStart(4, '0') + lo.toString(36).padStart(4, '0');
 }
 
 /** 单元键归一：折叠空白、去 markdown 标记、小写（标题/摘录的比对与短键） */
@@ -505,6 +507,7 @@ function kindOfTarget(path: string, ctx: SuggestCtx, unit: SuggestUnit): MountKi
   if (unit === 'heading') return 'head';
   if (unit === 'paragraph') return 'para';
   if (isUnderFolder(ctx?.cardboxDir || '', path)) return 'card';
+  if (ctx?.topicDir && isUnderFolder(ctx.topicDir, path)) return 'note'; // 主题盒：整篇（与文献盒同形态）
   return 'note';
 }
 
@@ -775,18 +778,36 @@ export async function ensureSuggestionBlockId(
 }
 
 /**
+ * 子路径写法（不含 `#`）：标题 = 标题原文；段落 = `^块id`；整篇 = ''。
+ * 落链接与别名替换共用这一个（避免两处各写一遍 `^` 的形状）。
+ */
+export function suggestionSubpath(
+  s: Pick<MountSuggestion, 'unit'> & Partial<Pick<MountSuggestion, 'subpath'>>
+): string {
+  const sub = String(s?.subpath ?? '').trim();
+  if (!sub) return '';
+  return s?.unit === 'paragraph' ? (sub.startsWith('^') ? sub : `^${sub}`) : sub;
+}
+
+/**
  * 三形态落链接文本（ADR-0140 决策 3）：
  * 整篇 `[[路径]]` / 标题 `[[路径#标题]]`（subpath 为空即降级整篇）/ 段落 `[[路径#^块id]]`（无块 id 降级整篇）。
+ * 词级锚点的别名替换：`[[路径#标题|原词]]` / `[[路径#^块id|原词]]`（Obsidian 同样认）。
  */
 export function suggestionLink(
   s: Pick<MountSuggestion, 'target' | 'unit'> & Partial<Pick<MountSuggestion, 'subpath'>>
 ): string {
   const core = idPath(s?.target).replace(/\.md$/i, '');
   if (!core) return '';
-  const sub = String(s?.subpath ?? '').trim();
-  if (s?.unit === 'paragraph') return sub ? `[[${core}#^${sub.replace(/^\^/, '')}]]` : `[[${core}]]`;
-  if (s?.unit === 'heading') return sub ? `[[${core}#${sub}]]` : `[[${core}]]`;
-  return `[[${core}]]`;
+  const sub = suggestionSubpath(s);
+  return sub ? `[[${core}#${sub}]]` : `[[${core}]]`;
+}
+
+/** 落链接的**目标串**（不含方括号）——句中追加路径用（`insertLinkAtAnchor` 自己加 `[[ ]]`） */
+export function suggestionLinkTarget(
+  s: Pick<MountSuggestion, 'target' | 'unit'> & Partial<Pick<MountSuggestion, 'subpath'>>
+): string {
+  return suggestionLink(s).replace(/^\[\[/, '').replace(/\]\]$/, '');
 }
 
 /**
@@ -1490,10 +1511,14 @@ export async function generateSuggestions(
 
   const suggestions: MountSuggestion[] = [];
   locateList.forEach((ad, i) => {
-    const pick = located ? located.find((p) => p.n === i + 1) : undefined;
-    if (located && !pick) return; // 定位官给了数组但没这条 → 视为否决
+    const pick = located ? (located.find((p) => p.n === i + 1) ?? null) : null;
+    // 定位官给了数组但**没这条编号**：模型编号错位比「明确否决」常见得多，
+    // 故不按否决处理（会误杀采纳官判过的有效配对），而是退回整篇兜底。真要否决请用 `skip:true`。
+    if (located && !pick) {
+      console.warn(`[mount-suggest] 定位官未给出 n${i + 1}（${ad.entry.path}），按整篇兜底`);
+    }
     if (pick?.skip) return; // skip 原样透传成「不生成该条」
-    suggestions.push(buildSuggestion(ctx, ad, pick ?? null, texts[i]));
+    suggestions.push(buildSuggestion(ctx, ad, pick, texts[i]));
   });
   tell('locate', locateList.length, locateList.length);
   // 超出定位官预算的采纳结果（>6 篇）按整篇兜底，不白丢
