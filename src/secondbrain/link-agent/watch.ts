@@ -58,9 +58,9 @@ export function createLinkBridge(
       await ready();
       return agent.processNoteNow(p, { silent: true, force: opts?.force === true });
     },
-    preview: async (content: string, title?: string) => {
+    preview: async (content: string, title?: string, opts?: { signal?: AbortSignal }) => {
       await ready();
-      return agent.previewLinks(content, title);
+      return agent.previewLinks(content, title, opts);
     },
     apply: async (path: string, targetPaths: string[]) => {
       const p = String(path || '').trim();

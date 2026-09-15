@@ -1133,7 +1133,7 @@ describe('自动关联通道 createLinkBridge：知识盒录入面板的四段�
     expect(agent.previewLinks).not.toHaveBeenCalled(); // 装载未完成
     release();
     const out = await p;
-    expect(agent.previewLinks).toHaveBeenCalledWith('一段草稿正文', '草稿标题');
+    expect(agent.previewLinks).toHaveBeenCalledWith('一段草稿正文', '草稿标题', undefined); // issue 327：透传 signal 位
     expect(out).toEqual({ status: 'done', picks: [{ path: '卡片盒/A.md', title: 'A' }] });
   });
 
@@ -1171,7 +1171,7 @@ describe('自动关联通道 createLinkBridge：知识盒录入面板的四段�
     await bridge.now('文献盒/X.md');
     await bridge.preview('正文');
     expect(agent.processNoteNow).toHaveBeenCalled();
-    expect(agent.previewLinks).toHaveBeenCalledWith('正文', undefined);
+    expect(agent.previewLinks).toHaveBeenCalledWith('正文', undefined, undefined);
   });
 
   it('空路径：直接返回零新建且不触发管线（防误调）', async () => {
