@@ -1,4 +1,4 @@
-/* 源指纹 942774551cd06f53 · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5f933cd654573994 · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -16631,13 +16631,17 @@ ${body}`;
       console.warn("[剪藏本] 物化清理侧写失败", e);
       return;
     }
-    if (!before.pendingSource.length) return;
+    const upgrades = [];
+    for (const p of [...before.pendingSource, ...before.marks.map((m) => m.notePath)]) {
+      if (p && !upgrades.includes(p)) upgrades.push(p);
+    }
+    if (!upgrades.length) return;
     const app = getApp();
     try {
       const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
       if (typeof mod.upgradeNoteSourceInternal !== "function") return;
       const link = `[[${clipPath}|${title}]]`;
-      for (const notePath of before.pendingSource) {
+      for (const notePath of upgrades) {
         try {
           await mod.upgradeNoteSourceInternal(app, notePath, link);
         } catch (e) {
@@ -21918,9 +21922,10 @@ ${bodyText.substring(0, 6e3)}`;
     const h = bar.offsetHeight || 36;
     const vw = window.innerWidth || document.documentElement.clientWidth || 0;
     const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    const clearance = isMobileEnv() ? MOBILE_SYS_BAR_CLEARANCE : 0;
     let left = rect.left;
-    let top = rect.top - h - 8;
-    if (top < 8) top = (rect.bottom || rect.top) + 8;
+    let top = rect.top - h - 8 - clearance;
+    if (top < 8) top = (rect.bottom || rect.top) + 8 + clearance;
     if (vw) left = Math.min(Math.max(left, 8), Math.max(8, vw - w - 8));
     if (vh) top = Math.min(Math.max(top, 8), Math.max(8, vh - h - 8));
     bar.style.left = `${left}px`;
@@ -22058,6 +22063,11 @@ ${bodyText.substring(0, 6e3)}`;
     if (kind === "term") fn(getApp(), snap.text, { source: source2, onCreated });
     else fn(getApp(), { text: snap.text, source: source2, onCreated });
   }
+  function refreshReadingViews(articleId) {
+    if (!M.cur || M.cur.id !== articleId) return;
+    renderReader();
+    if (M.mobDetailOpen) renderMobDetail();
+  }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
     try {
@@ -22071,10 +22081,11 @@ ${bodyText.substring(0, 6e3)}`;
           invalidateClipBodyCache(a.notePath);
         }
         await upgradeSourceFor(notePath, a);
-        if (M.cur && M.cur.id === a.id) renderReader();
+        refreshReadingViews(a.id);
       } else {
         M.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        if (M.cur && M.cur.id === a.id) renderReader();
+        M.sidecar = await addPendingSourceNote(a.id, notePath);
+        refreshReadingViews(a.id);
       }
     } catch (e) {
       console.warn("[剪藏本] 划词锚定写入失败", e);
@@ -22104,7 +22115,7 @@ ${bodyText.substring(0, 6e3)}`;
       });
       if (res.sidecar) M.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
-      if (M.cur && M.cur.id === a.id) renderReader();
+      refreshReadingViews(a.id);
     } catch (e) {
       console.warn("[剪藏本] 保存图片失败", e);
       notice("图片保存失败，请检查网络后重试", "error");
@@ -22171,7 +22182,18 @@ ${bodyText.substring(0, 6e3)}`;
       const withMd = p + ".md";
       if (app.vault.getAbstractFileByPath(withMd)) p = withMd;
     }
-    return app.vault.getAbstractFileByPath(p) ? p : null;
+    if (app.vault.getAbstractFileByPath(p)) return p;
+    if (!p.includes("/")) {
+      try {
+        const mc = app.metadataCache;
+        if (mc && typeof mc.getFirstLinkfileDest === "function") {
+          const dest = mc.getFirstLinkfileDest(p);
+          if (dest && app.vault.getAbstractFileByPath(dest)) return String(dest);
+        }
+      } catch (e) {
+      }
+    }
+    return null;
   }
   function interceptKnowledgeLink(link) {
     const path = resolveInternalTarget(link.dataset.href || link.getAttribute("href") || "");
@@ -22291,7 +22313,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap, MOBILE_SYS_BAR_CLEARANCE;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -22362,6 +22384,7 @@ ${bodyText.substring(0, 6e3)}`;
       selBarHoldUntil = 0;
       selSnap = null;
       imgSnap = null;
+      MOBILE_SYS_BAR_CLEARANCE = 48;
     }
   });
 
