@@ -1408,16 +1408,22 @@ function armSelBarEsc(): void {
   });
 }
 
-/** 浮框定位：光标（选区/图片）上方，放不下翻下方，视口内钳制（jsdom 零尺寸走估算兜底） */
+/** 移动端系统选择菜单让位高度（px）：原生复制/选择菜单贴着选区上方弹出，
+ *  浮框原位（选区上 8px）与之同位被盖——移动端定位统一再让出该高度 */
+const MOBILE_SYS_BAR_CLEARANCE = 48;
+
+/** 浮框定位：光标（选区/图片）上方，放不下翻下方，视口内钳制（jsdom 零尺寸走估算兜底）。
+ *  移动端额外让位系统选择菜单（issue 329 Bug 1）：上方让位后放不下 → 翻下方同让位；桌面零让位。 */
 function placeSelBar(rect: { top: number; left: number; bottom: number; right: number }): void {
   const bar = selBarEl!;
   const w = bar.offsetWidth || 240;
   const h = bar.offsetHeight || 36;
   const vw = window.innerWidth || document.documentElement.clientWidth || 0;
   const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+  const clearance = isMobileEnv() ? MOBILE_SYS_BAR_CLEARANCE : 0;
   let left = rect.left;
-  let top = rect.top - h - 8;
-  if (top < 8) top = (rect.bottom || rect.top) + 8;
+  let top = rect.top - h - 8 - clearance;
+  if (top < 8) top = (rect.bottom || rect.top) + 8 + clearance;
   if (vw) left = Math.min(Math.max(left, 8), Math.max(8, vw - w - 8));
   if (vh) top = Math.min(Math.max(top, 8), Math.max(8, vh - h - 8));
   bar.style.left = `${left}px`;
@@ -1579,6 +1585,15 @@ async function actSaveEntry(kind: 'term' | 'passage'): Promise<void> {
   else fn(getApp(), { text: snap.text, source, onCreated });
 }
 
+/** 双端阅读视图原位重渲（锚定/图片动作后即时出链）：桌面右栏 renderReader +
+ *  移动详情 renderMobDetail（独立渲染路径，issue 329 Bug 2）一并覆盖；
+ *  同条目守卫内置（对齐原三处 `M.cur && M.cur.id === a.id`——切篇后丢弃本次刷新）。 */
+function refreshReadingViews(articleId: string): void {
+  if (!M.cur || M.cur.id !== articleId) return;
+  renderReader();
+  if (M.mobDetailOpen) renderMobDetail();
+}
+
 /** 划词锚定落盘两路（ADR-0144 决策 4）：已保存条目直写剪藏 md；未保存条目侧写暂存（渲染层出链）。
  *  两路都同步回写文献笔记 source（已保存 = 内部路径即刻；未保存 = 物化时回写）。 */
 async function handleAnchorCreated(kind: 'term' | 'passage', notePath: string, snap: SelSnapshot, a: ClipArticle): Promise<void> {
@@ -1595,11 +1610,14 @@ async function handleAnchorCreated(kind: 'term' | 'passage', notePath: string, s
         invalidateClipBodyCache(a.notePath); // 正文缓存失效，重读即见双链
       }
       await upgradeSourceFor(notePath, a);
-      if (M.cur && M.cur.id === a.id) renderReader();
+      refreshReadingViews(a.id);
     } else {
       // 未保存条目：news.json 不可写 → 侧写 marks 暂存，渲染层立即出双链，保存物化时进 md
       M.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-      if (M.cur && M.cur.id === a.id) renderReader();
+      // 登记 pendingSource（issue 329 Bug 4）：保存物化时据此把文献笔记 source 回写为内部双链；
+      // 只记 marks 不登记会让升级名单恒空 → 外链残留死路
+      M.sidecar = await addPendingSourceNote(a.id, notePath);
+      refreshReadingViews(a.id);
     }
   } catch (e) {
     console.warn('[剪藏本] 划词锚定写入失败', e);
@@ -1634,7 +1652,7 @@ async function actSaveImage(): Promise<void> {
     });
     if (res.sidecar) M.sidecar = res.sidecar; // 内存侧写同步（渲染层立即换链）
     if (a.origin === 'clip' && a.notePath) invalidateClipBodyCache(a.notePath);
-    if (M.cur && M.cur.id === a.id) renderReader(); // 原位重渲（外层滚动容器不重置）
+    refreshReadingViews(a.id); // 原位重渲（外层滚动容器不重置；移动详情打开时一并重渲，issue 329 Bug 2）
   } catch (e) {
     console.warn('[剪藏本] 保存图片失败', e);
     notice('图片保存失败，请检查网络后重试', 'error');
@@ -1698,7 +1716,10 @@ function knowledgeDir(): string {
   return String((s && s.knowledgeDirectory) || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
 }
 
-/** internal-link href → vault 内实际路径（去 heading 锚点、补 .md、判存在）；缺失返回 null（不拦） */
+/** internal-link href → vault 内实际路径（去 heading 锚点、补 .md、判存在）；缺失返回 null（不拦）。
+ *  三级解析（issue 329 Bug 3）：全路径直查（含补 .md）→ 裸 basename 经 metadataCache
+ *  getFirstLinkfileDest 解析（锚定别名双链 `[[basename|文字]]` 的 data-href 无目录，
+ *  直查必空 → 拦截失败走原生导航，移动端实报崩溃）→ 仍无则 null 维持原生。 */
 function resolveInternalTarget(href: string): string | null {
   const app = getApp();
   let p = String(href || '').split('#')[0].trim().replace(/\\/g, '/');
@@ -1708,7 +1729,18 @@ function resolveInternalTarget(href: string): string | null {
     const withMd = p + '.md';
     if (app.vault.getAbstractFileByPath(withMd)) p = withMd;
   }
-  return app.vault.getAbstractFileByPath(p) ? p : null;
+  if (app.vault.getAbstractFileByPath(p)) return p;
+  if (!p.includes('/')) {
+    // 裸名形态：全库链接表解析唯一目标；命中且文件存在才拦（测试 mock 可能无该 API，守卫 + 兜错）
+    try {
+      const mc: any = (app as any).metadataCache;
+      if (mc && typeof mc.getFirstLinkfileDest === 'function') {
+        const dest = mc.getFirstLinkfileDest(p);
+        if (dest && app.vault.getAbstractFileByPath(dest)) return String(dest);
+      }
+    } catch (e) { /* 解析异常维持原生导航 */ }
+  }
+  return null;
 }
 
 /** 拦截判定（同步，供 click 内 preventDefault）：文献盒内的双链 → 直达预览；返回 true = 已拦截 */
