@@ -1,5 +1,5 @@
-/* 源指纹 0d57dbf3b86b8425 · 仓内输入 89 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 5082e641b178e1a6 · 仓内输入 90 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -6303,6 +6303,17 @@ ${body}`;
     }
   });
 
+  // src/core/link-now.ts
+  function getLinkBridge() {
+    return _bridge;
+  }
+  var _bridge;
+  var init_link_now = __esm({
+    "src/core/link-now.ts"() {
+      _bridge = null;
+    }
+  });
+
   // src/knowledge/source.ts
   function noteSourceName(path, name) {
     const explicit = String(name != null ? name : "").trim();
@@ -7157,14 +7168,28 @@ ${body}`;
     }
   });
 
-  // src/core/link-now.ts
-  function getLinkBridge() {
-    return _bridge;
+  // src/core/knowledge-boxes.ts
+  function normalizeBoxDir(raw, fallback) {
+    const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
+    return s || fallback;
   }
-  var _bridge;
-  var init_link_now = __esm({
-    "src/core/link-now.ts"() {
-      _bridge = null;
+  function getKnowledgeBoxes(s) {
+    var _a;
+    const st = (_a = s != null ? s : tryGetSettings()) != null ? _a : {};
+    return {
+      lit: normalizeBoxDir(st.knowledgeDirectory, DEFAULT_LIT_DIR),
+      cardbox: normalizeBoxDir(st.knowledgeCardboxDirectory, DEFAULT_CARDBOX_DIR),
+      topic: normalizeBoxDir(st.knowledgeTopicDirectory, DEFAULT_TOPIC_DIR)
+    };
+  }
+  var DEFAULT_LIT_DIR, DEFAULT_CARDBOX_DIR, DEFAULT_TOPIC_DIR;
+  var init_knowledge_boxes = __esm({
+    "src/core/knowledge-boxes.ts"() {
+      init_utils();
+      init_settings_provider();
+      DEFAULT_LIT_DIR = "文献盒";
+      DEFAULT_CARDBOX_DIR = "卡片盒";
+      DEFAULT_TOPIC_DIR = "主题盒";
     }
   });
 
@@ -10169,15 +10194,12 @@ ${sample}`,
       return null;
     }
   }
-  function inRecallScope(path) {
+  function inRecallScope(path, cardboxDir) {
     const p = idPath(path);
     if (!p) return false;
-    for (const dir of SUGGEST_EXCLUDE_DIRS) {
-      const d = idPath(dir);
-      if (!d) continue;
-      if (p === d || p.startsWith(d + "/")) return false;
-    }
-    return true;
+    const dir = idPath(cardboxDir != null ? cardboxDir : getKnowledgeBoxes().cardbox);
+    if (!dir) return false;
+    return p === dir || p.startsWith(dir + "/");
   }
   function kindOfTarget(path, ctx, unit) {
     if (unit === "heading") return "head";
@@ -10590,7 +10612,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (!p) continue;
       const key = normalizeTargetPath(p);
       if (!key || key === selfKey) continue;
-      if (!inRecallScope(p)) continue;
+      if (!inRecallScope(p, opts == null ? void 0 : opts.cardboxDir)) continue;
       let entry = byPath.get(key);
       if (!entry) {
         entry = { path: p, hitCount: 0, maxScore: 0, snippet: "", segs: [] };
@@ -10756,7 +10778,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (searchFailed) break;
     }
     if (searchFailed) return empty("no-index");
-    const pool = aggregatePool(hits, { selfPath: cardPath, limit: SUGGEST_POOL_SIZE }).filter((c) => {
+    const pool = aggregatePool(hits, { selfPath: cardPath, limit: SUGGEST_POOL_SIZE, cardboxDir: ctx.cardboxDir }).filter((c) => {
       if (!ctx.app.vault.getAbstractFileByPath(c.path)) return false;
       return !matchesExisting(c.path, null, existing);
     });
@@ -10930,12 +10952,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     return { ...tree, nodes: [...nodes, ...ghostNodes], edges: [...edges, ...ghostEdges] };
   }
-  var SUGGEST_MIN_SCORE, SUGGEST_MIN_ANCHOR_CHARS, SUGGEST_MAX_ANCHORS, SUGGEST_TOPK, SUGGEST_POOL_SIZE, SUGGEST_MAX_PER_TARGET, SUGGEST_MAX_LOCATE_NOTES, SUGGEST_LOCATE_TEXT_CAP, SUGGEST_JUDGE_MAX_TOKENS, SUGGEST_REASONING_EFFORT, REASON_MAX_CHARS, SUGGEST_CACHE_FILE, SUGGEST_CACHE_VERSION, HAS_MEANING_RE, WIKILINK_RE, SUGGEST_EXCLUDE_DIRS, BLOCK_ID_PREFIX, LEADING_MARK_RE, QUERY_PROMPT_PREFIX, ADOPT_PROMPT_PREFIX, LOCATE_PROMPT_PREFIX, STAGE_LABEL, STAGE_PERCENT;
+  var SUGGEST_MIN_SCORE, SUGGEST_MIN_ANCHOR_CHARS, SUGGEST_MAX_ANCHORS, SUGGEST_TOPK, SUGGEST_POOL_SIZE, SUGGEST_MAX_PER_TARGET, SUGGEST_MAX_LOCATE_NOTES, SUGGEST_LOCATE_TEXT_CAP, SUGGEST_JUDGE_MAX_TOKENS, SUGGEST_REASONING_EFFORT, REASON_MAX_CHARS, SUGGEST_CACHE_FILE, SUGGEST_CACHE_VERSION, HAS_MEANING_RE, WIKILINK_RE, BLOCK_ID_PREFIX, LEADING_MARK_RE, QUERY_PROMPT_PREFIX, ADOPT_PROMPT_PREFIX, LOCATE_PROMPT_PREFIX, STAGE_LABEL, STAGE_PERCENT;
   var init_mount_suggest = __esm({
     "src/knowledge/mount-suggest.ts"() {
       init_ai();
       init_mobile();
       init_settings_provider();
+      init_knowledge_boxes();
       init_storage();
       init_utils();
       init_readonly();
@@ -10951,10 +10974,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       SUGGEST_REASONING_EFFORT = "low";
       REASON_MAX_CHARS = 80;
       SUGGEST_CACHE_FILE = "mount-suggest.json";
-      SUGGEST_CACHE_VERSION = 3;
+      SUGGEST_CACHE_VERSION = 4;
       HAS_MEANING_RE = /[\p{L}\p{N}]/u;
       WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
-      SUGGEST_EXCLUDE_DIRS = ["归档", "网页剪藏"];
       BLOCK_ID_PREFIX = "bz-";
       LEADING_MARK_RE = /^(?:#{1,6}\s*|\[![^\]]*\]\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
       QUERY_PROMPT_PREFIX = [
@@ -12996,16 +13018,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   }
   function litDirOf(s) {
-    const raw = s && s.knowledgeDirectory ? String(s.knowledgeDirectory) : "文献盒";
-    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    return getKnowledgeBoxes(s || {}).lit;
   }
   function cardboxDirOf(s) {
-    const raw = s && s.knowledgeCardboxDirectory ? String(s.knowledgeCardboxDirectory) : "卡片盒";
-    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    return getKnowledgeBoxes(s || {}).cardbox;
   }
   function topicDirOf(s) {
-    const raw = s && s.knowledgeTopicDirectory ? String(s.knowledgeTopicDirectory) : "主题盒";
-    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    return getKnowledgeBoxes(s || {}).topic;
   }
   function parseDateRaw(raw) {
     const s = String(raw != null ? raw : "").trim();
@@ -13049,6 +13068,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_ai();
       init_mobile();
       init_settings_provider();
+      init_knowledge_boxes();
       init_link_now();
       init_item_actions();
       init_flow_dialog();
@@ -15773,9 +15793,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
   var knowledge_exports = {};
   __export(knowledge_exports, {
     ensureKnowledge: () => ensureKnowledge,
+    linkAllInBoxes: () => linkAllInBoxes,
     openKnowledgeAddTask: () => openKnowledgeAddTask,
     openKnowledgePanel: () => openKnowledgePanel,
     openTermNote: () => openTermNote,
+    relinkActiveNote: () => relinkActiveNote,
     unloadKnowledge: () => unloadKnowledge
   });
   function ensureKnowledge(app) {
@@ -15811,6 +15833,67 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     uiManager == null ? void 0 : uiManager.showTermEntry(t, src);
   }
+  function takeLinkBridge() {
+    if (tryGetSettings().linkAgentEnabled === false) {
+      notice("自动关联已在知识盒设置中关闭", "info");
+      return null;
+    }
+    const bridge = getLinkBridge();
+    if (!bridge) {
+      notice("自动关联暂不可用：第二大脑尚未就绪", "warning");
+      return null;
+    }
+    return bridge;
+  }
+  async function relinkActiveNote(app) {
+    var _a, _b;
+    const file = (_b = (_a = app.workspace).getActiveFile) == null ? void 0 : _b.call(_a);
+    if (!file) {
+      notice("请先打开一个笔记", "info");
+      return;
+    }
+    const bridge = takeLinkBridge();
+    if (!bridge) return;
+    try {
+      const outcome = await bridge.now(file.path, { force: true });
+      if (outcome.status === "done") {
+        notice(outcome.created > 0 ? `已新建关联 ${outcome.created} 条` : "未发现实质关联，未新建", "success");
+      } else if (outcome.status === "queued") {
+        notice("embedding 服务不可达，已加入待处理队列，服务可达后自动处理", "info");
+      } else if (outcome.status === "out-of-scope") {
+        notice("该笔记不在三个盒子内：自动关联只在文献盒、卡片盒、主题盒里生效", "info");
+      } else if (outcome.status === "failed") {
+        notice(`关联处理失败：${outcome.error}`, "error");
+      } else {
+        notice("该笔记暂无法处理（文件缺失、非 Markdown 或位于加密目录）", "info");
+      }
+    } catch (e) {
+      console.warn("[knowledge] 重跑关联失败", e);
+      notice(`关联处理失败：${e instanceof Error ? e.message : String(e)}`, "error");
+    }
+  }
+  async function linkAllInBoxes() {
+    const bridge = takeLinkBridge();
+    if (!bridge) return;
+    try {
+      const result = await bridge.backfill();
+      if (result.status === "done") {
+        notice(
+          result.created > 0 ? `批量补链完成：处理 ${result.processed} 篇 / 新建关联 ${result.created} 条` : "批量补链完成：未发现实质关联，未新建",
+          "success"
+        );
+      } else if (result.status === "unreachable") {
+        notice("embedding 服务不可达，无法补链；服务恢复后可在下次启动自动补链", "info");
+      } else if (result.status === "no-targets") {
+        notice("当前无待补链笔记：三个盒子内未连接的笔记已处理完", "info");
+      } else {
+        notice("批量补链跳过（自动关联已关闭）", "info");
+      }
+    } catch (e) {
+      console.warn("[knowledge] 批量补链失败", e);
+      notice(`批量补链失败：${e instanceof Error ? e.message : String(e)}`, "error");
+    }
+  }
   function unloadKnowledge() {
     uiManager == null ? void 0 : uiManager.destroy();
     uiManager = null;
@@ -15821,6 +15904,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     "src/knowledge/index.ts"() {
       init_fake_obsidian();
       init_settings_provider();
+      init_link_now();
+      init_notice();
       init_data2();
       init_ui();
       initialized = false;
