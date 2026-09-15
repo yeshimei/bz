@@ -127,8 +127,6 @@ const WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
 export const SUGGEST_EXCLUDE_DIRS = ['归档', '网页剪藏'];
 /** 块 id 前缀（段落双链锚定用；确定性哈希 → 幂等） */
 export const BLOCK_ID_PREFIX = 'bz-';
-/** 词级锚点阈值（≤12 字 → 别名替换 `[[目标|原词]]`，不做句中追加） */
-export const WORD_ANCHOR_MAX_CHARS = 12;
 
 /* ---------------- 通用小工具 ---------------- */
 
@@ -811,20 +809,16 @@ export function suggestionLinkTarget(
 }
 
 /**
- * 词级 / 表格行锚点 → **别名替换** `[[目标|原词]]`（ADR-0140 决策 3）：
- * 词级锚点（≤12 字）或表格行锚点在句中追加会读不通，直接把原词替换成带别名的双链。
- * 非词级锚点返回 null（走既有句中追加路径）。
- */
-export function isWordAnchor(anchor: AnchorRef | null | undefined, rowLike = false): boolean {
-  const text = String(anchor?.text ?? '').trim();
-  if (!text) return false;
-  if (rowLike) return true;
-  return [...text].length <= WORD_ANCHOR_MAX_CHARS && !/[。！？；\n]/.test(text);
-}
-
-/**
- * 别名替换：把正文中 `anchor` 那段原文**原地**换成 `[[目标|原词]]`。
- * 找不到锚点（文本对不上）返回 null（调用方退回追加路径）。
+ * 别名替换：把正文中 `anchor` 那段原文**原地**换成 `[[目标|原词]]`（ADR-0140 决策 3）。
+ *
+ * 2026-09-15 口径扩到**整句**（用户拍板「固定 = 套住整句」）：锚点句本身变成链接文本，
+ * 句子读起来一字不变，只是整句可点——比「句末追加一个 [[目标]]」更贴合「这句话挂到那张卡」。
+ *
+ * 套不进去返回 null（调用方退回句中追加 `insertLinkAtAnchor`）。两条闸都在**命中区间**上判，
+ * 不看锚点文本（锚点必经清洗，`[[…]]` 已变显示文本——对着它判是判不出来的）：
+ * ① `level === 3`（段落兜底）：命中区间是**整段**，套上去会把整段正文吞成一条链接
+ *    （锚点句里含双链时必然落到这一级：`flattenForMatch` 保留 `[`/`]`，与清洗后的锚点对不上）；
+ * ② 命中区间里含方括号：`[[目标|…[[某卡]]…]]` 会把链接语法撑破。
  */
 export function replaceAnchorWithAlias(
   body: string,
@@ -836,10 +830,13 @@ export function replaceAnchorWithAlias(
   const text = String(anchor?.text ?? '').trim();
   const core = idPath(target).replace(/\.md$/i, '');
   if (!src || !text || !core) return null;
-  const link = subpath ? `[[${core}#${subpath}|${text}]]` : `[[${core}|${text}]]`;
   if (src.includes(`[[${core}`)) return src; // 已是双链 → 幂等
   const hit = locateInText(src, text);
   if (!hit) return null;
+  if (hit.level === 3) return null; // 段落兜底：命中整段 → 绝不原地替换
+  // 命中的原文里带双链/嵌入：套上去 `]]` 会把链接语法撑破（单个方括号不管——`[1] 脚注` 这类照套）
+  if (/\[\[|\]\]/.test(src.slice(hit.at, hit.at + hit.len))) return null;
+  const link = subpath ? `[[${core}#${subpath}|${text}]]` : `[[${core}|${text}]]`;
   return src.slice(0, hit.at) + link + src.slice(hit.at + hit.len);
 }
 
