@@ -1,4 +1,4 @@
-/* 源指纹 ce0a3fc0f9498534 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 17c8129e0ee5b99c · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/knowledge-boxes.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/ui-tools.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
@@ -5355,6 +5355,14 @@ var BZW_secondbrain = (() => {
     const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
     return s || fallback;
   }
+  function parseDirList(raw) {
+    const out = [];
+    for (const part of String(raw != null ? raw : "").split(",")) {
+      const d = normalizeBoxDir(part, "");
+      if (d && !out.includes(d)) out.push(d);
+    }
+    return out;
+  }
   function getKnowledgeBoxes(s) {
     var _a2;
     const st = (_a2 = s != null ? s : tryGetSettings()) != null ? _a2 : {};
@@ -5377,30 +5385,11 @@ var BZW_secondbrain = (() => {
     return !!d && boxDirs(boxes).includes(d);
   }
 
-  // src/secondbrain/whitelist.ts
-  function parsePathList(raw) {
-    if (raw === null || raw === void 0) return [];
-    const out = [];
-    for (const part of String(raw).split(",")) {
-      const p = part.trim().replace(/^\/+|\/+$/g, "");
-      if (p && !out.includes(p)) out.push(p);
-    }
-    return out;
-  }
-
   // src/secondbrain/config.ts
-  function parseAllowPaths(raw) {
-    const out = [];
-    for (const p of parsePathList(raw)) {
-      const d = p.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-      if (d && !out.includes(d)) out.push(d);
-    }
-    return out;
-  }
   function resolveAllowPaths(rawAllowPaths) {
     const boxes = getKnowledgeBoxes();
     const dirs = boxDirs(boxes);
-    const extra = parseAllowPaths(rawAllowPaths).filter((p) => !isBoxDir(p, boxes) && !dirs.includes(p));
+    const extra = parseDirList(rawAllowPaths).filter((p) => !isBoxDir(p, boxes) && !dirs.includes(p));
     return [...dirs, ...extra];
   }
   function buildConfig() {
