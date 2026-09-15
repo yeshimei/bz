@@ -1,5 +1,5 @@
-/* 源指纹 cbb0e87eee31662d · 仓内输入 33 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
+/* 源指纹 303f5a56cac8b60f · 仓内输入 34 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
   var __create = Object.create;
@@ -4046,6 +4046,23 @@ var BZW_knowledge = (() => {
 
   // prototypes/knowledge/fake/fake-obsidian.ts
   var import_moment = __toESM(require_moment());
+
+  // prototypes/knowledge/fake/ai-index.ts
+  var AI_INDEX = [
+    { path: "卡片盒/睡眠卫生.md", keys: ["卫生", "作息", "咖啡因", "减光", "环境", "习惯", "固定", "睡前"], chunk: "固定作息、睡前减光、卧室只留睡眠功能、下午后不碰咖啡因。" },
+    { path: "文献盒/睡眠日记.md", keys: ["日记", "记录", "两周", "入睡", "卧床", "效率", "上床"], chunk: "连续两周逐日记录上床时间、入睡耗时、夜醒次数、起床时间与白天困倦程度。" },
+    { path: "文献盒/睡眠债.md", keys: ["债", "补觉", "不足", "白天", "熬夜", "欠", "补"], chunk: "睡眠债按「需要量减去实际量」逐日累加，单次补觉还不清。" },
+    { path: "卡片盒/认知行为疗法.md", keys: ["失眠", "干预", "认知", "行为", "治疗", "焦虑", "疗法"], chunk: "通过改变认知与行为模式干预心理问题，CBTI 是其在失眠域的具体形态。" },
+    { path: "卡片盒/多重记忆系统.md", keys: ["记忆", "陈述性", "程序性", "海马", "编码", "巩固"], chunk: "陈述性与程序性记忆分属不同系统，睡眠结构对记忆巩固有影响。" },
+    { path: "文献盒/昼夜节律.md", keys: ["昼夜", "节律", "生物钟", "光照", "褪黑素", "时相", "晒光", "光"], chunk: "以约 24 小时为周期的内在计时机制，光照是最强的同步因子。" },
+    { path: "文献盒/松果体.md", keys: ["褪黑素", "松果体", "激素", "夜间", "分泌"], chunk: "夜间分泌褪黑素，把光照信息转译为激素信号，是睡眠-觉醒节律的激素执行器。" },
+    // 带标题 / 段落的邻居：定位官能给出 heading / paragraph 单元（`## 功能分工` + ` ^bz-3f7a1c02` 都在库里）
+    { path: "文献盒/睡眠结构.md", keys: ["深睡", "REM", "周期", "分期", "功能", "恢复", "突触"], chunk: "深睡承担体力恢复与突触下调，REM 承担情绪加工与部分记忆整合，两者不能互相替代。" },
+    { path: "文献盒/CBTI.md", keys: ["失眠", "睡眠限制", "刺激控制", "循证", "治疗", "床"], chunk: "非药物治疗失眠的循证心理干预，含睡眠限制、刺激控制、认知重构等模块。" },
+    { path: "卡片盒/间隔重复.md", keys: ["间隔", "复习", "遗忘", "长期", "保持"], chunk: "按遗忘曲线安排复习间隔，用检索 effort 换长期保持。" }
+  ];
+
+  // prototypes/knowledge/fake/fake-obsidian.ts
   var Platform = {
     isMobile: typeof window !== "undefined" && window.innerWidth <= 768
   };
@@ -4063,6 +4080,112 @@ var BZW_knowledge = (() => {
     svg.setAttribute("stroke-linejoin", "round");
     svg.innerHTML = d;
     container.replaceChildren(svg);
+  }
+  function suggestCanned(prompt) {
+    if (/你是卡片盒挂载树的检索查询官/.test(prompt)) return cannedQuery(prompt);
+    if (/你是卡片盒挂载树的采纳官/.test(prompt)) return cannedAdopt(prompt);
+    if (/你是卡片盒挂载树的定位官/.test(prompt)) return cannedLocate(prompt);
+    return null;
+  }
+  function plainText(s) {
+    return String(s != null ? s : "").replace(/!?\[\[([^\[\]|]+)(?:\|([^\[\]]+))?\]\]/g, (_m, target, alias) => (alias || target).replace(/#\^?[^\]]*$/, "")).replace(/[*`>]/g, "").replace(/^[-•]\s*/gm, "").replace(/\s+/g, " ").trim();
+  }
+  function cannedQuery(prompt) {
+    const segs = [...prompt.matchAll(/^### s(\d+)：(.+)$/gm)].map((m) => ({ n: Number(m[1]), text: m[2].trim() }));
+    const items = segs.map((s) => {
+      var _a;
+      const plain = plainText(s.text);
+      const first = (_a = plain.split(/[。！？；]/)[0]) != null ? _a : plain;
+      const sentence = (first.length > 40 ? `${first.slice(0, 39)}…` : first) || plain.slice(0, 40);
+      const lower = plain.toLowerCase();
+      const keys = AI_INDEX.flatMap((it) => it.keys).filter((k) => lower.includes(k.toLowerCase()));
+      return {
+        seg: s.n,
+        sentence: /[。！？]$/.test(sentence) ? sentence : `${sentence}。`,
+        keywords: [...new Set(keys)].slice(0, 5).join(" "),
+        why: `这一段在讲「${sentence.slice(0, 18)}」`
+      };
+    });
+    return JSON.stringify(items);
+  }
+  function ngramOverlap(a, b) {
+    const grams = (s) => {
+      const t = plainText(s).replace(/\s+/g, "");
+      const out = /* @__PURE__ */ new Set();
+      for (let i = 0; i + 1 < t.length; i++) out.add(t.slice(i, i + 2));
+      return out;
+    };
+    const ga = grams(a);
+    const gb = grams(b);
+    let hit = 0;
+    for (const g of ga) if (gb.has(g)) hit++;
+    return hit;
+  }
+  function cannedAdopt(prompt) {
+    const segs = [...prompt.matchAll(/^### s(\d+)：(.+)$/gm)].map((m) => ({ n: Number(m[1]), text: m[2] }));
+    const cands = [...prompt.matchAll(/^- c\d+：(.*?)（(.+?)）命中 (\d+) 次 · 最高分 ([\d.]+)｜片段 ([^\n]*)$/gm)].map((m) => {
+      var _a, _b;
+      return {
+        name: m[1].trim(),
+        path: m[2].trim(),
+        hits: Number(m[3]),
+        score: Number(m[4]),
+        segs: [...m[5].matchAll(/s(\d+)/g)].map((x) => Number(x[1])),
+        chunk: (_b = (_a = m[5].split("｜").pop()) == null ? void 0 : _a.trim()) != null ? _b : ""
+      };
+    });
+    const ranked = cands.slice().sort((a, b) => b.score - a.score || b.hits - a.hits || a.path.localeCompare(b.path));
+    const used = /* @__PURE__ */ new Set();
+    const out = [];
+    for (const c of ranked) {
+      if (out.length >= 3) break;
+      const pool = (c.segs.length ? c.segs : segs.map((s) => s.n)).filter((n) => !used.has(n));
+      if (!pool.length) continue;
+      let best = pool[0];
+      let bestHit = -1;
+      for (const n of pool) {
+        const seg = segs.find((s) => s.n === n);
+        if (!seg) continue;
+        const hit = ngramOverlap(seg.text, `${c.name} ${c.chunk}`);
+        if (hit > bestHit) {
+          bestHit = hit;
+          best = n;
+        }
+      }
+      used.add(best);
+      out.push({
+        seg: best,
+        path: c.path,
+        score: Math.min(0.95, Math.max(0.75, c.score)),
+        reason: `这一段与《${c.name}》讲的是同一件事（召回命中 ${c.hits} 次）`
+      });
+    }
+    return JSON.stringify(out.sort((a, b) => a.seg - b.seg));
+  }
+  function cannedLocate(prompt) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const parts = prompt.split(/^## n(\d+) · .*$/gm);
+    const out = [];
+    for (let i = 1; i < parts.length; i += 2) {
+      const n = Number(parts[i]);
+      const block = (_a = parts[i + 1]) != null ? _a : "";
+      const anchor = ((_c = (_b = /^主卡锚点原文：(.*)$/m.exec(block)) == null ? void 0 : _b[1]) != null ? _c : "").trim();
+      const body = (_d = block.split("### 目标笔记全文")[1]) != null ? _d : "";
+      const heading = ((_f = (_e = /^#{1,6}[ \t]+(.+)$/m.exec(body)) == null ? void 0 : _e[1]) != null ? _f : "").trim();
+      const para = ((_h = (_g = /^（\d+）(.+)$/m.exec(body)) == null ? void 0 : _g[1]) != null ? _h : "").trim();
+      const idx = out.length;
+      const unit = idx === 0 ? "whole" : heading ? "heading" : para ? "paragraph" : "whole";
+      out.push({
+        n,
+        unit,
+        heading: unit === "heading" ? heading : "",
+        quote: unit === "paragraph" ? para.slice(0, 60) : "",
+        anchor,
+        reason: unit === "heading" ? `只有「${heading}」这一节与主卡相关` : unit === "paragraph" ? "目标笔记里这一段与主卡直接呼应" : "整篇都与主卡同一主题",
+        skip: false
+      });
+    }
+    return JSON.stringify(out);
   }
   async function requestUrl(opts) {
     var _a, _b, _c, _d, _e, _f, _g;
@@ -4134,10 +4257,13 @@ var BZW_knowledge = (() => {
     } catch (e) {
     }
     let content;
+    const suggest = suggestCanned(prompt);
     const passage = /把下方这段文字整理成一篇文献笔记/.exec(prompt);
     const term = /为术语「([^」]+)」生成一篇文献笔记/.exec(prompt);
     const img = /看这张图片|看下面这 \d+ 张图片/.exec(prompt);
-    if (img) {
+    if (suggest !== null) {
+      content = suggest;
+    } else if (img) {
       const domains = /从以下领域选一个最贴近的：([^；」]+)/.exec(prompt);
       const domain = domains ? domains[1].split("、")[0] : "艺术";
       const multi = imgCount > 1;
@@ -4490,6 +4616,15 @@ var BZW_knowledge = (() => {
   }
   function getLinkBridge() {
     return _bridge;
+  }
+
+  // src/secondbrain/readonly.ts
+  var source = null;
+  function setVectorSearchSource(s) {
+    source = s;
+  }
+  function exportVectorSearch() {
+    return source;
   }
 
   // src/core/settings-provider.ts
@@ -5579,8 +5714,8 @@ var BZW_knowledge = (() => {
 
   // src/core/utils.ts
   var import_moment2 = __toESM(require_moment());
-  function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, (m) => {
+  function escapeHtml(str2) {
+    return str2.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
       if (m === "<") return "&lt;";
       if (m === ">") return "&gt;";
@@ -5658,9 +5793,9 @@ var BZW_knowledge = (() => {
     if (!f) return false;
     return path === f || path.startsWith(f + "/");
   }
-  function hash31(str) {
+  function hash31(str2) {
     let h = 0;
-    const t = String(str || "");
+    const t = String(str2 || "");
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return h >>> 0;
   }
@@ -8869,25 +9004,43 @@ ${sample}`,
     return out;
   }
 
-  // src/secondbrain/readonly.ts
-  var source = null;
-  function exportVectorSearch() {
-    return source;
-  }
-
   // src/knowledge/mount-suggest.ts
   var SUGGEST_MIN_SCORE = 0.7;
   var SUGGEST_MIN_ANCHOR_CHARS = 6;
   var SUGGEST_MAX_ANCHORS = 12;
   var SUGGEST_TOPK = 8;
-  var SUGGEST_PER_ANCHOR_CANDIDATES = 3;
-  var SUGGEST_MAX_CANDIDATES = 24;
+  var SUGGEST_POOL_SIZE = 10;
+  var SUGGEST_MAX_PER_TARGET = 2;
+  var SUGGEST_MAX_LOCATE_NOTES = 6;
+  var SUGGEST_LOCATE_TEXT_CAP = 8e3;
   var SUGGEST_JUDGE_MAX_TOKENS = 131072;
+  var SUGGEST_REASONING_EFFORT = "low";
   var REASON_MAX_CHARS = 80;
   var SUGGEST_CACHE_FILE = "mount-suggest.json";
-  var SUGGEST_CACHE_VERSION = 2;
+  var SUGGEST_CACHE_VERSION = 3;
   var HAS_MEANING_RE = /[\p{L}\p{N}]/u;
   var WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
+  var SUGGEST_EXCLUDE_DIRS = ["归档", "网页剪藏"];
+  var BLOCK_ID_PREFIX = "bz-";
+  function hash8(s) {
+    const h = hash31(String(s != null ? s : "")) >>> 0;
+    const hi = h >>> 16 & 65535;
+    const lo = h & 65535;
+    return hi.toString(36).padStart(4, "0") + lo.toString(36).padStart(4, "0");
+  }
+  function normLite(s) {
+    return String(s != null ? s : "").replace(/[*_`~#]/g, "").replace(/\s+/g, "").trim().toLowerCase();
+  }
+  function idPath(path) {
+    return String(path != null ? path : "").replace(/\\/g, "/").replace(/^\.\//, "").trim();
+  }
+  function subKeyOf(s) {
+    var _a, _b;
+    const sub = String((_a = s == null ? void 0 : s.subpath) != null ? _a : "").trim();
+    if (sub) return hash8(normLite(sub));
+    const q2 = String((_b = s == null ? void 0 : s.quote) != null ? _b : "").trim();
+    return q2 ? hash8(normLite(q2)) : "";
+  }
   function nextIsBoundary(text, i) {
     if (i >= text.length) return true;
     return /\s/.test(text[i]);
@@ -8896,11 +9049,23 @@ ${sample}`,
   function wikiDisplay(inner) {
     const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : inner;
     const afterBlock = afterAlias.includes("^") ? afterAlias.slice(0, afterAlias.indexOf("^")) : afterAlias;
-    const noHead = afterBlock.includes("#") ? afterBlock.slice(afterBlock.lastIndexOf("#") + 1) : afterBlock;
+    const noHead = afterBlock.includes("#") ? afterBlock.slice(0, afterBlock.lastIndexOf("#") + 1) : afterBlock;
     return noHead || afterAlias || inner;
   }
+  function stripUnclosedWiki(raw) {
+    let text = String(raw != null ? raw : "");
+    for (let guard = 0; guard < 8; guard++) {
+      const open = text.lastIndexOf("[[");
+      if (open < 0) break;
+      if (text.indexOf("]]", open) > open) break;
+      const inner = text.slice(open + 2);
+      const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : "";
+      text = text.slice(0, open) + afterAlias;
+    }
+    return text;
+  }
   function cleanAnchorText(raw) {
-    return raw.replace(/!\[\[[^\[\]]*\]\]/g, " ").replace(/\[\[([^\[\]]+)\]\]/g, (_m, inner) => wikiDisplay(inner)).replace(/`+/g, "").replace(/\*\*|__/g, "").replace(/\s+/g, " ").trim();
+    return stripUnclosedWiki(raw).replace(/!\[\[[^\[\]]*\]\]/g, " ").replace(/\[\[([^\[\]]+)\]\]/g, (_m, inner) => wikiDisplay(inner)).replace(/`+/g, "").replace(/\*\*|__/g, "").replace(/\s+/g, " ").trim();
   }
   function pushAnchor(out, text, from, to) {
     let s = from;
@@ -8942,20 +9107,36 @@ ${sample}`,
   }
   function suggestKey(s) {
     var _a;
-    return normalizeAnchorText((_a = s.anchor) == null ? void 0 : _a.text) + "\0" + normalizeTargetPath(s.target);
+    const sub = subKeyOf(s);
+    return normalizeAnchorText((_a = s.anchor) == null ? void 0 : _a.text) + "\0" + normalizeTargetPath(s.target) + (sub ? "#" + sub : "");
   }
-  function matchesExisting(target, existing) {
+  function suggestionId(s) {
+    const sub = subKeyOf(s);
+    return `ai:${idPath(s == null ? void 0 : s.target)}${sub ? "#" + sub : ""}`;
+  }
+  function parseExistingLink(raw) {
+    const s = String(raw != null ? raw : "").trim();
+    const hash = s.indexOf("#");
+    if (hash < 0) return { path: s, subpath: null };
+    return { path: s.slice(0, hash), subpath: s.slice(hash + 1).trim() || null };
+  }
+  function matchesExisting(target, subpath, existing) {
     const t = normalizeTargetPath(target);
     if (!t) return false;
     const tBase = t.includes("/") ? t.slice(t.lastIndexOf("/") + 1) : t;
-    for (const raw of existing) {
-      const e = normalizeTargetPath(raw);
-      if (!e) continue;
-      if (e === t || e === tBase) return true;
+    const sub = String(subpath != null ? subpath : "").trim().toLowerCase();
+    for (const raw of existing || []) {
+      const e = parseExistingLink(raw);
+      const ep = normalizeTargetPath(e.path);
+      if (!ep) continue;
+      if (ep !== t && ep !== tBase) continue;
+      if (!e.subpath) return true;
+      if (sub && e.subpath.toLowerCase() === sub) return true;
     }
     return false;
   }
   function filterSuggestions(list, opts) {
+    var _a;
     const dismissed = new Set(((opts == null ? void 0 : opts.dismissed) || []).map((k) => String(k).trim().toLowerCase()));
     const existing = (opts == null ? void 0 : opts.existing) || [];
     const minScore = Number.isFinite(opts == null ? void 0 : opts.minScore) ? Number(opts == null ? void 0 : opts.minScore) : SUGGEST_MIN_SCORE;
@@ -8967,7 +9148,7 @@ ${sample}`,
       if (!(Number(s.score) >= minScore)) continue;
       const key2 = suggestKey(s);
       if (dismissed.has(key2) || seen.has(key2)) continue;
-      if (existing.length > 0 && matchesExisting(s.target, existing)) continue;
+      if (existing.length > 0 && matchesExisting(s.target, (_a = s.subpath) != null ? _a : null, existing)) continue;
       seen.add(key2);
       out.push(s);
     }
@@ -9031,9 +9212,31 @@ ${sample}`,
   function stripFrontmatter2(content) {
     return String(content != null ? content : "").replace(/^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, "");
   }
-  function kindOfTarget(path, ctx) {
+  async function readNoteText(app, path) {
+    var _a, _b, _c;
+    try {
+      const file = (_b = (_a = app == null ? void 0 : app.vault) == null ? void 0 : _a.getAbstractFileByPath) == null ? void 0 : _b.call(_a, path);
+      if (!file) return null;
+      return String((_c = await app.vault.read(file)) != null ? _c : "");
+    } catch (e) {
+      return null;
+    }
+  }
+  function inRecallScope(path) {
+    const p = idPath(path);
+    if (!p) return false;
+    for (const dir of SUGGEST_EXCLUDE_DIRS) {
+      const d = idPath(dir);
+      if (!d) continue;
+      if (p === d || p.startsWith(d + "/")) return false;
+    }
+    return true;
+  }
+  function kindOfTarget(path, ctx, unit) {
+    if (unit === "heading") return "head";
+    if (unit === "paragraph") return "para";
     if (isUnderFolder((ctx == null ? void 0 : ctx.cardboxDir) || "", path)) return "card";
-    if (isUnderFolder((ctx == null ? void 0 : ctx.litDir) || "", path)) return "para";
+    if ((ctx == null ? void 0 : ctx.topicDir) && isUnderFolder(ctx.topicDir, path)) return "note";
     return "note";
   }
   function displayName(path) {
@@ -9046,32 +9249,297 @@ ${sample}`,
     WIKILINK_RE.lastIndex = 0;
     let m;
     while ((m = WIKILINK_RE.exec(text)) !== null) {
-      const target = m[1].split("|")[0].split("#")[0].trim();
+      const target = m[1].split("|")[0].trim();
       if (target) out.push(target);
     }
     return out;
   }
-  var JUDGE_PROMPT_PREFIX = [
-    "你是卡片盒挂载树的建议裁判。给定一张主卡正文里的若干锚点（词/句），以及每个锚点经向量召回得到的候选目标，",
-    "逐一判断「锚点」与「候选目标」是否存在实质知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。",
-    "标准：只推实质关联，弱关联（仅任务级/提及级）不推，存疑不推；宁缺勿滥。",
-    '输出要求：严格 JSON 数组 [{"anchor":<锚点编号>,"target":<候选编号>,"score":<0到1的关联分>,"reason":"一句话理由"}]，按关联强度降序；',
-    `分数低于 ${SUGGEST_MIN_SCORE} 的一律不要输出；无关联输出 []；不要输出 JSON 以外的任何文字。`
-  ].join("");
-  function buildJudgePrompt(anchors, candidates) {
-    const lines = [JUDGE_PROMPT_PREFIX, "", "## 锚点与候选"];
-    for (let i = 0; i < anchors.length; i++) {
-      lines.push(`### a${i + 1}：${anchors[i].text}`);
-      const group = candidates.filter((c) => c.anchorIdx === i);
-      if (group.length === 0) {
-        lines.push("-（无候选）");
+  function flattenForMatch(text) {
+    const flat = [];
+    const map = [];
+    let i = 0;
+    const src = String(text != null ? text : "");
+    while (i < src.length) {
+      const ch = src[i];
+      if (/\s/.test(ch)) {
+        i++;
         continue;
       }
-      for (const c of group) {
-        const snippet = c.snippet ? "｜" + c.snippet.replace(/\s+/g, " ") : "";
-        lines.push(`- t${c.localIdx + 1}：${displayName(c.path)}（${c.path}）${snippet}`);
+      if (ch === "*" || ch === "_" || ch === "`" || ch === "~" || ch === ">" || ch === "|") {
+        i++;
+        continue;
+      }
+      if (ch === "…" || ch === "." && src.slice(i, i + 3) === "...") {
+        i += ch === "…" ? 1 : 3;
+        continue;
+      }
+      flat.push(ch.toLowerCase());
+      map.push(i);
+      i++;
+    }
+    return { flat: flat.join(""), map };
+  }
+  function keywordsOf(s) {
+    const text = String(s != null ? s : "");
+    const words = [...text.matchAll(/[\p{L}\p{N}]+/gu)].map((m) => m[0].toLowerCase());
+    const out = [];
+    for (const w of words) {
+      if (/[\p{Script=Han}]/u.test(w)) {
+        if (w.length <= 2) out.push(w);
+        else for (let i = 0; i + 2 <= w.length; i++) out.push(w.slice(i, i + 2));
+      } else if (w.length >= 2) out.push(w);
+    }
+    return out.slice(0, 24);
+  }
+  function locateInText(text, needle, from = 0) {
+    const src = String(text != null ? text : "");
+    const want = String(needle != null ? needle : "").trim();
+    if (!src || !want) return null;
+    const start = Math.max(0, Math.min(Number(from) || 0, src.length));
+    const exact = src.indexOf(want, start);
+    if (exact >= 0) return { at: exact, len: want.length, level: 1 };
+    const tail = src.slice(start);
+    const { flat, map } = flattenForMatch(tail);
+    const flatWant = flattenForMatch(want).flat;
+    if (flatWant) {
+      const hit = flat.indexOf(flatWant);
+      if (hit >= 0 && map[hit] !== void 0) {
+        const at = start + map[hit];
+        const endIdx = hit + flatWant.length - 1;
+        const end = map[endIdx] !== void 0 ? start + map[endIdx] + 1 : src.length;
+        return { at, len: Math.max(1, end - at), level: 2 };
       }
     }
+    const kws = keywordsOf(want);
+    if (kws.length === 0) return null;
+    const need = Math.max(1, Math.ceil(kws.length / 2));
+    let best = null;
+    const blockRe = /[^\n][\s\S]*?(?=\n\s*\n|$)/g;
+    let m;
+    while ((m = blockRe.exec(tail)) !== null) {
+      const raw = m[0];
+      if (!raw.trim()) continue;
+      const flatBlock = flattenForMatch(raw).flat;
+      let score = 0;
+      for (const k of kws) if (flatBlock.includes(k)) score++;
+      if (score < need) continue;
+      const lead = raw.length - raw.trimStart().length;
+      const at = start + m.index + lead;
+      const len = raw.trimEnd().length - lead;
+      if (!best || score > best.score) best = { at, len, score };
+    }
+    if (!best) return null;
+    return { at: best.at, len: best.len, level: 3 };
+  }
+  function expandBlock(text, at, len) {
+    const src = String(text != null ? text : "");
+    let s = Math.max(0, Math.min(Number(at) || 0, src.length));
+    let e = Math.max(s, Math.min(src.length, s + Math.max(0, Number(len) || 0)));
+    const lb = src.slice(0, s).search(/\n[ \t]*\n[^\n]*$/);
+    s = lb >= 0 ? lb + 1 : 0;
+    const nb = src.slice(e).search(/\n[ \t]*\n/);
+    e = nb >= 0 ? e + nb : src.length;
+    while (s < e && /\s/.test(src[s])) s++;
+    while (e > s && /\s/.test(src[e - 1])) e--;
+    return { at: s, len: Math.max(0, e - s) };
+  }
+  function findHeadingText(content, heading) {
+    const want = String(heading != null ? heading : "").trim();
+    if (!want) return null;
+    const wantKey = normLite(want);
+    for (const line of String(content != null ? content : "").split(/\r?\n/)) {
+      const m = /^(#{1,6})[ \t]+(.*)$/.exec(line);
+      if (!m) continue;
+      const text = m[2].trim();
+      if (!text) continue;
+      if (text === want || normLite(text) === wantKey) return text;
+    }
+    return null;
+  }
+  function sliceHeadingSection(content, headingText) {
+    const src = String(content != null ? content : "");
+    const lines = src.split(/\r?\n/);
+    let start = -1;
+    let level = 6;
+    for (let i = 0; i < lines.length; i++) {
+      const m = /^(#{1,6})[ \t]+(.*)$/.exec(lines[i]);
+      if (!m) continue;
+      if (m[2].trim() !== headingText) continue;
+      start = i;
+      level = m[1].length;
+      break;
+    }
+    if (start < 0) return src.trim();
+    let end = lines.length;
+    for (let i = start + 1; i < lines.length; i++) {
+      const m = /^(#{1,6})[ \t]+/.exec(lines[i]);
+      if (m && m[1].length <= level) {
+        end = i;
+        break;
+      }
+    }
+    return lines.slice(start, end).join("\n").trim();
+  }
+  function sliceUnitText(content, s) {
+    var _a, _b;
+    const text = stripFrontmatter2(content).trim();
+    if (!text) return "";
+    const unit = (s == null ? void 0 : s.unit) === "heading" || (s == null ? void 0 : s.unit) === "paragraph" ? s.unit : "whole";
+    if (unit === "heading") {
+      const real = findHeadingText(text, String((_a = s == null ? void 0 : s.heading) != null ? _a : ""));
+      if (!real) return text;
+      return sliceHeadingSection(text, real);
+    }
+    if (unit === "paragraph") {
+      const hit = String((_b = s == null ? void 0 : s.quote) != null ? _b : "").trim() ? locateInText(text, String(s.quote)) : null;
+      if (!hit) return text;
+      const block = expandBlock(text, hit.at, hit.len);
+      return text.slice(block.at, block.at + block.len).trim();
+    }
+    return text;
+  }
+  async function suggestionUnitMarkdown(app, s) {
+    var _a;
+    const reason = String((_a = s == null ? void 0 : s.reason) != null ? _a : "").trim() || "AI 建议：这张卡与主卡有实质关联。";
+    const head = `> ${reason}`;
+    const content = await readNoteText(app, s == null ? void 0 : s.target);
+    if (content === null) return head;
+    const unit = sliceUnitText(content, s);
+    return unit ? `${head}
+
+${unit}` : head;
+  }
+  function blockIdFor(path, blockText) {
+    return BLOCK_ID_PREFIX + hash8(`${idPath(path)}
+${String(blockText != null ? blockText : "").trim()}`);
+  }
+  async function ensureSuggestionBlockId(app, targetPath, quote) {
+    const path = idPath(targetPath);
+    if (!path || !String(quote != null ? quote : "").trim()) return { blockId: "", ok: false };
+    try {
+      return await enqueueFileTask(path, async () => {
+        var _a, _b, _c;
+        const file = (_b = (_a = app == null ? void 0 : app.vault) == null ? void 0 : _a.getAbstractFileByPath) == null ? void 0 : _b.call(_a, path);
+        if (!file) return { blockId: "", ok: false };
+        const text = String((_c = await app.vault.read(file)) != null ? _c : "");
+        const hit = locateInText(text, quote);
+        if (!hit) return { blockId: "", ok: false };
+        const block = expandBlock(text, hit.at, hit.len);
+        const blockText = text.slice(block.at, block.at + block.len);
+        const existing = /\^([A-Za-z0-9-]+)\s*$/.exec(blockText);
+        if (existing && existing[1].startsWith(BLOCK_ID_PREFIX)) return { blockId: existing[1], ok: true };
+        const blockId = blockIdFor(path, blockText.replace(/\^([A-Za-z0-9-]+)\s*$/, "").trim());
+        const trimmed = blockText.replace(/\s+$/, "");
+        const next = text.slice(0, block.at) + `${trimmed} ^${blockId}` + text.slice(block.at + block.len);
+        if (next !== text) await app.vault.modify(file, next);
+        return { blockId, ok: true };
+      });
+    } catch (e) {
+      console.warn("[mount-suggest] 补写块 id 失败", e);
+      return { blockId: "", ok: false };
+    }
+  }
+  function suggestionSubpath(s) {
+    var _a;
+    const sub = String((_a = s == null ? void 0 : s.subpath) != null ? _a : "").trim();
+    if (!sub) return "";
+    return (s == null ? void 0 : s.unit) === "paragraph" ? sub.startsWith("^") ? sub : `^${sub}` : sub;
+  }
+  function suggestionLink(s) {
+    const core = idPath(s == null ? void 0 : s.target).replace(/\.md$/i, "");
+    if (!core) return "";
+    const sub = suggestionSubpath(s);
+    return sub ? `[[${core}#${sub}]]` : `[[${core}]]`;
+  }
+  function suggestionLinkTarget(s) {
+    return suggestionLink(s).replace(/^\[\[/, "").replace(/\]\]$/, "");
+  }
+  function replaceAnchorWithAlias(body, anchor, target, subpath) {
+    var _a;
+    const src = String(body != null ? body : "");
+    const text = String((_a = anchor == null ? void 0 : anchor.text) != null ? _a : "").trim();
+    const core = idPath(target).replace(/\.md$/i, "");
+    if (!src || !text || !core) return null;
+    if (src.includes(`[[${core}`)) return src;
+    const hit = locateInText(src, text);
+    if (!hit) return null;
+    if (hit.level === 3) return null;
+    if (/\[\[|\]\]/.test(src.slice(hit.at, hit.at + hit.len))) return null;
+    const link = subpath ? `[[${core}#${subpath}|${text}]]` : `[[${core}|${text}]]`;
+    return src.slice(0, hit.at) + link + src.slice(hit.at + hit.len);
+  }
+  var QUERY_PROMPT_PREFIX = [
+    "你是卡片盒挂载树的检索查询官。给定一张主卡正文里带编号的若干片段，为**每个片段**生成两条检索查询：",
+    "1) sentence：把该片段改写成一句 20–40 字的完整短句（保留原意与关键术语，用于语义向量召回——",
+    "   关键词堆在向量查询侧会失配，召回质量差）；",
+    "2) keywords：该片段的 3–6 个检索关键词（空格分隔，不要写句子）。",
+    '输出要求：严格 JSON 数组 [{"seg":<片段编号>,"sentence":"…","keywords":"…","why":"一句话说明该片段在讲什么"}]，',
+    "按片段编号升序；不要输出 JSON 以外的任何文字。"
+  ].join("");
+  function buildQueryPrompt(anchors) {
+    const lines = [QUERY_PROMPT_PREFIX, "", "## 主卡正文片段"];
+    anchors.forEach((a, i) => lines.push(`### s${i + 1}：${a.text}`));
+    return lines.join("\n");
+  }
+  var ADOPT_PROMPT_PREFIX = [
+    "你是卡片盒挂载树的采纳官。给定主卡正文里带编号的片段，以及每个片段经检索召回的候选笔记",
+    "（名称 / 路径 / 命中次数 / 最高分 / 命中块摘要），判断「片段」与「候选笔记」是否存在实质知识关联",
+    "（共同主题、直接引用、同一事件或人物、强互补上下文）。",
+    "标准：只推实质关联，弱关联（仅任务级/提及级）不推，存疑不推；宁缺勿滥。",
+    "重要：下一轮还有定位官会**现读候选全文**复核，并且**可以否决**你选的配对——只要整体相关就选，",
+    "不要为了自洽硬凑，也不要因为看不到全文就放弃。",
+    `同一目标笔记最多选 ${SUGGEST_MAX_PER_TARGET} 条；关联分低于 ${SUGGEST_MIN_SCORE} 的一律不输出。`,
+    '输出要求：严格 JSON 数组 [{"seg":<片段编号>,"path":"<候选路径原文>","score":<0到1>,"reason":"一句话理由"}]，',
+    "按关联强度降序；确实没有关联就输出 []；不要输出 JSON 以外的任何文字。"
+  ].join("");
+  function buildAdoptPrompt(segs, pool) {
+    const lines = [ADOPT_PROMPT_PREFIX, "", "## 主卡正文片段"];
+    segs.forEach((a, i) => lines.push(`### s${i + 1}：${a.text}`));
+    lines.push("", "## 候选笔记（检索召回池）");
+    pool.forEach((c, i) => {
+      const snippet = c.snippet ? "｜" + c.snippet.replace(/\s+/g, " ") : "";
+      lines.push(
+        `- c${i + 1}：${displayName(c.path)}（${c.path}）命中 ${c.hitCount} 次 · 最高分 ${c.maxScore.toFixed(3)}｜片段 ${c.segs.map((s) => "s" + (s + 1)).join("/")}${snippet}`
+      );
+    });
+    return lines.join("\n");
+  }
+  var LOCATE_PROMPT_PREFIX = [
+    "你是卡片盒挂载树的定位官。上一轮采纳官已选出若干「主卡片段 → 目标笔记」配对，现在**现读目标笔记全文**，",
+    "为每条配对决定挂载粒度与锚定位置：",
+    '- unit="whole"：整篇都相关（理由里说清为什么整篇相关）；',
+    '- unit="heading"：只有某个标题下的小节相关 → heading 填**该小节标题的原文**（逐字，不得改写）；',
+    '- unit="paragraph"：只有某一段相关 → quote 填**该段原文摘录**（逐字，20–80 字，不得改写、不得加省略号、',
+    "  不要把表格行改写成空格分隔）；",
+    "- skip=true：其实不相关，否决这条（宁可少推，也不要泛泛的链接）。",
+    "anchor 填**主卡正文里的锚点原文**（逐字摘录自该片段，不要改写、不要加引号、不要加省略号）。",
+    '输出要求：严格 JSON 数组 [{"n":<配对编号>,"unit":"whole|heading|paragraph","heading":"…","quote":"…",',
+    '"anchor":"…","reason":"一句话理由","skip":false}]，按配对编号升序；全部否决输出 []；',
+    "不要输出 JSON 以外的任何文字。"
+  ].join("");
+  function outlineForLocate(content) {
+    const body = stripFrontmatter2(content);
+    const out = [];
+    let p = 0;
+    for (const line of body.split(/\r?\n/)) {
+      if (/^#{1,6}[ \t]+/.test(line)) {
+        out.push(line);
+        continue;
+      }
+      if (!line.trim()) continue;
+      p++;
+      out.push(`（${p}）${line}`);
+    }
+    const text = out.join("\n");
+    return text.length > SUGGEST_LOCATE_TEXT_CAP ? text.slice(0, SUGGEST_LOCATE_TEXT_CAP) + "\n…（后文略）" : text;
+  }
+  function buildLocatePrompt(items) {
+    const lines = [LOCATE_PROMPT_PREFIX, ""];
+    items.forEach((it, i) => {
+      lines.push(`## n${i + 1} · ${it.path}`);
+      lines.push(`主卡锚点原文：${it.anchor.text}`);
+      lines.push("", "### 目标笔记全文", outlineForLocate(it.content), "");
+    });
     return lines.join("\n");
   }
   function pickIndex(v) {
@@ -9093,7 +9561,7 @@ ${sample}`,
     }
     if (!value || typeof value !== "object") return null;
     const obj = value;
-    for (const key2 of ["suggestions", "picks", "result", "items", "data", "list", "content"]) {
+    for (const key2 of ["suggestions", "picks", "result", "items", "data", "list", "queries", "content"]) {
       const hit = digArray(obj[key2], depth + 1);
       if (hit) return hit;
     }
@@ -9103,10 +9571,9 @@ ${sample}`,
     }
     return null;
   }
-  function parseJudgePicks(raw) {
-    var _a;
+  function takeArray(raw) {
     const text = String(raw != null ? raw : "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
-    if (!text) return { found: false, count: 0, picks: [] };
+    if (!text) return null;
     let value = null;
     try {
       value = JSON.parse(text);
@@ -9120,28 +9587,191 @@ ${sample}`,
         }
       }
     }
-    const arr = digArray(value);
-    if (!arr) return { found: false, count: 0, picks: [] };
+    return digArray(value);
+  }
+  function str(v, cap = 0) {
+    const s = String(v != null ? v : "").replace(/\s+/g, " ").trim();
+    return cap > 0 ? s.slice(0, cap) : s;
+  }
+  function bool(v) {
+    if (typeof v === "boolean") return v;
+    if (typeof v === "number") return v !== 0;
+    return /^(true|yes|y|是|1)$/i.test(String(v != null ? v : "").trim());
+  }
+  function parseQueryList(raw) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const arr = takeArray(raw);
+    if (!arr) return { found: false, count: 0, items: [] };
     const out = [];
     for (const item of arr) {
       if (!item || typeof item !== "object") continue;
       const it = item;
-      const anchor = pickIndex(it.anchor);
-      const target = pickIndex(it.target);
-      const score = Number(it.score);
-      if (!Number.isInteger(anchor) || !Number.isInteger(target) || !Number.isFinite(score)) continue;
+      const seg = pickIndex((_c = (_b = (_a = it.seg) != null ? _a : it.segment) != null ? _b : it.n) != null ? _c : it.anchor);
+      const sentence = str((_e = (_d = it.sentence) != null ? _d : it.query) != null ? _e : it.q);
+      const keywords = str((_h = (_g = (_f = it.keywords) != null ? _f : it.keyword) != null ? _g : it.terms) != null ? _h : it.kw);
+      if (!Number.isInteger(seg) || !sentence && !keywords) continue;
+      out.push({ seg, sentence: sentence || keywords, keywords: keywords || sentence, why: str(it.why, REASON_MAX_CHARS) });
+    }
+    return { found: true, count: arr.length, items: out };
+  }
+  function parseAdoptPicks(raw) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const arr = takeArray(raw);
+    if (!arr) return { found: false, count: 0, items: [] };
+    const out = [];
+    for (const item of arr) {
+      if (!item || typeof item !== "object") continue;
+      const it = item;
+      const seg = pickIndex((_c = (_b = (_a = it.seg) != null ? _a : it.segment) != null ? _b : it.n) != null ? _c : it.anchor);
+      const path = str((_f = (_e = (_d = it.path) != null ? _d : it.target) != null ? _e : it.note) != null ? _f : it.file);
+      const score = Number((_h = (_g = it.score) != null ? _g : it.s) != null ? _h : it.confidence);
+      if (!Number.isInteger(seg) || !path || !Number.isFinite(score)) continue;
+      out.push({ seg, path, score: Math.max(0, Math.min(1, score)), reason: str(it.reason, REASON_MAX_CHARS) });
+    }
+    return { found: true, count: arr.length, items: out };
+  }
+  function normalizeUnit(v) {
+    const s = String(v != null ? v : "").trim().toLowerCase();
+    if (!s) return "";
+    if (/^(whole|all|note|整篇|全文|整篇笔记)$/.test(s)) return "whole";
+    if (/^(heading|head|headline|section|h[1-6]?|标题|小节)$/.test(s)) return "heading";
+    if (/^(paragraph|para|block|quote|passage|段落|段)$/.test(s)) return "paragraph";
+    if (/^(skip|none|null|否决|不相关)$/.test(s)) return "skip";
+    return "";
+  }
+  function parseLocatePicks(raw) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+    const arr = takeArray(raw);
+    if (!arr) return { found: false, count: 0, items: [] };
+    const out = [];
+    for (const item of arr) {
+      if (!item || typeof item !== "object") continue;
+      const it = item;
+      const n = pickIndex((_d = (_c = (_b = (_a = it.n) != null ? _a : it.seg) != null ? _b : it.index) != null ? _c : it.i) != null ? _d : it.pair);
+      if (!Number.isInteger(n)) continue;
+      const rawUnit = normalizeUnit((_f = (_e = it.unit) != null ? _e : it.type) != null ? _f : it.level);
+      const skip = bool((_h = (_g = it.skip) != null ? _g : it.reject) != null ? _h : it.veto) || rawUnit === "skip";
+      const unit = rawUnit === "" || rawUnit === "skip" ? "whole" : rawUnit;
       out.push({
-        anchor,
-        target,
-        score: Math.max(0, Math.min(1, score)),
-        reason: String((_a = it.reason) != null ? _a : "").replace(/\s+/g, " ").trim().slice(0, REASON_MAX_CHARS)
+        n,
+        skip,
+        unit,
+        heading: str((_j = (_i = it.heading) != null ? _i : it.title) != null ? _j : it.section),
+        quote: str((_l = (_k = it.quote) != null ? _k : it.excerpt) != null ? _l : it.text),
+        anchor: str(it.anchor),
+        reason: str(it.reason, REASON_MAX_CHARS)
       });
     }
-    return { found: true, count: arr.length, picks: out };
+    return { found: true, count: arr.length, items: out };
+  }
+  function aggregatePool(hits, opts) {
+    var _a, _b, _c, _d;
+    const limit = Number.isFinite(opts == null ? void 0 : opts.limit) ? Math.max(1, Number(opts == null ? void 0 : opts.limit)) : SUGGEST_POOL_SIZE;
+    const selfKey = normalizeTargetPath((opts == null ? void 0 : opts.selfPath) || "");
+    const byPath = /* @__PURE__ */ new Map();
+    const seenQuery = /* @__PURE__ */ new Map();
+    for (const h of hits || []) {
+      const p = String((_a = h == null ? void 0 : h.path) != null ? _a : "").trim();
+      if (!p) continue;
+      const key2 = normalizeTargetPath(p);
+      if (!key2 || key2 === selfKey) continue;
+      if (!inRecallScope(p)) continue;
+      let entry = byPath.get(key2);
+      if (!entry) {
+        entry = { path: p, hitCount: 0, maxScore: 0, snippet: "", segs: [] };
+        byPath.set(key2, entry);
+        seenQuery.set(key2, /* @__PURE__ */ new Set());
+      }
+      const qk = `${(_b = h == null ? void 0 : h.seg) != null ? _b : -1}\0${String((_c = h == null ? void 0 : h.query) != null ? _c : "")}`;
+      const qs = seenQuery.get(key2);
+      if (!qs.has(qk)) {
+        qs.add(qk);
+        entry.hitCount++;
+      }
+      const score = Number(h == null ? void 0 : h.score);
+      if (Number.isFinite(score) && score > entry.maxScore) {
+        entry.maxScore = score;
+        entry.snippet = String((_d = h == null ? void 0 : h.chunk) != null ? _d : "").slice(0, 200);
+      }
+      if (Number.isInteger(h == null ? void 0 : h.seg) && !entry.segs.includes(h.seg)) entry.segs.push(h.seg);
+    }
+    const all = [...byPath.values()];
+    for (const e of all) e.segs.sort((a, b) => a - b);
+    const ranked = all.slice().sort((a, b) => b.hitCount - a.hitCount || b.maxScore - a.maxScore);
+    const out = [];
+    const taken = /* @__PURE__ */ new Set();
+    const segBest = /* @__PURE__ */ new Map();
+    for (const e of ranked) {
+      for (const seg of e.segs) {
+        const cur = segBest.get(seg);
+        if (!cur || e.maxScore > cur.maxScore) segBest.set(seg, e);
+      }
+    }
+    for (const e of ranked) {
+      if (!e.segs.some((seg) => segBest.get(seg) === e)) continue;
+      const key2 = normalizeTargetPath(e.path);
+      if (taken.has(key2)) continue;
+      taken.add(key2);
+      out.push(e);
+      if (out.length >= limit) return out;
+    }
+    for (const e of ranked) {
+      const key2 = normalizeTargetPath(e.path);
+      if (taken.has(key2)) continue;
+      taken.add(key2);
+      out.push(e);
+      if (out.length >= limit) break;
+    }
+    return out;
+  }
+  var STAGE_LABEL = {
+    query: "查询官：为正文片段生成检索查询",
+    recall: "检索：召回候选笔记",
+    adopt: "采纳官：判断片段与候选的关联",
+    locate: "定位官：现读全文定粒度",
+    save: "落缓存"
+  };
+  var STAGE_PERCENT = {
+    query: 15,
+    recall: 40,
+    adopt: 65,
+    locate: 90,
+    save: 100
+  };
+  function suggestProgressLabel(p) {
+    var _a;
+    const base = (_a = STAGE_LABEL[p == null ? void 0 : p.stage]) != null ? _a : "";
+    const total = Number(p == null ? void 0 : p.total);
+    const done = Number(p == null ? void 0 : p.done);
+    const tail = Number.isFinite(total) && total > 0 && Number.isFinite(done) ? `（${done}/${total}）` : "";
+    return base + tail;
+  }
+  function suggestProgressPercent(p) {
+    var _a;
+    const base = (_a = STAGE_PERCENT[p == null ? void 0 : p.stage]) != null ? _a : 0;
+    const total = Number(p == null ? void 0 : p.total);
+    const done = Number(p == null ? void 0 : p.done);
+    if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(done)) return base;
+    const prev = p.stage === "recall" ? STAGE_PERCENT.query : p.stage === "locate" ? STAGE_PERCENT.adopt : base;
+    return Math.round(prev + (base - prev) * Math.min(1, Math.max(0, done / total)));
+  }
+  function aiPrompt(text) {
+    return createAI().prompt(text, void 0, {
+      modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS, reasoning_effort: SUGGEST_REASONING_EFFORT }
+    });
   }
   async function generateSuggestions(cardPath, ctx, opts) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e, _f, _g;
     const empty = (status) => ({ status, suggestions: [] });
+    const tell = (stage, done, total) => {
+      var _a2;
+      const p = { stage, label: "", done, total };
+      p.label = suggestProgressLabel(p);
+      try {
+        (_a2 = opts == null ? void 0 : opts.onProgress) == null ? void 0 : _a2.call(opts, p);
+      } catch (e) {
+      }
+    };
     if (isMobileEnv()) return empty("no-index");
     const searchApi = exportVectorSearch();
     if (!searchApi || !searchApi.isIndexReady()) return empty("no-index");
@@ -9183,73 +9813,184 @@ ${sample}`,
     }
     const dismissedSet = new Set(dismissed);
     const fixedSet = new Set(collectFixedKeys(entry));
-    const candidates = [];
-    const seenPair = /* @__PURE__ */ new Set();
+    tell("query", 0, anchors.length);
+    const queries = anchors.map((a) => [a.text]);
+    try {
+      const raw = await aiPrompt(buildQueryPrompt(anchors));
+      const parsed = parseQueryList(raw);
+      if (parsed.found) {
+        for (const it of parsed.items) {
+          const i = it.seg - 1;
+          if (i < 0 || i >= anchors.length) continue;
+          const pair = [it.sentence, it.keywords].filter((s) => String(s != null ? s : "").trim());
+          if (pair.length) queries[i] = pair;
+        }
+      } else {
+        console.warn("[mount-suggest] 查询官回答不可用，退回机械分句当查询");
+      }
+    } catch (e) {
+      console.warn("[mount-suggest] 查询官失败，退回机械分句当查询", e);
+    }
+    tell("query", anchors.length, anchors.length);
+    const recallTotal = queries.reduce((n, q2) => n + q2.length, 0);
+    let recallDone = 0;
+    const hits = [];
     let searchFailed = false;
-    outer: for (let i = 0; i < anchors.length; i++) {
-      let hits = [];
-      try {
-        hits = await searchApi.search(anchors[i].text, SUGGEST_TOPK) || [];
-      } catch (e) {
-        console.warn("[mount-suggest] 向量检索失败，按降级处理", e);
-        searchFailed = true;
-        break;
+    for (let i = 0; i < queries.length; i++) {
+      for (const q2 of queries[i]) {
+        try {
+          const got = await searchApi.search(q2, SUGGEST_TOPK) || [];
+          for (const h of got) {
+            if (!h || !h.path) continue;
+            hits.push({ seg: i, query: q2, path: h.path, score: Number(h.score) || 0, chunk: String(h.chunk || "") });
+          }
+        } catch (e) {
+          console.warn("[mount-suggest] 向量检索失败，按降级处理", e);
+          searchFailed = true;
+          break;
+        }
+        recallDone++;
+        tell("recall", recallDone, recallTotal);
       }
-      let local = 0;
-      for (const hit of hits) {
-        if (!hit || !hit.path || hit.path === cardPath) continue;
-        const pairKey = suggestKey({ anchor: anchors[i], target: hit.path });
-        if (dismissedSet.has(pairKey) || fixedSet.has(pairKey)) continue;
-        if (matchesExisting(hit.path, existing)) continue;
-        if (seenPair.has(pairKey)) continue;
-        if (!ctx.app.vault.getAbstractFileByPath(hit.path)) continue;
-        seenPair.add(pairKey);
-        candidates.push({
-          anchorIdx: i,
-          localIdx: local,
-          path: hit.path,
-          kind: kindOfTarget(hit.path, ctx),
-          snippet: String(hit.chunk || "").slice(0, 200)
-        });
-        local++;
-        if (local >= SUGGEST_PER_ANCHOR_CANDIDATES) break;
-        if (candidates.length >= SUGGEST_MAX_CANDIDATES) break outer;
-      }
+      if (searchFailed) break;
     }
     if (searchFailed) return empty("no-index");
-    if (candidates.length === 0) {
+    const pool = aggregatePool(hits, { selfPath: cardPath, limit: SUGGEST_POOL_SIZE }).filter((c) => {
+      if (!ctx.app.vault.getAbstractFileByPath(c.path)) return false;
+      return !matchesExisting(c.path, null, existing);
+    });
+    if (pool.length === 0) {
       const generatedAt2 = Date.now();
       await persistCardCache(cardPath, bodyHash, generatedAt2, []);
       return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
     }
-    let raw = "";
+    tell("adopt");
+    let rawAdopt = "";
     try {
-      raw = await createAI().prompt(buildJudgePrompt(anchors, candidates), void 0, {
-        modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS }
-      });
+      rawAdopt = await aiPrompt(buildAdoptPrompt(anchors, pool));
     } catch (e) {
-      console.warn("[mount-suggest] AI 裁判失败", e);
+      console.warn("[mount-suggest] 采纳官失败", e);
       return empty("no-ai");
     }
-    const parsed = parseJudgePicks(raw);
-    if (!parsed.found || parsed.count > 0 && parsed.picks.length === 0) {
+    const adoptedParsed = parseAdoptPicks(rawAdopt);
+    if (!adoptedParsed.found || adoptedParsed.count > 0 && adoptedParsed.items.length === 0) {
       console.warn(
-        `[mount-suggest] 裁判回答不可用（${raw ? `${raw.length} 字` : "空"}，数组 ${parsed.count} 条）：${String(raw).slice(0, 120)}`
+        `[mount-suggest] 采纳官回答不可用（${rawAdopt ? `${rawAdopt.length} 字` : "空"}，数组 ${adoptedParsed.count} 条）：${String(
+          rawAdopt
+        ).slice(0, 120)}`
       );
       return empty("no-answer");
     }
-    const judged = [];
-    for (const pick of parsed.picks) {
-      if (pick.score < SUGGEST_MIN_SCORE) continue;
-      const a = anchors[pick.anchor - 1];
-      const c = candidates.find((it) => it.anchorIdx === pick.anchor - 1 && it.localIdx === pick.target - 1);
-      if (!a || !c) continue;
-      judged.push({ anchor: { ...a }, target: c.path, kind: c.kind, reason: pick.reason, score: pick.score, state: "pending" });
+    const pathToEntry = /* @__PURE__ */ new Map();
+    for (const c of pool) {
+      pathToEntry.set(normalizeTargetPath(c.path), c);
+      const base = normalizeTargetPath(c.path).split("/").pop() || "";
+      if (base && !pathToEntry.has(base)) pathToEntry.set(base, c);
     }
-    const suggestions = filterSuggestions(judged, { dismissed, existing, minScore: SUGGEST_MIN_SCORE });
+    const adopted = [];
+    const perTarget = /* @__PURE__ */ new Map();
+    for (const pick of adoptedParsed.items) {
+      if (pick.score < SUGGEST_MIN_SCORE) continue;
+      const a = anchors[pick.seg - 1];
+      const c = (_e = pathToEntry.get(normalizeTargetPath(pick.path))) != null ? _e : pathToEntry.get(normalizeTargetPath(pick.path).split("/").pop() || "");
+      if (!a || !c) continue;
+      const tKey = normalizeTargetPath(c.path);
+      if (((_f = perTarget.get(tKey)) != null ? _f : 0) >= SUGGEST_MAX_PER_TARGET) continue;
+      if (dismissedSet.has(suggestKey({ anchor: a, target: c.path }))) continue;
+      if (fixedSet.has(suggestKey({ anchor: a, target: c.path }))) continue;
+      perTarget.set(tKey, ((_g = perTarget.get(tKey)) != null ? _g : 0) + 1);
+      adopted.push({ anchor: a, entry: c, score: pick.score, reason: pick.reason });
+    }
+    if (adoptedParsed.count === 0 || adopted.length === 0) {
+      const generatedAt2 = Date.now();
+      await persistCardCache(cardPath, bodyHash, generatedAt2, []);
+      return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
+    }
+    const locateList = adopted.slice(0, SUGGEST_MAX_LOCATE_NOTES);
+    tell("locate", 0, locateList.length);
+    const texts = [];
+    for (const ad of locateList) texts.push(await readNoteText(ctx.app, ad.entry.path));
+    let located = null;
+    try {
+      const rawLocate = await aiPrompt(
+        buildLocatePrompt(
+          locateList.map((ad, i) => {
+            var _a2;
+            return { anchor: ad.anchor, path: ad.entry.path, content: (_a2 = texts[i]) != null ? _a2 : "" };
+          })
+        )
+      );
+      const parsed = parseLocatePicks(rawLocate);
+      if (parsed.found && parsed.items.length > 0) located = parsed.items;
+      else console.warn("[mount-suggest] 定位官回答不可用，采纳结果按整篇兜底");
+    } catch (e) {
+      console.warn("[mount-suggest] 定位官失败，采纳结果按整篇兜底", e);
+    }
+    const suggestions = [];
+    locateList.forEach((ad, i) => {
+      var _a2;
+      const pick = located ? (_a2 = located.find((p) => p.n === i + 1)) != null ? _a2 : null : null;
+      if (located && !pick) {
+        console.warn(`[mount-suggest] 定位官未给出 n${i + 1}（${ad.entry.path}），按整篇兜底`);
+      }
+      if (pick == null ? void 0 : pick.skip) return;
+      suggestions.push(buildSuggestion(ctx, ad, pick, texts[i]));
+    });
+    tell("locate", locateList.length, locateList.length);
+    for (let i = SUGGEST_MAX_LOCATE_NOTES; i < adopted.length; i++) {
+      suggestions.push(buildSuggestion(ctx, adopted[i], null, null));
+    }
+    const filtered = filterSuggestions(suggestions, { dismissed, existing, minScore: SUGGEST_MIN_SCORE });
+    tell("save");
     const generatedAt = Date.now();
-    await persistCardCache(cardPath, bodyHash, generatedAt, suggestions);
-    return { status: "fresh", suggestions, generatedAt };
+    await persistCardCache(cardPath, bodyHash, generatedAt, filtered);
+    return { status: "fresh", suggestions: filtered, generatedAt };
+  }
+  function buildSuggestion(ctx, ad, pick, targetText) {
+    var _a, _b, _c, _d, _e, _f;
+    let anchor = { ...ad.anchor };
+    const modelAnchor = String((_a = pick == null ? void 0 : pick.anchor) != null ? _a : "").trim();
+    if (modelAnchor && modelAnchor !== ad.anchor.text) {
+      const hit = locateInText(ad.anchor.text, modelAnchor);
+      if (hit) anchor = { from: ad.anchor.from + hit.at, to: ad.anchor.from + hit.at + hit.len, text: ad.anchor.text.slice(hit.at, hit.at + hit.len) };
+    }
+    const reason = String((_c = (_b = pick == null ? void 0 : pick.reason) != null ? _b : ad.reason) != null ? _c : "").trim() || "相关主题";
+    let unit = (_d = pick == null ? void 0 : pick.unit) != null ? _d : "whole";
+    let heading = String((_e = pick == null ? void 0 : pick.heading) != null ? _e : "").trim();
+    let quote = String((_f = pick == null ? void 0 : pick.quote) != null ? _f : "").trim();
+    let subpath = "";
+    if (unit === "heading") {
+      const real = targetText ? findHeadingText(targetText, heading) : null;
+      if (!real) {
+        unit = "whole";
+        heading = "";
+      } else {
+        heading = real;
+        subpath = real;
+      }
+    } else if (unit === "paragraph") {
+      const hit = targetText && quote ? locateInText(targetText, quote) : null;
+      if (!hit) {
+        unit = "whole";
+        quote = "";
+      }
+    }
+    if (unit === "whole") {
+      heading = "";
+      quote = "";
+    }
+    return {
+      anchor,
+      target: ad.entry.path,
+      kind: kindOfTarget(ad.entry.path, ctx, unit),
+      reason,
+      score: ad.score,
+      state: "pending",
+      unit,
+      heading,
+      quote,
+      subpath
+    };
   }
   function mergeSuggestions(tree, run) {
     var _a;
@@ -9265,13 +10006,15 @@ ${sample}`,
     for (const s of (run == null ? void 0 : run.suggestions) || []) {
       if (!s || !s.target) continue;
       const key2 = normalizeTargetPath(s.target);
-      if (!key2 || key2 === rootPath || known.has(key2) || seen.has(key2)) continue;
-      seen.add(key2);
-      const id = "ai:" + s.target;
+      if (!key2 || key2 === rootPath || known.has(key2)) continue;
+      const id = suggestionId(s);
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const title = s.unit === "heading" && s.heading ? s.heading : s.unit === "paragraph" && s.quote ? s.quote.slice(0, 24) : displayName(s.target);
       ghostNodes.push({
         id,
         path: s.target,
-        title: displayName(s.target),
+        title,
         kind: s.kind,
         source: "ai",
         depth: rootDepth + 1,
@@ -9353,7 +10096,7 @@ ${sample}`,
     if (!Number.isFinite(scale)) return 1;
     return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, scale));
   }
-  function mountStatusText(status) {
+  function mountStatusText(status, boardEmpty = false) {
     switch (status) {
       case "cached":
         return "已缓存建议";
@@ -9368,7 +10111,7 @@ ${sample}`,
       case "no-answer":
         return "AI 未给出可用建议 · 只画双链（可点「重新生成」）";
       default:
-        return "生成中 · 等建议齐再开";
+        return boardEmpty ? "生成中 · 建议就绪后一起上屏" : "生成中 · 真实双链已上屏";
     }
   }
   function mountLinkText(node) {
@@ -9542,7 +10285,11 @@ ${sample}`,
     </div>
     <div class="bz-kb-mt-canvas" id="bz-kb-mt-canvas">
       <div class="bz-kb-mt-world" id="bz-kb-mt-world"></div>
-      <div class="bz-kb-mt-loading" id="bz-kb-mt-loading" style="display:none">生成中 · 等建议齐再开白板…</div>
+      <div class="bz-kb-mt-loading" id="bz-kb-mt-loading" style="display:none">
+        <div class="bz-kb-mt-pbar"><i class="bz-kb-mt-pbar-fill" id="bz-kb-mt-pbar"></i></div>
+        <div class="bz-kb-mt-pline"><span class="bz-kb-mt-pstage" id="bz-kb-mt-pstage">准备生成建议</span><span class="bz-kb-mt-ptimer" id="bz-kb-mt-ptimer">0s</span></div>
+        <div class="bz-kb-mt-pempty" id="bz-kb-mt-pempty"></div>
+      </div>
     </div>
     <div class="bz-kb-mt-zoomer">
       <button class="bz-kb-mt-zbtn bz-touch-target" data-mt-act="zoom-in" title="放大">＋</button>
@@ -9590,7 +10337,13 @@ ${sample}`,
       canvasEl,
       worldEl,
       svg,
-      loadingEl: win.querySelector("#bz-kb-mt-loading")
+      loadingEl: win.querySelector("#bz-kb-mt-loading"),
+      progressBar: win.querySelector("#bz-kb-mt-pbar"),
+      progressText: win.querySelector("#bz-kb-mt-pstage"),
+      progressTimer: win.querySelector("#bz-kb-mt-ptimer"),
+      progressHint: win.querySelector("#bz-kb-mt-pempty"),
+      timerId: null,
+      startedAt: 0
     };
     state = st;
     bindShellEvents(st);
@@ -9603,7 +10356,7 @@ ${sample}`,
       if (!btn) return;
       const act = btn.getAttribute("data-mt-act") || "";
       if (act === "close") closeMountTree();
-      else if (act === "refresh") void reload(true);
+      else if (act === "refresh") void confirmRefresh();
       else if (act === "zoom-in") zoomAtCenter(ZOOM_STEP);
       else if (act === "zoom-out") zoomAtCenter(1 / ZOOM_STEP);
       else if (act === "zoom-fit") fit();
@@ -9788,8 +10541,7 @@ ${sample}`,
     st.win.style.display = "none";
     st.selected = null;
     st.token++;
-    st.loading = false;
-    st.loadingEl.style.display = "none";
+    hideProgress(st);
     (_a = st.esc) == null ? void 0 : _a.unregister();
     st.esc = null;
   }
@@ -9817,7 +10569,7 @@ ${sample}`,
     }
     const sameTree = path === st.cardPath && direction === st.direction && st.tree.root === path && st.tree.nodes.length > 0;
     if (sameTree && !st.loading && !(opts == null ? void 0 : opts.force)) {
-      st.loadingEl.style.display = "none";
+      hideProgress(st);
       renderTop(st);
       return;
     }
@@ -9826,6 +10578,23 @@ ${sample}`,
     st.selected = null;
     st.folded = /* @__PURE__ */ new Set();
     await load(st, !!(opts == null ? void 0 : opts.force));
+  }
+  async function confirmRefresh() {
+    const st = state;
+    if (!st || !mountTreeOpen()) return;
+    const v = await openFlowDialog({
+      title: "重新生成挂载建议",
+      message: "会重跑一遍 AI 建议（查询官 → 检索 → 采纳官 → 定位官），大约半分钟到一分钟；已在正文里的双链不受影响，已固定 / 已取消的不会再推。",
+      // 弹窗挂 body，必须自带 'kb'（token 作用域）+ 'bz-kb-flow-dialog'（域皮），同 ui.ts 的几处确认框
+      className: "kb bz-kb-flow-dialog",
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "重新生成", value: "ok" }
+      ]
+    });
+    if (v !== "ok") return;
+    if (state !== st || !mountTreeOpen()) return;
+    await reload(true);
   }
   async function reload(force) {
     const st = state;
@@ -9842,7 +10611,8 @@ ${sample}`,
     st.cards.clear();
     st.ghosts = /* @__PURE__ */ new Map();
     st.run = null;
-    st.loadingEl.style.display = "";
+    st.tree = { root: path, direction, nodes: [], edges: [] };
+    clearCanvas(st);
     renderTop(st);
     const ctx = mountCtx();
     st.ctx = ctx;
@@ -9852,33 +10622,106 @@ ${sample}`,
     } catch (e) {
       tree = { root: path, direction, nodes: [], edges: [] };
     }
-    if (token !== st.token) return;
     const autoOn = ((_a = tryGetSettings()) == null ? void 0 : _a.knowledgeMountAutoSuggest) !== false;
-    let run = null;
-    if (autoOn) {
-      run = await runSuggest(st, path, ctx, force);
-      if (token !== st.token) return;
-    }
-    st.run = run;
+    const bare = tree.nodes.filter((n) => !n.attached).length <= 1;
+    const waitFirst = autoOn && (bare || force);
+    if (token !== st.token) return;
     st.tree = tree;
-    if (run && run.suggestions.length) {
-      for (const s of run.suggestions) {
-        if (s == null ? void 0 : s.target) st.ghosts.set("ai:" + s.target, s);
-      }
-      st.tree = mergeSuggestions(tree, run);
+    if (waitFirst) {
+      renderTop(st);
+    } else {
+      await renderCanvas(st);
+      renderTop(st);
+      fit();
     }
+    if (token !== st.token) return;
+    st.loading = false;
+    if (!autoOn) {
+      hideProgress(st);
+      renderTop(st);
+      return;
+    }
+    showProgress(st, waitFirst ? force ? EMPTY_HINT_REFRESH : EMPTY_HINT_BARE : "");
+    let run = null;
+    try {
+      run = await runSuggest(st, path, ctx, force, (p) => {
+        if (token === st.token) setProgress(st, p);
+      });
+    } catch (e) {
+      run = null;
+    }
+    if (token !== st.token) return;
+    st.run = run;
+    try {
+      if (run && run.suggestions.length) {
+        for (const s of run.suggestions) {
+          if (s == null ? void 0 : s.target) st.ghosts.set(suggestionId(s), s);
+        }
+        st.tree = mergeSuggestions(tree, run);
+        await renderCanvas(st);
+        if (waitFirst) fit();
+      } else if (waitFirst) {
+        st.tree = tree;
+        await renderCanvas(st);
+        fit();
+      } else {
+        st.tree = tree;
+      }
+    } finally {
+      if (token === st.token) hideProgress(st);
+    }
+    renderTop(st);
+  }
+  var EMPTY_HINT_BARE = "这张卡还没有挂载——先看 AI 能不能找到关联";
+  var EMPTY_HINT_REFRESH = "重新生成中——建议回来连同已有的挂载一起显示";
+  function showProgress(st, emptyHint = "") {
+    st.loading = true;
+    if (st.progressHint) st.progressHint.textContent = emptyHint;
+    st.loadingEl.classList.toggle("is-bare", !!emptyHint);
+    st.loadingEl.style.display = "";
+    st.startedAt = Date.now();
+    if (st.progressBar) st.progressBar.style.width = "4%";
+    if (st.progressText) st.progressText.textContent = "准备生成建议";
+    if (st.progressTimer) st.progressTimer.textContent = "0s";
+    stopTimer(st);
+    st.timerId = setInterval(() => {
+      const el = st.progressTimer;
+      if (el) el.textContent = `${Math.round((Date.now() - st.startedAt) / 1e3)}s`;
+    }, 500);
+  }
+  function setProgress(st, p) {
+    if (st.progressBar) st.progressBar.style.width = `${Math.min(100, Math.max(4, suggestProgressPercent(p)))}%`;
+    if (st.progressText) st.progressText.textContent = p.label || "生成中…";
+  }
+  function hideProgress(st) {
+    stopTimer(st);
     st.loading = false;
     st.loadingEl.style.display = "none";
-    await renderCanvas(st);
-    renderTop(st);
-    fit();
   }
-  async function runSuggest(st, path, ctx, force) {
+  function stopTimer(st) {
+    if (st.timerId) clearInterval(st.timerId);
+    st.timerId = null;
+  }
+  function clearCanvas(st) {
+    for (const el of Array.from(st.worldEl.querySelectorAll(".bz-kb-mt-node"))) el.remove();
+    st.svg.innerHTML = "";
+    st.cards.clear();
+    st.sizes.clear();
+    st.edges = [];
+    st.pos = {};
+  }
+  async function runSuggest(st, path, ctx, force, onProgress) {
+    var _a;
     try {
       return await generateSuggestions(
         path,
-        { app: ctx.app, cardboxDir: ctx.cardboxDir, litDir: ctx.litDir },
-        { force }
+        {
+          app: ctx.app,
+          cardboxDir: ctx.cardboxDir,
+          litDir: ctx.litDir,
+          topicDir: ((_a = tryGetSettings()) == null ? void 0 : _a.knowledgeTopicDirectory) || "主题盒"
+        },
+        { force, onProgress }
       );
     } catch (e) {
       return { status: "no-ai", suggestions: [] };
@@ -9917,7 +10760,7 @@ ${sample}`,
     const culled = st.sizes.size ? countCulled(st) : 0;
     let text;
     let extra = "";
-    if (st.loading) text = mountStatusText("generating");
+    if (st.loading) text = mountStatusText("generating", st.cards.size === 0);
     else if (st.run) text = mountStatusText(st.run.status);
     else text = "本卡建议未跑（自动建议已关闭）";
     if (!st.loading && culled > 0) extra = `<span class="bz-kb-mt-kind">· 图大，已按 ${LAYOUT_PARAMS.MAX_NODES} 张封顶</span>`;
@@ -10121,7 +10964,9 @@ ${sample}`,
       bodyEl.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml(node.path)}</div>`;
       return;
     }
-    const md = bodyMarkdown(st, node);
+    const app = (_a = st.ctx.app) != null ? _a : getApp();
+    const ghost = st.ghosts.get(node.id);
+    const md = ghost ? await suggestionUnitMarkdown(app, ghost) : bodyMarkdown(st, node);
     if (md === null) {
       bodyEl.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
       return;
@@ -10130,7 +10975,6 @@ ${sample}`,
       bodyEl.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
       return;
     }
-    const app = (_a = st.ctx.app) != null ? _a : getApp();
     let ok = false;
     if (app == null ? void 0 : app.vault) {
       try {
@@ -10242,20 +11086,21 @@ ${sample}`,
       const bodyEl = cardEl.querySelector(".bz-kb-mt-body");
       if (!bodyEl) continue;
       const anchor = (_d = (_c = st.tree.nodes.find((n) => n.id === e.to)) == null ? void 0 : _c.anchor) != null ? _d : null;
-      const point = measureDot(st, cardEl, bodyEl, anchor, key2, colorKind, cursor);
+      const point = measureDot(st, cardEl, bodyEl, anchor, key2, colorKind, cursor, !!e.suggested);
       if (point) out.set(id, point);
     }
     return out;
   }
-  function measureDot(st, cardEl, bodyEl, anchor, key2, colorKind, cursor) {
+  function measureDot(st, cardEl, bodyEl, anchor, key2, colorKind, cursor, highlight = false) {
     var _a;
     if (!anchor) return null;
     const needles = anchorNeedles(anchor);
     if (needles.length === 0) return null;
-    const dot = insertAnchorDot(bodyEl, needles, key2, (_a = cursor.get(bodyEl)) != null ? _a : 0);
+    const color = mountKindColor(colorKind);
+    const dot = insertAnchorDot(bodyEl, needles, key2, (_a = cursor.get(bodyEl)) != null ? _a : 0, highlight, color);
     if (!dot) return null;
     cursor.set(bodyEl, Number(dot.getAttribute("data-mt-at") || 0));
-    dot.style.color = mountKindColor(colorKind);
+    dot.style.color = color;
     const nodeId = cardEl.getAttribute("data-mt-id") || "";
     const base = st.pos[nodeId];
     const size = st.sizes.get(nodeId);
@@ -10266,23 +11111,46 @@ ${sample}`,
       y: base.y + dot.offsetTop + dot.offsetHeight / 2
     };
   }
-  function insertAnchorDot(bodyEl, needles, key2, from) {
-    var _a;
+  function insertAnchorDot(bodyEl, needles, key2, from, highlight = false, color = "") {
+    var _a, _b;
     const idx = textIndexOf(bodyEl);
-    const hit = locateInText(idx.text, needles, from);
+    const hit = locateInText2(idx.text, needles, from);
     if (!hit) return null;
+    const dot = document.createElement("i");
+    dot.className = "bz-kb-mt-anch";
+    dot.setAttribute("data-mt-edge", key2);
+    dot.setAttribute("data-mt-at", String(hit.at + hit.len));
+    dot.setAttribute("title", highlight ? "AI 建议的挂载点：这句挂到虚线那头" : "挂载点：这条线从这句话扯出");
+    if (highlight) {
+      const end = hit.at + hit.len;
+      const covered = idx.parts.filter((p) => p.start < end && p.start + p.node.data.length > hit.at);
+      if (covered.length === 0) return null;
+      let last = null;
+      for (const p of covered) {
+        const start = Math.max(0, hit.at - p.start);
+        let node = p.node;
+        if (start > 0) node = node.splitText(start);
+        const take = Math.min(node.data.length, end - (p.start + start));
+        if (take < node.data.length) node.splitText(take);
+        const span = document.createElement("span");
+        span.className = "bz-kb-mt-anch-hl";
+        span.setAttribute("data-mt-edge", key2);
+        span.setAttribute("data-mt-sug", "1");
+        if (color) span.style.color = color;
+        (_a = node.parentNode) == null ? void 0 : _a.insertBefore(span, node);
+        span.appendChild(node);
+        last = span;
+      }
+      last == null ? void 0 : last.appendChild(dot);
+      return dot;
+    }
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
     const after = part.node.splitText(offset);
     const len = Math.min(hit.len, after.data.length);
     const tail = after.splitText(len);
-    const dot = document.createElement("i");
-    dot.className = "bz-kb-mt-anch";
-    dot.setAttribute("data-mt-edge", key2);
-    dot.setAttribute("data-mt-at", String(hit.at + hit.len));
-    dot.setAttribute("title", "挂载点：这条线从这句话扯出");
-    (_a = after.parentNode) == null ? void 0 : _a.insertBefore(dot, tail);
+    (_b = after.parentNode) == null ? void 0 : _b.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -10305,7 +11173,7 @@ ${sample}`,
     }
     return { text, parts };
   }
-  function locateInText(text, needles, from) {
+  function locateInText2(text, needles, from) {
     if (!text) return null;
     const start = Math.min(Math.max(0, from), text.length);
     for (const needle of needles) {
@@ -10594,10 +11462,22 @@ ${sample}`,
     }
   }
   async function pinSuggestion(st, ghost) {
-    var _a, _b;
+    var _a, _b, _c, _d, _e;
     const rootPath = st.tree.root;
     const app = (_a = st.ctx.app) != null ? _a : getApp();
-    const link = ghost.target.replace(/\.md$/i, "");
+    let unit = ghost.unit === "heading" || ghost.unit === "paragraph" ? ghost.unit : "whole";
+    let subpath = String((_b = ghost.subpath) != null ? _b : "").trim();
+    if (unit === "paragraph") {
+      const got = ghost.quote ? await ensureSuggestionBlockId(app, ghost.target, ghost.quote) : { blockId: "", ok: false };
+      if (got.ok && got.blockId) subpath = got.blockId;
+      else unit = "whole";
+    } else if (unit === "heading" && !subpath) {
+      unit = "whole";
+    }
+    const shape = { target: ghost.target, unit, subpath };
+    const linkInner = suggestionLinkTarget(shape);
+    const anchorText = String((_d = (_c = ghost.anchor) == null ? void 0 : _c.text) != null ? _d : "").trim();
+    let written = `[[${linkInner}]]`;
     let found = false;
     let changed = false;
     try {
@@ -10607,14 +11487,16 @@ ${sample}`,
         if (!file) return;
         found = true;
         const text = await app.vault.read(file);
-        const next = insertLinkAtAnchor(text, ghost.anchor, link);
+        const aliasNext = replaceAnchorWithAlias(text, ghost.anchor, ghost.target, suggestionSubpath(shape));
+        if (aliasNext !== null) written = `[[${linkInner}|${anchorText}]]`;
+        const next = aliasNext != null ? aliasNext : insertLinkAtAnchor(text, ghost.anchor, linkInner);
         if (next !== text) {
           await app.vault.modify(file, next);
           changed = true;
         }
       });
     } catch (e) {
-      st.deps.notice(`固定失败：${(_b = e == null ? void 0 : e.message) != null ? _b : String(e)}`, "error");
+      st.deps.notice(`固定失败：${(_e = e == null ? void 0 : e.message) != null ? _e : String(e)}`, "error");
       return;
     }
     if (!found) {
@@ -10625,16 +11507,14 @@ ${sample}`,
       await markSuggestion(rootPath, ghost, "fixed", { app, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
     } catch (e) {
     }
-    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
-    st.ghosts.delete(ghostId(ghost));
+    const gid = suggestionId(ghost);
+    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => suggestionId(s) !== gid) };
+    st.ghosts.delete(gid);
     st.deps.notice(
-      changed ? `已固定：正文写入 [[${link}]]` : `已固定：正文里已有 [[${link}]]，本次只留档`,
+      changed ? `已固定：正文写入 ${written}` : `已固定：正文里已有 [[${linkInner}]]，本次只留档`,
       "success"
     );
     await rebuildTreeOnly(st);
-  }
-  function ghostId(ghost) {
-    return "ai:" + ghost.target;
   }
   async function dismissSuggestion(st, ghost) {
     var _a;
@@ -10644,7 +11524,8 @@ ${sample}`,
       await markSuggestion(rootPath, ghost, "dismissed", { app, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
     } catch (e) {
     }
-    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
+    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => suggestionId(s) !== suggestionId(ghost)) };
+    st.ghosts.delete(suggestionId(ghost));
     st.deps.notice("已取消建议：永久不再推荐这条", "success");
     await rebuildTreeOnly(st);
   }
@@ -11181,9 +12062,20 @@ ${sample}`,
       this.allNotes = [];
       this.allCards = [];
       this.allTopics = [];
+      /** 已渲染的卡片行数（issue 323：翻页只**追加**新行，不再整表 innerHTML 重建） */
       this.cardsShown = 0;
-      /** 挂载引用索引（issue 320）：整库扫描**每轮只算一次**，行徽标 / 孤儿筛选 / 行标记共用这份缓存 */
+      /** 卡片行容器（与表头/页脚分离，追加与徽标补丁都打在它身上） */
+      this.cardRowsEl = null;
+      /**
+       * 挂载引用索引（issue 320 / 323）：整库扫描一次并**缓存到面板对象上**——
+       * 行引用计数徽标（refCounts）、孤儿筛选与行标记（orphanCards）共用这一份；
+       * counts 算好后**传给 orphanCards 复用**（其内部不再自行复算一遍）。
+       *
+       * 323 起改**面板会话缓存 + 脏标记**：切到卡片部不再整库重扫（1503+ 文件逐个解析出站链是切换卡顿的大头），
+       * 只有**落卡 / 库内文件变更 / 目录变更 / 显式刷新**才置脏重算。
+       */
       this.mountIndex = null;
+      this.mountIndexDirty = true;
       /** 部贰「只看孤儿」筛选开关（内存态，重渲染 / 换部来回都保留） */
       this.cardOrphanOnly = false;
       this.editor = null;
@@ -11366,7 +12258,6 @@ ${sample}`,
       } else if (act === "cards-orphan") {
         if (!this.mountIndex) return;
         this.cardOrphanOnly = !this.cardOrphanOnly;
-        this.cardsShown = 0;
         this.renderCards();
       } else if (act === "topic-open") {
         const p = t.getAttribute("data-path") || "";
@@ -11404,12 +12295,15 @@ ${sample}`,
         this.renderLiterature();
       } else if (this.part === "z2") {
         const dir = cardboxDirOf(s);
-        if (this.loadedCardDir && this.loadedCardDir !== dir) this.allCards = [];
+        if (this.loadedCardDir && this.loadedCardDir !== dir) {
+          this.allCards = [];
+          this.markCardsDirty();
+        }
         await this.loadCards(dir);
-        this.cardsShown = 0;
         this.renderCards();
-        await this.loadMountIndex();
-        if (this.part === "z2") this.renderCards();
+        if (this.part !== "z2") return;
+        if (this.mountIndexDirty) await this.loadMountIndex();
+        if (this.part === "z2") this.applyMountIndex();
       } else {
         const dir = topicDirOf(s);
         if (this.loadedTopicDir && this.loadedTopicDir !== dir) this.allTopics = [];
@@ -11608,7 +12502,7 @@ ${sample}`,
         this.closeSheet();
         notice("已落卡 卡片盒/" + base + ".md · 它随时被任何笔记引用", "success");
         if (this.part === "z2") {
-          this.cardsShown = 0;
+          this.markCardsDirty();
           await this.loadMountIndex();
           this.renderCards();
         }
@@ -11651,9 +12545,11 @@ ${sample}`,
     /**
      * 挂载引用索引（issue 320；ADR-0138 §5 同包四项）：整库扫描一次并**缓存到面板对象上**——
      * 行引用计数徽标（refCounts）、孤儿筛选与行标记（orphanCards）共用这一份；
-     * counts 算好后**传给 orphanCards 复用**（其内部不再自行复算一遍），整轮 refresh 只走一遍整库扫描。
-     * 每轮 refresh 重算（改链 / 改名 / 增删卡即时跟随），行渲染里不再各算一次。
-     * 扫描异常按空索引降级：芯片显「未统计」并置灰，列表照常渲染。
+     * counts 算好后**传给 orphanCards 复用**（其内部不再自行复算一遍）。
+     *
+     * **323 起按面板会话缓存 + 脏标记**：切到「卡片」部不再整库重扫（1500+ 文件逐个解析出站链
+     * 是切换卡顿的最大头），只有**落卡 / 库内文件变更 / 目录变更 / 显式刷新**才置脏重算。
+     * 扫描异常按空索引降级：芯片显「未统计」并置灰，列表照常渲染（异常时留脏，下次再试）。
      */
     async loadMountIndex() {
       try {
@@ -11663,33 +12559,144 @@ ${sample}`,
       } catch (e) {
         this.mountIndex = null;
       }
+      if (this.mountIndex) this.mountIndexDirty = false;
     }
-    renderCards() {
-      if (!this.contentEl) return;
-      this.cardsShown = Math.max(this.cardsShown, 80);
+    /** 卡片列表与挂载索引一起置脏（落卡 / 库内文件变更 / 目录变更 → 下次进部贰重算） */
+    markCardsDirty() {
+      this.mountIndexDirty = true;
+      this.cardsShown = 0;
+      this.cardRowsEl = null;
+    }
+    /** 当前筛选后的卡片池（只有孤儿筛选依赖挂载索引；不筛选时池 = 全部卡片） */
+    cardPool() {
       const idx = this.mountIndex;
-      const pool = this.cardOrphanOnly && idx ? this.allCards.filter((c) => idx.orphans.has(c.path)) : this.allCards;
-      const shown = pool.slice(0, this.cardsShown);
-      const rows = shown.map((c) => {
-        var _a, _b;
-        const n = (_a = idx == null ? void 0 : idx.counts[c.path]) != null ? _a : 0;
-        const orphan = (_b = idx == null ? void 0 : idx.orphans.has(c.path)) != null ? _b : false;
-        return `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc(c.path)}">
-      <div class="bz-kb-hw"><span class="bz-kb-w">${esc(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}${orphan ? '<span class="bz-kb-orphan" title="既无入链也无挂载">孤 儿</span>' : ""}<span class="bz-kb-dom">${esc(c.domain)}</span></div>
+      return this.cardOrphanOnly && idx ? this.allCards.filter((c) => idx.orphans.has(c.path)) : this.allCards;
+    }
+    /** 表头芯片（原地同步：索引落地后只改这一个节点，不重建整表） */
+    cardBarHtml() {
+      const idx = this.mountIndex;
+      return `<div class="bz-kb-cbar"><button class="bz-kb-cfilter${this.cardOrphanOnly ? " is-on" : ""}" data-kb-act="cards-orphan"${idx ? "" : " disabled"} title="${idx ? "只列既无入链也无挂载的卡" : "挂载索引未统计（扫描失败）"}">孤 儿${idx ? ` · ${idx.orphans.size}` : " · 未统计"}</button><span class="bz-kb-meta">全部 ${this.allCards.length} 张</span></div>`;
+    }
+    /** 单行 HTML（全量重建与增量追加共用同一份模板） */
+    cardRowHtml(c) {
+      var _a, _b;
+      const idx = this.mountIndex;
+      const n = (_a = idx == null ? void 0 : idx.counts[c.path]) != null ? _a : 0;
+      const orphan = (_b = idx == null ? void 0 : idx.orphans.has(c.path)) != null ? _b : false;
+      return `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc(c.path)}">
+      <div class="bz-kb-hw"><span class="bz-kb-w">${esc(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}${orphan ? '<span class="bz-kb-orphan" title="既无入链也无挂载">孤 儿</span>' : ""}<span class="bz-kb-dom">${esc(
+        c.domain
+      )}</span></div>
       <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span>${n > 0 ? `<span class="bz-kb-refbadge" title="被 ${n} 处用户双链引用">被引 ${n}</span>` : ""}<button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
     </div>`;
-      }).join("");
-      const rest = pool.length - shown.length;
+    }
+    /**
+     * 全量重建（换部 / 换筛选 / 落卡）：只搭表头 + 空行容器 + 页脚，行由 `appendCardRows` 追加。
+     * 此后翻页与徽标落地都**不再**走 innerHTML 全表重建（issue 323：滚动到底反复触发时 O(n²) 抖动）。
+     */
+    renderCards() {
+      if (!this.contentEl) return;
       this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-cbar"><button class="bz-kb-cfilter${this.cardOrphanOnly ? " is-on" : ""}" data-kb-act="cards-orphan"${idx ? "" : " disabled"} title="${idx ? "只列既无入链也无挂载的卡" : "挂载索引未统计（扫描失败）"}">孤 儿${idx ? ` · ${idx.orphans.size}` : " · 未统计"}</button><span class="bz-kb-meta">全部 ${this.allCards.length} 张</span></div>
-      ${rows || `<div class="bz-kb-empty">${this.cardOrphanOnly ? "没有孤儿卡——每张卡都有人挂或挂着谁。" : "卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。"}</div>`}
-      ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ""}
+      ${this.cardBarHtml()}
+      <div class="bz-kb-rows" id="kb-card-rows"></div>
+      <div class="bz-kb-empty" id="kb-card-more" data-kb-act="cards-more" style="display:none"></div>
     </div>`;
+      this.cardRowsEl = q(this.contentEl, "#kb-card-rows");
+      this.cardsShown = 0;
+      this.appendCardRows(80);
+    }
+    /** 追加 n 行（增量：已渲染的行不动，滚动位置与 DOM 节点都保住） */
+    appendCardRows(n) {
+      const rowsEl = this.cardRowsEl;
+      if (!rowsEl) return;
+      const pool = this.cardPool();
+      if (pool.length === 0) {
+        rowsEl.innerHTML = `<div class="bz-kb-empty">${this.cardOrphanOnly ? "没有孤儿卡——每张卡都有人挂或挂着谁。" : "卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。"}</div>`;
+        this.cardsShown = 0;
+        this.updateCardMore(pool);
+        return;
+      }
+      const from = Math.max(0, this.cardsShown);
+      const to = Math.min(pool.length, from + n);
+      if (to > from) {
+        const tmp = document.createElement("div");
+        tmp.innerHTML = pool.slice(from, to).map((c) => this.cardRowHtml(c)).join("");
+        const frag = document.createDocumentFragment();
+        while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+        rowsEl.appendChild(frag);
+        this.cardsShown = to;
+      }
+      this.updateCardMore(pool);
+    }
+    /** 页脚「还有 N 张」原地更新（不重渲整表） */
+    updateCardMore(pool) {
+      const moreEl = this.contentEl ? q(this.contentEl, "#kb-card-more") : null;
+      if (!moreEl) return;
+      const rest = pool.length - this.cardsShown;
+      moreEl.style.display = rest > 0 ? "" : "none";
+      moreEl.textContent = rest > 0 ? `↓ 还有 ${rest} 张，滚动或点此加载` : "";
+    }
+    /** 索引落地后**原地**补徽标与孤儿标记（按行 querySelector 定位，不重建已渲染行） */
+    patchCardBadges() {
+      var _a;
+      const rowsEl = this.cardRowsEl;
+      const idx = this.mountIndex;
+      if (!rowsEl || !idx) return;
+      for (const row of Array.from(rowsEl.querySelectorAll(".bz-kb-lexrow"))) {
+        const path = row.getAttribute("data-path") || "";
+        if (idx.orphans.has(path)) {
+          const hw = row.querySelector(".bz-kb-hw");
+          if (hw && !hw.querySelector(".bz-kb-orphan")) {
+            const span = document.createElement("span");
+            span.className = "bz-kb-orphan";
+            span.title = "既无入链也无挂载";
+            span.textContent = "孤 儿";
+            const dom = hw.querySelector(".bz-kb-dom");
+            if (dom) hw.insertBefore(span, dom);
+            else hw.appendChild(span);
+          }
+        }
+        const n = (_a = idx.counts[path]) != null ? _a : 0;
+        if (n > 0) {
+          const tail = row.querySelector(".bz-kb-tail");
+          if (tail && !tail.querySelector(".bz-kb-refbadge")) {
+            const b = document.createElement("span");
+            b.className = "bz-kb-refbadge";
+            b.title = `被 ${n} 处用户双链引用`;
+            b.textContent = `被引 ${n}`;
+            const btn = tail.querySelector(".bz-kb-mt-openbtn");
+            if (btn) tail.insertBefore(b, btn);
+            else tail.appendChild(b);
+          }
+        }
+      }
+    }
+    /** 芯片原地同步（索引落地时改这一个节点：计数 / 置灰 / 点亮，不重建整表） */
+    syncCardChip() {
+      const chip2 = this.contentEl ? this.contentEl.querySelector('[data-kb-act="cards-orphan"]') : null;
+      if (!chip2) return;
+      const idx = this.mountIndex;
+      chip2.classList.toggle("is-on", this.cardOrphanOnly);
+      chip2.textContent = `孤 儿${idx ? ` · ${idx.orphans.size}` : " · 未统计"}`;
+      chip2.setAttribute("title", idx ? "只列既无入链也无挂载的卡" : "挂载索引未统计（扫描失败）");
+      chip2.disabled = !idx;
+    }
+    /**
+     * 索引落地：孤儿筛选开着时**池会变** → 全量重建；否则只打徽标补丁 + 更新页脚
+     * （保住已渲染行与滚动位置——issue 323 的第二处根因）。
+     */
+    applyMountIndex() {
+      this.syncCardChip();
+      if (!this.mountIndex) return;
+      if (this.cardOrphanOnly) this.renderCards();
+      else {
+        this.patchCardBadges();
+        this.updateCardMore(this.cardPool());
+      }
     }
     moreCards() {
-      if (this.cardsShown >= this.allCards.length) return;
-      this.cardsShown += 80;
-      this.renderCards();
+      if (this.cardsShown >= this.cardPool().length) return;
+      this.appendCardRows(80);
     }
     onContentScroll() {
       const sc = this.contentEl;
@@ -11829,6 +12836,7 @@ ${sample}`,
       this.loadedLitDir = "";
       this.loadedCardDir = "";
       this.loadedTopicDir = "";
+      this.mountIndexDirty = true;
     }
     attachFileListener() {
       if (this.fileListenerAttached) return;
@@ -13727,7 +14735,7 @@ ${sample}`,
   };
 
   // prototypes/knowledge/fake-sim.ts
-  var SEED_MARKER = "bz-sim:__kb_seed_v2";
+  var SEED_MARKER = "bz-sim:__kb_seed_v3";
   var key = (path) => `bz-sim:${path}`;
   var SEED_TASKS = [
     {
@@ -13998,6 +15006,218 @@ date: "2026-09-01 12:00:00"
 心流（flow）：全情投入、忘却时间的最优体验状态——术语录入「内部笔记来源」的联想目标。`
     }
   ];
+  var SEED_MOUNT_NOTES = [
+    {
+      path: "卡片盒/睡眠结构.md",
+      ctime: Date.parse("2026-09-12T21:10:00"),
+      content: `---
+tags: [睡眠, 神经科学]
+category: 医学
+---
+(描述:: 睡眠结构是一夜里各睡眠阶段的组成与轮转：非快速眼动与快速眼动交替，约九十分钟一个周期。)
+
+## 分期
+
+- N1/N2 是浅睡，[[睡眠纺锤波]] 出现在 N2
+- N3 又叫 [[慢波睡眠]]，高幅 delta 波占两成以上
+- [[快速眼动睡眠]] 眼球快速转动、肌张力消失，梦多在这一段
+
+## 一夜的周期
+
+成年人一夜走四到六个周期。深睡集中在头两个周期，管体力恢复；快速眼动在后半程补量，跟 [[记忆巩固]] 的关系更紧一些。
+
+什么时候想睡由 [[昼夜节律]] 定，有多想睡由睡眠压定，两套机制叠起来才是困意曲线。
+
+![[CONFIG/APPENDIX/CBTI演示.mp4]]
+
+早上晒光这一节我一直没整理成卡，先记一笔 [[晨间光照方案]]。`
+    },
+    {
+      path: "卡片盒/慢波睡眠.md",
+      ctime: Date.parse("2026-09-12T20:40:00"),
+      content: `---
+tags: [睡眠, 神经科学]
+category: 医学
+---
+(描述:: 慢波睡眠（N3）即深睡，脑电以高幅低频的 delta 波为主，生长激素在这一段脉冲式分泌。)
+
+深睡与 [[快速眼动睡眠]] 的分工不可互相替代：砍掉深睡第二天会累，砍掉快速眼动会「心里发空」。
+
+它跟 [[记忆巩固]] 的接口在海马：慢波期的尖波涟漪把白天的经历反复重放。
+
+深睡占比随年龄掉得很快——二十岁前后约两成，六十岁后常不足一成，这就是「年纪大了觉变浅」的生理来源。
+
+![[文献盒/assets/睡眠周期图.png]]`
+    },
+    {
+      path: "卡片盒/快速眼动睡眠.md",
+      ctime: Date.parse("2026-09-12T20:10:00"),
+      content: `---
+tags: [睡眠, 神经科学]
+category: 医学
+---
+(描述:: 快速眼动睡眠（REM）眼球快速转动、肌张力几乎消失，脑电接近清醒但人不易被叫醒。)
+
+它的时长在后半夜显著拉长，所以熬夜被砍掉的大多是这一段，情绪加工与联想的损失比「少睡几小时」更大。
+
+与 [[记忆巩固]]、[[慢波睡眠]] 不是一回事：那一套管陈述性记忆，这一套管情绪与模式的重新组合。
+
+失眠的人为什么总说「睡了一夜比没睡还累」，可以对着 [[文献盒/CBTI#核心模块|CBTI · 核心模块]] 里的几条看。`
+    },
+    {
+      path: "卡片盒/记忆巩固.md",
+      ctime: Date.parse("2026-09-09T21:30:00"),
+      content: `---
+tags: [学习, 睡眠]
+category: 学习
+---
+(描述:: 记忆巩固是新记忆先在海马快速编码，再在睡眠里被重放、逐步转写到皮层长时记忆的过程。)
+
+慢波期的重放效率最高，所以「睡够」对考试周比「再刷一套」更值钱，这也正是 [[间隔重复]] 安排复习间隔的生理依据。
+
+侧写见 [[卡片盒/多重记忆系统]]，失眠侧的代价见 [[文献盒/睡眠结构#^bz-3f7a1c02|睡眠结构 · 深睡那段]]。`
+    },
+    {
+      path: "卡片盒/睡眠纺锤波.md",
+      ctime: Date.parse("2026-09-11T22:30:00"),
+      content: `---
+tags: [睡眠, 神经科学]
+category: 医学
+---
+(描述:: 睡眠纺锤波是 N2 期 11–16 Hz 的成串脑电，由丘脑网状核与丘脑皮层回路往复产生，一夜可上万次。)
+
+纺锤波密度高的人更抗噪：它把外界声音关在 [[丘脑]] 门外，是「感觉门控」的睡眠版本。
+
+生成回路和激素背景都不是孤立现象，跟 [[文献盒/松果体]] 那条夜间通路合起来看更清楚。`
+    },
+    {
+      path: "卡片盒/丘脑.md",
+      ctime: Date.parse("2026-09-11T22:00:00"),
+      content: `---
+tags: [神经科学]
+category: 医学
+---
+(描述:: 丘脑是除嗅觉外所有感觉通往皮层的中继站，也是睡眠与觉醒的开关。)
+
+觉醒时它放大输入，N3 时切换成节律性爆发把输入挡在门外——[[睡眠纺锤波]] 就是这套开关在 N2 期的产物。
+
+所以「睡觉时听不见」不是耳朵关机，是中继站下班了。`
+    },
+    {
+      path: "卡片盒/睡眠卫生.md",
+      ctime: Date.parse("2026-09-02T21:00:00"),
+      content: `---
+tags: [睡眠]
+category: 医学
+---
+固定作息、睡前减光、卧室只留睡眠功能、下午后不碰咖啡因——听上去都对，落地时大多数人只做到第一条。`
+    }
+  ];
+  var SEED_MOUNT_LITERATURE = [
+    {
+      path: "文献盒/睡眠结构.md",
+      ctime: Date.parse("2026-09-12T21:20:00"),
+      content: `---
+title: 睡眠结构
+type: term
+domain: 医学
+term: 睡眠结构
+date: 2026-09-12 21:20:00
+related:
+  - "[[卡片盒/睡眠结构]]"
+---
+
+睡眠结构指一夜里各睡眠阶段的组成与轮转顺序。非快速眼动睡眠（NREM）分 N1、N2、N3 三期，其中 N3 又称慢波睡眠，脑电以高幅低频 delta 波为主，生长激素分泌高峰落在这里；快速眼动睡眠（REM）眼球快速转动、肌张力几乎消失，脑电接近清醒状态。一个完整周期约九十分钟，成人一夜经历四到六个周期，深睡集中在前半程，REM 在后半程逐渐拉长。睡眠结构的判读依赖多导睡眠图，脑电、眼动、肌电与呼吸信号同步记录，可用于评估睡眠效率、入睡潜伏期与睡眠呼吸暂停。随年龄增长，深睡比例下降、夜间觉醒增多，是老年睡眠变浅的主要来源。
+
+## 功能分工
+
+深睡承担体力恢复与突触下调，REM 承担情绪加工与部分记忆整合，两者不能互相替代。睡眠限制疗法与刺激控制都以「先压缩卧床时间、再让睡眠压把效率顶回来」为操作核心。
+
+被砍掉深睡的人第二天更困、更怕冷，被砍掉 REM 的人则更容易烦躁、注意力涣散。 ^bz-3f7a1c02
+
+结构的时相由昼夜节律系统定，深度由睡眠稳态（睡眠压）定，两者叠加才构成完整的困意曲线。`
+    },
+    {
+      path: "文献盒/慢波睡眠.md",
+      ctime: Date.parse("2026-09-12T20:50:00"),
+      content: `---
+title: 慢波睡眠
+type: term
+domain: 医学
+term: 慢波睡眠
+date: 2026-09-12 20:50:00
+related:
+  - "[[卡片盒/慢波睡眠]]"
+---
+
+慢波睡眠是深度非快速眼动睡眠，脑电以 0.5–4 Hz 的高幅 delta 波为主，占整夜睡眠的一到两成。它由丘脑皮层回路的同步化放电产生，生长激素在此期脉冲式分泌，组织修复与免疫调节集中发生。慢波睡眠集中在入睡后的前两个周期，后半夜快速眼动睡眠占比上升，因此熬夜最先牺牲的是深睡。慢波活动的功率可作为睡眠压的生理指标：清醒越久，入睡后的慢波活动越高，随夜衰减越快。深睡不足与代谢紊乱、免疫力下降相关，也直接影响陈述性记忆的隔夜巩固效果。`
+    },
+    {
+      path: "文献盒/睡眠纺锤波.md",
+      ctime: Date.parse("2026-09-11T22:40:00"),
+      content: `---
+title: 睡眠纺锤波
+type: term
+domain: 医学
+term: 睡眠纺锤波
+date: 2026-09-11 22:40:00
+related:
+  - "[[卡片盒/睡眠纺锤波]]"
+---
+
+睡眠纺锤波是 N2 期出现的 11–16 Hz 成串脑电活动，由丘脑网状核与丘脑皮层神经元往复抑制产生，单个纺锤持续 0.5–2 秒，一夜可达上万次。纺锤波密度存在明显的个体差异与遗传背景，密度高者对夜间噪声的唤醒阈值更高，睡眠更不容易被打断。纺锤波还与部分记忆任务的隔夜提升相关：它与慢波睡眠、快速眼动睡眠共同构成睡眠期记忆重放的三个环节。`
+    },
+    {
+      path: "文献盒/睡眠日记.md",
+      ctime: Date.parse("2026-09-08T20:00:00"),
+      content: `---
+title: 睡眠日记
+type: term
+domain: 医学
+term: 睡眠日记
+date: 2026-09-08 20:00:00
+---
+
+睡眠日记要求连续两周逐日记录上床时间、入睡耗时、夜醒次数与时长、起床时间、白天困倦程度及咖啡因与酒精摄入。它比一次多导睡眠图更能反映习惯性睡眠模式，是计算睡眠效率、判断睡眠相位前后移的一手材料，也是睡眠限制疗法调整卧床窗口的唯一依据。记录时只求当天如实填写，不必修饰——数据连续两周后，卧床里清醒的时间占比通常一眼可见。`
+    },
+    {
+      path: "文献盒/睡眠债.md",
+      ctime: Date.parse("2026-09-07T20:30:00"),
+      content: `---
+title: 睡眠债
+type: term
+domain: 医学
+term: 睡眠债
+date: 2026-09-07 20:30:00
+---
+
+睡眠债指累积的睡眠不足，按「需要量减去实际量」逐日累加。它不会因为单次补觉清零：恢复一夜只能还掉一部分，被砍掉的深睡与快速眼动睡眠份额尤其还不回来。睡眠债的典型表现是日间嗜睡、反应变慢与情绪波动，长期欠债则以代谢与免疫代价结算。判断自己欠了多少，靠主观感觉并不可靠——人对自身警觉度的自评在欠债状态下明显偏高。`
+    },
+    {
+      path: "文献盒/睡眠周期图.md",
+      ctime: Date.parse("2026-09-13T09:10:00"),
+      content: `---
+title: （图版）睡眠周期图：一夜的阶梯
+type: image
+domain: 医学
+date: 2026-09-13 09:10:00
+---
+
+（演示读图）以阶梯带表示一夜的睡眠阶段：暖黄为清醒，蓝色为快速眼动，越深的蓝代表越深的非快速眼动睡眠。可见深睡集中在头两个周期，快速眼动在后半程逐周期拉长。
+
+![[文献盒/assets/睡眠周期图.png]]`
+    }
+  ];
+  var SEED_MEDIA = [
+    {
+      path: "文献盒/assets/睡眠周期图.png",
+      content: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUAAAAC0CAIAAABqhmJGAAADnUlEQVR42u3coVEDURCA4VSCQGCYiYpAoTLUkBIoAIGiAApAoNDUQQEoJBpFDWgwt8dsHruPb+ZXiPDeu/1yNxG32e72kpq2cQQSwJIAlgSwBLCk8oDf3j9//Ol3f0lvsoUNyMKmWZg7sOQRWhLAkgCWlAHY715+xbGwIgtzB5Y8QksCWBLA0n8C7Oclv3tZ2N8uzB1Y8ggtCWBJAEsCWAJYEsCSUgGfnG4lNQ1gCWBJAEsCWAJYUn3AHy+3kS6vDh2be3d9c1GyTikKuOn309y765uLknVKAJsVgAEGWAADDLDRdFEABhhggAEWwAADLIABBhhgpwSwWQEYYIAFMMAAG00XBWCAAQYYYAEMMMACGGCAjaaLAjDAAAMMsAAGGGABDDDAADulb4Adk9Q3gCWAJQEsaR3gvm/NvXt6XWzu9wYXPIHIkmpel8HLzvp3je/AkSOY+9u34AkEATvMrH8HMMAAA2x8nQDAAAMMMMAAAwwwwMbXCQAMMMAAAwwwwAADDDDAAANsfJ0AwAADDDDAAAMMMMDG1wkADDDAAAMMMMAAAwwwwAADbHydAMAAAwwwwAADDDDAkwCWBLAEsCSAJa0DHHyN7ePzw2J9X7BccHdZS4p8TuJH1bwoBQ8zq+gdOLLuvl9jBXeXtaTgzBU8pcR/V/AwRz9CAwwwwAADDDDAAAMMMMAAAwwwwAADDDDAAAMMMMAAAwwwwAADDDDAAAMMMMAAAwwwwAADDDDAAAMMMMAAAwwwwAADDDDAAAMMMMAAAwwwwAADDDDAkooHsASwJIAlrQOc+Iraw839YuM/yu6aLilr2XMfZuYdOLLu8R9ld02XlLXsuQ8TYLsDGGAjbncAAwwwwAADDDDAABtxuwMYYCMOMMAAAwwwwADbHcAAG3G7AxhggAEGGGCAAQbYiNsdwAAbcbsDGGCAAQYYYIABBtiI2x3AABtxgAEGGGCAAT4WYEmDA1gCWBLAktYBHvzK3N3+OlLBVxDbnQo2+g4cHPGmX4dz704eoQEGWAADLAFsdwLYiAMsgAGWAAZYABtxuxPAAAMsgAGWALY7AWzEARbAAEsAAyyAjbjdCWAjDrAABlgCGGABbMTtTgBLAlgSwBLAkmoA9mZdyXuhJXmElgSwBLAkgCUBLAlgCWBJAEsCWAJYUkfAZ+cXkpoGsASwJIAlASwBLAlgSQBLAlgCWBLAkgCWAJYEsCSAJQEsASwJYElH6AsPIXBF5tbWTgAAAABJRU5ErkJggg=="
+    },
+    {
+      path: "CONFIG/APPENDIX/CBTI演示.mp4",
+      content: "（演示）视频文件占位：评审壳不加载真媒体，正文与卡片里的 mp4 嵌入统一映射到壳内 assets/demo.mp4 回放。"
+    }
+  ];
   function ensureTaskSeedShape() {
     var _a;
     const taskKey = key("CONFIG/STORAGE/knowledge.json");
@@ -14015,7 +15235,10 @@ date: "2026-09-01 12:00:00"
   function seedVault() {
     ensureTaskSeedShape();
     if (localStorage.getItem(SEED_MARKER)) return;
-    for (const n of SEED_NOTES) localStorage.setItem(key(n.path), encodeSeedFile(n.content, { ctime: n.ctime, mtime: n.ctime }));
+    for (const n of [...SEED_NOTES, ...SEED_MOUNT_NOTES, ...SEED_MOUNT_LITERATURE]) {
+      localStorage.setItem(key(n.path), encodeSeedFile(n.content, { ctime: n.ctime, mtime: n.ctime }));
+    }
+    for (const m of SEED_MEDIA) localStorage.setItem(key(m.path), encodeSeedFile(m.content));
     localStorage.setItem(key("CONFIG/STORAGE/knowledge.json"), encodeSeedFile(JSON.stringify(SEED_TASKS)));
     localStorage.setItem(SEED_MARKER, (/* @__PURE__ */ new Date()).toISOString());
   }
@@ -14171,6 +15394,26 @@ ${text}`;
       now: async (path) => ({ status: "done", created: await writeLinks(path, candidates()) })
     });
   }
+  function injectFakeVectorSearch() {
+    const index = AI_INDEX.filter((it) => !!localStorage.getItem(key(it.path)));
+    setVectorSearchSource({
+      isIndexReady: () => true,
+      search: async (query, topK = 5) => {
+        const q2 = String(query != null ? query : "").toLowerCase();
+        if (!q2.trim()) return [];
+        const hits = [];
+        for (const it of index) {
+          let hit = 0;
+          for (const k of it.keys) if (q2.includes(k.toLowerCase())) hit++;
+          if (!hit) continue;
+          const score = Math.min(0.93, 0.62 + hit * 0.06 + Math.min(0.12, it.chunk.length / 900));
+          hits.push({ path: it.path, chunk: it.chunk, score: Number(score.toFixed(3)) });
+        }
+        hits.sort((x, y) => y.score - x.score || x.path.localeCompare(y.path));
+        return hits.slice(0, Math.max(1, topK));
+      }
+    });
+  }
   function bootKnowledgeSim() {
     const g = window;
     if (g.__bzKbSimBooted) return;
@@ -14180,6 +15423,7 @@ ${text}`;
     setApp(app);
     injectSettings();
     injectFakeLinkNow(app);
+    injectFakeVectorSearch();
     KnowledgeData.init({ storagePath: "CONFIG/STORAGE" });
     ui = new UIManager(app);
     injectDemoPlate();
@@ -14212,7 +15456,7 @@ ${text}`;
     bootKnowledgeSim();
     ui == null ? void 0 : ui.showHistory();
   }
-  function openMountTree2(cardPath = "卡片盒/间隔重复.md") {
+  function openMountTree2(cardPath = "卡片盒/睡眠结构.md") {
     bootKnowledgeSim();
     void openMountTree(cardPath);
   }

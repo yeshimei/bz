@@ -1,4 +1,4 @@
-/* 源指纹 03552bec94f72fe1 · 仓内输入 198 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 af64dedcf7e4cd50 · 仓内输入 198 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -5114,8 +5114,8 @@ var BZW_settings_panel = (() => {
   });
 
   // src/core/utils.ts
-  function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, (m) => {
+  function escapeHtml(str2) {
+    return str2.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
       if (m === "<") return "&lt;";
       if (m === ">") return "&gt;";
@@ -5221,9 +5221,9 @@ var BZW_settings_panel = (() => {
     if (!f) return false;
     return path === f || path.startsWith(f + "/");
   }
-  function hash31(str) {
+  function hash31(str2) {
     let h = 0;
-    const t = String(str || "");
+    const t = String(str2 || "");
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return h >>> 0;
   }
@@ -20873,26 +20873,74 @@ ${sample}`,
   // src/knowledge/mount-suggest.ts
   var mount_suggest_exports = {};
   __export(mount_suggest_exports, {
+    BLOCK_ID_PREFIX: () => BLOCK_ID_PREFIX,
     SUGGEST_CACHE_FILE: () => SUGGEST_CACHE_FILE,
     SUGGEST_CACHE_VERSION: () => SUGGEST_CACHE_VERSION,
+    SUGGEST_EXCLUDE_DIRS: () => SUGGEST_EXCLUDE_DIRS,
     SUGGEST_JUDGE_MAX_TOKENS: () => SUGGEST_JUDGE_MAX_TOKENS,
+    SUGGEST_LOCATE_TEXT_CAP: () => SUGGEST_LOCATE_TEXT_CAP,
     SUGGEST_MAX_ANCHORS: () => SUGGEST_MAX_ANCHORS,
-    SUGGEST_MAX_CANDIDATES: () => SUGGEST_MAX_CANDIDATES,
+    SUGGEST_MAX_LOCATE_NOTES: () => SUGGEST_MAX_LOCATE_NOTES,
+    SUGGEST_MAX_PER_TARGET: () => SUGGEST_MAX_PER_TARGET,
     SUGGEST_MIN_ANCHOR_CHARS: () => SUGGEST_MIN_ANCHOR_CHARS,
     SUGGEST_MIN_SCORE: () => SUGGEST_MIN_SCORE,
-    SUGGEST_PER_ANCHOR_CANDIDATES: () => SUGGEST_PER_ANCHOR_CANDIDATES,
+    SUGGEST_POOL_SIZE: () => SUGGEST_POOL_SIZE,
+    SUGGEST_REASONING_EFFORT: () => SUGGEST_REASONING_EFFORT,
     SUGGEST_TOPK: () => SUGGEST_TOPK,
+    aggregatePool: () => aggregatePool,
+    blockIdFor: () => blockIdFor,
     cacheValid: () => cacheValid,
     clearSuggestCache: () => clearSuggestCache,
+    collectExistingTargets: () => collectExistingTargets,
+    ensureSuggestionBlockId: () => ensureSuggestionBlockId,
     filterSuggestions: () => filterSuggestions,
+    findHeadingText: () => findHeadingText,
     generateSuggestions: () => generateSuggestions,
+    inRecallScope: () => inRecallScope,
+    locateInText: () => locateInText,
     markSuggestion: () => markSuggestion,
+    matchesExisting: () => matchesExisting,
     mergeSuggestions: () => mergeSuggestions,
+    outlineForLocate: () => outlineForLocate,
+    parseAdoptPicks: () => parseAdoptPicks,
+    parseExistingLink: () => parseExistingLink,
     parseJudgePicks: () => parseJudgePicks,
+    parseLocatePicks: () => parseLocatePicks,
+    parseQueryList: () => parseQueryList,
     readSuggestCache: () => readSuggestCache,
+    replaceAnchorWithAlias: () => replaceAnchorWithAlias,
+    sliceUnitText: () => sliceUnitText,
     splitAnchors: () => splitAnchors,
-    suggestKey: () => suggestKey
+    stripFrontmatter: () => stripFrontmatter2,
+    suggestKey: () => suggestKey,
+    suggestKindOf: () => suggestKindOf,
+    suggestProgressLabel: () => suggestProgressLabel,
+    suggestProgressPercent: () => suggestProgressPercent,
+    suggestionId: () => suggestionId,
+    suggestionLink: () => suggestionLink,
+    suggestionLinkTarget: () => suggestionLinkTarget,
+    suggestionSubpath: () => suggestionSubpath,
+    suggestionUnitMarkdown: () => suggestionUnitMarkdown
   });
+  function hash8(s) {
+    const h = hash31(String(s != null ? s : "")) >>> 0;
+    const hi = h >>> 16 & 65535;
+    const lo = h & 65535;
+    return hi.toString(36).padStart(4, "0") + lo.toString(36).padStart(4, "0");
+  }
+  function normLite(s) {
+    return String(s != null ? s : "").replace(/[*_`~#]/g, "").replace(/\s+/g, "").trim().toLowerCase();
+  }
+  function idPath(path) {
+    return String(path != null ? path : "").replace(/\\/g, "/").replace(/^\.\//, "").trim();
+  }
+  function subKeyOf(s) {
+    var _a2, _b2;
+    const sub = String((_a2 = s == null ? void 0 : s.subpath) != null ? _a2 : "").trim();
+    if (sub) return hash8(normLite(sub));
+    const q2 = String((_b2 = s == null ? void 0 : s.quote) != null ? _b2 : "").trim();
+    return q2 ? hash8(normLite(q2)) : "";
+  }
   function nextIsBoundary(text, i) {
     if (i >= text.length) return true;
     return /\s/.test(text[i]);
@@ -20900,11 +20948,23 @@ ${sample}`,
   function wikiDisplay(inner) {
     const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : inner;
     const afterBlock = afterAlias.includes("^") ? afterAlias.slice(0, afterAlias.indexOf("^")) : afterAlias;
-    const noHead = afterBlock.includes("#") ? afterBlock.slice(afterBlock.lastIndexOf("#") + 1) : afterBlock;
+    const noHead = afterBlock.includes("#") ? afterBlock.slice(0, afterBlock.lastIndexOf("#") + 1) : afterBlock;
     return noHead || afterAlias || inner;
   }
+  function stripUnclosedWiki(raw) {
+    let text = String(raw != null ? raw : "");
+    for (let guard = 0; guard < 8; guard++) {
+      const open = text.lastIndexOf("[[");
+      if (open < 0) break;
+      if (text.indexOf("]]", open) > open) break;
+      const inner = text.slice(open + 2);
+      const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : "";
+      text = text.slice(0, open) + afterAlias;
+    }
+    return text;
+  }
   function cleanAnchorText(raw) {
-    return raw.replace(/!\[\[[^\[\]]*\]\]/g, " ").replace(/\[\[([^\[\]]+)\]\]/g, (_m, inner) => wikiDisplay(inner)).replace(/`+/g, "").replace(/\*\*|__/g, "").replace(/\s+/g, " ").trim();
+    return stripUnclosedWiki(raw).replace(/!\[\[[^\[\]]*\]\]/g, " ").replace(/\[\[([^\[\]]+)\]\]/g, (_m, inner) => wikiDisplay(inner)).replace(/`+/g, "").replace(/\*\*|__/g, "").replace(/\s+/g, " ").trim();
   }
   function pushAnchor(out, text, from, to) {
     let s = from;
@@ -20946,20 +21006,36 @@ ${sample}`,
   }
   function suggestKey(s) {
     var _a2;
-    return normalizeAnchorText((_a2 = s.anchor) == null ? void 0 : _a2.text) + "\0" + normalizeTargetPath(s.target);
+    const sub = subKeyOf(s);
+    return normalizeAnchorText((_a2 = s.anchor) == null ? void 0 : _a2.text) + "\0" + normalizeTargetPath(s.target) + (sub ? "#" + sub : "");
   }
-  function matchesExisting(target, existing) {
+  function suggestionId(s) {
+    const sub = subKeyOf(s);
+    return `ai:${idPath(s == null ? void 0 : s.target)}${sub ? "#" + sub : ""}`;
+  }
+  function parseExistingLink(raw) {
+    const s = String(raw != null ? raw : "").trim();
+    const hash = s.indexOf("#");
+    if (hash < 0) return { path: s, subpath: null };
+    return { path: s.slice(0, hash), subpath: s.slice(hash + 1).trim() || null };
+  }
+  function matchesExisting(target, subpath, existing) {
     const t = normalizeTargetPath(target);
     if (!t) return false;
     const tBase = t.includes("/") ? t.slice(t.lastIndexOf("/") + 1) : t;
-    for (const raw of existing) {
-      const e = normalizeTargetPath(raw);
-      if (!e) continue;
-      if (e === t || e === tBase) return true;
+    const sub = String(subpath != null ? subpath : "").trim().toLowerCase();
+    for (const raw of existing || []) {
+      const e = parseExistingLink(raw);
+      const ep = normalizeTargetPath(e.path);
+      if (!ep) continue;
+      if (ep !== t && ep !== tBase) continue;
+      if (!e.subpath) return true;
+      if (sub && e.subpath.toLowerCase() === sub) return true;
     }
     return false;
   }
   function filterSuggestions(list, opts) {
+    var _a2;
     const dismissed = new Set(((opts == null ? void 0 : opts.dismissed) || []).map((k) => String(k).trim().toLowerCase()));
     const existing = (opts == null ? void 0 : opts.existing) || [];
     const minScore = Number.isFinite(opts == null ? void 0 : opts.minScore) ? Number(opts == null ? void 0 : opts.minScore) : SUGGEST_MIN_SCORE;
@@ -20971,7 +21047,7 @@ ${sample}`,
       if (!(Number(s.score) >= minScore)) continue;
       const key = suggestKey(s);
       if (dismissed.has(key) || seen.has(key)) continue;
-      if (existing.length > 0 && matchesExisting(s.target, existing)) continue;
+      if (existing.length > 0 && matchesExisting(s.target, (_a2 = s.subpath) != null ? _a2 : null, existing)) continue;
       seen.add(key);
       out.push(s);
     }
@@ -21044,9 +21120,31 @@ ${sample}`,
   function stripFrontmatter2(content) {
     return String(content != null ? content : "").replace(/^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, "");
   }
-  function kindOfTarget(path, ctx) {
+  async function readNoteText(app, path) {
+    var _a2, _b2, _c;
+    try {
+      const file = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, path);
+      if (!file) return null;
+      return String((_c = await app.vault.read(file)) != null ? _c : "");
+    } catch (e) {
+      return null;
+    }
+  }
+  function inRecallScope(path) {
+    const p = idPath(path);
+    if (!p) return false;
+    for (const dir of SUGGEST_EXCLUDE_DIRS) {
+      const d = idPath(dir);
+      if (!d) continue;
+      if (p === d || p.startsWith(d + "/")) return false;
+    }
+    return true;
+  }
+  function kindOfTarget(path, ctx, unit) {
+    if (unit === "heading") return "head";
+    if (unit === "paragraph") return "para";
     if (isUnderFolder((ctx == null ? void 0 : ctx.cardboxDir) || "", path)) return "card";
-    if (isUnderFolder((ctx == null ? void 0 : ctx.litDir) || "", path)) return "para";
+    if ((ctx == null ? void 0 : ctx.topicDir) && isUnderFolder(ctx.topicDir, path)) return "note";
     return "note";
   }
   function displayName(path) {
@@ -21059,25 +21157,265 @@ ${sample}`,
     WIKILINK_RE.lastIndex = 0;
     let m;
     while ((m = WIKILINK_RE.exec(text)) !== null) {
-      const target = m[1].split("|")[0].split("#")[0].trim();
+      const target = m[1].split("|")[0].trim();
       if (target) out.push(target);
     }
     return out;
   }
-  function buildJudgePrompt(anchors, candidates) {
-    const lines = [JUDGE_PROMPT_PREFIX, "", "## 锚点与候选"];
-    for (let i = 0; i < anchors.length; i++) {
-      lines.push(`### a${i + 1}：${anchors[i].text}`);
-      const group = candidates.filter((c) => c.anchorIdx === i);
-      if (group.length === 0) {
-        lines.push("-（无候选）");
+  function flattenForMatch(text) {
+    const flat = [];
+    const map = [];
+    let i = 0;
+    const src = String(text != null ? text : "");
+    while (i < src.length) {
+      const ch = src[i];
+      if (/\s/.test(ch)) {
+        i++;
         continue;
       }
-      for (const c of group) {
-        const snippet = c.snippet ? "｜" + c.snippet.replace(/\s+/g, " ") : "";
-        lines.push(`- t${c.localIdx + 1}：${displayName(c.path)}（${c.path}）${snippet}`);
+      if (ch === "*" || ch === "_" || ch === "`" || ch === "~" || ch === ">" || ch === "|") {
+        i++;
+        continue;
+      }
+      if (ch === "…" || ch === "." && src.slice(i, i + 3) === "...") {
+        i += ch === "…" ? 1 : 3;
+        continue;
+      }
+      flat.push(ch.toLowerCase());
+      map.push(i);
+      i++;
+    }
+    return { flat: flat.join(""), map };
+  }
+  function keywordsOf(s) {
+    const text = String(s != null ? s : "");
+    const words = [...text.matchAll(/[\p{L}\p{N}]+/gu)].map((m) => m[0].toLowerCase());
+    const out = [];
+    for (const w of words) {
+      if (/[\p{Script=Han}]/u.test(w)) {
+        if (w.length <= 2) out.push(w);
+        else for (let i = 0; i + 2 <= w.length; i++) out.push(w.slice(i, i + 2));
+      } else if (w.length >= 2) out.push(w);
+    }
+    return out.slice(0, 24);
+  }
+  function locateInText(text, needle, from = 0) {
+    const src = String(text != null ? text : "");
+    const want = String(needle != null ? needle : "").trim();
+    if (!src || !want) return null;
+    const start = Math.max(0, Math.min(Number(from) || 0, src.length));
+    const exact = src.indexOf(want, start);
+    if (exact >= 0) return { at: exact, len: want.length, level: 1 };
+    const tail = src.slice(start);
+    const { flat, map } = flattenForMatch(tail);
+    const flatWant = flattenForMatch(want).flat;
+    if (flatWant) {
+      const hit = flat.indexOf(flatWant);
+      if (hit >= 0 && map[hit] !== void 0) {
+        const at = start + map[hit];
+        const endIdx = hit + flatWant.length - 1;
+        const end = map[endIdx] !== void 0 ? start + map[endIdx] + 1 : src.length;
+        return { at, len: Math.max(1, end - at), level: 2 };
       }
     }
+    const kws = keywordsOf(want);
+    if (kws.length === 0) return null;
+    const need = Math.max(1, Math.ceil(kws.length / 2));
+    let best = null;
+    const blockRe = /[^\n][\s\S]*?(?=\n\s*\n|$)/g;
+    let m;
+    while ((m = blockRe.exec(tail)) !== null) {
+      const raw = m[0];
+      if (!raw.trim()) continue;
+      const flatBlock = flattenForMatch(raw).flat;
+      let score = 0;
+      for (const k of kws) if (flatBlock.includes(k)) score++;
+      if (score < need) continue;
+      const lead = raw.length - raw.trimStart().length;
+      const at = start + m.index + lead;
+      const len = raw.trimEnd().length - lead;
+      if (!best || score > best.score) best = { at, len, score };
+    }
+    if (!best) return null;
+    return { at: best.at, len: best.len, level: 3 };
+  }
+  function expandBlock(text, at, len) {
+    const src = String(text != null ? text : "");
+    let s = Math.max(0, Math.min(Number(at) || 0, src.length));
+    let e = Math.max(s, Math.min(src.length, s + Math.max(0, Number(len) || 0)));
+    const lb = src.slice(0, s).search(/\n[ \t]*\n[^\n]*$/);
+    s = lb >= 0 ? lb + 1 : 0;
+    const nb = src.slice(e).search(/\n[ \t]*\n/);
+    e = nb >= 0 ? e + nb : src.length;
+    while (s < e && /\s/.test(src[s])) s++;
+    while (e > s && /\s/.test(src[e - 1])) e--;
+    return { at: s, len: Math.max(0, e - s) };
+  }
+  function findHeadingText(content, heading) {
+    const want = String(heading != null ? heading : "").trim();
+    if (!want) return null;
+    const wantKey = normLite(want);
+    for (const line of String(content != null ? content : "").split(/\r?\n/)) {
+      const m = /^(#{1,6})[ \t]+(.*)$/.exec(line);
+      if (!m) continue;
+      const text = m[2].trim();
+      if (!text) continue;
+      if (text === want || normLite(text) === wantKey) return text;
+    }
+    return null;
+  }
+  function sliceHeadingSection(content, headingText) {
+    const src = String(content != null ? content : "");
+    const lines = src.split(/\r?\n/);
+    let start = -1;
+    let level = 6;
+    for (let i = 0; i < lines.length; i++) {
+      const m = /^(#{1,6})[ \t]+(.*)$/.exec(lines[i]);
+      if (!m) continue;
+      if (m[2].trim() !== headingText) continue;
+      start = i;
+      level = m[1].length;
+      break;
+    }
+    if (start < 0) return src.trim();
+    let end = lines.length;
+    for (let i = start + 1; i < lines.length; i++) {
+      const m = /^(#{1,6})[ \t]+/.exec(lines[i]);
+      if (m && m[1].length <= level) {
+        end = i;
+        break;
+      }
+    }
+    return lines.slice(start, end).join("\n").trim();
+  }
+  function sliceUnitText(content, s) {
+    var _a2, _b2;
+    const text = stripFrontmatter2(content).trim();
+    if (!text) return "";
+    const unit = (s == null ? void 0 : s.unit) === "heading" || (s == null ? void 0 : s.unit) === "paragraph" ? s.unit : "whole";
+    if (unit === "heading") {
+      const real = findHeadingText(text, String((_a2 = s == null ? void 0 : s.heading) != null ? _a2 : ""));
+      if (!real) return text;
+      return sliceHeadingSection(text, real);
+    }
+    if (unit === "paragraph") {
+      const hit = String((_b2 = s == null ? void 0 : s.quote) != null ? _b2 : "").trim() ? locateInText(text, String(s.quote)) : null;
+      if (!hit) return text;
+      const block = expandBlock(text, hit.at, hit.len);
+      return text.slice(block.at, block.at + block.len).trim();
+    }
+    return text;
+  }
+  async function suggestionUnitMarkdown(app, s) {
+    var _a2;
+    const reason = String((_a2 = s == null ? void 0 : s.reason) != null ? _a2 : "").trim() || "AI 建议：这张卡与主卡有实质关联。";
+    const head = `> ${reason}`;
+    const content = await readNoteText(app, s == null ? void 0 : s.target);
+    if (content === null) return head;
+    const unit = sliceUnitText(content, s);
+    return unit ? `${head}
+
+${unit}` : head;
+  }
+  function blockIdFor(path, blockText) {
+    return BLOCK_ID_PREFIX + hash8(`${idPath(path)}
+${String(blockText != null ? blockText : "").trim()}`);
+  }
+  async function ensureSuggestionBlockId(app, targetPath, quote) {
+    const path = idPath(targetPath);
+    if (!path || !String(quote != null ? quote : "").trim()) return { blockId: "", ok: false };
+    try {
+      return await enqueueFileTask(path, async () => {
+        var _a2, _b2, _c;
+        const file = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, path);
+        if (!file) return { blockId: "", ok: false };
+        const text = String((_c = await app.vault.read(file)) != null ? _c : "");
+        const hit = locateInText(text, quote);
+        if (!hit) return { blockId: "", ok: false };
+        const block = expandBlock(text, hit.at, hit.len);
+        const blockText = text.slice(block.at, block.at + block.len);
+        const existing = /\^([A-Za-z0-9-]+)\s*$/.exec(blockText);
+        if (existing && existing[1].startsWith(BLOCK_ID_PREFIX)) return { blockId: existing[1], ok: true };
+        const blockId = blockIdFor(path, blockText.replace(/\^([A-Za-z0-9-]+)\s*$/, "").trim());
+        const trimmed = blockText.replace(/\s+$/, "");
+        const next = text.slice(0, block.at) + `${trimmed} ^${blockId}` + text.slice(block.at + block.len);
+        if (next !== text) await app.vault.modify(file, next);
+        return { blockId, ok: true };
+      });
+    } catch (e) {
+      console.warn("[mount-suggest] 补写块 id 失败", e);
+      return { blockId: "", ok: false };
+    }
+  }
+  function suggestionSubpath(s) {
+    var _a2;
+    const sub = String((_a2 = s == null ? void 0 : s.subpath) != null ? _a2 : "").trim();
+    if (!sub) return "";
+    return (s == null ? void 0 : s.unit) === "paragraph" ? sub.startsWith("^") ? sub : `^${sub}` : sub;
+  }
+  function suggestionLink(s) {
+    const core = idPath(s == null ? void 0 : s.target).replace(/\.md$/i, "");
+    if (!core) return "";
+    const sub = suggestionSubpath(s);
+    return sub ? `[[${core}#${sub}]]` : `[[${core}]]`;
+  }
+  function suggestionLinkTarget(s) {
+    return suggestionLink(s).replace(/^\[\[/, "").replace(/\]\]$/, "");
+  }
+  function replaceAnchorWithAlias(body, anchor, target, subpath) {
+    var _a2;
+    const src = String(body != null ? body : "");
+    const text = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "").trim();
+    const core = idPath(target).replace(/\.md$/i, "");
+    if (!src || !text || !core) return null;
+    if (src.includes(`[[${core}`)) return src;
+    const hit = locateInText(src, text);
+    if (!hit) return null;
+    if (hit.level === 3) return null;
+    if (/\[\[|\]\]/.test(src.slice(hit.at, hit.at + hit.len))) return null;
+    const link = subpath ? `[[${core}#${subpath}|${text}]]` : `[[${core}|${text}]]`;
+    return src.slice(0, hit.at) + link + src.slice(hit.at + hit.len);
+  }
+  function buildQueryPrompt(anchors) {
+    const lines = [QUERY_PROMPT_PREFIX, "", "## 主卡正文片段"];
+    anchors.forEach((a, i) => lines.push(`### s${i + 1}：${a.text}`));
+    return lines.join("\n");
+  }
+  function buildAdoptPrompt(segs, pool) {
+    const lines = [ADOPT_PROMPT_PREFIX, "", "## 主卡正文片段"];
+    segs.forEach((a, i) => lines.push(`### s${i + 1}：${a.text}`));
+    lines.push("", "## 候选笔记（检索召回池）");
+    pool.forEach((c, i) => {
+      const snippet = c.snippet ? "｜" + c.snippet.replace(/\s+/g, " ") : "";
+      lines.push(
+        `- c${i + 1}：${displayName(c.path)}（${c.path}）命中 ${c.hitCount} 次 · 最高分 ${c.maxScore.toFixed(3)}｜片段 ${c.segs.map((s) => "s" + (s + 1)).join("/")}${snippet}`
+      );
+    });
+    return lines.join("\n");
+  }
+  function outlineForLocate(content) {
+    const body = stripFrontmatter2(content);
+    const out = [];
+    let p = 0;
+    for (const line of body.split(/\r?\n/)) {
+      if (/^#{1,6}[ \t]+/.test(line)) {
+        out.push(line);
+        continue;
+      }
+      if (!line.trim()) continue;
+      p++;
+      out.push(`（${p}）${line}`);
+    }
+    const text = out.join("\n");
+    return text.length > SUGGEST_LOCATE_TEXT_CAP ? text.slice(0, SUGGEST_LOCATE_TEXT_CAP) + "\n…（后文略）" : text;
+  }
+  function buildLocatePrompt(items) {
+    const lines = [LOCATE_PROMPT_PREFIX, ""];
+    items.forEach((it, i) => {
+      lines.push(`## n${i + 1} · ${it.path}`);
+      lines.push(`主卡锚点原文：${it.anchor.text}`);
+      lines.push("", "### 目标笔记全文", outlineForLocate(it.content), "");
+    });
     return lines.join("\n");
   }
   function pickIndex(v) {
@@ -21099,7 +21437,7 @@ ${sample}`,
     }
     if (!value || typeof value !== "object") return null;
     const obj = value;
-    for (const key of ["suggestions", "picks", "result", "items", "data", "list", "content"]) {
+    for (const key of ["suggestions", "picks", "result", "items", "data", "list", "queries", "content"]) {
       const hit = digArray(obj[key], depth + 1);
       if (hit) return hit;
     }
@@ -21109,10 +21447,9 @@ ${sample}`,
     }
     return null;
   }
-  function parseJudgePicks(raw) {
-    var _a2;
+  function takeArray(raw) {
     const text = String(raw != null ? raw : "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
-    if (!text) return { found: false, count: 0, picks: [] };
+    if (!text) return null;
     let value = null;
     try {
       value = JSON.parse(text);
@@ -21126,7 +21463,85 @@ ${sample}`,
         }
       }
     }
-    const arr = digArray(value);
+    return digArray(value);
+  }
+  function str(v, cap = 0) {
+    const s = String(v != null ? v : "").replace(/\s+/g, " ").trim();
+    return cap > 0 ? s.slice(0, cap) : s;
+  }
+  function bool(v) {
+    if (typeof v === "boolean") return v;
+    if (typeof v === "number") return v !== 0;
+    return /^(true|yes|y|是|1)$/i.test(String(v != null ? v : "").trim());
+  }
+  function parseQueryList(raw) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    const arr = takeArray(raw);
+    if (!arr) return { found: false, count: 0, items: [] };
+    const out = [];
+    for (const item of arr) {
+      if (!item || typeof item !== "object") continue;
+      const it = item;
+      const seg = pickIndex((_c = (_b2 = (_a2 = it.seg) != null ? _a2 : it.segment) != null ? _b2 : it.n) != null ? _c : it.anchor);
+      const sentence = str((_e = (_d = it.sentence) != null ? _d : it.query) != null ? _e : it.q);
+      const keywords = str((_h = (_g = (_f = it.keywords) != null ? _f : it.keyword) != null ? _g : it.terms) != null ? _h : it.kw);
+      if (!Number.isInteger(seg) || !sentence && !keywords) continue;
+      out.push({ seg, sentence: sentence || keywords, keywords: keywords || sentence, why: str(it.why, REASON_MAX_CHARS) });
+    }
+    return { found: true, count: arr.length, items: out };
+  }
+  function parseAdoptPicks(raw) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    const arr = takeArray(raw);
+    if (!arr) return { found: false, count: 0, items: [] };
+    const out = [];
+    for (const item of arr) {
+      if (!item || typeof item !== "object") continue;
+      const it = item;
+      const seg = pickIndex((_c = (_b2 = (_a2 = it.seg) != null ? _a2 : it.segment) != null ? _b2 : it.n) != null ? _c : it.anchor);
+      const path = str((_f = (_e = (_d = it.path) != null ? _d : it.target) != null ? _e : it.note) != null ? _f : it.file);
+      const score = Number((_h = (_g = it.score) != null ? _g : it.s) != null ? _h : it.confidence);
+      if (!Number.isInteger(seg) || !path || !Number.isFinite(score)) continue;
+      out.push({ seg, path, score: Math.max(0, Math.min(1, score)), reason: str(it.reason, REASON_MAX_CHARS) });
+    }
+    return { found: true, count: arr.length, items: out };
+  }
+  function normalizeUnit(v) {
+    const s = String(v != null ? v : "").trim().toLowerCase();
+    if (!s) return "";
+    if (/^(whole|all|note|整篇|全文|整篇笔记)$/.test(s)) return "whole";
+    if (/^(heading|head|headline|section|h[1-6]?|标题|小节)$/.test(s)) return "heading";
+    if (/^(paragraph|para|block|quote|passage|段落|段)$/.test(s)) return "paragraph";
+    if (/^(skip|none|null|否决|不相关)$/.test(s)) return "skip";
+    return "";
+  }
+  function parseLocatePicks(raw) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+    const arr = takeArray(raw);
+    if (!arr) return { found: false, count: 0, items: [] };
+    const out = [];
+    for (const item of arr) {
+      if (!item || typeof item !== "object") continue;
+      const it = item;
+      const n = pickIndex((_d = (_c = (_b2 = (_a2 = it.n) != null ? _a2 : it.seg) != null ? _b2 : it.index) != null ? _c : it.i) != null ? _d : it.pair);
+      if (!Number.isInteger(n)) continue;
+      const rawUnit = normalizeUnit((_f = (_e = it.unit) != null ? _e : it.type) != null ? _f : it.level);
+      const skip = bool((_h = (_g = it.skip) != null ? _g : it.reject) != null ? _h : it.veto) || rawUnit === "skip";
+      const unit = rawUnit === "" || rawUnit === "skip" ? "whole" : rawUnit;
+      out.push({
+        n,
+        skip,
+        unit,
+        heading: str((_j = (_i = it.heading) != null ? _i : it.title) != null ? _j : it.section),
+        quote: str((_l = (_k = it.quote) != null ? _k : it.excerpt) != null ? _l : it.text),
+        anchor: str(it.anchor),
+        reason: str(it.reason, REASON_MAX_CHARS)
+      });
+    }
+    return { found: true, count: arr.length, items: out };
+  }
+  function parseJudgePicks(raw) {
+    const arr = takeArray(raw);
     if (!arr) return { found: false, count: 0, picks: [] };
     const out = [];
     for (const item of arr) {
@@ -21140,14 +21555,105 @@ ${sample}`,
         anchor,
         target,
         score: Math.max(0, Math.min(1, score)),
-        reason: String((_a2 = it.reason) != null ? _a2 : "").replace(/\s+/g, " ").trim().slice(0, REASON_MAX_CHARS)
+        reason: str(it.reason, REASON_MAX_CHARS)
       });
     }
     return { found: true, count: arr.length, picks: out };
   }
-  async function generateSuggestions(cardPath, ctx, opts) {
+  function aggregatePool(hits, opts) {
     var _a2, _b2, _c, _d;
+    const limit = Number.isFinite(opts == null ? void 0 : opts.limit) ? Math.max(1, Number(opts == null ? void 0 : opts.limit)) : SUGGEST_POOL_SIZE;
+    const selfKey = normalizeTargetPath((opts == null ? void 0 : opts.selfPath) || "");
+    const byPath = /* @__PURE__ */ new Map();
+    const seenQuery = /* @__PURE__ */ new Map();
+    for (const h of hits || []) {
+      const p = String((_a2 = h == null ? void 0 : h.path) != null ? _a2 : "").trim();
+      if (!p) continue;
+      const key = normalizeTargetPath(p);
+      if (!key || key === selfKey) continue;
+      if (!inRecallScope(p)) continue;
+      let entry = byPath.get(key);
+      if (!entry) {
+        entry = { path: p, hitCount: 0, maxScore: 0, snippet: "", segs: [] };
+        byPath.set(key, entry);
+        seenQuery.set(key, /* @__PURE__ */ new Set());
+      }
+      const qk = `${(_b2 = h == null ? void 0 : h.seg) != null ? _b2 : -1}\0${String((_c = h == null ? void 0 : h.query) != null ? _c : "")}`;
+      const qs = seenQuery.get(key);
+      if (!qs.has(qk)) {
+        qs.add(qk);
+        entry.hitCount++;
+      }
+      const score = Number(h == null ? void 0 : h.score);
+      if (Number.isFinite(score) && score > entry.maxScore) {
+        entry.maxScore = score;
+        entry.snippet = String((_d = h == null ? void 0 : h.chunk) != null ? _d : "").slice(0, 200);
+      }
+      if (Number.isInteger(h == null ? void 0 : h.seg) && !entry.segs.includes(h.seg)) entry.segs.push(h.seg);
+    }
+    const all = [...byPath.values()];
+    for (const e of all) e.segs.sort((a, b) => a - b);
+    const ranked = all.slice().sort((a, b) => b.hitCount - a.hitCount || b.maxScore - a.maxScore);
+    const out = [];
+    const taken = /* @__PURE__ */ new Set();
+    const segBest = /* @__PURE__ */ new Map();
+    for (const e of ranked) {
+      for (const seg of e.segs) {
+        const cur = segBest.get(seg);
+        if (!cur || e.maxScore > cur.maxScore) segBest.set(seg, e);
+      }
+    }
+    for (const e of ranked) {
+      if (!e.segs.some((seg) => segBest.get(seg) === e)) continue;
+      const key = normalizeTargetPath(e.path);
+      if (taken.has(key)) continue;
+      taken.add(key);
+      out.push(e);
+      if (out.length >= limit) return out;
+    }
+    for (const e of ranked) {
+      const key = normalizeTargetPath(e.path);
+      if (taken.has(key)) continue;
+      taken.add(key);
+      out.push(e);
+      if (out.length >= limit) break;
+    }
+    return out;
+  }
+  function suggestProgressLabel(p) {
+    var _a2;
+    const base = (_a2 = STAGE_LABEL[p == null ? void 0 : p.stage]) != null ? _a2 : "";
+    const total = Number(p == null ? void 0 : p.total);
+    const done = Number(p == null ? void 0 : p.done);
+    const tail = Number.isFinite(total) && total > 0 && Number.isFinite(done) ? `（${done}/${total}）` : "";
+    return base + tail;
+  }
+  function suggestProgressPercent(p) {
+    var _a2;
+    const base = (_a2 = STAGE_PERCENT[p == null ? void 0 : p.stage]) != null ? _a2 : 0;
+    const total = Number(p == null ? void 0 : p.total);
+    const done = Number(p == null ? void 0 : p.done);
+    if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(done)) return base;
+    const prev = p.stage === "recall" ? STAGE_PERCENT.query : p.stage === "locate" ? STAGE_PERCENT.adopt : base;
+    return Math.round(prev + (base - prev) * Math.min(1, Math.max(0, done / total)));
+  }
+  function aiPrompt(text) {
+    return createAI().prompt(text, void 0, {
+      modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS, reasoning_effort: SUGGEST_REASONING_EFFORT }
+    });
+  }
+  async function generateSuggestions(cardPath, ctx, opts) {
+    var _a2, _b2, _c, _d, _e, _f, _g;
     const empty = (status) => ({ status, suggestions: [] });
+    const tell = (stage, done, total) => {
+      var _a3;
+      const p = { stage, label: "", done, total };
+      p.label = suggestProgressLabel(p);
+      try {
+        (_a3 = opts == null ? void 0 : opts.onProgress) == null ? void 0 : _a3.call(opts, p);
+      } catch (e) {
+      }
+    };
     if (isMobileEnv()) return empty("no-index");
     const searchApi = exportVectorSearch();
     if (!searchApi || !searchApi.isIndexReady()) return empty("no-index");
@@ -21189,73 +21695,187 @@ ${sample}`,
     }
     const dismissedSet = new Set(dismissed);
     const fixedSet = new Set(collectFixedKeys(entry));
-    const candidates = [];
-    const seenPair = /* @__PURE__ */ new Set();
+    tell("query", 0, anchors.length);
+    const queries = anchors.map((a) => [a.text]);
+    try {
+      const raw = await aiPrompt(buildQueryPrompt(anchors));
+      const parsed = parseQueryList(raw);
+      if (parsed.found) {
+        for (const it of parsed.items) {
+          const i = it.seg - 1;
+          if (i < 0 || i >= anchors.length) continue;
+          const pair = [it.sentence, it.keywords].filter((s) => String(s != null ? s : "").trim());
+          if (pair.length) queries[i] = pair;
+        }
+      } else {
+        console.warn("[mount-suggest] 查询官回答不可用，退回机械分句当查询");
+      }
+    } catch (e) {
+      console.warn("[mount-suggest] 查询官失败，退回机械分句当查询", e);
+    }
+    tell("query", anchors.length, anchors.length);
+    const recallTotal = queries.reduce((n, q2) => n + q2.length, 0);
+    let recallDone = 0;
+    const hits = [];
     let searchFailed = false;
-    outer: for (let i = 0; i < anchors.length; i++) {
-      let hits = [];
-      try {
-        hits = await searchApi.search(anchors[i].text, SUGGEST_TOPK) || [];
-      } catch (e) {
-        console.warn("[mount-suggest] 向量检索失败，按降级处理", e);
-        searchFailed = true;
-        break;
+    for (let i = 0; i < queries.length; i++) {
+      for (const q2 of queries[i]) {
+        try {
+          const got = await searchApi.search(q2, SUGGEST_TOPK) || [];
+          for (const h of got) {
+            if (!h || !h.path) continue;
+            hits.push({ seg: i, query: q2, path: h.path, score: Number(h.score) || 0, chunk: String(h.chunk || "") });
+          }
+        } catch (e) {
+          console.warn("[mount-suggest] 向量检索失败，按降级处理", e);
+          searchFailed = true;
+          break;
+        }
+        recallDone++;
+        tell("recall", recallDone, recallTotal);
       }
-      let local = 0;
-      for (const hit of hits) {
-        if (!hit || !hit.path || hit.path === cardPath) continue;
-        const pairKey = suggestKey({ anchor: anchors[i], target: hit.path });
-        if (dismissedSet.has(pairKey) || fixedSet.has(pairKey)) continue;
-        if (matchesExisting(hit.path, existing)) continue;
-        if (seenPair.has(pairKey)) continue;
-        if (!ctx.app.vault.getAbstractFileByPath(hit.path)) continue;
-        seenPair.add(pairKey);
-        candidates.push({
-          anchorIdx: i,
-          localIdx: local,
-          path: hit.path,
-          kind: kindOfTarget(hit.path, ctx),
-          snippet: String(hit.chunk || "").slice(0, 200)
-        });
-        local++;
-        if (local >= SUGGEST_PER_ANCHOR_CANDIDATES) break;
-        if (candidates.length >= SUGGEST_MAX_CANDIDATES) break outer;
-      }
+      if (searchFailed) break;
     }
     if (searchFailed) return empty("no-index");
-    if (candidates.length === 0) {
+    const pool = aggregatePool(hits, { selfPath: cardPath, limit: SUGGEST_POOL_SIZE }).filter((c) => {
+      if (!ctx.app.vault.getAbstractFileByPath(c.path)) return false;
+      return !matchesExisting(c.path, null, existing);
+    });
+    if (pool.length === 0) {
       const generatedAt2 = Date.now();
       await persistCardCache(cardPath, bodyHash, generatedAt2, []);
       return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
     }
-    let raw = "";
+    tell("adopt");
+    let rawAdopt = "";
     try {
-      raw = await createAI().prompt(buildJudgePrompt(anchors, candidates), void 0, {
-        modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS }
-      });
+      rawAdopt = await aiPrompt(buildAdoptPrompt(anchors, pool));
     } catch (e) {
-      console.warn("[mount-suggest] AI 裁判失败", e);
+      console.warn("[mount-suggest] 采纳官失败", e);
       return empty("no-ai");
     }
-    const parsed = parseJudgePicks(raw);
-    if (!parsed.found || parsed.count > 0 && parsed.picks.length === 0) {
+    const adoptedParsed = parseAdoptPicks(rawAdopt);
+    if (!adoptedParsed.found || adoptedParsed.count > 0 && adoptedParsed.items.length === 0) {
       console.warn(
-        `[mount-suggest] 裁判回答不可用（${raw ? `${raw.length} 字` : "空"}，数组 ${parsed.count} 条）：${String(raw).slice(0, 120)}`
+        `[mount-suggest] 采纳官回答不可用（${rawAdopt ? `${rawAdopt.length} 字` : "空"}，数组 ${adoptedParsed.count} 条）：${String(
+          rawAdopt
+        ).slice(0, 120)}`
       );
       return empty("no-answer");
     }
-    const judged = [];
-    for (const pick of parsed.picks) {
-      if (pick.score < SUGGEST_MIN_SCORE) continue;
-      const a = anchors[pick.anchor - 1];
-      const c = candidates.find((it) => it.anchorIdx === pick.anchor - 1 && it.localIdx === pick.target - 1);
-      if (!a || !c) continue;
-      judged.push({ anchor: { ...a }, target: c.path, kind: c.kind, reason: pick.reason, score: pick.score, state: "pending" });
+    const pathToEntry = /* @__PURE__ */ new Map();
+    for (const c of pool) {
+      pathToEntry.set(normalizeTargetPath(c.path), c);
+      const base = normalizeTargetPath(c.path).split("/").pop() || "";
+      if (base && !pathToEntry.has(base)) pathToEntry.set(base, c);
     }
-    const suggestions = filterSuggestions(judged, { dismissed, existing, minScore: SUGGEST_MIN_SCORE });
+    const adopted = [];
+    const perTarget = /* @__PURE__ */ new Map();
+    for (const pick of adoptedParsed.items) {
+      if (pick.score < SUGGEST_MIN_SCORE) continue;
+      const a = anchors[pick.seg - 1];
+      const c = (_e = pathToEntry.get(normalizeTargetPath(pick.path))) != null ? _e : pathToEntry.get(normalizeTargetPath(pick.path).split("/").pop() || "");
+      if (!a || !c) continue;
+      const tKey = normalizeTargetPath(c.path);
+      if (((_f = perTarget.get(tKey)) != null ? _f : 0) >= SUGGEST_MAX_PER_TARGET) continue;
+      if (dismissedSet.has(suggestKey({ anchor: a, target: c.path }))) continue;
+      if (fixedSet.has(suggestKey({ anchor: a, target: c.path }))) continue;
+      perTarget.set(tKey, ((_g = perTarget.get(tKey)) != null ? _g : 0) + 1);
+      adopted.push({ anchor: a, entry: c, score: pick.score, reason: pick.reason });
+    }
+    if (adoptedParsed.count === 0 || adopted.length === 0) {
+      const generatedAt2 = Date.now();
+      await persistCardCache(cardPath, bodyHash, generatedAt2, []);
+      return { status: "fresh", suggestions: [], generatedAt: generatedAt2 };
+    }
+    const locateList = adopted.slice(0, SUGGEST_MAX_LOCATE_NOTES);
+    tell("locate", 0, locateList.length);
+    const texts = [];
+    for (const ad of locateList) texts.push(await readNoteText(ctx.app, ad.entry.path));
+    let located = null;
+    try {
+      const rawLocate = await aiPrompt(
+        buildLocatePrompt(
+          locateList.map((ad, i) => {
+            var _a3;
+            return { anchor: ad.anchor, path: ad.entry.path, content: (_a3 = texts[i]) != null ? _a3 : "" };
+          })
+        )
+      );
+      const parsed = parseLocatePicks(rawLocate);
+      if (parsed.found && parsed.items.length > 0) located = parsed.items;
+      else console.warn("[mount-suggest] 定位官回答不可用，采纳结果按整篇兜底");
+    } catch (e) {
+      console.warn("[mount-suggest] 定位官失败，采纳结果按整篇兜底", e);
+    }
+    const suggestions = [];
+    locateList.forEach((ad, i) => {
+      var _a3;
+      const pick = located ? (_a3 = located.find((p) => p.n === i + 1)) != null ? _a3 : null : null;
+      if (located && !pick) {
+        console.warn(`[mount-suggest] 定位官未给出 n${i + 1}（${ad.entry.path}），按整篇兜底`);
+      }
+      if (pick == null ? void 0 : pick.skip) return;
+      suggestions.push(buildSuggestion(ctx, ad, pick, texts[i]));
+    });
+    tell("locate", locateList.length, locateList.length);
+    for (let i = SUGGEST_MAX_LOCATE_NOTES; i < adopted.length; i++) {
+      suggestions.push(buildSuggestion(ctx, adopted[i], null, null));
+    }
+    const filtered2 = filterSuggestions(suggestions, { dismissed, existing, minScore: SUGGEST_MIN_SCORE });
+    tell("save");
     const generatedAt = Date.now();
-    await persistCardCache(cardPath, bodyHash, generatedAt, suggestions);
-    return { status: "fresh", suggestions, generatedAt };
+    await persistCardCache(cardPath, bodyHash, generatedAt, filtered2);
+    return { status: "fresh", suggestions: filtered2, generatedAt };
+  }
+  function buildSuggestion(ctx, ad, pick, targetText) {
+    var _a2, _b2, _c, _d, _e, _f;
+    let anchor = { ...ad.anchor };
+    const modelAnchor = String((_a2 = pick == null ? void 0 : pick.anchor) != null ? _a2 : "").trim();
+    if (modelAnchor && modelAnchor !== ad.anchor.text) {
+      const hit = locateInText(ad.anchor.text, modelAnchor);
+      if (hit) anchor = { from: ad.anchor.from + hit.at, to: ad.anchor.from + hit.at + hit.len, text: ad.anchor.text.slice(hit.at, hit.at + hit.len) };
+    }
+    const reason = String((_c = (_b2 = pick == null ? void 0 : pick.reason) != null ? _b2 : ad.reason) != null ? _c : "").trim() || "相关主题";
+    let unit = (_d = pick == null ? void 0 : pick.unit) != null ? _d : "whole";
+    let heading = String((_e = pick == null ? void 0 : pick.heading) != null ? _e : "").trim();
+    let quote = String((_f = pick == null ? void 0 : pick.quote) != null ? _f : "").trim();
+    let subpath = "";
+    if (unit === "heading") {
+      const real = targetText ? findHeadingText(targetText, heading) : null;
+      if (!real) {
+        unit = "whole";
+        heading = "";
+      } else {
+        heading = real;
+        subpath = real;
+      }
+    } else if (unit === "paragraph") {
+      const hit = targetText && quote ? locateInText(targetText, quote) : null;
+      if (!hit) {
+        unit = "whole";
+        quote = "";
+      }
+    }
+    if (unit === "whole") {
+      heading = "";
+      quote = "";
+    }
+    return {
+      anchor,
+      target: ad.entry.path,
+      kind: kindOfTarget(ad.entry.path, ctx, unit),
+      reason,
+      score: ad.score,
+      state: "pending",
+      unit,
+      heading,
+      quote,
+      subpath
+    };
+  }
+  function suggestKindOf(path, ctx, unit) {
+    return kindOfTarget(path, ctx, unit === "heading" || unit === "paragraph" ? unit : "whole");
   }
   function mergeSuggestions(tree, run) {
     var _a2;
@@ -21271,13 +21891,15 @@ ${sample}`,
     for (const s of (run == null ? void 0 : run.suggestions) || []) {
       if (!s || !s.target) continue;
       const key = normalizeTargetPath(s.target);
-      if (!key || key === rootPath || known.has(key) || seen.has(key)) continue;
-      seen.add(key);
-      const id = "ai:" + s.target;
+      if (!key || key === rootPath || known.has(key)) continue;
+      const id = suggestionId(s);
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const title = s.unit === "heading" && s.heading ? s.heading : s.unit === "paragraph" && s.quote ? s.quote.slice(0, 24) : displayName(s.target);
       ghostNodes.push({
         id,
         path: s.target,
-        title: displayName(s.target),
+        title,
         kind: s.kind,
         source: "ai",
         depth: rootDepth + 1,
@@ -21292,7 +21914,7 @@ ${sample}`,
     }
     return { ...tree, nodes: [...nodes, ...ghostNodes], edges: [...edges, ...ghostEdges] };
   }
-  var SUGGEST_MIN_SCORE, SUGGEST_MIN_ANCHOR_CHARS, SUGGEST_MAX_ANCHORS, SUGGEST_TOPK, SUGGEST_PER_ANCHOR_CANDIDATES, SUGGEST_MAX_CANDIDATES, SUGGEST_JUDGE_MAX_TOKENS, REASON_MAX_CHARS, SUGGEST_CACHE_FILE, SUGGEST_CACHE_VERSION, HAS_MEANING_RE, WIKILINK_RE, LEADING_MARK_RE, JUDGE_PROMPT_PREFIX;
+  var SUGGEST_MIN_SCORE, SUGGEST_MIN_ANCHOR_CHARS, SUGGEST_MAX_ANCHORS, SUGGEST_TOPK, SUGGEST_POOL_SIZE, SUGGEST_MAX_PER_TARGET, SUGGEST_MAX_LOCATE_NOTES, SUGGEST_LOCATE_TEXT_CAP, SUGGEST_JUDGE_MAX_TOKENS, SUGGEST_REASONING_EFFORT, REASON_MAX_CHARS, SUGGEST_CACHE_FILE, SUGGEST_CACHE_VERSION, HAS_MEANING_RE, WIKILINK_RE, SUGGEST_EXCLUDE_DIRS, BLOCK_ID_PREFIX, LEADING_MARK_RE, QUERY_PROMPT_PREFIX, ADOPT_PROMPT_PREFIX, LOCATE_PROMPT_PREFIX, STAGE_LABEL, STAGE_PERCENT;
   var init_mount_suggest = __esm({
     "src/knowledge/mount-suggest.ts"() {
       init_ai();
@@ -21305,22 +21927,66 @@ ${sample}`,
       SUGGEST_MIN_ANCHOR_CHARS = 6;
       SUGGEST_MAX_ANCHORS = 12;
       SUGGEST_TOPK = 8;
-      SUGGEST_PER_ANCHOR_CANDIDATES = 3;
-      SUGGEST_MAX_CANDIDATES = 24;
+      SUGGEST_POOL_SIZE = 10;
+      SUGGEST_MAX_PER_TARGET = 2;
+      SUGGEST_MAX_LOCATE_NOTES = 6;
+      SUGGEST_LOCATE_TEXT_CAP = 8e3;
       SUGGEST_JUDGE_MAX_TOKENS = 131072;
+      SUGGEST_REASONING_EFFORT = "low";
       REASON_MAX_CHARS = 80;
       SUGGEST_CACHE_FILE = "mount-suggest.json";
-      SUGGEST_CACHE_VERSION = 2;
+      SUGGEST_CACHE_VERSION = 3;
       HAS_MEANING_RE = /[\p{L}\p{N}]/u;
       WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
+      SUGGEST_EXCLUDE_DIRS = ["归档", "网页剪藏"];
+      BLOCK_ID_PREFIX = "bz-";
       LEADING_MARK_RE = /^(?:#{1,6}\s*|\[![^\]]*\]\s*|[-*+>]\s+|\d{1,3}[.)]\s+)+/;
-      JUDGE_PROMPT_PREFIX = [
-        "你是卡片盒挂载树的建议裁判。给定一张主卡正文里的若干锚点（词/句），以及每个锚点经向量召回得到的候选目标，",
-        "逐一判断「锚点」与「候选目标」是否存在实质知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。",
-        "标准：只推实质关联，弱关联（仅任务级/提及级）不推，存疑不推；宁缺勿滥。",
-        '输出要求：严格 JSON 数组 [{"anchor":<锚点编号>,"target":<候选编号>,"score":<0到1的关联分>,"reason":"一句话理由"}]，按关联强度降序；',
-        `分数低于 ${SUGGEST_MIN_SCORE} 的一律不要输出；无关联输出 []；不要输出 JSON 以外的任何文字。`
+      QUERY_PROMPT_PREFIX = [
+        "你是卡片盒挂载树的检索查询官。给定一张主卡正文里带编号的若干片段，为**每个片段**生成两条检索查询：",
+        "1) sentence：把该片段改写成一句 20–40 字的完整短句（保留原意与关键术语，用于语义向量召回——",
+        "   关键词堆在向量查询侧会失配，召回质量差）；",
+        "2) keywords：该片段的 3–6 个检索关键词（空格分隔，不要写句子）。",
+        '输出要求：严格 JSON 数组 [{"seg":<片段编号>,"sentence":"…","keywords":"…","why":"一句话说明该片段在讲什么"}]，',
+        "按片段编号升序；不要输出 JSON 以外的任何文字。"
       ].join("");
+      ADOPT_PROMPT_PREFIX = [
+        "你是卡片盒挂载树的采纳官。给定主卡正文里带编号的片段，以及每个片段经检索召回的候选笔记",
+        "（名称 / 路径 / 命中次数 / 最高分 / 命中块摘要），判断「片段」与「候选笔记」是否存在实质知识关联",
+        "（共同主题、直接引用、同一事件或人物、强互补上下文）。",
+        "标准：只推实质关联，弱关联（仅任务级/提及级）不推，存疑不推；宁缺勿滥。",
+        "重要：下一轮还有定位官会**现读候选全文**复核，并且**可以否决**你选的配对——只要整体相关就选，",
+        "不要为了自洽硬凑，也不要因为看不到全文就放弃。",
+        `同一目标笔记最多选 ${SUGGEST_MAX_PER_TARGET} 条；关联分低于 ${SUGGEST_MIN_SCORE} 的一律不输出。`,
+        '输出要求：严格 JSON 数组 [{"seg":<片段编号>,"path":"<候选路径原文>","score":<0到1>,"reason":"一句话理由"}]，',
+        "按关联强度降序；确实没有关联就输出 []；不要输出 JSON 以外的任何文字。"
+      ].join("");
+      LOCATE_PROMPT_PREFIX = [
+        "你是卡片盒挂载树的定位官。上一轮采纳官已选出若干「主卡片段 → 目标笔记」配对，现在**现读目标笔记全文**，",
+        "为每条配对决定挂载粒度与锚定位置：",
+        '- unit="whole"：整篇都相关（理由里说清为什么整篇相关）；',
+        '- unit="heading"：只有某个标题下的小节相关 → heading 填**该小节标题的原文**（逐字，不得改写）；',
+        '- unit="paragraph"：只有某一段相关 → quote 填**该段原文摘录**（逐字，20–80 字，不得改写、不得加省略号、',
+        "  不要把表格行改写成空格分隔）；",
+        "- skip=true：其实不相关，否决这条（宁可少推，也不要泛泛的链接）。",
+        "anchor 填**主卡正文里的锚点原文**（逐字摘录自该片段，不要改写、不要加引号、不要加省略号）。",
+        '输出要求：严格 JSON 数组 [{"n":<配对编号>,"unit":"whole|heading|paragraph","heading":"…","quote":"…",',
+        '"anchor":"…","reason":"一句话理由","skip":false}]，按配对编号升序；全部否决输出 []；',
+        "不要输出 JSON 以外的任何文字。"
+      ].join("");
+      STAGE_LABEL = {
+        query: "查询官：为正文片段生成检索查询",
+        recall: "检索：召回候选笔记",
+        adopt: "采纳官：判断片段与候选的关联",
+        locate: "定位官：现读全文定粒度",
+        save: "落缓存"
+      };
+      STAGE_PERCENT = {
+        query: 15,
+        recall: 40,
+        adopt: 65,
+        locate: 90,
+        save: 100
+      };
     }
   });
 
@@ -21334,7 +22000,7 @@ ${sample}`,
     if (!Number.isFinite(scale)) return 1;
     return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, scale));
   }
-  function mountStatusText(status) {
+  function mountStatusText(status, boardEmpty = false) {
     switch (status) {
       case "cached":
         return "已缓存建议";
@@ -21349,7 +22015,7 @@ ${sample}`,
       case "no-answer":
         return "AI 未给出可用建议 · 只画双链（可点「重新生成」）";
       default:
-        return "生成中 · 等建议齐再开";
+        return boardEmpty ? "生成中 · 建议就绪后一起上屏" : "生成中 · 真实双链已上屏";
     }
   }
   function mountLinkText(node) {
@@ -21523,7 +22189,11 @@ ${sample}`,
     </div>
     <div class="bz-kb-mt-canvas" id="bz-kb-mt-canvas">
       <div class="bz-kb-mt-world" id="bz-kb-mt-world"></div>
-      <div class="bz-kb-mt-loading" id="bz-kb-mt-loading" style="display:none">生成中 · 等建议齐再开白板…</div>
+      <div class="bz-kb-mt-loading" id="bz-kb-mt-loading" style="display:none">
+        <div class="bz-kb-mt-pbar"><i class="bz-kb-mt-pbar-fill" id="bz-kb-mt-pbar"></i></div>
+        <div class="bz-kb-mt-pline"><span class="bz-kb-mt-pstage" id="bz-kb-mt-pstage">准备生成建议</span><span class="bz-kb-mt-ptimer" id="bz-kb-mt-ptimer">0s</span></div>
+        <div class="bz-kb-mt-pempty" id="bz-kb-mt-pempty"></div>
+      </div>
     </div>
     <div class="bz-kb-mt-zoomer">
       <button class="bz-kb-mt-zbtn bz-touch-target" data-mt-act="zoom-in" title="放大">＋</button>
@@ -21571,7 +22241,13 @@ ${sample}`,
       canvasEl,
       worldEl,
       svg,
-      loadingEl: win.querySelector("#bz-kb-mt-loading")
+      loadingEl: win.querySelector("#bz-kb-mt-loading"),
+      progressBar: win.querySelector("#bz-kb-mt-pbar"),
+      progressText: win.querySelector("#bz-kb-mt-pstage"),
+      progressTimer: win.querySelector("#bz-kb-mt-ptimer"),
+      progressHint: win.querySelector("#bz-kb-mt-pempty"),
+      timerId: null,
+      startedAt: 0
     };
     state = st;
     bindShellEvents(st);
@@ -21584,7 +22260,7 @@ ${sample}`,
       if (!btn) return;
       const act = btn.getAttribute("data-mt-act") || "";
       if (act === "close") closeMountTree();
-      else if (act === "refresh") void reload(true);
+      else if (act === "refresh") void confirmRefresh();
       else if (act === "zoom-in") zoomAtCenter(ZOOM_STEP);
       else if (act === "zoom-out") zoomAtCenter(1 / ZOOM_STEP);
       else if (act === "zoom-fit") fit();
@@ -21769,8 +22445,7 @@ ${sample}`,
     st.win.style.display = "none";
     st.selected = null;
     st.token++;
-    st.loading = false;
-    st.loadingEl.style.display = "none";
+    hideProgress(st);
     (_a2 = st.esc) == null ? void 0 : _a2.unregister();
     st.esc = null;
   }
@@ -21798,7 +22473,7 @@ ${sample}`,
     }
     const sameTree = path === st.cardPath && direction === st.direction && st.tree.root === path && st.tree.nodes.length > 0;
     if (sameTree && !st.loading && !(opts == null ? void 0 : opts.force)) {
-      st.loadingEl.style.display = "none";
+      hideProgress(st);
       renderTop(st);
       return;
     }
@@ -21807,6 +22482,23 @@ ${sample}`,
     st.selected = null;
     st.folded = /* @__PURE__ */ new Set();
     await load(st, !!(opts == null ? void 0 : opts.force));
+  }
+  async function confirmRefresh() {
+    const st = state;
+    if (!st || !mountTreeOpen()) return;
+    const v = await openFlowDialog({
+      title: "重新生成挂载建议",
+      message: "会重跑一遍 AI 建议（查询官 → 检索 → 采纳官 → 定位官），大约半分钟到一分钟；已在正文里的双链不受影响，已固定 / 已取消的不会再推。",
+      // 弹窗挂 body，必须自带 'kb'（token 作用域）+ 'bz-kb-flow-dialog'（域皮），同 ui.ts 的几处确认框
+      className: "kb bz-kb-flow-dialog",
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "重新生成", value: "ok" }
+      ]
+    });
+    if (v !== "ok") return;
+    if (state !== st || !mountTreeOpen()) return;
+    await reload(true);
   }
   async function reload(force) {
     const st = state;
@@ -21823,7 +22515,8 @@ ${sample}`,
     st.cards.clear();
     st.ghosts = /* @__PURE__ */ new Map();
     st.run = null;
-    st.loadingEl.style.display = "";
+    st.tree = { root: path, direction, nodes: [], edges: [] };
+    clearCanvas(st);
     renderTop(st);
     const ctx = mountCtx();
     st.ctx = ctx;
@@ -21833,33 +22526,104 @@ ${sample}`,
     } catch (e) {
       tree = { root: path, direction, nodes: [], edges: [] };
     }
-    if (token !== st.token) return;
     const autoOn = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeMountAutoSuggest) !== false;
-    let run = null;
-    if (autoOn) {
-      run = await runSuggest(st, path, ctx, force);
-      if (token !== st.token) return;
-    }
-    st.run = run;
+    const bare = tree.nodes.filter((n) => !n.attached).length <= 1;
+    const waitFirst = autoOn && (bare || force);
+    if (token !== st.token) return;
     st.tree = tree;
-    if (run && run.suggestions.length) {
-      for (const s of run.suggestions) {
-        if (s == null ? void 0 : s.target) st.ghosts.set("ai:" + s.target, s);
-      }
-      st.tree = mergeSuggestions(tree, run);
+    if (waitFirst) {
+      renderTop(st);
+    } else {
+      await renderCanvas(st);
+      renderTop(st);
+      fit();
     }
+    if (token !== st.token) return;
+    st.loading = false;
+    if (!autoOn) {
+      hideProgress(st);
+      renderTop(st);
+      return;
+    }
+    showProgress(st, waitFirst ? force ? EMPTY_HINT_REFRESH : EMPTY_HINT_BARE : "");
+    let run = null;
+    try {
+      run = await runSuggest(st, path, ctx, force, (p) => {
+        if (token === st.token) setProgress(st, p);
+      });
+    } catch (e) {
+      run = null;
+    }
+    if (token !== st.token) return;
+    st.run = run;
+    try {
+      if (run && run.suggestions.length) {
+        for (const s of run.suggestions) {
+          if (s == null ? void 0 : s.target) st.ghosts.set(suggestionId(s), s);
+        }
+        st.tree = mergeSuggestions(tree, run);
+        await renderCanvas(st);
+        if (waitFirst) fit();
+      } else if (waitFirst) {
+        st.tree = tree;
+        await renderCanvas(st);
+        fit();
+      } else {
+        st.tree = tree;
+      }
+    } finally {
+      if (token === st.token) hideProgress(st);
+    }
+    renderTop(st);
+  }
+  function showProgress(st, emptyHint = "") {
+    st.loading = true;
+    if (st.progressHint) st.progressHint.textContent = emptyHint;
+    st.loadingEl.classList.toggle("is-bare", !!emptyHint);
+    st.loadingEl.style.display = "";
+    st.startedAt = Date.now();
+    if (st.progressBar) st.progressBar.style.width = "4%";
+    if (st.progressText) st.progressText.textContent = "准备生成建议";
+    if (st.progressTimer) st.progressTimer.textContent = "0s";
+    stopTimer(st);
+    st.timerId = setInterval(() => {
+      const el = st.progressTimer;
+      if (el) el.textContent = `${Math.round((Date.now() - st.startedAt) / 1e3)}s`;
+    }, 500);
+  }
+  function setProgress(st, p) {
+    if (st.progressBar) st.progressBar.style.width = `${Math.min(100, Math.max(4, suggestProgressPercent(p)))}%`;
+    if (st.progressText) st.progressText.textContent = p.label || "生成中…";
+  }
+  function hideProgress(st) {
+    stopTimer(st);
     st.loading = false;
     st.loadingEl.style.display = "none";
-    await renderCanvas(st);
-    renderTop(st);
-    fit();
   }
-  async function runSuggest(st, path, ctx, force) {
+  function stopTimer(st) {
+    if (st.timerId) clearInterval(st.timerId);
+    st.timerId = null;
+  }
+  function clearCanvas(st) {
+    for (const el of Array.from(st.worldEl.querySelectorAll(".bz-kb-mt-node"))) el.remove();
+    st.svg.innerHTML = "";
+    st.cards.clear();
+    st.sizes.clear();
+    st.edges = [];
+    st.pos = {};
+  }
+  async function runSuggest(st, path, ctx, force, onProgress) {
+    var _a2;
     try {
       return await generateSuggestions(
         path,
-        { app: ctx.app, cardboxDir: ctx.cardboxDir, litDir: ctx.litDir },
-        { force }
+        {
+          app: ctx.app,
+          cardboxDir: ctx.cardboxDir,
+          litDir: ctx.litDir,
+          topicDir: ((_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeTopicDirectory) || "主题盒"
+        },
+        { force, onProgress }
       );
     } catch (e) {
       return { status: "no-ai", suggestions: [] };
@@ -21898,7 +22662,7 @@ ${sample}`,
     const culled = st.sizes.size ? countCulled(st) : 0;
     let text;
     let extra = "";
-    if (st.loading) text = mountStatusText("generating");
+    if (st.loading) text = mountStatusText("generating", st.cards.size === 0);
     else if (st.run) text = mountStatusText(st.run.status);
     else text = "本卡建议未跑（自动建议已关闭）";
     if (!st.loading && culled > 0) extra = `<span class="bz-kb-mt-kind">· 图大，已按 ${LAYOUT_PARAMS.MAX_NODES} 张封顶</span>`;
@@ -22102,7 +22866,9 @@ ${sample}`,
       bodyEl2.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml(node.path)}</div>`;
       return;
     }
-    const md = bodyMarkdown(st, node);
+    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
+    const ghost = st.ghosts.get(node.id);
+    const md = ghost ? await suggestionUnitMarkdown(app, ghost) : bodyMarkdown(st, node);
     if (md === null) {
       bodyEl2.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
       return;
@@ -22111,7 +22877,6 @@ ${sample}`,
       bodyEl2.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
       return;
     }
-    const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
     let ok = false;
     if (app == null ? void 0 : app.vault) {
       try {
@@ -22223,20 +22988,21 @@ ${sample}`,
       const bodyEl2 = cardEl.querySelector(".bz-kb-mt-body");
       if (!bodyEl2) continue;
       const anchor = (_d = (_c = st.tree.nodes.find((n) => n.id === e.to)) == null ? void 0 : _c.anchor) != null ? _d : null;
-      const point = measureDot(st, cardEl, bodyEl2, anchor, key, colorKind, cursor);
+      const point = measureDot(st, cardEl, bodyEl2, anchor, key, colorKind, cursor, !!e.suggested);
       if (point) out.set(id, point);
     }
     return out;
   }
-  function measureDot(st, cardEl, bodyEl2, anchor, key, colorKind, cursor) {
+  function measureDot(st, cardEl, bodyEl2, anchor, key, colorKind, cursor, highlight = false) {
     var _a2;
     if (!anchor) return null;
     const needles = anchorNeedles(anchor);
     if (needles.length === 0) return null;
-    const dot = insertAnchorDot(bodyEl2, needles, key, (_a2 = cursor.get(bodyEl2)) != null ? _a2 : 0);
+    const color = mountKindColor(colorKind);
+    const dot = insertAnchorDot(bodyEl2, needles, key, (_a2 = cursor.get(bodyEl2)) != null ? _a2 : 0, highlight, color);
     if (!dot) return null;
     cursor.set(bodyEl2, Number(dot.getAttribute("data-mt-at") || 0));
-    dot.style.color = mountKindColor(colorKind);
+    dot.style.color = color;
     const nodeId = cardEl.getAttribute("data-mt-id") || "";
     const base = st.pos[nodeId];
     const size = st.sizes.get(nodeId);
@@ -22247,23 +23013,46 @@ ${sample}`,
       y: base.y + dot.offsetTop + dot.offsetHeight / 2
     };
   }
-  function insertAnchorDot(bodyEl2, needles, key, from) {
-    var _a2;
+  function insertAnchorDot(bodyEl2, needles, key, from, highlight = false, color = "") {
+    var _a2, _b2;
     const idx = textIndexOf(bodyEl2);
-    const hit = locateInText(idx.text, needles, from);
+    const hit = locateInText2(idx.text, needles, from);
     if (!hit) return null;
+    const dot = document.createElement("i");
+    dot.className = "bz-kb-mt-anch";
+    dot.setAttribute("data-mt-edge", key);
+    dot.setAttribute("data-mt-at", String(hit.at + hit.len));
+    dot.setAttribute("title", highlight ? "AI 建议的挂载点：这句挂到虚线那头" : "挂载点：这条线从这句话扯出");
+    if (highlight) {
+      const end = hit.at + hit.len;
+      const covered = idx.parts.filter((p) => p.start < end && p.start + p.node.data.length > hit.at);
+      if (covered.length === 0) return null;
+      let last = null;
+      for (const p of covered) {
+        const start = Math.max(0, hit.at - p.start);
+        let node = p.node;
+        if (start > 0) node = node.splitText(start);
+        const take = Math.min(node.data.length, end - (p.start + start));
+        if (take < node.data.length) node.splitText(take);
+        const span = document.createElement("span");
+        span.className = "bz-kb-mt-anch-hl";
+        span.setAttribute("data-mt-edge", key);
+        span.setAttribute("data-mt-sug", "1");
+        if (color) span.style.color = color;
+        (_a2 = node.parentNode) == null ? void 0 : _a2.insertBefore(span, node);
+        span.appendChild(node);
+        last = span;
+      }
+      last == null ? void 0 : last.appendChild(dot);
+      return dot;
+    }
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
     const after = part.node.splitText(offset);
     const len = Math.min(hit.len, after.data.length);
     const tail = after.splitText(len);
-    const dot = document.createElement("i");
-    dot.className = "bz-kb-mt-anch";
-    dot.setAttribute("data-mt-edge", key);
-    dot.setAttribute("data-mt-at", String(hit.at + hit.len));
-    dot.setAttribute("title", "挂载点：这条线从这句话扯出");
-    (_a2 = after.parentNode) == null ? void 0 : _a2.insertBefore(dot, tail);
+    (_b2 = after.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -22286,7 +23075,7 @@ ${sample}`,
     }
     return { text, parts };
   }
-  function locateInText(text, needles, from) {
+  function locateInText2(text, needles, from) {
     if (!text) return null;
     const start = Math.min(Math.max(0, from), text.length);
     for (const needle of needles) {
@@ -22574,10 +23363,22 @@ ${sample}`,
     }
   }
   async function pinSuggestion(st, ghost) {
-    var _a2, _b2;
+    var _a2, _b2, _c, _d, _e;
     const rootPath = st.tree.root;
     const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
-    const link = ghost.target.replace(/\.md$/i, "");
+    let unit = ghost.unit === "heading" || ghost.unit === "paragraph" ? ghost.unit : "whole";
+    let subpath = String((_b2 = ghost.subpath) != null ? _b2 : "").trim();
+    if (unit === "paragraph") {
+      const got = ghost.quote ? await ensureSuggestionBlockId(app, ghost.target, ghost.quote) : { blockId: "", ok: false };
+      if (got.ok && got.blockId) subpath = got.blockId;
+      else unit = "whole";
+    } else if (unit === "heading" && !subpath) {
+      unit = "whole";
+    }
+    const shape = { target: ghost.target, unit, subpath };
+    const linkInner = suggestionLinkTarget(shape);
+    const anchorText = String((_d = (_c = ghost.anchor) == null ? void 0 : _c.text) != null ? _d : "").trim();
+    let written = `[[${linkInner}]]`;
     let found = false;
     let changed = false;
     try {
@@ -22587,14 +23388,16 @@ ${sample}`,
         if (!file) return;
         found = true;
         const text = await app.vault.read(file);
-        const next = insertLinkAtAnchor(text, ghost.anchor, link);
+        const aliasNext = replaceAnchorWithAlias(text, ghost.anchor, ghost.target, suggestionSubpath(shape));
+        if (aliasNext !== null) written = `[[${linkInner}|${anchorText}]]`;
+        const next = aliasNext != null ? aliasNext : insertLinkAtAnchor(text, ghost.anchor, linkInner);
         if (next !== text) {
           await app.vault.modify(file, next);
           changed = true;
         }
       });
     } catch (e) {
-      st.deps.notice(`固定失败：${(_b2 = e == null ? void 0 : e.message) != null ? _b2 : String(e)}`, "error");
+      st.deps.notice(`固定失败：${(_e = e == null ? void 0 : e.message) != null ? _e : String(e)}`, "error");
       return;
     }
     if (!found) {
@@ -22605,16 +23408,14 @@ ${sample}`,
       await markSuggestion(rootPath, ghost, "fixed", { app, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
     } catch (e) {
     }
-    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
-    st.ghosts.delete(ghostId(ghost));
+    const gid = suggestionId(ghost);
+    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => suggestionId(s) !== gid) };
+    st.ghosts.delete(gid);
     st.deps.notice(
-      changed ? `已固定：正文写入 [[${link}]]` : `已固定：正文里已有 [[${link}]]，本次只留档`,
+      changed ? `已固定：正文写入 ${written}` : `已固定：正文里已有 [[${linkInner}]]，本次只留档`,
       "success"
     );
     await rebuildTreeOnly(st);
-  }
-  function ghostId(ghost) {
-    return "ai:" + ghost.target;
   }
   async function dismissSuggestion(st, ghost) {
     var _a2;
@@ -22624,16 +23425,18 @@ ${sample}`,
       await markSuggestion(rootPath, ghost, "dismissed", { app, cardboxDir: st.ctx.cardboxDir, litDir: st.ctx.litDir });
     } catch (e) {
     }
-    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => s.target !== ghost.target) };
+    if (st.run) st.run = { ...st.run, suggestions: st.run.suggestions.filter((s) => suggestionId(s) !== suggestionId(ghost)) };
+    st.ghosts.delete(suggestionId(ghost));
     st.deps.notice("已取消建议：永久不再推荐这条", "success");
     await rebuildTreeOnly(st);
   }
-  var MASK_ID, WIN_ID, ESC_ID, CANVAS_FALLBACK_W, CANVAS_FALLBACK_H, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP, ZOOM_FIT_MAX, FIT_PAD, DRAG_SLOP, LONG_PRESS_MS, LONG_PRESS_SLOP, DOCK_GAP, WIDTH_ROOT, WIDTH_BY_KIND, HEIGHT_BY_KIND, KIND_COLOR, KIND_LABEL, SOURCE_LABEL, state, menuOutsideHandler;
+  var MASK_ID, WIN_ID, ESC_ID, CANVAS_FALLBACK_W, CANVAS_FALLBACK_H, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP, ZOOM_FIT_MAX, FIT_PAD, DRAG_SLOP, LONG_PRESS_MS, LONG_PRESS_SLOP, DOCK_GAP, WIDTH_ROOT, WIDTH_BY_KIND, HEIGHT_BY_KIND, KIND_COLOR, KIND_LABEL, SOURCE_LABEL, state, EMPTY_HINT_BARE, EMPTY_HINT_REFRESH, menuOutsideHandler;
   var init_mount_canvas = __esm({
     "src/knowledge/mount-canvas.ts"() {
       init_fake_obsidian();
       init_app();
       init_esc_manager();
+      init_flow_dialog();
       init_mobile();
       init_notice();
       init_settings_provider();
@@ -22700,6 +23503,8 @@ ${sample}`,
         ai: "AI 建议"
       };
       state = null;
+      EMPTY_HINT_BARE = "这张卡还没有挂载——先看 AI 能不能找到关联";
+      EMPTY_HINT_REFRESH = "重新生成中——建议回来连同已有的挂载一起显示";
       menuOutsideHandler = null;
     }
   });
@@ -23367,9 +24172,20 @@ ${sample}`,
           this.allNotes = [];
           this.allCards = [];
           this.allTopics = [];
+          /** 已渲染的卡片行数（issue 323：翻页只**追加**新行，不再整表 innerHTML 重建） */
           this.cardsShown = 0;
-          /** 挂载引用索引（issue 320）：整库扫描**每轮只算一次**，行徽标 / 孤儿筛选 / 行标记共用这份缓存 */
+          /** 卡片行容器（与表头/页脚分离，追加与徽标补丁都打在它身上） */
+          this.cardRowsEl = null;
+          /**
+           * 挂载引用索引（issue 320 / 323）：整库扫描一次并**缓存到面板对象上**——
+           * 行引用计数徽标（refCounts）、孤儿筛选与行标记（orphanCards）共用这一份；
+           * counts 算好后**传给 orphanCards 复用**（其内部不再自行复算一遍）。
+           *
+           * 323 起改**面板会话缓存 + 脏标记**：切到卡片部不再整库重扫（1503+ 文件逐个解析出站链是切换卡顿的大头），
+           * 只有**落卡 / 库内文件变更 / 目录变更 / 显式刷新**才置脏重算。
+           */
           this.mountIndex = null;
+          this.mountIndexDirty = true;
           /** 部贰「只看孤儿」筛选开关（内存态，重渲染 / 换部来回都保留） */
           this.cardOrphanOnly = false;
           this.editor = null;
@@ -23552,7 +24368,6 @@ ${sample}`,
           } else if (act === "cards-orphan") {
             if (!this.mountIndex) return;
             this.cardOrphanOnly = !this.cardOrphanOnly;
-            this.cardsShown = 0;
             this.renderCards();
           } else if (act === "topic-open") {
             const p = t.getAttribute("data-path") || "";
@@ -23590,12 +24405,15 @@ ${sample}`,
             this.renderLiterature();
           } else if (this.part === "z2") {
             const dir = cardboxDirOf(s);
-            if (this.loadedCardDir && this.loadedCardDir !== dir) this.allCards = [];
+            if (this.loadedCardDir && this.loadedCardDir !== dir) {
+              this.allCards = [];
+              this.markCardsDirty();
+            }
             await this.loadCards(dir);
-            this.cardsShown = 0;
             this.renderCards();
-            await this.loadMountIndex();
-            if (this.part === "z2") this.renderCards();
+            if (this.part !== "z2") return;
+            if (this.mountIndexDirty) await this.loadMountIndex();
+            if (this.part === "z2") this.applyMountIndex();
           } else {
             const dir = topicDirOf(s);
             if (this.loadedTopicDir && this.loadedTopicDir !== dir) this.allTopics = [];
@@ -23794,7 +24612,7 @@ ${sample}`,
             this.closeSheet();
             notice("已落卡 卡片盒/" + base + ".md · 它随时被任何笔记引用", "success");
             if (this.part === "z2") {
-              this.cardsShown = 0;
+              this.markCardsDirty();
               await this.loadMountIndex();
               this.renderCards();
             }
@@ -23837,9 +24655,11 @@ ${sample}`,
         /**
          * 挂载引用索引（issue 320；ADR-0138 §5 同包四项）：整库扫描一次并**缓存到面板对象上**——
          * 行引用计数徽标（refCounts）、孤儿筛选与行标记（orphanCards）共用这一份；
-         * counts 算好后**传给 orphanCards 复用**（其内部不再自行复算一遍），整轮 refresh 只走一遍整库扫描。
-         * 每轮 refresh 重算（改链 / 改名 / 增删卡即时跟随），行渲染里不再各算一次。
-         * 扫描异常按空索引降级：芯片显「未统计」并置灰，列表照常渲染。
+         * counts 算好后**传给 orphanCards 复用**（其内部不再自行复算一遍）。
+         *
+         * **323 起按面板会话缓存 + 脏标记**：切到「卡片」部不再整库重扫（1500+ 文件逐个解析出站链
+         * 是切换卡顿的最大头），只有**落卡 / 库内文件变更 / 目录变更 / 显式刷新**才置脏重算。
+         * 扫描异常按空索引降级：芯片显「未统计」并置灰，列表照常渲染（异常时留脏，下次再试）。
          */
         async loadMountIndex() {
           try {
@@ -23849,33 +24669,144 @@ ${sample}`,
           } catch (e) {
             this.mountIndex = null;
           }
+          if (this.mountIndex) this.mountIndexDirty = false;
         }
-        renderCards() {
-          if (!this.contentEl) return;
-          this.cardsShown = Math.max(this.cardsShown, 80);
+        /** 卡片列表与挂载索引一起置脏（落卡 / 库内文件变更 / 目录变更 → 下次进部贰重算） */
+        markCardsDirty() {
+          this.mountIndexDirty = true;
+          this.cardsShown = 0;
+          this.cardRowsEl = null;
+        }
+        /** 当前筛选后的卡片池（只有孤儿筛选依赖挂载索引；不筛选时池 = 全部卡片） */
+        cardPool() {
           const idx = this.mountIndex;
-          const pool = this.cardOrphanOnly && idx ? this.allCards.filter((c) => idx.orphans.has(c.path)) : this.allCards;
-          const shown = pool.slice(0, this.cardsShown);
-          const rows = shown.map((c) => {
-            var _a2, _b2;
-            const n = (_a2 = idx == null ? void 0 : idx.counts[c.path]) != null ? _a2 : 0;
-            const orphan = (_b2 = idx == null ? void 0 : idx.orphans.has(c.path)) != null ? _b2 : false;
-            return `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc2(c.path)}">
-      <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}${orphan ? '<span class="bz-kb-orphan" title="既无入链也无挂载">孤 儿</span>' : ""}<span class="bz-kb-dom">${esc2(c.domain)}</span></div>
+          return this.cardOrphanOnly && idx ? this.allCards.filter((c) => idx.orphans.has(c.path)) : this.allCards;
+        }
+        /** 表头芯片（原地同步：索引落地后只改这一个节点，不重建整表） */
+        cardBarHtml() {
+          const idx = this.mountIndex;
+          return `<div class="bz-kb-cbar"><button class="bz-kb-cfilter${this.cardOrphanOnly ? " is-on" : ""}" data-kb-act="cards-orphan"${idx ? "" : " disabled"} title="${idx ? "只列既无入链也无挂载的卡" : "挂载索引未统计（扫描失败）"}">孤 儿${idx ? ` · ${idx.orphans.size}` : " · 未统计"}</button><span class="bz-kb-meta">全部 ${this.allCards.length} 张</span></div>`;
+        }
+        /** 单行 HTML（全量重建与增量追加共用同一份模板） */
+        cardRowHtml(c) {
+          var _a2, _b2;
+          const idx = this.mountIndex;
+          const n = (_a2 = idx == null ? void 0 : idx.counts[c.path]) != null ? _a2 : 0;
+          const orphan = (_b2 = idx == null ? void 0 : idx.orphans.has(c.path)) != null ? _b2 : false;
+          return `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc2(c.path)}">
+      <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}${orphan ? '<span class="bz-kb-orphan" title="既无入链也无挂载">孤 儿</span>' : ""}<span class="bz-kb-dom">${esc2(
+            c.domain
+          )}</span></div>
       <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span>${n > 0 ? `<span class="bz-kb-refbadge" title="被 ${n} 处用户双链引用">被引 ${n}</span>` : ""}<button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc2(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
     </div>`;
-          }).join("");
-          const rest = pool.length - shown.length;
+        }
+        /**
+         * 全量重建（换部 / 换筛选 / 落卡）：只搭表头 + 空行容器 + 页脚，行由 `appendCardRows` 追加。
+         * 此后翻页与徽标落地都**不再**走 innerHTML 全表重建（issue 323：滚动到底反复触发时 O(n²) 抖动）。
+         */
+        renderCards() {
+          if (!this.contentEl) return;
           this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-cbar"><button class="bz-kb-cfilter${this.cardOrphanOnly ? " is-on" : ""}" data-kb-act="cards-orphan"${idx ? "" : " disabled"} title="${idx ? "只列既无入链也无挂载的卡" : "挂载索引未统计（扫描失败）"}">孤 儿${idx ? ` · ${idx.orphans.size}` : " · 未统计"}</button><span class="bz-kb-meta">全部 ${this.allCards.length} 张</span></div>
-      ${rows || `<div class="bz-kb-empty">${this.cardOrphanOnly ? "没有孤儿卡——每张卡都有人挂或挂着谁。" : "卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。"}</div>`}
-      ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ""}
+      ${this.cardBarHtml()}
+      <div class="bz-kb-rows" id="kb-card-rows"></div>
+      <div class="bz-kb-empty" id="kb-card-more" data-kb-act="cards-more" style="display:none"></div>
     </div>`;
+          this.cardRowsEl = q(this.contentEl, "#kb-card-rows");
+          this.cardsShown = 0;
+          this.appendCardRows(80);
+        }
+        /** 追加 n 行（增量：已渲染的行不动，滚动位置与 DOM 节点都保住） */
+        appendCardRows(n) {
+          const rowsEl = this.cardRowsEl;
+          if (!rowsEl) return;
+          const pool = this.cardPool();
+          if (pool.length === 0) {
+            rowsEl.innerHTML = `<div class="bz-kb-empty">${this.cardOrphanOnly ? "没有孤儿卡——每张卡都有人挂或挂着谁。" : "卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。"}</div>`;
+            this.cardsShown = 0;
+            this.updateCardMore(pool);
+            return;
+          }
+          const from = Math.max(0, this.cardsShown);
+          const to = Math.min(pool.length, from + n);
+          if (to > from) {
+            const tmp = document.createElement("div");
+            tmp.innerHTML = pool.slice(from, to).map((c) => this.cardRowHtml(c)).join("");
+            const frag = document.createDocumentFragment();
+            while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+            rowsEl.appendChild(frag);
+            this.cardsShown = to;
+          }
+          this.updateCardMore(pool);
+        }
+        /** 页脚「还有 N 张」原地更新（不重渲整表） */
+        updateCardMore(pool) {
+          const moreEl = this.contentEl ? q(this.contentEl, "#kb-card-more") : null;
+          if (!moreEl) return;
+          const rest = pool.length - this.cardsShown;
+          moreEl.style.display = rest > 0 ? "" : "none";
+          moreEl.textContent = rest > 0 ? `↓ 还有 ${rest} 张，滚动或点此加载` : "";
+        }
+        /** 索引落地后**原地**补徽标与孤儿标记（按行 querySelector 定位，不重建已渲染行） */
+        patchCardBadges() {
+          var _a2;
+          const rowsEl = this.cardRowsEl;
+          const idx = this.mountIndex;
+          if (!rowsEl || !idx) return;
+          for (const row of Array.from(rowsEl.querySelectorAll(".bz-kb-lexrow"))) {
+            const path = row.getAttribute("data-path") || "";
+            if (idx.orphans.has(path)) {
+              const hw = row.querySelector(".bz-kb-hw");
+              if (hw && !hw.querySelector(".bz-kb-orphan")) {
+                const span = document.createElement("span");
+                span.className = "bz-kb-orphan";
+                span.title = "既无入链也无挂载";
+                span.textContent = "孤 儿";
+                const dom = hw.querySelector(".bz-kb-dom");
+                if (dom) hw.insertBefore(span, dom);
+                else hw.appendChild(span);
+              }
+            }
+            const n = (_a2 = idx.counts[path]) != null ? _a2 : 0;
+            if (n > 0) {
+              const tail = row.querySelector(".bz-kb-tail");
+              if (tail && !tail.querySelector(".bz-kb-refbadge")) {
+                const b = document.createElement("span");
+                b.className = "bz-kb-refbadge";
+                b.title = `被 ${n} 处用户双链引用`;
+                b.textContent = `被引 ${n}`;
+                const btn = tail.querySelector(".bz-kb-mt-openbtn");
+                if (btn) tail.insertBefore(b, btn);
+                else tail.appendChild(b);
+              }
+            }
+          }
+        }
+        /** 芯片原地同步（索引落地时改这一个节点：计数 / 置灰 / 点亮，不重建整表） */
+        syncCardChip() {
+          const chip2 = this.contentEl ? this.contentEl.querySelector('[data-kb-act="cards-orphan"]') : null;
+          if (!chip2) return;
+          const idx = this.mountIndex;
+          chip2.classList.toggle("is-on", this.cardOrphanOnly);
+          chip2.textContent = `孤 儿${idx ? ` · ${idx.orphans.size}` : " · 未统计"}`;
+          chip2.setAttribute("title", idx ? "只列既无入链也无挂载的卡" : "挂载索引未统计（扫描失败）");
+          chip2.disabled = !idx;
+        }
+        /**
+         * 索引落地：孤儿筛选开着时**池会变** → 全量重建；否则只打徽标补丁 + 更新页脚
+         * （保住已渲染行与滚动位置——issue 323 的第二处根因）。
+         */
+        applyMountIndex() {
+          this.syncCardChip();
+          if (!this.mountIndex) return;
+          if (this.cardOrphanOnly) this.renderCards();
+          else {
+            this.patchCardBadges();
+            this.updateCardMore(this.cardPool());
+          }
         }
         moreCards() {
-          if (this.cardsShown >= this.allCards.length) return;
-          this.cardsShown += 80;
-          this.renderCards();
+          if (this.cardsShown >= this.cardPool().length) return;
+          this.appendCardRows(80);
         }
         onContentScroll() {
           const sc = this.contentEl;
@@ -24015,6 +24946,7 @@ ${sample}`,
           this.loadedLitDir = "";
           this.loadedCardDir = "";
           this.loadedTopicDir = "";
+          this.mountIndexDirty = true;
         }
         attachFileListener() {
           if (this.fileListenerAttached) return;
@@ -28066,7 +28998,7 @@ ${sample}`,
           ghInfo = null;
         }
       }
-      const text = aiPrompt(title, url, desc, ghInfo);
+      const text = aiPrompt2(title, url, desc, ghInfo);
       if (!ai.ai) throw new Error("AI 服务不可用");
       const raw = await ai.ai.chat(text);
       const data = parseAiJson2(raw);
@@ -28099,7 +29031,7 @@ ${sample}`,
       errEl.textContent = "";
     }
   }
-  function aiPrompt(title, url, desc, ghInfo) {
+  function aiPrompt2(title, url, desc, ghInfo) {
     const known = TAGS.map((t) => t.label).join("、");
     const base = `你是收藏整理助手。把用户输入的收藏信息整理成 JSON（只输出 JSON，不输出任何多余文字），严格以下格式：
 {"title":"标题","url":"链接","description":"简介","tags":["标签1","标签2"]}
@@ -36124,8 +37056,8 @@ ${n.content.slice(0, 2e3)}
               }
             }
             if (!manifestSaved && note) {
-              const ghostId2 = note.id;
-              const idx = this.manifest.notes.findIndex((n) => n.id === ghostId2);
+              const ghostId = note.id;
+              const idx = this.manifest.notes.findIndex((n) => n.id === ghostId);
               if (idx !== -1) this.manifest.notes.splice(idx, 1);
             }
             throw e;
