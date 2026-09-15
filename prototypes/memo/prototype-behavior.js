@@ -1,4 +1,4 @@
-/* 源指纹 1c956272c15fec3e · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ea53d74ed01fcf40 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -28773,13 +28773,17 @@ ${body}`;
       console.warn("[剪藏本] 物化清理侧写失败", e);
       return;
     }
-    if (!before.pendingSource.length) return;
+    const upgrades = [];
+    for (const p of [...before.pendingSource, ...before.marks.map((m) => m.notePath)]) {
+      if (p && !upgrades.includes(p)) upgrades.push(p);
+    }
+    if (!upgrades.length) return;
     const app = getApp();
     try {
       const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
       if (typeof mod.upgradeNoteSourceInternal !== "function") return;
       const link = `[[${clipPath}|${title}]]`;
-      for (const notePath of before.pendingSource) {
+      for (const notePath of upgrades) {
         try {
           await mod.upgradeNoteSourceInternal(app, notePath, link);
         } catch (e) {
@@ -30168,9 +30172,10 @@ ${body}`;
     const h = bar.offsetHeight || 36;
     const vw = window.innerWidth || document.documentElement.clientWidth || 0;
     const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    const clearance = isMobileEnv() ? MOBILE_SYS_BAR_CLEARANCE : 0;
     let left = rect.left;
-    let top = rect.top - h - 8;
-    if (top < 8) top = (rect.bottom || rect.top) + 8;
+    let top = rect.top - h - 8 - clearance;
+    if (top < 8) top = (rect.bottom || rect.top) + 8 + clearance;
     if (vw) left = Math.min(Math.max(left, 8), Math.max(8, vw - w - 8));
     if (vh) top = Math.min(Math.max(top, 8), Math.max(8, vh - h - 8));
     bar.style.left = `${left}px`;
@@ -30308,6 +30313,11 @@ ${body}`;
     if (kind === "term") fn(getApp(), snap.text, { source: source2, onCreated });
     else fn(getApp(), { text: snap.text, source: source2, onCreated });
   }
+  function refreshReadingViews(articleId) {
+    if (!M5.cur || M5.cur.id !== articleId) return;
+    renderReader();
+    if (M5.mobDetailOpen) renderMobDetail();
+  }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
     try {
@@ -30321,10 +30331,11 @@ ${body}`;
           invalidateClipBodyCache(a.notePath);
         }
         await upgradeSourceFor(notePath, a);
-        if (M5.cur && M5.cur.id === a.id) renderReader();
+        refreshReadingViews(a.id);
       } else {
         M5.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        if (M5.cur && M5.cur.id === a.id) renderReader();
+        M5.sidecar = await addPendingSourceNote(a.id, notePath);
+        refreshReadingViews(a.id);
       }
     } catch (e) {
       console.warn("[剪藏本] 划词锚定写入失败", e);
@@ -30354,7 +30365,7 @@ ${body}`;
       });
       if (res.sidecar) M5.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
-      if (M5.cur && M5.cur.id === a.id) renderReader();
+      refreshReadingViews(a.id);
     } catch (e) {
       console.warn("[剪藏本] 保存图片失败", e);
       notice("图片保存失败，请检查网络后重试", "error");
@@ -30421,7 +30432,18 @@ ${body}`;
       const withMd = p + ".md";
       if (app.vault.getAbstractFileByPath(withMd)) p = withMd;
     }
-    return app.vault.getAbstractFileByPath(p) ? p : null;
+    if (app.vault.getAbstractFileByPath(p)) return p;
+    if (!p.includes("/")) {
+      try {
+        const mc = app.metadataCache;
+        if (mc && typeof mc.getFirstLinkfileDest === "function") {
+          const dest = mc.getFirstLinkfileDest(p);
+          if (dest && app.vault.getAbstractFileByPath(dest)) return String(dest);
+        }
+      } catch (e) {
+      }
+    }
+    return null;
   }
   function interceptKnowledgeLink(link) {
     const path = resolveInternalTarget(link.dataset.href || link.getAttribute("href") || "");
@@ -30541,7 +30563,7 @@ ${body}`;
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle3, loading, dirty, loaded2, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle3, loading, dirty, loaded2, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap, MOBILE_SYS_BAR_CLEARANCE;
   var init_ui6 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -30612,6 +30634,7 @@ ${body}`;
       selBarHoldUntil = 0;
       selSnap = null;
       imgSnap = null;
+      MOBILE_SYS_BAR_CLEARANCE = 48;
     }
   });
 
