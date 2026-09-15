@@ -9,6 +9,10 @@
  * 依赖方向：本模块在 core（`core ← 域`），知识盒与第二大脑都只经它取目录，两侧零互引（ADR-0002）。
  * 唯一真理源仍是设置键（`knowledgeDirectory` / `knowledgeCardboxDirectory` / `knowledgeTopicDirectory`）：
  * 改设置即改范围，不缓存、不探测磁盘（ADR-0141 §4：空盒是合法状态，空范围 / 空索引 / 不报错）。
+ *
+ * 两个导出族：（1）**盒子**——`getKnowledgeBoxes` / `boxDirs` / `isBoxDir`；
+ * （2）**判定与解析**——`inKnowledgeBoxes`（范围判定，自动关联与盒内召回都走它）/ `parseDirList`
+ * （逗号分隔目录串的唯一解析器）/ `normalizeBoxDir`（单目录归一）。
  */
 import { isUnderFolder } from './utils';
 import { tryGetSettings } from './settings-provider';
@@ -35,6 +39,21 @@ export function normalizeBoxDir(raw: unknown, fallback: string): string {
     .trim()
     .replace(/^\/+|\/+$/g, '');
   return s || fallback;
+}
+
+/**
+ * 逗号分隔目录串 → 归一化目录清单（**本存储格式的唯一解析器**）：逐项 `normalizeBoxDir` 归一
+ * （空项丢弃）+ 保序去重。使用者：`secondbrain/config` 的索引范围、`secondbrain/whitelist` 的
+ * 设置面板多选 chips、`settings.migrateAutoLinkSettings` 的 onload 迁移——三处口径必须一致，
+ * 否则「设置里看到的目录」与「实际生效的目录」会漂移。
+ */
+export function parseDirList(raw: unknown): string[] {
+  const out: string[] = [];
+  for (const part of String(raw ?? '').split(',')) {
+    const d = normalizeBoxDir(part, '');
+    if (d && !out.includes(d)) out.push(d);
+  }
+  return out;
 }
 
 /**

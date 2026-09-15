@@ -31,7 +31,7 @@ import { AI } from '../ai';
 import type { SearchHit } from '../vector-store';
 import {
   computeBackfillTargets,
-  getLinkAgentScopes,
+  inLinkScope,
   LinkQueueItem,
   computeHash,
   enqueuePaths,
@@ -40,7 +40,6 @@ import {
   isSettledEmpty,
   loadQueue,
   loadLinkState,
-  matchesScope,
   mergeRelated,
   parseRelatedEntries,
   parseJudgeOutput,
@@ -204,20 +203,34 @@ export class LinkAgent {
   }
 
   /**
+   * 入口守卫（processNote / applyLinks 共用，**判定顺序只有这一处**——两处各写一遍必然漂移：
+   * 曾出现「不存在的盒外 .md」在一处判 out-of-scope、另一处判 skipped 的分叉）：
+   * - 非 md（含文件不存在）→ `skipped`；
+   * - encrypt 锁定 → `skipped`（硬跳过先于盒界：锁定目录的文件不拿「是否在盒内」说事）；
+   * - 三盒之外 → `out-of-scope`（ADR-0141 §2：自动路径与手动命令同一口径，无豁免）；
+   * - 否则返回 `{ file }`（读内容不必再查一次 vault）。
+   */
+  private resolveTarget(path: string): { file: TFile } | { status: 'skipped' } | { status: 'out-of-scope' } {
+    const file = this.app.vault.getAbstractFileByPath(path) as TFile | null;
+    if (!file || file.extension !== 'md') return { status: 'skipped' };
+    if (isEncryptLockedPath(this.app, path)) return { status: 'skipped' };
+    if (!inLinkScope(path)) return { status: 'out-of-scope' };
+    return { file };
+  }
+
+  /**
    * 单篇完整管线；assumeReachable=true 时跳过探测（队列消费已在入口统一探过）。
    * 范围卫（ADR-0141 §2）：**盒外路径一律拒绝**（out-of-scope）——自动路径与手动命令同一口径，
-   * 不再有「手动触发即显式意图、不受范围限制」的豁免。
+   * 不再有「手动触发即显式意图、不受范围限制」的豁免；判定统一走 resolveTarget。
    * v1.7/ticket 167：respectRelated !== false 时，frontmatter related 非空 → `skipped-related` 跳过
    * （创建 / 修改 / 队列消费三条自动路径统一；存量补链目标天然只收缺 related 者，此门不触发）。
    */
   async processNote(path: string, opts?: { assumeReachable?: boolean; respectRelated?: boolean }): Promise<ProcessOutcome> {
     const s = tryGetSettings() as any;
     if (s.linkAgentEnabled === false) return { status: 'skipped' };
-    const file = this.app.vault.getAbstractFileByPath(path) as TFile | null;
-    if (!file || file.extension !== 'md') return { status: 'skipped' };
-    // encrypt 硬跳过先于盒界判定：锁定目录的文件连「是否在盒内」都不该被拿出来说事
-    if (isEncryptLockedPath(this.app, path)) return { status: 'skipped' };
-    if (!matchesScope(getLinkAgentScopes(), path)) return { status: 'out-of-scope' };
+    const target = this.resolveTarget(path);
+    if (!('file' in target)) return { status: target.status };
+    const file = target.file;
 
     let content = '';
     try {
@@ -330,9 +343,9 @@ export class LinkAgent {
   async applyLinks(path: string, targetPaths: string[]): Promise<ProcessOutcome> {
     const s = tryGetSettings() as any;
     if (s.linkAgentEnabled === false) return { status: 'skipped' };
-    if (!matchesScope(getLinkAgentScopes(), path)) return { status: 'out-of-scope' };
-    const file = this.app.vault.getAbstractFileByPath(path) as TFile | null;
-    if (!file || file.extension !== 'md') return { status: 'skipped' };
+    const target = this.resolveTarget(path); // 与 processNote 同一守卫与顺序
+    if (!('file' in target)) return { status: target.status };
+    const file = target.file;
     return this.runSerial(async () => {
       const targets = [...new Set((targetPaths || []).filter((p) => !!p && p !== path && !!this.app.vault.getAbstractFileByPath(p)))];
       const created = await this.writeRelated(file, targets);
@@ -451,7 +464,6 @@ export class LinkAgent {
    */
   async findCandidates(selfPath: string, content: string): Promise<SearchHit[]> {
     const topK = this.maxTopK;
-    const scopes = getLinkAgentScopes();
     const cfg = buildConfig();
     const baseUrl = IS_MOBILE ? cfg.OLLAMA_REMOTE_URL || cfg.OLLAMA_URL : undefined;
     const pool = Math.max(topK * 3, CANDIDATE_POOL_MIN);
@@ -465,7 +477,7 @@ export class LinkAgent {
     const bestByPath = new Map<string, SearchHit>();
     for (const hit of hits) {
       if (hit.path === selfPath) continue;
-      if (!matchesScope(scopes, hit.path)) continue;
+      if (!inLinkScope(hit.path)) continue;
       if (!this.app.vault.getAbstractFileByPath(hit.path)) continue;
       if (isEncryptLockedPath(this.app, hit.path)) continue;
       const cur = bestByPath.get(hit.path);
@@ -710,7 +722,6 @@ export class LinkAgent {
   private async computeBackfillTargets(): Promise<string[]> {
     const vault = this.app.vault as any;
     const cache = (this.app as any).metadataCache as any;
-    const scopes = getLinkAgentScopes();
     let queued: Set<string>;
     try {
       queued = new Set((await loadQueue()).map((i) => i.path));
@@ -739,7 +750,7 @@ export class LinkAgent {
     return computeBackfillTargets(
       files.map((f) => f.path),
       {
-        inScope: (p) => matchesScope(scopes, p),
+        inScope: (p) => inLinkScope(p),
         hasRelated: (p) => {
           try {
             const fm = cache?.getFileCache?.(vault.getAbstractFileByPath(p))?.frontmatter as Record<string, unknown> | undefined;
@@ -805,7 +816,7 @@ export class LinkAgent {
     };
 
     let removedTotal = 0;
-    const scopedFiles = mdFiles.filter((f) => matchesScope(getLinkAgentScopes(), f.path));
+    const scopedFiles = mdFiles.filter((f) => inLinkScope(f.path));
     for (const file of scopedFiles) {
       let entries: string[];
       try {

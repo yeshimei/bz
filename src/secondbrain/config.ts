@@ -10,8 +10,7 @@
  */
 import { tryGetSettings } from '../core/settings-provider';
 import { storageFile } from '../core/storage';
-import { boxDirs, getKnowledgeBoxes, isBoxDir } from '../core/knowledge-boxes';
-import { parsePathList } from './whitelist';
+import { boxDirs, getKnowledgeBoxes, isBoxDir, parseDirList } from '../core/knowledge-boxes';
 
 interface SecondBrainConfig {
   OLLAMA_URL: string;
@@ -33,29 +32,18 @@ interface SecondBrainConfig {
 }
 
 /**
- * 逗号分隔串 → 归一化目录清单：**拆分口径复用 whitelist.parsePathList**（同一存储格式的唯一解析器），
- * 仅在其上补一条反斜杠转正（Windows 手填路径），再按归一化结果去重。
- */
-export function parseAllowPaths(raw: unknown): string[] {
-  const out: string[] = [];
-  for (const p of parsePathList(raw)) {
-    const d = p.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
-    if (d && !out.includes(d)) out.push(d);
-  }
-  return out;
-}
-
-/**
  * 索引目录解析（ADR-0141 §3）：三盒恒含 + 白名单额外目录。
- * 值里的三盒条目在此剔除（幂等）——三盒已无条件纳入，留着只会被当成「额外目录」误导（settings.ts
- * 的 onload 迁移会把它们从盘上清掉，这里再兜一层防手改）。
+ * 解析口径 = core `parseDirList`（逗号目录串的唯一解析器）；值里的三盒条目在此剔除（幂等）——
+ * 三盒已无条件纳入，留着只会被当成「额外目录」误导（settings.ts 的 onload 迁移会把它们从盘上清掉，
+ * 这里再兜一层防手改）。
  */
 export function resolveAllowPaths(rawAllowPaths: unknown): string[] {
   const boxes = getKnowledgeBoxes();
   const dirs = boxDirs(boxes);
-  const extra = parseAllowPaths(rawAllowPaths).filter((p) => !isBoxDir(p, boxes) && !dirs.includes(p));
+  const extra = parseDirList(rawAllowPaths).filter((p) => !isBoxDir(p, boxes) && !dirs.includes(p));
   return [...dirs, ...extra];
 }
+
 
 export function buildConfig(): SecondBrainConfig {
   const s: any = tryGetSettings();

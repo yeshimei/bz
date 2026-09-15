@@ -1221,6 +1221,27 @@ describe('范围卫：盒外一律拒绝（ADR-0141 §2：手动亦无豁免）'
     expect(vault.files.get('其他/X.md')).not.toContain('related');
   });
 
+  it('两处入口共用同一守卫：同一路径在 processNote / applyLinks 返回相同状态（判定顺序只有一处）', async () => {
+    const { vault, agent } = makeWorld({ hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }] });
+    const both = async (path: string) => ({
+      process: (await agent.processNote(path)).status,
+      apply: (await agent.applyLinks(path, ['文献盒/B.md'])).status,
+    });
+
+    // 盒外且存在 → 两处都 out-of-scope（ADR-0141 §2：手动无豁免）
+    vault.files.set('其他/存在.md', 'x');
+    expect(await both('其他/存在.md')).toEqual({ process: 'out-of-scope', apply: 'out-of-scope' });
+    // 盒外且不存在 / 盒内且不存在 → 两处都 skipped（文件门先于盒界门）
+    expect(await both('其他/不存在.md')).toEqual({ process: 'skipped', apply: 'skipped' });
+    expect(await both('文献盒/不存在.md')).toEqual({ process: 'skipped', apply: 'skipped' });
+    // 非 md（canvas）→ 两处都 skipped
+    vault.files.set('文献盒/白板.canvas', '{}');
+    expect(await both('文献盒/白板.canvas')).toEqual({ process: 'skipped', apply: 'skipped' });
+    // encrypt 锁定（盒内盒外都算）→ 两处都 skipped：硬跳过先于盒界，这是唯一的顺序
+    vault.files.set('CONFIG/.ENCRYPT/E.md', 'x');
+    expect(await both('CONFIG/.ENCRYPT/E.md')).toEqual({ process: 'skipped', apply: 'skipped' });
+  });
+
   it('队列消费：盒外条目就地清理，不留滞留（范围不再可配，它永远跑不了）', async () => {
     const { vault, agent } = makeWorld({});
     vault.files.set('书库/旧书.md', 'x');
