@@ -1,8 +1,20 @@
 # Issue tracker: Local Markdown
 
-Issues and specs for this repo live as markdown files in `.scratch/`.
+Issues and specs for this repo live as markdown files in the **repo itself**（不是 `.scratch/`）。
 
-## Conventions
+## 本仓实际约定（2026-09-15 校正）
+
+- **实现票（唯一真理源）**：`issues/<NN>-<slug>.md`，三位数连号、全仓唯一（当前已到 `issues/325-*.md`）。
+  顶部字段：日期 / 用户拍板 / 关联（ADR 与 ticket 号）/ 状态；正文按背景 / 设计 / 改动面 / 测试 / 不在本轮分节。
+  新票编号前先看 `issues/` 最新号（并行会话防撞号）。
+- **决策记录**：`docs/adr/<NNNN>-<slug>.md`（四位数连号）。领域词表在仓库根 `CONTEXT.md`，
+  与 ADR 同步更新（词条含 `_Avoid_:` 反例列表）。
+- **探索期 spec**：`.scratch/<feature-slug>/spec.md`（不入库，见 `.gitignore`），
+  用于「还没定稿、没编号」的调研；定稿后再落成 `issues/` 票号 + ADR。
+- **交付态**写在票文件的 `状态：` 行（设计定稿 → 已实现 → 已交付），门禁结果与实现期偏差也追加在该行附近。
+- **进度总表**：仓库根 `PROGRESS.md`，每票一节、最新在上。
+
+## 通用约定（模板原文，Wayfinder 流程仍适用）
 
 - One feature per directory: `.scratch/<feature-slug>/`
 - The spec is `.scratch/<feature-slug>/spec.md`
@@ -12,11 +24,12 @@ Issues and specs for this repo live as markdown files in `.scratch/`.
 
 ## When a skill says "publish to the issue tracker"
 
-Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
+本仓：在新票 `issues/<NN>-<slug>.md` 落文件（先查最新号）；探索期内容落 `.scratch/<feature-slug>/`。
 
 ## When a skill says "fetch the relevant ticket"
 
-Read the file at the referenced path. The user will normally pass the path or the issue number directly.
+Read the file at the referenced path. The user will normally pass the path or the issue number directly
+（如「issue 325」= `issues/325-*.md`）。
 
 ## Wayfinding operations
 

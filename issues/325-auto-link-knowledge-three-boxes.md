@@ -17,6 +17,16 @@
   ④ `secondbrain/config.parseAllowPaths` 改为复用 `whitelist.parsePathList`（同一存储格式只留一个解析器）。
   ⑤ 知识盒 schema 顺带纳入文案 lint（域组 C 注册表），存量文案零违规。
   ⑥ 删除 `watch.ts` 的 `__resetLinkAgentGuideForTests`（引导提示退役后无标志可复位）。
+  ⑦ **双轴 review 后的三处修正**（2026-09-15，独立提交 `fix: review 修正`）：
+     · 范围判定**真走 core 单源**——原 `data.ts` 的 `getLinkAgentScopes()` + `matchesScope(scopes, path)`
+       门面删除，改 `inLinkScope(path)` 直转 `core.inKnowledgeBoxes`（此前 `inKnowledgeBoxes` 只有测试在用，
+       宣称的「单源」是摆设）；pipeline 5 处 + watch 2 处调用点随之收敛。
+     · 逗号目录串解析**收进 core** `parseDirList`：`config.resolveAllowPaths`（域）与
+       `settings.migrateAutoLinkSettings`（根配置层）不再各自内联归一化；`whitelist.parsePathList`
+       降为一行转发（同一存储格式只剩一个解析器）。`config.parseAllowPaths` 作为纯转发壳删除（Middle Man）。
+     · 入口守卫**合并**为 `LinkAgent.resolveTarget(path)`（processNote / applyLinks 共用）——原两处判定顺序
+       相反（盒界↔文件门），同一「不存在的盒外 .md」会一处 `out-of-scope`、一处 `skipped`；
+       现统一为 文件门 → encrypt 硬跳过 → 盒界，并加回归用例逐组合对齐两处返回值。
 
 ## §1 背景
 

@@ -20,10 +20,9 @@ import {
   upsertLinkState,
   enqueuePaths,
   isUnderFolder,
-  getLinkAgentScopes,
+  inLinkScope,
   isSettledEmpty,
   loadQueue,
-  matchesScope,
   mergeRelated,
   normalizeRelatedEntry,
   parseJudgeOutput,
@@ -47,35 +46,34 @@ describe('自动关联·设置键默认值', () => {
   });
 });
 
-describe('关联范围恒为三个盒子（ADR-0141 §2：范围不再可配）', () => {
+describe('关联范围恒为三个盒子（ADR-0141 §2：范围不再可配，判定归 core 单源）', () => {
   beforeEach(() => {
     setSettingsProvider(() => ({ ...DEFAULT_SETTINGS } as any));
   });
 
-  it('getLinkAgentScopes：直接取三个盒子目录（文献 → 卡片 → 主题）', () => {
-    expect(getLinkAgentScopes()).toEqual(['文献盒', '卡片盒', '主题盒']);
+  it('inLinkScope：三个盒子（含其下子目录）命中，盒外一律不命中', () => {
+    expect(inLinkScope('文献盒/A.md')).toBe(true);
+    expect(inLinkScope('卡片盒/次卡片盒/B.md')).toBe(true);
+    expect(inLinkScope('主题盒/C盒/X.md')).toBe(true);
+    expect(inLinkScope('其他/A.md')).toBe(false);
+    expect(inLinkScope('书库/某书.md')).toBe(false);
+    expect(inLinkScope('我的/日记/x.md')).toBe(false);
+    expect(inLinkScope('')).toBe(false);
   });
 
-  it('getLinkAgentScopes：盒子目录改了即跟随（反斜杠与首尾斜杠归一、空值回落缺省名）', () => {
+  it('inLinkScope：盒子目录改了即跟随（反斜杠与首尾斜杠归一、空值回落缺省名）', () => {
     setSettingsProvider(
-      // Windows 风格路径（反斜杠）与空值同时验证归一与回落
       () => ({
-              ...DEFAULT_SETTINGS,
-              knowledgeDirectory: ['笔记', '文献', ''].join('\\'),
-              knowledgeCardboxDirectory: '',
-              knowledgeTopicDirectory: '专题盒',
+        ...DEFAULT_SETTINGS,
+        knowledgeDirectory: ['笔记', '文献', ''].join('\\'),
+        knowledgeCardboxDirectory: '',
+        knowledgeTopicDirectory: '专题盒',
       } as any)
     );
-    expect(getLinkAgentScopes()).toEqual(['笔记/文献', '卡片盒', '专题盒']);
-  });
-
-  it('matchesScope：空范围任何路径都不命中；非空按目录递归匹配', () => {
-    expect(matchesScope([], '文献盒/A.md')).toBe(false);
-    expect(matchesScope(['文献盒'], '文献盒/A.md')).toBe(true);
-    expect(matchesScope(['文献盒'], '文献盒/子/B.md')).toBe(true);
-    expect(matchesScope(['文献盒'], '文献盒')).toBe(true);
-    expect(matchesScope(['文献盒'], '其他/A.md')).toBe(false);
-    expect(matchesScope(['文献盒', '卡片盒'], '卡片盒/K.md')).toBe(true);
+    expect(inLinkScope('笔记/文献/某篇.md')).toBe(true);
+    expect(inLinkScope('文献盒/A.md')).toBe(false); // 旧盒名不再命中
+    expect(inLinkScope('卡片盒/K.md')).toBe(true); // 空值回落缺省「卡片盒」
+    expect(inLinkScope('专题盒/T.md')).toBe(true);
   });
 });
 
