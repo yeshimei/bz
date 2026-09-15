@@ -38,7 +38,25 @@ const noteGen = vi.hoisted(() => ({
 }));
 vi.mock('../../src/knowledge/note-gen', () => noteGen);
 
-vi.mock('../../src/core/flow-dialog', () => ({ openFlowDialog: vi.fn().mockResolvedValue('ok') }));
+// issue 326：ui.ts 新 import confirmDiscard（关闭二次确认）。openFlowDialog 换成 spy（issue 291 断言用），
+// confirmDiscard 打**行为等价桩**——真实实现内部引用的是模块原 openFlowDialog，替换导出够不着它；
+// 桩记录 message/className（断言用）并经 spy 的 'ok' 解析走 proceed（与真实「确认放弃」同路径）。
+const flowDialog = vi.hoisted(() => ({
+  openFlowDialog: vi.fn().mockResolvedValue('ok'),
+  discarded: [] as Array<{ message?: string; className?: string }>,
+}));
+vi.mock('../../src/core/flow-dialog', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/core/flow-dialog')>();
+  return {
+    ...actual,
+    openFlowDialog: flowDialog.openFlowDialog,
+    confirmDiscard: (proceed: () => void, message?: string, className?: string) => {
+      flowDialog.discarded.push({ message, className });
+      return flowDialog.openFlowDialog({ title: '', message, className, actions: [] })
+        .then((v: unknown) => { if (v === 'ok') proceed(); });
+    },
+  };
+});
 
 function makeApp(vault: MockVault) {
   const openFile = vi.fn();
@@ -1015,9 +1033,9 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(popup.querySelector('#lit-term-meta-term')!.textContent).toBe('松果体');
     expect(popup.querySelector('#lit-term-meta-domain')!.textContent).toBe('心理');
     expect(popup.querySelector('#lit-term-content')!.textContent).toBe('AI 简介');
-    // 退出只剩两条道：点遮罩、ESC（✕ / 取消按钮都退役）
+    // 退出只剩两条道：点遮罩、ESC（✕ / 取消按钮都退役）；issue 326 起预览态关闭先过二次确认（stub 默认「放弃」）
     (document.getElementById('knowledge-term-mask') as HTMLElement).click();
-    expect(popup.style.display).toBe('none');
+    await vi.waitFor(() => expect(popup.style.display).toBe('none'));
     ui.showTermEntry();
     await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
     ui.hideTermEntry();
@@ -1546,4 +1564,103 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
       expect(call[0].actions).toHaveLength(2);
     }
   });
+
+// ==================== 录入面板关闭二次确认 + 生成后开笔记（issue 326） ====================
+
+describe('录入面板关闭二次确认 + 生成后开笔记（issue 326）', () => {
+  /** 造一张可被收图链路收下的图片 File（同图版录入段口径：字节不参与断言，MIME 合法即可） */
+  function pngFile(name = 'plate.png', type = 'image/png') {
+    return new File([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], name, { type });
+  }
+  function pressEsc(): void {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  }
+
+  it('段落态有文字 → ESC 触发风格化确认（统一壳 + 知识盒域皮 className），确认后面板收起', async () => {
+    (openFlowDialog as any).mockClear();
+    ui.showPassageEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-passage-input') as HTMLTextAreaElement).value = '一段没写入的文字';
+    pressEsc();
+    expect(openFlowDialog).toHaveBeenCalledWith(expect.objectContaining({
+      message: '段落还没生成写入，关闭后将丢失',
+      className: 'kb bz-kb-flow-dialog', // ADR-0125 域皮：'kb' token 作用域 + 域弹窗类
+    }));
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
+  });
+
+  it('干净态（没动输入）ESC 直关，不打扰', async () => {
+    (openFlowDialog as any).mockClear();
+    ui.showPassageEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    pressEsc();
+    expect(openFlowDialog).not.toHaveBeenCalled();
+    expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none');
+  });
+
+  it('图版有内存图片 → 关闭确认，文案按态给「图片」；清图后直关', async () => {
+    (openFlowDialog as any).mockClear();
+    ui.showImageEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    await (ui as any).acceptImageFiles([pngFile()]);
+    pressEsc();
+    expect(openFlowDialog).toHaveBeenCalledWith(expect.objectContaining({
+      message: '图片还没生成写入，关闭后将丢失',
+    }));
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
+    // 重开清掉图 → 干净态直关
+    (openFlowDialog as any).mockClear();
+    ui.showImageEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    pressEsc();
+    expect(openFlowDialog).not.toHaveBeenCalled();
+    expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none');
+  });
+
+  it('生成中关面板也算脏（termGenerating）→ 确认后才丢', async () => {
+    (openFlowDialog as any).mockClear();
+    noteGen.generatePassageDraft.mockReturnValue(new Promise(() => {})); // 挂起的生成
+    ui.showPassageEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-passage-input') as HTMLTextAreaElement).value = '生成中的段落';
+    (document.getElementById('lit-term-generate') as HTMLElement).click();
+    await vi.waitFor(() => expect((ui as any).termGenerating).toBe(true));
+    pressEsc();
+    expect(openFlowDialog).toHaveBeenCalled();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
+  });
+
+  it('确认写入成功 → 面板关 + 直接打开生成的笔记（openFile 收到生成路径）', async () => {
+    vault.files.set('文献盒/自动标题.md', noteMd({ title: '自动标题', type: 'passage' }));
+    ui.showPassageEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-passage-input') as HTMLTextAreaElement).value = '一段关于城市化的文字。';
+    await (ui as any).onTermGenerate();
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(openFile).toHaveBeenCalledWith(expect.objectContaining({ path: '文献盒/自动标题.md' })));
+    expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none');
+  });
+
+  it('影像录入：输入过链接 → ESC 确认（文案「影像信息还没保存」）；纯打开未动 → ESC 直关', async () => {
+    (openFlowDialog as any).mockClear();
+    ui.showAddDialog();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    const url = document.getElementById('lit-add-url') as HTMLInputElement;
+    url.value = 'https://www.bilibili.com/video/BV1xx411c7mD';
+    url.dispatchEvent(new Event('input', { bubbles: true }));
+    pressEsc();
+    expect(openFlowDialog).toHaveBeenCalledWith(expect.objectContaining({
+      message: '影像信息还没保存，关闭后将丢失',
+      className: 'kb bz-kb-flow-dialog',
+    }));
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('none'));
+    // 编辑态打开（带任务回填）但用户没动 → 直关：自动重抓程序化改值不打脏标（issue 326 事件打标口径）
+    (openFlowDialog as any).mockClear();
+    ui.showAddDialog({ id: 't1', url: 'https://www.bilibili.com/video/BV1xx411c7mD' });
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    pressEsc();
+    expect(openFlowDialog).not.toHaveBeenCalled();
+    expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('none');
+  });
+});
 });

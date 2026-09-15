@@ -25,7 +25,7 @@ import { tryGetSettings, getSettings, saveSettings } from '../core/settings-prov
 import { getKnowledgeBoxes } from '../core/knowledge-boxes';
 import { getLinkBridge } from '../core/link-now';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
-import { openFlowDialog } from '../core/flow-dialog';
+import { confirmDiscard, openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
 import { escapeHtml, fetchPageTitle, formatRelativeTime, stripMdExt } from '../core/utils';
 import { iconSpan } from '../core/ui/str';
@@ -480,6 +480,9 @@ export class UIManager {
   // ---- 添加任务弹窗 ----
   addMask: HTMLElement | null = null;
   addPopup: HTMLElement | null = null;
+  /** 用户动过表单（issue 326 关闭二次确认的脏标记）：只在真实用户事件点打标、开窗/保存成功复位——
+   *  不做数值比对，因为打开即自动重抓（ADR-0133）会程序化改写 url 与时长区间，比值必假阳 */
+  private addDirty = false;
   // ---- 添加弹窗解析态（ADR-0133：解析按钮 + 只读信息区 + 双把手范围）----
   /** 解析序列号：新解析/关弹窗使在途响应过期（回填前校验丢弃） */
   private addUrlSeq = 0;
@@ -562,8 +565,9 @@ export class UIManager {
     this.onKeydown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       // ESC 关最上层：术语面板 → 添加弹窗 → 处理面板（历史视图先退回队列）→ 主面板
-      if (this.termPopup && this.termPopup.style.display === 'flex') this.hideTermEntry();
-      else if (this.addPopup && this.addPopup.style.display === 'flex') this.hideAddDialog();
+      // （issue 326：录入面板关闭改走二次确认请求——有草稿先弹风格化确认，干净态直关）
+      if (this.termPopup && this.termPopup.style.display === 'flex') this.requestTermClose();
+      else if (this.addPopup && this.addPopup.style.display === 'flex') this.requestAddClose();
       else if (this.videoPopup && this.videoPopup.style.display === 'flex') {
         if (this.videoView === 'history') this.switchVideoView('tasks');
         else this.hideVideo();
@@ -1672,7 +1676,7 @@ export class UIManager {
     addMask.id = 'knowledge-add-mask';
     addMask.className = 'bz-kb-mask';
     addMask.style.display = 'none';
-    addMask.onclick = () => this.hideAddDialog();
+    addMask.onclick = () => this.requestAddClose(); // issue 326：有草稿先确认
     const popup = document.createElement('div');
     popup.id = 'knowledge-add-popup';
     popup.className = 'bz-lit-dialog kb'; // kb：纸墨皮变量作用域（缺此背景 var(--panel) 失效成透明，issue 257）
@@ -1733,11 +1737,14 @@ export class UIManager {
     this.addPopup = popup;
     q<HTMLButtonElement>(popup, '#lit-add-save')!.onclick = () => void this._handleAddSave();
     q<HTMLButtonElement>(popup, '#lit-add-resolve')!.onclick = () => void this._handleResolve();
-    q<HTMLButtonElement>(popup, '#lit-add-whole')!.onclick = () => this._resetAddRange();
+    q<HTMLButtonElement>(popup, '#lit-add-whole')!.onclick = () => { this.addDirty = true; this._resetAddRange(); };
+    // 档位下拉（issue 326）：选项在 _renderAdd 里重建但元素常驻，change 只由用户切换触发——打脏标
+    q<HTMLSelectElement>(popup, '#lit-add-quality')?.addEventListener('change', () => { this.addDirty = true; });
     // 链接框：输入即作废已解析信息并放弃在途解析（需重新点「解析」，ADR-0133）；回车 = 解析
     const addUrlInput = q<HTMLInputElement>(popup, '#lit-add-url');
     if (addUrlInput) {
       addUrlInput.addEventListener('input', () => {
+        this.addDirty = true; // 用户动过链接（issue 326 关闭确认）
         this.addUrlSeq++; // 在途解析过期（回填前序列号校验丢弃）
         this.addResolving = false; // 改输入 = 放弃在途解析：按钮恢复可用
         this._setResolveState(null);
@@ -1762,16 +1769,18 @@ export class UIManager {
     }
     // 分P 下拉：切 P → 量程更新 + 范围重置 + 档位重查（ADR-0133）
     q<HTMLSelectElement>(popup, '#lit-add-page')?.addEventListener('change', (e) => {
+      this.addDirty = true; // 用户切了分P（issue 326 关闭确认）
       void this._switchAddPage(Number((e.target as HTMLSelectElement).value) || 1);
     });
     // 时间框：blur/回车提交秒值（钳制 + 同步进度条）；↑/↓ = ±1 秒（Shift ±10）；回车提交后保存
     for (const [sel, which] of [['#lit-add-start', 'start'], ['#lit-add-end', 'end']] as const) {
       const input = q<HTMLInputElement>(popup, sel);
       if (!input) continue;
-      input.addEventListener('change', () => this._commitTimeInput(which));
+      input.addEventListener('change', () => { this.addDirty = true; this._commitTimeInput(which); });
       input.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
           e.preventDefault();
+          this.addDirty = true; // 键调时间也是用户改动（issue 326 关闭确认）
           this._nudgeTime(which, e.key === 'ArrowUp' ? 1 : -1, e.shiftKey ? 10 : 1);
         } else if (e.key === 'Enter') { e.preventDefault(); this._commitTimeInput(which, true); void this._handleAddSave(); }
       });
@@ -1780,6 +1789,7 @@ export class UIManager {
     if (numInput) {
       // 输入即同步状态：_renderAdd 的回写不吞用户手填（review 306）
       numInput.addEventListener('input', () => {
+        this.addDirty = true; // 用户填了分P（issue 326 关闭确认）
         const n = Number(numInput.value.trim());
         this.addPage = Number.isInteger(n) && n > 0 ? n : 1;
       });
@@ -1793,6 +1803,7 @@ export class UIManager {
   showAddDialog(editItem?: Partial<KnowledgeTask>): void {
     if (!this.addPopup || !this.addMask) return;
     this.addUrlReset(); // 开弹窗使在途解析过期（ADR-0133）
+    this.addDirty = false; // 开窗即干净基线（issue 326：脏标只在用户事件点打）
     this.editingId = editItem?.id ?? null;
     // 编辑既有任务：数据本来就有 → 直接展开下半表单（不逼用户为了看一眼再去点解析，issue 310）
     this.addRevealed = !!this.editingId;
@@ -1934,7 +1945,7 @@ export class UIManager {
     }
     host.innerHTML = '';
     const bar = new RangeBar({
-      onChange: (s, e) => { this.addStart = s; this.addEnd = e; this._paintRange(); },
+      onChange: (s, e) => { this.addDirty = true; this.addStart = s; this.addEnd = e; this._paintRange(); },
     });
     bar.set(this.addDuration, this.addStart, this.addEnd);
     host.appendChild(bar.el);
@@ -2285,7 +2296,7 @@ export class UIManager {
     mask.id = 'knowledge-term-mask';
     mask.className = 'bz-kb-mask';
     mask.style.display = 'none';
-    mask.onclick = () => this.hideTermEntry();
+    mask.onclick = () => this.requestTermClose(); // issue 326：有草稿先确认
     const popup = document.createElement('div');
     popup.id = 'knowledge-term-popup';
     popup.className = 'bz-lit-dialog bz-lit-term-dialog kb'; // kb：纸墨皮变量作用域（缺此背景 var(--panel) 失效成透明，issue 257）
@@ -2349,8 +2360,8 @@ export class UIManager {
     document.body.appendChild(popup);
     this.termMask = mask;
     this.termPopup = popup;
-    // 统一遮罩点关（issue 271）：✕ 已退役，点遮罩即收起
-    mask.addEventListener('click', (e) => { if (e.target === mask) this.hideTermEntry(); });
+    // 统一遮罩点关（issue 271）：✕ 已退役，点遮罩即收起；issue 326 起经 requestTermClose（草稿先确认）。
+    // 只留 onclick 一条道——原先 onclick 与 addEventListener 双注册会把确认弹两次
     q<HTMLButtonElement>(popup, '#lit-term-generate')!.onclick = () => void this.onTermGenerate();
     q<HTMLButtonElement>(popup, '#lit-term-regenerate')!.onclick = () => void this.onTermSummarize();
     q<HTMLButtonElement>(popup, '#lit-term-save')!.onclick = () => void this.onTermConfirm();
@@ -2450,9 +2461,13 @@ export class UIManager {
     this.showEntry('term', term, src);
   }
 
-  /** 打开「段落」录入（一段文字，AI 自动出标题）；来源行与名词同构（ADR-0116） */
-  showPassageEntry(src?: TermSource | null): void {
-    this.showEntry('passage', '', src);
+  /**
+   * 打开「段落」录入（一段文字，AI 自动出标题）；来源行与名词同构（ADR-0116）。
+   * issue 326：支持选区预填（命令入口）——与名词不同，预填**不自动生成**（大段文字让用户确认后再生成），
+   * showEntry 里自动生成只挂 term 态。
+   */
+  showPassageEntry(text?: string, src?: TermSource | null): void {
+    this.showEntry('passage', text, src);
   }
 
   /** 打开「图版」录入（可放多张图，AI 读图成文，issue 312/313）；来源行与名词/段落同构（ADR-0116） */
@@ -3026,6 +3041,7 @@ export class UIManager {
         notice(mode === 'passage' ? '已生成段落文献笔记：' + title : '已生成名词文献笔记：' + term, 'success');
       }
       this.hideTermEntry();
+      this.openNote(path); // issue 326：生成即开——关掉录入面板直达生成的笔记（openNote 自带收主面板/队列面板）
     } catch (e) {
       this.noticeTermError(e);
     } finally {
@@ -3044,6 +3060,35 @@ export class UIManager {
     if (this.termMask) this.termMask.style.display = 'none';
     if (this.termPopup) this.termPopup.style.display = 'none';
     void this.refreshCurrent();
+  }
+
+  /**
+   * 同壳三态脏判定（issue 326 关闭二次确认）：当前态输入非空 / 已有预览 / 生成中 / 图版有内存图，
+   * 任一即脏。来源行**单独不算脏**——命令入口本就预填来源（ADR-0116），一打开就关就弹确认是骚扰。
+   */
+  private entryDirty(): boolean {
+    if (!this.termPopup) return false;
+    if (this.termGenerating || this.termPreview) return true;
+    if (this.entryMode === 'image') return this.entryImages.length > 0;
+    const el = this.entryMode === 'passage'
+      ? q<HTMLTextAreaElement>(this.termPopup, '#lit-passage-input')
+      : q<HTMLInputElement>(this.termPopup, '#lit-term-input');
+    return !!(el && el.value.trim());
+  }
+
+  /** 录入面板关闭请求（issue 326）：脏 → 风格化二次确认（ADR-0125 统一壳 + 知识盒域皮）；干净态直关。
+   *  遮罩点击与 ESC 都走这里；确认写入成功路径直接调 hideTermEntry（不自带确认）。 */
+  private requestTermClose(): void {
+    if (!this.entryDirty()) { this.hideTermEntry(); return; }
+    const what = this.entryMode === 'image' ? '图片' : this.entryMode === 'passage' ? '段落' : '名词';
+    confirmDiscard(() => this.hideTermEntry(), `${what}还没生成写入，关闭后将丢失`, 'kb bz-kb-flow-dialog');
+  }
+
+  /** 影像录入弹窗关闭请求（issue 326）：用户动过表单（addDirty 事件打标）→ 二次确认；纯打开未动 → 直关。
+   *  保存成功路径直接调 hideAddDialog（刚落库无可丢）。 */
+  private requestAddClose(): void {
+    if (this.addDirty) confirmDiscard(() => this.hideAddDialog(), '影像信息还没保存，关闭后将丢失', 'kb bz-kb-flow-dialog');
+    else this.hideAddDialog();
   }
 
   // ==================== 通用小工具 ====================
