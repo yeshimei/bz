@@ -612,6 +612,7 @@ export class UIManager {
         if (this.videoView === 'history') this.switchVideoView('tasks');
         else this.hideVideo();
       }
+      else if (this.previewHostEl?.isConnected) this.closeSheet(); // 直达预览的独立宿主（主面板不在场）同样 ESC 可关
       else if (this.popup && this.popup.style.display === 'flex') this.hideMain();
     };
     document.addEventListener('keydown', this.onKeydown);
@@ -3210,7 +3211,13 @@ export class UIManager {
           images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || 'png', desc: String(im.desc || '').trim() })),
         });
         emitDomainEvent('knowledge:tasks', { kind: 'image-generated', title, notePath: path });
-        await this.commitEntryLinks(path);
+        try {
+          await this.commitEntryLinks(path);
+        } catch (le) {
+          // 关联落库失败不回滚已写笔记、不再上抛——否则 onCreated 断链 + 用户重试落 _2 重名副本（issue 329 评审）
+          console.warn('[knowledge] 关联写入失败（笔记已落盘）', le);
+          notice('笔记已写入，但关联写入失败', 'warning');
+        }
         this.clearEntryImage(); // 字节已进 vault，内存副本立刻丢掉
         notice('已生成图版文献笔记：' + title, 'success');
       } else {
@@ -3221,7 +3228,13 @@ export class UIManager {
           ? { kind: 'passage-generated', title, notePath: path }
           : { kind: 'term-generated', term, title: term, notePath: path });
         // 关联落库（issue 309）：预演结果写进 related；写完**直接关窗**（面板不逗留展示结果）
-        await this.commitEntryLinks(path);
+        try {
+          await this.commitEntryLinks(path);
+        } catch (le) {
+          // 同图版分支：关联失败不回滚不吞 onCreated（issue 329 评审）
+          console.warn('[knowledge] 关联写入失败（笔记已落盘）', le);
+          notice('笔记已写入，但关联写入失败', 'warning');
+        }
         notice(mode === 'passage' ? '已生成段落文献笔记：' + title : '已生成名词文献笔记：' + term, 'success');
       }
       this.hideTermEntry();
