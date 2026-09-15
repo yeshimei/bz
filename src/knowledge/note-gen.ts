@@ -457,7 +457,8 @@ export async function generateImageNote(opts: {
   // 文字在上、图片在下（issue 313 用户拍板）；图片行按有无描述分叉（ADR-0145）
   const imageLines = imagePaths.map((p, i) => {
     const desc = String(images[i]?.desc ?? '').trim();
-    return desc ? `![[${p}|${desc}]]` : `![[${p}]]`;
+    // 描述含 `]]` 会把嵌入语法提前闭合（别名截断、残文落正文）——插空格降级（issue 329 评审）
+    return desc ? `![[${p}|${String(desc).replace(/\]\]/g, '] ]')}]]` : `![[${p}]]`;
   });
   const body = [fm.join('\n'), summary, ...imageLines].filter(Boolean).join('\n\n');
   return writeUniqueNote(dir, name, body);
