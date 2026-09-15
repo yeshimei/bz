@@ -52,9 +52,11 @@ const noteGen = vi.hoisted(() => ({
   backfillNotes: vi.fn(),
 }));
 vi.mock('../../src/knowledge/note-gen', () => noteGen);
+/** 流程框替身：缺省「确认」（'ok'），需要验取消时 mockResolvedValueOnce('cancel') */
+const flowDialog = vi.hoisted(() => ({ openFlowDialog: vi.fn() }));
 vi.mock('../../src/core/flow-dialog', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  openFlowDialog: vi.fn().mockResolvedValue('ok'),
+  openFlowDialog: flowDialog.openFlowDialog,
 }));
 
 /* ------------------------------------------------------------------ *
@@ -194,6 +196,7 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     copied = [];
     suggestMock.generateSuggestions.mockReset().mockResolvedValue({ status: 'cached', suggestions: [] });
     suggestMock.markSuggestion.mockReset().mockResolvedValue(undefined);
+    flowDialog.openFlowDialog.mockReset().mockResolvedValue('ok');
     destroyMountTree();
   });
 
@@ -467,7 +470,128 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     expect(said('正文写入 [[文献盒/建议目标|主卡正文一句话]]')).toBe(true);
   });
 
-  it('issue 322 渐进呈现：换卡先清画布；建议还在跑时新卡真实双链已上屏', async () => {
+  it('空卡首开：只有主卡的卡跑建议时先出空板 + 生成中，不把孤零零一张主卡当结果画出来', async () => {
+    const BARE = '卡片盒/空卡.md';
+    vault.files.set(BARE, '---\ntitle: "空卡"\n---\n\n这张卡一句话都没有挂，先看看 AI 怎么说。');
+    vault.files.set('文献盒/建议目标.md', '建议目标的正文。');
+    let release: (v: unknown) => void = () => {};
+    suggestMock.generateSuggestions.mockImplementation(() => new Promise((r) => { release = r; }));
+    const pending = open(BARE);
+    // 生成中：画布上一个节点都没有（主卡也不画），进度带空板说明
+    await vi.waitFor(() => expect(loading().style.display).not.toBe('none'));
+    expect(card(BARE)).toBeNull();
+    expect(document.querySelectorAll('.bz-kb-mt-node').length).toBe(0);
+    expect(loading().classList.contains('is-bare')).toBe(true);
+    expect(loading().querySelector('.bz-kb-mt-pempty')!.textContent).toContain('还没有挂载');
+    // 建议回来 → 主卡 + 幽灵一起上屏
+    release({
+      status: 'fresh',
+      suggestions: [
+        { anchor: { from: 0, to: 8, text: '这张卡一句话都没有挂' }, target: '文献盒/建议目标.md', kind: 'note', reason: '相关', score: 0.8, state: 'pending' },
+      ],
+    });
+    await pending;
+    expect(card(BARE)).toBeTruthy();
+    expect(card('ai:文献盒/建议目标.md')).toBeTruthy();
+    expect(loading().style.display).toBe('none');
+  });
+
+  it('空卡首开：建议没出来（降级 / 无关联）→ 照实把这张只有主卡的树画出来', async () => {
+    const BARE = '卡片盒/空卡二.md';
+    vault.files.set(BARE, '---\ntitle: "空卡二"\n---\n\n同样没有挂载。');
+    await open(BARE); // 缺省 stub 返回 { status: 'cached', suggestions: [] }
+    expect(card(BARE)!.classList.contains('is-root')).toBe(true);
+    expect(loading().style.display).toBe('none');
+  });
+
+  it('AI 建议锚点句高亮：正文里那句包进 .bz-kb-mt-anch-hl，圆点落在句末；实体双链不加底纹', async () => {
+    const anchorText = '主卡正文一句话';
+    vault.files.set('文献盒/建议目标.md', '建议目标的正文。');
+    suggestMock.generateSuggestions.mockResolvedValue({
+      status: 'fresh',
+      suggestions: [
+        { anchor: { from: 0, to: anchorText.length, text: anchorText }, target: '文献盒/建议目标.md', kind: 'card', reason: '理由', score: 0.82, state: 'pending' },
+      ],
+    });
+    await open(ROOT);
+    const body = card(ROOT)!.querySelector<HTMLElement>('.bz-kb-mt-body')!;
+    const hl = body.querySelector<HTMLElement>('.bz-kb-mt-anch-hl')!;
+    expect(hl).toBeTruthy();
+    expect(hl.textContent).toBe(anchorText); // 锚点那句被整句包住
+    expect(hl.getAttribute('data-mt-sug')).toBe('1');
+    expect(hl.querySelector('.bz-kb-mt-anch')).toBeTruthy(); // 圆点在句末
+    // 正文里六条实体双链照旧只有圆点：整篇只有这一处建议底纹
+    expect(body.querySelectorAll('.bz-kb-mt-anch-hl').length).toBe(1);
+    expect(body.querySelectorAll('.bz-kb-mt-anch').length).toBeGreaterThanOrEqual(6);
+  });
+
+  it('锚点句里含双链时的高亮：整句覆盖（跨文本节点也包全），圆点落在句末', async () => {
+    // 真机渲染把 [[睡眠纺锤波]] 变成 <a>，锚点句因此被切成「文本 + <a> + 文本」——只在起点节点包 span 会只亮半截
+    mockMarkdownRenderer.render.mockImplementation(async (_app: any, md: string, el: HTMLElement) => {
+      renderWithLinks(String(md ?? ''), el);
+    });
+    const anchorText = '深睡集中在头两个周期，睡眠纺锤波 这一段';
+    vault.files.set(ROOT, `---\ntitle: "主卡"\n---\n\n${'深睡集中在头两个周期，[[睡眠纺锤波]] 这一段'}，后面还有别的。`);
+    vault.files.set('文献盒/建议目标.md', '建议目标的正文。');
+    suggestMock.generateSuggestions.mockResolvedValue({
+      status: 'fresh',
+      suggestions: [
+        { anchor: { from: 0, to: anchorText.length, text: anchorText }, target: '文献盒/建议目标.md', kind: 'note', reason: '理由', score: 0.82, state: 'pending' },
+      ],
+    });
+    await open(ROOT);
+    const body = card(ROOT)!.querySelector<HTMLElement>('.bz-kb-mt-body')!;
+    const hls = Array.from(body.querySelectorAll<HTMLElement>('.bz-kb-mt-anch-hl'));
+    expect(hls.length).toBeGreaterThanOrEqual(2); // 链接两侧各包一层
+    const covered = hls.map((el) => el.textContent).join('');
+    expect(covered).toContain('深睡集中在头两个周期');
+    expect(covered).toContain('这一段');
+    // 圆点在最后一个高亮片段的末尾（正文里还有别的锚点圆点——实体双链各一枚，故按高亮内定位）
+    const last = hls[hls.length - 1];
+    expect(last.lastElementChild?.className).toContain('bz-kb-mt-anch');
+  });
+
+  it('锚点句里含双链时固定：正文一个字不丢（不套别名，退回句中追加）', async () => {
+    const anchorText = 'N1/N2 是浅睡，睡眠纺锤波 出现在 N2'; // 清洗后的锚点（双链变显示文本）
+    vault.files.set(
+      ROOT,
+      ['---', 'title: "主卡"', '---', '', '## 分期', '', '- N1/N2 是浅睡，[[睡眠纺锤波]] 出现在 N2', '- N3 又叫慢波睡眠，跟 [[记忆巩固]] 有关系', ''].join('\n'),
+    );
+    vault.files.set('文献盒/建议目标.md', '建议目标的正文。');
+    suggestMock.generateSuggestions.mockResolvedValue({
+      status: 'fresh',
+      suggestions: [
+        { anchor: { from: 0, to: anchorText.length, text: anchorText }, target: '文献盒/建议目标.md', kind: 'note', reason: '理由', score: 0.82, state: 'pending' },
+      ],
+    });
+    await open(ROOT);
+    fireCtx(card('ai:文献盒/建议目标.md'));
+    byAct('pin').click();
+    await vi.waitFor(() => expect(said('已固定')).toBe(true));
+    const after = vault.files.get(ROOT)!;
+    expect(after).toContain('- N3 又叫慢波睡眠，跟 [[记忆巩固]] 有关系'); // 别的段落一个字没丢
+    expect(after).toContain('[[睡眠纺锤波]]'); // 原有双链还在
+  });
+
+  it('固定套整句：长句锚点走别名替换 `[[目标|原句]]`，不做句末追加', async () => {
+    const sentence = '人们在算命时倾向于认为模糊的人格描述精准对应自己';
+    vault.files.set(ROOT, `---\ntitle: "主卡"\n---\n\n${sentence}。后面还有别的句子。`);
+    vault.files.set('文献盒/建议目标.md', '建议目标的正文。');
+    suggestMock.generateSuggestions.mockResolvedValue({
+      status: 'fresh',
+      suggestions: [
+        { anchor: { from: 0, to: sentence.length, text: sentence }, target: '文献盒/建议目标.md', kind: 'card', reason: '理由', score: 0.82, state: 'pending' },
+      ],
+    });
+    await open(ROOT);
+    fireCtx(card('ai:文献盒/建议目标.md'));
+    byAct('pin').click();
+    await vi.waitFor(() => expect(said('已固定')).toBe(true));
+    expect(vault.files.get(ROOT)!).toContain(`[[文献盒/建议目标|${sentence}]]。后面还有别的句子。`);
+    expect(vault.files.get(ROOT)!.startsWith('---\ntitle: "主卡"\n')).toBe(true);
+  });
+
+  it('换卡：先清画布再画新卡（建议还在跑也先给真实双链，不留旧卡视图）', async () => {
     await open(ROOT);
     expect(card(ROOT)).toBeTruthy();
 
@@ -475,13 +599,41 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     let release: (v: unknown) => void = () => {};
     suggestMock.generateSuggestions.mockImplementation(() => new Promise((r) => { release = r; }));
     const pending = open('卡片盒/子卡.md');
-    // 建议还在跑：新卡的真实双链已经上屏，旧视图（主卡为根）已被清掉
+    // 建议还在跑：新卡的真实双链已上屏，旧视图（主卡为根的整棵树）整棵被清掉
     await vi.waitFor(() => expect(rootId()).toBe('卡片盒/子卡.md'));
     expect(card('卡片盒/子卡.md')).toBeTruthy();
     expect(card(ROOT)?.classList.contains('is-root')).toBe(false); // 旧卡的「主卡」徽章不再在
     expect((document.getElementById('bz-kb-mt-loading') as HTMLElement).style.display).not.toBe('none'); // 进度还在跑
     release({ status: 'fresh', suggestions: [] });
     await pending;
+    // 跑完仍是「以子卡为根」这张树（主卡以子卡的回指出现在树里，但不再是主卡）
+    expect(rootId()).toBe('卡片盒/子卡.md');
+    expect(card(ROOT)?.classList.contains('is-root')).toBe(false);
+  });
+
+  it('重新生成：先二次确认（取消不跑）；确认后画布清空 + 进度，跑完才画', async () => {
+    await open(ROOT);
+    expect(card(ROOT)).toBeTruthy();
+
+    // ① 取消：不进链路、画布照旧
+    flowDialog.openFlowDialog.mockResolvedValueOnce('cancel');
+    suggestMock.generateSuggestions.mockClear();
+    win().querySelector<HTMLButtonElement>('[data-mt-act="refresh"]')!.click();
+    await vi.waitFor(() => expect(flowDialog.openFlowDialog).toHaveBeenCalled());
+    expect(suggestMock.generateSuggestions).not.toHaveBeenCalled();
+    expect(card(ROOT)).toBeTruthy();
+
+    // ② 确认：清空画布 + 进度 + 空板说明；跑完连同建议一起画（缺省 mock 给 'ok'）
+    let release: (v: unknown) => void = () => {};
+    suggestMock.generateSuggestions.mockImplementation(() => new Promise((r) => { release = r; }));
+    win().querySelector<HTMLButtonElement>('[data-mt-act="refresh"]')!.click();
+    await vi.waitFor(() => expect((document.getElementById('bz-kb-mt-loading') as HTMLElement).style.display).not.toBe('none'));
+    expect(document.querySelectorAll('.bz-kb-mt-node').length).toBe(0);
+    expect(win().querySelector('#bz-kb-mt-pempty')!.textContent).toContain('重新生成中');
+    expect(suggestMock.generateSuggestions).toHaveBeenCalledWith(ROOT, expect.anything(), expect.objectContaining({ force: true }));
+    release({ status: 'fresh', suggestions: [] });
+    await vi.waitFor(() => expect(card(ROOT)).toBeTruthy());
+    expect((document.getElementById('bz-kb-mt-loading') as HTMLElement).style.display).toBe('none');
   });
 
   it('issue 322 进度：onProgress 驱动进度条宽度与阶段文字；链路结束即收起', async () => {
@@ -531,7 +683,7 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     const target = '文献盒/小节目标.md';
     const quote = '人们倾向于认为模糊描述精准对应自己，这是关键句。';
     vault.files.set(target, `# 总则\n\n总述一段。\n\n## 巴纳姆效应\n\n${quote}\n\n## 其它\n\n其它内容。`);
-    // 长锚点（>12 字）→ 走句中追加，不触发别名替换
+    // 2026-09-15 起长句锚点同样走别名套句（`[[目标#子路径|原句]]`），形态只由 unit 决定
     const anchorText = '人们在算命时倾向于认为模糊的人格描述精准对应自己';
     vault.files.set(ROOT, `---\ntitle: "主卡"\n---\n\n${anchorText}，这是主卡的句子。`);
 
@@ -555,8 +707,8 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     await open(ROOT, { force: true });
     fireCtx(card(suggestionId({ target, subpath: '巴纳姆效应' })));
     byAct('pin').click();
-    await vi.waitFor(() => expect(vault.files.get(ROOT)!).toContain('[[文献盒/小节目标#巴纳姆效应]]'));
-    expect(said('正文写入 [[文献盒/小节目标#巴纳姆效应]]')).toBe(true);
+    await vi.waitFor(() => expect(vault.files.get(ROOT)!).toContain(`[[文献盒/小节目标#巴纳姆效应|${anchorText}]]`));
+    expect(said(`正文写入 [[文献盒/小节目标#巴纳姆效应|${anchorText}]]`)).toBe(true);
     expect(vault.files.get(target)!).not.toContain('^bz-'); // 标题形态不动目标文件
 
     // ② 段落形态（换一个目标：① 已固定的目标进了真实双链，不会再被当建议推）
@@ -580,7 +732,8 @@ describe('挂载树白板（317 渲染与交互 / 319 壳与入口）', () => {
     await open(ROOT, { force: true });
     fireCtx(card(suggestionId({ target: target2, quote })));
     byAct('pin').click();
-    await vi.waitFor(() => expect(vault.files.get(ROOT)!).toContain('[[文献盒/段落目标#^bz-'));
+    await vi.waitFor(() => expect(vault.files.get(ROOT)!).toContain(`[[文献盒/段落目标#^bz-`));
+    expect(vault.files.get(ROOT)!).toContain(`|${anchorText}]]`); // 段落形态同样别名套句
     expect(vault.files.get(target2)!).toContain('^bz-'); // 块 id 挂在段落尾
     expect(vault.files.get(target2)!).toContain(`${quote} ^bz-`); // 块 id 挂在段落尾（原文不动）
   });

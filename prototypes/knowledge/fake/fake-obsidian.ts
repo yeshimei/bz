@@ -14,6 +14,7 @@
  * 不提供 setApp/getApp——评审壳统一走 core/app 真 setApp（fake-sim 注入 FakeApp），单源不裂。
  */
 import moment from 'moment';
+import { AI_INDEX } from './ai-index';
 
 export { moment };
 
@@ -59,6 +60,144 @@ export type IconName = string;
  * b23.tv 短链罐头（ADR-0134）：回放落地页 HTML（og:url + `__INITIAL_STATE__`）——评审壳里能看到
  * 「短链 → 补出 bvid → 写回规范链接」，无需真跑重定向。
  */
+/* ---------------- 挂载建议三段链路 · 罐头回答 ---------------- */
+
+/**
+ * 三段链路的罐头回答（2026-09-15）：prompt 里已经把**片段 / 候选池 / 目标全文**都写全了，
+ * 所以这里按 prompt 的形状现算，不写死答案——片段几句就答几句、候选池里有什么才选什么、
+ * 目标笔记里有什么标题/段落才敢指到哪里。三条链路各回各的 JSON 数组（形状见 mount-suggest 的解析器）。
+ *
+ * 定位官刻意轮着给 unit：n1 整篇 / n2 小节 / n3 段落——壳里三种落链接形态都能看一遍
+ * （标题与摘录都从 prompt 的目标全文里**逐字**取，链路本地会校验存在性，编不出来）。
+ * 不是挂载建议的调用返回 null（其余罐头照旧）。
+ */
+function suggestCanned(prompt: string): string | null {
+  if (/你是卡片盒挂载树的检索查询官/.test(prompt)) return cannedQuery(prompt);
+  if (/你是卡片盒挂载树的采纳官/.test(prompt)) return cannedAdopt(prompt);
+  if (/你是卡片盒挂载树的定位官/.test(prompt)) return cannedLocate(prompt);
+  return null;
+}
+
+/** 剥掉双链/加粗/列表符，留可读的纯文本（检索句子用） */
+function plainText(s: string): string {
+  return String(s ?? '')
+    .replace(/!?\[\[([^\[\]|]+)(?:\|([^\[\]]+))?\]\]/g, (_m, target: string, alias?: string) => (alias || target).replace(/#\^?[^\]]*$/, ''))
+    .replace(/[*`>]/g, '')
+    .replace(/^[-•]\s*/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** 轮 1 查询官：把每段改写成一句 20–40 字短句 + 3–6 个关键词（关键词取假索引里真能命中的词） */
+function cannedQuery(prompt: string): string {
+  const segs = [...prompt.matchAll(/^### s(\d+)：(.+)$/gm)].map((m) => ({ n: Number(m[1]), text: m[2].trim() }));
+  const items = segs.map((s) => {
+    const plain = plainText(s.text);
+    const first = plain.split(/[。！？；]/)[0] ?? plain;
+    const sentence = (first.length > 40 ? `${first.slice(0, 39)}…` : first) || plain.slice(0, 40);
+    const lower = plain.toLowerCase();
+    const keys = AI_INDEX.flatMap((it) => it.keys).filter((k) => lower.includes(k.toLowerCase()));
+    return {
+      seg: s.n,
+      sentence: /[。！？]$/.test(sentence) ? sentence : `${sentence}。`,
+      keywords: [...new Set(keys)].slice(0, 5).join(' '),
+      why: `这一段在讲「${sentence.slice(0, 18)}」`,
+    };
+  });
+  return JSON.stringify(items);
+}
+
+/** 2-gram 重合度（候选 ↔ 片段配对用；中文按双字切片足够分辨「像不像」） */
+function ngramOverlap(a: string, b: string): number {
+  const grams = (s: string): Set<string> => {
+    const t = plainText(s).replace(/\s+/g, '');
+    const out = new Set<string>();
+    for (let i = 0; i + 1 < t.length; i++) out.add(t.slice(i, i + 2));
+    return out;
+  };
+  const ga = grams(a);
+  const gb = grams(b);
+  let hit = 0;
+  for (const g of ga) if (gb.has(g)) hit++;
+  return hit;
+}
+
+/**
+ * 轮 2 采纳官：候选池按最高分排序，逐个配给**最像的那一段**（2-gram 重合度，只在候选自己命中过的片段里挑）。
+ * 宁缺勿滥：一段只配一条、最多 3 条。分数沿用候选池的最高分（本地还有 ≥0.7 的闸）。
+ */
+function cannedAdopt(prompt: string): string {
+  const segs = [...prompt.matchAll(/^### s(\d+)：(.+)$/gm)].map((m) => ({ n: Number(m[1]), text: m[2] }));
+  const cands = [...prompt.matchAll(/^- c\d+：(.*?)（(.+?)）命中 (\d+) 次 · 最高分 ([\d.]+)｜片段 ([^\n]*)$/gm)].map((m) => ({
+    name: m[1].trim(),
+    path: m[2].trim(),
+    hits: Number(m[3]),
+    score: Number(m[4]),
+    segs: [...m[5].matchAll(/s(\d+)/g)].map((x) => Number(x[1])),
+    chunk: m[5].split('｜').pop()?.trim() ?? '',
+  }));
+  const ranked = cands.slice().sort((a, b) => b.score - a.score || b.hits - a.hits || a.path.localeCompare(b.path));
+  const used = new Set<number>();
+  const out: Array<{ seg: number; path: string; score: number; reason: string }> = [];
+  for (const c of ranked) {
+    if (out.length >= 3) break;
+    const pool = (c.segs.length ? c.segs : segs.map((s) => s.n)).filter((n) => !used.has(n));
+    if (!pool.length) continue;
+    let best = pool[0];
+    let bestHit = -1;
+    for (const n of pool) {
+      const seg = segs.find((s) => s.n === n);
+      if (!seg) continue;
+      const hit = ngramOverlap(seg.text, `${c.name} ${c.chunk}`);
+      if (hit > bestHit) {
+        bestHit = hit;
+        best = n;
+      }
+    }
+    used.add(best);
+    out.push({
+      seg: best,
+      path: c.path,
+      score: Math.min(0.95, Math.max(0.75, c.score)),
+      reason: `这一段与《${c.name}》讲的是同一件事（召回命中 ${c.hits} 次）`,
+    });
+  }
+  return JSON.stringify(out.sort((a, b) => a.seg - b.seg));
+}
+
+/**
+ * 轮 3 定位官：现读目标全文后定粒度。n1 整篇 / n2 小节 / n3 段落轮着来，
+ * 标题与摘录都从 prompt 里的目标全文**逐字**抄（抄不到就退回整篇，绝不编）。
+ * anchor 回填主卡锚点原文——链路本地三级回定位后采用，锚点因此与高亮位置一致。
+ */
+function cannedLocate(prompt: string): string {
+  const parts = prompt.split(/^## n(\d+) · .*$/gm);
+  const out: Array<Record<string, unknown>> = [];
+  // split 后形如 [前言, '1', 块1, '2', 块2, …]
+  for (let i = 1; i < parts.length; i += 2) {
+    const n = Number(parts[i]);
+    const block = parts[i + 1] ?? '';
+    const anchor = (/^主卡锚点原文：(.*)$/m.exec(block)?.[1] ?? '').trim();
+    const body = block.split('### 目标笔记全文')[1] ?? '';
+    const heading = (/^#{1,6}[ \t]+(.+)$/m.exec(body)?.[1] ?? '').trim();
+    const para = (/^（\d+）(.+)$/m.exec(body)?.[1] ?? '').trim();
+    // 第一条给整篇（最常见的形态），其余按目标笔记自己有没有标题/段落定粒度——
+    // 三种形态在壳里都能看到，且都指得到真实存在的小节 / 段落（链路本地会校验，编不出来）
+    const idx = out.length;
+    const unit = idx === 0 ? 'whole' : heading ? 'heading' : para ? 'paragraph' : 'whole';
+    out.push({
+      n,
+      unit,
+      heading: unit === 'heading' ? heading : '',
+      quote: unit === 'paragraph' ? para.slice(0, 60) : '',
+      anchor,
+      reason: unit === 'heading' ? `只有「${heading}」这一节与主卡相关` : unit === 'paragraph' ? '目标笔记里这一段与主卡直接呼应' : '整篇都与主卡同一主题',
+      skip: false,
+    });
+  }
+  return JSON.stringify(out);
+}
+
 export async function requestUrl(opts?: { url?: string; body?: string }): Promise<{ status: number; text: string }> {
   const url = String(opts?.url ?? '');
   if (/^https:\/\/(www\.)?b23\.tv\//.test(url)) {
@@ -122,10 +261,13 @@ export async function requestUrl(opts?: { url?: string; body?: string }): Promis
     prompt = texts.join('\n');
   } catch { /* 原样空提示词 */ }
   let content: string;
+  const suggest = suggestCanned(prompt);
   const passage = /把下方这段文字整理成一篇文献笔记/.exec(prompt);
   const term = /为术语「([^」]+)」生成一篇文献笔记/.exec(prompt);
   const img = /看这张图片|看下面这 \d+ 张图片/.exec(prompt);
-  if (img) {
+  if (suggest !== null) {
+    content = suggest;
+  } else if (img) {
     // 图版录入（issue 312；多图 issue 313）：读图 → 演示级「自动图题 + 读图解读 + 领域」；
     // 回包里带上实际收到的图片数量与 base64 长度，自检据此断言「图真的走到了 AI 层」
     const domains = /从以下领域选一个最贴近的：([^；」]+)/.exec(prompt);

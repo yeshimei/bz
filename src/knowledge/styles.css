@@ -1395,6 +1395,13 @@
   font-variant-numeric: tabular-nums;
   color: var(--ink3, var(--ink2));
 }
+/* 空卡首开说明（只有主卡的卡在跑建议时画布是空的，得说一句不是坏了） */
+.bz-kb-mt-pempty { display: none; }
+.bz-kb-mt-loading.is-bare .bz-kb-mt-pempty {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink3, var(--ink2));
+}
 /* 连线层浮于卡片之上：**不写静态 z-index**（ADR-0067 域内禁止），靠 DOM 次序——
    渲染层每轮把 <svg> 移到 world 末位（见 mount-canvas.ts renderCanvas） */
 .bz-kb-mt-lines {
@@ -1541,6 +1548,17 @@
   vertical-align: 1px;
 }
 .bz-kb-mt-anch.is-hot { background: currentColor; }
+/* AI 建议（虚线边）的锚点句：整句虚线底纹——「AI 指的是哪一句」要在正文里一眼看见。
+   色随 currentColor（渲染层按目标形态色 set，与这条虚线边的线色一致）；
+   已采纳的实体双链不加这层底纹（只有圆点），免得满正文都是高亮。 */
+.bz-kb-mt-anch-hl {
+  border-bottom: 1px dashed currentColor;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  transition: background 0.15s ease;
+}
+.bz-kb-mt-anch-hl.is-hot {
+  background: color-mix(in srgb, currentColor 22%, transparent);
+}
 
 /* ===== 缩放器 + 提示行 ===== */
 .bz-kb-mt-zoomer {
