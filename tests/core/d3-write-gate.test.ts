@@ -68,7 +68,7 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
   },
   {
     file: /^src\/clipbook\/ui\.ts$/,
-    reason: '剪藏条目「另存为笔记」md 用户文档写（一次性建条，无读改写竞态面）',
+    reason: '剪藏条目「另存为笔记」md 用户文档写（一次性建条，无读改写竞态面）+ 已保存条目划词锚定直写（issue 329，用户文档读改写，同 clipbook/save 口径）',
   },
   {
     file: /^src\/cinema\/ui\.ts$/,
@@ -89,6 +89,10 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
   {
     file: /^src\/bookshelf\/notes\.ts$/,
     reason: '书评/划线 md 用户笔记写，vault.process 原子读改写（audit D 已收口，Obsidian 内建单步语义）',
+  },
+  {
+    file: /^src\/clipbook\/image-save\.ts$/,
+    reason: '剪藏正文图片落盘（issue 329）：图片二进制附件写（writeUniqueBinary 范式，用户附件非插件私有数据，同 douban-queue 先例）+ 已存剪藏 md 图片换链直写（用户文档写，口径同 clipbook/save）',
   },
   {
     file: /^src\/auto-summary\/processor\.ts$/,
