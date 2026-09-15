@@ -60,6 +60,21 @@ function litKindLabel(type: string): string {
 }
 /** 图版单次录入的图片张数上限（issue 313）：一次 AI 请求的图片数封顶，避免大图组拖垮上行与费用 */
 const IMAGE_ENTRY_MAX = 9;
+
+/**
+ * 录入预填扩展（issue 329，供剪藏本划选工具框等程序化入口消费；全可选，缺省零影响）。
+ * source 不在此——来源走 showXxxEntry 的 src 参数（TermSource），由 index.ts 把契约的
+ * url/note 两态归一后传入。onCreated 语义：确认写入成功落盘后回调 notePath，且**不自动打开笔记**
+ * （ADR-0144 工具框流程）；取消 / 写入失败不回调。
+ */
+export interface EntryPrefill {
+  /** 段落态正文预填（名词态走 term 参数，图版态无正文） */
+  text?: string;
+  /** 图版态 data URL 图片预填（走 acceptImageFiles 同构校验与上限） */
+  images?: string[];
+  /** 写入成功落盘后回调笔记路径 */
+  onCreated?: (notePath: string) => void;
+}
 /** 后台建链动态通知的去重键（issue 327）：同键原地更新，progress 起跑 → 结果落地 */
 const REL_BG_NOTICE_KEY = 'bz-kb-entry-rel';
 
@@ -529,8 +544,11 @@ export class UIManager {
    * 图版待落盘图片（issue 312；多图 issue 313）：拖入/粘贴/选择后**只留在内存**
    * （bytes 原样 + 预览用 data URL），确认写入时才 createBinary 进图片目录——
    * 与「草稿不落盘」同口径，取消不留孤儿文件。顺序 = 用户放入顺序（就是笔记里的图片顺序）。
+   * desc = 该张的用户图注（ADR-0145 逐图描述框；属于草稿态——删图连描述一起没，关面板即清）。
    */
-  private entryImages: Array<{ mime: string; bytes: ArrayBuffer; dataUrl: string }> = [];
+  private entryImages: Array<{ mime: string; bytes: ArrayBuffer; dataUrl: string; desc: string }> = [];
+  /** 确认写入成功后的回调（issue 329 剪藏本工具框流程）：有回调则写入后**不自动打开笔记**（ADR-0144），路径交调用方 */
+  private entryOnCreated: ((notePath: string) => void) | null = null;
   /** 关联行状态机：idle（未生成）→ loading（预演中）→ done/empty/queued/failed/off */
   private entryRelState: 'idle' | 'loading' | 'done' | 'empty' | 'queued' | 'failed' | 'off' = 'idle';
   /** 关联行结果文案（done 时 = 关联标题顿号串） */
@@ -792,7 +810,7 @@ export class UIManager {
       : kind === 'topic'
         ? { title: '主题预览 · 主题笔记', badge: '主 题', hot: false }
         : { title: `文献预览 · ${litKindPlain(n.type || '')}`, badge: litKindLabel(n.type || ''), hot: n.type === 'video' };
-    this.openSheet(this.sheetWrap(head.title, `
+    const ovl = this.openSheet(this.sheetWrap(head.title, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
         <span class="bz-kb-pos ${head.hot ? 'hot' : ''}">${head.badge}</span>
         <span class="bz-kb-dom">${esc(n.domain || '未分类')}</span></div>
@@ -803,8 +821,9 @@ export class UIManager {
     this._previewNote = n;
     // 正文真 Markdown 渲染：加粗/列表/标题/引用原生出，视频 ![[mp4]] 内嵌为可播放 <video>。
     // ADR-0122 追加语义契约：render 是「追加到容器」，渲染前容器必须为空（预填纯文本再渲染 = 双份，issue 275）；
-    // 兜底改事后判定——渲染抛错/无产出（mock、空产出）才回退纯文本段落；空正文显式「（无正文）」，不留全白
-    const bodyEl = this.popup ? q<HTMLElement>(this.popup, '#bz-kb-preview-body') : null;
+    // 兜底改事后判定——渲染抛错/无产出（mock、空产出）才回退纯文本段落；空正文显式「（无正文）」，不留全白。
+    // 查询走 openSheet 返回的 ovl（issue 329 独立宿主场景 this.popup 查不到）
+    const bodyEl = ovl ? q<HTMLElement>(ovl, '#bz-kb-preview-body') : null;
     if (bodyEl) {
       bodyEl.textContent = '';
       if (body) {
@@ -823,7 +842,7 @@ export class UIManager {
       }
     }
     // 来源/原文链接统一外开
-    const srcLinks = this.popup ? this.popup.querySelectorAll('[data-lit-src-url]') : [];
+    const srcLinks = ovl ? ovl.querySelectorAll('[data-lit-src-url]') : [];
     srcLinks.forEach((a) => {
       a.addEventListener('click', (e) => {
         e.preventDefault();
@@ -833,6 +852,25 @@ export class UIManager {
     });
   }
   private _previewNote: PreviewEntry | null = null;
+
+  /**
+   * 按 path 直达文献预览（issue 329 跨域 API，ADR-0144 划词锚定双链点击）：主面板不出场——
+   * openPreview 同一渲染入口与样式（ADR-0122 渲染契约），主窗不在场时落独立弹层宿主。
+   * 命中并打开返回 true；路径不在文献目录 / 文件缺失 / 解析失败返回 false，由调用方
+   * notice 后回退 app.workspace.openLinkText（Obsidian 原生环境维持原生跳转）。
+   */
+  async openPreviewByPath(path: string): Promise<boolean> {
+    const p = String(path || '').trim().replace(/\\/g, '/');
+    if (!p || !p.toLowerCase().endsWith('.md')) return false;
+    const dir = litDirOf(tryGetSettings() as Partial<BzSettings> | undefined);
+    if (!p.startsWith(dir + '/')) return false; // 不在文献目录：不是文献盒的菜
+    const file = getApp().vault.getAbstractFileByPath(p);
+    if (!file || (file as any).isFolder) return false;
+    const entry = await this.parseNoteFile(file);
+    if (!entry) return false;
+    await this.openPreview(entry);
+    return true;
+  }
 
   /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源文献+领域自动带，落 related 双链互链 / 连一张旧卡 / 为什么相关） */
   private async openCardEditor(n: KnowledgeNoteEntry): Promise<void> {
@@ -1155,10 +1193,27 @@ export class UIManager {
     } catch { return []; }
   }
 
-  /** 弹层（面板内覆盖） */
-  private openSheet(html: string): void {
+  /** 独立弹层宿主（issue 329 文献预览直达）：主面板不在场时预览弹层的全屏定位底座——
+   *  纸墨变量随 .kb 作用域生效，topifyZ 发号；用完由 closeSheet 撤除，不常驻空壳节点 */
+  private previewHostEl: HTMLElement | null = null;
+
+  /** 弹层宿主：主窗显示中挂主窗（既有路径零变化）；否则落独立宿主（直达预览不强行展开主面板） */
+  private sheetHost(): HTMLElement {
+    if (this.popup && this.popup.style.display === 'flex') return this.popup;
+    if (!this.previewHostEl || !this.previewHostEl.isConnected) {
+      const host = document.createElement('div');
+      host.className = 'bz-kb-sheet-host kb';
+      document.body.appendChild(host);
+      topifyZ(host);
+      this.previewHostEl = host;
+    }
+    return this.previewHostEl;
+  }
+
+  /** 弹层（面板内覆盖；返回 ovl 供调用方就地查询——独立宿主场景 this.popup 查不到） */
+  private openSheet(html: string): HTMLElement | null {
     this.closeSheet();
-    if (!this.popup) return;
+    const host = this.sheetHost();
     const ovl = document.createElement('div');
     ovl.className = 'bz-kb-ovl';
     ovl.innerHTML = `<div class="bz-kb-sheet">${html}</div>`;
@@ -1174,8 +1229,13 @@ export class UIManager {
       } else if (act === 'card-save') {
         void this.saveCard();
       }
+      // 独立宿主（预览直达）时主窗 onShellClick 不在场：挂载树入口在此兜住（主窗场景由 onShellClick 独家处理，防双开）
+      else if (act === 'mount-tree' && host !== this.popup) {
+        const p = t.getAttribute('data-path') || '';
+        if (p) void openMountTree(p);
+      }
     });
-    this.popup.appendChild(ovl);
+    host.appendChild(ovl);
     // 词头/为什么 输入 + 旧卡选择（编辑弹层）
     const titleInput = ovl.querySelector('[data-kb-role=cardtitle]') as HTMLInputElement | null;
     if (titleInput) titleInput.addEventListener('input', () => { if (this.editor) this.editor.title = titleInput.value; this.syncSaveBtn(); });
@@ -1190,10 +1250,18 @@ export class UIManager {
       });
     });
     this.syncSaveBtn();
+    return ovl;
   }
   private closeSheet(): void {
-    this.popup?.querySelectorAll('.bz-kb-ovl').forEach((x) => x.remove());
+    for (const host of [this.popup, this.previewHostEl]) {
+      host?.querySelectorAll('.bz-kb-ovl').forEach((x) => x.remove());
+    }
     this.editor = null;
+    // 独立宿主用完即撤：不留空壳节点常驻 document
+    if (this.previewHostEl && !this.previewHostEl.querySelector('.bz-kb-ovl')) {
+      this.previewHostEl.remove();
+      this.previewHostEl = null;
+    }
   }
   private sheetWrap(title: string, body: string): string {
     return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
@@ -2397,12 +2465,23 @@ export class UIManager {
         fileInput.value = ''; // 复位：同一文件再选一次也要能触发 change
         if (files.length) void this.acceptImageFiles(files);
       });
-      // 缩略图上的 ✕ 删除单张（事件委托：缩略图每次重建，逐个挂监听会漏）
+      // 缩略图上的 ✕ 删除单张（事件委托：缩略图每次重建，逐个挂监听会漏）；
+      // 逐图描述框（ADR-0145）点击不冒泡到拖入区（否则点框写字会顺手弹文件选择器）
       q<HTMLElement>(popup, '#lit-image-grid')?.addEventListener('click', (e) => {
         const btn = (e.target as HTMLElement)?.closest?.('[data-lit-image-remove]') as HTMLElement | null;
-        if (!btn) return;
-        e.stopPropagation(); // 别顺手弹出文件选择器
-        this.removeEntryImage(Number(btn.getAttribute('data-lit-image-remove')));
+        if (btn) {
+          e.stopPropagation(); // 别顺手弹出文件选择器
+          this.removeEntryImage(Number(btn.getAttribute('data-lit-image-remove')));
+          return;
+        }
+        if ((e.target as HTMLElement)?.closest?.('[data-lit-image-desc]')) e.stopPropagation();
+      });
+      // 逐图描述框输入（ADR-0145）：委托同步进内存图项（描述属图片项，删图连描述一起没）
+      q<HTMLElement>(popup, '#lit-image-grid')?.addEventListener('input', (e) => {
+        const inp = (e.target as HTMLElement)?.closest?.('[data-lit-image-desc]') as HTMLInputElement | null;
+        if (!inp) return;
+        const i = Number(inp.getAttribute('data-lit-image-desc'));
+        if (Number.isInteger(i) && i >= 0 && i < this.entryImages.length) this.entryImages[i].desc = inp.value;
       });
     }
     // Ctrl+V 粘贴截图：面板开着且当前是图版态才接管（document 级——粘贴焦点可能在弹层任意处）
@@ -2462,23 +2541,28 @@ export class UIManager {
   /**
    * 打开「名词」录入（一个词）；term 预填（命令带选中词时自动生成）；src 预填来源（ADR-0116——
    * 仅命令入口带当前笔记，主窗按钮入口不预填）。
+   * opts（issue 329 预填扩展，全可选）：见 EntryPrefill——text/images/onCreated；source 走 src 参数。
    */
-  showTermEntry(term?: string, src?: TermSource | null): void {
-    this.showEntry('term', term, src);
+  showTermEntry(term?: string, src?: TermSource | null, opts?: EntryPrefill): void {
+    this.showEntry('term', term, src, opts);
   }
 
   /**
    * 打开「段落」录入（一段文字，AI 自动出标题）；来源行与名词同构（ADR-0116）。
    * issue 326：支持选区预填（命令入口）——与名词不同，预填**不自动生成**（大段文字让用户确认后再生成），
-   * showEntry 里自动生成只挂 term 态。
+   * showEntry 里自动生成只挂 term 态。opts（issue 329）：text/images/onCreated 预填。
    */
-  showPassageEntry(text?: string, src?: TermSource | null): void {
-    this.showEntry('passage', text, src);
+  showPassageEntry(text?: string, src?: TermSource | null, opts?: EntryPrefill): void {
+    this.showEntry('passage', text, src, opts);
   }
 
-  /** 打开「图版」录入（可放多张图，AI 读图成文，issue 312/313）；来源行与名词/段落同构（ADR-0116） */
-  showImageEntry(src?: TermSource | null): void {
-    this.showEntry('image', '', src);
+  /**
+   * 打开「图版」录入（可放多张图，AI 读图成文，issue 312/313）；来源行与名词/段落同构（ADR-0116）。
+   * opts（issue 329）：images = data URL 数组预填进内存图列表（走 acceptImageFiles 同构校验与上限）；
+   * onCreated = 写入成功回调（不自动打开笔记）。
+   */
+  showImageEntry(src?: TermSource | null, opts?: EntryPrefill): void {
+    this.showEntry('image', '', src, opts);
   }
 
   /**
@@ -2486,12 +2570,15 @@ export class UIManager {
    * 名词=单行 input（有预填即自动生成），段落=多行 textarea（回车换行，Ctrl/Cmd+回车生成），
    * 图版=图片拖入区（拖/点选/Ctrl+V 三条路都收，**可多张**，图只在内存，确认写入才落盘）。
    * 每次打开即回到全新态：草稿清空、来源清空、图片清空、关联行归位到「待写入」。
+   * opts（issue 329）：images 在全新态就位后预填进内存（等价粘贴路径）；onCreated 挂到确认写入——
+   * 有回调时写入成功**不自动打开笔记**（ADR-0144 工具框流程：不打断阅读），路径交调用方处置。
    */
-  private showEntry(mode: 'term' | 'passage' | 'image', text?: string, src?: TermSource | null): void {
+  private showEntry(mode: 'term' | 'passage' | 'image', text?: string, src?: TermSource | null, opts?: EntryPrefill): void {
     if (!this.termPopup || !this.termMask) return;
     this.entryMode = mode;
     this.termPreview = null;
     this.termHasDraft = false;
+    this.entryOnCreated = opts?.onCreated ?? null;
     this.resetEntryRel();
     this.clearEntryImage();
     this.termPopup.setAttribute('data-lit-entry', mode);
@@ -2513,6 +2600,8 @@ export class UIManager {
     const focusEl: HTMLElement | null = mode === 'passage' ? area : mode === 'image' ? zone : input;
     if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
     if (mode === 'term' && value) void this.onTermGenerate();
+    // 图版图片预填（issue 329）：data URL 数组等价粘贴路径进内存（异步收图，收下即作废旧草稿——全新态无草稿可作废）
+    if (mode === 'image' && opts?.images?.length) void this.acceptImageDataUrls(opts.images);
     this.resetTermDupHint(); // 全新态：输入已清空，重名提示一并归位（ADR-0143/issue 328）
   }
 
@@ -2545,6 +2634,7 @@ export class UIManager {
   private async acceptImageFiles(files: File[]): Promise<void> {
     if (!this.termPopup || this.entryMode !== 'image' || !files.length) return;
     if (this.termGenerating) return; // 正在读图：等它出结果，避免半途改图造成错配
+    this.syncImageDescsFromDom(); // 加图前同步描述（尾部追加，既有索引不变，已输入的描述跨重绘保留）
     let hitLimit = false;
     let added = 0;
     for (const file of files) {
@@ -2561,8 +2651,26 @@ export class UIManager {
     this.draftInvalidate();
   }
 
+  /**
+   * data URL 图片预填（issue 329 剪藏本工具框「存为图版」）：程序化入口没有 File 对象——
+   * 把 data URL 解码转 File 后交 acceptImageFiles，校验链（MIME 白名单 / 体积 / ≤9 张上限 /
+   * 收下作废旧草稿）与粘贴路径完全同构。坏串 / 非 data URL 静默跳过。
+   */
+  private async acceptImageDataUrls(urls: string[]): Promise<void> {
+    const files: File[] = [];
+    (Array.isArray(urls) ? urls : []).forEach((u, i) => {
+      const m = String(u || '').trim().match(/^data:(image\/[\w.+-]+);base64,([\s\S]+)$/i);
+      if (!m) return;
+      try {
+        const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
+        files.push(new File([bytes], `prefill-${i + 1}.png`, { type: m[1] }));
+      } catch { /* 坏 base64：跳过该张 */ }
+    });
+    await this.acceptImageFiles(files);
+  }
+
   /** 单张校验与读取（MIME 白名单 / 读失败 / 转 data URL 失败均就地提示并返回 null） */
-  private async readImageFile(file: File): Promise<{ mime: string; bytes: ArrayBuffer; dataUrl: string } | null> {
+  private async readImageFile(file: File): Promise<{ mime: string; bytes: ArrayBuffer; dataUrl: string; desc: string } | null> {
     const mime = (String(file.type || '').toLowerCase() === 'image/jpg'
       ? 'image/jpeg'
       : String(file.type || '').toLowerCase()) || imageMimeOfPath(file.name) || '';
@@ -2575,7 +2683,7 @@ export class UIManager {
       return null;
     }
     try {
-      return { mime, bytes, dataUrl: imageDataUrl(bytes, mime) };
+      return { mime, bytes, dataUrl: imageDataUrl(bytes, mime), desc: '' };
     } catch (e: any) {
       notice(String(e?.message ?? e ?? '图片不可用'), 'error');
       return null;
@@ -2600,7 +2708,22 @@ export class UIManager {
     this.resetEntryRel();
   }
 
-  /** 图片行渲染：有图显示缩略图网格（每张带 ✕，可继续加），无图回到提示文案 */
+  /** 把 DOM 上的逐图描述框值同步回内存图项——只在索引不变的时机调用（加图前/生成前/写入前）；
+   *  删图后剩余项索引前移，旧 DOM 索引会错位覆写，故 removeEntryImage 路径绝不走这里。 */
+  private syncImageDescsFromDom(): void {
+    if (!this.termPopup) return;
+    this.termPopup.querySelectorAll<HTMLInputElement>('[data-lit-image-desc]').forEach((inp) => {
+      const i = Number(inp.getAttribute('data-lit-image-desc'));
+      if (Number.isInteger(i) && i >= 0 && i < this.entryImages.length) this.entryImages[i].desc = inp.value;
+    });
+  }
+
+  /**
+   * 图片行渲染：有图显示缩略图网格（每张带 ✕ 与逐图描述框，可继续加），无图回到提示文案。
+   * 描述框（ADR-0145）：每张图一个（单图即一框），属图片项——删图连描述一起没。
+   * 注意：这里**不做** DOM→内存的描述同步——删图后剩余项索引前移，旧 DOM 索引会错位覆写；
+   * 同步只在索引不变的时机做（加图前 / 生成前 / 写入前，见 syncImageDescsFromDom 调用点）。
+   */
   private renderEntryImage(): void {
     if (!this.termPopup) return;
     const grid = q<HTMLElement>(this.termPopup, '#lit-image-grid');
@@ -2613,6 +2736,7 @@ export class UIManager {
         grid.innerHTML = list.map((im, i) => `<div class="bz-lit-drop-item">
             <img src="${im.dataUrl}" alt="">
             <button type="button" data-lit-image-remove="${i}" title="移除这张" aria-label="移除这张">${iconSpan('x')}</button>
+            <input type="text" class="bz-lit-drop-desc" data-lit-image-desc="${i}" placeholder="图注（可选）" value="${esc(im.desc || '')}">
           </div>`).join('');
         mountIcons(grid); // `<i data-lucide>` 占位 → 真 SVG（innerHTML 重建后必须重挂，issue 313）
       } else {
@@ -2658,12 +2782,12 @@ export class UIManager {
     this.termSrcSet({ kind: 'external', url: normalizeSourceUrl(raw) }, input);
   }
 
-  /** 落来源：记录 + chip 渲染 + meta 行同步；外部来源异步抓标题（失败静默降级为纯链接） */
+  /** 落来源：记录 + chip 渲染 + meta 行同步；外部来源异步抓标题（已有 title（如剪藏本预填）不重复抓；失败静默降级为纯链接） */
   private termSrcSet(src: TermSource, input: HTMLInputElement | null): void {
     this.termSource = src;
     this.renderTermSrcChip(input);
     this.termSrcRefreshMeta();
-    if (src.kind === 'external') void this.termSrcFetchTitle(src);
+    if (src.kind === 'external' && !src.title) void this.termSrcFetchTitle(src);
   }
 
   private async termSrcFetchTitle(src: Extract<TermSource, { kind: 'external' }>): Promise<void> {
@@ -2961,13 +3085,14 @@ export class UIManager {
    */
   private async onImageGenerate(): Promise<void> {
     if (!this.termPopup || this.termGenerating) return;
+    this.syncImageDescsFromDom(); // 描述框现值先进内存（ADR-0145：图注随读图请求喂 AI）
     const images = this.entryImages;
     if (!images.length) { notice('请先拖入或粘贴图片', 'error'); return; }
     this.resetEntryRel(); // issue 327：点下即断在途预演（行归「—」），新内容回来再分析
     this.termGenerating = true;
     this.setTermGenLoading(true);
     try {
-      const draft = await generateImageDraft(images.map((im) => im.dataUrl));
+      const draft = await generateImageDraft(images.map((im) => im.dataUrl), images.map((im) => im.desc));
       this.presentTermPreview(draft);
       this.runEntryRelPreview(draft.summary, this.entryHeadTitle());
     } catch (e) {
@@ -3046,8 +3171,10 @@ export class UIManager {
       if (dup) { notice('已存在同名文献笔记：' + dup, 'error'); return; }
     }
     // 图版必须带着图走（预览存在但图被清掉 = 状态错位，宁可拒写也不留无图笔记）
+    this.syncImageDescsFromDom(); // 描述框现值先进内存（ADR-0145：描述随图片一并落盘）
     const images = this.entryImages;
     if (mode === 'image' && !images.length) { notice('图片已丢失，请重新拖入', 'error'); return; }
+    const onCreated = this.entryOnCreated; // await 前捕获（hideTermEntry 会复位回调）
     this.termGenerating = true;
     this.setTermGenLoading(true);
     const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
@@ -3055,13 +3182,13 @@ export class UIManager {
     try {
       let path: string;
       if (mode === 'image') {
-        // 图版：图片本体逐张与笔记一并落盘（note-gen 负责命名、去重与写唯一路径）
+        // 图版：图片本体逐张与笔记一并落盘（note-gen 负责命名、去重与写唯一路径；desc 走 ![[路径|描述]] 分叉）
         path = await generateImageNote({
           title,
           summary,
           domain,
           source,
-          images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || 'png' })),
+          images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || 'png', desc: String(im.desc || '').trim() })),
         });
         emitDomainEvent('knowledge:tasks', { kind: 'image-generated', title, notePath: path });
         await this.commitEntryLinks(path);
@@ -3079,7 +3206,13 @@ export class UIManager {
         notice(mode === 'passage' ? '已生成段落文献笔记：' + title : '已生成名词文献笔记：' + term, 'success');
       }
       this.hideTermEntry();
-      this.openNote(path); // issue 326：生成即开——关掉录入面板直达生成的笔记（openNote 自带收主面板/队列面板）
+      // 写入成功后的去向（issue 329）：有 onCreated（剪藏本工具框流程）→ 回调路径、**不自动打开笔记**
+      // （ADR-0144：不打断阅读；回调失败只记日志，不影响已完成的落盘）；否则维持「生成即开」。
+      if (onCreated) {
+        try { onCreated(path); } catch (e) { console.warn('[knowledge] onCreated 回调失败（笔记已写入）', e); }
+      } else {
+        this.openNote(path); // issue 326：生成即开——关掉录入面板直达生成的笔记（openNote 自带收主面板/队列面板）
+      }
     } catch (e) {
       this.noticeTermError(e);
     } finally {
@@ -3091,6 +3224,7 @@ export class UIManager {
 
   hideTermEntry(): void {
     this.termPreview = null;
+    this.entryOnCreated = null;
     this.resetEntryRel();
     this.clearEntryImage();
     this.resetTermDupHint();
@@ -3178,9 +3312,11 @@ export class UIManager {
     this.onPaste = () => {};
     this.termPreview = null;
     this.entryImages = [];
-    for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.termMask, this.termPopup]) {
+    this.entryOnCreated = null;
+    for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.termMask, this.termPopup, this.previewHostEl]) {
       if (el && el.parentNode) el.parentNode.removeChild(el);
     }
+    this.previewHostEl = null;
     this.mask = null;
     this.popup = null;
     this.contentEl = null;

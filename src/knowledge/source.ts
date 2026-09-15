@@ -117,3 +117,43 @@ export function serializeTermSource(src: TermSource | null | undefined): { sourc
   const name = noteSourceName(path, src.name);
   return { source: `[[${path}|${name}]]` };
 }
+
+/** frontmatter 引号包裹（对齐 auto-summary YAML 风格，防冒号/引号破坏结构；note-gen 落盘与 source 升级共用同一范式） */
+export function quoteYaml(s: unknown): string {
+  return '"' + String(s ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+}
+
+/** source 键值是否已是内部双链形态（`[[路径|名]]`；与 openPreview 的 `!startsWith('[[')` 判据同源） */
+export function isInternalSourceValue(v: string): boolean {
+  return /^\[\[/.test(String(v ?? '').trim());
+}
+
+/**
+ * source 升级（issue 329 / ADR-0144 §5「保存物化回写」的纯文本半边）：把 frontmatter 里的
+ * 外链 URL 形态 source 改写为内部双链 `[[剪藏路径|标题]]`。未保存剪藏发起录入时 source 落的
+ * 就是外链 URL（即 pendingSource 场景），物化时命中同一分支。
+ * 手术边界：**只动 source 一行**——sourceTitle 与其余键、正文零扰动（行级替换，不做整体重序列化）；
+ * 已是内部形态 → 幂等原样返回；无 frontmatter / 无 source 行 / source 既非外链也非内部 →
+ * 返回 null（无可升级，调用方不得写盘）。写值走 quoteYaml 引号包裹，与 generate* 落盘同范式。
+ */
+export function upgradeSourceLine(content: string, internalLink: string): string | null {
+  const link = String(internalLink ?? '').trim();
+  if (!link) return null;
+  const lines = String(content ?? '').split(/\r?\n/);
+  if (lines[0]?.trim() !== '---') return null;
+  let close = -1;
+  let srcAt = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '---') { close = i; break; }
+    if (/^source:/.test(lines[i])) srcAt = i; // 只认 frontmatter 内的顶层 source 行（遇 --- 即止，正文不扫）
+  }
+  if (close === -1 || srcAt === -1) return null;
+  const raw = lines[srcAt].slice('source:'.length).trim();
+  const quoted = (raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"));
+  const value = quoted ? raw.slice(1, -1) : raw;
+  if (isInternalSourceValue(value)) return content; // 幂等：已是内部双链，一个字节都不动
+  if (!isUrlLikeSourceText(value)) return null; // 既非内部也非外链 URL（手写文字等）→ 不动
+  lines[srcAt] = `source: ${quoteYaml(link)}`;
+  // 换行符保真：CRLF 文件整体回写时不悄悄改行尾（其余行原样回填）
+  return lines.join(content.includes('\r\n') ? '\r\n' : '\n');
+}

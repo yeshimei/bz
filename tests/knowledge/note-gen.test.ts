@@ -578,6 +578,33 @@ describe('generateImageDraft（图版读图草稿：走多模态通道，不落�
     await expect(generateImageDraft(['  ', ''])).rejects.toThrow('图片为空');
     expect(aiStub.json).not.toHaveBeenCalled();
   });
+
+  it('已填描述进读图提示词「用户图注」节（ADR-0145，issue 329）：按序号对应、空白描述不列、全空无节', async () => {
+    aiStub.json.mockResolvedValueOnce('{"title":"t","summary":"s","domain":"艺术"}');
+    await generateImageDraft(['data:image/png;base64,AAA', 'data:image/jpeg;base64,BBB'], ['一张窗外的树', '  ']);
+    const arg: any = aiStub.json.mock.calls[0][0];
+    expect(arg.text).toContain('用户图注');
+    expect(arg.text).toContain('第 1 张：一张窗外的树');
+    expect(arg.text).not.toContain('第 2 张'); // 空白描述不列
+
+    // 全空 / 不传 descs（既有调用形态回归）→ 不加「用户图注」节
+    aiStub.json.mockResolvedValueOnce('{"title":"t","summary":"s","domain":"艺术"}');
+    await generateImageDraft(['data:image/png;base64,AAA'], ['   ']);
+    expect(String((aiStub.json.mock.calls[1][0] as any).text)).not.toContain('用户图注');
+    aiStub.json.mockResolvedValueOnce('{"title":"t","summary":"s","domain":"艺术"}');
+    await generateImageDraft(['data:image/png;base64,AAA']);
+    expect(String((aiStub.json.mock.calls[2][0] as any).text)).not.toContain('用户图注');
+  });
+
+  it('图注与图片逐位对应：无效 url 被剔除时其图注一并剔除，不错位', async () => {
+    aiStub.json.mockResolvedValueOnce('{"title":"t","summary":"s","domain":"艺术"}');
+    await generateImageDraft(['data:image/png;base64,AAA', '  ', 'data:image/png;base64,CCC'], ['甲', '乙', '丙']);
+    const arg: any = aiStub.json.mock.calls[0][0];
+    expect(arg.images).toEqual(['data:image/png;base64,AAA', 'data:image/png;base64,CCC']);
+    expect(arg.text).toContain('第 1 张：甲');
+    expect(arg.text).toContain('第 2 张：丙'); // 丙跟随原第三张升为第 2 位
+    expect(arg.text).not.toContain('乙');
+  });
 });
 
 describe('generateImageNote（图版文献：图片本体 + 五键 frontmatter + 先文字后图片）', () => {
@@ -704,5 +731,31 @@ describe('generateImageNote（图版文献：图片本体 + 五键 frontmatter +
     const path = await generateImageNote({ title: '', summary: '某张旧照片的内容说明', images: imgs([1, 'png']) });
     expect(path).toBe('文献盒/某张旧照片的内容说明.md');
     expect(vault.binaryFiles.has('文献盒/assets/某张旧照片的内容说明.png')).toBe(true);
+  });
+
+  it('图片行语法分叉（ADR-0145，issue 329）：有描述 ![[路径|描述]]、无描述 ![[路径]]，多图逐张对应', async () => {
+    const path = await generateImageNote({
+      title: '写生两帧',
+      summary: '两张写生',
+      images: [
+        { bytes: bytesOf(2), ext: 'png', desc: '窗外的树' },
+        { bytes: bytesOf(3), ext: 'jpg' }, // 无描述 → 保持纯嵌入
+      ],
+    });
+    const content = vault.files.get(path)!;
+    expect(content).toContain('![[文献盒/assets/写生两帧.png|窗外的树]]');
+    expect(content).toContain('![[文献盒/assets/写生两帧.jpg]]');
+    expect(content).not.toContain('![[文献盒/assets/写生两帧.jpg|'); // 无描述不得带空管道
+    // 正文结构不变：解读在上、图片在下（与既有断言同口径）
+    expect(content.indexOf('两张写生')).toBeLessThan(content.indexOf('![[文献盒/assets/写生两帧.png'));
+    // 描述唯一载体是正文图片语法，不设 frontmatter 键（ADR-0145 §3）
+    const fm = vaultParseFrontmatter(content)!;
+    expect(fm.desc).toBeUndefined();
+    expect(fm.imageDesc).toBeUndefined();
+  });
+
+  it('描述中的引号/反斜杠在嵌入语法里原样保留（不经 YAML 引号，正文直拼）', async () => {
+    const path = await generateImageNote({ title: '手稿', summary: '解读', images: [{ bytes: bytesOf(1), ext: 'png', desc: '带"引号"的图注' }] });
+    expect(vault.files.get(path)).toContain('![[文献盒/assets/手稿.png|带"引号"的图注]]');
   });
 });

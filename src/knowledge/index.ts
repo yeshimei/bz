@@ -14,10 +14,31 @@ import { tryGetSettings } from '../core/settings-provider';
 import { getLinkBridge } from '../core/link-now';
 import { notice } from '../core/notice';
 import { KnowledgeData } from './data';
-import { UIManager } from './ui';
+import { UIManager, type EntryPrefill } from './ui';
+import { type TermSource } from './source';
+import { upgradeNoteSourceInFile } from './note-gen';
 
 let initialized = false;
 let uiManager: UIManager | null = null;
+
+/**
+ * 录入预填契约（issue 329，供剪藏本划选工具框等跨域程序化入口消费）：全可选，缺省零影响。
+ * - source：来源预填——url 态走外链 chip 管线（无 title 时异步抓页面标题落 sourceTitle），
+ *   note 态走内部笔记 chip；显式传入优先，未传时维持各入口既有语义（命令入口带当前笔记）。
+ * - text：段落态正文预填（优先于编辑器选区读取）；名词态走 term 参数、图版态无正文。
+ * - images：图版态 data URL 数组预填进内存图列表（等价粘贴路径，同构校验与 ≤9 张上限）。
+ * - onCreated：确认写入成功落盘后回调 notePath；**有回调即不自动打开笔记**（ADR-0144 工具框
+ *   流程不打断阅读）；取消 / 写入失败不回调。
+ */
+export interface KnowledgeEntryPrefill extends EntryPrefill {
+  source?: { kind: 'url'; url: string; title?: string } | { kind: 'note'; path: string };
+}
+
+/** 契约 source 两态 → 录入面板的 TermSource（url 归一 external；title 透传，已有则面板不重复抓标题） */
+function prefillSource(src: NonNullable<KnowledgeEntryPrefill['source']>) {
+  if (src.kind === 'url') return { kind: 'external' as const, url: src.url, title: src.title ?? null };
+  return { kind: 'note' as const, path: src.path };
+}
 
 /**
  * 懒加载初始化（ADR-0003 幂等）：数据层 + 面板。
@@ -56,23 +77,27 @@ export function openKnowledgeAddTask(app: App, prefill?: { url: string; title?: 
  * 名词生成入口（bz-knowledge-note-term 命令回调）：打开「名词」录入面板（ticket 136 §6）。
  * 显式 term 预填输入框；为空时读取当前激活 Markdown 编辑器选区预填（选中词），
  * 无选区则空输入框手动填。
- * 来源预填（ADR-0116）：命令入口带当前活动笔记上下文（选中词场景十有八九出自正在读的这篇）——
+ * 来源预填（ADR-0116）：命令入口带当前笔记上下文（选中词场景十有八九出自正在读的这篇）——
  * 以该笔记为可选「来源」（内部笔记方向），可一键清除；主窗「名词」按钮入口不带上下文、不预填。
+ * opts（issue 329 预填扩展）：显式 opts.source 优先于「当前笔记」候选；既有调用（无 opts）零变化。
  */
-export function openTermNote(app: App, term?: string): void {
+export function openTermNote(app: App, term?: string, opts?: KnowledgeEntryPrefill): void {
   ensureKnowledge(app);
   let t = term?.trim();
-  let src: { kind: 'note'; path: string } | undefined;
+  let src: TermSource | undefined;
+  if (opts?.source) src = prefillSource(opts.source);
   // ticket 138 §1.1：getActiveViewOfType 内部做 view instanceof type，右值必须是类（MarkdownView），
   // 传字符串会在真实 Obsidian 抛 TypeError（测试 mock 掩盖）；选区空则 undefined → 空输入框手填。
-  // 显式 term（程序化入口）不读视图也不带来源；命令入口（无参）才取「当前笔记」作来源预填候选（ADR-0116）。
+  // 显式 term（程序化入口）不读视图；命令入口（无参）才取「当前笔记」作来源预填候选（ADR-0116）。
   if (!t) {
     const view = app.workspace.getActiveViewOfType(MarkdownView);
     t = view?.editor?.getSelection()?.trim() || undefined;
-    const file = view?.file;
-    if (file && (file as any).extension === 'md') src = { kind: 'note', path: file.path };
+    if (!src) {
+      const file = view?.file;
+      if (file && (file as any).extension === 'md') src = { kind: 'note', path: file.path };
+    }
   }
-  uiManager?.showTermEntry(t, src);
+  uiManager?.showTermEntry(t, src, opts);
 }
 
 /**
@@ -80,29 +105,71 @@ export function openTermNote(app: App, term?: string): void {
  * 读当前激活 Markdown 编辑器选区预填段落输入框，当前笔记（md）作来源候选，可一键清除。
  * 差异点：段落**不自动生成**——名词一个词预填即生成，段落是大段文字，进面板确认内容后手动点
  * 「生成」（Ctrl/Cmd+回车同效）；无选区 / 无视图 → 空输入框手填。
+ * opts（issue 329）：text 优先于编辑器选区读取（剪藏本划选正文预填）；显式 opts.source 优先。
  */
-export function openPassageNote(app: App): void {
+export function openPassageNote(app: App, opts?: KnowledgeEntryPrefill): void {
   ensureKnowledge(app);
   let text: string | undefined;
-  let src: { kind: 'note'; path: string } | undefined;
+  let src: TermSource | undefined;
+  const explicit = String(opts?.text ?? '').trim();
+  if (explicit) text = explicit;
+  if (opts?.source) src = prefillSource(opts.source);
   const view = app.workspace.getActiveViewOfType(MarkdownView);
-  text = view?.editor?.getSelection()?.trim() || undefined;
-  const file = view?.file;
-  if (file && (file as any).extension === 'md') src = { kind: 'note', path: file.path };
-  uiManager?.showPassageEntry(text, src);
+  if (!text) text = view?.editor?.getSelection()?.trim() || undefined;
+  if (!src) {
+    const file = view?.file;
+    if (file && (file as any).extension === 'md') src = { kind: 'note', path: file.path };
+  }
+  uiManager?.showPassageEntry(text, src, opts);
 }
 
 /**
  * 图版生成入口（bz-knowledge-note-image 命令回调，issue 326）：图无预填可言，命令入口带当前
  * 笔记作来源候选（ADR-0116 同款——命令带上下文，主窗按钮入口不带）；无视图则不带来源。
+ * opts（issue 329）：images = data URL 数组预填进内存图列表（同构校验/上限）；显式 opts.source 优先。
  */
-export function openImageNote(app: App): void {
+export function openImageNote(app: App, opts?: KnowledgeEntryPrefill): void {
   ensureKnowledge(app);
-  let src: { kind: 'note'; path: string } | undefined;
-  const view = app.workspace.getActiveViewOfType(MarkdownView);
-  const file = view?.file;
-  if (file && (file as any).extension === 'md') src = { kind: 'note', path: file.path };
-  uiManager?.showImageEntry(src);
+  let src: TermSource | undefined;
+  if (opts?.source) src = prefillSource(opts.source);
+  if (!src) {
+    const view = app.workspace.getActiveViewOfType(MarkdownView);
+    const file = view?.file;
+    if (file && (file as any).extension === 'md') src = { kind: 'note', path: file.path };
+  }
+  uiManager?.showImageEntry(src, opts);
+}
+
+/**
+ * 文献预览直达（issue 329 跨域 API，ADR-0144 划词锚定双链点击）：按 path 打开知识盒
+ * 「文献预览」弹层（openPreview 同一渲染入口与样式，ADR-0122 渲染契约），主面板不需要可见。
+ * 文件缺失 / 不在文献目录 → notice 提示并回退 app.workspace.openLinkText
+ * （Obsidian 原生环境维持原生跳转，不在本 API 拦截范围）。
+ */
+export async function openKnowledgePreview(app: App, notePath: string): Promise<void> {
+  ensureKnowledge(app);
+  const path = String(notePath || '').trim();
+  if (uiManager && await uiManager.openPreviewByPath(path).catch(() => false)) return;
+  if (!path) { notice('未提供笔记路径，无法打开文献预览', 'warning'); return; }
+  notice('不在知识盒文献目录，改用 Obsidian 打开：' + path, 'info');
+  try {
+    await app.workspace.openLinkText(path, '', false);
+  } catch (e) {
+    console.warn('[knowledge] openLinkText 回退失败', e);
+  }
+}
+
+/**
+ * source 升级（issue 329 跨域 API，ADR-0144 §5「保存物化回写」）：把目标笔记 frontmatter 的
+ * 外链 URL 形态 source（未保存剪藏发起录入时的落库形态，即 pendingSource 场景）改写为
+ * internalLink 内部双链（`[[剪藏路径|标题]]`，序列化范式同 serializeTermSource）。
+ * 手术边界：只动 source 一行——sourceTitle 与其余 frontmatter 键、正文零扰动；
+ * 已是内部形态幂等不动（true，零写盘）；文件缺失 / 读失败 / 无可升级的 source 返回 false 静默。
+ * 文件 IO 在 note-gen（upgradeNoteSourceInFile，用户文档写口径），此处只做跨域门面。
+ */
+export async function upgradeNoteSourceInternal(app: App, notePath: string, internalLink: string): Promise<boolean> {
+  ensureKnowledge(app);
+  return upgradeNoteSourceInFile(app, notePath, internalLink);
 }
 
 /**

@@ -330,6 +330,13 @@
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
 }
 
+/* 文献预览直达（issue 329）：主面板不在场时预览弹层的独立宿主——只当全屏定位底座，
+   纸墨变量随 .kb 作用域生效；点外关闭 / 用完即撤由 closeSheet 负责，不常驻空壳 */
+.bz-kb-sheet-host {
+  position: fixed;
+  inset: 0;
+}
+
 .bz-kb-sheet-head {
   flex: none;
   display: flex;
@@ -989,6 +996,21 @@
   justify-content: center;
 }
 .bz-lit-drop-item button:hover { background: var(--red); }
+/* 逐图描述框（issue 329 / ADR-0145）：缩略图下一框，每张图一个；删图连描述一起没 */
+.bz-lit-drop-item .bz-lit-drop-desc {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 3px 6px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.bz-lit-drop-item .bz-lit-drop-desc:focus { outline: none; border-color: var(--accent); }
+.bz-lit-drop-item .bz-lit-drop-desc::placeholder { color: var(--ink3); }
 .bz-lit-drop-hint { font-size: var(--bz-font-meta); color: var(--ink3); line-height: 1.7; }
 /* 多行输入：逐值对齐 .bz-lit-dialog input[type="text"] 的纸墨皮（只多 line-height 与可拖高） */
 .bz-lit-term-dialog .bz-lit-term-row textarea {
