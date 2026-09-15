@@ -1081,12 +1081,14 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
   });
 
-  it('关联分析中禁用「重新生成 / 总结 / 确认写入」；总结后正文变了 → 再次重跑预演', async () => {
+  it('关联分析中不锁按钮（issue 327）：重新生成 / 总结随点随断在途裁判，新内容回来再分析', async () => {
     const previews: string[] = [];
-    const releases: Array<(v: any) => void> = [];
+    const signals: Array<AbortSignal | undefined> = [];
     setLinkBridge({
       backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
-      preview: (content: string) => { previews.push(content); return new Promise((r) => releases.push(r)); },
+      preview: (content: string, _title: string | undefined, opts?: { signal?: AbortSignal }) => {
+        previews.push(content); signals.push(opts?.signal); return new Promise(() => {});
+      },
       apply: async () => ({ status: 'done' as const, created: 0 }),
       now: async () => ({ status: 'done' as const, created: 0 }),
     });
@@ -1098,16 +1100,18 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     const regen = document.getElementById('lit-term-regenerate') as HTMLButtonElement;
     const save = document.getElementById('lit-term-save') as HTMLButtonElement;
     expect(previews).toEqual(['AI 简介']);
-    expect([gen.disabled, regen.disabled, save.disabled]).toEqual([true, true, true]); // 分析中：三个按钮全禁
-    releases.shift()!({ status: 'done', picks: [] });
-    await vi.waitFor(() => expect(save.disabled).toBe(false)); // 分析落地 → 恢复可用
-    expect([gen.disabled, regen.disabled]).toEqual([false, false]);
-    // 总结 → 正文被改写 → 关联重新分析（回到禁用态）
+    // issue 327：分析中不锁按钮（setEntryRelBusy 退役）——三个按钮全部可用
+    expect([gen.disabled, regen.disabled, save.disabled]).toEqual([false, false, false]);
+    // 总结 → 点下即断在途裁判（signal aborted），新内容回来再起新一轮预演
     await (ui as any).onTermSummarize();
     expect(previews).toEqual(['AI 简介', '精简版简介']);
-    expect([gen.disabled, regen.disabled, save.disabled]).toEqual([true, true, true]);
-    releases.shift()!({ status: 'done', picks: [] });
-    await vi.waitFor(() => expect(save.disabled).toBe(false));
+    expect(signals).toHaveLength(2);
+    expect(signals[0]?.aborted).toBe(true); // 上一轮被真中断
+    expect(signals[1]?.aborted).toBe(false);
+    // 重新生成同款：再断一轮、再起一轮
+    await (ui as any).onTermGenerate();
+    expect(previews).toEqual(['AI 简介', '精简版简介', 'AI 简介']);
+    expect(signals[1]?.aborted).toBe(true);
   });
 
   it('段落录入（issue 309）：同壳切到 passage + 多行输入 → AI 自动标题 → 按标题落 type: passage', async () => {
@@ -1249,11 +1253,15 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(getNoticeMessages().join('\n')).toContain('一次最多放 9 张图');
   });
 
-  it('图版：分析中加图 / 删图 → 作废在途预演并解除按钮闸门（不能停在禁用态）', async () => {
+  it('图版：分析中加图 / 删图 → 作废在途预演（真中断）且行不被晚到结果污染', async () => {
+    const signals: Array<AbortSignal | undefined> = [];
     let release!: (v: any) => void;
     setLinkBridge({
       backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
-      preview: () => new Promise((r) => { release = r; }),
+      preview: (_c: string, _t: string | undefined, opts?: { signal?: AbortSignal }) => {
+        signals.push(opts?.signal);
+        return new Promise((r) => { release = r; });
+      },
       apply: async () => ({ status: 'done' as const, created: 0 }),
       now: async () => ({ status: 'done' as const, created: 0 }),
     });
@@ -1263,17 +1271,21 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await (ui as any).onTermGenerate();
     const gen = document.getElementById('lit-term-generate') as HTMLButtonElement;
     const save = document.getElementById('lit-term-save') as HTMLButtonElement;
-    expect([gen.disabled, save.disabled]).toEqual([true, true]); // 分析中：闸门落下
-    await (ui as any).acceptImageFiles([pngFile('c.png')]); // 加图 = 作废在途预演
-    expect([gen.disabled, save.disabled]).toEqual([false, false]); // 闸门必须跟着解除
+    expect([gen.disabled, save.disabled]).toEqual([false, false]); // issue 327：分析中不锁按钮
+    await (ui as any).acceptImageFiles([pngFile('c.png')]); // 加图 = 作废在途预演（draftInvalidate → resetEntryRel）
+    expect(signals[0]?.aborted).toBe(true); // 在途裁判被真中断
+    expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('—'); // 行归位，不逗留在「分析中」
     release({ status: 'done', picks: [{ path: '卡片盒/旧.md', title: '旧' }] }); // 晚到响应不得回改状态
     await new Promise((r) => setTimeout(r, 10));
     expect([gen.disabled, save.disabled]).toEqual([false, false]);
     expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('—'); // 关联行也不被晚到结果污染
-    // 删一张同样解闸（复跑一遍，压在闸门落下的时刻）
+    // 复跑一轮：新预演在途（signals[1]）
     await (ui as any).onTermGenerate();
-    expect([gen.disabled, save.disabled]).toEqual([true, true]);
+    expect(signals).toHaveLength(2);
+    expect(signals[1]?.aborted).toBe(false);
+    // 删一张：removeEntryImage → draftInvalidate → 在途预演被真中断
     (document.querySelector('[data-lit-image-remove="0"]') as HTMLElement).click();
+    expect(signals[1]?.aborted).toBe(true);
     expect([gen.disabled, save.disabled]).toEqual([false, false]);
     release({ status: 'done', picks: [] });
   });
@@ -1661,6 +1673,60 @@ describe('录入面板关闭二次确认 + 生成后开笔记（issue 326）', (
     pressEsc();
     expect(openFlowDialog).not.toHaveBeenCalled();
     expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('none');
+  });
+
+  // ==================== 关联行三改：确认不动行 / 分析不锁按钮 / 中断与后台（issue 327） ====================
+
+  it('确认写入不动关联行（issue 327）：预演落地后行显示关联名，写入全程不回退 loading', async () => {
+    const applies: Array<[string, string[]]> = [];
+    setLinkBridge({
+      backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
+      preview: async () => ({ status: 'done' as const, picks: [{ path: '卡片盒/睡眠卫生.md', title: '睡眠卫生' }] }),
+      apply: async (p: string, picks: string[]) => { applies.push([p, picks]); return { status: 'done' as const, created: picks.length }; },
+      now: async () => ({ status: 'done' as const, created: 0 }),
+    });
+    noteGen.generateTermNote.mockResolvedValueOnce('文献盒/松果体.md');
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '褪黑素';
+    await (ui as any).onTermGenerate();
+    await vi.waitFor(() => expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('睡眠卫生'));
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    // 同步断言：行文本立刻原样——不被打回「分析中…」（326 之前的误导性回退已退役）
+    expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('睡眠卫生');
+    await vi.waitFor(() => expect(applies).toEqual([['文献盒/松果体.md', ['卡片盒/睡眠卫生.md']]]));
+  });
+
+  it('分析中确认写入：面板立关 + 笔记照开 + 后台重起预演并 apply + 动态通知报结果', async () => {
+    vault.files.set('文献盒/松果体.md', noteMd({ title: '松果体' }));
+    const applies: Array<[string, string[]]> = [];
+    const signals: Array<AbortSignal | undefined> = [];
+    let releasePreview!: (v: any) => void;
+    setLinkBridge({
+      backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
+      preview: (_c: string, _t: string | undefined, opts?: { signal?: AbortSignal }) => {
+        signals.push(opts?.signal);
+        return new Promise((r) => { releasePreview = r; });
+      },
+      apply: async (p: string, picks: string[]) => { applies.push([p, picks]); return { status: 'done' as const, created: picks.length }; },
+      now: async () => ({ status: 'done' as const, created: 0 }),
+    });
+    noteGen.generateTermNote.mockResolvedValueOnce('文献盒/松果体.md');
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '褪黑素';
+    await (ui as any).onTermGenerate(); // 预演挂起 = 分析中；按钮不锁 → 确认写入可点
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    // 面板不等分析：立关 + 笔记照开
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
+    expect(openFile).toHaveBeenCalledWith(expect.objectContaining({ path: '文献盒/松果体.md' }));
+    // 面板绑定的在途那次被作废（省 token），后台重起一轮
+    expect(signals[0]?.aborted).toBe(true);
+    expect(signals.length).toBe(2);
+    await vi.waitFor(() => expect(getNoticeMessages().join('\n')).toContain('知识盒关联：后台分析中'));
+    releasePreview({ status: 'done', picks: [{ path: '卡片盒/睡眠卫生.md', title: '睡眠卫生' }] });
+    await vi.waitFor(() => expect(applies).toEqual([['文献盒/松果体.md', ['卡片盒/睡眠卫生.md']]]));
+    await vi.waitFor(() => expect(getNoticeMessages().join('\n')).toContain('知识盒关联：已写入 1 条关联'));
   });
 });
 });
