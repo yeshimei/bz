@@ -76,6 +76,36 @@ export function openTermNote(app: App, term?: string): void {
 }
 
 /**
+ * 段落生成入口（bz-knowledge-note-passage 命令回调，issue 326）：与名词命令同构（ticket 138 / ADR-0116）——
+ * 读当前激活 Markdown 编辑器选区预填段落输入框，当前笔记（md）作来源候选，可一键清除。
+ * 差异点：段落**不自动生成**——名词一个词预填即生成，段落是大段文字，进面板确认内容后手动点
+ * 「生成」（Ctrl/Cmd+回车同效）；无选区 / 无视图 → 空输入框手填。
+ */
+export function openPassageNote(app: App): void {
+  ensureKnowledge(app);
+  let text: string | undefined;
+  let src: { kind: 'note'; path: string } | undefined;
+  const view = app.workspace.getActiveViewOfType(MarkdownView);
+  text = view?.editor?.getSelection()?.trim() || undefined;
+  const file = view?.file;
+  if (file && (file as any).extension === 'md') src = { kind: 'note', path: file.path };
+  uiManager?.showPassageEntry(text, src);
+}
+
+/**
+ * 图版生成入口（bz-knowledge-note-image 命令回调，issue 326）：图无预填可言，命令入口带当前
+ * 笔记作来源候选（ADR-0116 同款——命令带上下文，主窗按钮入口不带）；无视图则不带来源。
+ */
+export function openImageNote(app: App): void {
+  ensureKnowledge(app);
+  let src: { kind: 'note'; path: string } | undefined;
+  const view = app.workspace.getActiveViewOfType(MarkdownView);
+  const file = view?.file;
+  if (file && (file as any).extension === 'md') src = { kind: 'note', path: file.path };
+  uiManager?.showImageEntry(src);
+}
+
+/**
  * 取自动关联通道（三处命令共用）：总开关关掉 / 通道未接线 → 提示并返回 null。
  * 未接线的原因通常是第二大脑域尚未初始化——命令回调由 main.ts 先 ensureSecondBrain（幂等）再进来。
  */

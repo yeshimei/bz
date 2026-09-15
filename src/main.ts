@@ -54,7 +54,7 @@ import {
 import { openPomodoro, unloadPomodoro, ensurePomodoro, toggleFocus, skipBreak, togglePause } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // 知识盒（knowledge 域，ADR-0072 自 bili-downloader 迁出、ADR-0112 三部重构；网页版已移除，见 tools/bili-downloader）
-import { openKnowledgePanel, openTermNote, openKnowledgeAddTask, unloadKnowledge, relinkActiveNote, linkAllInBoxes } from './knowledge';
+import { openKnowledgePanel, openTermNote, openPassageNote, openImageNote, openKnowledgeAddTask, unloadKnowledge, relinkActiveNote, linkAllInBoxes } from './knowledge';
 // 挂载树白板（knowledge 域，issues 317/319）：两个命令直达 + 卸载清理（自绘遮罩挂 body，卸载必须摘）
 import { destroyMountTree, openMountTree, refreshMountTree } from './knowledge/mount-canvas';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 右键菜单）
@@ -160,6 +160,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-knowledge-note-term', name: '名词生成文献笔记', icon: 'book-type', callback: () => openTermNote(getApp()) },
   // 影像生成文献笔记（2026-09-10 首页入口菜单联动；issue 310 起直达影像录入界面——链接由面板内填或预填）
   { id: 'bz-knowledge-note-video', name: '影像生成文献笔记', icon: 'list-video', callback: () => openKnowledgeAddTask(getApp()) },
+  // 段落/图版生成文献笔记（issue 326）：与名词命令同款快捷入口——段落选区自动进输入框、当前笔记自动作来源（ADR-0116）
+  { id: 'bz-knowledge-note-passage', name: '段落生成文献笔记', icon: 'align-left', callback: () => openPassageNote(getApp()) },
+  { id: 'bz-knowledge-note-image', name: '图版生成文献笔记', icon: 'image', callback: () => openImageNote(getApp()) },
   // 自动关联（ADR-0141 §1：功能归属迁入知识盒，引擎留第二大脑；命令身份改 bz-knowledge-*）
   // 重跑当前笔记关联：正文大改后的手动兜底；范围恒为三个盒子，盒外笔记直接拒绝
   { id: 'bz-knowledge-relink', name: '重跑当前笔记关联', icon: 'link', callback: () => {
