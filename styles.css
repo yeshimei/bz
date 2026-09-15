@@ -9540,6 +9540,65 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: transparent; border-color: #ece8dd; color: var(--bz-danger);
 }
 .theme-dark #__shared_confirm_popup__.bz-overlay-popup.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__:hover { background: #2e2b25; }
+
+
+/* ==================== 划选工具框（issue 329 / ADR-0144） ====================
+   桌面/移动同套浮框（挂 body，脱离面板滚动与重建）：文字选区三动作（复制 Markdown /
+   存为名词 / 存为段落）、图片单击两动作（保存图片 / 存为图版）。
+   变量选择器并挂浮框根 .bz-clip-selbar——浮框挂 body（域内后代选择器不可达），
+   同右键菜单先例把 --clip-* 定义在随身单类上；字号/间距/圆角消费 core --bz-* token。
+   自绘浮框不造滚动条（动作行内排布，无滚动区域，铁律 4 不涉及）。 */
+.bz-clip-selbar {
+  --clip-paper: #faf8f3;
+  --clip-ink: #1c1a17;
+  --clip-ink-2: #3d3a34;
+  --clip-dim: #6b6458;
+  --clip-accent: #c2410c;
+  --clip-accent-soft: #e8965a;
+  --clip-line: #e4ddd0;
+  --clip-cream: #f3efe6;
+  --clip-serif: Georgia, "Noto Serif SC", "SimSun", serif;
+  position: fixed;
+  display: none;
+  align-items: stretch;
+  gap: 2px;
+  padding: 4px;
+  background: var(--clip-paper);
+  border: 1px solid var(--clip-ink);
+  border-radius: var(--bz-radius-sm);
+  box-shadow: 3px 3px 0 rgba(28, 26, 23, 0.18);
+  font-size: var(--bz-font-label);
+  color: var(--clip-ink);
+  white-space: nowrap;
+  /* z-index 走动态发号（allocZ，ADR-0067），不写静态档 */
+}
+.bz-clip-selbar-btn {
+  border: none;
+  background: transparent;
+  color: var(--clip-ink-2);
+  font-family: var(--clip-serif);
+  font-size: var(--bz-font-label);
+  letter-spacing: 1px;
+  padding: var(--bz-space-xs) var(--bz-space-sm);
+  border-radius: var(--bz-radius-xs);
+  cursor: pointer;
+}
+.bz-clip-selbar-btn:hover {
+  background: var(--clip-cream);
+  color: var(--clip-accent);
+}
+.bz-clip-selbar-btn:active { color: var(--clip-accent-soft); }
+.theme-dark .bz-clip-selbar {
+  --clip-paper: #1b1a17;
+  --clip-ink: #ece8dd;
+  --clip-ink-2: #cdc7b8;
+  --clip-dim: #928b7c;
+  --clip-accent: #e8794a;
+  --clip-accent-soft: #f0a077;
+  --clip-line: #363329;
+  --clip-cream: #2a2823;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+}
 /* ==================== 收藏本域样式（src/favorites/styles.css，issue 227「C5 终版」1:1 换血） ====================
  * 原型 .zcode/ui-prototypes/favorites-cork-5/c5-linen-full.html 逐字照搬（ADR-0101，用户拍板豁免铁律 6：
  * 面板 UI 不使用样式库/组件库，全部域内自带）。类名映射：.tags→.bz-fav-tags、.card→.bz-fav-card、
@@ -16874,6 +16933,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
 }
 
+/* 文献预览直达（issue 329）：主面板不在场时预览弹层的独立宿主——只当全屏定位底座，
+   纸墨变量随 .kb 作用域生效；点外关闭 / 用完即撤由 closeSheet 负责，不常驻空壳 */
+.bz-kb-sheet-host {
+  position: fixed;
+  inset: 0;
+}
+
 .bz-kb-sheet-head {
   flex: none;
   display: flex;
@@ -17533,6 +17599,21 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   justify-content: center;
 }
 .bz-lit-drop-item button:hover { background: var(--red); }
+/* 逐图描述框（issue 329 / ADR-0145）：缩略图下一框，每张图一个；删图连描述一起没 */
+.bz-lit-drop-item .bz-lit-drop-desc {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 3px 6px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.bz-lit-drop-item .bz-lit-drop-desc:focus { outline: none; border-color: var(--accent); }
+.bz-lit-drop-item .bz-lit-drop-desc::placeholder { color: var(--ink3); }
 .bz-lit-drop-hint { font-size: var(--bz-font-meta); color: var(--ink3); line-height: 1.7; }
 /* 多行输入：逐值对齐 .bz-lit-dialog input[type="text"] 的纸墨皮（只多 line-height 与可拖高） */
 .bz-lit-term-dialog .bz-lit-term-row textarea {
