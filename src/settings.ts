@@ -4,7 +4,7 @@
  * 迁移原则（ADR-0005 / spec「设置页」）：保留原脚本全部可配置项；
  * 默认值均提取自各脚本源码 settings.options.defaultValue。
  */
-import { getKnowledgeBoxes, isBoxDir } from './core/knowledge-boxes';
+import { getKnowledgeBoxes, isBoxDir, parseDirList } from './core/knowledge-boxes';
 
 export default interface BzSettings {
   // ===== 🤖 AI 全局（Q3 语义，spec「AI 全局」）=====
@@ -531,10 +531,8 @@ export function migrateAutoLinkSettings(raw: unknown): boolean {
   if (rec.secondBrainAllowPaths !== undefined) {
     const before = String(rec.secondBrainAllowPaths ?? '');
     const boxes = getKnowledgeBoxes(rec);
-    const after = before
-      .split(',')
-      .map((p) => p.replace(/\\/g, '/').trim().replace(/^\/+|\/+$/g, ''))
-      .filter((p) => p && !isBoxDir(p, boxes))
+    const after = parseDirList(before)
+      .filter((p) => !isBoxDir(p, boxes))
       .join(',');
     if (after !== before) {
       rec.secondBrainAllowPaths = after;

@@ -17,7 +17,7 @@
  * queue/state 经 store-file 串行写链读写（与 meta/panel 段互斥）。
  */
 import { isUnderFolder as isUnderFolderCore, stripMdExt } from '../../core/utils';
-import { boxDirs, getKnowledgeBoxes } from '../../core/knowledge-boxes';
+import { inKnowledgeBoxes } from '../../core/knowledge-boxes';
 import { loadStore, mutateStore } from '../store-file';
 
 /**
@@ -25,19 +25,12 @@ import { loadStore, mutateStore } from '../store-file';
  * 原 `linkAgentScopes` 键退役（读点全删，settings.ts 的 onload 迁移清旧值）。
  * 范围同时决定**两端**：哪些笔记会被关联（目标/触发侧：落盘监听 + 存量补链 + 死链扫描）
  * 与候选来源（近邻召回只在三盒索引语料里挑）。盒外笔记一律不处理（手动命令亦无豁免）。
- * 盒子目录经 core/knowledge-boxes 单源解析（ADR-0002：core ← 域，两侧零互引）。
+ *
+ * 「在不在盒内」只有这一个出口：判定实现归 core `inKnowledgeBoxes`（ADR-0141 §4，core ← 域），
+ * 本层不再自持「盒目录清单 + 前缀匹配」的第二套判定（那套会与知识盒侧漂移）。
  */
-export function getLinkAgentScopes(): string[] {
-  return boxDirs(getKnowledgeBoxes());
-}
-
-/**
- * 范围命中判定（目标/触发侧）：按目录递归匹配，空范围 = 任何路径都不命中。
- * 用于监听触发、补链目标、死链扫描、候选过滤与管线入口的盒内卫。
- */
-export function matchesScope(scopes: string[], path: string): boolean {
-  if (!scopes.length) return false;
-  return scopes.some((dir) => isUnderFolder(dir, path));
+export function inLinkScope(path: string): boolean {
+  return inKnowledgeBoxes(path);
 }
 
 // ---------------- 存量补链目标清单（ticket 115） ----------------

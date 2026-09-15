@@ -2,7 +2,7 @@
 /**
  * 三个盒子解析单源测试（ADR-0141 §4：core ← 域，两侧零互引）：
  * 归一化（反斜杠/首尾斜杠/空值回落缺省名）、三盒清单去重保序、盒内判定（递归语义）、
- * 白名单剔除用的「是否盒目录」判定。
+ * 白名单剔除用的「是否盒目录」判定，以及**逗号目录串的唯一解析器** parseDirList。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -11,6 +11,7 @@ import {
   DEFAULT_LIT_DIR,
   DEFAULT_TOPIC_DIR,
   boxDirs,
+  parseDirList,
   getKnowledgeBoxes,
   inKnowledgeBoxes,
   isBoxDir,
@@ -60,6 +61,27 @@ describe('getKnowledgeBoxes / boxDirs（三盒解析）', () => {
   it('不传参时读实时设置（改设置即改范围，无缓存）', () => {
     setSettingsProvider(() => ({ knowledgeDirectory: 'X' }) as any);
     expect(getKnowledgeBoxes().lit).toBe('X');
+  });
+});
+
+describe('parseDirList（逗号目录串的唯一解析器：索引范围 / 设置面板 chips / onload 迁移共用）', () => {
+  it('拆分 + trim + 去空项 + 去首尾斜杠 + 保序去重', () => {
+    expect(parseDirList('归档/网页剪藏, 我的 ')).toEqual(['归档/网页剪藏', '我的']);
+    expect(parseDirList(' 文献盒 , 卡片盒 , ,')).toEqual(['文献盒', '卡片盒']);
+    expect(parseDirList('A,A,B')).toEqual(['A', 'B']);
+    expect(parseDirList(' , , ')).toEqual([]);
+  });
+
+  it('反斜杠转正斜杠（Windows 手填路径）与嵌套子目录保留', () => {
+    expect(parseDirList('归档\\网页剪藏')).toEqual(['归档/网页剪藏']);
+    expect(parseDirList('\\我的\\日记\\')).toEqual(['我的/日记']);
+    expect(parseDirList('我的/日记, 我的')).toEqual(['我的/日记', '我的']); // 去冗余后代由 normalform 选择器管，这里只拆分
+  });
+
+  it('null / undefined / 空串 → 空数组（不抛错）', () => {
+    expect(parseDirList(null)).toEqual([]);
+    expect(parseDirList(undefined)).toEqual([]);
+    expect(parseDirList('')).toEqual([]);
   });
 });
 

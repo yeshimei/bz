@@ -1,27 +1,13 @@
 // @vitest-environment node
 /**
  * 第二大脑索引范围解析测试（ADR-0141 §3）：
- * ALLOW_PATHS = 三个盒子（无条件）∪ 白名单额外目录；白名单里的三盒条目剔除（幂等）；
- * canvas 属可索引文件（§5，向量库侧另有向量库测试覆盖，此处只测解析）。
+ * ALLOW_PATHS = 三个盒子（无条件）∪ 白名单额外目录；白名单里的三盒条目剔除（幂等）。
+ * 逗号目录串的**拆分与归一**归 core parseDirList（见 tests/core/knowledge-boxes.test.ts），
+ * 本文件只测域侧的范围拼装语义。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { parseAllowPaths, resolveAllowPaths } from '../../src/secondbrain/config';
-
-describe('parseAllowPaths（逗号分隔串解析）', () => {
-  it('拆分/trim/去空/去首尾斜杠/去重，保序', () => {
-    expect(parseAllowPaths('归档/网页剪藏, 我的 ')).toEqual(['归档/网页剪藏', '我的']);
-    expect(parseAllowPaths('A,A,B')).toEqual(['A', 'B']);
-    expect(parseAllowPaths(' , , ')).toEqual([]);
-    expect(parseAllowPaths(null)).toEqual([]);
-    expect(parseAllowPaths(undefined)).toEqual([]);
-  });
-
-  it('反斜杠转正斜杠（Windows 手填路径）', () => {
-    expect(parseAllowPaths('归档\\网页剪藏')).toEqual(['归档/网页剪藏']);
-    expect(parseAllowPaths('\\我的\\日记\\')).toEqual(['我的/日记']);
-  });
-});
+import { resolveAllowPaths } from '../../src/secondbrain/config';
 
 describe('resolveAllowPaths（三盒恒含 + 额外目录）', () => {
   const set = (overrides: Record<string, unknown> = {}) =>

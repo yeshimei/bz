@@ -21,6 +21,10 @@
 - [x] 测试：新增 core/knowledge-boxes、secondbrain/allow-paths、core/auto-link-migration 三文件；
       改写 link-agent 数据/UI、vector-store、mount-suggest、smoke 命令清单、知识盒 schema 断言；
       知识盒 schema 纳入文案 lint（域组 C）
+- [x] 交付后双轴 review（子代理跑 Standards + Spec，固定点 `e02ebabb`）：无硬违规、无缺失项；
+      三条待办已修（范围判定真走 core 单源 / 逗号目录串解析收进 core `parseDirList` /
+      processNote 与 applyLinks 合并为同一守卫），并校正 `docs/agents/issue-tracker.md`
+      （原文写的是 `.scratch/` 那套，与本仓 `issues/` + `docs/adr/` 不符）
 
 
 ## Issues 309-313 — 知识盒录入改版：四名词入口 + 关联行显式双链 + 影像两界面 + AI 多模态 + 图版（ADR-0135/0136）

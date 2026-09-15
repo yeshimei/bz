@@ -17,7 +17,7 @@ import type { App } from 'obsidian';
 import { onDomainEvent } from '../../core/domain-bus';
 import type { LinkBridge } from '../../core/link-now';
 import { tryGetSettings } from '../../core/settings-provider';
-import { getLinkAgentScopes, matchesScope } from './data';
+import { inLinkScope } from './data';
 import { LINK_BATCH_DELAY_MS, LinkAgent } from './pipeline';
 
 /** 死链清理防抖窗口（删除事件合并；测试可注入短值） */
@@ -128,7 +128,7 @@ export class LinkAgentWatcher {
   /** 三盒内新笔记落盘 → 入缓冲并重置防抖计时（约 60 秒聚合一批）；盒子目录改动即时生效（实时读设置） */
   onCreated(path: string): void {
     if (!this.enabled) return;
-    if (!matchesScope(getLinkAgentScopes(), path)) return;
+    if (!inLinkScope(path)) return;
     this.pendingCreates.add(path);
     if (this.batchTimer) clearTimeout(this.batchTimer);
     this.batchTimer = setTimeout(() => {
@@ -144,7 +144,7 @@ export class LinkAgentWatcher {
    */
   onModified(path: string): void {
     if (!this.enabled) return;
-    if (!matchesScope(getLinkAgentScopes(), path)) return;
+    if (!inLinkScope(path)) return;
     this.pendingModifies.add(path);
     if (this.batchTimer) clearTimeout(this.batchTimer);
     this.batchTimer = setTimeout(() => {

@@ -1,10 +1,13 @@
 /**
  * 白名单目录工具（ticket 114）：第二大脑「额外检索目录」（secondBrainAllowPaths）的
- * 解析/规范化/格式化与 vault 目录聚合；config.parseAllowPaths 也复用本模块的拆分口径。
+ * 规范化/格式化与 vault 目录聚合。
  *
  * 存储格式冻结：设置键内仍是英文逗号分隔的路径字符串（buildConfig.ALLOW_PATHS 的消费方零改动），
- * 本模块只做录入侧的体验增强。ADR-0141 §2 起自动关联范围恒为三个盒子，不再有范围键要解析。
+ * 本模块只做录入侧的体验增强。**拆分与归一本身不收在此**——转调 core `parseDirList`
+ * （与三盒解析、onload 迁移同一实现，ADR-0141 §4）；ADR-0141 §2 起自动关联范围恒为三个盒子，
+ * 不再有范围键要解析。
  */
+import { parseDirList } from '../core/knowledge-boxes';
 
 /** 单个可选条目：目录（含其全部子目录笔记数）或库根级单文件 */
 export interface FolderInfo {
@@ -20,15 +23,9 @@ export interface FolderInfo {
   isFile: boolean;
 }
 
-/** 解析逗号分隔路径：trim、去空项、去首尾斜杠、保序去重 */
+/** 解析逗号分隔路径（转调 core `parseDirList`）：trim、反斜杠转正、去空项、去首尾斜杠、保序去重 */
 export function parsePathList(raw: unknown): string[] {
-  if (raw === null || raw === undefined) return [];
-  const out: string[] = [];
-  for (const part of String(raw).split(',')) {
-    const p = part.trim().replace(/^\/+|\/+$/g, '');
-    if (p && !out.includes(p)) out.push(p);
-  }
-  return out;
+  return parseDirList(raw);
 }
 
 /** 反向格式化（设置键存储值，英文逗号分隔） */
