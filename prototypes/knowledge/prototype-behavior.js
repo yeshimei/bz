@@ -1,4 +1,4 @@
-/* 源指纹 c8f821a0fd5d897b · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 43758f22d536183c · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -7823,7 +7823,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     const imageLines = imagePaths.map((p, i) => {
       var _a2, _b2;
       const desc = String((_b2 = (_a2 = images[i]) == null ? void 0 : _a2.desc) != null ? _b2 : "").trim();
-      return desc ? `![[${p}|${desc}]]` : `![[${p}]]`;
+      return desc ? `![[${p}|${String(desc).replace(/\]\]/g, "] ]")}]]` : `![[${p}]]`;
     });
     const body = [fm.join("\n"), summary, ...imageLines].filter(Boolean).join("\n\n");
     return writeUniqueNote(dir, name, body);
@@ -12292,13 +12292,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
       this.createAddDialog();
       this.createTermUI();
       this.onKeydown = (e) => {
+        var _a;
         if (e.key !== "Escape") return;
         if (this.termPopup && this.termPopup.style.display === "flex") this.requestTermClose();
         else if (this.addPopup && this.addPopup.style.display === "flex") this.requestAddClose();
         else if (this.videoPopup && this.videoPopup.style.display === "flex") {
           if (this.videoView === "history") this.switchVideoView("tasks");
           else this.hideVideo();
-        } else if (this.popup && this.popup.style.display === "flex") this.hideMain();
+        } else if ((_a = this.previewHostEl) == null ? void 0 : _a.isConnected) this.closeSheet();
+        else if (this.popup && this.popup.style.display === "flex") this.hideMain();
       };
       document.addEventListener("keydown", this.onKeydown);
     }
@@ -14900,13 +14902,23 @@ ${String(blockText != null ? blockText : "").trim()}`);
             images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || "png", desc: String(im.desc || "").trim() }))
           });
           emitDomainEvent("knowledge:tasks", { kind: "image-generated", title, notePath: path });
-          await this.commitEntryLinks(path);
+          try {
+            await this.commitEntryLinks(path);
+          } catch (le) {
+            console.warn("[knowledge] 关联写入失败（笔记已落盘）", le);
+            notice("笔记已写入，但关联写入失败", "warning");
+          }
           this.clearEntryImage();
           notice("已生成图版文献笔记：" + title, "success");
         } else {
           path = mode === "passage" ? await generatePassageNote({ title, summary, domain, source: source2 }) : await generateTermNote({ term, summary, domain, source: source2 });
           emitDomainEvent("knowledge:tasks", mode === "passage" ? { kind: "passage-generated", title, notePath: path } : { kind: "term-generated", term, title: term, notePath: path });
-          await this.commitEntryLinks(path);
+          try {
+            await this.commitEntryLinks(path);
+          } catch (le) {
+            console.warn("[knowledge] 关联写入失败（笔记已落盘）", le);
+            notice("笔记已写入，但关联写入失败", "warning");
+          }
           notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
         }
         this.hideTermEntry();
