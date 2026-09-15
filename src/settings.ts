@@ -4,6 +4,7 @@
  * 迁移原则（ADR-0005 / spec「设置页」）：保留原脚本全部可配置项；
  * 默认值均提取自各脚本源码 settings.options.defaultValue。
  */
+import { getKnowledgeBoxes, isBoxDir } from './core/knowledge-boxes';
 
 export default interface BzSettings {
   // ===== 🤖 AI 全局（Q3 语义，spec「AI 全局」）=====
@@ -310,12 +311,10 @@ export default interface BzSettings {
   /** 远程 Ollama URL（移动端探活/降级链；空 = 未配置远程——移动端回落本地 URL，不探任何远程） */
   secondBrainRemoteOllamaUrl: string;
 
-  // ===== 🔗 第二大脑·自动双链管线（ticket 111，⚙️ 弹窗「自动双链」组）=====
-  /** 自动双链总开关：关联范围新笔记落盘时自动建立 related 双链（false 时无任何监听与写入） */
+  // ===== 🔗 自动关联（知识盒设置页「自动关联」组；ADR-0141 自第二大脑迁入并正名）=====
+  /** 自动关联总开关：三个盒子里的笔记落盘 / 改动后自动建立 related（false 时无任何监听与写入） */
   linkAgentEnabled: boolean;
-  /** 关联范围：英文逗号分隔的 vault 内目录清单（风格同 aiAgentWatchedFolders），同时决定落盘监听与候选过滤；f8：留空/空=不自动关联（ticket 116 起不再回退「文献盒」） */
-  linkAgentScopes: string;
-  /** 单篇候选数量（关联范围内向量近邻 Top-K） */
+  /** 单篇候选数量（三个盒子内向量近邻 Top-K） */
   linkAgentTopK: number;
   /** 每篇 related 写入上限；0 = 不限，由 AI 裁判自行决定（沿用复习域「0=不限制」惯例） */
   linkAgentMaxLinks: number;
@@ -513,6 +512,38 @@ export function migrateMemoSettingKeys(raw: unknown): boolean {
   return migrated;
 }
 
+/**
+ * ADR-0141 §2/§3 一次性迁移（自动关联迁入知识盒）：与 loadData 原始对象就地处理，随后才合并默认值。
+ * - `linkAgentScopes` 键**退役**：关联范围不再可配（恒为三个盒子），旧值不迁移（本机旧值「文献盒」直接丢）；
+ * - `secondBrainAllowPaths` 里的**三盒条目剔除**：三个盒子已无条件进索引，留着会被当成「额外检索目录」误导。
+ *
+ * 幂等：无旧键 / 无冗余条目即不改动，调用方据此决定要不要落盘（同 migrateMemoSettingKeys 的 C16 口径）。
+ * 三盒目录从**同一份原始设置**解析（此时还没合并 DEFAULT_SETTINGS，故显式传入 rec）。
+ */
+export function migrateAutoLinkSettings(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const rec = raw as Record<string, unknown>;
+  let migrated = false;
+  if (rec.linkAgentScopes !== undefined) {
+    delete rec.linkAgentScopes;
+    migrated = true;
+  }
+  if (rec.secondBrainAllowPaths !== undefined) {
+    const before = String(rec.secondBrainAllowPaths ?? '');
+    const boxes = getKnowledgeBoxes(rec);
+    const after = before
+      .split(',')
+      .map((p) => p.replace(/\\/g, '/').trim().replace(/^\/+|\/+$/g, ''))
+      .filter((p) => p && !isBoxDir(p, boxes))
+      .join(',');
+    if (after !== before) {
+      rec.secondBrainAllowPaths = after;
+      migrated = true;
+    }
+  }
+  return migrated;
+}
+
 export const DEFAULT_SETTINGS: BzSettings = {
   // AI 全局
   aiProvider: 'opencode-go',
@@ -658,7 +689,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 自动双链管线（ticket 111；ticket 116 起默认空 = 什么也不录，由用户自行填写范围）
   linkAgentEnabled: true,
-  linkAgentScopes: '',
   linkAgentTopK: 8,
   linkAgentMaxLinks: 0,
   linkAgentNotify: true,

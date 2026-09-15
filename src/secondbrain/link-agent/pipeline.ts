@@ -1,23 +1,26 @@
 /**
- * 自动双链管线（ticket 111）：embedding 可达性门 → 增量索引 → 文献盒内向量近邻 Top-K →
- * core AI 裁判（ADR-0052 统一通道）→ 单侧写入 related。
+ * 自动关联管线（ticket 111；ADR-0141 正名并限定三盒）：embedding 可达性门 → 增量索引 →
+ * **三盒内**向量近邻 Top-K → core AI 裁判（ADR-0052 统一通道）→ 单侧写入 related。
  *
- * 流程对齐 spec `.scratch/secondbrain-link-agent/spec.md`「核心流程」②③④⑥（范围词按需求变更
- * 泛化为 linkAgentScopes 可配置清单，缺省回退「文献盒」）：
+ * 流程对齐 spec `.scratch/secondbrain-link-agent/spec.md`「核心流程」②③④⑥。范围口径见 ADR-0141 §2：
+ * 关联范围**恒为三个盒子**（文献盒 / 卡片盒 / 主题盒，core/knowledge-boxes 单源），
+ * **两端都限**（被处理端 + 候选端），**手动命令与知识盒显式通道亦无豁免**（盒外直接 out-of-scope）。
  * - 探测短超时 ~1.5s（复用 secondBrainRemoteOllamaUrl/Ollama 客户端配置，移动端远程优先同 doRefresh 规则）；
  * - 不可达 → 入队（secondbrain.json link.queue 段）；可达 → 就地完整管线；
  * - 裁判 prompt 指令前缀固定（命中供应商前缀缓存），强调「只链实质关联，存疑不链」；
  * - 写入幂等：related 已存在的链不重复添加；linkAgentMaxLinks > 0 时裁判提示附上限且写入侧截断；
  * - 队列消费：域初始化发现队列非空且服务可达即自动消费，完成后合并通知；
- * - 存量补链（ticket 115）：启动时（队列消费之后）扫描关联范围内缺 related 的存量笔记批量建链，
- *   手动命令 bz-secondbrain-link-all 同路径兜底；批次与监听批次共用串行锁；
- * - 正文大改自动重跑（v1.4/ticket 119）：每次成功建链后把**全文内容哈希**记为基准
+ * - 存量补链（ticket 115）：启动时（队列消费之后）扫描三盒内缺 related 的存量笔记批量建链，
+ *   手动命令 bz-knowledge-link-all 同路径兜底；批次与监听批次共用串行锁；
+ * - 正文大改自动重跑（v1.4/ticket 119）：每次处理完成后把**全文内容哈希**记为基准
  *   （secondbrain.json link.state 段，ticket 120 起）；修改监听按基准过滤——内容未实质变化（含自写 related 触发的
  *   modify）不重跑，哈希不同 / 无基准才重跑该篇；
+ * - 「已尝试且 0 条」不再重试（ADR-0141 §6）：AI 判定无实质关联的笔记在基准里记 empty，
+ *   正文未变即不进存量补链目标（此前每次启动都重跑一轮裁判）；
  * - 已有 related 不再自动建链（v1.7/ticket 167）：尊重开关 `linkAgentRespectRelated`（默认开）开启时，
  *   创建 / 修改 / 队列消费三条自动路径对 **related 非空** 的笔记一律跳过（`skipped-related`，队列条目顺带移除）；
- *   手动命令 bz-secondbrain-rebuild-links 传 respectRelated:false 豁免（显式意图强制重跑）；
- * - 死链清理：关联范围（linkAgentScopes）各笔记 related 中指向不存在文件的条目移除；encrypt 锁定文件一律跳过。
+ *   手动命令 bz-knowledge-relink 传 respectRelated:false 豁免（显式意图强制重跑）；
+ * - 死链清理：三个盒子内各笔记 related 中指向不存在文件的条目移除；encrypt 锁定文件一律跳过。
  */
 import { stripMdExt } from '../../core/utils';
 import type { App, TFile } from 'obsidian';
@@ -34,6 +37,7 @@ import {
   enqueuePaths,
   dequeuePath,
   hasRelatedEntries,
+  isSettledEmpty,
   loadQueue,
   loadLinkState,
   matchesScope,
@@ -81,6 +85,8 @@ export type ProcessOutcome =
   | { status: 'queued' }
   | { status: 'skipped' }
   | { status: 'skipped-related' }
+  /** ADR-0141 §2：路径在三个盒子之外（自动路径不会走到，手动命令与知识盒通道据此提示拒绝） */
+  | { status: 'out-of-scope' }
   | { status: 'failed'; error: string };
 
 export interface BatchSummary {
@@ -199,6 +205,8 @@ export class LinkAgent {
 
   /**
    * 单篇完整管线；assumeReachable=true 时跳过探测（队列消费已在入口统一探过）。
+   * 范围卫（ADR-0141 §2）：**盒外路径一律拒绝**（out-of-scope）——自动路径与手动命令同一口径，
+   * 不再有「手动触发即显式意图、不受范围限制」的豁免。
    * v1.7/ticket 167：respectRelated !== false 时，frontmatter related 非空 → `skipped-related` 跳过
    * （创建 / 修改 / 队列消费三条自动路径统一；存量补链目标天然只收缺 related 者，此门不触发）。
    */
@@ -207,7 +215,9 @@ export class LinkAgent {
     if (s.linkAgentEnabled === false) return { status: 'skipped' };
     const file = this.app.vault.getAbstractFileByPath(path) as TFile | null;
     if (!file || file.extension !== 'md') return { status: 'skipped' };
+    // encrypt 硬跳过先于盒界判定：锁定目录的文件连「是否在盒内」都不该被拿出来说事
     if (isEncryptLockedPath(this.app, path)) return { status: 'skipped' };
+    if (!matchesScope(getLinkAgentScopes(), path)) return { status: 'out-of-scope' };
 
     let content = '';
     try {
@@ -260,8 +270,9 @@ export class LinkAgent {
       .filter((c) => !!c && c.path !== path && !!this.app.vault.getAbstractFileByPath(c.path));
     const created = await this.writeRelated(file, links.map((c) => c.path));
     // v1.4/ticket 119：写入后把当前文件全文哈希记为基准（含本次 related 写入——
-    // 自写触发的 modify 事件后续经基准过滤掉，防止自触发死循环）
-    await this.recordLinkBaseline(path);
+    // 自写触发的 modify 事件后续经基准过滤掉，防止自触发死循环）。
+    // ADR-0141 §6：一条都没建出即记 empty——存量补链不再反复重跑同一篇（正文变则哈希变，自然重算）。
+    await this.recordLinkBaseline(path, { empty: created === 0 });
     return { status: 'done', created };
   }
 
@@ -314,17 +325,18 @@ export class LinkAgent {
   /**
    * 写入预演结果（issue 309）：确认写入落盘后调用——把预览阶段选中的目标写进该篇 related，
    * 并记基准哈希（自写 related 触发的 modify 事件后续被过滤，不循环重跑）。
-   * 幂等、单侧、上限截断在写入侧兜底（同 writeRelated 契约）。
+   * 幂等、单侧、上限截断在写入侧兜底（同 writeRelated 契约）；盒外路径拒绝（ADR-0141 §2）。
    */
   async applyLinks(path: string, targetPaths: string[]): Promise<ProcessOutcome> {
     const s = tryGetSettings() as any;
     if (s.linkAgentEnabled === false) return { status: 'skipped' };
+    if (!matchesScope(getLinkAgentScopes(), path)) return { status: 'out-of-scope' };
     const file = this.app.vault.getAbstractFileByPath(path) as TFile | null;
     if (!file || file.extension !== 'md') return { status: 'skipped' };
     return this.runSerial(async () => {
       const targets = [...new Set((targetPaths || []).filter((p) => !!p && p !== path && !!this.app.vault.getAbstractFileByPath(p)))];
       const created = await this.writeRelated(file, targets);
-      await this.recordLinkBaseline(path);
+      await this.recordLinkBaseline(path, { empty: created === 0 });
       return { status: 'done' as const, created };
     });
   }
@@ -344,44 +356,48 @@ export class LinkAgent {
   }
 
   /**
-   * 单篇即时建链（issue 298）：知识盒生成文献笔记后**立刻**跑，不经批次防抖、不受关联范围限制
-   * （生成即显式目标，语义同手动重跑「显式意图」）。经串行锁执行——与监听批次 / 存量补链排队互斥，
-   * 避免并发 refresh 与裁判请求交错。
+   * 单篇即时建链（issue 298）：知识盒生成文献笔记后**立刻**跑，不经批次防抖。
+   * 范围卫不豁免（ADR-0141 §2）：盒外路径直接 out-of-scope（调用方据此提示拒绝）。
+   * 经串行锁执行——与监听批次 / 存量补链排队互斥，避免并发 refresh 与裁判请求交错。
+   * @param force 显式意图强制重跑（手动命令 bz-knowledge-relink）：跳过「已有 related 不再建链」尊重门
    * 通知受 linkAgentNotify 门控（同键合并单条）：N>0 报新建条数；不可达报入队；失败报错；N=0 静默。
    */
-  async processNoteNow(path: string, opts?: { silent?: boolean }): Promise<ProcessOutcome> {
-    const outcome = await this.runSerial(() => this.processNote(path));
+  async processNoteNow(path: string, opts?: { silent?: boolean; force?: boolean }): Promise<ProcessOutcome> {
+    const outcome = await this.runSerial(() =>
+      this.processNote(path, opts?.force ? { respectRelated: false } : undefined)
+    );
     if (!this.notifyEnabled || opts?.silent) return outcome;
     if (outcome.status === 'done') {
       if (outcome.created > 0) {
-        notify(`自动双链：已为文献笔记新建关联 ${outcome.created} 条`, {
+        notify(`自动关联：已为文献笔记新建关联 ${outcome.created} 条`, {
           type: 'success',
           dedupeKey: LINK_NOTE_NOW_NOTICE_KEY,
         });
       }
     } else if (outcome.status === 'queued') {
-      notify('自动双链：embedding 服务不可达，已入队待服务恢复后自动处理', {
+      notify('自动关联：embedding 服务不可达，已入队待服务恢复后自动处理', {
         type: 'info',
         dedupeKey: LINK_NOTE_NOW_NOTICE_KEY,
       });
     } else if (outcome.status === 'failed') {
-      notify(`自动双链处理失败：${outcome.error}`, { type: 'warning', dedupeKey: LINK_ERROR_NOTICE_KEY });
+      notify(`自动关联处理失败：${outcome.error}`, { type: 'warning', dedupeKey: LINK_ERROR_NOTICE_KEY });
     }
     return outcome;
   }
 
   /**
-   * v1.4/ticket 119：记录某篇的正文基准哈希（写盘成功后调用）。
+   * v1.4/ticket 119：记录某篇的基准哈希（处理完成后调用）。
    * - 只记录"当前文件内容"（含本次写入的 related）——这样自写触发的 vault:md-modified
    *   到冲刷时哈希与基准相同 → 被过滤跳过，不会循环重跑；
-   * - 失败静默（下一次成功建链会重记）。
+   * - ADR-0141 §6：empty=true 表示本次一条都没建出（存量补链据此不再重试同一篇）；
+   * - 失败静默（下一次处理会重记）。
    */
-  async recordLinkBaseline(path: string): Promise<void> {
+  async recordLinkBaseline(path: string, opts?: { empty?: boolean }): Promise<void> {
     try {
       const file = this.app.vault.getAbstractFileByPath(path) as TFile | null;
       if (!file) return;
       const content = await this.app.vault.read(file);
-      await upsertLinkState(path, computeHash(content));
+      await upsertLinkState(path, computeHash(content), opts?.empty === true);
     } catch (e) {
       console.warn('[link-agent] 基准哈希记录失败', e);
     }
@@ -427,14 +443,15 @@ export class LinkAgent {
   }
 
   /**
-   * 候选生成（ticket 116：来源 = 白名单索引库全部笔记，不再按 linkAgentScopes 过滤）：
-   * 全局大池近邻 → 去自身 → 剔除已不存在文件与 encrypt 锁定 → 按 path 去重取最优 → Top-K。
-   * 关联范围（linkAgentScopes）只决定"哪些笔记会被关联"（目标/触发侧），不限制候选来源。
+   * 候选生成（ADR-0141 §2：**候选端同样限三盒**——ticket 116「候选 = 白名单索引库全部笔记」口径作废）：
+   * 全局大池近邻 → 去自身 → 剔除盒外 / 已不存在文件 / encrypt 锁定 → 按 path 去重取最优 → Top-K。
+   * 盒外笔记（日记、剪藏、旧卡片盒）即便已进索引也不会被召回，保证关联结果永远指向盒内。
    * 查询端（ticket 118）：**全文嵌入**——正文全文（剥 frontmatter、去空白，超长按 LINK_QUERY_MAX_CHARS 安全截尾）
    * 送向量模型生成查询向量，而非 800 字摘要，提高召回。
    */
   async findCandidates(selfPath: string, content: string): Promise<SearchHit[]> {
     const topK = this.maxTopK;
+    const scopes = getLinkAgentScopes();
     const cfg = buildConfig();
     const baseUrl = IS_MOBILE ? cfg.OLLAMA_REMOTE_URL || cfg.OLLAMA_URL : undefined;
     const pool = Math.max(topK * 3, CANDIDATE_POOL_MIN);
@@ -448,6 +465,7 @@ export class LinkAgent {
     const bestByPath = new Map<string, SearchHit>();
     for (const hit of hits) {
       if (hit.path === selfPath) continue;
+      if (!matchesScope(scopes, hit.path)) continue;
       if (!this.app.vault.getAbstractFileByPath(hit.path)) continue;
       if (isEncryptLockedPath(this.app, hit.path)) continue;
       const cur = bestByPath.get(hit.path);
@@ -561,7 +579,7 @@ export class LinkAgent {
     const notifyOn = this.notifyEnabled && !opts?.silent;
     let handle: NoticeHandle | null = null;
     if (notifyOn) {
-      handle = notify(`自动双链：处理中 0/${paths.length} 篇`, { type: 'progress', dedupeKey: LINK_BATCH_NOTICE_KEY });
+      handle = notify(`自动关联：处理中 0/${paths.length} 篇`, { type: 'progress', dedupeKey: LINK_BATCH_NOTICE_KEY });
     }
     for (let i = 0; i < paths.length; i++) {
       const outcome = await this.processNote(paths[i], opts);
@@ -575,7 +593,7 @@ export class LinkAgent {
       }
       if (notifyOn) {
         // 同键合并：存活则原地更新消息并重置计时（notice 单框语义）
-        notify(`自动双链：处理中 ${i + 1}/${paths.length} 篇`, { type: 'progress', dedupeKey: LINK_BATCH_NOTICE_KEY });
+        notify(`自动关联：处理中 ${i + 1}/${paths.length} 篇`, { type: 'progress', dedupeKey: LINK_BATCH_NOTICE_KEY });
       }
     }
     if (notifyOn) {
@@ -639,6 +657,9 @@ export class LinkAgent {
       } else if (outcome.status === 'skipped-related') {
         // v1.7/ticket 167：尊重门跳过——条目代表「待处理」，已接管即处理完毕，移除避免队列滞留
         await dequeuePath(items[i].path);
+      } else if (outcome.status === 'out-of-scope') {
+        // ADR-0141 §2：盒外条目永远跑不了（范围不再可配），就地清理不留滞留
+        await dequeuePath(items[i].path);
       }
       if (notifyOn) {
         notify(`待处理关联：处理中 ${i + 1}/${items.length} 篇`, { type: 'progress', dedupeKey: LINK_BATCH_NOTICE_KEY });
@@ -664,12 +685,13 @@ export class LinkAgent {
   }
 
   /**
-   * 存量补链（ticket 115）：扫描关联范围内**缺 related** 的存量笔记批量建链。
+   * 存量补链（ticket 115）：扫描三盒内**缺 related** 的存量笔记批量建链。
    * - 探测 embedding 可达：不可达 → 返回 unreachable（启动调用方静默跳过，下次启动重试）；
-   * - 目标清单 = scope 内 md、frontmatter 无 related、排除 encrypt 锁定与队列内待重试条目；
+   * - 目标清单 = 三盒内 md、frontmatter 无 related、排除 encrypt 锁定 / 队列内待重试条目 /
+   *   已尝试且 0 条且正文未变者（ADR-0141 §6）；
    *   related 即进度检查点——中断/重启后续跑只处理仍未连接的，天然增量；
    * - 批次走 processBatch（入口已探测，批内 assumeReachable 不再逐篇探测），与监听批次串行互斥；
-   * - 启动调用忽略结果且批次全程静默（ticket 6，index 传 silent:true）；手动命令 bz-secondbrain-link-all 按 status 通知。
+   * - 启动调用忽略结果且批次全程静默（ticket 6，index 传 silent:true）；手动命令 bz-knowledge-link-all 按 status 通知。
    */
   async backfillMissingLinks(opts?: { silent?: boolean }): Promise<BackfillResult> {
     if ((tryGetSettings() as any).linkAgentEnabled === false) return { status: 'disabled' };
@@ -681,7 +703,10 @@ export class LinkAgent {
     return { status: 'done', summary };
   }
 
-  /** 存量补链目标清单（app 层把 vault / metadataCache / encrypt 边界 / 队列翻译成纯谓词） */
+  /**
+   * 存量补链目标清单（app 层把 vault / metadataCache / encrypt 边界 / 队列 / 基准翻译成纯谓词）。
+   * 范围恒为三盒（ADR-0141 §2）；「已尝试且 0 条且正文未变」的笔记不再进目标（ADR-0141 §6）。
+   */
   private async computeBackfillTargets(): Promise<string[]> {
     const vault = this.app.vault as any;
     const cache = (this.app as any).metadataCache as any;
@@ -691,6 +716,24 @@ export class LinkAgent {
       queued = new Set((await loadQueue()).map((i) => i.path));
     } catch {
       queued = new Set();
+    }
+    // ADR-0141 §6：已尝试 0 条者读回正文比基准哈希——只读这批（通常几十篇），一致即判「已结算」跳过。
+    // 读不到 / 状态文件损坏一律按未结算（保守重试一次，不误杀）。
+    const settled = new Set<string>();
+    try {
+      const state = await loadLinkState();
+      for (const [path, entry] of Object.entries(state)) {
+        if (entry.empty !== true) continue;
+        try {
+          const f = vault.getAbstractFileByPath?.(path);
+          if (!f || (f.extension && f.extension !== 'md')) continue;
+          if (isSettledEmpty(entry, computeHash(await this.app.vault.read(f)))) settled.add(path);
+        } catch {
+          /* 读不到：按未结算（重试一次） */
+        }
+      }
+    } catch {
+      /* 基准不可读：不启用「已结算」过滤 */
     }
     const files = (typeof vault.getMarkdownFiles === 'function' ? vault.getMarkdownFiles() : []) as { path: string }[];
     return computeBackfillTargets(
@@ -705,13 +748,13 @@ export class LinkAgent {
             return true; // 缓存不可读视作已连接，防止同一批反复重试
           }
         },
-        excluded: (p) => isEncryptLockedPath(this.app, p) || queued.has(p),
+        excluded: (p) => isEncryptLockedPath(this.app, p) || queued.has(p) || settled.has(p),
       }
     );
   }
 
   /**
-   * 死链清理：解析关联范围（linkAgentScopes，空 = 不扫描）内各笔记 related，移除指向不存在文件的失效条目（非 wikilink 条目不动）。
+   * 死链清理：解析**三个盒子**内各笔记 related，移除指向不存在文件的失效条目（非 wikilink 条目不动）。
    * encrypt 域锁定文件一律跳过：保险箱锁定态无法区分「已删除」与「已加密」，整体跳过本次清理；
    * 解锁态下清单内路径视为存活。返回实际移除条数；有移除才通知（零变化静默）。
    */

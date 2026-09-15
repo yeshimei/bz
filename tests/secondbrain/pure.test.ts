@@ -7,7 +7,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { euclideanSq, normalizeVec, vptree_build, vptree_search } from '../../src/secondbrain/vptree';
-import { smartChunk, CHUNK_SIZE, stripFrontmatter, embedChunks, noteTitleFromPath } from '../../src/secondbrain/chunk';
+import { smartChunk, CHUNK_SIZE, stripFrontmatter, embedChunks, noteTitleFromPath, canvasToText } from '../../src/secondbrain/chunk';
 import { STOP_WORDS, extractTerms, searchTextIndex } from '../../src/secondbrain/text-search';
 import { TFIDF, TFIDF_STOP_WORDS } from '../../src/secondbrain/tfidf';
 import { getCurrentContext } from '../../src/secondbrain/context';
@@ -90,10 +90,59 @@ describe('stripFrontmatter / embedChunks（ticket 110 切块剥离 frontmatter�
     expect(embedChunks('微短正文', '短卡', 50)).toEqual(['短卡\n微短正文']);
   });
 
-  it('noteTitleFromPath：子目录取 basename 去 .md', () => {
+  it('noteTitleFromPath：子目录取 basename 去 .md（canvas 同样去扩展名，ADR-0141 §5）', () => {
     expect(noteTitleFromPath('卡片盒/次卡片盒/幽灵之战：记忆依据图式构建.md')).toBe('幽灵之战：记忆依据图式构建');
     expect(noteTitleFromPath('README.md')).toBe('README');
     expect(noteTitleFromPath('我的/日记/2026-08-01.md')).toBe('2026-08-01');
+    expect(noteTitleFromPath('主题盒/ChatGPT 原理.canvas')).toBe('ChatGPT 原理');
+  });
+});
+
+describe('canvasToText（ADR-0141 §5：白板抽节点文本进索引，只作候选来源）', () => {
+  const wrap = (nodes: unknown[]) => JSON.stringify({ nodes, edges: [] });
+
+  it('text 节点取正文，按节点数组序拼接（块间空行分段）', () => {
+    const text = canvasToText(
+      wrap([
+        { type: 'text', text: '第一张卡片的正文。' },
+        { type: 'text', text: '  第二张卡片的正文。  ' },
+      ])
+    );
+    expect(text).toBe('第一张卡片的正文。\n\n第二张卡片的正文。');
+  });
+
+  it('无 text 的节点退化：group 取 label、file 取笔记名（去路径与扩展名）、link 取 url', () => {
+    const text = canvasToText(
+      wrap([
+        { type: 'group', label: '分组标题' },
+        { type: 'file', file: '文献盒/某篇文献.md' },
+        { type: 'link', url: 'https://example.com/a' },
+      ])
+    );
+    expect(text).toBe('分组标题\n\n某篇文献\n\nhttps://example.com/a');
+  });
+
+  it('节点混合排版：同一节点只取一个字段（text 优先于 label/file/url）', () => {
+    const text = canvasToText(wrap([{ type: 'text', text: '正文优先', label: '标签', file: 'x.md', url: 'u' }]));
+    expect(text).toBe('正文优先');
+  });
+
+  it('畸形输入一律返回空串（不抛错：坏白板不该让整轮索引挂掉）', () => {
+    expect(canvasToText('{ 这不是 JSON')).toBe('');
+    expect(canvasToText('')).toBe('');
+    expect(canvasToText('null')).toBe('');
+    expect(canvasToText('[]')).toBe('');
+    expect(canvasToText(wrap([]))).toBe('');
+    expect(canvasToText(JSON.stringify({ nodes: 'not-array' }))).toBe('');
+    expect(canvasToText(wrap([null, 42, '纯字符串', { type: 'text' }]))).toBe('');
+  });
+
+  it('抽出文本可交切块链路（embedChunks 后首块带白板名，供候选召回）', () => {
+    const body = canvasToText(wrap([{ type: 'text', text: '白板节点里的正文内容足够长可以成块了吧。' }]));
+    const chunks = embedChunks(body, noteTitleFromPath('主题盒/白板.canvas'), 10);
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0].startsWith('白板\n')).toBe(true);
+    expect(chunks[0]).toContain('白板节点里的正文内容足够长可以成块了吧。');
   });
 });
 

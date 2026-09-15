@@ -7,6 +7,7 @@ import { stripMdExt } from '../core/utils';
  * ticket 110：新增切块管线 embedChunks——先剥离 YAML frontmatter 再 smartChunk，
  *   笔记标题并入首块；frontmatter 样板字段（reviewStart/url 等）不进 embedding 文本
  *   （实测短卡近邻被格式相似度支配：探针 Top8 挤在 0.946–0.949 窄带）。
+ * ADR-0141 §5：新增 canvasToText——主题盒里的 `.canvas` 白板抽节点文本进索引（只作候选来源，不写回）。
  */
 export const CHUNK_SIZE = 256;
 export const SENTENCE_BOUNDARY = /[。！？!?\n]+/;
@@ -19,9 +20,52 @@ export function stripFrontmatter(text: string): string {
   return text.replace(FRONTMATTER_RE, '');
 }
 
-/** 路径 → 笔记标题（basename 去 .md）：标题信号并入首块用 */
+/** 路径 → 笔记标题（basename 去扩展名；md 与 canvas 通用）：标题信号并入首块用 */
 export function noteTitleFromPath(path: string): string {
-  return stripMdExt(path.slice(path.lastIndexOf('/') + 1));
+  return stripMdExt(path.slice(path.lastIndexOf('/') + 1)).replace(/\.canvas$/i, '');
+}
+
+/**
+ * canvas 节点文本抽取（ADR-0141 §5）：`.canvas` 是 JSON 白板（`{nodes:[…],edges:[…]}`），
+ * 抽节点可读文本后交既有切块链路——只作**候选来源**（可被召回、可当关联目标），**从不写回**
+ * （canvas 无 frontmatter，related 无处落）。
+ *
+ * 逐节点按数组序取：text（正文卡片）> label（group 分组标题）> file（嵌入笔记 → 取笔记名）
+ * > url（网页卡片）。畸形 JSON / 非对象 / 无 nodes 一律返回 ''（调用方按「无可嵌入内容」处理，
+ * 不抛错——白板损坏不该让整轮索引挂掉）。
+ */
+export function canvasToText(raw: string): string {
+  let data: unknown;
+  try {
+    data = JSON.parse(String(raw ?? ''));
+  } catch {
+    return '';
+  }
+  const nodes = (data as { nodes?: unknown } | null)?.nodes;
+  if (!Array.isArray(nodes)) return '';
+  const parts: string[] = [];
+  for (const node of nodes) {
+    if (!node || typeof node !== 'object') continue;
+    const rec = node as Record<string, unknown>;
+    const text = typeof rec.text === 'string' ? rec.text.trim() : '';
+    if (text) {
+      parts.push(text);
+      continue;
+    }
+    const label = typeof rec.label === 'string' ? rec.label.trim() : '';
+    if (label) {
+      parts.push(label);
+      continue;
+    }
+    const file = typeof rec.file === 'string' ? rec.file.trim() : '';
+    if (file) {
+      parts.push(noteTitleFromPath(file));
+      continue;
+    }
+    const url = typeof rec.url === 'string' ? rec.url.trim() : '';
+    if (url) parts.push(url);
+  }
+  return parts.join('\n\n');
 }
 
 /**

@@ -21,7 +21,8 @@ import { Component, MarkdownRenderer, setIcon, type App } from 'obsidian';
 import { imageDataUrl, imageExtOfMime, imageMimeOfPath } from '../core/ai';
 import type { SettingsSchema } from '../core/settings-schema';
 import { isMobileEnv } from '../core/mobile';
-import { tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
+import { getKnowledgeBoxes } from '../core/knowledge-boxes';
 import { getLinkBridge } from '../core/link-now';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -208,20 +209,20 @@ function dateStamp(): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-/** 文献目录（设置缺省「文献盒」，去首尾斜杠） */
+/**
+ * 三个盒子目录（ADR-0141 §4：解析单源在 core/knowledge-boxes，本域只做本地面板取用壳）。
+ * 传空对象即走缺省盒名——「设置未载入」场景原样保留旧语义（不悄悄读全局设置）。
+ */
 function litDirOf(s: Partial<BzSettings> | undefined): string {
-  const raw = s && s.knowledgeDirectory ? String(s.knowledgeDirectory) : '文献盒';
-  return raw.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  return getKnowledgeBoxes(s || {}).lit;
 }
 /** 卡片目录（缺省「卡片盒」） */
 function cardboxDirOf(s: Partial<BzSettings> | undefined): string {
-  const raw = s && s.knowledgeCardboxDirectory ? String(s.knowledgeCardboxDirectory) : '卡片盒';
-  return raw.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  return getKnowledgeBoxes(s || {}).cardbox;
 }
 /** 主题目录（缺省「主题盒」） */
 function topicDirOf(s: Partial<BzSettings> | undefined): string {
-  const raw = s && s.knowledgeTopicDirectory ? String(s.knowledgeTopicDirectory) : '主题盒';
-  return raw.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  return getKnowledgeBoxes(s || {}).topic;
 }
 
 function parseDateRaw(raw: string | undefined | null): number {
@@ -307,8 +308,23 @@ interface TopicEntry {
   created: number;
 }
 
-/** 知识盒设置 schema（声明式四组；ADR-0112 更名并新增卡片/主题目录） */
+/** 知识盒设置 schema（声明式五组；ADR-0112 更名并新增卡片/主题目录，ADR-0141 增「自动关联」组） */
 export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | Promise<void>; onClearSuggestCache?: () => void | Promise<void> }): SettingsSchema {
+  // 自动关联的总开关是**启动快照**配置（监听注册发生在域初始化），一次弹窗会话只提示一次（文案冻结同第二大脑面板）
+  let reloadWarned = false;
+  const warnReload = () => {
+    if (reloadWarned) return;
+    reloadWarned = true;
+    notice('自动关联设置已保存，重载插件后生效', 'info');
+  };
+  /** 缺省开语义（键缺失视为开，沿用原 !== false 口径） */
+  const boolDefaultOn = (key: string) => ({
+    get: () => (tryGetSettings() as any)[key] !== false,
+    set: (v: boolean) => {
+      (getSettings() as any)[key] = v;
+    },
+    save: () => saveSettings(),
+  });
   return {
     groups: [
       {
@@ -328,8 +344,57 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
             // 空值 = 回落到文献文件夹下的 assets（把「实际会落到哪」显式显示出来，不让人猜）
             fallbackValue: () => resolveImageDir(tryGetSettings() || {}) },
           { type: 'path', mode: 'single', name: '卡片文件夹', desc: '你自己写的卡片笔记所在文件夹，部贰扫描后把提炼的卡落在这里', binding: { key: 'knowledgeCardboxDirectory' } },
-          { type: 'path', mode: 'single', name: '主题文件夹', desc: '主题笔记所在文件夹，部叁仅作展示不影响写作', binding: { key: 'knowledgeTopicDirectory' } },
+          { type: 'path', mode: 'single', name: '主题文件夹', desc: '主题笔记所在文件夹，部叁展示为主，自动关联会写入关联属性', binding: { key: 'knowledgeTopicDirectory' } },
           { type: 'textarea', name: '领域词表', desc: '逗号分隔的领域词，留空则 AI 自由写领域', binding: { key: 'knowledgeDomainList' }, placeholder: '物理,医学,计算机,经济…' },
+        ],
+      },
+      {
+        // 自动关联（ADR-0141 §1：原第二大脑「自动双链」组迁入本域，正名「自动关联」）。
+        // 没有「关联范围」行——范围恒为上面三个文件夹，不再可配（ADR-0141 §2）。
+        icon: 'link', name: '自动关联',
+        rows: [
+          { type: 'toggle', name: '自动关联', desc: '三个盒子的笔记改动后自动建关联，候选近邻经 AI 裁判筛选', binding: boolDefaultOn('linkAgentEnabled'), onChange: warnReload },
+          {
+            type: 'text',
+            name: '单篇候选数量 TopK',
+            desc: '每篇笔记的近邻候选数，越大召回越全也越慢',
+            // number 键（linkAgentTopK）不走键直绑（收窄到 string），三函数绑定 + onChange 钳制复写
+            binding: {
+              get: () => String((getSettings() as any).linkAgentTopK ?? 8),
+              set: (v: string) => {
+                (getSettings() as any).linkAgentTopK = v;
+              },
+              save: () => saveSettings(),
+            },
+            visibleWhen: (s) => s.linkAgentEnabled !== false,
+            isChild: true,
+            onChange: (v) => {
+              const n = Math.floor(Number(v));
+              (getSettings() as any).linkAgentTopK = Number.isFinite(n) && n > 0 ? n : 8;
+            },
+          },
+          {
+            type: 'text',
+            name: '每篇关联上限',
+            desc: '0 表示不限量，由 AI 裁判自行决定',
+            // number 键（linkAgentMaxLinks）同上
+            binding: {
+              get: () => String((getSettings() as any).linkAgentMaxLinks ?? 0),
+              set: (v: string) => {
+                (getSettings() as any).linkAgentMaxLinks = v;
+              },
+              save: () => saveSettings(),
+            },
+            visibleWhen: (s) => s.linkAgentEnabled !== false,
+            isChild: true,
+            onChange: (v) => {
+              const n = Math.floor(Number(v));
+              (getSettings() as any).linkAgentMaxLinks = Number.isFinite(n) && n > 0 ? n : 0;
+            },
+          },
+          { type: 'toggle', name: '完成通知', desc: '处理完成后通知提醒，关闭则全程静默', binding: boolDefaultOn('linkAgentNotify'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+          { type: 'toggle', name: '失效关联自动清理', desc: '目标笔记删除后自动移除指向它的失效关联条目', binding: boolDefaultOn('linkAgentAutoClean'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+          { type: 'toggle', name: '已有关联不再建链', desc: '笔记已有关联时自动跳过处理', binding: boolDefaultOn('linkAgentRespectRelated'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
         ],
       },
       {

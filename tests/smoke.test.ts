@@ -82,7 +82,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-bookshelf-continue',
   'bz-review-open', 'bz-review-report', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
-  'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat', 'bz-secondbrain-rebuild-links', 'bz-secondbrain-link-all',
+  'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat',
   // 重建索引（2026-09-11 首页入口菜单；函数早已存在、此前无命令入口）
   'bz-secondbrain-rebuild-index',
   'bz-pomodoro-open',
@@ -95,6 +95,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-knowledge-note-video',
   // 挂载树白板（issues 317/319）：看挂载树（主卡 = 当前打开的笔记）/ 重跑挂载建议
   'bz-knowledge-mount-tree', 'bz-knowledge-mount-refresh',
+  // 自动关联（ADR-0141 §1：两条建链命令随功能归属迁入知识盒，引擎留第二大脑）
+  'bz-knowledge-relink', 'bz-knowledge-link-all',
   'bz-attach-move',
   // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记 + 快速复制密码
   // 注意：bz-encrypt-lock 是历史遗留 id，实际动作是「加密当前笔记」；

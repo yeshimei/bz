@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * 自动双链数据层测试（ticket 111；纯数据层 node 环境）：
+ * 自动关联数据层测试（ticket 111；ADR-0141 正名并限定三盒；纯数据层 node 环境）：
  * 队列 CRUD（入队合并刷新 hash / 消费移除 / 失败保留语义 / 失效条目清理）、
  * 正文基准哈希状态（v1.4/ticket 119：upsert/读回/移除/畸形容错）、
  * related 解析与幂等合并、上限截断、失效清理规划、裁判输出解析。
@@ -20,24 +20,25 @@ import {
   upsertLinkState,
   enqueuePaths,
   isUnderFolder,
+  getLinkAgentScopes,
+  isSettledEmpty,
   loadQueue,
   matchesScope,
   mergeRelated,
   normalizeRelatedEntry,
   parseJudgeOutput,
   parseRelatedEntries,
-  parseScopeList,
   planRemovals,
   pruneQueueByExists,
   toRelatedEntry,
 } from '../../src/secondbrain/link-agent/data';
 import { getSecondBrainStorePath } from '../../src/secondbrain/store-file';
 
-describe('自动双链·设置键默认值', () => {
-  it('DEFAULT_SETTINGS 七键齐备且取 spec 默认值（ticket 116：关联范围默认空 = 什么也不录；ticket 167：尊重开关默认开）', () => {
+describe('自动关联·设置键默认值', () => {
+  it('DEFAULT_SETTINGS 六键齐备且取默认值（ADR-0141 §2：linkAgentScopes 已退役；ticket 167：尊重开关默认开）', () => {
     const s = DEFAULT_SETTINGS as any;
     expect(s.linkAgentEnabled).toBe(true);
-    expect(s.linkAgentScopes).toBe('');
+    expect(s.linkAgentScopes).toBeUndefined(); // ADR-0141 §2：关联范围不再可配，键退役
     expect(s.linkAgentTopK).toBe(8);
     expect(s.linkAgentMaxLinks).toBe(0);
     expect(s.linkAgentNotify).toBe(true);
@@ -46,19 +47,26 @@ describe('自动双链·设置键默认值', () => {
   });
 });
 
-describe('关联范围解析（linkAgentScopes，ticket 116 语义：只决定目标/触发侧）', () => {
-  it('parseScopeList：逗号分隔/trim/去空/去重；多目录保序', () => {
-    expect(parseScopeList('文献盒,卡片盒')).toEqual(['文献盒', '卡片盒']);
-    expect(parseScopeList(' 文献盒 , 卡片盒 , ,')).toEqual(['文献盒', '卡片盒']);
-    expect(parseScopeList('书库')).toEqual(['书库']);
-    expect(parseScopeList('文献盒,文献盒,卡片盒')).toEqual(['文献盒', '卡片盒']);
+describe('关联范围恒为三个盒子（ADR-0141 §2：范围不再可配）', () => {
+  beforeEach(() => {
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS } as any));
   });
 
-  it('空值/缺省 = 空（什么也不录），不再是回退「文献盒」', () => {
-    expect(parseScopeList(undefined)).toEqual([]);
-    expect(parseScopeList(null)).toEqual([]);
-    expect(parseScopeList('')).toEqual([]);
-    expect(parseScopeList(' , ')).toEqual([]);
+  it('getLinkAgentScopes：直接取三个盒子目录（文献 → 卡片 → 主题）', () => {
+    expect(getLinkAgentScopes()).toEqual(['文献盒', '卡片盒', '主题盒']);
+  });
+
+  it('getLinkAgentScopes：盒子目录改了即跟随（反斜杠与首尾斜杠归一、空值回落缺省名）', () => {
+    setSettingsProvider(
+      // Windows 风格路径（反斜杠）与空值同时验证归一与回落
+      () => ({
+              ...DEFAULT_SETTINGS,
+              knowledgeDirectory: ['笔记', '文献', ''].join('\\'),
+              knowledgeCardboxDirectory: '',
+              knowledgeTopicDirectory: '专题盒',
+      } as any)
+    );
+    expect(getLinkAgentScopes()).toEqual(['笔记/文献', '卡片盒', '专题盒']);
   });
 
   it('matchesScope：空范围任何路径都不命中；非空按目录递归匹配', () => {
@@ -289,6 +297,43 @@ describe('正文基准哈希状态（v1.4/ticket 119）', () => {
   });
 });
 
+describe('「已尝试且 0 条」标记（ADR-0141 §6：堵掉每次启动重跑同一篇）', () => {
+  beforeEach(() => {
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS }) as any);
+  });
+
+  function makeEnv() {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    return { vault, app };
+  }
+
+  it('upsertLinkState(empty=true) 落标记，读回保留；默认不带标记', async () => {
+    makeEnv();
+    await upsertLinkState('文献盒/无关联.md', 'h1', true);
+    await upsertLinkState('文献盒/有关联.md', 'h2');
+    const state = await loadLinkState();
+    expect(state['文献盒/无关联.md'].empty).toBe(true);
+    expect(state['文献盒/有关联.md'].empty).toBeUndefined();
+  });
+
+  it('isSettledEmpty：empty 且哈希一致才算「已结算」；正文改了 / 无标记 / 无基准都不算', () => {
+    expect(isSettledEmpty({ hash: 'h', linkedAt: 't', empty: true }, 'h')).toBe(true);
+    expect(isSettledEmpty({ hash: 'h', linkedAt: 't', empty: true }, 'h2')).toBe(false); // 正文变了 → 重算
+    expect(isSettledEmpty({ hash: 'h', linkedAt: 't' }, 'h')).toBe(false); // 建出过关联 → 不适用
+    expect(isSettledEmpty(undefined, 'h')).toBe(false);
+    expect(isSettledEmpty({ hash: 'h', linkedAt: 't', empty: true }, '')).toBe(false);
+  });
+
+  it('再次处理（empty 缺省）会清掉旧标记——建出关联后不该再被判「已结算」', async () => {
+    makeEnv();
+    await upsertLinkState('文献盒/A.md', 'h1', true);
+    await upsertLinkState('文献盒/A.md', 'h1');
+    expect((await loadLinkState())['文献盒/A.md'].empty).toBeUndefined();
+  });
+});
+
 describe('裁判输出解析', () => {
   it('严格 JSON 数组解析；容忍代码围栏；非法整体返回 []', () => {
     expect(parseJudgeOutput('[{"id":1,"reason":"同主题"}]', 2)).toEqual([{ id: 1, reason: '同主题' }]);
@@ -332,6 +377,7 @@ describe('存量补链目标清单（computeBackfillTargets，ticket 115）', ()
       '文献盒/ENC.md',      // 加密锁定
       '文献盒/排队.md',     // 队列内待重试
       '文献盒/notes.txt',   // 非 md
+      '文献盒/白板.canvas', // ADR-0141 §5：canvas 只作候选来源，不进被处理端
       '卡片盒/K.md',
     ];
     expect(computeBackfillTargets(paths, alw)).toEqual([

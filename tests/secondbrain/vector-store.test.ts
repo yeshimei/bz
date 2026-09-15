@@ -65,10 +65,12 @@ function makeAdapter(vault: MockVault) {
 function makeApp(vault: MockVault, adapter: any, mtimes: Record<string, number> = {}) {
   return {
     vault: {
+      // ADR-0141 §5：索引来源 = 全库 md + canvas（getFiles 是 canvas 的枚举口）
+      getFiles: () => vault.getFiles().map((f: any) => ({ path: f.path, extension: f.extension, stat: { mtime: mtimes[f.path] ?? 1 } })),
       getMarkdownFiles: () =>
         [...vault.files.keys()]
           .filter((p) => p.endsWith('.md'))
-          .map((p) => ({ path: p, stat: { mtime: mtimes[p] ?? 1 } })),
+          .map((p) => ({ path: p, extension: 'md', stat: { mtime: mtimes[p] ?? 1 } })),
       read: async (f: any) => {
         const v = vault.files.get(f.path);
         if (v === undefined) throw new Error('ENOENT: ' + f.path);
@@ -209,6 +211,81 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     expect(meta.notes['我的/幽灵之战.md'].chunks[0].text).toBe(embedded[0]); // meta 存的即嵌入文本
   });
 
+
+  it('ADR-0141 §3：三盒恒含索引——白名单留空也收三盒内的 md 与 canvas，盒外不收', async () => {
+    const vault = new MockVault();
+    vault.files.set('文献盒/L1.md', '文献笔记内容足够长可以成块了吧。');
+    vault.files.set('主题盒/T1.md', '主题笔记内容同样足够长可以成块。');
+    vault.files.set(
+      '主题盒/ChatGPT 原理.canvas',
+      JSON.stringify({ nodes: [{ type: 'text', text: '白板节点里的正文也足够长可以成块。' }], edges: [] })
+    );
+    vault.files.set('书库/B1.md', '书库笔记不在三个盒子内，内容也足够长成块。');
+    const { adapter, binary } = makeAdapter(vault);
+    const app = makeApp(vault, adapter);
+    setApp(app as any);
+    // 白名单里故意混入三盒条目（settings.ts onload 迁移会剔除，这里验读侧同样幂等剔除）
+    setSettingsProvider(() => sbSettings({ secondBrainAllowPaths: '文献盒,卡片盒,主题盒' }) as any);
+    const vs = new VectorStore(app as any);
+    await vs.load();
+    mockBatchEmbed({});
+    await vs.refresh();
+
+    expect(Object.keys(vs.meta.notes).sort()).toEqual(['主题盒/ChatGPT 原理.canvas', '主题盒/T1.md', '文献盒/L1.md']);
+    // canvas 也进了向量段（不该只有 md 的 2 行）
+    expect(parseVec(binary).rows.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('ADR-0141 §3：白名单额外目录照旧生效（三盒是下限不是上限）', async () => {
+    const vault = new MockVault();
+    vault.files.set('文献盒/L1.md', '文献笔记内容足够长可以成块了吧。');
+    vault.files.set('归档/网页剪藏/S1.md', '剪藏正文内容同样足够长可以成块啊。');
+    vault.files.set('书库/B1.md', '书库笔记内容同样足够长可以成块啊。');
+    const { adapter } = makeAdapter(vault);
+    const app = makeApp(vault, adapter);
+    setApp(app as any);
+    setSettingsProvider(() => sbSettings({ secondBrainAllowPaths: '归档/网页剪藏' }) as any);
+    const vs = new VectorStore(app as any);
+    await vs.load();
+    mockBatchEmbed({});
+    await vs.refresh();
+
+    expect(Object.keys(vs.meta.notes).sort()).toEqual(['归档/网页剪藏/S1.md', '文献盒/L1.md']);
+  });
+
+  it('ADR-0141 §5：canvas 抽节点文本进索引（无 text 的 file/link 节点取其可读名）；畸形 JSON 不抛错', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      '主题盒/白板.canvas',
+      JSON.stringify({
+        nodes: [
+          { type: 'group', label: '分组标题也要进索引' },
+          { type: 'file', file: '文献盒/某篇文献.md' },
+          { type: 'text', text: '正文卡片的内容足够长可以成块了啊。' },
+        ],
+        edges: [],
+      })
+    );
+    vault.files.set('主题盒/坏板.canvas', '{ 这不是 JSON');
+    const { adapter } = makeAdapter(vault);
+    const app = makeApp(vault, adapter);
+    setApp(app as any);
+    const vs = new VectorStore(app as any);
+    await vs.load();
+    const track: string[] = [];
+    mockBatchEmbed({}, track);
+    await vs.refresh();
+
+    const joined = track.join('\n');
+    expect(joined).toContain('分组标题也要进索引');
+    expect(joined).toContain('某篇文献'); // file 节点取笔记名（不带路径与扩展名）
+    expect(joined).toContain('正文卡片的内容足够长可以成块了啊。');
+    expect(joined).not.toContain('这不是 JSON');
+    // 坏板解析失败 → 无可嵌入内容（不报错，与纯 frontmatter 的 md 同待遇：条目在、块为空）
+    expect(Object.keys(vs.meta.notes)).toEqual(['主题盒/白板.canvas', '主题盒/坏板.canvas']);
+    expect(vs.meta.notes['主题盒/坏板.canvas'].chunks).toEqual([]);
+  });
+
   it('refresh：ALLOW_PATHS 目录前缀/全等过滤；meta 只存 text、向量只进 .vec', async () => {
     const vault = new MockVault();
     vault.files.set('卡片盒/N1.md', '卡片盒笔记内容足够长可以成块了吧。');
@@ -342,7 +419,7 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     expect(vault.files.get(STORE_PATH)).toBe(metaBefore);
   });
 
-  it('refresh：白名单为空且有存量 → 清空全部并落盘；本就为空 → 仅提示不写盘', async () => {
+  it('refresh：索引范围内没有文件且有存量 → 清空全部并落盘；本就为空 → 仅提示不写盘', async () => {
     // 分支一：有存量 → 清空 + saveVectors + saveStore
     const vault = new MockVault();
     vault.files.set('其他/X.md', '白名单外文件');
@@ -358,7 +435,7 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     await vs.load();
     const progress = vi.fn();
     await vs.refresh(progress);
-    expect(progress).toHaveBeenCalledWith('✅ 向量库已清空（白名单为空）');
+    expect(progress).toHaveBeenCalledWith('✅ 向量库已清空（索引范围内没有文件）');
     expect(vs.meta.notes).toEqual({});
     expect(parseVec(binary).rows).toEqual([]); // .vec 只剩 dim=0 头
     expect(readMeta(vault).notes).toEqual({});
@@ -368,7 +445,7 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     await vs2.load();
     const progress2 = vi.fn();
     await vs2.refresh(progress2);
-    expect(progress2).toHaveBeenCalledWith('⚠️ 没有符合条件的文件');
+    expect(progress2).toHaveBeenCalledWith('⚠️ 索引范围内没有文件');
   });
 
   it('refresh：批量接口对某文件失败且逐条回退亦全败 → 该文件条目删除；正常文件照常入库', async () => {

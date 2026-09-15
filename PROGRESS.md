@@ -2,6 +2,26 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+## Issue 325 — 自动关联迁入知识盒：三盒为界、三盒恒含索引（ADR-0141 / ADR-0142）
+
+**状态：已交付**（worktree 门禁：tsc 0 错 + 全量 319 文件 5053 用例绿——仅原型产物新鲜度 8 项待主仓重出）
+
+- [x] 正名**自动关联**并迁归属不迁内核：设置组从第二大脑设置页迁到知识盒「自动关联」组、
+      两条命令改 `bz-knowledge-relink` / `bz-knowledge-link-all`（`bz-secondbrain-rebuild-index` 留本域）；
+      引擎 `src/secondbrain/link-agent/` 与向量索引原地不动，知识盒仍经 `core/link-now.ts` 的 LinkBridge 消费
+- [x] 范围恒为三个盒子（`core/knowledge-boxes.ts` 新增 = 解析单源）：被处理端与候选端都限，
+      `linkAgentScopes` 键退役（onload 忽略旧值），**手动命令与知识盒通道不再豁免**（盒外 `out-of-scope` 拒绝并提示）
+- [x] 三盒恒含索引：`ALLOW_PATHS` = 三盒 ∪ 白名单额外目录（值里三盒条目 onload 剔除、幂等）；
+      「白名单空 = 什么也不录」分支删除；两处「请去补白名单」引导退役；白名单行降级为「额外检索目录」
+- [x] canvas 只作候选来源：`chunk.canvasToText` 抽节点文本（text > label > file > url），
+      索引来源扩「md + canvas」；`computeBackfillTargets` 仍只收 `.md`（canvas 无 frontmatter 无处写 related）
+- [x] 存量补链堵漏：`link.state` 记「已尝试且 0 条」——AI 判无关联的笔记正文未变不再重跑（此前每次启动重跑）
+- [x] 挂载建议召回改**卡片盒白名单**（ADR-0142，修订 ADR-0140 排除式）：六类形态缩编为四类
+      （image/video 目标退化为只服务用户自己写的双链），空卡片盒 = 空建议集；缓存版本 v3 → v4
+- [x] 测试：新增 core/knowledge-boxes、secondbrain/allow-paths、core/auto-link-migration 三文件；
+      改写 link-agent 数据/UI、vector-store、mount-suggest、smoke 命令清单、知识盒 schema 断言；
+      知识盒 schema 纳入文案 lint（域组 C）
+
 
 ## Issues 309-313 — 知识盒录入改版：四名词入口 + 关联行显式双链 + 影像两界面 + AI 多模态 + 图版（ADR-0135/0136）
 
