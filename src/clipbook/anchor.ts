@@ -36,6 +36,11 @@ export function noteBasename(notePath: string): string {
   return base.replace(/\.md$/i, '') || String(notePath || '');
 }
 
+/** 内部双链别名文本清洗：`]]` 会把 wikilink 提前闭合（破语法），插空格降级（issue 329 评审） */
+export function linkAliasText(s: string): string {
+  return String(s || '').replace(/\]\]/g, '] ]');
+}
+
 /** 别名双链：`[[笔记 basename|原文字]]`（显示不变、原生 wikilink，无块 id——ADR-0144 决策 2） */
 export function aliasLink(notePath: string, find: string): string {
   return `[[${noteBasename(notePath)}|${find}]]`;

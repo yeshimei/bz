@@ -18,7 +18,7 @@ import { topifyZ } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { notice, notify, type NoticeHandle } from '../core/notice';
 import { localDatetime, toDatetime, articleKeyOf } from './constants';
-import { readArticleTracking, applyBodyTransforms, clearArticleTracking } from './anchor';
+import { readArticleTracking, applyBodyTransforms, clearArticleTracking, linkAliasText } from './anchor';
 import { extractImageUrls, localizeArticleImages } from './image-save';
 import type { ClipSavedImage } from './data';
 
@@ -167,7 +167,7 @@ async function materializeTracking(key: string, clipPath: string, title: string)
   try {
     const mod: any = await import('../knowledge');
     if (typeof mod.upgradeNoteSourceInternal !== 'function') return;
-    const link = `[[${clipPath}|${title}]]`;
+    const link = `[[${clipPath}|${linkAliasText(title)}]]`;
     for (const notePath of upgrades) {
       try {
         await mod.upgradeNoteSourceInternal(app, notePath, link);
