@@ -146,7 +146,10 @@ async function localizeImagesForSave(body: string, existing: ClipSavedImage[]): 
 
 /** 物化收尾（issue 329）：清该条目 marks/savedImages/pendingSource，对每个待升级文献笔记
  *  调 knowledge upgradeNoteSourceInternal 回写 `[[剪藏路径|条目标题]]`（契约 API 由 knowledge
- *  域并行实现，运行时按存在调用；无该导出（旧版本）跳过，侧写已清不再重试——接受）。 */
+ *  域并行实现，运行时按存在调用；无该导出（旧版本）跳过，侧写已清不再重试——接受）。
+ *  升级名单 = pendingSource ∪ marks.notePath（保序去重，Bug 4 修复）：修复前的存量侧写
+ *  只记 marks 未登记 pendingSource（升级链死路），并集一并救回；两段重复路径去重，
+ *  已升级目标不重复写。 */
 async function materializeTracking(key: string, clipPath: string, title: string): Promise<void> {
   let before;
   try {
@@ -155,13 +158,17 @@ async function materializeTracking(key: string, clipPath: string, title: string)
     console.warn('[剪藏本] 物化清理侧写失败', e);
     return; // 清理失败时不做 source 回写（下次保存再物化，避免半物化态）
   }
-  if (!before.pendingSource.length) return;
+  const upgrades: string[] = [];
+  for (const p of [...before.pendingSource, ...before.marks.map((m) => m.notePath)]) {
+    if (p && !upgrades.includes(p)) upgrades.push(p);
+  }
+  if (!upgrades.length) return;
   const app = getApp();
   try {
     const mod: any = await import('../knowledge');
     if (typeof mod.upgradeNoteSourceInternal !== 'function') return;
     const link = `[[${clipPath}|${title}]]`;
-    for (const notePath of before.pendingSource) {
+    for (const notePath of upgrades) {
       try {
         await mod.upgradeNoteSourceInternal(app, notePath, link);
       } catch (e) {
