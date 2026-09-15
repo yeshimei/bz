@@ -1,4 +1,4 @@
-/* 源指纹 7b98c54bafd97c06 · 仓内输入 90 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 264fcb927811552d · 仓内输入 90 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -4960,6 +4960,19 @@ var BZW_clipbook = (() => {
       }
       const focusBtn = document.getElementById(parts.focusId);
       if (focusBtn) focusBtn.focus();
+    });
+  }
+  function confirmDiscard(proceed, message, className) {
+    void openFlowDialog({
+      title: "放弃未保存的内容？",
+      message: message || "弹窗内有未保存的输入，关闭后将丢失",
+      className,
+      actions: [
+        { label: "放弃", value: "ok" },
+        { label: "继续编辑", value: "cancel" }
+      ]
+    }).then((v) => {
+      if (v === "ok") proceed();
     });
   }
   var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
@@ -13158,6 +13171,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
           // ---- 添加任务弹窗 ----
           this.addMask = null;
           this.addPopup = null;
+          /** 用户动过表单（issue 326 关闭二次确认的脏标记）：只在真实用户事件点打标、开窗/保存成功复位——
+           *  不做数值比对，因为打开即自动重抓（ADR-0133）会程序化改写 url 与时长区间，比值必假阳 */
+          this.addDirty = false;
           // ---- 添加弹窗解析态（ADR-0133：解析按钮 + 只读信息区 + 双把手范围）----
           /** 解析序列号：新解析/关弹窗使在途响应过期（回填前校验丢弃） */
           this.addUrlSeq = 0;
@@ -13240,8 +13256,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.createTermUI();
           this.onKeydown = (e) => {
             if (e.key !== "Escape") return;
-            if (this.termPopup && this.termPopup.style.display === "flex") this.hideTermEntry();
-            else if (this.addPopup && this.addPopup.style.display === "flex") this.hideAddDialog();
+            if (this.termPopup && this.termPopup.style.display === "flex") this.requestTermClose();
+            else if (this.addPopup && this.addPopup.style.display === "flex") this.requestAddClose();
             else if (this.videoPopup && this.videoPopup.style.display === "flex") {
               if (this.videoView === "history") this.switchVideoView("tasks");
               else this.hideVideo();
@@ -14333,12 +14349,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         // ==================== 影像 · 录入界面（词典皮 + 解析后展开，issue 310） ====================
         createAddDialog() {
-          var _a;
+          var _a, _b;
           const addMask = document.createElement("div");
           addMask.id = "knowledge-add-mask";
           addMask.className = "bz-kb-mask";
           addMask.style.display = "none";
-          addMask.onclick = () => this.hideAddDialog();
+          addMask.onclick = () => this.requestAddClose();
           const popup = document.createElement("div");
           popup.id = "knowledge-add-popup";
           popup.className = "bz-lit-dialog kb";
@@ -14395,10 +14411,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.addPopup = popup;
           q(popup, "#lit-add-save").onclick = () => void this._handleAddSave();
           q(popup, "#lit-add-resolve").onclick = () => void this._handleResolve();
-          q(popup, "#lit-add-whole").onclick = () => this._resetAddRange();
+          q(popup, "#lit-add-whole").onclick = () => {
+            this.addDirty = true;
+            this._resetAddRange();
+          };
+          (_a = q(popup, "#lit-add-quality")) == null ? void 0 : _a.addEventListener("change", () => {
+            this.addDirty = true;
+          });
           const addUrlInput = q(popup, "#lit-add-url");
           if (addUrlInput) {
             addUrlInput.addEventListener("input", () => {
+              this.addDirty = true;
               this.addUrlSeq++;
               this.addResolving = false;
               this._setResolveState(null);
@@ -14421,16 +14444,21 @@ ${String(blockText != null ? blockText : "").trim()}`);
               }
             });
           }
-          (_a = q(popup, "#lit-add-page")) == null ? void 0 : _a.addEventListener("change", (e) => {
+          (_b = q(popup, "#lit-add-page")) == null ? void 0 : _b.addEventListener("change", (e) => {
+            this.addDirty = true;
             void this._switchAddPage(Number(e.target.value) || 1);
           });
           for (const [sel, which] of [["#lit-add-start", "start"], ["#lit-add-end", "end"]]) {
             const input = q(popup, sel);
             if (!input) continue;
-            input.addEventListener("change", () => this._commitTimeInput(which));
+            input.addEventListener("change", () => {
+              this.addDirty = true;
+              this._commitTimeInput(which);
+            });
             input.addEventListener("keydown", (e) => {
               if (e.key === "ArrowUp" || e.key === "ArrowDown") {
                 e.preventDefault();
+                this.addDirty = true;
                 this._nudgeTime(which, e.key === "ArrowUp" ? 1 : -1, e.shiftKey ? 10 : 1);
               } else if (e.key === "Enter") {
                 e.preventDefault();
@@ -14442,6 +14470,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const numInput = q(popup, "#lit-add-page-num");
           if (numInput) {
             numInput.addEventListener("input", () => {
+              this.addDirty = true;
               const n = Number(numInput.value.trim());
               this.addPage = Number.isInteger(n) && n > 0 ? n : 1;
             });
@@ -14458,6 +14487,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           var _a, _b, _c, _d, _e, _f, _g;
           if (!this.addPopup || !this.addMask) return;
           this.addUrlReset();
+          this.addDirty = false;
           this.editingId = (_a = editItem == null ? void 0 : editItem.id) != null ? _a : null;
           this.addRevealed = !!this.editingId;
           const modeTag = q(this.addPopup, "#lit-add-mode");
@@ -14604,6 +14634,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           host.innerHTML = "";
           const bar = new RangeBar({
             onChange: (s, e) => {
+              this.addDirty = true;
               this.addStart = s;
               this.addEnd = e;
               this._paintRange();
@@ -14957,7 +14988,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           mask.id = "knowledge-term-mask";
           mask.className = "bz-kb-mask";
           mask.style.display = "none";
-          mask.onclick = () => this.hideTermEntry();
+          mask.onclick = () => this.requestTermClose();
           const popup = document.createElement("div");
           popup.id = "knowledge-term-popup";
           popup.className = "bz-lit-dialog bz-lit-term-dialog kb";
@@ -15017,9 +15048,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
           document.body.appendChild(popup);
           this.termMask = mask;
           this.termPopup = popup;
-          mask.addEventListener("click", (e) => {
-            if (e.target === mask) this.hideTermEntry();
-          });
           q(popup, "#lit-term-generate").onclick = () => void this.onTermGenerate();
           q(popup, "#lit-term-regenerate").onclick = () => void this.onTermSummarize();
           q(popup, "#lit-term-save").onclick = () => void this.onTermConfirm();
@@ -15118,9 +15146,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
         showTermEntry(term, src) {
           this.showEntry("term", term, src);
         }
-        /** 打开「段落」录入（一段文字，AI 自动出标题）；来源行与名词同构（ADR-0116） */
-        showPassageEntry(src) {
-          this.showEntry("passage", "", src);
+        /**
+         * 打开「段落」录入（一段文字，AI 自动出标题）；来源行与名词同构（ADR-0116）。
+         * issue 326：支持选区预填（命令入口）——与名词不同，预填**不自动生成**（大段文字让用户确认后再生成），
+         * showEntry 里自动生成只挂 term 态。
+         */
+        showPassageEntry(text, src) {
+          this.showEntry("passage", text, src);
         }
         /** 打开「图版」录入（可放多张图，AI 读图成文，issue 312/313）；来源行与名词/段落同构（ADR-0116） */
         showImageEntry(src) {
@@ -15703,6 +15735,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
               notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
             }
             this.hideTermEntry();
+            this.openNote(path);
           } catch (e) {
             this.noticeTermError(e);
           } finally {
@@ -15720,6 +15753,33 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (this.termMask) this.termMask.style.display = "none";
           if (this.termPopup) this.termPopup.style.display = "none";
           void this.refreshCurrent();
+        }
+        /**
+         * 同壳三态脏判定（issue 326 关闭二次确认）：当前态输入非空 / 已有预览 / 生成中 / 图版有内存图，
+         * 任一即脏。来源行**单独不算脏**——命令入口本就预填来源（ADR-0116），一打开就关就弹确认是骚扰。
+         */
+        entryDirty() {
+          if (!this.termPopup) return false;
+          if (this.termGenerating || this.termPreview) return true;
+          if (this.entryMode === "image") return this.entryImages.length > 0;
+          const el = this.entryMode === "passage" ? q(this.termPopup, "#lit-passage-input") : q(this.termPopup, "#lit-term-input");
+          return !!(el && el.value.trim());
+        }
+        /** 录入面板关闭请求（issue 326）：脏 → 风格化二次确认（ADR-0125 统一壳 + 知识盒域皮）；干净态直关。
+         *  遮罩点击与 ESC 都走这里；确认写入成功路径直接调 hideTermEntry（不自带确认）。 */
+        requestTermClose() {
+          if (!this.entryDirty()) {
+            this.hideTermEntry();
+            return;
+          }
+          const what = this.entryMode === "image" ? "图片" : this.entryMode === "passage" ? "段落" : "名词";
+          confirmDiscard(() => this.hideTermEntry(), `${what}还没生成写入，关闭后将丢失`, "kb bz-kb-flow-dialog");
+        }
+        /** 影像录入弹窗关闭请求（issue 326）：用户动过表单（addDirty 事件打标）→ 二次确认；纯打开未动 → 直关。
+         *  保存成功路径直接调 hideAddDialog（刚落库无可丢）。 */
+        requestAddClose() {
+          if (this.addDirty) confirmDiscard(() => this.hideAddDialog(), "影像信息还没保存，关闭后将丢失", "kb bz-kb-flow-dialog");
+          else this.hideAddDialog();
         }
         // ==================== 通用小工具 ====================
         openNote(path) {
@@ -15806,8 +15866,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
   __export(knowledge_exports, {
     ensureKnowledge: () => ensureKnowledge,
     linkAllInBoxes: () => linkAllInBoxes,
+    openImageNote: () => openImageNote,
     openKnowledgeAddTask: () => openKnowledgeAddTask,
     openKnowledgePanel: () => openKnowledgePanel,
+    openPassageNote: () => openPassageNote,
     openTermNote: () => openTermNote,
     relinkActiveNote: () => relinkActiveNote,
     unloadKnowledge: () => unloadKnowledge
@@ -15844,6 +15906,25 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (file && file.extension === "md") src = { kind: "note", path: file.path };
     }
     uiManager == null ? void 0 : uiManager.showTermEntry(t, src);
+  }
+  function openPassageNote(app) {
+    var _a, _b;
+    ensureKnowledge(app);
+    let text;
+    let src;
+    const view = app.workspace.getActiveViewOfType(MarkdownView);
+    text = ((_b = (_a = view == null ? void 0 : view.editor) == null ? void 0 : _a.getSelection()) == null ? void 0 : _b.trim()) || void 0;
+    const file = view == null ? void 0 : view.file;
+    if (file && file.extension === "md") src = { kind: "note", path: file.path };
+    uiManager == null ? void 0 : uiManager.showPassageEntry(text, src);
+  }
+  function openImageNote(app) {
+    ensureKnowledge(app);
+    let src;
+    const view = app.workspace.getActiveViewOfType(MarkdownView);
+    const file = view == null ? void 0 : view.file;
+    if (file && file.extension === "md") src = { kind: "note", path: file.path };
+    uiManager == null ? void 0 : uiManager.showImageEntry(src);
   }
   function takeLinkBridge() {
     if (tryGetSettings().linkAgentEnabled === false) {
