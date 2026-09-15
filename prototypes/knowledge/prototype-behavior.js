@@ -1,4 +1,4 @@
-/* 源指纹 825bc42a1f9db4bd · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 942d256042d363bc · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -11924,6 +11924,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return litKindPlain(type).split("").join(" ");
   }
   var IMAGE_ENTRY_MAX = 9;
+  var REL_BG_NOTICE_KEY = "bz-kb-entry-rel";
   var STATUS_META = {
     pending: { label: "待处理", cls: "bz-kb-pending" },
     processing: { label: "处理中", cls: "bz-kb-processing" },
@@ -12186,8 +12187,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       this.entryPreviewPicks = [];
       /** 预演是否已给出确定结果（done）——确定过就连「0 命中」也算结论，写入时不再重跑管线 */
       this.entryPreviewDone = false;
-      /** 在跑的预演（确认写入前等它落地，避免白跑一次完整管线） */
-      this.entryRelPending = null;
+      /** 在跑预演的中断器（issue 327）：重新生成 / 总结 / 关面板 / 确认写入转后台时 abort 在途裁判请求 */
+      this.entryRelAbort = null;
       /** 预演序号：重新生成 / 关闭面板让在途结果作废（晚到的响应不得覆盖新状态） */
       this.entryRelSeq = 0;
       this.termSrcSuggest = null;
@@ -14339,20 +14340,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (regen) regen.disabled = loading;
       const save = q(this.termPopup, "#lit-term-save");
       if (save) save.disabled = loading;
-      if (!loading) this.setEntryRelBusy(this.entryRelState === "loading");
-    }
-    /**
-     * 关联分析期间的按钮闸门（issue 309）：分析未出结果时禁止「重新生成」「总结」「确认写入」——
-     * 前者会作废在途结果、后者要用分析结果落库，都不能与正在跑的预演并行。
-     */
-    setEntryRelBusy(busy) {
-      if (!this.termPopup) return;
-      const gen = q(this.termPopup, "#lit-term-generate");
-      if (gen) gen.disabled = busy;
-      const regen = q(this.termPopup, "#lit-term-regenerate");
-      if (regen) regen.disabled = busy;
-      const save = q(this.termPopup, "#lit-term-save");
-      if (save) save.disabled = busy;
     }
     /**
      * 关联行渲染（issue 309）：按 entryRelState 出文案与墨色档；两类录入共用同一行。
@@ -14397,15 +14384,16 @@ ${String(blockText != null ? blockText : "").trim()}`);
       el.classList.add("bz-lit-rel-idle");
       el.textContent = "—";
     }
-    /** 关联行与预演状态整体复位（打开/关闭面板、出新草稿共用）：在途预演作废、结果清空、回到起点 */
+    /** 关联行与预演状态整体复位（打开/关闭面板、出新草稿、重生成/总结点下时共用）：abort 在途请求、结果清空、回到起点 */
     resetEntryRel() {
+      var _a;
       this.entryRelSeq++;
-      this.entryRelPending = null;
+      (_a = this.entryRelAbort) == null ? void 0 : _a.abort();
+      this.entryRelAbort = null;
       this.entryPreviewPicks = [];
       this.entryPreviewDone = false;
       this.entryRelText = "";
       this.setEntryRel("idle");
-      this.setEntryRelBusy(false);
     }
     /** 关联行状态切换（单一出口，避免各处直接改字段后忘记重绘） */
     setEntryRel(st) {
@@ -14416,8 +14404,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
      * 关联预演（issue 309）：AI 出内容后**立刻**跑——近邻检索 + AI 裁判，**只算不写**（草稿尚未落盘，
      * 故走 preview 而非 now）。属性区「关联」行就地走 loading → 关联名，这正是「生成完就看得到过程」。
      * 序号守卫：重新生成 / 关面板让在途结果作废，晚到的响应不得覆盖新状态。
+     * issue 327：起跑前 abort 上一轮（真中断，不白烧 token）；分析期间**不锁任何按钮**——
+     * 重新生成 / 总结随点随断随重跑，确认写入转后台。
      */
     async runEntryRelPreview(content, title) {
+      var _a;
       const bridge = getLinkBridge();
       const seq = ++this.entryRelSeq;
       this.entryPreviewPicks = [];
@@ -14425,11 +14416,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
         this.setEntryRel("off");
         return;
       }
+      (_a = this.entryRelAbort) == null ? void 0 : _a.abort();
+      const ac = new AbortController();
+      this.entryRelAbort = ac;
       this.entryRelText = "";
       this.setEntryRel("loading");
-      this.setEntryRelBusy(true);
       try {
-        const out = await bridge.preview(content, title);
+        const out = await bridge.preview(content, title, { signal: ac.signal });
         if (seq !== this.entryRelSeq) return;
         if (out.status === "done") {
           this.entryPreviewDone = true;
@@ -14441,73 +14434,93 @@ ${String(blockText != null ? blockText : "").trim()}`);
         else this.setEntryRel("failed");
       } catch (e) {
         if (seq === this.entryRelSeq) this.setEntryRel("failed");
-      } finally {
-        if (seq === this.entryRelSeq) this.setEntryRelBusy(false);
       }
     }
     /**
-     * 兜底建链（issue 309）：没有可用预演结果时，落盘后跑完整单篇管线（bridge.now）。
-     * 通道未注入（自动双链关闭 / 第二大脑未启用 / 原型壳未接线）→ 显式呈现「自动双链未开启」。
+     * 确认写入后的关联落库（issue 309 / 327 改版）：**全程不动关联行**——面板上显示过什么就是什么，
+     * 不把行打回 loading（那会被读成「又在重新分析」，实际只是本地写 related）。
+     * - 预演 done 有命中 → apply 落库（不重跑检索与裁判）；
+     * - 预演 done 零命中（确定「无关联」）→ 无可写；
+     * - 预演仍在分析 → 作废面板绑定的这次（省 token），后台重起 预演→apply，挂动态通知；
+     * - 预演 failed → 兜底 now 同样转后台；
+     * - 通道未接线 / off → 无可写。
      */
-    async runEntryLinkNow(path) {
+    async commitEntryLinks(path) {
+      var _a, _b, _c;
       const bridge = getLinkBridge();
-      if (!bridge) {
-        this.setEntryRel("off");
+      if (!bridge) return;
+      if (this.entryRelState === "loading") {
+        (_a = this.entryRelAbort) == null ? void 0 : _a.abort();
+        this.entryRelAbort = null;
+        void this.backgroundRelCommit(path, (_c = (_b = this.termPreview) == null ? void 0 : _b.body) != null ? _c : "", this.entryHeadTitle());
         return;
       }
-      this.entryRelText = "";
-      this.setEntryRel("loading");
+      if (this.entryPreviewDone && !this.entryPreviewPicks.length) return;
+      if (this.entryPreviewPicks.length) {
+        await bridge.apply(path, this.entryPreviewPicks);
+        return;
+      }
+      if (this.entryRelState === "failed") void this.backgroundRelNow(path);
+    }
+    /**
+     * 后台建链（issue 327）：分析中确认写入 / 预演失败兜底共用——不占面板，动态通知（同键原地更新）
+     * 报进度与结果：分析中… → 已写入 N 条 / 未发现实质关联 / 已入队 / 失败原因。
+     */
+    async backgroundRelCommit(path, content, title) {
+      const bridge = getLinkBridge();
+      if (!bridge) return;
+      notify("知识盒关联：后台分析中…", { type: "progress", dedupeKey: REL_BG_NOTICE_KEY });
+      try {
+        const out = await bridge.preview(content, title);
+        if (out.status === "skipped") {
+          notify("知识盒关联：自动关联未开启，未写入", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+          return;
+        }
+        if (out.status === "queued") {
+          notify("知识盒关联：向量服务不可达，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+          return;
+        }
+        if (out.status === "failed") {
+          notify(`知识盒关联失败：${out.error || "未知错误"}`, { type: "error", dedupeKey: REL_BG_NOTICE_KEY });
+          return;
+        }
+        if (!out.picks.length) {
+          notify("知识盒关联：未发现实质关联", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+          return;
+        }
+        const r = await bridge.apply(path, out.picks.map((p) => p.path));
+        notify(r.status === "done" ? `知识盒关联：已写入 ${r.created} 条关联` : "知识盒关联：自动关联未开启，未写入", {
+          type: r.status === "done" ? "success" : "info",
+          dedupeKey: REL_BG_NOTICE_KEY
+        });
+      } catch (e) {
+        notify(`知识盒关联失败：${e instanceof Error ? e.message : String(e)}`, { type: "error", dedupeKey: REL_BG_NOTICE_KEY });
+      }
+    }
+    /** 后台兜底建链（issue 327）：预演失败时的 bridge.now 完整管线，通知口径同 backgroundRelCommit */
+    async backgroundRelNow(path) {
+      const bridge = getLinkBridge();
+      if (!bridge) return;
+      notify("知识盒关联：后台建链中…", { type: "progress", dedupeKey: REL_BG_NOTICE_KEY });
       try {
         const out = await bridge.now(path);
         if (out.status === "done" || out.status === "skipped-related") {
-          const rels = await this.readRelatedTitles(path);
-          this.entryRelText = rels.join(" · ");
-          this.setEntryRel(rels.length ? "done" : "empty");
-        } else if (out.status === "queued") this.setEntryRel("queued");
-        else if (out.status === "skipped") this.setEntryRel("off");
-        else this.setEntryRel("failed");
-      } catch (e) {
-        this.setEntryRel("failed");
-      }
-    }
-    /**
-     * 确认写入后的关联落库（issue 309）：预演命中的目标**直接写进 related**（不重跑检索与裁判，
-     * 面板上已经显示过的结果原样落地）；没有可用预演（通道未接线 / 未命中 / 预演失败）→ 兜底跑完整管线。
-     */
-    async commitEntryLinks(path) {
-      try {
-        await this.entryRelPending;
-      } catch (e) {
-      }
-      const picks = this.entryPreviewPicks;
-      const bridge = getLinkBridge();
-      if (bridge && this.entryPreviewDone && !picks.length) {
-        this.setEntryRel("empty");
-        return;
-      }
-      if (bridge && picks.length) {
-        this.setEntryRel("loading");
-        try {
-          const out = await bridge.apply(path, picks);
-          if (out.status === "done") {
-            const rels = await this.readRelatedTitles(path);
-            this.entryRelText = rels.join(" · ");
-            this.setEntryRel(rels.length ? "done" : "empty");
-            return;
-          }
-        } catch (e) {
+          const created = out.status === "done" ? out.created : 0;
+          notify(created > 0 ? `知识盒关联：已写入 ${created} 条关联` : "知识盒关联：未发现实质关联", {
+            type: created > 0 ? "success" : "info",
+            dedupeKey: REL_BG_NOTICE_KEY
+          });
+        } else if (out.status === "queued") {
+          notify("知识盒关联：向量服务不可达，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+        } else if (out.status === "out-of-scope") {
+          notify("知识盒关联：该笔记不在三个盒子内，未写入", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+        } else if (out.status === "failed") {
+          notify(`知识盒关联失败：${out.error}`, { type: "error", dedupeKey: REL_BG_NOTICE_KEY });
+        } else {
+          notify("知识盒关联：自动关联未开启，未写入", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
         }
-      }
-      await this.runEntryLinkNow(path);
-    }
-    /** 读某篇笔记 frontmatter.related 的展示名列表（建链后就地显示 + 预览「关联」区共用解析） */
-    async readRelatedTitles(path) {
-      try {
-        const file = getApp().vault.getAbstractFileByPath(path);
-        if (!file) return [];
-        return parseRelatedNames(await getApp().vault.read(file));
       } catch (e) {
-        return [];
+        notify(`知识盒关联失败：${e instanceof Error ? e.message : String(e)}`, { type: "error", dedupeKey: REL_BG_NOTICE_KEY });
       }
     }
     setTermSummarizing(s) {
@@ -14521,7 +14534,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (save) save.disabled = s;
       const gen = q(this.termPopup, "#lit-term-generate");
       if (gen) gen.disabled = s;
-      if (!s) this.setEntryRelBusy(this.entryRelState === "loading");
     }
     /** 当前录入的头部标题：段落取属性卡里（可改）的标题，名词取输入框的词 */
     entryHeadTitle() {
@@ -14555,12 +14567,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
         notice(passage ? "请粘贴要整理的段落" : "请输入名词", "error");
         return;
       }
+      this.resetEntryRel();
       this.termGenerating = true;
       this.setTermGenLoading(true);
       try {
         const draft = passage ? await generatePassageDraft(text) : await generateTermDraft(text);
         this.presentTermPreview(draft);
-        this.entryRelPending = this.runEntryRelPreview(draft.summary, this.entryHeadTitle() || text);
+        this.runEntryRelPreview(draft.summary, this.entryHeadTitle() || text);
       } catch (e) {
         this.noticeTermError(e);
       } finally {
@@ -14579,12 +14592,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
         notice("请先拖入或粘贴图片", "error");
         return;
       }
+      this.resetEntryRel();
       this.termGenerating = true;
       this.setTermGenLoading(true);
       try {
         const draft = await generateImageDraft(images.map((im) => im.dataUrl));
         this.presentTermPreview(draft);
-        this.entryRelPending = this.runEntryRelPreview(draft.summary, this.entryHeadTitle());
+        this.runEntryRelPreview(draft.summary, this.entryHeadTitle());
       } catch (e) {
         this.noticeTermError(e);
       } finally {
@@ -14598,6 +14612,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         notice("请先生成简介", "info");
         return;
       }
+      this.resetEntryRel();
       this.termSummarizing = true;
       this.setTermSummarizing(true);
       try {
@@ -14605,7 +14620,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         this.termPreview.body = summarized;
         const contentEl = q(this.termPopup, "#lit-term-content");
         if (contentEl) contentEl.textContent = summarized;
-        this.entryRelPending = this.runEntryRelPreview(summarized, this.entryHeadTitle());
+        this.runEntryRelPreview(summarized, this.entryHeadTitle());
       } catch (e) {
         this.noticeTermError(e);
       } finally {
