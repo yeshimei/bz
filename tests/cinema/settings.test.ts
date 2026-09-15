@@ -58,7 +58,7 @@ describe('cinema 设置 schema', () => {
     const themeRow = schema.groups[0].rows[1] as any;
     expect(themeRow.binding).toMatchObject({ key: 'cinemaSkinTheme' });
     expect(themeRow.layoutKey).toBe('cinemaStyle');
-    // 组序：外观 → 目录 → 显示（「数据抓取」组 ADR-0133 起挪入设置面板「AI 与凭据」组）
+    // 组序：外观 → 目录 → 显示（「数据抓取」组 ADR-0133 起挪入设置面板，issue 330 定名「数据源凭据」组）
     expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录', '显示']);
   });
 

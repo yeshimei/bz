@@ -156,7 +156,7 @@ export class MockText {
   value = '';
   placeholder = '';
   inputEl: HTMLInputElement;
-  private cb: ((v: string) => void) | null = null;
+  protected cb: ((v: string) => void) | null = null;
   constructor() {
     this.inputEl = document.createElement('input');
     this.inputEl.type = 'text';
@@ -184,6 +184,21 @@ export class MockText {
     this.value = v;
     this.inputEl.value = v;
     if (this.cb) void this.cb(v);
+  }
+}
+/** addTextArea 用（issue 330）：复刻真实 TextAreaComponent 的 textarea 元素——
+ *  基类构造的孤儿 input 留在内存无害；setValue/setPlaceholder 经基类写 inputEl.value
+ *  对 textarea 同样成立。 */
+export class MockTextArea extends MockText {
+  textareaEl: HTMLTextAreaElement;
+  constructor() {
+    super();
+    this.textareaEl = document.createElement('textarea');
+    this.textareaEl.addEventListener('input', () => {
+      this.value = this.textareaEl.value;
+      if (this.cb) void this.cb(this.value);
+    });
+    this.inputEl = this.textareaEl as unknown as HTMLInputElement;
   }
 }
 export class MockToggle {
@@ -332,8 +347,8 @@ export class Setting {
     this.controls.push(t);
     return this;
   }
-  addTextArea(cb: (t: MockText) => void): this {
-    const t = new MockText();
+  addTextArea(cb: (t: MockTextArea) => void): this {
+    const t = new MockTextArea();
     cb(t);
     this.controlEl.appendChild(t.inputEl);
     this.controls.push(t);
