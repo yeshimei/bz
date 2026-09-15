@@ -1,5 +1,5 @@
-/* 源指纹 1085df3444a1e68d · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/ui-tools.ts","src/secondbrain/whitelist.ts"]*/
+/* 源指纹 ce0a3fc0f9498534 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/knowledge-boxes.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/ui-tools.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
   var __create = Object.create;
@@ -5347,7 +5347,62 @@ var BZW_secondbrain = (() => {
     }
   }
 
+  // src/core/knowledge-boxes.ts
+  var DEFAULT_LIT_DIR = "文献盒";
+  var DEFAULT_CARDBOX_DIR = "卡片盒";
+  var DEFAULT_TOPIC_DIR = "主题盒";
+  function normalizeBoxDir(raw, fallback) {
+    const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
+    return s || fallback;
+  }
+  function getKnowledgeBoxes(s) {
+    var _a2;
+    const st = (_a2 = s != null ? s : tryGetSettings()) != null ? _a2 : {};
+    return {
+      lit: normalizeBoxDir(st.knowledgeDirectory, DEFAULT_LIT_DIR),
+      cardbox: normalizeBoxDir(st.knowledgeCardboxDirectory, DEFAULT_CARDBOX_DIR),
+      topic: normalizeBoxDir(st.knowledgeTopicDirectory, DEFAULT_TOPIC_DIR)
+    };
+  }
+  function boxDirs(boxes) {
+    const b = boxes != null ? boxes : getKnowledgeBoxes();
+    const out = [];
+    for (const d of [b.lit, b.cardbox, b.topic]) {
+      if (d && !out.includes(d)) out.push(d);
+    }
+    return out;
+  }
+  function isBoxDir(dir, boxes) {
+    const d = normalizeBoxDir(dir, "");
+    return !!d && boxDirs(boxes).includes(d);
+  }
+
+  // src/secondbrain/whitelist.ts
+  function parsePathList(raw) {
+    if (raw === null || raw === void 0) return [];
+    const out = [];
+    for (const part of String(raw).split(",")) {
+      const p = part.trim().replace(/^\/+|\/+$/g, "");
+      if (p && !out.includes(p)) out.push(p);
+    }
+    return out;
+  }
+
   // src/secondbrain/config.ts
+  function parseAllowPaths(raw) {
+    const out = [];
+    for (const p of parsePathList(raw)) {
+      const d = p.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+      if (d && !out.includes(d)) out.push(d);
+    }
+    return out;
+  }
+  function resolveAllowPaths(rawAllowPaths) {
+    const boxes = getKnowledgeBoxes();
+    const dirs = boxDirs(boxes);
+    const extra = parseAllowPaths(rawAllowPaths).filter((p) => !isBoxDir(p, boxes) && !dirs.includes(p));
+    return [...dirs, ...extra];
+  }
   function buildConfig() {
     const s = tryGetSettings();
     return {
@@ -5358,8 +5413,7 @@ var BZW_secondbrain = (() => {
       TOP_K: Number(s.secondBrainTopK) || 20,
       CHAT_TOP_K: Number(s.secondBrainChatTopK) || 20,
       CHUNK_MIN_LENGTH: Number(s.secondBrainChunkMinLength) || 50,
-      ALLOW_PATHS: s.secondBrainAllowPaths ? String(s.secondBrainAllowPaths).split(",").map((p) => p.trim()).filter(Boolean) : [],
-      // ticket 116：空 = 什么也不录（不索引任何目录），不再是缺省目录清单
+      ALLOW_PATHS: resolveAllowPaths(s.secondBrainAllowPaths),
       CONTEXT_LIMIT: Number(s.secondBrainContextLimit) || 600,
       DEBOUNCE_DELAY: Number(s.secondBrainDebounceDelay) || 300,
       CURSOR_POLL_INTERVAL: Number(s.secondBrainCursorPollInterval) || 500,
@@ -6088,13 +6142,13 @@ var BZW_secondbrain = (() => {
   function confirmFullRebuild() {
     return openFlowDialog({
       title: "重新索引",
-      message: "将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？",
+      message: "将清空现有向量索引，按当前索引范围（三个盒子与额外检索目录）全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？",
       // 皮肤类（issue 291）：确认框挂 body，脱离主面板根，须显式带 .bz-sb-flow-dialog
       // 才拿到 --sb-* token（否则掉回 core 裸样式）；单源生效于三处入口
       className: "bz-sb-flow-dialog",
       actions: [
         { label: "取消", value: "cancel" },
-        // 刻意不标 danger（issue 291 评审）：清空的是**可重建的派生数据**（向量索引按白名单重嵌入即恢复），
+        // 刻意不标 danger（issue 291 评审）：清空的是**可重建的派生数据**（向量索引按索引范围重嵌入即恢复），
         // 用户笔记与配置一字不动 —— 非不可逆数据破坏，故保留普通高亮主动作。
         { label: "开始重建", value: "ok", cta: true }
       ]
@@ -6397,7 +6451,7 @@ var BZW_secondbrain = (() => {
           status.textContent = "没有成功向量化任何内容：请确认 Ollama 服务与 Embedding 模型可用" + (IS_MOBILE ? "（移动端需配置「远程 Ollama URL」）" : "") + "后重试";
           this.revealInitBtn("重试初始化");
         } else if (sawWarning) {
-          status.textContent = "白名单目录内没有可索引的 Markdown 笔记：请检查 ⚙️ 设置中的「白名单目录」";
+          status.textContent = "三个盒子与额外检索目录内都没有可索引的笔记：请检查 ⚙️ 设置中的「目录与分类」";
           this.revealInitBtn("重试初始化");
         } else {
           status.textContent = "未发现可索引的笔记内容";

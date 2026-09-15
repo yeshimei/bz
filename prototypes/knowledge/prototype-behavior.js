@@ -1,5 +1,5 @@
-/* 源指纹 303f5a56cac8b60f · 仓内输入 34 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
+/* 源指纹 d69411cb94076c67 · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
   var __create = Object.create;
@@ -6067,6 +6067,24 @@ var BZW_knowledge = (() => {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
   }
 
+  // src/core/knowledge-boxes.ts
+  var DEFAULT_LIT_DIR = "文献盒";
+  var DEFAULT_CARDBOX_DIR = "卡片盒";
+  var DEFAULT_TOPIC_DIR = "主题盒";
+  function normalizeBoxDir(raw, fallback) {
+    const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
+    return s || fallback;
+  }
+  function getKnowledgeBoxes(s) {
+    var _a;
+    const st = (_a = s != null ? s : tryGetSettings()) != null ? _a : {};
+    return {
+      lit: normalizeBoxDir(st.knowledgeDirectory, DEFAULT_LIT_DIR),
+      cardbox: normalizeBoxDir(st.knowledgeCardboxDirectory, DEFAULT_CARDBOX_DIR),
+      topic: normalizeBoxDir(st.knowledgeTopicDirectory, DEFAULT_TOPIC_DIR)
+    };
+  }
+
   // src/core/dom.ts
   function longPress(el, cb, dur, filter) {
     if (!dur) dur = 500;
@@ -9017,10 +9035,9 @@ ${sample}`,
   var SUGGEST_REASONING_EFFORT = "low";
   var REASON_MAX_CHARS = 80;
   var SUGGEST_CACHE_FILE = "mount-suggest.json";
-  var SUGGEST_CACHE_VERSION = 3;
+  var SUGGEST_CACHE_VERSION = 4;
   var HAS_MEANING_RE = /[\p{L}\p{N}]/u;
   var WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
-  var SUGGEST_EXCLUDE_DIRS = ["归档", "网页剪藏"];
   var BLOCK_ID_PREFIX = "bz-";
   function hash8(s) {
     const h = hash31(String(s != null ? s : "")) >>> 0;
@@ -9222,15 +9239,12 @@ ${sample}`,
       return null;
     }
   }
-  function inRecallScope(path) {
+  function inRecallScope(path, cardboxDir) {
     const p = idPath(path);
     if (!p) return false;
-    for (const dir of SUGGEST_EXCLUDE_DIRS) {
-      const d = idPath(dir);
-      if (!d) continue;
-      if (p === d || p.startsWith(d + "/")) return false;
-    }
-    return true;
+    const dir = idPath(cardboxDir != null ? cardboxDir : getKnowledgeBoxes().cardbox);
+    if (!dir) return false;
+    return p === dir || p.startsWith(dir + "/");
   }
   function kindOfTarget(path, ctx, unit) {
     if (unit === "heading") return "head";
@@ -9675,7 +9689,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (!p) continue;
       const key2 = normalizeTargetPath(p);
       if (!key2 || key2 === selfKey) continue;
-      if (!inRecallScope(p)) continue;
+      if (!inRecallScope(p, opts == null ? void 0 : opts.cardboxDir)) continue;
       let entry = byPath.get(key2);
       if (!entry) {
         entry = { path: p, hitCount: 0, maxScore: 0, snippet: "", segs: [] };
@@ -9855,7 +9869,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (searchFailed) break;
     }
     if (searchFailed) return empty("no-index");
-    const pool = aggregatePool(hits, { selfPath: cardPath, limit: SUGGEST_POOL_SIZE }).filter((c) => {
+    const pool = aggregatePool(hits, { selfPath: cardPath, limit: SUGGEST_POOL_SIZE, cardboxDir: ctx.cardboxDir }).filter((c) => {
       if (!ctx.app.vault.getAbstractFileByPath(c.path)) return false;
       return !matchesExisting(c.path, null, existing);
     });
@@ -12006,16 +12020,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   }
   function litDirOf(s) {
-    const raw = s && s.knowledgeDirectory ? String(s.knowledgeDirectory) : "文献盒";
-    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    return getKnowledgeBoxes(s || {}).lit;
   }
   function cardboxDirOf(s) {
-    const raw = s && s.knowledgeCardboxDirectory ? String(s.knowledgeCardboxDirectory) : "卡片盒";
-    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    return getKnowledgeBoxes(s || {}).cardbox;
   }
   function topicDirOf(s) {
-    const raw = s && s.knowledgeTopicDirectory ? String(s.knowledgeTopicDirectory) : "主题盒";
-    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    return getKnowledgeBoxes(s || {}).topic;
   }
   function parseDateRaw(raw) {
     const s = String(raw != null ? raw : "").trim();
@@ -15391,7 +15402,9 @@ ${text}`;
         const picks = targetPaths.map((p) => ({ path: p, title: map.get(p) || p }));
         return { status: "done", created: await writeLinks(path, picks) };
       },
-      now: async (path) => ({ status: "done", created: await writeLinks(path, candidates()) })
+      now: async (path) => ({ status: "done", created: await writeLinks(path, candidates()) }),
+      // ADR-0141：通道第四段（批量补链）——原型壳不跑批量，恒报无目标
+      backfill: async () => ({ status: "no-targets" })
     });
   }
   function injectFakeVectorSearch() {
