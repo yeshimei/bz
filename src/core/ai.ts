@@ -42,6 +42,8 @@ export interface AISettingsLike {
   aiContextOverrides?: Record<string, number>;
   /** 每提供商最大输出 token 覆盖（键 = provider id；未填用注册表 defaultMaxTokens） */
   aiMaxTokensOverrides?: Record<string, number>;
+  /** AI 思考档位（issue 330/ADR-0146）：auto（缺省）/ off / low / medium / high */
+  aiThinking?: string;
 }
 
 let _settingsProvider: (() => AISettingsLike) | null = null;
@@ -285,9 +287,60 @@ export function getProviderDescriptor(id?: string): AIProviderDescriptor {
   );
 }
 
+// ---------------- 思考档位映射（issue 330/ADR-0146） ----------------
+
+/** 思考参数风格：effort = reasoning_effort 档位（OpenAI 兼容层通用，含 Anthropic/Google 兼容端点）；
+ *  enable = enable_thinking 开关（DeepSeek V4 系 / Qwen，无强度档）；zhipu = thinking.type 开关；
+ *  none = 不注入（未知/自定义端点冒进发参数有 400 风险，保守不发） */
+export type AIThinkingStyle = 'effort' | 'enable' | 'zhipu' | 'none';
+
+/** provider id → 思考风格单一事实源（ADR-0146 §2；新增提供商时在此补一行） */
+export const AI_THINKING_STYLE: Record<string, AIThinkingStyle> = {
+  openai: 'effort',
+  openrouter: 'effort',
+  anthropic: 'effort',
+  google: 'effort',
+  groq: 'effort',
+  xai: 'effort',
+  together: 'effort',
+  mistral: 'effort',
+  siliconflow: 'effort',
+  deepseek: 'enable',
+  'opencode-go': 'enable',
+  dashscope: 'enable',
+  zhipu: 'zhipu',
+  'zhipu-plan': 'zhipu',
+  moonshot: 'none',
+  ollama: 'none',
+  custom: 'none',
+};
+
+/** 思考档位 + 风格 → 应注入请求体的键值对；null = 不注入。
+ *  auto/未知档不注入；off 对 effort 家族同样不注入（该家族无「关思考」参数，
+ *  真正关闭须选非思考模型——设置行文案如实说明）；enable/zhipu 的 off 发显式关闭键。 */
+export function thinkingOptionsFor(level: string, style: AIThinkingStyle): Record<string, any> | null {
+  if (style === 'none') return null;
+  if (level === 'off') {
+    if (style === 'enable') return { enable_thinking: false };
+    if (style === 'zhipu') return { thinking: { type: 'disabled' } };
+    return null;
+  }
+  if (level !== 'low' && level !== 'medium' && level !== 'high') return null; // auto / 非法值
+  if (style === 'effort') return { reasoning_effort: level };
+  if (style === 'enable') return { enable_thinking: true };
+  return { thinking: { type: 'enabled' } }; // zhipu
+}
+
+/** modelOptions 是否显式带了思考键（显式优先：reason()/reasonAndSearch() 等调用方语义不被设置覆盖） */
+export function hasExplicitThinkingOption(mo: Record<string, any>): boolean {
+  return 'enable_thinking' in mo || 'reasoning_effort' in mo || 'thinking' in mo;
+}
+
 // ---------------- provider 解析 ----------------
 
 interface AIProvider {
+  /** 注册表 id（思考风格映射用，issue 330/ADR-0146）；对象 override 无 id = 不注入思考参数 */
+  id?: string;
   endpoint: string;
   apiKey: string;
   model?: string;
@@ -347,6 +400,7 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
       throw new Error('未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）');
     }
     return cachePut({
+      id: 'custom',
       endpoint,
       apiKey: s.aiCustomApiKey,
       model: s.aiCustomModel || undefined,
@@ -364,6 +418,7 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
       const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
       if (provider && provider.endpoint && provider.apiKey) {
         return cachePut({
+          id: 'deepseek',
           endpoint: String(provider.endpoint).replace(/\/+$/, ''),
           apiKey: provider.apiKey,
           contextWindow: desc.defaultContextWindow,
@@ -381,6 +436,7 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
   const overrideContext = s.aiContextOverrides?.[name];
   const overrideMaxTokens = s.aiMaxTokensOverrides?.[name];
   return cachePut({
+    id: name,
     endpoint: desc.endpoint,
     apiKey: (key as string) || '',
     model: overrideModel || desc.model || undefined,
@@ -676,6 +732,13 @@ export class AIService {
     for (const k of Object.keys(mo)) {
       if (k === 'max_tokens') continue;
       body[k] = mo[k];
+    }
+    // 思考档位注入（issue 330/ADR-0146）：调用方显式思考键优先；auto / none 风格不注入。
+    // 字符串 override 指定的 provider 以其自身风格为准（provider.id 随解析带出）
+    if (!hasExplicitThinkingOption(mo)) {
+      const style = AI_THINKING_STYLE[provider.id || ''] || 'none';
+      const thinking = thinkingOptionsFor(s.aiThinking || 'auto', style);
+      if (thinking) Object.assign(body, thinking);
     }
     const signal = mergedOptions.signal instanceof AbortSignal ? (mergedOptions.signal as AbortSignal) : undefined;
     const onDelta = typeof mergedOptions.onDelta === 'function' ? (mergedOptions.onDelta as (delta: string) => void) : undefined;

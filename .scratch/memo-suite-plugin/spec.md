@@ -230,6 +230,8 @@ Feature: memo-suite-plugin
 48. 作为用户，我希望插件在未配置 AI key / 未装 Dataview / 无 Ollama 时各域优雅降级（禁用或提示），以便不拖垮主应用。
 49. 作为用户，我希望原脚本的域间全局状态（window.__memo/__quiz/__homeFilmStatus/__MOVIE_FOLDER_PATH/_bookSettings 等）改为模块级共享，语义不变，以便域间协作不受全局污染。
 50. 作为用户，我希望原脚本的命令防重注册机制（window.__belongingsCommandRegistered/_newsCommandRegistered 语义）由插件生命周期管理取代（onload 注册一次/onunload 清理），以便无重复注册。
+51. 作为用户，我希望主设置页 AI 组提供「思考（reasoning）」下拉（跟随模型默认 / 关闭 / 低 / 中 / 高），请求时按服务商翻译成各家思考参数（reasoning_effort / enable_thinking / thinking.type；custom 与不支持的服务商不注入，调用方显式传参优先），以便统一控制思考行为、给裁判类小任务省 reasoning token（issue 330，ADR-0146）。
+52. 作为用户，我希望自动关联提供「候选相似度下限」（默认 0.65，0 = 不过滤）：向量分数低于下限的候选直接剔除、不送 AI 裁判，以便明显无关的候选不再白耗裁判 token（issue 330，ADR-0146）。
 
 ## Implementation Decisions
 

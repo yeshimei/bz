@@ -183,6 +183,15 @@ export class LinkAgent {
     return settingNumber(s.linkAgentTopK, 8) || 8;
   }
 
+  /**
+   * 候选相似度下限（issue 330/ADR-0146）：vectorSearch 锐化后分数（score^0.35，与参考面板
+   * 百分比同尺）低于此值的候选直接剔除、不送 AI 裁判；0 = 不过滤。默认 0.65 ≈ 原始余弦 0.30。
+   */
+  private get minScore(): number {
+    const s = tryGetSettings() as any;
+    return settingNumber(s.linkAgentMinScore, 0.65);
+  }
+
   private get maxLinks(): number {
     const s = tryGetSettings() as any;
     return settingNumber(s.linkAgentMaxLinks, 0);
@@ -459,13 +468,15 @@ export class LinkAgent {
 
   /**
    * 候选生成（ADR-0141 §2：**候选端同样限三盒**——ticket 116「候选 = 白名单索引库全部笔记」口径作废）：
-   * 全局大池近邻 → 去自身 → 剔除盒外 / 已不存在文件 / encrypt 锁定 → 按 path 去重取最优 → Top-K。
+   * 全局大池近邻 → 去自身 → 剔除盒外 / 已不存在文件 / encrypt 锁定 → 相似度下限粗筛（issue 330/ADR-0146，
+   * 低于 linkAgentMinScore 的直接剔除不送 AI 裁判）→ 按 path 去重取最优 → Top-K。
    * 盒外笔记（日记、剪藏、旧卡片盒）即便已进索引也不会被召回，保证关联结果永远指向盒内。
    * 查询端（ticket 118）：**全文嵌入**——正文全文（剥 frontmatter、去空白，超长按 LINK_QUERY_MAX_CHARS 安全截尾）
    * 送向量模型生成查询向量，而非 800 字摘要，提高召回。
    */
   async findCandidates(selfPath: string, content: string): Promise<SearchHit[]> {
     const topK = this.maxTopK;
+    const minScore = this.minScore;
     const cfg = buildConfig();
     const baseUrl = IS_MOBILE ? cfg.OLLAMA_REMOTE_URL || cfg.OLLAMA_URL : undefined;
     const pool = Math.max(topK * 3, CANDIDATE_POOL_MIN);
@@ -482,6 +493,7 @@ export class LinkAgent {
       if (!inLinkScope(hit.path)) continue;
       if (!this.app.vault.getAbstractFileByPath(hit.path)) continue;
       if (isEncryptLockedPath(this.app, hit.path)) continue;
+      if (minScore > 0 && hit.score < minScore) continue;
       const cur = bestByPath.get(hit.path);
       if (!cur || hit.score > cur.score) bestByPath.set(hit.path, hit);
     }

@@ -230,6 +230,21 @@ function aiGroupRows(): SettingsRow[] {
     providerModelCustomRow(),
     providerNumberConfigRow('context'),
     providerNumberConfigRow('maxTokens'),
+    // 思考档位（issue 330/ADR-0146）：全局单值，请求时按 provider 静态映射翻译各家参数；
+    // 「关闭」对 effort 家族无法用参数关思考（如实说明），enable/zhipu 家族发显式关闭键
+    {
+      type: 'select',
+      name: '思考 reasoning',
+      desc: '关闭可省判定类小任务的思考消耗，部分服务商不支持分档',
+      binding: { key: 'aiThinking' },
+      options: [
+        { value: 'auto', label: '跟随模型默认' },
+        { value: 'off', label: '关闭（省 token）' },
+        { value: 'low', label: '低' },
+        { value: 'medium', label: '中' },
+        { value: 'high', label: '高' },
+      ],
+    },
   );
   // 凭据行（ADR-0133：「AI 与凭据」组收编）——B站 Cookie（知识盒档位查询；桌面端可从 CLI 导入）
   // + 影院 ApiZero Key / 豆瓣 Cookie（原影院「数据抓取」组挪入）

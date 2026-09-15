@@ -144,6 +144,8 @@ _Avoid_: 自动双链（旧称，ADR-0141 正名为「自动关联」）
 
 **盒内召回 (Box-scoped Recall)**: 两条 AI 链路的候选范围口径同族但**不可互相套用**（ADR-0141/0142）——自动关联限**三个盒子**（两端都限），挂载「语义建议」限**卡片盒白名单**（只召回卡片盒内的另一张卡，六类形态缩编为整篇/标题/段落/卡片四类，卡片盒为空即空建议集）。_Avoid_: 全库召回（ADR-0140 的排除式旧口径，已修订）
 
+**候选相似度下限 (Min Score, issue 330/ADR-0146)**: 自动关联的候选粗筛线（设置 `linkAgentMinScore`，默认 0.65，0 = 不过滤）——`findCandidates` 在范围过滤后、TopK 截断前把向量分数低于下限的候选直接剔除、不送 AI 裁判。分数与参考面板显示百分比**同尺**（`score^0.35` 锐化后余弦），0.65 ≈ 原始余弦 0.30。三条触发路径与录入预演同源生效。_Avoid_: 高分直链（下限只拦低分，高分候选仍一律过裁判）、查询截断（那是 LINK_QUERY_MAX_CHARS 输入侧）
+
 **挂载点 (Mount Point, ADR-0137)**: 卡片盒卡片的名字所充当的知识汇集点——**卡片名即挂载点名**（如卡片「DeepSeek」就是挂载点 DeepSeek）。挂载点呈现为一个汇集列表：卡片本体（恒列第一位）+ 三种来源的挂载（见「固定挂载」「自动挂载」「手动挂载」）。挂载点不是一个新实体，而是围绕卡片的**派生视图**；卡片改名 = 挂载点改名，同名对齐随名字走。_Avoid_: 主题笔记（部叁概念，另指）、话题、枢纽笔记、合集
 
 **固定挂载 (Fixed Mount, ADR-0137)**: 挂载列表中恒定的两项——**卡片本体**（第一位，即卡片自身内容）与**同名文献**（文献目录里与卡片同名的知识背景笔记，按名字持续对齐：创建卡片时文献未录入则位置空悬，同名文献任何时候录入都自动顶上）。两项都实时读出、不落盘。_Avoid_: 默认挂载、初始挂载（暗指一次性快照——同名对齐是持续的）
@@ -456,6 +458,8 @@ _Avoid_: 行助手拼装（想法 A 旧口径）、手写 Setting 链、builder 
 
 **通用设置组 (Common Settings Group)**: 跨域同构设置项在 core 定义一次、域一行挂载的复用层（ticket 131 想法 B 定稿）——首批「移动端默认全屏」（11 键收敛）、「批次数数字行」、「排序与默认筛选下拉」；门控、文案、防抖口径只在 core 一处。
 _Avoid_: 逐域复制设置块
+
+**思考设置 (Thinking Control, issue 330/ADR-0146)**: AI 全局思考档位（设置 `aiThinking`：auto/off/low/medium/high，默认 auto = 不注入任何思考参数、现状零变化）——请求时按 provider 静态风格映射翻译：effort 家族发 `reasoning_effort`（openai/openrouter/anthropic/google/groq/xai/together/mistral/siliconflow），enable 家族发 `enable_thinking`（deepseek/opencode-go/dashscope），zhipu 发 `thinking.type`，custom/moonshot/ollama 永不注入；modelOptions 显式键优先不覆盖（reason() 等既有语义不变）。强度**不做动态获取**（/models 无能力元数据）。_Avoid_: 思考开关（单开关表述，实为五档）、动态能力探测（已否）
 
 **插槽行 (Custom Row)**: 声明式设置页中非常规内容（皮肤网格、chips 区、异步状态区）的唯一出口——render 回调行；是声明体系的逃生口，不是第二体系。
 _Avoid_: 自定义 build 分支（build 入口已退役）

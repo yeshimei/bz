@@ -1,4 +1,4 @@
-/* 源指纹 63435fe3797c60b4 · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 fcde899317fff5eb · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -4519,6 +4519,40 @@ var BZW_cinema = (() => {
   function getProviderDescriptor(id) {
     return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
   }
+  var AI_THINKING_STYLE = {
+    openai: "effort",
+    openrouter: "effort",
+    anthropic: "effort",
+    google: "effort",
+    groq: "effort",
+    xai: "effort",
+    together: "effort",
+    mistral: "effort",
+    siliconflow: "effort",
+    deepseek: "enable",
+    "opencode-go": "enable",
+    dashscope: "enable",
+    zhipu: "zhipu",
+    "zhipu-plan": "zhipu",
+    moonshot: "none",
+    ollama: "none",
+    custom: "none"
+  };
+  function thinkingOptionsFor(level, style) {
+    if (style === "none") return null;
+    if (level === "off") {
+      if (style === "enable") return { enable_thinking: false };
+      if (style === "zhipu") return { thinking: { type: "disabled" } };
+      return null;
+    }
+    if (level !== "low" && level !== "medium" && level !== "high") return null;
+    if (style === "effort") return { reasoning_effort: level };
+    if (style === "enable") return { enable_thinking: true };
+    return { thinking: { type: "enabled" } };
+  }
+  function hasExplicitThinkingOption(mo) {
+    return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
+  }
   var _aiProviderCache = null;
   async function getAIProvider(override) {
     var _a, _b, _c;
@@ -4547,6 +4581,7 @@ var BZW_cinema = (() => {
         throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
       }
       return cachePut({
+        id: "custom",
         endpoint,
         apiKey: s.aiCustomApiKey,
         model: s.aiCustomModel || void 0,
@@ -4563,6 +4598,7 @@ var BZW_cinema = (() => {
         const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
         if (provider && provider.endpoint && provider.apiKey) {
           return cachePut({
+            id: "deepseek",
             endpoint: String(provider.endpoint).replace(/\/+$/, ""),
             apiKey: provider.apiKey,
             contextWindow: desc.defaultContextWindow,
@@ -4579,6 +4615,7 @@ var BZW_cinema = (() => {
     const overrideContext = (_b = s.aiContextOverrides) == null ? void 0 : _b[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
     return cachePut({
+      id: name,
       endpoint: desc.endpoint,
       apiKey: key || "",
       model: overrideModel || desc.model || void 0,
@@ -4766,6 +4803,11 @@ var BZW_cinema = (() => {
       for (const k of Object.keys(mo)) {
         if (k === "max_tokens") continue;
         body[k] = mo[k];
+      }
+      if (!hasExplicitThinkingOption(mo)) {
+        const style = AI_THINKING_STYLE[provider.id || ""] || "none";
+        const thinking = thinkingOptionsFor(s.aiThinking || "auto", style);
+        if (thinking) Object.assign(body, thinking);
       }
       const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
       const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;

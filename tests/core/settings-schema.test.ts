@@ -24,13 +24,14 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'folder-open', 'bell']);
   });
 
-  it('AI 与凭据区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行 + per-provider 配置三行 + 凭据三行（ticket 171/172；issue 187 删自定义模型行；ADR-0133 收编 B站 Cookie/影院两项）', () => {
+  it('AI 与凭据区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行 + per-provider 配置三行 + 思考档位 + 凭据三行（ticket 171/172；issue 187 删自定义模型行；ADR-0133 收编 B站 Cookie/影院两项；issue 330 加思考行）', () => {
     const rows = schema.groups[0].rows;
     // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行（每行 text）+ 自定义端点/密钥（text×2）
     //         + per-provider 配置三行（声明式重写后模型行同为标准 text + actions；上下文/最大输出 token number）
+    //         + 思考档位 select（issue 330/ADR-0146，全局单值常显）
     //         + 凭据三行（B站 Cookie / ApiZero Key / 豆瓣 Cookie，ADR-0133）
     const nonCustom = AI_PROVIDER_REGISTRY.filter((p) => p.id !== 'custom');
-    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'number', 'number', 'text', 'text', 'text'];
+    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'number', 'number', 'select', 'text', 'text', 'text'];
     expect(rows.map((r) => r.type)).toEqual(types);
     // 密钥行标题来自注册表 apiKeyLabel（含 deepseek/opencode-go，顺序与注册表一致）
     const names = rows.map((r) => (r as { name: string }).name);
@@ -38,7 +39,7 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     expect(names).toEqual([
       'AI 服务商', ...keyNames,
       '自定义 API 地址', '自定义 API 密钥',
-      '模型名称', '上下文窗口', '最大输出 token',
+      '模型名称', '上下文窗口', '最大输出 token', '思考 reasoning',
       'B站 Cookie', 'ApiZero Key', '豆瓣 Cookie',
     ]);
     const [provider, ...rest] = rows as Array<{
@@ -74,6 +75,12 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     expect('key' in ctxRow.binding!).toBe(false);
     expect('get' in ctxRow.binding!).toBe(true);
     expect(ctxRow.visibleWhen).toBeUndefined();
+    // 思考档位（issue 330/ADR-0146）：key 直绑 aiThinking，五档 options，全局常显
+    const thinkingRow = rows.find((r) => (r as { name: string }).name === '思考 reasoning') as any;
+    expect(thinkingRow.type).toBe('select');
+    expect(thinkingRow.binding).toEqual({ key: 'aiThinking' });
+    expect(thinkingRow.visibleWhen).toBeUndefined();
+    expect(thinkingRow.options.map((o: { value: string }) => o.value)).toEqual(['auto', 'off', 'low', 'medium', 'high']);
     // 显隐（ticket 170/171）：deepseek 显示 DeepSeek 行；opencode-go 显示 OpenCode 行；custom 显示自定义两行
     const findKey = (key: string) => {
       const idx = nonCustom.findIndex((p) => p.apiKeyKey === key);

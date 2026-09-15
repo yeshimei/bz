@@ -71,11 +71,11 @@ describe('⚙️ 知识盒设置弹窗「自动关联」组（ADR-0141 §1：自
     setApp({ vault: new MockVault() } as any);
   });
 
-  it('开启态：组名与五条明细渲染；「关联范围」行已退役（ADR-0141 §2：范围恒为三个盒子）', () => {
+  it('开启态：组名与六条明细渲染；「关联范围」行已退役（ADR-0141 §2：范围恒为三个盒子）', () => {
     openAutoLinkSettings();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('自动关联');
-    for (const name of ['单篇候选数量 TopK', '每篇关联上限', '完成通知', '失效关联自动清理', '已有关联不再建链']) {
+    for (const name of ['单篇候选数量 TopK', '每篇关联上限', '候选相似度下限', '完成通知', '失效关联自动清理', '已有关联不再建链']) {
       expect([...popup.querySelectorAll('.setting-item')].some((el) => (el as HTMLElement).dataset.name === name)).toBe(true);
     }
     const rowNames = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
@@ -130,12 +130,14 @@ describe('⚙️ 知识盒设置弹窗「自动关联」组（ADR-0141 §1：自
     // 各键独立持久化
     rowTrigger(popup, '单篇候选数量 TopK')('6');
     rowTrigger(popup, '每篇关联上限')('5');
+    rowTrigger(popup, '候选相似度下限')('0.5');
     rowTrigger(popup, '完成通知')(true);
     rowTrigger(popup, '失效关联自动清理')(true);
     rowTrigger(popup, '已有关联不再建链')(true);
     await new Promise((r) => setTimeout(r, 10));
     expect(settings.linkAgentTopK).toBe(6);
     expect(settings.linkAgentMaxLinks).toBe(5);
+    expect(settings.linkAgentMinScore).toBe(0.5); // issue 330/ADR-0146：钳制到 0~1 的数字
     expect(settings.linkAgentNotify).toBe(true);
     expect(settings.linkAgentAutoClean).toBe(true);
     expect(settings.linkAgentRespectRelated).toBe(true);
@@ -301,6 +303,25 @@ describe('管线：related 幂等写入与可达性门', () => {
     setSettingsProvider(() => ({ ...baseSettings(), knowledgeCardboxDirectory: '卡片盒2' }));
     const r2 = await second.agent.findCandidates('文献盒/A.md', '正文');
     expect(r2.map((c) => c.path)).toEqual(['卡片盒2/N.md']);
+  });
+
+  it('候选相似度下限（issue 330/ADR-0146）：低于下限的候选剔除不送裁判；边界值保留；0 不过滤', async () => {
+    // 默认 0.65：等于下限保留（严格小于才剔）、低于剔除
+    const { vault, agent } = makeWorld({
+      hits: [
+        { path: '文献盒/B.md', chunk: 'B', score: 0.9 },
+        { path: '文献盒/D.md', chunk: 'D', score: 0.65 }, // 边界：保留
+        { path: '文献盒/E.md', chunk: 'E', score: 0.649 }, // 低于下限：剔除
+      ],
+    });
+    vault.files.set('文献盒/E.md', 'e');
+    const r1 = await agent.findCandidates('文献盒/A.md', '正文');
+    expect(r1.map((c) => c.path)).toEqual(['文献盒/B.md', '文献盒/D.md']);
+
+    // 0 = 不过滤：低分候选照常入选（设置实时读，改 provider 即生效）
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentMinScore: 0 }));
+    const r2 = await agent.findCandidates('文献盒/A.md', '正文');
+    expect(r2.map((c) => c.path)).toEqual(['文献盒/B.md', '文献盒/D.md', '文献盒/E.md']);
   });
 
   it('查询端全文嵌入（ticket 118）：不再 800 字截断；超长按 LINK_QUERY_MAX_CHARS 安全截尾', async () => {

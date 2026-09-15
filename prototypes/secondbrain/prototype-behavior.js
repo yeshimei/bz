@@ -1,4 +1,4 @@
-/* 源指纹 347a75ecb6076d33 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d97e4b0dcf820a2f · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/knowledge-boxes.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/ui-tools.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
@@ -4408,6 +4408,40 @@ var BZW_secondbrain = (() => {
   function getProviderDescriptor(id) {
     return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
   }
+  var AI_THINKING_STYLE = {
+    openai: "effort",
+    openrouter: "effort",
+    anthropic: "effort",
+    google: "effort",
+    groq: "effort",
+    xai: "effort",
+    together: "effort",
+    mistral: "effort",
+    siliconflow: "effort",
+    deepseek: "enable",
+    "opencode-go": "enable",
+    dashscope: "enable",
+    zhipu: "zhipu",
+    "zhipu-plan": "zhipu",
+    moonshot: "none",
+    ollama: "none",
+    custom: "none"
+  };
+  function thinkingOptionsFor(level, style) {
+    if (style === "none") return null;
+    if (level === "off") {
+      if (style === "enable") return { enable_thinking: false };
+      if (style === "zhipu") return { thinking: { type: "disabled" } };
+      return null;
+    }
+    if (level !== "low" && level !== "medium" && level !== "high") return null;
+    if (style === "effort") return { reasoning_effort: level };
+    if (style === "enable") return { enable_thinking: true };
+    return { thinking: { type: "enabled" } };
+  }
+  function hasExplicitThinkingOption(mo) {
+    return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
+  }
   var _aiProviderCache = null;
   async function getAIProvider(override) {
     var _a2, _b2, _c;
@@ -4436,6 +4470,7 @@ var BZW_secondbrain = (() => {
         throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
       }
       return cachePut({
+        id: "custom",
         endpoint,
         apiKey: s.aiCustomApiKey,
         model: s.aiCustomModel || void 0,
@@ -4452,6 +4487,7 @@ var BZW_secondbrain = (() => {
         const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
         if (provider && provider.endpoint && provider.apiKey) {
           return cachePut({
+            id: "deepseek",
             endpoint: String(provider.endpoint).replace(/\/+$/, ""),
             apiKey: provider.apiKey,
             contextWindow: desc.defaultContextWindow,
@@ -4468,6 +4504,7 @@ var BZW_secondbrain = (() => {
     const overrideContext = (_b2 = s.aiContextOverrides) == null ? void 0 : _b2[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
     return cachePut({
+      id: name,
       endpoint: desc.endpoint,
       apiKey: key || "",
       model: overrideModel || desc.model || void 0,
@@ -4655,6 +4692,11 @@ var BZW_secondbrain = (() => {
       for (const k of Object.keys(mo)) {
         if (k === "max_tokens") continue;
         body[k] = mo[k];
+      }
+      if (!hasExplicitThinkingOption(mo)) {
+        const style = AI_THINKING_STYLE[provider.id || ""] || "none";
+        const thinking = thinkingOptionsFor(s.aiThinking || "auto", style);
+        if (thinking) Object.assign(body, thinking);
       }
       const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
       const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;

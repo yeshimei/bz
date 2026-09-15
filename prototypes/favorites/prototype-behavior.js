@@ -1,4 +1,4 @@
-/* 源指纹 70aadebab30555a8 · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 52a2bb79234b1f70 · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -4961,6 +4961,40 @@ var BZW_favorites = (() => {
   function getProviderDescriptor(id) {
     return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
   }
+  var AI_THINKING_STYLE = {
+    openai: "effort",
+    openrouter: "effort",
+    anthropic: "effort",
+    google: "effort",
+    groq: "effort",
+    xai: "effort",
+    together: "effort",
+    mistral: "effort",
+    siliconflow: "effort",
+    deepseek: "enable",
+    "opencode-go": "enable",
+    dashscope: "enable",
+    zhipu: "zhipu",
+    "zhipu-plan": "zhipu",
+    moonshot: "none",
+    ollama: "none",
+    custom: "none"
+  };
+  function thinkingOptionsFor(level, style) {
+    if (style === "none") return null;
+    if (level === "off") {
+      if (style === "enable") return { enable_thinking: false };
+      if (style === "zhipu") return { thinking: { type: "disabled" } };
+      return null;
+    }
+    if (level !== "low" && level !== "medium" && level !== "high") return null;
+    if (style === "effort") return { reasoning_effort: level };
+    if (style === "enable") return { enable_thinking: true };
+    return { thinking: { type: "enabled" } };
+  }
+  function hasExplicitThinkingOption(mo) {
+    return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
+  }
   var _aiProviderCache = null;
   async function getAIProvider(override) {
     var _a, _b, _c;
@@ -4989,6 +5023,7 @@ var BZW_favorites = (() => {
         throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
       }
       return cachePut({
+        id: "custom",
         endpoint,
         apiKey: s.aiCustomApiKey,
         model: s.aiCustomModel || void 0,
@@ -5005,6 +5040,7 @@ var BZW_favorites = (() => {
         const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
         if (provider && provider.endpoint && provider.apiKey) {
           return cachePut({
+            id: "deepseek",
             endpoint: String(provider.endpoint).replace(/\/+$/, ""),
             apiKey: provider.apiKey,
             contextWindow: desc.defaultContextWindow,
@@ -5021,6 +5057,7 @@ var BZW_favorites = (() => {
     const overrideContext = (_b = s.aiContextOverrides) == null ? void 0 : _b[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
     return cachePut({
+      id: name,
       endpoint: desc.endpoint,
       apiKey: key || "",
       model: overrideModel || desc.model || void 0,
@@ -5208,6 +5245,11 @@ var BZW_favorites = (() => {
       for (const k of Object.keys(mo)) {
         if (k === "max_tokens") continue;
         body[k] = mo[k];
+      }
+      if (!hasExplicitThinkingOption(mo)) {
+        const style = AI_THINKING_STYLE[provider.id || ""] || "none";
+        const thinking = thinkingOptionsFor(s.aiThinking || "auto", style);
+        if (thinking) Object.assign(body, thinking);
       }
       const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
       const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
