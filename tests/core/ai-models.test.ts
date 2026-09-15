@@ -182,11 +182,11 @@ describe('fetchProviderModels：HTTP 通道与错误', () => {
   });
 });
 
-describe('注册表覆盖面（ticket 173 拍板：全部 16 家统一逻辑）', () => {
-  it('16 家提供商注册表齐备，custom 兜底解析可用', () => {
-    expect(AI_PROVIDER_REGISTRY.length).toBe(16);
+describe('注册表覆盖面（ticket 173 拍板：全部 17 家统一逻辑）', () => {
+  it('17 家提供商注册表齐备，custom 兜底解析可用', () => {
+    expect(AI_PROVIDER_REGISTRY.length).toBe(17);
     const ids = AI_PROVIDER_REGISTRY.map((p) => p.id);
-    for (const id of ['deepseek', 'opencode-go', 'openai', 'anthropic', 'google', 'moonshot', 'zhipu', 'dashscope', 'siliconflow', 'openrouter', 'xai', 'groq', 'mistral', 'together', 'ollama', 'custom']) {
+    for (const id of ['deepseek', 'opencode-go', 'openai', 'anthropic', 'google', 'moonshot', 'zhipu', 'zhipu-plan', 'dashscope', 'siliconflow', 'openrouter', 'xai', 'groq', 'mistral', 'together', 'ollama', 'custom']) {
       expect(ids).toContain(id);
     }
   });

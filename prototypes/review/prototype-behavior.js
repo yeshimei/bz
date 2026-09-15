@@ -1,4 +1,4 @@
-/* 源指纹 f528596d18247f3d · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5eae8b15e52954bf · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -5981,6 +5981,18 @@ var BZW_review = (() => {
           apiKeyKey: "zhipuApiKey",
           apiKeyLabel: "智谱密钥",
           apiKeyDesc: "在智谱开放平台获取后填入这里"
+        },
+        {
+          // Coding 套餐（Lite/Pro/Max）额度只在 coding 专用端点生效；走标准 paas/v4 会按量计费报余额不足
+          id: "zhipu-plan",
+          label: "智谱 Plan",
+          endpoint: "https://open.bigmodel.cn/api/coding/paas/v4",
+          model: "glm-5.3-flash",
+          defaultMaxTokens: 8192,
+          defaultContextWindow: 131072,
+          apiKeyKey: "zhipuPlanApiKey",
+          apiKeyLabel: "智谱 Plan 密钥",
+          apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同"
         },
         {
           id: "dashscope",
