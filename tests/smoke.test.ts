@@ -93,6 +93,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-knowledge-open', 'bz-knowledge-note-term',
   // 视频生成文献笔记（2026-09-10：首页入口菜单联动）
   'bz-knowledge-note-video',
+  // 段落/图版生成文献笔记（issue 326：与名词同款快捷命令——选区预填 + 当前笔记来源）
+  'bz-knowledge-note-passage', 'bz-knowledge-note-image',
   // 挂载树白板（issues 317/319）：看挂载树（主卡 = 当前打开的笔记）/ 重跑挂载建议
   'bz-knowledge-mount-tree', 'bz-knowledge-mount-refresh',
   // 自动关联（ADR-0141 §1：两条建链命令随功能归属迁入知识盒，引擎留第二大脑）

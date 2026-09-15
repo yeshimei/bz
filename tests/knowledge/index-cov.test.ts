@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { MarkdownView } from 'obsidian';
-import { openKnowledgeAddTask, openTermNote, unloadKnowledge } from '../../src/knowledge';
+import { openKnowledgeAddTask, openTermNote, openPassageNote, openImageNote, unloadKnowledge } from '../../src/knowledge';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -20,6 +20,11 @@ const noteGen = vi.hoisted(() => ({
   generateTermDraft: vi.fn().mockResolvedValue({ summary: 'AI 简介', domain: '物理' }),
   summarizeTermSummary: vi.fn().mockResolvedValue('精简简介'),
   generateTermNote: vi.fn().mockResolvedValue('文献盒/AI 简介.md'),
+  generatePassageDraft: vi.fn().mockResolvedValue({ title: '自动标题', summary: '整理正文', domain: '社会' }),
+  generatePassageNote: vi.fn().mockResolvedValue('文献盒/自动标题.md'),
+  generateImageDraft: vi.fn().mockResolvedValue({ title: '自动图题', summary: '读图解读', domain: '艺术' }),
+  generateImageNote: vi.fn().mockResolvedValue('文献盒/自动图题.md'),
+  resolveImageDir: vi.fn(() => '文献盒/assets'),
   backfillNotes: vi.fn().mockResolvedValue({ scanned: 0, filled: 0, aiSkipped: false }),
 }));
 vi.mock('../../src/knowledge/note-gen', () => noteGen);
@@ -120,5 +125,62 @@ describe('openTermNote（bz-knowledge-note-term 命令：MarkdownView 类右值 
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('');
     expect(noteGen.generateTermDraft).not.toHaveBeenCalled();
+  });
+});
+
+describe('openPassageNote / openImageNote（bz-knowledge-note-passage / -image 命令，issue 326）', () => {
+  afterEach(() => {
+    unloadKnowledge();
+    document.body.innerHTML = '';
+    noteGen.generatePassageDraft.mockClear();
+  });
+
+  /** 同 openTermNote 段：注入 getActiveViewOfType 桩（类右值断言沿用） */
+  function setupApp(viewOfType: any): any {
+    resetObsidianMocks();
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault) as any;
+    app.workspace.getActiveViewOfType = vi.fn(() => viewOfType);
+    setApp(app);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', knowledgeDirectory: '文献盒' }) as any);
+    setSettingsSaver(async () => {});
+    return app;
+  }
+
+  it('段落：选区预填 textarea（裁空白）+ 当前笔记作来源 chip；**不自动生成**（与名词的差异点）', async () => {
+    const app = setupApp({ editor: { getSelection: () => '  一段城市化观察  ' }, file: { path: '笔记/读报.md', extension: 'md' } });
+
+    openPassageNote(app);
+
+    const popup = document.getElementById('knowledge-term-popup')!;
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    expect(popup.getAttribute('data-lit-entry')).toBe('passage');
+    expect((document.getElementById('lit-passage-input') as HTMLTextAreaElement).value).toBe('一段城市化观察');
+    // ADR-0116 命令入口带当前笔记：来源 chip 预填（内部笔记方向）
+    expect(document.getElementById('lit-term-src-chip')!.style.display).not.toBe('none');
+    // 差异点：段落预填不自动触发生成（名词带词即生成，ticket 155）
+    expect(noteGen.generatePassageDraft).not.toHaveBeenCalled();
+  });
+
+  it('段落：无激活视图 → 空输入框手填，不抛错、不带来源', async () => {
+    const app = setupApp(null);
+
+    expect(() => openPassageNote(app)).not.toThrow();
+
+    const popup = document.getElementById('knowledge-term-popup')!;
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    expect((document.getElementById('lit-passage-input') as HTMLTextAreaElement).value).toBe('');
+    expect(document.getElementById('lit-term-src-chip')!.style.display).toBe('none');
+  });
+
+  it('图版：命令入口直接开图版态，当前笔记作来源 chip（图无预填可言）', async () => {
+    const app = setupApp({ editor: { getSelection: () => '' }, file: { path: '笔记/读报.md', extension: 'md' } });
+
+    openImageNote(app);
+
+    const popup = document.getElementById('knowledge-term-popup')!;
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    expect(popup.getAttribute('data-lit-entry')).toBe('image');
+    expect(document.getElementById('lit-term-src-chip')!.style.display).not.toBe('none');
   });
 });
