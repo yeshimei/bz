@@ -9264,6 +9264,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ---- 右栏：阅读面（serif 标题 / meta 细线 / 首字下沉 / 两端对齐） ---- */
 .bz-clip-read { flex: 1; min-width: 0; display: flex; flex-direction: column; background: transparent; }
+/* 正文可选（issue 329 划选工具框前置条件）：自定义面板不在 Obsidian 阅读视图的选择豁免内，
+   移动端壳层默认禁选、长按不出选区——桌面阅读窗格与移动详情层显式放开；
+   工具框挂 body 不受影响，其余域面板不动。 */
+.bz-clip-read,
+.bz-clip-mob-detail {
+  user-select: text;
+  -webkit-user-select: text;
+}
 .bz-clip-read-scroll { flex: 1; overflow-y: auto; padding: 28px 44px 40px; }
 .bz-clip-read-body { max-width: 560px; margin: 0 auto; }
 /* meta 一行：时间 · 站点（橘）——原型对齐，无图标无底色；状态章已退役（打开即已读让位后语义冗余） */
