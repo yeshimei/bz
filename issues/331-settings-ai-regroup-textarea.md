@@ -1,7 +1,9 @@
-# 330 · 设置面板 AI 页重新分组 + Cookie 行换多行文本框
+# 331 · 设置面板 AI 页重新分组 + Cookie 行换多行文本框
 
-- 状态：已实现（2026-09-16，单 worktree 开发 → 门禁全绿 → 合并部署）
-- 关联：ADR-0133（「AI 与凭据」组收编，本票拆组取代其单组形态）/ issue 186（AI 独立成域）/ ticket 172（per-provider 三行）
+- 状态：已实现（2026-09-16，单 worktree 开发 → 门禁全绿 → 合并部署；编号 330 与并行会话
+  「AI 思考设置与候选相似度下限」撞号，改挂 331/ADR-0147）
+- 关联：ADR-0133（「AI 与凭据」组收编，本票拆组取代其单组形态）/ issue 186（AI 独立成域）/
+  ticket 172（per-provider 三行）/ issue 330（思考档位行，合并时归入「模型配置」组）
 
 ## 用户原话拆解
 
@@ -15,7 +17,7 @@
 | 组 | 图标 | 行 | 说明 |
 |---|---|---|---|
 | 服务商 | plug-zap | AI 服务商下拉 + 各注册表提供商密钥行 + custom 端点/密钥 | visibleWhen 随 aiProvider 行级门控不变 |
-| 模型配置 | cpu | 模型名称 + 上下文窗口 + 最大输出 token | refreshKey 随服务商切换联动——联动链是全 schema 级，跨组不受影响 |
+| 模型配置 | cpu | 模型名称 + 上下文窗口 + 最大输出 token + 思考 reasoning | refreshKey 随服务商切换联动——联动链是全 schema 级，跨组不受影响；思考档位（issue 330）合并时归入本组 |
 | 数据源凭据 | key-round | B站 Cookie + ApiZero Key + 豆瓣 Cookie | 非 AI 的第三方数据源凭据独立成卡（ADR-0133 收编成果保留，仅不再与 AI 混组） |
 
 ### 控件（textarea 行）
@@ -34,5 +36,5 @@
 
 ## 文档同步
 
-- spec.md 追加 issue 330 节；CONTEXT.md「清晰度档位」「凭据」词条组名改「数据源凭据」；
+- spec.md 追加 issue 331 节；CONTEXT.md「清晰度档位」「凭据」词条组名改「数据源凭据」；
   settings.ts / cinema/settings.ts 注释同步。ADR-0133 与 spec 历史拍板链保留原文（历史记录）。

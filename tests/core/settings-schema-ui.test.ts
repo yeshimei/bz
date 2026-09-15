@@ -448,7 +448,7 @@ describe('path 行接入统一路径选择器（ADR-0061）', () => {
 
 describe('主设置页 AI per-provider 配置三行（ticket 172）', () => {
   // 直接构造与 mainSettingsSchema 相同的三行（避免全量 schema 重渲染的 DOM 噪音）；
-  // issue 330 拆组后模型三行在「模型配置」组——渲 AI 页前三组，顺带覆盖跨组 refreshKey 联动
+  // issue 331 拆组后模型三行在「模型配置」组——渲 AI 页前三组，顺带覆盖跨组 refreshKey 联动
   function renderProviderRows(container: HTMLElement) {
     const schema = mainSettingsSchema();
     renderSettingsInto(container, { groups: schema.groups.slice(0, 3) });

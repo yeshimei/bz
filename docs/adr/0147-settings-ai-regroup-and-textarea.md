@@ -1,7 +1,7 @@
-# ADR-0146 设置面板 AI 页三卡分组与 Cookie 多行文本框
+# ADR-0147 设置面板 AI 页三卡分组与 Cookie 多行文本框
 
-- 状态：已接受（2026-09-16，用户拍板）
-- 关联：issue 330 / ADR-0133（「AI 与凭据」收编，本决策拆解其单组形态）/ issue 186（AI 独立成域）
+- 状态：已接受（2026-09-16，用户拍板；编号 0146 与并行会话撞号，改挂 0147）
+- 关联：issue 331 / ADR-0133（「AI 与凭据」收编，本决策拆解其单组形态）/ issue 186（AI 独立成域）
 - 影响：`src/core/settings-main-schema.ts`（组结构 + Cookie 行控件）、`src/core/settings-schema.ts`（TextAreaRow.actions）、`src/settings-panel/renderer.ts`（textarea 行内按钮）、相关测试
 
 ## 背景
@@ -13,7 +13,8 @@ ADR-0133 把 B站 Cookie、影院 ApiZero Key / 豆瓣 Cookie 收编进 AI 组�
 ## 决策
 
 1. **AI 页拆三组**：「服务商」（下拉+密钥+custom，visibleWhen 行级门控随行走）/「模型配置」
-   （模型名称+上下文+最大输出 token）/「数据源凭据」（B站 Cookie+ApiZero Key+豆瓣 Cookie）。
+   （模型名称+上下文+最大输出 token；issue 330 的「思考 reasoning」档位行合并时归入本组）/
+   「数据源凭据」（B站 Cookie+ApiZero Key+豆瓣 Cookie）。
    设置键、绑定、显隐条件零变化；refreshKey 联动链本就是全 schema 级，模型三行跨组随服务商
    切换刷新不受影响。⚙️ 原生设置页与设置面板共用本 schema，两侧同时生效。
 2. **Cookie 行换 textarea**：B站 Cookie / 豆瓣 Cookie 动辄上千字符，`type: 'text'` →

@@ -41,7 +41,7 @@ export function cinemaSettingsSchema(): SettingsSchema {
           // 旧「每批加载数量」（cinemaPageSize）已删除：全仓无消费点（列表一次全量渲染），属死配置
         ],
       },
-      // 「数据抓取」组（ApiZero Key / 豆瓣 Cookie）已挪入设置面板「数据源凭据」组（ADR-0133 收编，issue 330 定名）
+      // 「数据抓取」组（ApiZero Key / 豆瓣 Cookie）已挪入设置面板「数据源凭据」组（ADR-0133 收编，issue 331 定名）
       {
         icon: 'eye',
         name: '显示',
