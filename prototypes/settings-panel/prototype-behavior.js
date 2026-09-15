@@ -1,4 +1,4 @@
-/* 源指纹 01e4195cb5295df7 · 仓内输入 201 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 321fada57bbbb76b · 仓内输入 201 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -18381,20 +18381,56 @@ ${c.trim()}
       return "png";
     }
   }
-  function imageBaseName(title) {
-    const t = String(title || "").replace(/[\\/:*?"<>|#^[\]]/g, "").replace(/\s+/g, " ").trim().slice(0, 60);
-    return t || "image";
+  function cleanFileName(s) {
+    return String(s || "").replace(/[^0-9A-Za-z._\-\u4e00-\u9fff]/g, "");
   }
-  async function fetchImageBinary(url) {
+  function extFromContentType(contentType) {
+    const ct = String(contentType || "").toLowerCase();
+    if (ct.includes("png")) return "png";
+    if (ct.includes("gif")) return "gif";
+    if (ct.includes("webp")) return "webp";
+    if (ct.includes("avif")) return "avif";
+    if (ct.includes("svg")) return "svg";
+    return "jpg";
+  }
+  function clipTimestampBase(seq) {
+    const d = /* @__PURE__ */ new Date();
+    const p2 = (n) => String(n).padStart(2, "0");
+    const day = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}`;
+    const time = `${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}`;
+    return `clip-${day}-${time}-${seq}`;
+  }
+  function imageNameFromUrl(url, seq, contentType) {
+    try {
+      const raw = String(new URL(url).pathname.split("/").pop() || "");
+      let decoded = raw;
+      try {
+        decoded = decodeURIComponent(raw);
+      } catch (e) {
+      }
+      const cleaned = cleanFileName(decoded).slice(0, 80);
+      const m = cleaned.match(NAME_EXT_RE);
+      if (m && m[1]) return `${m[1]}.${m[2].toLowerCase() === "jpeg" ? "jpg" : m[2].toLowerCase()}`;
+    } catch (e) {
+    }
+    return `${clipTimestampBase(seq)}.${extFromContentType(contentType)}`;
+  }
+  async function fetchImageWithMeta(url) {
     const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), HTTP_TIMEOUT_MS));
     const req = requestUrl({ url, method: "GET", headers: { ...UA_HEADERS }, throw: false }).then((resp) => {
-      return resp && resp.status >= 200 && resp.status < 300 ? resp.arrayBuffer : null;
+      if (!resp || resp.status < 200 || resp.status >= 300) return null;
+      const headers = resp && resp.headers || {};
+      const ct = headers["content-type"] || headers["Content-Type"] || "";
+      return { buf: resp.arrayBuffer, contentType: String(ct) };
     });
     req.catch(() => {
     });
-    const buf = await Promise.race([req, timer]);
-    if (!buf) throw new Error("图片下载失败或超时：" + url);
-    return buf;
+    const hit = await Promise.race([req, timer]);
+    if (!hit) throw new Error("图片下载失败或超时：" + url);
+    return hit;
+  }
+  async function fetchImageBinary(url) {
+    return (await fetchImageWithMeta(url)).buf;
   }
   async function fetchImageDataUrl(src) {
     const url = normalizeImageSrc(src);
@@ -18421,14 +18457,19 @@ ${c.trim()}
     await app.vault.createBinary(path, bytes);
     return path;
   }
+  function splitName(name) {
+    const i = name.lastIndexOf(".");
+    return i > 0 ? { base: name.slice(0, i), ext: name.slice(i + 1) } : { base: name, ext: "jpg" };
+  }
   async function saveClipImage(opts) {
     const url = normalizeImageSrc(opts.src);
     if (!url || !/^https?:\/\//.test(url) && !url.startsWith("data:")) {
       throw new Error("不是可保存的图片地址");
     }
     if (url.startsWith("data:")) throw new Error("图片已是本地数据，无需保存");
-    const bytes = await fetchImageBinary(url);
-    const local = await writeUniqueImage(clipbookImageDir(), imageBaseName(opts.title), extOfImageUrl(url), bytes);
+    const { buf, contentType } = await fetchImageWithMeta(url);
+    const name = splitName(imageNameFromUrl(url, 1, contentType));
+    const local = await writeUniqueImage(clipbookImageDir(), name.base, name.ext, buf);
     if (opts.savedNotePath) {
       const app = getApp();
       const file = app.vault.getAbstractFileByPath(opts.savedNotePath);
@@ -18444,7 +18485,51 @@ ${c.trim()}
     notice("图片已保存，保存剪藏时一并换链", "success");
     return { local, sidecar };
   }
-  var HTTP_TIMEOUT_MS, UA_HEADERS, EXT_WHITELIST;
+  function extractImageUrls(body) {
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    const re = /!\[[^\]]*\]\(([^)]+)\)/g;
+    let m;
+    while (m = re.exec(String(body || ""))) {
+      const raw = String(m[1] || "").trim().split(/\s+/)[0];
+      if (!raw || seen.has(raw)) continue;
+      if (!/^https?:\/\//i.test(raw) && !raw.startsWith("//")) continue;
+      seen.add(raw);
+      out.push(raw);
+    }
+    return out;
+  }
+  async function localizeArticleImages(opts) {
+    var _a2;
+    const urls = extractImageUrls(opts.body);
+    const reuse = new Map((Array.isArray(opts.existing) ? opts.existing : []).filter((s) => s && s.src && s.local).map((s) => [s.src, s.local]));
+    const swaps = [];
+    let localized = 0;
+    let failed = 0;
+    const dir = clipbookImageDir();
+    for (let i = 0; i < urls.length; i++) {
+      const src = urls[i];
+      const seq = i + 1;
+      (_a2 = opts.onProgress) == null ? void 0 : _a2.call(opts, seq, urls.length);
+      const hit = reuse.get(src);
+      if (hit) {
+        swaps.push({ src, local: hit });
+        continue;
+      }
+      try {
+        const url = normalizeImageSrc(src);
+        const { buf, contentType } = await fetchImageWithMeta(url);
+        const name = splitName(imageNameFromUrl(url, seq, contentType));
+        const local = await writeUniqueImage(dir, name.base, name.ext, buf);
+        swaps.push({ src, local });
+        localized++;
+      } catch (e) {
+        failed++;
+      }
+    }
+    return { swaps, localized, failed };
+  }
+  var HTTP_TIMEOUT_MS, UA_HEADERS, EXT_WHITELIST, NAME_EXTS, NAME_EXT_RE;
   var init_image_save = __esm({
     "src/clipbook/image-save.ts"() {
       init_fake_obsidian();
@@ -18455,6 +18540,8 @@ ${c.trim()}
       HTTP_TIMEOUT_MS = 15e3;
       UA_HEADERS = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" };
       EXT_WHITELIST = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "avif", "ico"]);
+      NAME_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "svg", "avif"];
+      NAME_EXT_RE = new RegExp(`^(.+)\\.(${NAME_EXTS.join("|")})$`, "i");
     }
   });
 
@@ -27582,7 +27669,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const rawBody = String(raw.body || "").replace(/^\s*---[\s\S]*?---\s*/, "").replace(/^\s*```dataviewjs[\s\S]*?```\s*/, "").trim();
     const key = articleKeyOf(raw);
     const tracking = await readArticleTracking(key);
-    const transformed = applyBodyTransforms(rawBody, tracking.marks, tracking.images);
+    const imageSwaps = await localizeImagesForSave(rawBody, tracking.images);
+    const transformed = applyBodyTransforms(rawBody, tracking.marks, imageSwaps);
     const body = transformed.body;
     const md = `---
 url: "${yamlEscape(raw.url || "")}"
@@ -27612,6 +27700,37 @@ ${body}`;
       console.error("[剪藏本] 保存剪藏失败", e);
       notice("保存失败，请稍后重试", "error");
       return false;
+    }
+  }
+  async function localizeImagesForSave(body, existing) {
+    const total = extractImageUrls(body).length;
+    if (!total) return existing;
+    const ph = total > 1 ? notify(`正在保存图片 1/${total}…`, { type: "progress" }) : null;
+    try {
+      const res = await localizeArticleImages({
+        body,
+        existing,
+        onProgress: (done, t) => ph == null ? void 0 : ph.setMessage(`正在保存图片 ${done}/${t}…`)
+      });
+      const partial = res.failed > 0 ? `，${res.failed} 张失败保留外链` : "";
+      if (res.swaps.length > 0) {
+        const msg = `已本地化 ${res.swaps.length} 张图片${partial}`;
+        if (ph) {
+          ph.setType("success");
+          ph.setMessage(msg);
+        } else notice(msg, "success");
+      } else {
+        const msg = `${res.failed} 张图片保存失败，正文保留原外链`;
+        if (ph) {
+          ph.setType("warning");
+          ph.setMessage(msg);
+        } else notice(msg, "warning");
+      }
+      return res.swaps;
+    } catch (e) {
+      console.warn("[剪藏本] 全量图片本地化异常，正文保留原外链", e);
+      ph == null ? void 0 : ph.hide();
+      return existing;
     }
   }
   async function materializeTracking(key, clipPath, title) {
@@ -27697,6 +27816,7 @@ ${body}`;
       init_notice();
       init_constants3();
       init_anchor();
+      init_image_save();
       yamlEscape = (v) => String(v != null ? v : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
     }
   });
@@ -28507,7 +28627,7 @@ ${body}`;
       const art = all.find((x) => x.id === card.dataset.id) || M5.cur;
       if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
-      attachItemActions(card, actions, { sheetHead: buildSheetHead(art), menuClass: "bz-clip-menu-editorial" });
+      attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || void 0, menuClass: "bz-clip-menu-editorial" });
       card.addEventListener("click", (e) => {
         if (e.target && e.target.closest(".bz-item-sheet")) return;
         selectArticle(art.id);
@@ -28519,19 +28639,6 @@ ${body}`;
         toggleDeskFold(kind);
       });
     });
-  }
-  function buildSheetHead(a) {
-    const head = document.createElement("div");
-    head.className = "bz-clip-sheet-head";
-    const t = document.createElement("div");
-    t.className = "bz-clip-sheet-title";
-    t.textContent = a.title;
-    const s = document.createElement("div");
-    s.className = "bz-clip-sheet-sum";
-    s.textContent = a.summary || "";
-    head.appendChild(t);
-    head.appendChild(s);
-    return head;
   }
   function buildItemActions(a) {
     const out = [];
@@ -28557,6 +28664,7 @@ ${body}`;
     if (a.st !== "saved") {
       out.push({ icon: "download", label: "保存到剪藏本", title: "保存为正式剪藏", onClick: () => void doSave(a) });
     }
+    out.push({ icon: "link", label: "复制原文链接", onClick: () => void copyText(a.url, "原文链接已复制") });
     if (a.st === "unread") {
       out.push({ icon: "check", label: "标记为已读", title: "不再出现在收件流", onClick: () => void doMarkRead(a) });
     }
@@ -28891,7 +28999,7 @@ ${body}`;
     mobListEl.querySelectorAll("[data-id]").forEach((card) => {
       const art = byId.get(String(card.dataset.id || ""));
       if (!art) return;
-      attachItemActions(card, buildItemActions(art), { sheetHead: buildSheetHead(art) });
+      attachItemActions(card, buildItemActions(art), { sheetTitle: art.title, sheetSub: art.summary || void 0 });
     });
     mobListEl.querySelectorAll(".bz-clip-mob-ch-hd").forEach((hd) => {
       let sel = null;
@@ -29209,7 +29317,6 @@ ${body}`;
     try {
       const res = await saveClipImage({
         src: snap.src,
-        title: a.title,
         articleKey: a.id,
         savedNotePath: a.origin === "clip" ? a.notePath : null
       });
