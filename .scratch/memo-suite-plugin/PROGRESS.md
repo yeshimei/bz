@@ -931,3 +931,12 @@ etrieve 增 lexicalQuery（词法降级免「情绪/时段」噪音）。④ **�
 - ✅ **有意不接**：secondbrain 模板保留不接线（存量兼容）；diary entry-added/deleted/file-vacated 有意不接（file-created/modified/deleted 已覆盖，防双记录）；quiz 构造层保留待其动作点接线（已并入 review，评分由 review:rated 表征）
 - ✅ **测试**：新增 `tests/smartcat/coverage-action.test.ts` 6 例（review started/added/removed/rated、空标题与 noteSource 关静默、attach moved 带/不带 count）；同步修 3 处存量断言（movie want / literature→knowledge / review rated 四档）
 - 📄 文档：issues/261 立项；docs/adr/0118；CONTEXT 行为流词条；spec 增补纪要
+
+## 2026-09-16 备忘录代码条目闭环：保存剪藏后自动前进的下一篇补换篇语义（issue 332 / memo zrurtk）
+**状态：worktree clipbook 258 测试（24 文件）+ tsc 0 错误；合并 master 全量 5204 测试（326 文件）全绿；已部署**
+
+- ✅ 根因：`refreshAfterAction` 落位回退分支把 `M.cur` 直接落到邻位，绕过 `selectArticle` 的换篇语义（打开即已读 + 滚动归零）——「处理后前进下一篇」动线自增强包时代存在，换篇补齐从未跟上
+- ✅ 修复：落位换篇时补 `markReadOnOpen`（renderAll 前，同步内存位 + 串行落盘）与双端滚动归零（桌面 `resetReadScroll` / 移动详情 `scrollTop=0`）
+- ✅ 调用方面审计：保存前进 ✓ / B站分流留流原位 ✓ / 标读不出流原位 ✓ / 删除前进 ✓ / 撤销不误触发 ✓；邻位 clip 来源由 origin 守卫早退
+- ✅ 回归：`memo-next-after-save.test.ts` 4 用例钉住用户动线；clipbook 全域 + 主仓库全量绿
+- 📄 文档：issues/332；CONTEXT 会话冻结序词条补读者前进语义

@@ -1246,3 +1246,10 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > 便于粘贴与检查；ApiZero Key 短令牌保持单行）——TextAreaRow 行型补 actions 字段（两渲染器同
 > 口径，按钮在多行文本左侧），B站行「从 CLI 导入」按钮由此保留。mock 层 addTextArea 同步复刻
 > 真实 textarea 元素。
+
+### 剪藏本保存/标读后自动前进的下一篇补换篇语义（issue 332，2026-09-16）
+
+> `refreshAfterAction` 落位回退（当前条目出收件流 → `M.cur` 落邻位）此前绕过 `selectArticle`，
+> 自动前进的下一篇不标已读、滚动位残留前一篇（memo zrurtk）。修复：换篇时补 `markReadOnOpen`
+> （renderAll 前调用）+ 双端滚动归零（renderAll 后）；B站分流/标读/撤销等留流场景不误触发
+> （id 未变不算换篇）。
