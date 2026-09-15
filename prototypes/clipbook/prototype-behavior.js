@@ -1,4 +1,4 @@
-/* 源指纹 3e1819ecfdf6094b · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 53cff0531aca2462 · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -20942,6 +20942,7 @@ ${bodyText.substring(0, 6e3)}`;
       panelSplit = null;
     }
     clipBodyCache.clear();
+    clipBodyInflight.clear();
     setSearchKw("");
     M.open = false;
     M.mobDetailOpen = false;
@@ -21514,6 +21515,7 @@ ${bodyText.substring(0, 6e3)}`;
       if (!body) note = "正文已清空（已处理条目）";
     }
     readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), note });
+    readerEl.dataset.clipReaderId = a.id;
     mountIcons(readerEl);
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
@@ -21522,32 +21524,60 @@ ${bodyText.substring(0, 6e3)}`;
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
+  function hydrateActiveClipBody(a, body) {
+    const targets = [
+      {
+        host: readerEl,
+        sel: "[data-clip-md]",
+        dim: true,
+        // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M.cur && M.cur.id === a.id && readerEl.contains(md)
+      },
+      {
+        host: mobDetailEl,
+        sel: "[data-clip-mob-md]",
+        dim: false,
+        alive: (md) => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+      }
+    ];
+    for (const t of targets) {
+      const md = t.host ? t.host.querySelector(t.sel) : null;
+      if (!md || !t.alive(md)) continue;
+      if (!body) {
+        md.innerHTML = `<p${t.dim ? ' class="dim"' : ""}>（笔记暂无正文）</p>`;
+        continue;
+      }
+      md.innerHTML = "";
+      void hydrateArticleMarkdown(md, body, a.notePath || "", () => t.alive(md));
+    }
+  }
+  function clipBodyReadFail(a) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M.cur && M.cur.id === a.id) {
+      const md = readerEl.querySelector("[data-clip-md]");
+      if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
+    }
+    if (M.mobDetailOpen && M.cur && M.cur.id === a.id && mobDetailEl) {
+      const md = mobDetailEl.querySelector("[data-clip-mob-md]");
+      if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
+    }
+  }
   async function loadClipBody(a) {
     const path = a.notePath;
-    if (!path || clipBodyCache.has(path)) return;
+    if (!path || clipBodyCache.has(path) || clipBodyInflight.has(path)) return;
     const note = a.note;
     if (!note || !note.file) return;
+    clipBodyInflight.add(path);
     let body = "";
     try {
       body = stripClipChrome(await getApp().vault.cachedRead(note.file));
     } catch (e) {
-      if (M.cur && M.cur.id === a.id && readerEl) {
-        const md = readerEl.querySelector("[data-clip-md]");
-        if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
-      }
+      clipBodyInflight.delete(path);
+      clipBodyReadFail(a);
       return;
     }
+    clipBodyInflight.delete(path);
     clipBodyCache.set(path, body);
-    if (M.cur && M.cur.id === a.id && readerEl) {
-      const md = readerEl.querySelector("[data-clip-md]");
-      if (!md) return;
-      if (!body) {
-        md.innerHTML = `<p class="dim">（笔记暂无正文）</p>`;
-        return;
-      }
-      md.innerHTML = "";
-      void hydrateArticleMarkdown(md, body, path, () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(md));
-    }
+    hydrateActiveClipBody(a, body);
   }
   function invalidateClipBodyCache(path) {
     clipBodyCache.delete(String(path || ""));
@@ -21872,8 +21902,20 @@ ${bodyText.substring(0, 6e3)}`;
       mobSaveBtnEl.classList.toggle("saved", saved);
       mobSaveBtnEl.textContent = saved ? "已存" : "存为剪藏";
     }
-    const mdBody = a.origin === "news" ? transformBodyForRead(a, a.body) : "";
-    const note = a.body ? "" : a.origin === "clip" ? "剪藏笔记正文请在 Obsidian 中打开" : "正文已清空";
+    let mdBody = "";
+    let note = "";
+    if (a.origin === "clip") {
+      const cached = a.notePath ? clipBodyCache.get(a.notePath) : void 0;
+      if (cached !== void 0) {
+        mdBody = cached;
+        if (!mdBody) note = "（笔记暂无正文）";
+      } else {
+        note = "正在读取剪藏正文…";
+      }
+    } else {
+      mdBody = transformBodyForRead(a, a.body);
+      if (!mdBody) note = "正文已清空";
+    }
     const idx = mobItemOrder.findIndex((x) => x.id === a.id);
     const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : "";
     const detailBody = mobDetailEl.querySelector("[data-clip-mob-detail-body]");
@@ -21884,6 +21926,7 @@ ${bodyText.substring(0, 6e3)}`;
     if (mdEl && mdBody) {
       void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
+    if (a.origin === "clip") void loadClipBody(a);
   }
   function ensureSelBar() {
     if (selBarEl && selBarEl.isConnected) return selBarEl;
@@ -22319,7 +22362,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap, MOBILE_SYS_BAR_CLEARANCE;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap, MOBILE_SYS_BAR_CLEARANCE;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -22384,6 +22427,7 @@ ${bodyText.substring(0, 6e3)}`;
       snapEpochs = /* @__PURE__ */ new Map();
       deskFoldOpen = /* @__PURE__ */ new Set();
       deskFoldTouched = /* @__PURE__ */ new Set();
+      clipBodyInflight = /* @__PURE__ */ new Set();
       selBarEl = null;
       selBarEsc = null;
       selChangeTimer = null;

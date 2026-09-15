@@ -9309,7 +9309,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-clip-art-sum-h { display: flex; align-items: center; gap: var(--bz-space-xs); font-size: var(--bz-font-caption); color: var(--clip-accent); margin-bottom: var(--bz-space-xs); font-family: var(--clip-serif); letter-spacing: 2px; }
 .bz-clip-art-sum-h .bz-ic { width: 11px; height: 11px; }
 /* 正文：两端对齐 + 首段首字下沉（编辑部印刷排版） */
-.bz-clip-art-md { font-size: var(--bz-font-body); line-height: 2.05; color: var(--clip-body); text-align: justify; }
+/* issue 329 第三批 Bug B：连续英文长词/长 URL 撑破容器出横向滚动——换行真正生效（不加 overflow 掩盖）；
+   min-width: 0 防 flex/grid 链路上容器被内容撑开拒绝收缩 */
+.bz-clip-art-md { font-size: var(--bz-font-body); line-height: 2.05; color: var(--clip-body); text-align: justify; overflow-wrap: anywhere; word-break: break-word; min-width: 0; }
 .bz-clip-art-md p { margin: 0 0 var(--bz-space-md); }
 .bz-clip-art-md > p:first-of-type::first-letter {
   font-family: Georgia, var(--clip-serif); font-size: 300%; float: left;
@@ -9322,6 +9324,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-clip-art-md blockquote { border-left: 3px solid var(--clip-accent); background: var(--clip-cream); border-radius: 0; padding: var(--bz-space-sm) var(--bz-space-md); margin: var(--bz-space-sm) 0; color: var(--clip-ink-2); font-size: var(--bz-font-label); }
 .bz-clip-art-md p.dim { color: var(--clip-muted); text-align: left; }
+/* 正文媒体兜底（issue 329 第三批 Bug B）：MarkdownRenderer 直出的原生 img/video 不带
+   .bz-clip-art-img 记号类，同防长媒体撑破横向滚动；已有记号图专属规则与此同向不冲突 */
+.bz-clip-art-md img, .bz-clip-art-md video,
+.bz-clip-mob-d-md img, .bz-clip-mob-d-md video { max-width: 100%; height: auto; }
 /* 阅读字号三档（enh 包 7）：小/中/大 = meta/body（默认）/emphasis 档；档位由设置面板「基础 · 阅读字号」驱动 */
 .bz-clip-read-body.fs-sm .bz-clip-art-md { font-size: var(--bz-font-meta); }
 .bz-clip-read-body.fs-lg .bz-clip-art-md { font-size: var(--bz-font-emphasis); }
@@ -9432,7 +9438,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-clip-mob-d-kicker { font-family: var(--clip-serif); font-size: 16.5px; letter-spacing: 3px; color: var(--clip-muted); display: flex; justify-content: space-between; }
 .bz-clip-mob-d-title { font-family: var(--clip-serif); font-size: 27px; font-weight: 700; line-height: 1.45; margin: 10px 0 14px; color: var(--clip-ink); }
 .bz-clip-mob-d-rule { border: none; border-top: 1px solid var(--clip-line); margin: 2px 0 var(--bz-space-lg); }
-.bz-clip-mob-d-md { font-family: var(--clip-serif); font-size: 22.5px; line-height: 1.95; color: var(--clip-body); text-align: justify; }
+/* issue 329 第三批 Bug B：同桌面正文，长词防撑破（overflow-wrap 优先，word-break 兜底旧内核） */
+.bz-clip-mob-d-md { font-family: var(--clip-serif); font-size: 22.5px; line-height: 1.95; color: var(--clip-body); text-align: justify; overflow-wrap: anywhere; word-break: break-word; min-width: 0; }
 .bz-clip-mob-d-md p { margin-bottom: 14px; }
 /* 正文图片段（2026-09-09 用户拍板）：max-width 收进正文栏防溢出（与桌面 .bz-clip-art-md img 同语义） */
 .bz-clip-mob-d-md img.bz-clip-art-img {
