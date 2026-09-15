@@ -7,7 +7,7 @@
  * knowledge 契约 API 由并行 worktree 实现——vi.mock 打桩（仿 flow.test.ts 对 knowledge 的 mock）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -103,6 +103,7 @@ async function showToolbar(text: string): Promise<HTMLElement> {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  clearNotices(); // progress 常驻通知不自动消失，逐用例清 DOM 防跨用例断言污染
 });
 
 beforeEach(() => {
@@ -268,19 +269,20 @@ describe('工具框五动作触发与预填参数（issue 329）', () => {
       expect(bar!.textContent).toContain('存为图版');
       expect(bar!.querySelectorAll('[data-clip-selbar-act]')).toHaveLength(2);
     });
-    // 动作一：保存图片（未保存条目 → 落盘 + 侧写，news.json 零写入）
+    // 动作一：保存图片（未保存条目 → 落盘 + 侧写，news.json 零写入）。
+    // 命名取 URL 自带文件名（issue 329 追加修订：条目标题不再参与命名）
     (document.querySelector('[data-clip-selbar-act="save-img"]') as HTMLElement).click();
     await vi.waitFor(() => {
-      expect((vault as any).binaryFiles.has('归档/网页剪藏/assets/甲文.png')).toBe(true);
+      expect((vault as any).binaryFiles.has('归档/网页剪藏/assets/a.png')).toBe(true);
     });
     const sidecar = await readClipbookData();
     expect(sidecar.savedImages['url:https://guokr.com/1']).toEqual([
-      { src: 'https://img.example/a.png', local: '归档/网页剪藏/assets/甲文.png' },
+      { src: 'https://img.example/a.png', local: '归档/网页剪藏/assets/a.png' },
     ]);
     // 内存侧写同步 → 原位重渲后阅读区出现本地嵌入
     await vi.waitFor(() => {
       const reader = document.querySelector('[data-clip-reader]') as HTMLElement;
-      expect(reader.textContent).toContain('![[归档/网页剪藏/assets/甲文.png]]');
+      expect(reader.textContent).toContain('![[归档/网页剪藏/assets/a.png]]');
     });
     const newsDisk = JSON.parse((vault as any).files.get(getNewsFilePath())!);
     expect(newsDisk.articles[0].body).toContain('https://img.example/a.png'); // news.json 原文不动
@@ -470,5 +472,140 @@ describe('已保存条目直写路径（issue 329 / ADR-0144 决策 4）', () =>
     const sidecar = await readClipbookData();
     expect(sidecar.marks['clip:归档/网页剪藏/剪藏笔记A.md']).toBeUndefined();
     closePanelSafe();
+  });
+});
+
+// ================= 保存剪藏全量图片本地化（issue 329 追加修订） =================
+
+/** 假图响应：/bad/ 前缀 404，其余 200 png 二进制（带 content-type 头） */
+function mockImageFetch(): void {
+  (requestUrl as ReturnType<typeof vi.fn>).mockImplementation(async (opts: any) => {
+    if (String(opts.url).includes('/bad/')) return { status: 404, arrayBuffer: new ArrayBuffer(0) };
+    return {
+      status: 200,
+      arrayBuffer: new TextEncoder().encode('bytes:' + String(opts.url)).buffer,
+      headers: { 'content-type': 'image/png' },
+    };
+  });
+}
+
+describe('保存剪藏全量图片本地化（issue 329 追加修订）', () => {
+  it('多图：progress 通知原地更新（正在保存图片 1/2），收口 success 含张数，md 全换本地嵌入', async () => {
+    const vault = boot();
+    const okResp = (opts: any) => ({
+      status: 200,
+      arrayBuffer: new TextEncoder().encode('bytes:' + String(opts.url)).buffer,
+      headers: { 'content-type': 'image/png' },
+    });
+    // 第一张挂起：锁存 progress 形态后再放行（单张瞬时完成观察不到中间态）
+    let release!: (v: any) => void;
+    const gate = new Promise<any>((resolve) => { release = resolve; });
+    (requestUrl as ReturnType<typeof vi.fn>).mockImplementation((opts: any) =>
+      String(opts.url).includes('slow') ? gate : Promise.resolve(okResp(opts)));
+    const p = writeClipNote({
+      platform: '果壳科学人', title: '图文丙', url: 'https://guokr.com/3', author: '果壳',
+      date: '2026-09-01 08:00:00',
+      body: '图一 ![慢](https://img.example/slow.png) 图二 ![乙](https://img.example/b.png)。',
+    });
+    await vi.waitFor(() => {
+      const el = [...document.querySelectorAll('.bz-notice')].find((n) => n.className.includes('bz-notice--progress'));
+      expect(el).toBeTruthy();
+      expect(el!.textContent).toContain('正在保存图片 1/2');
+    });
+    release(okResp({ url: 'https://img.example/slow.png' }));
+    expect(await p).toBe(true);
+    // 收口：progress 原地转 success（含张数，正文无 emoji 无感叹号）
+    await vi.waitFor(() => {
+      const el = [...document.querySelectorAll('.bz-notice')].find((n) =>
+        n.className.includes('bz-notice--success') && (n.textContent || '').includes('已本地化 2 张图片'));
+      expect(el).toBeTruthy();
+    });
+    // md：两图全换本地嵌入（URL 自带名命名），外链零残留；frontmatter 不动
+    const md = vault.files.get('归档/网页剪藏/图文丙.md')!;
+    expect(md).toContain('![[归档/网页剪藏/assets/slow.png]]');
+    expect(md).toContain('![[归档/网页剪藏/assets/b.png]]');
+    expect(md).not.toContain('https://img.example');
+    expect(md).toContain('url: "https://guokr.com/3"');
+    // 二进制真的落盘
+    expect((vault as any).binaryFiles.has('归档/网页剪藏/assets/slow.png')).toBe(true);
+    expect((vault as any).binaryFiles.has('归档/网页剪藏/assets/b.png')).toBe(true);
+  });
+
+  it('部分失败：success 收口含失败数；失败图保留原外链', async () => {
+    const vault = boot();
+    mockImageFetch();
+    const ok = await writeClipNote({
+      platform: '果壳科学人', title: '图文丁', url: 'https://guokr.com/4',
+      body: '![好](https://img.example/ok.png) ![坏](https://img.example/bad/gone.png)',
+    });
+    expect(ok).toBe(true);
+    await vi.waitFor(() => expect(hasNotice('已本地化 1 张图片，1 张失败保留外链')).toBe(true));
+    const md = vault.files.get('归档/网页剪藏/图文丁.md')!;
+    expect(md).toContain('![[归档/网页剪藏/assets/ok.png]]');
+    expect(md).toContain('![坏](https://img.example/bad/gone.png)');
+  });
+
+  it('全部失败：warning 一条含失败数，正文保留全部外链', async () => {
+    const vault = boot();
+    mockImageFetch();
+    const ok = await writeClipNote({
+      platform: '果壳科学人', title: '图文戊', url: 'https://guokr.com/5',
+      body: '![一](https://img.example/bad/1.png) ![二](https://img.example/bad/2.png)',
+    });
+    expect(ok).toBe(true);
+    await vi.waitFor(() => expect(hasNotice('2 张图片保存失败，正文保留原外链')).toBe(true));
+    const warn = [...document.querySelectorAll('.bz-notice')].find((n) => n.className.includes('bz-notice--warning'));
+    expect(warn).toBeTruthy();
+    const md = vault.files.get('归档/网页剪藏/图文戊.md')!;
+    expect(md).toContain('![一](https://img.example/bad/1.png)');
+    expect(md).toContain('![二](https://img.example/bad/2.png)');
+  });
+
+  it('零图片：不弹图片相关通知（只有保存成功一条）', async () => {
+    const vault = boot();
+    mockImageFetch();
+    await writeClipNote({ platform: '果壳科学人', title: '纯文己', url: 'https://guokr.com/6', body: '没有图的正文。' });
+    await vi.waitFor(() => expect(hasNotice('已保存：纯文己')).toBe(true));
+    expect(hasNotice(/本地化|保存失败/)).toBe(false);
+  });
+
+  it('时机：覆盖确认前不网络等待（确认框挂起时零请求），确认后才拉图', async () => {
+    const vault = boot();
+    vault.files.set('归档/网页剪藏/图文庚.md', '旧内容');
+    mockImageFetch();
+    const p = writeClipNote({
+      platform: '果壳科学人', title: '图文庚', url: 'https://guokr.com/7',
+      body: '![图](https://img.example/confirm.png)',
+    });
+    // 覆盖确认框已挂起 → 此刻 requestUrl 必须零调用
+    await vi.waitFor(() => expect(document.querySelector('.y')).toBeTruthy());
+    expect((requestUrl as ReturnType<typeof vi.fn>).mock.calls.length).toBe(0);
+    (document.querySelector('.y') as HTMLElement).click();
+    expect(await p).toBe(true);
+    expect((requestUrl as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
+    const md = vault.files.get('归档/网页剪藏/图文庚.md')!;
+    expect(md).toContain('![[归档/网页剪藏/assets/confirm.png]]');
+  });
+
+  it('菜单「保存到剪藏本」→ flowSave 全链路：图下载落盘、md 换链、已处理态照常落盘', async () => {
+    const vault = boot();
+    mockImageFetch();
+    openClipbook(getApp());
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    await vi.waitFor(() => expect(M.articles.length).toBe(1));
+    const item = document.querySelector('.bz-clip-item') as HTMLElement;
+    item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
+    const btn = [...(document.querySelector('.bz-item-menu') as HTMLElement).querySelectorAll('.bz-item-menu-item')]
+      .find((b) => b.textContent!.includes('保存到剪藏本')) as HTMLElement;
+    btn.click();
+    await vi.waitFor(() => expect(vault.files.get('归档/网页剪藏/甲文.md')).toBeTruthy());
+    const md = vault.files.get('归档/网页剪藏/甲文.md')!;
+    expect(md).toContain('![[归档/网页剪藏/assets/a.png]]');
+    expect(md).not.toContain('https://img.example');
+    await vi.waitFor(() => expect(hasNotice('已本地化 1 张图片')).toBe(true));
+    await drainNewsWritesForTests();
+    const disk = JSON.parse(vault.files.get(getNewsFilePath())!);
+    expect(disk.articles[0].state).toBe('saved'); // flow 编排（标已处理/统计）不受拉图影响
   });
 });

@@ -16,9 +16,11 @@ import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
-import { notice } from '../core/notice';
+import { notice, notify, type NoticeHandle } from '../core/notice';
 import { localDatetime, toDatetime, articleKeyOf } from './constants';
 import { readArticleTracking, applyBodyTransforms, clearArticleTracking } from './anchor';
+import { extractImageUrls, localizeArticleImages } from './image-save';
+import type { ClipSavedImage } from './data';
 
 // C27：先转义反斜杠（\ → \\）再转义引号/换行——否则 url/author/summary 含 `\` 时
 // 产出 `\\"` 之类被 YAML 当转义序列解读，值读取时变形
@@ -38,7 +40,9 @@ export function clipDirOf(): string {
  *  dirOverride（ADR-0119）：每日简报保存走专属目录，缺省仍取 articleDirectory。
  *  保存物化（issue 329 / ADR-0144）：落盘前 body 过 applyBodyTransforms——划词标记替换为
  *  别名双链、已存图片外链换 `![[本地路径]]`；写盘成功后清该条目侧写追踪，并对每个待升级
- *  文献笔记回写 source 为 `[[剪藏路径|条目标题]]`（source 两态：外链 URL → 内部路径）。写盘失败不清理（重存再物化）。 */
+ *  文献笔记回写 source 为 `[[剪藏路径|条目标题]]`（source 两态：外链 URL → 内部路径）。写盘失败不清理（重存再物化）。
+ *  全量图片本地化（issue 329 追加修订）：覆盖确认之后、写 md 之前把正文**所有**外链图
+ *  下载落盘并组进换链映射（确认前不网络等待；复用侧写 savedImages 不重下；单张失败保留外链）。 */
 export async function writeClipNote(raw: any, dirOverride?: string): Promise<boolean> {
   const app = getApp();
   const dir = dirOverride || clipDirOf();
@@ -66,7 +70,9 @@ export async function writeClipNote(raw: any, dirOverride?: string): Promise<boo
   // issue 329：保存物化——落盘前按侧写追踪（划词 marks + 已存图片映射）变换正文
   const key = articleKeyOf(raw);
   const tracking = await readArticleTracking(key);
-  const transformed = applyBodyTransforms(rawBody, tracking.marks, tracking.images);
+  // 全量图片本地化：所有外链图下载落盘后组 src→local 全量映射，与划词同一 imageSwaps 管线换链
+  const imageSwaps = await localizeImagesForSave(rawBody, tracking.images);
+  const transformed = applyBodyTransforms(rawBody, tracking.marks, imageSwaps);
   const body = transformed.body;
 
   const md = `---
@@ -99,6 +105,42 @@ ${body}`;
     console.error('[剪藏本] 保存剪藏失败', e);
     notice('保存失败，请稍后重试', 'error');
     return false;
+  }
+}
+
+/**
+ * 保存前全量图片本地化编排（issue 329 追加修订）：多张时开 progress 通知原地更新
+ * （`正在保存图片 2/8…`）；完成后按可感知性原则收口——本地化 ≥1 张 → success（含张数，
+ * 有失败数一并报）；全部失败 → warning（含失败数）；零图片 → 不弹任何额外通知。
+ * 返回 src→local 全量映射（复用 + 新下），供 applyBodyTransforms 换链。
+ */
+async function localizeImagesForSave(body: string, existing: ClipSavedImage[]): Promise<ClipSavedImage[]> {
+  const total = extractImageUrls(body).length;
+  if (!total) return existing;
+  // 多张才开进度框（单张瞬时完成不值得占一条常驻通知）
+  const ph: NoticeHandle | null = total > 1 ? notify(`正在保存图片 1/${total}…`, { type: 'progress' }) : null;
+  try {
+    const res = await localizeArticleImages({
+      body,
+      existing,
+      onProgress: (done, t) => ph?.setMessage(`正在保存图片 ${done}/${t}…`),
+    });
+    const partial = res.failed > 0 ? `，${res.failed} 张失败保留外链` : '';
+    if (res.swaps.length > 0) {
+      const msg = `已本地化 ${res.swaps.length} 张图片${partial}`;
+      if (ph) { ph.setType('success'); ph.setMessage(msg); }
+      else notice(msg, 'success');
+    } else {
+      const msg = `${res.failed} 张图片保存失败，正文保留原外链`;
+      if (ph) { ph.setType('warning'); ph.setMessage(msg); }
+      else notice(msg, 'warning');
+    }
+    return res.swaps;
+  } catch (e) {
+    // 编排层兜底（单张失败已在 localize 内消化，走到这里属异常态）：不阻断保存
+    console.warn('[剪藏本] 全量图片本地化异常，正文保留原外链', e);
+    ph?.hide();
+    return existing;
   }
 }
 

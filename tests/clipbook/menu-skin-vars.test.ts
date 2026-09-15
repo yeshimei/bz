@@ -33,9 +33,10 @@ describe('clipbook 菜单换肤变量作用域（issue 222 修复轮）', () => 
     const defined = new Set(
       [...css.slice(css.lastIndexOf('{', def), css.indexOf('}', def)).matchAll(/(--clip-[a-z0-9-]*)\s*:/g)].map((x) => x[1]),
     );
-    // 消费块 = 「右键菜单编辑部换肤」注释起，至「右键菜单头」注释止
+    // 消费块 = 「右键菜单编辑部换肤」注释起，至「移动端」段注释止
+    // （issue 329 追加修订：原「右键菜单头」段随自绘抽屉头退役删除，段界后移）
     const start = css.indexOf('右键菜单编辑部换肤');
-    const end = css.indexOf('右键菜单头');
+    const end = css.indexOf('移动端（m3');
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
     const used = [...css.slice(start, end).matchAll(/var\((--clip-[a-z0-9-]*)/g)].map((x) => x[1]);
