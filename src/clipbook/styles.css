@@ -302,11 +302,6 @@
 .bz-clip-menu-editorial .bz-item-menu-item--danger { color: #b3261e; }
 .bz-clip-menu-editorial .bz-item-menu-item--danger:hover { background: #b3261e; color: var(--clip-paper); }
 
-/* ---- 右键菜单头（item-actions 抽屉头） ---- */
-.bz-clip-sheet-head { padding: 2px 0 6px; }
-.bz-clip-sheet-title { font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); line-height: 1.5; }
-.bz-clip-sheet-sum { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-top: var(--bz-space-xs); }
-
 /* ==================== 移动端（m3 目录索引逐字落域；ADR-0107 修订：样式/结构 = 原型逐字） ====================
    2026-09-09 用户拍板：移动端文字全量 ×1.5（基数 = m3 逐字值；.bz-clip-mob-* 类桌面 display:none
    独享移动端，改基座值即单源生效，与 home 批同口径）。 */

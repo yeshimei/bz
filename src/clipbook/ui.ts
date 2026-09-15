@@ -791,8 +791,10 @@ function bindItemMenus(): void {
     const art = all.find((x) => x.id === card.dataset.id) || M.cur;
     if (!art || art.id !== card.dataset.id) return;
     const actions = buildItemActions(art);
-    // menuClass：菜单挂 body（域内后代选择器不可达），编辑部皮肤靠根挂类生效（同 memo 皮肤先例）
-    attachItemActions(card, actions, { sheetHead: buildSheetHead(art), menuClass: 'bz-clip-menu-editorial' });
+    // menuClass：菜单挂 body（域内后代选择器不可达），编辑部皮肤靠根挂类生效（同 memo 皮肤先例）。
+    // 抽屉头对齐核心标准（issue 329 追加修订）：sheetTitle/sheetSub 走 item-actions 组件库两行头部
+    // （自带省略截断），域内自绘头部退役
+    attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || undefined, menuClass: 'bz-clip-menu-editorial' });
     // 单击选中 → 阅读
     card.addEventListener('click', (e) => {
       if (e.target && (e.target as HTMLElement).closest('.bz-item-sheet')) return;
@@ -806,20 +808,6 @@ function bindItemMenus(): void {
       toggleDeskFold(kind);
     });
   });
-}
-
-function buildSheetHead(a: ClipArticle): HTMLElement {
-  const head = document.createElement('div');
-  head.className = 'bz-clip-sheet-head';
-  const t = document.createElement('div');
-  t.className = 'bz-clip-sheet-title';
-  t.textContent = a.title;
-  const s = document.createElement('div');
-  s.className = 'bz-clip-sheet-sum';
-  s.textContent = a.summary || '';
-  head.appendChild(t);
-  head.appendChild(s);
-  return head;
 }
 
 /** 条目动作（右键/抽屉）：与原型菜单一致 + 剪藏条目打开笔记 */
@@ -849,6 +837,8 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
   if (a.st !== 'saved') {
     out.push({ icon: 'download', label: '保存到剪藏本', title: '保存为正式剪藏', onClick: () => void doSave(a) });
   }
+  // issue 329 追加修订：复制原文链接（桌面右键与移动长按抽屉共用此函数，一处接入两端生效）
+  out.push({ icon: 'link', label: '复制原文链接', onClick: () => void copyText(a.url, '原文链接已复制') });
   // C14：已读/已收条目不再挂「标记为已读」——doMarkRead 的 st!=='unread' 守卫会静默吞掉，菜单不给无效入口
   if (a.st === 'unread') {
     out.push({ icon: 'check', label: '标记为已读', title: '不再出现在收件流', onClick: () => void doMarkRead(a) });
@@ -1260,11 +1250,12 @@ function renderMobToc(): void {
   }
   mobListEl.innerHTML = mobTocHtml(chapters, searching, expandedMobArch);
   // 移动长按抽屉（enh 包 2）：条目动作与桌面右键同源（buildItemActions）——一处接入两端全量对齐；
+  // 抽屉头走核心 sheetTitle/sheetSub（issue 329 追加修订：与桌面卡同款，域内自绘头部退役）。
   // 章头挂源级「全部标为已读」（rail 源行动同源，源条退役后的迁移位）
   mobListEl.querySelectorAll<HTMLElement>('[data-id]').forEach((card) => {
     const art = byId.get(String(card.dataset.id || ''));
     if (!art) return;
-    attachItemActions(card, buildItemActions(art), { sheetHead: buildSheetHead(art) });
+    attachItemActions(card, buildItemActions(art), { sheetTitle: art.title, sheetSub: art.summary || undefined });
   });
   mobListEl.querySelectorAll<HTMLElement>('.bz-clip-mob-ch-hd').forEach((hd) => {
     let sel: any = null;
@@ -1629,7 +1620,7 @@ async function upgradeSourceFor(notePath: string, a: ClipArticle): Promise<void>
   }
 }
 
-/** 保存图片（图片工具框动作一）：requestUrl 落盘 → 已保存直写换链 / 未保存记侧写 */
+/** 保存图片（图片工具框动作一）：requestUrl 落盘（URL 自带名/时间戳命名）→ 已保存直写换链 / 未保存记侧写 */
 async function actSaveImage(): Promise<void> {
   const snap = imgSnap;
   if (!snap) return;
@@ -1638,7 +1629,6 @@ async function actSaveImage(): Promise<void> {
   try {
     const res = await saveClipImage({
       src: snap.src,
-      title: a.title,
       articleKey: a.id,
       savedNotePath: a.origin === 'clip' ? a.notePath : null,
     });
