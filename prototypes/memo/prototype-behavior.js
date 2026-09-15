@@ -1,4 +1,4 @@
-/* 源指纹 049ffe1d0af1b98f · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 cec35ed9d7b3f07e · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -29196,6 +29196,7 @@ ${body}`;
       panelSplit = null;
     }
     clipBodyCache.clear();
+    clipBodyInflight.clear();
     setSearchKw("");
     M5.open = false;
     M5.mobDetailOpen = false;
@@ -29768,6 +29769,7 @@ ${body}`;
       if (!body) note = "正文已清空（已处理条目）";
     }
     readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), note });
+    readerEl.dataset.clipReaderId = a.id;
     mountIcons(readerEl);
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
@@ -29776,32 +29778,60 @@ ${body}`;
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
+  function hydrateActiveClipBody(a, body) {
+    const targets = [
+      {
+        host: readerEl,
+        sel: "[data-clip-md]",
+        dim: true,
+        // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M5.cur && M5.cur.id === a.id && readerEl.contains(md)
+      },
+      {
+        host: mobDetailEl,
+        sel: "[data-clip-mob-md]",
+        dim: false,
+        alive: (md) => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+      }
+    ];
+    for (const t of targets) {
+      const md = t.host ? t.host.querySelector(t.sel) : null;
+      if (!md || !t.alive(md)) continue;
+      if (!body) {
+        md.innerHTML = `<p${t.dim ? ' class="dim"' : ""}>（笔记暂无正文）</p>`;
+        continue;
+      }
+      md.innerHTML = "";
+      void hydrateArticleMarkdown(md, body, a.notePath || "", () => t.alive(md));
+    }
+  }
+  function clipBodyReadFail(a) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M5.cur && M5.cur.id === a.id) {
+      const md = readerEl.querySelector("[data-clip-md]");
+      if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
+    }
+    if (M5.mobDetailOpen && M5.cur && M5.cur.id === a.id && mobDetailEl) {
+      const md = mobDetailEl.querySelector("[data-clip-mob-md]");
+      if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
+    }
+  }
   async function loadClipBody(a) {
     const path = a.notePath;
-    if (!path || clipBodyCache.has(path)) return;
+    if (!path || clipBodyCache.has(path) || clipBodyInflight.has(path)) return;
     const note = a.note;
     if (!note || !note.file) return;
+    clipBodyInflight.add(path);
     let body = "";
     try {
       body = stripClipChrome(await getApp().vault.cachedRead(note.file));
     } catch (e) {
-      if (M5.cur && M5.cur.id === a.id && readerEl) {
-        const md = readerEl.querySelector("[data-clip-md]");
-        if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
-      }
+      clipBodyInflight.delete(path);
+      clipBodyReadFail(a);
       return;
     }
+    clipBodyInflight.delete(path);
     clipBodyCache.set(path, body);
-    if (M5.cur && M5.cur.id === a.id && readerEl) {
-      const md = readerEl.querySelector("[data-clip-md]");
-      if (!md) return;
-      if (!body) {
-        md.innerHTML = `<p class="dim">（笔记暂无正文）</p>`;
-        return;
-      }
-      md.innerHTML = "";
-      void hydrateArticleMarkdown(md, body, path, () => !!M5.cur && M5.cur.id === a.id && !!readerEl && readerEl.contains(md));
-    }
+    hydrateActiveClipBody(a, body);
   }
   function invalidateClipBodyCache(path) {
     clipBodyCache.delete(String(path || ""));
@@ -30126,8 +30156,20 @@ ${body}`;
       mobSaveBtnEl.classList.toggle("saved", saved);
       mobSaveBtnEl.textContent = saved ? "已存" : "存为剪藏";
     }
-    const mdBody = a.origin === "news" ? transformBodyForRead(a, a.body) : "";
-    const note = a.body ? "" : a.origin === "clip" ? "剪藏笔记正文请在 Obsidian 中打开" : "正文已清空";
+    let mdBody = "";
+    let note = "";
+    if (a.origin === "clip") {
+      const cached = a.notePath ? clipBodyCache.get(a.notePath) : void 0;
+      if (cached !== void 0) {
+        mdBody = cached;
+        if (!mdBody) note = "（笔记暂无正文）";
+      } else {
+        note = "正在读取剪藏正文…";
+      }
+    } else {
+      mdBody = transformBodyForRead(a, a.body);
+      if (!mdBody) note = "正文已清空";
+    }
     const idx = mobItemOrder.findIndex((x) => x.id === a.id);
     const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : "";
     const detailBody = mobDetailEl.querySelector("[data-clip-mob-detail-body]");
@@ -30138,6 +30180,7 @@ ${body}`;
     if (mdEl && mdBody) {
       void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
+    if (a.origin === "clip") void loadClipBody(a);
   }
   function ensureSelBar() {
     if (selBarEl && selBarEl.isConnected) return selBarEl;
@@ -30573,7 +30616,7 @@ ${body}`;
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle3, loading, dirty, loaded2, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap, MOBILE_SYS_BAR_CLEARANCE;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle3, loading, dirty, loaded2, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap, MOBILE_SYS_BAR_CLEARANCE;
   var init_ui6 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -30638,6 +30681,7 @@ ${body}`;
       snapEpochs = /* @__PURE__ */ new Map();
       deskFoldOpen = /* @__PURE__ */ new Set();
       deskFoldTouched = /* @__PURE__ */ new Set();
+      clipBodyInflight = /* @__PURE__ */ new Set();
       selBarEl = null;
       selBarEsc = null;
       selChangeTimer = null;

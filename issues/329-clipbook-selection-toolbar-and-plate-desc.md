@@ -21,6 +21,17 @@
   长按不出选区，划选工具框由此完全不可用。桌面 Obsidian 壳层（asar 逐条核对仅 PDF 阅读器禁选）、
   本插件 CSS、社区插件与快照均无全局禁选规则；显式放开为双端零风险兜底。
 
+## 追加修订（2026-09-16 第四批）
+
+- **图版图片落错目录（配置澄清 + 数据迁移）**：图版存储走知识盒「图版图片文件夹」
+  （`knowledgeImageFolder`），与剪藏本「剪藏图片文件夹」是两个键——用户配了后者、前者留空回落
+  `文献盒/assets`。已迁移存量（图片挪 `CONFIG/APPENDIX`、图版笔记路径改写、
+  `knowledgeImageFolder` 同步设置）。
+- **移动详情已收剪藏正文可读**：占位「请在 Obsidian 中打开」退役——clip 分支对齐桌面懒加载
+  （clipBodyCache → 原位双端水合，`hydrateActiveClipBody` 统一两路；防串篇标记 + 同篇单飞去重）。
+- **正文长词防撑破**：双正文容器 `overflow-wrap: anywhere` + `min-width: 0`，媒体 `max-width: 100%`
+  兜底，不加掩盖式 overflow-x。
+
 ## 追加修订（2026-09-16 第三批 · 移动端四 bug）
 
 - **工具框被系统选择菜单遮挡**：`placeSelBar` 移动端加 48px 系统菜单让位（上方放不下翻下方同理），
