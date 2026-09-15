@@ -1,15 +1,15 @@
 /**
- * 自动双链 UI/通知层测试（ticket 111 + 115 + 119，jsdom）：
- * - ⚙️ 弹窗「自动双链」总开关联动明细显隐（onChange 即时重渲染、各键独立持久化、重开还原）；
+ * 自动关联 UI/通知层测试（ticket 111 + 115 + 119；ADR-0141 正名并限定三盒，jsdom）：
+ * - ⚙️ 知识盒设置弹窗「自动关联」组总开关联动明细显隐（ADR-0141 §1 自第二大脑设置页迁入）；
  * - 管线写入（单侧幂等 / 上限截断 / 入队 / 裁判失败入队）；
  * - 通知触发条件（本批新建 N 条 / N=0 静默 / 队列消费完成 / 死链清理有移除才报）；
- * - 监听器聚合与守卫；命令 bz-secondbrain-rebuild-links 注册守卫分支；
- * - 存量补链（ticket 115）：目标清单扫描 / 可达门 / 队列排除 / 串行锁；命令 bz-secondbrain-link-all 守卫分支；
+ * - 监听器聚合与守卫（范围恒为三盒）；命令 bz-knowledge-relink 守卫分支（含盒外拒绝）；
+ * - 存量补链（ticket 115）：目标清单扫描 / 可达门 / 队列排除 / 串行锁 / 已尝试 0 条不重跑（ADR-0141 §6）；
  * - 正文大改自动重跑（v1.4/ticket 119）：成功建链后记基准哈希；修改过滤（实质变化才重跑）；
  *   修改监听聚合与删除清基准；自写 related 不触发循环重跑。
- * - 自动双链通道（issue 309）：createLinkBridge 三段能力——preview（草稿未落盘也能算关联，
- *   生成后立刻跑）/ apply（落盘后写预演结果）/ now（兜底单篇管线）；装载等待、索引白名单
- *   一次性引导、返回值透传。原「knowledge:tasks 订阅生成即跑」（issue 298）已删除。
+ * - 自动关联通道（issue 309 + ADR-0141）：createLinkBridge 四段能力——preview（草稿未落盘也能算关联，
+ *   生成后立刻跑）/ apply（落盘后写预演结果）/ now（兜底单篇管线，force 供手动命令）/ backfill（批量补链）；
+ *   装载等待与返回值透传。「请去补白名单」一次性引导已随三盒恒含退役（ADR-0141 §3）。
  * - processNoteNow 自身的通知门（issue 298 保留）：新建 N / 入队 / 失败三态 toast（通道调用传 silent）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -18,13 +18,11 @@ import { resetObsidianMocks, clearNotices, getNoticeMessages } from '../mock-obs
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { clearDomainEvents, emitDomainEvent } from '../../src/core/domain-bus';
-import { closeSettingsModal } from '../../src/core/settings-modal';
+import { closeSettingsModal, openSettingsModal } from '../../src/core/settings-modal';
 import { DEFAULT_SETTINGS } from '../../src/settings';
-import { openSecondBrainSettings } from '../../src/secondbrain/panel';
 import { LinkAgent, __setLinkBatchMsForTests } from '../../src/secondbrain/link-agent/pipeline';
 import {
   LinkAgentWatcher,
-  __resetLinkAgentGuideForTests,
   __setLinkCleanDebounceMsForTests,
   createLinkBridge,
   startQueueConsumption,
@@ -32,10 +30,20 @@ import {
 } from '../../src/secondbrain/link-agent/watch';
 import { enqueuePaths, loadQueue, loadLinkState, computeHash } from '../../src/secondbrain/link-agent/data';
 import { AI } from '../../src/secondbrain/ai';
-import { rebuildSecondBrainLinks, runSecondBrainLinkAll, unloadSecondBrain } from '../../src/secondbrain/index';
+import { unloadSecondBrain } from '../../src/secondbrain/index';
+import { relinkActiveNote, linkAllInBoxes } from '../../src/knowledge/index';
+import { knowledgeSettingsSchema } from '../../src/knowledge/ui';
+import { secondBrainSettingsSchema } from '../../src/secondbrain/panel';
+import { setLinkBridge } from '../../src/core/link-now';
 
 function baseSettings() {
-  return { ...DEFAULT_SETTINGS, secondBrainAllowPaths: '卡片盒,文献盒' } as any;
+  // ADR-0141 §3：白名单不再是候选来源开关（三盒恒含索引），此处留空不影响自动关联行为
+  return { ...DEFAULT_SETTINGS, secondBrainAllowPaths: '' } as any;
+}
+
+/** 知识盒设置弹窗（「自动关联」组所在处；ADR-0141 §1 自第二大脑设置页迁入） */
+function openAutoLinkSettings(): void {
+  openSettingsModal({ title: '知识盒设置', maxWidth: 520, schema: knowledgeSettingsSchema() });
 }
 
 /** 取指定设置行的触发器（MockToggle/MockText 均有 trigger） */
@@ -49,7 +57,7 @@ function rowTrigger(popup: HTMLElement, name: string): (v: any) => void {
   return (v: any) => ctrl.trigger(v);
 }
 
-describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
+describe('⚙️ 知识盒设置弹窗「自动关联」组（ADR-0141 §1：自第二大脑设置页迁入）', () => {
   let settings: ReturnType<typeof baseSettings>;
 
   beforeEach(() => {
@@ -63,54 +71,60 @@ describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
     setApp({ vault: new MockVault() } as any);
   });
 
-  it('开启态：组名与六行明细渲染', () => {
-    openSecondBrainSettings();
+  it('开启态：组名与五条明细渲染；「关联范围」行已退役（ADR-0141 §2：范围恒为三个盒子）', () => {
+    openAutoLinkSettings();
     const popup = document.getElementById('bz-settings-modal-popup')!;
-    expect(popup.textContent).toContain('自动双链');
-    for (const name of ['单篇候选数量 TopK', '每篇关联上限', '完成通知', '失效关联自动清理', '已有关联不再建链', '关联范围']) {
+    expect(popup.textContent).toContain('自动关联');
+    for (const name of ['单篇候选数量 TopK', '每篇关联上限', '完成通知', '失效关联自动清理', '已有关联不再建链']) {
       expect([...popup.querySelectorAll('.setting-item')].some((el) => (el as HTMLElement).dataset.name === name)).toBe(true);
     }
+    const rowNames = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    expect(rowNames).not.toContain('关联范围'); // 范围不再可配
     closeSettingsModal();
   });
 
+  it('第二大脑设置页不再有「自动双链」组（ADR-0141 §1：设置组已迁知识盒）', () => {
+    const groups = secondBrainSettingsSchema().groups.map((g) => g.name);
+    expect(groups).not.toContain('自动双链');
+    expect(groups).not.toContain('自动关联');
+  });
+
   it('onChange 关闭总开关：明细即时隐藏（bz-setting-hidden）且键持久化；重开弹窗还原关闭态', async () => {
-    openSecondBrainSettings();
+    openAutoLinkSettings();
     const popup = document.getElementById('bz-settings-modal-popup')!;
-    rowTrigger(popup, '自动双链')(false);
+    rowTrigger(popup, '自动关联')(false);
     await new Promise((r) => setTimeout(r, 5));
     expect(settings.linkAgentEnabled).toBe(false);
-    // 明细整体隐藏（ticket 131 visibleWhen 声明式：隐藏行留在 DOM 带 .bz-setting-hidden；path 行
-    // visibleWhen 作用于自定义包装容器，用 closest 统查，含新增的关联范围行）
+    // 明细整体隐藏（ticket 131 visibleWhen 声明式：隐藏行留在 DOM 带 .bz-setting-hidden）
     const detailHidden = (name: string) => {
       const el = [...popup.querySelectorAll('.setting-item')].find((s) => (s as HTMLElement).dataset.name === name);
       return el ? (el as HTMLElement).closest('.bz-setting-hidden') !== null : false;
     };
     expect(detailHidden('单篇候选数量 TopK')).toBe(true);
-    expect(detailHidden('关联范围')).toBe(true);
     closeSettingsModal();
 
     // 重开弹窗按当前状态还原：仍关闭、明细隐藏
-    openSecondBrainSettings();
+    openAutoLinkSettings();
     const popup2 = document.getElementById('bz-settings-modal-popup')!;
-    const scopeEl2 = [...popup2.querySelectorAll('.setting-item')].find(
-      (s) => (s as HTMLElement).dataset.name === '关联范围'
+    const topkEl2 = [...popup2.querySelectorAll('.setting-item')].find(
+      (s) => (s as HTMLElement).dataset.name === '单篇候选数量 TopK'
     ) as HTMLElement;
-    expect(scopeEl2).toBeTruthy();
-    expect(scopeEl2.closest('.bz-setting-hidden')).not.toBeNull();
+    expect(topkEl2).toBeTruthy();
+    expect(topkEl2.closest('.bz-setting-hidden')).not.toBeNull();
     closeSettingsModal();
   });
 
-  it('重开还原开启态；各键独立持久化（TopK/上限/范围文本、通知与清理 toggle）', async () => {
+  it('重开还原开启态；各键独立持久化（TopK/上限文本、通知与清理 toggle）', async () => {
     settings.linkAgentEnabled = false;
     settings.linkAgentTopK = 12;
     settings.linkAgentMaxLinks = 3;
     settings.linkAgentNotify = false;
     settings.linkAgentAutoClean = false;
     settings.linkAgentRespectRelated = false;
-    openSecondBrainSettings();
+    openAutoLinkSettings();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     // 开启态还原（master 值来自当前设置）
-    rowTrigger(popup, '自动双链')(true);
+    rowTrigger(popup, '自动关联')(true);
     await new Promise((r) => setTimeout(r, 5));
     expect(settings.linkAgentEnabled).toBe(true);
     // 各键独立持久化
@@ -119,44 +133,22 @@ describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
     rowTrigger(popup, '完成通知')(true);
     rowTrigger(popup, '失效关联自动清理')(true);
     rowTrigger(popup, '已有关联不再建链')(true);
-    // 关联范围（ticket 128 统一选择器）：种库内目录 → 点「📁 选择」→ 勾选 → 确定；存储格式仍逗号分隔串
-    const scopeVault = new MockVault();
-    scopeVault.create('文献盒/A.md', 'x');
-    scopeVault.create('卡片盒/B.md', 'x');
-    setApp({ vault: scopeVault } as any);
-    const scopeBtn = rowTrigger(popup, '关联范围'); // (v) => controls[0].trigger(v)，按钮触发即打开选择器
-    scopeBtn(undefined);
-    const picker = document.getElementById('bz-path-picker-popup')!;
-    // 等「adapter 补齐完成」标记（快速首渲染下 rows 立即出现；等 ready 保证目录集合完整）
-    await vi.waitFor(() => expect(picker.dataset.ready).toBe('1'));
-    const clickRow = (p: string) => {
-      const row = [...picker.querySelectorAll('.bz-path-picker-row')].find(
-        (r) => (r as HTMLElement).dataset.path === p
-      ) as HTMLElement;
-      row.click();
-    };
-    clickRow('文献盒');
-    clickRow('卡片盒');
-    (picker.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
-    await new Promise((r) => setTimeout(r, 10));
-    expect(settings.linkAgentScopes).toBe('文献盒,卡片盒');
     await new Promise((r) => setTimeout(r, 10));
     expect(settings.linkAgentTopK).toBe(6);
     expect(settings.linkAgentMaxLinks).toBe(5);
     expect(settings.linkAgentNotify).toBe(true);
     expect(settings.linkAgentAutoClean).toBe(true);
     expect(settings.linkAgentRespectRelated).toBe(true);
-    expect(settings.linkAgentScopes).toBe('文献盒,卡片盒');
     closeSettingsModal();
   });
 
-  it('[f2-sb] 重载提示一次弹窗只提示一次（样本改用「自动双链」；原「启用」开关已随启用键退役 2026-09-12）', async () => {
-    openSecondBrainSettings();
+  it('[f2-sb] 重载提示一次弹窗只提示一次（ADR-0141：总开关仍在知识盒设置页，仍是启动快照配置）', async () => {
+    openAutoLinkSettings();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     clearNotices();
-    // 「自动双链」toggle 仍带 warnReload（首次改动提示「重载插件后生效」）
-    rowTrigger(popup, '自动双链')(false);
-    rowTrigger(popup, '自动双链')(true);
+    // 「自动关联」toggle 仍带 warnReload（首次改动提示「重载插件后生效」）
+    rowTrigger(popup, '自动关联')(false);
+    rowTrigger(popup, '自动关联')(true);
     await new Promise((r) => setTimeout(r, 5));
     expect(settings.linkAgentEnabled).toBe(true);
     // 一次弹窗会话内只提示一次（f2 重载提示收敛）
@@ -277,25 +269,38 @@ describe('管线：related 幂等写入与可达性门', () => {
     expect(r).toEqual({ status: 'skipped' });
   });
 
-  it('候选来源 = 白名单索引库全部笔记：不按关联范围过滤，仅剔除自身/缺失文件/encrypt 锁定', async () => {
+  it('候选端限三盒（ADR-0141 §2）：盒外候选被过滤，仅剔除自身/缺失文件/encrypt 锁定', async () => {
     const { vault, agent } = makeWorld({
       hits: [
         { path: '文献盒/B.md', chunk: 'B', score: 0.9 },
         { path: '卡片盒/K.md', chunk: 'K', score: 0.85 },
-        { path: '其他/X.md', chunk: 'X', score: 0.8 }, // 范围外照常入选（候选不受范围限制）
+        { path: '主题盒/T.md', chunk: 'T', score: 0.82 },
+        { path: '其他/X.md', chunk: 'X', score: 0.8 }, // 盒外 → 过滤
+        { path: '书库/Y.md', chunk: 'Y', score: 0.78 }, // 盒外 → 过滤
         { path: '文献盒/A.md', chunk: '自身', score: 0.99 }, // 自身剔除
         { path: 'CONFIG/.ENCRYPT/E.md', chunk: 'E', score: 0.7 }, // encrypt 锁定剔除
         { path: '文献盒/GONE.md', chunk: 'G', score: 0.6 }, // 文件不存在剔除
       ],
     });
     vault.files.set('卡片盒/K.md', 'k');
+    vault.files.set('主题盒/T.md', 't');
     vault.files.set('其他/X.md', 'x');
-    // 空范围（ticket 116 默认）与显式范围都不影响候选来源
+    vault.files.set('书库/Y.md', 'y');
     const r1 = await agent.findCandidates('文献盒/A.md', '正文');
-    expect(r1.map((c) => c.path)).toEqual(['文献盒/B.md', '卡片盒/K.md', '其他/X.md']);
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
-    const r2 = await agent.findCandidates('文献盒/A.md', '正文');
-    expect(r2.map((c) => c.path)).toEqual(['文献盒/B.md', '卡片盒/K.md', '其他/X.md']);
+    expect(r1.map((c) => c.path)).toEqual(['文献盒/B.md', '卡片盒/K.md', '主题盒/T.md']);
+
+    // 盒子目录改了 → 候选范围跟着改（实时读设置，无缓存）
+    const second = makeWorld({
+      hits: [
+        { path: '卡片盒2/N.md', chunk: 'N', score: 0.9 },
+        { path: '卡片盒/K.md', chunk: 'K', score: 0.85 }, // 旧卡片盒已不在盒内
+      ],
+    });
+    second.vault.files.set('卡片盒2/N.md', 'n');
+    second.vault.files.set('卡片盒/K.md', 'k');
+    setSettingsProvider(() => ({ ...baseSettings(), knowledgeCardboxDirectory: '卡片盒2' }));
+    const r2 = await second.agent.findCandidates('文献盒/A.md', '正文');
+    expect(r2.map((c) => c.path)).toEqual(['卡片盒2/N.md']);
   });
 
   it('查询端全文嵌入（ticket 118）：不再 800 字截断；超长按 LINK_QUERY_MAX_CHARS 安全截尾', async () => {
@@ -551,33 +556,27 @@ describe('通知触发条件（自绘 toast）', () => {
     expect(getNoticeMessages().some((m) => m.includes('待处理关联已处理完毕'))).toBe(false);
   });
 
-  it('死链清理：有移除才报「已清理 N 条失效关联」；零变化静默；扫描范围随 linkAgentScopes', async () => {
+  it('死链清理：有移除才报「已清理 N 条失效关联」；零变化静默；扫描范围恒为三盒', async () => {
     const { vault, agent } = makeWorld({});
     vault.files.set(
       '文献盒/C.md',
       '---\nrelated:\n  - "[[文献盒/GONE.md]]"\n  - "[[文献盒/B]]"\n---\n\n正文'
     );
-    // 多范围：卡片盒也在范围内，其失效链一并清理
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒,卡片盒' }));
     vault.files.set('卡片盒/E.md', '---\nrelated:\n  - "[[卡片盒/DEAD.md]]"\n---\n\n正文');
+    // 盒外（书库）不在范围内：失效链原样保留（ADR-0141 §2：范围不再可配）
+    vault.files.set('书库/F.md', '---\nrelated:\n  - "[[书库/DEAD2.md]]"\n---\n\n正文');
     const n1 = await agent.cleanDeadLinks();
-    expect(n1).toBe(2);
+    expect(n1).toBe(2); // 文献盒 1 + 卡片盒 1
     expect(getNoticeMessages().some((m) => m.includes('已清理 2 条失效关联'))).toBe(true);
     expect(vault.files.get('文献盒/C.md')).not.toContain('GONE');
     expect(vault.files.get('文献盒/C.md')).toContain('[[文献盒/B]]');
     expect(vault.files.get('卡片盒/E.md')).not.toContain('DEAD');
+    expect(vault.files.get('书库/F.md')).toContain('DEAD2');
 
     clearNotices();
     const n2 = await agent.cleanDeadLinks();
     expect(n2).toBe(0);
     expect(getNoticeMessages().some((m) => m.includes('已清理'))).toBe(false);
-
-    // 范围收回仅文献盒：卡片盒的失效链不再被扫描
-    vault.files.set('卡片盒/F.md', '---\nrelated:\n  - "[[卡片盒/DEAD2.md]]"\n---\n\n正文');
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
-    const n3 = await agent.cleanDeadLinks();
-    expect(n3).toBe(0);
-    expect(vault.files.get('卡片盒/F.md')).toContain('DEAD2');
   });
 
   it('[n2-sb] 启动静默：silent 批次/队列不发进度与完成 toast，汇总照常；手动（非 silent）保留通知', async () => {
@@ -622,7 +621,7 @@ describe('通知触发条件（自绘 toast）', () => {
     const { vault, agent } = makeWorld({});
     vault.files.set('CONFIG/.ENCRYPT/.safe.enc', 'cipher');
     vault.files.set('文献盒/C.md', '---\nrelated:\n  - "[[文献盒/GONE.md]]"\n---\n\n正文');
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
+    // 范围恒为三盒（ADR-0141 §2）：文献盒在盒内，其他/ 在盒外
     const n = await agent.cleanDeadLinks();
     expect(n).toBe(0);
     expect(vault.files.get('文献盒/C.md')).toContain('GONE');
@@ -636,7 +635,6 @@ describe('监听器：防抖聚合与开关门', () => {
     document.body.innerHTML = '';
     __setLinkBatchMsForTests(30);
     __setLinkCleanDebounceMsForTests(30);
-    __resetLinkAgentGuideForTests();
     setSettingsProvider(baseSettings);
     setSettingsSaver(() => Promise.resolve());
   });
@@ -655,48 +653,42 @@ describe('监听器：防抖聚合与开关门', () => {
     return { vault, agent, watcher };
   }
 
-  it('文献盒内创建事件聚合成批；非文献盒忽略；缓冲内已删除文件不进批次', async () => {
+  it('三盒内创建事件聚合成批；盒外忽略；缓冲内已删除文件不进批次', async () => {
     const { vault, agent, watcher } = makeWatcher(new MockVault());
     vault.files.set('文献盒/X.md', 'x');
+    vault.files.set('主题盒/T.md', 't');
     vault.files.set('其他/Y.md', 'y');
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
     watcher.start();
     watcher.onCreated('文献盒/X.md');
     watcher.onCreated('文献盒/DEAD.md'); // 防抖窗口内将被删除
-    watcher.onCreated('其他/Y.md');
+    watcher.onCreated('主题盒/T.md'); // 三盒之一：同样触发
+    watcher.onCreated('其他/Y.md'); // 盒外忽略
     watcher.onDeleted('文献盒/DEAD.md');
     await new Promise((r) => setTimeout(r, 70));
     expect(agent.processBatch).toHaveBeenCalledTimes(1);
-    expect(agent.processBatch.mock.calls[0][0]).toEqual(['文献盒/X.md']);
+    expect(agent.processBatch.mock.calls[0][0]).toEqual(['文献盒/X.md', '主题盒/T.md']);
     watcher.destroy();
   });
 
-  it('多范围目录：监听随 linkAgentScopes 同步生效；缺键（空）时什么也不录、不触发', async () => {
+  it('盒子目录改了监听范围跟着改（实时读设置）；盒外路径一律不触发', async () => {
     const { vault, agent, watcher } = makeWatcher(new MockVault());
-    vault.files.set('文献盒/X.md', 'x');
+    vault.files.set('卡片盒2/N.md', 'n');
     vault.files.set('卡片盒/K.md', 'k');
-    vault.files.set('其他/Y.md', 'y');
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒,卡片盒' }));
+    setSettingsProvider(() => ({ ...baseSettings(), knowledgeCardboxDirectory: '卡片盒2' }));
     watcher.start();
-    watcher.onCreated('文献盒/X.md');
-    watcher.onCreated('卡片盒/K.md'); // 第二个范围目录同样触发
-    watcher.onCreated('其他/Y.md'); // 范围外忽略
+    watcher.onCreated('卡片盒2/N.md'); // 新卡片盒目录：在盒内
+    watcher.onCreated('卡片盒/K.md'); // 旧卡片盒目录：已不在盒内
     await new Promise((r) => setTimeout(r, 70));
     expect(agent.processBatch).toHaveBeenCalledTimes(1);
-    expect(agent.processBatch.mock.calls[0][0]).toEqual(['文献盒/X.md', '卡片盒/K.md']);
+    expect(agent.processBatch.mock.calls[0][0]).toEqual(['卡片盒2/N.md']);
     watcher.destroy();
 
-    // 设置对象缺 linkAgentScopes 键（空）：范围 = 什么也不录，任何路径都不触发监听
+    // 盒外一律不触发（范围不可配 → 不存在「范围为空什么也不录」这个态了）
     clearDomainEvents();
     const w2env = makeWatcher(new MockVault());
-    w2env.vault.files.set('文献盒/Z.md', 'z');
-    setSettingsProvider(() => {
-      const s = { ...baseSettings(), secondBrainAllowPaths: '文献盒' };
-      delete (s as any).linkAgentScopes;
-      return s;
-    });
+    w2env.vault.files.set('书库/Z.md', 'z');
     w2env.watcher.start();
-    w2env.watcher.onCreated('文献盒/Z.md');
+    w2env.watcher.onCreated('书库/Z.md');
     await new Promise((r) => setTimeout(r, 70));
     expect(w2env.agent.processBatch).not.toHaveBeenCalled();
     w2env.watcher.destroy();
@@ -709,7 +701,7 @@ describe('监听器：防抖聚合与开关门', () => {
     vault.files.set('文献盒/UNCHANGED.md', 'u');
     vault.files.set('文献盒/DEAD.md', 'd');
     vault.files.set('其他/Y.md', 'y');
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
+    // 范围恒为三盒（ADR-0141 §2）：文献盒在盒内，其他/ 在盒外
     // 修改过滤 stub：只保留 M 与 X（UNCHANGED 被滤掉；X 虽来自 created 也并入批次去重）
     agent.filterChangedForRelink.mockImplementation(async (paths: string[]) =>
       paths.filter((p) => p.includes('M.md') || p.includes('X.md'))
@@ -719,7 +711,7 @@ describe('监听器：防抖聚合与开关门', () => {
     watcher.onModified('文献盒/M.md');
     watcher.onModified('文献盒/UNCHANGED.md'); // 过滤剔除
     watcher.onModified('文献盒/DEAD.md'); // 防抖窗口内被删除 → 缓冲剔除
-    watcher.onModified('其他/Y.md'); // 范围外忽略
+    watcher.onModified('其他/Y.md'); // 盒外忽略
     watcher.onDeleted('文献盒/DEAD.md');
     expect(agent.dropLinkBaseline).toHaveBeenCalledWith('文献盒/DEAD.md');
     await new Promise((r) => setTimeout(r, 70));
@@ -731,7 +723,7 @@ describe('监听器：防抖聚合与开关门', () => {
   it('v1.4 修改过滤异常时按全部修改保留兜底（不丢事件）', async () => {
     const { vault, agent, watcher } = makeWatcher(new MockVault());
     vault.files.set('文献盒/M.md', 'm');
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
+    // 范围恒为三盒（ADR-0141 §2）：文献盒在盒内，其他/ 在盒外
     agent.filterChangedForRelink.mockRejectedValue(new Error('状态文件损坏'));
     watcher.start();
     watcher.onModified('文献盒/M.md');
@@ -741,10 +733,10 @@ describe('监听器：防抖聚合与开关门', () => {
     watcher.destroy();
   });
 
-  it('v1.4 修改事件校验：范围外/开关关闭不缓冲，删除清两缓冲', async () => {
+  it('v1.4 修改事件校验：盒外/开关关闭不缓冲，删除清两缓冲', async () => {
     const { vault, agent, watcher } = makeWatcher(new MockVault());
     vault.files.set('文献盒/M.md', 'm');
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
+    // 范围恒为三盒（ADR-0141 §2）：文献盒在盒内，其他/ 在盒外
     watcher.start();
     watcher.onModified('其他/Y.md'); // 范围外
     await new Promise((r) => setTimeout(r, 70));
@@ -788,48 +780,21 @@ describe('监听器：防抖聚合与开关门', () => {
     watcher.destroy();
   });
 
-  it('引导提示泛化：范围内出现白名单未含目录时一次性提示；补齐后与重复 start 不再提示', () => {
-    // 多目录范围：只点名缺失目录（书库缺失被提示，已在白名单内的文献盒/卡片盒不提）
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒,卡片盒,书库', secondBrainAllowPaths: '卡片盒,文献盒' }));
-    const { watcher } = makeWatcher(new MockVault());
-    watcher.start();
-    const guide = getNoticeMessages().find((m) => m.includes('白名单'));
-    expect(guide).toBeTruthy();
-    expect(guide).toContain('书库');
-    expect(guide!.includes('「文献盒」')).toBe(false);
-    watcher.destroy();
-
-    // 第二个 watcher（同会话）：不再重复提示
-    clearNotices();
-    const w2 = makeWatcher(new MockVault()).watcher;
-    w2.start();
-    expect(getNoticeMessages().some((m) => m.includes('白名单'))).toBe(false);
-    w2.destroy();
-
-    // 白名单已包含全部范围：无提示
-    __resetLinkAgentGuideForTests();
-    clearNotices();
-    setSettingsProvider(baseSettings);
-    const w3 = makeWatcher(new MockVault()).watcher;
-    w3.start();
-    expect(getNoticeMessages()).toEqual([]);
-    w3.destroy();
-  });
 });
 
-describe('命令 bz-secondbrain-rebuild-links 守卫分支', () => {
+describe('命令 bz-knowledge-relink 守卫分支（ADR-0141 §1：命令迁入知识盒域，引擎留第二大脑）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     clearDomainEvents();
     document.body.innerHTML = '';
     setSettingsProvider(baseSettings);
     setSettingsSaver(() => Promise.resolve());
-    unloadSecondBrain();
+    setLinkBridge(null);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    unloadSecondBrain();
+    setLinkBridge(null);
   });
 
   function makeCommandApp(activePath: string | null) {
@@ -841,37 +806,82 @@ describe('命令 bz-secondbrain-rebuild-links 守卫分支', () => {
     return app;
   }
 
+  /** 注入假通道（知识盒只经 core/link-now 消费，域隔离下不 import 第二大脑） */
+  function injectBridge(outcome: unknown) {
+    const now = vi.fn(async () => outcome);
+    setLinkBridge({ now, preview: vi.fn(), apply: vi.fn(), backfill: vi.fn() } as any);
+    return now;
+  }
+
   it('无活动笔记：提示先打开笔记', async () => {
-    makeCommandApp(null);
-    await rebuildSecondBrainLinks({ workspace: { getActiveFile: () => null } } as any);
+    injectBridge({ status: 'done', created: 0 });
+    await relinkActiveNote({ workspace: { getActiveFile: () => null } } as any);
     expect(getNoticeMessages().some((m) => m.includes('请先打开一个笔记'))).toBe(true);
   });
 
-  it('手动触发不受范围限制：范围外笔记也进入管线（候选仍按范围过滤），完成后按结果通知', async () => {
-    const app = makeCommandApp('我的/日记/x.md'); // 不在任何 linkAgentScopes 内
-    // mock 掉管线本体（避免真实探测网络），验证命令放行进入管线而非被范围守卫拦截
-    const spy = vi.spyOn(LinkAgent.prototype, 'processNote').mockResolvedValue({ status: 'done', created: 2 });
-    await rebuildSecondBrainLinks(app as any);
-    expect(spy).toHaveBeenCalledWith('我的/日记/x.md', { respectRelated: false }); // v1.7/ticket 167：手动重跑豁免尊重门
+  it('手动重跑强制：force 透传（跳过「已有 related 不建链」尊重门），完成后按结果通知', async () => {
+    const app = makeCommandApp('文献盒/a.md');
+    const now = injectBridge({ status: 'done', created: 2 });
+    await relinkActiveNote(app as any);
+    expect(now).toHaveBeenCalledWith('文献盒/a.md', { force: true }); // v1.7/ticket 167 保留
     expect(getNoticeMessages().some((m) => m.includes('已新建关联 2 条'))).toBe(true);
   });
 
-  it('自动双链已关闭：提示且不进入管线', async () => {
+  it('盒外笔记：拒绝并提示不在三个盒子内（ADR-0141 §2 口径反转——手动不再豁免范围）', async () => {
+    const app = makeCommandApp('我的/日记/x.md');
+    const now = injectBridge({ status: 'out-of-scope' });
+    await relinkActiveNote(app as any);
+    expect(now).toHaveBeenCalledWith('我的/日记/x.md', { force: true }); // 命令不预判盒界，判定归实现侧
+    expect(getNoticeMessages().some((m) => m.includes('该笔记不在三个盒子内'))).toBe(true);
+  });
+
+  it('零新建 / 入队 / 失败 / 无法处理：各自提示', async () => {
+    const app = makeCommandApp('文献盒/a.md');
+    injectBridge({ status: 'done', created: 0 });
+    await relinkActiveNote(app as any);
+    expect(getNoticeMessages().some((m) => m.includes('未发现实质关联，未新建'))).toBe(true);
+
+    clearNotices();
+    injectBridge({ status: 'queued' });
+    await relinkActiveNote(app as any);
+    expect(getNoticeMessages().some((m) => m.includes('已加入待处理队列'))).toBe(true);
+
+    clearNotices();
+    injectBridge({ status: 'failed', error: '服务商不可用' });
+    await relinkActiveNote(app as any);
+    expect(getNoticeMessages().some((m) => m.includes('关联处理失败：服务商不可用'))).toBe(true);
+
+    clearNotices();
+    injectBridge({ status: 'skipped' });
+    await relinkActiveNote(app as any);
+    expect(getNoticeMessages().some((m) => m.includes('该笔记暂无法处理'))).toBe(true);
+  });
+
+  it('自动关联已关闭：提示且不调通道', async () => {
     setSettingsProvider(() => ({ ...baseSettings(), linkAgentEnabled: false }));
     const app = makeCommandApp('文献盒/a.md');
-    await rebuildSecondBrainLinks(app as any);
-    expect(getNoticeMessages().some((m) => m.includes('自动双链已在第二大脑设置中关闭'))).toBe(true);
+    const now = injectBridge({ status: 'done', created: 1 });
+    await relinkActiveNote(app as any);
+    expect(getNoticeMessages().some((m) => m.includes('自动关联已在知识盒设置中关闭'))).toBe(true);
+    expect(now).not.toHaveBeenCalled();
+  });
+
+  it('通道未接线（第二大脑未就绪）：明确提示，不静默', async () => {
+    const app = makeCommandApp('文献盒/a.md');
+    setLinkBridge(null);
+    await relinkActiveNote(app as any);
+    expect(getNoticeMessages().some((m) => m.includes('自动关联暂不可用'))).toBe(true);
   });
 });
 
 // ---------------- 存量补链与串行锁（ticket 115） ----------------
 
-describe('存量补链（backfillMissingLinks，ticket 115 + 116）', () => {
+describe('存量补链（backfillMissingLinks，ticket 115 + 116 + ADR-0141）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     clearDomainEvents();
     document.body.innerHTML = '';
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
+    setSettingsProvider(baseSettings); // 范围恒为三盒（ADR-0141 §2），不再需要范围覆盖
     setSettingsSaver(() => Promise.resolve());
   });
 
@@ -938,13 +948,60 @@ describe('存量补链（backfillMissingLinks，ticket 115 + 116）', () => {
     expect(q.map((i) => i.path)).toEqual(['文献盒/A.md']); // 队列条目未被消费（归队列消费管）
   });
 
-  it('空关联范围：目标为空，返回 no-targets（ticket 116：什么也不录）', async () => {
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '' }));
+  it('三盒内没有文件：目标为空，返回 no-targets（空盒是合法状态，不报错不提示）', async () => {
+    // 三盒全部指向空目录（含 ADR-0141 §4 的「不做存在性探测」：目录不存在即该盒范围为空格）
+    setSettingsProvider(
+      () => ({
+        ...baseSettings(),
+        knowledgeDirectory: '空文献盒',
+        knowledgeCardboxDirectory: '空卡片盒',
+        knowledgeTopicDirectory: '空主题盒',
+      })
+    );
     const { agent, askSpy } = makeWorld({});
     const result = await agent.backfillMissingLinks();
     expect(result).toEqual({ status: 'no-targets' });
     expect(askSpy).not.toHaveBeenCalled();
     expect(getNoticeMessages()).toEqual([]);
+  });
+
+  it('盒外笔记不进目标：书库/日记里的缺关联笔记不被自动建链（ADR-0141 §2）', async () => {
+    const { vault, agent, askSpy } = makeWorld({
+      hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
+    });
+    askSpy.mockResolvedValue('[{"id":1,"reason":"r"}]');
+    vault.files.set('书库/缺关联.md', '一本还没建过关联的书');
+    vault.files.set('我的/日记/缺关联.md', '一篇还没建过关联的日记');
+    const result = await agent.backfillMissingLinks();
+    expect(result.status).toBe('done');
+    const summary = (result as { summary: { total: number } }).summary;
+    expect(summary.total).toBe(3); // 只有文献盒 A/B/D
+    expect(vault.files.get('书库/缺关联.md')).not.toContain('related');
+    expect(vault.files.get('我的/日记/缺关联.md')).not.toContain('related');
+  });
+
+  it('已尝试且 0 条（ADR-0141 §6）：正文未变不再重跑；正文改了重新进目标', async () => {
+    // 第一轮：AI 判定无关联 → 写基准并记 empty
+    const first = makeWorld({ hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }] });
+    first.askSpy.mockResolvedValue('[]');
+    const r1 = await first.agent.backfillMissingLinks();
+    expect(r1.status).toBe('done');
+    const st = await loadLinkState();
+    expect(Object.values(st).filter((e) => e.empty === true).length).toBeGreaterThan(0);
+
+    // 第二轮（同一库）：仍无 related，但基准已记「已尝试且 0 条」→ 不再进目标、不再调裁判
+    first.askSpy.mockClear();
+    const r2 = await first.agent.backfillMissingLinks();
+    expect(r2).toEqual({ status: 'no-targets' });
+    expect(first.askSpy).not.toHaveBeenCalled();
+
+    // 正文改了 → 哈希不同 → 重新进目标
+    first.vault.files.set('文献盒/A.md', '改过一遍的正文，与基准哈希不同');
+    first.askSpy.mockResolvedValue('[]');
+    const r3 = await first.agent.backfillMissingLinks();
+    expect(r3.status).toBe('done');
+    const s3 = (r3 as { summary: { total: number } }).summary;
+    expect(s3.total).toBe(1); // 只有刚改过的 A 重新进目标
   });
 
   it('串行锁：并发批次排队执行，refresh 绝不同时运行', async () => {
@@ -973,81 +1030,77 @@ describe('存量补链（backfillMissingLinks，ticket 115 + 116）', () => {
   });
 });
 
-// ---------------- 命令 bz-secondbrain-link-all 守卫分支（ticket 115） ----------------
-
-describe('命令 bz-secondbrain-link-all 守卫分支', () => {
+describe('命令 bz-knowledge-link-all 守卫分支（ADR-0141 §1：命令迁入知识盒域）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     clearDomainEvents();
     document.body.innerHTML = '';
     setSettingsProvider(baseSettings);
     setSettingsSaver(() => Promise.resolve());
-    unloadSecondBrain();
+    setLinkBridge(null);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    unloadSecondBrain();
+    setLinkBridge(null);
   });
 
-  function makeAllApp() {
-    const vault = new MockVault();
-    vault.files.set('文献盒/A.md', '正文');
-    const app = mockAppWithVault(vault);
-    setApp(app as any);
-    return app;
+  /** 注入假通道的 backfill 段（知识盒命令只把状态映射成提示） */
+  function injectBackfill(outcome: unknown) {
+    const backfill = vi.fn(async () => outcome);
+    setLinkBridge({ now: vi.fn(), preview: vi.fn(), apply: vi.fn(), backfill } as any);
+    return backfill;
   }
 
-  it('自动双链已关闭：提示且不进入补链', async () => {
+  it('自动关联已关闭：提示且不调通道', async () => {
     setSettingsProvider(() => ({ ...baseSettings(), linkAgentEnabled: false }));
-    const spy = vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({ status: 'done', summary: { total: 0, processed: 0, created: 0, queued: 0, failed: 0 } });
-    await runSecondBrainLinkAll(makeAllApp() as any);
-    expect(getNoticeMessages().some((m) => m.includes('自动双链已在第二大脑设置中关闭'))).toBe(true);
-    expect(spy).not.toHaveBeenCalled();
+    const backfill = injectBackfill({ status: 'done', processed: 0, created: 0 });
+    await linkAllInBoxes();
+    expect(getNoticeMessages().some((m) => m.includes('自动关联已在知识盒设置中关闭'))).toBe(true);
+    expect(backfill).not.toHaveBeenCalled();
   });
 
   it('补链产出关联：按汇总通知（启动静默路径不重复通知）', async () => {
-    const spy = vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({
-      status: 'done',
-      summary: { total: 2, processed: 2, created: 3, queued: 0, failed: 0 },
-    });
-    await runSecondBrainLinkAll(makeAllApp() as any);
-    expect(spy).toHaveBeenCalled(); // 手动命令路径进入补链（启动补链同路径静默）
+    const backfill = injectBackfill({ status: 'done', processed: 2, created: 3 });
+    await linkAllInBoxes();
+    expect(backfill).toHaveBeenCalled();
     expect(getNoticeMessages().some((m) => m.includes('批量补链完成：处理 2 篇 / 新建关联 3 条'))).toBe(true);
   });
 
   it('零新建：通知未发现实质关联', async () => {
-    vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({
-      status: 'done',
-      summary: { total: 1, processed: 1, created: 0, queued: 0, failed: 0 },
-    });
-    await runSecondBrainLinkAll(makeAllApp() as any);
+    injectBackfill({ status: 'done', processed: 1, created: 0 });
+    await linkAllInBoxes();
     expect(getNoticeMessages().some((m) => m.includes('批量补链完成：未发现实质关联，未新建'))).toBe(true);
   });
 
   it('embedding 不可达：提示稍后自动补链', async () => {
-    vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({ status: 'unreachable' });
-    await runSecondBrainLinkAll(makeAllApp() as any);
+    injectBackfill({ status: 'unreachable' });
+    await linkAllInBoxes();
     expect(getNoticeMessages().some((m) => m.includes('embedding 服务不可达'))).toBe(true);
   });
 
   it('无待补链笔记：提示已处理完', async () => {
-    vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({ status: 'no-targets' });
-    await runSecondBrainLinkAll(makeAllApp() as any);
+    injectBackfill({ status: 'no-targets' });
+    await linkAllInBoxes();
     expect(getNoticeMessages().some((m) => m.includes('当前无待补链笔记'))).toBe(true);
+  });
+
+  it('通道未接线：明确提示，不抛错', async () => {
+    setLinkBridge(null);
+    await linkAllInBoxes();
+    expect(getNoticeMessages().some((m) => m.includes('自动关联暂不可用'))).toBe(true);
   });
 });
 
-// ---------------- 自动双链通道（issue 309） ----------------
+// ---------------- 自动关联通道（issue 309 + ADR-0141） ----------------
 
-describe('自动双链通道 createLinkBridge：知识盒录入面板的三段能力', () => {
+describe('自动关联通道 createLinkBridge：知识盒录入面板的四段能力', () => {
   beforeEach(() => {
     resetObsidianMocks();
     clearDomainEvents();
     document.body.innerHTML = '';
     __setLinkBatchMsForTests(30);
     __setLinkCleanDebounceMsForTests(30);
-    __resetLinkAgentGuideForTests();
     setSettingsProvider(baseSettings);
     setSettingsSaver(() => Promise.resolve());
   });
@@ -1060,6 +1113,10 @@ describe('自动双链通道 createLinkBridge：知识盒录入面板的三段�
       processNoteNow: vi.fn(async () => ({ status: 'done', created: 1 })),
       previewLinks: vi.fn(async () => ({ status: 'done', picks: [{ path: '卡片盒/A.md', title: 'A' }] })),
       applyLinks: vi.fn(async () => ({ status: 'done', created: 2 })),
+      backfillMissingLinks: vi.fn(async () => ({
+        status: 'done',
+        summary: { total: 2, processed: 2, created: 1, queued: 0, failed: 0 },
+      })),
     } as any;
     const bridge = createLinkBridge(agent, initialLoad);
     return { vault, app, agent, bridge };
@@ -1088,11 +1145,24 @@ describe('自动双链通道 createLinkBridge：知识盒录入面板的三段�
     expect(out).toEqual({ status: 'done', created: 2 });
   });
 
-  it('now：兜底单篇管线，通知静默（进度由面板呈现）', async () => {
+  it('now：兜底单篇管线，通知静默（进度由面板呈现）；force 透传给手动重跑用', async () => {
     const { vault, agent, bridge } = makeBridge(null);
     vault.files.set('文献盒/新文献.md', 'x');
     await bridge.now('文献盒/新文献.md');
-    expect(agent.processNoteNow).toHaveBeenCalledWith('文献盒/新文献.md', { silent: true });
+    expect(agent.processNoteNow).toHaveBeenCalledWith('文献盒/新文献.md', { silent: true, force: false });
+    await bridge.now('文献盒/新文献.md', { force: true });
+    expect(agent.processNoteNow).toHaveBeenLastCalledWith('文献盒/新文献.md', { silent: true, force: true });
+  });
+
+  it('backfill：批量补链结果折算为截面形状（命令侧只认 processed/created）', async () => {
+    const { agent, bridge } = makeBridge(null);
+    expect(await bridge.backfill()).toEqual({ status: 'done', processed: 2, created: 1 });
+    expect(agent.backfillMissingLinks).toHaveBeenCalled();
+
+    agent.backfillMissingLinks.mockResolvedValueOnce({ status: 'unreachable' });
+    expect(await bridge.backfill()).toEqual({ status: 'unreachable' });
+    agent.backfillMissingLinks.mockResolvedValueOnce({ status: 'no-targets' });
+    expect(await bridge.backfill()).toEqual({ status: 'no-targets' });
   });
 
   it('装载失败不阻断：照常跑（preview / now）', async () => {
@@ -1112,27 +1182,56 @@ describe('自动双链通道 createLinkBridge：知识盒录入面板的三段�
     expect(agent.applyLinks).not.toHaveBeenCalled();
   });
 
-  it('索引白名单未覆盖该目录：一次性提示；已覆盖则零提示（落盘类调用）', async () => {
-    setSettingsProvider(() => ({ ...baseSettings(), secondBrainAllowPaths: '卡片盒' }));
-    const miss = makeBridge(null);
-    miss.vault.files.set('文献盒/X.md', 'x');
-    await miss.bridge.now('文献盒/X.md');
-    const hinted = () => getNoticeMessages().filter((m) => m.includes('文献笔记目录'));
-    expect(hinted().length).toBe(1);
-    expect(hinted()[0]).toContain('文献盒');
-    await miss.bridge.now('文献盒/X.md');
-    expect(hinted().length).toBe(1);
-
-    clearNotices();
-    const hit = makeBridge(null);
-    hit.vault.files.set('文献盒/X.md', 'x');
-    setSettingsProvider(() => ({ ...baseSettings(), secondBrainAllowPaths: '文献盒' }));
-    await hit.bridge.now('文献盒/X.md');
-    expect(hinted().length).toBe(0);
+  it('落盘类调用零提示：三盒恒含索引后不再有「请去补白名单」引导（ADR-0141 §3 退役）', async () => {
+    setSettingsProvider(() => ({ ...baseSettings(), secondBrainAllowPaths: '' }));
+    const { vault, bridge } = makeBridge(null);
+    vault.files.set('文献盒/X.md', 'x');
+    await bridge.now('文献盒/X.md');
+    await bridge.apply('文献盒/X.md', ['卡片盒/A.md']);
+    expect(getNoticeMessages()).toEqual([]);
   });
 });
 
-describe('单篇即时建链 processNoteNow 通知（issue 298）', () => {
+describe('范围卫：盒外一律拒绝（ADR-0141 §2：手动亦无豁免）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    clearDomainEvents();
+    document.body.innerHTML = '';
+    setSettingsProvider(baseSettings);
+    setSettingsSaver(() => Promise.resolve());
+  });
+
+  it('processNote：盒外路径直接 out-of-scope，不探测不裁判不写盘', async () => {
+    const { vault, agent, askSpy } = makeWorld({ hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }] });
+    askSpy.mockResolvedValue('[]');
+    vault.files.set('我的/日记/x.md', '日记正文');
+    vault.files.set('书库/Y.md', '书正文');
+    expect(await agent.processNote('我的/日记/x.md')).toEqual({ status: 'out-of-scope' });
+    expect(await agent.processNote('书库/Y.md')).toEqual({ status: 'out-of-scope' });
+    expect(await agent.processNote('文献盒/A.md')).toMatchObject({ status: 'done' }); // 盒内照常
+    expect(vault.files.get('我的/日记/x.md')).not.toContain('related');
+    expect(askSpy).toHaveBeenCalledTimes(1); // 只有盒内的那篇走了裁判
+  });
+
+  it('processNoteNow / applyLinks：盒外同样 out-of-scope，且不写任何东西', async () => {
+    const { vault, agent } = makeWorld({});
+    vault.files.set('其他/X.md', 'x');
+    expect(await agent.processNoteNow('其他/X.md')).toEqual({ status: 'out-of-scope' });
+    expect(await agent.applyLinks('其他/X.md', ['文献盒/B.md'])).toEqual({ status: 'out-of-scope' });
+    expect(vault.files.get('其他/X.md')).not.toContain('related');
+  });
+
+  it('队列消费：盒外条目就地清理，不留滞留（范围不再可配，它永远跑不了）', async () => {
+    const { vault, agent } = makeWorld({});
+    vault.files.set('书库/旧书.md', 'x');
+    await enqueuePaths(['书库/旧书.md', '文献盒/A.md']);
+    await agent.consumeQueue();
+    const q = await loadQueue();
+    expect(q.map((i) => i.path)).not.toContain('书库/旧书.md');
+  });
+});
+
+describe('单篇即时建链 processNoteNow 通知（issue 298 + ADR-0141）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     clearDomainEvents();
@@ -1173,7 +1272,7 @@ describe('单篇即时建链 processNoteNow 通知（issue 298）', () => {
     askSpy.mockRejectedValue(new Error('服务商不可用'));
     const r = await agent.processNoteNow('文献盒/A.md');
     expect(r.status).toBe('failed');
-    expect(getNoticeMessages().some((m) => m.includes('自动双链处理失败'))).toBe(true);
+    expect(getNoticeMessages().some((m) => m.includes('自动关联处理失败'))).toBe(true);
     expect((await loadQueue()).some((i) => i.path === '文献盒/A.md')).toBe(true);
   });
 

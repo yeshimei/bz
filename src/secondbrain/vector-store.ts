@@ -28,7 +28,7 @@ import type { App, TFile } from 'obsidian';
 import { buildConfig, IS_MOBILE } from './config';
 import { loadStore, mutateStore } from './store-file';
 import { MobileBuffer } from './binary';
-import { embedChunks, noteTitleFromPath } from './chunk';
+import { embedChunks, canvasToText, noteTitleFromPath } from './chunk';
 import { euclideanSq, normalizeVec, vptree_build, vptree_search, VPNode, Vec } from './vptree';
 import { parallelMap } from './parallel';
 import { TFIDF } from './tfidf';
@@ -144,18 +144,25 @@ export class VectorStore {
     return this.refreshPromise !== null;
   }
 
-  /** 白名单过滤后的 md 文件列表（doRefresh / hasPendingChanges / 主面板覆盖率共用） */
+  /**
+   * 可索引文件全集（ADR-0141 §5）：全库 md + canvas。
+   * canvas 只作**候选来源**（抽节点文本嵌入，不写回——无 frontmatter），故与 md 同列。
+   */
+  private indexableFiles(): TFile[] {
+    const vault = this.app.vault as any;
+    const md = typeof vault.getMarkdownFiles === 'function' ? (vault.getMarkdownFiles() as TFile[]) : [];
+    const canvas =
+      typeof vault.getFiles === 'function'
+        ? (vault.getFiles() as TFile[]).filter((f) => f && f.extension === 'canvas')
+        : [];
+    return [...md, ...canvas];
+  }
+
+  /** 索引范围过滤后的文件列表（doRefresh / hasPendingChanges / 主面板覆盖率共用） */
   whitelistedFiles(): TFile[] {
-    const CONFIG = buildConfig();
-    const allowPaths = CONFIG.ALLOW_PATHS || [];
-    return (this.app.vault.getMarkdownFiles() as TFile[]).filter((f) => {
-      // ticket 116：白名单空 = 什么也不录（不索引任何目录），不再是"全库"
-      if (allowPaths.length === 0) return false;
-      for (const allow of allowPaths) {
-        if (f.path.startsWith(allow + '/') || f.path === allow) return true;
-      }
-      return false;
-    });
+    const allowPaths = buildConfig().ALLOW_PATHS || [];
+    // ADR-0141 §3：三盒恒含 → allowPaths 永不为空，「空 = 什么也不录」分支已退役
+    return this.indexableFiles().filter((f) => allowPaths.some((allow) => f.path === allow || f.path.startsWith(allow + '/')));
   }
 
   /**
@@ -308,11 +315,11 @@ export class VectorStore {
   private async doRefresh(): Promise<void> {
     const CONFIG = buildConfig();
 
-    // 白名单过滤（与 hasPendingChanges / 主面板覆盖率同一实现）
+    // 索引范围过滤（与 hasPendingChanges / 主面板覆盖率同一实现）
     const allowPaths = CONFIG.ALLOW_PATHS || [];
-    const allFiles = this.app.vault.getMarkdownFiles();
+    const allFiles = this.indexableFiles();
     const files = this.whitelistedFiles();
-    console.log(`[secondbrain] 全库 ${allFiles.length} 篇，白名单 [${allowPaths}] → 过滤后 ${files.length} 篇`);
+    console.log(`[secondbrain] 可索引 ${allFiles.length} 个文件，范围 [${allowPaths}] → 过滤后 ${files.length} 个`);
 
     // 记录「删除前」完整键序的源偏移（修复②：拷贝旧段必须按源布局寻址）
     const srcOffsets = new Map<string, number>();
@@ -322,7 +329,7 @@ export class VectorStore {
       srcOff += note.chunks.length;
     }
 
-    // 白名单清空：全库清空并落盘（修复①在空集场景的延伸）
+    // 范围为空集（三个盒子都空且无额外目录）：全库清空并落盘（修复①在空集场景的延伸）
     if (files.length === 0) {
       if (Object.keys(this.meta.notes).length > 0) {
         this.meta.notes = {};
@@ -331,9 +338,9 @@ export class VectorStore {
         this.meta._dim = 0;
         await this.saveVectors();
         await this.saveStore();
-        this.updateProgress('✅ 向量库已清空（白名单为空）');
+        this.updateProgress('✅ 向量库已清空（索引范围内没有文件）');
       } else {
-        this.updateProgress('⚠️ 没有符合条件的文件');
+        this.updateProgress('⚠️ 索引范围内没有文件');
       }
       return;
     }
@@ -383,7 +390,9 @@ export class VectorStore {
     const globalTasks: ChunkTask[] = [];
     for (const file of toProcess) {
       try {
-        const content = await this.app.vault.read(file);
+        const raw = await this.app.vault.read(file);
+        // ADR-0141 §5：canvas 是 JSON 白板——抽节点文本后走同一条切块链路（md 原样进）
+        const content = file.extension === 'canvas' ? canvasToText(raw) : raw;
         // ticket 110：frontmatter 剥离后切块、标题并入首块（空正文兜底截断收口在 embedChunks 内）
         const chunks = embedChunks(content, noteTitleFromPath(file.path), minChunk);
         fileChunksMap.set(file.path, chunks.map(() => null));
