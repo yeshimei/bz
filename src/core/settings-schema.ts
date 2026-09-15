@@ -122,6 +122,8 @@ interface TextAreaRow extends RowBase, TextualCommit {
   binding: RowBinding<string>;
   placeholder?: string;
   onChange?: (value: string, ctx: SettingsRowContext) => void;
+  /** 行内附加按钮（issue 330：与 text 行同口径，渲染于多行文本左侧，如 B站 Cookie「从 CLI 导入」） */
+  actions?: RowAction[];
 }
 
 export interface NumberRow extends RowBase, TextualCommit {
@@ -495,9 +497,9 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         });
       }
     };
-    // 行内附加按钮（先注册 → 渲染于输入框左侧，2026-09-08 拍板换位的对齐口径）：
+    // 行内附加按钮（先注册 → 渲染于输入框左侧，2026-09-08 拍板换位的对齐口径；textarea 行同口径，issue 330）：
     // onClick 完成后重读本行绑定值回填显示（不置脏）+ 重求值——供「填入/拉取回填」类动作即时回显
-    const actions = (row as TextRow | NumberRow).actions;
+    const actions = (row as TextRow | TextAreaRow | NumberRow).actions;
     if (actions) {
       for (const a of actions) {
         setting.addButton((b) => {

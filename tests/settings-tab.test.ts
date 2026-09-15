@@ -73,12 +73,12 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     if (plugin && plugin.unregisterGestures) plugin.unregisterGestures();
   });
 
-  it('单页平铺：无 tab；分组卡片（带 icon）：AI + 数据存储路径 + 通知（issue 297 补通知组）', () => {
+  it('单页平铺：无 tab；分组卡片（带 icon）：服务商/模型配置/数据源凭据 + 数据存储路径 + 通知（issue 330 AI 页拆三组）', () => {
     expect(tab.containerEl.querySelectorAll('.bz-tab').length).toBe(0);
     const groupNames = [...tab.containerEl.querySelectorAll('.bz-settings-group-name')].map((t) => t.textContent);
-    expect(groupNames).toEqual(['AI 与凭据', '数据存储路径', '通知']); // ADR-0133：AI 组改名并收编凭据
+    expect(groupNames).toEqual(['服务商', '模型配置', '数据源凭据', '数据存储路径', '通知']);
     const groupIcons = [...tab.containerEl.querySelectorAll('.bz-settings-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(groupIcons).toEqual(['sparkles', 'folder-open', 'bell']);
+    expect(groupIcons).toEqual(['plug-zap', 'cpu', 'key-round', 'folder-open', 'bell']);
   });
 
   it('AI 区块：服务商下拉 + 密钥行；数据存储路径区块：路径选择行（已选态 chip + ✕，无按钮/手输框）', () => {
@@ -86,6 +86,10 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     findSetting(tab, 'DeepSeek 密钥');
     findSetting(tab, 'OpenCode 密钥');
     findSetting(tab, '最大输出 token'); // ticket 170
+    // issue 330：Cookie 行渲染为多行文本框（textarea），API 密钥行保持单行输入框
+    expect((findSetting(tab, 'B站 Cookie').querySelector('.setting-item-control textarea'))).toBeTruthy();
+    expect((findSetting(tab, '豆瓣 Cookie').querySelector('.setting-item-control textarea'))).toBeTruthy();
+    expect(findSetting(tab, 'ApiZero Key').querySelector('.setting-item-control textarea')).toBeNull();
     const storageRow = findSetting(tab, '数据存储路径');
     // ticket 128：行内无 text 输入框；ticket 133：已选态「选择…」按钮移出 DOM（chip 内 ✕ 仍是 button）；
     // 默认值场景 data-filled=1（CSS 双保险隐藏按钮——用户反馈「有默认值时按钮不消失」的回归锁）
@@ -97,6 +101,19 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     // 域设置不再出现在设置页（已迁往各域 ⚙️ 弹窗）
     expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '启动时自动弹窗')).toBe(false);
     expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '剪藏目录')).toBe(false);
+  });
+
+  it('B站 Cookie 行：Cookie 值经 textarea 编辑并落盘（issue 330 换控件后防抖落盘语义不变）', async () => {
+    const el = findSetting(tab, 'B站 Cookie');
+    const ta = el.querySelector('.setting-item-control textarea') as HTMLTextAreaElement;
+    const ctrl = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
+    ctrl.trigger('abc=1; def=2');
+    // textarea 无回车提交（core 渲染器口径）：失焦即落盘
+    ta.dispatchEvent(new Event('blur'));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(plugin.settings.bilibiliCookie).toBe('abc=1; def=2');
+    expect(diskData['bz'].bilibiliCookie).toBe('abc=1; def=2');
+    expect(ta.value).toBe('abc=1; def=2');
   });
 
   it('AI 服务商切换 → 密钥行 visibleWhen 显隐（ticket 131：默认 opencode-go 显示 OpenCode 行）', async () => {

@@ -21,6 +21,19 @@
   长按不出选区，划选工具框由此完全不可用。桌面 Obsidian 壳层（asar 逐条核对仅 PDF 阅读器禁选）、
   本插件 CSS、社区插件与快照均无全局禁选规则；显式放开为双端零风险兜底。
 
+## 追加修订（2026-09-16 第三批 · 移动端四 bug）
+
+- **工具框被系统选择菜单遮挡**：`placeSelBar` 移动端加 48px 系统菜单让位（上方放不下翻下方同理），
+  桌面行为不变。
+- **动作后详情层不即时重渲**：`handleAnchorCreated`/`actSaveImage` 原只调 `renderReader()`（桌面右栏），
+  移动详情是独立渲染路径——新增 `refreshReadingViews`，`M.mobDetailOpen` 时连 `renderMobDetail()`。
+- **点锚定双链崩溃**：锚定链接是裸 basename，`resolveInternalTarget` 只认全路径 → 拦截必失败走原生
+  导向（崩溃发生在这条未预期路径）。补第三级解析：`metadataCache.getFirstLinkfileDest` 按 Obsidian
+  原生口径把 basename 解析为全路径，命中文献盒即直达预览，盒外维持原生导航。
+- **保存后 source 未升级**：`addArticleMark` 只记 marks、从不登记 pendingSource，物化升级名单恒空。
+  双修：划词时补 `addPendingSourceNote`；物化名单改 `pendingSource ∪ marks.notePath` 并集
+  （顺带救回修复前已划词未保存的存量数据）。
+
 ## 追加修订（2026-09-16 第二批）
 
 - **图片命名去文章标题**：新增 `imageNameFromUrl`——优先取 URL 自带文件名（剥 query、清洗、须带图片
