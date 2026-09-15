@@ -35,6 +35,7 @@ const noteGen = vi.hoisted(() => ({
   resolveImageDir: vi.fn(() => '文献盒/assets'),
   summarizeTermSummary: vi.fn(),
   backfillNotes: vi.fn(),
+  findDuplicateTermNote: vi.fn(), // ADR-0143：mockReset 后默认 undefined = 无重复，既有用例直行
 }));
 vi.mock('../../src/knowledge/note-gen', () => noteGen);
 
@@ -164,6 +165,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     noteGen.generateImageDraft.mockReset();
     noteGen.summarizeTermSummary.mockReset();
     noteGen.backfillNotes.mockReset();
+    noteGen.findDuplicateTermNote.mockReset();
     noteGen.generateTermDraft.mockResolvedValue({ summary: 'AI 简介', domain: '心理' });
     noteGen.summarizeTermSummary.mockResolvedValue('精简版简介');
     noteGen.generateTermNote.mockResolvedValue('文献盒/松果体.md');
@@ -1078,6 +1080,63 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('自动双链未开启');
     (document.getElementById('lit-term-save') as HTMLElement).click();
     await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalled());
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
+  });
+
+  // ==================== 名词重名防护（ADR-0143/issue 328） ====================
+
+  it('名词重名实时提醒：输入命中内联提示、改名即消，仅提醒不阻断', async () => {
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    const input = document.getElementById('lit-term-input') as HTMLInputElement;
+    const hint = document.getElementById('lit-term-dup') as HTMLElement;
+    expect(hint).not.toBeNull();
+    expect(hint.style.display).toBe('none'); // 全新态无提示
+    noteGen.findDuplicateTermNote.mockReturnValue('文献盒/褪黑素.md');
+    input.value = '褪黑素';
+    input.dispatchEvent(new Event('input'));
+    expect(noteGen.findDuplicateTermNote).toHaveBeenCalledWith('褪黑素');
+    expect(hint.style.display).not.toBe('none');
+    expect(hint.textContent).toContain('已存在同名文献笔记');
+    expect(hint.textContent).toContain('褪黑素');
+    noteGen.findDuplicateTermNote.mockReturnValue(undefined);
+    input.value = '换个名词';
+    input.dispatchEvent(new Event('input'));
+    expect(hint.style.display).toBe('none'); // 改名即消
+    // 重开面板即全新态：提示不残留
+    noteGen.findDuplicateTermNote.mockReturnValue('文献盒/褪黑素.md');
+    input.value = '褪黑素';
+    input.dispatchEvent(new Event('input'));
+    expect(hint.style.display).not.toBe('none');
+    ui.hideTermEntry();
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    expect((document.getElementById('lit-term-dup') as HTMLElement).style.display).toBe('none');
+  });
+
+  it('名词重名确认硬拦截：命中即拒写——error 通知、不落盘、面板与预览保留可改名重试', async () => {
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '褪黑素';
+    await (ui as any).onTermGenerate();
+    expect(document.getElementById('lit-term-preview')!.style.display).not.toBe('none');
+    noteGen.findDuplicateTermNote.mockReturnValue('文献盒/褪黑素.md');
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(getNoticeMessages().join('\n')).toContain('已存在同名文献笔记'));
+    expect(noteGen.generateTermNote).not.toHaveBeenCalled();
+    expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'); // 面板保留
+    expect(document.getElementById('lit-term-preview')!.style.display).not.toBe('none'); // 预览保留
+    expect((document.getElementById('lit-term-save') as HTMLElement).textContent).toBe('确认写入'); // 未进入写入态
+  });
+
+  it('段落确认不查重（ADR-0143 只做名词）：AI 标题与既有笔记同名也照常落盘关窗', async () => {
+    noteGen.findDuplicateTermNote.mockReturnValue('文献盒/自动标题.md');
+    ui.showPassageEntry('一段文字');
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    await (ui as any).onTermGenerate();
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(noteGen.generatePassageNote).toHaveBeenCalled());
+    expect(noteGen.findDuplicateTermNote).not.toHaveBeenCalled(); // 段落链路不碰查重
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
   });
 

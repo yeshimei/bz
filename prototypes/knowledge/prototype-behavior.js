@@ -1,4 +1,4 @@
-/* 源指纹 942d256042d363bc · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1d0c515c1c8803c1 · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -7524,6 +7524,13 @@ var BZW_knowledge = (() => {
     await app.vault.create(path, content);
     return path;
   }
+  function findDuplicateTermNote(term) {
+    const app = getApp();
+    const s = tryGetSettings();
+    const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const path = `${dir}/${sanitizeMdTitle(term)}.md`;
+    return app.vault.getAbstractFileByPath(path) ? path : null;
+  }
   async function generateVideoNote(opts) {
     const ai = createAI();
     const s = tryGetSettings();
@@ -13942,7 +13949,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     // ============ 录入面板：名词 / 段落 / 图版同壳三态（142 简洁版 + 155 总结 + issue 309/312） ============
     createTermUI() {
-      var _a, _b, _c;
+      var _a, _b, _c, _d;
       const mask = document.createElement("div");
       mask.id = "knowledge-term-mask";
       mask.className = "bz-kb-mask";
@@ -13963,6 +13970,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         <span class="bz-lit-term-meta-k">名词</span>
         <input id="lit-term-input" type="text" autocomplete="off">
       </div>
+      <div id="lit-term-dup" class="bz-lit-dup-hint bz-lit-term-only" style="display:none;"></div>
       <div class="bz-lit-term-row bz-lit-passage-only">
         <span class="bz-lit-term-meta-k">段落</span>
         <textarea id="lit-passage-input" rows="6" placeholder="粘贴一段文字…"></textarea>
@@ -14016,7 +14024,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           void this.onTermGenerate();
         }
       });
-      (_b = q(popup, "#lit-passage-input")) == null ? void 0 : _b.addEventListener("keydown", (e) => {
+      (_b = q(popup, "#lit-term-input")) == null ? void 0 : _b.addEventListener("input", () => this.refreshTermDupHint());
+      (_c = q(popup, "#lit-passage-input")) == null ? void 0 : _c.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
           e.preventDefault();
           void this.onTermGenerate();
@@ -14043,7 +14052,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           fileInput.value = "";
           if (files.length) void this.acceptImageFiles(files);
         });
-        (_c = q(popup, "#lit-image-grid")) == null ? void 0 : _c.addEventListener("click", (e) => {
+        (_d = q(popup, "#lit-image-grid")) == null ? void 0 : _d.addEventListener("click", (e) => {
           var _a2, _b2;
           const btn = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-lit-image-remove]");
           if (!btn) return;
@@ -14149,6 +14158,27 @@ ${String(blockText != null ? blockText : "").trim()}`);
       const focusEl = mode === "passage" ? area : mode === "image" ? zone : input;
       if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
       if (mode === "term" && value) void this.onTermGenerate();
+      this.resetTermDupHint();
+    }
+    /** 名词重名实时提醒（ADR-0143/issue 328）：同步查 vault（getAbstractFileByPath 内存索引，无需防抖），
+     *  命中内联显示既有笔记名，改名即消；仅提醒不阻断、不锁按钮。 */
+    refreshTermDupHint() {
+      var _a, _b, _c;
+      if (!this.termPopup) return;
+      const hint = q(this.termPopup, "#lit-term-dup");
+      if (!hint) return;
+      const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
+      const dup = term ? findDuplicateTermNote(term) : null;
+      hint.textContent = dup ? "已存在同名文献笔记：" + ((_c = String(dup).split("/").pop()) == null ? void 0 : _c.replace(/\.md$/, "")) : "";
+      hint.style.display = dup ? "" : "none";
+    }
+    /** 重名提醒复位（开面板 / 关面板即全新态） */
+    resetTermDupHint() {
+      const hint = this.termPopup ? q(this.termPopup, "#lit-term-dup") : null;
+      if (hint) {
+        hint.textContent = "";
+        hint.style.display = "none";
+      }
     }
     // ---------- 图版图片收发（issue 312；多图 issue 313） ----------
     /**
@@ -14677,6 +14707,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           notice("请输入名词", "error");
           return;
         }
+        const dup = findDuplicateTermNote(term);
+        if (dup) {
+          notice("已存在同名文献笔记：" + dup, "error");
+          return;
+        }
       }
       const images = this.entryImages;
       if (mode === "image" && !images.length) {
@@ -14721,6 +14756,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       this.termPreview = null;
       this.resetEntryRel();
       this.clearEntryImage();
+      this.resetTermDupHint();
       const srcInput = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
       this.termSrcReset(srcInput);
       if (this.termMask) this.termMask.style.display = "none";

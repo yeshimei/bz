@@ -21,6 +21,7 @@ import {
   generateTermDraft,
   summarizeTermSummary,
   generateTermNote,
+  findDuplicateTermNote,
   generateImageDraft,
   generateImageNote,
   resolveImageDir,
@@ -261,6 +262,42 @@ describe('summarizeTermSummary（术语简介 AI 精简，ticket 155）', () => 
     expect(aiStub.chat).not.toHaveBeenCalled();
     aiStub.chat.mockResolvedValue('   ');
     await expect(summarizeTermSummary('正文')).rejects.toThrow('AI 返回为空');
+  });
+});
+
+describe('findDuplicateTermNote（名词重名查重，ADR-0143/issue 328）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vault = new MockVault();
+    setApp({ vault } as any);
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒' }) as any);
+  });
+
+  afterEach(() => {
+    setSettingsProvider(() => ({}) as any);
+  });
+
+  it('命中：文献目录已有同名 md → 返回既有路径', () => {
+    vault.files.set('文献盒/褪黑素.md', '---\ntitle: 褪黑素\n---\n旧笔记');
+    expect(findDuplicateTermNote('褪黑素')).toBe('文献盒/褪黑素.md');
+  });
+
+  it('不命中：目录为空 / 名字不同 → null', () => {
+    expect(findDuplicateTermNote('褪黑素')).toBeNull();
+    vault.files.set('文献盒/褪黑素.md', 'x');
+    expect(findDuplicateTermNote('血清素')).toBeNull();
+  });
+
+  it('清洗后比对：非法字符经 sanitize 归 _ 后命中（与 writeUniqueNote 撞名判定同源）', () => {
+    vault.files.set('文献盒/a_b_c.md', 'x');
+    expect(findDuplicateTermNote('a/b:c')).toBe('文献盒/a_b_c.md');
+  });
+
+  it('其他目录同名不算（只查文献目录）', () => {
+    vault.files.set('知识盒/褪黑素.md', 'x');
+    expect(findDuplicateTermNote('褪黑素')).toBeNull();
   });
 });
 
