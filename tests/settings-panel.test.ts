@@ -101,7 +101,7 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[0]).toBe('3'); // 通用：外观 2 卡（原「设置」域并入）+ 数据存储路径 1 项（体检为按钮行不计）
     expect(badges[1]).toBe('4'); // 通知：4 个 select（issue 297 建的组，2026-09-12 自通用域拆出独立成一页）
     expect(badges[2]).toBe('12'); // 首页：外观 2 卡 + 时间线 4 + 内容过滤 4（issue 305 已跳过回归）+ 预告栏 1 + 入口内联编辑器 1 行
-    expect(badges[3]).toBe('8'); // AI 与凭据：服务商+模型名称+上下文+最大输出+思考（issue 330）+ B站 Cookie/ApiZero Key/豆瓣 Cookie（ADR-0133 收编；密钥行门控隐藏）
+    expect(badges[3]).toBe('8'); // AI 页（issue 331 拆三组）：服务商+模型名称+上下文+最大输出+思考（issue 330）+ B站 Cookie/ApiZero Key/豆瓣 Cookie（密钥行门控隐藏）
     expect(badges[5]).toBe('5'); // 日记本：ADR-0115 升格后 = 外观 2 + 目录 2 + 显示 1（维护组为按钮行，不计设置项）
     expect(badges[6]).toBe('11'); // 备忘录（todo→memo 正名沿用待办 schema）：11 项（issue 293 增打开默认场景/已完成显示范围；issue 292 退役「到期时间格式」）
     expect(badges[7]).toBe('6'); // 归物本：外观 2 卡 + 显示 3（默认状态筛选/默认排序/金额单位）+ 记一笔 1（issue 294）
@@ -166,10 +166,12 @@ describe('设置面板（settings-panel）', () => {
     ) as HTMLElement;
     expect(aiItem).toBeTruthy();
     aiItem.click();
-    await waitGroups(popup, 1);
+    await waitGroups(popup, 3);
     groups = popup.querySelectorAll('.bz-sp-group');
-    expect(groups.length).toBe(1); // 仅 AI 组（采样参数组已退役）
-    expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('AI 与凭据'); // ADR-0133 改名
+    expect(groups.length).toBe(3); // issue 331：AI 页拆三组（服务商/模型配置/数据源凭据）
+    expect([...groups].map((g) => g.querySelector('.bz-sp-group-name')!.textContent)).toEqual([
+      '服务商', '模型配置', '数据源凭据',
+    ]);
     expect(popup.querySelectorAll('.bz-sp-set-row').length).toBeGreaterThan(0);
     ui.cleanup();
   });
@@ -232,6 +234,54 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
+  it('桌面端：AI 域数据源凭据组——Cookie 行渲染为 textarea，B站行带「从 CLI 导入」按钮（issue 331）', async () => {
+    // stub 桌面端判定 + CLI 凭据文件（schema 以 window.require 判定桌面端 ADR-0133 口径；
+    // 导入读 ~/.bilibili-cookies.json 的 { cookie } 字段）
+    (window as unknown as { require?: unknown }).require = (mod: string) => {
+      if (mod === 'fs') return { readFileSync: () => JSON.stringify({ cookie: 'SESSDATA=abc; buvid=xyz' }) };
+      if (mod === 'os') return { homedir: () => '/home/t' };
+      if (mod === 'path') return { join: (...p: string[]) => p.join('/') };
+      return {};
+    };
+    const ui = new SettingsPanelUI();
+    try {
+      ui.open();
+      const popup = document.getElementById('bz-settings-panel-popup')!;
+      await tick();
+      const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
+        (el) => el.textContent?.includes('AI')
+      ) as HTMLElement;
+      aiItem.click();
+      await waitGroups(popup, 3);
+      const rowOf = (name: string) =>
+        [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')].find(
+          (r) => r.querySelector('.bz-sp-set-name')?.textContent === name
+        );
+      // B站 Cookie / 豆瓣 Cookie = textarea；ApiZero Key 短令牌保持单行输入框
+      const bili = rowOf('B站 Cookie');
+      const douban = rowOf('豆瓣 Cookie');
+      const apizero = rowOf('ApiZero Key');
+      expect(bili?.querySelector('textarea.bz-input'), 'B站 Cookie 为多行文本框').toBeTruthy();
+      expect(douban?.querySelector('textarea.bz-input'), '豆瓣 Cookie 为多行文本框').toBeTruthy();
+      expect(apizero?.querySelector('textarea.bz-input')).toBeNull();
+      expect(apizero?.querySelector('input.bz-input'), 'ApiZero Key 为单行输入').toBeTruthy();
+      // 行内按钮在多行文本左侧（2026-09-08 拍板口径；textarea 行 actions 与 text 行同口径）
+      const biliCtrl = bili!.querySelector('.bz-sp-set-ctrl')!;
+      expect(biliCtrl.querySelector('.bz-sp-btn')?.textContent).toBe('从 CLI 导入');
+      expect(biliCtrl.firstElementChild!.classList.contains('bz-sp-btn')).toBe(true);
+      // ApiZero Key 行无行内按钮
+      expect(apizero!.querySelector('.bz-sp-btn')).toBeNull();
+      // 点「从 CLI 导入」→ 写入绑定并回填 textarea 显示（动作回填经 displaySetters 程序化写值，不置脏）
+      (biliCtrl.querySelector('.bz-sp-btn') as HTMLElement).click();
+      await tick();
+      expect((bili!.querySelector('textarea.bz-input') as HTMLTextAreaElement).value).toBe('SESSDATA=abc; buvid=xyz');
+      expect(panelState.bilibiliCookie).toBe('SESSDATA=abc; buvid=xyz');
+    } finally {
+      ui.cleanup();
+      delete (window as unknown as { require?: unknown }).require;
+    }
+  });
+
   it('桌面端：分组卡图标为 lucide（schema 图标名 → setIcon data-icon）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
@@ -240,14 +290,14 @@ describe('设置面板（settings-panel）', () => {
     // 通用域分组：外观（palette，原「设置」域并入）+ 数据存储路径（folder-open）
     let icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
     expect(icons).toEqual(['palette', 'folder-open']);
-    // AI 域分组：AI（sparkles）
+    // AI 域分组：服务商/模型配置/数据源凭据（issue 331 拆三组）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')
     ) as HTMLElement;
     aiItem.click();
-    await waitGroups(popup, 1);
+    await waitGroups(popup, 3);
     icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(icons).toEqual(['sparkles']); // 采样参数组已退役，仅 AI 单组
+    expect(icons).toEqual(['plug-zap', 'cpu', 'key-round']);
     ui.cleanup();
   });
 

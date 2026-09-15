@@ -67,8 +67,8 @@ function makeCtx(rowEl: HTMLElement, refreshVisibility: () => void): SettingsRow
 
 /* ==================== 行控件（全部消费组件库共享类） ==================== */
 
-/** refreshKey 联动的程序化显示值写回入口（makeInput 挂入；WeakMap 替代元素挂属性） */
-const displaySetters = new WeakMap<HTMLInputElement, (v: string) => void>();
+/** refreshKey 联动的程序化显示值写回入口（makeInput 与 textarea 分支均挂入；WeakMap 替代元素挂属性） */
+const displaySetters = new WeakMap<HTMLInputElement | HTMLTextAreaElement, (v: string) => void>();
 
 /**
  * refreshKey 联动注册（makeInput 系共用）：任意行变更后重读显示值，
@@ -257,11 +257,12 @@ export function makePathRowCtrl(opts: {
 
 /* ==================== 行渲染 ==================== */
 
-/** 文本/数字行行内附加按钮：先插按钮再插输入框（2026-09-08 拍板：按钮在左、输入框右缘对齐）；
- *  onClick 传当前输入值，完成后重读绑定回填显示（不置脏）+ 刷新显隐——供「填入/回填」类动作 */
+/** 文本/数字/多行文本行行内附加按钮：先插按钮再插输入框（2026-09-08 拍板：按钮在左、输入框右缘对齐；
+ *  issue 330 起 textarea 行同口径）。onClick 传当前输入值，完成后重读绑定回填显示（不置脏）+
+ *  刷新显隐——供「填入/回填」类动作 */
 function mountTextActions(
   ctrlEl: HTMLElement,
-  input: HTMLInputElement,
+  input: HTMLInputElement | HTMLTextAreaElement,
   acc: { read: () => unknown },
   actions: Array<{ text: string; cta?: boolean; onClick: (value: string | undefined, ctx: SettingsRowContext) => void | Promise<void> }> | undefined,
   ctx: SettingsRowContext,
@@ -365,9 +366,10 @@ function renderRow(
     }
     case 'textarea': {
       const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
-      // 结构单源（R.textareaHtml）
-      ctrlEl.innerHTML = R.textareaHtml(acc.read() ?? '', row.placeholder);
-      const ta = ctrlEl.querySelector('textarea')!;
+      // 结构单源（R.textareaHtml）；行内附加按钮在左（issue 330，同 text 行拍板口径）——textarea 最后插入
+      const taHolder = document.createElement('div');
+      taHolder.innerHTML = R.textareaHtml(acc.read() ?? '', row.placeholder);
+      const ta = taHolder.firstElementChild as HTMLTextAreaElement;
       // 行级 onCommit 一次性提示（H1：备忘录「自定义场景列表」memoReloadScenes 即 textarea 行钩子）
       const warn = new SpCommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
       let timer: number | null = null;
@@ -385,17 +387,22 @@ function renderRow(
         timer = window.setTimeout(commit, 800);
       });
       ta.addEventListener('blur', commit);
+      // 程序化写值入口（动作回填 / refreshKey 联动共用；清 dirty 防 blur 假写覆盖，同 makeInput）
+      displaySetters.set(ta, (v: string) => {
+        dirty = false;
+        if (ta.value !== v) ta.value = v;
+      });
       // refreshKey 联动：任意行变更后重读显示值写回（不落盘）
       if (regRefresh && row.refreshKey !== undefined) {
         const ref = row.refreshKey;
         regRefresh(() => {
           const snap = snapshot();
           const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
-          dirty = false;
-          const f = String(fresh ?? '');
-          if (ta.value !== f) ta.value = f;
+          displaySetters.get(ta)?.(String(fresh ?? ''));
         });
       }
+      mountTextActions(ctrlEl, ta, acc, (row as { actions?: never }).actions as never, ctx, refresh);
+      ctrlEl.appendChild(ta);
       break;
     }
     case 'number': {

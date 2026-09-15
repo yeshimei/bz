@@ -13,6 +13,9 @@
  *   按钮，行级联动 onRefresh）；上下文/最大输出 token 为标准 number 行（三函数 binding +
  *   refreshKey 随「AI 服务商」切换联动刷新，不再走 custom 套原生 Setting——统一两渲染器视觉）；
  * - issue 187 曾新增「采样参数」组，2026-09-08 拍板整体退役（UI 组 + 请求透传 + 设置键一并移除）；
+ * - issue 331 重新分组：「AI 与凭据」单组（ADR-0133）拆为「服务商」「模型配置」「数据源凭据」
+ *   三组；B站 Cookie / 豆瓣 Cookie 行由单行输入框改 textarea（Cookie 串长，便于粘贴检查），
+ *   「从 CLI 导入」按钮经 TextAreaRow.actions 保留。键与行为零变化；
  * - 存储路径行 onCommit 的 warning 提示文案逐字保留（f1 防错提示，正文不带 emoji，铁律 7）；
  * - 区块标题 DOM 契约 .bz-setting-section-title 不破（无 icon 分组 = 区块标题平铺形态）。
  * - ticket 100 文案修正（键名/行为不动）：两个 API Key 行标题收短为「DeepSeek 密钥」「OpenCode 密钥」，
@@ -154,6 +157,7 @@ function providerModelCustomRow(): SettingsRow {
  * 「上下文窗口 / 最大输出 token」per-provider 行（ticket 172）：标准 number 行（不再走 custom
  * 套原生 Setting——统一 core / settings-panel 两渲染器的视觉与交互）。三函数 binding 读写当前
  * provider 的覆盖值（未填回落注册表默认）；refreshKey 随「AI 服务商」切换联动刷新显示值。
+ * issue 331 起归「模型配置」组——refreshKey 联动链是全 schema 级的，跨组不受影响。
  */
 function providerNumberConfigRow(kind: 'context' | 'maxTokens'): NumberRow {
   const mapKey: OverrideMapKey = kind === 'context' ? 'aiContextOverrides' : 'aiMaxTokensOverrides';
@@ -182,11 +186,11 @@ function providerNumberConfigRow(kind: 'context' | 'maxTokens'): NumberRow {
 }
 
 /**
- * 构造 AI 区块行（ticket 171 注册表驱动）：服务商下拉 + 每家提供商一行密钥（visibleWhen 随
- * aiProvider 显隐）+ custom 的端点/模型两行 + per-provider 配置三行。
+ * 「服务商」组行（issue 331 拆组）：服务商下拉 + 每家注册表提供商一行密钥（visibleWhen 随
+ * aiProvider 显隐）+ custom 的端点/密钥两行。
  * 密钥行标题/描述取自 descriptor 的 apiKeyLabel / apiKeyDesc（文案 lint 与注册表单一事实源）。
  */
-function aiGroupRows(): SettingsRow[] {
+function providerGroupRows(): SettingsRow[] {
   const rows: SettingsRow[] = [
     {
       type: 'select',
@@ -225,8 +229,15 @@ function aiGroupRows(): SettingsRow[] {
       binding: { key: 'aiCustomApiKey' },
       visibleWhen: (snapshot) => snapshot.aiProvider === 'custom',
     },
-    // ticket 172 per-provider 配置三行：模型行 custom（内嵌「获取模型名」按钮）+
-    // 上下文/最大输出 token 标准 number 行（refreshKey 随服务商切换联动）
+  );
+  return rows;
+}
+
+/** 「模型配置」组行（issue 331 拆组）：ticket 172 per-provider 三行——模型行 custom
+ *  （内嵌「获取模型名」按钮）+ 上下文/最大输出 token 标准 number 行
+ *  （refreshKey 随服务商切换联动，跨组生效）+ 思考档位（issue 330 并入本组）。 */
+function modelGroupRows(): SettingsRow[] {
+  return [
     providerModelCustomRow(),
     providerNumberConfigRow('context'),
     providerNumberConfigRow('maxTokens'),
@@ -245,15 +256,24 @@ function aiGroupRows(): SettingsRow[] {
         { value: 'high', label: '高' },
       ],
     },
-  );
-  // 凭据行（ADR-0133：「AI 与凭据」组收编）——B站 Cookie（知识盒档位查询；桌面端可从 CLI 导入）
-  // + 影院 ApiZero Key / 豆瓣 Cookie（原影院「数据抓取」组挪入）
-  rows.push(
+  ];
+}
+
+/**
+ * 「数据源凭据」组行（issue 331 拆组，ADR-0133「AI 与凭据」单组退役）：与 AI 服务商无关的
+ * 第三方数据源凭据集中一卡——B站 Cookie（知识盒档位查询；桌面端可从 CLI 导入）+ 影院
+ * ApiZero Key / 豆瓣 Cookie（原影院「数据抓取」组挪入）。
+ * Cookie 串动辄上千字符，textarea 行便于粘贴与检查（单行输入框已退役）；ApiZero Key 为短
+ * 令牌，保持单行。
+ */
+function credentialGroupRows(): SettingsRow[] {
+  return [
     {
-      type: 'text',
+      type: 'textarea',
       name: 'B站 Cookie',
       desc: '视频录入解析清晰度档位用，留空则档位回落固定列表',
       binding: { key: 'bilibiliCookie' },
+      placeholder: '粘贴从浏览器复制的 Cookie',
       actions: isDesktopShell() ? [{ text: '从 CLI 导入', onClick: () => importCliBilibiliCookie() }] : [],
     },
     {
@@ -263,27 +283,25 @@ function aiGroupRows(): SettingsRow[] {
       binding: { key: 'cinemaApizeroKey' },
     },
     {
-      type: 'text',
+      type: 'textarea',
       name: '豆瓣 Cookie',
       desc: '搜索被风控时粘贴浏览器Cookie可提高成功率，不填也能抓',
       binding: { key: 'cinemaDoubanCookie' },
+      placeholder: '粘贴从浏览器复制的 Cookie',
     },
-  );
-  return rows;
+  ];
 }
 
-/** 采样参数组已于 2026-09-08 拍板退役（原 issue 187 四键：温度/top_p/频率惩罚/存在惩罚） */
-
-/** AI 与凭据设置组（issue 186：设置面板拆独立域；⚙️ 主设置页与本域共用同一组定义。
- *  ADR-0133：组名「AI」→「AI 与凭据」，收编影院 ApiZero Key / 豆瓣 Cookie 与 B站 Cookie） */
+/** AI 页设置组（issue 186：设置面板拆独立域；⚙️ 主设置页与本域共用同一组定义。
+ *  issue 331 重新分组：「AI 与凭据」单组（ADR-0133）拆为「服务商」「模型配置」「数据源凭据」
+ *  三组——接入（选谁+密钥）/ 模型参数（用哪个模型+窗口）/ 数据源凭据（非 AI 的第三方凭据）
+ *  三层各归各卡；键与行为零变化。 */
 export function aiSettingsSchema(): SettingsSchema {
   return {
     groups: [
-      {
-        icon: 'sparkles',
-        name: 'AI 与凭据',
-        rows: aiGroupRows(),
-      },
+      { icon: 'plug-zap', name: '服务商', rows: providerGroupRows() },
+      { icon: 'cpu', name: '模型配置', rows: modelGroupRows() },
+      { icon: 'key-round', name: '数据源凭据', rows: credentialGroupRows() },
     ],
   };
 }
