@@ -31,7 +31,7 @@ vi.mock('../../src/knowledge', () => ({
 // 由 knowledge 侧并行 worktree 实现，本 worktree 的 src/knowledge/index.ts 尚无这些导出——
 // 类型按 any 消费（运行时 vi.mock 工厂提供全部函数），与实现源码「按存在调用」口径一致。
 const knowledgeMocks: Record<string, any> = await import('../../src/knowledge');
-const { requestUrl } = await import('obsidian');
+const { requestUrl, Platform } = await import('obsidian');
 
 /** 种子：未读 news 一篇（正文含划词目标与外链图）+ 剪藏笔记 A（已保存条目直写用） */
 function seedVault(): MockVault {
@@ -103,6 +103,7 @@ async function showToolbar(text: string): Promise<HTMLElement> {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  (Platform as any).isMobile = false; // 移动端让位用例置位后复位，防污染后续用例
   clearNotices(); // progress 常驻通知不自动消失，逐用例清 DOM 防跨用例断言污染
 });
 
@@ -184,6 +185,89 @@ function closePanelSafe(): void {
     M.open = false;
   } catch (e) { /* 用例内已收 */ }
 }
+
+// ================= 移动端浮框让位系统选择菜单（issue 329 Bug 1） =================
+
+describe('移动端浮框让位系统选择菜单（issue 329 Bug 1）', () => {
+  it('桌面：定位行为不变（选区上 8px，无让位）', async () => {
+    await openDesktop();
+    const bar = await showToolbar('量子纠缠');
+    // 选区 rect top=100、浮框高 jsdom 零尺寸估算 36 → 100 - 36 - 8 = 56
+    expect(bar.style.top).toBe('56px');
+    closePanelSafe();
+  });
+
+  it('移动端：上方放得下 → 上方再让位 48（系统选择菜单高度）', async () => {
+    await openDesktop();
+    (Platform as any).isMobile = true;
+    const bar = await showToolbar('量子纠缠');
+    // 100 - 36 - 8 - 48 = 8（恰贴钳制下限，仍在上方位）
+    expect(bar.style.top).toBe('8px');
+    closePanelSafe();
+  });
+
+  it('移动端：上方放不下 → 翻下方同样让位 48', async () => {
+    await openDesktop();
+    (Platform as any).isMobile = true;
+    const mdEl = document.querySelector('[data-clip-md]') as HTMLElement;
+    vi.spyOn(window, 'getSelection').mockReturnValue({
+      isCollapsed: false,
+      rangeCount: 1,
+      toString: () => '量子纠缠',
+      getRangeAt: () => ({
+        commonAncestorContainer: mdEl,
+        getBoundingClientRect: () => ({ top: 0, left: 50, bottom: 30, right: 260, width: 210, height: 20 }),
+      }),
+    } as any);
+    (document.querySelector('[data-clip-read-pane]') as HTMLElement).dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    await vi.waitFor(() => {
+      const bar = document.querySelector('.bz-clip-selbar') as HTMLElement | null;
+      expect(bar).toBeTruthy();
+      expect(bar!.style.display).toBe('flex');
+    });
+    // 上方 0 - 36 - 8 - 48 < 8 放不下 → 翻下方：30 + 8 + 48 = 86
+    expect((document.querySelector('.bz-clip-selbar') as HTMLElement).style.top).toBe('86px');
+    closePanelSafe();
+  });
+});
+
+// ================= 移动详情原位重渲（issue 329 Bug 2） =================
+
+describe('移动详情原位重渲（issue 329 Bug 2）', () => {
+  it('移动详情打开时划词 onCreated → 详情正文即时出双链（renderMobDetail 一并重渲）', async () => {
+    await openDesktop();
+    // 进移动详情（mob 层 DOM 桌面下同样构建；openMobDetail 不分端）
+    (document.querySelector('.bz-clip-mob-item') as HTMLElement).click();
+    await vi.waitFor(() => expect(M.mobDetailOpen).toBe(true));
+    await vi.waitFor(() => {
+      const mobMd = document.querySelector('[data-clip-mob-md]') as HTMLElement | null;
+      expect(mobMd).toBeTruthy();
+      expect(mobMd!.textContent).toContain('量子纠缠');
+    });
+    // 详情正文容器内划选 → mouseup 弹工具框（mobDetailEl 挂 onReaderMouseUp）
+    const mobMd = document.querySelector('[data-clip-mob-md]') as HTMLElement;
+    mockTextSelection('量子纠缠', mobMd);
+    (document.querySelector('[data-clip-mob-detail]') as HTMLElement).dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    await vi.waitFor(() => {
+      const bar = document.querySelector('.bz-clip-selbar') as HTMLElement | null;
+      expect(bar).toBeTruthy();
+      expect(bar!.style.display).toBe('flex');
+    });
+    (document.querySelector('[data-clip-selbar-act="term"]') as HTMLElement).click();
+    await vi.waitFor(() => expect(knowledgeMocks.openTermNote).toHaveBeenCalledTimes(1));
+    const [, , opts] = (knowledgeMocks.openTermNote as ReturnType<typeof vi.fn>).mock.calls[0];
+    opts.onCreated('文献盒/量子纠缠笔记.md');
+    // 详情 md 容器重渲后出现别名双链（修复前只重渲桌面 reader，移动详情残留旧文）
+    await vi.waitFor(() => {
+      const md = document.querySelector('[data-clip-mob-md]') as HTMLElement;
+      expect(md.textContent).toContain('[[量子纠缠笔记|量子纠缠]]');
+    });
+    // 顺手覆盖 Bug 4：未保存分支 onCreated 现在也登记 pendingSource（保存物化升级名单）
+    const sidecar = await readClipbookData();
+    expect(sidecar.pendingSource['url:https://guokr.com/1']).toEqual(['文献盒/量子纠缠笔记.md']);
+    closePanelSafe();
+  });
+});
 
 // ================= 五动作：触发与预填参数 =================
 
@@ -378,6 +462,35 @@ describe('点击拦截直达文献预览（issue 329 / ADR-0144 决策 3）', ()
 
   it('目标文件缺失 → 不拦（resolveInternalTarget 返回 null，原生行为自兜）', async () => {
     await openClipReaderWithLink('文献盒/不存在的笔记.md');
+    (document.querySelector('[data-clip-reader] a.internal-link') as HTMLElement).click();
+    expect(knowledgeMocks.openKnowledgePreview).not.toHaveBeenCalled();
+    closePanelSafe();
+  });
+
+  it('裸 basename 双链（锚定别名链形态）→ metadataCache 解析兜底命中文献盒 → 拦截直达预览', async () => {
+    // 锚定双链写 `[[basename|原文字]]`（anchor.ts aliasLink），data-href 无目录——
+    // 全路径直查必空，靠 getFirstLinkfileDest 第三级解析（issue 329 Bug 3）
+    await openClipReaderWithLink('量子纠缠笔记', (v) => {
+      v.files.set('文献盒/量子纠缠笔记.md', '---\ntitle: 量子纠缠笔记\ntype: term\n---\n简介');
+    });
+    (getApp() as any).metadataCache.getFirstLinkfileDest = vi.fn(() => '文献盒/量子纠缠笔记.md');
+    (document.querySelector('[data-clip-reader] a.internal-link') as HTMLElement).click();
+    await vi.waitFor(() =>
+      expect(knowledgeMocks.openKnowledgePreview).toHaveBeenCalledWith(getApp(), '文献盒/量子纠缠笔记.md'));
+    closePanelSafe();
+  });
+
+  it('裸 basename 解析为空 → 不拦（维持原生导航）', async () => {
+    await openClipReaderWithLink('不存在的笔记');
+    (getApp() as any).metadataCache.getFirstLinkfileDest = vi.fn(() => '');
+    (document.querySelector('[data-clip-reader] a.internal-link') as HTMLElement).click();
+    expect(knowledgeMocks.openKnowledgePreview).not.toHaveBeenCalled();
+    closePanelSafe();
+  });
+
+  it('裸 basename 解析目标不在 vault → 不拦（守卫存在性，不拦向幽灵路径）', async () => {
+    await openClipReaderWithLink('幽灵笔记');
+    (getApp() as any).metadataCache.getFirstLinkfileDest = vi.fn(() => '文献盒/幽灵笔记.md');
     (document.querySelector('[data-clip-reader] a.internal-link') as HTMLElement).click();
     expect(knowledgeMocks.openKnowledgePreview).not.toHaveBeenCalled();
     closePanelSafe();
