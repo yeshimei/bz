@@ -4,7 +4,7 @@
  * 链路（ADR-0140 决策 1，每卡 3 次调用，结果落缓存）：
  *   轮 1 查询官：编号片段 → `{seg, sentence, keywords, why}`（完整短句 + 关键词**双查询**，
  *     关键词堆在 bge-m3 查询侧失配，召回质量差）；
- *   本地召回：范围闸（**只排除归档/网页剪藏**）+ 自指剔除 + 同笔记去重留最高分块 + 双查询并集
+ *   本地召回：范围闸（**只有卡片盒之内**，ADR-0142）+ 自指剔除 + 同笔记去重留最高分块 + 双查询并集
  *     按「命中次数 → 最高分」排序（保底多样性：每片段最优笔记必进池），总量 10；
  *   轮 2 采纳官：片段 × 候选 → `{seg, path, score, reason}`，同一目标最多 2 条；
  *   轮 3 定位官：**现读被采纳笔记全文** → `{unit: whole|heading|paragraph, heading, quote, anchor, reason}`，
@@ -43,6 +43,7 @@
 import { createAI, getAIProvider } from '../core/ai';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
+import { getKnowledgeBoxes } from '../core/knowledge-boxes';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { hash31, isUnderFolder, stripMdExt } from '../core/utils';
 import { exportVectorSearch } from '../secondbrain/readonly';
@@ -67,7 +68,7 @@ export interface SuggestCtx {
   app: any;
   cardboxDir: string;
   litDir: string;
-  /** 主题盒（缺省 `主题盒`）：范围闸**不**用它做白名单（ADR-0140：只排除归档/剪藏），只参与形态判定 */
+  /** 主题盒（缺省 `主题盒`）：范围闸不用它（ADR-0142：白名单 = 卡片盒），只参与形态判定 */
   topicDir?: string;
 }
 
@@ -113,18 +114,20 @@ const REASON_MAX_CHARS = 80;
 export const SUGGEST_CACHE_FILE = 'mount-suggest.json';
 /**
  * 缓存格式版本：解析/取数口径变更即 +1，旧片（无 `ver` 或版本不符）一律按失效处理——
- * 免去「用户手动清缓存」。v3 = 321 三段式：片里带 unit/heading/quote/subpath。
+ * 免去「用户手动清缓存」。v3 = 321 三段式：片里带 unit/heading/quote/subpath；
+ * v4 = ADR-0142 召回闸改卡片盒白名单（v3 旧片里可能有盒外目标，一律重算）。
  */
-export const SUGGEST_CACHE_VERSION = 3;
+export const SUGGEST_CACHE_VERSION = 4;
 /** 锚点文本最短长度之外还需含文字/数字（纯符号、纯标点、表格分隔线一律不是锚点） */
 const HAS_MEANING_RE = /[\p{L}\p{N}]/u;
 /** 正文双链（含嵌入；解析口径最小化——只用于「目标已是双链」过滤，完整解析归 mount-data 314） */
 const WIKILINK_RE = /!?\[\[([^\[\]]+)\]\]/g;
 /**
- * 召回范围闸：只排除**归档与网页剪藏**（ADR-0140 决策 1）。
- * 实测：全库召回 top5 有 4 条剪藏噪声；只留卡片盒+文献盒又会丢主题盒真邻居 → 排除式而非白名单。
+ * 召回范围闸（ADR-0142 决策 1，修订 ADR-0140）：**只召回卡片盒之内**的笔记。
+ * 判定按三个盒子的 core 单源取目录（core/knowledge-boxes），不再维护排除表。
+ * 代价是刻意接受的：建议只在卡到卡之间产生，卡到文献与主题靠固定挂载与用户自己写的正文双链。
  */
-export const SUGGEST_EXCLUDE_DIRS = ['归档', '网页剪藏'];
+
 /** 块 id 前缀（段落双链锚定用；确定性哈希 → 幂等） */
 export const BLOCK_ID_PREFIX = 'bz-';
 
@@ -484,16 +487,16 @@ async function readNoteText(app: any, path: string): Promise<string | null> {
   }
 }
 
-/** 目标在召回范围闸内？只排除归档 / 网页剪藏（ADR-0140：排除式，不是白名单） */
-export function inRecallScope(path: string): boolean {
+/**
+ * 目标在召回范围闸内？**只有卡片盒里的笔记算**（ADR-0142 决策 1，白名单式，取代 ADR-0140 的排除式）。
+ * @param cardboxDir 卡片盒目录（默认取 core/knowledge-boxes 单源；测试与预览可显式传）
+ */
+export function inRecallScope(path: string, cardboxDir?: string): boolean {
   const p = idPath(path);
   if (!p) return false;
-  for (const dir of SUGGEST_EXCLUDE_DIRS) {
-    const d = idPath(dir);
-    if (!d) continue;
-    if (p === d || p.startsWith(d + '/')) return false;
-  }
-  return true;
+  const dir = idPath(cardboxDir ?? getKnowledgeBoxes().cardbox);
+  if (!dir) return false;
+  return p === dir || p.startsWith(dir + '/');
 }
 
 /**
@@ -1177,7 +1180,7 @@ export interface PoolEntry {
 }
 
 /**
- * 召回聚合：范围闸（只排除归档/剪藏）+ 自指剔除 + 同笔记合并（留最高分块）+
+ * 召回聚合：范围闸（ADR-0142：只有卡片盒之内）+ 自指剔除 + 同笔记合并（留最高分块）+
  * 排序「命中次数 → 最高分」+ **多样性保底**（每片段最优笔记必进池），总量 `limit`。
  *
  * 排序**不能只看命中次数**（实测把真正相关的「巴纳姆效应」挤出了候选池），
@@ -1185,7 +1188,7 @@ export interface PoolEntry {
  */
 export function aggregatePool(
   hits: RecallHit[],
-  opts?: { selfPath?: string; limit?: number }
+  opts?: { selfPath?: string; limit?: number; cardboxDir?: string }
 ): PoolEntry[] {
   const limit = Number.isFinite(opts?.limit) ? Math.max(1, Number(opts?.limit)) : SUGGEST_POOL_SIZE;
   const selfKey = normalizeTargetPath(opts?.selfPath || '');
@@ -1196,7 +1199,7 @@ export function aggregatePool(
     if (!p) continue;
     const key = normalizeTargetPath(p);
     if (!key || key === selfKey) continue;
-    if (!inRecallScope(p)) continue;
+    if (!inRecallScope(p, opts?.cardboxDir)) continue;
     let entry = byPath.get(key);
     if (!entry) {
       entry = { path: p, hitCount: 0, maxScore: 0, snippet: '', segs: [] };
@@ -1423,7 +1426,7 @@ export async function generateSuggestions(
   }
   if (searchFailed) return empty('no-index');
 
-  const pool = aggregatePool(hits, { selfPath: cardPath, limit: SUGGEST_POOL_SIZE }).filter((c) => {
+  const pool = aggregatePool(hits, { selfPath: cardPath, limit: SUGGEST_POOL_SIZE, cardboxDir: ctx.cardboxDir }).filter((c) => {
     if (!ctx.app.vault.getAbstractFileByPath(c.path)) return false; // 失效目标（改名/删除残留）
     return !matchesExisting(c.path, null, existing); // 已链整篇的不送审
   });

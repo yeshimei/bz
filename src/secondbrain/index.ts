@@ -6,17 +6,17 @@
  *   ticket 107 起索引未就绪时不自动嵌入）；
  * - 三个命令入口：主面板（统一入口）/ 参考侧边栏 / AI 对话；ticket 107 起本地无向量数据时
  *   后两者统一转开主面板引导态；
- * - ticket 111：自动双链管线（link agent）——linkAgentEnabled 开关注册监听与队列消费；
- * - ticket 115：启动存量补链（队列消费后串行）+ 手动命令 bz-secondbrain-link-all 兜底；
+ * - ticket 111：自动关联管线（link agent）——linkAgentEnabled 开关注册监听与队列消费；
+ * - ticket 115：启动存量补链（队列消费后串行）；手动命令（bz-knowledge-link-all / bz-knowledge-relink）
+ *   随功能归属迁知识盒（ADR-0141 §1）；
  * - ticket 119（v1.4）：正文大改自动重跑——修改监听按基准哈希过滤，内容实质变化才重跑建链；
  * - issue 309：文献笔记建链改走显式通道——getLinkBridge() 给知识盒录入面板三段能力：
- *   preview（AI 出内容即起跑预演，草稿未落盘也能算）/ apply（落盘后写预演结果）/ now（兜底单篇管线），
+ *   preview（AI 出内容即起跑预演，草稿未落盘也能算）/ apply（落盘后写预演结果）/ now（兜底单篇管线）/ backfill（批量补链），
  *   面板内 loading → 完成后就地显示关联；原「生成即跑」的 'knowledge:tasks' 订阅已删除；
  * - unload 全量清理：定时器、订阅、面板 DOM、DeepSeek 服务、link agent。
  */
 import type { App } from 'obsidian';
 import { onDomainEvent } from '../core/domain-bus';
-import { notice } from '../core/notice';
 import { setLinkBridge } from '../core/link-now';
 import { tryGetSettings } from '../core/settings-provider';
 import { IS_MOBILE } from './config';
@@ -39,7 +39,7 @@ let reference: ReferencePanel | null = null;
 let chat: ChatPanel | null = null;
 let mobile: MobilePanel | null = null;
 
-// 自动双链管线（ticket 111）：随 linkAgentEnabled 开关注册（ADR-0003）
+// 自动关联管线（ticket 111）：随 linkAgentEnabled 开关注册（ADR-0003）
 let linkAgent: LinkAgent | null = null;
 let linkWatcher: LinkAgentWatcher | null = null;
 
@@ -86,14 +86,14 @@ export function ensureSecondBrain(app: App): void {
       store?.refresh().catch((e) => console.warn('[secondbrain] 后台刷新失败', e));
     }, 5000);
   });
-  // ticket 111：自动双链——linkAgentEnabled=false 时无任何监听与写入
+  // ticket 111：自动关联——linkAgentEnabled=false 时无任何监听与写入
   try {
     if ((tryGetSettings() as any).linkAgentEnabled !== false) {
       linkAgent = new LinkAgent({ app, store: s });
       // initialLoad 传入监听器：显式建链通道先等索引装载完成（issue 309）
       linkWatcher = new LinkAgentWatcher(app, linkAgent, s.initialLoad);
       linkWatcher.start();
-      // issue 309：知识盒录入面板的自动双链通道（预演 / 落盘后写入 / 兜底单篇建链）
+      // issue 309：知识盒录入面板的自动关联通道（预演 / 落盘后写入 / 兜底单篇建链）
       setLinkBridge(createLinkBridge(linkAgent, s.initialLoad));
       // 域初始化发现队列非空且 embedding 可达 → 自动消费，无需询问；
       // 队列消费之后串行执行存量补链（ticket 115：关联范围内缺 related 的存量笔记批量建链，
@@ -113,7 +113,7 @@ export function ensureSecondBrain(app: App): void {
       })();
     }
   } catch (e) {
-    console.warn('[secondbrain] 自动双链初始化失败', e);
+    console.warn('[secondbrain] 自动关联初始化失败', e);
   }
 }
 
@@ -245,71 +245,4 @@ export function openSecondBrainChat(app: App): void {
   openChatInternal();
 }
 
-/**
- * 命令 bz-secondbrain-link-all（ticket 115）：对关联范围内**所有未连接（缺 related）的存量笔记**
- * 手动批量补链——启动自动补链的显式兜底入口，同路径同串行锁；embedding 不可达 / 无目标均明确通知。
- */
-export async function runSecondBrainLinkAll(app: App): Promise<void> {
-  if ((tryGetSettings() as any).linkAgentEnabled === false) {
-    notice('自动双链已在第二大脑设置中关闭');
-    return;
-  }
-  ensureSecondBrain(app);
-  if (!linkAgent) return;
-  try {
-    const result = await linkAgent.backfillMissingLinks();
-    if (result.status === 'done') {
-      const { summary } = result;
-      notice(
-        summary.created > 0
-          ? `批量补链完成：处理 ${summary.processed} 篇 / 新建关联 ${summary.created} 条`
-          : '批量补链完成：未发现实质关联，未新建',
-        'success'
-      );
-    } else if (result.status === 'unreachable') {
-      notice('embedding 服务不可达，无法补链；服务恢复后可在下次启动自动补链', 'info');
-    } else if (result.status === 'no-targets') {
-      notice('当前无待补链笔记：关联范围内未连接的笔记已处理完', 'info');
-    } else {
-      notice('批量补链跳过（自动双链已关闭）', 'info');
-    }
-  } catch (e) {
-    console.warn('[secondbrain] 批量补链失败', e);
-    notice(`批量补链失败：${e instanceof Error ? e.message : String(e)}`, 'error');
-  }
-}
-
-/**
- * 命令 bz-secondbrain-rebuild-links（ticket 111）：对当前打开笔记重跑一次关联
- * （正文大改后的手动兜底入口）。手动触发即显式意图：不受 linkAgentScopes 范围限制，
- * 任何笔记可跑（候选仍按 linkAgentScopes 过滤）；embedding 不可达时入队待自动消费。
- * v1.7/ticket 167：显式传 respectRelated:false 豁免「已有 related 不再自动建链」——手动重跑始终强制。
- */
-export async function rebuildSecondBrainLinks(app: App): Promise<void> {
-  const file = app.workspace.getActiveFile?.() as { path: string } | null;
-  if (!file) {
-    notice('请先打开一个笔记');
-    return;
-  }
-  if ((tryGetSettings() as any).linkAgentEnabled === false) {
-    notice('自动双链已在第二大脑设置中关闭');
-    return;
-  }
-  ensureSecondBrain(app);
-  if (!linkAgent) return;
-  try {
-    const outcome = await linkAgent.processNote(file.path, { respectRelated: false });
-    if (outcome.status === 'done') {
-      notice(outcome.created > 0 ? `已新建关联 ${outcome.created} 条` : '未发现实质关联，未新建', 'success');
-    } else if (outcome.status === 'queued') {
-      notice('embedding 服务不可达，已加入待处理队列，服务可达后自动处理', 'info');
-    } else if (outcome.status === 'failed') {
-      notice(`关联处理失败：${outcome.error}`, 'error');
-    } else {
-      notice('该笔记暂无法处理（文件缺失或位于加密目录）', 'info');
-    }
-  } catch (e) {
-    console.warn('[secondbrain] 重跑关联失败', e);
-    notice(`关联处理失败：${e instanceof Error ? e.message : String(e)}`, 'error');
-  }
-}
+/** 命令 bz-secondbrain-open：参考侧边栏（移动端为底部抽屉参考 tab）；空库统一转开主面板引导 */

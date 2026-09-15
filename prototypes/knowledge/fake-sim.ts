@@ -688,6 +688,8 @@ function injectFakeLinkNow(app: FakeApp): void {
       return { status: 'done' as const, created: await writeLinks(path, picks) };
     },
     now: async (path: string) => ({ status: 'done' as const, created: await writeLinks(path, candidates()) }),
+    // ADR-0141：通道第四段（批量补链）——原型壳不跑批量，恒报无目标
+    backfill: async () => ({ status: 'no-targets' as const }),
   });
 }
 

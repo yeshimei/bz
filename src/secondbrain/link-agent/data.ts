@@ -1,5 +1,5 @@
 /**
- * 自动双链管线数据层（ticket 111；spec `.scratch/secondbrain-link-agent/spec.md`）
+ * 自动关联管线数据层（ticket 111；ADR-0141 正名；spec `.scratch/secondbrain-link-agent/spec.md`）
  *
  * 职责：
  * - 待处理队列 link 段（ticket 120：并入 secondbrain.json 的 link.queue，原独立
@@ -7,6 +7,8 @@
  *   同 path 合并刷新 hash、消费成功移除、失败保留、对应文件删除时顺带清理；
  * - 正文基准哈希 link 段（ticket 120：link.state，原独立 secondbrain_link_state.json 迁移）：
  *   记录每篇笔记最近一次成功建链时的全文内容哈希——修改监听据此判断"内容是否有实质变化才重跑"；
+ *   ADR-0141 §6 起另带 `empty` 标记：AI 判定「无实质关联」的笔记（related 始终为空）
+ *   记一笔「已尝试且 0 条」，正文未变即不再重试（此前每次启动都重跑一轮裁判）；
  * - related 属性解析与幂等写入的纯函数部分：只写新笔记侧，已存在的链不重复添加，
  *   `linkAgentMaxLinks > 0` 时截断，默认 0 = 不限量；
  * - 裁判输出（严格 JSON `[{"id":1,"reason":"..."}]`）解析。
@@ -15,32 +17,23 @@
  * queue/state 经 store-file 串行写链读写（与 meta/panel 段互斥）。
  */
 import { isUnderFolder as isUnderFolderCore, stripMdExt } from '../../core/utils';
+import { boxDirs, getKnowledgeBoxes } from '../../core/knowledge-boxes';
 import { loadStore, mutateStore } from '../store-file';
-import { tryGetSettings } from '../../core/settings-provider';
 
 /**
- * 关联范围解析（linkAgentScopes）：英文逗号分隔的 vault 内目录清单（风格同 aiAgentWatchedFolders），
- * 只决定**哪些笔记会被自动关联**（目标/触发侧：落盘监听目录 + 存量补链目标清单）；
- * **候选来源不受本范围限制**——一律取白名单索引库（secondBrainAllowPaths）中的全部笔记近邻。
- * 空值/缺省 = 什么也不录（不自动关联任何笔记），**不是**全库意思（用户拍板，ticket 116）。
+ * 关联范围（ADR-0141 §2）：**恒为三个盒子**（文献盒 / 卡片盒 / 主题盒），不再可配——
+ * 原 `linkAgentScopes` 键退役（读点全删，settings.ts 的 onload 迁移清旧值）。
+ * 范围同时决定**两端**：哪些笔记会被关联（目标/触发侧：落盘监听 + 存量补链 + 死链扫描）
+ * 与候选来源（近邻召回只在三盒索引语料里挑）。盒外笔记一律不处理（手动命令亦无豁免）。
+ * 盒子目录经 core/knowledge-boxes 单源解析（ADR-0002：core ← 域，两侧零互引）。
  */
-export function parseScopeList(raw: unknown): string[] {
-  const list = String(raw ?? '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean);
-  // 无 fallback：空 = 空（此前缺省回退「文献盒」，ticket 116 移除）
-  return [...new Set(list)];
-}
-
-/** 读当前设置的关联范围目录清单（实时读取，弹窗改动即时生效于后续事件） */
 export function getLinkAgentScopes(): string[] {
-  return parseScopeList((tryGetSettings() as any).linkAgentScopes);
+  return boxDirs(getKnowledgeBoxes());
 }
 
 /**
- * 范围命中判定（目标/触发侧）：空范围 = 什么也不录入（任何路径都不命中），非空按目录递归匹配。
- * 用于监听触发、补链目标、死链扫描；候选检索不使用本判定。
+ * 范围命中判定（目标/触发侧）：按目录递归匹配，空范围 = 任何路径都不命中。
+ * 用于监听触发、补链目标、死链扫描、候选过滤与管线入口的盒内卫。
  */
 export function matchesScope(scopes: string[], path: string): boolean {
   if (!scopes.length) return false;
@@ -50,18 +43,19 @@ export function matchesScope(scopes: string[], path: string): boolean {
 // ---------------- 存量补链目标清单（ticket 115） ----------------
 
 export interface BackfillTargetPredicates {
-  /** 是否位于关联范围内（linkAgentScopes） */
+  /** 是否位于关联范围内（恒为三个盒子，ADR-0141 §2） */
   inScope: (path: string) => boolean;
   /** frontmatter 是否已含 related（已连接的笔记跳过，related 即进度检查点） */
   hasRelated: (path: string) => boolean;
-  /** 排除（加密锁定目录 / 队列内待重试条目等） */
+  /** 排除（加密锁定目录 / 队列内待重试条目 / 已尝试且 0 条且正文未变者，ADR-0141 §6） */
   excluded: (path: string) => boolean;
 }
 
 /**
  * 计算存量补链目标清单（纯函数，node 环境可测）：
- * 只收 .md、去重、按路径字典序稳定输出；范围外 / 已含 related / 被排除的一律剔除。
- * 由调用方把 app（vault/metadataCache/encrypt 边界/队列）翻译成三个谓词。
+ * 只收 .md（canvas 不进被处理端——无 frontmatter 可写）、去重、按路径字典序稳定输出；
+ * 范围外 / 已含 related / 被排除的一律剔除。由调用方把 app（vault/metadataCache/encrypt 边界/队列/基准）
+ * 翻译成三个谓词。
  */
 export function computeBackfillTargets(allPaths: string[], opts: BackfillTargetPredicates): string[] {
   const seen = new Set<string>();
@@ -238,10 +232,15 @@ export async function pruneQueueByExists(exists: (path: string) => boolean): Pro
 
 // ---------------- 正文基准哈希（v1.4/ticket 119：正文大改自动重跑；ticket 120：store link.state 段） ----------------
 
-/** 基准状态条目：最近一次成功建链时的全文内容哈希 + 时间戳 */
+/** 基准状态条目：最近一次成功建链时的全文内容哈希 + 时间戳（+ 是否「已尝试且 0 条」） */
 export interface LinkStateEntry {
   hash: string;
   linkedAt: string;
+  /**
+   * ADR-0141 §6：该次处理 AI 判定「无实质关联」→ 一条都没建出。
+   * 没有这个标记时，related 永远为空的笔记每次启动都会被存量补链重跑一轮裁判。
+   */
+  empty?: boolean;
 }
 
 /** 全部基准状态：path → 条目 */
@@ -259,18 +258,35 @@ export async function loadLinkState(): Promise<LinkStateMap> {
   for (const [path, entry] of Object.entries(data as Record<string, unknown>)) {
     const e = entry as LinkStateEntry | null | undefined;
     if (e && typeof e === 'object' && typeof e.hash === 'string' && e.hash) {
-      out[path] = { hash: e.hash, linkedAt: typeof e.linkedAt === 'string' ? e.linkedAt : '' };
+      out[path] = {
+        hash: e.hash,
+        linkedAt: typeof e.linkedAt === 'string' ? e.linkedAt : '',
+        ...(e.empty === true ? { empty: true as const } : {}),
+      };
     }
   }
   return out;
 }
 
-/** upsert 单篇基准（成功建链后调用）：刷新全文内容哈希与时间戳 */
-export async function upsertLinkState(path: string, hash: string): Promise<void> {
+/**
+ * upsert 单篇基准（处理完成后调用）：刷新全文内容哈希与时间戳。
+ * @param empty 本次处理一条关联都没建出（ADR-0141 §6：存量补链据此不再重试同一篇）
+ */
+export async function upsertLinkState(path: string, hash: string, empty = false): Promise<void> {
   if (!path || !hash) return;
   await mutateStore((s) => {
-    s.link.state[path] = { hash, linkedAt: new Date().toISOString() };
+    const entry: LinkStateEntry = { hash, linkedAt: new Date().toISOString() };
+    if (empty) entry.empty = true;
+    s.link.state[path] = entry;
   });
+}
+
+/**
+ * 「已尝试且 0 条」判定（ADR-0141 §6，纯函数）：基准记着 empty，且当前正文哈希与基准一致
+ * → 正文没变过，不必再跑一轮裁判。正文改了哈希自然不同 → 回到重跑（与修改监听同一判据）。
+ */
+export function isSettledEmpty(entry: LinkStateEntry | undefined, currentHash: string): boolean {
+  return !!entry && entry.empty === true && !!currentHash && entry.hash === currentHash;
 }
 
 /** 移除单篇基准（文件删除清理时用；不存在则空操作） */

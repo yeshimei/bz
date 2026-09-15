@@ -7,7 +7,16 @@
   ADR-0140（三段式，范围闸被 0142 修订）/ ADR-0002（域隔离）/ ADR-0112（知识盒三部）/
   issue 298（link agent 迁移搁置——本 issue 复活并落地）/ issue 309（LinkBridge 三段通道）/
   ticket 111·115·116·119·128·167
-- 状态：设计定稿，待实现
+- 状态：**已实现**（2026-09-15；实现见 commit「feat(knowledge): 自动关联迁入知识盒」）。
+  实现期与设计的偏差：
+  ① `core/link-now.ts` 的 LinkBridge 增两段——`now(path, { force })`（手动命令强制重跑用，
+     保住 v1.7/ticket 167 的「手动豁免尊重门」）与 `backfill()`（批量补链归知识盒命令，引擎仍在本域）；
+     `LinkNowOutcome` 增 `out-of-scope`（盒外拒绝要有独立提示，不能冒充「文件缺失」）。
+  ② 盒界卫在 `processNote` 中置于 encrypt 硬跳过**之后**——锁定目录文件仍报 `skipped`，不报盒外。
+  ③ 队列消费遇 `out-of-scope` 就地出队（范围不可配 → 该条目永远跑不了，避免滞留）。
+  ④ `secondbrain/config.parseAllowPaths` 改为复用 `whitelist.parsePathList`（同一存储格式只留一个解析器）。
+  ⑤ 知识盒 schema 顺带纳入文案 lint（域组 C 注册表），存量文案零违规。
+  ⑥ 删除 `watch.ts` 的 `__resetLinkAgentGuideForTests`（引导提示退役后无标志可复位）。
 
 ## §1 背景
 

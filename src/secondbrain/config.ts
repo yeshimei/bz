@@ -5,9 +5,13 @@
  * - ticket 120 数据整合：JSON 全部并入 secondbrain.json（STORE_PATH），向量二进制改名 secondbrain.vec
  *   （VEC_PATH）；原 secondbrain_meta.json 语义并入 store-file 的 meta 段，不再单独文件。
  * - META_PATH/VEC_PATH 废弃设置键不再兜底：storagePath 为唯一目录口径（ADR-0009 延续）。
+ * - ADR-0141 §3：ALLOW_PATHS = 三个盒子（无条件）∪ 白名单额外目录——白名单键从
+ *   「唯一语料来源」降级为「三盒之外还要纳入检索的目录」（ticket 116 的「空 = 什么也不录」作废）。
  */
 import { tryGetSettings } from '../core/settings-provider';
 import { storageFile } from '../core/storage';
+import { boxDirs, getKnowledgeBoxes, isBoxDir } from '../core/knowledge-boxes';
+import { parsePathList } from './whitelist';
 
 interface SecondBrainConfig {
   OLLAMA_URL: string;
@@ -28,6 +32,31 @@ interface SecondBrainConfig {
   OLLAMA_REMOTE_URL: string;
 }
 
+/**
+ * 逗号分隔串 → 归一化目录清单：**拆分口径复用 whitelist.parsePathList**（同一存储格式的唯一解析器），
+ * 仅在其上补一条反斜杠转正（Windows 手填路径），再按归一化结果去重。
+ */
+export function parseAllowPaths(raw: unknown): string[] {
+  const out: string[] = [];
+  for (const p of parsePathList(raw)) {
+    const d = p.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+    if (d && !out.includes(d)) out.push(d);
+  }
+  return out;
+}
+
+/**
+ * 索引目录解析（ADR-0141 §3）：三盒恒含 + 白名单额外目录。
+ * 值里的三盒条目在此剔除（幂等）——三盒已无条件纳入，留着只会被当成「额外目录」误导（settings.ts
+ * 的 onload 迁移会把它们从盘上清掉，这里再兜一层防手改）。
+ */
+export function resolveAllowPaths(rawAllowPaths: unknown): string[] {
+  const boxes = getKnowledgeBoxes();
+  const dirs = boxDirs(boxes);
+  const extra = parseAllowPaths(rawAllowPaths).filter((p) => !isBoxDir(p, boxes) && !dirs.includes(p));
+  return [...dirs, ...extra];
+}
+
 export function buildConfig(): SecondBrainConfig {
   const s: any = tryGetSettings();
   return {
@@ -38,12 +67,7 @@ export function buildConfig(): SecondBrainConfig {
     TOP_K: Number(s.secondBrainTopK) || 20,
     CHAT_TOP_K: Number(s.secondBrainChatTopK) || 20,
     CHUNK_MIN_LENGTH: Number(s.secondBrainChunkMinLength) || 50,
-    ALLOW_PATHS: s.secondBrainAllowPaths
-      ? String(s.secondBrainAllowPaths)
-          .split(',')
-          .map((p: string) => p.trim())
-          .filter(Boolean)
-      : [], // ticket 116：空 = 什么也不录（不索引任何目录），不再是缺省目录清单
+    ALLOW_PATHS: resolveAllowPaths(s.secondBrainAllowPaths),
     CONTEXT_LIMIT: Number(s.secondBrainContextLimit) || 600,
     DEBOUNCE_DELAY: Number(s.secondBrainDebounceDelay) || 300,
     CURSOR_POLL_INTERVAL: Number(s.secondBrainCursorPollInterval) || 500,
