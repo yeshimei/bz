@@ -1,5 +1,5 @@
-/* 源指纹 48e40879616482ec · 仓内输入 90 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 235c76d4beab5ddc · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -6167,118 +6167,6 @@ ${c.trim()}
     }
   });
 
-  // src/clipbook/save.ts
-  function clipDirOf() {
-    const s = tryGetSettings();
-    return s && s.articleDirectory || "归档/网页剪藏";
-  }
-  async function writeClipNote(raw, dirOverride) {
-    const app = getApp();
-    const dir = dirOverride || clipDirOf();
-    const cleanTitle = String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim();
-    if (!cleanTitle) {
-      notice("标题为空", "error");
-      return false;
-    }
-    const filePath = `${dir}/${cleanTitle}.md`;
-    if (app.vault.getAbstractFileByPath(filePath)) {
-      const ok = await confirmOverwrite(filePath);
-      if (!ok) return false;
-    }
-    const tagsYaml = (raw.tags || []).map((t) => `  - "${yamlEscape(t)}"`).join("\n");
-    const now = localDatetime();
-    const pubDate = raw.date ? toDatetime(String(raw.date)) : "";
-    const body = String(raw.body || "").replace(/^\s*---[\s\S]*?---\s*/, "").replace(/^\s*```dataviewjs[\s\S]*?```\s*/, "").trim();
-    const md = `---
-url: "${yamlEscape(raw.url || "")}"
-author: "${yamlEscape(raw.author || "")}"
-site: "${yamlEscape(raw.platform || "")}"
-summary: "${yamlEscape(raw.summary || "")}"
-tags:
-${tagsYaml}
-date: "${yamlEscape(pubDate)}"
-created: ${now}
----
-\`\`\`dataviewjs
-await dv.view(\`CONFIG/SCRIPTS/DataView/摘要\`)
-\`\`\`
-
-${body}`;
-    try {
-      const dirAf = app.vault.getAbstractFileByPath(dir);
-      if (!dirAf) await app.vault.createFolder(dir);
-      const existing = app.vault.getAbstractFileByPath(filePath);
-      if (existing) await app.vault.modify(existing, md);
-      else await app.vault.create(filePath, md);
-      notice(`已保存：${cleanTitle}`, "success");
-      return true;
-    } catch (e) {
-      console.error("[剪藏本] 保存剪藏失败", e);
-      notice("保存失败，请稍后重试", "error");
-      return false;
-    }
-  }
-  function confirmOverwrite(filePath) {
-    return new Promise((resolve2) => {
-      const el = document.createElement("div");
-      Object.assign(el.style, {
-        position: "fixed",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%,-50%)",
-        background: "var(--background-primary)",
-        borderRadius: "10px",
-        padding: "20px",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
-        minWidth: "260px",
-        textAlign: "center",
-        fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif",
-        zIndex: "10500"
-      });
-      el.innerHTML = `
-      <div style="margin-bottom:14px;color:var(--text-normal);font-size:14px;">已存在同名剪藏，覆盖？</div>
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <button class="y" style="padding:6px 18px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);border-radius:4px;cursor:pointer;">覆盖</button>
-        <button class="n" style="padding:6px 18px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);border-radius:4px;cursor:pointer;">取消</button>
-      </div>`;
-      const ov = document.createElement("div");
-      Object.assign(ov.style, { position: "fixed", inset: "0", background: "var(--background-modifier-cover)" });
-      topifyZ(ov, el);
-      document.body.appendChild(ov);
-      document.body.appendChild(el);
-      const close = (v) => {
-        ov.remove();
-        el.remove();
-        resolve2(v);
-      };
-      ov.onclick = () => close(false);
-      const h = escManager.register("clipbook-confirm", {
-        isVisible: () => ov.isConnected,
-        close: () => close(false)
-      });
-      el.querySelector(".y").onclick = () => {
-        h.unregister();
-        close(true);
-      };
-      el.querySelector(".n").onclick = () => {
-        h.unregister();
-        close(false);
-      };
-    });
-  }
-  var yamlEscape;
-  var init_save = __esm({
-    "src/clipbook/save.ts"() {
-      init_app();
-      init_esc_manager();
-      init_dom();
-      init_settings_provider();
-      init_notice();
-      init_constants();
-      yamlEscape = (v) => String(v != null ? v : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
-    }
-  });
-
   // src/clipbook/data.ts
   function clipbookFilePath() {
     return storageFile(CLIPBOOK_JSON);
@@ -6287,8 +6175,18 @@ ${body}`;
     return {
       articleOverrides: data && data.articleOverrides !== null && typeof data.articleOverrides === "object" && !Array.isArray(data.articleOverrides) ? data.articleOverrides : {},
       savedArchive: Array.isArray(data && data.savedArchive) ? data.savedArchive.filter((s) => s && typeof s === "object" && s.url) : [],
-      order: Array.isArray(data && data.order) ? data.order.map(String) : []
+      order: Array.isArray(data && data.order) ? data.order.map(String) : [],
+      // issue 329 新段：旧侧写无此三段 → 空对象兜底；段内结构容错（非法形态整段丢弃）
+      marks: resolveRecord(data && data.marks, (v) => Array.isArray(v) ? v.filter((m) => m && typeof m.find === "string" && typeof m.notePath === "string") : []),
+      savedImages: resolveRecord(data && data.savedImages, (v) => Array.isArray(v) ? v.filter((im) => im && typeof im.src === "string" && typeof im.local === "string") : []),
+      pendingSource: resolveRecord(data && data.pendingSource, (v) => Array.isArray(v) ? v.map(String).filter(Boolean) : [])
     };
+  }
+  function resolveRecord(raw, coerce) {
+    if (!raw || raw === null || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const out = {};
+    for (const k of Object.keys(raw)) out[k] = coerce(raw[k]);
+    return out;
   }
   async function readClipbookData() {
     const data = await jsonFileStore(clipbookFilePath(), { defaultValue: () => emptySidecar() }).read();
@@ -6306,13 +6204,147 @@ ${body}`;
     });
   }
   function emptySidecar() {
-    return { articleOverrides: {}, savedArchive: [], order: [] };
+    return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
   }
   var CLIPBOOK_JSON;
   var init_data = __esm({
     "src/clipbook/data.ts"() {
       init_storage();
       CLIPBOOK_JSON = "clipbook.json";
+    }
+  });
+
+  // src/clipbook/anchor.ts
+  function escapeRe(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  function noteBasename(notePath) {
+    const base = String(notePath || "").split("/").pop() || "";
+    return base.replace(/\.md$/i, "") || String(notePath || "");
+  }
+  function aliasLink(notePath, find) {
+    return `[[${noteBasename(notePath)}|${find}]]`;
+  }
+  function applyBodyTransforms(body, marks, imageSwaps) {
+    let out = String(body || "");
+    const usedImages = [];
+    const usedMarks = [];
+    for (const sw of Array.isArray(imageSwaps) ? imageSwaps : []) {
+      if (!sw || !sw.src || !sw.local) continue;
+      const re = new RegExp(`!\\[[^\\]]*\\]\\(${escapeRe(sw.src)}\\)`);
+      if (!re.test(out)) continue;
+      out = out.replace(re, `![[${sw.local}]]`);
+      usedImages.push({ src: sw.src, local: sw.local });
+    }
+    for (const mk of Array.isArray(marks) ? marks : []) {
+      if (!mk || !mk.find || !mk.notePath) continue;
+      const idx = out.indexOf(mk.find);
+      if (idx === -1) continue;
+      out = out.slice(0, idx) + aliasLink(mk.notePath, mk.find) + out.slice(idx + mk.find.length);
+      usedMarks.push({ find: mk.find, notePath: mk.notePath, kind: mk.kind === "passage" ? "passage" : "term" });
+    }
+    return { body: out, marks: usedMarks, images: usedImages };
+  }
+  function applyClipContentTransforms(content, marks, imageSwaps) {
+    const src = String(content || "");
+    const m = src.match(/^(\s*---\r?\n[\s\S]*?\r?\n---[ \t]*\r?\n?)([\s\S]*)$/);
+    if (!m) return applyBodyTransforms(src, marks, imageSwaps).body;
+    return m[1] + applyBodyTransforms(m[2], marks, imageSwaps).body;
+  }
+  function lineAround(src, start, end) {
+    const ls = src.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
+    let le = src.indexOf("\n", end);
+    if (le === -1) le = src.length;
+    return src.slice(ls, le).trim();
+  }
+  function findMarkdownSnippet(body, text) {
+    const src = String(body || "");
+    const t = String(text || "").trim();
+    if (!src || !t) return null;
+    const direct = src.indexOf(t);
+    if (direct !== -1) return lineAround(src, direct, direct + t.length);
+    let normStr = "";
+    const normIdx = [];
+    let prevSpace = true;
+    for (let i = 0; i < src.length; i++) {
+      const ch = src[i];
+      if (/\s/.test(ch)) {
+        if (prevSpace) continue;
+        normStr += " ";
+        normIdx.push(i);
+        prevSpace = true;
+      } else {
+        normStr += ch;
+        normIdx.push(i);
+        prevSpace = false;
+      }
+    }
+    const q2 = t.replace(/\s+/g, " ").trim();
+    const n = normStr.indexOf(q2);
+    if (n === -1) return null;
+    const start = normIdx[n];
+    const end = normIdx[Math.min(n + q2.length - 1, normIdx.length - 1)] + 1;
+    return lineAround(src, start, end);
+  }
+  async function readArticleTracking(articleKey) {
+    const data = await readClipbookData();
+    return {
+      marks: data.marks[articleKey] || [],
+      images: data.savedImages[articleKey] || [],
+      pendingSource: data.pendingSource[articleKey] || []
+    };
+  }
+  async function addArticleMark(articleKey, mark) {
+    return updateClipbookData((cur) => {
+      const marks = { ...cur.marks };
+      const list = (marks[articleKey] || []).slice();
+      if (list.some((m) => m.find === mark.find && m.notePath === mark.notePath)) return cur;
+      list.push({ find: mark.find, notePath: mark.notePath, kind: mark.kind === "passage" ? "passage" : "term" });
+      marks[articleKey] = list;
+      return { ...cur, marks };
+    });
+  }
+  async function addArticleImageSwap(articleKey, swap) {
+    return updateClipbookData((cur) => {
+      const savedImages = { ...cur.savedImages };
+      const list = (savedImages[articleKey] || []).filter((im) => im.src !== swap.src);
+      list.push({ src: swap.src, local: swap.local });
+      savedImages[articleKey] = list;
+      return { ...cur, savedImages };
+    });
+  }
+  async function addPendingSourceNote(articleKey, notePath) {
+    return updateClipbookData((cur) => {
+      const pendingSource = { ...cur.pendingSource };
+      const list = (pendingSource[articleKey] || []).slice();
+      if (!list.includes(notePath)) list.push(notePath);
+      pendingSource[articleKey] = list;
+      return { ...cur, pendingSource };
+    });
+  }
+  async function clearArticleTracking(articleKey) {
+    let before = { marks: [], images: [], pendingSource: [] };
+    await updateClipbookData((cur) => {
+      before = {
+        marks: cur.marks[articleKey] || [],
+        images: cur.savedImages[articleKey] || [],
+        pendingSource: cur.pendingSource[articleKey] || []
+      };
+      if (!before.marks.length && !before.images.length && !before.pendingSource.length) return cur;
+      const marks = { ...cur.marks };
+      const savedImages = { ...cur.savedImages };
+      const pendingSource = { ...cur.pendingSource };
+      delete marks[articleKey];
+      delete savedImages[articleKey];
+      delete pendingSource[articleKey];
+      return { ...cur, marks, savedImages, pendingSource };
+    });
+    return before;
+  }
+  var init_anchor = __esm({
+    "src/clipbook/anchor.ts"() {
+      init_data();
+      init_constants();
     }
   });
 
@@ -7998,7 +8030,7 @@ ${body}`;
     flush(lines.length);
     return out;
   }
-  function escapeRe(s) {
+  function escapeRe2(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
   function headingSnippet(lines, heading, cache) {
@@ -8042,7 +8074,7 @@ ${body}`;
   }
   function blockSnippet(lines, id, cache) {
     var _a, _b, _c, _d, _e, _f, _g, _h;
-    const re = new RegExp(`(^|\\s)\\^${escapeRe(id)}(\\s|$)`);
+    const re = new RegExp(`(^|\\s)\\^${escapeRe2(id)}(\\s|$)`);
     const start = numOr((_d = (_c = (_b = (_a = cache == null ? void 0 : cache.blocks) == null ? void 0 : _a[id]) == null ? void 0 : _b.position) == null ? void 0 : _c.start) == null ? void 0 : _d.line, -1);
     if (start >= 0) {
       const end = numOr((_h = (_g = (_f = (_e = cache == null ? void 0 : cache.blocks) == null ? void 0 : _e[id]) == null ? void 0 : _f.position) == null ? void 0 : _g.end) == null ? void 0 : _h.line, start);
@@ -16057,6 +16089,149 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   });
 
+  // src/clipbook/save.ts
+  function clipDirOf() {
+    const s = tryGetSettings();
+    return s && s.articleDirectory || "归档/网页剪藏";
+  }
+  async function writeClipNote(raw, dirOverride) {
+    const app = getApp();
+    const dir = dirOverride || clipDirOf();
+    const cleanTitle = String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim();
+    if (!cleanTitle) {
+      notice("标题为空", "error");
+      return false;
+    }
+    const filePath = `${dir}/${cleanTitle}.md`;
+    if (app.vault.getAbstractFileByPath(filePath)) {
+      const ok = await confirmOverwrite(filePath);
+      if (!ok) return false;
+    }
+    const tagsYaml = (raw.tags || []).map((t) => `  - "${yamlEscape(t)}"`).join("\n");
+    const now = localDatetime();
+    const pubDate = raw.date ? toDatetime(String(raw.date)) : "";
+    const rawBody = String(raw.body || "").replace(/^\s*---[\s\S]*?---\s*/, "").replace(/^\s*```dataviewjs[\s\S]*?```\s*/, "").trim();
+    const key = articleKeyOf(raw);
+    const tracking = await readArticleTracking(key);
+    const transformed = applyBodyTransforms(rawBody, tracking.marks, tracking.images);
+    const body = transformed.body;
+    const md = `---
+url: "${yamlEscape(raw.url || "")}"
+author: "${yamlEscape(raw.author || "")}"
+site: "${yamlEscape(raw.platform || "")}"
+summary: "${yamlEscape(raw.summary || "")}"
+tags:
+${tagsYaml}
+date: "${yamlEscape(pubDate)}"
+created: ${now}
+---
+\`\`\`dataviewjs
+await dv.view(\`CONFIG/SCRIPTS/DataView/摘要\`)
+\`\`\`
+
+${body}`;
+    try {
+      const dirAf = app.vault.getAbstractFileByPath(dir);
+      if (!dirAf) await app.vault.createFolder(dir);
+      const existing = app.vault.getAbstractFileByPath(filePath);
+      if (existing) await app.vault.modify(existing, md);
+      else await app.vault.create(filePath, md);
+      notice(`已保存：${cleanTitle}`, "success");
+      await materializeTracking(key, filePath, cleanTitle);
+      return true;
+    } catch (e) {
+      console.error("[剪藏本] 保存剪藏失败", e);
+      notice("保存失败，请稍后重试", "error");
+      return false;
+    }
+  }
+  async function materializeTracking(key, clipPath, title) {
+    let before;
+    try {
+      before = await clearArticleTracking(key);
+    } catch (e) {
+      console.warn("[剪藏本] 物化清理侧写失败", e);
+      return;
+    }
+    if (!before.pendingSource.length) return;
+    const app = getApp();
+    try {
+      const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
+      if (typeof mod.upgradeNoteSourceInternal !== "function") return;
+      const link = `[[${clipPath}|${title}]]`;
+      for (const notePath of before.pendingSource) {
+        try {
+          await mod.upgradeNoteSourceInternal(app, notePath, link);
+        } catch (e) {
+          console.warn("[剪藏本] 回写文献来源失败（接受，静默）", notePath, e);
+        }
+      }
+    } catch (e) {
+      console.warn("[剪藏本] knowledge 模块不可用，source 回写跳过", e);
+    }
+  }
+  function confirmOverwrite(filePath) {
+    return new Promise((resolve2) => {
+      const el = document.createElement("div");
+      Object.assign(el.style, {
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%,-50%)",
+        background: "var(--background-primary)",
+        borderRadius: "10px",
+        padding: "20px",
+        boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
+        minWidth: "260px",
+        textAlign: "center",
+        fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif",
+        zIndex: "10500"
+      });
+      el.innerHTML = `
+      <div style="margin-bottom:14px;color:var(--text-normal);font-size:14px;">已存在同名剪藏，覆盖？</div>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button class="y" style="padding:6px 18px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);border-radius:4px;cursor:pointer;">覆盖</button>
+        <button class="n" style="padding:6px 18px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);border-radius:4px;cursor:pointer;">取消</button>
+      </div>`;
+      const ov = document.createElement("div");
+      Object.assign(ov.style, { position: "fixed", inset: "0", background: "var(--background-modifier-cover)" });
+      topifyZ(ov, el);
+      document.body.appendChild(ov);
+      document.body.appendChild(el);
+      const close = (v) => {
+        ov.remove();
+        el.remove();
+        resolve2(v);
+      };
+      ov.onclick = () => close(false);
+      const h = escManager.register("clipbook-confirm", {
+        isVisible: () => ov.isConnected,
+        close: () => close(false)
+      });
+      el.querySelector(".y").onclick = () => {
+        h.unregister();
+        close(true);
+      };
+      el.querySelector(".n").onclick = () => {
+        h.unregister();
+        close(false);
+      };
+    });
+  }
+  var yamlEscape;
+  var init_save = __esm({
+    "src/clipbook/save.ts"() {
+      init_app();
+      init_esc_manager();
+      init_dom();
+      init_settings_provider();
+      init_notice();
+      init_constants();
+      init_anchor();
+      yamlEscape = (v) => String(v != null ? v : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
+    }
+  });
+
   // src/clipbook/flow.ts
   function setReadingSession(key) {
     if (key !== curKey) {
@@ -19988,7 +20163,7 @@ ${bodyText.substring(0, 6e3)}`;
     M.open = false;
     M.articles = [];
     M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
+    M.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
     M.clipNotes = null;
     M.clipUrls = /* @__PURE__ */ new Set();
     M.sel = defaultSel();
@@ -20006,7 +20181,7 @@ ${bodyText.substring(0, 6e3)}`;
         open: false,
         articles: [],
         stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
-        sidecar: { articleOverrides: {}, savedArchive: [], order: [] },
+        sidecar: { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} },
         clipNotes: null,
         clipUrls: /* @__PURE__ */ new Set(),
         sel: defaultSel(),
@@ -20100,7 +20275,7 @@ ${bodyText.substring(0, 6e3)}`;
       M.articles = [];
       M.clipNotes = null;
       M.clipUrls = /* @__PURE__ */ new Set();
-      M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
+      M.sidecar = emptySidecar();
       M.upInfo = {};
       return { status: "missing", articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
     }
@@ -20108,7 +20283,7 @@ ${bodyText.substring(0, 6e3)}`;
       M.articles = [];
       M.clipNotes = null;
       M.clipUrls = /* @__PURE__ */ new Set();
-      M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
+      M.sidecar = emptySidecar();
       M.upInfo = {};
       return { status: "corrupt", articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
     }
@@ -20161,6 +20336,105 @@ ${bodyText.substring(0, 6e3)}`;
       init_app();
       init_state();
       init_write_queue();
+    }
+  });
+
+  // src/clipbook/image-save.ts
+  function clipbookImageDir() {
+    const s = tryGetSettings();
+    const configured = String(s && s.clipbookImageFolder || "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    if (configured) return configured;
+    const dir = String(s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
+    return `${dir}/assets`;
+  }
+  function normalizeImageSrc(src) {
+    const s = String(src || "").trim();
+    if (s.startsWith("//")) return "https:" + s;
+    return s;
+  }
+  function extOfImageUrl(src) {
+    try {
+      const path = String(src || "").split(/[?#]/)[0];
+      const ext = (path.split(".").pop() || "").toLowerCase();
+      return EXT_WHITELIST.has(ext) ? ext === "jpeg" ? "jpg" : ext : "png";
+    } catch (e) {
+      return "png";
+    }
+  }
+  function imageBaseName(title) {
+    const t = String(title || "").replace(/[\\/:*?"<>|#^[\]]/g, "").replace(/\s+/g, " ").trim().slice(0, 60);
+    return t || "image";
+  }
+  async function fetchImageBinary(url) {
+    const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), HTTP_TIMEOUT_MS));
+    const req = requestUrl({ url, method: "GET", headers: { ...UA_HEADERS }, throw: false }).then((resp) => {
+      return resp && resp.status >= 200 && resp.status < 300 ? resp.arrayBuffer : null;
+    });
+    req.catch(() => {
+    });
+    const buf = await Promise.race([req, timer]);
+    if (!buf) throw new Error("图片下载失败或超时：" + url);
+    return buf;
+  }
+  async function fetchImageDataUrl(src) {
+    const url = normalizeImageSrc(src);
+    if (url.startsWith("data:")) return url;
+    const buf = await fetchImageBinary(url);
+    const bytes = new Uint8Array(buf);
+    let bin = "";
+    const CHUNK = 32768;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
+    }
+    return `data:image/${extOfImageUrl(url)};base64,${btoa(bin)}`;
+  }
+  async function writeUniqueImage(dir, baseName2, ext, bytes) {
+    const app = getApp();
+    const folder = String(dir || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    let path = `${folder}/${baseName2}.${ext}`;
+    for (let i = 2; app.vault.getAbstractFileByPath(path); i++) path = `${folder}/${baseName2}_${i}.${ext}`;
+    try {
+      const exists = await app.vault.adapter.exists(folder);
+      if (!exists) await app.vault.createFolder(folder);
+    } catch (e) {
+    }
+    await app.vault.createBinary(path, bytes);
+    return path;
+  }
+  async function saveClipImage(opts) {
+    const url = normalizeImageSrc(opts.src);
+    if (!url || !/^https?:\/\//.test(url) && !url.startsWith("data:")) {
+      throw new Error("不是可保存的图片地址");
+    }
+    if (url.startsWith("data:")) throw new Error("图片已是本地数据，无需保存");
+    const bytes = await fetchImageBinary(url);
+    const local = await writeUniqueImage(clipbookImageDir(), imageBaseName(opts.title), extOfImageUrl(url), bytes);
+    if (opts.savedNotePath) {
+      const app = getApp();
+      const file = app.vault.getAbstractFileByPath(opts.savedNotePath);
+      if (file) {
+        const content = await app.vault.read(file);
+        const next = applyClipContentTransforms(content, [], [{ src: String(opts.src || "").trim(), local }]);
+        if (next !== content) await app.vault.modify(file, next);
+      }
+      notice("图片已保存并替换进笔记", "success");
+      return { local, sidecar: null };
+    }
+    const sidecar = await addArticleImageSwap(opts.articleKey, { src: String(opts.src || "").trim(), local });
+    notice("图片已保存，保存剪藏时一并换链", "success");
+    return { local, sidecar };
+  }
+  var HTTP_TIMEOUT_MS, UA_HEADERS, EXT_WHITELIST;
+  var init_image_save = __esm({
+    "src/clipbook/image-save.ts"() {
+      init_fake_obsidian();
+      init_app();
+      init_settings_provider();
+      init_notice();
+      init_anchor();
+      HTTP_TIMEOUT_MS = 15e3;
+      UA_HEADERS = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" };
+      EXT_WHITELIST = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "avif", "ico"]);
     }
   });
 
@@ -20252,6 +20526,19 @@ ${bodyText.substring(0, 6e3)}`;
       }
       escHandle = null;
     }
+    document.removeEventListener("selectionchange", onSelectionChanged);
+    document.removeEventListener("mousedown", onDocMouseDown, true);
+    if (selChangeTimer !== null) {
+      clearTimeout(selChangeTimer);
+      selChangeTimer = null;
+    }
+    hideSelBar();
+    if (selBarEl) {
+      selBarEl.remove();
+      selBarEl = null;
+    }
+    selSnap = null;
+    imgSnap = null;
     if (searchDebounceTimer !== null) {
       clearTimeout(searchDebounceTimer);
       searchDebounceTimer = null;
@@ -20339,6 +20626,17 @@ ${bodyText.substring(0, 6e3)}`;
         }
         return;
       }
+      const ilink = t.closest("a.internal-link");
+      if (ilink && interceptKnowledgeLink(ilink)) {
+        e.preventDefault();
+        return;
+      }
+      const img = t.closest("img");
+      if (img && img.closest("[data-clip-md]")) {
+        e.preventDefault();
+        showImageSelBar(img);
+        return;
+      }
       if (t.closest("[data-clip-open-note]") && M.cur) openNote(M.cur);
     });
     readPaneEl.addEventListener("keydown", (e) => {
@@ -20350,6 +20648,9 @@ ${bodyText.substring(0, 6e3)}`;
         stepArticle(1);
       }
     });
+    readPaneEl.addEventListener("mouseup", onReaderMouseUp);
+    const readScrollEl = readPaneEl.querySelector(".bz-clip-read-scroll");
+    if (readScrollEl) readScrollEl.addEventListener("scroll", hideSelBar, { passive: true });
     mobSearchBtn.addEventListener("click", () => {
       const show = mobSearchbarEl.style.display === "none";
       mobSearchbarEl.style.display = show ? "block" : "none";
@@ -20391,6 +20692,17 @@ ${bodyText.substring(0, 6e3)}`;
         }
         return;
       }
+      const ilink = t.closest("a.internal-link");
+      if (ilink && interceptKnowledgeLink(ilink)) {
+        e.preventDefault();
+        return;
+      }
+      const img = t.closest("img");
+      if (img && img.closest("[data-clip-mob-md]")) {
+        e.preventDefault();
+        showImageSelBar(img);
+        return;
+      }
       if (!t.closest("[data-clip-mob-next]") || !M.cur) return;
       const grp = mobItemOrder.filter((x) => x.srcName === M.cur.srcName);
       const idx = grp.findIndex((x) => x.id === M.cur.id);
@@ -20398,6 +20710,11 @@ ${bodyText.substring(0, 6e3)}`;
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
     });
+    mobDetailEl.addEventListener("mouseup", onReaderMouseUp);
+    const mobBodyScrollEl = overlayEl.querySelector("[data-clip-mob-detail-body]");
+    if (mobBodyScrollEl) mobBodyScrollEl.addEventListener("scroll", hideSelBar, { passive: true });
+    document.addEventListener("selectionchange", onSelectionChanged);
+    document.addEventListener("mousedown", onDocMouseDown, true);
     escKey = "bz-clipbook";
     escHandle = escManager.register(escKey, {
       isVisible: () => !!overlayEl && overlayEl.style.display !== "none",
@@ -20780,6 +21097,14 @@ ${bodyText.substring(0, 6e3)}`;
     if (!el.querySelector("*") || !((_a = el.textContent) == null ? void 0 : _a.trim())) el.textContent = md;
     bindImgFallback(el);
   }
+  function transformBodyForRead(a, body) {
+    var _a, _b;
+    if (a.origin !== "news") return body;
+    const marks = ((_a = M.sidecar.marks) == null ? void 0 : _a[a.id]) || [];
+    const swaps = ((_b = M.sidecar.savedImages) == null ? void 0 : _b[a.id]) || [];
+    if (!marks.length && !swaps.length) return body;
+    return applyBodyTransforms(body, marks, swaps).body;
+  }
   function bindImgFallback(container) {
     container.querySelectorAll("img").forEach((img) => {
       img.addEventListener("error", () => img.remove(), { once: true });
@@ -20788,6 +21113,7 @@ ${bodyText.substring(0, 6e3)}`;
   function renderReader() {
     if (!readerEl) return;
     const a = M.cur;
+    hideSelBar();
     applyReaderFontSize();
     if (!a) {
       readerEl.innerHTML = "";
@@ -20814,7 +21140,7 @@ ${bodyText.substring(0, 6e3)}`;
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
     if (mdEl && body) {
-      void hydrateArticleMarkdown(mdEl, body, a.notePath || "", () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -21160,6 +21486,7 @@ ${bodyText.substring(0, 6e3)}`;
   function renderMobDetail() {
     if (!mobDetailEl || !M.cur) return;
     const a = M.cur;
+    hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
       const saved = a.st === "saved";
@@ -21167,8 +21494,8 @@ ${bodyText.substring(0, 6e3)}`;
       mobSaveBtnEl.classList.toggle("saved", saved);
       mobSaveBtnEl.textContent = saved ? "已存" : "存为剪藏";
     }
-    const mdBody = a.origin === "news" ? a.body : "";
-    const note = mdBody ? "" : a.origin === "clip" ? "剪藏笔记正文请在 Obsidian 中打开" : "正文已清空";
+    const mdBody = a.origin === "news" ? transformBodyForRead(a, a.body) : "";
+    const note = a.body ? "" : a.origin === "clip" ? "剪藏笔记正文请在 Obsidian 中打开" : "正文已清空";
     const idx = mobItemOrder.findIndex((x) => x.id === a.id);
     const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : "";
     const detailBody = mobDetailEl.querySelector("[data-clip-mob-detail-body]");
@@ -21178,6 +21505,328 @@ ${bodyText.substring(0, 6e3)}`;
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");
     if (mdEl && mdBody) {
       void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+    }
+  }
+  function ensureSelBar() {
+    if (selBarEl && selBarEl.isConnected) return selBarEl;
+    const bar = document.createElement("div");
+    bar.className = "bz-clip-selbar";
+    bar.style.display = "none";
+    bar.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-clip-selbar-act]");
+      if (!btn) return;
+      e.stopPropagation();
+      void runSelBarAct(btn.getAttribute("data-clip-selbar-act") || "");
+    });
+    document.body.appendChild(bar);
+    selBarEl = bar;
+    return bar;
+  }
+  function hideSelBar() {
+    if (selBarEsc) {
+      try {
+        selBarEsc.unregister();
+      } catch (e) {
+      }
+      selBarEsc = null;
+    }
+    if (selBarEl) selBarEl.style.display = "none";
+  }
+  function armSelBarEsc() {
+    if (selBarEsc) {
+      try {
+        selBarEsc.unregister();
+      } catch (e) {
+      }
+    }
+    selBarEsc = escManager.register("bz-clipbook-selbar", {
+      isVisible: () => !!selBarEl && selBarEl.style.display !== "none",
+      close: hideSelBar
+    });
+  }
+  function placeSelBar(rect) {
+    const bar = selBarEl;
+    const w = bar.offsetWidth || 240;
+    const h = bar.offsetHeight || 36;
+    const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    let left = rect.left;
+    let top = rect.top - h - 8;
+    if (top < 8) top = (rect.bottom || rect.top) + 8;
+    if (vw) left = Math.min(Math.max(left, 8), Math.max(8, vw - w - 8));
+    if (vh) top = Math.min(Math.max(top, 8), Math.max(8, vh - h - 8));
+    bar.style.left = `${left}px`;
+    bar.style.top = `${top}px`;
+  }
+  function currentSourceBody(a) {
+    if (a.origin === "clip") return a.notePath ? clipBodyCache.get(a.notePath) || "" : "";
+    return a.body || "";
+  }
+  function readTextSelection() {
+    const sel = typeof window.getSelection === "function" ? window.getSelection() : null;
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null;
+    const text = String(sel.toString() || "").trim();
+    if (!text) return null;
+    const range = sel.getRangeAt(0);
+    const node = range.commonAncestorContainer;
+    const el = node && node.nodeType === 3 ? node.parentElement : node;
+    const container = el && typeof el.closest === "function" ? el.closest("[data-clip-md],[data-clip-mob-md]") : null;
+    if (!container) return null;
+    const r = typeof range.getBoundingClientRect === "function" ? range.getBoundingClientRect() : null;
+    return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
+  }
+  function showTextSelBar(info) {
+    const a = M.cur;
+    if (!a) return;
+    const body = currentSourceBody(a);
+    selSnap = { articleId: a.id, text: info.text, body };
+    imgSnap = null;
+    const bar = ensureSelBar();
+    bar.innerHTML = `
+    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="copy" title="复制选中内容的 Markdown 源语法">复制 Markdown</button>
+    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="term" title="存为知识盒名词，并在此处留下锚定双链">存为名词</button>
+    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="passage" title="存为知识盒段落，并在此处留下锚定双链">存为段落</button>`;
+    bar.style.display = "flex";
+    placeSelBar(info.rect);
+    armSelBarEsc();
+  }
+  function showImageSelBar(imgEl) {
+    const a = M.cur;
+    if (!a) return;
+    const src = imgEl.getAttribute("src") || "";
+    if (!src) return;
+    imgSnap = { articleId: a.id, src };
+    selSnap = null;
+    const bar = ensureSelBar();
+    bar.innerHTML = `
+    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="save-img" title="下载图片到剪藏图片文件夹">保存图片</button>
+    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="img-note" title="存为知识盒图版（读图成文）">存为图版</button>`;
+    bar.style.display = "flex";
+    const r = typeof imgEl.getBoundingClientRect === "function" ? imgEl.getBoundingClientRect() : null;
+    placeSelBar(r || { top: 0, left: 0, bottom: 0, right: 0 });
+    armSelBarEsc();
+  }
+  function checkTextSelection() {
+    if (!M.open) return;
+    if (Date.now() < selBarHoldUntil) return;
+    const info = readTextSelection();
+    if (!info) {
+      hideSelBar();
+      return;
+    }
+    showTextSelBar(info);
+  }
+  function onSelectionChanged() {
+    if (selChangeTimer !== null) clearTimeout(selChangeTimer);
+    selChangeTimer = setTimeout(() => {
+      selChangeTimer = null;
+      checkTextSelection();
+    }, 200);
+  }
+  function onReaderMouseUp() {
+    if (selChangeTimer !== null) {
+      clearTimeout(selChangeTimer);
+      selChangeTimer = null;
+    }
+    checkTextSelection();
+  }
+  function onDocMouseDown(ev) {
+    if (!selBarEl || selBarEl.style.display === "none") return;
+    if (selBarEl.contains(ev.target)) return;
+    hideSelBar();
+  }
+  async function runSelBarAct(act) {
+    selBarHoldUntil = Date.now() + 600;
+    if (act === "copy") {
+      hideSelBar();
+      await actCopyMarkdown();
+      return;
+    }
+    if (act === "term" || act === "passage") {
+      hideSelBar();
+      await actSaveEntry(act);
+      return;
+    }
+    if (act === "save-img") {
+      hideSelBar();
+      await actSaveImage();
+      return;
+    }
+    if (act === "img-note") {
+      hideSelBar();
+      await actImageNote();
+    }
+  }
+  async function actCopyMarkdown() {
+    const snap = selSnap;
+    if (!snap) return;
+    const snippet = snap.body ? findMarkdownSnippet(snap.body, snap.text) : null;
+    await copyText(snippet || snap.text, "Markdown 已复制");
+  }
+  function articleForSnapshot(articleId) {
+    return M.cur && M.cur.id === articleId ? M.cur : null;
+  }
+  async function actSaveEntry(kind) {
+    const snap = selSnap;
+    if (!snap) return;
+    const a = articleForSnapshot(snap.articleId);
+    if (!a) return;
+    let mod = null;
+    try {
+      mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
+    } catch (e) {
+      notice("知识盒模块加载失败", "error");
+      return;
+    }
+    const fn = kind === "term" ? mod.openTermNote : mod.openPassageNote;
+    if (typeof fn !== "function") {
+      notice("知识盒尚未支持划词录入，请更新插件", "warning");
+      return;
+    }
+    const source2 = a.url ? { kind: "url", url: a.url, title: a.title } : void 0;
+    const onCreated = (notePath) => {
+      void handleAnchorCreated(kind, String(notePath || ""), snap, a);
+    };
+    if (kind === "term") fn(getApp(), snap.text, { source: source2, onCreated });
+    else fn(getApp(), { text: snap.text, source: source2, onCreated });
+  }
+  async function handleAnchorCreated(kind, notePath, snap, a) {
+    if (!notePath) return;
+    try {
+      if (a.origin === "clip" && a.notePath) {
+        const app = getApp();
+        const file = app.vault.getAbstractFileByPath(a.notePath);
+        if (file) {
+          const content = await app.vault.read(file);
+          const next = applyClipContentTransforms(content, [{ find: snap.text, notePath, kind }], []);
+          if (next !== content) await app.vault.modify(file, next);
+          invalidateClipBodyCache(a.notePath);
+        }
+        await upgradeSourceFor(notePath, a);
+        if (M.cur && M.cur.id === a.id) renderReader();
+      } else {
+        M.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+        if (M.cur && M.cur.id === a.id) renderReader();
+      }
+    } catch (e) {
+      console.warn("[剪藏本] 划词锚定写入失败", e);
+      notice("锚定写入失败", "error");
+    }
+  }
+  async function upgradeSourceFor(notePath, a) {
+    if (!a.notePath) return;
+    try {
+      const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
+      if (typeof mod.upgradeNoteSourceInternal !== "function") return;
+      await mod.upgradeNoteSourceInternal(getApp(), notePath, `[[${a.notePath}|${a.title}]]`);
+    } catch (e) {
+      console.warn("[剪藏本] 升级文献来源失败（静默接受）", e);
+    }
+  }
+  async function actSaveImage() {
+    const snap = imgSnap;
+    if (!snap) return;
+    const a = articleForSnapshot(snap.articleId);
+    if (!a) return;
+    try {
+      const res = await saveClipImage({
+        src: snap.src,
+        title: a.title,
+        articleKey: a.id,
+        savedNotePath: a.origin === "clip" ? a.notePath : null
+      });
+      if (res.sidecar) M.sidecar = res.sidecar;
+      if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
+      if (M.cur && M.cur.id === a.id) renderReader();
+    } catch (e) {
+      console.warn("[剪藏本] 保存图片失败", e);
+      notice("图片保存失败，请检查网络后重试", "error");
+    }
+  }
+  async function actImageNote() {
+    const snap = imgSnap;
+    if (!snap) return;
+    const a = articleForSnapshot(snap.articleId);
+    if (!a) return;
+    let dataUrl = "";
+    try {
+      dataUrl = await fetchImageDataUrl(snap.src);
+    } catch (e) {
+      notice("图片读取失败，无法生成图版", "error");
+      return;
+    }
+    let mod = null;
+    try {
+      mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
+    } catch (e) {
+      notice("知识盒模块加载失败", "error");
+      return;
+    }
+    if (typeof mod.openImageNote !== "function") {
+      notice("知识盒尚未支持图版录入，请更新插件", "warning");
+      return;
+    }
+    const source2 = a.url ? { kind: "url", url: a.url, title: a.title } : void 0;
+    mod.openImageNote(getApp(), {
+      source: source2,
+      images: [dataUrl],
+      onCreated: (notePath) => {
+        void handlePlateCreated(String(notePath || ""), a);
+      }
+    });
+  }
+  async function handlePlateCreated(notePath, a) {
+    if (!notePath) return;
+    try {
+      if (a.origin === "clip" && a.notePath) {
+        await upgradeSourceFor(notePath, a);
+      } else {
+        M.sidecar = await addPendingSourceNote(a.id, notePath);
+      }
+    } catch (e) {
+      console.warn("[剪藏本] 图版来源登记失败", e);
+      notice("图版来源登记失败", "error");
+    }
+  }
+  function knowledgeDir() {
+    const s = tryGetSettings();
+    return String(s && s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function resolveInternalTarget(href) {
+    const app = getApp();
+    let p = String(href || "").split("#")[0].trim().replace(/\\/g, "/");
+    if (!p) return null;
+    try {
+      p = decodeURIComponent(p);
+    } catch (e) {
+    }
+    if (!p.toLowerCase().endsWith(".md")) {
+      const withMd = p + ".md";
+      if (app.vault.getAbstractFileByPath(withMd)) p = withMd;
+    }
+    return app.vault.getAbstractFileByPath(p) ? p : null;
+  }
+  function interceptKnowledgeLink(link) {
+    const path = resolveInternalTarget(link.dataset.href || link.getAttribute("href") || "");
+    if (!path) return false;
+    const dir = knowledgeDir();
+    if (!path.startsWith(dir + "/")) return false;
+    void openKnowledgePreviewSafe(path);
+    return true;
+  }
+  async function openKnowledgePreviewSafe(path) {
+    try {
+      const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
+      if (typeof mod.openKnowledgePreview === "function") {
+        await mod.openKnowledgePreview(getApp(), path);
+        return;
+      }
+    } catch (e) {
+      console.warn("[剪藏本] 文献预览直达失败，回退原生打开", e);
+    }
+    try {
+      getApp().workspace.openLinkText(path, "", false, { active: true });
+    } catch (e) {
     }
   }
   function clipbookSettingsSchema(dataSource) {
@@ -21208,7 +21857,9 @@ ${bodyText.substring(0, 6e3)}`;
           icon: "folder-open",
           name: "目录",
           rows: [
-            { type: "path", mode: "single", name: "剪藏文件夹", desc: "存放网页剪藏文章的文件夹", binding: { key: "articleDirectory" } }
+            { type: "path", mode: "single", name: "剪藏文件夹", desc: "存放网页剪藏文章的文件夹", binding: { key: "articleDirectory" } },
+            // issue 329：保存正文图片的落地目录（留空回落剪藏目录 assets）
+            { type: "path", mode: "single", name: "图片文件夹", desc: "保存网页图片的文件夹，留空存到剪藏目录下的 assets", binding: { key: "clipbookImageFolder" } }
           ]
         },
         {
@@ -21273,7 +21924,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -21297,6 +21948,8 @@ ${bodyText.substring(0, 6e3)}`;
       init_state();
       init_loader();
       init_news_data();
+      init_anchor();
+      init_image_save();
       init_flow();
       overlayEl = null;
       railListEl = null;
@@ -21336,6 +21989,12 @@ ${bodyText.substring(0, 6e3)}`;
       snapEpochs = /* @__PURE__ */ new Map();
       deskFoldOpen = /* @__PURE__ */ new Set();
       deskFoldTouched = /* @__PURE__ */ new Set();
+      selBarEl = null;
+      selBarEsc = null;
+      selChangeTimer = null;
+      selBarHoldUntil = 0;
+      selSnap = null;
+      imgSnap = null;
     }
   });
 

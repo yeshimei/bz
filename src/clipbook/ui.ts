@@ -25,7 +25,7 @@
  * markup 全部出自 render.ts（纯层，原型 × 插件一份），本文件只管生命周期/事件委托/
  * 数据流；行为单源（ADR-0106）经 fake-sim.ts 打进评审壳 prototype.html（alias obsidian→fake）。
  */
-import { Component, MarkdownRenderer } from 'obsidian';
+import { Component, MarkdownRenderer, TFile } from 'obsidian';
 import { getApp } from '../core/app';
 import { notice, notifyUndo } from '../core/notice';
 import { uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
@@ -53,6 +53,8 @@ import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar } from './loader';
 import { readNewsData } from './news-data';
 import { writeClipNote } from './save';
+import { applyBodyTransforms, applyClipContentTransforms, findMarkdownSnippet, addArticleMark, addPendingSourceNote, type ClipMark } from './anchor';
+import { saveClipImage, fetchImageDataUrl } from './image-save';
 import {
   flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession,
   flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews,
@@ -186,6 +188,20 @@ export function unloadPanel(): void {
     try { escHandle.unregister(); } catch (e) { /* 忽略 */ }
     escHandle = null;
   }
+  // issue 329：划选工具框清理（document 级监听 + 单例 DOM + 快照）
+  document.removeEventListener('selectionchange', onSelectionChanged);
+  document.removeEventListener('mousedown', onDocMouseDown, true);
+  if (selChangeTimer !== null) {
+    clearTimeout(selChangeTimer);
+    selChangeTimer = null;
+  }
+  hideSelBar();
+  if (selBarEl) {
+    selBarEl.remove();
+    selBarEl = null;
+  }
+  selSnap = null;
+  imgSnap = null;
   if (searchDebounceTimer !== null) {
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = null;
@@ -277,12 +293,22 @@ function buildDom(app: any): void {
     const t = e.target as HTMLElement;
     const ext = t.closest('a[data-clip-ext]') as HTMLAnchorElement | null;
     if (ext) { e.preventDefault(); try { window.open(ext.href, '_blank'); } catch { /* jsdom 无 window.open */ } return; }
+    // issue 329：划词锚定双链点击 → 文献盒内拦下直达预览（目录外不拦原生导航）
+    const ilink = t.closest('a.internal-link') as HTMLAnchorElement | null;
+    if (ilink && interceptKnowledgeLink(ilink)) { e.preventDefault(); return; }
+    // issue 329：正文图片单击 → 图片工具框（保存图片 / 存为图版）
+    const img = t.closest('img');
+    if (img && img.closest('[data-clip-md]')) { e.preventDefault(); showImageSelBar(img as HTMLImageElement); return; }
     if (t.closest('[data-clip-open-note]') && M.cur) openNote(M.cur);
   });
   readPaneEl!.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); stepArticle(-1); }
     else if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); stepArticle(1); }
   });
+  // issue 329：划选工具框事件（桌面右栏）——mouseup 即时检查、滚动即收（scroll 不冒泡，直绑滚动容器）
+  readPaneEl!.addEventListener('mouseup', onReaderMouseUp);
+  const readScrollEl = readPaneEl!.querySelector('.bz-clip-read-scroll');
+  if (readScrollEl) readScrollEl.addEventListener('scroll', hideSelBar, { passive: true });
   // 移动：搜索切换（原型顶栏「搜索」文字钮；显式 block/none——CSS 无默认 display，由骨架 inline none 兜底）
   mobSearchBtn!.addEventListener('click', () => {
     const show = mobSearchbarEl!.style.display === 'none';
@@ -319,12 +345,23 @@ function buildDom(app: any): void {
     const t = e.target as HTMLElement;
     const ext = t.closest('a[data-clip-ext]') as HTMLAnchorElement | null;
     if (ext) { e.preventDefault(); try { window.open(ext.href, '_blank'); } catch { /* jsdom 无 window.open */ } return; }
+    // issue 329：移动详情同款——双链直达预览拦截 + 图片单击工具框（桌面/移动同套逻辑）
+    const ilink = t.closest('a.internal-link') as HTMLAnchorElement | null;
+    if (ilink && interceptKnowledgeLink(ilink)) { e.preventDefault(); return; }
+    const img = t.closest('img');
+    if (img && img.closest('[data-clip-mob-md]')) { e.preventDefault(); showImageSelBar(img as HTMLImageElement); return; }
     if (!t.closest('[data-clip-mob-next]') || !M.cur) return;
     const grp = mobItemOrder.filter((x) => x.srcName === M.cur!.srcName);
     const idx = grp.findIndex((x) => x.id === M.cur!.id);
     const next = grp[idx + 1];
     if (next) openMobDetail(next.id); else (mobBackBtn as HTMLElement).click();
   });
+  // issue 329：划选工具框事件（移动详情正文 + 双端公共层）——mouseup / selectionchange 防抖双端同套
+  mobDetailEl!.addEventListener('mouseup', onReaderMouseUp);
+  const mobBodyScrollEl = overlayEl.querySelector('[data-clip-mob-detail-body]');
+  if (mobBodyScrollEl) mobBodyScrollEl.addEventListener('scroll', hideSelBar, { passive: true });
+  document.addEventListener('selectionchange', onSelectionChanged);
+  document.addEventListener('mousedown', onDocMouseDown, true);
 
   // ESC（C19：详情屏开着时第一层收详情返回列表，再按一次才关面板）
   escKey = 'bz-clipbook';
@@ -836,6 +873,18 @@ async function hydrateArticleMarkdown(el: HTMLElement, md: string, sourcePath: s
   bindImgFallback(el);
 }
 
+/** 渲染前正文变换（issue 329 / ADR-0144）：news 条目按侧写追踪（划词 marks + 已存图片映射）
+ *  跑 applyBodyTransforms 后再交 MarkdownRenderer；无标记零开销原样返回。
+ *  clip 条目正文即盘上原文（已保存条目划词直写 md，不走侧写），不在此变换。
+ *  ADR-0122 契约不受影响：变换发生在字符串层，渲染前容器清空、追加渲染照旧。 */
+function transformBodyForRead(a: ClipArticle, body: string): string {
+  if (a.origin !== 'news') return body;
+  const marks = ((M.sidecar as any).marks as Record<string, ClipMark[]> | undefined)?.[a.id] || [];
+  const swaps = ((M.sidecar as any).savedImages as Record<string, Array<{ src: string; local: string }>> | undefined)?.[a.id] || [];
+  if (!marks.length && !swaps.length) return body;
+  return applyBodyTransforms(body, marks, swaps).body;
+}
+
 /** 正文图片加载失败隐藏（外链图缓存失效/断网时不留裂图；MarkdownRenderer 产出的 img 无专属类，按容器取） */
 function bindImgFallback(container: HTMLElement): void {
   container.querySelectorAll('img').forEach((img) => {
@@ -846,6 +895,7 @@ function bindImgFallback(container: HTMLElement): void {
 function renderReader(): void {
   if (!readerEl) return;
   const a = M.cur;
+  hideSelBar(); // 切篇/重渲收工具框（旧选区 rect 已失效）
   applyReaderFontSize();
   if (!a) {
     readerEl.innerHTML = '';
@@ -875,7 +925,8 @@ function renderReader(): void {
   bindImgFallback(readerEl);
   const mdEl = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
   if (mdEl && body) {
-    void hydrateArticleMarkdown(mdEl, body, a.notePath || '', () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+    // issue 329：渲染前按侧写标记变换（划词双链 + 已存图片换链），news.json 原文不被写
+    void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || '', () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
   }
   if (a.origin === 'clip') void loadClipBody(a);
 }
@@ -1285,6 +1336,7 @@ function markReadOnOpen(a: ClipArticle): void {
 function renderMobDetail(): void {
   if (!mobDetailEl || !M.cur) return;
   const a = M.cur;
+  hideSelBar(); // 切条目/重渲收工具框
   // 屏2 顶部：居中「站名 · 目录」（原型 .d-ch）
   if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
   // 保存钮（原型文字钮「存为剪藏 / 已存」；剪藏来源隐藏——doSave 对 origin!=='news' 静默 return）
@@ -1294,8 +1346,8 @@ function renderMobDetail(): void {
     mobSaveBtnEl.classList.toggle('saved', saved);
     mobSaveBtnEl.textContent = saved ? '已存' : '存为剪藏';
   }
-  const mdBody = a.origin === 'news' ? a.body : '';
-  const note = mdBody ? '' : (a.origin === 'clip' ? '剪藏笔记正文请在 Obsidian 中打开' : '正文已清空');
+  const mdBody = a.origin === 'news' ? transformBodyForRead(a, a.body) : '';
+  const note = a.body ? '' : (a.origin === 'clip' ? '剪藏笔记正文请在 Obsidian 中打开' : '正文已清空');
   // C13：按 id 查——mobItemOrder 是快照重建的实例、M.cur 来自 queryBySource 新建实例，indexOf 身份失配
   const idx = mobItemOrder.findIndex((x) => x.id === a.id);
   const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : '';
@@ -1308,6 +1360,391 @@ function renderMobDetail(): void {
   if (mdEl && mdBody) {
     void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || '', () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
   }
+}
+
+// ================= 划选工具框（issue 329 / ADR-0144：桌面/移动同套） =================
+// 阅读正文划选文字 → 光标上方浮框：复制 Markdown / 存为名词 / 存为段落；
+// 单击图片 → 浮框：保存图片 / 存为图版。选区塌陷/点击别处/Esc/滚动即收。
+// 录入动作动态 import('../knowledge') 契约 API（openTermNote/openPassageNote/openImageNote，
+// 新参全可选；本域按存在调用——旧版本缺导出时提示，不崩）。生成后不自动打开笔记。
+
+/** 工具框单例 DOM（挂 body，脱离面板滚动/重建影响） */
+let selBarEl: HTMLElement | null = null;
+let selBarEsc: { unregister(): void } | null = null;
+let selChangeTimer: ReturnType<typeof setTimeout> | null = null;
+/** 动作发起后的静默窗口：点按钮触发的 selectionchange 不再重弹工具框 */
+let selBarHoldUntil = 0;
+/** 文字动作快照（显示工具框时定格，防动作执行中切篇错锚） */
+interface SelSnapshot { articleId: string; text: string; body: string; }
+let selSnap: SelSnapshot | null = null;
+/** 图片动作快照 */
+interface ImgSnapshot { articleId: string; src: string; }
+let imgSnap: ImgSnapshot | null = null;
+
+function ensureSelBar(): HTMLElement {
+  if (selBarEl && selBarEl.isConnected) return selBarEl;
+  const bar = document.createElement('div');
+  bar.className = 'bz-clip-selbar';
+  bar.style.display = 'none';
+  // 动作委托（data-clip-selbar-act）；mousedown 不拦——document 捕获层按 contains 判定「外部点击」
+  bar.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('[data-clip-selbar-act]') as HTMLElement | null;
+    if (!btn) return;
+    e.stopPropagation();
+    void runSelBarAct(btn.getAttribute('data-clip-selbar-act') || '');
+  });
+  document.body.appendChild(bar);
+  selBarEl = bar;
+  return bar;
+}
+
+function hideSelBar(): void {
+  if (selBarEsc) {
+    try { selBarEsc.unregister(); } catch (e) { /* 幂等 */ }
+    selBarEsc = null;
+  }
+  if (selBarEl) selBarEl.style.display = 'none';
+}
+
+function armSelBarEsc(): void {
+  // 只换 ESC 层，不动显示态（调用方刚把浮框置为可见；全量 hideSelBar 会把框藏回去）
+  if (selBarEsc) {
+    try { selBarEsc.unregister(); } catch (e) { /* 幂等 */ }
+  }
+  selBarEsc = escManager.register('bz-clipbook-selbar', {
+    isVisible: () => !!selBarEl && selBarEl.style.display !== 'none',
+    close: hideSelBar,
+  });
+}
+
+/** 浮框定位：光标（选区/图片）上方，放不下翻下方，视口内钳制（jsdom 零尺寸走估算兜底） */
+function placeSelBar(rect: { top: number; left: number; bottom: number; right: number }): void {
+  const bar = selBarEl!;
+  const w = bar.offsetWidth || 240;
+  const h = bar.offsetHeight || 36;
+  const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+  const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+  let left = rect.left;
+  let top = rect.top - h - 8;
+  if (top < 8) top = (rect.bottom || rect.top) + 8;
+  if (vw) left = Math.min(Math.max(left, 8), Math.max(8, vw - w - 8));
+  if (vh) top = Math.min(Math.max(top, 8), Math.max(8, vh - h - 8));
+  bar.style.left = `${left}px`;
+  bar.style.top = `${top}px`;
+}
+
+/** 当前条目源 body（复制 Markdown 回查用）：clip 条目 = 正文缓存原文；news 条目 = body（只读，永不被写） */
+function currentSourceBody(a: ClipArticle): string {
+  if (a.origin === 'clip') return a.notePath ? (clipBodyCache.get(a.notePath) || '') : '';
+  return a.body || '';
+}
+
+/** 选区读盘：仅认双端阅读正文容器（桌面 [data-clip-md] / 移动 [data-clip-mob-md]）内的非空选区 */
+function readTextSelection(): { text: string; rect: { top: number; left: number; bottom: number; right: number } } | null {
+  const sel = typeof window.getSelection === 'function' ? window.getSelection() : null;
+  if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null;
+  const text = String(sel.toString() || '').trim();
+  if (!text) return null;
+  const range = sel.getRangeAt(0);
+  const node = range.commonAncestorContainer;
+  const el = node && node.nodeType === 3 ? node.parentElement : (node as HTMLElement | null);
+  const container = el && typeof el.closest === 'function'
+    ? el.closest('[data-clip-md],[data-clip-mob-md]')
+    : null;
+  if (!container) return null;
+  const r = typeof range.getBoundingClientRect === 'function' ? range.getBoundingClientRect() : null;
+  return { text, rect: r || ({ top: 0, left: 0, bottom: 0, right: 0 } as any) };
+}
+
+function showTextSelBar(info: { text: string; rect: { top: number; left: number; bottom: number; right: number } }): void {
+  const a = M.cur;
+  if (!a) return;
+  const body = currentSourceBody(a);
+  selSnap = { articleId: a.id, text: info.text, body };
+  imgSnap = null;
+  const bar = ensureSelBar();
+  bar.innerHTML = `
+    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="copy" title="复制选中内容的 Markdown 源语法">复制 Markdown</button>
+    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="term" title="存为知识盒名词，并在此处留下锚定双链">存为名词</button>
+    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="passage" title="存为知识盒段落，并在此处留下锚定双链">存为段落</button>`;
+  bar.style.display = 'flex';
+  placeSelBar(info.rect);
+  armSelBarEsc();
+}
+
+function showImageSelBar(imgEl: HTMLImageElement): void {
+  const a = M.cur;
+  if (!a) return;
+  const src = imgEl.getAttribute('src') || '';
+  if (!src) return;
+  imgSnap = { articleId: a.id, src };
+  selSnap = null;
+  const bar = ensureSelBar();
+  bar.innerHTML = `
+    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="save-img" title="下载图片到剪藏图片文件夹">保存图片</button>
+    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="img-note" title="存为知识盒图版（读图成文）">存为图版</button>`;
+  bar.style.display = 'flex';
+  const r = typeof imgEl.getBoundingClientRect === 'function' ? imgEl.getBoundingClientRect() : null;
+  placeSelBar(r || ({ top: 0, left: 0, bottom: 0, right: 0 } as any));
+  armSelBarEsc();
+}
+
+/** 选区检查（mouseup 即时 + selectionchange 防抖共用）：塌陷/离开正文 → 收框 */
+function checkTextSelection(): void {
+  if (!M.open) return;
+  if (Date.now() < selBarHoldUntil) return; // 动作静默窗口（点按钮引发的选区抖动不重弹）
+  const info = readTextSelection();
+  if (!info) {
+    hideSelBar();
+    return;
+  }
+  showTextSelBar(info);
+}
+
+function onSelectionChanged(): void {
+  if (selChangeTimer !== null) clearTimeout(selChangeTimer);
+  selChangeTimer = setTimeout(() => {
+    selChangeTimer = null;
+    checkTextSelection();
+  }, 200);
+}
+
+function onReaderMouseUp(): void {
+  if (selChangeTimer !== null) {
+    clearTimeout(selChangeTimer);
+    selChangeTimer = null;
+  }
+  checkTextSelection();
+}
+
+/** 点工具框外即收（document 捕获层；工具框内按下不收） */
+function onDocMouseDown(ev: MouseEvent): void {
+  if (!selBarEl || selBarEl.style.display === 'none') return;
+  if (selBarEl.contains(ev.target as Node)) return;
+  hideSelBar();
+}
+
+/** 工具框动作分发 */
+async function runSelBarAct(act: string): Promise<void> {
+  selBarHoldUntil = Date.now() + 600;
+  if (act === 'copy') {
+    hideSelBar();
+    await actCopyMarkdown();
+    return;
+  }
+  if (act === 'term' || act === 'passage') {
+    hideSelBar();
+    await actSaveEntry(act);
+    return;
+  }
+  if (act === 'save-img') {
+    hideSelBar();
+    await actSaveImage();
+    return;
+  }
+  if (act === 'img-note') {
+    hideSelBar();
+    await actImageNote();
+  }
+}
+
+/** 复制 Markdown：选区文本回查源 body 片段（保语法），回查失败回退纯文本 */
+async function actCopyMarkdown(): Promise<void> {
+  const snap = selSnap;
+  if (!snap) return;
+  const snippet = snap.body ? findMarkdownSnippet(snap.body, snap.text) : null;
+  await copyText(snippet || snap.text, 'Markdown 已复制');
+}
+
+/** 快照校验：动作执行时仍是发起时的当前条目才落锚（切篇后丢弃） */
+function articleForSnapshot(articleId: string): ClipArticle | null {
+  return M.cur && M.cur.id === articleId ? M.cur : null;
+}
+
+/** 知识盒录入入口（存为名词/段落）：预填选区 + 原文来源，生成后不自动打开笔记（ADR-0144 决策 1）。
+ *  契约 API（knowledge 域并行实现）按存在调用：openTermNote(app, term?, opts) / openPassageNote(app, opts)。 */
+async function actSaveEntry(kind: 'term' | 'passage'): Promise<void> {
+  const snap = selSnap;
+  if (!snap) return;
+  const a = articleForSnapshot(snap.articleId);
+  if (!a) return;
+  let mod: any = null;
+  try {
+    mod = await import('../knowledge');
+  } catch (e) {
+    notice('知识盒模块加载失败', 'error');
+    return;
+  }
+  const fn = kind === 'term' ? mod.openTermNote : mod.openPassageNote;
+  if (typeof fn !== 'function') {
+    notice('知识盒尚未支持划词录入，请更新插件', 'warning');
+    return;
+  }
+  const source = a.url ? { kind: 'url' as const, url: a.url, title: a.title } : undefined;
+  const onCreated = (notePath: string) => {
+    void handleAnchorCreated(kind, String(notePath || ''), snap, a);
+  };
+  if (kind === 'term') fn(getApp(), snap.text, { source, onCreated });
+  else fn(getApp(), { text: snap.text, source, onCreated });
+}
+
+/** 划词锚定落盘两路（ADR-0144 决策 4）：已保存条目直写剪藏 md；未保存条目侧写暂存（渲染层出链）。
+ *  两路都同步回写文献笔记 source（已保存 = 内部路径即刻；未保存 = 物化时回写）。 */
+async function handleAnchorCreated(kind: 'term' | 'passage', notePath: string, snap: SelSnapshot, a: ClipArticle): Promise<void> {
+  if (!notePath) return;
+  try {
+    if (a.origin === 'clip' && a.notePath) {
+      // 已保存条目：直写剪藏 md（同 applyBodyTransforms 变换管线，仅动正文不动 frontmatter）
+      const app = getApp();
+      const file = app.vault.getAbstractFileByPath(a.notePath) as TFile | null;
+      if (file) {
+        const content = await app.vault.read(file);
+        const next = applyClipContentTransforms(content, [{ find: snap.text, notePath, kind }], []);
+        if (next !== content) await app.vault.modify(file, next);
+        invalidateClipBodyCache(a.notePath); // 正文缓存失效，重读即见双链
+      }
+      await upgradeSourceFor(notePath, a);
+      if (M.cur && M.cur.id === a.id) renderReader();
+    } else {
+      // 未保存条目：news.json 不可写 → 侧写 marks 暂存，渲染层立即出双链，保存物化时进 md
+      M.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+      if (M.cur && M.cur.id === a.id) renderReader();
+    }
+  } catch (e) {
+    console.warn('[剪藏本] 划词锚定写入失败', e);
+    notice('锚定写入失败', 'error');
+  }
+}
+
+/** 文献笔记 source 升级（ADR-0144 决策 5）：回写为 `[[剪藏路径|条目标题]]`（无块 id）。
+ *  契约 API upgradeNoteSourceInternal 按存在调用；失败静默（断链代价可接受）。 */
+async function upgradeSourceFor(notePath: string, a: ClipArticle): Promise<void> {
+  if (!a.notePath) return;
+  try {
+    const mod: any = await import('../knowledge');
+    if (typeof mod.upgradeNoteSourceInternal !== 'function') return;
+    await mod.upgradeNoteSourceInternal(getApp(), notePath, `[[${a.notePath}|${a.title}]]`);
+  } catch (e) {
+    console.warn('[剪藏本] 升级文献来源失败（静默接受）', e);
+  }
+}
+
+/** 保存图片（图片工具框动作一）：requestUrl 落盘 → 已保存直写换链 / 未保存记侧写 */
+async function actSaveImage(): Promise<void> {
+  const snap = imgSnap;
+  if (!snap) return;
+  const a = articleForSnapshot(snap.articleId);
+  if (!a) return;
+  try {
+    const res = await saveClipImage({
+      src: snap.src,
+      title: a.title,
+      articleKey: a.id,
+      savedNotePath: a.origin === 'clip' ? a.notePath : null,
+    });
+    if (res.sidecar) M.sidecar = res.sidecar; // 内存侧写同步（渲染层立即换链）
+    if (a.origin === 'clip' && a.notePath) invalidateClipBodyCache(a.notePath);
+    if (M.cur && M.cur.id === a.id) renderReader(); // 原位重渲（外层滚动容器不重置）
+  } catch (e) {
+    console.warn('[剪藏本] 保存图片失败', e);
+    notice('图片保存失败，请检查网络后重试', 'error');
+  }
+}
+
+/** 存为图版（图片工具框动作二）：拉图转 data URL 预填进图版录入（确认写入才落盘），plate 无正文锚定仅 source 跟随 */
+async function actImageNote(): Promise<void> {
+  const snap = imgSnap;
+  if (!snap) return;
+  const a = articleForSnapshot(snap.articleId);
+  if (!a) return;
+  let dataUrl = '';
+  try {
+    dataUrl = await fetchImageDataUrl(snap.src);
+  } catch (e) {
+    notice('图片读取失败，无法生成图版', 'error');
+    return;
+  }
+  let mod: any = null;
+  try {
+    mod = await import('../knowledge');
+  } catch (e) {
+    notice('知识盒模块加载失败', 'error');
+    return;
+  }
+  if (typeof mod.openImageNote !== 'function') {
+    notice('知识盒尚未支持图版录入，请更新插件', 'warning');
+    return;
+  }
+  const source = a.url ? { kind: 'url' as const, url: a.url, title: a.title } : undefined;
+  mod.openImageNote(getApp(), {
+    source,
+    images: [dataUrl],
+    onCreated: (notePath: string) => {
+      void handlePlateCreated(String(notePath || ''), a);
+    },
+  });
+}
+
+/** 图版来源登记（plate 无正文锚定，仅 source 跟随——ADR-0144 决策 5）：已保存立即升级，未保存记 pendingSource */
+async function handlePlateCreated(notePath: string, a: ClipArticle): Promise<void> {
+  if (!notePath) return;
+  try {
+    if (a.origin === 'clip' && a.notePath) {
+      await upgradeSourceFor(notePath, a);
+    } else {
+      M.sidecar = await addPendingSourceNote(a.id, notePath);
+    }
+  } catch (e) {
+    console.warn('[剪藏本] 图版来源登记失败', e);
+    notice('图版来源登记失败', 'error');
+  }
+}
+
+// ================= 点击拦截：锚定双链直达文献预览（issue 329 / ADR-0144 决策 3） =================
+
+/** knowledgeDirectory（缺省「文献盒」，路径归一） */
+function knowledgeDir(): string {
+  const s = tryGetSettings() as any;
+  return String((s && s.knowledgeDirectory) || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+}
+
+/** internal-link href → vault 内实际路径（去 heading 锚点、补 .md、判存在）；缺失返回 null（不拦） */
+function resolveInternalTarget(href: string): string | null {
+  const app = getApp();
+  let p = String(href || '').split('#')[0].trim().replace(/\\/g, '/');
+  if (!p) return null;
+  try { p = decodeURIComponent(p); } catch (e) { /* 保留原串 */ }
+  if (!p.toLowerCase().endsWith('.md')) {
+    const withMd = p + '.md';
+    if (app.vault.getAbstractFileByPath(withMd)) p = withMd;
+  }
+  return app.vault.getAbstractFileByPath(p) ? p : null;
+}
+
+/** 拦截判定（同步，供 click 内 preventDefault）：文献盒内的双链 → 直达预览；返回 true = 已拦截 */
+function interceptKnowledgeLink(link: HTMLAnchorElement): boolean {
+  const path = resolveInternalTarget(link.dataset.href || link.getAttribute('href') || '');
+  if (!path) return false;
+  const dir = knowledgeDir();
+  if (!path.startsWith(dir + '/')) return false; // 目录外：原生导航不拦
+  void openKnowledgePreviewSafe(path);
+  return true;
+}
+
+/** 文献预览直达：契约 API openKnowledgePreview 按存在调用；抛错/缺失回退原生打开（openLinkText） */
+async function openKnowledgePreviewSafe(path: string): Promise<void> {
+  try {
+    const mod: any = await import('../knowledge');
+    if (typeof mod.openKnowledgePreview === 'function') {
+      await mod.openKnowledgePreview(getApp(), path);
+      return;
+    }
+  } catch (e) {
+    console.warn('[剪藏本] 文献预览直达失败，回退原生打开', e);
+  }
+  try {
+    getApp().workspace.openLinkText(path, '', false, { active: true });
+  } catch (e) { /* 环境无 workspace（测试）忽略 */ }
 }
 
 // ================= 设置 schema（ADR-0064 声明式；settings-panel 域清单挂载） =================
@@ -1341,6 +1778,8 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
         name: '目录',
         rows: [
           { type: 'path', mode: 'single', name: '剪藏文件夹', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
+          // issue 329：保存正文图片的落地目录（留空回落剪藏目录 assets）
+          { type: 'path', mode: 'single', name: '图片文件夹', desc: '保存网页图片的文件夹，留空存到剪藏目录下的 assets', binding: { key: 'clipbookImageFolder' } },
         ],
       },
       {

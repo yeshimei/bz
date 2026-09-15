@@ -143,6 +143,8 @@ export default interface BzSettings {
   clipbookPanelHeight: number;
   /** 剪藏本目录栏宽度记忆（issue 222：拖动中/右栏分割线后记住；0=未拖过走默认 360px） */
   clipbookMidWidth: number;
+  /** 剪藏本图片文件夹（issue 329：保存正文图片落地目录；留空回落 <剪藏目录>/assets） */
+  clipbookImageFolder: string;
 
   // ===== 🔐 密码本（6 项）=====
   /** 🔤 密码生成字符集 */
@@ -621,6 +623,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   clipbookPanelHeight: 0,
   // clipbook：目录栏宽度记忆（issue 222 分割线拖宽；0=未拖过）
   clipbookMidWidth: 0,
+  // clipbook：图片文件夹（issue 329；留空回落剪藏目录 assets）
+  clipbookImageFolder: '',
 
 
   passwordCharset:
