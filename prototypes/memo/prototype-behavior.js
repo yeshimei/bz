@@ -1,4 +1,4 @@
-/* 源指纹 3747a8262fc3c3aa · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 060455221e0cf9bd · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -19485,6 +19485,36 @@ ${c.trim()}
     const name = noteSourceName(path, src.name);
     return { source: `[[${path}|${name}]]` };
   }
+  function quoteYaml(s) {
+    return '"' + String(s != null ? s : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+  }
+  function isInternalSourceValue(v) {
+    return /^\[\[/.test(String(v != null ? v : "").trim());
+  }
+  function upgradeSourceLine(content, internalLink) {
+    var _a2;
+    const link = String(internalLink != null ? internalLink : "").trim();
+    if (!link) return null;
+    const lines = String(content != null ? content : "").split(/\r?\n/);
+    if (((_a2 = lines[0]) == null ? void 0 : _a2.trim()) !== "---") return null;
+    let close = -1;
+    let srcAt = -1;
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim() === "---") {
+        close = i;
+        break;
+      }
+      if (/^source:/.test(lines[i])) srcAt = i;
+    }
+    if (close === -1 || srcAt === -1) return null;
+    const raw = lines[srcAt].slice("source:".length).trim();
+    const quoted = raw.startsWith('"') && raw.endsWith('"') || raw.startsWith("'") && raw.endsWith("'");
+    const value = quoted ? raw.slice(1, -1) : raw;
+    if (isInternalSourceValue(value)) return content;
+    if (!isUrlLikeSourceText(value)) return null;
+    lines[srcAt] = `source: ${quoteYaml(link)}`;
+    return lines.join(content.includes("\r\n") ? "\r\n" : "\n");
+  }
   var URL_LIKE_RE, TRACK_KEYS;
   var init_source = __esm({
     "src/knowledge/source.ts"() {
@@ -20353,9 +20383,6 @@ ${c.trim()}
   function parseDomainList(raw) {
     return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
   }
-  function quoteYaml(s) {
-    return '"' + String(s != null ? s : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
-  }
   function sanitizeMdTitle(s) {
     const t = String(s != null ? s : "").replace(/[\\/:*?"<>|#^[\]]/g, "_").replace(/\s+/g, " ").trim().slice(0, 50);
     return t || "文献笔记";
@@ -20621,21 +20648,39 @@ ${text}`;
     await app.vault.createBinary(path, bytes);
     return path;
   }
-  function imagePrompt(list, count) {
+  function imagePrompt(list, count, descs) {
     const multi = count > 1;
     const scope = multi ? `看下面这 ${count} 张图片，把它们**作为一组**生成一篇文献笔记` : "看这张图片，为它生成一篇文献笔记";
     const bodyAsk = multi ? "对这组图的整理说明（150-300字简体中文，连贯成文）：先说这组图共同在讲什么，再按图交代各自可见的内容与信息，图中含文字则整理其要点" : "对这张图的整理说明（150-300字简体中文，连贯成文）：图中含文字则整理其要点，是照片、示意图或图表则客观描述其可见内容与信息";
-    return `你是文献整理助手。${scope}。只输出 JSON，不要任何解释：
+    let prompt = `你是文献整理助手。${scope}。只输出 JSON，不要任何解释：
 {"title":"15-30字的中文完整陈述句，概括${multi ? "这组图" : "这张图"}在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"${bodyAsk}","domain": ${domainInstruction(list)}}
 硬约束：只能写图中确实能看到的内容，不得臆测、不得补充图中没有的事实与数字、不得写成观后感。所有字段一律使用简体中文。`;
+    const notes = (Array.isArray(descs) ? descs : []).map((d, i) => ({ n: i + 1, d: String(d != null ? d : "").trim() })).filter((x) => x.d);
+    if (notes.length) {
+      prompt += `
+
+【用户图注】用户为其中部分图片写的描述，解读请贴合这些关注点：
+${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
+    }
+    return prompt;
   }
-  async function generateImageDraft(imageUrls) {
+  async function generateImageDraft(imageUrls, descs) {
     const ai = createAI();
     const s = tryGetSettings();
     const list = parseDomainList(s.knowledgeDomainList);
-    const urls = (Array.isArray(imageUrls) ? imageUrls : []).map((u) => String(u || "").trim()).filter(Boolean);
-    if (!urls.length) throw new Error("图片为空");
-    const raw = await ai.json({ text: imagePrompt(list, urls.length), images: urls }, { modelOptions: { max_tokens: 4096 } });
+    const pairs = (Array.isArray(imageUrls) ? imageUrls : []).map((u, i) => {
+      var _a2;
+      return {
+        url: String(u || "").trim(),
+        desc: String((_a2 = Array.isArray(descs) ? descs[i] : "") != null ? _a2 : "").trim()
+      };
+    });
+    const valid = pairs.filter((p) => p.url);
+    if (!valid.length) throw new Error("图片为空");
+    const raw = await ai.json(
+      { text: imagePrompt(list, valid.length, valid.map((p) => p.desc)), images: valid.map((p) => p.url) },
+      { modelOptions: { max_tokens: 4096 } }
+    );
     const meta = parseAiJson(raw);
     return {
       title: String((meta == null ? void 0 : meta.title) || "").trim(),
@@ -20676,8 +20721,30 @@ ${text}`;
       if (src.sourceTitle) fm.push(`sourceTitle: ${quoteYaml(src.sourceTitle)}`);
     }
     fm.push("---");
-    const body = [fm.join("\n"), summary, ...imagePaths.map((p) => `![[${p}]]`)].filter(Boolean).join("\n\n");
+    const imageLines = imagePaths.map((p, i) => {
+      var _a3, _b3;
+      const desc = String((_b3 = (_a3 = images[i]) == null ? void 0 : _a3.desc) != null ? _b3 : "").trim();
+      return desc ? `![[${p}|${desc}]]` : `![[${p}]]`;
+    });
+    const body = [fm.join("\n"), summary, ...imageLines].filter(Boolean).join("\n\n");
     return writeUniqueNote(dir, name, body);
+  }
+  async function upgradeNoteSourceInFile(app, notePath, internalLink) {
+    const path = String(notePath || "").trim();
+    const link = String(internalLink || "").trim();
+    if (!path || !link) return false;
+    const file = app.vault.getAbstractFileByPath(path);
+    if (!file || file.isFolder) return false;
+    let content;
+    try {
+      content = await app.vault.read(file);
+    } catch (e) {
+      return false;
+    }
+    const upgraded = upgradeSourceLine(content, link);
+    if (upgraded === null) return false;
+    if (upgraded !== content) await app.vault.modify(file, upgraded);
+    return true;
   }
   function parseFrontmatter2(content) {
     var _a2;
@@ -25462,8 +25529,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
            * 图版待落盘图片（issue 312；多图 issue 313）：拖入/粘贴/选择后**只留在内存**
            * （bytes 原样 + 预览用 data URL），确认写入时才 createBinary 进图片目录——
            * 与「草稿不落盘」同口径，取消不留孤儿文件。顺序 = 用户放入顺序（就是笔记里的图片顺序）。
+           * desc = 该张的用户图注（ADR-0145 逐图描述框；属于草稿态——删图连描述一起没，关面板即清）。
            */
           this.entryImages = [];
+          /** 确认写入成功后的回调（issue 329 剪藏本工具框流程）：有回调则写入后**不自动打开笔记**（ADR-0144），路径交调用方 */
+          this.entryOnCreated = null;
           /** 关联行状态机：idle（未生成）→ loading（预演中）→ done/empty/queued/failed/off */
           this.entryRelState = "idle";
           /** 关联行结果文案（done 时 = 关联标题顿号串） */
@@ -25493,6 +25563,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.pendingRefreshPaths = /* @__PURE__ */ new Set();
           this.pendingDeletePaths = /* @__PURE__ */ new Set();
           this._previewNote = null;
+          /** 独立弹层宿主（issue 329 文献预览直达）：主面板不在场时预览弹层的全屏定位底座——
+           *  纸墨变量随 .kb 作用域生效，topifyZ 发号；用完由 closeSheet 撤除，不常驻空壳节点 */
+          this.previewHostEl = null;
           this.app = app;
           this.createMainUI();
           this.createVideoUI();
@@ -25719,7 +25792,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const rels = await this.noteRels(n);
           const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.url)}" href="#">${esc2(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.source)}" href="#">${esc2(n.sourceTitle || n.source)}</a></div>` : "";
           const head = kind === "card" ? { title: "卡片预览 · 卡片盒", badge: "卡 片", hot: false } : kind === "topic" ? { title: "主题预览 · 主题笔记", badge: "主 题", hot: false } : { title: `文献预览 · ${litKindPlain(n.type || "")}`, badge: litKindLabel(n.type || ""), hot: n.type === "video" };
-          this.openSheet(this.sheetWrap(head.title, `
+          const ovl = this.openSheet(this.sheetWrap(head.title, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc2(n.title)}</span>
         <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
         <span class="bz-kb-dom">${esc2(n.domain || "未分类")}</span></div>
@@ -25728,7 +25801,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
           this._previewNote = n;
-          const bodyEl2 = this.popup ? q(this.popup, "#bz-kb-preview-body") : null;
+          const bodyEl2 = ovl ? q(ovl, "#bz-kb-preview-body") : null;
           if (bodyEl2) {
             bodyEl2.textContent = "";
             if (body) {
@@ -25745,7 +25818,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
               bodyEl2.innerHTML = parasHtml;
             }
           }
-          const srcLinks = this.popup ? this.popup.querySelectorAll("[data-lit-src-url]") : [];
+          const srcLinks = ovl ? ovl.querySelectorAll("[data-lit-src-url]") : [];
           srcLinks.forEach((a) => {
             a.addEventListener("click", (e) => {
               e.preventDefault();
@@ -25753,6 +25826,24 @@ ${String(blockText != null ? blockText : "").trim()}`);
               this._openExternal(a.getAttribute("data-lit-src-url") || "");
             });
           });
+        }
+        /**
+         * 按 path 直达文献预览（issue 329 跨域 API，ADR-0144 划词锚定双链点击）：主面板不出场——
+         * openPreview 同一渲染入口与样式（ADR-0122 渲染契约），主窗不在场时落独立弹层宿主。
+         * 命中并打开返回 true；路径不在文献目录 / 文件缺失 / 解析失败返回 false，由调用方
+         * notice 后回退 app.workspace.openLinkText（Obsidian 原生环境维持原生跳转）。
+         */
+        async openPreviewByPath(path) {
+          const p = String(path || "").trim().replace(/\\/g, "/");
+          if (!p || !p.toLowerCase().endsWith(".md")) return false;
+          const dir = litDirOf(tryGetSettings());
+          if (!p.startsWith(dir + "/")) return false;
+          const file = getApp().vault.getAbstractFileByPath(p);
+          if (!file || file.isFolder) return false;
+          const entry = await this.parseNoteFile(file);
+          if (!entry) return false;
+          await this.openPreview(entry);
+          return true;
         }
         /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源文献+领域自动带，落 related 双链互链 / 连一张旧卡 / 为什么相关） */
         async openCardEditor(n) {
@@ -26072,10 +26163,22 @@ ${String(blockText != null ? blockText : "").trim()}`);
             return [];
           }
         }
-        /** 弹层（面板内覆盖） */
+        /** 弹层宿主：主窗显示中挂主窗（既有路径零变化）；否则落独立宿主（直达预览不强行展开主面板） */
+        sheetHost() {
+          if (this.popup && this.popup.style.display === "flex") return this.popup;
+          if (!this.previewHostEl || !this.previewHostEl.isConnected) {
+            const host = document.createElement("div");
+            host.className = "bz-kb-sheet-host kb";
+            document.body.appendChild(host);
+            topifyZ(host);
+            this.previewHostEl = host;
+          }
+          return this.previewHostEl;
+        }
+        /** 弹层（面板内覆盖；返回 ovl 供调用方就地查询——独立宿主场景 this.popup 查不到） */
         openSheet(html) {
           this.closeSheet();
-          if (!this.popup) return;
+          const host = this.sheetHost();
           const ovl = document.createElement("div");
           ovl.className = "bz-kb-ovl";
           ovl.innerHTML = `<div class="bz-kb-sheet">${html}</div>`;
@@ -26094,9 +26197,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
               if (n) void this.openCardEditor(n);
             } else if (act === "card-save") {
               void this.saveCard();
+            } else if (act === "mount-tree" && host !== this.popup) {
+              const p = t.getAttribute("data-path") || "";
+              if (p) void openMountTree(p);
             }
           });
-          this.popup.appendChild(ovl);
+          host.appendChild(ovl);
           const titleInput = ovl.querySelector("[data-kb-role=cardtitle]");
           if (titleInput) titleInput.addEventListener("input", () => {
             if (this.editor) this.editor.title = titleInput.value;
@@ -26116,11 +26222,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
             });
           });
           this.syncSaveBtn();
+          return ovl;
         }
         closeSheet() {
-          var _a2;
-          (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
+          for (const host of [this.popup, this.previewHostEl]) {
+            host == null ? void 0 : host.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
+          }
           this.editor = null;
+          if (this.previewHostEl && !this.previewHostEl.querySelector(".bz-kb-ovl")) {
+            this.previewHostEl.remove();
+            this.previewHostEl = null;
+          }
         }
         sheetWrap(title, body) {
           return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc2(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
@@ -27227,7 +27339,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         // ============ 录入面板：名词 / 段落 / 图版同壳三态（142 简洁版 + 155 总结 + issue 309/312） ============
         createTermUI() {
-          var _a2, _b2, _c, _d;
+          var _a2, _b2, _c, _d, _e;
           const mask = document.createElement("div");
           mask.id = "knowledge-term-mask";
           mask.className = "bz-kb-mask";
@@ -27331,11 +27443,21 @@ ${String(blockText != null ? blockText : "").trim()}`);
               if (files.length) void this.acceptImageFiles(files);
             });
             (_d = q(popup, "#lit-image-grid")) == null ? void 0 : _d.addEventListener("click", (e) => {
-              var _a3, _b3;
+              var _a3, _b3, _c2, _d2;
               const btn = (_b3 = (_a3 = e.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b3.call(_a3, "[data-lit-image-remove]");
-              if (!btn) return;
-              e.stopPropagation();
-              this.removeEntryImage(Number(btn.getAttribute("data-lit-image-remove")));
+              if (btn) {
+                e.stopPropagation();
+                this.removeEntryImage(Number(btn.getAttribute("data-lit-image-remove")));
+                return;
+              }
+              if ((_d2 = (_c2 = e.target) == null ? void 0 : _c2.closest) == null ? void 0 : _d2.call(_c2, "[data-lit-image-desc]")) e.stopPropagation();
+            });
+            (_e = q(popup, "#lit-image-grid")) == null ? void 0 : _e.addEventListener("input", (e) => {
+              var _a3, _b3;
+              const inp = (_b3 = (_a3 = e.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b3.call(_a3, "[data-lit-image-desc]");
+              if (!inp) return;
+              const i = Number(inp.getAttribute("data-lit-image-desc"));
+              if (Number.isInteger(i) && i >= 0 && i < this.entryImages.length) this.entryImages[i].desc = inp.value;
             });
           }
           this.onPaste = (e) => {
@@ -27388,33 +27510,42 @@ ${String(blockText != null ? blockText : "").trim()}`);
         /**
          * 打开「名词」录入（一个词）；term 预填（命令带选中词时自动生成）；src 预填来源（ADR-0116——
          * 仅命令入口带当前笔记，主窗按钮入口不预填）。
+         * opts（issue 329 预填扩展，全可选）：见 EntryPrefill——text/images/onCreated；source 走 src 参数。
          */
-        showTermEntry(term, src) {
-          this.showEntry("term", term, src);
+        showTermEntry(term, src, opts) {
+          this.showEntry("term", term, src, opts);
         }
         /**
          * 打开「段落」录入（一段文字，AI 自动出标题）；来源行与名词同构（ADR-0116）。
          * issue 326：支持选区预填（命令入口）——与名词不同，预填**不自动生成**（大段文字让用户确认后再生成），
-         * showEntry 里自动生成只挂 term 态。
+         * showEntry 里自动生成只挂 term 态。opts（issue 329）：text/images/onCreated 预填。
          */
-        showPassageEntry(text, src) {
-          this.showEntry("passage", text, src);
+        showPassageEntry(text, src, opts) {
+          this.showEntry("passage", text, src, opts);
         }
-        /** 打开「图版」录入（可放多张图，AI 读图成文，issue 312/313）；来源行与名词/段落同构（ADR-0116） */
-        showImageEntry(src) {
-          this.showEntry("image", "", src);
+        /**
+         * 打开「图版」录入（可放多张图，AI 读图成文，issue 312/313）；来源行与名词/段落同构（ADR-0116）。
+         * opts（issue 329）：images = data URL 数组预填进内存图列表（走 acceptImageFiles 同构校验与上限）；
+         * onCreated = 写入成功回调（不自动打开笔记）。
+         */
+        showImageEntry(src, opts) {
+          this.showEntry("image", "", src, opts);
         }
         /**
          * 同壳三态入口（issue 309/312）：三种录入态共用一套 DOM，只切 `data-lit-entry` 与首行控件——
          * 名词=单行 input（有预填即自动生成），段落=多行 textarea（回车换行，Ctrl/Cmd+回车生成），
          * 图版=图片拖入区（拖/点选/Ctrl+V 三条路都收，**可多张**，图只在内存，确认写入才落盘）。
          * 每次打开即回到全新态：草稿清空、来源清空、图片清空、关联行归位到「待写入」。
+         * opts（issue 329）：images 在全新态就位后预填进内存（等价粘贴路径）；onCreated 挂到确认写入——
+         * 有回调时写入成功**不自动打开笔记**（ADR-0144 工具框流程：不打断阅读），路径交调用方处置。
          */
-        showEntry(mode, text, src) {
+        showEntry(mode, text, src, opts) {
+          var _a2, _b2;
           if (!this.termPopup || !this.termMask) return;
           this.entryMode = mode;
           this.termPreview = null;
           this.termHasDraft = false;
+          this.entryOnCreated = (_a2 = opts == null ? void 0 : opts.onCreated) != null ? _a2 : null;
           this.resetEntryRel();
           this.clearEntryImage();
           this.termPopup.setAttribute("data-lit-entry", mode);
@@ -27436,6 +27567,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const focusEl = mode === "passage" ? area : mode === "image" ? zone : input;
           if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
           if (mode === "term" && value) void this.onTermGenerate();
+          if (mode === "image" && ((_b2 = opts == null ? void 0 : opts.images) == null ? void 0 : _b2.length)) void this.acceptImageDataUrls(opts.images);
           this.resetTermDupHint();
         }
         /** 名词重名实时提醒（ADR-0143/issue 328）：同步查 vault（getAbstractFileByPath 内存索引，无需防抖），
@@ -27468,6 +27600,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         async acceptImageFiles(files) {
           if (!this.termPopup || this.entryMode !== "image" || !files.length) return;
           if (this.termGenerating) return;
+          this.syncImageDescsFromDom();
           let hitLimit = false;
           let added = 0;
           for (const file of files) {
@@ -27486,6 +27619,24 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.renderEntryImage();
           this.draftInvalidate();
         }
+        /**
+         * data URL 图片预填（issue 329 剪藏本工具框「存为图版」）：程序化入口没有 File 对象——
+         * 把 data URL 解码转 File 后交 acceptImageFiles，校验链（MIME 白名单 / 体积 / ≤9 张上限 /
+         * 收下作废旧草稿）与粘贴路径完全同构。坏串 / 非 data URL 静默跳过。
+         */
+        async acceptImageDataUrls(urls) {
+          const files = [];
+          (Array.isArray(urls) ? urls : []).forEach((u, i) => {
+            const m = String(u || "").trim().match(/^data:(image\/[\w.+-]+);base64,([\s\S]+)$/i);
+            if (!m) return;
+            try {
+              const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
+              files.push(new File([bytes], `prefill-${i + 1}.png`, { type: m[1] }));
+            } catch (e) {
+            }
+          });
+          await this.acceptImageFiles(files);
+        }
         /** 单张校验与读取（MIME 白名单 / 读失败 / 转 data URL 失败均就地提示并返回 null） */
         async readImageFile(file) {
           var _a2, _b2;
@@ -27502,7 +27653,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             return null;
           }
           try {
-            return { mime, bytes, dataUrl: imageDataUrl(bytes, mime) };
+            return { mime, bytes, dataUrl: imageDataUrl(bytes, mime), desc: "" };
           } catch (e) {
             notice(String((_b2 = (_a2 = e == null ? void 0 : e.message) != null ? _a2 : e) != null ? _b2 : "图片不可用"), "error");
             return null;
@@ -27524,7 +27675,21 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.setTermGenLoading(false);
           this.resetEntryRel();
         }
-        /** 图片行渲染：有图显示缩略图网格（每张带 ✕，可继续加），无图回到提示文案 */
+        /** 把 DOM 上的逐图描述框值同步回内存图项——只在索引不变的时机调用（加图前/生成前/写入前）；
+         *  删图后剩余项索引前移，旧 DOM 索引会错位覆写，故 removeEntryImage 路径绝不走这里。 */
+        syncImageDescsFromDom() {
+          if (!this.termPopup) return;
+          this.termPopup.querySelectorAll("[data-lit-image-desc]").forEach((inp) => {
+            const i = Number(inp.getAttribute("data-lit-image-desc"));
+            if (Number.isInteger(i) && i >= 0 && i < this.entryImages.length) this.entryImages[i].desc = inp.value;
+          });
+        }
+        /**
+         * 图片行渲染：有图显示缩略图网格（每张带 ✕ 与逐图描述框，可继续加），无图回到提示文案。
+         * 描述框（ADR-0145）：每张图一个（单图即一框），属图片项——删图连描述一起没。
+         * 注意：这里**不做** DOM→内存的描述同步——删图后剩余项索引前移，旧 DOM 索引会错位覆写；
+         * 同步只在索引不变的时机做（加图前 / 生成前 / 写入前，见 syncImageDescsFromDom 调用点）。
+         */
         renderEntryImage() {
           if (!this.termPopup) return;
           const grid = q(this.termPopup, "#lit-image-grid");
@@ -27536,6 +27701,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
               grid.innerHTML = list.map((im, i) => `<div class="bz-lit-drop-item">
             <img src="${im.dataUrl}" alt="">
             <button type="button" data-lit-image-remove="${i}" title="移除这张" aria-label="移除这张">${iconSpan("x")}</button>
+            <input type="text" class="bz-lit-drop-desc" data-lit-image-desc="${i}" placeholder="图注（可选）" value="${esc2(im.desc || "")}">
           </div>`).join("");
               mountIcons(grid);
             } else {
@@ -27577,12 +27743,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!raw || !isUrlLikeSourceText(raw)) return;
           this.termSrcSet({ kind: "external", url: normalizeSourceUrl(raw) }, input);
         }
-        /** 落来源：记录 + chip 渲染 + meta 行同步；外部来源异步抓标题（失败静默降级为纯链接） */
+        /** 落来源：记录 + chip 渲染 + meta 行同步；外部来源异步抓标题（已有 title（如剪藏本预填）不重复抓；失败静默降级为纯链接） */
         termSrcSet(src, input) {
           this.termSource = src;
           this.renderTermSrcChip(input);
           this.termSrcRefreshMeta();
-          if (src.kind === "external") void this.termSrcFetchTitle(src);
+          if (src.kind === "external" && !src.title) void this.termSrcFetchTitle(src);
         }
         async termSrcFetchTitle(src) {
           try {
@@ -27895,6 +28061,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
          */
         async onImageGenerate() {
           if (!this.termPopup || this.termGenerating) return;
+          this.syncImageDescsFromDom();
           const images = this.entryImages;
           if (!images.length) {
             notice("请先拖入或粘贴图片", "error");
@@ -27904,7 +28071,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.termGenerating = true;
           this.setTermGenLoading(true);
           try {
-            const draft = await generateImageDraft(images.map((im) => im.dataUrl));
+            const draft = await generateImageDraft(images.map((im) => im.dataUrl), images.map((im) => im.desc));
             this.presentTermPreview(draft);
             this.runEntryRelPreview(draft.summary, this.entryHeadTitle());
           } catch (e) {
@@ -27991,11 +28158,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
               return;
             }
           }
+          this.syncImageDescsFromDom();
           const images = this.entryImages;
           if (mode === "image" && !images.length) {
             notice("图片已丢失，请重新拖入", "error");
             return;
           }
+          const onCreated = this.entryOnCreated;
           this.termGenerating = true;
           this.setTermGenLoading(true);
           const save2 = q(this.termPopup, "#lit-term-save");
@@ -28008,7 +28177,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
                 summary,
                 domain,
                 source: source2,
-                images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || "png" }))
+                images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || "png", desc: String(im.desc || "").trim() }))
               });
               emitDomainEvent("knowledge:tasks", { kind: "image-generated", title, notePath: path });
               await this.commitEntryLinks(path);
@@ -28021,7 +28190,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
               notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
             }
             this.hideTermEntry();
-            this.openNote(path);
+            if (onCreated) {
+              try {
+                onCreated(path);
+              } catch (e) {
+                console.warn("[knowledge] onCreated 回调失败（笔记已写入）", e);
+              }
+            } else {
+              this.openNote(path);
+            }
           } catch (e) {
             this.noticeTermError(e);
           } finally {
@@ -28032,6 +28209,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         hideTermEntry() {
           this.termPreview = null;
+          this.entryOnCreated = null;
           this.resetEntryRel();
           this.clearEntryImage();
           this.resetTermDupHint();
@@ -28130,9 +28308,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           };
           this.termPreview = null;
           this.entryImages = [];
-          for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.termMask, this.termPopup]) {
+          this.entryOnCreated = null;
+          for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.termMask, this.termPopup, this.previewHostEl]) {
             if (el && el.parentNode) el.parentNode.removeChild(el);
           }
+          this.previewHostEl = null;
           this.mask = null;
           this.popup = null;
           this.contentEl = null;
@@ -28156,11 +28336,18 @@ ${String(blockText != null ? blockText : "").trim()}`);
     openImageNote: () => openImageNote,
     openKnowledgeAddTask: () => openKnowledgeAddTask,
     openKnowledgePanel: () => openKnowledgePanel,
+    openKnowledgePreview: () => openKnowledgePreview,
     openPassageNote: () => openPassageNote,
     openTermNote: () => openTermNote,
     relinkActiveNote: () => relinkActiveNote,
-    unloadKnowledge: () => unloadKnowledge
+    unloadKnowledge: () => unloadKnowledge,
+    upgradeNoteSourceInternal: () => upgradeNoteSourceInternal
   });
+  function prefillSource(src) {
+    var _a2;
+    if (src.kind === "url") return { kind: "external", url: src.url, title: (_a2 = src.title) != null ? _a2 : null };
+    return { kind: "note", path: src.path };
+  }
   function ensureKnowledge(app) {
     var _a2;
     if (initialized3) return;
@@ -28181,37 +28368,67 @@ ${String(blockText != null ? blockText : "").trim()}`);
     ensureKnowledge(app);
     uiManager == null ? void 0 : uiManager.showVideoEntry(prefill);
   }
-  function openTermNote(app, term) {
+  function openTermNote(app, term, opts) {
     var _a2, _b2;
     ensureKnowledge(app);
     let t = term == null ? void 0 : term.trim();
     let src;
+    if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
     if (!t) {
       const view = app.workspace.getActiveViewOfType(MarkdownView);
       t = ((_b2 = (_a2 = view == null ? void 0 : view.editor) == null ? void 0 : _a2.getSelection()) == null ? void 0 : _b2.trim()) || void 0;
-      const file = view == null ? void 0 : view.file;
-      if (file && file.extension === "md") src = { kind: "note", path: file.path };
+      if (!src) {
+        const file = view == null ? void 0 : view.file;
+        if (file && file.extension === "md") src = { kind: "note", path: file.path };
+      }
     }
-    uiManager == null ? void 0 : uiManager.showTermEntry(t, src);
+    uiManager == null ? void 0 : uiManager.showTermEntry(t, src, opts);
   }
-  function openPassageNote(app) {
-    var _a2, _b2;
+  function openPassageNote(app, opts) {
+    var _a2, _b2, _c;
     ensureKnowledge(app);
     let text;
     let src;
+    const explicit = String((_a2 = opts == null ? void 0 : opts.text) != null ? _a2 : "").trim();
+    if (explicit) text = explicit;
+    if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
     const view = app.workspace.getActiveViewOfType(MarkdownView);
-    text = ((_b2 = (_a2 = view == null ? void 0 : view.editor) == null ? void 0 : _a2.getSelection()) == null ? void 0 : _b2.trim()) || void 0;
-    const file = view == null ? void 0 : view.file;
-    if (file && file.extension === "md") src = { kind: "note", path: file.path };
-    uiManager == null ? void 0 : uiManager.showPassageEntry(text, src);
+    if (!text) text = ((_c = (_b2 = view == null ? void 0 : view.editor) == null ? void 0 : _b2.getSelection()) == null ? void 0 : _c.trim()) || void 0;
+    if (!src) {
+      const file = view == null ? void 0 : view.file;
+      if (file && file.extension === "md") src = { kind: "note", path: file.path };
+    }
+    uiManager == null ? void 0 : uiManager.showPassageEntry(text, src, opts);
   }
-  function openImageNote(app) {
+  function openImageNote(app, opts) {
     ensureKnowledge(app);
     let src;
-    const view = app.workspace.getActiveViewOfType(MarkdownView);
-    const file = view == null ? void 0 : view.file;
-    if (file && file.extension === "md") src = { kind: "note", path: file.path };
-    uiManager == null ? void 0 : uiManager.showImageEntry(src);
+    if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
+    if (!src) {
+      const view = app.workspace.getActiveViewOfType(MarkdownView);
+      const file = view == null ? void 0 : view.file;
+      if (file && file.extension === "md") src = { kind: "note", path: file.path };
+    }
+    uiManager == null ? void 0 : uiManager.showImageEntry(src, opts);
+  }
+  async function openKnowledgePreview(app, notePath) {
+    ensureKnowledge(app);
+    const path = String(notePath || "").trim();
+    if (uiManager && await uiManager.openPreviewByPath(path).catch(() => false)) return;
+    if (!path) {
+      notice("未提供笔记路径，无法打开文献预览", "warning");
+      return;
+    }
+    notice("不在知识盒文献目录，改用 Obsidian 打开：" + path, "info");
+    try {
+      await app.workspace.openLinkText(path, "", false);
+    } catch (e) {
+      console.warn("[knowledge] openLinkText 回退失败", e);
+    }
+  }
+  async function upgradeNoteSourceInternal(app, notePath, internalLink) {
+    ensureKnowledge(app);
+    return upgradeNoteSourceInFile(app, notePath, internalLink);
   }
   function takeLinkBridge() {
     if (tryGetSettings().linkAgentEnabled === false) {
@@ -28288,6 +28505,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_notice();
       init_data7();
       init_ui5();
+      init_note_gen();
       initialized3 = false;
       uiManager = null;
     }
