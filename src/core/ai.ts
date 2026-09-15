@@ -1,7 +1,7 @@
 /**
  * AIService / createAI（Q3.js window.__utils 移植，ticket 03）
  * provider：注册表驱动（ticket 170/171 策略模式）——deepseek / opencode-go / openai / anthropic /
- * google / moonshot / zhipu / dashscope / siliconflow / openrouter / xai / groq / mistral /
+ * google / moonshot / zhipu / zhipu-plan / dashscope / siliconflow / openrouter / xai / groq / mistral /
  * together / ollama / custom（OpenAI 兼容自定义端点，插件设置注入，取代 Q3 的 QuickAdd 宏设置）；
  * override 字符串（注册表 id）或对象 {endpoint, apiKey, model, extraHeaders}。
  * prompt：fetch 流式（stream:true），失败自动 fallback requestUrl 非流式；noCors 直接走 requestUrl。
@@ -24,6 +24,7 @@ export interface AISettingsLike {
   googleApiKey?: string;
   moonshotApiKey?: string;
   zhipuApiKey?: string;
+  zhipuPlanApiKey?: string;
   dashscopeApiKey?: string;
   siliconflowApiKey?: string;
   openrouterApiKey?: string;
@@ -161,6 +162,18 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     apiKeyKey: 'zhipuApiKey',
     apiKeyLabel: '智谱密钥',
     apiKeyDesc: '在智谱开放平台获取后填入这里',
+  },
+  {
+    // Coding 套餐（Lite/Pro/Max）额度只在 coding 专用端点生效；走标准 paas/v4 会按量计费报余额不足
+    id: 'zhipu-plan',
+    label: '智谱 Plan',
+    endpoint: 'https://open.bigmodel.cn/api/coding/paas/v4',
+    model: 'glm-5.3-flash',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 131072,
+    apiKeyKey: 'zhipuPlanApiKey',
+    apiKeyLabel: '智谱 Plan 密钥',
+    apiKeyDesc: '智谱 Coding 套餐专用端点，密钥与智谱开放平台相同',
   },
   {
     id: 'dashscope',

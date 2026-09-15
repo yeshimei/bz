@@ -9,7 +9,7 @@ import { getKnowledgeBoxes, isBoxDir, parseDirList } from './core/knowledge-boxe
 export default interface BzSettings {
   // ===== 🤖 AI 全局（Q3 语义，spec「AI 全局」）=====
   /** AI 服务商：注册表 id（ticket 170/171 策略模式；deepseek / opencode-go / openai / anthropic /
-   *  google / moonshot / zhipu / dashscope / siliconflow / openrouter / xai / groq / mistral /
+   *  google / moonshot / zhipu / zhipu-plan / dashscope / siliconflow / openrouter / xai / groq / mistral /
    *  together / ollama / custom） */
   aiProvider: string;
   /** 🔑 DeepSeek API Key（留空则回退读取 QuickAdd data.json） */
@@ -26,6 +26,8 @@ export default interface BzSettings {
   moonshotApiKey: string;
   /** 🔑 智谱（GLM）API Key */
   zhipuApiKey: string;
+  /** 🔑 智谱 Plan（Coding 套餐）API Key */
+  zhipuPlanApiKey: string;
   /** 🔑 阿里云百炼（通义）API Key */
   dashscopeApiKey: string;
   /** 🔑 硅基流动 API Key */
@@ -552,6 +554,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   googleApiKey: '',
   moonshotApiKey: '',
   zhipuApiKey: '',
+  zhipuPlanApiKey: '',
   dashscopeApiKey: '',
   siliconflowApiKey: '',
   openrouterApiKey: '',

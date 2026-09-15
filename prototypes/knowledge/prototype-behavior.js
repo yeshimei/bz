@@ -1,4 +1,4 @@
-/* 源指纹 7aff4320fc40ecb4 · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 bcbf4e75bceadf36 · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -4726,6 +4726,18 @@ var BZW_knowledge = (() => {
       apiKeyKey: "zhipuApiKey",
       apiKeyLabel: "智谱密钥",
       apiKeyDesc: "在智谱开放平台获取后填入这里"
+    },
+    {
+      // Coding 套餐（Lite/Pro/Max）额度只在 coding 专用端点生效；走标准 paas/v4 会按量计费报余额不足
+      id: "zhipu-plan",
+      label: "智谱 Plan",
+      endpoint: "https://open.bigmodel.cn/api/coding/paas/v4",
+      model: "glm-5.3-flash",
+      defaultMaxTokens: 8192,
+      defaultContextWindow: 131072,
+      apiKeyKey: "zhipuPlanApiKey",
+      apiKeyLabel: "智谱 Plan 密钥",
+      apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同"
     },
     {
       id: "dashscope",

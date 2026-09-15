@@ -117,6 +117,20 @@ describe('getAIProvider 解析与缓存', () => {
     await expect(getAIProvider()).rejects.toThrow('未配置 DeepSeek API Key');
   });
 
+  it('zhipu-plan：Coding 套餐专用端点，模型默认 glm-5.3-flash', async () => {
+    setupAI({ aiProvider: 'zhipu-plan', zhipuPlanApiKey: 'zp-plan-key' });
+    const p = await getAIProvider();
+    expect(p.endpoint).toBe('https://open.bigmodel.cn/api/coding/paas/v4');
+    expect(p.model).toBe('glm-5.3-flash');
+    expect(p.apiKey).toBe('zp-plan-key');
+    expect(p.noCors).toBeUndefined();
+  });
+
+  it('zhipu-plan 缺 key：拦截报「未配置 智谱 Plan API Key」', async () => {
+    setupAI({ aiProvider: 'zhipu-plan' });
+    await expect(getAIProvider()).rejects.toThrow('未配置 智谱 Plan API Key');
+  });
+
   it('custom provider：endpoint/key/model 全部取自设置，尾斜杠清理', async () => {
     setupAI({
       aiProvider: 'custom',
