@@ -410,6 +410,25 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
               (getSettings() as any).linkAgentMaxLinks = Number.isFinite(n) && n > 0 ? n : 0;
             },
           },
+          {
+            type: 'text',
+            name: '候选相似度下限',
+            desc: '低于此分的候选直接丢弃不送 AI 裁判，0 表示不过滤',
+            // number 键（linkAgentMinScore，0~1 小数）同 TopK 口径：三函数绑定 + onChange 钳制
+            binding: {
+              get: () => String((getSettings() as any).linkAgentMinScore ?? 0.65),
+              set: (v: string) => {
+                (getSettings() as any).linkAgentMinScore = v;
+              },
+              save: () => saveSettings(),
+            },
+            visibleWhen: (s) => s.linkAgentEnabled !== false,
+            isChild: true,
+            onChange: (v) => {
+              const n = Number(v);
+              (getSettings() as any).linkAgentMinScore = Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.65;
+            },
+          },
           { type: 'toggle', name: '完成通知', desc: '处理完成后通知提醒，关闭则全程静默', binding: boolDefaultOn('linkAgentNotify'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
           { type: 'toggle', name: '失效关联自动清理', desc: '目标笔记删除后自动移除指向它的失效关联条目', binding: boolDefaultOn('linkAgentAutoClean'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
           { type: 'toggle', name: '已有关联不再建链', desc: '笔记已有关联时自动跳过处理', binding: boolDefaultOn('linkAgentRespectRelated'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },

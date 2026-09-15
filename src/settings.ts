@@ -56,6 +56,10 @@ export default interface BzSettings {
   aiContextOverrides: Record<string, number>;
   /** 📏 每提供商最大输出 token 覆盖（键 = provider id）：未填用注册表 defaultMaxTokens（=模型最大输出） */
   aiMaxTokensOverrides: Record<string, number>;
+  /** 🧠 AI 思考档位（issue 330/ADR-0146）：auto=跟随模型默认（不注入参数，缺省）/ off=关闭 /
+   *  low|medium|high=思考强度。请求时按 provider 静态映射翻译成各家思考参数（ADR-0146）；
+   *  modelOptions 显式思考键优先，不受本设置影响 */
+  aiThinking: string;
 
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
@@ -328,6 +332,9 @@ export default interface BzSettings {
   linkAgentAutoClean: boolean;
   /** 已有关联不再建链（v1.7/ticket 167）：自动路径（创建/修改/队列消费）对 related 非空笔记跳过；手动重跑豁免 */
   linkAgentRespectRelated: boolean;
+  /** 候选相似度下限（issue 330/ADR-0146）：vectorSearch 锐化后分数（与参考面板百分比同尺）
+   *  低于此值的候选直接剔除不送 AI 裁判；0 = 不过滤 */
+  linkAgentMinScore: number;
 
   // ===== 第二大脑（2026-09-12 拍板：启用开关退役）=====
   /** 第二大脑不再有启用键：启动时无条件自动加载（原 l7A secondBrainEnabled 开关与懒加载分支一并退役，
@@ -571,6 +578,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   aiModelOverrides: {},
   aiContextOverrides: {},
   aiMaxTokensOverrides: {},
+  // AI 思考档位（issue 330/ADR-0146）：auto = 跟随模型默认，不注入思考参数
+  aiThinking: 'auto',
 
   // 共享数据路径（ADR-0009）
   storagePath: 'CONFIG/STORAGE',
@@ -699,6 +708,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   linkAgentNotify: true,
   linkAgentAutoClean: true,
   linkAgentRespectRelated: true, // v1.7/ticket 167：默认尊重「已有 related 不再自动建链」
+  linkAgentMinScore: 0.65, // issue 330/ADR-0146：候选相似度下限（锐化后分数，0.65≈原始余弦 0.30）；0=不过滤
 
   // 常驻监听（issue 187：旧 aiAgent 4 键退役，引用同步无条件常驻，不设开关）
   // 第二大脑（2026-09-12 拍板）：启用开关退役，启动无条件自动加载，键不再落盘

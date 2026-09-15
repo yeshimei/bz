@@ -1,4 +1,4 @@
-/* 源指纹 8f2f4183645492ea · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c8f821a0fd5d897b · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -4842,6 +4842,40 @@ var BZW_knowledge = (() => {
   function getProviderDescriptor(id) {
     return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
   }
+  var AI_THINKING_STYLE = {
+    openai: "effort",
+    openrouter: "effort",
+    anthropic: "effort",
+    google: "effort",
+    groq: "effort",
+    xai: "effort",
+    together: "effort",
+    mistral: "effort",
+    siliconflow: "effort",
+    deepseek: "enable",
+    "opencode-go": "enable",
+    dashscope: "enable",
+    zhipu: "zhipu",
+    "zhipu-plan": "zhipu",
+    moonshot: "none",
+    ollama: "none",
+    custom: "none"
+  };
+  function thinkingOptionsFor(level, style) {
+    if (style === "none") return null;
+    if (level === "off") {
+      if (style === "enable") return { enable_thinking: false };
+      if (style === "zhipu") return { thinking: { type: "disabled" } };
+      return null;
+    }
+    if (level !== "low" && level !== "medium" && level !== "high") return null;
+    if (style === "effort") return { reasoning_effort: level };
+    if (style === "enable") return { enable_thinking: true };
+    return { thinking: { type: "enabled" } };
+  }
+  function hasExplicitThinkingOption(mo) {
+    return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
+  }
   var _aiProviderCache = null;
   async function getAIProvider(override) {
     var _a, _b, _c;
@@ -4870,6 +4904,7 @@ var BZW_knowledge = (() => {
         throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
       }
       return cachePut({
+        id: "custom",
         endpoint,
         apiKey: s.aiCustomApiKey,
         model: s.aiCustomModel || void 0,
@@ -4886,6 +4921,7 @@ var BZW_knowledge = (() => {
         const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
         if (provider && provider.endpoint && provider.apiKey) {
           return cachePut({
+            id: "deepseek",
             endpoint: String(provider.endpoint).replace(/\/+$/, ""),
             apiKey: provider.apiKey,
             contextWindow: desc.defaultContextWindow,
@@ -4902,6 +4938,7 @@ var BZW_knowledge = (() => {
     const overrideContext = (_b = s.aiContextOverrides) == null ? void 0 : _b[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
     return cachePut({
+      id: name,
       endpoint: desc.endpoint,
       apiKey: key2 || "",
       model: overrideModel || desc.model || void 0,
@@ -5121,6 +5158,11 @@ var BZW_knowledge = (() => {
       for (const k of Object.keys(mo)) {
         if (k === "max_tokens") continue;
         body[k] = mo[k];
+      }
+      if (!hasExplicitThinkingOption(mo)) {
+        const style = AI_THINKING_STYLE[provider.id || ""] || "none";
+        const thinking = thinkingOptionsFor(s.aiThinking || "auto", style);
+        if (thinking) Object.assign(body, thinking);
       }
       const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
       const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;

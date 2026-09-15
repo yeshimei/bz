@@ -1,4 +1,4 @@
-/* 源指纹 c24a9347e1fa48ba · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1c956272c15fec3e · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -10851,6 +10851,21 @@ var BZW_memo = (() => {
   function getProviderDescriptor(id) {
     return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
   }
+  function thinkingOptionsFor(level, style) {
+    if (style === "none") return null;
+    if (level === "off") {
+      if (style === "enable") return { enable_thinking: false };
+      if (style === "zhipu") return { thinking: { type: "disabled" } };
+      return null;
+    }
+    if (level !== "low" && level !== "medium" && level !== "high") return null;
+    if (style === "effort") return { reasoning_effort: level };
+    if (style === "enable") return { enable_thinking: true };
+    return { thinking: { type: "enabled" } };
+  }
+  function hasExplicitThinkingOption(mo) {
+    return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
+  }
   async function getAIProvider(override) {
     var _a2, _b2, _c;
     if (!override && _aiProviderCache) return _aiProviderCache;
@@ -10878,6 +10893,7 @@ var BZW_memo = (() => {
         throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
       }
       return cachePut2({
+        id: "custom",
         endpoint,
         apiKey: s.aiCustomApiKey,
         model: s.aiCustomModel || void 0,
@@ -10894,6 +10910,7 @@ var BZW_memo = (() => {
         const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
         if (provider && provider.endpoint && provider.apiKey) {
           return cachePut2({
+            id: "deepseek",
             endpoint: String(provider.endpoint).replace(/\/+$/, ""),
             apiKey: provider.apiKey,
             contextWindow: desc.defaultContextWindow,
@@ -10910,6 +10927,7 @@ var BZW_memo = (() => {
     const overrideContext = (_b2 = s.aiContextOverrides) == null ? void 0 : _b2[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
     return cachePut2({
+      id: name,
       endpoint: desc.endpoint,
       apiKey: key || "",
       model: overrideModel || desc.model || void 0,
@@ -11108,7 +11126,7 @@ var BZW_memo = (() => {
     }
     return new AIService(params, defaultModel, mergedOptions);
   }
-  var _settingsProvider, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MIME, AI_IMAGE_MAX_BYTES, AIService;
+  var _settingsProvider, AI_PROVIDER_REGISTRY, AI_THINKING_STYLE, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MIME, AI_IMAGE_MAX_BYTES, AIService;
   var init_ai = __esm({
     "src/core/ai.ts"() {
       init_fake_obsidian();
@@ -11309,6 +11327,25 @@ var BZW_memo = (() => {
           apiKeyDesc: "在服务官网获取后填入这里"
         }
       ];
+      AI_THINKING_STYLE = {
+        openai: "effort",
+        openrouter: "effort",
+        anthropic: "effort",
+        google: "effort",
+        groq: "effort",
+        xai: "effort",
+        together: "effort",
+        mistral: "effort",
+        siliconflow: "effort",
+        deepseek: "enable",
+        "opencode-go": "enable",
+        dashscope: "enable",
+        zhipu: "zhipu",
+        "zhipu-plan": "zhipu",
+        moonshot: "none",
+        ollama: "none",
+        custom: "none"
+      };
       _aiProviderCache = null;
       AI_IDLE_TIMEOUT_MS = 6e4;
       AI_IMAGE_IDLE_TIMEOUT_MS = 18e4;
@@ -11347,6 +11384,11 @@ var BZW_memo = (() => {
           for (const k of Object.keys(mo)) {
             if (k === "max_tokens") continue;
             body[k] = mo[k];
+          }
+          if (!hasExplicitThinkingOption(mo)) {
+            const style = AI_THINKING_STYLE[provider.id || ""] || "none";
+            const thinking = thinkingOptionsFor(s.aiThinking || "auto", style);
+            if (thinking) Object.assign(body, thinking);
           }
           const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
           const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
@@ -11826,7 +11868,22 @@ var BZW_memo = (() => {
       // 上下文/最大输出 token 标准 number 行（refreshKey 随服务商切换联动）
       providerModelCustomRow(),
       providerNumberConfigRow("context"),
-      providerNumberConfigRow("maxTokens")
+      providerNumberConfigRow("maxTokens"),
+      // 思考档位（issue 330/ADR-0146）：全局单值，请求时按 provider 静态映射翻译各家参数；
+      // 「关闭」对 effort 家族无法用参数关思考（如实说明），enable/zhipu 家族发显式关闭键
+      {
+        type: "select",
+        name: "思考 reasoning",
+        desc: "关闭可省判定类小任务的思考消耗，部分服务商不支持分档",
+        binding: { key: "aiThinking" },
+        options: [
+          { value: "auto", label: "跟随模型默认" },
+          { value: "off", label: "关闭（省 token）" },
+          { value: "low", label: "低" },
+          { value: "medium", label: "中" },
+          { value: "high", label: "高" }
+        ]
+      }
     );
     rows.push(
       {
@@ -25422,6 +25479,28 @@ ${String(blockText != null ? blockText : "").trim()}`);
               onChange: (v) => {
                 const n = Math.floor(Number(v));
                 getSettings().linkAgentMaxLinks = Number.isFinite(n) && n > 0 ? n : 0;
+              }
+            },
+            {
+              type: "text",
+              name: "候选相似度下限",
+              desc: "低于此分的候选直接丢弃不送 AI 裁判，0 表示不过滤",
+              // number 键（linkAgentMinScore，0~1 小数）同 TopK 口径：三函数绑定 + onChange 钳制
+              binding: {
+                get: () => {
+                  var _a2;
+                  return String((_a2 = getSettings().linkAgentMinScore) != null ? _a2 : 0.65);
+                },
+                set: (v) => {
+                  getSettings().linkAgentMinScore = v;
+                },
+                save: () => saveSettings()
+              },
+              visibleWhen: (s) => s.linkAgentEnabled !== false,
+              isChild: true,
+              onChange: (v) => {
+                const n = Number(v);
+                getSettings().linkAgentMinScore = Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.65;
               }
             },
             { type: "toggle", name: "完成通知", desc: "处理完成后通知提醒，关闭则全程静默", binding: boolDefaultOn("linkAgentNotify"), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
@@ -43101,6 +43180,8 @@ ${n.content.slice(0, 2e3)}
         aiModelOverrides: {},
         aiContextOverrides: {},
         aiMaxTokensOverrides: {},
+        // AI 思考档位（issue 330/ADR-0146）：auto = 跟随模型默认，不注入思考参数
+        aiThinking: "auto",
         // 共享数据路径（ADR-0009）
         storagePath: "CONFIG/STORAGE",
         // 附件搬移（ticket 65，运行时记忆）
@@ -43211,6 +43292,8 @@ ${n.content.slice(0, 2e3)}
         linkAgentAutoClean: true,
         linkAgentRespectRelated: true,
         // v1.7/ticket 167：默认尊重「已有 related 不再自动建链」
+        linkAgentMinScore: 0.65,
+        // issue 330/ADR-0146：候选相似度下限（锐化后分数，0.65≈原始余弦 0.30）；0=不过滤
         // 常驻监听（issue 187：旧 aiAgent 4 键退役，引用同步无条件常驻，不设开关）
         // 第二大脑（2026-09-12 拍板）：启用开关退役，启动无条件自动加载，键不再落盘
         // 番茄钟（9 项，ticket 31）

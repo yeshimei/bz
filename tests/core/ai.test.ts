@@ -4,7 +4,21 @@
  * fallback 非流式（requestUrl）、noCors 直走、chat/json 方法、provider 解析与错误。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { AIService, createAI, getAIProvider, setAISettingsProvider, resetAIProviderCache, imageDataUrl, imageExtOfMime, imageMimeOfPath, AI_IMAGE_MAX_BYTES } from '../../src/core/ai';
+import {
+  AIService,
+  createAI,
+  getAIProvider,
+  setAISettingsProvider,
+  resetAIProviderCache,
+  imageDataUrl,
+  imageExtOfMime,
+  imageMimeOfPath,
+  AI_IMAGE_MAX_BYTES,
+  AI_PROVIDER_REGISTRY,
+  AI_THINKING_STYLE,
+  thinkingOptionsFor,
+  hasExplicitThinkingOption,
+} from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 import { requestUrl } from '../mock-obsidian-entry';
@@ -291,6 +305,143 @@ describe('AIService', () => {
     resetAIProviderCache();
     const ai = new AIService({}, 'deepseek-v4-flash');
     await expect(ai.prompt('x')).rejects.toThrow('未配置自定义 AI 服务');
+  });
+
+  // ==================== 思考档位注入（issue 330/ADR-0146） ====================
+
+  /** 切 provider + 思考档位并重置缓存（思考映射按 provider.id 查表） */
+  function useThinking(provider: string, aiThinking: string, extra: Record<string, any> = {}): void {
+    setAISettingsProvider(() => ({ ...DEFAULT_SETTINGS, aiProvider: provider, aiThinking, ...extra }));
+    resetAIProviderCache();
+  }
+
+  it('思考 effort 家族（openai）：low/medium/high 发 reasoning_effort；off 与 auto 不注入', async () => {
+    const makeResp = () => ({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
+    });
+    fetchMock.mockImplementation(() => Promise.resolve(makeResp()));
+    const ai = new AIService({}, 'gpt-4o-mini');
+
+    useThinking('openai', 'high', { openaiApiKey: 'sk-openai-test' });
+    await ai.prompt('q');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).reasoning_effort).toBe('high');
+
+    // off 对 effort 家族不注入（该家族无关思考参数，不冒进发不被支持的值）
+    useThinking('openai', 'off', { openaiApiKey: 'sk-openai-test' });
+    await ai.prompt('q');
+    let body = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(body.reasoning_effort).toBeUndefined();
+    expect(body.enable_thinking).toBeUndefined();
+    expect(body.thinking).toBeUndefined();
+
+    // auto（缺省档）不注入：现状零变化
+    useThinking('openai', 'auto', { openaiApiKey: 'sk-openai-test' });
+    await ai.prompt('q');
+    body = JSON.parse(fetchMock.mock.calls[2][1].body);
+    expect(body.reasoning_effort).toBeUndefined();
+  });
+
+  it('思考 enable 家族（deepseek 默认 provider）：off 发 enable_thinking:false，强度档发 true', async () => {
+    const makeResp = () => ({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
+    });
+    fetchMock.mockImplementation(() => Promise.resolve(makeResp()));
+    const ai = new AIService({}, 'deepseek-v4-flash');
+
+    useThinking('deepseek', 'off');
+    await ai.prompt('q');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).enable_thinking).toBe(false);
+
+    useThinking('deepseek', 'low');
+    await ai.prompt('q');
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).enable_thinking).toBe(true); // enable 家族无强度档
+  });
+
+  it('思考 zhipu 家族：off 发 thinking:{type:disabled}，强度档发 thinking:{type:enabled}', async () => {
+    const makeResp = () => ({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
+    });
+    fetchMock.mockImplementation(() => Promise.resolve(makeResp()));
+    const ai = new AIService({}, 'glm-4-flash');
+
+    useThinking('zhipu', 'off', { zhipuApiKey: 'sk-zhipu-test' });
+    await ai.prompt('q');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).thinking).toEqual({ type: 'disabled' });
+
+    useThinking('zhipu', 'medium', { zhipuApiKey: 'sk-zhipu-test' });
+    await ai.prompt('q');
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).thinking).toEqual({ type: 'enabled' });
+  });
+
+  it('思考 none 家族（custom/moonshot/ollama）与对象 override：设了档位也永不注入', async () => {
+    const makeResp = () => ({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
+    });
+    fetchMock.mockImplementation(() => Promise.resolve(makeResp()));
+    const ai = new AIService({}, 'deepseek-v4-flash');
+
+    // custom 需要端点+密钥才不抛缺配置
+    useThinking('custom', 'high', { aiCustomEndpoint: 'https://me.example/v1', aiCustomApiKey: 'k-c' });
+    await ai.prompt('q');
+    let body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.reasoning_effort).toBeUndefined();
+    expect(body.enable_thinking).toBeUndefined();
+    expect(body.thinking).toBeUndefined();
+
+    // 对象 override（脚本内直给端点）无 provider id → none，不注入
+    useThinking('deepseek', 'high');
+    await ai.prompt('x', undefined, { provider: { endpoint: 'https://third.example/v1', apiKey: 'k3', model: 'm3' } });
+    body = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(body.reasoning_effort).toBeUndefined();
+  });
+
+  it('思考注入不覆盖显式 modelOptions（reason()/显式思考键语义不变）', async () => {
+    const makeResp = () => ({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
+    });
+    fetchMock.mockImplementation(() => Promise.resolve(makeResp()));
+    const ai = new AIService({}, 'deepseek-v4-flash');
+
+    // 设置 off，但 reason() 显式 enable_thinking:true → 显式优先，仍为 true
+    useThinking('deepseek', 'off');
+    await ai.reason('q');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).enable_thinking).toBe(true);
+
+    // 设置档 low（enable→true），显式 modelOptions.reasoning_effort:'high' → 原样透传不被覆盖
+    useThinking('deepseek', 'low');
+    await ai.prompt('q', undefined, { modelOptions: { reasoning_effort: 'high' } });
+    const body = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(body.reasoning_effort).toBe('high');
+    expect(body.enable_thinking).toBeUndefined();
+  });
+
+  it('thinkingOptionsFor 纯函数：auto/非法档/none 风格一律 null；AI_THINKING_STYLE 覆盖全部注册表 provider', () => {
+    expect(thinkingOptionsFor('auto', 'effort')).toBeNull();
+    expect(thinkingOptionsFor('auto', 'enable')).toBeNull();
+    expect(thinkingOptionsFor('一切', 'effort')).toBeNull(); // 非法档不注入
+    expect(thinkingOptionsFor('off', 'effort')).toBeNull();
+    expect(thinkingOptionsFor('off', 'enable')).toEqual({ enable_thinking: false });
+    expect(thinkingOptionsFor('off', 'zhipu')).toEqual({ thinking: { type: 'disabled' } });
+    expect(thinkingOptionsFor('high', 'none')).toBeNull();
+    expect(thinkingOptionsFor('high', 'effort')).toEqual({ reasoning_effort: 'high' });
+    expect(thinkingOptionsFor('high', 'enable')).toEqual({ enable_thinking: true });
+    expect(thinkingOptionsFor('high', 'zhipu')).toEqual({ thinking: { type: 'enabled' } });
+    // 注册表 17 家每家都有风格映射，新增 provider 忘补表会被这里拦住
+    expect(AI_PROVIDER_REGISTRY.every((p) => AI_THINKING_STYLE[p.id])).toBe(true);
+    expect(hasExplicitThinkingOption({ enable_thinking: true })).toBe(true);
+    expect(hasExplicitThinkingOption({ reasoning_effort: 'low' })).toBe(true);
+    expect(hasExplicitThinkingOption({ thinking: { type: 'enabled' } })).toBe(true);
+    expect(hasExplicitThinkingOption({ response_format: { type: 'json_object' } })).toBe(false);
   });
 });
 

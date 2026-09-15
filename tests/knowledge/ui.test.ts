@@ -1572,20 +1572,20 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(imgRow.fallbackValue()).toBe('文献盒/assets'); // note-gen 在本文件被 mock：这里验的是接线
   });
 
-  it('「自动关联」组（ADR-0141 §1/§2）：六行绑定 linkAgent* 键，且没有「关联范围」行', () => {
+  it('「自动关联」组（ADR-0141 §1/§2）：七行绑定 linkAgent* 键，且没有「关联范围」行', () => {
     const schema = knowledgeSettingsSchema();
     const group = schema.groups.find((g) => g.name === '自动关联')!;
     expect(group).toBeTruthy();
     const rows = group.rows as any[];
-    // 总开关 + 五条明细（顺序即面板顺序）
+    // 总开关 + 六条明细（顺序即面板顺序）
     expect(rows[0].type).toBe('toggle');
     expect(rows[0].name).toBe('自动关联');
     expect(rows[0].binding.get()).toBe(true); // 缺省开语义（键缺失视为开）
     const names = rows.map((r) => r.name);
-    expect(names).toEqual(['自动关联', '单篇候选数量 TopK', '每篇关联上限', '完成通知', '失效关联自动清理', '已有关联不再建链']);
-    // 明细绑定的是第二大脑那七个键里的六个（键名不改，ADR-0141 §7）
+    expect(names).toEqual(['自动关联', '单篇候选数量 TopK', '每篇关联上限', '候选相似度下限', '完成通知', '失效关联自动清理', '已有关联不再建链']);
+    // 明细绑定的是第二大脑那七个键里的七个（键名不改，ADR-0141 §7；下限键为 issue 330/ADR-0146 新增）
     const boundKeys = rows.slice(1).map((r) => r.binding?.key ?? r.binding?.get?.toString() ?? '');
-    expect(boundKeys.length).toBe(5);
+    expect(boundKeys.length).toBe(6);
     for (const r of rows.slice(1)) expect(r.isChild).toBe(true);
     // 范围恒为三个盒子，不再有范围行（ADR-0141 §2）
     expect(names).not.toContain('关联范围');
