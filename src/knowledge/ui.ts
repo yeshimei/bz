@@ -6,8 +6,9 @@
  * 录入入口四名词（issue 309/312；顺序 2026-09-14 复核为 图版在影像之前）：名词（一个词）/ 段落（一段文字，AI 自动出标题）/ 影像（B 站视频任务）/
  * 图版（拖入或粘贴图片，AI 读图成文，issue 312；**可多张**，issue 313）。名词 / 段落 / 图版共用一个面板壳
  * （同壳三态：单行 input / 多行 textarea / 图片拖入区 + 来源行一致）。关联时机 = **AI 出内容即起跑**：
- * 属性区「关联」行走「分析中… → 关联名」，分析期间重新生成 / 总结 / 确认写入全部禁用；确认写入把
- * 结果写进新笔记 related 后**直接关窗**。面板不设取消钮（退出走点遮罩 / ESC），也不自动打开笔记。
+ * 属性区「关联」行走「分析中… → 关联名」；分析期间按钮不锁（issue 327）——重新生成 / 总结随点随断在途
+ * 裁判、新内容回来再分析；确认写入全程不动关联行，把结果写进新笔记 related 后**直接关窗**。
+ * 面板不设取消钮（退出走点遮罩 / ESC，有草稿先过二次确认）。
  * 事件刷新：knowledge:tasks（视频 converted/failed + 本域生成事件，小橘行为流亦订阅此通道）。
  * 影像两个界面（issue 310 + 2026-09-14 复核）：**录入界面**（主窗「影像」按钮 / 命令 / 聚合讯直达；
  * 词典皮行内标签行，初始只出链接行，解析跑完才展开信息 / 分P / 剪辑 / 清晰度 / 保存；标题栏不放出口钮
@@ -26,7 +27,7 @@ import { getKnowledgeBoxes } from '../core/knowledge-boxes';
 import { getLinkBridge } from '../core/link-now';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { confirmDiscard, openFlowDialog } from '../core/flow-dialog';
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
 import { escapeHtml, fetchPageTitle, formatRelativeTime, stripMdExt } from '../core/utils';
 import { iconSpan } from '../core/ui/str';
 import { mountIcons } from '../core/ui/icons';
@@ -59,6 +60,8 @@ function litKindLabel(type: string): string {
 }
 /** 图版单次录入的图片张数上限（issue 313）：一次 AI 请求的图片数封顶，避免大图组拖垮上行与费用 */
 const IMAGE_ENTRY_MAX = 9;
+/** 后台建链动态通知的去重键（issue 327）：同键原地更新，progress 起跑 → 结果落地 */
+const REL_BG_NOTICE_KEY = 'bz-kb-entry-rel';
 
 interface StatusMeta { label: string; cls: string; }
 const STATUS_META: Record<KnowledgeTask['status'], StatusMeta> = {
@@ -536,8 +539,8 @@ export class UIManager {
   private entryPreviewPicks: string[] = [];
   /** 预演是否已给出确定结果（done）——确定过就连「0 命中」也算结论，写入时不再重跑管线 */
   private entryPreviewDone = false;
-  /** 在跑的预演（确认写入前等它落地，避免白跑一次完整管线） */
-  private entryRelPending: Promise<void> | null = null;
+  /** 在跑预演的中断器（issue 327）：重新生成 / 总结 / 关面板 / 确认写入转后台时 abort 在途裁判请求 */
+  private entryRelAbort: AbortController | null = null;
   /** 预演序号：重新生成 / 关闭面板让在途结果作废（晚到的响应不得覆盖新状态） */
   private entryRelSeq = 0;
   private termSrcSuggest: ReturnType<typeof uiSuggest> | null = null;
@@ -2703,22 +2706,7 @@ export class UIManager {
     if (regen) regen.disabled = loading;
     const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
     if (save) save.disabled = loading;
-    // 生成结束但关联还在分析中 → 这三个按钮继续保持禁用（见 setEntryRelBusy）
-    if (!loading) this.setEntryRelBusy(this.entryRelState === 'loading');
-  }
-
-  /**
-   * 关联分析期间的按钮闸门（issue 309）：分析未出结果时禁止「重新生成」「总结」「确认写入」——
-   * 前者会作废在途结果、后者要用分析结果落库，都不能与正在跑的预演并行。
-   */
-  private setEntryRelBusy(busy: boolean): void {
-    if (!this.termPopup) return;
-    const gen = q<HTMLButtonElement>(this.termPopup, '#lit-term-generate');
-    if (gen) gen.disabled = busy;
-    const regen = q<HTMLButtonElement>(this.termPopup, '#lit-term-regenerate');
-    if (regen) regen.disabled = busy;
-    const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
-    if (save) save.disabled = busy;
+    // issue 327：关联分析不再锁定按钮（setEntryRelBusy 整套退役）——生成/总结的忙态只锁操作自身
   }
 
   /**
@@ -2745,17 +2733,15 @@ export class UIManager {
     el.textContent = '—';
   }
 
-  /** 关联行与预演状态整体复位（打开/关闭面板、出新草稿共用）：在途预演作废、结果清空、回到起点 */
+  /** 关联行与预演状态整体复位（打开/关闭面板、出新草稿、重生成/总结点下时共用）：abort 在途请求、结果清空、回到起点 */
   private resetEntryRel(): void {
     this.entryRelSeq++; // 在途预演的晚到响应据此丢弃
-    this.entryRelPending = null;
+    this.entryRelAbort?.abort(); // issue 327：真中断在途裁判请求（不再白烧 token）
+    this.entryRelAbort = null;
     this.entryPreviewPicks = [];
     this.entryPreviewDone = false;
     this.entryRelText = '';
     this.setEntryRel('idle');
-    // 复位 = 没有在跑的预演 → 顺带解除闸门。必须在这里做：作废在途预演后它的 finally 会因序号
-    // 不匹配而**不再解除**，若只靠它解锁，按钮会永久停在禁用态（图版换图即这条路，issue 312）。
-    this.setEntryRelBusy(false);
   }
 
   /** 关联行状态切换（单一出口，避免各处直接改字段后忘记重绘） */
@@ -2768,17 +2754,21 @@ export class UIManager {
    * 关联预演（issue 309）：AI 出内容后**立刻**跑——近邻检索 + AI 裁判，**只算不写**（草稿尚未落盘，
    * 故走 preview 而非 now）。属性区「关联」行就地走 loading → 关联名，这正是「生成完就看得到过程」。
    * 序号守卫：重新生成 / 关面板让在途结果作废，晚到的响应不得覆盖新状态。
+   * issue 327：起跑前 abort 上一轮（真中断，不白烧 token）；分析期间**不锁任何按钮**——
+   * 重新生成 / 总结随点随断随重跑，确认写入转后台。
    */
   private async runEntryRelPreview(content: string, title: string): Promise<void> {
     const bridge = getLinkBridge();
     const seq = ++this.entryRelSeq;
     this.entryPreviewPicks = [];
     if (!bridge) { this.setEntryRel('off'); return; }
+    this.entryRelAbort?.abort(); // 上一轮还在跑 → 先断（新内容一到即重新分析，旧的不再要）
+    const ac = new AbortController();
+    this.entryRelAbort = ac;
     this.entryRelText = '';
     this.setEntryRel('loading');
-    this.setEntryRelBusy(true); // 分析中：重新生成 / 总结 / 确认写入全部禁用
     try {
-      const out = await bridge.preview(content, title);
+      const out = await bridge.preview(content, title, { signal: ac.signal });
       if (seq !== this.entryRelSeq) return; // 已有更新的预演（重新生成）/ 面板已重置
       if (out.status === 'done') {
         this.entryPreviewDone = true;
@@ -2790,76 +2780,96 @@ export class UIManager {
       else this.setEntryRel('failed');
     } catch {
       if (seq === this.entryRelSeq) this.setEntryRel('failed');
-    } finally {
-      if (seq === this.entryRelSeq) this.setEntryRelBusy(false);
     }
   }
 
   /**
-   * 兜底建链（issue 309）：没有可用预演结果时，落盘后跑完整单篇管线（bridge.now）。
-   * 通道未注入（自动双链关闭 / 第二大脑未启用 / 原型壳未接线）→ 显式呈现「自动双链未开启」。
+   * 确认写入后的关联落库（issue 309 / 327 改版）：**全程不动关联行**——面板上显示过什么就是什么，
+   * 不把行打回 loading（那会被读成「又在重新分析」，实际只是本地写 related）。
+   * - 预演 done 有命中 → apply 落库（不重跑检索与裁判）；
+   * - 预演 done 零命中（确定「无关联」）→ 无可写；
+   * - 预演仍在分析 → 作废面板绑定的这次（省 token），后台重起 预演→apply，挂动态通知；
+   * - 预演 failed → 兜底 now 同样转后台；
+   * - 通道未接线 / off → 无可写。
    */
-  private async runEntryLinkNow(path: string): Promise<void> {
+  private async commitEntryLinks(path: string): Promise<void> {
     const bridge = getLinkBridge();
-    if (!bridge) { this.setEntryRel('off'); return; }
-    this.entryRelText = '';
-    this.setEntryRel('loading');
+    if (!bridge) return; // 关联行已显示「自动双链未开启」
+    if (this.entryRelState === 'loading') {
+      this.entryRelAbort?.abort();
+      this.entryRelAbort = null;
+      void this.backgroundRelCommit(path, this.termPreview?.body ?? '', this.entryHeadTitle());
+      return;
+    }
+    if (this.entryPreviewDone && !this.entryPreviewPicks.length) return; // 确定「无关联」，不再重跑管线
+    if (this.entryPreviewPicks.length) {
+      await bridge.apply(path, this.entryPreviewPicks);
+      return;
+    }
+    if (this.entryRelState === 'failed') void this.backgroundRelNow(path);
+  }
+
+  /**
+   * 后台建链（issue 327）：分析中确认写入 / 预演失败兜底共用——不占面板，动态通知（同键原地更新）
+   * 报进度与结果：分析中… → 已写入 N 条 / 未发现实质关联 / 已入队 / 失败原因。
+   */
+  private async backgroundRelCommit(path: string, content: string, title: string): Promise<void> {
+    const bridge = getLinkBridge();
+    if (!bridge) return;
+    notify('知识盒关联：后台分析中…', { type: 'progress', dedupeKey: REL_BG_NOTICE_KEY });
+    try {
+      const out = await bridge.preview(content, title);
+      if (out.status === 'skipped') {
+        notify('知识盒关联：自动关联未开启，未写入', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
+        return;
+      }
+      if (out.status === 'queued') {
+        notify('知识盒关联：向量服务不可达，已入队，服务可达后自动处理', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
+        return;
+      }
+      if (out.status === 'failed') {
+        notify(`知识盒关联失败：${out.error || '未知错误'}`, { type: 'error', dedupeKey: REL_BG_NOTICE_KEY });
+        return;
+      }
+      if (!out.picks.length) {
+        notify('知识盒关联：未发现实质关联', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
+        return;
+      }
+      const r = await bridge.apply(path, out.picks.map((p) => p.path));
+      notify(r.status === 'done' ? `知识盒关联：已写入 ${r.created} 条关联` : '知识盒关联：自动关联未开启，未写入', {
+        type: r.status === 'done' ? 'success' : 'info',
+        dedupeKey: REL_BG_NOTICE_KEY,
+      });
+    } catch (e) {
+      notify(`知识盒关联失败：${e instanceof Error ? e.message : String(e)}`, { type: 'error', dedupeKey: REL_BG_NOTICE_KEY });
+    }
+  }
+
+  /** 后台兜底建链（issue 327）：预演失败时的 bridge.now 完整管线，通知口径同 backgroundRelCommit */
+  private async backgroundRelNow(path: string): Promise<void> {
+    const bridge = getLinkBridge();
+    if (!bridge) return;
+    notify('知识盒关联：后台建链中…', { type: 'progress', dedupeKey: REL_BG_NOTICE_KEY });
     try {
       const out = await bridge.now(path);
       if (out.status === 'done' || out.status === 'skipped-related') {
-        // skipped-related = 该篇已带 related（尊重门）→ 直接把既有链显示出来
-        const rels = await this.readRelatedTitles(path);
-        this.entryRelText = rels.join(' · ');
-        this.setEntryRel(rels.length ? 'done' : 'empty');
-      } else if (out.status === 'queued') this.setEntryRel('queued');
-      else if (out.status === 'skipped') this.setEntryRel('off');
-      else this.setEntryRel('failed');
-    } catch {
-      this.setEntryRel('failed');
-    }
-  }
-
-  /**
-   * 确认写入后的关联落库（issue 309）：预演命中的目标**直接写进 related**（不重跑检索与裁判，
-   * 面板上已经显示过的结果原样落地）；没有可用预演（通道未接线 / 未命中 / 预演失败）→ 兜底跑完整管线。
-   */
-  private async commitEntryLinks(path: string): Promise<void> {
-    try {
-      await this.entryRelPending; // 用户可能没等预演跑完就点了写入
-    } catch {
-      /* 预演异常：交给兜底路径 */
-    }
-    const picks = this.entryPreviewPicks;
-    const bridge = getLinkBridge();
-    if (bridge && this.entryPreviewDone && !picks.length) {
-      // 预演已给出确定结论「无关联」→ 写入时不再重跑管线（用户看到的分析结果就是最终依据）
-      this.setEntryRel('empty');
-      return;
-    }
-    if (bridge && picks.length) {
-      this.setEntryRel('loading');
-      try {
-        const out = await bridge.apply(path, picks);
-        if (out.status === 'done') {
-          const rels = await this.readRelatedTitles(path);
-          this.entryRelText = rels.join(' · ');
-          this.setEntryRel(rels.length ? 'done' : 'empty');
-          return;
-        }
-      } catch {
-        /* 写入异常：走兜底 */
+        const created = out.status === 'done' ? out.created : 0;
+        notify(created > 0 ? `知识盒关联：已写入 ${created} 条关联` : '知识盒关联：未发现实质关联', {
+          type: created > 0 ? 'success' : 'info',
+          dedupeKey: REL_BG_NOTICE_KEY,
+        });
+      } else if (out.status === 'queued') {
+        notify('知识盒关联：向量服务不可达，已入队，服务可达后自动处理', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
+      } else if (out.status === 'out-of-scope') {
+        notify('知识盒关联：该笔记不在三个盒子内，未写入', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
+      } else if (out.status === 'failed') {
+        notify(`知识盒关联失败：${out.error}`, { type: 'error', dedupeKey: REL_BG_NOTICE_KEY });
+      } else {
+        notify('知识盒关联：自动关联未开启，未写入', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
       }
+    } catch (e) {
+      notify(`知识盒关联失败：${e instanceof Error ? e.message : String(e)}`, { type: 'error', dedupeKey: REL_BG_NOTICE_KEY });
     }
-    await this.runEntryLinkNow(path);
-  }
-
-  /** 读某篇笔记 frontmatter.related 的展示名列表（建链后就地显示 + 预览「关联」区共用解析） */
-  private async readRelatedTitles(path: string): Promise<string[]> {
-    try {
-      const file = getApp().vault.getAbstractFileByPath(path);
-      if (!file) return [];
-      return parseRelatedNames(await getApp().vault.read(file as any));
-    } catch { return []; }
   }
 
   private setTermSummarizing(s: boolean): void {
@@ -2870,8 +2880,7 @@ export class UIManager {
     if (save) save.disabled = s;
     const gen = q<HTMLButtonElement>(this.termPopup, '#lit-term-generate');
     if (gen) gen.disabled = s;
-    // 总结结束但关联随即重跑 → 这三个按钮继续保持禁用
-    if (!s) this.setEntryRelBusy(this.entryRelState === 'loading');
+    // issue 327：关联分析不再锁定按钮（原「总结结束但关联随即重跑 → 继续禁用」分支随 setEntryRelBusy 退役）
   }
 
   /** 当前录入的头部标题：段落取属性卡里（可改）的标题，名词取输入框的词 */
@@ -2905,6 +2914,7 @@ export class UIManager {
       ? (q<HTMLTextAreaElement>(this.termPopup, '#lit-passage-input')?.value ?? '').trim()
       : (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
     if (!text) { notice(passage ? '请粘贴要整理的段落' : '请输入名词', 'error'); return; }
+    this.resetEntryRel(); // issue 327：点下即断在途预演（行归「—」），新内容回来再分析
     this.termGenerating = true;
     this.setTermGenLoading(true);
     try {
@@ -2913,8 +2923,8 @@ export class UIManager {
         : await generateTermDraft(text);
       this.presentTermPreview(draft);
       // 生成出内容即起关联预演（issue 309）：**不 await** —— 面板先回到可操作态，
-      // 属性区「关联」行自己走 loading → 完成显示；确认写入时再等它落地。
-      this.entryRelPending = this.runEntryRelPreview(draft.summary, this.entryHeadTitle() || text);
+      // 属性区「关联」行自己走 loading → 完成显示；分析期间按钮不锁（issue 327）。
+      this.runEntryRelPreview(draft.summary, this.entryHeadTitle() || text);
     } catch (e) {
       this.noticeTermError(e);
     } finally {
@@ -2931,12 +2941,13 @@ export class UIManager {
     if (!this.termPopup || this.termGenerating) return;
     const images = this.entryImages;
     if (!images.length) { notice('请先拖入或粘贴图片', 'error'); return; }
+    this.resetEntryRel(); // issue 327：点下即断在途预演（行归「—」），新内容回来再分析
     this.termGenerating = true;
     this.setTermGenLoading(true);
     try {
       const draft = await generateImageDraft(images.map((im) => im.dataUrl));
       this.presentTermPreview(draft);
-      this.entryRelPending = this.runEntryRelPreview(draft.summary, this.entryHeadTitle());
+      this.runEntryRelPreview(draft.summary, this.entryHeadTitle());
     } catch (e) {
       this.noticeTermError(e);
     } finally {
@@ -2948,6 +2959,7 @@ export class UIManager {
   private async onTermSummarize(): Promise<void> {
     if (!this.termPopup || this.termSummarizing || this.termGenerating) return;
     if (!this.termPreview || !this.termPreview.body.trim()) { notice('请先生成简介', 'info'); return; }
+    this.resetEntryRel(); // issue 327：点下即断在途预演（行归「—」），新内容回来再分析
     this.termSummarizing = true;
     this.setTermSummarizing(true);
     try {
@@ -2956,7 +2968,7 @@ export class UIManager {
       const contentEl = q<HTMLElement>(this.termPopup, '#lit-term-content');
       if (contentEl) contentEl.textContent = summarized;
       // 正文变了 → 关联重新分析（issue 309：重新生成 / 总结都要重跑预演）
-      this.entryRelPending = this.runEntryRelPreview(summarized, this.entryHeadTitle());
+      this.runEntryRelPreview(summarized, this.entryHeadTitle());
     } catch (e) {
       this.noticeTermError(e);
     } finally {

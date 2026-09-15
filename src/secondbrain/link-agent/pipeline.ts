@@ -296,10 +296,12 @@ export class LinkAgent {
    * （标题取草稿标题；frontmatter 读不到即退化为纯标题卡）。
    * 经串行锁执行（与监听批次 / 补链 / 单篇即时建链互斥）；
    * embedding 不可达 → queued（与服务不可达同语义：不是失败，服务恢复后可重算）；裁判失败 → failed。
+   * opts.signal = 调用方中断（issue 327）：直达 AI.ask 的取消通道，abort 后本次检索与裁判不再消耗。
    */
   async previewLinks(
     content: string,
-    title = ''
+    title = '',
+    opts?: { signal?: AbortSignal }
   ): Promise<{ status: 'done'; picks: Array<{ path: string; title: string }> } | { status: 'queued' } | { status: 'skipped' } | { status: 'failed'; error: string }> {
     const s = tryGetSettings() as any;
     if (s.linkAgentEnabled === false) return { status: 'skipped' };
@@ -321,7 +323,7 @@ export class LinkAgent {
       const ghost = { path: '', basename: title || '待落盘草稿', extension: 'md' } as unknown as TFile;
       let answer = '';
       try {
-        answer = await AI.ask(this.buildJudgePrompt(ghost, text, candidates));
+        answer = await AI.ask(this.buildJudgePrompt(ghost, text, candidates), { signal: opts?.signal });
       } catch (e) {
         return { status: 'failed' as const, error: e instanceof Error ? e.message : String(e) };
       }

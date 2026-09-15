@@ -53,8 +53,8 @@ export type LinkPreviewOutcome =
 export interface LinkBridge {
   /** 单篇即时建链（无预演结果时的兜底：完整跑一遍检索 + 裁判 + 写入）；force = 强制重跑（跳过「已有 related 不建链」尊重门） */
   now(path: string, opts?: { force?: boolean }): Promise<LinkNowOutcome>;
-  /** 关联预演（只算不写）：草稿正文 → 命中的关联目标 */
-  preview(content: string, title?: string): Promise<LinkPreviewOutcome>;
+  /** 关联预演（只算不写）：草稿正文 → 命中的关联目标；signal = 调用方中断（issue 327，重生成/总结即断在途裁判） */
+  preview(content: string, title?: string, opts?: { signal?: AbortSignal }): Promise<LinkPreviewOutcome>;
   /** 把预演结果写进某篇的 related（确认写入落盘后调用） */
   apply(path: string, targetPaths: string[]): Promise<LinkNowOutcome>;
   /** 批量补链：三个盒子内缺 related 的笔记，逐篇跑管线（启动自动补链的手动兜底） */
