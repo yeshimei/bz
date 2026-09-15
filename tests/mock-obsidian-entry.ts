@@ -186,7 +186,7 @@ export class MockText {
     if (this.cb) void this.cb(v);
   }
 }
-/** addTextArea 用（issue 330）：复刻真实 TextAreaComponent 的 textarea 元素——
+/** addTextArea 用（issue 331）：复刻真实 TextAreaComponent 的 textarea 元素——
  *  基类构造的孤儿 input 留在内存无害；setValue/setPlaceholder 经基类写 inputEl.value
  *  对 textarea 同样成立。 */
 export class MockTextArea extends MockText {

@@ -73,7 +73,7 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     if (plugin && plugin.unregisterGestures) plugin.unregisterGestures();
   });
 
-  it('单页平铺：无 tab；分组卡片（带 icon）：服务商/模型配置/数据源凭据 + 数据存储路径 + 通知（issue 330 AI 页拆三组）', () => {
+  it('单页平铺：无 tab；分组卡片（带 icon）：服务商/模型配置/数据源凭据 + 数据存储路径 + 通知（issue 331 AI 页拆三组）', () => {
     expect(tab.containerEl.querySelectorAll('.bz-tab').length).toBe(0);
     const groupNames = [...tab.containerEl.querySelectorAll('.bz-settings-group-name')].map((t) => t.textContent);
     expect(groupNames).toEqual(['服务商', '模型配置', '数据源凭据', '数据存储路径', '通知']);
@@ -86,7 +86,7 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     findSetting(tab, 'DeepSeek 密钥');
     findSetting(tab, 'OpenCode 密钥');
     findSetting(tab, '最大输出 token'); // ticket 170
-    // issue 330：Cookie 行渲染为多行文本框（textarea），API 密钥行保持单行输入框
+    // issue 331：Cookie 行渲染为多行文本框（textarea），API 密钥行保持单行输入框
     expect((findSetting(tab, 'B站 Cookie').querySelector('.setting-item-control textarea'))).toBeTruthy();
     expect((findSetting(tab, '豆瓣 Cookie').querySelector('.setting-item-control textarea'))).toBeTruthy();
     expect(findSetting(tab, 'ApiZero Key').querySelector('.setting-item-control textarea')).toBeNull();
@@ -103,7 +103,7 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '剪藏目录')).toBe(false);
   });
 
-  it('B站 Cookie 行：Cookie 值经 textarea 编辑并落盘（issue 330 换控件后防抖落盘语义不变）', async () => {
+  it('B站 Cookie 行：Cookie 值经 textarea 编辑并落盘（issue 331 换控件后防抖落盘语义不变）', async () => {
     const el = findSetting(tab, 'B站 Cookie');
     const ta = el.querySelector('.setting-item-control textarea') as HTMLTextAreaElement;
     const ctrl = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');

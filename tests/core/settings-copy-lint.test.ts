@@ -74,7 +74,7 @@ describe('全量 schema 文案 lint（注册表：LINT_TARGETS）', () => {
 
   it('主设置页修正后文案抽查：新标题收短、描述自然句、键名不动', () => {
     const schema = mainSettingsSchema();
-    // issue 330 起 AI 页拆三组，行断言改全组 flatMap（跨组仍按行名查）
+    // issue 331 起 AI 页拆三组，行断言改全组 flatMap（跨组仍按行名查）
     const rows = schema.groups.flatMap((g) => g.rows) as Array<{ name: string; desc?: string }>;
     // 键名/行为不动，标题可改（ticket 100 ④）；ticket 170 新增自定义三行 + max token；
     // ticket 171 注册表扩展为全部提供商各一行密钥（标题取自注册表 apiKeyLabel）；
