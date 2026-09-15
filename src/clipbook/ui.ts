@@ -215,6 +215,7 @@ export function unloadPanel(): void {
     panelSplit = null;
   }
   clipBodyCache.clear();
+  clipBodyInflight.clear(); // 在途读盘位一并清（卸载后迟到读盘只写缓存，不拦重开后的新 kick）
   setSearchKw(''); // 卸载清搜索词（模块级变量，泄漏会污染下一次装载的列表/rail 计数）
   M.open = false;
   M.mobDetailOpen = false;
@@ -911,6 +912,9 @@ function renderReader(): void {
   }
 
   readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), note });
+  // 活动篇标记（issue 329 第三批）：loadClipBody 双端 kick 后，桌面容器可能仍显旧篇
+  // （移动详情切篇不重渲桌面）——hydrateActiveClipBody/clipBodyReadFail 桌面分支按此防串篇
+  readerEl.dataset.clipReaderId = a.id;
   mountIcons(readerEl);
   bindImgFallback(readerEl);
   const mdEl = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
@@ -921,36 +925,73 @@ function renderReader(): void {
   if (a.origin === 'clip') void loadClipBody(a);
 }
 
+/** 剪藏正文就绪后的双端原位水合（loadClipBody 完成回调，issue 329 第三批）：
+ *  桌面右栏 [data-clip-md] 与移动详情 [data-clip-mob-md] 谁在展示当前条目就水合谁（可同时），
+ *  各自 alive 守卫防迟到水合串篇；空正文 = 占位终态（不与水合共存）。
+ *  C5：MarkdownRenderer.render 是**追加**语义（铁律 6）——水合前清掉「正在读取剪藏正文…」占位，
+ *  否则正文顶部永久残留占位一行。 */
+function hydrateActiveClipBody(a: ClipArticle, body: string): void {
+  const targets: Array<{ host: HTMLElement | null; sel: string; dim: boolean; alive: (md: HTMLElement) => boolean }> = [
+    {
+      host: readerEl, sel: '[data-clip-md]', dim: true,
+      // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
+      alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M.cur && M.cur.id === a.id && readerEl.contains(md),
+    },
+    {
+      host: mobDetailEl, sel: '[data-clip-mob-md]', dim: false,
+      alive: (md) => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md),
+    },
+  ];
+  for (const t of targets) {
+    const md = t.host ? (t.host.querySelector(t.sel) as HTMLElement | null) : null;
+    if (!md || !t.alive(md)) continue;
+    if (!body) {
+      md.innerHTML = `<p${t.dim ? ' class="dim"' : ''}>（笔记暂无正文）</p>`;
+      continue;
+    }
+    md.innerHTML = '';
+    void hydrateArticleMarkdown(md, body, a.notePath || '', () => t.alive(md));
+  }
+}
+
+/** 剪藏正文读取失败的双端占位（issue 329 第三批：移动详情与桌面同文案，可打开笔记查看） */
+function clipBodyReadFail(a: ClipArticle): void {
+  if (readerEl && readerEl.dataset.clipReaderId === a.id && M.cur && M.cur.id === a.id) {
+    const md = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
+    if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
+  }
+  if (M.mobDetailOpen && M.cur && M.cur.id === a.id && mobDetailEl) {
+    const md = mobDetailEl.querySelector('[data-clip-mob-md]') as HTMLElement | null;
+    if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
+  }
+}
+
+/** 在途读盘去重（同 path 单飞，issue 329 第三批）：renderReader 与 renderMobDetail 存在
+ *  同帧连续调用路径（renderAll 等），同一未缓存 clip 篇会被双 kick——双读盘后两次「清空+追加」
+ *  水合在 MarkdownRenderer 追加语义（铁律 6）下叠出重复正文；后到 kick 直接 return，
+ *  先到完成后 hydrateActiveClipBody 双端统一水合已覆盖。失败也清位防永久卡死 */
+const clipBodyInflight = new Set<string>();
+
 /** 剪藏正文懒加载（enh 包 3）：cachedRead → 剥 frontmatter/dataviewjs → 按 path 缓存**原文**；
- *  完成时仍是当前篇则原位水合正文（MarkdownRenderer，不整篇重渲染，防滚动位置重置） */
+ *  完成/失败时按当前活动视图原位水合（issue 329 第三批起双端：桌面右栏 + 移动详情；
+ *  MarkdownRenderer，不整篇重渲染，防滚动位置重置）。renderReader/renderMobDetail 均可 kick，幂等 */
 async function loadClipBody(a: ClipArticle): Promise<void> {
   const path = a.notePath;
-  if (!path || clipBodyCache.has(path)) return;
+  if (!path || clipBodyCache.has(path) || clipBodyInflight.has(path)) return;
   const note = a.note as ClipNote | undefined;
   if (!note || !note.file) return;
+  clipBodyInflight.add(path);
   let body = '';
   try {
     body = stripClipChrome(await getApp().vault.cachedRead(note.file));
   } catch (e) {
-    if (M.cur && M.cur.id === a.id && readerEl) {
-      const md = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
-      if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
-    }
+    clipBodyInflight.delete(path);
+    clipBodyReadFail(a);
     return;
   }
+  clipBodyInflight.delete(path);
   clipBodyCache.set(path, body);
-  if (M.cur && M.cur.id === a.id && readerEl) {
-    const md = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
-    if (!md) return;
-    if (!body) {
-      md.innerHTML = `<p class="dim">（笔记暂无正文）</p>`;
-      return;
-    }
-    // C5：MarkdownRenderer.render 是**追加**语义（铁律 6）——水合前清掉「正在读取剪藏正文…」占位，
-    // 否则正文顶部永久残留占位一行；占位只承担「无正文可渲染」终态，不与水合共存
-    md.innerHTML = '';
-    void hydrateArticleMarkdown(md, body, path, () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(md));
-  }
+  hydrateActiveClipBody(a, body);
 }
 
 /** 目录事件失效正文缓存（enh 包 3；index.ts registerAutoRefresh 调用） */
@@ -1337,8 +1378,23 @@ function renderMobDetail(): void {
     mobSaveBtnEl.classList.toggle('saved', saved);
     mobSaveBtnEl.textContent = saved ? '已存' : '存为剪藏';
   }
-  const mdBody = a.origin === 'news' ? transformBodyForRead(a, a.body) : '';
-  const note = a.body ? '' : (a.origin === 'clip' ? '剪藏笔记正文请在 Obsidian 中打开' : '正文已清空');
+  // 正文（issue 329 第三批 Bug A）：news 直用 body；clip 与桌面 renderReader 同源——
+  // clipBodyCache 有缓存即用（空正文 note=「（笔记暂无正文）」），未缓存显「正在读取」占位并
+  // kick loadClipBody 读盘后双端原位水合；旧占位语「请在 Obsidian 中打开」退役（已收剪藏移动详情与未读条目一样可读）
+  let mdBody = '';
+  let note = '';
+  if (a.origin === 'clip') {
+    const cached = a.notePath ? clipBodyCache.get(a.notePath) : undefined;
+    if (cached !== undefined) {
+      mdBody = cached;
+      if (!mdBody) note = '（笔记暂无正文）';
+    } else {
+      note = '正在读取剪藏正文…';
+    }
+  } else {
+    mdBody = transformBodyForRead(a, a.body);
+    if (!mdBody) note = '正文已清空';
+  }
   // C13：按 id 查——mobItemOrder 是快照重建的实例、M.cur 来自 queryBySource 新建实例，indexOf 身份失配
   const idx = mobItemOrder.findIndex((x) => x.id === a.id);
   const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : '';
@@ -1351,6 +1407,7 @@ function renderMobDetail(): void {
   if (mdEl && mdBody) {
     void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || '', () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
   }
+  if (a.origin === 'clip') void loadClipBody(a); // 缓存未命中时读盘，完成后 hydrateActiveClipBody 原位水合
 }
 
 // ================= 划选工具框（issue 329 / ADR-0144：桌面/移动同套） =================
