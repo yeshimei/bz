@@ -1,4 +1,4 @@
-/* 源指纹 820cab70e3294862 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a687f111824efbf3 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -19253,6 +19253,9 @@ ${c.trim()}
     const base = String(notePath || "").split("/").pop() || "";
     return base.replace(/\.md$/i, "") || String(notePath || "");
   }
+  function linkAliasText(s) {
+    return String(s || "").replace(/\]\]/g, "] ]");
+  }
   function aliasLink(notePath, find) {
     return `[[${noteBasename(notePath)}|${find}]]`;
   }
@@ -20878,7 +20881,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     const imageLines = imagePaths.map((p, i) => {
       var _a3, _b3;
       const desc = String((_b3 = (_a3 = images[i]) == null ? void 0 : _a3.desc) != null ? _b3 : "").trim();
-      return desc ? `![[${p}|${desc}]]` : `![[${p}]]`;
+      return desc ? `![[${p}|${String(desc).replace(/\]\]/g, "] ]")}]]` : `![[${p}]]`;
     });
     const body = [fm.join("\n"), summary, ...imageLines].filter(Boolean).join("\n\n");
     return writeUniqueNote(dir, name, body);
@@ -25748,13 +25751,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.createAddDialog();
           this.createTermUI();
           this.onKeydown = (e) => {
+            var _a2;
             if (e.key !== "Escape") return;
             if (this.termPopup && this.termPopup.style.display === "flex") this.requestTermClose();
             else if (this.addPopup && this.addPopup.style.display === "flex") this.requestAddClose();
             else if (this.videoPopup && this.videoPopup.style.display === "flex") {
               if (this.videoView === "history") this.switchVideoView("tasks");
               else this.hideVideo();
-            } else if (this.popup && this.popup.style.display === "flex") this.hideMain();
+            } else if ((_a2 = this.previewHostEl) == null ? void 0 : _a2.isConnected) this.closeSheet();
+            else if (this.popup && this.popup.style.display === "flex") this.hideMain();
           };
           document.addEventListener("keydown", this.onKeydown);
         }
@@ -28356,13 +28361,23 @@ ${String(blockText != null ? blockText : "").trim()}`);
                 images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || "png", desc: String(im.desc || "").trim() }))
               });
               emitDomainEvent("knowledge:tasks", { kind: "image-generated", title, notePath: path });
-              await this.commitEntryLinks(path);
+              try {
+                await this.commitEntryLinks(path);
+              } catch (le) {
+                console.warn("[knowledge] 关联写入失败（笔记已落盘）", le);
+                notice("笔记已写入，但关联写入失败", "warning");
+              }
               this.clearEntryImage();
               notice("已生成图版文献笔记：" + title, "success");
             } else {
               path = mode === "passage" ? await generatePassageNote({ title, summary, domain, source: source2 }) : await generateTermNote({ term, summary, domain, source: source2 });
               emitDomainEvent("knowledge:tasks", mode === "passage" ? { kind: "passage-generated", title, notePath: path } : { kind: "term-generated", term, title: term, notePath: path });
-              await this.commitEntryLinks(path);
+              try {
+                await this.commitEntryLinks(path);
+              } catch (le) {
+                console.warn("[knowledge] 关联写入失败（笔记已落盘）", le);
+                notice("笔记已写入，但关联写入失败", "warning");
+              }
               notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
             }
             this.hideTermEntry();
@@ -28792,7 +28807,7 @@ ${body}`;
     try {
       const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
       if (typeof mod.upgradeNoteSourceInternal !== "function") return;
-      const link = `[[${clipPath}|${title}]]`;
+      const link = `[[${clipPath}|${linkAliasText(title)}]]`;
       for (const notePath of upgrades) {
         try {
           await mod.upgradeNoteSourceInternal(app, notePath, link);
@@ -29922,6 +29937,8 @@ ${body}`;
     if (ok !== "ok") return;
     const rawBefore = { ...a.raw || {} };
     await flowDeleteNews(a);
+    void clearArticleTracking(a.id).catch(() => {
+    });
     notifyUndo(`已删除条目「${a.title}」`, () => void undoDeleteNews(rawBefore));
     await refreshAfterAction();
   }
@@ -29953,6 +29970,8 @@ ${body}`;
         }
         await getApp().vault.trash(note.file, true);
         clipBodyCache.delete(path);
+        void clearArticleTracking(a.id).catch(() => {
+        });
         notifyUndo(`已删除剪藏「${a.title}」（已移入系统回收站）`, () => void undoTrashClip(path, content));
         await refreshAfterAction();
       } catch (e) {
@@ -29995,7 +30014,7 @@ ${body}`;
       M5.cur = flat.find((x) => x.id === prevId) || M5.cur;
     } else if (flat.length) {
       M5.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!M5.cur && M5.cur.id !== prevId;
+      advanced = !!prevId && !!M5.cur && M5.cur.id !== prevId;
     } else {
       M5.cur = null;
     }
@@ -30284,8 +30303,9 @@ ${body}`;
     imgSnap = { articleId: a.id, src };
     selSnap = null;
     const bar = ensureSelBar();
+    const localImg = !/^https?:/i.test(src);
     bar.innerHTML = `
-    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="save-img" title="下载图片到剪藏图片文件夹">保存图片</button>
+    ${localImg ? "" : '<button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="save-img" title="下载图片到剪藏图片文件夹">保存图片</button>'}
     <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="img-note" title="存为知识盒图版（读图成文）">存为图版</button>`;
     bar.style.display = "flex";
     const r = typeof imgEl.getBoundingClientRect === "function" ? imgEl.getBoundingClientRect() : null;
@@ -30410,7 +30430,7 @@ ${body}`;
     try {
       const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
       if (typeof mod.upgradeNoteSourceInternal !== "function") return;
-      await mod.upgradeNoteSourceInternal(getApp(), notePath, `[[${a.notePath}|${a.title}]]`);
+      await mod.upgradeNoteSourceInternal(getApp(), notePath, `[[${a.notePath}|${linkAliasText(a.title)}]]`);
     } catch (e) {
       console.warn("[剪藏本] 升级文献来源失败（静默接受）", e);
     }

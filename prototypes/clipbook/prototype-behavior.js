@@ -1,4 +1,4 @@
-/* 源指纹 acc755b87943e4fa · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9b3d75140f029a0c · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -6222,6 +6222,9 @@ ${c.trim()}
     const base = String(notePath || "").split("/").pop() || "";
     return base.replace(/\.md$/i, "") || String(notePath || "");
   }
+  function linkAliasText(s) {
+    return String(s || "").replace(/\]\]/g, "] ]");
+  }
   function aliasLink(notePath, find) {
     return `[[${noteBasename(notePath)}|${find}]]`;
   }
@@ -8992,7 +8995,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     const imageLines = imagePaths.map((p, i) => {
       var _a2, _b2;
       const desc = String((_b2 = (_a2 = images[i]) == null ? void 0 : _a2.desc) != null ? _b2 : "").trim();
-      return desc ? `![[${p}|${desc}]]` : `![[${p}]]`;
+      return desc ? `![[${p}|${String(desc).replace(/\]\]/g, "] ]")}]]` : `![[${p}]]`;
     });
     const body = [fm.join("\n"), summary, ...imageLines].filter(Boolean).join("\n\n");
     return writeUniqueNote(dir, name, body);
@@ -13596,13 +13599,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.createAddDialog();
           this.createTermUI();
           this.onKeydown = (e) => {
+            var _a;
             if (e.key !== "Escape") return;
             if (this.termPopup && this.termPopup.style.display === "flex") this.requestTermClose();
             else if (this.addPopup && this.addPopup.style.display === "flex") this.requestAddClose();
             else if (this.videoPopup && this.videoPopup.style.display === "flex") {
               if (this.videoView === "history") this.switchVideoView("tasks");
               else this.hideVideo();
-            } else if (this.popup && this.popup.style.display === "flex") this.hideMain();
+            } else if ((_a = this.previewHostEl) == null ? void 0 : _a.isConnected) this.closeSheet();
+            else if (this.popup && this.popup.style.display === "flex") this.hideMain();
           };
           document.addEventListener("keydown", this.onKeydown);
         }
@@ -16204,13 +16209,23 @@ ${String(blockText != null ? blockText : "").trim()}`);
                 images: images.map((im) => ({ bytes: im.bytes, ext: imageExtOfMime(im.mime) || "png", desc: String(im.desc || "").trim() }))
               });
               emitDomainEvent("knowledge:tasks", { kind: "image-generated", title, notePath: path });
-              await this.commitEntryLinks(path);
+              try {
+                await this.commitEntryLinks(path);
+              } catch (le) {
+                console.warn("[knowledge] 关联写入失败（笔记已落盘）", le);
+                notice("笔记已写入，但关联写入失败", "warning");
+              }
               this.clearEntryImage();
               notice("已生成图版文献笔记：" + title, "success");
             } else {
               path = mode === "passage" ? await generatePassageNote({ title, summary, domain, source: source2 }) : await generateTermNote({ term, summary, domain, source: source2 });
               emitDomainEvent("knowledge:tasks", mode === "passage" ? { kind: "passage-generated", title, notePath: path } : { kind: "term-generated", term, title: term, notePath: path });
-              await this.commitEntryLinks(path);
+              try {
+                await this.commitEntryLinks(path);
+              } catch (le) {
+                console.warn("[knowledge] 关联写入失败（笔记已落盘）", le);
+                notice("笔记已写入，但关联写入失败", "warning");
+              }
               notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
             }
             this.hideTermEntry();
@@ -16640,7 +16655,7 @@ ${body}`;
     try {
       const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
       if (typeof mod.upgradeNoteSourceInternal !== "function") return;
-      const link = `[[${clipPath}|${title}]]`;
+      const link = `[[${clipPath}|${linkAliasText(title)}]]`;
       for (const notePath of upgrades) {
         try {
           await mod.upgradeNoteSourceInternal(app, notePath, link);
@@ -21668,6 +21683,8 @@ ${bodyText.substring(0, 6e3)}`;
     if (ok !== "ok") return;
     const rawBefore = { ...a.raw || {} };
     await flowDeleteNews(a);
+    void clearArticleTracking(a.id).catch(() => {
+    });
     notifyUndo(`已删除条目「${a.title}」`, () => void undoDeleteNews(rawBefore));
     await refreshAfterAction();
   }
@@ -21699,6 +21716,8 @@ ${bodyText.substring(0, 6e3)}`;
         }
         await getApp().vault.trash(note.file, true);
         clipBodyCache.delete(path);
+        void clearArticleTracking(a.id).catch(() => {
+        });
         notifyUndo(`已删除剪藏「${a.title}」（已移入系统回收站）`, () => void undoTrashClip(path, content));
         await refreshAfterAction();
       } catch (e) {
@@ -21741,7 +21760,7 @@ ${bodyText.substring(0, 6e3)}`;
       M.cur = flat.find((x) => x.id === prevId) || M.cur;
     } else if (flat.length) {
       M.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!M.cur && M.cur.id !== prevId;
+      advanced = !!prevId && !!M.cur && M.cur.id !== prevId;
     } else {
       M.cur = null;
     }
@@ -22030,8 +22049,9 @@ ${bodyText.substring(0, 6e3)}`;
     imgSnap = { articleId: a.id, src };
     selSnap = null;
     const bar = ensureSelBar();
+    const localImg = !/^https?:/i.test(src);
     bar.innerHTML = `
-    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="save-img" title="下载图片到剪藏图片文件夹">保存图片</button>
+    ${localImg ? "" : '<button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="save-img" title="下载图片到剪藏图片文件夹">保存图片</button>'}
     <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="img-note" title="存为知识盒图版（读图成文）">存为图版</button>`;
     bar.style.display = "flex";
     const r = typeof imgEl.getBoundingClientRect === "function" ? imgEl.getBoundingClientRect() : null;
@@ -22156,7 +22176,7 @@ ${bodyText.substring(0, 6e3)}`;
     try {
       const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
       if (typeof mod.upgradeNoteSourceInternal !== "function") return;
-      await mod.upgradeNoteSourceInternal(getApp(), notePath, `[[${a.notePath}|${a.title}]]`);
+      await mod.upgradeNoteSourceInternal(getApp(), notePath, `[[${a.notePath}|${linkAliasText(a.title)}]]`);
     } catch (e) {
       console.warn("[剪藏本] 升级文献来源失败（静默接受）", e);
     }
