@@ -1191,17 +1191,29 @@ async function copyText(text: string, okMsg: string): Promise<void> {
  * 仅条目真消失（删除/剪藏目录删除）才补位到同位置下一条。
  */
 async function refreshAfterAction(): Promise<void> {
-  const prevIdx = M.cur ? deskFlat().findIndex((x) => x.id === M.cur!.id) : -1;
+  const prevId = M.cur?.id;
+  const prevIdx = M.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
   await readNewsAndSidecar();
   const flat = deskFlat();
-  if (M.cur && flat.some((x) => x.id === M.cur!.id)) {
-    M.cur = flat.find((x) => x.id === M.cur!.id) || M.cur; // 保留原位（可能 st 已变，刷新引用）
+  let advanced = false;
+  if (prevId && flat.some((x) => x.id === prevId)) {
+    M.cur = flat.find((x) => x.id === prevId) || M.cur; // 保留原位（可能 st 已变，刷新引用）
   } else if (flat.length) {
+    // 当前条目已出收件流（保存/标读/删除）→ 自动前进到落位邻位（「处理后前进下一篇」动线）
     M.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
+    advanced = !!M.cur && M.cur.id !== prevId;
   } else {
     M.cur = null;
   }
+  // memo zrurtk：自动前进的「下一篇」也是被打开的文章——补齐换篇语义（打开即已读），
+  // 此前只换引用不走 selectArticle，导致下一篇不标已读、滚动位还停在前一篇的位置
+  if (advanced && M.cur) markReadOnOpen(M.cur);
   renderAll();
+  if (advanced) {
+    resetReadScroll();
+    const mobBody = mobDetailEl ? (mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement | null) : null;
+    if (M.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
+  }
 }
 
 // ================= 面板尺寸记忆（enh 包 8 → uiResizable persist，ADR-0094） =================
