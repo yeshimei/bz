@@ -51,7 +51,6 @@ import {
   findHeadingText,
   generateSuggestions,
   inRecallScope,
-  isWordAnchor,
   locateInText,
   markSuggestion,
   mergeSuggestions,
@@ -391,14 +390,7 @@ describe('suggestionLink（三形态落链接）与 blockIdFor / ensureSuggestio
   });
 });
 
-describe('词级 / 表格行锚点：别名替换（不做句中追加）', () => {
-  it('≤12 字的锚点是词级；含句读或超长不是', () => {
-    expect(isWordAnchor({ from: 0, to: 4, text: '证实偏差' })).toBe(true);
-    expect(isWordAnchor({ from: 0, to: 20, text: '这是一段很长的完整句子内容超过十二字' })).toBe(false);
-    expect(isWordAnchor({ from: 0, to: 2, text: '' })).toBe(false);
-    expect(isWordAnchor({ from: 0, to: 8, text: '表格里的长行' }, true)).toBe(true); // 表格行强制走替换
-  });
-
+describe('锚点别名套句：原地换成 `[[目标|原句]]`（不做句中追加）', () => {
   it('原词原地换成 `[[目标|原词]]`；带子路径也认；已是双链则原样（幂等）', () => {
     const body = '这里谈到证实偏差的危害。';
     expect(replaceAnchorWithAlias(body, { from: 4, to: 8, text: '证实偏差' }, T1)).toBe(
@@ -411,6 +403,28 @@ describe('词级 / 表格行锚点：别名替换（不做句中追加）', () =
       `[[${T1.replace(/\.md$/, '')}]]`
     );
     expect(replaceAnchorWithAlias(body, { from: 0, to: 4, text: '不存在的词' }, T1)).toBeNull();
+  });
+
+  it('2026-09-15 口径扩到**整句**：长句锚点也原地套住（句读留在链接外）', () => {
+    const sentence = '人们在算命时倾向于认为模糊的人格描述精准对应自己';
+    const body = `${sentence}。后面还有别的句子。`;
+    expect(replaceAnchorWithAlias(body, { from: 0, to: sentence.length, text: sentence }, T1)).toBe(
+      `[[${T1.replace(/\.md$/, '')}|${sentence}]]。后面还有别的句子。`
+    );
+  });
+
+  it('锚点句里含双链：不套（否则整段被吞成一条链接），返回 null 退回句中追加', () => {
+    // 锚点文本是**清洗后**的（双链已变显示文本），正文里仍是 `[[…]]`：
+    // ② 级（去空白/markdown）因 `flattenForMatch` 保留方括号而对不上 → 落到 ③ 级段落兜底，
+    // 命中区间是整段——原地替换会把三条列表项压成一条链接（2026-09-15 审查发现）。
+    const body = ['## 分期', '', '- N1/N2 是浅睡，[[睡眠纺锤波]] 出现在 N2', '- N3 又叫慢波睡眠', ''].join('\n');
+    expect(replaceAnchorWithAlias(body, { from: 0, to: 23, text: 'N1/N2 是浅睡，睡眠纺锤波 出现在 N2' }, T1)).toBeNull();
+    expect(body).toContain('- N3 又叫慢波睡眠'); // 原样未动（纯函数不改入参，这里只是把意图写清）
+  });
+
+  it('锚点里的单个方括号不拦（`[1] 脚注` 这类照套）；只有 `[[`/`]]` 才退', () => {
+    const body = '结论见 [1] 脚注那一条。';
+    expect(replaceAnchorWithAlias(body, { from: 0, to: 6, text: '结论见 [1] 脚注' }, T1)).toContain(`[[${T1.replace(/\.md$/, '')}|结论见 [1] 脚注]]`);
   });
 });
 

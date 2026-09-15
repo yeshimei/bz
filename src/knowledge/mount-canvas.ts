@@ -33,6 +33,7 @@
 import { Component, MarkdownRenderer } from 'obsidian';
 import { getApp } from '../core/app';
 import { escManager, type EscHandle } from '../core/esc-manager';
+import { openFlowDialog } from '../core/flow-dialog';
 import { isMobileEnv } from '../core/mobile';
 import { notice, type NoticeType } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
@@ -45,7 +46,6 @@ import { routeEdges } from './mount-route';
 import {
   ensureSuggestionBlockId,
   generateSuggestions,
-  isWordAnchor,
   markSuggestion,
   mergeSuggestions,
   replaceAnchorWithAlias,
@@ -215,6 +215,8 @@ interface CanvasState {
   progressText: HTMLElement | null;
   /** 计时（秒） */
   progressTimer: HTMLElement | null;
+  /** 空板说明（画布上什么都没画时的一行话：空卡首开 / 重新生成，见 showProgress） */
+  progressHint: HTMLElement | null;
   timerId: ReturnType<typeof setInterval> | null;
   startedAt: number;
 }
@@ -242,8 +244,11 @@ export function clampMountScale(scale: number): number {
   return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, scale));
 }
 
-/** 建议状态文案（顶栏；`generating` 由渲染层自己管，不会被 generateSuggestions 返回） */
-export function mountStatusText(status: SuggestStatus): string {
+/**
+ * 建议状态文案（顶栏；`generating` 由渲染层自己管，不会被 generateSuggestions 返回）。
+ * `boardEmpty` = 这一轮生成期间画布是空的（空卡首开 / 重新生成）：此时别再说「真实双链已上屏」。
+ */
+export function mountStatusText(status: SuggestStatus, boardEmpty = false): string {
   switch (status) {
     case 'cached':
       return '已缓存建议';
@@ -259,7 +264,7 @@ export function mountStatusText(status: SuggestStatus): string {
       return 'AI 未给出可用建议 · 只画双链（可点「重新生成」）';
     // 321 起建议是**后台并入**：真实双链已经上屏，这句话不再是「等建议齐再开」
     default:
-      return '生成中 · 真实双链已上屏';
+      return boardEmpty ? '生成中 · 建议就绪后一起上屏' : '生成中 · 真实双链已上屏';
   }
 }
 
@@ -471,6 +476,7 @@ function buildShell(): CanvasState | null {
       <div class="bz-kb-mt-loading" id="bz-kb-mt-loading" style="display:none">
         <div class="bz-kb-mt-pbar"><i class="bz-kb-mt-pbar-fill" id="bz-kb-mt-pbar"></i></div>
         <div class="bz-kb-mt-pline"><span class="bz-kb-mt-pstage" id="bz-kb-mt-pstage">准备生成建议</span><span class="bz-kb-mt-ptimer" id="bz-kb-mt-ptimer">0s</span></div>
+        <div class="bz-kb-mt-pempty" id="bz-kb-mt-pempty"></div>
       </div>
     </div>
     <div class="bz-kb-mt-zoomer">
@@ -525,6 +531,7 @@ function buildShell(): CanvasState | null {
     progressBar: win.querySelector<HTMLElement>('#bz-kb-mt-pbar'),
     progressText: win.querySelector<HTMLElement>('#bz-kb-mt-pstage'),
     progressTimer: win.querySelector<HTMLElement>('#bz-kb-mt-ptimer'),
+    progressHint: win.querySelector<HTMLElement>('#bz-kb-mt-pempty'),
     timerId: null,
     startedAt: 0,
   };
@@ -540,7 +547,7 @@ function bindShellEvents(st: CanvasState): void {
     if (!btn) return;
     const act = btn.getAttribute('data-mt-act') || '';
     if (act === 'close') closeMountTree();
-    else if (act === 'refresh') void reload(true);
+    else if (act === 'refresh') void confirmRefresh();
     else if (act === 'zoom-in') zoomAtCenter(ZOOM_STEP);
     else if (act === 'zoom-out') zoomAtCenter(1 / ZOOM_STEP);
     else if (act === 'zoom-fit') fit();
@@ -807,6 +814,29 @@ export async function refreshMountTree(): Promise<void> {
     notice('重跑挂载建议：先打开一张挂载树白板', 'info');
     return;
   }
+  await confirmRefresh();
+}
+
+/**
+ * 「重新生成」二次确认（2026-09-15 用户拍板）：一次重跑是 3 轮 AI 调用（缓存外）+ 几十秒，
+ * 踩空代价高，且会把「已看过的建议」整批换掉——先问一句再跑。顶栏按钮与命令走同一处。
+ * 等确认期间白板可能被关掉（模态不挡 ESC/点遮罩关板），回来先复查还在不在。
+ */
+async function confirmRefresh(): Promise<void> {
+  const st = state;
+  if (!st || !mountTreeOpen()) return;
+  const v = await openFlowDialog({
+    title: '重新生成挂载建议',
+    message: '会重跑一遍 AI 建议（查询官 → 检索 → 采纳官 → 定位官），大约半分钟到一分钟；已在正文里的双链不受影响，已固定 / 已取消的不会再推。',
+    // 弹窗挂 body，必须自带 'kb'（token 作用域）+ 'bz-kb-flow-dialog'（域皮），同 ui.ts 的几处确认框
+    className: 'kb bz-kb-flow-dialog',
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '重新生成', value: 'ok' },
+    ],
+  });
+  if (v !== 'ok') return;
+  if (state !== st || !mountTreeOpen()) return; // 等确认期间白板被关掉：不再替它跑一轮 AI
   await reload(true);
 }
 
@@ -844,51 +874,82 @@ async function load(st: CanvasState, force: boolean): Promise<void> {
   } catch {
     tree = { root: path, direction, nodes: [], edges: [] };
   }
-  if (token !== st.token) return;
-  // 渐进呈现第一步：树建完**立即**画真实双链（不等建议），用户秒级看到新卡
-  st.tree = tree;
-  await renderCanvas(st);
-  renderTop(st);
-  fit();
-  if (token !== st.token) return;
-
-  // 建议链路：开关关闭就不调（顶栏明说）
+  // 建议链路：开关关闭就不调（顶栏明说）。要在画之前知道——它决定这一轮画布先画什么（见 waitFirst）。
   const autoOn = (tryGetSettings() as { knowledgeMountAutoSuggest?: boolean } | null)?.knowledgeMountAutoSuggest !== false;
+  // 「空卡」= 除主卡外一个实体挂载都没有（同名文献吸附不算挂载）。
+  // 进度条在转的时候画布不留旧内容（2026-09-15 用户拍板）：
+  //   空卡 → 画了也只有孤零零一张主卡，不像白板，也容易被读成「结果就这些」；
+  //   重新生成 → 板上还挂着上一轮看过的东西，点了像没反应。
+  // 两种情况都先空板 + 进度，建议回来（或返回空）再一次性画全。
+  const bare = tree.nodes.filter((n) => !n.attached).length <= 1;
+  const waitFirst = autoOn && (bare || force);
+  if (token !== st.token) return;
+  st.tree = tree;
+  if (waitFirst) {
+    renderTop(st); // 顶栏/面包屑照常切到当前主卡；画布留空（下面 showProgress 给一行说明）
+  } else {
+    // 渐进呈现第一步：树建完**立即**画真实双链（不等建议），用户秒级看到新卡
+    await renderCanvas(st);
+    renderTop(st);
+    fit();
+  }
+  if (token !== st.token) return;
   st.loading = false;
   if (!autoOn) {
     hideProgress(st);
     renderTop(st);
     return;
   }
-  showProgress(st);
+  // 空卡上主动点「重新生成」时按重跑说（不提「还没有挂载」，那是首开口径）
+  showProgress(st, waitFirst ? (force ? EMPTY_HINT_REFRESH : EMPTY_HINT_BARE) : '');
   let run: SuggestRun | null = null;
   try {
     run = await runSuggest(st, path, ctx, force, (p) => {
       if (token === st.token) setProgress(st, p);
     });
-  } finally {
-    if (token === st.token) hideProgress(st);
+  } catch {
+    run = null; // 建议链路异常按「没结果」处理，进度照常收（不能留着常驻「生成中」）
   }
-  if (token !== st.token) return;
+  if (token !== st.token) return; // 在途作废：进度归新的那一轮管，这里不碰
   st.run = run;
-  if (run && run.suggestions.length) {
-    for (const s of run.suggestions) {
-      if (s?.target) st.ghosts.set(suggestionId(s), s);
+  try {
+    if (run && run.suggestions.length) {
+      for (const s of run.suggestions) {
+        if (s?.target) st.ghosts.set(suggestionId(s), s);
+      }
+      st.tree = mergeSuggestions(tree, run);
+      // 渐进呈现第二步：建议就绪后并入幽灵节点重画（保留用户已调过的缩放/平移，不重新 fit）
+      await renderCanvas(st);
+      if (waitFirst) fit(); // 空板首画：画布之前是空的，得摆一次位置
+    } else if (waitFirst) {
+      // 建议没出来（降级 / 无关联）：空板不能再空着——照实画出来（含真实双链）
+      st.tree = tree;
+      await renderCanvas(st);
+      fit();
+    } else {
+      st.tree = tree;
     }
-    st.tree = mergeSuggestions(tree, run);
-    // 渐进呈现第二步：建议就绪后并入幽灵节点重画（保留用户已调过的缩放/平移，不重新 fit）
-    await renderCanvas(st);
-  } else {
-    st.tree = tree;
+  } finally {
+    // 收进度放在**画完之后**（先收再画会留一帧「板子空着、进度也没了」）；渲染抛错也要收
+    if (token === st.token) hideProgress(st);
   }
   renderTop(st);
 }
 
 /* ---------- 进度条（issue 322：AI 进度可视化） ---------- */
 
-/** 起进度：遮罩显示 + 计时起跑（只在真的要跑建议时才调，避免「一闪而过」） */
-function showProgress(st: CanvasState): void {
+/** 空板说明（画布上什么都没画时，得说一句不是坏了）：空卡首开 / 重新生成 */
+const EMPTY_HINT_BARE = '这张卡还没有挂载——先看 AI 能不能找到关联';
+const EMPTY_HINT_REFRESH = '重新生成中——建议回来连同已有的挂载一起显示';
+
+/**
+ * 起进度：遮罩显示 + 计时起跑（只在真的要跑建议时才调，避免「一闪而过」）。
+ * `emptyHint` 非空 = 画布此刻是空的（还没画任何节点），多一行说明。
+ */
+function showProgress(st: CanvasState, emptyHint = ''): void {
   st.loading = true;
+  if (st.progressHint) st.progressHint.textContent = emptyHint;
+  st.loadingEl.classList.toggle('is-bare', !!emptyHint);
   st.loadingEl.style.display = '';
   st.startedAt = Date.now();
   if (st.progressBar) st.progressBar.style.width = '4%';
@@ -995,7 +1056,8 @@ function renderTop(st: CanvasState): void {
   const culled = st.sizes.size ? countCulled(st) : 0;
   let text: string;
   let extra = '';
-  if (st.loading) text = mountStatusText('generating');
+  // 画布上有没有卡 = st.cards（clearCanvas 清空、renderCanvas 填）——空板态顶栏不能再说「已上屏」
+  if (st.loading) text = mountStatusText('generating', st.cards.size === 0);
   else if (st.run) text = mountStatusText(st.run.status);
   else text = '本卡建议未跑（自动建议已关闭）';
   if (!st.loading && culled > 0) extra = `<span class="bz-kb-mt-kind">· 图大，已按 ${LAYOUT_PARAMS.MAX_NODES} 张封顶</span>`;
@@ -1399,13 +1461,13 @@ function placeAnchors(
     const bodyEl = cardEl.querySelector<HTMLElement>('.bz-kb-mt-body');
     if (!bodyEl) continue;
     const anchor = st.tree.nodes.find((n) => n.id === e.to)?.anchor ?? null;
-    const point = measureDot(st, cardEl, bodyEl, anchor, key, colorKind, cursor);
+    const point = measureDot(st, cardEl, bodyEl, anchor, key, colorKind, cursor, !!e.suggested);
     if (point) out.set(id, point);
   }
   return out;
 }
 
-/** 插一枚锚点圆点（正文里找不到锚点文本就不插，边退回盒式起点兜底） */
+/** 插一枚锚点圆点（正文里找不到锚点文本就不插，边退回盒式起点兜底）；`highlight` = AI 建议（虚线边）时整句加高亮 */
 function measureDot(
   st: CanvasState,
   cardEl: HTMLElement,
@@ -1414,14 +1476,16 @@ function measureDot(
   key: string,
   colorKind: MountKind,
   cursor: Map<HTMLElement, number>,
+  highlight = false,
 ): { x: number; y: number } | null {
   if (!anchor) return null;
   const needles = anchorNeedles(anchor);
   if (needles.length === 0) return null;
-  const dot = insertAnchorDot(bodyEl, needles, key, cursor.get(bodyEl) ?? 0);
+  const color = mountKindColor(colorKind);
+  const dot = insertAnchorDot(bodyEl, needles, key, cursor.get(bodyEl) ?? 0, highlight, color);
   if (!dot) return null;
   cursor.set(bodyEl, Number(dot.getAttribute('data-mt-at') || 0));
-  dot.style.color = mountKindColor(colorKind);
+  dot.style.color = color;
   const nodeId = cardEl.getAttribute('data-mt-id') || '';
   const base = st.pos[nodeId];
   const size = st.sizes.get(nodeId);
@@ -1434,27 +1498,63 @@ function measureDot(
   };
 }
 
-/** 在正文里定位锚点文本并插入圆点；命中返回圆点元素（`data-mt-at` = 游标位置，供同卡下一条接着找） */
+/**
+ * 在正文里定位锚点文本并插入圆点；命中返回圆点元素（`data-mt-at` = 游标位置，供同卡下一条接着找）。
+ * `highlight` = AI 建议：把锚点那句话**整个包进** `.bz-kb-mt-anch-hl`（虚线底纹），圆点落在句末——
+ * 用户要在正文里一眼看见「AI 说的是哪一句」（2026-09-15 报障：建议没有对应到句子，只有一个 7px 圆点）。
+ * 高亮与圆点同带 `data-mt-edge`：悬停这句 = 悬停那条虚线边（与实体双链的联动同款）。
+ * `color` = 目标形态色（与这条边的线色一致；圆点与底纹同色，不再借用别处的语义色）。
+ *
+ * 高亮要处理**跨文本节点**的锚点句：句子里嵌着 `[[双链]]`/`![[嵌入]]` 时，渲染后原句被切成
+ * 「文本 + <a> + 文本」多个节点，只在命中起点那个节点里包 span 会只高亮半截、圆点落在句中。
+ * 故按命中区间 `[at, at+len)` 覆盖到的每个文本节点各包一层（链接元素保持原样，半截的切出来），
+ * 圆点挂到最后一个 span 末尾。
+ */
 function insertAnchorDot(
   bodyEl: HTMLElement,
   needles: string[],
   key: string,
   from: number,
+  highlight = false,
+  color = '',
 ): HTMLElement | null {
   const idx = textIndexOf(bodyEl);
   const hit = locateInText(idx.text, needles, from);
   if (!hit) return null;
+  const dot = document.createElement('i');
+  dot.className = 'bz-kb-mt-anch';
+  dot.setAttribute('data-mt-edge', key);
+  dot.setAttribute('data-mt-at', String(hit.at + hit.len));
+  dot.setAttribute('title', highlight ? 'AI 建议的挂载点：这句挂到虚线那头' : '挂载点：这条线从这句话扯出');
+  if (highlight) {
+    const end = hit.at + hit.len;
+    const covered = idx.parts.filter((p) => p.start < end && p.start + p.node.data.length > hit.at);
+    if (covered.length === 0) return null;
+    let last: HTMLElement | null = null;
+    for (const p of covered) {
+      const start = Math.max(0, hit.at - p.start);
+      let node = p.node;
+      if (start > 0) node = node.splitText(start); // 起点在节点中间：切出后半段
+      const take = Math.min(node.data.length, end - (p.start + start));
+      if (take < node.data.length) node.splitText(take); // 尾巴切走，node 就是命中区间这一段
+      const span = document.createElement('span');
+      span.className = 'bz-kb-mt-anch-hl';
+      span.setAttribute('data-mt-edge', key);
+      span.setAttribute('data-mt-sug', '1');
+      if (color) span.style.color = color;
+      node.parentNode?.insertBefore(span, node);
+      span.appendChild(node);
+      last = span;
+    }
+    last?.appendChild(dot); // 圆点落在句末
+    return dot;
+  }
   const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
   if (!part) return null;
   const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
   const after = part.node.splitText(offset);
   const len = Math.min(hit.len, after.data.length);
   const tail = after.splitText(len);
-  const dot = document.createElement('i');
-  dot.className = 'bz-kb-mt-anch';
-  dot.setAttribute('data-mt-edge', key);
-  dot.setAttribute('data-mt-at', String(hit.at + hit.len));
-  dot.setAttribute('title', '挂载点：这条线从这句话扯出');
   after.parentNode?.insertBefore(dot, tail);
   return dot;
 }
@@ -1843,11 +1943,10 @@ async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<v
       if (!file) return;
       found = true;
       const text = await app.vault.read(file);
-      // 表格行锚点（清洗后仍残留 `|`）或词级锚点 → 别名替换；否则句中追加
-      const rowLike = String(ghost.anchor?.text ?? '').includes('|');
-      const aliasNext = isWordAnchor(ghost.anchor, rowLike)
-        ? replaceAnchorWithAlias(text, ghost.anchor, ghost.target, suggestionSubpath(shape))
-        : null;
+      // 别名套句优先（2026-09-15 用户拍板：固定 = 套住整句）：锚点那句原文**原地**换成
+      // `[[目标|原句]]`，句子读起来一字不变、整句可点。套不进去（原文对不上 / 含方括号或换行）
+      // 才退回句中追加（insertLinkAtAnchor 自带三级重定位与末尾兜底）。
+      const aliasNext = replaceAnchorWithAlias(text, ghost.anchor, ghost.target, suggestionSubpath(shape));
       if (aliasNext !== null) written = `[[${linkInner}|${anchorText}]]`;
       const next = aliasNext ?? insertLinkAtAnchor(text, ghost.anchor, linkInner);
       if (next !== text) {
