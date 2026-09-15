@@ -53,7 +53,7 @@ import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar } from './loader';
 import { readNewsData } from './news-data';
 import { writeClipNote } from './save';
-import { applyBodyTransforms, applyClipContentTransforms, findMarkdownSnippet, addArticleMark, addPendingSourceNote, type ClipMark } from './anchor';
+import { applyBodyTransforms, applyClipContentTransforms, findMarkdownSnippet, addArticleMark, addPendingSourceNote, clearArticleTracking, linkAliasText, type ClipMark } from './anchor';
 import { saveClipImage, fetchImageDataUrl } from './image-save';
 import {
   flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession,
@@ -1118,6 +1118,7 @@ async function deleteNewsItem(a: ClipArticle): Promise<void> {
   if (ok !== 'ok') return;
   const rawBefore = { ...(a.raw || {}) }; // 动作前快照（撤销插回 news.json 用）
   await flowDeleteNews(a);
+  void clearArticleTracking(a.id).catch(() => { /* 侧写残留无害，不阻断删除 */ });
   notifyUndo(`已删除条目「${a.title}」`, () => void undoDeleteNews(rawBefore));
   await refreshAfterAction();
 }
@@ -1149,6 +1150,7 @@ async function deleteClipNote(a: ClipArticle): Promise<void> {
       try { content = await getApp().vault.cachedRead(note.file); } catch (e) { /* 快照失败也继续删 */ }
       await getApp().vault.trash(note.file, true); // 系统回收站（enh 包 5：替代硬删除）
       clipBodyCache.delete(path);
+      void clearArticleTracking(a.id).catch(() => { /* 侧写残留无害，不阻断删除 */ });
       notifyUndo(`已删除剪藏「${a.title}」（已移入系统回收站）`, () => void undoTrashClip(path, content));
       await refreshAfterAction();
     } catch (e) {
@@ -1201,7 +1203,8 @@ async function refreshAfterAction(): Promise<void> {
   } else if (flat.length) {
     // 当前条目已出收件流（保存/标读/删除）→ 自动前进到落位邻位（「处理后前进下一篇」动线）
     M.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-    advanced = !!M.cur && M.cur.id !== prevId;
+    // prevId 为空（无当前篇，如撤销唯一条目后 refresh）只落引用不标读——「恢复原状」不被前进动线破坏
+    advanced = !!prevId && !!M.cur && M.cur.id !== prevId;
   } else {
     M.cur = null;
   }
@@ -1546,8 +1549,10 @@ function showImageSelBar(imgEl: HTMLImageElement): void {
   imgSnap = { articleId: a.id, src };
   selSnap = null;
   const bar = ensureSelBar();
+  // 已本地化的嵌入图（src 非 http）没有「保存」语义，不出该项防误点报网络错误（issue 329 评审）
+  const localImg = !/^https?:/i.test(src);
   bar.innerHTML = `
-    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="save-img" title="下载图片到剪藏图片文件夹">保存图片</button>
+    ${localImg ? '' : '<button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="save-img" title="下载图片到剪藏图片文件夹">保存图片</button>'}
     <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="img-note" title="存为知识盒图版（读图成文）">存为图版</button>`;
   bar.style.display = 'flex';
   const r = typeof imgEl.getBoundingClientRect === 'function' ? imgEl.getBoundingClientRect() : null;
@@ -1701,7 +1706,7 @@ async function upgradeSourceFor(notePath: string, a: ClipArticle): Promise<void>
   try {
     const mod: any = await import('../knowledge');
     if (typeof mod.upgradeNoteSourceInternal !== 'function') return;
-    await mod.upgradeNoteSourceInternal(getApp(), notePath, `[[${a.notePath}|${a.title}]]`);
+    await mod.upgradeNoteSourceInternal(getApp(), notePath, `[[${a.notePath}|${linkAliasText(a.title)}]]`);
   } catch (e) {
     console.warn('[剪藏本] 升级文献来源失败（静默接受）', e);
   }

@@ -651,6 +651,18 @@ describe('generateImageNote（图版文献：图片本体 + 五键 frontmatter +
     expect(content.indexOf('一张树的照片')).toBeLessThan(content.indexOf('![[文献盒/assets/窗外的树.png]]'));
   });
 
+  it('描述含 ]] 不破嵌入语法（评审修复：]] 插空格降级）', async () => {
+    const path = await generateImageNote({
+      title: '描述带双括号',
+      summary: '用户图注里带 wikilink 结束符',
+      images: [{ bytes: bytesOf(4), ext: 'png', desc: '见图]]否则截断' }],
+    });
+    const content = vault.files.get(path)!;
+    expect(content).toContain('![[文献盒/assets/描述带双括号.png|见图] ]否则截断]]');
+    // 全文恰好一对嵌入闭合（描述内的 ]] 已降级，无残文落正文）
+    expect(content.match(/\]\]/g)!.length).toBe(1);
+  });
+
   it('多图（issue 313）：逐张落盘 + 逐条嵌入，顺序与传入一致且全在文字之后', async () => {
     const path = await generateImageNote({
       title: '三张写生',
