@@ -41,7 +41,7 @@ import { mountCtx, orphanCards, refCounts } from './mount-data';
 import type { KnowledgeTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
 import { openMountTree } from './mount-canvas';
-import { backfillNotes, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, resolveImageDir, summarizeTermSummary } from './note-gen';
+import { backfillNotes, findDuplicateTermNote, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, resolveImageDir, summarizeTermSummary } from './note-gen';
 import { canonicalVideoUrl, cleanSourceTitle, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, type TermSource } from './source';
 import { fetchCheckedQualities, fetchVideoMeta, needsBvidRepair, parseBvid, resolveVideo, type ResolvedVideo, type VideoMeta } from './video-meta';
 import { RangeBar } from './range-bar';
@@ -2319,6 +2319,7 @@ export class UIManager {
         <span class="bz-lit-term-meta-k">名词</span>
         <input id="lit-term-input" type="text" autocomplete="off">
       </div>
+      <div id="lit-term-dup" class="bz-lit-dup-hint bz-lit-term-only" style="display:none;"></div>
       <div class="bz-lit-term-row bz-lit-passage-only">
         <span class="bz-lit-term-meta-k">段落</span>
         <textarea id="lit-passage-input" rows="6" placeholder="粘贴一段文字…"></textarea>
@@ -2371,6 +2372,8 @@ export class UIManager {
     q<HTMLInputElement>(popup, '#lit-term-input')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); void this.onTermGenerate(); }
     });
+    // 名词重名实时提醒（ADR-0143/issue 328）：输入即查，命中内联提示、改名即消；只提醒不阻断（确认写入再硬拦一道）
+    q<HTMLInputElement>(popup, '#lit-term-input')?.addEventListener('input', () => this.refreshTermDupHint());
     // 段落是多行输入：回车用于换行，Ctrl/Cmd + Enter 才触发生成
     q<HTMLTextAreaElement>(popup, '#lit-passage-input')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void this.onTermGenerate(); }
@@ -2510,6 +2513,25 @@ export class UIManager {
     const focusEl: HTMLElement | null = mode === 'passage' ? area : mode === 'image' ? zone : input;
     if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
     if (mode === 'term' && value) void this.onTermGenerate();
+    this.resetTermDupHint(); // 全新态：输入已清空，重名提示一并归位（ADR-0143/issue 328）
+  }
+
+  /** 名词重名实时提醒（ADR-0143/issue 328）：同步查 vault（getAbstractFileByPath 内存索引，无需防抖），
+   *  命中内联显示既有笔记名，改名即消；仅提醒不阻断、不锁按钮。 */
+  private refreshTermDupHint(): void {
+    if (!this.termPopup) return;
+    const hint = q<HTMLElement>(this.termPopup, '#lit-term-dup');
+    if (!hint) return;
+    const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
+    const dup = term ? findDuplicateTermNote(term) : null;
+    hint.textContent = dup ? '已存在同名文献笔记：' + String(dup).split('/').pop()?.replace(/\.md$/, '') : '';
+    hint.style.display = dup ? '' : 'none';
+  }
+
+  /** 重名提醒复位（开面板 / 关面板即全新态） */
+  private resetTermDupHint(): void {
+    const hint = this.termPopup ? q<HTMLElement>(this.termPopup, '#lit-term-dup') : null;
+    if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
   }
 
   // ---------- 图版图片收发（issue 312；多图 issue 313） ----------
@@ -3018,6 +3040,10 @@ export class UIManager {
     } else {
       term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
       if (!term) { notice('请输入名词', 'error'); return; }
+      // 名词重名硬拦截（ADR-0143/issue 328）：命中即拒写，预览与面板保留、改名即可重试；
+      // 段落 / 图版标题 AI 生成，刻意不拦（重名 writeUniqueNote 兜底 _2 并列）
+      const dup = findDuplicateTermNote(term);
+      if (dup) { notice('已存在同名文献笔记：' + dup, 'error'); return; }
     }
     // 图版必须带着图走（预览存在但图被清掉 = 状态错位，宁可拒写也不留无图笔记）
     const images = this.entryImages;
@@ -3067,6 +3093,7 @@ export class UIManager {
     this.termPreview = null;
     this.resetEntryRel();
     this.clearEntryImage();
+    this.resetTermDupHint();
     const srcInput = this.termPopup ? q<HTMLInputElement>(this.termPopup, '#lit-term-src') : null;
     this.termSrcReset(srcInput);
     if (this.termMask) this.termMask.style.display = 'none';

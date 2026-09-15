@@ -103,6 +103,20 @@ export async function writeUniqueNote(dir: string, baseName: string, content: st
 }
 
 /**
+ * 名词重名查重（ADR-0143/issue 328，只做名词入口）：输入经 sanitizeMdTitle 清洗后与文献目录
+ * 既有 md 比对——path 构造与撞名判定同 writeUniqueNote，命中的正是「不拦就会变 _2」的情况。
+ * 段落 / 图版 / 影像标题由 AI 生成，刻意不查（重名由 writeUniqueNote 兜底 _2 并列）。
+ * 命中返回既有路径，无重复返回 null。
+ */
+export function findDuplicateTermNote(term: string): string | null {
+  const app = getApp();
+  const s = tryGetSettings();
+  const dir = String(s.knowledgeDirectory || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  const path = `${dir}/${sanitizeMdTitle(term)}.md`;
+  return app.vault.getAbstractFileByPath(path) ? path : null;
+}
+
+/**
  * 生成视频文献笔记：元数据（title/tags/summary/domain）+ 分块润色 → 九键 frontmatter 落盘；
  * videoPath 非空时正文尾部附视频双链（ADR-0066/0073「正文 = 润色 + 视频双链」，ticket 151 补回）。
  * 返回 vault 相对笔记路径。

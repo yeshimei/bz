@@ -892,6 +892,9 @@
   font-family: inherit;
 }
 .bz-lit-srcchip button:hover { color: var(--red); background: var(--card); }
+/* 名词重名实时提醒（ADR-0143/issue 328）：名词输入行下的内联提示，.bz-lit-term-only 管三态显隐
+   （仅名词态出现），命中显示既有笔记名、改名即消 */
+.bz-lit-dup-hint { margin-top: 6px; font-size: var(--bz-font-meta); color: var(--red); word-break: break-all; }
 /* 来源可点（术语预览 meta 行 / 部壹文献预览） */
 .bz-lit-srcopen { cursor: pointer; word-break: break-all; }
 .bz-lit-srcopen:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
