@@ -64,7 +64,7 @@ describe('B站保存分流回写（enh 包 11）', () => {
     expect(vault.files.has('归档/网页剪藏/视频一.md')).toBe(false);
     // 已标已处理 → 收件流视图不再出现（防重复建任务的口径）
     const { queryBySource } = await import('../../src/clipbook/store');
-    const stream = queryBySource(disk.articles, { articleOverrides: {}, savedArchive: [], order: [] }, new Set(), [], { kind: 'all' }, {});
+    const stream = queryBySource(disk.articles, { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} }, new Set(), [], { kind: 'all' }, {});
     expect(stream).toHaveLength(0);
   });
 });
@@ -147,7 +147,7 @@ describe('已处理正文保留（issue 274）', () => {
     expect(disk.articles[0].state).toBe('skipped');
     expect(disk.articles[0].body).toBe('正文甲');
     // 会话目录（ADR-0108）：已读段条目仍携带正文（右栏/移动详情打开即渲染）
-    const sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
+    const sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
     const flat = store.queryBySourceFull(disk.articles, sidecar, new Set(), [], { kind: 'all' }, {});
     const buckets = store.bucketByState(flat);
     expect(buckets.read).toHaveLength(1);
@@ -163,7 +163,7 @@ describe('已处理正文保留（issue 274）', () => {
     const store = await import('../../src/clipbook/store');
     const flat = store.queryBySourceFull(
       diskJson(vault).articles,
-      { articleOverrides: {}, savedArchive: [], order: [] },
+      { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} },
       new Set(), [], { kind: 'all' }, {}
     );
     const buckets = store.bucketByState(flat);

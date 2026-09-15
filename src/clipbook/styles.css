@@ -487,3 +487,62 @@
   background: transparent; border-color: #ece8dd; color: var(--bz-danger);
 }
 .theme-dark #__shared_confirm_popup__.bz-overlay-popup.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__:hover { background: #2e2b25; }
+
+
+/* ==================== 划选工具框（issue 329 / ADR-0144） ====================
+   桌面/移动同套浮框（挂 body，脱离面板滚动与重建）：文字选区三动作（复制 Markdown /
+   存为名词 / 存为段落）、图片单击两动作（保存图片 / 存为图版）。
+   变量选择器并挂浮框根 .bz-clip-selbar——浮框挂 body（域内后代选择器不可达），
+   同右键菜单先例把 --clip-* 定义在随身单类上；字号/间距/圆角消费 core --bz-* token。
+   自绘浮框不造滚动条（动作行内排布，无滚动区域，铁律 4 不涉及）。 */
+.bz-clip-selbar {
+  --clip-paper: #faf8f3;
+  --clip-ink: #1c1a17;
+  --clip-ink-2: #3d3a34;
+  --clip-dim: #6b6458;
+  --clip-accent: #c2410c;
+  --clip-accent-soft: #e8965a;
+  --clip-line: #e4ddd0;
+  --clip-cream: #f3efe6;
+  --clip-serif: Georgia, "Noto Serif SC", "SimSun", serif;
+  position: fixed;
+  display: none;
+  align-items: stretch;
+  gap: 2px;
+  padding: 4px;
+  background: var(--clip-paper);
+  border: 1px solid var(--clip-ink);
+  border-radius: var(--bz-radius-sm);
+  box-shadow: 3px 3px 0 rgba(28, 26, 23, 0.18);
+  font-size: var(--bz-font-label);
+  color: var(--clip-ink);
+  white-space: nowrap;
+  /* z-index 走动态发号（allocZ，ADR-0067），不写静态档 */
+}
+.bz-clip-selbar-btn {
+  border: none;
+  background: transparent;
+  color: var(--clip-ink-2);
+  font-family: var(--clip-serif);
+  font-size: var(--bz-font-label);
+  letter-spacing: 1px;
+  padding: var(--bz-space-xs) var(--bz-space-sm);
+  border-radius: var(--bz-radius-xs);
+  cursor: pointer;
+}
+.bz-clip-selbar-btn:hover {
+  background: var(--clip-cream);
+  color: var(--clip-accent);
+}
+.bz-clip-selbar-btn:active { color: var(--clip-accent-soft); }
+.theme-dark .bz-clip-selbar {
+  --clip-paper: #1b1a17;
+  --clip-ink: #ece8dd;
+  --clip-ink-2: #cdc7b8;
+  --clip-dim: #928b7c;
+  --clip-accent: #e8794a;
+  --clip-accent-soft: #f0a077;
+  --clip-line: #363329;
+  --clip-cream: #2a2823;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+}

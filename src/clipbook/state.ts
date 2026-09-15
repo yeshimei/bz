@@ -53,7 +53,7 @@ export const M: ClipbookState = {
   open: false,
   articles: [],
   stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
-  sidecar: { articleOverrides: {}, savedArchive: [], order: [] },
+  sidecar: { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} },
   clipNotes: null,
   clipUrls: new Set(),
   sel: defaultSel(),
@@ -70,7 +70,7 @@ export function resetClipbookState(): void {
   M.open = false;
   M.articles = [];
   M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-  M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
+  M.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
   M.clipNotes = null;
   M.clipUrls = new Set();
   M.sel = defaultSel();

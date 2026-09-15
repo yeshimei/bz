@@ -15,10 +15,30 @@
  */
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 
+/** 划词锚定标记（issue 329 / ADR-0144）：find = 选区原文（替换定位串），notePath = 文献笔记路径 */
+export interface ClipMark {
+  find: string;
+  notePath: string;
+  kind: 'term' | 'passage';
+}
+
+/** 已保存图片映射（issue 329）：src = 正文原外链（精确匹配），local = 本地 vault 路径 */
+export interface ClipSavedImage {
+  src: string;
+  local: string;
+}
+
 export interface ClipbookData {
   articleOverrides: Record<string, { reading?: boolean }>;
   savedArchive: Array<{ url: string; title: string; savedAt: string }>;
   order: string[];
+  /** 划词锚定（issue 329 / ADR-0144）：articleKey → 选区替换标记（未保存条目暂存，保存物化即清） */
+  marks: Record<string, ClipMark[]>;
+  /** 已保存图片（issue 329）：articleKey → 外链→本地路径映射（保存物化时统一换链） */
+  savedImages: Record<string, ClipSavedImage[]>;
+  /** 待升级 source 的文献笔记路径（issue 329 / ADR-0144 source 两态；term/passage/plate 通用）：
+   *  articleKey → 该条目发起录入的文献笔记路径清单，保存物化时回写 [[剪藏路径|标题]] */
+  pendingSource: Record<string, string[]>;
 }
 
 export const CLIPBOOK_JSON = 'clipbook.json';
@@ -37,7 +57,22 @@ function resolve(data: ClipbookData): ClipbookData {
       ? (data.savedArchive as any[]).filter((s) => s && typeof s === 'object' && s.url)
       : [],
     order: Array.isArray(data && data.order) ? (data.order as any[]).map(String) : [],
+    // issue 329 新段：旧侧写无此三段 → 空对象兜底；段内结构容错（非法形态整段丢弃）
+    marks: resolveRecord(data && (data as any).marks, (v: any) =>
+      Array.isArray(v) ? v.filter((m: any) => m && typeof m.find === 'string' && typeof m.notePath === 'string') : []),
+    savedImages: resolveRecord(data && (data as any).savedImages, (v: any) =>
+      Array.isArray(v) ? v.filter((im: any) => im && typeof im.src === 'string' && typeof im.local === 'string') : []),
+    pendingSource: resolveRecord(data && (data as any).pendingSource, (v: any) =>
+      Array.isArray(v) ? v.map(String).filter(Boolean) : []),
   };
+}
+
+/** Record 段容错解析：非对象 → 空对象；每值经 coerce 归一 */
+function resolveRecord<T>(raw: any, coerce: (v: any) => T[]): Record<string, T[]> {
+  if (!raw || raw === null || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out: Record<string, T[]> = {};
+  for (const k of Object.keys(raw)) out[k] = coerce((raw as any)[k]);
+  return out;
 }
 
 /** 读 clipbook.json（缺失/损坏 → 空侧写 + 建文件） */
@@ -69,5 +104,5 @@ export function updateClipbookData(mutate: (cur: ClipbookData) => ClipbookData):
 }
 
 export function emptySidecar(): ClipbookData {
-  return { articleOverrides: {}, savedArchive: [], order: [] };
+  return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
 }

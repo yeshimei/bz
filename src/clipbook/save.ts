@@ -17,7 +17,8 @@ import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
-import { localDatetime, toDatetime } from './constants';
+import { localDatetime, toDatetime, articleKeyOf } from './constants';
+import { readArticleTracking, applyBodyTransforms, clearArticleTracking } from './anchor';
 
 // C27：先转义反斜杠（\ → \\）再转义引号/换行——否则 url/author/summary 含 `\` 时
 // 产出 `\\"` 之类被 YAML 当转义序列解读，值读取时变形
@@ -34,7 +35,10 @@ export function clipDirOf(): string {
 // B站分流逻辑在 flow.flowSave 内实现。
 
 /** 写剪藏笔记（news 原文 raw）。返回是否写盘成功；空标题/取消覆盖/写盘异常均返回 false（调用方不得标已处理）。
- *  dirOverride（ADR-0119）：每日简报保存走专属目录，缺省仍取 articleDirectory。 */
+ *  dirOverride（ADR-0119）：每日简报保存走专属目录，缺省仍取 articleDirectory。
+ *  保存物化（issue 329 / ADR-0144）：落盘前 body 过 applyBodyTransforms——划词标记替换为
+ *  别名双链、已存图片外链换 `![[本地路径]]`；写盘成功后清该条目侧写追踪，并对每个待升级
+ *  文献笔记回写 source 为 `[[剪藏路径|条目标题]]`（source 两态：外链 URL → 内部路径）。写盘失败不清理（重存再物化）。 */
 export async function writeClipNote(raw: any, dirOverride?: string): Promise<boolean> {
   const app = getApp();
   const dir = dirOverride || clipDirOf();
@@ -55,10 +59,15 @@ export async function writeClipNote(raw: any, dirOverride?: string): Promise<boo
   const pubDate = raw.date ? toDatetime(String(raw.date)) : '';
   // C10：剥离外壳必须锚定串首（去 m 标志）——带 m 时 `^` 匹配任意行首，正文中两条
   // `---` 分隔线之间的整段会被当 frontmatter 静默删掉（已复现：intro/中段/outro 丢中段）
-  const body = String(raw.body || '')
+  const rawBody = String(raw.body || '')
     .replace(/^\s*---[\s\S]*?---\s*/, '')
     .replace(/^\s*```dataviewjs[\s\S]*?```\s*/, '')
     .trim();
+  // issue 329：保存物化——落盘前按侧写追踪（划词 marks + 已存图片映射）变换正文
+  const key = articleKeyOf(raw);
+  const tracking = await readArticleTracking(key);
+  const transformed = applyBodyTransforms(rawBody, tracking.marks, tracking.images);
+  const body = transformed.body;
 
   const md = `---
 url: "${yamlEscape(raw.url || '')}"
@@ -83,11 +92,42 @@ ${body}`;
     if (existing) await app.vault.modify(existing as TFile, md);
     else await app.vault.create(filePath, md);
     notice(`已保存：${cleanTitle}`, 'success');
+    // 物化收尾：清侧写追踪 + 待升级 source 回写内部双链（升级失败静默——断链代价可接受，ADR-0144 后果）
+    await materializeTracking(key, filePath, cleanTitle);
     return true;
   } catch (e) {
     console.error('[剪藏本] 保存剪藏失败', e);
     notice('保存失败，请稍后重试', 'error');
     return false;
+  }
+}
+
+/** 物化收尾（issue 329）：清该条目 marks/savedImages/pendingSource，对每个待升级文献笔记
+ *  调 knowledge upgradeNoteSourceInternal 回写 `[[剪藏路径|条目标题]]`（契约 API 由 knowledge
+ *  域并行实现，运行时按存在调用；无该导出（旧版本）跳过，侧写已清不再重试——接受）。 */
+async function materializeTracking(key: string, clipPath: string, title: string): Promise<void> {
+  let before;
+  try {
+    before = await clearArticleTracking(key);
+  } catch (e) {
+    console.warn('[剪藏本] 物化清理侧写失败', e);
+    return; // 清理失败时不做 source 回写（下次保存再物化，避免半物化态）
+  }
+  if (!before.pendingSource.length) return;
+  const app = getApp();
+  try {
+    const mod: any = await import('../knowledge');
+    if (typeof mod.upgradeNoteSourceInternal !== 'function') return;
+    const link = `[[${clipPath}|${title}]]`;
+    for (const notePath of before.pendingSource) {
+      try {
+        await mod.upgradeNoteSourceInternal(app, notePath, link);
+      } catch (e) {
+        console.warn('[剪藏本] 回写文献来源失败（接受，静默）', notePath, e);
+      }
+    }
+  } catch (e) {
+    console.warn('[剪藏本] knowledge 模块不可用，source 回写跳过', e);
   }
 }
 

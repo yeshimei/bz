@@ -8,7 +8,7 @@
  * - 剪藏目录扫描（目录不存在 → null 区分空态）。
  */
 import { readNewsData, writeNewsDataMerged, migrateLegacyStats, applyRetention, normalizeRetentionDays, statsHasData, type NewsWriteIntent } from './news-data';
-import { readClipbookData } from './data';
+import { readClipbookData, emptySidecar } from './data';
 import { scanClipDirectory, type ClipNote } from './scan';
 import { clipUrlSet } from './store';
 import { articleKeyOf } from './constants';
@@ -41,7 +41,7 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
     M.articles = [];
     M.clipNotes = null;
     M.clipUrls = new Set();
-    M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
+    M.sidecar = emptySidecar();
     M.upInfo = {};
     return { status: 'missing', articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
   }
@@ -49,7 +49,7 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
     M.articles = [];
     M.clipNotes = null;
     M.clipUrls = new Set();
-    M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
+    M.sidecar = emptySidecar();
     M.upInfo = {};
     return { status: 'corrupt', articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
   }
