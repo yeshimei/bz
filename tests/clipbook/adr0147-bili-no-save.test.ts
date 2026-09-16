@@ -158,7 +158,7 @@ describe('锚定双链点击：捕获阶段掐断原生导航（移动端崩溃�
     await vi.waitFor(() => expect(M.mobDetailOpen).toBe(true));
     await vi.waitFor(() => expect(document.querySelector('[data-clip-mob-md]')).toBeTruthy());
     // 手动注入 internal-link（mock MarkdownRenderer 不产真实锚点，行为单源测试同款做法）。
-    // data-href 用裸 basename（真实别名双链 `[[量子纠缠笔记|量子纠缠]]` 的渲染形态，issue 336）
+    // data-href 用裸 basename（真实别名双链 `[[量子纠缠笔记|量子纠缠]]` 的渲染形态，issue 340）
     const md = document.querySelector('[data-clip-mob-md]') as HTMLElement;
     md.innerHTML = '<p><a class="internal-link" data-href="量子纠缠笔记" href="量子纠缠笔记">量子纠缠</a></p>';
     // 模拟 Obsidian 的 document 级委托监听（原生导航通道）
@@ -175,7 +175,7 @@ describe('锚定双链点击：捕获阶段掐断原生导航（移动端崩溃�
   });
 });
 
-describe('锚定双链裸 basename 解析（issue 336：桌面无反应/移动端崩溃根因）', () => {
+describe('锚定双链裸 basename 解析（issue 340：桌面无反应/移动端崩溃根因）', () => {
   /** 打开移动详情并注入裸 basename 锚点（真实渲染形态），点击后断言预览直达/原生回退 */
   async function clickBasenameAnchor(vault: MockVault, href: string): Promise<void> {
     (Platform as any).isMobile = true;
