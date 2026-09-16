@@ -18,7 +18,7 @@ export interface CheckIssue {
   title: string;
   /** 详情（路径/说明；展示在「查看详情」展开区） */
   detail?: string;
-  /** 可修复项所属修复组（'favorites' | 'clipbook'）；缺省 = 只报告不可修 */
+  /** 可修复项所属修复组（'favorites' | 'clipbook' | 'clipbook-marks' | 'clipbook-source' | 'knowledge'）；缺省 = 只报告不可修 */
   fixGroup?: string;
   /** 修复项唯一 key（同组内定位条目； favorites=条目 id / clipbook=归档 url） */
   fixKey?: string;

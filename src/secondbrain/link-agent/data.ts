@@ -289,6 +289,40 @@ export async function removeLinkState(path: string): Promise<void> {
   });
 }
 
+// ---------------- 改名同步（issue 339：vault:md-renamed 消费的数据入口） ----------------
+
+/**
+ * 队列条目与基准哈希键随笔记改名 rekey（issue 339；消费方按批传入、批内按序回放）：
+ * - newPath 仍为 md 且在三盒 → 键迁移，hash/queuedAt/linkedAt/empty 随键保留——
+ *   改名不改正文，基准丢了修改监听会按「无基准」重跑、存量补链把改名笔记当新目标，重复消耗裁判；
+ * - newPath 非 md 或已移出三盒 → 视同删除：旧键就地清理（与 onDeleted 同口径）；
+ * - 新键已有条目/基准（极端同名冲突）→ 保留新键现值只删旧键（不覆盖）。
+ * 整批一次 mutateStore（沿用既有串行链与「写 JSON 语义不变」；无键命中时写前比对自动跳过落盘）。
+ * @returns 实际改动的键数
+ */
+export async function rekeyLinkPaths(renames: Array<{ oldPath: string; newPath: string }>): Promise<number> {
+  if (!renames.length) return 0;
+  let changed = 0;
+  await mutateStore((s) => {
+    for (const { oldPath, newPath } of renames) {
+      if (!oldPath || !newPath || oldPath === newPath) continue;
+      const keepNew = newPath.endsWith('.md') && inLinkScope(newPath);
+      const qi = s.link.queue.findIndex((i) => i && i.path === oldPath);
+      if (qi !== -1) {
+        if (keepNew && !s.link.queue.some((i) => i && i.path === newPath)) s.link.queue[qi].path = newPath;
+        else s.link.queue.splice(qi, 1);
+        changed += 1;
+      }
+      if (s.link.state && oldPath in s.link.state) {
+        if (keepNew && !(newPath in s.link.state)) s.link.state[newPath] = s.link.state[oldPath];
+        delete s.link.state[oldPath];
+        changed += 1;
+      }
+    }
+  });
+  return changed;
+}
+
 // ---------------- 裁判输出解析（严格 JSON `[{"id":1,"reason":"..."}]`） ----------------
 
 export interface JudgePick {

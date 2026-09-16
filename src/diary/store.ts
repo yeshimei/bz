@@ -304,3 +304,30 @@ export function isUnparsedRefusal(e: unknown): boolean {
   return e instanceof UnparsedLineError;
 }
 
+// ---------------- 内存路径同步（issue 339：vault:md-renamed / vault:md-deleted 消费的纯内存口） ----------------
+
+/**
+ * 笔记改名内存同步（issue 339，纯内存不落盘；快照回写机制不动）：
+ * diaryDataMap 键与命中条目的 filePath/filename 重定向 oldPath→newPath——
+ * 墙开着时改名条目文件，跳转与媒体解析取 stale 路径的问题由此自愈（重开全量重读兜底不变）。
+ * 返回是否发生改动（无 map / 无命中键 / 同路径均空转）。
+ */
+export function rekeyDiaryMapPath(oldPath: string, newPath: string): boolean {
+  if (!diaryDataMap || !oldPath || !newPath || oldPath === newPath) return false;
+  const entries = diaryDataMap.get(oldPath);
+  if (!entries) return false;
+  diaryDataMap.delete(oldPath);
+  for (const e of entries) {
+    if (e.filePath === oldPath) e.filePath = newPath;
+    if (e.filename === oldPath) e.filename = newPath;
+  }
+  diaryDataMap.set(newPath, entries);
+  return true;
+}
+
+/** 笔记删除内存同步（issue 339，纯内存不落盘）：移除该路径的内存快照。返回是否移除。 */
+export function dropDiaryMapPath(path: string): boolean {
+  if (!diaryDataMap || !path) return false;
+  return diaryDataMap.delete(path);
+}
+
