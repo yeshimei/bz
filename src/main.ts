@@ -27,7 +27,7 @@ import { openMemoPanel, addMemoItem, addMemoForActiveNote, unloadMemo, ensureMem
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
-import { openClipbook, markAllUnreadRead, unloadClipbook } from './clipbook';
+import { openClipbook, markAllUnreadRead, unloadClipbook, ensureClipbookFileSync, unloadClipbookFileSync } from './clipbook';
 import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipbook/news-fetcher';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
@@ -54,7 +54,7 @@ import {
 import { openPomodoro, unloadPomodoro, ensurePomodoro, toggleFocus, skipBreak, togglePause } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // 知识盒（knowledge 域，ADR-0072 自 bili-downloader 迁出、ADR-0112 三部重构；网页版已移除，见 tools/bili-downloader）
-import { openKnowledgePanel, openTermNote, openPassageNote, openImageNote, openKnowledgeAddTask, unloadKnowledge, relinkActiveNote, linkAllInBoxes } from './knowledge';
+import { openKnowledgePanel, openTermNote, openPassageNote, openImageNote, openKnowledgeAddTask, unloadKnowledge, relinkActiveNote, linkAllInBoxes, ensureKnowledgeFileSync, unloadKnowledgeFileSync } from './knowledge';
 // 挂载树白板（knowledge 域，issues 317/319）：两个命令直达 + 卸载清理（自绘遮罩挂 body，卸载必须摘）
 import { destroyMountTree, openMountTree, refreshMountTree } from './knowledge/mount-canvas';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 右键菜单）
@@ -289,6 +289,10 @@ export default class BzPlugin extends Plugin {
       // 引用同步无条件常驻（issue 187：原 aiAgentEnabled 开关随旧 AIAgent 退役——
       // 备忘录/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）
       ensureFileSync(this.app);
+      // 知识盒/剪藏本引用同步无条件常驻（issue 336 / ADR-0149：knowledge.json、clipbook.json
+      // 路径 file-sync + 卡片 source 断链摘除——同属数据完整性功能，不设开关）
+      ensureKnowledgeFileSync(this.app);
+      ensureClipbookFileSync(this.app);
       // 第二大脑（2026-09-12 拍板）：启用开关退役 → 启动即无条件自动加载（原懒加载分支已删）
       ensureSecondBrainOnReady(this.app, () => this.unloaded);
       // 复习计划：到期提醒开启时常驻（ticket 100——监听/染色/轮询统一启动；否则懒加载）；enableAutoNotify 缺省视为开
@@ -325,6 +329,9 @@ export default class BzPlugin extends Plugin {
     unloadPomodoro();
     unloadMemo();
     unloadFileSync();
+    // 知识盒/剪藏本引用同步收口（issue 336：退订域事件 + 清去抖定时器）
+    unloadKnowledgeFileSync();
+    unloadClipbookFileSync();
     unloadHome();
     unloadRecap();
     unloadEncrypt();

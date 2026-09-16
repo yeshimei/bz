@@ -157,9 +157,10 @@ describe('锚定双链点击：捕获阶段掐断原生导航（移动端崩溃�
     card!.click();
     await vi.waitFor(() => expect(M.mobDetailOpen).toBe(true));
     await vi.waitFor(() => expect(document.querySelector('[data-clip-mob-md]')).toBeTruthy());
-    // 手动注入 internal-link（mock MarkdownRenderer 不产真实锚点，行为单源测试同款做法）
+    // 手动注入 internal-link（mock MarkdownRenderer 不产真实锚点，行为单源测试同款做法）。
+    // data-href 用裸 basename（真实别名双链 `[[量子纠缠笔记|量子纠缠]]` 的渲染形态，issue 340）
     const md = document.querySelector('[data-clip-mob-md]') as HTMLElement;
-    md.innerHTML = '<p><a class="internal-link" data-href="文献盒/量子纠缠笔记.md" href="文献盒/量子纠缠笔记.md">量子纠缠</a></p>';
+    md.innerHTML = '<p><a class="internal-link" data-href="量子纠缠笔记" href="量子纠缠笔记">量子纠缠</a></p>';
     // 模拟 Obsidian 的 document 级委托监听（原生导航通道）
     let navigated = '';
     const spy = (e: Event) => {
@@ -171,5 +172,47 @@ describe('锚定双链点击：捕获阶段掐断原生导航（移动端崩溃�
     await vi.waitFor(() => expect(knowledgeMocks.openKnowledgePreview).toHaveBeenCalledTimes(1));
     expect(navigated).toBe(''); // stopPropagation 掐断：原生导航通道未触发
     document.removeEventListener('click', spy);
+  });
+});
+
+describe('锚定双链裸 basename 解析（issue 340：桌面无反应/移动端崩溃根因）', () => {
+  /** 打开移动详情并注入裸 basename 锚点（真实渲染形态），点击后断言预览直达/原生回退 */
+  async function clickBasenameAnchor(vault: MockVault, href: string): Promise<void> {
+    (Platform as any).isMobile = true;
+    await vi.waitFor(() => expect(M.articles.length).toBe(2));
+    const card = [...document.querySelectorAll('.bz-clip-mob-item') as unknown as HTMLElement[]]
+      .find((el) => el.textContent?.includes('甲文'));
+    card!.click();
+    await vi.waitFor(() => expect(M.mobDetailOpen).toBe(true));
+    await vi.waitFor(() => expect(document.querySelector('[data-clip-mob-md]')).toBeTruthy());
+    const md = document.querySelector('[data-clip-mob-md]') as HTMLElement;
+    md.innerHTML = `<p><a class="internal-link" data-href="${href}" href="${href}">锚</a></p>`;
+    (md.querySelector('a.internal-link') as HTMLElement).click();
+  }
+
+  it('盒内同名笔记直查：mock 无任何链接解析 API（≈真实 Obsidian 无 getFirstLinkfileDest）仍拦截直达预览', async () => {
+    const vault = boot();
+    vault.files.set('文献盒/量子纠缠笔记.md', '---\ntitle: 量子纠缠笔记\ntype: term\n---\n名词正文。');
+    await clickBasenameAnchor(vault, '量子纠缠笔记');
+    await vi.waitFor(() => expect(knowledgeMocks.openKnowledgePreview).toHaveBeenCalledTimes(1));
+    expect(knowledgeMocks.openKnowledgePreview).toHaveBeenCalledWith(expect.anything(), '文献盒/量子纠缠笔记.md');
+  });
+
+  it('盒内子目录笔记：getFirstLinkpathDest 兜底解析（TFile.path）后拦截', async () => {
+    const vault = boot();
+    vault.files.set('文献盒/子目录/长名词.md', '---\ntitle: 长名词\ntype: term\n---\n正文。');
+    // 直查未命中（不在盒根）→ 走 metadataCache 兜底；mock 先于点击就位
+    const app: any = getApp();
+    app.metadataCache.getFirstLinkpathDest = (p: string) => ({ path: '文献盒/子目录/长名词.md', name: p });
+    await clickBasenameAnchor(vault, '长名词');
+    await vi.waitFor(() => expect(knowledgeMocks.openKnowledgePreview).toHaveBeenCalledTimes(1));
+    expect(knowledgeMocks.openKnowledgePreview).toHaveBeenCalledWith(expect.anything(), '文献盒/子目录/长名词.md');
+  });
+
+  it('解析失败（盒内外都不存在）：不拦，原生导航通道不触发预览', async () => {
+    const vault = boot();
+    await clickBasenameAnchor(vault, '不存在的笔记');
+    await new Promise((r) => setTimeout(r, 30));
+    expect(knowledgeMocks.openKnowledgePreview).not.toHaveBeenCalled();
   });
 });
