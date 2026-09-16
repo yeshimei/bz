@@ -582,8 +582,9 @@ export function openForm(item: FavoritesItem | null): void {
   host.innerHTML = formHtml(it);
   const { mask, popup, close } = uiModal({
     content: host.firstElementChild as HTMLElement,
-    // 卡片皮沿用域类（.bz-overlay-popup.bz-fav-form 承载亚麻卡几何，内容规则照旧）；scope 供 token
-    className: 'bz-fav-form bz-fav-scope',
+    // 弹窗壳只挂 scope（token 域）；bz-fav-form 类由单源 markup 内容根携带（F15 教训：
+    // 壳与内容同挂一类会双计单例守卫），亚麻卡几何锚 .bz-overlay-popup.bz-fav-scope
+    className: 'bz-fav-scope',
     requestClose: () => requestCloseForm(),
     onClose: () => { _formClose = null; },
   });
