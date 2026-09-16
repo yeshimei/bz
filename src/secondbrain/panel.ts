@@ -31,6 +31,7 @@ import type { VectorStore } from './vector-store';
 import { parsePathList, formatPathList } from './whitelist';
 import { getLanIPs, formatRemoteOllamaUrl, pickPrimaryLanIp } from './local-ip';
 import { loadStore } from './store-file';
+import { renderPanelWeeklyCard } from './weekly-ui';
 import {
   panelShellHtml,
   panelCardsHtml,
@@ -555,7 +556,8 @@ export class SecondBrainPanel {
     mountIcons(dist);
   }
 
-  /** AI 库摘要 + 自动建链数（secondbrain.json panel/link 段，异步回填；生成入口已移除，旧值仍可展示） */
+  /** AI 库摘要 + 自动建链数 + 每周动态入口卡（secondbrain.json panel/link/weekly 段，异步回填；
+   *  摘要生成入口已移除，旧值仍可展示） */
   private async loadSummaryAndLinks(): Promise<void> {
     try {
       const store = await loadStore(this.app);
@@ -576,6 +578,8 @@ export class SecondBrainPanel {
           `<span class="bz-sb-log-sep">·</span>${panelLogHtml([{ text: `自动建链 ${linkedTotal} 条` }])}`
         );
       }
+      // issue 360：近期动态入口卡（有非空摘要才显示；点击开详情弹层）
+      renderPanelWeeklyCard(popup, this.app, store.weekly?.digest ?? null);
     } catch {
       /* 读库失败不阻断统计展示 */
     }
