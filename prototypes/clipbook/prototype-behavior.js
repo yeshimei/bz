@@ -1,5 +1,5 @@
-/* 源指纹 e6b6c21739be8a16 · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 9fa3f1a1468fe908 · 仓内输入 95 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -6617,6 +6617,49 @@ ${c.trim()}
   function isInternalSourceValue(v) {
     return /^\[\[/.test(String(v != null ? v : "").trim());
   }
+  function internalLinkPathOf(value) {
+    const m = /^\[\[([^\]]+?)\]\]$/.exec(String(value != null ? value : "").trim());
+    if (!m) return null;
+    return m[1].split("|")[0].trim() || null;
+  }
+  function normalizeLinkPath(p) {
+    const s = String(p != null ? p : "").trim().replace(/\\/g, "/");
+    return s ? stripMdExt(s) : "";
+  }
+  function sourcePointsAt(value, retiredPath) {
+    var _a;
+    const linkPath = normalizeLinkPath((_a = internalLinkPathOf(String(value != null ? value : ""))) != null ? _a : "");
+    if (!linkPath) return false;
+    const target = normalizeLinkPath(retiredPath);
+    return !!target && linkPath === target;
+  }
+  function retireSourceLine(content, retiredPath, fallbackUrl) {
+    var _a;
+    const target = normalizeLinkPath(retiredPath);
+    if (!target) return null;
+    const lines = String(content != null ? content : "").split(/\r?\n/);
+    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return null;
+    let close = -1;
+    let srcAt = -1;
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim() === "---") {
+        close = i;
+        break;
+      }
+      if (/^source:/.test(lines[i])) srcAt = i;
+    }
+    if (close === -1 || srcAt === -1) return null;
+    const raw = lines[srcAt].slice("source:".length).trim();
+    const quoted = raw.startsWith('"') && raw.endsWith('"') || raw.startsWith("'") && raw.endsWith("'");
+    const value = (quoted ? raw.slice(1, -1) : raw).replace(/\\(["\\])/g, "$1");
+    if (!sourcePointsAt(value, retiredPath)) return content;
+    if (fallbackUrl && String(fallbackUrl).trim()) {
+      lines[srcAt] = `source: ${quoteYaml(String(fallbackUrl).trim())}`;
+    } else {
+      lines.splice(srcAt, 1);
+    }
+    return lines.join(content.includes("\r\n") ? "\r\n" : "\n");
+  }
   function upgradeSourceLine(content, internalLink) {
     var _a;
     const link = String(internalLink != null ? internalLink : "").trim();
@@ -8540,9 +8583,9 @@ ${c.trim()}
     const root = await rootNode(rootPath, scan);
     nodes.set(root.id, root);
     order.push(root.id);
-    const queue = [root.id];
-    while (queue.length) {
-      const node = nodes.get(queue.shift());
+    const queue3 = [root.id];
+    while (queue3.length) {
+      const node = nodes.get(queue3.shift());
       if (node.kind !== "card" || node.missing) continue;
       const sameNote = await findSameNameNote(node.path, ctx);
       if (sameNote && !nodes.has(sameNote)) {
@@ -8583,7 +8626,7 @@ ${c.trim()}
             edges.push({ from: node.id, to: child.id, suggested: false });
           }
         }
-        if (fresh && child.kind === "card" && !child.missing) queue.push(child.id);
+        if (fresh && child.kind === "card" && !child.missing) queue3.push(child.id);
       }
     }
     const firstIdx = new Map(order.map((id, i) => [id, i]));
@@ -16354,10 +16397,237 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   });
 
+  // src/knowledge/source-retire.ts
+  function knowledgeDirOf() {
+    var _a, _b;
+    return String((_b = (_a = tryGetSettings()) == null ? void 0 : _a.knowledgeDirectory) != null ? _b : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
+  }
+  async function retireKnowledgeSources(app, retiredPath, fallbackUrl) {
+    const target = String(retiredPath || "").trim();
+    if (!target) return 0;
+    const dir = knowledgeDirOf();
+    const files = (app.vault.getMarkdownFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
+    const hits = files.filter((f) => {
+      var _a, _b, _c;
+      try {
+        const fm = (_c = (_b = (_a = app.metadataCache) == null ? void 0 : _a.getFileCache) == null ? void 0 : _b.call(_a, f)) == null ? void 0 : _c.frontmatter;
+        return !!fm && sourcePointsAt(fm.source, target);
+      } catch (e) {
+        return false;
+      }
+    });
+    let changed = 0;
+    for (const f of hits) {
+      try {
+        const content = await app.vault.read(f);
+        const next = retireSourceLine(content, target, fallbackUrl);
+        if (next !== null && next !== content) {
+          await app.vault.modify(f, next);
+          changed++;
+        }
+      } catch (e) {
+        console.warn("[knowledge] source 退役写回失败（跳过该卡）", f.path, e);
+      }
+    }
+    return changed;
+  }
+  async function retireKnowledgeSourcesForClip(app, clipPath, clipUrl) {
+    const url = String(clipUrl != null ? clipUrl : "").trim();
+    const n = await retireKnowledgeSources(app, clipPath, url || null);
+    if (n > 0) {
+      if (url) notify(`已把 ${n} 张知识卡片来源回退为原链接`, { type: "success" });
+      else notify(`已摘除 ${n} 张知识卡片的失效来源`, { type: "info" });
+    }
+    return n;
+  }
+  async function retireSourcesOnMdDeleted(app, deletedPath) {
+    const n = await retireKnowledgeSources(app, deletedPath, null);
+    if (n > 0) notify(`已摘除 ${n} 张知识卡片的失效来源`, { type: "info" });
+    return n;
+  }
+  var init_source_retire = __esm({
+    "src/knowledge/source-retire.ts"() {
+      init_settings_provider();
+      init_notice();
+      init_source();
+    }
+  });
+
+  // src/knowledge/file-sync.ts
+  function syncRename(tasks, { oldPath, newPath }) {
+    let changed = false;
+    for (const task of tasks) {
+      if ((task == null ? void 0 : task.notePath) === oldPath) {
+        task.notePath = newPath;
+        changed = true;
+      }
+      if ((task == null ? void 0 : task.videoPath) === oldPath) {
+        task.videoPath = newPath;
+        changed = true;
+      }
+    }
+    return changed;
+  }
+  function syncDelete(tasks, path) {
+    let changed = false;
+    for (const task of tasks) {
+      if ((task == null ? void 0 : task.notePath) === path) {
+        task.notePath = null;
+        changed = true;
+      }
+      if ((task == null ? void 0 : task.videoPath) === path) {
+        task.videoPath = null;
+        changed = true;
+      }
+    }
+    return changed;
+  }
+  function inFolders(path, folders) {
+    return folders.some((f) => path.startsWith(f + "/") || path === f);
+  }
+  function getKnowledgePath() {
+    if (KnowledgeData.filePath) return KnowledgeData.filePath;
+    return storageFile("knowledge.json", tryGetSettings().storagePath || "CONFIG/STORAGE");
+  }
+  async function syncTasks(fn, ...args) {
+    const path = getKnowledgePath();
+    await enqueueFileTask(path, async () => {
+      const tasks = await KnowledgeData.read();
+      if (fn(tasks, ...args)) await KnowledgeData.write(tasks);
+    });
+  }
+  function getWatchedFolders() {
+    return [knowledgeDirOf()];
+  }
+  function enqueue(task) {
+    queue = queue.then(() => {
+      if (_cancelled) return;
+      return task();
+    }).catch((e) => {
+      console.error("[knowledge-file-sync]", e);
+      notify("知识盒同步失败，数据可能不一致", { type: "error", dedupeKey: "knowledge-file-sync" });
+    });
+  }
+  function debounceDelay() {
+    const s = tryGetSettings();
+    return Number(s && s.DEBOUNCE_DELAY) || 300;
+  }
+  function createBatchFlusher(run) {
+    let pending = [];
+    let timer = null;
+    const flush = () => {
+      timer = null;
+      if (_cancelled) {
+        pending = [];
+        return;
+      }
+      const batch = pending;
+      pending = [];
+      enqueue(() => run(batch));
+    };
+    const push = (ev) => {
+      if (_cancelled) return;
+      pending.push(ev);
+      if (timer !== null) clearTimeout(timer);
+      timer = setTimeout(flush, debounceDelay());
+    };
+    return Object.assign(push, {
+      cancel() {
+        if (timer !== null) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        pending = [];
+      }
+    });
+  }
+  function createFileSyncAgent(app) {
+    const referencedByTasks = async (path) => {
+      if (!path) return false;
+      try {
+        const tasks = await KnowledgeData.read();
+        return tasks.some((t) => (t == null ? void 0 : t.notePath) === path || (t == null ? void 0 : t.videoPath) === path);
+      } catch (e) {
+        return false;
+      }
+    };
+    const isMd = (file) => file && file.extension === "md" && inFolders(file.path, getWatchedFolders());
+    const pseudoFile = (path) => ({
+      path,
+      basename: stripMdExt(path.split("/").pop() || ""),
+      extension: "md"
+    });
+    const flushRenames = createBatchFlusher(async (batch) => {
+      for (const ev of batch) {
+        await syncTasks(syncRename, ev);
+      }
+    });
+    _flushers.push(flushRenames);
+    _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
+      const file = pseudoFile(evt.newPath);
+      void (async () => {
+        if (!(isMd(file) || await referencedByTasks(evt.oldPath) || await referencedByTasks(evt.newPath))) return;
+        flushRenames({ oldPath: evt.oldPath, newPath: evt.newPath });
+      })();
+    }));
+    _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
+      const file = pseudoFile(evt.path);
+      void (async () => {
+        if (isMd(file) || await referencedByTasks(evt.path)) {
+          enqueue(() => syncTasks(syncDelete, evt.path));
+        }
+        await retireSourcesOnMdDeleted(app, evt.path);
+      })();
+    }));
+  }
+  function ensureFileSync(app) {
+    if (initialized) return;
+    initialized = true;
+    _cancelled = false;
+    createFileSyncAgent(app);
+  }
+  function unloadFileSync() {
+    _cancelled = true;
+    for (const f of _flushers) {
+      try {
+        f.cancel();
+      } catch (e) {
+      }
+    }
+    _flushers = [];
+    for (const off of _refs) {
+      try {
+        off();
+      } catch (e) {
+      }
+    }
+    _refs = [];
+    initialized = false;
+    queue = Promise.resolve();
+  }
+  var initialized, _refs, _cancelled, _flushers, queue;
+  var init_file_sync = __esm({
+    "src/knowledge/file-sync.ts"() {
+      init_utils();
+      init_notice();
+      init_settings_provider();
+      init_domain_bus();
+      init_storage();
+      init_data2();
+      init_source_retire();
+      initialized = false;
+      _refs = [];
+      _cancelled = false;
+      _flushers = [];
+      queue = Promise.resolve();
+    }
+  });
+
   // src/knowledge/index.ts
   var knowledge_exports = {};
   __export(knowledge_exports, {
     ensureKnowledge: () => ensureKnowledge,
+    ensureKnowledgeFileSync: () => ensureFileSync,
     linkAllInBoxes: () => linkAllInBoxes,
     openImageNote: () => openImageNote,
     openKnowledgeAddTask: () => openKnowledgeAddTask,
@@ -16366,7 +16636,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     openPassageNote: () => openPassageNote,
     openTermNote: () => openTermNote,
     relinkActiveNote: () => relinkActiveNote,
+    retireKnowledgeSourcesForClip: () => retireKnowledgeSourcesForClip,
     unloadKnowledge: () => unloadKnowledge,
+    unloadKnowledgeFileSync: () => unloadFileSync,
     upgradeNoteSourceInternal: () => upgradeNoteSourceInternal
   });
   function prefillSource(src) {
@@ -16376,11 +16648,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function ensureKnowledge(app) {
     var _a;
-    if (initialized) return;
+    if (initialized2) return;
     try {
       KnowledgeData.init({ storagePath: (_a = tryGetSettings()) == null ? void 0 : _a.storagePath });
       uiManager = new UIManager(app);
-      initialized = true;
+      initialized2 = true;
     } catch (e) {
       console.error("bz: 文献盒初始化失败（下次打开命令将自动重试）", e);
       uiManager = null;
@@ -16520,9 +16792,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function unloadKnowledge() {
     uiManager == null ? void 0 : uiManager.destroy();
     uiManager = null;
-    initialized = false;
+    initialized2 = false;
   }
-  var initialized, uiManager;
+  var initialized2, uiManager;
   var init_knowledge = __esm({
     "src/knowledge/index.ts"() {
       init_fake_obsidian();
@@ -16532,7 +16804,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_data2();
       init_ui();
       init_note_gen();
-      initialized = false;
+      init_source_retire();
+      init_file_sync();
+      initialized2 = false;
       uiManager = null;
     }
   });
@@ -18825,17 +19099,17 @@ ${bodyText.substring(0, 6e3)}`;
     }, 2e3);
   }
   function ensureAutoSummary(app) {
-    if (initialized2) {
+    if (initialized3) {
       if (!registerTimer && !fileListenerRef) scheduleRegister(app);
       return;
     }
-    initialized2 = true;
+    initialized3 = true;
     vaultRef = app.vault;
     workspaceRef = app.workspace;
     scheduleRegister(app);
   }
   function isAutoSummaryInitialized() {
-    return initialized2;
+    return initialized3;
   }
   function stopAutoSummary() {
     if (registerTimer) {
@@ -18873,18 +19147,18 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function unloadAutoSummary() {
     stopAutoSummary();
-    initialized2 = false;
+    initialized3 = false;
     vaultRef = null;
     workspaceRef = null;
   }
-  var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
+  var initialized3, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
   var init_auto_summary = __esm({
     "src/auto-summary/index.ts"() {
       init_ai();
       init_settings_provider();
       init_notice();
       init_processor2();
-      initialized2 = false;
+      initialized3 = false;
       vaultRef = null;
       workspaceRef = null;
       fileListenerRef = null;
@@ -20837,6 +21111,7 @@ ${bodyText.substring(0, 6e3)}`;
     __clipBodyCacheKeysForTests: () => __clipBodyCacheKeysForTests,
     clipbookSettingsSchema: () => clipbookSettingsSchema,
     closePanel: () => closePanel,
+    deleteClipNote: () => deleteClipNote,
     initPanel: () => initPanel,
     invalidateClipBodyCache: () => invalidateClipBodyCache,
     openSettings: () => openSettings,
@@ -21706,6 +21981,14 @@ ${bodyText.substring(0, 6e3)}`;
         try {
           content = await getApp().vault.cachedRead(note.file);
         } catch (e) {
+        }
+        try {
+          const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
+          if (typeof mod.retireKnowledgeSourcesForClip === "function") {
+            await mod.retireKnowledgeSourcesForClip(getApp(), path, a.url || "");
+          }
+        } catch (e) {
+          console.warn("[剪藏本] 知识卡片来源回退失败（接受，静默）", e);
         }
         await getApp().vault.trash(note.file, true);
         clipBodyCache.delete(path);
@@ -22619,11 +22902,21 @@ ${bodyText.substring(0, 6e3)}`;
   init_news_fetcher();
   init_flow();
   init_ui3();
-  var initialized3 = false;
+
+  // src/clipbook/file-sync.ts
+  init_utils();
+  init_notice();
+  init_settings_provider();
+  init_domain_bus();
+  init_data();
+  var queue2 = Promise.resolve();
+
+  // src/clipbook/index.ts
+  var initialized4 = false;
   var autoRefreshRegistered = false;
   function openClipbook(app) {
-    if (!initialized3) {
-      initialized3 = true;
+    if (!initialized4) {
+      initialized4 = true;
       registerAutoRefresh(app);
       setNewsFetchDoneListener(() => reloadIfOpen());
       initPanel(app, true);
@@ -22633,8 +22926,8 @@ ${bodyText.substring(0, 6e3)}`;
     void maybeFetchNews();
   }
   function unloadClipbook() {
-    if (!initialized3) return;
-    initialized3 = false;
+    if (!initialized4) return;
+    initialized4 = false;
     unloadPanel();
     autoRefreshRegistered = false;
   }

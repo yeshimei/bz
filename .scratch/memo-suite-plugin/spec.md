@@ -1266,3 +1266,19 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > smartcat 迁 core 单通道（AIInput 扩 {messages}）、装配评审满预算条款（ADR-0140 决策 4）改由
 > 设置面板承载、死键 secondBrainChatModel 等三枚与 ollamaChat 死导出清除、favorites isAvailable
 > 判定单源化。全量 5206 绿，见 ADR-0148。
+
+### 引用同步全景补齐：剪藏×知识盒 / 影院×书架 / 保险库他引 / 补漏四包（issue 336-339，2026-09-16）
+
+> 用户报障「自动摘要改剪藏文件名，文献笔记来源没跟改」的审计跟进：issue 335 修完唯一高危项
+> （auto-summary 改名换 fileManager.renameFile 联动改链）后，全域审计列出剩余风险点，用户拍板
+> 「全部修复」。四包并行 worktree（336 知识盒×剪藏 / 337 影院×书架 / 338 encrypt 他引 / 339 补漏），
+> 各自域测试 + 合并后全量 5283 绿，主仓库构建部署。① 知识盒×剪藏（ADR-0149/issue 336）：剪藏
+> 删除 trash 前行级降级卡片 source 回外链（用剪藏 url，ADR-0144 逆向）；全库 md-deleted 兜底摘除
+> 断链 source（sourceTitle 保留）；knowledge.json（notePath/videoPath）与 clipbook.json
+> （marks/pendingSource）仿 memo file-sync 无条件常驻。② 影院×书架（issue 337）：海报纯路径
+> frontmatter 随海报文件 rename 联动（去抖保序）；豆瓣抓取队列写回前存在性守卫（外部删除静默
+> 出队）；EPUB coverPath 调查为 weave 自有数据不改（降级链已覆盖）。③ encrypt（issue 338）：
+> 加密附件他引检查，共享附件原件保留（keptShared 记账、解锁还原跳过明文写回），他篇嵌入不断链。
+> ④ 补漏（issue 339）：secondbrain link.queue/state 键 rename rekey（向量索引不 rekey，行序随
+> JSON 键序自愈）+ diary 墙内存条目路径同步 + checkup 孤儿检查扩 knowledge/clipbook 并接一键修复。
+> attach 回退路径（无 fileManager 老宿主）维持 warning 口径不修。

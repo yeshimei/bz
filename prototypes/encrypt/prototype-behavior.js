@@ -1,4 +1,4 @@
-/* 源指纹 2cc850afe570e6e1 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 8ab443ddcb4f29e4 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/encrypt/fake-sim.ts → window.BZW_encrypt（行为单源预览包，issue 245/ADR-0106） */
 var BZW_encrypt = (() => {
@@ -7613,7 +7613,8 @@ var BZW_encrypt = (() => {
      * 加密阶段密文流式写入暂存区 `.staging/`（不占内存、不进入数据文件夹正式布局）；
      * 全部加密成功后才进入提交序列：
      *   S1 写挂起标记 → S2 清单先行（saveManifest，提交点）→ S3 暂存镜像搬入顶层
-     *   → S4 清除挂起标记 → S5 尽力删原文件（失败仅提示，onDeleteFailed 收集，不回滚）。
+     *   → S4 清除挂起标记 → S5 尽力删原文件（失败仅提示，onDeleteFailed 收集，不回滚；
+     *   共享附件 keptShared 跳过删除——issue 338 他引保护，原件保留他篇嵌入不断链）。
      * 关键不变量：挂起标记存在 ⇒ 原文件未删 ⇒ 解锁自愈回滚永远安全；标记于删原文件前清除，
      * 标记清除后的意外一律视为已提交、绝不回滚（Q4-A）。
      * 任一失败（附件/正文加密、写暂存、清单写入、搬入、清标记）→ 整笔放弃：清理本次暂存、
@@ -7660,7 +7661,9 @@ var BZW_encrypt = (() => {
             blobSize: enc.length,
             fingerprint: fp,
             hasPreview,
-            previewRef
+            previewRef,
+            // 共享附件标记随清单记账（issue 338）：仅 true 落账，老清单/非共享不受影响
+            keptShared: a.keptShared || void 0
           };
         });
         for (const r of results) attachments.push(r);
@@ -7692,6 +7695,7 @@ var BZW_encrypt = (() => {
         }
         const deleteFailed = [];
         for (const a of input.attachments) {
+          if (a.keptShared) continue;
           try {
             await this.deleteVaultFile(a.path);
           } catch (e) {
@@ -7740,6 +7744,8 @@ var BZW_encrypt = (() => {
      * 还原（取出即删）一篇笔记（操作级互斥入口，P1-6）：与 lockNote 共享同一串行链。
      *
      * 解原文 + 原质量附件写回原路径。
+     * 共享附件（keptShared，issue 338）跳过写回：原件加密时已保留在原路径，还原时不再
+     * 解密/校验/落盘该附件（密文镜像照常随条目删除），防覆盖保留的原件。
      * 原子语义（用户决策修订）：阶段一并行解密全部附件 + 正文并完成全部校验
      * （指纹冲突/目标被占/镜像缺失/解密失败），**任一失败 → 整体放弃，零落盘**；
      * 阶段二才批量写回明文（写回中途失败尽力回滚本次创建的文件）。
@@ -7759,13 +7765,18 @@ var BZW_encrypt = (() => {
       const total = note.attachments.length + 1;
       let done = 0;
       const plainAttachments = await mapLimit(note.attachments, BLOB_CONCURRENCY, async (a) => {
+        if (a.keptShared) {
+          done += 1;
+          onProgress == null ? void 0 : onProgress({ done, total, current: a.path });
+          return null;
+        }
         const plainB64 = await this.prepareRestoreAttachment(a);
         done += 1;
         onProgress == null ? void 0 : onProgress({ done, total, current: a.path });
         return plainB64;
       });
       note.attachments.forEach((a, i) => {
-        if (plainAttachments[i] === null) conflicts.push(a.path);
+        if (!a.keptShared && plainAttachments[i] === null) conflicts.push(a.path);
       });
       done += 1;
       onProgress == null ? void 0 : onProgress({ done, total, current: note.path });
@@ -7782,6 +7793,7 @@ var BZW_encrypt = (() => {
       try {
         for (let i = 0; i < note.attachments.length; i++) {
           const a = note.attachments[i];
+          if (a.keptShared) continue;
           const wasCreated = await this.commitRestoreAttachment(a, plainAttachments[i]);
           if (wasCreated) created.push(a.path);
         }
@@ -7854,10 +7866,10 @@ var BZW_encrypt = (() => {
       const plainAttachments = await mapLimit(
         note.attachments,
         BLOB_CONCURRENCY,
-        async (a) => this.prepareRestoreAttachment(a)
+        async (a) => a.keptShared ? null : this.prepareRestoreAttachment(a)
       );
       note.attachments.forEach((a, i) => {
-        if (plainAttachments[i] === null) conflicts.push(a.path);
+        if (!a.keptShared && plainAttachments[i] === null) conflicts.push(a.path);
       });
       if (!finalBlock) conflicts.push(note.path);
       if (conflicts.length > 0) return false;
@@ -7865,6 +7877,7 @@ var BZW_encrypt = (() => {
       try {
         for (let i = 0; i < note.attachments.length; i++) {
           const a = note.attachments[i];
+          if (a.keptShared) continue;
           const wasCreated = await this.commitRestoreAttachment(a, plainAttachments[i]);
           if (wasCreated) created.push(a.path);
         }
@@ -9483,6 +9496,68 @@ var BZW_encrypt = (() => {
     }
     const vaultFiles = ((_c = app == null ? void 0 : app.vault) == null ? void 0 : _c.getFiles) && app.vault.getFiles() || [];
     return collectNoteAttachments(content, embedLinks, vaultFiles);
+  }
+  function findSharedAttachmentPaths(notePath, attPaths, others) {
+    const cand = /* @__PURE__ */ new Set();
+    for (const p of attPaths) {
+      if (p) cand.add(p);
+    }
+    if (!cand.size || !others.length) return [];
+    const byName = /* @__PURE__ */ new Map();
+    for (const p of cand) {
+      const name = p.slice(p.lastIndexOf("/") + 1);
+      if (name && !byName.has(name)) byName.set(name, p);
+    }
+    const shared = /* @__PURE__ */ new Set();
+    for (const o of others) {
+      if (!o || o.path === notePath) continue;
+      for (const l of o.links || []) {
+        if (!l || typeof l !== "string") continue;
+        const clean = decodeURIComponent(l.split("#")[0].trim()).replace(/^\.\//, "");
+        if (!clean) continue;
+        let hit;
+        if (cand.has(clean)) hit = clean;
+        else if (!clean.includes("/")) hit = byName.get(clean);
+        else {
+          for (const p of cand) {
+            if (p.endsWith("/" + clean)) {
+              hit = p;
+              break;
+            }
+          }
+        }
+        if (hit) shared.add(hit);
+      }
+    }
+    return [...shared];
+  }
+  function collectSharedAttachmentPaths(app, notePath, attPaths) {
+    var _a, _b, _c;
+    if (!attPaths.length) return [];
+    let mds = [];
+    try {
+      mds = ((_a = app == null ? void 0 : app.vault) == null ? void 0 : _a.getMarkdownFiles) && app.vault.getMarkdownFiles() || [];
+    } catch (e) {
+      return [];
+    }
+    const others = [];
+    for (const f of mds) {
+      const links = [];
+      try {
+        const cache = (_c = (_b = app == null ? void 0 : app.metadataCache) == null ? void 0 : _b.getFileCache) == null ? void 0 : _c.call(_b, f);
+        const embeds = cache && Array.isArray(cache.embeds) ? cache.embeds : [];
+        const mdLinks = cache && Array.isArray(cache.links) ? cache.links : [];
+        for (const e of embeds) {
+          if (e && typeof e.link === "string") links.push(e.link);
+        }
+        for (const l of mdLinks) {
+          if (l && typeof l.link === "string") links.push(l.link);
+        }
+      } catch (e) {
+      }
+      others.push({ path: f.path, links });
+    }
+    return findSharedAttachmentPaths(notePath, attPaths, others);
   }
   function kindOf(path) {
     var _a;
@@ -11676,11 +11751,12 @@ var BZW_encrypt = (() => {
         });
       });
     }
-    /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始 */
-    async confirmLockProceed(file, attCount) {
+    /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始；共享附件原件保留（issue 338） */
+    async confirmLockProceed(file, attCount, sharedCount = 0) {
+      const sharedNote = sharedCount > 0 ? `其中 ${sharedCount} 个附件被其他笔记共用，原件将保留在原位置。` : "";
       return await openFlowDialog({
         title: "加密到保险库",
-        message: `把「${file.basename}」的正文${attCount ? "与 " + attCount + " 个附件" : ""}加密移入保险库？加密后原笔记与附件将从原路径移出（保险库内为密文）。`,
+        message: `把「${file.basename}」的正文${attCount ? "与 " + attCount + " 个附件" : ""}加密移入保险库？加密后原笔记与附件将从原路径移出（保险库内为密文）。${sharedNote}`,
         actions: [
           { label: "取消", value: "cancel" },
           // 刻意不标 danger（issue 291 评审）：加密是「搬进保险库」而非销毁——原路径消失但正文/附件
@@ -11745,9 +11821,13 @@ var BZW_encrypt = (() => {
         }
         const content = await app.vault.read(file);
         const attPaths = collectNoteAttachmentPaths(app, file, content);
-        if (!await this.confirmLockProceed(file, attPaths.length)) return;
+        const sharedSet = new Set(collectSharedAttachmentPaths(app, file.path, attPaths));
+        if (!await this.confirmLockProceed(file, attPaths.length, sharedSet.size)) return;
         const attachments = await this.readAttachmentInputs(app, attPaths);
         if (!attachments) return;
+        for (const a of attachments) {
+          if (sharedSet.has(a.path)) a.keptShared = true;
+        }
         const h = progressNotify("加密 " + file.basename);
         try {
           await this.dataManager.lockNote(
@@ -11769,7 +11849,11 @@ var BZW_encrypt = (() => {
               }
             }
           );
-          finishProgress(h, attachments.length + 1, "加密完成");
+          finishProgress(
+            h,
+            attachments.length + 1,
+            sharedSet.size ? `加密完成（${sharedSet.size} 个附件被其他笔记共用，原件保留）` : "加密完成"
+          );
           this.uiManager.show();
         } catch (e) {
           if (h) h.hide();
