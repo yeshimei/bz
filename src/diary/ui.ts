@@ -2146,9 +2146,9 @@ export class DiaryAppController {
 
   /**
    * 写链路域事件回刷（issue 256）：entry-added/tags-changed/entry-deleted/entry-decrypted/
-   * encrypted-purged 五通道防抖 loadAndRender——写日记命令（域外弹窗保存）、recap 写回、
-   * 条目删除等路径统一收口（ADR-0130：file-vacated 通道随条目文件化退役，删除由 UI 层
-   * entry-deleted 通知）。
+   * encrypted-purged 五通道防抖 loadAndRender——写日记命令（域外弹窗保存）、首页「生成今日
+   * 总结」写回（ADR-0154 起，原 recap 面板链路）、条目删除等路径统一收口（ADR-0130：
+   * file-vacated 通道随条目文件化退役，删除由 UI 层 entry-deleted 通知）。
    */
   private subscribeWriteEvents(): void {
     if (this._writeOff) return;

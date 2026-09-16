@@ -68,7 +68,6 @@ export const DOMAIN_MAP: Map<string, HomeDomain> = new Map(DOMAINS.map((d) => [d
 export const DOMAIN_DOT: Record<string, string> = {
   diary: '#e67341',
   memo: '#e8590c',
-  recap: '#d64d8f',
   cinema: '#e6951d',
   review: '#7c5cd6',
   pomodoro: '#e5534b',
@@ -653,7 +652,7 @@ export function riverCountText(id: string, data: RiverData): string | null {
     case 'belongings':
       return `登记 ${c.belongingsTotal} 件`;
     default:
-      return null; // recap/literature/reading-report/attach/encrypt/vault/smartcat/settings/pomodoro 走域副题
+      return null; // literature/reading-report/attach/encrypt/vault/smartcat/settings/pomodoro 走域副题
   }
 }
 

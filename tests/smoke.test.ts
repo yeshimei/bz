@@ -50,8 +50,7 @@ const registeredCommands: any[] = [];
 /** 期望的命令 id 全集（spec「命令 id 全清单」第 9 轮：COMMANDS 表 + 日记本 bz-diary-open） */
 const EXPECTED_COMMAND_IDS = [
   'bz-home-open',
-  // 今日回顾（recap 域，方向一 R2：当天五域痕迹聚合面板）
-  'bz-recap-today',
+  // 今日回顾面板已退役（ADR-0154）：bz-recap-today 随批删除，「生成今日总结」迁 home 时间线卡
   'bz-memo-open', 'bz-memo-add',
   // 给当前笔记记一笔（2026-09-11 首页入口菜单）
   'bz-memo-note-binding',
@@ -199,7 +198,6 @@ describe('bz 骨架冒烟', () => {
     // 域入口命令 icon 全部来自 DOMAIN_ICONS（一处定义、两处引用：命令表 + 设置面板导航）
     const domainCommands: Array<[string, string]> = [
       ['bz-home-open', 'home'],
-      ['bz-recap-today', 'recap'],
       ['bz-memo-open', 'memo'],
       ['bz-belongings-open', 'belongings'],
       ['bz-clipbook-open', 'clipping'],

@@ -126,6 +126,13 @@
 .bz-home-timeline[data-tl-time="0"] .bz-home-ev-tm { display: none; }
 .bz-home-timeline[data-tl-time="0"] .bz-home-ev { padding-left: var(--bz-space-lg); }
 
+/* ---- 「生成今日总结」动作行（ADR-0154 自 recap 面板迁入；只在今天视图渲染）----
+   按钮基线走组件库 .bz-btn（inline-flex + spinner gap 对齐），域内只压尺寸贴卡内行密度，
+   配色取时间线点评/预告卡同源的 --h-ai（小橘 AI 语义）；初始 disabled（探测/生成中），透明度走组件库 .bz-btn:disabled */
+.bz-home-ai-row { display: flex; justify-content: flex-end; padding: 2px var(--bz-space-sm) var(--bz-space-sm); }
+.bz-home-panel .bz-home-ai { height: 26px; padding: 0 12px; font-size: 11.5px; border-radius: 999px; color: var(--h-ai) !important; background: var(--h-ai-soft) !important; }
+.bz-home-panel .bz-home-ai:hover { border-color: var(--h-ai); }
+
 /* ---- 明天预告（原型 .pr） ---- */
 .bz-home-panel .bz-home-pr { display: block; background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px var(--bz-space-lg); margin-bottom: 10px; font-size: var(--bz-font-label); line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }
 .bz-home-panel .bz-home-pr:hover { border-color: var(--h-ai); }
