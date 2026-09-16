@@ -324,7 +324,8 @@ export class LinkAgent {
       }
       let candidates: SearchHit[] = [];
       try {
-        candidates = await this.findCandidates('', text);
+        // rethrow：检索不可达必须以抛错冒头（findCandidates 默认吞错返空），否则 queued 语义死路、面板会冒充「暂无关联」
+        candidates = await this.findCandidates('', text, { rethrowSearchFailure: true });
       } catch {
         return { status: 'queued' as const }; // 检索不可达：按「服务不可达」处理，不冒充失败
       }
@@ -474,7 +475,7 @@ export class LinkAgent {
    * 查询端（ticket 118）：**全文嵌入**——正文全文（剥 frontmatter、去空白，超长按 LINK_QUERY_MAX_CHARS 安全截尾）
    * 送向量模型生成查询向量，而非 800 字摘要，提高召回。
    */
-  async findCandidates(selfPath: string, content: string): Promise<SearchHit[]> {
+  async findCandidates(selfPath: string, content: string, opts?: { rethrowSearchFailure?: boolean }): Promise<SearchHit[]> {
     const topK = this.maxTopK;
     const minScore = this.minScore;
     const cfg = buildConfig();
@@ -484,6 +485,8 @@ export class LinkAgent {
     try {
       hits = await this.store.vectorSearch(bodyExcerpt(content, LINK_QUERY_MAX_CHARS), pool, baseUrl);
     } catch (e) {
+      // 预演（previewLinks）要区分「真空候选」与「检索不可达」——后者是 queued 不是「暂无关联」
+      if (opts?.rethrowSearchFailure) throw e;
       console.warn('[link-agent] 近邻检索失败', e);
       return [];
     }
