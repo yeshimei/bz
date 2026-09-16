@@ -44,41 +44,36 @@ beforeEach(() => {
   vi.mocked(openKnowledgeAddTask).mockClear();
 });
 
-describe('B站保存分流回写（enh 包 11）', () => {
-  it('B站链接保存 → 打开文献盒 + 回写已处理（read/saved/stats）+ 通知，不写剪藏笔记', async () => {
+describe('B站条目去除保存（ADR-0147 推翻 ADR-0068 分流保存）', () => {
+  it('flowSave 对 B站条目为无操作：不写剪藏、不回写、不调知识盒、返回 false', async () => {
     const vault = seedDisk([
       { platform: 'B站', title: '视频一', url: 'https://b23.tv/1', author: '影视飓风', body: '简介', date: '2026-09-01 08:00:00' },
     ]);
     const ok = await flowSave({ raw: diskJson(vault).articles[0] });
-    expect(ok).toBe(true);
-    expect(openKnowledgeAddTask).toHaveBeenCalledTimes(1);
+    expect(ok).toBe(false);
+    expect(openKnowledgeAddTask).not.toHaveBeenCalled();
     await drainNewsWritesForTests();
     const disk = diskJson(vault);
     const a = disk.articles.find((x: any) => x.url === 'https://b23.tv/1');
-    expect(a.read).toBe(true);
-    expect(a.state).toBe('saved');
-    expect(a.body).toBe('简介'); // issue 274：已收正文保留不清
-    expect(disk.stats.totalSaved).toBe(1);
-    expect(disk.stats.totalRead).toBe(1);
-    // 分流不写剪藏目录
+    expect(a.read).toBeUndefined();
+    expect(a.state).toBeUndefined();
+    expect(disk.stats.totalSaved).toBe(0);
+    expect(disk.stats.totalRead).toBe(0);
     expect(vault.files.has('归档/网页剪藏/视频一.md')).toBe(false);
-    // 已标已处理 → 收件流视图不再出现（防重复建任务的口径）
-    const { queryBySource } = await import('../../src/clipbook/store');
-    const stream = queryBySource(disk.articles, { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} }, new Set(), [], { kind: 'all' }, {});
-    expect(stream).toHaveLength(0);
   });
+
 });
 
 describe('F3 review 收编：已读未收补收升级路径', () => {
   it('已读未收（read=true state=skipped）再保存 → state 升级 saved、totalSaved+1，totalRead 不重复计', async () => {
     const vault = seedDisk([
-      { platform: 'B站', title: '已读未收片', url: 'https://b23.tv/up', author: 'UP主', body: '简介', date: '2026-09-01 08:00:00', read: true, state: 'skipped' },
+      { platform: '果壳科学人', title: '已读未收文', url: 'https://guokr.com/up', author: '果壳', body: '正文', date: '2026-09-01 08:00:00', read: true, state: 'skipped' },
     ]);
     const ok = await flowSave({ raw: diskJson(vault).articles[0] });
     expect(ok).toBe(true);
     await drainNewsWritesForTests();
     const disk = diskJson(vault);
-    const a = disk.articles.find((x: any) => x.url === 'https://b23.tv/up');
+    const a = disk.articles.find((x: any) => x.url === 'https://guokr.com/up');
     expect(a.read).toBe(true);
     expect(a.state).toBe('saved'); // 修复前被 F3 守卫拦截，恒停 skipped（笔记已写出但盘面不映）
     expect(disk.stats.totalSaved).toBe(1); // 升级计入已收
