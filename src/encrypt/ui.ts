@@ -211,6 +211,90 @@ export function collectNoteAttachmentPaths(app: any, file: any, content: string)
   return collectNoteAttachments(content, embedLinks, vaultFiles);
 }
 
+/**
+ * 他引检查（纯函数，只读，便于单测；issue 338）：候选附件中被「其他笔记」同时引用者视为共享。
+ * @param notePath 被加密笔记自身路径（排除——自引不算他引）
+ * @param attPaths 候选附件路径（collectNoteAttachmentPaths 解析出的 vault 全路径）
+ * @param others 其他 md 文件的引用列表（path + metadataCache embeds/links 的原始 link 串）
+ * 引用解析复用 collectNoteAttachments 的三段式（精确路径 → basename 索引 → 后缀匹配），
+ * 额外剥 `#` 子路径（标题/块引用变体）。与 Obsidian 自身链接能力同边界：
+ * 缓存未索引的极端场景可能漏判，不做全库文本扫描兜底（issue 338 边界拍板）。
+ */
+export function findSharedAttachmentPaths(
+  notePath: string,
+  attPaths: string[],
+  others: { path: string; links: string[] }[]
+): string[] {
+  const cand = new Set<string>();
+  for (const p of attPaths) {
+    if (p) cand.add(p);
+  }
+  if (!cand.size || !others.length) return [];
+  // 一次性索引：候选附件 basename → 全路径（一次建表逐引用 O(1)，同 collectNoteAttachments 思路）
+  const byName = new Map<string, string>();
+  for (const p of cand) {
+    const name = p.slice(p.lastIndexOf('/') + 1);
+    if (name && !byName.has(name)) byName.set(name, p);
+  }
+  const shared = new Set<string>();
+  for (const o of others) {
+    if (!o || o.path === notePath) continue; // 排除被加密笔记自身
+    for (const l of o.links || []) {
+      if (!l || typeof l !== 'string') continue;
+      const clean = decodeURIComponent(l.split('#')[0].trim()).replace(/^\.\//, '');
+      if (!clean) continue;
+      let hit: string | undefined;
+      if (cand.has(clean)) hit = clean;
+      else if (!clean.includes('/')) hit = byName.get(clean);
+      else {
+        // 相对路径（含子目录）形式：退化为候选集后缀匹配（低频路径）
+        for (const p of cand) {
+          if (p.endsWith('/' + clean)) {
+            hit = p;
+            break;
+          }
+        }
+      }
+      if (hit) shared.add(hit);
+    }
+  }
+  return [...shared];
+}
+
+/**
+ * 从 app 收集候选附件中被其他笔记引用者（collectNoteAttachmentPaths 的姊妹口，issue 338）：
+ * 扫全库 md 的 metadataCache（embeds + links，排除被加密笔记自身），解析命中候选附件路径者视为共享。
+ * 缓存缺失/读取失败按「无他引」处理（功能不阻断）；不做全库文本扫描兜底（边界见 findSharedAttachmentPaths）。
+ */
+export function collectSharedAttachmentPaths(app: any, notePath: string, attPaths: string[]): string[] {
+  if (!attPaths.length) return [];
+  let mds: { path: string }[] = [];
+  try {
+    mds = (app?.vault?.getMarkdownFiles && app.vault.getMarkdownFiles()) || [];
+  } catch (e) {
+    return [];
+  }
+  const others: { path: string; links: string[] }[] = [];
+  for (const f of mds) {
+    const links: string[] = [];
+    try {
+      const cache = app?.metadataCache?.getFileCache?.(f);
+      const embeds = cache && Array.isArray(cache.embeds) ? cache.embeds : [];
+      const mdLinks = cache && Array.isArray(cache.links) ? cache.links : [];
+      for (const e of embeds) {
+        if (e && typeof e.link === 'string') links.push(e.link);
+      }
+      for (const l of mdLinks) {
+        if (l && typeof l.link === 'string') links.push(l.link);
+      }
+    } catch (e) {
+      /* 单文件缓存读取失败跳过 */
+    }
+    others.push({ path: f.path, links });
+  }
+  return findSharedAttachmentPaths(notePath, attPaths, others);
+}
+
 /** 判断附件类型（按扩展名） */
 export function kindOf(path: string): 'image' | 'video' {
   const ext = path.split('.').pop()?.toLowerCase() || '';
@@ -2678,12 +2762,14 @@ export class EncryptAppController {
     });
   }
 
-  /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始 */
-  private async confirmLockProceed(file: { basename: string }, attCount: number): Promise<boolean> {
+  /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始；共享附件原件保留（issue 338） */
+  private async confirmLockProceed(file: { basename: string }, attCount: number, sharedCount = 0): Promise<boolean> {
+    // 共享附件提示（仅他引存在时追加，非共享路径文案逐字不变）：这些附件不随加密移出
+    const sharedNote = sharedCount > 0 ? `其中 ${sharedCount} 个附件被其他笔记共用，原件将保留在原位置。` : '';
     return (
       (await openFlowDialog({
         title: '加密到保险库',
-        message: `把「${file.basename}」的正文${attCount ? '与 ' + attCount + ' 个附件' : ''}加密移入保险库？加密后原笔记与附件将从原路径移出（保险库内为密文）。`,
+        message: `把「${file.basename}」的正文${attCount ? '与 ' + attCount + ' 个附件' : ''}加密移入保险库？加密后原笔记与附件将从原路径移出（保险库内为密文）。${sharedNote}`,
         actions: [
           { label: '取消', value: 'cancel' },
           // 刻意不标 danger（issue 291 评审）：加密是「搬进保险库」而非销毁——原路径消失但正文/附件
@@ -2756,9 +2842,15 @@ export class EncryptAppController {
       const content = await app.vault.read(file);
       // 附件引用：metadataCache.embeds（Obsidian 自带链接信息）为主 + 正则兜底（collectNoteAttachmentPaths）
       const attPaths = collectNoteAttachmentPaths(app, file, content);
-      if (!(await this.confirmLockProceed(file, attPaths.length))) return;
+      // 他引检查（issue 338）：被其他笔记共用的附件 → 原件保留不删（他篇嵌入不断链），密文侧照常入库
+      const sharedSet = new Set(collectSharedAttachmentPaths(app, file.path, attPaths));
+      if (!(await this.confirmLockProceed(file, attPaths.length, sharedSet.size))) return;
       const attachments = await this.readAttachmentInputs(app, attPaths);
       if (!attachments) return;
+      // 共享标记随附件入 manifest（还原取出时跳过该附件的明文写回，防覆盖保留的原件）
+      for (const a of attachments) {
+        if (sharedSet.has(a.path)) a.keptShared = true;
+      }
       const h = progressNotify('加密 ' + file.basename);
       try {
         await this.dataManager.lockNote(
@@ -2782,8 +2874,13 @@ export class EncryptAppController {
             }
           }
         );
-        // 主动打开保险库面板，展示刚加密的条目（无独立完成 toast，进度通知已显示完成）
-        finishProgress(h, attachments.length + 1, '加密完成');
+        // 主动打开保险库面板，展示刚加密的条目（无独立完成 toast，进度通知已显示完成）；
+        // 共享附件在完成通知中区分（issue 338：N 个附件被其他笔记共用，原件保留）
+        finishProgress(
+          h,
+          attachments.length + 1,
+          sharedSet.size ? `加密完成（${sharedSet.size} 个附件被其他笔记共用，原件保留）` : '加密完成'
+        );
         this.uiManager.show();
       } catch (e: any) {
         // 失败分支收尾进度通知（ticket 5）：收起常驻转圈，不残留幽灵进度条；错误另由 error toast 明示
