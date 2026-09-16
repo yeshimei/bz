@@ -56,7 +56,7 @@ export function skinClassOf(v: unknown): string {
 
 /**
  * 弹窗骨架（#pomodoro-popup 内部；控件 id 由 ui.ts 接线）
- * ——环形进度 / 循环圆点 / 阶段 / 任务 / 时间 / 三按钮 / 今日统计 + 近 7 天柱。
+ * ——环形进度 / 循环圆点 / 阶段 / 任务 / 时间 / 三按钮 / 今日统计 + 统计两档（近 7 天 / 近 6 月，issue 357）。
  */
 export function panelShellHtml(): string {
   return `
@@ -75,7 +75,12 @@ export function panelShellHtml(): string {
       </div>
       <div class="pomodoro-stats">
         <div id="pomodoro-today"></div>
+        <div class="pomodoro-stat-tabs">
+          <button id="pomodoro-stat-tab-week" class="pomodoro-stat-tab" type="button">近 7 天</button>
+          <button id="pomodoro-stat-tab-month" class="pomodoro-stat-tab" type="button">近 6 月</button>
+        </div>
         <div id="pomodoro-week" class="pomodoro-week"></div>
+        <div id="pomodoro-months" class="pomodoro-week" hidden></div>
       </div>`;
 }
 

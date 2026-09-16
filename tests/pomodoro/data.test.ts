@@ -330,6 +330,102 @@ describe('PomodoroDataManager', () => {
   });
 });
 
+describe('archived 周归档段（issue 357：零迁移，可选段容错归一）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+  });
+
+  it('load：旧文件无 archived 段 → 照常工作（data.archived 不落键，零迁移）', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      POMODORO_FILE_PATH,
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [{ ts: 1, duration: 1500 }],
+      })
+    );
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new PomodoroDataManager(app);
+    const data = await dm.load();
+    expect(data.history).toEqual([{ ts: 1, duration: 1500 }]);
+    expect(data.archived).toBeUndefined();
+  });
+
+  it('load：archived 非法行过滤；tasks 非法值剥离；空 tasks 不落键', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      POMODORO_FILE_PATH,
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [],
+        archived: [
+          { week: '2026-08-03', count: 2, minutes: 50, tasks: { 写报告: 50, 坏任务: 'x', 空值: null } },
+          { week: 'bad-week', count: 1, minutes: 25 },
+          { week: '2026-08-10', count: -1, minutes: 25 },
+          { week: '2026-08-10', count: 1, minutes: -5 },
+          null,
+          { count: 1, minutes: 25 },
+        ],
+      })
+    );
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new PomodoroDataManager(app);
+    const data = await dm.load();
+    expect(data.archived).toEqual([{ week: '2026-08-03', count: 2, minutes: 50, tasks: { 写报告: 50 } }]);
+  });
+
+  it('load：archived: [] → 不落键（空段不写）', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      POMODORO_FILE_PATH,
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [],
+        archived: [],
+      })
+    );
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new PomodoroDataManager(app);
+    expect((await dm.load()).archived).toBeUndefined();
+  });
+
+  it('save → load 往返：带 archived 段一致落盘', async () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new PomodoroDataManager(app);
+    const data = {
+      version: 1 as const,
+      state: createInitialState(),
+      history: [],
+      archived: [{ week: '2026-08-03', count: 2, minutes: 50, tasks: { 写报告: 50 } }],
+    };
+    await dm.save(data);
+    const raw = JSON.parse(vault.files.get(POMODORO_FILE_PATH)!);
+    expect(raw.archived).toEqual(data.archived);
+    expect(await dm.load()).toEqual(data);
+  });
+
+  it('save：数据层无损透传（archived: [] 原样落盘；「空段不落键」由 ui.save 与 load 归一承担）', async () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new PomodoroDataManager(app);
+    await dm.save({ version: 1, state: createInitialState(), history: [{ ts: 1, duration: 1500 }], archived: [] });
+    const raw = JSON.parse(vault.files.get(POMODORO_FILE_PATH)!);
+    expect(raw.archived).toEqual([]); // 透传不加工
+  });
+});
+
 describe('任务归属字段（增强包：备忘录「专注这个」联动持久化）', () => {
   const BASE_STATE = { phase: 'focus' as const, endTime: null, remaining: 600, paused: false, cycleFocusCount: 1 };
 
