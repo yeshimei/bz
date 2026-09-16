@@ -46,14 +46,14 @@ import {
   formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt,
   generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
 } from '../core/utils';
-import { MemoData, DEFAULT_SCENARIOS } from './data';
+import { MemoData, DEFAULT_SCENARIOS, parseComposerChecklist } from './data';
 import { getDueStatus, formatDueText, recurLabel } from './due';
 import {
   MEMO_ICONS as ICON, iconSpan, sceneDot, sceneLabel, mainCountHtml,
   navBtnHtml, mobChipHtml, mobAddSceneChipHtml, panelShellHtml, metaTagsHtml,
   cardHtml as renderCard, checkHtml, sectionLabelHtml, doneBarHtml, doneMoreHtml, type MetaDue,
 } from './render';
-import type { MemoItem, MemoRecur } from './types';
+import type { MemoItem, MemoRecur, MemoCheckItem } from './types';
 import { M } from './state';
 
 /** 备忘录主面板缩放钳制（ADR-0084：最小/硬上限，实际另受视口 92% 约束；默认 720×580 走域内 CSS） */
@@ -437,6 +437,18 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   // 行内勾选（完成/恢复；300ms 防抖对齐 memo 卡片）——切换逻辑抽 toggleCheck，与移动抽屉头共用
   const content = overlay.querySelector('[data-memo-content]') as HTMLElement;
   content.addEventListener('click', (e) => {
+    // 清单子任务勾选（issue 354）：行内即时落盘，全勾完父项自动完成
+    const clRow = (e.target as HTMLElement).closest('[data-memo-cl]') as HTMLElement | null;
+    if (clRow) {
+      const card = clRow.closest('.bz-memo-card') as HTMLElement | null;
+      const it = M.items.find((i) => i.id === card?.dataset.memoId);
+      if (!it || it.checklist?.length === 0) return;
+      const idx = Number((clRow.dataset.memoCl || '').split(':')[1]);
+      if (!Number.isInteger(idx)) return;
+      e.stopPropagation();
+      void toggleChecklistItem(it, idx);
+      return;
+    }
     const check = (e.target as HTMLElement).closest('[data-memo-check]') as HTMLElement | null;
     if (!check) return;
     const card = check.closest('.bz-memo-card') as HTMLElement | null;
@@ -611,9 +623,22 @@ function metaDueOf(it: MemoItem): MetaDue {
   return { status: st, text: formatDueText(it.due) };
 }
 
-/** 卡片 meta 行（纯层 metaTagsHtml 的行为侧封装：注入 due 包与相对时间；recur 文案单源 due.recurLabel） */
+/** 清单进度（issue 354）：「已勾 n/总数」文案；无清单回空（meta 不出标签） */
+function checkProgress(it: MemoItem): string {
+  const cl = it.checklist || [];
+  if (!cl.length) return '';
+  return `${cl.filter((c) => c.done).length}/${cl.length}`;
+}
+
+/** 卡片 meta 行（纯层 metaTagsHtml 的行为侧封装：注入 due 包与相对时间；recur/进度文案单源注入） */
 function metaTags(it: MemoItem): string {
-  return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', it.recur ? recurLabel(it.recur) : '');
+  return metaTagsHtml(
+    it,
+    metaDueOf(it),
+    it.created ? formatRelativeTime(it.created) : '',
+    it.recur ? recurLabel(it.recur) : '',
+    checkProgress(it)
+  );
 }
 
 function renderContent(): void {
@@ -637,7 +662,7 @@ function renderContent(): void {
   const urgent = active.filter((i) => dueRank(i) <= 1);
   const normal = active.filter((i) => dueRank(i) > 1);
 
-  const cardHtml = (it: MemoItem) => renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', it.recur ? recurLabel(it.recur) : '');
+  const cardHtml = (it: MemoItem) => renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', it.recur ? recurLabel(it.recur) : '', checkProgress(it));
 
   const sections: string[] = [];
   if (urgent.length) {
@@ -826,6 +851,32 @@ async function restoreItem(it: MemoItem): Promise<void> {
   await refresh();
 }
 
+/**
+ * 清单子任务勾选切换（issue 354）：行内即时落盘（无父项 300ms 防抖——子项单点语义明确）。
+ * 全勾完且父项未完成 → 走 completeItem 自动完成（周期条目由数据层链式生成下一期、清单随期重置）；
+ * 已完成父项取消任一勾选 → 自动恢复未完成。普通勾选静默（不发域事件，避免行为流刷屏）。
+ */
+async function toggleChecklistItem(it: MemoItem, idx: number): Promise<void> {
+  const cl = (it.checklist || []).map((c) => ({ ...c }));
+  if (idx < 0 || idx >= cl.length) return;
+  cl[idx].done = !cl[idx].done;
+  const allDone = cl.every((c) => c.done);
+  try {
+    if (allDone && !it.completed) {
+      await MemoData.updateItem(it.id, { checklist: cl });
+      await completeItem(it); // 复用完成链路（通知/域事件/refresh 同源）
+      return;
+    }
+    const patch: Partial<MemoItem> = { checklist: cl };
+    if (it.completed && !allDone) patch.completed = null; // 已完成父项取消勾选 → 自动恢复
+    await MemoData.updateItem(it.id, patch);
+  } catch (e) {
+    notifySaveError(e, '更新子任务');
+    console.error(e);
+  }
+  await refresh();
+}
+
 async function postponeItem(id: string, days: number): Promise<void> {
   const it = M.items.find((i) => i.id === id);
   if (!it || !it.due) return;
@@ -1007,15 +1058,18 @@ function addFromComposer(): void {
     // 剪贴板预填标题候选：内容仍是预填的原始 URL 才采用（用户改动即弃）
     const hint = clipTitleHint && clipTitleHint.title && txt === clipTitleHint.url ? clipTitleHint : null;
     clipTitleHint = null;
+    // 清单约定语法（issue 354）：「筹备旅行 /订机票 /订酒店」→ 标题 + 勾选项
+    const parsed = parseComposerChecklist(txt);
     const it: MemoItem = {
       id: generateId(), // T5：与旧 memo 同前缀 'item'（同源 memo.json）
-      title: hint ? hint.title : txt,
+      title: hint ? hint.title : parsed.title,
       scene,
       priority: 'minor',
       created: moment().format('YYYY-MM-DD HH:mm:ss'),
       completed: null,
       due: null,
       recur: null, // composer 快速录入不带周期（编辑弹窗可补）
+      checklist: parsed.checklist,
       notePath: null,
       notePosition: null,
       scriptName: null,
@@ -1079,7 +1133,12 @@ export function openEditor(
   title.textContent = isEdit ? '编辑备忘录' : '创建备忘录';
   form.appendChild(title);
 
-  // 内容
+  // 内容（新建态预设内容走 composer 约定语法解析——issue 354：标题部分进内容框，词条进清单草稿）
+  const presetRaw = isEdit ? '' : opts?.presetContent || '';
+  const parsedPreset = presetRaw ? parseComposerChecklist(presetRaw) : null;
+  const clInitial: MemoCheckItem[] = editing
+    ? (editing.checklist || []).map((c) => ({ ...c }))
+    : (parsedPreset?.checklist ? parsedPreset.checklist.map((c) => ({ ...c })) : []);
   const contentField = document.createElement('div');
   contentField.className = 'bz-field';
   const contentLabel = document.createElement('span');
@@ -1088,9 +1147,64 @@ export function openEditor(
   const contentInput = document.createElement('textarea');
   contentInput.className = 'bz-input';
   contentInput.placeholder = '输入备忘录内容...';
-  contentInput.value = editing ? editing.title : (opts?.presetContent || '');
+  contentInput.value = editing ? editing.title : parsedPreset ? parsedPreset.title : '';
   contentField.append(contentLabel, contentInput);
   form.appendChild(contentField);
+
+  // 清单子任务（issue 354）：行内勾选态 + 文案 + 删除，「添加子任务」追加空行；保存时清洗空行
+  const clDraft: MemoCheckItem[] = clInitial;
+  const clField = document.createElement('div');
+  clField.className = 'bz-field bz-memo-cl-field';
+  const clLabel = document.createElement('span');
+  clLabel.className = 'bz-field-label';
+  clLabel.textContent = '子任务（可选，勾完自动完成父项）';
+  const clRows = document.createElement('div');
+  clRows.className = 'bz-memo-cl-edit';
+  const clAddBtn = document.createElement('button');
+  clAddBtn.type = 'button';
+  clAddBtn.className = 'bz-memo-cl-addbtn';
+  clAddBtn.appendChild(uiIcon('plus'));
+  clAddBtn.appendChild(document.createTextNode('添加子任务'));
+  clField.append(clLabel, clRows, clAddBtn);
+  form.appendChild(clField);
+
+  function renderClRows(): void {
+    clRows.innerHTML = '';
+    clDraft.forEach((c, idx) => {
+      const row = document.createElement('div');
+      row.className = 'bz-memo-cl-edit-row';
+      const box = document.createElement('span');
+      box.className = 'bz-memo-cl-box' + (c.done ? ' bz-memo-cl-on' : '');
+      box.title = c.done ? '取消完成' : '标记完成';
+      box.addEventListener('click', () => {
+        clDraft[idx].done = !clDraft[idx].done;
+        box.classList.toggle('bz-memo-cl-on', clDraft[idx].done);
+      });
+      const inp = document.createElement('input');
+      inp.className = 'bz-input';
+      inp.value = c.text;
+      inp.placeholder = '子任务内容';
+      inp.addEventListener('input', () => { clDraft[idx].text = inp.value; });
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'bz-icon-btn bz-icon-btn--lg';
+      del.title = '删除子任务';
+      del.appendChild(uiIcon('x'));
+      del.addEventListener('click', () => {
+        clDraft.splice(idx, 1);
+        renderClRows();
+      });
+      row.append(box, inp, del);
+      clRows.appendChild(row);
+    });
+  }
+  renderClRows();
+  clAddBtn.addEventListener('click', () => {
+    clDraft.push({ text: '', done: false });
+    renderClRows();
+    const last = clRows.lastElementChild?.querySelector('input') as HTMLInputElement | null;
+    last?.focus();
+  });
 
   // 第二输入框区（剪藏标题/代码脚本/公开课课程；随场景显隐）——放在场景平铺上方
   const titleBox = document.createElement('div');
@@ -1321,6 +1435,9 @@ export function openEditor(
     const recurBtnOn = recurChoice.el.querySelector('.is-on');
     const recurKind = (recurBtnOn ? (recurBtnOn as HTMLElement).dataset.value || 'none' : 'none') as MemoRecur['kind'] | 'none';
     const recur: MemoRecur | null = recurKind === 'weekly' || recurKind === 'monthly' || recurKind === 'yearly' ? { kind: recurKind } : null;
+    // 清单子任务（issue 354）：清洗空行后落盘；全空 = 无清单
+    const clClean = clDraft.map((c) => ({ text: c.text.trim(), done: c.done })).filter((c) => c.text);
+    const checklist: MemoCheckItem[] | null = clClean.length ? clClean : null;
     const dueVal = dueInput.value;
     const due = dueVal ? dueVal.replace('T', ' ') : null;
     let titleVal = titleInput.value.trim();
@@ -1357,6 +1474,7 @@ export function openEditor(
             priority,
             due,
             recur,
+            checklist,
             notePath: posState.notePath,
             notePosition: posState.notePosition,
             scriptName,
@@ -1375,6 +1493,7 @@ export function openEditor(
             completed: null,
             due,
             recur,
+            checklist,
             notePath: posState.notePath,
             notePosition: posState.notePosition,
             scriptName,

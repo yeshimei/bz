@@ -10,7 +10,7 @@ import { getApp } from '../core/app';
 import { generateId, extractUrlAndDisplay } from '../core/utils';
 import { backupOriginal, enqueueFileTask, storageFile } from '../core/storage';
 import { notify } from '../core/notice';
-import type { MemoItem, MemoRecur } from './types';
+import type { MemoItem, MemoRecur, MemoCheckItem } from './types';
 
 export interface MemoSettingsLike {
   /** ADR-0009 共享数据路径 */
@@ -52,6 +52,36 @@ export function normalizeRecur(v: unknown): MemoRecur | null {
     return { kind: 'days', interval: Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1 };
   }
   return null;
+}
+
+/** checklist 字段归一（issue 354，零迁移）：逐项 {text,done} 清洗（text 转字符串、done 归布尔、
+ *  空 text 行剔除）；非数组/清洗后为空一律 null（旧数据与手改脏数据都安全回落「无清单」） */
+export function normalizeChecklist(v: unknown): MemoCheckItem[] | null {
+  if (!Array.isArray(v)) return null;
+  const items = v
+    .map((c: any) => ({ text: String(c?.text ?? '').trim(), done: !!c?.done }))
+    .filter((c) => c.text.length > 0);
+  return items.length ? items : null;
+}
+
+/**
+ * composer 约定语法解析（issue 354）：「筹备旅行 /订机票 /订酒店」——
+ * 空白分隔的 `/词条` token 逐个收进清单（词条本身不含空白）；其余文本为标题。
+ * 全部是词条（无标题）时首词条升格为标题；无词条时 checklist = null（普通条目）。
+ * 纯函数；URL 不受影响（https:// 开头不以 / 起始，路径型 token 如 24/7 也不带前导斜杠）。
+ */
+export function parseComposerChecklist(raw: string): { title: string; checklist: MemoCheckItem[] | null } {
+  const text = raw.trim();
+  if (!text) return { title: '', checklist: null };
+  const items: MemoCheckItem[] = [];
+  const titleParts: string[] = [];
+  for (const tok of text.split(/\s+/)) {
+    if (tok.length > 1 && tok.startsWith('/')) items.push({ text: tok.slice(1), done: false });
+    else titleParts.push(tok);
+  }
+  let title = titleParts.join(' ').trim();
+  if (!title && items.length) title = items.shift()!.text; // 全是词条：首词条升格为标题
+  return { title, checklist: items.length ? items : null };
 }
 
 /**
@@ -97,6 +127,7 @@ export function normalizeItem(item: any): MemoItem {
     linkedNote: item.linkedNote || null,
     url: item.url || null,
     recur: normalizeRecur(item.recur),
+    checklist: normalizeChecklist(item.checklist),
   };
 }
 
@@ -208,10 +239,12 @@ export const MemoData = {
       let next: MemoItem | null = null;
       if (recur) {
         const due = nextRecurDue(recur, item.due || now, now);
-        // 经 normalizeItem 重建干净形态；notePosition 显式浅拷贝防两期共享引用
+        // 经 normalizeItem 重建干净形态；notePosition 浅拷贝防两期共享引用；
+        // checklist 深拷贝且勾选态重置——新的一期从头来过（原条目保留当期勾选史）
         next = normalizeItem({
           ...item,
           notePosition: item.notePosition ? { ...item.notePosition } : null,
+          checklist: normalizeChecklist(item.checklist)?.map((c) => ({ ...c, done: false })) ?? null,
           id: generateId(),
           created: now,
           completed: null,
