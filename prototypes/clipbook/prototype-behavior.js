@@ -1,4 +1,4 @@
-/* 源指纹 b08ff42e04902d5d · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e6b6c21739be8a16 · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -18575,6 +18575,7 @@ ${bodyText.substring(0, 6e3)}`;
     return null;
   }
   async function renameToTitle(app, file, title) {
+    var _a;
     const clean = String(title).replace(/[\\/:*?"<>|\r\n]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
     if (!clean || clean === file.basename) return { target: file, renamed: false, failed: false };
     const dir = file.path.includes("/") ? file.path.slice(0, file.path.lastIndexOf("/")) : "/";
@@ -18584,7 +18585,9 @@ ${bodyText.substring(0, 6e3)}`;
       newPath = `${dir}/${clean} (${n++}).md`;
     }
     try {
-      await app.vault.rename(file, newPath);
+      const fmRename = (_a = app == null ? void 0 : app.fileManager) == null ? void 0 : _a.renameFile;
+      if (fmRename) await fmRename.call(app.fileManager, file, newPath);
+      else await app.vault.rename(file, newPath);
       return { target: app.vault.getAbstractFileByPath(newPath) || file, renamed: true, failed: false };
     } catch (e) {
       console.warn("[自动摘要] 重命名失败，仅写 frontmatter title:", e);
@@ -22254,11 +22257,14 @@ ${bodyText.substring(0, 6e3)}`;
     }
     if (app.vault.getAbstractFileByPath(p)) return p;
     if (!p.includes("/")) {
+      const inBox = knowledgeDir() + "/" + p + ".md";
+      if (app.vault.getAbstractFileByPath(inBox)) return inBox;
       try {
         const mc = app.metadataCache;
-        if (mc && typeof mc.getFirstLinkfileDest === "function") {
-          const dest = mc.getFirstLinkfileDest(p);
-          if (dest && app.vault.getAbstractFileByPath(dest)) return String(dest);
+        if (mc && typeof mc.getFirstLinkpathDest === "function") {
+          const dest = mc.getFirstLinkpathDest(p, "");
+          const destPath = dest && typeof dest === "object" ? dest.path : dest;
+          if (destPath && app.vault.getAbstractFileByPath(destPath)) return String(destPath);
         }
       } catch (e) {
       }

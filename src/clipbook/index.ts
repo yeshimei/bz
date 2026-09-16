@@ -79,6 +79,10 @@ export function unloadClipbook(): void {
   autoRefreshRegistered = false;
 }
 
+/** clipbook.json 引用同步（issue 336 / ADR-0149 决策 4，main.ts onLayoutReady 常驻接线；
+ *  实现同 memo file-sync 范式：域事件订阅 + 去抖 + 读改写事务） */
+export { ensureFileSync as ensureClipbookFileSync, unloadFileSync as unloadClipbookFileSync } from './file-sync';
+
 /** 目录/数据变化自动刷新（clipping:file-* 域事件，仅面板打开时重载；300ms 防抖） */
 function registerAutoRefresh(app: App): void {
   if (autoRefreshRegistered) return;
