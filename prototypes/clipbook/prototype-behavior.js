@@ -1,4 +1,4 @@
-/* 源指纹 bb1430c36d5ed048 · 仓内输入 97 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 660be43c09f9b092 · 仓内输入 97 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -16067,7 +16067,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
           if (st === "queued") {
             el.classList.add("bz-lit-rel-idle");
-            el.textContent = "向量服务不可达，已入队";
+            el.textContent = "检索服务不可用，延后至桌面端处理";
             return;
           }
           if (st === "failed") {
@@ -16176,7 +16176,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
               return;
             }
             if (out.status === "queued") {
-              notify("知识盒关联：向量服务不可达，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+              notify("知识盒关联：检索服务不可用，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
               return;
             }
             if (out.status === "failed") {
@@ -16210,7 +16210,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
                 dedupeKey: REL_BG_NOTICE_KEY
               });
             } else if (out.status === "queued") {
-              notify("知识盒关联：向量服务不可达，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+              notify("知识盒关联：检索服务不可用，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
             } else if (out.status === "out-of-scope") {
               notify("知识盒关联：该笔记不在三个盒子内，未写入", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
             } else if (out.status === "failed") {
