@@ -17,7 +17,7 @@ import { DOMAIN_ICONS } from './core/domain-icons';
 import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
 
-import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys } from './settings';
+import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey } from './settings';
 
 // 备忘录（memo 域，ADR-0092 旧备忘录域退役后 memo.json 唯一属主，ADR-0117 正名：UI/交互/写盘/引用同步归本域；
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
@@ -40,7 +40,7 @@ import { openCinema, addCinemaItem, openCinemaAnalysis, pickRandomCinema, unload
 // 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；读书报告内嵌为面板内视图）
 import { openBookshelf, openBookshelfReport, continueReading, unloadBookshelf } from './bookshelf';
 // 影视分析报告独立域已退役（ADR-0090：报告窗并入影院内嵌分析页，命令直达 bz-cinema-analysis）
-import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
+import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewStart, ensureReview, unloadReview } from './review';
 import {
   openSecondBrainPanel,
   openSecondBrainReference,
@@ -123,7 +123,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-bookshelf-open', name: '书库', icon: DOMAIN_ICONS.bookshelf, callback: () => openBookshelf(getApp()) },
   // 继续在读（2026-09-11 首页入口菜单）：开书架墙并落到「在读」分栏
   { id: 'bz-bookshelf-continue', name: '继续在读', icon: 'book-open', callback: () => void continueReading(getApp()) },
-  // 复习计划（9 命令）
+  // 复习计划（5 命令；评级四命令已裁——issue 346：QuickAdd 热键时代遗产，插件不设默认快捷键后
+  // 不可达且不在 home 菜单耦合清单；bz-review-rate 难度弹窗为面板外唯一评级入口）
+
   { id: 'bz-review-open', name: '复习计划', icon: DOMAIN_ICONS.review, callback: () => openReviewPanel(getApp()) },
   // ticket 174：独立「复习计划分析报告」命令（直开统计弹窗）；图标弃 bar-chart-3（阅读分析报告独占，
   // enh-sweep-a 错开）改 calendar-check（呼应复习日程语义）
@@ -133,11 +135,6 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-review-remove', name: '移出复习计划', icon: 'minus', callback: () => reviewRemoveCurrent(getApp()) },
   { id: 'bz-review-overdue', name: '复习（跳转逾期）', icon: 'alarm-clock', callback: () => reviewJumpOverdue(getApp()) },
   { id: 'bz-review-rate', name: '复习（选择难度）', icon: 'gauge', callback: () => reviewMarkDialog(getApp()) },
-  // f3：评级四命令去英文后缀并统一「复习（X）」标点（id 不动）
-  { id: 'bz-review-again', name: '复习（忘了）', icon: 'rotate-ccw', callback: () => reviewMarkRating(getApp(), 'again') },
-  { id: 'bz-review-hard', name: '复习（困难）', icon: 'trending-up', callback: () => reviewMarkRating(getApp(), 'hard') },
-  { id: 'bz-review-good', name: '复习（一般）', icon: 'check', callback: () => reviewMarkRating(getApp(), 'good') },
-  { id: 'bz-review-easy', name: '复习（简单）', icon: 'sparkles', callback: () => reviewMarkRating(getApp(), 'easy') },
   // 第二大脑（ticket 103：原闪念正名接管，主面板为统一入口）
   { id: 'bz-secondbrain-panel', name: '第二大脑面板', icon: DOMAIN_ICONS.secondbrain, callback: () => openSecondBrainPanel(getApp()) },
   // f7：与「第二大脑面板」区分——本命令打开参考侧边栏（右侧窄窗/移动端抽屉参考 tab）
@@ -234,8 +231,10 @@ export default class BzPlugin extends Plugin {
     const autoLinkMigrated = migrateAutoLinkSettings(loaded);
     // issue 342 后续：「上下文窗口」设置行删除（模型固有属性、零消费点），aiContextOverrides 键退役
     const retiredAIKeysMigrated = migrateRetiredAIKeys(loaded);
+    // issue 346：收藏本排序循环钮键退役（ADR-0083 后零消费点，残留清除）
+    const retiredSortKeyMigrated = migrateRetiredFavoritesSortKey(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
-    if (memoKeysMigrated || autoLinkMigrated || retiredAIKeysMigrated) {
+    if (memoKeysMigrated || autoLinkMigrated || retiredAIKeysMigrated || retiredSortKeyMigrated) {
       void this.saveSettings().catch((e) => console.error('[bz] 设置键迁移落盘失败:', e));
     }
     setApp(this.app);
