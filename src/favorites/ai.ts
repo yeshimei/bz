@@ -2,6 +2,7 @@
  * 收藏本 AI 服务 + 余额查询（ticket 11）：源码 收藏本.js L69-234 逐字。
  */
 import { requestUrl } from 'obsidian';
+import { withTimeout } from '../core/http';
 import { createAI, getAIProvider } from '../core/ai';
 import type { AIService } from '../core/ai';
 
@@ -46,13 +47,16 @@ export class FavoritesAIService {
     let fetched = false;
     for (let attempt = 0; attempt < 2 && !fetched; attempt++) {
       try {
-        const resp: any = await this._requestUrlWithTimeout(
-          {
+        // 8s 超时（withTimeout，core/http 单源，issue 347）：api.github.com 网络不稳，
+        // 超时/请求失败同样进 catch → 重试 1 次 → 降级
+        const resp: any = await withTimeout(
+          requestUrl({
             url: `https://api.github.com/repos/${owner}/${repo}`,
             method: 'GET',
             headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'obsidian-bz' },
-          },
-          8000
+          }),
+          8000,
+          'GitHub API',
         );
         if (resp.status && resp.status >= 400) throw new Error(`HTTP ${resp.status}`);
         const data = JSON.parse(resp.text || '{}');
@@ -64,16 +68,5 @@ export class FavoritesAIService {
       }
     }
     return { title, description, fetched };
-  }
-
-  /** requestUrl 包超时（避免 api.github.com 长时间挂起） */
-  private _requestUrlWithTimeout(opts: any, timeoutMs: number): Promise<any> {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new Error('GitHub API 请求超时')), timeoutMs);
-    });
-    return Promise.race([requestUrl(opts), timeout]).finally(() => {
-      if (timer) clearTimeout(timer);
-    });
   }
 }

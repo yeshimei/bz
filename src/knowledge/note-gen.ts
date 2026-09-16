@@ -11,6 +11,7 @@
  * - 旧笔记自动补全（type 启发式 + domain AI，补过落库不重复）
  */
 import { createAI } from '../core/ai';
+import { withTimeout } from '../core/http';
 import { getApp } from '../core/app';
 import { tryGetSettings } from '../core/settings-provider';
 import type { App } from 'obsidian';
@@ -116,21 +117,11 @@ function nowStamp(): string {
 }
 
 /**
- * 单次 AI 调用超时上限（Promise.race；ticket 138 §1.3）。
+ * 单次 AI 调用超时上限（withTimeout，core/http 单源收编；ticket 138 §1.3）。
  * 底层 ai.json 无法中途取消，超时只是让调用方得以跳过该条继续整批，
  * 挂起的 AI Promise 的 settle 结果被丢弃（本条已按超时处理，不算 AI 未配置）。
  */
 const BACKFILL_AI_TIMEOUT_MS = 25000;
-
-function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`AI 请求超时（${label}，${ms}ms）`)), ms);
-    p.then(
-      (v) => { clearTimeout(timer); resolve(v); },
-      (e) => { clearTimeout(timer); reject(e); },
-    );
-  });
-}
 
 /** 写唯一路径笔记（永不覆盖；目录不存在自动建） */
 export async function writeUniqueNote(dir: string, baseName: string, content: string): Promise<string> {
