@@ -25,7 +25,7 @@ import {
   type ItemAction,
   type ItemActionsOptions,
 } from '../core/item-actions';
-import {  escapeHtml, formatRelativeTime , cancelClipboardClear, armClipboardClear, copySensitiveText } from '../core/utils';
+import {  escapeHtml, formatRelativeTime , cancelClipboardClear, copySensitiveWithFallback } from '../core/utils';
 import { uiEmpty, uiProgress } from '../core/ui';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -102,7 +102,7 @@ export interface EncryptUIConfig {
 /** 默认生成字符集（唯一定义居 password-vault/data；此处再导出保持 ui.ts 公共面） */
 export { DEFAULT_PW_CHARSET };
 
-// secureRandomPassword / cancelClipboardClear / armClipboardClear / copySensitiveText
+// cancelClipboardClear / copySensitiveWithFallback（含 textarea+execCommand 降级兜底，issue 347 收口）
 // 收口 core/utils（与 password-vault 同源共用单定时器，批次 G）；密码生成/强度计算随
 // ADR-0155 密码视图退役归 password-vault 域，本域仅保留日记正文复制（60s 清空）链路。
 
@@ -1634,8 +1634,7 @@ export class UIManager {
    * 流程确认框（取消 / 确认 cta）：笔记/日记动作共用。
    * `danger`（issue 291 评审补）= 主动作是删除/销毁类 → 弹窗挂 `.bz-flow-dialog--danger`，
    * 主按钮降为中性底 + 红字（设计手册 §9/§10）。默认 false（还原等非破坏动作保持高亮）。
-   * 注意与 password-vault 的 `askConfirm` 区别：那个是域内自绘确认（自带 .danger 按钮样式），
-   * 本方法走 core 流程框，危险语义必须显式传进来。
+   * password-vault 的 `askConfirm` 已随 issue 347 一并收编同一 core 流程框（两域同源）。
    */
   private askConfirm(
     title: string,
@@ -1656,28 +1655,8 @@ export class UIManager {
     });
   }
 
-  /** 敏感文本复制 + 60s 自动清空（日记正文复制等共用） */
-  async copySensitive(text: string): Promise<boolean> {
-    try {
-      await copySensitiveText(text);
-      return true;
-    } catch (e) {
-      // 降级：textarea 选中法
-      try {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.cssText = 'position:fixed;opacity:0';
-        document.body.appendChild(ta);
-        ta.select();
-        const ok = document.execCommand('copy');
-        ta.remove();
-        if (ok) armClipboardClear();
-        return ok;
-      } catch (e2) {
-        return false;
-      }
-    }
-  }
+  // 敏感文本复制（含降级兜底）+ 60s 自动清空：收口 core/utils copySensitiveWithFallback
+  // （issue 347：与 password-vault 两份逐字雷同的兜底实现一并删除，两域消费同一实现）。
 
   private setAssetFromNav(a: VaultAsset): void {
     // 资产兜底：面板只管加密笔记/加密日记（pw 入口已随 ADR-0155 摘除），旧停留值残留统一落 note
@@ -1958,7 +1937,7 @@ export class UIManager {
           this.toast('正文解密失败', true);
           return;
         }
-        void this.copySensitive(t).then((ok) => this.toast(ok ? '正文已复制（60 秒后自动清空）' : '复制失败', !ok));
+        void copySensitiveWithFallback(t).then((ok) => this.toast(ok ? '正文已复制（60 秒后自动清空）' : '复制失败', !ok));
       })
       .catch(() => this.toast('正文解密失败', true));
   }

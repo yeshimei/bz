@@ -9,7 +9,6 @@
  */
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
-import { armClipboardClear, copySensitiveText } from '../core/utils';
 import type { PasswordVaultEntry } from './data';
 
 /** 选中动作：现有条目（复制该密码）| 生成新（按设置生成并复制） */
@@ -83,35 +82,10 @@ export function closePasswordQuickPicker(): void {
 }
 
 /**
- * 复制敏感文本 + textarea 降级（与面板内「复制」同口径）：成功布防 60s 自动清空。
- * 快速取密全程不打开面板，复制链路必须自带降级（navigator.clipboard 不可用时）。
- */
-export async function copySensitiveWithFallback(text: string): Promise<boolean> {
-  try {
-    await copySensitiveText(text);
-    return true;
-  } catch (e) {
-    // 降级：textarea 选中法
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.cssText = 'position:fixed;opacity:0';
-      document.body.appendChild(ta);
-      ta.select();
-      const ok = document.execCommand('copy');
-      ta.remove();
-      if (ok) armClipboardClear();
-      return ok;
-    } catch (e2) {
-      return false;
-    }
-  }
-}
-
-/**
  * 打开快速取密选择器（幂等：已开先关）。onPick 在选择器关闭后回调选中动作，
- * 复制与 60s 自动清空由调用方执行。顶部固定「生成新密码」项不受过滤影响；
- * 无命中时列表只剩该项（ADR-0155 口径：搜到即复制、无命中生成）。
+ * 复制与 60s 自动清空由调用方执行（copySensitiveWithFallback 已收口 core/utils，issue 347）。
+ * 顶部固定「生成新密码」项不受过滤影响；无命中时列表只剩该项（ADR-0155 口径：搜到即复制、
+ * 无命中生成）。
  */
 export function openPasswordQuickPicker(
   entries: PasswordVaultEntry[],
