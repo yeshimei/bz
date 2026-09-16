@@ -1819,9 +1819,12 @@ function knowledgeDir(): string {
 }
 
 /** internal-link href → vault 内实际路径（去 heading 锚点、补 .md、判存在）；缺失返回 null（不拦）。
- *  三级解析（issue 329 Bug 3）：全路径直查（含补 .md）→ 裸 basename 经 metadataCache
- *  getFirstLinkfileDest 解析（锚定别名双链 `[[basename|文字]]` 的 data-href 无目录，
- *  直查必空 → 拦截失败走原生导航，移动端实报崩溃）→ 仍无则 null 维持原生。 */
+ *  三级解析（issue 329 Bug 3 / issue 340 修正）：全路径直查（含补 .md）→ 裸 basename 先按
+ *  「知识盒内同名笔记」直查（锚定别名双链 `[[basename|文字]]` 必指盒内笔记，vault 存在性判定
+ *  即可解析，不依赖 metadataCache）→ 再退 metadataCache.getFirstLinkpathDest 全库解析。
+ *  不得用 getFirstLinkfileDest：该 API 在 Obsidian 1.12/1.13 实装中不存在（d.ts 亦无），
+ *  typeof 守卫静默空转 → 拦截恒失效 → 原生导航（桌面笔记开在全屏面板后=无反应；移动端 webview
+ *  直接导航=OB 重启，issue 340 实测）。 */
 function resolveInternalTarget(href: string): string | null {
   const app = getApp();
   let p = String(href || '').split('#')[0].trim().replace(/\\/g, '/');
@@ -1833,12 +1836,16 @@ function resolveInternalTarget(href: string): string | null {
   }
   if (app.vault.getAbstractFileByPath(p)) return p;
   if (!p.includes('/')) {
-    // 裸名形态：全库链接表解析唯一目标；命中且文件存在才拦（测试 mock 可能无该 API，守卫 + 兜错）
+    const inBox = knowledgeDir() + '/' + p + '.md';
+    if (app.vault.getAbstractFileByPath(inBox)) return inBox;
+    // 兜底：全库 basename 解析（d.ts 正牌 API，TFile|null；sourcePath 空串=全库口径）。
+    // 测试 mock 可能无该 API，守卫 + 兜错，异常维持原生导航
     try {
       const mc: any = (app as any).metadataCache;
-      if (mc && typeof mc.getFirstLinkfileDest === 'function') {
-        const dest = mc.getFirstLinkfileDest(p);
-        if (dest && app.vault.getAbstractFileByPath(dest)) return String(dest);
+      if (mc && typeof mc.getFirstLinkpathDest === 'function') {
+        const dest = mc.getFirstLinkpathDest(p, '');
+        const destPath = dest && typeof dest === 'object' ? dest.path : dest;
+        if (destPath && app.vault.getAbstractFileByPath(destPath)) return String(destPath);
       }
     } catch (e) { /* 解析异常维持原生导航 */ }
   }
