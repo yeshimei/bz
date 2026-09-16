@@ -1,5 +1,5 @@
-/* 源指纹 4b4ecfe4787b12f2 · 仓内输入 211 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 cadb9cc8373122a8 · 仓内输入 212 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -12226,6 +12226,43 @@ var BZW_memo = (() => {
   });
 
   // src/favorites/config.ts
+  function getTags() {
+    return currentTags != null ? currentTags : DEFAULT_TAGS;
+  }
+  function setTags(tags) {
+    currentTags = tags;
+  }
+  function resetTagsState() {
+    currentTags = null;
+  }
+  function getTagById(id) {
+    var _a2;
+    return (_a2 = getTags().find((t) => t.id === id)) != null ? _a2 : null;
+  }
+  function getTagsPath(storagePath) {
+    const idx = storagePath.lastIndexOf("/");
+    const dir = idx >= 0 ? storagePath.slice(0, idx) : "";
+    return (dir || CONFIG.DEFAULT_STORAGE_PATH) + "/" + CONFIG.TAGS_FILE;
+  }
+  function newTagId() {
+    return "t" + Date.now().toString(36);
+  }
+  function normalizeTags(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const r of raw) {
+      if (!r || typeof r !== "object") continue;
+      const o = r;
+      const label = typeof o.label === "string" ? o.label.trim() : "";
+      if (!label) continue;
+      out.push({
+        id: typeof o.id === "string" && o.id ? o.id : newTagId(),
+        label,
+        ic: typeof o.ic === "string" && o.ic ? o.ic : "tag"
+      });
+    }
+    return out;
+  }
   function getStorageDir(value) {
     let dir = (value || CONFIG.DEFAULT_STORAGE_PATH).trim().replace(/\/+$/, "");
     if (/\.json$/i.test(dir)) {
@@ -12245,26 +12282,29 @@ var BZW_memo = (() => {
     const t = (text || "").trim();
     return t.length > 0 && !/\s/.test(t) && (/^https?:\/\//i.test(t) || /^www\./i.test(t));
   }
-  var CONFIG, TAGS;
+  var CONFIG, DEFAULT_TAGS, currentTags;
   var init_config2 = __esm({
     "src/favorites/config.ts"() {
       CONFIG = {
         /** 默认存储目录（文件名固定 favorites.json，设置只允许改目录） */
         DEFAULT_STORAGE_PATH: "CONFIG/STORAGE",
         /** 数据文件名（固定，不允许用户修改） */
-        STORAGE_FILE: "favorites.json"
+        STORAGE_FILE: "favorites.json",
+        /** 标签定义文件（issue 363 伴生文件，与 favorites.json 同目录、跟随 storagePath 设置） */
+        TAGS_FILE: "favorites.tags.json"
       };
-      TAGS = [
-        { label: "GitHub", ic: "github" },
-        { label: "桌面软件", ic: "app-window" },
-        { label: "网站", ic: "globe" },
-        { label: "大模型", ic: "brain-circuit" },
-        { label: "pi", ic: "keyboard" },
-        { label: "Claude", ic: "bot" },
-        { label: "skills", ic: "zap" },
-        { label: "酒馆", ic: "beer" },
-        { label: "DeepSeek Harness", ic: "waypoints" }
+      DEFAULT_TAGS = [
+        { id: "github", label: "GitHub", ic: "github" },
+        { id: "desktop", label: "桌面软件", ic: "app-window" },
+        { id: "web", label: "网站", ic: "globe" },
+        { id: "llm", label: "大模型", ic: "brain-circuit" },
+        { id: "pi", label: "pi", ic: "keyboard" },
+        { id: "claude", label: "Claude", ic: "bot" },
+        { id: "skills", label: "skills", ic: "zap" },
+        { id: "pub", label: "酒馆", ic: "beer" },
+        { id: "dsh", label: "DeepSeek Harness", ic: "waypoints" }
       ];
+      currentTags = null;
     }
   });
 
@@ -32354,7 +32394,10 @@ ${body}`;
       酒馆: 330,
       "DeepSeek Harness": 195
     };
-    return m[label] != null ? m[label] : 200;
+    if (m[label] != null) return m[label];
+    let h = 0;
+    for (let i = 0; i < label.length; i++) h = (h * 31 + label.charCodeAt(i)) % 360;
+    return h;
   }
   function visibleItems(items) {
     return items.filter((i) => !i.archived);
@@ -32390,7 +32433,7 @@ ${body}`;
     <p>${esc(it.description || "（这张卡只写了个名字）")}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
       const h = hueOf(t);
-      const ic2 = (TAGS.find((x) => x.label === t) || { ic: "" }).ic;
+      const ic2 = (getTags().find((x) => x.label === t) || { ic: "" }).ic;
       return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(t)}</span></span>`;
     }).join("")}</span>
       <span>${esc(relTime2(it.created))}</span></div>
@@ -32413,7 +32456,7 @@ ${body}`;
     return acts;
   }
   function pickChipsHtml(sel) {
-    return TAGS.map(
+    return getTags().map(
       (t) => `<button type="button" class="${sel.has(t.label) ? "bz-fav-on" : ""}" data-tag="${esc(t.label)}">${iconSpan(t.ic, "bz-ic--xs")}<span>${esc(t.label)}</span></button>`
     ).join("");
   }
@@ -32467,7 +32510,7 @@ ${body}`;
   function chipsHtml2(items, view, mobile) {
     const mk = (label, ic2, cnt, active2, grey = false) => `<button class="bz-fav-chip${active2 ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}" data-fav-tag="${esc(label)}">${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(label)} ${cnt}</span></button>`;
     const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON3.add, "bz-ic--xs")}<span>新收藏</span></button>`;
-    const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + TAGS.map((t) => {
+    const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + getTags().map((t) => {
       const n = tagCount(items, t.label);
       return n ? mk(t.label, t.ic, n, !view.archived && view.tag === t.label) : "";
     }).join("");
@@ -32505,6 +32548,117 @@ ${body}`;
     "src/favorites/render.ts"() {
       init_shared5();
       init_render10();
+    }
+  });
+
+  // src/favorites/data.ts
+  var DataManager;
+  var init_data8 = __esm({
+    "src/favorites/data.ts"() {
+      init_json_store();
+      init_storage();
+      init_app();
+      init_config2();
+      DataManager = class {
+        constructor(storagePath) {
+          this.store = jsonStore(storagePath);
+          this.filePath = storagePath;
+          this.tagsPath = getTagsPath(storagePath);
+          this.tagsStore = jsonStore(this.tagsPath);
+        }
+        async read() {
+          return this.store.read();
+        }
+        async write(data) {
+          return this.store.write(data);
+        }
+        /** 读改写事务：fn 基于磁盘现值就地改动（或返回新数组），整体入串行队列执行 */
+        async mutateAll(fn) {
+          return enqueueFileTask(this.filePath, async () => {
+            const data = await this.read();
+            const next = fn(data) || data;
+            await this.write(next);
+            return next;
+          });
+        }
+        add(item) {
+          return this.mutateAll((data) => {
+            data.unshift(item);
+          });
+        }
+        delete(id) {
+          return this.mutateAll((data) => {
+            const idx = data.findIndex((d) => d.id === id);
+            if (idx !== -1) data.splice(idx, 1);
+          });
+        }
+        /**
+         * 撤销删除（ticket 141 通病 1）：删除前取到的完整条目原样插回（含 archived/llmConfig 等全部字段），
+         * 不走 add() 重排——同 id 已存在（并发写回）则幂等跳过。参照 review/data.ts restoreItem 先例。
+         */
+        restoreItem(item) {
+          return this.mutateAll((data) => {
+            if (data.some((d) => d.id === item.id)) return;
+            data.push(item);
+          }).then(() => void 0);
+        }
+        update(id, newData) {
+          return this.mutateAll((data) => {
+            const idx = data.findIndex((d) => d.id === id);
+            if (idx !== -1) data[idx] = { ...data[idx], ...newData };
+          });
+        }
+        async getAll() {
+          return await this.read();
+        }
+        // ==================== 标签定义（issue 363：favorites.tags.json） ====================
+        /**
+         * 载入标签定义并注入 config 单源（app.init 时调用）：文件缺失 → 回退内置 9 类 seed
+         * （零迁移，不建文件不写盘）；文件在 → 归一化（坏行剔除/缺 id 补）后生效；空数组/坏
+         * JSON（jsonStore 留档降级为 []）同样走 seed 回退。
+         */
+        async loadTags() {
+          let raw = null;
+          try {
+            if (getApp().vault.getAbstractFileByPath(this.tagsPath)) {
+              raw = await this.tagsStore.read();
+            }
+          } catch (e) {
+            raw = null;
+          }
+          const tags = normalizeTags(raw);
+          const next = tags.length ? tags : DEFAULT_TAGS;
+          setTags(next);
+          return next;
+        }
+        /** 保存标签定义（管理界面增删改排序的唯一落盘点）：写盘 + 注入单源即时生效 */
+        async saveTags(tags) {
+          await enqueueFileTask(this.tagsPath, async () => {
+            await this.tagsStore.write(tags);
+          });
+          setTags(tags);
+        }
+        /**
+         * 条目标签批量跟随（改名/删除迁移；范式 = memo updateSceneBulk）：tags[] 内 from → to
+         * 且 type 同步（type = tags[0] 派生字段），返回迁移条数；零匹配不写盘。
+         */
+        async updateTagLabelBulk(from, to) {
+          if (!from || from === to) return 0;
+          return enqueueFileTask(this.filePath, async () => {
+            const data = await this.read();
+            let n = 0;
+            data.forEach((d) => {
+              if ((d.tags || []).includes(from)) {
+                d.tags = d.tags.map((t) => t === from ? to : t);
+                if (d.type === from) d.type = to;
+                n++;
+              }
+            });
+            if (n > 0) await this.write(data);
+            return n;
+          });
+        }
+      };
     }
   });
 
@@ -32551,7 +32705,7 @@ ${body}`;
               options: [
                 { value: "", label: "全部" },
                 { value: "@last", label: "记住上次" },
-                ...TAGS.map((t) => ({ value: t.label, label: t.label }))
+                ...getTags().map((t) => ({ value: t.label, label: t.label }))
               ]
             },
             {
@@ -32565,6 +32719,18 @@ ${body}`;
               ]
             }
           ]
+        },
+        {
+          // 标签管理（issue 363 标签自定义）：增删改排序，定义落 favorites.tags.json（config 单源注入）。
+          // custom 行 = 域内自绘管理列表（行内文案不经设置文案 lint，与其他管理弹窗同惯例）
+          icon: "tags",
+          name: "标签管理",
+          rows: [
+            {
+              type: "custom",
+              render: (body, ctx) => renderTagManager(body, ctx)
+            }
+          ]
         }
       ]
     };
@@ -32575,10 +32741,10 @@ ${body}`;
     if (v === "@last") {
       const last = s == null ? void 0 : s.favoritesLastFilter;
       if (last === "@archived") return { tag: null, archived: true };
-      if (last && TAGS.some((t) => t.label === last)) return { tag: last, archived: false };
+      if (last && getTags().some((t) => t.label === last)) return { tag: last, archived: false };
       return { tag: null, archived: false };
     }
-    if (v && TAGS.some((t) => t.label === v)) return { tag: v, archived: false };
+    if (v && getTags().some((t) => t.label === v)) return { tag: v, archived: false };
     return { tag: null, archived: false };
   }
   function ensureFavoritesEsc() {
@@ -32697,6 +32863,7 @@ ${body}`;
   function unloadFavoritesUI() {
     closePanel3();
     resetFavoritesState();
+    resetTagsState();
   }
   async function loadItems() {
     try {
@@ -32946,8 +33113,8 @@ ${body}`;
       url: (it == null ? void 0 : it.url) || "",
       desc: (it == null ? void 0 : it.description) || "",
       pinned: !!(it == null ? void 0 : it.pinned),
-      // 与 DOM 脏比较同口径（只数九类 chip）：TAGS 外标签不进基线，一开表单不误判脏（F10）
-      tags: ((it == null ? void 0 : it.tags) || []).filter((t) => TAGS.some((x) => x.label === t)).sort().join("|")
+      // 与 DOM 脏比较同口径（只数当前标签集 chip，issue 363 动态）：标签集外标签不进基线，一开表单不误判脏（F10）
+      tags: ((it == null ? void 0 : it.tags) || []).filter((t) => getTags().some((x) => x.label === t)).sort().join("|")
     };
     const titleInp = popup.querySelector("#fz-title");
     const urlInp = popup.querySelector("#fz-url");
@@ -33028,11 +33195,12 @@ ${body}`;
       setVal("#fz-url", data.url);
       setVal("#fz-desc", data.description);
       const rawTags = Array.isArray(data.tags) ? data.tags.map((x) => String(x)) : data.tags ? [String(data.tags)] : [];
-      const known = TAGS.map((t) => t.label);
+      const known = getTags().map((t) => t.label);
       const valid = rawTags.filter((t) => known.includes(t));
       const unknown = rawTags.filter((t) => !known.includes(t));
       if (unknown.length) notice(`AI 整理的标签「${unknown.join("、")}」不在列表中，已忽略`, "warning");
-      if (ghInfo && !valid.includes("GitHub")) valid.unshift("GitHub");
+      const ghTag = getTagById("github");
+      if ((ghInfo == null ? void 0 : ghInfo.fetched) && ghTag && !valid.includes(ghTag.label)) valid.unshift(ghTag.label);
       sel.clear();
       valid.forEach((t) => sel.add(t));
       redraw();
@@ -33048,7 +33216,7 @@ ${body}`;
     }
   }
   function aiPrompt2(title, url, desc, ghInfo) {
-    const known = TAGS.map((t) => t.label).join("、");
+    const known = getTags().map((t) => t.label).join("、");
     const base = `你是收藏整理助手。把用户输入的收藏信息整理成 JSON（只输出 JSON，不输出任何多余文字），严格以下格式：
 {"title":"标题","url":"链接","description":"简介","tags":["标签1","标签2"]}
 规则：
@@ -33146,7 +33314,199 @@ GitHub 仓库：${ghInfo.title}
       _saving = false;
     }
   }
-  var M6, mainEscRegistered2, _dm, _ai, _app2, _saving, _baseline;
+  function tagManagerDm() {
+    const s = tryGetSettings();
+    return new DataManager(getStoragePath(s == null ? void 0 : s.storagePath));
+  }
+  function renderTagManager(body, _ctx) {
+    const dm = tagManagerDm();
+    const wrap = document.createElement("div");
+    wrap.className = "bz-fav-scope bz-fav-tagmgr";
+    body.appendChild(wrap);
+    const draw = () => drawTagManager(wrap, dm, draw);
+    draw();
+    void dm.loadTags().then(draw).catch(() => {
+    });
+  }
+  function drawTagManager(wrap, dm, redraw) {
+    wrap.innerHTML = "";
+    const tags = getTags();
+    const icBtn = (ic2, title, disabled, danger, onClick) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "bz-fav-tagmgr-btn" + (danger ? " bz-fav-tagmgr-btn--danger" : "");
+      b.title = title;
+      b.disabled = disabled;
+      b.innerHTML = `<i data-lucide="${ic2}"></i>`;
+      b.addEventListener("click", onClick);
+      return b;
+    };
+    for (const tag of tags) {
+      const row = document.createElement("div");
+      row.className = "bz-fav-tagmgr-row";
+      const ic2 = document.createElement("span");
+      ic2.className = "bz-fav-tagmgr-ic";
+      ic2.innerHTML = `<i data-lucide="${tag.ic || "tag"}"></i>`;
+      const name = document.createElement("span");
+      name.className = "bz-fav-tagmgr-name";
+      name.textContent = tag.label;
+      const ops = document.createElement("span");
+      ops.className = "bz-fav-tagmgr-ops";
+      const idx = tags.indexOf(tag);
+      ops.append(
+        icBtn("chevron-up", "上移", idx === 0, false, () => void moveTag(dm, idx, -1, redraw)),
+        icBtn("chevron-down", "下移", idx === tags.length - 1, false, () => void moveTag(dm, idx, 1, redraw)),
+        icBtn("pencil", "编辑", false, false, () => openTagEditor(dm, tag, redraw)),
+        icBtn("trash-2", "删除", false, true, () => void deleteTagFlow(dm, tag, redraw))
+      );
+      row.append(ic2, name, ops);
+      wrap.appendChild(row);
+    }
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "bz-fav-tagmgr-add";
+    addBtn.innerHTML = `<i data-lucide="plus"></i><span>添加标签</span>`;
+    addBtn.addEventListener("click", () => openTagEditor(dm, null, redraw));
+    wrap.appendChild(addBtn);
+    mountIcons(wrap);
+  }
+  async function moveTag(dm, idx, delta, redraw) {
+    const tags = [...getTags()];
+    const j = idx + delta;
+    if (j < 0 || j >= tags.length) return;
+    [tags[idx], tags[j]] = [tags[j], tags[idx]];
+    try {
+      await dm.saveTags(tags);
+      redraw();
+    } catch (e) {
+      notifySaveError(e, "调整标签排序");
+    }
+  }
+  function openTagEditor(dm, existing, redraw) {
+    var _a2, _b2;
+    const mask = document.createElement("div");
+    mask.className = "bz-fav-form-mask bz-fav-scope";
+    const popup = document.createElement("div");
+    popup.className = "bz-fav-form bz-fav-tageditor";
+    popup.innerHTML = `
+    <h2>${existing ? "编辑标签" : "添加标签"}</h2>
+    <div class="bz-fav-fld"><label>名称</label><input id="fz-tag-name" value="${esc((existing == null ? void 0 : existing.label) || "")}" placeholder="如：装修灵感"></div>
+    <div class="bz-fav-fld"><label>图标</label><div class="bz-fav-tageditor-ics" id="fz-tag-ics"></div></div>
+    <div class="bz-fav-btns">
+      <button type="button" data-fz-tag-cancel>取消</button>
+      <button type="button" id="fz-tag-save" class="bz-fav-pri">${existing ? "保存" : "添加"}</button>
+    </div>`;
+    mask.appendChild(popup);
+    document.body.appendChild(mask);
+    topifyZ(mask);
+    mountIcons(popup);
+    const escHandle4 = escManager.register("bz-fav-tageditor", {
+      isVisible: () => mask.isConnected,
+      close: () => close()
+    });
+    const close = () => {
+      escHandle4.unregister();
+      mask.remove();
+    };
+    const input = popup.querySelector("#fz-tag-name");
+    let picked = (existing == null ? void 0 : existing.ic) || "tag";
+    const icPick = popup.querySelector("#fz-tag-ics");
+    const drawIcs = () => {
+      icPick.innerHTML = "";
+      for (const name of TAG_ICON_CHOICES) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "bz-fav-tageditor-ic" + (name === picked ? " bz-fav-on" : "");
+        b.innerHTML = `<i data-lucide="${name}"></i>`;
+        b.addEventListener("click", () => {
+          picked = name;
+          drawIcs();
+        });
+        icPick.appendChild(b);
+      }
+      mountIcons(icPick);
+    };
+    drawIcs();
+    const doSave2 = async () => {
+      const label = input.value.trim();
+      if (!label) {
+        notice("请输入标签名称");
+        return;
+      }
+      if (getTags().some((t) => t.label === label && t.id !== (existing == null ? void 0 : existing.id))) {
+        notice("已有同名标签");
+        return;
+      }
+      const next = [...getTags()];
+      try {
+        if (existing) {
+          const idx = next.findIndex((t) => t.id === existing.id);
+          if (idx === -1) {
+            notice("标签不存在，请重试", "error");
+            return;
+          }
+          if (next[idx].label !== label) await dm.updateTagLabelBulk(next[idx].label, label);
+          next[idx] = { ...next[idx], label, ic: picked };
+        } else {
+          next.push({ id: newTagId(), label, ic: picked });
+        }
+        await dm.saveTags(next);
+        notice(existing ? `已更新标签「${label}」` : `已添加标签「${label}」`, "success");
+        close();
+        redraw();
+      } catch (e) {
+        notifySaveError(e, "保存标签");
+      }
+    };
+    (_a2 = popup.querySelector("[data-fz-tag-cancel]")) == null ? void 0 : _a2.addEventListener("click", () => close());
+    (_b2 = popup.querySelector("#fz-tag-save")) == null ? void 0 : _b2.addEventListener("click", () => void doSave2());
+    mask.addEventListener("mousedown", (e) => {
+      if (e.target === mask) close();
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        void doSave2();
+      }
+    });
+    setTimeout(() => input.focus(), 30);
+  }
+  async function deleteTagFlow(dm, tag, redraw) {
+    var _a2;
+    const rest = getTags().filter((t) => t.id !== tag.id);
+    if (!rest.length) {
+      notice("至少保留一个标签");
+      return;
+    }
+    const fallback = (_a2 = rest.find((t) => t.id === "web")) != null ? _a2 : rest[0];
+    let count = 0;
+    try {
+      const items = await dm.getAll();
+      count = items.filter((i) => (i.tags || []).includes(tag.label)).length;
+    } catch (e) {
+    }
+    const ok = await openFlowDialog({
+      title: "删除标签",
+      className: "bz-fav-flow-dialog bz-fav-scope",
+      message: count > 0 ? `确定删除标签「${tag.label}」吗？
+其中 ${count} 条收藏将迁入标签「${fallback.label}」。` : `确定删除标签「${tag.label}」吗？
+标签将从标签列表中移除。`,
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "删除", value: "del", danger: true, cta: true }
+      ]
+    });
+    if (ok !== "del") return;
+    try {
+      if (count > 0) await dm.updateTagLabelBulk(tag.label, fallback.label);
+      await dm.saveTags(rest);
+      notice(`已删除标签「${tag.label}」`, "success");
+      redraw();
+    } catch (e) {
+      notifySaveError(e, "删除标签");
+    }
+  }
+  var M6, mainEscRegistered2, _dm, _ai, _app2, _saving, _baseline, TAG_ICON_CHOICES;
   var init_ui7 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -33163,6 +33523,7 @@ GitHub 仓库：${ghInfo.title}
       init_favorites_source();
       init_config2();
       init_render11();
+      init_data8();
       M6 = {
         overlay: null,
         items: [],
@@ -33177,6 +33538,30 @@ GitHub 仓库：${ghInfo.title}
       _app2 = null;
       _saving = false;
       _baseline = null;
+      TAG_ICON_CHOICES = [
+        "tag",
+        "bookmark",
+        "star",
+        "heart",
+        "github",
+        "globe",
+        "app-window",
+        "brain-circuit",
+        "keyboard",
+        "bot",
+        "zap",
+        "beer",
+        "waypoints",
+        "book-open",
+        "film",
+        "music",
+        "gamepad-2",
+        "package",
+        "briefcase",
+        "graduation-cap",
+        "link",
+        "folder"
+      ];
     }
   });
 
@@ -33574,7 +33959,7 @@ GitHub 仓库：${ghInfo.title}
     await enqueueFileTask(getReviewFitFilePath(), () => jsonFileStore(getReviewFitFilePath()).write(fit2));
   }
   var ReviewDataManager;
-  var init_data8 = __esm({
+  var init_data9 = __esm({
     "src/review/data.ts"() {
       init_utils();
       init_storage();
@@ -36869,7 +37254,7 @@ ${n.content.slice(0, 2e3)}
       init_notice();
       init_flow_dialog();
       init_domain_bus();
-      init_data8();
+      init_data9();
       init_watch();
       init_ui9();
       init_app2();
@@ -36900,8 +37285,8 @@ ${n.content.slice(0, 2e3)}
       init_app();
       init_settings_provider();
       init_fsrs();
-      init_data8();
-      init_data8();
+      init_data9();
+      init_data9();
       init_fit();
       init_fsrs();
       init_queue();
@@ -39124,7 +39509,7 @@ ${n.content.slice(0, 2e3)}
     return out;
   }
   var ENCRYPT_CHANGED_CHANNEL, ENCRYPT_UNLOCK_CHANGED_CHANNEL, RAND_CHARS, STAGING_DIR, PENDING_FILE, BLOB_CONCURRENCY, SafeManager;
-  var init_data9 = __esm({
+  var init_data10 = __esm({
     "src/encrypt/data.ts"() {
       init_app();
       init_domain_bus();
@@ -41914,7 +42299,7 @@ ${n.content.slice(0, 2e3)}
       init_settings_provider();
       init_settings_modal();
       init_settings_common();
-      init_data9();
+      init_data10();
       init_preview();
       init_vault_data();
       init_vault_pw_view();
@@ -44499,7 +44884,7 @@ ${n.content.slice(0, 2e3)}
     await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app }).write(data);
   }
   var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS2;
-  var init_data10 = __esm({
+  var init_data11 = __esm({
     "src/smartcat/data.ts"() {
       init_storage();
       init_config5();
@@ -45308,12 +45693,12 @@ ${n.content.slice(0, 2e3)}
           });
         },
         smartcat: async () => {
-          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data10(), data_exports));
+          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui11(), ui_exports9));
           const app = getApp();
           const data = await loadSmartCatData2(app);
           const saveConfig = async (config) => {
-            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data10(), data_exports));
+            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
             data.config = config;
             await saveSmartCatData2(app, data);
           };

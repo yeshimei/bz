@@ -1,4 +1,4 @@
-/* 源指纹 195b977bc496c7c3 · 仓内输入 101 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9a5f8384c924e123 · 仓内输入 101 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -15052,10 +15052,75 @@ ${n.content.slice(0, 2e3)}
 
   // src/favorites/data.ts
   init_storage();
+  init_app();
+
+  // src/favorites/config.ts
+  var CONFIG = {
+    /** 默认存储目录（文件名固定 favorites.json，设置只允许改目录） */
+    DEFAULT_STORAGE_PATH: "CONFIG/STORAGE",
+    /** 数据文件名（固定，不允许用户修改） */
+    STORAGE_FILE: "favorites.json",
+    /** 标签定义文件（issue 363 伴生文件，与 favorites.json 同目录、跟随 storagePath 设置） */
+    TAGS_FILE: "favorites.tags.json"
+  };
+  var DEFAULT_TAGS = [
+    { id: "github", label: "GitHub", ic: "github" },
+    { id: "desktop", label: "桌面软件", ic: "app-window" },
+    { id: "web", label: "网站", ic: "globe" },
+    { id: "llm", label: "大模型", ic: "brain-circuit" },
+    { id: "pi", label: "pi", ic: "keyboard" },
+    { id: "claude", label: "Claude", ic: "bot" },
+    { id: "skills", label: "skills", ic: "zap" },
+    { id: "pub", label: "酒馆", ic: "beer" },
+    { id: "dsh", label: "DeepSeek Harness", ic: "waypoints" }
+  ];
+  var currentTags = null;
+  function setTags(tags) {
+    currentTags = tags;
+  }
+  function getTagsPath(storagePath) {
+    const idx = storagePath.lastIndexOf("/");
+    const dir = idx >= 0 ? storagePath.slice(0, idx) : "";
+    return (dir || CONFIG.DEFAULT_STORAGE_PATH) + "/" + CONFIG.TAGS_FILE;
+  }
+  function newTagId() {
+    return "t" + Date.now().toString(36);
+  }
+  function normalizeTags(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const r of raw) {
+      if (!r || typeof r !== "object") continue;
+      const o = r;
+      const label = typeof o.label === "string" ? o.label.trim() : "";
+      if (!label) continue;
+      out.push({
+        id: typeof o.id === "string" && o.id ? o.id : newTagId(),
+        label,
+        ic: typeof o.ic === "string" && o.ic ? o.ic : "tag"
+      });
+    }
+    return out;
+  }
+  function getStorageDir(value) {
+    let dir = (value || CONFIG.DEFAULT_STORAGE_PATH).trim().replace(/\/+$/, "");
+    if (/\.json$/i.test(dir)) {
+      const idx = dir.lastIndexOf("/");
+      dir = idx >= 0 ? dir.slice(0, idx) : "";
+    }
+    return dir || CONFIG.DEFAULT_STORAGE_PATH;
+  }
+  function getStoragePath(value) {
+    return getStorageDir(value) + "/" + CONFIG.STORAGE_FILE;
+  }
+
+  // src/favorites/data.ts
   var DataManager = class {
     constructor(storagePath) {
       this.store = jsonStore(storagePath);
       this.filePath = storagePath;
+      this.tagsPath = getTagsPath(storagePath);
+      this.tagsStore = jsonStore(this.tagsPath);
     }
     async read() {
       return this.store.read();
@@ -15102,26 +15167,54 @@ ${n.content.slice(0, 2e3)}
     async getAll() {
       return await this.read();
     }
-  };
-
-  // src/favorites/config.ts
-  var CONFIG = {
-    /** 默认存储目录（文件名固定 favorites.json，设置只允许改目录） */
-    DEFAULT_STORAGE_PATH: "CONFIG/STORAGE",
-    /** 数据文件名（固定，不允许用户修改） */
-    STORAGE_FILE: "favorites.json"
-  };
-  function getStorageDir(value) {
-    let dir = (value || CONFIG.DEFAULT_STORAGE_PATH).trim().replace(/\/+$/, "");
-    if (/\.json$/i.test(dir)) {
-      const idx = dir.lastIndexOf("/");
-      dir = idx >= 0 ? dir.slice(0, idx) : "";
+    // ==================== 标签定义（issue 363：favorites.tags.json） ====================
+    /**
+     * 载入标签定义并注入 config 单源（app.init 时调用）：文件缺失 → 回退内置 9 类 seed
+     * （零迁移，不建文件不写盘）；文件在 → 归一化（坏行剔除/缺 id 补）后生效；空数组/坏
+     * JSON（jsonStore 留档降级为 []）同样走 seed 回退。
+     */
+    async loadTags() {
+      let raw = null;
+      try {
+        if (getApp().vault.getAbstractFileByPath(this.tagsPath)) {
+          raw = await this.tagsStore.read();
+        }
+      } catch (e) {
+        raw = null;
+      }
+      const tags = normalizeTags(raw);
+      const next = tags.length ? tags : DEFAULT_TAGS;
+      setTags(next);
+      return next;
     }
-    return dir || CONFIG.DEFAULT_STORAGE_PATH;
-  }
-  function getStoragePath(value) {
-    return getStorageDir(value) + "/" + CONFIG.STORAGE_FILE;
-  }
+    /** 保存标签定义（管理界面增删改排序的唯一落盘点）：写盘 + 注入单源即时生效 */
+    async saveTags(tags) {
+      await enqueueFileTask(this.tagsPath, async () => {
+        await this.tagsStore.write(tags);
+      });
+      setTags(tags);
+    }
+    /**
+     * 条目标签批量跟随（改名/删除迁移；范式 = memo updateSceneBulk）：tags[] 内 from → to
+     * 且 type 同步（type = tags[0] 派生字段），返回迁移条数；零匹配不写盘。
+     */
+    async updateTagLabelBulk(from, to) {
+      if (!from || from === to) return 0;
+      return enqueueFileTask(this.filePath, async () => {
+        const data = await this.read();
+        let n = 0;
+        data.forEach((d) => {
+          if ((d.tags || []).includes(from)) {
+            d.tags = d.tags.map((t) => t === from ? to : t);
+            if (d.type === from) d.type = to;
+            n++;
+          }
+        });
+        if (n > 0) await this.write(data);
+        return n;
+      });
+    }
+  };
 
   // src/home/river.ts
   var DAY_MS2 = 864e5;
