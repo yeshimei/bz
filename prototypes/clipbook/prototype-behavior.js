@@ -1,4 +1,4 @@
-/* 源指纹 e662895493172974 · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b08ff42e04902d5d · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -16606,7 +16606,9 @@ ${body}`;
       });
       const partial = res.failed > 0 ? `，${res.failed} 张失败保留外链` : "";
       if (res.swaps.length > 0) {
-        const msg = `已本地化 ${res.swaps.length} 张图片${partial}`;
+        const reused = res.swaps.length - res.localized;
+        const reusedTxt = reused > 0 ? `（复用 ${reused} 张）` : "";
+        const msg = `已本地化 ${res.swaps.length} 张图片${reusedTxt}${partial}`;
         if (ph) {
           ph.setType("success");
           ph.setMessage(msg);
@@ -16797,14 +16799,7 @@ ${body}`;
   async function flowSave(article) {
     const raw = article && article.raw;
     if (!raw) return false;
-    const isBili = raw.platform === "B站" && !!String(raw.url || "").trim();
-    if (isBili) {
-      const { openKnowledgeAddTask: openKnowledgeAddTask2 } = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
-      openKnowledgeAddTask2(getApp(), { url: raw.url, title: raw.title || null, uploader: raw.author || null });
-      await markHandledAndBump(raw, "saved");
-      notice("已转入文献盒", "success");
-      return true;
-    }
+    if (raw.platform === "B站") return false;
     pauseReadingSession();
     try {
       const ok = await writeClipNote(raw);
@@ -16915,8 +16910,6 @@ ${body}`;
   var curKey, openedAt, accumMs, NO_BUMP;
   var init_flow = __esm({
     "src/clipbook/flow.ts"() {
-      init_app();
-      init_notice();
       init_domain_bus();
       init_settings_provider();
       init_news_data();
@@ -20790,6 +20783,8 @@ ${bodyText.substring(0, 6e3)}`;
       const kept = new Set(cleaned.map((a) => articleKeyOf(a)));
       removedKeys = (data.articles || []).map((a) => articleKeyOf(a)).filter((k) => !kept.has(k));
       data = { ...data, articles: cleaned };
+      for (const k of removedKeys) void clearArticleTracking(k).catch(() => {
+      });
     }
     let statsChanged = false;
     if (!statsHasData(data.stats)) {
@@ -20822,6 +20817,7 @@ ${bodyText.substring(0, 6e3)}`;
     "src/clipbook/loader.ts"() {
       init_news_data();
       init_data();
+      init_anchor();
       init_scan();
       init_store();
       init_constants();
@@ -21024,6 +21020,7 @@ ${bodyText.substring(0, 6e3)}`;
       const ilink = t.closest("a.internal-link");
       if (ilink && interceptKnowledgeLink(ilink)) {
         e.preventDefault();
+        e.stopPropagation();
         return;
       }
       const img = t.closest("img");
@@ -21033,7 +21030,7 @@ ${bodyText.substring(0, 6e3)}`;
         return;
       }
       if (t.closest("[data-clip-open-note]") && M.cur) openNote(M.cur);
-    });
+    }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft" || e.key === "k") {
         e.preventDefault();
@@ -21074,6 +21071,8 @@ ${bodyText.substring(0, 6e3)}`;
     });
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
+      var _a;
+      if (((_a = M.cur) == null ? void 0 : _a.st) === "saved") return;
       void doSave(M.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
@@ -21090,6 +21089,7 @@ ${bodyText.substring(0, 6e3)}`;
       const ilink = t.closest("a.internal-link");
       if (ilink && interceptKnowledgeLink(ilink)) {
         e.preventDefault();
+        e.stopPropagation();
         return;
       }
       const img = t.closest("img");
@@ -21104,7 +21104,7 @@ ${bodyText.substring(0, 6e3)}`;
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
-    });
+    }, true);
     mobDetailEl.addEventListener("mouseup", onReaderMouseUp);
     const mobBodyScrollEl = overlayEl.querySelector("[data-clip-mob-detail-body]");
     if (mobBodyScrollEl) mobBodyScrollEl.addEventListener("scroll", hideSelBar, { passive: true });
@@ -21438,6 +21438,7 @@ ${bodyText.substring(0, 6e3)}`;
     });
   }
   function buildItemActions(a) {
+    var _a;
     const out = [];
     if (a.origin === "clip") {
       out.push(
@@ -21458,7 +21459,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
       return out;
     }
-    if (a.st !== "saved") {
+    if (a.st !== "saved" && ((_a = a.raw) == null ? void 0 : _a.platform) !== "B站") {
       out.push({ icon: "download", label: "保存到剪藏本", title: "保存为正式剪藏", onClick: () => void doSave(a) });
     }
     out.push({ icon: "link", label: "复制原文链接", onClick: () => void copyText(a.url, "原文链接已复制") });
@@ -21910,14 +21911,16 @@ ${bodyText.substring(0, 6e3)}`;
     });
   }
   function renderMobDetail() {
+    var _a;
     if (!mobDetailEl || !M.cur) return;
     const a = M.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
       const saved = a.st === "saved";
-      mobSaveBtnEl.style.display = a.origin !== "news" ? "none" : "";
+      mobSaveBtnEl.style.display = a.origin !== "news" || ((_a = a.raw) == null ? void 0 : _a.platform) === "B站" ? "none" : "";
       mobSaveBtnEl.classList.toggle("saved", saved);
+      mobSaveBtnEl.classList.toggle("disabled", saved);
       mobSaveBtnEl.textContent = saved ? "已存" : "存为剪藏";
     }
     let mdBody = "";
@@ -22235,8 +22238,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function knowledgeDir() {
-    const s = tryGetSettings();
-    return String(s && s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    return getKnowledgeBoxes(tryGetSettings()).lit;
   }
   function resolveInternalTarget(href) {
     const app = getApp();
@@ -22405,6 +22407,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_state();
       init_loader();
       init_news_data();
+      init_knowledge_boxes();
       init_anchor();
       init_image_save();
       init_flow();
