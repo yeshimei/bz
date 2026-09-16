@@ -158,8 +158,9 @@
 /* —— 表单弹窗（壳已收编 core uiModal，issue 347 第 5 项）——
    遮罩/z 发号/遮罩点击关/ESC 关全归 .bz-overlay-mask 单源；域内只保留亚麻卡皮
    （逐值照抄旧 .bz-fav-form，与确认流程框 #__shared_confirm_popup__.bz-fav-flow-dialog 同取值：
-   --pop 底 / 14px 圆角 / 0 16px 44px .32 阴影）。限高滚动走 core popup 82vh 单源。 */
-.bz-overlay-popup.bz-fav-form {
+   --pop 底 / 14px 圆角 / 0 16px 44px .32 阴影）。限高滚动走 core popup 82vh 单源。
+   壳类锚 scope（bz-fav-form 由单源内容根携带，壳不重复挂——F15 单例守卫双计教训）。 */
+.bz-overlay-popup.bz-fav-scope {
   width: min(430px, calc(100vw - 32px));
   background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
   box-shadow: 0 16px 44px rgba(0,0,0,.32);
