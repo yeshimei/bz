@@ -792,6 +792,55 @@ describe('ADR-0077：置顶排序 + R 优先级 + 抽查 + 拟合触发', () => 
     expect(fitFile).toBeUndefined(); // 样本不足未落盘
   });
 
+  it('maybeRunFit：≥300 对全参档落盘 version=2（issue 361 契约；full 按档位而非 w 长度）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    // 单条目 350 条 FSRS 相位历史（逐日 + 混合评级 + stability 标记）→ 349 对 ≥300 → 全参
+    const history = Array.from({ length: 350 }, (_, i) => ({
+      timestamp: new Date(Date.UTC(2025, 0, 1) + i * 86400e3).toISOString(),
+      stage: 10,
+      rating: ['good', 'easy', 'again', 'hard'][i % 4],
+      stability: 5,
+      difficulty: 0.3,
+    }));
+    await seedOverdue(vault, { stage: 12, phase: 'fsrs', stability: 5, difficulty: 0.3, reviewHistory: history });
+    const app = makeApp(vault);
+    setApp(app);
+    (reviewApp as any).dataManager = new ReviewDataManager(app);
+    setSettingsProvider(() => ({ reviewEnableFit: true, reviewFitEveryN: 1 } as any));
+    await reviewApp.maybeRunFit(app);
+    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/review-fit.json')!);
+    expect(raw.full).toBe(true);
+    expect(raw.version).toBe(2); // 全参结果写新版本字段
+    expect(raw.fitCount).toBe(349);
+    expect(reviewApp._fitMeta?.version).toBe(2); // 内存态同步（统计弹窗档位标注数据源）
+    expect(reviewApp._fittedW).not.toBeNull();
+  });
+
+  it('maybeRunFit：100~299 对基础档落盘 version=1（旧八参口径）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const history = Array.from({ length: 150 }, (_, i) => ({
+      timestamp: new Date(Date.UTC(2025, 0, 1) + i * 86400e3).toISOString(),
+      stage: 10,
+      rating: i % 2 ? 'good' : 'easy',
+      stability: 5,
+      difficulty: 0.3,
+    }));
+    await seedOverdue(vault, { stage: 12, phase: 'fsrs', stability: 5, difficulty: 0.3, reviewHistory: history });
+    const app = makeApp(vault);
+    setApp(app);
+    (reviewApp as any).dataManager = new ReviewDataManager(app);
+    setSettingsProvider(() => ({ reviewEnableFit: true, reviewFitEveryN: 1 } as any));
+    await reviewApp.maybeRunFit(app);
+    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/review-fit.json')!);
+    expect(raw.full).toBe(false);
+    expect(raw.version).toBe(1);
+    // 基础档不越界：w[8..18] 保持默认
+    const { DEFAULT_W } = await import('../../src/review/fsrs');
+    for (let i = 8; i < 19; i++) expect(raw.w[i]).toBe(DEFAULT_W[i]);
+  });
+
   it('P2 回归：拟合重算 fire-and-forget——不 await（挂起的拟合不阻塞评级写盘）', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '正文');
@@ -857,11 +906,12 @@ describe('ADR-0077：置顶排序 + R 优先级 + 抽查 + 拟合触发', () => 
     // 新写入的记录带 difficulty（good 不变难度 → 0.3）与 stability
     expect(history[1].difficulty).toBe(0.3);
     expect(history[1].stability).toEqual(expect.any(Number));
-    // 走拟合层真实入口：旧记录缺 difficulty 回退条目级值 → 旧→新配对产出可拟合样本
-    const { buildFitSamples } = await import('../../src/review/fit');
-    const samples = buildFitSamples(history, { fallbackDifficulty: items[0].difficulty });
-    expect(samples.length).toBeGreaterThanOrEqual(1);
-    expect(samples[0].S).toBe(5);
+    // 走拟合层真实入口：旧记录含 stability 相位标记即可回放构样（issue 361：回放从权重重建 S/D，不读录得值）
+    const { buildReplaySeries } = await import('../../src/review/fit');
+    const series = buildReplaySeries(history);
+    expect(series).not.toBeNull();
+    expect(series!.pairs.length).toBeGreaterThanOrEqual(1);
+    expect(series!.initRating).toBe(2); // 首条 FSRS 记录 good
   });
 
   it('拟合链路源头：进入 FSRS（阶梯→fsrs）的历史记录同样带 stability/difficulty', async () => {

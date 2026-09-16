@@ -14,7 +14,7 @@ import { type App } from 'obsidian';
 import { topifyZ, allocZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { escapeHtml, formatRelativeTime, stripTitleMarks } from '../core/utils';
-import type { ReviewDataManager, ReviewItem } from './data';
+import type { ReviewDataManager, ReviewItem, FittedParams } from './data';
 import { computeStats, loadDistribution, historyOf, dateKey, RATING_NAMES, RATING_COLORS } from './stats';
 import { FSRS, DEFAULT_W } from './fsrs';
 import { uiIcon } from '../core/ui';
@@ -109,21 +109,25 @@ function rankListHTML(items: Array<{ name: string; sub: string; meta: string }>)
 }
 
 // ======================= 统计弹窗 =======================
-/** 打开统计弹窗（全局视图）。R 口径与调度同源：读拟合权重 currentW()（item 12） */
+/** 打开统计弹窗（全局视图）。R 口径与调度同源：读拟合权重 currentW()（item 12）；
+ *  issue 361：同时取拟合元数据，标注当前拟合档位（基础拟合/全参拟合） */
 export async function showStatsModal(app: App, dm: ReviewDataManager): Promise<void> {
   lastDm = dm;
   const items = await dm.loadItems();
   let w: number[] | undefined;
+  let fit: FittedParams | null = null;
   try {
-    w = (await import('./app')).reviewApp.currentW();
+    const appMod = await import('./app');
+    w = appMod.reviewApp.currentW();
+    fit = typeof appMod.reviewApp.fitMeta === 'function' ? appMod.reviewApp.fitMeta() : null;
   } catch {
     w = undefined; // 取不到拟合权重 → computeStats 回退默认
   }
-  renderStatsModal(app, dm, items, w);
+  renderStatsModal(app, dm, items, w, fit);
 }
 
 /** 渲染统计弹窗（600px 窄卡，影视布局） */
-function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], w?: number[]): void {
+function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], w?: number[], fit?: FittedParams | null): void {
   closeStatsModal();
   statsMask = document.createElement('div');
   statsMask.id = 'review-stats-mask';
@@ -154,7 +158,7 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], 
 
 
   const stats = computeStats(items, { w });
-  body.innerHTML = buildStatsHTML(app, dm, items, stats);
+  body.innerHTML = buildStatsHTML(app, dm, items, stats, fit);
 
   // 时间线列表行 → 独立复习历史弹窗
   body.querySelectorAll('.bz-review-stats-tl-row').forEach((el) => {
@@ -177,7 +181,7 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], 
 }
 
 /** 构建统计弹窗 HTML（影视布局：浅色卡 + 色条板块） */
-function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], stats: ReturnType<typeof computeStats>): string {
+function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], stats: ReturnType<typeof computeStats>, fit?: FittedParams | null): string {
   // 浅色统计卡（6 个）
   const cards = `
     <div class="bz-stats-cards">
@@ -188,6 +192,16 @@ function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], st
       ${statCardHTML('平均 R', stats.avgR === null ? '-' : Math.round(stats.avgR * 100) + '%', 4)}
       ${statCardHTML('复习笔记', stats.reviewedNotes, 5)}
     </div>`;
+
+  // 拟合档位标注（issue 361）：人话展示当前记忆曲线来源——全参拟合（≥300 条）/ 基础拟合（八参）/
+  // 默认参数（尚未拟合）；附样本量与拟合时间
+  const fitChips = fit
+    ? statInlineHTML([
+        `记忆曲线：${fit.full ? '全参拟合' : '基础拟合'}`,
+        `样本 ${fit.fitCount} 条`,
+        `拟合于 ${formatRelativeTime(new Date(fit.fitAt))}`,
+      ])
+    : statInlineHTML(['记忆曲线：默认参数，复习积累后自动拟合']);
 
   // 评级分布（软进度条，窄卡更紧凑）
   const total = Object.values(stats.ratingDist).reduce((a, b) => a + b, 0) || 1;
@@ -244,7 +258,7 @@ function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], st
   const daily7 = stats.daily7.map((d) => ({ label: d.date.slice(5).replace('-', '/'), value: d.count }));
   const weekHTML = sectionHTML('最近 7 天复习量', barChartHTML(daily7, '#E6DFF5'), '#E6DFF5');
 
-  return cards + ratingHTML + loadHTML + timelineHTML + weekHTML;
+  return cards + fitChips + ratingHTML + loadHTML + timelineHTML + weekHTML;
 }
 
 // ======================= 复习历史独立弹窗 =======================

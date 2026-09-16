@@ -432,3 +432,33 @@ describe('收藏本标签自定义数据契约（issue 363 冒烟）', () => {
     resetTagsState();
   });
 });
+
+describe('复习拟合全参放开（issue 361 冒烟）', () => {
+  it('fitFromItems 分档：<300 对基础八参（不越界动 w[8..]）、≥300 对全 19 参；契约版本常量 1/2', async () => {
+    const { fitFromItems } = await import('../src/review/fit');
+    const { DEFAULT_W } = await import('../src/review/fsrs');
+    const { FIT_PARAMS_VERSION } = await import('../src/review/data');
+    // FSRS 相位形态历史（stability 标记 + 逐日时间戳 + 混合评级）
+    const mk = (n: number) => [
+      {
+        reviewHistory: Array.from({ length: n }, (_, i) => ({
+          timestamp: new Date(Date.UTC(2025, 0, 1) + i * 86400e3).toISOString(),
+          stage: 10,
+          rating: ['good', 'easy', 'again', 'hard'][i % 4],
+          stability: 5,
+          difficulty: 0.3,
+        })),
+      },
+    ];
+    const basic = fitFromItems(mk(150))!; // 149 对 → 基础档
+    expect(basic.fit.full).toBe(false);
+    expect(basic.fit.w).toHaveLength(19);
+    for (let i = 8; i < 19; i++) expect(basic.fit.w[i]).toBe(DEFAULT_W[i]); // 基础档不越界
+    const full = fitFromItems(mk(350))!; // 349 对 → 全参档
+    expect(full.fit.full).toBe(true);
+    expect(full.fit.w).toHaveLength(19);
+    expect(Number.isFinite(full.fit.logLikelihood)).toBe(true);
+    expect(FIT_PARAMS_VERSION.BASIC).toBe(1);
+    expect(FIT_PARAMS_VERSION.FULL).toBe(2);
+  });
+});
