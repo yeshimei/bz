@@ -507,3 +507,20 @@ describe('备忘录清单型子任务（issue 354 冒烟）', () => {
     expect(parseComposerChecklist('随手记一条').checklist).toBeNull();
   });
 });
+
+describe('备忘录月历视图（issue 355 冒烟）', () => {
+  it('面板壳带 列表/月历 视图页签与月历锚点（纯层 markup 契约）', async () => {
+    const { panelShellHtml, calHeadHtml, calGridHtml } = await import('../src/memo/render');
+    const shell = panelShellHtml();
+    expect(shell).toContain('data-memo-view="list"');
+    expect(shell).toContain('data-memo-view="calendar"');
+    // 月历头行 + 网格锚点在场
+    const head = calHeadHtml('2026年9月');
+    expect(head).toContain('data-memo-cal-prev');
+    expect(head).toContain('data-memo-cal-next');
+    expect(head).toContain('data-memo-cal-today');
+    const grid = calGridHtml([{ day: 1, today: true, selected: false, chips: [{ id: 'a', title: '事项', cls: 'is-today' }] }]);
+    expect(grid).toContain('data-memo-cal-day="1"');
+    expect(grid).toContain('data-memo-cal-item="a"');
+  });
+});

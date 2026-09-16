@@ -55,6 +55,59 @@
   background: var(--bz-brand-soft);
 }
 
+/* ---- 视图切换页签（issue 355）：工具行尾部 列表/月历 两档，桌面与移动同源 ---- */
+.bz-memo-viewtoggle {
+  display: flex; flex-shrink: 0;
+  border: 1px solid var(--bz-border-strong); border-radius: var(--bz-radius-sm);
+  overflow: hidden;
+}
+.bz-memo-viewbtn {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  background: var(--bz-surface-1); color: var(--bz-text-3);
+  border: none; cursor: pointer; padding: 0;
+}
+.bz-memo-viewbtn + .bz-memo-viewbtn { border-left: 1px solid var(--bz-border); }
+.bz-memo-viewbtn:hover { color: var(--bz-text-1); background: var(--bz-surface-hover); }
+.bz-memo-viewbtn.is-on { background: var(--bz-brand); color: var(--bz-on-brand); }
+.bz-memo-viewbtn .bz-ic { width: 14px; height: 14px; }
+
+/* ---- 月历视图（issue 355）：头行翻页 + 网格 + 事件 chip + 当日清单 ---- */
+.bz-memo-cal-head { display: flex; align-items: center; gap: var(--bz-space-sm); padding: 2px var(--bz-space-xs) var(--bz-space-sm); }
+.bz-memo-cal-title { font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); letter-spacing: 0.02em; }
+.bz-memo-cal-today { margin-left: auto; }
+.bz-memo-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.bz-memo-cal-wd { text-align: center; font-size: var(--bz-font-caption); color: var(--bz-text-3); padding: 2px 0 4px; }
+.bz-memo-cal-cell {
+  min-height: 64px; padding: 3px 4px; cursor: pointer;
+  border: 1px solid var(--bz-border); border-radius: var(--bz-radius-sm);
+  display: flex; flex-direction: column; gap: 2px; overflow: hidden; background: transparent;
+}
+.bz-memo-cal-cell:hover { border-color: var(--bz-brand); }
+.bz-memo-cal-cell.is-blank { cursor: default; border-color: transparent; }
+.bz-memo-cal-cell.is-blank:hover { border-color: transparent; }
+.bz-memo-cal-day { font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: 1.4; }
+.bz-memo-cal-cell.is-today .bz-memo-cal-day { color: var(--bz-brand); font-weight: var(--bz-weight-bold); }
+.bz-memo-cal-cell.is-selected { background: var(--bz-brand-soft); border-color: var(--bz-brand); }
+.bz-memo-cal-chips { display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow: hidden; }
+.bz-memo-cal-chip {
+  display: flex; align-items: center; gap: 3px;
+  font-size: var(--bz-font-caption); line-height: 16px; padding: 0 5px;
+  border-radius: var(--bz-radius-full); white-space: nowrap; overflow: hidden;
+  background: var(--bz-surface-3); color: var(--bz-text-2); cursor: pointer;
+}
+.bz-memo-cal-chip .bz-memo-cal-chip-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+  flex-shrink: 0; display: none;
+}
+/* 状态色沿用 overdue/today/future 现有口径（同 token 配比的专属档） */
+.bz-memo-cal-chip.is-overdue { background: color-mix(in srgb, var(--bz-danger) 14%, transparent); color: var(--bz-danger); }
+.bz-memo-cal-chip.is-today { background: color-mix(in srgb, var(--bz-brand) 14%, transparent); color: var(--bz-brand); }
+.bz-memo-cal-chip.is-future { background: color-mix(in srgb, var(--bz-success) 12%, transparent); color: var(--bz-success); }
+.bz-memo-cal-chip.is-more { background: transparent; color: var(--bz-text-3); }
+/* 当日清单（点日期展开）：复用列表卡片；空日轻提示 */
+.bz-memo-cal-daypanel { padding-top: var(--bz-space-sm); }
+.bz-memo-cal-noday { padding: var(--bz-space-md) var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); text-align: center; }
+
 /* ---- 列表 ---- */
 .bz-memo-content { flex: 1; overflow-y: auto; padding: var(--bz-space-xs) var(--bz-space-md) var(--bz-space-md); display: flex; flex-direction: column; min-height: 0; }
 .bz-memo-section-label {
@@ -270,6 +323,12 @@
   .bz-memo-cl-row { padding: 5px 0; gap: 9px; }
   .bz-memo-cl-row .bz-memo-cl-box { width: 16px; height: 16px; }
   .bz-memo-cl-row .bz-memo-cl-text { font-size: var(--bz-font-body); }
+  /* 月历触控档（issue 355）：格子收矮成色点热区——chip 隐文字显圆点，日数留格 */
+  .bz-memo-cal-cell { min-height: 44px; padding: 2px 3px; }
+  .bz-memo-cal-chip { padding: 0; justify-content: center; background: transparent; }
+  .bz-memo-cal-chip .bz-memo-cal-chip-dot { display: block; width: 7px; height: 7px; }
+  .bz-memo-cal-chip .bz-memo-cal-chip-txt { display: none; }
+  .bz-memo-cal-chip.is-more .bz-memo-cal-chip-txt { display: block; font-size: 10px; line-height: 14px; }
 }
 
 /* ═══════════ 皮肤体系（issue 210，2026-09-06 细节对齐原型） ═══════════
