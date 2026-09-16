@@ -1,4 +1,4 @@
-/* 源指纹 25ab842d7ae3ac53 · 仓内输入 37 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 054591d7e5a0b3c1 · 仓内输入 37 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -7741,20 +7741,6 @@ ${c}`
       domain: String((meta == null ? void 0 : meta.domain) || "").trim()
     };
   }
-  async function summarizeTermSummary(text) {
-    const ai = createAI();
-    const t = String(text || "").trim();
-    if (!t) throw new Error("内容为空");
-    const out = await ai.chat(
-      `你是文字编辑。把下面的术语介绍压缩成更精简的一段话：保留术语定义与关键事实，删除冗余表述与重复内容，长度约为原文的一半。输出必须是简体中文。直接输出结果，不要解释、不要加标题、不要列表。
-
-【原文】
-${t}`
-    );
-    const s = String(out || "").trim();
-    if (!s) throw new Error("AI 返回为空");
-    return s;
-  }
   async function generateTermNote(opts) {
     var _a;
     const s = tryGetSettings();
@@ -12339,10 +12325,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       this.termPreview = null;
       /** 生成流在途（ADR-0152/issue 343）：与 termSaving 分开——「是否正在生成」与「是否正在落盘」是两件事 */
       this.termGenerating = false;
-      /** 确认写入的落盘过程在途（承接原 termGenerating 的写入语义）：期间不接生成 / 总结 / 再次写入 */
+      /** 确认写入的落盘过程在途（承接原 termGenerating 的写入语义）：期间不接生成 / 再次写入 */
       this.termSaving = false;
-      this.termSummarizing = false;
-      this.termHasDraft = false;
       /** 草稿中断标记（ADR-0152 决策 6）：流断在半个 JSON 上 → 已流入的正文保留可见，但**不可写** */
       this.termDraftBroken = false;
       /** 在途生成流的中断器（ADR-0152 决策 7）：再点生成 = abort 重开；关窗二次确认**之后**才 abort */
@@ -14165,7 +14149,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       };
       return card;
     }
-    // ============ 录入面板：名词 / 段落 / 图版同壳三态（142 简洁版 + 155 总结 + issue 309/312） ============
+    // ============ 录入面板：名词 / 段落 / 图版同壳三态（142 简洁版 + issue 309/312；155 总结入口 2026-09-16 退役） ============
     createTermUI() {
       var _a, _b, _c, _d, _e;
       const mask = document.createElement("div");
@@ -14206,7 +14190,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         <input id="lit-term-src" type="text" autocomplete="off">
         <span id="lit-term-src-chip" class="bz-lit-srcchip" style="display:none;"></span>
       </div>
-      <div class="bz-lit-term-actions">
+      <div class="bz-lit-term-actions" id="lit-term-gen-row">
         <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
       </div>
       <div id="lit-term-preview" style="display:none;">
@@ -14215,16 +14199,16 @@ ${String(blockText != null ? blockText : "").trim()}`);
             <div class="bz-lit-term-meta-row bz-lit-term-only"><span class="bz-lit-term-meta-k">名词</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row bz-lit-titled-only"><span class="bz-lit-term-meta-k">标题</span><span id="lit-entry-meta-title" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
-            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">关联</span><span id="lit-term-meta-rel" class="bz-lit-term-meta-v bz-lit-rel-idle">待写入</span></div>
+            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
           </div>
         </div>
         <div class="bz-lit-term-card">
           <div id="lit-term-content" class="bz-lit-term-content"></div>
         </div>
         <div class="bz-lit-term-actions">
-          <button id="lit-term-regenerate">总结</button>
+          <button id="lit-term-regenerate">重新生成</button>
           <button id="lit-term-save" class="bz-lit-accent-btn">确认写入</button>
         </div>
       </div>`;
@@ -14234,7 +14218,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       this.termMask = mask;
       this.termPopup = popup;
       q(popup, "#lit-term-generate").onclick = () => void this.onTermGenerate();
-      q(popup, "#lit-term-regenerate").onclick = () => void this.onTermSummarize();
+      q(popup, "#lit-term-regenerate").onclick = () => void this.onTermGenerate();
       q(popup, "#lit-term-save").onclick = () => void this.onTermConfirm();
       (_a = q(popup, "#lit-term-input")) == null ? void 0 : _a.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
@@ -14374,11 +14358,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       this.abortTermGenerate();
       this.termGenerating = false;
       this.termSaving = false;
-      this.termSummarizing = false;
       this.termDraftBroken = false;
       this.termStreamBody = "";
       this.termPreview = null;
-      this.termHasDraft = false;
       this.entryOnCreated = (_a = opts == null ? void 0 : opts.onCreated) != null ? _a : null;
       this.resetEntryRel();
       this.clearEntryImage();
@@ -14509,7 +14491,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
       this.termDraftBroken = false;
       this.termStreamBody = "";
       this.termPreview = null;
-      this.termHasDraft = false;
       this.setTermPreviewVisible(false);
       this.refreshTermActions();
       this.resetEntryRel();
@@ -14641,29 +14622,33 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (!this.termPopup) return;
       const p = q(this.termPopup, "#lit-term-preview");
       if (p) p.style.display = v ? "flex" : "none";
+      const genRow = q(this.termPopup, "#lit-term-gen-row");
+      if (genRow) genRow.style.display = v ? "none" : "";
     }
-    /** 面板忙态：生成流在途 / 正在总结 / 正在落盘——三者期间都不接受新的生成、总结、写入与图片改动 */
+    /** 面板忙态：生成流在途 / 正在落盘——期间不接受新的写入与图片改动（生成键例外：再点 = 中止重开） */
     get termBusy() {
-      return this.termGenerating || this.termSummarizing || this.termSaving;
+      return this.termGenerating || this.termSaving;
     }
     /**
-     * 底部三键可用性的**唯一刷新出口**（ADR-0152）：改完忙态调它，不要在别处直接动 disabled。
-     * - 「生成」：生成流在途时**保持可点**——再点 = 中止重开（决策 7）；只有落盘 / 总结期间才禁用。
-     * - 「总结」「确认写入」：忙态与**中断草稿**下都禁用——中断的半篇不允许落库（决策 6）。
-     * issue 327：关联分析不锁任何按钮（setEntryRelBusy 已退役），忙态只锁这三个键自己。
+     * 生成 / 重新生成 / 确认写入三键可用性的**唯一刷新出口**（ADR-0152）：改完忙态调它，
+     * 不要在别处直接动 disabled。三键各占一个槽位（决策 12：生成入口不留两处）：
+     * - 「生成」（输入行下方，仅预览收起时可见）：只有落盘期间禁用。
+     * - 「重新生成」（预览底部、确认写入之前）：生成流在途时**保持可点**——再点 = 中止重开（决策 7）；
+     *   中断草稿下同样可点（它是从「中断」回到可写状态的那条路）；只有落盘期间禁用。
+     * - 「确认写入」：忙态与**中断草稿**下都禁用——中断的半篇不允许落库（决策 6）。
+     * issue 327：关联分析不锁任何按钮（setEntryRelBusy 已退役），忙态只锁这三键自己。
      */
     refreshTermActions() {
       if (!this.termPopup) return;
       const gen = q(this.termPopup, "#lit-term-generate");
-      if (gen) {
-        gen.disabled = this.termSaving || this.termSummarizing;
-        gen.textContent = this.termGenerating ? "生成中…" : this.termHasDraft ? "重新生成" : "生成";
-      }
-      const blocked = this.termBusy || this.termDraftBroken;
+      if (gen) gen.disabled = this.termSaving;
       const regen = q(this.termPopup, "#lit-term-regenerate");
-      if (regen) regen.disabled = blocked;
+      if (regen) {
+        regen.disabled = this.termSaving;
+        regen.textContent = this.termGenerating ? "生成中…" : "重新生成";
+      }
       const save = q(this.termPopup, "#lit-term-save");
-      if (save) save.disabled = blocked;
+      if (save) save.disabled = this.termBusy || this.termDraftBroken;
     }
     /**
      * 正文区渲染：占位灰字 / 已流入正文共用同一个容器（textContent 单源）。
@@ -14683,7 +14668,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     setTermMetaPending(sel, text = "分析中…") {
       const el = this.termPopup ? q(this.termPopup, sel) : null;
       if (!el) return;
-      el.textContent = text;
+      el.innerHTML = `<span class="bz-lit-rel-bar" aria-hidden="true"></span>${text}`;
       el.classList.add("bz-lit-meta-pending");
     }
     /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰 */
@@ -14875,14 +14860,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
         notify(`知识盒关联失败：${e instanceof Error ? e.message : String(e)}`, { type: "error", dedupeKey: REL_BG_NOTICE_KEY });
       }
     }
-    /** 总结忙态（文案 + 三键可用性一并随状态走）：字段与界面只有一个入口，见 refreshTermActions */
-    setTermSummarizing(s) {
-      this.termSummarizing = s;
-      if (!this.termPopup) return;
-      const regen = q(this.termPopup, "#lit-term-regenerate");
-      if (regen) regen.textContent = s ? "总结中…" : "总结";
-      this.refreshTermActions();
-    }
     /** 当前录入的头部标题：段落 / 图版取草稿里的 AI 标题（属性行已只读，无 DOM 来源），名词取输入框的词 */
     entryHeadTitle() {
       var _a, _b, _c, _d;
@@ -14910,7 +14887,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         await this.onImageGenerate();
         return;
       }
-      if (this.termSaving || this.termSummarizing) return;
+      if (this.termSaving) return;
       const passage = mode === "passage";
       const text = passage ? ((_b = (_a = q(this.termPopup, "#lit-passage-input")) == null ? void 0 : _a.value) != null ? _b : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
       if (!text) {
@@ -14947,7 +14924,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
      */
     async onImageGenerate() {
       if (!this.termPopup) return;
-      if (this.termSaving || this.termSummarizing) return;
+      if (this.termSaving) return;
       this.syncImageDescsFromDom();
       const images = this.entryImages;
       if (!images.length) {
@@ -14975,26 +14952,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.termGenerating = false;
           this.refreshTermActions();
         }
-      }
-    }
-    async onTermSummarize() {
-      if (!this.termPopup || this.termBusy || this.termDraftBroken) return;
-      if (!this.termPreview || !this.termPreview.body.trim()) {
-        notice("请先生成简介", "info");
-        return;
-      }
-      this.resetEntryRel();
-      this.setTermSummarizing(true);
-      try {
-        const summarized = await summarizeTermSummary(this.termPreview.body);
-        this.termPreview.body = summarized;
-        this.termStreamBody = summarized;
-        this.setTermContent(summarized, false);
-        this.runEntryRelPreview(summarized, this.entryHeadTitle());
-      } catch (e) {
-        this.noticeTermError(e);
-      } finally {
-        this.setTermSummarizing(false);
       }
     }
     /** 中止在途生成流（ADR-0152 决策 7）：先置空句柄再 abort——它的收尾据此被序号守卫拦掉，
@@ -15048,7 +15005,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
      */
     finishTermPreview(draft) {
       this.termPreview = { domain: draft.domain, body: draft.summary, title: draft.title };
-      this.termHasDraft = true;
       this.termStreamBody = draft.summary;
       this.termDraftBroken = false;
       if (!this.termPopup) return;
@@ -15170,7 +15126,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
       this.abortTermGenerate();
       this.termGenerating = false;
       this.termSaving = false;
-      this.termSummarizing = false;
       this.termDraftBroken = false;
       this.termStreamBody = "";
       this.termPreview = null;
