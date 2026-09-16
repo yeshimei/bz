@@ -5,7 +5,7 @@
  *  - item 12：当前 R 与调度同口径（currentW 路径）
  *  - item 14：关闭钮 lucide、无开发文案
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { showTimeline, showStatsModal, closeTimeline, closeStatsModal } from '../../src/review/stats-ui';
 import type { ReviewDataManager } from '../../src/review/data';
 import type { ReviewItem } from '../../src/review/data';
@@ -108,5 +108,50 @@ describe('统计弹窗（item 14：lucide 关闭钮 + 无开发文案）', () =>
     ]));
     expect(document.getElementById('review-history-close')).toBeNull();
     closeTimeline();
+  });
+});
+
+describe('统计弹窗拟合档位标注（issue 361）', () => {
+  const dm = {
+    loadItems: async () => [] as ReviewItem[],
+  } as unknown as ReviewDataManager;
+
+  beforeEach(async () => {
+    document.body.innerHTML = '';
+    closeStatsModal();
+    const { reviewApp } = await import('../../src/review/app');
+    reviewApp._fitMeta = null; // 清跨用例污染
+  });
+
+  afterEach(async () => {
+    const { reviewApp } = await import('../../src/review/app');
+    reviewApp._fitMeta = null;
+    closeStatsModal();
+  });
+
+  it('全参拟合档（version 2）→「全参拟合」+ 样本量人话标注', async () => {
+    const { reviewApp } = await import('../../src/review/app');
+    reviewApp._fitMeta = { w: [], fitAt: new Date(Date.now() - 2 * 86400e3).toISOString(), fitCount: 356, full: true, version: 2 };
+    await showStatsModal({ vault: { getAbstractFileByPath: () => null } } as any, dm);
+    const text = document.getElementById('review-stats-body')!.textContent || '';
+    expect(text).toContain('全参拟合');
+    expect(text).toContain('样本 356 条');
+    expect(text).not.toContain('基础拟合');
+  });
+
+  it('基础八参档 →「基础拟合」', async () => {
+    const { reviewApp } = await import('../../src/review/app');
+    reviewApp._fitMeta = { w: [], fitAt: new Date().toISOString(), fitCount: 150, full: false, version: 1 };
+    await showStatsModal({ vault: { getAbstractFileByPath: () => null } } as any, dm);
+    const text = document.getElementById('review-stats-body')!.textContent || '';
+    expect(text).toContain('基础拟合');
+    expect(text).not.toContain('全参拟合');
+  });
+
+  it('无拟合文件 →「默认参数」兜底文案', async () => {
+    await showStatsModal({ vault: { getAbstractFileByPath: () => null } } as any, dm);
+    const text = document.getElementById('review-stats-body')!.textContent || '';
+    expect(text).toContain('默认参数');
+    expect(text).not.toContain('全参拟合');
   });
 });
