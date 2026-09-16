@@ -16,7 +16,7 @@ import { applyDirectories, emojiToTagMap } from '../../src/diary/config';
 import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, Platform } from '../mock-obsidian-entry';
-import { DiaryAppController } from '../../src/diary/ui';
+import { DiaryAppController, memoryExcerpt } from '../../src/diary/ui';
 import { emitDomainEvent } from '../../src/core/domain-bus';
 import { diaryDataMap, setDiaryDataMap } from '../../src/diary/store';
 
@@ -1184,6 +1184,42 @@ describe('回忆墙 UI', () => {
     expect(document.querySelector('.bz-diary-desk .bz-diary-memories')).toBeNull();
   });
 
+  it('issue 352：那年今天放开纯文字条目——文字块卡与媒体卡混排，点击跳原文不进灯箱', async () => {
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const lastYear = now.getFullYear() - 1;
+    const lastYearKey = `${lastYear}-${mm}-${dd}`;
+    // 同一天两条：媒体条目 + 纯文字条目（时刻不同 → 两文件）
+    vault.files.set(diaryEntryPath('我的/日记', lastYearKey, '08:00'), seed(lastYearKey, '08:00', '📸', '![[old_photo.jpg]]'));
+    vault.files.set(
+      diaryEntryPath('我的/日记', lastYearKey, '09:30'),
+      seed(lastYearKey, '09:30', '📖', '那年今天随手写下的一段心情，纯文字日记也该进回顾流。')
+    );
+    await openAndWait();
+    const memories = document.querySelector('.bz-diary-desk .bz-diary-memories') as HTMLElement;
+    expect(memories).toBeTruthy();
+    // 文字块卡在位：同形（年份角标）+ 不同貌（--text 变体 + 摘要文本）
+    const textCard = memories.querySelector('.bz-diary-memory--text') as HTMLElement;
+    expect(textCard).toBeTruthy();
+    expect(textCard.querySelector('.bz-diary-memory-year')!.textContent).toBe(String(lastYear));
+    expect(textCard.querySelector('.bz-diary-memory-text-tx')!.textContent).toContain('纯文字日记也该进回顾流');
+    // 两卡混排：媒体缩略卡 1 + 文字块卡 1
+    expect(memories.querySelectorAll('.bz-diary-memory').length).toBe(2);
+    expect(memories.querySelectorAll('.bz-diary-memory-thumb').length).toBe(1);
+    // 点击文字卡 → 跳原文（jumpToDiaryEntry mock），不开灯箱（无媒体）
+    textCard.click();
+    expect(mocks.jumpToEntry).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('.bz-diary-lb--show')).toBeNull();
+  });
+
+  it('issue 352：时光条文字卡摘要 memoryExcerpt——压平空白、超长截断补省略号、空正文占位', () => {
+    expect(memoryExcerpt('第一行\n\n第二行   尾部  ')).toBe('第一行 第二行 尾部');
+    expect(memoryExcerpt('好'.repeat(80))).toBe(`${'好'.repeat(64)}…`);
+    expect(memoryExcerpt('')).toBe('（无正文）');
+    expect(memoryExcerpt('   ')).toBe('（无正文）');
+  });
+
   it('增强 #6：媒体块 cap 去文件名，显示「时间 · 标签」', async () => {
     await openAndWait();
     const desk = document.querySelector('.bz-diary-desk')!;
@@ -1484,13 +1520,17 @@ describe('回忆墙 UI', () => {
     expect(core).toContain('.bz-sheet-act--danger');
     // #2：年份分隔标签类
     expect(css).toContain('.bz-diary-rail-year');
-    // #5：那年今天时光条类（容器/头行/横滑行/卡片/年份角标）
+    // #5：那年今天时光条类（容器/头行/横滑行/卡片/年份角标）+ #352 文字块卡（变体/面块/emoji/摘要）
     for (const cls of [
       '.bz-diary-memories',
       '.bz-diary-memories-head',
       '.bz-diary-memories-row',
       '.bz-diary-memory-thumb',
       '.bz-diary-memory-year',
+      '.bz-diary-memory--text',
+      '.bz-diary-memory-text',
+      '.bz-diary-memory-text-em',
+      '.bz-diary-memory-text-tx',
     ]) {
       expect(css).toContain(cls);
     }

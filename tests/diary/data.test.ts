@@ -630,6 +630,13 @@ describe('pickOnThisDay（那年今天，增强 #5 数据口径）', () => {
     expect(pickOnThisDay(entries, '2026-9')).toEqual([]);
   });
 
+  it('issue 352：口径放开——纯文字条目（无媒体）与媒体条目一并命中（不在此层筛媒体）', () => {
+    const withMedia: WallEntry = { ...mk('2024-09-04'), media: [{ name: 'a.jpg', kind: 'img' }] };
+    const textOnly = mk('2025-09-04');
+    const hit = pickOnThisDay([withMedia, textOnly], '2026-09-04');
+    expect(hit).toEqual([withMedia, textOnly]);
+  });
+
   it('空条目集返回空数组', () => {
     expect(pickOnThisDay([], '2026-09-04')).toEqual([]);
   });

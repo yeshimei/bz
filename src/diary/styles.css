@@ -399,7 +399,7 @@
 .bz-diary-mob .bz-diary {
   padding: 0 var(--bz-space-lg) var(--bz-space-xl);
 }
-/* ---- 增强 #5：那年今天时光条（wall 首屏顶部横滑媒体条，独立块不打断瀑布流） ---- */
+/* ---- 增强 #5：那年今天时光条（wall 首屏顶部横滑回顾条，独立块不打断瀑布流；媒体卡 + 文字块卡，issue 352） ---- */
 .bz-diary-memories {
   padding: var(--bz-space-md) 0 2px;
 }
@@ -478,6 +478,34 @@
   background: rgba(0, 0, 0, 0.45);
   padding: 0 6px;
   border-radius: var(--bz-radius-full);
+}
+/* 纯文字条目卡（issue 352）：与媒体缩略卡同形（4/3 面块 + 年份角标）不同貌——
+   无图面垫 hover 色，emoji 垫头 + 摘要多行截断，一眼可辨「这是文字不是图」 */
+.bz-diary .bz-diary-memory--text {
+  background: var(--dw-hover);
+}
+.bz-diary-memory-text {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 8px 9px;
+  text-align: left;
+}
+.bz-diary-memory-text-em {
+  font-size: var(--bz-font-meta);
+  line-height: 1.2;
+}
+.bz-diary-memory-text-tx {
+  font-size: var(--bz-font-caption);
+  line-height: 1.45;
+  color: var(--dw-ink);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 /* 日期节头（sticky：滚动时吸顶显示日期 + 周几 + 统计） */
 .bz-diary-day-head {
