@@ -50,8 +50,7 @@ const registeredCommands: any[] = [];
 /** 期望的命令 id 全集（spec「命令 id 全清单」第 9 轮：COMMANDS 表 + 日记本 bz-diary-open） */
 const EXPECTED_COMMAND_IDS = [
   'bz-home-open',
-  // 今日回顾（recap 域，方向一 R2：当天五域痕迹聚合面板）
-  'bz-recap-today',
+  // 今日回顾面板已退役（ADR-0157）：bz-recap-today 随批删除，「生成今日总结」迁 home 时间线卡
   'bz-memo-open', 'bz-memo-add',
   // 给当前笔记记一笔（2026-09-11 首页入口菜单）
   'bz-memo-note-binding',
@@ -87,6 +86,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-review-open', 'bz-review-report', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
   // 做题练习（issue 362）：做题家独立面板入口
   'bz-review-quiz-open',
+  // 评级四命令保留（issue 362 做题家面板依赖，原 issue 364 裁剪案撤回；难度弹窗仍为无热键时的面板外评级入口）
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
   'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat',
   // 重建索引（2026-09-11 首页入口菜单；函数早已存在、此前无命令入口）
@@ -108,14 +108,15 @@ const EXPECTED_COMMAND_IDS = [
   // 自动关联（ADR-0141 §1：两条建链命令随功能归属迁入知识盒，引擎留第二大脑）
   'bz-knowledge-relink', 'bz-knowledge-link-all',
   'bz-attach-move',
-  // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记 + 快速复制密码
+  // 统一保险库（ADR-0085）：加密笔记 + 加密日记 + 加密当前笔记（ADR-0158：密码资产视图
+  // 与快速复制密码命令退役，快速取密统一归 bz-password-vault-gen）
   // 注意：bz-encrypt-lock 是历史遗留 id，实际动作是「加密当前笔记」；
   // 锁定保险库（2026-09-11 首页入口菜单）另用 bz-encrypt-lock-vault，避免撞 id
-  'bz-encrypt-open', 'bz-encrypt-lock', 'bz-encrypt-copy-password',
+  'bz-encrypt-open', 'bz-encrypt-lock',
   'bz-encrypt-lock-vault',
   // 密码本（password-vault 域，ADR-0109 拆回独立域）
   'bz-password-vault-open',
-  // 快速生成密码（2026-09-10：首页入口菜单联动）
+  // 快速取密（ADR-0158 统一流：fuzzy 列现有密码 + 顶部「生成新」；id 承接旧「快速生成密码」）
   'bz-password-vault-gen',
   // 锁定密码本（2026-09-11 首页入口菜单；与保险库同库同锁）
   'bz-password-vault-lock',
@@ -192,7 +193,7 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-memo-add').name).toBe('加备忘录');
     // t2：四套叫法统一「阅读分析报告」（走查批 D；home 磁贴保留短名「阅读报告」）
     expect(byId('bz-reading-report-open').name).toBe('阅读分析报告');
-    // f3：评级四命令去英文后缀、统一「复习（X）」标点
+    // f3：评级四命令去英文后缀、统一「复习（X）」标点（issue 362 起做题家面板依赖，保留）
     expect(byId('bz-review-again').name).toBe('复习（忘了）');
     expect(byId('bz-review-hard').name).toBe('复习（困难）');
     expect(byId('bz-review-good').name).toBe('复习（一般）');
@@ -222,7 +223,6 @@ describe('bz 骨架冒烟', () => {
     // 域入口命令 icon 全部来自 DOMAIN_ICONS（一处定义、两处引用：命令表 + 设置面板导航）
     const domainCommands: Array<[string, string]> = [
       ['bz-home-open', 'home'],
-      ['bz-recap-today', 'recap'],
       ['bz-memo-open', 'memo'],
       ['bz-belongings-open', 'belongings'],
       ['bz-clipbook-open', 'clipping'],

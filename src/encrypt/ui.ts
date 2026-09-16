@@ -1,11 +1,12 @@
 /**
- * 统一保险库 UI（encrypt 域；ADR-0085 合并保险库 × 保险库）
+ * 统一保险库 UI（encrypt 域；ADR-0085 合并保险库 × 保险库，ADR-0158 密码资产视图退役）
  * 主面板 = 保险库三栏工作台（P1 资产档案库视觉）：
- *   - 左栏资产导航：品牌印章 + 概览 + 密码/加密笔记/加密日记（分类色计数）+ 体检状态 + 立即上锁
- *   - 中栏列表 / 右栏详情：密码（平台聚合/账号卡/收藏/复制）、加密笔记（预览/还原/删除）、
- *     加密日记（预览/还原回日记/复制正文/彻底销毁）；概览 = hero 计数 + 统计卡 + 最近 + 体检摘要
- *   - 移动端：恒真全屏 + 底部资产 tab + 平台/账号/详情页
- * 数据：SafeManager 单例（三类资产同一 manifest）+ PasswordVaultDataManager（密码资产）。
+ *   - 左栏资产导航：品牌印章 + 概览 + 加密笔记（分类色计数）+ 体检状态 + 立即上锁
+ *   - 中栏列表 / 右栏详情：加密笔记（预览/还原/删除）、加密日记（预览/还原回日记/复制正文/
+ *     彻底销毁）；概览 = hero 计数 + 统计卡 + 最近 + 体检摘要；密码资产 UI 归 password-vault 域
+ *   - 移动端：恒真全屏 + 底部资产 tab + 详情页
+ * 数据：SafeManager 单例（各类资产同一 manifest）+ PasswordVaultDataManager（仅数据层：
+ * 解锁屏统计快照与上锁清缓存，无视图）。
  * 解锁弹窗（showPasswordDialog）、压缩预览窗、体检弹窗、加锁当前笔记协调均保留于此。
  */
 import { MarkdownRenderer, Component } from 'obsidian';
@@ -24,7 +25,7 @@ import {
   type ItemAction,
   type ItemActionsOptions,
 } from '../core/item-actions';
-import {  escapeHtml, formatRelativeTime , secureRandomPassword, cancelClipboardClear, armClipboardClear, copySensitiveText } from '../core/utils';
+import {  debounce, escapeHtml, formatRelativeTime , cancelClipboardClear, copySensitiveWithFallback } from '../core/utils';
 import { uiEmpty, uiProgress } from '../core/ui';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -32,9 +33,7 @@ import { makeReloadWarnOnce, numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem, type LockAttachmentInput } from './data';
 import { compressImage, videoFrame } from './preview';
-import { PasswordVaultDataManager, type PasswordVaultEntry, type PlatformGroup } from './vault-data';
-import { VaultPwView, DEFAULT_PW_STATE, DEFAULT_PW_CHARSET, type PwViewState, type PwViewHost } from './vault-pw-view';
-import { openPasswordQuickPicker } from './pw-picker';
+import { PasswordVaultDataManager, DEFAULT_PW_CHARSET } from '../password-vault/data';
 import { overviewHTML, noteRowHTML, noteDetailHTML, type VaultAsset, type OverviewStats, vIc } from './vault-assets-view';
 import { uiLockScreen } from '../core/ui/lock-screen';
 import type { LockScreenKind, LockScreenStat } from '../core/ui/lock-screen';
@@ -98,41 +97,16 @@ export interface EncryptUIConfig {
   previewQuality: number;
   autoLoadOriginal: boolean;
   securityMode: boolean;
-  /** 密码生成字符集/长度（ADR-0085：密码资产并入，快照自全局键 passwordCharset/passwordLength） */
-  pwCharset?: string;
-  pwLength?: string;
 }
 
-/** 默认生成字符集（与旧密码本同款；实现居 vault-pw-view，此处再导出保持 ui.ts 公共面） */
+/** 默认生成字符集（唯一定义居 password-vault/data；此处再导出保持 ui.ts 公共面） */
 export { DEFAULT_PW_CHARSET };
 
-// secureRandomPassword / cancelClipboardClear / armClipboardClear / copySensitiveText
-// 收口 core/utils（与 password-vault 同源共用单定时器，批次 G）
+// cancelClipboardClear / copySensitiveWithFallback（含 textarea+execCommand 降级兜底，issue 365 收口）
+// 收口 core/utils（与 password-vault 同源共用单定时器，批次 G）；密码生成/强度计算随
+// ADR-0158 密码视图退役归 password-vault 域，本域仅保留日记正文复制（60s 清空）链路。
 
-/** 密码强度档（表单强度提示）：弱 / 中 / 强 */
-export type PwStrength = 'weak' | 'mid' | 'strong';
-
-/**
- * 密码强度（纯本地计算，不联网、不落盘）：长度 + 字符多样性计分。
- * len≥8 / len≥12 / 大小写并存 / 含数字 / 含符号 各 1 分：≤2 弱、3-4 中、5 强。
- */
-export function passwordStrength(pw: string): PwStrength {
-  if (!pw) return 'weak';
-  let score = 0;
-  if (pw.length >= 8) score++;
-  if (pw.length >= 12) score++;
-  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
-  if (/\d/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  return score <= 2 ? 'weak' : score <= 4 ? 'mid' : 'strong';
-}
-
-/** 密码强度提示文案（UI 与测试共用） */
-export function pwStrengthLabel(s: PwStrength): string {
-  return s === 'weak' ? '弱' : s === 'mid' ? '中' : '强';
-}
-
-/** 上次停留资产（会话级记忆）：下次打开面板/快速取密直落该资产，不回概览 */
+/** 上次停留资产（会话级记忆）：下次打开面板直落该资产，不回概览 */
 let lastVisitedAsset: VaultAsset = 'note';
 
 /**
@@ -509,17 +483,19 @@ export class UIManager {
   private unlockFailStreak = 0;
   /** 当前冷却截止时间戳（ms）；早于此的尝试被拒绝并提示剩余等待 */
   private unlockCooldownUntil = 0;
-  /** 搜索防抖计时器 */
-  searchTimer: ReturnType<typeof setTimeout> | null = null;
+  /** 搜索防抖（180ms 尾触；issue 365 收编 core debounce，原手写无 teardown 取消路径） */
+  searchDebounced = debounce(() => this.renderAll(), 180);
 
-  // ---------- 密码资产（ADR-0085 并入统一保险库） ----------
-  /** 密码资产数据管理器（encrypt Controller 构造注入同一 SafeManager 单例） */
+  // ---------- 密码数据层（ADR-0158：仅共享锁/统计用途，视图归 password-vault 域） ----------
+  /**
+   * 密码数据管理器（与保险库同一 SafeManager 单例）。encrypt 面板不再渲染密码资产，
+   * 本实例只承担三件共享职责：解锁后 load 供统计快照（captureLockStats 的 password-vault 档）、
+   * 上锁时清本侧明文缓存（lock/hide）、订阅域事件保持内存与盘一致（事件订阅在数据层构造器内）。
+   */
   pwDataManager: PasswordVaultDataManager;
-  /** 密码资产 UI（平台列表/详情/移动卡，宿主 = 本 UIManager） */
-  pwView: VaultPwView;
-  /** 密码资产状态（列表筛选/选中/显隐） */
-  pwState: PwViewState = { ...DEFAULT_PW_STATE };
-  /** 当前资产视图（概览/密码/笔记/日记） */
+  /** 列表搜索关键词（笔记列表头搜索框 / 移动端常驻框共用；防抖后触发重绘） */
+  searchKw = '';
+  /** 当前资产视图（概览/笔记/日记） */
   asset: VaultAsset = 'overview';
   /** 加密日记详情临时明文缓存（渲染详情时惰性解密） */
   private _diaryPlain: Record<string, string> = {};
@@ -535,24 +511,9 @@ export class UIManager {
   constructor(dataManager: SafeManager, config: EncryptUIConfig, pwDataManager?: PasswordVaultDataManager) {
     this.dataManager = dataManager;
     this.config = config;
-    // 密码数据管理器缺省自建（同一 SafeManager 单例）——Controller 可注入
+    // 密码数据管理器缺省自建（同一 SafeManager 单例）——Controller 可注入；无视图（ADR-0158）
     this.pwDataManager = pwDataManager || new PasswordVaultDataManager(dataManager);
-    this.pwView = new VaultPwView(
-      this.pwDataManager,
-      {
-        toast: (m, err) => this.toast(m, err),
-        openPwEntryDialog: (edit, prefill) => this.openPwEntryDialog(edit, prefill),
-        openPwPlatformEdit: (p) => this.openPwPlatformEdit(p),
-        askConfirm: (t, m, okLabel, danger, cb) => this.askConfirm(t, m, okLabel, danger, cb),
-        copySensitive: (t) => this.copySensitive(t),
-        openExternal: (u) => this.openExternal(u),
-        onPwChanged: () => this.renderAll(),
-        openPwAccountPage: (d, st) => this.openPwAccountPage(d, st),
-      } satisfies PwViewHost,
-      { charset: config.pwCharset, length: config.pwLength }
-    );
-    // 外部写密码条目（保险库/其它实例）→ 重载密码数据 + 重绘
-    this.pwDataManager.onExternalChange = () => this.renderAll();
+    // 外部写密码条目不再触发面板重绘（无密码视图）：数据层重载照常，统计在下一次 renderAll 取新值
   }
 
   /** 解锁成功后复位节流状态 */
@@ -579,8 +540,8 @@ export class UIManager {
     count: HTMLElement;
   };
   /**
-   * 桌面搜索框（评审 2026-09-12：从顶栏下移到「全部加密笔记 N 项」之上）——它现在随
-   * 列表头一起渲染，故不再缓存引用而按需现取；null = 当前资产没有列表头（概览 / 密码）。
+   * 桌面搜索框（评审 2026-09-12：从顶栏下移到列表头里）——它现在随
+   * 列表头一起渲染，故不再缓存引用而按需现取；null = 当前资产没有列表头（概览）。
    */
   private get deskSearch(): HTMLInputElement | null {
     return this.popup?.querySelector<HTMLInputElement>('[data-vault-search]') ?? null;
@@ -678,10 +639,10 @@ export class UIManager {
   /** 统一骨架交互：资产导航 / 顶栏动作 / 搜索防抖 / 移动端 seg */
   private bindVaultShell(): void {
     const setAsset = (a: VaultAsset) => {
-      if (a === 'pw' || a === 'diary') a = 'note'; // 资产兜底：入口收敛后残留值落加密笔记
+      if ((a as string) === 'pw' || a === 'diary') a = 'note'; // 资产兜底：入口收敛后残留值落加密笔记
       this.asset = a;
       lastVisitedAsset = a; // 记住停留资产：下次打开直落
-      this.pwState.searchKw = '';
+      this.searchKw = '';
       const headSearch = this.deskSearch;
       if (headSearch) headSearch.value = '';
       this.mob.search.value = '';
@@ -733,15 +694,14 @@ export class UIManager {
         this.asset = 'note';
         lastVisitedAsset = 'note';
       }
-      this.pwState.searchKw = v;
+      this.searchKw = v;
       if (isMob) {
         const deskSearch = this.deskSearch;
         if (deskSearch) deskSearch.value = v; // 移动端输入 → 同步桌面框
       } else {
         this.mob.search.value = v; // 桌面输入 → 同步移动端框
       }
-      if (this.searchTimer) clearTimeout(this.searchTimer);
-      this.searchTimer = setTimeout(() => this.renderAll(), 180);
+      this.searchDebounced();
     });
   }
 
@@ -779,8 +739,7 @@ export class UIManager {
     this.stopSessionTimers();
     if (this.isSecurityMode()) {
       this.dataManager.lock();
-      this.pwDataManager.lock();
-      this.pwState = { ...DEFAULT_PW_STATE };
+      this.pwDataManager.lock(); // 共享锁：本侧密码明文缓存一并清出
       this._selNoteId = null;
       this._diaryPlain = {}; // G：明文缓存随上锁一并清出内存（与 lockNow 同口径）
       // E11：lockNow 路径传 suppress——一次上锁只由触发方发一条通知，不再 lockNow/hide 各弹一条
@@ -877,7 +836,7 @@ export class UIManager {
   private ensureHealthElements() {
     const mask = document.createElement('div');
     mask.id = 'bz-encrypt-health-mask';
-    mask.className = 'bz-encrypt-health-mask';
+    mask.className = 'bz-overlay-mask bz-encrypt-health-mask'; // issue 365：底/blur 归 core 单源，域类仅覆写 padding
     mask.style.display = 'none';
     const popup = document.createElement('div');
     popup.id = 'bz-encrypt-health-popup';
@@ -1306,10 +1265,9 @@ export class UIManager {
   }
 
   /** 资产计数 + 导航高亮 */
-  private counts(): { pw: number; note: number; diary: number } {
+  private counts(): { note: number; diary: number } {
     const notes = this.dataManager.manifest.notes;
     return {
-      pw: this.pwDataManager.pwData.length,
       note: notes.filter((n) => n.kind !== 'diary-entry' && n.kind !== 'password-vault').length,
       diary: notes.filter((n) => n.kind === 'diary-entry').length,
     };
@@ -1338,6 +1296,8 @@ export class UIManager {
         ['加密条目', '随库附件', '附件密文'],
       );
       const plats = this.pwDataManager.platforms();
+      // password-vault 档 = 共享锁解锁屏统计（密码本域锁屏同款口径）；encrypt 侧代为快照：
+      // 只经保险库解锁的会话也能刷新该档（ADR-0158 后密码视图已摘，快照链路保留）
       this.lockStatsCache['password-vault'] = [
         { num: String(plats.length), label: '平台' },
         { num: String(this.pwDataManager.pwData.length), label: '口令条目' },
@@ -1432,19 +1392,11 @@ export class UIManager {
     const keepHead = this._lastRenderedAsset === this.asset && (this.asset === 'note' || this.asset === 'diary');
     if (!keepHead) this.desk.list.innerHTML = '';
     this.desk.detail.innerHTML = '';
-    // 离开密码资产时移除密码专用收藏切换钮（顶栏共享）
-    if (this.asset !== 'pw') {
-      this.popup!.querySelector('.bz-vault-bar [data-act="pw-fav"]')?.remove();
-    }
     // 概览跨栏（评审）：概览横跨中列表 + 右详情两栏
     this.setOverviewSpan(this.asset === 'overview');
     this._lastRenderedAsset = this.asset;
     if (this.asset === 'overview') {
       this.renderDeskOverview();
-      return;
-    }
-    if (this.asset === 'pw') {
-      this.renderDeskPw();
       return;
     }
     const kind: 'note' | 'diary' = this.asset;
@@ -1490,49 +1442,6 @@ export class UIManager {
     detail.appendChild(area);
   }
 
-  /** 桌面密码资产：平台列表 + 账号详情 + 顶栏收藏切换钮 */
-  private renderDeskPw() {
-    const list = this.desk.list;
-    const detail = this.desk.detail;
-    const kw = this.pwState.searchKw;
-    this.setVaultHead('密码');
-    // 顶栏追加密码动作按钮（生成/新增在通用 gen 已有——密码视图放专用新增/收藏切换）
-    const barActs = this.popup!.querySelector('.bz-vault-bar')!;
-    const favBtn = barActs.querySelector('[data-act="pw-fav"]') as HTMLElement | null;
-    const favIcon = vIc(this.pwState.view === 'fav' ? 'star' : 'star-outline', 15);
-    const favTitle = this.pwState.view === 'fav' ? '全部平台' : '只看收藏';
-    if (!favBtn) {
-      const btn = document.createElement('button');
-      btn.className = 'bz-vault-ic';
-      btn.dataset.act = 'pw-fav';
-      btn.title = favTitle;
-      btn.innerHTML = favIcon;
-      barActs.appendChild(btn);
-      btn.addEventListener('click', () => {
-        this.pwState.view = this.pwState.view === 'fav' ? 'all' : 'fav';
-        this.renderAll();
-      });
-    } else {
-      favBtn.title = favTitle;
-      favBtn.innerHTML = favIcon;
-    }
-    // 列头（含新增入口）与滚动 body 分离：行渲染/空态写 body，避免整列清空丢掉入口
-    const listHead = document.createElement('div');
-    listHead.className = 'bz-vault-lc-head';
-    listHead.innerHTML = `<div class="t">平台</div><button class="lc-add" data-lc-add="pw" title="新增密码">${vIc('plus', 13)} 新增密码</button>`;
-    listHead.querySelector('[data-lc-add="pw"]')?.addEventListener('click', () => this.openPwEntryDialog());
-    const listBody = document.createElement('div');
-    listBody.className = 'bz-vault-lc-body';
-    list.appendChild(listHead);
-    list.appendChild(listBody);
-    this.pwView.renderDeskList(listBody, this.pwState, (p, a) => {
-      this.pwState.selPlatform = p;
-      this.pwState.selAccount = a;
-      this.renderDesktop();
-    });
-    this.pwView.renderDeskDetail(detail, this.pwState);
-  }
-
   /** 桌面加密笔记/日记：列表 + 详情（异步解密日记正文预览） */
   /**
    * 桌面加密笔记/日记：列表 + 详情。
@@ -1542,7 +1451,7 @@ export class UIManager {
   private renderDeskNotes(kind: 'note' | 'diary', keepHead = false) {
     const list = this.desk.list;
     const detail = this.desk.detail;
-    const kw = this.pwState.searchKw;
+    const kw = this.searchKw;
     let notes = [...this.dataManager.manifest.notes]
       .filter((n) => (kind === 'diary' ? n.kind === 'diary-entry' : n.kind !== 'diary-entry' && n.kind !== 'password-vault'))
       .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
@@ -1715,249 +1624,16 @@ export class UIManager {
     return head;
   }
 
-  // ---------- 密码条目弹窗（添加/编辑/平台编辑/确认/toast） ----------
-  /** 密码添加/编辑弹窗（移动端复用桌面弹窗 DOM；双端共享 pwDataManager） */
-  openPwEntryDialog(edit?: PasswordVaultEntry | null, prefill?: { platform?: string; url?: string }): void {
-    if (!this.dataManager.unlocked) {
-      notice('请先解锁保险库');
-      return;
-    }
-    this._pwEditingId = edit ? edit.id : null;
-    this._pwDupConfirmed = false; // 查重放行标志随弹窗打开复位：每次保存都要重新确认
-    const dlg = this.ensurePwDialog();
-    const title = dlg.querySelector('.bz-vault-dlg h3')!;
-    title.textContent = edit ? '编辑密码条目' : '添加密码条目';
-    const fields = ['platform', 'url', 'account', 'password', 'note'] as const;
-    fields.forEach((f) => {
-      const input = dlg.querySelector(`[data-f="${f}"]`) as HTMLInputElement;
-      input.value = edit ? edit[f] || '' : prefill && f !== 'password' ? prefill[f as 'platform' | 'url'] || '' : '';
-    });
-    const pw = edit ? edit.password : this.generatePassword();
-    const pwInput = dlg.querySelector('[data-f="password"]') as HTMLInputElement;
-    pwInput.value = pw;
-    // 防偷看：每次打开默认掩码态，eye 手动切换明文
-    pwInput.type = 'password';
-    const eyeBtn = dlg.querySelector('[data-pwv-dlg="eye"]') as HTMLElement | null;
-    if (eyeBtn) {
-      eyeBtn.title = '显示密码';
-      eyeBtn.innerHTML = vIc('eye', 14);
-    }
-    (dlg.querySelector('[data-f-err]') as HTMLElement).textContent = '';
-    this.pwDlgSyncUi?.();
-    this.openPwDialogOverlay(true);
-    // 焦点移到平台输入
-    const first = dlg.querySelector('[data-f="platform"]') as HTMLInputElement | null;
-    first?.focus();
-  }
-
-  private _pwEditingId: string | null = null;
-  /** 同平台+账号查重命中后的放行标志（同一弹窗会话内再点一次保存即放行） */
-  private _pwDupConfirmed = false;
-  /** 弹窗内联动刷新（强度提示等）；ensurePwDialog 首建时注入 */
-  private pwDlgSyncUi: (() => void) | null = null;
-  private pwDlg: HTMLElement | null = null;
-  /** 密码添加/编辑弹窗的 ESC 层（E7：弹窗可见时 ESC 只关弹窗，不穿透关掉主面板） */
-  private pwDlgEsc: { unregister: () => void } | null = null;
-
-  private ensurePwDialog(): HTMLElement {
-    if (this.pwDlg && document.body.contains(this.pwDlg)) return this.pwDlg;
-    const dlg = document.createElement('div');
-    dlg.className = 'bz-vault-dlg-mask';
-    dlg.innerHTML = `
-      <div class="bz-vault-dlg">
-        <h3>添加密码条目</h3>
-        <div class="sub">带 * 为必填 · 平台与账号密码不可为空</div>
-        <label>平台 *</label><input data-f="platform" placeholder="如 GitHub">
-        <label>链接（可选）</label><input data-f="url" placeholder="https://…">
-        <label>账号 *</label><input data-f="account" placeholder="登录账号 / 邮箱 / 手机号">
-        <label>密码 *</label>
-        <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="gen" data-pwv-dlg="gen">生成</button><button class="mini" data-pwv-dlg="eye" type="button" title="显示密码">${vIc('eye', 14)}</button></div>
-        <div class="pwstrength" data-pw-strength></div>
-        <label>备注（可选）</label><input data-f="note" placeholder="备用信息…">
-        <div class="err" data-f-err></div>
-        <div class="btns"><button class="cancel" data-pwv-dlg="cancel">取消</button><button class="save" data-pwv-dlg="save">保存</button></div>
-      </div>`;
-    const errEl = dlg.querySelector('[data-f-err]') as HTMLElement;
-    const get = (f: string) => (dlg.querySelector(`[data-f="${f}"]`) as HTMLInputElement).value.trim();
-    // 防偷看：eye 切换密码明文/掩码（默认掩码）
-    dlg.querySelector('[data-pwv-dlg="eye"]')?.addEventListener('click', () => {
-      const input = dlg.querySelector('[data-f="password"]') as HTMLInputElement;
-      const show = input.type === 'password';
-      input.type = show ? 'text' : 'password';
-      const eye = dlg.querySelector('[data-pwv-dlg="eye"]') as HTMLElement;
-      eye.title = show ? '隐藏密码' : '显示密码';
-      eye.innerHTML = vIc(show ? 'eye-off' : 'eye', 14);
-      input.focus();
-    });
-    // 强度提示（纯本地计算）：密码框输入/生成/打开弹窗时联动刷新
-    const strengthEl = dlg.querySelector('[data-pw-strength]') as HTMLElement;
-    const syncStrength = () => {
-      const v = (dlg.querySelector('[data-f="password"]') as HTMLInputElement).value;
-      if (!v) {
-        strengthEl.textContent = '';
-        delete strengthEl.dataset.level;
-        return;
-      }
-      const s = passwordStrength(v);
-      strengthEl.textContent = '强度：' + pwStrengthLabel(s);
-      strengthEl.dataset.level = s;
-    };
-    this.pwDlgSyncUi = syncStrength;
-    (dlg.querySelector('[data-f="password"]') as HTMLInputElement).addEventListener('input', syncStrength);
-    // Enter 流转：平台→链接→账号→密码→备注→保存（末字段 Enter=保存）
-    const flow: Array<[string, string | null]> = [
-      ['platform', 'url'],
-      ['url', 'account'],
-      ['account', 'password'],
-      ['password', 'note'],
-      ['note', null],
-    ];
-    for (const [f, next] of flow) {
-      dlg.querySelector(`[data-f="${f}"]`)?.addEventListener('keydown', (e) => {
-        if ((e as KeyboardEvent).key !== 'Enter') return;
-        e.preventDefault();
-        if (next) (dlg.querySelector(`[data-f="${next}"]`) as HTMLInputElement | null)?.focus();
-        else (dlg.querySelector('[data-pwv-dlg="save"]') as HTMLButtonElement | null)?.click();
-      });
-    }
-    // 遮罩点击（内容区外）关闭
-    dlg.addEventListener('click', (e) => {
-      if (e.target === dlg) this.openPwDialogOverlay(false);
-    });
-    dlg.querySelector('[data-pwv-dlg="gen"]')?.addEventListener('click', () => {
-      (dlg.querySelector('[data-f="password"]') as HTMLInputElement).value = this.generatePassword();
-      syncStrength();
-      this.toast('已生成新密码');
-    });
-    dlg.querySelector('[data-pwv-dlg="cancel"]')?.addEventListener('click', () => this.openPwDialogOverlay(false));
-    dlg.querySelector('[data-pwv-dlg="save"]')?.addEventListener('click', async () => {
-      const platform = get('platform');
-      if (!platform) {
-        errEl.textContent = '平台不能为空';
-        return;
-      }
-      if (!get('account') || !get('password')) {
-        errEl.textContent = '账号和密码不能为空';
-        return;
-      }
-      // 同平台+账号查重（防重复收录）：首次命中只提示，再点一次保存放行（用户拍板）
-      const account = get('account');
-      const dup = this.pwDataManager.pwData.find(
-        (d) => d.id !== this._pwEditingId && (d.platform || '').trim() === platform && (d.account || '').trim() === account
-      );
-      if (dup && !this._pwDupConfirmed) {
-        this._pwDupConfirmed = true;
-        errEl.textContent = `该平台已有同名账号（${dup.account || account}），再次点击保存将放行`;
-        return;
-      }
-      const item = { platform, url: get('url'), account, password: get('password'), note: get('note') };
-      try {
-        if (this._pwEditingId) {
-          await this.pwDataManager.updateItem(this._pwEditingId, item);
-          this.pwState.selPlatform = item.platform;
-          this.pwState.selAccount = this._pwEditingId;
-        } else {
-          await this.pwDataManager.addItem(item);
-          this.pwState.selPlatform = item.platform;
-          this.pwState.selAccount = this.pwDataManager.pwData[0]?.id ?? null;
-        }
-        this.openPwDialogOverlay(false);
-        this.renderAll();
-        this.toast('已保存');
-      } catch (e: any) {
-        errEl.textContent = '保存失败：' + e.message;
-      }
-    });
-    document.body.appendChild(dlg);
-    this.pwDlg = dlg;
-    return dlg;
-  }
-
-  private openPwDialogOverlay(open: boolean) {
-    if (!this.pwDlg) return;
-    if (open) {
-      topifyZ(this.pwDlg); // ADR-0067：密码弹窗挂 body，显示即发号保证盖过 vault 面板
-      // E7：注册独立 ESC 层（isVisible = 弹窗 display，close = 关弹窗）——对照 save.ts confirmOverwrite。
-      // 此前 ESC 命中主面板层：安全模式下 hide() 随即上锁清数据，再点保存报「保存失败：未解锁」。
-      if (!this.pwDlgEsc) {
-        this.pwDlgEsc = escManager.register('bz-vault-pw-dlg', {
-          isVisible: () => !!this.pwDlg && this.pwDlg.style.display !== 'none' && document.body.contains(this.pwDlg),
-          close: () => this.openPwDialogOverlay(false),
-        });
-      }
-    } else {
-      this.pwDlgEsc?.unregister();
-      this.pwDlgEsc = null;
-    }
-    this.pwDlg.style.display = open ? 'flex' : 'none';
-  }
-
-  /** 卸载辅助：关密码弹窗（注销 ESC 层）并移除 body 上无 id 的弹窗遮罩（G：cleanup 此前不清） */
+  /** 卸载辅助：移除 body 上无 id 的弹窗遮罩（平台编辑等一次性弹层；G：cleanup 此前不清） */
   closeAllDialogs(): void {
-    this.openPwDialogOverlay(false);
     document.querySelectorAll('body > .bz-vault-dlg-mask').forEach((el) => el.remove());
   }
 
-  /** 平台信息编辑弹窗（独立自绘） */
-  private openPwPlatformEdit(platform: string) {
-    const accs = this.pwDataManager.accountsOf(platform);
-    const d = accs[0];
-    const mask = document.createElement('div');
-    mask.className = 'bz-vault-dlg-mask';
-    topifyZ(mask); // ADR-0067：一次性弹窗，创建即显示即发号（挂 body，盖过 vault 面板）
-    mask.style.display = 'flex';
-    mask.innerHTML = `
-      <div class="bz-vault-dlg">
-        <h3>编辑平台 · ${escapeHtml(platform)}</h3>
-        <div class="sub">改名/改链接将应用到该平台全部账号</div>
-        <label>平台名 *</label><input data-pf="platform" value="${escapeHtml(platform === '(无平台)' ? '' : platform)}">
-        <label>链接（可选）</label><input data-pf="url" value="${escapeHtml(d?.url || '')}">
-        <div class="err" data-pf-err></div>
-        <div class="btns"><button class="cancel" data-pf-act="cancel">取消</button><button class="save" data-pf-act="save">保存</button></div>
-      </div>`;
-    const errEl = mask.querySelector('[data-pf-err]') as HTMLElement;
-    // E7：注册独立 ESC 层（isVisible = 遮罩在 DOM，close = 关弹窗），弹窗可见时 ESC 不穿透到主面板
-    let escH: { unregister: () => void } | null = null;
-    const closePf = () => {
-      escH?.unregister();
-      escH = null;
-      mask.remove();
-    };
-    escH = escManager.register('bz-vault-pw-platform-edit', {
-      isVisible: () => mask.isConnected,
-      close: closePf,
-    });
-    mask.addEventListener('click', (e) => {
-      if (e.target === mask) closePf();
-    });
-    mask.querySelector('[data-pf-act="cancel"]')?.addEventListener('click', () => closePf());
-    mask.querySelector('[data-pf-act="save"]')?.addEventListener('click', async () => {
-      const name = (mask.querySelector('[data-pf="platform"]') as HTMLInputElement).value.trim();
-      if (!name) {
-        errEl.textContent = '平台名不能为空';
-        return;
-      }
-      const url = (mask.querySelector('[data-pf="url"]') as HTMLInputElement).value;
-      try {
-        await this.pwDataManager.updatePlatform(platform, { platform: name, url });
-        this.pwState.selPlatform = name;
-        this.pwState.selAccount = null;
-        closePf();
-        this.renderAll();
-        this.toast('平台信息已更新');
-      } catch (e: any) {
-        errEl.textContent = '保存失败：' + e.message;
-      }
-    });
-    document.body.appendChild(mask);
-  }
-
   /**
-   * 流程确认框（取消 / 确认 cta）：密码资产与笔记/日记动作共用。
+   * 流程确认框（取消 / 确认 cta）：笔记/日记动作共用。
    * `danger`（issue 291 评审补）= 主动作是删除/销毁类 → 弹窗挂 `.bz-flow-dialog--danger`，
    * 主按钮降为中性底 + 红字（设计手册 §9/§10）。默认 false（还原等非破坏动作保持高亮）。
-   * 注意与 password-vault 的 `askConfirm` 区别：那个是域内自绘确认（自带 .danger 按钮样式），
-   * 本方法走 core 流程框，危险语义必须显式传进来。
+   * password-vault 的 `askConfirm` 已随 issue 365 一并收编同一 core 流程框（两域同源）。
    */
   private askConfirm(
     title: string,
@@ -1978,64 +1654,12 @@ export class UIManager {
     });
   }
 
-  /** 敏感文本复制 + 60s 自动清空（密码资产与日记共用） */
-  async copySensitive(text: string): Promise<boolean> {
-    try {
-      await copySensitiveText(text);
-      return true;
-    } catch (e) {
-      // 降级：textarea 选中法
-      try {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.cssText = 'position:fixed;opacity:0';
-        document.body.appendChild(ta);
-        ta.select();
-        const ok = document.execCommand('copy');
-        ta.remove();
-        if (ok) armClipboardClear();
-        return ok;
-      } catch (e2) {
-        return false;
-      }
-    }
-  }
-
-  private openExternal(url: string): void {
-    try {
-      const w = window as any;
-      const electron = w.require && w.require('electron');
-      if (electron && electron.shell) {
-        electron.shell.openExternal(url);
-        return;
-      }
-    } catch (e) {
-      /* fallthrough */
-    }
-    window.open(url, '_blank');
-  }
-
-  private generatePassword(): string {
-    const length = parseInt(this.config.pwLength || '') || 16;
-    const charset = this.config.pwCharset || DEFAULT_PW_CHARSET;
-    return secureRandomPassword(length, charset);
-  }
-
-  private genAndToast(): void {
-    if (!this.dataManager.unlocked) {
-      notice('请先解锁保险库');
-      return;
-    }
-    // 生成密码（不自动落盘）：放入剪贴板，进入密码视图（供用户添加）
-    void this.copySensitive(this.generatePassword()).then((ok) => {
-      if (ok) this.toast('新密码已生成并复制（60 秒后自动清空），可「新增密码」粘贴使用');
-      else this.toast('生成失败，请重试', true);
-    });
-  }
+  // 敏感文本复制（含降级兜底）+ 60s 自动清空：收口 core/utils copySensitiveWithFallback
+  // （issue 365：与 password-vault 两份逐字雷同的兜底实现一并删除，两域消费同一实现）。
 
   private setAssetFromNav(a: VaultAsset): void {
-    // 资产兜底：面板已只管加密笔记（pw/diary 入口按原型移除），旧停留值/概览流水残留统一落 note
-    if (a === 'pw' || a === 'diary') a = 'note';
+    // 资产兜底：面板只管加密笔记/加密日记（pw 入口已随 ADR-0158 摘除），旧停留值残留统一落 note
+    if ((a as string) === 'pw' || a === 'diary') a = 'note';
     this.asset = a;
     lastVisitedAsset = a; // 记住停留资产：下次打开直落
     this.desk.nav.querySelectorAll('.bz-vault-item').forEach((el) =>
@@ -2075,13 +1699,10 @@ export class UIManager {
   /** 立即上锁（锁屏接管）。@param silent E11：安静上锁（触发方自带通知，如空闲自动上锁），hide 不再补一条 */
   lockNow(silent = false): void {
     this.dataManager.lock();
-    this.pwDataManager.lock();
-    this.pwState = { ...DEFAULT_PW_STATE };
+    this.pwDataManager.lock(); // 共享锁：本侧密码明文缓存一并清出
     this._selNoteId = null;
     this._diaryPlain = {};
-    // E4：编辑态复位（关闭中的密码弹窗残留 id 不带到下次解锁）
-    this._pwEditingId = null;
-    // E3：收敛回概览 + 锁态文案——避免停在「密码/笔记」视图显示"保险库还没有密码"空态，
+    // E3：收敛回概览 + 锁态文案——避免停在「笔记」视图显示空态，
     // 视觉像"清空"而非"上锁"
     this.asset = 'overview';
     // E5：上锁后体检结果无意义，复位未体检态
@@ -2123,19 +1744,12 @@ export class UIManager {
       body.appendChild(area);
       return;
     }
-    if (this.asset === 'pw') {
-      const card = document.createElement('div');
-      card.className = 'bz-vault-mob-pwlist';
-      this.pwView.renderMobList(card, this.pwState, (p) => this.openPwMobPage(p));
-      body.appendChild(card);
-      return;
-    }
     // 笔记/日记
     const kind = this.asset;
     const notes = [...this.dataManager.manifest.notes]
       .filter((n) => (kind === 'diary' ? n.kind === 'diary-entry' : n.kind !== 'diary-entry' && n.kind !== 'password-vault'))
       .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-    const kw = this.pwState.searchKw;
+    const kw = this.searchKw;
     const filtered = kw
       ? notes.filter((n) => (n.title || '').toLowerCase().includes(kw.toLowerCase()) || (n.path || '').toLowerCase().includes(kw.toLowerCase()))
       : notes;
@@ -2203,25 +1817,6 @@ export class UIManager {
         if (pre && t !== null) pre.innerHTML = escapeHtml(t).replace(/\n/g, '<br>');
       }).catch(() => {});
     }
-  }
-
-  private openPwMobPage(p: PlatformGroup) {
-    const { page } = this.createMobPage(escapeHtml(p.platform));
-    this.pwView.renderMobPlatformPage(page.querySelector('.body') as HTMLElement, p, this.pwState);
-    page.querySelector('[data-mob-back]')?.addEventListener('click', () => page.remove());
-    // E6：平台详情页 ⋮ 此前未绑事件（点击无反应）——移动端直接开底部抽屉
-    page.querySelector('[data-mob-menu]')?.addEventListener('click', () => this.pwView.openPlatformSheet(p.platform));
-    this.mob.body.appendChild(page);
-  }
-
-  private openPwAccountPage(d: PasswordVaultEntry, st: PwViewState) {
-    const { page, body } = this.createMobPage(escapeHtml(d.platform));
-    // 单账号详情（搜索态复用平台页单卡逻辑——直接构账号卡）
-    this.pwView.renderDeskDetail(body, { ...st, selPlatform: d.platform, selAccount: d.id });
-    page.querySelector('[data-mob-back]')?.addEventListener('click', () => page.remove());
-    // E6：账号详情页 ⋮ 此前未绑事件——移动端直接开底部抽屉
-    page.querySelector('[data-mob-menu]')?.addEventListener('click', () => this.pwView.openAccountSheet(d));
-    this.mob.body.appendChild(page);
   }
 
   /** 轻量 toast（保险库窗口内） */
@@ -2341,7 +1936,7 @@ export class UIManager {
           this.toast('正文解密失败', true);
           return;
         }
-        void this.copySensitive(t).then((ok) => this.toast(ok ? '正文已复制（60 秒后自动清空）' : '复制失败', !ok));
+        void copySensitiveWithFallback(t).then((ok) => this.toast(ok ? '正文已复制（60 秒后自动清空）' : '复制失败', !ok));
       })
       .catch(() => this.toast('正文解密失败', true));
   }
@@ -2718,7 +2313,7 @@ export class EncryptAppController {
     this._initialized = true;
   }
 
-  /** 打开保险库主面板：解锁成功直落密码资产并聚焦搜索（快速取密路径）；
+  /** 打开保险库主面板：解锁成功直落加密笔记资产并聚焦搜索；
    *  已解锁直接打开则恢复上次停留资产（会话级记忆）。 */
   async openManager() {
     if (!this.dataManager.unlocked) {
@@ -2731,35 +2326,6 @@ export class EncryptAppController {
       this.uiManager.show();
       this.uiManager.restoreLastAsset();
     }
-  }
-
-  /**
-   * 快速复制密码（命令 bz-encrypt-copy-password；不打开主面板）：
-   * 未解锁先弹主密码 → 轻量 fuzzy 选择器选条目 → 复制到剪贴板（60s 自动清空）。
-   */
-  async quickCopyPassword(): Promise<void> {
-    if (!this.dataManager.unlocked) {
-      const ok = await this.uiManager.showPasswordDialog();
-      if (!ok) return;
-    }
-    try {
-      await this.uiManager.pwDataManager.load();
-    } catch (e) {
-      /* 载荷损坏等：按空态处理，由下方「还没有密码」兜底提示 */
-    }
-    const entries = this.uiManager.pwDataManager.pwData;
-    if (!entries.length) {
-      notice('保险库还没有密码，打开面板后可新增');
-      return;
-    }
-    void openPasswordQuickPicker(entries, (d) => {
-      void this.uiManager.copySensitive(d.password).then((ok) => {
-        notice(
-          ok ? `已复制「${d.platform}」${d.account ? `（${d.account}）` : ''}的密码，60 秒后自动清空` : '复制失败，请手动复制',
-          ok ? 'success' : 'error'
-        );
-      });
-    });
   }
 
   /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始；共享附件原件保留（issue 338） */
@@ -2899,12 +2465,11 @@ export class EncryptAppController {
       const el = document.getElementById(id);
       if (el) el.remove();
     }
-    // G：密码弹窗（含平台编辑遮罩，无 id 挂 body）、剪贴板自动清空计时器、密码资产域事件订阅
+    // G：无 id 挂 body 的一次性弹层、剪贴板自动清空计时器、密码数据域事件订阅
     this.uiManager.closeAllDialogs();
     cancelClipboardClear();
-    // 解锁会话计时（时长刷新/无交互自动上锁）+ 账号卡明文自动回遮计时
+    // 解锁会话计时（时长刷新/无交互自动上锁）
     this.uiManager.stopSessionTimers();
-    this.uiManager.pwView.disposeRevealTimers();
     this.uiManager.pwDataManager.destroy();
     this.uiManager.mask = null;
     this.uiManager.popup = null;

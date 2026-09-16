@@ -29,7 +29,7 @@ import { Component, MarkdownRenderer, TFile } from 'obsidian';
 import { getApp } from '../core/app';
 import { notice, notifyUndo } from '../core/notice';
 import { uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
-import { cmpZh, formatRelativeTime, localDayKey } from '../core/utils';
+import { cmpZh, debounce, formatRelativeTime, localDayKey } from '../core/utils';
 import { isMobileEnv } from '../core/mobile';
 import { escManager } from '../core/esc-manager';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
@@ -90,7 +90,12 @@ const PANEL_MAX_W = 1600;
 const PANEL_MAX_H = 1000;
 /** 剪藏正文缓存（notePath → 剥 frontmatter 后正文；clipping:file-* 目录事件失效） */
 const clipBodyCache = new Map<string, string>();
-let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+/** 桌面搜索防抖（issue 365 收编 core debounce：尾触语义与原手写定时器等价，面板关闭 cancel） */
+const searchDebounced = debounce(() => {
+  setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : '');
+  renderList();
+  renderRail();
+}, SEARCH_DEBOUNCE_MS);
 let panelResizeDetach: { detach: () => void; flush: () => void } | null = null;
 let panelSplit: { el: HTMLElement; restore: () => void; flush: () => void; detach: () => void } | null = null;
 /** 分割线钳制：中栏（目录）最小宽 / 右栏（阅读）最小宽（对齐 PANEL_MIN_W 下整体不溢出） */
@@ -207,10 +212,7 @@ export function unloadPanel(): void {
   }
   selSnap = null;
   imgSnap = null;
-  if (searchDebounceTimer !== null) {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = null;
-  }
+  searchDebounced.cancel();
   if (panelResizeDetach) {
     panelResizeDetach.detach(); // detach 内补落未存的防抖尾值（persist 收尾）
     panelResizeDetach = null;
@@ -292,15 +294,7 @@ function buildDom(app: any): void {
     toggleSource(JSON.parse(row.dataset.src || 'null'));
   });
   // 桌面搜索（enh 包 1）：180ms 防抖对齐保险库/备忘录
-  deskSearchEl!.addEventListener('input', () => {
-    if (searchDebounceTimer !== null) clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = setTimeout(() => {
-      searchDebounceTimer = null;
-      setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : '');
-      renderList();
-      renderRail();
-    }, SEARCH_DEBOUNCE_MS);
-  });
+  deskSearchEl!.addEventListener('input', () => searchDebounced());
   // 右栏常驻委托（enh 包 3/6c）：正文外链（md 锚点 data-clip-ext）+「打开笔记」点击 + ←→/jk 条目切换
   readPaneEl!.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;

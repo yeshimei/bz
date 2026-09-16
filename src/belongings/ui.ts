@@ -17,7 +17,8 @@
  * 契约保留：belongings.json 零迁移；smartcat 事件（add/edit/status/delete + belongingsEditChanges）；
  *   belongingsDefaultStatus 设置键；命令路径 openForm（面板未开可弹）；
  *   自动刷新（数据文件 modify，自写短路）；主题变化重渲染；ESC 分层（详情→表单→主面板）；
- *   脏表单 confirmDiscard；notifyUndo 撤销；topifyZ 动态发号（ADR-0067）。
+ *   脏表单 confirmDiscard；notifyUndo 撤销；主面板 topifyZ 动态发号（ADR-0067），
+ *   表单/详情弹窗壳已收编 core uiModal（issue 365 第 5 项，z 发号随壳归 allocZ 单源）。
  * 视觉换血按 ADR-0097 判例：.bz-bel--poster 域内 token 作用域覆盖 + .bz-bel-* 装饰类，
  *   chips/segmented/空态在 render.ts 串里沿用组件库皮（bz-chip/bz-segmented/bz-empty，ADR-0094 视觉）。
  */
@@ -26,10 +27,11 @@ import { topifyZ } from '../core/z-order';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
+import { debounce } from '../core/utils';
 import { longPress } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
-import { mountIcons, uiSuggest, uiIconSpan } from '../core/ui';
+import { mountIcons, uiModal, uiSuggest, uiIconSpan } from '../core/ui';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction, resetItemMenuClickGuard } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
 import { belongingsEditChanges } from '../smartcat/belongings-source';
@@ -207,23 +209,22 @@ function itemById(id: string): BelongingsItem | undefined {
 
 // ==================== 主面板生命周期 ====================
 
-/** ESC 层（bz-bel）：表单 || 详情 || 年度报告 || 主面板——顶层先关，不穿透（对照 favorites bz-fav；
- *  表单叠详情时（详情点编辑）先关表单，修 B6 层序倒挂；报告层序 issue 356） */
+/** ESC 层（bz-bel）：主面板兜底层——表单/详情已各自成为 uiModal 'bz-modal' 层（后注册先关），
+ *  本层的表单/详情分支仅作兜底（选择器已迁 popup 类）；年度报告（issue 356）仍为自绘遮罩，
+ *  层序在详情之下、主面板之上。顶层先关，不穿透（对照 favorites bz-fav）。 */
 let mainEscRegistered = false;
 function ensureBelongingsEsc(): void {
   if (mainEscRegistered) return;
   mainEscRegistered = true;
   escManager.register('bz-bel', {
-    isVisible: () => !!M.overlay || !!document.querySelector('.bz-bel-form-mask') || !!document.querySelector('.bz-bel-detail-mask') || !!document.querySelector('.bz-bel-report-mask'),
+    isVisible: () => !!M.overlay || !!document.querySelector('.bz-bel-form') || !!document.querySelector('.bz-bel-detail') || !!document.querySelector('.bz-bel-report-mask'),
     close: () => {
-      const form = document.querySelector('.bz-bel-form-mask') as HTMLElement | null;
-      if (form) {
+      if (document.querySelector('.bz-bel-form')) {
         // 脏表单走 confirmDiscard 拦截（ticket 189，对照 favorites）
-        requestCloseBelForm(form);
+        requestCloseBelForm();
         return;
       }
-      const detail = document.querySelector('.bz-bel-detail-mask') as HTMLElement | null;
-      if (detail) {
+      if (document.querySelector('.bz-bel-detail')) {
         closeBelDetail();
         return;
       }
@@ -347,15 +348,13 @@ async function openPanelInner(): Promise<void> {
   // 搜索（B3：防抖定时器在面板关闭后仍会触发——首行守卫 overlay 存活；渲染序列含 hero，
   // 副题「N 件在列」计数随搜索刷新）
   const bindSearch = (inp: HTMLInputElement) => {
-    let deb: ReturnType<typeof setTimeout> | undefined;
-    inp.addEventListener('input', () => {
-      clearTimeout(deb);
-      deb = setTimeout(() => {
-        if (!M.overlay) return;
-        M.q = inp.value.trim();
-        renderAll();
-      }, SEARCH_DEBOUNCE_MS);
-    });
+    // issue 365 收编 core debounce（尾触防抖 + overlay 存活守卫原样保留）
+    const debounced = debounce(() => {
+      if (!M.overlay) return;
+      M.q = inp.value.trim();
+      renderAll();
+    }, SEARCH_DEBOUNCE_MS);
+    inp.addEventListener('input', () => debounced());
   };
   bindSearch(overlay.querySelector('[data-bel-search]') as HTMLInputElement);
 
@@ -528,21 +527,29 @@ export async function openBelongingsReportView(): Promise<void> {
   openBelReport(items, currencyUnit(), { onAdd: () => { void openForm(null); } });
 }
 
-// ==================== 详情弹窗（P20 桌面点卡） ====================
+// ==================== 详情弹窗（P20 桌面点卡；壳收编 core uiModal，issue 365 第 5 项） ====================
+
+/** 详情弹窗关闭句柄（core uiModal close；closePanel/closeBelDetail 统一走此单路径） */
+let belDetailClose: (() => void) | null = null;
 
 function closeBelDetail(): void {
-  document.querySelector('.bz-bel-detail-mask')?.remove();
+  // uiModal close（幂等）：遮罩与 ESC 层一并移除（不留全屏空遮罩挡住下层交互）
+  belDetailClose?.();
+  belDetailClose = null;
 }
 
 function openBelDetail(it: BelongingsItem): void {
   closeBelDetail();
-  const mask = document.createElement('div');
-  mask.className = 'bz-overlay-mask bz-bel-detail-mask';
-  mask.innerHTML = belDetailHtml(it, currencyUnit());
-  document.body.appendChild(mask);
-  topifyZ(mask); // ADR-0067：显示即发号（详情恒压主面板；表单再开时后发号恒压详情）
+  const host = document.createElement('div');
+  host.innerHTML = belDetailHtml(it, currencyUnit());
+  ensureBelongingsEsc(); // 详情可在面板未开时被带起（命令路径保险），且先于 uiModal 层入栈
+  const { mask, close } = uiModal({
+    content: host.firstElementChild as HTMLElement,
+    className: 'bz-bel-detail', // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-detail），内容规则照旧
+    onClose: () => { belDetailClose = null; },
+  });
+  belDetailClose = close; // 遮罩点击/ESC 关已归 uiModal（详情无脏态，直接关）
   mountIcons(mask);
-  ensureBelongingsEsc(); // 详情可在面板未开时被带起（命令路径保险）
 
   // 四态流转条（当前态高亮；点击 = 同右键菜单流转，带撤销）
   const acts = mask.querySelector('[data-bd-acts]') as HTMLElement;
@@ -565,7 +572,7 @@ function openBelDetail(it: BelongingsItem): void {
       openBelDetail(now);
     })();
   });
-  mask.addEventListener('mousedown', (e) => { if (e.target === mask) closeBelDetail(); });
+  // 遮罩点击关闭已归 uiModal（点遮罩直接关，详情无脏态）；编辑/删除绑定照旧
   mask.querySelector('[data-bd-edit]')?.addEventListener('click', () => {
     const cur = itemById(it.id);
     if (cur) openForm(cur);
@@ -768,9 +775,10 @@ function belFormStatusNow(mask: HTMLElement): string {
 
 function belFormDirty(): boolean {
   if (!_belBaseline) return false;
-  const mask = document.querySelector('.bz-bel-form-mask') as HTMLElement | null;
-  if (!mask) return false;
-  const g = (id: string) => (mask.querySelector(id) as HTMLInputElement | null)?.value ?? '';
+  // 表单壳已收编 core uiModal（issue 365 第 5 项）：popup 挂 bz-bel-form，字段都在其下
+  const pop = document.querySelector('.bz-bel-form') as HTMLElement | null;
+  if (!pop) return false;
+  const g = (id: string) => (pop.querySelector(id) as HTMLInputElement | null)?.value ?? '';
   return (
     g('#bm-name') !== _belBaseline.name ||
     g('#bm-cat') !== _belBaseline.cat ||
@@ -779,29 +787,36 @@ function belFormDirty(): boolean {
     g('#bm-desc') !== _belBaseline.desc ||
     g('#bm-exitdate') !== _belBaseline.exitDate ||
     g('#bm-soldprice') !== _belBaseline.soldPrice ||
-    belFormStatusNow(mask) !== _belBaseline.status
+    belFormStatusNow(pop) !== _belBaseline.status
   );
 }
 
-function closeBelForm(mask: HTMLElement): void {
+/** 表单弹窗关闭句柄与遮罩引用（core uiModal；closeBelForm 统一走此单路径，companion 注销也要遮罩） */
+let belFormClose: (() => void) | null = null;
+let belFormMask: HTMLElement | null = null;
+
+function closeBelForm(): void {
   _belBaseline = null;
   _belFormTargetId = null;
-  unregisterSheetCompanion(mask);
-  mask.remove();
+  if (belFormMask) unregisterSheetCompanion(belFormMask);
+  belFormMask = null;
+  // uiModal close（幂等）：遮罩与 ESC 层一并收，onClose 清句柄
+  belFormClose?.();
+  belFormClose = null;
 }
 
-function requestCloseBelForm(mask: HTMLElement): void {
+function requestCloseBelForm(): void {
   // 第三个参数 = 皮肤类（issue 291）：confirmDiscard 的确认框同样是 body 弹窗，
   // 不传就与刚被它拦住的表单弹窗（.bz-bel-form 海报皮）两张脸
-  if (belFormDirty()) confirmDiscard(() => closeBelForm(mask), undefined, 'bz-bel-flow-dialog');
-  else closeBelForm(mask);
+  if (belFormDirty()) confirmDiscard(() => closeBelForm(), undefined, 'bz-bel-flow-dialog');
+  else closeBelForm();
 }
 
 export function openForm(it: BelongingsItem | null): void {
   // B8 防叠开：已有表单悬浮时聚焦既有表单直接返回——重复开会让模块级 _belBaseline 互踩、脏拦截失效。
   // H14：仅同一目标（同物品编辑 / 同为新建）才静默聚焦；目标是另一物品时明确提示，
   // 不再让 B 的编辑窗没开、内容可能填进 A
-  const existing = document.querySelector('.bz-bel-form-mask') as HTMLElement | null;
+  const existing = document.querySelector('.bz-bel-form') as HTMLElement | null;
   if (existing) {
     const targetId = it?.id ?? null;
     if (_belFormTargetId === targetId) {
@@ -825,14 +840,22 @@ export function openForm(it: BelongingsItem | null): void {
     return;
   }
   const init = belFormInit(it);
-  const mask = document.createElement('div');
-  mask.className = 'bz-overlay-mask bz-bel-form-mask';
-  mask.innerHTML = belFormHtml(it, currencyUnit());
+  // ESC 层先于 uiModal 入栈（弹窗层恒压主面板层）；表单可在面板未开时打开（命令路径）
+  ensureBelongingsEsc();
+  // 壳走 core uiModal 单源（issue 365 第 5 项）：遮罩创建/z 发号/遮罩点击关/ESC 关全归 uiModal，
+  // 脏拦截经 requestClose 通道（遮罩点击/ESC → requestCloseBelForm，脏表单先弹放弃确认）
+  const host = document.createElement('div');
+  host.innerHTML = belFormHtml(it, currencyUnit());
+  const { mask, close } = uiModal({
+    content: host.firstElementChild as HTMLElement,
+    className: 'bz-bel-form', // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-form），内容规则照旧
+    requestClose: () => requestCloseBelForm(),
+    onClose: () => { belFormClose = null; },
+  });
+  belFormClose = close;
+  belFormMask = mask;
   _belFormTargetId = it?.id ?? null;
-  document.body.appendChild(mask);
-  topifyZ(mask); // ADR-0067：显示即发号（原静态 z-index:110000 已删，恒压主面板）
   mountIcons(mask);
-  ensureBelongingsEsc(); // 表单可在面板未开时打开（命令路径）——ESC 层在此保证已注册
   // 编辑自抽屉：companion 防误关
   const sheetOpen = !!document.querySelector('.bz-item-sheet-mask');
   if (it && sheetOpen) registerSheetCompanion(mask);
@@ -925,8 +948,8 @@ export function openForm(it: BelongingsItem | null): void {
     })();
   });
 
-  mask.addEventListener('mousedown', (e) => { if (e.target === mask) requestCloseBelForm(mask); });
-  mask.querySelector('[data-bm-cancel]')?.addEventListener('click', () => requestCloseBelForm(mask));
+  // 取消 → 脏拦截（遮罩点击关闭已归 uiModal requestClose 通道，不再自挂 mousedown）
+  mask.querySelector('[data-bm-cancel]')?.addEventListener('click', () => requestCloseBelForm());
   saveBtn.addEventListener('click', () => {
     if (saving) return;
     const name = (mask.querySelector('#bm-name') as HTMLInputElement).value.trim();
@@ -967,10 +990,8 @@ export function openForm(it: BelongingsItem | null): void {
           const cur = itemById(it.id);
           if (!cur) {
             notice('该物品已被外部变更删除，本次保存未写入', 'warning');
-            unregisterSheetCompanion(mask);
             closeItemMenu();
-            _belFormTargetId = null;
-            mask.remove();
+            closeBelForm(); // uiModal 单一关闭路径（companion/基线/遮罩一并收）
             return;
           }
           const snapshot = { ...cur };
@@ -1014,7 +1035,8 @@ export function openForm(it: BelongingsItem | null): void {
         _belFormTargetId = null;
         unregisterSheetCompanion(mask);
         closeItemMenu();
-        mask.remove();
+        belFormClose?.(); // uiModal 单一关闭路径：遮罩随 close 移除
+        belFormClose = null;
       } catch (e: any) {
         notice(`保存失败：${e?.message || '未知错误'}`, 'error');
         saving = false;

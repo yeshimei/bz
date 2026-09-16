@@ -15,7 +15,7 @@
  * - UP 名单列表：组内只留「管理」按钮行（计数在 desc），增删/配置在独立 UP 主弹窗
  *   （renderPanelSchema 渲染进自建 overlay，形态不变）。
  */
-import { requestUrl } from 'obsidian';
+import { httpGetText, requestUrlAsFetch } from '../core/http';
 import { notice } from '../core/notice';
 import { numStrBinding } from '../core/settings-common';
 import { createOverlay } from '../core/dom';
@@ -340,23 +340,12 @@ interface RssManagerBox {
 }
 
 /** 试拉 RSS：取 XML 原文，须带 feed 结构标记（<rss>/<feed>/<RDF>，拦截恰好含 <title> 的
- *  普通 HTML 网页）再提取 feed 自带标题；10s 超时/非 2xx/非 feed 结构/解析不出 → null。
- *  导出（C23 回归测试用；生产仅 addRssFeedUrl 消费） */
+ *  普通 HTML 网页）再提取 feed 自带标题；10s 超时/非 2xx/网络错/非 feed 结构/解析不出 → null。
+ *  超时壳收编 core/http（issue 365）；导出（C23 回归测试用；生产仅 addRssFeedUrl 消费） */
 export async function fetchRssFeedTitle(url: string): Promise<string | null> {
-  try {
-    const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000));
-    const req = requestUrl({ url, method: 'GET' }).then((resp) => {
-      if (resp.status < 200 || resp.status >= 300) return null;
-      if (!looksLikeFeedXml(resp.text)) return null;
-      return extractFeedTitleFromXml(resp.text);
-    });
-    // C23：超时胜出后 req 若迟到 reject 会成为 unhandled rejection——挂空 catch 兜底
-    //（race 尚在等待时 rejection 仍由下方 await 经外层 try 捕获，行为不变）
-    req.catch(() => {});
-    return await Promise.race([req, timer]);
-  } catch {
-    return null;
-  }
+  const xml = await httpGetText(url, { timeoutMs: 10000, fetchImpl: requestUrlAsFetch() });
+  if (!xml || !looksLikeFeedXml(xml)) return null;
+  return extractFeedTitleFromXml(xml);
 }
 
 /**

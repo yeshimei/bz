@@ -16,7 +16,7 @@
  * 于是短链「标题/UP主/分P/时长」一次页面请求拿全，且 API 不可达时仍不残缺；meta.bvid 一并回传给调用方
  * （切 P 查档位、短链写回规范链接都靠它）。
  */
-import { requestUrl } from 'obsidian';
+import { httpGetText, requestUrlAsFetch } from '../core/http';
 import { cleanSourceTitle, isUrlLikeSourceText } from './source';
 
 /** view API 的 bvid 判据：统一 10 位（仓内另有 {8,12} 展示用与 CLI {10} 写法，本模块为唯一解析口径） */
@@ -77,21 +77,13 @@ const VIEW_TIMEOUT_MS = 10000;
 const QUALITY_TIMEOUT_MS = 10000;
 const NAV_TIMEOUT_MS = 10000;
 
-/** 超时包装（范式随 clipbook fetchRssFeedTitle）：超时 → null；落定时器清理（批量重抓不堆积） */
-function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | null> {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  const timeout = new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), ms); });
-  const done = (): void => { if (timer) { clearTimeout(timer); timer = null; } };
-  return Promise.race([p, timeout]).then(
-    (v) => { done(); return v === null ? null : (v as T); },
-    (e) => { done(); throw e; },
-  );
-}
+/** 生产 HTTP 通道（requestUrl → fetch 形状适配，core/http 单源，issue 365） */
+const httpImpl = requestUrlAsFetch();
 
-/** 非 2xx 或 JSON 解析失败 → null */
-function parseJson(resp: any): any {
-  if (!resp || resp.status < 200 || resp.status >= 300) return null;
-  try { return JSON.parse(resp.text as string); } catch { return null; }
+/** 2xx 正文 → JSON（非 2xx / 网络错 / 超时已由 httpGetText 归 null；解析失败 → null） */
+function parseJsonText(text: string | null): any {
+  if (!text) return null;
+  try { return JSON.parse(text); } catch { return null; }
 }
 
 /** 正整数化（容错 NaN/负/小数） */
@@ -200,10 +192,13 @@ export function parseBvidFromHtml(html: string): string | null {
   return bvidFromOgUrl(html) || bvidFromVideoData(videoDataFromState(extractInitialState(html)));
 }
 
-/** B 站 view API：10s 超时（Promise.race，范式随 clipbook fetchRssFeedTitle）；非 2xx/code!==0/异常 → null */
+/** B 站 view API：10s 超时（core/http）；非 2xx/code!==0/异常 → null */
 async function fetchFromViewApi(bvid: string): Promise<VideoMeta | null> {
   try {
-    const json = parseJson(await withTimeout(requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: 'GET' }), VIEW_TIMEOUT_MS));
+    const json = parseJsonText(await httpGetText(
+      `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`,
+      { timeoutMs: VIEW_TIMEOUT_MS, fetchImpl: httpImpl },
+    ));
     if (!json || json.code !== 0 || !json.data) return null;
     return metaFromVideoData(json.data);
   } catch {
@@ -223,14 +218,8 @@ const PAGE_HEADERS = {
  * 页面完全不可达 → null（调用方按既有降级链收尾）。
  */
 async function fetchFromPage(url: string): Promise<{ bvid: string | null; meta: VideoMeta | null } | null> {
-  let html = '';
-  try {
-    const resp: any = await withTimeout(requestUrl({ url, method: 'GET', headers: { ...PAGE_HEADERS } }), VIEW_TIMEOUT_MS);
-    if (!resp || resp.status < 200 || resp.status >= 300) return null;
-    html = String(resp.text ?? '');
-  } catch {
-    return null;
-  }
+  // httpGetText 已把非 2xx / 网络错 / 超时归 null；2xx 空正文同旧口径按不可达处理
+  const html = String(await httpGetText(url, { timeoutMs: VIEW_TIMEOUT_MS, headers: { ...PAGE_HEADERS }, fetchImpl: httpImpl }) ?? '');
   if (!html) return null;
   const state = extractInitialState(html);
   const videoData = videoDataFromState(state);
@@ -300,9 +289,9 @@ export async function isCookieLoggedIn(cookie: string): Promise<boolean> {
   const c = String(cookie ?? '').trim();
   if (!c) return false;
   try {
-    const json = parseJson(await withTimeout(
-      requestUrl({ url: 'https://api.bilibili.com/x/web-interface/nav', method: 'GET', headers: { Cookie: c } }),
-      NAV_TIMEOUT_MS,
+    const json = parseJsonText(await httpGetText(
+      'https://api.bilibili.com/x/web-interface/nav',
+      { timeoutMs: NAV_TIMEOUT_MS, headers: { Cookie: c }, fetchImpl: httpImpl },
     ));
     return !!(json && json.code === 0 && json.data && json.data.isLogin === true);
   } catch {
@@ -320,9 +309,9 @@ export async function fetchVideoQualities(bvid: string, cid: number, cookie: str
   if (!c || !bvid || !posInt(cid)) return null;
   try {
     const url = `https://api.bilibili.com/x/player/playurl?bvid=${bvid}&cid=${posInt(cid)}&qn=127&fnval=4048&fourk=1`;
-    const json = parseJson(await withTimeout(
-      requestUrl({ url, method: 'GET', headers: { Cookie: c } }),
-      QUALITY_TIMEOUT_MS,
+    const json = parseJsonText(await httpGetText(
+      url,
+      { timeoutMs: QUALITY_TIMEOUT_MS, headers: { Cookie: c }, fetchImpl: httpImpl },
     ));
     const videos = json && json.code === 0 && json.data && json.data.dash ? json.data.dash.video : null;
     if (!Array.isArray(videos)) return null;

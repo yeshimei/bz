@@ -73,17 +73,14 @@ describe('core 旧硬编码遮罩两处（core/styles.css）', () => {
 });
 
 describe('域遮罩 blur 全量在位', () => {
-  it('非品牌域遮罩含 token blur（encrypt×3 / knowledge / review×3 / pomodoro / diary×2 / password-vault×3）', () => {
+  it('非品牌域遮罩含 token blur（encrypt-lockscreen / review-quiz / diary×2 / password-vault×3）', () => {
     const cases: Array<[file: string, selector: string]> = [
       // 保险库解锁屏已收编为 core 共享组件（三域同源），遮罩随之落到 core 组件库
       ['src/core/ui/components.css', '.bz-lockscreen--mask'],
-      ['src/encrypt/styles.css', '.bz-encrypt-health-mask'],
-      ['src/encrypt/styles.css', '.bz-vault-dlg-mask'],
-      ['src/knowledge/styles.css', '.bz-kb-mask'],
-      ['src/review/styles.css', '#review-stats-mask'],
-      ['src/review/styles.css', '#review-history-mask'],
+      // review stats/history / pomodoro / knowledge .bz-kb-mask / encrypt 体检遮罩已收编
+      // .bz-overlay-mask 单源（issue 365），blur 随 core 组断言，域断言迁入下方收编组
+      // .bz-vault-dlg-mask（密码添加/编辑弹窗遮罩）随 ADR-0158 密码视图退役，断言一并清退
       ['src/review/styles.css', '#quiz-mask'],
-      ['src/pomodoro/styles.css', '#pomodoro-mask'],
       ['src/diary/styles.css', '#add-diary-mask'],
       ['src/diary/styles.css', '#diary-tag-selector-mask'],
       ['src/password-vault/styles.css', '.bz-password-vault-mobpage'],
@@ -103,11 +100,9 @@ describe('域遮罩 blur 全量在位', () => {
     expect(m![0]).toContain('background: var(--bz-overlay)');
   });
 
-  it('品牌底色遮罩保留域底色只加 blur（favorites / secondbrain / settings-panel）', () => {
-    const fav = rule(repo('src/favorites/styles.css'), '.bz-fav-form-mask');
-    expect(fav).toContain(BLUR);
-    expect(fav, 'favorites 暖纸 --mask 底色应保留').toContain('background: var(--mask)');
-
+  it('品牌底色遮罩保留域底色只加 blur（secondbrain / settings-panel）', () => {
+    // favorites 表单遮罩已随壳收编 core uiModal（issue 365 第 5 项）：
+    // 遮罩底色/blur 归 .bz-overlay-mask 单源（core 组断言覆盖），暖纸底留在 popup 卡皮
     const sb = rule(repo('src/secondbrain/styles.css'), '.bz-sb-panel-mask');
     expect(sb).toContain(BLUR);
     expect(sb, 'secondbrain 暖褐底色应保留').toContain('background: #2a261e4d');
@@ -116,5 +111,37 @@ describe('域遮罩 blur 全量在位', () => {
     const sp = rule(repo('src/settings-panel/styles.css'), '.bz-sp-skin.bz-overlay-mask');
     expect(sp).toContain(BLUR);
     expect(sp, 'settings-panel 暖黑亮态底色应保留').toContain('background: rgba(20, 15, 8, 0.4)');
+  });
+});
+
+describe('遮罩三件套收编 .bz-overlay-mask 单源（issue 365）', () => {
+  /** TS 挂类锚点：域遮罩底色/blur 归 core 单源，blur 由上方 core 组断言守卫 */
+  const TS_ANCHORS: Array<[file: string, anchor: string]> = [
+    ['src/review/stats-ui.ts', "statsMask.className = 'bz-overlay-mask'"],
+    ['src/review/stats-ui.ts', "histMask.className = 'bz-overlay-mask'"],
+    ['src/pomodoro/ui.ts', "mask.className = 'bz-overlay-mask'"],
+    ['src/encrypt/ui.ts', "'bz-overlay-mask bz-encrypt-health-mask'"],
+    ['src/knowledge/mount-canvas.ts', "'bz-overlay-mask bz-kb-mask bz-kb-mt-mask'"],
+  ];
+
+  it('五处域遮罩 TS 挂 core 单源类', () => {
+    for (const [file, anchor] of TS_ANCHORS) {
+      expect(repo(file).includes(anchor), `${file} 缺挂类锚点 ${anchor}`).toBe(true);
+    }
+  });
+
+  it('域 CSS 不再重复声明遮罩底/blur（防回潮）', () => {
+    // review×2 / knowledge .bz-kb-mask：三件套规则整条退役（选择器应不存在）
+    for (const sel of ['#review-stats-mask', '#review-history-mask']) {
+      expect(repo('src/review/styles.css').includes(sel + ' {'), `${sel} 三件套应已退役`).toBe(false);
+    }
+    expect(repo('src/knowledge/styles.css').includes('.bz-kb-mask {'), '.bz-kb-mask 三件套应已退役').toBe(false);
+    // pomodoro / encrypt 体检遮罩：域块仅剩 padding 覆写，不得回潮底色/blur
+    expect(rule(repo('src/pomodoro/styles.css'), '#pomodoro-mask.bz-overlay-mask')).toEqual(
+      expect.not.stringContaining('backdrop-filter')
+    );
+    const health = rule(repo('src/encrypt/styles.css'), '.bz-encrypt-health-mask.bz-overlay-mask');
+    expect(health).not.toContain('backdrop-filter');
+    expect(health).not.toContain('background');
   });
 });

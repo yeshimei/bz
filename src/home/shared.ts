@@ -11,7 +11,7 @@
  * 显式入参）；图标一律 `<i data-lucide>` 占位，由各端 mountIcons 物化。
  * 布局差异层（面板骨架/周历/河卡）见 layouts/river/render.ts；域入口 render.ts 聚合两者。
  */
-import { esc, iconSpan } from '../core/ui/str';
+import { esc, iconSpan, pad2 } from '../core/ui/str';
 import { DOMAIN_ICONS } from '../core/domain-icons';
 import type { PomodoroPhase } from '../core/pomodoro-phase';
 import type { RecapSummary } from '../recap/aggregate';
@@ -68,7 +68,6 @@ export const DOMAIN_MAP: Map<string, HomeDomain> = new Map(DOMAINS.map((d) => [d
 export const DOMAIN_DOT: Record<string, string> = {
   diary: '#e67341',
   memo: '#e8590c',
-  recap: '#d64d8f',
   cinema: '#e6951d',
   review: '#7c5cd6',
   pomodoro: '#e5534b',
@@ -270,12 +269,14 @@ export const DOMAIN_MENU: Record<string, DomainMenuAction[]> = {
   ],
   belongings: [{ label: '加物品', commandId: 'bz-belongings-add', icon: 'archive' }],
   // 保险库：此前是空菜单（无域快捷动作）；锁定是唯一「不开面板」的一步动作
-  // （加密当前笔记 / 快速取密虽已有命令，但属「作用于当前笔记」，不在本次采纳范围）
+  // （加密当前笔记虽已有命令，但属「作用于当前笔记」，不在本次采纳范围；
+  //   快速取密已随 ADR-0158 归并密码本域——bz-encrypt-copy-password 退役）
   encrypt: [
     { label: '锁定保险库', commandId: 'bz-encrypt-lock-vault', icon: 'lock', keepHome: true },
   ],
   vault: [
-    { label: '快速生成密码', commandId: 'bz-password-vault-gen', icon: 'key' },
+    // ADR-0158 统一快速取密：fuzzy 列现有密码 + 顶部「生成新」，同 id 承接旧「快速生成密码」
+    { label: '快速取密', commandId: 'bz-password-vault-gen', icon: 'key' },
     // 与保险库同库同锁（一把主密码）：文案按本域名口径，行为是同一个 lockSafe
     { label: '锁定密码本', commandId: 'bz-password-vault-lock', icon: 'lock', keepHome: true },
   ],
@@ -436,14 +437,6 @@ export type TimelineKind =
   /** 点评 ✦：小橘挂在痕迹下面的那句话，以及你给影片打的星级（行为流 movie:rated） */
   | 'note';
 
-/** 三类的中文名（设置面板勾选项文案单源；首页不需要，故只在这边声明） */
-export const TIMELINE_KIND_LABEL: Record<TimelineKind | 'skipped', string> = {
-  produce: '产出',
-  progress: '状态推进',
-  note: '点评 ✦',
-  skipped: '已跳过',
-};
-
 /** 时间线痕迹的类别集合（三类 + 第四类「已跳过」） */
 export type TimelineEventKind = TimelineKind | 'skipped';
 
@@ -510,26 +503,22 @@ export function filterEvents<T extends { text: string; kind?: string }>(events: 
 
 /* ---------- 日期/文案小工具 ---------- */
 
-function p2(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
 /** 'YYYY-MM-DD'（本地时区） */
 export function dateStrOf(anchor: number): string {
   const d = new Date(anchor);
-  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
 function fmtHm(t: number): string {
   const d = new Date(t);
-  return `${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 /** 头行日期文案：'YYYY-MM-DD 周X · HH:mm'（打开时刻现取，非模块级状态） */
 export function headDateText(now: number = Date.now()): string {
   const d = new Date(now);
   const wd = '日一二三四五六'[d.getDay()];
-  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} 周${wd} · ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} 周${wd} · ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 /* ---------- 规则纯函数（原型 buildNotes/buildPreviews/buildDots 一比一移植） ---------- */
@@ -661,7 +650,7 @@ export function riverCountText(id: string, data: RiverData): string | null {
     case 'belongings':
       return `登记 ${c.belongingsTotal} 件`;
     default:
-      return null; // recap/literature/reading-report/attach/encrypt/vault/smartcat/settings/pomodoro 走域副题
+      return null; // literature/reading-report/attach/encrypt/vault/smartcat/settings/pomodoro 走域副题
   }
 }
 

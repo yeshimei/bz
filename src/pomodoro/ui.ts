@@ -674,6 +674,7 @@ function bindEvents(): void {
 function buildDOM(): void {
   const mask = document.createElement('div');
   mask.id = 'pomodoro-mask';
+  mask.className = 'bz-overlay-mask'; // issue 365：遮罩底/blur 收编 core 单源（域 CSS 仅覆写 padding 归零）
   // 域主弹窗层级在 src/pomodoro/styles.css（#pomodoro-mask z-index，低于域设置弹窗与 Obsidian 设置页）——不再 JS 内联 z-index
   mask.innerHTML = popupShellHtml();
   mask.style.zIndex = String(allocZ()); // ADR-0067：创建即显示即发号

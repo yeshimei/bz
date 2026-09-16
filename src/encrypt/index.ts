@@ -7,7 +7,7 @@ import type { App } from 'obsidian';
 import { getSettings } from '../core/settings-provider';
 import { getApp } from '../core/app';
 import { notice } from '../core/notice';
-import { EncryptAppController, DEFAULT_PW_CHARSET } from './ui';
+import { EncryptAppController } from './ui';
 import { vIc } from './vault-assets-view';
 import type { LockScreenKind } from '../core/ui/lock-screen';
 
@@ -24,9 +24,6 @@ function getController(): EncryptAppController {
       previewQuality: parseFloat(s.encryptPreviewQuality) || 0.5,
       autoLoadOriginal: !!s.encryptAutoLoadOriginal,
       securityMode: !!s.encryptSecurityMode,
-      // ADR-0085：密码资产并入保险库；生成器沿用全局键（旧密码本同源）
-      pwCharset: s.passwordCharset || DEFAULT_PW_CHARSET,
-      pwLength: String(parseInt(s.passwordLength) || 16),
     };
     controller = EncryptAppController.getInstance(config);
   }
@@ -77,14 +74,6 @@ export function openEncrypt(app: App): void {
 
 export function encryptCurrentNote(app: App): void {
   void ensureEncrypt(app).then(() => getController().lockCurrentNote());
-}
-
-/**
- * 快速复制密码（命令 bz-encrypt-copy-password）：轻量 fuzzy 选择器选中即复制
- * （60s 自动清空剪贴板），未解锁先弹主密码；全程不打开保险库主面板。
- */
-export function copyVaultPassword(app: App): void {
-  void ensureEncrypt(app).then(() => getController().quickCopyPassword());
 }
 
 /**

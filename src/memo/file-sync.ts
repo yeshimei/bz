@@ -1,21 +1,20 @@
 /**
- * 备忘录域文件同步（memo.json 引用同步；ADR-0092 自旧 memo 域迁入，语义逐行等价）
+ * 备忘录域文件同步（memo.json 引用同步；ADR-0092 自旧 memo 域迁入）：
  *   rename → 同步引用路径/标题/notePath（memo.json）
  *   delete → 清空关联（linkedNote + notePath/notePosition）
- * sync 纯函数与队列/去抖为域内私有副本（勿跨域 import）；
- * rename 经域事件总线 'vault:md-renamed' 按 DEBOUNCE_DELAY 合并去抖回放保序，
- * delete 走 'vault:md-deleted' 即时通道（obsidian-adapter 恒发、仅 md，
- * 载荷见 src/core/obsidian-adapter.ts）。
+ * 队列/去抖/批量冲刷/事件订阅/生命周期收编至公共壳 core/file-sync（issue 365），
+ * 域侧只留同步纯函数、监听范围与装配；rename 经域事件总线 'vault:md-renamed'
+ * 按 DEBOUNCE_DELAY 合并去抖回放保序，delete 走 'vault:md-deleted' 即时通道
+ * （obsidian-adapter 恒发、仅 md，载荷见 src/core/obsidian-adapter.ts）。
  */
 import { stripMdExt } from '../core/utils';
 import type { App } from 'obsidian';
-import { notify } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
-import { onDomainEvent } from '../core/domain-bus';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { SYNC_WATCHED_FOLDERS } from '../core/settings-common';
+import { createFileSync, type FileSyncRenameEvent } from '../core/file-sync';
 
-// ---------- 同步纯函数（域内私有副本） ----------
+// ---------- 同步纯函数（域内私有） ----------
 
 interface SyncItem {
   linkedNote?: string | null;
@@ -24,13 +23,16 @@ interface SyncItem {
   [key: string]: any;
 }
 
+/** memo rename 事件：基础路径对 + 标题联动字段 */
+interface MemoRenameEvent extends FileSyncRenameEvent {
+  oldTitle: string;
+  newTitle: string;
+}
+
 /** 笔记重命名：同步引用路径 / 标题 / notePath。
  *  E21：标题联动只对「本条引用了该笔记」（notePath/linkedNote 命中）的条目生效——
  *  此前按「标题 === 旧文件名」盲改，内容恰好与文件同名的无关条目标题被悄悄改掉。 */
-function syncRename(
-  items: SyncItem[],
-  { oldPath, newPath, oldTitle, newTitle }: { oldPath: string; newPath: string; oldTitle: string; newTitle: string }
-): boolean {
+function syncRename(items: SyncItem[], { oldPath, newPath, oldTitle, newTitle }: MemoRenameEvent): boolean {
   let changed = false;
   for (const item of items) {
     const linkedHit = item.linkedNote === oldPath;
@@ -65,22 +67,6 @@ function syncDelete(items: SyncItem[], path: string): boolean {
   return changed;
 }
 
-/** 监听目录范围检查：路径等于目录本身或位于其下 */
-function inFolders(path: string, folders: string[]): boolean {
-  return folders.some((f) => path.startsWith(f + '/') || path === f);
-}
-
-// ---------- JSON 读写（统一数据读写层；原 ai-agent 私有副本语义已统一至 jsonFileStore） ----------
-
-/** 读取 memo.json（jsonFileStore 语义：缺失建文件返回 []，损坏改名留档重建） */
-async function loadJSON(app: App, filePath: string): Promise<any[]> {
-  return jsonFileStore<any[]>(filePath).read();
-}
-
-async function saveJSON(app: App, filePath: string, data: any): Promise<void> {
-  await jsonFileStore<any[]>(filePath).write(data);
-}
-
 // ---------- 路径 / 设置 ----------
 
 /** 备忘录数据文件路径（ADR-0009 共享数据路径） */
@@ -93,162 +79,51 @@ function getWatchedFolders(): string[] {
   return SYNC_WATCHED_FOLDERS.split(',').map((x) => x.trim()).filter(Boolean);
 }
 
-// ---------- 队列 / 去抖（ai-agent/index.ts 逐行等价移植） ----------
+// ---------- 壳装配（issue 365：队列/去抖/订阅/生命周期走 core/file-sync） ----------
 
-let initialized = false;
-/** 已注册订阅的退订函数集合（unload 统一调用：总线退订幂等无双清） */
-let _refs: (() => void)[] = [];
-/** 卸载标志：置位后积压任务首行短路、去抖窗口内事件直接丢弃 */
-let _cancelled = false;
-/** 待清理的去抖器（unload 时清定时器） */
-let _flushers: { cancel(): void }[] = [];
-
-/** 任务队列：串行执行（防并发读写同一 JSON）；失败通知（去重防刷屏）。
- *  任务执行前检查 _cancelled，卸载后积压任务首行短路。 */
-let queue: Promise<any> = Promise.resolve();
-function enqueue(task: () => Promise<any> | void) {
-  queue = queue
-    .then(() => {
-      if (_cancelled) return;
-      return task();
-    })
-    .catch((e) => {
-      console.error('[memo-file-sync]', e);
-      notify('备忘录同步失败，数据可能不一致', { type: 'error', dedupeKey: 'memo-file-sync' });
-    });
-}
-
-/** 去抖延迟：复用既有 DEBOUNCE_DELAY 设置（字符串毫秒，缺省 300） */
-function debounceDelay(): number {
-  const s: any = tryGetSettings();
-  return Number(s && s.DEBOUNCE_DELAY) || 300;
-}
-
-/** 同类事件合并去抖：DEBOUNCE_DELAY 窗口内同型事件收集成批，静默期后作为单个
- *  队列任务按序回放——既削队列峰值，又保留 rename 链（A→B→C）等顺序语义。 */
-function createBatchFlusher<T>(run: (batch: T[]) => Promise<void>): ((ev: T) => void) & { cancel(): void } {
-  let pending: T[] = [];
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  const flush = () => {
-    timer = null;
-    if (_cancelled) {
-      pending = [];
-      return;
-    }
-    const batch = pending;
-    pending = [];
-    enqueue(() => run(batch));
-  };
-  const push = (ev: T): void => {
-    if (_cancelled) return;
-    pending.push(ev);
-    if (timer !== null) clearTimeout(timer);
-    timer = setTimeout(flush, debounceDelay());
-  };
-  return Object.assign(push, {
-    cancel(): void {
-      if (timer !== null) {
-        clearTimeout(timer);
-        timer = null;
-      }
-      pending = [];
-    },
-  });
-}
-
-// ---------- 事件编排 ----------
-
-function createFileSyncAgent(app: App): void {
-  /** 对 memo.json 执行同步函数，有变化才写回。
-   *  读改写整体入 per-path 串行队列：与 memo UI / memo UI 的 CRUD 同队列互斥，
-   *  后台同步不得用陈旧基线覆盖面板刚写入的数据（写竞态收敛）。 */
-  async function syncSource(fn: (items: any[], ...args: any[]) => boolean, ...args: any[]) {
+const agent = createFileSync<SyncItem[], MemoRenameEvent>({
+  logTag: '[memo-file-sync]',
+  failNotice: '备忘录同步失败，数据可能不一致',
+  failDedupeKey: 'memo-file-sync',
+  watchedFolders: getWatchedFolders,
+  /** 对 memo.json 执行同步改写，有变化才写回。读改写整体入 per-path 串行队列：
+   *  与 memo UI 的 CRUD 同队列互斥，后台同步不得用陈旧基线覆盖面板刚写入的数据（写竞态收敛）。 */
+  commit: async (apply) => {
     const path = getMemoPath();
     await enqueueFileTask(path, async () => {
-      const items = await loadJSON(app, path);
-      if (fn(items, ...args)) await saveJSON(app, path, items);
+      const items = await jsonFileStore<any[]>(path).read();
+      if (apply(items)) await jsonFileStore<any[]>(path).write(items);
     });
-  }
-
-  const isMd = (file: any) => file && file.extension === 'md' && inFolders(file.path, getWatchedFolders());
-
+  },
   /** E22：范围外笔记只要被 memo.json 实际引用（notePath/linkedNote 命中）也放行同步——
    *  notePath 可指向任意笔记（编辑器「定位到笔记」），监听范围只覆盖两个目录时，
    *  范围外笔记 rename/delete 引用不同步（卡片「位置」tag 跳不存在的文件）。 */
-  const referencedByMemo = async (path: string): Promise<boolean> => {
+  referencedBy: async (path) => {
     if (!path) return false;
     try {
-      const items = await loadJSON(app, getMemoPath());
-      return (items as SyncItem[]).some((it) => it?.linkedNote === path || it?.notePath === path);
+      const items = (await jsonFileStore<any[]>(getMemoPath()).read()) as SyncItem[];
+      return items.some((it) => it?.linkedNote === path || it?.notePath === path);
     } catch (e) {
       return false;
     }
-  };
-
-  // rename 同类事件按 DEBOUNCE_DELAY 合并去抖回放保序；delete 保持即时。
-
-  /** 总线载荷 → 现有闭包期望的伪 TFile 形状（{path, basename, extension:'md'}，rename 另附 oldPath） */
-  const pseudoFile = (path: string): any => ({
-    path,
-    basename: stripMdExt(path.split('/').pop() || ''),
-    extension: 'md',
-  });
-
-  const flushRenames = createBatchFlusher<any>(async (batch) => {
-    for (const ev of batch) {
-      await syncSource(syncRename, ev);
-    }
-  });
-  _flushers.push(flushRenames);
-  _refs.push(onDomainEvent<{ oldPath: string; newPath: string }>('vault:md-renamed', (evt) => {
-    const file = pseudoFile(evt.newPath);
-    // E22：范围外放行看新旧两条路径（改名移出/移入监听范围都算被引用）
-    void (async () => {
-      if (!(isMd(file) || (await referencedByMemo(evt.oldPath)) || (await referencedByMemo(evt.newPath)))) return;
-      const oldTitle = stripMdExt((evt.oldPath ?? '').split('/').pop()!);
-      flushRenames({
-        oldPath: evt.oldPath,
-        newPath: evt.newPath,
-        oldTitle,
-        newTitle: file.basename,
-      });
-    })();
-  }));
-
-  _refs.push(onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => {
-    const file = pseudoFile(evt.path);
-    void (async () => {
-      // E22：范围外但被 memo.json 引用的笔记删除同样要清关联
-      if (!(isMd(file) || (await referencedByMemo(evt.path)))) return;
-      enqueue(() => syncSource(syncDelete, evt.path));
-    })();
-  }));
-}
+  },
+  /** 标题联动载荷：oldTitle 自旧路径文件名提取，newTitle 即新路径 basename */
+  buildRenameEvent: (evt, newBasename) => ({
+    oldPath: evt.oldPath,
+    newPath: evt.newPath,
+    oldTitle: stripMdExt((evt.oldPath ?? '').split('/').pop() || ''),
+    newTitle: newBasename,
+  }),
+  applyRename: syncRename,
+  applyDelete: syncDelete,
+});
 
 /** 幂等初始化（memo 域总入口，main.ts onLayoutReady 调用） */
 export function ensureFileSync(app: App): void {
-  if (initialized) return;
-  initialized = true;
-  _cancelled = false; // 重新启用后恢复任务受理
-  createFileSyncAgent(app);
+  agent.ensure(app);
 }
 
-/** 卸载清理：置位 _cancelled 使积压任务首行短路并丢弃去抖窗口内未回放的事件，
- *  退订全部监听（总线退订幂等，重复卸载无双清风险）后重置模块状态。 */
+/** 卸载清理（壳置位 _cancelled 短路积压任务、丢弃去抖窗口内事件并退订全部监听） */
 export function unloadFileSync(): void {
-  _cancelled = true;
-  for (const f of _flushers) {
-    try {
-      f.cancel();
-    } catch (e) { /* 忽略 */ }
-  }
-  _flushers = [];
-  for (const off of _refs) {
-    try {
-      off();
-    } catch (e) { /* 忽略 */ }
-  }
-  _refs = [];
-  initialized = false;
-  queue = Promise.resolve();
+  agent.unload();
 }

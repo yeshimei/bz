@@ -14,6 +14,9 @@ export interface BzModalOpts {
   head?: boolean;                  // 带标题头行——默认 false；头行只有标题，无关闭钮（issue 271：弹窗统一点遮罩/ESC 关闭）
   title?: string;
   onClose?: () => void;            // 关闭回调（遮罩/ESC）
+  /** 关闭意图拦截（issue 365 第 5 项，脏表单弹窗用）：提供时遮罩点击/ESC 改调 requestClose——
+   *  由消费方决定放行（自行调 close()）还是先弹放弃确认；不直接关。缺省 = 直接关。 */
+  requestClose?: () => void;
   className?: string;              // 附加到 popup 的类
 }
 
@@ -54,15 +57,21 @@ export function uiModal(opts: BzModalOpts): { mask: HTMLElement; popup: HTMLElem
     opts.onClose?.();
   }
 
+  // 关闭意图统一走 attemptClose：有 requestClose 时交消费方拦截（脏表单先确认），否则直接关
+  const attemptClose = (): void => {
+    if (opts.requestClose) opts.requestClose();
+    else close();
+  };
+
   // 点遮罩关闭（弹窗内元素不触发）
   mask.addEventListener('click', (e) => {
-    if (e.target === mask) close();
+    if (e.target === mask) attemptClose();
   });
 
   // ESC：栈顶后开先关（escManager 会做可见性判断）
   escHandle = escManager.register('bz-modal', {
     isVisible: () => mask.isConnected,
-    close,
+    close: attemptClose,
   });
 
   document.body.appendChild(mask);

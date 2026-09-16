@@ -2,7 +2,7 @@
  * 书架墙布局（ADR-0105 布局差异层）：面板骨架/头行标签/排序 segmented/书脊墙装箱/空态。
  * 共享口径与借书卡见 ../../shared.ts；本文件只写「书脊墙」这一布局的排布差异。
  */
-import { esc, iconSpan } from '../../../core/ui/str';
+import { esc, emptyHtmlStr, iconSpan } from '../../../core/ui/str';
 import { EMPTY_BOOKS_ICON, EMPTY_SEARCH_ICON, EMPTY_FILTER_ICON, ICON } from '../../constants';
 import { itemId, statusColor, type RenderHooks } from '../../shared';
 import { SORT_LABEL } from '../../constants';
@@ -138,11 +138,6 @@ export function packZone(shelf: HTMLElement, cat: string, books: BookshelfItem[]
 
 // ---------- markup 构建器 ----------
 
-/** 空态内联 markup（类同构 uiEmpty 工厂：bz-empty/bz-empty-ic/bz-empty-title/bz-empty-desc） */
-function bzEmptyHtml(icon: string, title: string, desc: string): string {
-  return `<div class="bz-empty">${iconSpan(icon, 'bz-empty-ic')}<div class="bz-empty-title">${esc(title)}</div><div class="bz-empty-desc">${esc(desc)}</div></div>`;
-}
-
 /** 空态三态（库空 / 搜索无命中 / 筛选无书）；folder/tag 由调用方解析（插件读设置，壳给演示值） */
 export function wallEmptyHTML(itemsTotal: number, q: string, folder: string, tag: string): string {
   const cfg = !itemsTotal
@@ -150,12 +145,12 @@ export function wallEmptyHTML(itemsTotal: number, q: string, folder: string, tag
     : q
       ? { icon: EMPTY_SEARCH_ICON, title: '没有找到相关的书', desc: '试试其他关键词，或换一个筛选' }
       : { icon: EMPTY_FILTER_ICON, title: '这个筛选下还没有书', desc: '换一个状态或分类标签，或用搜索找找' };
-  return `<div class="bz-bs-wall-empty">${bzEmptyHtml(cfg.icon, cfg.title, cfg.desc)}</div>`;
+  return `<div class="bz-bs-wall-empty">${emptyHtmlStr(cfg.icon, cfg.title, cfg.desc)}</div>`;
 }
 
 /** 首扫加载态占位（B8：rebuild 完成前墙位不闪空白） */
 export function wallLoadingHTML(): string {
-  return `<div class="bz-bs-wall-empty">${bzEmptyHtml('loader', '正在整理书架…', '')}</div>`;
+  return `<div class="bz-bs-wall-empty">${emptyHtmlStr('loader', '正在整理书架…', '')}</div>`;
 }
 
 /** 统计标签行 HTML（纸质标签；状态四张 + 分类册数标签；点选筛选、再点回全馆） */

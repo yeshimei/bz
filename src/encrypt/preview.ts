@@ -8,6 +8,8 @@
  * 空 src / 资源不可加载 / 加载或抽帧超时（onload/onloadedmetadata/onseeked 永不触发）
  * 一律超时返回 null，由调用方跳过预览层，绝不陷入"无限循环"（挂起/假死）。
  */
+import { withTimeout } from '../core/http';
+
 export interface CompressResult {
   dataUrl: string;
   width: number;
@@ -36,25 +38,12 @@ function canvasAvailable(): boolean {
 }
 
 /**
- * 用超时 + 空值保护包裹 Union 事件 Promise：
+ * 用超时 + 空值保护包裹 Union 事件 Promise（超时壳已收编 core/http，issue 365；
+ * 此处 re-export 保持既有导入面——preview.test / preview-canvas.test 直接导入）：
  * - src 为空 → 直接 reject（绝不等 onload/onerror 永不触发）
  * - 超过 timeout 仍未触发目标事件 → reject（超时按失败，返回 null 由调用方跳过）
  */
-export function withTimeout(promise: Promise<void>, timeoutMs: number, label: string): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(label + ' 超时')), timeoutMs);
-    promise.then(
-      () => {
-        clearTimeout(timer);
-        resolve();
-      },
-      (e) => {
-        clearTimeout(timer);
-        reject(e);
-      }
-    );
-  });
-}
+export { withTimeout };
 
 /** 空/无效 src 快捷返回 null（不进入加载，避免挂起） */
 function isEmptySrc(src: string): boolean {

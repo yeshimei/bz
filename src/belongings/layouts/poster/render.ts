@@ -3,7 +3,7 @@
  * 面板骨架/hero/chips/年份与排序下拉/KPI/网格卡/渲染胶水。
  * 共享口径与详情/表单见 ../../shared.ts；域入口 render.ts 聚合两方。
  */
-import { esc, iconSpan } from '../../../core/ui/str';
+import { emptyHtmlStr, esc, iconSpan } from '../../../core/ui/str';
 import {
   ICON, STATUS, STATUS_ORDER, SORT_OPTS,
   moneyShort, moneyWith, statusKeyOf,
@@ -126,7 +126,12 @@ export function mobStatsText(items: BelongingsItem[], unit: MoneyUnit = 'cny'): 
 
 /** 空态（bz-empty 库皮；文案区分库空 vs 筛选无匹配） */
 export function emptyHtml(noMatch: boolean): string {
-  return `<div class="bz-empty">${iconSpan(ICON.empty, 'bz-empty-ic')}<div class="bz-empty-title">${noMatch ? '没有符合条件的物品' : '这里还没有物品'}</div><div class="bz-empty-desc">${noMatch ? '换个筛选条件，或清除搜索' : '点「记一笔」登记第一个物品'}</div></div>`;
+  // issue 365 收编 core emptyHtmlStr（bz-empty 口径同构；常量文案 esc 幂等不变）
+  return emptyHtmlStr(
+    ICON.empty,
+    noMatch ? '没有符合条件的物品' : '这里还没有物品',
+    noMatch ? '换个筛选条件，或清除搜索' : '点「记一笔」登记第一个物品',
+  );
 }
 
 /** 网格卡（P20 大字报）：NO.XX 编号 + 状态徽章 + 特大分类图标 + 名称 + 大字价格 + meta */

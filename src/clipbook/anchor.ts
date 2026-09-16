@@ -206,8 +206,3 @@ export async function clearArticleTracking(articleKey: string): Promise<ArticleT
   });
   return before;
 }
-
-/** news 原文 → articleKey（save.ts 物化与 UI 侧写共用同一口径） */
-export function trackingKeyOf(raw: any): string {
-  return articleKeyOf(raw);
-}

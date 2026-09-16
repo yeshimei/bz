@@ -1,7 +1,7 @@
 /**
  * 保险库增强包·UI 层回归（encrypt 域）：
- * 快速取密路径（解锁直落密码资产 + 记住停留资产 + 搜索聚焦 + bz-encrypt-copy-password 选择器）、
- * 密码表单效率（强度提示/同平台账号查重二次放行/Enter 流转）、防偷看（表单 eye/账号卡 15s 自动回遮）、
+ * 快速取密路径（解锁直落加密笔记资产 + 记住停留资产 + 搜索聚焦；ADR-0158 后快速复制
+ * 密码选择器随 bz-encrypt-copy-password 退役，统一流测试在 tests/password-vault/quick-pick.test.ts）、
  * 体检状态真实化（健康卡读真实状态 + 点直达体检）、解锁会话可见性（已解锁时长 + 安全模式 15min 无交互上锁）、
  * 流程三小修（锁定态加密笔记先解锁/还原冲突列路径/概览搜索生效）。
  */
@@ -10,8 +10,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { SafeManager } from '../../src/encrypt/data';
 import { UIManager, EncryptAppController } from '../../src/encrypt/ui';
-import { PasswordVaultDataManager } from '../../src/encrypt/vault-data';
-import { closePasswordQuickPicker } from '../../src/encrypt/pw-picker';
+import { PasswordVaultDataManager } from '../../src/password-vault/data';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 
@@ -30,8 +29,6 @@ const CONFIG = {
   previewQuality: 0.5,
   autoLoadOriginal: false,
   securityMode: false,
-  pwCharset: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+',
-  pwLength: '16',
 };
 
 describe('保险库增强包（UIManager / Controller）', () => {
@@ -54,29 +51,11 @@ describe('保险库增强包（UIManager / Controller）', () => {
   });
 
   afterEach(() => {
-    closePasswordQuickPicker();
     ui.popup?.remove();
     ui.mask?.remove();
     sm.lock();
     document.body.innerHTML = '';
   });
-
-  function gotoPwAsset() {
-    // nav 密码入口已按原型收敛（保险库面板只管加密笔记）；密码视图代码保留，直通置资产供回归
-    ui.asset = 'pw';
-    ui.renderAll();
-  }
-
-  function openEntryDialog() {
-    ui.show();
-    return waitFor(() => !!document.querySelector('.bz-vault-nav')).then(() => {
-      gotoPwAsset();
-      return waitFor(() => !!document.querySelector('.bz-vault-lc-head [data-lc-add="pw"]')).then(() => {
-        (document.querySelector('.bz-vault-lc-head [data-lc-add="pw"]') as HTMLElement).click();
-        return waitFor(() => !!document.querySelector('.bz-vault-dlg'));
-      });
-    });
-  }
 
   // ---------- 1 快速取密路径 ----------
   it('解锁成功后直落加密笔记资产并聚焦搜索框；下次打开直落上次停留资产', async () => {
@@ -110,153 +89,6 @@ describe('保险库增强包（UIManager / Controller）', () => {
     } finally {
       c.cleanup();
       EncryptAppController.instance = null;
-    }
-  });
-
-  it('bz-encrypt-copy-password：quickCopyPassword 弹轻量选择器（不打开主面板），搜索过滤 + Enter 复制并 60s 自动清空', async () => {
-    const c = new EncryptAppController({ ...CONFIG });
-    try {
-      await c.init();
-      await c.dataManager.unlock('pw');
-      await c.uiManager.pwDataManager.addItem({ platform: 'GitHub', account: 'me@x', password: 's3cret' });
-      await c.uiManager.pwDataManager.addItem({ platform: '微信', account: 'wx', password: 'pwx' });
-      const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined as any);
-      const run = c.quickCopyPassword();
-      await waitFor(() => !!document.getElementById('bz-encrypt-pw-picker-popup'));
-      // 不解锁主面板
-      expect(c.uiManager.mask!.style.display).not.toBe('block');
-      // fuzzy 搜索过滤：'gt' 子序列命中 GitHub
-      const search = document.querySelector('.bz-encrypt-pwqp-search') as HTMLInputElement;
-      search.value = 'gt';
-      search.dispatchEvent(new Event('input'));
-      await waitFor(() => document.querySelectorAll('.bz-popover-item').length === 1);
-      expect(document.querySelector('.bz-popover-item .pl')!.textContent).toBe('GitHub');
-      // Enter 复制（60s 自动清空由 armClipboardClear 承担）
-      search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-      await run;
-      expect(writeText).toHaveBeenCalledWith('s3cret');
-      await waitFor(() => hasNotice('已复制「GitHub」（me@x）的密码，60 秒后自动清空'));
-      expect(document.getElementById('bz-encrypt-pw-picker-popup')).toBeNull();
-    } finally {
-      c.cleanup();
-      EncryptAppController.instance = null;
-    }
-  });
-
-  it('bz-encrypt-copy-password：空库提示且不弹选择器', async () => {
-    const c = new EncryptAppController({ ...CONFIG });
-    try {
-      await c.init();
-      await c.dataManager.unlock('pw');
-      await c.quickCopyPassword();
-      expect(document.getElementById('bz-encrypt-pw-picker-popup')).toBeNull();
-      await waitFor(() => hasNotice('保险库还没有密码，打开面板后可新增'));
-    } finally {
-      c.cleanup();
-      EncryptAppController.instance = null;
-    }
-  });
-
-  // ---------- 2 密码表单效率 ----------
-  it('密码框强度提示：生成密码=强，输入弱密码=弱（纯本地联动）', async () => {
-    await openEntryDialog();
-    const dlg = document.querySelector('.bz-vault-dlg') as HTMLElement;
-    const pwInput = dlg.querySelector('[data-f="password"]') as HTMLInputElement;
-    const strength = dlg.querySelector('[data-pw-strength]') as HTMLElement;
-    // 生成密码（16 位混合字符集）= 强
-    expect(strength.textContent).toBe('强度：强');
-    expect(strength.dataset.level).toBe('strong');
-    // 输入弱密码 → 弱
-    pwInput.value = 'abc';
-    pwInput.dispatchEvent(new Event('input'));
-    expect(strength.textContent).toBe('强度：弱');
-    expect(strength.dataset.level).toBe('weak');
-  });
-
-  it('保存前同平台+账号查重：命中提示「该平台已有同名账号」，再点一次放行', async () => {
-    await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
-    await openEntryDialog();
-    const dlg = document.querySelector('.bz-vault-dlg') as HTMLElement;
-    const set = (f: string, v: string) => {
-      (dlg.querySelector(`[data-f="${f}"]`) as HTMLInputElement).value = v;
-    };
-    set('platform', 'GitHub');
-    set('account', 'me');
-    set('password', 'other');
-    const save = dlg.querySelector('[data-pwv-dlg="save"]') as HTMLButtonElement;
-    save.click();
-    const err = dlg.querySelector('[data-f-err]') as HTMLElement;
-    await waitFor(() => err.textContent!.includes('该平台已有同名账号'));
-    expect(dm.pwData.length).toBe(1); // 未落盘
-    // 再点一次 → 放行
-    save.click();
-    await waitFor(() => dm.pwData.length === 2);
-  });
-
-  it('Enter 流转：平台→链接→账号→密码→备注，末字段 Enter=保存', async () => {
-    await openEntryDialog();
-    const dlg = document.querySelector('.bz-vault-dlg') as HTMLElement;
-    const f = (name: string) => dlg.querySelector(`[data-f="${name}"]`) as HTMLInputElement;
-    f('platform').focus();
-    f('platform').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-    expect(document.activeElement).toBe(f('url'));
-    f('url').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-    expect(document.activeElement).toBe(f('account'));
-    f('account').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-    expect(document.activeElement).toBe(f('password'));
-    f('password').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-    expect(document.activeElement).toBe(f('note'));
-    // 填齐必填后，末字段 Enter 触发保存
-    f('platform').value = '豆瓣';
-    f('account').value = 'me@douban';
-    f('note').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-    await waitFor(() => dm.pwData.length === 1);
-    expect(dm.pwData[0].platform).toBe('豆瓣');
-  });
-
-  // ---------- 3 防偷看 ----------
-  it('弹窗密码框默认 type=password，eye 切换明文/掩码', async () => {
-    await openEntryDialog();
-    const dlg = document.querySelector('.bz-vault-dlg') as HTMLElement;
-    const pwInput = dlg.querySelector('[data-f="password"]') as HTMLInputElement;
-    expect(pwInput.type).toBe('password');
-    const eye = dlg.querySelector('[data-pwv-dlg="eye"]') as HTMLElement;
-    eye.click();
-    expect(pwInput.type).toBe('text');
-    expect(eye.title).toBe('隐藏密码');
-    eye.click();
-    expect(pwInput.type).toBe('password');
-  });
-
-  it('账号卡明文 ~15 秒自动回遮；手动提前隐藏即撤计时', async () => {
-    await dm.addItem({ platform: 'GitHub', account: 'me', password: 's3cret!' });
-    ui.show();
-    await waitFor(() => !!document.querySelector('.bz-vault-nav'));
-    gotoPwAsset();
-    await waitFor(() => !!document.querySelector('.bz-vault-lc-body .bz-pwv-plrow'));
-    (document.querySelector('.bz-vault-lc-body .bz-pwv-plrow') as HTMLElement).click();
-    await waitFor(() => !!document.querySelector('.bz-vault-detail .bz-pwv-acctcard'));
-    vi.useFakeTimers();
-    try {
-      const eye = document.querySelector('.bz-vault-detail [data-pwv="eye"]') as HTMLElement;
-      eye.click();
-      let pw = document.querySelector('.bz-vault-detail .bz-pwv-acctcard .pw') as HTMLElement;
-      expect(pw.classList.contains('mask')).toBe(false);
-      expect(pw.textContent).toBe('s3cret!');
-      // 15s 后自动回遮
-      await vi.advanceTimersByTimeAsync(15_000);
-      pw = document.querySelector('.bz-vault-detail .bz-pwv-acctcard .pw') as HTMLElement;
-      expect(pw.classList.contains('mask')).toBe(true);
-      // 再次显示后手动隐藏 → 计时撤销，不再自动改变
-      const eye2 = document.querySelector('.bz-vault-detail [data-pwv="eye"]') as HTMLElement;
-      eye2.click();
-      const eye3 = document.querySelector('.bz-vault-detail [data-pwv="eye"]') as HTMLElement;
-      eye3.click();
-      await vi.advanceTimersByTimeAsync(30_000);
-      pw = document.querySelector('.bz-vault-detail .bz-pwv-acctcard .pw') as HTMLElement;
-      expect(pw.classList.contains('mask')).toBe(true); // 手动隐藏后保持掩码
-    } finally {
-      vi.useRealTimers();
     }
   });
 

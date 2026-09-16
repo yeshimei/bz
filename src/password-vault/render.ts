@@ -2,7 +2,8 @@
  * 密码本渲染纯层（issue 251/ADR-0110：原型 × 插件 markup 单源）。
  *
  * 密码本无第二布局，单文件即全部 markup：面板骨架（桌面三栏 + 移动单列双屏）/
- * 锁屏（金色印章）/ 添加弹窗 / 平台编辑弹窗 / 确认框 / 平台行 / 账号卡 / 移动页。
+ * 锁屏（金色印章）/ 添加弹窗 / 平台编辑弹窗 / 平台行 / 账号卡 / 移动页。
+ * 确认框与 toast 已收编 core（issue 365：openFlowDialog / 全局通知），域内不再出 markup。
  * 原型 × 插件 markup 单源：
  *   - 插件侧：ui.ts 直接 import（事件绑定/core 服务/数据读写留 ui.ts）；
  *   - 评审壳侧：esbuild 打成 IIFE → 同目录 prototype-render.js（window.BZR_password_vault）；
@@ -18,12 +19,12 @@
  * 本文件只做 markup 平移（自 ui.ts，issue 251），任何视觉值不动。
  */
 import { colorOf, esc, escAttr } from '../core/ui/str';
-import type { PasswordVaultEntry, PlatformGroup } from '../encrypt/vault-data';
+import type { PasswordVaultEntry, PlatformGroup } from './data';
 
 /** esc/colorOf/escAttr 再导出：行为层与评审壳演示 markup 同源（收口 core/ui/str，批次 G） */
 export { esc, colorOf, escAttr };
 /** 条目类型再导出（type-only，编译期擦除——render 产物不拖数据层依赖链） */
-export type { PasswordVaultEntry, PlatformGroup } from '../encrypt/vault-data';
+export type { PasswordVaultEntry, PlatformGroup } from './data';
 
 // ==================== 常量与工具 ====================
 
@@ -113,14 +114,10 @@ export function modalHTML(which: 'desk' | 'mob'): string {
       </div>`;
 }
 
-/** 确认框（原型自绘双实例同步） */
-export function confirmHTML(which: 'desk' | 'mob'): string {
-  return `
-      <div class="bz-password-vault-pop2" data-confirm="${which}">
-        <div class="card"><h3>确认</h3><div class="msg"></div>
-        <div class="btns"><button class="cancel" data-act="cancel">取消</button><button class="ok" data-act="ok">确定</button></div></div>
-      </div>`;
-}
+/**
+ * 确认框已收编 core openFlowDialog（issue 365），域内不再出确认框 markup；
+ * 本函数删除，`bz-password-vault-pop2` 基类仅余平台编辑弹窗（platEditHTML）在用。
+ */
 
 /** 平台编辑弹窗 */
 export function platEditHTML(which: 'desk' | 'mob'): string {
@@ -164,9 +161,7 @@ export function deskHTML(): string {
         </div>
       </div>
       ${lockHTML('desk')}
-      <div class="bz-password-vault-toast"></div>
       ${modalHTML('desk')}
-      ${confirmHTML('desk')}
       ${platEditHTML('desk')}
     `;
 }
@@ -193,9 +188,7 @@ export function mobHTML(): string {
         </div>
       </div>
       ${lockHTML('mob')}
-      <div class="bz-password-vault-toast"></div>
       ${modalHTML('mob')}
-      ${confirmHTML('mob')}
       ${platEditHTML('mob')}
     `;
 }

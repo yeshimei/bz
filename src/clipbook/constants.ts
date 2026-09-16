@@ -1,6 +1,11 @@
 /**
  * clipbook（剪藏本融合域，ADR-0082 / issue 177）：常量。
  */
+import { pad2 } from '../core/ui/str';
+import { localDayKey } from '../core/utils';
+
+/** 本地日期键转发 core/utils（issue 365 机械项清扫：原手写实现与 core 逐字等价） */
+export { localDayKey };
 
 /** 稳定标识键（对齐 news/data.ts articleKeyOf：url 优先，其次 title+date） */
 export function articleKeyOf(a: any): string {
@@ -26,11 +31,6 @@ export function excerpt(body: string, max = 90): string {
 }
 
 // ===== 日期工具（自旧 news/reader.ts 迁入，ADR-0086；flow.ts / save.ts 消费）=====
-/** 本地日期键 YYYY-MM-DD（对齐 src/pomodoro/stats.ts dayKey 本地日口径：UTC+8 凌晨 0-8 点不落昨日） */
-export function localDayKey(ts: number = Date.now()): string {
-  const d = new Date(ts);
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-}
 
 /** 本地时间戳 YYYY-MM-DD HH:mm:ss（剪藏 created 字段，避免 UTC+8 凌晨写入昨日） */
 export function localDatetime(ts: number = Date.now()): string {
@@ -50,6 +50,3 @@ export function toDatetime(dateStr: string): string {
   }
 }
 
-function pad2(n: number | string): string {
-  return String(n).padStart(2, '0');
-}

@@ -97,15 +97,23 @@ export interface FlowOpts {
  * 「今天有动静」不该因为我关了「已跳过」就变暗。
  * 判据 = shared.eventVisible（事件直带 kind 优先，见 issue 305 / ADR-0132）。
  * 过滤后当天为空 + 原本有痕迹 → 给「被过滤掉了」的专属空态，别让用户以为数据丢了。
+ *
+ * 「生成今日总结」动作行（ADR-0157 自 recap 面板迁入）：只在**今天**视图出现
+ * （总结写的是「今天」，翻昨天/前天没有意义）；按钮初始 disabled，
+ * 点击行为与「已写过 → 重新生成」态由 ui.ts 行为层接管（本层只出 markup）。
  */
 export function flowHtml(data: RiverData, view: string, opts: FlowOpts = {}): string {
   const filter = opts.filter ?? DEFAULT_TIMELINE_FILTER;
   const showTime = opts.showTime !== false;
   const size = opts.size ?? 'normal';
-  const wrap = (inner: string): string =>
-    '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? '1' : '0') + '">' + inner + '</div>';
   const day = data.days.find((d) => d.dateStr === view) ?? data.today;
   const isToday = day.dateStr === data.today.dateStr;
+  const aiRow = isToday
+    ? '<div class="bz-home-ai-row"><button type="button" class="bz-btn bz-home-ai" data-home-ai disabled'
+      + ' title="把今天的痕迹写成一段总结，写进日记">生成今日总结</button></div>'
+    : '';
+  const wrap = (inner: string): string =>
+    '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? '1' : '0') + '">' + inner + aiRow + '</div>';
   // 点评开关：关掉就整条不生成（而不是生成后不渲染——省得下面 find 拿到空）
   const notes = isToday && filter.notes ? buildNotes(data) : [];
   // 点评的 index 指向**过滤前**的事件下标，故过滤前先把 index 带上，过滤后再丢弃

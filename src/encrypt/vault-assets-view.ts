@@ -8,19 +8,16 @@
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import type { SafeNote } from './data';
 
-export type VaultAsset = 'overview' | 'pw' | 'note' | 'diary';
+export type VaultAsset = 'overview' | 'note' | 'diary';
 
-/** 资产分类色（P1 档案库：密码=品牌金/笔记=松石/日记=靛蓝）。
- *  pw 随 issue 198 批 D 金色归 --bz-brand 系（内联 style 引用全局 token，随明暗翻色）；
+/** 资产分类色（P1 档案库：笔记=松石/日记=靛蓝；密码资产色随 ADR-0158 视图退役删除）。
  *  note/diary 为数据语义分类色（与 styles.css --bz-vault-teal/indigo 同源，无对应 --bz-* token）。 */
-export const ASSET_COLOR: Record<'pw' | 'note' | 'diary', string> = {
-  pw: 'var(--bz-brand)',
+export const ASSET_COLOR: Record<'note' | 'diary', string> = {
   note: '#2e7d68',
   diary: '#5a63a8',
 };
 
 export interface AssetCounts {
-  pw: number;
   note: number;
   diary: number;
 }
@@ -154,7 +151,7 @@ export function noteDetailHTML(note: SafeNote, kind: 'note' | 'diary', plainPrev
     </div>`;
 }
 
-/** lucide path 表（与 vault-pw-view 互补；两者各自收敛本文件使用项） */
+/** lucide path 表（本域视图用；快速取密选择器图标归 password-vault 域） */
 const ICON_PATHS: Record<string, string> = {
   lock: '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
   'lock-open': '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 7.9-.9"/>',

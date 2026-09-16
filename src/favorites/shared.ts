@@ -19,7 +19,7 @@
  * data-fav-* 钩子即两侧事件绑定与测试断言的共同契约，改钩子先改这里。
  * C5 视觉拍板定稿（ADR-0101）：本文件只做 markup 平移，任何视觉值一个像素不动。
  */
-import { esc, iconSpan } from '../core/ui/str';
+import { esc, iconSpan, pad2 } from '../core/ui/str';
 import { getTags } from './config';
 import type { FavoritesItem } from './types';
 
@@ -78,8 +78,7 @@ export function relTime(s: string | undefined): string {
   if (diff < h) return Math.floor(diff / m) + ' 分钟前';
   if (diff < day) return Math.floor(diff / h) + ' 小时前';
   if (diff < 7 * day) return Math.floor(diff / day) + ' 天前';
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getMonth() + 1}-${p(d.getDate())}`;
+  return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
 }
 
 /**

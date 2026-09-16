@@ -382,22 +382,17 @@ export default interface BzSettings {
   /** 备忘录（memo 新域）：移动端默认全屏（默认关——与旧备忘录一致） */
   /** 归物本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   /** 收藏本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
-  /** 收藏本：列表排序键（created=创建时间最新优先 / title=标题；toolbar 排序循环钮读写。
-   *  ADR-0083 重设计去 domain 键——循环仅 created/title 两档；旧 domain 值兼容回落 created。
-   *  排序选择持久化于 data.json 而非 favorites.json——favorites.json 顶层是纯条目数组，
-   *  顶层加字段需改根结构，会破坏仍在用的外部统计脚本 主页.js（读 favorites.length），
-   *  且违背「既有结构不改」铁律；排序键落设置与 memoSortMode 同惯例） */
-  favoritesSortKey: string;
+  // 旧 favoritesSortKey（toolbar 排序循环钮）已删（issue 364）：migrateRetiredFavoritesSortKey 清残留
   // 旧 favoritesTimeFormat（卡片日期显示）已删（ADR-0101）：固定相对时间
   /** 收藏本：打开面板默认筛选（issue 296）：''=全部 / '@last'=记住上次（取 favoritesLastFilter，同
    *  memoOpenScene '@last' 先例）/ 标签 label=固定该标签；非法值（含标签不在九类）回落全部 */
   favoritesOpenFilter: string;
   /** 收藏本：上次筛选记忆（issue 296；closePanel 写回：''=全部 / '@archived'=已归档视图 / 标签 label；
    *  仅 favoritesOpenFilter='@last' 时消费。落设置（data.json）而非 favorites.json——顶层纯条目数组
-   *  不改根结构，与 favoritesSortKey 同惯例） */
+   *  不改根结构，与 memoSortMode 同惯例） */
   favoritesLastFilter: string;
   /** 收藏本：默认排序（issue 296）：new=最新收藏 / old=最早收藏 / title=按标题；置顶恒最前不变；
-   *  非法值回落 new。只管「打开面板时是什么序」，与退役的 favoritesSortKey（排序循环钮）无涉 */
+   *  非法值回落 new。只管「打开面板时是什么序」，与已退役的排序循环钮无涉 */
   favoritesDefaultSort: string;
   /** 影院：移动端默认全屏（默认开——原 JS 内联强制全屏；ADR-0087 起影视报告同控此键） */
   /** 复习计划：移动端默认全屏（默认开——原 JS 内联强制全屏） */
@@ -535,6 +530,19 @@ export function migrateRetiredAIKeys(raw: unknown): boolean {
   const rec = raw as Record<string, unknown>;
   if (rec.aiContextOverrides === undefined) return false;
   delete rec.aiContextOverrides;
+  return true;
+}
+
+/**
+ * issue 364 一次性迁移：收藏本排序循环钮键退役——ADR-0083 重设计后循环钮已删，键全链
+ * 零消费点（打开面板的排序由 favoritesDefaultSort 承担），旧值不迁移直接丢。
+ * 幂等：无旧键即不改动，调用方据此决定要不要落盘（同 migrateRetiredAIKeys 口径）。
+ */
+export function migrateRetiredFavoritesSortKey(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const rec = raw as Record<string, unknown>;
+  if (rec.favoritesSortKey === undefined) return false;
+  delete rec.favoritesSortKey;
   return true;
 }
 
@@ -778,7 +786,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   homeDefaultDay: 'today',
   homeTimelineTime: true,
   homeNextCards: true,
-  favoritesSortKey: 'created',
   favoritesOpenFilter: '',
   favoritesLastFilter: '',
   favoritesDefaultSort: 'new',
