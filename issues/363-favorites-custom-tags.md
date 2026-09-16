@@ -1,0 +1,22 @@
+# 363 · 收藏本标签自定义
+
+> labels: wayfinder:task ｜ map: 346 ｜ 来源: next-ideas #32（用户已采纳）｜ status: open ｜ assignee: — ｜ blocked-by: —
+
+## What
+
+收藏本 9 类标签（GitHub/桌面软件/网站/大模型/pi/Claude/skills/酒馆/DeepSeek Harness）现在是硬编码；放开为用户可增删改（emoji + 名称），存量条目标签平滑映射（旧标签名保留为有效标签直到改完）。
+
+## Scene
+
+想加「装修灵感」「育儿」这类自己的分类，不用挤进现有 9 类。
+
+## Acceptance
+
+- 标签管理入口（设置面板 favorites schema 组或面板内管理弹窗）
+- 存量兼容：旧数据载入零迁移可用；改标签名时存量条目跟随（参照备忘录场景迁移 updateSceneBulk 范式）
+- 数据层 + UI 层测试 + smoke 同步；门禁全绿
+
+## Notes
+
+- 相关：src/favorites（config.ts 标签单源、data.ts 迁移）
+- 标签定义从代码搬进 favorites.json 时考虑 ADR（数据契约变更）。
