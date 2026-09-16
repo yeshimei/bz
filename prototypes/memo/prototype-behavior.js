@@ -1,5 +1,5 @@
-/* 源指纹 c64c30902bd0a30b · 仓内输入 214 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 e685f349b01836db · 仓内输入 216 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -11072,6 +11072,28 @@ var BZW_memo = (() => {
   });
 
   // src/core/ai.ts
+  var ai_exports = {};
+  __export(ai_exports, {
+    AIService: () => AIService,
+    AI_IDLE_TIMEOUT_MS: () => AI_IDLE_TIMEOUT_MS,
+    AI_IMAGE_IDLE_TIMEOUT_MS: () => AI_IMAGE_IDLE_TIMEOUT_MS,
+    AI_IMAGE_MAX_BYTES: () => AI_IMAGE_MAX_BYTES,
+    AI_PROVIDER_REGISTRY: () => AI_PROVIDER_REGISTRY,
+    AI_THINKING_STYLE: () => AI_THINKING_STYLE,
+    createAI: () => createAI,
+    getAIProvider: () => getAIProvider,
+    getProviderDescriptor: () => getProviderDescriptor,
+    hasExplicitThinkingOption: () => hasExplicitThinkingOption,
+    imageDataUrl: () => imageDataUrl,
+    imageExtOfMime: () => imageExtOfMime,
+    imageMimeOfPath: () => imageMimeOfPath,
+    resetAIProviderCache: () => resetAIProviderCache,
+    setAISettingsProvider: () => setAISettingsProvider,
+    thinkingOptionsFor: () => thinkingOptionsFor
+  });
+  function setAISettingsProvider(fn) {
+    _settingsProvider = fn;
+  }
   function getQ3Settings() {
     return _settingsProvider ? _settingsProvider() : {};
   }
@@ -11092,6 +11114,9 @@ var BZW_memo = (() => {
   }
   function hasExplicitThinkingOption(mo) {
     return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
+  }
+  function resetAIProviderCache() {
+    _aiProviderCache = null;
   }
   async function getAIProvider(override) {
     var _a2, _b2, _c;
@@ -17142,9 +17167,9 @@ ${countsToText(s.missing)}
   }
   function renderAll() {
     if (!M4.overlay) return;
-    const panel = M4.overlay.querySelector(".bz-bel-panel");
-    if (!panel) return;
-    renderPanelView(panel, itemList(), M4, { mountIcons }, currencyUnit());
+    const panel2 = M4.overlay.querySelector(".bz-bel-panel");
+    if (!panel2) return;
+    renderPanelView(panel2, itemList(), M4, { mountIcons }, currencyUnit());
   }
   function applyStatusFilter(k) {
     if (k === "__all") M4.status = null;
@@ -32913,10 +32938,10 @@ ${body}`;
     board.innerHTML = boardHtml(items, view);
     hooks.mountIcons(board);
   }
-  function renderPanelView2(panel, items, view, hooks) {
-    const tags = panel.querySelector("[data-fav-tags]");
+  function renderPanelView2(panel2, items, view, hooks) {
+    const tags = panel2.querySelector("[data-fav-tags]");
     if (tags) renderTagsInto(tags, items, view, hooks);
-    const board = panel.querySelector("[data-fav-content]");
+    const board = panel2.querySelector("[data-fav-content]");
     if (board) renderBoardInto(board, items, view, hooks);
   }
   var init_render10 = __esm({
@@ -33265,8 +33290,8 @@ ${body}`;
   }
   function renderAll3() {
     if (!M6.overlay) return;
-    const panel = M6.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel, M6.items, M6, { mountIcons, mobile: isMobileEnv() });
+    const panel2 = M6.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel2, M6.items, M6, { mountIcons, mobile: isMobileEnv() });
   }
   function applyTagFilter(label) {
     if (label === "全部" || label === "__all") {
@@ -34105,10 +34130,10 @@ GitHub 仓库：${ghInfo.title}
   }
   function applyBookshelfSkin(skin) {
     if (!M2.currentOverlay) return;
-    const panel = M2.currentOverlay.querySelector(".bz-bs-panel");
-    if (!panel) return;
-    panel.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), "bz-bs-mode-light", "bz-bs-mode-dark");
-    panel.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
+    const panel2 = M2.currentOverlay.querySelector(".bz-bs-panel");
+    if (!panel2) return;
+    panel2.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), "bz-bs-mode-light", "bz-bs-mode-dark");
+    panel2.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
   }
   var SKIN_IDS;
   var init_ui8 = __esm({
@@ -36094,6 +36119,66 @@ ${n.content.slice(0, 2e3)}
         <button class="bz-btn bz-btn--primary bz-btn--block" data-action="done">完成 · 回到复习计划</button>
       </div>`;
   }
+  function quizPracticeSetupHtml(ctx) {
+    const scopeSeg = QUIZ_PRACTICE_SCOPES.map(
+      (o) => `<button type="button" class="bz-segmented-btn${o.v === ctx.scope ? " is-on" : ""}" data-scope="${o.v}" role="radio" aria-checked="${o.v === ctx.scope}">${o.label}</button>`
+    ).join("");
+    const batchSeg = QUIZ_PRACTICE_BATCHES.map(
+      (o) => `<button type="button" class="bz-segmented-btn${o.v === ctx.batch ? " is-on" : ""}" data-batch="${o.v}" role="radio" aria-checked="${o.v === ctx.batch}">${o.label}</button>`
+    ).join("");
+    let detail;
+    if (ctx.scope === "all") {
+      detail = `<div class="bz-qp-detail">整库笔记都纳入出题范围，系统目录自动跳过</div>`;
+    } else if (ctx.scope === "folder") {
+      const chips = ctx.folders.length ? ctx.folders.map((f) => {
+        const label = f === "" ? "（库根目录）" : f;
+        return `<span class="bz-qp-chip"><span class="bz-qp-chip-name" title="${esc3(label)}">${esc3(label)}</span><button type="button" class="bz-qp-chip-x" data-rm-folder="${esc3(f)}" aria-label="移除 ${esc3(label)}">✕</button></span>`;
+      }).join("") : `<span class="bz-qp-detail">还没选文件夹</span>`;
+      detail = `<div class="bz-qp-folder-row"><div class="bz-qp-chips">${chips}</div><button type="button" class="bz-btn bz-btn--ghost" data-act="pick-folders">${ctx.folders.length ? "改文件夹" : "选择文件夹"}</button></div>`;
+    } else {
+      detail = `<div class="bz-qp-note-field"><input type="text" class="bz-input bz-qp-note-input" data-role="note-input" placeholder="输入笔记名筛选，点选确定" value="${esc3(ctx.notePath)}"></div>`;
+    }
+    const meta = ctx.bankCount === null ? "" : ctx.bankCount > 0 ? `当前范围现有 <b>${ctx.bankCount}</b> 题` : "当前范围还没有题目，开始后会自动出题";
+    return `
+    <div class="bz-qp-view">
+      <div class="bz-panel-head">
+        <div class="bz-panel-brand">${icon("graduation-cap", "bz-ic--sm")}</div>
+        <div class="bz-panel-title">做题练习</div>
+        <div class="bz-panel-head-pipe"></div>
+        <div class="bz-panel-head-sub">只刷题 · 不排期复习</div>
+        <span class="bz-panel-head-sp"></span>
+        <button class="bz-icon-btn" data-act="close" title="关闭">${icon("x")}</button>
+      </div>
+      <div class="bz-qp-body">
+        <div class="bz-qp-sec">
+          <div class="bz-qp-sec-label">出题范围</div>
+          <div class="bz-segmented" role="radiogroup" aria-label="出题范围">${scopeSeg}</div>
+          <div class="bz-qp-detail-wrap">${detail}</div>
+        </div>
+        <div class="bz-qp-sec">
+          <div class="bz-qp-sec-label">本轮题量</div>
+          <div class="bz-segmented" role="radiogroup" aria-label="本轮题量">${batchSeg}</div>
+        </div>
+        <div class="bz-qp-meta" data-role="bank-meta">${meta}</div>
+        <button class="bz-btn bz-btn--primary bz-qp-start" data-act="start">开始做题</button>
+        <div class="bz-qp-foot">键位与做题家一致：1-4 / A-D 选择，Enter 提交或下一题；答对的题出库，答错的留给下次。</div>
+      </div>
+    </div>`;
+  }
+  function quizPracticeSummaryHtml(r) {
+    return `
+    <div class="bz-summary">
+      <div class="bz-summary-title">本轮刷题小结</div>
+      <div class="bz-summary-stats">
+        <div class="st"><b>${r.correct}</b><span>答对</span></div>
+        <div class="st ${r.wrong ? "warn" : ""}"><b>${r.wrong}</b><span>答错</span></div>
+        <div class="st"><b>${r.skipped}</b><span>跳过</span></div>
+      </div>
+      <div class="bz-qp-acc">正确率 <b>${r.accuracy}%</b></div>
+      <button class="bz-btn bz-btn--primary bz-btn--block" data-act="again">再来一轮</button>
+      <button class="bz-btn bz-btn--ghost bz-btn--block" data-act="finish">收工</button>
+    </div>`;
+  }
   function difficultyDialogHtml(item) {
     return `
       <h4>标记复习：${esc3(item.name)}</h4>
@@ -36113,13 +36198,24 @@ ${n.content.slice(0, 2e3)}
       <button class="bz-review-bar-btn bz-touch-target--sm is-skip" data-rating="skip">${"跳过"}</button>
     </span>`;
   }
-  var ESC;
+  var ESC, QUIZ_PRACTICE_SCOPES, QUIZ_PRACTICE_BATCHES;
   var init_render12 = __esm({
     "src/review/render.ts"() {
       init_fsrs();
       init_queue();
       init_stats3();
       ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+      QUIZ_PRACTICE_SCOPES = [
+        { v: "all", label: "全部" },
+        { v: "folder", label: "按文件夹" },
+        { v: "note", label: "单篇" }
+      ];
+      QUIZ_PRACTICE_BATCHES = [
+        { v: 10, label: "10 题" },
+        { v: 20, label: "20 题" },
+        { v: 30, label: "30 题" },
+        { v: 0, label: "不限" }
+      ];
     }
   });
 
@@ -37473,11 +37569,341 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/review/quiz-panel-data.ts
+  function listVaultNotes(app) {
+    var _a2, _b2;
+    const files = ((_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getMarkdownFiles) == null ? void 0 : _b2.call(_a2)) || [];
+    const out = [];
+    for (const f of files) {
+      const p = String((f == null ? void 0 : f.path) || "");
+      if (!p.endsWith(".md") || isExcludedPath(p)) continue;
+      out.push(p);
+    }
+    return out.sort();
+  }
+  function notesInFolders(app, folders) {
+    const all = listVaultNotes(app);
+    if (folders.includes("")) return all;
+    const picked = /* @__PURE__ */ new Set();
+    for (const p of all) {
+      for (const dir of folders) {
+        if (p.startsWith(dir + "/")) {
+          picked.add(p);
+          break;
+        }
+      }
+    }
+    return [...picked].sort();
+  }
+  function resolveScopeNotes(app, scope, folders, notePath) {
+    if (scope === "folder") return notesInFolders(app, folders);
+    if (scope === "note") return notePath ? [notePath] : [];
+    return listVaultNotes(app);
+  }
+  async function collectQuestionsForNotes(app, reader, paths) {
+    const out = [];
+    for (const p of paths) {
+      const qs = await reader.getQuestionsForNote(app, p);
+      if (!qs || !qs.length) continue;
+      for (const q2 of qs) out.push({ ...q2, notePath: p });
+    }
+    return out;
+  }
+  function pickRoundQuestions(all, batch) {
+    const pools = /* @__PURE__ */ new Map();
+    for (const q2 of all) {
+      const key = q2.notePath || "";
+      const pool = pools.get(key);
+      if (pool) pool.push(q2);
+      else pools.set(key, [q2]);
+    }
+    const out = [];
+    const capped = batch > 0;
+    while (pools.size) {
+      let took = false;
+      for (const [key, pool] of pools) {
+        const q2 = pool.shift();
+        if (!q2) {
+          pools.delete(key);
+          continue;
+        }
+        took = true;
+        out.push(q2);
+        if (capped && out.length >= batch) return out;
+      }
+      if (!took) break;
+    }
+    return out;
+  }
+  var init_quiz_panel_data = __esm({
+    "src/review/quiz-panel-data.ts"() {
+      init_path_picker();
+    }
+  });
+
+  // src/review/quiz-panel.ts
+  async function aiReadyOrGuide() {
+    const { getAIProvider: getAIProvider2 } = await Promise.resolve().then(() => (init_ai(), ai_exports));
+    try {
+      await getAIProvider2();
+      return true;
+    } catch (e) {
+      void openFlowDialog({
+        title: "AI 还没配置",
+        message: `${(e == null ? void 0 : e.message) || "还没配置 AI 服务"}。做题练习靠 AI 出题，配好后回来就能开刷。`,
+        actions: [
+          { label: "去设置", value: "settings", cta: true },
+          { label: "稍后再说", value: "cancel" }
+        ]
+      }).then((v) => {
+        if (v !== "settings") return;
+        void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(getApp(), "review"));
+      });
+      return false;
+    }
+  }
+  async function openQuizPanel(app) {
+    if (quizUI._sessionActive) return;
+    ensureQuiz(app);
+    if (!panel) panel = new QuizPracticePanel(app);
+    panel.show();
+  }
+  function unloadQuizPanel() {
+    panel == null ? void 0 : panel.destroy();
+    panel = null;
+  }
+  var MASK_ID2, POPUP_ID, ESC_ID2, DEFAULT_BATCH, QuizPracticePanel, panel;
+  var init_quiz_panel = __esm({
+    "src/review/quiz-panel.ts"() {
+      init_app();
+      init_notice();
+      init_esc_manager();
+      init_z_order();
+      init_domain_bus();
+      init_flow_dialog();
+      init_path_picker();
+      init_ui();
+      init_quiz_core();
+      init_render12();
+      init_quiz_panel_data();
+      MASK_ID2 = "bz-quiz-practice-mask";
+      POPUP_ID = "bz-quiz-practice-popup";
+      ESC_ID2 = "review-quiz-practice";
+      DEFAULT_BATCH = 20;
+      QuizPracticePanel = class {
+        constructor(app) {
+          this.escHandle = null;
+          this.state = {
+            scope: "all",
+            batch: DEFAULT_BATCH,
+            folders: [],
+            notePath: ""
+          };
+          /** 本轮备题数（小结「跳过」= 备题数 − 已答数） */
+          this.roundSize = 0;
+          /** 会话启动 in-flight 防抖（双击只放行一次，防双跑批量出题） */
+          this.starting = false;
+          this.app = app;
+          this.mask = document.createElement("div");
+          this.mask.id = MASK_ID2;
+          this.mask.classList.add("bz-panel-overlay");
+          this.mask.style.display = "none";
+          this.mask.style.zIndex = "0";
+          this.mask.onclick = () => this.hide();
+          this.popup = document.createElement("div");
+          this.popup.id = POPUP_ID;
+          this.popup.classList.add("bz-panel-frame");
+          this.popup.classList.add("bz-panel-mtop");
+          this.popup.style.display = "none";
+          this.popup.style.zIndex = "0";
+          this.content = document.createElement("div");
+          this.content.className = "bz-quiz-practice-container";
+          this.popup.appendChild(this.content);
+          document.body.appendChild(this.mask);
+          document.body.appendChild(this.popup);
+        }
+        // ==================== 显隐 / 生命周期 ====================
+        show() {
+          this.present();
+          void this.renderSetup();
+        }
+        /** 仅置顶显示（设置视图渲染由 show 驱动；小结视图自带内容复用） */
+        present() {
+          topifyZ(this.mask, this.popup);
+          this.mask.style.display = "block";
+          this.popup.style.display = "flex";
+          if (!this.escHandle) {
+            this.escHandle = escManager.register(ESC_ID2, {
+              isVisible: () => this.mask.style.display === "block",
+              close: () => this.hide()
+            });
+          }
+        }
+        hide() {
+          this.mask.style.display = "none";
+          this.popup.style.display = "none";
+        }
+        /** 卸载清理（unloadQuizPanel）：会话在途先走契约强制收口（防御性结算 + 拆题面弹窗），
+         *  不留孤儿题面/键盘监听/ESC 层；DOM 与 ESC 层随手摘除（模块单例复位后下次重建）。 */
+        destroy() {
+          var _a2;
+          if (quizUI._sessionActive) quizUI.close();
+          (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
+          this.escHandle = null;
+          this.mask.remove();
+          this.popup.remove();
+        }
+        // ==================== 设置视图 ====================
+        async renderSetup() {
+          const count = await this.probeBankCount();
+          this.content.innerHTML = quizPracticeSetupHtml({
+            scope: this.state.scope,
+            batch: this.state.batch,
+            folders: this.state.folders,
+            notePath: this.state.notePath,
+            bankCount: count
+          });
+          mountIcons(this.content);
+          this.bindSetup();
+        }
+        /** 范围内现有题数（一次读题库文件内存账，null = 读取失败不挡开面板） */
+        async probeBankCount() {
+          var _a2;
+          try {
+            const paths = resolveScopeNotes(this.app, this.state.scope, this.state.folders, this.state.notePath);
+            if (!paths.length) return 0;
+            const bank = await quizUI.manager.loadQuiz(this.app);
+            let count = 0;
+            for (const p of paths) count += ((_a2 = bank.notes[p]) == null ? void 0 : _a2.length) || 0;
+            return count;
+          } catch (e) {
+            return null;
+          }
+        }
+        bindSetup() {
+          var _a2, _b2, _c;
+          (_a2 = this.content.querySelector('[data-act="close"]')) == null ? void 0 : _a2.addEventListener("click", () => this.hide());
+          this.content.querySelectorAll("[data-scope]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const v = btn.dataset.scope;
+              if (v && v !== this.state.scope) {
+                this.state.scope = v;
+                void this.renderSetup();
+              }
+            });
+          });
+          this.content.querySelectorAll("[data-batch]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const v = Number(btn.dataset.batch);
+              if (!Number.isNaN(v) && v !== this.state.batch) {
+                this.state.batch = v;
+                void this.renderSetup();
+              }
+            });
+          });
+          this.content.querySelectorAll("[data-rm-folder]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              this.state.folders = this.state.folders.filter((f) => f !== btn.dataset.rmFolder);
+              void this.renderSetup();
+            });
+          });
+          (_b2 = this.content.querySelector('[data-act="pick-folders"]')) == null ? void 0 : _b2.addEventListener("click", () => {
+            openPathPicker({
+              title: "选择出题文件夹",
+              mode: "multi",
+              selected: this.state.folders,
+              onConfirm: (list) => {
+                this.state.folders = list;
+                void this.renderSetup();
+              }
+            });
+          });
+          const input = this.content.querySelector('[data-role="note-input"]');
+          if (input) {
+            uiSuggest({
+              anchor: input,
+              max: 12,
+              source: () => listVaultNotes(getApp()),
+              onPick: (p) => {
+                this.state.notePath = p;
+                void this.renderSetup();
+              }
+            });
+            input.addEventListener("input", () => {
+              this.state.notePath = input.value.trim();
+            });
+            input.addEventListener("change", () => {
+              void this.renderSetup();
+            });
+          }
+          (_c = this.content.querySelector('[data-act="start"]')) == null ? void 0 : _c.addEventListener("click", () => {
+            void this.startSession();
+          });
+        }
+        // ==================== 开始会话（契约驱动） ====================
+        async startSession() {
+          if (this.starting) return;
+          this.starting = true;
+          const startBtn = this.content.querySelector('[data-act="start"]');
+          startBtn == null ? void 0 : startBtn.setAttribute("disabled", "");
+          try {
+            const app = this.app;
+            const paths = resolveScopeNotes(app, this.state.scope, this.state.folders, this.state.notePath);
+            if (!paths.length) {
+              notice("当前范围没有可出题的笔记", "warning");
+              return;
+            }
+            if (!await aiReadyOrGuide()) return;
+            await quizUI.ensureQuestions(paths);
+            const collected = await collectQuestionsForNotes(app, quizUI.manager, paths);
+            const picked = pickRoundQuestions(collected, this.state.batch);
+            if (!picked.length) {
+              notice("这个范围还没出成题目：AI 出题失败或笔记内容为空，稍后再试", "warning");
+              return;
+            }
+            this.hide();
+            emitDomainEvent("review", { kind: "started" });
+            this.roundSize = picked.length;
+            quizUI.startReviewSession({
+              questions: picked,
+              onComplete: (results) => {
+                quizUI.endReviewSession();
+                this.showSummary(results);
+              }
+            });
+          } finally {
+            this.starting = false;
+            startBtn == null ? void 0 : startBtn.removeAttribute("disabled");
+          }
+        }
+        // ==================== 成绩小结 ====================
+        showSummary(results) {
+          var _a2, _b2;
+          const skipped = Math.max(0, this.roundSize - results.total);
+          this.content.innerHTML = quizPracticeSummaryHtml({
+            correct: results.correct,
+            wrong: results.wrong,
+            skipped,
+            accuracy: results.accuracy
+          });
+          mountIcons(this.content);
+          (_a2 = this.content.querySelector('[data-act="again"]')) == null ? void 0 : _a2.addEventListener("click", () => {
+            void this.renderSetup();
+          });
+          (_b2 = this.content.querySelector('[data-act="finish"]')) == null ? void 0 : _b2.addEventListener("click", () => this.hide());
+          this.present();
+        }
+      };
+      panel = null;
+    }
+  });
+
   // src/review/index.ts
   var review_exports = {};
   __export(review_exports, {
     dataManager: () => dataManager2,
     ensureReview: () => ensureReview,
+    openQuizPractice: () => openQuizPractice,
     openReviewPanel: () => openReviewPanel,
     openReviewReport: () => openReviewReport,
     reviewAddCurrent: () => reviewAddCurrent,
@@ -37552,6 +37978,9 @@ ${n.content.slice(0, 2e3)}
     ensureReview(app);
     const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
     await showStatsModal2(app, dataManager2);
+  }
+  function openQuizPractice(app) {
+    void openQuizPanel(app);
   }
   async function reviewAddCurrent(app) {
     ensureReview(app);
@@ -37670,6 +38099,7 @@ ${n.content.slice(0, 2e3)}
     }
     reviewApp.stopReviewLoops();
     reviewApp.dataManager = null;
+    unloadQuizPanel();
     for (const off of unsubscribers) {
       try {
         off();
@@ -37694,6 +38124,7 @@ ${n.content.slice(0, 2e3)}
       init_watch();
       init_ui9();
       init_app2();
+      init_quiz_panel();
       initialized6 = false;
       dataManager2 = null;
       uiManager2 = null;
@@ -38559,11 +38990,11 @@ ${n.content.slice(0, 2e3)}
   function normalizeStore(raw) {
     const d = raw && typeof raw === "object" ? raw : {};
     const linkRaw = d.link && typeof d.link === "object" ? d.link : {};
-    const panel = d.panel && typeof d.panel === "object" ? d.panel : null;
+    const panel2 = d.panel && typeof d.panel === "object" ? d.panel : null;
     return {
       version: d.version === STORE_VERSION ? STORE_VERSION : void 0,
       meta: d.meta && typeof d.meta === "object" ? d.meta : {},
-      panel,
+      panel: panel2,
       link: {
         queue: Array.isArray(linkRaw.queue) ? linkRaw.queue : [],
         state: linkRaw.state && typeof linkRaw.state === "object" && !Array.isArray(linkRaw.state) ? linkRaw.state : {}
@@ -38678,8 +39109,8 @@ ${n.content.slice(0, 2e3)}
       }
     }
     const meta = { ...priMeta, notes };
-    let panel = primary.panel;
-    if (conflict.panel && (!panel || conflict.panel.generatedAt > panel.generatedAt)) panel = conflict.panel;
+    let panel2 = primary.panel;
+    if (conflict.panel && (!panel2 || conflict.panel.generatedAt > panel2.generatedAt)) panel2 = conflict.panel;
     const queue3 = [...primary.link.queue];
     const seen = new Set(queue3.map((q2) => q2.path));
     for (const q2 of conflict.link.queue) {
@@ -38703,7 +39134,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     const chatTrimmed = chatHistory.slice(-CHAT_HISTORY_LIMIT);
-    return { version: primary.version, meta, panel, link: { queue: queue3, state: state3 }, chatHistory: chatTrimmed };
+    return { version: primary.version, meta, panel: panel2, link: { queue: queue3, state: state3 }, chatHistory: chatTrimmed };
   }
   function buildRowOffsets(meta) {
     const map = /* @__PURE__ */ new Map();
@@ -46804,11 +47235,11 @@ ${n.content.slice(0, 2e3)}
   }
   function applyMemoSkin(skin) {
     if (!M.overlay) return;
-    const panel = M.overlay.querySelector(".bz-memo-panel");
-    if (!panel) return;
-    panel.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
+    const panel2 = M.overlay.querySelector(".bz-memo-panel");
+    if (!panel2) return;
+    panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
     const v = skin === "editorial" ? "editorial" : "paper";
-    panel.classList.add(`bz-memo-skin-${v}`);
+    panel2.classList.add(`bz-memo-skin-${v}`);
   }
   function skinClass() {
     const s = tryGetSettings().memoSkin;
