@@ -258,3 +258,13 @@ export function unloadKnowledge(): void {
   uiManager = null;
   initialized = false;
 }
+
+/**
+ * source 退役（issue 336 / ADR-0149 决策 1 跨域契约，剪藏本删除流 trash 前消费）：
+ * 有 url → 知识盒卡片 source 行级降级回外链（ADR-0144 逆向，出处零丢失）；无 url →
+ * 改调摘除（sourceTitle 保留）。返回退役卡片数（降级失败由调用方静默兜底，不阻断删除）。
+ * 编排在 source-retire.ts，此处只做跨域门面（同 upgradeNoteSourceInternal 范式）。
+ */
+export { retireKnowledgeSourcesForClip } from './source-retire';
+/** knowledge.json 引用同步 + 卡片 source 断链摘除消费（issue 336，main.ts onLayoutReady 常驻接线） */
+export { ensureFileSync as ensureKnowledgeFileSync, unloadFileSync as unloadKnowledgeFileSync } from './file-sync';
