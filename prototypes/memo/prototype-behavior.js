@@ -1,4 +1,4 @@
-/* 源指纹 9114f8341af66cec · 仓内输入 214 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c64c30902bd0a30b · 仓内输入 214 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -34337,12 +34337,13 @@ GitHub 仓库：${ghInfo.title}
   async function loadFittedParams(app) {
     const data = await jsonFileStore(getReviewFitFilePath()).read();
     if (!data || !Array.isArray(data.w) || data.w.length < 8) return null;
+    if (data.version === FIT_PARAMS_VERSION.FULL && data.w.length < 19) return null;
     return data;
   }
   async function saveFittedParams(app, fit2) {
     await enqueueFileTask(getReviewFitFilePath(), () => jsonFileStore(getReviewFitFilePath()).write(fit2));
   }
-  var ReviewDataManager;
+  var ReviewDataManager, FIT_PARAMS_VERSION;
   var init_data9 = __esm({
     "src/review/data.ts"() {
       init_utils();
@@ -34491,94 +34492,97 @@ GitHub 仓库：${ghInfo.title}
           });
         }
       };
+      FIT_PARAMS_VERSION = { BASIC: 1, FULL: 2 };
     }
   });
 
   // src/review/fit.ts
-  function clip(w) {
-    const out = [...w];
-    for (let i = 0; i < 4; i++) out[i] = Math.max(0.01, out[i]);
-    out[4] = Math.max(0, Math.min(1, out[4]));
-    for (let i = 5; i < 8; i++) out[i] = Math.max(0.01, out[i]);
-    return out;
-  }
-  function computeSampleLogLikelihood(w, sample) {
-    const d = DEFAULT_D;
-    const S = sample.S;
-    const t = sample.t;
-    const denom = Math.max(0.01, S * d);
-    const R = Math.pow(1 + t / denom, -d);
-    const remember = sample.rating === 2 || sample.rating === 3;
-    const p = remember ? R : 1 - R;
-    return Math.log(Math.max(1e-9, Math.min(1 - 1e-9, p)));
-  }
-  function isFittableSample(sample) {
-    return sample.stage >= 9;
-  }
-  function buildFitSamples(history2, opts) {
-    const out = [];
-    for (let i = 1; i < history2.length; i++) {
-      const prev = history2[i - 1];
-      const cur = history2[i];
-      if (prev.stability === void 0) continue;
-      const prevD = prev.difficulty !== void 0 ? prev.difficulty : opts == null ? void 0 : opts.fallbackDifficulty;
-      if (prevD === void 0) continue;
-      const t = (new Date(cur.timestamp).getTime() - new Date(prev.timestamp).getTime()) / 864e5;
+  function buildReplaySeries(history2) {
+    const fsrsEntries = history2.filter((h) => h.stability !== void 0);
+    if (fsrsEntries.length < 2) return null;
+    const initRating = RATING_INDEX[fsrsEntries[0].rating];
+    if (initRating === void 0) return null;
+    const pairs = [];
+    for (let i = 1; i < fsrsEntries.length; i++) {
+      const t = (new Date(fsrsEntries[i].timestamp).getTime() - new Date(fsrsEntries[i - 1].timestamp).getTime()) / 864e5;
       if (!(t > 0)) continue;
-      const ratingIdx = RATING_INDEX[cur.rating];
-      if (ratingIdx === void 0) continue;
-      out.push({
-        t,
-        S: prev.stability,
-        D: prevD,
-        rating: ratingIdx,
-        stage: cur.stage
-      });
+      const rating = RATING_INDEX[fsrsEntries[i].rating];
+      if (rating === void 0) continue;
+      pairs.push({ t, rating });
+    }
+    if (!pairs.length) return null;
+    return { initRating, pairs };
+  }
+  function buildReplaySeriesFromItems(items) {
+    const out = [];
+    for (const it of items) {
+      const s = buildReplaySeries(it.reviewHistory || []);
+      if (s) out.push(s);
     }
     return out;
   }
-  function totalLogLikelihood(w, samples) {
+  function replayLogLikelihood(w, series) {
+    const fsrs = new FSRS(w);
     let sum = 0;
-    for (const s of samples) {
-      if (!isFittableSample(s)) continue;
-      sum += computeSampleLogLikelihood(w, s);
+    for (const s of series) {
+      let S = fsrs.initS(RATING_NAMES[s.initRating]);
+      let D = s.initRating === 0 ? fsrs.w[4] : 0.3;
+      for (const p of s.pairs) {
+        const R = fsrs.R(p.t, S);
+        const remember = p.rating >= 2;
+        const prob = remember ? R : 1 - R;
+        sum += Math.log(Math.max(1e-9, Math.min(1 - 1e-9, prob)));
+        const next = fsrs.nextInterval(S, D, RATING_NAMES[p.rating], R);
+        S = next.S;
+        D = next.D;
+      }
     }
     return sum;
   }
-  function numericGradient(w, samples, eps = 1e-5) {
+  function clipW(w) {
+    return w.map((x, i) => {
+      const b = W_BOUNDS[i];
+      return b ? Math.max(b[0], Math.min(b[1], x)) : x;
+    });
+  }
+  function numericGradient(w, series, fitLen = 8, eps = 1e-5) {
     const grad = new Array(w.length).fill(0);
-    const base = totalLogLikelihood(w, samples);
-    for (let i = 0; i < Math.min(8, w.length); i++) {
-      const wp = [...w];
-      const wm = [...w];
-      wp[i] += eps;
-      wm[i] -= eps;
-      const fp = totalLogLikelihood(wp, samples);
-      const fm = totalLogLikelihood(wm, samples);
-      grad[i] = (fp - fm) / (2 * eps);
+    const wp = [...w];
+    const wm = [...w];
+    for (let i = 0; i < Math.min(fitLen, w.length); i++) {
+      wp[i] = w[i] + eps;
+      wm[i] = w[i] - eps;
+      grad[i] = (replayLogLikelihood(wp, series) - replayLogLikelihood(wm, series)) / (2 * eps);
+      wp[i] = w[i];
+      wm[i] = w[i];
     }
     return grad;
   }
-  function fitFSRSParams(samples, opts = {}) {
-    var _a2, _b2, _c;
+  function fitFSRSParams(series, opts = {}) {
+    var _a2, _b2, _c, _d, _e;
     const initW = opts.initW ? [...opts.initW] : [...DEFAULT_W];
-    const iterations = (_a2 = opts.iterations) != null ? _a2 : 150;
-    const lr = (_b2 = opts.lr) != null ? _b2 : 0.02;
+    const iterations = Math.max(1, (_a2 = opts.iterations) != null ? _a2 : opts.full ? 120 : 80);
+    const lr = (_b2 = opts.lr) != null ? _b2 : 0.05;
     const full = (_c = opts.full) != null ? _c : false;
+    const maxMs = Math.max(0, (_d = opts.maxMs) != null ? _d : 3e3);
+    const stallRounds = Math.max(1, (_e = opts.stallRounds) != null ? _e : 10);
     const fitLen = full ? Math.min(19, initW.length) : Math.min(8, initW.length);
-    const w = clip(initW);
+    const w = clipW(initW);
     const m = new Array(w.length).fill(0);
     const v = new Array(w.length).fill(0);
     const beta1 = 0.9;
     const beta2 = 0.999;
     const eps = 1e-8;
-    let lastLL = totalLogLikelihood(w, samples);
+    const t0 = Date.now();
+    let lastLL = replayLogLikelihood(w, series);
     let bestW = [...w];
     let bestLL = lastLL;
     let stall = 0;
+    let done = 0;
     for (let it = 1; it <= iterations; it++) {
+      done = it;
       const lrIt = lr * (1 - 0.75 * (it / iterations));
-      const grad = numericGradient(w, samples);
+      const grad = numericGradient(w, series, fitLen);
       for (let i = 0; i < fitLen; i++) {
         m[i] = beta1 * m[i] + (1 - beta1) * grad[i];
         v[i] = beta2 * v[i] + (1 - beta2) * grad[i] * grad[i];
@@ -34587,42 +34591,82 @@ GitHub 仓库：${ghInfo.title}
         w[i] += lrIt * mHat / (Math.sqrt(vHat) + eps);
       }
       for (let i = 0; i < fitLen; i++) {
-        if (i < 4) w[i] = Math.max(0.01, w[i]);
-        else if (i === 4) w[i] = Math.max(0, Math.min(1, w[i]));
-        else w[i] = Math.max(0.01, w[i]);
+        const b = W_BOUNDS[i];
+        if (b) w[i] = Math.max(b[0], Math.min(b[1], w[i]));
       }
-      const ll = totalLogLikelihood(w, samples);
+      const ll = replayLogLikelihood(w, series);
       if (ll > bestLL) {
         bestLL = ll;
         bestW = [...w];
       }
       if (Math.abs(ll - lastLL) < 1e-6) {
         stall++;
-        if (stall >= 10) break;
+        if (stall >= stallRounds) break;
       } else stall = 0;
       lastLL = ll;
+      if (maxMs > 0 && Date.now() - t0 > maxMs) break;
     }
-    return { w: clip(bestW), logLikelihood: bestLL, iterations };
+    return { w: clipW(bestW), logLikelihood: bestLL, iterations: done, full };
   }
   function fitFromItems(items, opts) {
     var _a2;
-    const samples = items.flatMap((i) => buildFitSamples(i.reviewHistory || [], { fallbackDifficulty: i.difficulty }));
-    const fittable = samples.filter(isFittableSample);
-    const count = fittable.length;
+    const series = buildReplaySeriesFromItems(items);
+    const count = series.reduce((n, s) => n + s.pairs.length, 0);
     if (count < 100) return null;
     const full = (_a2 = opts == null ? void 0 : opts.full) != null ? _a2 : count >= 300;
-    return { fit: fitFSRSParams(samples, { full }), count };
+    return { fit: fitFSRSParams(series, { full }), count };
   }
   function mergeFittedW(fitted) {
     const out = [...DEFAULT_W];
     for (let i = 0; i < Math.min(19, fitted.length); i++) out[i] = fitted[i];
     return out;
   }
-  var RATING_INDEX;
+  var RATING_NAMES, RATING_INDEX, W_BOUNDS;
   var init_fit = __esm({
     "src/review/fit.ts"() {
       init_fsrs();
+      RATING_NAMES = ["again", "hard", "good", "easy"];
       RATING_INDEX = { again: 0, hard: 1, good: 2, easy: 3 };
+      W_BOUNDS = [
+        [0.01, 60],
+        // w0  初始稳定性 again
+        [0.01, 120],
+        // w1  hard
+        [0.01, 240],
+        // w2  good
+        [0.01, 480],
+        // w3  easy
+        [0, 1],
+        // w4  again 难度（本插件口径）
+        [-1.5, 1.5],
+        // w5  hard 难度增量
+        [-1.5, 1.5],
+        // w6  easy 难度增量
+        [0.01, 10],
+        // w7  （v4 模型未用，兜底约束）
+        [0.01, 10],
+        // w8  成功演化 exp 系数
+        [0.01, 5],
+        // w9  S 幂
+        [0.01, 10],
+        // w10 (1-R) 系数
+        [0.01, 10],
+        // w11 again 演化系数
+        [0.01, 5],
+        // w12 D 幂
+        [0.01, 5],
+        // w13 (S+1) 幂
+        [-5, 5],
+        // w14 R 系数
+        [0.01, 10],
+        // w15 （v4 模型未用）
+        [0.01, 10],
+        // w16 （v4 模型未用）
+        [-5, 5],
+        // w17 easy 奖励系数
+        [0.01, 10]
+        // w18 （v4 模型未用）
+      ];
     }
   });
 
@@ -34722,11 +34766,11 @@ GitHub 仓库：${ghInfo.title}
     }
     return out;
   }
-  var RATING_NAMES, RATING_COLORS;
+  var RATING_NAMES2, RATING_COLORS;
   var init_stats3 = __esm({
     "src/review/stats.ts"() {
       init_fsrs();
-      RATING_NAMES = { again: "忘了", hard: "困难", good: "一般", easy: "简单" };
+      RATING_NAMES2 = { again: "忘了", hard: "困难", good: "一般", easy: "简单" };
       RATING_COLORS = { again: "#ff4757", hard: "#ff9f43", good: "#2ed573", easy: "#7bed9f" };
     }
   });
@@ -36086,7 +36130,7 @@ ${n.content.slice(0, 2e3)}
     if (accuracy >= 50) return "hard";
     return "again";
   }
-  var CORRECT_JUMP_DELAY_MS2, SprintSession, RATING_NAMES2;
+  var CORRECT_JUMP_DELAY_MS2, SprintSession, RATING_NAMES3;
   var init_sprint = __esm({
     "src/review/sprint.ts"() {
       init_utils();
@@ -36486,7 +36530,7 @@ ${n.content.slice(0, 2e3)}
           const remain = this.remainingCount;
           const name = stripTitleMarks(entry.item.name);
           const nextLabel = this.mode === "single" ? "完成 · 回面板" : remain > 0 ? `下一篇 · ${this.nextPendingName()}` : "完成本轮 · 结算";
-          const ratingLine = this.mode === "redo" ? `${RATING_NAMES2[rating]} · 已解除待重做` : `${RATING_NAMES2[rating]} · 下次 ${entry.passNote || "已排期"}`;
+          const ratingLine = this.mode === "redo" ? `${RATING_NAMES3[rating]} · 已解除待重做` : `${RATING_NAMES3[rating]} · 下次 ${entry.passNote || "已排期"}`;
           this.view = "result";
           this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintBodyHtml(
             sprintResultHtml({
@@ -36494,7 +36538,7 @@ ${n.content.slice(0, 2e3)}
               acc: entry.acc,
               wrong: entry.wrong,
               passed,
-              ratingLine: passed ? ratingLine : `${RATING_NAMES2[rating]} · 待重做`,
+              ratingLine: passed ? ratingLine : `${RATING_NAMES3[rating]} · 待重做`,
               nextLabel,
               showEnd: remain > 0 && this.mode !== "single"
             }),
@@ -36530,7 +36574,7 @@ ${n.content.slice(0, 2e3)}
           (_b2 = this.opts.host.querySelector('[data-action="skip"]')) == null ? void 0 : _b2.addEventListener("click", () => this.skipCurrent());
         }
       };
-      RATING_NAMES2 = { easy: "轻松", good: "一般", hard: "困难", again: "忘了" };
+      RATING_NAMES3 = { easy: "轻松", good: "一般", hard: "困难", again: "忘了" };
     }
   });
 
@@ -36790,14 +36834,17 @@ ${n.content.slice(0, 2e3)}
     lastDm = dm;
     const items = await dm.loadItems();
     let w;
+    let fit2 = null;
     try {
-      w = (await Promise.resolve().then(() => (init_app2(), app_exports))).reviewApp.currentW();
+      const appMod = await Promise.resolve().then(() => (init_app2(), app_exports));
+      w = appMod.reviewApp.currentW();
+      fit2 = typeof appMod.reviewApp.fitMeta === "function" ? appMod.reviewApp.fitMeta() : null;
     } catch (e) {
       w = void 0;
     }
-    renderStatsModal(app, dm, items, w);
+    renderStatsModal(app, dm, items, w, fit2);
   }
-  function renderStatsModal(app, dm, items, w) {
+  function renderStatsModal(app, dm, items, w, fit2) {
     closeStatsModal();
     statsMask = document.createElement("div");
     statsMask.id = "review-stats-mask";
@@ -36822,7 +36869,7 @@ ${n.content.slice(0, 2e3)}
     document.body.appendChild(statsMask);
     document.body.appendChild(statsPopup);
     const stats = computeStats(items, { w });
-    body.innerHTML = buildStatsHTML(app, dm, items, stats);
+    body.innerHTML = buildStatsHTML(app, dm, items, stats, fit2);
     body.querySelectorAll(".bz-review-stats-tl-row").forEach((el) => {
       el.addEventListener("click", () => {
         const idx = Number(el.dataset.idx);
@@ -36840,7 +36887,7 @@ ${n.content.slice(0, 2e3)}
       close: closeStatsModal
     });
   }
-  function buildStatsHTML(app, dm, items, stats) {
+  function buildStatsHTML(app, dm, items, stats, fit2) {
     var _a2, _b2;
     const cards = `
     <div class="bz-stats-cards">
@@ -36851,9 +36898,14 @@ ${n.content.slice(0, 2e3)}
       ${statCardHTML("平均 R", stats.avgR === null ? "-" : Math.round(stats.avgR * 100) + "%", 4)}
       ${statCardHTML("复习笔记", stats.reviewedNotes, 5)}
     </div>`;
+    const fitChips = fit2 ? statInlineHTML([
+      `记忆曲线：${fit2.full ? "全参拟合" : "基础拟合"}`,
+      `样本 ${fit2.fitCount} 条`,
+      `拟合于 ${formatRelativeTime(new Date(fit2.fitAt))}`
+    ]) : statInlineHTML(["记忆曲线：默认参数，复习积累后自动拟合"]);
     const total = Object.values(stats.ratingDist).reduce((a, b) => a + b, 0) || 1;
     const ratingBars = ["again", "hard", "good", "easy"].map((r) => ({
-      label: RATING_NAMES[r],
+      label: RATING_NAMES2[r],
       value: stats.ratingDist[r] || 0
     }));
     const ratingHTML = sectionHTML(
@@ -36902,7 +36954,7 @@ ${n.content.slice(0, 2e3)}
     );
     const daily7 = stats.daily7.map((d) => ({ label: d.date.slice(5).replace("-", "/"), value: d.count }));
     const weekHTML = sectionHTML("最近 7 天复习量", barChartHTML(daily7, "#E6DFF5"), "#E6DFF5");
-    return cards + ratingHTML + loadHTML + timelineHTML + weekHTML;
+    return cards + fitChips + ratingHTML + loadHTML + timelineHTML + weekHTML;
   }
   async function showTimeline(app, dm, item) {
     closeTimeline();
@@ -36957,7 +37009,7 @@ ${n.content.slice(0, 2e3)}
     tl.className = "bz-review-history-tl";
     const itemsHTML = history2.map((h, i) => {
       const isLast = i === history2.length - 1;
-      const ratingName = RATING_NAMES[h.rating] || h.rating;
+      const ratingName = RATING_NAMES2[h.rating] || h.rating;
       const color = RATING_COLORS[h.rating] || "#888";
       const rText = h.R !== void 0 ? `R=${h.R <= 1 ? Math.round(h.R * 100) : Math.round(h.R)}%` : "";
       const sText = h.stability !== void 0 ? `S=${h.stability}` : "";
@@ -37694,6 +37746,8 @@ ${n.content.slice(0, 2e3)}
         _reviewCountSinceFit: 0,
         /** ADR-0077：当前生效的拟合权重（null=用默认 DEFAULT_W） */
         _fittedW: null,
+        /** issue 361：最近载入的拟合元数据（null=无拟合文件/未加载；统计弹窗展示拟合档位用） */
+        _fitMeta: null,
         /** ADR-0077：拟合运行防重入 */
         _fitRunning: false,
         /** P3：reviewLoop 活动轮询句柄（卸载统一清理；插件禁用后不得继续读盘翻篇弹通知） */
@@ -37734,14 +37788,21 @@ ${n.content.slice(0, 2e3)}
         ensure(app) {
           if (!this.dataManager) this.dataManager = new ReviewDataManager(app);
         },
-        /** ADR-0077：加载拟合参数到 _fittedW（无则 null 回退默认）；ensureReview 启动时调用 */
+        /** ADR-0077：加载拟合参数到 _fittedW（无则 null 回退默认）；ensureReview 启动时调用。
+         *  issue 361：同时留存 _fitMeta（契约版本/样本数/档位），统计弹窗标注拟合档位用 */
         async loadFitParams(app) {
           try {
             const fit2 = await loadFittedParams(app);
+            this._fitMeta = fit2;
             this._fittedW = fit2 ? mergeFittedW(fit2.w) : null;
           } catch (e) {
+            this._fitMeta = null;
             this._fittedW = null;
           }
+        },
+        /** issue 361：当前拟合档位元数据（无拟合 → null；stats-ui 人话标注「基础拟合/全参拟合」） */
+        fitMeta() {
+          return this._fitMeta;
         },
         /**
          * ADR-0077：每 N 次复习自动重拟合（全自动定期重算）。
@@ -37761,12 +37822,17 @@ ${n.content.slice(0, 2e3)}
             const items = await dm.loadItems();
             const result = fitFromItems(items);
             if (result) {
-              await saveFittedParams(app, {
+              const fitAt = (/* @__PURE__ */ new Date()).toISOString();
+              const version = result.fit.full ? FIT_PARAMS_VERSION.FULL : FIT_PARAMS_VERSION.BASIC;
+              const meta = {
                 w: result.fit.w,
-                fitAt: (/* @__PURE__ */ new Date()).toISOString(),
+                fitAt,
                 fitCount: result.count,
-                full: result.fit.w.length >= 19
-              });
+                full: result.fit.full,
+                version
+              };
+              await saveFittedParams(app, meta);
+              this._fitMeta = meta;
               this._fittedW = mergeFittedW(result.fit.w);
               notice(`已根据 ${result.count} 条复习记录拟合记忆参数`, "success");
             }
