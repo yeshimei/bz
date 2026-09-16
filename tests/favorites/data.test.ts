@@ -1,11 +1,12 @@
 // @vitest-environment node
 /**
  * 收藏本 DataManager 测试（ticket 11）：CRUD + 排序。
+ * issue 363：标签定义 favorites.tags.json 读写 + 改名/删除条目批量跟随（updateTagLabelBulk）。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { DataManager } from '../../src/favorites/data';
-import { getStorageDir, getStoragePath, isUrlLike } from '../../src/favorites/config';
+import { getStorageDir, getStoragePath, isUrlLike, DEFAULT_TAGS, getTags, resetTagsState, normalizeTags } from '../../src/favorites/config';
 import { MockVault } from '../mock-vault';
 
 function makeApp(vault: MockVault) {
@@ -124,6 +125,91 @@ describe('存储路径解析（文件名固定 favorites.json）', () => {
   it('文件名不可改：自定义 fav.json 一律落 favorites.json', () => {
     const dir = getStorageDir('我的/数据/fav.json');
     expect(dir).toBe('我的/数据');
+  });
+});
+
+describe('标签定义 favorites.tags.json（issue 363）', () => {
+  let vault: MockVault;
+  let dm: DataManager;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setApp(makeApp(vault));
+    dm = new DataManager('CONFIG/STORAGE/favorites.json');
+    resetTagsState();
+  });
+
+  it('loadTags：文件缺失 → 回退内置 9 类 seed（零迁移，不建文件不写盘）', async () => {
+    const tags = await dm.loadTags();
+    expect(tags.map((t) => t.label)).toEqual(['GitHub', '桌面软件', '网站', '大模型', 'pi', 'Claude', 'skills', '酒馆', 'DeepSeek Harness']);
+    expect(tags.every((t) => t.id && t.ic)).toBe(true);
+    expect(getTags()).toBe(tags); // config 单源注入生效
+    expect(vault.files.has('CONFIG/STORAGE/favorites.tags.json')).toBe(false);
+  });
+
+  it('loadTags：文件在自定义目录也按 storagePath 定位（同 favorites.json 目录）', async () => {
+    const dm2 = new DataManager('我的/数据/favorites.json');
+    vault.files.set('我的/数据/favorites.tags.json', JSON.stringify([{ id: 'x', label: '装修灵感', ic: 'heart' }]));
+    const tags = await dm2.loadTags();
+    expect(tags.map((t) => t.label)).toEqual(['装修灵感']);
+  });
+
+  it('loadTags：文件为数组（含自定义标签）→ 定义生效且顺序保留', async () => {
+    vault.files.set('CONFIG/STORAGE/favorites.tags.json', JSON.stringify([
+      { id: 't1', label: '育儿', ic: 'heart' },
+      { id: 'github', label: 'GitHub', ic: 'github' },
+    ]));
+    const tags = await dm.loadTags();
+    expect(tags.map((t) => t.id)).toEqual(['t1', 'github']);
+    expect(getTags().map((t) => t.label)).toEqual(['育儿', 'GitHub']);
+  });
+
+  it('loadTags：空数组 / 坏行 → seed 回退（坏 JSON 由 jsonStore 留档降级为 []，同路径）', async () => {
+    vault.files.set('CONFIG/STORAGE/favorites.tags.json', '[]');
+    expect((await dm.loadTags()).length).toBe(DEFAULT_TAGS.length);
+    vault.files.set('CONFIG/STORAGE/favorites.tags.json', JSON.stringify([null, 42, { label: '  ' }, { label: '有效', ic: 'star' }]));
+    const tags = await dm.loadTags();
+    expect(tags.map((t) => t.label)).toEqual(['有效']);
+  });
+
+  it('saveTags：写盘（裸数组 JSON）+ config 单源即时生效', async () => {
+    const next = [{ id: 't1', label: '育儿', ic: 'heart' }, { id: 'web', label: '网站', ic: 'globe' }];
+    await dm.saveTags(next);
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.tags.json')!)).toEqual(next);
+    expect(getTags().map((t) => t.label)).toEqual(['育儿', '网站']);
+  });
+
+  it('updateTagLabelBulk：条目 tags[] 与 type 批量跟随（updateSceneBulk 范式），返回迁移条数', async () => {
+    await dm.add({ id: '1', tags: ['酒馆', 'GitHub'], title: 'A', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '', type: '酒馆' } as any);
+    await dm.add({ id: '2', tags: ['酒馆'], title: 'B', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '', type: '酒馆' } as any);
+    await dm.add({ id: '3', tags: ['网站'], title: 'C', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '', type: '网站' } as any);
+
+    const moved = await dm.updateTagLabelBulk('酒馆', '小酒馆');
+    expect(moved).toBe(2);
+    const data = await dm.getAll();
+    expect(data.find((d) => d.id === '1')).toMatchObject({ tags: ['小酒馆', 'GitHub'], type: '小酒馆' });
+    expect(data.find((d) => d.id === '2')).toMatchObject({ tags: ['小酒馆'], type: '小酒馆' });
+    expect(data.find((d) => d.id === '3')).toMatchObject({ tags: ['网站'], type: '网站' }); // 无关条目不动
+  });
+
+  it('updateTagLabelBulk：零匹配返回 0 且不写盘；空名/同名幂等返回 0', async () => {
+    await dm.add({ id: '1', tags: ['网站'], title: 'A', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '', type: '网站' } as any);
+    const before = vault.files.get('CONFIG/STORAGE/favorites.json')!;
+    expect(await dm.updateTagLabelBulk('不存在', '随便')).toBe(0);
+    expect(await dm.updateTagLabelBulk('网站', '网站')).toBe(0);
+    expect(await dm.updateTagLabelBulk('', 'x')).toBe(0);
+    expect(vault.files.get('CONFIG/STORAGE/favorites.json')).toBe(before);
+  });
+
+  it('normalizeTags：非数组 → []；缺 id 补、缺 ic 回落 tag、名称去空白', () => {
+    expect(normalizeTags('nope')).toEqual([]);
+    const out = normalizeTags([{ label: ' A ' }, { id: 'k', label: 'B' }, { id: '', label: 'C', ic: '' }]);
+    expect(out).toHaveLength(3);
+    expect(out[0]).toMatchObject({ label: 'A', ic: 'tag' });
+    expect(out[0].id).toBeTruthy();
+    expect(out[1]).toMatchObject({ id: 'k', label: 'B', ic: 'tag' });
+    expect(out[2].label).toBe('C');
+    expect(out[2].ic).toBe('tag');
   });
 });
 

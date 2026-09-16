@@ -20,7 +20,7 @@
  * C5 视觉拍板定稿（ADR-0101）：本文件只做 markup 平移，任何视觉值一个像素不动。
  */
 import { esc, iconSpan } from '../core/ui/str';
-import { TAGS } from './config';
+import { getTags } from './config';
 import type { FavoritesItem } from './types';
 
 /** esc/iconSpan 再导出：评审壳演示层 markup（toast/确认框）与插件同源 */
@@ -82,12 +82,19 @@ export function relTime(s: string | undefined): string {
   return `${d.getMonth() + 1}-${p(d.getDate())}`;
 }
 
-/** 首标签 → 磁圆点/徽记色相（原型 hueOf 逐字；9 固定标签各占一档，未知标签兜底蓝） */
+/**
+ * 首标签 → 磁圆点/徽记色相（原型 hueOf 逐字）。issue 363 标签自定义延伸：
+ * 内置 9 类原名映射保留（未改名数据视觉不变）；未命中（自定义/改名标签）回落
+ * 字符串 hash 色相带（同一 label 恒定、不同标签分散，不再一律兜底蓝）。
+ */
 export function hueOf(label: string): number {
   const m: Record<string, number> = {
     GitHub: 215, 桌面软件: 160, 网站: 30, 大模型: 265, pi: 100, Claude: 20, skills: 50, 酒馆: 330, 'DeepSeek Harness': 195,
   };
-  return m[label] != null ? m[label] : 200;
+  if (m[label] != null) return m[label];
+  let h = 0;
+  for (let i = 0; i < label.length; i++) h = (h * 31 + label.charCodeAt(i)) % 360;
+  return h;
 }
 
 // ==================== 派生管道（items 显式入参） ====================
@@ -148,7 +155,7 @@ export function cardHtml(it: FavoritesItem, idx: number): string {
     <p>${esc(it.description || '（这张卡只写了个名字）')}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
       const h = hueOf(t);
-      const ic = (TAGS.find((x) => x.label === t) || { ic: '' }).ic;
+      const ic = (getTags().find((x) => x.label === t) || { ic: '' }).ic;
       return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic ? iconSpan(ic, 'bz-ic--xs') : ''}<span>${esc(t)}</span></span>`;
     }).join('')}</span>
       <span>${esc(relTime(it.created))}</span></div>
@@ -195,9 +202,10 @@ export function actionSpecs(it: FavoritesItem): FavActionSpec[] {
 
 // ==================== 表单（添加 / 编辑共用骨架） ====================
 
-/** 表单标签多选 chips（.bz-fav-pick 内部；sel = 当前选中集，重绘由调用方触发） */
+/** 表单标签多选 chips（.bz-fav-pick 内部；sel = 当前选中集，重绘由调用方触发）。
+ *  issue 363：标签集 = getTags() 动态（内置 seed / favorites.tags.json） */
 export function pickChipsHtml(sel: Set<string>): string {
-  return TAGS.map((t) =>
+  return getTags().map((t) =>
     `<button type="button" class="${sel.has(t.label) ? 'bz-fav-on' : ''}" data-tag="${esc(t.label)}">${iconSpan(t.ic, 'bz-ic--xs')}<span>${esc(t.label)}</span></button>`
   ).join('');
 }

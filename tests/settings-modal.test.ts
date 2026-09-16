@@ -508,12 +508,13 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     setSettingsSaver(async () => {});
   });
 
-  it('桌面端：外观组（issue 246 占位）+ 显示组（issue 296）；退役键不回归', () => {
+  it('桌面端：外观组（issue 246 占位）+ 显示组（issue 296）+ 标签管理组（issue 363）；退役键不回归', () => {
     const schema = favoritesSettingsSchema();
-    // issue 296 补显示组后：外观 / 显示 两组
-    expect(schema.groups).toHaveLength(2);
+    // issue 363 补标签管理组后：外观 / 显示 / 标签管理 三组
+    expect(schema.groups).toHaveLength(3);
     expect(schema.groups[0].name).toBe('外观');
     expect(schema.groups[1].name).toBe('显示');
+    expect(schema.groups[2].name).toBe('标签管理');
     const allRows = schema.groups.flatMap((g) => g.rows) as any[];
     expect(allRows.find((r) => r.binding?.key === 'favoritesTimeFormat')).toBeUndefined();
     expect(allRows.find((r) => r.binding?.key === 'favoritesSortKey')).toBeUndefined();
@@ -522,7 +523,7 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     expect(layout.binding).toMatchObject({ key: 'favoritesSkin' });
     expect(theme.binding).toMatchObject({ key: 'favoritesSkinTheme' });
     expect(theme.layoutKey).toBe('favoritesSkin');
-    // 显示组（issue 296）：打开默认筛选（全部/记住上次/九类标签）+ 默认排序三档
+    // 显示组（issue 296）：打开默认筛选（全部/记住上次/当前标签集）+ 默认排序三档
     const [openFilter, sort] = schema.groups[1].rows as any[];
     expect(openFilter.binding).toMatchObject({ key: 'favoritesOpenFilter' });
     expect(openFilter.options.map((o: any) => o.value)).toEqual([
@@ -530,5 +531,10 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     ]);
     expect(sort.binding).toMatchObject({ key: 'favoritesDefaultSort' });
     expect(sort.options.map((o: any) => o.value)).toEqual(['new', 'old', 'title']);
+    // 标签管理组（issue 363）：custom 行插槽（管理列表自绘，行内文案不经设置文案 lint）
+    const mgrRows = schema.groups[2].rows as any[];
+    expect(mgrRows).toHaveLength(1);
+    expect(mgrRows[0].type).toBe('custom');
+    expect(typeof mgrRows[0].render).toBe('function');
   });
 });

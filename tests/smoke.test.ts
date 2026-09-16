@@ -410,3 +410,20 @@ ${failures.join('\n')}`).toEqual([]);
     unloadPomodoro(); // 清理弹窗与域内存态，不污染后续用例
   });
 });
+
+describe('收藏本标签自定义数据契约（issue 363 冒烟）', () => {
+  it('favorites.json 纯数组根契约不动；标签定义走同目录伴生文件 favorites.tags.json，缺省回退内置 9 类', async () => {
+    const { DataManager } = await import('../src/favorites/data');
+    const { getTags, resetTagsState } = await import('../src/favorites/config');
+    resetTagsState();
+    // 未载入/文件缺失 = 内置 9 类 seed（零迁移）
+    expect(getTags().map((t) => t.id)).toEqual(
+      ['github', 'desktop', 'web', 'llm', 'pi', 'claude', 'skills', 'pub', 'dsh']
+    );
+    // 标签定义伴生文件与 favorites.json 同目录（favorites.json 顶层保持纯条目数组：
+    // 主页.js 读 favorites.length、checkup 字段漂移检查依赖纯数组根，不因标签自定义破坏）
+    const dm = new DataManager('CONFIG/STORAGE/favorites.json');
+    expect(dm.tagsPath).toBe('CONFIG/STORAGE/favorites.tags.json');
+    resetTagsState();
+  });
+});
