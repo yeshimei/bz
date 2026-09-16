@@ -78,7 +78,7 @@ describe('域遮罩 blur 全量在位', () => {
       // 保险库解锁屏已收编为 core 共享组件（三域同源），遮罩随之落到 core 组件库
       ['src/core/ui/components.css', '.bz-lockscreen--mask'],
       ['src/encrypt/styles.css', '.bz-encrypt-health-mask'],
-      ['src/encrypt/styles.css', '.bz-vault-dlg-mask'],
+      // .bz-vault-dlg-mask（密码添加/编辑弹窗遮罩）随 ADR-0155 密码视图退役，断言一并清退
       ['src/knowledge/styles.css', '.bz-kb-mask'],
       ['src/review/styles.css', '#review-stats-mask'],
       ['src/review/styles.css', '#review-history-mask'],

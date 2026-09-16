@@ -1757,3 +1757,18 @@
   background: var(--pwv-gold-soft);
   opacity: 0.82; /* 同 .bz-password-vault-btn:hover */
 }
+
+/* ---------- 快速取密选择器（bz-password-vault-gen「快速取密」命令，ADR-0155 统一流）。
+   挂 body（createOverlay 弹层，不落 .bz-password-vault 根内），与原 encrypt 侧
+   .bz-encrypt-pwqp 同构迁移：候选行/空态/搜索框基线走样式库 .bz-popover-item(.is-on) /
+   .bz-popover-empty / .bz-input；域内只留弹窗壳、滚动列表与行内两行文案
+   （平台名继承行色，is-on 时随品牌色）。层级走 ADR-0067 动态发号。 ---------- */
+.bz-password-vault-qp { background: var(--bz-surface-2, var(--background-secondary)); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); flex-direction: column; overflow: hidden; }
+.bz-password-vault-qp-head { padding: 14px var(--bz-space-lg) 0; }
+.bz-password-vault-qp-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--bz-text-1, var(--text-normal)); }
+.bz-password-vault-qp-search { margin: 10px var(--bz-space-lg); width: calc(100% - 32px); box-sizing: border-box; }
+.bz-password-vault-qp-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 var(--bz-space-sm) 10px; }
+.bz-password-vault-qp .bz-popover-item .mid { flex: 1; min-width: 0; }
+.bz-password-vault-qp .bz-popover-item .pl { font-size: var(--bz-font-body); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bz-password-vault-qp .bz-popover-item .ac { font-size: var(--bz-font-meta); color: var(--bz-text-2, var(--text-muted)); font-family: var(--bz-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.bz-password-vault-qp .bz-popover-item .key { font-size: var(--bz-font-caption); color: var(--bz-text-3, var(--text-faint)); flex-shrink: 0; }

@@ -58,7 +58,7 @@ import { destroyMountTree, openMountTree, refreshMountTree } from './knowledge/m
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 右键菜单）
 import { openAttachMove, ensureAttachFileMenu, ATTACH_COMMAND_ID } from './attach';
 // 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板）
-import { openEncrypt, encryptCurrentNote, copyVaultPassword, lockEncrypt, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
+import { openEncrypt, encryptCurrentNote, lockEncrypt, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 // 密码本（password-vault 域，ADR-0109 自统一保险库拆回独立域；ADR-0078 成型版，共享保险箱锁与数据）
 import { openPasswordVault, unloadPasswordVault, copyGeneratedPassword, lockPasswordVault } from './password-vault';
 // 内容首页（home 域，ticket 177；旧入口页 launcher 已退役删除，ADR-0093）
@@ -183,15 +183,14 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）
   { id: 'bz-encrypt-open', name: '保险库', icon: DOMAIN_ICONS.encrypt, callback: () => openEncrypt(getApp()) },
   { id: 'bz-encrypt-lock', name: '加密当前笔记', icon: 'lock-keyhole', callback: () => encryptCurrentNote(getApp()) },
-  // 快速取密（fuzzy 选择器直取密码 → 剪贴板 60s 自动清空，不打开主面板）
-  { id: 'bz-encrypt-copy-password', name: '快速复制密码', icon: 'key-round', callback: () => copyVaultPassword(getApp()) },
   // 锁定保险库（2026-09-11 首页入口菜单）：一步上锁、不开面板（此前只能进面板点「立即上锁」）。
   // id 不能用 bz-encrypt-lock —— 那条早被「加密当前笔记」占用（历史遗留的语义错位），改用 lock-vault
   { id: 'bz-encrypt-lock-vault', name: '锁定保险库', icon: 'lock', callback: () => lockEncrypt(getApp()) },
   // 密码本（password-vault 域，ADR-0109 拆回独立域：ADR-0078 成型版 UI，与保险库共享锁与数据）
   { id: 'bz-password-vault-open', name: '密码本', icon: DOMAIN_ICONS['password-vault'], callback: () => openPasswordVault(getApp()) },
-  // 快速生成密码（2026-09-10：首页入口菜单联动，按设置的长度/字符集生成即复制，60s 后清空剪贴板，不开面板）
-  { id: 'bz-password-vault-gen', name: '快速生成密码', icon: 'key-round', callback: () => void copyGeneratedPassword(getApp()) },
+  // 快速取密（ADR-0155 统一流：fuzzy 列现有密码 + 顶部「生成新」，搜到即复制、无命中生成；
+  // 60s 后清空剪贴板、不弹明文、不开面板。原 bz-encrypt-copy-password 退役，同语义由本条承接）
+  { id: 'bz-password-vault-gen', name: '快速取密', icon: 'key-round', callback: () => void copyGeneratedPassword(getApp()) },
   // 锁定密码本（2026-09-11 首页入口菜单）：与保险库同库同锁（一把主密码）
   { id: 'bz-password-vault-lock', name: '锁定密码本', icon: 'lock', callback: () => lockPasswordVault(getApp()) },
   // 小橘陪伴猫（smartcat 域）

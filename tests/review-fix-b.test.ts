@@ -69,9 +69,8 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     // --sm（原 -4px）：番茄钟控制钮（骨架 markup 单源已迁 render.ts，ADR-0104）、复习评级条
     expect(repo('src/pomodoro/render.ts')).toMatch(/pomodoro-btn pomodoro-btn-primary bz-touch-target--sm/);
     expect(repo('src/review/render.ts')).toContain('bz-review-bar-btn bz-touch-target--sm'); // issue 253 markup 单源 render.ts
-    // --lg（原 -8px）：加密空态钮/复制账号钮、复习信息行（home 活动河改版后无盒装钮/迷你 chips）
-    expect(repo('src/encrypt/vault-pw-view.ts')).toContain('bz-pwv-empty-add bz-touch-target--lg');
-    expect(repo('src/encrypt/vault-pw-view.ts')).toContain('copyac bz-touch-target--lg');
+    // --lg（原 -8px）：复习信息行（home 活动河改版后无盒装钮/迷你 chips）；
+    // 加密空态钮/复制账号钮随 ADR-0155 密码视图退役（vault-pw-view 文件删除，断言一并清退）
     expect(repo('src/review/render.ts')).toContain('bz-q-fitem bz-touch-target--lg'); // issue 253 markup 单源 render.ts
     // --xl（原 -12px）：日记本头行图标钮（ADR-0115 回忆墙升格，markup 单源 render.ts）、加密移动关闭/返回钮、复习三个关闭钮
     expect(repo('src/diary/render.ts')).toContain('bz-diary-icon-btn bz-touch-target--xl');

@@ -99,14 +99,15 @@ const EXPECTED_COMMAND_IDS = [
   // 自动关联（ADR-0141 §1：两条建链命令随功能归属迁入知识盒，引擎留第二大脑）
   'bz-knowledge-relink', 'bz-knowledge-link-all',
   'bz-attach-move',
-  // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记 + 快速复制密码
+  // 统一保险库（ADR-0085）：加密笔记 + 加密日记 + 加密当前笔记（ADR-0155：密码资产视图
+  // 与快速复制密码命令退役，快速取密统一归 bz-password-vault-gen）
   // 注意：bz-encrypt-lock 是历史遗留 id，实际动作是「加密当前笔记」；
   // 锁定保险库（2026-09-11 首页入口菜单）另用 bz-encrypt-lock-vault，避免撞 id
-  'bz-encrypt-open', 'bz-encrypt-lock', 'bz-encrypt-copy-password',
+  'bz-encrypt-open', 'bz-encrypt-lock',
   'bz-encrypt-lock-vault',
   // 密码本（password-vault 域，ADR-0109 拆回独立域）
   'bz-password-vault-open',
-  // 快速生成密码（2026-09-10：首页入口菜单联动）
+  // 快速取密（ADR-0155 统一流：fuzzy 列现有密码 + 顶部「生成新」；id 承接旧「快速生成密码」）
   'bz-password-vault-gen',
   // 锁定密码本（2026-09-11 首页入口菜单；与保险库同库同锁）
   'bz-password-vault-lock',

@@ -29,8 +29,14 @@
 
 ## 三、测试
 
-（实现后回填）
+（实现后回填；#7/#8 ADR-0155 批次已随实现回填如下）
+
+- 删 `tests/encrypt/vault-ui.test.ts` 密码视图用例（文件重写为收敛版：骨架/导航/摘除断言/日记抽屉/销毁确认等非密码用例保留，新增「直通 pw 资产不渲染密码元素」「密码镜像 SafeNote 不进面板」断言）；
+- 删 `tests/encrypt/enh-data.test.ts`（密码强度随弹窗退役；fuzzy 段移入 password-vault）；
+- `tests/encrypt/vault-data.test.ts` → `tests/password-vault/data-manager.test.ts`（数据层测试随实现属主迁移，import 改 `src/password-vault/data`）；
+- `tests/password-vault/quick-pick.test.ts` 新增：fuzzy 数据侧 3 例 + 统一流 UI 3 例（顶部固定「生成新」不受过滤影响 / 选现有 Enter 复制且通知不含明文 / 空库只剩生成新可生成 / 60s 自动清空定时器 fake clock 命中 / 未解锁先弹共享解锁屏、面板未打开）；
+- `tests/smoke.test.ts` 删 `bz-encrypt-copy-password`；`tests/core/overlay-glass.test.ts` 清退 `.bz-vault-dlg-mask` 遮罩断言；`tests/review-fix-b.test.ts` 清退 vault-pw-view 触控档断言。
 
 ## 四、门禁
 
-（实现后回填）
+（实现后回填；#7/#8 批次：`tsc --noEmit` 0 错；`vitest run tests/encrypt tests/password-vault tests/smoke.test.ts` 30 文件 426 用例全绿；全量回归仅 `preview-freshness` 25 例失败（原型产物待回主仓重出，worktree 不构建）。）
