@@ -950,8 +950,8 @@ describe('桌面行动作浮层', () => {
     addBtn.click();
     await tick(10);
     (document.querySelector('#fz-title') as HTMLInputElement).value = '脏草稿';
-    (document.querySelector('.bz-fav-form-mask') as HTMLElement)
-      .dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    (document.querySelector('.bz-overlay-mask') as HTMLElement)
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     expect(document.querySelector('.bz-fav-form')).not.toBeNull(); // 表单仍在（拦截未直接关）
     expect(confirm().classList.contains('bz-fav-flow-dialog')).toBe(true);
@@ -1025,7 +1025,7 @@ describe('添加表单', () => {
     await tick(20);
     openAddViaMainBtn();
     const els = formEls();
-    expect(document.querySelector('.bz-fav-form-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-overlay-mask')).not.toBeNull();
     expect(els.titleEl.textContent).toBe('添加收藏');
     expect(els.save.textContent).toBe('保存');
     expect(els.tagBtns.length).toBe(9);
@@ -1476,14 +1476,14 @@ describe('脏表单拦截', () => {
     ) as HTMLElement;
     btn.click();
   }
-  const maskEl = () => document.querySelector('.bz-fav-form-mask') as HTMLElement;
+  const maskEl = () => document.querySelector('.bz-overlay-mask') as HTMLElement;
 
   it('空白表单点遮罩直接关，无 confirm', async () => {
     const ctx = await setup();
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     openAddForm();
-    maskEl().dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    maskEl().dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     expect(document.querySelector('.bz-fav-form')).toBeNull();
     expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
@@ -1496,7 +1496,7 @@ describe('脏表单拦截', () => {
     openAddForm();
     const title = document.querySelector('#fz-title') as HTMLInputElement;
     title.value = '未保存草稿';
-    maskEl().dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    maskEl().dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     // confirm 弹出
     const popup = document.getElementById('__shared_confirm_popup__');
@@ -1509,7 +1509,7 @@ describe('脏表单拦截', () => {
     expect(document.querySelector('.bz-fav-form')).not.toBeNull();
     expect((document.querySelector('#fz-title') as HTMLInputElement).value).toBe('未保存草稿');
     // 再点遮罩 → 放弃（第一动作 = __shared_confirm_cancel__）
-    maskEl().dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    maskEl().dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
     await tick(10);
@@ -1541,7 +1541,7 @@ describe('脏表单拦截', () => {
     await tick(10);
     clickAction('编辑');
     await tick(10);
-    maskEl().dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    maskEl().dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     expect(document.querySelector('.bz-fav-form')).toBeNull(); // 无改动直接关
     expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
@@ -1557,7 +1557,7 @@ describe('脏表单拦截', () => {
     clickAction('编辑');
     await tick(10);
     // 基线只计入九类 chip（GitHub），与 formTagsNow 同口径 → 未改动不算脏
-    maskEl().dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    maskEl().dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     expect(document.querySelector('.bz-fav-form')).toBeNull();
     expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
@@ -1815,7 +1815,7 @@ describe('表单防丢检查补全（ticket 188：标签/置顶/关联笔记）'
     ) as HTMLElement;
     btn.click();
   }
-  const maskEl = () => document.querySelector('.bz-fav-form-mask') as HTMLElement;
+  const maskEl = () => document.querySelector('.bz-overlay-mask') as HTMLElement;
 
   it('只点置顶钮（无文本输入）→ 点遮罩弹 confirm', async () => {
     const ctx = await setup();
@@ -1823,7 +1823,7 @@ describe('表单防丢检查补全（ticket 188：标签/置顶/关联笔记）'
     await tick(20);
     openAddForm();
     (document.querySelector('#fz-pin') as HTMLElement).click();
-    maskEl().dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    maskEl().dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
     expect(document.querySelector('.bz-fav-form')).not.toBeNull();

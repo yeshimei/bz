@@ -274,9 +274,10 @@
 /* ---- 空态（组件库 uiEmpty 工厂 → .bz-empty，token 覆盖自动纸面化） ---- */
 
 /* ---- 详情弹窗（P20 桌面点卡）：纸面 + 墨框 + 硬阴影 + 四态流转条 ----
-   遮罩 z 由 openBelDetail 经 topifyZ 动态发号（ADR-0067，恒压主面板） */
-.bz-bel-detail {
-  width: 520px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
+   壳已收编 core uiModal（issue 347 第 5 项）：遮罩/z 发号（allocZ）随壳归 core 单源，
+   域内只保留海报卡皮（.bz-overlay-popup.bz-bel-detail 提特异性压过共享壳默认卡面） */
+.bz-overlay-popup.bz-bel-detail {
+  width: 520px; max-width: calc(100vw - 32px);
   background: var(--bz-bel-paper); color: var(--bz-bel-ink);
   border: 2px solid var(--bz-bel-ink); border-radius: 0;
   box-shadow: 10px 10px 0 var(--bz-bel-shadow-strong);
@@ -328,15 +329,15 @@
 .bz-bel-sheet-head { display: flex; align-items: flex-start; gap: 10px; }
 .bz-bel-sheet-info { flex: 1; min-width: 0; }
 
-/* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；状态 = p20 .choice 平铺四格）----
-   表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档；
+/* ---- 表单（弹窗壳已收编 core uiModal，issue 347 第 5 项；状态 = p20 .choice 平铺四格）----
+   遮罩/z 发号/遮罩点击关/ESC 关全归 .bz-overlay-mask 单源；限高滚动走 core popup 82vh；
    分类候选浮层（.bz-popover）锚定所在 .bz-field 下方 */
-.bz-bel-form {
+.bz-overlay-popup.bz-bel-form {
   background: var(--bz-bel-paper); color: var(--bz-bel-ink);
   border-radius: 0;
   border: 2px solid var(--bz-bel-ink); box-shadow: 10px 10px 0 var(--bz-bel-shadow-strong);
-  width: 480px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
-  padding: var(--bz-space-lg); display: flex; flex-direction: column;
+  width: 480px; max-width: calc(100vw - 32px);
+  padding: var(--bz-space-lg);
 }
 .bz-bel-form .bz-field { position: relative; }
 .bz-bel-form .bz-input { border-color: var(--bz-bel-ink); background: transparent; }
@@ -417,19 +418,17 @@
 }
 
 /* ---- 移动端（≤768px = p20 手机壳）----
-   容器查询基座：面板与浮层遮罩各为容器（原型评审壳 .demo-mob 396px 由此触发移动端样式，
-   单源双端）。真实端语义与原 @media(max-width:768px) 等价：移动全屏面板宽 = 100vw、
-   详情遮罩 inset:0 宽 = 100vw，均恰在 ≤768 时命中。面板自身尺寸规则仍走 @media
-   （容器查询不能命中容器自己）。 */
-.bz-bel-panel,
-.bz-bel-form-mask,
-.bz-bel-detail-mask { container-type: inline-size; }
+   容器查询基座：面板为容器（原型评审壳 .demo-mob 396px 由此触发移动端样式，单源双端）。
+   表单/详情遮罩容器档已随壳收编 uiModal 退役——其内容无容器查询规则（此前为陪跑挂名）。
+   真实端语义与原 @media(max-width:768px) 等价：移动全屏面板宽 = 100vw。面板自身尺寸
+   规则仍走 @media（容器查询不能命中容器自己）。 */
+.bz-bel-panel { container-type: inline-size; }
 @media (max-width: 768px) {
   .bz-bel-panel {
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
-  .bz-bel-detail { width: 100vw; max-width: none; border-left: none; border-right: none; }
+  .bz-overlay-popup.bz-bel-detail { width: 100vw; max-width: none; border-left: none; border-right: none; }
 }
 @container (max-width: 768px) {
   /* hero 顶行 = 印章头（H8 拍板）：墨章「64 在库」+「归物本」+ 钱数小字 + ✕ 右对齐；

@@ -155,13 +155,13 @@
    插件端 .bz-ic 默认 1em、tagb 挂 --xs 12px（!important），覆盖须同带 !important。 —— */
 .bz-fav-card .bz-fav-tagb .bz-ic { width: 11px !important; height: 11px !important; }
 
-/* —— 表单（原型 .mask + .form 逐字） —— */
-.bz-fav-form-mask {
-  position: fixed; inset: 0; z-index: 600; /* 原型兜底值，插件端以 topifyZ 为准 */
-  background: var(--mask); backdrop-filter: blur(var(--bz-overlay-blur)); display: flex; align-items: center; justify-content: center;
-}
-.bz-fav-form {
-  width: min(430px, calc(100vw - 32px)); max-height: 86vh; overflow: auto; background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
+/* —— 表单弹窗（壳已收编 core uiModal，issue 347 第 5 项）——
+   遮罩/z 发号/遮罩点击关/ESC 关全归 .bz-overlay-mask 单源；域内只保留亚麻卡皮
+   （逐值照抄旧 .bz-fav-form，与确认流程框 #__shared_confirm_popup__.bz-fav-flow-dialog 同取值：
+   --pop 底 / 14px 圆角 / 0 16px 44px .32 阴影）。限高滚动走 core popup 82vh 单源。 */
+.bz-overlay-popup.bz-fav-form {
+  width: min(430px, calc(100vw - 32px));
+  background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
   box-shadow: 0 16px 44px rgba(0,0,0,.32);
 }
 .bz-fav-form h2 { font-size: var(--bz-font-emphasis); color: var(--pop-ink); margin: 0 0 14px; letter-spacing: 2px; }
@@ -209,8 +209,7 @@
    confirmDiscard(..., 'bz-fav-flow-dialog bz-fav-scope') 挂类。为什么必须是这两个类：
      · `bz-fav-flow-dialog` = 本域确认框专属类，承载下面这套取值；
      · `bz-fav-scope` = 私有 token（--pop/--pop-ink/--pop-mut/--acc/--fld-bd/--on-acc）的定义者，
-       不命中则本块所有变量解析失败 → 必须跟着传（与 openForm 的
-       `.bz-fav-form-mask bz-fav-scope` 同口径）。
+       不命中则本块所有变量解析失败 → 必须跟着传（与 openForm 的 uiModal popup 域类同口径）。
    取值全部照抄同域表单弹窗 `.bz-fav-form`（styles.css:163 起），让「归档/删除/放弃」三个确认框
    与「添加·编辑收藏」表单弹窗同皮。core 侧不再自持壳层，底/圆角/阴影由
    `.bz-overlay-popup` 消费的 --bz-* token 起底，这里用域私有 token 覆写。

@@ -42,11 +42,13 @@ describe('C1：域选择器脱离 core reset 同分顺序对抗 + 原型 core �
   });
 });
 
-describe('C2：动态 mask 挂 bz-fav-scope（行为单源后断言指向真行为 ui.ts，壳不自绘）', () => {
-  it('openForm 的 mask className 带 scope（issue 245：壳只载真行为包，无自绘 confirmDlg）', () => {
+describe('C2：弹窗壳收编 core uiModal（issue 347 第 5 项）后 scope 挂 popup（壳不自绘）', () => {
+  it('openForm 的 uiModal popup className 带域类 + scope（issue 245 行为单源口径延续）', () => {
     const proto = favProto();
-    // 行为单源（issue 245/ADR-0106）：动态 mask 的 className 赋值唯一落点 = 真行为 ui.ts
-    expect(favUi().match(/bz-fav-form-mask bz-fav-scope/g)?.length).toBe(1);
+    // 行为单源（issue 245/ADR-0106）：弹窗 className 赋值唯一落点 = 真行为 ui.ts；旧自绘 mask 类退役
+    expect(favUi().match(/bz-fav-form bz-fav-scope/g)?.length).toBe(1);
+    expect(favUi()).toContain('uiModal(');
+    expect(favUi()).not.toContain('bz-fav-form-mask');
     expect(proto).not.toContain("= 'bz-fav-form-mask';");
     expect(proto).toContain('prototype-behavior.js');
   });
@@ -89,11 +91,12 @@ describe('C10：图标尺寸对齐 c5 基准（ADR-0101 1:1 恢复）', () => {
   });
 });
 
-describe('C11：静态 z-index 标注原型兜底', () => {
-  it('form-mask z-index 行带「原型兜底值，插件端以 topifyZ 为准」注释（菜单/抽屉 z 已归 core 动态发号）', () => {
+describe('C11：静态 z-index 退役（壳收编 core uiModal 后 z 发号归 allocZ 单源）', () => {
+  it('旧 .bz-fav-form-mask 壳样式整块退役，域内不再持静态 z-index / 自绘遮罩', () => {
     const css = favCss();
-    expect(css.match(/原型兜底值，插件端以 topifyZ 为准/g)?.length).toBe(1);
-    expect(css).toMatch(/z-index: 600; \/\* 原型兜底值/);
+    expect(css).not.toContain('.bz-fav-form-mask');
+    expect(css).not.toContain('topifyZ 为准'); // 旧兜底注释随壳退役
+    expect(css).not.toMatch(/z-index:\s*\d+/);
   });
 });
 

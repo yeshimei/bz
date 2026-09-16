@@ -105,13 +105,16 @@ describe('enh-sweep-c：小字号扫尾', () => {
 });
 
 describe('enh-sweep-c：静态 z-index 退役（favorites/belongings）', () => {
-  it('css 不再持有 100000/110000 静态档；ui.ts 显示时 topifyZ 发号', () => {
+  it('css 不再持有 100000/110000 静态档；面板 topifyZ 发号，弹窗壳 z 发号归 core uiModal（allocZ）', () => {
     for (const d of ['favorites', 'belongings']) {
       const s = css(d);
       expect(s).not.toContain('z-index: 100000');
       expect(s).not.toContain('110000');
+      // 面板仍走 topifyZ（ADR-0067）；表单/详情自绘遮罩已随壳收编 uiModal（issue 347 第 5 项），
+      // 遮罩创建即 allocZ 发号，域内不再自挂 topifyZ(mask)
       expect(src(`src/${d}/ui.ts`).match(/topifyZ\(overlay\)/)).not.toBeNull();
-      expect(src(`src/${d}/ui.ts`).match(/topifyZ\(mask\)/)).not.toBeNull();
+      expect(src(`src/${d}/ui.ts`)).toContain('uiModal(');
+      expect(src(`src/${d}/ui.ts`)).not.toMatch(/topifyZ\(mask\)/);
     }
   });
 });
