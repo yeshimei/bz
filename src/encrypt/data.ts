@@ -50,6 +50,12 @@ export interface SafeAttachment {
   hasPreview: boolean;
   /** 预览层镜像相对路径（encryptRoot 下，平铺随机名） */
   previewRef: string;
+  /**
+   * 共享附件标记（issue 338 他引保护）：加密时该附件被其他笔记同时引用，
+   * 原件保留在原路径未删（他篇嵌入不断链）。还原取出时跳过该附件的明文写回，
+   * 防覆盖保留的原件；密文镜像照常随条目删除。
+   */
+  keptShared?: boolean;
 }
 
 /** 清单里的一条加密笔记 */
@@ -119,6 +125,11 @@ export interface LockAttachmentInput {
   data: string;
   /** 预览内容 base64（压缩/抽帧产物）；不传则无预览层 */
   previewData?: string;
+  /**
+   * 共享附件标记（issue 338 他引保护）：该附件被其他笔记同时引用，调用方（他引检查）
+   * 判定后置 true——加密时原件保留不删（S5 跳过），标记随清单记账，还原取出时跳过明文写回。
+   */
+  keptShared?: boolean;
 }
 
 export interface LockNoteInput {
@@ -985,7 +996,8 @@ export class SafeManager {
    * 加密阶段密文流式写入暂存区 `.staging/`（不占内存、不进入数据文件夹正式布局）；
    * 全部加密成功后才进入提交序列：
    *   S1 写挂起标记 → S2 清单先行（saveManifest，提交点）→ S3 暂存镜像搬入顶层
-   *   → S4 清除挂起标记 → S5 尽力删原文件（失败仅提示，onDeleteFailed 收集，不回滚）。
+   *   → S4 清除挂起标记 → S5 尽力删原文件（失败仅提示，onDeleteFailed 收集，不回滚；
+   *   共享附件 keptShared 跳过删除——issue 338 他引保护，原件保留他篇嵌入不断链）。
    * 关键不变量：挂起标记存在 ⇒ 原文件未删 ⇒ 解锁自愈回滚永远安全；标记于删原文件前清除，
    * 标记清除后的意外一律视为已提交、绝不回滚（Q4-A）。
    * 任一失败（附件/正文加密、写暂存、清单写入、搬入、清标记）→ 整笔放弃：清理本次暂存、
@@ -1046,6 +1058,8 @@ export class SafeManager {
           fingerprint: fp,
           hasPreview,
           previewRef,
+          // 共享附件标记随清单记账（issue 338）：仅 true 落账，老清单/非共享不受影响
+          keptShared: a.keptShared || undefined,
         };
       });
       for (const r of results) attachments.push(r);
@@ -1083,9 +1097,12 @@ export class SafeManager {
       } catch (e) {
         throw new Error('清除挂起标记失败：' + (e as Error).message);
       }
-      // S5 尽力删原文件（失败仅提示、不回滚；Q4-A）
+      // S5 尽力删原文件（失败仅提示、不回滚；Q4-A）。
+      // 共享附件（keptShared，issue 338 他引保护）：原件保留不删（他篇笔记嵌入不断链），
+      // 密文侧已照常入库；还原取出时跳过明文写回（防覆盖保留的原件）。
       const deleteFailed: string[] = [];
       for (const a of input.attachments) {
+        if (a.keptShared) continue;
         try {
           await this.deleteVaultFile(a.path);
         } catch (e) {
@@ -1146,6 +1163,8 @@ export class SafeManager {
    * 还原（取出即删）一篇笔记（操作级互斥入口，P1-6）：与 lockNote 共享同一串行链。
    *
    * 解原文 + 原质量附件写回原路径。
+   * 共享附件（keptShared，issue 338）跳过写回：原件加密时已保留在原路径，还原时不再
+   * 解密/校验/落盘该附件（密文镜像照常随条目删除），防覆盖保留的原件。
    * 原子语义（用户决策修订）：阶段一并行解密全部附件 + 正文并完成全部校验
    * （指纹冲突/目标被占/镜像缺失/解密失败），**任一失败 → 整体放弃，零落盘**；
    * 阶段二才批量写回明文（写回中途失败尽力回滚本次创建的文件）。
@@ -1170,16 +1189,23 @@ export class SafeManager {
     const conflicts: string[] = [];
     const total = note.attachments.length + 1;
 
-    // 阶段一（准备，并行）：附件解密 + 指纹校验 + 目标占用检查；冲突只收集不落盘
+    // 阶段一（准备，并行）：附件解密 + 指纹校验 + 目标占用检查；冲突只收集不落盘。
+    // 共享附件（keptShared，issue 338）：原件保留在原路径，跳过解密/校验/写回——
+    // 占位 null 不计冲突（否则保留的原件会被误判「被用户占用」阻塞整体还原）
     let done = 0;
     const plainAttachments = await mapLimit(note.attachments, BLOB_CONCURRENCY, async (a) => {
+      if (a.keptShared) {
+        done += 1;
+        onProgress?.({ done, total, current: a.path });
+        return null;
+      }
       const plainB64 = await this.prepareRestoreAttachment(a);
       done += 1;
       onProgress?.({ done, total, current: a.path });
       return plainB64;
     });
     note.attachments.forEach((a, i) => {
-      if (plainAttachments[i] === null) conflicts.push(a.path);
+      if (!a.keptShared && plainAttachments[i] === null) conflicts.push(a.path);
     });
     // 正文准备（contentRef 镜像）
     done += 1;
@@ -1197,11 +1223,12 @@ export class SafeManager {
     }
     if (conflicts.length > 0) return { note, conflicts, removed: false };
 
-    // 阶段二（提交）：全部准备成功才写回明文
+    // 阶段二（提交）：全部准备成功才写回明文（共享附件跳过写回——原件保留在原路径，issue 338）
     const created: string[] = [];
     try {
       for (let i = 0; i < note.attachments.length; i++) {
         const a = note.attachments[i];
+        if (a.keptShared) continue;
         const wasCreated = await this.commitRestoreAttachment(a, plainAttachments[i]!);
         if (wasCreated) created.push(a.path);
       }
@@ -1283,20 +1310,21 @@ export class SafeManager {
     const note = this.manifest.notes.find((n) => n.id === noteId);
     if (!note || note.kind !== 'diary-entry') throw new Error('未找到该加密日记条目');
     const conflicts: string[] = [];
-    // 阶段一（准备，并行）：全部附件解密 + 校验
+    // 阶段一（准备，并行）：全部附件解密 + 校验（共享附件 keptShared 跳过——原件保留，issue 338）
     const plainAttachments = await mapLimit(note.attachments, BLOB_CONCURRENCY, async (a) =>
-      this.prepareRestoreAttachment(a)
+      a.keptShared ? null : this.prepareRestoreAttachment(a)
     );
     note.attachments.forEach((a, i) => {
-      if (plainAttachments[i] === null) conflicts.push(a.path);
+      if (!a.keptShared && plainAttachments[i] === null) conflicts.push(a.path);
     });
     if (!finalBlock) conflicts.push(note.path);
     if (conflicts.length > 0) return false;
-    // 阶段二（提交）：写回附件 + merge 块；失败回滚本次创建
+    // 阶段二（提交）：写回附件（共享附件跳过——原件保留在原路径，issue 338）+ merge 块；失败回滚本次创建
     const created: string[] = [];
     try {
       for (let i = 0; i < note.attachments.length; i++) {
         const a = note.attachments[i];
+        if (a.keptShared) continue;
         const wasCreated = await this.commitRestoreAttachment(a, plainAttachments[i]!);
         if (wasCreated) created.push(a.path);
       }
