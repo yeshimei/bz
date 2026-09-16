@@ -117,7 +117,12 @@ async function renameToTitle(app: any, file: any, title: string): Promise<Rename
     newPath = `${dir}/${clean} (${n++}).md`;
   }
   try {
-    await app.vault.rename(file, newPath);
+    // 必须走 fileManager.renameFile：它会联动更新全库指向该文件的双链（含知识盒 source 这类
+    // frontmatter 引号字符串内的 [[路径|名]]）；vault.rename 只搬路径不更新任何引用，
+    // 曾致文献笔记来源断链。老宿主无 fileManager 才回退（对齐 attach 域同一范式）。
+    const fmRename = app?.fileManager?.renameFile;
+    if (fmRename) await fmRename.call(app.fileManager, file, newPath);
+    else await app.vault.rename(file, newPath);
     return { target: app.vault.getAbstractFileByPath(newPath) || file, renamed: true, failed: false };
   } catch (e) {
     console.warn('[自动摘要] 重命名失败，仅写 frontmatter title:', e);
@@ -199,7 +204,7 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
       return;
     }
 
-    // AI 标题 → 重命名笔记文件（rename 只改路径不改内容；失败/无需改回退原 file）
+    // AI 标题 → 重命名笔记文件（fileManager.renameFile 联动更新全库双链；失败/无需改回退原 file）
     let targetFile = file;
     let renameFailed = false; // warning 推迟到 modify 成功后发（B5：文案承诺「标题已写入」需以真实落盘为前提）
     if (missing.includes('title') && aiResult.title) {
