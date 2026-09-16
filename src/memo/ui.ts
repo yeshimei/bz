@@ -1530,11 +1530,6 @@ export function ensureMemo(app: App): void {
   void loadData();
 }
 
-export function openMemo(app: App): void {
-  ensureMemo(app);
-  openMemoPanel(app);
-}
-
 export function addMemo(app: App): void {
   ensureMemo(app);
   void (async () => {

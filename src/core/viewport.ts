@@ -34,11 +34,6 @@ type Cleanup = () => void;
 
 let cleanup: Cleanup | null = null;
 
-/** 当前是否已接管（测试/调试用） */
-export function isViewportBound(): boolean {
-  return cleanup !== null;
-}
-
 /**
  * 同步一次可视视口高度到 `--bz-vvh`。
  * 未挂载 / 无 visualViewport 时是安全的 no-op（CSS 侧 `100dvh` 兜底）。
