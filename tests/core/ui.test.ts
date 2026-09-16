@@ -338,6 +338,21 @@ describe('bz ui 组件库', () => {
       const { popup } = uiModal({ content: 'hi', maxWidth: 520 });
       expect(popup.style.maxWidth).toContain('520');
     });
+    it('requestClose 拦截通道：遮罩点击/ESC 改调 requestClose 不直接关（issue 347 第 5 项，脏表单先确认）', () => {
+      const requestClose = vi.fn();
+      const { close } = uiModal({ content: 'hi', requestClose });
+      // 遮罩点击 → 只通知意图，不关（消费方未放行）
+      document.querySelector('.bz-overlay-mask')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(requestClose).toHaveBeenCalledTimes(1);
+      expect(document.querySelector('.bz-overlay-mask')).not.toBeNull();
+      // ESC 同走拦截通道
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      expect(requestClose).toHaveBeenCalledTimes(2);
+      expect(document.querySelector('.bz-overlay-mask')).not.toBeNull();
+      // 消费方放行 → close() 真关（遮罩移除）
+      close();
+      expect(document.querySelector('.bz-overlay-mask')).toBeNull();
+    });
   });
 
   describe('lightbox', () => {

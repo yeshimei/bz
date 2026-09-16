@@ -103,11 +103,9 @@ describe('域遮罩 blur 全量在位', () => {
     expect(m![0]).toContain('background: var(--bz-overlay)');
   });
 
-  it('品牌底色遮罩保留域底色只加 blur（favorites / secondbrain / settings-panel）', () => {
-    const fav = rule(repo('src/favorites/styles.css'), '.bz-fav-form-mask');
-    expect(fav).toContain(BLUR);
-    expect(fav, 'favorites 暖纸 --mask 底色应保留').toContain('background: var(--mask)');
-
+  it('品牌底色遮罩保留域底色只加 blur（secondbrain / settings-panel）', () => {
+    // favorites 表单遮罩已随壳收编 core uiModal（issue 347 第 5 项）：
+    // 遮罩底色/blur 归 .bz-overlay-mask 单源（core 组断言覆盖），暖纸底留在 popup 卡皮
     const sb = rule(repo('src/secondbrain/styles.css'), '.bz-sb-panel-mask');
     expect(sb).toContain(BLUR);
     expect(sb, 'secondbrain 暖褐底色应保留').toContain('background: #2a261e4d');

@@ -70,7 +70,7 @@ const yearSel = () => document.querySelector('[data-bel-year]') as HTMLElement |
 const yearLabel = () => yearSel()!.querySelector('.bz-bel-select-label')!.textContent;
 const yearOpts = () => [...document.querySelectorAll('[data-bel-yearmenu] .bz-bel-dropopt')] as HTMLElement[];
 const searchInp = () => document.querySelector('[data-bel-search]') as HTMLInputElement | null;
-const detailMask = () => document.querySelector('.bz-bel-detail-mask') as HTMLElement | null;
+const detailMask = () => (document.querySelector('.bz-overlay-popup.bz-bel-detail')?.closest('.bz-overlay-mask') as HTMLElement | null) ?? null;
 const detailBox = () => document.querySelector('.bz-bel-detail') as HTMLElement | null;
 
 /** 桌面：卡右键出跟手菜单（bubbles 到 content 委托；preventDefault 拦原生） */
@@ -113,7 +113,7 @@ async function open(vault: MockVault, settings: any = {}) {
 
 // ---- 表单字段访问（模块级：表单可在面板打开/菜单/命令多路径打开） ----
 const formMask = () => {
-  const m = document.querySelector('.bz-bel-form-mask') as HTMLElement | null;
+  const m = document.querySelector('.bz-overlay-popup.bz-bel-form') as HTMLElement | null;
   if (!m) throw new Error('表单未打开');
   return m;
 };
@@ -229,18 +229,18 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     expect(panel()).toBeNull();
   });
 
-  it('工具行主按钮开表单；表单取消钮关闭；表单遮罩 mousedown 关闭；面板不受影响', async () => {
+  it('工具行主按钮开表单；表单取消钮关闭；表单遮罩点击关闭；面板不受影响', async () => {
     await openPanel();
     openAddForm(panel()!);
-    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).not.toBeNull();
     // 取消钮关闭
     (document.querySelector('[data-bm-cancel]') as HTMLElement).click();
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
     expect(panel()).not.toBeNull();
-    // 遮罩 mousedown 关闭（表单关走 mask/取消钮，无独立 esc 注册）
+    // 遮罩点击关闭（壳已收编 core uiModal：点击关/ESC 关随壳归 core，requestClose 走脏拦截）
     openAddForm(panel()!);
-    (document.querySelector('.bz-bel-form-mask') as HTMLElement).dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    ((document.querySelector('.bz-overlay-popup.bz-bel-form') as HTMLElement).closest('.bz-overlay-mask') as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true })); // uiModal：点遮罩（mask 本体）才触发关闭
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
     expect(panel()).not.toBeNull();
   });
 
@@ -267,9 +267,9 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     expect(panel()).not.toBeNull();
     // 第二层：表单
     openAddForm(panel()!);
-    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).not.toBeNull();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
     expect(panel()).not.toBeNull();
     // 第三层：主面板
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
@@ -279,10 +279,10 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
   it('ESC 分层：面板未开时命令路径开表单，ESC 可关表单（注册随表单补挂）', async () => {
     openForm(null); // 命令路径：内部异步 loadDatabase 后再开
     await flush();
-    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).not.toBeNull();
     expect(panel()).toBeNull();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
     expect(panel()).toBeNull();
   });
 
@@ -308,7 +308,7 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     cleanupBelongings();
   });
 
-  it('收尾扫尾：面板/表单/详情遮罩 topifyZ 动态发号（层层恒压）+ 根节点挂 bz-panel-mtop', async () => {
+  it('收尾扫尾：面板/表单/详情遮罩动态发号（面板 topifyZ、弹窗壳 allocZ 同源，层层恒压）+ 根节点挂 bz-panel-mtop', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1' }) });
     await openPanel();
     const overlay = panel()!;
@@ -323,12 +323,12 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     expect(Number.isFinite(zDetail) && zDetail > zOverlay).toBe(true);
     // 表单压详情
     await openForm(null);
-    const mask = document.querySelector('.bz-bel-form-mask') as HTMLElement;
+    const mask = document.querySelector('.bz-overlay-popup.bz-bel-form')!.closest('.bz-overlay-mask') as HTMLElement; // z 发号在遮罩（core uiModal allocZ）
     const zForm = Number(mask.style.zIndex);
     expect(Number.isFinite(zForm) && zForm > zDetail).toBe(true);
     // 收尾：取消关表单 + 关详情
     (mask.querySelector('[data-bm-cancel]') as HTMLElement).click();
-    (detailMask()! as HTMLElement).dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); // issue 271：✕ 退役，点遮罩关
+    (detailMask()! as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true })); // issue 271：✕ 退役，点遮罩关
     expect(detailMask()).toBeNull();
     cleanupBelongings();
   });
@@ -816,8 +816,8 @@ describe('归物本详情弹窗（P20）', () => {
     expect(flows.find((b) => b.dataset.bdFlow === '闲置')!.classList.contains('is-cur')).toBe(true);
     // 网格卡徽章同步
     expect(cells()[0].querySelector('.bz-bel-tag')!.textContent).toContain('闲置');
-    // 点遮罩关闭（issue 271：✕ 退役；belongings 遮罩走 mousedown）
-    (detailMask()! as HTMLElement).dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    // 点遮罩关闭（issue 271：✕ 退役；遮罩点击关已归 core uiModal）
+    (detailMask()! as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(detailMask()).toBeNull();
   });
 
@@ -827,7 +827,7 @@ describe('归物本详情弹窗（P20）', () => {
     clickCell(cells()[0]);
     (detailBox()!.querySelector('[data-bd-edit]') as HTMLElement).click();
     await flush();
-    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).not.toBeNull();
     expect(nameInp().value).toBe('键盘');
     (formMask().querySelector('[data-bm-cancel]') as HTMLElement).click();
     // 删除
@@ -850,14 +850,14 @@ describe('归物本详情弹窗（P20）', () => {
     expect(events).toEqual([{ kind: 'delete', title: '键盘' }]);
   });
 
-  it('详情遮罩 mousedown 自身关闭；点弹窗本体不关', async () => {
+  it('详情遮罩点击自身关闭；点弹窗本体不关', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1' }) });
     await open(vault);
     clickCell(cells()[0]);
-    (detailMask() as HTMLElement).dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    (detailMask() as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(detailMask()).toBeNull();
     clickCell(cells()[0]);
-    detailBox()!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    detailBox()!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(detailMask()).not.toBeNull();
   });
 
@@ -869,11 +869,11 @@ describe('归物本详情弹窗（P20）', () => {
     // 详情内点编辑 → 表单叠上
     (detailBox()!.querySelector('[data-bd-edit]') as HTMLElement).click();
     await flush();
-    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).not.toBeNull();
     expect(detailMask()).not.toBeNull();
     // 第一层 ESC：关表单，详情保持
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
     expect(detailMask()).not.toBeNull();
     // 第二层 ESC：关详情
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
@@ -1382,7 +1382,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     dateInp().value = '2024-06-15';
     saveBtn().click();
     await flush();
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
     const raw = JSON.parse(vault.files.get(DATA_PATH)!);
     expect(Object.keys(raw)).toEqual(['version', 'last_updated', 'items']);
     const item: any = Object.values(raw.items)[0];
@@ -1415,7 +1415,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     openForm(null);
     await flush();
     // 只有一张表单，且焦点回到既有表单输入框
-    expect(document.querySelectorAll('.bz-bel-form-mask')).toHaveLength(1);
+    expect(document.querySelectorAll('.bz-overlay-popup.bz-bel-form')).toHaveLength(1);
     expect(document.activeElement).toBe(nameInp());
     expect((formMask().querySelector('#bm-name') as HTMLInputElement).value).toBe('改一半');
     // 基线未被第二次调用互踩：脏拦截照常工作
@@ -1424,7 +1424,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
     await flush();
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
   });
 
   it('B7：命令路径数据加载失败 → error 通知，表单不开（修复前静默无任何反馈）', async () => {
@@ -1434,7 +1434,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     openForm(null);
     await flush();
     await tick(20);
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
     expect(hasNotice('数据加载失败：设置读取失败')).toBe(true);
   });
 
@@ -1466,7 +1466,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(saved.items.item_1.created_date).toBe('2024-06-01T10:00:00.000Z'); // created 保留
     expect(events).toHaveLength(1);
     expect(events[0]).toEqual({ kind: 'edit', title: '红轴机械键盘', changes: ['改了名称', '改了价格'] });
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
     expect(cells()[0].textContent).toContain('红轴机械键盘');
   });
 
@@ -1498,7 +1498,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     clickAction('编辑');
     await flush();
     expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
-    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).not.toBeNull();
     // 点表单本体不触发外部点击关闭抽屉（registerSheetCompanion）
     formMask().querySelector('.bz-bel-form')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
@@ -1506,7 +1506,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     nameInp().value = '改后手机';
     saveBtn().click();
     await flush();
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
     expect(document.querySelector('.bz-item-sheet')).toBeNull();
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items.item_1.name).toBe('改后手机');
     expect(events[0]).toEqual({ kind: 'edit', title: '改后手机', changes: ['改了名称'] });
@@ -1523,7 +1523,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     await flush();
     // 脏拦截：confirm 弹出，表单保持
     expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
-    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).not.toBeNull();
     // issue 291：confirmDiscard 的确认框同样带域皮肤类（否则与刚被拦住的表单弹窗两张脸）
     expect(
       document.getElementById('__shared_confirm_popup__')!.classList.contains('bz-bel-flow-dialog')
@@ -1535,7 +1535,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     await flush();
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items.item_1.name).toBe('键盘');
     expect(events).toHaveLength(0);
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
     expect(cells()[0].textContent).toContain('键盘');
     // 未改动表单：取消直接关（无 confirm）
     rightClick(cells()[0]);
@@ -1543,7 +1543,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     await flush();
     (formMask().querySelector('[data-bm-cancel]') as HTMLElement).click();
     await flush();
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
     expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
   });
 
@@ -2017,14 +2017,14 @@ describe('出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089
     clickAction('编辑');
     await flush();
     nameInp().value = '改一半';
-    (document.querySelector('.bz-bel-form-mask') as HTMLElement).dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    ((document.querySelector('.bz-overlay-popup.bz-bel-form') as HTMLElement).closest('.bz-overlay-mask') as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true })); // uiModal：点遮罩（mask 本体）才触发关闭
     await flush();
     expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
-    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).not.toBeNull();
     // 继续编辑 = __shared_confirm_ok__
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await flush();
-    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).not.toBeNull();
     expect(nameInp().value).toBe('改一半');
   });
 });
@@ -2129,7 +2129,7 @@ describe('新增物品默认状态（issue 294）', () => {
     // 编辑既有条目：状态按条目自身回填（默认值只管新记）
     (cells().find((c) => c.textContent?.includes('旧相机')) as HTMLElement).click();
     await flush();
-    (document.querySelector('.bz-bel-detail-mask [data-bd-edit]') as HTMLElement)?.click();
+    (document.querySelector('.bz-overlay-popup.bz-bel-detail [data-bd-edit]') as HTMLElement)?.click();
     await flush();
     expect((formMask().querySelector('#bm-status .bz-choice-btn.is-on') as HTMLElement).dataset.status).toBe('使用中');
     close();
