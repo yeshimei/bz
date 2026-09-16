@@ -105,26 +105,33 @@ describe('enh-sweep-c：小字号扫尾', () => {
 });
 
 describe('enh-sweep-c：静态 z-index 退役（favorites/belongings）', () => {
-  it('css 不再持有 100000/110000 静态档；ui.ts 显示时 topifyZ 发号', () => {
+  it('css 不再持有 100000/110000 静态档；面板 topifyZ 发号，弹窗壳 z 发号归 core uiModal（allocZ）', () => {
     for (const d of ['favorites', 'belongings']) {
       const s = css(d);
       expect(s).not.toContain('z-index: 100000');
       expect(s).not.toContain('110000');
+      // 面板仍走 topifyZ（ADR-0067）；表单/详情自绘遮罩已随壳收编 uiModal（issue 365 第 5 项），
+      // 遮罩创建即 allocZ 发号，域内不再自挂 topifyZ(mask)
       expect(src(`src/${d}/ui.ts`).match(/topifyZ\(overlay\)/)).not.toBeNull();
-      expect(src(`src/${d}/ui.ts`).match(/topifyZ\(mask\)/)).not.toBeNull();
+      expect(src(`src/${d}/ui.ts`)).toContain('uiModal(');
+      expect(src(`src/${d}/ui.ts`)).not.toMatch(/topifyZ\(mask\)/);
     }
   });
 });
 
 describe('enh-sweep-c：杂项打磨', () => {
-  it('review：遮罩 token 毛玻璃（--bz-overlay-blur 三处单源）+ 滚动条隐藏收敛 core 界面级单源 + 死规则清理', () => {
+  it('review：遮罩收编 core 单源（统计/历史走 .bz-overlay-mask，quiz 保留）+ 滚动条隐藏收敛 core 界面级单源 + 死规则清理', () => {
+    // issue 365：统计/历史弹窗遮罩底/blur 上收 core .bz-overlay-mask（TS 挂类，id 留作 DOM 钩子）；
+    // #quiz-mask 入口休眠且刻意自绘，保留原声明
     const s = css('review');
-    for (const sel of ['#review-stats-mask', '#review-history-mask', '#quiz-mask']) {
-      expect(s, `缺 ${sel} 毛玻璃`).toMatch(
-        new RegExp(`${sel.replace(/#/g, '\\#')}\\s*\\{[^}]*backdrop-filter: blur\\(var\\(--bz-overlay-blur\\)\\)`)
-      );
-    }
-    expect(s.match(/backdrop-filter/g)?.length).toBe(3); // 仅上述三处遮罩
+    expect(s).not.toContain('#review-stats-mask {');
+    expect(s).not.toContain('#review-history-mask {');
+    expect(s, '#quiz-mask 刻意保留自绘').toMatch(
+      /#quiz-mask\s*\{[^}]*backdrop-filter: blur\(var\(--bz-overlay-blur\)\)/
+    );
+    expect(s.match(/backdrop-filter/g)?.length).toBe(1); // 仅 quiz-mask 一处
+    const ts = src('src/review/stats-ui.ts');
+    expect(ts.match(/className = 'bz-overlay-mask'/g)?.length).toBe(2); // 统计 + 历史两处
     // 滚动条隐藏收敛 core 界面级单源（ADR-0122 / issue 277）：core 规则在册 + review 域内不再重复定义
     expect(componentsCss()).toMatch(/#review-entries-container[^{]*\{[^}]*scrollbar-width: none/);
     expect(s).not.toMatch(/scrollbar-width|::-webkit-scrollbar/);

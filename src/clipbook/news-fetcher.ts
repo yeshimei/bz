@@ -10,9 +10,10 @@
  * 24h 窗口（知乎/果壳）、URL + 标题双去重、fetchedAt 打标口径与守护完全一致。
  */
 import { requestUrl } from 'obsidian';
+import { httpGetText, requestUrlAsFetch } from '../core/http';
 import { notice } from '../core/notice';
 import { readNewsData, writeNewsDataMerged, normalizeFetchIntervalMin, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN, type NewsSources, type NewsWriteIntent, type RssFeed } from './news-data';
-import { articleKeyOf } from './constants';
+import { articleKeyOf, localDatetime } from './constants';
 import { enqueueNewsWrite } from './write-queue';
 
 // ---------- 常量（对齐守护） ----------
@@ -35,22 +36,15 @@ export { FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN };
 
 export type HttpGet = (url: string, headers?: Record<string, string>) => Promise<string | null>;
 
-/** requestUrl 适配：15s 超时（Promise.race，requestUrl 不支持中止）、非 2xx → null（对齐守护 safeFetch 语义） */
+/** requestUrl 适配：15s 超时、非 2xx / 网络错 / 超时 → null（对齐守护 safeFetch 语义）。
+ *  超时壳收编 core/http（issue 365）；迟到 rejection 由 withTimeout 消化（C23） */
 export function requestUrlHttpGet(): HttpGet {
-  return async (url, headers) => {
-    try {
-      const req = requestUrl({ url, method: 'GET', headers: { ...HEADERS, ...(headers || {}) }, throw: false }).then((resp) => {
-        return resp.status >= 200 && resp.status < 300 ? resp.text : null;
-      });
-      // C23：超时胜出后 req 若迟到 reject 会成为 unhandled rejection——挂空 catch 兜底
-      //（race 尚在等待时 rejection 仍由下方 await 经外层 try 捕获，行为不变）
-      req.catch(() => {});
-      const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), FETCH_TIMEOUT_MS));
-      return await Promise.race([req, timer]);
-    } catch {
-      return null;
-    }
-  };
+  const impl = requestUrlAsFetch();
+  return (url, headers) => httpGetText(url, {
+    timeoutMs: FETCH_TIMEOUT_MS,
+    headers: { ...HEADERS, ...(headers || {}) },
+    fetchImpl: impl,
+  });
 }
 
 // ---------- 磁盘读写（依赖注入；生产默认走 news-data 合并写） ----------
@@ -107,11 +101,7 @@ export function defaultFetchStore(): FetchStoreDeps {
 // ---------- 通用纯函数（照搬守护） ----------
 
 /** 本地时间串 YYYY-MM-DD HH:mm:ss（news 条目 date/fetchedAt 统一口径，避免 UTC 偏移落错日） */
-export function localDatetime(ts: number = Date.now()): string {
-  const d = new Date(ts);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
+export { localDatetime }; // issue 365 收编：原手写与 constants.localDatetime 逐字等价（导出路径保留）
 
 /** HTML → Markdown（照搬守护正则版；知乎 detail body / 果壳 INITIAL_STORE content / RSS content 共用） */
 export function htmlToMarkdown(html: string): string {

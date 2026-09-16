@@ -43,7 +43,7 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
 import {
-  formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt,
+  debounce, formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt,
   generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
 } from '../core/utils';
 import { MemoData, DEFAULT_SCENARIOS, parseComposerChecklist } from './data';
@@ -61,8 +61,12 @@ import { M } from './state';
 const PANEL = { MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
 /** 搜索防抖（180ms，favorites/belongings 同值） */
 const SEARCH_DEBOUNCE_MS = 180;
-/** 搜索防抖计时（打开期间有效，面板关闭清理） */
-let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+/** 搜索防抖（180ms，favorites/belongings 同值；issue 365 收编 core debounce：尾触语义与原手写
+ *  定时器等价——最后一次 input 的输入值生效，面板关闭 cancel 防孤儿回调） */
+const searchDebounced = debounce((v: string) => {
+  M.search = v;
+  renderAll();
+}, SEARCH_DEBOUNCE_MS);
 
 // ---------- 小工具 ----------
 
@@ -523,14 +527,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
 
   // 搜索（防抖 180ms，对齐 favorites/belongings——修复前每键全量重渲且注释与实现不符）
   const searchInput = overlay.querySelector('[data-memo-search]') as HTMLInputElement;
-  searchInput.addEventListener('input', () => {
-    if (searchDebounceTimer !== null) clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = setTimeout(() => {
-      searchDebounceTimer = null;
-      M.search = searchInput.value.trim();
-      renderAll();
-    }, SEARCH_DEBOUNCE_MS);
-  });
+  searchInput.addEventListener('input', () => searchDebounced(searchInput.value.trim()));
 
   void (async () => {
     await loadData();
@@ -555,11 +552,8 @@ export function closeMemoPanel(): void {
     M.overlay.remove();
     M.overlay = null;
   }
-  // 防抖窗口内关闭面板：清计时器防孤儿回调
-  if (searchDebounceTimer !== null) {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = null;
-  }
+  // 防抖窗口内关闭面板：取消挂起回调防孤儿执行
+  searchDebounced.cancel();
   // 卸载拖动缩放（detach 幂等；persist 未落盘的尾值由工厂立即补存）
   if (panelResizeDetach) {
     panelResizeDetach.detach();
@@ -1844,11 +1838,6 @@ export function ensureMemo(app: App): void {
   registerEscapeHandler();
   subscribeMemoSync(app); // T1：同源 memo.json 跨域同步
   void loadData();
-}
-
-export function openMemo(app: App): void {
-  ensureMemo(app);
-  openMemoPanel(app);
 }
 
 export function addMemo(app: App): void {

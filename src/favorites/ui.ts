@@ -167,8 +167,7 @@ function ensureFavoritesEsc(): void {
     isVisible: () => !!M.overlay || !!document.querySelector('.bz-fav-form'),
     close: () => {
       closeItemMenu();
-      const form = document.querySelector('.bz-fav-form') as HTMLElement | null;
-      if (form) requestCloseForm(form);
+      if (document.querySelector('.bz-fav-form')) requestCloseForm();
       else closePanel();
     },
   });
@@ -533,6 +532,8 @@ interface FormBaseline {
 
 let _saving = false;
 let _baseline: FormBaseline | null = null;
+/** 表单弹窗关闭句柄（core uiModal close；closeForm 统一走此单路径） */
+let _formClose: (() => void) | null = null;
 
 /** 表单当前 标签选中集 / 置顶态（DOM 读；供脏比较，避免闭包持有局部状态） */
 function formTagsNow(popup: HTMLElement): string {
@@ -558,23 +559,24 @@ function formDirty(): boolean {
   );
 }
 
-function requestCloseForm(popup: HTMLElement): void {
+function requestCloseForm(): void {
   // issue 291：放弃草稿确认框同样要带本域皮肤类（第三个参数为 core 新增的 className 透传通道）。
-  // 表单弹窗 openForm 的 mask 挂 body 时已自带 `bz-fav-form-mask` + `bz-fav-scope`，本框若不带，
-  // 同一域里就出现「表单有皮、放弃确认没皮」；与归档/删除确认取同一串类，三框同皮。
+  // 表单弹窗壳已收编 core uiModal（issue 365 第 5 项，popup 挂表单域类 + scope）；
+  // 本确认框若不带同串类，同一域里就出现「表单有皮、放弃确认没皮」；与归档/删除确认取同一串类，三框同皮。
   if (formDirty()) {
-    confirmDiscard(() => closeForm(popup), undefined, 'bz-fav-flow-dialog bz-fav-scope');
+    confirmDiscard(() => closeForm(), undefined, 'bz-fav-flow-dialog bz-fav-scope');
   } else {
-    closeForm(popup);
+    closeForm();
   }
 }
 
-function closeForm(popup: HTMLElement): void {
+function closeForm(): void {
   _baseline = null;
   _saving = false;
   closeItemMenu(); // 表单开着时若菜单/抽屉残留在下，一并收掉（core 幂等）
-  // 连同遮罩一并移除（不留全屏空遮罩挡住下层交互）
-  (popup.closest('.bz-fav-form-mask') ?? popup).remove();
+  // uiModal close（幂等）：遮罩与 ESC 层一并收（不留全屏空遮罩挡住下层交互）
+  _formClose?.();
+  _formClose = null;
 }
 
 /** 表单弹窗内取输入值（id 选择器；空串兜底；formDirty/runAiFill/saveForm 共用） */
@@ -582,20 +584,26 @@ function inputVal(popup: HTMLElement, id: string): string {
   return (popup.querySelector(id) as HTMLInputElement | null)?.value ?? '';
 }
 
-/** 打开添加/编辑表单（原型 1:1：标题/链接/简介/标签多选/置顶开关 + AI 整理钮；无大模型/关联笔记） */
+/** 打开添加/编辑表单（原型 1:1：标题/链接/简介/标签多选/置顶开关 + AI 整理钮；无大模型/关联笔记）
+ *  壳走 core uiModal 单源（issue 365 第 5 项）：遮罩创建/z 发号/遮罩点击关/ESC 关全归 uiModal，
+ *  脏拦截经 requestClose 通道（遮罩点击/ESC → requestCloseForm，脏表单先弹放弃确认）。 */
 export function openForm(item: FavoritesItem | null): void {
-  ensureFavoritesEsc(); // 命令可直开表单不经 openPanel：ESC 层随表单注册（F2）
+  ensureFavoritesEsc(); // 命令可直开表单不经 openPanel：ESC 层随表单注册（F2），且须先于 uiModal 层入栈
   // 单例守卫（F15）：已有表单先收掉——防多层叠加（ESC 一次只关一层、遮罩层叠点击错位）
-  const existing = document.querySelector('.bz-fav-form') as HTMLElement | null;
-  if (existing) closeForm(existing);
+  if (document.querySelector('.bz-fav-form')) closeForm();
   const it = item;
-  const mask = document.createElement('div');
-  mask.className = 'bz-fav-form-mask bz-fav-scope';
-  mask.innerHTML = formHtml(it);
-  document.body.appendChild(mask);
-  topifyZ(mask); // ADR-0067：显示即发号，恒压主面板
+  const host = document.createElement('div');
+  host.innerHTML = formHtml(it);
+  const { mask, popup, close } = uiModal({
+    content: host.firstElementChild as HTMLElement,
+    // 弹窗壳只挂 scope（token 域）；bz-fav-form 类由单源 markup 内容根携带（F15 教训：
+    // 壳与内容同挂一类会双计单例守卫），亚麻卡几何锚 .bz-overlay-popup.bz-fav-scope
+    className: 'bz-fav-scope',
+    requestClose: () => requestCloseForm(),
+    onClose: () => { _formClose = null; },
+  });
+  _formClose = close;
   mountIcons(mask);
-  const popup = mask.querySelector('.bz-fav-form') as HTMLElement;
 
   _baseline = {
     title: it?.title || '',
@@ -638,9 +646,8 @@ export function openForm(item: FavoritesItem | null): void {
 
   const errEl = popup.querySelector('#fz-err') as HTMLElement;
 
-  // 遮罩点击 / 取消 → 脏拦截；保存
-  mask.addEventListener('mousedown', (e) => { if (e.target === mask) requestCloseForm(popup); });
-  popup.querySelector('[data-fz-cancel]')?.addEventListener('click', () => requestCloseForm(popup));
+  // 取消 → 脏拦截；保存（遮罩点击关闭已归 uiModal requestClose 通道，不再自挂 mousedown）
+  popup.querySelector('[data-fz-cancel]')?.addEventListener('click', () => requestCloseForm());
   popup.querySelector('#fz-ai')?.addEventListener('click', () => void runAiFill(popup, sel, drawPick, errEl));
   popup.querySelector('#fz-save')?.addEventListener('click', () => void saveForm(popup, it, sel, errEl));
 
@@ -803,7 +810,7 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
       await dm.add(data);
       emitDomainEvent('favorites', { kind: 'add', item: data });
     }
-    closeForm(popup);
+    closeForm();
     await reload();
   } catch (e: any) {
     notice(`保存失败：${e?.message || '未知错误'}`, 'error');
@@ -819,8 +826,8 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
 // 经 updateTagLabelBulk 批量跟随（范式 = memo updateSceneBulk）；行内文案不经设置文案 lint
 // （custom 插槽惯例）。挂 .bz-fav-scope 取域私有 token（flow-dialog 同款通道）。
 // UI 全域内自绘（ADR-0101 拍板：favorites 不引组件库按钮，review-fix-b 守卫）——按钮/输入框
-// 自建 DOM + `data-lucide` 占位经 mountIcons 兑现；编辑弹窗复用表单弹窗那套类（.bz-fav-form-mask
-// / .bz-fav-form / .bz-fav-btns），与「添加·编辑收藏」同皮。
+// 自建 DOM + `data-lucide` 占位经 mountIcons 兑现；编辑弹窗壳收编 core uiModal（同 openForm
+// 口径），内容根复用 .bz-fav-form / .bz-fav-btns，与「添加·编辑收藏」同皮。
 
 /** 图标选择集（lucide 名；含内置 9 类原图标，供新增/编辑挑选） */
 const TAG_ICON_CHOICES = [
@@ -904,33 +911,28 @@ async function moveTag(dm: DataManager, idx: number, delta: number, redraw: () =
   }
 }
 
-/** 新增/编辑弹窗（域内自绘：复用表单弹窗类 .bz-fav-form-mask / .bz-fav-form 同皮 + ESC 独立注册）：
- *  名称 + 图标胶囊；编辑改名先 updateTagLabelBulk 迁条目再存定义 */
+/** 新增/编辑弹窗（壳收编 core uiModal，与表单弹窗同口径 issue 365 第 5 项；markup 沿用
+ *  .bz-fav-form 同皮 + .bz-fav-tageditor 内容根）：名称 + 图标胶囊；编辑改名先
+ *  updateTagLabelBulk 迁条目再存定义 */
 function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => void): void {
-  const mask = document.createElement('div');
-  mask.className = 'bz-fav-form-mask bz-fav-scope';
-  const popup = document.createElement('div');
-  popup.className = 'bz-fav-form bz-fav-tageditor';
-  popup.innerHTML = `
+  const host = document.createElement('div');
+  host.innerHTML = `
+    <div class="bz-fav-form bz-fav-tageditor">
     <h2>${existing ? '编辑标签' : '添加标签'}</h2>
     <div class="bz-fav-fld"><label>名称</label><input id="fz-tag-name" value="${esc(existing?.label || '')}" placeholder="如：装修灵感"></div>
     <div class="bz-fav-fld"><label>图标</label><div class="bz-fav-tageditor-ics" id="fz-tag-ics"></div></div>
     <div class="bz-fav-btns">
       <button type="button" data-fz-tag-cancel>取消</button>
       <button type="button" id="fz-tag-save" class="bz-fav-pri">${existing ? '保存' : '添加'}</button>
+    </div>
     </div>`;
-  mask.appendChild(popup);
-  document.body.appendChild(mask);
-  topifyZ(mask); // ADR-0067：显示即发号
-  mountIcons(popup);
-  const escHandle = escManager.register('bz-fav-tageditor', {
-    isVisible: () => mask.isConnected,
-    close: () => close(),
+  // 弹窗壳只挂 scope（token 域）；bz-fav-form 由内容根携带（与 openForm 同口径，F15 单例守卫不重类）
+  const { popup, close } = uiModal({
+    content: host.firstElementChild as HTMLElement,
+    className: 'bz-fav-scope',
+    maxWidth: 380,
   });
-  const close = (): void => {
-    escHandle.unregister();
-    mask.remove();
-  };
+  mountIcons(popup);
   const input = popup.querySelector('#fz-tag-name') as HTMLInputElement;
   let picked = existing?.ic || 'tag';
   const icPick = popup.querySelector('#fz-tag-ics') as HTMLElement;
@@ -973,7 +975,6 @@ function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => v
   };
   popup.querySelector('[data-fz-tag-cancel]')?.addEventListener('click', () => close());
   popup.querySelector('#fz-tag-save')?.addEventListener('click', () => void doSave());
-  mask.addEventListener('mousedown', (e) => { if (e.target === mask) close(); });
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); void doSave(); }
   });

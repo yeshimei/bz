@@ -1,13 +1,14 @@
 /**
  * 锁家族修复批回归（review-all-bugs.md 三节 E 系 password-vault 侧）：
- * E1 确认框监听器单绑定防删错条目、E2 共锁感知（别域上锁锁屏接管/解锁重载）、
- * E5 弹窗密码默认掩码 + eye 切换、E6 移动详情页 eye/fav/删除即时重建、
- * E15 安全模式自动上锁走全局通知、E16 写操作失败 toast（不吞成 unhandled rejection）、
- * E17 平台头像首字符转义。
+ * E1 确认框回调正确绑定（收编 core 流程框后：取消/ESC/遮罩 = 回调不执行，确认恰好执行一次）、
+ * E2 共锁感知（别域上锁锁屏接管/解锁重载）、E5 弹窗密码默认掩码 + eye 切换、
+ * E6 移动详情页 eye/fav/删除即时重建、E15 安全模式自动上锁走全局通知、
+ * E16 写操作失败全局通知报错（不吞成 unhandled rejection）、E17 平台头像首字符转义。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { cancelActiveFlowDialog } from '../../src/core/flow-dialog';
 import { SafeManager } from '../../src/encrypt/data';
 import { PasswordVaultDataManager } from '../../src/password-vault/data';
 import { PasswordVaultUIManager } from '../../src/password-vault/ui';
@@ -27,6 +28,12 @@ async function waitFor(cond: () => boolean, timeout = 3000) {
     if (Date.now() - start > timeout) throw new Error('waitFor 超时');
     await new Promise((r) => setTimeout(r, 20));
   }
+}
+
+/** 等 core 流程框（askConfirm 收编后的唯一确认 UI，挂 body）出现并返回其弹窗 */
+async function waitForFlowPopup(): Promise<HTMLElement> {
+  await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
+  return document.getElementById('__shared_confirm_popup__') as HTMLElement;
 }
 
 describe('锁家族修复批（password-vault）', () => {
@@ -50,6 +57,7 @@ describe('锁家族修复批（password-vault）', () => {
   });
 
   afterEach(() => {
+    cancelActiveFlowDialog(); // 未决确认框按取消语义结算（防污染后续用例）
     ui.cleanup();
     sm.lock();
     document.body.innerHTML = '';
@@ -60,31 +68,46 @@ describe('锁家族修复批（password-vault）', () => {
     await dm.addItem({ platform: '平台A', account: 'a1', password: 'x' });
     await dm.addItem({ platform: '平台B', account: 'b1', password: 'x' });
     ui.ensureElements();
-    const deskConfirm = document.querySelector('.bz-password-vault-pop2[data-confirm="desk"]') as HTMLElement;
 
     const fired: string[] = [];
     ui.askConfirm('删除 A', 'm', true, () => fired.push('A'));
-    // 用户点遮罩取消（confirmCb 复位，但旧监听器/回调在修复前仍残留叠加）
-    deskConfirm.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(deskConfirm.classList.contains('open')).toBe(false);
+    const popupA = await waitForFlowPopup();
+    expect(popupA.querySelector('h4')!.textContent).toBe('删除 A');
+    expect(popupA.classList.contains('bz-pwv-flow-dialog')).toBe(true); // 域皮随行
+    expect(popupA.classList.contains('bz-flow-dialog--danger')).toBe(true); // danger 语义
+    // 用户点遮罩取消（openFlowDialog 取消语义：遮罩点击 resolve undefined，回调不执行）
+    (document.getElementById('__shared_confirm_mask__') as HTMLElement)
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
+    await flush();
+    expect(fired).toEqual([]);
 
     ui.askConfirm('删除 B', 'm', true, () => fired.push('B'));
-    expect(deskConfirm.classList.contains('open')).toBe(true);
-    (deskConfirm.querySelector('.ok') as HTMLElement).click();
+    const popupB = await waitForFlowPopup();
+    expect(popupB.querySelector('h4')!.textContent).toBe('删除 B');
+    // danger=true → 确认钮文案「删除」（原自绘 .ok.danger 同文案语义）
+    expect(document.getElementById('__shared_confirm_ok__')!.textContent).toBe('删除');
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await flush();
 
-    expect(fired).toEqual(['B']); // 修复前：先命中第一次的旧监听器 → 执行 A
+    expect(fired).toEqual(['B']); // 修复前（自绘监听器叠加）：先命中第一次的旧监听器 → 执行 A
   });
 
   it('E1 对照：连续两次确认（第一次已执行）→ 第二次回调恰好执行一次', async () => {
     await sm.unlock('pw');
     ui.ensureElements();
-    const deskConfirm = document.querySelector('.bz-password-vault-pop2[data-confirm="desk"]') as HTMLElement;
     const fired: string[] = [];
     ui.askConfirm('一', 'm', false, () => fired.push('first'));
-    (deskConfirm.querySelector('.ok') as HTMLElement).click();
+    await waitForFlowPopup();
+    expect(document.getElementById('__shared_confirm_ok__')!.textContent).toBe('确定'); // 非危险 → 「确定」
+    expect(
+      (document.getElementById('__shared_confirm_popup__') as HTMLElement).classList.contains('bz-flow-dialog--danger')
+    ).toBe(false);
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await flush();
     ui.askConfirm('二', 'm', false, () => fired.push('second'));
-    (deskConfirm.querySelector('.ok') as HTMLElement).click();
+    await waitForFlowPopup();
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await flush();
     expect(fired).toEqual(['first', 'second']);
   });
@@ -170,9 +193,9 @@ describe('锁家族修复批（password-vault）', () => {
     (document.querySelector('.bz-password-vault-mobcard') as HTMLElement).click();
     await flush();
     const d = dm.pwData[0];
-    await (ui as any).handleAccountAction(d, 'del');
-    const deskConfirm = document.querySelector('.bz-password-vault-pop2[data-confirm="desk"]') as HTMLElement;
-    (deskConfirm.querySelector('.ok') as HTMLElement).click();
+    await (ui as any).handleAccountAction(d, 'del'); // del → 确认框（core 流程框）
+    await waitForFlowPopup();
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await waitFor(() => dm.pwData.length === 0 && !document.querySelector('.bz-password-vault-mobpage')!.classList.contains('open'));
     expect(dm.pwData.length).toBe(0);
     expect(document.querySelector('.bz-password-vault-mobpage')!.classList.contains('open')).toBe(false);
@@ -190,7 +213,7 @@ describe('锁家族修复批（password-vault）', () => {
     ui2.cleanup();
   });
 
-  it('E16：写操作失败（save 抛错）→ 面板内 toast 报错 + 列表回滚重绘，不产生 unhandled rejection', async () => {
+  it('E16：写操作失败（save 抛错）→ 全局通知报错（error 档）+ 列表回滚重绘，不产生 unhandled rejection', async () => {
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'secret' });
     ui.ensureElements();
@@ -206,9 +229,11 @@ describe('锁家族修复批（password-vault）', () => {
     await (ui as any).handleAccountAction(d, 'fav');
     await flush(50);
     window.removeEventListener('unhandledrejection', onUnhandled);
-    const toast = document.querySelector('.bz-password-vault-toast') as HTMLElement;
-    expect(toast.classList.contains('err')).toBe(true);
-    expect(toast.textContent).toContain('操作失败');
+    // 提示收编 core 全局通知（issue 365）：文案逐字保留 + error 档（原面板内 toast .err 同语义）
+    expect(hasNotice('操作失败：disk full')).toBe(true);
+    const errNotice = [...document.querySelectorAll('.bz-notice--error .bz-notice-msg')]
+      .some((el) => (el.textContent || '').includes('操作失败'));
+    expect(errNotice).toBe(true);
     expect(dm.pwData[0].fav).toBe(false); // 内存回滚，半改态不残留
     void unhandled;
   });

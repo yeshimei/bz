@@ -40,7 +40,7 @@ async function open(vault: MockVault): Promise<HTMLElement> {
   return document.querySelector('.bz-panel-overlay') as HTMLElement;
 }
 
-const formMask = () => document.querySelector('.bz-bel-form-mask') as HTMLElement;
+const formMask = () => document.querySelector('.bz-overlay-popup.bz-bel-form') as HTMLElement;
 const cells = () => [...document.querySelectorAll('[data-bel-content] .bz-bel-cell')] as HTMLElement[];
 
 function rightClick(cell: HTMLElement) {
@@ -135,7 +135,7 @@ describe('归物本 review 面板组回归（H14-H20）', () => {
     await flush();
     expect((formMask().querySelector('#bm-err') as HTMLElement).textContent).toContain('出离日期不能早于购买日期');
     // 未落盘（表单未关、无文件写入新条目）
-    expect(document.querySelector('.bz-bel-form-mask')).toBeTruthy();
+    expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeTruthy();
     const saved = JSON.parse(vault.files.get(DATA_PATH)!);
     expect(Object.keys(saved.items ?? {}).length).toBe(0);
     // 改成合法出离日期后可保存

@@ -1594,14 +1594,6 @@ function buildSuggestion(
   };
 }
 
-/**
- * 目标形态（供渲染层/外部按 ctx 复用；`kindOfTarget` 的公开版）。
- * 单元优先：heading → head / paragraph → para；整篇：卡片盒 → card，其余 → note。
- */
-export function suggestKindOf(path: string, ctx: SuggestCtx, unit?: SuggestUnit): MountKind {
-  return kindOfTarget(path, ctx, unit === 'heading' || unit === 'paragraph' ? unit : 'whole');
-}
-
 /* ---------------- 渲染层用：把建议并进挂载树 ---------------- */
 
 /**

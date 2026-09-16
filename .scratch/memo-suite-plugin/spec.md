@@ -1283,6 +1283,28 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > JSON 键序自愈）+ diary 墙内存条目路径同步 + checkup 孤儿检查扩 knowledge/clipbook 并接一键修复。
 > attach 回退路径（无 fileManager 老宿主）维持 warning 口径不修。
 
+### 全域裁剪批：死代码 / review 评级四命令 / recap 面板退役 / encrypt 密码视图摘除（issue 364，2026-09-16）
+
+> 用户问「全域有哪些功能未被使用、可裁剪；哪些代码可复用提通用」。三路只读扫描（死代码 /
+> 跨域重复 / 功能重叠）+ vault 实际数据核对出清单；用户拍板「除 26 个外观占位键保留外全部采纳，
+> 一起修复」。本批为裁剪侧：① 死代码（core/selection、core/list-patch 两整文件 + 七处零调用
+> 导出 + 三份 src 侧 prototype-render.js 残留 + favoritesSortKey 死键走迁移退役）；
+> ② review 评级四命令（QuickAdd 热键时代遗产，不设默认快捷键后不可达）裁剪，保留
+> bz-review-rate 弹难度弹窗为唯一面板外评级入口；③ recap 面板退役，「生成今日总结」并入 home
+> 今日摘要卡（ADR-0157）；④ encrypt 摘除密码资产视图、快速取密统一为一条 fuzzy 流（ADR-0158，
+> 兑现 ADR-0109 挂起的第二步）。外观占位键 26 枚显式保留不裁（ADR-0159）。
+
+### 全域复用上收批：core/http · file-sync 壳 · uiModal · password-vault 收编 · 机械项（issue 365，2026-09-16）
+
+> 同上评审的复用侧：① 新建 core/http.ts（withTimeout + httpGetText）收敛七处手写带超时请求
+> （语义三套：race→null / race→reject / AbortController）；② 三份 file-sync（memo/clipbook/
+> knowledge 各 220-254 行、骨架逐行等价）抽 core/file-sync.ts 公共壳，域留纯函数；
+> ③ password-vault 最后死角收编：自绘确认框/toast 迁 openFlowDialog/notice（其 E1 注释自述
+> 曾因监听器叠加删错条目），剪贴板复制降级兜底 ×2（encrypt/password-vault 逐字雷同）收 core；
+> ④ 八处手写 mask+popup 三代弹窗壳残迁 core uiModal（favorites/belongings/encrypt/knowledge/
+> secondbrain）；⑤ 中等机械项：core debounce（采用率 0）换五域搜索防抖、空态字符串工厂 ×6、
+> relTime 手写 ×5 口径统一、secondbrain 手写长按 ×2 换 core/dom longPress、pad2 ×12、
+> localDayKey ×3、13 处遮罩 CSS 样板清偿（.bz-overlay-mask 单源）。
 ### 2026 秋季批次·第一波：6 票并行 worktree（issues 352/356/357/358/359/363，2026-09-17）
 
 > 来源 next-ideas.md 全域盘点，用户采纳编号派工；wayfinder 地图 issues/346。每票独立 worktree 开发、
@@ -1291,7 +1313,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > 点击跳原文不开灯箱），纯文本摘要避开 MarkdownRenderer 追加语义（a5d2713a）。② 356 归物本年度资产
 > 报告：`report-stats` 纯层（购入/离场/月度花销/分类占比/日均成本 as-of 口径/陪伴 Top5，截至所选年末
 > 可复现）+ body 级独立遮罩报告页（避开面板全量重渲抹写），命令 `bz-belongings-report`（7ad3fcb6）。
-> ③ 357 番茄钟周归档层（ADR-0154）：`archived` 可选段存 ArchivedWeek（周 key=周一本地日期），明细裁
+> ③ 357 番茄钟周归档层（ADR-0157）：`archived` 可选段存 ArchivedWeek（周 key=周一本地日期），明细裁
 > 7 天窗拍板不动，`trimWithArchive` 裁剪即归档原子落账，统计加「近 7 天/近 6 月」双档（e23da635）。
 > ④ 358 剪藏阅读报告：勘误——阅读时长此前仅内存累计从不落盘；侧写新增 `readLog` 段（key/title/src/
 > minutes/ts，满 1 分钟入账，180 天/5000 条上限），封存点=切篇/保存/标读/关面板/开报告；报告独立弹

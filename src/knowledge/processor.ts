@@ -18,6 +18,7 @@
  * 「笔记落盘中」（ui.ts STEP_DONE_MAP 完成态文案按此精确匹配）。
  */
 import { notice } from '../core/notice';
+import { localNow } from '../core/ui/str';
 import { emitDomainEvent } from '../core/domain-bus';
 import { tryGetSettings } from '../core/settings-provider';
 import { getApp } from '../core/app';
@@ -114,9 +115,7 @@ function tailStderr(chunks: Buffer[]): string {
 }
 
 function nowTs(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  return localNow(); // issue 365 收编：原手写与 core/ui/str localNow 逐字等价
 }
 
 /** 单部终态回调（内部：ok + reason + 笔记/视频路径；resolve 于落库完成后） */

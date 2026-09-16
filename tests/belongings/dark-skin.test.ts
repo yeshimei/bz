@@ -100,7 +100,7 @@ describe('issue 291：确认流程框带皮（core/flow-dialog）', () => {
     const ui = repo('src/belongings/ui.ts');
     expect(ui, '删除物品确认未带皮肤类').toContain("className: 'bz-bel-flow-dialog'");
     expect(ui, '放弃草稿确认未带皮肤类').toContain(
-      "confirmDiscard(() => closeBelForm(mask), undefined, 'bz-bel-flow-dialog')"
+      "confirmDiscard(() => closeBelForm(), undefined, 'bz-bel-flow-dialog')"
     );
   });
 

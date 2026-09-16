@@ -5,6 +5,7 @@
 import moment from 'moment';
 import { requestUrl } from 'obsidian';
 import { getApp } from './app';
+import { pad2 } from './ui/str';
 
 /** HTML 转义 */
 export function escapeHtml(str: string): string {
@@ -17,10 +18,9 @@ export function escapeHtml(str: string): string {
   });
 }
 
-/** pad2(n)：两位数补零（月/日/时/分/秒） */
-export function pad2(n: number | string): string {
-  return String(n).padStart(2, '0');
-}
+/** pad2(n)：两位数补零（月/日/时/分/秒）；实现单源 core/ui/str（零依赖区，render 纯层
+ *  白名单仅 str），此处转发保持既有 import 路径兼容（pomodoro/reading-report 等消费） */
+export { pad2 };
 
 
 /** 睡眠 */
@@ -307,5 +307,38 @@ export function copySensitiveText(text: string): Promise<void> {
     return navigator.clipboard.writeText(text).then(() => armClipboardClear());
   } catch (e) {
     return Promise.reject(e);
+  }
+}
+
+/**
+ * 复制敏感内容（含降级兜底）+ 自动清空（issue 365 收口单源）。
+ * encrypt/ui（日记正文复制）与 password-vault（面板复制 + quick-pick 快速取密）
+ * 原各持一份逐字雷同的「copySensitiveText 失败 → textarea+execCommand 选中法」兜底，
+ * 收编为本函数；两域一律走这里，域内不再自留副本。
+ * 行为口径（三份旧实现逐字等价）：
+ * - navigator.clipboard.writeText 成功 → true（60s 清空随 copySensitiveText 布防）；
+ * - 失败（权限拒绝/非安全上下文/clipboard 缺失）→ textarea 选中法兜底，
+ *   execCommand('copy') 成功同样布防 60s 自动清空，返回其布尔结果；
+ * - 兜底亦抛错 → false（不布防清空）。
+ */
+export async function copySensitiveWithFallback(text: string): Promise<boolean> {
+  try {
+    await copySensitiveText(text);
+    return true;
+  } catch (e) {
+    // 降级：textarea 选中法
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      if (ok) armClipboardClear();
+      return ok;
+    } catch (e2) {
+      return false;
+    }
   }
 }

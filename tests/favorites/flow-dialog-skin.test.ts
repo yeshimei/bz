@@ -30,9 +30,10 @@ describe('issue 291：favorites 确认框挂域皮肤类', () => {
     const src = favUi();
     // openFlowDialog 的 className：归档 + 删除收藏（issue 291）+ 删除标签（issue 363）三处
     expect(src.match(/className: 'bz-fav-flow-dialog bz-fav-scope'/g)?.length).toBe(3);
-    // 放弃草稿走 core/flow-dialog 的 confirmDiscard 第三参（className 透传通道）
+    // 放弃草稿走 core/flow-dialog 的 confirmDiscard 第三参（className 透传通道；
+    // 表单壳已收编 core uiModal，closeForm 不再带 popup 形参，issue 365 第 5 项）
     expect(src).toMatch(
-      /confirmDiscard\(\(\) => closeForm\(popup\),\s*\n?\s*undefined,\s*\n?\s*'bz-fav-flow-dialog bz-fav-scope'\)/
+      /confirmDiscard\(\(\) => closeForm\(\),\s*\n?\s*undefined,\s*\n?\s*'bz-fav-flow-dialog bz-fav-scope'\)/
     );
     // 四处口径一致：都是「域流程框类 + 私有 token 作用域类」这一串
     expect(src.match(/bz-fav-flow-dialog bz-fav-scope/g)?.length).toBe(4);

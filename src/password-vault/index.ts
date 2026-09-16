@@ -7,9 +7,10 @@
 import type { App } from 'obsidian';
 import { getSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
-import { lockSafe } from '../encrypt';
+import { copySensitiveWithFallback } from '../core/utils';
+import { lockSafe, ensureSafeUnlocked } from '../encrypt';
 import { PasswordVaultAppController } from './ui';
-import { copySensitiveText } from '../core/utils';
+import { openPasswordQuickPicker, closePasswordQuickPicker } from './quick-pick';
 
 let initialized = false;
 let controller: PasswordVaultAppController | null = null;
@@ -39,19 +40,36 @@ export function openPasswordVault(app: App): void {
 }
 
 /**
- * 快速生成密码（命令 bz-password-vault-gen，2026-09-10 首页入口菜单联动）：
- * 按设置的字符集/长度生成 → 复制到剪贴板（60 秒后自动清空，与面板内「复制」同一路径）→ 通知。
- * 全程不打开面板；生成器与面板同源（同一个 controller 实例读同一份设置）。
+ * 快速取密（命令 bz-password-vault-gen，ADR-0158 统一流；2026-09-10 首页入口菜单联动）：
+ * 未解锁先弹主密码（同库同锁）→ fuzzy 选择器列出现有密码条目 + 顶部固定「生成新密码」项——
+ * 选中现有条目 → 复制该密码；选「生成新」→ 按设置的字符集/长度生成并复制。
+ * 60s 剪贴板自动清空语义、防偷窥口径（通知只报平台/账号，不含明文）与旧链路一致；
+ * 全程不打开面板（选择器为轻量弹层）。
  */
 export async function copyGeneratedPassword(app: App): Promise<void> {
   await ensurePasswordVault(app);
-  const pw = getController().uiManager.generatePassword();
+  if (!(await ensureSafeUnlocked('password-vault'))) return;
+  const c = getController();
   try {
-    await copySensitiveText(pw);
-    notice('已生成并复制密码，60 秒后自动清空剪贴板');
+    await c.dataManager.load();
   } catch {
-    notice('密码已生成，但复制失败（剪贴板不可用）', 'warning');
+    /* 载荷损坏等：按空态处理（选择器只剩「生成新密码」项） */
   }
+  openPasswordQuickPicker(c.dataManager.pwData, (pick) => {
+    const noticeCopy = (ok: boolean, msg: string) =>
+      notice(ok ? msg : '复制失败，请手动复制', ok ? 'success' : 'error');
+    if (pick.type === 'generate') {
+      const pw = c.uiManager.generatePassword();
+      void copySensitiveWithFallback(pw).then((ok) =>
+        noticeCopy(ok, '已生成并复制密码，60 秒后自动清空剪贴板')
+      );
+      return;
+    }
+    const d = pick.entry;
+    void copySensitiveWithFallback(d.password).then((ok) =>
+      noticeCopy(ok, `已复制「${d.platform}」${d.account ? `（${d.account}）` : ''}的密码，60 秒后自动清空`)
+    );
+  });
 }
 
 /**
@@ -70,6 +88,7 @@ export async function lockPasswordVault(app: App): Promise<void> {
 
 /** 卸载清理（main.ts onunload 调用） */
 export function unloadPasswordVault(): void {
+  closePasswordQuickPicker(); // 快速取密选择器若开着：插件卸载即撤（遮罩/ESC 层不残留）
   if (controller) controller.cleanup();
   controller = null;
   initialized = false;

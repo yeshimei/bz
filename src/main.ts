@@ -17,7 +17,7 @@ import { DOMAIN_ICONS } from './core/domain-icons';
 import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
 
-import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys } from './settings';
+import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey } from './settings';
 
 // 备忘录（memo 域，ADR-0092 旧备忘录域退役后 memo.json 唯一属主，ADR-0117 正名：UI/交互/写盘/引用同步归本域；
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
@@ -59,13 +59,13 @@ import { destroyMountTree, openMountTree, refreshMountTree } from './knowledge/m
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 右键菜单）
 import { openAttachMove, ensureAttachFileMenu, ATTACH_COMMAND_ID } from './attach';
 // 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板）
-import { openEncrypt, encryptCurrentNote, copyVaultPassword, lockEncrypt, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
+import { openEncrypt, encryptCurrentNote, lockEncrypt, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 // 密码本（password-vault 域，ADR-0109 自统一保险库拆回独立域；ADR-0078 成型版，共享保险箱锁与数据）
 import { openPasswordVault, unloadPasswordVault, copyGeneratedPassword, lockPasswordVault } from './password-vault';
 // 内容首页（home 域，ticket 177；旧入口页 launcher 已退役删除，ADR-0093）
 import { openHome, unloadHome } from './home';
-// 今日回顾（recap 域，方向一 R2）：当天五域痕迹聚合只读面板
-import { openRecap, unloadRecap } from './recap';
+// recap 域面板已退役（ADR-0157）：「生成今日总结」迁 home 时间线卡动作行，
+// collectRecap/summarize 纯函数库留 src/recap 供 home 消费，main 不再接线
 import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
 // ai-agent 域解散：引用同步拆入 memo/favorites 域无条件常驻（原 ensureAIAgent/unloadAIAgent 换线）
 // 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴；AI 走 bz core/ai，数据单 json smartcat.json）
@@ -81,8 +81,6 @@ import { openDataCheckup, unloadDataCheckup } from './checkup';
 const COMMANDS: { id: string; name: string; icon: string; callback: () => void }[] = [
   // 内容首页（home 域，ticket 177）
   { id: 'bz-home-open', name: '内容首页', icon: DOMAIN_ICONS.home, callback: () => openHome(getApp()) },
-  // 今日回顾（recap 域，方向一 R2：当天日记/影视/读书/备忘录/番茄痕迹聚合面板）
-  { id: 'bz-recap-today', name: '今日回顾', icon: DOMAIN_ICONS.recap, callback: () => openRecap(getApp()) },
   // 备忘录（memo 域，ADR-0092 起为 memo.json 唯一属主）
   { id: 'bz-memo-open', name: '备忘录', icon: DOMAIN_ICONS.memo, callback: () => openMemoPanel(getApp()) },
   { id: 'bz-memo-add', name: '加备忘录', icon: 'clipboard-list', callback: () => addMemoItem(getApp()) },
@@ -130,7 +128,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-bookshelf-open', name: '书库', icon: DOMAIN_ICONS.bookshelf, callback: () => openBookshelf(getApp()) },
   // 继续在读（2026-09-11 首页入口菜单）：开书架墙并落到「在读」分栏
   { id: 'bz-bookshelf-continue', name: '继续在读', icon: 'book-open', callback: () => void continueReading(getApp()) },
-  // 复习计划（9 命令）
+  // 复习计划（10 命令；评级四命令原拟裁撤，issue 362 做题家面板起依赖评级动作——保留）
+
   { id: 'bz-review-open', name: '复习计划', icon: DOMAIN_ICONS.review, callback: () => openReviewPanel(getApp()) },
   // ticket 174：独立「复习计划分析报告」命令（直开统计弹窗）；图标弃 bar-chart-3（阅读分析报告独占，
   // enh-sweep-a 错开）改 calendar-check（呼应复习日程语义）
@@ -143,7 +142,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-review-remove', name: '移出复习计划', icon: 'minus', callback: () => reviewRemoveCurrent(getApp()) },
   { id: 'bz-review-overdue', name: '复习（跳转逾期）', icon: 'alarm-clock', callback: () => reviewJumpOverdue(getApp()) },
   { id: 'bz-review-rate', name: '复习（选择难度）', icon: 'gauge', callback: () => reviewMarkDialog(getApp()) },
-  // f3：评级四命令去英文后缀并统一「复习（X）」标点（id 不动）
+  // f3：评级四命令去英文后缀并统一「复习（X）」标点（id 不动；issue 362 起做题家面板依赖评级动作）
   { id: 'bz-review-again', name: '复习（忘了）', icon: 'rotate-ccw', callback: () => reviewMarkRating(getApp(), 'again') },
   { id: 'bz-review-hard', name: '复习（困难）', icon: 'trending-up', callback: () => reviewMarkRating(getApp(), 'hard') },
   { id: 'bz-review-good', name: '复习（一般）', icon: 'check', callback: () => reviewMarkRating(getApp(), 'good') },
@@ -201,15 +200,14 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）
   { id: 'bz-encrypt-open', name: '保险库', icon: DOMAIN_ICONS.encrypt, callback: () => openEncrypt(getApp()) },
   { id: 'bz-encrypt-lock', name: '加密当前笔记', icon: 'lock-keyhole', callback: () => encryptCurrentNote(getApp()) },
-  // 快速取密（fuzzy 选择器直取密码 → 剪贴板 60s 自动清空，不打开主面板）
-  { id: 'bz-encrypt-copy-password', name: '快速复制密码', icon: 'key-round', callback: () => copyVaultPassword(getApp()) },
   // 锁定保险库（2026-09-11 首页入口菜单）：一步上锁、不开面板（此前只能进面板点「立即上锁」）。
   // id 不能用 bz-encrypt-lock —— 那条早被「加密当前笔记」占用（历史遗留的语义错位），改用 lock-vault
   { id: 'bz-encrypt-lock-vault', name: '锁定保险库', icon: 'lock', callback: () => lockEncrypt(getApp()) },
   // 密码本（password-vault 域，ADR-0109 拆回独立域：ADR-0078 成型版 UI，与保险库共享锁与数据）
   { id: 'bz-password-vault-open', name: '密码本', icon: DOMAIN_ICONS['password-vault'], callback: () => openPasswordVault(getApp()) },
-  // 快速生成密码（2026-09-10：首页入口菜单联动，按设置的长度/字符集生成即复制，60s 后清空剪贴板，不开面板）
-  { id: 'bz-password-vault-gen', name: '快速生成密码', icon: 'key-round', callback: () => void copyGeneratedPassword(getApp()) },
+  // 快速取密（ADR-0158 统一流：fuzzy 列现有密码 + 顶部「生成新」，搜到即复制、无命中生成；
+  // 60s 后清空剪贴板、不弹明文、不开面板。原 bz-encrypt-copy-password 退役，同语义由本条承接）
+  { id: 'bz-password-vault-gen', name: '快速取密', icon: 'key-round', callback: () => void copyGeneratedPassword(getApp()) },
   // 锁定密码本（2026-09-11 首页入口菜单）：与保险库同库同锁（一把主密码）
   { id: 'bz-password-vault-lock', name: '锁定密码本', icon: 'lock', callback: () => lockPasswordVault(getApp()) },
   // 小橘陪伴猫（smartcat 域）
@@ -247,8 +245,10 @@ export default class BzPlugin extends Plugin {
     const autoLinkMigrated = migrateAutoLinkSettings(loaded);
     // issue 342 后续：「上下文窗口」设置行删除（模型固有属性、零消费点），aiContextOverrides 键退役
     const retiredAIKeysMigrated = migrateRetiredAIKeys(loaded);
+    // issue 364：收藏本排序循环钮键退役（ADR-0083 后零消费点，残留清除）
+    const retiredSortKeyMigrated = migrateRetiredFavoritesSortKey(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
-    if (memoKeysMigrated || autoLinkMigrated || retiredAIKeysMigrated) {
+    if (memoKeysMigrated || autoLinkMigrated || retiredAIKeysMigrated || retiredSortKeyMigrated) {
       void this.saveSettings().catch((e) => console.error('[bz] 设置键迁移落盘失败:', e));
     }
     setApp(this.app);
@@ -346,7 +346,9 @@ export default class BzPlugin extends Plugin {
     unloadKnowledgeFileSync();
     unloadClipbookFileSync();
     unloadHome();
-    unloadRecap();
+    // recap 面板退役（ADR-0157）：原 unloadRecap 只清面板 DOM/ESC（随面板一并消失）；
+    // 迁入 home 的「生成今日总结」无在途作废句柄，unloadHome（resetHomeState）复位生成标志，
+    // 在途流程收口时按钮已随 DOM 摘除（aiButton 为 null）自然 no-op，通知由 cleanupNotices 统一清
     unloadEncrypt();
     unloadPasswordVault();
     unloadSmartCat();

@@ -32,13 +32,9 @@
   --red: #c4523d;
 }
 
-/* ===== 遮罩 / 主窗 ===== */
-.bz-kb-mask {
-  position: fixed;
-  inset: 0;
-  background: var(--bz-overlay);
-  backdrop-filter: blur(var(--bz-overlay-blur));
-}
+/* ===== 遮罩 / 主窗 =====
+   .bz-kb-mask 三件套（fixed/inset/--bz-overlay 底/token blur）已收编 .bz-overlay-mask 单源
+   （issue 365）；类名保留为 DOM 语义钩子（mount-canvas 挂 bz-overlay-mask bz-kb-mask bz-kb-mt-mask） */
 
 .bz-kb-window {
   position: fixed;
