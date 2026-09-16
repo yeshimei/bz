@@ -36,6 +36,9 @@ import { belongingsEditChanges } from '../smartcat/belongings-source';
 import type { SettingsSchema } from '../core/settings-schema';
 import { loadDatabase, saveDatabase, getDataFilePath } from './data';
 import {
+  openBelReport, closeBelReport, unloadBelReport,
+} from './report';
+import {
   renderPanelView, panelHtml,
   belDetailHtml, flowBtnsHtml, belFormHtml, belFormInit, statusPickHtml, sheetHeadHtml,
   actionSpecs, todayStr, isExited, exitedStatus, SORT_OPTS,
@@ -204,14 +207,14 @@ function itemById(id: string): BelongingsItem | undefined {
 
 // ==================== 主面板生命周期 ====================
 
-/** ESC 层（bz-bel）：表单 || 详情 || 主面板——顶层先关，不穿透（对照 favorites bz-fav；
- *  表单叠详情时（详情点编辑）先关表单，修 B6 层序倒挂） */
+/** ESC 层（bz-bel）：表单 || 详情 || 年度报告 || 主面板——顶层先关，不穿透（对照 favorites bz-fav；
+ *  表单叠详情时（详情点编辑）先关表单，修 B6 层序倒挂；报告层序 issue 356） */
 let mainEscRegistered = false;
 function ensureBelongingsEsc(): void {
   if (mainEscRegistered) return;
   mainEscRegistered = true;
   escManager.register('bz-bel', {
-    isVisible: () => !!M.overlay || !!document.querySelector('.bz-bel-form-mask') || !!document.querySelector('.bz-bel-detail-mask'),
+    isVisible: () => !!M.overlay || !!document.querySelector('.bz-bel-form-mask') || !!document.querySelector('.bz-bel-detail-mask') || !!document.querySelector('.bz-bel-report-mask'),
     close: () => {
       const form = document.querySelector('.bz-bel-form-mask') as HTMLElement | null;
       if (form) {
@@ -222,6 +225,11 @@ function ensureBelongingsEsc(): void {
       const detail = document.querySelector('.bz-bel-detail-mask') as HTMLElement | null;
       if (detail) {
         closeBelDetail();
+        return;
+      }
+      // 年度报告（issue 356）：层序在详情之下、主面板之上——报告先关，再落主面板
+      if (document.querySelector('.bz-bel-report-mask')) {
+        closeBelReport();
         return;
       }
       closePanel();
@@ -314,6 +322,8 @@ async function openPanelInner(): Promise<void> {
     const t = e.target as HTMLElement;
     if (e.target === overlay) { closePanel(); return; }
     if (t.closest('[data-bel-add]')) { void openForm(null); return; }
+    // 年度报告（issue 356）：以当前库开报告页（命令路径共用同一视图入口）
+    if (t.closest('[data-bel-report]')) { void openBelongingsReportView(); return; }
     if (t.closest('[data-bel-close]')) { closePanel(); return; }
     // 状态 chips：再点「全部」= 取消筛选回未筛选；再点当前项 = 取消筛选回全部
     const chip = t.closest('[data-bel-st]') as HTMLElement | null;
@@ -390,6 +400,8 @@ async function openPanelInner(): Promise<void> {
 export function closePanel(): void {
   stopAutoRefresh();
   closeBelDetail();
+  // 年度报告随面板关闭收口（issue 356：报告是面板上下文的派生视图，不留孤儿在途渲染）
+  closeBelReport();
   // 主题监听随面板关闭断开（H17）：面板关闭期间 body class 变动不再空转回调（有界泄漏）
   if (bodyThemeObserver) {
     bodyThemeObserver.disconnect();
@@ -413,6 +425,8 @@ export function cleanupBelongings(): void {
     bodyThemeObserver.disconnect();
     bodyThemeObserver = null;
   }
+  // 卸载收口（issue 356）：作废在途报告渲染 + 复位报告模块状态（面板可能从未开过）
+  unloadBelReport();
   resetBelongingsState();
 }
 
@@ -489,6 +503,29 @@ function applyStatusFilter(k: string): void {
   if (k === '__all') M.status = null;
   else M.status = M.status === k ? null : k;
   renderAll();
+}
+
+// ==================== 年度报告视图（issue 356：工具行入口 + 命令共用） ====================
+
+/**
+ * 打开年度资产报告页：面板开着以当前库快照直开；面板未开（命令路径）从盘载库，
+ * 不牵动面板状态（M.db 仍空，报告页自持快照）。已开着 = 就地用新快照重开（report 层语义）。
+ */
+export async function openBelongingsReportView(): Promise<void> {
+  ensureBelongingsEsc(); // 命令路径可先于面板开报告——ESC 层在此保证已注册
+  let items: BelongingsItem[];
+  if (M.db) {
+    items = itemList();
+  } else {
+    try {
+      items = Object.values((await loadDatabase()).items);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      notice('数据加载失败：' + msg, 'error');
+      return;
+    }
+  }
+  openBelReport(items, currencyUnit(), { onAdd: () => { void openForm(null); } });
 }
 
 // ==================== 详情弹窗（P20 桌面点卡） ====================
