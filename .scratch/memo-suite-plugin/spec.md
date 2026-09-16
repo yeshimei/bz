@@ -1282,3 +1282,25 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > ④ 补漏（issue 339）：secondbrain link.queue/state 键 rename rekey（向量索引不 rekey，行序随
 > JSON 键序自愈）+ diary 墙内存条目路径同步 + checkup 孤儿检查扩 knowledge/clipbook 并接一键修复。
 > attach 回退路径（无 fileManager 老宿主）维持 warning 口径不修。
+
+### 2026 秋季批次·第一波：6 票并行 worktree（issues 352/356/357/358/359/363，2026-09-17）
+
+> 来源 next-ideas.md 全域盘点，用户采纳编号派工；wayfinder 地图 issues/346。每票独立 worktree 开发、
+> cherry-pick 进 master 后全量门禁（5436 绿）逐票放行。① 352 日记「那年今天」放开纯文字条目：墙层撤
+> media 过滤，文字块卡（emoji 垫头 + 64 字摘要 `memoryExcerpt` + 年份角标，加密未解锁显示「已加密」，
+> 点击跳原文不开灯箱），纯文本摘要避开 MarkdownRenderer 追加语义（a5d2713a）。② 356 归物本年度资产
+> 报告：`report-stats` 纯层（购入/离场/月度花销/分类占比/日均成本 as-of 口径/陪伴 Top5，截至所选年末
+> 可复现）+ body 级独立遮罩报告页（避开面板全量重渲抹写），命令 `bz-belongings-report`（7ad3fcb6）。
+> ③ 357 番茄钟周归档层（ADR-0154）：`archived` 可选段存 ArchivedWeek（周 key=周一本地日期），明细裁
+> 7 天窗拍板不动，`trimWithArchive` 裁剪即归档原子落账，统计加「近 7 天/近 6 月」双档（e23da635）。
+> ④ 358 剪藏阅读报告：勘误——阅读时长此前仅内存累计从不落盘；侧写新增 `readLog` 段（key/title/src/
+> minutes/ts，满 1 分钟入账，180 天/5000 条上限），封存点=切篇/保存/标读/关面板/开报告；报告独立弹
+> 层（周期切换/来源 TopN/24 小时桶），命令 `bz-clipbook-report`（866b5213）。⑤ 359 第二大脑对话收编
+> core AI：勘误——ticket 108 起已走 AIService，本次退役残留 DeepSeek 单例（`getDeepseekAI` 删除），
+> `AI.ask` → `createAI().prompt(prompt, undefined, opts)` 不锁模型、跟随 AI 设置的 provider.model；
+> 补引用卡零测试缺口（0e645fc6）。⑥ 363 收藏标签自定义：**契约修正**——票面「favorites.json 加段」
+> 违反「顶层纯数组」成文拍板（外部统计脚本依赖 length），改伴生文件 `favorites.tags.json`（同目录随
+> storagePath，checkup 清单零扰动）；DEFAULT_TAGS 运行时回退不预落盘，删标签走 updateTagLabelBulk
+> 迁移（范式 updateSceneBulk），GitHub 强标签特判改 `getTagById('github')` 按名解耦（6d949e90）。
+> 原型产物重出随合并批 chore(preview) 提交（settings-panel 行为包内联全域 schema 闭包，任一域改
+> schema 均连带）。第二波进行中：353/354/355 备忘录三连、360 本周知识动态、361 拟合 19 参数、362 做题家面板。
