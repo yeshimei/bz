@@ -1304,3 +1304,22 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > 迁移（范式 updateSceneBulk），GitHub 强标签特判改 `getTagById('github')` 按名解耦（6d949e90）。
 > 原型产物重出随合并批 chore(preview) 提交（settings-panel 行为包内联全域 schema 闭包，任一域改
 > schema 均连带）。第二波进行中：353/354/355 备忘录三连、360 本周知识动态、361 拟合 19 参数、362 做题家面板。
+
+### 2026 秋季批次·第二波：5 票（issues 353/354/355/360/361/362，2026-09-17）
+
+> ① 备忘录三连（一个 worktree 串行，schema 叠加可选字段零迁移）：353 周期重复——`recur`
+> `{kind: weekly|monthly|yearly|days, interval?}`，completeItem 单队列任务内原子「完成+生成下一期」
+> （锚定原 due 不漂移、月末钳制、幂等短路），checklist 随下一期重置（0abba882）；354 清单型子任务
+> ——`checklist {text,done}[]`，composer `/词条` 语法解析（URL/路径不误收），进度 n/N、全勾自动完成
+> （1110b987）；355 月历视图——纯视图无新字段，周一首列网格、到期 chip 沿用状态色、每格至多 3 条、
+> 顺延=延后 1/3 天或移到选中日期（4430e636）；三票连带 checkup MEMO_ITEM_FIELDS 契约镜像 14→16。
+> ② 360 本周知识动态（7e9d00d7）：滚动 7 天周界（lastRunAt），新增=meta.notes 键差分（knownPaths
+> 快照），关联=link 段 linkedAt 落窗非 empty；撞车=向量锐化分 ≥0.85（TF-IDF 降级走 token 覆盖率
+> ≥0.7），近邻仅查最近 12 篇省成本；顺带修 pickVectorCollision 同 path 低分顶掉高分的真 bug。
+> ③ 361 FSRS 拟合 19 参数（45b1438f）：**发现旧八参似然公式不读 w（梯度恒零、拟合空转）**，重写为
+> 整条历史回放式 MLE（与调度逐式同源）；分档 <100 跳过 / 100-299 基础 / ≥300 全参，三重护栏（迭代
+> 上限/停滞早停/3s 墙钟），FIT_PARAMS_VERSION 1/2 契约，合成数据 360 对全参 ~115ms。
+> ④ 362 做题家独立面板（29a36630）：`bz-review-quiz-open`「做题练习」，范围三档（整库剪枝/文件夹
+> 多选/单篇联想）+ 题量档，quiz-core 引擎零改动只做壳，AI 未配置人话引导去设置不出题不崩。
+> 合并纪律：同域票（memo 三连）串行 pick，main.ts/smoke.test.ts 冲突双侧保留，原型产物冲突一律
+> ours + build-preview 定稿（chore(preview) 随批）。最终门禁 tsc 零错 + 5544/5544 全绿。
