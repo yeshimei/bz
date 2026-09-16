@@ -26,10 +26,19 @@
 - secondbrain/ollama.ts、douban/news 抓取器本体不收（协议/防风控域内合法），只收超时壳。
 - diary/ui/datetime-picker.ts（702 行）暂不上收——单一消费方，第二处需要时再收。
 
-## 三、测试
+## 三、测试（要点）
 
-（实现后回填）
+- 新增：tests/core/file-sync.test.ts（壳 11 用例：匹配/去抖/E22 放行/unload 短路/队列断链不断）、
+  tests/core/http.test.ts（四态 + withTimeout + 适配器 12 用例）、tests/core/clipboard-fallback.test.ts
+  （4 用例）、tests/core/str-utils.test.ts（pad2/emptyHtmlStr 5 用例）、tests/password-vault/quick-pick.test.ts
+  与 data-manager.test.ts（随 ADR-0158）、tests/home/summary-action.test.ts（随 ADR-0157）。
+- 迁移：pv 确认流测试改 flow-dialog 交互断言；favorites/belongings 弹窗断言迁 uiModal 实际 DOM 口径；
+  overlay-glass/enh-sweep-c/walkthrough-fix-c 旧遮罩样板守卫迁 core 单源新口径。
+- 回归：F15 表单单例（批 8 壳重类双计）修复并固守卫；三域 file-sync 既有断言零改动全绿。
 
 ## 四、门禁
 
-（实现后回填）
+tsc --noEmit 0 错；全量 5522 通过 / 唯一失败 = preview-freshness 25 例（原型产物回主仓重出即绿）。
+不收编留档：encrypt 主体/体检窗、knowledge 主窗/影像队列、secondbrain 面板（常驻工作台换壳必改行为）；
+cinema douban-queue 与 secondbrain ollama 超时语义独特不收编；relTime 手写 4 处与 secondbrain
+长按 2 处口径刻意不同保留（详见提交记录判定表）。

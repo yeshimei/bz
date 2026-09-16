@@ -43,4 +43,8 @@
 
 ## 四、门禁
 
-（实现后回填；#7/#8 批次：`tsc --noEmit` 0 错；`vitest run tests/encrypt tests/password-vault tests/smoke.test.ts` 30 文件 426 用例全绿；全量回归仅 `preview-freshness` 25 例失败（原型产物待回主仓重出，worktree 不构建）。）
+分支 `chore/global-trim-batch`：tsc --noEmit 0 错；合并 master 底（346-363 并行批次）后全量
+5522 通过 / 唯一失败 = preview-freshness 25 例（原型产物按规程回主仓重出即绿）。
+合并要点：评级四命令按 issue 362 撤回恢复（见「后续演进」）；CHART_RANK_BADGES 因
+issue 356/358 排行榜启用而恢复；问题编号 346/347 与并行会话撞车，本批重编为 364/365
+（ADR 0154-0156 → 0157-0159）。
