@@ -127,7 +127,10 @@ async function localizeImagesForSave(body: string, existing: ClipSavedImage[]): 
     });
     const partial = res.failed > 0 ? `，${res.failed} 张失败保留外链` : '';
     if (res.swaps.length > 0) {
-      const msg = `已本地化 ${res.swaps.length} 张图片${partial}`;
+      // 复用的张数（此前单图已存过）单列，避免「已本地化 N 张」与实际新下载数对不上（issue 333 评审）
+      const reused = res.swaps.length - res.localized;
+      const reusedTxt = reused > 0 ? `（复用 ${reused} 张）` : '';
+      const msg = `已本地化 ${res.swaps.length} 张图片${reusedTxt}${partial}`;
       if (ph) { ph.setType('success'); ph.setMessage(msg); }
       else notice(msg, 'success');
     } else {
