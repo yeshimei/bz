@@ -1,12 +1,12 @@
 // @vitest-environment node
 /**
- * 保险库（password-vault）数据层测试：
+ * 保险库（password-vault）数据层测试（实现在 src/password-vault/data.ts，ADR-0155 属主收口）：
  * 共享保险箱 password-vault SafeNote（fav 字段新增/兼容）、平台聚合、CRUD、
  * 域事件广播（写后 password-vault:changed；外部 encrypt:changed 触发重载）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SafeManager } from '../../src/encrypt/data';
-import { PasswordVaultDataManager, PASSWORD_VAULT_CHANNEL } from '../../src/encrypt/vault-data';
+import { PasswordVaultDataManager, PASSWORD_VAULT_CHANNEL } from '../../src/password-vault/data';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 import { onDomainEvent } from '../../src/core/domain-bus';

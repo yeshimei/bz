@@ -18,12 +18,12 @@
  * 本文件只做 markup 平移（自 ui.ts，issue 251），任何视觉值不动。
  */
 import { colorOf, esc, escAttr } from '../core/ui/str';
-import type { PasswordVaultEntry, PlatformGroup } from '../encrypt/vault-data';
+import type { PasswordVaultEntry, PlatformGroup } from './data';
 
 /** esc/colorOf/escAttr 再导出：行为层与评审壳演示 markup 同源（收口 core/ui/str，批次 G） */
 export { esc, colorOf, escAttr };
 /** 条目类型再导出（type-only，编译期擦除——render 产物不拖数据层依赖链） */
-export type { PasswordVaultEntry, PlatformGroup } from '../encrypt/vault-data';
+export type { PasswordVaultEntry, PlatformGroup } from './data';
 
 // ==================== 常量与工具 ====================
 

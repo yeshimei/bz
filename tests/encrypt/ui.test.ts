@@ -7,7 +7,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { SafeManager, type SafeAttachment } from '../../src/encrypt/data';
 import { EncryptAppController, UIManager, collectMediaSlots, truncateName, mimeOf, collectNoteAttachments, collectNoteAttachmentPaths } from '../../src/encrypt/ui';
-import { PasswordVaultDataManager } from '../../src/encrypt/vault-data';
+import { PasswordVaultDataManager } from '../../src/password-vault/data';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, mockMarkdownRenderer } from '../mock-obsidian-entry';
 

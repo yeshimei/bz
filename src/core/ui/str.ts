@@ -45,7 +45,7 @@ export function escAttr(s: string): string {
     .replace(/>/g, '&gt;');
 }
 
-/** 已知平台品牌色映射（密码条目头像底色；encrypt/vault-pw-view 与 password-vault/render 同款） */
+/** 已知平台品牌色映射（密码条目头像底色；password-vault 域 render.ts 消费；原 encrypt 侧同款已随 ADR-0155 退役） */
 export const PLATFORM_COLOR_MAP: Record<string, string> = {
   github: '#5a5f73',
   微信: '#3eb575',
