@@ -17,6 +17,8 @@ import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-fo
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, Platform } from '../mock-obsidian-entry';
 import { DiaryAppController } from '../../src/diary/ui';
+import { emitDomainEvent } from '../../src/core/domain-bus';
+import { diaryDataMap, setDiaryDataMap } from '../../src/diary/store';
 
 /** 夹具便捷：按（日期、时刻、emoji 序列、正文）生成条目文件全文（emoji 反查类型，未知兜底「日记」） */
 function seed(date: string, time: string, emojiSeq: string, body: string): string {
@@ -1492,5 +1494,58 @@ describe('回忆墙 UI', () => {
     ]) {
       expect(css).toContain(cls);
     }
+  });
+});
+
+// ===== 引用同步（issue 339：vault:md-renamed / vault:md-deleted 内存路径同步） =====
+
+describe('引用同步（issue 339）', () => {
+  it('改名：墙条目 filePath/filename 重定向 + diaryDataMap 键迁移；hide 后订阅摘除不再响应', async () => {
+    const c = await openAndWait();
+    // 预置 map 快照（墙加载不走写层，map 由本用例种子化）
+    setDiaryDataMap(null);
+    const oldPath = '我的/日记/2606122033.md';
+    const newPath = '我的/日记/2606122345.md';
+    const mapEntry: any = {
+      date: '2026-06-12', time: '20:33', timeValue: 2033, tags: [], emoji: '',
+      content: 'x', filename: oldPath, filePath: oldPath, lineNumber: 0,
+    };
+    setDiaryDataMap(new Map([[oldPath, [mapEntry]]]));
+    emitDomainEvent('vault:md-renamed', { oldPath, newPath });
+    const e = (c as any).entries.find((x: any) => x.filePath === newPath);
+    expect(e).toBeTruthy();
+    expect(e.filename).toBe(newPath);
+    expect((c as any).entries.some((x: any) => x.filePath === oldPath)).toBe(false);
+    // map 键与条目字段同步迁移（不落盘：vault 文件未被改写）
+    expect(diaryDataMap!.has(oldPath)).toBe(false);
+    expect(diaryDataMap!.get(newPath)![0]).toBe(mapEntry);
+    expect(mapEntry.filePath).toBe(newPath);
+    expect(vault.modifiedPaths).toEqual([]);
+    // hide 后订阅摘除：再次改名不响应（重开全量重读自愈兜底不变）
+    c.hide();
+    emitDomainEvent('vault:md-renamed', { oldPath: newPath, newPath: '我的/日记/2607010000.md' });
+    expect((c as any).entries.some((x: any) => x.filePath === '我的/日记/2607010000.md')).toBe(false);
+    expect((c as any).entries.some((x: any) => x.filePath === newPath)).toBe(true);
+    setDiaryDataMap(null);
+  });
+
+  it('删除：条目移出内存墙自动反映；改名移出墙目录按删除口径移出', async () => {
+    const c = await openAndWait();
+    setDiaryDataMap(new Map());
+    const before = (c as any).entries.length;
+    const victim = '我的/日记/2606112129.md';
+    emitDomainEvent('vault:md-deleted', { path: victim });
+    expect((c as any).entries.some((x: any) => x.filePath === victim)).toBe(false);
+    expect((c as any).entries.length).toBe(before - 1);
+    // 墙 DOM 同步收敛（少一个日期节头）
+    await waitFor(
+      () => document.querySelectorAll('.bz-diary-desk .bz-diary-day-head').length === before - 1
+    );
+    // 改名移出墙目录（movedOut 同语义）：条目移出，不指向墙外路径
+    const moved = '我的/日记/2608192302.md';
+    emitDomainEvent('vault:md-renamed', { oldPath: moved, newPath: '随笔/挪走.md' });
+    expect((c as any).entries.some((x: any) => x.filePath === '随笔/挪走.md')).toBe(false);
+    expect((c as any).entries.some((x: any) => x.filePath === moved)).toBe(false);
+    setDiaryDataMap(null);
   });
 });

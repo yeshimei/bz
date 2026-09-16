@@ -433,3 +433,137 @@ describe('编排器与结果缓存', () => {
     expect(report!.sections).toHaveLength(4);
   });
 });
+
+describe('检查三扩展（issue 339）：知识盒与剪藏标注孤儿', () => {
+  it('知识盒：任务 notePath/videoPath 指向缺失分别报告（可修复）；文件在则不报', async () => {
+    const task = {
+      id: 'knowledge-task-1', url: 'https://b23.tv/x', status: 'success',
+      title: '视频甲', notePath: '文献盒/甲.md', videoPath: '附件/视频甲.mp4',
+    };
+    const { app } = makeApp({ [`${DIR}/knowledge.json`]: JSON.stringify([task]) });
+    const sec = await checkOrphans(app);
+    const note = sec!.issues.find((i) => i.fixGroup === 'knowledge' && i.fixKey === 'knowledge-task-1|note');
+    const video = sec!.issues.find((i) => i.fixGroup === 'knowledge' && i.fixKey === 'knowledge-task-1|video');
+    expect(note).toBeTruthy();
+    expect(note!.title).toContain('知识盒任务「视频甲」的文献笔记不存在');
+    expect(note!.detail).toContain('文献盒/甲.md');
+    expect(video).toBeTruthy();
+    expect(video!.detail).toContain('附件/视频甲.mp4');
+
+    // 引用齐全 → 不报
+    const { app: app2 } = makeApp({
+      [`${DIR}/knowledge.json`]: JSON.stringify([task]),
+      '文献盒/甲.md': '# 甲',
+      '附件/视频甲.mp4': 'bin',
+    });
+    const sec2 = await checkOrphans(app2);
+    expect(sec2!.issues.filter((i) => i.fixGroup === 'knowledge')).toEqual([]);
+  });
+
+  it('剪藏 marks / pendingSource：notePath 指向缺失报告（fixKey 编码条目与笔记，任意字符安全）', async () => {
+    const sidecar = JSON.stringify({
+      articleOverrides: {}, savedArchive: [], order: [],
+      marks: { 'url:https://x': [{ find: '选|文', notePath: '文献盒/ gone.md', kind: 'term' }] },
+      savedImages: {},
+      pendingSource: { 'url:https://x': ['文献盒/gone.md'] },
+    });
+    const { app } = makeApp({ [`${DIR}/clipbook.json`]: sidecar });
+    const sec = await checkOrphans(app);
+    const mark = sec!.issues.find((i) => i.fixGroup === 'clipbook-marks');
+    expect(mark).toBeTruthy();
+    expect(mark!.title).toContain('剪藏标注指向的笔记不存在');
+    expect(JSON.parse(mark!.fixKey!)).toEqual(['url:https://x', '选|文', '文献盒/ gone.md']);
+    const src = sec!.issues.find((i) => i.fixGroup === 'clipbook-source');
+    expect(src).toBeTruthy();
+    expect(JSON.parse(src!.fixKey!)).toEqual(['url:https://x', '文献盒/gone.md']);
+
+    // 笔记存在 → 不报
+    const { app: app2 } = makeApp({
+      [`${DIR}/clipbook.json`]: sidecar,
+      '文献盒/ gone.md': '# a',
+      '文献盒/gone.md': '# b',
+    });
+    const sec2 = await checkOrphans(app2);
+    expect(sec2!.issues.filter((i) => i.fixGroup === 'clipbook-marks' || i.fixGroup === 'clipbook-source')).toEqual([]);
+  });
+});
+
+describe('一键修复扩展（issue 339）', () => {
+  it('knowledge：清空失效 notePath/videoPath（任务本体保留），undo 原样恢复', async () => {
+    const raw = JSON.stringify([
+      { id: 'kt-1', url: 'u', status: 'success', notePath: '文献盒/gone.md', videoPath: '附件/gone.mp4' },
+      { id: 'kt-2', url: 'u', status: 'success', notePath: '文献盒/keep.md', videoPath: null },
+    ]);
+    const { app, vault } = makeApp({
+      [`${DIR}/knowledge.json`]: raw,
+      '文献盒/keep.md': '# k',
+    });
+    const issues = [
+      { severity: 'warn' as const, title: 't', fixGroup: 'knowledge', fixKey: 'kt-1|note' },
+      { severity: 'warn' as const, title: 't', fixGroup: 'knowledge', fixKey: 'kt-1|video' },
+    ];
+    const [outcome] = await fixOrphanIssues(app, issues);
+    expect(outcome.fixed).toBe(2);
+    const mid = JSON.parse(vault.files.get(`${DIR}/knowledge.json`)!);
+    expect(mid[0].notePath).toBeNull();
+    expect(mid[0].videoPath).toBeNull();
+    expect(mid[1].notePath).toBe('文献盒/keep.md'); // 未列入修复的任务不动
+    await outcome.undo();
+    const restored = JSON.parse(vault.files.get(`${DIR}/knowledge.json`)!);
+    expect(restored[0].notePath).toBe('文献盒/gone.md');
+    expect(restored[0].videoPath).toBe('附件/gone.mp4');
+  });
+
+  it('clipbook marks：移除失效标注（列表清空连键删），undo 按原索引插回', async () => {
+    const raw = JSON.stringify({
+      articleOverrides: {}, savedArchive: [], order: [],
+      marks: {
+        'url:https://x': [
+          { find: '甲', notePath: '文献盒/gone.md', kind: 'term' },
+          { find: '乙', notePath: '文献盒/keep.md', kind: 'passage' },
+        ],
+        'url:https://y': [{ find: '丙', notePath: '文献盒/gone2.md', kind: 'term' }],
+      },
+      savedImages: {},
+      pendingSource: {},
+    });
+    const { app, vault } = makeApp({
+      [`${DIR}/clipbook.json`]: raw,
+      '文献盒/keep.md': '# k',
+    });
+    const issues = [
+      { severity: 'warn' as const, title: 't', fixGroup: 'clipbook-marks', fixKey: JSON.stringify(['url:https://x', '甲', '文献盒/gone.md']) },
+      { severity: 'warn' as const, title: 't', fixGroup: 'clipbook-marks', fixKey: JSON.stringify(['url:https://y', '丙', '文献盒/gone2.md']) },
+    ];
+    const [outcome] = await fixOrphanIssues(app, issues);
+    expect(outcome.fixed).toBe(2);
+    const mid = JSON.parse(vault.files.get(`${DIR}/clipbook.json`)!);
+    expect(mid.marks['url:https://x'].map((m: any) => m.find)).toEqual(['乙']); // 命中者保留
+    expect(mid.marks['url:https://y']).toBeUndefined(); // 清空连键删
+    await outcome.undo();
+    const restored = JSON.parse(vault.files.get(`${DIR}/clipbook.json`)!);
+    expect(restored.marks['url:https://x'].map((m: any) => m.find)).toEqual(['甲', '乙']);
+    expect(restored.marks['url:https://y'].map((m: any) => m.find)).toEqual(['丙']);
+  });
+
+  it('clipbook pendingSource：移除失效待回写路径，undo 插回', async () => {
+    const raw = JSON.stringify({
+      articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {},
+      pendingSource: { 'url:https://x': ['文献盒/gone.md', '文献盒/keep.md'] },
+    });
+    const { app, vault } = makeApp({
+      [`${DIR}/clipbook.json`]: raw,
+      '文献盒/keep.md': '# k',
+    });
+    const issues = [
+      { severity: 'warn' as const, title: 't', fixGroup: 'clipbook-source', fixKey: JSON.stringify(['url:https://x', '文献盒/gone.md']) },
+    ];
+    const [outcome] = await fixOrphanIssues(app, issues);
+    expect(outcome.fixed).toBe(1);
+    const mid = JSON.parse(vault.files.get(`${DIR}/clipbook.json`)!);
+    expect(mid.pendingSource['url:https://x']).toEqual(['文献盒/keep.md']);
+    await outcome.undo();
+    const restored = JSON.parse(vault.files.get(`${DIR}/clipbook.json`)!);
+    expect(restored.pendingSource['url:https://x']).toEqual(['文献盒/gone.md', '文献盒/keep.md']);
+  });
+});

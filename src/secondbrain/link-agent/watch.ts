@@ -6,6 +6,8 @@
  *   基准哈希过滤（filterChangedForRelink：内容未实质变化 / 自写 related 不重跑），
  *   只对真正改动的存量笔记重跑建链（正文大改自动重跑）；
  * - 删除事件订阅 → 防抖合并触发死链清理（低频巡检 30 分钟兜底）；删除同时移除该篇基准哈希；
+ * - 改名事件订阅（issue 339）：队列条目与基准哈希键 oldPath→newPath 去抖合并 rekey——
+ *   改名笔记不重复入队、基准不丢（向量索引不在此处理，doRefresh 的删除+重嵌自愈兜底）；
  * - 文献笔记建链改走**显式通道**（issue 309）：createLinkBridge 给知识盒录入面板 preview / apply / now
  *   三段能力（AI 出内容即起跑预演，面板内 loading → 完成后就地显示）。原「订阅 'knowledge:tasks'
  *   生成即跑」的被动路径已删除——它不向调用方回报进度，且与调用方写入结果无法对齐；
@@ -17,13 +19,19 @@ import type { App } from 'obsidian';
 import { onDomainEvent } from '../../core/domain-bus';
 import type { LinkBridge } from '../../core/link-now';
 import { tryGetSettings } from '../../core/settings-provider';
-import { inLinkScope } from './data';
+import { inLinkScope, rekeyLinkPaths } from './data';
 import { LINK_BATCH_DELAY_MS, LinkAgent } from './pipeline';
 
 /** 死链清理防抖窗口（删除事件合并；测试可注入短值） */
 export let LINK_CLEAN_DEBOUNCE_MS = 5000;
 export function __setLinkCleanDebounceMsForTests(ms: number): void {
   LINK_CLEAN_DEBOUNCE_MS = ms;
+}
+
+/** 改名 rekey 防抖窗口（issue 339：窗口内多次改名合并成一次 store 写，链式改名按序回放；测试可注入短值） */
+export let LINK_REKEY_DEBOUNCE_MS = 1500;
+export function __setLinkRekeyDebounceMsForTests(ms: number): void {
+  LINK_REKEY_DEBOUNCE_MS = ms;
 }
 
 /** 低频巡检间隔（spec「核心流程⑤」：启动后低频巡检兜底） */
@@ -92,9 +100,13 @@ export class LinkAgentWatcher {
   private pendingCreates = new Set<string>();
   /** 防抖批次缓冲（修改事件聚合，v1.4/ticket 119） */
   private pendingModifies = new Set<string>();
+  /** 改名 rekey 防抖缓冲（issue 339：窗口内事件按序合并，冲刷时整批一次 store 写） */
+  private pendingRenames: Array<{ oldPath: string; newPath: string }> = [];
   private batchTimer: ReturnType<typeof setTimeout> | null = null;
   /** 死链清理防抖定时器 */
   private cleanTimer: ReturnType<typeof setTimeout> | null = null;
+  /** 改名 rekey 防抖定时器（issue 339） */
+  private renameTimer: ReturnType<typeof setTimeout> | null = null;
   /** 低频巡检定时器 */
   private sweepTimer: ReturnType<typeof setInterval> | null = null;
   /** 总线退订函数账本 */
@@ -118,7 +130,8 @@ export class LinkAgentWatcher {
     this.unsubs.push(
       onDomainEvent<{ path: string }>('vault:md-created', (evt) => this.onCreated(evt.path)),
       onDomainEvent<{ path: string }>('vault:md-modified', (evt) => this.onModified(evt.path)),
-      onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => this.onDeleted(evt.path))
+      onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => this.onDeleted(evt.path)),
+      onDomainEvent<{ oldPath: string; newPath: string }>('vault:md-renamed', (evt) => this.onRenamed(evt.oldPath, evt.newPath))
     );
     this.sweepTimer = setInterval(() => {
       void this.runDeadLinkSweep();
@@ -164,6 +177,30 @@ export class LinkAgentWatcher {
       void this.runDeadLinkSweep();
     }, LINK_CLEAN_DEBOUNCE_MS);
     void this.agent.dropLinkBaseline(path);
+  }
+
+  /**
+   * 改名事件（issue 339）：防抖批次缓冲内旧路径顺带改指新路径（冲刷存在性过滤不再丢条目）；
+   * 队列条目与基准哈希键的去抖合并 rekey 交数据层（rekeyLinkPaths，写 JSON 语义不变）——
+   * 新路径移出三盒/非 md 时数据层按删除口径清理，此处不重复判定。
+   */
+  onRenamed(oldPath: string, newPath: string): void {
+    for (const buf of [this.pendingCreates, this.pendingModifies]) {
+      if (buf.delete(oldPath) && this.enabled && newPath.endsWith('.md') && inLinkScope(newPath)) buf.add(newPath);
+    }
+    if (!this.enabled) return;
+    if (!oldPath || !newPath || oldPath === newPath) return;
+    // 新旧都在盒外：队列/基准不可能有该键，直接短路（避免无关改名每次空转 store 读写）
+    if (!inLinkScope(oldPath) && !inLinkScope(newPath)) return;
+    this.pendingRenames.push({ oldPath, newPath });
+    if (this.renameTimer) clearTimeout(this.renameTimer);
+    this.renameTimer = setTimeout(() => {
+      this.renameTimer = null;
+      const batch = this.pendingRenames;
+      this.pendingRenames = [];
+      if (!batch.length) return;
+      rekeyLinkPaths(batch).catch((e) => console.warn('[link-agent] 改名同步失败', e));
+    }, LINK_REKEY_DEBOUNCE_MS);
   }
 
   /** 冲刷防抖批次：只处理仍存在的文件；上一批未完成时本次跳过（下一事件重新聚合） */
@@ -214,6 +251,11 @@ export class LinkAgentWatcher {
       clearTimeout(this.cleanTimer);
       this.cleanTimer = null;
     }
+    if (this.renameTimer) {
+      clearTimeout(this.renameTimer);
+      this.renameTimer = null;
+    }
+    this.pendingRenames = [];
     if (this.sweepTimer) {
       clearInterval(this.sweepTimer);
       this.sweepTimer = null;
