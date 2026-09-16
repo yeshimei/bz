@@ -21,11 +21,13 @@ Android 选择 ActionMode「剪切/复制/粘贴」），与自绘工具框同�
 
 **取 B。正文保留 `user-select: text`，只压系统菜单的入口。**
 
-1. **iOS（WKWebView）**：正文容器规则加 `-webkit-touch-callout: none`——WKWebView 上压 Callout
-   的官方开关，也是 iOS 侧唯一开关。
-2. **Android（WebView）**：正文容器内 capture 阶段拦 `contextmenu` + `preventDefault`。
-3. **作用域只到正文容器**：仅移动端、仅 `[data-clip-md]` / `[data-clip-mob-md]` 内的目标。
-   列表卡片右键菜单（item-actions）、面板骨架、桌面右键一律不碰。
+1. **iOS（WKWebView）**：正文文本容器（`[data-clip-md]` / `[data-clip-mob-md]`）加
+   `-webkit-touch-callout: none`——WKWebView 上压 Callout 的官方开关，也是 iOS 侧唯一开关。
+2. **Android（WebView）**：同一容器内 capture 阶段拦 `contextmenu` + `preventDefault`。
+   **两端作用域同一份容器名单**（CSS 一份、JS 一份，测试有漂移守卫）——只改一边会让
+   「一端压住、一端没压住」。
+3. **作用域只到正文文本容器**：仅移动端。标题 / meta / 脚注**不压**——那里 bz 没有替代工具框，
+   保留原生菜单给用户复制；列表卡片右键菜单（item-actions）、面板骨架、桌面右键一律不碰。
 4. **48px 让位保留为兜底**：`MOBILE_SYS_BAR_CLEARANCE` 不删。屏蔽是 best-effort，
    拦不住时工具框仍靠让位错开系统菜单。
 

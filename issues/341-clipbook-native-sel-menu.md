@@ -23,8 +23,10 @@
 
 ## 修复
 
-1. `src/clipbook/styles.css`：`.bz-clip-read, .bz-clip-mob-detail` 规则新增
-   `-webkit-touch-callout: none`（`user-select: text` / `-webkit-user-select: text` 原样保留）。
+1. `src/clipbook/styles.css`：新增 `[data-clip-md], [data-clip-mob-md] { -webkit-touch-callout: none }`——
+   **作用域与 UI 侧拦截同口径**（只到正文文本容器；标题 / meta / 脚注没有替代工具框，保留原生菜单）。
+   上方那条选择豁免规则（`.bz-clip-read, .bz-clip-mob-detail` 的 `user-select: text` /
+   `-webkit-user-select: text`）**原样不动**。
 2. `src/clipbook/ui.ts`：`buildDom` 在 `overlayEl` 上挂 **capture 阶段** `contextmenu` →
    新模块级 `onReaderContextMenu`：**仅 `isMobileEnv()`** 且
    `ev.target.closest('[data-clip-md],[data-clip-mob-md]')` 命中才 `preventDefault`。
@@ -50,15 +52,17 @@
 - **开发机无法验证真机效果** → 必须用户在手机上长按正文实测。
   建议顺序：① iOS 长按正文还有没有 Callout ② Android 长按还有没有浮动工具条。
 
-## 回归测试（`tests/clipbook/native-sel-menu.test.ts`，11 例）
+## 回归测试（`tests/clipbook/native-sel-menu.test.ts`，12 例）
 
 - 行为层 8 例：桌面正文 `[data-clip-md]` 被拦 / 正文内子元素委托路径被拦 / 桌面不拦 /
   移动详情 `[data-clip-mob-md]` 被拦 / 正文外（遮罩、rail）不拦 /
   桌面卡片 contextmenu 仍由 item-actions 接管弹菜单 / 移动端卡片 contextmenu 不被本拦截吞掉 /
   拦下 contextmenu 后划选仍能弹出工具框（防过度拦截）。
-- 样式源静态断言 3 例（jsdom 不算 CSS 级联，同 `tests/clipbook/menu-skin-vars.test.ts` 手法）：
-  正文容器规则含 `-webkit-touch-callout: none`、同一规则**仍含** `user-select: text`（防误删豁免）、
-  `-webkit-touch-callout` 在本域样式源只出现一处（不外溢）。
+- 样式源静态断言 4 例（jsdom 不算 CSS 级联，同 `tests/clipbook/menu-skin-vars.test.ts` 手法）：
+  文本容器规则含 `-webkit-touch-callout: none`、选择豁免规则**仍含** `user-select: text`
+  且**不含** touch-callout（防误挂到整窗格）、CSS 容器名单与 `ui.ts` 的
+  `closest('[data-clip-md],[data-clip-mob-md]')` **同口径**（漂移守卫：iOS 靠 CSS、Android 靠 JS，
+  分叉在真机上表现为「一端压住一端没压住」）、`-webkit-touch-callout` 在本域样式源只出现一处。
 
 ## 门禁（worktree `wt/clip-selmenu`）
 

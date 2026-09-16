@@ -197,15 +197,26 @@ function declBlock(selector: string): string {
 }
 
 describe('正文容器 Callout 抑制（issue 341，样式源断言）', () => {
-  it('正文容器规则含 -webkit-touch-callout:none（iOS 侧唯一开关）', () => {
-    const decl = declBlock('.bz-clip-read,');
-    expect(decl).toMatch(/-webkit-touch-callout:\s*none/);
+  it('正文文本容器规则含 -webkit-touch-callout:none（iOS 侧唯一开关）', () => {
+    expect(declBlock('[data-clip-md],')).toMatch(/-webkit-touch-callout:\s*none/);
   });
 
-  it('同一规则仍保留 user-select:text —— 收回豁免会连原生选区一起没，工具框拿不到文本', () => {
+  it('选择豁免规则仍保留 user-select:text —— 收回豁免会连原生选区一起没，工具框拿不到文本', () => {
     const decl = declBlock('.bz-clip-read,');
     expect(decl).toMatch(/user-select:\s*text/);
     expect(decl).toMatch(/-webkit-user-select:\s*text/);
+    // 抑制必须挂在文本容器上，不能顺手挂到选择豁免那条（那是整个阅读窗格）
+    expect(decl).not.toMatch(/-webkit-touch-callout/);
+  });
+
+  it('抑制作用的容器与 UI 侧 contextmenu 拦截同口径（两侧同一对 [data-clip-*-md]）', () => {
+    // 漂移守卫：CSS 与 ui.ts 各写一份容器名单，一旦只改一边即两端行为分叉
+    // （iOS 靠 CSS、Android 靠 JS，分叉在真机上表现为「一端压住一端没压住」）
+    const ui = fs.readFileSync(path.join(process.cwd(), 'src/clipbook/ui.ts'), 'utf8');
+    expect(ui).toContain("closest('[data-clip-md],[data-clip-mob-md]')");
+    const decl = declBlock('[data-clip-md],');
+    expect(decl).toMatch(/-webkit-touch-callout/);
+    expect(css).toMatch(/\[data-clip-mob-md\]\s*\{/); // 列表里带上了移动详情容器
   });
 
   it('touch-callout 只出现在这一处（不外溢到其它域；剪藏本是全插件唯一选择豁免域）', () => {
