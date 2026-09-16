@@ -340,7 +340,7 @@ export async function generateDossierNarrative(input: string): Promise<string> {
           USER_CONTENT_BOUNDARY,
       },
       { role: 'user', content: input },
-    ], 400);
+    ]);
     const text = typeof r?.narrative === 'string' && r.narrative.trim() ? r.narrative.trim() : '';
     return text;
   } catch (e) {

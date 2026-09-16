@@ -744,7 +744,7 @@ export class MemorySystem {
               USER_CONTENT_BOUNDARY,
           },
           { role: 'user', content: `记忆：${description}` },
-        ], 150);
+        ]);
         const s = Number(r?.score);
         // H4（087）：emotion 白名单——仅接受 EMOTION_VAD 键集枚举；未知 → 回退 detectEmotion 词法兜底
         const emotion = sanitizeEmotion(r?.emotion);
@@ -1121,7 +1121,7 @@ export class MemorySystem {
             '{"emotions":[{"index":1,"emotion":"calm"}]}。\n\n' +
             numbered,
         },
-      ], 400);
+      ]);
       const list = Array.isArray(r?.emotions) ? r.emotions : [];
       let written = 0;
       for (const item of list) {
@@ -1299,7 +1299,7 @@ export class MemorySystem {
         const r = await callChatJson([
           { role: 'system', content: '你是辅助归纳记忆的助手，只输出合法 JSON。\n\n' + USER_CONTENT_BOUNDARY },
           { role: 'user', content: prompt },
-        ], 800);
+        ]);
         if (Array.isArray(r?.insights)) {
           // ticket 163：洞察条数上限钳制——LLM 输出按序截断（prompt 已声明「最多 N 条」，此处硬截断兜底）
           insights = r.insights
@@ -1403,7 +1403,7 @@ export class MemorySystem {
         const r = await callChatJson([
           { role: 'system', content: '你是辅助归纳记忆的助手，只输出合法 JSON。\n\n' + USER_CONTENT_BOUNDARY },
           { role: 'user', content: prompt },
-        ], 800);
+        ]);
         if (Array.isArray(r?.digests)) {
           digests = r.digests
             .filter((x: any) => x && typeof x.text === 'string' && x.text.trim())

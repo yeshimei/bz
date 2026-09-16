@@ -39,7 +39,6 @@ import { setVectorSearchSource } from '../../src/secondbrain/readonly';
 import {
   SUGGEST_CACHE_FILE,
   SUGGEST_CACHE_VERSION,
-  SUGGEST_JUDGE_MAX_TOKENS,
   SUGGEST_MIN_SCORE,
   SUGGEST_REASONING_EFFORT,
   aggregatePool,
@@ -718,13 +717,12 @@ describe('generateSuggestions（三段式 + 缓存 + 逐卡失效）', () => {
     expect(run2.suggestions.map((s) => s.target)).toEqual([T1]);
   });
 
-  it('AI 调用：走 prompt 纯文本通道（不带 json_object）+ low 思考档 + 预算 131072', async () => {
+  it('AI 调用：走 prompt 纯文本通道（不带 json_object）+ low 思考档 + 输出上限不私传（面板独裁 issue 334）', async () => {
     aiPass(adoptRaw([{ seg: 1, path: T1 }]));
     await generateSuggestions(`${CARDBOX}/A.md`, ctx);
     expect(mocks.jsonForced).not.toHaveBeenCalled(); // 哨兵：不得改用 json()（实测会吐空壳 → 零建议）
     const opts = mocks.judge.mock.calls[0][2] as { modelOptions: Record<string, unknown> }; // prompt(input, model, options)
-    expect(opts.modelOptions.max_tokens).toBe(SUGGEST_JUDGE_MAX_TOKENS);
-    expect(opts.modelOptions.max_tokens).toBeGreaterThanOrEqual(131072);
+    expect(opts.modelOptions).not.toHaveProperty('max_tokens'); // 上限唯一权威 = 设置面板
     expect(opts.modelOptions.reasoning_effort).toBe(SUGGEST_REASONING_EFFORT); // low：默认档 143s → 7s
     expect(opts.modelOptions.thinking).toBeUndefined(); // 绝不关思考（关了会退回 a1/t2 标签式作答）
   });

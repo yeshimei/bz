@@ -1,4 +1,4 @@
-/* 源指纹 52a2bb79234b1f70 · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 8d506df9de55fada · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -4136,12 +4136,6 @@ var BZW_favorites = (() => {
   function saveSettings() {
     return _saver ? _saver() : Promise.resolve();
   }
-  function getSettings() {
-    if (!_provider) {
-      throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
-    }
-    return _provider();
-  }
   function tryGetSettings() {
     return _provider ? _provider() : {};
   }
@@ -5218,27 +5212,33 @@ var BZW_favorites = (() => {
       ...images.map((url) => ({ type: "image_url", image_url: { url } }))
     ];
   }
+  function buildMessages(input) {
+    if (input && typeof input === "object" && Array.isArray(input.messages)) {
+      return input.messages;
+    }
+    return [{ role: "user", content: buildUserContent(input) }];
+  }
   var AIService = class {
     constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
       this.defaultModel = defaultModel;
       this.defaultOptions = defaultOptions;
     }
     /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
-     *  input 为字符串（纯文本，报文同旧版）或 {text, images}（带图 → 多模态 content 数组）；
+     *  input 为字符串（纯文本，报文同旧版）、{text, images}（带图 → 多模态 content 数组）
+     *  或 {messages}（多轮完整报文，原样进请求）；
      *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
      *  既有调用（不传这两项）行为零变化 */
     async prompt(input, model = this.defaultModel, options = {}) {
-      var _a;
       const mergedOptions = this._mergeOptions(options);
       const provider = await getAIProvider(mergedOptions.provider);
       const s = getQ3Settings();
       const isExplicit = model !== this.defaultModel;
       const effModel = isExplicit ? model : provider.model || model;
       const mo = mergedOptions.modelOptions || {};
-      const effMaxTokens = (_a = mo.max_tokens) != null ? _a : provider.defaultMaxTokens || 4096;
+      const effMaxTokens = provider.defaultMaxTokens || 4096;
       const body = {
         model: effModel,
-        messages: [{ role: "user", content: buildUserContent(input) }],
+        messages: buildMessages(input),
         max_tokens: effMaxTokens,
         stream: true
       };
@@ -5321,21 +5321,8 @@ var BZW_favorites = (() => {
       return options;
     }
   };
-  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}, defaultMaxTokens = 8192) {
-    const internalDefaultOptions = {
-      modelOptions: {
-        max_tokens: defaultMaxTokens,
-        ...defaultOptions.modelOptions || {}
-      }
-    };
-    const mergedOptions = { ...internalDefaultOptions, ...defaultOptions };
-    if (defaultOptions.modelOptions) {
-      mergedOptions.modelOptions = {
-        ...internalDefaultOptions.modelOptions,
-        ...defaultOptions.modelOptions
-      };
-    }
-    return new AIService(params, defaultModel, mergedOptions);
+  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
+    return new AIService(params, defaultModel, defaultOptions);
   }
 
   // src/favorites/ai.ts
@@ -5345,23 +5332,18 @@ var BZW_favorites = (() => {
     }
     /**
      * AI 是否已配置（ticket 23 + 审查建议 C：真实读取插件 AI 配置，替代恒真的 !!this.ai）。
-     * 判定口径与 core/ai.ts getAIProvider 一致：provider = aiProvider || 'opencode-go'；
-     * - opencode-go 无 legacy 兜底：缺 opencodeGoApiKey 即拦截；
-     * - deepseek 的 quickadd data.json 兜底是异步文件读取（core/ai getAIProvider 运行时判定），
-     *   插件设置缺 key 不判死——交给运行时兜底，避免误拦仅 QuickAdd data.json 配置的老用户；
-     * - 其余注册表提供商（ticket 171）：缺 apiKeyKey 对应键即拦截（ollama 本地服务无密钥豁免）；
-     * - custom（ticket 170）：需 endpoint + key 齐全才算已配置。
+     * issue 334/ADR-0148 起判定口径单源 core/ai——getAIProvider() 能解析即已配置，
+     * 含 deepseek QuickAdd data.json 异步兜底、ollama 免密钥、custom 三件套齐全；
+     * 本地不再复刻第二套判定（旧同步版对 deepseek 恒真，口径偏松）。
      */
-    isAvailable() {
+    async isAvailable() {
       if (!this.ai) return false;
-      const s = getSettings();
-      const provider = s.aiProvider || "opencode-go";
-      if (provider === "opencode-go") return !!s.opencodeGoApiKey;
-      if (provider === "custom") return !!s.aiCustomEndpoint && !!s.aiCustomApiKey;
-      if (provider === "ollama") return true;
-      const desc = getProviderDescriptor(provider);
-      if (provider === "deepseek") return true;
-      return !!s[desc.apiKeyKey];
+      try {
+        await getAIProvider();
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
     /**
      * 获取 GitHub 仓库信息（真实 API，增强：原稿为纯 AI 生成，现改为
@@ -6622,7 +6604,7 @@ var BZW_favorites = (() => {
   }
   async function runAiFill(popup, sel, redraw, errEl) {
     const ai = aiServiceOf();
-    if (!ai.isAvailable()) {
+    if (!await ai.isAvailable()) {
       notice("AI 服务未配置或不可用", "warning");
       return;
     }

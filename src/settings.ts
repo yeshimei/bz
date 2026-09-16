@@ -308,12 +308,6 @@ export default interface BzSettings {
   secondBrainDebounceDelay: string;
   /** 光标轮询间隔（ms） */
   secondBrainCursorPollInterval: string;
-  /** Ollama 对话模型 */
-  secondBrainChatModel: string;
-  /** DeepSeek 模型 */
-  secondBrainDeepseekModel: string;
-  /** 默认使用 DeepSeek（true/false） */
-  secondBrainDefaultUseDeepseek: string;
   /** 最大历史记录 */
   secondBrainMaxHistory: string;
   /** 远程 Ollama URL（移动端探活/降级链；空 = 未配置远程——移动端回落本地 URL，不探任何远程） */
@@ -694,9 +688,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   secondBrainContextLimit: '600',
   secondBrainDebounceDelay: '300',
   secondBrainCursorPollInterval: '500',
-  secondBrainChatModel: 'qwen2.5:14b-instruct',
-  secondBrainDeepseekModel: 'deepseek-v4-flash',
-  secondBrainDefaultUseDeepseek: 'false',
   secondBrainMaxHistory: '10',
   // 空 = 未配置远程（enh-sweep-a：原写死内网 IP 改留空；secondbrain/config 同步去 IP 回落）
   secondBrainRemoteOllamaUrl: '',

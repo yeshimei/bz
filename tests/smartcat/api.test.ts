@@ -1,10 +1,12 @@
 // @vitest-environment node
 /**
- * smartcat AI 层测试：走 bz core/ai getAIProvider（mock settings），
- * 验证多轮 messages 请求体/模型参数/失败 fallback requestUrl。
+ * smartcat AI 层测试：issue 334/ADR-0148 起迁移到 core AIService 单通道——
+ * 多轮 {messages} 报文、temperature 0.7 任务语义、输出上限跟随设置面板（per-provider 覆盖 >
+ * 注册表默认）；fetch 失败 fallback requestUrl 由 core 承载（超时/空闲中止已在
+ * tests/core/sweep-core-ai.test.ts 覆盖，此处不重复）。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { callChat, __setAICallTimeoutMsForTests } from '../../src/smartcat/api';
+import { callChat, callChatJson } from '../../src/smartcat/api';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
 import { requestUrl } from '../mock-obsidian-entry';
@@ -20,8 +22,8 @@ afterEach(() => {
   delete (globalThis as any).fetch;
 });
 
-describe('callChat', () => {
-  it('fetch 可用：POST chat/completions，模型/参数对齐原版', async () => {
+describe('callChat（core AIService 单通道）', () => {
+  it('fetch 可用：POST chat/completions，多轮 messages + temperature + 面板独裁上限', async () => {
     const fetchMock = vi.fn(async (url: string, init: any) => ({
       ok: true,
       json: async () => ({ choices: [{ message: { content: '喵呜~ 你好！' } }] }),
@@ -38,15 +40,26 @@ describe('callChat', () => {
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({ Authorization: 'Bearer sk-test' }),
-        body: expect.stringContaining('"model":"deepseek-chat"'),
+        body: expect.stringContaining('"model":"deepseek-v4-flash"'),
       })
     );
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.max_tokens).toBe(300);
-    expect(body.temperature).toBe(0.7);
-    expect(body.stream).toBe(false);
+    expect(body.max_tokens).toBe(8192); // 面板独裁：deepseek 注册表默认，不私传 300
+    expect(body.temperature).toBe(0.7); // 任务语义保留
     expect(body.messages.length).toBe(2);
     expect(body.messages[0].role).toBe('system');
+  });
+
+  it('per-provider「最大输出 token」覆盖生效（面板独裁的价值）', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test', aiMaxTokensOverrides: { deepseek: 4096 } }));
+    resetAIProviderCache();
+    const fetchMock = vi.fn(async (_url: string, init: any) => ({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: 'ok' } }] }),
+    }));
+    (globalThis as any).fetch = fetchMock;
+    await callChat([{ role: 'user', content: 'hi' }]);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).max_tokens).toBe(4096);
   });
 
   it('fetch 失败（CORS/网络）→ fallback requestUrl 非流式', async () => {
@@ -72,7 +85,7 @@ describe('callChat', () => {
     await expect(callChat([{ role: 'user', content: 'x' }])).rejects.toThrow();
   });
 
-  it('API 错误状态码 → 抛错', async () => {
+  it('API 错误状态码 → 抛错（含服务端错误消息）', async () => {
     const fetchMock = vi.fn(async () => ({
       ok: false,
       status: 401,
@@ -81,34 +94,32 @@ describe('callChat', () => {
     (globalThis as any).fetch = fetchMock;
     await expect(callChat([{ role: 'user', content: 'x' }])).rejects.toThrow(/Invalid API key/);
   });
+});
 
-  it('P2 超时：fetch 挂起 → 60s 窗口（测试注入缩短）reject 且 fallback requestUrl 同样超时走降级链报错', async () => {
-    __setAICallTimeoutMsForTests(20);
-    try {
-      const fetchMock = vi.fn(() => new Promise<any>(() => {})); // 永不 resolve（模拟挂起）
-      (globalThis as any).fetch = fetchMock;
-      vi.mocked(requestUrl).mockReturnValue(new Promise<any>(() => {}) as any);
-      await expect(callChat([{ role: 'user', content: 'x' }])).rejects.toThrow(/超时/);
-      // 两路径都尝试过：fetch 超时 → fallback requestUrl 也超时
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(requestUrl).toHaveBeenCalledTimes(1);
-    } finally {
-      __setAICallTimeoutMsForTests(60 * 1000); // 复位默认窗口
-    }
+describe('callChatJson', () => {
+  it('response_format json_object + 解析成功', async () => {
+    const fetchMock = vi.fn(async (_url: string, init: any) => {
+      const body = JSON.parse(init.body);
+      return {
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: JSON.stringify({ score: 3 }) } }], sent: body }),
+      };
+    });
+    (globalThis as any).fetch = fetchMock;
+    const r = await callChatJson([
+      { role: 'system', content: '只输出 JSON' },
+      { role: 'user', content: '打分' },
+    ]);
+    expect(r).toEqual({ score: 3 });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.response_format).toEqual({ type: 'json_object' });
   });
 
-  it('P2 超时：fallback requestUrl 成功则降级链正常返回（超时只淘汰挂起路径）', async () => {
-    __setAICallTimeoutMsForTests(20);
-    try {
-      (globalThis as any).fetch = () => new Promise<any>(() => {}); // 主路径挂起
-      vi.mocked(requestUrl).mockResolvedValue({
-        status: 200,
-        text: JSON.stringify({ choices: [{ message: { content: 'fallback ok' } }] }),
-      } as any);
-      const r = await callChat([{ role: 'user', content: 'hi' }]);
-      expect(r).toBe('fallback ok');
-    } finally {
-      __setAICallTimeoutMsForTests(60 * 1000);
-    }
+  it('JSON 解析失败 → 抛错（调用方降级）', async () => {
+    (globalThis as any).fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: '不是 JSON' } }] }),
+    }));
+    await expect(callChatJson([{ role: 'user', content: 'x' }])).rejects.toThrow(/JSON 解析失败/);
   });
 });

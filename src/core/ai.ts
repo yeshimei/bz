@@ -11,6 +11,9 @@
  * 图像输入（issue 311）：`prompt` 除纯文本外也收 `{text, images}`，带图时 content 走 OpenAI
  * 多模态数组（`image_url`）；本地图用 `imageDataUrl` 转 base64 data URL（DeepSeek V4.1-Flash
  * 只收公网 https 或 base64，格式限 JPEG/PNG/GIF/WebP）。纯文本调用报文与旧版逐字节一致。
+ * 参数单源（issue 334/ADR-0148）：输出上限 max_tokens 面板独裁——唯一权威 = provider 解析结果
+ * （设置「最大输出 token」per-provider 覆盖 > 注册表默认），调用方/工厂传值一律忽略；
+ * `prompt` 也收 `{messages}` 多轮报文（smartcat 行为流），temperature 等任务语义仍由调用方传。
  */
 import { requestUrl } from 'obsidian';
 import { getApp } from './app';
@@ -68,7 +71,7 @@ export interface AIProviderDescriptor {
   endpoint: string;
   /** 默认模型（custom 为 ''，运行时用 aiCustomModel） */
   model: string;
-  /** 默认 max_tokens（createAI 未显式给时生效；0 = 不设上限用 API 默认） */
+  /** 注册表默认 max_tokens（输出上限唯一权威链的兜底档：设置 per-provider 覆盖 > 此默认） */
   defaultMaxTokens: number;
   /** 默认请求上下文窗口（token 数；设置页提示用） */
   defaultContextWindow: number;
@@ -348,7 +351,7 @@ interface AIProvider {
   extraHeaders?: Record<string, string>;
   /** 注册表默认上下文窗口（token 数；设置页未覆盖时用） */
   contextWindow?: number;
-  /** 注册表默认 max_tokens（设置 aiMaxTokens=0 时用） */
+  /** 注册表默认 max_tokens（设置 per-provider 覆盖缺省时的兜底档） */
   defaultMaxTokens?: number;
 }
 
@@ -612,11 +615,17 @@ async function chatCompletionsNonStream(provider: AIProvider, body: any, signal?
 
 // ---------------- 图像输入（issue 311） ----------------
 
+/** 一次聊天消息（多轮报文用；smartcat 行为流等需要 system/user/assistant 序列的调用方） */
+export interface AIMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string | AIContentPart[];
+}
+
 /**
- * 一次用户消息：纯文本（string —— 与旧版报文逐字节一致）或「文本 + 若干图」。
- * 带图时走 OpenAI 多模态 content 数组，与 DeepSeek V4.1-Flash（2026-09-10 起的原生视觉）同形。
+ * 一次用户消息内容：纯文本（string —— 与旧版报文逐字节一致）、「文本 + 若干图」（多模态数组）
+ * 或多轮完整报文（{messages}，原样作为请求 messages，不经单条包装）。
  */
-export type AIInput = string | { text: string; images?: string[] };
+export type AIInput = string | { text: string; images?: string[] } | { messages: AIMessage[] };
 
 /** 图片部件的 url：公网 https 直链（≤8192 字符）或 data URL（本地图，单图 ≤32MiB） */
 export interface AIImageInput {
@@ -677,7 +686,7 @@ export function imageDataUrl(bytes: ArrayBuffer | Uint8Array, mime: string): str
  * DeepSeek 文档示例把图放在前面，顺序对结果无影响）。空串 / 非串图片项一律丢弃；
  * 全被丢弃时退回纯文本，避免发出无内容的图片组。
  */
-function buildUserContent(input: AIInput): string | AIContentPart[] {
+function buildUserContent(input: string | { text: string; images?: string[] }): string | AIContentPart[] {
   if (typeof input === 'string') return input;
   const text = String(input?.text ?? '');
   const images = (Array.isArray(input?.images) ? input.images : [])
@@ -688,6 +697,14 @@ function buildUserContent(input: AIInput): string | AIContentPart[] {
     { type: 'text', text },
     ...images.map<AIContentPart>((url) => ({ type: 'image_url', image_url: { url } })),
   ];
+}
+
+/** 报文 messages：{messages} 多轮输入原样用（smartcat 行为流），单条输入包成一条 user 消息 */
+function buildMessages(input: AIInput): any[] {
+  if (input && typeof input === 'object' && Array.isArray((input as any).messages)) {
+    return (input as any).messages;
+  }
+  return [{ role: 'user', content: buildUserContent(input as string | { text: string; images?: string[] }) }];
 }
 
 // ---------------- AIService ----------------
@@ -708,7 +725,8 @@ export class AIService {
   }
 
   /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
-   *  input 为字符串（纯文本，报文同旧版）或 {text, images}（带图 → 多模态 content 数组）；
+   *  input 为字符串（纯文本，报文同旧版）、{text, images}（带图 → 多模态 content 数组）
+   *  或 {messages}（多轮完整报文，原样进请求）；
    *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
    *  既有调用（不传这两项）行为零变化 */
   async prompt(input: AIInput, model: string = this.defaultModel, options: AIOptions = {}): Promise<string> {
@@ -719,16 +737,17 @@ export class AIService {
     const isExplicit = model !== this.defaultModel;
     const effModel = isExplicit ? model : (provider.model || model);
     const mo = mergedOptions.modelOptions || {};
-    // max_tokens（issue 187 删全局 aiMaxTokens 孤儿分支）：显式 modelOptions > provider 解析结果
-    // （per-provider 覆盖 > 注册表 defaultMaxTokens = 模型最大输出）
-    const effMaxTokens = mo.max_tokens ?? (provider.defaultMaxTokens || 4096);
+    // max_tokens（issue 334/ADR-0148 面板独裁）：唯一权威 = provider 解析结果
+    // （设置面板「最大输出 token」per-provider 覆盖 > 注册表默认）；调用方传 max_tokens 一律忽略
+    const effMaxTokens = provider.defaultMaxTokens || 4096;
     const body: Record<string, any> = {
       model: effModel,
-      messages: [{ role: 'user', content: buildUserContent(input) }],
+      messages: buildMessages(input),
       max_tokens: effMaxTokens,
       stream: true,
     };
-    // 透传其余 modelOptions（response_format / enable_thinking 等，不支持的字段由 API 忽略）
+    // 透传其余 modelOptions（response_format / temperature / enable_thinking 等，不支持的字段由
+    // API 忽略）；max_tokens 不在透传之列——上限只认设置面板（issue 334/ADR-0148）
     for (const k of Object.keys(mo)) {
       if (k === 'max_tokens') continue;
       body[k] = mo[k];
@@ -828,22 +847,11 @@ export class AIService {
 }
 
 /**
- * 工厂函数，快速创建 AIService 实例
- * @param defaultMaxTokens 默认 8192（createAI 内部 max_tokens 默认）
+ * 工厂函数，快速创建 AIService 实例。
+ * issue 334/ADR-0148：不再注入默认 max_tokens（旧第 4 参 defaultMaxTokens 已删）——
+ * 输出上限唯一权威 = provider 解析结果（设置面板 per-provider 覆盖 > 注册表默认），
+ * 调用方在 modelOptions 里传 max_tokens 也会被 prompt() 忽略。
  */
-export function createAI(params?: any, defaultModel = 'deepseek-v4-flash', defaultOptions: any = {}, defaultMaxTokens = 8192): AIService {
-  const internalDefaultOptions = {
-    modelOptions: {
-      max_tokens: defaultMaxTokens,
-      ...(defaultOptions.modelOptions || {}),
-    },
-  };
-  const mergedOptions: any = { ...internalDefaultOptions, ...defaultOptions };
-  if (defaultOptions.modelOptions) {
-    mergedOptions.modelOptions = {
-      ...internalDefaultOptions.modelOptions,
-      ...defaultOptions.modelOptions,
-    };
-  }
-  return new AIService(params, defaultModel, mergedOptions);
+export function createAI(params?: any, defaultModel = 'deepseek-v4-flash', defaultOptions: any = {}): AIService {
+  return new AIService(params, defaultModel, defaultOptions);
 }

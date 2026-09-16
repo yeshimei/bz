@@ -253,20 +253,57 @@ describe('AIService', () => {
     expect(body.enable_thinking).toBe(false);
   });
 
-  it('max_tokens 默认注册表值（ticket 172），modelOptions.max_tokens 可覆盖', async () => {
+  it('max_tokens 面板独裁（issue 334/ADR-0148）：modelOptions.max_tokens 被忽略，恒取 provider 链解析值', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
       body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
     });
     const ai = new AIService({}, 'deepseek-v4-flash');
+    // deepseek 注册表默认 8192；调用方传 200 一律忽略
     await ai.prompt('q', 'm', { modelOptions: { max_tokens: 200 } });
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.max_tokens).toBe(200);
+    expect(body.max_tokens).toBe(8192);
+
+    // per-provider 覆盖生效：设置「最大输出 token」压过注册表默认
+    setAISettingsProvider(() => ({
+      ...DEFAULT_SETTINGS,
+      aiMaxTokensOverrides: { deepseek: 16384 },
+    }));
+    resetAIProviderCache();
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
+    });
+    await ai.prompt('q2');
+    const body2 = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(body2.max_tokens).toBe(16384);
   });
 
-  it('fallback 也失败 → 抛出组合错误', async () => {
-    fetchMock.mockRejectedValue(new Error('fetch 崩'));
+  it('{messages} 多轮输入：原样进请求体（issue 334 smartcat 迁移），max_tokens 仍走面板链', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
+    });
+    const ai = new AIService({}, 'deepseek-v4-flash');
+    await ai.prompt({
+      messages: [
+        { role: 'system', content: '你是小橘' },
+        { role: 'user', content: '你好' },
+        { role: 'assistant', content: '喵' },
+        { role: 'user', content: '继续' },
+      ],
+    });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.messages).toHaveLength(4);
+    expect(body.messages[0]).toEqual({ role: 'system', content: '你是小橘' });
+    expect(body.messages[3]).toEqual({ role: 'user', content: '继续' });
+    expect(body.max_tokens).toBe(8192);
+  });
+
+  it('fallback 也失败 → 抛出组合错误', async () => {    fetchMock.mockRejectedValue(new Error('fetch 崩'));
     vi.mocked(requestUrl).mockRejectedValue(new Error('requestUrl 崩'));
     const ai = new AIService({}, 'deepseek-v4-flash');
     await expect(ai.prompt('x')).rejects.toThrow('AI 请求失败: fetch 崩（fallback: requestUrl 崩）');

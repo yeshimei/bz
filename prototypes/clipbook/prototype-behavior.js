@@ -1,4 +1,4 @@
-/* 源指纹 9b3d75140f029a0c · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e662895493172974 · 仓内输入 92 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -7123,21 +7123,14 @@ ${c.trim()}
       ...images.map((url) => ({ type: "image_url", image_url: { url } }))
     ];
   }
-  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}, defaultMaxTokens = 8192) {
-    const internalDefaultOptions = {
-      modelOptions: {
-        max_tokens: defaultMaxTokens,
-        ...defaultOptions.modelOptions || {}
-      }
-    };
-    const mergedOptions = { ...internalDefaultOptions, ...defaultOptions };
-    if (defaultOptions.modelOptions) {
-      mergedOptions.modelOptions = {
-        ...internalDefaultOptions.modelOptions,
-        ...defaultOptions.modelOptions
-      };
+  function buildMessages(input) {
+    if (input && typeof input === "object" && Array.isArray(input.messages)) {
+      return input.messages;
     }
-    return new AIService(params, defaultModel, mergedOptions);
+    return [{ role: "user", content: buildUserContent(input) }];
+  }
+  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
+    return new AIService(params, defaultModel, defaultOptions);
   }
   var _settingsProvider, AI_PROVIDER_REGISTRY, AI_THINKING_STYLE, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MIME, AI_IMAGE_MAX_BYTES, AIService;
   var init_ai = __esm({
@@ -7376,21 +7369,21 @@ ${c.trim()}
           this.defaultOptions = defaultOptions;
         }
         /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
-         *  input 为字符串（纯文本，报文同旧版）或 {text, images}（带图 → 多模态 content 数组）；
+         *  input 为字符串（纯文本，报文同旧版）、{text, images}（带图 → 多模态 content 数组）
+         *  或 {messages}（多轮完整报文，原样进请求）；
          *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
          *  既有调用（不传这两项）行为零变化 */
         async prompt(input, model = this.defaultModel, options = {}) {
-          var _a;
           const mergedOptions = this._mergeOptions(options);
           const provider = await getAIProvider(mergedOptions.provider);
           const s = getQ3Settings();
           const isExplicit = model !== this.defaultModel;
           const effModel = isExplicit ? model : provider.model || model;
           const mo = mergedOptions.modelOptions || {};
-          const effMaxTokens = (_a = mo.max_tokens) != null ? _a : provider.defaultMaxTokens || 4096;
+          const effMaxTokens = provider.defaultMaxTokens || 4096;
           const body = {
             model: effModel,
-            messages: [{ role: "user", content: buildUserContent(input) }],
+            messages: buildMessages(input),
             max_tokens: effMaxTokens,
             stream: true
           };
@@ -8757,8 +8750,7 @@ ${c.trim()}
 所有字段一律使用简体中文。
 
 【转写文稿片段】
-${chunks[0] || ""}`,
-      { modelOptions: { max_tokens: 600 } }
+${chunks[0] || ""}`
     );
     const meta = parseAiJson(metaRaw);
     const title = String((meta == null ? void 0 : meta.title) || "").trim() || opts.videoTitle || "未命名";
@@ -8771,10 +8763,9 @@ ${chunks[0] || ""}`,
         `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。转写可能存在语音误听，专名与术语（如火箭型号、人名、地名、专业词）若明显是误听则按上下文纠正为最合理的写法；无法确定的保持原文。输出必须是简体中文（繁体转写一律转为简体）。直接输出润色后的正文，不要解释、不要加标题、不要列表。
 
 【转写文稿】
-${c}`,
-        // deepseek-v4-flash（带思考）长文润色时 reasoning_content 会吃光 max_tokens 导致 content 空串
-        // （ticket 复现：finish_reason=length、content=''）；deepseek-chat 无思考、输出直达 content，稳
-        { model: "deepseek-chat", modelOptions: { max_tokens: 8192 } }
+${c}`
+        // 输出上限走设置面板（issue 334/ADR-0148）；模型也跟随设置——历史上这里曾想私换
+        // deepseek-chat 避思考，但 options.model 从未被 prompt() 读取，属无效死参数，一并拆除
       );
       polished.push(String(p || "").trim());
     }
@@ -8822,8 +8813,7 @@ ${c}`,
       `你是文字编辑。把下面的术语介绍压缩成更精简的一段话：保留术语定义与关键事实，删除冗余表述与重复内容，长度约为原文的一半。输出必须是简体中文。直接输出结果，不要解释、不要加标题、不要列表。
 
 【原文】
-${t}`,
-      { modelOptions: { max_tokens: 1024 } }
+${t}`
     );
     const s = String(out || "").trim();
     if (!s) throw new Error("AI 返回为空");
@@ -8875,7 +8865,7 @@ ${text}`;
     const list = parseDomainList(s.knowledgeDomainList);
     const t = String(text || "").trim();
     if (!t) throw new Error("段落为空");
-    const raw = await ai.json(passagePrompt(t, list), { modelOptions: { max_tokens: 4096 } });
+    const raw = await ai.json(passagePrompt(t, list));
     const meta = parseAiJson(raw);
     return {
       title: String((meta == null ? void 0 : meta.title) || "").trim(),
@@ -8949,8 +8939,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     const valid = pairs.filter((p) => p.url);
     if (!valid.length) throw new Error("图片为空");
     const raw = await ai.json(
-      { text: imagePrompt(list, valid.length, valid.map((p) => p.desc)), images: valid.map((p) => p.url) },
-      { modelOptions: { max_tokens: 4096 } }
+      { text: imagePrompt(list, valid.length, valid.map((p) => p.desc)), images: valid.map((p) => p.url) }
     );
     const meta = parseAiJson(raw);
     return {
@@ -9091,8 +9080,7 @@ ${content || ""}`;
               `请判断下面这段文字所属的领域（${domainInstruction(list)}）。只输出 JSON：{"domain":"<领域词>"}
 
 【文本】
-${sample}`,
-              { modelOptions: { max_tokens: 80 } }
+${sample}`
             ),
             aiTimeoutMs,
             "领域判定"
@@ -11042,7 +11030,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function aiPrompt(text) {
     return createAI().prompt(text, void 0, {
-      modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS, reasoning_effort: SUGGEST_REASONING_EFFORT }
+      modelOptions: { reasoning_effort: SUGGEST_REASONING_EFFORT }
     });
   }
   async function generateSuggestions(cardPath, ctx, opts) {
@@ -11314,7 +11302,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     return { ...tree, nodes: [...nodes, ...ghostNodes], edges: [...edges, ...ghostEdges] };
   }
-  var SUGGEST_MIN_SCORE, SUGGEST_MIN_ANCHOR_CHARS, SUGGEST_MAX_ANCHORS, SUGGEST_TOPK, SUGGEST_POOL_SIZE, SUGGEST_MAX_PER_TARGET, SUGGEST_MAX_LOCATE_NOTES, SUGGEST_LOCATE_TEXT_CAP, SUGGEST_JUDGE_MAX_TOKENS, SUGGEST_REASONING_EFFORT, REASON_MAX_CHARS, SUGGEST_CACHE_FILE, SUGGEST_CACHE_VERSION, HAS_MEANING_RE, WIKILINK_RE, BLOCK_ID_PREFIX, LEADING_MARK_RE, QUERY_PROMPT_PREFIX, ADOPT_PROMPT_PREFIX, LOCATE_PROMPT_PREFIX, STAGE_LABEL, STAGE_PERCENT;
+  var SUGGEST_MIN_SCORE, SUGGEST_MIN_ANCHOR_CHARS, SUGGEST_MAX_ANCHORS, SUGGEST_TOPK, SUGGEST_POOL_SIZE, SUGGEST_MAX_PER_TARGET, SUGGEST_MAX_LOCATE_NOTES, SUGGEST_LOCATE_TEXT_CAP, SUGGEST_REASONING_EFFORT, REASON_MAX_CHARS, SUGGEST_CACHE_FILE, SUGGEST_CACHE_VERSION, HAS_MEANING_RE, WIKILINK_RE, BLOCK_ID_PREFIX, LEADING_MARK_RE, QUERY_PROMPT_PREFIX, ADOPT_PROMPT_PREFIX, LOCATE_PROMPT_PREFIX, STAGE_LABEL, STAGE_PERCENT;
   var init_mount_suggest = __esm({
     "src/knowledge/mount-suggest.ts"() {
       init_ai();
@@ -11332,7 +11320,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
       SUGGEST_MAX_PER_TARGET = 2;
       SUGGEST_MAX_LOCATE_NOTES = 6;
       SUGGEST_LOCATE_TEXT_CAP = 8e3;
-      SUGGEST_JUDGE_MAX_TOKENS = 131072;
       SUGGEST_REASONING_EFFORT = "low";
       REASON_MAX_CHARS = 80;
       SUGGEST_CACHE_FILE = "mount-suggest.json";
@@ -18583,7 +18570,9 @@ ${needed.includes("tags") ? buildTagsRule(opts.tagCount || "3-6") + "\n\n" : ""}
 ${bodyText.substring(0, 6e3)}`;
     try {
       const result = await ai.prompt(prompt, "deepseek-v4-flash", {
-        modelOptions: { max_tokens: length === "detailed" ? 2048 : 1024, temperature: 0.3 }
+        // temperature 属任务语义（分析类低温）；max_tokens 面板独裁不在此传（issue 334/ADR-0148）——
+        // 推理模型思考耗尽小预算曾致 content 空串必失败，上限唯一权威 = 设置面板后自愈
+        modelOptions: { temperature: 0.3 }
       });
       const jsonMatch = (result || "").match(/\{[\s\S]*\}/);
       if (jsonMatch) return JSON.parse(jsonMatch[0]);

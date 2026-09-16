@@ -896,6 +896,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **aiMaxTokens 删键**：请求链 max_tokens = modelOptions ?? provider 解析（per-provider 覆盖 > 注册表默认）；全局分支删除（存量值 0 未生效，零迁移）。
 - **custom 模型行统一**：「自定义模型」行退役，「模型名称」行（带获取模型名按钮）为全服务商唯一模型入口；setProviderValue 特判 (custom, aiModelOverrides) → 直写 aiCustomModel，修手输无效 bug；onPick 与手输同路径。
 - **采样参数组**：aiTemperature/aiTopP/aiFrequencyPenalty/aiPresencePenalty（string 键数字项，'' = 不发字段），AI 域第二组「采样参数」（采样温度/核采样上限/频率惩罚/存在惩罚），⚙️ 主设置页同步三区块；请求链 modelOptions 同名字段优先、非法数字跳过、温度 0 合法。
+  > [!RETRO] 本条目两项已被后续拍板取代：采样参数组 2026-09-08 全链退役（79f1007f）；「max_tokens = modelOptions ?? provider 解析」优先级 2026-09-16 被 issue 334/ADR-0148 面板独裁取代（modelOptions.max_tokens 一律忽略）。历史记录，现状以 ADR-0148 为准。
 - **测试**：全量 3678 绿；ai-cov 采样透传 2 用例；文案 lint 过（标题 ≥4 字无符号、描述自然句）。无新 ADR 编号外决策（见 ADR-0088）。
 
 ### 影视分析报告内嵌化：独立窗退役、并入影院面板（ticket 190，ADR-0090）
@@ -1253,3 +1254,15 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > 自动前进的下一篇不标已读、滚动位残留前一篇（memo zrurtk）。修复：换篇时补 `markReadOnOpen`
 > （renderAll 前调用）+ 双端滚动归零（renderAll 后）；B站分流/标读/撤销等留流场景不误触发
 > （id 未变不算换篇）。
+
+### AI 输出上限面板独裁：调用点私有 max_tokens 全拆除（issue 334，2026-09-16）
+
+> 用户问「所有 AI 调用的设置项都走设置面板，怎么各自还有自己的私有参数呢」。事实核查：设置
+> 面板「最大输出 token」（aiMaxTokensOverrides，ticket 172）被两条私有链架空——createAI 注入
+> 8192 + 调用点散落私有值（自动摘要 1024/2048、知识盒六档、装配评审 131072、第二大脑 16384、
+> 小橘 300），旧优先级「显式 > provider 解析」下用户设置从未生效。恶果实例：deepseek-flash
+> 推理模型思考单篇 6011 tok 烧光 1024 预算，自动摘要 content 恒空必败且静默。拍板两刀：max_tokens
+> 全拆、面板独裁（覆盖 > 注册表默认，传入即忽略）；温度维持 9-08 退役案不进设置。createAI 停注、
+> smartcat 迁 core 单通道（AIInput 扩 {messages}）、装配评审满预算条款（ADR-0140 决策 4）改由
+> 设置面板承载、死键 secondBrainChatModel 等三枚与 ollamaChat 死导出清除、favorites isAvailable
+> 判定单源化。全量 5206 绿，见 ADR-0148。
