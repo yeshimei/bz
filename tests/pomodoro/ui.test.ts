@@ -786,11 +786,13 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
     expect(raw.state.phase).toBe('focus');
   });
 
-  it('样式基线：mask 遮罩走 --bz-overlay token + token 毛玻璃；状态栏挂 hover 反馈', () => {
+  it('样式基线：mask 遮罩收编 .bz-overlay-mask 单源（issue 347）+ padding 归零覆写；状态栏挂 hover 反馈', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
-    expect(/#pomodoro-mask\s*\{[^}]*background: var\(--bz-overlay\)/.test(css)).toBe(true);
-    expect(/#pomodoro-mask\s*\{[^}]*backdrop-filter: blur\(var\(--bz-overlay-blur\)\)/.test(css)).toBe(true);
-    expect(/#pomodoro-mask\s*\{[^}]*rgba\(0,0,0,\s*0\.45\)/.test(css)).toBe(false);
+    // 底色/blur 归 core 单源后，域块仅剩 padding 归零覆写（320px 弹窗窄屏可用区与收编前等价）；
+    // 挂类守卫在 tests/core/overlay-glass.test.ts 收编组
+    expect(/#pomodoro-mask\.bz-overlay-mask\s*\{[^}]*padding: 0/.test(css)).toBe(true);
+    expect(/#pomodoro-mask[^{]*\{[^}]*background/.test(css)).toBe(false); // 域内不得回潮遮罩底
+    expect(/#pomodoro-mask[^{]*\{[^}]*rgba\(0,0,0,\s*0\.45\)/.test(css)).toBe(false);
     expect(css).toContain('.pomodoro-statusbar:hover');
   });
 });

@@ -11,7 +11,7 @@
 
 
 /* ==================== 番茄钟弹窗（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
-    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); } /* z 动态发号（ADR-0067）；遮罩色走 --bz-overlay（原写死 rgba 已对齐） */
+    #pomodoro-mask.bz-overlay-mask { padding: 0; } /* 三件套（fixed/inset/--bz-overlay 底/token blur/居中）已收编 .bz-overlay-mask 单源（issue 347）；padding 归零对齐原可用区，320px 弹窗窄屏不被裁 */
     #pomodoro-popup { width: 320px; padding: var(--bz-space-xl); border-radius: var(--bz-radius-lg); background: var(--pz-bg, var(--background-primary)); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
     #pomodoro-popup:focus { outline: none; } /* Space 快捷键承载焦点，不画焦点环 */
     #pomodoro-ring-svg { width: 160px; height: 160px; margin: var(--bz-space-sm) auto; display: block; }

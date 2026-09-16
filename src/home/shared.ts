@@ -11,7 +11,7 @@
  * 显式入参）；图标一律 `<i data-lucide>` 占位，由各端 mountIcons 物化。
  * 布局差异层（面板骨架/周历/河卡）见 layouts/river/render.ts；域入口 render.ts 聚合两者。
  */
-import { esc, iconSpan } from '../core/ui/str';
+import { esc, iconSpan, pad2 } from '../core/ui/str';
 import { DOMAIN_ICONS } from '../core/domain-icons';
 import type { PomodoroPhase } from '../core/pomodoro-phase';
 import type { RecapSummary } from '../recap/aggregate';
@@ -503,26 +503,22 @@ export function filterEvents<T extends { text: string; kind?: string }>(events: 
 
 /* ---------- 日期/文案小工具 ---------- */
 
-function p2(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
 /** 'YYYY-MM-DD'（本地时区） */
 export function dateStrOf(anchor: number): string {
   const d = new Date(anchor);
-  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
 function fmtHm(t: number): string {
   const d = new Date(t);
-  return `${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 /** 头行日期文案：'YYYY-MM-DD 周X · HH:mm'（打开时刻现取，非模块级状态） */
 export function headDateText(now: number = Date.now()): string {
   const d = new Date(now);
   const wd = '日一二三四五六'[d.getDay()];
-  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} 周${wd} · ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} 周${wd} · ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 /* ---------- 规则纯函数（原型 buildNotes/buildPreviews/buildDots 一比一移植） ---------- */

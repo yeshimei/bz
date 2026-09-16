@@ -10,6 +10,8 @@
  */
 import type { App, TFile } from 'obsidian';
 import { storageFile } from '../core/storage';
+import { localDayKey } from '../core/utils';
+import { pad2 } from '../core/ui/str';
 import type { RiverEvent, TimelineEventKind } from './shared';
 
 /** 行为流侧车文件（单源在 smartcat/memory.ts，此处按存储路径只读） */
@@ -78,8 +80,7 @@ const wrap = (name: string, open: string, close: string): string => (name ? `${o
  */
 export function mapBehaviorEvent(item: BehaviorItemLite): TimelineEvent | null {
   const time = new Date(item.ts);
-  const p2 = (n: number) => String(n).padStart(2, '0');
-  const timeLabel = `${p2(time.getHours())}:${p2(time.getMinutes())}`;
+  const timeLabel = `${pad2(time.getHours())}:${pad2(time.getMinutes())}`;
   const base = { domain: behaviorSourceDomain(item.source), ts: item.ts, timeLabel };
   const key = `${item.source}:${item.type}`;
   // 复习启动条目无名（coverage-source 只发 {review, started}）→ 不走无名守卫
@@ -145,11 +146,9 @@ export async function readBehaviorItems(app: App): Promise<BehaviorItemLite[]> {
   }
 }
 
-/** 本地日串 'YYYY-MM-DD' */
+/** 本地日串 'YYYY-MM-DD'（issue 347 收编：转发 core localDayKey，原手写逐字等价） */
 function dateStrOf(ts: number): string {
-  const d = new Date(ts);
-  const p2 = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+  return localDayKey(ts);
 }
 
 /**

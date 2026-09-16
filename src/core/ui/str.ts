@@ -21,11 +21,25 @@ export function esc(s: unknown): string {
   return escapeHtml(String(s ?? ''));
 }
 
+/** pad2(n)：两位数补零（月/日/时/分/秒；与 core/utils pad2 同语义，零依赖单源落此——
+ *  render 纯层白名单仅本文件，须经此消费；utils.pad2 转发兼容既有 import 路径） */
+export function pad2(n: number | string): string {
+  return String(n).padStart(2, '0');
+}
+
 /** 本地时间戳 YYYY-MM-DD HH:mm:ss（created/archivedAt 等写入格式；零依赖故居此，favorites/cinema 共用） */
 export function localNow(): string {
   const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+}
+
+/** 空态字符串版（与 core/ui/empty.ts uiEmpty 同 markup 口径：bz-empty / bz-empty-ic /
+ *  bz-empty-title / bz-empty-desc；icon 传空串跳过图标节点、desc 传空串跳过描述节点，
+ *  与 DOM 版 if (opts.icon) / if (opts.desc) 对齐）。零依赖居此：icon 用 iconSpan 占位串
+ *  （渲染入 DOM 后 mountIcons 兑现），不经 core/ui/empty（其 import icon.ts 拖 obsidian，
+ *  render 纯层禁入）。title/desc 经 esc 转义——icon 是受信 lucide 名不转义。 */
+export function emptyHtmlStr(icon: string, title: string, desc?: string): string {
+  return `<div class="bz-empty">${icon ? iconSpan(icon, 'bz-empty-ic') : ''}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ''}</div>`;
 }
 
 /** lucide 图标占位串（`<i data-lucide>`）：渲染入 DOM 后由 mountIcons 兑现成 SVG——

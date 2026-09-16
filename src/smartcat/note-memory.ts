@@ -16,6 +16,7 @@
  *  - 引用失效自愈：resolver/getFile 返回 null 的条目登记（onStaleRef）并清理。
  */
 import { parseDiaryEntryFile, diaryDateFromEntryPath, resolveDiaryEntryMeta } from '../core/diary-format';
+import { pad2 } from '../core/ui/str';
 
 /** 记忆入库种子（memory.ts 契约 API 入参，签名冻结） */
 export interface NoteMemorySeed {
@@ -116,8 +117,7 @@ export function classifyForMemory(path: string, dirs: string[], diaryDir: string
 /** 本地日期（YYYY-MM-DD；now 注入供测试） */
 export function noteMemoryToday(now: number): string {
   const dt = new Date(now);
-  const p2 = (n: number) => String(n).padStart(2, '0');
-  return `${dt.getFullYear()}-${p2(dt.getMonth() + 1)}-${p2(dt.getDate())}`;
+  return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
 }
 
 /** 日记条目文件 → 单条种子（ADR-0130 一目一文件；属性损坏按题目降级；正文空 → []） */

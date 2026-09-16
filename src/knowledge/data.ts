@@ -10,6 +10,7 @@ import moment from 'moment';
 import { enqueueFileTask, jsonFileStore, storageFile, type JsonFileStore } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import { generateId } from '../core/utils';
+import { pad2 } from '../core/ui/str';
 import { getApp } from '../core/app';
 import { cleanUrlText, normalizeSourceUrl } from './source';
 import type { KnowledgeTask, KnowledgeTaskStatus } from './types';
@@ -75,8 +76,7 @@ export function secToTimeText(sec: number | null | undefined): string {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const ss = s % 60;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return h > 0 ? `${h}:${pad(m)}:${pad(ss)}` : `${m}:${pad(ss)}`;
+  return h > 0 ? `${h}:${pad2(m)}:${pad2(ss)}` : `${m}:${pad2(ss)}`;
 }
 
 /**

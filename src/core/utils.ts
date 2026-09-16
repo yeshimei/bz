@@ -5,6 +5,7 @@
 import moment from 'moment';
 import { requestUrl } from 'obsidian';
 import { getApp } from './app';
+import { pad2 } from './ui/str';
 
 /** HTML 转义 */
 export function escapeHtml(str: string): string {
@@ -17,10 +18,9 @@ export function escapeHtml(str: string): string {
   });
 }
 
-/** pad2(n)：两位数补零（月/日/时/分/秒） */
-export function pad2(n: number | string): string {
-  return String(n).padStart(2, '0');
-}
+/** pad2(n)：两位数补零（月/日/时/分/秒）；实现单源 core/ui/str（零依赖区，render 纯层
+ *  白名单仅 str），此处转发保持既有 import 路径兼容（pomodoro/reading-report 等消费） */
+export { pad2 };
 
 
 /** 睡眠 */

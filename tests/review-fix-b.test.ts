@@ -103,7 +103,9 @@ describe('批 B-4：z-index 静态大数收口（ADR-0067）', () => {
   it('literature：遮罩/窗口/小型弹窗静态档清零（显示路径 topifyZ 发号已就位）', () => {
     const css = repo('src/knowledge/styles.css');
     expect(css).not.toMatch(/z-index:/); // 域内原本仅 3 处静态档，全清
-    for (const sel of ['.bz-kb-mask', '.bz-kb-window', '.bz-lit-dialog']) {
+    // .bz-kb-mask 三件套已收编 .bz-overlay-mask 单源（issue 347，挂类守卫在 overlay-glass 收编组），
+    // 域 CSS 不再持有遮罩规则——存在性断言只留窗口与小型弹窗
+    for (const sel of ['.bz-kb-window', '.bz-lit-dialog']) {
       const rule = css.match(new RegExp(`${sel.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*\\{[^}]*\\}`));
       expect(rule, sel).toBeTruthy();
     }

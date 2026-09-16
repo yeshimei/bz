@@ -11,6 +11,7 @@
  * - 旧笔记自动补全（type 启发式 + domain AI，补过落库不重复）
  */
 import { createAI } from '../core/ai';
+import { localNow } from '../core/ui/str';
 import { withTimeout } from '../core/http';
 import { getApp } from '../core/app';
 import { tryGetSettings } from '../core/settings-provider';
@@ -111,9 +112,7 @@ function domainInstruction(list: string[]): string {
 }
 
 function nowStamp(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  return localNow(); // issue 347 收编：原手写与 core/ui/str localNow 逐字等价
 }
 
 /**
