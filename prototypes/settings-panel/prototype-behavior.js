@@ -1,5 +1,5 @@
-/* 源指纹 44b524452ef11d4b · 仓内输入 201 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 c4269640435e77ed · 仓内输入 203 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -11005,7 +11005,7 @@ ${countsToText(s.missing)}
     return set;
   }
   async function checkOrphans(app, opts = {}) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t;
     const issues = [];
     let scanned = 0;
     {
@@ -11066,8 +11066,9 @@ ${countsToText(s.missing)}
     {
       const sidecarFile = ((_h = jsonScanTargets(app).find((t) => t.file.endsWith("/clipbook.json"))) == null ? void 0 : _h.file) || "CONFIG/STORAGE/clipbook.json";
       const parsed = await readRawJson(app, sidecarFile);
-      if (parsed && parsed.ok && parsed.data && typeof parsed.data === "object" && !Array.isArray(parsed.data)) {
-        const savedArchive = parsed.data.savedArchive;
+      const data = parsed && parsed.ok && parsed.data && typeof parsed.data === "object" && !Array.isArray(parsed.data) ? parsed.data : null;
+      if (data) {
+        const savedArchive = data.savedArchive;
         if (Array.isArray(savedArchive)) {
           const urls = await clipUrlSet(app);
           for (const entry of savedArchive) {
@@ -11089,14 +11090,63 @@ ${countsToText(s.missing)}
             await ((_j = opts.tick) == null ? void 0 : _j.call(opts, "剪藏本 · 已保存残留"));
           }
         }
+        const marks = data.marks && typeof data.marks === "object" && !Array.isArray(data.marks) ? data.marks : {};
+        for (const [articleKey, list] of Object.entries(marks)) {
+          if (!Array.isArray(list)) continue;
+          for (const mk of list) {
+            if ((_k = opts.isCancelled) == null ? void 0 : _k.call(opts)) return null;
+            if (!mk || typeof mk !== "object") continue;
+            scanned += 1;
+            const notePath = String(mk.notePath || "").trim();
+            if (notePath && !fileExists(app, notePath)) {
+              const find = String(mk.find || "");
+              issues.push({
+                severity: "warn",
+                title: `剪藏标注指向的笔记不存在（${notePath.split("/").pop() || notePath}）`,
+                detail: `侧写文件：${sidecarFile}
+条目：${articleKey}
+标注原文：${find}
+笔记路径：${notePath}
+这条标注的目标笔记已删除，保存物化时会被跳过，可清除该标注记录。`,
+                fixGroup: "clipbook-marks",
+                fixKey: JSON.stringify([articleKey, find, notePath]),
+                fixLabel: "清除标注"
+              });
+            }
+            await ((_l = opts.tick) == null ? void 0 : _l.call(opts, "剪藏本 · 划词标注"));
+          }
+        }
+        const pendingSource = data.pendingSource && typeof data.pendingSource === "object" && !Array.isArray(data.pendingSource) ? data.pendingSource : {};
+        for (const [articleKey, list] of Object.entries(pendingSource)) {
+          if (!Array.isArray(list)) continue;
+          for (const p of list) {
+            if ((_m = opts.isCancelled) == null ? void 0 : _m.call(opts)) return null;
+            scanned += 1;
+            const notePath = String(p || "").trim();
+            if (notePath && !fileExists(app, notePath)) {
+              issues.push({
+                severity: "warn",
+                title: `剪藏待回写来源指向的笔记不存在（${notePath.split("/").pop() || notePath}）`,
+                detail: `侧写文件：${sidecarFile}
+条目：${articleKey}
+笔记路径：${notePath}
+保存物化时这条来源回写会因目标缺失被跳过，可清除该待回写记录。`,
+                fixGroup: "clipbook-source",
+                fixKey: JSON.stringify([articleKey, notePath]),
+                fixLabel: "清除待回写来源"
+              });
+            }
+            await ((_n = opts.tick) == null ? void 0 : _n.call(opts, "剪藏本 · 待回写来源"));
+          }
+        }
       }
     }
     {
-      const favFile = ((_k = jsonScanTargets(app).find((t) => t.file.endsWith("/favorites.json"))) == null ? void 0 : _k.file) || "CONFIG/STORAGE/favorites.json";
+      const favFile = ((_o = jsonScanTargets(app).find((t) => t.file.endsWith("/favorites.json"))) == null ? void 0 : _o.file) || "CONFIG/STORAGE/favorites.json";
       const parsed = await readRawJson(app, favFile);
       if (parsed && parsed.ok && Array.isArray(parsed.data)) {
         for (const it of parsed.data) {
-          if ((_l = opts.isCancelled) == null ? void 0 : _l.call(opts)) return null;
+          if ((_p = opts.isCancelled) == null ? void 0 : _p.call(opts)) return null;
           if (!it || typeof it !== "object") continue;
           scanned += 1;
           const note = String(it.linkedNote || "").trim();
@@ -11112,7 +11162,47 @@ ${countsToText(s.missing)}
               fixLabel: "清除关联"
             });
           }
-          await ((_m = opts.tick) == null ? void 0 : _m.call(opts, "收藏本 · 关联笔记"));
+          await ((_q = opts.tick) == null ? void 0 : _q.call(opts, "收藏本 · 关联笔记"));
+        }
+      }
+    }
+    {
+      const kbFile = ((_r = jsonScanTargets(app).find((t) => t.file.endsWith("/knowledge.json"))) == null ? void 0 : _r.file) || "CONFIG/STORAGE/knowledge.json";
+      const parsed = await readRawJson(app, kbFile);
+      if (parsed && parsed.ok && Array.isArray(parsed.data)) {
+        for (const it of parsed.data) {
+          if ((_s = opts.isCancelled) == null ? void 0 : _s.call(opts)) return null;
+          if (!it || typeof it !== "object") continue;
+          scanned += 1;
+          const id = String(it.id || "");
+          const note = String(it.notePath || "").trim();
+          const video = String(it.videoPath || "").trim();
+          const title = String(it.title || it.url || "(无标题)");
+          if (note && !fileExists(app, note)) {
+            issues.push({
+              severity: "warn",
+              title: `知识盒任务「${title}」的文献笔记不存在`,
+              detail: `数据文件：${kbFile}
+笔记路径：${note}
+任务卡「打开文献笔记」会失败；可清除该引用（任务本体保留）。`,
+              fixGroup: "knowledge",
+              fixKey: id ? `${id}|note` : "",
+              fixLabel: "清除笔记引用"
+            });
+          }
+          if (video && !fileExists(app, video)) {
+            issues.push({
+              severity: "warn",
+              title: `知识盒任务「${title}」的视频文件不存在`,
+              detail: `数据文件：${kbFile}
+视频路径：${video}
+任务卡「复制视频路径」指向的文件已缺失；可清除该路径（任务本体保留）。`,
+              fixGroup: "knowledge",
+              fixKey: id ? `${id}|video` : "",
+              fixLabel: "清除视频路径"
+            });
+          }
+          await ((_t = opts.tick) == null ? void 0 : _t.call(opts, "知识盒 · 任务引用"));
         }
       }
     }
@@ -11577,6 +11667,161 @@ ${countsToText(s.missing)}
       }
     };
   }
+  async function fixKnowledge(app, file, keys) {
+    const restored = /* @__PURE__ */ new Map();
+    const fixed = await enqueueFileTask(file, async () => {
+      var _a2;
+      const store2 = jsonFileStore(file, { defaultValue: [] });
+      const data = await store2.read();
+      let n = 0;
+      for (const key of keys) {
+        const bar = key.lastIndexOf("|");
+        if (bar <= 0) continue;
+        const id = key.slice(0, bar);
+        const field = key.slice(bar + 1) === "note" ? "notePath" : "videoPath";
+        const it = (Array.isArray(data) ? data : []).find((d) => d && typeof d === "object" && String(d.id) === id);
+        if (!it) continue;
+        const cur = String(it[field] || "").trim();
+        if (!cur) continue;
+        const rec = (_a2 = restored.get(id)) != null ? _a2 : {};
+        rec[field === "notePath" ? "notePath" : "videoPath"] = it[field];
+        restored.set(id, rec);
+        it[field] = null;
+        n += 1;
+      }
+      if (n > 0) await store2.write(data);
+      return n;
+    });
+    return {
+      fixed,
+      label: fixed ? `已清除 ${fixed} 处知识盒任务的失效引用（任务保留）` : "没有需要清除的引用（数据已变化）",
+      undo: async () => {
+        if (!restored.size) return;
+        await enqueueFileTask(file, async () => {
+          const store2 = jsonFileStore(file, { defaultValue: [] });
+          const data = await store2.read();
+          for (const it of Array.isArray(data) ? data : []) {
+            if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
+            const rec = restored.get(String(it.id));
+            if (rec.notePath !== void 0) it.notePath = rec.notePath;
+            if (rec.videoPath !== void 0) it.videoPath = rec.videoPath;
+          }
+          await store2.write(data);
+        });
+      }
+    };
+  }
+  function clipbookDefault() {
+    return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
+  }
+  function recordSectionOf(data, key) {
+    const cur = data && typeof data === "object" ? data[key] : void 0;
+    if (cur && typeof cur === "object" && !Array.isArray(cur)) return cur;
+    data[key] = {};
+    return data[key];
+  }
+  async function fixClipbookMarks(app, file, keys) {
+    const removed = [];
+    const fixed = await enqueueFileTask(file, async () => {
+      const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
+      const data = await store2.read();
+      const marks = recordSectionOf(data, "marks");
+      let n = 0;
+      for (const key of keys) {
+        let articleKey = "";
+        let find = "";
+        let notePath = "";
+        try {
+          const [a, f, p] = JSON.parse(key);
+          articleKey = String(a != null ? a : "");
+          find = String(f != null ? f : "");
+          notePath = String(p != null ? p : "");
+        } catch (e) {
+          continue;
+        }
+        if (!articleKey || !notePath) continue;
+        const list = Array.isArray(marks[articleKey]) ? marks[articleKey] : [];
+        const idx = list.findIndex(
+          (m) => m && typeof m === "object" && String(m.find || "") === find && String(m.notePath || "") === notePath
+        );
+        if (idx === -1) continue;
+        removed.push({ articleKey, mark: list[idx], index: idx });
+        list.splice(idx, 1);
+        if (list.length === 0) delete marks[articleKey];
+        n += 1;
+      }
+      if (n > 0) await store2.write(data);
+      return n;
+    });
+    return {
+      fixed,
+      label: fixed ? `已清除 ${fixed} 条失效的剪藏标注` : "没有需要清除的标注（数据已变化）",
+      undo: async () => {
+        if (!removed.length) return;
+        await enqueueFileTask(file, async () => {
+          const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
+          const data = await store2.read();
+          const marks = recordSectionOf(data, "marks");
+          for (const r of removed) {
+            const list = Array.isArray(marks[r.articleKey]) ? marks[r.articleKey] : [];
+            const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+            list.splice(at, 0, r.mark);
+            marks[r.articleKey] = list;
+          }
+          await store2.write(data);
+        });
+      }
+    };
+  }
+  async function fixClipbookPendingSource(app, file, keys) {
+    const removed = [];
+    const fixed = await enqueueFileTask(file, async () => {
+      const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
+      const data = await store2.read();
+      const pending = recordSectionOf(data, "pendingSource");
+      let n = 0;
+      for (const key of keys) {
+        let articleKey = "";
+        let notePath = "";
+        try {
+          const [a, p] = JSON.parse(key);
+          articleKey = String(a != null ? a : "");
+          notePath = String(p != null ? p : "");
+        } catch (e) {
+          continue;
+        }
+        if (!articleKey || !notePath) continue;
+        const list = Array.isArray(pending[articleKey]) ? pending[articleKey] : [];
+        const idx = list.findIndex((p) => String(p || "") === notePath);
+        if (idx === -1) continue;
+        removed.push({ articleKey, notePath, index: idx });
+        list.splice(idx, 1);
+        if (list.length === 0) delete pending[articleKey];
+        n += 1;
+      }
+      if (n > 0) await store2.write(data);
+      return n;
+    });
+    return {
+      fixed,
+      label: fixed ? `已清除 ${fixed} 条失效的剪藏待回写来源` : "没有需要清除的待回写来源（数据已变化）",
+      undo: async () => {
+        if (!removed.length) return;
+        await enqueueFileTask(file, async () => {
+          const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
+          const data = await store2.read();
+          const pending = recordSectionOf(data, "pendingSource");
+          for (const r of removed) {
+            const list = Array.isArray(pending[r.articleKey]) ? pending[r.articleKey] : [];
+            const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+            list.splice(at, 0, r.notePath);
+            pending[r.articleKey] = list;
+          }
+          await store2.write(data);
+        });
+      }
+    };
+  }
   async function fixOrphanIssues(app, issues) {
     const outcomes = [];
     const targets = jsonScanTargets(app);
@@ -11588,6 +11833,12 @@ ${countsToText(s.missing)}
     if (favIds.length) outcomes.push(await fixFavorites(app, fileOf("favorites.json"), favIds));
     const clipUrls = fixKeysOf(issues, "clipbook");
     if (clipUrls.length) outcomes.push(await fixClipbook(app, fileOf("clipbook.json"), clipUrls));
+    const markKeys = fixKeysOf(issues, "clipbook-marks");
+    if (markKeys.length) outcomes.push(await fixClipbookMarks(app, fileOf("clipbook.json"), markKeys));
+    const srcKeys = fixKeysOf(issues, "clipbook-source");
+    if (srcKeys.length) outcomes.push(await fixClipbookPendingSource(app, fileOf("clipbook.json"), srcKeys));
+    const kbKeys = fixKeysOf(issues, "knowledge");
+    if (kbKeys.length) outcomes.push(await fixKnowledge(app, fileOf("knowledge.json"), kbKeys));
     return outcomes;
   }
   var CHECK_LABELS, lastReport;
@@ -18741,6 +18992,49 @@ ${c.trim()}
   function isInternalSourceValue(v) {
     return /^\[\[/.test(String(v != null ? v : "").trim());
   }
+  function internalLinkPathOf(value) {
+    const m = /^\[\[([^\]]+?)\]\]$/.exec(String(value != null ? value : "").trim());
+    if (!m) return null;
+    return m[1].split("|")[0].trim() || null;
+  }
+  function normalizeLinkPath(p) {
+    const s = String(p != null ? p : "").trim().replace(/\\/g, "/");
+    return s ? stripMdExt(s) : "";
+  }
+  function sourcePointsAt(value, retiredPath) {
+    var _a2;
+    const linkPath = normalizeLinkPath((_a2 = internalLinkPathOf(String(value != null ? value : ""))) != null ? _a2 : "");
+    if (!linkPath) return false;
+    const target = normalizeLinkPath(retiredPath);
+    return !!target && linkPath === target;
+  }
+  function retireSourceLine(content, retiredPath, fallbackUrl) {
+    var _a2;
+    const target = normalizeLinkPath(retiredPath);
+    if (!target) return null;
+    const lines = String(content != null ? content : "").split(/\r?\n/);
+    if (((_a2 = lines[0]) == null ? void 0 : _a2.trim()) !== "---") return null;
+    let close = -1;
+    let srcAt = -1;
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim() === "---") {
+        close = i;
+        break;
+      }
+      if (/^source:/.test(lines[i])) srcAt = i;
+    }
+    if (close === -1 || srcAt === -1) return null;
+    const raw = lines[srcAt].slice("source:".length).trim();
+    const quoted = raw.startsWith('"') && raw.endsWith('"') || raw.startsWith("'") && raw.endsWith("'");
+    const value = (quoted ? raw.slice(1, -1) : raw).replace(/\\(["\\])/g, "$1");
+    if (!sourcePointsAt(value, retiredPath)) return content;
+    if (fallbackUrl && String(fallbackUrl).trim()) {
+      lines[srcAt] = `source: ${quoteYaml(String(fallbackUrl).trim())}`;
+    } else {
+      lines.splice(srcAt, 1);
+    }
+    return lines.join(content.includes("\r\n") ? "\r\n" : "\n");
+  }
   function upgradeSourceLine(content, internalLink) {
     var _a2;
     const link = String(internalLink != null ? internalLink : "").trim();
@@ -19481,9 +19775,9 @@ ${c.trim()}
     const root = await rootNode(rootPath, scan);
     nodes.set(root.id, root);
     order.push(root.id);
-    const queue = [root.id];
-    while (queue.length) {
-      const node = nodes.get(queue.shift());
+    const queue2 = [root.id];
+    while (queue2.length) {
+      const node = nodes.get(queue2.shift());
       if (node.kind !== "card" || node.missing) continue;
       const sameNote = await findSameNameNote(node.path, ctx);
       if (sameNote && !nodes.has(sameNote)) {
@@ -19524,7 +19818,7 @@ ${c.trim()}
             edges.push({ from: node.id, to: child.id, suggested: false });
           }
         }
-        if (fresh && child.kind === "card" && !child.missing) queue.push(child.id);
+        if (fresh && child.kind === "card" && !child.missing) queue2.push(child.id);
       }
     }
     const firstIdx = new Map(order.map((id, i) => [id, i]));
@@ -27560,10 +27854,237 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   });
 
+  // src/knowledge/source-retire.ts
+  function knowledgeDirOf() {
+    var _a2, _b2;
+    return String((_b2 = (_a2 = tryGetSettings()) == null ? void 0 : _a2.knowledgeDirectory) != null ? _b2 : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
+  }
+  async function retireKnowledgeSources(app, retiredPath, fallbackUrl) {
+    const target = String(retiredPath || "").trim();
+    if (!target) return 0;
+    const dir = knowledgeDirOf();
+    const files = (app.vault.getMarkdownFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
+    const hits = files.filter((f) => {
+      var _a2, _b2, _c;
+      try {
+        const fm = (_c = (_b2 = (_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) == null ? void 0 : _b2.call(_a2, f)) == null ? void 0 : _c.frontmatter;
+        return !!fm && sourcePointsAt(fm.source, target);
+      } catch (e) {
+        return false;
+      }
+    });
+    let changed = 0;
+    for (const f of hits) {
+      try {
+        const content = await app.vault.read(f);
+        const next = retireSourceLine(content, target, fallbackUrl);
+        if (next !== null && next !== content) {
+          await app.vault.modify(f, next);
+          changed++;
+        }
+      } catch (e) {
+        console.warn("[knowledge] source 退役写回失败（跳过该卡）", f.path, e);
+      }
+    }
+    return changed;
+  }
+  async function retireKnowledgeSourcesForClip(app, clipPath, clipUrl) {
+    const url = String(clipUrl != null ? clipUrl : "").trim();
+    const n = await retireKnowledgeSources(app, clipPath, url || null);
+    if (n > 0) {
+      if (url) notify(`已把 ${n} 张知识卡片来源回退为原链接`, { type: "success" });
+      else notify(`已摘除 ${n} 张知识卡片的失效来源`, { type: "info" });
+    }
+    return n;
+  }
+  async function retireSourcesOnMdDeleted(app, deletedPath) {
+    const n = await retireKnowledgeSources(app, deletedPath, null);
+    if (n > 0) notify(`已摘除 ${n} 张知识卡片的失效来源`, { type: "info" });
+    return n;
+  }
+  var init_source_retire = __esm({
+    "src/knowledge/source-retire.ts"() {
+      init_settings_provider();
+      init_notice();
+      init_source();
+    }
+  });
+
+  // src/knowledge/file-sync.ts
+  function syncRename(tasks, { oldPath, newPath }) {
+    let changed = false;
+    for (const task of tasks) {
+      if ((task == null ? void 0 : task.notePath) === oldPath) {
+        task.notePath = newPath;
+        changed = true;
+      }
+      if ((task == null ? void 0 : task.videoPath) === oldPath) {
+        task.videoPath = newPath;
+        changed = true;
+      }
+    }
+    return changed;
+  }
+  function syncDelete(tasks, path) {
+    let changed = false;
+    for (const task of tasks) {
+      if ((task == null ? void 0 : task.notePath) === path) {
+        task.notePath = null;
+        changed = true;
+      }
+      if ((task == null ? void 0 : task.videoPath) === path) {
+        task.videoPath = null;
+        changed = true;
+      }
+    }
+    return changed;
+  }
+  function inFolders(path, folders) {
+    return folders.some((f) => path.startsWith(f + "/") || path === f);
+  }
+  function getKnowledgePath() {
+    if (KnowledgeData.filePath) return KnowledgeData.filePath;
+    return storageFile("knowledge.json", tryGetSettings().storagePath || "CONFIG/STORAGE");
+  }
+  async function syncTasks(fn, ...args) {
+    const path = getKnowledgePath();
+    await enqueueFileTask(path, async () => {
+      const tasks = await KnowledgeData.read();
+      if (fn(tasks, ...args)) await KnowledgeData.write(tasks);
+    });
+  }
+  function getWatchedFolders() {
+    return [knowledgeDirOf()];
+  }
+  function enqueue(task) {
+    queue = queue.then(() => {
+      if (_cancelled) return;
+      return task();
+    }).catch((e) => {
+      console.error("[knowledge-file-sync]", e);
+      notify("知识盒同步失败，数据可能不一致", { type: "error", dedupeKey: "knowledge-file-sync" });
+    });
+  }
+  function debounceDelay() {
+    const s = tryGetSettings();
+    return Number(s && s.DEBOUNCE_DELAY) || 300;
+  }
+  function createBatchFlusher(run) {
+    let pending = [];
+    let timer = null;
+    const flush = () => {
+      timer = null;
+      if (_cancelled) {
+        pending = [];
+        return;
+      }
+      const batch = pending;
+      pending = [];
+      enqueue(() => run(batch));
+    };
+    const push = (ev) => {
+      if (_cancelled) return;
+      pending.push(ev);
+      if (timer !== null) clearTimeout(timer);
+      timer = setTimeout(flush, debounceDelay());
+    };
+    return Object.assign(push, {
+      cancel() {
+        if (timer !== null) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        pending = [];
+      }
+    });
+  }
+  function createFileSyncAgent(app) {
+    const referencedByTasks = async (path) => {
+      if (!path) return false;
+      try {
+        const tasks = await KnowledgeData.read();
+        return tasks.some((t) => (t == null ? void 0 : t.notePath) === path || (t == null ? void 0 : t.videoPath) === path);
+      } catch (e) {
+        return false;
+      }
+    };
+    const isMd = (file) => file && file.extension === "md" && inFolders(file.path, getWatchedFolders());
+    const pseudoFile = (path) => ({
+      path,
+      basename: stripMdExt(path.split("/").pop() || ""),
+      extension: "md"
+    });
+    const flushRenames = createBatchFlusher(async (batch) => {
+      for (const ev of batch) {
+        await syncTasks(syncRename, ev);
+      }
+    });
+    _flushers.push(flushRenames);
+    _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
+      const file = pseudoFile(evt.newPath);
+      void (async () => {
+        if (!(isMd(file) || await referencedByTasks(evt.oldPath) || await referencedByTasks(evt.newPath))) return;
+        flushRenames({ oldPath: evt.oldPath, newPath: evt.newPath });
+      })();
+    }));
+    _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
+      const file = pseudoFile(evt.path);
+      void (async () => {
+        if (isMd(file) || await referencedByTasks(evt.path)) {
+          enqueue(() => syncTasks(syncDelete, evt.path));
+        }
+        await retireSourcesOnMdDeleted(app, evt.path);
+      })();
+    }));
+  }
+  function ensureFileSync(app) {
+    if (initialized2) return;
+    initialized2 = true;
+    _cancelled = false;
+    createFileSyncAgent(app);
+  }
+  function unloadFileSync() {
+    _cancelled = true;
+    for (const f of _flushers) {
+      try {
+        f.cancel();
+      } catch (e) {
+      }
+    }
+    _flushers = [];
+    for (const off of _refs) {
+      try {
+        off();
+      } catch (e) {
+      }
+    }
+    _refs = [];
+    initialized2 = false;
+    queue = Promise.resolve();
+  }
+  var initialized2, _refs, _cancelled, _flushers, queue;
+  var init_file_sync = __esm({
+    "src/knowledge/file-sync.ts"() {
+      init_utils();
+      init_notice();
+      init_settings_provider();
+      init_domain_bus();
+      init_storage();
+      init_data6();
+      init_source_retire();
+      initialized2 = false;
+      _refs = [];
+      _cancelled = false;
+      _flushers = [];
+      queue = Promise.resolve();
+    }
+  });
+
   // src/knowledge/index.ts
   var knowledge_exports = {};
   __export(knowledge_exports, {
     ensureKnowledge: () => ensureKnowledge,
+    ensureKnowledgeFileSync: () => ensureFileSync,
     linkAllInBoxes: () => linkAllInBoxes,
     openImageNote: () => openImageNote,
     openKnowledgeAddTask: () => openKnowledgeAddTask,
@@ -27572,7 +28093,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     openPassageNote: () => openPassageNote,
     openTermNote: () => openTermNote,
     relinkActiveNote: () => relinkActiveNote,
+    retireKnowledgeSourcesForClip: () => retireKnowledgeSourcesForClip,
     unloadKnowledge: () => unloadKnowledge,
+    unloadKnowledgeFileSync: () => unloadFileSync,
     upgradeNoteSourceInternal: () => upgradeNoteSourceInternal
   });
   function prefillSource(src) {
@@ -27582,11 +28105,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function ensureKnowledge(app) {
     var _a2;
-    if (initialized2) return;
+    if (initialized3) return;
     try {
       KnowledgeData.init({ storagePath: (_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath });
       uiManager = new UIManager(app);
-      initialized2 = true;
+      initialized3 = true;
     } catch (e) {
       console.error("bz: 文献盒初始化失败（下次打开命令将自动重试）", e);
       uiManager = null;
@@ -27726,9 +28249,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function unloadKnowledge() {
     uiManager == null ? void 0 : uiManager.destroy();
     uiManager = null;
-    initialized2 = false;
+    initialized3 = false;
   }
-  var initialized2, uiManager;
+  var initialized3, uiManager;
   var init_knowledge = __esm({
     "src/knowledge/index.ts"() {
       init_fake_obsidian();
@@ -27738,7 +28261,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_data6();
       init_ui5();
       init_note_gen();
-      initialized2 = false;
+      init_source_retire();
+      init_file_sync();
+      initialized3 = false;
       uiManager = null;
     }
   });
@@ -28137,6 +28662,7 @@ ${body}`;
     __clipBodyCacheKeysForTests: () => __clipBodyCacheKeysForTests,
     clipbookSettingsSchema: () => clipbookSettingsSchema,
     closePanel: () => closePanel2,
+    deleteClipNote: () => deleteClipNote,
     initPanel: () => initPanel,
     invalidateClipBodyCache: () => invalidateClipBodyCache,
     openSettings: () => openSettings,
@@ -29006,6 +29532,14 @@ ${body}`;
         try {
           content = await getApp().vault.cachedRead(note.file);
         } catch (e) {
+        }
+        try {
+          const mod = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
+          if (typeof mod.retireKnowledgeSourcesForClip === "function") {
+            await mod.retireKnowledgeSourcesForClip(getApp(), path, a.url || "");
+          }
+        } catch (e) {
+          console.warn("[剪藏本] 知识卡片来源回退失败（接受，静默）", e);
         }
         await getApp().vault.trash(note.file, true);
         clipBodyCache.delete(path);
@@ -32208,8 +32742,8 @@ ${n.content.slice(0, 2e3)}
     quizUpdate: () => quizUpdate
   });
   function ensureQuiz(app) {
-    if (initialized3) return;
-    initialized3 = true;
+    if (initialized4) return;
+    initialized4 = true;
     QuizMasterUI.ai = createAI();
     quizUI.ai = QuizMasterUI.ai;
     QuizMasterUI.settings = getSettings();
@@ -32218,13 +32752,13 @@ ${n.content.slice(0, 2e3)}
     ensureQuiz(app);
     await quizUI.updateQuiz();
   }
-  var initialized3;
+  var initialized4;
   var init_quiz_core = __esm({
     "src/review/quiz-core/index.ts"() {
       init_ai();
       init_settings_provider();
       init_session();
-      initialized3 = false;
+      initialized4 = false;
     }
   });
 
@@ -34146,8 +34680,8 @@ ${n.content.slice(0, 2e3)}
     return { path, basename: stripMdExt(base), extension: "md" };
   }
   function ensureReview(app) {
-    if (initialized4) return;
-    initialized4 = true;
+    if (initialized5) return;
+    initialized5 = true;
     reviewApp.ensure(app);
     dataManager = new ReviewDataManager(app);
     uiManager2 = new UIManager2(app, dataManager);
@@ -34299,7 +34833,7 @@ ${n.content.slice(0, 2e3)}
     await reviewApp.applyReviewStyles(app);
   }
   function unloadReview() {
-    initialized4 = false;
+    initialized5 = false;
     if (firstCheckTimer) {
       clearTimeout(firstCheckTimer);
       firstCheckTimer = null;
@@ -34323,7 +34857,7 @@ ${n.content.slice(0, 2e3)}
     reviewWatcher == null ? void 0 : reviewWatcher.destroy();
     reviewWatcher = null;
   }
-  var initialized4, dataManager, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
+  var initialized5, dataManager, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
   var init_review = __esm({
     "src/review/index.ts"() {
       init_utils();
@@ -34334,7 +34868,7 @@ ${n.content.slice(0, 2e3)}
       init_watch();
       init_ui9();
       init_app2();
-      initialized4 = false;
+      initialized5 = false;
       dataManager = null;
       uiManager2 = null;
       reviewWatcher = null;
@@ -35275,7 +35809,7 @@ ${n.content.slice(0, 2e3)}
     }
     return true;
   }
-  function enqueue(fn) {
+  function enqueue2(fn) {
     const run = chain.then(fn, fn);
     chain = run.then(
       () => void 0,
@@ -35306,12 +35840,12 @@ ${n.content.slice(0, 2e3)}
     const meta = { ...priMeta, notes };
     let panel = primary.panel;
     if (conflict.panel && (!panel || conflict.panel.generatedAt > panel.generatedAt)) panel = conflict.panel;
-    const queue = [...primary.link.queue];
-    const seen = new Set(queue.map((q2) => q2.path));
+    const queue2 = [...primary.link.queue];
+    const seen = new Set(queue2.map((q2) => q2.path));
     for (const q2 of conflict.link.queue) {
       if (!seen.has(q2.path)) {
         seen.add(q2.path);
-        queue.push(q2);
+        queue2.push(q2);
       }
     }
     const state3 = { ...primary.link.state };
@@ -35329,7 +35863,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     const chatTrimmed = chatHistory.slice(-CHAT_HISTORY_LIMIT);
-    return { version: primary.version, meta, panel, link: { queue, state: state3 }, chatHistory: chatTrimmed };
+    return { version: primary.version, meta, panel, link: { queue: queue2, state: state3 }, chatHistory: chatTrimmed };
   }
   function buildRowOffsets(meta) {
     const map = /* @__PURE__ */ new Map();
@@ -35582,7 +36116,7 @@ ${n.content.slice(0, 2e3)}
     await adapter.write(getSecondBrainStorePath(), next);
   }
   async function loadStore(app) {
-    return enqueue(() => readStoreRaw(app));
+    return enqueue2(() => readStoreRaw(app));
   }
   var STORE_VERSION, CHAT_HISTORY_LIMIT, LEGACY_FILES, LEGACY_VEC, chain;
   var init_store_file = __esm({
@@ -38328,7 +38862,8 @@ ${n.content.slice(0, 2e3)}
          * 加密阶段密文流式写入暂存区 `.staging/`（不占内存、不进入数据文件夹正式布局）；
          * 全部加密成功后才进入提交序列：
          *   S1 写挂起标记 → S2 清单先行（saveManifest，提交点）→ S3 暂存镜像搬入顶层
-         *   → S4 清除挂起标记 → S5 尽力删原文件（失败仅提示，onDeleteFailed 收集，不回滚）。
+         *   → S4 清除挂起标记 → S5 尽力删原文件（失败仅提示，onDeleteFailed 收集，不回滚；
+         *   共享附件 keptShared 跳过删除——issue 338 他引保护，原件保留他篇嵌入不断链）。
          * 关键不变量：挂起标记存在 ⇒ 原文件未删 ⇒ 解锁自愈回滚永远安全；标记于删原文件前清除，
          * 标记清除后的意外一律视为已提交、绝不回滚（Q4-A）。
          * 任一失败（附件/正文加密、写暂存、清单写入、搬入、清标记）→ 整笔放弃：清理本次暂存、
@@ -38375,7 +38910,9 @@ ${n.content.slice(0, 2e3)}
                 blobSize: enc.length,
                 fingerprint: fp,
                 hasPreview,
-                previewRef
+                previewRef,
+                // 共享附件标记随清单记账（issue 338）：仅 true 落账，老清单/非共享不受影响
+                keptShared: a.keptShared || void 0
               };
             });
             for (const r of results) attachments.push(r);
@@ -38407,6 +38944,7 @@ ${n.content.slice(0, 2e3)}
             }
             const deleteFailed = [];
             for (const a of input.attachments) {
+              if (a.keptShared) continue;
               try {
                 await this.deleteVaultFile(a.path);
               } catch (e) {
@@ -38455,6 +38993,8 @@ ${n.content.slice(0, 2e3)}
          * 还原（取出即删）一篇笔记（操作级互斥入口，P1-6）：与 lockNote 共享同一串行链。
          *
          * 解原文 + 原质量附件写回原路径。
+         * 共享附件（keptShared，issue 338）跳过写回：原件加密时已保留在原路径，还原时不再
+         * 解密/校验/落盘该附件（密文镜像照常随条目删除），防覆盖保留的原件。
          * 原子语义（用户决策修订）：阶段一并行解密全部附件 + 正文并完成全部校验
          * （指纹冲突/目标被占/镜像缺失/解密失败），**任一失败 → 整体放弃，零落盘**；
          * 阶段二才批量写回明文（写回中途失败尽力回滚本次创建的文件）。
@@ -38474,13 +39014,18 @@ ${n.content.slice(0, 2e3)}
           const total = note.attachments.length + 1;
           let done = 0;
           const plainAttachments = await mapLimit(note.attachments, BLOB_CONCURRENCY, async (a) => {
+            if (a.keptShared) {
+              done += 1;
+              onProgress == null ? void 0 : onProgress({ done, total, current: a.path });
+              return null;
+            }
             const plainB64 = await this.prepareRestoreAttachment(a);
             done += 1;
             onProgress == null ? void 0 : onProgress({ done, total, current: a.path });
             return plainB64;
           });
           note.attachments.forEach((a, i) => {
-            if (plainAttachments[i] === null) conflicts.push(a.path);
+            if (!a.keptShared && plainAttachments[i] === null) conflicts.push(a.path);
           });
           done += 1;
           onProgress == null ? void 0 : onProgress({ done, total, current: note.path });
@@ -38497,6 +39042,7 @@ ${n.content.slice(0, 2e3)}
           try {
             for (let i = 0; i < note.attachments.length; i++) {
               const a = note.attachments[i];
+              if (a.keptShared) continue;
               const wasCreated = await this.commitRestoreAttachment(a, plainAttachments[i]);
               if (wasCreated) created.push(a.path);
             }
@@ -38569,10 +39115,10 @@ ${n.content.slice(0, 2e3)}
           const plainAttachments = await mapLimit(
             note.attachments,
             BLOB_CONCURRENCY,
-            async (a) => this.prepareRestoreAttachment(a)
+            async (a) => a.keptShared ? null : this.prepareRestoreAttachment(a)
           );
           note.attachments.forEach((a, i) => {
-            if (plainAttachments[i] === null) conflicts.push(a.path);
+            if (!a.keptShared && plainAttachments[i] === null) conflicts.push(a.path);
           });
           if (!finalBlock) conflicts.push(note.path);
           if (conflicts.length > 0) return false;
@@ -38580,6 +39126,7 @@ ${n.content.slice(0, 2e3)}
           try {
             for (let i = 0; i < note.attachments.length; i++) {
               const a = note.attachments[i];
+              if (a.keptShared) continue;
               const wasCreated = await this.commitRestoreAttachment(a, plainAttachments[i]);
               if (wasCreated) created.push(a.path);
             }
@@ -40128,7 +40675,9 @@ ${n.content.slice(0, 2e3)}
     collectMediaSlots: () => collectMediaSlots,
     collectNoteAttachmentPaths: () => collectNoteAttachmentPaths,
     collectNoteAttachments: () => collectNoteAttachments,
+    collectSharedAttachmentPaths: () => collectSharedAttachmentPaths,
     encryptSettingsSchema: () => encryptSettingsSchema,
+    findSharedAttachmentPaths: () => findSharedAttachmentPaths,
     kindOf: () => kindOf,
     mimeOf: () => mimeOf,
     passwordStrength: () => passwordStrength,
@@ -40202,6 +40751,68 @@ ${n.content.slice(0, 2e3)}
     }
     const vaultFiles = ((_c = app == null ? void 0 : app.vault) == null ? void 0 : _c.getFiles) && app.vault.getFiles() || [];
     return collectNoteAttachments(content, embedLinks, vaultFiles);
+  }
+  function findSharedAttachmentPaths(notePath, attPaths, others) {
+    const cand = /* @__PURE__ */ new Set();
+    for (const p of attPaths) {
+      if (p) cand.add(p);
+    }
+    if (!cand.size || !others.length) return [];
+    const byName = /* @__PURE__ */ new Map();
+    for (const p of cand) {
+      const name = p.slice(p.lastIndexOf("/") + 1);
+      if (name && !byName.has(name)) byName.set(name, p);
+    }
+    const shared = /* @__PURE__ */ new Set();
+    for (const o of others) {
+      if (!o || o.path === notePath) continue;
+      for (const l of o.links || []) {
+        if (!l || typeof l !== "string") continue;
+        const clean = decodeURIComponent(l.split("#")[0].trim()).replace(/^\.\//, "");
+        if (!clean) continue;
+        let hit;
+        if (cand.has(clean)) hit = clean;
+        else if (!clean.includes("/")) hit = byName.get(clean);
+        else {
+          for (const p of cand) {
+            if (p.endsWith("/" + clean)) {
+              hit = p;
+              break;
+            }
+          }
+        }
+        if (hit) shared.add(hit);
+      }
+    }
+    return [...shared];
+  }
+  function collectSharedAttachmentPaths(app, notePath, attPaths) {
+    var _a2, _b2, _c;
+    if (!attPaths.length) return [];
+    let mds = [];
+    try {
+      mds = ((_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getMarkdownFiles) && app.vault.getMarkdownFiles() || [];
+    } catch (e) {
+      return [];
+    }
+    const others = [];
+    for (const f of mds) {
+      const links = [];
+      try {
+        const cache = (_c = (_b2 = app == null ? void 0 : app.metadataCache) == null ? void 0 : _b2.getFileCache) == null ? void 0 : _c.call(_b2, f);
+        const embeds = cache && Array.isArray(cache.embeds) ? cache.embeds : [];
+        const mdLinks = cache && Array.isArray(cache.links) ? cache.links : [];
+        for (const e of embeds) {
+          if (e && typeof e.link === "string") links.push(e.link);
+        }
+        for (const l of mdLinks) {
+          if (l && typeof l.link === "string") links.push(l.link);
+        }
+      } catch (e) {
+      }
+      others.push({ path: f.path, links });
+    }
+    return findSharedAttachmentPaths(notePath, attPaths, others);
   }
   function kindOf(path) {
     var _a2;
@@ -42454,11 +43065,12 @@ ${n.content.slice(0, 2e3)}
             });
           });
         }
-        /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始 */
-        async confirmLockProceed(file, attCount) {
+        /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始；共享附件原件保留（issue 338） */
+        async confirmLockProceed(file, attCount, sharedCount = 0) {
+          const sharedNote = sharedCount > 0 ? `其中 ${sharedCount} 个附件被其他笔记共用，原件将保留在原位置。` : "";
           return await openFlowDialog({
             title: "加密到保险库",
-            message: `把「${file.basename}」的正文${attCount ? "与 " + attCount + " 个附件" : ""}加密移入保险库？加密后原笔记与附件将从原路径移出（保险库内为密文）。`,
+            message: `把「${file.basename}」的正文${attCount ? "与 " + attCount + " 个附件" : ""}加密移入保险库？加密后原笔记与附件将从原路径移出（保险库内为密文）。${sharedNote}`,
             actions: [
               { label: "取消", value: "cancel" },
               // 刻意不标 danger（issue 291 评审）：加密是「搬进保险库」而非销毁——原路径消失但正文/附件
@@ -42523,9 +43135,13 @@ ${n.content.slice(0, 2e3)}
             }
             const content = await app.vault.read(file);
             const attPaths = collectNoteAttachmentPaths(app, file, content);
-            if (!await this.confirmLockProceed(file, attPaths.length)) return;
+            const sharedSet = new Set(collectSharedAttachmentPaths(app, file.path, attPaths));
+            if (!await this.confirmLockProceed(file, attPaths.length, sharedSet.size)) return;
             const attachments = await this.readAttachmentInputs(app, attPaths);
             if (!attachments) return;
+            for (const a of attachments) {
+              if (sharedSet.has(a.path)) a.keptShared = true;
+            }
             const h = progressNotify("加密 " + file.basename);
             try {
               await this.dataManager.lockNote(
@@ -42547,7 +43163,11 @@ ${n.content.slice(0, 2e3)}
                   }
                 }
               );
-              finishProgress(h, attachments.length + 1, "加密完成");
+              finishProgress(
+                h,
+                attachments.length + 1,
+                sharedSet.size ? `加密完成（${sharedSet.size} 个附件被其他笔记共用，原件保留）` : "加密完成"
+              );
               this.uiManager.show();
             } catch (e) {
               if (h) h.hide();
@@ -44274,17 +44894,17 @@ ${n.content.slice(0, 2e3)}
     return ui;
   }
   async function ensureSettingsPanel(_app3) {
-    if (initialized5) return;
-    initialized5 = true;
+    if (initialized6) return;
+    initialized6 = true;
   }
   function openSettingsPanel(app, domainId) {
     void ensureSettingsPanel(app).then(() => getUI().open(domainId));
   }
-  var initialized5, ui;
+  var initialized6, ui;
   var init_settings_panel = __esm({
     "src/settings-panel/index.ts"() {
       init_ui13();
-      initialized5 = false;
+      initialized6 = false;
       ui = null;
     }
   });
