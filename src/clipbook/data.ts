@@ -12,6 +12,8 @@
  *   通道之一保留（store 的 savedKeys），实际 saved 判定主要靠 clipByUrl（url 命中剪藏
  *   目录）与 news 侧 state，故无产出方不影响状态正确性。
  * - order: 「全部未读」排序（本票不做拖拽，段预留）
+ * - readLog: 阅读会话流水（issue 358）——插件侧阅读时长收集的唯一落点；news.json stats 段
+ *   只有计数无时长，报告（report-ui/report-stats）从本段派生。
  */
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 
@@ -28,6 +30,21 @@ export interface ClipSavedImage {
   local: string;
 }
 
+/** 阅读会话流水条目（issue 358）：一次封存的连续阅读段（右栏/详情停留）。
+ *  粒度 =「哪篇（key/title）· 哪里来（src）· 读多久（minutes 整分钟）· 何时封存（ts）」；
+ *  同篇多次打开 = 多条记录（时段分布按段归桶），报告层聚合去重。 */
+export interface ClipReadLogEntry {
+  /** 条目稳定标识（articleKeyOf / clip:<path>） */
+  key: string;
+  title: string;
+  /** 来源展示名（ClipArticle.srcName：B站 UP 名 / 平台 / 剪藏站点） */
+  src: string;
+  /** 本次会话整分钟（≥1；不足 1 分钟不记） */
+  minutes: number;
+  /** 会话封存时刻（epoch ms） */
+  ts: number;
+}
+
 export interface ClipbookData {
   articleOverrides: Record<string, { reading?: boolean }>;
   savedArchive: Array<{ url: string; title: string; savedAt: string }>;
@@ -39,6 +56,9 @@ export interface ClipbookData {
   /** 待升级 source 的文献笔记路径（issue 329 / ADR-0144 source 两态；term/passage/plate 通用）：
    *  articleKey → 该条目发起录入的文献笔记路径清单，保存物化时回写 [[剪藏路径|标题]] */
   pendingSource: Record<string, string[]>;
+  /** 阅读会话流水（issue 358）：append-only，追加时裁剪（180 天外 + 上限条数，见 flow trimReadLog）；
+   *  旧侧写无此段 → 空数组兜底，零迁移 */
+  readLog: ClipReadLogEntry[];
 }
 
 export const CLIPBOOK_JSON = 'clipbook.json';
@@ -64,7 +84,26 @@ function resolve(data: ClipbookData): ClipbookData {
       Array.isArray(v) ? v.filter((im: any) => im && typeof im.src === 'string' && typeof im.local === 'string') : []),
     pendingSource: resolveRecord(data && (data as any).pendingSource, (v: any) =>
       Array.isArray(v) ? v.map(String).filter(Boolean) : []),
+    // issue 358 新段：旧侧写无此段 → 空数组兜底；条目形态容错（非法条目整条丢弃）
+    readLog: resolveReadLog((data as any)?.readLog),
   };
+}
+
+/** readLog 段容错解析（issue 358）：非数组 → 空数组；条目缺关键字段/时长非法 → 丢弃 */
+function resolveReadLog(raw: any): ClipReadLogEntry[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((e: any) =>
+    e && typeof e === 'object'
+    && typeof e.key === 'string' && e.key
+    && typeof e.minutes === 'number' && isFinite(e.minutes) && e.minutes > 0
+    && typeof e.ts === 'number' && isFinite(e.ts)
+  ).map((e: any) => ({
+    key: e.key,
+    title: typeof e.title === 'string' ? e.title : '',
+    src: typeof e.src === 'string' ? e.src : '',
+    minutes: e.minutes,
+    ts: e.ts,
+  }));
 }
 
 /** Record 段容错解析：非对象 → 空对象；每值经 coerce 归一 */
@@ -104,5 +143,5 @@ export function updateClipbookData(mutate: (cur: ClipbookData) => ClipbookData):
 }
 
 export function emptySidecar(): ClipbookData {
-  return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
+  return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
 }

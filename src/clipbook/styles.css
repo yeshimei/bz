@@ -566,3 +566,302 @@
   --clip-cream: #2a2823;
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
 }
+
+
+/* ==================== 阅读报告弹层（issue 358「我读了什么」） ====================
+   剪藏本自有阅读报告（数据 = clipbook.json readLog 阅读会话流水），与书库「阅读分析报告」
+   并列不深链。弹层独立 overlay（不经 .bz-clip-frame 子树），域主题变量按 .bz-clip-selbar
+   先例挂在随身单类上；条形/柱状/排名徽章配色消费 core/chart-palette 粉彩系（图表配色单源），
+   墨字/纸面走域 --clip-* 印刷风变量；滚动条不自造（core 界面级单源隐藏，ADR-0122）。 */
+.bz-clip-report-frame {
+  --clip-paper: #faf8f3;
+  --clip-ink: #1c1a17;
+  --clip-ink-2: #3d3a34;
+  --clip-body: #33302a;
+  --clip-dim: #6b6458;
+  --clip-accent: #c2410c;
+  --clip-accent-soft: #e8965a;
+  --clip-line: #e4ddd0;
+  --clip-line-soft: #eee8dc;
+  --clip-cream: #f3efe6;
+  --clip-soft: #efe9dd;
+  --clip-serif: Georgia, "Noto Serif SC", "SimSun", serif;
+  width: 720px;
+  max-width: calc(100vw - 40px);
+  height: 660px;
+  max-height: 92vh;
+  background: var(--clip-paper);
+  color: var(--clip-ink);
+}
+.theme-dark .bz-clip-report-frame {
+  --clip-paper: #1b1a17;
+  --clip-ink: #ece8dd;
+  --clip-ink-2: #cdc7b8;
+  --clip-body: #cdc7b8;
+  --clip-dim: #928b7c;
+  --clip-accent: #e8794a;
+  --clip-accent-soft: #f0a077;
+  --clip-line: #363329;
+  --clip-line-soft: #2e2b25;
+  --clip-cream: #2a2823;
+  --clip-soft: #26231e;
+}
+
+/* ---- 头行：标题（组件库 .bz-panel-head 壳）+ 周期 seg + 关闭钮 ---- */
+.bz-clp-rep-seg {
+  display: flex;
+  gap: 2px;
+  margin-left: var(--bz-space-sm);
+}
+.bz-clp-rep-seg-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--clip-serif);
+  font-size: var(--bz-font-label);
+  letter-spacing: 1px;
+  color: var(--clip-dim);
+  padding: 3px 10px;
+  border-radius: var(--bz-radius-sm);
+}
+.bz-clp-rep-seg-btn:hover { color: var(--clip-accent); background: var(--clip-cream); }
+.bz-clp-rep-seg-btn.on { color: var(--clip-paper); background: var(--clip-accent); }
+.bz-clp-rep-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--bz-radius-sm);
+  color: var(--clip-dim);
+  cursor: pointer;
+}
+.bz-clp-rep-close:hover { color: var(--clip-ink); background: var(--clip-cream); }
+
+/* ---- 体：滚动容器（滚动功能保留，条由 core 通杀隐藏） ---- */
+.bz-clp-rep-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--bz-space-lg);
+}
+.bz-clp-rep-skeleton {
+  text-align: center;
+  padding: 48px 0;
+  color: var(--clip-dim);
+  font-family: var(--clip-serif);
+  letter-spacing: 2px;
+}
+.bz-clp-rep-error { text-align: center; padding: 48px 24px; color: var(--clip-dim); }
+.bz-clp-rep-error-t { font-size: 1.2em; margin-bottom: 8px; color: var(--clip-ink-2); }
+
+/* ---- 空态人话 ---- */
+.bz-clp-rep-empty { text-align: center; padding: 72px 24px; color: var(--clip-dim); }
+.bz-clp-rep-empty-t {
+  margin-top: 12px;
+  font-size: 1.1em;
+  color: var(--clip-ink-2);
+  font-family: var(--clip-serif);
+  letter-spacing: 1px;
+}
+.bz-clp-rep-empty-d { margin-top: 8px; font-size: var(--bz-font-caption); }
+
+/* ---- 段（编辑部小标：衬线 + 点线拖尾） ---- */
+.bz-clp-rep-sec { margin-bottom: var(--bz-space-xl, 24px); }
+.bz-clp-rep-sec-h {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+  font-family: var(--clip-serif);
+  font-size: var(--bz-font-label);
+  letter-spacing: 2px;
+  color: var(--clip-ink-2);
+  margin-bottom: var(--bz-space-md);
+}
+.bz-clp-rep-sec-h::after {
+  content: "";
+  flex: 1;
+  border-top: 1px dotted var(--clip-line);
+}
+.bz-clp-rep-sub {
+  font-family: var(--clip-serif);
+  font-size: var(--bz-font-caption);
+  letter-spacing: 1px;
+  color: var(--clip-dim);
+  margin: var(--bz-space-md) 0 6px;
+}
+.bz-clp-rep-none { color: var(--clip-dim); font-size: var(--bz-font-caption); }
+
+/* ---- 概览：三格 hero（粉彩卡底在 markup 内联 chart-palette 值，此处只管形） ---- */
+.bz-clp-rep-hero {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--bz-space-sm);
+}
+.bz-clp-rep-hero-card {
+  background: var(--clip-cream);
+  border: 1px solid var(--clip-line-soft);
+  border-radius: var(--bz-radius-md);
+  padding: var(--bz-space-md);
+  text-align: center;
+  min-width: 0;
+}
+.bz-clp-rep-hero-card b {
+  display: block;
+  font-family: var(--clip-serif);
+  font-size: 1.35em;
+  color: var(--clip-accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-clp-rep-hero-card span {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--bz-font-caption);
+  color: var(--clip-dim);
+}
+
+/* 读得最久 Top 5 */
+.bz-clp-rep-top-row {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--clip-line-soft);
+  font-size: var(--bz-font-label);
+}
+.bz-clp-rep-top-row:last-child { border-bottom: none; }
+.bz-clp-rep-rank {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--bz-radius-xs);
+  font-size: var(--bz-font-caption);
+  font-weight: var(--bz-weight-semibold);
+  color: var(--clip-ink);
+}
+.bz-clp-rep-top-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--clip-ink-2);
+}
+.bz-clp-rep-top-src {
+  flex-shrink: 0;
+  max-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--clip-dim);
+  font-size: var(--bz-font-caption);
+}
+.bz-clp-rep-top-min {
+  flex-shrink: 0;
+  color: var(--clip-accent);
+  font-size: var(--bz-font-caption);
+}
+
+/* ---- 来源分布：水平条形行（与 reading-report generateBarRows 同范式） ---- */
+.bz-clp-rep-bars { display: flex; flex-direction: column; gap: 10px; }
+.bz-clp-rep-bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+  font-size: var(--bz-font-label);
+}
+.bz-clp-rep-bar-label {
+  flex: 0 0 8em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--clip-ink-2);
+}
+.bz-clp-rep-bar-track {
+  flex: 1;
+  height: 10px;
+  background: var(--clip-soft);
+  border-radius: var(--bz-radius-sm);
+  overflow: hidden;
+  display: block;
+}
+.bz-clp-rep-bar-track i {
+  display: block;
+  height: 100%;
+  border-radius: var(--bz-radius-sm);
+}
+.bz-clp-rep-bar-val {
+  flex-shrink: 0;
+  color: var(--clip-dim);
+  font-size: var(--bz-font-caption);
+}
+
+/* ---- 阅读时段：24 小时柱 ---- */
+.bz-clp-rep-hours {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 76px;
+}
+.bz-clp-rep-hcol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  min-width: 0;
+}
+.bz-clp-rep-hbar {
+  width: 62%;
+  border-radius: 2px 2px 0 0;
+  min-height: 3px;
+}
+.bz-clp-rep-hbar.accent { outline: 1px solid var(--clip-accent-soft); }
+.bz-clp-rep-hlabel {
+  margin-top: 4px;
+  font-size: var(--bz-font-caption);
+  color: var(--clip-dim);
+  line-height: 1;
+}
+.bz-clp-rep-hours-note {
+  margin-top: 8px;
+  font-size: var(--bz-font-caption);
+  color: var(--clip-dim);
+}
+
+/* ---- rail 脚注入口（桌面 rail 底部「我读了什么」） ---- */
+.bz-clp-rep-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: var(--bz-space-sm);
+  padding: 6px 0;
+  border-top: 1px dotted var(--clip-line);
+  font-family: var(--clip-serif);
+  font-size: var(--bz-font-caption);
+  letter-spacing: 1px;
+  color: var(--clip-dim);
+  cursor: pointer;
+}
+.bz-clp-rep-entry:hover { color: var(--clip-accent); }
+
+/* ---- 移动端：真全屏跟随 .bz-panel-mtop（core 统一避让），卡宽自适应 ---- */
+@media (max-width: 768px) {
+  .bz-clip-report-frame {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+  }
+  .bz-clp-rep-hero { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .bz-clp-rep-bar-label { flex-basis: 5.5em; }
+}
