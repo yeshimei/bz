@@ -1,5 +1,5 @@
-/* 源指纹 8414fc94c9026053 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["src/clipbook/render.ts","src/core/ui/str.ts"]*/
+/* 源指纹 978a6e977695d949 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["src/clipbook/render.ts","src/clipbook/report-stats.ts","src/core/chart-palette.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/clipbook/render.ts → window.BZR_clipbook（评审壳预览包，ADR-0104） */
 var BZR_clipbook = (() => {
   var __defProp = Object.defineProperty;
@@ -24,6 +24,11 @@ var BZR_clipbook = (() => {
   var render_exports = {};
   __export(render_exports, {
     ICO: () => ICO,
+    buildClipReportSections: () => buildClipReportSections,
+    clipReportEmptyHtml: () => clipReportEmptyHtml,
+    clipReportEntryHtml: () => clipReportEntryHtml,
+    clipReportShellHtml: () => clipReportShellHtml,
+    clipReportSkeletonHtml: () => clipReportSkeletonHtml,
     deskFoldRowHtml: () => deskFoldRowHtml,
     esc: () => esc,
     foldBodyHtml: () => foldBodyHtml,
@@ -57,6 +62,21 @@ var BZR_clipbook = (() => {
   }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+
+  // src/core/chart-palette.ts
+  var CHART_PASTEL_SERIES = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
+  var CHART_RANK_BADGES = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
+  var CHART_HIGHLIGHT = "#FFE5CC";
+
+  // src/clipbook/report-stats.ts
+  var REPORT_TOP_N = 5;
+  function formatMinutes(min) {
+    const m = Math.max(0, Math.round(min));
+    const h = Math.floor(m / 60);
+    const r = m % 60;
+    if (h <= 0) return `${r} 分钟`;
+    return r > 0 ? `${h} 小时 ${r} 分钟` : `${h} 小时`;
   }
 
   // src/clipbook/render.ts
@@ -110,6 +130,7 @@ var BZR_clipbook = (() => {
       <div class="bz-clip-mob" data-clip-mob>
         <div class="bz-clip-mob-top">
           <div class="bz-clip-mob-title">剪藏本</div>
+          <span class="bz-clip-mob-act" data-clip-mob-report role="button">报告</span>
           <span class="bz-clip-mob-act" data-clip-mob-search role="button">搜索</span>
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
@@ -160,6 +181,9 @@ var BZR_clipbook = (() => {
   }
   function railFootHtml(todayRead) {
     return `今日已读<br><b>${todayRead}</b> 篇`;
+  }
+  function clipReportEntryHtml() {
+    return `<div class="bz-clp-rep-entry" data-clp-rep-entry role="button" tabindex="0">我读了什么 ${iconSpan("chevron-right", "bz-ic--xs")}</div>`;
   }
   function tocListHtml(list, curId, timeOf) {
     return list.map((a, i) => `
@@ -262,6 +286,99 @@ var BZR_clipbook = (() => {
     <div class="bz-clip-mob-d-md markdown-rendered" data-clip-mob-md>${opts.note ? `<p>${esc(opts.note)}</p>` : ""}</div>
     <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
   `;
+  }
+  function clipReportShellHtml() {
+    return `
+    <div class="bz-panel-frame bz-clip-report-frame bz-panel-mtop">
+      <div class="bz-panel-head">
+        <div class="bz-panel-title">我读了什么</div>
+        <div class="bz-clp-rep-seg" data-clp-rep-period role="tablist" aria-label="统计周期">
+          <button class="bz-clp-rep-seg-btn on" data-period="week" type="button">本周</button>
+          <button class="bz-clp-rep-seg-btn" data-period="month" type="button">本月</button>
+        </div>
+        <div class="bz-panel-head-sp"></div>
+        <span class="bz-clp-rep-close" role="button" tabindex="0" data-clp-rep-close title="关闭">${iconSpan(ICO.x)}</span>
+      </div>
+      <div class="bz-clp-rep-body" data-clp-rep-body></div>
+    </div>`;
+  }
+  function clipReportSkeletonHtml() {
+    return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
+  }
+  function clipReportEmptyHtml() {
+    return `
+    <div class="bz-clp-rep-empty">
+      ${iconSpan(ICO.book, "bz-ic--lg")}
+      <div class="bz-clp-rep-empty-t">还没有阅读记录</div>
+      <div class="bz-clp-rep-empty-d">在剪藏本里打开文章阅读，停留满一分钟就会自动记到这里</div>
+    </div>`;
+  }
+  function buildClipReportSections(d) {
+    return [
+      { key: "overview", label: "统计概览", generate: () => clipReportOverviewHtml(d) },
+      { key: "sources", label: "来源分布", generate: () => clipReportSourcesHtml(d) },
+      { key: "hours", label: "阅读时段", generate: () => clipReportHoursHtml(d) }
+    ];
+  }
+  function clipReportOverviewHtml(d) {
+    const topRows = d.topArticles.map((a, i) => {
+      const badge = CHART_RANK_BADGES[i % CHART_RANK_BADGES.length];
+      return `
+    <div class="bz-clp-rep-top-row">
+      <span class="bz-clp-rep-rank" style="background:${badge}">${i + 1}</span>
+      <span class="bz-clp-rep-top-title" title="${esc(a.title)}">${esc(a.title)}</span>
+      <span class="bz-clp-rep-top-src">${esc(a.src)}</span>
+      <span class="bz-clp-rep-top-min">${esc(formatMinutes(a.minutes))}</span>
+    </div>`;
+    }).join("");
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">统计概览</div>
+      <div class="bz-clp-rep-hero">
+        <div class="bz-clp-rep-hero-card"><b>${d.articles}</b><span>已读篇数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${esc(formatMinutes(d.totalMinutes))}</b><span>总时长</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${d.activeDays}</b><span>活跃天数</span></div>
+      </div>
+      ${topRows ? `<div class="bz-clp-rep-top"><div class="bz-clp-rep-sub">读得最久</div>${topRows}</div>` : ""}
+    </div>`;
+  }
+  function clipReportSourcesHtml(d) {
+    const rows = d.bySrc.slice(0, REPORT_TOP_N);
+    if (!rows.length) {
+      return `<div class="bz-clp-rep-sec"><div class="bz-clp-rep-sec-h">来源分布</div><p class="bz-clp-rep-none">本期暂无来源数据</p></div>`;
+    }
+    const max = Math.max(1, ...rows.map((r) => r.minutes));
+    const barRows = rows.map((r, i) => {
+      const width = Math.max(2, Math.round(r.minutes / max * 100));
+      return `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label" title="${esc(r.name)}">${esc(r.name)}</span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${width}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${r.articles} 篇 · ${esc(formatMinutes(r.minutes))}</span>
+    </div>`;
+    }).join("");
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">来源分布</div>
+      <div class="bz-clp-rep-bars">${barRows}</div>
+    </div>`;
+  }
+  function clipReportHoursHtml(d) {
+    const max = Math.max(0, ...d.hours);
+    const cols = d.hours.map((m, h) => {
+      const height = max > 0 && m > 0 ? 10 + Math.round(m / max * 44) : 3;
+      const accent = max > 0 && m > 0 && m === max;
+      const bg = accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
+      return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? " accent" : ""}" style="height:${height}px;background:${bg}" title="${h} 点 · ${esc(formatMinutes(m))}"></div><div class="bz-clp-rep-hlabel">${h}</div></div>`;
+    }).join("");
+    const peakHour = max > 0 ? d.hours.indexOf(max) : -1;
+    const peakText = peakHour >= 0 ? `${peakHour} 点前后` : "暂无";
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">阅读时段</div>
+      <div class="bz-clp-rep-hours">${cols}</div>
+      <div class="bz-clp-rep-hours-note">每根柱 = 该小时的阅读分钟 · 阅读高峰在 ${peakText}</div>
+    </div>`;
   }
   return __toCommonJS(render_exports);
 })();
