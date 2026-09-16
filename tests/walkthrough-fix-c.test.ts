@@ -218,11 +218,13 @@ describe('批 C-14：clipbook rail 徽标白字对比（底色加深一档；ADR
 
 describe('批 C-15/16：literature 遮罩与 B站状态徽标', () => {
   it('遮罩统一 --bz-overlay + token 毛玻璃（--bz-overlay-blur 单源，memo item-1789106289860）', () => {
+    // issue 347：三件套（fixed/inset/--bz-overlay 底/token blur）再上收 core .bz-overlay-mask——
+    // 域 CSS 不再自declared 规则，类名保留为 DOM 钩子（挂 core 单源类）
     const css = repo('src/knowledge/styles.css');
-    const mask = rule(css, '.bz-kb-mask');
-    expect(mask, '缺 .bz-kb-mask 规则').not.toBeNull();
-    expect(mask![1]).toContain('background: var(--bz-overlay)');
-    expect(mask![1]).toContain('backdrop-filter: blur(var(--bz-overlay-blur))');
+    expect(rule(css, '.bz-kb-mask'), '域内不应再有 .bz-kb-mask 自绘规则（已收编 core 单源）').toBeNull();
+    expect(css).not.toContain('backdrop-filter: blur(var(--bz-overlay-blur))');
+    const ts = repo('src/knowledge/mount-canvas.ts');
+    expect(ts).toContain("mask.className = 'bz-overlay-mask bz-kb-mask bz-kb-mt-mask'");
   });
 
   it('状态徽标 tint 底 + 深语义字（.bz-badge--* 模式），实底白字退役', () => {
