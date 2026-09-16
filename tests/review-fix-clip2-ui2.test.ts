@@ -93,8 +93,8 @@ describe('C11：skipped→saved 升级路径不重复计分布', () => {
     const today = localDayKey();
     const vault = new MockVault();
     vault.files.set(getNewsFilePath(), seedNews(
-      [{ platform: 'B站', title: '已读未收片', url: 'https://b23.tv/c11', author: 'UP', body: '简介', date: '2026-09-01 08:00:00', read: true, state: 'skipped' }],
-      { totalRead: 1, totalSaved: 0, totalSkipped: 1, byPlatform: { B站: 1 }, byDate: { [today]: 1 } },
+      [{ platform: '果壳科学人', title: '已读未收文', url: 'https://guokr.com/c11', author: '果壳', body: '正文', date: '2026-09-01 08:00:00', read: true, state: 'skipped' }],
+      { totalRead: 1, totalSaved: 0, totalSkipped: 1, byPlatform: { 果壳科学人: 1 }, byDate: { [today]: 1 } },
     ));
     setApp(mockAppWithVault(vault));
     setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', articleDirectory: '归档/网页剪藏' } as any));
@@ -107,7 +107,7 @@ describe('C11：skipped→saved 升级路径不重复计分布', () => {
     expect(disk.stats.totalSaved).toBe(1);         // 升级计入已收
     expect(disk.stats.totalRead).toBe(1);          // 修复前 +1 → 2（已读重复计）
     expect(disk.stats.totalSkipped).toBe(1);
-    expect(disk.stats.byPlatform.B站).toBe(1);      // 修复前 +1 → 2（平台分布重复计）
+    expect(disk.stats.byPlatform['果壳科学人']).toBe(1); // 修复前 +1 → 2（平台分布重复计）
     expect(disk.stats.byDate[today]).toBe(1);      // 修复前 +1 → 2（rail 脚注「今日已读」一篇计两次）
   });
 });

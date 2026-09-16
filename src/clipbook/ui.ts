@@ -53,6 +53,7 @@ import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar } from './loader';
 import { readNewsData } from './news-data';
 import { writeClipNote } from './save';
+import { getKnowledgeBoxes } from '../core/knowledge-boxes';
 import { applyBodyTransforms, applyClipContentTransforms, findMarkdownSnippet, addArticleMark, addPendingSourceNote, clearArticleTracking, linkAliasText, type ClipMark } from './anchor';
 import { saveClipImage, fetchImageDataUrl } from './image-save';
 import {
@@ -294,14 +295,20 @@ function buildDom(app: any): void {
     const t = e.target as HTMLElement;
     const ext = t.closest('a[data-clip-ext]') as HTMLAnchorElement | null;
     if (ext) { e.preventDefault(); try { window.open(ext.href, '_blank'); } catch { /* jsdom 无 window.open */ } return; }
-    // issue 329：划词锚定双链点击 → 文献盒内拦下直达预览（目录外不拦原生导航）
+    // issue 329：划词锚定双链点击 → 文献盒内拦下直达预览（目录外不拦原生导航）。
+    // stopPropagation 必须有：Obsidian 对 internal-link 另有自己的监听，只 preventDefault 挡不住
+    // ——预览与原生导航同时发生，移动端两者相争直接崩（用户实测 OB 重启）
     const ilink = t.closest('a.internal-link') as HTMLAnchorElement | null;
-    if (ilink && interceptKnowledgeLink(ilink)) { e.preventDefault(); return; }
+    if (ilink && interceptKnowledgeLink(ilink)) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     // issue 329：正文图片单击 → 图片工具框（保存图片 / 存为图版）
     const img = t.closest('img');
     if (img && img.closest('[data-clip-md]')) { e.preventDefault(); showImageSelBar(img as HTMLImageElement); return; }
     if (t.closest('[data-clip-open-note]') && M.cur) openNote(M.cur);
-  });
+  }, true); // capture：先于 Obsidian 的 internal-link 监听
   readPaneEl!.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); stepArticle(-1); }
     else if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); stepArticle(1); }
@@ -338,6 +345,7 @@ function buildDom(app: any): void {
   mobBackBtn!.addEventListener('click', () => closeMobDetail());
   // 移动：头栏保存钮（文字钮「存为剪藏 / 已存」）
   mobSaveBtnEl!.addEventListener('click', () => {
+    if (M.cur?.st === 'saved') return; // 已存置灰（issue 329 评审）：重复保存会冲掉划词标记并重复下载图片
     void doSave(M.cur);
   });
   // 移动详情「读下一则」（原型脚；同章内下一则，章末回目录）——按 id 定位（目录条目为重建实例，indexOf 恒 -1）
@@ -348,7 +356,12 @@ function buildDom(app: any): void {
     if (ext) { e.preventDefault(); try { window.open(ext.href, '_blank'); } catch { /* jsdom 无 window.open */ } return; }
     // issue 329：移动详情同款——双链直达预览拦截 + 图片单击工具框（桌面/移动同套逻辑）
     const ilink = t.closest('a.internal-link') as HTMLAnchorElement | null;
-    if (ilink && interceptKnowledgeLink(ilink)) { e.preventDefault(); return; }
+    if (ilink && interceptKnowledgeLink(ilink)) {
+      // 同桌面：capture + 掐断传播，防 Obsidian 原生导航与预览同时发生（移动端崩溃源）
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     const img = t.closest('img');
     if (img && img.closest('[data-clip-mob-md]')) { e.preventDefault(); showImageSelBar(img as HTMLImageElement); return; }
     if (!t.closest('[data-clip-mob-next]') || !M.cur) return;
@@ -356,7 +369,7 @@ function buildDom(app: any): void {
     const idx = grp.findIndex((x) => x.id === M.cur!.id);
     const next = grp[idx + 1];
     if (next) openMobDetail(next.id); else (mobBackBtn as HTMLElement).click();
-  });
+  }, true); // capture：同桌面右栏
   // issue 329：划选工具框事件（移动详情正文 + 双端公共层）——mouseup / selectionchange 防抖双端同套
   mobDetailEl!.addEventListener('mouseup', onReaderMouseUp);
   const mobBodyScrollEl = overlayEl.querySelector('[data-clip-mob-detail-body]');
@@ -835,7 +848,8 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
   }
   // news 条目（C3：原「移出剪藏本」分支已删——收件流 filter 剔除 saved 后该动作永不可达；
   // 剪藏本视图对已存条目提供「删除」，语义空间已覆盖）
-  if (a.st !== 'saved') {
+  // B站条目不提供保存至剪藏（ADR-0147 推翻 ADR-0068 分流保存；知识盒影像入口仍可录 B站链接）
+  if (a.st !== 'saved' && a.raw?.platform !== 'B站') {
     out.push({ icon: 'download', label: '保存到剪藏本', title: '保存为正式剪藏', onClick: () => void doSave(a) });
   }
   // issue 329 追加修订：复制原文链接（桌面右键与移动长按抽屉共用此函数，一处接入两端生效）
@@ -1389,8 +1403,9 @@ function renderMobDetail(): void {
   // 保存钮（原型文字钮「存为剪藏 / 已存」；剪藏来源隐藏——doSave 对 origin!=='news' 静默 return）
   if (mobSaveBtnEl) {
     const saved = a.st === 'saved';
-    mobSaveBtnEl.style.display = a.origin !== 'news' ? 'none' : '';
+    mobSaveBtnEl.style.display = a.origin !== 'news' || a.raw?.platform === 'B站' ? 'none' : '';
     mobSaveBtnEl.classList.toggle('saved', saved);
+    mobSaveBtnEl.classList.toggle('disabled', saved); // 置灰：已存条目不可再触发保存
     mobSaveBtnEl.textContent = saved ? '已存' : '存为剪藏';
   }
   // 正文（issue 329 第三批 Bug A）：news 直用 body；clip 与桌面 renderReader 同源——
@@ -1786,8 +1801,8 @@ async function handlePlateCreated(notePath: string, a: ClipArticle): Promise<voi
 
 /** knowledgeDirectory（缺省「文献盒」，路径归一） */
 function knowledgeDir(): string {
-  const s = tryGetSettings() as any;
-  return String((s && s.knowledgeDirectory) || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  // 单源（ADR-0141）：三盒目录归一走 core/knowledge-boxes，不再手写重复归一（issue 333 评审）
+  return getKnowledgeBoxes(tryGetSettings() as any).lit;
 }
 
 /** internal-link href → vault 内实际路径（去 heading 锚点、补 .md、判存在）；缺失返回 null（不拦）。
