@@ -5,7 +5,8 @@
  * 消息气泡（user 墨底右对齐 / assistant 白卡）+ 检索中态（呼吸点）+ 引用卡列表 + 推荐问法
  * 常驻 chips。markup 出 render.ts 纯层；本文件只留行为。
  *
- * 行为逐行保留：DeepSeek 统一走主设置页 AI 服务商；RAG 提示词逐字对齐 QA L1718（每问独立
+ * 行为逐行保留：对话统一走主设置页 AI 设置（core AIService，issue 359 起 DeepSeek 专用形态退役）；
+ * RAG 提示词逐字对齐 QA L1718（每问独立
  * 检索 CHAT_TOP_K 条，context 格式 `[path] (xx%)\nchunk`）；历史仅 UI 展示 + 裁剪
  * MAX_HISTORY×2 条不进 prompt；多行 textarea（Enter 发送 / Shift+Enter 换行 / isComposing
  * 组合态不发送）；请求可取消（发送钮原地切「停止」，AbortController 中止）；流式增量渲染

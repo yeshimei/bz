@@ -9,7 +9,7 @@
  *   active-leaf-change，防抖 DEBOUNCE_DELAY 后独立检索（L1995-1999/L2016-2031）
  * - 参考卡：过滤当前文件、单击懒渲染 markdown 展开（L2076-2085）；
  *   长按 500ms 震动 navigator.vibrate(30) → jumpToChunk → 收起抽屉（L2086-2099）
- * - AI tab：DeepSeek 开关、Enter 发送、markdown 渲染回退纯文本；
+ * - AI tab：Enter 发送、markdown 渲染回退纯文本（AI 通道统一走主设置页 AI 设置，issue 359）；
  *   提示词与桌面同构但「【参考内容】」简写「【参考】」（L2135-2161）
  * - store.initMobile() 三级检索初始化（L1928-1929）
  */
