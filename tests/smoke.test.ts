@@ -56,6 +56,8 @@ const EXPECTED_COMMAND_IDS = [
   // 给当前笔记记一笔（2026-09-11 首页入口菜单）
   'bz-memo-note-binding',
   'bz-belongings-add', 'bz-belongings-open',
+  // 年度资产报告（issue 356：报告页直开，面板未开也从盘载库）
+  'bz-belongings-report',
   // 剪藏本（clipbook 融合域，ADR-0082）：聚合讯未读流+剪藏笔记一体化；旧 bz-clipping-open/bz-news-open 断开
   'bz-clipbook-open',
   // 未读全部标为已读（2026-09-11 首页入口菜单；跨全库批量已读）

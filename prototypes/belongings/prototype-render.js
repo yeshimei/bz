@@ -1,4 +1,4 @@
-/* 源指纹 58a80c043b8af8ae · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ee7dc64e53d9eab1 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/belongings/render.ts → window.BZR_belongings（评审壳预览包，ADR-0104） */
 var BZR_belongings = (() => {
@@ -573,7 +573,9 @@ var BZR_belongings = (() => {
     close: "x",
     del: "trash-2",
     empty: "package",
-    chevD: "chevron-down"
+    chevD: "chevron-down",
+    report: "bar-chart-3"
+    // 年度资产报告工具行入口（issue 356）
   };
   var STATUS = {
     using: { label: "使用中", key: "using", ic: "check-circle" },
@@ -875,6 +877,7 @@ var BZR_belongings = (() => {
         <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
       </div>
       <div class="bz-bel-sort" data-bel-sort></div>
+      <button class="bz-icon-btn bz-bel-reportbtn" data-bel-report title="年度资产报告" aria-label="年度资产报告">${iconSpan(ICON.report)}</button>
       <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
     </div>
     <div class="bz-mobstrip" data-bel-mobstatus></div>

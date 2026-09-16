@@ -23,7 +23,7 @@ import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSe
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
 import { openMemoPanel, addMemoItem, addMemoForActiveNote, unloadMemo, ensureMemoReminders, ensureFileSync, unloadFileSync } from './memo';
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
-import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
+import { addBelongingsItem, openBelongings, openBelongingsReport, unloadBelongings } from './belongings';
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
 import { openClipbook, markAllUnreadRead, unloadClipbook, ensureClipbookFileSync, unloadClipbookFileSync } from './clipbook';
 import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipbook/news-fetcher';
@@ -90,6 +90,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 归物本
   { id: 'bz-belongings-add', name: '加物品', icon: 'archive', callback: () => addBelongingsItem(getApp()) },
   { id: 'bz-belongings-open', name: '归物本', icon: DOMAIN_ICONS.belongings, callback: () => openBelongings(getApp()) },
+  // 年度资产报告（issue 356：报告页直开，面板未开也从盘载库；icon 与三份既有分析报告错开）
+  { id: 'bz-belongings-report', name: '归物本年度报告', icon: 'trending-up', callback: () => openBelongingsReport(getApp()) },
   // 剪藏本（clipbook 融合域，ADR-0082：聚合讯未读流 + 剪藏笔记一体化工作台）
   { id: 'bz-clipbook-open', name: '剪藏本', icon: DOMAIN_ICONS.clipping, callback: () => openClipbook(getApp()) },
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要（只重建摘要/标签，不动用户标题）

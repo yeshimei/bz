@@ -37,6 +37,7 @@ export const ICON = {
   del: 'trash-2',
   empty: 'package',
   chevD: 'chevron-down',
+  report: 'bar-chart-3', // 年度资产报告工具行入口（issue 356）
 };
 
 /** 状态（数据四态精确串；key = 稳定英文标识） */
