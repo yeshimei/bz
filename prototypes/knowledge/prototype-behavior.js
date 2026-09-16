@@ -1,4 +1,4 @@
-/* 源指纹 054591d7e5a0b3c1 · 仓内输入 37 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 779bc3b7c60f31e4 · 仓内输入 37 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -14705,7 +14705,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       }
       if (st === "queued") {
         el.classList.add("bz-lit-rel-idle");
-        el.textContent = "向量服务不可达，已入队";
+        el.textContent = "检索服务不可用，延后至桌面端处理";
         return;
       }
       if (st === "failed") {
@@ -14814,7 +14814,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           return;
         }
         if (out.status === "queued") {
-          notify("知识盒关联：向量服务不可达，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+          notify("知识盒关联：检索服务不可用，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
           return;
         }
         if (out.status === "failed") {
@@ -14848,7 +14848,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             dedupeKey: REL_BG_NOTICE_KEY
           });
         } else if (out.status === "queued") {
-          notify("知识盒关联：向量服务不可达，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
+          notify("知识盒关联：检索服务不可用，已入队，服务可达后自动处理", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
         } else if (out.status === "out-of-scope") {
           notify("知识盒关联：该笔记不在三个盒子内，未写入", { type: "info", dedupeKey: REL_BG_NOTICE_KEY });
         } else if (out.status === "failed") {
