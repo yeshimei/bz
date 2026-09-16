@@ -85,6 +85,8 @@ const EXPECTED_COMMAND_IDS = [
   // 继续在读（2026-09-11 首页入口菜单；开书架墙落「在读」分栏）
   'bz-bookshelf-continue',
   'bz-review-open', 'bz-review-report', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
+  // 做题练习（issue 362）：做题家独立面板入口
+  'bz-review-quiz-open',
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
   'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat',
   // 重建索引（2026-09-11 首页入口菜单；函数早已存在、此前无命令入口）
@@ -193,6 +195,9 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-review-hard').name).toBe('复习（困难）');
     expect(byId('bz-review-good').name).toBe('复习（一般）');
     expect(byId('bz-review-easy').name).toBe('复习（简单）');
+    // issue 362：做题家独立面板入口（graduation-cap 与复习域设置分组「做题家」同款）
+    expect(byId('bz-review-quiz-open').name).toBe('做题练习');
+    expect(byId('bz-review-quiz-open').icon).toBe('graduation-cap');
     // f7：第二大脑面板与第二大脑参考区分（不再与功能名歧义）
     expect(byId('bz-secondbrain-panel').name).toBe('第二大脑面板');
     expect(byId('bz-secondbrain-open').name).toBe('第二大脑参考');

@@ -40,7 +40,7 @@ import { openCinema, addCinemaItem, openCinemaAnalysis, pickRandomCinema, unload
 // 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；读书报告内嵌为面板内视图）
 import { openBookshelf, openBookshelfReport, continueReading, unloadBookshelf } from './bookshelf';
 // 影视分析报告独立域已退役（ADR-0090：报告窗并入影院内嵌分析页，命令直达 bz-cinema-analysis）
-import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
+import { openReviewPanel, openReviewReport, openQuizPractice, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
 import {
   openSecondBrainPanel,
   openSecondBrainReference,
@@ -135,6 +135,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // enh-sweep-a 错开）改 calendar-check（呼应复习日程语义）
   { id: 'bz-review-report', name: '复习计划分析报告', icon: 'calendar-check', callback: () => openReviewReport(getApp()) },
   { id: 'bz-review-start', name: '开始复习', icon: 'play', callback: () => reviewStart(getApp()) },
+  // 做题练习（issue 362）：做题家独立面板——不排期复习，选题范围 + 本轮题量直接开刷；
+  // icon 与复习域设置分组「做题家」同款 graduation-cap（域语言一致，命令表内无重复）
+  { id: 'bz-review-quiz-open', name: '做题练习', icon: 'graduation-cap', callback: () => openQuizPractice(getApp()) },
   { id: 'bz-review-add', name: '加入复习计划', icon: 'plus', callback: () => reviewAddCurrent(getApp()) },
   { id: 'bz-review-remove', name: '移出复习计划', icon: 'minus', callback: () => reviewRemoveCurrent(getApp()) },
   { id: 'bz-review-overdue', name: '复习（跳转逾期）', icon: 'alarm-clock', callback: () => reviewJumpOverdue(getApp()) },

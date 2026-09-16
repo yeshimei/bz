@@ -514,3 +514,32 @@
   #review-history-popup .bz-review-history-time { font-size: 13.5px; min-width: 96px; }
   #review-history-popup .bz-review-history-stage { font-size: 13.5px; }
 }
+
+/* ==================== 做题练习独立面板（issue 362） ====================
+   壳接组件库（.bz-panel-overlay/.bz-panel-frame/.bz-panel-mtop）；域内只留 id 几何。
+   控件/配色全部消费 core/ui 组件类与 --bz-* token（.bz-segmented/.bz-input/.bz-summary），
+   滚动条由 core 界面级单源隐藏（ADR-0122，bz- id 前缀在册），域内不自造。 */
+#bz-quiz-practice-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 94%; max-width: 520px; max-height: 84vh; animation: slideUp var(--bz-dur-slow) ease-out; }
+@media (max-width: 768px) {
+  #bz-quiz-practice-popup { animation: none !important; top: 0; left: 0; transform: none; width: 100%; max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
+}
+.bz-quiz-practice-container { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.bz-qp-view { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.bz-qp-body { display: flex; flex-direction: column; gap: var(--bz-space-md); padding: var(--bz-space-md) 20px var(--bz-space-lg); flex: 1; min-height: 0; overflow-y: auto; }
+.bz-qp-sec { display: flex; flex-direction: column; gap: var(--bz-space-xs); }
+.bz-qp-sec-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); font-weight: 600; }
+.bz-qp-detail-wrap { display: flex; flex-direction: column; gap: var(--bz-space-xs); }
+.bz-qp-detail { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+.bz-qp-folder-row { display: flex; align-items: flex-start; gap: var(--bz-space-sm); }
+.bz-qp-chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+.bz-qp-chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 3px 6px 3px 10px; border-radius: 12px; background: var(--bz-surface-3); font-size: var(--bz-font-caption); color: var(--bz-text-2); }
+.bz-qp-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bz-qp-chip-x { appearance: none; border: none; background: transparent; color: var(--bz-text-3); cursor: pointer; padding: 0 3px; font-size: var(--bz-font-caption); line-height: 1; }
+.bz-qp-chip-x:hover { color: var(--bz-danger); }
+.bz-qp-note-field { position: relative; }
+.bz-qp-meta { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+.bz-qp-meta b { color: var(--bz-text-1); font-weight: 600; }
+.bz-qp-start { height: 38px; font-size: var(--bz-font-label); }
+.bz-qp-foot { font-size: var(--bz-font-caption); color: var(--bz-text-3); line-height: 1.5; }
+.bz-qp-acc { font-size: var(--bz-font-label); color: var(--bz-text-2); }
+.bz-qp-acc b { color: var(--bz-brand); font-weight: 700; font-size: var(--bz-font-emphasis); }
