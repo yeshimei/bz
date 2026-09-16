@@ -1,5 +1,5 @@
-/* 源指纹 453130c8cbdd1f4c · 仓内输入 223 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 6b6b9dd24f22eb1b · 仓内输入 231 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -4728,7 +4728,7 @@ var BZW_home = (() => {
       popup.innerHTML = parts.html;
       mask.appendChild(popup);
       document.body.appendChild(mask);
-      const escHandle5 = escManager.register("q3-confirm", {
+      const escHandle6 = escManager.register("q3-confirm", {
         isVisible: () => mask.isConnected,
         close: () => settle(void 0)
       });
@@ -4742,7 +4742,7 @@ var BZW_home = (() => {
         if (settled) return;
         settled = true;
         if (activeSettle === settle) activeSettle = null;
-        escHandle5.unregister();
+        escHandle6.unregister();
         mask.remove();
         restoreFocus();
         resolve2(v);
@@ -5708,7 +5708,7 @@ var BZW_home = (() => {
     el.appendChild(uiIcon("chevron-down", "bz-select-car"));
     let current2 = opts.value;
     let menu = null;
-    let escHandle5 = null;
+    let escHandle6 = null;
     const labelOf = (v) => {
       const o = opts.options.find((x) => x.value === v);
       return o ? o.label : "";
@@ -5723,9 +5723,9 @@ var BZW_home = (() => {
         menu.remove();
         menu = null;
       }
-      if (escHandle5) {
-        escHandle5.unregister();
-        escHandle5 = null;
+      if (escHandle6) {
+        escHandle6.unregister();
+        escHandle6 = null;
       }
       el.classList.remove("open");
       el.setAttribute("aria-expanded", "false");
@@ -5778,7 +5778,7 @@ var BZW_home = (() => {
         m.style.right = `${over}px`;
         if (m.getBoundingClientRect().left < 2) m.style.right = "";
       }
-      escHandle5 = escManager.register("bz-ui-select", {
+      escHandle6 = escManager.register("bz-ui-select", {
         isVisible: () => !!menu && menu.isConnected,
         close: () => close()
       });
@@ -6142,7 +6142,7 @@ var BZW_home = (() => {
     let current2 = (_a2 = opts.value) != null ? _a2 : "";
     let items = opts.options;
     let layer = null;
-    let escHandle5 = null;
+    let escHandle6 = null;
     const onDocClick = (e) => {
       if (!layer) return;
       const t = e.target;
@@ -6184,7 +6184,7 @@ var BZW_home = (() => {
       (anchor.parentElement || anchor).appendChild(m);
       layer = m;
       document.addEventListener("click", onDocClick);
-      escHandle5 = escManager.register("bz-ui-popover", {
+      escHandle6 = escManager.register("bz-ui-popover", {
         isVisible: () => !!layer && layer.isConnected,
         close: () => close()
       });
@@ -6194,9 +6194,9 @@ var BZW_home = (() => {
       layer.remove();
       layer = null;
       document.removeEventListener("click", onDocClick);
-      if (escHandle5) {
-        escHandle5.unregister();
-        escHandle5 = null;
+      if (escHandle6) {
+        escHandle6.unregister();
+        escHandle6 = null;
       }
     };
     const setValue = (id) => {
@@ -6425,20 +6425,20 @@ var BZW_home = (() => {
     mask.appendChild(foot);
     document.body.appendChild(mask);
     lockBodyScroll(true);
-    let escHandle5 = null;
+    let escHandle6 = null;
     function close() {
       if (current !== mask) return;
       mask.remove();
-      escHandle5 == null ? void 0 : escHandle5.unregister();
-      if (currentEscHandle === escHandle5) currentEscHandle = null;
+      escHandle6 == null ? void 0 : escHandle6.unregister();
+      if (currentEscHandle === escHandle6) currentEscHandle = null;
       current = null;
       lockBodyScroll(false);
     }
-    escHandle5 = escManager.register("bz-lightbox", {
+    escHandle6 = escManager.register("bz-lightbox", {
       isVisible: () => mask.isConnected,
       close
     });
-    currentEscHandle = escHandle5;
+    currentEscHandle = escHandle6;
     mask.addEventListener("click", (e) => {
       if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot")) close();
     });
@@ -6490,19 +6490,19 @@ var BZW_home = (() => {
     popup.appendChild(body);
     mask.appendChild(popup);
     let closed = false;
-    let escHandle5 = null;
+    let escHandle6 = null;
     function close() {
       var _a2;
       if (closed) return;
       closed = true;
       mask.remove();
-      escHandle5 == null ? void 0 : escHandle5.unregister();
+      escHandle6 == null ? void 0 : escHandle6.unregister();
       (_a2 = opts.onClose) == null ? void 0 : _a2.call(opts);
     }
     mask.addEventListener("click", (e) => {
       if (e.target === mask) close();
     });
-    escHandle5 = escManager.register("bz-modal", {
+    escHandle6 = escManager.register("bz-modal", {
       isVisible: () => mask.isConnected,
       close
     });
@@ -36672,12 +36672,12 @@ GitHub 仓库：${ghInfo.title}
     document.body.appendChild(mask);
     topifyZ(mask);
     mountIcons(popup);
-    const escHandle5 = escManager.register("bz-fav-tageditor", {
+    const escHandle6 = escManager.register("bz-fav-tageditor", {
       isVisible: () => mask.isConnected,
       close: () => close()
     });
     const close = () => {
-      escHandle5.unregister();
+      escHandle6.unregister();
       mask.remove();
     };
     const input = popup.querySelector("#fz-tag-name");
@@ -37215,7 +37215,7 @@ GitHub 仓库：${ghInfo.title}
     return storageFile("secondbrain.vec");
   }
   function emptyStore() {
-    return { version: STORE_VERSION, meta: null, panel: null, link: { queue: [], state: {} }, chatHistory: [] };
+    return { version: STORE_VERSION, meta: null, panel: null, link: { queue: [], state: {} }, chatHistory: [], weekly: null };
   }
   function normalizeChatHistory(raw) {
     if (!Array.isArray(raw)) return [];
@@ -37223,6 +37223,17 @@ GitHub 仓库：${ghInfo.title}
       (e) => !!e && typeof e === "object" && (e.role === "user" || e.role === "assistant") && typeof e.content === "string"
     );
     return valid.slice(-CHAT_HISTORY_LIMIT);
+  }
+  function normalizeWeekly(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const r = raw;
+    if (typeof r.lastRunAt !== "number" || !isFinite(r.lastRunAt) || !Array.isArray(r.knownPaths)) return null;
+    const digest = r.digest && typeof r.digest === "object" && !Array.isArray(r.digest) ? r.digest : null;
+    return {
+      lastRunAt: r.lastRunAt,
+      knownPaths: r.knownPaths.filter((p) => typeof p === "string" && p.length > 0),
+      digest
+    };
   }
   function normalizeStore(raw) {
     const d = raw && typeof raw === "object" ? raw : {};
@@ -37236,7 +37247,8 @@ GitHub 仓库：${ghInfo.title}
         queue: Array.isArray(linkRaw.queue) ? linkRaw.queue : [],
         state: linkRaw.state && typeof linkRaw.state === "object" && !Array.isArray(linkRaw.state) ? linkRaw.state : {}
       },
-      chatHistory: normalizeChatHistory(d.chatHistory)
+      chatHistory: normalizeChatHistory(d.chatHistory),
+      weekly: normalizeWeekly(d.weekly)
     };
   }
   function hasFn(adapter, name) {
@@ -37371,7 +37383,9 @@ GitHub 仓库：${ghInfo.title}
       }
     }
     const chatTrimmed = chatHistory.slice(-CHAT_HISTORY_LIMIT);
-    return { version: primary.version, meta, panel: panel2, link: { queue: queue2, state: state3 }, chatHistory: chatTrimmed };
+    let weekly = primary.weekly;
+    if (conflict.weekly && (!weekly || conflict.weekly.lastRunAt > weekly.lastRunAt)) weekly = conflict.weekly;
+    return { version: primary.version, meta, panel: panel2, link: { queue: queue2, state: state3 }, chatHistory: chatTrimmed, weekly };
   }
   function buildRowOffsets(meta) {
     const map = /* @__PURE__ */ new Map();
@@ -37645,6 +37659,53 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
+  // src/secondbrain/link-agent/data.ts
+  var init_data10 = __esm({
+    "src/secondbrain/link-agent/data.ts"() {
+      init_utils();
+      init_knowledge_boxes();
+      init_store_file();
+    }
+  });
+
+  // src/secondbrain/tfidf.ts
+  var TFIDF_STOP_WORDS, STOP_SET;
+  var init_tfidf = __esm({
+    "src/secondbrain/tfidf.ts"() {
+      TFIDF_STOP_WORDS = "的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等";
+      STOP_SET = new Set(TFIDF_STOP_WORDS);
+    }
+  });
+
+  // src/secondbrain/chunk.ts
+  var init_chunk = __esm({
+    "src/secondbrain/chunk.ts"() {
+      init_utils();
+    }
+  });
+
+  // src/secondbrain/weekly.ts
+  function formatDigestRange(since, until) {
+    const a = new Date(since);
+    const b = new Date(until);
+    const day = (d) => `${d.getMonth() + 1} 月 ${d.getDate()} 日`;
+    const sameYear = a.getFullYear() === b.getFullYear();
+    const left = sameYear ? day(a) : `${a.getFullYear()} 年 ${day(a)}`;
+    return `${left} – ${day(b)}`;
+  }
+  var WEEKLY_INTERVAL_MS, WEEKLY_MAX_COLLISIONS;
+  var init_weekly = __esm({
+    "src/secondbrain/weekly.ts"() {
+      init_store_file();
+      init_data10();
+      init_tfidf();
+      init_chunk();
+      init_config3();
+      WEEKLY_INTERVAL_MS = 7 * 24 * 3600 * 1e3;
+      WEEKLY_MAX_COLLISIONS = 10;
+    }
+  });
+
   // src/secondbrain/render.ts
   function topLevelDir(path) {
     const i = path.indexOf("/");
@@ -37794,6 +37855,10 @@ GitHub 仓库：${ghInfo.title}
             <div class="bz-sb-ct bz-sb-ai-ct">${ic("sparkles", 13)}库摘要<span class="bz-sb-ct-n" id="bz-sb-ai-when"></span></div>
             <div class="bz-sb-ai-txt" id="bz-sb-ai-txt"></div>
           </div>
+          <div class="bz-sb-section bz-sb-weekly-card" id="bz-sb-weekly-card" style="display:none" role="button" tabindex="0" title="本周知识动态">
+            <div class="bz-sb-ct bz-sb-ai-ct">${ic("calendar-days", 13)}近期动态<span class="bz-sb-ct-n" id="bz-sb-weekly-range"></span></div>
+            <div class="bz-sb-weekly-card-txt" id="bz-sb-weekly-card-txt"></div>
+          </div>
         </div>
       </div>
       <div class="bz-sb-foot">
@@ -37849,12 +37914,222 @@ GitHub 仓库：${ghInfo.title}
   function panelLogHtml(parts) {
     return parts.map((p) => `<span class="bz-sb-log-item${p.warn ? " bz-sb-log-item--warn" : ""}">${escapeHtml3(p.text)}</span>`).join('<span class="bz-sb-log-sep">·</span>');
   }
+  function weeklyShellHtml(range) {
+    return `
+  <div class="bz-sb-weekly-head">
+    <div class="bz-sb-glyph">${ic("calendar-days", 17)}</div>
+    <div class="bz-sb-head-title">
+      <h3>本周知识动态</h3>
+      <div class="bz-sb-cnt" id="bz-sb-weekly-range-head">${escapeHtml3(range)}</div>
+    </div>
+    <div class="bz-sb-head-sp"></div>
+    <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-weekly-close" aria-label="关闭" title="关闭">${ic("x", 14)}</button>
+  </div>
+  <div class="bz-sb-weekly-body bz-sb-scroll-y" id="bz-sb-weekly-body"></div>`;
+  }
+  function weeklySummaryHtml(withAI) {
+    return withAI ? `<div class="bz-sb-weekly-summary" id="bz-sb-weekly-summary"><div class="bz-sb-weekly-summary-text" id="bz-sb-weekly-summary-text"></div></div>` : `<div class="bz-sb-weekly-stats" id="bz-sb-weekly-stats"></div>`;
+  }
+  function weeklyStatsHtml(notes, links, collisions) {
+    const chip2 = (v, k, warn = false) => `<span class="bz-sb-weekly-chip${warn && v > 0 ? " bz-sb-weekly-chip--warn" : ""}"><b>${v}</b>${k}</span>`;
+    return chip2(notes, " 篇新增笔记") + chip2(links, " 条新增关联") + chip2(collisions, " 处主题撞车", true);
+  }
+  function weeklySectionHtml(id, icon2, title, count, rows, emptyText = "") {
+    if (count <= 0) return emptyText ? `<div class="bz-sb-weekly-empty">${escapeHtml3(emptyText)}</div>` : "";
+    return `
+  <div class="bz-sb-weekly-section" id="${id}">
+    <div class="bz-sb-ct">${ic(icon2, 13)}${escapeHtml3(title)}<span class="bz-sb-ct-n">${count}</span></div>
+    <div class="bz-sb-weekly-rows">${rows}</div>
+  </div>`;
+  }
+  function weeklyNoteRowHtml(path, name, when) {
+    return `<div class="bz-sb-weekly-row" data-path="${escapeHtml3(path)}" role="button" tabindex="0"><span class="bz-sb-weekly-row-dot"></span><span class="bz-sb-weekly-row-name">${escapeHtml3(name)}</span><span class="bz-sb-weekly-row-time">${escapeHtml3(when)}</span></div>`;
+  }
+  function weeklyCollisionRowHtml(path, name, targetPath, targetName, pct) {
+    return `<div class="bz-sb-weekly-row bz-sb-weekly-row--hit" data-path="${escapeHtml3(path)}" role="button" tabindex="0"><span class="bz-sb-weekly-row-dot bz-sb-weekly-row-dot--warn"></span><span class="bz-sb-weekly-row-name">${escapeHtml3(name)}</span><span class="bz-sb-weekly-row-hit-arrow">${ic("arrow-right", 12)}</span><span class="bz-sb-weekly-row-name bz-sb-weekly-row-name--target" data-path="${escapeHtml3(targetPath)}">${escapeHtml3(targetName)}</span><span class="bz-sb-weekly-row-pct">${pct}%</span></div>`;
+  }
+  function weeklyEmptyHtml() {
+    return `<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">最近一周没有新入脑的笔记与关联，一切安静。</div>`;
+  }
+  function weeklyLoadingHtml() {
+    return `<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">正在聚合本周动态…</div>`;
+  }
   var SB_PALETTE, SB_FALLBACK, ic;
   var init_render12 = __esm({
     "src/secondbrain/render.ts"() {
       SB_PALETTE = ["#0f766e", "#6366f1", "#d97706", "#db2777", "#0e7490", "#7c3aed", "#b45309", "#be185d"];
       SB_FALLBACK = "#a39b8c";
       ic = (name, size = 15) => `<i data-lucide="${name}" style="width:${size}px;height:${size}px"></i>`;
+    }
+  });
+
+  // src/secondbrain/ai.ts
+  var init_ai3 = __esm({
+    "src/secondbrain/ai.ts"() {
+      init_ai();
+    }
+  });
+
+  // src/secondbrain/weekly-ui.ts
+  function ensureModal(app) {
+    var _a2;
+    appRef = app;
+    if (overlayEl3) {
+      overlayEl3.style.display = "flex";
+      return;
+    }
+    const { mask, popup } = createOverlay({
+      maskId: "bz-sb-weekly-mask",
+      popupId: "bz-sb-weekly-panel",
+      onMaskClick: () => closeWeeklyDigest(),
+      width: "560px",
+      maxWidth: 560
+    });
+    popup.classList.add("bz-sb-weekly-modal");
+    popup.innerHTML = weeklyShellHtml("");
+    overlayEl3 = popup;
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    popup.style.display = "flex";
+    (_a2 = popup.querySelector("#bz-sb-weekly-close")) == null ? void 0 : _a2.addEventListener("click", () => closeWeeklyDigest());
+    const body = popup.querySelector("#bz-sb-weekly-body");
+    const jump = (path) => {
+      const f = appRef == null ? void 0 : appRef.vault.getAbstractFileByPath(path);
+      if (f) void appRef.workspace.getLeaf(false).openFile(f);
+      else notice("文件不存在或已被移动", "info");
+    };
+    body == null ? void 0 : body.addEventListener("click", (e) => {
+      const el = e.target.closest("[data-path]");
+      if (el == null ? void 0 : el.dataset.path) jump(el.dataset.path);
+    });
+    body == null ? void 0 : body.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const el = e.target.closest("[data-path]");
+      if (el == null ? void 0 : el.dataset.path) {
+        e.preventDefault();
+        jump(el.dataset.path);
+      }
+    });
+    escHandle4 = escManager.register("bz-sb-weekly-modal", {
+      isVisible: () => !!overlayEl3 && overlayEl3.style.display === "flex" && overlayEl3.isConnected,
+      close: () => closeWeeklyDigest()
+    });
+  }
+  function openWeeklyDigest(app) {
+    void (async () => {
+      var _a2, _b2;
+      try {
+        const store2 = await loadStore(app);
+        ensureModal(app);
+        showWeeklyModal((_b2 = (_a2 = store2.weekly) == null ? void 0 : _a2.digest) != null ? _b2 : null);
+      } catch (e) {
+        console.warn("[secondbrain] 每周动态读取失败", e);
+        ensureModal(app);
+        showWeeklyModal(null, { loadFailed: true });
+      }
+    })();
+  }
+  function closeWeeklyDigest() {
+    renderSeq3++;
+    if (overlayEl3) overlayEl3.style.display = "none";
+  }
+  function showWeeklyModal(digest, opts) {
+    if (!overlayEl3) return;
+    const seq = ++renderSeq3;
+    const rangeHead = overlayEl3.querySelector("#bz-sb-weekly-range-head");
+    const body = overlayEl3.querySelector("#bz-sb-weekly-body");
+    if (!body) return;
+    if (!digest) {
+      if (rangeHead) rangeHead.textContent = "";
+      body.innerHTML = (opts == null ? void 0 : opts.loading) ? weeklyLoadingHtml() : (opts == null ? void 0 : opts.loadFailed) ? '<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">读取动态数据失败，请稍后重开。</div>' : weeklyEmptyHtml();
+      mountIcons(body);
+      return;
+    }
+    if (seq !== renderSeq3) return;
+    if (rangeHead) rangeHead.textContent = formatDigestRange(digest.since, digest.until);
+    const nameOf = (path) => path.split("/").pop() || path;
+    const summary = digest.aiSummary ? weeklySummaryHtml(true) : weeklySummaryHtml(false);
+    const sections = [];
+    sections.push(
+      `<div class="bz-sb-weekly-section bz-sb-weekly-summary-wrap">${summary}</div>`
+    );
+    if (digest.collisions.length > 0) {
+      const rows = digest.collisions.map(
+        (c) => weeklyCollisionRowHtml(c.path, nameOf(c.path), c.targetPath, nameOf(c.targetPath), Math.round(c.score * 100))
+      ).join("");
+      sections.push(weeklySectionHtml("bz-sb-weekly-hits", "copy", "主题撞车提示", digest.collisions.length, rows));
+    }
+    if (digest.newNotes.length > 0) {
+      const rows = digest.newNotes.slice(0, 30).map((n) => weeklyNoteRowHtml(n.path, nameOf(n.path), formatRelativeTime(n.mtime))).join("");
+      sections.push(weeklySectionHtml("bz-sb-weekly-notes", "file-plus", "新增笔记", digest.newNotes.length, rows));
+    }
+    if (digest.newLinks.length > 0) {
+      const rows = digest.newLinks.slice(0, 30).map((l) => weeklyNoteRowHtml(l.path, nameOf(l.path), formatRelativeTime(l.linkedAt))).join("");
+      sections.push(weeklySectionHtml("bz-sb-weekly-links", "link", "新增关联", digest.newLinks.length, rows));
+    }
+    if (digest.newNotes.length + digest.newLinks.length + digest.collisions.length === 0) {
+      sections.push(weeklyEmptyHtml());
+    }
+    body.innerHTML = sections.join("");
+    if (digest.aiSummary) {
+      const txt = body.querySelector("#bz-sb-weekly-summary-text");
+      if (txt) txt.textContent = digest.aiSummary;
+    } else {
+      const stats = body.querySelector("#bz-sb-weekly-stats");
+      if (stats) stats.innerHTML = weeklyStatsHtml(digest.newNotes.length, digest.newLinks.length, digest.collisions.length);
+    }
+    if (digest.collisions.length >= WEEKLY_MAX_COLLISIONS) {
+      body.insertAdjacentHTML(
+        "beforeend",
+        `<div class="bz-sb-weekly-empty">撞车提示较多，仅显示相似度最高的 ${WEEKLY_MAX_COLLISIONS} 条。</div>`
+      );
+    }
+    mountIcons(body);
+  }
+  function renderPanelWeeklyCard(popup, app, digest) {
+    const card = popup.querySelector("#bz-sb-weekly-card");
+    if (!card) return;
+    if (!digest) {
+      card.style.display = "none";
+      return;
+    }
+    const range = popup.querySelector("#bz-sb-weekly-range");
+    const txt = popup.querySelector("#bz-sb-weekly-card-txt");
+    if (range) range.textContent = formatDigestRange(digest.since, digest.until);
+    if (txt) {
+      const parts = [`${digest.newNotes.length} 篇新增`, `${digest.newLinks.length} 条关联`];
+      if (digest.collisions.length > 0) parts.push(`${digest.collisions.length} 处撞车`);
+      txt.textContent = parts.join(" · ");
+    }
+    card.style.display = "";
+    if (!card.dataset.bound) {
+      card.dataset.bound = "1";
+      const open = () => openWeeklyDigest(app);
+      card.addEventListener("click", open);
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          open();
+        }
+      });
+    }
+  }
+  var overlayEl3, escHandle4, appRef, renderSeq3;
+  var init_weekly_ui = __esm({
+    "src/secondbrain/weekly-ui.ts"() {
+      init_dom();
+      init_esc_manager();
+      init_ui();
+      init_notice();
+      init_utils();
+      init_store_file();
+      init_weekly();
+      init_render12();
+      init_ai3();
+      overlayEl3 = null;
+      escHandle4 = null;
+      appRef = null;
+      renderSeq3 = 0;
     }
   });
 
@@ -38041,6 +38316,7 @@ GitHub 仓库：${ghInfo.title}
       init_whitelist();
       init_local_ip();
       init_store_file();
+      init_weekly_ui();
       init_render12();
       init_render12();
       SecondBrainPanel = class {
@@ -38462,9 +38738,10 @@ GitHub 仓库：${ghInfo.title}
           if (distN) distN.textContent = `${tree.length} 个来源`;
           mountIcons(dist);
         }
-        /** AI 库摘要 + 自动建链数（secondbrain.json panel/link 段，异步回填；生成入口已移除，旧值仍可展示） */
+        /** AI 库摘要 + 自动建链数 + 每周动态入口卡（secondbrain.json panel/link/weekly 段，异步回填；
+         *  摘要生成入口已移除，旧值仍可展示） */
         async loadSummaryAndLinks() {
-          var _a2, _b2, _c;
+          var _a2, _b2, _c, _d, _e;
           try {
             const store2 = await loadStore(this.app);
             const popup = this.popup;
@@ -38484,6 +38761,7 @@ GitHub 仓库：${ghInfo.title}
                 `<span class="bz-sb-log-sep">·</span>${panelLogHtml([{ text: `自动建链 ${linkedTotal} 条` }])}`
               );
             }
+            renderPanelWeeklyCard(popup, this.app, (_e = (_d = store2.weekly) == null ? void 0 : _d.digest) != null ? _e : null);
           } catch (e) {
           }
         }
@@ -39184,7 +39462,7 @@ GitHub 仓库：${ghInfo.title}
     mask.addEventListener("click", (e) => {
       if (e.target === mask) closePomodoro();
     });
-    escHandle4 = escManager.register("pomodoro", {
+    escHandle5 = escManager.register("pomodoro", {
       isVisible: () => maskEl2 !== null,
       close: closePomodoro
     });
@@ -39200,7 +39478,7 @@ GitHub 仓库：${ghInfo.title}
     return initInflight;
   }
   async function openPomodoro(app) {
-    appRef = app;
+    appRef2 = app;
     if (!dataManager) dataManager = new PomodoroDataManager(app);
     if (!maskEl2) {
       openInflight != null ? openInflight : openInflight = (async () => {
@@ -39218,7 +39496,7 @@ GitHub 仓库：${ghInfo.title}
     popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
   }
   async function ensurePomodoro(app) {
-    appRef = app;
+    appRef2 = app;
     if (!dataManager) dataManager = new PomodoroDataManager(app);
     registerVisibilityListener();
     if (!loaded2) {
@@ -39238,9 +39516,9 @@ GitHub 仓库：${ghInfo.title}
       maskEl2.remove();
       maskEl2 = null;
     }
-    if (escHandle4) {
-      escHandle4.unregister();
-      escHandle4 = null;
+    if (escHandle5) {
+      escHandle5.unregister();
+      escHandle5 = null;
     }
   }
   async function startFocusForTask(app, taskTitle) {
@@ -39323,10 +39601,10 @@ GitHub 仓库：${ghInfo.title}
     statMode = "week";
     lastStatsKey = "";
     dataManager = null;
-    appRef = null;
+    appRef2 = null;
     loaded2 = false;
   }
-  var dataManager, state2, history, archived, loaded2, statMode, maskEl2, escHandle4, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var dataManager, state2, history, archived, loaded2, statMode, maskEl2, escHandle5, timerId, appRef2, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
   var init_ui10 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -39353,9 +39631,9 @@ GitHub 仓库：${ghInfo.title}
       loaded2 = false;
       statMode = "week";
       maskEl2 = null;
-      escHandle4 = null;
+      escHandle5 = null;
       timerId = null;
-      appRef = null;
+      appRef2 = null;
       autoPauseMain = false;
       visibilityHandler = null;
       lastStatsKey = "";
@@ -39501,7 +39779,7 @@ GitHub 仓库：${ghInfo.title}
     return out;
   }
   var ENCRYPT_CHANGED_CHANNEL, ENCRYPT_UNLOCK_CHANGED_CHANNEL, RAND_CHARS, STAGING_DIR, PENDING_FILE, BLOB_CONCURRENCY, SafeManager;
-  var init_data10 = __esm({
+  var init_data11 = __esm({
     "src/encrypt/data.ts"() {
       init_app();
       init_domain_bus();
@@ -42291,7 +42569,7 @@ GitHub 仓库：${ghInfo.title}
       init_settings_provider();
       init_settings_modal();
       init_settings_common();
-      init_data10();
+      init_data11();
       init_preview();
       init_vault_data();
       init_vault_pw_view();
@@ -44876,7 +45154,7 @@ GitHub 仓库：${ghInfo.title}
     await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app }).write(data);
   }
   var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS3;
-  var init_data11 = __esm({
+  var init_data12 = __esm({
     "src/smartcat/data.ts"() {
       init_storage();
       init_config5();
@@ -45685,12 +45963,12 @@ GitHub 仓库：${ghInfo.title}
           });
         },
         smartcat: async () => {
-          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
+          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data12(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui12(), ui_exports9));
           const app = getApp();
           const data = await loadSmartCatData2(app);
           const saveConfig = async (config) => {
-            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
+            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data12(), data_exports));
             data.config = config;
             await saveSmartCatData2(app, data);
           };
@@ -48834,19 +49112,19 @@ type:
       })
     );
   }
-  var appRef2 = null;
+  var appRef3 = null;
   function bootHomeSim() {
     const g = window;
     if (g.__bzHomeSimBooted) return;
     g.__bzHomeSimBooted = true;
     seedDatabase();
     injectSettings();
-    appRef2 = new FakeApp();
-    setApp(appRef2);
+    appRef3 = new FakeApp();
+    setApp(appRef3);
   }
   function openHome2() {
     bootHomeSim();
-    openHome(appRef2);
+    openHome(appRef3);
   }
   function resetHomeSim() {
     wipeSimKeys();
@@ -48855,7 +49133,7 @@ type:
   async function toggleFocusSim() {
     bootHomeSim();
     const m = await Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports));
-    await m.toggleFocus(appRef2);
+    await m.toggleFocus(appRef3);
   }
   return __toCommonJS(fake_sim_exports);
 })();
