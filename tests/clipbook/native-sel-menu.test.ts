@@ -7,8 +7,8 @@
  * Android 选择工具条），与自绘工具框同位抢位。系统菜单是 OS 层 UI 不是 DOM，只能：
  *   - iOS WKWebView：`-webkit-touch-callout: none`（唯一开关，落在 styles.css 正文容器规则）
  *   - Android WebView：正文容器内拦 `contextmenu` + preventDefault（ui.ts onReaderContextMenu）
- * 两条路均为 best-effort（Android ActionMode 未必认 preventDefault）——拦不住时靠
- * MOBILE_SYS_BAR_CLEARANCE 48px 让位兜底，故让位逻辑不在本文件断言范围内（toolbar.test.ts 覆盖）。
+ * 两条路均为 best-effort（Android ActionMode 未必认 preventDefault）。真机验收（2026-09-16）确认
+ * 压制生效，故 issue 329 给移动端加的 48px 让位已撤销、两端定位同口径（toolbar.test.ts 覆盖）。
  *
  * 作用域铁律：只拦移动端 + 只拦 [data-clip-md]/[data-clip-mob-md] 内的目标。
  * 列表卡片右键菜单（item-actions）与桌面右键是鼠标惯用件，不得被误伤。

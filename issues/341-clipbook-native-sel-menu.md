@@ -1,6 +1,6 @@
 # Issue 341 — 剪藏本正文屏蔽移动端原生选择菜单（系统工具框与划选工具框抢位）
 
-**状态：已修复**（2026-09-16，待真机验收）
+**状态：已修复并经用户真机验收**（2026-09-16；验收确认压制生效 → 同日撤销移动端让位，见文末）
 
 ## 现象（用户诉求）
 
@@ -31,8 +31,8 @@
    新模块级 `onReaderContextMenu`：**仅 `isMobileEnv()`** 且
    `ev.target.closest('[data-clip-md],[data-clip-mob-md]')` 命中才 `preventDefault`。
    capture 是为了先于 Obsidian 自己的正文监听。
-3. `MOBILE_SYS_BAR_CLEARANCE = 48` **保留为兜底**（注释更新为 issue 341 口径）：
-   屏蔽是 best-effort，拦不住时仍靠这 48px 让位。
+3. `MOBILE_SYS_BAR_CLEARANCE = 48` 当时**保留为兜底**（屏蔽是 best-effort，拦不住时仍靠让位）
+   —— 真机验收确认压住后**已删除**，见文末。
 
 ## 作用域（不误伤，测试逐条钉住）
 
@@ -43,14 +43,30 @@
 
 ## 已知限制与代价（如实交代，勿承诺过头）
 
-- **iOS**：`-webkit-touch-callout: none` 是 WKWebView 压 Callout 的官方开关，但**需真机验证**——
-  个别 iOS 版本可能连带影响长按起选。
-- **Android**：`preventDefault` 对 Selection ActionMode 只是 best-effort，**不保证压得住**，
-  故 48px 让位保留；真机若确认压住了，后续可把让位改 0（一行改动）。
+- **iOS**：`-webkit-touch-callout: none` 是 WKWebView 压 Callout 的官方开关。**已真机验收**（2026-09-16）。
+- **Android**：`preventDefault` 对 Selection ActionMode 只是 best-effort。**已真机验收**（2026-09-16）——
+  据此撤销了原来的 48px 让位兜底。
 - **代价**：正文原生「复制 / 全选」随之消失。ADR-0144 已拍板「复制 = Markdown 源语法」，
   工具框刻意没有纯文本复制钮；若要补「复制文字」钮属新决策，需用户拍板。
-- **开发机无法验证真机效果** → 必须用户在手机上长按正文实测。
-  建议顺序：① iOS 长按正文还有没有 Callout ② Android 长按还有没有浮动工具条。
+
+## 真机验收与让位撤销（2026-09-16 后续 · 用户驱动）
+
+用户真机实测：**压制生效**——正文长按不再弹系统选择菜单。
+
+随后用户提出：工具框与选区之间多出一段边距，要去掉。那段正是 issue 329 为躲系统菜单给
+`placeSelBar` 加的移动端 48px 让位——菜单压住了，让位只剩空隙。故：
+
+1. `src/clipbook/ui.ts`：删 `MOBILE_SYS_BAR_CLEARANCE` 常量与 `placeSelBar` 内的
+   `const clearance = isMobileEnv() ? … : 0`，定位回到双端同一份算式（选区上 8px，放不下翻下方 8px）。
+2. `tests/clipbook/toolbar.test.ts`：原「移动端让位 48」两例改为「零让位，与桌面同定位」
+   （期望值 8px → 56px、86px → 38px），describe 更名「浮框定位：双端同口径」。
+3. `tests/clipbook/native-sel-menu.test.ts` 头注释同步（不再有让位兜底）。
+4. `docs/adr/0150-clip-native-selection-menu-suppress.md` 决策 4 由「48px 让位保留为兜底」
+   改为「移动端让位已撤销」，状态转「已真机验收」。
+
+**口径（不留兜底）**：屏蔽仍是 best-effort。将来若某版本 WebView 又压不住，工具框会重新与系统菜单
+同位——届时把让位加回来（或换压制手段），而不是留一段恒久的空隙。让位是针对具体缺陷的补丁，
+缺陷消失即应撤销。
 
 ## 回归测试（`tests/clipbook/native-sel-menu.test.ts`，12 例）
 

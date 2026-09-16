@@ -1,8 +1,9 @@
 # ADR-0150 剪藏本正文屏蔽原生选择菜单（保住选择豁免，牺牲原生复制/全选）
 
-- 状态：已接受（2026-09-16，用户提出诉求；**已实现，待真机验收**）
+- 状态：已接受（2026-09-16，用户提出诉求；**已实现并经用户真机验收**，验收后撤销了移动端让位）
 - 关联：issue 341 / ADR-0144（划选工具框与锚定双链，本 ADR 补其移动端缺口）/ ADR-0082（剪藏本）
-- 影响：`src/clipbook/styles.css`、`src/clipbook/ui.ts`、`CONTEXT.md`、`tests/clipbook/native-sel-menu.test.ts`
+- 影响：`src/clipbook/styles.css`、`src/clipbook/ui.ts`、`CONTEXT.md`、
+  `tests/clipbook/native-sel-menu.test.ts`、`tests/clipbook/toolbar.test.ts`
 
 ## 背景
 
@@ -28,14 +29,16 @@ Android 选择 ActionMode「剪切/复制/粘贴」），与自绘工具框同�
    「一端压住、一端没压住」。
 3. **作用域只到正文文本容器**：仅移动端。标题 / meta / 脚注**不压**——那里 bz 没有替代工具框，
    保留原生菜单给用户复制；列表卡片右键菜单（item-actions）、面板骨架、桌面右键一律不碰。
-4. **48px 让位保留为兜底**：`MOBILE_SYS_BAR_CLEARANCE` 不删。屏蔽是 best-effort，
-   拦不住时工具框仍靠让位错开系统菜单。
+4. **移动端 48px 让位已撤销**（2026-09-16，真机验收后）：issue 329 给 `placeSelBar` 加的
+   系统菜单让位（`MOBILE_SYS_BAR_CLEARANCE`）随压制生效一并删除——菜单既然不再抢位，
+   让位只剩一段恒久空隙。定位回到**双端同一份算式**（选区上 8px，放不下翻下方 8px）。
 
 ## 后果
 
 - **接受**：正文里原生的「复制 / 全选」随之消失。与 ADR-0144「复制 = 复制 Markdown 源语法」
   口径自洽（工具框刻意没有纯文本复制钮）；若将来要补「复制文字」钮，属新决策，需重新拍板。
-- **不确定**：Android 的 `preventDefault` 对 Selection ActionMode **不保证**生效；
-  iOS 个别版本 `-webkit-touch-callout: none` 可能连带影响长按起选。两者均**必须真机验证**，
-  故本 ADR 状态记「待真机验收」。真机确认 Android 压住后，可把 48px 让位改 0（一行）。
+- **已真机验收（2026-09-16）**：用户实测正文长按不再弹系统选择菜单。残留风险仍在，但**不留兜底**：
+  Android 的 `preventDefault` 对 Selection ActionMode 不保证在所有 WebView 版本 / 定制 ROM 生效，
+  iOS 个别版本 `-webkit-touch-callout: none` 可能连带影响长按起选。真要复现，处置是把让位加回来
+  （或换压制手段），而不是预置一段空隙——让位属于「针对具体缺陷的补丁」，缺陷消失即撤销。
 - **零副作用域**：桌面行为、列表卡片菜单、选区与工具框交互均不变（有回归用例钉住）。

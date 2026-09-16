@@ -1513,24 +1513,18 @@ function armSelBarEsc(): void {
   });
 }
 
-/** 移动端系统选择菜单让位高度（px）：原生复制/选择菜单贴着选区上方弹出，
- *  浮框原位（选区上 8px）与之同位被盖——移动端定位统一再让出该高度。
- *  issue 341 起保留为兜底：菜单屏蔽是 best-effort（Android 选择 ActionMode 未必认
- *  preventDefault），拦不住时仍靠这 48px 让位。 */
-const MOBILE_SYS_BAR_CLEARANCE = 48;
-
-/** 浮框定位：光标（选区/图片）上方，放不下翻下方，视口内钳制（jsdom 零尺寸走估算兜底）。
- *  移动端额外让位系统选择菜单（issue 329 Bug 1）：上方让位后放不下 → 翻下方同让位；桌面零让位。 */
+/** 浮框定位：光标（选区/图片）上方 8px，放不下翻下方，视口内钳制（jsdom 零尺寸走估算兜底）。
+ *  双端同一份口径：issue 329 曾给移动端额外让位 48px（躲系统选择菜单），issue 341 屏蔽生效后
+ *  系统菜单不再抢位，让位只剩空隙，故撤销（2026-09-16 真机验收确认）。 */
 function placeSelBar(rect: { top: number; left: number; bottom: number; right: number }): void {
   const bar = selBarEl!;
   const w = bar.offsetWidth || 240;
   const h = bar.offsetHeight || 36;
   const vw = window.innerWidth || document.documentElement.clientWidth || 0;
   const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-  const clearance = isMobileEnv() ? MOBILE_SYS_BAR_CLEARANCE : 0;
   let left = rect.left;
-  let top = rect.top - h - 8 - clearance;
-  if (top < 8) top = (rect.bottom || rect.top) + 8 + clearance;
+  let top = rect.top - h - 8;
+  if (top < 8) top = (rect.bottom || rect.top) + 8;
   if (vw) left = Math.min(Math.max(left, 8), Math.max(8, vw - w - 8));
   if (vh) top = Math.min(Math.max(top, 8), Math.max(8, vh - h - 8));
   bar.style.left = `${left}px`;

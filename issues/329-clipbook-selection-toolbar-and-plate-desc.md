@@ -35,7 +35,8 @@
 ## 追加修订（2026-09-16 第三批 · 移动端四 bug）
 
 - **工具框被系统选择菜单遮挡**：`placeSelBar` 移动端加 48px 系统菜单让位（上方放不下翻下方同理），
-  桌面行为不变。
+  桌面行为不变。_（2026-09-16 更新：系统菜单已由 issue 341 / ADR-0150 在源头压掉，该让位随后撤销——
+  工具框恢复双端同口径定位。本条目仅存历史。）_
 - **动作后详情层不即时重渲**：`handleAnchorCreated`/`actSaveImage` 原只调 `renderReader()`（桌面右栏），
   移动详情是独立渲染路径——新增 `refreshReadingViews`，`M.mobDetailOpen` 时连 `renderMobDetail()`。
 - **点锚定双链崩溃**：锚定链接是裸 basename，`resolveInternalTarget` 只认全路径 → 拦截必失败走原生
