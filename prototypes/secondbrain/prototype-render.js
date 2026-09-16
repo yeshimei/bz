@@ -1,4 +1,4 @@
-/* 源指纹 40bf684292309c21 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f74aabee1b207925 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/secondbrain/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/secondbrain/render.ts → window.BZR_secondbrain（评审壳预览包，ADR-0104） */
 var BZR_secondbrain = (() => {
@@ -43,7 +43,15 @@ var BZR_secondbrain = (() => {
     panelTrendHtml: () => panelTrendHtml,
     refCardHtml: () => refCardHtml,
     refStateHtml: () => refStateHtml,
-    sbSourceColor: () => sbSourceColor
+    sbSourceColor: () => sbSourceColor,
+    weeklyCollisionRowHtml: () => weeklyCollisionRowHtml,
+    weeklyEmptyHtml: () => weeklyEmptyHtml,
+    weeklyLoadingHtml: () => weeklyLoadingHtml,
+    weeklyNoteRowHtml: () => weeklyNoteRowHtml,
+    weeklySectionHtml: () => weeklySectionHtml,
+    weeklyShellHtml: () => weeklyShellHtml,
+    weeklyStatsHtml: () => weeklyStatsHtml,
+    weeklySummaryHtml: () => weeklySummaryHtml
   });
   function topLevelDir(path) {
     const i = path.indexOf("/");
@@ -196,6 +204,10 @@ var BZR_secondbrain = (() => {
             <div class="bz-sb-ct bz-sb-ai-ct">${ic("sparkles", 13)}库摘要<span class="bz-sb-ct-n" id="bz-sb-ai-when"></span></div>
             <div class="bz-sb-ai-txt" id="bz-sb-ai-txt"></div>
           </div>
+          <div class="bz-sb-section bz-sb-weekly-card" id="bz-sb-weekly-card" style="display:none" role="button" tabindex="0" title="本周知识动态">
+            <div class="bz-sb-ct bz-sb-ai-ct">${ic("calendar-days", 13)}近期动态<span class="bz-sb-ct-n" id="bz-sb-weekly-range"></span></div>
+            <div class="bz-sb-weekly-card-txt" id="bz-sb-weekly-card-txt"></div>
+          </div>
         </div>
       </div>
       <div class="bz-sb-foot">
@@ -250,6 +262,46 @@ var BZR_secondbrain = (() => {
   }
   function panelLogHtml(parts) {
     return parts.map((p) => `<span class="bz-sb-log-item${p.warn ? " bz-sb-log-item--warn" : ""}">${escapeHtml(p.text)}</span>`).join('<span class="bz-sb-log-sep">·</span>');
+  }
+  function weeklyShellHtml(range) {
+    return `
+  <div class="bz-sb-weekly-head">
+    <div class="bz-sb-glyph">${ic("calendar-days", 17)}</div>
+    <div class="bz-sb-head-title">
+      <h3>本周知识动态</h3>
+      <div class="bz-sb-cnt" id="bz-sb-weekly-range-head">${escapeHtml(range)}</div>
+    </div>
+    <div class="bz-sb-head-sp"></div>
+    <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-weekly-close" aria-label="关闭" title="关闭">${ic("x", 14)}</button>
+  </div>
+  <div class="bz-sb-weekly-body bz-sb-scroll-y" id="bz-sb-weekly-body"></div>`;
+  }
+  function weeklySummaryHtml(withAI) {
+    return withAI ? `<div class="bz-sb-weekly-summary" id="bz-sb-weekly-summary"><div class="bz-sb-weekly-summary-text" id="bz-sb-weekly-summary-text"></div></div>` : `<div class="bz-sb-weekly-stats" id="bz-sb-weekly-stats"></div>`;
+  }
+  function weeklyStatsHtml(notes, links, collisions) {
+    const chip = (v, k, warn = false) => `<span class="bz-sb-weekly-chip${warn && v > 0 ? " bz-sb-weekly-chip--warn" : ""}"><b>${v}</b>${k}</span>`;
+    return chip(notes, " 篇新增笔记") + chip(links, " 条新增关联") + chip(collisions, " 处主题撞车", true);
+  }
+  function weeklySectionHtml(id, icon, title, count, rows, emptyText = "") {
+    if (count <= 0) return emptyText ? `<div class="bz-sb-weekly-empty">${escapeHtml(emptyText)}</div>` : "";
+    return `
+  <div class="bz-sb-weekly-section" id="${id}">
+    <div class="bz-sb-ct">${ic(icon, 13)}${escapeHtml(title)}<span class="bz-sb-ct-n">${count}</span></div>
+    <div class="bz-sb-weekly-rows">${rows}</div>
+  </div>`;
+  }
+  function weeklyNoteRowHtml(path, name, when) {
+    return `<div class="bz-sb-weekly-row" data-path="${escapeHtml(path)}" role="button" tabindex="0"><span class="bz-sb-weekly-row-dot"></span><span class="bz-sb-weekly-row-name">${escapeHtml(name)}</span><span class="bz-sb-weekly-row-time">${escapeHtml(when)}</span></div>`;
+  }
+  function weeklyCollisionRowHtml(path, name, targetPath, targetName, pct) {
+    return `<div class="bz-sb-weekly-row bz-sb-weekly-row--hit" data-path="${escapeHtml(path)}" role="button" tabindex="0"><span class="bz-sb-weekly-row-dot bz-sb-weekly-row-dot--warn"></span><span class="bz-sb-weekly-row-name">${escapeHtml(name)}</span><span class="bz-sb-weekly-row-hit-arrow">${ic("arrow-right", 12)}</span><span class="bz-sb-weekly-row-name bz-sb-weekly-row-name--target" data-path="${escapeHtml(targetPath)}">${escapeHtml(targetName)}</span><span class="bz-sb-weekly-row-pct">${pct}%</span></div>`;
+  }
+  function weeklyEmptyHtml() {
+    return `<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">最近一周没有新入脑的笔记与关联，一切安静。</div>`;
+  }
+  function weeklyLoadingHtml() {
+    return `<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">正在聚合本周动态…</div>`;
   }
   var CHAT_CHIPS = ["为什么会遗忘", "享乐适应", "怎么高效记笔记", "睡不好怎么补救", "闪电", "王阳明"];
   function chatShellHtml(topK) {

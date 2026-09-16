@@ -382,7 +382,7 @@ export default interface BzSettings {
   /** 备忘录（memo 新域）：移动端默认全屏（默认关——与旧备忘录一致） */
   /** 归物本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   /** 收藏本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
-  // 旧 favoritesSortKey（toolbar 排序循环钮）已删（issue 346）：migrateRetiredFavoritesSortKey 清残留
+  // 旧 favoritesSortKey（toolbar 排序循环钮）已删（issue 364）：migrateRetiredFavoritesSortKey 清残留
   // 旧 favoritesTimeFormat（卡片日期显示）已删（ADR-0101）：固定相对时间
   /** 收藏本：打开面板默认筛选（issue 296）：''=全部 / '@last'=记住上次（取 favoritesLastFilter，同
    *  memoOpenScene '@last' 先例）/ 标签 label=固定该标签；非法值（含标签不在九类）回落全部 */
@@ -534,7 +534,7 @@ export function migrateRetiredAIKeys(raw: unknown): boolean {
 }
 
 /**
- * issue 346 一次性迁移：收藏本排序循环钮键退役——ADR-0083 重设计后循环钮已删，键全链
+ * issue 364 一次性迁移：收藏本排序循环钮键退役——ADR-0083 重设计后循环钮已删，键全链
  * 零消费点（打开面板的排序由 favoritesDefaultSort 承担），旧值不迁移直接丢。
  * 幂等：无旧键即不改动，调用方据此决定要不要落盘（同 migrateRetiredAIKeys 口径）。
  */

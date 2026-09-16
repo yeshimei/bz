@@ -2,31 +2,92 @@
  * 收藏本配置（ticket 11 移植 + ticket 177 重构）：源码 收藏本.js L12-25。
  * 9 类固定标签（顺序即 UI 顺序）：数据 tags[] 存 label（如 'GitHub'）。
  * 归档冷存（ADR-0074）为数据层字段扩展，见 types.ts。
+ *
+ * issue 363 标签自定义：9 类降为内置 seed（DEFAULT_TAGS），定义本体搬进 favorites.tags.json
+ * （伴生文件——favorites.json 顶层纯条目数组契约不动：主页.js 读 favorites.length、checkup
+ * 字段漂移检查依赖纯数组根）。运行时状态收口本模块（diary/config.ts PRIMARY_TAGS_CONFIG
+ * 同款范式）：未载入/文件缺失回退 seed，零迁移；UI 与渲染纯层统一 getTags() 消费。
  */
+import type { FavTag } from './types';
+
 export const CONFIG = {
   /** 默认存储目录（文件名固定 favorites.json，设置只允许改目录） */
   DEFAULT_STORAGE_PATH: 'CONFIG/STORAGE',
   /** 数据文件名（固定，不允许用户修改） */
   STORAGE_FILE: 'favorites.json',
+  /** 标签定义文件（issue 363 伴生文件，与 favorites.json 同目录、跟随 storagePath 设置） */
+  TAGS_FILE: 'favorites.tags.json',
 };
 
-/** 标签定义（label 即数据本体 tags[] 存的值；ic 为 Obsidian 内置 lucide 图标名） */
-export interface FavTag {
-  label: string;
-  ic: string;
+/**
+ * 内置 9 类 seed（旧硬编码 TAGS 收编）：id 固定不随改名变化——GitHub 强标签特判、
+ * 删除迁移兜底目标（'web' 网站）等内部引用一律按 id 取当前 label。
+ */
+export const DEFAULT_TAGS: FavTag[] = [
+  { id: 'github', label: 'GitHub', ic: 'github' },
+  { id: 'desktop', label: '桌面软件', ic: 'app-window' },
+  { id: 'web', label: '网站', ic: 'globe' },
+  { id: 'llm', label: '大模型', ic: 'brain-circuit' },
+  { id: 'pi', label: 'pi', ic: 'keyboard' },
+  { id: 'claude', label: 'Claude', ic: 'bot' },
+  { id: 'skills', label: 'skills', ic: 'zap' },
+  { id: 'pub', label: '酒馆', ic: 'beer' },
+  { id: 'dsh', label: 'DeepSeek Harness', ic: 'waypoints' },
+];
+
+/** 运行时标签集（null = 未载入，getTags() 回落 seed；data.loadTags 注入磁盘值） */
+let currentTags: FavTag[] | null = null;
+
+/** 当前生效标签定义（未载入/文件缺失 = 内置 9 类；顺序即磁贴行与表单顺序） */
+export function getTags(): FavTag[] {
+  return currentTags ?? DEFAULT_TAGS;
 }
 
-export const TAGS: FavTag[] = [
-  { label: 'GitHub', ic: 'github' },
-  { label: '桌面软件', ic: 'app-window' },
-  { label: '网站', ic: 'globe' },
-  { label: '大模型', ic: 'brain-circuit' },
-  { label: 'pi', ic: 'keyboard' },
-  { label: 'Claude', ic: 'bot' },
-  { label: 'skills', ic: 'zap' },
-  { label: '酒馆', ic: 'beer' },
-  { label: 'DeepSeek Harness', ic: 'waypoints' },
-];
+/** 注入运行时标签集（loadTags 载入 / 管理界面保存后调用；归一化防线见 data.loadTags） */
+export function setTags(tags: FavTag[]): void {
+  currentTags = tags;
+}
+
+/** 测试/卸载重置（回退 seed） */
+export function resetTagsState(): void {
+  currentTags = null;
+}
+
+/** 按稳定 id 取标签定义（GitHub 特判等内部引用单源；不存在返回 null） */
+export function getTagById(id: string): FavTag | null {
+  return getTags().find((t) => t.id === id) ?? null;
+}
+
+/** 标签定义文件路径（与 favorites.json 同目录、文件名固定） */
+export function getTagsPath(storagePath: string): string {
+  // storagePath 已是 DataManager 构造用的完整 favorites.json 路径，取同目录换固定文件名
+  const idx = storagePath.lastIndexOf('/');
+  const dir = idx >= 0 ? storagePath.slice(0, idx) : '';
+  return (dir || CONFIG.DEFAULT_STORAGE_PATH) + '/' + CONFIG.TAGS_FILE;
+}
+
+/** 新增标签 id（'t' + 时间戳36进制；id 一经生成不再变化） */
+export function newTagId(): string {
+  return 't' + Date.now().toString(36);
+}
+
+/** 标签定义归一化：坏行剔除、缺 id 补（旧手改文件防御）、缺图标回落 tag、名称去空白 */
+export function normalizeTags(raw: unknown): FavTag[] {
+  if (!Array.isArray(raw)) return [];
+  const out: FavTag[] = [];
+  for (const r of raw) {
+    if (!r || typeof r !== 'object') continue;
+    const o = r as Partial<FavTag>;
+    const label = typeof o.label === 'string' ? o.label.trim() : '';
+    if (!label) continue;
+    out.push({
+      id: typeof o.id === 'string' && o.id ? o.id : newTagId(),
+      label,
+      ic: typeof o.ic === 'string' && o.ic ? o.ic : 'tag',
+    });
+  }
+  return out;
+}
 
 
 

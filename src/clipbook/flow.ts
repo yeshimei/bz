@@ -9,7 +9,9 @@
  *   真的写盘时发——重复标读（盘面已达成目标态）不重复喂 smartcat 行为流）。
  * - 正文保留（issue 274）：已处理不再删 body——会话目录已读/已收条目点开仍可阅全文；
  *   超龄条目由保留策略整条清理（news-data applyRetention）。
- * - 阅读时长：右栏/详情停留会话累计（对齐 ticket 076 openedAt/accumMs 语义，整分钟 ≥1）。
+ * - 阅读时长：右栏/详情停留会话累计（对齐 ticket 076 openedAt/accumMs 语义，整分钟 ≥1）；
+ *   issue 358 起满 1 分钟的会话段封存入账 clipbook.json 侧写 readLog（flushReadingSession：
+ *   切篇 / 处理动作落定 / 关面板、卸载），报告页由此派生，news.json 不加段。
  *
  * 本层负责编排 + 落盘串行队列；store.ts 提供原语。
  */
@@ -22,26 +24,32 @@ import { localDayKey } from './constants';
 import type { NewsReadEvent } from '../smartcat/news-source';
 import { writeClipNote } from './save';
 import { articleKeyOf } from './constants';
-import { updateClipbookData } from './data';
+import { updateClipbookData, type ClipReadLogEntry } from './data';
 import { enqueueNewsWrite } from './write-queue';
 
 // ---------- 阅读会话计时（对齐 ticket 076：当前显示条目 + 累计可视毫秒） ----------
 let curKey = '';
+/** 当前会话条目元信息（issue 358：封存入账 readLog 时的 title/src 取自此；切换前保存旧篇） */
+let curMeta: { title: string; src: string } | null = null;
 let openedAt = 0;
 let accumMs = 0;
 
 /** 切换阅读目标（UI 选中变化/关闭时调用；同篇不重置累计）
  *  C7：同 key 重渲染（renderReader 反复触发）不再重置 openedAt——此前每次都重开计时，
- *  上一段可视时长被丢弃致行为流 durationMin 偏小；仅切换目标时归零重开。 */
-export function setReadingSession(key: string): void {
+ *  上一段可视时长被丢弃致行为流 durationMin 偏小；仅切换目标时归零重开。
+ *  issue 358：切换时旧篇先封存入账侧写 readLog（flushReadingSession），meta 传当前篇。 */
+export function setReadingSession(key: string, meta?: { title: string; src: string } | null): void {
   if (key !== curKey) {
-    // 切换目标：旧篇累计封存逻辑（本实现不跨条目恢复，故归零）
+    // 切换目标：旧篇累计封存入账 → 换篇重开
+    flushReadingSession();
     curKey = key;
+    curMeta = meta || null;
     accumMs = 0;
     openedAt = Date.now();
   } else if (!openedAt) {
     // 同篇且已暂停：恢复计时起点
     openedAt = Date.now();
+    if (meta && !curMeta) curMeta = meta;
   }
 }
 
@@ -58,6 +66,46 @@ function durationMin(): number {
   const now = Date.now();
   const total = (openedAt ? now - openedAt : 0) + accumMs;
   return Math.max(1, Math.round(total / 60000));
+}
+
+/** 会话封存入账（issue 358）：把当前累计折成整分钟追加进侧写 readLog，然后清零累计。
+ *  只记满 1 分钟的段（快速略过不入账，对齐 durationMin 整分钟口径；不足整分钟丢弃）。
+ *  调用点：切篇（setReadingSession）/ 处理动作落定后（flowSave/flowMarkRead——行为流
+ *  emit 之后，不影响 durationMin）/ 关面板、卸载、开报告前（pause 之后补封存）。
+ *  落盘 fire-and-forget：updateClipbookData 自带 per-path 串行队列，失败只留 console。 */
+export function flushReadingSession(): void {
+  if (!curKey) return;
+  const now = Date.now();
+  const total = (openedAt ? now - openedAt : 0) + accumMs;
+  openedAt = 0;
+  accumMs = 0;
+  if (total < 60000) return;
+  const entry: ClipReadLogEntry = {
+    key: curKey,
+    title: curMeta?.title || '',
+    src: curMeta?.src || '',
+    minutes: Math.max(1, Math.round(total / 60000)),
+    ts: now,
+  };
+  void appendReadLog(entry).catch((e) => console.error('[剪藏本] 阅读时长入账失败', e));
+}
+
+/** readLog 追加 + 裁剪（读改写事务，与侧写其他写方同队列串行） */
+async function appendReadLog(entry: ClipReadLogEntry): Promise<void> {
+  await updateClipbookData((cur) => {
+    return { ...cur, readLog: trimReadLog([...(cur.readLog || []), entry], entry.ts) };
+  });
+}
+
+/** readLog 裁剪口径（issue 358）：保留最近 180 天 + 上限 5000 条（超出裁最旧）。
+ *  报告只看本周/本月，180 天窗口绰绰有余；防长年使用把 clipbook.json 无限撑大。 */
+const READ_LOG_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
+const READ_LOG_MAX_ENTRIES = 5000;
+
+export function trimReadLog(list: ClipReadLogEntry[], now: number): ClipReadLogEntry[] {
+  const floor = now - READ_LOG_RETENTION_MS;
+  const kept = list.filter((e) => e && typeof e.ts === 'number' && isFinite(e.ts) && e.ts >= floor);
+  return kept.length > READ_LOG_MAX_ENTRIES ? kept.slice(kept.length - READ_LOG_MAX_ENTRIES) : kept;
 }
 
 /** 测试钩子：读当前会话状态（C7 回归保护：同 key 重入不丢累计） */
@@ -174,6 +222,8 @@ export async function flowSave(article: any): Promise<boolean> {
     if (bump.changed) emitDomainEvent('news', { kind: 'read', evt });
     // 保存联动 auto-summary：登记待补全（smartcat 订阅该剪藏 modify 补全 / 2 分钟降级）
     emitDomainEvent('news', { kind: 'saved', evt, clipPath: `${dirOf()}/${String(raw.title || '').replace(/[\\/:*?"<>|]/g, '').trim()}.md` });
+    // 本篇已处理出收件流 → 会话封存入账 readLog（issue 358；行为流已 emit，不影响 durationMin）
+    flushReadingSession();
     return true;
   } catch (e) {
     console.error('[剪藏本] 保存失败', e);
@@ -190,6 +240,8 @@ export async function flowMarkRead(article: any): Promise<HandledBump> {
   pauseReadingSession();
   const res = await markHandledAndBump(raw, 'skipped');
   if (res.changed) emitReadEvt(raw, 'skipped');
+  // 本篇已处理 → 会话封存入账 readLog（issue 358；同上，行为流之后）
+  flushReadingSession();
   return res;
 }
 

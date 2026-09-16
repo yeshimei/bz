@@ -1,10 +1,10 @@
-# ADR-0156 · 外观占位设置键显式保留
+# ADR-0159 · 外观占位设置键显式保留
 
-日期：2026-09-16 · 关联：issue 346、issue 246（占位键设计原案）
+日期：2026-09-16 · 关联：issue 364、issue 246（占位键设计原案）
 
 ## 背景
 
-全域裁剪批（issue 346）三路扫描发现 26 个外观占位设置键（`xxLayout` / `xxSkin` /
+全域裁剪批（issue 364）三路扫描发现 26 个外观占位设置键（`xxLayout` / `xxSkin` /
 `xxTheme` 形态：memoLayout、homeLayout、homeSkin、bookshelfLayout、cinemaStyle、
 cinemaSkinTheme、belSkin/Theme、diarySkin/Theme、clipbookSkin/Theme、favoritesSkin/Theme、
 reviewSkin/Theme、secondbrainSkin/Theme、knowledgeSkin/Theme、encryptSkin/Theme、

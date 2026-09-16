@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * issue 346 一次性迁移测试（migrateRetiredFavoritesSortKey，src/settings.ts）：
+ * issue 364 一次性迁移测试（migrateRetiredFavoritesSortKey，src/settings.ts）：
  * 收藏本 toolbar 排序循环钮键退役——ADR-0083 重设计后循环钮已删，键全链零消费点
  * （打开面板的排序由 favoritesDefaultSort 承担），旧值不迁移直接丢。
  */

@@ -338,7 +338,7 @@ describe('bz ui 组件库', () => {
       const { popup } = uiModal({ content: 'hi', maxWidth: 520 });
       expect(popup.style.maxWidth).toContain('520');
     });
-    it('requestClose 拦截通道：遮罩点击/ESC 改调 requestClose 不直接关（issue 347 第 5 项，脏表单先确认）', () => {
+    it('requestClose 拦截通道：遮罩点击/ESC 改调 requestClose 不直接关（issue 365 第 5 项，脏表单先确认）', () => {
       const requestClose = vi.fn();
       const { close } = uiModal({ content: 'hi', requestClose });
       // 遮罩点击 → 只通知意图，不关（消费方未放行）

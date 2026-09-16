@@ -10,7 +10,7 @@ import type { SafeNote } from './data';
 
 export type VaultAsset = 'overview' | 'note' | 'diary';
 
-/** 资产分类色（P1 档案库：笔记=松石/日记=靛蓝；密码资产色随 ADR-0155 视图退役删除）。
+/** 资产分类色（P1 档案库：笔记=松石/日记=靛蓝；密码资产色随 ADR-0158 视图退役删除）。
  *  note/diary 为数据语义分类色（与 styles.css --bz-vault-teal/indigo 同源，无对应 --bz-* token）。 */
 export const ASSET_COLOR: Record<'note' | 'diary', string> = {
   note: '#2e7d68',

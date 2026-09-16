@@ -15,7 +15,7 @@
  *  - 入口顺序 / 显隐：**本页不做任何编辑交互**，统一由「设置 → 首页入口」弹窗打理
  *    （顺序两端各一套 + 隐藏域，存 home.json，见 ./order）；本页只按序渲染可见域。
  *  - 时间线：小橘行为流痕迹 + 规则点评（✦ 域内自算，非 AI 调用）；
- *    今天视图的动作行「生成今日总结」（ADR-0154 自 recap 面板迁入，AI 总结写日记走 recap 链路）
+ *    今天视图的动作行「生成今日总结」（ADR-0157 自 recap 面板迁入，AI 总结写日记走 recap 链路）
  *  - 明天预告：复习/剪藏/日记三张规则卡，点击直达
  * markup 单源（ADR-0104）：面板骨架/周历/入口行/河卡/预告卡 HTML 全部出自 ./render
  * （渲染纯层，与原型壳消费同一份）；本文件只剩行为层——生命周期/事件绑定/ESC/命令直达。
@@ -37,7 +37,7 @@ import type { PomodoroPhase } from '../core/pomodoro-phase';
 import { isFocusingPhase } from '../core/pomodoro-phase';
 import { collectRiver, type RiverData } from './river';
 import { loadHomeOrder } from './order';
-// 「生成今日总结」（ADR-0154 自 recap 面板迁入）：数据采集与 AI 写日记链路仍是 recap 域
+// 「生成今日总结」（ADR-0157 自 recap 面板迁入）：数据采集与 AI 写日记链路仍是 recap 域
 // 纯函数库（home ← recap 单向，recap/aggregate → home/weekly 无环）。
 import { collectRecap } from '../recap/aggregate';
 import type { RecapData } from '../recap/aggregate';
@@ -208,7 +208,7 @@ function bindEvents(overlay: HTMLElement, app: any): void {
       closeOverlay();
       return;
     }
-    // 「生成今日总结」（ADR-0154）：时间线河卡今天的动作行（render 层只出按钮，行为在此）
+    // 「生成今日总结」（ADR-0157）：时间线河卡今天的动作行（render 层只出按钮，行为在此）
     if (t.closest('[data-home-ai]')) {
       void onGenerateClick(app);
       return;
@@ -336,7 +336,7 @@ function mountRowInteractions(overlay: HTMLElement, app: any, river: RiverData):
   if (tiles) for (const el of rowEls(tiles)) attachRowMenu(el, app, river);
 }
 
-/* ---------- 「生成今日总结」（ADR-0154 自 recap 面板迁入，链路/通知语义原样保留） ----------
+/* ---------- 「生成今日总结」（ADR-0157 自 recap 面板迁入，链路/通知语义原样保留） ----------
  * 挂点 = 时间线河卡（今天视图）动作行按钮（markup 出自 layouts/river/render.ts flowHtml）。
  * 流程：loading 防重复 → 点击时现场采集当天五域痕迹（collectRecap）→ AI 总结自动写入日记
  *（同日替换不叠条）；AI 未配置/失败 → 降级数字模板，弹通知给「写入日记/复制」动作；

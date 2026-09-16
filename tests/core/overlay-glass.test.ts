@@ -78,8 +78,8 @@ describe('域遮罩 blur 全量在位', () => {
       // 保险库解锁屏已收编为 core 共享组件（三域同源），遮罩随之落到 core 组件库
       ['src/core/ui/components.css', '.bz-lockscreen--mask'],
       // review stats/history / pomodoro / knowledge .bz-kb-mask / encrypt 体检遮罩已收编
-      // .bz-overlay-mask 单源（issue 347），blur 随 core 组断言，域断言迁入下方收编组
-      // .bz-vault-dlg-mask（密码添加/编辑弹窗遮罩）随 ADR-0155 密码视图退役，断言一并清退
+      // .bz-overlay-mask 单源（issue 365），blur 随 core 组断言，域断言迁入下方收编组
+      // .bz-vault-dlg-mask（密码添加/编辑弹窗遮罩）随 ADR-0158 密码视图退役，断言一并清退
       ['src/review/styles.css', '#quiz-mask'],
       ['src/diary/styles.css', '#add-diary-mask'],
       ['src/diary/styles.css', '#diary-tag-selector-mask'],
@@ -101,7 +101,7 @@ describe('域遮罩 blur 全量在位', () => {
   });
 
   it('品牌底色遮罩保留域底色只加 blur（secondbrain / settings-panel）', () => {
-    // favorites 表单遮罩已随壳收编 core uiModal（issue 347 第 5 项）：
+    // favorites 表单遮罩已随壳收编 core uiModal（issue 365 第 5 项）：
     // 遮罩底色/blur 归 .bz-overlay-mask 单源（core 组断言覆盖），暖纸底留在 popup 卡皮
     const sb = rule(repo('src/secondbrain/styles.css'), '.bz-sb-panel-mask');
     expect(sb).toContain(BLUR);
@@ -114,7 +114,7 @@ describe('域遮罩 blur 全量在位', () => {
   });
 });
 
-describe('遮罩三件套收编 .bz-overlay-mask 单源（issue 347）', () => {
+describe('遮罩三件套收编 .bz-overlay-mask 单源（issue 365）', () => {
   /** TS 挂类锚点：域遮罩底色/blur 归 core 单源，blur 由上方 core 组断言守卫 */
   const TS_ANCHORS: Array<[file: string, anchor: string]> = [
     ['src/review/stats-ui.ts', "statsMask.className = 'bz-overlay-mask'"],

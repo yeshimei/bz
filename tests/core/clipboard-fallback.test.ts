@@ -1,5 +1,5 @@
 /**
- * core 剪贴板复制降级兜底单源测试（issue 347 第 4 项）：
+ * core 剪贴板复制降级兜底单源测试（issue 365 第 4 项）：
  * copySensitiveWithFallback = copySensitiveText（navigator.clipboard.writeText）失败 →
  * textarea + execCommand('copy') 选中法兜底；任一路径成功布防 60s 自动清空剪贴板。
  * encrypt/ui（日记正文复制）与 password-vault（面板复制 + quick-pick 快速取密）双域消费同一实现。

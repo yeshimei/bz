@@ -412,6 +412,108 @@ export function sprintSummaryHtml(p: { total: number; passed: number; failed: nu
       </div>`;
 }
 
+// ==================== 做题练习独立面板（issue 362；壳见 quiz-panel.ts） ====================
+
+/** 做题练习设置视图上下文（scope=all 整库 / folder 按文件夹 / note 单篇；batch≤0 = 不限） */
+export interface QuizPracticeSetupCtx {
+  scope: 'all' | 'folder' | 'note';
+  batch: number;
+  /** folder 范围已选目录（'' = 库根目录） */
+  folders: string[];
+  /** note 范围已选笔记路径 */
+  notePath: string;
+  /** 范围内现有题数（null = 统计中/未统计，meta 行占位） */
+  bankCount: number | null;
+}
+
+/** 出题范围段选与题量段选的档位（markup 单源；quiz-panel.ts 经 data-* 委托绑定） */
+const QUIZ_PRACTICE_SCOPES: Array<{ v: 'all' | 'folder' | 'note'; label: string }> = [
+  { v: 'all', label: '全部' },
+  { v: 'folder', label: '按文件夹' },
+  { v: 'note', label: '单篇' },
+];
+const QUIZ_PRACTICE_BATCHES: Array<{ v: number; label: string }> = [
+  { v: 10, label: '10 题' },
+  { v: 20, label: '20 题' },
+  { v: 30, label: '30 题' },
+  { v: 0, label: '不限' },
+];
+
+/** 做题练习设置视图（头行 + 范围段选 + 范围详情行 + 题量段选 + 题库 meta + 开始钮） */
+export function quizPracticeSetupHtml(ctx: QuizPracticeSetupCtx): string {
+  const scopeSeg = QUIZ_PRACTICE_SCOPES.map(
+    (o) =>
+      `<button type="button" class="bz-segmented-btn${o.v === ctx.scope ? ' is-on' : ''}" data-scope="${o.v}" role="radio" aria-checked="${o.v === ctx.scope}">${o.label}</button>`
+  ).join('');
+  const batchSeg = QUIZ_PRACTICE_BATCHES.map(
+    (o) =>
+      `<button type="button" class="bz-segmented-btn${o.v === ctx.batch ? ' is-on' : ''}" data-batch="${o.v}" role="radio" aria-checked="${o.v === ctx.batch}">${o.label}</button>`
+  ).join('');
+  let detail: string;
+  if (ctx.scope === 'all') {
+    detail = `<div class="bz-qp-detail">整库笔记都纳入出题范围，系统目录自动跳过</div>`;
+  } else if (ctx.scope === 'folder') {
+    const chips = ctx.folders.length
+      ? ctx.folders
+          .map((f) => {
+            const label = f === '' ? '（库根目录）' : f;
+            return `<span class="bz-qp-chip"><span class="bz-qp-chip-name" title="${esc(label)}">${esc(label)}</span><button type="button" class="bz-qp-chip-x" data-rm-folder="${esc(f)}" aria-label="移除 ${esc(label)}">✕</button></span>`;
+          })
+          .join('')
+      : `<span class="bz-qp-detail">还没选文件夹</span>`;
+    detail = `<div class="bz-qp-folder-row"><div class="bz-qp-chips">${chips}</div><button type="button" class="bz-btn bz-btn--ghost" data-act="pick-folders">${ctx.folders.length ? '改文件夹' : '选择文件夹'}</button></div>`;
+  } else {
+    detail = `<div class="bz-qp-note-field"><input type="text" class="bz-input bz-qp-note-input" data-role="note-input" placeholder="输入笔记名筛选，点选确定" value="${esc(ctx.notePath)}"></div>`;
+  }
+  const meta =
+    ctx.bankCount === null
+      ? ''
+      : ctx.bankCount > 0
+        ? `当前范围现有 <b>${ctx.bankCount}</b> 题`
+        : '当前范围还没有题目，开始后会自动出题';
+  return `
+    <div class="bz-qp-view">
+      <div class="bz-panel-head">
+        <div class="bz-panel-brand">${icon('graduation-cap', 'bz-ic--sm')}</div>
+        <div class="bz-panel-title">做题练习</div>
+        <div class="bz-panel-head-pipe"></div>
+        <div class="bz-panel-head-sub">只刷题 · 不排期复习</div>
+        <span class="bz-panel-head-sp"></span>
+        <button class="bz-icon-btn" data-act="close" title="关闭">${icon('x')}</button>
+      </div>
+      <div class="bz-qp-body">
+        <div class="bz-qp-sec">
+          <div class="bz-qp-sec-label">出题范围</div>
+          <div class="bz-segmented" role="radiogroup" aria-label="出题范围">${scopeSeg}</div>
+          <div class="bz-qp-detail-wrap">${detail}</div>
+        </div>
+        <div class="bz-qp-sec">
+          <div class="bz-qp-sec-label">本轮题量</div>
+          <div class="bz-segmented" role="radiogroup" aria-label="本轮题量">${batchSeg}</div>
+        </div>
+        <div class="bz-qp-meta" data-role="bank-meta">${meta}</div>
+        <button class="bz-btn bz-btn--primary bz-qp-start" data-act="start">开始做题</button>
+        <div class="bz-qp-foot">键位与做题家一致：1-4 / A-D 选择，Enter 提交或下一题；答对的题出库，答错的留给下次。</div>
+      </div>
+    </div>`;
+}
+
+/** 做题练习成绩小结（对/错/跳过、正确率 + 再来一轮；跳过 = 备题数 − 已答数） */
+export function quizPracticeSummaryHtml(r: { correct: number; wrong: number; skipped: number; accuracy: number }): string {
+  return `
+    <div class="bz-summary">
+      <div class="bz-summary-title">本轮刷题小结</div>
+      <div class="bz-summary-stats">
+        <div class="st"><b>${r.correct}</b><span>答对</span></div>
+        <div class="st ${r.wrong ? 'warn' : ''}"><b>${r.wrong}</b><span>答错</span></div>
+        <div class="st"><b>${r.skipped}</b><span>跳过</span></div>
+      </div>
+      <div class="bz-qp-acc">正确率 <b>${r.accuracy}%</b></div>
+      <button class="bz-btn bz-btn--primary bz-btn--block" data-act="again">再来一轮</button>
+      <button class="bz-btn bz-btn--ghost bz-btn--block" data-act="finish">收工</button>
+    </div>`;
+}
+
 // ==================== 难度弹窗 / 悬浮迷你评级条 ====================
 
 /** 难度弹窗（评分命令用；showDifficultyDialog 消费） */

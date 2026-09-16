@@ -200,16 +200,22 @@ export class ReviewDataManager {
   }
 }
 
+/** review-fit.json 契约版本（issue 361）：1=基础八参拟合；2=全 19 参数拟合 */
+export const FIT_PARAMS_VERSION = { BASIC: 1, FULL: 2 } as const;
+
 /** 拟合参数落盘（ADR-0077：独立存储 review-fit.json，不覆盖 DEFAULT_W、不破坏 review.json 数组结构） */
 export interface FittedParams {
-  /** 拟合出的 19 权重（首版只填前 8 个，其余为 DEFAULT_W） */
+  /** 拟合出的 19 权重（基础档只动 w[0..7]，其余为 DEFAULT_W） */
   w: number[];
   /** 拟合时间戳 ISO */
   fitAt: string;
   /** 参与拟合的样本数 */
   fitCount: number;
-  /** 全参(true)还是子集(false)拟合 */
+  /** 全参(true)还是基础八参(false)拟合 */
   full: boolean;
+  /** 契约版本（issue 361）：1=基础八参；2=全 19 参数。
+   *  旧八参文件无该字段 → 载入视同 1（零迁移，w 前 8 有效其余本就取 DEFAULT_W）；新拟合写入显式版本。 */
+  version?: number;
 }
 
 
@@ -221,6 +227,8 @@ export function getReviewFitFilePath(): string {
 export async function loadFittedParams(app: App): Promise<FittedParams | null> {
   const data = (await jsonFileStore<any>(getReviewFitFilePath()).read()) as any;
   if (!data || !Array.isArray(data.w) || data.w.length < 8) return null;
+  // 全参契约完整性：声称 v2 但权重不足 19 维 → 视为字段不齐（null 回退默认，与 w<8 同口径）
+  if (data.version === FIT_PARAMS_VERSION.FULL && data.w.length < 19) return null;
   return data as FittedParams;
 }
 

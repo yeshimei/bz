@@ -26,6 +26,9 @@ export const MEMO_ICONS = {
 	overdue: 'circle-alert',
 	clock: 'clock',
 	calendar: 'calendar',
+	recur: 'repeat',
+	clist: 'list-checks',
+	list: 'list',
 	doneFold: 'chevron-down',
 	sceneAll: 'layers',
 	sceneToday: 'sun',
@@ -145,6 +148,10 @@ export function panelShellHtml(): string {
           <div class="bz-toolrow">
             <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"></div>
             <div class="bz-memo-sort" data-memo-sort></div>
+            <div class="bz-memo-viewtoggle" data-memo-viewtoggle role="tablist" aria-label="视图切换">
+              <button class="bz-memo-viewbtn is-on" data-memo-view="list" title="列表视图" aria-label="列表视图">${iconSpan(MEMO_ICONS.list)}</button>
+              <button class="bz-memo-viewbtn" data-memo-view="calendar" title="月历视图" aria-label="月历视图">${iconSpan(MEMO_ICONS.calendar)}</button>
+            </div>
           </div>
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
           <div class="bz-memo-content" data-memo-content></div>
@@ -160,8 +167,9 @@ export function panelShellHtml(): string {
 /** meta 行 due 注入包（状态/文案由调用方按当下时刻算好） */
 export type MetaDue = { status: 'overdue' | 'today' | 'future'; text: string } | null;
 
-/** 卡片 meta 行（顺序对齐 memo buildMeta：课程→脚本→链接→位置→场景→截止→时间） */
-export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string): string {
+/** 卡片 meta 行（顺序对齐 memo buildMeta：课程→脚本→链接→位置→场景→重复→清单进度→截止→时间；
+ *  due/recur/进度文案由调用方按当下时刻算好注入——纯层不算时间） */
+export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string, recurText = '', checkProgress = ''): string {
 	const tags: string[] = [];
 	// 1. 课程（公开课）
 	if (it.scene === '公开课' && it.courseName) {
@@ -188,6 +196,14 @@ export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string): strin
 	// 5. 场景（重要红底）
 	const imp = it.priority === 'important' ? ' bz-memo-tag-important' : '';
 	tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${esc(it.scene)}</span>`);
+	// 5.5 周期重复（issue 353：recur 条目可视标记，文案调用方注入）
+	if (recurText) {
+		tags.push(`<span class="bz-memo-tag bz-memo-tag-recur" title="周期重复：完成后自动生成下一期">${iconSpan(MEMO_ICONS.recur)} ${esc(recurText)}</span>`);
+	}
+	// 5.6 清单进度（issue 354：勾完 n/N，文案调用方注入）
+	if (checkProgress) {
+		tags.push(`<span class="bz-memo-tag bz-memo-tag-check" title="子任务进度">${iconSpan(MEMO_ICONS.clist)} ${esc(checkProgress)}</span>`);
+	}
 	// 6. 截止（未完成；due 包由调用方注入）
 	if (due) {
 		tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${esc(due.text)}</span>`);
@@ -205,8 +221,24 @@ export function checkHtml(it: MemoItem): string {
 	return `<span class="bz-memo-check${it.completed ? ' bz-memo-checked' : ''}" data-memo-check title="${it.completed ? '恢复未完成' : '标记完成'}"></span>`;
 }
 
-/** 条目卡（勾选/标题/meta；标题带 linkedNote/url 时为可点链接，点击行为接线在 ui.ts） */
-export function cardHtml(it: MemoItem, due: MetaDue, relTime: string): string {
+/** 清单子任务行组（issue 354，ADR-0104 纯层 markup：标题之下、meta 之上；
+ *  锚点 data-memo-cl="itemId:idx"，点击行为接线在 ui.ts；父项完成态整组淡显） */
+export function checklistHtml(it: MemoItem): string {
+	const cl = it.checklist || [];
+	if (!cl.length) return '';
+	const rows = cl
+		.map(
+			(c, i) => `<div class="bz-memo-cl-row${c.done ? ' is-done' : ''}" data-memo-cl="${esc(it.id)}:${i}">
+        <span class="bz-memo-cl-box${c.done ? ' bz-memo-cl-on' : ''}"></span>
+        <span class="bz-memo-cl-text">${esc(c.text)}</span>
+      </div>`
+		)
+		.join('');
+	return `<div class="bz-memo-cl${it.completed ? ' bz-memo-cl-dim' : ''}">${rows}</div>`;
+}
+
+/** 条目卡（勾选/标题/清单子任务/meta；标题带 linkedNote/url 时为可点链接，点击行为接线在 ui.ts） */
+export function cardHtml(it: MemoItem, due: MetaDue, relTime: string, recurText = '', checkProgress = ''): string {
 	const titleCls = it.completed ? ' bz-memo-done' : '';
 	const clickable = !!(it.linkedNote || it.url);
 	const titleHtml = clickable
@@ -216,7 +248,8 @@ export function cardHtml(it: MemoItem, due: MetaDue, relTime: string): string {
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime)}</div>
+        ${checklistHtml(it)}
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime, recurText, checkProgress)}</div>
       </div>
     </div>`;
 }
@@ -235,4 +268,48 @@ export function doneBarHtml(open: boolean, count: number): string {
 /** 「更早 N 条」放全钮 */
 export function doneMoreHtml(n: number): string {
 	return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
+}
+
+// ═══════ 月历视图（issue 355，ADR-0104 纯层 markup）═══════
+// 格子/事件/月份文案由调用方（ui.ts，moment 可用侧）算好注入；本层只拼字符串。
+
+/** 周首列（周一开头，与中文月历惯例一致） */
+export const CAL_WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
+
+/** 日历事件 chip（cls = 状态色档：is-overdue/is-today/is-future/is-more） */
+export type CalChip = { id: string; title: string; cls: string };
+
+/** 日历格子（blank = 月首尾补位空格） */
+export type CalCell = { day: number; blank?: boolean; today?: boolean; selected?: boolean; chips: CalChip[] };
+
+/** 月历头行：‹ › 月份翻页 + 回到今天（锚点 data-memo-cal-prev/next/today） */
+export function calHeadHtml(monthLabel: string): string {
+	return `<div class="bz-memo-cal-head">
+      <button class="bz-icon-btn" data-memo-cal-prev title="上个月">${iconSpan('chevron-left')}</button>
+      <div class="bz-memo-cal-title">${esc(monthLabel)}</div>
+      <button class="bz-icon-btn" data-memo-cal-next title="下个月">${iconSpan('chevron-right')}</button>
+      <button class="bz-btn bz-btn--sm bz-memo-cal-today" data-memo-cal-today>回到今天</button>
+    </div>`;
+}
+
+/** 月历网格：周名行 + 格子（空白补位/今日/选中态；事件 chip 可点开条目，格子点击选中当日） */
+export function calGridHtml(cells: CalCell[]): string {
+	const wds = CAL_WEEKDAYS.map((w) => `<div class="bz-memo-cal-wd">${esc(w)}</div>`).join('');
+	const grid = cells
+		.map((c) => {
+			if (c.blank) return `<div class="bz-memo-cal-cell is-blank"></div>`;
+			const chips = c.chips
+				.map((ch) =>
+					ch.id
+						? `<div class="bz-memo-cal-chip ${ch.cls}" data-memo-cal-item="${esc(ch.id)}" title="${esc(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${esc(ch.title)}</span></div>`
+						: `<div class="bz-memo-cal-chip ${ch.cls}" title="${esc(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${esc(ch.title)}</span></div>`
+				)
+				.join('');
+			return `<div class="bz-memo-cal-cell${c.today ? ' is-today' : ''}${c.selected ? ' is-selected' : ''}" data-memo-cal-day="${c.day}">
+        <div class="bz-memo-cal-day">${c.day}</div>
+        <div class="bz-memo-cal-chips">${chips}</div>
+      </div>`;
+		})
+		.join('');
+	return `<div class="bz-memo-cal-grid">${wds}${grid}</div>`;
 }

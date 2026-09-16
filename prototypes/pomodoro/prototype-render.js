@@ -1,4 +1,4 @@
-/* 源指纹 7506ab6ba41cc04c · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d705ea38efe77fbf · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/pomodoro/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/pomodoro/render.ts → window.BZR_pomodoro（评审壳预览包，ADR-0104） */
 var BZR_pomodoro = (() => {
@@ -67,7 +67,12 @@ var BZR_pomodoro = (() => {
       </div>
       <div class="pomodoro-stats">
         <div id="pomodoro-today"></div>
+        <div class="pomodoro-stat-tabs">
+          <button id="pomodoro-stat-tab-week" class="pomodoro-stat-tab" type="button">近 7 天</button>
+          <button id="pomodoro-stat-tab-month" class="pomodoro-stat-tab" type="button">近 6 月</button>
+        </div>
         <div id="pomodoro-week" class="pomodoro-week"></div>
+        <div id="pomodoro-months" class="pomodoro-week" hidden></div>
       </div>`;
   }
   function popupShellHtml() {

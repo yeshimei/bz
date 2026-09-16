@@ -1,5 +1,5 @@
 /**
- * 带超时网络请求单源（issue 347 复用上收批第 1 项）：此前多处各自手写 Promise.race /
+ * 带超时网络请求单源（issue 365 复用上收批第 1 项）：此前多处各自手写 Promise.race /
  * AbortController 超时壳（clipbook 抓取、knowledge 视频/笔记、favorites GitHub、encrypt
  * 预览……），本模块收敛为两把工具——
  * - withTimeout：超时 → reject（错误信息含 label 便于定位），原 Promise 照旧 settle 但结果

@@ -17,6 +17,8 @@ import { onDomainEvent } from '../../src/core/domain-bus';
 import {
   openPanel, openForm, closePanel, unloadFavoritesUI, favoritesSettingsSchema, initFavoritesUI,
 } from '../../src/favorites/ui';
+import { getTags } from '../../src/favorites/config';
+import { hueOf } from '../../src/favorites/render';
 import { MockVault } from '../mock-vault';
 import {
   resetObsidianMocks, hasNotice, Platform, requestUrl,
@@ -1880,5 +1882,250 @@ describe('issue 219「亚麻记事板」卡流视觉', () => {
     await tick(20);
     const archCard = cards()[0];
     expect(archCard.classList.contains('bz-fav-arch')).toBe(true);
+  });
+});
+
+// ==================== 标签自定义（issue 363：favorites.tags.json + 设置面板标签管理） ====================
+
+describe('标签自定义（issue 363）', () => {
+  /** 预置标签定义文件（与 favorites.json 同目录伴生文件） */
+  function seedTags(vault: MockVault, tags: any[]): void {
+    vault.files.set('CONFIG/STORAGE/favorites.tags.json', JSON.stringify(tags));
+  }
+  const CUSTOM = [
+    { id: 'github', label: 'GitHub', ic: 'github' },
+    { id: 'web', label: '网站', ic: 'globe' },
+    { id: 't1', label: '装修灵感', ic: 'heart' },
+  ];
+  /** 同「添加表单」describe 的局部 helper（磁贴行尾「＋ 新收藏」贴纸开表单 + 表单控件集） */
+  function openAddViaMainBtn(): void {
+    const btn = [...document.querySelectorAll('[data-fav-add]')].find(
+      (b) => (b as HTMLElement).classList.contains('bz-fav-chip-add')
+    ) as HTMLElement;
+    btn.click();
+  }
+  function formEls() {
+    const form = document.querySelector('.bz-fav-form') as HTMLElement;
+    if (!form) throw new Error('表单未打开');
+    const g = (id: string) => form.querySelector(id) as HTMLInputElement;
+    return {
+      form,
+      title: g('#fz-title'),
+      url: g('#fz-url'),
+      desc: g('#fz-desc') as unknown as HTMLTextAreaElement,
+      err: form.querySelector('#fz-err') as HTMLElement,
+      save: form.querySelector('#fz-save') as HTMLButtonElement,
+      pin: form.querySelector('#fz-pin') as HTMLElement,
+      tagBtns: [...form.querySelectorAll('#fz-tags [data-tag]')] as HTMLElement[],
+      aiBtn: form.querySelector('#fz-ai') as HTMLButtonElement,
+      cancel: form.querySelector('[data-fz-cancel]') as HTMLButtonElement,
+      titleEl: form.querySelector('h2') as HTMLElement,
+    };
+  }
+
+  it('自定义标签全链生效：磁贴行 chip + 卡片 + 表单胶囊读动态标签集', async () => {
+    const ctx = await setup();
+    seedTags(ctx.vault, CUSTOM);
+    seedVault(ctx.vault, [seedItem({ id: '1', title: '灵感卡', tags: ['装修灵感'], created: '2025-01-01 00:00:00' })]);
+    await ctx.dm.loadTags();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    // 磁贴行：动态标签渲染（含计数），seed 九类不再出现（未在定义中的「大模型」无磁贴）
+    expect(document.querySelector('[data-fav-tag="装修灵感"]')).not.toBeNull();
+    expect(document.querySelector('[data-fav-tag="大模型"]')).toBeNull();
+    // 表单胶囊 = 动态标签集
+    openAddViaMainBtn();
+    const pick = [...document.querySelectorAll('#fz-tags [data-tag]')].map((b) => (b as HTMLElement).dataset.tag);
+    expect(pick).toContain('装修灵感');
+    expect(pick).not.toContain('大模型');
+    closePanel();
+  });
+
+  it('管理组渲染：seed 回退态出 9 行 + 添加钮；预置文件出磁盘定义', async () => {
+    const ctx = await setup();
+    seedTags(ctx.vault, CUSTOM);
+    await ctx.dm.loadTags();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    renderSettingsInto(host, favoritesSettingsSchema());
+    await tick(20);
+    const rows = [...document.querySelectorAll('.bz-fav-tagmgr-row')];
+    expect(rows.map((r) => r.querySelector('.bz-fav-tagmgr-name')!.textContent)).toEqual(['GitHub', '网站', '装修灵感']);
+    // 每行四操作：上移/下移/编辑/删除（首行上移禁用）
+    expect(rows[0].querySelectorAll('.bz-fav-tagmgr-btn').length).toBe(4);
+    expect((rows[0].querySelector('[title="上移"]') as HTMLButtonElement).disabled).toBe(true);
+    expect((rows[0].querySelector('[title="下移"]') as HTMLButtonElement).disabled).toBe(false);
+    expect(document.querySelector('.bz-fav-tagmgr-add')!.textContent).toContain('添加标签');
+  });
+
+  it('添加标签：弹窗填名称保存 → favorites.tags.json 写入 + 列表即时出现', async () => {
+    const ctx = await setup();
+    await ctx.dm.loadTags();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    renderSettingsInto(host, favoritesSettingsSchema());
+    await tick(20);
+    (document.querySelector('.bz-fav-tagmgr-add') as HTMLElement).click();
+    const editor = document.querySelector('.bz-fav-tageditor') as HTMLElement;
+    expect(editor).not.toBeNull();
+    const input = editor.querySelector('#fz-tag-name') as HTMLInputElement;
+    input.value = '育儿';
+    // 图标胶囊可选中（点第 4 个）
+    (editor.querySelectorAll('.bz-fav-tageditor-ic')[3] as HTMLElement).click();
+    (editor.querySelector('#fz-tag-save') as HTMLElement).click();
+    await tick(20);
+    const saved = JSON.parse(ctx.vault.files.get('CONFIG/STORAGE/favorites.tags.json')!);
+    const added = saved.find((t: any) => t.label === '育儿');
+    expect(added).toBeTruthy();
+    expect(added.id).toMatch(/^t/); // 新增 id = 't' + 时间戳
+    expect(getTags().some((t) => t.label === '育儿')).toBe(true);
+    // 列表重画含新行
+    expect([...document.querySelectorAll('.bz-fav-tagmgr-row .bz-fav-tagmgr-name')].map((e) => e.textContent)).toContain('育儿');
+  });
+
+  it('添加校验：空名 / 同名被拦截不落盘', async () => {
+    const ctx = await setup();
+    seedTags(ctx.vault, CUSTOM);
+    await ctx.dm.loadTags();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    renderSettingsInto(host, favoritesSettingsSchema());
+    await tick(20);
+    (document.querySelector('.bz-fav-tagmgr-add') as HTMLElement).click();
+    const editor = document.querySelector('.bz-fav-tageditor') as HTMLElement;
+    const input = editor.querySelector('#fz-tag-name') as HTMLInputElement;
+    const saveBtn = editor.querySelector('#fz-tag-save') as HTMLElement;
+    saveBtn.click(); // 空名
+    await tick(10);
+    expect(hasNotice('请输入标签名称')).toBe(true);
+    input.value = 'GitHub'; // 同名
+    saveBtn.click();
+    await tick(10);
+    expect(hasNotice('已有同名标签')).toBe(true);
+    // 两次拦截均未落盘：文件内容仍为 seed 的 CUSTOM
+    expect(JSON.parse(ctx.vault.files.get('CONFIG/STORAGE/favorites.tags.json')!)).toEqual(CUSTOM);
+  });
+
+  it('改名存量跟随：编辑「酒馆」→「小酒馆」→ 条目 tags[]+type 批量跟随（updateSceneBulk 范式）', async () => {
+    const ctx = await setup();
+    seedTags(ctx.vault, JSON.parse(JSON.stringify([
+      { id: 'github', label: 'GitHub', ic: 'github' },
+      { id: 'pub', label: '酒馆', ic: 'beer' },
+      { id: 'web', label: '网站', ic: 'globe' },
+    ])));
+    seedVault(ctx.vault, [
+      seedItem({ id: '1', title: '酒馆项', tags: ['酒馆', 'GitHub'], created: '2025-01-01 00:00:00' }),
+    ]);
+    await ctx.dm.loadTags();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    renderSettingsInto(host, favoritesSettingsSchema());
+    await tick(20);
+    const row = [...document.querySelectorAll('.bz-fav-tagmgr-row')].find((r) => r.textContent!.includes('酒馆')) as HTMLElement;
+    (row.querySelector('[title="编辑"]') as HTMLElement).click();
+    const input = document.querySelector('#fz-tag-name') as HTMLInputElement;
+    expect(input.value).toBe('酒馆');
+    input.value = '小酒馆';
+    (document.querySelector('#fz-tag-save') as HTMLElement).click();
+    await tick(20);
+    // 条目跟随（tags 与 type 双字段）
+    const item = (await ctx.dm.getAll())[0];
+    expect(item.tags).toEqual(['小酒馆', 'GitHub']);
+    expect(item.type).toBe('小酒馆');
+    // 定义落盘
+    const saved = JSON.parse(ctx.vault.files.get('CONFIG/STORAGE/favorites.tags.json')!);
+    expect(saved.find((t: any) => t.id === 'pub')).toMatchObject({ label: '小酒馆' });
+  });
+
+  it('删除带条目标签：确认框提示迁入「网站」→ 条目迁移 + 定义移除', async () => {
+    const ctx = await setup();
+    seedTags(ctx.vault, JSON.parse(JSON.stringify([
+      { id: 'desktop', label: '桌面软件', ic: 'app-window' },
+      { id: 'web', label: '网站', ic: 'globe' },
+    ])));
+    seedVault(ctx.vault, [
+      seedItem({ id: '1', title: '软件项', tags: ['桌面软件'], created: '2025-01-01 00:00:00' }),
+    ]);
+    await ctx.dm.loadTags();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    renderSettingsInto(host, favoritesSettingsSchema());
+    await tick(20);
+    const row = [...document.querySelectorAll('.bz-fav-tagmgr-row')].find((r) => r.textContent!.includes('桌面软件')) as HTMLElement;
+    (row.querySelector('[title="删除"]') as HTMLElement).click();
+    await tick(20); // 删除流程先异步数条目再弹确认框
+    const popup = document.getElementById('__shared_confirm_popup__');
+    expect(popup!.textContent).toContain('1 条收藏将迁入标签「网站」');
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await tick(20);
+    expect((await ctx.dm.getAll())[0].tags).toEqual(['网站']);
+    const saved = JSON.parse(ctx.vault.files.get('CONFIG/STORAGE/favorites.tags.json')!);
+    expect(saved.map((t: any) => t.label)).toEqual(['网站']);
+  });
+
+  it('删除空标签：确认后仅移除定义，条目不动', async () => {
+    const ctx = await setup();
+    seedTags(ctx.vault, JSON.parse(JSON.stringify(CUSTOM)));
+    seedVault(ctx.vault, [seedItem({ id: '1', title: '站', tags: ['网站'] })]);
+    await ctx.dm.loadTags();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    renderSettingsInto(host, favoritesSettingsSchema());
+    await tick(20);
+    const row = [...document.querySelectorAll('.bz-fav-tagmgr-row')].find((r) => r.textContent!.includes('装修灵感')) as HTMLElement;
+    (row.querySelector('[title="删除"]') as HTMLElement).click();
+    await tick(20); // 删除流程先异步数条目再弹确认框
+    expect(document.getElementById('__shared_confirm_popup__')!.textContent).toContain('标签将从标签列表中移除');
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await tick(20);
+    expect((await ctx.dm.getAll())[0].tags).toEqual(['网站']); // 无关条目不动
+    const saved = JSON.parse(ctx.vault.files.get('CONFIG/STORAGE/favorites.tags.json')!);
+    expect(saved.map((t: any) => t.id)).toEqual(['github', 'web']);
+  });
+
+  it('排序：下移后落盘新顺序', async () => {
+    const ctx = await setup();
+    seedTags(ctx.vault, JSON.parse(JSON.stringify(CUSTOM)));
+    await ctx.dm.loadTags();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    renderSettingsInto(host, favoritesSettingsSchema());
+    await tick(20);
+    const row0 = [...document.querySelectorAll('.bz-fav-tagmgr-row')].find((r) => r.textContent!.includes('GitHub')) as HTMLElement;
+    (row0.querySelector('[title="下移"]') as HTMLElement).click();
+    await tick(20);
+    const saved = JSON.parse(ctx.vault.files.get('CONFIG/STORAGE/favorites.tags.json')!);
+    expect(saved.map((t: any) => t.id)).toEqual(['web', 'github', 't1']);
+  });
+
+  it('GitHub 强标签按 id 解耦：改名后 AI 整理兜底用当前 label', async () => {
+    const ctx = await setup();
+    seedTags(ctx.vault, CUSTOM.map((t) => (t.id === 'github' ? { ...t, label: 'Git格' } : t)));
+    seedVault(ctx.vault, []);
+    await ctx.dm.loadTags();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    openAddViaMainBtn();
+    const els = formEls();
+    els.url.value = 'https://github.com/foo/bar';
+    vi.mocked(requestUrl).mockResolvedValue({
+      status: 200,
+      text: JSON.stringify({ name: 'bar', description: 'repo desc' }),
+    } as any);
+    const chat = vi.fn().mockResolvedValue('{"title":"bar","description":"仓库简介","tags":["网站"]}');
+    ctx.ai.ai = { chat } as any;
+    els.aiBtn.click();
+    await tick(60);
+    // 兜底强标签 = id 'github' 的当前 label（不再硬编码 'GitHub'）
+    const onTags = [...document.querySelectorAll('#fz-tags [data-tag].bz-fav-on')].map((b) => (b as HTMLElement).dataset.tag);
+    expect(onTags).toEqual(['Git格', '网站']);
+    closePanel();
+  });
+
+  it('hueOf：自定义/改名标签走 hash 稳定色相（不再一律兜底蓝 200）', async () => {
+    const h1 = hueOf('装修灵感');
+    expect(h1).not.toBe(200);
+    expect(hueOf('装修灵感')).toBe(h1); // 同名恒定
+    expect(hueOf('GitHub')).toBe(215); // 内置原名映射保留（旧数据视觉不变）
   });
 });

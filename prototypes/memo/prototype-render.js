@@ -1,4 +1,4 @@
-/* 源指纹 a0c43053974c14da · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e0f8367fdc9129a3 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {
@@ -23,11 +23,15 @@ var BZR_memo = (() => {
   // src/memo/render.ts
   var render_exports = {};
   __export(render_exports, {
+    CAL_WEEKDAYS: () => CAL_WEEKDAYS,
     MEMO_ICONS: () => MEMO_ICONS,
     SCENE_DOTS: () => SCENE_DOTS,
     SCENE_PSEUDO_ICONS: () => SCENE_PSEUDO_ICONS,
+    calGridHtml: () => calGridHtml,
+    calHeadHtml: () => calHeadHtml,
     cardHtml: () => cardHtml,
     checkHtml: () => checkHtml,
+    checklistHtml: () => checklistHtml,
     doneBarHtml: () => doneBarHtml,
     doneMoreHtml: () => doneMoreHtml,
     dueIconName: () => dueIconName,
@@ -73,6 +77,9 @@ var BZR_memo = (() => {
     overdue: "circle-alert",
     clock: "clock",
     calendar: "calendar",
+    recur: "repeat",
+    clist: "list-checks",
+    list: "list",
     doneFold: "chevron-down",
     sceneAll: "layers",
     sceneToday: "sun"
@@ -158,6 +165,10 @@ var BZR_memo = (() => {
           <div class="bz-toolrow">
             <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"></div>
             <div class="bz-memo-sort" data-memo-sort></div>
+            <div class="bz-memo-viewtoggle" data-memo-viewtoggle role="tablist" aria-label="视图切换">
+              <button class="bz-memo-viewbtn is-on" data-memo-view="list" title="列表视图" aria-label="列表视图">${iconSpan(MEMO_ICONS.list)}</button>
+              <button class="bz-memo-viewbtn" data-memo-view="calendar" title="月历视图" aria-label="月历视图">${iconSpan(MEMO_ICONS.calendar)}</button>
+            </div>
           </div>
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
           <div class="bz-memo-content" data-memo-content></div>
@@ -169,7 +180,7 @@ var BZR_memo = (() => {
       </div>
     </div>`;
   }
-  function metaTagsHtml(it, due, relTime) {
+  function metaTagsHtml(it, due, relTime, recurText = "", checkProgress = "") {
     const tags = [];
     if (it.scene === "公开课" && it.courseName) {
       tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml(it.courseName.replace(/^《|》$/g, ""))}</span>`);
@@ -194,6 +205,12 @@ var BZR_memo = (() => {
     }
     const imp = it.priority === "important" ? " bz-memo-tag-important" : "";
     tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${escapeHtml(it.scene)}</span>`);
+    if (recurText) {
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-recur" title="周期重复：完成后自动生成下一期">${iconSpan(MEMO_ICONS.recur)} ${escapeHtml(recurText)}</span>`);
+    }
+    if (checkProgress) {
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-check" title="子任务进度">${iconSpan(MEMO_ICONS.clist)} ${escapeHtml(checkProgress)}</span>`);
+    }
     if (due) {
       tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml(due.text)}</span>`);
     }
@@ -205,7 +222,18 @@ var BZR_memo = (() => {
   function checkHtml(it) {
     return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
   }
-  function cardHtml(it, due, relTime) {
+  function checklistHtml(it) {
+    const cl = it.checklist || [];
+    if (!cl.length) return "";
+    const rows = cl.map(
+      (c, i) => `<div class="bz-memo-cl-row${c.done ? " is-done" : ""}" data-memo-cl="${escapeHtml(it.id)}:${i}">
+        <span class="bz-memo-cl-box${c.done ? " bz-memo-cl-on" : ""}"></span>
+        <span class="bz-memo-cl-text">${escapeHtml(c.text)}</span>
+      </div>`
+    ).join("");
+    return `<div class="bz-memo-cl${it.completed ? " bz-memo-cl-dim" : ""}">${rows}</div>`;
+  }
+  function cardHtml(it, due, relTime, recurText = "", checkProgress = "") {
     const titleCls = it.completed ? " bz-memo-done" : "";
     const clickable = !!(it.linkedNote || it.url);
     const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
@@ -213,7 +241,8 @@ var BZR_memo = (() => {
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime)}</div>
+        ${checklistHtml(it)}
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime, recurText, checkProgress)}</div>
       </div>
     </div>`;
   }
@@ -226,6 +255,29 @@ var BZR_memo = (() => {
   }
   function doneMoreHtml(n) {
     return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
+  }
+  var CAL_WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
+  function calHeadHtml(monthLabel) {
+    return `<div class="bz-memo-cal-head">
+      <button class="bz-icon-btn" data-memo-cal-prev title="上个月">${iconSpan("chevron-left")}</button>
+      <div class="bz-memo-cal-title">${escapeHtml(monthLabel)}</div>
+      <button class="bz-icon-btn" data-memo-cal-next title="下个月">${iconSpan("chevron-right")}</button>
+      <button class="bz-btn bz-btn--sm bz-memo-cal-today" data-memo-cal-today>回到今天</button>
+    </div>`;
+  }
+  function calGridHtml(cells) {
+    const wds = CAL_WEEKDAYS.map((w) => `<div class="bz-memo-cal-wd">${escapeHtml(w)}</div>`).join("");
+    const grid = cells.map((c) => {
+      if (c.blank) return `<div class="bz-memo-cal-cell is-blank"></div>`;
+      const chips = c.chips.map(
+        (ch) => ch.id ? `<div class="bz-memo-cal-chip ${ch.cls}" data-memo-cal-item="${escapeHtml(ch.id)}" title="${escapeHtml(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml(ch.title)}</span></div>` : `<div class="bz-memo-cal-chip ${ch.cls}" title="${escapeHtml(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml(ch.title)}</span></div>`
+      ).join("");
+      return `<div class="bz-memo-cal-cell${c.today ? " is-today" : ""}${c.selected ? " is-selected" : ""}" data-memo-cal-day="${c.day}">
+        <div class="bz-memo-cal-day">${c.day}</div>
+        <div class="bz-memo-cal-chips">${chips}</div>
+      </div>`;
+    }).join("");
+    return `<div class="bz-memo-cal-grid">${wds}${grid}</div>`;
   }
   return __toCommonJS(render_exports);
 })();

@@ -14,6 +14,7 @@ import { readNewsData } from './news-data';
 import { maybeFetchNews, setNewsFetchDoneListener } from './news-fetcher';
 import { flowMarkAllRead } from './flow';
 import { initPanel, showPanel, unloadPanel, reloadIfOpen, invalidateClipBodyCache } from './ui';
+import { openClipbookReport, unloadClipbookReport } from './report-ui';
 
 let initialized = false;
 let autoRefreshRegistered = false;
@@ -73,11 +74,17 @@ export async function markAllUnreadRead(): Promise<void> {
 
 /** 卸载清理（main.ts onunload） */
 export function unloadClipbook(): void {
+  // 阅读报告弹层可由命令直开（不经 openClipbook 初始化），卸载无条件收口
+  unloadClipbookReport();
   if (!initialized) return;
   initialized = false;
   unloadPanel();
   autoRefreshRegistered = false;
 }
+
+/** 打开剪藏阅读报告弹层（命令 bz-clipbook-report；issue 358）：
+ *  只读 clipbook.json 侧写 readLog，不依赖剪藏本主面板装载态 */
+export { openClipbookReport };
 
 /** clipbook.json 引用同步（issue 336 / ADR-0149 决策 4，main.ts onLayoutReady 常驻接线；
  *  实现同 memo file-sync 范式：域事件订阅 + 去抖 + 读改写事务） */

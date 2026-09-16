@@ -146,7 +146,7 @@ export async function readBehaviorItems(app: App): Promise<BehaviorItemLite[]> {
   }
 }
 
-/** 本地日串 'YYYY-MM-DD'（issue 347 收编：转发 core localDayKey，原手写逐字等价） */
+/** 本地日串 'YYYY-MM-DD'（issue 365 收编：转发 core localDayKey，原手写逐字等价） */
 function dateStrOf(ts: number): string {
   return localDayKey(ts);
 }

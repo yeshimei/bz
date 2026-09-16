@@ -7,7 +7,7 @@
  * - 头部行：品牌「日记本」+ 范围/计数 + 按钮组（pen-line 写日记、search 搜索、calendar 按年月跳转、x 关闭——lucide 线条图标）。
  * - 类型 chips 行：主标签胶囊（日记📖/摄影📸/骑行🚴/猫🐱…，emoji 为数据语义），可点选筛选，带计数；「加密」锁定态（lock 线条图标虚线）。
  * - 主体两栏：左 = 固定章节栏（年份分组 + 月份列表，每项带缩略图胶卷小图，滚动自动高亮当前月份，点击平滑滚动定位）；
- *   右 = 瀑布流（masonry：图片/视频/音频块 + 纯文字窄条，按日期分节，节头 sticky 显示日期+周几+统计；首屏顶部可有「那年今天」横滑媒体条）。
+ *   右 = 瀑布流（masonry：图片/视频/音频块 + 纯文字窄条，按日期分节，节头 sticky 显示日期+周几+统计；首屏顶部可有「那年今天」横滑回顾条——媒体缩略卡 + 纯文字文字块卡，issue 352）。
  * - 媒体块：真实 <img>（object-fit:cover 按比例）、<video preload=none> 渐变海报+▶角标（点击开灯箱真播）、
  *   音频块 music 图标（点击开灯箱内联播放）；加密条目媒体走保险箱按需解密（增强 #8）；
  *   渲染失败（mediaSrc 返回空）显示渐变占位（原型 .ph 逻辑）。
@@ -97,6 +97,20 @@ const RAIL_HIGHLIGHT_EPSILON_PX = 8;
 const SCROLL_FIX_DELAY_MS = 480;
 /** DW3：vault modify 自动刷新防抖 */
 const MODIFY_REFRESH_DEBOUNCE_MS = 400;
+
+/** issue 352：时光条文字卡摘要长度上限（字符）——CSS 行截断管显示，此处只防超长正文整段进 DOM */
+const MEMORY_EXCERPT_MAX_CHARS = 64;
+
+/**
+ * 时光条文字卡摘要（issue 352，纯函数，可单测）：
+ * 压平空白（换行/连续空格并一）后截断，超长补省略号；空正文回退「（无正文）」
+ * （抽屉头「（仅媒体）」同款占位文案）。markdown 标记不渲染——横滑缩略位纯文本预览（抽屉头同款）。
+ */
+export function memoryExcerpt(text: string): string {
+  const flat = (text || '').replace(/\s+/g, ' ').trim();
+  if (!flat) return '（无正文）';
+  return flat.length > MEMORY_EXCERPT_MAX_CHARS ? `${flat.slice(0, MEMORY_EXCERPT_MAX_CHARS)}…` : flat;
+}
 
 /**
  * 滚动高亮的当前月份选取（纯函数，可单测）：
@@ -189,7 +203,7 @@ export class DiaryAppController {
   private railObservers: Record<'desk' | 'mob', IntersectionObserver | null> = { desk: null, mob: null };
   private rafCleanups: Record<'desk' | 'mob', (() => void) | null> = { desk: null, mob: null };
   private sheetEntry: WallEntry | null = null;
-  /** 搜索防抖（250ms 尾触；issue 347 收编 core debounce。实例唯一槽：desk/mob 双搜索框共享，
+  /** 搜索防抖（250ms 尾触；issue 365 收编 core debounce。实例唯一槽：desk/mob 双搜索框共享，
    *  与原共享 _searchTimer 槽语义一致；原手写无 teardown 取消路径，此处同样不设） */
   private _searchDebounced = debounce((v: string) => {
     this.searchKeyword = v;
@@ -639,8 +653,9 @@ export class DiaryAppController {
       ui.wall.appendChild(this.mkEmpty());
       return;
     }
-    // 增强 #5：那年今天时光条（首屏顶部横滑媒体条，不打断主瀑布流；无命中不渲染）
-    const memories = pickOnThisDay(list, this.todayStr()).filter((e) => e.media.length > 0);
+    // 增强 #5 + issue 352：那年今天时光条（首屏顶部横滑条，不打断主瀑布流；无命中不渲染）。
+    // 口径放开：媒体条目走缩略卡，纯文字条目也入回顾流走文字块卡（分流在 mkMemories 内）。
+    const memories = pickOnThisDay(list, this.todayStr());
     if (memories.length) ui.wall.appendChild(this.mkMemories(memories));
     // 章节栏（仅桌面）：壳 = .bz-rail 族（ADR-0094），月份行 = .bz-rail-item(.on) 形制
     if (!mobile) {
@@ -1030,8 +1045,9 @@ export class DiaryAppController {
   }
 
   /**
-   * 增强 #5：那年今天时光条——mmdd 命中的历史媒体条目横滑条（wall 首屏顶部，独立块不打断瀑布流；
-   * 调用方已过滤无媒体条目）。点击缩略 → 灯箱连看（与主墙灯箱同一序列外条目，单条目内步进）。
+   * 增强 #5 + issue 352：那年今天时光条——mmdd 命中的历史条目横滑条（wall 首屏顶部，独立块不打断瀑布流）。
+   * 卡片分流：媒体条目走缩略卡（点击进灯箱连看，与主墙灯箱同一序列外条目，单条目内步进）；
+   * 纯文字条目走文字块卡（与媒体卡同形不同貌），点击跳原文（无媒体，灯箱无意义）。
    */
   private mkMemories(entries: WallEntry[]): HTMLElement {
     const box = document.createElement('div');
@@ -1048,6 +1064,30 @@ export class DiaryAppController {
       const cell = document.createElement('button');
       cell.className = 'bz-diary-memory bz-touch-target--xl';
       cell.title = `${e.date} ${e.time}`;
+      const year = document.createElement('span');
+      year.className = 'bz-diary-memory-year';
+      year.textContent = e.date.slice(0, 4);
+      // issue 352：纯文字条目——文字块卡（emoji 垫头 + 摘要截断），点击跳原文
+      if (!e.media.length) {
+        cell.classList.add('bz-diary-memory--text');
+        const block = document.createElement('div');
+        block.className = 'bz-diary-memory-text';
+        const em = document.createElement('span');
+        em.className = 'bz-diary-memory-text-em';
+        em.textContent = e.emoji;
+        const tx = document.createElement('span');
+        tx.className = 'bz-diary-memory-text-tx';
+        // 加密未解锁不漏正文（同墙内文字卡口径）；摘要纯文本预览（抽屉头同款：markdown 标记不渲染）
+        tx.textContent = this.isEncHidden(e) ? '（已加密）' : memoryExcerpt(e.text);
+        block.append(em, tx);
+        cell.append(block, year);
+        cell.addEventListener('click', () => {
+          if (this.isEncHidden(e)) return;
+          void this.jumpTo(e);
+        });
+        row.appendChild(cell);
+        return;
+      }
       const thumb = document.createElement('div');
       thumb.className = 'bz-diary-memory-thumb';
       const m = e.media[0];
@@ -1098,9 +1138,6 @@ export class DiaryAppController {
       } else if (m.kind === 'audio') {
         thumb.appendChild(uiIcon(ACTION_ICON.music));
       }
-      const year = document.createElement('span');
-      year.className = 'bz-diary-memory-year';
-      year.textContent = e.date.slice(0, 4);
       cell.append(thumb, year);
       cell.addEventListener('click', () => {
         // 时光条自身成序列（该条目媒体平铺），点击进灯箱后可在条目内左右连看。
@@ -2145,7 +2182,7 @@ export class DiaryAppController {
   /**
    * 写链路域事件回刷（issue 256）：entry-added/tags-changed/entry-deleted/entry-decrypted/
    * encrypted-purged 五通道防抖 loadAndRender——写日记命令（域外弹窗保存）、首页「生成今日
-   * 总结」写回（ADR-0154 起，原 recap 面板链路）、条目删除等路径统一收口（ADR-0130：
+   * 总结」写回（ADR-0157 起，原 recap 面板链路）、条目删除等路径统一收口（ADR-0130：
    * file-vacated 通道随条目文件化退役，删除由 UI 层 entry-deleted 通知）。
    */
   private subscribeWriteEvents(): void {

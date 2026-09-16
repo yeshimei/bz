@@ -33,13 +33,14 @@ function ruleBodyOfToken(text: string, token: string): string {
 }
 
 describe('belongings poster 皮肤暗色模式（issue 270）', () => {
-  it('暗色 token 组：.theme-dark 后代选择器同时覆盖四壳（面板/表单/详情/右键菜单）', () => {
+  it('暗色 token 组：.theme-dark 后代选择器同时覆盖五壳（面板/表单/详情/右键菜单/年度报告）', () => {
     const { selector } = ruleOfSelector(cssText(), '.theme-dark .bz-bel--poster');
     for (const shell of [
       '.theme-dark .bz-bel--poster',
       '.theme-dark .bz-bel-form',
       '.theme-dark .bz-bel-detail',
       '.theme-dark .bz-bel-menu',
+      '.theme-dark .bz-bel-report',
     ]) {
       expect(selector, `暗色组缺壳 ${shell}`).toContain(shell);
     }
@@ -143,5 +144,27 @@ describe('issue 291：确认流程框带皮（core/flow-dialog）', () => {
     const text = repo('src/belongings/styles.css');
     // 域内不得出现改写壳类本体的规则（只允许 #__shared_confirm_popup__ 复合选择器）
     expect(text).not.toMatch(/\.bz-overlay-popup\s*\{/);
+  });
+});
+
+describe('issue 356：年度资产报告页样式守卫', () => {
+  it('报告壳进亮/暗两处 token 组（第六壳，防「开了页面没翻色」）', () => {
+    const text = cssText();
+    expect(ruleOfSelector(text, '.bz-bel--poster').selector).toContain('.bz-bel-report');
+    expect(ruleOfSelector(text, '.theme-dark .bz-bel--poster').selector).toContain('.theme-dark .bz-bel-report');
+  });
+
+  it('报告页材质走 token：纸面/墨框/方角/硬偏移阴影与详情同语言，无自造滚动条', () => {
+    const rule = cssText().match(/\.bz-bel-report\s*\{[^}]*\}/);
+    expect(rule, '缺 .bz-bel-report 规则块').not.toBeNull();
+    expect(rule![0]).toContain('background: var(--bz-bel-paper)');
+    expect(rule![0]).toContain('border: 2px solid var(--bz-bel-ink)');
+    expect(rule![0]).toContain('border-radius: 0');
+    expect(rule![0]).toContain('box-shadow: 10px 10px 0 var(--bz-bel-shadow-strong)');
+    // 滚动条样式归 core 单源（ADR-0122）：内容区只开滚动，不写 scrollbar-width/自绘 thumb
+    expect(cssText().match(/\.bz-bel-report-body\s*\{[^}]*\}/)![0]).toContain('overflow-y: auto');
+    const css = cssText();
+    expect(css).not.toContain('scrollbar-width');
+    expect(css).not.toContain('-webkit-scrollbar');
   });
 });

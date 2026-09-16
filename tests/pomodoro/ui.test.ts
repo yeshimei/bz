@@ -786,7 +786,7 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
     expect(raw.state.phase).toBe('focus');
   });
 
-  it('样式基线：mask 遮罩收编 .bz-overlay-mask 单源（issue 347）+ padding 归零覆写；状态栏挂 hover 反馈', () => {
+  it('样式基线：mask 遮罩收编 .bz-overlay-mask 单源（issue 365）+ padding 归零覆写；状态栏挂 hover 反馈', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
     // 底色/blur 归 core 单源后，域块仅剩 padding 归零覆写（320px 弹窗窄屏可用区与收编前等价）；
     // 挂类守卫在 tests/core/overlay-glass.test.ts 收编组
@@ -933,5 +933,124 @@ describe('menuPhase（首页入口菜单番茄项的相位派发）', () => {
     expect(menuPhase()).toBe('paused');
     await toggleFocus(app); // 停止（= reset：phase 保持 focus，endTime/paused 归零）
     expect(menuPhase()).toBe('idle');
+  });
+});
+
+/**
+ * 统计两档 + 周归档（issue 357）：弹窗统计区「近 7 天明细 / 近 6 月趋势」并列切换；
+ * 月趋势 = 归档行 + 当前 7 天明细合成（两源按日不交不重复累计）；
+ * 装载/落盘走 trimWithArchive——离开 7 天保留窗的明细按自然周归档进 pomodoro.json 可选段 archived。
+ */
+describe('统计两档与周归档（issue 357）', () => {
+  const DAY = 86_400_000;
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+    unloadPomodoro();
+    unmountPomodoroStatusBar();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(T0)); // T0 = 2026-08-10 周一 10:00
+  });
+  afterEach(() => {
+    unloadPomodoro();
+    unmountPomodoroStatusBar();
+    vi.useRealTimers();
+  });
+
+  it('打开弹窗：两档 tab 就位，默认近 7 天（周柱可见、月柱隐藏）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    expect(el('pomodoro-stat-tab-week').textContent).toBe('近 7 天');
+    expect(el('pomodoro-stat-tab-month').textContent).toBe('近 6 月');
+    expect(el('pomodoro-stat-tab-week').classList.contains('pomodoro-stat-tab-on')).toBe(true);
+    expect(el('pomodoro-stat-tab-month').classList.contains('pomodoro-stat-tab-on')).toBe(false);
+    expect(el('pomodoro-week').hidden).toBe(false);
+    expect(el('pomodoro-months').hidden).toBe(true);
+  });
+
+  it('切近 6 月：空数据渲染 6 根月柱（3 月→8 月），切回近 7 天恢复', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    el('pomodoro-stat-tab-month').click();
+    expect(el('pomodoro-stat-tab-month').classList.contains('pomodoro-stat-tab-on')).toBe(true);
+    expect(el('pomodoro-week').hidden).toBe(true);
+    expect(el('pomodoro-months').hidden).toBe(false);
+    const bars = [...el('pomodoro-months').querySelectorAll('.pomodoro-stat-day')] as HTMLElement[];
+    expect(bars).toHaveLength(6);
+    expect(bars.map((b) => b.title)).toEqual([
+      '2026-03：0 个 · 0 分钟',
+      '2026-04：0 个 · 0 分钟',
+      '2026-05：0 个 · 0 分钟',
+      '2026-06：0 个 · 0 分钟',
+      '2026-07：0 个 · 0 分钟',
+      '2026-08：0 个 · 0 分钟',
+    ]);
+    expect(bars[5].textContent).toBe('8月'); // 短签不带年份（窄面板）
+    el('pomodoro-stat-tab-week').click();
+    expect(el('pomodoro-week').hidden).toBe(false);
+    expect(el('pomodoro-months').hidden).toBe(true);
+    expect(document.querySelectorAll('#pomodoro-week .pomodoro-stat-day').length).toBe(7); // 周柱原样
+  });
+
+  it('月趋势合成：归档行 + 窗内明细按月归集，不重复累计', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [
+          { ts: T0 - 3_600_000, duration: 1500 }, // 今天（窗内明细 → 2026-08）
+          { ts: T0 - 30 * DAY, duration: 1500 }, // 2026-07-11 周六（窗外 → 装载即归档并入 2026-07-06 周）
+        ],
+        archived: [{ week: '2026-07-06', count: 2, minutes: 50 }],
+      })
+    );
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    el('pomodoro-stat-tab-month').click();
+    const bars = [...el('pomodoro-months').querySelectorAll('.pomodoro-stat-day')] as HTMLElement[];
+    expect(bars[4].title).toBe('2026-07：3 个 · 75 分钟'); // 既有 2 + 装载归档 1（周 key 判重增量合并）
+    expect(bars[5].title).toBe('2026-08：1 个 · 25 分钟'); // 仅窗内明细（窗外已从 history 移除，不重复）
+    expect(el('pomodoro-today').textContent).toContain('今日 1 个 · 25 分钟');
+  });
+
+  it('装载即裁剪归档落盘；完成专注再 save 不重复累计；无归档时不写 archived 键', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [{ ts: T0 - 30 * DAY, duration: 1500 }], // 2026-07-11 周六，窗外
+      })
+    );
+    const { app, vault: v } = setup(vault);
+    await openPomodoro(app); // initData：裁剪 + 归档增量 → 立即固化落盘
+    await enqueueFileTask(getPomodoroFilePath(), async () => undefined);
+    let raw = JSON.parse(v.files.get(getPomodoroFilePath())!);
+    expect(raw.history).toEqual([]); // 窗外明细已裁
+    expect(raw.archived).toEqual([{ week: '2026-07-06', count: 1, minutes: 25 }]); // 归档一行
+    // 完成一个专注（今天）→ save 再走 trimWithArchive：明细不重复归档
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    await enqueueFileTask(getPomodoroFilePath(), async () => undefined);
+    raw = JSON.parse(v.files.get(getPomodoroFilePath())!);
+    expect(raw.history).toHaveLength(1);
+    expect(raw.archived).toEqual([{ week: '2026-07-06', count: 1, minutes: 25 }]); // 不增账
+  });
+
+  it('save：无归档数据时文件不写 archived 键（文件形状与旧版一致）', async () => {
+    const { app, vault: v } = setup();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    await enqueueFileTask(getPomodoroFilePath(), async () => undefined);
+    const raw = JSON.parse(v.files.get(getPomodoroFilePath())!);
+    expect(raw.history).toHaveLength(1);
+    expect('archived' in raw).toBe(false);
   });
 });

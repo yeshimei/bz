@@ -21,6 +21,8 @@
  * 编辑部印刷风视觉拍板定稿（issue 214，p1-final 原型）：本文件只做 markup 平移，任何视觉值不动。
  */
 import { esc, iconSpan } from '../core/ui/str';
+import { CHART_PASTEL_SERIES, CHART_RANK_BADGES, CHART_HIGHLIGHT } from '../core/chart-palette';
+import { formatMinutes, REPORT_TOP_N, type ClipReportData } from './report-stats';
 import type { ClipArticle } from './types';
 
 /** esc/iconSpan 再导出：行为层与评审壳演示 markup 同源 */
@@ -86,6 +88,7 @@ export function panelHtml(): string {
       <div class="bz-clip-mob" data-clip-mob>
         <div class="bz-clip-mob-top">
           <div class="bz-clip-mob-title">剪藏本</div>
+          <span class="bz-clip-mob-act" data-clip-mob-report role="button">报告</span>
           <span class="bz-clip-mob-act" data-clip-mob-search role="button">搜索</span>
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
@@ -165,6 +168,13 @@ export function railItemHtml(sel: SrcSelJson, label: string, unread: number, tot
 /** rail 脚注（issue 214）：今日已读 N 篇（news.json stats.byDate，键 YYYY-MM-DD；缺省 0） */
 export function railFootHtml(todayRead: number): string {
   return `今日已读<br><b>${todayRead}</b> 篇`;
+}
+
+/** rail 脚注·阅读报告入口（issue 358）：点开「我读了什么」报告弹层。
+ *  与书库「阅读分析报告」（bz-reading-report-open）并列的另一份报告——本域自有的
+ *  剪藏阅读流水，数据出 clipbook.json readLog，不深链书库报告。 */
+export function clipReportEntryHtml(): string {
+  return `<div class="bz-clp-rep-entry" data-clp-rep-entry role="button" tabindex="0">我读了什么 ${iconSpan('chevron-right', 'bz-ic--xs')}</div>`;
 }
 
 // ==================== 中栏目录（序号制条目） ====================
@@ -333,4 +343,128 @@ export function mobDetailHtml(a: ClipArticle, opts: { time: string; note: string
     <div class="bz-clip-mob-d-md markdown-rendered" data-clip-mob-md>${opts.note ? `<p>${esc(opts.note)}</p>` : ''}</div>
     <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
   `;
+}
+
+// ==================== 阅读报告弹层（issue 358「我读了什么」） ====================
+// 剪藏本自有阅读报告（数据 = clipbook.json readLog），与书库「阅读分析报告」并列不深链。
+// 分段懒生成（仿 reading-report 分片范式）：行为层逐段让出主线程填充；周期切换重算重渲。
+
+/** 报告弹层骨架：桌面卡 + 移动 .bz-panel-mtop 真全屏；头行 = 标题 + 周期 seg + 关闭钮；
+ *  体 = data-clp-rep-body（行为层骨架 → 分段填充）。data-clp-rep-* 即行为层委托契约。 */
+export function clipReportShellHtml(): string {
+  return `
+    <div class="bz-panel-frame bz-clip-report-frame bz-panel-mtop">
+      <div class="bz-panel-head">
+        <div class="bz-panel-title">我读了什么</div>
+        <div class="bz-clp-rep-seg" data-clp-rep-period role="tablist" aria-label="统计周期">
+          <button class="bz-clp-rep-seg-btn on" data-period="week" type="button">本周</button>
+          <button class="bz-clp-rep-seg-btn" data-period="month" type="button">本月</button>
+        </div>
+        <div class="bz-panel-head-sp"></div>
+        <span class="bz-clp-rep-close" role="button" tabindex="0" data-clp-rep-close title="关闭">${iconSpan(ICO.x)}</span>
+      </div>
+      <div class="bz-clp-rep-body" data-clp-rep-body></div>
+    </div>`;
+}
+
+/** 骨架占位（分片计算完成前先见「统计中…」，不「像没点」） */
+export function clipReportSkeletonHtml(): string {
+  return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
+}
+
+/** 空态人话（readLog 无任何记录：还没在剪藏本里读过文章） */
+export function clipReportEmptyHtml(): string {
+  return `
+    <div class="bz-clp-rep-empty">
+      ${iconSpan(ICO.book, 'bz-ic--lg')}
+      <div class="bz-clp-rep-empty-t">还没有阅读记录</div>
+      <div class="bz-clp-rep-empty-d">在剪藏本里打开文章阅读，停留满一分钟就会自动记到这里</div>
+    </div>`;
+}
+
+/** 单期报告分段（懒生成；段序冻结：概览 → 来源分布 → 阅读时段） */
+export interface ClipReportSection {
+  /** 段稳定键（进度/调试用） */
+  key: string;
+  /** 段进度文案（无 emoji） */
+  label: string;
+  /** 调用时才拼装该段 HTML */
+  generate: () => string;
+}
+
+export function buildClipReportSections(d: ClipReportData): ClipReportSection[] {
+  return [
+    { key: 'overview', label: '统计概览', generate: () => clipReportOverviewHtml(d) },
+    { key: 'sources', label: '来源分布', generate: () => clipReportSourcesHtml(d) },
+    { key: 'hours', label: '阅读时段', generate: () => clipReportHoursHtml(d) },
+  ];
+}
+
+/** 段 1·统计概览：三格 hero（篇数/总时长/活跃天数）+ 读得最久 Top 5。
+ *  hero/排名徽章取 chart-palette 粉彩系与浅底徽章色（图表配色单源），墨字走域皮肤。 */
+function clipReportOverviewHtml(d: ClipReportData): string {
+  const topRows = d.topArticles.map((a, i) => {
+    const badge = CHART_RANK_BADGES[i % CHART_RANK_BADGES.length];
+    return `
+    <div class="bz-clp-rep-top-row">
+      <span class="bz-clp-rep-rank" style="background:${badge}">${i + 1}</span>
+      <span class="bz-clp-rep-top-title" title="${esc(a.title)}">${esc(a.title)}</span>
+      <span class="bz-clp-rep-top-src">${esc(a.src)}</span>
+      <span class="bz-clp-rep-top-min">${esc(formatMinutes(a.minutes))}</span>
+    </div>`;
+  }).join('');
+  return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">统计概览</div>
+      <div class="bz-clp-rep-hero">
+        <div class="bz-clp-rep-hero-card"><b>${d.articles}</b><span>已读篇数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${esc(formatMinutes(d.totalMinutes))}</b><span>总时长</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${d.activeDays}</b><span>活跃天数</span></div>
+      </div>
+      ${topRows ? `<div class="bz-clp-rep-top"><div class="bz-clp-rep-sub">读得最久</div>${topRows}</div>` : ''}
+    </div>`;
+}
+
+/** 段 2·来源分布（站点/UP/订阅源 Top N）：水平条形行（环形图被否拍板后的统一范式，
+ *  与 reading-report generateBarRows 同构；粉彩系列色按行循环） */
+function clipReportSourcesHtml(d: ClipReportData): string {
+  const rows = d.bySrc.slice(0, REPORT_TOP_N);
+  if (!rows.length) {
+    return `<div class="bz-clp-rep-sec"><div class="bz-clp-rep-sec-h">来源分布</div><p class="bz-clp-rep-none">本期暂无来源数据</p></div>`;
+  }
+  const max = Math.max(1, ...rows.map((r) => r.minutes));
+  const barRows = rows.map((r, i) => {
+    const width = Math.max(2, Math.round((r.minutes / max) * 100));
+    return `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label" title="${esc(r.name)}">${esc(r.name)}</span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${width}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${r.articles} 篇 · ${esc(formatMinutes(r.minutes))}</span>
+    </div>`;
+  }).join('');
+  return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">来源分布</div>
+      <div class="bz-clp-rep-bars">${barRows}</div>
+    </div>`;
+}
+
+/** 段 3·阅读时段：24 小时柱（每柱 = 该小时阅读分钟数；粉彩底，最高柱 CHART_HIGHLIGHT 强调）
+ *  + 高峰人话 */
+function clipReportHoursHtml(d: ClipReportData): string {
+  const max = Math.max(0, ...d.hours);
+  const cols = d.hours.map((m, h) => {
+    const height = max > 0 && m > 0 ? 10 + Math.round((m / max) * 44) : 3;
+    const accent = max > 0 && m > 0 && m === max;
+    const bg = accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
+    return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? ' accent' : ''}" style="height:${height}px;background:${bg}" title="${h} 点 · ${esc(formatMinutes(m))}"></div><div class="bz-clp-rep-hlabel">${h}</div></div>`;
+  }).join('');
+  const peakHour = max > 0 ? d.hours.indexOf(max) : -1;
+  const peakText = peakHour >= 0 ? `${peakHour} 点前后` : '暂无';
+  return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">阅读时段</div>
+      <div class="bz-clp-rep-hours">${cols}</div>
+      <div class="bz-clp-rep-hours-note">每根柱 = 该小时的阅读分钟 · 阅读高峰在 ${peakText}</div>
+    </div>`;
 }

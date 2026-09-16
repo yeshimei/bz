@@ -23,9 +23,9 @@ import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSe
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
 import { openMemoPanel, addMemoItem, addMemoForActiveNote, unloadMemo, ensureMemoReminders, ensureFileSync, unloadFileSync } from './memo';
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
-import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
+import { addBelongingsItem, openBelongings, openBelongingsReport, unloadBelongings } from './belongings';
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
-import { openClipbook, markAllUnreadRead, unloadClipbook, ensureClipbookFileSync, unloadClipbookFileSync } from './clipbook';
+import { openClipbook, markAllUnreadRead, openClipbookReport, unloadClipbook, ensureClipbookFileSync, unloadClipbookFileSync } from './clipbook';
 import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipbook/news-fetcher';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
@@ -40,11 +40,12 @@ import { openCinema, addCinemaItem, openCinemaAnalysis, pickRandomCinema, unload
 // 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；读书报告内嵌为面板内视图）
 import { openBookshelf, openBookshelfReport, continueReading, unloadBookshelf } from './bookshelf';
 // 影视分析报告独立域已退役（ADR-0090：报告窗并入影院内嵌分析页，命令直达 bz-cinema-analysis）
-import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewStart, ensureReview, unloadReview } from './review';
+import { openReviewPanel, openReviewReport, openQuizPractice, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
 import {
   openSecondBrainPanel,
   openSecondBrainReference,
   openSecondBrainChat,
+  openSecondBrainWeekly,
   rebuildSecondBrainIndex,
   unloadSecondBrain,
   ensureSecondBrain,
@@ -63,7 +64,7 @@ import { openEncrypt, encryptCurrentNote, lockEncrypt, unloadEncrypt, mountEncry
 import { openPasswordVault, unloadPasswordVault, copyGeneratedPassword, lockPasswordVault } from './password-vault';
 // 内容首页（home 域，ticket 177；旧入口页 launcher 已退役删除，ADR-0093）
 import { openHome, unloadHome } from './home';
-// recap 域面板已退役（ADR-0154）：「生成今日总结」迁 home 时间线卡动作行，
+// recap 域面板已退役（ADR-0157）：「生成今日总结」迁 home 时间线卡动作行，
 // collectRecap/summarize 纯函数库留 src/recap 供 home 消费，main 不再接线
 import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
 // ai-agent 域解散：引用同步拆入 memo/favorites 域无条件常驻（原 ensureAIAgent/unloadAIAgent 换线）
@@ -88,6 +89,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 归物本
   { id: 'bz-belongings-add', name: '加物品', icon: 'archive', callback: () => addBelongingsItem(getApp()) },
   { id: 'bz-belongings-open', name: '归物本', icon: DOMAIN_ICONS.belongings, callback: () => openBelongings(getApp()) },
+  // 年度资产报告（issue 356：报告页直开，面板未开也从盘载库；icon 与三份既有分析报告错开）
+  { id: 'bz-belongings-report', name: '归物本年度报告', icon: 'trending-up', callback: () => openBelongingsReport(getApp()) },
   // 剪藏本（clipbook 融合域，ADR-0082：聚合讯未读流 + 剪藏笔记一体化工作台）
   { id: 'bz-clipbook-open', name: '剪藏本', icon: DOMAIN_ICONS.clipping, callback: () => openClipbook(getApp()) },
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要（只重建摘要/标签，不动用户标题）
@@ -99,6 +102,10 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
     // 命令触发无就地可见结果（面板可能没开）：完成态给反馈；面板开着由 reloadIfOpen 同步
     void fetchNowNews().then(notifyManualFetchResult);
   } },
+  // 剪藏阅读报告（issue 358「我读了什么」）：剪藏本自有阅读流水报告弹层（数据 = clipbook.json
+  // 侧写 readLog），与书库「阅读分析报告」并列；图标弃 bar-chart-3（阅读分析报告独占）改
+  // newspaper（剪藏本语义），与 pie-chart/calendar-check 继续错开
+  { id: 'bz-clipbook-report', name: '剪藏阅读报告', icon: 'newspaper', callback: () => openClipbookReport(getApp()) },
 
   // 日记本（diary 域，ADR-0115：原回忆墙升格正名；媒体墙即日记本唯一 UI）
   { id: 'bz-diary-open', name: '日记本', icon: DOMAIN_ICONS.diary, callback: () => openDiary(getApp()) },
@@ -121,18 +128,25 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-bookshelf-open', name: '书库', icon: DOMAIN_ICONS.bookshelf, callback: () => openBookshelf(getApp()) },
   // 继续在读（2026-09-11 首页入口菜单）：开书架墙并落到「在读」分栏
   { id: 'bz-bookshelf-continue', name: '继续在读', icon: 'book-open', callback: () => void continueReading(getApp()) },
-  // 复习计划（5 命令；评级四命令已裁——issue 346：QuickAdd 热键时代遗产，插件不设默认快捷键后
-  // 不可达且不在 home 菜单耦合清单；bz-review-rate 难度弹窗为面板外唯一评级入口）
+  // 复习计划（10 命令；评级四命令原拟裁撤，issue 362 做题家面板起依赖评级动作——保留）
 
   { id: 'bz-review-open', name: '复习计划', icon: DOMAIN_ICONS.review, callback: () => openReviewPanel(getApp()) },
   // ticket 174：独立「复习计划分析报告」命令（直开统计弹窗）；图标弃 bar-chart-3（阅读分析报告独占，
   // enh-sweep-a 错开）改 calendar-check（呼应复习日程语义）
   { id: 'bz-review-report', name: '复习计划分析报告', icon: 'calendar-check', callback: () => openReviewReport(getApp()) },
   { id: 'bz-review-start', name: '开始复习', icon: 'play', callback: () => reviewStart(getApp()) },
+  // 做题练习（issue 362）：做题家独立面板——不排期复习，选题范围 + 本轮题量直接开刷；
+  // icon 与复习域设置分组「做题家」同款 graduation-cap（域语言一致，命令表内无重复）
+  { id: 'bz-review-quiz-open', name: '做题练习', icon: 'graduation-cap', callback: () => openQuizPractice(getApp()) },
   { id: 'bz-review-add', name: '加入复习计划', icon: 'plus', callback: () => reviewAddCurrent(getApp()) },
   { id: 'bz-review-remove', name: '移出复习计划', icon: 'minus', callback: () => reviewRemoveCurrent(getApp()) },
   { id: 'bz-review-overdue', name: '复习（跳转逾期）', icon: 'alarm-clock', callback: () => reviewJumpOverdue(getApp()) },
   { id: 'bz-review-rate', name: '复习（选择难度）', icon: 'gauge', callback: () => reviewMarkDialog(getApp()) },
+  // f3：评级四命令去英文后缀并统一「复习（X）」标点（id 不动；issue 362 起做题家面板依赖评级动作）
+  { id: 'bz-review-again', name: '复习（忘了）', icon: 'rotate-ccw', callback: () => reviewMarkRating(getApp(), 'again') },
+  { id: 'bz-review-hard', name: '复习（困难）', icon: 'trending-up', callback: () => reviewMarkRating(getApp(), 'hard') },
+  { id: 'bz-review-good', name: '复习（一般）', icon: 'check', callback: () => reviewMarkRating(getApp(), 'good') },
+  { id: 'bz-review-easy', name: '复习（简单）', icon: 'sparkles', callback: () => reviewMarkRating(getApp(), 'easy') },
   // 第二大脑（ticket 103：原闪念正名接管，主面板为统一入口）
   { id: 'bz-secondbrain-panel', name: '第二大脑面板', icon: DOMAIN_ICONS.secondbrain, callback: () => openSecondBrainPanel(getApp()) },
   // f7：与「第二大脑面板」区分——本命令打开参考侧边栏（右侧窄窗/移动端抽屉参考 tab）
@@ -141,6 +155,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 重建索引（2026-09-11 首页入口菜单）：全库重建向量索引（函数早已存在，此前无命令入口）
   // 留第二大脑——它是检索本体，不是关联（ADR-0141 §1）
   { id: 'bz-secondbrain-rebuild-index', name: '重建索引', icon: 'refresh-cw', callback: () => rebuildSecondBrainIndex(getApp()) },
+  // 本周知识动态（issue 360）：每周知识摘要手动入口——打开详情弹层并强制重聚一轮；
+  // 自动路径为启动后延迟静默聚合（无新内容零打扰）。calendar-days 与 review 的 calendar-check 错开
+  { id: 'bz-secondbrain-weekly', name: '本周知识动态', icon: 'calendar-days', callback: () => openSecondBrainWeekly(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, callback: () => openPomodoro(getApp()) },
   // 开始/停止专注（2026-09-10：首页入口菜单联动，一把切换，等价面板「开始 / 重置」两颗钮）
@@ -188,7 +205,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-encrypt-lock-vault', name: '锁定保险库', icon: 'lock', callback: () => lockEncrypt(getApp()) },
   // 密码本（password-vault 域，ADR-0109 拆回独立域：ADR-0078 成型版 UI，与保险库共享锁与数据）
   { id: 'bz-password-vault-open', name: '密码本', icon: DOMAIN_ICONS['password-vault'], callback: () => openPasswordVault(getApp()) },
-  // 快速取密（ADR-0155 统一流：fuzzy 列现有密码 + 顶部「生成新」，搜到即复制、无命中生成；
+  // 快速取密（ADR-0158 统一流：fuzzy 列现有密码 + 顶部「生成新」，搜到即复制、无命中生成；
   // 60s 后清空剪贴板、不弹明文、不开面板。原 bz-encrypt-copy-password 退役，同语义由本条承接）
   { id: 'bz-password-vault-gen', name: '快速取密', icon: 'key-round', callback: () => void copyGeneratedPassword(getApp()) },
   // 锁定密码本（2026-09-11 首页入口菜单）：与保险库同库同锁（一把主密码）
@@ -228,7 +245,7 @@ export default class BzPlugin extends Plugin {
     const autoLinkMigrated = migrateAutoLinkSettings(loaded);
     // issue 342 后续：「上下文窗口」设置行删除（模型固有属性、零消费点），aiContextOverrides 键退役
     const retiredAIKeysMigrated = migrateRetiredAIKeys(loaded);
-    // issue 346：收藏本排序循环钮键退役（ADR-0083 后零消费点，残留清除）
+    // issue 364：收藏本排序循环钮键退役（ADR-0083 后零消费点，残留清除）
     const retiredSortKeyMigrated = migrateRetiredFavoritesSortKey(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
     if (memoKeysMigrated || autoLinkMigrated || retiredAIKeysMigrated || retiredSortKeyMigrated) {
@@ -329,7 +346,7 @@ export default class BzPlugin extends Plugin {
     unloadKnowledgeFileSync();
     unloadClipbookFileSync();
     unloadHome();
-    // recap 面板退役（ADR-0154）：原 unloadRecap 只清面板 DOM/ESC（随面板一并消失）；
+    // recap 面板退役（ADR-0157）：原 unloadRecap 只清面板 DOM/ESC（随面板一并消失）；
     // 迁入 home 的「生成今日总结」无在途作废句柄，unloadHome（resetHomeState）复位生成标志，
     // 在途流程收口时按钮已随 DOM 摘除（aiButton 为 null）自然 no-op，通知由 cleanupNotices 统一清
     unloadEncrypt();

@@ -1,5 +1,5 @@
 /**
- * 快速取密统一流测试（password-vault 域，ADR-0155）：
+ * 快速取密统一流测试（password-vault 域，ADR-0158）：
  * 数据侧：fuzzy 匹配得分与条目过滤排序（连续子串优先、子序列兜底）。
  * UI 侧：选择器列出现有条目 + 顶部固定「生成新密码」项（不受过滤影响）；
  * 选中现有条目 → 复制该密码；选「生成新」→ 按设置的长度/字符集生成并复制；
@@ -145,7 +145,7 @@ describe('快速取密统一流（选择器 UI + 命令链路）', () => {
     writeText.mockClear(); // vi.spyOn 跨用例返回同一 mock：清掉前序用例调用记录，精确次数断言才成立
     const run = await openViaCommand();
     const rows = () => [...document.querySelectorAll<HTMLElement>('.bz-password-vault-qp .bz-popover-item')];
-    // 空库：选择器只剩「生成新」一项（ADR-0155 口径：无命中生成，空库不阻断）
+    // 空库：选择器只剩「生成新」一项（ADR-0158 口径：无命中生成，空库不阻断）
     expect(rows().length).toBe(1);
     expect(rows()[0].querySelector('.pl')!.textContent).toBe('生成新密码');
     // 复制动作发生前先接管时钟：60s 清空定时器由 copySensitiveText 成功后布防，

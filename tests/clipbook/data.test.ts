@@ -28,8 +28,9 @@ const base = (patch: Record<string, any> = {}) => ({
 describe('clipbook/data sidecar', () => {
   it('缺失文件 → 建空侧写可读', async () => {
     const d = await readClipbookData();
-    // issue 329：侧写扩段（marks/savedImages/pendingSource）——空侧写断言改走 emptySidecar 单源
-    expect(d).toEqual({ articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} });
+    // issue 329：侧写扩段（marks/savedImages/pendingSource）——空侧写断言改走 emptySidecar 单源；
+    // issue 358：再扩 readLog（阅读会话流水，零迁移兜底空数组）
+    expect(d).toEqual(emptySidecar());
   });
 
   it('容错解析损坏段', async () => {

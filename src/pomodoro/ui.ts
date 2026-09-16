@@ -10,6 +10,9 @@
  * 循环位置 6px 方点行（替代「专注 2/4」文字）；lucide timer 图标替代 🍅；mask 遮罩走
  * --background-modifier-cover token；面板聚焦 Space 切换开始/暂停；
  * startFocusForTask：备忘录「专注这个」联动（归属记入 state/history，弹窗/状态栏展示任务名）。
+ * issue 357：统计两档切换（近 7 天明细 / 近 6 月趋势）+ 周归档落盘——save/initData 走
+ * trimWithArchive，离开 7 天保留窗的明细按自然周归档进 pomodoro.json 可选段 archived（幂等合并），
+ * 「history 只留 7 天明细」拍板不变；月趋势 = stats.lastNMonths（归档行 + 明细合成，不重复累计）。
  */
 import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
@@ -19,7 +22,7 @@ import { tryGetSettings, getSettings, saveSettings } from '../core/settings-prov
 import { notice, notify } from '../core/notice';
 import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
-import { PomodoroDataManager, trimHistory } from './data';
+import { PomodoroDataManager, trimWithArchive } from './data';
 // 面板主题清单 / 弹窗骨架：单源在 ./render（ui.ts 与评审壳皮肤页共用）
 import {
   POMODORO_SKIN_THEMES,
@@ -31,9 +34,9 @@ export type { PomodoroSkinTheme } from './render';
 import { playSound } from './sound';
 import type { SoundKind } from './sound';
 import { syncPomodoroStatusBar } from './statusbar';
-import { todayCount, todayMinutes, last7Days } from './stats';
+import { todayCount, todayMinutes, last7Days, lastNMonths, TREND_MONTHS } from './stats';
 import { PRESETS, CUSTOM_PRESET_ID } from './config';
-import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent } from './state';
+import type { PomodoroState, HistoryEntry, ArchivedWeek, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent } from './state';
 import { transition, recover, createInitialState, phaseDurationSec } from './state';
 import type { PomodoroPhase } from '../core/pomodoro-phase';
 import { isFocusingPhase } from '../core/pomodoro-phase';
@@ -43,7 +46,11 @@ import { emitDomainEvent } from '../core/domain-bus';
 let dataManager: PomodoroDataManager | null = null;
 let state: PomodoroState = createInitialState();
 let history: HistoryEntry[] = [];
+/** 周归档行（issue 357）：离开 7 天保留窗的明细按周聚合落账，随 save/initData 与 history 同步落盘 */
+let archived: ArchivedWeek[] = [];
 let loaded = false;
+/** 统计档位（issue 357）：近 7 天明细 / 近 6 月趋势（归档行 + 明细合成），默认近 7 天 */
+let statMode: 'week' | 'month' = 'week';
 let maskEl: HTMLElement | null = null;
 let escHandle: { unregister: () => void } | null = null;
 let timerId: number | null = null;
@@ -194,37 +201,85 @@ function fmt(sec: number): string {
   return `${pad2(m)}:${pad2(s)}`;
 }
 
-/** 历史统计区：今日计数+总分钟 + 近 7 天柱条；同数据跳过重建（防 tick 每秒 DOM churn） */
+/** 统计柱条公共搭建：柱高按 count 归一（max 40px），label 短签 + title 全量（近 7 天/近 6 月共用） */
+function buildStatBars(container: HTMLElement, rows: Array<{ label: string; title: string; count: number }>): void {
+  const max = Math.max(1, ...rows.map((r) => r.count));
+  container.innerHTML = '';
+  for (const r of rows) {
+    const bar = document.createElement('div');
+    bar.className = 'pomodoro-stat-day';
+    bar.title = r.title;
+    const col = document.createElement('div');
+    col.className = 'pomodoro-stat-col';
+    const h = document.createElement('div');
+    h.className = 'pomodoro-stat-bar';
+    h.style.height = `${Math.max(2, Math.round((r.count / max) * 40))}px`;
+    col.appendChild(h);
+    const label = document.createElement('span');
+    label.className = 'pomodoro-stat-label';
+    label.textContent = r.label;
+    col.appendChild(label);
+    bar.appendChild(col);
+    container.appendChild(bar);
+  }
+}
+
+/**
+ * 历史统计区：今日计数+总分钟 + 统计两档（issue 357）——「近 7 天」明细柱 / 「近 6 月」趋势柱
+ * （stats.lastNMonths：归档行 + 当前 7 天明细合成，两源按日不交不重复累计）；
+ * 同档同数据跳过重建（防 tick 每秒 DOM churn），档位切换经 setStatMode 清键强制重建。
+ */
 let lastStatsKey = '';
 function renderStats(): void {
   const now = Date.now();
   const todayEl = document.getElementById('pomodoro-today');
   if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
   const weekEl = document.getElementById('pomodoro-week');
-  if (!weekEl) return;
+  const monthsEl = document.getElementById('pomodoro-months');
+  if (!weekEl || !monthsEl) return;
+  const tabWeek = document.getElementById('pomodoro-stat-tab-week');
+  const tabMonth = document.getElementById('pomodoro-stat-tab-month');
+  tabWeek?.classList.toggle('pomodoro-stat-tab-on', statMode === 'week');
+  tabMonth?.classList.toggle('pomodoro-stat-tab-on', statMode === 'month');
+  if (statMode === 'month') {
+    weekEl.hidden = true;
+    monthsEl.hidden = false;
+    const months = lastNMonths(archived, history, now, TREND_MONTHS);
+    const key = 'm:' + months.map((m) => `${m.month}:${m.count}:${m.minutes}`).join(',') + `#${archived.length}`;
+    if (key === lastStatsKey) return;
+    lastStatsKey = key;
+    buildStatBars(
+      monthsEl,
+      months.map((m) => ({
+        label: `${parseInt(m.month.slice(5, 7), 10)}月`,
+        title: `${m.month}：${m.count} 个 · ${m.minutes} 分钟`,
+        count: m.count,
+      }))
+    );
+    return;
+  }
+  weekEl.hidden = false;
+  monthsEl.hidden = true;
   const days = last7Days(history, now);
-  const key = days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(',');
+  const key = 'w:' + days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(',');
   if (key === lastStatsKey) return;
   lastStatsKey = key;
-  const max = Math.max(1, ...days.map((d) => d.count));
-  weekEl.innerHTML = '';
-  for (const d of days) {
-    const bar = document.createElement('div');
-    bar.className = 'pomodoro-stat-day';
-    bar.title = `${d.date}：${d.count} 个 · ${d.minutes} 分钟`;
-    const col = document.createElement('div');
-    col.className = 'pomodoro-stat-col';
-    const h = document.createElement('div');
-    h.className = 'pomodoro-stat-bar';
-    h.style.height = `${Math.max(2, Math.round((d.count / max) * 40))}px`;
-    col.appendChild(h);
-    const label = document.createElement('span');
-    label.className = 'pomodoro-stat-label';
-    label.textContent = d.date.slice(8); // DD（完整日期在 title；窄面板不折行）
-    col.appendChild(label);
-    bar.appendChild(col);
-    weekEl.appendChild(bar);
-  }
+  buildStatBars(
+    weekEl,
+    days.map((d) => ({
+      label: d.date.slice(8), // DD（完整日期在 title；窄面板不折行）
+      title: `${d.date}：${d.count} 个 · ${d.minutes} 分钟`,
+      count: d.count,
+    }))
+  );
+}
+
+/** 统计档位切换（issue 357）：换档即强制重建柱区（lastStatsKey 清空防同键早退） */
+function setStatMode(mode: 'week' | 'month'): void {
+  if (statMode === mode) return;
+  statMode = mode;
+  lastStatsKey = '';
+  render();
 }
 
 function render(): void {
@@ -435,8 +490,12 @@ function ensureTick(): void {
 }
 
 async function save(): Promise<void> {
-  history = trimHistory(history, Date.now()); // F13：历史按保留窗裁剪后再落盘（pomodoro.json 不线性膨胀）
-  if (dataManager) await dataManager.save({ version: 1, state, history });
+  // F13 保留窗裁剪 + issue 357 周归档：离开窗口的明细先按自然周归档（幂等合并）再落盘，
+  // 「history 只留 7 天明细」拍板不变；归档随同一次 save 原子落账（空数组不落键）
+  const t = trimWithArchive(history, archived, Date.now());
+  history = t.history;
+  archived = t.archived;
+  if (dataManager) await dataManager.save({ version: 1, state, history, ...(archived.length ? { archived } : {}) });
 }
 
 /** 首次打开：load + 主倒计时超时恢复（静默；ticket 62 不补算——超时即回空闲） */
@@ -444,10 +503,15 @@ async function initData(): Promise<void> {
   const data = await dataManager!.load();
   const r = recover(data.state, data.history, Date.now(), durations(), options());
   state = r.state;
-  history = trimHistory(r.history, Date.now()); // F13：装载即裁剪（此后任何 save 落盘的都是裁剪后历史）
+  // F13：装载即裁剪；issue 357 被裁明细按周归档进内存（旧文件无 archived 段照常工作，首周起算）
+  const t = trimWithArchive(r.history, data.archived, Date.now());
+  history = t.history;
+  archived = t.archived;
   // 主番茄钟超时回空闲（endTime 从有到无）→ 落盘
   const mainChanged = data.state.endTime !== null && r.state.endTime === null;
-  if (mainChanged) await dataManager!.save({ version: 1, state, history });
+  // issue 357：归档有增量也立即固化——防「内存已裁剪归档、盘上未裁」的窗口期里二次装载重复入账
+  const archivedChanged = JSON.stringify(data.archived ?? []) !== JSON.stringify(archived);
+  if (mainChanged || archivedChanged) await dataManager!.save({ version: 1, state, history, ...(archived.length ? { archived } : {}) });
   loaded = true;
 }
 
@@ -592,6 +656,9 @@ function bindEvents(): void {
   startBtn.addEventListener('click', () => applyAction(state.paused ? 'resume' : state.endTime !== null ? 'pause' : 'start'));
   document.getElementById('pomodoro-btn-reset')!.addEventListener('click', () => applyAction('reset'));
   document.getElementById('pomodoro-btn-skip')!.addEventListener('click', () => applyAction('skip'));
+  // 统计两档切换（issue 357）：近 7 天明细 / 近 6 月趋势
+  document.getElementById('pomodoro-stat-tab-week')?.addEventListener('click', () => setStatMode('week'));
+  document.getElementById('pomodoro-stat-tab-month')?.addEventListener('click', () => setStatMode('month'));
   const popup = document.getElementById('pomodoro-popup')!;
   // Space 键切换开始/暂停（面板聚焦时；按钮聚焦走原生 Space 激活避免双触发，输入类控件跳过）
   popup.addEventListener('keydown', (e) => {
@@ -607,7 +674,7 @@ function bindEvents(): void {
 function buildDOM(): void {
   const mask = document.createElement('div');
   mask.id = 'pomodoro-mask';
-  mask.className = 'bz-overlay-mask'; // issue 347：遮罩底/blur 收编 core 单源（域 CSS 仅覆写 padding 归零）
+  mask.className = 'bz-overlay-mask'; // issue 365：遮罩底/blur 收编 core 单源（域 CSS 仅覆写 padding 归零）
   // 域主弹窗层级在 src/pomodoro/styles.css（#pomodoro-mask z-index，低于域设置弹窗与 Obsidian 设置页）——不再 JS 内联 z-index
   mask.innerHTML = popupShellHtml();
   mask.style.zIndex = String(allocZ()); // ADR-0067：创建即显示即发号
@@ -816,6 +883,8 @@ export function unloadPomodoro(): void {
   closePomodoro();
   state = createInitialState();
   history = [];
+  archived = []; // issue 357：归档行随历史一并重置
+  statMode = 'week'; // 统计档位回默认近 7 天
   lastStatsKey = '';
   dataManager = null;
   appRef = null;

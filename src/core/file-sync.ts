@@ -1,5 +1,5 @@
 /**
- * 文件同步公共壳（issue 347 全域复用上收）：域 json 数据对库内 md 路径变更的后台同步。
+ * 文件同步公共壳（issue 365 全域复用上收）：域 json 数据对库内 md 路径变更的后台同步。
  *
  * 三域（memo/clipbook/knowledge）原先各持一份逐行等价的私有骨架，本壳收编：
  *   - 生命周期：幂等 ensure / unload（unload 置位 _cancelled → 积压任务首行短路、

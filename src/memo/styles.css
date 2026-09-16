@@ -55,6 +55,59 @@
   background: var(--bz-brand-soft);
 }
 
+/* ---- 视图切换页签（issue 355）：工具行尾部 列表/月历 两档，桌面与移动同源 ---- */
+.bz-memo-viewtoggle {
+  display: flex; flex-shrink: 0;
+  border: 1px solid var(--bz-border-strong); border-radius: var(--bz-radius-sm);
+  overflow: hidden;
+}
+.bz-memo-viewbtn {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  background: var(--bz-surface-1); color: var(--bz-text-3);
+  border: none; cursor: pointer; padding: 0;
+}
+.bz-memo-viewbtn + .bz-memo-viewbtn { border-left: 1px solid var(--bz-border); }
+.bz-memo-viewbtn:hover { color: var(--bz-text-1); background: var(--bz-surface-hover); }
+.bz-memo-viewbtn.is-on { background: var(--bz-brand); color: var(--bz-on-brand); }
+.bz-memo-viewbtn .bz-ic { width: 14px; height: 14px; }
+
+/* ---- 月历视图（issue 355）：头行翻页 + 网格 + 事件 chip + 当日清单 ---- */
+.bz-memo-cal-head { display: flex; align-items: center; gap: var(--bz-space-sm); padding: 2px var(--bz-space-xs) var(--bz-space-sm); }
+.bz-memo-cal-title { font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); letter-spacing: 0.02em; }
+.bz-memo-cal-today { margin-left: auto; }
+.bz-memo-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.bz-memo-cal-wd { text-align: center; font-size: var(--bz-font-caption); color: var(--bz-text-3); padding: 2px 0 4px; }
+.bz-memo-cal-cell {
+  min-height: 64px; padding: 3px 4px; cursor: pointer;
+  border: 1px solid var(--bz-border); border-radius: var(--bz-radius-sm);
+  display: flex; flex-direction: column; gap: 2px; overflow: hidden; background: transparent;
+}
+.bz-memo-cal-cell:hover { border-color: var(--bz-brand); }
+.bz-memo-cal-cell.is-blank { cursor: default; border-color: transparent; }
+.bz-memo-cal-cell.is-blank:hover { border-color: transparent; }
+.bz-memo-cal-day { font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: 1.4; }
+.bz-memo-cal-cell.is-today .bz-memo-cal-day { color: var(--bz-brand); font-weight: var(--bz-weight-bold); }
+.bz-memo-cal-cell.is-selected { background: var(--bz-brand-soft); border-color: var(--bz-brand); }
+.bz-memo-cal-chips { display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow: hidden; }
+.bz-memo-cal-chip {
+  display: flex; align-items: center; gap: 3px;
+  font-size: var(--bz-font-caption); line-height: 16px; padding: 0 5px;
+  border-radius: var(--bz-radius-full); white-space: nowrap; overflow: hidden;
+  background: var(--bz-surface-3); color: var(--bz-text-2); cursor: pointer;
+}
+.bz-memo-cal-chip .bz-memo-cal-chip-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+  flex-shrink: 0; display: none;
+}
+/* 状态色沿用 overdue/today/future 现有口径（同 token 配比的专属档） */
+.bz-memo-cal-chip.is-overdue { background: color-mix(in srgb, var(--bz-danger) 14%, transparent); color: var(--bz-danger); }
+.bz-memo-cal-chip.is-today { background: color-mix(in srgb, var(--bz-brand) 14%, transparent); color: var(--bz-brand); }
+.bz-memo-cal-chip.is-future { background: color-mix(in srgb, var(--bz-success) 12%, transparent); color: var(--bz-success); }
+.bz-memo-cal-chip.is-more { background: transparent; color: var(--bz-text-3); }
+/* 当日清单（点日期展开）：复用列表卡片；空日轻提示 */
+.bz-memo-cal-daypanel { padding-top: var(--bz-space-sm); }
+.bz-memo-cal-noday { padding: var(--bz-space-md) var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); text-align: center; }
+
 /* ---- 列表 ---- */
 .bz-memo-content { flex: 1; overflow-y: auto; padding: var(--bz-space-xs) var(--bz-space-md) var(--bz-space-md); display: flex; flex-direction: column; min-height: 0; }
 .bz-memo-section-label {
@@ -110,6 +163,26 @@
 .bz-memo-card.bz-memo-done .bz-memo-card-title { text-decoration: line-through; color: var(--bz-text-2); }
 .bz-memo-card-title a { color: var(--bz-brand); text-decoration: underline; cursor: pointer; word-break: break-word; }
 
+/* ---- 清单子任务（issue 354）：标题之下、meta 之上的勾选行组 ---- */
+.bz-memo-cl { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; }
+.bz-memo-cl-row { display: flex; align-items: flex-start; gap: 8px; padding: 2px 0; cursor: pointer; }
+.bz-memo-cl-box {
+  width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; margin-top: 2px;
+  border: 1.5px solid var(--bz-border-strong); background: var(--bz-surface-2);
+  position: relative; box-sizing: border-box; cursor: pointer; display: inline-block;
+}
+.bz-memo-cl-row:hover .bz-memo-cl-box { border-color: var(--bz-brand); }
+.bz-memo-cl-box.bz-memo-cl-on { background: var(--bz-brand); border-color: var(--bz-brand); }
+.bz-memo-cl-box.bz-memo-cl-on::after {
+  content: ''; position: absolute; left: 3.5px; top: 0.5px;
+  width: 3.5px; height: 6.5px; border: solid var(--bz-on-brand); border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.bz-memo-cl-text { font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: 1.6; word-break: break-word; }
+.bz-memo-cl-row.is-done .bz-memo-cl-text { text-decoration: line-through; color: var(--bz-text-3); }
+/* 父项已完成：整组淡显（与卡片 done 暗淡同语汇），行仍可点（取消勾选即恢复父项） */
+.bz-memo-cl.bz-memo-cl-dim { opacity: 0.72; }
+
 /* ---- 移动抽屉头（buildSheetHead，ADR-0104 markup 单源）----
    勾选圈复用上方 .bz-memo-check 单源规则（抽屉经 sheetClass 挂皮肤类，纸感/编辑部皮肤自动随行，
    无需皮肤段额外覆盖）；此处只补头部横排布局与完成态——对齐列表 .bz-memo-card.bz-memo-done
@@ -139,6 +212,10 @@
 .bz-memo-tag.bz-memo-tag-overdue { background: color-mix(in srgb, var(--bz-danger) 14%, transparent); color: var(--bz-danger); }
 .bz-memo-tag.bz-memo-tag-today { background: color-mix(in srgb, var(--bz-brand) 14%, transparent); color: var(--bz-brand); }
 .bz-memo-tag.bz-memo-tag-future { background: color-mix(in srgb, var(--bz-success) 12%, transparent); color: var(--bz-success); }
+/* 周期重复标记（issue 353）：品牌软底色字——「这条会自己回来」的语义强调 */
+.bz-memo-tag.bz-memo-tag-recur { background: var(--bz-brand-soft); color: var(--bz-brand); }
+/* 清单进度标签（issue 354）：中性次底，n/N 弱信息 */
+.bz-memo-tag.bz-memo-tag-check { background: var(--bz-surface-3); color: var(--bz-text-2); }
 .bz-memo-time { font-size: var(--bz-font-caption); line-height: 18px; color: var(--bz-text-3); flex-shrink: 0; }
 
 /* 空态：组件库 .bz-empty 三件套（图标 + 一句话 + 动作按钮），域内不再自留空态样式 */
@@ -186,6 +263,22 @@
 .bz-memo-addscene .bz-btn-row { margin-top: var(--bz-space-xs); }
 .bz-memo-addscene-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); line-height: 1.5; }
 
+/* ---- 编辑器清单子任务区（issue 354）：勾选框 + 文案输入 + 删除钮行 ---- */
+.bz-memo-cl-edit { display: flex; flex-direction: column; gap: 6px; }
+.bz-memo-cl-edit-row { display: flex; align-items: center; gap: 6px; }
+.bz-memo-cl-edit-row .bz-memo-cl-box { margin-top: 0; flex-shrink: 0; }
+.bz-memo-cl-edit-row .bz-input { flex: 1; min-width: 0; height: 30px; }
+.bz-memo-cl-edit-row .bz-icon-btn { flex-shrink: 0; }
+.bz-memo-cl-addbtn {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 2px; padding: 4px 10px;
+  border: 1px dashed var(--bz-border-strong); border-radius: var(--bz-radius-sm);
+  background: transparent; color: var(--bz-text-3); cursor: pointer;
+  font-size: var(--bz-font-meta); font-family: inherit;
+}
+.bz-memo-cl-addbtn:hover { color: var(--bz-brand); border-color: var(--bz-brand); background: var(--bz-brand-soft); }
+.bz-memo-cl-addbtn .bz-ic { width: 12px; height: 12px; }
+
 /* （issue 266 的「移动端专属头行新建钮」在 issue 268 退役：移动端新建入口归底部
    录入「添加」（打开创建弹窗）与场景条尾部「添加场景」，故此处原有的
    `@media (min-width:769px){ .bz-memo-head-…{display:none} }` 一并删除。
@@ -226,6 +319,16 @@
   .bz-memo-sheet-entry .bz-memo-check::after { content: ''; position: absolute; inset: -13px; }
   .bz-memo-card .bz-memo-card-title { font-size: var(--bz-font-emphasis); }
   .bz-memo-composer .bz-input { height: 40px; }
+  /* 清单子任务触控档（issue 354）：行加高 + 勾选框 16px，整行即热区 */
+  .bz-memo-cl-row { padding: 5px 0; gap: 9px; }
+  .bz-memo-cl-row .bz-memo-cl-box { width: 16px; height: 16px; }
+  .bz-memo-cl-row .bz-memo-cl-text { font-size: var(--bz-font-body); }
+  /* 月历触控档（issue 355）：格子收矮成色点热区——chip 隐文字显圆点，日数留格 */
+  .bz-memo-cal-cell { min-height: 44px; padding: 2px 3px; }
+  .bz-memo-cal-chip { padding: 0; justify-content: center; background: transparent; }
+  .bz-memo-cal-chip .bz-memo-cal-chip-dot { display: block; width: 7px; height: 7px; }
+  .bz-memo-cal-chip .bz-memo-cal-chip-txt { display: none; }
+  .bz-memo-cal-chip.is-more .bz-memo-cal-chip-txt { display: block; font-size: 10px; line-height: 14px; }
 }
 
 /* ═══════════ 皮肤体系（issue 210，2026-09-06 细节对齐原型） ═══════════
@@ -515,6 +618,11 @@
 .bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-future {
   background: color-mix(in srgb, var(--bz-success) 12%, transparent);
   color: var(--bz-success);
+}
+/* 周期重复标记（issue 353）：纸感下通用 tag 已被压成无框色字，语义 tag 保留软底（同逾期/今日/未来口径） */
+.bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-recur {
+  background: var(--bz-brand-soft);
+  color: var(--bz-brand);
 }
 
 /* 已完成条 + 录入行 + 弹窗标题 */

@@ -1,6 +1,6 @@
-# ADR-0154 · recap 独立面板退役：「生成今日总结」并入 home
+# ADR-0157 · recap 独立面板退役：「生成今日总结」并入 home
 
-日期：2026-09-16 · 关联：issue 346、ADR-0132（home 时间线换行为流源）、ADR-0091（reading-report 内嵌化先例）、ADR-0093（launcher 退役先例）
+日期：2026-09-16 · 关联：issue 364、ADR-0132（home 时间线换行为流源）、ADR-0091（reading-report 内嵌化先例）、ADR-0093（launcher 退役先例）
 
 ## 背景
 

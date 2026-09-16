@@ -10,7 +10,7 @@ import { FSRS, FSRS_FIRST_TEXTS, scheduleNext } from './fsrs';
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
-import { loadFittedParams, saveFittedParams } from './data';
+import { loadFittedParams, saveFittedParams, FIT_PARAMS_VERSION, type FittedParams } from './data';
 import { fitFromItems, mergeFittedW } from './fit';
 import { DEFAULT_W } from './fsrs';
 import { DEFAULT_R_THRESHOLD, isDueToday, isEarlyDue, roundQueue } from './queue';
@@ -40,6 +40,8 @@ export const reviewApp = {
   _reviewCountSinceFit: 0,
   /** ADR-0077：当前生效的拟合权重（null=用默认 DEFAULT_W） */
   _fittedW: null as number[] | null,
+  /** issue 361：最近载入的拟合元数据（null=无拟合文件/未加载；统计弹窗展示拟合档位用） */
+  _fitMeta: null as FittedParams | null,
   /** ADR-0077：拟合运行防重入 */
   _fitRunning: false,
   /** P3：reviewLoop 活动轮询句柄（卸载统一清理；插件禁用后不得继续读盘翻篇弹通知） */
@@ -86,14 +88,22 @@ export const reviewApp = {
     if (!this.dataManager) this.dataManager = new ReviewDataManager(app);
   },
 
-  /** ADR-0077：加载拟合参数到 _fittedW（无则 null 回退默认）；ensureReview 启动时调用 */
+  /** ADR-0077：加载拟合参数到 _fittedW（无则 null 回退默认）；ensureReview 启动时调用。
+   *  issue 361：同时留存 _fitMeta（契约版本/样本数/档位），统计弹窗标注拟合档位用 */
   async loadFitParams(app: App): Promise<void> {
     try {
       const fit = await loadFittedParams(app);
+      this._fitMeta = fit;
       this._fittedW = fit ? mergeFittedW(fit.w) : null;
     } catch (e) {
+      this._fitMeta = null;
       this._fittedW = null;
     }
+  },
+
+  /** issue 361：当前拟合档位元数据（无拟合 → null；stats-ui 人话标注「基础拟合/全参拟合」） */
+  fitMeta(): FittedParams | null {
+    return this._fitMeta;
   },
 
   /**
@@ -114,12 +124,19 @@ export const reviewApp = {
       const items = await dm.loadItems();
       const result = fitFromItems(items);
       if (result) {
-        await saveFittedParams(app, {
+        // issue 361：契约版本落盘（1=基础八参 / 2=全 19 参数）；
+        // full 以拟合结果档位为准（旧口径 w.length>=19 恒真，分档失真——回归修正）
+        const fitAt = new Date().toISOString();
+        const version = result.fit.full ? FIT_PARAMS_VERSION.FULL : FIT_PARAMS_VERSION.BASIC;
+        const meta: FittedParams = {
           w: result.fit.w,
-          fitAt: new Date().toISOString(),
+          fitAt,
           fitCount: result.count,
-          full: result.fit.w.length >= 19,
-        });
+          full: result.fit.full,
+          version,
+        };
+        await saveFittedParams(app, meta);
+        this._fitMeta = meta;
         this._fittedW = mergeFittedW(result.fit.w);
         notice(`已根据 ${result.count} 条复习记录拟合记忆参数`, 'success');
       }

@@ -9,6 +9,7 @@ import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml, summaryHtml,
   readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobFoldHtml, mobChHeadHtml, mobNoHitHtml,
   siteShort, siteTint, stateFlag, stateLabel,
+  clipReportEntryHtml, clipReportShellHtml, clipReportEmptyHtml, buildClipReportSections,
 } from '../../src/clipbook/render';
 import type { ClipArticle } from '../../src/clipbook/render';
 
@@ -171,6 +172,41 @@ describe('clipbook render 纯层（issue 247）', () => {
     expect(mobListHtml([art({ st: 'unread' })], () => '刚刚')).toContain('bz-clip-mob-ttl');
     expect(railFootHtml(7)).toContain('<b>7</b>');
     expect(summaryHtml('摘')).toContain('bz-clip-art-sum-h');
+  });
+
+  it('阅读报告弹层 markup（issue 358）：骨架契约 data-clp-rep-* + 周期 seg + 空态人话 + 三段懒生成', () => {
+    // rail 脚注入口（行为层委托 data-clp-rep-entry）
+    expect(clipReportEntryHtml()).toContain('data-clp-rep-entry');
+    expect(clipReportEntryHtml()).toContain('我读了什么');
+    // 弹层骨架：头行 seg（本周/本月）+ 关闭钮 + 体容器
+    const shell = clipReportShellHtml();
+    expect(shell).toContain('data-clp-rep-period');
+    expect(shell).toContain('data-period="week"');
+    expect(shell).toContain('data-period="month"');
+    expect(shell).toContain('data-clp-rep-close');
+    expect(shell).toContain('data-clp-rep-body');
+    expect(shell).toContain('bz-panel-mtop');
+    // 空态人话（无 emoji）
+    const empty = clipReportEmptyHtml();
+    expect(empty).toContain('还没有阅读记录');
+    expect(empty).not.toMatch(/[←-⯿☀-➿]/);
+    // 三段懒生成：键序冻结 + 段序（概览 → 来源分布 → 阅读时段）
+    const d = {
+      period: 'week' as const, articles: 2, sessions: 3, totalMinutes: 45,
+      bySrc: [{ name: '知乎日报', articles: 2, minutes: 45 }],
+      hours: new Array<number>(24).fill(0), topArticles: [], activeDays: 2,
+    };
+    d.hours[9] = 45;
+    const secs = buildClipReportSections(d);
+    expect(secs.map((x) => x.key)).toEqual(['overview', 'sources', 'hours']);
+    const overview = secs[0].generate();
+    expect(overview).toContain('已读篇数');
+    expect(overview).toContain('总时长');
+    expect(overview).toContain('活跃天数');
+    expect(secs[1].generate()).toContain('知乎日报');
+    const hours = secs[2].generate();
+    expect(hours).toContain('阅读时段');
+    expect(hours).toContain('阅读高峰在 9 点前后');
   });
 
   it('站点短名与徽标色：果壳科学人→果壳；同站恒色', () => {

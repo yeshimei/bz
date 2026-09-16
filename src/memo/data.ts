@@ -10,7 +10,7 @@ import { getApp } from '../core/app';
 import { generateId, extractUrlAndDisplay } from '../core/utils';
 import { backupOriginal, enqueueFileTask, storageFile } from '../core/storage';
 import { notify } from '../core/notice';
-import type { MemoItem } from './types';
+import type { MemoItem, MemoRecur, MemoCheckItem } from './types';
 
 export interface MemoSettingsLike {
   /** ADR-0009 共享数据路径 */
@@ -41,6 +41,74 @@ function hasCourseTag(cache: any): boolean {
   return !!tags && tags.includes('公开课'); // 数组与字符串均有 includes
 }
 
+/** recur 字段归一（issue 353，零迁移）：合法 kind 保留（days 补 interval 缺省 1）；
+ *  缺省/形态不对/未知 kind 一律 null（旧数据与手改脏数据都安全回落「不重复」） */
+export function normalizeRecur(v: unknown): MemoRecur | null {
+  if (!v || typeof v !== 'object') return null;
+  const kind = (v as MemoRecur).kind;
+  if (kind === 'weekly' || kind === 'monthly' || kind === 'yearly') return { kind };
+  if (kind === 'days') {
+    const n = Number((v as MemoRecur).interval);
+    return { kind: 'days', interval: Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1 };
+  }
+  return null;
+}
+
+/** checklist 字段归一（issue 354，零迁移）：逐项 {text,done} 清洗（text 转字符串、done 归布尔、
+ *  空 text 行剔除）；非数组/清洗后为空一律 null（旧数据与手改脏数据都安全回落「无清单」） */
+export function normalizeChecklist(v: unknown): MemoCheckItem[] | null {
+  if (!Array.isArray(v)) return null;
+  const items = v
+    .map((c: any) => ({ text: String(c?.text ?? '').trim(), done: !!c?.done }))
+    .filter((c) => c.text.length > 0);
+  return items.length ? items : null;
+}
+
+/**
+ * composer 约定语法解析（issue 354）：「筹备旅行 /订机票 /订酒店」——
+ * 空白分隔的 `/词条` token 逐个收进清单（词条本身不含空白）；其余文本为标题。
+ * 全部是词条（无标题）时首词条升格为标题；无词条时 checklist = null（普通条目）。
+ * 纯函数；URL 不受影响（https:// 开头不以 / 起始，路径型 token 如 24/7 也不带前导斜杠）。
+ */
+export function parseComposerChecklist(raw: string): { title: string; checklist: MemoCheckItem[] | null } {
+  const text = raw.trim();
+  if (!text) return { title: '', checklist: null };
+  const items: MemoCheckItem[] = [];
+  const titleParts: string[] = [];
+  for (const tok of text.split(/\s+/)) {
+    if (tok.length > 1 && tok.startsWith('/')) items.push({ text: tok.slice(1), done: false });
+    else titleParts.push(tok);
+  }
+  let title = titleParts.join(' ').trim();
+  if (!title && items.length) title = items.shift()!.text; // 全是词条：首词条升格为标题
+  return { title, checklist: items.length ? items : null };
+}
+
+/**
+ * 周期条目的下一期到期时间（issue 353）：锚定 base（条目 due；无则取完成时刻）不动，
+ * 取「锚点 + n 个周期」中第一个严格晚于完成时刻的值——锚点不随加法漂移
+ * （月锚 1/31 顺延恒为每月 31 日/月末钳制 2/28，不因逐次 add 退化成 28 号）。
+ * 补完逾期老条目逐周期前跳，上限 366 跳防极端数据死循环。
+ * 纯函数（moment 仅做日期算术），nowStr 由调用方注入便于测试。
+ */
+export function nextRecurDue(recur: MemoRecur, base: string | null, nowStr?: string): string {
+  const fmt = 'YYYY-MM-DD HH:mm:ss';
+  const norm = (s: string) => s.replace('T', ' ');
+  let anchor = moment(norm(base || nowStr || moment().format(fmt)), fmt);
+  if (!anchor.isValid()) anchor = moment();
+  const now = nowStr ? moment(norm(nowStr), fmt) : moment();
+  const unit = recur.kind === 'weekly' ? 'weeks' : recur.kind === 'monthly' ? 'months' : recur.kind === 'yearly' ? 'years' : 'days';
+  const amount = unit === 'days' ? (recur.interval && recur.interval >= 1 ? Math.floor(recur.interval) : 1) : 1;
+  let n = 1;
+  let cur = anchor.clone().add(n * amount, unit as moment.DurationInputArg2);
+  let guard = 0;
+  while (cur.valueOf() <= now.valueOf() && guard++ < 366) {
+    n++;
+    cur = anchor.clone().add(n * amount, unit as moment.DurationInputArg2);
+  }
+  return cur.format(fmt);
+}
+
 /** 条目字段归一（缺省补默认值，旧数据零迁移）——与旧 memo loadItems 逐字段等价 */
 export function normalizeItem(item: any): MemoItem {
   return {
@@ -58,6 +126,8 @@ export function normalizeItem(item: any): MemoItem {
     coursePath: item.coursePath || null,
     linkedNote: item.linkedNote || null,
     url: item.url || null,
+    recur: normalizeRecur(item.recur),
+    checklist: normalizeChecklist(item.checklist),
   };
 }
 
@@ -149,9 +219,42 @@ export const MemoData = {
     });
   },
 
-  async completeItem(id: string) {
-    const now = moment().format('YYYY-MM-DD HH:mm:ss');
-    await this.updateItem(id, { completed: now });
+  /**
+   * 完成条目（issue 353 扩展）：标记 completed；周期条目（recur）自动生成下一期——
+   * 全字段克隆（场景/优先级/关联笔记/子任务等保留），新 id/created，completed 清空，
+   * due 顺延到下一周期（nextRecurDue，无 due 则锚定完成时刻起算）。
+   * 返回 { next }：非周期条目 next = null；已完成条目幂等短路（不重复生成）。
+   * 整个「读→改→写（含生成）」在同一个串行队列任务内原子完成——队列不可重入，
+   * 任务内不得再走 updateItem/addItem（同路径会死锁）。
+   */
+  async completeItem(id: string): Promise<{ next: MemoItem | null }> {
+    return enqueueFileTask(this.memoFilePath, async () => {
+      const data = await this.read();
+      const item = data.find((d: any) => d.id === id);
+      if (!item) throw new Error('条目不存在');
+      if (item.completed) return { next: null };
+      const now = moment().format('YYYY-MM-DD HH:mm:ss');
+      item.completed = now;
+      const recur = normalizeRecur(item.recur);
+      let next: MemoItem | null = null;
+      if (recur) {
+        const due = nextRecurDue(recur, item.due || now, now);
+        // 经 normalizeItem 重建干净形态；notePosition 浅拷贝防两期共享引用；
+        // checklist 深拷贝且勾选态重置——新的一期从头来过（原条目保留当期勾选史）
+        next = normalizeItem({
+          ...item,
+          notePosition: item.notePosition ? { ...item.notePosition } : null,
+          checklist: normalizeChecklist(item.checklist)?.map((c) => ({ ...c, done: false })) ?? null,
+          id: generateId(),
+          created: now,
+          completed: null,
+          due,
+        });
+        data.unshift(next);
+      }
+      await this.write(data);
+      return { next };
+    });
   },
 
   /** 删除条目；返回被删条目的原索引（未找到返回 -1），供撤销时插回原位 */

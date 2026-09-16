@@ -47,7 +47,7 @@ export class FavoritesAIService {
     let fetched = false;
     for (let attempt = 0; attempt < 2 && !fetched; attempt++) {
       try {
-        // 8s 超时（withTimeout，core/http 单源，issue 347）：api.github.com 网络不稳，
+        // 8s 超时（withTimeout，core/http 单源，issue 365）：api.github.com 网络不稳，
         // 超时/请求失败同样进 catch → 重试 1 次 → 降级
         const resp: any = await withTimeout(
           requestUrl({

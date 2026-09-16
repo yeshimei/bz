@@ -1,5 +1,5 @@
-/* 源指纹 ed2968a1deb2e920 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/knowledge-boxes.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/ui-tools.ts","src/secondbrain/whitelist.ts"]*/
+/* 源指纹 067b50809b0bbf35 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
   var __create = Object.create;
@@ -14,6 +14,9 @@ var BZW_secondbrain = (() => {
     if (typeof require !== "undefined") return require.apply(this, arguments);
     throw Error('Dynamic require of "' + x + '" is not supported');
   });
+  var __esm = (fn, res) => function __init() {
+    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+  };
   var __commonJS = (cb, mod) => function __require2() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
@@ -38,6 +41,1461 @@ var BZW_secondbrain = (() => {
     mod
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // prototypes/secondbrain/fake/fake-obsidian.ts
+  function setIcon(container, iconId) {
+    var _a2;
+    const d = typeof window !== "undefined" && ((_a2 = window.SB_ICONS) == null ? void 0 : _a2[iconId]) || "";
+    if (!d) return;
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.innerHTML = d;
+    container.replaceChildren(svg);
+  }
+  async function requestUrl() {
+    throw new Error("原型环境无 Obsidian requestUrl（fake obsidian）");
+  }
+  var Platform, MarkdownRenderer, Component, FakeVault, FakeApp;
+  var init_fake_obsidian = __esm({
+    "prototypes/secondbrain/fake/fake-obsidian.ts"() {
+      Platform = {
+        isMobile: typeof window !== "undefined" && window.innerWidth <= 768
+      };
+      if (typeof globalThis !== "undefined") {
+        globalThis.obsidian = globalThis.obsidian || { Platform };
+      }
+      MarkdownRenderer = {
+        async render(_app2, md, el) {
+          const html = String(md).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\n/g, "<br>");
+          el.innerHTML = html;
+        }
+      };
+      Component = class {
+        onload() {
+        }
+        unload() {
+        }
+      };
+      FakeVault = class _FakeVault {
+        constructor() {
+          this.listeners = /* @__PURE__ */ new Map();
+          /** 存储面（core/storage jsonFileStore / vector-store 二进制 / 主面板存储占用） */
+          this.adapter = {
+            exists: async (path) => localStorage.getItem(_FakeVault.key(path)) != null,
+            read: async (path) => {
+              const raw = localStorage.getItem(_FakeVault.key(path));
+              if (raw == null) throw new Error("file not found: " + path);
+              return raw;
+            },
+            write: async (path, data) => {
+              localStorage.setItem(_FakeVault.key(path), data);
+            },
+            /** 与 Obsidian adapter.stat 同形：{ size } 或抛错（调用方 try/catch） */
+            stat: async (path) => {
+              const raw = localStorage.getItem(_FakeVault.key(path));
+              if (raw == null) throw new Error("file not found: " + path);
+              return { size: raw.length, type: "file" };
+            },
+            /** 二进制面（vector-store 专用；原型以 base64 存取，行为代码原样跑） */
+            readBinary: async (path) => {
+              const raw = localStorage.getItem(_FakeVault.key(path));
+              if (raw == null) throw new Error("file not found: " + path);
+              const bin = atob(raw);
+              const buf = new ArrayBuffer(bin.length);
+              const view = new Uint8Array(buf);
+              for (let i = 0; i < bin.length; i++) view[i] = bin.charCodeAt(i);
+              return buf;
+            },
+            writeBinary: async (path, data) => {
+              const view = new Uint8Array(data);
+              let bin = "";
+              for (let i = 0; i < view.length; i++) bin += String.fromCharCode(view[i]);
+              localStorage.setItem(_FakeVault.key(path), btoa(bin));
+            }
+          };
+        }
+        static key(path) {
+          return "bz-sb-sim:" + path;
+        }
+        getAbstractFileByPath(path) {
+          const raw = localStorage.getItem(_FakeVault.key(path));
+          return raw == null ? null : { path, content: raw };
+        }
+        /** 白名单扫描面（vector-store.refresh 链）：种子库无 md 笔记 → 无变更，refresh 快速完成 */
+        getMarkdownFiles() {
+          const out = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith(_FakeVault.key("")) && k.endsWith(".md")) {
+              const path = k.slice(_FakeVault.key("").length);
+              out.push({ path, content: localStorage.getItem(k) || "" });
+            }
+          }
+          return out;
+        }
+        async read(f) {
+          return f.content;
+        }
+        async modify(f, content) {
+          f.content = content;
+          localStorage.setItem(_FakeVault.key(f.path), content);
+        }
+        async create(path, content) {
+          localStorage.setItem(_FakeVault.key(path), content);
+          return { path, content };
+        }
+        async createFolder(_path) {
+          return void 0;
+        }
+        on(evt, cb) {
+          if (!this.listeners.has(evt)) this.listeners.set(evt, []);
+          this.listeners.get(evt).push(cb);
+          return { ref: this.listeners.get(evt).length };
+        }
+        offref(_ref) {
+        }
+        emit(evt, file) {
+          var _a2;
+          for (const cb of (_a2 = this.listeners.get(evt)) != null ? _a2 : []) cb(file);
+        }
+      };
+      FakeApp = class {
+        constructor() {
+          this.vault = new FakeVault();
+          /** 参考面板的光标轮询在无编辑器时静默空转（真行为同语义）；演示检索由 fake-sim 的
+           *  「换一篇当前笔记」驱动 refreshWithDebounce */
+          this.workspace = {
+            activeEditor: null,
+            getActiveFile: () => null,
+            getLeaf: () => ({
+              openFile: async () => {
+              }
+            }),
+            on: () => ({ ref: 0 }),
+            offref() {
+            }
+          };
+        }
+      };
+    }
+  });
+
+  // src/core/app.ts
+  function setApp(app) {
+    _app = app;
+  }
+  function getApp() {
+    if (!_app) {
+      throw new Error("bz: app 未初始化（setApp 未调用）");
+    }
+    return _app;
+  }
+  var _app;
+  var init_app = __esm({
+    "src/core/app.ts"() {
+      _app = null;
+    }
+  });
+
+  // src/core/settings-provider.ts
+  function setSettingsProvider(fn) {
+    _provider = fn;
+  }
+  function setSettingsSaver(fn) {
+    _saver = fn;
+  }
+  function tryGetSettings() {
+    return _provider ? _provider() : {};
+  }
+  var _provider, _saver;
+  var init_settings_provider = __esm({
+    "src/core/settings-provider.ts"() {
+      _provider = null;
+      _saver = null;
+    }
+  });
+
+  // src/core/model-limits.ts
+  function normalizeModelId(model) {
+    return String(model || "").trim().toLowerCase().split(":")[0].split("/").pop().trim();
+  }
+  function resolveModelLimits(model) {
+    const key = normalizeModelId(model || "");
+    if (!key) return null;
+    let best = null;
+    for (const entry of MODEL_LIMITS) {
+      for (const k of [entry.id, ...entry.aliases || []]) {
+        if (key === k) return { maxOutput: entry.maxOutput, contextWindow: entry.contextWindow };
+        if (key.includes(k) && (!best || k.length > best.len)) best = { entry, len: k.length };
+      }
+    }
+    return best ? { maxOutput: best.entry.maxOutput, contextWindow: best.entry.contextWindow } : null;
+  }
+  var MODEL_LIMITS;
+  var init_model_limits = __esm({
+    "src/core/model-limits.ts"() {
+      MODEL_LIMITS = [
+        // ---- DeepSeek 官方（2026-09-16 核对官方「模型 & 价格」页：上下文 1M / 最大输出 384K，在售模型同档）
+        {
+          id: "deepseek-flash",
+          aliases: ["deepseek-v4-flash", "deepseek-v4-flash-vision-exp", "deepseek-flash-latest", "deepseek-v4.1-flash"],
+          maxOutput: 393216,
+          contextWindow: 1048576
+        },
+        {
+          id: "deepseek-v4-pro",
+          aliases: ["deepseek-pro", "deepseek-pro-latest"],
+          maxOutput: 393216,
+          contextWindow: 1048576
+        },
+        // ---- 阿里云百炼 Qwen3.7 系（2026-09-16 核对官方帮助中心；qwen-plus / qwen-max 等短名指向当前主力版本）
+        { id: "qwen3.7-plus", aliases: ["qwen-plus"], maxOutput: 131072, contextWindow: 1e6 },
+        { id: "qwen3.7-max", aliases: ["qwen-max"], maxOutput: 65536, contextWindow: 1e6 },
+        { id: "qwen3.7-flash", aliases: ["qwen-flash", "qwen-turbo"], maxOutput: 16384, contextWindow: 1e6 },
+        // ---- 以下条目沿用注册表既有口径（未二次核对官方文档，数值与注册表默认一致，勿据此调大）
+        { id: "claude-sonnet-4-5", aliases: ["claude-sonnet-4.5"], maxOutput: 64e3, contextWindow: 2e5 },
+        { id: "gpt-4o-mini", maxOutput: 16384, contextWindow: 128e3 },
+        { id: "gemini-2.0-flash", maxOutput: 8192, contextWindow: 1048576 },
+        { id: "kimi-k2-0711-preview", aliases: ["kimi-k2"], maxOutput: 131072, contextWindow: 131072 },
+        { id: "glm-4-flash", maxOutput: 8192, contextWindow: 131072 }
+      ];
+    }
+  });
+
+  // src/core/ai.ts
+  function setAISettingsProvider(fn) {
+    _settingsProvider = fn;
+  }
+  function getQ3Settings() {
+    return _settingsProvider ? _settingsProvider() : {};
+  }
+  function getProviderDescriptor(id) {
+    return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
+  }
+  function thinkingOptionsFor(level, style) {
+    if (style === "none") return null;
+    if (level === "off") {
+      if (style === "enable") return { enable_thinking: false };
+      if (style === "zhipu") return { thinking: { type: "disabled" } };
+      return null;
+    }
+    if (level !== "low" && level !== "medium" && level !== "high") return null;
+    if (style === "effort") return { reasoning_effort: level };
+    if (style === "enable") return { enable_thinking: true };
+    return { thinking: { type: "enabled" } };
+  }
+  function hasExplicitThinkingOption(mo) {
+    return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
+  }
+  async function getAIProvider(override) {
+    var _a2, _b2, _c;
+    if (!override && _aiProviderCache) return _aiProviderCache;
+    const cacheable = !override;
+    const cachePut = (p) => {
+      if (cacheable) _aiProviderCache = p;
+      return p;
+    };
+    const s = getQ3Settings();
+    if (override && typeof override === "object" && override.apiKey) {
+      return {
+        endpoint: String(override.endpoint || "https://api.deepseek.com").replace(/\/+$/, ""),
+        apiKey: override.apiKey,
+        model: override.model || void 0,
+        extraHeaders: override.extraHeaders || void 0,
+        defaultMaxTokens: override.defaultMaxTokens
+      };
+    }
+    const name = typeof override === "string" && override || s.aiProvider || "opencode-go";
+    const desc = getProviderDescriptor(name);
+    if (name === "custom") {
+      const endpoint = (s.aiCustomEndpoint || "").replace(/\/+$/, "");
+      if (!endpoint || !s.aiCustomApiKey) {
+        throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
+      }
+      const customLimits = resolveModelLimits(s.aiCustomModel || "");
+      return cachePut({
+        id: "custom",
+        endpoint,
+        apiKey: s.aiCustomApiKey,
+        model: s.aiCustomModel || void 0,
+        extraHeaders: desc.extraHeaders,
+        defaultMaxTokens: ((_a2 = s.aiMaxTokensOverrides) == null ? void 0 : _a2["custom"]) || (customLimits == null ? void 0 : customLimits.maxOutput) || desc.defaultMaxTokens
+      });
+    }
+    const key = s[desc.apiKeyKey];
+    if (!key && name === "deepseek") {
+      try {
+        const raw = await getApp().vault.adapter.read(".obsidian/plugins/quickadd/data.json");
+        const cfg = JSON.parse(raw);
+        const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
+        if (provider && provider.endpoint && provider.apiKey) {
+          return cachePut({
+            id: "deepseek",
+            endpoint: String(provider.endpoint).replace(/\/+$/, ""),
+            apiKey: provider.apiKey,
+            defaultMaxTokens: desc.defaultMaxTokens
+          });
+        }
+      } catch (e) {
+      }
+    }
+    if (!key && name !== "ollama") {
+      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
+    }
+    const overrideModel = (_b2 = s.aiModelOverrides) == null ? void 0 : _b2[name];
+    const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
+    const limits = resolveModelLimits(overrideModel || desc.model || "");
+    return cachePut({
+      id: name,
+      endpoint: desc.endpoint,
+      apiKey: key || "",
+      model: overrideModel || desc.model || void 0,
+      noCors: desc.noCors,
+      extraHeaders: desc.extraHeaders,
+      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
+    });
+  }
+  function abortError() {
+    const e = new Error("请求已取消");
+    e.name = "AbortError";
+    return e;
+  }
+  function timeoutError(idleMs = AI_IDLE_TIMEOUT_MS) {
+    const e = new Error(`AI 请求超时（${Math.round(idleMs / 1e3)} 秒无响应）`);
+    e.name = "TimeoutError";
+    return e;
+  }
+  function idleTimeoutOf(body) {
+    const msgs = Array.isArray(body == null ? void 0 : body.messages) ? body.messages : [];
+    const hasImage = msgs.some(
+      (m) => Array.isArray(m == null ? void 0 : m.content) && m.content.some((p) => (p == null ? void 0 : p.type) === "image_url")
+    );
+    return hasImage ? AI_IMAGE_IDLE_TIMEOUT_MS : AI_IDLE_TIMEOUT_MS;
+  }
+  async function streamChatCompletions(provider, body, signal, onDelta) {
+    const idleMs = idleTimeoutOf(body);
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${provider.apiKey}`,
+      ...provider.extraHeaders || {}
+    };
+    const controller = new AbortController();
+    const onOuterAbort = () => controller.abort();
+    let outerLinked = false;
+    if (signal) {
+      if (signal.aborted) controller.abort();
+      else {
+        signal.addEventListener("abort", onOuterAbort);
+        outerLinked = true;
+      }
+    }
+    let idleTimer = null;
+    const armIdle = () => {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => controller.abort(), idleMs);
+    };
+    try {
+      armIdle();
+      const resp = await fetch(`${provider.endpoint}/chat/completions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      if (!resp.ok) {
+        let msg = `API ${resp.status}`;
+        try {
+          const err = await resp.json();
+          if (err.error && err.error.message) msg = err.error.message;
+        } catch (e) {
+        }
+        throw new Error(msg);
+      }
+      if (!resp.body || typeof resp.body.getReader !== "function") {
+        const data = await resp.json();
+        return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
+      }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let full = "", buf = "";
+      while (true) {
+        armIdle();
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf("\n")) !== -1) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line.startsWith("data:")) continue;
+          const payload = line.slice(5).trim();
+          if (payload === "[DONE]") {
+            try {
+              reader.cancel();
+            } catch (e) {
+            }
+            return full;
+          }
+          try {
+            const chunk = JSON.parse(payload);
+            const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+            if (delta) {
+              full += delta;
+              try {
+                onDelta == null ? void 0 : onDelta(delta);
+              } catch (e) {
+              }
+            }
+          } catch (e) {
+          }
+        }
+      }
+      return full;
+    } catch (e) {
+      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError(idleMs);
+      throw e;
+    } finally {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      if (outerLinked && signal) signal.removeEventListener("abort", onOuterAbort);
+    }
+  }
+  async function chatCompletionsNonStream(provider, body, signal) {
+    if (signal == null ? void 0 : signal.aborted) throw abortError();
+    const idleMs = idleTimeoutOf(body);
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${provider.apiKey}`,
+      ...provider.extraHeaders || {}
+    };
+    const resp = await new Promise((resolve, reject) => {
+      let timer = null;
+      const settle = (fn) => {
+        if (timer !== null) clearTimeout(timer);
+        fn();
+      };
+      timer = setTimeout(() => settle(() => reject(timeoutError(idleMs))), idleMs);
+      requestUrl({
+        url: `${provider.endpoint}/chat/completions`,
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ...body, stream: false })
+      }).then(
+        (r) => settle(() => resolve(r)),
+        (e) => settle(() => reject(e))
+      );
+    });
+    if (signal == null ? void 0 : signal.aborted) throw abortError();
+    const data = JSON.parse(resp.text);
+    const errMsg = data.error && (data.error.message || data.error.type) || data.message && data.message;
+    if (errMsg) throw new Error(`API ${resp.status}: ${errMsg}`);
+    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
+    return content;
+  }
+  function buildUserContent(input) {
+    var _a2;
+    if (typeof input === "string") return input;
+    const text = String((_a2 = input == null ? void 0 : input.text) != null ? _a2 : "");
+    const images = (Array.isArray(input == null ? void 0 : input.images) ? input.images : []).map((u) => String(u != null ? u : "").trim()).filter((u) => u.length > 0);
+    if (!images.length) return text;
+    return [
+      { type: "text", text },
+      ...images.map((url) => ({ type: "image_url", image_url: { url } }))
+    ];
+  }
+  function buildMessages(input) {
+    if (input && typeof input === "object" && Array.isArray(input.messages)) {
+      return input.messages;
+    }
+    return [{ role: "user", content: buildUserContent(input) }];
+  }
+  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
+    return new AIService(params, defaultModel, defaultOptions);
+  }
+  var _settingsProvider, AI_PROVIDER_REGISTRY, AI_THINKING_STYLE, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MAX_BYTES, AIService;
+  var init_ai = __esm({
+    "src/core/ai.ts"() {
+      init_fake_obsidian();
+      init_app();
+      init_model_limits();
+      _settingsProvider = null;
+      AI_PROVIDER_REGISTRY = [
+        {
+          id: "deepseek",
+          label: "DeepSeek",
+          endpoint: "https://api.deepseek.com",
+          model: "",
+          // 空 = 沿用调用方默认模型（原行为：deepseek 不强制模型）
+          // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
+          // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
+          defaultMaxTokens: 393216,
+          apiKeyKey: "deepseekApiKey",
+          apiKeyLabel: "DeepSeek 密钥",
+          apiKeyDesc: "留空则自动回退读取外部配置密钥"
+        },
+        {
+          id: "opencode-go",
+          label: "OpenCode Go",
+          endpoint: "https://opencode.ai/zen/go/v1",
+          model: "deepseek-v4-flash",
+          // deepseek-v4-flash 是官方 deepseek-flash 的旧名（同档：1M 窗口 / 384K 输出）
+          defaultMaxTokens: 393216,
+          apiKeyKey: "opencodeGoApiKey",
+          apiKeyLabel: "OpenCode 密钥",
+          apiKeyDesc: "在订阅官网获取后填入这里",
+          noCors: true
+        },
+        {
+          id: "openai",
+          label: "OpenAI",
+          endpoint: "https://api.openai.com/v1",
+          model: "gpt-4o-mini",
+          defaultMaxTokens: 16384,
+          apiKeyKey: "openaiApiKey",
+          apiKeyLabel: "OpenAI 密钥",
+          apiKeyDesc: "在 OpenAI 官网获取后填入这里"
+        },
+        {
+          id: "anthropic",
+          label: "Anthropic（Claude）",
+          endpoint: "https://api.anthropic.com/v1",
+          model: "claude-sonnet-4-5",
+          defaultMaxTokens: 64e3,
+          // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
+          apiKeyKey: "anthropicApiKey",
+          apiKeyLabel: "Anthropic 密钥",
+          apiKeyDesc: "在 Anthropic 官网获取后填入这里",
+          extraHeaders: { "anthropic-version": "2023-06-01" }
+        },
+        {
+          id: "google",
+          label: "Google Gemini",
+          endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
+          model: "gemini-2.0-flash",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "googleApiKey",
+          apiKeyLabel: "Gemini 密钥",
+          apiKeyDesc: "在 Google AI Studio 获取后填入这里"
+        },
+        {
+          id: "moonshot",
+          label: "Moonshot（Kimi）",
+          endpoint: "https://api.moonshot.cn/v1",
+          model: "kimi-k2-0711-preview",
+          defaultMaxTokens: 131072,
+          // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
+          apiKeyKey: "moonshotApiKey",
+          apiKeyLabel: "Kimi 密钥",
+          apiKeyDesc: "在 Moonshot 开放平台获取后填入这里"
+        },
+        {
+          id: "zhipu",
+          label: "智谱（GLM）",
+          endpoint: "https://open.bigmodel.cn/api/paas/v4",
+          model: "glm-4-flash",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "zhipuApiKey",
+          apiKeyLabel: "智谱密钥",
+          apiKeyDesc: "在智谱开放平台获取后填入这里"
+        },
+        {
+          // Coding 套餐（Lite/Pro/Max）额度只在 coding 专用端点生效；走标准 paas/v4 会按量计费报余额不足
+          id: "zhipu-plan",
+          label: "智谱 Plan",
+          endpoint: "https://open.bigmodel.cn/api/coding/paas/v4",
+          model: "glm-5.3-flash",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "zhipuPlanApiKey",
+          apiKeyLabel: "智谱 Plan 密钥",
+          apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同"
+        },
+        {
+          id: "dashscope",
+          label: "阿里云百炼（通义）",
+          endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          model: "qwen-plus",
+          // qwen-plus 指向当前主力版本（Qwen3.7-Plus：1M 窗口 / 131K 输出）
+          defaultMaxTokens: 131072,
+          apiKeyKey: "dashscopeApiKey",
+          apiKeyLabel: "百炼密钥",
+          apiKeyDesc: "在阿里云百炼获取 API Key 后填入这里"
+        },
+        {
+          id: "siliconflow",
+          label: "硅基流动",
+          endpoint: "https://api.siliconflow.cn/v1",
+          model: "deepseek-ai/DeepSeek-V3",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "siliconflowApiKey",
+          apiKeyLabel: "硅基流动密钥",
+          apiKeyDesc: "在硅基流动官网获取后填入这里"
+        },
+        {
+          id: "openrouter",
+          label: "OpenRouter",
+          endpoint: "https://openrouter.ai/api/v1",
+          model: "deepseek/deepseek-chat",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "openrouterApiKey",
+          apiKeyLabel: "OpenRouter 密钥",
+          apiKeyDesc: "在 OpenRouter 官网获取后填入这里"
+        },
+        {
+          id: "xai",
+          label: "xAI（Grok）",
+          endpoint: "https://api.x.ai/v1",
+          model: "grok-2-latest",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "xaiApiKey",
+          apiKeyLabel: "xAI 密钥",
+          apiKeyDesc: "在 xAI 控制台获取后填入这里"
+        },
+        {
+          id: "groq",
+          label: "Groq",
+          endpoint: "https://api.groq.com/openai/v1",
+          model: "llama-3.3-70b-versatile",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "groqApiKey",
+          apiKeyLabel: "Groq 密钥",
+          apiKeyDesc: "在 Groq 控制台获取后填入这里"
+        },
+        {
+          id: "mistral",
+          label: "Mistral",
+          endpoint: "https://api.mistral.ai/v1",
+          model: "mistral-large-latest",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "mistralApiKey",
+          apiKeyLabel: "Mistral 密钥",
+          apiKeyDesc: "在 Mistral 控制台获取后填入这里"
+        },
+        {
+          id: "together",
+          label: "Together AI",
+          endpoint: "https://api.together.xyz/v1",
+          model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "togetherApiKey",
+          apiKeyLabel: "Together 密钥",
+          apiKeyDesc: "在 Together AI 官网获取后填入这里"
+        },
+        {
+          id: "ollama",
+          label: "Ollama（本地）",
+          endpoint: "http://localhost:11434/v1",
+          model: "llama3.1",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "ollamaApiKey",
+          apiKeyLabel: "Ollama 密钥",
+          apiKeyDesc: "本地服务无需密钥，留空即可"
+        },
+        {
+          id: "custom",
+          label: "自定义（OpenAI 兼容）",
+          endpoint: "",
+          model: "",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "aiCustomApiKey",
+          apiKeyLabel: "自定义 API 密钥",
+          apiKeyDesc: "在服务官网获取后填入这里"
+        }
+      ];
+      AI_THINKING_STYLE = {
+        openai: "effort",
+        openrouter: "effort",
+        anthropic: "effort",
+        google: "effort",
+        groq: "effort",
+        xai: "effort",
+        together: "effort",
+        mistral: "effort",
+        siliconflow: "effort",
+        deepseek: "enable",
+        "opencode-go": "enable",
+        dashscope: "enable",
+        zhipu: "zhipu",
+        "zhipu-plan": "zhipu",
+        moonshot: "none",
+        ollama: "none",
+        custom: "none"
+      };
+      _aiProviderCache = null;
+      AI_IDLE_TIMEOUT_MS = 6e4;
+      AI_IMAGE_IDLE_TIMEOUT_MS = 18e4;
+      AI_IMAGE_MAX_BYTES = 32 * 1024 * 1024;
+      AIService = class {
+        constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
+          this.defaultModel = defaultModel;
+          this.defaultOptions = defaultOptions;
+        }
+        /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
+         *  input 为字符串（纯文本，报文同旧版）、{text, images}（带图 → 多模态 content 数组）
+         *  或 {messages}（多轮完整报文，原样进请求）；
+         *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
+         *  既有调用（不传这两项）行为零变化 */
+        async prompt(input, model = this.defaultModel, options = {}) {
+          const mergedOptions = this._mergeOptions(options);
+          const provider = await getAIProvider(mergedOptions.provider);
+          const s = getQ3Settings();
+          const isExplicit = model !== this.defaultModel;
+          const effModel = isExplicit ? model : provider.model || model;
+          const mo = mergedOptions.modelOptions || {};
+          const effMaxTokens = provider.defaultMaxTokens || 4096;
+          const body = {
+            model: effModel,
+            messages: buildMessages(input),
+            max_tokens: effMaxTokens,
+            stream: true
+          };
+          for (const k of Object.keys(mo)) {
+            if (k === "max_tokens") continue;
+            body[k] = mo[k];
+          }
+          if (!hasExplicitThinkingOption(mo)) {
+            const style = AI_THINKING_STYLE[provider.id || ""] || "none";
+            const thinking = thinkingOptionsFor(s.aiThinking || "auto", style);
+            if (thinking) Object.assign(body, thinking);
+          }
+          const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
+          const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
+          try {
+            const content = provider.noCors ? await chatCompletionsNonStream(provider, body, signal) : await streamChatCompletions(provider, body, signal, onDelta);
+            return content;
+          } catch (streamError) {
+            if (signal == null ? void 0 : signal.aborted) throw streamError;
+            try {
+              const content = await chatCompletionsNonStream(provider, body, signal);
+              return content;
+            } catch (e) {
+              throw new Error(`AI 请求失败: ${streamError.message}（fallback: ${e.message}）`);
+            }
+          }
+        }
+        /** 普通对话模型（deepseek-v4-flash；收纯文本或 {text, images}） */
+        async chat(input, extraOptions = {}) {
+          return this.prompt(input, "deepseek-v4-flash", extraOptions);
+        }
+        /** 推理模型，自动开启思考模式 */
+        async reason(input, extraOptions = {}) {
+          const options = this._prepareOptions(extraOptions, { enable_thinking: true });
+          return this.prompt(input, "deepseek-v4-flash", options);
+        }
+        /** 联网搜索（实验性，第三方代理平台生效） */
+        async search(input, extraOptions = {}) {
+          const options = this._prepareOptions(extraOptions, { search: true });
+          return this.prompt(input, "deepseek-v4-flash", options);
+        }
+        /** 要求 AI 返回 JSON 格式（设置 response_format；知识盒等域走这条，故同样要能吃图） */
+        async json(input, extraOptions = {}) {
+          const options = this._prepareOptions(extraOptions, {
+            response_format: { type: "json_object" }
+          });
+          return this.prompt(input, "deepseek-v4-flash", options);
+        }
+        /** 思考 + 联网搜索（实验性） */
+        async reasonAndSearch(input, extraOptions = {}) {
+          const options = this._prepareOptions(extraOptions, {
+            enable_thinking: true,
+            search: true
+          });
+          return this.prompt(input, "deepseek-v4-flash", options);
+        }
+        setDefaultModel(model) {
+          this.defaultModel = model;
+        }
+        setDefaultOptions(options) {
+          this.defaultOptions = options;
+        }
+        // ---------- 内部辅助方法 ----------
+        _mergeOptions(options) {
+          const merged = { ...this.defaultOptions, ...options };
+          if (this.defaultOptions.modelOptions || options.modelOptions) {
+            merged.modelOptions = {
+              ...this.defaultOptions.modelOptions || {},
+              ...options.modelOptions || {}
+            };
+          }
+          return merged;
+        }
+        /** 准备选项：复制 extraOptions，并设置指定的 modelOptions 字段（用户显式传入优先） */
+        _prepareOptions(extraOptions, modelSettings) {
+          const options = { ...extraOptions };
+          if (!options.modelOptions) options.modelOptions = {};
+          const userModelOpts = options.modelOptions;
+          options.modelOptions = { ...modelSettings, ...userModelOpts };
+          return options;
+        }
+      };
+    }
+  });
+
+  // src/core/z-order.ts
+  function syncAlwaysOnTop() {
+    for (const el of alwaysOnTop) {
+      if (!el.isConnected) {
+        alwaysOnTop.delete(el);
+        continue;
+      }
+      el.style.zIndex = String(zCounter);
+    }
+  }
+  function allocZBlock(n) {
+    const base = ++zCounter;
+    zCounter += n - 1;
+    zCounter++;
+    syncAlwaysOnTop();
+    return base;
+  }
+  function allocZ() {
+    return allocZBlock(1);
+  }
+  function topifyZ(...els) {
+    const live2 = els.filter((el) => !!el);
+    if (live2.length === 0) return;
+    const base = allocZBlock(live2.length);
+    live2.forEach((el, i) => {
+      el.style.zIndex = String(base + i);
+    });
+  }
+  var zCounter, alwaysOnTop;
+  var init_z_order = __esm({
+    "src/core/z-order.ts"() {
+      zCounter = 1e5;
+      alwaysOnTop = /* @__PURE__ */ new Set();
+    }
+  });
+
+  // src/core/notice.ts
+  function maxVisible() {
+    const v = Number(noticePref("noticeMaxVisible"));
+    return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
+  }
+  function notice(msg, type, duration) {
+    notify(msg, { type: type || "info", duration });
+  }
+  function isMobileView() {
+    return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
+  }
+  function defaultVariant() {
+    if (isMobileView()) return "drop";
+    const pos = noticePref("noticePosition");
+    return pos === "top-left" || pos === "bottom-left" ? "slide-left" : "slide-right";
+  }
+  function noticePref(key) {
+    var _a2;
+    try {
+      const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2[key];
+      return typeof v === "string" ? v : void 0;
+    } catch (e) {
+      return void 0;
+    }
+  }
+  function durationGear() {
+    const v = noticePref("noticeDuration");
+    if (v === "quick") return { base: 2e3, persistent: false };
+    if (v === "relaxed") return { base: 5e3, persistent: false };
+    if (v === "persistent") return { base: 3e3, persistent: true };
+    return { base: 3e3, persistent: false };
+  }
+  function defaultDuration(type) {
+    const base = durationGear().base;
+    return type === "error" ? base + 2e3 : base;
+  }
+  function suppressedByLevel(kind, opts) {
+    const level = noticePref("noticeLevel");
+    if (level !== "important" && level !== "error") return false;
+    if (kind === "progress") return false;
+    if (opts && (opts.action || opts.actions && opts.actions.length > 0)) return false;
+    if (level === "error") return kind !== "error";
+    return kind !== "warning" && kind !== "error";
+  }
+  function applyPositionClass(container) {
+    const pos = noticePref("noticePosition");
+    container.classList.remove(...POSITION_CLASSES);
+    const cls = pos === "bottom-right" || pos === "bottom-left" || pos === "top-left" ? `bz-notice-pos--${pos}` : "";
+    if (cls) container.classList.add(cls);
+  }
+  function calcDuration(text, base) {
+    const len = text.length;
+    if (len <= SHORT_THRESHOLD) return base;
+    const extra = (len - SHORT_THRESHOLD) * PER_CHAR_MS;
+    return Math.min(base + extra, 15e3);
+  }
+  function ensureContainer() {
+    let container = document.getElementById("bz-notice-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "bz-notice-container";
+      document.body.appendChild(container);
+    }
+    return container;
+  }
+  function removeInternal(n) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    const i = live.indexOf(n);
+    if (i !== -1) live.splice(i, 1);
+    if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
+  }
+  function evictOldest() {
+    let quota = live.length - maxVisible() + 1;
+    for (let i = 0; quota > 0 && i < live.length; ) {
+      const candidate = live[i];
+      if (candidate.persistent) {
+        i++;
+        continue;
+      }
+      removeInternal(candidate);
+      quota--;
+    }
+  }
+  function applyTypeToEl(n, kind) {
+    const isProgressNow = kind === "progress";
+    n.el.classList.remove(
+      "bz-notice--info",
+      "bz-notice--success",
+      "bz-notice--warning",
+      "bz-notice--error",
+      "bz-notice--pause",
+      "bz-notice--accept",
+      "bz-notice--delete",
+      "bz-notice--confirm",
+      "bz-notice--restore",
+      "bz-notice--skip",
+      "bz-notice--archive",
+      "bz-notice--progress"
+    );
+    n.el.classList.add("bz-notice--" + (isProgressNow ? "progress" : kind));
+    n.iconEl.innerHTML = "";
+    if (isProgressNow) {
+      n.iconEl.innerHTML = SPINNER_SVG;
+    } else {
+      n.iconEl.textContent = ICONS[kind];
+    }
+    n.isProgress = isProgressNow;
+  }
+  function hideNow(n) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    if (!n.el.classList.contains("bz-notice--leaving")) {
+      n.el.classList.add("bz-notice--leaving");
+      const out = OUT_CLASS[n.variant];
+      if (out) n.el.classList.add(out);
+      window.setTimeout(() => removeInternal(n), LEAVE_MS);
+    }
+  }
+  function armTimer(n, kind, explicitDuration, text) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    n.persistent = false;
+    if (kind === "progress") {
+      if (explicitDuration !== void 0 && explicitDuration > 0) {
+        n.timer = window.setTimeout(() => hideNow(n), explicitDuration);
+      } else {
+        n.persistent = true;
+      }
+      return;
+    }
+    const base = defaultDuration(kind);
+    const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
+    if (dur <= 0) {
+      n.persistent = true;
+      return;
+    }
+    if (explicitDuration === void 0 && durationGear().persistent) return;
+    n.timer = window.setTimeout(() => hideNow(n), dur);
+  }
+  function noopHandle() {
+    return {
+      el: document.createElement("div"),
+      setMessage() {
+      },
+      setProgress() {
+      },
+      setType() {
+      },
+      hide() {
+      }
+    };
+  }
+  function appendActionBtn(n, action) {
+    const btn = document.createElement("span");
+    btn.className = "bz-notice-action";
+    btn.setAttribute("role", "button");
+    btn.textContent = action.label;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (action.onClick) action.onClick();
+      hideNow(n);
+    });
+    n.el.appendChild(btn);
+  }
+  function notify(msg, opts) {
+    const kind = opts && opts.type || "info";
+    if (suppressedByLevel(kind, opts)) return noopHandle();
+    const isProgress = kind === "progress";
+    const type = isProgress ? "info" : kind;
+    const variant = opts && opts.variant || defaultVariant();
+    const container = ensureContainer();
+    applyPositionClass(container);
+    if (opts && opts.dedupeKey) {
+      const key = opts.dedupeKey;
+      const r = recent[key];
+      const now = Date.now();
+      if (r && r.n && r.n.el.isConnected) {
+        r.n.msgEl.textContent = msg;
+        if (r.n.isProgress !== isProgress || r.n.el.classList.contains("bz-notice--" + type) === false) {
+          applyTypeToEl(r.n, kind);
+        }
+        const mergeActions = [];
+        if (opts.action) mergeActions.push(opts.action);
+        if (opts.actions) mergeActions.push(...opts.actions);
+        const existingLabels = new Set(
+          Array.from(r.n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
+        );
+        for (const a of mergeActions) {
+          if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
+        }
+        armTimer(r.n, kind, opts.duration, msg);
+        return noopHandle();
+      }
+      if (r && now - r.at < DEDUPE_WINDOW_MS) {
+        return noopHandle();
+      }
+      recent[key] = { at: now, n: null };
+    }
+    evictOldest();
+    const el = document.createElement("div");
+    el.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+    const icon = document.createElement("div");
+    icon.className = "bz-notice-icon";
+    if (isProgress) {
+      icon.innerHTML = SPINNER_SVG;
+    } else {
+      icon.textContent = ICONS[type];
+    }
+    el.appendChild(icon);
+    const body = document.createElement("div");
+    body.className = "bz-notice-body";
+    if (opts && opts.title) {
+      const titleEl = document.createElement("div");
+      titleEl.className = "bz-notice-title";
+      titleEl.textContent = opts.title;
+      body.appendChild(titleEl);
+    }
+    const msgEl = document.createElement("div");
+    msgEl.className = "bz-notice-msg";
+    msgEl.textContent = msg;
+    body.appendChild(msgEl);
+    el.appendChild(body);
+    let progressEl = null;
+    if (isProgress) {
+      progressEl = document.createElement("div");
+      progressEl.className = "bz-notice-progress";
+      el.appendChild(progressEl);
+    }
+    const n = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
+    const actions = [];
+    if (opts && opts.action) actions.push(opts.action);
+    if (opts && opts.actions) {
+      for (const a of opts.actions) {
+        if (!actions.some((x) => x.label === a.label)) actions.push(a);
+      }
+    }
+    for (const a of actions) appendActionBtn(n, a);
+    el.addEventListener("click", () => hideNow(n));
+    container.style.zIndex = String(allocZ());
+    container.appendChild(el);
+    live.push(n);
+    if (opts && opts.dedupeKey) {
+      const r = recent[opts.dedupeKey];
+      if (r) r.n = n;
+    }
+    const fullText = (opts && opts.title ? opts.title + " " : "") + msg;
+    armTimer(n, kind, opts && opts.duration, fullText);
+    return {
+      el,
+      setMessage(text) {
+        n.msgEl.textContent = text;
+      },
+      setType(t) {
+        applyTypeToEl(n, t);
+        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
+      },
+      setProgress(pct) {
+        if (!n.progressEl) return;
+        if (pct === -1) {
+          n.progressEl.classList.add("bz-notice-progress--indeterminate");
+          return;
+        }
+        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
+        const clamped = Math.max(0, Math.min(100, pct));
+        n.progressEl.style.width = clamped + "%";
+        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
+        else n.progressEl.classList.remove("bz-notice-progress--done");
+      },
+      hide() {
+        hideNow(n);
+      }
+    };
+  }
+  var MAX_VISIBLE_DEFAULT, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, OUT_CLASS, POSITION_CLASSES, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
+  var init_notice = __esm({
+    "src/core/notice.ts"() {
+      init_z_order();
+      init_settings_provider();
+      MAX_VISIBLE_DEFAULT = 5;
+      LEAVE_MS = 200;
+      DEDUPE_WINDOW_MS = 3e4;
+      MOBILE_QUERY = "(max-width: 768px)";
+      ICONS = {
+        info: "ℹ️",
+        success: "✅",
+        warning: "⚠️",
+        error: "❌",
+        pause: "⏸️",
+        accept: "✨",
+        delete: "🗑️",
+        confirm: "✓",
+        restore: "↩️",
+        skip: "🚫",
+        archive: "📁"
+      };
+      SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
+      OUT_CLASS = {
+        drop: "bz-notice--out-drop",
+        pop: "bz-notice--out-pop",
+        "slide-left": "bz-notice--out-left",
+        "slide-right": "bz-notice--out-right",
+        bounce: "bz-notice--out-fade",
+        shake: "bz-notice--out-fade"
+      };
+      POSITION_CLASSES = ["bz-notice-pos--bottom-right", "bz-notice-pos--bottom-left", "bz-notice-pos--top-left"];
+      PER_CHAR_MS = 60;
+      SHORT_THRESHOLD = 20;
+      live = [];
+      recent = {};
+    }
+  });
+
+  // src/core/mobile.ts
+  var init_mobile = __esm({
+    "src/core/mobile.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/icon.ts
+  var init_icon = __esm({
+    "src/core/ui/icon.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/icons.ts
+  function uiIconSpan(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  function mountIcons(root) {
+    root.querySelectorAll("[data-lucide]").forEach((el) => {
+      const name = el.getAttribute("data-lucide") || "";
+      if (!name) return;
+      try {
+        const fresh = uiIconSpan(name);
+        const cls = el.className;
+        if (cls && cls !== "bz-ic") fresh.className = cls;
+        el.replaceWith(fresh);
+      } catch (e) {
+      }
+    });
+  }
+  var init_icons = __esm({
+    "src/core/ui/icons.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/button.ts
+  var init_button = __esm({
+    "src/core/ui/button.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/chip.ts
+  var init_chip = __esm({
+    "src/core/ui/chip.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/setlist.ts
+  var init_setlist = __esm({
+    "src/core/ui/setlist.ts"() {
+    }
+  });
+
+  // src/core/ui/field.ts
+  var init_field = __esm({
+    "src/core/ui/field.ts"() {
+    }
+  });
+
+  // src/core/ui/slider.ts
+  var init_slider = __esm({
+    "src/core/ui/slider.ts"() {
+    }
+  });
+
+  // src/core/ui/empty.ts
+  var init_empty = __esm({
+    "src/core/ui/empty.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/segmented.ts
+  var init_segmented = __esm({
+    "src/core/ui/segmented.ts"() {
+    }
+  });
+
+  // src/core/ui/choice.ts
+  var init_choice = __esm({
+    "src/core/ui/choice.ts"() {
+    }
+  });
+
+  // src/core/ui/cardpick.ts
+  var init_cardpick = __esm({
+    "src/core/ui/cardpick.ts"() {
+    }
+  });
+
+  // src/core/ui/switch.ts
+  var init_switch = __esm({
+    "src/core/ui/switch.ts"() {
+    }
+  });
+
+  // src/core/esc-manager.ts
+  var escManager;
+  var init_esc_manager = __esm({
+    "src/core/esc-manager.ts"() {
+      escManager = (() => {
+        const layers = [];
+        const onKeydown = (e) => {
+          if (e.key !== "Escape") return;
+          for (let i = layers.length - 1; i >= 0; i--) {
+            const L = layers[i];
+            try {
+              if (L.isVisible()) {
+                L.close();
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return;
+              }
+            } catch (err) {
+              layers.splice(i, 1);
+            }
+          }
+        };
+        if (typeof document !== "undefined") {
+          document.addEventListener("keydown", onKeydown);
+        }
+        return {
+          register(id, layer) {
+            for (let i = layers.length - 1; i >= 0; i--) {
+              if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
+            }
+            const rec = Object.assign({ id }, layer);
+            layers.push(rec);
+            return {
+              unregister: () => {
+                const i = layers.indexOf(rec);
+                if (i !== -1) layers.splice(i, 1);
+              }
+            };
+          },
+          /** 插件卸载时移除全局监听 */
+          destroy() {
+            if (typeof document !== "undefined") {
+              document.removeEventListener("keydown", onKeydown);
+            }
+          }
+        };
+      })();
+    }
+  });
+
+  // src/core/ui/select.ts
+  var init_select = __esm({
+    "src/core/ui/select.ts"() {
+      init_icon();
+      init_esc_manager();
+    }
+  });
+
+  // src/core/ui/search.ts
+  var init_search = __esm({
+    "src/core/ui/search.ts"() {
+      init_icon();
+      init_field();
+    }
+  });
+
+  // src/core/ui/mainhead.ts
+  var init_mainhead = __esm({
+    "src/core/ui/mainhead.ts"() {
+      init_button();
+    }
+  });
+
+  // src/core/ui/rail.ts
+  var init_rail = __esm({
+    "src/core/ui/rail.ts"() {
+      init_fake_obsidian();
+      init_icon();
+    }
+  });
+
+  // src/core/ui/mobstrip.ts
+  var init_mobstrip = __esm({
+    "src/core/ui/mobstrip.ts"() {
+    }
+  });
+
+  // src/core/ui/stat.ts
+  var init_stat = __esm({
+    "src/core/ui/stat.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/progress.ts
+  var init_progress = __esm({
+    "src/core/ui/progress.ts"() {
+    }
+  });
+
+  // src/core/ui/popover.ts
+  var init_popover = __esm({
+    "src/core/ui/popover.ts"() {
+      init_icon();
+      init_esc_manager();
+    }
+  });
+
+  // src/core/ui/suggest.ts
+  var init_suggest = __esm({
+    "src/core/ui/suggest.ts"() {
+    }
+  });
+
+  // src/core/ui/lightbox.ts
+  var init_lightbox = __esm({
+    "src/core/ui/lightbox.ts"() {
+      init_icon();
+      init_esc_manager();
+      init_z_order();
+    }
+  });
+
+  // src/core/ui/modal.ts
+  var init_modal = __esm({
+    "src/core/ui/modal.ts"() {
+      init_esc_manager();
+      init_z_order();
+    }
+  });
+
+  // src/core/dom.ts
+  function createOverlay(opts) {
+    const mask = document.createElement("div");
+    mask.id = opts.maskId;
+    mask.className = "bz-overlay-mask";
+    mask.style.display = "none";
+    mask.onclick = function(e) {
+      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
+    };
+    const popup = document.createElement("div");
+    popup.id = opts.popupId;
+    popup.className = "bz-overlay-popup";
+    popup.style.display = "none";
+    popup.style.width = opts.width || "90%";
+    popup.style.maxWidth = (opts.maxWidth || 400) + "px";
+    topifyZ(mask, popup);
+    return { mask, popup, topify: () => topifyZ(mask, popup) };
+  }
+  var init_dom = __esm({
+    "src/core/dom.ts"() {
+      init_notice();
+      init_z_order();
+    }
+  });
+
+  // src/core/ui/resize.ts
+  var init_resize = __esm({
+    "src/core/ui/resize.ts"() {
+      init_dom();
+    }
+  });
+
+  // src/core/ui/splitter.ts
+  var init_splitter = __esm({
+    "src/core/ui/splitter.ts"() {
+      init_dom();
+    }
+  });
+
+  // src/core/ui/index.ts
+  var init_ui = __esm({
+    "src/core/ui/index.ts"() {
+      init_icon();
+      init_icons();
+      init_button();
+      init_chip();
+      init_setlist();
+      init_field();
+      init_slider();
+      init_empty();
+      init_segmented();
+      init_choice();
+      init_cardpick();
+      init_switch();
+      init_select();
+      init_search();
+      init_mainhead();
+      init_rail();
+      init_mobstrip();
+      init_stat();
+      init_progress();
+      init_popover();
+      init_suggest();
+      init_lightbox();
+      init_modal();
+      init_resize();
+      init_splitter();
+    }
+  });
 
   // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
@@ -4028,1214 +5486,7 @@ var BZW_secondbrain = (() => {
     }
   });
 
-  // prototypes/secondbrain/fake-sim.ts
-  var fake_sim_exports = {};
-  __export(fake_sim_exports, {
-    bootSecondBrainSim: () => bootSecondBrainSim,
-    demoReferenceQuery: () => demoReferenceQuery,
-    openChat: () => openChat,
-    openPanel: () => openPanel,
-    openRef: () => openRef
-  });
-
-  // prototypes/secondbrain/fake/fake-obsidian.ts
-  var Platform = {
-    isMobile: typeof window !== "undefined" && window.innerWidth <= 768
-  };
-  if (typeof globalThis !== "undefined") {
-    globalThis.obsidian = globalThis.obsidian || { Platform };
-  }
-  function setIcon(container, iconId) {
-    var _a2;
-    const d = typeof window !== "undefined" && ((_a2 = window.SB_ICONS) == null ? void 0 : _a2[iconId]) || "";
-    if (!d) return;
-    const ns = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(ns, "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("fill", "none");
-    svg.setAttribute("stroke", "currentColor");
-    svg.setAttribute("stroke-width", "2");
-    svg.setAttribute("stroke-linecap", "round");
-    svg.setAttribute("stroke-linejoin", "round");
-    svg.innerHTML = d;
-    container.replaceChildren(svg);
-  }
-  async function requestUrl() {
-    throw new Error("原型环境无 Obsidian requestUrl（fake obsidian）");
-  }
-  var MarkdownRenderer = {
-    async render(_app2, md, el) {
-      const html = String(md).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\n/g, "<br>");
-      el.innerHTML = html;
-    }
-  };
-  var Component = class {
-    onload() {
-    }
-    unload() {
-    }
-  };
-  var FakeVault = class _FakeVault {
-    constructor() {
-      this.listeners = /* @__PURE__ */ new Map();
-      /** 存储面（core/storage jsonFileStore / vector-store 二进制 / 主面板存储占用） */
-      this.adapter = {
-        exists: async (path) => localStorage.getItem(_FakeVault.key(path)) != null,
-        read: async (path) => {
-          const raw = localStorage.getItem(_FakeVault.key(path));
-          if (raw == null) throw new Error("file not found: " + path);
-          return raw;
-        },
-        write: async (path, data) => {
-          localStorage.setItem(_FakeVault.key(path), data);
-        },
-        /** 与 Obsidian adapter.stat 同形：{ size } 或抛错（调用方 try/catch） */
-        stat: async (path) => {
-          const raw = localStorage.getItem(_FakeVault.key(path));
-          if (raw == null) throw new Error("file not found: " + path);
-          return { size: raw.length, type: "file" };
-        },
-        /** 二进制面（vector-store 专用；原型以 base64 存取，行为代码原样跑） */
-        readBinary: async (path) => {
-          const raw = localStorage.getItem(_FakeVault.key(path));
-          if (raw == null) throw new Error("file not found: " + path);
-          const bin = atob(raw);
-          const buf = new ArrayBuffer(bin.length);
-          const view = new Uint8Array(buf);
-          for (let i = 0; i < bin.length; i++) view[i] = bin.charCodeAt(i);
-          return buf;
-        },
-        writeBinary: async (path, data) => {
-          const view = new Uint8Array(data);
-          let bin = "";
-          for (let i = 0; i < view.length; i++) bin += String.fromCharCode(view[i]);
-          localStorage.setItem(_FakeVault.key(path), btoa(bin));
-        }
-      };
-    }
-    static key(path) {
-      return "bz-sb-sim:" + path;
-    }
-    getAbstractFileByPath(path) {
-      const raw = localStorage.getItem(_FakeVault.key(path));
-      return raw == null ? null : { path, content: raw };
-    }
-    /** 白名单扫描面（vector-store.refresh 链）：种子库无 md 笔记 → 无变更，refresh 快速完成 */
-    getMarkdownFiles() {
-      const out = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith(_FakeVault.key("")) && k.endsWith(".md")) {
-          const path = k.slice(_FakeVault.key("").length);
-          out.push({ path, content: localStorage.getItem(k) || "" });
-        }
-      }
-      return out;
-    }
-    async read(f) {
-      return f.content;
-    }
-    async modify(f, content) {
-      f.content = content;
-      localStorage.setItem(_FakeVault.key(f.path), content);
-    }
-    async create(path, content) {
-      localStorage.setItem(_FakeVault.key(path), content);
-      return { path, content };
-    }
-    async createFolder(_path) {
-      return void 0;
-    }
-    on(evt, cb) {
-      if (!this.listeners.has(evt)) this.listeners.set(evt, []);
-      this.listeners.get(evt).push(cb);
-      return { ref: this.listeners.get(evt).length };
-    }
-    offref(_ref) {
-    }
-    emit(evt, file) {
-      var _a2;
-      for (const cb of (_a2 = this.listeners.get(evt)) != null ? _a2 : []) cb(file);
-    }
-  };
-  var FakeApp = class {
-    constructor() {
-      this.vault = new FakeVault();
-      /** 参考面板的光标轮询在无编辑器时静默空转（真行为同语义）；演示检索由 fake-sim 的
-       *  「换一篇当前笔记」驱动 refreshWithDebounce */
-      this.workspace = {
-        activeEditor: null,
-        getActiveFile: () => null,
-        getLeaf: () => ({
-          openFile: async () => {
-          }
-        }),
-        on: () => ({ ref: 0 }),
-        offref() {
-        }
-      };
-    }
-  };
-
-  // src/core/app.ts
-  var _app = null;
-  function setApp(app) {
-    _app = app;
-  }
-  function getApp() {
-    if (!_app) {
-      throw new Error("bz: app 未初始化（setApp 未调用）");
-    }
-    return _app;
-  }
-
-  // src/core/settings-provider.ts
-  var _provider = null;
-  var _saver = null;
-  function setSettingsProvider(fn) {
-    _provider = fn;
-  }
-  function setSettingsSaver(fn) {
-    _saver = fn;
-  }
-  function tryGetSettings() {
-    return _provider ? _provider() : {};
-  }
-
-  // src/core/model-limits.ts
-  var MODEL_LIMITS = [
-    // ---- DeepSeek 官方（2026-09-16 核对官方「模型 & 价格」页：上下文 1M / 最大输出 384K，在售模型同档）
-    {
-      id: "deepseek-flash",
-      aliases: ["deepseek-v4-flash", "deepseek-v4-flash-vision-exp", "deepseek-flash-latest", "deepseek-v4.1-flash"],
-      maxOutput: 393216,
-      contextWindow: 1048576
-    },
-    {
-      id: "deepseek-v4-pro",
-      aliases: ["deepseek-pro", "deepseek-pro-latest"],
-      maxOutput: 393216,
-      contextWindow: 1048576
-    },
-    // ---- 阿里云百炼 Qwen3.7 系（2026-09-16 核对官方帮助中心；qwen-plus / qwen-max 等短名指向当前主力版本）
-    { id: "qwen3.7-plus", aliases: ["qwen-plus"], maxOutput: 131072, contextWindow: 1e6 },
-    { id: "qwen3.7-max", aliases: ["qwen-max"], maxOutput: 65536, contextWindow: 1e6 },
-    { id: "qwen3.7-flash", aliases: ["qwen-flash", "qwen-turbo"], maxOutput: 16384, contextWindow: 1e6 },
-    // ---- 以下条目沿用注册表既有口径（未二次核对官方文档，数值与注册表默认一致，勿据此调大）
-    { id: "claude-sonnet-4-5", aliases: ["claude-sonnet-4.5"], maxOutput: 64e3, contextWindow: 2e5 },
-    { id: "gpt-4o-mini", maxOutput: 16384, contextWindow: 128e3 },
-    { id: "gemini-2.0-flash", maxOutput: 8192, contextWindow: 1048576 },
-    { id: "kimi-k2-0711-preview", aliases: ["kimi-k2"], maxOutput: 131072, contextWindow: 131072 },
-    { id: "glm-4-flash", maxOutput: 8192, contextWindow: 131072 }
-  ];
-  function normalizeModelId(model) {
-    return String(model || "").trim().toLowerCase().split(":")[0].split("/").pop().trim();
-  }
-  function resolveModelLimits(model) {
-    const key = normalizeModelId(model || "");
-    if (!key) return null;
-    let best = null;
-    for (const entry of MODEL_LIMITS) {
-      for (const k of [entry.id, ...entry.aliases || []]) {
-        if (key === k) return { maxOutput: entry.maxOutput, contextWindow: entry.contextWindow };
-        if (key.includes(k) && (!best || k.length > best.len)) best = { entry, len: k.length };
-      }
-    }
-    return best ? { maxOutput: best.entry.maxOutput, contextWindow: best.entry.contextWindow } : null;
-  }
-
-  // src/core/ai.ts
-  var _settingsProvider = null;
-  function setAISettingsProvider(fn) {
-    _settingsProvider = fn;
-  }
-  function getQ3Settings() {
-    return _settingsProvider ? _settingsProvider() : {};
-  }
-  var AI_PROVIDER_REGISTRY = [
-    {
-      id: "deepseek",
-      label: "DeepSeek",
-      endpoint: "https://api.deepseek.com",
-      model: "",
-      // 空 = 沿用调用方默认模型（原行为：deepseek 不强制模型）
-      // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
-      // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
-      defaultMaxTokens: 393216,
-      apiKeyKey: "deepseekApiKey",
-      apiKeyLabel: "DeepSeek 密钥",
-      apiKeyDesc: "留空则自动回退读取外部配置密钥"
-    },
-    {
-      id: "opencode-go",
-      label: "OpenCode Go",
-      endpoint: "https://opencode.ai/zen/go/v1",
-      model: "deepseek-v4-flash",
-      // deepseek-v4-flash 是官方 deepseek-flash 的旧名（同档：1M 窗口 / 384K 输出）
-      defaultMaxTokens: 393216,
-      apiKeyKey: "opencodeGoApiKey",
-      apiKeyLabel: "OpenCode 密钥",
-      apiKeyDesc: "在订阅官网获取后填入这里",
-      noCors: true
-    },
-    {
-      id: "openai",
-      label: "OpenAI",
-      endpoint: "https://api.openai.com/v1",
-      model: "gpt-4o-mini",
-      defaultMaxTokens: 16384,
-      apiKeyKey: "openaiApiKey",
-      apiKeyLabel: "OpenAI 密钥",
-      apiKeyDesc: "在 OpenAI 官网获取后填入这里"
-    },
-    {
-      id: "anthropic",
-      label: "Anthropic（Claude）",
-      endpoint: "https://api.anthropic.com/v1",
-      model: "claude-sonnet-4-5",
-      defaultMaxTokens: 64e3,
-      // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
-      apiKeyKey: "anthropicApiKey",
-      apiKeyLabel: "Anthropic 密钥",
-      apiKeyDesc: "在 Anthropic 官网获取后填入这里",
-      extraHeaders: { "anthropic-version": "2023-06-01" }
-    },
-    {
-      id: "google",
-      label: "Google Gemini",
-      endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
-      model: "gemini-2.0-flash",
-      defaultMaxTokens: 8192,
-      apiKeyKey: "googleApiKey",
-      apiKeyLabel: "Gemini 密钥",
-      apiKeyDesc: "在 Google AI Studio 获取后填入这里"
-    },
-    {
-      id: "moonshot",
-      label: "Moonshot（Kimi）",
-      endpoint: "https://api.moonshot.cn/v1",
-      model: "kimi-k2-0711-preview",
-      defaultMaxTokens: 131072,
-      // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
-      apiKeyKey: "moonshotApiKey",
-      apiKeyLabel: "Kimi 密钥",
-      apiKeyDesc: "在 Moonshot 开放平台获取后填入这里"
-    },
-    {
-      id: "zhipu",
-      label: "智谱（GLM）",
-      endpoint: "https://open.bigmodel.cn/api/paas/v4",
-      model: "glm-4-flash",
-      defaultMaxTokens: 8192,
-      apiKeyKey: "zhipuApiKey",
-      apiKeyLabel: "智谱密钥",
-      apiKeyDesc: "在智谱开放平台获取后填入这里"
-    },
-    {
-      // Coding 套餐（Lite/Pro/Max）额度只在 coding 专用端点生效；走标准 paas/v4 会按量计费报余额不足
-      id: "zhipu-plan",
-      label: "智谱 Plan",
-      endpoint: "https://open.bigmodel.cn/api/coding/paas/v4",
-      model: "glm-5.3-flash",
-      defaultMaxTokens: 8192,
-      apiKeyKey: "zhipuPlanApiKey",
-      apiKeyLabel: "智谱 Plan 密钥",
-      apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同"
-    },
-    {
-      id: "dashscope",
-      label: "阿里云百炼（通义）",
-      endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-      model: "qwen-plus",
-      // qwen-plus 指向当前主力版本（Qwen3.7-Plus：1M 窗口 / 131K 输出）
-      defaultMaxTokens: 131072,
-      apiKeyKey: "dashscopeApiKey",
-      apiKeyLabel: "百炼密钥",
-      apiKeyDesc: "在阿里云百炼获取 API Key 后填入这里"
-    },
-    {
-      id: "siliconflow",
-      label: "硅基流动",
-      endpoint: "https://api.siliconflow.cn/v1",
-      model: "deepseek-ai/DeepSeek-V3",
-      defaultMaxTokens: 8192,
-      apiKeyKey: "siliconflowApiKey",
-      apiKeyLabel: "硅基流动密钥",
-      apiKeyDesc: "在硅基流动官网获取后填入这里"
-    },
-    {
-      id: "openrouter",
-      label: "OpenRouter",
-      endpoint: "https://openrouter.ai/api/v1",
-      model: "deepseek/deepseek-chat",
-      defaultMaxTokens: 8192,
-      apiKeyKey: "openrouterApiKey",
-      apiKeyLabel: "OpenRouter 密钥",
-      apiKeyDesc: "在 OpenRouter 官网获取后填入这里"
-    },
-    {
-      id: "xai",
-      label: "xAI（Grok）",
-      endpoint: "https://api.x.ai/v1",
-      model: "grok-2-latest",
-      defaultMaxTokens: 8192,
-      apiKeyKey: "xaiApiKey",
-      apiKeyLabel: "xAI 密钥",
-      apiKeyDesc: "在 xAI 控制台获取后填入这里"
-    },
-    {
-      id: "groq",
-      label: "Groq",
-      endpoint: "https://api.groq.com/openai/v1",
-      model: "llama-3.3-70b-versatile",
-      defaultMaxTokens: 8192,
-      apiKeyKey: "groqApiKey",
-      apiKeyLabel: "Groq 密钥",
-      apiKeyDesc: "在 Groq 控制台获取后填入这里"
-    },
-    {
-      id: "mistral",
-      label: "Mistral",
-      endpoint: "https://api.mistral.ai/v1",
-      model: "mistral-large-latest",
-      defaultMaxTokens: 8192,
-      apiKeyKey: "mistralApiKey",
-      apiKeyLabel: "Mistral 密钥",
-      apiKeyDesc: "在 Mistral 控制台获取后填入这里"
-    },
-    {
-      id: "together",
-      label: "Together AI",
-      endpoint: "https://api.together.xyz/v1",
-      model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      defaultMaxTokens: 8192,
-      apiKeyKey: "togetherApiKey",
-      apiKeyLabel: "Together 密钥",
-      apiKeyDesc: "在 Together AI 官网获取后填入这里"
-    },
-    {
-      id: "ollama",
-      label: "Ollama（本地）",
-      endpoint: "http://localhost:11434/v1",
-      model: "llama3.1",
-      defaultMaxTokens: 8192,
-      apiKeyKey: "ollamaApiKey",
-      apiKeyLabel: "Ollama 密钥",
-      apiKeyDesc: "本地服务无需密钥，留空即可"
-    },
-    {
-      id: "custom",
-      label: "自定义（OpenAI 兼容）",
-      endpoint: "",
-      model: "",
-      defaultMaxTokens: 8192,
-      apiKeyKey: "aiCustomApiKey",
-      apiKeyLabel: "自定义 API 密钥",
-      apiKeyDesc: "在服务官网获取后填入这里"
-    }
-  ];
-  function getProviderDescriptor(id) {
-    return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
-  }
-  var AI_THINKING_STYLE = {
-    openai: "effort",
-    openrouter: "effort",
-    anthropic: "effort",
-    google: "effort",
-    groq: "effort",
-    xai: "effort",
-    together: "effort",
-    mistral: "effort",
-    siliconflow: "effort",
-    deepseek: "enable",
-    "opencode-go": "enable",
-    dashscope: "enable",
-    zhipu: "zhipu",
-    "zhipu-plan": "zhipu",
-    moonshot: "none",
-    ollama: "none",
-    custom: "none"
-  };
-  function thinkingOptionsFor(level, style) {
-    if (style === "none") return null;
-    if (level === "off") {
-      if (style === "enable") return { enable_thinking: false };
-      if (style === "zhipu") return { thinking: { type: "disabled" } };
-      return null;
-    }
-    if (level !== "low" && level !== "medium" && level !== "high") return null;
-    if (style === "effort") return { reasoning_effort: level };
-    if (style === "enable") return { enable_thinking: true };
-    return { thinking: { type: "enabled" } };
-  }
-  function hasExplicitThinkingOption(mo) {
-    return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
-  }
-  var _aiProviderCache = null;
-  async function getAIProvider(override) {
-    var _a2, _b2, _c;
-    if (!override && _aiProviderCache) return _aiProviderCache;
-    const cacheable = !override;
-    const cachePut = (p) => {
-      if (cacheable) _aiProviderCache = p;
-      return p;
-    };
-    const s = getQ3Settings();
-    if (override && typeof override === "object" && override.apiKey) {
-      return {
-        endpoint: String(override.endpoint || "https://api.deepseek.com").replace(/\/+$/, ""),
-        apiKey: override.apiKey,
-        model: override.model || void 0,
-        extraHeaders: override.extraHeaders || void 0,
-        defaultMaxTokens: override.defaultMaxTokens
-      };
-    }
-    const name = typeof override === "string" && override || s.aiProvider || "opencode-go";
-    const desc = getProviderDescriptor(name);
-    if (name === "custom") {
-      const endpoint = (s.aiCustomEndpoint || "").replace(/\/+$/, "");
-      if (!endpoint || !s.aiCustomApiKey) {
-        throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
-      }
-      const customLimits = resolveModelLimits(s.aiCustomModel || "");
-      return cachePut({
-        id: "custom",
-        endpoint,
-        apiKey: s.aiCustomApiKey,
-        model: s.aiCustomModel || void 0,
-        extraHeaders: desc.extraHeaders,
-        defaultMaxTokens: ((_a2 = s.aiMaxTokensOverrides) == null ? void 0 : _a2["custom"]) || (customLimits == null ? void 0 : customLimits.maxOutput) || desc.defaultMaxTokens
-      });
-    }
-    const key = s[desc.apiKeyKey];
-    if (!key && name === "deepseek") {
-      try {
-        const raw = await getApp().vault.adapter.read(".obsidian/plugins/quickadd/data.json");
-        const cfg = JSON.parse(raw);
-        const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
-        if (provider && provider.endpoint && provider.apiKey) {
-          return cachePut({
-            id: "deepseek",
-            endpoint: String(provider.endpoint).replace(/\/+$/, ""),
-            apiKey: provider.apiKey,
-            defaultMaxTokens: desc.defaultMaxTokens
-          });
-        }
-      } catch (e) {
-      }
-    }
-    if (!key && name !== "ollama") {
-      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
-    }
-    const overrideModel = (_b2 = s.aiModelOverrides) == null ? void 0 : _b2[name];
-    const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
-    const limits = resolveModelLimits(overrideModel || desc.model || "");
-    return cachePut({
-      id: name,
-      endpoint: desc.endpoint,
-      apiKey: key || "",
-      model: overrideModel || desc.model || void 0,
-      noCors: desc.noCors,
-      extraHeaders: desc.extraHeaders,
-      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
-    });
-  }
-  function abortError() {
-    const e = new Error("请求已取消");
-    e.name = "AbortError";
-    return e;
-  }
-  var AI_IDLE_TIMEOUT_MS = 6e4;
-  var AI_IMAGE_IDLE_TIMEOUT_MS = 18e4;
-  function timeoutError(idleMs = AI_IDLE_TIMEOUT_MS) {
-    const e = new Error(`AI 请求超时（${Math.round(idleMs / 1e3)} 秒无响应）`);
-    e.name = "TimeoutError";
-    return e;
-  }
-  function idleTimeoutOf(body) {
-    const msgs = Array.isArray(body == null ? void 0 : body.messages) ? body.messages : [];
-    const hasImage = msgs.some(
-      (m) => Array.isArray(m == null ? void 0 : m.content) && m.content.some((p) => (p == null ? void 0 : p.type) === "image_url")
-    );
-    return hasImage ? AI_IMAGE_IDLE_TIMEOUT_MS : AI_IDLE_TIMEOUT_MS;
-  }
-  async function streamChatCompletions(provider, body, signal, onDelta) {
-    const idleMs = idleTimeoutOf(body);
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${provider.apiKey}`,
-      ...provider.extraHeaders || {}
-    };
-    const controller = new AbortController();
-    const onOuterAbort = () => controller.abort();
-    let outerLinked = false;
-    if (signal) {
-      if (signal.aborted) controller.abort();
-      else {
-        signal.addEventListener("abort", onOuterAbort);
-        outerLinked = true;
-      }
-    }
-    let idleTimer = null;
-    const armIdle = () => {
-      if (idleTimer !== null) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => controller.abort(), idleMs);
-    };
-    try {
-      armIdle();
-      const resp = await fetch(`${provider.endpoint}/chat/completions`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-        signal: controller.signal
-      });
-      if (!resp.ok) {
-        let msg = `API ${resp.status}`;
-        try {
-          const err = await resp.json();
-          if (err.error && err.error.message) msg = err.error.message;
-        } catch (e) {
-        }
-        throw new Error(msg);
-      }
-      if (!resp.body || typeof resp.body.getReader !== "function") {
-        const data = await resp.json();
-        return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
-      }
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let full = "", buf = "";
-      while (true) {
-        armIdle();
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        let nl;
-        while ((nl = buf.indexOf("\n")) !== -1) {
-          const line = buf.slice(0, nl).trim();
-          buf = buf.slice(nl + 1);
-          if (!line.startsWith("data:")) continue;
-          const payload = line.slice(5).trim();
-          if (payload === "[DONE]") {
-            try {
-              reader.cancel();
-            } catch (e) {
-            }
-            return full;
-          }
-          try {
-            const chunk = JSON.parse(payload);
-            const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-            if (delta) {
-              full += delta;
-              try {
-                onDelta == null ? void 0 : onDelta(delta);
-              } catch (e) {
-              }
-            }
-          } catch (e) {
-          }
-        }
-      }
-      return full;
-    } catch (e) {
-      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError(idleMs);
-      throw e;
-    } finally {
-      if (idleTimer !== null) clearTimeout(idleTimer);
-      if (outerLinked && signal) signal.removeEventListener("abort", onOuterAbort);
-    }
-  }
-  async function chatCompletionsNonStream(provider, body, signal) {
-    if (signal == null ? void 0 : signal.aborted) throw abortError();
-    const idleMs = idleTimeoutOf(body);
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${provider.apiKey}`,
-      ...provider.extraHeaders || {}
-    };
-    const resp = await new Promise((resolve, reject) => {
-      let timer = null;
-      const settle = (fn) => {
-        if (timer !== null) clearTimeout(timer);
-        fn();
-      };
-      timer = setTimeout(() => settle(() => reject(timeoutError(idleMs))), idleMs);
-      requestUrl({
-        url: `${provider.endpoint}/chat/completions`,
-        method: "POST",
-        headers,
-        body: JSON.stringify({ ...body, stream: false })
-      }).then(
-        (r) => settle(() => resolve(r)),
-        (e) => settle(() => reject(e))
-      );
-    });
-    if (signal == null ? void 0 : signal.aborted) throw abortError();
-    const data = JSON.parse(resp.text);
-    const errMsg = data.error && (data.error.message || data.error.type) || data.message && data.message;
-    if (errMsg) throw new Error(`API ${resp.status}: ${errMsg}`);
-    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-    if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
-    return content;
-  }
-  var AI_IMAGE_MAX_BYTES = 32 * 1024 * 1024;
-  function buildUserContent(input) {
-    var _a2;
-    if (typeof input === "string") return input;
-    const text = String((_a2 = input == null ? void 0 : input.text) != null ? _a2 : "");
-    const images = (Array.isArray(input == null ? void 0 : input.images) ? input.images : []).map((u) => String(u != null ? u : "").trim()).filter((u) => u.length > 0);
-    if (!images.length) return text;
-    return [
-      { type: "text", text },
-      ...images.map((url) => ({ type: "image_url", image_url: { url } }))
-    ];
-  }
-  function buildMessages(input) {
-    if (input && typeof input === "object" && Array.isArray(input.messages)) {
-      return input.messages;
-    }
-    return [{ role: "user", content: buildUserContent(input) }];
-  }
-  var AIService = class {
-    constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
-      this.defaultModel = defaultModel;
-      this.defaultOptions = defaultOptions;
-    }
-    /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
-     *  input 为字符串（纯文本，报文同旧版）、{text, images}（带图 → 多模态 content 数组）
-     *  或 {messages}（多轮完整报文，原样进请求）；
-     *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
-     *  既有调用（不传这两项）行为零变化 */
-    async prompt(input, model = this.defaultModel, options = {}) {
-      const mergedOptions = this._mergeOptions(options);
-      const provider = await getAIProvider(mergedOptions.provider);
-      const s = getQ3Settings();
-      const isExplicit = model !== this.defaultModel;
-      const effModel = isExplicit ? model : provider.model || model;
-      const mo = mergedOptions.modelOptions || {};
-      const effMaxTokens = provider.defaultMaxTokens || 4096;
-      const body = {
-        model: effModel,
-        messages: buildMessages(input),
-        max_tokens: effMaxTokens,
-        stream: true
-      };
-      for (const k of Object.keys(mo)) {
-        if (k === "max_tokens") continue;
-        body[k] = mo[k];
-      }
-      if (!hasExplicitThinkingOption(mo)) {
-        const style = AI_THINKING_STYLE[provider.id || ""] || "none";
-        const thinking = thinkingOptionsFor(s.aiThinking || "auto", style);
-        if (thinking) Object.assign(body, thinking);
-      }
-      const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
-      const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
-      try {
-        const content = provider.noCors ? await chatCompletionsNonStream(provider, body, signal) : await streamChatCompletions(provider, body, signal, onDelta);
-        return content;
-      } catch (streamError) {
-        if (signal == null ? void 0 : signal.aborted) throw streamError;
-        try {
-          const content = await chatCompletionsNonStream(provider, body, signal);
-          return content;
-        } catch (e) {
-          throw new Error(`AI 请求失败: ${streamError.message}（fallback: ${e.message}）`);
-        }
-      }
-    }
-    /** 普通对话模型（deepseek-v4-flash；收纯文本或 {text, images}） */
-    async chat(input, extraOptions = {}) {
-      return this.prompt(input, "deepseek-v4-flash", extraOptions);
-    }
-    /** 推理模型，自动开启思考模式 */
-    async reason(input, extraOptions = {}) {
-      const options = this._prepareOptions(extraOptions, { enable_thinking: true });
-      return this.prompt(input, "deepseek-v4-flash", options);
-    }
-    /** 联网搜索（实验性，第三方代理平台生效） */
-    async search(input, extraOptions = {}) {
-      const options = this._prepareOptions(extraOptions, { search: true });
-      return this.prompt(input, "deepseek-v4-flash", options);
-    }
-    /** 要求 AI 返回 JSON 格式（设置 response_format；知识盒等域走这条，故同样要能吃图） */
-    async json(input, extraOptions = {}) {
-      const options = this._prepareOptions(extraOptions, {
-        response_format: { type: "json_object" }
-      });
-      return this.prompt(input, "deepseek-v4-flash", options);
-    }
-    /** 思考 + 联网搜索（实验性） */
-    async reasonAndSearch(input, extraOptions = {}) {
-      const options = this._prepareOptions(extraOptions, {
-        enable_thinking: true,
-        search: true
-      });
-      return this.prompt(input, "deepseek-v4-flash", options);
-    }
-    setDefaultModel(model) {
-      this.defaultModel = model;
-    }
-    setDefaultOptions(options) {
-      this.defaultOptions = options;
-    }
-    // ---------- 内部辅助方法 ----------
-    _mergeOptions(options) {
-      const merged = { ...this.defaultOptions, ...options };
-      if (this.defaultOptions.modelOptions || options.modelOptions) {
-        merged.modelOptions = {
-          ...this.defaultOptions.modelOptions || {},
-          ...options.modelOptions || {}
-        };
-      }
-      return merged;
-    }
-    /** 准备选项：复制 extraOptions，并设置指定的 modelOptions 字段（用户显式传入优先） */
-    _prepareOptions(extraOptions, modelSettings) {
-      const options = { ...extraOptions };
-      if (!options.modelOptions) options.modelOptions = {};
-      const userModelOpts = options.modelOptions;
-      options.modelOptions = { ...modelSettings, ...userModelOpts };
-      return options;
-    }
-  };
-  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
-    return new AIService(params, defaultModel, defaultOptions);
-  }
-
-  // src/core/z-order.ts
-  var zCounter = 1e5;
-  var alwaysOnTop = /* @__PURE__ */ new Set();
-  function syncAlwaysOnTop() {
-    for (const el of alwaysOnTop) {
-      if (!el.isConnected) {
-        alwaysOnTop.delete(el);
-        continue;
-      }
-      el.style.zIndex = String(zCounter);
-    }
-  }
-  function allocZBlock(n) {
-    const base = ++zCounter;
-    zCounter += n - 1;
-    zCounter++;
-    syncAlwaysOnTop();
-    return base;
-  }
-  function allocZ() {
-    return allocZBlock(1);
-  }
-  function topifyZ(...els) {
-    const live2 = els.filter((el) => !!el);
-    if (live2.length === 0) return;
-    const base = allocZBlock(live2.length);
-    live2.forEach((el, i) => {
-      el.style.zIndex = String(base + i);
-    });
-  }
-
-  // src/core/notice.ts
-  var MAX_VISIBLE_DEFAULT = 5;
-  function maxVisible() {
-    const v = Number(noticePref("noticeMaxVisible"));
-    return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
-  }
-  var LEAVE_MS = 200;
-  var DEDUPE_WINDOW_MS = 3e4;
-  var MOBILE_QUERY = "(max-width: 768px)";
-  var ICONS = {
-    info: "ℹ️",
-    success: "✅",
-    warning: "⚠️",
-    error: "❌",
-    pause: "⏸️",
-    accept: "✨",
-    delete: "🗑️",
-    confirm: "✓",
-    restore: "↩️",
-    skip: "🚫",
-    archive: "📁"
-  };
-  var SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
-  function notice(msg, type, duration) {
-    notify(msg, { type: type || "info", duration });
-  }
-  function isMobileView() {
-    return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
-  }
-  function defaultVariant() {
-    if (isMobileView()) return "drop";
-    const pos = noticePref("noticePosition");
-    return pos === "top-left" || pos === "bottom-left" ? "slide-left" : "slide-right";
-  }
-  var OUT_CLASS = {
-    drop: "bz-notice--out-drop",
-    pop: "bz-notice--out-pop",
-    "slide-left": "bz-notice--out-left",
-    "slide-right": "bz-notice--out-right",
-    bounce: "bz-notice--out-fade",
-    shake: "bz-notice--out-fade"
-  };
-  function noticePref(key) {
-    var _a2;
-    try {
-      const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2[key];
-      return typeof v === "string" ? v : void 0;
-    } catch (e) {
-      return void 0;
-    }
-  }
-  function durationGear() {
-    const v = noticePref("noticeDuration");
-    if (v === "quick") return { base: 2e3, persistent: false };
-    if (v === "relaxed") return { base: 5e3, persistent: false };
-    if (v === "persistent") return { base: 3e3, persistent: true };
-    return { base: 3e3, persistent: false };
-  }
-  function defaultDuration(type) {
-    const base = durationGear().base;
-    return type === "error" ? base + 2e3 : base;
-  }
-  function suppressedByLevel(kind, opts) {
-    const level = noticePref("noticeLevel");
-    if (level !== "important" && level !== "error") return false;
-    if (kind === "progress") return false;
-    if (opts && (opts.action || opts.actions && opts.actions.length > 0)) return false;
-    if (level === "error") return kind !== "error";
-    return kind !== "warning" && kind !== "error";
-  }
-  var POSITION_CLASSES = ["bz-notice-pos--bottom-right", "bz-notice-pos--bottom-left", "bz-notice-pos--top-left"];
-  function applyPositionClass(container) {
-    const pos = noticePref("noticePosition");
-    container.classList.remove(...POSITION_CLASSES);
-    const cls = pos === "bottom-right" || pos === "bottom-left" || pos === "top-left" ? `bz-notice-pos--${pos}` : "";
-    if (cls) container.classList.add(cls);
-  }
-  var PER_CHAR_MS = 60;
-  var SHORT_THRESHOLD = 20;
-  function calcDuration(text, base) {
-    const len = text.length;
-    if (len <= SHORT_THRESHOLD) return base;
-    const extra = (len - SHORT_THRESHOLD) * PER_CHAR_MS;
-    return Math.min(base + extra, 15e3);
-  }
-  function ensureContainer() {
-    let container = document.getElementById("bz-notice-container");
-    if (!container) {
-      container = document.createElement("div");
-      container.id = "bz-notice-container";
-      document.body.appendChild(container);
-    }
-    return container;
-  }
-  var live = [];
-  var recent = {};
-  function removeInternal(n) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    const i = live.indexOf(n);
-    if (i !== -1) live.splice(i, 1);
-    if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
-  }
-  function evictOldest() {
-    let quota = live.length - maxVisible() + 1;
-    for (let i = 0; quota > 0 && i < live.length; ) {
-      const candidate = live[i];
-      if (candidate.persistent) {
-        i++;
-        continue;
-      }
-      removeInternal(candidate);
-      quota--;
-    }
-  }
-  function applyTypeToEl(n, kind) {
-    const isProgressNow = kind === "progress";
-    n.el.classList.remove(
-      "bz-notice--info",
-      "bz-notice--success",
-      "bz-notice--warning",
-      "bz-notice--error",
-      "bz-notice--pause",
-      "bz-notice--accept",
-      "bz-notice--delete",
-      "bz-notice--confirm",
-      "bz-notice--restore",
-      "bz-notice--skip",
-      "bz-notice--archive",
-      "bz-notice--progress"
-    );
-    n.el.classList.add("bz-notice--" + (isProgressNow ? "progress" : kind));
-    n.iconEl.innerHTML = "";
-    if (isProgressNow) {
-      n.iconEl.innerHTML = SPINNER_SVG;
-    } else {
-      n.iconEl.textContent = ICONS[kind];
-    }
-    n.isProgress = isProgressNow;
-  }
-  function hideNow(n) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    if (!n.el.classList.contains("bz-notice--leaving")) {
-      n.el.classList.add("bz-notice--leaving");
-      const out = OUT_CLASS[n.variant];
-      if (out) n.el.classList.add(out);
-      window.setTimeout(() => removeInternal(n), LEAVE_MS);
-    }
-  }
-  function armTimer(n, kind, explicitDuration, text) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    n.persistent = false;
-    if (kind === "progress") {
-      if (explicitDuration !== void 0 && explicitDuration > 0) {
-        n.timer = window.setTimeout(() => hideNow(n), explicitDuration);
-      } else {
-        n.persistent = true;
-      }
-      return;
-    }
-    const base = defaultDuration(kind);
-    const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
-    if (dur <= 0) {
-      n.persistent = true;
-      return;
-    }
-    if (explicitDuration === void 0 && durationGear().persistent) return;
-    n.timer = window.setTimeout(() => hideNow(n), dur);
-  }
-  function noopHandle() {
-    return {
-      el: document.createElement("div"),
-      setMessage() {
-      },
-      setProgress() {
-      },
-      setType() {
-      },
-      hide() {
-      }
-    };
-  }
-  function appendActionBtn(n, action) {
-    const btn = document.createElement("span");
-    btn.className = "bz-notice-action";
-    btn.setAttribute("role", "button");
-    btn.textContent = action.label;
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (action.onClick) action.onClick();
-      hideNow(n);
-    });
-    n.el.appendChild(btn);
-  }
-  function notify(msg, opts) {
-    const kind = opts && opts.type || "info";
-    if (suppressedByLevel(kind, opts)) return noopHandle();
-    const isProgress = kind === "progress";
-    const type = isProgress ? "info" : kind;
-    const variant = opts && opts.variant || defaultVariant();
-    const container = ensureContainer();
-    applyPositionClass(container);
-    if (opts && opts.dedupeKey) {
-      const key = opts.dedupeKey;
-      const r = recent[key];
-      const now = Date.now();
-      if (r && r.n && r.n.el.isConnected) {
-        r.n.msgEl.textContent = msg;
-        if (r.n.isProgress !== isProgress || r.n.el.classList.contains("bz-notice--" + type) === false) {
-          applyTypeToEl(r.n, kind);
-        }
-        const mergeActions = [];
-        if (opts.action) mergeActions.push(opts.action);
-        if (opts.actions) mergeActions.push(...opts.actions);
-        const existingLabels = new Set(
-          Array.from(r.n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
-        );
-        for (const a of mergeActions) {
-          if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
-        }
-        armTimer(r.n, kind, opts.duration, msg);
-        return noopHandle();
-      }
-      if (r && now - r.at < DEDUPE_WINDOW_MS) {
-        return noopHandle();
-      }
-      recent[key] = { at: now, n: null };
-    }
-    evictOldest();
-    const el = document.createElement("div");
-    el.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
-    el.setAttribute("role", "status");
-    el.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
-    const icon = document.createElement("div");
-    icon.className = "bz-notice-icon";
-    if (isProgress) {
-      icon.innerHTML = SPINNER_SVG;
-    } else {
-      icon.textContent = ICONS[type];
-    }
-    el.appendChild(icon);
-    const body = document.createElement("div");
-    body.className = "bz-notice-body";
-    if (opts && opts.title) {
-      const titleEl = document.createElement("div");
-      titleEl.className = "bz-notice-title";
-      titleEl.textContent = opts.title;
-      body.appendChild(titleEl);
-    }
-    const msgEl = document.createElement("div");
-    msgEl.className = "bz-notice-msg";
-    msgEl.textContent = msg;
-    body.appendChild(msgEl);
-    el.appendChild(body);
-    let progressEl = null;
-    if (isProgress) {
-      progressEl = document.createElement("div");
-      progressEl.className = "bz-notice-progress";
-      el.appendChild(progressEl);
-    }
-    const n = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
-    const actions = [];
-    if (opts && opts.action) actions.push(opts.action);
-    if (opts && opts.actions) {
-      for (const a of opts.actions) {
-        if (!actions.some((x) => x.label === a.label)) actions.push(a);
-      }
-    }
-    for (const a of actions) appendActionBtn(n, a);
-    el.addEventListener("click", () => hideNow(n));
-    container.style.zIndex = String(allocZ());
-    container.appendChild(el);
-    live.push(n);
-    if (opts && opts.dedupeKey) {
-      const r = recent[opts.dedupeKey];
-      if (r) r.n = n;
-    }
-    const fullText = (opts && opts.title ? opts.title + " " : "") + msg;
-    armTimer(n, kind, opts && opts.duration, fullText);
-    return {
-      el,
-      setMessage(text) {
-        n.msgEl.textContent = text;
-      },
-      setType(t) {
-        applyTypeToEl(n, t);
-        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
-      },
-      setProgress(pct) {
-        if (!n.progressEl) return;
-        if (pct === -1) {
-          n.progressEl.classList.add("bz-notice-progress--indeterminate");
-          return;
-        }
-        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
-        const clamped = Math.max(0, Math.min(100, pct));
-        n.progressEl.style.width = clamped + "%";
-        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
-        else n.progressEl.classList.remove("bz-notice-progress--done");
-      },
-      hide() {
-        hideNow(n);
-      }
-    };
-  }
-
-  // src/core/ui/icons.ts
-  function uiIconSpan(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-  function mountIcons(root) {
-    root.querySelectorAll("[data-lucide]").forEach((el) => {
-      const name = el.getAttribute("data-lucide") || "";
-      if (!name) return;
-      try {
-        const fresh = uiIconSpan(name);
-        const cls = el.className;
-        if (cls && cls !== "bz-ic") fresh.className = cls;
-        el.replaceWith(fresh);
-      } catch (e) {
-      }
-    });
-  }
-
-  // src/core/esc-manager.ts
-  var escManager = (() => {
-    const layers = [];
-    const onKeydown = (e) => {
-      if (e.key !== "Escape") return;
-      for (let i = layers.length - 1; i >= 0; i--) {
-        const L = layers[i];
-        try {
-          if (L.isVisible()) {
-            L.close();
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            return;
-          }
-        } catch (err) {
-          layers.splice(i, 1);
-        }
-      }
-    };
-    if (typeof document !== "undefined") {
-      document.addEventListener("keydown", onKeydown);
-    }
-    return {
-      register(id, layer) {
-        for (let i = layers.length - 1; i >= 0; i--) {
-          if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
-        }
-        const rec = Object.assign({ id }, layer);
-        layers.push(rec);
-        return {
-          unregister: () => {
-            const i = layers.indexOf(rec);
-            if (i !== -1) layers.splice(i, 1);
-          }
-        };
-      },
-      /** 插件卸载时移除全局监听 */
-      destroy() {
-        if (typeof document !== "undefined") {
-          document.removeEventListener("keydown", onKeydown);
-        }
-      }
-    };
-  })();
-
-  // src/core/dom.ts
-  function createOverlay(opts) {
-    const mask = document.createElement("div");
-    mask.id = opts.maskId;
-    mask.className = "bz-overlay-mask";
-    mask.style.display = "none";
-    mask.onclick = function(e) {
-      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
-    };
-    const popup = document.createElement("div");
-    popup.id = opts.popupId;
-    popup.className = "bz-overlay-popup";
-    popup.style.display = "none";
-    popup.style.width = opts.width || "90%";
-    popup.style.maxWidth = (opts.maxWidth || 400) + "px";
-    topifyZ(mask, popup);
-    return { mask, popup, topify: () => topifyZ(mask, popup) };
-  }
-
   // src/core/utils.ts
-  var import_moment = __toESM(require_moment());
   function escapeHtml(str) {
     return str.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
@@ -5296,10 +5547,16 @@ var BZW_secondbrain = (() => {
   function stripMdExt(name) {
     return String(name || "").replace(/\.md$/i, "");
   }
+  var import_moment;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment = __toESM(require_moment());
+      init_fake_obsidian();
+      init_app();
+    }
+  });
 
   // src/core/flow-dialog.ts
-  var FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-  var FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
   function buildFlowDialogParts(title, message, actions) {
     let buttons;
     if (actions.length === 2) {
@@ -5323,7 +5580,6 @@ var BZW_secondbrain = (() => {
     }).join("") + "</div>";
     return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
-  var activeSettle = null;
   function openFlowDialog(opts) {
     if (!opts.actions || opts.actions.length === 0) {
       return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
@@ -5349,7 +5605,7 @@ var BZW_secondbrain = (() => {
       popup.innerHTML = parts.html;
       mask.appendChild(popup);
       document.body.appendChild(mask);
-      const escHandle = escManager.register("q3-confirm", {
+      const escHandle2 = escManager.register("q3-confirm", {
         isVisible: () => mask.isConnected,
         close: () => settle(void 0)
       });
@@ -5363,7 +5619,7 @@ var BZW_secondbrain = (() => {
         if (settled) return;
         settled = true;
         if (activeSettle === settle) activeSettle = null;
-        escHandle.unregister();
+        escHandle2.unregister();
         mask.remove();
         restoreFocus();
         resolve(v);
@@ -5377,6 +5633,50 @@ var BZW_secondbrain = (() => {
       if (focusBtn) focusBtn.focus();
     });
   }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
+    }
+  });
+
+  // src/core/path-picker.ts
+  var init_path_picker = __esm({
+    "src/core/path-picker.ts"() {
+      init_fake_obsidian();
+      init_app();
+      init_dom();
+      init_esc_manager();
+    }
+  });
+
+  // src/core/settings-schema.ts
+  var init_settings_schema = __esm({
+    "src/core/settings-schema.ts"() {
+      init_fake_obsidian();
+      init_settings_provider();
+      init_path_picker();
+      init_settings_modal();
+      init_ui();
+      init_notice();
+    }
+  });
+
+  // src/core/settings-modal.ts
+  var init_settings_modal = __esm({
+    "src/core/settings-modal.ts"() {
+      init_fake_obsidian();
+      init_dom();
+      init_esc_manager();
+      init_mobile();
+      init_settings_schema();
+    }
+  });
 
   // src/core/storage.ts
   function storageDir() {
@@ -5387,7 +5687,6 @@ var BZW_secondbrain = (() => {
     const dir = (base || storageDir()).trim().replace(/\/+$/, "");
     return `${dir}/${name}`;
   }
-  var CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
   function corruptStamp(d = /* @__PURE__ */ new Date()) {
     const p = (n) => String(n).padStart(2, "0");
     return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
@@ -5419,11 +5718,17 @@ var BZW_secondbrain = (() => {
       return null;
     }
   }
+  var CORRUPT_BACKUP_DIR;
+  var init_storage = __esm({
+    "src/core/storage.ts"() {
+      init_app();
+      init_settings_provider();
+      init_notice();
+      CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
+    }
+  });
 
   // src/core/knowledge-boxes.ts
-  var DEFAULT_LIT_DIR = "文献盒";
-  var DEFAULT_CARDBOX_DIR = "卡片盒";
-  var DEFAULT_TOPIC_DIR = "主题盒";
   function normalizeBoxDir(raw, fallback) {
     const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
     return s || fallback;
@@ -5457,6 +5762,16 @@ var BZW_secondbrain = (() => {
     const d = normalizeBoxDir(dir, "");
     return !!d && boxDirs(boxes).includes(d);
   }
+  var DEFAULT_LIT_DIR, DEFAULT_CARDBOX_DIR, DEFAULT_TOPIC_DIR;
+  var init_knowledge_boxes = __esm({
+    "src/core/knowledge-boxes.ts"() {
+      init_utils();
+      init_settings_provider();
+      DEFAULT_LIT_DIR = "文献盒";
+      DEFAULT_CARDBOX_DIR = "卡片盒";
+      DEFAULT_TOPIC_DIR = "主题盒";
+    }
+  });
 
   // src/secondbrain/config.ts
   function resolveAllowPaths(rawAllowPaths) {
@@ -5484,12 +5799,17 @@ var BZW_secondbrain = (() => {
       OLLAMA_REMOTE_URL: s.secondBrainRemoteOllamaUrl || ""
     };
   }
-  var _a, _b;
-  var IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(typeof navigator !== "undefined" ? navigator.userAgent : "") || ((_b = (_a = globalThis.obsidian) == null ? void 0 : _a.Platform) == null ? void 0 : _b.isMobile) === true;
+  var _a, _b, IS_MOBILE;
+  var init_config = __esm({
+    "src/secondbrain/config.ts"() {
+      init_settings_provider();
+      init_storage();
+      init_knowledge_boxes();
+      IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(typeof navigator !== "undefined" ? navigator.userAgent : "") || ((_b = (_a = globalThis.obsidian) == null ? void 0 : _a.Platform) == null ? void 0 : _b.isMobile) === true;
+    }
+  });
 
   // src/secondbrain/store-file.ts
-  var STORE_VERSION = 1;
-  var CHAT_HISTORY_LIMIT = 100;
   function storeDir() {
     return storageDir();
   }
@@ -5499,15 +5819,8 @@ var BZW_secondbrain = (() => {
   function getSecondBrainVecPath() {
     return storageFile("secondbrain.vec");
   }
-  var LEGACY_FILES = [
-    "secondbrain_meta.json",
-    "secondbrain_panel.json",
-    "secondbrain_link_queue.json",
-    "secondbrain_link_state.json"
-  ];
-  var LEGACY_VEC = "secondbrain_vectors.vec";
   function emptyStore() {
-    return { version: STORE_VERSION, meta: null, panel: null, link: { queue: [], state: {} }, chatHistory: [] };
+    return { version: STORE_VERSION, meta: null, panel: null, link: { queue: [], state: {} }, chatHistory: [], weekly: null };
   }
   function normalizeChatHistory(raw) {
     if (!Array.isArray(raw)) return [];
@@ -5515,6 +5828,17 @@ var BZW_secondbrain = (() => {
       (e) => !!e && typeof e === "object" && (e.role === "user" || e.role === "assistant") && typeof e.content === "string"
     );
     return valid.slice(-CHAT_HISTORY_LIMIT);
+  }
+  function normalizeWeekly(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const r = raw;
+    if (typeof r.lastRunAt !== "number" || !isFinite(r.lastRunAt) || !Array.isArray(r.knownPaths)) return null;
+    const digest = r.digest && typeof r.digest === "object" && !Array.isArray(r.digest) ? r.digest : null;
+    return {
+      lastRunAt: r.lastRunAt,
+      knownPaths: r.knownPaths.filter((p) => typeof p === "string" && p.length > 0),
+      digest
+    };
   }
   function normalizeStore(raw) {
     const d = raw && typeof raw === "object" ? raw : {};
@@ -5528,7 +5852,8 @@ var BZW_secondbrain = (() => {
         queue: Array.isArray(linkRaw.queue) ? linkRaw.queue : [],
         state: linkRaw.state && typeof linkRaw.state === "object" && !Array.isArray(linkRaw.state) ? linkRaw.state : {}
       },
-      chatHistory: normalizeChatHistory(d.chatHistory)
+      chatHistory: normalizeChatHistory(d.chatHistory),
+      weekly: normalizeWeekly(d.weekly)
     };
   }
   function hasFn(adapter, name) {
@@ -5609,7 +5934,6 @@ var BZW_secondbrain = (() => {
     }
     return true;
   }
-  var chain = Promise.resolve();
   function enqueue(fn) {
     const run = chain.then(fn, fn);
     chain = run.then(
@@ -5664,7 +5988,9 @@ var BZW_secondbrain = (() => {
       }
     }
     const chatTrimmed = chatHistory.slice(-CHAT_HISTORY_LIMIT);
-    return { version: primary.version, meta, panel: panel2, link: { queue, state }, chatHistory: chatTrimmed };
+    let weekly = primary.weekly;
+    if (conflict.weekly && (!weekly || conflict.weekly.lastRunAt > weekly.lastRunAt)) weekly = conflict.weekly;
+    return { version: primary.version, meta, panel: panel2, link: { queue, state }, chatHistory: chatTrimmed, weekly };
   }
   function buildRowOffsets(meta) {
     const map = /* @__PURE__ */ new Map();
@@ -5943,6 +6269,112 @@ var BZW_secondbrain = (() => {
       s.chatHistory = [];
     }, app);
   }
+  var STORE_VERSION, CHAT_HISTORY_LIMIT, LEGACY_FILES, LEGACY_VEC, chain;
+  var init_store_file = __esm({
+    "src/secondbrain/store-file.ts"() {
+      init_app();
+      init_storage();
+      init_utils();
+      STORE_VERSION = 1;
+      CHAT_HISTORY_LIMIT = 100;
+      LEGACY_FILES = [
+        "secondbrain_meta.json",
+        "secondbrain_panel.json",
+        "secondbrain_link_queue.json",
+        "secondbrain_link_state.json"
+      ];
+      LEGACY_VEC = "secondbrain_vectors.vec";
+      chain = Promise.resolve();
+    }
+  });
+
+  // src/secondbrain/link-agent/data.ts
+  var init_data = __esm({
+    "src/secondbrain/link-agent/data.ts"() {
+      init_utils();
+      init_knowledge_boxes();
+      init_store_file();
+    }
+  });
+
+  // src/secondbrain/ai.ts
+  var AI;
+  var init_ai2 = __esm({
+    "src/secondbrain/ai.ts"() {
+      init_ai();
+      AI = {
+        /** 统一入口：失败直接抛出，由调用方 toast 报错（不静默回退 Ollama——ticket 108）；
+         *  opts 可选（既有单参调用零兼容负担），透传取消/流式 */
+        async ask(prompt, opts) {
+          return createAI().prompt(prompt, void 0, opts != null ? opts : {});
+        }
+      };
+    }
+  });
+
+  // prototypes/secondbrain/fake-sim.ts
+  var fake_sim_exports = {};
+  __export(fake_sim_exports, {
+    bootSecondBrainSim: () => bootSecondBrainSim,
+    demoReferenceQuery: () => demoReferenceQuery,
+    openChat: () => openChat,
+    openPanel: () => openPanel,
+    openRef: () => openRef
+  });
+  init_fake_obsidian();
+  init_app();
+  init_settings_provider();
+  init_ai();
+
+  // src/secondbrain/panel.ts
+  init_notice();
+  init_z_order();
+  init_mobile();
+  init_ui();
+  init_flow_dialog();
+  init_esc_manager();
+  init_utils();
+  init_settings_provider();
+  init_settings_modal();
+  init_config();
+
+  // src/secondbrain/whitelist.ts
+  init_knowledge_boxes();
+
+  // src/secondbrain/panel.ts
+  init_store_file();
+
+  // src/secondbrain/weekly-ui.ts
+  init_dom();
+  init_esc_manager();
+  init_ui();
+  init_notice();
+  init_utils();
+  init_store_file();
+
+  // src/secondbrain/weekly.ts
+  init_store_file();
+  init_data();
+
+  // src/secondbrain/tfidf.ts
+  var TFIDF_STOP_WORDS = "的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等";
+  var STOP_SET = new Set(TFIDF_STOP_WORDS);
+
+  // src/secondbrain/chunk.ts
+  init_utils();
+
+  // src/secondbrain/weekly.ts
+  init_config();
+  var WEEKLY_INTERVAL_MS = 7 * 24 * 3600 * 1e3;
+  var WEEKLY_MAX_COLLISIONS = 10;
+  function formatDigestRange(since, until) {
+    const a = new Date(since);
+    const b = new Date(until);
+    const day = (d) => `${d.getMonth() + 1} 月 ${d.getDate()} 日`;
+    const sameYear = a.getFullYear() === b.getFullYear();
+    const left = sameYear ? day(a) : `${a.getFullYear()} 年 ${day(a)}`;
+    return `${left} – ${day(b)}`;
+  }
 
   // src/secondbrain/render.ts
   function topLevelDir(path) {
@@ -6096,6 +6528,10 @@ var BZW_secondbrain = (() => {
             <div class="bz-sb-ct bz-sb-ai-ct">${ic("sparkles", 13)}库摘要<span class="bz-sb-ct-n" id="bz-sb-ai-when"></span></div>
             <div class="bz-sb-ai-txt" id="bz-sb-ai-txt"></div>
           </div>
+          <div class="bz-sb-section bz-sb-weekly-card" id="bz-sb-weekly-card" style="display:none" role="button" tabindex="0" title="本周知识动态">
+            <div class="bz-sb-ct bz-sb-ai-ct">${ic("calendar-days", 13)}近期动态<span class="bz-sb-ct-n" id="bz-sb-weekly-range"></span></div>
+            <div class="bz-sb-weekly-card-txt" id="bz-sb-weekly-card-txt"></div>
+          </div>
         </div>
       </div>
       <div class="bz-sb-foot">
@@ -6151,6 +6587,46 @@ var BZW_secondbrain = (() => {
   function panelLogHtml(parts) {
     return parts.map((p) => `<span class="bz-sb-log-item${p.warn ? " bz-sb-log-item--warn" : ""}">${escapeHtml2(p.text)}</span>`).join('<span class="bz-sb-log-sep">·</span>');
   }
+  function weeklyShellHtml(range) {
+    return `
+  <div class="bz-sb-weekly-head">
+    <div class="bz-sb-glyph">${ic("calendar-days", 17)}</div>
+    <div class="bz-sb-head-title">
+      <h3>本周知识动态</h3>
+      <div class="bz-sb-cnt" id="bz-sb-weekly-range-head">${escapeHtml2(range)}</div>
+    </div>
+    <div class="bz-sb-head-sp"></div>
+    <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-weekly-close" aria-label="关闭" title="关闭">${ic("x", 14)}</button>
+  </div>
+  <div class="bz-sb-weekly-body bz-sb-scroll-y" id="bz-sb-weekly-body"></div>`;
+  }
+  function weeklySummaryHtml(withAI) {
+    return withAI ? `<div class="bz-sb-weekly-summary" id="bz-sb-weekly-summary"><div class="bz-sb-weekly-summary-text" id="bz-sb-weekly-summary-text"></div></div>` : `<div class="bz-sb-weekly-stats" id="bz-sb-weekly-stats"></div>`;
+  }
+  function weeklyStatsHtml(notes, links, collisions) {
+    const chip = (v, k, warn = false) => `<span class="bz-sb-weekly-chip${warn && v > 0 ? " bz-sb-weekly-chip--warn" : ""}"><b>${v}</b>${k}</span>`;
+    return chip(notes, " 篇新增笔记") + chip(links, " 条新增关联") + chip(collisions, " 处主题撞车", true);
+  }
+  function weeklySectionHtml(id, icon, title, count, rows, emptyText = "") {
+    if (count <= 0) return emptyText ? `<div class="bz-sb-weekly-empty">${escapeHtml2(emptyText)}</div>` : "";
+    return `
+  <div class="bz-sb-weekly-section" id="${id}">
+    <div class="bz-sb-ct">${ic(icon, 13)}${escapeHtml2(title)}<span class="bz-sb-ct-n">${count}</span></div>
+    <div class="bz-sb-weekly-rows">${rows}</div>
+  </div>`;
+  }
+  function weeklyNoteRowHtml(path, name, when) {
+    return `<div class="bz-sb-weekly-row" data-path="${escapeHtml2(path)}" role="button" tabindex="0"><span class="bz-sb-weekly-row-dot"></span><span class="bz-sb-weekly-row-name">${escapeHtml2(name)}</span><span class="bz-sb-weekly-row-time">${escapeHtml2(when)}</span></div>`;
+  }
+  function weeklyCollisionRowHtml(path, name, targetPath, targetName, pct) {
+    return `<div class="bz-sb-weekly-row bz-sb-weekly-row--hit" data-path="${escapeHtml2(path)}" role="button" tabindex="0"><span class="bz-sb-weekly-row-dot bz-sb-weekly-row-dot--warn"></span><span class="bz-sb-weekly-row-name">${escapeHtml2(name)}</span><span class="bz-sb-weekly-row-hit-arrow">${ic("arrow-right", 12)}</span><span class="bz-sb-weekly-row-name bz-sb-weekly-row-name--target" data-path="${escapeHtml2(targetPath)}">${escapeHtml2(targetName)}</span><span class="bz-sb-weekly-row-pct">${pct}%</span></div>`;
+  }
+  function weeklyEmptyHtml() {
+    return `<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">最近一周没有新入脑的笔记与关联，一切安静。</div>`;
+  }
+  function weeklyLoadingHtml() {
+    return `<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">正在聚合本周动态…</div>`;
+  }
   var CHAT_CHIPS = ["为什么会遗忘", "享乐适应", "怎么高效记笔记", "睡不好怎么补救", "闪电", "王阳明"];
   function chatShellHtml(topK) {
     return `
@@ -6195,6 +6671,156 @@ var BZW_secondbrain = (() => {
   }
   function refStateHtml(text) {
     return `<div class="bz-sb-ref-empty">${escapeHtml2(text)}</div>`;
+  }
+
+  // src/secondbrain/weekly-ui.ts
+  init_ai2();
+  var overlayEl = null;
+  var escHandle = null;
+  var appRef = null;
+  var renderSeq = 0;
+  function ensureModal(app) {
+    var _a2;
+    appRef = app;
+    if (overlayEl) {
+      overlayEl.style.display = "flex";
+      return;
+    }
+    const { mask, popup } = createOverlay({
+      maskId: "bz-sb-weekly-mask",
+      popupId: "bz-sb-weekly-panel",
+      onMaskClick: () => closeWeeklyDigest(),
+      width: "560px",
+      maxWidth: 560
+    });
+    popup.classList.add("bz-sb-weekly-modal");
+    popup.innerHTML = weeklyShellHtml("");
+    overlayEl = popup;
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    popup.style.display = "flex";
+    (_a2 = popup.querySelector("#bz-sb-weekly-close")) == null ? void 0 : _a2.addEventListener("click", () => closeWeeklyDigest());
+    const body = popup.querySelector("#bz-sb-weekly-body");
+    const jump = (path) => {
+      const f = appRef == null ? void 0 : appRef.vault.getAbstractFileByPath(path);
+      if (f) void appRef.workspace.getLeaf(false).openFile(f);
+      else notice("文件不存在或已被移动", "info");
+    };
+    body == null ? void 0 : body.addEventListener("click", (e) => {
+      const el = e.target.closest("[data-path]");
+      if (el == null ? void 0 : el.dataset.path) jump(el.dataset.path);
+    });
+    body == null ? void 0 : body.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const el = e.target.closest("[data-path]");
+      if (el == null ? void 0 : el.dataset.path) {
+        e.preventDefault();
+        jump(el.dataset.path);
+      }
+    });
+    escHandle = escManager.register("bz-sb-weekly-modal", {
+      isVisible: () => !!overlayEl && overlayEl.style.display === "flex" && overlayEl.isConnected,
+      close: () => closeWeeklyDigest()
+    });
+  }
+  function openWeeklyDigest(app) {
+    void (async () => {
+      var _a2, _b2;
+      try {
+        const store2 = await loadStore(app);
+        ensureModal(app);
+        showWeeklyModal((_b2 = (_a2 = store2.weekly) == null ? void 0 : _a2.digest) != null ? _b2 : null);
+      } catch (e) {
+        console.warn("[secondbrain] 每周动态读取失败", e);
+        ensureModal(app);
+        showWeeklyModal(null, { loadFailed: true });
+      }
+    })();
+  }
+  function closeWeeklyDigest() {
+    renderSeq++;
+    if (overlayEl) overlayEl.style.display = "none";
+  }
+  function showWeeklyModal(digest, opts) {
+    if (!overlayEl) return;
+    const seq = ++renderSeq;
+    const rangeHead = overlayEl.querySelector("#bz-sb-weekly-range-head");
+    const body = overlayEl.querySelector("#bz-sb-weekly-body");
+    if (!body) return;
+    if (!digest) {
+      if (rangeHead) rangeHead.textContent = "";
+      body.innerHTML = (opts == null ? void 0 : opts.loading) ? weeklyLoadingHtml() : (opts == null ? void 0 : opts.loadFailed) ? '<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">读取动态数据失败，请稍后重开。</div>' : weeklyEmptyHtml();
+      mountIcons(body);
+      return;
+    }
+    if (seq !== renderSeq) return;
+    if (rangeHead) rangeHead.textContent = formatDigestRange(digest.since, digest.until);
+    const nameOf = (path) => path.split("/").pop() || path;
+    const summary = digest.aiSummary ? weeklySummaryHtml(true) : weeklySummaryHtml(false);
+    const sections = [];
+    sections.push(
+      `<div class="bz-sb-weekly-section bz-sb-weekly-summary-wrap">${summary}</div>`
+    );
+    if (digest.collisions.length > 0) {
+      const rows = digest.collisions.map(
+        (c) => weeklyCollisionRowHtml(c.path, nameOf(c.path), c.targetPath, nameOf(c.targetPath), Math.round(c.score * 100))
+      ).join("");
+      sections.push(weeklySectionHtml("bz-sb-weekly-hits", "copy", "主题撞车提示", digest.collisions.length, rows));
+    }
+    if (digest.newNotes.length > 0) {
+      const rows = digest.newNotes.slice(0, 30).map((n) => weeklyNoteRowHtml(n.path, nameOf(n.path), formatRelativeTime(n.mtime))).join("");
+      sections.push(weeklySectionHtml("bz-sb-weekly-notes", "file-plus", "新增笔记", digest.newNotes.length, rows));
+    }
+    if (digest.newLinks.length > 0) {
+      const rows = digest.newLinks.slice(0, 30).map((l) => weeklyNoteRowHtml(l.path, nameOf(l.path), formatRelativeTime(l.linkedAt))).join("");
+      sections.push(weeklySectionHtml("bz-sb-weekly-links", "link", "新增关联", digest.newLinks.length, rows));
+    }
+    if (digest.newNotes.length + digest.newLinks.length + digest.collisions.length === 0) {
+      sections.push(weeklyEmptyHtml());
+    }
+    body.innerHTML = sections.join("");
+    if (digest.aiSummary) {
+      const txt = body.querySelector("#bz-sb-weekly-summary-text");
+      if (txt) txt.textContent = digest.aiSummary;
+    } else {
+      const stats = body.querySelector("#bz-sb-weekly-stats");
+      if (stats) stats.innerHTML = weeklyStatsHtml(digest.newNotes.length, digest.newLinks.length, digest.collisions.length);
+    }
+    if (digest.collisions.length >= WEEKLY_MAX_COLLISIONS) {
+      body.insertAdjacentHTML(
+        "beforeend",
+        `<div class="bz-sb-weekly-empty">撞车提示较多，仅显示相似度最高的 ${WEEKLY_MAX_COLLISIONS} 条。</div>`
+      );
+    }
+    mountIcons(body);
+  }
+  function renderPanelWeeklyCard(popup, app, digest) {
+    const card = popup.querySelector("#bz-sb-weekly-card");
+    if (!card) return;
+    if (!digest) {
+      card.style.display = "none";
+      return;
+    }
+    const range = popup.querySelector("#bz-sb-weekly-range");
+    const txt = popup.querySelector("#bz-sb-weekly-card-txt");
+    if (range) range.textContent = formatDigestRange(digest.since, digest.until);
+    if (txt) {
+      const parts = [`${digest.newNotes.length} 篇新增`, `${digest.newLinks.length} 条关联`];
+      if (digest.collisions.length > 0) parts.push(`${digest.collisions.length} 处撞车`);
+      txt.textContent = parts.join(" · ");
+    }
+    card.style.display = "";
+    if (!card.dataset.bound) {
+      card.dataset.bound = "1";
+      const open = () => openWeeklyDigest(app);
+      card.addEventListener("click", open);
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          open();
+        }
+      });
+    }
   }
 
   // src/secondbrain/panel.ts
@@ -6632,9 +7258,10 @@ var BZW_secondbrain = (() => {
       if (distN) distN.textContent = `${tree.length} 个来源`;
       mountIcons(dist);
     }
-    /** AI 库摘要 + 自动建链数（secondbrain.json panel/link 段，异步回填；生成入口已移除，旧值仍可展示） */
+    /** AI 库摘要 + 自动建链数 + 每周动态入口卡（secondbrain.json panel/link/weekly 段，异步回填；
+     *  摘要生成入口已移除，旧值仍可展示） */
     async loadSummaryAndLinks() {
-      var _a2, _b2, _c;
+      var _a2, _b2, _c, _d, _e;
       try {
         const store2 = await loadStore(this.app);
         const popup = this.popup;
@@ -6654,6 +7281,7 @@ var BZW_secondbrain = (() => {
             `<span class="bz-sb-log-sep">·</span>${panelLogHtml([{ text: `自动建链 ${linkedTotal} 条` }])}`
           );
         }
+        renderPanelWeeklyCard(popup, this.app, (_e = (_d = store2.weekly) == null ? void 0 : _d.digest) != null ? _e : null);
       } catch (e) {
       }
     }
@@ -6663,7 +7291,16 @@ var BZW_secondbrain = (() => {
     return i === -1 ? "（根目录）" : path.slice(0, i);
   }
 
+  // src/secondbrain/chat-panel.ts
+  init_dom();
+  init_esc_manager();
+  init_flow_dialog();
+  init_ui();
+  init_config();
+
   // src/secondbrain/ui-tools.ts
+  init_fake_obsidian();
+  init_app();
   function jumpToChunk(file, chunkText, highlight = false) {
     try {
       const app = getApp();
@@ -6788,21 +7425,9 @@ var BZW_secondbrain = (() => {
     };
   }
 
-  // src/secondbrain/ai.ts
-  var deepseek = null;
-  function getDeepseekAI() {
-    if (!deepseek) deepseek = createAI({}, "deepseek-v4-flash");
-    return deepseek;
-  }
-  var AI = {
-    /** 统一入口：失败直接抛出，由调用方 toast 报错（不静默回退 Ollama——ticket 108）；
-     *  opts 可选（既有单参调用零兼容负担），透传取消/流式（ticket 141） */
-    async ask(prompt, opts) {
-      return getDeepseekAI().prompt(prompt, void 0, opts != null ? opts : {});
-    }
-  };
-
   // src/secondbrain/chat-panel.ts
+  init_ai2();
+  init_store_file();
   function welcomeText(topK) {
     return `你好！每次提问会独立检索 ${topK} 条笔记辅助回答。`;
   }
@@ -7060,7 +7685,14 @@ ${userMsg}`;
     }
   };
 
+  // src/secondbrain/reference-panel.ts
+  init_utils();
+  init_notice();
+  init_z_order();
+
   // src/secondbrain/float-window.ts
+  init_esc_manager();
+  init_z_order();
   var FloatWindow = class {
     constructor(title, opts = {}) {
       this.isHidden = false;
@@ -7255,6 +7887,9 @@ ${userMsg}`;
     }
   };
 
+  // src/secondbrain/reference-panel.ts
+  init_config();
+
   // src/secondbrain/context.ts
   function getCurrentContext(ed) {
     if (!ed) return "";
@@ -7296,6 +7931,7 @@ ${userMsg}`;
   }
 
   // src/secondbrain/reference-panel.ts
+  init_ui();
   var ReferencePanel = class {
     constructor(app, store2, existingWin) {
       this.lastQuery = "";
@@ -7665,6 +8301,14 @@ ${userMsg}`;
   };
 
   // src/secondbrain/mobile-panel.ts
+  init_utils();
+  init_esc_manager();
+  init_notice();
+  init_ui();
+  init_config();
+  init_z_order();
+  init_ai2();
+  init_store_file();
   var SNAP_MID = 45;
   var SNAP_HIGH = 75;
   var COLLAPSE_THRESHOLD = 18;
@@ -8089,6 +8733,7 @@ ${text}`;
   };
 
   // prototypes/secondbrain/fake-sim.ts
+  init_config();
   var SimVectorStore = class {
     constructor() {
       this.dim = 1024;

@@ -1,8 +1,9 @@
 /**
  * 第二大脑共享数据文件层（ticket 120 数据整合；ticket 141 chatHistory 段加法扩展；
- * ticket 152 Syncthing 冲突自愈）
+ * ticket 152 Syncthing 冲突自愈；issue 360 weekly 段加法扩展）
  * - 单文件 secondbrain.json 承载 JSON 段：meta（索引元数据）/ panel（AI 概括缓存，ticket 141 起
- *   仅存量保留不再消费）/ link（双链队列+基准哈希）/ chatHistory（AI 对话历史，ticket 141 加法扩展）；
+ *   仅存量保留不再消费）/ link（双链队列+基准哈希）/ chatHistory（AI 对话历史，ticket 141 加法扩展）/
+ *   weekly（每周知识动态聚合状态，issue 360 加法扩展——旧文件缺失视为 null，零迁移可读）；
  *   向量二进制独立 secondbrain.vec（原 secondbrain_vectors.vec 改名，ticket 120）。
  * - loadStore：读整文件 → parse → 段结构校验；损坏 → 原样留档 CONFIG/.CORRUPT（core 留档契约，D3 对齐）
  *   后清位重建空结构；首次调用触发一次性迁移（四旧 JSON + 旧 vec → 组装/改名 → 删旧；幂等：新文件存在即跳过）；
@@ -40,7 +41,53 @@ export interface ChatHistoryEntry {
 /** 对话历史上限（ticket 141）：超出截断最旧 */
 export const CHAT_HISTORY_LIMIT = 100;
 
-/** 单文件整体结构（v1；chatHistory 为 ticket 141 加法扩展段） */
+// ---------------- weekly 段（issue 360：每周知识动态；结构定义收在此处供 weekly.ts 消费） ----------------
+
+/** 摘要·新增笔记条目 */
+export interface WeeklyNoteEntry {
+  path: string;
+  mtime: number;
+}
+
+/** 摘要·新增关联条目（link.state 中 linkedAt 落在窗口内的非空条目） */
+export interface WeeklyLinkEntry {
+  path: string;
+  linkedAt: string;
+}
+
+/** 摘要·主题撞车条目（mode 记录判定通道：vector 向量近邻 / tfidf 分词覆盖降级） */
+export interface WeeklyCollisionEntry {
+  path: string;
+  targetPath: string;
+  score: number;
+  mode: 'vector' | 'tfidf';
+}
+
+/** 一份周摘要（有实质内容才落盘；各列表写入侧截断，见 weekly.ts 容量口径） */
+export interface WeeklyDigest {
+  generatedAt: number;
+  /** 窗口起点（ms）＝ 上次聚合时刻 */
+  since: number;
+  /** 窗口终点（ms）＝ 本次聚合时刻 */
+  until: number;
+  newNotes: WeeklyNoteEntry[];
+  newLinks: WeeklyLinkEntry[];
+  collisions: WeeklyCollisionEntry[];
+  /** AI 人话总结（可选；未配置/失败降级纯列表） */
+  aiSummary?: string;
+}
+
+/** weekly 段（issue 360）：周界判定状态 + 新增判定快照 + 最近一份非空摘要 */
+export interface WeeklyStoreSection {
+  /** 上次聚合时刻（ms；周界判定基准——距今 ≥ 7 天才再聚） */
+  lastRunAt: number;
+  /** 上次聚合时的索引键快照（新增笔记 = 当前键 − 快照键） */
+  knownPaths: string[];
+  /** 最近一次非空摘要（空轮不写，面板入口卡/弹层回放读它） */
+  digest: WeeklyDigest | null;
+}
+
+/** 单文件整体结构（v1；chatHistory 为 ticket 141 加法扩展段，weekly 为 issue 360 加法扩展段） */
 export interface SecondBrainStore {
   version: number;
   meta: Record<string, unknown> | null;
@@ -48,6 +95,8 @@ export interface SecondBrainStore {
   link: LinkStoreSection;
   /** AI 对话历史（ticket 141 加法扩展：旧文件缺失 → []，normalizeStore 兜底，零迁移） */
   chatHistory: ChatHistoryEntry[];
+  /** 每周知识动态（issue 360 加法扩展：旧文件缺失 → null，normalizeStore 兜底，零迁移） */
+  weekly: WeeklyStoreSection | null;
 }
 
 /** storagePath 唯一目录口径（ADR-0009 延续；同 config.ts） */
@@ -76,7 +125,7 @@ const LEGACY_FILES = [
 const LEGACY_VEC = 'secondbrain_vectors.vec';
 
 function emptyStore(): SecondBrainStore {
-  return { version: STORE_VERSION, meta: null, panel: null, link: { queue: [], state: {} }, chatHistory: [] };
+  return { version: STORE_VERSION, meta: null, panel: null, link: { queue: [], state: {} }, chatHistory: [], weekly: null };
 }
 
 /** chatHistory 段校验（ticket 141 加法扩展）：非数组 → []；条目 role/content 不合法的剔除，超限截断最旧 */
@@ -92,8 +141,22 @@ function normalizeChatHistory(raw: unknown): ChatHistoryEntry[] {
   return valid.slice(-CHAT_HISTORY_LIMIT);
 }
 
+/** weekly 段校验（issue 360 加法扩展）：缺失/畸形 → null；lastRunAt 非有限数 / knownPaths 非数组 → null（按冷启动重立基线） */
+function normalizeWeekly(raw: unknown): WeeklyStoreSection | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.lastRunAt !== 'number' || !isFinite(r.lastRunAt) || !Array.isArray(r.knownPaths)) return null;
+  const digest =
+    r.digest && typeof r.digest === 'object' && !Array.isArray(r.digest) ? (r.digest as WeeklyStoreSection['digest']) : null;
+  return {
+    lastRunAt: r.lastRunAt,
+    knownPaths: r.knownPaths.filter((p): p is string => typeof p === 'string' && p.length > 0),
+    digest,
+  };
+}
+
 /** 段结构校验：容忍旧写错 / 缺段（queue 非数组→[]；state 非对象→{}；panel/meta 缺省 null/{}；
- *  chatHistory 缺失→[]——ticket 141 加法扩展，旧数据零迁移可读） */
+ *  chatHistory 缺失→[]——ticket 141 加法扩展，旧数据零迁移可读；weekly 缺失→null——issue 360 加法扩展） */
 function normalizeStore(raw: unknown): SecondBrainStore {
   const d = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const linkRaw = d.link && typeof d.link === 'object' ? (d.link as Record<string, unknown>) : {};
@@ -110,6 +173,7 @@ function normalizeStore(raw: unknown): SecondBrainStore {
           : {},
     },
     chatHistory: normalizeChatHistory(d.chatHistory),
+    weekly: normalizeWeekly(d.weekly),
   };
 }
 
@@ -286,7 +350,11 @@ export function mergeStoreWithConflict(primary: SecondBrainStore, conflict: Seco
   }
   const chatTrimmed = chatHistory.slice(-CHAT_HISTORY_LIMIT);
 
-  return { version: primary.version, meta, panel, link: { queue, state }, chatHistory: chatTrimmed };
+  // weekly（issue 360）：取 lastRunAt 大者（后聚合的设备状态更新；null 视为旧）
+  let weekly = primary.weekly;
+  if (conflict.weekly && (!weekly || conflict.weekly.lastRunAt > weekly.lastRunAt)) weekly = conflict.weekly;
+
+  return { version: primary.version, meta, panel, link: { queue, state }, chatHistory: chatTrimmed, weekly };
 }
 
 /** meta.notes 键序 → 行偏移表（{offset, count}；布局不变式：行序 = 键序 × 各篇 chunks 数） */
