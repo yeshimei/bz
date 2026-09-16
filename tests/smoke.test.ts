@@ -392,4 +392,19 @@ ${failures.join('\n')}`).toEqual([]);
     expect(plugin2.settings.memoFilePath).toBe('自定义/路径');
     expect(plugin2.settings.cinemaFolderPath).toBe('我的/影视');
   });
+
+  it('番茄钟统计两档（issue 357）：bz-pomodoro-open 打开弹窗含「近 7 天 / 近 6 月」切换与双柱区', async () => {
+    const { unloadPomodoro } = await import('../src/pomodoro');
+    const plugin = await createPlugin(makeMockApp());
+    registeredCommands.find((c: any) => c.id === 'bz-pomodoro-open')!.callback();
+    await vi.waitFor(() => {
+      expect(document.getElementById('pomodoro-popup')).toBeTruthy();
+    });
+    // 统计区两档 tab + 双柱区容器（近 7 天明细 / 近 6 月趋势，与原型共用 render.ts 单源 markup）
+    expect(document.getElementById('pomodoro-stat-tab-week')!.textContent).toBe('近 7 天');
+    expect(document.getElementById('pomodoro-stat-tab-month')!.textContent).toBe('近 6 月');
+    expect(document.getElementById('pomodoro-week')).toBeTruthy();
+    expect(document.getElementById('pomodoro-months')!.hidden).toBe(true); // 默认近 7 天档
+    unloadPomodoro(); // 清理弹窗与域内存态，不污染后续用例
+  });
 });
