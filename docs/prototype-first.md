@@ -41,3 +41,13 @@
 - **假层语义必须与宿主一致**（ADR-0122）：fake 层与测试 mock 里凡是「照宿主 API 写的替身」，语义要与真机逐条对齐。已实例：`MarkdownRenderer.render` 是**追加**语义（类型定义写明 "The element to append to"，不清空容器），而 fake 渲染器（`innerHTML =`）与测试 mock（`el.textContent = md`）都实现成覆盖语义 —— 于是「纯文本预填 + 追加渲染」造成的正文双份只在真机显现，评审壳与单测两侧全绿（issue 275）。改宿主替身前先查官方类型定义的行为描述，再写替身；发现「假层语义与宿主不符且恰好掩盖缺陷」按缺陷处理。
 - **弹层隐藏滚动条不自造**（ADR-0080/0122）：bz 界面级单源在 `src/core/ui/components.css`（按 `bz-` 前缀通杀，滚动功能保留）；域内写 `scrollbar-width: thin/auto` 或 `::-webkit-scrollbar` 自绘是违规，评审壳里看见滚动条按缺陷处理。
 - 宿主差异（theme 切换 / 假数据 / 图标表 / Platform）全部收敛在 fake 层与评审壳，组件层禁止分叉。
+- **worktree 内 `preview-freshness` 假红 = 行尾，不一定是你的改动**（ADR-0104/0133）：源指纹按**磁盘字节**算，
+  而 `core.autocrlf=true` 下 worktree 检出 CRLF、主仓库工作区可能被工具写成 LF——**同一提交、`git status`
+  两边都干净，指纹却不同**。症状是**你根本没碰的域**（pomodoro / home / memo / settings-panel 等）
+  跟着一起红。处理（worktree 内、git 不可见）：先把那批文件对齐成与主仓库**逐字节一致**，
+  再 `node scripts/build-preview.mjs` 重出——守卫即全绿，且**重出的产物可安全带回主仓库**
+  （指纹由与主仓库相同的字节算出）。反例：不对齐就重出，产物内嵌的是 worktree 的 CRLF 指纹，
+  合并回主仓库后必红。实例口径见 `issues/341-clipbook-native-sel-menu.md` 门禁段。
+- **仓库级遗留**：`.gitattributes` 只固定了 `main.js` 与 `prototypes/**/*.{js,ts}`，`src/**` 未固定行尾——
+  全新 clone（autocrlf 检出 CRLF）下这些域的原型新鲜度守卫仍会假红。跨域根治需给 `src/**` 定
+  `text eol=lf` 并整仓 renormalize（未做，另议）。
