@@ -48,6 +48,11 @@
   再 `node scripts/build-preview.mjs` 重出——守卫即全绿，且**重出的产物可安全带回主仓库**
   （指纹由与主仓库相同的字节算出）。反例：不对齐就重出，产物内嵌的是 worktree 的 CRLF 指纹，
   合并回主仓库后必红。实例口径见 `issues/341-clipbook-native-sel-menu.md` 门禁段。
+- **省事口径：worktree 内的全量直接跳过该守卫** —— `vitest run --exclude tests/preview-freshness.test.ts`。
+  这条守卫的权威判定场景是**主仓库重出产物之后**（无 CRLF 假红）；在 worktree 里跑它只有两种下场：
+  逐次对齐字节，或 `git stash` 取基线做差集。前者是给环境做人工补偿、后者白花一轮，都不如不跑。
+  worktree 的红线因此收窄为「本域测试 + tsc + 其余全量绿」，重出产物与 `pnpm run build` 一律回主仓做，
+  做完在主仓跑该守卫取权威结论（issue 341 后续实证：336 文件 5268 例绿 → 主仓 337/5295 + 27/27 绿）。
 - **仓库级遗留**：`.gitattributes` 只固定了 `main.js` 与 `prototypes/**/*.{js,ts}`，`src/**` 未固定行尾——
   全新 clone（autocrlf 检出 CRLF）下这些域的原型新鲜度守卫仍会假红。跨域根治需给 `src/**` 定
   `text eol=lf` 并整仓 renormalize（未做，另议）。

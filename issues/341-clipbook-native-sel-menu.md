@@ -100,3 +100,12 @@ issue 340 的门禁段已把这条记为「worktree CRLF 已知伪失败」。
 **遗留（未做，另议）**：`.gitattributes` 只固定了 `main.js` / `prototypes/**/*.{js,ts}`，
 `src/**` 未固定行尾 → 全新 clone（autocrlf=true 检出 CRLF）下这些域的原型新鲜度守卫仍会假红。
 根治需给 `src/**` 定 `text eol=lf` 并整仓 renormalize，属跨域仓库级改动，本 issue 不顺手做。
+
+### 后续批次门禁（worktree `wt/clip-noclear`，撤销让位）
+
+worktree 内 **336 文件 / 5268 用例绿**（`--exclude tests/preview-freshness.test.ts`——该守卫只在主仓
+重出产物后判读，口径已写进 `docs/prototype-first.md`）+ `tsc --noEmit` 0 错。
+合并回主仓库后：全量 **337 文件 / 5295 用例绿** + `preview-freshness` **27/27 绿**
+（clipbook / memo / settings-panel 三包重出——三包均内联 `src/clipbook/ui.ts`，故同批变化；
+`styles.css` 无变化）+ `pnpm run build` 已部署，部署目录 `main.js` 复核无
+`MOBILE_SYS_BAR_CLEARANCE` 残留（0 处）。
