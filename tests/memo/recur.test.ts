@@ -99,7 +99,7 @@ describe('issue 353 · completeItem 自动生成下一期', () => {
       id: 'r1', title: '交周报', scene: '工作', priority: 'important', created: '2026-09-01 09:00:00',
       completed: null, due: '2026-09-18 18:00:00', notePath: '工作/周报.md', notePosition: { line: 3, ch: 0 },
       scriptName: null, courseName: null, coursePath: null, linkedNote: '归档/网页剪藏/x.md',
-      url: 'https://example.com', recur: { kind: 'weekly' },
+      url: 'https://example.com', recur: { kind: 'weekly' }, checklist: null,
     };
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([src]));
     const { next } = await MemoData.completeItem('r1');
@@ -165,7 +165,7 @@ describe('issue 353 · meta 重复标记（markup 口径）', () => {
   const base = (extra: Partial<MemoItem>): MemoItem => ({
     id: 't1', title: '交周报', scene: '工作', priority: 'minor', created: '2026-09-10 09:00:00',
     completed: null, due: null, notePath: null, notePosition: null, scriptName: null,
-    courseName: null, coursePath: null, linkedNote: null, url: null, recur: null, ...extra,
+    courseName: null, coursePath: null, linkedNote: null, url: null, recur: null, checklist: null, ...extra,
   });
 
   it('recur 文案注入 → bz-memo-tag-recur 标签，位于场景与截止之间', () => {

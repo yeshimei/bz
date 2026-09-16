@@ -110,6 +110,26 @@
 .bz-memo-card.bz-memo-done .bz-memo-card-title { text-decoration: line-through; color: var(--bz-text-2); }
 .bz-memo-card-title a { color: var(--bz-brand); text-decoration: underline; cursor: pointer; word-break: break-word; }
 
+/* ---- 清单子任务（issue 354）：标题之下、meta 之上的勾选行组 ---- */
+.bz-memo-cl { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; }
+.bz-memo-cl-row { display: flex; align-items: flex-start; gap: 8px; padding: 2px 0; cursor: pointer; }
+.bz-memo-cl-box {
+  width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; margin-top: 2px;
+  border: 1.5px solid var(--bz-border-strong); background: var(--bz-surface-2);
+  position: relative; box-sizing: border-box; cursor: pointer; display: inline-block;
+}
+.bz-memo-cl-row:hover .bz-memo-cl-box { border-color: var(--bz-brand); }
+.bz-memo-cl-box.bz-memo-cl-on { background: var(--bz-brand); border-color: var(--bz-brand); }
+.bz-memo-cl-box.bz-memo-cl-on::after {
+  content: ''; position: absolute; left: 3.5px; top: 0.5px;
+  width: 3.5px; height: 6.5px; border: solid var(--bz-on-brand); border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.bz-memo-cl-text { font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: 1.6; word-break: break-word; }
+.bz-memo-cl-row.is-done .bz-memo-cl-text { text-decoration: line-through; color: var(--bz-text-3); }
+/* 父项已完成：整组淡显（与卡片 done 暗淡同语汇），行仍可点（取消勾选即恢复父项） */
+.bz-memo-cl.bz-memo-cl-dim { opacity: 0.72; }
+
 /* ---- 移动抽屉头（buildSheetHead，ADR-0104 markup 单源）----
    勾选圈复用上方 .bz-memo-check 单源规则（抽屉经 sheetClass 挂皮肤类，纸感/编辑部皮肤自动随行，
    无需皮肤段额外覆盖）；此处只补头部横排布局与完成态——对齐列表 .bz-memo-card.bz-memo-done
@@ -141,6 +161,8 @@
 .bz-memo-tag.bz-memo-tag-future { background: color-mix(in srgb, var(--bz-success) 12%, transparent); color: var(--bz-success); }
 /* 周期重复标记（issue 353）：品牌软底色字——「这条会自己回来」的语义强调 */
 .bz-memo-tag.bz-memo-tag-recur { background: var(--bz-brand-soft); color: var(--bz-brand); }
+/* 清单进度标签（issue 354）：中性次底，n/N 弱信息 */
+.bz-memo-tag.bz-memo-tag-check { background: var(--bz-surface-3); color: var(--bz-text-2); }
 .bz-memo-time { font-size: var(--bz-font-caption); line-height: 18px; color: var(--bz-text-3); flex-shrink: 0; }
 
 /* 空态：组件库 .bz-empty 三件套（图标 + 一句话 + 动作按钮），域内不再自留空态样式 */
@@ -188,6 +210,22 @@
 .bz-memo-addscene .bz-btn-row { margin-top: var(--bz-space-xs); }
 .bz-memo-addscene-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); line-height: 1.5; }
 
+/* ---- 编辑器清单子任务区（issue 354）：勾选框 + 文案输入 + 删除钮行 ---- */
+.bz-memo-cl-edit { display: flex; flex-direction: column; gap: 6px; }
+.bz-memo-cl-edit-row { display: flex; align-items: center; gap: 6px; }
+.bz-memo-cl-edit-row .bz-memo-cl-box { margin-top: 0; flex-shrink: 0; }
+.bz-memo-cl-edit-row .bz-input { flex: 1; min-width: 0; height: 30px; }
+.bz-memo-cl-edit-row .bz-icon-btn { flex-shrink: 0; }
+.bz-memo-cl-addbtn {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 2px; padding: 4px 10px;
+  border: 1px dashed var(--bz-border-strong); border-radius: var(--bz-radius-sm);
+  background: transparent; color: var(--bz-text-3); cursor: pointer;
+  font-size: var(--bz-font-meta); font-family: inherit;
+}
+.bz-memo-cl-addbtn:hover { color: var(--bz-brand); border-color: var(--bz-brand); background: var(--bz-brand-soft); }
+.bz-memo-cl-addbtn .bz-ic { width: 12px; height: 12px; }
+
 /* （issue 266 的「移动端专属头行新建钮」在 issue 268 退役：移动端新建入口归底部
    录入「添加」（打开创建弹窗）与场景条尾部「添加场景」，故此处原有的
    `@media (min-width:769px){ .bz-memo-head-…{display:none} }` 一并删除。
@@ -228,6 +266,10 @@
   .bz-memo-sheet-entry .bz-memo-check::after { content: ''; position: absolute; inset: -13px; }
   .bz-memo-card .bz-memo-card-title { font-size: var(--bz-font-emphasis); }
   .bz-memo-composer .bz-input { height: 40px; }
+  /* 清单子任务触控档（issue 354）：行加高 + 勾选框 16px，整行即热区 */
+  .bz-memo-cl-row { padding: 5px 0; gap: 9px; }
+  .bz-memo-cl-row .bz-memo-cl-box { width: 16px; height: 16px; }
+  .bz-memo-cl-row .bz-memo-cl-text { font-size: var(--bz-font-body); }
 }
 
 /* ═══════════ 皮肤体系（issue 210，2026-09-06 细节对齐原型） ═══════════

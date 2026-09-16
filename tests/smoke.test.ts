@@ -493,3 +493,17 @@ describe('备忘录周期重复（issue 353 冒烟）', () => {
     expect(raw.find((i: any) => i.id === 'smoke-r').completed).toBeTruthy();
   });
 });
+
+describe('备忘录清单型子任务（issue 354 冒烟）', () => {
+  it('composer 约定语法：/词条 收进 checklist（纯函数契约）', async () => {
+    const { parseComposerChecklist } = await import('../src/memo/data');
+    const p = parseComposerChecklist('筹备旅行 /订机票 /订酒店');
+    expect(p.title).toBe('筹备旅行');
+    expect(p.checklist).toEqual([
+      { text: '订机票', done: false },
+      { text: '订酒店', done: false },
+    ]);
+    // 无词条 = 普通条目
+    expect(parseComposerChecklist('随手记一条').checklist).toBeNull();
+  });
+});
