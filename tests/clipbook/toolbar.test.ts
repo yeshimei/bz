@@ -186,10 +186,10 @@ function closePanelSafe(): void {
   } catch (e) { /* 用例内已收 */ }
 }
 
-// ================= 移动端浮框让位系统选择菜单（issue 329 Bug 1） =================
+// ================= 浮框定位（双端同一份口径，issue 341 撤销移动端让位） =================
 
-describe('移动端浮框让位系统选择菜单（issue 329 Bug 1）', () => {
-  it('桌面：定位行为不变（选区上 8px，无让位）', async () => {
+describe('浮框定位：双端同口径（issue 341 撤销移动端系统菜单让位）', () => {
+  it('桌面：选区上 8px', async () => {
     await openDesktop();
     const bar = await showToolbar('量子纠缠');
     // 选区 rect top=100、浮框高 jsdom 零尺寸估算 36 → 100 - 36 - 8 = 56
@@ -197,16 +197,16 @@ describe('移动端浮框让位系统选择菜单（issue 329 Bug 1）', () => {
     closePanelSafe();
   });
 
-  it('移动端：上方放得下 → 上方再让位 48（系统选择菜单高度）', async () => {
+  it('移动端：零让位，与桌面同定位（系统选择菜单已屏蔽，让位只剩空隙）', async () => {
     await openDesktop();
     (Platform as any).isMobile = true;
     const bar = await showToolbar('量子纠缠');
-    // 100 - 36 - 8 - 48 = 8（恰贴钳制下限，仍在上方位）
-    expect(bar.style.top).toBe('8px');
+    // 100 - 36 - 8 = 56（与桌面同一算式，端别不再参与定位）
+    expect(bar.style.top).toBe('56px');
     closePanelSafe();
   });
 
-  it('移动端：上方放不下 → 翻下方同样让位 48', async () => {
+  it('移动端：上方放不下 → 翻下方，同样零让位', async () => {
     await openDesktop();
     (Platform as any).isMobile = true;
     const mdEl = document.querySelector('[data-clip-md]') as HTMLElement;
@@ -225,8 +225,8 @@ describe('移动端浮框让位系统选择菜单（issue 329 Bug 1）', () => {
       expect(bar).toBeTruthy();
       expect(bar!.style.display).toBe('flex');
     });
-    // 上方 0 - 36 - 8 - 48 < 8 放不下 → 翻下方：30 + 8 + 48 = 86
-    expect((document.querySelector('.bz-clip-selbar') as HTMLElement).style.top).toBe('86px');
+    // 上方 0 - 36 - 8 < 8 放不下 → 翻下方：30 + 8 = 38
+    expect((document.querySelector('.bz-clip-selbar') as HTMLElement).style.top).toBe('38px');
     closePanelSafe();
   });
 });
