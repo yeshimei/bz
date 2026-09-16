@@ -208,12 +208,10 @@ describe('getAIProvider 解析与缓存', () => {
       aiProvider: 'openai',
       openaiApiKey: 'sk-openai',
       aiModelOverrides: { openai: 'gpt-4o' },
-      aiContextOverrides: { openai: 9999 },
       aiMaxTokensOverrides: { openai: 32000 },
     });
     const p = await getAIProvider();
     expect(p.model).toBe('gpt-4o'); // 覆盖注册表默认 gpt-4o-mini
-    expect(p.contextWindow).toBe(9999);
     expect(p.defaultMaxTokens).toBe(32000);
   });
 
@@ -413,7 +411,7 @@ describe('选项合并与服务方法面', () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.model).toBe('my-model');
     expect(body.temperature).toBe(0.5);
-    expect(body.max_tokens).toBe(8192); // 上限不认 defaultOptions：恒取 provider 链（issue 334/ADR-0148）
+    expect(body.max_tokens).toBe(393216); // 上限不认 defaultOptions：恒取 provider 链（issue 334/ADR-0148）
   });
 
   it('search / reasonAndSearch 方法透传对应 modelOptions', async () => {
@@ -439,7 +437,7 @@ describe('选项合并与服务方法面', () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.a).toBe(1); // 默认侧键保留
     expect(body.b).toBe(2); // 调用方键合入
-    expect(body.max_tokens).toBe(8192); // 两侧的 max_tokens 均被忽略：恒取 provider 链（issue 334）
+    expect(body.max_tokens).toBe(393216); // 两侧的 max_tokens 均被忽略：恒取 provider 链（issue 334）
   });
 
   it('createAI：不再注入默认 max_tokens（issue 334/ADR-0148），defaultOptions.modelOptions 其余键照常', async () => {
@@ -447,6 +445,6 @@ describe('选项合并与服务方法面', () => {
     await ai.prompt('q');
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.enable_thinking).toBe(true);
-    expect(body.max_tokens).toBe(8192); // 注入/显式 max_tokens 均忽略：恒取 provider 链
+    expect(body.max_tokens).toBe(393216); // 注入/显式 max_tokens 均忽略：恒取 provider 链
   });
 });

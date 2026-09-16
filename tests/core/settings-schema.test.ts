@@ -78,7 +78,7 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
     expect(openaiVw(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
   });
 
-  it('模型配置组（issue 331 拆组）：模型名称 text（三函数绑定 + 获取模型名按钮）+ 上下文/最大输出 token number（ticket 172）+ 思考档位 select（issue 330）', () => {
+  it('模型配置组（issue 331 拆组）：模型名称 text（三函数绑定 + 获取模型名按钮）+ 最大输出 token number（ticket 172；上下文窗口行已删）+ 思考档位 select（issue 330）', () => {
     const rows = schema.groups[1].rows as Array<{
       name: string;
       type: string;
@@ -86,10 +86,10 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
       visibleWhen?: (s: SettingsSnapshot) => boolean;
       refreshKey?: unknown;
     }>;
-    expect(rows.map((r) => r.name)).toEqual(['模型名称', '上下文窗口', '最大输出 token', '思考 reasoning']);
-    expect(rows.map((r) => r.type)).toEqual(['text', 'number', 'number', 'select']);
-    // 前三行随服务商切换的联动走 refreshKey，跨组生效（issue 331）；思考档位无 refreshKey
-    rows.slice(0, 3).forEach((r) => {
+    expect(rows.map((r) => r.name)).toEqual(['模型名称', '最大输出 token', '思考 reasoning']);
+    expect(rows.map((r) => r.type)).toEqual(['text', 'number', 'select']);
+    // 前两行随服务商切换的联动走 refreshKey，跨组生效（issue 331）；思考档位无 refreshKey
+    rows.slice(0, 2).forEach((r) => {
       expect(r.visibleWhen).toBeUndefined();
       expect(typeof r.refreshKey).toBe('function');
       expect('key' in r.binding!).toBe(false);
@@ -98,7 +98,7 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
     // 模型行内嵌「获取模型名」按钮
     expect((rows[0] as any).actions?.map((a: { text: string }) => a.text)).toEqual(['获取模型名']);
     // 思考档位（issue 330）：key 直绑 aiThinking，五档 options，全局常显
-    const thinkingRow = rows[3] as unknown as {
+    const thinkingRow = rows[2] as unknown as {
       binding: { key: string };
       visibleWhen?: unknown;
       refreshKey?: unknown;
