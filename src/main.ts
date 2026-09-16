@@ -4,7 +4,7 @@
  * 命令 id 统一 `bz-` 前缀（ADR-0004 修订：2025 用户决策统一品牌前缀），不设置默认快捷键，
  * 卸载时 removeCommand 清理——取代原脚本的 window.__*CommandRegistered 防重标志。
  */
-import { Plugin, PluginSettingTab } from 'obsidian';
+import { Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { notice, cleanupNotices } from './core/notice';
 import { escManager } from './core/esc-manager';
 import { closeItemMenu } from './core/item-actions';
@@ -16,8 +16,6 @@ import { bindMobileViewport, unbindMobileViewport } from './core/viewport';
 import { DOMAIN_ICONS } from './core/domain-icons';
 import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
-import { renderSettingsInto } from './core/settings-schema';
-import { mainSettingsSchema } from './core/settings-main-schema';
 
 import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys } from './settings';
 
@@ -412,9 +410,9 @@ function ensureSecondBrainOnReady(app: any, isUnloaded: () => boolean) {
   }, 0);
 }
 
-// ===== 设置页（ADR-0009：单页平铺，只含「🤖 AI」「📂 数据存储路径」两区块）=====
-// ticket 131：两区块 schema 化（ADR-0064 声明式渲染器），原私有 textSetting/toggleSetting/
-// pathSetting helper 退役（text 防抖落盘/onCommit 一次性提示语义收口 core 渲染器）。
+// ===== 设置页（issue 345：原生设置页不再平铺设置项，只留一个「打开设置面板」按钮——
+// 全部设置已聚合 settings-panel 面板；原 ADR-0009 单页平铺与本页退役，mainSettingsSchema
+// 聚合器仍留在 core/settings-main-schema 供测试与文案 lint 全量断言）=====
 
 export class BzSettingTab extends PluginSettingTab {
   plugin: BzPlugin;
@@ -427,8 +425,11 @@ export class BzSettingTab extends PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    // AI 服务商切换 → 密钥行显隐走 visibleWhen；存储路径 onCommit warning 文案逐字保留
-    // （schema 定义见 core/settings-main-schema.ts）；渲染器统一完成徽标/两行式标注/初始显隐
-    renderSettingsInto(containerEl, mainSettingsSchema());
+    new Setting(containerEl)
+      .setName('打开设置面板')
+      .setDesc('全部设置（AI、数据存储路径、通知、各域）都在 bz 设置面板中集中管理')
+      .addButton((btn) =>
+        btn.setButtonText('打开设置面板').setCta().onClick(() => openSettingsPanel(this.plugin.app))
+      );
   }
 }

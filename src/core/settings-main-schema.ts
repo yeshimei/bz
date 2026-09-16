@@ -400,8 +400,10 @@ export function noticeSettingsSchema(): SettingsSchema {
   };
 }
 
-/** 构造主设置页 schema（⚙️ 原生设置页三区块 = AI + 数据存储路径 + 通知；每次 display 重建，
- *  visibleWhen 在渲染器内重求值）。2026-09-12：通知自「通用」域拆出独立成一页，原生页随之为三区块。 */
+/** 全局设置聚合视图（AI + 数据存储路径 + 通知；每次调用重建，visibleWhen 在渲染器内重求值）。
+ *  issue 345（2026-09-16 用户拍板）：原生设置页退役平铺（BzSettingTab 只留「打开设置面板」按钮），
+ *  本聚合器不再有 UI 消费方——保留作测试与文案 lint 的全量断言入口；面板分页各用
+ *  aiSettingsSchema / generalSettingsSchema / noticeSettingsSchema。 */
 export function mainSettingsSchema(): SettingsSchema {
   return {
     groups: [...aiSettingsSchema().groups, ...generalSettingsSchema().groups, ...noticeSettingsSchema().groups],

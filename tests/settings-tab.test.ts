@@ -1,17 +1,22 @@
 /**
- * 设置页测试（覆盖 main.ts BzSettingTab，ADR-0009）：单页两区块（🤖 AI / 📂 数据存储路径）渲染 +
- * 控件交互保存持久化 + storagePath 迁移（旧 7 字段 → 共享路径）。
- * ticket 128：数据存储路径行改为统一路径选择器（chips + 选择…按钮，无手输文本框），
- * 交互经选择器录入；onCommit 提示语义（有变更才提示、同一次会话至多一次、改回原值复位）保留。
- * ticket 131：两区块 schema 化（ADR-0064 渲染器）；AI 服务商切换 → 密钥行显隐走 visibleWhen；
- * ticket 100 文案修正（标题收短为「DeepSeek 密钥」「OpenCode 密钥」，键名/行为不动）。
- * 依赖 mock-obsidian-entry 的 Setting 链式 mock（MockDropdown/MockText/MockToggle）。
+ * 设置页测试（覆盖 main.ts BzSettingTab）：issue 345（2026-09-16 用户拍板）原生设置页
+ * 退役平铺——不再渲染任何 schema 设置组，只留一个「打开设置面板」按钮，点击打开
+ * settings-panel 面板（openSettingsPanel）。原平铺（服务商/密钥/存储路径/通知行）
+ * 的数据断言改由 tests/core/settings-schema.test.ts（mainSettingsSchema 纯数据）与
+ * settings-panel.test.ts（面板内嵌渲染）承接。
+ * 依赖 mock-obsidian-entry 的 Setting 链式 mock（MockButton 渲染真实 button 元素）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import BzPlugin, { BzSettingTab } from '../src/main';
-import { MockVault, mockAppWithVault } from './mock-vault';
-import { setApp } from '../src/core/app';
-import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from './mock-obsidian-entry';
+import { MockVault } from './mock-vault';
+import { resetObsidianMocks } from './mock-obsidian-entry';
+import { openSettingsPanel } from '../src/settings-panel';
+
+// 拦截面板打开（本页只断言「点击 → openSettingsPanel(app)」，面板内部行为归 settings-panel.test.ts）
+vi.mock('../src/settings-panel', async (importOriginal) => {
+  const mod = await importOriginal<Record<string, unknown>>();
+  return { ...mod, openSettingsPanel: vi.fn() };
+});
 
 const diskData: Record<string, any> = {};
 
@@ -42,21 +47,7 @@ async function createPlugin(app: any) {
   return plugin;
 }
 
-/** 按设置名找 setting-item */
-function findSetting(tab: BzSettingTab, name: string): HTMLElement {
-  const el = [...tab.containerEl.querySelectorAll('.setting-item')].find(
-    (s) => (s as HTMLElement).dataset.name === name
-  ) as HTMLElement;
-  expect(el, `设置项「${name}」存在`).toBeTruthy();
-  return el;
-}
-
-/** 取设置项的控件（MockText/MockToggle 均有 trigger） */
-function controlOf(el: HTMLElement): any {
-  return (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
-}
-
-describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
+describe('设置页 BzSettingTab（issue 345：只留打开设置面板按钮）', () => {
   let plugin: any;
   let tab: BzSettingTab;
 
@@ -64,6 +55,7 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     resetObsidianMocks();
     delete diskData['bz'];
     document.body.innerHTML = '';
+    vi.mocked(openSettingsPanel).mockClear();
     plugin = await createPlugin(makeMockApp());
     tab = new BzSettingTab(plugin.app, plugin);
     tab.display();
@@ -73,126 +65,27 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     if (plugin && plugin.unregisterGestures) plugin.unregisterGestures();
   });
 
-  it('单页平铺：无 tab；分组卡片（带 icon）：服务商/模型配置/数据源凭据 + 数据存储路径 + 通知（issue 331 AI 页拆三组）', () => {
-    expect(tab.containerEl.querySelectorAll('.bz-tab').length).toBe(0);
-    const groupNames = [...tab.containerEl.querySelectorAll('.bz-settings-group-name')].map((t) => t.textContent);
-    expect(groupNames).toEqual(['服务商', '模型配置', '数据源凭据', '数据存储路径', '通知']);
-    const groupIcons = [...tab.containerEl.querySelectorAll('.bz-settings-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(groupIcons).toEqual(['plug-zap', 'cpu', 'key-round', 'folder-open', 'bell']);
+  it('原生页无任何 schema 设置组：无分组卡片、无密钥/存储路径/通知行，仅一行一按钮', () => {
+    expect(tab.containerEl.querySelectorAll('.bz-settings-group-name').length).toBe(0);
+    const names = [...tab.containerEl.querySelectorAll('.setting-item')].map((s) => (s as HTMLElement).dataset.name);
+    expect(names).toEqual(['打开设置面板']);
+    const btn = tab.containerEl.querySelector('.setting-item-control button') as HTMLButtonElement;
+    expect(btn).toBeTruthy();
+    expect(btn.textContent).toBe('打开设置面板');
+    // setCta 强调色按钮（MockButton 记 flag）
+    const ctrl = (tab.containerEl.querySelector('.setting-item') as any).__setting.controls[0];
+    expect(ctrl.cta).toBe(true);
   });
 
-  it('AI 区块：服务商下拉 + 密钥行；数据存储路径区块：路径选择行（已选态 chip + ✕，无按钮/手输框）', () => {
-    findSetting(tab, 'AI 服务商');
-    findSetting(tab, 'DeepSeek 密钥');
-    findSetting(tab, 'OpenCode 密钥');
-    findSetting(tab, '最大输出 token'); // ticket 170
-    // issue 331：Cookie 行渲染为多行文本框（textarea），API 密钥行保持单行输入框
-    expect((findSetting(tab, 'B站 Cookie').querySelector('.setting-item-control textarea'))).toBeTruthy();
-    expect((findSetting(tab, '豆瓣 Cookie').querySelector('.setting-item-control textarea'))).toBeTruthy();
-    expect(findSetting(tab, 'ApiZero Key').querySelector('.setting-item-control textarea')).toBeNull();
-    const storageRow = findSetting(tab, '数据存储路径');
-    // ticket 128：行内无 text 输入框；ticket 133：已选态「选择…」按钮移出 DOM（chip 内 ✕ 仍是 button）；
-    // 默认值场景 data-filled=1（CSS 双保险隐藏按钮——用户反馈「有默认值时按钮不消失」的回归锁）
-    expect(storageRow.querySelector('.setting-item-control input')).toBeNull();
-    expect(storageRow.querySelector('.setting-item-control .bz-path-picker-btn--slim')).toBeNull();
-    expect(storageRow.dataset.filled).toBe('1');
-    expect(storageRow.querySelector('.setting-item-control .bz-path-picker-chip-x')).toBeTruthy();
-    expect(storageRow.querySelector('.setting-item-control .bz-path-picker-chip-name')!.textContent).toBe('CONFIG/STORAGE');
-    // 域设置不再出现在设置页（已迁往各域 ⚙️ 弹窗）
-    expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '启动时自动弹窗')).toBe(false);
-    expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '剪藏目录')).toBe(false);
+  it('重复 display 不残留旧内容（containerEl 先 empty）', () => {
+    tab.display();
+    expect(tab.containerEl.querySelectorAll('.setting-item').length).toBe(1);
   });
 
-  it('B站 Cookie 行：Cookie 值经 textarea 编辑并落盘（issue 331 换控件后防抖落盘语义不变）', async () => {
-    const el = findSetting(tab, 'B站 Cookie');
-    const ta = el.querySelector('.setting-item-control textarea') as HTMLTextAreaElement;
-    const ctrl = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
-    ctrl.trigger('abc=1; def=2');
-    // textarea 无回车提交（core 渲染器口径）：失焦即落盘
-    ta.dispatchEvent(new Event('blur'));
-    await new Promise((r) => setTimeout(r, 10));
-    expect(plugin.settings.bilibiliCookie).toBe('abc=1; def=2');
-    expect(diskData['bz'].bilibiliCookie).toBe('abc=1; def=2');
-    expect(ta.value).toBe('abc=1; def=2');
-  });
-
-  it('AI 服务商切换 → 密钥行 visibleWhen 显隐（ticket 131：默认 opencode-go 显示 OpenCode 行）', async () => {
-    const hiddenOf = (name: string) => findSetting(tab, name).classList.contains('bz-setting-hidden');
-    // 默认 opencode-go：OpenCode 行显示、DeepSeek 行隐藏、custom 行隐藏
-    expect(hiddenOf('DeepSeek 密钥')).toBe(true);
-    expect(hiddenOf('OpenCode 密钥')).toBe(false);
-    expect(hiddenOf('自定义 API 地址')).toBe(true);
-    // 切 deepseek：反转
-    const aiSetting = findSetting(tab, 'AI 服务商');
-    const dd = (aiSetting as any).__setting.controls.find((c: any) => c.options && 'deepseek' in c.options);
-    dd.trigger('deepseek');
-    await new Promise((r) => setTimeout(r, 10));
-    expect(hiddenOf('DeepSeek 密钥')).toBe(false);
-    expect(hiddenOf('OpenCode 密钥')).toBe(true);
-    // 切 custom：仅 custom 行显示
-    dd.trigger('custom');
-    await new Promise((r) => setTimeout(r, 10));
-    expect(hiddenOf('DeepSeek 密钥')).toBe(true);
-    expect(hiddenOf('OpenCode 密钥')).toBe(true);
-    expect(hiddenOf('自定义 API 地址')).toBe(false);
-    expect(hiddenOf('自定义 API 密钥')).toBe(false);
-    // 切回 opencode-go：再次反转
-    dd.trigger('opencode-go');
-    await new Promise((r) => setTimeout(r, 10));
-    expect(hiddenOf('DeepSeek 密钥')).toBe(true);
-    expect(hiddenOf('OpenCode 密钥')).toBe(false);
-    expect(hiddenOf('自定义 API 地址')).toBe(true);
-  });
-
-  it('AI 服务商切换更新设置并持久化', async () => {
-    const aiSetting = findSetting(tab, 'AI 服务商');
-    const dd = (aiSetting as any).__setting.controls.find((c: any) => c.options && 'opencode-go' in c.options);
-    dd.trigger('opencode-go');
-    await new Promise((r) => setTimeout(r, 10));
-    expect(plugin.settings.aiProvider).toBe('opencode-go');
-    expect(diskData['bz'].aiProvider).toBe('opencode-go');
-  });
-
-  it('数据存储路径经统一选择器录入：确认即落盘 + f1 风险提示（同会话不重复、改回原值复位）', async () => {
-    // 选择器数据源 = vault 文件夹：种几个候选目录（含默认 CONFIG/STORAGE）
-    const vault = new MockVault();
-    vault.create('CONFIG/STORAGE/a.json', 'x');
-    vault.create('CONFIG/数据/b.json', 'x');
-    vault.create('CONFIG/数据2/c.json', 'x');
-    setApp(mockAppWithVault(vault) as any);
-    const saveSpy = vi.spyOn(plugin, 'saveData');
-
-    const pickVia = async (path: string) => {
-      const el = findSetting(tab, '数据存储路径');
-      (el as any).__setting.controls[0].trigger(); // 「选择…」按钮 → 打开选择器
-      const popup = document.getElementById('bz-path-picker-popup')!;
-      await vi.waitFor(() => expect(popup.querySelectorAll('.bz-path-picker-row').length).toBeGreaterThan(0));
-      const row = [...popup.querySelectorAll('.bz-path-picker-row')].find(
-        (r) => (r as HTMLElement).dataset.path === path
-      ) as HTMLElement;
-      row.click();
-      (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
-      await new Promise((r) => setTimeout(r, 10));
-    };
-
-    // 选 CONFIG/数据 → 内存 + 落盘一次 + 风险提示（仅改路径、文件不迁移、重载后生效；正文不带 emoji）
-    await pickVia('CONFIG/数据');
-    expect(plugin.settings.storagePath).toBe('CONFIG/数据');
-    expect(saveSpy).toHaveBeenCalledTimes(1); // 离散选择 → 确认即落盘（无防抖必要，语义保留）
-    expect(getNoticeMessages().some((m) => m.includes('文件') && m.includes('迁移') && m.includes('重载'))).toBe(true);
-
-    // 同会话再改其它值：不重复提示（warned 去重）
-    clearNotices();
-    await pickVia('CONFIG/数据2');
-    expect(plugin.settings.storagePath).toBe('CONFIG/数据2');
-    expect(getNoticeMessages().filter((m) => m.includes('重载')).length).toBe(0);
-
-    // 改回原值 → warned 复位（不提示）；再次改动 → 可再次提示
-    clearNotices();
-    await pickVia('CONFIG/STORAGE');
-    expect(plugin.settings.storagePath).toBe('CONFIG/STORAGE');
-    expect(getNoticeMessages().filter((m) => m.includes('重载')).length).toBe(0);
-    await pickVia('CONFIG/数据');
-    expect(hasNotice(/重载/)).toBe(true);
+  it('点击按钮 → openSettingsPanel(plugin.app)（bz 设置面板打开）', () => {
+    const btn = tab.containerEl.querySelector('.setting-item-control button') as HTMLButtonElement;
+    btn.click();
+    expect(openSettingsPanel).toHaveBeenCalledTimes(1);
+    expect(openSettingsPanel).toHaveBeenCalledWith(plugin.app);
   });
 });
