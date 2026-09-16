@@ -128,6 +128,66 @@ export function isInternalSourceValue(v: string): boolean {
   return /^\[\[/.test(String(v ?? '').trim());
 }
 
+/** 内部双链值 → 目标路径半边（`[[路径|名]]` 取路径；非闭合内链形态返回 null） */
+function internalLinkPathOf(value: string): string | null {
+  const m = /^\[\[([^\]]+?)\]\]$/.exec(String(value ?? '').trim());
+  if (!m) return null;
+  return m[1].split('|')[0].trim() || null;
+}
+
+/** 链接路径归一（命中判据共用）：反斜杠转正斜杠 + 剥 .md 后缀，与落库形态解耦 */
+function normalizeLinkPath(p: string): string {
+  const s = String(p ?? '').trim().replace(/\\/g, '/');
+  return s ? stripMdExt(s) : '';
+}
+
+/**
+ * source 值是否为内部双链且指向 retiredPath（issue 336 / ADR-0149 退役命中判据）：
+ * 摘除/降级编排的 metadataCache 预筛与 retireSourceLine 的内容级复核共用同一口径。
+ * 两侧路径都归一（反斜杠转正斜杠、剥 .md 后缀）后比对。
+ */
+export function sourcePointsAt(value: unknown, retiredPath: string): boolean {
+  const linkPath = normalizeLinkPath(internalLinkPathOf(String(value ?? '')) ?? '');
+  if (!linkPath) return false;
+  const target = normalizeLinkPath(retiredPath);
+  return !!target && linkPath === target;
+}
+
+/**
+ * source 退役（issue 336 / ADR-0149「删除/改名时的回退与摘除」）：frontmatter source 为
+ * 内部双链且指向 retiredPath 时行级退役——fallbackUrl 非空 → 改写回外链形态
+ * `quoteYaml(fallbackUrl)`（降级，出处零丢失，ADR-0144 的逆向）；fallbackUrl 空 →
+ * 整行摘除（sourceTitle 保留，卡片回到「无来源」合法初始态而非悬挂）。
+ * 手术边界同 upgradeSourceLine：只动 source 一行、换行符保真、不整体重序列化；
+ * source 非内部 / 不指向 retiredPath / 已是目标形态 → 原样返回（幂等，ADR-0144 降级后
+ * md-deleted 消费者天然跳过）；无 frontmatter / 无 source 行 → null（调用方不得写盘）。
+ */
+export function retireSourceLine(content: string, retiredPath: string, fallbackUrl?: string | null): string | null {
+  const target = normalizeLinkPath(retiredPath);
+  if (!target) return null;
+  const lines = String(content ?? '').split(/\r?\n/);
+  if (lines[0]?.trim() !== '---') return null;
+  let close = -1;
+  let srcAt = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '---') { close = i; break; }
+    if (/^source:/.test(lines[i])) srcAt = i; // 只认 frontmatter 内的顶层 source 行（正文不扫）
+  }
+  if (close === -1 || srcAt === -1) return null;
+  const raw = lines[srcAt].slice('source:'.length).trim();
+  const quoted = (raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"));
+  // 剥一层引号后还原 quoteYaml 的转义（\" → "、\\ → \），路径比对才不会因转义错位
+  const value = (quoted ? raw.slice(1, -1) : raw).replace(/\\(["\\])/g, '$1');
+  if (!sourcePointsAt(value, retiredPath)) return content; // 非内部 / 不指向 → 无可退役，零扰动
+  if (fallbackUrl && String(fallbackUrl).trim()) {
+    lines[srcAt] = `source: ${quoteYaml(String(fallbackUrl).trim())}`;
+  } else {
+    lines.splice(srcAt, 1); // 摘除：sourceTitle 与其余行零扰动
+  }
+  // 换行符保真：CRLF 文件整体回写时不悄悄改行尾（其余行原样回填）
+  return lines.join(content.includes('\r\n') ? '\r\n' : '\n');
+}
+
 /**
  * source 升级（issue 329 / ADR-0144 §5「保存物化回写」的纯文本半边）：把 frontmatter 里的
  * 外链 URL 形态 source 改写为内部双链 `[[剪藏路径|标题]]`。未保存剪藏发起录入时 source 落的
