@@ -159,17 +159,9 @@ function emitReadEvt(raw: any, state: 'saved' | 'skipped'): NewsReadEvent {
 export async function flowSave(article: any): Promise<boolean> {
   const raw = article && article.raw;
   if (!raw) return false;
-  const isBili = raw.platform === 'B站' && !!String(raw.url || '').trim();
-  if (isBili) {
-    // ADR-0068：B站视频保存改道文献盒（不写剪藏、不进行为流）。
-    // enh 包 11：分流后回写已处理态（read+saved、统计 +1）——条目随即出收件流，
-    // 防同一视频再次「保存到剪藏本」重复建任务；并给「已转入文献盒」明确反馈。
-    const { openKnowledgeAddTask } = await import('../knowledge');
-    openKnowledgeAddTask(getApp(), { url: raw.url, title: raw.title || null, uploader: raw.author || null });
-    await markHandledAndBump(raw, 'saved');
-    notice('已转入文献盒', 'success');
-    return true;
-  }
+  // B站条目不提供保存至剪藏（ADR-0147 推翻 ADR-0068 分流保存，用户拍板 2026-09-16）；
+  // UI 已不下发该动作，此处守卫防程序化误调。B站链接入知识盒走「影像」录入。
+  if (raw.platform === 'B站') return false;
   pauseReadingSession();
   try {
     const ok = await writeClipNote(raw); // 内部 notice 成功/失败；false = 空标题/取消覆盖/写盘异常

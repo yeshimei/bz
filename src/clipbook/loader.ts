@@ -9,6 +9,7 @@
  */
 import { readNewsData, writeNewsDataMerged, migrateLegacyStats, applyRetention, normalizeRetentionDays, statsHasData, type NewsWriteIntent } from './news-data';
 import { readClipbookData, emptySidecar } from './data';
+import { clearArticleTracking } from './anchor';
 import { scanClipDirectory, type ClipNote } from './scan';
 import { clipUrlSet } from './store';
 import { articleKeyOf } from './constants';
@@ -68,6 +69,8 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
     const kept = new Set(cleaned.map((a: any) => articleKeyOf(a)));
     removedKeys = (data.articles || []).map((a: any) => articleKeyOf(a)).filter((k: string) => !kept.has(k));
     data = { ...data, articles: cleaned };
+    // 被清理条目的侧写三段（marks/savedImages/pendingSource）一并清掉，不随清理永久残留（issue 333 评审）
+    for (const k of removedKeys) void clearArticleTracking(k).catch(() => { /* 残留无害，不阻断装载 */ });
   }
   // 旧 stats 迁移（stats 段无真实数据时并入旧 news-stats.json 一次）
   let statsChanged = false;
