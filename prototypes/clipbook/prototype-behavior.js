@@ -1,4 +1,4 @@
-/* 源指纹 660be43c09f9b092 · 仓内输入 97 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d17c94467e763c87 · 仓内输入 97 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -8297,6 +8297,64 @@ ${c.trim()}
     }
     return findBySameName(t, ctx);
   }
+  function fmValueList(v) {
+    if (Array.isArray(v)) return v.map((x) => String(x != null ? x : "").trim()).filter(Boolean);
+    const s = String(v != null ? v : "").trim();
+    return s ? [s] : [];
+  }
+  function linkTargetOf(raw) {
+    const s = String(raw != null ? raw : "").trim().replace(/^!?\[\[/, "").replace(/\]\]$/, "");
+    return splitLinkText(s).target;
+  }
+  function outboundTargetsViaCache(ctx, file) {
+    var _a, _b, _c, _d, _e, _f, _g;
+    const app = (_a = ctx == null ? void 0 : ctx.app) != null ? _a : getApp();
+    const from = normSlashes(String((_b = file == null ? void 0 : file.path) != null ? _b : ""));
+    if (!from) return [];
+    const out = [];
+    const outs = (_d = (_c = app == null ? void 0 : app.metadataCache) == null ? void 0 : _c.resolvedLinks) == null ? void 0 : _d[from];
+    if (outs && typeof outs === "object") {
+      for (const to of Object.keys(outs)) {
+        if (!outs[to]) continue;
+        if (samePath(to, from)) continue;
+        out.push(normSlashes(to));
+      }
+    }
+    const fm = (_g = (_f = (_e = app == null ? void 0 : app.metadataCache) == null ? void 0 : _e.getFileCache) == null ? void 0 : _f.call(_e, file)) == null ? void 0 : _g.frontmatter;
+    for (const key of ["related", "mounted"]) {
+      for (const item of fmValueList(fm == null ? void 0 : fm[key])) {
+        const target = linkTargetOf(item);
+        if (!target) continue;
+        const p = resolveLinkPath(target, ctx, from);
+        if (!p || samePath(p, from)) continue;
+        out.push(p);
+      }
+    }
+    return out;
+  }
+  function hasOutboundViaCache(ctx, file) {
+    var _a, _b, _c, _d, _e, _f, _g;
+    const app = (_a = ctx == null ? void 0 : ctx.app) != null ? _a : getApp();
+    const from = normSlashes(String((_b = file == null ? void 0 : file.path) != null ? _b : ""));
+    if (!from) return false;
+    const cache = (_d = (_c = app == null ? void 0 : app.metadataCache) == null ? void 0 : _c.getFileCache) == null ? void 0 : _d.call(_c, file);
+    const isSelf = (raw) => {
+      const target = linkTargetOf(raw);
+      if (!target) return true;
+      const p = resolveLinkPath(target, ctx, from);
+      return !!p && samePath(p, from);
+    };
+    for (const l of [...(_e = cache == null ? void 0 : cache.links) != null ? _e : [], ...(_f = cache == null ? void 0 : cache.embeds) != null ? _f : []]) {
+      if (!isSelf((_g = l == null ? void 0 : l.link) != null ? _g : "")) return true;
+    }
+    const fm = cache == null ? void 0 : cache.frontmatter;
+    for (const key of ["related", "mounted"]) {
+      for (const item of fmValueList(fm == null ? void 0 : fm[key])) {
+        if (!isSelf(item)) return true;
+      }
+    }
+    return false;
+  }
   async function resolveMountLinks(links, ctx, sourcePath = "") {
     var _a, _b;
     const out = [];
@@ -8676,32 +8734,22 @@ ${c.trim()}
   }
   async function refCounts(ctx) {
     var _a;
-    const scan = newScan(ctx);
-    const cards = cardFiles(ctx);
-    const byKey = new Map(cards.map((c) => [pathKey(c.path), normSlashes(c.path)]));
     const counts = {};
-    for (const c of cards) counts[normSlashes(c.path)] = 0;
     for (const f of mdFiles(ctx)) {
-      const items = await outboundItems(scan, f.path);
-      for (const it of items) {
-        if (!it.path) continue;
-        if (samePath(it.path, f.path)) continue;
-        const card = byKey.get(pathKey(it.path));
-        if (card) counts[card] = ((_a = counts[card]) != null ? _a : 0) + 1;
+      for (const to of outboundTargetsViaCache(ctx, f)) {
+        counts[to] = ((_a = counts[to]) != null ? _a : 0) + 1;
       }
     }
     return counts;
   }
   async function orphanCards(ctx, counts) {
     var _a;
-    const scan = newScan(ctx);
     const refs = counts != null ? counts : await refCounts(ctx);
     const out = [];
     for (const card of cardFiles(ctx)) {
       const path = normSlashes(card.path);
       if (((_a = refs[path]) != null ? _a : 0) > 0) continue;
-      const items = (await outboundItems(scan, path)).filter((it) => !isSelfItem(it, path));
-      if (items.length) continue;
+      if (hasOutboundViaCache(ctx, card)) continue;
       out.push(path);
     }
     return out.sort();
@@ -8940,10 +8988,10 @@ ${c}`
       "tags:",
       tags.map((t) => `  - ${quoteYaml(t)}`).join("\n"),
       `summary: ${quoteYaml(summary)}`,
-      `url: ${quoteYaml(opts.url)}`,
+      `source: ${quoteYaml(opts.url)}`,
       `date: ${quoteYaml(nowStamp())}`,
       `author: ${quoteYaml(opts.uploader)}`,
-      `videoTitle: ${quoteYaml(opts.videoTitle)}`,
+      `sourceTitle: ${quoteYaml(opts.videoTitle)}`,
       "type: video",
       `domain: ${quoteYaml(domain)}`,
       "---"
@@ -9188,6 +9236,38 @@ ${head}
 
 ${content || ""}`;
   }
+  function migrateVideoSourceKeys(content) {
+    var _a;
+    const src = String(content != null ? content : "");
+    const lines = src.split(/\r?\n/);
+    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return src;
+    let close = -1;
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim() === "---") {
+        close = i;
+        break;
+      }
+    }
+    if (close === -1) return src;
+    let sourceAt = -1, sourceTitleAt = -1, urlAt = -1, videoTitleAt = -1;
+    for (let i = 1; i < close; i++) {
+      if (/^source:/.test(lines[i])) sourceAt = i;
+      else if (/^sourceTitle:/.test(lines[i])) sourceTitleAt = i;
+      else if (/^url:/.test(lines[i])) urlAt = i;
+      else if (/^videoTitle:/.test(lines[i])) videoTitleAt = i;
+    }
+    let hit = false;
+    if (urlAt >= 0 && sourceAt < 0) {
+      lines[urlAt] = "source:" + lines[urlAt].slice("url:".length);
+      hit = true;
+    }
+    if (videoTitleAt >= 0 && sourceTitleAt < 0) {
+      lines[videoTitleAt] = "sourceTitle:" + lines[videoTitleAt].slice("videoTitle:".length);
+      hit = true;
+    }
+    if (!hit) return src;
+    return lines.join(src.includes("\r\n") ? "\r\n" : "\n");
+  }
   async function backfillNotes(opts = {}) {
     var _a, _b;
     const app = getApp();
@@ -9198,14 +9278,20 @@ ${content || ""}`;
     const needDomain = [];
     let filled = 0;
     for (const f of files) {
-      const content = await app.vault.read(f);
+      let content = await app.vault.read(f);
+      const migrated = migrateVideoSourceKeys(content);
+      if (migrated !== content) {
+        await app.vault.modify(f, migrated);
+        content = migrated;
+        filled++;
+      }
       const fm = parseFrontmatter(content);
       const hasType = fm.type === "video" || fm.type === "term";
       const hasDomain = !!fm.domain;
       if (hasType && hasDomain) continue;
       const patch = [];
       if (!hasType) {
-        const type = fm.url || fm.author || fm.videoTitle ? "video" : fm.term ? "term" : "";
+        const type = fm.author ? "video" : fm.term ? "term" : "";
         if (type) patch.push(`type:${type}`);
       }
       if (!hasDomain) needDomain.push({ file: f });
@@ -13413,6 +13499,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function litKindLabel(type) {
     return litKindPlain(type).split("").join(" ");
   }
+  function refBadgeTitle(n) {
+    return `被 ${n} 处引用（正文双链 + 关联属性）`;
+  }
   function q(root, sel) {
     return root.querySelector(sel);
   }
@@ -13538,29 +13627,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
     return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
   }
-  function appendRelatedLine(text, link) {
-    var _a;
-    const lines = text.split(/\r?\n/);
-    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return text;
-    let close = -1;
-    let relatedAt = -1;
-    for (let i = 1; i < lines.length; i++) {
-      if (lines[i].trim() === "---") {
-        close = i;
-        break;
-      }
-      if (/^related:/.test(lines[i])) relatedAt = i;
-    }
-    if (close === -1) return text;
-    if (relatedAt === -1) {
-      lines.splice(close, 0, "related:", `  - "${link}"`);
-    } else {
-      let end = relatedAt + 1;
-      while (end < close && /^\s*-\s/.test(lines[end])) end++;
-      lines.splice(end, 0, `  - "${link}"`);
-    }
-    return lines.join("\n");
-  }
   var IMAGE_ENTRY_MAX, REL_BG_NOTICE_KEY, STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager;
   var init_ui = __esm({
     "src/knowledge/ui.ts"() {
@@ -13632,8 +13698,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.mountIndexDirty = true;
           /** 部贰「只看孤儿」筛选开关（内存态，重渲染 / 换部来回都保留） */
           this.cardOrphanOnly = false;
-          this.editor = null;
-          this.sessionNewPaths = /* @__PURE__ */ new Set();
           this.loadedLitDir = "";
           this.loadedCardDir = "";
           this.loadedTopicDir = "";
@@ -13685,6 +13749,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
           /** 当前录入态：term = 一个词（名词）/ passage = 一段文字（段落）/ image = 一张图（图版） */
           this.entryMode = "term";
           this.termPreview = null;
+          /**
+           * 用户已就地改过的属性字段（建议 5）：流式期间**不再用 AI 值覆盖它**——用户刚打完的标题
+           * 不该被下一帧 delta 冲掉。点「重新生成」= 新一轮 → 整集合清空，这就是用户要的「覆盖」语义。
+           */
+          this.userEdited = /* @__PURE__ */ new Set();
+          /** 领域行编辑态的联想象（进编辑态建、出编辑态销，见 beginMetaEdit） */
+          this.termDomainSuggest = null;
           /** 生成流在途（ADR-0152/issue 343）：与 termSaving 分开——「是否正在生成」与「是否正在落盘」是两件事 */
           this.termGenerating = false;
           /** 确认写入的落盘过程在途（承接原 termGenerating 的写入语义）：期间不接生成 / 再次写入 */
@@ -13712,6 +13783,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.entryRelText = "";
           /** 预演命中的目标路径（确认写入时据此写 related，不重跑检索与裁判） */
           this.entryPreviewPicks = [];
+          /** 预演命中的候选（path 与展示名成对：写入按 path、渲染按 title；点掉时按下标同步删两处） */
+          this.entryPreviewItems = [];
           /** 预演是否已给出确定结果（done）——确定过就连「0 命中」也算结论，写入时不再重跑管线 */
           this.entryPreviewDone = false;
           /** 在跑预演的中断器（issue 327）：重新生成 / 总结 / 关面板 / 确认写入转后台时 abort 在途裁判请求 */
@@ -13865,6 +13938,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
             if (this.loadedLitDir && this.loadedLitDir !== dir) this.allNotes = [];
             await this.loadLiterature(dir);
             this.renderLiterature();
+            if (this.part !== "z1") return;
+            if (this.mountIndexDirty) await this.loadMountIndex();
+            if (this.part === "z1") this.patchLitBadges();
           } else if (this.part === "z2") {
             const dir = cardboxDirOf(s);
             if (this.loadedCardDir && this.loadedCardDir !== dir) {
@@ -13920,7 +13996,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
               type: fm && fm.type ? String(fm.type) : "",
               domain: fm && fm.domain ? String(fm.domain) : "",
               summary: fm && fm.summary ? String(fm.summary) : "",
-              url: fm && fm.url ? String(fm.url) : "",
               source: fm && fm.source ? String(fm.source) : "",
               sourceTitle: fm && fm.sourceTitle ? String(fm.sourceTitle) : "",
               date,
@@ -13933,12 +14008,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         renderLiterature() {
           if (!this.contentEl) return;
-          const rows = this.allNotes.map((n, i) => {
-            const no = String(i + 1).padStart(2, "0");
+          const rows = this.allNotes.map((n) => {
             const kind = litKindLabel(n.type);
             return `<div class="bz-kb-lexrow" data-kb-act="lit-peek" data-path="${esc2(n.path)}">
         <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(n.title)}</span><span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${kind}</span><span class="bz-kb-dom">${esc2(n.domain || "未分类")}</span></div>
-        <div class="bz-kb-tail"><span class="bz-kb-meta">LIT-${no} · ${esc2(n.date || "")}</span></div>
+        <div class="bz-kb-tail"><span class="bz-kb-meta">${esc2(n.date || "")}</span></div>
       </div>`;
           }).join("");
           this.contentEl.innerHTML = `
@@ -13964,7 +14038,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const body = stripFrontmatter3(raw);
           const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc2(b)}</p>`).join("") || "<p>（无正文）</p>";
           const rels = await this.noteRels(n);
-          const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.url)}" href="#">${esc2(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.source)}" href="#">${esc2(n.sourceTitle || n.source)}</a></div>` : "";
+          const srcHtml = n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.source)}" href="#">${esc2(n.sourceTitle || n.source)}</a></div>` : "";
           const head = kind === "card" ? { title: "卡片预览 · 卡片盒", badge: "卡 片", hot: false } : kind === "topic" ? { title: "主题预览 · 主题笔记", badge: "主 题", hot: false } : { title: `文献预览 · ${litKindPlain(n.type || "")}`, badge: litKindLabel(n.type || ""), hot: n.type === "video" };
           const ovl = this.openSheet(this.sheetWrap(head.title, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc2(n.title)}</span>
@@ -14019,88 +14093,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           await this.openPreview(entry);
           return true;
         }
-        /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源文献+领域自动带，落 related 双链互链 / 连一张旧卡 / 为什么相关） */
-        async openCardEditor(n) {
-          await this.ensureCards();
-          const dom = n.domain || "未分类";
-          const sameDom = this.allCards.filter((c) => c.domain === dom).map((c) => c.title);
-          const others = this.allCards.map((c) => c.title).filter((t) => !sameDom.includes(t));
-          const olds = [...sameDom.slice(0, 5)];
-          for (const t of others) {
-            if (olds.length >= 6) break;
-            olds.push(t);
-          }
-          if (olds.length === 0) olds.push(n.title);
-          const whySug = `《${n.title}》与这张旧卡讨论同一主题——读后补全了机制细节，整理为显式连接。`;
-          const oldsHtml = olds.map((o, i) => `<button class="bz-kb-old" data-kb-old="${esc2(o)}">${esc2(o)}${i === 0 ? '<span class="bz-kb-rec">推荐</span>' : ""}</button>`).join("");
-          this.openSheet(this.sheetWrap("提炼成卡 → 卡片盒", `
-      <div class="bz-kb-f"><div class="bz-kb-flb">词 头（可 改）</div>
-        <input type="text" data-kb-role="cardtitle" value="${esc2(n.title)}"></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">来 源 与 领 域（自 动 带，落 related 双链）</div>
-        <div class="bz-kb-srcline"><span class="bz-kb-srchip"><b>源</b>${esc2(n.path)}</span>
-        <span class="bz-kb-srchip"><b>领域</b>〔${esc2(dom)}〕自动继承</span></div></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">连 一 张 旧 卡（铁律：不 解 释 的 链 接 不 产 生 知 识）</div>
-        <div class="bz-kb-olds">${oldsHtml}</div></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">为 什 么 相 关（一 句 话，可 改）</div>
-        <input type="text" data-kb-role="why" value="${esc2(whySug)}"></div>
-      <div style="margin-top:18px;display:flex;gap:10px">
-        <button class="bz-kb-bigbtn" data-kb-act="card-save" disabled>落 卡</button>
-        <button class="bz-kb-ghost" data-kb-close>取消</button>
-      </div>
-      <div class="bz-kb-note" style="font-size:11px;margin-top:14px">落卡后它躺在卡片盒，随时被任何笔记引用——不强迫挂进哪篇，也不强迫复习。</div>`));
-          this.editor = { source: n, pick: null, why: whySug, title: n.title };
-        }
-        syncSaveBtn() {
-          var _a;
-          const btn = (_a = this.popup) == null ? void 0 : _a.querySelector("[data-kb-act=card-save]");
-          if (btn && this.editor) btn.disabled = !(this.editor.pick && this.editor.why.trim());
-        }
-        /** 落卡：写卡片盒笔记（category=领域、related=源文献）+ 源文献 related 追加新卡（互链） */
-        async saveCard() {
-          var _a;
-          if (!this.editor || !this.editor.pick || !this.editor.why.trim()) return;
-          const app = getApp();
-          const s = tryGetSettings();
-          const dir = cardboxDirOf(s);
-          const src = this.editor.source;
-          const why = this.editor.why.trim();
-          let base = this.editor.title.trim() || src.title;
-          const stamp = dateStamp();
-          try {
-            let idx = 2;
-            while (app.vault.getAbstractFileByPath(`${dir}/${base}.md`)) {
-              base = `${this.editor.title.trim() || src.title} ${idx}`;
-              idx++;
-            }
-            const path = `${dir}/${base}.md`;
-            try {
-              if (!app.vault.getFolderByPath(dir)) await app.vault.createFolder(dir);
-            } catch (e) {
-            }
-            const md = ["---", "tags: []", `category: ${src.domain || "未分类"}`, "related:", `  - "[[${src.path}|${src.title}]]"`, `date: "${stamp}"`, "---", "", why, ""].join("\n");
-            await app.vault.create(path, md);
-            const srcFile = app.vault.getAbstractFileByPath(src.path);
-            if (srcFile) {
-              const text = await app.vault.read(srcFile);
-              const linkText = `[[${stripMdExt(path)}|${base}]]`;
-              const updated = appendRelatedLine(text, linkText);
-              if (updated !== text) await app.vault.modify(srcFile, updated);
-            }
-            this.allCards.unshift({ file: null, path, title: base, domain: src.domain || "未分类", review: false, created: Date.now() });
-            this.sessionNewPaths.add(path);
-            this.editor = null;
-            this.closeSheet();
-            notice("已落卡 卡片盒/" + base + ".md · 它随时被任何笔记引用", "success");
-            if (this.part === "z2") {
-              this.markCardsDirty();
-              await this.loadMountIndex();
-              this.renderCards();
-            }
-          } catch (e) {
-            notice("落卡失败：" + ((_a = e == null ? void 0 : e.message) != null ? _a : String(e)), "error");
-          }
-        }
-        /** 部贰卡片扫描（存量零迁移：领域读序 domain → category → 未分类） */
+        /** 卡片编辑入口已整体移除（2026-09-16 用户拍板）：卡片的创建与编辑归用户自己在卡片文件夹里做，
+         *  知识盒只做扫描与展示。 */
+        /** 部贰卡片扫描：领域只认 `domain`（2026-09-16 统一：`category` 兜底已摘——
+         *  它是历史别名，实测库里 0 张卡在用；写入侧唯一写 category 的落卡也已移除）。 */
         async loadCards(dir) {
           var _a;
           const app = getApp();
@@ -14122,7 +14118,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
                 file: f,
                 path: f.path,
                 title: fm && fm.title ? String(fm.title) : f.basename,
-                domain: fm && fm.domain ? String(fm.domain) : fm && fm.category ? String(fm.category) : "未分类",
+                domain: fm && fm.domain ? String(fm.domain) : "未分类",
                 review: fm && fm.reviewStart != null,
                 created
               });
@@ -14174,10 +14170,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const n = (_a = idx == null ? void 0 : idx.counts[c.path]) != null ? _a : 0;
           const orphan = (_b = idx == null ? void 0 : idx.orphans.has(c.path)) != null ? _b : false;
           return `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc2(c.path)}">
-      <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}${orphan ? '<span class="bz-kb-orphan" title="既无入链也无挂载">孤 儿</span>' : ""}<span class="bz-kb-dom">${esc2(
+      <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(c.title)}</span>${orphan ? '<span class="bz-kb-orphan" title="既无入链也无挂载">孤 儿</span>' : ""}<span class="bz-kb-dom">${esc2(
             c.domain
           )}</span></div>
-      <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span>${n > 0 ? `<span class="bz-kb-refbadge" title="被 ${n} 处用户双链引用">被引 ${n}</span>` : ""}<button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc2(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
+      <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span>${n > 0 ? `<span class="bz-kb-refbadge" title="${esc2(refBadgeTitle(n))}">被引 ${n}</span>` : ""}<button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc2(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
     </div>`;
         }
         /**
@@ -14201,7 +14197,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!rowsEl) return;
           const pool = this.cardPool();
           if (pool.length === 0) {
-            rowsEl.innerHTML = `<div class="bz-kb-empty">${this.cardOrphanOnly ? "没有孤儿卡——每张卡都有人挂或挂着谁。" : "卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。"}</div>`;
+            rowsEl.innerHTML = `<div class="bz-kb-empty">${this.cardOrphanOnly ? "没有孤儿卡——每张卡都有人挂或挂着谁。" : "卡片目录还没有卡片——在「卡片文件夹」里新建一篇笔记即可。"}</div>`;
             this.cardsShown = 0;
             this.updateCardMore(pool);
             return;
@@ -14252,13 +14248,36 @@ ${String(blockText != null ? blockText : "").trim()}`);
               if (tail && !tail.querySelector(".bz-kb-refbadge")) {
                 const b = document.createElement("span");
                 b.className = "bz-kb-refbadge";
-                b.title = `被 ${n} 处用户双链引用`;
+                b.title = refBadgeTitle(n);
                 b.textContent = `被引 ${n}`;
                 const btn = tail.querySelector(".bz-kb-mt-openbtn");
                 if (btn) tail.insertBefore(b, btn);
                 else tail.appendChild(b);
               }
             }
+          }
+        }
+        /**
+         * 文献行的「被引 N」徽标（2026-09-16 采纳建议 8）：索引落地后**原地补**，不重建整表
+         * （保住滚动位置，与 patchCardBadges 同一手法）。口径与卡片部**同一个数**——
+         * 都取 `mountIndex.counts`（正文双链 + related + mounted，去自链），只是各查各的路径。
+         * 0 不出徽标（列表更干净，与卡片部一致）。
+         */
+        patchLitBadges() {
+          var _a;
+          const idx = this.mountIndex;
+          if (!this.contentEl || !idx) return;
+          for (const row of Array.from(this.contentEl.querySelectorAll(".bz-kb-lexrow[data-kb-act=lit-peek]"))) {
+            const path = row.getAttribute("data-path") || "";
+            const n = (_a = idx.counts[path]) != null ? _a : 0;
+            if (n <= 0) continue;
+            const tail = row.querySelector(".bz-kb-tail");
+            if (!tail || tail.querySelector(".bz-kb-refbadge")) continue;
+            const b = document.createElement("span");
+            b.className = "bz-kb-refbadge";
+            b.title = refBadgeTitle(n);
+            b.textContent = `被引 ${n}`;
+            tail.insertBefore(b, tail.firstChild);
           }
         }
         /** 芯片原地同步（索引落地时改这一个节点：计数 / 置灰 / 点亮，不重建整表） */
@@ -14325,10 +14344,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
       ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
     </div>`;
         }
-        async ensureCards() {
-          const dir = cardboxDirOf(tryGetSettings());
-          if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
-        }
         /** 读笔记 frontmatter related 展示名列表（预览「关联」区；解析见 parseRelatedNames） */
         async noteRels(n) {
           try {
@@ -14357,7 +14372,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
           ovl.className = "bz-kb-ovl";
           ovl.innerHTML = `<div class="bz-kb-sheet">${html}</div>`;
           ovl.addEventListener("click", (e) => {
-            var _a, _b;
             const t = e.target.closest("[data-kb-act],[data-kb-close]");
             if (e.target === ovl || t && t.hasAttribute("data-kb-close")) {
               this.closeSheet();
@@ -14365,44 +14379,18 @@ ${String(blockText != null ? blockText : "").trim()}`);
             }
             if (!t) return;
             const act = t.getAttribute("data-kb-act");
-            if (act === "card-new") {
-              const w = ((_b = (_a = t.closest(".bz-kb-sheet")) == null ? void 0 : _a.querySelector(".bz-kb-hw .bz-kb-w")) == null ? void 0 : _b.textContent) || "";
-              const n = this.allNotes.find((x) => x.title === w);
-              if (n) void this.openCardEditor(n);
-            } else if (act === "card-save") {
-              void this.saveCard();
-            } else if (act === "mount-tree" && host !== this.popup) {
+            if (act === "mount-tree" && host !== this.popup) {
               const p = t.getAttribute("data-path") || "";
               if (p) void openMountTree(p);
             }
           });
           host.appendChild(ovl);
-          const titleInput = ovl.querySelector("[data-kb-role=cardtitle]");
-          if (titleInput) titleInput.addEventListener("input", () => {
-            if (this.editor) this.editor.title = titleInput.value;
-            this.syncSaveBtn();
-          });
-          const whyInput = ovl.querySelector("[data-kb-role=why]");
-          if (whyInput) whyInput.addEventListener("input", () => {
-            if (this.editor) this.editor.why = whyInput.value;
-            this.syncSaveBtn();
-          });
-          ovl.querySelectorAll("[data-kb-old]").forEach((b) => {
-            b.addEventListener("click", () => {
-              if (!this.editor) return;
-              this.editor.pick = b.getAttribute("data-kb-old");
-              ovl.querySelectorAll("[data-kb-old]").forEach((x) => x.classList.toggle("is-on", x === b));
-              this.syncSaveBtn();
-            });
-          });
-          this.syncSaveBtn();
           return ovl;
         }
         closeSheet() {
           for (const host of [this.popup, this.previewHostEl]) {
             host == null ? void 0 : host.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
           }
-          this.editor = null;
           if (this.previewHostEl && !this.previewHostEl.querySelector(".bz-kb-ovl")) {
             this.previewHostEl.remove();
             this.previewHostEl = null;
@@ -15558,11 +15546,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
       <div id="lit-term-preview" style="display:none;">
         <div class="bz-lit-term-card">
           <div class="bz-lit-term-meta">
-            <div class="bz-lit-term-meta-row bz-lit-term-only"><span class="bz-lit-term-meta-k">名词</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
-            <div class="bz-lit-term-meta-row bz-lit-titled-only"><span class="bz-lit-term-meta-k">标题</span><span id="lit-entry-meta-title" class="bz-lit-term-meta-v"></span></div>
-            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row bz-lit-term-only"><span class="bz-lit-term-meta-k">名词</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v is-editable" data-term-edit="term"></span></div>
+            <div class="bz-lit-term-meta-row bz-lit-titled-only"><span class="bz-lit-term-meta-k">标题</span><span id="lit-entry-meta-title" class="bz-lit-term-meta-v is-editable" data-term-edit="title"></span></div>
+            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v is-editable" data-term-edit="domain"></span></div>
             <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
-            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">关联</span><span id="lit-term-meta-rel" class="bz-lit-term-meta-v bz-lit-rel-idle">待写入</span></div>
+            <div class="bz-lit-term-meta-row" id="lit-term-meta-relrow" style="display:none;"><span class="bz-lit-term-meta-k">关联</span><span id="lit-term-meta-rel" class="bz-lit-term-meta-v bz-lit-rel-idle"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
           </div>
         </div>
@@ -15669,7 +15657,20 @@ ${String(blockText != null ? blockText : "").trim()}`);
             });
           }
           popup.addEventListener("click", (e) => {
-            const t = e.target.closest("[data-term-src-clear],[data-term-src-open]");
+            const target = e.target;
+            const editEl = target.closest("[data-term-edit]");
+            if (editEl && !editEl.querySelector("input")) {
+              e.stopPropagation();
+              this.beginMetaEdit(editEl, editEl.getAttribute("data-term-edit"));
+              return;
+            }
+            const dropEl = target.closest("[data-rel-drop]");
+            if (dropEl) {
+              e.stopPropagation();
+              this.dropEntryRelPick(Number(dropEl.getAttribute("data-rel-drop")));
+              return;
+            }
+            const t = target.closest("[data-term-src-clear],[data-term-src-open]");
             if (!t) return;
             e.stopPropagation();
             if (t.hasAttribute("data-term-src-clear")) {
@@ -15691,8 +15692,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         /**
          * 打开「段落」录入（一段文字，AI 自动出标题）；来源行与名词同构（ADR-0116）。
-         * issue 326：支持选区预填（命令入口）——与名词不同，预填**不自动生成**（大段文字让用户确认后再生成），
-         * showEntry 里自动生成只挂 term 态。opts（issue 329）：text/images/onCreated 预填。
+         * issue 326：支持选区预填（命令入口）。2026-09-16 起预填**同样自动生成**（用户拍板「统一都自动跑」）——
+         * 原「大段文字让用户确认后再生成」的差异取消，showEntry 里的自动生成改挂 term + passage 两态。
+         * opts（issue 329）：text/images/onCreated 预填。
          */
         showPassageEntry(text, src, opts) {
           this.showEntry("passage", text, src, opts);
@@ -15723,6 +15725,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.termDraftBroken = false;
           this.termStreamBody = "";
           this.termPreview = null;
+          this.userEdited.clear();
           this.entryOnCreated = (_a = opts == null ? void 0 : opts.onCreated) != null ? _a : null;
           this.resetEntryRel();
           this.clearEntryImage();
@@ -15745,7 +15748,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const zone = q(this.termPopup, "#lit-image-drop");
           const focusEl = mode === "passage" ? area : mode === "image" ? zone : input;
           if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
-          if (mode === "term" && value) void this.onTermGenerate();
+          if ((mode === "term" || mode === "passage") && value) void this.onTermGenerate();
           if (mode === "image" && ((_b = opts == null ? void 0 : opts.images) == null ? void 0 : _b.length)) void this.acceptImageDataUrls(opts.images);
           this.resetTermDupHint();
         }
@@ -15853,6 +15856,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.termDraftBroken = false;
           this.termStreamBody = "";
           this.termPreview = null;
+          this.userEdited.clear();
           this.setTermPreviewVisible(false);
           this.refreshTermActions();
           this.resetEntryRel();
@@ -16040,6 +16044,114 @@ ${String(blockText != null ? blockText : "").trim()}`);
           el.textContent = text;
           el.classList.remove("bz-lit-meta-pending");
         }
+        /* ---------- 属性行就地编辑（建议 5 / ADR-0152 决策 16-19） ---------- */
+        /**
+         * 进入编辑态：展示态 span **就地**换成同字号输入框（不跳布局），回车 / 失焦提交、ESC 放弃。
+         * 领域行额外挂联想候选（见 domainCandidates）。已在编辑态（里面有 input）时不再套一层。
+         */
+        beginMetaEdit(el, field) {
+          var _a;
+          if (!this.termPopup || el.querySelector("input")) return;
+          const cur = ((_a = el.textContent) != null ? _a : "").trim();
+          el.classList.remove("is-editable");
+          el.textContent = "";
+          const input = document.createElement("input");
+          input.type = "text";
+          input.className = "bz-lit-term-meta-edit";
+          input.value = cur === "—" ? "" : cur;
+          input.placeholder = field === "term" ? "术语" : field === "title" ? "标题" : "领域";
+          el.appendChild(input);
+          let done = false;
+          const finish = (commit) => {
+            var _a2, _b;
+            if (done) return;
+            done = true;
+            (_a2 = this.termDomainSuggest) == null ? void 0 : _a2.detach();
+            (_b = this.termDomainSuggest) == null ? void 0 : _b.close();
+            this.termDomainSuggest = null;
+            const raw = input.value.trim();
+            el.textContent = "";
+            el.classList.add("is-editable");
+            if (commit) this.commitMetaEdit(field, raw);
+            else this.paintMetaField(field);
+          };
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              e.stopPropagation();
+              finish(true);
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              e.stopPropagation();
+              finish(false);
+            }
+          });
+          input.addEventListener("blur", () => finish(true));
+          if (field === "domain") {
+            this.termDomainSuggest = uiSuggest({
+              anchor: input,
+              max: 12,
+              iconOf: () => "🏷",
+              labelOf: (v) => v,
+              source: () => this.domainCandidates(),
+              onPick: (v) => {
+                input.value = v;
+              }
+            });
+          }
+          setTimeout(() => {
+            input.focus();
+            input.select();
+          }, 0);
+        }
+        /**
+         * 提交编辑：写进草稿（落盘取的就是它）+ 记「用户改过」→ 本轮流式不再覆盖该字段。
+         * 名词行 = 术语本身，写回顶部输入框（落盘读的是输入框）并重查重名（ADR-0143 提示不能滞后）。
+         */
+        commitMetaEdit(field, raw) {
+          this.userEdited.add(field);
+          if (field === "term") {
+            const input = this.termPopup ? q(this.termPopup, "#lit-term-input") : null;
+            if (input && raw) input.value = raw;
+            this.refreshTermDupHint();
+          } else if (this.termPreview) {
+            if (field === "title") this.termPreview.title = raw;
+            else this.termPreview.domain = raw;
+          }
+          this.paintMetaField(field);
+        }
+        /** 单个属性行按当前值重画成展示态（空值给占位「—」；名词取输入框、其余取草稿） */
+        paintMetaField(field) {
+          var _a, _b, _c, _d, _e;
+          if (!this.termPopup) return;
+          const sel = field === "term" ? "#lit-term-meta-term" : field === "title" ? "#lit-entry-meta-title" : "#lit-term-meta-domain";
+          const text = field === "term" ? ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim() : String((_e = field === "title" ? (_c = this.termPreview) == null ? void 0 : _c.title : (_d = this.termPreview) == null ? void 0 : _d.domain) != null ? _e : "").trim();
+          this.setTermMetaValue(sel, text || "—");
+        }
+        /**
+         * 领域候选（用户拍板口径）：**已用过的领域 ∪ 设置里的词表**，去重后按使用频次降序，
+         * 只在词表里、还没用过的排在后面（频次视为 0）。
+         * 已用过的从文献目录现扫 frontmatter（走 metadataCache，零 IO）——本机词表是空的，
+         * 若只取词表就一条候选都没有，故「已用过」是主来源。
+         */
+        domainCandidates() {
+          var _a, _b;
+          const s = tryGetSettings();
+          const app = getApp();
+          const prefix = litDirOf(s) + "/";
+          const used = /* @__PURE__ */ new Map();
+          for (const f of app.vault.getFiles() || []) {
+            if (!f || f.extension !== "md" || !String(f.path).startsWith(prefix)) continue;
+            const fm = (_a = app.metadataCache.getFileCache(f)) == null ? void 0 : _a.frontmatter;
+            const d = fm && fm.domain ? String(fm.domain).trim() : "";
+            if (d) used.set(d, ((_b = used.get(d)) != null ? _b : 0) + 1);
+          }
+          const out = [...used.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([d]) => d);
+          for (const w of parseDomainList(s == null ? void 0 : s.knowledgeDomainList)) {
+            if (!used.has(w)) out.push(w);
+          }
+          return out;
+        }
         /**
          * 关联行渲染（issue 309）：按 entryRelState 出文案与墨色档；两类录入共用同一行。
          * loading 态给一条滑动的墨色小条 + 「分析中…」——建链要跑近邻检索与 AI 裁判，
@@ -16048,8 +16160,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
         entryRelRefresh() {
           const el = this.termPopup ? q(this.termPopup, "#lit-term-meta-rel") : null;
           if (!el) return;
-          el.className = "bz-lit-term-meta-v";
           const st = this.entryRelState;
+          const row = this.termPopup ? q(this.termPopup, "#lit-term-meta-relrow") : null;
+          if (row) row.style.display = st === "idle" ? "none" : "";
+          el.className = "bz-lit-term-meta-v";
           if (st === "loading") {
             el.classList.add("bz-lit-rel-idle");
             el.innerHTML = '<span class="bz-lit-rel-bar" aria-hidden="true"></span>分析中…';
@@ -16057,7 +16171,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
           if (st === "done") {
             el.classList.add("bz-lit-rel-ok");
-            el.textContent = this.entryRelText || "已建立关联";
+            const items = this.entryPreviewItems;
+            if (!items.length) {
+              el.textContent = this.entryRelText || "已建立关联";
+              return;
+            }
+            el.innerHTML = items.map(
+              (it, i) => `<span class="bz-lit-rel-chip"><span>${esc2(it.title)}</span><button type="button" data-rel-drop="${i}" title="这条不写入">✕</button></span>`
+            ).join("");
             return;
           }
           if (st === "empty") {
@@ -16083,6 +16204,18 @@ ${String(blockText != null ? blockText : "").trim()}`);
           el.classList.add("bz-lit-rel-idle");
           el.textContent = "—";
         }
+        /**
+         * 点掉一条关联候选（建议 5）：本轮不写它——`entryPreviewPicks`（写入用）与
+         * `entryPreviewItems`（渲染用）按下标同步删，两数组恒等长。
+         * **不可撤销**（用户拍板）：面板不给恢复入口；点「重新生成」会重算，被点掉的可能再出现。
+         */
+        dropEntryRelPick(i) {
+          if (!Number.isInteger(i) || i < 0 || i >= this.entryPreviewItems.length) return;
+          this.entryPreviewItems.splice(i, 1);
+          this.entryPreviewPicks.splice(i, 1);
+          this.entryRelText = this.entryPreviewItems.map((x) => x.title).join(" · ");
+          this.entryRelRefresh();
+        }
         /** 关联行与预演状态整体复位（打开/关闭面板、出新草稿、重生成/总结点下时共用）：abort 在途请求、结果清空、回到起点 */
         resetEntryRel() {
           var _a;
@@ -16090,6 +16223,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           (_a = this.entryRelAbort) == null ? void 0 : _a.abort();
           this.entryRelAbort = null;
           this.entryPreviewPicks = [];
+          this.entryPreviewItems = [];
           this.entryPreviewDone = false;
           this.entryRelText = "";
           this.setEntryRel("idle");
@@ -16111,6 +16245,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const bridge = getLinkBridge();
           const seq = ++this.entryRelSeq;
           this.entryPreviewPicks = [];
+          this.entryPreviewItems = [];
           if (!bridge) {
             this.setEntryRel("off");
             return;
@@ -16126,6 +16261,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             if (out.status === "done") {
               this.entryPreviewDone = true;
               this.entryPreviewPicks = out.picks.map((p) => p.path);
+              this.entryPreviewItems = out.picks.map((p) => ({ path: p.path, title: p.title }));
               this.entryRelText = out.picks.map((p) => p.title).join(" · ");
               this.setEntryRel(out.picks.length ? "done" : "empty");
             } else if (out.status === "queued") this.setEntryRel("queued");
@@ -16334,6 +16470,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!this.termPopup) return;
           this.termStreamBody = "";
           this.termDraftBroken = false;
+          this.userEdited.clear();
           if (this.entryTitled) {
             this.setTermMetaPending("#lit-entry-meta-title");
           } else {
@@ -16354,8 +16491,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
          */
         applyDraftFields(f) {
           if (!this.termPopup) return;
-          if (f.domain !== null) this.setTermMetaValue("#lit-term-meta-domain", f.domain || "—");
-          if (this.entryTitled && f.title !== null) this.setTermMetaValue("#lit-entry-meta-title", f.title || "—");
+          if (f.domain !== null && !this.userEdited.has("domain")) this.setTermMetaValue("#lit-term-meta-domain", f.domain || "—");
+          if (this.entryTitled && f.title !== null && !this.userEdited.has("title")) this.setTermMetaValue("#lit-entry-meta-title", f.title || "—");
           if (f.summary !== null) {
             this.termStreamBody = f.summary;
             this.setTermContent(f.summary, false);
@@ -16366,12 +16503,19 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 这里用终值再填一遍——流式路径下大多早已到位，非流式降级路径下这才是唯一一次填充。
          */
         finishTermPreview(draft) {
-          this.termPreview = { domain: draft.domain, body: draft.summary, title: draft.title };
+          var _a, _b, _c;
+          const keepTitle = this.userEdited.has("title");
+          const keepDomain = this.userEdited.has("domain");
+          this.termPreview = {
+            domain: keepDomain ? String((_b = (_a = this.termPreview) == null ? void 0 : _a.domain) != null ? _b : "") : draft.domain,
+            body: draft.summary,
+            title: keepTitle ? (_c = this.termPreview) == null ? void 0 : _c.title : draft.title
+          };
           this.termStreamBody = draft.summary;
           this.termDraftBroken = false;
           if (!this.termPopup) return;
-          if (this.entryTitled) this.setTermMetaValue("#lit-entry-meta-title", draft.title || "—");
-          this.setTermMetaValue("#lit-term-meta-domain", draft.domain || "—");
+          if (this.entryTitled && !keepTitle) this.setTermMetaValue("#lit-entry-meta-title", draft.title || "—");
+          if (!keepDomain) this.setTermMetaValue("#lit-term-meta-domain", draft.domain || "—");
           this.setTermContent(draft.summary, false);
           this.resetEntryRel();
           this.refreshTermActions();
