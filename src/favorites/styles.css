@@ -264,3 +264,54 @@
   .bz-fav-panel .bz-fav-board { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: var(--bz-space-lg) var(--bz-space-md); align-items: start; }
   .bz-fav-panel .bz-fav-card { width: auto; }
 }
+
+/* ==================== 标签管理（issue 363：设置面板「标签管理」组 custom 行 + 编辑弹窗） ====================
+ * 容器与弹窗均挂 .bz-fav-scope 取域私有 token（bz-fav-flow-dialog 同款通道：设置面板/弹窗
+ * 不在 .bz-fav-scope 树内，缺它变量全部解析失败）。UI 全域内自绘（ADR-0101：favorites 不引
+ * 组件库按钮）——编辑弹窗复用表单弹窗 .bz-fav-form-mask / .bz-fav-form 壳与 .bz-fav-btns
+ * 按钮行样式（同皮），这里只补图标钮/添加钮/图标胶囊；暗色随 .theme-dark .bz-fav-scope
+ * 整组变量自动反转。 */
+
+/* —— 管理列表（custom 行容器） —— */
+.bz-fav-tagmgr { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.bz-fav-tagmgr-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 6px 5px 12px;
+  border: 1px solid var(--fld-bd); border-radius: 10px; background: var(--fld-bg);
+}
+.bz-fav-tagmgr-ic { display: inline-flex; align-items: center; color: var(--chip-ink); flex: none; }
+.bz-fav-tagmgr-ic svg { width: 15px; height: 15px; }
+.bz-fav-tagmgr-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--pop-ink); }
+.bz-fav-tagmgr-ops { display: inline-flex; align-items: center; gap: 2px; flex: none; }
+/* 行内小图标钮（上移/下移/编辑/删除；域内自绘） */
+.bz-fav-tagmgr-btn {
+  width: 26px; height: 26px; border-radius: 7px; cursor: pointer; flex: none;
+  border: none; background: transparent; color: var(--chip-ink);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.bz-fav-tagmgr-btn svg { width: 14px; height: 14px; }
+.bz-fav-tagmgr-btn:hover { background: var(--menu-hover); color: var(--acc-deep); }
+.bz-fav-tagmgr-btn:disabled { opacity: .35; cursor: default; }
+.bz-fav-tagmgr-btn:disabled:hover { background: transparent; color: var(--chip-ink); }
+.bz-fav-tagmgr-btn--danger:hover { color: var(--danger); }
+/* 添加标签钮（虚线描边呼应面板磁贴行「新收藏」chip） */
+.bz-fav-tagmgr-add {
+  margin-top: 2px; cursor: pointer;
+  border: 1.5px dashed var(--chip-add-bd); background: transparent; color: var(--chip-add-ink);
+  border-radius: 99px; font: 12px/1 var(--font-interface, system-ui); padding: var(--bz-space-sm) 14px;
+  display: inline-flex; align-items: center; gap: 5px; align-self: flex-start;
+}
+.bz-fav-tagmgr-add svg { width: 13px; height: 13px; }
+.bz-fav-tagmgr-add:hover { color: var(--acc-deep); border-color: var(--acc); }
+
+/* —— 编辑弹窗（复用 .bz-fav-form-mask/.bz-fav-form 壳与 .bz-fav-btns 按钮行，仅补图标胶囊与宽度档） —— */
+.bz-fav-tageditor { width: min(380px, calc(100vw - 32px)); }
+.bz-fav-tageditor-ics { display: flex; flex-wrap: wrap; gap: 6px; }
+.bz-fav-tageditor-ic {
+  width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
+  border: 1px solid var(--fld-bd); background: var(--fld-bg); color: var(--chip-ink);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.bz-fav-tageditor-ic svg { width: 16px; height: 16px; }
+.bz-fav-tageditor-ic:hover { border-color: var(--acc); color: var(--acc-deep); }
+.bz-fav-tageditor-ic.bz-fav-on { border-color: var(--acc); background: var(--acc); color: var(--on-acc); }

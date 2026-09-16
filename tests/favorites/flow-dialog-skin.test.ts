@@ -26,16 +26,16 @@ const confirmBlock = (selector: string) =>
   favCss().match(new RegExp(`#__shared_confirm_popup__\\.bz-fav-flow-dialog${selector}\\s*\\{([^}]*)\\}`));
 
 describe('issue 291：favorites 确认框挂域皮肤类', () => {
-  it('ui.ts 三处确认框（归档 / 删除 / 放弃草稿）都传 bz-fav-flow-dialog bz-fav-scope', () => {
+  it('ui.ts 各处确认框（归档 / 删除 / 删除标签 / 放弃草稿）都传 bz-fav-flow-dialog bz-fav-scope', () => {
     const src = favUi();
-    // 归档 + 删除两处 openFlowDialog 的 className
-    expect(src.match(/className: 'bz-fav-flow-dialog bz-fav-scope'/g)?.length).toBe(2);
+    // openFlowDialog 的 className：归档 + 删除收藏（issue 291）+ 删除标签（issue 363）三处
+    expect(src.match(/className: 'bz-fav-flow-dialog bz-fav-scope'/g)?.length).toBe(3);
     // 放弃草稿走 core/flow-dialog 的 confirmDiscard 第三参（className 透传通道）
     expect(src).toMatch(
       /confirmDiscard\(\(\) => closeForm\(popup\),\s*\n?\s*undefined,\s*\n?\s*'bz-fav-flow-dialog bz-fav-scope'\)/
     );
-    // 三处口径一致：都是「域流程框类 + 私有 token 作用域类」这一串
-    expect(src.match(/bz-fav-flow-dialog bz-fav-scope/g)?.length).toBe(3);
+    // 四处口径一致：都是「域流程框类 + 私有 token 作用域类」这一串
+    expect(src.match(/bz-fav-flow-dialog bz-fav-scope/g)?.length).toBe(4);
   });
 
   it('styles.css 有 id + 域类复合选择器规则块，壳取值映射表单弹窗 .bz-fav-form', () => {

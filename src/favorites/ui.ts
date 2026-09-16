@@ -29,21 +29,22 @@ import { isMobileEnv } from '../core/mobile';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { openItemMenu, openItemSheet, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { getApp } from '../core/app';
-import { mountIcons } from '../core/ui';
+import { mountIcons, uiModal, uiInput } from '../core/ui';
 import { emitDomainEvent } from '../core/domain-bus';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
 import type { SettingsSchema } from '../core/settings-schema';
-import { TAGS, normalizeUrl, isUrlLike } from './config';
+import { getTags, getTagById, newTagId, resetTagsState, getStoragePath, normalizeUrl, isUrlLike } from './config';
 import {
   actionSpecs, formHtml, pickChipsHtml, hueOf, relTime,
-  panelHtml, renderPanelView, localNow, normalizeFavSort,
+  panelHtml, renderPanelView, localNow, normalizeFavSort, esc,
   type FavActionSpec,
   type FavSort,
   type FavoritesItem,
 } from './render';
 import { FavoritesAIService } from './ai';
-import type { DataManager } from './data';
+import { DataManager } from './data';
+import type { FavTag } from './types';
 
 /** 域级模块状态（模块单例；卸载/测试重置）。tag/archived 切片与纯层 FavView 结构兼容 */
 interface FavState {
@@ -103,7 +104,7 @@ export function favoritesSettingsSchema(): SettingsSchema {
             options: [
               { value: '', label: '全部' },
               { value: '@last', label: '记住上次' },
-              ...TAGS.map((t) => ({ value: t.label, label: t.label })),
+              ...getTags().map((t) => ({ value: t.label, label: t.label })),
             ],
           },
           {
@@ -118,23 +119,35 @@ export function favoritesSettingsSchema(): SettingsSchema {
           },
         ],
       },
+      {
+        // 标签管理（issue 363 标签自定义）：增删改排序，定义落 favorites.tags.json（config 单源注入）。
+        // custom 行 = 域内自绘管理列表（行内文案不经设置文案 lint，与其他管理弹窗同惯例）
+        icon: 'tags',
+        name: '标签管理',
+        rows: [
+          {
+            type: 'custom',
+            render: (body, ctx) => renderTagManager(body, ctx),
+          },
+        ],
+      },
     ],
   };
 }
 
 /** 打开默认筛选（设置 favoritesOpenFilter，issue 296）：''=全部；'@last'=取关面板记忆
  *  favoritesLastFilter（memoOpenScene '@last' 同款先例）；标签 label=固定该标签；
- *  非法值（含标签已不在九类）回落全部 */
+ *  非法值（含标签已删除/改名，issue 363）回落全部 */
 function resolveOpenFilter(): { tag: string | null; archived: boolean } {
   const s = tryGetSettings();
   const v = s?.favoritesOpenFilter;
   if (v === '@last') {
     const last = s?.favoritesLastFilter;
     if (last === '@archived') return { tag: null, archived: true };
-    if (last && TAGS.some((t) => t.label === last)) return { tag: last, archived: false };
+    if (last && getTags().some((t) => t.label === last)) return { tag: last, archived: false };
     return { tag: null, archived: false };
   }
-  if (v && TAGS.some((t) => t.label === v)) return { tag: v, archived: false };
+  if (v && getTags().some((t) => t.label === v)) return { tag: v, archived: false };
   return { tag: null, archived: false };
 }
 
@@ -270,6 +283,7 @@ export function closePanel(): void {
 export function unloadFavoritesUI(): void {
   closePanel();
   resetFavoritesState();
+  resetTagsState(); // issue 363：标签运行时集一并回退 seed（下次 init 由 loadTags 重注磁盘值）
 }
 
 async function loadItems(): Promise<void> {
@@ -588,8 +602,8 @@ export function openForm(item: FavoritesItem | null): void {
     url: it?.url || '',
     desc: it?.description || '',
     pinned: !!it?.pinned,
-    // 与 DOM 脏比较同口径（只数九类 chip）：TAGS 外标签不进基线，一开表单不误判脏（F10）
-    tags: (it?.tags || []).filter((t) => TAGS.some((x) => x.label === t)).sort().join('|'),
+    // 与 DOM 脏比较同口径（只数当前标签集 chip，issue 363 动态）：标签集外标签不进基线，一开表单不误判脏（F10）
+    tags: (it?.tags || []).filter((t) => getTags().some((x) => x.label === t)).sort().join('|'),
   };
 
   // 贴链自动搬家：标题框粘贴 URL 形态内容 → 移入链接框并回焦标题
@@ -682,11 +696,13 @@ async function runAiFill(
     setVal('#fz-url', data.url);
     setVal('#fz-desc', data.description);
     const rawTags: string[] = Array.isArray(data.tags) ? data.tags.map((x: any) => String(x)) : data.tags ? [String(data.tags)] : [];
-    const known = TAGS.map((t) => t.label);
+    const known = getTags().map((t) => t.label);
     const valid = rawTags.filter((t) => known.includes(t));
     const unknown = rawTags.filter((t) => !known.includes(t));
     if (unknown.length) notice(`AI 整理的标签「${unknown.join('、')}」不在列表中，已忽略`, 'warning');
-    if (ghInfo && !valid.includes('GitHub')) valid.unshift('GitHub');
+    // GitHub 强标签按 id 解耦（issue 363）：改名后仍取当前 label；标签已删除则跳过特判
+    const ghTag = getTagById('github');
+    if (ghInfo?.fetched && ghTag && !valid.includes(ghTag.label)) valid.unshift(ghTag.label);
     sel.clear();
     valid.forEach((t) => sel.add(t));
     redraw();
@@ -702,9 +718,9 @@ async function runAiFill(
   }
 }
 
-/** AI 提示词（GitHub 版含翻译约束；简介禁编造） */
+/** AI 提示词（GitHub 版含翻译约束；简介禁编造；标签清单随 getTags() 动态——issue 363） */
 function aiPrompt(title: string, url: string, desc: string, ghInfo: { title: string; description: string; fetched: boolean } | null): string {
-  const known = TAGS.map((t) => t.label).join('、');
+  const known = getTags().map((t) => t.label).join('、');
   const base = `你是收藏整理助手。把用户输入的收藏信息整理成 JSON（只输出 JSON，不输出任何多余文字），严格以下格式：
 {"title":"标题","url":"链接","description":"简介","tags":["标签1","标签2"]}
 规则：
@@ -795,5 +811,203 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
     saveBtn.textContent = it ? '更新' : '保存';
   } finally {
     _saving = false;
+  }
+}
+
+// ==================== 标签管理（issue 363：设置面板「标签管理」组 custom 行） ====================
+// 定义本体 favorites.tags.json（data.saveTags 落盘 + config 单源注入）；改名/删除时存量条目
+// 经 updateTagLabelBulk 批量跟随（范式 = memo updateSceneBulk）；行内文案不经设置文案 lint
+// （custom 插槽惯例）。挂 .bz-fav-scope 取域私有 token（flow-dialog 同款通道）。
+// UI 全域内自绘（ADR-0101 拍板：favorites 不引组件库按钮，review-fix-b 守卫）——按钮/输入框
+// 自建 DOM + `data-lucide` 占位经 mountIcons 兑现；编辑弹窗复用表单弹窗那套类（.bz-fav-form-mask
+// / .bz-fav-form / .bz-fav-btns），与「添加·编辑收藏」同皮。
+
+/** 图标选择集（lucide 名；含内置 9 类原图标，供新增/编辑挑选） */
+const TAG_ICON_CHOICES = [
+  'tag', 'bookmark', 'star', 'heart', 'github', 'globe', 'app-window', 'brain-circuit',
+  'keyboard', 'bot', 'zap', 'beer', 'waypoints', 'book-open', 'film', 'music',
+  'gamepad-2', 'package', 'briefcase', 'graduation-cap', 'link', 'folder',
+];
+
+/** 管理用数据管理器（按当前存储设置现构造；loadTags 幂等注入 config 单源） */
+function tagManagerDm(): DataManager {
+  const s = tryGetSettings() as any;
+  return new DataManager(getStoragePath(s?.storagePath));
+}
+
+/** 管理列表渲染（custom 行 render 入口）：先画当前生效集，磁盘载入完成后重画 */
+function renderTagManager(body: HTMLElement, _ctx: { rowEl: HTMLElement; refreshVisibility: () => void }): void {
+  const dm = tagManagerDm();
+  const wrap = document.createElement('div');
+  wrap.className = 'bz-fav-scope bz-fav-tagmgr';
+  body.appendChild(wrap);
+  const draw = () => drawTagManager(wrap, dm, draw);
+  draw();
+  void dm.loadTags().then(draw).catch(() => { /* 载入失败保持当前生效集 */ });
+}
+
+function drawTagManager(wrap: HTMLElement, dm: DataManager, redraw: () => void): void {
+  wrap.innerHTML = '';
+  const tags = getTags();
+  /** 行内小图标钮（域内自绘，样式 .bz-fav-tagmgr-btn） */
+  const icBtn = (ic: string, title: string, disabled: boolean, danger: boolean, onClick: () => void): HTMLElement => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bz-fav-tagmgr-btn' + (danger ? ' bz-fav-tagmgr-btn--danger' : '');
+    b.title = title;
+    b.disabled = disabled;
+    b.innerHTML = `<i data-lucide="${ic}"></i>`;
+    b.addEventListener('click', onClick);
+    return b;
+  };
+  for (const tag of tags) {
+    const row = document.createElement('div');
+    row.className = 'bz-fav-tagmgr-row';
+    const ic = document.createElement('span');
+    ic.className = 'bz-fav-tagmgr-ic';
+    ic.innerHTML = `<i data-lucide="${tag.ic || 'tag'}"></i>`;
+    const name = document.createElement('span');
+    name.className = 'bz-fav-tagmgr-name';
+    name.textContent = tag.label;
+    const ops = document.createElement('span');
+    ops.className = 'bz-fav-tagmgr-ops';
+    const idx = tags.indexOf(tag);
+    ops.append(
+      icBtn('chevron-up', '上移', idx === 0, false, () => void moveTag(dm, idx, -1, redraw)),
+      icBtn('chevron-down', '下移', idx === tags.length - 1, false, () => void moveTag(dm, idx, 1, redraw)),
+      icBtn('pencil', '编辑', false, false, () => openTagEditor(dm, tag, redraw)),
+      icBtn('trash-2', '删除', false, true, () => void deleteTagFlow(dm, tag, redraw)),
+    );
+    row.append(ic, name, ops);
+    wrap.appendChild(row);
+  }
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'bz-fav-tagmgr-add';
+  addBtn.innerHTML = `<i data-lucide="plus"></i><span>添加标签</span>`;
+  addBtn.addEventListener('click', () => openTagEditor(dm, null, redraw));
+  wrap.appendChild(addBtn);
+  mountIcons(wrap);
+}
+
+/** 排序调整（上移/下移）：交换后整体落盘（saveTags 注入单源即时生效） */
+async function moveTag(dm: DataManager, idx: number, delta: number, redraw: () => void): Promise<void> {
+  const tags = [...getTags()];
+  const j = idx + delta;
+  if (j < 0 || j >= tags.length) return;
+  [tags[idx], tags[j]] = [tags[j], tags[idx]];
+  try {
+    await dm.saveTags(tags);
+    redraw();
+  } catch (e) {
+    notifySaveError(e, '调整标签排序');
+  }
+}
+
+/** 新增/编辑弹窗（域内自绘：复用表单弹窗类 .bz-fav-form-mask / .bz-fav-form 同皮 + ESC 独立注册）：
+ *  名称 + 图标胶囊；编辑改名先 updateTagLabelBulk 迁条目再存定义 */
+function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => void): void {
+  const mask = document.createElement('div');
+  mask.className = 'bz-fav-form-mask bz-fav-scope';
+  const popup = document.createElement('div');
+  popup.className = 'bz-fav-form bz-fav-tageditor';
+  popup.innerHTML = `
+    <h2>${existing ? '编辑标签' : '添加标签'}</h2>
+    <div class="bz-fav-fld"><label>名称</label><input id="fz-tag-name" value="${esc(existing?.label || '')}" placeholder="如：装修灵感"></div>
+    <div class="bz-fav-fld"><label>图标</label><div class="bz-fav-tageditor-ics" id="fz-tag-ics"></div></div>
+    <div class="bz-fav-btns">
+      <button type="button" data-fz-tag-cancel>取消</button>
+      <button type="button" id="fz-tag-save" class="bz-fav-pri">${existing ? '保存' : '添加'}</button>
+    </div>`;
+  mask.appendChild(popup);
+  document.body.appendChild(mask);
+  topifyZ(mask); // ADR-0067：显示即发号
+  mountIcons(popup);
+  const escHandle = escManager.register('bz-fav-tageditor', {
+    isVisible: () => mask.isConnected,
+    close: () => close(),
+  });
+  const close = (): void => {
+    escHandle.unregister();
+    mask.remove();
+  };
+  const input = popup.querySelector('#fz-tag-name') as HTMLInputElement;
+  let picked = existing?.ic || 'tag';
+  const icPick = popup.querySelector('#fz-tag-ics') as HTMLElement;
+  const drawIcs = () => {
+    icPick.innerHTML = '';
+    for (const name of TAG_ICON_CHOICES) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'bz-fav-tageditor-ic' + (name === picked ? ' bz-fav-on' : '');
+      b.innerHTML = `<i data-lucide="${name}"></i>`;
+      b.addEventListener('click', () => { picked = name; drawIcs(); });
+      icPick.appendChild(b);
+    }
+    mountIcons(icPick);
+  };
+  drawIcs();
+
+  const doSave = async (): Promise<void> => {
+    const label = input.value.trim();
+    if (!label) { notice('请输入标签名称'); return; }
+    if (getTags().some((t) => t.label === label && t.id !== existing?.id)) { notice('已有同名标签'); return; }
+    const next = [...getTags()];
+    try {
+      if (existing) {
+        const idx = next.findIndex((t) => t.id === existing.id);
+        if (idx === -1) { notice('标签不存在，请重试', 'error'); return; }
+        // 改名存量跟随（issue 363）：先批量迁移条目 tags[]+type，成功后才写新定义——防条目与定义脱钩
+        if (next[idx].label !== label) await dm.updateTagLabelBulk(next[idx].label, label);
+        next[idx] = { ...next[idx], label, ic: picked };
+      } else {
+        next.push({ id: newTagId(), label, ic: picked });
+      }
+      await dm.saveTags(next);
+      notice(existing ? `已更新标签「${label}」` : `已添加标签「${label}」`, 'success');
+      close();
+      redraw();
+    } catch (e) {
+      notifySaveError(e, '保存标签');
+    }
+  };
+  popup.querySelector('[data-fz-tag-cancel]')?.addEventListener('click', () => close());
+  popup.querySelector('#fz-tag-save')?.addEventListener('click', () => void doSave());
+  mask.addEventListener('mousedown', (e) => { if (e.target === mask) close(); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); void doSave(); }
+  });
+  setTimeout(() => input.focus(), 30);
+}
+
+/** 删除标签：至少留一个；带条目时确认迁入「网站」（id 'web'，已删则取剩余第一个） */
+async function deleteTagFlow(dm: DataManager, tag: FavTag, redraw: () => void): Promise<void> {
+  const rest = getTags().filter((t) => t.id !== tag.id);
+  if (!rest.length) { notice('至少保留一个标签'); return; }
+  const fallback = rest.find((t) => t.id === 'web') ?? rest[0];
+  let count = 0;
+  try {
+    const items = await dm.getAll();
+    count = items.filter((i) => (i.tags || []).includes(tag.label)).length;
+  } catch { /* 读失败按 0 条处理：删除定义本身不受影响 */ }
+  const ok = await openFlowDialog({
+    title: '删除标签',
+    className: 'bz-fav-flow-dialog bz-fav-scope',
+    message: count > 0
+      ? `确定删除标签「${tag.label}」吗？\n其中 ${count} 条收藏将迁入标签「${fallback.label}」。`
+      : `确定删除标签「${tag.label}」吗？\n标签将从标签列表中移除。`,
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '删除', value: 'del', danger: true, cta: true },
+    ],
+  });
+  if (ok !== 'del') return;
+  try {
+    if (count > 0) await dm.updateTagLabelBulk(tag.label, fallback.label);
+    await dm.saveTags(rest);
+    notice(`已删除标签「${tag.label}」`, 'success');
+    redraw();
+  } catch (e) {
+    notifySaveError(e, '删除标签');
   }
 }

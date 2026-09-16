@@ -29,6 +29,12 @@ export class FavoritesApp {
     this.dataManager = new DataManager(storagePath);
     this.aiService = new FavoritesAIService();
     this.initialized = true;
+    // 标签定义载入（issue 363）：favorites.tags.json → config 单源；缺失回退内置 9 类（零迁移）
+    try {
+      await this.dataManager.loadTags();
+    } catch (e) {
+      console.error('[favorites-loadTags]', e);
+    }
   }
 
   /** 打开收藏面板（toggle 语义在 ui.openPanel 内） */

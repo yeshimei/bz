@@ -45,8 +45,9 @@ describe('C1：域选择器脱离 core reset 同分顺序对抗 + 原型 core �
 describe('C2：动态 mask 挂 bz-fav-scope（行为单源后断言指向真行为 ui.ts，壳不自绘）', () => {
   it('openForm 的 mask className 带 scope（issue 245：壳只载真行为包，无自绘 confirmDlg）', () => {
     const proto = favProto();
-    // 行为单源（issue 245/ADR-0106）：动态 mask 的 className 赋值唯一落点 = 真行为 ui.ts
-    expect(favUi().match(/bz-fav-form-mask bz-fav-scope/g)?.length).toBe(1);
+    // 行为单源（issue 245/ADR-0106）：动态 mask 的 className 赋值唯一落点 = 真行为 ui.ts；
+    // issue 363 标签编辑弹窗（openTagEditor）复用同款类串 = 第 2 处（均在真行为层）
+    expect(favUi().match(/bz-fav-form-mask bz-fav-scope/g)?.length).toBe(2);
     expect(proto).not.toContain("= 'bz-fav-form-mask';");
     expect(proto).toContain('prototype-behavior.js');
   });

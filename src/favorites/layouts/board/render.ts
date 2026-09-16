@@ -8,7 +8,7 @@
  * 由 hooks.mobile 显式入参（不读 core isMobileEnv——纯层禁 core 服务）。
  */
 import { esc, iconSpan } from '../../../core/ui/str';
-import { TAGS } from '../../config';
+import { getTags } from '../../config';
 import {
   ICON, cardHtml, emptyHtml, tagCount, visibleItems, archivedItems, filteredItems,
   type FavView,
@@ -37,6 +37,7 @@ export function panelHtml(mobile: boolean): string {
 }
 
 /** 磁贴标签行 markup（「图标 名 数字」白底磁贴；无计数标签不显示；
+ *  标签集 = getTags() 动态（issue 363）；
  *  「新收藏」chip = lucide plus 虚线磁贴、无磁点；移动端平铺单行时置首，桌面仍居行尾） */
 export function chipsHtml(items: FavoritesItem[], view: FavView, mobile: boolean): string {
   const mk = (label: string, ic: string, cnt: number, active: boolean, grey = false) =>
@@ -45,7 +46,7 @@ export function chipsHtml(items: FavoritesItem[], view: FavView, mobile: boolean
   const chips =
     mk('全部', '', visibleItems(items).length, !view.archived && view.tag === null) +
     mk('已归档', 'archive', archivedItems(items).length, view.archived, true) +
-    TAGS.map((t) => {
+    getTags().map((t) => {
       const n = tagCount(items, t.label);
       return n ? mk(t.label, t.ic, n, !view.archived && view.tag === t.label) : '';
     }).join('');
