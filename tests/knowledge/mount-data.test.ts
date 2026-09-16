@@ -635,13 +635,18 @@ describe('refCounts / orphanCards（315）', () => {
 
   it('只数用户双链（正文 wikilink + related + mounted），不数同名文献', async () => {
     makeApp(countFiles());
-    expect(await refCounts(mountCtx())).toEqual({
-      '卡片盒/甲卡.md': 4, // 乙卡正文 + 丙卡 related + 丙卡 mounted + 日记正文
-      '卡片盒/乙卡.md': 0,
-      '卡片盒/丙卡.md': 0,
-      '卡片盒/孤立.md': 0,
-      '卡片盒/同名.md': 0,
-    });
+    // 2026-09-16 起键 = **所有被指向的路径**，不再预填「卡片盒里每张卡 = 0」的零项；
+    // 消费方一律 `counts[path] ?? 0`。这样一次遍历能同时喂卡片部「被引 N」与文献部的同一个数。
+    const counts = await refCounts(mountCtx());
+    expect(counts['卡片盒/甲卡.md']).toBe(4); // 乙卡正文 + 丙卡 related + 丙卡 mounted + 日记正文
+    expect(counts['卡片盒/乙卡.md'] ?? 0).toBe(0);
+    expect(counts['卡片盒/丙卡.md'] ?? 0).toBe(0);
+    expect(counts['卡片盒/孤立.md'] ?? 0).toBe(0);
+    expect(counts['卡片盒/同名.md'] ?? 0).toBe(0);
+    // 同名文献不被算进来（「不数同名文献」）
+    expect(counts['文献盒/甲卡.md'] ?? 0).toBe(0);
+    // 键里只含真正被指向的目标
+    expect(Object.keys(counts)).toEqual(['卡片盒/甲卡.md']);
   });
 
   it('孤儿卡 = 无入链且自身挂载项全空；同名文献不解除孤儿', async () => {
@@ -664,7 +669,7 @@ describe('refCounts / orphanCards（315）', () => {
       '卡片盒/他卡.md': '他卡正文 [[被指卡]]。',
     });
     const counts = await refCounts(mountCtx());
-    expect(counts['卡片盒/自恋卡.md']).toBe(0); // 自链不算被引
+    expect(counts['卡片盒/自恋卡.md'] ?? 0).toBe(0); // 自链不算被引
     expect(counts['卡片盒/被指卡.md']).toBe(1); // 他卡的双链照常算
     // 自链也不构成「有挂载」：只指自己的卡仍是孤儿；有入链的不是
     expect(await orphanCards(mountCtx())).toEqual(['卡片盒/自恋卡.md']);

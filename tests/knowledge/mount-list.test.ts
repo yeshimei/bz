@@ -236,28 +236,6 @@ describe('挂载树·列表侧（issue 320）', () => {
     expect(read.mock.calls.length).toBe(0);
   });
 
-  it('落卡后索引只重算一次：新卡即时带徽标（源文献互链已计入）', async () => {
-    await openCards();
-    await waitIndex();
-    // 源文献带 frontmatter（appendRelatedLine 只认 frontmatter；无 frontmatter 不写）
-    vault.files.set('文献盒/来源.md', ['---', 'title: "来源"', '---', '', '来源正文。'].join('\n'));
-    const ref0 = scan.refCounts;
-    const orph0 = scan.orphanCards;
-    (ui as any).editor = {
-      source: { file: null, path: '文献盒/来源.md', title: '来源', domain: '心理' },
-      pick: '卡片盒/甲卡.md',
-      why: '整理为显式连接',
-      title: '新卡',
-    };
-    await (ui as any).saveCard();
-    expect(scan.refCounts - ref0).toBe(1);
-    expect(scan.orphanCards - orph0).toBe(1);
-    expect(row('卡片盒/新卡.md')).toBeTruthy();
-    // 源文献 related 互链指向新卡 → 新卡被引 1（重算已反映这次写入）；有入链即非孤儿
-    expect(row('卡片盒/新卡.md').querySelector('.bz-kb-refbadge')!.textContent).toBe('被引 1');
-    expect(row('卡片盒/新卡.md').querySelector('.bz-kb-orphan')).toBeNull();
-  });
-
   it('孤儿筛选 × 分页：分页按筛选后的池子算，加载更多只加孤儿', async () => {
     for (let i = 1; i <= 81; i++) vault.files.set(`卡片盒/批${String(i).padStart(2, '0')}.md`, '批量孤立卡。');
     ui.showMain();

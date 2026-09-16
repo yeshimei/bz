@@ -17,6 +17,7 @@ import {
   parseAiJson,
   parseFrontmatter,
   injectFrontmatter,
+  migrateVideoSourceKeys,
   generateVideoNote,
   generateTermDraft,
   generatePassageDraft,
@@ -168,16 +169,20 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 润色正文�
 
     const content = vault.files.get(path)!;
     const fm = vaultParseFrontmatter(content)!;
-    // 九键：title/tags/summary/url/date/author/videoTitle/type/domain
+    // 九键：title/tags/summary/source/date/author/sourceTitle/type/domain
+    // （2026-09-16 统一来源：url → source、videoTitle → sourceTitle，四类文献共用「来源」一个名）
     expect(fm.title).toBe('T');
     expect(fm.tags).toEqual(['a']);
     expect(fm.summary).toBe('s');
-    expect(fm.url).toBe('https://b23.tv/xxx');
+    expect(fm.source).toBe('https://b23.tv/xxx');
     expect(fm.date).toBeTruthy();
     expect(fm.author).toBe('某UP');
-    expect(fm.videoTitle).toBe('测试视频');
+    expect(fm.sourceTitle).toBe('测试视频');
     expect(fm.type).toBe('video');
     expect(fm.domain).toBe('心理');
+    // 旧键名不再出现
+    expect(fm.url).toBeUndefined();
+    expect(fm.videoTitle).toBeUndefined();
     // 正文 = 两块润色拼接
     expect(content).toContain('润色润色');
     // 未传 videoPath（keepVideo=false 等）→ 无视频段
@@ -416,7 +421,8 @@ describe('generateTermNote（术语文献：五键 frontmatter + 一段简介）
 
     const content = vault.files.get(path)!;
     const fm = vaultParseFrontmatter(content)!;
-    // 五键：title/type/domain/term/date；不得混入视频键（tags/summary/url/author/videoTitle）
+    // 五键：title/type/domain/term/date；不得混入视频专有键（tags/summary/author/sourceTitle），
+    // 未传 source → 来源两键一个都不落
     expect(fm.title).toBe('心理');
     expect(fm.type).toBe('term');
     expect(fm.domain).toBe('心理');
@@ -424,9 +430,9 @@ describe('generateTermNote（术语文献：五键 frontmatter + 一段简介）
     expect(fm.date).toBeTruthy();
     expect(fm.tags).toBeUndefined();
     expect(fm.summary).toBeUndefined();
-    expect(fm.url).toBeUndefined();
     expect(fm.author).toBeUndefined();
-    expect(fm.videoTitle).toBeUndefined();
+    expect(fm.source).toBeUndefined();
+    expect(fm.sourceTitle).toBeUndefined();
     // 正文 = AI 简介（stub summary 's'）
     expect(content).toContain('\n\ns');
   });
@@ -563,19 +569,43 @@ describe('backfillNotes（旧笔记自动补全；ticket 138 §1.3：单次 AI �
   });
 
   it('双缺（type 启发式 + AI domain）：两处都落盘且不互覆盖（P1-2 回归：domain 写回不回滚 type 补丁）', async () => {
-    // 旧笔记只有 url（启发式 → type: video），缺 type 与 domain——ADR-0073 主目标人群
-    vault.files.set('文献盒/旧A.md', '---\nurl: "https://www.bilibili.com/video/BV1xx411c7mD"\n---\n\n正文A');
+    // 旧笔记带 author + url（启发式 → type: video），缺 type 与 domain——ADR-0073 主目标人群；
+    // url 同时被存量键迁移改写成 source（2026-09-16 统一来源），故 filled = 迁移 1 + type 1 + domain 1
+    vault.files.set('文献盒/旧A.md', '---\nauthor: "某UP"\nurl: "https://www.bilibili.com/video/BV1xx411c7mD"\n---\n\n正文A');
     aiStub.json.mockImplementationOnce(async () => '{"domain":"物理"}');
 
     const res = await backfillNotes();
 
-    expect(res).toEqual({ scanned: 1, filled: 2, aiSkipped: false }); // type 补丁写盘 + domain 写盘
+    expect(res).toEqual({ scanned: 1, filled: 3, aiSkipped: false });
     const content = vault.files.get('文献盒/旧A.md')!;
+    expect(content).toContain('source: "https://www.bilibili.com/video/BV1xx411c7mD"'); // 迁移后的形态
     expect(content).toContain('type: "video"');
     expect(content).toContain('domain: "物理"');
-    // type/domain 各恰出现一次（未被重复注入/覆盖）
+    // source/type/domain 各恰出现一次（迁移不造重复键、补丁未被重复注入）
+    expect((content.match(/^source:/gm) || []).length).toBe(1);
     expect((content.match(/^type:/gm) || []).length).toBe(1);
     expect((content.match(/^domain:/gm) || []).length).toBe(1);
+  });
+
+  it('存量键迁移（统一来源）：url → source、videoTitle → sourceTitle；幂等、不造重复键、正文零扰动', async () => {
+    expect(migrateVideoSourceKeys('---\nurl: "https://x"\n---\n\n正文')).toBe('---\nsource: "https://x"\n---\n\n正文');
+    expect(migrateVideoSourceKeys('---\nvideoTitle: "视频原题"\n---\n\n正文')).toBe('---\nsourceTitle: "视频原题"\n---\n\n正文');
+    // 两键同时 + 其它键与正文原样保留（只动这两行）
+    expect(
+      migrateVideoSourceKeys('---\ntitle: "T"\nurl: "u"\nauthor: "A"\nvideoTitle: "V"\ntype: video\n---\n\n正文段')
+    ).toBe('---\ntitle: "T"\nsource: "u"\nauthor: "A"\nsourceTitle: "V"\ntype: video\n---\n\n正文段');
+    // 幂等：迁移过的内容再喂一次逐字节相同
+    const once = migrateVideoSourceKeys('---\nurl: "u"\nvideoTitle: "V"\n---\n\n正文');
+    expect(migrateVideoSourceKeys(once)).toBe(once);
+    // 已有目标键 → 不改名（绝不造出重复键），原样返回
+    expect(migrateVideoSourceKeys('---\nsource: "s"\nurl: "u"\n---\n\n正文')).toBe('---\nsource: "s"\nurl: "u"\n---\n\n正文');
+    // 无 frontmatter / 两键都没有 → 原样
+    expect(migrateVideoSourceKeys('正文而已')).toBe('正文而已');
+    expect(migrateVideoSourceKeys('---\ntitle: "T"\n---\n\n正文')).toBe('---\ntitle: "T"\n---\n\n正文');
+    // CRLF 保真
+    expect(migrateVideoSourceKeys('---\r\nurl: "u"\r\n---\r\n\r\n正文')).toBe('---\r\nsource: "u"\r\n---\r\n\r\n正文');
+    // 正文里的 url:/videoTitle: 行不受影响（只扫 frontmatter）
+    expect(migrateVideoSourceKeys('---\ntitle: "T"\n---\nurl: "正文里的"\n')).toBe('---\ntitle: "T"\n---\nurl: "正文里的"\n');
   });
 
   it('单缺 type（已有 domain）：只做启发式补 type，不调 AI', async () => {
@@ -736,7 +766,7 @@ describe('generateImageNote（图版文献：图片本体 + 五键 frontmatter +
     expect(fm.date).toBeTruthy();
     // 不得混入其它文献类型的键
     expect(fm.term).toBeUndefined();
-    expect(fm.url).toBeUndefined();
+    expect(fm.author).toBeUndefined();
     expect(fm.tags).toBeUndefined();
     // 正文 = 全路径嵌入（裸名会指错同名图）+ 读图解读，解读在前、嵌入在后（issue 313）
     expect(content).toContain('![[文献盒/assets/窗外的树.png]]');

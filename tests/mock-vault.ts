@@ -281,6 +281,47 @@ export function parseFrontmatter(content: string): Record<string, any> | null {
   return fm;
 }
 
+/**
+ * 全库链接图（Obsidian `metadataCache.resolvedLinks` 的 mock）：`{ 源路径: { 目标路径: 出现次数 } }`。
+ * 口径对齐 Obsidian：只收**能解析到库内文件**的 wikilink（含 `![[嵌入]]`），断链不入图；
+ * 目标解析 = 全路径优先（补 .md 兜底）→ 全库同名（去目录、去扩展名、大小写不敏感，取字典序首个）。
+ * 每次访问现算（测试里 vault 随用例变化），调用方不会拿到过期快照。
+ */
+function buildResolvedLinks(vault: MockVault): Record<string, Record<string, number>> {
+  const paths = [...vault.files.keys()];
+  const resolveOne = (target: string): string | null => {
+    const t = String(target ?? '').replace(/\\/g, '/').trim();
+    if (!t) return null;
+    if (vault.files.has(t)) return t;
+    if (vault.files.has(t + '.md')) return t + '.md';
+    const base = (t.split('/').pop() ?? '').replace(/\.md$/i, '').toLowerCase();
+    if (!base) return null;
+    const hit = paths
+      .filter((p) => p.toLowerCase().endsWith('.md'))
+      .filter((p) => (p.split('/').pop() ?? '').replace(/\.md$/i, '').toLowerCase() === base)
+      .sort()[0];
+    return hit ?? null;
+  };
+  const out: Record<string, Record<string, number>> = {};
+  for (const [path, content] of vault.files) {
+    if (!path.toLowerCase().endsWith('.md')) continue;
+    // frontmatter 里的 [[...]]（related / mounted 等）**不进 resolvedLinks**——真机同样不含，
+    // 它们由 frontmatter 单独承载；不剥掉会与消费方的 frontmatter 解析重复计数。
+    const body = content.replace(/^---\r?\n[\s\S]*?\r?\n---/, '');
+    const bag: Record<string, number> = {};
+    const re = /!?\[\[([^\[\]]+?)\]\]/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(body)) !== null) {
+      const inner = m[1].split('|')[0].split('#')[0].trim();
+      const p = resolveOne(inner);
+      if (!p) continue; // 断链不入图（与 Obsidian 一致）
+      bag[p] = (bag[p] ?? 0) + 1;
+    }
+    if (Object.keys(bag).length) out[path] = bag;
+  }
+  return out;
+}
+
 /** 构造带 frontmatter 解析的测试 app */
 export function mockAppWithVault(vault: MockVault) {
   return {
@@ -293,12 +334,23 @@ export function mockAppWithVault(vault: MockVault) {
           const path = typeof f === 'string' ? f : f?.path ?? '';
           const content = vault.files.get(path) ?? '';
           const fm = parseFrontmatter(content);
+          // 正文区（frontmatter 里的链接不算正文链接，与真机 resolvedLinks 口径一致）
+          const body = content.replace(/^---\r?\n[\s\S]*?\r?\n---/, '');
           // wikilink 嵌入解析（Obsidian 自带链接信息；encrypt 域附件收集的主数据源）
           const embeds: { link: string }[] = [];
           const re = /!\[\[([^\]|#]+)(?:\|[^\]]*)?\]\]/g;
           let m: RegExpExecArray | null;
           while ((m = re.exec(content)) !== null) embeds.push({ link: m[1].trim() });
-          return fm || embeds.length ? { frontmatter: fm, embeds } : null;
+          // 普通双链（真机 FileCache.links）：**解析前**的目标名，**断链也在**——
+          // 「断链也算有挂载」这条口径靠它（resolvedLinks 只收解析成功的）
+          const links: { link: string }[] = [];
+          const lre = /(?<!!)\[\[([^\]|#]+)(?:\|[^\]]*)?\]\]/g;
+          while ((m = lre.exec(body)) !== null) links.push({ link: m[1].trim() });
+          return fm || embeds.length || links.length ? { frontmatter: fm, embeds, links } : null;
+        },
+        /** 全库链接图（真机由 Obsidian 维护；见 buildResolvedLinks）。getter = 每次现算快照 */
+        get resolvedLinks() {
+          return buildResolvedLinks(vault);
         },
         // 事件监听（changed 等），供实时同步类测试 emit
         on: (event: string, cb: (...args: any[]) => void): any => {

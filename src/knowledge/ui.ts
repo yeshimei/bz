@@ -1,6 +1,6 @@
 /**
  * 知识盒（knowledge 域）UI —— ADR-0112 三部重构（原型为唯一真理）：
- * 部壹·文献（四种录入进货 + 文献词典列表 + 预览/提炼成卡）、部贰·卡片（卡片盒扫描展示）、
+ * 部壹·文献（四种录入进货 + 文献词典列表 + 预览）、部贰·卡片（卡片盒扫描展示）、
  * 部叁·主题（主题笔记仅展示，写作与检索归 Obsidian + 第二大脑）。
  * 知识盒只整理关联：文献→卡片 = 连一张旧卡 + 一句为什么（related 键，源文献自动互链）。
  * 录入入口四名词（issue 309/312；顺序 2026-09-14 复核为 图版在影像之前）：名词（一个词）/ 段落（一段文字，AI 自动出标题）/ 影像（B 站视频任务）/
@@ -41,7 +41,7 @@ import { mountCtx, orphanCards, refCounts } from './mount-data';
 import type { KnowledgeTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
 import { openMountTree } from './mount-canvas';
-import { backfillNotes, findDuplicateTermNote, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, resolveImageDir, type DraftFields, type DraftHooks } from './note-gen';
+import { backfillNotes, findDuplicateTermNote, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, parseDomainList, resolveImageDir, type DraftFields, type DraftHooks } from './note-gen';
 import { canonicalVideoUrl, cleanSourceTitle, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, type TermSource } from './source';
 import { fetchCheckedQualities, fetchVideoMeta, needsBvidRepair, parseBvid, resolveVideo, type ResolvedVideo, type VideoMeta } from './video-meta';
 import { RangeBar } from './range-bar';
@@ -60,6 +60,11 @@ function litKindLabel(type: string): string {
 }
 /** 图版单次录入的图片张数上限（issue 313）：一次 AI 请求的图片数封顶，避免大图组拖垮上行与费用 */
 const IMAGE_ENTRY_MAX = 9;
+
+/** 「被引 N」徽标 tooltip（卡片部与文献部共用一份文案：同一个数就该说同一句话） */
+function refBadgeTitle(n: number): string {
+  return `被 ${n} 处引用（正文双链 + 关联属性）`;
+}
 
 /**
  * 录入预填扩展（issue 329，供剪藏本划选工具框等程序化入口消费；全可选，缺省零影响）。
@@ -258,27 +263,6 @@ function stripFrontmatter(text: string): string {
   return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, '');
 }
 
-/** frontmatter related 列表追加一条（无 related 键则整键插入；纯字符串操作，行扫描实现） */
-export function appendRelatedLine(text: string, link: string): string {
-  const lines = text.split(/\r?\n/);
-  if (lines[0]?.trim() !== '---') return text;
-  let close = -1;
-  let relatedAt = -1;
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i].trim() === '---') { close = i; break; }
-    if (/^related:/.test(lines[i])) relatedAt = i;
-  }
-  if (close === -1) return text;
-  if (relatedAt === -1) {
-    lines.splice(close, 0, 'related:', `  - "${link}"`);
-  } else {
-    let end = relatedAt + 1;
-    while (end < close && /^\s*-\s/.test(lines[end])) end++;
-    lines.splice(end, 0, `  - "${link}"`);
-  }
-  return lines.join('\n');
-}
-
 /** 部壹文献条目（数据源 = 文献目录文件夹实况，不从数据文件派生） */
 interface KnowledgeNoteEntry {
   file: any;
@@ -287,9 +271,8 @@ interface KnowledgeNoteEntry {
   type: string;
   domain: string;
   summary: string;
-  url: string;
-  source: string;      // 术语来源原文值（ADR-0116：URL 或 [[双链]]；视频文献无此键）
-  sourceTitle: string; // 外部来源抓到的页面标题（可选）
+  source: string;      // 出处原文值（URL 或 [[双链]]；2026-09-16 起四类文献统一走这一个键）
+  sourceTitle: string; // 出处标题（外链抓到的页面标题 / 视频原题；可选）
   date: string;
   created: number;
 }
@@ -302,12 +285,11 @@ interface PreviewEntry {
   type?: string;
   domain?: string;
   date?: string;
-  url?: string;
   source?: string;
   sourceTitle?: string;
 }
 
-/** 部贰卡片条目（存量零迁移：领域读序 domain → category → 未分类） */
+/** 部贰卡片条目（领域只认 `domain`；`category` 历史别名已摘，2026-09-16 统一） */
 interface CardEntry {
   file: any;
   path: string;
@@ -446,17 +428,10 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
           { type: 'number', name: '压缩质量 CRF', desc: '数值越小画质越高，范围 18 到 28', binding: { key: 'knowledgeCrf' }, min: 18, max: 28, step: 1 },
         ],
       },
-      {
-        icon: 'terminal', name: '工具',
-        rows: [
-          { type: 'text', name: 'ffmpeg 路径', desc: '视频处理用，留空跟随工具配置', binding: { key: 'knowledgeFfmpegPath' }, placeholder: '如 ffmpeg 或 D:/tools/ffmpeg.exe' },
-          { type: 'text', name: 'ffprobe 路径', desc: '探测视频元数据用，留空跟随工具配置', binding: { key: 'knowledgeFfprobePath' }, placeholder: '如 ffprobe 或 D:/tools/ffprobe.exe' },
-          { type: 'text', name: 'Python 路径', desc: '装了 Python 一般填 python 即可，或填绝对路径，留空跟随工具配置', binding: { key: 'knowledgePythonPath' }, placeholder: '如 python 或 D:/tools/python.exe' },
-          { type: 'text', name: 'Whisper 模型', desc: '转写模型档位，可选 tiny 到 large', binding: { key: 'knowledgeWhisperModel' }, placeholder: '如 small' },
-          { type: 'text', name: '缓存文件夹', desc: '剪辑产物与转写稿的缓存，留空用系统临时目录', binding: { key: 'knowledgeCacheDir' }, placeholder: '如 D:/bili-dl-cache' },
-          { type: 'number', name: '缓存保留天数', desc: '超过该天数的缓存自动清理', binding: { key: 'knowledgeCacheRetentionDays' }, min: 1, step: 1 },
-        ],
-      },
+      // 「工具」组（ffmpeg / ffprobe / Python 路径、Whisper 模型、缓存文件夹与保留天数）2026-09-16 移除：
+      // 这些是「负责把外部工具装起来」的人才调的参数，不是记笔记的人该面对的旋钮。
+      // **设置键与消费链原样保留**（settings.ts 的键声明 + processor 的读取都没动）：存量用户配过的值
+      // 继续生效，只是不再从面板暴露；留空本来就走工具侧默认值。
       {
         icon: 'wrench', name: '维护',
         rows: [
@@ -502,8 +477,6 @@ export class UIManager {
   private mountIndexDirty = true;
   /** 部贰「只看孤儿」筛选开关（内存态，重渲染 / 换部来回都保留） */
   private cardOrphanOnly = false;
-  private editor: { source: KnowledgeNoteEntry; pick: string | null; why: string; title: string } | null = null;
-  private sessionNewPaths = new Set<string>();
   private loadedLitDir = '';
   private loadedCardDir = '';
   private loadedTopicDir = '';
@@ -555,6 +528,13 @@ export class UIManager {
   /** 当前录入态：term = 一个词（名词）/ passage = 一段文字（段落）/ image = 一张图（图版） */
   private entryMode: 'term' | 'passage' | 'image' = 'term';
   private termPreview: { domain: string; body: string; title?: string } | null = null;
+  /**
+   * 用户已就地改过的属性字段（建议 5）：流式期间**不再用 AI 值覆盖它**——用户刚打完的标题
+   * 不该被下一帧 delta 冲掉。点「重新生成」= 新一轮 → 整集合清空，这就是用户要的「覆盖」语义。
+   */
+  private userEdited = new Set<'term' | 'title' | 'domain'>();
+  /** 领域行编辑态的联想象（进编辑态建、出编辑态销，见 beginMetaEdit） */
+  private termDomainSuggest: ReturnType<typeof uiSuggest> | null = null;
   /** 生成流在途（ADR-0152/issue 343）：与 termSaving 分开——「是否正在生成」与「是否正在落盘」是两件事 */
   private termGenerating = false;
   /** 确认写入的落盘过程在途（承接原 termGenerating 的写入语义）：期间不接生成 / 再次写入 */
@@ -581,6 +561,8 @@ export class UIManager {
   private entryRelText = '';
   /** 预演命中的目标路径（确认写入时据此写 related，不重跑检索与裁判） */
   private entryPreviewPicks: string[] = [];
+  /** 预演命中的候选（path 与展示名成对：写入按 path、渲染按 title；点掉时按下标同步删两处） */
+  private entryPreviewItems: { path: string; title: string }[] = [];
   /** 预演是否已给出确定结果（done）——确定过就连「0 命中」也算结论，写入时不再重跑管线 */
   private entryPreviewDone = false;
   /** 在跑预演的中断器（issue 327）：重新生成 / 总结 / 关面板 / 确认写入转后台时 abort 在途裁判请求 */
@@ -728,7 +710,10 @@ export class UIManager {
       const dir = litDirOf(s);
       if (this.loadedLitDir && this.loadedLitDir !== dir) this.allNotes = [];
       await this.loadLiterature(dir);
-      this.renderLiterature();
+      this.renderLiterature(); // 首屏先出文献行：不把列表卡在整库索引上（与部贰同策略）
+      if (this.part !== 'z1') return; // 期间换了部 → 本次作废
+      if (this.mountIndexDirty) await this.loadMountIndex();
+      if (this.part === 'z1') this.patchLitBadges(); // 索引落地后补文献行的「被引 N」
     } else if (this.part === 'z2') {
       const dir = cardboxDirOf(s);
       if (this.loadedCardDir && this.loadedCardDir !== dir) { this.allCards = []; this.markCardsDirty(); }
@@ -779,7 +764,6 @@ export class UIManager {
         type: fm && fm.type ? String(fm.type) : '',
         domain: fm && fm.domain ? String(fm.domain) : '',
         summary: fm && fm.summary ? String(fm.summary) : '',
-        url: fm && fm.url ? String(fm.url) : '',
         source: fm && fm.source ? String(fm.source) : '',
         sourceTitle: fm && fm.sourceTitle ? String(fm.sourceTitle) : '',
         date, created,
@@ -792,12 +776,13 @@ export class UIManager {
 
   private renderLiterature(): void {
     if (!this.contentEl) return;
-    const rows = this.allNotes.map((n, i) => {
-      const no = String(i + 1).padStart(2, '0');
+    // 行内不再有 LIT-xx 编号（2026-09-16 用户拍板）：那个编号取的是「当前列表第几行」，
+    // 每新增一篇全体 +1，拿它当索引毫无意义，超过 99 篇还会撑破两位排版。
+    const rows = this.allNotes.map((n) => {
       const kind = litKindLabel(n.type);
       return `<div class="bz-kb-lexrow" data-kb-act="lit-peek" data-path="${esc(n.path)}">
         <div class="bz-kb-hw"><span class="bz-kb-w">${esc(n.title)}</span><span class="bz-kb-pos ${n.type === 'video' ? 'hot' : ''}">${kind}</span><span class="bz-kb-dom">${esc(n.domain || '未分类')}</span></div>
-        <div class="bz-kb-tail"><span class="bz-kb-meta">LIT-${no} · ${esc(n.date || '')}</span></div>
+        <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || '')}</span></div>
       </div>`;
     }).join('');
     this.contentEl.innerHTML = `
@@ -826,12 +811,12 @@ export class UIManager {
       .map((b) => `<p>${esc(b)}</p>`)
       .join('') || '<p>（无正文）</p>';
     const rels = await this.noteRels(n);
-    // 来源/原文（可点外开）：视频文献 url 键 → 「原文」；术语外部 source 键 → 「来源」（内部笔记来源只在术语面板 meta 行呈现）
-    const srcHtml = n.url
-      ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.url)}" href="#">${esc(n.url)}</a></div>`
-      : n.source && !n.source.startsWith('[[')
-        ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>`
-        : '';
+    // 来源（可点外开）：**四类文献统一这一块**（2026-09-16 视频的 url 键并入 source，
+    // 此前视频显「原文」、其余显「来源」＝同一件事两个名字）。只出外链型 source，
+    // 内部双链来源交给 Obsidian 原生反链（与旧口径一致）。
+    const srcHtml = n.source && !n.source.startsWith('[[')
+      ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>`
+      : '';
     const head = kind === 'card'
       ? { title: '卡片预览 · 卡片盒', badge: '卡 片', hot: false }
       : kind === 'topic'
@@ -899,79 +884,11 @@ export class UIManager {
     return true;
   }
 
-  /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源文献+领域自动带，落 related 双链互链 / 连一张旧卡 / 为什么相关） */
-  private async openCardEditor(n: KnowledgeNoteEntry): Promise<void> {
-    await this.ensureCards();
-    const dom = n.domain || '未分类';
-    const sameDom = this.allCards.filter((c) => c.domain === dom).map((c) => c.title);
-    const others = this.allCards.map((c) => c.title).filter((t) => !sameDom.includes(t));
-    const olds: string[] = [...sameDom.slice(0, 5)];
-    for (const t of others) { if (olds.length >= 6) break; olds.push(t); }
-    if (olds.length === 0) olds.push(n.title);
-    const whySug = `《${n.title}》与这张旧卡讨论同一主题——读后补全了机制细节，整理为显式连接。`;
-    const oldsHtml = olds.map((o, i) => `<button class="bz-kb-old" data-kb-old="${esc(o)}">${esc(o)}${i === 0 ? '<span class="bz-kb-rec">推荐</span>' : ''}</button>`).join('');
-    this.openSheet(this.sheetWrap('提炼成卡 → 卡片盒', `
-      <div class="bz-kb-f"><div class="bz-kb-flb">词 头（可 改）</div>
-        <input type="text" data-kb-role="cardtitle" value="${esc(n.title)}"></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">来 源 与 领 域（自 动 带，落 related 双链）</div>
-        <div class="bz-kb-srcline"><span class="bz-kb-srchip"><b>源</b>${esc(n.path)}</span>
-        <span class="bz-kb-srchip"><b>领域</b>〔${esc(dom)}〕自动继承</span></div></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">连 一 张 旧 卡（铁律：不 解 释 的 链 接 不 产 生 知 识）</div>
-        <div class="bz-kb-olds">${oldsHtml}</div></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">为 什 么 相 关（一 句 话，可 改）</div>
-        <input type="text" data-kb-role="why" value="${esc(whySug)}"></div>
-      <div style="margin-top:18px;display:flex;gap:10px">
-        <button class="bz-kb-bigbtn" data-kb-act="card-save" disabled>落 卡</button>
-        <button class="bz-kb-ghost" data-kb-close>取消</button>
-      </div>
-      <div class="bz-kb-note" style="font-size:11px;margin-top:14px">落卡后它躺在卡片盒，随时被任何笔记引用——不强迫挂进哪篇，也不强迫复习。</div>`));
-    // openSheet→closeSheet 会清编辑态，故状态在挂载后置入（输入/旧卡选择监听由 openSheet 统一挂）
-    this.editor = { source: n, pick: null, why: whySug, title: n.title };
-  }
+  /** 卡片编辑入口已整体移除（2026-09-16 用户拍板）：卡片的创建与编辑归用户自己在卡片文件夹里做，
+   *  知识盒只做扫描与展示。 */
 
-  private syncSaveBtn(): void {
-    const btn = this.popup?.querySelector('[data-kb-act=card-save]') as HTMLButtonElement | null;
-    if (btn && this.editor) btn.disabled = !(this.editor.pick && this.editor.why.trim());
-  }
-
-  /** 落卡：写卡片盒笔记（category=领域、related=源文献）+ 源文献 related 追加新卡（互链） */
-  private async saveCard(): Promise<void> {
-    if (!this.editor || !this.editor.pick || !this.editor.why.trim()) return;
-    const app = getApp();
-    const s = tryGetSettings() as Partial<BzSettings> | undefined;
-    const dir = cardboxDirOf(s);
-    const src = this.editor.source;
-    const why = this.editor.why.trim();
-    let base = this.editor.title.trim() || src.title;
-    const stamp = dateStamp();
-    try {
-      let idx = 2;
-      while (app.vault.getAbstractFileByPath(`${dir}/${base}.md`)) { base = `${this.editor.title.trim() || src.title} ${idx}`; idx++; }
-      const path = `${dir}/${base}.md`;
-      try { if (!app.vault.getFolderByPath(dir)) await (app.vault as any).createFolder(dir); } catch { /* 已存在 */ }
-      const md = ['---', 'tags: []', `category: ${src.domain || '未分类'}`, 'related:', `  - "[[${src.path}|${src.title}]]"`, `date: "${stamp}"`, '---', '', why, ''].join('\n');
-      await app.vault.create(path, md);
-      // 互链：源文献 frontmatter.related 追加新卡
-      const srcFile = app.vault.getAbstractFileByPath(src.path);
-      if (srcFile) {
-        const text = await app.vault.read(srcFile as any);
-        const linkText = `[[${stripMdExt(path)}|${base}]]`;
-        const updated = appendRelatedLine(text, linkText);
-        if (updated !== text) await app.vault.modify(srcFile as any, updated);
-      }
-      this.allCards.unshift({ file: null as any, path, title: base, domain: src.domain || '未分类', review: false, created: Date.now() });
-      this.sessionNewPaths.add(path);
-      this.editor = null;
-      this.closeSheet();
-      notice('已落卡 卡片盒/' + base + '.md · 它随时被任何笔记引用', 'success');
-      // 落卡 = 索引脏点：新卡改变了全库引用图，必须重算（issue 323：其它情况一律走会话缓存）
-      if (this.part === 'z2') { this.markCardsDirty(); await this.loadMountIndex(); this.renderCards(); }
-    } catch (e: any) {
-      notice('落卡失败：' + (e?.message ?? String(e)), 'error');
-    }
-  }
-
-  /** 部贰卡片扫描（存量零迁移：领域读序 domain → category → 未分类） */
+  /** 部贰卡片扫描：领域只认 `domain`（2026-09-16 统一：`category` 兜底已摘——
+   *  它是历史别名，实测库里 0 张卡在用；写入侧唯一写 category 的落卡也已移除）。 */
   private async loadCards(dir: string): Promise<void> {
     const app = getApp();
     this.loadedCardDir = dir;
@@ -987,7 +904,7 @@ export class UIManager {
         out.push({
           file: f, path: f.path,
           title: fm && fm.title ? String(fm.title) : f.basename,
-          domain: fm && fm.domain ? String(fm.domain) : fm && fm.category ? String(fm.category) : '未分类',
+          domain: fm && fm.domain ? String(fm.domain) : '未分类',
           review: fm && fm.reviewStart != null,
           created,
         });
@@ -1047,12 +964,12 @@ export class UIManager {
     const orphan = idx?.orphans.has(c.path) ?? false;
     return `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc(c.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc(c.title)}</span>${
-        this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ''
-      }${orphan ? '<span class="bz-kb-orphan" title="既无入链也无挂载">孤 儿</span>' : ''}<span class="bz-kb-dom">${esc(
+        orphan ? '<span class="bz-kb-orphan" title="既无入链也无挂载">孤 儿</span>' : ''
+      }<span class="bz-kb-dom">${esc(
       c.domain
     )}</span></div>
       <div class="bz-kb-tail"><span>${c.review ? '复习中 · 到期由闹钟安排' : '未入复习'}</span>${
-        n > 0 ? `<span class="bz-kb-refbadge" title="被 ${n} 处用户双链引用">被引 ${n}</span>` : ''
+        n > 0 ? `<span class="bz-kb-refbadge" title="${esc(refBadgeTitle(n))}">被引 ${n}</span>` : ''
       }<button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(c.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button></div>
     </div>`;
   }
@@ -1080,7 +997,7 @@ export class UIManager {
     const pool = this.cardPool();
     if (pool.length === 0) {
       rowsEl.innerHTML = `<div class="bz-kb-empty">${
-        this.cardOrphanOnly ? '没有孤儿卡——每张卡都有人挂或挂着谁。' : '卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。'
+        this.cardOrphanOnly ? '没有孤儿卡——每张卡都有人挂或挂着谁。' : '卡片目录还没有卡片——在「卡片文件夹」里新建一篇笔记即可。'
       }</div>`;
       this.cardsShown = 0;
       this.updateCardMore(pool);
@@ -1133,13 +1050,36 @@ export class UIManager {
         if (tail && !tail.querySelector('.bz-kb-refbadge')) {
           const b = document.createElement('span');
           b.className = 'bz-kb-refbadge';
-          b.title = `被 ${n} 处用户双链引用`;
+          b.title = refBadgeTitle(n);
           b.textContent = `被引 ${n}`;
           const btn = tail.querySelector('.bz-kb-mt-openbtn');
           if (btn) tail.insertBefore(b, btn);
           else tail.appendChild(b);
         }
       }
+    }
+  }
+
+  /**
+   * 文献行的「被引 N」徽标（2026-09-16 采纳建议 8）：索引落地后**原地补**，不重建整表
+   * （保住滚动位置，与 patchCardBadges 同一手法）。口径与卡片部**同一个数**——
+   * 都取 `mountIndex.counts`（正文双链 + related + mounted，去自链），只是各查各的路径。
+   * 0 不出徽标（列表更干净，与卡片部一致）。
+   */
+  private patchLitBadges(): void {
+    const idx = this.mountIndex;
+    if (!this.contentEl || !idx) return;
+    for (const row of Array.from(this.contentEl.querySelectorAll<HTMLElement>('.bz-kb-lexrow[data-kb-act=lit-peek]'))) {
+      const path = row.getAttribute('data-path') || '';
+      const n = idx.counts[path] ?? 0;
+      if (n <= 0) continue;
+      const tail = row.querySelector<HTMLElement>('.bz-kb-tail');
+      if (!tail || tail.querySelector('.bz-kb-refbadge')) continue;
+      const b = document.createElement('span');
+      b.className = 'bz-kb-refbadge';
+      b.title = refBadgeTitle(n);
+      b.textContent = `被引 ${n}`;
+      tail.insertBefore(b, tail.firstChild);
     }
   }
 
@@ -1208,11 +1148,6 @@ export class UIManager {
     </div>`;
   }
 
-  private async ensureCards(): Promise<void> {
-    const dir = cardboxDirOf(tryGetSettings() as Partial<BzSettings> | undefined);
-    if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
-  }
-
   /** 读笔记 frontmatter related 展示名列表（预览「关联」区；解析见 parseRelatedNames） */
   private async noteRels(n: PreviewEntry): Promise<string[]> {
     try {
@@ -1249,41 +1184,19 @@ export class UIManager {
       if (e.target === ovl || (t && t.hasAttribute('data-kb-close'))) { this.closeSheet(); return; }
       if (!t) return;
       const act = t.getAttribute('data-kb-act');
-      if (act === 'card-new') {
-        const w = t.closest('.bz-kb-sheet')?.querySelector('.bz-kb-hw .bz-kb-w')?.textContent || '';
-        const n = this.allNotes.find((x) => x.title === w);
-        if (n) void this.openCardEditor(n);
-      } else if (act === 'card-save') {
-        void this.saveCard();
-      }
       // 独立宿主（预览直达）时主窗 onShellClick 不在场：挂载树入口在此兜住（主窗场景由 onShellClick 独家处理，防双开）
-      else if (act === 'mount-tree' && host !== this.popup) {
+      if (act === 'mount-tree' && host !== this.popup) {
         const p = t.getAttribute('data-path') || '';
         if (p) void openMountTree(p);
       }
     });
     host.appendChild(ovl);
-    // 词头/为什么 输入 + 旧卡选择（编辑弹层）
-    const titleInput = ovl.querySelector('[data-kb-role=cardtitle]') as HTMLInputElement | null;
-    if (titleInput) titleInput.addEventListener('input', () => { if (this.editor) this.editor.title = titleInput.value; this.syncSaveBtn(); });
-    const whyInput = ovl.querySelector('[data-kb-role=why]') as HTMLInputElement | null;
-    if (whyInput) whyInput.addEventListener('input', () => { if (this.editor) this.editor.why = whyInput.value; this.syncSaveBtn(); });
-    ovl.querySelectorAll('[data-kb-old]').forEach((b) => {
-      b.addEventListener('click', () => {
-        if (!this.editor) return;
-        this.editor.pick = (b as HTMLElement).getAttribute('data-kb-old');
-        ovl.querySelectorAll('[data-kb-old]').forEach((x) => x.classList.toggle('is-on', x === b));
-        this.syncSaveBtn();
-      });
-    });
-    this.syncSaveBtn();
     return ovl;
   }
   private closeSheet(): void {
     for (const host of [this.popup, this.previewHostEl]) {
       host?.querySelectorAll('.bz-kb-ovl').forEach((x) => x.remove());
     }
-    this.editor = null;
     // 独立宿主用完即撤：不留空壳节点常驻 document
     if (this.previewHostEl && !this.previewHostEl.querySelector('.bz-kb-ovl')) {
       this.previewHostEl.remove();
@@ -2406,9 +2319,12 @@ export class UIManager {
     // 标签行 / 生成；预览态：属性卡（含「关联」行）+ 内容卡 + 重新生成/确认写入。
     // 三态只差第一行控件（单行 input / 多行 textarea / 图片拖入区）与属性首行（名词文本 vs 只读标题），
     // 由 popup 上的 data-lit-entry 切换 `.bz-lit-term-only` / `.bz-lit-passage-only` / `.bz-lit-image-only`。
-    // 属性行的编辑出口（ADR-0152 决策 9）：规则统一为「用户输入可编辑、AI 产出只读」——
-    // 名词/段落文本/来源照旧可改，标题（原 input）与领域一样只读展示。
+    // 属性行的编辑出口（ADR-0152 决策 16-19，2026-09-16 修订）：**标题与领域改为可编辑**
+    // （决策 9 的「AI 产出一律只读」被推翻）——正文仍只读（那是 AI 的产出，改它等于重写），
+    // 标题/领域是「编目」动作，必须留给用户；名词行同样可就地改（提交时写回输入框）。
+    // 编辑形态 = **点一下才变**（静态与只读逐像素一致，hover 才给极轻提示），回车/失焦提交、ESC 放弃。
     // 属性行次序（2026-09-16 修订）：名词/标题 → 领域 → 来源 → 关联 → 日期（日期沉到最末行）；
+    // 关联行**只在正式开跑后出现**（idle 整行隐藏，避免草稿到达前挂一行假的「—」）。
     // 生成入口按状态只出一条（ADR-0152 决策 7/12）：预览收起时是输入行下方的「生成」，
     // 预览展开后该入口移交底部「重新生成」（两处不并列）。
     body.innerHTML = `
@@ -2443,11 +2359,11 @@ export class UIManager {
       <div id="lit-term-preview" style="display:none;">
         <div class="bz-lit-term-card">
           <div class="bz-lit-term-meta">
-            <div class="bz-lit-term-meta-row bz-lit-term-only"><span class="bz-lit-term-meta-k">名词</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
-            <div class="bz-lit-term-meta-row bz-lit-titled-only"><span class="bz-lit-term-meta-k">标题</span><span id="lit-entry-meta-title" class="bz-lit-term-meta-v"></span></div>
-            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row bz-lit-term-only"><span class="bz-lit-term-meta-k">名词</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v is-editable" data-term-edit="term"></span></div>
+            <div class="bz-lit-term-meta-row bz-lit-titled-only"><span class="bz-lit-term-meta-k">标题</span><span id="lit-entry-meta-title" class="bz-lit-term-meta-v is-editable" data-term-edit="title"></span></div>
+            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v is-editable" data-term-edit="domain"></span></div>
             <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
-            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">关联</span><span id="lit-term-meta-rel" class="bz-lit-term-meta-v bz-lit-rel-idle">待写入</span></div>
+            <div class="bz-lit-term-meta-row" id="lit-term-meta-relrow" style="display:none;"><span class="bz-lit-term-meta-k">关联</span><span id="lit-term-meta-rel" class="bz-lit-term-meta-v bz-lit-rel-idle"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
           </div>
         </div>
@@ -2556,9 +2472,24 @@ export class UIManager {
         onPick: (p: string) => this.termSrcSet({ kind: 'note', path: p }, srcInput),
       });
     }
-    // 委托：标题栏 ✕ / chip ✕ 清除 / meta 行点击打开（动态渲染元素，委托一次）
+    // 委托：属性行就地编辑 / 关联候选点掉 / 来源 chip ✕ 清除 / meta 行点击打开（动态渲染元素，委托一次）
     popup.addEventListener('click', (e) => {
-      const t = (e.target as HTMLElement).closest('[data-term-src-clear],[data-term-src-open]') as HTMLElement | null;
+      const target = e.target as HTMLElement;
+      // 属性行进入编辑态（建议 5：点一下才变；已在编辑态时点输入框不重入）
+      const editEl = target.closest('[data-term-edit]') as HTMLElement | null;
+      if (editEl && !editEl.querySelector('input')) {
+        e.stopPropagation();
+        this.beginMetaEdit(editEl, editEl.getAttribute('data-term-edit') as 'term' | 'title' | 'domain');
+        return;
+      }
+      // 点掉一条关联候选（建议 5：本轮不写，不可撤销）
+      const dropEl = target.closest('[data-rel-drop]') as HTMLElement | null;
+      if (dropEl) {
+        e.stopPropagation();
+        this.dropEntryRelPick(Number(dropEl.getAttribute('data-rel-drop')));
+        return;
+      }
+      const t = target.closest('[data-term-src-clear],[data-term-src-open]') as HTMLElement | null;
       if (!t) return;
       e.stopPropagation();
       if (t.hasAttribute('data-term-src-clear')) {
@@ -2583,8 +2514,9 @@ export class UIManager {
 
   /**
    * 打开「段落」录入（一段文字，AI 自动出标题）；来源行与名词同构（ADR-0116）。
-   * issue 326：支持选区预填（命令入口）——与名词不同，预填**不自动生成**（大段文字让用户确认后再生成），
-   * showEntry 里自动生成只挂 term 态。opts（issue 329）：text/images/onCreated 预填。
+   * issue 326：支持选区预填（命令入口）。2026-09-16 起预填**同样自动生成**（用户拍板「统一都自动跑」）——
+   * 原「大段文字让用户确认后再生成」的差异取消，showEntry 里的自动生成改挂 term + passage 两态。
+   * opts（issue 329）：text/images/onCreated 预填。
    */
   showPassageEntry(text?: string, src?: TermSource | null, opts?: EntryPrefill): void {
     this.showEntry('passage', text, src, opts);
@@ -2618,6 +2550,7 @@ export class UIManager {
     this.termDraftBroken = false;
     this.termStreamBody = '';
     this.termPreview = null;
+    this.userEdited.clear(); // 全新态：上一轮的用户覆盖层一并归零
     this.entryOnCreated = opts?.onCreated ?? null;
     this.resetEntryRel();
     this.clearEntryImage();
@@ -2640,7 +2573,9 @@ export class UIManager {
     const zone = q<HTMLElement>(this.termPopup, '#lit-image-drop');
     const focusEl: HTMLElement | null = mode === 'passage' ? area : mode === 'image' ? zone : input;
     if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
-    if (mode === 'term' && value) void this.onTermGenerate();
+    // 三态一致：有预填即自动跑（2026-09-16 用户拍板「统一都自动跑」）——
+    // 段落此前要再点一次「生成」，与名词不同款；同一排入口两套节奏对用户是纯记忆负担。
+    if ((mode === 'term' || mode === 'passage') && value) void this.onTermGenerate();
     // 图版图片预填（issue 329）：data URL 数组等价粘贴路径进内存（异步收图，收下即作废旧草稿——全新态无草稿可作废）
     if (mode === 'image' && opts?.images?.length) void this.acceptImageDataUrls(opts.images);
     this.resetTermDupHint(); // 全新态：输入已清空，重名提示一并归位（ADR-0143/issue 328）
@@ -2747,6 +2682,7 @@ export class UIManager {
     this.termDraftBroken = false;
     this.termStreamBody = '';
     this.termPreview = null;
+    this.userEdited.clear(); // 草稿作废 = 用户覆盖层一并作废（图组/输入已变）
     this.setTermPreviewVisible(false);
     this.refreshTermActions();
     this.resetEntryRel();
@@ -2952,6 +2888,109 @@ export class UIManager {
     el.classList.remove('bz-lit-meta-pending');
   }
 
+  /* ---------- 属性行就地编辑（建议 5 / ADR-0152 决策 16-19） ---------- */
+
+  /**
+   * 进入编辑态：展示态 span **就地**换成同字号输入框（不跳布局），回车 / 失焦提交、ESC 放弃。
+   * 领域行额外挂联想候选（见 domainCandidates）。已在编辑态（里面有 input）时不再套一层。
+   */
+  private beginMetaEdit(el: HTMLElement, field: 'term' | 'title' | 'domain'): void {
+    if (!this.termPopup || el.querySelector('input')) return;
+    const cur = (el.textContent ?? '').trim();
+    el.classList.remove('is-editable');
+    el.textContent = '';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'bz-lit-term-meta-edit';
+    input.value = cur === '—' ? '' : cur; // 占位符不是值
+    input.placeholder = field === 'term' ? '术语' : field === 'title' ? '标题' : '领域';
+    el.appendChild(input);
+    let done = false;
+    const finish = (commit: boolean): void => {
+      if (done) return;
+      done = true;
+      this.termDomainSuggest?.detach();
+      this.termDomainSuggest?.close();
+      this.termDomainSuggest = null;
+      const raw = input.value.trim();
+      el.textContent = '';
+      el.classList.add('is-editable');
+      if (commit) this.commitMetaEdit(field, raw);
+      else this.paintMetaField(field); // ESC = 放弃：按草稿重画回原值
+    };
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); finish(true); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(false); }
+      // stopPropagation 必需：这两个键冒泡到 document 会撞上「ESC 关面板」的分层处理器
+      // （用户在属性行按 ESC 想放弃编辑，却弹出关闭确认框——真实键盘路径的 bug）
+    });
+    input.addEventListener('blur', () => finish(true));
+    if (field === 'domain') {
+      this.termDomainSuggest = uiSuggest({
+        anchor: input,
+        max: 12,
+        iconOf: () => '🏷',
+        labelOf: (v: string) => v,
+        source: () => this.domainCandidates(),
+        onPick: (v: string) => { input.value = v; },
+      });
+    }
+    setTimeout(() => { input.focus(); input.select(); }, 0);
+  }
+
+  /**
+   * 提交编辑：写进草稿（落盘取的就是它）+ 记「用户改过」→ 本轮流式不再覆盖该字段。
+   * 名词行 = 术语本身，写回顶部输入框（落盘读的是输入框）并重查重名（ADR-0143 提示不能滞后）。
+   */
+  private commitMetaEdit(field: 'term' | 'title' | 'domain', raw: string): void {
+    this.userEdited.add(field);
+    if (field === 'term') {
+      const input = this.termPopup ? q<HTMLInputElement>(this.termPopup, '#lit-term-input') : null;
+      if (input && raw) input.value = raw;
+      this.refreshTermDupHint();
+    } else if (this.termPreview) {
+      if (field === 'title') this.termPreview.title = raw;
+      else this.termPreview.domain = raw;
+    }
+    this.paintMetaField(field);
+  }
+
+  /** 单个属性行按当前值重画成展示态（空值给占位「—」；名词取输入框、其余取草稿） */
+  private paintMetaField(field: 'term' | 'title' | 'domain'): void {
+    if (!this.termPopup) return;
+    const sel = field === 'term' ? '#lit-term-meta-term' : field === 'title' ? '#lit-entry-meta-title' : '#lit-term-meta-domain';
+    const text = field === 'term'
+      ? (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim()
+      : String((field === 'title' ? this.termPreview?.title : this.termPreview?.domain) ?? '').trim();
+    this.setTermMetaValue(sel, text || '—');
+  }
+
+  /**
+   * 领域候选（用户拍板口径）：**已用过的领域 ∪ 设置里的词表**，去重后按使用频次降序，
+   * 只在词表里、还没用过的排在后面（频次视为 0）。
+   * 已用过的从文献目录现扫 frontmatter（走 metadataCache，零 IO）——本机词表是空的，
+   * 若只取词表就一条候选都没有，故「已用过」是主来源。
+   */
+  private domainCandidates(): string[] {
+    const s = tryGetSettings() as Partial<BzSettings> | undefined;
+    const app = getApp();
+    const prefix = litDirOf(s) + '/';
+    const used = new Map<string, number>();
+    for (const f of (app.vault.getFiles() || []) as any[]) {
+      if (!f || f.extension !== 'md' || !String(f.path).startsWith(prefix)) continue;
+      const fm = (app.metadataCache.getFileCache(f) as any)?.frontmatter;
+      const d = fm && fm.domain ? String(fm.domain).trim() : '';
+      if (d) used.set(d, (used.get(d) ?? 0) + 1);
+    }
+    const out = [...used.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([d]) => d);
+    for (const w of parseDomainList(s?.knowledgeDomainList)) {
+      if (!used.has(w)) out.push(w);
+    }
+    return out;
+  }
+
   /**
    * 关联行渲染（issue 309）：按 entryRelState 出文案与墨色档；两类录入共用同一行。
    * loading 态给一条滑动的墨色小条 + 「分析中…」——建链要跑近邻检索与 AI 裁判，
@@ -2960,14 +2999,29 @@ export class UIManager {
   private entryRelRefresh(): void {
     const el = this.termPopup ? q<HTMLElement>(this.termPopup, '#lit-term-meta-rel') : null;
     if (!el) return;
-    el.className = 'bz-lit-term-meta-v';
     const st = this.entryRelState;
+    // idle = 关联还没开跑（草稿尚未到达）→ **整行不出**（2026-09-16 用户要求）：
+    // 此前这里挂着「待写入 → —」，可那一刻关联根本没开始跑，展示一行静止的假状态只会误导。
+    // 正式开跑（loading）起才让这一行出现——「看得见正在跑」的前提是它真的在跑。
+    const row = this.termPopup ? q<HTMLElement>(this.termPopup, '#lit-term-meta-relrow') : null;
+    if (row) row.style.display = st === 'idle' ? 'none' : '';
+    el.className = 'bz-lit-term-meta-v';
     if (st === 'loading') {
       el.classList.add('bz-lit-rel-idle');
       el.innerHTML = '<span class="bz-lit-rel-bar" aria-hidden="true"></span>分析中…';
       return;
     }
-    if (st === 'done') { el.classList.add('bz-lit-rel-ok'); el.textContent = this.entryRelText || '已建立关联'; return; }
+    if (st === 'done') {
+      el.classList.add('bz-lit-rel-ok');
+      const items = this.entryPreviewItems;
+      if (!items.length) { el.textContent = this.entryRelText || '已建立关联'; return; }
+      // 每条候选一个 chip + ✕（建议 5）：点掉即从本轮写入里移除、**不给恢复**；
+      // 重新生成会重算，被点掉的可能再出现（用户拍板）。
+      el.innerHTML = items.map((it, i) =>
+        `<span class="bz-lit-rel-chip"><span>${esc(it.title)}</span><button type="button" data-rel-drop="${i}" title="这条不写入">✕</button></span>`
+      ).join('');
+      return;
+    }
     if (st === 'empty') { el.classList.add('bz-lit-rel-idle'); el.textContent = '暂无关联'; return; }
     if (st === 'queued') { el.classList.add('bz-lit-rel-idle'); el.textContent = '检索服务不可用，延后至桌面端处理'; return; }
     if (st === 'failed') { el.classList.add('bz-lit-rel-err'); el.textContent = '关联失败'; return; }
@@ -2976,12 +3030,26 @@ export class UIManager {
     el.textContent = '—';
   }
 
+  /**
+   * 点掉一条关联候选（建议 5）：本轮不写它——`entryPreviewPicks`（写入用）与
+   * `entryPreviewItems`（渲染用）按下标同步删，两数组恒等长。
+   * **不可撤销**（用户拍板）：面板不给恢复入口；点「重新生成」会重算，被点掉的可能再出现。
+   */
+  private dropEntryRelPick(i: number): void {
+    if (!Number.isInteger(i) || i < 0 || i >= this.entryPreviewItems.length) return;
+    this.entryPreviewItems.splice(i, 1);
+    this.entryPreviewPicks.splice(i, 1);
+    this.entryRelText = this.entryPreviewItems.map((x) => x.title).join(' · ');
+    this.entryRelRefresh();
+  }
+
   /** 关联行与预演状态整体复位（打开/关闭面板、出新草稿、重生成/总结点下时共用）：abort 在途请求、结果清空、回到起点 */
   private resetEntryRel(): void {
     this.entryRelSeq++; // 在途预演的晚到响应据此丢弃
     this.entryRelAbort?.abort(); // issue 327：真中断在途裁判请求（不再白烧 token）
     this.entryRelAbort = null;
     this.entryPreviewPicks = [];
+    this.entryPreviewItems = [];
     this.entryPreviewDone = false;
     this.entryRelText = '';
     this.setEntryRel('idle');
@@ -3004,6 +3072,7 @@ export class UIManager {
     const bridge = getLinkBridge();
     const seq = ++this.entryRelSeq;
     this.entryPreviewPicks = [];
+    this.entryPreviewItems = [];
     if (!bridge) { this.setEntryRel('off'); return; }
     this.entryRelAbort?.abort(); // 上一轮还在跑 → 先断（新内容一到即重新分析，旧的不再要）
     const ac = new AbortController();
@@ -3016,6 +3085,7 @@ export class UIManager {
       if (out.status === 'done') {
         this.entryPreviewDone = true;
         this.entryPreviewPicks = out.picks.map((p) => p.path);
+        this.entryPreviewItems = out.picks.map((p) => ({ path: p.path, title: p.title }));
         this.entryRelText = out.picks.map((p) => p.title).join(' · ');
         this.setEntryRel(out.picks.length ? 'done' : 'empty');
       } else if (out.status === 'queued') this.setEntryRel('queued');
@@ -3232,6 +3302,8 @@ export class UIManager {
     if (!this.termPopup) return;
     this.termStreamBody = '';
     this.termDraftBroken = false;
+    // 新一轮 = 用户覆盖层清空（建议 5 的「覆盖」语义）：上一轮改过的标题 / 领域不再拦住新的 AI 值。
+    this.userEdited.clear();
     if (this.entryTitled) {
       this.setTermMetaPending('#lit-entry-meta-title');
     } else {
@@ -3254,8 +3326,9 @@ export class UIManager {
    */
   private applyDraftFields(f: DraftFields): void {
     if (!this.termPopup) return;
-    if (f.domain !== null) this.setTermMetaValue('#lit-term-meta-domain', f.domain || '—');
-    if (this.entryTitled && f.title !== null) this.setTermMetaValue('#lit-entry-meta-title', f.title || '—');
+    // 用户已改过的字段不再被流式覆盖（建议 5）：「覆盖」只在点「重新生成」时发生（新一轮清空 userEdited）
+    if (f.domain !== null && !this.userEdited.has('domain')) this.setTermMetaValue('#lit-term-meta-domain', f.domain || '—');
+    if (this.entryTitled && f.title !== null && !this.userEdited.has('title')) this.setTermMetaValue('#lit-entry-meta-title', f.title || '—');
     if (f.summary !== null) {
       this.termStreamBody = f.summary;
       this.setTermContent(f.summary, false);
@@ -3267,12 +3340,19 @@ export class UIManager {
    * 这里用终值再填一遍——流式路径下大多早已到位，非流式降级路径下这才是唯一一次填充。
    */
   private finishTermPreview(draft: { summary: string; domain: string; title?: string }): void {
-    this.termPreview = { domain: draft.domain, body: draft.summary, title: draft.title };
+    // 用户改过的标题 / 领域以**用户值**收尾（建议 5）：AI 终值只填没被改过的那部分
+    const keepTitle = this.userEdited.has('title');
+    const keepDomain = this.userEdited.has('domain');
+    this.termPreview = {
+      domain: keepDomain ? String(this.termPreview?.domain ?? '') : draft.domain,
+      body: draft.summary,
+      title: keepTitle ? this.termPreview?.title : draft.title,
+    };
     this.termStreamBody = draft.summary;
     this.termDraftBroken = false;
     if (!this.termPopup) return;
-    if (this.entryTitled) this.setTermMetaValue('#lit-entry-meta-title', draft.title || '—');
-    this.setTermMetaValue('#lit-term-meta-domain', draft.domain || '—');
+    if (this.entryTitled && !keepTitle) this.setTermMetaValue('#lit-entry-meta-title', draft.title || '—');
+    if (!keepDomain) this.setTermMetaValue('#lit-term-meta-domain', draft.domain || '—');
     this.setTermContent(draft.summary, false);
     // 新草稿 = 关联行回到起点，上一次的写入出口与在途预演一并作废
     this.resetEntryRel();

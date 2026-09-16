@@ -89,13 +89,15 @@ const BASE_SETTINGS: Record<string, any> = {
 };
 
 /** 带 frontmatter 的文献笔记 markdown */
-function noteMd(opts: { title: string; type?: string; domain?: string; date?: string; summary?: string; url?: string; body?: string; related?: string[] }) {
+function noteMd(opts: { title: string; type?: string; domain?: string; date?: string; summary?: string; source?: string; sourceTitle?: string; body?: string; related?: string[] }) {
   const lines = ['---', `title: "${opts.title}"`];
   if (opts.type) lines.push(`type: ${opts.type}`);
   if (opts.domain) lines.push(`domain: "${opts.domain}"`);
   lines.push(`summary: "${opts.summary ?? '一段简介'}"`);
   lines.push(`date: "${opts.date ?? '2026-08-01 10:00:00'}"`);
-  if (opts.url) lines.push(`url: "${opts.url}"`);
+  // 四类文献统一「来源」两键（2026-09-16）：视频的 url / videoTitle 已并入 source / sourceTitle
+  if (opts.source) lines.push(`source: "${opts.source}"`);
+  if (opts.sourceTitle) lines.push(`sourceTitle: "${opts.sourceTitle}"`);
   if (opts.related?.length) {
     lines.push('related:');
     for (const r of opts.related) lines.push(`  - "[[${r}]]"`);
@@ -202,7 +204,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(popup.querySelector('.bz-kb-sc')!.textContent).toContain('还没有文献笔记'));
   });
 
-  it('部壹文献列表：词条/影像 + 领域 + LIT 编号，最近创建降序；行点击开预览（全文段落 + 关联；无操作按钮）', async () => {
+  it('部壹文献列表：词条/影像 + 领域 + 日期，最近创建降序；行点击开预览（全文段落 + 关联；无操作按钮；无行内编号）', async () => {
     vault.files.set('文献盒/视频C.md', noteMd({
       title: '视频C', type: 'video', domain: '物理', date: '2026-09-01 10:00:00',
       body: '段落一。\n\n段落二。', related: ['卡片盒/旧卡A'],
@@ -218,15 +220,15 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(sheet.textContent).toContain('段落一');
     expect(sheet.textContent).toContain('段落二');
     expect(sheet.textContent).toContain('旧卡A');
-    // 预览只读：提炼成卡/先放回去按钮已移除；壳头 ✕ 已退役（issue 271：点遮罩/ESC 关闭）
+    // 预览只读（2026-09-16：提炼成卡入口整体移除，知识盒不再产卡）；壳头 ✕ 已退役（issue 271：点遮罩/ESC 关闭）
     expect(sheet.querySelector('[data-kb-act=card-new]')).toBeNull();
     expect(sheet.querySelector('.bz-kb-sheet-close')).toBeNull();
   });
 
-  it('影像文献预览：正文经 MarkdownRenderer 渲染（含 ![[mp4]] 内嵌）；原文链接可点外开', async () => {
+  it('影像文献预览：正文经 MarkdownRenderer 渲染（含 ![[mp4]] 内嵌）；来源链接可点外开', async () => {
     vault.files.set('文献盒/带片C.md', noteMd({
       title: '带片C', type: 'video', domain: '物理', date: '2026-09-02 10:00:00',
-      url: 'https://www.bilibili.com/video/BV1demo/',
+      source: 'https://www.bilibili.com/video/BV1demo/',
       body: '段落零。\n\n![[CONFIG/APPENDIX/带片C.mp4]]',
     }));
     ui.showMain();
@@ -248,7 +250,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(bodyEl.textContent!.split('段落零').length - 1).toBe(1);
     // ![[…mp4]] 只出现一次：整段正文只经渲染器产出一份
     expect(bodyEl.textContent!.split('![[CONFIG/APPENDIX/带片C.mp4]]').length - 1).toBe(1);
-    // 视频 url → 「原文」可点链接（openUrl 外开）
+    // 视频 source（统一来源键）→ 可点链接（openUrl 外开）
     const link = document.querySelector('[data-lit-src-url]') as HTMLElement;
     expect(link?.getAttribute('data-lit-src-url')).toBe('https://www.bilibili.com/video/BV1demo/');
     link.click();
@@ -300,47 +302,22 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(document.getElementById('bz-kb-preview-body')!.textContent).toContain('（无正文）'));
   });
 
-  it('提炼成卡（预览按钮已移除，编辑器编程触达保行为覆盖）：候选同域优先带推荐；落卡写卡片盒 + 源文献 related 互链 + 部贰新落', async () => {
-    vault.files.set('文献盒/无助.md', noteMd({
-      title: '无助竟是大脑本能', type: 'video', domain: '心理', date: '2026-08-29 10:00:00',
-      body: '塞里格曼修正理论。', related: ['卡片盒/习得性无助'],
-    }));
-    vault.files.set('卡片盒/习得性无助.md', cardMd({ title: '习得性无助', category: '心理', review: true }));
-    vault.files.set('卡片盒/工作记忆.md', cardMd({ title: '工作记忆', category: '认知' }));
-    ui.showMain();
-    await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-lexrow').length).toBe(1));
-    // 预览入口按钮已移除（快改批）：直接打开编辑器，保 saveCard 行为覆盖
-    await (ui as any).openCardEditor((ui as any).allNotes[0]);
-    await vi.waitFor(() => expect(document.querySelector('[data-kb-role=why]')).toBeTruthy());
-    const olds = Array.from(document.querySelectorAll<HTMLElement>('[data-kb-old]')).map((b) => b.textContent);
-    expect(olds[0]).toContain('习得性无助');
-    expect(olds[0]).toContain('推荐');
-        (document.querySelector('[data-kb-old]') as HTMLElement).click();
-    await vi.waitFor(() => expect((document.querySelector('[data-kb-act=card-save]') as HTMLButtonElement).disabled).toBe(false));
-    (document.querySelector('[data-kb-act=card-save]') as HTMLElement).click();
-    await vi.waitFor(() => expect(vault.files.has('卡片盒/无助竟是大脑本能.md')).toBe(true));
-    await vi.waitFor(() => expect((vault.files.get('文献盒/无助.md') as string)).toContain('[[卡片盒/无助竟是大脑本能|无助竟是大脑本能]]'));
-    const cardText = vault.files.get('卡片盒/无助竟是大脑本能.md') as string;
-    expect(cardText).toContain('category: 心理');
-    expect(cardText).toContain('[[文献盒/无助.md|无助竟是大脑本能]]');
-    expect(cardText).toContain('整理为显式连接');
-    const srcText = vault.files.get('文献盒/无助.md') as string;
-    expect(srcText).toContain('[[卡片盒/无助竟是大脑本能|无助竟是大脑本能]]');
-    (document.querySelector('[data-part=z2]') as HTMLElement).click();
-    await vi.waitFor(() => expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('无助竟是大脑本能'));
-    expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('新 落');
-  });
-
-  it('部贰：卡片领域读序 domain → category → 未分类；复习中/未入复习', async () => {
-    vault.files.set('卡片盒/A.md', cardMd({ title: 'A', category: '生物', review: true }));
+  it('部贰：卡片领域只认 domain（category 历史别名不再兜底）；复习中/未入复习', async () => {
+    vault.files.set('卡片盒/A.md', cardMd({ title: 'A', domain: '生物', review: true }));
     vault.files.set('卡片盒/B.md', cardMd({ title: 'B', domain: '历史' }));
-    vault.files.set('卡片盒/C.md', cardMd({ title: 'C' }));
+    vault.files.set('卡片盒/C.md', cardMd({ title: 'C', category: '旧别名' }));
     ui.showMain();
     (document.querySelector('[data-part=z2]') as HTMLElement).click();
     await vi.waitFor(() => expect(document.querySelector('[data-kb-act=card-peek]')).toBeTruthy());
     expect(document.querySelectorAll('[data-kb-act=card-peek]').length).toBe(3);
     expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('复习中 · 到期由闹钟安排');
     expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('未入复习');
+    // domain 正常出字；只带 category 的卡落「未分类」（旧别名不再冒充领域）
+    const sc = document.querySelector('.bz-kb-sc')!.textContent!;
+    expect(sc).toContain('生物');
+    expect(sc).toContain('历史');
+    expect(sc).toContain('未分类');
+    expect(sc).not.toContain('旧别名');
   });
 
   it('部叁：主题笔记展示（列表 + 三部统一预览弹层），文案标明关联机制探索中', async () => {
@@ -1546,7 +1523,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(noteGen.generateTermNote).not.toHaveBeenCalled();
     expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('分析中…');
     release({ status: 'done', picks: [{ path: '卡片盒/睡眠卫生.md', title: '睡眠卫生' }] });
-    await vi.waitFor(() => expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('睡眠卫生'));
+    await vi.waitFor(() => expect(document.getElementById('lit-term-meta-rel')!.textContent).toContain('睡眠卫生'));
     // 确认写入：落盘 + 只写预演结果（apply 而非 now —— 不重跑检索与裁判）
     vault.files.set('文献盒/松果体.md', '---\ntitle: 松果体\nrelated:\n  - "[[卡片盒/睡眠卫生|睡眠卫生]]"\n---\n\n简介');
     (document.getElementById('lit-term-save') as HTMLElement).click();
@@ -1718,7 +1695,8 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
 
   it('knowledgeSettingsSchema：五组（目录与分类含卡片/主题目录新键、自动关联、视频处理、工具、维护）+ 清空历史回调', async () => {
     const schema = knowledgeSettingsSchema();
-    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录与分类', '自动关联', '视频处理', '工具', '维护']);
+    // 「工具」组 2026-09-16 移除（ffmpeg / Python / Whisper 这类装机参数不进用户面板）
+    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录与分类', '自动关联', '视频处理', '维护']);
     const dirRows = schema.groups[1].rows.map((r) => (r as any).binding?.key);
     expect(dirRows).toContain('knowledgeCardboxDirectory');
     expect(dirRows).toContain('knowledgeTopicDirectory');
@@ -2043,10 +2021,10 @@ describe('录入面板关闭二次确认 + 生成后开笔记（issue 326）', (
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     (document.getElementById('lit-term-input') as HTMLInputElement).value = '褪黑素';
     await (ui as any).onTermGenerate();
-    await vi.waitFor(() => expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('睡眠卫生'));
+    await vi.waitFor(() => expect(document.getElementById('lit-term-meta-rel')!.textContent).toContain('睡眠卫生'));
     (document.getElementById('lit-term-save') as HTMLElement).click();
     // 同步断言：行文本立刻原样——不被打回「分析中…」（326 之前的误导性回退已退役）
-    expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('睡眠卫生');
+    expect(document.getElementById('lit-term-meta-rel')!.textContent).toContain('睡眠卫生');
     await vi.waitFor(() => expect(applies).toEqual([['文献盒/松果体.md', ['卡片盒/睡眠卫生.md']]]));
   });
 
@@ -2080,6 +2058,76 @@ describe('录入面板关闭二次确认 + 生成后开笔记（issue 326）', (
     releasePreview({ status: 'done', picks: [{ path: '卡片盒/睡眠卫生.md', title: '睡眠卫生' }] });
     await vi.waitFor(() => expect(applies).toEqual([['文献盒/松果体.md', ['卡片盒/睡眠卫生.md']]]));
     await vi.waitFor(() => expect(getNoticeMessages().join('\n')).toContain('知识盒关联：已写入 1 条关联'));
+  });
+
+  it('建议 5：属性行点一下才变可编辑（回车提交 / ESC 放弃）；关联行 idle 不显示、chip 可点掉且不可恢复', async () => {
+    const applies: Array<[string, string[]]> = [];
+    setLinkBridge({
+      backfill: async () => ({ status: 'done' as const, processed: 0, created: 0 }),
+      preview: async () => ({
+        status: 'done' as const,
+        picks: [
+          { path: '卡片盒/睡眠卫生.md', title: '睡眠卫生' },
+          { path: '卡片盒/昼夜节律.md', title: '昼夜节律' },
+        ],
+      }),
+      apply: async (p: string, picks: string[]) => { applies.push([p, picks]); return { status: 'done' as const, created: picks.length }; },
+      now: async () => ({ status: 'done' as const, created: 0 }),
+    });
+    // 草稿**挂起**（不 resolve）：这样才观察得到「关联还没开跑」那一瞬的界面
+    let releaseDraft!: (v: any) => void;
+    noteGen.generatePassageDraft.mockImplementationOnce(() => new Promise((r) => { releaseDraft = r; }));
+    ui.showPassageEntry('一段关于睡眠的文字');
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+
+    // 关联行 idle：草稿未到、关联尚未开跑 → 整行不显示（不再挂一行假的「—」）
+    expect((document.getElementById('lit-term-meta-relrow') as HTMLElement).style.display).toBe('none');
+
+    // 放行草稿（段落预填即自动生成，三态统一）→ 标题落值、关联开跑后行出现且候选变 chip
+    releaseDraft({ title: 'AI 给的标题', summary: '整理后的正文。', domain: '生理' });
+    await vi.waitFor(() => expect(document.getElementById('lit-entry-meta-title')!.textContent).toBe('AI 给的标题'));
+    expect((ui as any).termPreview?.title).toBe('AI 给的标题');
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-lit-rel-chip').length).toBe(2));
+    expect((document.getElementById('lit-term-meta-relrow') as HTMLElement).style.display).not.toBe('none');
+
+    // 点掉第一条：只剩一条，且面板不给恢复入口
+    (document.querySelector('[data-rel-drop="0"]') as HTMLElement).click();
+    expect(document.querySelectorAll('.bz-lit-rel-chip').length).toBe(1);
+    expect(document.getElementById('lit-term-meta-rel')!.textContent).toContain('昼夜节律');
+    expect(document.getElementById('lit-term-meta-rel')!.textContent).not.toContain('睡眠卫生');
+
+    // 标题：点一下才变输入框；ESC = 放弃（恢复 AI 值）
+    (document.getElementById('lit-entry-meta-title') as HTMLElement).click();
+    const escInput = document.querySelector('.bz-lit-term-meta-edit') as HTMLInputElement;
+    expect(escInput).toBeTruthy();
+    expect(escInput.value).toBe('AI 给的标题');
+    escInput.value = '放弃掉的值';
+    escInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await vi.waitFor(() => expect(document.getElementById('lit-entry-meta-title')!.textContent).toBe('AI 给的标题'));
+
+    // 再改一次并回车提交
+    (document.getElementById('lit-entry-meta-title') as HTMLElement).click();
+    const okInput = document.querySelector('.bz-lit-term-meta-edit') as HTMLInputElement;
+    expect(okInput).toBeTruthy();
+    expect(okInput.value).toBe('AI 给的标题'); // 二次进入拿到的是新输入框（ESC 那次已撤）
+    okInput.value = '我改的标题';
+    okInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect((ui as any).termPreview?.title).toBe('我改的标题');
+    await vi.waitFor(() => expect(document.getElementById('lit-entry-meta-title')!.textContent).toBe('我改的标题'));
+
+    // 领域同样可就地编辑
+    (document.getElementById('lit-term-meta-domain') as HTMLElement).click();
+    const dInput = document.querySelector('.bz-lit-term-meta-edit') as HTMLInputElement;
+    dInput.value = '睡眠医学';
+    dInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await vi.waitFor(() => expect(document.getElementById('lit-term-meta-domain')!.textContent).toBe('睡眠医学'));
+
+    // 落盘 = 所见即所得：用户改过的标题与领域进笔记；关联只带没被点掉的那条
+    noteGen.generatePassageNote.mockResolvedValueOnce('文献盒/我改的标题.md');
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(noteGen.generatePassageNote).toHaveBeenCalled());
+    expect(noteGen.generatePassageNote.mock.calls.at(-1)![0]).toMatchObject({ title: '我改的标题', domain: '睡眠医学' });
+    await vi.waitFor(() => expect(applies).toEqual([['文献盒/我改的标题.md', ['卡片盒/昼夜节律.md']]]));
   });
 });
 });

@@ -1,6 +1,6 @@
 /**
  * 文献笔记生成（literature 域，ADR-0071：AI 回迁 bz 插件侧）
- * - 视频文献（type: video，frontmatter 九键：title/tags/summary/url/date/author/videoTitle/type/domain，
+ * - 视频文献（type: video，frontmatter 九键：title/tags/summary/source/date/author/sourceTitle/type/domain，
  *   正文 = 润色转录 + 视频双链——ticket 151 补回：videoPath 非空时正文尾部嵌 `![[路径]]`，
  *   ADR-0066「保留视频原件」关（keepVideo=false）时 videoPath 为 null，无视频段）
  * - 术语文献（type: term，frontmatter 五键：title/type/domain/term/date + 可选 source/sourceTitle（术语来源，ADR-0116），正文=一段百科式简介）
@@ -215,10 +215,10 @@ ${c}`,
     'tags:',
     tags.map((t) => `  - ${quoteYaml(t)}`).join('\n'),
     `summary: ${quoteYaml(summary)}`,
-    `url: ${quoteYaml(opts.url)}`,
+    `source: ${quoteYaml(opts.url)}`,
     `date: ${quoteYaml(nowStamp())}`,
     `author: ${quoteYaml(opts.uploader)}`,
-    `videoTitle: ${quoteYaml(opts.videoTitle)}`,
+    `sourceTitle: ${quoteYaml(opts.videoTitle)}`,
     'type: video',
     `domain: ${quoteYaml(domain)}`,
     '---',
@@ -570,12 +570,46 @@ export function injectFrontmatter(content: string, entries: string[]): string {
 }
 
 /**
- * 旧笔记自动补全：type 用启发式（有 url/author/videoTitle → video；有 term → term），
+ * 存量键迁移（2026-09-16 统一来源，用户拍板）：视频文献的 `url` → `source`、
+ * `videoTitle` → `sourceTitle`——四类文献的「出处」从此只有一个名字。
+ * 手术边界：只动 frontmatter 里这两行，其余键与正文零扰动；换行符保真；幂等。
+ * 已有同名目标键时不改名，**绝不造出重复键**。
+ * 无 frontmatter / 两个键都没有 → 原样返回（调用方据此跳过写盘）。导出供单测直接断言。
+ */
+export function migrateVideoSourceKeys(content: string): string {
+  const src = String(content ?? '');
+  const lines = src.split(/\r?\n/);
+  if (lines[0]?.trim() !== '---') return src;
+  let close = -1;
+  for (let i = 1; i < lines.length; i++) { if (lines[i].trim() === '---') { close = i; break; } }
+  if (close === -1) return src;
+  let sourceAt = -1, sourceTitleAt = -1, urlAt = -1, videoTitleAt = -1;
+  for (let i = 1; i < close; i++) {
+    if (/^source:/.test(lines[i])) sourceAt = i;
+    else if (/^sourceTitle:/.test(lines[i])) sourceTitleAt = i;
+    else if (/^url:/.test(lines[i])) urlAt = i;
+    else if (/^videoTitle:/.test(lines[i])) videoTitleAt = i;
+  }
+  let hit = false;
+  // 保留原行的空格与引号包裹风格：只换键名，值原样搬过去
+  if (urlAt >= 0 && sourceAt < 0) { lines[urlAt] = 'source:' + lines[urlAt].slice('url:'.length); hit = true; }
+  if (videoTitleAt >= 0 && sourceTitleAt < 0) {
+    lines[videoTitleAt] = 'sourceTitle:' + lines[videoTitleAt].slice('videoTitle:'.length);
+    hit = true;
+  }
+  if (!hit) return src;
+  return lines.join(src.includes('\r\n') ? '\r\n' : '\n');
+}
+
+/**
+ * 旧笔记自动补全：type 用启发式（有 author → video；有 term → term），
  * domain 用 AI 分类；补过落库不再重复；AI 未配置跳过。返回 {scanned, filled, aiSkipped}。
  * ticket 138 §1.3：单次 AI 调用带超时（默认 25s），超时/失败即跳过该条继续，不卡死整批；
  * aiTimeoutMs 供测试注入短超时。
  * P1-2：domain 写回前对每条现读最新内容（type 启发式补丁可能已写盘），
  * 避免用读入时的旧 content 整体覆盖回滚 type 补丁；P3-3 由 parseFrontmatter 剥引号兜底。
+ * 2026-09-16：入口先跑一次存量键迁移（见 migrateVideoSourceKeys）——必须排在
+ * 「已补全即跳过」之前，否则已有 type+domain 的存量笔记永远轮不到迁移。
  */
 export async function backfillNotes(opts: { aiTimeoutMs?: number } = {}): Promise<{ scanned: number; filled: number; aiSkipped: boolean }> {
   const app = getApp();
@@ -586,14 +620,23 @@ export async function backfillNotes(opts: { aiTimeoutMs?: number } = {}): Promis
   const needDomain: { file: any }[] = [];
   let filled = 0;
   for (const f of files) {
-    const content = await app.vault.read(f);
+    let content = await app.vault.read(f);
+    // 存量键迁移先做（排在「已补全即跳过」之前）：否则已有 type+domain 的存量笔记永远轮不到迁移
+    const migrated = migrateVideoSourceKeys(content);
+    if (migrated !== content) {
+      await app.vault.modify(f, migrated);
+      content = migrated;
+      filled++;
+    }
     const fm = parseFrontmatter(content);
     const hasType = fm.type === 'video' || fm.type === 'term';
     const hasDomain = !!fm.domain;
     if (hasType && hasDomain) continue; // 已补全（含引号包裹值，parse 已剥引号）
     const patch: string[] = [];
     if (!hasType) {
-      const type = (fm.url || fm.author || fm.videoTitle) ? 'video' : fm.term ? 'term' : '';
+      // video 判据改用 author（UP 主，四类里只有视频文献有）：url / videoTitle 已并入
+      // source / sourceTitle（统一来源），而 source 是术语/段落/图版共用的键，不能当判据。
+      const type = fm.author ? 'video' : fm.term ? 'term' : '';
       if (type) patch.push(`type:${type}`);
     }
     // domain 补全队列入列时只记 file——domain 写回时现读补丁后的最新内容
