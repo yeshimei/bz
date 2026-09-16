@@ -2969,7 +2969,7 @@ export class UIManager {
     }
     if (st === 'done') { el.classList.add('bz-lit-rel-ok'); el.textContent = this.entryRelText || '已建立关联'; return; }
     if (st === 'empty') { el.classList.add('bz-lit-rel-idle'); el.textContent = '暂无关联'; return; }
-    if (st === 'queued') { el.classList.add('bz-lit-rel-idle'); el.textContent = '向量服务不可达，已入队'; return; }
+    if (st === 'queued') { el.classList.add('bz-lit-rel-idle'); el.textContent = '检索服务不可用，延后至桌面端处理'; return; }
     if (st === 'failed') { el.classList.add('bz-lit-rel-err'); el.textContent = '关联失败'; return; }
     if (st === 'off') { el.classList.add('bz-lit-rel-idle'); el.textContent = '自动双链未开启'; return; }
     el.classList.add('bz-lit-rel-idle');
@@ -3067,7 +3067,7 @@ export class UIManager {
         return;
       }
       if (out.status === 'queued') {
-        notify('知识盒关联：向量服务不可达，已入队，服务可达后自动处理', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
+        notify('知识盒关联：检索服务不可用，已入队，服务可达后自动处理', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
         return;
       }
       if (out.status === 'failed') {
@@ -3102,7 +3102,7 @@ export class UIManager {
           dedupeKey: REL_BG_NOTICE_KEY,
         });
       } else if (out.status === 'queued') {
-        notify('知识盒关联：向量服务不可达，已入队，服务可达后自动处理', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
+        notify('知识盒关联：检索服务不可用，已入队，服务可达后自动处理', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
       } else if (out.status === 'out-of-scope') {
         notify('知识盒关联：该笔记不在三个盒子内，未写入', { type: 'info', dedupeKey: REL_BG_NOTICE_KEY });
       } else if (out.status === 'failed') {

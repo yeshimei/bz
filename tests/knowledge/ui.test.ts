@@ -1554,7 +1554,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(applies[0]).toEqual(['文献盒/松果体.md', ['卡片盒/睡眠卫生.md']]);
   });
 
-  it('关联行：零命中 → 「暂无关联」；检索不可达 → 「已入队」（均由预演直接给出）', async () => {
+  it('关联行：零命中 → 「暂无关联」；检索不可达 → 「检索服务不可用，延后至桌面端处理」（均由预演直接给出）', async () => {
     const bridgeOf = (preview: () => Promise<any>) => ({
       preview,
       apply: async () => ({ status: 'done' as const, created: 0 }),
@@ -1571,7 +1571,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     ui.showTermEntry();
     (document.getElementById('lit-term-input') as HTMLInputElement).value = '不可达';
     await (ui as any).onTermGenerate();
-    await vi.waitFor(() => expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('向量服务不可达，已入队'));
+    await vi.waitFor(() => expect(document.getElementById('lit-term-meta-rel')!.textContent).toBe('检索服务不可用，延后至桌面端处理'));
   });
 
   // ==================== 术语来源（ADR-0116） ====================

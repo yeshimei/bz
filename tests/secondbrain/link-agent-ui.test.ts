@@ -247,6 +247,17 @@ describe('管线：related 幂等写入与可达性门', () => {
     expect(vault.files.get('文献盒/A.md')).not.toContain('related');
   });
 
+  it('previewLinks：检索失败必须冒头 → queued（不冒充「暂无关联」）', async () => {
+    const { agent, store } = makeWorld({});
+    store.vectorSearch.mockRejectedValue(new Error('Ollama 无响应'));
+    await expect(agent.previewLinks('一篇草稿正文', '草稿标题')).resolves.toEqual({ status: 'queued' });
+  });
+
+  it('previewLinks：可达且零命中 → done 空 picks（真空候选，与不可达两态可区分）', async () => {
+    const { agent } = makeWorld({ hits: [] });
+    await expect(agent.previewLinks('一篇草稿正文', '草稿标题')).resolves.toEqual({ status: 'done', picks: [] });
+  });
+
   it('裁判失败 → failed 且入队待下次重试', async () => {
     const { agent, askSpy } = makeWorld({
       hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
