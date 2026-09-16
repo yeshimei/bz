@@ -1,7 +1,6 @@
 /**
  * 通用设置组预设（ticket 131，ADR-0064 决策 5）：跨域同构项 core 定义一次、域一行挂载。
  *
- * 「每批加载数量」数字行（diary/clipping/movie 三域统一文案）、
  * 「重载后生效」一次性提示 helper（movie/password/encrypt/secondbrain 快照设置收口）。
  *
  * TODO(后续域迁移票)——排序、默认筛选下拉暂不抽预设：diary 标签排序（fixed/count）、
@@ -10,24 +9,7 @@
  */
 import { notice } from './notice';
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
-import type { GroupDecl, SettingsKeyOfType, SettingsRow, SettingsSnapshot } from './settings-schema';
-
-/** 「每批加载数量」数字行（三域统一文案，ticket 170）：日记/剪藏/影视逐字对齐。
- *  各域键为 string（滚动加载数量，data.json 字符串存储冻结）——number 行显示数字、落盘保持字符串。 */
-export function batchSizeRow(
-  key: SettingsKeyOfType<string>,
-  opts?: { onCommit?: () => void }
-): SettingsRow {
-  return {
-    type: 'number',
-    name: '每批加载数量',
-    desc: '滚动加载时每批显示的条目数',
-    binding: numStrBinding(key, 20),
-    min: 1,
-    step: 1,
-    onCommit: opts?.onCommit,
-  };
-}
+import type { GroupDecl, SettingsRow, SettingsSnapshot } from './settings-schema';
 
 /** 重载提示文案：快照设置改动后通知重载插件生效（正文不带 emoji，铁律 7） */
 const RELOAD_SETTINGS_NOTICE = '设置已保存，重载插件后生效';

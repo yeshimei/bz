@@ -436,14 +436,6 @@ export type TimelineKind =
   /** 点评 ✦：小橘挂在痕迹下面的那句话，以及你给影片打的星级（行为流 movie:rated） */
   | 'note';
 
-/** 三类的中文名（设置面板勾选项文案单源；首页不需要，故只在这边声明） */
-export const TIMELINE_KIND_LABEL: Record<TimelineKind | 'skipped', string> = {
-  produce: '产出',
-  progress: '状态推进',
-  note: '点评 ✦',
-  skipped: '已跳过',
-};
-
 /** 时间线痕迹的类别集合（三类 + 第四类「已跳过」） */
 export type TimelineEventKind = TimelineKind | 'skipped';
 
