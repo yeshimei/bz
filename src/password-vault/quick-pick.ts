@@ -1,6 +1,6 @@
 /**
  * 快速取密轻量选择器（password-vault 域；命令 bz-password-vault-gen「快速取密」专用，
- * ADR-0155 统一流：自 encrypt/pw-picker.ts 移植升级）。
+ * ADR-0158 统一流：自 encrypt/pw-picker.ts 移植升级）。
  * 复用 path-picker 范式（createOverlay + escManager 层级 + 搜索即时过滤）：
  * 搜索框 + 现有密码条目行（平台/账号）fuzzy 过滤（连续子串优先、子序列兜底），
  * **顶部固定「生成新密码」选项**（不受过滤影响，恒在首位）——选中现有条目回调复制，
@@ -83,8 +83,8 @@ export function closePasswordQuickPicker(): void {
 
 /**
  * 打开快速取密选择器（幂等：已开先关）。onPick 在选择器关闭后回调选中动作，
- * 复制与 60s 自动清空由调用方执行（copySensitiveWithFallback 已收口 core/utils，issue 347）。
- * 顶部固定「生成新密码」项不受过滤影响；无命中时列表只剩该项（ADR-0155 口径：搜到即复制、
+ * 复制与 60s 自动清空由调用方执行（copySensitiveWithFallback 已收口 core/utils，issue 365）。
+ * 顶部固定「生成新密码」项不受过滤影响；无命中时列表只剩该项（ADR-0158 口径：搜到即复制、
  * 无命中生成）。
  */
 export function openPasswordQuickPicker(

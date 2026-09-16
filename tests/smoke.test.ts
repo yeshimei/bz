@@ -50,17 +50,21 @@ const registeredCommands: any[] = [];
 /** 期望的命令 id 全集（spec「命令 id 全清单」第 9 轮：COMMANDS 表 + 日记本 bz-diary-open） */
 const EXPECTED_COMMAND_IDS = [
   'bz-home-open',
-  // 今日回顾面板已退役（ADR-0154）：bz-recap-today 随批删除，「生成今日总结」迁 home 时间线卡
+  // 今日回顾面板已退役（ADR-0157）：bz-recap-today 随批删除，「生成今日总结」迁 home 时间线卡
   'bz-memo-open', 'bz-memo-add',
   // 给当前笔记记一笔（2026-09-11 首页入口菜单）
   'bz-memo-note-binding',
   'bz-belongings-add', 'bz-belongings-open',
+  // 年度资产报告（issue 356：报告页直开，面板未开也从盘载库）
+  'bz-belongings-report',
   // 剪藏本（clipbook 融合域，ADR-0082）：聚合讯未读流+剪藏笔记一体化；旧 bz-clipping-open/bz-news-open 断开
   'bz-clipbook-open',
   // 未读全部标为已读（2026-09-11 首页入口菜单；跨全库批量已读）
   'bz-clipbook-mark-all-read',
   // 立即抓取（issue 302 / ADR-0128：插件内抓取的手动入口，忽略间隔）
   'bz-clipbook-fetch-now',
+  // 剪藏阅读报告（issue 358「我读了什么」：剪藏本自有阅读流水报告弹层）
+  'bz-clipbook-report',
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要
   'bz-auto-summary-redo',
   // 统一保险库（encrypt 域，ADR-0085）：密码/笔记/日记合一
@@ -80,10 +84,15 @@ const EXPECTED_COMMAND_IDS = [
   // 继续在读（2026-09-11 首页入口菜单；开书架墙落「在读」分栏）
   'bz-bookshelf-continue',
   'bz-review-open', 'bz-review-report', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
-  // 评级四命令（bz-review-again/hard/good/easy）已裁（issue 346）：热键时代遗产不可达，难度弹窗为唯一面板外评级入口
+  // 做题练习（issue 362）：做题家独立面板入口
+  'bz-review-quiz-open',
+  // 评级四命令保留（issue 362 做题家面板依赖，原 issue 364 裁剪案撤回；难度弹窗仍为无热键时的面板外评级入口）
+  'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
   'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat',
   // 重建索引（2026-09-11 首页入口菜单；函数早已存在、此前无命令入口）
   'bz-secondbrain-rebuild-index',
+  // 本周知识动态（issue 360：每周知识摘要，启动静默聚合 + 手动重聚详情弹层）
+  'bz-secondbrain-weekly',
   'bz-pomodoro-open',
   // 开始/停止专注（2026-09-10：首页入口菜单联动）
   'bz-pomodoro-focus-toggle',
@@ -99,7 +108,7 @@ const EXPECTED_COMMAND_IDS = [
   // 自动关联（ADR-0141 §1：两条建链命令随功能归属迁入知识盒，引擎留第二大脑）
   'bz-knowledge-relink', 'bz-knowledge-link-all',
   'bz-attach-move',
-  // 统一保险库（ADR-0085）：加密笔记 + 加密日记 + 加密当前笔记（ADR-0155：密码资产视图
+  // 统一保险库（ADR-0085）：加密笔记 + 加密日记 + 加密当前笔记（ADR-0158：密码资产视图
   // 与快速复制密码命令退役，快速取密统一归 bz-password-vault-gen）
   // 注意：bz-encrypt-lock 是历史遗留 id，实际动作是「加密当前笔记」；
   // 锁定保险库（2026-09-11 首页入口菜单）另用 bz-encrypt-lock-vault，避免撞 id
@@ -107,7 +116,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-encrypt-lock-vault',
   // 密码本（password-vault 域，ADR-0109 拆回独立域）
   'bz-password-vault-open',
-  // 快速取密（ADR-0155 统一流：fuzzy 列现有密码 + 顶部「生成新」；id 承接旧「快速生成密码」）
+  // 快速取密（ADR-0158 统一流：fuzzy 列现有密码 + 顶部「生成新」；id 承接旧「快速生成密码」）
   'bz-password-vault-gen',
   // 锁定密码本（2026-09-11 首页入口菜单；与保险库同库同锁）
   'bz-password-vault-lock',
@@ -178,12 +187,27 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-memo-open').name).toBe('备忘录');
     // clipbook 融合域（ADR-0082）：剪藏本 = 聚合讯+剪藏本合一入口
     expect(byId('bz-clipbook-open').name).toBe('剪藏本');
+    // issue 358：剪藏阅读报告（与 bz-reading-report-open 书库报告并列的自有报告）
+    expect(byId('bz-clipbook-report').name).toBe('剪藏阅读报告');
+    expect(byId('bz-clipbook-report').icon).toBe('newspaper');
     expect(byId('bz-memo-add').name).toBe('加备忘录');
     // t2：四套叫法统一「阅读分析报告」（走查批 D；home 磁贴保留短名「阅读报告」）
     expect(byId('bz-reading-report-open').name).toBe('阅读分析报告');
+    // f3：评级四命令去英文后缀、统一「复习（X）」标点（issue 362 起做题家面板依赖，保留）
+    expect(byId('bz-review-again').name).toBe('复习（忘了）');
+    expect(byId('bz-review-hard').name).toBe('复习（困难）');
+    expect(byId('bz-review-good').name).toBe('复习（一般）');
+    expect(byId('bz-review-easy').name).toBe('复习（简单）');
+    // issue 362：做题家独立面板入口（graduation-cap 与复习域设置分组「做题家」同款）
+    expect(byId('bz-review-quiz-open').name).toBe('做题练习');
+    expect(byId('bz-review-quiz-open').icon).toBe('graduation-cap');
     // f7：第二大脑面板与第二大脑参考区分（不再与功能名歧义）
     expect(byId('bz-secondbrain-panel').name).toBe('第二大脑面板');
     expect(byId('bz-secondbrain-open').name).toBe('第二大脑参考');
+    // issue 360：本周知识动态（图标 calendar-days，与复习报告 calendar-check 错开）
+    expect(byId('bz-secondbrain-weekly').name).toBe('本周知识动态');
+    expect(byId('bz-secondbrain-weekly').icon).toBe('calendar-days');
+    expect(byId('bz-secondbrain-weekly').icon).not.toBe(byId('bz-review-report').icon);
     // f7：重复图标去重——message-circle 各只出现一次（clapperboard 随 movie-add 退役已无）
     const icons = registeredCommands.map((c: any) => c.icon);
     expect(icons.filter((i: string) => i === 'message-circle')).toHaveLength(1);
@@ -385,5 +409,118 @@ ${failures.join('\n')}`).toEqual([]);
     const plugin2 = await createPlugin(makeMockApp());
     expect(plugin2.settings.memoFilePath).toBe('自定义/路径');
     expect(plugin2.settings.cinemaFolderPath).toBe('我的/影视');
+  });
+
+  it('番茄钟统计两档（issue 357）：bz-pomodoro-open 打开弹窗含「近 7 天 / 近 6 月」切换与双柱区', async () => {
+    const { unloadPomodoro } = await import('../src/pomodoro');
+    const plugin = await createPlugin(makeMockApp());
+    registeredCommands.find((c: any) => c.id === 'bz-pomodoro-open')!.callback();
+    await vi.waitFor(() => {
+      expect(document.getElementById('pomodoro-popup')).toBeTruthy();
+    });
+    // 统计区两档 tab + 双柱区容器（近 7 天明细 / 近 6 月趋势，与原型共用 render.ts 单源 markup）
+    expect(document.getElementById('pomodoro-stat-tab-week')!.textContent).toBe('近 7 天');
+    expect(document.getElementById('pomodoro-stat-tab-month')!.textContent).toBe('近 6 月');
+    expect(document.getElementById('pomodoro-week')).toBeTruthy();
+    expect(document.getElementById('pomodoro-months')!.hidden).toBe(true); // 默认近 7 天档
+    unloadPomodoro(); // 清理弹窗与域内存态，不污染后续用例
+  });
+});
+
+describe('收藏本标签自定义数据契约（issue 363 冒烟）', () => {
+  it('favorites.json 纯数组根契约不动；标签定义走同目录伴生文件 favorites.tags.json，缺省回退内置 9 类', async () => {
+    const { DataManager } = await import('../src/favorites/data');
+    const { getTags, resetTagsState } = await import('../src/favorites/config');
+    resetTagsState();
+    // 未载入/文件缺失 = 内置 9 类 seed（零迁移）
+    expect(getTags().map((t) => t.id)).toEqual(
+      ['github', 'desktop', 'web', 'llm', 'pi', 'claude', 'skills', 'pub', 'dsh']
+    );
+    // 标签定义伴生文件与 favorites.json 同目录（favorites.json 顶层保持纯条目数组：
+    // 主页.js 读 favorites.length、checkup 字段漂移检查依赖纯数组根，不因标签自定义破坏）
+    const dm = new DataManager('CONFIG/STORAGE/favorites.json');
+    expect(dm.tagsPath).toBe('CONFIG/STORAGE/favorites.tags.json');
+    resetTagsState();
+  });
+});
+
+describe('复习拟合全参放开（issue 361 冒烟）', () => {
+  it('fitFromItems 分档：<300 对基础八参（不越界动 w[8..]）、≥300 对全 19 参；契约版本常量 1/2', async () => {
+    const { fitFromItems } = await import('../src/review/fit');
+    const { DEFAULT_W } = await import('../src/review/fsrs');
+    const { FIT_PARAMS_VERSION } = await import('../src/review/data');
+    // FSRS 相位形态历史（stability 标记 + 逐日时间戳 + 混合评级）
+    const mk = (n: number) => [
+      {
+        reviewHistory: Array.from({ length: n }, (_, i) => ({
+          timestamp: new Date(Date.UTC(2025, 0, 1) + i * 86400e3).toISOString(),
+          stage: 10,
+          rating: ['good', 'easy', 'again', 'hard'][i % 4],
+          stability: 5,
+          difficulty: 0.3,
+        })),
+      },
+    ];
+    const basic = fitFromItems(mk(150))!; // 149 对 → 基础档
+    expect(basic.fit.full).toBe(false);
+    expect(basic.fit.w).toHaveLength(19);
+    for (let i = 8; i < 19; i++) expect(basic.fit.w[i]).toBe(DEFAULT_W[i]); // 基础档不越界
+    const full = fitFromItems(mk(350))!; // 349 对 → 全参档
+    expect(full.fit.full).toBe(true);
+    expect(full.fit.w).toHaveLength(19);
+    expect(Number.isFinite(full.fit.logLikelihood)).toBe(true);
+    expect(FIT_PARAMS_VERSION.BASIC).toBe(1);
+    expect(FIT_PARAMS_VERSION.FULL).toBe(2);
+  });
+});
+
+describe('备忘录周期重复（issue 353 冒烟）', () => {
+  it('completeItem：周期条目完成后数据层自动生成下一期（全字段保留，非周期不生成）', async () => {
+    const { MockVault } = await import('./mock-vault');
+    const { setApp } = await import('../src/core/app');
+    const { MemoData } = await import('../src/memo/data');
+    const vault = new MockVault();
+    setApp({ vault, workspace: { getActiveFile: () => null }, metadataCache: { getFileCache: () => null } } as any);
+    MemoData.init({ storagePath: 'CONFIG/STORAGE' });
+    await MemoData.addItem({ id: 'smoke-r', title: '每周五交周报', scene: '工作', priority: 'minor', created: '2026-01-01 09:00:00', recur: { kind: 'weekly' } } as any);
+    const { next } = await MemoData.completeItem('smoke-r');
+    expect(next).not.toBeNull();
+    expect(next!.completed).toBeNull();
+    expect(next!.recur).toEqual({ kind: 'weekly' });
+    expect(next!.title).toBe('每周五交周报');
+    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(raw).toHaveLength(2);
+    expect(raw.find((i: any) => i.id === 'smoke-r').completed).toBeTruthy();
+  });
+});
+
+describe('备忘录清单型子任务（issue 354 冒烟）', () => {
+  it('composer 约定语法：/词条 收进 checklist（纯函数契约）', async () => {
+    const { parseComposerChecklist } = await import('../src/memo/data');
+    const p = parseComposerChecklist('筹备旅行 /订机票 /订酒店');
+    expect(p.title).toBe('筹备旅行');
+    expect(p.checklist).toEqual([
+      { text: '订机票', done: false },
+      { text: '订酒店', done: false },
+    ]);
+    // 无词条 = 普通条目
+    expect(parseComposerChecklist('随手记一条').checklist).toBeNull();
+  });
+});
+
+describe('备忘录月历视图（issue 355 冒烟）', () => {
+  it('面板壳带 列表/月历 视图页签与月历锚点（纯层 markup 契约）', async () => {
+    const { panelShellHtml, calHeadHtml, calGridHtml } = await import('../src/memo/render');
+    const shell = panelShellHtml();
+    expect(shell).toContain('data-memo-view="list"');
+    expect(shell).toContain('data-memo-view="calendar"');
+    // 月历头行 + 网格锚点在场
+    const head = calHeadHtml('2026年9月');
+    expect(head).toContain('data-memo-cal-prev');
+    expect(head).toContain('data-memo-cal-next');
+    expect(head).toContain('data-memo-cal-today');
+    const grid = calGridHtml([{ day: 1, today: true, selected: false, chips: [{ id: 'a', title: '事项', cls: 'is-today' }] }]);
+    expect(grid).toContain('data-memo-cal-day="1"');
+    expect(grid).toContain('data-memo-cal-item="a"');
   });
 });

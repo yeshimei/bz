@@ -1582,7 +1582,7 @@
   margin-top: var(--bz-space-sm);
 }
 /* ============ 通用弹窗（平台编辑弹窗容器） ============
- * 确认框已收编 core openFlowDialog（issue 347），其专属样式（.card .msg / .ok / .ok.danger）
+ * 确认框已收编 core openFlowDialog（issue 365），其专属样式（.card .msg / .ok / .ok.danger）
  * 与 toast 样式段已随 markup 一并清除；本选择器现仅余平台编辑弹窗（platEditHTML 仍挂
  * bz-password-vault-pop2 基类）在用。 */
 .bz-password-vault-pop2 {
@@ -1629,7 +1629,7 @@
   background: var(--pwv-surface2);
   color: var(--pwv-ink);
 }
-/* toast 样式段已随收编 core 全局通知删除（issue 347）：提示统一走 .bz-notice 单源。 */
+/* toast 样式段已随收编 core 全局通知删除（issue 365）：提示统一走 .bz-notice 单源。 */
 
 /* ============ 解锁屏（三域共用骨架 · 密码本口径） ============
  * 密码本锁屏是面板内覆盖层（desk/mob 双实例），用 inline 实例；token 同样自己重声明。
@@ -1642,7 +1642,7 @@
 }
 
 /* ============ 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一）============
-   域内确认框（首设主密码风险确认 / 清单疑似损坏 → 仍要重设，及 issue 347 收编的
+   域内确认框（首设主密码风险确认 / 清单疑似损坏 → 仍要重设，及 issue 365 收编的
    删除类 askConfirm）统一走 openFlowDialog，popup 挂 document.body —— 脱离
    .bz-password-vault 根后 --pwv-* 全部失效（金色主钮会掉回 core 默认品牌色）。
    故各处传 className: 'bz-pwv-flow-dialog'，本文件补两段：
@@ -1711,7 +1711,7 @@
    本条在危险态下直接不匹配，危险语义与配色原样保留。
    本域两处确认框的分工（issue 291 评审补）：「设置主密码」是风险告知门、主动作是首设正向路径，
    **不标 danger** → 走本条金色主钮；「仍要重设」是破坏性重设（旧数据永久不可恢复），**已标 danger**
-   → 本条不匹配、落到 core 中性档。issue 347 收编的删除类 askConfirm 同理走 danger 档（红字主钮）。 */
+   → 本条不匹配、落到 core 中性档。issue 365 收编的删除类 askConfirm 同理走 danger 档（红字主钮）。 */
 #__shared_confirm_popup__.bz-pwv-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__ {
   background: var(--pwv-gold-soft);
   color: #fff;
@@ -1723,7 +1723,7 @@
   opacity: 0.82; /* 同 .bz-password-vault-btn:hover */
 }
 
-/* ---------- 快速取密选择器（bz-password-vault-gen「快速取密」命令，ADR-0155 统一流）。
+/* ---------- 快速取密选择器（bz-password-vault-gen「快速取密」命令，ADR-0158 统一流）。
    挂 body（createOverlay 弹层，不落 .bz-password-vault 根内），与原 encrypt 侧
    .bz-encrypt-pwqp 同构迁移：候选行/空态/搜索框基线走样式库 .bz-popover-item(.is-on) /
    .bz-popover-empty / .bz-input；域内只留弹窗壳、滚动列表与行内两行文案

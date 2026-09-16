@@ -1,6 +1,6 @@
 import { todayStr } from '../helpers/date';
 /**
- * home「生成今日总结」动作测试（ADR-0154：自 recap 独立面板迁入时间线河卡动作行）：
+ * home「生成今日总结」动作测试（ADR-0157：自 recap 独立面板迁入时间线河卡动作行）：
  * 今天视图动作行渲染（昨天视图不出现）、AI 成功 → 写日记落点（回顾条目 + 关键数字行）
  * + 成功通知「查看」+ 按钮变「重新生成」、AI 未配置降级模板双动作（写入日记才落盘）、
  * 生成中防重复点击、域清单无 recap 残留。
@@ -107,7 +107,7 @@ async function waitForIdle(): Promise<void> {
   await vi.waitFor(() => expect(H.aiGenerating).toBe(false));
 }
 
-describe('home 生成今日总结（ADR-0154 迁入时间线卡）', () => {
+describe('home 生成今日总结（ADR-0157 迁入时间线卡）', () => {
   let vault: StatVault;
 
   beforeEach(() => {
@@ -231,7 +231,7 @@ describe('home 生成今日总结（ADR-0154 迁入时间线卡）', () => {
   });
 });
 
-describe('home 域清单（recap 退役后，ADR-0154）', () => {
+describe('home 域清单（recap 退役后，ADR-0157）', () => {
   it('recap 已从首页入口清单退役', () => {
     expect(DOMAINS.some((d) => d.id === 'recap')).toBe(false);
     expect(ALL_DOMAIN_IDS).not.toContain('recap');

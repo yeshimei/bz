@@ -1,4 +1,4 @@
-/* 源指纹 39869303e040011d · 仓内输入 77 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 838df1b3d337b464 · 仓内输入 77 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -14816,6 +14816,12 @@ ${entry.content.trim()}`;
   var RAIL_HIGHLIGHT_EPSILON_PX = 8;
   var SCROLL_FIX_DELAY_MS = 480;
   var MODIFY_REFRESH_DEBOUNCE_MS = 400;
+  var MEMORY_EXCERPT_MAX_CHARS = 64;
+  function memoryExcerpt(text) {
+    const flat = (text || "").replace(/\s+/g, " ").trim();
+    if (!flat) return "（无正文）";
+    return flat.length > MEMORY_EXCERPT_MAX_CHARS ? `${flat.slice(0, MEMORY_EXCERPT_MAX_CHARS)}…` : flat;
+  }
   function pickCurrentMonth(heads) {
     let current = null;
     for (const h of heads) {
@@ -15245,7 +15251,7 @@ ${entry.content.trim()}`;
         ui.wall.appendChild(this.mkEmpty());
         return;
       }
-      const memories = pickOnThisDay(list, this.todayStr()).filter((e) => e.media.length > 0);
+      const memories = pickOnThisDay(list, this.todayStr());
       if (memories.length) ui.wall.appendChild(this.mkMemories(memories));
       if (!mobile) {
         ui.rail.appendChild(this.mkRailScroll(list));
@@ -15574,8 +15580,9 @@ ${entry.content.trim()}`;
       return localDayKey();
     }
     /**
-     * 增强 #5：那年今天时光条——mmdd 命中的历史媒体条目横滑条（wall 首屏顶部，独立块不打断瀑布流；
-     * 调用方已过滤无媒体条目）。点击缩略 → 灯箱连看（与主墙灯箱同一序列外条目，单条目内步进）。
+     * 增强 #5 + issue 352：那年今天时光条——mmdd 命中的历史条目横滑条（wall 首屏顶部，独立块不打断瀑布流）。
+     * 卡片分流：媒体条目走缩略卡（点击进灯箱连看，与主墙灯箱同一序列外条目，单条目内步进）；
+     * 纯文字条目走文字块卡（与媒体卡同形不同貌），点击跳原文（无媒体，灯箱无意义）。
      */
     mkMemories(entries) {
       const box = document.createElement("div");
@@ -15592,6 +15599,28 @@ ${entry.content.trim()}`;
         const cell = document.createElement("button");
         cell.className = "bz-diary-memory bz-touch-target--xl";
         cell.title = `${e.date} ${e.time}`;
+        const year = document.createElement("span");
+        year.className = "bz-diary-memory-year";
+        year.textContent = e.date.slice(0, 4);
+        if (!e.media.length) {
+          cell.classList.add("bz-diary-memory--text");
+          const block = document.createElement("div");
+          block.className = "bz-diary-memory-text";
+          const em = document.createElement("span");
+          em.className = "bz-diary-memory-text-em";
+          em.textContent = e.emoji;
+          const tx = document.createElement("span");
+          tx.className = "bz-diary-memory-text-tx";
+          tx.textContent = this.isEncHidden(e) ? "（已加密）" : memoryExcerpt(e.text);
+          block.append(em, tx);
+          cell.append(block, year);
+          cell.addEventListener("click", () => {
+            if (this.isEncHidden(e)) return;
+            void this.jumpTo(e);
+          });
+          row.appendChild(cell);
+          return;
+        }
         const thumb = document.createElement("div");
         thumb.className = "bz-diary-memory-thumb";
         const m = e.media[0];
@@ -15636,9 +15665,6 @@ ${entry.content.trim()}`;
         } else if (m.kind === "audio") {
           thumb.appendChild(uiIcon(ACTION_ICON.music));
         }
-        const year = document.createElement("span");
-        year.className = "bz-diary-memory-year";
-        year.textContent = e.date.slice(0, 4);
         cell.append(thumb, year);
         cell.addEventListener("click", () => {
           this._lbSeqMain = this._lbSeq;

@@ -14,6 +14,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { getNewsFilePath, readNewsData } from '../../src/clipbook/news-data';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 import { flowSave, flowMarkRead, flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews, flowDeleteNews } from '../../src/clipbook/flow';
+import { emptySidecar } from '../../src/clipbook/data';
 
 vi.mock('../../src/knowledge', () => ({ openKnowledgeAddTask: vi.fn() }));
 const { openKnowledgeAddTask } = await import('../../src/knowledge');
@@ -142,7 +143,7 @@ describe('已处理正文保留（issue 274）', () => {
     expect(disk.articles[0].state).toBe('skipped');
     expect(disk.articles[0].body).toBe('正文甲');
     // 会话目录（ADR-0108）：已读段条目仍携带正文（右栏/移动详情打开即渲染）
-    const sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
+    const sidecar = { ...emptySidecar() };
     const flat = store.queryBySourceFull(disk.articles, sidecar, new Set(), [], { kind: 'all' }, {});
     const buckets = store.bucketByState(flat);
     expect(buckets.read).toHaveLength(1);
@@ -158,7 +159,7 @@ describe('已处理正文保留（issue 274）', () => {
     const store = await import('../../src/clipbook/store');
     const flat = store.queryBySourceFull(
       diskJson(vault).articles,
-      { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} },
+      emptySidecar(),
       new Set(), [], { kind: 'all' }, {}
     );
     const buckets = store.bucketByState(flat);

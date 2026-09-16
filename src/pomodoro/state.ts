@@ -52,6 +52,22 @@ export interface HistoryEntry {
   task?: string;
 }
 
+/**
+ * 周归档行（issue 357）：离开 7 天保留窗的明细按自然周（周一起始，本地时区）聚合成一行，
+ * 落 pomodoro.json 可选段 archived——「history 只留 7 天明细」的既有拍板不变，只加归档层。
+ * 同一周不重复建行：以 week key 判重后增量合并（mergeArchived）。
+ */
+export interface ArchivedWeek {
+  /** 归属周 key = 该周周一的本地日期（YYYY-MM-DD） */
+  week: string;
+  /** 该周完成番茄数 */
+  count: number;
+  /** 该周专注总分钟数 */
+  minutes: number;
+  /** 任务分布：任务标题 → 分钟数（备忘录「专注这个」归属的统计扩展，可选） */
+  tasks?: Record<string, number>;
+}
+
 export type PomodoroEvent =
   | { type: 'none' }
   | { type: 'started'; phase: Phase }

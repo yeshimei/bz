@@ -126,7 +126,7 @@
 .bz-home-timeline[data-tl-time="0"] .bz-home-ev-tm { display: none; }
 .bz-home-timeline[data-tl-time="0"] .bz-home-ev { padding-left: var(--bz-space-lg); }
 
-/* ---- 「生成今日总结」动作行（ADR-0154 自 recap 面板迁入；只在今天视图渲染）----
+/* ---- 「生成今日总结」动作行（ADR-0157 自 recap 面板迁入；只在今天视图渲染）----
    按钮基线走组件库 .bz-btn（inline-flex + spinner gap 对齐），域内只压尺寸贴卡内行密度，
    配色取时间线点评/预告卡同源的 --h-ai（小橘 AI 语义）；初始 disabled（探测/生成中），透明度走组件库 .bz-btn:disabled */
 .bz-home-ai-row { display: flex; justify-content: flex-end; padding: 2px var(--bz-space-sm) var(--bz-space-sm); }

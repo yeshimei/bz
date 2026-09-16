@@ -127,7 +127,7 @@ describe('filtered / years / hero', () => {
 describe('markup 构建器（钩子契约 = 两侧绑定与测试断言的共同事实源）', () => {
   it('panelHtml 骨架钩子齐全（data-bel-*）', () => {
     const html = panelHtml();
-    for (const hook of ['data-bel-herotitle', 'data-bel-herosub', 'data-bel-kpis', 'data-bel-stampn', 'data-bel-mobstats', 'data-bel-close', 'data-bel-chips', 'data-bel-search', 'data-bel-year', 'data-bel-mobsortsel', 'data-bel-sort', 'data-bel-add', 'data-bel-mobstatus', 'data-bel-content']) {
+    for (const hook of ['data-bel-herotitle', 'data-bel-herosub', 'data-bel-kpis', 'data-bel-stampn', 'data-bel-mobstats', 'data-bel-close', 'data-bel-chips', 'data-bel-search', 'data-bel-year', 'data-bel-mobsortsel', 'data-bel-sort', 'data-bel-report', 'data-bel-add', 'data-bel-mobstatus', 'data-bel-content']) {
       expect(html).toContain(hook);
     }
     expect(html).toContain('bz-bel--poster');

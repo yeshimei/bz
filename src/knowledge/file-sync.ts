@@ -4,7 +4,7 @@
  *   rename → 同步任务 notePath/videoPath（knowledge.json）
  *   delete → notePath/videoPath 置空（UI 对空路径全部有守卫：渲染行条件跳过、打开钮不挂）
  *           + source-retire 消费体（摘除指向被删文件的卡片 source 行）
- * 队列/去抖/批量冲刷/事件订阅/生命周期收编至公共壳 core/file-sync（issue 347），
+ * 队列/去抖/批量冲刷/事件订阅/生命周期收编至公共壳 core/file-sync（issue 365），
  * 域侧只留同步纯函数、监听范围与装配；rename 经域事件总线 'vault:md-renamed'
  * 按 DEBOUNCE_DELAY 合并去抖回放保序，delete 走 'vault:md-deleted' 即时通道
  * （obsidian-adapter 恒发、仅 md）。
@@ -71,7 +71,7 @@ function getWatchedFolders(): string[] {
   return [knowledgeDirOf()];
 }
 
-// ---------- 壳装配（issue 347：队列/去抖/订阅/生命周期走 core/file-sync） ----------
+// ---------- 壳装配（issue 365：队列/去抖/订阅/生命周期走 core/file-sync） ----------
 
 /** knowledge.json 引用命中检查（范围外放行口径，同 memo E22） */
 async function referencedByTasks(path: string): Promise<boolean> {

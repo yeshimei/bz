@@ -70,7 +70,7 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     expect(repo('src/pomodoro/render.ts')).toMatch(/pomodoro-btn pomodoro-btn-primary bz-touch-target--sm/);
     expect(repo('src/review/render.ts')).toContain('bz-review-bar-btn bz-touch-target--sm'); // issue 253 markup 单源 render.ts
     // --lg（原 -8px）：复习信息行（home 活动河改版后无盒装钮/迷你 chips）；
-    // 加密空态钮/复制账号钮随 ADR-0155 密码视图退役（vault-pw-view 文件删除，断言一并清退）
+    // 加密空态钮/复制账号钮随 ADR-0158 密码视图退役（vault-pw-view 文件删除，断言一并清退）
     expect(repo('src/review/render.ts')).toContain('bz-q-fitem bz-touch-target--lg'); // issue 253 markup 单源 render.ts
     // --xl（原 -12px）：日记本头行图标钮（ADR-0115 回忆墙升格，markup 单源 render.ts）、加密移动关闭/返回钮、复习三个关闭钮
     expect(repo('src/diary/render.ts')).toContain('bz-diary-icon-btn bz-touch-target--xl');
@@ -103,7 +103,7 @@ describe('批 B-4：z-index 静态大数收口（ADR-0067）', () => {
   it('literature：遮罩/窗口/小型弹窗静态档清零（显示路径 topifyZ 发号已就位）', () => {
     const css = repo('src/knowledge/styles.css');
     expect(css).not.toMatch(/z-index:/); // 域内原本仅 3 处静态档，全清
-    // .bz-kb-mask 三件套已收编 .bz-overlay-mask 单源（issue 347，挂类守卫在 overlay-glass 收编组），
+    // .bz-kb-mask 三件套已收编 .bz-overlay-mask 单源（issue 365，挂类守卫在 overlay-glass 收编组），
     // 域 CSS 不再持有遮罩规则——存在性断言只留窗口与小型弹窗
     for (const sel of ['.bz-kb-window', '.bz-lit-dialog']) {
       const rule = css.match(new RegExp(`${sel.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*\\{[^}]*\\}`));

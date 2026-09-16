@@ -42,13 +42,14 @@ describe('C1：域选择器脱离 core reset 同分顺序对抗 + 原型 core �
   });
 });
 
-describe('C2：弹窗壳收编 core uiModal（issue 347 第 5 项）后 scope 挂 popup（壳不自绘）', () => {
+describe('C2：弹窗壳收编 core uiModal（issue 365 第 5 项）后 scope 挂 popup（壳不自绘）', () => {
   it('openForm 的 uiModal popup className 只挂 scope；bz-fav-form 由单源内容根携带（F15 单例守卫口径）', () => {
     const proto = favProto();
     // 行为单源（issue 245/ADR-0106）：弹窗 className 赋值唯一落点 = 真行为 ui.ts；旧自绘 mask 类退役。
-    // 壳与内容不重类：popup 只挂 bz-fav-scope（token 域 + 卡皮锚），bz-fav-form 只在 formHtml 内容根
-    // （querySelector('.bz-fav-form') 单例守卫恰好命中一层，回归见 tests/review-fix-clip-ui F15）
-    expect(favUi().match(/className: 'bz-fav-scope'/g)?.length).toBe(1);
+    // 壳与内容不重类：popup 只挂 bz-fav-scope（token 域 + 卡皮锚），bz-fav-form 只在内容根
+    // （querySelector('.bz-fav-form') 单例守卫恰好命中一层，回归见 tests/review-fix-clip-ui F15）；
+    // issue 363 标签编辑弹窗（openTagEditor）壳同口径收编 = 第 2 处 scope 挂点
+    expect(favUi().match(/className: 'bz-fav-scope'/g)?.length).toBe(2);
     expect(favUi()).not.toContain('bz-fav-form bz-fav-scope');
     expect(favUi()).toContain('uiModal(');
     expect(favUi()).not.toContain('bz-fav-form-mask');

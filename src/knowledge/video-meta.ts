@@ -77,7 +77,7 @@ const VIEW_TIMEOUT_MS = 10000;
 const QUALITY_TIMEOUT_MS = 10000;
 const NAV_TIMEOUT_MS = 10000;
 
-/** 生产 HTTP 通道（requestUrl → fetch 形状适配，core/http 单源，issue 347） */
+/** 生产 HTTP 通道（requestUrl → fetch 形状适配，core/http 单源，issue 365） */
 const httpImpl = requestUrlAsFetch();
 
 /** 2xx 正文 → JSON（非 2xx / 网络错 / 超时已由 httpGetText 归 null；解析失败 → null） */

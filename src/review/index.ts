@@ -11,6 +11,7 @@ import { ReviewDataManager } from './data';
 import { ReviewWatcher } from './watch';
 import { UIManager } from './ui';
 import { reviewApp } from './app';
+import { openQuizPanel, unloadQuizPanel } from './quiz-panel';
 import type { Rating } from './fsrs';
 
 let initialized = false;
@@ -102,6 +103,12 @@ export async function openReviewReport(app: App): Promise<void> {
   ensureReview(app);
   const { showStatsModal } = await import('./stats-ui');
   await showStatsModal(app, dataManager!);
+}
+
+/** 做题练习独立面板（bz-review-quiz-open，issue 362）：quiz-core 引擎 + 做题会话契约的
+ *  直接消费壳——不进复习流程、不写排期（域内 feature 文件静态引入，unloadReview 统一收口）。 */
+export function openQuizPractice(app: App): void {
+  void openQuizPanel(app);
 }
 
 /** 加入复习计划（review-add-current） */
@@ -236,6 +243,8 @@ export function unloadReview(): void {
   // P3：终止 reviewLoop 1s 轮询 + 释放单例 dataManager（插件禁用后不得继续读盘/持旧 app 引用）
   reviewApp.stopReviewLoops();
   reviewApp.dataManager = null;
+  // 做题练习独立面板（issue 362）：会话在途契约强制收口 + 面板 DOM/ESC 层摘除
+  unloadQuizPanel();
   // P2：全部退订函数统一调用（原生 offref + 总线退订），防卸载后旧监听残留（再 ensure 后事件双触发）
   for (const off of unsubscribers) {
     try {

@@ -2,7 +2,7 @@
  * 备忘录域文件同步（memo.json 引用同步；ADR-0092 自旧 memo 域迁入）：
  *   rename → 同步引用路径/标题/notePath（memo.json）
  *   delete → 清空关联（linkedNote + notePath/notePosition）
- * 队列/去抖/批量冲刷/事件订阅/生命周期收编至公共壳 core/file-sync（issue 347），
+ * 队列/去抖/批量冲刷/事件订阅/生命周期收编至公共壳 core/file-sync（issue 365），
  * 域侧只留同步纯函数、监听范围与装配；rename 经域事件总线 'vault:md-renamed'
  * 按 DEBOUNCE_DELAY 合并去抖回放保序，delete 走 'vault:md-deleted' 即时通道
  * （obsidian-adapter 恒发、仅 md，载荷见 src/core/obsidian-adapter.ts）。
@@ -79,7 +79,7 @@ function getWatchedFolders(): string[] {
   return SYNC_WATCHED_FOLDERS.split(',').map((x) => x.trim()).filter(Boolean);
 }
 
-// ---------- 壳装配（issue 347：队列/去抖/订阅/生命周期走 core/file-sync） ----------
+// ---------- 壳装配（issue 365：队列/去抖/订阅/生命周期走 core/file-sync） ----------
 
 const agent = createFileSync<SyncItem[], MemoRenameEvent>({
   logTag: '[memo-file-sync]',

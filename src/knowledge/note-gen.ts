@@ -112,7 +112,7 @@ function domainInstruction(list: string[]): string {
 }
 
 function nowStamp(): string {
-  return localNow(); // issue 347 收编：原手写与 core/ui/str localNow 逐字等价
+  return localNow(); // issue 365 收编：原手写与 core/ui/str localNow 逐字等价
 }
 
 /**

@@ -37,7 +37,7 @@ export { FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN };
 export type HttpGet = (url: string, headers?: Record<string, string>) => Promise<string | null>;
 
 /** requestUrl 适配：15s 超时、非 2xx / 网络错 / 超时 → null（对齐守护 safeFetch 语义）。
- *  超时壳收编 core/http（issue 347）；迟到 rejection 由 withTimeout 消化（C23） */
+ *  超时壳收编 core/http（issue 365）；迟到 rejection 由 withTimeout 消化（C23） */
 export function requestUrlHttpGet(): HttpGet {
   const impl = requestUrlAsFetch();
   return (url, headers) => httpGetText(url, {
@@ -101,7 +101,7 @@ export function defaultFetchStore(): FetchStoreDeps {
 // ---------- 通用纯函数（照搬守护） ----------
 
 /** 本地时间串 YYYY-MM-DD HH:mm:ss（news 条目 date/fetchedAt 统一口径，避免 UTC 偏移落错日） */
-export { localDatetime }; // issue 347 收编：原手写与 constants.localDatetime 逐字等价（导出路径保留）
+export { localDatetime }; // issue 365 收编：原手写与 constants.localDatetime 逐字等价（导出路径保留）
 
 /** HTML → Markdown（照搬守护正则版；知乎 detail body / 果壳 INITIAL_STORE content / RSS content 共用） */
 export function htmlToMarkdown(html: string): string {

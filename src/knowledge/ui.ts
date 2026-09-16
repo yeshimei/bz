@@ -228,7 +228,7 @@ const fmtElapsed = (ms: number): string => {
 
 /** 本地时间戳「YYYY-MM-DD HH:mm:ss」（卡片 date / 术语卡日期展示共用） */
 function dateStamp(): string {
-  return localNow(); // issue 347 收编：原手写与 core/ui/str localNow 逐字等价
+  return localNow(); // issue 365 收编：原手写与 core/ui/str localNow 逐字等价
 }
 
 /**

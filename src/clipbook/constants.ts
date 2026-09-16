@@ -4,7 +4,7 @@
 import { pad2 } from '../core/ui/str';
 import { localDayKey } from '../core/utils';
 
-/** 本地日期键转发 core/utils（issue 347 机械项清扫：原手写实现与 core 逐字等价） */
+/** 本地日期键转发 core/utils（issue 365 机械项清扫：原手写实现与 core 逐字等价） */
 export { localDayKey };
 
 /** 稳定标识键（对齐 news/data.ts articleKeyOf：url 优先，其次 title+date） */

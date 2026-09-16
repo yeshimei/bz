@@ -1,4 +1,4 @@
-/* 源指纹 d13eabfb8a4e2ffc · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 45ca491a4c24b630 · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -4145,19 +4145,56 @@ var BZW_favorites = (() => {
     /** 默认存储目录（文件名固定 favorites.json，设置只允许改目录） */
     DEFAULT_STORAGE_PATH: "CONFIG/STORAGE",
     /** 数据文件名（固定，不允许用户修改） */
-    STORAGE_FILE: "favorites.json"
+    STORAGE_FILE: "favorites.json",
+    /** 标签定义文件（issue 363 伴生文件，与 favorites.json 同目录、跟随 storagePath 设置） */
+    TAGS_FILE: "favorites.tags.json"
   };
-  var TAGS = [
-    { label: "GitHub", ic: "github" },
-    { label: "桌面软件", ic: "app-window" },
-    { label: "网站", ic: "globe" },
-    { label: "大模型", ic: "brain-circuit" },
-    { label: "pi", ic: "keyboard" },
-    { label: "Claude", ic: "bot" },
-    { label: "skills", ic: "zap" },
-    { label: "酒馆", ic: "beer" },
-    { label: "DeepSeek Harness", ic: "waypoints" }
+  var DEFAULT_TAGS = [
+    { id: "github", label: "GitHub", ic: "github" },
+    { id: "desktop", label: "桌面软件", ic: "app-window" },
+    { id: "web", label: "网站", ic: "globe" },
+    { id: "llm", label: "大模型", ic: "brain-circuit" },
+    { id: "pi", label: "pi", ic: "keyboard" },
+    { id: "claude", label: "Claude", ic: "bot" },
+    { id: "skills", label: "skills", ic: "zap" },
+    { id: "pub", label: "酒馆", ic: "beer" },
+    { id: "dsh", label: "DeepSeek Harness", ic: "waypoints" }
   ];
+  var currentTags = null;
+  function getTags() {
+    return currentTags != null ? currentTags : DEFAULT_TAGS;
+  }
+  function setTags(tags) {
+    currentTags = tags;
+  }
+  function getTagById(id) {
+    var _a;
+    return (_a = getTags().find((t) => t.id === id)) != null ? _a : null;
+  }
+  function getTagsPath(storagePath) {
+    const idx = storagePath.lastIndexOf("/");
+    const dir = idx >= 0 ? storagePath.slice(0, idx) : "";
+    return (dir || CONFIG.DEFAULT_STORAGE_PATH) + "/" + CONFIG.TAGS_FILE;
+  }
+  function newTagId() {
+    return "t" + Date.now().toString(36);
+  }
+  function normalizeTags(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const r of raw) {
+      if (!r || typeof r !== "object") continue;
+      const o = r;
+      const label = typeof o.label === "string" ? o.label.trim() : "";
+      if (!label) continue;
+      out.push({
+        id: typeof o.id === "string" && o.id ? o.id : newTagId(),
+        label,
+        ic: typeof o.ic === "string" && o.ic ? o.ic : "tag"
+      });
+    }
+    return out;
+  }
   function getStorageDir(value) {
     let dir = (value || CONFIG.DEFAULT_STORAGE_PATH).trim().replace(/\/+$/, "");
     if (/\.json$/i.test(dir)) {
@@ -4704,6 +4741,8 @@ var BZW_favorites = (() => {
     constructor(storagePath) {
       this.store = jsonStore(storagePath);
       this.filePath = storagePath;
+      this.tagsPath = getTagsPath(storagePath);
+      this.tagsStore = jsonStore(this.tagsPath);
     }
     async read() {
       return this.store.read();
@@ -4749,6 +4788,53 @@ var BZW_favorites = (() => {
     }
     async getAll() {
       return await this.read();
+    }
+    // ==================== 标签定义（issue 363：favorites.tags.json） ====================
+    /**
+     * 载入标签定义并注入 config 单源（app.init 时调用）：文件缺失 → 回退内置 9 类 seed
+     * （零迁移，不建文件不写盘）；文件在 → 归一化（坏行剔除/缺 id 补）后生效；空数组/坏
+     * JSON（jsonStore 留档降级为 []）同样走 seed 回退。
+     */
+    async loadTags() {
+      let raw = null;
+      try {
+        if (getApp().vault.getAbstractFileByPath(this.tagsPath)) {
+          raw = await this.tagsStore.read();
+        }
+      } catch (e) {
+        raw = null;
+      }
+      const tags = normalizeTags(raw);
+      const next = tags.length ? tags : DEFAULT_TAGS;
+      setTags(next);
+      return next;
+    }
+    /** 保存标签定义（管理界面增删改排序的唯一落盘点）：写盘 + 注入单源即时生效 */
+    async saveTags(tags) {
+      await enqueueFileTask(this.tagsPath, async () => {
+        await this.tagsStore.write(tags);
+      });
+      setTags(tags);
+    }
+    /**
+     * 条目标签批量跟随（改名/删除迁移；范式 = memo updateSceneBulk）：tags[] 内 from → to
+     * 且 type 同步（type = tags[0] 派生字段），返回迁移条数；零匹配不写盘。
+     */
+    async updateTagLabelBulk(from, to) {
+      if (!from || from === to) return 0;
+      return enqueueFileTask(this.filePath, async () => {
+        const data = await this.read();
+        let n = 0;
+        data.forEach((d) => {
+          if ((d.tags || []).includes(from)) {
+            d.tags = d.tags.map((t) => t === from ? to : t);
+            if (d.type === from) d.type = to;
+            n++;
+          }
+        });
+        if (n > 0) await this.write(data);
+        return n;
+      });
     }
   };
 
@@ -6073,7 +6159,10 @@ var BZW_favorites = (() => {
       酒馆: 330,
       "DeepSeek Harness": 195
     };
-    return m[label] != null ? m[label] : 200;
+    if (m[label] != null) return m[label];
+    let h = 0;
+    for (let i = 0; i < label.length; i++) h = (h * 31 + label.charCodeAt(i)) % 360;
+    return h;
   }
   function visibleItems(items) {
     return items.filter((i) => !i.archived);
@@ -6109,7 +6198,7 @@ var BZW_favorites = (() => {
     <p>${esc(it.description || "（这张卡只写了个名字）")}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
       const h = hueOf(t);
-      const ic = (TAGS.find((x) => x.label === t) || { ic: "" }).ic;
+      const ic = (getTags().find((x) => x.label === t) || { ic: "" }).ic;
       return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic ? iconSpan(ic, "bz-ic--xs") : ""}<span>${esc(t)}</span></span>`;
     }).join("")}</span>
       <span>${esc(relTime(it.created))}</span></div>
@@ -6132,7 +6221,7 @@ var BZW_favorites = (() => {
     return acts;
   }
   function pickChipsHtml(sel) {
-    return TAGS.map(
+    return getTags().map(
       (t) => `<button type="button" class="${sel.has(t.label) ? "bz-fav-on" : ""}" data-tag="${esc(t.label)}">${iconSpan(t.ic, "bz-ic--xs")}<span>${esc(t.label)}</span></button>`
     ).join("");
   }
@@ -6166,7 +6255,7 @@ var BZW_favorites = (() => {
   function chipsHtml(items, view, mobile) {
     const mk = (label, ic, cnt, active, grey = false) => `<button class="bz-fav-chip${active ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}" data-fav-tag="${esc(label)}">${ic ? iconSpan(ic, "bz-ic--xs") : ""}<span>${esc(label)} ${cnt}</span></button>`;
     const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON.add, "bz-ic--xs")}<span>新收藏</span></button>`;
-    const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + TAGS.map((t) => {
+    const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + getTags().map((t) => {
       const n = tagCount(items, t.label);
       return n ? mk(t.label, t.ic, n, !view.archived && view.tag === t.label) : "";
     }).join("");
@@ -6215,10 +6304,10 @@ var BZW_favorites = (() => {
     if (v === "@last") {
       const last = s == null ? void 0 : s.favoritesLastFilter;
       if (last === "@archived") return { tag: null, archived: true };
-      if (last && TAGS.some((t) => t.label === last)) return { tag: last, archived: false };
+      if (last && getTags().some((t) => t.label === last)) return { tag: last, archived: false };
       return { tag: null, archived: false };
     }
-    if (v && TAGS.some((t) => t.label === v)) return { tag: v, archived: false };
+    if (v && getTags().some((t) => t.label === v)) return { tag: v, archived: false };
     return { tag: null, archived: false };
   }
   var mainEscRegistered = false;
@@ -6588,8 +6677,8 @@ var BZW_favorites = (() => {
       url: (it == null ? void 0 : it.url) || "",
       desc: (it == null ? void 0 : it.description) || "",
       pinned: !!(it == null ? void 0 : it.pinned),
-      // 与 DOM 脏比较同口径（只数九类 chip）：TAGS 外标签不进基线，一开表单不误判脏（F10）
-      tags: ((it == null ? void 0 : it.tags) || []).filter((t) => TAGS.some((x) => x.label === t)).sort().join("|")
+      // 与 DOM 脏比较同口径（只数当前标签集 chip，issue 363 动态）：标签集外标签不进基线，一开表单不误判脏（F10）
+      tags: ((it == null ? void 0 : it.tags) || []).filter((t) => getTags().some((x) => x.label === t)).sort().join("|")
     };
     const titleInp = popup.querySelector("#fz-title");
     const urlInp = popup.querySelector("#fz-url");
@@ -6670,11 +6759,12 @@ var BZW_favorites = (() => {
       setVal("#fz-url", data.url);
       setVal("#fz-desc", data.description);
       const rawTags = Array.isArray(data.tags) ? data.tags.map((x) => String(x)) : data.tags ? [String(data.tags)] : [];
-      const known = TAGS.map((t) => t.label);
+      const known = getTags().map((t) => t.label);
       const valid = rawTags.filter((t) => known.includes(t));
       const unknown = rawTags.filter((t) => !known.includes(t));
       if (unknown.length) notice(`AI 整理的标签「${unknown.join("、")}」不在列表中，已忽略`, "warning");
-      if (ghInfo && !valid.includes("GitHub")) valid.unshift("GitHub");
+      const ghTag = getTagById("github");
+      if ((ghInfo == null ? void 0 : ghInfo.fetched) && ghTag && !valid.includes(ghTag.label)) valid.unshift(ghTag.label);
       sel.clear();
       valid.forEach((t) => sel.add(t));
       redraw();
@@ -6690,7 +6780,7 @@ var BZW_favorites = (() => {
     }
   }
   function aiPrompt(title, url, desc, ghInfo) {
-    const known = TAGS.map((t) => t.label).join("、");
+    const known = getTags().map((t) => t.label).join("、");
     const base = `你是收藏整理助手。把用户输入的收藏信息整理成 JSON（只输出 JSON，不输出任何多余文字），严格以下格式：
 {"title":"标题","url":"链接","description":"简介","tags":["标签1","标签2"]}
 规则：

@@ -1,185 +1,189 @@
 /**
- * FSRS 参数自研拟合优化器（ADR-0077，ticket 174）
- *
- * 现状：fsrs.ts 的 19 权重 DEFAULT_W 写死，从不按个人复习历史学习。
- * 目标：根据 reviewHistory（每条含 timestamp/stage/rating/stability/R）优化权重，
- *      得到个人化记忆曲线。
+ * FSRS 参数自研拟合优化器（ADR-0077，ticket 174；issue 361 放开全 19 参数）
  *
  * 调研结论（子代理 2026-09-03）：npm 无纯 TS 现成优化器；官方 WASM 包对应 FSRS-5/6 非本插件 v4，
- * 且有 Electron/WASI 集成风险 → 自研纯 JS 优化器（前向传播 + 对数似然 + Adam）。
- * 首版只拟合 w[0..7] 子集（初始稳定性/难度 + 遗忘幂律），跑通后再放开全 19 参数。
+ * 且有 Electron/WASI 集成风险 → 自研纯 JS 优化器（回放前向传播 + 对数似然 + Adam）。
  *
- * 样本门槛：≥300 条全参、100~300 子集、<100 跳过（ADR-0077）。
- * 数值：参数范围约束（稳定性/难度为正等）、从 DEFAULT_W 初始化、小学习率 + 退火、log-sum-exp 防溢出。
+ * issue 361（2026-09）：目标函数重写为「整条历史回放」——以候选权重 w 从条目首次进入 FSRS 起
+ * 前向推演（initS → R → nextInterval），对每次实际评级记二分类对数似然
+ * （good/easy=记住 ∝ R，again/hard=遗忘 ∝ 1-R）。旧实现（逐对样本 + 录得的 S/D）的似然与 w
+ * 无关、梯度恒零（拟合空转回默认），回放式让全部权重真正进入目标：
+ *   - 基础档（100~299 条）：拟合 w[0..7] 八参（w[7] 在本插件 v4 模型中不进似然公式，梯度恒零保持初值）
+ *   - 全参档（≥300 条）：拟合全部 19 维（w[7]/w[15]/w[16]/w[18] 为 v4 模型未用参数，自动保持初值）
+ *
+ * 防不收敛拖死（拟合在评级路径 fire-and-forget 后台跑，但仍是主线程同步 CPU）：
+ * 迭代上限 + 停滞早停 + 墙钟时限三重护栏。
+ *
+ * 样本门槛（ADR-0077）：≥300 条全参、100~300 基础八参、<100 跳过。
+ * 数值：逐参数合法区间约束、从 DEFAULT_W 初始化、小学习率 + 退火、log 截断防溢出。
  */
 
-import { DEFAULT_D, DEFAULT_W } from './fsrs';
+import { DEFAULT_W, FSRS, type Rating } from './fsrs';
 
-/** 训练样本：一次「复习 → 下次评级」的观察 */
-export interface FitSample {
-  /** 距上次复习的天数 t（>0） */
-  t: number;
-  /** 上次评级后的稳定性 S */
-  S: number;
-  /** 上次评级后的难度 D */
-  D: number;
-  /** 本次实际评级（0=again,1=hard,2=good,3=easy） */
-  rating: number;
-  /** 该笔记当前阶段（区分阶梯/FSRS 相位；阶梯阶段样本不参与拟合） */
-  stage: number;
-}
-
-/** 拟合结果 */
-export interface FitResult {
-  /** 拟合后的 19 权重（首版只填前 8 个，其余为 DEFAULT_W） */
-  w: number[];
-  /** 对数似然（越大越好） */
-  logLikelihood: number;
-  /** 迭代轮数 */
-  iterations: number;
-}
-
-/** 评级 → 0..3（FSRS 内部序） */
+/** 评级序（FSRS 内部 0..3）↔ 名称（与 fsrs.ts Rating 同源） */
+const RATING_NAMES: Rating[] = ['again', 'hard', 'good', 'easy'];
 const RATING_INDEX: Record<string, number> = { again: 0, hard: 1, good: 2, easy: 3 };
 
-/** 数值稳定 sigmoid */
-function sigmoid(x: number): number {
-  if (x >= 0) {
-    const z = Math.exp(-x);
-    return 1 / (1 + z);
-  }
-  const z = Math.exp(x);
-  return z / (1 + z);
-}
-
-/** 将稳定性/难度约束到合法区间 */
-function clip(w: number[]): number[] {
-  // w[0..3] 初始稳定性：>0.01（again 允许很小但必须正）
-  // w[4..7] 遗忘幂律：w[4](again 难度) 在 [0,1]；w[5..7] 为正
-  const out = [...w];
-  for (let i = 0; i < 4; i++) out[i] = Math.max(0.01, out[i]);
-  out[4] = Math.max(0, Math.min(1, out[4]));
-  for (let i = 5; i < 8; i++) out[i] = Math.max(0.01, out[i]);
-  return out;
+/** 回放序列：单个条目 FSRS 相位的复习观察（时间升序） */
+export interface ReplaySeries {
+  /** 首次进入 FSRS 的评级（0..3）——回放起点（对齐 scheduleNext enteringFsrs 的 initS/initD） */
+  initRating: number;
+  /** 相邻复习对（前一条 → 本条）：t=间隔天数（>0），rating=本条评级（0..3） */
+  pairs: Array<{ t: number; rating: number }>;
 }
 
 /**
- * 前向：给定权重 w 与样本，计算「本次评级」的对数似然。
- *
- * 语义：样本记录了上次评级后的 (S, D)，距离 t 天后本次评级为 r。
- * 我们假设「记忆保留度」R = (1 + t/(S·d))^(-d)，遗忘概率 = 1 - R，
- * 评级 good/easy 概率 ∝ R、again/hard 概率 ∝ 1-R，用 softmax 归一化成 4 类概率。
- *
- * 简化近似（首版）：只建模「是否记得住」的二分类——P(remember) = R，
- * rating∈{good,easy} 视为记住，{again,hard} 视为遗忘。对数似然 = 记住则 log R，遗忘则 log(1-R)。
- * 这样梯度解析可算、数值稳定，且抓住核心信号（间隔缩放 vs 遗忘率）。
+ * 单条目 reviewHistory → 回放序列；无可回放对（FSRS 相位不足 2 条）返回 null。
+ * 只取 FSRS 相位记录：scheduleNext 仅 FSRS 相位（含进入点）写 stability，阶梯阶段固定表
+ * 不参与拟合——history.stability 存在即 FSRS 相位标记（旧数据只含 stability 无 difficulty 亦可，
+ * 回放从权重重建 S/D，不读录得值）。相邻配对 t<=0 剔除（零间隔重复复习不带信息）。
  */
-export function computeSampleLogLikelihood(w: number[], sample: FitSample): number {
-  // d（遗忘幂律指数）用全局固定 DEFAULT_D（0.9），不读 w[7]——FSRS 的 w[7] 是难度
-  // 演化参数（默认 0.01），不是幂指数，喂给 R 公式会产出「几乎不忘」的荒谬曲线。
-  // 拟合只个性化 S/D 演化权重（w[2..6] 等），遗忘曲线形状全局统一（终局 review 拍板口径）。
-  const d = DEFAULT_D;
-  const S = sample.S;
-  const t = sample.t;
-  // 记忆保留度（同 fsrs.ts R 公式）
-  const denom = Math.max(0.01, S * d);
-  const R = Math.pow(1 + t / denom, -d);
-  const remember = sample.rating === 2 || sample.rating === 3; // good/easy
-  // 数值稳定 log
-  const p = remember ? R : 1 - R;
-  return Math.log(Math.max(1e-9, Math.min(1 - 1e-9, p)));
-}
-
-/** 样本 → 是否需要拟合（仅 FSRS 相位 stage>=10 的样本，阶梯阶段固定表不参与） */
-export function isFittableSample(sample: FitSample): boolean {
-  return sample.stage >= 9; // LADDER_MAX=9：stage 9 已进入 fsrs 相位（对齐 fsrs.ts LADDER_MAX）
-}
-
-/**
- * 从 reviewHistory 构造训练样本。
- * reviewHistory 每条：{ timestamp, stage, rating, stability?, R? }（FSRS 相位记录含 stability/R）。
- * 逐条配对：上一条的 (stability, difficulty) 作为 S/D，本条 timestamp - 上条 timestamp = t，本条 rating 为标签。
- */
-export function buildFitSamples(
-  history: Array<{ timestamp: string; stage: number; rating: string; stability?: number; difficulty?: number }>,
-  opts?: { /** 上一条缺 difficulty 时回退条目级 item.difficulty（生产旧数据 history 无 difficulty） */
-    fallbackDifficulty?: number }
-): FitSample[] {
-  const out: FitSample[] = [];
-  for (let i = 1; i < history.length; i++) {
-    const prev = history[i - 1];
-    const cur = history[i];
-    // 需要上一条的 stability（FSRS 相位才记录）；difficulty 缺失回退条目级值
-    if (prev.stability === undefined) continue;
-    const prevD = prev.difficulty !== undefined ? prev.difficulty : opts?.fallbackDifficulty;
-    if (prevD === undefined) continue;
-    const t = (new Date(cur.timestamp).getTime() - new Date(prev.timestamp).getTime()) / 86400000;
+export function buildReplaySeries(
+  history: Array<{ timestamp: string; stage?: number; rating: string; stability?: number }>
+): ReplaySeries | null {
+  const fsrsEntries = history.filter((h) => h.stability !== undefined);
+  if (fsrsEntries.length < 2) return null;
+  const initRating = RATING_INDEX[fsrsEntries[0].rating];
+  if (initRating === undefined) return null;
+  const pairs: Array<{ t: number; rating: number }> = [];
+  for (let i = 1; i < fsrsEntries.length; i++) {
+    const t = (new Date(fsrsEntries[i].timestamp).getTime() - new Date(fsrsEntries[i - 1].timestamp).getTime()) / 86400000;
     if (!(t > 0)) continue;
-    const ratingIdx = RATING_INDEX[cur.rating];
-    if (ratingIdx === undefined) continue;
-    out.push({
-      t,
-      S: prev.stability,
-      D: prevD,
-      rating: ratingIdx,
-      stage: cur.stage,
-    });
+    const rating = RATING_INDEX[fsrsEntries[i].rating];
+    if (rating === undefined) continue;
+    pairs.push({ t, rating });
+  }
+  if (!pairs.length) return null;
+  return { initRating, pairs };
+}
+
+/** 全条目 → 回放序列列表（配对不跨条目：不同笔记的历史串联会产生假样本） */
+export function buildReplaySeriesFromItems(
+  items: Array<{ reviewHistory?: Array<{ timestamp: string; stage?: number; rating: string; stability?: number }> }>
+): ReplaySeries[] {
+  const out: ReplaySeries[] = [];
+  for (const it of items) {
+    const s = buildReplaySeries(it.reviewHistory || []);
+    if (s) out.push(s);
   }
   return out;
 }
 
 /**
- * 对数似然总和（用于拟合目标与评估）。
- * @param w 权重（长度 ≥8；只读前 8 个参与拟合，其余不参与梯度）
- * @param samples 训练样本
+ * 回放对数似然：给定候选权重，逐条目前向推演并累计「实际评级」的对数似然。
+ *  - 起点对齐 scheduleNext enteringFsrs：S0 = initS(initRating)，D0 = again→w[4] / 其余 0.3；
+ *  - 每对：R = R(t,S)（遗忘幂律指数 d 固定 DEFAULT_D，与调度同源），good/easy 记 log R、
+ *    again/hard 记 log(1-R)；
+ *  - 状态推进 nextInterval（nextDiff/nextStab 全走 FSRS 类公式——拟合与调度逐式同源，
+ *    拟合出的权重即刻就是调度用的那张记忆曲线）。
  */
-export function totalLogLikelihood(w: number[], samples: FitSample[]): number {
+export function replayLogLikelihood(w: number[], series: ReplaySeries[]): number {
+  const fsrs = new FSRS(w);
   let sum = 0;
-  for (const s of samples) {
-    if (!isFittableSample(s)) continue;
-    sum += computeSampleLogLikelihood(w, s);
+  for (const s of series) {
+    let S = fsrs.initS(RATING_NAMES[s.initRating]);
+    let D = s.initRating === 0 ? fsrs.w[4] : 0.3;
+    for (const p of s.pairs) {
+      const R = fsrs.R(p.t, S);
+      const remember = p.rating >= 2; // good/easy=记住，again/hard=遗忘
+      const prob = remember ? R : 1 - R;
+      sum += Math.log(Math.max(1e-9, Math.min(1 - 1e-9, prob)));
+      const next = fsrs.nextInterval(S, D, RATING_NAMES[p.rating], R);
+      S = next.S;
+      D = next.D;
+    }
   }
   return sum;
 }
 
-/** 数值梯度（中心差分；对 w[0..7] 求导） */
-export function numericGradient(w: number[], samples: FitSample[], eps = 1e-5): number[] {
+/** 19 权重合法区间（全参放开后逐参数约束，防 19 维跑飞产出 NaN/无穷记忆曲线；区间恒含 DEFAULT_W 除 w[4] 既有 [0,1] 口径） */
+const W_BOUNDS: ReadonlyArray<readonly [number, number]> = [
+  [0.01, 60], // w0  初始稳定性 again
+  [0.01, 120], // w1  hard
+  [0.01, 240], // w2  good
+  [0.01, 480], // w3  easy
+  [0, 1], // w4  again 难度（本插件口径）
+  [-1.5, 1.5], // w5  hard 难度增量
+  [-1.5, 1.5], // w6  easy 难度增量
+  [0.01, 10], // w7  （v4 模型未用，兜底约束）
+  [0.01, 10], // w8  成功演化 exp 系数
+  [0.01, 5], // w9  S 幂
+  [0.01, 10], // w10 (1-R) 系数
+  [0.01, 10], // w11 again 演化系数
+  [0.01, 5], // w12 D 幂
+  [0.01, 5], // w13 (S+1) 幂
+  [-5, 5], // w14 R 系数
+  [0.01, 10], // w15 （v4 模型未用）
+  [0.01, 10], // w16 （v4 模型未用）
+  [-5, 5], // w17 easy 奖励系数
+  [0.01, 10], // w18 （v4 模型未用）
+];
+
+/** 将权重约束到合法区间（就地语义的纯拷贝版） */
+function clipW(w: number[]): number[] {
+  return w.map((x, i) => {
+    const b = W_BOUNDS[i];
+    return b ? Math.max(b[0], Math.min(b[1], x)) : x;
+  });
+}
+
+/** 拟合结果 */
+export interface FitResult {
+  /** 拟合后的 19 权重（基础档只动 w[0..7]，全参档全部可动；模型未用参数保持初值） */
+  w: number[];
+  /** 对数似然（越大越好） */
+  logLikelihood: number;
+  /** 实际迭代轮数（早停/时限截断后小于上限） */
+  iterations: number;
+  /** 拟合档位：true=全参（≥300 条），false=基础八参（100~299 条）——issue 361 */
+  full: boolean;
+}
+
+/** 数值梯度（中心差分，对前 fitLen 维求导；模型未用参数梯度恒零，Adam 更新量为零自动保持初值） */
+export function numericGradient(w: number[], series: ReplaySeries[], fitLen = 8, eps = 1e-5): number[] {
   const grad = new Array(w.length).fill(0);
-  const base = totalLogLikelihood(w, samples);
-  for (let i = 0; i < Math.min(8, w.length); i++) {
-    const wp = [...w];
-    const wm = [...w];
-    wp[i] += eps;
-    wm[i] -= eps;
-    const fp = totalLogLikelihood(wp, samples);
-    const fm = totalLogLikelihood(wm, samples);
-    grad[i] = (fp - fm) / (2 * eps);
+  const wp = [...w];
+  const wm = [...w];
+  for (let i = 0; i < Math.min(fitLen, w.length); i++) {
+    wp[i] = w[i] + eps;
+    wm[i] = w[i] - eps;
+    grad[i] = (replayLogLikelihood(wp, series) - replayLogLikelihood(wm, series)) / (2 * eps);
+    wp[i] = w[i];
+    wm[i] = w[i];
   }
   return grad;
 }
 
 /**
- * Adam 梯度上升（最大化对数似然）。
- * 首版用数值梯度 + Adam（实现简单、数值稳），跑通后可换解析梯度加速。
+ * Adam 梯度上升（最大化回放对数似然）。
+ * 护栏：iterations 迭代上限 + stallRounds 停滞早停（改进 <1e-6 连续 N 轮）+ maxMs 墙钟时限
+ * （issue 361：19 维数值梯度的评估量是八参的 ~2.7 倍，三重护栏防大历史用户不收敛拖死后台拟合）。
  */
 export function fitFSRSParams(
-  samples: FitSample[],
+  series: ReplaySeries[],
   opts: {
     initW?: number[];
+    /** 迭代上限（默认：全参 120 / 基础 80） */
     iterations?: number;
+    /** Adam 学习率（默认 0.05） */
     lr?: number;
-    /** 是否全参拟合（默认 false=只 w[0..7] 子集） */
+    /** 是否全参拟合（默认 false=基础八参 w[0..7]） */
     full?: boolean;
+    /** 墙钟时限 ms（默认 3000） */
+    maxMs?: number;
+    /** 停滞早停轮数（默认 10） */
+    stallRounds?: number;
   } = {}
 ): FitResult {
   const initW = opts.initW ? [...opts.initW] : [...DEFAULT_W];
-  const iterations = opts.iterations ?? 150;
-  const lr = opts.lr ?? 0.02;
+  const iterations = Math.max(1, opts.iterations ?? (opts.full ? 120 : 80));
+  const lr = opts.lr ?? 0.05;
   const full = opts.full ?? false;
+  const maxMs = Math.max(0, opts.maxMs ?? 3000);
+  const stallRounds = Math.max(1, opts.stallRounds ?? 10);
 
-  // 只拟合子集：w[0..7]；full=true 时拟合前 8 个（首版全参也先只到 8，留 19 后续）
   const fitLen = full ? Math.min(19, initW.length) : Math.min(8, initW.length);
-  const w = clip(initW);
+  const w = clipW(initW);
 
   // Adam 状态
   const m = new Array(w.length).fill(0);
@@ -188,15 +192,18 @@ export function fitFSRSParams(
   const beta2 = 0.999;
   const eps = 1e-8;
 
-  let lastLL = totalLogLikelihood(w, samples);
+  const t0 = Date.now();
+  let lastLL = replayLogLikelihood(w, series);
   let bestW = [...w];
   let bestLL = lastLL;
   let stall = 0;
+  let done = 0;
 
   for (let it = 1; it <= iterations; it++) {
+    done = it;
     // 学习率退火：线性衰减到 1/4
     const lrIt = lr * (1 - 0.75 * (it / iterations));
-    const grad = numericGradient(w, samples);
+    const grad = numericGradient(w, series, fitLen);
 
     for (let i = 0; i < fitLen; i++) {
       m[i] = beta1 * m[i] + (1 - beta1) * grad[i];
@@ -206,52 +213,47 @@ export function fitFSRSParams(
       w[i] += lrIt * mHat / (Math.sqrt(vHat) + eps);
     }
 
-    // 约束
+    // 约束（就地逐维收敛到合法区间）
     for (let i = 0; i < fitLen; i++) {
-      if (i < 4) w[i] = Math.max(0.01, w[i]);
-      else if (i === 4) w[i] = Math.max(0, Math.min(1, w[i]));
-      else w[i] = Math.max(0.01, w[i]);
+      const b = W_BOUNDS[i];
+      if (b) w[i] = Math.max(b[0], Math.min(b[1], w[i]));
     }
 
-    const ll = totalLogLikelihood(w, samples);
+    const ll = replayLogLikelihood(w, series);
     if (ll > bestLL) {
       bestLL = ll;
       bestW = [...w];
     }
-    // 早停：改进 < 1e-6 连续 10 轮
+    // 早停：改进 < 1e-6 连续 stallRounds 轮
     if (Math.abs(ll - lastLL) < 1e-6) {
       stall++;
-      if (stall >= 10) break;
+      if (stall >= stallRounds) break;
     } else stall = 0;
     lastLL = ll;
+    // 墙钟护栏：不收敛也不拖死后台（同步 CPU 在主线程）
+    if (maxMs > 0 && Date.now() - t0 > maxMs) break;
   }
 
-  return { w: clip(bestW), logLikelihood: bestLL, iterations };
+  return { w: clipW(bestW), logLikelihood: bestLL, iterations: done, full };
 }
 
 /**
- * 拟合入口：从 reviewItems 的 reviewHistory 构造样本 → 判断门槛 → 拟合。
- * 返回 null 表示样本不足/无可拟合样本（调用方回退默认参数）。
+ * 拟合入口：从 reviewItems 的 reviewHistory 构造回放序列 → 判断门槛 → 分档拟合。
+ * 返回 null 表示样本不足/无可回放序列（调用方回退默认参数）。
  */
 export function fitFromItems(
-  items: Array<{
-    difficulty?: number;
-    reviewHistory?: Array<{ timestamp: string; stage: number; rating: string; stability?: number; difficulty?: number }>;
-  }>,
+  items: Array<{ reviewHistory?: Array<{ timestamp: string; stage?: number; rating: string; stability?: number }> }>,
   opts?: { full?: boolean }
 ): { fit: FitResult; count: number } | null {
-  // 按条目分别构样再拍平：配对不跨条目（不同笔记的历史串联会产生假样本）；
-  // 上一条缺 difficulty 时回退条目级 item.difficulty（生产旧数据 history 无 difficulty）
-  const samples = items.flatMap((i) => buildFitSamples((i.reviewHistory || []) as any, { fallbackDifficulty: i.difficulty }));
-  const fittable = samples.filter(isFittableSample);
-  const count = fittable.length;
-  // 样本门槛（ADR-0077）：≥300 全参、100~300 子集、<100 跳过
+  const series = buildReplaySeriesFromItems(items);
+  const count = series.reduce((n, s) => n + s.pairs.length, 0);
+  // 样本门槛（ADR-0077）：≥300 全参、100~300 基础八参、<100 跳过
   if (count < 100) return null;
   const full = opts?.full ?? count >= 300;
-  return { fit: fitFSRSParams(samples, { full }), count };
+  return { fit: fitFSRSParams(series, { full }), count };
 }
 
-/** 将拟合权重与默认权重合并为完整 19 权重（子集只覆盖前 8，其余取默认） */
+/** 将拟合权重与默认权重合并为完整 19 权重（拟合结果本身 19 维，等长即全量覆盖） */
 export function mergeFittedW(fitted: number[]): number[] {
   const out = [...DEFAULT_W];
   for (let i = 0; i < Math.min(19, fitted.length); i++) out[i] = fitted[i];

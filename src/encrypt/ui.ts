@@ -1,5 +1,5 @@
 /**
- * 统一保险库 UI（encrypt 域；ADR-0085 合并保险库 × 保险库，ADR-0155 密码资产视图退役）
+ * 统一保险库 UI（encrypt 域；ADR-0085 合并保险库 × 保险库，ADR-0158 密码资产视图退役）
  * 主面板 = 保险库三栏工作台（P1 资产档案库视觉）：
  *   - 左栏资产导航：品牌印章 + 概览 + 加密笔记（分类色计数）+ 体检状态 + 立即上锁
  *   - 中栏列表 / 右栏详情：加密笔记（预览/还原/删除）、加密日记（预览/还原回日记/复制正文/
@@ -102,9 +102,9 @@ export interface EncryptUIConfig {
 /** 默认生成字符集（唯一定义居 password-vault/data；此处再导出保持 ui.ts 公共面） */
 export { DEFAULT_PW_CHARSET };
 
-// cancelClipboardClear / copySensitiveWithFallback（含 textarea+execCommand 降级兜底，issue 347 收口）
+// cancelClipboardClear / copySensitiveWithFallback（含 textarea+execCommand 降级兜底，issue 365 收口）
 // 收口 core/utils（与 password-vault 同源共用单定时器，批次 G）；密码生成/强度计算随
-// ADR-0155 密码视图退役归 password-vault 域，本域仅保留日记正文复制（60s 清空）链路。
+// ADR-0158 密码视图退役归 password-vault 域，本域仅保留日记正文复制（60s 清空）链路。
 
 /** 上次停留资产（会话级记忆）：下次打开面板直落该资产，不回概览 */
 let lastVisitedAsset: VaultAsset = 'note';
@@ -483,10 +483,10 @@ export class UIManager {
   private unlockFailStreak = 0;
   /** 当前冷却截止时间戳（ms）；早于此的尝试被拒绝并提示剩余等待 */
   private unlockCooldownUntil = 0;
-  /** 搜索防抖（180ms 尾触；issue 347 收编 core debounce，原手写无 teardown 取消路径） */
+  /** 搜索防抖（180ms 尾触；issue 365 收编 core debounce，原手写无 teardown 取消路径） */
   searchDebounced = debounce(() => this.renderAll(), 180);
 
-  // ---------- 密码数据层（ADR-0155：仅共享锁/统计用途，视图归 password-vault 域） ----------
+  // ---------- 密码数据层（ADR-0158：仅共享锁/统计用途，视图归 password-vault 域） ----------
   /**
    * 密码数据管理器（与保险库同一 SafeManager 单例）。encrypt 面板不再渲染密码资产，
    * 本实例只承担三件共享职责：解锁后 load 供统计快照（captureLockStats 的 password-vault 档）、
@@ -511,7 +511,7 @@ export class UIManager {
   constructor(dataManager: SafeManager, config: EncryptUIConfig, pwDataManager?: PasswordVaultDataManager) {
     this.dataManager = dataManager;
     this.config = config;
-    // 密码数据管理器缺省自建（同一 SafeManager 单例）——Controller 可注入；无视图（ADR-0155）
+    // 密码数据管理器缺省自建（同一 SafeManager 单例）——Controller 可注入；无视图（ADR-0158）
     this.pwDataManager = pwDataManager || new PasswordVaultDataManager(dataManager);
     // 外部写密码条目不再触发面板重绘（无密码视图）：数据层重载照常，统计在下一次 renderAll 取新值
   }
@@ -836,7 +836,7 @@ export class UIManager {
   private ensureHealthElements() {
     const mask = document.createElement('div');
     mask.id = 'bz-encrypt-health-mask';
-    mask.className = 'bz-overlay-mask bz-encrypt-health-mask'; // issue 347：底/blur 归 core 单源，域类仅覆写 padding
+    mask.className = 'bz-overlay-mask bz-encrypt-health-mask'; // issue 365：底/blur 归 core 单源，域类仅覆写 padding
     mask.style.display = 'none';
     const popup = document.createElement('div');
     popup.id = 'bz-encrypt-health-popup';
@@ -1297,7 +1297,7 @@ export class UIManager {
       );
       const plats = this.pwDataManager.platforms();
       // password-vault 档 = 共享锁解锁屏统计（密码本域锁屏同款口径）；encrypt 侧代为快照：
-      // 只经保险库解锁的会话也能刷新该档（ADR-0155 后密码视图已摘，快照链路保留）
+      // 只经保险库解锁的会话也能刷新该档（ADR-0158 后密码视图已摘，快照链路保留）
       this.lockStatsCache['password-vault'] = [
         { num: String(plats.length), label: '平台' },
         { num: String(this.pwDataManager.pwData.length), label: '口令条目' },
@@ -1633,7 +1633,7 @@ export class UIManager {
    * 流程确认框（取消 / 确认 cta）：笔记/日记动作共用。
    * `danger`（issue 291 评审补）= 主动作是删除/销毁类 → 弹窗挂 `.bz-flow-dialog--danger`，
    * 主按钮降为中性底 + 红字（设计手册 §9/§10）。默认 false（还原等非破坏动作保持高亮）。
-   * password-vault 的 `askConfirm` 已随 issue 347 一并收编同一 core 流程框（两域同源）。
+   * password-vault 的 `askConfirm` 已随 issue 365 一并收编同一 core 流程框（两域同源）。
    */
   private askConfirm(
     title: string,
@@ -1655,10 +1655,10 @@ export class UIManager {
   }
 
   // 敏感文本复制（含降级兜底）+ 60s 自动清空：收口 core/utils copySensitiveWithFallback
-  // （issue 347：与 password-vault 两份逐字雷同的兜底实现一并删除，两域消费同一实现）。
+  // （issue 365：与 password-vault 两份逐字雷同的兜底实现一并删除，两域消费同一实现）。
 
   private setAssetFromNav(a: VaultAsset): void {
-    // 资产兜底：面板只管加密笔记/加密日记（pw 入口已随 ADR-0155 摘除），旧停留值残留统一落 note
+    // 资产兜底：面板只管加密笔记/加密日记（pw 入口已随 ADR-0158 摘除），旧停留值残留统一落 note
     if ((a as string) === 'pw' || a === 'diary') a = 'note';
     this.asset = a;
     lastVisitedAsset = a; // 记住停留资产：下次打开直落

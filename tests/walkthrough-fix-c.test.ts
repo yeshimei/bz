@@ -218,7 +218,7 @@ describe('批 C-14：clipbook rail 徽标白字对比（底色加深一档；ADR
 
 describe('批 C-15/16：literature 遮罩与 B站状态徽标', () => {
   it('遮罩统一 --bz-overlay + token 毛玻璃（--bz-overlay-blur 单源，memo item-1789106289860）', () => {
-    // issue 347：三件套（fixed/inset/--bz-overlay 底/token blur）再上收 core .bz-overlay-mask——
+    // issue 365：三件套（fixed/inset/--bz-overlay 底/token blur）再上收 core .bz-overlay-mask——
     // 域 CSS 不再自declared 规则，类名保留为 DOM 钩子（挂 core 单源类）
     const css = repo('src/knowledge/styles.css');
     expect(rule(css, '.bz-kb-mask'), '域内不应再有 .bz-kb-mask 自绘规则（已收编 core 单源）').toBeNull();

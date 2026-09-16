@@ -1,5 +1,5 @@
-/* 源指纹 60e43d4324b068f5 · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
+/* 源指纹 5463c1c5c44941ef · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
   var __create = Object.create;
@@ -4623,6 +4623,17 @@ var BZW_belongings = (() => {
       return "&#39;";
     });
   }
+  function yieldToMainThread(timeoutMs = 200) {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined") {
+        resolve();
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === "function") ric(() => resolve(), { timeout: timeoutMs });
+      else window.setTimeout(resolve, 0);
+    });
+  }
 
   // src/core/flow-dialog.ts
   var FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
@@ -4718,6 +4729,14 @@ var BZW_belongings = (() => {
     });
   }
 
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+
   // src/core/ui/icons.ts
   function uiIconSpan(name, extraClass = "") {
     const i = document.createElement("span");
@@ -4737,6 +4756,70 @@ var BZW_belongings = (() => {
       } catch (e) {
       }
     });
+  }
+
+  // src/core/ui/button.ts
+  function uiBtn(opts) {
+    const b = document.createElement("button");
+    b.type = "button";
+    const cls = ["bz-btn"];
+    if (opts.tone && opts.tone !== "default") cls.push(`bz-btn--${opts.tone}`);
+    if (opts.size && opts.size !== "md") cls.push(`bz-btn--${opts.size}`);
+    if (opts.chip) cls.push("bz-btn--chip");
+    if (opts.on) cls.push("is-on");
+    if (opts.className) cls.push(opts.className);
+    b.className = cls.join(" ");
+    if (opts.title) b.title = opts.title;
+    if (opts.disabled) b.disabled = true;
+    if (opts.icon) {
+      if (opts.chip) {
+        const chip = document.createElement("span");
+        chip.className = "bz-btn-chip";
+        chip.appendChild(uiIcon(opts.icon));
+        b.appendChild(chip);
+      } else {
+        b.appendChild(uiIcon(opts.icon));
+      }
+    }
+    if (opts.label) {
+      const span = document.createElement("span");
+      span.textContent = opts.label;
+      b.appendChild(span);
+    }
+    if (opts.onClick) b.addEventListener("click", opts.onClick);
+    return b;
+  }
+  function uiBtnRow(buttons, opts) {
+    const row = document.createElement("div");
+    const cls = ["bz-btn-row"];
+    if (opts == null ? void 0 : opts.center) cls.push("bz-btn-row--center");
+    if (opts == null ? void 0 : opts.grow) cls.push("bz-btn-row--grow");
+    row.className = cls.join(" ");
+    buttons.forEach((x) => row.appendChild(x));
+    return row;
+  }
+
+  // src/core/ui/empty.ts
+  function uiEmpty(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-empty";
+    if (opts.icon) {
+      const ic = uiIcon(opts.icon);
+      ic.classList.add("bz-empty-ic");
+      el.appendChild(ic);
+    }
+    const t = document.createElement("div");
+    t.className = "bz-empty-title";
+    t.textContent = opts.title;
+    el.appendChild(t);
+    if (opts.desc) {
+      const d = document.createElement("div");
+      d.className = "bz-empty-desc";
+      d.textContent = opts.desc;
+      el.appendChild(d);
+    }
+    if (opts.actions) el.appendChild(opts.actions);
+    return el;
   }
 
   // src/core/ui/suggest.ts
@@ -5966,6 +6049,12 @@ var BZW_belongings = (() => {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
 
+  // src/core/chart-palette.ts
+  var CHART_PASTEL_SERIES = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
+  var CHART_RANK_BADGES = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
+  var CHART_INK = "#3D4456";
+  var CHART_HIGHLIGHT = "#FFE5CC";
+
   // src/belongings/shared.ts
   var ICON = {
     add: "plus",
@@ -5973,7 +6062,9 @@ var BZW_belongings = (() => {
     close: "x",
     del: "trash-2",
     empty: "package",
-    chevD: "chevron-down"
+    chevD: "chevron-down",
+    report: "bar-chart-3"
+    // 年度资产报告工具行入口（issue 356）
   };
   var STATUS = {
     using: { label: "使用中", key: "using", ic: "check-circle" },
@@ -6244,6 +6335,465 @@ var BZW_belongings = (() => {
     return specs;
   }
 
+  // src/belongings/report-stats.ts
+  var COMPANION_TOP_N = 5;
+  function monthLabel(m) {
+    return `${m}月`;
+  }
+  function parseDayTs(raw) {
+    const parts = String(raw || "").slice(0, 10).split("-").map(Number);
+    const [y, m, d] = parts;
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d).getTime();
+  }
+  function yearOf(raw) {
+    const s = String(raw || "").slice(0, 4);
+    return /^\d{4}$/.test(s) ? s : "";
+  }
+  var DAY_MS = 864e5;
+  function exitTsOf(it) {
+    const exited = it.current_status === "已转卖" || it.current_status === "已丢弃";
+    return exited ? parseDayTs(it.exit_date) : null;
+  }
+  function priceOf(it) {
+    return Number(it.purchase_price) || 0;
+  }
+  function recoveredOf(it) {
+    return it.current_status === "已转卖" && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
+  }
+  function reportYears(items) {
+    const set = /* @__PURE__ */ new Set();
+    for (const it of items) {
+      const py = yearOf(it.purchase_date);
+      if (py) set.add(py);
+      const ey = yearOf(it.exit_date);
+      if (ey && (it.current_status === "已转卖" || it.current_status === "已丢弃")) set.add(ey);
+    }
+    return [...set].sort().reverse();
+  }
+  function resolveReportYear(items, year) {
+    const years = reportYears(items);
+    return years.includes(year) ? year : years[0] || "";
+  }
+  function avgDailyCostAsOf(items, cutoffTs) {
+    let cost = 0;
+    let days = 0;
+    for (const it of items) {
+      const p = parseDayTs(it.purchase_date);
+      if (p == null || p >= cutoffTs) continue;
+      cost += priceOf(it);
+      const ex = exitTsOf(it);
+      const capped = ex != null && ex < cutoffTs;
+      if (capped) cost -= recoveredOf(it);
+      days += Math.max(0, Math.floor(((capped ? ex : cutoffTs) - p) / DAY_MS));
+    }
+    return days ? cost / days : 0;
+  }
+  function computeYearReport(items, year, now = /* @__PURE__ */ new Date()) {
+    const y = Number(year);
+    const yearStart = new Date(y, 0, 1).getTime();
+    const yearEnd = new Date(y + 1, 0, 1).getTime();
+    const nowTs = now.getTime();
+    const purchased = items.filter((it) => {
+      const p = parseDayTs(it.purchase_date);
+      return p != null && p >= yearStart && p < yearEnd;
+    });
+    const exitedInYear = items.filter((it) => {
+      const ex = parseDayTs(it.exit_date);
+      return ex != null && ex >= yearStart && ex < yearEnd && (it.current_status === "已转卖" || it.current_status === "已丢弃");
+    });
+    const monthlySpend = Array.from({ length: 12 }, (_, i) => ({
+      label: monthLabel(i + 1),
+      amount: 0,
+      count: 0
+    }));
+    for (const it of purchased) {
+      const p = parseDayTs(it.purchase_date);
+      const m = new Date(p).getMonth();
+      monthlySpend[m].amount += priceOf(it);
+      monthlySpend[m].count += 1;
+    }
+    const catMap = /* @__PURE__ */ new Map();
+    for (const it of purchased) {
+      const name = catNameOf(it.category).trim() || "未分类";
+      const cur = catMap.get(name) || { count: 0, amount: 0 };
+      cur.count += 1;
+      cur.amount += priceOf(it);
+      catMap.set(name, cur);
+    }
+    const purchasedAmount = purchased.reduce((s, i) => s + priceOf(i), 0);
+    const categoryShare = [...catMap.entries()].map(([name, v]) => ({
+      name,
+      count: v.count,
+      amount: v.amount,
+      pct: purchasedAmount > 0 ? Math.round(v.amount / purchasedAmount * 1e3) / 10 : 0
+    })).sort((a, b) => b.amount - a.amount || b.count - a.count || a.name.localeCompare(b.name, "zh"));
+    const dailyCostTrend = Array.from({ length: 12 }, (_, i) => {
+      const cutoff = new Date(y, i + 1, 1).getTime();
+      const future = cutoff > nowTs;
+      return {
+        label: monthLabel(i + 1),
+        value: future ? 0 : avgDailyCostAsOf(items, cutoff),
+        future
+      };
+    });
+    const companionCutoff = Math.min(yearEnd, nowTs);
+    const companions = items.map((it) => {
+      const p = parseDayTs(it.purchase_date);
+      if (p == null || p >= companionCutoff) return null;
+      const ex = exitTsOf(it);
+      const end = ex != null && ex < companionCutoff ? ex : companionCutoff;
+      return { item: it, days: Math.max(0, Math.floor((end - p) / DAY_MS)) };
+    }).filter((r) => r != null).sort(
+      (a, b) => b.days - a.days || String(a.item.purchase_date || "").localeCompare(String(b.item.purchase_date || "")) || String(a.item.name || "").localeCompare(String(b.item.name || ""), "zh")
+    ).slice(0, COMPANION_TOP_N);
+    return {
+      year,
+      purchasedCount: purchased.length,
+      purchasedAmount,
+      exitedCount: exitedInYear.length,
+      recoveredAmount: exitedInYear.reduce((s, i) => s + recoveredOf(i), 0),
+      monthlySpend,
+      categoryShare,
+      dailyCostTrend,
+      companions,
+      hasYearData: purchased.length > 0 || exitedInYear.length > 0
+    };
+  }
+
+  // src/belongings/report.ts
+  var renderSeq = 0;
+  var progressToastSeq = 0;
+  var activeProgress = null;
+  var maskEl = null;
+  var ctxItems = [];
+  var ctxUnit = "cny";
+  var ctxYears = [];
+  var ctxYear = "";
+  var ctxOnAdd = null;
+  var SKELETON_HTML = '<div class="bz-belr-skeleton">统计中…</div>';
+  var ERROR_HTML = `<div class="bz-belr-error">
+  <div class="bz-belr-error-t">统计失败</div>
+  <div>读取归物本数据时出错，请关闭后重试</div>
+</div>`;
+  var IDLE_CALLBACK_TIMEOUT_MS = 50;
+  function yieldToMainThread2() {
+    return yieldToMainThread(IDLE_CALLBACK_TIMEOUT_MS);
+  }
+  function openBelReport(items, unit, opts = {}) {
+    var _a;
+    ctxItems = items;
+    ctxUnit = unit;
+    ctxOnAdd = (_a = opts.onAdd) != null ? _a : null;
+    ctxYears = [];
+    ctxYear = "";
+    if (maskEl) {
+      startReport();
+      return;
+    }
+    const mask = document.createElement("div");
+    mask.className = "bz-overlay-mask bz-bel-report-mask";
+    mask.innerHTML = `
+  <div class="bz-bel-report" role="dialog" aria-label="归物本年度资产报告">
+    <div class="bz-bel-report-head">
+      <div class="bz-bel-report-title">年度资产报告</div>
+      <div class="bz-bel-report-nav">
+        <button type="button" class="bz-icon-btn" data-belr-prev title="上一年" aria-label="上一年">${iconSpan("chevron-left")}</button>
+        <span class="bz-bel-report-year" data-belr-year>—</span>
+        <button type="button" class="bz-icon-btn" data-belr-next title="下一年" aria-label="下一年">${iconSpan("chevron-right")}</button>
+      </div>
+      <button type="button" class="bz-icon-btn bz-bel-report-close" data-belr-close title="关闭" aria-label="关闭报告">${iconSpan("x")}</button>
+    </div>
+    <div class="bz-bel-report-body" data-belr-body></div>
+  </div>`;
+    document.body.appendChild(mask);
+    topifyZ(mask);
+    mountIcons(mask);
+    maskEl = mask;
+    mask.addEventListener("click", (e) => {
+      const t = e.target;
+      if (e.target === mask) {
+        closeBelReport();
+        return;
+      }
+      if (t.closest("[data-belr-close]")) {
+        closeBelReport();
+        return;
+      }
+      if (t.closest("[data-belr-prev]")) {
+        stepYear(-1);
+        return;
+      }
+      if (t.closest("[data-belr-next]")) {
+        stepYear(1);
+        return;
+      }
+    });
+    startReport();
+  }
+  function closeBelReport() {
+    cancelBelReport();
+    if (maskEl) {
+      maskEl.remove();
+      maskEl = null;
+    }
+    ctxItems = [];
+    ctxYears = [];
+    ctxYear = "";
+    ctxOnAdd = null;
+  }
+  function cancelBelReport() {
+    renderSeq++;
+    if (activeProgress) {
+      activeProgress.hide();
+      activeProgress = null;
+    }
+  }
+  function stepYear(dir) {
+    const idx = ctxYears.indexOf(ctxYear);
+    if (idx < 0) return;
+    const next = idx - dir;
+    if (next < 0 || next >= ctxYears.length) return;
+    ctxYear = ctxYears[next];
+    paintYearNav();
+    startReport();
+  }
+  function paintYearNav() {
+    if (!maskEl) return;
+    const label = maskEl.querySelector("[data-belr-year]");
+    if (label) label.textContent = ctxYear || "—";
+    const idx = ctxYears.indexOf(ctxYear);
+    const prev = maskEl.querySelector("[data-belr-prev]");
+    const next = maskEl.querySelector("[data-belr-next]");
+    if (prev) prev.disabled = idx < 0 || idx >= ctxYears.length - 1;
+    if (next) next.disabled = idx < 0 || idx <= 0;
+  }
+  function startReport() {
+    const body = maskEl == null ? void 0 : maskEl.querySelector("[data-belr-body]");
+    if (!body) return;
+    cancelBelReport();
+    const seq = renderSeq;
+    const alive = () => seq === renderSeq && !!(maskEl == null ? void 0 : maskEl.isConnected) && body.isConnected;
+    body.innerHTML = SKELETON_HTML;
+    ctxYears = reportYears(ctxItems);
+    ctxYear = resolveReportYear(ctxItems, ctxYear);
+    paintYearNav();
+    const progress = notify("正在统计年度数据…", {
+      type: "progress",
+      duration: 0,
+      dedupeKey: `bz-belongings-report-progress-${++progressToastSeq}`
+    });
+    activeProgress = progress;
+    const finishAbort = () => {
+      progress.hide();
+      if (activeProgress === progress) activeProgress = null;
+    };
+    const finishDone = (quiet) => {
+      if (activeProgress === progress) activeProgress = null;
+      if (quiet) progress.hide();
+      else {
+        progress.setType("success");
+        progress.setMessage("年度报告完成");
+      }
+    };
+    const step = async () => {
+      progress.setMessage("正在读取归物本…");
+      await yieldToMainThread2();
+      if (!alive()) return finishAbort();
+      if (ctxItems.length === 0) {
+        body.innerHTML = "";
+        body.appendChild(buildLibraryEmpty());
+        mountIcons(body);
+        return finishDone(true);
+      }
+      progress.setMessage("正在汇总购入与离场…");
+      await yieldToMainThread2();
+      if (!alive()) return finishAbort();
+      const year = ctxYear;
+      const stats = computeYearReport(ctxItems, year);
+      if (!alive()) return finishAbort();
+      if (!stats.hasYearData) {
+        body.innerHTML = emptyYearHtml(year);
+        mountIcons(body);
+        return finishDone(true);
+      }
+      const sections = buildReportSections(stats);
+      body.innerHTML = "";
+      for (const section of sections) {
+        if (!alive()) return finishAbort();
+        await yieldToMainThread2();
+        if (!alive()) return finishAbort();
+        body.insertAdjacentHTML("beforeend", section.generate());
+        progress.setMessage(`正在生成${section.label}…`);
+      }
+      if (alive()) {
+        mountIcons(body);
+        finishDone(false);
+      } else {
+        finishAbort();
+      }
+    };
+    void step().catch((error) => {
+      console.error("生成归物本年度报告失败:", error);
+      if (activeProgress === progress) activeProgress = null;
+      if (alive()) {
+        progress.setType("error");
+        progress.setMessage("统计失败：读取归物本数据时出错，请重试");
+        body.innerHTML = ERROR_HTML;
+      } else {
+        progress.hide();
+      }
+    });
+  }
+  function buildLibraryEmpty() {
+    const actions = uiBtnRow(
+      [
+        uiBtn({
+          label: "记一笔",
+          icon: "plus",
+          tone: "primary",
+          onClick: () => ctxOnAdd == null ? void 0 : ctxOnAdd()
+        })
+      ],
+      { center: true }
+    );
+    return uiEmpty({
+      icon: "package",
+      title: "归物本还没有物品",
+      desc: "登记物品后，这里会按年生成资产报告：购入与离场、月度花销、分类占比和陪伴最久的物件",
+      actions
+    });
+  }
+  function emptyYearHtml(year) {
+    return `<div class="bz-belr-emptyyear">
+    <div class="bz-belr-emptyyear-t">${esc(year)} 年没有物品记录</div>
+    <div class="bz-belr-emptyyear-d">${ctxYears.length > 1 ? "用上方 ‹ › 切换到有记录的年份" : "在归物本补记这一年的物品后，这里会生成报告"}</div>
+  </div>`;
+  }
+  function buildReportSections(stats) {
+    return [
+      { key: "summary", label: "购入与离场概览", generate: () => summaryHtml(stats) },
+      { key: "monthly", label: "月度花销走势", generate: () => monthlyHtml(stats) },
+      { key: "categories", label: "分类占比", generate: () => categoriesHtml(stats) },
+      { key: "daily", label: "日均成本走势", generate: () => dailyHtml(stats) },
+      { key: "companions", label: "陪伴最久榜", generate: () => companionsHtml(stats) }
+    ];
+  }
+  function secHead(title, note = "") {
+    return `<div class="bz-belr-sec-head"><span class="bz-belr-sec-title">${esc(title)}</span>${note ? `<span class="bz-belr-sec-note">${esc(note)}</span>` : ""}</div>`;
+  }
+  function summaryHtml(stats) {
+    const card = (num, label, color) => `<div class="bz-belr-hero" style="background:${color}">
+      <b>${esc(num)}</b><span>${esc(label)}</span>
+    </div>`;
+    return `<div class="bz-belr-sec">
+  ${secHead(`${stats.year} 年购入与离场`)}
+  <div class="bz-belr-grid">
+  ${card(String(stats.purchasedCount), "购入件数", CHART_PASTEL_SERIES[0])}
+  ${card(moneyShort(stats.purchasedAmount, ctxUnit), "购入金额", CHART_PASTEL_SERIES[1])}
+  ${card(String(stats.exitedCount), "离场件数", CHART_PASTEL_SERIES[2])}
+  ${card(moneyShort(stats.recoveredAmount, ctxUnit), "转卖回血", CHART_PASTEL_SERIES[4])}
+  </div>
+  </div>`;
+  }
+  function columnsHtml(cols) {
+    const max = Math.max(0, ...cols.filter((c) => !c.future).map((c) => c.value));
+    return `<div class="bz-belr-cols">
+  ${cols.map((c) => {
+      const height = !c.future && c.value > 0 && max > 0 ? 12 + Math.round(c.value / max * 48) : 3;
+      const bg = c.future ? "transparent" : c.accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
+      const num = !c.future && c.value > 0 ? `<span class="bz-belr-col-num">${esc(c.display)}</span>` : "";
+      const cls = ["bz-belr-col", c.future ? "bz-belr-col--future" : "", c.accent ? "bz-belr-col--accent" : ""].filter(Boolean).join(" ");
+      return `<div class="${cls}"${c.title ? ` title="${esc(c.title)}"` : ""}>
+        ${num}
+        <div class="bz-belr-col-bar" style="height:${height}px;${c.future ? "" : `background:${bg}`}"></div>
+        <div class="bz-belr-col-label">${esc(c.label)}</div>
+      </div>`;
+    }).join("")}
+  </div>`;
+  }
+  function monthlyHtml(stats) {
+    const maxAmount = Math.max(0, ...stats.monthlySpend.map((m) => m.amount));
+    const cols = stats.monthlySpend.map((m) => ({
+      label: m.label,
+      value: m.amount,
+      display: moneyShort(m.amount, ctxUnit),
+      accent: m.amount > 0 && m.amount === maxAmount,
+      title: m.count > 0 ? `${m.label}购入 ${m.count} 件 · ${moneyShort(m.amount, ctxUnit)}` : `${m.label}无购入`
+    }));
+    return `<div class="bz-belr-sec">
+  ${secHead("月度花销走势", `全年购入 ${moneyShort(stats.purchasedAmount, ctxUnit)}`)}
+  ${columnsHtml(cols)}
+  </div>`;
+  }
+  function categoriesHtml(stats) {
+    const MAX_ROWS = 8;
+    const rows = stats.categoryShare.slice(0, MAX_ROWS);
+    const rest = stats.categoryShare.slice(MAX_ROWS);
+    if (rest.length > 0) {
+      rows.push({
+        name: `其他（${rest.length} 类）`,
+        count: rest.reduce((s, r) => s + r.count, 0),
+        amount: rest.reduce((s, r) => s + r.amount, 0),
+        pct: Math.round(rest.reduce((s, r) => s + r.pct, 0) * 10) / 10
+      });
+    }
+    const line = (row, i) => {
+      const color = CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length];
+      const width = Math.max(0, Math.min(100, row.pct));
+      return `<div class="bz-belr-row">
+      <span class="bz-belr-row-label" title="${esc(row.name)}">${esc(row.name)}</span>
+      <div class="bz-progress bz-progress--lg bz-belr-row-track"><i style="width:${width}%;background:${color}"></i></div>
+      <span class="bz-belr-row-val">${row.count} 件 · ${esc(moneyShort(row.amount, ctxUnit))} · ${row.pct}%</span>
+    </div>`;
+    };
+    return `<div class="bz-belr-sec">
+  ${secHead("分类占比", `共 ${stats.categoryShare.length} 类 · 按购入金额`)}
+  <div class="bz-belr-rows">${rows.map(line).join("")}</div>
+  </div>`;
+  }
+  function dailyHtml(stats) {
+    const cols = stats.dailyCostTrend.map((c) => ({
+      label: c.label,
+      value: c.future ? 0 : c.value,
+      display: c.value > 0 ? trimNum(c.value) : "0",
+      future: c.future,
+      title: c.future ? `${c.label}末尚未到来` : `${c.label}末日均 ${trimNum(c.value)}${c.value > 0 ? "/天" : ""}`
+    }));
+    return `<div class="bz-belr-sec">
+  ${secHead("日均成本走势", "口径：各月末时点 ·（总购入 − 转卖回本）/ 累计持有天数")}
+  ${columnsHtml(cols)}
+  </div>`;
+  }
+  function trimNum(n) {
+    return n.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+  }
+  function companionsHtml(stats) {
+    if (stats.companions.length === 0) {
+      return `<div class="bz-belr-sec">
+    ${secHead("陪伴最久榜")}
+    <p class="bz-belr-none">暂无可统计的物品</p>
+    </div>`;
+    }
+    const line = (row, i) => {
+      const it = row.item;
+      const price = Number(it.purchase_price) || 0;
+      const daily = row.days > 0 ? price / row.days : price;
+      const badge = i < CHART_RANK_BADGES.length ? ` style="background:${CHART_RANK_BADGES[i]};color:${CHART_INK}"` : "";
+      const goneYear = it.exit_date ? String(it.exit_date).slice(0, 4) : "";
+      return `<div class="bz-belr-comp">
+      <span class="bz-belr-comp-rank"${badge}>${i + 1}</span>
+      <span class="bz-belr-comp-name" title="${esc(it.name)}">${esc(it.name)}</span>
+      <span class="bz-belr-comp-meta">${esc(String(it.purchase_date || "").slice(0, 4) || "—")} 年购入${goneYear ? ` · ${esc(goneYear)} 年离场` : ""} · 日均 ${esc(moneyWith(trimNum(daily), ctxUnit))}</span>
+      <b class="bz-belr-comp-days">${row.days.toLocaleString("zh-CN")} 天</b>
+    </div>`;
+    };
+    return `<div class="bz-belr-sec">
+  ${secHead("陪伴最久榜", `截至 ${stats.year} 年末 · Top ${stats.companions.length}`)}
+  <div class="bz-belr-comps">${stats.companions.map(line).join("")}</div>
+  </div>`;
+  }
+
   // src/belongings/layouts/poster/render.ts
   function panelHtml() {
     return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-bel--poster">
@@ -6275,6 +6825,7 @@ var BZW_belongings = (() => {
         <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
       </div>
       <div class="bz-bel-sort" data-bel-sort></div>
+      <button class="bz-icon-btn bz-bel-reportbtn" data-bel-report title="年度资产报告" aria-label="年度资产报告">${iconSpan(ICON.report)}</button>
       <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
     </div>
     <div class="bz-mobstrip" data-bel-mobstatus></div>
@@ -7209,7 +7760,7 @@ var BZW_belongings = (() => {
     if (mainEscRegistered) return;
     mainEscRegistered = true;
     escManager.register("bz-bel", {
-      isVisible: () => !!M.overlay || !!document.querySelector(".bz-bel-form-mask") || !!document.querySelector(".bz-bel-detail-mask"),
+      isVisible: () => !!M.overlay || !!document.querySelector(".bz-bel-form-mask") || !!document.querySelector(".bz-bel-detail-mask") || !!document.querySelector(".bz-bel-report-mask"),
       close: () => {
         const form = document.querySelector(".bz-bel-form-mask");
         if (form) {
@@ -7219,6 +7770,10 @@ var BZW_belongings = (() => {
         const detail = document.querySelector(".bz-bel-detail-mask");
         if (detail) {
           closeBelDetail();
+          return;
+        }
+        if (document.querySelector(".bz-bel-report-mask")) {
+          closeBelReport();
           return;
         }
         closePanel();
@@ -7302,6 +7857,10 @@ var BZW_belongings = (() => {
         void openForm(null);
         return;
       }
+      if (t.closest("[data-bel-report]")) {
+        void openBelongingsReportView();
+        return;
+      }
       if (t.closest("[data-bel-close]")) {
         closePanel();
         return;
@@ -7376,6 +7935,7 @@ var BZW_belongings = (() => {
   function closePanel() {
     stopAutoRefresh();
     closeBelDetail();
+    closeBelReport();
     if (bodyThemeObserver) {
       bodyThemeObserver.disconnect();
       bodyThemeObserver = null;
@@ -7457,6 +8017,24 @@ var BZW_belongings = (() => {
     if (k === "__all") M.status = null;
     else M.status = M.status === k ? null : k;
     renderAll();
+  }
+  async function openBelongingsReportView() {
+    ensureBelongingsEsc();
+    let items;
+    if (M.db) {
+      items = itemList();
+    } else {
+      try {
+        items = Object.values((await loadDatabase()).items);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        notice("数据加载失败：" + msg, "error");
+        return;
+      }
+    }
+    openBelReport(items, currencyUnit(), { onAdd: () => {
+      void openForm(null);
+    } });
   }
   function closeBelDetail() {
     var _a;

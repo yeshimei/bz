@@ -122,7 +122,7 @@ describe('store-file 一次性迁移（ticket 120）', () => {
   it('无旧文件：返回空结构且不落盘（保持「空库不产生文件」语义）', async () => {
     const { vault } = makeEnv();
     const store = await loadStore();
-    expect(store).toEqual({ version: 1, meta: null, panel: null, link: { queue: [], state: {} }, chatHistory: [] });
+    expect(store).toEqual({ version: 1, meta: null, panel: null, link: { queue: [], state: {} }, chatHistory: [], weekly: null });
     expect(vault.files.has(getSecondBrainStorePath())).toBe(false);
   });
 });

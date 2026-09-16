@@ -18,7 +18,7 @@
  *   belongingsDefaultStatus 设置键；命令路径 openForm（面板未开可弹）；
  *   自动刷新（数据文件 modify，自写短路）；主题变化重渲染；ESC 分层（详情→表单→主面板）；
  *   脏表单 confirmDiscard；notifyUndo 撤销；主面板 topifyZ 动态发号（ADR-0067），
- *   表单/详情弹窗壳已收编 core uiModal（issue 347 第 5 项，z 发号随壳归 allocZ 单源）。
+ *   表单/详情弹窗壳已收编 core uiModal（issue 365 第 5 项，z 发号随壳归 allocZ 单源）。
  * 视觉换血按 ADR-0097 判例：.bz-bel--poster 域内 token 作用域覆盖 + .bz-bel-* 装饰类，
  *   chips/segmented/空态在 render.ts 串里沿用组件库皮（bz-chip/bz-segmented/bz-empty，ADR-0094 视觉）。
  */
@@ -37,6 +37,9 @@ import { emitDomainEvent } from '../core/domain-bus';
 import { belongingsEditChanges } from '../smartcat/belongings-source';
 import type { SettingsSchema } from '../core/settings-schema';
 import { loadDatabase, saveDatabase, getDataFilePath } from './data';
+import {
+  openBelReport, closeBelReport, unloadBelReport,
+} from './report';
 import {
   renderPanelView, panelHtml,
   belDetailHtml, flowBtnsHtml, belFormHtml, belFormInit, statusPickHtml, sheetHeadHtml,
@@ -207,13 +210,14 @@ function itemById(id: string): BelongingsItem | undefined {
 // ==================== 主面板生命周期 ====================
 
 /** ESC 层（bz-bel）：主面板兜底层——表单/详情已各自成为 uiModal 'bz-modal' 层（后注册先关），
- *  本层的表单/详情分支仅作兜底（选择器已迁 popup 类）。顶层先关，不穿透（对照 favorites bz-fav）。 */
+ *  本层的表单/详情分支仅作兜底（选择器已迁 popup 类）；年度报告（issue 356）仍为自绘遮罩，
+ *  层序在详情之下、主面板之上。顶层先关，不穿透（对照 favorites bz-fav）。 */
 let mainEscRegistered = false;
 function ensureBelongingsEsc(): void {
   if (mainEscRegistered) return;
   mainEscRegistered = true;
   escManager.register('bz-bel', {
-    isVisible: () => !!M.overlay || !!document.querySelector('.bz-bel-form') || !!document.querySelector('.bz-bel-detail'),
+    isVisible: () => !!M.overlay || !!document.querySelector('.bz-bel-form') || !!document.querySelector('.bz-bel-detail') || !!document.querySelector('.bz-bel-report-mask'),
     close: () => {
       if (document.querySelector('.bz-bel-form')) {
         // 脏表单走 confirmDiscard 拦截（ticket 189，对照 favorites）
@@ -222,6 +226,11 @@ function ensureBelongingsEsc(): void {
       }
       if (document.querySelector('.bz-bel-detail')) {
         closeBelDetail();
+        return;
+      }
+      // 年度报告（issue 356）：层序在详情之下、主面板之上——报告先关，再落主面板
+      if (document.querySelector('.bz-bel-report-mask')) {
+        closeBelReport();
         return;
       }
       closePanel();
@@ -314,6 +323,8 @@ async function openPanelInner(): Promise<void> {
     const t = e.target as HTMLElement;
     if (e.target === overlay) { closePanel(); return; }
     if (t.closest('[data-bel-add]')) { void openForm(null); return; }
+    // 年度报告（issue 356）：以当前库开报告页（命令路径共用同一视图入口）
+    if (t.closest('[data-bel-report]')) { void openBelongingsReportView(); return; }
     if (t.closest('[data-bel-close]')) { closePanel(); return; }
     // 状态 chips：再点「全部」= 取消筛选回未筛选；再点当前项 = 取消筛选回全部
     const chip = t.closest('[data-bel-st]') as HTMLElement | null;
@@ -337,7 +348,7 @@ async function openPanelInner(): Promise<void> {
   // 搜索（B3：防抖定时器在面板关闭后仍会触发——首行守卫 overlay 存活；渲染序列含 hero，
   // 副题「N 件在列」计数随搜索刷新）
   const bindSearch = (inp: HTMLInputElement) => {
-    // issue 347 收编 core debounce（尾触防抖 + overlay 存活守卫原样保留）
+    // issue 365 收编 core debounce（尾触防抖 + overlay 存活守卫原样保留）
     const debounced = debounce(() => {
       if (!M.overlay) return;
       M.q = inp.value.trim();
@@ -388,6 +399,8 @@ async function openPanelInner(): Promise<void> {
 export function closePanel(): void {
   stopAutoRefresh();
   closeBelDetail();
+  // 年度报告随面板关闭收口（issue 356：报告是面板上下文的派生视图，不留孤儿在途渲染）
+  closeBelReport();
   // 主题监听随面板关闭断开（H17）：面板关闭期间 body class 变动不再空转回调（有界泄漏）
   if (bodyThemeObserver) {
     bodyThemeObserver.disconnect();
@@ -411,6 +424,8 @@ export function cleanupBelongings(): void {
     bodyThemeObserver.disconnect();
     bodyThemeObserver = null;
   }
+  // 卸载收口（issue 356）：作废在途报告渲染 + 复位报告模块状态（面板可能从未开过）
+  unloadBelReport();
   resetBelongingsState();
 }
 
@@ -489,7 +504,30 @@ function applyStatusFilter(k: string): void {
   renderAll();
 }
 
-// ==================== 详情弹窗（P20 桌面点卡；壳收编 core uiModal，issue 347 第 5 项） ====================
+// ==================== 年度报告视图（issue 356：工具行入口 + 命令共用） ====================
+
+/**
+ * 打开年度资产报告页：面板开着以当前库快照直开；面板未开（命令路径）从盘载库，
+ * 不牵动面板状态（M.db 仍空，报告页自持快照）。已开着 = 就地用新快照重开（report 层语义）。
+ */
+export async function openBelongingsReportView(): Promise<void> {
+  ensureBelongingsEsc(); // 命令路径可先于面板开报告——ESC 层在此保证已注册
+  let items: BelongingsItem[];
+  if (M.db) {
+    items = itemList();
+  } else {
+    try {
+      items = Object.values((await loadDatabase()).items);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      notice('数据加载失败：' + msg, 'error');
+      return;
+    }
+  }
+  openBelReport(items, currencyUnit(), { onAdd: () => { void openForm(null); } });
+}
+
+// ==================== 详情弹窗（P20 桌面点卡；壳收编 core uiModal，issue 365 第 5 项） ====================
 
 /** 详情弹窗关闭句柄（core uiModal close；closePanel/closeBelDetail 统一走此单路径） */
 let belDetailClose: (() => void) | null = null;
@@ -737,7 +775,7 @@ function belFormStatusNow(mask: HTMLElement): string {
 
 function belFormDirty(): boolean {
   if (!_belBaseline) return false;
-  // 表单壳已收编 core uiModal（issue 347 第 5 项）：popup 挂 bz-bel-form，字段都在其下
+  // 表单壳已收编 core uiModal（issue 365 第 5 项）：popup 挂 bz-bel-form，字段都在其下
   const pop = document.querySelector('.bz-bel-form') as HTMLElement | null;
   if (!pop) return false;
   const g = (id: string) => (pop.querySelector(id) as HTMLInputElement | null)?.value ?? '';
@@ -804,7 +842,7 @@ export function openForm(it: BelongingsItem | null): void {
   const init = belFormInit(it);
   // ESC 层先于 uiModal 入栈（弹窗层恒压主面板层）；表单可在面板未开时打开（命令路径）
   ensureBelongingsEsc();
-  // 壳走 core uiModal 单源（issue 347 第 5 项）：遮罩创建/z 发号/遮罩点击关/ESC 关全归 uiModal，
+  // 壳走 core uiModal 单源（issue 365 第 5 项）：遮罩创建/z 发号/遮罩点击关/ESC 关全归 uiModal，
   // 脏拦截经 requestClose 通道（遮罩点击/ESC → requestCloseBelForm，脏表单先弹放弃确认）
   const host = document.createElement('div');
   host.innerHTML = belFormHtml(it, currencyUnit());

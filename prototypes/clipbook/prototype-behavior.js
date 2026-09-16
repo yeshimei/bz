@@ -1,5 +1,5 @@
-/* 源指纹 d17c94467e763c87 · 仓内输入 97 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 9bed9bc13fd853da · 仓内输入 100 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -3321,18 +3321,18 @@ var BZW_clipbook = (() => {
           return res;
         }
         function createAdder(direction, name) {
-          return function(val, period) {
+          return function(val, period2) {
             var dur, tmp;
-            if (period !== null && !isNaN(+period)) {
+            if (period2 !== null && !isNaN(+period2)) {
               deprecateSimple(
                 name,
                 "moment()." + name + "(period, number) is deprecated. Please use moment()." + name + "(number, period). See http://momentjs.com/guides/#/warnings/add-inverted-param/ for more info."
               );
               tmp = val;
-              val = period;
-              period = tmp;
+              val = period2;
+              period2 = tmp;
             }
-            dur = createDuration(val, period);
+            dur = createDuration(val, period2);
             addSubtract(this, dur, direction);
             return this;
           };
@@ -4876,6 +4876,17 @@ var BZW_clipbook = (() => {
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return h >>> 0;
   }
+  function yieldToMainThread(timeoutMs = 200) {
+    return new Promise((resolve2) => {
+      if (typeof window === "undefined") {
+        resolve2();
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === "function") ric(() => resolve2(), { timeout: timeoutMs });
+      else window.setTimeout(resolve2, 0);
+    });
+  }
   var import_moment;
   var init_utils = __esm({
     "src/core/utils.ts"() {
@@ -4934,7 +4945,7 @@ var BZW_clipbook = (() => {
       popup.innerHTML = parts.html;
       mask.appendChild(popup);
       document.body.appendChild(mask);
-      const escHandle2 = escManager.register("q3-confirm", {
+      const escHandle3 = escManager.register("q3-confirm", {
         isVisible: () => mask.isConnected,
         close: () => settle(void 0)
       });
@@ -4948,7 +4959,7 @@ var BZW_clipbook = (() => {
         if (settled) return;
         settled = true;
         if (activeSettle === settle) activeSettle = null;
-        escHandle2.unregister();
+        escHandle3.unregister();
         mask.remove();
         restoreFocus();
         resolve2(v);
@@ -6179,8 +6190,22 @@ ${c.trim()}
       // issue 329 新段：旧侧写无此三段 → 空对象兜底；段内结构容错（非法形态整段丢弃）
       marks: resolveRecord(data && data.marks, (v) => Array.isArray(v) ? v.filter((m) => m && typeof m.find === "string" && typeof m.notePath === "string") : []),
       savedImages: resolveRecord(data && data.savedImages, (v) => Array.isArray(v) ? v.filter((im) => im && typeof im.src === "string" && typeof im.local === "string") : []),
-      pendingSource: resolveRecord(data && data.pendingSource, (v) => Array.isArray(v) ? v.map(String).filter(Boolean) : [])
+      pendingSource: resolveRecord(data && data.pendingSource, (v) => Array.isArray(v) ? v.map(String).filter(Boolean) : []),
+      // issue 358 新段：旧侧写无此段 → 空数组兜底；条目形态容错（非法条目整条丢弃）
+      readLog: resolveReadLog(data == null ? void 0 : data.readLog)
     };
+  }
+  function resolveReadLog(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(
+      (e) => e && typeof e === "object" && typeof e.key === "string" && e.key && typeof e.minutes === "number" && isFinite(e.minutes) && e.minutes > 0 && typeof e.ts === "number" && isFinite(e.ts)
+    ).map((e) => ({
+      key: e.key,
+      title: typeof e.title === "string" ? e.title : "",
+      src: typeof e.src === "string" ? e.src : "",
+      minutes: e.minutes,
+      ts: e.ts
+    }));
   }
   function resolveRecord(raw, coerce) {
     if (!raw || raw === null || typeof raw !== "object" || Array.isArray(raw)) return {};
@@ -6204,7 +6229,7 @@ ${c.trim()}
     });
   }
   function emptySidecar() {
-    return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
+    return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
   }
   var CLIPBOOK_JSON;
   var init_data = __esm({
@@ -12478,54 +12503,54 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   async function fillBody(st, node, cardEl) {
     var _a;
-    const bodyEl = cardEl.querySelector(".bz-kb-mt-body");
-    if (!bodyEl) return;
+    const bodyEl2 = cardEl.querySelector(".bz-kb-mt-body");
+    if (!bodyEl2) return;
     if (node.attached && st.folded.has(node.id)) return;
     const stale = !!node.missing || st.ghosts.has(node.id) && !ghostTargetExists(st, node);
     if (stale) {
-      bodyEl.innerHTML = '<div class="bz-kb-mt-ph is-missing">失效：目标已不存在（改名或删除后残留）</div>';
+      bodyEl2.innerHTML = '<div class="bz-kb-mt-ph is-missing">失效：目标已不存在（改名或删除后残留）</div>';
       return;
     }
     if (node.kind === "image" || node.kind === "video") {
-      bodyEl.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml(node.path)}</div>`;
+      bodyEl2.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml(node.path)}</div>`;
       return;
     }
     const app = (_a = st.ctx.app) != null ? _a : getApp();
     const ghost = st.ghosts.get(node.id);
     const md = ghost ? await suggestionUnitMarkdown(app, ghost) : bodyMarkdown(st, node);
     if (md === null) {
-      bodyEl.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
+      bodyEl2.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
       return;
     }
     if (!md.trim()) {
-      bodyEl.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
+      bodyEl2.innerHTML = '<div class="bz-kb-mt-ph">（无正文）</div>';
       return;
     }
     let ok = false;
     if (app == null ? void 0 : app.vault) {
       try {
         const comp = new Component();
-        await MarkdownRenderer.render(app, md, bodyEl, node.path, comp);
+        await MarkdownRenderer.render(app, md, bodyEl2, node.path, comp);
         comp.unload();
         ok = true;
       } catch (e) {
         ok = false;
       }
     }
-    if (ok && bodyEl.querySelector("*")) {
-      tagBodyLinks(st, node, bodyEl);
+    if (ok && bodyEl2.querySelector("*")) {
+      tagBodyLinks(st, node, bodyEl2);
       return;
     }
-    bodyEl.textContent = "";
+    bodyEl2.textContent = "";
     for (const part of md.split(/\r?\n\r?\n+/)) {
       const t = part.trim();
       if (!t) continue;
       const p = document.createElement("div");
       p.className = "bz-kb-mt-ptext";
       p.textContent = t;
-      bodyEl.appendChild(p);
+      bodyEl2.appendChild(p);
     }
-    tagBodyLinks(st, node, bodyEl);
+    tagBodyLinks(st, node, bodyEl2);
   }
   function normRef(v) {
     return String(v != null ? v : "").trim().replace(/\\/g, "/").replace(/^\.\//, "").replace(/\.md$/i, "").replace(/^\/+/, "").toLowerCase();
@@ -12548,9 +12573,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     return out;
   }
-  function tagBodyLinks(st, node, bodyEl) {
+  function tagBodyLinks(st, node, bodyEl2) {
     var _a;
-    const links = Array.from(bodyEl.querySelectorAll("a.internal-link, a[data-href]"));
+    const links = Array.from(bodyEl2.querySelectorAll("a.internal-link, a[data-href]"));
     if (!links.length) return;
     const outgoing = ((_a = st.tree.edges) != null ? _a : []).filter(
       (e) => (st.direction === "downstream" ? e.from : e.to) === node.id
@@ -12609,23 +12634,23 @@ ${String(blockText != null ? blockText : "").trim()}`);
       const colorKind = (_b = kindById.get(st.direction === "downstream" ? e.to : e.from)) != null ? _b : "para";
       const cardEl = st.cards.get(bearerId);
       if (!cardEl || cardEl.style.display === "none") continue;
-      const bodyEl = cardEl.querySelector(".bz-kb-mt-body");
-      if (!bodyEl) continue;
+      const bodyEl2 = cardEl.querySelector(".bz-kb-mt-body");
+      if (!bodyEl2) continue;
       const anchor = (_d = (_c = st.tree.nodes.find((n) => n.id === e.to)) == null ? void 0 : _c.anchor) != null ? _d : null;
-      const point = measureDot(st, cardEl, bodyEl, anchor, key, colorKind, cursor, !!e.suggested);
+      const point = measureDot(st, cardEl, bodyEl2, anchor, key, colorKind, cursor, !!e.suggested);
       if (point) out.set(id, point);
     }
     return out;
   }
-  function measureDot(st, cardEl, bodyEl, anchor, key, colorKind, cursor, highlight = false) {
+  function measureDot(st, cardEl, bodyEl2, anchor, key, colorKind, cursor, highlight = false) {
     var _a;
     if (!anchor) return null;
     const needles = anchorNeedles(anchor);
     if (needles.length === 0) return null;
     const color = mountKindColor(colorKind);
-    const dot = insertAnchorDot(bodyEl, needles, key, (_a = cursor.get(bodyEl)) != null ? _a : 0, highlight, color);
+    const dot = insertAnchorDot(bodyEl2, needles, key, (_a = cursor.get(bodyEl2)) != null ? _a : 0, highlight, color);
     if (!dot) return null;
-    cursor.set(bodyEl, Number(dot.getAttribute("data-mt-at") || 0));
+    cursor.set(bodyEl2, Number(dot.getAttribute("data-mt-at") || 0));
     dot.style.color = color;
     const nodeId = cardEl.getAttribute("data-mt-id") || "";
     const base = st.pos[nodeId];
@@ -12637,9 +12662,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       y: base.y + dot.offsetTop + dot.offsetHeight / 2
     };
   }
-  function insertAnchorDot(bodyEl, needles, key, from, highlight = false, color = "") {
+  function insertAnchorDot(bodyEl2, needles, key, from, highlight = false, color = "") {
     var _a, _b;
-    const idx = textIndexOf(bodyEl);
+    const idx = textIndexOf(bodyEl2);
     const hit = locateInText2(idx.text, needles, from);
     if (!hit) return null;
     const dot = document.createElement("i");
@@ -14049,21 +14074,21 @@ ${String(blockText != null ? blockText : "").trim()}`);
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
           this._previewNote = n;
-          const bodyEl = ovl ? q(ovl, "#bz-kb-preview-body") : null;
-          if (bodyEl) {
-            bodyEl.textContent = "";
+          const bodyEl2 = ovl ? q(ovl, "#bz-kb-preview-body") : null;
+          if (bodyEl2) {
+            bodyEl2.textContent = "";
             if (body) {
               try {
                 const comp = new Component();
-                await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
+                await MarkdownRenderer.render(this.app, body, bodyEl2, n.path, comp);
                 comp.unload();
               } catch (e) {
               }
-              if (!bodyEl.querySelector("*")) {
-                bodyEl.innerHTML = parasHtml;
+              if (!bodyEl2.querySelector("*")) {
+                bodyEl2.innerHTML = parasHtml;
               }
             } else {
-              bodyEl.innerHTML = parasHtml;
+              bodyEl2.innerHTML = parasHtml;
             }
           }
           const srcLinks = ovl ? ovl.querySelectorAll("[data-lit-src-url]") : [];
@@ -17352,13 +17377,16 @@ ${body}`;
   });
 
   // src/clipbook/flow.ts
-  function setReadingSession(key) {
+  function setReadingSession(key, meta) {
     if (key !== curKey) {
+      flushReadingSession();
       curKey = key;
+      curMeta = meta || null;
       accumMs = 0;
       openedAt = Date.now();
     } else if (!openedAt) {
       openedAt = Date.now();
+      if (meta && !curMeta) curMeta = meta;
     }
   }
   function pauseReadingSession() {
@@ -17371,6 +17399,32 @@ ${body}`;
     const now = Date.now();
     const total = (openedAt ? now - openedAt : 0) + accumMs;
     return Math.max(1, Math.round(total / 6e4));
+  }
+  function flushReadingSession() {
+    if (!curKey) return;
+    const now = Date.now();
+    const total = (openedAt ? now - openedAt : 0) + accumMs;
+    openedAt = 0;
+    accumMs = 0;
+    if (total < 6e4) return;
+    const entry = {
+      key: curKey,
+      title: (curMeta == null ? void 0 : curMeta.title) || "",
+      src: (curMeta == null ? void 0 : curMeta.src) || "",
+      minutes: Math.max(1, Math.round(total / 6e4)),
+      ts: now
+    };
+    void appendReadLog(entry).catch((e) => console.error("[剪藏本] 阅读时长入账失败", e));
+  }
+  async function appendReadLog(entry) {
+    await updateClipbookData((cur) => {
+      return { ...cur, readLog: trimReadLog([...cur.readLog || [], entry], entry.ts) };
+    });
+  }
+  function trimReadLog(list, now) {
+    const floor = now - READ_LOG_RETENTION_MS;
+    const kept = list.filter((e) => e && typeof e.ts === "number" && isFinite(e.ts) && e.ts >= floor);
+    return kept.length > READ_LOG_MAX_ENTRIES ? kept.slice(kept.length - READ_LOG_MAX_ENTRIES) : kept;
   }
   function bumpStats(s, action, platform, today, upgraded) {
     if (!upgraded) {
@@ -17440,6 +17494,7 @@ ${body}`;
       const evt = buildReadEvt(raw, "saved");
       if (bump.changed) emitDomainEvent("news", { kind: "read", evt });
       emitDomainEvent("news", { kind: "saved", evt, clipPath: `${dirOf()}/${String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim()}.md` });
+      flushReadingSession();
       return true;
     } catch (e) {
       console.error("[剪藏本] 保存失败", e);
@@ -17452,6 +17507,7 @@ ${body}`;
     pauseReadingSession();
     const res = await markHandledAndBump(raw, "skipped");
     if (res.changed) emitReadEvt(raw, "skipped");
+    flushReadingSession();
     return res;
   }
   async function flowDeleteNews(article) {
@@ -17539,7 +17595,7 @@ ${body}`;
     const s = tryGetSettings();
     return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
   }
-  var curKey, openedAt, accumMs, NO_BUMP;
+  var curKey, curMeta, openedAt, accumMs, READ_LOG_RETENTION_MS, READ_LOG_MAX_ENTRIES, NO_BUMP;
   var init_flow = __esm({
     "src/clipbook/flow.ts"() {
       init_domain_bus();
@@ -17551,8 +17607,11 @@ ${body}`;
       init_data();
       init_write_queue();
       curKey = "";
+      curMeta = null;
       openedAt = 0;
       accumMs = 0;
+      READ_LOG_RETENTION_MS = 180 * 24 * 60 * 60 * 1e3;
+      READ_LOG_MAX_ENTRIES = 5e3;
       NO_BUMP = { changed: false, upgraded: false, stats: null };
     }
   });
@@ -21071,6 +21130,94 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
+  // src/core/chart-palette.ts
+  var CHART_PASTEL_SERIES, CHART_RANK_BADGES, CHART_HIGHLIGHT;
+  var init_chart_palette = __esm({
+    "src/core/chart-palette.ts"() {
+      CHART_PASTEL_SERIES = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
+      CHART_RANK_BADGES = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
+      CHART_HIGHLIGHT = "#FFE5CC";
+    }
+  });
+
+  // src/clipbook/report-stats.ts
+  function periodStartTs(period2, now) {
+    if (period2 === "month") {
+      return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    }
+    const offset = (now.getDay() + 6) % 7;
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset).getTime();
+  }
+  function filterReadLogByPeriod(log, period2, now) {
+    const start = periodStartTs(period2, now);
+    return (log || []).filter((e) => e && typeof e.ts === "number" && isFinite(e.ts) && e.ts >= start);
+  }
+  function hourOf(ts) {
+    const h = new Date(ts).getHours();
+    return h >= 0 && h < 24 ? h : 0;
+  }
+  function dayKeyOf(ts) {
+    const d = new Date(ts);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function buildClipReport(log, period2, now = /* @__PURE__ */ new Date()) {
+    const entries = filterReadLogByPeriod(log, period2, now);
+    const minutesByKey = /* @__PURE__ */ new Map();
+    const srcMap = /* @__PURE__ */ new Map();
+    const hours = new Array(24).fill(0);
+    const days = /* @__PURE__ */ new Set();
+    let totalMinutes = 0;
+    for (const e of entries) {
+      const m = Math.max(0, Math.round(Number(e.minutes) || 0));
+      if (m <= 0) continue;
+      totalMinutes += m;
+      hours[hourOf(e.ts)] += m;
+      days.add(dayKeyOf(e.ts));
+      const key = String(e.key || "");
+      const src = String(e.src || "").trim() || "未知";
+      const prev = minutesByKey.get(key);
+      if (prev) prev.minutes += m;
+      else minutesByKey.set(key, { entry: e, minutes: m });
+      let row = srcMap.get(src);
+      if (!row) {
+        row = { name: src, articles: 0, minutes: 0 };
+        srcMap.set(src, row);
+      }
+      row.minutes += m;
+    }
+    for (const { entry } of minutesByKey.values()) {
+      const src = String(entry.src || "").trim() || "未知";
+      const row = srcMap.get(src);
+      if (row) row.articles += 1;
+    }
+    const bySrc = [...srcMap.values()].sort((a, b) => b.minutes - a.minutes || b.articles - a.articles || a.name.localeCompare(b.name));
+    const topArticles = [...minutesByKey.entries()].map(([key, v]) => ({ key, title: v.entry.title || "(无标题)", src: String(v.entry.src || "").trim() || "未知", minutes: v.minutes })).sort((a, b) => b.minutes - a.minutes || a.key.localeCompare(b.key)).slice(0, 5);
+    return {
+      period: period2,
+      articles: minutesByKey.size,
+      sessions: entries.length,
+      totalMinutes,
+      bySrc,
+      hours,
+      topArticles,
+      activeDays: days.size
+    };
+  }
+  function formatMinutes(min) {
+    const m = Math.max(0, Math.round(min));
+    const h = Math.floor(m / 60);
+    const r = m % 60;
+    if (h <= 0) return `${r} 分钟`;
+    return r > 0 ? `${h} 小时 ${r} 分钟` : `${h} 小时`;
+  }
+  var REPORT_TOP_N;
+  var init_report_stats = __esm({
+    "src/clipbook/report-stats.ts"() {
+      REPORT_TOP_N = 5;
+    }
+  });
+
   // src/clipbook/render.ts
   function panelHtml() {
     return `
@@ -21102,6 +21249,7 @@ ${bodyText.substring(0, 6e3)}`;
       <div class="bz-clip-mob" data-clip-mob>
         <div class="bz-clip-mob-top">
           <div class="bz-clip-mob-title">剪藏本</div>
+          <span class="bz-clip-mob-act" data-clip-mob-report role="button">报告</span>
           <span class="bz-clip-mob-act" data-clip-mob-search role="button">搜索</span>
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
@@ -21144,6 +21292,9 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function railFootHtml(todayRead) {
     return `今日已读<br><b>${todayRead}</b> 篇`;
+  }
+  function clipReportEntryHtml() {
+    return `<div class="bz-clp-rep-entry" data-clp-rep-entry role="button" tabindex="0">我读了什么 ${iconSpan("chevron-right", "bz-ic--xs")}</div>`;
   }
   function tocListHtml(list, curId, timeOf) {
     return list.map((a, i) => `
@@ -21247,10 +21398,105 @@ ${bodyText.substring(0, 6e3)}`;
     <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
   `;
   }
+  function clipReportShellHtml() {
+    return `
+    <div class="bz-panel-frame bz-clip-report-frame bz-panel-mtop">
+      <div class="bz-panel-head">
+        <div class="bz-panel-title">我读了什么</div>
+        <div class="bz-clp-rep-seg" data-clp-rep-period role="tablist" aria-label="统计周期">
+          <button class="bz-clp-rep-seg-btn on" data-period="week" type="button">本周</button>
+          <button class="bz-clp-rep-seg-btn" data-period="month" type="button">本月</button>
+        </div>
+        <div class="bz-panel-head-sp"></div>
+        <span class="bz-clp-rep-close" role="button" tabindex="0" data-clp-rep-close title="关闭">${iconSpan(ICO.x)}</span>
+      </div>
+      <div class="bz-clp-rep-body" data-clp-rep-body></div>
+    </div>`;
+  }
+  function clipReportSkeletonHtml() {
+    return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
+  }
+  function clipReportEmptyHtml() {
+    return `
+    <div class="bz-clp-rep-empty">
+      ${iconSpan(ICO.book, "bz-ic--lg")}
+      <div class="bz-clp-rep-empty-t">还没有阅读记录</div>
+      <div class="bz-clp-rep-empty-d">在剪藏本里打开文章阅读，停留满一分钟就会自动记到这里</div>
+    </div>`;
+  }
+  function buildClipReportSections(d) {
+    return [
+      { key: "overview", label: "统计概览", generate: () => clipReportOverviewHtml(d) },
+      { key: "sources", label: "来源分布", generate: () => clipReportSourcesHtml(d) },
+      { key: "hours", label: "阅读时段", generate: () => clipReportHoursHtml(d) }
+    ];
+  }
+  function clipReportOverviewHtml(d) {
+    const topRows = d.topArticles.map((a, i) => {
+      const badge = CHART_RANK_BADGES[i % CHART_RANK_BADGES.length];
+      return `
+    <div class="bz-clp-rep-top-row">
+      <span class="bz-clp-rep-rank" style="background:${badge}">${i + 1}</span>
+      <span class="bz-clp-rep-top-title" title="${esc(a.title)}">${esc(a.title)}</span>
+      <span class="bz-clp-rep-top-src">${esc(a.src)}</span>
+      <span class="bz-clp-rep-top-min">${esc(formatMinutes(a.minutes))}</span>
+    </div>`;
+    }).join("");
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">统计概览</div>
+      <div class="bz-clp-rep-hero">
+        <div class="bz-clp-rep-hero-card"><b>${d.articles}</b><span>已读篇数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${esc(formatMinutes(d.totalMinutes))}</b><span>总时长</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${d.activeDays}</b><span>活跃天数</span></div>
+      </div>
+      ${topRows ? `<div class="bz-clp-rep-top"><div class="bz-clp-rep-sub">读得最久</div>${topRows}</div>` : ""}
+    </div>`;
+  }
+  function clipReportSourcesHtml(d) {
+    const rows = d.bySrc.slice(0, REPORT_TOP_N);
+    if (!rows.length) {
+      return `<div class="bz-clp-rep-sec"><div class="bz-clp-rep-sec-h">来源分布</div><p class="bz-clp-rep-none">本期暂无来源数据</p></div>`;
+    }
+    const max = Math.max(1, ...rows.map((r) => r.minutes));
+    const barRows = rows.map((r, i) => {
+      const width = Math.max(2, Math.round(r.minutes / max * 100));
+      return `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label" title="${esc(r.name)}">${esc(r.name)}</span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${width}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${r.articles} 篇 · ${esc(formatMinutes(r.minutes))}</span>
+    </div>`;
+    }).join("");
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">来源分布</div>
+      <div class="bz-clp-rep-bars">${barRows}</div>
+    </div>`;
+  }
+  function clipReportHoursHtml(d) {
+    const max = Math.max(0, ...d.hours);
+    const cols = d.hours.map((m, h) => {
+      const height = max > 0 && m > 0 ? 10 + Math.round(m / max * 44) : 3;
+      const accent = max > 0 && m > 0 && m === max;
+      const bg = accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
+      return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? " accent" : ""}" style="height:${height}px;background:${bg}" title="${h} 点 · ${esc(formatMinutes(m))}"></div><div class="bz-clp-rep-hlabel">${h}</div></div>`;
+    }).join("");
+    const peakHour = max > 0 ? d.hours.indexOf(max) : -1;
+    const peakText = peakHour >= 0 ? `${peakHour} 点前后` : "暂无";
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">阅读时段</div>
+      <div class="bz-clp-rep-hours">${cols}</div>
+      <div class="bz-clp-rep-hours-note">每根柱 = 该小时的阅读分钟 · 阅读高峰在 ${peakText}</div>
+    </div>`;
+  }
   var ICO;
   var init_render3 = __esm({
     "src/clipbook/render.ts"() {
       init_str();
+      init_chart_palette();
+      init_report_stats();
       ICO = {
         inbox: "inbox",
         feed: "rss",
@@ -21284,7 +21530,7 @@ ${bodyText.substring(0, 6e3)}`;
     M.open = false;
     M.articles = [];
     M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
+    M.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
     M.clipNotes = null;
     M.clipUrls = /* @__PURE__ */ new Set();
     M.sel = defaultSel();
@@ -21302,7 +21548,7 @@ ${bodyText.substring(0, 6e3)}`;
         open: false,
         articles: [],
         stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
-        sidecar: { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} },
+        sidecar: { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] },
         clipNotes: null,
         clipUrls: /* @__PURE__ */ new Set(),
         sel: defaultSel(),
@@ -21463,6 +21709,171 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
+  // src/clipbook/report-ui.ts
+  function bodyEl() {
+    return overlayEl ? overlayEl.querySelector("[data-clp-rep-body]") : null;
+  }
+  function openClipbookReport(_app2) {
+    flushReadingSession();
+    if (!overlayEl) buildDom();
+    overlayEl.style.display = "flex";
+    void renderBody(true);
+  }
+  function closeClipbookReport() {
+    renderSeq++;
+    releaseProgress();
+    if (overlayEl) overlayEl.style.display = "none";
+    logCache = null;
+  }
+  function unloadClipbookReport() {
+    closeClipbookReport();
+    if (escHandle) {
+      try {
+        escHandle.unregister();
+      } catch (e) {
+      }
+      escHandle = null;
+    }
+    if (overlayEl) {
+      overlayEl.remove();
+      overlayEl = null;
+    }
+  }
+  function releaseProgress() {
+    if (activeProgress) {
+      activeProgress.hide();
+      activeProgress = null;
+    }
+  }
+  function buildDom() {
+    overlayEl = document.createElement("div");
+    overlayEl.className = "bz-panel-overlay bz-clip-report-overlay";
+    overlayEl.innerHTML = clipReportShellHtml();
+    document.body.appendChild(overlayEl);
+    mountIcons(overlayEl);
+    overlayEl.addEventListener("click", (e) => {
+      if (e.target === overlayEl) {
+        closeClipbookReport();
+        return;
+      }
+      const t = e.target;
+      if (t.closest("[data-clp-rep-close]")) {
+        closeClipbookReport();
+        return;
+      }
+      const segBtn = t.closest("[data-period]");
+      if (segBtn) setPeriod(segBtn.dataset.period || "week");
+    });
+    overlayEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const t = e.target;
+      if (t.closest("[data-clp-rep-close]")) {
+        e.preventDefault();
+        closeClipbookReport();
+      }
+    });
+    escHandle = escManager.register("bz-clipbook-report", {
+      isVisible: () => !!overlayEl && overlayEl.style.display !== "none",
+      close: closeClipbookReport
+    });
+  }
+  function setPeriod(next) {
+    if (next === period) return;
+    period = next;
+    const seg = overlayEl == null ? void 0 : overlayEl.querySelector("[data-clp-rep-period]");
+    if (seg) {
+      seg.querySelectorAll("[data-period]").forEach((b) => {
+        b.classList.toggle("on", b.dataset.period === period);
+      });
+    }
+    void renderBody(false);
+  }
+  async function renderBody(withToast) {
+    const body = bodyEl();
+    if (!body) return;
+    const seq = ++renderSeq;
+    const alive = () => seq === renderSeq && !!overlayEl && overlayEl.style.display !== "none" && body.isConnected;
+    body.innerHTML = clipReportSkeletonHtml();
+    const progress = withToast ? notify("正在统计剪藏阅读数据…", { type: "progress", duration: 0, dedupeKey: `bz-clipbook-report-progress-${++progressToastSeq}` }) : null;
+    if (progress) activeProgress = progress;
+    const finishAbort = () => {
+      if (progress && activeProgress === progress) {
+        progress.hide();
+        activeProgress = null;
+      }
+    };
+    try {
+      if (!logCache) {
+        progress == null ? void 0 : progress.setMessage("正在读取阅读记录…");
+        await yieldToMainThread(YIELD_MS);
+        if (!alive()) return finishAbort();
+        const sidecar = await readClipbookData();
+        if (!alive()) return finishAbort();
+        logCache = sidecar.readLog || [];
+      }
+      if (!logCache.length) {
+        body.innerHTML = clipReportEmptyHtml();
+        mountIcons(body);
+        if (progress && activeProgress === progress) {
+          progress.hide();
+          activeProgress = null;
+        }
+        return;
+      }
+      progress == null ? void 0 : progress.setMessage("正在计算统计数据…");
+      await yieldToMainThread(YIELD_MS);
+      if (!alive()) return finishAbort();
+      const data = buildClipReport(logCache, period, /* @__PURE__ */ new Date());
+      body.innerHTML = "";
+      for (const section of buildClipReportSections(data)) {
+        if (!alive()) return finishAbort();
+        await yieldToMainThread(YIELD_MS);
+        if (!alive()) return finishAbort();
+        body.insertAdjacentHTML("beforeend", section.generate());
+        progress == null ? void 0 : progress.setMessage(`正在生成${section.label}…`);
+      }
+      if (alive()) {
+        mountIcons(body);
+        if (progress && activeProgress === progress) {
+          activeProgress = null;
+          progress.setType("success");
+          progress.setMessage("剪藏阅读统计完成");
+        }
+      } else {
+        finishAbort();
+      }
+    } catch (error) {
+      console.error("[剪藏本] 阅读报告生成失败", error);
+      releaseProgress();
+      if (alive()) body.innerHTML = ERROR_HTML;
+    }
+  }
+  var overlayEl, escHandle, period, logCache, renderSeq, progressToastSeq, activeProgress, YIELD_MS, ERROR_HTML;
+  var init_report_ui = __esm({
+    "src/clipbook/report-ui.ts"() {
+      init_notice();
+      init_ui2();
+      init_utils();
+      init_esc_manager();
+      init_data();
+      init_flow();
+      init_report_stats();
+      init_render3();
+      overlayEl = null;
+      escHandle = null;
+      period = "week";
+      logCache = null;
+      renderSeq = 0;
+      progressToastSeq = 0;
+      activeProgress = null;
+      YIELD_MS = 50;
+      ERROR_HTML = `<div class="bz-clp-rep-error">
+  <div class="bz-clp-rep-error-t">统计失败</div>
+  <div>读取阅读记录时出错，请重新打开；若反复出现请查看控制台</div>
+</div>`;
+    }
+  });
+
   // src/clipbook/ui.ts
   var ui_exports = {};
   __export(ui_exports, {
@@ -21480,15 +21891,15 @@ ${bodyText.substring(0, 6e3)}`;
   });
   function initPanel(app, showNow = false) {
     M.appRef = app;
-    if (!overlayEl) buildDom(app);
+    if (!overlayEl2) buildDom2(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
   }
   function showPanel() {
-    if (!overlayEl) {
-      buildDom(M.appRef);
+    if (!overlayEl2) {
+      buildDom2(M.appRef);
     }
-    overlayEl.style.display = "flex";
+    overlayEl2.style.display = "flex";
     panelSplit == null ? void 0 : panelSplit.restore();
     M.open = true;
     beginSession();
@@ -21497,7 +21908,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
-    if (!M.open && overlayEl) return Promise.resolve();
+    if (!M.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") notice("news.json 损坏，未加载（原文件已保留）", "error");
@@ -21535,22 +21946,24 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function closePanel() {
     pauseReadingSession();
+    flushReadingSession();
     panelResizeDetach == null ? void 0 : panelResizeDetach.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     M.open = false;
     M.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
-    if (overlayEl) overlayEl.style.display = "none";
+    if (overlayEl2) overlayEl2.style.display = "none";
   }
   function unloadPanel() {
     pauseReadingSession();
+    flushReadingSession();
     closeItemMenu();
-    if (escHandle) {
+    if (escHandle2) {
       try {
-        escHandle.unregister();
+        escHandle2.unregister();
       } catch (e) {
       }
-      escHandle = null;
+      escHandle2 = null;
     }
     document.removeEventListener("selectionchange", onSelectionChanged);
     document.removeEventListener("mousedown", onDocMouseDown, true);
@@ -21586,8 +21999,8 @@ ${bodyText.substring(0, 6e3)}`;
     loadPromise = null;
     dirty = false;
     loaded = false;
-    if (overlayEl) overlayEl.remove();
-    overlayEl = null;
+    if (overlayEl2) overlayEl2.remove();
+    overlayEl2 = null;
     readerEl = null;
     readPaneEl = null;
     railListEl = null;
@@ -21602,32 +22015,37 @@ ${bodyText.substring(0, 6e3)}`;
     mobItemOrder = [];
     resetClipbookState();
   }
-  function buildDom(app) {
-    overlayEl = document.createElement("div");
-    overlayEl.className = "bz-panel-overlay";
-    overlayEl.style.display = "none";
-    overlayEl.innerHTML = panelHtml();
-    mountIcons(overlayEl);
-    document.body.appendChild(overlayEl);
-    railListEl = overlayEl.querySelector("[data-clip-rail]");
-    railFootEl = overlayEl.querySelector("[data-clip-rail-foot]");
-    listEl = overlayEl.querySelector("[data-clip-list]");
-    readerEl = overlayEl.querySelector("[data-clip-reader]");
-    readPaneEl = overlayEl.querySelector("[data-clip-read-pane]");
-    mobListEl = overlayEl.querySelector("[data-clip-mob-list]");
-    mobDetailEl = overlayEl.querySelector("[data-clip-mob-detail]");
-    mobTitleEl = overlayEl.querySelector("[data-clip-mob-title]");
-    mobSaveBtnEl = overlayEl.querySelector("[data-clip-mob-save]");
-    const mobSearchBtn = overlayEl.querySelector("[data-clip-mob-search]");
-    const mobCloseBtn = overlayEl.querySelector("[data-clip-mob-close]");
-    const mobBackBtn = overlayEl.querySelector("[data-clip-mob-back]");
-    mobSearchbarEl = overlayEl.querySelector("[data-clip-mob-searchbar]");
+  function buildDom2(app) {
+    overlayEl2 = document.createElement("div");
+    overlayEl2.className = "bz-panel-overlay";
+    overlayEl2.style.display = "none";
+    overlayEl2.innerHTML = panelHtml();
+    mountIcons(overlayEl2);
+    document.body.appendChild(overlayEl2);
+    railListEl = overlayEl2.querySelector("[data-clip-rail]");
+    railFootEl = overlayEl2.querySelector("[data-clip-rail-foot]");
+    listEl = overlayEl2.querySelector("[data-clip-list]");
+    readerEl = overlayEl2.querySelector("[data-clip-reader]");
+    readPaneEl = overlayEl2.querySelector("[data-clip-read-pane]");
+    mobListEl = overlayEl2.querySelector("[data-clip-mob-list]");
+    mobDetailEl = overlayEl2.querySelector("[data-clip-mob-detail]");
+    mobTitleEl = overlayEl2.querySelector("[data-clip-mob-title]");
+    mobSaveBtnEl = overlayEl2.querySelector("[data-clip-mob-save]");
+    const mobSearchBtn = overlayEl2.querySelector("[data-clip-mob-search]");
+    const mobCloseBtn = overlayEl2.querySelector("[data-clip-mob-close]");
+    const mobBackBtn = overlayEl2.querySelector("[data-clip-mob-back]");
+    mobSearchbarEl = overlayEl2.querySelector("[data-clip-mob-searchbar]");
     const mobSearchbar = mobSearchbarEl;
-    const mobInput = overlayEl.querySelector("[data-clip-mob-input]");
-    deskSearchEl = overlayEl.querySelector("[data-clip-desk-search]");
-    overlayEl.addEventListener("click", (e) => {
-      if (e.target === overlayEl) closePanel();
+    const mobInput = overlayEl2.querySelector("[data-clip-mob-input]");
+    deskSearchEl = overlayEl2.querySelector("[data-clip-desk-search]");
+    overlayEl2.addEventListener("click", (e) => {
+      if (e.target === overlayEl2) closePanel();
     });
+    railFootEl.addEventListener("click", (e) => {
+      if (e.target.closest("[data-clp-rep-entry]")) openClipbookReport(app);
+    });
+    const mobReportBtn = overlayEl2.querySelector("[data-clip-mob-report]");
+    mobReportBtn.addEventListener("click", () => openClipbookReport(app));
     railListEl.addEventListener("click", (e) => {
       const row = e.target.closest("[data-src]");
       if (!row) return;
@@ -21742,14 +22160,14 @@ ${bodyText.substring(0, 6e3)}`;
       else mobBackBtn.click();
     }, true);
     mobDetailEl.addEventListener("mouseup", onReaderMouseUp);
-    const mobBodyScrollEl = overlayEl.querySelector("[data-clip-mob-detail-body]");
+    const mobBodyScrollEl = overlayEl2.querySelector("[data-clip-mob-detail-body]");
     if (mobBodyScrollEl) mobBodyScrollEl.addEventListener("scroll", hideSelBar, { passive: true });
     document.addEventListener("selectionchange", onSelectionChanged);
     document.addEventListener("mousedown", onDocMouseDown, true);
-    overlayEl.addEventListener("contextmenu", onReaderContextMenu, true);
+    overlayEl2.addEventListener("contextmenu", onReaderContextMenu, true);
     escKey = "bz-clipbook";
-    escHandle = escManager.register(escKey, {
-      isVisible: () => !!overlayEl && overlayEl.style.display !== "none",
+    escHandle2 = escManager.register(escKey, {
+      isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
         if (M.mobDetailOpen) {
           closeMobDetail();
@@ -21758,7 +22176,7 @@ ${bodyText.substring(0, 6e3)}`;
         closePanel();
       }
     });
-    const frameEl = overlayEl.querySelector(".bz-clip-frame");
+    const frameEl = overlayEl2.querySelector(".bz-clip-frame");
     if (!isMobileEnv()) {
       panelResizeDetach = uiResizable(frameEl, {
         minW: PANEL_MIN_W,
@@ -21767,8 +22185,8 @@ ${bodyText.substring(0, 6e3)}`;
         maxH: PANEL_MAX_H,
         persist: { load: savedPanelSize, save: rememberPanelSize }
       });
-      const midEl = overlayEl.querySelector(".bz-clip-mid");
-      const readEl = overlayEl.querySelector(".bz-clip-read");
+      const midEl = overlayEl2.querySelector(".bz-clip-mid");
+      const readEl = overlayEl2.querySelector(".bz-clip-read");
       panelSplit = uiVSplitter({
         left: midEl,
         right: readEl,
@@ -21829,7 +22247,7 @@ ${bodyText.substring(0, 6e3)}`;
     renderAll();
   }
   function renderHeadIssue() {
-    const el = overlayEl ? overlayEl.querySelector("[data-clip-issue]") : null;
+    const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
     if (!el) return;
     const d = /* @__PURE__ */ new Date();
     el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M.articles.length} 期`;
@@ -21937,7 +22355,7 @@ ${bodyText.substring(0, 6e3)}`;
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0);
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
     }
     const rows = railListEl.querySelectorAll("[data-src]");
     rows.forEach((row) => {
@@ -22141,7 +22559,7 @@ ${bodyText.substring(0, 6e3)}`;
       readerEl.appendChild(uiEmpty({ icon: "book-open", title: "从列表选择一篇文章开始阅读" }));
       return;
     }
-    setReadingSession(a.id);
+    setReadingSession(a.id, { title: a.title, src: a.srcName });
     let body = "";
     let note = "";
     if (a.origin === "clip") {
@@ -23036,7 +23454,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -23064,7 +23482,8 @@ ${bodyText.substring(0, 6e3)}`;
       init_anchor();
       init_image_save();
       init_flow();
-      overlayEl = null;
+      init_report_ui();
+      overlayEl2 = null;
       railListEl = null;
       railFootEl = null;
       listEl = null;
@@ -23077,7 +23496,7 @@ ${bodyText.substring(0, 6e3)}`;
       mobSearchbarEl = null;
       deskSearchEl = null;
       escKey = "";
-      escHandle = null;
+      escHandle2 = null;
       loading = false;
       dirty = false;
       loaded = false;
@@ -23265,6 +23684,7 @@ ${bodyText.substring(0, 6e3)}`;
   init_news_fetcher();
   init_flow();
   init_ui3();
+  init_report_ui();
 
   // src/clipbook/file-sync.ts
   init_utils();
@@ -23289,6 +23709,7 @@ ${bodyText.substring(0, 6e3)}`;
     void maybeFetchNews();
   }
   function unloadClipbook() {
+    unloadClipbookReport();
     if (!initialized4) return;
     initialized4 = false;
     unloadPanel();

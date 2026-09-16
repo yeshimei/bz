@@ -270,12 +270,12 @@ export const DOMAIN_MENU: Record<string, DomainMenuAction[]> = {
   belongings: [{ label: '加物品', commandId: 'bz-belongings-add', icon: 'archive' }],
   // 保险库：此前是空菜单（无域快捷动作）；锁定是唯一「不开面板」的一步动作
   // （加密当前笔记虽已有命令，但属「作用于当前笔记」，不在本次采纳范围；
-  //   快速取密已随 ADR-0155 归并密码本域——bz-encrypt-copy-password 退役）
+  //   快速取密已随 ADR-0158 归并密码本域——bz-encrypt-copy-password 退役）
   encrypt: [
     { label: '锁定保险库', commandId: 'bz-encrypt-lock-vault', icon: 'lock', keepHome: true },
   ],
   vault: [
-    // ADR-0155 统一快速取密：fuzzy 列现有密码 + 顶部「生成新」，同 id 承接旧「快速生成密码」
+    // ADR-0158 统一快速取密：fuzzy 列现有密码 + 顶部「生成新」，同 id 承接旧「快速生成密码」
     { label: '快速取密', commandId: 'bz-password-vault-gen', icon: 'key' },
     // 与保险库同库同锁（一把主密码）：文案按本域名口径，行为是同一个 lockSafe
     { label: '锁定密码本', commandId: 'bz-password-vault-lock', icon: 'lock', keepHome: true },

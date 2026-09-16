@@ -1,9 +1,9 @@
 /**
- * 保险库（password-vault）数据层——密码数据唯一属主（ADR-0155 收口）。
+ * 保险库（password-vault）数据层——密码数据唯一属主（ADR-0158 收口）。
  *
  * 历史：ADR-0085 曾把本实现迁入 encrypt/vault-data.ts（密码资产并入统一面板），
  * ADR-0109 拆回独立域时本文件降级为 re-export 壳，两份「一份实现 + 一份壳」并存；
- * ADR-0155 摘除 encrypt 面板密码资产视图，实现随属主迁回本域（encrypt/vault-data.ts 退役）。
+ * ADR-0158 摘除 encrypt 面板密码资产视图，实现随属主迁回本域（encrypt/vault-data.ts 退役）。
  *
  * 密码条目数据源 = 保险库清单内 kind='password-vault' 的 SafeNote（同一主密码/解锁态）：
  *  - 增删改 = 整表重加密覆盖同一镜像（updateNotePayload / lockNote 首建）；

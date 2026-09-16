@@ -46,21 +46,22 @@ import {
   debounce, formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt,
   generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
 } from '../core/utils';
-import { MemoData, DEFAULT_SCENARIOS } from './data';
-import { getDueStatus, formatDueText } from './due';
+import { MemoData, DEFAULT_SCENARIOS, parseComposerChecklist } from './data';
+import { getDueStatus, formatDueText, recurLabel } from './due';
 import {
   MEMO_ICONS as ICON, iconSpan, sceneDot, sceneLabel, mainCountHtml,
   navBtnHtml, mobChipHtml, mobAddSceneChipHtml, panelShellHtml, metaTagsHtml,
   cardHtml as renderCard, checkHtml, sectionLabelHtml, doneBarHtml, doneMoreHtml, type MetaDue,
+  calHeadHtml, calGridHtml, CAL_WEEKDAYS, type CalCell, type CalChip,
 } from './render';
-import type { MemoItem } from './types';
+import type { MemoItem, MemoRecur, MemoCheckItem } from './types';
 import { M } from './state';
 
 /** 备忘录主面板缩放钳制（ADR-0084：最小/硬上限，实际另受视口 92% 约束；默认 720×580 走域内 CSS） */
 const PANEL = { MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
 /** 搜索防抖（180ms，favorites/belongings 同值） */
 const SEARCH_DEBOUNCE_MS = 180;
-/** 搜索防抖（180ms，favorites/belongings 同值；issue 347 收编 core debounce：尾触语义与原手写
+/** 搜索防抖（180ms，favorites/belongings 同值；issue 365 收编 core debounce：尾触语义与原手写
  *  定时器等价——最后一次 input 的输入值生效，面板关闭 cancel 防孤儿回调） */
 const searchDebounced = debounce((v: string) => {
   M.search = v;
@@ -326,6 +327,9 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   // 打开默认场景（memoOpenScene）：提醒 notePath 定位恒「全部」——定位靠搜索过滤，场景过滤会把目标条目挡掉
   M.activeScene = opts?.notePath ? '全部' : resolveOpenScene();
   M.showEarlierDone = false; // 「更早 N 条」每次打开重新收起
+  M.view = 'list'; // 视图每次打开回列表（issue 355）
+  M.calMonth = moment().format('YYYY-MM');
+  M.calSelected = null;
   M.pinnedNewId = null;
   M.search = ''; // E8：搜索词跨开合残留——输入框是新的但列表仍被旧关键词过滤（notePath 定位在 loadData 后另行覆写）
 
@@ -414,6 +418,14 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
       renderAll();
       return;
     }
+    // 视图切换（issue 355）：列表 / 月历（工具行页签，桌面与移动同源）
+    const viewBtn = t.closest('[data-memo-view]') as HTMLElement | null;
+    if (viewBtn) {
+      const v = viewBtn.dataset.memoView;
+      if (v === 'list' || v === 'calendar') M.view = v;
+      renderAll();
+      return;
+    }
     const addScene = t.closest('[data-memo-addscene]');
     if (addScene) { openAddSceneDialog(); return; }
     // 主头行「新建备忘录」按钮 → 打开创建编辑器
@@ -441,6 +453,47 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   // 行内勾选（完成/恢复；300ms 防抖对齐 memo 卡片）——切换逻辑抽 toggleCheck，与移动抽屉头共用
   const content = overlay.querySelector('[data-memo-content]') as HTMLElement;
   content.addEventListener('click', (e) => {
+    // 月历（issue 355）：翻页/回到今天/点日选中/点事件开编辑
+    const calNav = (e.target as HTMLElement).closest('[data-memo-cal-prev],[data-memo-cal-next],[data-memo-cal-today]') as HTMLElement | null;
+    if (calNav) {
+      const cur = moment(`${M.calMonth}-01`, 'YYYY-MM-DD');
+      if (calNav.hasAttribute('data-memo-cal-prev')) M.calMonth = cur.subtract(1, 'month').format('YYYY-MM');
+      else if (calNav.hasAttribute('data-memo-cal-next')) M.calMonth = cur.add(1, 'month').format('YYYY-MM');
+      else M.calMonth = moment().format('YYYY-MM');
+      M.calSelected = null; // 换月不保留选中日（当日清单随视图重置）
+      renderAll();
+      return;
+    }
+    const calChip = (e.target as HTMLElement).closest('[data-memo-cal-item]') as HTMLElement | null;
+    if (calChip) {
+      const it = M.items.find((i) => i.id === calChip.dataset.memoCalItem);
+      if (it) {
+        e.stopPropagation();
+        openEditor(it);
+      }
+      return;
+    }
+    const dayCell = (e.target as HTMLElement).closest('[data-memo-cal-day]') as HTMLElement | null;
+    if (dayCell) {
+      const d = Number(dayCell.dataset.memoCalDay);
+      if (Number.isInteger(d)) {
+        M.calSelected = `${M.calMonth}-${String(d).padStart(2, '0')}`;
+        renderAll();
+      }
+      return;
+    }
+    // 清单子任务勾选（issue 354）：行内即时落盘，全勾完父项自动完成
+    const clRow = (e.target as HTMLElement).closest('[data-memo-cl]') as HTMLElement | null;
+    if (clRow) {
+      const card = clRow.closest('.bz-memo-card') as HTMLElement | null;
+      const it = M.items.find((i) => i.id === card?.dataset.memoId);
+      if (!it || it.checklist?.length === 0) return;
+      const idx = Number((clRow.dataset.memoCl || '').split(':')[1]);
+      if (!Number.isInteger(idx)) return;
+      e.stopPropagation();
+      void toggleChecklistItem(it, idx);
+      return;
+    }
     const check = (e.target as HTMLElement).closest('[data-memo-check]') as HTMLElement | null;
     if (!check) return;
     const card = check.closest('.bz-memo-card') as HTMLElement | null;
@@ -536,7 +589,17 @@ function renderAll(): void {
   renderNav();
   renderMobScenes();
   renderMainHead();
+  renderViewToggle();
   renderContent();
+}
+
+/** 视图页签态（issue 355）：list/calendar 两钮 is-on 随 M.view */
+function renderViewToggle(): void {
+  const wrap = M.overlay!.querySelector('[data-memo-viewtoggle]');
+  if (!wrap) return;
+  wrap.querySelectorAll<HTMLElement>('[data-memo-view]').forEach((b) => {
+    b.classList.toggle('is-on', b.dataset.memoView === M.view);
+  });
 }
 
 /** 主头行（原型 p1-main-head）：当前场景标题 + “· N 项 · M 未完成” + 右侧新建按钮 */
@@ -605,62 +668,41 @@ function metaDueOf(it: MemoItem): MetaDue {
   return { status: st, text: formatDueText(it.due) };
 }
 
-/** 卡片 meta 行（纯层 metaTagsHtml 的行为侧封装：注入 due 包与相对时间） */
+/** 清单进度（issue 354）：「已勾 n/总数」文案；无清单回空（meta 不出标签） */
+function checkProgress(it: MemoItem): string {
+  const cl = it.checklist || [];
+  if (!cl.length) return '';
+  return `${cl.filter((c) => c.done).length}/${cl.length}`;
+}
+
+/** 卡片 meta 行（纯层 metaTagsHtml 的行为侧封装：注入 due 包与相对时间；recur/进度文案单源注入） */
 function metaTags(it: MemoItem): string {
-  return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '');
+  return metaTagsHtml(
+    it,
+    metaDueOf(it),
+    it.created ? formatRelativeTime(it.created) : '',
+    it.recur ? recurLabel(it.recur) : '',
+    checkProgress(it)
+  );
 }
 
 function renderContent(): void {
   const content = M.overlay!.querySelector('[data-memo-content]') as HTMLElement;
   if (!content) return;
-  const items = getVisibleItems();
-  if (items.length === 0) {
-    // 空态三件套（组件库 .bz-empty：图标 + 一句话 + 「新建备忘录」动作按钮）
-    content.innerHTML = '';
-    content.appendChild(uiEmpty({
-      icon: ICON.empty,
-      title: M.search ? '没有匹配的备忘录' : '这里还没有备忘录',
-      desc: M.search ? '试试其他关键词，或清除搜索' : '随手记一条，别让它溜走',
-      actions: uiBtnRow([uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) })], { center: true }),
-    }));
+  if (M.view === 'calendar') {
+    renderCalendar(content);
     return;
   }
-  // 分组：到期优先（overdue/today）→ 其他 → 已完成（折叠条）
-  const active = items.filter((i) => !i.completed);
-  const done = items.filter((i) => i.completed);
-  const urgent = active.filter((i) => dueRank(i) <= 1);
-  const normal = active.filter((i) => dueRank(i) > 1);
+  renderListContent(content);
+}
 
-  const cardHtml = (it: MemoItem) => renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '');
+/** 卡片 markup（列表 / 月历当日清单共用：recur/进度文案单源注入） */
+function cardHtmlOf(it: MemoItem): string {
+  return renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', it.recur ? recurLabel(it.recur) : '', checkProgress(it));
+}
 
-  const sections: string[] = [];
-  if (urgent.length) {
-    sections.push(sectionLabelHtml('到期优先', urgent.length));
-    sections.push(...urgent.map((it) => cardHtml(it)));
-  }
-  if (normal.length) {
-    sections.push(sectionLabelHtml('其他', normal.length));
-    sections.push(...normal.map((it) => cardHtml(it)));
-  }
-  if (done.length) {
-    const open = M.showDone;
-    // 时间界（设置 memoDoneWindow）：展开默认只列时间窗内完成的，更早的收进尾部「更早 N 条」（点开放全；全部=不收）
-    const win = doneWindowDays();
-    const cutoff = win === null ? null : moment().subtract(win, 'days').format('YYYY-MM-DD HH:mm:ss');
-    const recent = cutoff === null ? done : done.filter((i) => (i.completed as string) >= cutoff);
-    const earlier = done.length - recent.length;
-    const listed = !open || M.showEarlierDone ? done : recent;
-    sections.push(doneBarHtml(open, done.length));
-    if (open) {
-      sections.push(...listed.map((it) => cardHtml(it)));
-      if (earlier > 0 && !M.showEarlierDone) {
-        sections.push(doneMoreHtml(earlier));
-      }
-    }
-  }
-  content.innerHTML = sections.join('');
-  mountIcons(content);
-
+/** 卡片行为接线（列表 / 月历当日清单共用）：链接打开/位置跳转/右键菜单与长按抽屉 */
+function wireCards(content: HTMLElement): void {
   // 链接点击：打开关联内容（内部笔记 / 外部 URL），不走浏览器默认
   content.querySelectorAll('[data-memo-openitem]').forEach((el) => {
     el.addEventListener('click', (e) => {
@@ -690,6 +732,106 @@ function renderContent(): void {
       sheetHead: buildSheetHead(it),
     });
   });
+}
+
+function renderListContent(content: HTMLElement): void {
+  const items = getVisibleItems();
+  if (items.length === 0) {
+    // 空态三件套（组件库 .bz-empty：图标 + 一句话 + 「新建备忘录」动作按钮）
+    content.innerHTML = '';
+    content.appendChild(uiEmpty({
+      icon: ICON.empty,
+      title: M.search ? '没有匹配的备忘录' : '这里还没有备忘录',
+      desc: M.search ? '试试其他关键词，或清除搜索' : '随手记一条，别让它溜走',
+      actions: uiBtnRow([uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) })], { center: true }),
+    }));
+    return;
+  }
+  // 分组：到期优先（overdue/today）→ 其他 → 已完成（折叠条）
+  const active = items.filter((i) => !i.completed);
+  const done = items.filter((i) => i.completed);
+  const urgent = active.filter((i) => dueRank(i) <= 1);
+  const normal = active.filter((i) => dueRank(i) > 1);
+
+  const sections: string[] = [];
+  if (urgent.length) {
+    sections.push(sectionLabelHtml('到期优先', urgent.length));
+    sections.push(...urgent.map((it) => cardHtmlOf(it)));
+  }
+  if (normal.length) {
+    sections.push(sectionLabelHtml('其他', normal.length));
+    sections.push(...normal.map((it) => cardHtmlOf(it)));
+  }
+  if (done.length) {
+    const open = M.showDone;
+    // 时间界（设置 memoDoneWindow）：展开默认只列时间窗内完成的，更早的收进尾部「更早 N 条」（点开放全；全部=不收）
+    const win = doneWindowDays();
+    const cutoff = win === null ? null : moment().subtract(win, 'days').format('YYYY-MM-DD HH:mm:ss');
+    const recent = cutoff === null ? done : done.filter((i) => (i.completed as string) >= cutoff);
+    const earlier = done.length - recent.length;
+    const listed = !open || M.showEarlierDone ? done : recent;
+    sections.push(doneBarHtml(open, done.length));
+    if (open) {
+      sections.push(...listed.map((it) => cardHtmlOf(it)));
+      if (earlier > 0 && !M.showEarlierDone) {
+        sections.push(doneMoreHtml(earlier));
+      }
+    }
+  }
+  content.innerHTML = sections.join('');
+  mountIcons(content);
+  wireCards(content);
+}
+
+/**
+ * 月历视图（issue 355）：当前月网格 + 到期事件 chip（overdue/today/future 状态色沿用现有口径）
+ * + 点日查看当日清单（含当日到期的已完成条目，卡片淡显）。
+ * 场景筛选与搜索照常生效（getVisibleItems 口径）；菜单顺延走卡片动作「延后 1/3 天」。
+ */
+function renderCalendar(content: HTMLElement): void {
+  let monthMoment = moment(`${M.calMonth}-01`, 'YYYY-MM-DD', true);
+  if (!monthMoment.isValid()) {
+    // 防御：非法月份（手改内存态等）回当月
+    M.calMonth = moment().format('YYYY-MM');
+    M.calSelected = null;
+    monthMoment = moment(`${M.calMonth}-01`, 'YYYY-MM-DD', true);
+  }
+  const visible = getVisibleItems();
+  const undone = visible.filter((i) => !i.completed && i.due);
+  const byDay = new Map<string, MemoItem[]>();
+  for (const it of undone) {
+    const key = it.due!.slice(0, 10);
+    const bucket = byDay.get(key);
+    if (bucket) bucket.push(it);
+    else byDay.set(key, [it]);
+  }
+  const today = localDayKey();
+  const cells: CalCell[] = [];
+  const lead = (monthMoment.day() + 6) % 7; // 周一首列的月首补位
+  for (let i = 0; i < lead; i++) cells.push({ day: 0, blank: true, chips: [] });
+  const daysInMonth = monthMoment.daysInMonth();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${M.calMonth}-${String(d).padStart(2, '0')}`;
+    const list = byDay.get(key) || [];
+    // 每格最多 3 条 chip，多出折「还有 N 条」（格子本身可点看全量）
+    const chips: CalChip[] = list.slice(0, 3).map((it) => {
+      const st = getDueStatus(it.due!);
+      return { id: it.id, title: it.title, cls: st === 'overdue' ? 'is-overdue' : st === 'today' ? 'is-today' : 'is-future' };
+    });
+    if (list.length > 3) chips.push({ id: '', title: `还有 ${list.length - 3} 条`, cls: 'is-more' });
+    cells.push({ day: d, today: key === today, selected: M.calSelected === key, chips });
+  }
+  const sections: string[] = [calHeadHtml(monthMoment.format('YYYY年M月')), calGridHtml(cells)];
+  // 当日清单：点日期展开（完成态条目同列，卡片淡显划线）
+  if (M.calSelected) {
+    const dayItems = visible.filter((i) => (i.due || '').slice(0, 10) === M.calSelected);
+    const label = `${moment(M.calSelected).format('M月D日')} · ${dayItems.length} 项`;
+    const cards = dayItems.length ? dayItems.map((it) => cardHtmlOf(it)).join('') : '<div class="bz-memo-cal-noday">这一天没有备忘录</div>';
+    sections.push(`<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, dayItems.length)}${cards}</div>`);
+  }
+  content.innerHTML = sections.join('');
+  mountIcons(content);
+  wireCards(content);
 }
 
 /** 移动抽屉顶部信息说明（与列表卡同源 markup——勾选圈走 checkHtml 单源（ADR-0104），
@@ -783,10 +925,27 @@ function toggleCheck(it: MemoItem): void {
 
 async function completeItem(it: MemoItem): Promise<void> {
   try {
-    await MemoData.completeItem(it.id);
+    const { next } = await MemoData.completeItem(it.id);
     emitDomainEvent('memo', { kind: 'completed', title: it.title });
+    // 周期重复（issue 353）：下一期已由数据层生成——轻提示新到期日 + 补一条 added 行为流
+    if (next) {
+      notice(next.due ? `下一期已排到 ${moment(next.due).format('MM/DD HH:mm')}` : '下一期已生成', 'success');
+      emitDomainEvent('memo', { kind: 'added', title: next.title, scene: next.scene, priority: next.priority, due: next.due });
+    }
   } catch (e) {
     notifySaveError(e, '标记完成');
+    console.error(e);
+  }
+  await refresh();
+}
+
+/** 停止周期重复（issue 353）：recur 清空，之后完成不再生成下一期 */
+async function stopRecur(id: string): Promise<void> {
+  try {
+    await MemoData.updateItem(id, { recur: null });
+    notice('已停止重复，完成后不再生成下一期', 'success');
+  } catch (e) {
+    notifySaveError(e, '停止重复');
     console.error(e);
   }
   await refresh();
@@ -798,6 +957,32 @@ async function restoreItem(it: MemoItem): Promise<void> {
     emitDomainEvent('memo', { kind: 'restored', title: it.title });
   } catch (e) {
     notifySaveError(e, '恢复未完成');
+    console.error(e);
+  }
+  await refresh();
+}
+
+/**
+ * 清单子任务勾选切换（issue 354）：行内即时落盘（无父项 300ms 防抖——子项单点语义明确）。
+ * 全勾完且父项未完成 → 走 completeItem 自动完成（周期条目由数据层链式生成下一期、清单随期重置）；
+ * 已完成父项取消任一勾选 → 自动恢复未完成。普通勾选静默（不发域事件，避免行为流刷屏）。
+ */
+async function toggleChecklistItem(it: MemoItem, idx: number): Promise<void> {
+  const cl = (it.checklist || []).map((c) => ({ ...c }));
+  if (idx < 0 || idx >= cl.length) return;
+  cl[idx].done = !cl[idx].done;
+  const allDone = cl.every((c) => c.done);
+  try {
+    if (allDone && !it.completed) {
+      await MemoData.updateItem(it.id, { checklist: cl });
+      await completeItem(it); // 复用完成链路（通知/域事件/refresh 同源）
+      return;
+    }
+    const patch: Partial<MemoItem> = { checklist: cl };
+    if (it.completed && !allDone) patch.completed = null; // 已完成父项取消勾选 → 自动恢复
+    await MemoData.updateItem(it.id, patch);
+  } catch (e) {
+    notifySaveError(e, '更新子任务');
     console.error(e);
   }
   await refresh();
@@ -815,6 +1000,23 @@ async function postponeItem(id: string, days: number): Promise<void> {
     notice(`已延后 ${days} 天`, 'success');
   } catch (e) {
     notifySaveError(e, '延后备忘录');
+    console.error(e);
+  }
+  await refresh();
+}
+
+/** 移到指定日期（issue 355 月历改期）：保留原时刻只换日期，日历上把事项直接挪到别的日子 */
+async function moveToDay(id: string, day: string): Promise<void> {
+  const it = M.items.find((i) => i.id === id);
+  if (!it || !it.due) return;
+  const time = it.due.replace('T', ' ').slice(11) || '09:00';
+  const next = `${day} ${time}`;
+  try {
+    await MemoData.updateItem(id, { due: next });
+    emitDomainEvent('memo', { kind: 'postponed', title: it.title, due: next });
+    notice(`已移到 ${moment(day).format('MM/DD')}`, 'success');
+  } catch (e) {
+    notifySaveError(e, '改期备忘录');
     console.error(e);
   }
   await refresh();
@@ -913,6 +1115,23 @@ function buildCardActions(it: MemoItem): ItemAction[] {
     };
     actions.push({ icon: 'clock', label: '延后 1 天', title: '延后 1 天', sub: `→ ${postponeSub(1)}`, onClick: async () => { await postponeItem(it.id, 1); } });
     actions.push({ icon: 'clock', label: '延后 3 天', title: '延后 3 天', sub: `→ ${postponeSub(3)}`, onClick: async () => { await postponeItem(it.id, 3); } });
+    // 月历选中日（issue 355）：≠ 到期日时给「移到选中日期」——先在月历点目标日，
+    // 再（切回列表或在该日清单之外）对任意事项右键/长按直接改期
+    if (M.calSelected && it.due.slice(0, 10) !== M.calSelected) {
+      actions.push({
+        icon: 'calendar', label: '移到选中日期', title: '移到月历选中的日期',
+        sub: `→ ${moment(M.calSelected).format('MM-DD')}`,
+        onClick: async () => { await moveToDay(it.id, M.calSelected!); },
+      });
+    }
+  }
+  // 周期重复（issue 353）：可随时停止——recur 清空后完成不再生成下一期
+  if (it.recur && !it.completed) {
+    actions.push({
+      icon: 'repeat', label: '停止重复', title: '停止周期重复',
+      sub: recurLabel(it.recur),
+      onClick: async () => { await stopRecur(it.id); },
+    });
   }
   const isImportant = it.priority === 'important';
   actions.push({
@@ -976,14 +1195,18 @@ function addFromComposer(): void {
     // 剪贴板预填标题候选：内容仍是预填的原始 URL 才采用（用户改动即弃）
     const hint = clipTitleHint && clipTitleHint.title && txt === clipTitleHint.url ? clipTitleHint : null;
     clipTitleHint = null;
+    // 清单约定语法（issue 354）：「筹备旅行 /订机票 /订酒店」→ 标题 + 勾选项
+    const parsed = parseComposerChecklist(txt);
     const it: MemoItem = {
       id: generateId(), // T5：与旧 memo 同前缀 'item'（同源 memo.json）
-      title: hint ? hint.title : txt,
+      title: hint ? hint.title : parsed.title,
       scene,
       priority: 'minor',
       created: moment().format('YYYY-MM-DD HH:mm:ss'),
       completed: null,
       due: null,
+      recur: null, // composer 快速录入不带周期（编辑弹窗可补）
+      checklist: parsed.checklist,
       notePath: null,
       notePosition: null,
       scriptName: null,
@@ -1047,7 +1270,12 @@ export function openEditor(
   title.textContent = isEdit ? '编辑备忘录' : '创建备忘录';
   form.appendChild(title);
 
-  // 内容
+  // 内容（新建态预设内容走 composer 约定语法解析——issue 354：标题部分进内容框，词条进清单草稿）
+  const presetRaw = isEdit ? '' : opts?.presetContent || '';
+  const parsedPreset = presetRaw ? parseComposerChecklist(presetRaw) : null;
+  const clInitial: MemoCheckItem[] = editing
+    ? (editing.checklist || []).map((c) => ({ ...c }))
+    : (parsedPreset?.checklist ? parsedPreset.checklist.map((c) => ({ ...c })) : []);
   const contentField = document.createElement('div');
   contentField.className = 'bz-field';
   const contentLabel = document.createElement('span');
@@ -1056,9 +1284,64 @@ export function openEditor(
   const contentInput = document.createElement('textarea');
   contentInput.className = 'bz-input';
   contentInput.placeholder = '输入备忘录内容...';
-  contentInput.value = editing ? editing.title : (opts?.presetContent || '');
+  contentInput.value = editing ? editing.title : parsedPreset ? parsedPreset.title : '';
   contentField.append(contentLabel, contentInput);
   form.appendChild(contentField);
+
+  // 清单子任务（issue 354）：行内勾选态 + 文案 + 删除，「添加子任务」追加空行；保存时清洗空行
+  const clDraft: MemoCheckItem[] = clInitial;
+  const clField = document.createElement('div');
+  clField.className = 'bz-field bz-memo-cl-field';
+  const clLabel = document.createElement('span');
+  clLabel.className = 'bz-field-label';
+  clLabel.textContent = '子任务（可选，勾完自动完成父项）';
+  const clRows = document.createElement('div');
+  clRows.className = 'bz-memo-cl-edit';
+  const clAddBtn = document.createElement('button');
+  clAddBtn.type = 'button';
+  clAddBtn.className = 'bz-memo-cl-addbtn';
+  clAddBtn.appendChild(uiIcon('plus'));
+  clAddBtn.appendChild(document.createTextNode('添加子任务'));
+  clField.append(clLabel, clRows, clAddBtn);
+  form.appendChild(clField);
+
+  function renderClRows(): void {
+    clRows.innerHTML = '';
+    clDraft.forEach((c, idx) => {
+      const row = document.createElement('div');
+      row.className = 'bz-memo-cl-edit-row';
+      const box = document.createElement('span');
+      box.className = 'bz-memo-cl-box' + (c.done ? ' bz-memo-cl-on' : '');
+      box.title = c.done ? '取消完成' : '标记完成';
+      box.addEventListener('click', () => {
+        clDraft[idx].done = !clDraft[idx].done;
+        box.classList.toggle('bz-memo-cl-on', clDraft[idx].done);
+      });
+      const inp = document.createElement('input');
+      inp.className = 'bz-input';
+      inp.value = c.text;
+      inp.placeholder = '子任务内容';
+      inp.addEventListener('input', () => { clDraft[idx].text = inp.value; });
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'bz-icon-btn bz-icon-btn--lg';
+      del.title = '删除子任务';
+      del.appendChild(uiIcon('x'));
+      del.addEventListener('click', () => {
+        clDraft.splice(idx, 1);
+        renderClRows();
+      });
+      row.append(box, inp, del);
+      clRows.appendChild(row);
+    });
+  }
+  renderClRows();
+  clAddBtn.addEventListener('click', () => {
+    clDraft.push({ text: '', done: false });
+    renderClRows();
+    const last = clRows.lastElementChild?.querySelector('input') as HTMLInputElement | null;
+    last?.focus();
+  });
 
   // 第二输入框区（剪藏标题/代码脚本/公开课课程；随场景显隐）——放在场景平铺上方
   const titleBox = document.createElement('div');
@@ -1192,6 +1475,28 @@ export function openEditor(
   dueField.append(dueLabel, dueRow);
   form.appendChild(dueField);
 
+  // 周期重复（issue 353）：不重复/每周/每月/每年；自定义 N 天间隔数据结构已预留，UI 一期不暴露
+  const recurField = document.createElement('div');
+  recurField.className = 'bz-field';
+  const recurLabelEl = document.createElement('span');
+  recurLabelEl.className = 'bz-field-label';
+  recurLabelEl.textContent = '重复';
+  recurField.appendChild(recurLabelEl);
+  const recurChoice = uiChoice<string>({
+    options: [
+      { value: 'none', label: '不重复' },
+      { value: 'weekly', label: '每周' },
+      { value: 'monthly', label: '每月' },
+      { value: 'yearly', label: '每年' },
+    ],
+    value: editing?.recur ? editing.recur.kind : 'none',
+    float: true, // 浮岛 segmented（与场景/优先级同范式）
+    label: '重复',
+    onChange: () => { /* 值由保存时读取 */ },
+  });
+  recurField.appendChild(recurChoice.el);
+  form.appendChild(recurField);
+
   // 📌 定位（F 款已入组件库 .bz-btn--chip，issue 200；真实读取当前笔记与光标，绑定后转品牌色）
   const posRow = document.createElement('div');
   posRow.className = 'bz-memo-pos-row';
@@ -1263,6 +1568,13 @@ export function openEditor(
     if (sceneBtnOn) scene = (sceneBtnOn as HTMLElement).dataset.value || scene;
     const prioBtnOn = prioChoice.el.querySelector('.is-on');
     const priority: string = prioBtnOn ? (prioBtnOn as HTMLElement).dataset.value || 'minor' : 'minor';
+    // 周期重复（issue 353）：'none' 归一 null；days 自定义间隔一期不出 UI，保存口径只产三基础周期
+    const recurBtnOn = recurChoice.el.querySelector('.is-on');
+    const recurKind = (recurBtnOn ? (recurBtnOn as HTMLElement).dataset.value || 'none' : 'none') as MemoRecur['kind'] | 'none';
+    const recur: MemoRecur | null = recurKind === 'weekly' || recurKind === 'monthly' || recurKind === 'yearly' ? { kind: recurKind } : null;
+    // 清单子任务（issue 354）：清洗空行后落盘；全空 = 无清单
+    const clClean = clDraft.map((c) => ({ text: c.text.trim(), done: c.done })).filter((c) => c.text);
+    const checklist: MemoCheckItem[] | null = clClean.length ? clClean : null;
     const dueVal = dueInput.value;
     const due = dueVal ? dueVal.replace('T', ' ') : null;
     let titleVal = titleInput.value.trim();
@@ -1298,6 +1610,8 @@ export function openEditor(
             scene,
             priority,
             due,
+            recur,
+            checklist,
             notePath: posState.notePath,
             notePosition: posState.notePosition,
             scriptName,
@@ -1315,6 +1629,8 @@ export function openEditor(
             created: moment().format('YYYY-MM-DD HH:mm:ss'),
             completed: null,
             due,
+            recur,
+            checklist,
             notePath: posState.notePath,
             notePosition: posState.notePosition,
             scriptName,

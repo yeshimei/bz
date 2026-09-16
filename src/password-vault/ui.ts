@@ -2,7 +2,7 @@
  * 保险库（password-vault）UI — 原型 v1「保险库」一比一移植
  * 桌面三栏工作台（导航+列表+详情）+ 移动端（列表卡+详情页+FAB）+ 原型自绘
  * 右键菜单 / 底部抽屉 / 解锁屏（金色印章 + 安全机制嵌入）；
- * 确认框走 core 流程框（openFlowDialog）、提示走 core 全局通知（issue 347 收编）。
+ * 确认框走 core 流程框（openFlowDialog）、提示走 core 全局通知（issue 365 收编）。
  * 数据经 PasswordVaultDataManager（保险箱 password-vault SafeNote 共享）；
  * 解锁底层走保险箱 SafeManager（同一主密码），原型锁屏仅作视觉壳，
  * 安全机制（首设风险确认/失败冷却/损坏重设/自愈提示）完整保留（Q13）。
@@ -56,7 +56,7 @@ interface LockSecurity {
 const DEFAULT_CHARSET =
   '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+';
 
-// secureRandomPassword / copySensitiveWithFallback / cancelClipboardClear 收口 core/utils（批次 G 单源 + issue 347 剪贴板兜底单源）
+// secureRandomPassword / copySensitiveWithFallback / cancelClipboardClear 收口 core/utils（批次 G 单源 + issue 365 剪贴板兜底单源）
 
 /**
  * 给容器内所有 [data-avatar] 注入真实 favicon 图标（域名从 url 解析）：
@@ -973,7 +973,7 @@ export class PasswordVaultUIManager {
     });
   }
 
-  // ---------- 确认框（core 流程框单源，issue 347 收编） ----------
+  // ---------- 确认框（core 流程框单源，issue 365 收编） ----------
   /**
    * 确认框：原 E1 时代为域内自绘双实例同步弹层（回调覆写 + pending 消费，曾因确定按钮
    * 监听器逐次叠加而删错条目）；现收编 core openFlowDialog——每次新建 DOM、取消按钮 /
@@ -996,7 +996,7 @@ export class PasswordVaultUIManager {
     });
   }
 
-  // ---------- 提示（core 全局通知单源，issue 347 收编） ----------
+  // ---------- 提示（core 全局通知单源，issue 365 收编） ----------
   /**
    * 提示：原为面板内自绘 toast（双实例同步 + 1800ms 定时器），收编 core 全局通知——
    * 面板最小化/隐藏时提示仍可见（E15 同款教训），文案逐字保留；isErr → error（❌），
@@ -1006,7 +1006,7 @@ export class PasswordVaultUIManager {
     notice(msg, isErr ? 'error' : 'success');
   }
 
-  // ---------- 复制（core 剪贴板兜底单源，issue 347 收编） ----------
+  // ---------- 复制（core 剪贴板兜底单源，issue 365 收编） ----------
   // 复制链路（copySensitiveText 失败 → textarea+execCommand 兜底 + 60s 自动清空）
   // 收口 core/utils 的 copySensitiveWithFallback；本域 encrypt 双域消费同一实现。
 

@@ -3,7 +3,7 @@
  *
  * 密码本无第二布局，单文件即全部 markup：面板骨架（桌面三栏 + 移动单列双屏）/
  * 锁屏（金色印章）/ 添加弹窗 / 平台编辑弹窗 / 平台行 / 账号卡 / 移动页。
- * 确认框与 toast 已收编 core（issue 347：openFlowDialog / 全局通知），域内不再出 markup。
+ * 确认框与 toast 已收编 core（issue 365：openFlowDialog / 全局通知），域内不再出 markup。
  * 原型 × 插件 markup 单源：
  *   - 插件侧：ui.ts 直接 import（事件绑定/core 服务/数据读写留 ui.ts）；
  *   - 评审壳侧：esbuild 打成 IIFE → 同目录 prototype-render.js（window.BZR_password_vault）；
@@ -115,7 +115,7 @@ export function modalHTML(which: 'desk' | 'mob'): string {
 }
 
 /**
- * 确认框已收编 core openFlowDialog（issue 347），域内不再出确认框 markup；
+ * 确认框已收编 core openFlowDialog（issue 365），域内不再出确认框 markup；
  * 本函数删除，`bz-password-vault-pop2` 基类仅余平台编辑弹窗（platEditHTML）在用。
  */
 

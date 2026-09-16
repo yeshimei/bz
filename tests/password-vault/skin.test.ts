@@ -10,7 +10,7 @@
  *  1) token 层 `.bz-pwv-flow-dialog { … }`：域私有 token 整表按同值复制到弹窗根；
  *  2) 壳映射 `#__shared_confirm_popup__.bz-pwv-flow-dialog { … }`：材质取域弹窗卡
  *     `.bz-password-vault-pop2 .card`（平台编辑弹窗同款），金色主钮取 `.bz-password-vault-btn.gold`
- *     （原自绘 `.pop2 .ok` 已随 issue 347 确认框收编删除，取值同源）。
+ *     （原自绘 `.pop2 .ok` 已随 issue 365 确认框收编删除，取值同源）。
  *
  * 本用例守护：两处都传类、token 层与壳映射都在、金色主钮带 `:not(--danger)` 守卫
  * （危险主动作不得被域规则盖回金色 —— core 既定口径）。
@@ -35,7 +35,7 @@ function block(sel: string): string | null {
 describe('issue 291：password-vault 确认框随金色印章皮', () => {
   it('全部确认框都传 className: bz-pwv-flow-dialog（首设风险 / 清单损坏重设 / 删除类 askConfirm）', () => {
     const hits = ui().match(/className: 'bz-pwv-flow-dialog'/g) || [];
-    expect(hits.length, '锁屏两处各一 + askConfirm 收编单源一处（issue 347）').toBe(3);
+    expect(hits.length, '锁屏两处各一 + askConfirm 收编单源一处（issue 365）').toBe(3);
     expect(ui()).toContain('设置主密码');
     expect(ui()).toContain('清单疑似损坏');
   });

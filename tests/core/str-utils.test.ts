@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * core/ui/str 零依赖字符串工具测试（issue 347 机械项清扫）：
+ * core/ui/str 零依赖字符串工具测试（issue 365 机械项清扫）：
  * pad2（两位补零单源）/ emptyHtmlStr（空态字符串版，与 core/ui/empty uiEmpty 同 markup 口径）。
  * 纯函数无 DOM 依赖，node 环境直跑。
  */

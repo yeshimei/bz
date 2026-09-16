@@ -110,7 +110,7 @@ describe('enh-sweep-c：静态 z-index 退役（favorites/belongings）', () => 
       const s = css(d);
       expect(s).not.toContain('z-index: 100000');
       expect(s).not.toContain('110000');
-      // 面板仍走 topifyZ（ADR-0067）；表单/详情自绘遮罩已随壳收编 uiModal（issue 347 第 5 项），
+      // 面板仍走 topifyZ（ADR-0067）；表单/详情自绘遮罩已随壳收编 uiModal（issue 365 第 5 项），
       // 遮罩创建即 allocZ 发号，域内不再自挂 topifyZ(mask)
       expect(src(`src/${d}/ui.ts`).match(/topifyZ\(overlay\)/)).not.toBeNull();
       expect(src(`src/${d}/ui.ts`)).toContain('uiModal(');
@@ -121,7 +121,7 @@ describe('enh-sweep-c：静态 z-index 退役（favorites/belongings）', () => 
 
 describe('enh-sweep-c：杂项打磨', () => {
   it('review：遮罩收编 core 单源（统计/历史走 .bz-overlay-mask，quiz 保留）+ 滚动条隐藏收敛 core 界面级单源 + 死规则清理', () => {
-    // issue 347：统计/历史弹窗遮罩底/blur 上收 core .bz-overlay-mask（TS 挂类，id 留作 DOM 钩子）；
+    // issue 365：统计/历史弹窗遮罩底/blur 上收 core .bz-overlay-mask（TS 挂类，id 留作 DOM 钩子）；
     // #quiz-mask 入口休眠且刻意自绘，保留原声明
     const s = css('review');
     expect(s).not.toContain('#review-stats-mask {');

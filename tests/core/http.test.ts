@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * core/http 单源测试（issue 347 复用上收批第 1 项）：
+ * core/http 单源测试（issue 365 复用上收批第 1 项）：
  * - httpGetText 四态：2xx → 正文、非 2xx / 网络错 / 超时 → null（全部 fetchImpl 注入，不发真请求）；
  * - withTimeout：超时 reject（label 与时限进错误信息）、原 Promise 超时后照旧 settle
  *   （结果弃用、无 unhandled rejection）、先落定一侧透传并清计时器；

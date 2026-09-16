@@ -40,7 +40,7 @@ export interface HomeState {
    */
   riverView: string | null;
   /**
-   * 「生成今日总结」进行中（ADR-0154 自 recap 面板迁入；AI 请求+写盘期间再点直接忽略）。
+   * 「生成今日总结」进行中（ADR-0157 自 recap 面板迁入；AI 请求+写盘期间再点直接忽略）。
    * **必须挂在 H 里**：在途请求无作废句柄，unloadHome（resetHomeState）复位标志后
    * 收口 sync 的按钮探测自然落定——插件重载不残留「生成中」卡死态。
    */

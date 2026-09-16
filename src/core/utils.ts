@@ -311,7 +311,7 @@ export function copySensitiveText(text: string): Promise<void> {
 }
 
 /**
- * 复制敏感内容（含降级兜底）+ 自动清空（issue 347 收口单源）。
+ * 复制敏感内容（含降级兜底）+ 自动清空（issue 365 收口单源）。
  * encrypt/ui（日记正文复制）与 password-vault（面板复制 + quick-pick 快速取密）
  * 原各持一份逐字雷同的「copySensitiveText 失败 → textarea+execCommand 选中法」兜底，
  * 收编为本函数；两域一律走这里，域内不再自留副本。

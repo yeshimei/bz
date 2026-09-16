@@ -7,7 +7,7 @@
  *           防物化时 anchor 写未解析链接 / upgrade 静默失败（审计#4）。
  *           与保存物化 clearArticleTracking 幂等共处：同为 updateClipbookData 读改写事务，
  *           同 per-path 队列串行，谁先落盘谁生效、互不覆盖。
- * 队列/去抖/批量冲刷/事件订阅/生命周期收编至公共壳 core/file-sync（issue 347），
+ * 队列/去抖/批量冲刷/事件订阅/生命周期收编至公共壳 core/file-sync（issue 365），
  * 域侧只留同步纯函数、监听范围与装配；rename 经域事件总线 'vault:md-renamed'
  * 按 DEBOUNCE_DELAY 合并去抖回放保序，delete 走 'vault:md-deleted' 即时通道
  * （obsidian-adapter 恒发、仅 md）。
@@ -84,7 +84,7 @@ function getWatchedFolders(): string[] {
   return [kb, clipDirOf()];
 }
 
-// ---------- 壳装配（issue 347：队列/去抖/订阅/生命周期走 core/file-sync） ----------
+// ---------- 壳装配（issue 365：队列/去抖/订阅/生命周期走 core/file-sync） ----------
 
 /** clipbook.json 引用命中检查（范围外放行口径，同 memo E22）：marks 的 notePath 指向
  *  知识盒文献笔记，可不在剪藏目录监听范围内 */

@@ -1,5 +1,5 @@
 /**
- * 统一保险库工作台 UI 测试（encrypt 域，ADR-0085；ADR-0155 密码资产视图摘除后收敛版）
+ * 统一保险库工作台 UI 测试（encrypt 域，ADR-0085；ADR-0158 密码资产视图摘除后收敛版）
  * 覆盖：三栏骨架 DOM（nav/列表/详情 + 移动端 seg）、资产导航收敛（概览/笔记；密码视图
  * 已退役——直通 pw 资产兜底落笔记且不渲染任何密码元素）、密码镜像 SafeNote 不进面板、
  * 加密笔记视图切换渲染、日记移动端详情抽屉、锁屏态（未解锁 show → 锁屏）、
@@ -31,7 +31,7 @@ const CONFIG = {
   securityMode: false,
 };
 
-describe('统一保险库工作台（UIManager；ADR-0155 收敛为加密笔记 + 加密日记）', () => {
+describe('统一保险库工作台（UIManager；ADR-0158 收敛为加密笔记 + 加密日记）', () => {
   let vault: MockVault;
   let sm: SafeManager;
   let dm: PasswordVaultDataManager;
@@ -89,7 +89,7 @@ describe('统一保险库工作台（UIManager；ADR-0155 收敛为加密笔记 
     expect(navCnt).toBe('0');
   });
 
-  it('ADR-0155 摘除断言：直通 pw 资产兜底落笔记，不渲染任何密码视图元素', async () => {
+  it('ADR-0158 摘除断言：直通 pw 资产兜底落笔记，不渲染任何密码视图元素', async () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'p@ss', fav: true });
     ui.show();
     await waitFor(() => !!document.querySelector('.bz-vault-detail > .bz-vault-area'));

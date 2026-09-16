@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * core/file-sync 公共壳纯逻辑测试（issue 347 全域复用上收）：
+ * core/file-sync 公共壳纯逻辑测试（issue 365 全域复用上收）：
  * watched folders 匹配（含目录本身口径）、范围外引用放行（E22）、DEBOUNCE_DELAY
  * 去抖合并回放保序与缺省 300ms、delete 即时派发、buildRenameEvent 载荷构造、
  * onMdDeleted 后置消费者、unload 后不再触发、积压任务 _cancelled 首行短路、

@@ -30,7 +30,8 @@
 .bz-sb-mb-mini,
 .bz-sb-ref-preview,
 .bz-sb-ref-card--float,
-.bz-sb-flow-dialog {
+.bz-sb-flow-dialog,
+.bz-sb-weekly-modal {
   --sb-bg: #fbfaf7;
   --sb-card: #ffffff;
   --sb-ink: #211d16;
@@ -64,7 +65,8 @@
 .theme-dark .bz-sb-mb-mini,
 .theme-dark .bz-sb-ref-preview,
 .theme-dark .bz-sb-ref-card--float,
-.theme-dark .bz-sb-flow-dialog {
+.theme-dark .bz-sb-flow-dialog,
+.theme-dark .bz-sb-weekly-modal {
   --sb-bg: #17150f;
   --sb-card: #211d16;
   --sb-ink: #ece7db;
@@ -1721,4 +1723,201 @@
    （黑影在深炭棕底不可见，域内该档是写死值、不走 token，故此处必须另写一条） */
 .theme-dark #__shared_confirm_popup__.bz-sb-flow-dialog {
   box-shadow: 0 24px 60px #00000080;
+}
+
+/* ==================== 每周知识动态（issue 360：主面板入口卡 + 详情弹层） ====================
+   消费同组 --sb-* token（弹层已并入上方 token 组第九根）与 core 版式 token；
+   列表滚动不自造滚动条（core 通杀），弹层滚动区沿用域内 .bz-sb-scroll-y。 */
+
+/* —— 主面板入口卡（右栏 AI 摘要卡下方一枚只读卡，最小侵入） —— */
+.bz-sb-weekly-card {
+  cursor: pointer;
+  transition: border-color 120ms ease;
+}
+.bz-sb-weekly-card:hover {
+  border-color: var(--sb-acc);
+}
+.bz-sb-weekly-card:focus-visible {
+  outline: 1.5px solid var(--sb-acc);
+  outline-offset: 1px;
+}
+.bz-sb-weekly-card-txt {
+  font-size: var(--bz-font-meta);
+  color: var(--sb-ink2);
+  line-height: 1.5;
+}
+
+/* —— 详情弹层（居中，遮罩 + ESC 关闭；壳布局对齐 .bz-sb-chat-modal） —— */
+.bz-sb-weekly-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 560px;
+  max-height: calc(100vh - 48px);
+  background: var(--sb-bg);
+  border: 1px solid var(--sb-line2);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px #00000022;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1001;
+  color: var(--sb-ink);
+}
+.theme-dark .bz-sb-weekly-modal {
+  box-shadow: 0 24px 60px #00000080; /* 暗色壳影加深：与 .theme-dark .bz-sb-panel 同值 */
+}
+.bz-sb-weekly-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 15px 20px var(--bz-space-md);
+  border-bottom: 1px solid var(--sb-line);
+}
+.bz-sb-weekly-head h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+.bz-sb-weekly-body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--bz-space-lg) 20px var(--bz-space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-md);
+}
+
+/* —— 概要：AI 人话总结 / 计数总览 —— */
+.bz-sb-weekly-summary {
+  background: var(--sb-acc-soft);
+  border: 1px solid var(--sb-acc-line);
+  border-radius: var(--bz-radius-md);
+  padding: 10px 14px;
+}
+.bz-sb-weekly-summary-text {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--sb-ink2);
+}
+.bz-sb-weekly-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.bz-sb-weekly-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--sb-track);
+  border: 1px solid var(--sb-line);
+  font-size: var(--bz-font-meta);
+  color: var(--sb-ink3);
+}
+.bz-sb-weekly-chip b {
+  font-size: 15px;
+  color: var(--sb-ink);
+  font-variant-numeric: tabular-nums;
+}
+.bz-sb-weekly-chip--warn b {
+  color: var(--sb-warn);
+}
+
+/* —— 分节与行（列表行对齐 .bz-sb-recent-row 的交互手感） —— */
+.bz-sb-weekly-section {
+  background: var(--sb-card);
+  border: 1px solid var(--sb-line);
+  border-radius: var(--bz-radius-md);
+  padding: var(--bz-space-md) 14px;
+}
+.bz-sb-weekly-rows {
+  display: flex;
+  flex-direction: column;
+}
+.bz-sb-weekly-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 0;
+}
+.bz-sb-weekly-row:hover {
+  background: var(--sb-track);
+}
+.bz-sb-weekly-row:hover .bz-sb-weekly-row-name {
+  color: var(--sb-acc);
+}
+.bz-sb-weekly-row:focus-visible {
+  outline: 1.5px solid var(--sb-acc);
+  outline-offset: -1px;
+}
+.bz-sb-weekly-row-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sb-acc);
+  opacity: 0.65;
+}
+.bz-sb-weekly-row-dot--warn {
+  background: var(--sb-warn);
+  opacity: 1;
+}
+.bz-sb-weekly-row-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--sb-ink2);
+}
+.bz-sb-weekly-row-name--target {
+  color: var(--sb-ink3);
+}
+.bz-sb-weekly-row-time {
+  flex: none;
+  margin-left: auto;
+  font-size: var(--bz-font-meta);
+  color: var(--sb-mut);
+  font-variant-numeric: tabular-nums;
+}
+.bz-sb-weekly-row--hit {
+  cursor: default; /* 整行不跳转：跳转落在新笔记与目标名两段字段上 */
+}
+.bz-sb-weekly-row--hit > .bz-sb-weekly-row-name {
+  cursor: pointer;
+}
+.bz-sb-weekly-row--hit > .bz-sb-weekly-row-name:hover {
+  color: var(--sb-acc);
+}
+.bz-sb-weekly-row-hit-arrow {
+  flex: none;
+  color: var(--sb-faint);
+  display: inline-flex;
+}
+.bz-sb-weekly-row-pct {
+  flex: none;
+  margin-left: auto;
+  font-size: var(--bz-font-meta);
+  font-weight: 600;
+  color: var(--sb-warn);
+  font-variant-numeric: tabular-nums;
+}
+
+/* —— 空态 / 聚合中 / 截断脚注 —— */
+.bz-sb-weekly-empty {
+  padding: 4px 4px;
+  font-size: var(--bz-font-meta);
+  color: var(--sb-mut);
+}
+.bz-sb-weekly-empty--page {
+  padding: 48px 12px;
+  text-align: center;
+  font-size: 13px;
 }

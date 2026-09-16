@@ -229,7 +229,7 @@ describe('锁家族修复批（password-vault）', () => {
     await (ui as any).handleAccountAction(d, 'fav');
     await flush(50);
     window.removeEventListener('unhandledrejection', onUnhandled);
-    // 提示收编 core 全局通知（issue 347）：文案逐字保留 + error 档（原面板内 toast .err 同语义）
+    // 提示收编 core 全局通知（issue 365）：文案逐字保留 + error 档（原面板内 toast .err 同语义）
     expect(hasNotice('操作失败：disk full')).toBe(true);
     const errNotice = [...document.querySelectorAll('.bz-notice--error .bz-notice-msg')]
       .some((el) => (el.textContent || '').includes('操作失败'));

@@ -38,7 +38,7 @@ function canvasAvailable(): boolean {
 }
 
 /**
- * 用超时 + 空值保护包裹 Union 事件 Promise（超时壳已收编 core/http，issue 347；
+ * 用超时 + 空值保护包裹 Union 事件 Promise（超时壳已收编 core/http，issue 365；
  * 此处 re-export 保持既有导入面——preview.test / preview-canvas.test 直接导入）：
  * - src 为空 → 直接 reject（绝不等 onload/onerror 永不触发）
  * - 超过 timeout 仍未触发目标事件 → reject（超时按失败，返回 null 由调用方跳过）

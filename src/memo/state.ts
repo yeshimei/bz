@@ -22,6 +22,12 @@ export interface MemoState {
   showDone: boolean;
   /** 已完成折叠区：「更早 N 条」（时间窗外，memoDoneWindow）是否展开 */
   showEarlierDone: boolean;
+  /** 主视图（issue 355）：list 列表 | calendar 月历（打开面板默认列表） */
+  view: 'list' | 'calendar';
+  /** 月历当前月份（'YYYY-MM'） */
+  calMonth: string;
+  /** 月历选中日（'YYYY-MM-DD'；null = 未选，不显示当日清单） */
+  calSelected: string | null;
   /** 录入当场可见：composer/编辑器新建条目 id（伪场景「今日」「重要」过滤放行，切场景/关面板清空） */
   pinnedNewId: string | null;
   /** 勾选完成防抖计时（300ms，对齐 memo 卡片行为） */
@@ -39,6 +45,9 @@ export const M: MemoState = {
   search: '',
   showDone: false,
   showEarlierDone: false,
+  view: 'list',
+  calMonth: '',
+  calSelected: null,
   pinnedNewId: null,
   completeTimers: new Map(),
   renderFn: null,
@@ -54,6 +63,9 @@ export function resetMemoState(): void {
   M.search = '';
   M.showDone = false;
   M.showEarlierDone = false;
+  M.view = 'list';
+  M.calMonth = '';
+  M.calSelected = null;
   M.pinnedNewId = null;
   M.completeTimers.forEach((t) => clearTimeout(t));
   M.completeTimers.clear();
