@@ -195,6 +195,15 @@ async function pump(): Promise<void> {
         refreshAfterFetch();
         continue;
       }
+      // 审计#12（issue 337）：写回前存在性守卫——目标笔记已被删（含插件外删除，不经 G8
+      // dequeueDoubanFetch）→ 静默出队：清会话去重标记（对齐 G8/C10，同名重建可重新入队），
+      // 不记失败不发错误通知（外部删除是用户意图，「重启后会自动重试」的文案对它不成立）
+      if (M.appRef && !M.appRef.vault.getAbstractFileByPath(entry.file.path)) {
+        console.info(`bz 影院：豆瓣抓取目标笔记已删除，静默出队：${entry.file.path}`);
+        attempted.delete(entry.file.path);
+        refreshAfterFetch();
+        continue;
+      }
       if (!r.ok) {
         if (r.reason === 'blocked') blockedNames.push(entry.name);
         else failedNames.push(entry.name);

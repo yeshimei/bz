@@ -68,6 +68,23 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
   };
 }
 
+/**
+ * 海报路径 rename 联动目标扫描（issue 337 审计#11）：`海报` 是纯路径非双链，
+ * Obsidian 改名海报文件不联动 frontmatter。扫影院目录全部 md 的 metadataCache frontmatter，
+ * 返回 海报==oldPath 的笔记（不依赖面板是否开过，M.items 未填充也能命中）。
+ * 读法与 parseMovieFile 同口径（toString 剥引号——metadataCache 已解析 YAML）。
+ */
+export function findPosterRenameTargets(app: App, oldPath: string): TFile[] {
+  if (!oldPath) return [];
+  const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(M.folderPath + '/'));
+  const hits: TFile[] = [];
+  for (const file of files) {
+    const fm = app.metadataCache.getFileCache(file)?.frontmatter;
+    if (fm && fm['海报'] != null && String(fm['海报']) === oldPath) hits.push(file);
+  }
+  return hits;
+}
+
 /** 重建条目列表（扫描 M.folderPath 下全部 md） */
 export function rebuildItems(app: App): CinemaItem[] {
   const newItems: CinemaItem[] = [];
