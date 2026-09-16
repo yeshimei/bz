@@ -392,4 +392,42 @@ describe('G8：删除影片出队豆瓣抓取队列', () => {
     // 同名重建（路径相同）再入队：修复前 attempted 残留 → 永不补抓
     expect(enqueueDoubanFetch(a.file!, '甲')).toBe(true);
   });
+
+  it('审计#12（issue 337）：抓取目标被插件外删除 → 写回前守卫静默出队，零通知，同名重建可重抓', async () => {
+    const vault = new MockVault();
+    const [a] = seedTwo(vault);
+    const path = a.file!.path;
+    M.appRef = mockAppWithVault(vault); // 守卫读 M.appRef.vault 存在性（G8 路径之外的删除）
+    const fetched: string[] = [];
+    configureFetchQueue({
+      ...TEST_HOOKS,
+      fetch: async (file) => {
+        fetched.push(file.path);
+        return okOutcome();
+      },
+    });
+    expect(enqueueDoubanFetch(a.file!, '甲')).toBe(true);
+    vault.files.delete(path); // 抓取期间被插件外删除（不经 dequeueDoubanFetch，取消集合不含它）
+    await settle();
+    expect(fetched).toEqual([path]); // 抓取照跑，守卫在写回前接住
+    expect(getNoticeMessages()).toEqual([]); // 静默：不进失败聚合（外部删除是用户意图，文案「会自动重试」对它不成立）
+    expect(isFetching(path)).toBe(false);
+    // attempted 已清：同名重建（同路径）可重新入队补抓（对齐 G8/C10 语义）
+    vault.files.set(path, '---\ntags: [电影]\n评分: -1\n---');
+    const rebuilt = M.appRef!.vault.getAbstractFileByPath(path) as any;
+    expect(enqueueDoubanFetch(rebuilt, '甲')).toBe(true);
+  });
+
+  it('审计#12 对照：文件存在时守卫不误伤，写回照常零通知', async () => {
+    const vault = new MockVault();
+    const [a] = seedTwo(vault);
+    M.appRef = mockAppWithVault(vault);
+    const { fetched, fetch } = makeSuccessFetch(vault);
+    configureFetchQueue({ ...TEST_HOOKS, fetch });
+    expect(enqueueDoubanFetch(a.file!, '甲')).toBe(true);
+    await settle();
+    expect(fetched).toEqual([a.file!.path]);
+    expect(vault.files.get(a.file!.path)).toContain('豆瓣链接');
+    expect(getNoticeMessages()).toEqual([]);
+  });
 });

@@ -6,7 +6,7 @@ import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
 import { M, resetCinemaState, resolveCinemaFolderPath, DEFAULT_FOLDER } from './state';
-import { rebuildItems } from './data';
+import { rebuildItems, findPosterRenameTargets } from './data';
 import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, openAddModalDirect, openRandomMovie } from './ui';
 import { shutdownDoubanQueue, sweepDoubanFetch } from './douban-queue';
 
@@ -35,6 +35,7 @@ export function ensureCinema(app: App): void {
   M.appRef = app;
   registerEscapeHandler();
   registerAutoRefresh(app);
+  registerPosterRenameSync(app);
 }
 
 /** 域事件自动刷新（cinema/vault 多通道，防抖 300ms，仅 overlay 打开时刷新）。
@@ -58,6 +59,49 @@ function registerAutoRefresh(app: App): void {
   onDomainEvent<{ path: string }>('vault:md-created', (evt) => schedule({ path: evt.path }));
   onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => schedule({ path: evt.path }));
   onDomainEvent<{ path: string }>('vault:md-modified', (evt) => schedule({ path: evt.path }));
+}
+
+// ---------- 海报路径 rename 联动（issue 337 审计#11） ----------
+
+/** `海报` frontmatter 存的是纯路径非双链，Obsidian 改名海报文件不联动（审计#11）。
+ *  订阅 vault:md-renamed（消费先例：上方 md-deleted 自动刷新），命中任一影院笔记
+ *  海报==oldPath 才 processFrontMatter 改写（回调内复核，只动该键，其余键不碰）。
+ *  事件按 DEBOUNCE 同窗口合并去抖、保序回放（A→B→C 连改名不丢中间态——
+ *  只留末事件会漏改，参照 memo file-sync 同语义）；改写落盘经真实环境 modify 事件
+ *  走既有自动刷新，此处不手动重渲染（避免双刷）。 */
+const POSTER_RENAME_DEBOUNCE_MS = 300;
+let posterSyncRegistered = false;
+let posterRenameQueue: { oldPath: string; newPath: string }[] = [];
+let posterRenameTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** 幂等注册（ensureCinema 初始化分支调用，与 registerAutoRefresh 同生命周期） */
+function registerPosterRenameSync(app: App): void {
+  if (posterSyncRegistered) return;
+  posterSyncRegistered = true;
+  onDomainEvent<{ oldPath: string; newPath: string }>('vault:md-renamed', (evt) => {
+    if (!evt || typeof evt.oldPath !== 'string' || !evt.oldPath || typeof evt.newPath !== 'string' || !evt.newPath) return;
+    posterRenameQueue.push({ oldPath: evt.oldPath, newPath: evt.newPath });
+    if (posterRenameTimer) clearTimeout(posterRenameTimer);
+    posterRenameTimer = setTimeout(() => void flushPosterRenames(app), POSTER_RENAME_DEBOUNCE_MS);
+  });
+}
+
+/** 防抖到期：保序回放积压 rename 事件，逐个改写命中笔记（无命中零写盘） */
+async function flushPosterRenames(app: App): Promise<void> {
+  posterRenameTimer = null;
+  const batch = posterRenameQueue;
+  posterRenameQueue = [];
+  for (const { oldPath, newPath } of batch) {
+    for (const file of findPosterRenameTargets(app, oldPath)) {
+      try {
+        await app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+          if (fm['海报'] != null && String(fm['海报']) === oldPath) fm['海报'] = newPath;
+        });
+      } catch (e) {
+        console.warn('bz 影院：海报路径联动改写失败:', file.path, e);
+      }
+    }
+  }
 }
 
 /** 打开影院（命令 bz-cinema-open，toggle 语义） */
@@ -110,6 +154,12 @@ export function pickRandomCinema(app: App): void {
 export function unloadCinema(): void {
   initialized = false;
   autoRefreshRegistered = false;
+  posterSyncRegistered = false;
+  if (posterRenameTimer) {
+    clearTimeout(posterRenameTimer);
+    posterRenameTimer = null;
+  }
+  posterRenameQueue = [];
   shutdownDoubanQueue(); // 杀活动抓取子进程、清队列状态（卸载后会话语义重置）
   if (M.currentOverlay) {
     M.currentOverlay.remove();
