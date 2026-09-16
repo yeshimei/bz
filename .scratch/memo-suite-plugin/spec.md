@@ -300,7 +300,7 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 
 ### 设置页
 
-- **设置归属模型（ADR-0009，2025 用户决策）**：设置两分——全局项留 Obsidian 设置页（单页平铺，无 tab，只含「🤖 AI」「📂 数据存储路径」两区块），域行为项进各功能主面板右上角 ⚙️ 域设置弹窗；筛选/排序弹窗统一挂 🔀（影视「筛选与排序」、书库「视图与筛选」），⚙️ 只表示真设置；AI Agent 4 项设置不暴露（字段保留，运行时读旧值、默认值兜底）；入口页不新增设置（编辑模式控件即入口，移动端列数由列数控件按平台读写）
+- **设置归属模型（ADR-0009，2025 用户决策；展示入口 2026-09-16 经 ADR-0153/issue 345 修订）**：设置两分——全局项归全局（原定留 Obsidian 设置页单页平铺，ADR-0153 起原生页退役平铺、只留「打开设置面板」按钮跳转 settings-panel 面板，全域设置唯一浏览/编辑入口归面板），域行为项进各功能主面板右上角 ⚙️ 域设置弹窗；筛选/排序弹窗统一挂 🔀（影视「筛选与排序」、书库「视图与筛选」），⚙️ 只表示真设置；AI Agent 4 项设置不暴露（字段保留，运行时读旧值、默认值兜底）；入口页不新增设置（编辑模式控件即入口，移动端列数由列数控件按平台读写）
 - **共享数据路径**：新增 storagePath 字段（默认 CONFIG/STORAGE），统一 memo/belongings/passwords/favorites/review/quiz/闪念 meta/vec 的 JSON 数据目录；旧 7 字段（todoFilePath/belongingsDataFolder/pwStoragePath/favoritesStoragePath/reviewStoragePath/META_PATH/VEC_PATH）废弃仅兼容保留（接口 + data.json 不删，UI 不暴露）。迁移（首次加载）：旧字段全部相同 → 用该值初始化；参差 → 默认值 + Notice 列出被忽略的自定义路径。内容目录类（日记/剪藏/书库/影视/信等笔记目录）不进共享路径，归各域设置弹窗单独配置
 - 日记本已删除「标签配置/默认标签」设置的先例：设置项迁移以「保留原脚本可配置项」为原则，用户已确认删除的项不恢复
 - **2026-08-07 补充（用户决策）**：新增 5 项设置——影视每页加载数量（moviePageSize，默认 20）、日记本每批加载数量（diaryBatchSize，默认 20）、剪藏本每批加载数量（articleBatchSize，默认 20）、做题家数据存储路径（quizStoragePath，默认 CONFIG/STORAGE）、复习计划数据存储路径（reviewStoragePath，默认 CONFIG/STORAGE）
@@ -365,7 +365,7 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 
 ### 设置项总表（源码提取，按 ADR-0009 归属重排；文案要求遵循 CONTEXT.md「设置项文案规范」——标题零符号直说用途、描述一句大白话无符号）
 
-**全局设置页（单页平铺，两区块）**：
+**全局设置页（单页平铺，两区块）**——ADR-0153/issue 345 起**退役平铺**：原生设置页只留「打开设置面板」按钮，下列全局项改经 settings-panel 面板（AI 页/通用页/通知页）展示与编辑，键与行为零变化（下表为历史快照，后续增量见 issues 186/331/345）：
 - **🤖 AI**：aiProvider（服务商下拉）、deepseekApiKey、opencodeGoApiKey（AI Agent 4 项不暴露：aiAgentEnabled/enableAIClipMatch/aiAgentWatchedFolders/aiAgentModel 字段保留，默认值兜底）
 - **📂 数据存储路径**：storagePath（共享，默认 CONFIG/STORAGE；旧 7 字段废弃仅兼容：todoFilePath/belongingsDataFolder/pwStoragePath/favoritesStoragePath/reviewStoragePath/META_PATH/VEC_PATH）
 

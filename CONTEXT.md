@@ -432,12 +432,12 @@ _Avoid_: 6 分制、×1.67 换算、旧六桶（≥5.5/5~5.5/4~5/3~4/2~3/<2）
 **域事件总线 (Domain Event Bus)**: bz 的进程内发布订阅设施（ticket 101，ADR-0047，`src/core/domain-bus.ts`）——通道命名 `<域名>:<事件>`（如 `vault:md-modified`、`diary:file-renamed`），fire-and-forget 同步扇出、单 handler 抛错隔离、总线不做去重/防抖。vault 原生四事件由 `core/obsidian-adapter.ts` 全插件唯一订阅点收编并**双通道派发**：恒发通用兜底 `vault:md-*`（任意文件夹监听需求在此接），命中域目录另发语义 `<域>:file-*`；目录归类由 `core/path-classify.ts` 按 settings 实时动态构建（smartcat/context-source 硬编码副本的单源替代）。订阅端两条纪律：回环抑制只能在订阅端做（总线禁全局去环）；同源双订必须自带防双记录。跨域事件类型 type-only 导入，零运行时边。
 _Avoid_: 总线层全局去环、在 obsidian-adapter 之外直接 app.vault.on 订阅 md 四事件、预铺无消费者的通道
 
-### 设置模型（ADR-0009）
+### 设置模型（ADR-0009，2026-09-16 起 ADR-0153 修订入口）
 
-**全局设置页 (Global Settings Page)**: Obsidian 设置中的 bz 设置页——单页平铺（无 tab），只含「AI」「数据存储路径」两个区块。
+**全局设置页 (Global Settings Page)**: Obsidian 设置中的 bz 设置页——ADR-0153 起退役平铺（ADR-0009 原三区块展示取消），只留一行「打开设置面板」按钮跳转 settings-panel 面板；全域设置的唯一浏览/编辑入口是设置面板。
 _Avoid_: 设置 tab、分类设置、设置页分区
 
-**设置面板 (Settings Panel)**: bz 全域设置的聚合浏览入口（ADR-0080，`src/settings-panel/` 域，命令 `bz-settings-panel-open`）——顶部为影院式**整宽头行（仅标题「设置」，桌面无关闭钮，遮罩/ESC 关）**；桌面端侧栏工作台（左域导航 + 右设置分组卡）、移动端命令面板（搜索 + 域列表，主面板真全屏 + 头行关闭钮，子面板一律居中弹窗、遮罩点击关闭）。与全局设置页/域设置弹窗**并存**，设置读写仍走既有 schema 与 settings-provider。控件基线已收编**组件库**（src/core/ui：`.bz-input/.bz-sw/.bz-select/.bz-range/.bz-chip/.bz-btn/.bz-badge/.bz-empty`），图标一律 lucide（禁止 emoji 当图标）。
+**设置面板 (Settings Panel)**: bz 全域设置的聚合浏览入口（ADR-0080，`src/settings-panel/` 域，命令 `bz-settings-panel-open`）——顶部为影院式**整宽头行（仅标题「设置」，桌面无关闭钮，遮罩/ESC 关）**；桌面端侧栏工作台（左域导航 + 右设置分组卡）、移动端命令面板（搜索 + 域列表，主面板真全屏 + 头行关闭钮，子面板一律居中弹窗、遮罩点击关闭）。与域设置弹窗**并存**（ADR-0153 起为全域设置唯一浏览/编辑入口，Obsidian 原生设置页只留「打开设置面板」跳转按钮），设置读写仍走既有 schema 与 settings-provider。控件基线已收编**组件库**（src/core/ui：`.bz-input/.bz-sw/.bz-select/.bz-range/.bz-chip/.bz-btn/.bz-badge/.bz-empty`），图标一律 lucide（禁止 emoji 当图标）。
 _Avoid_: 全局设置面板（与「全局设置页」混淆）、设置聚合器
 
 **主面板 (Main Panel)**: 功能域的完整主窗口，经命令 `bz-<域>-open` 打开，承载该域列表与全部功能入口；区别于域内小弹窗与快捷创建。
@@ -505,5 +505,5 @@ _Avoid_: toast、气泡、原生通知、Notice
 - 命令 id 统一 `bz-` 前缀（ADR-0004 修订；用户决策品牌统一，推翻 ADR-0001 不带前缀约定）。
 - 一个插件包含全部待迁移域（用户决策）；外部进程能力（child_process）在 Electron 桌面端可用，移动端不可用。
 - 全部 16 个脚本功能与样式完全复刻。
-- 设置归属（ADR-0009）：全局设置页（AI/共享数据路径）+ 域设置弹窗（⚙️ 就近）；筛选/排序统一用 🔀；AI Agent 设置不暴露，用默认值。
+- 设置归属（ADR-0009，入口经 ADR-0153 修订）：全局项统一进设置面板（原生设置页只留跳转按钮）+ 域设置弹窗（⚙️ 就近）；筛选/排序统一用 🔀；AI Agent 设置不暴露，用默认值。
 - 样式按域拆分（ADR-0020）：源写 `src/core/styles.css` 与 `src/<域>/styles.css`；根 `styles.css` 是构建聚合产物，勿手改。

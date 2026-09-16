@@ -27,3 +27,8 @@ Obsidian 原生插件设置页（`BzSettingTab.display()`）此前平铺渲染 `
 
 - 设置读写链路（settings-provider、schema、绑定）零变化——只是原生页不再展示。
 - `mainSettingsSchema` 不删：settings-copy-lint / settings-schema.test 仍以它为全量断言入口。
+- 同步：ADR-0153（原生设置页退役平铺）、spec.md 设置归属模型/设置项总表注记、
+  CONTEXT.md 设置模型词条与 Rules 行。
+- 留给后续（review 发现）：`preview-freshness` 指纹按磁盘字节算，主仓 LF 直出文件在
+  worktree 被 autocrlf smudge 成 CRLF 会误报「产物滞后」（本批 worktree 12 例假红、
+  主仓同提交全绿实证）。建议 stamp 归一化（按 clean 后内容算摘要），另立 issue。
