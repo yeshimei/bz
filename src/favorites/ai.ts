@@ -2,9 +2,8 @@
  * 收藏本 AI 服务 + 余额查询（ticket 11）：源码 收藏本.js L69-234 逐字。
  */
 import { requestUrl } from 'obsidian';
-import { createAI, getProviderDescriptor } from '../core/ai';
+import { createAI, getAIProvider } from '../core/ai';
 import type { AIService } from '../core/ai';
-import { getSettings } from '../core/settings-provider';
 
 // ==================== AI 服务 ====================
 export class FavoritesAIService {
@@ -16,24 +15,18 @@ export class FavoritesAIService {
 
   /**
    * AI 是否已配置（ticket 23 + 审查建议 C：真实读取插件 AI 配置，替代恒真的 !!this.ai）。
-   * 判定口径与 core/ai.ts getAIProvider 一致：provider = aiProvider || 'opencode-go'；
-   * - opencode-go 无 legacy 兜底：缺 opencodeGoApiKey 即拦截；
-   * - deepseek 的 quickadd data.json 兜底是异步文件读取（core/ai getAIProvider 运行时判定），
-   *   插件设置缺 key 不判死——交给运行时兜底，避免误拦仅 QuickAdd data.json 配置的老用户；
-   * - 其余注册表提供商（ticket 171）：缺 apiKeyKey 对应键即拦截（ollama 本地服务无密钥豁免）；
-   * - custom（ticket 170）：需 endpoint + key 齐全才算已配置。
+   * issue 334/ADR-0148 起判定口径单源 core/ai——getAIProvider() 能解析即已配置，
+   * 含 deepseek QuickAdd data.json 异步兜底、ollama 免密钥、custom 三件套齐全；
+   * 本地不再复刻第二套判定（旧同步版对 deepseek 恒真，口径偏松）。
    */
-  isAvailable(): boolean {
+  async isAvailable(): Promise<boolean> {
     if (!this.ai) return false;
-    const s = getSettings() as any;
-    const provider = s.aiProvider || 'opencode-go';
-    if (provider === 'opencode-go') return !!s.opencodeGoApiKey;
-    if (provider === 'custom') return !!s.aiCustomEndpoint && !!s.aiCustomApiKey;
-    if (provider === 'ollama') return true; // 本地服务无需密钥
-    const desc = getProviderDescriptor(provider);
-    // 注册表提供商：缺对应密钥键即拦截；deepseek 缺 key 不判死（运行时 QuickAdd 兜底）
-    if (provider === 'deepseek') return true;
-    return !!s[desc.apiKeyKey];
+    try {
+      await getAIProvider();
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**

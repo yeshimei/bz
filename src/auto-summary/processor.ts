@@ -41,7 +41,7 @@ const FIELD_DEFS: Record<string, string> = {
   tags: '"tags": ["标签1", "标签2", "标签3"]',
 };
 
-/** ticket 124（Q8 详设一）：摘要长度档位 → summary 字数要求与 max_tokens */
+/** ticket 124（Q8 详设一）：摘要长度档位 → summary 字数要求（输出上限走设置面板，issue 334/ADR-0148） */
 export const SUMMARY_LENGTH_RULES: Record<string, string> = {
   simple:
     '"summary": "50-100字的简短摘要。提炼核心观点与关键结论。直达内容，禁止使用\'本文\'、\'本文章\'、\'文章\'、\'作者认为\'等前缀词"',
@@ -83,7 +83,9 @@ ${bodyText.substring(0, 6000)}`;
 
   try {
     const result = await ai.prompt(prompt, 'deepseek-v4-flash', {
-      modelOptions: { max_tokens: length === 'detailed' ? 2048 : 1024, temperature: 0.3 },
+      // temperature 属任务语义（分析类低温）；max_tokens 面板独裁不在此传（issue 334/ADR-0148）——
+      // 推理模型思考耗尽小预算曾致 content 空串必失败，上限唯一权威 = 设置面板后自愈
+      modelOptions: { temperature: 0.3 },
     });
     const jsonMatch = (result || '').match(/\{[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);

@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
+import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { renderSettingsInto } from '../../src/core/settings-schema';
 import { DataManager } from '../../src/favorites/data';
 import { FavoritesAIService } from '../../src/favorites/ai';
@@ -131,6 +132,9 @@ async function setup(): Promise<Ctx> {
     opencodeGoApiKey: 'sk-test',
   };
   setSettingsProvider(() => state as any);
+  // issue 334：isAvailable 判定单源 core getAIProvider——桥接同一份 state（活读）并重置 provider 缓存
+  setAISettingsProvider(() => state as any);
+  resetAIProviderCache();
   setSettingsSaver(async () => { saves++; });
   const dm = new DataManager('CONFIG/STORAGE/favorites.json');
   const ai = new FavoritesAIService();
@@ -1105,6 +1109,7 @@ describe('添加表单', () => {
   it('AI 不可用 → 点 AI 整理只 notice，不调用 ai.chat', async () => {
     const ctx = await setup();
     ctx.state.opencodeGoApiKey = ''; // 清掉 key → isAvailable false
+    resetAIProviderCache();
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     openAddViaMainBtn();

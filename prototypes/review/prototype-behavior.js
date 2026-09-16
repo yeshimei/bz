@@ -1,4 +1,4 @@
-/* 源指纹 36dad81c3e6ecb82 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 2250500fca0ec963 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -5895,21 +5895,14 @@ var BZW_review = (() => {
       ...images.map((url) => ({ type: "image_url", image_url: { url } }))
     ];
   }
-  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}, defaultMaxTokens = 8192) {
-    const internalDefaultOptions = {
-      modelOptions: {
-        max_tokens: defaultMaxTokens,
-        ...defaultOptions.modelOptions || {}
-      }
-    };
-    const mergedOptions = { ...internalDefaultOptions, ...defaultOptions };
-    if (defaultOptions.modelOptions) {
-      mergedOptions.modelOptions = {
-        ...internalDefaultOptions.modelOptions,
-        ...defaultOptions.modelOptions
-      };
+  function buildMessages(input) {
+    if (input && typeof input === "object" && Array.isArray(input.messages)) {
+      return input.messages;
     }
-    return new AIService(params, defaultModel, mergedOptions);
+    return [{ role: "user", content: buildUserContent(input) }];
+  }
+  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
+    return new AIService(params, defaultModel, defaultOptions);
   }
   var _settingsProvider, AI_PROVIDER_REGISTRY, AI_THINKING_STYLE, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MAX_BYTES, AIService;
   var init_ai = __esm({
@@ -6141,21 +6134,21 @@ var BZW_review = (() => {
           this.defaultOptions = defaultOptions;
         }
         /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
-         *  input 为字符串（纯文本，报文同旧版）或 {text, images}（带图 → 多模态 content 数组）；
+         *  input 为字符串（纯文本，报文同旧版）、{text, images}（带图 → 多模态 content 数组）
+         *  或 {messages}（多轮完整报文，原样进请求）；
          *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
          *  既有调用（不传这两项）行为零变化 */
         async prompt(input, model = this.defaultModel, options = {}) {
-          var _a;
           const mergedOptions = this._mergeOptions(options);
           const provider = await getAIProvider(mergedOptions.provider);
           const s = getQ3Settings();
           const isExplicit = model !== this.defaultModel;
           const effModel = isExplicit ? model : provider.model || model;
           const mo = mergedOptions.modelOptions || {};
-          const effMaxTokens = (_a = mo.max_tokens) != null ? _a : provider.defaultMaxTokens || 4096;
+          const effMaxTokens = provider.defaultMaxTokens || 4096;
           const body = {
             model: effModel,
-            messages: [{ role: "user", content: buildUserContent(input) }],
+            messages: buildMessages(input),
             max_tokens: effMaxTokens,
             stream: true
           };

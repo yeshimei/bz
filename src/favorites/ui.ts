@@ -642,7 +642,7 @@ async function runAiFill(
   errEl: HTMLElement
 ): Promise<void> {
   const ai = aiServiceOf();
-  if (!ai.isAvailable()) {
+  if (!(await ai.isAvailable())) {
     notice('AI 服务未配置或不可用', 'warning');
     return;
   }

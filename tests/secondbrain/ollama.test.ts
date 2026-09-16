@@ -5,7 +5,7 @@
  * 检索降级层负责（vector-store.test.ts 有 fake timer 用例）。正常响应不受影响。
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { getEmbedding, ollamaChat, checkRemoteOllama, EMBED_TIMEOUT_MS } from '../../src/secondbrain/ollama';
+import { getEmbedding, checkRemoteOllama, EMBED_TIMEOUT_MS } from '../../src/secondbrain/ollama';
 
 const BASE = 'http://127.0.0.1:65535';
 
@@ -36,15 +36,6 @@ describe('httpFetch 统一超时（P1-10）', () => {
     await assertion;
     expect((fetchMock.mock.calls[0][1] as any).signal.aborted).toBe(true);
     expect(vi.getTimerCount()).toBe(0); // finally 清理 abort 定时器
-  });
-
-  it('ollamaChat：同样受超时保护并报「Ollama 无响应」', async () => {
-    stubPendingFetch();
-    vi.useFakeTimers();
-    const p = ollamaChat('你好', undefined, BASE);
-    const assertion = expect(p).rejects.toThrow('Ollama 无响应');
-    await vi.advanceTimersByTimeAsync(EMBED_TIMEOUT_MS + 1);
-    await assertion;
   });
 
   it('checkRemoteOllama：超时按不可用处理（返回 false，不抛出）', async () => {

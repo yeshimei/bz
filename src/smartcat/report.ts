@@ -90,7 +90,7 @@ export async function generateWeeklyReport(d: WeeklyReportData): Promise<string>
             USER_CONTENT_BOUNDARY,
         },
         { role: 'user', content: formatWeeklyReport(d) },
-      ], 500);
+      ]);
       const text = typeof r?.report === 'string' && r.report.trim() ? r.report.trim() : '';
       if (text) return text;
     }

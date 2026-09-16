@@ -42,7 +42,7 @@ describe('aiProcess', () => {
     expect(prompt).not.toContain('author');
     // 模型与 modelOptions
     expect(ai.prompt.mock.calls[0][1]).toBe('deepseek-v4-flash');
-    expect(ai.prompt.mock.calls[0][2]).toEqual({ modelOptions: { max_tokens: 1024, temperature: 0.3 } });
+    expect(ai.prompt.mock.calls[0][2]).toEqual({ modelOptions: { temperature: 0.3 } });
   });
 
   it('只缺 title → 提示词不含 summary/tags 定义', async () => {
@@ -92,21 +92,21 @@ describe('aiProcess', () => {
     expect(r!.title).toBe('T2');
   });
 
-  it('ticket 124：摘要长度简单档 → 50-100 字规则 + max_tokens 1024', async () => {
+  it('ticket 124：摘要长度简单档 → 50-100 字规则（输出上限走设置面板，issue 334）', async () => {
     const ai = makeAI('{"summary":"S"}');
     await aiProcess(ai, '正文', ['summary'], { summaryLength: 'simple' });
     const prompt = ai.prompt.mock.calls[0][0] as string;
     expect(prompt).toContain('50-100字');
     expect(prompt).not.toContain('150-250字');
-    expect(ai.prompt.mock.calls[0][2]).toEqual({ modelOptions: { max_tokens: 1024, temperature: 0.3 } });
+    expect(ai.prompt.mock.calls[0][2]).toEqual({ modelOptions: { temperature: 0.3 } });
   });
 
-  it('ticket 124：详细档 → 300-400 字规则 + max_tokens 2048', async () => {
+  it('ticket 124：详细档 → 300-400 字规则（输出上限走设置面板，issue 334）', async () => {
     const ai = makeAI('{"summary":"S"}');
     await aiProcess(ai, '正文', ['summary'], { summaryLength: 'detailed' });
     const prompt = ai.prompt.mock.calls[0][0] as string;
     expect(prompt).toContain('300-400字');
-    expect(ai.prompt.mock.calls[0][2]).toEqual({ modelOptions: { max_tokens: 2048, temperature: 0.3 } });
+    expect(ai.prompt.mock.calls[0][2]).toEqual({ modelOptions: { temperature: 0.3 } });
   });
 
   it('ticket 124：未知长度档 → 回退标准档', async () => {

@@ -405,14 +405,15 @@ describe('选项合并与服务方法面', () => {
     delete (global as any).fetch;
   });
 
-  it('setDefaultModel 切换默认模型；setDefaultOptions 注入默认 modelOptions', async () => {
+  it('setDefaultModel 切换默认模型；setDefaultOptions 注入默认 modelOptions（max_tokens 除外——面板独裁）', async () => {
     const ai = new AIService({}, 'deepseek-v4-flash');
     ai.setDefaultModel('my-model');
-    ai.setDefaultOptions({ modelOptions: { max_tokens: 777 } });
+    ai.setDefaultOptions({ modelOptions: { temperature: 0.5, max_tokens: 777 } });
     await ai.prompt('q');
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.model).toBe('my-model');
-    expect(body.max_tokens).toBe(777);
+    expect(body.temperature).toBe(0.5);
+    expect(body.max_tokens).toBe(8192); // 上限不认 defaultOptions：恒取 provider 链（issue 334/ADR-0148）
   });
 
   it('search / reasonAndSearch 方法透传对应 modelOptions', async () => {
@@ -432,20 +433,20 @@ describe('选项合并与服务方法面', () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).enable_thinking).toBe(false);
   });
 
-  it('_mergeOptions：defaultOptions 与调用方 options 均含 modelOptions 时浅合并且调用方优先', async () => {
+  it('_mergeOptions：defaultOptions 与调用方 options 均含 modelOptions 时浅合并且调用方优先（max_tokens 除外）', async () => {
     const ai = new AIService(undefined, 'm', { modelOptions: { a: 1, max_tokens: 100 } });
     await ai.prompt('q', 'm', { modelOptions: { b: 2, max_tokens: 55 } });
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.a).toBe(1); // 默认侧键保留
     expect(body.b).toBe(2); // 调用方键合入
-    expect(body.max_tokens).toBe(55); // 同名键调用方优先
+    expect(body.max_tokens).toBe(8192); // 两侧的 max_tokens 均被忽略：恒取 provider 链（issue 334）
   });
 
-  it('createAI：defaultOptions.modelOptions 合入内部默认（max_tokens 可被显式 defaultMaxTokens 基础上覆盖）', async () => {
-    const ai = createAI({}, 'm', { modelOptions: { enable_thinking: true, max_tokens: 2048 } }, 4096);
+  it('createAI：不再注入默认 max_tokens（issue 334/ADR-0148），defaultOptions.modelOptions 其余键照常', async () => {
+    const ai = createAI({}, 'm', { modelOptions: { enable_thinking: true, max_tokens: 2048 } });
     await ai.prompt('q');
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.enable_thinking).toBe(true);
-    expect(body.max_tokens).toBe(2048); // defaultOptions.modelOptions 优先于 defaultMaxTokens
+    expect(body.max_tokens).toBe(8192); // 注入/显式 max_tokens 均忽略：恒取 provider 链
   });
 });

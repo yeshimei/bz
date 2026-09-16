@@ -1,12 +1,14 @@
 // @vitest-environment node
 /**
  * 收藏本 FavoritesAIService 测试（ticket 11）：GitHub 信息获取（增强：真实 GitHub API）。
- * ticket 23：isAvailable 真实读取插件 AI 配置（core/ai 判定口径）。
+ * ticket 23：isAvailable 真实读取插件 AI 配置。issue 334/ADR-0148：判定单源 core
+ * getAIProvider（含 QuickAdd data.json 异步兜底），不再本地复刻第二套口径。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FavoritesAIService } from '../../src/favorites/ai';
 import { requestUrl } from '../mock-obsidian-entry';
-import { setSettingsProvider } from '../../src/core/settings-provider';
+import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
+import { setApp } from '../../src/core/app';
 
 describe('fetchGitHubInfo', () => {
   beforeEach(() => {
@@ -69,60 +71,96 @@ describe('fetchGitHubInfo', () => {
   });
 });
 
-describe('isAvailable（ticket 23：真实读取插件 AI 配置，替代恒真 !!this.ai）', () => {
+describe('isAvailable（issue 334/ADR-0148：判定单源 core getAIProvider）', () => {
   afterEach(() => {
-    // 避免残留设置影响同文件后续用例（保持 provider 已注入，getSettings 不抛）
-    setSettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: 'sk-x' }) as any);
+    // 避免残留设置影响同文件后续用例（保持 provider 已注入）
+    setAISettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: 'sk-x' }) as any);
+    resetAIProviderCache();
   });
 
-  it('未配置任何 key → false', () => {
-    setSettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: '' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(false);
+  it('未配置任何 key → false', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: '' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(false);
   });
 
-  it('opencode-go（默认 provider）配 key → true', () => {
-    setSettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: 'sk-o' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(true);
+  it('opencode-go（默认 provider）配 key → true', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: 'sk-o' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
   });
 
-  it('provider 未显式设置 → 按默认 opencode-go 口径判定', () => {
-    setSettingsProvider(() => ({ opencodeGoApiKey: 'sk-o' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(true);
+  it('provider 未显式设置 → 按默认 opencode-go 口径判定', async () => {
+    setAISettingsProvider(() => ({ opencodeGoApiKey: 'sk-o' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
   });
 
-  it('deepseek 配 key → true', () => {
-    setSettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-d' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(true);
+  it('deepseek 配 key → true', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-d' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
   });
 
-  it('deepseek 缺 key → 不判死（true）：legacy quickadd data.json 兜底交由 getAIProvider 运行时判定（审查建议 C）', () => {
-    setSettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: '' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(true);
+  it('deepseek 缺 key 且无 QuickAdd 兜底 → false（旧同步版恒真口径废除）', async () => {
+    setApp({ vault: { adapter: { read: async () => { throw new Error('no quickadd'); } } } } as any);
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: '' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(false);
   });
 
-  it('opencode-go 缺 key 时 deepseek key 不顶替（provider 独立判定）', () => {
-    setSettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: '', deepseekApiKey: 'sk-d' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(false);
+  it('deepseek 缺 key → QuickAdd data.json 有配置则 true（legacy 兜底真实生效）', async () => {
+    setApp({
+      vault: {
+        adapter: {
+          read: async () => JSON.stringify({ ai: { providers: [{ endpoint: 'https://api.deepseek.com', apiKey: 'sk-legacy' }] } }),
+        },
+      },
+    } as any);
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: '' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
   });
 
-  it('注册表提供商（ticket 171）：openai/gemini 等配对应 key → true；缺 key → false', () => {
-    setSettingsProvider(() => ({ aiProvider: 'openai', openaiApiKey: 'sk-oa' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(true);
-    setSettingsProvider(() => ({ aiProvider: 'openai', openaiApiKey: '' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(false);
-    setSettingsProvider(() => ({ aiProvider: 'google', googleApiKey: 'sk-g' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(true);
-    setSettingsProvider(() => ({ aiProvider: 'google', googleApiKey: '' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(false);
+  it('opencode-go 缺 key 时 deepseek key 不顶替（provider 独立判定）', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: '', deepseekApiKey: 'sk-d' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(false);
   });
 
-  it('注册表提供商密钥互不顶替（选 openai 时其他家的 key 无效）', () => {
-    setSettingsProvider(() => ({ aiProvider: 'openai', openaiApiKey: '', anthropicApiKey: 'sk-an' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(false);
+  it('注册表提供商（ticket 171）：openai/gemini 等配对应 key → true；缺 key → false', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'openai', openaiApiKey: 'sk-oa' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
+    setAISettingsProvider(() => ({ aiProvider: 'openai', openaiApiKey: '' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(false);
+    setAISettingsProvider(() => ({ aiProvider: 'google', googleApiKey: 'sk-g' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
+    setAISettingsProvider(() => ({ aiProvider: 'google', googleApiKey: '' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(false);
   });
 
-  it('ollama（本地）无需密钥 → 恒 true', () => {
-    setSettingsProvider(() => ({ aiProvider: 'ollama', ollamaApiKey: '' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(true);
+  it('注册表提供商密钥互不顶替（选 openai 时其他家的 key 无效）', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'openai', openaiApiKey: '', anthropicApiKey: 'sk-an' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(false);
+  });
+
+  it('custom：endpoint + key 齐全 → true，缺一 → false', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'custom', aiCustomEndpoint: 'https://x.example/v1', aiCustomApiKey: 'sk-c' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
+    setAISettingsProvider(() => ({ aiProvider: 'custom', aiCustomEndpoint: '', aiCustomApiKey: 'sk-c' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(false);
+  });
+
+  it('ollama（本地）无需密钥 → 恒 true', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'ollama', ollamaApiKey: '' }) as any);
+    resetAIProviderCache();
+    await expect(new FavoritesAIService().isAvailable()).resolves.toBe(true);
   });
 });

@@ -1,4 +1,4 @@
-/* 源指纹 43758f22d536183c · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 58d3b85094a838b7 · 仓内输入 35 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -5131,27 +5131,33 @@ var BZW_knowledge = (() => {
       ...images.map((url) => ({ type: "image_url", image_url: { url } }))
     ];
   }
+  function buildMessages(input) {
+    if (input && typeof input === "object" && Array.isArray(input.messages)) {
+      return input.messages;
+    }
+    return [{ role: "user", content: buildUserContent(input) }];
+  }
   var AIService = class {
     constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
       this.defaultModel = defaultModel;
       this.defaultOptions = defaultOptions;
     }
     /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
-     *  input 为字符串（纯文本，报文同旧版）或 {text, images}（带图 → 多模态 content 数组）；
+     *  input 为字符串（纯文本，报文同旧版）、{text, images}（带图 → 多模态 content 数组）
+     *  或 {messages}（多轮完整报文，原样进请求）；
      *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
      *  既有调用（不传这两项）行为零变化 */
     async prompt(input, model = this.defaultModel, options = {}) {
-      var _a;
       const mergedOptions = this._mergeOptions(options);
       const provider = await getAIProvider(mergedOptions.provider);
       const s = getQ3Settings();
       const isExplicit = model !== this.defaultModel;
       const effModel = isExplicit ? model : provider.model || model;
       const mo = mergedOptions.modelOptions || {};
-      const effMaxTokens = (_a = mo.max_tokens) != null ? _a : provider.defaultMaxTokens || 4096;
+      const effMaxTokens = provider.defaultMaxTokens || 4096;
       const body = {
         model: effModel,
-        messages: [{ role: "user", content: buildUserContent(input) }],
+        messages: buildMessages(input),
         max_tokens: effMaxTokens,
         stream: true
       };
@@ -5234,21 +5240,8 @@ var BZW_knowledge = (() => {
       return options;
     }
   };
-  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}, defaultMaxTokens = 8192) {
-    const internalDefaultOptions = {
-      modelOptions: {
-        max_tokens: defaultMaxTokens,
-        ...defaultOptions.modelOptions || {}
-      }
-    };
-    const mergedOptions = { ...internalDefaultOptions, ...defaultOptions };
-    if (defaultOptions.modelOptions) {
-      mergedOptions.modelOptions = {
-        ...internalDefaultOptions.modelOptions,
-        ...defaultOptions.modelOptions
-      };
-    }
-    return new AIService(params, defaultModel, mergedOptions);
+  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
+    return new AIService(params, defaultModel, defaultOptions);
   }
 
   // src/knowledge/data.ts
@@ -7584,8 +7577,7 @@ var BZW_knowledge = (() => {
 所有字段一律使用简体中文。
 
 【转写文稿片段】
-${chunks[0] || ""}`,
-      { modelOptions: { max_tokens: 600 } }
+${chunks[0] || ""}`
     );
     const meta = parseAiJson(metaRaw);
     const title = String((meta == null ? void 0 : meta.title) || "").trim() || opts.videoTitle || "未命名";
@@ -7598,10 +7590,9 @@ ${chunks[0] || ""}`,
         `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。转写可能存在语音误听，专名与术语（如火箭型号、人名、地名、专业词）若明显是误听则按上下文纠正为最合理的写法；无法确定的保持原文。输出必须是简体中文（繁体转写一律转为简体）。直接输出润色后的正文，不要解释、不要加标题、不要列表。
 
 【转写文稿】
-${c}`,
-        // deepseek-v4-flash（带思考）长文润色时 reasoning_content 会吃光 max_tokens 导致 content 空串
-        // （ticket 复现：finish_reason=length、content=''）；deepseek-chat 无思考、输出直达 content，稳
-        { model: "deepseek-chat", modelOptions: { max_tokens: 8192 } }
+${c}`
+        // 输出上限走设置面板（issue 334/ADR-0148）；模型也跟随设置——历史上这里曾想私换
+        // deepseek-chat 避思考，但 options.model 从未被 prompt() 读取，属无效死参数，一并拆除
       );
       polished.push(String(p || "").trim());
     }
@@ -7649,8 +7640,7 @@ ${c}`,
       `你是文字编辑。把下面的术语介绍压缩成更精简的一段话：保留术语定义与关键事实，删除冗余表述与重复内容，长度约为原文的一半。输出必须是简体中文。直接输出结果，不要解释、不要加标题、不要列表。
 
 【原文】
-${t}`,
-      { modelOptions: { max_tokens: 1024 } }
+${t}`
     );
     const s = String(out || "").trim();
     if (!s) throw new Error("AI 返回为空");
@@ -7702,7 +7692,7 @@ ${text}`;
     const list = parseDomainList(s.knowledgeDomainList);
     const t = String(text || "").trim();
     if (!t) throw new Error("段落为空");
-    const raw = await ai.json(passagePrompt(t, list), { modelOptions: { max_tokens: 4096 } });
+    const raw = await ai.json(passagePrompt(t, list));
     const meta = parseAiJson(raw);
     return {
       title: String((meta == null ? void 0 : meta.title) || "").trim(),
@@ -7777,8 +7767,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     const valid = pairs.filter((p) => p.url);
     if (!valid.length) throw new Error("图片为空");
     const raw = await ai.json(
-      { text: imagePrompt(list, valid.length, valid.map((p) => p.desc)), images: valid.map((p) => p.url) },
-      { modelOptions: { max_tokens: 4096 } }
+      { text: imagePrompt(list, valid.length, valid.map((p) => p.desc)), images: valid.map((p) => p.url) }
     );
     const meta = parseAiJson(raw);
     return {
@@ -7902,8 +7891,7 @@ ${content || ""}`;
               `请判断下面这段文字所属的领域（${domainInstruction(list)}）。只输出 JSON：{"domain":"<领域词>"}
 
 【文本】
-${sample}`,
-              { modelOptions: { max_tokens: 80 } }
+${sample}`
             ),
             aiTimeoutMs,
             "领域判定"
@@ -9128,7 +9116,6 @@ ${sample}`,
   var SUGGEST_MAX_PER_TARGET = 2;
   var SUGGEST_MAX_LOCATE_NOTES = 6;
   var SUGGEST_LOCATE_TEXT_CAP = 8e3;
-  var SUGGEST_JUDGE_MAX_TOKENS = 131072;
   var SUGGEST_REASONING_EFFORT = "low";
   var REASON_MAX_CHARS = 80;
   var SUGGEST_CACHE_FILE = "mount-suggest.json";
@@ -9868,7 +9855,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function aiPrompt(text) {
     return createAI().prompt(text, void 0, {
-      modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS, reasoning_effort: SUGGEST_REASONING_EFFORT }
+      modelOptions: { reasoning_effort: SUGGEST_REASONING_EFFORT }
     });
   }
   async function generateSuggestions(cardPath, ctx, opts) {

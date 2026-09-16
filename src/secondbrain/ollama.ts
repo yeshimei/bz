@@ -58,26 +58,6 @@ export async function getEmbeddingsBatch(texts: string[], baseUrl?: string): Pro
   return vec;
 }
 
-/** Ollama 对话 */
-export async function ollamaChat(prompt: string, model?: string, baseUrl?: string): Promise<string> {
-  const CONFIG = buildConfig();
-  const url = baseUrl || CONFIG.OLLAMA_URL;
-  const m = model || CONFIG.OLLAMA_CHAT_MODEL;
-  const resp = await httpFetch(`${url}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: m,
-      messages: [{ role: 'user', content: prompt }],
-      stream: false,
-      options: { temperature: 0.7 },
-    }),
-  });
-  if (!resp.ok) throw new Error(`Ollama 错误: ${resp.status}`);
-  const data = await resp.json();
-  return data.message?.content || '（无响应）';
-}
-
 /** 检查远程 Ollama */
 export async function checkRemoteOllama(url: string): Promise<boolean> {
   try {

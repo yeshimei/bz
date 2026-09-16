@@ -136,7 +136,6 @@ export async function generateVideoNote(opts: {
 
 【转写文稿片段】
 ${chunks[0] || ''}`,
-    { modelOptions: { max_tokens: 600 } },
   );
   const meta = parseAiJson(metaRaw);
   const title = String(meta?.title || '').trim() || opts.videoTitle || '未命名';
@@ -151,9 +150,8 @@ ${chunks[0] || ''}`,
 
 【转写文稿】
 ${c}`,
-      // deepseek-v4-flash（带思考）长文润色时 reasoning_content 会吃光 max_tokens 导致 content 空串
-      // （ticket 复现：finish_reason=length、content=''）；deepseek-chat 无思考、输出直达 content，稳
-      { model: 'deepseek-chat', modelOptions: { max_tokens: 8192 } },
+      // 输出上限走设置面板（issue 334/ADR-0148）；模型也跟随设置——历史上这里曾想私换
+      // deepseek-chat 避思考，但 options.model 从未被 prompt() 读取，属无效死参数，一并拆除
     );
     polished.push(String(p || '').trim());
   }
@@ -216,7 +214,6 @@ export async function summarizeTermSummary(text: string): Promise<string> {
 
 【原文】
 ${t}`,
-    { modelOptions: { max_tokens: 1024 } },
   );
   const s = String(out || '').trim();
   if (!s) throw new Error('AI 返回为空');
@@ -290,7 +287,7 @@ export async function generatePassageDraft(text: string): Promise<{ title: strin
   const list = parseDomainList(s.knowledgeDomainList);
   const t = String(text || '').trim();
   if (!t) throw new Error('段落为空');
-  const raw = await ai.json(passagePrompt(t, list), { modelOptions: { max_tokens: 4096 } });
+  const raw = await ai.json(passagePrompt(t, list));
   const meta = parseAiJson(raw);
   return {
     title: String(meta?.title || '').trim(),
@@ -394,7 +391,6 @@ export async function generateImageDraft(imageUrls: string[], descs?: string[]):
   if (!valid.length) throw new Error('图片为空');
   const raw = await ai.json(
     { text: imagePrompt(list, valid.length, valid.map((p) => p.desc)), images: valid.map((p) => p.url) },
-    { modelOptions: { max_tokens: 4096 } },
   );
   const meta = parseAiJson(raw);
   return {
@@ -567,7 +563,6 @@ export async function backfillNotes(opts: { aiTimeoutMs?: number } = {}): Promis
         const raw = await withTimeout(
           ai.json(
             `请判断下面这段文字所属的领域（${domainInstruction(list)}）。只输出 JSON：{"domain":"<领域词>"}\n\n【文本】\n${sample}`,
-            { modelOptions: { max_tokens: 80 } },
           ),
           aiTimeoutMs,
           '领域判定',

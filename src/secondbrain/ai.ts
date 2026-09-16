@@ -1,9 +1,9 @@
 /**
  * 第二大脑 AI 通道（ticket 108 起统一走 bz core/ai，主设置页「🤖 AI」服务商单选）
- * - ticket 103~107：QA 双通道（勾选 DeepSeek / 回退本地 Ollama qwen2.5），设置键 secondBrainDeepseekModel 等；
+ * - ticket 103~107：QA 双通道（勾选 DeepSeek / 回退本地 Ollama qwen2.5），设置键 secondBrainChatModel 等；
  * - ticket 108：用户拍板「统一使用 ai」——对话与概括都走 core/ai（aiProvider：DeepSeek / OpenCode Go），
- *   不再回退 Ollama（Ollama 从此专注嵌入 bge-m3）；旧三个对话设置键保留 data.json 不再消费
- *   （CONCURRENCY 死配置同款处理），内部模型名改用 QA 冻结常量。
+ *   不再回退 Ollama（Ollama 从此专注嵌入 bge-m3）；旧对话设置键随 issue 334/ADR-0148 删除
+ *   （零消费死键），内部模型名改用 QA 冻结常量。
  */
 import { createAI } from '../core/ai';
 
@@ -12,7 +12,7 @@ let deepseek: AIService | null = null;
 
 /** 主设置页 AI 服务懒创建（unload 由域入口置空）；defaultModel 用 QA 冻结默认值，provider 配置的模型优先 */
 export function getDeepseekAI(): AIService {
-  if (!deepseek) deepseek = createAI({}, 'deepseek-v4-flash', {}, 16384);
+  if (!deepseek) deepseek = createAI({}, 'deepseek-v4-flash');
   return deepseek;
 }
 

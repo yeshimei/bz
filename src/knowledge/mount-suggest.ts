@@ -103,10 +103,11 @@ export const SUGGEST_MAX_LOCATE_NOTES = 6;
 /** 轮 3 单篇正文封顶字数（长文不受索引截断影响，但 prompt 不能无限长） */
 export const SUGGEST_LOCATE_TEXT_CAP = 8000;
 /**
- * 调用参数（2026-09-15 用户拍板，ADR-0140 决策 4）：预算给满 131072（GLM 上限即此值），
- * 思考档取 `low`（默认档 143s / low 7s，采纳结果几乎一样；**关掉会退回 a1/t2 标签式作答**）。
+ * 调用参数：思考档取 `low`（2026-09-15 用户拍板，ADR-0140 决策 4——默认档 143s / low 7s，
+ * 采纳结果几乎一样；**关掉会退回 a1/t2 标签式作答**，故显式思考键保留，ADR-0146 显式优先）。
+ * 输出预算曾在此写死 131072，issue 334/ADR-0148 起面板独裁——上限走设置面板
+ * 「最大输出 token」（per-provider 覆盖 > 注册表默认），推理模型大思考量由用户按需调高。
  */
-export const SUGGEST_JUDGE_MAX_TOKENS = 131072;
 export const SUGGEST_REASONING_EFFORT = 'low';
 /** 一句话理由长度上限（超长截断，防 UI 溢出） */
 const REASON_MAX_CHARS = 80;
@@ -1293,10 +1294,10 @@ export function suggestProgressPercent(p: SuggestProgress): number {
 
 /* ---------------- 生成 ---------------- */
 
-/** 统一 AI 调用（prompt 纯文本通道 + 满预算 + low 思考档；三处调用同一口径） */
+/** 统一 AI 调用（prompt 纯文本通道 + low 思考档 + 面板独裁输出上限；三处调用同一口径） */
 function aiPrompt(text: string): Promise<string> {
   return createAI().prompt(text, undefined, {
-    modelOptions: { max_tokens: SUGGEST_JUDGE_MAX_TOKENS, reasoning_effort: SUGGEST_REASONING_EFFORT },
+    modelOptions: { reasoning_effort: SUGGEST_REASONING_EFFORT },
   });
 }
 
