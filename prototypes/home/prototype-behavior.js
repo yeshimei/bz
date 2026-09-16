@@ -1,5 +1,5 @@
-/* 源指纹 ebd35b3d3b534eb3 · 仓内输入 231 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 3683b3c929eea571 · 仓内输入 233 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/store.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/recap/summarize.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -602,8 +602,8 @@ var BZW_home = (() => {
           return regexEscape(
             s.replace("\\", "").replace(
               /\\(\[)|\\(\])|\[([^\]\[]*)\]|\\(.)/g,
-              function(matched, p1, p23, p3, p4) {
-                return p1 || p23 || p3 || p4;
+              function(matched, p1, p22, p3, p4) {
+                return p1 || p22 || p3 || p4;
               }
             )
           );
@@ -4504,8 +4504,35 @@ var BZW_home = (() => {
     }
   });
 
+  // src/core/ui/str.ts
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localNow() {
+    const d = /* @__PURE__ */ new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
+  function emptyHtmlStr(icon2, title, desc) {
+    return `<div class="bz-empty">${icon2 ? iconSpan(icon2, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  var ESC_MAP;
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    }
+  });
+
   // src/core/utils.ts
-  function escapeHtml(str2) {
+  function escapeHtml2(str2) {
     return str2.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
       if (m === "<") return "&lt;";
@@ -4513,9 +4540,6 @@ var BZW_home = (() => {
       if (m === '"') return "&quot;";
       return "&#39;";
     });
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
   }
   function generateId(prefix) {
     prefix = prefix || "item";
@@ -4574,6 +4598,15 @@ var BZW_home = (() => {
     }
     return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
   }
+  function getCurrentNoteInfo() {
+    const f = getApp().workspace.getActiveFile();
+    return f ? { path: f.path, name: f.basename } : null;
+  }
+  function getCurrentCursorPosition() {
+    const ws = getApp().workspace;
+    const ed = ws.activeEditor && ws.activeEditor.editor;
+    return ed ? { line: ed.getCursor().line, ch: ed.getCursor().ch } : null;
+  }
   async function fetchPageTitle(url) {
     try {
       const r = await requestUrl({
@@ -4618,6 +4651,23 @@ var BZW_home = (() => {
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return h >>> 0;
   }
+  function debounce(fn, ms) {
+    let t;
+    const wrapped = (...args) => {
+      if (t !== void 0) clearTimeout(t);
+      t = setTimeout(() => {
+        t = void 0;
+        fn(...args);
+      }, ms);
+    };
+    wrapped.cancel = () => {
+      if (t !== void 0) {
+        clearTimeout(t);
+        t = void 0;
+      }
+    };
+    return wrapped;
+  }
   function yieldToMainThread(timeoutMs = 200) {
     return new Promise((resolve2) => {
       if (typeof window === "undefined") {
@@ -4628,21 +4678,6 @@ var BZW_home = (() => {
       if (typeof ric === "function") ric(() => resolve2(), { timeout: timeoutMs });
       else window.setTimeout(resolve2, 0);
     });
-  }
-  function secureRandomPassword(length, charset) {
-    const n = charset.length;
-    if (!(length > 0) || n === 0) return "";
-    const LIMIT2 = Math.floor(4294967296 / n) * n;
-    let pwd = "";
-    while (pwd.length < length) {
-      const buf = new Uint32Array(length - pwd.length);
-      crypto.getRandomValues(buf);
-      for (let i = 0; i < buf.length && pwd.length < length; i++) {
-        if (buf[i] >= LIMIT2) continue;
-        pwd += charset.charAt(buf[i] % n);
-      }
-    }
-    return pwd;
   }
   function cancelClipboardClear() {
     if (clipboardClearTimer !== null) {
@@ -4668,12 +4703,33 @@ var BZW_home = (() => {
       return Promise.reject(e);
     }
   }
+  async function copySensitiveWithFallback(text) {
+    try {
+      await copySensitiveText(text);
+      return true;
+    } catch (e) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        if (ok) armClipboardClear();
+        return ok;
+      } catch (e2) {
+        return false;
+      }
+    }
+  }
   var import_moment, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
   var init_utils = __esm({
     "src/core/utils.ts"() {
       import_moment = __toESM(require_moment());
       init_fake_obsidian();
       init_app();
+      init_str();
       CLIPBOARD_CLEAR_DELAY_MS = 6e4;
       clipboardClearTimer = null;
     }
@@ -4697,9 +4753,9 @@ var BZW_home = (() => {
     }
     const ctaIdx = actions.findIndex((a) => a.cta);
     const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
     }).join("") + "</div>";
     return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
@@ -6499,12 +6555,16 @@ var BZW_home = (() => {
       escHandle6 == null ? void 0 : escHandle6.unregister();
       (_a2 = opts.onClose) == null ? void 0 : _a2.call(opts);
     }
+    const attemptClose = () => {
+      if (opts.requestClose) opts.requestClose();
+      else close();
+    };
     mask.addEventListener("click", (e) => {
-      if (e.target === mask) close();
+      if (e.target === mask) attemptClose();
     });
     escHandle6 = escManager.register("bz-modal", {
       isVisible: () => mask.isConnected,
-      close
+      close: attemptClose
     });
     document.body.appendChild(mask);
     return { mask, popup, close };
@@ -6589,47 +6649,6 @@ var BZW_home = (() => {
     document.addEventListener("click", swallow, true);
     document.addEventListener("mousedown", disarm, { capture: true, once: true });
   }
-  function createSiteIcon(domain, size = 16) {
-    if (!domain) return null;
-    const mappedDomain = DOMAIN_MAP[domain] || domain;
-    const cacheKey = `favicon_v2_${mappedDomain}_${size}`;
-    const img = document.createElement("img");
-    img.className = "bz-site-icon";
-    img.style.cssText = `width:${size}px; height:${size}px;`;
-    img.alt = "";
-    img.crossOrigin = "anonymous";
-    try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        img.src = cached;
-        return img;
-      }
-    } catch (e) {
-    }
-    const networkUrl = `https://favicon.yandex.net/favicon/v2/${mappedDomain}?size=${size}`;
-    img.src = networkUrl;
-    img.onload = function() {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-        const dataUrl = canvas.toDataURL("image/png");
-        try {
-          localStorage.setItem(cacheKey, dataUrl);
-        } catch (e) {
-        }
-      } catch (e) {
-      }
-      img.onload = null;
-    };
-    img.onerror = function() {
-      img.style.display = "none";
-      img.onerror = null;
-    };
-    return img;
-  }
   function createOverlay(opts) {
     const mask = document.createElement("div");
     mask.id = opts.maskId;
@@ -6647,15 +6666,10 @@ var BZW_home = (() => {
     topifyZ(mask, popup);
     return { mask, popup, topify: () => topifyZ(mask, popup) };
   }
-  var DOMAIN_MAP;
   var init_dom = __esm({
     "src/core/dom.ts"() {
       init_notice();
       init_z_order();
-      DOMAIN_MAP = {
-        "guokrapp.guokr.com": "guokr.com",
-        "daily.zhihu.com": "zhihu.com"
-      };
     }
   });
 
@@ -7378,49 +7392,6 @@ var BZW_home = (() => {
     }
   });
 
-  // src/core/ui/str.ts
-  function escapeHtml2(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml2(String(s != null ? s : ""));
-  }
-  function localNow() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
-  function escAttr(s) {
-    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-  function colorOf(platform) {
-    const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
-    if (k) return PLATFORM_COLOR_MAP[k];
-    let h = 0;
-    const t = platform || "?";
-    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
-    return PALETTE[h % PALETTE.length];
-  }
-  var ESC_MAP, PLATFORM_COLOR_MAP, PALETTE;
-  var init_str = __esm({
-    "src/core/ui/str.ts"() {
-      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-      PLATFORM_COLOR_MAP = {
-        github: "#5a5f73",
-        微信: "#3eb575",
-        支付宝: "#4f7cf7",
-        notion: "#111111",
-        哔哩哔哩: "#fb7299",
-        招商银行: "#d43d3d",
-        豆瓣: "#3fa34d"
-      };
-      PALETTE = ["#7c6bd6", "#3e8e5a", "#c98a1e", "#4f7cf7", "#d43d3d", "#2a9d8f", "#b4551d", "#5a5f73"];
-    }
-  });
-
   // src/core/domain-icons.ts
   var DOMAIN_ICONS;
   var init_domain_icons = __esm({
@@ -7433,7 +7404,6 @@ var BZW_home = (() => {
         ai: "sparkles",
         // 域入口命令与面板导航共用
         home: "layout-grid",
-        recap: "calendar-heart",
         memo: "check-square",
         belongings: "package",
         clipping: "scissors",
@@ -7532,21 +7502,18 @@ var BZW_home = (() => {
         return filter.produce;
     }
   }
-  function p2(n) {
-    return String(n).padStart(2, "0");
-  }
   function dateStrOf(anchor) {
     const d = new Date(anchor);
-    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
   function fmtHm(t) {
     const d = new Date(t);
-    return `${p2(d.getHours())}:${p2(d.getMinutes())}`;
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   }
   function headDateText(now = Date.now()) {
     const d = new Date(now);
     const wd = "日一二三四五六"[d.getDay()];
-    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} 周${wd} · ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} 周${wd} · ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   }
   function dayOffsetMs(t) {
     const d = new Date(t);
@@ -7614,9 +7581,9 @@ var BZW_home = (() => {
       clipping: c.clippingUnread > 0 ? "warn" : "off"
     };
   }
-  function dotOf(dots2, id) {
+  function dotOf(dots, id) {
     var _a2;
-    return (_a2 = dots2[id]) != null ? _a2 : "off";
+    return (_a2 = dots[id]) != null ? _a2 : "off";
   }
   function riverCountText(id, data) {
     const c = data.counts;
@@ -7641,7 +7608,7 @@ var BZW_home = (() => {
         return null;
     }
   }
-  var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP2, DOMAIN_DOT, ALL_DOMAIN_IDS, DOMAIN_MENU, EMPTY_COUNTS, EMPTY_SUMMARY, DEFAULT_TIMELINE_FILTER;
+  var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS, DOMAIN_MENU, EMPTY_COUNTS, EMPTY_SUMMARY, DEFAULT_TIMELINE_FILTER;
   var init_shared = __esm({
     "src/home/shared.ts"() {
       init_str();
@@ -7673,11 +7640,10 @@ var BZW_home = (() => {
         { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
         { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
       ];
-      DOMAIN_MAP2 = new Map(DOMAINS.map((d) => [d.id, d]));
+      DOMAIN_MAP = new Map(DOMAINS.map((d) => [d.id, d]));
       DOMAIN_DOT = {
         diary: "#e67341",
         memo: "#e8590c",
-        recap: "#d64d8f",
         cinema: "#e6951d",
         review: "#7c5cd6",
         pomodoro: "#e5534b",
@@ -7747,12 +7713,14 @@ var BZW_home = (() => {
         ],
         belongings: [{ label: "加物品", commandId: "bz-belongings-add", icon: "archive" }],
         // 保险库：此前是空菜单（无域快捷动作）；锁定是唯一「不开面板」的一步动作
-        // （加密当前笔记 / 快速取密虽已有命令，但属「作用于当前笔记」，不在本次采纳范围）
+        // （加密当前笔记虽已有命令，但属「作用于当前笔记」，不在本次采纳范围；
+        //   快速取密已随 ADR-0158 归并密码本域——bz-encrypt-copy-password 退役）
         encrypt: [
           { label: "锁定保险库", commandId: "bz-encrypt-lock-vault", icon: "lock", keepHome: true }
         ],
         vault: [
-          { label: "快速生成密码", commandId: "bz-password-vault-gen", icon: "key" },
+          // ADR-0158 统一快速取密：fuzzy 列现有密码 + 顶部「生成新」，同 id 承接旧「快速生成密码」
+          { label: "快速取密", commandId: "bz-password-vault-gen", icon: "key" },
           // 与保险库同库同锁（一把主密码）：文案按本域名口径，行为是同一个 lockSafe
           { label: "锁定密码本", commandId: "bz-password-vault-lock", icon: "lock", keepHome: true }
         ]
@@ -8977,6 +8945,36 @@ var BZW_home = (() => {
       tagToEmojiMap = {};
       emojiToTagMap = {};
       buildTagMaps();
+    }
+  });
+
+  // src/diary/parser.ts
+  function isEncryptedEntry(entry) {
+    return typeof entry.content === "string" && entry.content.includes("🔐");
+  }
+  function parseEntryFile(content, filePath) {
+    const parsed = parseDiaryEntryFile(content);
+    const meta = resolveDiaryEntryMeta(filePath, parsed);
+    if (!meta) return null;
+    const [h = 0, min = 0] = meta.time.split(":").map(Number);
+    const tags = parsed.tags.length > 0 ? parsed.tags : ["日记"];
+    return {
+      date: meta.date,
+      time: meta.time,
+      timeValue: h * 100 + min,
+      tags,
+      emoji: tags.map((tag) => getTagEmoji(tag)).join(""),
+      content: parsed.body.trim(),
+      filename: filePath,
+      filePath,
+      lineNumber: 0
+    };
+  }
+  var init_parser = __esm({
+    "src/diary/parser.ts"() {
+      init_fake_obsidian();
+      init_diary_format();
+      init_config();
     }
   });
 
@@ -10838,7 +10836,7 @@ ${n.content.slice(0, 2e3)}
             const btn = document.createElement("button");
             btn.className = "quiz-option-btn";
             const cleanText = cleanOptionText(opt);
-            btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml(cleanText)}</span><span class="check-mark">✔️</span>`;
+            btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml2(cleanText)}</span><span class="check-mark">✔️</span>`;
             btn.dataset.index = String(idx);
             btn.onclick = () => {
               if (answeredRef.value) return;
@@ -11528,7 +11526,7 @@ ${n.content.slice(0, 2e3)}
     }).join("");
     return `
       <div class="bz-sq-head"><b>本轮队列</b></div>
-      <div class="bz-sq-list">${rows || '<div class="bz-empty"><div class="bz-empty-title">队列完毕</div></div>'}</div>`;
+      <div class="bz-sq-list">${rows || emptyHtmlStr("", "队列完毕")}</div>`;
   }
   function sprintBodyHtml(mainHtml, entries) {
     return `
@@ -11648,6 +11646,7 @@ ${n.content.slice(0, 2e3)}
   var ESC, QUIZ_PRACTICE_SCOPES, QUIZ_PRACTICE_BATCHES;
   var init_render3 = __esm({
     "src/review/render.ts"() {
+      init_str();
       init_fsrs();
       init_queue();
       init_stats2();
@@ -12367,7 +12366,7 @@ ${n.content.slice(0, 2e3)}
       const rank = i < 3 ? `<span class="bz-stats-rank-badge" style="background:${badges[i]};">${i + 1}</span>` : `<span class="bz-stats-rank-plain">${i + 1}</span>`;
       return `<div class="bz-review-stats-tl-row" data-idx="${i}">
       ${rank}
-      <span class="bz-stats-rank-name">${escapeHtml(it.name)}</span>
+      <span class="bz-stats-rank-name">${escapeHtml2(it.name)}</span>
       ${it.sub ? `<span class="bz-stats-rank-sub">${it.sub}</span>` : ""}
       <span class="bz-stats-rank-meta">${it.meta}</span>
     </div>`;
@@ -12391,6 +12390,7 @@ ${n.content.slice(0, 2e3)}
     closeStatsModal();
     statsMask = document.createElement("div");
     statsMask.id = "review-stats-mask";
+    statsMask.className = "bz-overlay-mask";
     statsMask.style.display = "block";
     statsMask.style.zIndex = String(allocZ());
     statsMask.onclick = closeStatsModal;
@@ -12510,6 +12510,7 @@ ${n.content.slice(0, 2e3)}
     const history2 = historyOf(item);
     histMask = document.createElement("div");
     histMask.id = "review-history-mask";
+    histMask.className = "bz-overlay-mask";
     histMask.style.display = "block";
     histMask.style.zIndex = String(allocZ());
     histMask.onclick = closeTimeline;
@@ -12536,7 +12537,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     status.innerHTML = `
-    <div class="bz-review-history-name">${escapeHtml(stripTitleMarks(item.name))}</div>
+    <div class="bz-review-history-name">${escapeHtml2(stripTitleMarks(item.name))}</div>
     <div class="bz-review-history-sub">${stageText} · 共 ${history2.length} 次复习${curR || ""}</div>
   `;
     body.appendChild(status);
@@ -13146,11 +13147,11 @@ ${n.content.slice(0, 2e3)}
       if (res && typeof res.then === "function") {
         return Promise.resolve(res).then((final) => {
           current2 = Array.isArray(final) ? final : list;
-          renderAll5();
+          renderAll6();
         });
       }
       current2 = Array.isArray(res) ? res : list;
-      renderAll5();
+      renderAll6();
     };
     const openPicker = () => openPathPicker({
       title: opts.pickerTitle || opts.name,
@@ -13182,16 +13183,16 @@ ${n.content.slice(0, 2e3)}
         btn.remove();
       }
     };
-    const renderAll5 = () => {
+    const renderAll6 = () => {
       syncBtn();
       render2();
     };
-    const refresh = () => {
+    const refresh2 = () => {
       current2 = readValue();
-      renderAll5();
+      renderAll6();
     };
-    renderAll5();
-    return { refresh, settingEl: setting.settingEl };
+    renderAll6();
+    return { refresh: refresh2, settingEl: setting.settingEl };
   }
   function closePathPicker() {
     if (currentMask) {
@@ -13299,13 +13300,13 @@ ${n.content.slice(0, 2e3)}
       listEl2.innerHTML = "";
       const q2 = state3.q.trim().toLowerCase();
       const exact = !!q2 && state3.folders.includes(q2);
-      const LIMIT2 = 300;
+      const LIMIT = 300;
       let n = 0;
       let total = 0;
       for (const folder of orderedList()) {
         if (q2 && !exact && !folder.toLowerCase().includes(q2)) continue;
         total++;
-        if (n >= LIMIT2) continue;
+        if (n >= LIMIT) continue;
         n++;
         const on = selected.has(folder);
         const row = document.createElement("div");
@@ -13341,10 +13342,10 @@ ${n.content.slice(0, 2e3)}
         empty.className = "bz-path-picker-empty";
         empty.textContent = "没有匹配的目录";
         listEl2.appendChild(empty);
-      } else if (total > LIMIT2) {
+      } else if (total > LIMIT) {
         const more = document.createElement("div");
         more.className = "bz-path-picker-empty";
-        more.textContent = `已显示前 ${LIMIT2} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
+        more.textContent = `已显示前 ${LIMIT} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
         listEl2.appendChild(more);
       }
     }
@@ -14309,7 +14310,7 @@ ${n.content.slice(0, 2e3)}
     renderChips();
     return ctrl;
   }
-  function mountTextActions(ctrlEl, input, acc, actions, ctx, refresh) {
+  function mountTextActions(ctrlEl, input, acc, actions, ctx, refresh2) {
     for (const a of actions != null ? actions : []) {
       const holder = document.createElement("div");
       holder.innerHTML = rowBtnHtml(a.text, a.cta);
@@ -14319,13 +14320,13 @@ ${n.content.slice(0, 2e3)}
           var _a2, _b2;
           await a.onClick(input.value, ctx);
           (_b2 = displaySetters.get(input)) == null ? void 0 : _b2(String((_a2 = acc.read()) != null ? _a2 : ""));
-          refresh();
+          refresh2();
         })();
       });
       ctrlEl.appendChild(btn);
     }
   }
-  function renderRow(row, refresh, regRefresh) {
+  function renderRow(row, refresh2, regRefresh) {
     var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
     const rowName = row.name;
     const bindKey = (_a2 = row.binding) == null ? void 0 : _a2.key;
@@ -14346,7 +14347,7 @@ ${n.content.slice(0, 2e3)}
       note: row.note
     });
     const el = holder.firstElementChild;
-    const ctx = makeCtx(el, refresh);
+    const ctx = makeCtx(el, refresh2);
     ctx.rowEl = el;
     const ctrlEl = isCustom ? el : el.querySelector(isCardsRow ? ".bz-sp-set-cards" : ".bz-sp-set-ctrl");
     switch (row.type) {
@@ -14367,7 +14368,7 @@ ${n.content.slice(0, 2e3)}
           sw.setAttribute("aria-checked", String(v));
           void acc.persist();
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
-          refresh();
+          refresh2();
         });
         break;
       }
@@ -14389,7 +14390,7 @@ ${n.content.slice(0, 2e3)}
             warn.fire(v);
           }
         });
-        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh);
+        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh2);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
         break;
@@ -14428,7 +14429,7 @@ ${n.content.slice(0, 2e3)}
             (_a3 = displaySetters.get(ta)) == null ? void 0 : _a3(String(fresh != null ? fresh : ""));
           });
         }
-        mountTextActions(ctrlEl, ta, acc, row.actions, ctx, refresh);
+        mountTextActions(ctrlEl, ta, acc, row.actions, ctx, refresh2);
         ctrlEl.appendChild(ta);
         break;
       }
@@ -14457,7 +14458,7 @@ ${n.content.slice(0, 2e3)}
           }
         });
         input.step = String((_h = row.step) != null ? _h : 1);
-        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh);
+        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh2);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
         break;
@@ -14510,7 +14511,7 @@ ${n.content.slice(0, 2e3)}
               vspan.textContent = labelOf(o.value);
               void acc.persist();
               (_a4 = row.onChange) == null ? void 0 : _a4.call(row, o.value, ctx);
-              refresh();
+              refresh2();
             });
           });
           sel.appendChild(menu);
@@ -14608,7 +14609,7 @@ ${n.content.slice(0, 2e3)}
                 var _a3;
                 const cur = (typeof row.items === "function" ? row.items() : row.items).map((x) => x.key);
                 await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, cur.filter((k) => k !== key), ctx));
-                refresh();
+                refresh2();
               })();
             }
           }));
@@ -14647,7 +14648,7 @@ ${n.content.slice(0, 2e3)}
             c.classList.add("is-on");
             void acc.persist();
             (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b3 = c.dataset.spCard) != null ? _b3 : "", ctx);
-            refresh();
+            refresh2();
           });
         });
         break;
@@ -14675,7 +14676,7 @@ ${n.content.slice(0, 2e3)}
     }
     return el;
   }
-  function renderGroup(container, group, refresh, regRefresh) {
+  function renderGroup(container, group, refresh2, regRefresh) {
     const cardHolder = document.createElement("div");
     cardHolder.innerHTML = groupCardHtml(group.icon, group.name, `${group.rows.length} 项`);
     const card = cardHolder.firstElementChild;
@@ -14683,7 +14684,7 @@ ${n.content.slice(0, 2e3)}
     const body = card.querySelector(".bz-sp-group-body");
     const rowEls2 = [];
     group.rows.forEach((r) => {
-      const rowEl = renderRow(r, refresh, regRefresh);
+      const rowEl = renderRow(r, refresh2, regRefresh);
       rowEls2.push(rowEl);
       body.appendChild(rowEl);
     });
@@ -14716,7 +14717,7 @@ ${n.content.slice(0, 2e3)}
       }
       el.style.display = visible ? "" : "none";
     };
-    const refresh = () => {
+    const refresh2 = () => {
       container.querySelectorAll("[data-sp-row]").forEach((el) => {
         const cond = visibleConditions.get(el);
         if (!cond) return;
@@ -14735,7 +14736,7 @@ ${n.content.slice(0, 2e3)}
     };
     schema.groups.forEach((g) => {
       var _a2, _b2;
-      const card = renderGroup(container, g, refresh, (fn) => valueRefreshes.push(fn));
+      const card = renderGroup(container, g, refresh2, (fn) => valueRefreshes.push(fn));
       card.dataset.spGroup = g.name;
       const groupVw = g.visibleWhen;
       if (groupVw) {
@@ -14766,7 +14767,7 @@ ${n.content.slice(0, 2e3)}
       });
     });
     mountIcons(container);
-    return { refresh };
+    return { refresh: refresh2 };
   }
   var SpCommitWarn, displaySetters, groupCountUpdaters;
   var init_renderer = __esm({
@@ -16037,6 +16038,19 @@ ${countsToText(s.missing)}
       return { text: String((_a2 = c == null ? void 0 : c.text) != null ? _a2 : "").trim(), done: !!(c == null ? void 0 : c.done) };
     }).filter((c) => c.text.length > 0);
     return items.length ? items : null;
+  }
+  function parseComposerChecklist(raw) {
+    const text = raw.trim();
+    if (!text) return { title: "", checklist: null };
+    const items = [];
+    const titleParts = [];
+    for (const tok of text.split(/\s+/)) {
+      if (tok.length > 1 && tok.startsWith("/")) items.push({ text: tok.slice(1), done: false });
+      else titleParts.push(tok);
+    }
+    let title = titleParts.join(" ").trim();
+    if (!title && items.length) title = items.shift().text;
+    return { title, checklist: items.length ? items : null };
   }
   function nextRecurDue(recur, base, nowStr) {
     const fmt2 = "YYYY-MM-DD HH:mm:ss";
@@ -17735,6 +17749,47 @@ ${countsToText(s.missing)}
   });
 
   // src/memo/due.ts
+  function getNowStr() {
+    return (0, import_moment4.default)().format("YYYY-MM-DD HH:mm");
+  }
+  function getTodayStr() {
+    return localDayKey();
+  }
+  function getDueStatus(due) {
+    if (!due) return null;
+    const now = getNowStr();
+    const dueNorm = due.replace("T", " ");
+    const dueDate = due.slice(0, 10);
+    const today = getTodayStr();
+    if (dueDate < today) return "overdue";
+    if (dueDate > today) return "future";
+    if (dueNorm <= now) return "overdue";
+    return "today";
+  }
+  function formatDueText(due) {
+    const status = getDueStatus(due);
+    const dueMoment = (0, import_moment4.default)(due.replace("T", " "));
+    const timeStr = dueMoment.format("HH:mm");
+    const dateStr = dueMoment.format("MM/DD");
+    const today = getTodayStr();
+    const dueDate = due.slice(0, 10);
+    if (status === "overdue") {
+      if (dueDate === today) return `今天 ${timeStr} 已过期`;
+      const days2 = (0, import_moment4.default)().diff((0, import_moment4.default)(dueDate), "days");
+      return `${days2}天前已过期`;
+    }
+    if (status === "today") return `今天 ${timeStr} 到期`;
+    const days = (0, import_moment4.default)(dueDate).diff((0, import_moment4.default)(today), "days");
+    if (days === 1) return `明天 ${timeStr} 到期`;
+    return `${dateStr} ${timeStr} 到期`;
+  }
+  function recurLabel(recur) {
+    if (recur.kind === "weekly") return "每周";
+    if (recur.kind === "monthly") return "每月";
+    if (recur.kind === "yearly") return "每年";
+    const n = recur.interval && recur.interval >= 1 ? Math.floor(recur.interval) : 1;
+    return `每 ${n} 天`;
+  }
   var import_moment4;
   var init_due = __esm({
     "src/memo/due.ts"() {
@@ -17744,7 +17799,142 @@ ${countsToText(s.missing)}
   });
 
   // src/memo/render.ts
-  var MEMO_ICONS, SCENE_PSEUDO_ICONS;
+  function sceneDot(scene) {
+    return SCENE_DOTS[scene] || "#8b8f9a";
+  }
+  function dueIconName(status) {
+    if (status === "overdue") return MEMO_ICONS.overdue;
+    if (status === "today") return MEMO_ICONS.clock;
+    return MEMO_ICONS.calendar;
+  }
+  function dueTagClass(status) {
+    if (status === "overdue") return "bz-memo-tag-overdue";
+    if (status === "today") return "bz-memo-tag-today";
+    return "bz-memo-tag-future";
+  }
+  function sceneLabel(scene) {
+    return scene.replace(LEADING_EMOJI_RE, "");
+  }
+  function sceneLeadHtml(o, dotCls) {
+    var _a2, _b2;
+    const pseudo = SCENE_PSEUDO_ICONS[o.scene];
+    if (pseudo) return iconSpan(pseudo.icon, (_a2 = pseudo.cls) != null ? _a2 : "");
+    const emo = (_b2 = o.scene.match(LEADING_EMOJI_RE)) == null ? void 0 : _b2[1];
+    if (emo) return `<span class="bz-rail-emoji">${escapeHtml(emo)}</span>`;
+    if (!o.dot) return "";
+    return `<span class="${dotCls}" style="--bz-rail-tint:${o.dot}"></span>`;
+  }
+  function mainCountHtml(total, undone) {
+    return `· <span class="bz-memo-cnt-num">${total}</span> 项 · <span class="bz-memo-cnt-num">${undone}</span> 未完成`;
+  }
+  function navBtnHtml(o, active2, count) {
+    return `<button class="bz-rail-item${active2 ? " on" : ""}" data-memo-scene="${escapeHtml(o.scene)}">${sceneLeadHtml(o, "bz-rail-dot")}<span class="bz-rail-name">${escapeHtml(sceneLabel(o.scene))}</span><span class="bz-rail-count">${count}</span></button>`;
+  }
+  function mobChipHtml(o, active2) {
+    return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-memo-scene="${escapeHtml(o.scene)}">${sceneLeadHtml(o, "bz-mobstrip-dot")}${escapeHtml(sceneLabel(o.scene))}</button>`;
+  }
+  function mobAddSceneChipHtml() {
+    return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan(MEMO_ICONS.addScene)}${escapeHtml("添加场景")}</button>`;
+  }
+  function metaTagsHtml(it, due, relTime3, recurText = "", checkProgress2 = "") {
+    const tags = [];
+    if (it.scene === "公开课" && it.courseName) {
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml(it.courseName.replace(/^《|》$/g, ""))}</span>`);
+    }
+    if (it.scene === "代码" && it.scriptName) {
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${escapeHtml(it.scriptName)}</span>`);
+    }
+    if (it.url) {
+      let host = "链接";
+      try {
+        host = new URL(it.url).hostname.replace(/^www\./, "");
+      } catch (e) {
+      }
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml(it.url)}">${iconSpan(MEMO_ICONS.url)} ${escapeHtml(host)}</span>`);
+    }
+    if (it.notePath) {
+      const name = it.notePath.split("/").pop().replace(/\.md$/i, "");
+      const isCourseSame = it.scene === "公开课" && it.courseName && it.courseName.replace(/^《|》$/g, "") === name;
+      if (!isCourseSame) {
+        tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${escapeHtml(name)}</span>`);
+      }
+    }
+    const imp = it.priority === "important" ? " bz-memo-tag-important" : "";
+    tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${escapeHtml(it.scene)}</span>`);
+    if (recurText) {
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-recur" title="周期重复：完成后自动生成下一期">${iconSpan(MEMO_ICONS.recur)} ${escapeHtml(recurText)}</span>`);
+    }
+    if (checkProgress2) {
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-check" title="子任务进度">${iconSpan(MEMO_ICONS.clist)} ${escapeHtml(checkProgress2)}</span>`);
+    }
+    if (due) {
+      tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml(due.text)}</span>`);
+    }
+    if (it.created && relTime3) {
+      tags.push(`<span class="bz-memo-time">${escapeHtml(relTime3)}</span>`);
+    }
+    return tags.join("");
+  }
+  function checkHtml(it) {
+    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
+  }
+  function checklistHtml(it) {
+    const cl = it.checklist || [];
+    if (!cl.length) return "";
+    const rows = cl.map(
+      (c, i) => `<div class="bz-memo-cl-row${c.done ? " is-done" : ""}" data-memo-cl="${escapeHtml(it.id)}:${i}">
+        <span class="bz-memo-cl-box${c.done ? " bz-memo-cl-on" : ""}"></span>
+        <span class="bz-memo-cl-text">${escapeHtml(c.text)}</span>
+      </div>`
+    ).join("");
+    return `<div class="bz-memo-cl${it.completed ? " bz-memo-cl-dim" : ""}">${rows}</div>`;
+  }
+  function cardHtml2(it, due, relTime3, recurText = "", checkProgress2 = "") {
+    const titleCls = it.completed ? " bz-memo-done" : "";
+    const clickable = !!(it.linkedNote || it.url);
+    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
+    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}">
+      ${checkHtml(it)}
+      <div class="bz-memo-body-text">
+        <div class="bz-memo-card-title">${titleHtml}</div>
+        ${checklistHtml(it)}
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime3, recurText, checkProgress2)}</div>
+      </div>
+    </div>`;
+  }
+  function sectionLabelHtml(label, count) {
+    return `<div class="bz-memo-section-label">${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
+  }
+  function doneBarHtml(open, count) {
+    return `<div class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar>
+      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></div>`;
+  }
+  function doneMoreHtml(n) {
+    return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
+  }
+  function calHeadHtml(monthLabel2) {
+    return `<div class="bz-memo-cal-head">
+      <button class="bz-icon-btn" data-memo-cal-prev title="上个月">${iconSpan("chevron-left")}</button>
+      <div class="bz-memo-cal-title">${escapeHtml(monthLabel2)}</div>
+      <button class="bz-icon-btn" data-memo-cal-next title="下个月">${iconSpan("chevron-right")}</button>
+      <button class="bz-btn bz-btn--sm bz-memo-cal-today" data-memo-cal-today>回到今天</button>
+    </div>`;
+  }
+  function calGridHtml(cells) {
+    const wds = CAL_WEEKDAYS.map((w) => `<div class="bz-memo-cal-wd">${escapeHtml(w)}</div>`).join("");
+    const grid = cells.map((c) => {
+      if (c.blank) return `<div class="bz-memo-cal-cell is-blank"></div>`;
+      const chips = c.chips.map(
+        (ch) => ch.id ? `<div class="bz-memo-cal-chip ${ch.cls}" data-memo-cal-item="${escapeHtml(ch.id)}" title="${escapeHtml(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml(ch.title)}</span></div>` : `<div class="bz-memo-cal-chip ${ch.cls}" title="${escapeHtml(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml(ch.title)}</span></div>`
+      ).join("");
+      return `<div class="bz-memo-cal-cell${c.today ? " is-today" : ""}${c.selected ? " is-selected" : ""}" data-memo-cal-day="${c.day}">
+        <div class="bz-memo-cal-day">${c.day}</div>
+        <div class="bz-memo-cal-chips">${chips}</div>
+      </div>`;
+    }).join("");
+    return `<div class="bz-memo-cal-grid">${wds}${grid}</div>`;
+  }
+  var MEMO_ICONS, SCENE_DOTS, SCENE_PSEUDO_ICONS, LEADING_EMOJI_RE, CAL_WEEKDAYS;
   var init_render6 = __esm({
     "src/memo/render.ts"() {
       init_str();
@@ -17773,11 +17963,21 @@ ${countsToText(s.missing)}
         sceneAll: "layers",
         sceneToday: "sun"
       };
+      SCENE_DOTS = {
+        剪藏: "#e67341",
+        代码: "#4c82c8",
+        公开课: "#8f5fc0",
+        学习: "#4c9e6c",
+        生活: "#c27a48",
+        工作: "#b25757"
+      };
       SCENE_PSEUDO_ICONS = {
         全部: { icon: MEMO_ICONS.sceneAll },
         今日: { icon: MEMO_ICONS.sceneToday },
         重要: { icon: MEMO_ICONS.star, cls: "bz-ic--warning" }
       };
+      LEADING_EMOJI_RE = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)\s*/u;
+      CAL_WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
     }
   });
 
@@ -17804,7 +18004,1031 @@ ${countsToText(s.missing)}
     }
   });
 
+  // src/core/settings-common.ts
+  function numStrBinding(key, def) {
+    return {
+      get: () => {
+        const raw = tryGetSettings()[key];
+        if (raw === "" || raw === null || raw === void 0) return def;
+        const n = Number(raw);
+        return Number.isFinite(n) && n > 0 ? n : def;
+      },
+      set: (v) => {
+        getSettings()[key] = String(v);
+      },
+      save: () => saveSettings()
+    };
+  }
+  function makeReloadWarnOnce() {
+    let reloadWarned = false;
+    return () => {
+      if (reloadWarned) return;
+      reloadWarned = true;
+      notice(RELOAD_SETTINGS_NOTICE, "info");
+    };
+  }
+  var RELOAD_SETTINGS_NOTICE;
+  var init_settings_common = __esm({
+    "src/core/settings-common.ts"() {
+      init_notice();
+      init_settings_provider();
+      RELOAD_SETTINGS_NOTICE = "设置已保存，重载插件后生效";
+    }
+  });
+
+  // src/pomodoro/render.ts
+  function normalizeSkinTheme(v) {
+    const cur = String(v != null ? v : "");
+    return POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : DEFAULT_POMODORO_SKIN_THEME;
+  }
+  function skinClassOf(v) {
+    return `pomodoro-skin-${normalizeSkinTheme(v)}`;
+  }
+  function panelShellHtml() {
+    return `
+      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
+        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
+        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
+      <div id="pomodoro-phase"></div>
+      <div id="pomodoro-task" class="pomodoro-task"></div>
+      <div id="pomodoro-time"></div>
+      <div class="pomodoro-controls">
+        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
+        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
+        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
+      </div>
+      <div class="pomodoro-stats">
+        <div id="pomodoro-today"></div>
+        <div class="pomodoro-stat-tabs">
+          <button id="pomodoro-stat-tab-week" class="pomodoro-stat-tab" type="button">近 7 天</button>
+          <button id="pomodoro-stat-tab-month" class="pomodoro-stat-tab" type="button">近 6 月</button>
+        </div>
+        <div id="pomodoro-week" class="pomodoro-week"></div>
+        <div id="pomodoro-months" class="pomodoro-week" hidden></div>
+      </div>`;
+  }
+  function popupShellHtml() {
+    return `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
+  }
+  var POMODORO_SKIN_THEMES, DEFAULT_POMODORO_SKIN_THEME;
+  var init_render7 = __esm({
+    "src/pomodoro/render.ts"() {
+      POMODORO_SKIN_THEMES = [
+        { value: "tomato", label: "番茄" },
+        { value: "ink", label: "墨白" },
+        { value: "grid", label: "方格纸" },
+        { value: "moss", label: "苔原" },
+        { value: "mist", label: "海雾" },
+        { value: "sand", label: "暖沙" },
+        { value: "citrus", label: "蜜柑" },
+        { value: "sakura", label: "樱粉" },
+        { value: "latte", label: "咖啡" },
+        { value: "night", label: "夜航" }
+      ];
+      DEFAULT_POMODORO_SKIN_THEME = "tomato";
+    }
+  });
+
+  // src/pomodoro/sound.ts
+  function playSound(kind, volume = 100) {
+    const w = typeof window !== "undefined" ? window : globalThis;
+    const AC = w.AudioContext || w.webkitAudioContext;
+    if (!AC) return;
+    if (volume <= 0) return;
+    try {
+      const cfg = SOUND_CONFIG[kind];
+      const ctx = new AC();
+      if (ctx.state === "suspended" && typeof ctx.resume === "function") void ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = cfg.freq;
+      const peak = 0.8 * (Math.max(1, Math.min(100, volume)) / 100);
+      const t = ctx.currentTime;
+      gain.gain.setValueAtTime(1e-3, t);
+      gain.gain.exponentialRampToValueAtTime(peak, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(1e-3, t + cfg.dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + cfg.dur + 0.02);
+      const ctxRef = ctx;
+      setTimeout(() => {
+        void ctxRef.close();
+      }, cfg.dur * 1e3 + 300);
+    } catch (e) {
+    }
+  }
+  var SOUND_CONFIG;
+  var init_sound = __esm({
+    "src/pomodoro/sound.ts"() {
+      SOUND_CONFIG = {
+        "focus-start": { freq: 880, dur: 0.25 },
+        "short-break-start": { freq: 523, dur: 0.3 },
+        "long-break-start": { freq: 392, dur: 0.45 },
+        pause: { freq: 440, dur: 0.2 }
+      };
+    }
+  });
+
+  // src/pomodoro/statusbar.ts
+  function syncPomodoroStatusBar(state3, remainSec) {
+    if (!statusEl) return;
+    const running2 = state3.endTime !== null;
+    const paused = !running2 && state3.paused;
+    statusEl.classList.toggle("pomodoro-statusbar-idle", !running2 && !paused);
+    statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
+    statusEl.title = state3.task ? `番茄钟：${state3.task}` : "番茄钟";
+    if (textSpan) {
+      if (running2) {
+        const m = Math.floor(remainSec / 60);
+        const s = remainSec % 60;
+        textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
+      } else if (paused) {
+        textSpan.textContent = "已暂停";
+      } else {
+        textSpan.textContent = "";
+      }
+    }
+  }
+  var statusEl, textSpan;
+  var init_statusbar = __esm({
+    "src/pomodoro/statusbar.ts"() {
+      init_fake_obsidian();
+      init_utils();
+      statusEl = null;
+      textSpan = null;
+    }
+  });
+
+  // src/pomodoro/config.ts
+  var PRESETS, CUSTOM_PRESET_ID;
+  var init_config3 = __esm({
+    "src/pomodoro/config.ts"() {
+      PRESETS = {
+        classic: { label: "经典标准", workMin: 25, shortBreakMin: 5, longBreakMin: 15 },
+        neuro: { label: "神经专注", workMin: 30, shortBreakMin: 7, longBreakMin: 20 },
+        flow: { label: "深度心流", workMin: 50, shortBreakMin: 10, longBreakMin: 25 },
+        creative: { label: "创意激发", workMin: 40, shortBreakMin: 12, longBreakMin: 20 },
+        beginner: { label: "初学入门", workMin: 15, shortBreakMin: 5, longBreakMin: 12 },
+        study: { label: "高效学习", workMin: 30, shortBreakMin: 5, longBreakMin: 15 },
+        sprint: { label: "敏捷冲刺", workMin: 20, shortBreakMin: 4, longBreakMin: 12 },
+        marathon: { label: "马拉松式", workMin: 45, shortBreakMin: 15, longBreakMin: 30 },
+        recovery: { label: "疲劳恢复", workMin: 20, shortBreakMin: 10, longBreakMin: 20 },
+        intense: { label: "高强度", workMin: 50, shortBreakMin: 5, longBreakMin: 15 },
+        balanced: { label: "平衡模式", workMin: 35, shortBreakMin: 7, longBreakMin: 18 }
+      };
+      CUSTOM_PRESET_ID = "custom";
+    }
+  });
+
+  // src/pomodoro/ui.ts
+  var ui_exports3 = {};
+  __export(ui_exports3, {
+    POMODORO_SKIN_THEMES: () => POMODORO_SKIN_THEMES,
+    closePomodoro: () => closePomodoro,
+    ensurePomodoro: () => ensurePomodoro,
+    isFocusing: () => isFocusing,
+    menuPhase: () => menuPhase,
+    openPomodoro: () => openPomodoro,
+    pomodoroSettingsSchema: () => pomodoroSettingsSchema,
+    skipBreak: () => skipBreak,
+    startFocusForTask: () => startFocusForTask,
+    toggleFocus: () => toggleFocus,
+    togglePause: () => togglePause,
+    unloadPomodoro: () => unloadPomodoro
+  });
+  function applySkinClass() {
+    const popup = document.getElementById("pomodoro-popup");
+    if (!popup) return;
+    const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
+    for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
+    popup.classList.add(want);
+  }
+  function durations() {
+    const s = tryGetSettings();
+    const num2 = (v, def) => {
+      const n = parseInt(v != null ? v : "", 10);
+      return Number.isFinite(n) && n > 0 ? n : def;
+    };
+    const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
+    return {
+      workMin: preset ? preset.workMin : num2(s.pomodoroWorkMin, 25),
+      shortBreakMin: preset ? preset.shortBreakMin : num2(s.pomodoroShortBreakMin, 5),
+      longBreakMin: preset ? preset.longBreakMin : num2(s.pomodoroLongBreakMin, 15),
+      longBreakInterval: num2(s.pomodoroLongBreakInterval, 4)
+    };
+  }
+  function options() {
+    const s = tryGetSettings();
+    return {
+      forceFocus: !!s.pomodoroForceFocus,
+      autoCycle: !!s.pomodoroAutoCycle,
+      autoSkipBreak: !!s.pomodoroAutoSkipBreak
+    };
+  }
+  function phaseLabel(phase) {
+    if (phase === "focus") return "专注";
+    if (phase === "short-break") return "短休息";
+    if (phase === "long-break") return "长休息";
+    return "番茄钟";
+  }
+  function phaseText(phase, count, d) {
+    if (phase === "focus") return `专注 ${count + 1}/${d.longBreakInterval}`;
+    return phaseLabel(phase);
+  }
+  function playPhaseSound(phase) {
+    const s = tryGetSettings();
+    if (s.pomodoroSound !== false) {
+      const kind = phase === "focus" ? "focus-start" : phase === "long-break" ? "long-break-start" : "short-break-start";
+      playSound(kind, pomodoroVolume());
+    }
+  }
+  function notifyPhaseStarted(phase) {
+    const d = durations();
+    if (phase === "focus") {
+      notice("专注开始", "success");
+    } else if (phase === "long-break") {
+      notice(`长休息开始：${d.longBreakMin} 分钟`, "success");
+    } else {
+      notice(`休息开始：${d.shortBreakMin} 分钟`, "success");
+    }
+    playPhaseSound(phase);
+  }
+  function notifyPaused() {
+    notice("已暂停专注", "pause");
+    const s = tryGetSettings();
+    if (s.pomodoroSound !== false) playSound("pause", pomodoroVolume());
+  }
+  function breakLabel(phase, d) {
+    return phase === "long-break" ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
+  }
+  function notifyPhaseComplete(e) {
+    const d = durations();
+    playPhaseSound(e.nextPhase);
+    if (e.autoStarted) {
+      if (e.completedPhase === "focus") {
+        notice(e.nextPhase === "focus" ? "专注完成：开始下一轮专注" : `专注完成：${breakLabel(e.nextPhase, d)}`, "success");
+      } else {
+        notice("休息结束：开始专注", "success");
+      }
+      return;
+    }
+    if (e.completedPhase === "focus") {
+      notify(`专注完成：${breakLabel(e.nextPhase, d)}`, {
+        type: "success",
+        duration: 6e3,
+        action: { label: "开始休息", onClick: () => applyAction("start") }
+      });
+    } else {
+      notify("休息结束", {
+        type: "success",
+        duration: 6e3,
+        action: { label: "开始专注", onClick: () => applyAction("start") }
+      });
+    }
+  }
+  function pomodoroVolume() {
+    const v = tryGetSettings().pomodoroVolume;
+    return typeof v === "number" && v >= 0 ? v : 100;
+  }
+  function remainingSec() {
+    if (state.endTime !== null) return Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
+    if (state.phase === "idle" && state.remaining === 0) return phaseDurationSec("focus", durations());
+    return state.remaining;
+  }
+  function fmt(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${pad2(m)}:${pad2(s)}`;
+  }
+  function buildStatBars(container, rows) {
+    const max = Math.max(1, ...rows.map((r) => r.count));
+    container.innerHTML = "";
+    for (const r of rows) {
+      const bar = document.createElement("div");
+      bar.className = "pomodoro-stat-day";
+      bar.title = r.title;
+      const col = document.createElement("div");
+      col.className = "pomodoro-stat-col";
+      const h = document.createElement("div");
+      h.className = "pomodoro-stat-bar";
+      h.style.height = `${Math.max(2, Math.round(r.count / max * 40))}px`;
+      col.appendChild(h);
+      const label = document.createElement("span");
+      label.className = "pomodoro-stat-label";
+      label.textContent = r.label;
+      col.appendChild(label);
+      bar.appendChild(col);
+      container.appendChild(bar);
+    }
+  }
+  function renderStats() {
+    const now = Date.now();
+    const todayEl = document.getElementById("pomodoro-today");
+    if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
+    const weekEl = document.getElementById("pomodoro-week");
+    const monthsEl = document.getElementById("pomodoro-months");
+    if (!weekEl || !monthsEl) return;
+    const tabWeek = document.getElementById("pomodoro-stat-tab-week");
+    const tabMonth = document.getElementById("pomodoro-stat-tab-month");
+    tabWeek == null ? void 0 : tabWeek.classList.toggle("pomodoro-stat-tab-on", statMode === "week");
+    tabMonth == null ? void 0 : tabMonth.classList.toggle("pomodoro-stat-tab-on", statMode === "month");
+    if (statMode === "month") {
+      weekEl.hidden = true;
+      monthsEl.hidden = false;
+      const months = lastNMonths(archived, history, now, TREND_MONTHS);
+      const key2 = "m:" + months.map((m) => `${m.month}:${m.count}:${m.minutes}`).join(",") + `#${archived.length}`;
+      if (key2 === lastStatsKey) return;
+      lastStatsKey = key2;
+      buildStatBars(
+        monthsEl,
+        months.map((m) => ({
+          label: `${parseInt(m.month.slice(5, 7), 10)}月`,
+          title: `${m.month}：${m.count} 个 · ${m.minutes} 分钟`,
+          count: m.count
+        }))
+      );
+      return;
+    }
+    weekEl.hidden = false;
+    monthsEl.hidden = true;
+    const days = last7Days(history, now);
+    const key = "w:" + days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
+    if (key === lastStatsKey) return;
+    lastStatsKey = key;
+    buildStatBars(
+      weekEl,
+      days.map((d) => ({
+        label: d.date.slice(8),
+        // DD（完整日期在 title；窄面板不折行）
+        title: `${d.date}：${d.count} 个 · ${d.minutes} 分钟`,
+        count: d.count
+      }))
+    );
+  }
+  function setStatMode(mode) {
+    if (statMode === mode) return;
+    statMode = mode;
+    lastStatsKey = "";
+    render();
+  }
+  function render() {
+    const d = durations();
+    const remain = remainingSec();
+    syncPomodoroStatusBar(state, remain);
+    if (!maskEl) return;
+    const total = phaseDurationSec(state.phase === "idle" ? "focus" : state.phase, d);
+    const C = 2 * Math.PI * 52;
+    const progress = total > 0 ? 1 - remain / total : 1;
+    const circle = document.getElementById("pomodoro-ring-progress");
+    if (circle) {
+      circle.setAttribute("stroke-dasharray", String(C));
+      circle.setAttribute("stroke-dashoffset", String(C * (1 - progress)));
+    }
+    const phaseEl = document.getElementById("pomodoro-phase");
+    if (phaseEl) {
+      const label = phaseLabel(state.phase);
+      if (phaseEl.dataset.label !== label) {
+        phaseEl.dataset.label = label;
+        phaseEl.innerHTML = "";
+        if (state.phase === "idle") {
+          const ic2 = document.createElement("span");
+          ic2.className = "pomodoro-phase-icon";
+          setIcon(ic2, "timer");
+          phaseEl.appendChild(ic2);
+          phaseEl.appendChild(document.createTextNode(label));
+        } else {
+          phaseEl.textContent = label;
+        }
+      }
+    }
+    renderCycleDots(d);
+    renderTaskLine();
+    const timeEl = document.getElementById("pomodoro-time");
+    if (timeEl) timeEl.textContent = fmt(remain);
+    renderStats();
+    updateButtons();
+    applySkinClass();
+  }
+  function renderCycleDots(d) {
+    const cycleEl = document.getElementById("pomodoro-cycle");
+    if (!cycleEl) return;
+    const total = Math.max(1, d.longBreakInterval);
+    if (cycleEl.childElementCount !== total) {
+      cycleEl.innerHTML = "";
+      for (let i = 0; i < total; i++) {
+        const dot = document.createElement("span");
+        dot.className = "pomodoro-cycle-dot";
+        cycleEl.appendChild(dot);
+      }
+    }
+    Array.from(cycleEl.children).forEach((dot, i) => {
+      dot.className = "pomodoro-cycle-dot" + (i < state.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
+    });
+  }
+  function renderTaskLine() {
+    const taskEl = document.getElementById("pomodoro-task");
+    if (!taskEl) return;
+    if (state.task) {
+      if (taskEl.textContent !== state.task) taskEl.textContent = state.task;
+      taskEl.title = state.task;
+    } else {
+      taskEl.textContent = "";
+      taskEl.removeAttribute("title");
+    }
+  }
+  function updateButtons() {
+    const startBtn = document.getElementById("pomodoro-btn-start");
+    if (!startBtn) return;
+    const running2 = state.endTime !== null;
+    startBtn.textContent = running2 ? "暂停" : state.paused ? "继续" : "开始";
+    const locked = options().forceFocus && state.phase === "focus" && (running2 || state.paused);
+    const startLocked = locked && !(state.paused && state.pausedBy === "autopause");
+    startBtn.disabled = startLocked;
+    const resetBtn = document.getElementById("pomodoro-btn-reset");
+    const skipBtn = document.getElementById("pomodoro-btn-skip");
+    if (resetBtn) resetBtn.disabled = locked;
+    if (skipBtn) skipBtn.disabled = locked;
+  }
+  function applyAction(action) {
+    const prev = state;
+    const r = transition(state, action, Date.now(), durations(), options());
+    state = r.state;
+    if (!state.paused) autoPauseMain = false;
+    if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
+    if (r.event.type === "phase-completed") {
+      if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
+      if (action === "tick") notifyPhaseComplete(r.event);
+      if (r.event.completedPhase === "focus" && r.event.historyEntry) {
+        emitDomainEvent("pomodoro", { kind: "focus-done", minutes: durations().workMin });
+      }
+    }
+    if (action === "pause" && state.paused) notifyPaused();
+    if (r.event.type !== "none" || action === "pause" && state.paused || action === "reset" && r.state !== prev) void save();
+    ensureTick();
+    render();
+  }
+  function onTick() {
+    applyAction("tick");
+  }
+  function autoPauseEnabled() {
+    return tryGetSettings().pomodoroAutoPauseOnHide !== false;
+  }
+  function freezeRunning(s, now) {
+    if (s.endTime === null || s.paused) return s;
+    return {
+      ...s,
+      paused: true,
+      pausedBy: "autopause",
+      remaining: Math.max(0, Math.ceil((s.endTime - now) / 1e3)),
+      endTime: null
+    };
+  }
+  function unfreezeRunning(s, now) {
+    if (!s.paused) return s;
+    return { ...s, paused: false, pausedBy: void 0, remaining: 0, endTime: now + s.remaining * 1e3 };
+  }
+  function pauseOnHidden() {
+    if (!autoPauseEnabled()) return;
+    const now = Date.now();
+    if (state.endTime !== null && !state.paused) {
+      state = freezeRunning(state, now);
+      autoPauseMain = true;
+    }
+    if (autoPauseMain) {
+      void save();
+      render();
+    }
+  }
+  function resumeOnVisible() {
+    const now = Date.now();
+    if (autoPauseMain && state.paused) {
+      state = unfreezeRunning(state, now);
+      autoPauseMain = false;
+      void save();
+      render();
+      return;
+    }
+    render();
+  }
+  function registerVisibilityListener() {
+    if (visibilityHandler) return;
+    visibilityHandler = () => {
+      if (document.hidden) pauseOnHidden();
+      else resumeOnVisible();
+    };
+    document.addEventListener("visibilitychange", visibilityHandler);
+  }
+  function unregisterVisibilityListener() {
+    if (visibilityHandler) {
+      document.removeEventListener("visibilitychange", visibilityHandler);
+      visibilityHandler = null;
+    }
+  }
+  function ensureTick() {
+    const needsTick = state.endTime !== null;
+    if (needsTick && timerId === null) {
+      timerId = window.setInterval(onTick, 1e3);
+    } else if (!needsTick && timerId !== null) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+  }
+  async function save() {
+    const t = trimWithArchive(history, archived, Date.now());
+    history = t.history;
+    archived = t.archived;
+    if (dataManager) await dataManager.save({ version: 1, state, history, ...archived.length ? { archived } : {} });
+  }
+  async function initData() {
+    var _a2;
+    const data = await dataManager.load();
+    const r = recover(data.state, data.history, Date.now(), durations(), options());
+    state = r.state;
+    const t = trimWithArchive(r.history, data.archived, Date.now());
+    history = t.history;
+    archived = t.archived;
+    const mainChanged = data.state.endTime !== null && r.state.endTime === null;
+    const archivedChanged = JSON.stringify((_a2 = data.archived) != null ? _a2 : []) !== JSON.stringify(archived);
+    if (mainChanged || archivedChanged) await dataManager.save({ version: 1, state, history, ...archived.length ? { archived } : {} });
+    loaded = true;
+  }
+  function pomodoroSettingsSchema() {
+    const soundToggle = {
+      get: () => tryGetSettings().pomodoroSound !== false,
+      set: (v) => {
+        getSettings().pomodoroSound = v;
+      },
+      save: () => saveSettings()
+    };
+    const autoPauseToggle = {
+      get: () => tryGetSettings().pomodoroAutoPauseOnHide !== false,
+      set: (v) => {
+        getSettings().pomodoroAutoPauseOnHide = v;
+      },
+      save: () => saveSettings()
+    };
+    return {
+      groups: [
+        {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            {
+              type: "choiceCards",
+              name: "面板布局",
+              binding: { key: "pomodoroSkin" },
+              options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }],
+              // 配套回落（issue 246 a2 口径：不建 layoutPairMap）：换布局后若当前主题不属于
+              // 新布局的配套（layout 不符）→ 回落第一个适配主题（无适配主题则兜底第一项），
+              // 防「布局换了主题还挂旧皮」
+              onChange: () => {
+                var _a2, _b2;
+                const s = tryGetSettings();
+                const cur = String((_a2 = s.pomodoroSkinTheme) != null ? _a2 : "");
+                const fit2 = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
+                if (!fit2.some((o) => o.value === cur)) {
+                  s.pomodoroSkinTheme = ((_b2 = fit2[0]) != null ? _b2 : SKIN_THEME_OPTIONS[0]).value;
+                  saveSettings();
+                }
+                render();
+              }
+            },
+            // 面板主题：10 套皮（清单单源 = render.ts POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）；
+            // onChange 驱动 render() 重挂皮肤类——设置面板关着弹窗换肤也要即时生效（评审 c1）
+            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: SKIN_THEME_OPTIONS, onChange: () => render() }
+          ]
+        },
+        {
+          icon: "timer",
+          name: "时间方案",
+          rows: [
+            {
+              type: "select",
+              name: "预设方案",
+              desc: "选择现成的工作与休息时长组合",
+              binding: { key: "pomodoroPreset" },
+              options: [
+                ...Object.entries(PRESETS).map(([id, p]) => ({
+                  value: id,
+                  label: `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`
+                })),
+                { value: CUSTOM_PRESET_ID, label: "自定义" }
+              ],
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "工作时长",
+              desc: "自定义方案的工作阶段分钟数",
+              binding: numStrBinding("pomodoroWorkMin", 25),
+              min: 1,
+              max: 120,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "短休息时长",
+              desc: "自定义方案的短休息分钟数",
+              binding: numStrBinding("pomodoroShortBreakMin", 5),
+              min: 1,
+              max: 60,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "长休息时长",
+              desc: "自定义方案的长休息分钟数",
+              binding: numStrBinding("pomodoroLongBreakMin", 15),
+              min: 1,
+              max: 60,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            { type: "number", name: "长休息间隔", desc: "每隔几个专注进入一次长休息", binding: numStrBinding("pomodoroLongBreakInterval", 4), min: 1, max: 20, step: 1, onChange: () => render() }
+          ]
+        },
+        {
+          icon: "sliders-horizontal",
+          name: "行为",
+          rows: [
+            { type: "toggle", name: "强制专注模式", desc: "专注进行中无法暂停跳过或重置", binding: { key: "pomodoroForceFocus" }, onChange: () => render() },
+            { type: "toggle", name: "自动循环", desc: "阶段结束后自动开始下一阶段", binding: { key: "pomodoroAutoCycle" }, onChange: () => render() },
+            { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
+            { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
+            { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
+            // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
+            {
+              type: "slider",
+              name: "提示音音量",
+              desc: "提示音大小，默认最大",
+              binding: { get: () => {
+                var _a2;
+                return (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100;
+              }, set: (v) => {
+                getSettings().pomodoroVolume = v;
+              }, save: () => saveSettings() },
+              min: 0,
+              max: 100,
+              step: 5,
+              actions: [{ text: "试听", onClick: () => {
+                var _a2;
+                return playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
+              } }]
+            },
+            {
+              type: "select",
+              name: "打开时恢复方式",
+              desc: "启动时正在倒计时，选择弹窗提醒或后台继续",
+              binding: { key: "pomodoroRestoreMode" },
+              options: [
+                { value: "background", label: "后台继续" },
+                { value: "popup", label: "自动弹窗" }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+  }
+  function bindEvents() {
+    var _a2, _b2;
+    const startBtn = document.getElementById("pomodoro-btn-start");
+    startBtn.addEventListener("click", () => applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start"));
+    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => applyAction("reset"));
+    document.getElementById("pomodoro-btn-skip").addEventListener("click", () => applyAction("skip"));
+    (_a2 = document.getElementById("pomodoro-stat-tab-week")) == null ? void 0 : _a2.addEventListener("click", () => setStatMode("week"));
+    (_b2 = document.getElementById("pomodoro-stat-tab-month")) == null ? void 0 : _b2.addEventListener("click", () => setStatMode("month"));
+    const popup = document.getElementById("pomodoro-popup");
+    popup.addEventListener("keydown", (e) => {
+      if (e.key !== " ") return;
+      const t = e.target;
+      const tag = t.tagName;
+      if (tag === "BUTTON" || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) return;
+      e.preventDefault();
+      applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start");
+    });
+  }
+  function buildDOM() {
+    var _a2;
+    const mask = document.createElement("div");
+    mask.id = "pomodoro-mask";
+    mask.className = "bz-overlay-mask";
+    mask.innerHTML = popupShellHtml();
+    mask.style.zIndex = String(allocZ());
+    document.body.appendChild(mask);
+    maskEl = mask;
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) closePomodoro();
+    });
+    escHandle2 = escManager.register("pomodoro", {
+      isVisible: () => maskEl !== null,
+      close: closePomodoro
+    });
+    bindEvents();
+    render();
+    (_a2 = document.getElementById("pomodoro-popup")) == null ? void 0 : _a2.focus();
+  }
+  function initDataOnce() {
+    if (loaded) return Promise.resolve();
+    initInflight != null ? initInflight : initInflight = initData().finally(() => {
+      initInflight = null;
+    });
+    return initInflight;
+  }
+  async function openPomodoro(app) {
+    appRef = app;
+    if (!dataManager) dataManager = new PomodoroDataManager(app);
+    if (!maskEl) {
+      openInflight != null ? openInflight : openInflight = (async () => {
+        await initDataOnce();
+        buildDOM();
+        ensureTick();
+      })();
+      try {
+        await openInflight;
+      } finally {
+        openInflight = null;
+      }
+    }
+    const popupEl2 = maskEl ? maskEl.querySelector("#pomodoro-popup") : null;
+    popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
+  }
+  async function ensurePomodoro(app) {
+    appRef = app;
+    if (!dataManager) dataManager = new PomodoroDataManager(app);
+    registerVisibilityListener();
+    if (!loaded) {
+      await initDataOnce();
+      if (state.endTime !== null) {
+        ensureTick();
+        render();
+        const remainSec = Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
+        notice(`番茄钟继续：${phaseText(state.phase, state.cycleFocusCount, durations())}，还剩 ${fmt(remainSec)}`);
+        const s = tryGetSettings();
+        if (s.pomodoroRestoreMode === "popup") void openPomodoro(app);
+      }
+    }
+  }
+  function closePomodoro() {
+    if (maskEl) {
+      maskEl.remove();
+      maskEl = null;
+    }
+    if (escHandle2) {
+      escHandle2.unregister();
+      escHandle2 = null;
+    }
+  }
+  async function startFocusForTask(app, taskTitle) {
+    await ensurePomodoro(app);
+    const o = options();
+    const d = durations();
+    if (state.phase === "short-break" || state.phase === "long-break") {
+      state = transition(state, "skip", Date.now(), d, o).state;
+      void save();
+      render();
+    }
+    if (state.endTime !== null) {
+      notice("已有专注计时中，本次不重复开始", "warning");
+      return;
+    }
+    if (o.forceFocus && state.paused && state.pausedBy !== "autopause") {
+      notice("强制专注模式暂停中，请先在番茄钟恢复", "warning");
+      return;
+    }
+    state = { ...state, task: taskTitle };
+    applyAction("start");
+  }
+  function isFocusing() {
+    return isFocusingPhase(menuPhase());
+  }
+  async function toggleFocus(app) {
+    await ensurePomodoro(app);
+    if (isFocusing()) {
+      const before = state;
+      applyAction("reset");
+      if (state === before) notice("强制专注模式中，请先在番茄钟面板操作", "warning");
+      else notice("专注已停止");
+      return;
+    }
+    if (state.phase === "short-break" || state.phase === "long-break") {
+      state = transition(state, "skip", Date.now(), durations(), options()).state;
+      void save();
+      render();
+    }
+    applyAction("start");
+  }
+  function menuPhase() {
+    if (state.phase === "short-break" || state.phase === "long-break") return "break";
+    if (state.phase !== "focus") return "idle";
+    if (state.paused) return "paused";
+    return state.endTime !== null ? "focusing" : "idle";
+  }
+  async function skipBreak(app) {
+    await ensurePomodoro(app);
+    if (state.phase !== "short-break" && state.phase !== "long-break") {
+      notice("当前不在休息阶段", "warning");
+      return;
+    }
+    state = transition(state, "skip", Date.now(), durations(), options()).state;
+    void save();
+    render();
+    applyAction("start");
+  }
+  async function togglePause(app) {
+    await ensurePomodoro(app);
+    if (state.endTime === null && !state.paused) {
+      notice("当前没有进行中的计时", "warning");
+      return;
+    }
+    applyAction(state.paused ? "resume" : "pause");
+  }
+  function unloadPomodoro() {
+    if (timerId !== null) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+    unregisterVisibilityListener();
+    autoPauseMain = false;
+    openInflight = null;
+    initInflight = null;
+    closePomodoro();
+    state = createInitialState();
+    history = [];
+    archived = [];
+    statMode = "week";
+    lastStatsKey = "";
+    dataManager = null;
+    appRef = null;
+    loaded = false;
+  }
+  var dataManager, state, history, archived, loaded, statMode, maskEl, escHandle2, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var init_ui4 = __esm({
+    "src/pomodoro/ui.ts"() {
+      init_fake_obsidian();
+      init_esc_manager();
+      init_z_order();
+      init_settings_provider();
+      init_notice();
+      init_settings_common();
+      init_data3();
+      init_render7();
+      init_render7();
+      init_sound();
+      init_statusbar();
+      init_stats();
+      init_config3();
+      init_state3();
+      init_pomodoro_phase();
+      init_utils();
+      init_domain_bus();
+      dataManager = null;
+      state = createInitialState();
+      history = [];
+      archived = [];
+      loaded = false;
+      statMode = "week";
+      maskEl = null;
+      escHandle2 = null;
+      timerId = null;
+      appRef = null;
+      autoPauseMain = false;
+      visibilityHandler = null;
+      lastStatsKey = "";
+      SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
+      initInflight = null;
+      openInflight = null;
+    }
+  });
+
+  // src/pomodoro/index.ts
+  var pomodoro_exports = {};
+  __export(pomodoro_exports, {
+    ensurePomodoro: () => ensurePomodoro,
+    isFocusing: () => isFocusing,
+    menuPhase: () => menuPhase,
+    openPomodoro: () => openPomodoro,
+    skipBreak: () => skipBreak,
+    startFocusForTask: () => startFocusForTask,
+    toggleFocus: () => toggleFocus,
+    togglePause: () => togglePause,
+    unloadPomodoro: () => unloadPomodoro
+  });
+  var init_pomodoro = __esm({
+    "src/pomodoro/index.ts"() {
+      init_ui4();
+    }
+  });
+
   // src/memo/ui.ts
+  function isTodayStr(s) {
+    return !!s && s.slice(0, 10) === (0, import_moment5.default)().format("YYYY-MM-DD");
+  }
+  function fallbackScene() {
+    const scenes = MemoData.getScenarios();
+    const s = tryGetSettings().memoDefaultScene;
+    return s && scenes.includes(s) ? s : scenes[0];
+  }
+  function doneWindowDays() {
+    var _a2;
+    const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2.memoDoneWindow;
+    if (v === "all") return null;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 30;
+  }
+  async function readClipUrl() {
+    let text = "";
+    try {
+      text = await navigator.clipboard.readText();
+    } catch (e) {
+      return null;
+    }
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+    const { url, display } = extractUrlAndDisplay(trimmed);
+    if (!url) return null;
+    const title = display && display !== url ? display : await fetchPageTitle(url) || "";
+    return { url, title };
+  }
+  function notifyClipPrefill() {
+    notify("已从剪贴板预填链接", { type: "info", dedupeKey: "memo-clip-prefill" });
+  }
+  async function loadData() {
+    M3.items = await MemoData.loadItems();
+  }
+  async function refresh() {
+    var _a2, _b2;
+    await loadData();
+    (_b2 = (_a2 = M3).renderFn) == null ? void 0 : _b2.call(_a2);
+  }
+  function dueRank(it) {
+    if (!it.due) return 3;
+    const st = getDueStatus(it.due);
+    return st === "overdue" ? 0 : st === "today" ? 1 : 2;
+  }
+  function getVisibleItems() {
+    const kw = M3.search.trim().toLowerCase();
+    let list = M3.items.filter((it) => {
+      if (M3.activeScene === "今日") {
+        if (!it.completed) {
+          const st = getDueStatus(it.due);
+          if (st !== "overdue" && st !== "today") return false;
+        } else if (!isTodayStr(it.completed)) {
+          return false;
+        }
+      } else if (M3.activeScene === "重要") {
+        if (it.priority !== "important") return false;
+      } else if (M3.activeScene !== "全部" && it.scene !== M3.activeScene) return false;
+      if (kw) {
+        const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName].filter(Boolean).join(" ").toLowerCase();
+        if (!hay.includes(kw)) return false;
+      }
+      return true;
+    });
+    if (M3.pinnedNewId && M3.activeScene !== "全部") {
+      const pinned = M3.items.find((i) => i.id === M3.pinnedNewId);
+      if (pinned && !pinned.completed && !list.some((i) => i.id === pinned.id)) list = [pinned, ...list];
+    }
+    list.sort((a, b) => {
+      const ac = !!a.completed, bc = !!b.completed;
+      if (ac !== bc) return ac ? 1 : -1;
+      const dr = dueRank(a) - dueRank(b);
+      if (dr !== 0) return dr;
+      if (M3.sortMode === "priority") {
+        const pa = a.priority === "important" ? 0 : 1;
+        const pb = b.priority === "important" ? 0 : 1;
+        if (pa !== pb) return pa - pb;
+      }
+      if (M3.sortMode === "created") {
+        return (b.created || "").localeCompare(a.created || "");
+      }
+      if (a.due && b.due) return a.due.localeCompare(b.due);
+      return (b.created || "").localeCompare(a.created || "");
+    });
+    return list;
+  }
+  function sceneCount(scene) {
+    if (scene === "今日") {
+      return M3.items.filter((it) => {
+        if (it.completed) return isTodayStr(it.completed);
+        const st = getDueStatus(it.due);
+        return st === "overdue" || st === "today";
+      }).length;
+    }
+    if (scene === "重要") return M3.items.filter((it) => it.priority === "important").length;
+    if (scene === "全部") return M3.items.length;
+    return M3.items.filter((it) => it.scene === scene).length;
+  }
   function applyMemoSkin(skin) {
     if (!M3.overlay) return;
     const panel2 = M3.overlay.querySelector(".bz-memo-panel");
@@ -17813,8 +19037,1038 @@ ${countsToText(s.missing)}
     const v = skin === "editorial" ? "editorial" : "paper";
     panel2.classList.add(`bz-memo-skin-${v}`);
   }
-  var import_moment5;
-  var init_ui4 = __esm({
+  function skinClass() {
+    const s = tryGetSettings().memoSkin;
+    return s === "editorial" ? "bz-memo-skin-editorial" : "bz-memo-skin-paper";
+  }
+  function closeMemoPanel() {
+    if (M3.overlay) {
+      const s = tryGetSettings();
+      if (s) {
+        s.memoLastScene = M3.activeScene;
+        void saveSettings();
+      }
+      M3.overlay.remove();
+      M3.overlay = null;
+    }
+    searchDebounced.cancel();
+    if (panelResizeDetach) {
+      panelResizeDetach.detach();
+      panelResizeDetach = null;
+    }
+    if (sortSelectDetach) {
+      sortSelectDetach();
+      sortSelectDetach = null;
+    }
+    M3.renderFn = null;
+    M3.pinnedNewId = null;
+    clipTitleHint = null;
+    M3.completeTimers.forEach((t) => clearTimeout(t));
+    M3.completeTimers.clear();
+  }
+  function renderAll() {
+    if (!M3.overlay) return;
+    renderNav();
+    renderMobScenes();
+    renderMainHead();
+    renderViewToggle();
+    renderContent();
+  }
+  function renderViewToggle() {
+    const wrap2 = M3.overlay.querySelector("[data-memo-viewtoggle]");
+    if (!wrap2) return;
+    wrap2.querySelectorAll("[data-memo-view]").forEach((b) => {
+      b.classList.toggle("is-on", b.dataset.memoView === M3.view);
+    });
+  }
+  function renderMainHead() {
+    const overlay2 = M3.overlay;
+    const titleEl = overlay2.querySelector("[data-memo-main-title]");
+    const countEl = overlay2.querySelector("[data-memo-main-count]");
+    if (!titleEl || !countEl) return;
+    titleEl.textContent = sceneLabel(M3.activeScene);
+    const items = getVisibleItems();
+    const undone = items.filter((i) => !i.completed).length;
+    countEl.innerHTML = mainCountHtml(items.length, undone);
+  }
+  function sceneOptions() {
+    return [
+      { scene: "全部", dot: "" },
+      { scene: "今日", dot: "" },
+      { scene: "重要", dot: "" },
+      ...MemoData.getScenarios().map((s) => ({ scene: s, dot: sceneDot(s) }))
+    ];
+  }
+  function attachSceneActions(el, scene) {
+    if (scene === "全部" || scene === "今日" || scene === "重要") return;
+    attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
+  }
+  function renderNav() {
+    const nav = M3.overlay.querySelector("[data-memo-nav]");
+    if (!nav) return;
+    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M3.activeScene === o.scene, sceneCount(o.scene))).join("");
+    mountIcons(nav);
+    nav.querySelectorAll("[data-memo-scene]").forEach((el) => {
+      attachSceneActions(el, el.dataset.memoScene);
+    });
+  }
+  function renderMobScenes() {
+    const wrap2 = M3.overlay.querySelector("[data-memo-mob-scenes]");
+    if (!wrap2) return;
+    wrap2.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M3.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
+    mountIcons(wrap2);
+    wrap2.querySelectorAll("[data-memo-scene]").forEach((el) => {
+      attachSceneActions(el, el.dataset.memoScene);
+    });
+  }
+  function metaDueOf(it) {
+    if (!it.due || it.completed) return null;
+    const st = getDueStatus(it.due);
+    if (!st) return null;
+    return { status: st, text: formatDueText(it.due) };
+  }
+  function checkProgress(it) {
+    const cl = it.checklist || [];
+    if (!cl.length) return "";
+    return `${cl.filter((c) => c.done).length}/${cl.length}`;
+  }
+  function metaTags(it) {
+    return metaTagsHtml(
+      it,
+      metaDueOf(it),
+      it.created ? formatRelativeTime(it.created) : "",
+      it.recur ? recurLabel(it.recur) : "",
+      checkProgress(it)
+    );
+  }
+  function renderContent() {
+    const content = M3.overlay.querySelector("[data-memo-content]");
+    if (!content) return;
+    if (M3.view === "calendar") {
+      renderCalendar(content);
+      return;
+    }
+    renderListContent(content);
+  }
+  function cardHtmlOf(it) {
+    return cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", it.recur ? recurLabel(it.recur) : "", checkProgress(it));
+  }
+  function wireCards(content) {
+    content.querySelectorAll("[data-memo-openitem]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const it = M3.items.find((i) => i.id === el.dataset.memoOpenitem);
+        if (it) openItem(it);
+      });
+    });
+    content.querySelectorAll("[data-memo-pos]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const it = M3.items.find((i) => i.id === el.dataset.memoPos);
+        if (it) jumpToNote(it);
+      });
+    });
+    content.querySelectorAll(".bz-memo-card").forEach((card) => {
+      const id = card.dataset.memoId;
+      const it = M3.items.find((i) => i.id === id);
+      if (!it) return;
+      attachItemActions(card, buildCardActions(it), {
+        menuClass: skinClass() || void 0,
+        sheetClass: skinClass() || void 0,
+        // 抽屉挂 body，需自带皮肤类，头部勾选圈皮肤样式才随行
+        sheetHead: buildSheetHead(it)
+      });
+    });
+  }
+  function renderListContent(content) {
+    const items = getVisibleItems();
+    if (items.length === 0) {
+      content.innerHTML = "";
+      content.appendChild(uiEmpty({
+        icon: MEMO_ICONS.empty,
+        title: M3.search ? "没有匹配的备忘录" : "这里还没有备忘录",
+        desc: M3.search ? "试试其他关键词，或清除搜索" : "随手记一条，别让它溜走",
+        actions: uiBtnRow([uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })], { center: true })
+      }));
+      return;
+    }
+    const active2 = items.filter((i) => !i.completed);
+    const done = items.filter((i) => i.completed);
+    const urgent = active2.filter((i) => dueRank(i) <= 1);
+    const normal = active2.filter((i) => dueRank(i) > 1);
+    const sections = [];
+    if (urgent.length) {
+      sections.push(sectionLabelHtml("到期优先", urgent.length));
+      sections.push(...urgent.map((it) => cardHtmlOf(it)));
+    }
+    if (normal.length) {
+      sections.push(sectionLabelHtml("其他", normal.length));
+      sections.push(...normal.map((it) => cardHtmlOf(it)));
+    }
+    if (done.length) {
+      const open = M3.showDone;
+      const win = doneWindowDays();
+      const cutoff = win === null ? null : (0, import_moment5.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
+      const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
+      const earlier = done.length - recent2.length;
+      const listed = !open || M3.showEarlierDone ? done : recent2;
+      sections.push(doneBarHtml(open, done.length));
+      if (open) {
+        sections.push(...listed.map((it) => cardHtmlOf(it)));
+        if (earlier > 0 && !M3.showEarlierDone) {
+          sections.push(doneMoreHtml(earlier));
+        }
+      }
+    }
+    content.innerHTML = sections.join("");
+    mountIcons(content);
+    wireCards(content);
+  }
+  function renderCalendar(content) {
+    let monthMoment = (0, import_moment5.default)(`${M3.calMonth}-01`, "YYYY-MM-DD", true);
+    if (!monthMoment.isValid()) {
+      M3.calMonth = (0, import_moment5.default)().format("YYYY-MM");
+      M3.calSelected = null;
+      monthMoment = (0, import_moment5.default)(`${M3.calMonth}-01`, "YYYY-MM-DD", true);
+    }
+    const visible = getVisibleItems();
+    const undone = visible.filter((i) => !i.completed && i.due);
+    const byDay = /* @__PURE__ */ new Map();
+    for (const it of undone) {
+      const key = it.due.slice(0, 10);
+      const bucket = byDay.get(key);
+      if (bucket) bucket.push(it);
+      else byDay.set(key, [it]);
+    }
+    const today = localDayKey();
+    const cells = [];
+    const lead = (monthMoment.day() + 6) % 7;
+    for (let i = 0; i < lead; i++) cells.push({ day: 0, blank: true, chips: [] });
+    const daysInMonth = monthMoment.daysInMonth();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = `${M3.calMonth}-${String(d).padStart(2, "0")}`;
+      const list = byDay.get(key) || [];
+      const chips = list.slice(0, 3).map((it) => {
+        const st = getDueStatus(it.due);
+        return { id: it.id, title: it.title, cls: st === "overdue" ? "is-overdue" : st === "today" ? "is-today" : "is-future" };
+      });
+      if (list.length > 3) chips.push({ id: "", title: `还有 ${list.length - 3} 条`, cls: "is-more" });
+      cells.push({ day: d, today: key === today, selected: M3.calSelected === key, chips });
+    }
+    const sections = [calHeadHtml(monthMoment.format("YYYY年M月")), calGridHtml(cells)];
+    if (M3.calSelected) {
+      const dayItems = visible.filter((i) => (i.due || "").slice(0, 10) === M3.calSelected);
+      const label = `${(0, import_moment5.default)(M3.calSelected).format("M月D日")} · ${dayItems.length} 项`;
+      const cards = dayItems.length ? dayItems.map((it) => cardHtmlOf(it)).join("") : '<div class="bz-memo-cal-noday">这一天没有备忘录</div>';
+      sections.push(`<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, dayItems.length)}${cards}</div>`);
+    }
+    content.innerHTML = sections.join("");
+    mountIcons(content);
+    wireCards(content);
+  }
+  function buildSheetHead(it) {
+    var _a2;
+    const head = document.createElement("div");
+    head.className = "bz-item-sheet-entry bz-memo-sheet-entry";
+    if (it.completed) head.classList.add("bz-memo-done");
+    head.insertAdjacentHTML("afterbegin", checkHtml(it));
+    const text = document.createElement("div");
+    text.className = "bz-memo-body-text";
+    const title = document.createElement("div");
+    title.textContent = it.title;
+    if (it.completed) title.classList.add("done");
+    text.appendChild(title);
+    const meta = document.createElement("div");
+    meta.className = "bz-memo-meta";
+    meta.innerHTML = metaTags(it);
+    mountIcons(meta);
+    text.appendChild(meta);
+    head.appendChild(text);
+    (_a2 = head.querySelector("[data-memo-check]")) == null ? void 0 : _a2.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeItemMenu();
+      toggleCheck(it);
+    });
+    return head;
+  }
+  function openItem(it) {
+    closeMemoPanel();
+    const app = M3.appRef;
+    if (it.linkedNote) {
+      const file = app.vault.getAbstractFileByPath(it.linkedNote);
+      if (file) void app.workspace.getLeaf().openFile(file);
+      else notice("关联笔记不存在");
+    } else if (it.url) {
+      try {
+        app.openUrl(it.url);
+      } catch (e) {
+        const electron = window.require && window.require("electron");
+        if (electron && electron.shell) electron.shell.openExternal(it.url);
+      }
+    }
+  }
+  function jumpToNote(it) {
+    var _a2;
+    if (!it.notePath) return;
+    closeMemoPanel();
+    const app = M3.appRef;
+    const file = app.vault.getAbstractFileByPath(it.notePath);
+    if (!file) {
+      notice("关联笔记不存在");
+      return;
+    }
+    const leaf = app.workspace.getLeaf();
+    void leaf.openFile(file);
+    const editor = (_a2 = leaf.view) == null ? void 0 : _a2.editor;
+    if (editor && it.notePosition) {
+      const { line, ch } = it.notePosition;
+      editor.focus();
+      editor.setCursor(line, ch || 0);
+      editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+    }
+  }
+  function toggleCheck(it) {
+    if (it.completed) {
+      void restoreItem(it);
+      return;
+    }
+    if (M3.completeTimers.has(it.id)) {
+      clearTimeout(M3.completeTimers.get(it.id));
+      M3.completeTimers.delete(it.id);
+      return;
+    }
+    const timer = setTimeout(() => {
+      M3.completeTimers.delete(it.id);
+      void completeItem(it);
+    }, 300);
+    M3.completeTimers.set(it.id, timer);
+  }
+  async function completeItem(it) {
+    try {
+      const { next } = await MemoData.completeItem(it.id);
+      emitDomainEvent("memo", { kind: "completed", title: it.title });
+      if (next) {
+        notice(next.due ? `下一期已排到 ${(0, import_moment5.default)(next.due).format("MM/DD HH:mm")}` : "下一期已生成", "success");
+        emitDomainEvent("memo", { kind: "added", title: next.title, scene: next.scene, priority: next.priority, due: next.due });
+      }
+    } catch (e) {
+      notifySaveError(e, "标记完成");
+      console.error(e);
+    }
+    await refresh();
+  }
+  async function stopRecur(id) {
+    try {
+      await MemoData.updateItem(id, { recur: null });
+      notice("已停止重复，完成后不再生成下一期", "success");
+    } catch (e) {
+      notifySaveError(e, "停止重复");
+      console.error(e);
+    }
+    await refresh();
+  }
+  async function restoreItem(it) {
+    try {
+      await MemoData.updateItem(it.id, { completed: null });
+      emitDomainEvent("memo", { kind: "restored", title: it.title });
+    } catch (e) {
+      notifySaveError(e, "恢复未完成");
+      console.error(e);
+    }
+    await refresh();
+  }
+  async function postponeItem(id, days) {
+    const it = M3.items.find((i) => i.id === id);
+    if (!it || !it.due) return;
+    const d = new Date(it.due.replace("T", " "));
+    d.setDate(d.getDate() + days);
+    const next = `${localDayKey(d)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    try {
+      await MemoData.updateItem(id, { due: next });
+      emitDomainEvent("memo", { kind: "postponed", title: it.title, due: next });
+      notice(`已延后 ${days} 天`, "success");
+    } catch (e) {
+      notifySaveError(e, "延后备忘录");
+      console.error(e);
+    }
+    await refresh();
+  }
+  async function moveToDay(id, day) {
+    const it = M3.items.find((i) => i.id === id);
+    if (!it || !it.due) return;
+    const time = it.due.replace("T", " ").slice(11) || "09:00";
+    const next = `${day} ${time}`;
+    try {
+      await MemoData.updateItem(id, { due: next });
+      emitDomainEvent("memo", { kind: "postponed", title: it.title, due: next });
+      notice(`已移到 ${(0, import_moment5.default)(day).format("MM/DD")}`, "success");
+    } catch (e) {
+      notifySaveError(e, "改期备忘录");
+      console.error(e);
+    }
+    await refresh();
+  }
+  async function togglePrio(id) {
+    const it = M3.items.find((i) => i.id === id);
+    if (!it) return;
+    const to = it.priority === "important" ? "minor" : "important";
+    try {
+      await MemoData.updateItem(id, { priority: to });
+      emitDomainEvent("memo", { kind: "priority", title: it.title, to });
+      notice(to === "important" ? "已转为重要" : "已转为次要", "success");
+    } catch (e) {
+      notifySaveError(e, "切换优先级");
+      console.error(e);
+    }
+    await refresh();
+  }
+  async function deleteItemConfirm(it) {
+    const ok = await openFlowDialog({
+      title: "删除备忘录",
+      message: `确定删除备忘录「${it.title}」吗？
+删除后可在通知中撤销。`,
+      className: skinClass(),
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "删除", value: "delete", danger: true, cta: true }
+      ]
+    });
+    if (ok !== "delete") return;
+    try {
+      const idx = await MemoData.deleteItem(it.id);
+      emitDomainEvent("memo", { kind: "deleted", title: it.title });
+      notifyUndo(`已删除备忘录「${it.title}」`, () => {
+        void (async () => {
+          try {
+            await MemoData.restoreItem(it, idx);
+            await refresh();
+          } catch (e) {
+            notifySaveError(e, "撤销删除");
+            console.error(e);
+          }
+        })();
+      });
+    } catch (e) {
+      notifySaveError(e, "删除备忘录");
+      console.error(e);
+    }
+    await refresh();
+  }
+  function focusMemoItem(it) {
+    const app = M3.appRef;
+    if (!app) return;
+    void Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports)).then((m) => m.startFocusForTask(app, it.title));
+  }
+  function buildCardActions(it) {
+    const actions = [];
+    if (it.linkedNote || it.url) {
+      let sub;
+      if (it.linkedNote) sub = stripMdExt(it.linkedNote.split("/").pop() || "");
+      else if (it.url) {
+        try {
+          sub = new URL(it.url).hostname;
+        } catch (e) {
+        }
+      }
+      actions.push({ icon: "external-link", label: "打开", title: "打开关联内容", sub, onClick: () => openItem(it) });
+    }
+    if (it.notePath) {
+      actions.push({
+        icon: "book-open",
+        label: "跳转关联笔记",
+        title: "跳转关联笔记",
+        sub: stripMdExt(it.notePath.split("/").pop() || ""),
+        onClick: () => jumpToNote(it)
+      });
+    }
+    if (!it.completed) {
+      actions.push({ icon: "timer", label: "专注这个", title: "开始一个归属到该备忘录的专注番茄", onClick: () => focusMemoItem(it) });
+      actions.push({
+        icon: "check-circle",
+        label: "标记完成",
+        title: "标记完成",
+        sub: it.due ? formatDueText(it.due) : void 0,
+        onClick: async () => {
+          await completeItem(it);
+        }
+      });
+    } else {
+      actions.push({ icon: "rotate-ccw", label: "恢复未完成", title: "恢复未完成", onClick: async () => {
+        await restoreItem(it);
+      } });
+    }
+    if (it.due && !it.completed) {
+      const postponeSub = (days) => {
+        const d = new Date(it.due.replace("T", " "));
+        d.setDate(d.getDate() + days);
+        return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      };
+      actions.push({ icon: "clock", label: "延后 1 天", title: "延后 1 天", sub: `→ ${postponeSub(1)}`, onClick: async () => {
+        await postponeItem(it.id, 1);
+      } });
+      actions.push({ icon: "clock", label: "延后 3 天", title: "延后 3 天", sub: `→ ${postponeSub(3)}`, onClick: async () => {
+        await postponeItem(it.id, 3);
+      } });
+      if (M3.calSelected && it.due.slice(0, 10) !== M3.calSelected) {
+        actions.push({
+          icon: "calendar",
+          label: "移到选中日期",
+          title: "移到月历选中的日期",
+          sub: `→ ${(0, import_moment5.default)(M3.calSelected).format("MM-DD")}`,
+          onClick: async () => {
+            await moveToDay(it.id, M3.calSelected);
+          }
+        });
+      }
+    }
+    if (it.recur && !it.completed) {
+      actions.push({
+        icon: "repeat",
+        label: "停止重复",
+        title: "停止周期重复",
+        sub: recurLabel(it.recur),
+        onClick: async () => {
+          await stopRecur(it.id);
+        }
+      });
+    }
+    const isImportant = it.priority === "important";
+    actions.push({
+      icon: "star",
+      label: isImportant ? "转为次要" : "转为重要",
+      title: "切换优先级",
+      onClick: async () => {
+        await togglePrio(it.id);
+      }
+    });
+    actions.push({
+      icon: "copy",
+      label: "复制内容",
+      title: "复制内容",
+      sub: `${it.title.length} 字`,
+      onClick: async () => {
+        await navigator.clipboard.writeText(it.title);
+        notice("内容已复制", "success");
+      }
+    });
+    actions.push({ icon: "pencil", label: "编辑", title: "编辑", onClick: () => openEditor(it) });
+    actions.push({ icon: "trash-2", label: "删除", title: "删除", kind: "danger", onClick: () => void deleteItemConfirm(it) });
+    return actions;
+  }
+  function openEditor(item, opts) {
+    var _a2, _b2;
+    const isEdit = !!item;
+    const scenes = MemoData.getScenarios();
+    const editing = item != null ? item : null;
+    const presetScene = (opts == null ? void 0 : opts.presetScene) && scenes.includes(opts.presetScene) ? opts.presetScene : null;
+    const defaultScene = editing ? editing.scene : presetScene != null ? presetScene : fallbackScene();
+    const isClip = defaultScene === "剪藏";
+    const isCode = defaultScene === "代码";
+    const isCourse = defaultScene === "公开课";
+    const form = document.createElement("div");
+    form.className = "bz-memo-form";
+    const title = document.createElement("div");
+    title.className = "bz-memo-form-title";
+    title.textContent = isEdit ? "编辑备忘录" : "创建备忘录";
+    form.appendChild(title);
+    const presetRaw = isEdit ? "" : (opts == null ? void 0 : opts.presetContent) || "";
+    const parsedPreset = presetRaw ? parseComposerChecklist(presetRaw) : null;
+    const clInitial = editing ? (editing.checklist || []).map((c) => ({ ...c })) : (parsedPreset == null ? void 0 : parsedPreset.checklist) ? parsedPreset.checklist.map((c) => ({ ...c })) : [];
+    const contentField = document.createElement("div");
+    contentField.className = "bz-field";
+    const contentLabel = document.createElement("span");
+    contentLabel.className = "bz-field-label";
+    contentLabel.textContent = "内容";
+    const contentInput = document.createElement("textarea");
+    contentInput.className = "bz-input";
+    contentInput.placeholder = "输入备忘录内容...";
+    contentInput.value = editing ? editing.title : parsedPreset ? parsedPreset.title : "";
+    contentField.append(contentLabel, contentInput);
+    form.appendChild(contentField);
+    const clDraft = clInitial;
+    const clField = document.createElement("div");
+    clField.className = "bz-field bz-memo-cl-field";
+    const clLabel = document.createElement("span");
+    clLabel.className = "bz-field-label";
+    clLabel.textContent = "子任务（可选，勾完自动完成父项）";
+    const clRows = document.createElement("div");
+    clRows.className = "bz-memo-cl-edit";
+    const clAddBtn = document.createElement("button");
+    clAddBtn.type = "button";
+    clAddBtn.className = "bz-memo-cl-addbtn";
+    clAddBtn.appendChild(uiIcon("plus"));
+    clAddBtn.appendChild(document.createTextNode("添加子任务"));
+    clField.append(clLabel, clRows, clAddBtn);
+    form.appendChild(clField);
+    function renderClRows() {
+      clRows.innerHTML = "";
+      clDraft.forEach((c, idx) => {
+        const row = document.createElement("div");
+        row.className = "bz-memo-cl-edit-row";
+        const box = document.createElement("span");
+        box.className = "bz-memo-cl-box" + (c.done ? " bz-memo-cl-on" : "");
+        box.title = c.done ? "取消完成" : "标记完成";
+        box.addEventListener("click", () => {
+          clDraft[idx].done = !clDraft[idx].done;
+          box.classList.toggle("bz-memo-cl-on", clDraft[idx].done);
+        });
+        const inp = document.createElement("input");
+        inp.className = "bz-input";
+        inp.value = c.text;
+        inp.placeholder = "子任务内容";
+        inp.addEventListener("input", () => {
+          clDraft[idx].text = inp.value;
+        });
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "bz-icon-btn bz-icon-btn--lg";
+        del.title = "删除子任务";
+        del.appendChild(uiIcon("x"));
+        del.addEventListener("click", () => {
+          clDraft.splice(idx, 1);
+          renderClRows();
+        });
+        row.append(box, inp, del);
+        clRows.appendChild(row);
+      });
+    }
+    renderClRows();
+    clAddBtn.addEventListener("click", () => {
+      var _a3;
+      clDraft.push({ text: "", done: false });
+      renderClRows();
+      const last = (_a3 = clRows.lastElementChild) == null ? void 0 : _a3.querySelector("input");
+      last == null ? void 0 : last.focus();
+    });
+    const titleBox = document.createElement("div");
+    titleBox.className = "bz-memo-extra" + (isClip ? " bz-memo-extra-on" : "");
+    const titleInput = document.createElement("input");
+    titleInput.className = "bz-input";
+    titleInput.placeholder = "标题（可选）";
+    titleInput.value = editing ? "" : (opts == null ? void 0 : opts.presetTitle) || "";
+    titleBox.appendChild(titleInput);
+    form.appendChild(titleBox);
+    const scriptBox = document.createElement("div");
+    scriptBox.className = "bz-memo-extra" + (isCode ? " bz-memo-extra-on" : "");
+    const scriptInput = document.createElement("input");
+    scriptInput.className = "bz-input";
+    scriptInput.placeholder = "脚本名";
+    scriptInput.value = (editing == null ? void 0 : editing.scriptName) || "";
+    scriptBox.appendChild(scriptInput);
+    form.appendChild(scriptBox);
+    const courseBox = document.createElement("div");
+    courseBox.className = "bz-memo-extra" + (isCourse ? " bz-memo-extra-on" : "");
+    const courseInput = document.createElement("input");
+    courseInput.className = "bz-input";
+    courseInput.placeholder = "课程名";
+    courseInput.value = (editing == null ? void 0 : editing.courseName) || "";
+    courseBox.appendChild(courseInput);
+    form.appendChild(courseBox);
+    function tryEditorClipPrefill() {
+      void (async () => {
+        if (isEdit) return;
+        if (contentInput.value.trim()) return;
+        const hit = await readClipUrl();
+        if (!hit) return;
+        if (contentInput.value.trim()) return;
+        contentInput.placeholder = hit.url;
+        if (hit.title) titleInput.placeholder = hit.title;
+        notifyClipPrefill();
+      })();
+    }
+    const sceneField = document.createElement("div");
+    sceneField.className = "bz-field";
+    const sceneLabel2 = document.createElement("span");
+    sceneLabel2.className = "bz-field-label";
+    sceneLabel2.textContent = "场景";
+    sceneField.appendChild(sceneLabel2);
+    const choice = uiChoice({
+      options: scenes.map((s) => ({ value: s, label: s })),
+      value: defaultScene,
+      float: true,
+      // 浮岛 segmented（issue 199 拍板：滑动白卡）
+      label: "场景",
+      onChange: (v) => {
+        titleBox.classList.toggle("bz-memo-extra-on", v === "剪藏");
+        scriptBox.classList.toggle("bz-memo-extra-on", v === "代码");
+        courseBox.classList.toggle("bz-memo-extra-on", v === "公开课");
+        if (v === "剪藏") tryEditorClipPrefill();
+      }
+    });
+    sceneField.appendChild(choice.el);
+    form.appendChild(sceneField);
+    const prioField = document.createElement("div");
+    prioField.className = "bz-field";
+    const prioLabel = document.createElement("span");
+    prioLabel.className = "bz-field-label";
+    prioLabel.textContent = "优先级";
+    prioField.appendChild(prioLabel);
+    const prioChoice = uiChoice({
+      options: [
+        { value: "minor", label: "次要" },
+        { value: "important", label: "重要" }
+      ],
+      value: editing ? editing.priority : tryGetSettings().memoDefaultPriority || "minor",
+      float: true,
+      // 浮岛 segmented（issue 199 拍板）
+      label: "优先级",
+      onChange: () => {
+      }
+    });
+    prioField.appendChild(prioChoice.el);
+    form.appendChild(prioField);
+    const knownScripts = [...new Set(M3.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
+    const knownCourses = [...new Set(M3.items.map((i) => i.courseName).filter((n) => !!n))].sort();
+    function bindSug(input, list, onPick) {
+      uiSuggest({ anchor: input, source: list, max: 5, excludeCurrent: true, onPick });
+    }
+    let courseNotes = [];
+    let pickedCourse = (editing == null ? void 0 : editing.courseName) && editing.coursePath ? { name: editing.courseName, path: editing.coursePath } : null;
+    bindSug(scriptInput, () => knownScripts);
+    bindSug(courseInput, () => knownCourses, (val) => {
+      pickedCourse = courseNotes.find((n) => n.name === val) || null;
+    });
+    void MemoData.getCourseNotes().then((notes) => {
+      courseNotes = notes;
+      const extra = notes.map((n) => n.name);
+      knownCourses.push(...extra.filter((n) => !knownCourses.includes(n)));
+      if (courseBox.classList.contains("bz-memo-extra-on")) courseInput.dispatchEvent(new Event("focus"));
+    });
+    const dueField = document.createElement("div");
+    dueField.className = "bz-field";
+    const dueLabel = document.createElement("span");
+    dueLabel.className = "bz-field-label";
+    dueLabel.textContent = "截止时间（可选）";
+    const dueRow = document.createElement("div");
+    dueRow.className = "bz-memo-due-row";
+    const dueInput = document.createElement("input");
+    dueInput.type = "datetime-local";
+    dueInput.className = "bz-input";
+    if (editing == null ? void 0 : editing.due) dueInput.value = editing.due.replace(" ", "T");
+    const dueClear = uiIconBtnClear();
+    dueClear.style.display = (editing == null ? void 0 : editing.due) ? "inline-flex" : "none";
+    dueClear.addEventListener("click", () => {
+      dueInput.value = "";
+      dueClear.style.display = "none";
+    });
+    dueInput.addEventListener("input", () => {
+      dueClear.style.display = dueInput.value ? "inline-flex" : "none";
+    });
+    dueRow.append(dueInput, dueClear);
+    dueField.append(dueLabel, dueRow);
+    form.appendChild(dueField);
+    const recurField = document.createElement("div");
+    recurField.className = "bz-field";
+    const recurLabelEl = document.createElement("span");
+    recurLabelEl.className = "bz-field-label";
+    recurLabelEl.textContent = "重复";
+    recurField.appendChild(recurLabelEl);
+    const recurChoice = uiChoice({
+      options: [
+        { value: "none", label: "不重复" },
+        { value: "weekly", label: "每周" },
+        { value: "monthly", label: "每月" },
+        { value: "yearly", label: "每年" }
+      ],
+      value: (editing == null ? void 0 : editing.recur) ? editing.recur.kind : "none",
+      float: true,
+      // 浮岛 segmented（与场景/优先级同范式）
+      label: "重复",
+      onChange: () => {
+      }
+    });
+    recurField.appendChild(recurChoice.el);
+    form.appendChild(recurField);
+    const posRow = document.createElement("div");
+    posRow.className = "bz-memo-pos-row";
+    const posState = {
+      notePath: (editing == null ? void 0 : editing.notePath) || ((_a2 = opts == null ? void 0 : opts.presetNote) == null ? void 0 : _a2.path) || null,
+      notePosition: (editing == null ? void 0 : editing.notePosition) || ((_b2 = opts == null ? void 0 : opts.presetNote) == null ? void 0 : _b2.position) || null
+    };
+    const posBtn = uiBtn({ icon: "pin", label: "定位到笔记", chip: true });
+    const posLabel = posBtn.lastElementChild;
+    const setPosBtn = (name, active2) => {
+      posLabel.textContent = name;
+      posBtn.classList.toggle("is-on", active2);
+    };
+    posBtn.addEventListener("click", () => {
+      if (posState.notePath) {
+        posState.notePath = null;
+        posState.notePosition = null;
+        setPosBtn("定位到笔记", false);
+        return;
+      }
+      const info = getCurrentNoteInfo();
+      const pos = getCurrentCursorPosition();
+      if (info && pos) {
+        posState.notePath = info.path;
+        posState.notePosition = { line: pos.line, ch: pos.ch };
+        setPosBtn(info.name, true);
+      } else {
+        notice("无法获取当前位置");
+      }
+    });
+    if (posState.notePath) {
+      const name = stripMdExt(posState.notePath.split("/").pop() || "");
+      setPosBtn(name, true);
+    } else {
+      setPosBtn("定位到笔记", false);
+    }
+    const posHint = document.createElement("span");
+    posHint.className = "bz-memo-pos-hint";
+    posHint.textContent = "绑定当前打开的笔记位置";
+    posRow.append(posBtn, posHint);
+    form.appendChild(posRow);
+    let closeModal = () => {
+    };
+    const modalBox = document.createElement("div");
+    modalBox.className = "bz-memo-editor";
+    const cancelBtn = uiBtn({ label: "取消", onClick: () => closeModal() });
+    const saveBtn = uiBtn({ label: isEdit ? "保存" : "添加", tone: "primary" });
+    const actionsRow = document.createElement("div");
+    actionsRow.className = "bz-memo-form-actions";
+    actionsRow.appendChild(uiBtnRow([cancelBtn, saveBtn]));
+    form.appendChild(actionsRow);
+    modalBox.appendChild(form);
+    saveBtn.addEventListener("click", () => {
+      let content = contentInput.value.trim();
+      if (!content) {
+        const ph = contentInput.placeholder;
+        if (ph && ph !== "输入备忘录内容...") content = ph;
+      }
+      if (!content) {
+        notice("请输入内容");
+        return;
+      }
+      let scene = defaultScene;
+      const sceneBtnOn = choice.el.querySelector(".is-on");
+      if (sceneBtnOn) scene = sceneBtnOn.dataset.value || scene;
+      const prioBtnOn = prioChoice.el.querySelector(".is-on");
+      const priority = prioBtnOn ? prioBtnOn.dataset.value || "minor" : "minor";
+      const recurBtnOn = recurChoice.el.querySelector(".is-on");
+      const recurKind = recurBtnOn ? recurBtnOn.dataset.value || "none" : "none";
+      const recur = recurKind === "weekly" || recurKind === "monthly" || recurKind === "yearly" ? { kind: recurKind } : null;
+      const clClean = clDraft.map((c) => ({ text: c.text.trim(), done: c.done })).filter((c) => c.text);
+      const checklist = clClean.length ? clClean : null;
+      const dueVal = dueInput.value;
+      const due = dueVal ? dueVal.replace("T", " ") : null;
+      let titleVal = titleInput.value.trim();
+      if (!titleVal && scene === "剪藏") {
+        const ph = titleInput.placeholder;
+        if (ph && ph !== "标题（可选）") titleVal = ph;
+      }
+      const scriptName = scene === "代码" ? scriptInput.value.trim() || null : null;
+      let courseName = null;
+      let coursePath = null;
+      if (scene === "公开课") {
+        const cv = courseInput.value.trim();
+        if (cv) {
+          courseName = cv;
+          if (pickedCourse && pickedCourse.name === cv) coursePath = pickedCourse.path;
+          else {
+            const matched = courseNotes.find((n) => n.name.toLowerCase() === cv.toLowerCase());
+            if (matched) coursePath = matched.path;
+          }
+        }
+      }
+      const finalTitle = scene === "剪藏" && titleVal ? titleVal : content;
+      const { url } = extractUrlAndDisplay(content);
+      void (async () => {
+        var _a3;
+        try {
+          if (isEdit && editing) {
+            await MemoData.updateItem(editing.id, {
+              title: finalTitle,
+              scene,
+              priority,
+              due,
+              recur,
+              checklist,
+              notePath: posState.notePath,
+              notePosition: posState.notePosition,
+              scriptName,
+              courseName,
+              coursePath,
+              url: url != null ? url : editing.url
+            });
+            emitDomainEvent("memo", { kind: "edited", old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
+          } else {
+            const it = {
+              id: generateId(),
+              // T5：与旧 memo 同前缀 'item'（同源 memo.json）
+              title: finalTitle,
+              scene,
+              priority,
+              created: (0, import_moment5.default)().format("YYYY-MM-DD HH:mm:ss"),
+              completed: null,
+              due,
+              recur,
+              checklist,
+              notePath: posState.notePath,
+              notePosition: posState.notePosition,
+              scriptName,
+              courseName,
+              coursePath,
+              linkedNote: null,
+              url
+            };
+            await MemoData.addItem(it);
+            emitDomainEvent("memo", { kind: "added", title: finalTitle, scene, priority, due });
+            M3.pinnedNewId = it.id;
+          }
+          closeModal();
+          (_a3 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a3.call(opts);
+          await refresh();
+        } catch (e) {
+          notifySaveError(e, isEdit ? "保存备忘录" : "新建备忘录");
+          console.error(e);
+        }
+      })();
+    });
+    const { close } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass() });
+    closeModal = close;
+    contentInput.focus();
+    if (!isEdit && defaultScene === "剪藏") tryEditorClipPrefill();
+  }
+  function uiIconBtnClear() {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "bz-icon-btn bz-icon-btn--lg";
+    b.title = "清除截止时间";
+    b.appendChild(uiIcon("x"));
+    return b;
+  }
+  function buildSceneActions(scene) {
+    const actions = [
+      { icon: MEMO_ICONS.settings, label: "在设置中编辑", title: "打开设置面板编辑场景列表", onClick: () => openMemoInSettings() }
+    ];
+    if (DEFAULT_SCENARIOS.includes(scene)) return actions;
+    actions.push(
+      { icon: MEMO_ICONS.edit, label: "重命名", title: "重命名场景", onClick: () => openRenameSceneDialog(scene) },
+      { icon: MEMO_ICONS.del, label: "删除场景", title: "删除场景", kind: "danger", onClick: () => void deleteSceneConfirm(scene) }
+    );
+    return actions;
+  }
+  function openMemoInSettings() {
+    const app = M3.appRef;
+    closeMemoPanel();
+    if (!app) return;
+    void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(app, "memo"));
+  }
+  function commitScenarios(next, okMsg) {
+    getSettings().memoScenarios = next.join(",");
+    return saveSettings().then(async () => {
+      MemoData.init(getSettings());
+      notice(okMsg, "success");
+      await refresh();
+    });
+  }
+  function openRenameSceneDialog(scene) {
+    if (DEFAULT_SCENARIOS.includes(scene)) {
+      notice("默认场景不支持重命名");
+      return;
+    }
+    const wrap2 = document.createElement("div");
+    wrap2.className = "bz-memo-addscene";
+    const title = document.createElement("div");
+    title.className = "bz-memo-form-title";
+    title.textContent = "重命名场景";
+    const input = document.createElement("input");
+    input.className = "bz-input";
+    input.value = scene;
+    const count = M3.items.filter((i) => i.scene === scene).length;
+    const hint = document.createElement("div");
+    hint.className = "bz-memo-addscene-hint";
+    hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与备忘录共用）";
+    const saveBtn = uiBtn({ label: "保存", tone: "primary" });
+    const cancelBtn = uiBtn({ label: "取消" });
+    const row = uiBtnRow([cancelBtn, saveBtn]);
+    wrap2.append(title, input, hint, row);
+    const { close } = uiModal({ content: wrap2, maxWidth: 340, className: skinClass() });
+    const doSave2 = () => {
+      const name = input.value.trim();
+      if (!name) {
+        notice("请输入场景名称");
+        return;
+      }
+      if (/[,，]/.test(name)) {
+        notice("场景名不能包含逗号");
+        return;
+      }
+      if (name === scene) {
+        close();
+        return;
+      }
+      const scenes = MemoData.getScenarios();
+      if (scenes.includes(name)) {
+        notice("场景已存在");
+        return;
+      }
+      void (async () => {
+        try {
+          const moved = await MemoData.updateSceneBulk(scene, name);
+          if (moved === 0 && count > 0) throw new Error("场景迁移未生效");
+          await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
+          if (M3.activeScene === scene) M3.activeScene = name;
+          renderAll();
+          close();
+        } catch (e) {
+          notifySaveError(e, "重命名场景");
+          console.error(e);
+        }
+      })();
+    };
+    saveBtn.addEventListener("click", doSave2);
+    cancelBtn.addEventListener("click", () => close());
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doSave2();
+      if (e.key === "Escape") close();
+    });
+    setTimeout(() => {
+      input.focus();
+      input.select();
+    }, 30);
+  }
+  async function deleteSceneConfirm(scene) {
+    if (DEFAULT_SCENARIOS.includes(scene)) {
+      notice("默认场景不支持删除");
+      return;
+    }
+    const scenes = MemoData.getScenarios();
+    const others = scenes.filter((s) => s !== scene);
+    const defSetting = tryGetSettings().memoDefaultScene;
+    const target = defSetting && others.includes(defSetting) ? defSetting : others[0];
+    if (!target) {
+      notice("至少保留一个场景");
+      return;
+    }
+    const count = M3.items.filter((i) => i.scene === scene).length;
+    const ok = await openFlowDialog({
+      title: "删除场景",
+      message: count > 0 ? `确定删除场景「${scene}」吗？
+其中 ${count} 条备忘录将迁入默认场景「${target}」。` : `确定删除场景「${scene}」吗？
+场景将从设置中移除。`,
+      className: skinClass(),
+      // 挂 body 的流程框须显式带皮肤类（issue 291）
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "删除", value: "delete", danger: true, cta: true }
+      ]
+    });
+    if (ok !== "delete") return;
+    try {
+      if (count > 0) await MemoData.updateSceneBulk(scene, target);
+      await commitScenarios(others, `已删除场景「${scene}」`);
+      if (M3.activeScene === scene) M3.activeScene = "全部";
+      renderAll();
+    } catch (e) {
+      notifySaveError(e, "删除场景");
+      console.error(e);
+    }
+  }
+  var import_moment5, SEARCH_DEBOUNCE_MS, searchDebounced, clipTitleHint, panelResizeDetach, sortSelectDetach;
+  var init_ui5 = __esm({
     "src/memo/ui.ts"() {
       import_moment5 = __toESM(require_moment());
       init_notice();
@@ -17831,6 +20085,14 @@ ${countsToText(s.missing)}
       init_due();
       init_render6();
       init_state4();
+      SEARCH_DEBOUNCE_MS = 180;
+      searchDebounced = debounce((v) => {
+        M3.search = v;
+        renderAll();
+      }, SEARCH_DEBOUNCE_MS);
+      clipTitleHint = null;
+      panelResizeDetach = null;
+      sortSelectDetach = null;
     }
   });
 
@@ -17984,7 +20246,7 @@ ${countsToText(s.missing)}
     "src/memo/settings.ts"() {
       init_settings_provider();
       init_data5();
-      init_ui4();
+      init_ui5();
     }
   });
 
@@ -19002,7 +21264,7 @@ ${countsToText(s.missing)}
     ctxOnAdd = (_a2 = opts.onAdd) != null ? _a2 : null;
     ctxYears = [];
     ctxYear = "";
-    if (maskEl) {
+    if (maskEl2) {
       startReport();
       return;
     }
@@ -19024,7 +21286,7 @@ ${countsToText(s.missing)}
     document.body.appendChild(mask);
     topifyZ(mask);
     mountIcons(mask);
-    maskEl = mask;
+    maskEl2 = mask;
     mask.addEventListener("click", (e) => {
       const t = e.target;
       if (e.target === mask) {
@@ -19048,9 +21310,9 @@ ${countsToText(s.missing)}
   }
   function closeBelReport() {
     cancelBelReport();
-    if (maskEl) {
-      maskEl.remove();
-      maskEl = null;
+    if (maskEl2) {
+      maskEl2.remove();
+      maskEl2 = null;
     }
     ctxItems = [];
     ctxYears = [];
@@ -19066,9 +21328,9 @@ ${countsToText(s.missing)}
   }
   function unloadBelReport() {
     cancelBelReport();
-    if (maskEl) {
-      maskEl.remove();
-      maskEl = null;
+    if (maskEl2) {
+      maskEl2.remove();
+      maskEl2 = null;
     }
     ctxItems = [];
     ctxYears = [];
@@ -19085,21 +21347,21 @@ ${countsToText(s.missing)}
     startReport();
   }
   function paintYearNav() {
-    if (!maskEl) return;
-    const label = maskEl.querySelector("[data-belr-year]");
+    if (!maskEl2) return;
+    const label = maskEl2.querySelector("[data-belr-year]");
     if (label) label.textContent = ctxYear || "—";
     const idx = ctxYears.indexOf(ctxYear);
-    const prev = maskEl.querySelector("[data-belr-prev]");
-    const next = maskEl.querySelector("[data-belr-next]");
+    const prev = maskEl2.querySelector("[data-belr-prev]");
+    const next = maskEl2.querySelector("[data-belr-next]");
     if (prev) prev.disabled = idx < 0 || idx >= ctxYears.length - 1;
     if (next) next.disabled = idx < 0 || idx <= 0;
   }
   function startReport() {
-    const body = maskEl == null ? void 0 : maskEl.querySelector("[data-belr-body]");
+    const body = maskEl2 == null ? void 0 : maskEl2.querySelector("[data-belr-body]");
     if (!body) return;
     cancelBelReport();
     const seq = renderSeq;
-    const alive = () => seq === renderSeq && !!(maskEl == null ? void 0 : maskEl.isConnected) && body.isConnected;
+    const alive = () => seq === renderSeq && !!(maskEl2 == null ? void 0 : maskEl2.isConnected) && body.isConnected;
     body.innerHTML = SKELETON_HTML;
     ctxYears = reportYears(ctxItems);
     ctxYear = resolveReportYear(ctxItems, ctxYear);
@@ -19319,7 +21581,7 @@ ${countsToText(s.missing)}
   <div class="bz-belr-comps">${stats.companions.map(line).join("")}</div>
   </div>`;
   }
-  var renderSeq, progressToastSeq, activeProgress, maskEl, ctxItems, ctxUnit, ctxYears, ctxYear, ctxOnAdd, SKELETON_HTML, ERROR_HTML, IDLE_CALLBACK_TIMEOUT_MS;
+  var renderSeq, progressToastSeq, activeProgress, maskEl2, ctxItems, ctxUnit, ctxYears, ctxYear, ctxOnAdd, SKELETON_HTML, ERROR_HTML, IDLE_CALLBACK_TIMEOUT_MS;
   var init_report = __esm({
     "src/belongings/report.ts"() {
       init_utils();
@@ -19333,7 +21595,7 @@ ${countsToText(s.missing)}
       renderSeq = 0;
       progressToastSeq = 0;
       activeProgress = null;
-      maskEl = null;
+      maskEl2 = null;
       ctxItems = [];
       ctxUnit = "cny";
       ctxYears = [];
@@ -19431,7 +21693,11 @@ ${countsToText(s.missing)}
     return `投入 ${moneyShort(totalAssets(items), unit)} · 日均 ${moneyWith(avgDailyCost(items).toFixed(2), unit)}`;
   }
   function emptyHtml(noMatch) {
-    return `<div class="bz-empty">${iconSpan(ICON2.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
+    return emptyHtmlStr(
+      ICON2.empty,
+      noMatch ? "没有符合条件的物品" : "这里还没有物品",
+      noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"
+    );
   }
   function cellHtml(it, idx, unit = "cny") {
     var _a2;
@@ -19502,7 +21768,7 @@ ${countsToText(s.missing)}
     }
     hooks.mountIcons(content);
   }
-  var init_render7 = __esm({
+  var init_render8 = __esm({
     "src/belongings/layouts/poster/render.ts"() {
       init_str();
       init_shared4();
@@ -19510,10 +21776,10 @@ ${countsToText(s.missing)}
   });
 
   // src/belongings/render.ts
-  var init_render8 = __esm({
+  var init_render9 = __esm({
     "src/belongings/render.ts"() {
       init_shared4();
-      init_render7();
+      init_render8();
     }
   });
 
@@ -19695,8 +21961,8 @@ ${countsToText(s.missing)}
   });
 
   // src/belongings/ui.ts
-  var ui_exports3 = {};
-  __export(ui_exports3, {
+  var ui_exports4 = {};
+  __export(ui_exports4, {
     belongingSettingsSchema: () => belongingSettingsSchema,
     cleanupBelongings: () => cleanupBelongings,
     closePanel: () => closePanel,
@@ -19821,15 +22087,13 @@ ${countsToText(s.missing)}
     if (mainEscRegistered) return;
     mainEscRegistered = true;
     escManager.register("bz-bel", {
-      isVisible: () => !!M4.overlay || !!document.querySelector(".bz-bel-form-mask") || !!document.querySelector(".bz-bel-detail-mask") || !!document.querySelector(".bz-bel-report-mask"),
+      isVisible: () => !!M4.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       close: () => {
-        const form = document.querySelector(".bz-bel-form-mask");
-        if (form) {
-          requestCloseBelForm(form);
+        if (document.querySelector(".bz-bel-form")) {
+          requestCloseBelForm();
           return;
         }
-        const detail = document.querySelector(".bz-bel-detail-mask");
-        if (detail) {
+        if (document.querySelector(".bz-bel-detail")) {
           closeBelDetail();
           return;
         }
@@ -19866,7 +22130,7 @@ ${countsToText(s.missing)}
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
     M4.overlay = overlay2;
-    M4.renderFn = () => renderAll();
+    M4.renderFn = () => renderAll2();
     mountIcons(overlay2);
     ensureBelongingsEsc();
     const closeDrops = () => {
@@ -19889,7 +22153,7 @@ ${countsToText(s.missing)}
         const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
         if (opt.closest("[data-bel-yearmenu]")) M4.year = v;
         else M4.sort = v;
-        renderAll();
+        renderAll2();
         return;
       }
       closeDrops();
@@ -19930,27 +22194,24 @@ ${countsToText(s.missing)}
       const segBtn = t.closest(".bz-segmented-btn");
       if (segBtn) {
         M4.sort = segBtn.dataset.k;
-        renderAll();
+        renderAll2();
         return;
       }
       const kpi = t.closest("[data-bel-statclick]");
       if (kpi) {
         const kind = kpi.dataset.belStatclick;
         if (kind === "asset") M4.status = M4.status === "asset" ? null : "asset";
-        renderAll();
+        renderAll2();
         return;
       }
     });
     const bindSearch = (inp) => {
-      let deb;
-      inp.addEventListener("input", () => {
-        clearTimeout(deb);
-        deb = setTimeout(() => {
-          if (!M4.overlay) return;
-          M4.q = inp.value.trim();
-          renderAll();
-        }, SEARCH_DEBOUNCE_MS);
-      });
+      const debounced = debounce(() => {
+        if (!M4.overlay) return;
+        M4.q = inp.value.trim();
+        renderAll2();
+      }, SEARCH_DEBOUNCE_MS2);
+      inp.addEventListener("input", () => debounced());
     };
     bindSearch(overlay2.querySelector("[data-bel-search]"));
     const content = overlay2.querySelector("[data-bel-content]");
@@ -19985,7 +22246,7 @@ ${countsToText(s.missing)}
         return isMobileEnv() && !!((_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]"));
       }
     );
-    renderAll();
+    renderAll2();
     startAutoRefresh();
     observeTheme();
   }
@@ -20073,7 +22334,7 @@ ${countsToText(s.missing)}
     }
     (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
   }
-  function renderAll() {
+  function renderAll2() {
     if (!M4.overlay) return;
     const panel2 = M4.overlay.querySelector(".bz-bel-panel");
     if (!panel2) return;
@@ -20082,7 +22343,7 @@ ${countsToText(s.missing)}
   function applyStatusFilter(k) {
     if (k === "__all") M4.status = null;
     else M4.status = M4.status === k ? null : k;
-    renderAll();
+    renderAll2();
   }
   async function openBelongingsReportView() {
     ensureBelongingsEsc();
@@ -20103,19 +22364,25 @@ ${countsToText(s.missing)}
     } });
   }
   function closeBelDetail() {
-    var _a2;
-    (_a2 = document.querySelector(".bz-bel-detail-mask")) == null ? void 0 : _a2.remove();
+    belDetailClose == null ? void 0 : belDetailClose();
+    belDetailClose = null;
   }
   function openBelDetail(it) {
     var _a2, _b2;
     closeBelDetail();
-    const mask = document.createElement("div");
-    mask.className = "bz-overlay-mask bz-bel-detail-mask";
-    mask.innerHTML = belDetailHtml(it, currencyUnit());
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    mountIcons(mask);
+    const host = document.createElement("div");
+    host.innerHTML = belDetailHtml(it, currencyUnit());
     ensureBelongingsEsc();
+    const { mask, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-bel-detail",
+      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-detail），内容规则照旧
+      onClose: () => {
+        belDetailClose = null;
+      }
+    });
+    belDetailClose = close;
+    mountIcons(mask);
     const acts = mask.querySelector("[data-bd-acts]");
     const drawActs = () => {
       const cur = itemById(it.id);
@@ -20140,9 +22407,6 @@ ${countsToText(s.missing)}
         }
         openBelDetail(now);
       })();
-    });
-    mask.addEventListener("mousedown", (e) => {
-      if (e.target === mask) closeBelDetail();
     });
     (_a2 = mask.querySelector("[data-bd-edit]")) == null ? void 0 : _a2.addEventListener("click", () => {
       const cur = itemById(it.id);
@@ -20305,27 +22569,29 @@ ${countsToText(s.missing)}
   }
   function belFormDirty() {
     if (!_belBaseline) return false;
-    const mask = document.querySelector(".bz-bel-form-mask");
-    if (!mask) return false;
+    const pop = document.querySelector(".bz-bel-form");
+    if (!pop) return false;
     const g = (id) => {
       var _a2, _b2;
-      return (_b2 = (_a2 = mask.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
+      return (_b2 = (_a2 = pop.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
     };
-    return g("#bm-name") !== _belBaseline.name || g("#bm-cat") !== _belBaseline.cat || g("#bm-price") !== _belBaseline.price || g("#bm-date") !== _belBaseline.date || g("#bm-desc") !== _belBaseline.desc || g("#bm-exitdate") !== _belBaseline.exitDate || g("#bm-soldprice") !== _belBaseline.soldPrice || belFormStatusNow(mask) !== _belBaseline.status;
+    return g("#bm-name") !== _belBaseline.name || g("#bm-cat") !== _belBaseline.cat || g("#bm-price") !== _belBaseline.price || g("#bm-date") !== _belBaseline.date || g("#bm-desc") !== _belBaseline.desc || g("#bm-exitdate") !== _belBaseline.exitDate || g("#bm-soldprice") !== _belBaseline.soldPrice || belFormStatusNow(pop) !== _belBaseline.status;
   }
-  function closeBelForm(mask) {
+  function closeBelForm() {
     _belBaseline = null;
     _belFormTargetId = null;
-    unregisterSheetCompanion(mask);
-    mask.remove();
+    if (belFormMask) unregisterSheetCompanion(belFormMask);
+    belFormMask = null;
+    belFormClose == null ? void 0 : belFormClose();
+    belFormClose = null;
   }
-  function requestCloseBelForm(mask) {
-    if (belFormDirty()) confirmDiscard(() => closeBelForm(mask), void 0, "bz-bel-flow-dialog");
-    else closeBelForm(mask);
+  function requestCloseBelForm() {
+    if (belFormDirty()) confirmDiscard(() => closeBelForm(), void 0, "bz-bel-flow-dialog");
+    else closeBelForm();
   }
   function openForm(it) {
     var _a2, _b2, _c, _d, _e;
-    const existing = document.querySelector(".bz-bel-form-mask");
+    const existing = document.querySelector(".bz-bel-form");
     if (existing) {
       const targetId = (_a2 = it == null ? void 0 : it.id) != null ? _a2 : null;
       if (_belFormTargetId === targetId) {
@@ -20346,14 +22612,22 @@ ${countsToText(s.missing)}
       return;
     }
     const init = belFormInit(it);
-    const mask = document.createElement("div");
-    mask.className = "bz-overlay-mask bz-bel-form-mask";
-    mask.innerHTML = belFormHtml(it, currencyUnit());
-    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    mountIcons(mask);
     ensureBelongingsEsc();
+    const host = document.createElement("div");
+    host.innerHTML = belFormHtml(it, currencyUnit());
+    const { mask, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-bel-form",
+      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-form），内容规则照旧
+      requestClose: () => requestCloseBelForm(),
+      onClose: () => {
+        belFormClose = null;
+      }
+    });
+    belFormClose = close;
+    belFormMask = mask;
+    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
+    mountIcons(mask);
     const sheetOpen = !!document.querySelector(".bz-item-sheet-mask");
     if (it && sheetOpen) registerSheetCompanion(mask);
     _belBaseline = {
@@ -20449,10 +22723,7 @@ ${countsToText(s.missing)}
         }
       })();
     });
-    mask.addEventListener("mousedown", (e) => {
-      if (e.target === mask) requestCloseBelForm(mask);
-    });
-    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm(mask));
+    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm());
     saveBtn.addEventListener("click", () => {
       if (saving) return;
       const name = mask.querySelector("#bm-name").value.trim();
@@ -20503,10 +22774,8 @@ ${countsToText(s.missing)}
             const cur = itemById(it.id);
             if (!cur) {
               notice("该物品已被外部变更删除，本次保存未写入", "warning");
-              unregisterSheetCompanion(mask);
               closeItemMenu();
-              _belFormTargetId = null;
-              mask.remove();
+              closeBelForm();
               return;
             }
             const snapshot2 = { ...cur };
@@ -20549,7 +22818,8 @@ ${countsToText(s.missing)}
           _belFormTargetId = null;
           unregisterSheetCompanion(mask);
           closeItemMenu();
-          mask.remove();
+          belFormClose == null ? void 0 : belFormClose();
+          belFormClose = null;
         } catch (e) {
           notice(`保存失败：${(e == null ? void 0 : e.message) || "未知错误"}`, "error");
           saving = false;
@@ -20563,14 +22833,15 @@ ${countsToText(s.missing)}
       return (_a3 = mask.querySelector("#bm-name")) == null ? void 0 : _a3.focus();
     }, 100);
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, mainEscRegistered, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, _belBaseline, _belFormTargetId;
-  var init_ui5 = __esm({
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M4, dropDocClick, DEFAULT_STATUS_VALUES, mainEscRegistered, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var init_ui6 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
       init_z_order();
       init_app();
       init_esc_manager();
       init_mobile();
+      init_utils();
       init_dom();
       init_settings_provider();
       init_flow_dialog();
@@ -20580,10 +22851,10 @@ ${countsToText(s.missing)}
       init_belongings_source();
       init_data6();
       init_report();
-      init_render8();
+      init_render9();
       init_ai2();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
-      SEARCH_DEBOUNCE_MS = 180;
+      SEARCH_DEBOUNCE_MS2 = 180;
       M4 = {
         overlay: null,
         db: null,
@@ -20600,8 +22871,11 @@ ${countsToText(s.missing)}
       selfWritePending = false;
       bodyThemeObserver = null;
       opening = false;
+      belDetailClose = null;
       _belBaseline = null;
       _belFormTargetId = null;
+      belFormClose = null;
+      belFormMask = null;
     }
   });
 
@@ -20615,14 +22889,10 @@ ${countsToText(s.missing)}
     if (!s) return "";
     return s.length > max ? s.slice(0, max) + "…" : s;
   }
-  function localDayKey2(ts = Date.now()) {
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${pad22(d.getMonth() + 1)}-${pad22(d.getDate())}`;
-  }
   function localDatetime(ts = Date.now()) {
     const d = new Date(ts);
-    const hms = `${pad22(d.getHours())}:${pad22(d.getMinutes())}:${pad22(d.getSeconds())}`;
-    return `${localDayKey2(ts)} ${hms}`;
+    const hms = `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+    return `${localDayKey(ts)} ${hms}`;
   }
   function toDatetime(dateStr) {
     try {
@@ -20633,11 +22903,10 @@ ${countsToText(s.missing)}
       return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
     }
   }
-  function pad22(n) {
-    return String(n).padStart(2, "0");
-  }
   var init_constants3 = __esm({
     "src/clipbook/constants.ts"() {
+      init_str();
+      init_utils();
     }
   });
 
@@ -21154,7 +23423,7 @@ ${countsToText(s.missing)}
     return body.replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, "").trim();
   }
   var KEY_LINE_RE, LIST_ITEM_RE, BLOCK_SCALAR_RE;
-  var init_parser = __esm({
+  var init_parser2 = __esm({
     "src/auto-summary/parser.ts"() {
       KEY_LINE_RE = /^([^\s:#-][^:]*):(.*)$/;
       LIST_ITEM_RE = /^[ \t]*-[ \t]+(.*)$/;
@@ -21312,7 +23581,7 @@ ${bodyText.substring(0, 6e3)}`;
           action: {
             label: "查看",
             onClick: () => {
-              Promise.resolve().then(() => (init_ui7(), ui_exports5)).then((m) => m.revealClipArticle(targetFile.path)).catch(() => {
+              Promise.resolve().then(() => (init_ui8(), ui_exports6)).then((m) => m.revealClipArticle(targetFile.path)).catch(() => {
               });
             }
           }
@@ -21328,7 +23597,7 @@ ${bodyText.substring(0, 6e3)}`;
   var attemptSeq, FIELD_DEFS, SUMMARY_LENGTH_RULES;
   var init_processor = __esm({
     "src/auto-summary/processor.ts"() {
-      init_parser();
+      init_parser2();
       init_notice();
       init_ai();
       init_settings_provider();
@@ -21533,53 +23802,56 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
-  // src/core/settings-common.ts
-  function numStrBinding(key, def) {
-    return {
-      get: () => {
-        const raw = tryGetSettings()[key];
-        if (raw === "" || raw === null || raw === void 0) return def;
-        const n = Number(raw);
-        return Number.isFinite(n) && n > 0 ? n : def;
-      },
-      set: (v) => {
-        getSettings()[key] = String(v);
-      },
-      save: () => saveSettings()
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve2, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve2(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+  async function httpGetText(url, opts) {
+    const fetchImpl = opts.fetchImpl || ((u, init) => globalThis.fetch(u, init));
+    try {
+      const resp = await withTimeout(fetchImpl(url, { headers: opts.headers }), opts.timeoutMs, url);
+      if (!resp || !resp.ok) return null;
+      return await resp.text();
+    } catch (e) {
+      return null;
+    }
+  }
+  function requestUrlAsFetch() {
+    return async (url, init) => {
+      const resp = await requestUrl({ url, method: "GET", headers: init == null ? void 0 : init.headers, throw: false });
+      const status = resp.status;
+      return { ok: status >= 200 && status < 300, status, text: () => Promise.resolve(resp.text) };
     };
   }
-  function makeReloadWarnOnce() {
-    let reloadWarned = false;
-    return () => {
-      if (reloadWarned) return;
-      reloadWarned = true;
-      notice(RELOAD_SETTINGS_NOTICE, "info");
-    };
-  }
-  var RELOAD_SETTINGS_NOTICE;
-  var init_settings_common = __esm({
-    "src/core/settings-common.ts"() {
-      init_notice();
-      init_settings_provider();
-      RELOAD_SETTINGS_NOTICE = "设置已保存，重载插件后生效";
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
     }
   });
 
   // src/clipbook/news-fetcher.ts
   function requestUrlHttpGet() {
-    return async (url, headers) => {
-      try {
-        const req = requestUrl({ url, method: "GET", headers: { ...HEADERS, ...headers || {} }, throw: false }).then((resp) => {
-          return resp.status >= 200 && resp.status < 300 ? resp.text : null;
-        });
-        req.catch(() => {
-        });
-        const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), FETCH_TIMEOUT_MS));
-        return await Promise.race([req, timer]);
-      } catch (e) {
-        return null;
-      }
-    };
+    const impl = requestUrlAsFetch();
+    return (url, headers) => httpGetText(url, {
+      timeoutMs: FETCH_TIMEOUT_MS,
+      headers: { ...HEADERS, ...headers || {} },
+      fetchImpl: impl
+    });
   }
   function defaultFetchStore() {
     return {
@@ -21604,11 +23876,6 @@ ${bodyText.substring(0, 6e3)}`;
         await writeNewsDataMerged(intent);
       })
     };
-  }
-  function localDatetime2(ts = Date.now()) {
-    const d = new Date(ts);
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   }
   function htmlToMarkdown(html) {
     let md = html;
@@ -21740,7 +24007,7 @@ ${c.trim()}
     let date = "";
     if (it.pubDate) {
       const d = new Date(it.pubDate);
-      if (!isNaN(d.getTime())) date = localDatetime2(d.getTime());
+      if (!isNaN(d.getTime())) date = localDatetime(d.getTime());
     }
     return { platform: feedName, title, url, author: feedName, date, body };
   }
@@ -21784,7 +24051,7 @@ ${c.trim()}
 ` : "",
       `🔗 观看：[${String(archive.title)}](${url})${archive.duration_text ? `（时长 ${archive.duration_text}）` : ""}`
     ].join("").trim();
-    const date = localDatetime2(pubTs * 1e3);
+    const date = localDatetime(pubTs * 1e3);
     return { platform: "B站", title: String(archive.title), url, author: String(author.name || ""), date, body };
   }
   function extractUpInfo(items) {
@@ -22056,7 +24323,7 @@ ${c.trim()}
       newArticles = newArticles.filter((a) => !rssPrunedSet.has(a.url));
     }
     const rssTitlePatches = rssRes && Object.keys(rssRes.titleUpdates).length > 0 ? rssRes.titleUpdates : void 0;
-    const fetchedAt = localDatetime2(now());
+    const fetchedAt = localDatetime(now());
     for (const a of newArticles) a.fetchedAt = fetchedAt;
     const attempted = [guokrP, zhihuP, biliP, rssP].filter((p) => p !== null).length;
     const allFailed = attempted > 0 && failedSources.length >= attempted;
@@ -22125,6 +24392,7 @@ ${c.trim()}
   var init_news_fetcher = __esm({
     "src/clipbook/news-fetcher.ts"() {
       init_fake_obsidian();
+      init_http();
       init_notice();
       init_news_data();
       init_constants3();
@@ -22164,7 +24432,7 @@ ${c.trim()}
     const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
     const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
     const intervalDesc = () => {
-      const t = box.lastFetchAt > 0 ? localDatetime2(box.lastFetchAt) : "还没有抓取过";
+      const t = box.lastFetchAt > 0 ? localDatetime(box.lastFetchAt) : "还没有抓取过";
       return `打开插件或剪藏本时超过该间隔自动抓取，上次抓取 ${t}`;
     };
     return [
@@ -22409,19 +24677,9 @@ ${c.trim()}
     handle = handleReg;
   }
   async function fetchRssFeedTitle(url) {
-    try {
-      const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), 1e4));
-      const req = requestUrl({ url, method: "GET" }).then((resp) => {
-        if (resp.status < 200 || resp.status >= 300) return null;
-        if (!looksLikeFeedXml(resp.text)) return null;
-        return extractFeedTitleFromXml(resp.text);
-      });
-      req.catch(() => {
-      });
-      return await Promise.race([req, timer]);
-    } catch (e) {
-      return null;
-    }
+    const xml = await httpGetText(url, { timeoutMs: 1e4, fetchImpl: requestUrlAsFetch() });
+    if (!xml || !looksLikeFeedXml(xml)) return null;
+    return extractFeedTitleFromXml(xml);
   }
   function rssManagerSettingsSchema(opts) {
     const box = {
@@ -22564,7 +24822,7 @@ ${c.trim()}
   var upManagerOpen, rssManagerOpen;
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
-      init_fake_obsidian();
+      init_http();
       init_notice();
       init_settings_common();
       init_dom();
@@ -23151,7 +25409,7 @@ ${c.trim()}
     </div>`;
   }
   var ICO;
-  var init_render9 = __esm({
+  var init_render10 = __esm({
     "src/clipbook/render.ts"() {
       init_str();
       init_chart_palette();
@@ -23413,7 +25671,6 @@ ${c.trim()}
   var init_anchor = __esm({
     "src/clipbook/anchor.ts"() {
       init_data7();
-      init_constants3();
     }
   });
 
@@ -23647,9 +25904,9 @@ ${c.trim()}
   }
   function clipTimestampBase(seq) {
     const d = /* @__PURE__ */ new Date();
-    const p23 = (n) => String(n).padStart(2, "0");
-    const day = `${d.getFullYear()}${p23(d.getMonth() + 1)}${p23(d.getDate())}`;
-    const time = `${p23(d.getHours())}${p23(d.getMinutes())}${p23(d.getSeconds())}`;
+    const p22 = (n) => String(n).padStart(2, "0");
+    const day = `${d.getFullYear()}${p22(d.getMonth() + 1)}${p22(d.getDate())}`;
+    const time = `${p22(d.getHours())}${p22(d.getMinutes())}${p22(d.getSeconds())}`;
     return `clip-${day}-${time}-${seq}`;
   }
   function imageNameFromUrl(url, seq, contentType) {
@@ -23991,8 +26248,7 @@ ${c.trim()}
     const h = Math.floor(s / 3600);
     const m = Math.floor(s % 3600 / 60);
     const ss = s % 60;
-    const pad = (n) => String(n).padStart(2, "0");
-    return h > 0 ? `${h}:${pad(m)}:${pad(ss)}` : `${m}:${pad(ss)}`;
+    return h > 0 ? `${h}:${pad2(m)}:${pad2(ss)}` : `${m}:${pad2(ss)}`;
   }
   function timeTextToSec(t) {
     const canon = normalizeLooseTime(t);
@@ -24010,6 +26266,7 @@ ${c.trim()}
       init_storage();
       init_settings_provider();
       init_utils();
+      init_str();
       init_app();
       init_source();
       TIME_RE = /^\d{1,3}:\d{1,2}(:\d{1,2}(\.\d{1,3})?)?$/;
@@ -24718,9 +26975,9 @@ ${c.trim()}
     const root = await rootNode(rootPath, scan);
     nodes.set(root.id, root);
     order.push(root.id);
-    const queue2 = [root.id];
-    while (queue2.length) {
-      const node = nodes.get(queue2.shift());
+    const queue = [root.id];
+    while (queue.length) {
+      const node = nodes.get(queue.shift());
       if (node.kind !== "card" || node.missing) continue;
       const sameNote = await findSameNameNote(node.path, ctx);
       if (sameNote && !nodes.has(sameNote)) {
@@ -24761,7 +27018,7 @@ ${c.trim()}
             edges.push({ from: node.id, to: child.id, suggested: false });
           }
         }
-        if (fresh && child.kind === "card" && !child.missing) queue2.push(child.id);
+        if (fresh && child.kind === "card" && !child.missing) queue.push(child.id);
       }
     }
     const firstIdx = new Map(order.map((id, i) => [id, i]));
@@ -24956,24 +27213,7 @@ ${c.trim()}
     return `"domain": "从以下领域选一个最贴近的：${list.join("、")}；都不贴切可写一个新的中文领域词"`;
   }
   function nowStamp() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve2, reject) => {
-      const timer = setTimeout(() => reject(new Error(`AI 请求超时（${label}，${ms}ms）`)), ms);
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve2(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
+    return localNow();
   }
   async function writeUniqueNote(dir, baseName2, content) {
     const app = getApp();
@@ -25382,6 +27622,8 @@ ${sample}`
   var init_note_gen = __esm({
     "src/knowledge/note-gen.ts"() {
       init_ai();
+      init_str();
+      init_http();
       init_app();
       init_settings_provider();
       init_partial_json();
@@ -25440,14 +27682,13 @@ ${sample}`
     return s.trim();
   }
   function nowTs() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    return localNow();
   }
   var INSTALL_HINT, STEP_RE, RESULT_RE, PROGRESS_RE, INFO_RE, AI_STEP_TEXT, NOTE_STEP_TEXT, BatchRunner;
   var init_processor2 = __esm({
     "src/knowledge/processor.ts"() {
       init_notice();
+      init_str();
       init_domain_bus();
       init_settings_provider();
       init_app();
@@ -26667,7 +28908,6 @@ ${sample}`
     splitAnchors: () => splitAnchors,
     stripFrontmatter: () => stripFrontmatter2,
     suggestKey: () => suggestKey,
-    suggestKindOf: () => suggestKindOf,
     suggestProgressLabel: () => suggestProgressLabel,
     suggestProgressPercent: () => suggestProgressPercent,
     suggestionId: () => suggestionId,
@@ -27625,9 +29865,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
       subpath
     };
   }
-  function suggestKindOf(path, ctx, unit) {
-    return kindOfTarget(path, ctx, unit === "heading" || unit === "paragraph" ? unit : "whole");
-  }
   function mergeSuggestions(tree, run) {
     var _a2;
     const nodes = Array.isArray(tree == null ? void 0 : tree.nodes) ? tree.nodes : [];
@@ -27917,11 +30154,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   }
   function buildShell() {
-    if (state) return state;
+    if (state2) return state2;
     if (typeof document === "undefined") return null;
     const mask = document.createElement("div");
     mask.id = MASK_ID;
-    mask.className = "bz-kb-mask bz-kb-mt-mask";
+    mask.className = "bz-overlay-mask bz-kb-mask bz-kb-mt-mask";
     mask.style.display = "none";
     mask.addEventListener("click", () => closeMountTree());
     const win = document.createElement("div");
@@ -27999,7 +30236,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       timerId: null,
       startedAt: 0
     };
-    state = st;
+    state2 = st;
     bindShellEvents(st);
     return st;
   }
@@ -28183,11 +30420,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
     };
   }
   function mountTreeOpen() {
-    return !!state && state.mask.style.display !== "none";
+    return !!state2 && state2.mask.style.display !== "none";
   }
   function closeMountTree() {
     var _a2;
-    const st = state;
+    const st = state2;
     if (!st) return;
     closeMenu();
     cancelLongPress(st);
@@ -28234,7 +30471,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     await load(st, !!(opts == null ? void 0 : opts.force));
   }
   async function confirmRefresh() {
-    const st = state;
+    const st = state2;
     if (!st || !mountTreeOpen()) return;
     const v = await openFlowDialog({
       title: "重新生成挂载建议",
@@ -28247,11 +30484,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
       ]
     });
     if (v !== "ok") return;
-    if (state !== st || !mountTreeOpen()) return;
+    if (state2 !== st || !mountTreeOpen()) return;
     await reload(true);
   }
   async function reload(force) {
-    const st = state;
+    const st = state2;
     if (!st) return;
     await load(st, force);
   }
@@ -28400,10 +30637,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const chain2 = crumbs.length ? crumbs : rootNode2 ? [rootNode2] : [];
     st.win.querySelector("#bz-kb-mt-crumbs").innerHTML = chain2.map((n, i) => {
       const last = i === chain2.length - 1;
-      const label = escapeHtml(displayTitle(n));
+      const label = escapeHtml2(displayTitle(n));
       const sep = i === 0 ? "" : '<span class="bz-kb-mt-sep">›</span>';
       if (last && !st.selected) return `${sep}<span class="bz-kb-mt-crumb is-cur">${label}</span>`;
-      return `${sep}<button class="bz-kb-mt-crumb bz-touch-target" data-mt-act="crumb" data-path="${escapeHtml(n.path)}" data-id="${escapeHtml(n.id)}" title="以《${label}》为主卡重开">${label}</button>`;
+      return `${sep}<button class="bz-kb-mt-crumb bz-touch-target" data-mt-act="crumb" data-path="${escapeHtml2(n.path)}" data-id="${escapeHtml2(n.id)}" title="以《${label}》为主卡重开">${label}</button>`;
     }).join("");
     const dirEl = st.win.querySelector("#bz-kb-mt-dir");
     dirEl.textContent = st.direction === "upstream" ? "上游 · 谁挂了我" : "下游 · 我挂了谁";
@@ -28416,7 +30653,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     else if (st.run) text = mountStatusText(st.run.status);
     else text = "本卡建议未跑（自动建议已关闭）";
     if (!st.loading && culled > 0) extra = `<span class="bz-kb-mt-kind">· 图大，已按 ${LAYOUT_PARAMS.MAX_NODES} 张封顶</span>`;
-    statusEl2.innerHTML = `<span class="bz-kb-mt-status-t">${escapeHtml(text)}</span>${extra}${!st.loading && ((_c = st.run) == null ? void 0 : _c.status) === "no-index" ? '<button class="bz-kb-mt-btn is-mini" data-mt-act="build-index" title="打开第二大脑重建索引（绝不自动建）">去建索引</button>' : ""}`;
+    statusEl2.innerHTML = `<span class="bz-kb-mt-status-t">${escapeHtml2(text)}</span>${extra}${!st.loading && ((_c = st.run) == null ? void 0 : _c.status) === "no-index" ? '<button class="bz-kb-mt-btn is-mini" data-mt-act="build-index" title="打开第二大脑重建索引（绝不自动建）">去建索引</button>' : ""}`;
     const hint = st.win.querySelector("#bz-kb-mt-hint");
     hint.textContent = isMobileEnv() ? "点卡片血缘高亮 · 长按卡片出菜单 · 双指缩放 · 单指拖拽平移" : "点卡片血缘高亮（再点取消）· 右键菜单 · 拖拽平移 · 滚轮缩放 · 点标题折/展";
   }
@@ -28613,7 +30850,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       return;
     }
     if (node.kind === "image" || node.kind === "video") {
-      bodyEl3.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml(node.path)}</div>`;
+      bodyEl3.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml2(node.path)}</div>`;
       return;
     }
     const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
@@ -28975,14 +31212,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
     applyTransform(st);
   }
   function zoomAtCenter(factor) {
-    const st = state;
+    const st = state2;
     if (!st) return;
     const w = st.canvasEl.clientWidth || CANVAS_FALLBACK_W;
     const h = st.canvasEl.clientHeight || CANVAS_FALLBACK_H;
     zoomAt(st, w / 2, h / 2, factor);
   }
   function fit() {
-    const st = state;
+    const st = state2;
     if (!st) return;
     const cw = st.canvasEl.clientWidth || CANVAS_FALLBACK_W;
     const ch = st.canvasEl.clientHeight || CANVAS_FALLBACK_H;
@@ -28995,7 +31232,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function openNodeMenu(nodeId, x, y) {
     var _a2, _b2, _c, _d, _e;
-    const st = state;
+    const st = state2;
     if (!st || !nodeId) return;
     const node = st.tree.nodes.find((n) => n.id === nodeId);
     if (!node) return;
@@ -29069,7 +31306,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function closeMenu() {
     var _a2;
-    const st = state;
+    const st = state2;
     (_a2 = st == null ? void 0 : st.menu) == null ? void 0 : _a2.remove();
     if (st) st.menu = null;
     if (menuOutsideHandler) {
@@ -29180,7 +31417,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     st.deps.notice("已取消建议：永久不再推荐这条", "success");
     await rebuildTreeOnly(st);
   }
-  var MASK_ID, WIN_ID, ESC_ID, CANVAS_FALLBACK_W, CANVAS_FALLBACK_H, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP, ZOOM_FIT_MAX, FIT_PAD, DRAG_SLOP, LONG_PRESS_MS, LONG_PRESS_SLOP, DOCK_GAP, WIDTH_ROOT, WIDTH_BY_KIND, HEIGHT_BY_KIND, KIND_COLOR, KIND_LABEL, SOURCE_LABEL, state, EMPTY_HINT_BARE, EMPTY_HINT_REFRESH, menuOutsideHandler;
+  var MASK_ID, WIN_ID, ESC_ID, CANVAS_FALLBACK_W, CANVAS_FALLBACK_H, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP, ZOOM_FIT_MAX, FIT_PAD, DRAG_SLOP, LONG_PRESS_MS, LONG_PRESS_SLOP, DOCK_GAP, WIDTH_ROOT, WIDTH_BY_KIND, HEIGHT_BY_KIND, KIND_COLOR, KIND_LABEL, SOURCE_LABEL, state2, EMPTY_HINT_BARE, EMPTY_HINT_REFRESH, menuOutsideHandler;
   var init_mount_canvas = __esm({
     "src/knowledge/mount-canvas.ts"() {
       init_fake_obsidian();
@@ -29252,7 +31489,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         manual: "手动",
         ai: "AI 建议"
       };
-      state = null;
+      state2 = null;
       EMPTY_HINT_BARE = "这张卡还没有挂载——先看 AI 能不能找到关联";
       EMPTY_HINT_REFRESH = "重新生成中——建议回来连同已有的挂载一起显示";
       menuOutsideHandler = null;
@@ -29268,32 +31505,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const m = String(input != null ? input : "").match(BVID_RE);
     return m ? m[0] : null;
   }
-  function withTimeout2(p, ms) {
-    let timer = null;
-    const timeout = new Promise((resolve2) => {
-      timer = setTimeout(() => resolve2(null), ms);
-    });
-    const done = () => {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    };
-    return Promise.race([p, timeout]).then(
-      (v) => {
-        done();
-        return v === null ? null : v;
-      },
-      (e) => {
-        done();
-        throw e;
-      }
-    );
-  }
-  function parseJson(resp) {
-    if (!resp || resp.status < 200 || resp.status >= 300) return null;
+  function parseJsonText(text) {
+    if (!text) return null;
     try {
-      return JSON.parse(resp.text);
+      return JSON.parse(text);
     } catch (e) {
       return null;
     }
@@ -29383,7 +31598,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   async function fetchFromViewApi(bvid) {
     try {
-      const json = parseJson(await withTimeout2(requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: "GET" }), VIEW_TIMEOUT_MS));
+      const json = parseJsonText(await httpGetText(
+        `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`,
+        { timeoutMs: VIEW_TIMEOUT_MS, fetchImpl: httpImpl }
+      ));
       if (!json || json.code !== 0 || !json.data) return null;
       return metaFromVideoData(json.data);
     } catch (e) {
@@ -29392,14 +31610,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   async function fetchFromPage(url) {
     var _a2;
-    let html = "";
-    try {
-      const resp = await withTimeout2(requestUrl({ url, method: "GET", headers: { ...PAGE_HEADERS } }), VIEW_TIMEOUT_MS);
-      if (!resp || resp.status < 200 || resp.status >= 300) return null;
-      html = String((_a2 = resp.text) != null ? _a2 : "");
-    } catch (e) {
-      return null;
-    }
+    const html = String((_a2 = await httpGetText(url, { timeoutMs: VIEW_TIMEOUT_MS, headers: { ...PAGE_HEADERS }, fetchImpl: httpImpl })) != null ? _a2 : "");
     if (!html) return null;
     const state3 = extractInitialState(html);
     const videoData = videoDataFromState(state3);
@@ -29445,9 +31656,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const c = String(cookie != null ? cookie : "").trim();
     if (!c) return false;
     try {
-      const json = parseJson(await withTimeout2(
-        requestUrl({ url: "https://api.bilibili.com/x/web-interface/nav", method: "GET", headers: { Cookie: c } }),
-        NAV_TIMEOUT_MS
+      const json = parseJsonText(await httpGetText(
+        "https://api.bilibili.com/x/web-interface/nav",
+        { timeoutMs: NAV_TIMEOUT_MS, headers: { Cookie: c }, fetchImpl: httpImpl }
       ));
       return !!(json && json.code === 0 && json.data && json.data.isLogin === true);
     } catch (e) {
@@ -29459,9 +31670,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (!c || !bvid || !posInt(cid)) return null;
     try {
       const url = `https://api.bilibili.com/x/player/playurl?bvid=${bvid}&cid=${posInt(cid)}&qn=127&fnval=4048&fourk=1`;
-      const json = parseJson(await withTimeout2(
-        requestUrl({ url, method: "GET", headers: { Cookie: c } }),
-        QUALITY_TIMEOUT_MS
+      const json = parseJsonText(await httpGetText(
+        url,
+        { timeoutMs: QUALITY_TIMEOUT_MS, headers: { Cookie: c }, fetchImpl: httpImpl }
       ));
       const videos = json && json.code === 0 && json.data && json.data.dash ? json.data.dash.video : null;
       if (!Array.isArray(videos)) return null;
@@ -29486,10 +31697,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const qualities = bvid && sel && sel.cid ? await fetchCheckedQualities(bvid, sel.cid, cookie) : null;
     return { meta, qualities };
   }
-  var BVID_RE, BVID_EXACT_RE, BILI_HOST_RE, VIEW_TIMEOUT_MS, QUALITY_TIMEOUT_MS, NAV_TIMEOUT_MS, PAGE_HEADERS;
+  var BVID_RE, BVID_EXACT_RE, BILI_HOST_RE, VIEW_TIMEOUT_MS, QUALITY_TIMEOUT_MS, NAV_TIMEOUT_MS, httpImpl, PAGE_HEADERS;
   var init_video_meta = __esm({
     "src/knowledge/video-meta.ts"() {
-      init_fake_obsidian();
+      init_http();
       init_source();
       BVID_RE = /BV[0-9A-Za-z]{10}/;
       BVID_EXACT_RE = /^BV[0-9A-Za-z]{10}$/;
@@ -29497,6 +31708,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       VIEW_TIMEOUT_MS = 1e4;
       QUALITY_TIMEOUT_MS = 1e4;
       NAV_TIMEOUT_MS = 1e4;
+      httpImpl = requestUrlAsFetch();
       PAGE_HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         Referer: "https://www.bilibili.com/"
@@ -29616,8 +31828,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
   });
 
   // src/knowledge/ui.ts
-  var ui_exports4 = {};
-  __export(ui_exports4, {
+  var ui_exports5 = {};
+  __export(ui_exports5, {
     UIManager: () => UIManager2,
     humanizeError: () => humanizeError,
     knowledgeSettingsSchema: () => knowledgeSettingsSchema,
@@ -29662,7 +31874,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return out;
   }
   function esc3(s) {
-    return escapeHtml(String(s != null ? s : ""));
+    return escapeHtml2(String(s != null ? s : ""));
   }
   function shortNoteName(path) {
     const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
@@ -29735,9 +31947,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return url.length > 28 ? url.slice(0, 28) + "…" : url;
   }
   function dateStamp() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    return localNow();
   }
   function litDirOf(s) {
     return getKnowledgeBoxes(s || {}).lit;
@@ -29929,10 +32139,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
     };
   }
   var IMAGE_ENTRY_MAX, REL_BG_NOTICE_KEY, STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager2;
-  var init_ui6 = __esm({
+  var init_ui7 = __esm({
     "src/knowledge/ui.ts"() {
       init_fake_obsidian();
       init_ai();
+      init_str();
       init_mobile();
       init_settings_provider();
       init_knowledge_boxes();
@@ -33112,6 +35323,130 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   });
 
+  // src/core/file-sync.ts
+  function createFileSync(config) {
+    let initialized7 = false;
+    let _refs = [];
+    let _cancelled = false;
+    let _flushers = [];
+    let queue = Promise.resolve();
+    function enqueue2(task) {
+      queue = queue.then(() => {
+        if (_cancelled) return;
+        return task();
+      }).catch((e) => {
+        console.error(config.logTag, e);
+        notify(config.failNotice, { type: "error", dedupeKey: config.failDedupeKey });
+      });
+    }
+    function debounceDelay() {
+      const s = tryGetSettings();
+      return Number(s && s.DEBOUNCE_DELAY) || 300;
+    }
+    function createBatchFlusher(run) {
+      let pending = [];
+      let timer = null;
+      const flush = () => {
+        timer = null;
+        if (_cancelled) {
+          pending = [];
+          return;
+        }
+        const batch = pending;
+        pending = [];
+        enqueue2(() => run(batch));
+      };
+      const push = (ev) => {
+        if (_cancelled) return;
+        pending.push(ev);
+        if (timer !== null) clearTimeout(timer);
+        timer = setTimeout(flush, debounceDelay());
+      };
+      return Object.assign(push, {
+        cancel() {
+          if (timer !== null) {
+            clearTimeout(timer);
+            timer = null;
+          }
+          pending = [];
+        }
+      });
+    }
+    function inFolders(path, folders) {
+      return folders.some((f) => path.startsWith(f + "/") || path === f);
+    }
+    function createAgent(app) {
+      var _a2;
+      const isMd = (file) => file && file.extension === "md" && inFolders(file.path, config.watchedFolders());
+      const pseudoFile = (path) => ({
+        path,
+        basename: stripMdExt(path.split("/").pop() || ""),
+        extension: "md"
+      });
+      const buildRenameEvent = (_a2 = config.buildRenameEvent) != null ? _a2 : (evt) => evt;
+      const flushRenames = createBatchFlusher(async (batch) => {
+        for (const ev of batch) {
+          await config.commit((data) => config.applyRename(data, ev));
+        }
+      });
+      _flushers.push(flushRenames);
+      _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
+        const file = pseudoFile(evt.newPath);
+        void (async () => {
+          if (!(isMd(file) || await config.referencedBy(evt.oldPath) || await config.referencedBy(evt.newPath))) return;
+          flushRenames(buildRenameEvent(evt, file.basename));
+        })();
+      }));
+      _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
+        const file = pseudoFile(evt.path);
+        void (async () => {
+          if (isMd(file) || await config.referencedBy(evt.path)) {
+            enqueue2(() => config.commit((data) => config.applyDelete(data, evt.path)));
+          }
+          if (config.onMdDeleted) await config.onMdDeleted(app, evt.path);
+        })();
+      }));
+    }
+    return {
+      /** 幂等初始化（main.ts onLayoutReady 调用；ADR-0003 同款幂等） */
+      ensure(app) {
+        if (initialized7) return;
+        initialized7 = true;
+        _cancelled = false;
+        createAgent(app);
+      },
+      /** 卸载清理：置位 _cancelled 使积压任务首行短路并丢弃去抖窗口内未回放的事件，
+       *  退订全部监听（总线退订幂等，重复卸载无双清风险）后重置模块状态。 */
+      unload() {
+        _cancelled = true;
+        for (const f of _flushers) {
+          try {
+            f.cancel();
+          } catch (e) {
+          }
+        }
+        _flushers = [];
+        for (const off of _refs) {
+          try {
+            off();
+          } catch (e) {
+          }
+        }
+        _refs = [];
+        initialized7 = false;
+        queue = Promise.resolve();
+      }
+    };
+  }
+  var init_file_sync = __esm({
+    "src/core/file-sync.ts"() {
+      init_utils();
+      init_notice();
+      init_settings_provider();
+      init_domain_bus();
+    }
+  });
+
   // src/knowledge/file-sync.ts
   function syncRename(tasks, { oldPath, newPath }) {
     let changed = false;
@@ -33141,144 +35476,56 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     return changed;
   }
-  function inFolders(path, folders) {
-    return folders.some((f) => path.startsWith(f + "/") || path === f);
-  }
   function getKnowledgePath() {
     if (KnowledgeData.filePath) return KnowledgeData.filePath;
     return storageFile("knowledge.json", tryGetSettings().storagePath || "CONFIG/STORAGE");
   }
-  async function syncTasks(fn, ...args) {
+  async function syncTasks(apply) {
     const path = getKnowledgePath();
     await enqueueFileTask(path, async () => {
       const tasks = await KnowledgeData.read();
-      if (fn(tasks, ...args)) await KnowledgeData.write(tasks);
+      if (apply(tasks)) await KnowledgeData.write(tasks);
     });
   }
   function getWatchedFolders() {
     return [knowledgeDirOf()];
   }
-  function enqueue(task) {
-    queue = queue.then(() => {
-      if (_cancelled) return;
-      return task();
-    }).catch((e) => {
-      console.error("[knowledge-file-sync]", e);
-      notify("知识盒同步失败，数据可能不一致", { type: "error", dedupeKey: "knowledge-file-sync" });
-    });
-  }
-  function debounceDelay() {
-    const s = tryGetSettings();
-    return Number(s && s.DEBOUNCE_DELAY) || 300;
-  }
-  function createBatchFlusher(run) {
-    let pending = [];
-    let timer = null;
-    const flush = () => {
-      timer = null;
-      if (_cancelled) {
-        pending = [];
-        return;
-      }
-      const batch = pending;
-      pending = [];
-      enqueue(() => run(batch));
-    };
-    const push = (ev) => {
-      if (_cancelled) return;
-      pending.push(ev);
-      if (timer !== null) clearTimeout(timer);
-      timer = setTimeout(flush, debounceDelay());
-    };
-    return Object.assign(push, {
-      cancel() {
-        if (timer !== null) {
-          clearTimeout(timer);
-          timer = null;
-        }
-        pending = [];
-      }
-    });
-  }
-  function createFileSyncAgent(app) {
-    const referencedByTasks = async (path) => {
-      if (!path) return false;
-      try {
-        const tasks = await KnowledgeData.read();
-        return tasks.some((t) => (t == null ? void 0 : t.notePath) === path || (t == null ? void 0 : t.videoPath) === path);
-      } catch (e) {
-        return false;
-      }
-    };
-    const isMd = (file) => file && file.extension === "md" && inFolders(file.path, getWatchedFolders());
-    const pseudoFile = (path) => ({
-      path,
-      basename: stripMdExt(path.split("/").pop() || ""),
-      extension: "md"
-    });
-    const flushRenames = createBatchFlusher(async (batch) => {
-      for (const ev of batch) {
-        await syncTasks(syncRename, ev);
-      }
-    });
-    _flushers.push(flushRenames);
-    _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
-      const file = pseudoFile(evt.newPath);
-      void (async () => {
-        if (!(isMd(file) || await referencedByTasks(evt.oldPath) || await referencedByTasks(evt.newPath))) return;
-        flushRenames({ oldPath: evt.oldPath, newPath: evt.newPath });
-      })();
-    }));
-    _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
-      const file = pseudoFile(evt.path);
-      void (async () => {
-        if (isMd(file) || await referencedByTasks(evt.path)) {
-          enqueue(() => syncTasks(syncDelete, evt.path));
-        }
-        await retireSourcesOnMdDeleted(app, evt.path);
-      })();
-    }));
+  async function referencedByTasks(path) {
+    if (!path) return false;
+    try {
+      const tasks = await KnowledgeData.read();
+      return tasks.some((t) => (t == null ? void 0 : t.notePath) === path || (t == null ? void 0 : t.videoPath) === path);
+    } catch (e) {
+      return false;
+    }
   }
   function ensureFileSync(app) {
-    if (initialized3) return;
-    initialized3 = true;
-    _cancelled = false;
-    createFileSyncAgent(app);
+    agent.ensure(app);
   }
   function unloadFileSync() {
-    _cancelled = true;
-    for (const f of _flushers) {
-      try {
-        f.cancel();
-      } catch (e) {
-      }
-    }
-    _flushers = [];
-    for (const off of _refs) {
-      try {
-        off();
-      } catch (e) {
-      }
-    }
-    _refs = [];
-    initialized3 = false;
-    queue = Promise.resolve();
+    agent.unload();
   }
-  var initialized3, _refs, _cancelled, _flushers, queue;
-  var init_file_sync = __esm({
+  var agent;
+  var init_file_sync2 = __esm({
     "src/knowledge/file-sync.ts"() {
-      init_utils();
-      init_notice();
       init_settings_provider();
-      init_domain_bus();
       init_storage();
+      init_file_sync();
       init_data8();
       init_source_retire();
-      initialized3 = false;
-      _refs = [];
-      _cancelled = false;
-      _flushers = [];
-      queue = Promise.resolve();
+      agent = createFileSync({
+        logTag: "[knowledge-file-sync]",
+        failNotice: "知识盒同步失败，数据可能不一致",
+        failDedupeKey: "knowledge-file-sync",
+        watchedFolders: getWatchedFolders,
+        commit: (apply) => syncTasks(apply),
+        referencedBy: referencedByTasks,
+        applyRename: syncRename,
+        applyDelete: syncDelete,
+        /** source 退役消费者（ADR-0149 决策 2）：卡片 source 可指向任意笔记（不限目录），
+         *  任何被删 md 都过一遍 metadataCache 预筛；已降级卡片天然幂等跳过 */
+        onMdDeleted: (app, path) => retireSourcesOnMdDeleted(app, path)
+      });
     }
   });
 
@@ -33307,11 +35554,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function ensureKnowledge(app) {
     var _a2;
-    if (initialized4) return;
+    if (initialized3) return;
     try {
       KnowledgeData.init({ storagePath: (_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath });
       uiManager = new UIManager2(app);
-      initialized4 = true;
+      initialized3 = true;
     } catch (e) {
       console.error("bz: 文献盒初始化失败（下次打开命令将自动重试）", e);
       uiManager = null;
@@ -33451,9 +35698,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function unloadKnowledge() {
     uiManager == null ? void 0 : uiManager.destroy();
     uiManager = null;
-    initialized4 = false;
+    initialized3 = false;
   }
-  var initialized4, uiManager;
+  var initialized3, uiManager;
   var init_knowledge = __esm({
     "src/knowledge/index.ts"() {
       init_fake_obsidian();
@@ -33461,11 +35708,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_link_now();
       init_notice();
       init_data8();
-      init_ui6();
+      init_ui7();
       init_note_gen();
       init_source_retire();
-      init_file_sync();
-      initialized4 = false;
+      init_file_sync2();
+      initialized3 = false;
       uiManager = null;
     }
   });
@@ -33716,7 +35963,7 @@ ${body}`;
   function markHandledAndBump(raw, action) {
     const key = articleKeyOf(raw);
     const platform = raw.platform || "未知";
-    const today = localDayKey2();
+    const today = localDayKey();
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return NO_BUMP;
@@ -33806,7 +36053,7 @@ ${body}`;
     await enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
-      const today = localDayKey2();
+      const today = localDayKey();
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       let bumped = 0;
       const list = (res.data.articles || []).map((a) => {
@@ -33841,7 +36088,7 @@ ${body}`;
           else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
           const platform = a.platform || "未知";
           s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
-          const day = localDayKey2();
+          const day = localDayKey();
           s.byDate[day] = Math.max(0, (Number(s.byDate[day]) || 0) - 1);
         }
         const restored = { ...a };
@@ -33941,7 +36188,7 @@ ${body}`;
         closeClipbookReport();
       }
     });
-    escHandle2 = escManager.register("bz-clipbook-report", {
+    escHandle3 = escManager.register("bz-clipbook-report", {
       isVisible: () => !!overlayEl && overlayEl.style.display !== "none",
       close: closeClipbookReport
     });
@@ -34017,7 +36264,7 @@ ${body}`;
       if (alive()) body.innerHTML = ERROR_HTML2;
     }
   }
-  var overlayEl, escHandle2, period, logCache, renderSeq2, progressToastSeq2, activeProgress2, YIELD_MS, ERROR_HTML2;
+  var overlayEl, escHandle3, period, logCache, renderSeq2, progressToastSeq2, activeProgress2, YIELD_MS, ERROR_HTML2;
   var init_report_ui = __esm({
     "src/clipbook/report-ui.ts"() {
       init_notice();
@@ -34027,9 +36274,9 @@ ${body}`;
       init_data7();
       init_flow();
       init_report_stats2();
-      init_render9();
+      init_render10();
       overlayEl = null;
-      escHandle2 = null;
+      escHandle3 = null;
       period = "week";
       logCache = null;
       renderSeq2 = 0;
@@ -34044,8 +36291,8 @@ ${body}`;
   });
 
   // src/clipbook/ui.ts
-  var ui_exports5 = {};
-  __export(ui_exports5, {
+  var ui_exports6 = {};
+  __export(ui_exports6, {
     __clipBodyCacheKeysForTests: () => __clipBodyCacheKeysForTests,
     clipbookSettingsSchema: () => clipbookSettingsSchema,
     closePanel: () => closePanel2,
@@ -34072,8 +36319,8 @@ ${body}`;
     panelSplit == null ? void 0 : panelSplit.restore();
     M5.open = true;
     beginSession();
-    if (dirty || !loaded) void loadIfNeeded();
-    else renderAll2();
+    if (dirty || !loaded2) void loadIfNeeded();
+    else renderAll3();
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
@@ -34082,9 +36329,9 @@ ${body}`;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") notice("news.json 损坏，未加载（原文件已保留）", "error");
       dirty = false;
-      loaded = true;
+      loaded2 = true;
       beginSession();
-      renderAll2();
+      renderAll3();
     }).catch((e) => {
       console.error("[剪藏本] 装载失败", e);
       notice("剪藏本数据读取失败", "error");
@@ -34116,7 +36363,7 @@ ${body}`;
   function closePanel2() {
     pauseReadingSession();
     flushReadingSession();
-    panelResizeDetach == null ? void 0 : panelResizeDetach.flush();
+    panelResizeDetach2 == null ? void 0 : panelResizeDetach2.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     M5.open = false;
     M5.mobDetailOpen = false;
@@ -34127,12 +36374,12 @@ ${body}`;
     pauseReadingSession();
     flushReadingSession();
     closeItemMenu();
-    if (escHandle3) {
+    if (escHandle4) {
       try {
-        escHandle3.unregister();
+        escHandle4.unregister();
       } catch (e) {
       }
-      escHandle3 = null;
+      escHandle4 = null;
     }
     document.removeEventListener("selectionchange", onSelectionChanged);
     document.removeEventListener("mousedown", onDocMouseDown, true);
@@ -34147,13 +36394,10 @@ ${body}`;
     }
     selSnap = null;
     imgSnap = null;
-    if (searchDebounceTimer !== null) {
-      clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = null;
-    }
-    if (panelResizeDetach) {
-      panelResizeDetach.detach();
-      panelResizeDetach = null;
+    searchDebounced2.cancel();
+    if (panelResizeDetach2) {
+      panelResizeDetach2.detach();
+      panelResizeDetach2 = null;
     }
     if (panelSplit) {
       panelSplit.detach();
@@ -34167,7 +36411,7 @@ ${body}`;
     loading = false;
     loadPromise = null;
     dirty = false;
-    loaded = false;
+    loaded2 = false;
     if (overlayEl2) overlayEl2.remove();
     overlayEl2 = null;
     readerEl = null;
@@ -34220,15 +36464,7 @@ ${body}`;
       if (!row) return;
       toggleSource(JSON.parse(row.dataset.src || "null"));
     });
-    deskSearchEl.addEventListener("input", () => {
-      if (searchDebounceTimer !== null) clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = setTimeout(() => {
-        searchDebounceTimer = null;
-        setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : "");
-        renderList();
-        renderRail();
-      }, SEARCH_DEBOUNCE_MS2);
-    });
+    deskSearchEl.addEventListener("input", () => searchDebounced2());
     readPaneEl.addEventListener("click", (e) => {
       const t = e.target;
       const ext = t.closest("a[data-clip-ext]");
@@ -34335,7 +36571,7 @@ ${body}`;
     document.addEventListener("mousedown", onDocMouseDown, true);
     overlayEl2.addEventListener("contextmenu", onReaderContextMenu, true);
     escKey = "bz-clipbook";
-    escHandle3 = escManager.register(escKey, {
+    escHandle4 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
         if (M5.mobDetailOpen) {
@@ -34347,7 +36583,7 @@ ${body}`;
     });
     const frameEl = overlayEl2.querySelector(".bz-clip-frame");
     if (!isMobileEnv()) {
-      panelResizeDetach = uiResizable(frameEl, {
+      panelResizeDetach2 = uiResizable(frameEl, {
         minW: PANEL_MIN_W,
         minH: PANEL_MIN_H,
         maxW: PANEL_MAX_W,
@@ -34386,7 +36622,7 @@ ${body}`;
     M5.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
-    renderAll2();
+    renderAll3();
   }
   function toggleSource(src) {
     const same = src && src.kind !== "all" && src.kind === M5.sel.kind && String(src.platform || "") === M5.sel.platform && (src.up ? String(src.up) : null) === M5.sel.up && String(src.site || "") === M5.sel.site;
@@ -34395,7 +36631,7 @@ ${body}`;
   function setSearchKw(kw) {
     searchKw = kw;
   }
-  function renderAll2() {
+  function renderAll3() {
     if (!M5.open) return;
     renderHeadIssue();
     renderRail();
@@ -34413,7 +36649,7 @@ ${body}`;
   function closeMobDetail() {
     M5.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
-    renderAll2();
+    renderAll3();
   }
   function renderHeadIssue() {
     const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
@@ -34987,7 +37223,7 @@ ${body}`;
       M5.cur = null;
     }
     if (advanced && M5.cur) markReadOnOpen(M5.cur);
-    renderAll2();
+    renderAll3();
     if (advanced) {
       resetReadScroll();
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
@@ -35623,8 +37859,8 @@ ${body}`;
       }
     });
   }
-  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle3, loading, dirty, loaded, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
-  var init_ui7 = __esm({
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle4, loading, dirty, loaded2, SEARCH_DEBOUNCE_MS3, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced2, panelResizeDetach2, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var init_ui8 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
       init_app();
@@ -35643,7 +37879,7 @@ ${body}`;
       init_news_source_settings();
       init_md();
       init_store();
-      init_render9();
+      init_render10();
       init_state5();
       init_loader();
       init_news_data();
@@ -35665,18 +37901,22 @@ ${body}`;
       mobSearchbarEl = null;
       deskSearchEl = null;
       escKey = "";
-      escHandle3 = null;
+      escHandle4 = null;
       loading = false;
       dirty = false;
-      loaded = false;
-      SEARCH_DEBOUNCE_MS2 = 180;
+      loaded2 = false;
+      SEARCH_DEBOUNCE_MS3 = 180;
       PANEL_MIN_W = 760;
       PANEL_MIN_H = 520;
       PANEL_MAX_W = 1600;
       PANEL_MAX_H = 1e3;
       clipBodyCache = /* @__PURE__ */ new Map();
-      searchDebounceTimer = null;
-      panelResizeDetach = null;
+      searchDebounced2 = debounce(() => {
+        setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : "");
+        renderList();
+        renderRail();
+      }, SEARCH_DEBOUNCE_MS3);
+      panelResizeDetach2 = null;
       panelSplit = null;
       SPLIT_MIN_MID = 220;
       SPLIT_MIN_READ = 320;
@@ -35728,8 +37968,7 @@ ${body}`;
     if (diff < h) return Math.floor(diff / m) + " 分钟前";
     if (diff < day) return Math.floor(diff / h) + " 小时前";
     if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getMonth() + 1}-${p(d.getDate())}`;
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
   }
   function hueOf(label) {
     const m = {
@@ -35884,7 +38123,7 @@ ${body}`;
     const board = panel2.querySelector("[data-fav-content]");
     if (board) renderBoardInto(board, items, view, hooks);
   }
-  var init_render10 = __esm({
+  var init_render11 = __esm({
     "src/favorites/layouts/board/render.ts"() {
       init_str();
       init_config2();
@@ -35893,10 +38132,10 @@ ${body}`;
   });
 
   // src/favorites/render.ts
-  var init_render11 = __esm({
+  var init_render12 = __esm({
     "src/favorites/render.ts"() {
       init_shared5();
-      init_render10();
+      init_render11();
     }
   });
 
@@ -36012,8 +38251,8 @@ ${body}`;
   });
 
   // src/favorites/ui.ts
-  var ui_exports6 = {};
-  __export(ui_exports6, {
+  var ui_exports7 = {};
+  __export(ui_exports7, {
     closePanel: () => closePanel3,
     favoritesSettingsSchema: () => favoritesSettingsSchema,
     initFavoritesUI: () => initFavoritesUI,
@@ -36103,8 +38342,7 @@ ${body}`;
       isVisible: () => !!M6.overlay || !!document.querySelector(".bz-fav-form"),
       close: () => {
         closeItemMenu();
-        const form = document.querySelector(".bz-fav-form");
-        if (form) requestCloseForm(form);
+        if (document.querySelector(".bz-fav-form")) requestCloseForm();
         else closePanel3();
       }
     });
@@ -36127,7 +38365,7 @@ ${body}`;
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
     M6.overlay = overlay2;
-    M6.renderFn = () => renderAll3();
+    M6.renderFn = () => renderAll4();
     const openFilter = resolveOpenFilter();
     M6.tag = openFilter.tag;
     M6.archived = openFilter.archived;
@@ -36194,7 +38432,7 @@ ${body}`;
     );
     void (async () => {
       await loadItems();
-      renderAll3();
+      renderAll4();
     })();
   }
   function closePanel3() {
@@ -36228,7 +38466,7 @@ ${body}`;
     await loadItems();
     (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
   }
-  function renderAll3() {
+  function renderAll4() {
     if (!M6.overlay) return;
     const panel2 = M6.overlay.querySelector(".bz-fav-panel");
     renderPanelView2(panel2, M6.items, M6, { mountIcons, mobile: isMobileEnv() });
@@ -36244,7 +38482,7 @@ ${body}`;
       M6.archived = false;
       M6.tag = M6.tag === label ? null : label;
     }
-    renderAll3();
+    renderAll4();
   }
   function itemById2(id) {
     return M6.items.find((i) => i.id === id);
@@ -36426,19 +38664,19 @@ ${body}`;
     if (!popup) return false;
     return inputVal(popup, "#fz-title") !== _baseline.title || inputVal(popup, "#fz-url") !== _baseline.url || inputVal(popup, "#fz-desc") !== _baseline.desc || formPinNow(popup) !== _baseline.pinned || formTagsNow(popup) !== _baseline.tags;
   }
-  function requestCloseForm(popup) {
+  function requestCloseForm() {
     if (formDirty()) {
-      confirmDiscard(() => closeForm(popup), void 0, "bz-fav-flow-dialog bz-fav-scope");
+      confirmDiscard(() => closeForm(), void 0, "bz-fav-flow-dialog bz-fav-scope");
     } else {
-      closeForm(popup);
+      closeForm();
     }
   }
-  function closeForm(popup) {
-    var _a2;
+  function closeForm() {
     _baseline = null;
     _saving = false;
     closeItemMenu();
-    ((_a2 = popup.closest(".bz-fav-form-mask")) != null ? _a2 : popup).remove();
+    _formClose == null ? void 0 : _formClose();
+    _formClose = null;
   }
   function inputVal(popup, id) {
     var _a2, _b2;
@@ -36447,16 +38685,22 @@ ${body}`;
   function openForm2(item) {
     var _a2, _b2, _c;
     ensureFavoritesEsc();
-    const existing = document.querySelector(".bz-fav-form");
-    if (existing) closeForm(existing);
+    if (document.querySelector(".bz-fav-form")) closeForm();
     const it = item;
-    const mask = document.createElement("div");
-    mask.className = "bz-fav-form-mask bz-fav-scope";
-    mask.innerHTML = formHtml(it);
-    document.body.appendChild(mask);
-    topifyZ(mask);
+    const host = document.createElement("div");
+    host.innerHTML = formHtml(it);
+    const { mask, popup, close } = uiModal({
+      content: host.firstElementChild,
+      // 弹窗壳只挂 scope（token 域）；bz-fav-form 类由单源 markup 内容根携带（F15 教训：
+      // 壳与内容同挂一类会双计单例守卫），亚麻卡几何锚 .bz-overlay-popup.bz-fav-scope
+      className: "bz-fav-scope",
+      requestClose: () => requestCloseForm(),
+      onClose: () => {
+        _formClose = null;
+      }
+    });
+    _formClose = close;
     mountIcons(mask);
-    const popup = mask.querySelector(".bz-fav-form");
     _baseline = {
       title: (it == null ? void 0 : it.title) || "",
       url: (it == null ? void 0 : it.url) || "",
@@ -36491,10 +38735,7 @@ ${body}`;
     const pinEl = popup.querySelector("#fz-pin");
     pinEl.addEventListener("click", () => pinEl.classList.toggle("bz-fav-on"));
     const errEl = popup.querySelector("#fz-err");
-    mask.addEventListener("mousedown", (e) => {
-      if (e.target === mask) requestCloseForm(popup);
-    });
-    (_a2 = popup.querySelector("[data-fz-cancel]")) == null ? void 0 : _a2.addEventListener("click", () => requestCloseForm(popup));
+    (_a2 = popup.querySelector("[data-fz-cancel]")) == null ? void 0 : _a2.addEventListener("click", () => requestCloseForm());
     (_b2 = popup.querySelector("#fz-ai")) == null ? void 0 : _b2.addEventListener("click", () => void runAiFill(popup, sel, drawPick, errEl));
     (_c = popup.querySelector("#fz-save")) == null ? void 0 : _c.addEventListener("click", () => void saveForm(popup, it, sel, errEl));
     setTimeout(() => {
@@ -36653,7 +38894,7 @@ GitHub 仓库：${ghInfo.title}
         await dm.add(data);
         emitDomainEvent("favorites", { kind: "add", item: data });
       }
-      closeForm(popup);
+      closeForm();
       await reload2();
     } catch (e) {
       notice(`保存失败：${(e == null ? void 0 : e.message) || "未知错误"}`, "error");
@@ -36733,30 +38974,23 @@ GitHub 仓库：${ghInfo.title}
   }
   function openTagEditor(dm, existing, redraw) {
     var _a2, _b2;
-    const mask = document.createElement("div");
-    mask.className = "bz-fav-form-mask bz-fav-scope";
-    const popup = document.createElement("div");
-    popup.className = "bz-fav-form bz-fav-tageditor";
-    popup.innerHTML = `
+    const host = document.createElement("div");
+    host.innerHTML = `
+    <div class="bz-fav-form bz-fav-tageditor">
     <h2>${existing ? "编辑标签" : "添加标签"}</h2>
     <div class="bz-fav-fld"><label>名称</label><input id="fz-tag-name" value="${esc((existing == null ? void 0 : existing.label) || "")}" placeholder="如：装修灵感"></div>
     <div class="bz-fav-fld"><label>图标</label><div class="bz-fav-tageditor-ics" id="fz-tag-ics"></div></div>
     <div class="bz-fav-btns">
       <button type="button" data-fz-tag-cancel>取消</button>
       <button type="button" id="fz-tag-save" class="bz-fav-pri">${existing ? "保存" : "添加"}</button>
+    </div>
     </div>`;
-    mask.appendChild(popup);
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    mountIcons(popup);
-    const escHandle6 = escManager.register("bz-fav-tageditor", {
-      isVisible: () => mask.isConnected,
-      close: () => close()
+    const { popup, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-fav-scope",
+      maxWidth: 380
     });
-    const close = () => {
-      escHandle6.unregister();
-      mask.remove();
-    };
+    mountIcons(popup);
     const input = popup.querySelector("#fz-tag-name");
     let picked = (existing == null ? void 0 : existing.ic) || "tag";
     const icPick = popup.querySelector("#fz-tag-ics");
@@ -36809,9 +39043,6 @@ GitHub 仓库：${ghInfo.title}
     };
     (_a2 = popup.querySelector("[data-fz-tag-cancel]")) == null ? void 0 : _a2.addEventListener("click", () => close());
     (_b2 = popup.querySelector("#fz-tag-save")) == null ? void 0 : _b2.addEventListener("click", () => void doSave2());
-    mask.addEventListener("mousedown", (e) => {
-      if (e.target === mask) close();
-    });
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -36855,8 +39086,8 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M6, mainEscRegistered2, _dm, _ai, _app2, _saving, _baseline, TAG_ICON_CHOICES;
-  var init_ui8 = __esm({
+  var M6, mainEscRegistered2, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var init_ui9 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
       init_z_order();
@@ -36871,7 +39102,7 @@ GitHub 仓库：${ghInfo.title}
       init_settings_provider();
       init_favorites_source();
       init_config2();
-      init_render11();
+      init_render12();
       init_data9();
       M6 = {
         overlay: null,
@@ -36887,6 +39118,7 @@ GitHub 仓库：${ghInfo.title}
       _app2 = null;
       _saving = false;
       _baseline = null;
+      _formClose = null;
       TAG_ICON_CHOICES = [
         "tag",
         "bookmark",
@@ -37055,7 +39287,7 @@ GitHub 仓库：${ghInfo.title}
       init_dom();
       init_flow_dialog();
       init_ui();
-      init_ui9();
+      init_ui10();
       init_notes();
       init_epub_notes();
     }
@@ -37076,7 +39308,7 @@ GitHub 仓库：${ghInfo.title}
     panel2.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
   }
   var SKIN_IDS;
-  var init_ui9 = __esm({
+  var init_ui10 = __esm({
     "src/bookshelf/ui.ts"() {
       init_fake_obsidian();
       init_esc_manager();
@@ -37174,7 +39406,7 @@ GitHub 仓库：${ghInfo.title}
   var init_settings5 = __esm({
     "src/bookshelf/settings.ts"() {
       init_data2();
-      init_ui9();
+      init_ui10();
     }
   });
 
@@ -37205,7 +39437,7 @@ GitHub 仓库：${ghInfo.title}
     };
   }
   var _a, _b, IS_MOBILE;
-  var init_config3 = __esm({
+  var init_config4 = __esm({
     "src/secondbrain/config.ts"() {
       init_settings_provider();
       init_storage();
@@ -37406,7 +39638,7 @@ GitHub 仓库：${ghInfo.title}
     }
     return true;
   }
-  function enqueue2(fn) {
+  function enqueue(fn) {
     const run = chain.then(fn, fn);
     chain = run.then(
       () => void 0,
@@ -37437,12 +39669,12 @@ GitHub 仓库：${ghInfo.title}
     const meta = { ...priMeta, notes };
     let panel2 = primary.panel;
     if (conflict.panel && (!panel2 || conflict.panel.generatedAt > panel2.generatedAt)) panel2 = conflict.panel;
-    const queue2 = [...primary.link.queue];
-    const seen = new Set(queue2.map((q2) => q2.path));
+    const queue = [...primary.link.queue];
+    const seen = new Set(queue.map((q2) => q2.path));
     for (const q2 of conflict.link.queue) {
       if (!seen.has(q2.path)) {
         seen.add(q2.path);
-        queue2.push(q2);
+        queue.push(q2);
       }
     }
     const state3 = { ...primary.link.state };
@@ -37462,7 +39694,7 @@ GitHub 仓库：${ghInfo.title}
     const chatTrimmed = chatHistory.slice(-CHAT_HISTORY_LIMIT);
     let weekly = primary.weekly;
     if (conflict.weekly && (!weekly || conflict.weekly.lastRunAt > weekly.lastRunAt)) weekly = conflict.weekly;
-    return { version: primary.version, meta, panel: panel2, link: { queue: queue2, state: state3 }, chatHistory: chatTrimmed, weekly };
+    return { version: primary.version, meta, panel: panel2, link: { queue, state: state3 }, chatHistory: chatTrimmed, weekly };
   }
   function buildRowOffsets(meta) {
     const map = /* @__PURE__ */ new Map();
@@ -37715,7 +39947,7 @@ GitHub 仓库：${ghInfo.title}
     await adapter.write(getSecondBrainStorePath(), next);
   }
   async function loadStore(app) {
-    return enqueue2(() => readStoreRaw(app));
+    return enqueue(() => readStoreRaw(app));
   }
   var STORE_VERSION, CHAT_HISTORY_LIMIT, LEGACY_FILES, LEGACY_VEC, chain;
   var init_store_file = __esm({
@@ -37777,7 +40009,7 @@ GitHub 仓库：${ghInfo.title}
       init_data10();
       init_tfidf();
       init_chunk();
-      init_config3();
+      init_config4();
       WEEKLY_INTERVAL_MS = 7 * 24 * 3600 * 1e3;
       WEEKLY_MAX_COLLISIONS = 10;
     }
@@ -37893,7 +40125,7 @@ GitHub 仓库：${ghInfo.title}
   function escapeHtml3(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   }
-  function panelShellHtml2() {
+  function panelShellHtml3() {
     return `
   <div class="bz-sb-head">
     <div class="bz-sb-glyph">${ic("brain", 19)}</div>
@@ -37969,12 +40201,12 @@ GitHub 仓库：${ghInfo.title}
       return `<div class="bz-sb-trend-col${i === 11 ? " bz-sb-trend-col--last" : ""}" title="${weeksAgo === 0 ? "本周" : `${weeksAgo} 周前`}：${n} 篇" aria-label="${n} 篇"><div class="bz-sb-trend-bar" style="height:${Math.max(2, Math.round(n / max * 62))}px"></div><span>${label}</span></div>`;
     }).join("");
   }
-  function panelDistHtml(nodes, expanded, colorOf2, maxChunks, depth = 0) {
+  function panelDistHtml(nodes, expanded, colorOf, maxChunks, depth = 0) {
     return nodes.map((node) => {
       const hasChildren = node.children.length > 0;
       const open = expanded.has(node.path);
-      const row = `<div class="bz-sb-dist-row${hasChildren ? " bz-sb-dist-row--dir" : ""}" data-path="${escapeHtml3(node.path)}" style="padding-left:${10 + depth * 16}px"><span class="bz-sb-dist-caret${hasChildren ? "" : " bz-sb-dist-caret--leaf"}">${hasChildren ? ic("chevron-right", 12) : ""}</span><span class="bz-sb-dist-name">${escapeHtml3(node.name)}</span><span class="bz-sb-dist-bar"><span class="bz-sb-dist-fill" style="width:${Math.round(node.chunks / maxChunks * 100)}%;background:${colorOf2(node.name)}"></span></span><span class="bz-sb-dist-num">${node.notes} 篇 / ${node.chunks} 段</span></div>`;
-      const kids = hasChildren && open ? panelDistHtml(node.children, expanded, colorOf2, maxChunks, depth + 1) : "";
+      const row = `<div class="bz-sb-dist-row${hasChildren ? " bz-sb-dist-row--dir" : ""}" data-path="${escapeHtml3(node.path)}" style="padding-left:${10 + depth * 16}px"><span class="bz-sb-dist-caret${hasChildren ? "" : " bz-sb-dist-caret--leaf"}">${hasChildren ? ic("chevron-right", 12) : ""}</span><span class="bz-sb-dist-name">${escapeHtml3(node.name)}</span><span class="bz-sb-dist-bar"><span class="bz-sb-dist-fill" style="width:${Math.round(node.chunks / maxChunks * 100)}%;background:${colorOf(node.name)}"></span></span><span class="bz-sb-dist-num">${node.notes} 篇 / ${node.chunks} 段</span></div>`;
+      const kids = hasChildren && open ? panelDistHtml(node.children, expanded, colorOf, maxChunks, depth + 1) : "";
       return row + kids;
     }).join("");
   }
@@ -38032,7 +40264,7 @@ GitHub 仓库：${ghInfo.title}
     return `<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">正在聚合本周动态…</div>`;
   }
   var SB_PALETTE, SB_FALLBACK, ic;
-  var init_render12 = __esm({
+  var init_render13 = __esm({
     "src/secondbrain/render.ts"() {
       SB_PALETTE = ["#0f766e", "#6366f1", "#d97706", "#db2777", "#0e7490", "#7c3aed", "#b45309", "#be185d"];
       SB_FALLBACK = "#a39b8c";
@@ -38050,7 +40282,7 @@ GitHub 仓库：${ghInfo.title}
   // src/secondbrain/weekly-ui.ts
   function ensureModal(app) {
     var _a2;
-    appRef = app;
+    appRef2 = app;
     if (overlayEl3) {
       overlayEl3.style.display = "flex";
       return;
@@ -38071,8 +40303,8 @@ GitHub 仓库：${ghInfo.title}
     (_a2 = popup.querySelector("#bz-sb-weekly-close")) == null ? void 0 : _a2.addEventListener("click", () => closeWeeklyDigest());
     const body = popup.querySelector("#bz-sb-weekly-body");
     const jump = (path) => {
-      const f = appRef == null ? void 0 : appRef.vault.getAbstractFileByPath(path);
-      if (f) void appRef.workspace.getLeaf(false).openFile(f);
+      const f = appRef2 == null ? void 0 : appRef2.vault.getAbstractFileByPath(path);
+      if (f) void appRef2.workspace.getLeaf(false).openFile(f);
       else notice("文件不存在或已被移动", "info");
     };
     body == null ? void 0 : body.addEventListener("click", (e) => {
@@ -38087,7 +40319,7 @@ GitHub 仓库：${ghInfo.title}
         jump(el.dataset.path);
       }
     });
-    escHandle4 = escManager.register("bz-sb-weekly-modal", {
+    escHandle5 = escManager.register("bz-sb-weekly-modal", {
       isVisible: () => !!overlayEl3 && overlayEl3.style.display === "flex" && overlayEl3.isConnected,
       close: () => closeWeeklyDigest()
     });
@@ -38191,7 +40423,7 @@ GitHub 仓库：${ghInfo.title}
       });
     }
   }
-  var overlayEl3, escHandle4, appRef, renderSeq3;
+  var overlayEl3, escHandle5, appRef2, renderSeq3;
   var init_weekly_ui = __esm({
     "src/secondbrain/weekly-ui.ts"() {
       init_dom();
@@ -38201,11 +40433,11 @@ GitHub 仓库：${ghInfo.title}
       init_utils();
       init_store_file();
       init_weekly();
-      init_render12();
+      init_render13();
       init_ai3();
       overlayEl3 = null;
-      escHandle4 = null;
-      appRef = null;
+      escHandle5 = null;
+      appRef2 = null;
       renderSeq3 = 0;
     }
   });
@@ -38389,13 +40621,13 @@ GitHub 仓库：${ghInfo.title}
       init_utils();
       init_settings_provider();
       init_settings_modal();
-      init_config3();
+      init_config4();
       init_whitelist();
       init_local_ip();
       init_store_file();
       init_weekly_ui();
-      init_render12();
-      init_render12();
+      init_render13();
+      init_render13();
       SecondBrainPanel = class {
         constructor(app, store2, opts) {
           this.mask = null;
@@ -38605,7 +40837,7 @@ GitHub 仓库：${ghInfo.title}
           mask.onclick = () => this.close();
           const popup = document.createElement("div");
           popup.className = "bz-sb-panel bz-panel-mtop";
-          popup.innerHTML = panelShellHtml2();
+          popup.innerHTML = panelShellHtml3();
           (_a2 = popup.querySelector("#bz-sb-panel-close")) == null ? void 0 : _a2.addEventListener("click", () => {
             if (this.expandedDirs.size) {
               this.expandedDirs.clear();
@@ -38752,7 +40984,7 @@ GitHub 仓库：${ghInfo.title}
           const healthy = vecRows === 0 || vecRows === stats.chunkCount;
           const fmtBytes = (n) => n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
           const order = new Map(stats.bySource.map((s, i) => [s.name, i]));
-          const colorOf2 = (name) => sbSourceColor(name, order);
+          const colorOf = (name) => sbSourceColor(name, order);
           const cnt = popup.querySelector("#bz-sb-cnt");
           if (cnt) cnt.textContent = `${fmtCompact(stats.noteCount)} 篇 · ${fmtCompact(stats.chunkCount)} 段已入脑`;
           const pill = popup.querySelector("#bz-sb-pill-txt");
@@ -38784,7 +41016,7 @@ GitHub 仓库：${ghInfo.title}
                 name: r.path.split("/").pop() || r.path,
                 chunks: r.chunks,
                 when: formatRelativeTime(r.mtime),
-                color: colorOf2(topLevelName(r.path))
+                color: colorOf(topLevelName(r.path))
               }))
             );
             const recentN = popup.querySelector("#bz-sb-recent-n");
@@ -38808,9 +41040,9 @@ GitHub 仓库：${ghInfo.title}
           if (!popup || !dist) return;
           const tree = buildSourceTree(this.store.meta);
           const order = new Map(computeStats2(this.store.meta).bySource.map((s, i) => [s.name, i]));
-          const colorOf2 = (name) => sbSourceColor(name, order);
+          const colorOf = (name) => sbSourceColor(name, order);
           const rootMax = Math.max(1, ...tree.map((n) => n.chunks));
-          dist.innerHTML = panelDistHtml(tree, this.expandedDirs, colorOf2, rootMax);
+          dist.innerHTML = panelDistHtml(tree, this.expandedDirs, colorOf, rootMax);
           const distN = popup.querySelector("#bz-sb-dist-n");
           if (distN) distN.textContent = `${tree.length} 个来源`;
           mountIcons(dist);
@@ -38843,880 +41075,6 @@ GitHub 仓库：${ghInfo.title}
           }
         }
       };
-    }
-  });
-
-  // src/pomodoro/render.ts
-  function normalizeSkinTheme(v) {
-    const cur = String(v != null ? v : "");
-    return POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : DEFAULT_POMODORO_SKIN_THEME;
-  }
-  function skinClassOf(v) {
-    return `pomodoro-skin-${normalizeSkinTheme(v)}`;
-  }
-  function panelShellHtml3() {
-    return `
-      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
-        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
-        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
-      </svg>
-      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
-      <div id="pomodoro-phase"></div>
-      <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
-      <div class="pomodoro-controls">
-        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
-        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
-        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
-      </div>
-      <div class="pomodoro-stats">
-        <div id="pomodoro-today"></div>
-        <div class="pomodoro-stat-tabs">
-          <button id="pomodoro-stat-tab-week" class="pomodoro-stat-tab" type="button">近 7 天</button>
-          <button id="pomodoro-stat-tab-month" class="pomodoro-stat-tab" type="button">近 6 月</button>
-        </div>
-        <div id="pomodoro-week" class="pomodoro-week"></div>
-        <div id="pomodoro-months" class="pomodoro-week" hidden></div>
-      </div>`;
-  }
-  function popupShellHtml() {
-    return `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml3()}</div>`;
-  }
-  var POMODORO_SKIN_THEMES, DEFAULT_POMODORO_SKIN_THEME;
-  var init_render13 = __esm({
-    "src/pomodoro/render.ts"() {
-      POMODORO_SKIN_THEMES = [
-        { value: "tomato", label: "番茄" },
-        { value: "ink", label: "墨白" },
-        { value: "grid", label: "方格纸" },
-        { value: "moss", label: "苔原" },
-        { value: "mist", label: "海雾" },
-        { value: "sand", label: "暖沙" },
-        { value: "citrus", label: "蜜柑" },
-        { value: "sakura", label: "樱粉" },
-        { value: "latte", label: "咖啡" },
-        { value: "night", label: "夜航" }
-      ];
-      DEFAULT_POMODORO_SKIN_THEME = "tomato";
-    }
-  });
-
-  // src/pomodoro/sound.ts
-  function playSound(kind, volume = 100) {
-    const w = typeof window !== "undefined" ? window : globalThis;
-    const AC = w.AudioContext || w.webkitAudioContext;
-    if (!AC) return;
-    if (volume <= 0) return;
-    try {
-      const cfg = SOUND_CONFIG[kind];
-      const ctx = new AC();
-      if (ctx.state === "suspended" && typeof ctx.resume === "function") void ctx.resume();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = cfg.freq;
-      const peak = 0.8 * (Math.max(1, Math.min(100, volume)) / 100);
-      const t = ctx.currentTime;
-      gain.gain.setValueAtTime(1e-3, t);
-      gain.gain.exponentialRampToValueAtTime(peak, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(1e-3, t + cfg.dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + cfg.dur + 0.02);
-      const ctxRef = ctx;
-      setTimeout(() => {
-        void ctxRef.close();
-      }, cfg.dur * 1e3 + 300);
-    } catch (e) {
-    }
-  }
-  var SOUND_CONFIG;
-  var init_sound = __esm({
-    "src/pomodoro/sound.ts"() {
-      SOUND_CONFIG = {
-        "focus-start": { freq: 880, dur: 0.25 },
-        "short-break-start": { freq: 523, dur: 0.3 },
-        "long-break-start": { freq: 392, dur: 0.45 },
-        pause: { freq: 440, dur: 0.2 }
-      };
-    }
-  });
-
-  // src/pomodoro/statusbar.ts
-  function syncPomodoroStatusBar(state3, remainSec) {
-    if (!statusEl) return;
-    const running2 = state3.endTime !== null;
-    const paused = !running2 && state3.paused;
-    statusEl.classList.toggle("pomodoro-statusbar-idle", !running2 && !paused);
-    statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
-    statusEl.title = state3.task ? `番茄钟：${state3.task}` : "番茄钟";
-    if (textSpan) {
-      if (running2) {
-        const m = Math.floor(remainSec / 60);
-        const s = remainSec % 60;
-        textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
-      } else if (paused) {
-        textSpan.textContent = "已暂停";
-      } else {
-        textSpan.textContent = "";
-      }
-    }
-  }
-  var statusEl, textSpan;
-  var init_statusbar = __esm({
-    "src/pomodoro/statusbar.ts"() {
-      init_fake_obsidian();
-      init_utils();
-      statusEl = null;
-      textSpan = null;
-    }
-  });
-
-  // src/pomodoro/config.ts
-  var PRESETS, CUSTOM_PRESET_ID;
-  var init_config4 = __esm({
-    "src/pomodoro/config.ts"() {
-      PRESETS = {
-        classic: { label: "经典标准", workMin: 25, shortBreakMin: 5, longBreakMin: 15 },
-        neuro: { label: "神经专注", workMin: 30, shortBreakMin: 7, longBreakMin: 20 },
-        flow: { label: "深度心流", workMin: 50, shortBreakMin: 10, longBreakMin: 25 },
-        creative: { label: "创意激发", workMin: 40, shortBreakMin: 12, longBreakMin: 20 },
-        beginner: { label: "初学入门", workMin: 15, shortBreakMin: 5, longBreakMin: 12 },
-        study: { label: "高效学习", workMin: 30, shortBreakMin: 5, longBreakMin: 15 },
-        sprint: { label: "敏捷冲刺", workMin: 20, shortBreakMin: 4, longBreakMin: 12 },
-        marathon: { label: "马拉松式", workMin: 45, shortBreakMin: 15, longBreakMin: 30 },
-        recovery: { label: "疲劳恢复", workMin: 20, shortBreakMin: 10, longBreakMin: 20 },
-        intense: { label: "高强度", workMin: 50, shortBreakMin: 5, longBreakMin: 15 },
-        balanced: { label: "平衡模式", workMin: 35, shortBreakMin: 7, longBreakMin: 18 }
-      };
-      CUSTOM_PRESET_ID = "custom";
-    }
-  });
-
-  // src/pomodoro/ui.ts
-  var ui_exports7 = {};
-  __export(ui_exports7, {
-    POMODORO_SKIN_THEMES: () => POMODORO_SKIN_THEMES,
-    closePomodoro: () => closePomodoro,
-    ensurePomodoro: () => ensurePomodoro,
-    isFocusing: () => isFocusing,
-    menuPhase: () => menuPhase,
-    openPomodoro: () => openPomodoro,
-    pomodoroSettingsSchema: () => pomodoroSettingsSchema,
-    skipBreak: () => skipBreak,
-    startFocusForTask: () => startFocusForTask,
-    toggleFocus: () => toggleFocus,
-    togglePause: () => togglePause,
-    unloadPomodoro: () => unloadPomodoro
-  });
-  function applySkinClass() {
-    const popup = document.getElementById("pomodoro-popup");
-    if (!popup) return;
-    const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
-    for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
-    popup.classList.add(want);
-  }
-  function durations() {
-    const s = tryGetSettings();
-    const num2 = (v, def) => {
-      const n = parseInt(v != null ? v : "", 10);
-      return Number.isFinite(n) && n > 0 ? n : def;
-    };
-    const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
-    return {
-      workMin: preset ? preset.workMin : num2(s.pomodoroWorkMin, 25),
-      shortBreakMin: preset ? preset.shortBreakMin : num2(s.pomodoroShortBreakMin, 5),
-      longBreakMin: preset ? preset.longBreakMin : num2(s.pomodoroLongBreakMin, 15),
-      longBreakInterval: num2(s.pomodoroLongBreakInterval, 4)
-    };
-  }
-  function options() {
-    const s = tryGetSettings();
-    return {
-      forceFocus: !!s.pomodoroForceFocus,
-      autoCycle: !!s.pomodoroAutoCycle,
-      autoSkipBreak: !!s.pomodoroAutoSkipBreak
-    };
-  }
-  function phaseLabel(phase) {
-    if (phase === "focus") return "专注";
-    if (phase === "short-break") return "短休息";
-    if (phase === "long-break") return "长休息";
-    return "番茄钟";
-  }
-  function phaseText(phase, count, d) {
-    if (phase === "focus") return `专注 ${count + 1}/${d.longBreakInterval}`;
-    return phaseLabel(phase);
-  }
-  function playPhaseSound(phase) {
-    const s = tryGetSettings();
-    if (s.pomodoroSound !== false) {
-      const kind = phase === "focus" ? "focus-start" : phase === "long-break" ? "long-break-start" : "short-break-start";
-      playSound(kind, pomodoroVolume());
-    }
-  }
-  function notifyPhaseStarted(phase) {
-    const d = durations();
-    if (phase === "focus") {
-      notice("专注开始", "success");
-    } else if (phase === "long-break") {
-      notice(`长休息开始：${d.longBreakMin} 分钟`, "success");
-    } else {
-      notice(`休息开始：${d.shortBreakMin} 分钟`, "success");
-    }
-    playPhaseSound(phase);
-  }
-  function notifyPaused() {
-    notice("已暂停专注", "pause");
-    const s = tryGetSettings();
-    if (s.pomodoroSound !== false) playSound("pause", pomodoroVolume());
-  }
-  function breakLabel(phase, d) {
-    return phase === "long-break" ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
-  }
-  function notifyPhaseComplete(e) {
-    const d = durations();
-    playPhaseSound(e.nextPhase);
-    if (e.autoStarted) {
-      if (e.completedPhase === "focus") {
-        notice(e.nextPhase === "focus" ? "专注完成：开始下一轮专注" : `专注完成：${breakLabel(e.nextPhase, d)}`, "success");
-      } else {
-        notice("休息结束：开始专注", "success");
-      }
-      return;
-    }
-    if (e.completedPhase === "focus") {
-      notify(`专注完成：${breakLabel(e.nextPhase, d)}`, {
-        type: "success",
-        duration: 6e3,
-        action: { label: "开始休息", onClick: () => applyAction("start") }
-      });
-    } else {
-      notify("休息结束", {
-        type: "success",
-        duration: 6e3,
-        action: { label: "开始专注", onClick: () => applyAction("start") }
-      });
-    }
-  }
-  function pomodoroVolume() {
-    const v = tryGetSettings().pomodoroVolume;
-    return typeof v === "number" && v >= 0 ? v : 100;
-  }
-  function remainingSec() {
-    if (state2.endTime !== null) return Math.max(0, Math.ceil((state2.endTime - Date.now()) / 1e3));
-    if (state2.phase === "idle" && state2.remaining === 0) return phaseDurationSec("focus", durations());
-    return state2.remaining;
-  }
-  function fmt(sec) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${pad2(m)}:${pad2(s)}`;
-  }
-  function buildStatBars(container, rows) {
-    const max = Math.max(1, ...rows.map((r) => r.count));
-    container.innerHTML = "";
-    for (const r of rows) {
-      const bar = document.createElement("div");
-      bar.className = "pomodoro-stat-day";
-      bar.title = r.title;
-      const col = document.createElement("div");
-      col.className = "pomodoro-stat-col";
-      const h = document.createElement("div");
-      h.className = "pomodoro-stat-bar";
-      h.style.height = `${Math.max(2, Math.round(r.count / max * 40))}px`;
-      col.appendChild(h);
-      const label = document.createElement("span");
-      label.className = "pomodoro-stat-label";
-      label.textContent = r.label;
-      col.appendChild(label);
-      bar.appendChild(col);
-      container.appendChild(bar);
-    }
-  }
-  function renderStats() {
-    const now = Date.now();
-    const todayEl = document.getElementById("pomodoro-today");
-    if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
-    const weekEl = document.getElementById("pomodoro-week");
-    const monthsEl = document.getElementById("pomodoro-months");
-    if (!weekEl || !monthsEl) return;
-    const tabWeek = document.getElementById("pomodoro-stat-tab-week");
-    const tabMonth = document.getElementById("pomodoro-stat-tab-month");
-    tabWeek == null ? void 0 : tabWeek.classList.toggle("pomodoro-stat-tab-on", statMode === "week");
-    tabMonth == null ? void 0 : tabMonth.classList.toggle("pomodoro-stat-tab-on", statMode === "month");
-    if (statMode === "month") {
-      weekEl.hidden = true;
-      monthsEl.hidden = false;
-      const months = lastNMonths(archived, history, now, TREND_MONTHS);
-      const key2 = "m:" + months.map((m) => `${m.month}:${m.count}:${m.minutes}`).join(",") + `#${archived.length}`;
-      if (key2 === lastStatsKey) return;
-      lastStatsKey = key2;
-      buildStatBars(
-        monthsEl,
-        months.map((m) => ({
-          label: `${parseInt(m.month.slice(5, 7), 10)}月`,
-          title: `${m.month}：${m.count} 个 · ${m.minutes} 分钟`,
-          count: m.count
-        }))
-      );
-      return;
-    }
-    weekEl.hidden = false;
-    monthsEl.hidden = true;
-    const days = last7Days(history, now);
-    const key = "w:" + days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
-    if (key === lastStatsKey) return;
-    lastStatsKey = key;
-    buildStatBars(
-      weekEl,
-      days.map((d) => ({
-        label: d.date.slice(8),
-        // DD（完整日期在 title；窄面板不折行）
-        title: `${d.date}：${d.count} 个 · ${d.minutes} 分钟`,
-        count: d.count
-      }))
-    );
-  }
-  function setStatMode(mode) {
-    if (statMode === mode) return;
-    statMode = mode;
-    lastStatsKey = "";
-    render();
-  }
-  function render() {
-    const d = durations();
-    const remain = remainingSec();
-    syncPomodoroStatusBar(state2, remain);
-    if (!maskEl2) return;
-    const total = phaseDurationSec(state2.phase === "idle" ? "focus" : state2.phase, d);
-    const C = 2 * Math.PI * 52;
-    const progress = total > 0 ? 1 - remain / total : 1;
-    const circle = document.getElementById("pomodoro-ring-progress");
-    if (circle) {
-      circle.setAttribute("stroke-dasharray", String(C));
-      circle.setAttribute("stroke-dashoffset", String(C * (1 - progress)));
-    }
-    const phaseEl = document.getElementById("pomodoro-phase");
-    if (phaseEl) {
-      const label = phaseLabel(state2.phase);
-      if (phaseEl.dataset.label !== label) {
-        phaseEl.dataset.label = label;
-        phaseEl.innerHTML = "";
-        if (state2.phase === "idle") {
-          const ic2 = document.createElement("span");
-          ic2.className = "pomodoro-phase-icon";
-          setIcon(ic2, "timer");
-          phaseEl.appendChild(ic2);
-          phaseEl.appendChild(document.createTextNode(label));
-        } else {
-          phaseEl.textContent = label;
-        }
-      }
-    }
-    renderCycleDots(d);
-    renderTaskLine();
-    const timeEl = document.getElementById("pomodoro-time");
-    if (timeEl) timeEl.textContent = fmt(remain);
-    renderStats();
-    updateButtons();
-    applySkinClass();
-  }
-  function renderCycleDots(d) {
-    const cycleEl = document.getElementById("pomodoro-cycle");
-    if (!cycleEl) return;
-    const total = Math.max(1, d.longBreakInterval);
-    if (cycleEl.childElementCount !== total) {
-      cycleEl.innerHTML = "";
-      for (let i = 0; i < total; i++) {
-        const dot = document.createElement("span");
-        dot.className = "pomodoro-cycle-dot";
-        cycleEl.appendChild(dot);
-      }
-    }
-    Array.from(cycleEl.children).forEach((dot, i) => {
-      dot.className = "pomodoro-cycle-dot" + (i < state2.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
-    });
-  }
-  function renderTaskLine() {
-    const taskEl = document.getElementById("pomodoro-task");
-    if (!taskEl) return;
-    if (state2.task) {
-      if (taskEl.textContent !== state2.task) taskEl.textContent = state2.task;
-      taskEl.title = state2.task;
-    } else {
-      taskEl.textContent = "";
-      taskEl.removeAttribute("title");
-    }
-  }
-  function updateButtons() {
-    const startBtn = document.getElementById("pomodoro-btn-start");
-    if (!startBtn) return;
-    const running2 = state2.endTime !== null;
-    startBtn.textContent = running2 ? "暂停" : state2.paused ? "继续" : "开始";
-    const locked = options().forceFocus && state2.phase === "focus" && (running2 || state2.paused);
-    const startLocked = locked && !(state2.paused && state2.pausedBy === "autopause");
-    startBtn.disabled = startLocked;
-    const resetBtn = document.getElementById("pomodoro-btn-reset");
-    const skipBtn = document.getElementById("pomodoro-btn-skip");
-    if (resetBtn) resetBtn.disabled = locked;
-    if (skipBtn) skipBtn.disabled = locked;
-  }
-  function applyAction(action) {
-    const prev = state2;
-    const r = transition(state2, action, Date.now(), durations(), options());
-    state2 = r.state;
-    if (!state2.paused) autoPauseMain = false;
-    if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
-    if (r.event.type === "phase-completed") {
-      if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
-      if (action === "tick") notifyPhaseComplete(r.event);
-      if (r.event.completedPhase === "focus" && r.event.historyEntry) {
-        emitDomainEvent("pomodoro", { kind: "focus-done", minutes: durations().workMin });
-      }
-    }
-    if (action === "pause" && state2.paused) notifyPaused();
-    if (r.event.type !== "none" || action === "pause" && state2.paused || action === "reset" && r.state !== prev) void save();
-    ensureTick();
-    render();
-  }
-  function onTick() {
-    applyAction("tick");
-  }
-  function autoPauseEnabled() {
-    return tryGetSettings().pomodoroAutoPauseOnHide !== false;
-  }
-  function freezeRunning(s, now) {
-    if (s.endTime === null || s.paused) return s;
-    return {
-      ...s,
-      paused: true,
-      pausedBy: "autopause",
-      remaining: Math.max(0, Math.ceil((s.endTime - now) / 1e3)),
-      endTime: null
-    };
-  }
-  function unfreezeRunning(s, now) {
-    if (!s.paused) return s;
-    return { ...s, paused: false, pausedBy: void 0, remaining: 0, endTime: now + s.remaining * 1e3 };
-  }
-  function pauseOnHidden() {
-    if (!autoPauseEnabled()) return;
-    const now = Date.now();
-    if (state2.endTime !== null && !state2.paused) {
-      state2 = freezeRunning(state2, now);
-      autoPauseMain = true;
-    }
-    if (autoPauseMain) {
-      void save();
-      render();
-    }
-  }
-  function resumeOnVisible() {
-    const now = Date.now();
-    if (autoPauseMain && state2.paused) {
-      state2 = unfreezeRunning(state2, now);
-      autoPauseMain = false;
-      void save();
-      render();
-      return;
-    }
-    render();
-  }
-  function registerVisibilityListener() {
-    if (visibilityHandler) return;
-    visibilityHandler = () => {
-      if (document.hidden) pauseOnHidden();
-      else resumeOnVisible();
-    };
-    document.addEventListener("visibilitychange", visibilityHandler);
-  }
-  function unregisterVisibilityListener() {
-    if (visibilityHandler) {
-      document.removeEventListener("visibilitychange", visibilityHandler);
-      visibilityHandler = null;
-    }
-  }
-  function ensureTick() {
-    const needsTick = state2.endTime !== null;
-    if (needsTick && timerId === null) {
-      timerId = window.setInterval(onTick, 1e3);
-    } else if (!needsTick && timerId !== null) {
-      window.clearInterval(timerId);
-      timerId = null;
-    }
-  }
-  async function save() {
-    const t = trimWithArchive(history, archived, Date.now());
-    history = t.history;
-    archived = t.archived;
-    if (dataManager) await dataManager.save({ version: 1, state: state2, history, ...archived.length ? { archived } : {} });
-  }
-  async function initData() {
-    var _a2;
-    const data = await dataManager.load();
-    const r = recover(data.state, data.history, Date.now(), durations(), options());
-    state2 = r.state;
-    const t = trimWithArchive(r.history, data.archived, Date.now());
-    history = t.history;
-    archived = t.archived;
-    const mainChanged = data.state.endTime !== null && r.state.endTime === null;
-    const archivedChanged = JSON.stringify((_a2 = data.archived) != null ? _a2 : []) !== JSON.stringify(archived);
-    if (mainChanged || archivedChanged) await dataManager.save({ version: 1, state: state2, history, ...archived.length ? { archived } : {} });
-    loaded2 = true;
-  }
-  function pomodoroSettingsSchema() {
-    const soundToggle = {
-      get: () => tryGetSettings().pomodoroSound !== false,
-      set: (v) => {
-        getSettings().pomodoroSound = v;
-      },
-      save: () => saveSettings()
-    };
-    const autoPauseToggle = {
-      get: () => tryGetSettings().pomodoroAutoPauseOnHide !== false,
-      set: (v) => {
-        getSettings().pomodoroAutoPauseOnHide = v;
-      },
-      save: () => saveSettings()
-    };
-    return {
-      groups: [
-        {
-          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
-          icon: "palette",
-          name: "外观",
-          rows: [
-            {
-              type: "choiceCards",
-              name: "面板布局",
-              binding: { key: "pomodoroSkin" },
-              options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }],
-              // 配套回落（issue 246 a2 口径：不建 layoutPairMap）：换布局后若当前主题不属于
-              // 新布局的配套（layout 不符）→ 回落第一个适配主题（无适配主题则兜底第一项），
-              // 防「布局换了主题还挂旧皮」
-              onChange: () => {
-                var _a2, _b2;
-                const s = tryGetSettings();
-                const cur = String((_a2 = s.pomodoroSkinTheme) != null ? _a2 : "");
-                const fit2 = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
-                if (!fit2.some((o) => o.value === cur)) {
-                  s.pomodoroSkinTheme = ((_b2 = fit2[0]) != null ? _b2 : SKIN_THEME_OPTIONS[0]).value;
-                  saveSettings();
-                }
-                render();
-              }
-            },
-            // 面板主题：10 套皮（清单单源 = render.ts POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）；
-            // onChange 驱动 render() 重挂皮肤类——设置面板关着弹窗换肤也要即时生效（评审 c1）
-            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: SKIN_THEME_OPTIONS, onChange: () => render() }
-          ]
-        },
-        {
-          icon: "timer",
-          name: "时间方案",
-          rows: [
-            {
-              type: "select",
-              name: "预设方案",
-              desc: "选择现成的工作与休息时长组合",
-              binding: { key: "pomodoroPreset" },
-              options: [
-                ...Object.entries(PRESETS).map(([id, p]) => ({
-                  value: id,
-                  label: `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`
-                })),
-                { value: CUSTOM_PRESET_ID, label: "自定义" }
-              ],
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "工作时长",
-              desc: "自定义方案的工作阶段分钟数",
-              binding: numStrBinding("pomodoroWorkMin", 25),
-              min: 1,
-              max: 120,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "短休息时长",
-              desc: "自定义方案的短休息分钟数",
-              binding: numStrBinding("pomodoroShortBreakMin", 5),
-              min: 1,
-              max: 60,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "长休息时长",
-              desc: "自定义方案的长休息分钟数",
-              binding: numStrBinding("pomodoroLongBreakMin", 15),
-              min: 1,
-              max: 60,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            { type: "number", name: "长休息间隔", desc: "每隔几个专注进入一次长休息", binding: numStrBinding("pomodoroLongBreakInterval", 4), min: 1, max: 20, step: 1, onChange: () => render() }
-          ]
-        },
-        {
-          icon: "sliders-horizontal",
-          name: "行为",
-          rows: [
-            { type: "toggle", name: "强制专注模式", desc: "专注进行中无法暂停跳过或重置", binding: { key: "pomodoroForceFocus" }, onChange: () => render() },
-            { type: "toggle", name: "自动循环", desc: "阶段结束后自动开始下一阶段", binding: { key: "pomodoroAutoCycle" }, onChange: () => render() },
-            { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
-            { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
-            { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
-            // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
-            {
-              type: "slider",
-              name: "提示音音量",
-              desc: "提示音大小，默认最大",
-              binding: { get: () => {
-                var _a2;
-                return (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100;
-              }, set: (v) => {
-                getSettings().pomodoroVolume = v;
-              }, save: () => saveSettings() },
-              min: 0,
-              max: 100,
-              step: 5,
-              actions: [{ text: "试听", onClick: () => {
-                var _a2;
-                return playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
-              } }]
-            },
-            {
-              type: "select",
-              name: "打开时恢复方式",
-              desc: "启动时正在倒计时，选择弹窗提醒或后台继续",
-              binding: { key: "pomodoroRestoreMode" },
-              options: [
-                { value: "background", label: "后台继续" },
-                { value: "popup", label: "自动弹窗" }
-              ]
-            }
-          ]
-        }
-      ]
-    };
-  }
-  function bindEvents() {
-    var _a2, _b2;
-    const startBtn = document.getElementById("pomodoro-btn-start");
-    startBtn.addEventListener("click", () => applyAction(state2.paused ? "resume" : state2.endTime !== null ? "pause" : "start"));
-    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => applyAction("reset"));
-    document.getElementById("pomodoro-btn-skip").addEventListener("click", () => applyAction("skip"));
-    (_a2 = document.getElementById("pomodoro-stat-tab-week")) == null ? void 0 : _a2.addEventListener("click", () => setStatMode("week"));
-    (_b2 = document.getElementById("pomodoro-stat-tab-month")) == null ? void 0 : _b2.addEventListener("click", () => setStatMode("month"));
-    const popup = document.getElementById("pomodoro-popup");
-    popup.addEventListener("keydown", (e) => {
-      if (e.key !== " ") return;
-      const t = e.target;
-      const tag = t.tagName;
-      if (tag === "BUTTON" || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) return;
-      e.preventDefault();
-      applyAction(state2.paused ? "resume" : state2.endTime !== null ? "pause" : "start");
-    });
-  }
-  function buildDOM() {
-    var _a2;
-    const mask = document.createElement("div");
-    mask.id = "pomodoro-mask";
-    mask.innerHTML = popupShellHtml();
-    mask.style.zIndex = String(allocZ());
-    document.body.appendChild(mask);
-    maskEl2 = mask;
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) closePomodoro();
-    });
-    escHandle5 = escManager.register("pomodoro", {
-      isVisible: () => maskEl2 !== null,
-      close: closePomodoro
-    });
-    bindEvents();
-    render();
-    (_a2 = document.getElementById("pomodoro-popup")) == null ? void 0 : _a2.focus();
-  }
-  function initDataOnce() {
-    if (loaded2) return Promise.resolve();
-    initInflight != null ? initInflight : initInflight = initData().finally(() => {
-      initInflight = null;
-    });
-    return initInflight;
-  }
-  async function openPomodoro(app) {
-    appRef2 = app;
-    if (!dataManager) dataManager = new PomodoroDataManager(app);
-    if (!maskEl2) {
-      openInflight != null ? openInflight : openInflight = (async () => {
-        await initDataOnce();
-        buildDOM();
-        ensureTick();
-      })();
-      try {
-        await openInflight;
-      } finally {
-        openInflight = null;
-      }
-    }
-    const popupEl2 = maskEl2 ? maskEl2.querySelector("#pomodoro-popup") : null;
-    popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
-  }
-  async function ensurePomodoro(app) {
-    appRef2 = app;
-    if (!dataManager) dataManager = new PomodoroDataManager(app);
-    registerVisibilityListener();
-    if (!loaded2) {
-      await initDataOnce();
-      if (state2.endTime !== null) {
-        ensureTick();
-        render();
-        const remainSec = Math.max(0, Math.ceil((state2.endTime - Date.now()) / 1e3));
-        notice(`番茄钟继续：${phaseText(state2.phase, state2.cycleFocusCount, durations())}，还剩 ${fmt(remainSec)}`);
-        const s = tryGetSettings();
-        if (s.pomodoroRestoreMode === "popup") void openPomodoro(app);
-      }
-    }
-  }
-  function closePomodoro() {
-    if (maskEl2) {
-      maskEl2.remove();
-      maskEl2 = null;
-    }
-    if (escHandle5) {
-      escHandle5.unregister();
-      escHandle5 = null;
-    }
-  }
-  async function startFocusForTask(app, taskTitle) {
-    await ensurePomodoro(app);
-    const o = options();
-    const d = durations();
-    if (state2.phase === "short-break" || state2.phase === "long-break") {
-      state2 = transition(state2, "skip", Date.now(), d, o).state;
-      void save();
-      render();
-    }
-    if (state2.endTime !== null) {
-      notice("已有专注计时中，本次不重复开始", "warning");
-      return;
-    }
-    if (o.forceFocus && state2.paused && state2.pausedBy !== "autopause") {
-      notice("强制专注模式暂停中，请先在番茄钟恢复", "warning");
-      return;
-    }
-    state2 = { ...state2, task: taskTitle };
-    applyAction("start");
-  }
-  function isFocusing() {
-    return isFocusingPhase(menuPhase());
-  }
-  async function toggleFocus(app) {
-    await ensurePomodoro(app);
-    if (isFocusing()) {
-      const before = state2;
-      applyAction("reset");
-      if (state2 === before) notice("强制专注模式中，请先在番茄钟面板操作", "warning");
-      else notice("专注已停止");
-      return;
-    }
-    if (state2.phase === "short-break" || state2.phase === "long-break") {
-      state2 = transition(state2, "skip", Date.now(), durations(), options()).state;
-      void save();
-      render();
-    }
-    applyAction("start");
-  }
-  function menuPhase() {
-    if (state2.phase === "short-break" || state2.phase === "long-break") return "break";
-    if (state2.phase !== "focus") return "idle";
-    if (state2.paused) return "paused";
-    return state2.endTime !== null ? "focusing" : "idle";
-  }
-  async function skipBreak(app) {
-    await ensurePomodoro(app);
-    if (state2.phase !== "short-break" && state2.phase !== "long-break") {
-      notice("当前不在休息阶段", "warning");
-      return;
-    }
-    state2 = transition(state2, "skip", Date.now(), durations(), options()).state;
-    void save();
-    render();
-    applyAction("start");
-  }
-  async function togglePause(app) {
-    await ensurePomodoro(app);
-    if (state2.endTime === null && !state2.paused) {
-      notice("当前没有进行中的计时", "warning");
-      return;
-    }
-    applyAction(state2.paused ? "resume" : "pause");
-  }
-  function unloadPomodoro() {
-    if (timerId !== null) {
-      window.clearInterval(timerId);
-      timerId = null;
-    }
-    unregisterVisibilityListener();
-    autoPauseMain = false;
-    openInflight = null;
-    initInflight = null;
-    closePomodoro();
-    state2 = createInitialState();
-    history = [];
-    archived = [];
-    statMode = "week";
-    lastStatsKey = "";
-    dataManager = null;
-    appRef2 = null;
-    loaded2 = false;
-  }
-  var dataManager, state2, history, archived, loaded2, statMode, maskEl2, escHandle5, timerId, appRef2, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
-  var init_ui10 = __esm({
-    "src/pomodoro/ui.ts"() {
-      init_fake_obsidian();
-      init_esc_manager();
-      init_z_order();
-      init_settings_provider();
-      init_notice();
-      init_settings_common();
-      init_data3();
-      init_render13();
-      init_render13();
-      init_sound();
-      init_statusbar();
-      init_stats();
-      init_config4();
-      init_state3();
-      init_pomodoro_phase();
-      init_utils();
-      init_domain_bus();
-      dataManager = null;
-      state2 = createInitialState();
-      history = [];
-      archived = [];
-      loaded2 = false;
-      statMode = "week";
-      maskEl2 = null;
-      escHandle5 = null;
-      timerId = null;
-      appRef2 = null;
-      autoPauseMain = false;
-      visibilityHandler = null;
-      lastStatsKey = "";
-      SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
-      initInflight = null;
-      openInflight = null;
     }
   });
 
@@ -40997,21 +42355,6 @@ GitHub 仓库：${ghInfo.title}
       return false;
     }
   }
-  function withTimeout3(promise, timeoutMs, label) {
-    return new Promise((resolve2, reject) => {
-      const timer = setTimeout(() => reject(new Error(label + " 超时")), timeoutMs);
-      promise.then(
-        () => {
-          clearTimeout(timer);
-          resolve2();
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
-  }
   function isEmptySrc(src) {
     return !src || !src.trim();
   }
@@ -41025,7 +42368,7 @@ GitHub 仓库：${ghInfo.title}
       img.src = src;
     });
     try {
-      await withTimeout3(loaded3, PREVIEW_TIMEOUT_MS, "图片加载");
+      await withTimeout(loaded3, PREVIEW_TIMEOUT_MS, "图片加载");
     } catch (e) {
       return null;
     }
@@ -41053,7 +42396,7 @@ GitHub 仓库：${ghInfo.title}
       video.src = src;
     });
     try {
-      await withTimeout3(meta, PREVIEW_TIMEOUT_MS, "视频元数据加载");
+      await withTimeout(meta, PREVIEW_TIMEOUT_MS, "视频元数据加载");
     } catch (e) {
       return null;
     }
@@ -41068,7 +42411,7 @@ GitHub 仓库：${ghInfo.title}
       }
     });
     try {
-      await withTimeout3(seek, PREVIEW_TIMEOUT_MS, "视频抽帧");
+      await withTimeout(seek, PREVIEW_TIMEOUT_MS, "视频抽帧");
     } catch (e) {
       return null;
     }
@@ -41089,24 +42432,26 @@ GitHub 仓库：${ghInfo.title}
   var PREVIEW_TIMEOUT_MS, PREVIEW_OMIT_SIZE, PREVIEW_OMIT_QUALITY;
   var init_preview = __esm({
     "src/encrypt/preview.ts"() {
+      init_http();
       PREVIEW_TIMEOUT_MS = 5e3;
       PREVIEW_OMIT_SIZE = 384;
       PREVIEW_OMIT_QUALITY = 0.5;
     }
   });
 
-  // src/encrypt/vault-data.ts
-  var PASSWORD_VAULT_CHANNEL, ENCRYPT_CHANGED_CHANNEL2, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
-  var init_vault_data = __esm({
-    "src/encrypt/vault-data.ts"() {
+  // src/password-vault/data.ts
+  var PASSWORD_VAULT_CHANNEL, ENCRYPT_CHANGED_CHANNEL2, DEFAULT_PW_CHARSET, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
+  var init_data12 = __esm({
+    "src/password-vault/data.ts"() {
       init_domain_bus();
       PASSWORD_VAULT_CHANNEL = "password-vault:changed";
       ENCRYPT_CHANGED_CHANNEL2 = "encrypt:changed";
+      DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
       VAULT_KIND = "password-vault";
       VAULT_PATH = "CONFIG/.ENCRYPT/passwords";
       VAULT_TITLE = "密码本";
       PasswordVaultDataManager = class {
-        /** 显式注入 SafeManager（ADR-0085：encrypt Controller 装配同一单例，避免域内循环依赖默认取单例） */
+        /** 显式注入 SafeManager（与保险库面板同一单例，共享解锁态/清单） */
         constructor(safe) {
           this.pwData = [];
           /** load 缓存（ticket 43 同款）：清单条目 + 原始密文字节；密文未变不重解密 */
@@ -41344,672 +42689,9 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
-  // src/encrypt/vault-pw-view.ts
-  function relTime3(iso) {
-    if (!iso) return "";
-    return formatRelativeTime(iso);
-  }
-  function dots(p) {
-    return "•".repeat(Math.min((p || "").length, 18));
-  }
-  function avatarHTML(platform, url, cls = "bz-pwv-avatar") {
-    const ch = (platform || "?").slice(0, 1);
-    return `<div class="${cls}" style="background:${colorOf(platform)}" data-pwv-avatar="1" data-url="${escAttr(url || "")}"><span>${escAttr(ch)}</span></div>`;
-  }
-  function hydratePwAvatars(scope) {
-    scope.querySelectorAll("[data-pwv-avatar]").forEach((box) => {
-      if (box.querySelector("img")) return;
-      const url = box.getAttribute("data-url");
-      let domain = null;
-      try {
-        domain = url ? new URL(url).hostname : null;
-      } catch (e) {
-        domain = null;
-      }
-      const img = createSiteIcon(domain, 64);
-      if (img) {
-        img.className = "bz-pwv-favicon";
-        img.removeAttribute("style");
-        img.addEventListener("load", () => {
-          const ch = box.querySelector("span");
-          if (ch) ch.style.display = "none";
-        });
-        box.appendChild(img);
-      }
-    });
-  }
-  var DEFAULT_PW_STATE, PW_REVEAL_AUTO_MASK_MS, DEFAULT_PW_CHARSET, VaultPwView, ICON_PATHS;
-  var init_vault_pw_view = __esm({
-    "src/encrypt/vault-pw-view.ts"() {
-      init_dom();
-      init_item_actions();
-      init_utils();
-      init_str();
-      init_ui();
-      DEFAULT_PW_STATE = {
-        asset: "pw",
-        view: "all",
-        searchKw: "",
-        selPlatform: null,
-        selAccount: null,
-        shownIds: {}
-      };
-      PW_REVEAL_AUTO_MASK_MS = 15e3;
-      DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
-      VaultPwView = class {
-        constructor(dm, host, cfg) {
-          /** 明文自动回遮计时器（按条目 id；手动隐藏/上锁即撤） */
-          this.revealTimers = {};
-          this.dm = dm;
-          this.host = host;
-          this.charset = cfg.charset || DEFAULT_PW_CHARSET;
-          this.length = parseInt(String(cfg.length)) || 16;
-        }
-        /** 收藏星内联图标（替代 ★ 文本符号；图标一律 lucide——ui-kit 手册铁律） */
-        starIc() {
-          return `<span class="star">${this.ic("star", 11)}</span>`;
-        }
-        /** 撤销单条明文自动回遮计时 */
-        clearRevealTimer(id) {
-          if (this.revealTimers[id]) {
-            clearTimeout(this.revealTimers[id]);
-            delete this.revealTimers[id];
-          }
-        }
-        /** 卸载清理：撤销全部明文自动回遮计时器（防插件禁用后定时器仍触发改 UI） */
-        disposeRevealTimers() {
-          for (const id of Object.keys(this.revealTimers)) {
-            clearTimeout(this.revealTimers[id]);
-            delete this.revealTimers[id];
-          }
-        }
-        // ---------- 桌面列表 ----------
-        /**
-         * 渲染密码资产桌面列表（平台聚合行 / 搜索展平行）到 container。
-         * row 点击 → onPick(platform 或 account)；右键/长按 → 统一抽屉（平台/账号动作）。
-         */
-        renderDeskList(container, st, onPick) {
-          var _a2;
-          container.innerHTML = "";
-          const kw = st.searchKw;
-          if (kw) {
-            const hits = this.dm.search(kw).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || "") * -1);
-            if (!hits.length) {
-              container.replaceChildren(this.emptyState("没有匹配的条目", "换个关键词，或清空搜索"));
-              return;
-            }
-            for (const d of hits) {
-              const r = document.createElement("div");
-              r.className = "bz-pwv-row" + (d.id === st.selAccount ? " on" : "");
-              r.innerHTML = `${avatarHTML(d.platform, d.url)}
-          <div class="mid"><div class="pl">${this.esc(d.platform)}${d.fav ? " " + this.starIc() : ""}</div><div class="ac">${this.esc(d.account || "(无账号)")}</div></div>
-          <div class="tm">${relTime3(d.createdAt)}</div>`;
-              r.addEventListener("click", () => onPick(d.platform, d.id));
-              this.attachAccountActions(r, d);
-              container.appendChild(r);
-            }
-            hydratePwAvatars(container);
-            return;
-          }
-          let plats = this.dm.platforms();
-          if (st.view === "fav") plats = plats.filter((p) => this.dm.hasFav(p.platform));
-          if (!plats.length) {
-            if (st.view === "fav") {
-              container.replaceChildren(this.emptyState("还没有收藏", "右键或长按条目可收藏，常用账号一目了然"));
-            } else {
-              container.replaceChildren(this.emptyState("保险库还没有密码", "收录第一条账号开始使用", { add: true }));
-              (_a2 = container.querySelector('[data-pwv="empty-add"]')) == null ? void 0 : _a2.addEventListener("click", () => this.host.openPwEntryDialog());
-            }
-            return;
-          }
-          for (const p of plats) {
-            const r = document.createElement("div");
-            r.className = "bz-pwv-plrow" + (p.platform === st.selPlatform ? " on" : "");
-            const recent2 = p.accounts[0];
-            const favStar = this.dm.hasFav(p.platform) ? " " + this.starIc() : "";
-            const countBadge = p.accounts.length > 1 ? `<span class="bz-pwv-cnt">${p.accounts.length}</span>` : "";
-            r.innerHTML = `${avatarHTML(p.platform, recent2 == null ? void 0 : recent2.url)}
-        <div class="mid"><div class="pl">${this.esc(p.platform)}${favStar}${countBadge}</div><div class="ac">${recent2 ? this.esc(recent2.account || "(无账号)") : ""}</div></div>
-        <div class="tm">${relTime3(recent2 && recent2.createdAt)}</div>`;
-            r.addEventListener("click", () => onPick(p.platform, null));
-            this.attachPlatformActions(r, p.platform);
-            container.appendChild(r);
-          }
-          hydratePwAvatars(container);
-        }
-        /** 渲染密码资产桌面详情区（平台账号卡流 / 搜索态单卡） */
-        renderDeskDetail(container, st) {
-          var _a2, _b2;
-          container.innerHTML = "";
-          const kw = st.searchKw;
-          let d;
-          if (kw) {
-            d = this.dm.pwData.find((x) => x.id === st.selAccount);
-            if (!d) {
-              container.replaceChildren(this.emptyState("选择一条结果", "点击左侧结果查看详情"));
-              return;
-            }
-          } else if (st.selPlatform) {
-            const accs = this.dm.accountsOf(st.selPlatform);
-            const filtered2 = st.view === "fav" ? accs.filter((x) => x.fav) : accs;
-            const first = accs[0];
-            const favStar = this.dm.hasFav(st.selPlatform) ? " " + this.starIc() : "";
-            container.innerHTML = `<div class="bz-pwv-dhead">
-        <div class="av big">${avatarHTML(st.selPlatform, first == null ? void 0 : first.url, "bz-pwv-avatar big")}</div>
-        <div class="ttl"><h2>${this.esc(st.selPlatform)}${favStar}</h2>
-          ${first && first.url ? `<a class="url" href="${this.esc(first.url)}" target="_blank" rel="noopener">${this.esc(first.url)} ↗</a>` : '<div class="url faint">无链接</div>'}</div>
-        <div class="acts">
-          <button class="bz-pwv-ic" data-pwv="plat-edit" title="编辑平台信息">${this.ic("pencil")}</button>
-        </div>
-      </div>
-      <div class="bz-pwv-accthead">
-        <div class="t">${filtered2.length} 个账号</div>
-        <button class="bz-pwv-addacct" data-pwv="plat-add">${this.ic("plus", 12)} 在该平台新增账号</button>
-      </div>
-      <div class="bz-pwv-accts"></div>`;
-            const acctsEl = container.querySelector(".bz-pwv-accts");
-            if (!filtered2.length) {
-              acctsEl.replaceChildren(this.emptyState("该平台暂无账号", "点上方「在该平台新增账号」录入"));
-            } else {
-              for (const x of filtered2) acctsEl.appendChild(this.buildAccountCard(x, st));
-            }
-            (_a2 = container.querySelector('[data-pwv="plat-edit"]')) == null ? void 0 : _a2.addEventListener("click", () => this.host.openPwPlatformEdit(st.selPlatform));
-            (_b2 = container.querySelector('[data-pwv="plat-add"]')) == null ? void 0 : _b2.addEventListener(
-              "click",
-              () => this.host.openPwEntryDialog(null, { platform: st.selPlatform || "", url: (first == null ? void 0 : first.url) || "" })
-            );
-            return;
-          } else {
-            container.replaceChildren(this.emptyState("选择一个平台", "左侧选择平台后，这里显示其全部账号", { icon: "key" }));
-            return;
-          }
-          container.appendChild(this.buildAccountCard(d, st, true));
-        }
-        /** 单张账号卡（详情区复用）：复制账号常驻 + 密码行（显隐/复制）+ 备注 + 创建时间 */
-        buildAccountCard(d, st, withHead = false) {
-          const card = document.createElement("div");
-          card.className = "bz-pwv-acctcard";
-          const shown = !!st.shownIds[d.id];
-          const accMeta = withHead ? `${this.esc(d.platform)}${d.fav ? " " + this.starIc() : ""}` : `${this.esc(d.account || "(无账号)")}${d.fav ? " " + this.starIc() : ""}`;
-          card.innerHTML = `<div class="accrow">
-      <div class="name">${accMeta}</div>
-      <button class="copyac bz-touch-target--lg" data-pwv="copy-ac">${this.ic("copy")} 复制账号</button>
-    </div>
-    <div class="pwrow">
-      <div class="pw ${shown ? "" : "mask"}">${shown ? this.esc(d.password) : dots(d.password)}</div>
-      <button class="mini" data-pwv="eye" title="${shown ? "隐藏密码" : "显示密码"}">${shown ? this.ic("eye-off") : this.ic("eye")}</button>
-      <button class="mini" data-pwv="copy-pw" title="复制密码">${this.ic("copy")}</button>
-    </div>
-    ${d.note ? `<div class="note">${this.esc(d.note)}</div>` : ""}
-    <div class="meta">创建于 ${this.esc(new Date(d.createdAt).toLocaleDateString("zh-CN"))}${d.url ? ' · <a href="' + this.esc(d.url) + '" target="_blank" rel="noopener">' + this.esc(d.url.replace("https://", "")) + " ↗</a>" : ""}</div>`;
-          card.querySelectorAll("[data-pwv]").forEach(
-            (b) => b.addEventListener("click", (e) => {
-              e.stopPropagation();
-              this.dispatchAccountAction(d, b.dataset.pwv, st);
-            })
-          );
-          this.attachAccountActions(card, d);
-          return card;
-        }
-        /** 账号动作分发（卡片按钮 + 抽屉共用） */
-        dispatchAccountAction(d, act, st) {
-          var _a2, _b2;
-          const t = (m, err = false) => this.host.toast(m, err);
-          if (act === "copy-ac") {
-            void this.host.copySensitive(d.account || "").then((ok) => ok ? t("账号已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true), () => t("复制失败，请手动复制", true));
-          } else if (act === "copy-pw") {
-            void this.host.copySensitive(d.password || "").then((ok) => ok ? t("密码已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true), () => t("复制失败，请手动复制", true));
-          } else if (act === "eye") {
-            const showing = !st.shownIds[d.id];
-            st.shownIds[d.id] = showing;
-            if (showing) {
-              this.clearRevealTimer(d.id);
-              this.revealTimers[d.id] = setTimeout(() => {
-                var _a3, _b3;
-                delete this.revealTimers[d.id];
-                if (st.shownIds[d.id]) {
-                  delete st.shownIds[d.id];
-                  (_b3 = (_a3 = this.host).onPwChanged) == null ? void 0 : _b3.call(_a3);
-                }
-              }, PW_REVEAL_AUTO_MASK_MS);
-            } else {
-              this.clearRevealTimer(d.id);
-            }
-            (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-          } else if (act === "edit") {
-            this.host.openPwEntryDialog(d);
-          } else if (act === "fav") {
-            void this.dm.toggleFav(d.id).then(() => {
-              var _a3, _b3;
-              return (_b3 = (_a3 = this.host).onPwChanged) == null ? void 0 : _b3.call(_a3);
-            }).catch((e) => this.failToast(e));
-          } else if (act === "del") {
-            this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", true, () => {
-              void this.dm.deleteItem(d.id).then(() => {
-                var _a3, _b3;
-                if (st.selAccount === d.id) st.selAccount = null;
-                (_b3 = (_a3 = this.host).onPwChanged) == null ? void 0 : _b3.call(_a3);
-                t(`已删除账号「${d.account}」`);
-              }).catch((e) => this.failToast(e));
-            });
-          }
-        }
-        /** E2：写动作失败统一提示 + 重渲染（数据层已回滚内存，按真实状态收敛） */
-        failToast(e) {
-          var _a2, _b2;
-          this.host.toast(`保存失败：${(e == null ? void 0 : e.message) || e}`, true);
-          (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-        }
-        /** 账号动作集（行卡右键/长按与移动账号详情页 ⋮ 共用） */
-        accountActions(d) {
-          return [
-            {
-              icon: "copy",
-              label: "复制账号",
-              onClick: () => void this.host.copySensitive(d.account || "").then((ok) => this.host.toast(ok ? "账号已复制（60 秒后自动清空）" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-            },
-            {
-              icon: "key",
-              label: "复制密码",
-              onClick: () => void this.host.copySensitive(d.password || "").then((ok) => this.host.toast(ok ? "密码已复制（60 秒后自动清空）" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-            },
-            {
-              icon: "star",
-              label: d.fav ? "取消收藏" : "收藏",
-              onClick: () => void this.dm.toggleFav(d.id).then(() => {
-                var _a2, _b2;
-                return (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-              }).catch((e) => this.failToast(e))
-            },
-            {
-              icon: "external-link",
-              label: "打开链接",
-              onClick: () => d.url ? this.host.openExternal(d.url) : this.host.toast("该条目没有链接", true)
-            },
-            { icon: "pencil", label: "编辑", onClick: () => this.host.openPwEntryDialog(d) },
-            {
-              icon: "trash-2",
-              label: "删除",
-              kind: "danger",
-              onClick: () => this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", true, () => {
-                void this.dm.deleteItem(d.id).then(() => {
-                  var _a2, _b2;
-                  (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-                  this.host.toast(`已删除账号「${d.account}」`);
-                }).catch((e) => this.failToast(e));
-              })
-            }
-          ];
-        }
-        attachAccountActions(el, d) {
-          attachItemActions(el, this.accountActions(d), { sheetHead: this.buildSheetHead(d) });
-        }
-        /** 移动端账号详情页 ⋮：直接开底部抽屉（抽屉手势挂行卡上，详情页按钮触达不了——E6） */
-        openAccountSheet(d) {
-          openItemSheet(this.accountActions(d), { sheetHead: this.buildSheetHead(d) });
-        }
-        /** 平台动作集（行卡右键/长按与移动平台详情页 ⋮ 共用） */
-        platformActions(platform) {
-          const accs = this.dm.accountsOf(platform);
-          const recent2 = accs[0];
-          const count = accs.length;
-          const actions = [
-            {
-              icon: "plus",
-              label: "在该平台新增账号",
-              onClick: () => this.host.openPwEntryDialog(null, { platform, url: (recent2 == null ? void 0 : recent2.url) || "" })
-            }
-          ];
-          if (recent2) {
-            actions.push({
-              icon: "copy",
-              label: "复制最近账号",
-              onClick: () => void this.host.copySensitive(recent2.account || "").then((ok) => this.host.toast(ok ? "最近账号已复制" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-            });
-            actions.push({
-              icon: "key",
-              label: "复制最近密码",
-              onClick: () => void this.host.copySensitive(recent2.password || "").then((ok) => this.host.toast(ok ? "最近密码已复制" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-            });
-          }
-          actions.push({ icon: "pencil", label: "编辑平台信息", onClick: () => this.host.openPwPlatformEdit(platform) });
-          actions.push({
-            icon: "trash-2",
-            label: "删除整个平台",
-            kind: "danger",
-            onClick: () => this.host.askConfirm("删除整个平台", `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, "删除", true, () => {
-              void this.dm.removePlatform(platform).then(() => {
-                var _a2, _b2;
-                (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-                this.host.toast(`已删除平台与 ${count} 个账号`);
-              }).catch((e) => this.failToast(e));
-            })
-          });
-          return actions;
-        }
-        platformSheetOpts(platform) {
-          const recent2 = this.dm.accountsOf(platform)[0];
-          return { sheetHead: this.buildSheetHead(recent2 != null ? recent2 : { account: platform, platform, createdAt: "" }) };
-        }
-        attachPlatformActions(el, platform) {
-          attachItemActions(el, this.platformActions(platform), this.platformSheetOpts(platform));
-        }
-        /** 移动端平台详情页 ⋮：直接开底部抽屉（E6 同款） */
-        openPlatformSheet(platform) {
-          openItemSheet(this.platformActions(platform), this.platformSheetOpts(platform));
-        }
-        // ---------- 移动端卡流 ----------
-        /** 渲染移动端密码卡流（平台卡；fav 过滤 view 由调用方传入 st） */
-        renderMobList(container, st, onOpenPlatform) {
-          var _a2;
-          container.innerHTML = "";
-          const kw = st.searchKw;
-          if (kw) {
-            const hits = this.dm.search(kw).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || "") * -1);
-            if (!hits.length) {
-              container.replaceChildren(this.emptyState("没有匹配的条目", "换个关键词试试"));
-              return;
-            }
-            for (const d of hits) {
-              const c = document.createElement("div");
-              c.className = "bz-pwv-mobcard";
-              c.innerHTML = `${avatarHTML(d.platform, d.url, "bz-pwv-avatar av")}
-          <div class="mid"><div class="a">${this.esc(d.platform)}${d.fav ? " " + this.starIc() : ""}</div><div class="b">${this.esc(d.account || "(无账号)")}</div></div>
-          <span class="go">${this.ic("chevron-right")}</span>`;
-              c.addEventListener("click", () => {
-                var _a3, _b2;
-                return (_b2 = (_a3 = this.host).openPwAccountPage) == null ? void 0 : _b2.call(_a3, d, st);
-              });
-              this.attachAccountActions(c, d);
-              container.appendChild(c);
-            }
-            hydratePwAvatars(container);
-            return;
-          }
-          let plats = this.dm.platforms();
-          if (st.view === "fav") plats = plats.filter((p) => this.dm.hasFav(p.platform));
-          if (!plats.length) {
-            if (st.view === "fav") {
-              container.replaceChildren(this.emptyState("还没有收藏", "右键或长按条目可收藏，常用账号一目了然"));
-            } else {
-              container.replaceChildren(this.emptyState("保险库还没有密码", "收录第一条账号开始使用", { add: true }));
-              (_a2 = container.querySelector('[data-pwv="empty-add"]')) == null ? void 0 : _a2.addEventListener("click", () => this.host.openPwEntryDialog());
-            }
-            return;
-          }
-          for (const p of plats) {
-            const recent2 = p.accounts[0];
-            const c = document.createElement("div");
-            c.className = "bz-pwv-mobcard";
-            const favStar = this.dm.hasFav(p.platform) ? " " + this.starIc() : "";
-            const cnt = p.accounts.length > 1 ? `<span class="cnt">${p.accounts.length}</span>` : "";
-            c.innerHTML = `${avatarHTML(p.platform, recent2 == null ? void 0 : recent2.url, "bz-pwv-avatar av")}
-        <div class="mid"><div class="a">${this.esc(p.platform)}${favStar}${cnt}</div><div class="b">${recent2 ? this.esc(recent2.account || "(无账号)") : ""}</div></div>
-        <span class="go">${this.ic("chevron-right")}</span>`;
-            c.addEventListener("click", () => onOpenPlatform(p));
-            this.attachPlatformActions(c, p.platform);
-            container.appendChild(c);
-          }
-          hydratePwAvatars(container);
-        }
-        /** 平台详情页（移动）HTML 注入 body；含账号卡与操作 */
-        renderMobPlatformPage(body, p, st) {
-          var _a2;
-          const accs = p.accounts;
-          const first = accs[0];
-          const favStar = this.dm.hasFav(p.platform) ? ' <span class="star">★</span>' : "";
-          body.innerHTML = `<div class="bz-pwv-mobplathead">
-      <div class="av big">${avatarHTML(p.platform, first == null ? void 0 : first.url, "bz-pwv-avatar big")}</div>
-      <div><div class="nm">${this.esc(p.platform)}${favStar}</div>
-        ${first && first.url ? `<a class="url" href="${this.esc(first.url)}" target="_blank" rel="noopener">${this.esc(first.url)} ↗</a>` : '<div class="url faint">无链接</div>'}</div>
-      <button class="bz-pwv-btn gold" data-pwv="plat-add">${this.ic("plus", 12)} 新增账号</button>
-    </div>
-    <div class="bz-pwv-accts"></div>`;
-          const acctsEl = body.querySelector(".bz-pwv-accts");
-          if (!accs.length) {
-            acctsEl.replaceChildren(this.emptyState("该平台暂无账号", "点上方「在该平台新增账号」录入"));
-          } else {
-            for (const d of accs) acctsEl.appendChild(this.buildAccountCard(d, st));
-          }
-          (_a2 = body.querySelector('[data-pwv="plat-add"]')) == null ? void 0 : _a2.addEventListener(
-            "click",
-            () => this.host.openPwEntryDialog(null, { platform: p.platform, url: (first == null ? void 0 : first.url) || "" })
-          );
-        }
-        // ---------- 抽屉头 ----------
-        buildSheetHead(d) {
-          const head = document.createElement("div");
-          head.className = "bz-item-sheet-entry";
-          const body = document.createElement("div");
-          body.style.cssText = "display:flex; align-items:flex-start; gap:10px;";
-          const emoji = document.createElement("span");
-          emoji.className = "bz-item-sheet-emoji";
-          emoji.textContent = "🔑";
-          body.appendChild(emoji);
-          const info = document.createElement("div");
-          info.style.cssText = "flex:1; min-width:0;";
-          const t = document.createElement("div");
-          t.className = "bz-item-sheet-title";
-          t.textContent = d.account || d.platform;
-          info.appendChild(t);
-          const s = document.createElement("div");
-          s.className = "bz-item-sheet-sub";
-          s.textContent = `${d.platform}${d.platform ? " · " : ""}${relTime3(d.createdAt)}`;
-          info.appendChild(s);
-          body.appendChild(info);
-          head.appendChild(body);
-          return head;
-        }
-        // ---------- lucide 图标 ----------
-        ic(name, size = 14) {
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
-        }
-        /** 空态（组件库 uiEmpty = .bz-empty 基线）；add = 附「新增密码」金色 CTA（金库主题色，域内样式） */
-        emptyState(title, desc, opts) {
-          const empty = uiEmpty((opts == null ? void 0 : opts.icon) ? { icon: opts.icon, title, desc } : { title, desc });
-          if (opts == null ? void 0 : opts.add) {
-            const add = document.createElement("button");
-            add.className = "bz-pwv-empty-add bz-touch-target--lg";
-            add.setAttribute("data-pwv", "empty-add");
-            add.innerHTML = `${this.ic("plus")} 新增密码`;
-            empty.appendChild(add);
-          }
-          return empty;
-        }
-        esc(s) {
-          return escapeHtml(String(s != null ? s : ""));
-        }
-      };
-      ICON_PATHS = {
-        copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-        key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3z"/>',
-        star: '<path d="M12 2 15 9l7 .8-5.3 4.7 1.6 6.9L12 17.8 5.7 21.4l1.6-6.9L2 9.8 9 9z"/>',
-        "external-link": '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
-        pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
-        "trash-2": '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>',
-        eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
-        "eye-off": '<path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 8 10 8a13.2 13.2 0 0 1-1.67 2.68M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 8 10 8a9.7 9.7 0 0 0 5.39-1.61M2 2l20 20"/>',
-        plus: '<path d="M12 5v14M5 12h14"/>',
-        "chevron-right": '<path d="m9 18 6-6-6-6"/>'
-      };
-    }
-  });
-
-  // src/encrypt/pw-picker.ts
-  function fuzzyScore(hay, query) {
-    if (!query) return 0;
-    const h = (hay || "").toLowerCase();
-    const q2 = query.toLowerCase();
-    const idx = h.indexOf(q2);
-    if (idx >= 0) return 1e3 - idx;
-    let hi = 0;
-    for (let qi = 0; qi < q2.length; qi++) {
-      hi = h.indexOf(q2[qi], hi);
-      if (hi === -1) return -1;
-      hi++;
-    }
-    return 100;
-  }
-  function fuzzyFilterEntries(entries, query) {
-    const hits = [];
-    for (const e of entries) {
-      const score = Math.max(
-        fuzzyScore(e.platform || "", query),
-        fuzzyScore(e.account || "", query),
-        fuzzyScore(e.note || "", query)
-      );
-      if (score >= 0) hits.push({ e, score });
-    }
-    hits.sort((a, b) => b.score - a.score || (b.e.createdAt || "").localeCompare(a.e.createdAt || ""));
-    return hits.map((h) => h.e);
-  }
-  function closePasswordQuickPicker() {
-    if (currentMask2) {
-      currentMask2.remove();
-      currentMask2 = null;
-    }
-    if (currentPopup2) {
-      currentPopup2.remove();
-      currentPopup2 = null;
-    }
-    if (currentHandle2) {
-      currentHandle2.unregister();
-      currentHandle2 = null;
-    }
-    if (focusTimer2 !== null) {
-      window.clearTimeout(focusTimer2);
-      focusTimer2 = null;
-    }
-  }
-  function openPasswordQuickPicker(entries, onPick) {
-    closePasswordQuickPicker();
-    const { mask, popup } = createOverlay({
-      maskId: "bz-encrypt-pw-picker-mask",
-      popupId: "bz-encrypt-pw-picker-popup",
-      width: "min(calc(100vw - 32px), 420px)",
-      maxWidth: 420,
-      onMaskClick: () => closePasswordQuickPicker()
-    });
-    currentMask2 = mask;
-    currentPopup2 = popup;
-    popup.classList.add("bz-encrypt-pwqp");
-    popup.style.height = "min(420px, 72vh)";
-    const head = document.createElement("div");
-    head.className = "bz-encrypt-pwqp-head";
-    const title = document.createElement("h3");
-    title.className = "bz-encrypt-pwqp-title";
-    title.textContent = "快速复制密码";
-    head.appendChild(title);
-    const search = document.createElement("input");
-    search.type = "text";
-    search.className = "bz-input bz-encrypt-pwqp-search";
-    search.placeholder = "搜索平台 / 账号…";
-    search.spellcheck = false;
-    search.setAttribute("aria-label", "搜索密码条目");
-    const listEl2 = document.createElement("div");
-    listEl2.className = "bz-encrypt-pwqp-list";
-    const state3 = { hits: [], active: 0 };
-    const setActive = (i) => {
-      var _a2;
-      if (!state3.hits.length) return;
-      state3.active = Math.max(0, Math.min(state3.hits.length - 1, i));
-      listEl2.querySelectorAll(".bz-popover-item").forEach((el, k) => {
-        el.classList.toggle("is-on", k === state3.active);
-      });
-      (_a2 = listEl2.querySelector(".bz-popover-item.is-on")) == null ? void 0 : _a2.scrollIntoView({ block: "nearest" });
-    };
-    const renderList2 = () => {
-      listEl2.innerHTML = "";
-      state3.hits = fuzzyFilterEntries(entries, search.value.trim());
-      state3.active = 0;
-      if (!state3.hits.length) {
-        const empty = document.createElement("div");
-        empty.className = "bz-popover-empty";
-        empty.textContent = "没有匹配的密码条目";
-        listEl2.appendChild(empty);
-        return;
-      }
-      const shown = state3.hits.slice(0, LIMIT);
-      shown.forEach((d, i) => {
-        const row = document.createElement("div");
-        row.className = "bz-popover-item" + (i === 0 ? " is-on" : "");
-        row.setAttribute("role", "option");
-        const mid = document.createElement("div");
-        mid.className = "mid";
-        const pl = document.createElement("div");
-        pl.className = "pl";
-        pl.textContent = d.platform || "(无平台)";
-        const ac = document.createElement("div");
-        ac.className = "ac";
-        ac.textContent = d.account || "(无账号)";
-        mid.appendChild(pl);
-        mid.appendChild(ac);
-        const key = document.createElement("span");
-        key.className = "key";
-        key.textContent = "Enter 复制";
-        row.appendChild(mid);
-        row.appendChild(key);
-        row.addEventListener("click", () => {
-          closePasswordQuickPicker();
-          onPick(d);
-        });
-        listEl2.appendChild(row);
-      });
-      if (state3.hits.length > LIMIT) {
-        const more = document.createElement("div");
-        more.className = "bz-popover-empty";
-        more.textContent = `已显示前 ${LIMIT} 条（共 ${state3.hits.length} 条命中），请输入关键词缩小范围`;
-        listEl2.appendChild(more);
-      }
-    };
-    search.addEventListener("input", () => renderList2());
-    search.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setActive(state3.active + 1);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setActive(state3.active - 1);
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        const d = state3.hits[state3.active];
-        if (d) {
-          closePasswordQuickPicker();
-          onPick(d);
-        }
-      }
-    });
-    popup.append(head, search, listEl2);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    currentHandle2 = escManager.register("bz-encrypt-pw-picker", {
-      isVisible: () => !!currentMask2,
-      close: () => closePasswordQuickPicker()
-    });
-    renderList2();
-    focusTimer2 = window.setTimeout(() => {
-      focusTimer2 = null;
-      if (mask.isConnected) search.focus();
-    }, 30);
-  }
-  var LIMIT, currentMask2, currentPopup2, currentHandle2, focusTimer2;
-  var init_pw_picker = __esm({
-    "src/encrypt/pw-picker.ts"() {
-      init_dom();
-      init_esc_manager();
-      LIMIT = 100;
-      currentMask2 = null;
-      currentPopup2 = null;
-      currentHandle2 = null;
-      focusTimer2 = null;
-    }
-  });
-
   // src/encrypt/vault-assets-view.ts
   function vIc(name, size = 14) {
-    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS2[name] || ""}</svg>`;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
   }
   function overviewHTML(stats) {
     const { counts, attachments, attBytes, recent: recent2, health } = stats;
@@ -42018,10 +42700,10 @@ GitHub 仓库：${ghInfo.title}
     const recentRows = recent2.length ? recent2.map((r) => {
       const color = r.kind === "note" ? ASSET_COLOR.note : ASSET_COLOR.diary;
       const iconName = r.kind === "note" ? "file-lock" : "book-lock";
-      return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml(r.id)}"` : ""}>
+      return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
-            <div class="mid"><div class="a">${escapeHtml(r.title)}</div><div class="b">${escapeHtml(r.sub)}</div></div>
-            <span class="tm">${escapeHtml(r.time)}</span></div>`;
+            <div class="mid"><div class="a">${escapeHtml2(r.title)}</div><div class="b">${escapeHtml2(r.sub)}</div></div>
+            <span class="tm">${escapeHtml2(r.time)}</span></div>`;
     }).join("") : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc("lock", 28) + '</span><div class="bz-empty-title">还没有动态</div><div class="bz-empty-desc">笔记或日记入库后，最近动态在这里显示</div></div>';
     return `
   <div class="bz-vault-hero">
@@ -42065,19 +42747,19 @@ GitHub 仓库：${ghInfo.title}
   function noteRowHTML(note, kind, active2) {
     const color = ASSET_COLOR[kind];
     const iconName = kind === "note" ? "file-lock" : "book-lock";
-    const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
+    const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml2(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
     return `
-    <div class="bz-vault-row ${active2 ? "on" : ""}" data-noteid="${escapeHtml(note.id)}" data-kind="${kind}">
+    <div class="bz-vault-row ${active2 ? "on" : ""}" data-noteid="${escapeHtml2(note.id)}" data-kind="${kind}">
       <span class="av" style="background:${color}">${vIc(iconName, 16)}</span>
-      <div class="mid"><div class="t1">${escapeHtml(note.title)}</div><div class="t2">${sub}</div></div>
-      <span class="tm">${escapeHtml(formatRelativeTime(note.createdAt))}</span>
+      <div class="mid"><div class="t1">${escapeHtml2(note.title)}</div><div class="t2">${sub}</div></div>
+      <span class="tm">${escapeHtml2(formatRelativeTime(note.createdAt))}</span>
     </div>`;
   }
   function noteDetailHTML(note, kind, plainPreview) {
     const color = ASSET_COLOR[kind];
     const iconName = kind === "note" ? "file-lock" : "book-lock";
-    const attLine = note.attachments.length ? `<span class="val" title="${escapeHtml(note.attachments.map((a) => a.path.split("/").pop() || a.path).join("、"))}">${note.attachments.length} 个</span>` : '<span class="val">无附件</span>';
-    const pathLine = kind === "note" ? `${escapeHtml(note.path)} · 已移出` : `${escapeHtml(note.path)} · 已还原该段`;
+    const attLine = note.attachments.length ? `<span class="val" title="${escapeHtml2(note.attachments.map((a) => a.path.split("/").pop() || a.path).join("、"))}">${note.attachments.length} 个</span>` : '<span class="val">无附件</span>';
+    const pathLine = kind === "note" ? `${escapeHtml2(note.path)} · 已移出` : `${escapeHtml2(note.path)} · 已还原该段`;
     const created = new Date(note.createdAt).toLocaleString("zh-CN", { hour12: false });
     const actionBtns = kind === "note" ? `<button class="bbtn teal" data-detail="preview">${vIc("eye", 14)} 解密预览</button>
          <button class="bbtn" data-detail="restore">${vIc("download", 14)} 取出还原</button>
@@ -42087,26 +42769,25 @@ GitHub 仓库：${ghInfo.title}
     return `
     <div class="bz-vault-dhead">
       <span class="big" style="background:${color}">${vIc(iconName, 21)}</span>
-      <div class="ttl"><h2>${escapeHtml(note.title)}</h2><div class="url">${pathLine}</div></div>
+      <div class="ttl"><h2>${escapeHtml2(note.title)}</h2><div class="url">${pathLine}</div></div>
     </div>
     <div class="bz-vault-dcontent">
       ${kind === "note" ? `<div class="field"><div class="lab">附件镜像</div><div class="valrow">${attLine}</div></div>
-           <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>
-           <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>` : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml(plainPreview).replace(/\n/g, "<br>") : "（未解密预览）"}</div></div>
-           <div class="field"><div class="lab">加密于</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>`}
+           <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml2(created)}</span></div></div>
+           <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>` : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml2(plainPreview).replace(/\n/g, "<br>") : "（未解密预览）"}</div></div>
+           <div class="field"><div class="lab">加密于</div><div class="valrow"><span class="val">${escapeHtml2(created)}</span></div></div>`}
       <div class="bigbtns">${actionBtns}</div>
     </div>`;
   }
-  var ASSET_COLOR, ICON_PATHS2;
+  var ASSET_COLOR, ICON_PATHS;
   var init_vault_assets_view = __esm({
     "src/encrypt/vault-assets-view.ts"() {
       init_utils();
       ASSET_COLOR = {
-        pw: "var(--bz-brand)",
         note: "#2e7d68",
         diary: "#5a63a8"
       };
-      ICON_PATHS2 = {
+      ICON_PATHS = {
         lock: '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
         "lock-open": '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 7.9-.9"/>',
         key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3z"/>',
@@ -42337,25 +43018,10 @@ GitHub 仓库：${ghInfo.title}
     findSharedAttachmentPaths: () => findSharedAttachmentPaths,
     kindOf: () => kindOf,
     mimeOf: () => mimeOf,
-    passwordStrength: () => passwordStrength,
-    pwStrengthLabel: () => pwStrengthLabel,
     truncateName: () => truncateName
   });
   function statusbarHtml(unlocked) {
     return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
-  }
-  function passwordStrength(pw) {
-    if (!pw) return "weak";
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (pw.length >= 12) score++;
-    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
-    if (/\d/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-    return score <= 2 ? "weak" : score <= 4 ? "mid" : "strong";
-  }
-  function pwStrengthLabel(s) {
-    return s === "weak" ? "弱" : s === "mid" ? "中" : "强";
   }
   function collectNoteAttachments(content, embedLinks, vaultFiles) {
     const refs = /* @__PURE__ */ new Set();
@@ -42525,7 +43191,7 @@ GitHub 仓库：${ghInfo.title}
   }
   function mediaHtml(a, dataUrl) {
     if (!a) return "";
-    const alt = escapeHtml(a.path || "");
+    const alt = escapeHtml2(a.path || "");
     const key = encodeURIComponent(a.path);
     const kindLabel = a.kind === "video" ? "视频" : "图";
     let inner;
@@ -42648,9 +43314,7 @@ GitHub 仓库：${ghInfo.title}
       init_settings_common();
       init_data11();
       init_preview();
-      init_vault_data();
-      init_vault_pw_view();
-      init_pw_picker();
+      init_data12();
       init_vault_assets_view();
       init_lock_screen();
       init_lock_stats();
@@ -42710,11 +43374,11 @@ GitHub 仓库：${ghInfo.title}
           this.unlockFailStreak = 0;
           /** 当前冷却截止时间戳（ms）；早于此的尝试被拒绝并提示剩余等待 */
           this.unlockCooldownUntil = 0;
-          /** 搜索防抖计时器 */
-          this.searchTimer = null;
-          /** 密码资产状态（列表筛选/选中/显隐） */
-          this.pwState = { ...DEFAULT_PW_STATE };
-          /** 当前资产视图（概览/密码/笔记/日记） */
+          /** 搜索防抖（180ms 尾触；issue 365 收编 core debounce，原手写无 teardown 取消路径） */
+          this.searchDebounced = debounce(() => this.renderAll(), 180);
+          /** 列表搜索关键词（笔记列表头搜索框 / 移动端常驻框共用；防抖后触发重绘） */
+          this.searchKw = "";
+          /** 当前资产视图（概览/笔记/日记） */
           this.asset = "overview";
           /** 加密日记详情临时明文缓存（渲染详情时惰性解密） */
           this._diaryPlain = {};
@@ -42731,32 +43395,9 @@ GitHub 仓库：${ghInfo.title}
           /** 解锁屏统计快照（会话内缓存；冷启动回落 lock-stats.json 上次快照，见 core/lock-stats） */
           this.lockStatsCache = {};
           this._selNoteId = null;
-          this._pwEditingId = null;
-          /** 同平台+账号查重命中后的放行标志（同一弹窗会话内再点一次保存即放行） */
-          this._pwDupConfirmed = false;
-          /** 弹窗内联动刷新（强度提示等）；ensurePwDialog 首建时注入 */
-          this.pwDlgSyncUi = null;
-          this.pwDlg = null;
-          /** 密码添加/编辑弹窗的 ESC 层（E7：弹窗可见时 ESC 只关弹窗，不穿透关掉主面板） */
-          this.pwDlgEsc = null;
           this.dataManager = dataManager3;
           this.config = config;
           this.pwDataManager = pwDataManager || new PasswordVaultDataManager(dataManager3);
-          this.pwView = new VaultPwView(
-            this.pwDataManager,
-            {
-              toast: (m, err) => this.toast(m, err),
-              openPwEntryDialog: (edit, prefill) => this.openPwEntryDialog(edit, prefill),
-              openPwPlatformEdit: (p) => this.openPwPlatformEdit(p),
-              askConfirm: (t, m, okLabel, danger, cb) => this.askConfirm(t, m, okLabel, danger, cb),
-              copySensitive: (t) => this.copySensitive(t),
-              openExternal: (u) => this.openExternal(u),
-              onPwChanged: () => this.renderAll(),
-              openPwAccountPage: (d, st) => this.openPwAccountPage(d, st)
-            },
-            { charset: config.pwCharset, length: config.pwLength }
-          );
-          this.pwDataManager.onExternalChange = () => this.renderAll();
         }
         /** 解锁成功后复位节流状态 */
         resetUnlockThrottle() {
@@ -42771,8 +43412,8 @@ GitHub 仓库：${ghInfo.title}
           return delaySec;
         }
         /**
-         * 桌面搜索框（评审 2026-09-12：从顶栏下移到「全部加密笔记 N 项」之上）——它现在随
-         * 列表头一起渲染，故不再缓存引用而按需现取；null = 当前资产没有列表头（概览 / 密码）。
+         * 桌面搜索框（评审 2026-09-12：从顶栏下移到列表头里）——它现在随
+         * 列表头一起渲染，故不再缓存引用而按需现取；null = 当前资产没有列表头（概览）。
          */
         get deskSearch() {
           var _a2, _b2;
@@ -42860,7 +43501,7 @@ GitHub 仓库：${ghInfo.title}
             if (a === "pw" || a === "diary") a = "note";
             this.asset = a;
             lastVisitedAsset = a;
-            this.pwState.searchKw = "";
+            this.searchKw = "";
             const headSearch = this.deskSearch;
             if (headSearch) headSearch.value = "";
             this.mob.search.value = "";
@@ -42902,15 +43543,14 @@ GitHub 仓库：${ghInfo.title}
               this.asset = "note";
               lastVisitedAsset = "note";
             }
-            this.pwState.searchKw = v;
+            this.searchKw = v;
             if (isMob) {
               const deskSearch = this.deskSearch;
               if (deskSearch) deskSearch.value = v;
             } else {
               this.mob.search.value = v;
             }
-            if (this.searchTimer) clearTimeout(this.searchTimer);
-            this.searchTimer = setTimeout(() => this.renderAll(), 180);
+            this.searchDebounced();
           });
         }
         createMask(id) {
@@ -42944,7 +43584,6 @@ GitHub 仓库：${ghInfo.title}
           if (this.isSecurityMode()) {
             this.dataManager.lock();
             this.pwDataManager.lock();
-            this.pwState = { ...DEFAULT_PW_STATE };
             this._selNoteId = null;
             this._diaryPlain = {};
             if (!suppressAutoLockNotice) this.noticeAutoLock();
@@ -43030,7 +43669,7 @@ GitHub 仓库：${ghInfo.title}
         ensureHealthElements() {
           const mask = document.createElement("div");
           mask.id = "bz-encrypt-health-mask";
-          mask.className = "bz-encrypt-health-mask";
+          mask.className = "bz-overlay-mask bz-encrypt-health-mask";
           mask.style.display = "none";
           const popup = document.createElement("div");
           popup.id = "bz-encrypt-health-popup";
@@ -43436,7 +44075,6 @@ GitHub 仓库：${ghInfo.title}
         counts() {
           const notes = this.dataManager.manifest.notes;
           return {
-            pw: this.pwDataManager.pwData.length,
             note: notes.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault").length,
             diary: notes.filter((n) => n.kind === "diary-entry").length
           };
@@ -43539,21 +44177,13 @@ GitHub 仓库：${ghInfo.title}
         }
         /** 桌面区渲染（中列表 + 右详情按资产分发） */
         renderDesktop() {
-          var _a2;
           const keepHead = this._lastRenderedAsset === this.asset && (this.asset === "note" || this.asset === "diary");
           if (!keepHead) this.desk.list.innerHTML = "";
           this.desk.detail.innerHTML = "";
-          if (this.asset !== "pw") {
-            (_a2 = this.popup.querySelector('.bz-vault-bar [data-act="pw-fav"]')) == null ? void 0 : _a2.remove();
-          }
           this.setOverviewSpan(this.asset === "overview");
           this._lastRenderedAsset = this.asset;
           if (this.asset === "overview") {
             this.renderDeskOverview();
-            return;
-          }
-          if (this.asset === "pw") {
-            this.renderDeskPw();
             return;
           }
           const kind = this.asset;
@@ -43597,47 +44227,6 @@ GitHub 仓库：${ghInfo.title}
           );
           detail.appendChild(area);
         }
-        /** 桌面密码资产：平台列表 + 账号详情 + 顶栏收藏切换钮 */
-        renderDeskPw() {
-          var _a2;
-          const list = this.desk.list;
-          const detail = this.desk.detail;
-          const kw = this.pwState.searchKw;
-          this.setVaultHead("密码");
-          const barActs = this.popup.querySelector(".bz-vault-bar");
-          const favBtn = barActs.querySelector('[data-act="pw-fav"]');
-          const favIcon = vIc(this.pwState.view === "fav" ? "star" : "star-outline", 15);
-          const favTitle = this.pwState.view === "fav" ? "全部平台" : "只看收藏";
-          if (!favBtn) {
-            const btn = document.createElement("button");
-            btn.className = "bz-vault-ic";
-            btn.dataset.act = "pw-fav";
-            btn.title = favTitle;
-            btn.innerHTML = favIcon;
-            barActs.appendChild(btn);
-            btn.addEventListener("click", () => {
-              this.pwState.view = this.pwState.view === "fav" ? "all" : "fav";
-              this.renderAll();
-            });
-          } else {
-            favBtn.title = favTitle;
-            favBtn.innerHTML = favIcon;
-          }
-          const listHead = document.createElement("div");
-          listHead.className = "bz-vault-lc-head";
-          listHead.innerHTML = `<div class="t">平台</div><button class="lc-add" data-lc-add="pw" title="新增密码">${vIc("plus", 13)} 新增密码</button>`;
-          (_a2 = listHead.querySelector('[data-lc-add="pw"]')) == null ? void 0 : _a2.addEventListener("click", () => this.openPwEntryDialog());
-          const listBody = document.createElement("div");
-          listBody.className = "bz-vault-lc-body";
-          list.appendChild(listHead);
-          list.appendChild(listBody);
-          this.pwView.renderDeskList(listBody, this.pwState, (p, a) => {
-            this.pwState.selPlatform = p;
-            this.pwState.selAccount = a;
-            this.renderDesktop();
-          });
-          this.pwView.renderDeskDetail(detail, this.pwState);
-        }
         /** 桌面加密笔记/日记：列表 + 详情（异步解密日记正文预览） */
         /**
          * 桌面加密笔记/日记：列表 + 详情。
@@ -43647,7 +44236,7 @@ GitHub 仓库：${ghInfo.title}
         renderDeskNotes(kind, keepHead = false) {
           const list = this.desk.list;
           const detail = this.desk.detail;
-          const kw = this.pwState.searchKw;
+          const kw = this.searchKw;
           let notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
           this.setVaultHead(kind === "note" ? "笔记" : "加密日记");
           if (kw) {
@@ -43799,231 +44388,15 @@ GitHub 仓库：${ghInfo.title}
           head.appendChild(body);
           return head;
         }
-        // ---------- 密码条目弹窗（添加/编辑/平台编辑/确认/toast） ----------
-        /** 密码添加/编辑弹窗（移动端复用桌面弹窗 DOM；双端共享 pwDataManager） */
-        openPwEntryDialog(edit, prefill) {
-          var _a2;
-          if (!this.dataManager.unlocked) {
-            notice("请先解锁保险库");
-            return;
-          }
-          this._pwEditingId = edit ? edit.id : null;
-          this._pwDupConfirmed = false;
-          const dlg = this.ensurePwDialog();
-          const title = dlg.querySelector(".bz-vault-dlg h3");
-          title.textContent = edit ? "编辑密码条目" : "添加密码条目";
-          const fields = ["platform", "url", "account", "password", "note"];
-          fields.forEach((f) => {
-            const input = dlg.querySelector(`[data-f="${f}"]`);
-            input.value = edit ? edit[f] || "" : prefill && f !== "password" ? prefill[f] || "" : "";
-          });
-          const pw = edit ? edit.password : this.generatePassword();
-          const pwInput = dlg.querySelector('[data-f="password"]');
-          pwInput.value = pw;
-          pwInput.type = "password";
-          const eyeBtn = dlg.querySelector('[data-pwv-dlg="eye"]');
-          if (eyeBtn) {
-            eyeBtn.title = "显示密码";
-            eyeBtn.innerHTML = vIc("eye", 14);
-          }
-          dlg.querySelector("[data-f-err]").textContent = "";
-          (_a2 = this.pwDlgSyncUi) == null ? void 0 : _a2.call(this);
-          this.openPwDialogOverlay(true);
-          const first = dlg.querySelector('[data-f="platform"]');
-          first == null ? void 0 : first.focus();
-        }
-        ensurePwDialog() {
-          var _a2, _b2, _c, _d, _e;
-          if (this.pwDlg && document.body.contains(this.pwDlg)) return this.pwDlg;
-          const dlg = document.createElement("div");
-          dlg.className = "bz-vault-dlg-mask";
-          dlg.innerHTML = `
-      <div class="bz-vault-dlg">
-        <h3>添加密码条目</h3>
-        <div class="sub">带 * 为必填 · 平台与账号密码不可为空</div>
-        <label>平台 *</label><input data-f="platform" placeholder="如 GitHub">
-        <label>链接（可选）</label><input data-f="url" placeholder="https://…">
-        <label>账号 *</label><input data-f="account" placeholder="登录账号 / 邮箱 / 手机号">
-        <label>密码 *</label>
-        <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="gen" data-pwv-dlg="gen">生成</button><button class="mini" data-pwv-dlg="eye" type="button" title="显示密码">${vIc("eye", 14)}</button></div>
-        <div class="pwstrength" data-pw-strength></div>
-        <label>备注（可选）</label><input data-f="note" placeholder="备用信息…">
-        <div class="err" data-f-err></div>
-        <div class="btns"><button class="cancel" data-pwv-dlg="cancel">取消</button><button class="save" data-pwv-dlg="save">保存</button></div>
-      </div>`;
-          const errEl = dlg.querySelector("[data-f-err]");
-          const get = (f) => dlg.querySelector(`[data-f="${f}"]`).value.trim();
-          (_a2 = dlg.querySelector('[data-pwv-dlg="eye"]')) == null ? void 0 : _a2.addEventListener("click", () => {
-            const input = dlg.querySelector('[data-f="password"]');
-            const show = input.type === "password";
-            input.type = show ? "text" : "password";
-            const eye = dlg.querySelector('[data-pwv-dlg="eye"]');
-            eye.title = show ? "隐藏密码" : "显示密码";
-            eye.innerHTML = vIc(show ? "eye-off" : "eye", 14);
-            input.focus();
-          });
-          const strengthEl = dlg.querySelector("[data-pw-strength]");
-          const syncStrength = () => {
-            const v = dlg.querySelector('[data-f="password"]').value;
-            if (!v) {
-              strengthEl.textContent = "";
-              delete strengthEl.dataset.level;
-              return;
-            }
-            const s = passwordStrength(v);
-            strengthEl.textContent = "强度：" + pwStrengthLabel(s);
-            strengthEl.dataset.level = s;
-          };
-          this.pwDlgSyncUi = syncStrength;
-          dlg.querySelector('[data-f="password"]').addEventListener("input", syncStrength);
-          const flow = [
-            ["platform", "url"],
-            ["url", "account"],
-            ["account", "password"],
-            ["password", "note"],
-            ["note", null]
-          ];
-          for (const [f, next] of flow) {
-            (_b2 = dlg.querySelector(`[data-f="${f}"]`)) == null ? void 0 : _b2.addEventListener("keydown", (e) => {
-              var _a3, _b3;
-              if (e.key !== "Enter") return;
-              e.preventDefault();
-              if (next) (_a3 = dlg.querySelector(`[data-f="${next}"]`)) == null ? void 0 : _a3.focus();
-              else (_b3 = dlg.querySelector('[data-pwv-dlg="save"]')) == null ? void 0 : _b3.click();
-            });
-          }
-          dlg.addEventListener("click", (e) => {
-            if (e.target === dlg) this.openPwDialogOverlay(false);
-          });
-          (_c = dlg.querySelector('[data-pwv-dlg="gen"]')) == null ? void 0 : _c.addEventListener("click", () => {
-            dlg.querySelector('[data-f="password"]').value = this.generatePassword();
-            syncStrength();
-            this.toast("已生成新密码");
-          });
-          (_d = dlg.querySelector('[data-pwv-dlg="cancel"]')) == null ? void 0 : _d.addEventListener("click", () => this.openPwDialogOverlay(false));
-          (_e = dlg.querySelector('[data-pwv-dlg="save"]')) == null ? void 0 : _e.addEventListener("click", async () => {
-            var _a3, _b3;
-            const platform = get("platform");
-            if (!platform) {
-              errEl.textContent = "平台不能为空";
-              return;
-            }
-            if (!get("account") || !get("password")) {
-              errEl.textContent = "账号和密码不能为空";
-              return;
-            }
-            const account = get("account");
-            const dup = this.pwDataManager.pwData.find(
-              (d) => d.id !== this._pwEditingId && (d.platform || "").trim() === platform && (d.account || "").trim() === account
-            );
-            if (dup && !this._pwDupConfirmed) {
-              this._pwDupConfirmed = true;
-              errEl.textContent = `该平台已有同名账号（${dup.account || account}），再次点击保存将放行`;
-              return;
-            }
-            const item = { platform, url: get("url"), account, password: get("password"), note: get("note") };
-            try {
-              if (this._pwEditingId) {
-                await this.pwDataManager.updateItem(this._pwEditingId, item);
-                this.pwState.selPlatform = item.platform;
-                this.pwState.selAccount = this._pwEditingId;
-              } else {
-                await this.pwDataManager.addItem(item);
-                this.pwState.selPlatform = item.platform;
-                this.pwState.selAccount = (_b3 = (_a3 = this.pwDataManager.pwData[0]) == null ? void 0 : _a3.id) != null ? _b3 : null;
-              }
-              this.openPwDialogOverlay(false);
-              this.renderAll();
-              this.toast("已保存");
-            } catch (e) {
-              errEl.textContent = "保存失败：" + e.message;
-            }
-          });
-          document.body.appendChild(dlg);
-          this.pwDlg = dlg;
-          return dlg;
-        }
-        openPwDialogOverlay(open) {
-          var _a2;
-          if (!this.pwDlg) return;
-          if (open) {
-            topifyZ(this.pwDlg);
-            if (!this.pwDlgEsc) {
-              this.pwDlgEsc = escManager.register("bz-vault-pw-dlg", {
-                isVisible: () => !!this.pwDlg && this.pwDlg.style.display !== "none" && document.body.contains(this.pwDlg),
-                close: () => this.openPwDialogOverlay(false)
-              });
-            }
-          } else {
-            (_a2 = this.pwDlgEsc) == null ? void 0 : _a2.unregister();
-            this.pwDlgEsc = null;
-          }
-          this.pwDlg.style.display = open ? "flex" : "none";
-        }
-        /** 卸载辅助：关密码弹窗（注销 ESC 层）并移除 body 上无 id 的弹窗遮罩（G：cleanup 此前不清） */
+        /** 卸载辅助：移除 body 上无 id 的弹窗遮罩（平台编辑等一次性弹层；G：cleanup 此前不清） */
         closeAllDialogs() {
-          this.openPwDialogOverlay(false);
           document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el) => el.remove());
         }
-        /** 平台信息编辑弹窗（独立自绘） */
-        openPwPlatformEdit(platform) {
-          var _a2, _b2;
-          const accs = this.pwDataManager.accountsOf(platform);
-          const d = accs[0];
-          const mask = document.createElement("div");
-          mask.className = "bz-vault-dlg-mask";
-          topifyZ(mask);
-          mask.style.display = "flex";
-          mask.innerHTML = `
-      <div class="bz-vault-dlg">
-        <h3>编辑平台 · ${escapeHtml(platform)}</h3>
-        <div class="sub">改名/改链接将应用到该平台全部账号</div>
-        <label>平台名 *</label><input data-pf="platform" value="${escapeHtml(platform === "(无平台)" ? "" : platform)}">
-        <label>链接（可选）</label><input data-pf="url" value="${escapeHtml((d == null ? void 0 : d.url) || "")}">
-        <div class="err" data-pf-err></div>
-        <div class="btns"><button class="cancel" data-pf-act="cancel">取消</button><button class="save" data-pf-act="save">保存</button></div>
-      </div>`;
-          const errEl = mask.querySelector("[data-pf-err]");
-          let escH = null;
-          const closePf = () => {
-            escH == null ? void 0 : escH.unregister();
-            escH = null;
-            mask.remove();
-          };
-          escH = escManager.register("bz-vault-pw-platform-edit", {
-            isVisible: () => mask.isConnected,
-            close: closePf
-          });
-          mask.addEventListener("click", (e) => {
-            if (e.target === mask) closePf();
-          });
-          (_a2 = mask.querySelector('[data-pf-act="cancel"]')) == null ? void 0 : _a2.addEventListener("click", () => closePf());
-          (_b2 = mask.querySelector('[data-pf-act="save"]')) == null ? void 0 : _b2.addEventListener("click", async () => {
-            const name = mask.querySelector('[data-pf="platform"]').value.trim();
-            if (!name) {
-              errEl.textContent = "平台名不能为空";
-              return;
-            }
-            const url = mask.querySelector('[data-pf="url"]').value;
-            try {
-              await this.pwDataManager.updatePlatform(platform, { platform: name, url });
-              this.pwState.selPlatform = name;
-              this.pwState.selAccount = null;
-              closePf();
-              this.renderAll();
-              this.toast("平台信息已更新");
-            } catch (e) {
-              errEl.textContent = "保存失败：" + e.message;
-            }
-          });
-          document.body.appendChild(mask);
-        }
         /**
-         * 流程确认框（取消 / 确认 cta）：密码资产与笔记/日记动作共用。
+         * 流程确认框（取消 / 确认 cta）：笔记/日记动作共用。
          * `danger`（issue 291 评审补）= 主动作是删除/销毁类 → 弹窗挂 `.bz-flow-dialog--danger`，
          * 主按钮降为中性底 + 红字（设计手册 §9/§10）。默认 false（还原等非破坏动作保持高亮）。
-         * 注意与 password-vault 的 `askConfirm` 区别：那个是域内自绘确认（自带 .danger 按钮样式），
-         * 本方法走 core 流程框，危险语义必须显式传进来。
+         * password-vault 的 `askConfirm` 已随 issue 365 一并收编同一 core 流程框（两域同源）。
          */
         askConfirm(title, message, okLabel, danger, onYes) {
           void openFlowDialog({
@@ -44037,54 +44410,8 @@ GitHub 仓库：${ghInfo.title}
             if (v === "ok") onYes();
           });
         }
-        /** 敏感文本复制 + 60s 自动清空（密码资产与日记共用） */
-        async copySensitive(text) {
-          try {
-            await copySensitiveText(text);
-            return true;
-          } catch (e) {
-            try {
-              const ta = document.createElement("textarea");
-              ta.value = text;
-              ta.style.cssText = "position:fixed;opacity:0";
-              document.body.appendChild(ta);
-              ta.select();
-              const ok = document.execCommand("copy");
-              ta.remove();
-              if (ok) armClipboardClear();
-              return ok;
-            } catch (e2) {
-              return false;
-            }
-          }
-        }
-        openExternal(url) {
-          try {
-            const w = window;
-            const electron = w.require && w.require("electron");
-            if (electron && electron.shell) {
-              electron.shell.openExternal(url);
-              return;
-            }
-          } catch (e) {
-          }
-          window.open(url, "_blank");
-        }
-        generatePassword() {
-          const length = parseInt(this.config.pwLength || "") || 16;
-          const charset = this.config.pwCharset || DEFAULT_PW_CHARSET;
-          return secureRandomPassword(length, charset);
-        }
-        genAndToast() {
-          if (!this.dataManager.unlocked) {
-            notice("请先解锁保险库");
-            return;
-          }
-          void this.copySensitive(this.generatePassword()).then((ok) => {
-            if (ok) this.toast("新密码已生成并复制（60 秒后自动清空），可「新增密码」粘贴使用");
-            else this.toast("生成失败，请重试", true);
-          });
-        }
+        // 敏感文本复制（含降级兜底）+ 60s 自动清空：收口 core/utils copySensitiveWithFallback
+        // （issue 365：与 password-vault 两份逐字雷同的兜底实现一并删除，两域消费同一实现）。
         setAssetFromNav(a) {
           if (a === "pw" || a === "diary") a = "note";
           this.asset = a;
@@ -44123,10 +44450,8 @@ GitHub 仓库：${ghInfo.title}
         lockNow(silent = false) {
           this.dataManager.lock();
           this.pwDataManager.lock();
-          this.pwState = { ...DEFAULT_PW_STATE };
           this._selNoteId = null;
           this._diaryPlain = {};
-          this._pwEditingId = null;
           this.asset = "overview";
           this.lastHealth = null;
           this.unlockedAt = null;
@@ -44161,16 +44486,9 @@ GitHub 仓库：${ghInfo.title}
             body.appendChild(area);
             return;
           }
-          if (this.asset === "pw") {
-            const card = document.createElement("div");
-            card.className = "bz-vault-mob-pwlist";
-            this.pwView.renderMobList(card, this.pwState, (p) => this.openPwMobPage(p));
-            body.appendChild(card);
-            return;
-          }
           const kind = this.asset;
           const notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-          const kw = this.pwState.searchKw;
+          const kw = this.searchKw;
           const filtered2 = kw ? notes.filter((n) => (n.title || "").toLowerCase().includes(kw.toLowerCase()) || (n.path || "").toLowerCase().includes(kw.toLowerCase())) : notes;
           if (!filtered2.length) {
             body.replaceChildren(
@@ -44225,26 +44543,10 @@ GitHub 仓库：${ghInfo.title}
           if (kind === "diary") {
             void this.dataManager.decryptNoteBody(note).then((t) => {
               const pre = body.querySelector(".note.pre");
-              if (pre && t !== null) pre.innerHTML = escapeHtml(t).replace(/\n/g, "<br>");
+              if (pre && t !== null) pre.innerHTML = escapeHtml2(t).replace(/\n/g, "<br>");
             }).catch(() => {
             });
           }
-        }
-        openPwMobPage(p) {
-          var _a2, _b2;
-          const { page } = this.createMobPage(escapeHtml(p.platform));
-          this.pwView.renderMobPlatformPage(page.querySelector(".body"), p, this.pwState);
-          (_a2 = page.querySelector("[data-mob-back]")) == null ? void 0 : _a2.addEventListener("click", () => page.remove());
-          (_b2 = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b2.addEventListener("click", () => this.pwView.openPlatformSheet(p.platform));
-          this.mob.body.appendChild(page);
-        }
-        openPwAccountPage(d, st) {
-          var _a2, _b2;
-          const { page, body } = this.createMobPage(escapeHtml(d.platform));
-          this.pwView.renderDeskDetail(body, { ...st, selPlatform: d.platform, selAccount: d.id });
-          (_a2 = page.querySelector("[data-mob-back]")) == null ? void 0 : _a2.addEventListener("click", () => page.remove());
-          (_b2 = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b2.addEventListener("click", () => this.pwView.openAccountSheet(d));
-          this.mob.body.appendChild(page);
         }
         /** 轻量 toast（保险库窗口内） */
         toast(msg, isErr = false) {
@@ -44363,7 +44665,7 @@ GitHub 仓库：${ghInfo.title}
               this.toast("正文解密失败", true);
               return;
             }
-            void this.copySensitive(t).then((ok) => this.toast(ok ? "正文已复制（60 秒后自动清空）" : "复制失败", !ok));
+            void copySensitiveWithFallback(t).then((ok) => this.toast(ok ? "正文已复制（60 秒后自动清空）" : "复制失败", !ok));
           }).catch(() => this.toast("正文解密失败", true));
         }
         confirmDestroyDiary(note) {
@@ -44581,7 +44883,7 @@ GitHub 仓库：${ghInfo.title}
             } else if (missing) {
               const im = document.createElement("img");
               im.className = "bz-encrypt-preview-media";
-              im.alt = escapeHtml(a.path || "");
+              im.alt = escapeHtml2(a.path || "");
               im.src = url;
               missing.replaceWith(im);
             }
@@ -44681,7 +44983,7 @@ GitHub 仓库：${ghInfo.title}
           this.uiManager.ensureElements();
           this._initialized = true;
         }
-        /** 打开保险库主面板：解锁成功直落密码资产并聚焦搜索（快速取密路径）；
+        /** 打开保险库主面板：解锁成功直落加密笔记资产并聚焦搜索；
          *  已解锁直接打开则恢复上次停留资产（会话级记忆）。 */
         async openManager() {
           if (!this.dataManager.unlocked) {
@@ -44694,33 +44996,6 @@ GitHub 仓库：${ghInfo.title}
             this.uiManager.show();
             this.uiManager.restoreLastAsset();
           }
-        }
-        /**
-         * 快速复制密码（命令 bz-encrypt-copy-password；不打开主面板）：
-         * 未解锁先弹主密码 → 轻量 fuzzy 选择器选条目 → 复制到剪贴板（60s 自动清空）。
-         */
-        async quickCopyPassword() {
-          if (!this.dataManager.unlocked) {
-            const ok = await this.uiManager.showPasswordDialog();
-            if (!ok) return;
-          }
-          try {
-            await this.uiManager.pwDataManager.load();
-          } catch (e) {
-          }
-          const entries = this.uiManager.pwDataManager.pwData;
-          if (!entries.length) {
-            notice("保险库还没有密码，打开面板后可新增");
-            return;
-          }
-          void openPasswordQuickPicker(entries, (d) => {
-            void this.uiManager.copySensitive(d.password).then((ok) => {
-              notice(
-                ok ? `已复制「${d.platform}」${d.account ? `（${d.account}）` : ""}的密码，60 秒后自动清空` : "复制失败，请手动复制",
-                ok ? "success" : "error"
-              );
-            });
-          });
         }
         /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始；共享附件原件保留（issue 338） */
         async confirmLockProceed(file, attCount, sharedCount = 0) {
@@ -44844,7 +45119,6 @@ GitHub 仓库：${ghInfo.title}
           this.uiManager.closeAllDialogs();
           cancelClipboardClear();
           this.uiManager.stopSessionTimers();
-          this.uiManager.pwView.disposeRevealTimers();
           this.uiManager.pwDataManager.destroy();
           this.uiManager.mask = null;
           this.uiManager.popup = null;
@@ -45231,7 +45505,7 @@ GitHub 仓库：${ghInfo.title}
     await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app }).write(data);
   }
   var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS3;
-  var init_data12 = __esm({
+  var init_data13 = __esm({
     "src/smartcat/data.ts"() {
       init_storage();
       init_config5();
@@ -45616,7 +45890,8 @@ GitHub 仓库：${ghInfo.title}
     DEFAULT_SETTINGS: () => DEFAULT_SETTINGS,
     migrateAutoLinkSettings: () => migrateAutoLinkSettings,
     migrateMemoSettingKeys: () => migrateMemoSettingKeys,
-    migrateRetiredAIKeys: () => migrateRetiredAIKeys
+    migrateRetiredAIKeys: () => migrateRetiredAIKeys,
+    migrateRetiredFavoritesSortKey: () => migrateRetiredFavoritesSortKey
   });
   function migrateMemoSettingKeys(raw) {
     if (!raw || typeof raw !== "object") return false;
@@ -45636,6 +45911,13 @@ GitHub 仓库：${ghInfo.title}
     const rec = raw;
     if (rec.aiContextOverrides === void 0) return false;
     delete rec.aiContextOverrides;
+    return true;
+  }
+  function migrateRetiredFavoritesSortKey(raw) {
+    if (!raw || typeof raw !== "object") return false;
+    const rec = raw;
+    if (rec.favoritesSortKey === void 0) return false;
+    delete rec.favoritesSortKey;
     return true;
   }
   function migrateAutoLinkSettings(raw) {
@@ -45865,7 +46147,6 @@ GitHub 仓库：${ghInfo.title}
         homeDefaultDay: "today",
         homeTimelineTime: true,
         homeNextCards: true,
-        favoritesSortKey: "created",
         favoritesOpenFilter: "",
         favoritesLastFilter: "",
         favoritesDefaultSort: "new",
@@ -46009,14 +46290,14 @@ GitHub 仓库：${ghInfo.title}
         home: async () => (await Promise.resolve().then(() => (init_settings(), settings_exports))).homeSettingsSchema(),
         diary: async () => (await Promise.resolve().then(() => (init_settings2(), settings_exports2))).diarySettingsSchema(),
         memo: async () => (await Promise.resolve().then(() => (init_settings3(), settings_exports3))).memoSettingsSchema(),
-        belongings: async () => (await Promise.resolve().then(() => (init_ui5(), ui_exports3))).belongingSettingsSchema(),
+        belongings: async () => (await Promise.resolve().then(() => (init_ui6(), ui_exports4))).belongingSettingsSchema(),
         // 数据源组为声明行（外部 news.json 状态），先读盘预载再建 schema
         clipping: async () => {
           const { readDataSourceState: readDataSourceState2 } = await Promise.resolve().then(() => (init_news_source_settings(), news_source_settings_exports));
           const state3 = await readDataSourceState2();
-          return (await Promise.resolve().then(() => (init_ui7(), ui_exports5))).clipbookSettingsSchema(state3);
+          return (await Promise.resolve().then(() => (init_ui8(), ui_exports6))).clipbookSettingsSchema(state3);
         },
-        favorites: async () => (await Promise.resolve().then(() => (init_ui8(), ui_exports6))).favoritesSettingsSchema(),
+        favorites: async () => (await Promise.resolve().then(() => (init_ui9(), ui_exports7))).favoritesSettingsSchema(),
         cinema: async () => (await Promise.resolve().then(() => (init_settings4(), settings_exports4))).cinemaSettingsSchema(),
         bookshelf: async () => (await Promise.resolve().then(() => (init_settings5(), settings_exports5))).bookshelfSettingsSchema(),
         review: async () => {
@@ -46027,11 +46308,11 @@ GitHub 仓库：${ghInfo.title}
           return reviewSettingsSchema2({ app, dataManager: reviewApp2.dataManager });
         },
         secondbrain: async () => (await Promise.resolve().then(() => (init_panel(), panel_exports))).secondBrainSettingsSchema(),
-        pomodoro: async () => (await Promise.resolve().then(() => (init_ui10(), ui_exports7))).pomodoroSettingsSchema(),
+        pomodoro: async () => (await Promise.resolve().then(() => (init_ui4(), ui_exports3))).pomodoroSettingsSchema(),
         encrypt: async () => (await Promise.resolve().then(() => (init_ui11(), ui_exports8))).encryptSettingsSchema(),
         "password-vault": async () => (await Promise.resolve().then(() => (init_settings6(), settings_exports6))).passwordVaultSettingsSchema(),
         knowledge: async () => {
-          const { knowledgeSettingsSchema: knowledgeSettingsSchema2 } = await Promise.resolve().then(() => (init_ui6(), ui_exports4));
+          const { knowledgeSettingsSchema: knowledgeSettingsSchema2 } = await Promise.resolve().then(() => (init_ui7(), ui_exports5));
           return knowledgeSettingsSchema2({
             onClearSuggestCache: async () => {
               const { clearSuggestCache: clearSuggestCache2 } = await Promise.resolve().then(() => (init_mount_suggest(), mount_suggest_exports));
@@ -46040,12 +46321,12 @@ GitHub 仓库：${ghInfo.title}
           });
         },
         smartcat: async () => {
-          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data12(), data_exports));
+          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data13(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui12(), ui_exports9));
           const app = getApp();
           const data = await loadSmartCatData2(app);
           const saveConfig = async (config) => {
-            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data12(), data_exports));
+            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data13(), data_exports));
             data.config = config;
             await saveSmartCatData2(app, data);
           };
@@ -46186,7 +46467,7 @@ GitHub 仓库：${ghInfo.title}
           const pane = popup.querySelector(".bz-sp-pane");
           const searchIn = popup.querySelector(".bz-sp-search .bz-input");
           popup.addEventListener("keydown", (e) => this.onNavKey(e, pane));
-          const renderNav = (q2) => {
+          const renderNav2 = (q2) => {
             const query = q2.trim();
             nav.innerHTML = "";
             const visible = listableDomains();
@@ -46211,18 +46492,18 @@ GitHub 仓库：${ghInfo.title}
               const id = b.dataset.spDomain;
               b.addEventListener("click", () => {
                 this.activeDomainId = id;
-                renderNav(searchIn.value);
+                renderNav2(searchIn.value);
                 void this.renderDomain(pane, DOMAINS2.find((x) => x.id === id));
               });
             });
           };
           searchIn.addEventListener("input", () => {
-            renderNav(searchIn.value);
+            renderNav2(searchIn.value);
             this.searchQuery = searchIn.value.trim();
             this.applyHitFilter(popup, this.searchQuery);
           });
-          renderNav("");
-          this.rerenderList = () => renderNav(searchIn.value);
+          renderNav2("");
+          this.rerenderList = () => renderNav2(searchIn.value);
           void this.renderDomain(pane, (_a2 = DOMAINS2.find((x) => x.id === this.activeDomainId)) != null ? _a2 : DOMAINS2[0]);
         }
         /**
@@ -46564,8 +46845,8 @@ GitHub 仓库：${ghInfo.title}
     return ui;
   }
   async function ensureSettingsPanel(_app3) {
-    if (initialized5) return;
-    initialized5 = true;
+    if (initialized4) return;
+    initialized4 = true;
   }
   function openSettingsPanel(app, domainId) {
     void ensureSettingsPanel(app).then(() => getUI().open(domainId));
@@ -46573,13 +46854,13 @@ GitHub 仓库：${ghInfo.title}
   function unloadSettingsPanel() {
     if (ui) ui.cleanup();
     ui = null;
-    initialized5 = false;
+    initialized4 = false;
   }
-  var initialized5, ui;
+  var initialized4, ui;
   var init_settings_panel = __esm({
     "src/settings-panel/index.ts"() {
       init_ui13();
-      initialized5 = false;
+      initialized4 = false;
       ui = null;
     }
   });
@@ -46875,8 +47156,8 @@ GitHub 仓库：${ghInfo.title}
     return { path, basename: stripMdExt(base), extension: "md" };
   }
   function ensureReview(app) {
-    if (initialized6) return;
-    initialized6 = true;
+    if (initialized5) return;
+    initialized5 = true;
     reviewApp.ensure(app);
     dataManager2 = new ReviewDataManager(app);
     uiManager2 = new UIManager(app, dataManager2);
@@ -47031,7 +47312,7 @@ GitHub 仓库：${ghInfo.title}
     await reviewApp.applyReviewStyles(app);
   }
   function unloadReview() {
-    initialized6 = false;
+    initialized5 = false;
     if (firstCheckTimer) {
       clearTimeout(firstCheckTimer);
       firstCheckTimer = null;
@@ -47056,7 +47337,7 @@ GitHub 仓库：${ghInfo.title}
     reviewWatcher == null ? void 0 : reviewWatcher.destroy();
     reviewWatcher = null;
   }
-  var initialized6, dataManager2, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
+  var initialized5, dataManager2, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
   var init_review = __esm({
     "src/review/index.ts"() {
       init_utils();
@@ -47068,7 +47349,7 @@ GitHub 仓库：${ghInfo.title}
       init_ui2();
       init_app2();
       init_quiz_panel();
-      initialized6 = false;
+      initialized5 = false;
       dataManager2 = null;
       uiManager2 = null;
       reviewWatcher = null;
@@ -47807,22 +48088,239 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
-  // src/pomodoro/index.ts
-  var pomodoro_exports = {};
-  __export(pomodoro_exports, {
-    ensurePomodoro: () => ensurePomodoro,
-    isFocusing: () => isFocusing,
-    menuPhase: () => menuPhase,
-    openPomodoro: () => openPomodoro,
-    skipBreak: () => skipBreak,
-    startFocusForTask: () => startFocusForTask,
-    toggleFocus: () => toggleFocus,
-    togglePause: () => togglePause,
-    unloadPomodoro: () => unloadPomodoro
+  // src/diary/store.ts
+  var store_exports = {};
+  __export(store_exports, {
+    DiaryFileReadError: () => DiaryFileReadError,
+    UnparsedLineError: () => UnparsedLineError,
+    addEntry: () => addEntry,
+    diaryDataMap: () => diaryDataMap,
+    dropDiaryMapPath: () => dropDiaryMapPath,
+    findDiaryEntry: () => findDiaryEntry,
+    isDiaryReadFailure: () => isDiaryReadFailure,
+    isUnparsedRefusal: () => isUnparsedRefusal,
+    listDateEntries: () => listDateEntries,
+    rekeyDiaryMapPath: () => rekeyDiaryMapPath,
+    removeDiaryEntries: () => removeDiaryEntries,
+    setDiaryDataMap: () => setDiaryDataMap,
+    updateDiaryTags: () => updateDiaryTags
   });
-  var init_pomodoro = __esm({
-    "src/pomodoro/index.ts"() {
-      init_ui10();
+  function setDiaryDataMap(map) {
+    diaryDataMap = map;
+  }
+  function warnUnparsed(msg, dedupeKey) {
+    try {
+      notify(msg, { type: "warning", dedupeKey });
+    } catch (e) {
+    }
+  }
+  function warnReadFailed(msg, dedupeKey) {
+    try {
+      notify(msg, { type: "error", dedupeKey });
+    } catch (e) {
+    }
+  }
+  function isDiaryReadFailure(e) {
+    return e instanceof DiaryFileReadError;
+  }
+  function listDateEntryPaths(dateStr) {
+    var _a2, _b2;
+    const dirPrefix = `${DIARY_DIRECTORY}/`;
+    return (((_b2 = (_a2 = getApp().vault).getMarkdownFiles) == null ? void 0 : _b2.call(_a2)) || []).map((f) => f.path).filter((p) => {
+      var _a3;
+      return p.startsWith(dirPrefix) && ((_a3 = diaryMetaFromEntryPath(p)) == null ? void 0 : _a3.date) === dateStr;
+    });
+  }
+  async function readEntryCtxInQueue(filePath) {
+    const file = getApp().vault.getAbstractFileByPath(filePath);
+    let content = "";
+    if (file) {
+      try {
+        content = await getApp().vault.read(file);
+      } catch (e) {
+        warnReadFailed(
+          `「${filePath.split("/").pop()}」日记读取失败，本次修改没有执行（直接写会覆盖整篇日记）。请稍后重试。`,
+          `diary-read-failed-${filePath}`
+        );
+        throw new DiaryFileReadError(filePath, e);
+      }
+    }
+    const entry = file ? parseEntryFile(content, filePath) : null;
+    if (file && !entry) {
+      warnUnparsed(
+        `「${filePath.split("/").pop()}」无法解析为日记条目（文件名非条目形状或日期非法），本次修改没有执行。请先在日记本设置中运行「日记格式体检」排查。`,
+        `diary-write-refused-${filePath}`
+      );
+      throw new UnparsedLineError(filePath.split("/").pop() || filePath, 1);
+    }
+    if (!diaryDataMap) setDiaryDataMap(/* @__PURE__ */ new Map());
+    if (file && entry) diaryDataMap.set(filePath, [entry]);
+    else diaryDataMap.delete(filePath);
+    return { file, content, entry };
+  }
+  async function withEntryFile(filePath, task) {
+    return enqueueFileTask(filePath, async () => task(await readEntryCtxInQueue(filePath)));
+  }
+  async function listDateEntries(dateStr, opts) {
+    if (opts == null ? void 0 : opts.filePath) {
+      return withEntryFile(opts.filePath, ({ entry }) => entry ? [{ ...entry }] : []);
+    }
+    const out = [];
+    for (const p of listDateEntryPaths(dateStr)) {
+      try {
+        const es = await withEntryFile(p, ({ entry }) => entry ? [{ ...entry }] : []);
+        out.push(...es);
+      } catch (e) {
+        if (isDiaryReadFailure(e) || e instanceof UnparsedLineError) continue;
+        throw e;
+      }
+    }
+    out.sort((a, b) => a.timeValue - b.timeValue);
+    return out;
+  }
+  async function addEntry(dateStr, timeStr, tagsArray, content, opts) {
+    const [hours = 0, minutes = 0] = timeStr.split(":").map(Number);
+    const timeValue = hours * 100 + minutes;
+    const dir = (opts == null ? void 0 : opts.filePath) ? opts.filePath.split("/").slice(0, -1).join("/") : DIARY_DIRECTORY;
+    const addKey = `${dir}/${dateStr}`;
+    const created = await enqueueFileTask(addKey, async () => {
+      let seq = 1;
+      let filePath = diaryEntryPath(dir, dateStr, timeStr, seq);
+      while (getApp().vault.getAbstractFileByPath(filePath)) {
+        seq += 1;
+        filePath = diaryEntryPath(dir, dateStr, timeStr, seq);
+      }
+      const finalContent = serializeDiaryEntryFile({ date: dateStr, time: timeStr }, tagsArray, content.trim());
+      try {
+        await getApp().vault.create(filePath, finalContent);
+      } catch (error) {
+        console.error(`创建条目文件 ${filePath} 失败:`, error);
+        throw error;
+      }
+      const entry = {
+        date: dateStr,
+        time: timeStr,
+        timeValue,
+        tags: tagsArray,
+        emoji: tagsArray.map((tag) => getTagEmoji(tag)).join(""),
+        content: content.trim(),
+        filename: filePath,
+        filePath,
+        lineNumber: 0,
+        id: `${dateStr}-${timeStr.replace(/:/g, "-")}-${Date.now()}`
+      };
+      if (!diaryDataMap) setDiaryDataMap(/* @__PURE__ */ new Map());
+      diaryDataMap.set(filePath, [entry]);
+      return entry;
+    });
+    emitDomainEvent("diary:entry-added", { date: dateStr, time: timeStr, tags: tagsArray, content: content.trim() });
+    return created;
+  }
+  async function removeDiaryEntries(dateStr, match, opts) {
+    const paths = (opts == null ? void 0 : opts.filePath) ? [opts.filePath] : listDateEntryPaths(dateStr);
+    let removed = 0;
+    for (const p of paths) {
+      try {
+        const del = await enqueueFileTask(p, async () => {
+          const { file, entry } = await readEntryCtxInQueue(p);
+          if (!file || !entry || !match(entry)) return false;
+          await getApp().vault.delete(file);
+          if (diaryDataMap) diaryDataMap.delete(p);
+          return true;
+        });
+        if (del) removed += 1;
+      } catch (e) {
+        if (isDiaryReadFailure(e) || e instanceof UnparsedLineError) continue;
+        throw e;
+      }
+    }
+    return removed;
+  }
+  async function updateDiaryTags(dateStr, match, newTags, opts) {
+    const paths = (opts == null ? void 0 : opts.filePath) ? [opts.filePath] : listDateEntryPaths(dateStr);
+    for (const p of paths) {
+      let hit = null;
+      try {
+        hit = await enqueueFileTask(p, async () => {
+          const { file, content, entry } = await readEntryCtxInQueue(p);
+          if (!file || !entry || !match(entry)) return null;
+          const changed = !(entry.tags.length === newTags.length && entry.tags.every((t) => newTags.includes(t)));
+          if (!changed) return { entry, from: [...entry.tags], changed: false };
+          const body = parseDiaryEntryFile(content).body;
+          await getApp().vault.modify(file, serializeDiaryEntryFile({ date: entry.date, time: entry.time }, newTags, body));
+          const from = [...entry.tags];
+          entry.tags = [...newTags];
+          entry.emoji = newTags.map((tag) => getTagEmoji(tag)).join("");
+          if (diaryDataMap) diaryDataMap.set(p, [entry]);
+          return { entry, from, changed: true };
+        });
+      } catch (e) {
+        if (isDiaryReadFailure(e) || e instanceof UnparsedLineError) continue;
+        throw e;
+      }
+      if (hit) {
+        if (hit.changed) {
+          emitDomainEvent("diary:tags-changed", { date: hit.entry.date, time: hit.entry.time, from: hit.from, to: newTags });
+        }
+        return hit.entry;
+      }
+    }
+    return null;
+  }
+  async function findDiaryEntry(filename) {
+    if (!filename || !filename.includes("/")) return null;
+    try {
+      return await withEntryFile(filename, ({ entry }) => entry ? { ...entry } : null);
+    } catch (e) {
+      return null;
+    }
+  }
+  function isUnparsedRefusal(e) {
+    return e instanceof UnparsedLineError;
+  }
+  function rekeyDiaryMapPath(oldPath, newPath) {
+    if (!diaryDataMap || !oldPath || !newPath || oldPath === newPath) return false;
+    const entries = diaryDataMap.get(oldPath);
+    if (!entries) return false;
+    diaryDataMap.delete(oldPath);
+    for (const e of entries) {
+      if (e.filePath === oldPath) e.filePath = newPath;
+      if (e.filename === oldPath) e.filename = newPath;
+    }
+    diaryDataMap.set(newPath, entries);
+    return true;
+  }
+  function dropDiaryMapPath(path) {
+    if (!diaryDataMap || !path) return false;
+    return diaryDataMap.delete(path);
+  }
+  var diaryDataMap, UnparsedLineError, DiaryFileReadError;
+  var init_store2 = __esm({
+    "src/diary/store.ts"() {
+      init_app();
+      init_notice();
+      init_domain_bus();
+      init_storage();
+      init_diary_format();
+      init_config();
+      init_parser();
+      diaryDataMap = null;
+      UnparsedLineError = class extends Error {
+        constructor(dateStr, count) {
+          super(`「${dateStr}」无法解析为日记条目，已拒绝处理`);
+          this.dateStr = dateStr;
+          this.count = count;
+          this.name = "UnparsedLineError";
+        }
+      };
+      DiaryFileReadError = class extends Error {
+        constructor(filePath, cause_) {
+          super(`日记文件读取失败：${filePath}`);
+          this.filePath = filePath;
+          this.cause_ = cause_;
+          this.name = "DiaryFileReadError";
+        }
+      };
     }
   });
 
@@ -47847,7 +48345,8 @@ GitHub 仓库：${ghInfo.title}
     riverFailed: false,
     order: { version: 3, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] },
     pomodoroPhase: "idle",
-    riverView: null
+    riverView: null,
+    aiGenerating: false
   };
 
   // src/home/ui.ts
@@ -47888,33 +48387,8 @@ GitHub 仓库：${ghInfo.title}
     return new Date(y, mo - 1, d).getTime();
   }
 
-  // src/diary/parser.ts
-  init_fake_obsidian();
-  init_diary_format();
-  init_config();
-  function isEncryptedEntry(entry) {
-    return typeof entry.content === "string" && entry.content.includes("🔐");
-  }
-  function parseEntryFile(content, filePath) {
-    const parsed = parseDiaryEntryFile(content);
-    const meta = resolveDiaryEntryMeta(filePath, parsed);
-    if (!meta) return null;
-    const [h = 0, min = 0] = meta.time.split(":").map(Number);
-    const tags = parsed.tags.length > 0 ? parsed.tags : ["日记"];
-    return {
-      date: meta.date,
-      time: meta.time,
-      timeValue: h * 100 + min,
-      tags,
-      emoji: tags.map((tag) => getTagEmoji(tag)).join(""),
-      content: parsed.body.trim(),
-      filename: filePath,
-      filePath,
-      lineNumber: 0
-    };
-  }
-
   // src/recap/aggregate.ts
+  init_parser();
   init_diary_format();
   init_data();
   init_constants();
@@ -48162,6 +48636,8 @@ GitHub 仓库：${ghInfo.title}
 
   // src/home/behavior-timeline.ts
   init_storage();
+  init_utils();
+  init_str();
   var BEHAVIOR_SIDECAR = "smartcat-behavior.json";
   var SOURCE_DOMAIN = {
     movie: "cinema",
@@ -48202,8 +48678,7 @@ GitHub 仓库：${ghInfo.title}
   var wrap = (name, open, close) => name ? `${open}${name}${close}` : "";
   function mapBehaviorEvent(item) {
     const time = new Date(item.ts);
-    const p23 = (n) => String(n).padStart(2, "0");
-    const timeLabel = `${p23(time.getHours())}:${p23(time.getMinutes())}`;
+    const timeLabel = `${pad2(time.getHours())}:${pad2(time.getMinutes())}`;
     const base = { domain: behaviorSourceDomain(item.source), ts: item.ts, timeLabel };
     const key = `${item.source}:${item.type}`;
     if (key === "review:started") return { ...base, kind: "produce", text: "开始复习" };
@@ -48260,9 +48735,7 @@ GitHub 仓库：${ghInfo.title}
     }
   }
   function dateStrOf2(ts) {
-    const d = new Date(ts);
-    const p23 = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p23(d.getMonth() + 1)}-${p23(d.getDate())}`;
+    return localDayKey(ts);
   }
   function behaviorToDays(items, now, days) {
     const out = [];
@@ -48466,6 +48939,138 @@ GitHub 仓库：${ghInfo.title}
   // src/home/ui.ts
   init_order();
 
+  // src/recap/summarize.ts
+  init_ai();
+  init_diary_format();
+  var RECAP_MARKER = "【今日回顾】";
+  function numbersSegments(summary, failed) {
+    const segs = [];
+    if (!failed.includes("diary")) segs.push(`日记 ${summary.diary} 条`);
+    if (!failed.includes("cinema")) segs.push(`影视 ${summary.movies} 部`);
+    if (!failed.includes("bookshelf")) segs.push(`读完 ${summary.books} 本`);
+    if (!failed.includes("memo")) segs.push(`完成 ${summary.memoDone} 个备忘录`);
+    if (!failed.includes("pomodoro")) segs.push(`番茄 ${summary.pomodoros} 个 ${summary.pomodoroMinutes} 分钟`);
+    return segs;
+  }
+  function numbersLine(summary, failed) {
+    const segs = numbersSegments(summary, failed);
+    return segs.length ? `今日数字：${segs.join(" · ")}` : "";
+  }
+  function templateSummary(summary, failed) {
+    const segs = numbersSegments(summary, failed);
+    return segs.length ? `今天：${segs.join("、")}` : "今天：暂时没有可用的记录";
+  }
+  function buildRecapDigest(data) {
+    const lines = [];
+    const nums = numbersSegments(data.summary, data.failed);
+    if (nums.length) lines.push(`【今日数字】${nums.join("、")}`);
+    if (data.items.length) {
+      lines.push("【今日痕迹】");
+      for (const it of data.items) lines.push(`- ${it.timeLabel} ${it.text}`);
+    }
+    return lines.join("\n");
+  }
+  function buildSummaryPrompt(digest) {
+    return [
+      "你是用户的私人日记助手「包仔」。根据下面这位用户今天的生活记录，写一段今日总结，直接说给用户本人听：",
+      "- 口语化，像朋友聊天一样自然，温暖不油腻",
+      "- 全程用第二人称「你」",
+      "- 150~300 字：可以点名今天看过的影视、读过的书、完成的备忘录、专注的时段，结尾给一句轻松的观察或祝愿",
+      "- 只输出总结正文：不要标题、不要列表、不要「以下是总结」之类的说明",
+      "",
+      digest
+    ].join("\n");
+  }
+  function sanitizeSummaryText(text) {
+    return String(text || "").trim();
+  }
+  function buildEntryContent(body, summary, failed, opts) {
+    const parts = [RECAP_MARKER, body.trim()];
+    if (opts.withNumbers) {
+      const nums = numbersLine(summary, failed);
+      if (nums) parts.push("", nums);
+    }
+    return parts.join("\n");
+  }
+  function isRecapEntry(e) {
+    return isRecapMarkedText(e.content);
+  }
+  function isRecapMarkedText(text) {
+    return typeof text === "string" && text.trimStart().startsWith(RECAP_MARKER);
+  }
+  function entryTextWithoutMarker(content) {
+    const lines = content.split("\n");
+    if (lines.length && lines[0].trim() === RECAP_MARKER) return lines.slice(1).join("\n").trim();
+    return content.trim();
+  }
+  async function aiUnavailableReason() {
+    try {
+      await getAIProvider();
+      return null;
+    } catch (e) {
+      return e instanceof Error ? e.message : String(e);
+    }
+  }
+  async function generateRecapContent(data) {
+    const summary = data.summary;
+    const failed = data.failed;
+    if (failed.length >= 5) {
+      return { ok: false, mode: "template", content: "", degradeReason: "今天的数据暂时读不到，请稍后再试" };
+    }
+    const template = () => templateSummary(summary, failed);
+    const unavailable = await aiUnavailableReason();
+    if (unavailable) {
+      return { ok: true, mode: "template", content: buildEntryContent(template(), summary, failed, { withNumbers: false }), degradeReason: `未配置 AI 服务（${unavailable}），已生成数字模板总结` };
+    }
+    try {
+      const ai = createAI();
+      const raw = await ai.chat(buildSummaryPrompt(buildRecapDigest(data)));
+      const text = sanitizeSummaryText(String(raw || ""));
+      if (!text) {
+        return { ok: true, mode: "template", content: buildEntryContent(template(), summary, failed, { withNumbers: false }), degradeReason: "AI 返回了空内容，已生成数字模板总结" };
+      }
+      return { ok: true, mode: "ai", content: buildEntryContent(text, summary, failed, { withNumbers: true }), degradeReason: null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn("[recap] AI 总结生成失败，降级数字模板:", e);
+      return { ok: true, mode: "template", content: buildEntryContent(template(), summary, failed, { withNumbers: false }), degradeReason: `AI 调用失败（${msg}），已生成数字模板总结` };
+    }
+  }
+  async function findRecapEntryPath(app, now = Date.now()) {
+    var _a2, _b2;
+    try {
+      const dir = settingDir(["diaryDirectory"], "我的/日记");
+      const dateStr = localDayStr(now);
+      const files = ((_b2 = (_a2 = app.vault).getMarkdownFiles) == null ? void 0 : _b2.call(_a2)) || [];
+      const candidates = files.map((f) => f.path).filter((p) => p.startsWith(`${dir}/`) && diaryDateFromEntryPath(p) === dateStr);
+      for (const p of candidates) {
+        const f = app.vault.getAbstractFileByPath(p);
+        if (!f) continue;
+        const parsed = parseDiaryEntryFile(await app.vault.read(f));
+        if (isRecapMarkedText(parsed.body)) return p;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+  async function writeRecapEntry(content, now = Date.now()) {
+    const dateStr = localDayStr(now);
+    const store2 = await Promise.resolve().then(() => (init_store2(), store_exports));
+    const timeStr = fmtHM(now);
+    const hadOld = (await store2.listDateEntries(dateStr).catch(() => [])).some(isRecapEntry);
+    await store2.addEntry(dateStr, timeStr, ["日记"], content);
+    try {
+      await store2.removeDiaryEntries(dateStr, (e) => isRecapEntry(e) && !(e.time === timeStr && e.content === content.trim()));
+    } catch (e) {
+      console.warn("[recap] 清理旧「今日回顾」条目失败（下次生成会重试清理）:", e);
+    }
+    return hadOld ? "replaced" : "written";
+  }
+  async function hasRecapEntry(app, now = Date.now()) {
+    return await findRecapEntryPath(app, now) !== null;
+  }
+
   // src/home/render.ts
   init_shared();
 
@@ -48515,9 +49120,10 @@ GitHub 仓库：${ghInfo.title}
     const filter = (_a2 = opts.filter) != null ? _a2 : DEFAULT_TIMELINE_FILTER;
     const showTime = opts.showTime !== false;
     const size = (_b2 = opts.size) != null ? _b2 : "normal";
-    const wrap2 = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + "</div>";
     const day = (_c = data.days.find((d) => d.dateStr === view)) != null ? _c : data.today;
     const isToday = day.dateStr === data.today.dateStr;
+    const aiRow = isToday ? '<div class="bz-home-ai-row"><button type="button" class="bz-btn bz-home-ai" data-home-ai disabled title="把今天的痕迹写成一段总结，写进日记">生成今日总结</button></div>' : "";
+    const wrap2 = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + aiRow + "</div>";
     const notes = isToday && filter.notes ? buildNotes(data) : [];
     const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => eventVisible(e, filter));
     const body = kept.map(({ e, i }) => {
@@ -48526,8 +49132,8 @@ GitHub 仓库：${ghInfo.title}
       const lastDiary = i === ((_a3 = kept[kept.length - 1]) == null ? void 0 : _a3.i) && note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
       const memoId = e.domain;
       const dmColor = domainColor(memoId);
-      const dmName = (_c2 = (_b3 = DOMAIN_MAP2.get(memoId)) == null ? void 0 : _b3.name) != null ? _c2 : e.domain;
-      const dmIcon = (_e = (_d = DOMAIN_MAP2.get(memoId)) == null ? void 0 : _d.icon) != null ? _e : "";
+      const dmName = (_c2 = (_b3 = DOMAIN_MAP.get(memoId)) == null ? void 0 : _b3.name) != null ? _c2 : e.domain;
+      const dmIcon = (_e = (_d = DOMAIN_MAP.get(memoId)) == null ? void 0 : _d.icon) != null ? _e : "";
       return '<div class="bz-home-ev' + lastDiary + '">' + (showTime ? '<span class="bz-home-ev-tm">' + esc(e.timeLabel) + "</span>" : "") + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
     }).join("");
     if (kept.length) return wrap2(body);
@@ -48595,7 +49201,7 @@ GitHub 仓库：${ghInfo.title}
     H.overlayVisible = true;
     mountIcons(overlay2);
     bindEvents2(overlay2, app);
-    renderAll4();
+    renderAll5();
     void refreshRiverAndRender();
   }
   async function readPomodoroPhase(app) {
@@ -48625,7 +49231,7 @@ GitHub 仓库：${ghInfo.title}
       const { defaultDay, rangeDays } = readHomeSettings();
       H.riverView = pickInitialView(river, defaultDay, rangeDays);
     }
-    renderAll4();
+    renderAll5();
   }
   function closeOverlay() {
     if (!H.currentOverlay || !H.overlayVisible) return;
@@ -48661,10 +49267,14 @@ GitHub 仓库：${ghInfo.title}
         closeOverlay();
         return;
       }
+      if (t.closest("[data-home-ai]")) {
+        void onGenerateClick(app);
+        return;
+      }
       const go = t.closest("[data-home-go]");
       if (go) {
         const id = go.dataset.homeGo || "";
-        if (id && DOMAIN_MAP2.has(id)) openDomain(id, app);
+        if (id && DOMAIN_MAP.has(id)) openDomain(id, app);
         return;
       }
       const wk = t.closest("[data-home-weekday]");
@@ -48677,13 +49287,14 @@ GitHub 仓库：${ghInfo.title}
           if (flow) {
             flow.innerHTML = flowHtml(H.river, (_a2 = H.riverView) != null ? _a2 : "", readHomeSettings().flow);
             mountIcons(flow);
+            void syncHomeAiButton(H.appRef);
           }
         }
       }
     });
   }
   function openDomain(id, app) {
-    const d = DOMAIN_MAP2.get(id);
+    const d = DOMAIN_MAP.get(id);
     if (!d) return;
     closeOverlay();
     runCommand(d.commandId, app, `「${d.name}」暂时不可用`);
@@ -48713,7 +49324,7 @@ GitHub 仓库：${ghInfo.title}
     return Array.from(container.querySelectorAll(".bz-home-erow, .bz-home-m-tile"));
   }
   function attachRowMenu(el, app, river) {
-    const d = DOMAIN_MAP2.get(el.dataset.homeGo || "");
+    const d = DOMAIN_MAP.get(el.dataset.homeGo || "");
     if (!d) return;
     const menu = DOMAIN_MENU[d.id];
     if (!menu || !menu.length) return;
@@ -48750,7 +49361,105 @@ GitHub 仓库：${ghInfo.title}
     const tiles = overlay2.querySelector("[data-home-tiles]");
     if (tiles) for (const el of rowEls(tiles)) attachRowMenu(el, app, river);
   }
-  function renderAll4() {
+  function aiButton() {
+    var _a2, _b2;
+    return (_b2 = (_a2 = H.currentOverlay) == null ? void 0 : _a2.querySelector("[data-home-ai]")) != null ? _b2 : null;
+  }
+  async function syncHomeAiButton(app) {
+    var _a2;
+    const btn = aiButton();
+    if (!btn) return;
+    const written = await hasRecapEntry((_a2 = H.appRef) != null ? _a2 : app);
+    if (!btn.isConnected || H.aiGenerating) return;
+    setAiButton(btn, written ? "重新生成" : "生成今日总结", false);
+  }
+  function setAiButton(btn, label, loading2) {
+    btn.disabled = loading2;
+    if (loading2) {
+      btn.innerHTML = `<span class="bz-spinner bz-spinner--sm"></span>生成中…`;
+      btn.title = "";
+    } else {
+      btn.textContent = label;
+      btn.title = label === "重新生成" ? "替换今天已有的「今日回顾」条目" : "把今天的痕迹写成一段总结，写进日记";
+    }
+  }
+  function notifyWritten(app) {
+    notify("今日总结已写入日记", {
+      type: "success",
+      action: {
+        label: "查看",
+        onClick: () => {
+          var _a2;
+          try {
+            void findRecapEntryPath((_a2 = H.appRef) != null ? _a2 : app).then((p) => {
+              var _a3;
+              if (!p) return;
+              void ((_a3 = H.appRef) != null ? _a3 : app).workspace.openLinkText(p.replace(/\.md$/, ""), "", false, { active: true });
+            });
+          } catch (e) {
+          }
+        }
+      }
+    });
+  }
+  function notifyTemplateFallback(app, reason, content) {
+    notify(reason, {
+      type: "warning",
+      duration: 1e4,
+      actions: [
+        {
+          label: "写入日记",
+          onClick: () => {
+            writeRecapEntry(content).then(() => {
+              var _a2, _b2;
+              notifyWritten((_a2 = H.appRef) != null ? _a2 : app);
+              void syncHomeAiButton((_b2 = H.appRef) != null ? _b2 : app);
+            }).catch((e) => notifySaveError(e, "写入日记"));
+          }
+        },
+        {
+          label: "复制",
+          onClick: () => {
+            navigator.clipboard.writeText(entryTextWithoutMarker(content)).then(() => notify("已复制今日总结", { type: "success" })).catch((e) => notifyActionError(e, "复制"));
+          }
+        }
+      ]
+    });
+  }
+  async function onGenerateClick(app) {
+    var _a2, _b2, _c, _d;
+    if (H.aiGenerating) return;
+    const btn = aiButton();
+    if (!btn) return;
+    H.aiGenerating = true;
+    setAiButton(btn, "", true);
+    try {
+      let data;
+      try {
+        data = await collectRecap((_a2 = H.appRef) != null ? _a2 : app);
+      } catch (e) {
+        notify("今天的数据暂时读不到，请稍后再试", { type: "warning" });
+        return;
+      }
+      const result = await generateRecapContent(data);
+      if (!result.ok) {
+        notify(result.degradeReason || "暂时生成不了今日总结，请稍后再试", { type: "warning" });
+        return;
+      }
+      if (result.mode === "ai") {
+        await writeRecapEntry(result.content);
+        notifyWritten((_b2 = H.appRef) != null ? _b2 : app);
+      } else {
+        notifyTemplateFallback((_c = H.appRef) != null ? _c : app, result.degradeReason || "已生成数字模板总结", result.content);
+      }
+    } catch (e) {
+      notifyActionError(e, "生成今日总结");
+    } finally {
+      H.aiGenerating = false;
+      void syncHomeAiButton((_d = H.appRef) != null ? _d : app);
+    }
+  }
+  function renderAll5() {
     const overlay2 = H.currentOverlay;
     if (!overlay2) return;
     const date = overlay2.querySelector("[data-home-date]");
@@ -48767,7 +49476,7 @@ GitHub 仓库：${ghInfo.title}
         });
         const retry = uiBtn({ label: "重试", onClick: () => {
           H.riverFailed = false;
-          renderAll4();
+          renderAll5();
           void refreshRiverAndRender();
         } });
         const row = document.createElement("div");
@@ -48810,16 +49519,17 @@ GitHub 仓库：${ghInfo.title}
     mountIcons(next);
     mountIcons(tiles);
     mountRowInteractions(overlay2, H.appRef, river);
+    void syncHomeAiButton(H.appRef);
   }
   function registerEscapeHandler() {
     registerPanelEsc("bz-home", () => !!H.currentOverlay && H.overlayVisible, closeOverlay);
   }
 
   // src/home/index.ts
-  var initialized7 = false;
+  var initialized6 = false;
   function ensureHome(app) {
-    if (initialized7) return;
-    initialized7 = true;
+    if (initialized6) return;
+    initialized6 = true;
     H.appRef = app;
   }
   function openHome(app) {
@@ -48840,11 +49550,11 @@ GitHub 仓库：${ghInfo.title}
   var SEED_REV = 7;
   var SEED_MARK = "bz-sim:__home_seed";
   var KEY_PREFIX2 = "bz-sim:";
-  var p22 = (n) => String(n).padStart(2, "0");
+  var p2 = (n) => String(n).padStart(2, "0");
   function dstr(n) {
     const d = /* @__PURE__ */ new Date();
     d.setDate(d.getDate() - n);
-    return `${d.getFullYear()}-${p22(d.getMonth() + 1)}-${p22(d.getDate())}`;
+    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
   }
   function at(n, hm) {
     const [h, m] = hm.split(":").map(Number);

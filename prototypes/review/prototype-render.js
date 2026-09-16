@@ -1,5 +1,5 @@
-/* 源指纹 7747d642cc8c2236 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["src/review/fsrs.ts","src/review/queue.ts","src/review/render.ts","src/review/stats.ts"]*/
+/* 源指纹 0a430c6ccb4cdcd9 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["src/core/ui/str.ts","src/review/fsrs.ts","src/review/queue.ts","src/review/render.ts","src/review/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/review/render.ts → window.BZR_review（评审壳预览包，ADR-0104） */
 var BZR_review = (() => {
   var __defProp = Object.defineProperty;
@@ -27,7 +27,7 @@ var BZR_review = (() => {
     currentRPct: () => currentRPct,
     difficultyDialogHtml: () => difficultyDialogHtml,
     dueLabelOf: () => dueLabelOf,
-    esc: () => esc,
+    esc: () => esc2,
     icon: () => icon,
     isPlayable: () => isPlayable,
     markHtml: () => markHtml,
@@ -47,6 +47,21 @@ var BZR_review = (() => {
     stageTagHtml: () => stageTagHtml,
     todayLabel: () => todayLabel
   });
+
+  // src/core/ui/str.ts
+  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function emptyHtmlStr(icon2, title, desc) {
+    return `<div class="bz-empty">${icon2 ? iconSpan(icon2, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
 
   // src/review/fsrs.ts
   var DEFAULT_W = [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 1.26, 0.07, 0.35, 2.06, 0.57, 0.09, 0.05, 0.33, 2.15];
@@ -209,7 +224,7 @@ var BZR_review = (() => {
 
   // src/review/render.ts
   var ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  function esc(s) {
+  function esc2(s) {
     return String(s).replace(/[&<>"']/g, (c) => ESC[c]);
   }
   function icon(name, extra = "bz-q-ic") {
@@ -289,7 +304,7 @@ var BZR_review = (() => {
     const w = (_b = ctx.w) != null ? _b : DEFAULT_W;
     const due = dueLabelOf(item, now);
     const canPlay = isPlayable(item, now) && !item.isMissing;
-    const title = item.isCompleted ? `<s>${esc(item.name)}</s>` : esc(item.name);
+    const title = item.isCompleted ? `<s>${esc2(item.name)}</s>` : esc2(item.name);
     const cls = [
       "bz-q-card",
       item.isOverdue ? "danger" : "",
@@ -407,7 +422,7 @@ var BZR_review = (() => {
       return `
           <div class="bz-sprint-opt${extra}${answered ? " is-disabled" : ""}" data-i="${i}" role="button" tabindex="${answered ? "-1" : "0"}" aria-disabled="${answered ? "true" : "false"}">
             <span class="k">${"ABCD"[i]}</span>
-            <span class="t">${esc(opt)}</span>
+            <span class="t">${esc2(opt)}</span>
             <span class="m">${m}</span>
           </div>`;
     }).join("");
@@ -421,14 +436,14 @@ var BZR_review = (() => {
     const lastWrong = st.answered && !st.lastCorrect && !st.remaining;
     const nextBtn = st.answered && !st.lastCorrect && st.remaining ? `<button class="bz-btn bz-btn--primary" data-action="next">下一题 →</button>` : lastWrong ? `<button class="bz-btn bz-btn--primary" data-action="note">${icon("flag", "bz-sprint-ic")} 结束并结算</button>` : "";
     const submit = needSubmit ? `<button class="bz-btn bz-btn--primary bz-sprint-submit" data-action="submit">提交答案</button>` : "";
-    const explain = st.answered && !st.lastCorrect && question.explain ? `<div class="bz-sprint-explain">${esc(question.explain)}</div>` : "";
+    const explain = st.answered && !st.lastCorrect && question.explain ? `<div class="bz-sprint-explain">${esc2(question.explain)}</div>` : "";
     return `
       <div class="bz-sprint-qtop">
         <span class="bz-sprint-progress">${done + 1}/${total}</span>
       </div>
       <div class="bz-sprint-qcard">
         <div class="bz-sprint-qtype">${single ? "单选" : "多选"}</div>
-        <div class="bz-sprint-qtext">${esc(question.question)}</div>
+        <div class="bz-sprint-qtext">${esc2(question.question)}</div>
         <div class="bz-sprint-opts">${optsHtml}</div>
         ${explain}
         ${submit}
@@ -437,7 +452,7 @@ var BZR_review = (() => {
   }
   function sprintAsideHtml(entries) {
     const rows = entries.map((e) => {
-      const name = esc(e.name);
+      const name = esc2(e.name);
       if (e.state === "passed") return `<div class="bz-sq-item passed"><span class="nm"><s>${name}</s></span></div>`;
       if (e.state === "failed") return `<div class="bz-sq-item failed"><span class="nm">${name}</span></div>`;
       if (e.state === "doing") return `<div class="bz-sq-item doing"><span class="nm">${name}</span></div>`;
@@ -445,7 +460,7 @@ var BZR_review = (() => {
     }).join("");
     return `
       <div class="bz-sq-head"><b>本轮队列</b></div>
-      <div class="bz-sq-list">${rows || '<div class="bz-empty"><div class="bz-empty-title">队列完毕</div></div>'}</div>`;
+      <div class="bz-sq-list">${rows || emptyHtmlStr("", "队列完毕")}</div>`;
   }
   function sprintBodyHtml(mainHtml, entries) {
     return `
@@ -458,13 +473,13 @@ var BZR_review = (() => {
     const total = p.acc + p.wrong;
     const inner = p.passed ? `
         <div class="bz-result-ic">${markHtml("ok", "lg")}</div>
-        <div class="bz-result-name">${esc(p.name)}</div>
+        <div class="bz-result-name">${esc2(p.name)}</div>
         <div class="bz-result-score">${p.acc}<span class="sl">/${total}</span></div>
         <span class="bz-result-rating pass">${p.ratingLine}</span>
         <button class="bz-btn bz-btn--primary bz-btn--block" data-action="next">${p.nextLabel}</button>
         ${p.showEnd ? `<button class="bz-btn bz-btn--ghost bz-btn--block" data-action="end">结束这次复习</button>` : ""}` : `
         <div class="bz-result-ic bad">${markHtml("bad", "lg")}</div>
-        <div class="bz-result-name">${esc(p.name)}</div>
+        <div class="bz-result-name">${esc2(p.name)}</div>
         <div class="bz-result-score">${p.acc}<span class="sl">/${total}</span></div>
         <span class="bz-result-rating fail">${p.ratingLine}</span>
         <button class="bz-btn bz-btn--danger bz-btn--block" data-action="note">${icon("file-text", "bz-sprint-ic")} 复习此笔记 · 打开原文</button>`;
@@ -507,11 +522,11 @@ var BZR_review = (() => {
     } else if (ctx.scope === "folder") {
       const chips = ctx.folders.length ? ctx.folders.map((f) => {
         const label = f === "" ? "（库根目录）" : f;
-        return `<span class="bz-qp-chip"><span class="bz-qp-chip-name" title="${esc(label)}">${esc(label)}</span><button type="button" class="bz-qp-chip-x" data-rm-folder="${esc(f)}" aria-label="移除 ${esc(label)}">✕</button></span>`;
+        return `<span class="bz-qp-chip"><span class="bz-qp-chip-name" title="${esc2(label)}">${esc2(label)}</span><button type="button" class="bz-qp-chip-x" data-rm-folder="${esc2(f)}" aria-label="移除 ${esc2(label)}">✕</button></span>`;
       }).join("") : `<span class="bz-qp-detail">还没选文件夹</span>`;
       detail = `<div class="bz-qp-folder-row"><div class="bz-qp-chips">${chips}</div><button type="button" class="bz-btn bz-btn--ghost" data-act="pick-folders">${ctx.folders.length ? "改文件夹" : "选择文件夹"}</button></div>`;
     } else {
-      detail = `<div class="bz-qp-note-field"><input type="text" class="bz-input bz-qp-note-input" data-role="note-input" placeholder="输入笔记名筛选，点选确定" value="${esc(ctx.notePath)}"></div>`;
+      detail = `<div class="bz-qp-note-field"><input type="text" class="bz-input bz-qp-note-input" data-role="note-input" placeholder="输入笔记名筛选，点选确定" value="${esc2(ctx.notePath)}"></div>`;
     }
     const meta = ctx.bankCount === null ? "" : ctx.bankCount > 0 ? `当前范围现有 <b>${ctx.bankCount}</b> 题` : "当前范围还没有题目，开始后会自动出题";
     return `
@@ -556,7 +571,7 @@ var BZR_review = (() => {
   }
   function difficultyDialogHtml(item) {
     return `
-      <h4>标记复习：${esc(item.name)}</h4>
+      <h4>标记复习：${esc2(item.name)}</h4>
       <button class="diff-btn" data-diff="again">忘了（Again）</button>
       <button class="diff-btn" data-diff="hard">困难（Hard）</button>
       <button class="diff-btn" data-diff="good">一般（Good）</button>
@@ -568,7 +583,7 @@ var BZR_review = (() => {
     const names = { again: "忘了", hard: "困难", good: "一般", easy: "简单" };
     const btns = ["again", "hard", "good", "easy"].map((r) => `<button class="bz-review-bar-btn bz-touch-target--sm is-${r}" data-rating="${r}">${names[r]}</button>`).join("");
     return `
-    <span class="bz-review-bar-info">${esc(p.name.replace(/^《|》$/g, ""))}<i>(${p.index}/${p.total})</i></span>
+    <span class="bz-review-bar-info">${esc2(p.name.replace(/^《|》$/g, ""))}<i>(${p.index}/${p.total})</i></span>
     <span class="bz-review-bar-act">${btns}
       <button class="bz-review-bar-btn bz-touch-target--sm is-skip" data-rating="skip">${"跳过"}</button>
     </span>`;

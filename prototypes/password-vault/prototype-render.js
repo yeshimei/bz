@@ -1,4 +1,4 @@
-/* 源指纹 25704c836fd4e119 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 85cf76b14743c7c3 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/password-vault/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/password-vault/render.ts → window.BZR_password_vault（评审壳预览包，ADR-0104） */
 var BZR_password_vault = (() => {
@@ -27,7 +27,6 @@ var BZR_password_vault = (() => {
     acctCardHtml: () => acctCardHtml,
     avatarHTML: () => avatarHTML,
     colorOf: () => colorOf,
-    confirmHTML: () => confirmHTML,
     deskHTML: () => deskHTML,
     dots: () => dots,
     emptyHtml: () => emptyHtml,
@@ -140,13 +139,6 @@ var BZR_password_vault = (() => {
         </div>
       </div>`;
   }
-  function confirmHTML(which) {
-    return `
-      <div class="bz-password-vault-pop2" data-confirm="${which}">
-        <div class="card"><h3>确认</h3><div class="msg"></div>
-        <div class="btns"><button class="cancel" data-act="cancel">取消</button><button class="ok" data-act="ok">确定</button></div></div>
-      </div>`;
-  }
   function platEditHTML(which) {
     return `
       <div class="bz-password-vault-pop2 bz-password-vault-platedit" data-plat-edit="${which}">
@@ -186,9 +178,7 @@ var BZR_password_vault = (() => {
         </div>
       </div>
       ${lockHTML("desk")}
-      <div class="bz-password-vault-toast"></div>
       ${modalHTML("desk")}
-      ${confirmHTML("desk")}
       ${platEditHTML("desk")}
     `;
   }
@@ -213,9 +203,7 @@ var BZR_password_vault = (() => {
         </div>
       </div>
       ${lockHTML("mob")}
-      <div class="bz-password-vault-toast"></div>
       ${modalHTML("mob")}
-      ${confirmHTML("mob")}
       ${platEditHTML("mob")}
     `;
   }
