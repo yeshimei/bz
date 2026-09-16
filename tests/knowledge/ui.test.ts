@@ -163,11 +163,9 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     noteGen.generatePassageDraft.mockReset();
     noteGen.generateImageNote.mockReset();
     noteGen.generateImageDraft.mockReset();
-    noteGen.summarizeTermSummary.mockReset();
     noteGen.backfillNotes.mockReset();
     noteGen.findDuplicateTermNote.mockReset();
     noteGen.generateTermDraft.mockResolvedValue({ summary: 'AI 简介', domain: '心理' });
-    noteGen.summarizeTermSummary.mockResolvedValue('精简版简介');
     noteGen.generateTermNote.mockResolvedValue('文献盒/松果体.md');
     noteGen.generatePassageDraft.mockResolvedValue({ title: '自动标题', summary: '整理正文', domain: '社会' });
     noteGen.generatePassageNote.mockResolvedValue('文献盒/自动标题.md');
@@ -1046,28 +1044,36 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
 
   // ==================== 录入草稿流式成形（ADR-0152 / issue 343） ====================
 
-  it('点下即开界面：预览区立刻展开，属性行「分析中…」、正文区「正在生成…」，总结与写入禁用（ADR-0152 决策 4）', async () => {
+  it('点下即开界面：预览区立刻展开，属性行「分析中…」、正文区「正在生成…」，写入禁用（ADR-0152 决策 4）', async () => {
     let release: (v: any) => void = () => {};
     noteGen.generateTermDraft.mockReturnValueOnce(new Promise<any>((res) => { release = res; }));
     ui.showTermEntry();
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     (document.getElementById('lit-term-input') as HTMLInputElement).value = '量子纠缠';
+    // 预览收起时：生成入口在输入行下方（属性/底部按钮都还不在）
+    expect((document.getElementById('lit-term-gen-row') as HTMLElement).style.display).not.toBe('none');
     (document.getElementById('lit-term-generate') as HTMLElement).click();
     // 不等 AI 返回：界面已在位
     expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex');
     expect(document.getElementById('lit-term-meta-term')!.textContent).toBe('量子纠缠'); // 用户输入侧先给值
     expect(document.getElementById('lit-term-meta-date')!.textContent).not.toBe(''); // 日期同理
     expect(document.getElementById('lit-term-meta-domain')!.textContent).toBe('分析中…'); // AI 产出侧挂占位
+    // 领域占位与关联行同一套信号（滑动墨条 + 同一句文案）
+    expect(document.getElementById('lit-term-meta-domain')!.querySelector('.bz-lit-rel-bar')).not.toBeNull();
     expect(document.getElementById('lit-term-content')!.textContent).toBe('正在生成…');
     expect(document.getElementById('lit-term-content')!.classList.contains('bz-lit-term-pending')).toBe(true);
-    // 忙态只锁总结与写入；生成键保持可点（再点 = 中止重开，决策 7）
+    // 生成入口让位给底部「重新生成」（ADR-0152 决策 12）：其一在途可点 = 中止重开（决策 7）；写入锁住
+    expect((document.getElementById('lit-term-gen-row') as HTMLElement).style.display).toBe('none');
+    const regen = document.getElementById('lit-term-regenerate') as HTMLButtonElement;
+    expect(regen.disabled).toBe(false);
+    expect(regen.textContent).toBe('生成中…');
     expect((document.getElementById('lit-term-save') as HTMLButtonElement).disabled).toBe(true);
-    expect((document.getElementById('lit-term-regenerate') as HTMLButtonElement).disabled).toBe(true);
-    expect((document.getElementById('lit-term-generate') as HTMLButtonElement).disabled).toBe(false);
     release({ summary: '量子纠缠是物理现象', domain: '物理' });
     await vi.waitFor(() => expect(document.getElementById('lit-term-content')!.textContent).toBe('量子纠缠是物理现象'));
     expect(document.getElementById('lit-term-meta-domain')!.textContent).toBe('物理');
+    expect(document.getElementById('lit-term-meta-domain')!.querySelector('.bz-lit-rel-bar')).toBeNull(); // 落值即撤占位
     expect(document.getElementById('lit-term-content')!.classList.contains('bz-lit-term-pending')).toBe(false);
+    expect(regen.textContent).toBe('重新生成');
     expect((document.getElementById('lit-term-save') as HTMLButtonElement).disabled).toBe(false);
   });
 
@@ -1111,16 +1117,18 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     (document.getElementById('lit-term-input') as HTMLInputElement).value = '量子纠缠';
     const gen = document.getElementById('lit-term-generate') as HTMLElement;
-    gen.click();
+    gen.click(); // 预览收起时：入口在输入行下方
     expect(signals).toHaveLength(1);
     expect(signals[0].aborted).toBe(false);
-    gen.click(); // 再点：中止并重开
+    const regen = document.getElementById('lit-term-regenerate') as HTMLButtonElement;
+    expect((document.getElementById('lit-term-gen-row') as HTMLElement).style.display).toBe('none'); // 入口已移交底部
+    regen.click(); // 再点（底部「重新生成」）：中止并重开
     expect(signals).toHaveLength(2);
     expect(signals[0].aborted).toBe(true); // 旧流被中止
     expect(signals[1].aborted).toBe(false);
     expect(document.getElementById('lit-term-content')!.textContent).toBe('正在生成…'); // 旧正文不留在屏上
     expect(document.getElementById('lit-term-content')!.classList.contains('bz-lit-term-pending')).toBe(true);
-    expect(document.getElementById('lit-term-generate')!.textContent).toBe('生成中…'); // 新一轮仍在跑
+    expect(regen.textContent).toBe('生成中…'); // 新一轮仍在跑
     await vi.waitFor(() => expect(getNoticeMessages().join('\n')).not.toContain('生成中断')); // 主动中止不报中断
   });
 
@@ -1136,7 +1144,8 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(getNoticeMessages().join('\n')).toContain('生成中断'));
     expect(document.getElementById('lit-term-content')!.textContent).toBe('量子纠缠是一种'); // 文字不白丢
     expect((document.getElementById('lit-term-save') as HTMLButtonElement).disabled).toBe(true);
-    expect((document.getElementById('lit-term-regenerate') as HTMLButtonElement).disabled).toBe(true); // 半篇不给总结
+    // 中断态下「重新生成」是回到可写状态的唯一出路 → 必须可点（半篇只锁写入，不锁重来）
+    expect((document.getElementById('lit-term-regenerate') as HTMLButtonElement).disabled).toBe(false);
     // 按钮之外还有一道守卫：绕过界面直接写也被拦
     await (ui as any).onTermConfirm();
     expect(noteGen.generateTermNote).not.toHaveBeenCalled();
@@ -1291,7 +1300,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
   });
 
-  it('关联分析中不锁按钮（issue 327）：重新生成 / 总结随点随断在途裁判，新内容回来再分析', async () => {
+  it('关联分析中不锁按钮（issue 327）：重新生成随点随断在途裁判，新内容回来再分析', async () => {
     const previews: string[] = [];
     const signals: Array<AbortSignal | undefined> = [];
     setLinkBridge({
@@ -1306,21 +1315,20 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     (document.getElementById('lit-term-input') as HTMLInputElement).value = '心流';
     await (ui as any).onTermGenerate(); // 生成完即起预演（挂在 loading 上，未落地）
-    const gen = document.getElementById('lit-term-generate') as HTMLButtonElement;
     const regen = document.getElementById('lit-term-regenerate') as HTMLButtonElement;
     const save = document.getElementById('lit-term-save') as HTMLButtonElement;
     expect(previews).toEqual(['AI 简介']);
-    // issue 327：分析中不锁按钮（setEntryRelBusy 退役）——三个按钮全部可用
-    expect([gen.disabled, regen.disabled, save.disabled]).toEqual([false, false, false]);
-    // 总结 → 点下即断在途裁判（signal aborted），新内容回来再起新一轮预演
-    await (ui as any).onTermSummarize();
-    expect(previews).toEqual(['AI 简介', '精简版简介']);
+    // issue 327：分析中不锁按钮（setEntryRelBusy 退役）——重新生成与确认写入都可用
+    expect([regen.disabled, save.disabled]).toEqual([false, false]);
+    // 重新生成 → 点下即断在途裁判（signal aborted），新内容回来再起新一轮预演
+    await (ui as any).onTermGenerate();
+    expect(previews).toEqual(['AI 简介', 'AI 简介']);
     expect(signals).toHaveLength(2);
     expect(signals[0]?.aborted).toBe(true); // 上一轮被真中断
     expect(signals[1]?.aborted).toBe(false);
-    // 重新生成同款：再断一轮、再起一轮
+    // 同款再来一次：又断一轮、又起一轮
     await (ui as any).onTermGenerate();
-    expect(previews).toEqual(['AI 简介', '精简版简介', 'AI 简介']);
+    expect(previews).toEqual(['AI 简介', 'AI 简介', 'AI 简介']);
     expect(signals[1]?.aborted).toBe(true);
   });
 
