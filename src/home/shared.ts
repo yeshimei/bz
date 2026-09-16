@@ -248,8 +248,13 @@ export const DOMAIN_MENU: Record<string, DomainMenuAction[]> = {
   clipping: [
     { label: '未读全部标为已读', commandId: 'bz-clipbook-mark-all-read', icon: 'check-check', kind: 'danger', keepHome: true },
   ],
+  // 知识盒：四入口补齐（2026-09-16 用户点名——此前只有名词与影像两条，段落/图版缺）。
+  // 顺序与主窗录入入口行同源（名词 → 段落 → 图版 → 影像，见 knowledge/ui.ts renderLiterature），
+  // 不在这里另立一套次序。四条都是「打开录入弹层」类动作，故都不带 keepHome（关首页再弹）。
   knowledge: [
     { label: '名词生成文献笔记', commandId: 'bz-knowledge-note-term', icon: 'file-text' },
+    { label: '段落生成文献笔记', commandId: 'bz-knowledge-note-passage', icon: 'align-left' },
+    { label: '图版生成文献笔记', commandId: 'bz-knowledge-note-image', icon: 'image' },
     { label: '影像生成文献笔记', commandId: 'bz-knowledge-note-video', icon: 'list-video' },
   ],
   bookshelf: [

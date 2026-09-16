@@ -1937,7 +1937,7 @@ async function pinSuggestion(st: CanvasState, ghost: MountSuggestion): Promise<v
   let changed = false;
   try {
     // D3 可靠写契约：用户文档的「读-改-写」走 core/storage 的 per-path 串行队列（enqueueFileTask），
-    // 与提炼成卡 / 自动摘要 / 用户手编等写方串行，避免同文件互吞
+    // 与自动摘要 / 自动关联 / 用户手编等写方串行，避免同文件互吞
     await enqueueFileTask(rootPath, async () => {
       const file = app?.vault?.getAbstractFileByPath?.(rootPath);
       if (!file) return;

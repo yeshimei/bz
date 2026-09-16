@@ -103,8 +103,8 @@ export function openTermNote(app: App, term?: string, opts?: KnowledgeEntryPrefi
 /**
  * 段落生成入口（bz-knowledge-note-passage 命令回调，issue 326）：与名词命令同构（ticket 138 / ADR-0116）——
  * 读当前激活 Markdown 编辑器选区预填段落输入框，当前笔记（md）作来源候选，可一键清除。
- * 差异点：段落**不自动生成**——名词一个词预填即生成，段落是大段文字，进面板确认内容后手动点
- * 「生成」（Ctrl/Cmd+回车同效）；无选区 / 无视图 → 空输入框手填。
+ * 2026-09-16 起与名词**完全同款**：预填即自动生成（原「段落要先点一次生成」的差异取消）；
+ * 无选区 / 无视图 → 空输入框手填（Ctrl/Cmd+回车仍可手动触发）。
  * opts（issue 329）：text 优先于编辑器选区读取（剪藏本划选正文预填）；显式 opts.source 优先。
  */
 export function openPassageNote(app: App, opts?: KnowledgeEntryPrefill): void {

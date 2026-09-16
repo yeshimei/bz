@@ -286,6 +286,86 @@ function resolveLinkPath(target: string, ctx: MountCtx, sourcePath: string): str
   return findBySameName(t, ctx);
 }
 
+/** frontmatter 列表值归一（Obsidian 解析后可能是数组 / 单串 / 空）→ 非空字符串数组 */
+function fmValueList(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map((x) => String(x ?? '').trim()).filter(Boolean);
+  const s = String(v ?? '').trim();
+  return s ? [s] : [];
+}
+
+/** `[[路径|别名]]` / `[[路径#子路径]]` / 裸文本 → 链接目标名（剥方括号与别名，与 splitLinkText 同源） */
+function linkTargetOf(raw: unknown): string {
+  const s = String(raw ?? '').trim().replace(/^!?\[\[/, '').replace(/\]\]$/, '');
+  return splitLinkText(s).target;
+}
+
+/**
+ * 单篇出链目标（**零 IO**，2026-09-16 新增）：数据源 = Obsidian 内存里已算好的
+ * `metadataCache.resolvedLinks`（正文 wikilink + `![[嵌入]]`，目标已解析成库内路径）
+ * 与 `getFileCache().frontmatter` 的 related / mounted（frontmatter 链接**不进** resolvedLinks，
+ * 必须单独补，否则口径会悄悄变窄）。
+ * 产出「已去自链的目标路径」数组：**同一来源内按目标去重、不同来源各算一条**
+ * （related 与 mounted 指同一张卡 = 两条），与 outboundItems 的引用计数口径一致。
+ * 只服务引用计数与孤儿判定；需要**锚点**的挂载树仍走 outboundItems（它要读正文）。
+ */
+function outboundTargetsViaCache(ctx: MountCtx, file: any): string[] {
+  const app: any = ctx?.app ?? getApp();
+  const from = normSlashes(String(file?.path ?? ''));
+  if (!from) return [];
+  const out: string[] = [];
+  // ① 正文链接：resolvedLinks 的值是「出现次数」，旧口径是「同一文件内重复指向同目标只计 1」→ 只取键
+  const outs = app?.metadataCache?.resolvedLinks?.[from];
+  if (outs && typeof outs === 'object') {
+    for (const to of Object.keys(outs)) {
+      if (!outs[to]) continue;
+      if (samePath(to, from)) continue;
+      out.push(normSlashes(to));
+    }
+  }
+  // ② frontmatter 的 related / mounted（各算一条，与 outboundItems 的多来源口径同）
+  const fm = app?.metadataCache?.getFileCache?.(file)?.frontmatter;
+  for (const key of ['related', 'mounted']) {
+    for (const item of fmValueList(fm?.[key])) {
+      const target = linkTargetOf(item);
+      if (!target) continue;
+      const p = resolveLinkPath(target, ctx, from);
+      if (!p || samePath(p, from)) continue;
+      out.push(p);
+    }
+  }
+  return out;
+}
+
+/**
+ * 自身**有没有挂载项**（孤儿判定用，零 IO）：与 outboundTargetsViaCache 的差别只有一条——
+ * **断链也算有**（「卡不长草不因目标已被删」，315 既有口径）：resolvedLinks 不含断链，
+ * 所以这里读 `getFileCache().links / embeds`（**解析前**的链接，断链也在）逐个判。
+ * 自链不算（与树内剪线、引用计数同口径）。目标解析要走 resolveLinkPath，故仅用于卡片（数量少）；
+ * 全库计数请用 resolvedLinks 版。
+ */
+function hasOutboundViaCache(ctx: MountCtx, file: any): boolean {
+  const app: any = ctx?.app ?? getApp();
+  const from = normSlashes(String(file?.path ?? ''));
+  if (!from) return false;
+  const cache = app?.metadataCache?.getFileCache?.(file);
+  const isSelf = (raw: unknown): boolean => {
+    const target = linkTargetOf(raw);
+    if (!target) return true; // 无目标名（`[[#标题]]` 同文件引用）：不产挂载项，视同跳过
+    const p = resolveLinkPath(target, ctx, from);
+    return !!p && samePath(p, from);
+  };
+  for (const l of [...(cache?.links ?? []), ...(cache?.embeds ?? [])]) {
+    if (!isSelf((l as any)?.link ?? '')) return true;
+  }
+  const fm = cache?.frontmatter;
+  for (const key of ['related', 'mounted']) {
+    for (const item of fmValueList(fm?.[key])) {
+      if (!isSelf(item)) return true;
+    }
+  }
+  return false;
+}
+
 /**
  * 解析路径 + 精化 kind：`metadataCache.getFirstLinkpathDest(target, sourcePath)`；
  * 返回 null 时用「全库同名匹配」兜底（大小写不敏感、去 .md 比较），仍无 → `missing=true, path=null`。
@@ -501,7 +581,7 @@ function mountKey(link: string): string {
   return pathKey(splitLinkText(inner).target.trim());
 }
 /**
- * frontmatter 列表键的**纯字符串**增删（appendRelatedLine 同路子；不碰其它键）。
+ * frontmatter 列表键的**纯字符串**增删（行级改写，不碰其它键）。
  * `add` 幂等（同目标已存在 → 原样返回）；`remove` 删掉全部同目标行，列表清空则连键行一起删。
  * 去重/删除**只认卡片本体**（`[[甲卡#标题]]` 与 `[[甲卡|别名]]` 同一条）；键下允许空行（空行不结束列表）。
  * 无 frontmatter / 空目标 / 键为内联非空列表（`mounted: [a, b]`）→ 原样返回（不写脏行、不猜用户手写格式）。
@@ -551,7 +631,7 @@ function fmListWrite(text: string, key: string, value: string, mode: 'add' | 're
     if (at === -1) return [...lines.slice(0, close), `${key}:`, item, ...lines.slice(close)].join('\n');
     const next = lines.slice();
     if (inline) next[at] = `${key}:`; // `mounted: []` → 列表形态
-    next.splice(to, 0, item); // 追加到现有列表项之后（appendRelatedLine 同口径）
+    next.splice(to, 0, item); // 追加到现有列表项之后
     return next.join('\n');
   }
   if (!hit || at === -1) return src;
@@ -579,7 +659,7 @@ export function removeMount(text: string, link: string): string {
 
 /**
  * frontmatter `related` 的**目标路径**列表（与 `ui.ts:116 parseRelatedNames` 同一套行扫描，
- * 但取目标而非展示名；写入格式即 `- "[[路径|名]]"`，见 `appendRelatedLine` / `ui.ts` 落卡）。
+ * 但取目标而非展示名；写入格式即 `- "[[路径|名]]"`）。
  */
 export async function readRelated(cardPath: string, ctx: MountCtx): Promise<string[]> {
   const text = await readText(cardPath, ctx);
@@ -854,23 +934,19 @@ export async function buildMountTree(cardPath: string, opts: { direction: MountD
  * ------------------------------------------------------------------ */
 
 /**
- * 引用计数（**只数用户双链**：正文 wikilink + related + mounted 指向该卡的总数）；
+ * 引用计数（**只数用户双链**：正文 wikilink + related + mounted 指向它的总数）；
  * 不数同名文献、不数 AI 建议、**不数自链**（`[[本卡…]]` 与剪线口径一致）。
- * 键 = 卡片盒里的卡片路径（含 0），值 = 指向它的项数（同一文件内重复指向同一目标只计 1——挂载项按目标去重）。
+ * 键 = **所有被指向的路径**（2026-09-16 起不再局限于卡片盒）：卡片部取自己的键算「被引 N」，
+ * 文献部取文献路径算同一个数——一次全库遍历喂两处消费，且**零 IO**（走 metadataCache，
+ * 见 outboundTargetsViaCache）。旧实现逐篇 readText：1500 篇量级会把主线程占满，
+ * 正是「卡片盒打开要等很久」的根因。
+ * 未出现的路径 = 0（消费方 `?? 0` 兜底，不再预填 0 项）。
  */
 export async function refCounts(ctx: MountCtx): Promise<Record<string, number>> {
-  const scan = newScan(ctx);
-  const cards = cardFiles(ctx);
-  const byKey = new Map(cards.map((c: any) => [pathKey(c.path), normSlashes(c.path)]));
   const counts: Record<string, number> = {};
-  for (const c of cards) counts[normSlashes(c.path)] = 0;
   for (const f of mdFiles(ctx)) {
-    const items = await outboundItems(scan, f.path);
-    for (const it of items) {
-      if (!it.path) continue;
-      if (samePath(it.path, f.path)) continue; // 自链不算被引（与树内剪线、inboundItems 排除自链同口径）
-      const card = byKey.get(pathKey(it.path));
-      if (card) counts[card] = (counts[card] ?? 0) + 1;
+    for (const to of outboundTargetsViaCache(ctx, f)) {
+      counts[to] = (counts[to] ?? 0) + 1;
     }
   }
   return counts;
@@ -885,14 +961,13 @@ export async function refCounts(ctx: MountCtx): Promise<Record<string, number>> 
  * 缺省仍自行调用 `refCounts(ctx)`（向后兼容，单测与其它调用方无需改）。
  */
 export async function orphanCards(ctx: MountCtx, counts?: Record<string, number>): Promise<string[]> {
-  const scan = newScan(ctx);
   const refs = counts ?? (await refCounts(ctx));
   const out: string[] = [];
   for (const card of cardFiles(ctx)) {
     const path = normSlashes(card.path);
     if ((refs[path] ?? 0) > 0) continue;
-    const items = (await outboundItems(scan, path)).filter((it) => !isSelfItem(it, path));
-    if (items.length) continue;
+    // 自身出链判空同样走零 IO 的 cache 版；**断链也算有挂载**（见 hasOutboundViaCache）
+    if (hasOutboundViaCache(ctx, card)) continue;
     out.push(path);
   }
   return out.sort();

@@ -162,7 +162,7 @@ describe('openPassageNote / openImageNote（bz-knowledge-note-passage / -image �
     return app;
   }
 
-  it('段落：选区预填 textarea（裁空白）+ 当前笔记作来源 chip；**不自动生成**（与名词的差异点）', async () => {
+  it('段落：选区预填 textarea（裁空白）+ 当前笔记作来源 chip；**预填即自动生成**（2026-09-16 起与名词同款）', async () => {
     const app = setupApp({ editor: { getSelection: () => '  一段城市化观察  ' }, file: { path: '笔记/读报.md', extension: 'md' } });
 
     openPassageNote(app);
@@ -173,8 +173,8 @@ describe('openPassageNote / openImageNote（bz-knowledge-note-passage / -image �
     expect((document.getElementById('lit-passage-input') as HTMLTextAreaElement).value).toBe('一段城市化观察');
     // ADR-0116 命令入口带当前笔记：来源 chip 预填（内部笔记方向）
     expect(document.getElementById('lit-term-src-chip')!.style.display).not.toBe('none');
-    // 差异点：段落预填不自动触发生成（名词带词即生成，ticket 155）
-    expect(noteGen.generatePassageDraft).not.toHaveBeenCalled();
+    // 三态统一：段落预填同样自动触发生成（原「段落要先点一次」的差异，2026-09-16 用户拍板取消）
+    await vi.waitFor(() => expect(noteGen.generatePassageDraft).toHaveBeenCalled());
   });
 
   it('段落：无激活视图 → 空输入框手填，不抛错、不带来源', async () => {
@@ -246,14 +246,15 @@ describe('issue 329 录入预填扩展（source/text/images/onCreated）', () =>
     expect(requestUrl).not.toHaveBeenCalled(); // 已有 title 不重复抓（fetchPageTitle 走 requestUrl）
   });
 
-  it('openPassageNote opts.text 优先于编辑器选区（且不自动生成）；无 opts 回归读选区 + 当前笔记 chip', async () => {
+  it('openPassageNote opts.text 优先于编辑器选区（且同样自动生成）；无 opts 回归读选区 + 当前笔记 chip', async () => {
     const view = { editor: { getSelection: () => '  编辑器里的选区  ' }, file: { path: '笔记/读报.md', extension: 'md' } };
     const { app } = setup329(view);
     openPassageNote(app, { text: '剪藏选中的正文' });
     const popup = document.getElementById('knowledge-term-popup')!;
     await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
     expect((document.getElementById('lit-passage-input') as HTMLTextAreaElement).value).toBe('剪藏选中的正文');
-    expect(noteGen.generatePassageDraft).not.toHaveBeenCalled(); // 段落预填不自动生成（issue 326 语义不变）
+    // 段落预填同样自动生成（2026-09-16 三态统一，原「不自动生成」的语义已取消）
+    await vi.waitFor(() => expect(noteGen.generatePassageDraft).toHaveBeenCalled());
     // 回归：无 opts → 读选区 + 当前笔记作来源候选
     unloadKnowledge();
     document.body.innerHTML = '';
