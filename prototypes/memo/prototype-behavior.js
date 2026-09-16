@@ -1,5 +1,5 @@
-/* 源指纹 3b8110bd84da50f2 · 仓内输入 208 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 4e21cc278c46358a · 仓内输入 209 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -20860,6 +20860,73 @@ ${c.trim()}
     }
   });
 
+  // src/knowledge/partial-json.ts
+  function isWs(ch) {
+    return ch === " " || ch === "	" || ch === "\n" || ch === "\r";
+  }
+  function valueStartOf(prefix, key) {
+    const marker = `"${key}"`;
+    let from = 0;
+    for (; ; ) {
+      const i = prefix.indexOf(marker, from);
+      if (i < 0) return -1;
+      let j = i + marker.length;
+      while (j < prefix.length && isWs(prefix[j])) j++;
+      if (prefix[j] === ":") {
+        j++;
+        while (j < prefix.length && isWs(prefix[j])) j++;
+        return prefix[j] === '"' ? j + 1 : -1;
+      }
+      from = i + marker.length;
+    }
+  }
+  function partialStringField(prefix, key) {
+    const start = valueStartOf(prefix, key);
+    if (start < 0) return null;
+    let out = "";
+    let i = start;
+    while (i < prefix.length) {
+      const ch = prefix[i];
+      if (ch === "\\") {
+        if (i + 1 >= prefix.length) break;
+        const esc4 = prefix[i + 1];
+        if (esc4 === "u") {
+          const hex = prefix.slice(i + 2, i + 6);
+          if (hex.length < 4) break;
+          if (!/^[0-9a-fA-F]{4}$/.test(hex)) {
+            i += 2;
+            continue;
+          }
+          out += String.fromCharCode(parseInt(hex, 16));
+          i += 6;
+          continue;
+        }
+        out += esc4 in ESCAPE_CHARS ? ESCAPE_CHARS[esc4] : esc4;
+        i += 2;
+        continue;
+      }
+      if (ch === '"') break;
+      out += ch;
+      i++;
+    }
+    return out;
+  }
+  var ESCAPE_CHARS;
+  var init_partial_json = __esm({
+    "src/knowledge/partial-json.ts"() {
+      ESCAPE_CHARS = {
+        n: "\n",
+        t: "	",
+        r: "\r",
+        b: "\b",
+        f: "\f",
+        '"': '"',
+        "\\": "\\",
+        "/": "/"
+      };
+    }
+  });
+
   // src/knowledge/note-gen.ts
   function parseDomainList(raw) {
     return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
@@ -20911,6 +20978,27 @@ ${c.trim()}
       }
     }
     throw new Error("AI 返回的不是 JSON：" + cleaned.slice(0, 120));
+  }
+  function draftAiOptions(hooks) {
+    const onProgress = hooks == null ? void 0 : hooks.onProgress;
+    let onDelta;
+    if (onProgress) {
+      let acc = "";
+      onDelta = (delta) => {
+        acc += delta;
+        onProgress({
+          title: partialStringField(acc, "title"),
+          domain: partialStringField(acc, "domain"),
+          summary: partialStringField(acc, "summary")
+        });
+      };
+    }
+    return { onDelta, signal: hooks == null ? void 0 : hooks.signal };
+  }
+  function requireSummary(v) {
+    const s = String(v != null ? v : "").trim();
+    if (!s) throw new Error("AI 未返回正文");
+    return s;
   }
   function domainInstruction(list) {
     if (!list.length) return '"domain": "领域，用一个中文词"';
@@ -21007,18 +21095,18 @@ ${c}`
   }
   function termPrompt(term, list) {
     return `你是百科知识整理助手。为术语「${term}」生成一篇文献笔记。只输出 JSON，不要任何解释：
-{"summary":"一段关于该术语的简明介绍（百科总结式，150-300字简体中文，连贯成文，涵盖定义、核心要点与必要背景）","domain": ${domainInstruction(list)}}`;
+{${domainInstruction(list)},"summary":"一段关于该术语的简明介绍（百科总结式，150-300字简体中文，连贯成文，涵盖定义、核心要点与必要背景）"}`;
   }
-  async function generateTermDraft(term) {
+  async function generateTermDraft(term, hooks) {
     const ai = createAI();
     const s = tryGetSettings();
     const list = parseDomainList(s.knowledgeDomainList);
     const t = String(term || "").trim();
     if (!t) throw new Error("术语为空");
-    const raw = await ai.json(termPrompt(t, list));
+    const raw = await ai.json(termPrompt(t, list), draftAiOptions(hooks));
     const meta = parseAiJson(raw);
     return {
-      summary: String((meta == null ? void 0 : meta.summary) || "").trim(),
+      summary: requireSummary(meta == null ? void 0 : meta.summary),
       domain: String((meta == null ? void 0 : meta.domain) || "").trim()
     };
   }
@@ -21070,23 +21158,23 @@ ${t}`
   }
   function passagePrompt(text, list) {
     return `你是文献整理助手。把下方这段文字整理成一篇文献笔记。只输出 JSON，不要任何解释：
-{"title":"15-30字的中文完整陈述句，概括这段文字在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"整理后的正文（保留原文的全部事实与要点，删去口水话、重复表述，可分自然段）","domain": ${domainInstruction(list)}}
+{${domainInstruction(list)},"title":"15-30字的中文完整陈述句，概括这段文字在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"整理后的正文（保留原文的全部事实与要点，删去口水话、重复表述，可分自然段）"}
 硬约束：正文只能来自原文，不得添加原文没有的事实、数字或结论，不得写成读后感。所有字段一律使用简体中文。
 
 【原文】
 ${text}`;
   }
-  async function generatePassageDraft(text) {
+  async function generatePassageDraft(text, hooks) {
     const ai = createAI();
     const s = tryGetSettings();
     const list = parseDomainList(s.knowledgeDomainList);
     const t = String(text || "").trim();
     if (!t) throw new Error("段落为空");
-    const raw = await ai.json(passagePrompt(t, list));
+    const raw = await ai.json(passagePrompt(t, list), draftAiOptions(hooks));
     const meta = parseAiJson(raw);
     return {
       title: String((meta == null ? void 0 : meta.title) || "").trim(),
-      summary: String((meta == null ? void 0 : meta.summary) || "").trim(),
+      summary: requireSummary(meta == null ? void 0 : meta.summary),
       domain: String((meta == null ? void 0 : meta.domain) || "").trim()
     };
   }
@@ -21131,7 +21219,7 @@ ${text}`;
     const scope = multi ? `看下面这 ${count} 张图片，把它们**作为一组**生成一篇文献笔记` : "看这张图片，为它生成一篇文献笔记";
     const bodyAsk = multi ? "对这组图的整理说明（150-300字简体中文，连贯成文）：先说这组图共同在讲什么，再按图交代各自可见的内容与信息，图中含文字则整理其要点" : "对这张图的整理说明（150-300字简体中文，连贯成文）：图中含文字则整理其要点，是照片、示意图或图表则客观描述其可见内容与信息";
     let prompt = `你是文献整理助手。${scope}。只输出 JSON，不要任何解释：
-{"title":"15-30字的中文完整陈述句，概括${multi ? "这组图" : "这张图"}在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"${bodyAsk}","domain": ${domainInstruction(list)}}
+{${domainInstruction(list)},"title":"15-30字的中文完整陈述句，概括${multi ? "这组图" : "这张图"}在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"${bodyAsk}"}
 硬约束：只能写图中确实能看到的内容，不得臆测、不得补充图中没有的事实与数字、不得写成观后感。所有字段一律使用简体中文。`;
     const notes = (Array.isArray(descs) ? descs : []).map((d, i) => ({ n: i + 1, d: String(d != null ? d : "").trim() })).filter((x) => x.d);
     if (notes.length) {
@@ -21142,7 +21230,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     }
     return prompt;
   }
-  async function generateImageDraft(imageUrls, descs) {
+  async function generateImageDraft(imageUrls, descs, hooks) {
     const ai = createAI();
     const s = tryGetSettings();
     const list = parseDomainList(s.knowledgeDomainList);
@@ -21156,12 +21244,13 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     const valid = pairs.filter((p) => p.url);
     if (!valid.length) throw new Error("图片为空");
     const raw = await ai.json(
-      { text: imagePrompt(list, valid.length, valid.map((p) => p.desc)), images: valid.map((p) => p.url) }
+      { text: imagePrompt(list, valid.length, valid.map((p) => p.desc)), images: valid.map((p) => p.url) },
+      draftAiOptions(hooks)
     );
     const meta = parseAiJson(raw);
     return {
       title: String((meta == null ? void 0 : meta.title) || "").trim(),
-      summary: String((meta == null ? void 0 : meta.summary) || "").trim(),
+      summary: requireSummary(meta == null ? void 0 : meta.summary),
       domain: String((meta == null ? void 0 : meta.domain) || "").trim()
     };
   }
@@ -21320,6 +21409,7 @@ ${sample}`
       init_ai();
       init_app();
       init_settings_provider();
+      init_partial_json();
       init_source();
       BACKFILL_AI_TIMEOUT_MS = 25e3;
       IMAGE_ASSETS_DIR = "assets";
@@ -26016,9 +26106,18 @@ ${String(blockText != null ? blockText : "").trim()}`);
           /** 当前录入态：term = 一个词（名词）/ passage = 一段文字（段落）/ image = 一张图（图版） */
           this.entryMode = "term";
           this.termPreview = null;
+          /** 生成流在途（ADR-0152/issue 343）：与 termSaving 分开——「是否正在生成」与「是否正在落盘」是两件事 */
           this.termGenerating = false;
+          /** 确认写入的落盘过程在途（承接原 termGenerating 的写入语义）：期间不接生成 / 总结 / 再次写入 */
+          this.termSaving = false;
           this.termSummarizing = false;
           this.termHasDraft = false;
+          /** 草稿中断标记（ADR-0152 决策 6）：流断在半个 JSON 上 → 已流入的正文保留可见，但**不可写** */
+          this.termDraftBroken = false;
+          /** 在途生成流的中断器（ADR-0152 决策 7）：再点生成 = abort 重开；关窗二次确认**之后**才 abort */
+          this.termGenAbort = null;
+          /** 已流入正文区的正文（空串 = 还没有正文字符到达）：中断收场据此判断「有没有半篇要保留」 */
+          this.termStreamBody = "";
           this.termSource = null;
           // 来源（名词/段落/图版共用行，ADR-0116；null = 未填）
           /**
@@ -27883,7 +27982,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         <div class="bz-lit-term-card">
           <div class="bz-lit-term-meta">
             <div class="bz-lit-term-meta-row bz-lit-term-only"><span class="bz-lit-term-meta-k">名词</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
-            <div class="bz-lit-term-meta-row bz-lit-titled-only"><span class="bz-lit-term-meta-k">标题</span><input id="lit-entry-meta-title" type="text" autocomplete="off"></div>
+            <div class="bz-lit-term-meta-row bz-lit-titled-only"><span class="bz-lit-term-meta-k">标题</span><span id="lit-entry-meta-title" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
@@ -28041,6 +28140,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
           var _a2, _b2;
           if (!this.termPopup || !this.termMask) return;
           this.entryMode = mode;
+          this.abortTermGenerate();
+          this.termGenerating = false;
+          this.termSaving = false;
+          this.termSummarizing = false;
+          this.termDraftBroken = false;
+          this.termStreamBody = "";
           this.termPreview = null;
           this.termHasDraft = false;
           this.entryOnCreated = (_a2 = opts == null ? void 0 : opts.onCreated) != null ? _a2 : null;
@@ -28057,7 +28162,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.termSrcReset(q(this.termPopup, "#lit-term-src"));
           if (src) this.termSrcSet(src, q(this.termPopup, "#lit-term-src"));
           this.setTermPreviewVisible(false);
-          this.setTermGenLoading(false);
+          this.setTermContent("", false);
+          this.refreshTermActions();
           topifyZ(this.termMask, this.termPopup);
           this.termMask.style.display = "block";
           this.termPopup.style.display = "flex";
@@ -28097,7 +28203,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
          */
         async acceptImageFiles(files) {
           if (!this.termPopup || this.entryMode !== "image" || !files.length) return;
-          if (this.termGenerating) return;
+          if (this.termBusy) return;
           this.syncImageDescsFromDom();
           let hitLimit = false;
           let added = 0;
@@ -28160,17 +28266,21 @@ ${String(blockText != null ? blockText : "").trim()}`);
         /** 删掉第 i 张（缩略图上的 ✕）：同样作废已有草稿（图组变了） */
         removeEntryImage(i) {
           if (!Number.isInteger(i) || i < 0 || i >= this.entryImages.length) return;
-          if (this.termGenerating) return;
+          if (this.termBusy) return;
           this.entryImages.splice(i, 1);
           this.renderEntryImage();
           this.draftInvalidate();
         }
         /** 草稿失效（图组 / 输入变了）：预览收起、生成按钮复位、关联行归位到「待写入」 */
         draftInvalidate() {
+          this.abortTermGenerate();
+          this.termGenerating = false;
+          this.termDraftBroken = false;
+          this.termStreamBody = "";
           this.termPreview = null;
           this.termHasDraft = false;
           this.setTermPreviewVisible(false);
-          this.setTermGenLoading(false);
+          this.refreshTermActions();
           this.resetEntryRel();
         }
         /** 把 DOM 上的逐图描述框值同步回内存图项——只在索引不变的时机调用（加图前/生成前/写入前）；
@@ -28301,17 +28411,56 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const p = q(this.termPopup, "#lit-term-preview");
           if (p) p.style.display = v ? "flex" : "none";
         }
-        setTermGenLoading(loading2) {
+        /** 面板忙态：生成流在途 / 正在总结 / 正在落盘——三者期间都不接受新的生成、总结、写入与图片改动 */
+        get termBusy() {
+          return this.termGenerating || this.termSummarizing || this.termSaving;
+        }
+        /**
+         * 底部三键可用性的**唯一刷新出口**（ADR-0152）：改完忙态调它，不要在别处直接动 disabled。
+         * - 「生成」：生成流在途时**保持可点**——再点 = 中止重开（决策 7）；只有落盘 / 总结期间才禁用。
+         * - 「总结」「确认写入」：忙态与**中断草稿**下都禁用——中断的半篇不允许落库（决策 6）。
+         * issue 327：关联分析不锁任何按钮（setEntryRelBusy 已退役），忙态只锁这三个键自己。
+         */
+        refreshTermActions() {
           if (!this.termPopup) return;
           const gen = q(this.termPopup, "#lit-term-generate");
           if (gen) {
-            gen.disabled = loading2;
-            gen.textContent = loading2 ? "生成中…" : this.termHasDraft ? "重新生成" : "生成";
+            gen.disabled = this.termSaving || this.termSummarizing;
+            gen.textContent = this.termGenerating ? "生成中…" : this.termHasDraft ? "重新生成" : "生成";
           }
+          const blocked = this.termBusy || this.termDraftBroken;
           const regen = q(this.termPopup, "#lit-term-regenerate");
-          if (regen) regen.disabled = loading2;
+          if (regen) regen.disabled = blocked;
           const save2 = q(this.termPopup, "#lit-term-save");
-          if (save2) save2.disabled = loading2;
+          if (save2) save2.disabled = blocked;
+        }
+        /**
+         * 正文区渲染：占位灰字 / 已流入正文共用同一个容器（textContent 单源）。
+         * 值没变就不动 DOM——每帧都写会让流式期间的排版反复重排。
+         */
+        setTermContent(text, pending) {
+          const el = this.termPopup ? q(this.termPopup, "#lit-term-content") : null;
+          if (!el) return;
+          if (el.textContent === text && el.classList.contains("bz-lit-term-pending") === pending) return;
+          el.classList.toggle("bz-lit-term-pending", pending);
+          el.textContent = text;
+        }
+        /**
+         * 属性行的「分析中…」占位（ADR-0152 决策 4）：领域 / 标题这类 AI 产出的行，
+         * 在值到达之前统一挂这一句灰字，与正文区的「正在生成…」同语气。
+         */
+        setTermMetaPending(sel, text = "分析中…") {
+          const el = this.termPopup ? q(this.termPopup, sel) : null;
+          if (!el) return;
+          el.textContent = text;
+          el.classList.add("bz-lit-meta-pending");
+        }
+        /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰 */
+        setTermMetaValue(sel, text) {
+          const el = this.termPopup ? q(this.termPopup, sel) : null;
+          if (!el) return;
+          el.textContent = text;
+          el.classList.remove("bz-lit-meta-pending");
         }
         /**
          * 关联行渲染（issue 309）：按 entryRelState 出文案与墨色档；两类录入共用同一行。
@@ -28495,25 +28644,22 @@ ${String(blockText != null ? blockText : "").trim()}`);
             notify(`知识盒关联失败：${e instanceof Error ? e.message : String(e)}`, { type: "error", dedupeKey: REL_BG_NOTICE_KEY });
           }
         }
+        /** 总结忙态（文案 + 三键可用性一并随状态走）：字段与界面只有一个入口，见 refreshTermActions */
         setTermSummarizing(s) {
+          this.termSummarizing = s;
           if (!this.termPopup) return;
           const regen = q(this.termPopup, "#lit-term-regenerate");
-          if (regen) {
-            regen.disabled = s;
-            regen.textContent = s ? "总结中…" : "总结";
-          }
-          const save2 = q(this.termPopup, "#lit-term-save");
-          if (save2) save2.disabled = s;
-          const gen = q(this.termPopup, "#lit-term-generate");
-          if (gen) gen.disabled = s;
+          if (regen) regen.textContent = s ? "总结中…" : "总结";
+          this.refreshTermActions();
         }
-        /** 当前录入的头部标题：段落取属性卡里（可改）的标题，名词取输入框的词 */
+        /** 当前录入的头部标题：段落 / 图版取草稿里的 AI 标题（属性行已只读，无 DOM 来源），名词取输入框的词 */
         entryHeadTitle() {
           var _a2, _b2, _c, _d;
           if (!this.termPopup) return "";
-          return this.entryTitled ? ((_b2 = (_a2 = q(this.termPopup, "#lit-entry-meta-title")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
+          return this.entryTitled ? String((_b2 = (_a2 = this.termPreview) == null ? void 0 : _a2.title) != null ? _b2 : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
         }
-        /** 属性首行是否「可改标题」态（段落 / 图版共用；名词的属性首行是只读的名词文本） */
+        /** 属性首行是否为「标题行」态（段落 / 图版用；名词的属性首行是只读的名词文本）。
+         *  ADR-0152 决策 9 后本判定不再表示「可改标题」，仅表示该态要不要显示标题行。 */
         get entryTitled() {
           return this.entryMode === "passage" || this.entryMode === "image";
         }
@@ -28527,107 +28673,181 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         async onTermGenerate() {
           var _a2, _b2, _c, _d;
-          if (!this.termPopup || this.termGenerating) return;
+          if (!this.termPopup) return;
           const mode = this.entryMode;
           if (mode === "image") {
             await this.onImageGenerate();
             return;
           }
+          if (this.termSaving || this.termSummarizing) return;
           const passage = mode === "passage";
           const text = passage ? ((_b2 = (_a2 = q(this.termPopup, "#lit-passage-input")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
           if (!text) {
             notice(passage ? "请粘贴要整理的段落" : "请输入名词", "error");
             return;
           }
+          this.abortTermGenerate();
           this.resetEntryRel();
+          const ac = new AbortController();
+          this.termGenAbort = ac;
           this.termGenerating = true;
-          this.setTermGenLoading(true);
+          this.beginTermPreview();
           try {
-            const draft = passage ? await generatePassageDraft(text) : await generateTermDraft(text);
-            this.presentTermPreview(draft);
+            const hooks = { signal: ac.signal, onProgress: (f) => this.applyDraftFields(f) };
+            const draft = passage ? await generatePassageDraft(text, hooks) : await generateTermDraft(text, hooks);
+            if (this.termGenAbort !== ac) return;
+            this.finishTermPreview(draft);
             this.runEntryRelPreview(draft.summary, this.entryHeadTitle() || text);
           } catch (e) {
-            this.noticeTermError(e);
+            if (this.termGenAbort !== ac) return;
+            this.handleTermGenFailure(e);
           } finally {
-            this.termGenerating = false;
-            this.setTermGenLoading(false);
+            if (this.termGenAbort === ac) {
+              this.termGenAbort = null;
+              this.termGenerating = false;
+              this.refreshTermActions();
+            }
           }
         }
         /**
          * 图版读图（issue 312；多图 issue 313）：图片 data URL 列表一次投给多模态模型
          * （core/ai 的 `{text, images}` 通道），出标题 / 领域 / 解读正文后与其余两态走同一套预览 + 关联预演。
+         * 流式成形与再点重开口径与名词/段落一致（ADR-0152）：点下即展开骨架，再点 = 中止在途读图并重开。
          */
         async onImageGenerate() {
-          if (!this.termPopup || this.termGenerating) return;
+          if (!this.termPopup) return;
+          if (this.termSaving || this.termSummarizing) return;
           this.syncImageDescsFromDom();
           const images = this.entryImages;
           if (!images.length) {
             notice("请先拖入或粘贴图片", "error");
             return;
           }
+          this.abortTermGenerate();
           this.resetEntryRel();
+          const ac = new AbortController();
+          this.termGenAbort = ac;
           this.termGenerating = true;
-          this.setTermGenLoading(true);
+          this.beginTermPreview();
           try {
-            const draft = await generateImageDraft(images.map((im) => im.dataUrl), images.map((im) => im.desc));
-            this.presentTermPreview(draft);
+            const hooks = { signal: ac.signal, onProgress: (f) => this.applyDraftFields(f) };
+            const draft = await generateImageDraft(images.map((im) => im.dataUrl), images.map((im) => im.desc), hooks);
+            if (this.termGenAbort !== ac) return;
+            this.finishTermPreview(draft);
             this.runEntryRelPreview(draft.summary, this.entryHeadTitle());
           } catch (e) {
-            this.noticeTermError(e);
+            if (this.termGenAbort !== ac) return;
+            this.handleTermGenFailure(e);
           } finally {
-            this.termGenerating = false;
-            this.setTermGenLoading(false);
+            if (this.termGenAbort === ac) {
+              this.termGenAbort = null;
+              this.termGenerating = false;
+              this.refreshTermActions();
+            }
           }
         }
         async onTermSummarize() {
-          if (!this.termPopup || this.termSummarizing || this.termGenerating) return;
+          if (!this.termPopup || this.termBusy || this.termDraftBroken) return;
           if (!this.termPreview || !this.termPreview.body.trim()) {
             notice("请先生成简介", "info");
             return;
           }
           this.resetEntryRel();
-          this.termSummarizing = true;
           this.setTermSummarizing(true);
           try {
             const summarized = await summarizeTermSummary(this.termPreview.body);
             this.termPreview.body = summarized;
-            const contentEl = q(this.termPopup, "#lit-term-content");
-            if (contentEl) contentEl.textContent = summarized;
+            this.termStreamBody = summarized;
+            this.setTermContent(summarized, false);
             this.runEntryRelPreview(summarized, this.entryHeadTitle());
           } catch (e) {
             this.noticeTermError(e);
           } finally {
-            this.termSummarizing = false;
             this.setTermSummarizing(false);
           }
         }
-        presentTermPreview(draft) {
+        /** 中止在途生成流（ADR-0152 决策 7）：先置空句柄再 abort——它的收尾据此被序号守卫拦掉，
+         *  不会把「用户自己关的窗 / 自己触发的重生成」误报成「生成中断」。 */
+        abortTermGenerate() {
+          const ac = this.termGenAbort;
+          this.termGenAbort = null;
+          ac == null ? void 0 : ac.abort();
+        }
+        /**
+         * 点下即开界面（ADR-0152 决策 4）：预览区立刻展开，属性行先给「用户输入侧」的值（名词 / 日期），
+         * AI 产出侧（领域 / 标题）挂「分析中…」，正文区挂「正在生成…」。
+         * 生成期间界面必须在位——这是「界面立刻在位、内容依次到位」的前半句。
+         * 注意这里**不设** termPreview：草稿仍以收尾的 parseAiJson 结果为准，界面提前展开不等于草稿提前成立。
+         */
+        beginTermPreview() {
           var _a2, _b2, _c;
-          this.termPreview = { domain: draft.domain, body: draft.summary, title: draft.title };
-          this.termHasDraft = true;
           if (!this.termPopup) return;
+          this.termStreamBody = "";
+          this.termDraftBroken = false;
           if (this.entryTitled) {
-            const titleInput = q(this.termPopup, "#lit-entry-meta-title");
-            if (titleInput) titleInput.value = draft.title || "";
+            this.setTermMetaPending("#lit-entry-meta-title");
           } else {
             const term = ((_b2 = (_a2 = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim();
-            const termEl = q(this.termPopup, "#lit-term-meta-term");
-            if (termEl) termEl.textContent = term || "—";
+            this.setTermMetaValue("#lit-term-meta-term", term || "—");
           }
-          const domainEl = q(this.termPopup, "#lit-term-meta-domain");
-          if (domainEl) domainEl.textContent = draft.domain || "—";
-          const dateEl = q(this.termPopup, "#lit-term-meta-date");
-          if (dateEl) dateEl.textContent = dateStamp();
-          const contentEl = q(this.termPopup, "#lit-term-content");
-          if (contentEl) contentEl.textContent = draft.summary;
-          this.resetEntryRel();
+          this.setTermMetaPending("#lit-term-meta-domain");
+          this.setTermMetaValue("#lit-term-meta-date", dateStamp());
+          this.setTermContent("正在生成…", true);
           this.setTermPreviewVisible(true);
+          this.refreshTermActions();
           const prev = q(this.termPopup, "#lit-term-preview");
           (_c = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _c.call(prev, { behavior: "smooth", block: "nearest" });
         }
+        /**
+         * 流式字段到达（ADR-0152 决策 3/11）：正文逐字写，领域与标题到达即填。
+         * 抽取器对「还没到的字段」给 null、对「到了但是空」给空串——两者不可混为一谈，故都按 null 判定。
+         */
+        applyDraftFields(f) {
+          if (!this.termPopup) return;
+          if (f.domain !== null) this.setTermMetaValue("#lit-term-meta-domain", f.domain || "—");
+          if (this.entryTitled && f.title !== null) this.setTermMetaValue("#lit-entry-meta-title", f.title || "—");
+          if (f.summary !== null) {
+            this.termStreamBody = f.summary;
+            this.setTermContent(f.summary, false);
+          }
+        }
+        /**
+         * 草稿收尾：流式只作用于渲染，草稿对象仍由收尾结果落定（保证「预览所见 == 落盘所写」）。
+         * 这里用终值再填一遍——流式路径下大多早已到位，非流式降级路径下这才是唯一一次填充。
+         */
+        finishTermPreview(draft) {
+          this.termPreview = { domain: draft.domain, body: draft.summary, title: draft.title };
+          this.termHasDraft = true;
+          this.termStreamBody = draft.summary;
+          this.termDraftBroken = false;
+          if (!this.termPopup) return;
+          if (this.entryTitled) this.setTermMetaValue("#lit-entry-meta-title", draft.title || "—");
+          this.setTermMetaValue("#lit-term-meta-domain", draft.domain || "—");
+          this.setTermContent(draft.summary, false);
+          this.resetEntryRel();
+          this.refreshTermActions();
+        }
+        /**
+         * 生成失败分流（ADR-0152 决策 6）：已经流进正文 → 算「中断」——文字保留可见、草稿标记为不可写；
+         * 一个字都没到 → 常规生成失败报错（骨架留在已展开态，可直接再点生成）。
+         * 用户主动中止不会走到这里（由调用方的句柄守卫拦掉）。
+         */
+        handleTermGenFailure(e) {
+          if (this.termStreamBody) {
+            this.termDraftBroken = true;
+            notice("生成中断：已保留收到的内容，请重新生成后再写入", "error");
+          } else {
+            this.noticeTermError(e);
+          }
+          this.refreshTermActions();
+        }
         async onTermConfirm() {
-          var _a2, _b2, _c, _d;
-          if (!this.termPopup || this.termGenerating) return;
+          var _a2, _b2, _c;
+          if (!this.termPopup || this.termBusy) return;
+          if (this.termDraftBroken) {
+            notice("生成中断：请重新生成后再写入", "error");
+            return;
+          }
           const mode = this.entryMode;
           const source2 = this.termSource;
           if (!this.termPreview) {
@@ -28639,13 +28859,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
           let term = "";
           let title = "";
           if (this.entryTitled) {
-            title = ((_b2 = (_a2 = q(this.termPopup, "#lit-entry-meta-title")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim();
+            title = String((_a2 = this.termPreview.title) != null ? _a2 : "").trim();
             if (!title) {
               notice("标题不能为空", "error");
               return;
             }
           } else {
-            term = ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
+            term = ((_c = (_b2 = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _b2.value) != null ? _c : "").trim();
             if (!term) {
               notice("请输入名词", "error");
               return;
@@ -28663,8 +28883,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
             return;
           }
           const onCreated = this.entryOnCreated;
-          this.termGenerating = true;
-          this.setTermGenLoading(true);
+          this.termSaving = true;
+          this.refreshTermActions();
           const save2 = q(this.termPopup, "#lit-term-save");
           if (save2) save2.textContent = "写入中…";
           try {
@@ -28710,12 +28930,18 @@ ${String(blockText != null ? blockText : "").trim()}`);
           } catch (e) {
             this.noticeTermError(e);
           } finally {
-            this.termGenerating = false;
+            this.termSaving = false;
             if (save2) save2.textContent = "确认写入";
-            this.setTermGenLoading(false);
+            this.refreshTermActions();
           }
         }
         hideTermEntry() {
+          this.abortTermGenerate();
+          this.termGenerating = false;
+          this.termSaving = false;
+          this.termSummarizing = false;
+          this.termDraftBroken = false;
+          this.termStreamBody = "";
           this.termPreview = null;
           this.entryOnCreated = null;
           this.resetEntryRel();
@@ -28733,7 +28959,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
          */
         entryDirty() {
           if (!this.termPopup) return false;
-          if (this.termGenerating || this.termPreview) return true;
+          if (this.termBusy || this.termPreview || this.termDraftBroken) return true;
           if (this.entryMode === "image") return this.entryImages.length > 0;
           const el = this.entryMode === "passage" ? q(this.termPopup, "#lit-passage-input") : q(this.termPopup, "#lit-term-input");
           return !!(el && el.value.trim());
@@ -28786,6 +29012,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         destroy() {
           var _a2;
+          this.abortTermGenerate();
           this.clearRunTimer();
           this.runState.clear();
           if (this.termSrcTimer) {
