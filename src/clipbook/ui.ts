@@ -47,7 +47,7 @@ import { queryBySource, queryBySourceFull, aggregateSites, clipArticle, bucketBy
 import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml,
   readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
-  deskFoldRowHtml, foldBodyHtml, ICO,
+  deskFoldRowHtml, foldBodyHtml, ICO, clipReportEntryHtml,
 } from './render';
 import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar } from './loader';
@@ -57,9 +57,10 @@ import { getKnowledgeBoxes } from '../core/knowledge-boxes';
 import { applyBodyTransforms, applyClipContentTransforms, findMarkdownSnippet, addArticleMark, addPendingSourceNote, clearArticleTracking, linkAliasText, type ClipMark } from './anchor';
 import { saveClipImage, fetchImageDataUrl } from './image-save';
 import {
-  flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession,
+  flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession, flushReadingSession,
   flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews,
 } from './flow';
+import { openClipbookReport } from './report-ui';
 import type { ClipNote } from './scan';
 
 // ================= 模块级 UI 引用 =================
@@ -172,6 +173,8 @@ export async function revealClipArticle(notePath: string): Promise<void> {
 /** 关闭面板（隐藏 overlay；DOM 保留——重开零扫描复用缓存；unloadPanel 才移除） */
 export function closePanel(): void {
   pauseReadingSession();
+  // issue 358：关面板前把本段阅读会话封存入账侧写 readLog（时长不因关面板丢失）
+  flushReadingSession();
   panelResizeDetach?.flush(); // 关面板即落盘面板尺寸（review P2：恢复旧 flushPendingSize 语义）
   panelSplit?.flush(); // 关面板即落盘分割线宽度（同上语义）
   M.open = false;
@@ -184,6 +187,7 @@ export function closePanel(): void {
 /** 卸载（main.ts onunload） */
 export function unloadPanel(): void {
   pauseReadingSession();
+  flushReadingSession(); // issue 358：卸载同样封存阅读会话入账
   closeItemMenu();
   if (escHandle) {
     try { escHandle.unregister(); } catch (e) { /* 忽略 */ }
@@ -274,6 +278,13 @@ function buildDom(app: any): void {
   overlayEl.addEventListener('click', (e) => {
     if (e.target === overlayEl) closePanel();
   });
+  // rail 脚注·阅读报告入口（issue 358）：「我读了什么」弹层（剪藏本自有报告，非书库深链）
+  railFootEl!.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('[data-clp-rep-entry]')) openClipbookReport(app);
+  });
+  // 移动头行「报告」文字钮（issue 358）：同一弹层
+  const mobReportBtn = overlayEl.querySelector('[data-clip-mob-report]');
+  mobReportBtn!.addEventListener('click', () => openClipbookReport(app));
   // 桌面 rail 源切换（再点已选源回「全部未读」，issue 208）
   railListEl!.addEventListener('click', (e) => {
     const row = (e.target as HTMLElement).closest('[data-src]') as HTMLElement | null;
@@ -651,8 +662,9 @@ function renderRail(): void {
   railListEl.innerHTML = html;
   mountIcons(railListEl);
   // rail 脚注（issue 214）：今日已读 N 篇（news.json stats.byDate，键 YYYY-MM-DD；缺省 0）
+  // + 阅读报告入口（issue 358「我读了什么」；行为委托 buildDom 里 data-clp-rep-entry）
   if (railFootEl) {
-    railFootEl.innerHTML = railFootHtml(M.stats?.byDate?.[localDayKey()] || 0);
+    railFootEl.innerHTML = railFootHtml(M.stats?.byDate?.[localDayKey()] || 0) + clipReportEntryHtml();
   }
   // rail 源行动作（enh 包 4）：右键/长按出「全部标为已读」等源级批量操作——
   // rail 是导航层，动作挂在源行而非条目卡，中栏「列表零操作」拍板不被破坏
@@ -912,7 +924,8 @@ function renderReader(): void {
     readerEl.appendChild(uiEmpty({ icon: 'book-open', title: '从列表选择一篇文章开始阅读' }));
     return;
   }
-  setReadingSession(a.id);
+  // issue 358：会话计时携带条目元信息（title/srcName）——封存入账 readLog 时「哪篇、哪里来」
+  setReadingSession(a.id, { title: a.title, src: a.srcName });
   // 正文（issue 273 review）：news 直用 body；clip 懒加载 cachedRead → 剥壳缓存原文；
   // markdown 一律交 Obsidian MarkdownRenderer 异步水合（note = 容器占位文案）
   let body = '';

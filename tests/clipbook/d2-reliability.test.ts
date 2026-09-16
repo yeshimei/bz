@@ -14,7 +14,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { enqueueFileTask, jsonFileStore } from '../../src/core/storage';
 import { getNewsFilePath, readNewsData, writeNewsDataMerged } from '../../src/clipbook/news-data';
-import { readClipbookData, updateClipbookData, clipbookFilePath } from '../../src/clipbook/data';
+import { readClipbookData, updateClipbookData, clipbookFilePath, emptySidecar } from '../../src/clipbook/data';
 import { enqueueNewsWrite, drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 import { articleKeyOf } from '../../src/clipbook/constants';
 
@@ -125,8 +125,9 @@ describe('clipbook.json 侧写读改写收编（updateClipbookData）', () => {
     vault.files.set(clipbookFilePath(), broken);
     // 坏文件 → 留档 + 降级空侧写，读取不抛
     const cur = await readClipbookData();
-    // issue 329：侧写扩段（marks/savedImages/pendingSource）——降级空侧写含新段默认空
-    expect(cur).toEqual({ articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} });
+    // issue 329：侧写扩段（marks/savedImages/pendingSource）——降级空侧写含新段默认空；
+    // issue 358：再扩 readLog（阅读会话流水，零迁移兜底空数组）
+    expect(cur).toEqual(emptySidecar());
     const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/clipbook.json.'));
     expect(backups).toHaveLength(1);
     expect(vault.files.get(backups[0])).toBe(broken);

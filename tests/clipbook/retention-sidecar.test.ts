@@ -8,7 +8,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { readNewsAndSidecar } from '../../src/clipbook/loader';
-import { readClipbookData, updateClipbookData } from '../../src/clipbook/data';
+import { readClipbookData, updateClipbookData, emptySidecar } from '../../src/clipbook/data';
 import { getNewsFilePath } from '../../src/clipbook/news-data';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 
@@ -46,9 +46,9 @@ describe('保留策略清理同步清侧写（issue 333）', () => {
   it('超期条目被清理后，其 marks/pendingSource 侧写随之清除', async () => {
     // 预置：旧文曾有划词标记（修复前创建、pendingSource 缺失的存量形态）
     const before = {
-      articleOverrides: {}, savedArchive: [], order: [],
+      ...emptySidecar(),
       marks: { [KEY]: [{ find: '旧正文片段', notePath: '文献盒/旧名词.md', kind: 'term' as const }] },
-      savedImages: {}, pendingSource: { [KEY]: ['文献盒/旧名词.md'] },
+      pendingSource: { [KEY]: ['文献盒/旧名词.md'] },
     };
     await updateClipbookData(() => before);
 

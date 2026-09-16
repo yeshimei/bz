@@ -64,6 +64,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-clipbook-mark-all-read',
   // 立即抓取（issue 302 / ADR-0128：插件内抓取的手动入口，忽略间隔）
   'bz-clipbook-fetch-now',
+  // 剪藏阅读报告（issue 358「我读了什么」：剪藏本自有阅读流水报告弹层）
+  'bz-clipbook-report',
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要
   'bz-auto-summary-redo',
   // 统一保险库（encrypt 域，ADR-0085）：密码/笔记/日记合一
@@ -180,6 +182,9 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-memo-open').name).toBe('备忘录');
     // clipbook 融合域（ADR-0082）：剪藏本 = 聚合讯+剪藏本合一入口
     expect(byId('bz-clipbook-open').name).toBe('剪藏本');
+    // issue 358：剪藏阅读报告（与 bz-reading-report-open 书库报告并列的自有报告）
+    expect(byId('bz-clipbook-report').name).toBe('剪藏阅读报告');
+    expect(byId('bz-clipbook-report').icon).toBe('newspaper');
     expect(byId('bz-memo-add').name).toBe('加备忘录');
     // t2：四套叫法统一「阅读分析报告」（走查批 D；home 磁贴保留短名「阅读报告」）
     expect(byId('bz-reading-report-open').name).toBe('阅读分析报告');
