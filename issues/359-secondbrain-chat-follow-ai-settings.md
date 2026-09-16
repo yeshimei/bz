@@ -1,6 +1,6 @@
 # 359 · 第二大脑对话改走 AI 设置
 
-> labels: wayfinder:task ｜ map: 346 ｜ 来源: next-ideas #25（用户已采纳，**语义已修正**）｜ status: open ｜ assignee: — ｜ blocked-by: —
+> labels: wayfinder:task ｜ map: 346 ｜ 来源: next-ideas #25（用户已采纳，**语义已修正**）｜ status: closed ｜ assignee: dev ｜ blocked-by: —
 
 ## What
 
@@ -22,3 +22,7 @@
 
 - 相关：src/secondbrain/chat-panel.ts、api.ts（旧 DeepSeek 通道退役）、src/core/ai.ts
 - 旧配置键迁移（若存在 DeepSeek 专用键）按项目零迁移/迁移惯例处理，spec 里写清。
+
+## Resolution
+
+✅ 已交付：commit `0e645fc6`（2026-09-17，全量门禁绿，随 2b2fdbbc 部署）。

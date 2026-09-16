@@ -1,6 +1,6 @@
 # 358 · 剪藏本阅读报告
 
-> labels: wayfinder:task ｜ map: 346 ｜ 来源: next-ideas #18（用户已采纳）｜ status: open ｜ assignee: — ｜ blocked-by: —
+> labels: wayfinder:task ｜ map: 346 ｜ 来源: next-ideas #18（用户已采纳）｜ status: closed ｜ assignee: dev ｜ blocked-by: —
 
 ## What
 
@@ -20,3 +20,7 @@
 
 - 相关：src/clipbook（stats 收集链路、报告视图）、范式参考 src/reading-report
 - 注意与书库阅读报告入口的关系（rail 底部现有入口跳书库报告）——入口规划在 spec 里定。
+
+## Resolution
+
+✅ 已交付：commit `866b5213`（2026-09-17，全量门禁绿，随 2b2fdbbc 部署）。

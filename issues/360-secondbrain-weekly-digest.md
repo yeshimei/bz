@@ -1,6 +1,6 @@
 # 360 · 第二大脑每周知识摘要
 
-> labels: wayfinder:task ｜ map: 346 ｜ 来源: next-ideas #27（用户已采纳）｜ status: open ｜ assignee: — ｜ blocked-by: —
+> labels: wayfinder:task ｜ map: 346 ｜ 来源: next-ideas #27（用户已采纳）｜ status: closed ｜ assignee: dev ｜ blocked-by: —
 
 ## What
 
@@ -20,3 +20,7 @@
 
 - 相关：src/secondbrain（vector-store/link 段、meta 段时间戳）
 - 注意成本控制：摘要聚合优先用本地数据，AI 文案生成可选。
+
+## Resolution
+
+✅ 已交付：commit `7e9d00d7`（2026-09-17，全量门禁绿，随 2b2fdbbc 部署）。
