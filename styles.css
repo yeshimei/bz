@@ -7818,6 +7818,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-home-timeline[data-tl-time="0"] .bz-home-ev-tm { display: none; }
 .bz-home-timeline[data-tl-time="0"] .bz-home-ev { padding-left: var(--bz-space-lg); }
 
+/* ---- 「生成今日总结」动作行（ADR-0157 自 recap 面板迁入；只在今天视图渲染）----
+   按钮基线走组件库 .bz-btn（inline-flex + spinner gap 对齐），域内只压尺寸贴卡内行密度，
+   配色取时间线点评/预告卡同源的 --h-ai（小橘 AI 语义）；初始 disabled（探测/生成中），透明度走组件库 .bz-btn:disabled */
+.bz-home-ai-row { display: flex; justify-content: flex-end; padding: 2px var(--bz-space-sm) var(--bz-space-sm); }
+.bz-home-panel .bz-home-ai { height: 26px; padding: 0 12px; font-size: 11.5px; border-radius: 999px; color: var(--h-ai) !important; background: var(--h-ai-soft) !important; }
+.bz-home-panel .bz-home-ai:hover { border-color: var(--h-ai); }
+
 /* ---- 明天预告（原型 .pr） ---- */
 .bz-home-panel .bz-home-pr { display: block; background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px var(--bz-space-lg); margin-bottom: 10px; font-size: var(--bz-font-label); line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }
 .bz-home-panel .bz-home-pr:hover { border-color: var(--h-ai); }
@@ -7986,90 +7993,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 悬停：跟随首页入口行的暖色低透明叠加，不引主题灰（否则浅色下偏冷、显脏） */
 .bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(23, 21, 18, 0.06) !important; }
 .theme-dark .bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(236, 233, 223, 0.08) !important; }
-/* ==================== 今日回顾域样式（src/recap/styles.css，方向一 R2） ====================
-   组件库纪律（铁律 6）：面板壳（.bz-panel-overlay/.bz-panel-frame）、头行（.bz-panel-head 族）、
-   统计卡（.bz-stat/uiStat）、空态/按钮/spinner 走 src/core/ui；本文件只保留今日回顾独有布局
-   （overlay 移动端 flex-end 变体/面板尺寸/头行移动端变体/摘要行网格/痕迹时间轴），
-   取值一律取自 tokens.css（间距/字号/圆角全部对档）。 */
-
-/* ---- 遮罩 + 主面板骨架：基线走样式库 .bz-panel-overlay/.bz-panel-frame（含滚动条隐藏）；
-        .bz-recap-overlay 只留移动端 flex-end 变体，.bz-recap-panel 只留桌面尺寸 ---- */
-.bz-recap-panel {
-  width: 640px; max-width: calc(100vw - 32px); height: 560px; max-height: 90vh;
-}
-
-/* ---- 头行：基线走样式库 .bz-panel-head 族（标题+竖线日期+spacer+钮组，44px）；
-        域内只留 R3 生成钮禁用态与关闭钮显隐（桌面遮罩/ESC 关闭，移动端显示） ---- */
-/* R3 生成按钮（采集期间/生成中禁用：内容/容器透明度走 state token，语义见设计手册 §6.4；
-   生成中内嵌 .bz-spinner--sm，.bz-btn 基线自带 inline-flex + 6px gap 对齐） */
-.bz-recap-ai:disabled { opacity: var(--bz-state-disabled-content); cursor: default; }
-.bz-recap-close { display: none; }
-
-/* ---- 主体（滚动区） ---- */
-.bz-recap-body {
-  flex: 1; min-height: 0; overflow-y: auto;
-  padding: var(--bz-space-lg) var(--bz-space-xl) calc(var(--bz-space-xl) + env(safe-area-inset-bottom, 0px));
-}
-.bz-recap-loading {
-  height: 100%; display: flex; align-items: center; justify-content: center;
-  color: var(--bz-text-3);
-}
-
-/* ---- 顶部摘要行：五格统计卡（日记 N 条 · 影视 N · 书 N · 待办完成 N · 番茄 N 个 M 分钟）。
-        卡基线走样式库 .bz-stat（uiStat 工厂，--text 文字档）；域内只补居中排版修饰 ---- */
-.bz-recap-summary {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--bz-space-sm);
-  margin-bottom: var(--bz-space-lg);
-}
-.bz-recap-stat { align-items: center; text-align: center; }
-
-/* ---- 痕迹时间轴：时刻 + 域图标 + 一句话（时间正序） ---- */
-.bz-recap-timeline { display: flex; flex-direction: column; }
-.bz-recap-row {
-  display: flex; align-items: center; gap: var(--bz-space-md);
-  padding: var(--bz-space-sm) var(--bz-space-sm);
-  border-radius: var(--bz-radius-sm);
-  min-height: 36px;
-}
-.bz-recap-row:hover { background: var(--bz-surface-hover); }
-.bz-recap-time {
-  font-size: var(--bz-font-caption); color: var(--bz-text-3);
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0; min-width: 72px; text-align: right;
-}
-.bz-recap-row-ic {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; flex-shrink: 0;
-  color: var(--bz-text-2);
-  background: var(--bz-surface-3); border-radius: var(--bz-radius-xs);
-}
-.bz-recap-row-ic .bz-ic { width: 13px; height: 13px; }
-.bz-recap-text {
-  font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.4;
-  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-/* 域名前缀（弱化：区分归属靠图标+前缀，正文保持主角） */
-.bz-recap-dom {
-  font-style: normal; font-size: var(--bz-font-meta); color: var(--bz-text-3);
-  margin-right: var(--bz-space-sm);
-}
-.bz-recap-empty { padding: var(--bz-space-2xl) 0; }
-
-/* ---- 移动端（≤768px）：真全屏 + 显示关闭钮 + 摘要两行换行 ---- */
-@media (max-width: 768px) {
-  .bz-recap-overlay { align-items: flex-end; }
-  .bz-recap-panel {
-    width: 100vw; height: 100%; max-width: none; max-height: none;
-    border-radius: 0; border: none;
-  }
-  /* 头行尺寸/两侧间距走共享 .bz-panel-head 基线（44px/0 lg）；顶距由根节点
-     .bz-panel-mtop 统一接管（ui-kit-manual §3.2），域内只留标题放大变体 */
-  .bz-recap-panel .bz-panel-title { font-size: var(--bz-font-emphasis); }
-  .bz-recap-close { display: inline-flex; }
-  .bz-recap-body { padding-left: var(--bz-space-lg); padding-right: var(--bz-space-lg); }
-  .bz-recap-summary { grid-template-columns: repeat(3, 1fr); }
-  .bz-recap-time { min-width: 60px; }
-}
 /* ==================== 待办域样式（src/todo/styles.css） ==================== */
 /* 基线（按钮/图标钮/chip/输入/弹窗/空态/平铺选择/面板壳/头行/侧栏/主头行/工具行/搜索/
    移动横滑条）全部消费组件库（src/core/ui/components.css 的 .bz-* 类与 --bz-* token）；
@@ -10239,13 +10162,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    插件端 .bz-ic 默认 1em、tagb 挂 --xs 12px（!important），覆盖须同带 !important。 —— */
 .bz-fav-card .bz-fav-tagb .bz-ic { width: 11px !important; height: 11px !important; }
 
-/* —— 表单（原型 .mask + .form 逐字） —— */
-.bz-fav-form-mask {
-  position: fixed; inset: 0; z-index: 600; /* 原型兜底值，插件端以 topifyZ 为准 */
-  background: var(--mask); backdrop-filter: blur(var(--bz-overlay-blur)); display: flex; align-items: center; justify-content: center;
-}
-.bz-fav-form {
-  width: min(430px, calc(100vw - 32px)); max-height: 86vh; overflow: auto; background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
+/* —— 表单弹窗（壳已收编 core uiModal，issue 365 第 5 项）——
+   遮罩/z 发号/遮罩点击关/ESC 关全归 .bz-overlay-mask 单源；域内只保留亚麻卡皮
+   （逐值照抄旧 .bz-fav-form，与确认流程框 #__shared_confirm_popup__.bz-fav-flow-dialog 同取值：
+   --pop 底 / 14px 圆角 / 0 16px 44px .32 阴影）。限高滚动走 core popup 82vh 单源。
+   壳类锚 scope（bz-fav-form 由单源内容根携带，壳不重复挂——F15 单例守卫双计教训）。 */
+.bz-overlay-popup.bz-fav-scope {
+  width: min(430px, calc(100vw - 32px));
+  background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
   box-shadow: 0 16px 44px rgba(0,0,0,.32);
 }
 .bz-fav-form h2 { font-size: var(--bz-font-emphasis); color: var(--pop-ink); margin: 0 0 14px; letter-spacing: 2px; }
@@ -10293,8 +10217,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    confirmDiscard(..., 'bz-fav-flow-dialog bz-fav-scope') 挂类。为什么必须是这两个类：
      · `bz-fav-flow-dialog` = 本域确认框专属类，承载下面这套取值；
      · `bz-fav-scope` = 私有 token（--pop/--pop-ink/--pop-mut/--acc/--fld-bd/--on-acc）的定义者，
-       不命中则本块所有变量解析失败 → 必须跟着传（与 openForm 的
-       `.bz-fav-form-mask bz-fav-scope` 同口径）。
+       不命中则本块所有变量解析失败 → 必须跟着传（与 openForm 的 uiModal popup 域类同口径）。
    取值全部照抄同域表单弹窗 `.bz-fav-form`（styles.css:163 起），让「归档/删除/放弃」三个确认框
    与「添加·编辑收藏」表单弹窗同皮。core 侧不再自持壳层，底/圆角/阴影由
    `.bz-overlay-popup` 消费的 --bz-* token 起底，这里用域私有 token 覆写。
@@ -10352,9 +10275,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* ==================== 标签管理（issue 363：设置面板「标签管理」组 custom 行 + 编辑弹窗） ====================
  * 容器与弹窗均挂 .bz-fav-scope 取域私有 token（bz-fav-flow-dialog 同款通道：设置面板/弹窗
  * 不在 .bz-fav-scope 树内，缺它变量全部解析失败）。UI 全域内自绘（ADR-0101：favorites 不引
- * 组件库按钮）——编辑弹窗复用表单弹窗 .bz-fav-form-mask / .bz-fav-form 壳与 .bz-fav-btns
- * 按钮行样式（同皮），这里只补图标钮/添加钮/图标胶囊；暗色随 .theme-dark .bz-fav-scope
- * 整组变量自动反转。 */
+ * 组件库按钮）——编辑弹窗壳已收编 core uiModal（issue 365 第 5 项同口径），内容根沿用
+ * .bz-fav-form 同皮与 .bz-fav-btns 按钮行样式，这里只补图标钮/添加钮/图标胶囊；
+ * 暗色随 .theme-dark .bz-fav-scope 整组变量自动反转。 */
 
 /* —— 管理列表（custom 行容器） —— */
 .bz-fav-tagmgr { display: flex; flex-direction: column; gap: 6px; width: 100%; }
@@ -10388,8 +10311,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-fav-tagmgr-add svg { width: 13px; height: 13px; }
 .bz-fav-tagmgr-add:hover { color: var(--acc-deep); border-color: var(--acc); }
 
-/* —— 编辑弹窗（复用 .bz-fav-form-mask/.bz-fav-form 壳与 .bz-fav-btns 按钮行，仅补图标胶囊与宽度档） —— */
-.bz-fav-tageditor { width: min(380px, calc(100vw - 32px)); }
+/* —— 编辑弹窗（壳收编 uiModal maxWidth 380 档；内容根 .bz-fav-form 同皮 + .bz-fav-btns 按钮行，补图标胶囊） —— */
 .bz-fav-tageditor-ics { display: flex; flex-wrap: wrap; gap: 6px; }
 .bz-fav-tageditor-ic {
   width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
@@ -10634,14 +10556,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-review-exclude-remove { background: none; border: none; cursor: pointer; color: var(--bz-text-3); font-size: var(--bz-font-caption); line-height: 1; padding: 2px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: none !important; }
 .bz-review-exclude-remove:hover { color: var(--bz-danger); background: var(--bz-surface-hover); }
 
-/* 统计弹窗 / 复习历史弹窗（既有实现，容器保留） */
-#review-stats-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); }
+/* 统计弹窗 / 复习历史弹窗（既有实现，容器保留）；遮罩三件套已收编 .bz-overlay-mask 单源（issue 365） */
 #review-stats-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); width: 92%; max-width: 600px; max-height: 88vh; flex-direction: column; animation: slideUp var(--bz-dur-slow) ease-out; }
 #review-stats-body { flex: 1; overflow-y: auto; }
 .bz-review-stats-head { padding: var(--bz-space-sm) 18px 6px !important; }
 .bz-review-stats-head .bz-review-title { font-size: .92rem !important; font-weight: 600 !important; margin: 0 !important; }
 .bz-review-stats-tl-row:hover { background: var(--bz-surface-hover); }
-#review-history-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); }
 #review-history-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); width: 92%; max-width: 480px; max-height: 80vh; flex-direction: column; overflow: hidden; animation: slideUp var(--bz-dur-slow) ease-out; }
 #review-history-body { flex: 1; overflow-y: auto; position: relative; }
 /* 排名/时间线行（issue 270：stats-ui 内联收编并入本类，值逐字搬运——
@@ -10957,7 +10877,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 
 /* ==================== 番茄钟弹窗（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
-    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); } /* z 动态发号（ADR-0067）；遮罩色走 --bz-overlay（原写死 rgba 已对齐） */
+    #pomodoro-mask.bz-overlay-mask { padding: 0; } /* 三件套（fixed/inset/--bz-overlay 底/token blur/居中）已收编 .bz-overlay-mask 单源（issue 365）；padding 归零对齐原可用区，320px 弹窗窄屏不被裁 */
     #pomodoro-popup { width: 320px; padding: var(--bz-space-xl); border-radius: var(--bz-radius-lg); background: var(--pz-bg, var(--background-primary)); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
     #pomodoro-popup:focus { outline: none; } /* Space 快捷键承载焦点，不画焦点环 */
     #pomodoro-ring-svg { width: 160px; height: 160px; margin: var(--bz-space-sm) auto; display: block; }
@@ -11146,13 +11066,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   box-shadow: var(--bz-shadow-lg);
   flex-direction: column;
 }
-/* 主密码弹窗（铁律 9 收敛：视觉样式一律在此，JS 仅留功能性 zIndex/display——动态发号见 topifyZ） */
-.bz-encrypt-dialog-mask {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: var(--bz-overlay);
-  backdrop-filter: blur(var(--bz-overlay-blur));
-  align-items: center; justify-content: center;
-}
+/* 主密码弹窗（铁律 9 收敛：视觉样式一律在此，JS 仅留功能性 zIndex/display——动态发号见 topifyZ）；
+   旧 .bz-encrypt-dialog-mask 已死（主密码弹窗走 createMask → .bz-overlay-mask 单源，TS 零引用，issue 365 清偿） */
 .bz-encrypt-dialog-box {
   background: var(--bz-surface-2); border-radius: var(--bz-radius-md);
   padding: 28px; max-width: 420px; width: 90%;
@@ -11253,11 +11168,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   #bz-encrypt-popup { width: 95%; max-height: 90vh; }
 }
 /* 体检弹窗（右上角体检按钮替换原清理扫把：先报告后勾选清理） */
-.bz-encrypt-health-mask {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: var(--bz-overlay);
-  backdrop-filter: blur(var(--bz-overlay-blur));
-  align-items: center; justify-content: center;
+/* 遮罩三件套已收编 .bz-overlay-mask 单源（issue 365）；padding 归零对齐原可用区（92% 宽依赖视口全宽） */
+.bz-encrypt-health-mask.bz-overlay-mask {
+  padding: 0;
 }
 .bz-encrypt-health-box {
   background: var(--bz-surface-2); border-radius: var(--bz-radius-md);
@@ -11331,9 +11244,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #bz-encrypt-popup .bz-vault-desk { display: flex; height: 100%; width: 100%; color: var(--bz-text-1); font-size: var(--bz-font-body); }
 #bz-encrypt-popup button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 #bz-encrypt-popup input { font: inherit; border: 1px solid var(--bz-border); background: var(--bz-surface-1); color: var(--bz-text-1); border-radius: 10px; padding: var(--bz-space-sm) 10px; outline: none; }
-#bz-encrypt-popup .bz-vault-ic { width: 30px; height: 30px; border-radius: var(--bz-radius-sm); display: inline-flex; align-items: center; justify-content: center; color: var(--bz-text-2); flex-shrink: 0; }
-#bz-encrypt-popup .bz-vault-ic:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-#bz-encrypt-popup .bz-vault-ic svg { width: 15px; height: 15px; }
 /* 左导航 */
 #bz-encrypt-popup .bz-vault-nav { width: 210px; flex-shrink: 0; background: var(--bz-surface-1); border-right: 1px solid var(--bz-border); display: flex; flex-direction: column; padding: var(--bz-space-lg) var(--bz-space-md) var(--bz-space-md); }
 #bz-encrypt-popup .bz-vault-brand { display: flex; align-items: center; gap: 10px; padding: 0 10px var(--bz-space-lg); }
@@ -11346,7 +11256,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #bz-encrypt-popup .bz-vault-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-item:hover { background: var(--bz-surface-hover); }
 #bz-encrypt-popup .bz-vault-item .cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); background: var(--bz-surface-hover); border-radius: var(--bz-radius-full); padding: 1px 7px; font-variant-numeric: tabular-nums; }
-/* 密码资产激活态 = 品牌软底 + 品牌字（金色归 --bz-brand 系）；笔记/日记沿用分类语义色 */
+/* 资产激活态 = 品牌软底 + 品牌字（金色归 --bz-brand 系）；笔记/日记沿用分类语义色 */
 #bz-encrypt-popup .bz-vault-item.on { background: color-mix(in srgb, var(--bz-brand) 13%, transparent); color: var(--bz-brand); font-weight: 600; border-color: color-mix(in srgb, var(--bz-brand) 25%, transparent); }
 #bz-encrypt-popup .bz-vault-item.on .cnt { background: color-mix(in srgb, var(--bz-brand) 20%, transparent); color: var(--bz-brand); }
 #bz-encrypt-popup .bz-vault-item.k-note.on { background: color-mix(in srgb, var(--bz-vault-teal) 12%, transparent); color: var(--bz-vault-teal-ink); border-color: color-mix(in srgb, var(--bz-vault-teal) 30%, transparent); }
@@ -11410,9 +11320,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #bz-encrypt-popup .bz-vault-detail { flex: 1; min-width: 0; border: 1px solid var(--bz-border); background: var(--bz-surface-1); border-radius: var(--bz-radius-lg); display: flex; flex-direction: column; overflow-y: auto; color: var(--bz-text-1); }
 #bz-encrypt-popup .bz-vault-detail > .bz-vault-area { overflow-y: auto; padding: 18px 20px; }
 /* 详情列头：列内滚动时 sticky 保持可见 */
-#bz-encrypt-popup .bz-vault-dhead,
-#bz-encrypt-popup .bz-pwv-dhead,
-#bz-encrypt-popup .bz-pwv-accthead { position: sticky; top: 0; background: var(--bz-surface-1); z-index: 1; }
+#bz-encrypt-popup .bz-vault-dhead { position: sticky; top: 0; background: var(--bz-surface-1); z-index: 1; }
 #bz-encrypt-popup .bz-vault-dhead { display: flex; align-items: center; gap: 13px; padding: var(--bz-space-lg) 20px; border-bottom: 1px solid var(--bz-border); }
 #bz-encrypt-popup .bz-vault-dhead .big { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; color: var(--bz-on-brand); flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-dhead .big svg { width: 21px; height: 21px; }
@@ -11429,9 +11337,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #bz-encrypt-popup .chip.att { color: var(--bz-vault-teal-ink); background: color-mix(in srgb, var(--bz-vault-teal) 10%, transparent); border-color: color-mix(in srgb, var(--bz-vault-teal) 30%, transparent); }
 #bz-encrypt-popup .chip.att svg { width: 12px; height: 12px; flex-shrink: 0; }
 #bz-encrypt-popup .field .valrow.chips .chip { display: inline-flex; align-items: center; gap: var(--bz-space-xs); }
-/* 收藏星/新增按钮换内联 svg 后的基线对齐 */
-#bz-encrypt-popup .star svg { vertical-align: -1px; }
-#bz-encrypt-popup .bz-pwv-addacct svg, #bz-encrypt-popup .bz-pwv-btn.gold svg { vertical-align: -2px; margin-right: 3px; }
 #bz-encrypt-popup .note { background: var(--bz-surface-2); border: 1px solid var(--bz-border); border-radius: 11px; padding: 11px 13px; font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: 1.6; }
 #bz-encrypt-popup .note.hint { color: var(--bz-text-3); font-size: var(--bz-font-meta); }
 #bz-encrypt-popup .note.pre { white-space: normal; word-break: break-word; }
@@ -11482,152 +11387,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #bz-encrypt-popup .bz-vault-hrow .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-hrow .lbl { flex: 1; }
 #bz-encrypt-popup .bz-vault-hrow .n { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--bz-text-1); }
-/* 空态：图标/标题/描述/居中基线走样式库 .bz-empty（uiEmpty 工厂，色彩层 token 随明暗）；
-   域内只补列表列纵向撑满（原 .bz-pwv-empty flex:1 的布局语义）与金库主题 CTA */
+/* 空态：图标/标题/描述/居中基线走样式库 .bz-empty（uiEmpty 工厂，色彩层 token 随明暗）；域内只补列表列纵向撑满 */
 #bz-encrypt-popup .bz-vault-lc-body > .bz-empty { flex: 1; }
-#bz-encrypt-popup .bz-empty .bz-pwv-empty-add { display: inline-flex; align-items: center; gap: 5px; margin-top: var(--bz-space-md); font-size: var(--bz-font-meta); font-weight: 600; color: var(--bz-brand); background: color-mix(in srgb, var(--bz-brand) 14%, transparent); border: 1px solid color-mix(in srgb, var(--bz-brand) 30%, transparent); border-radius: var(--bz-radius-full); padding: 6px 15px; cursor: pointer; }
-#bz-encrypt-popup .bz-empty .bz-pwv-empty-add:hover { background: color-mix(in srgb, var(--bz-brand) 24%, transparent); }
-#bz-encrypt-popup .bz-empty .bz-pwv-empty-add svg { width: 13px; height: 13px; }
-/* 密码平台行 */
-#bz-encrypt-popup .bz-pwv-row, #bz-encrypt-popup .bz-pwv-plrow { display: flex; align-items: center; gap: 11px; padding: 10px; border-radius: var(--bz-radius-md); cursor: pointer; border: 1px solid transparent; transition: background var(--bz-dur-fast), border-color var(--bz-dur-fast); color: var(--bz-text-1); margin: 0 var(--bz-space-sm); }
-#bz-encrypt-popup .bz-pwv-row:hover, #bz-encrypt-popup .bz-pwv-plrow:hover { background: var(--bz-surface-2); }
-#bz-encrypt-popup .bz-pwv-row.on, #bz-encrypt-popup .bz-pwv-plrow.on { background: var(--bz-surface-2); border-color: var(--bz-border); box-shadow: var(--bz-shadow-md); }
-#bz-encrypt-popup .bz-pwv-row .mid, #bz-encrypt-popup .bz-pwv-plrow .mid { flex: 1; min-width: 0; }
-#bz-encrypt-popup .bz-pwv-row .pl, #bz-encrypt-popup .bz-pwv-plrow .pl { font-size: var(--bz-font-label); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; color: var(--bz-text-1); }
-#bz-encrypt-popup .bz-pwv-row .ac, #bz-encrypt-popup .bz-pwv-plrow .ac { font-size: var(--bz-font-caption); color: var(--bz-text-2); font-family: var(--bz-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
-#bz-encrypt-popup .bz-pwv-row .tm, #bz-encrypt-popup .bz-pwv-plrow .tm { font-size: var(--bz-font-caption); color: var(--bz-text-3); flex-shrink: 0; }
-#bz-encrypt-popup .bz-pwv-row .star, #bz-encrypt-popup .bz-pwv-plrow .star { color: var(--bz-warning); } /* 同上：内联 svg 收藏星 */
-#bz-encrypt-popup .bz-pwv-cnt { font-size: var(--bz-font-caption); color: var(--bz-brand); background: color-mix(in srgb, var(--bz-brand) 16%, transparent); border-radius: var(--bz-radius-full); padding: 0 7px; font-variant-numeric: tabular-nums; }
-/* 平台头像 */
-#bz-encrypt-popup .bz-pwv-avatar { position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; color: var(--bz-on-brand); flex-shrink: 0; }
-#bz-encrypt-popup .bz-pwv-avatar.big { width: 46px; height: 46px; border-radius: 13px; font-size: 18px; }
-#bz-encrypt-popup .bz-pwv-avatar.av { width: 36px; height: 36px; border-radius: 10px; font-size: var(--bz-font-body); }
-#bz-encrypt-popup .bz-pwv-avatar .bz-pwv-favicon { width: 60%; height: 60%; object-fit: contain; position: relative; z-index: 1; }
-/* 密码详情 */
-#bz-encrypt-popup .bz-pwv-dhead { display: flex; align-items: center; gap: 13px; padding: var(--bz-space-lg) 20px; border-bottom: 1px solid var(--bz-border); }
-#bz-encrypt-popup .bz-pwv-dhead .ttl { flex: 1; min-width: 0; }
-#bz-encrypt-popup .bz-pwv-dhead .ttl h2 { margin: 0; font-size: 16px; font-weight: 700; color: var(--bz-text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#bz-encrypt-popup .bz-pwv-dhead .ttl .url { font-size: var(--bz-font-caption); color: var(--bz-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; cursor: pointer; }
-#bz-encrypt-popup .bz-pwv-dhead .ttl .url:hover { color: var(--bz-brand); }
-#bz-encrypt-popup .bz-pwv-accthead { display: flex; align-items: center; gap: var(--bz-space-sm); padding: var(--bz-space-md) 20px var(--bz-space-xs); }
-#bz-encrypt-popup .bz-pwv-accthead .t { font-size: var(--bz-font-meta); font-weight: 700; color: var(--bz-text-2); flex: 1; }
-#bz-encrypt-popup .bz-pwv-addacct { font-size: var(--bz-font-meta); color: var(--bz-brand); background: color-mix(in srgb, var(--bz-brand) 12%, transparent); padding: 5px var(--bz-space-md); border-radius: var(--bz-radius-full); font-weight: 600; }
-#bz-encrypt-popup .bz-pwv-addacct:hover { background: color-mix(in srgb, var(--bz-brand) 22%, transparent); }
-#bz-encrypt-popup .bz-pwv-accts { padding: var(--bz-space-sm) 20px 20px; }
-#bz-encrypt-popup .bz-pwv-acctcard { border: 1px solid var(--bz-border); background: var(--bz-surface-2); border-radius: 14px; padding: 14px var(--bz-space-lg); margin-bottom: 10px; }
-#bz-encrypt-popup .bz-pwv-acctcard .accrow { display: flex; align-items: center; gap: var(--bz-space-sm); margin-bottom: 10px; }
-#bz-encrypt-popup .bz-pwv-acctcard .accrow .name { flex: 1; min-width: 0; font-size: var(--bz-font-body); font-weight: 700; color: var(--bz-text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#bz-encrypt-popup .bz-pwv-acctcard .accrow .name .star { color: var(--bz-warning); font-size: var(--bz-font-caption); margin-left: var(--bz-space-xs); }
-#bz-encrypt-popup .bz-pwv-acctcard .copyac { font-size: var(--bz-font-meta); color: var(--bz-text-2); background: var(--bz-surface-hover); padding: 5px var(--bz-space-md); border-radius: var(--bz-radius-full); display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
-#bz-encrypt-popup .bz-pwv-acctcard .copyac svg { width: 13px; height: 13px; }
-#bz-encrypt-popup .bz-pwv-acctcard .pwrow { display: flex; align-items: center; gap: var(--bz-space-sm); }
-#bz-encrypt-popup .bz-pwv-acctcard .pw { flex: 1; min-width: 0; font-size: var(--bz-font-label); font-family: var(--bz-font-mono); padding: 9px var(--bz-space-md); background: var(--bz-surface-1); border: 1px solid var(--bz-border); border-radius: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-text-1); }
-#bz-encrypt-popup .bz-pwv-acctcard .pw.mask { letter-spacing: 0.14em; color: var(--bz-text-2); }
-#bz-encrypt-popup .bz-pwv-acctcard .mini { width: 30px; height: 30px; border-radius: var(--bz-radius-sm); display: inline-flex; align-items: center; justify-content: center; color: var(--bz-text-2); flex-shrink: 0; }
-#bz-encrypt-popup .bz-pwv-acctcard .mini:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-#bz-encrypt-popup .bz-pwv-acctcard .mini svg { width: 14px; height: 14px; }
-#bz-encrypt-popup .bz-pwv-acctcard .note { margin-top: 10px; }
-#bz-encrypt-popup .bz-pwv-acctcard .meta { margin-top: var(--bz-space-sm); font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-#bz-encrypt-popup .bz-pwv-acctcard .meta a { color: var(--bz-brand); }
-/* 密码移动卡 */
-#bz-encrypt-popup .bz-pwv-mobcard { display: flex; align-items: center; gap: var(--bz-space-md); background: var(--bz-surface-1); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-lg); padding: var(--bz-space-md) 14px; margin-bottom: 10px; cursor: pointer; color: var(--bz-text-1); }
-#bz-encrypt-popup .bz-pwv-mobcard .mid { flex: 1; min-width: 0; }
-#bz-encrypt-popup .bz-pwv-mobcard .a { font-size: var(--bz-font-body); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#bz-encrypt-popup .bz-pwv-mobcard .a .star { color: var(--bz-warning); font-size: var(--bz-font-caption); margin-left: 3px; }
-#bz-encrypt-popup .bz-pwv-mobcard .b { font-size: var(--bz-font-caption); color: var(--bz-text-2); font-family: var(--bz-font-mono); margin-top: 1px; }
-#bz-encrypt-popup .bz-pwv-mobcard .cnt { font-size: var(--bz-font-caption); color: var(--bz-brand); background: color-mix(in srgb, var(--bz-brand) 16%, transparent); border-radius: var(--bz-radius-full); padding: 0 7px; margin-left: var(--bz-space-xs); }
-#bz-encrypt-popup .bz-pwv-mobcard .go { color: var(--bz-text-3); display: flex; }
-#bz-encrypt-popup .bz-pwv-mobcard .go svg { width: 15px; height: 15px; }
 /* 移动端恒真全屏（mob 默认隐藏，<768px 显示） */
 #bz-encrypt-popup .bz-vault-mob { display: none; }
-/* 密码添加/编辑/平台编辑弹窗：脱离 #bz-encrypt-popup 挂 body（ADR-0085 合并版），
-   样式必须无 popup 前缀；token 用全局 --bz-* 变量（.theme-* 挂 body）保证两主题可用。
-   层级走 ADR-0067 动态发号（topifyZ 显示即发号），不写死 z-index（旧 2200 已删）。 */
-.bz-vault-dlg-mask { position: fixed; inset: 0; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); display: flex; align-items: center; justify-content: center; }
-.bz-vault-dlg { background: var(--bz-surface-2); border-radius: var(--bz-radius-lg); padding: 22px var(--bz-space-xl); width: min(92vw, 440px); max-height: 86vh; overflow-y: auto; box-shadow: var(--bz-shadow-lg); }
-.bz-vault-dlg h3 { margin: 0 0 var(--bz-space-xs); font-size: var(--bz-font-title); font-weight: 700; color: var(--bz-text-1); }
-.bz-vault-dlg .sub { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-bottom: 14px; }
-.bz-vault-dlg label { display: block; font-size: var(--bz-font-meta); color: var(--bz-text-2); margin: 10px 0 5px; }
-.bz-vault-dlg button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-.bz-vault-dlg input { width: 100%; box-sizing: border-box; border: 1px solid var(--bz-border); background: var(--bz-surface-2); color: var(--bz-text-1); border-radius: 10px; padding: var(--bz-space-sm) 10px; outline: none; }
-.bz-vault-dlg input:focus { border-color: var(--bz-brand); }
-.bz-vault-dlg .pwdrow { display: flex; gap: var(--bz-space-sm); }
-.bz-vault-dlg .pwdrow input { flex: 1; }
-.bz-vault-dlg .pwdrow .gen { background: var(--bz-surface-hover); padding: var(--bz-space-sm) 14px; border-radius: 10px; font-weight: 600; color: var(--bz-text-1); }
-.bz-vault-dlg .pwdrow .mini { width: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--bz-text-2); flex-shrink: 0; }
-.bz-vault-dlg .pwdrow .mini:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-vault-dlg .pwdrow .mini svg { width: 14px; height: 14px; }
-/* 密码强度提示（纯本地计算）：弱=警示（--bz-warning）/ 中=品牌（--bz-brand）/ 强=语义绿（--bz-success）；
-   状态色只表达状态且附文字 */
-.bz-vault-dlg .pwstrength { min-height: 15px; margin: 6px 0 0; font-size: var(--bz-font-meta); color: var(--bz-text-2); }
-.bz-vault-dlg .pwstrength[data-level="weak"] { color: var(--bz-warning); }
-.bz-vault-dlg .pwstrength[data-level="mid"] { color: var(--bz-brand); }
-.bz-vault-dlg .pwstrength[data-level="strong"] { color: var(--bz-success); }
-.bz-vault-dlg .err { color: var(--bz-danger); font-size: var(--bz-font-meta); margin: var(--bz-space-sm) 0 0; min-height: 16px; }
-.bz-vault-dlg .btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: var(--bz-space-lg); }
-.bz-vault-dlg .btns button { padding: var(--bz-space-sm) 18px; border-radius: 10px; font-weight: 600; }
-.bz-vault-dlg .btns .cancel { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-vault-dlg .btns .save { background: var(--bz-brand); color: var(--bz-on-brand); }
-/* 快速取密选择器（bz-encrypt-copy-password 命令；挂 body，与 .bz-vault-dlg 同域前缀体系）。
-   候选行/空态/搜索框基线走样式库 .bz-popover-item(.is-on) / .bz-popover-empty / .bz-input；
-   域内只留弹窗壳、滚动列表与行内两行文案（平台名继承行色，is-on 时随品牌色）。 */
-.bz-encrypt-pwqp { background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); flex-direction: column; overflow: hidden; }
-.bz-encrypt-pwqp-head { padding: 14px var(--bz-space-lg) 0; }
-.bz-encrypt-pwqp-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--bz-text-1); }
-.bz-encrypt-pwqp-search { margin: 10px var(--bz-space-lg); width: calc(100% - 32px); box-sizing: border-box; }
-.bz-encrypt-pwqp-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 var(--bz-space-sm) 10px; }
-.bz-encrypt-pwqp .bz-popover-item .mid { flex: 1; min-width: 0; }
-.bz-encrypt-pwqp .bz-popover-item .pl { font-size: var(--bz-font-body); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bz-encrypt-pwqp .bz-popover-item .ac { font-size: var(--bz-font-meta); color: var(--bz-text-2); font-family: var(--bz-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
-.bz-encrypt-pwqp .bz-popover-item .key { font-size: var(--bz-font-caption); color: var(--bz-text-3); flex-shrink: 0; }
-@media (max-width: 768px) {
-  #bz-encrypt-popup { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; }
-  #bz-encrypt-popup .bz-vault-desk { display: none; }
-  #bz-encrypt-popup .bz-vault-mob { display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; background: var(--bz-surface-2); color: var(--bz-text-1); }
-  #bz-encrypt-popup .bz-vault-mbar { display: flex; align-items: center; gap: 10px; padding: 14px 14px var(--bz-space-sm); }
-  #bz-encrypt-popup .bz-vault-mbar .seal { width: 30px; height: 30px; border-radius: 9px; background: var(--bz-vault-gold-soft); display: flex; align-items: center; justify-content: center; color: var(--bz-on-brand); flex-shrink: 0; }
-  #bz-encrypt-popup .bz-vault-mbar .seal svg { width: 15px; height: 15px; stroke: var(--bz-on-brand); }
-  #bz-encrypt-popup .bz-vault-mbar .t { font-size: 16px; font-weight: 700; flex: 1; color: var(--bz-text-1); }
-  #bz-encrypt-popup .bz-vault-mbar .st { font-size: var(--bz-font-caption); color: var(--bz-success); font-weight: 700; background: color-mix(in srgb, var(--bz-success) 12%, transparent); padding: 3px 9px; border-radius: var(--bz-radius-full); }
-  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose { color: var(--bz-text-2); display: flex; }
-  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose svg { width: 18px; height: 18px; }
-  #bz-encrypt-popup .bz-vault-msearch { display: flex; align-items: center; gap: var(--bz-space-sm); margin: var(--bz-space-xs) 14px var(--bz-space-sm); min-height: 44px; background: var(--bz-surface-1); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-md); padding: 0 var(--bz-space-md); }
-  #bz-encrypt-popup .bz-vault-msearch svg { width: 13px; height: 13px; color: var(--bz-text-3); }
-  #bz-encrypt-popup .bz-vault-msearch input { border: none; background: none; flex: 1; padding: 9px 0; font-size: var(--bz-font-label); }
-  #bz-encrypt-popup .bz-vault-msearch input:focus { outline: none; }
-  #bz-encrypt-popup .bz-vault-mseg { display: flex; gap: 6px; margin: 2px 14px 10px; padding: var(--bz-space-xs); background: var(--bz-surface-hover); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-md); }
-  #bz-encrypt-popup .bz-vault-mseg .sg { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 44px; text-align: center; padding: 7px 0; border-radius: 9px; font-size: var(--bz-font-meta); font-weight: 600; color: var(--bz-text-2); cursor: pointer; }
-  #bz-encrypt-popup .bz-vault-mseg .sg.on { background: var(--bz-vault-gold-soft); color: var(--bz-on-brand); }
-  #bz-encrypt-popup .bz-vault-mbody { flex: 1; overflow-y: auto; padding: 2px 14px var(--bz-space-xl); position: relative; }
-  #bz-encrypt-popup .bz-vault-mob-overview .bz-vault-cards { grid-template-columns: 1fr; }
-  #bz-encrypt-popup .bz-vault-mob-overview .bz-vault-two { grid-template-columns: 1fr; }
-  #bz-encrypt-popup .bz-vault-mob-overview .bz-vault-hero { padding: 18px 20px; }
-  #bz-encrypt-popup .bz-vault-mobpage { position: absolute; inset: 0; background: var(--bz-surface-2); z-index: 5; display: flex; flex-direction: column; }
-  #bz-encrypt-popup .bz-vault-mobpage .head { display: flex; align-items: center; gap: var(--bz-space-sm); padding: var(--bz-space-md) 14px var(--bz-space-sm); border-bottom: 1px solid var(--bz-border); }
-  #bz-encrypt-popup .bz-vault-mobpage .head .back { color: var(--bz-text-2); display: flex; }
-  #bz-encrypt-popup .bz-vault-mobpage .head .back svg { width: 18px; height: 18px; }
-  #bz-encrypt-popup .bz-vault-mobpage .head .t { flex: 1; font-size: var(--bz-font-emphasis); font-weight: 700; color: var(--bz-text-1); }
-  #bz-encrypt-popup .bz-vault-mobpage .body { flex: 1; overflow-y: auto; padding: var(--bz-space-md) 14px var(--bz-space-xl); }
-  #bz-encrypt-popup .bz-vault-mobpage .bz-vault-dhead { padding: 0 0 var(--bz-space-md); border-bottom: 1px solid var(--bz-border); }
-  #bz-encrypt-popup .bz-vault-mobpage .bz-vault-dcontent { padding: 14px 0 0; }
-  #bz-encrypt-popup .bz-pwv-mobplathead { display: flex; align-items: center; gap: 10px; padding: var(--bz-space-xs) 0 var(--bz-space-md); border-bottom: 1px solid var(--bz-border); margin-bottom: var(--bz-space-md); }
-  #bz-encrypt-popup .bz-pwv-mobplathead .nm { font-size: var(--bz-font-emphasis); font-weight: 700; color: var(--bz-text-1); }
-  #bz-encrypt-popup .bz-pwv-mobplathead .url { font-size: var(--bz-font-caption); color: var(--bz-text-2); }
-  #bz-encrypt-popup .bz-pwv-mobplathead .bz-pwv-btn.gold { margin-left: auto; background: var(--bz-vault-gold-soft); color: var(--bz-on-brand); padding: var(--bz-space-sm) 14px; border-radius: 10px; font-weight: 600; }
-}
-
-/* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，模板挂类）：
-   移动端关闭/返回钮 = --xl(-12px)，账户卡小钮/空态新增钮 = --lg(-8px)，域内不再复制外扩块。 */
-
-/* ============ 解锁屏（三域共用骨架 · 保险库口径） ============
- * 弹层挂 body，够不着 .bz-encrypt-popup 作用域 —— 锁屏自己重声明一份 token 再消费。
- * 保险库用「金纸」品牌语言（与密码本同源的暖色强调 + 渐变印章）。
- */
-.bz-lockscreen--vault {
-  --ls-accent: var(--interactive-accent, #b8913e);
-  --ls-accent-soft: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent, #b8913e) 70%, white), var(--interactive-accent, #b8913e));
-  --ls-seal-radius: 22px;
-}
 /* ==================== 保险库域样式（src/password-vault/styles.css） ==================== */
 /* ==================== 保险库（password-vault，原型 v1 一比一） ==================== */
 /* 铁律 8：视觉样式写域源头，构建时聚合进根 styles.css；类名 bz- 前缀。
@@ -13211,7 +12974,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   min-height: 16px;
   margin-top: var(--bz-space-sm);
 }
-/* ============ 通用弹窗（确认容器） ============ */
+/* ============ 通用弹窗（平台编辑弹窗容器） ============
+ * 确认框已收编 core openFlowDialog（issue 365），其专属样式（.card .msg / .ok / .ok.danger）
+ * 与 toast 样式段已随 markup 一并清除；本选择器现仅余平台编辑弹窗（platEditHTML 仍挂
+ * bz-password-vault-pop2 基类）在用。 */
 .bz-password-vault-pop2 {
   position: absolute;
   inset: 0;
@@ -13241,12 +13007,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-weight: 700;
   color: var(--pwv-ink);
 }
-.bz-password-vault-pop2 .card .msg {
-  font-size: 13.5px;
-  color: var(--pwv-muted);
-  line-height: 1.6;
-  margin-bottom: 18px;
-}
 .bz-password-vault-pop2 .btns {
   display: flex;
   justify-content: flex-end;
@@ -13262,40 +13022,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--pwv-surface2);
   color: var(--pwv-ink);
 }
-.bz-password-vault-pop2 .ok {
-  background: var(--pwv-gold-soft);
-  color: #fff;
-  box-shadow: 0 5px 14px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
-}
-.bz-password-vault-pop2 .ok.danger {
-  background: var(--pwv-bad);
-  box-shadow: 0 5px 14px color-mix(in srgb, var(--text-error) 35%, transparent);
-}
-/* ============ toast ============ */
-.bz-password-vault-toast {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--pwv-ink);
-  color: var(--pwv-bg);
-  padding: 9px 18px;
-  border-radius: var(--bz-radius-full);
-  font-size: 12.5px;
-  font-weight: 600;
-  z-index: 70;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--bz-dur-base);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-}
-.bz-password-vault-toast.show {
-  opacity: 1;
-}
-.bz-password-vault-toast.err {
-  background: var(--pwv-bad);
-  color: #fff;
-}
+/* toast 样式段已随收编 core 全局通知删除（issue 365）：提示统一走 .bz-notice 单源。 */
 
 /* ============ 解锁屏（三域共用骨架 · 密码本口径） ============
  * 密码本锁屏是面板内覆盖层（desk/mob 双实例），用 inline 实例；token 同样自己重声明。
@@ -13308,9 +13035,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 /* ============ 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一）============
-   两处确认框（首设主密码风险确认 / 清单疑似损坏 → 仍要重设）走 openFlowDialog，
-   popup 挂 document.body —— 脱离 .bz-password-vault 根后 --pwv-* 全部失效（金色主钮
-   会掉回 core 默认品牌色）。故两处传 className: 'bz-pwv-flow-dialog'，本文件补两段：
+   域内确认框（首设主密码风险确认 / 清单疑似损坏 → 仍要重设，及 issue 365 收编的
+   删除类 askConfirm）统一走 openFlowDialog，popup 挂 document.body —— 脱离
+   .bz-password-vault 根后 --pwv-* 全部失效（金色主钮会掉回 core 默认品牌色）。
+   故各处传 className: 'bz-pwv-flow-dialog'，本文件补两段：
    token 层（紧邻）承载域变量，id 选择器段映射域材质与金色按钮语言。 */
 
 /* token 层：把 .bz-password-vault（本文件 :7-23）的私有 token 按同值复制一份到本根。
@@ -13337,8 +13065,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --pwv-radius: 12px;
 }
 
-/* 壳材质：逐值取自 .bz-password-vault-pop2 .card（本文件 :1598-1607，域内自绘确认框）——
-   底 --pwv-surface / 无描边（只用投影分界）/ 18px 圆角 / 深投影；文字口径同段 .card h3、.msg。
+/* 壳材质：逐值取自 .bz-password-vault-pop2 .card（平台编辑弹窗同款卡，无描边只用投影分界）——
+   底 --pwv-surface / 18px 圆角 / 深投影；文字口径同段 .card h3、原自绘确认框 .msg。
    共享壳默认（--bz-surface-3 底 + --bz-border 描边 + --bz-radius-md 圆角）是组件库自有调色板，
    与本域「随 Obsidian 主题变量、金色为强调色」不是一套，覆盖后才与自绘确认框同皮。 */
 #__shared_confirm_popup__.bz-pwv-flow-dialog {
@@ -13348,7 +13076,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
   color: var(--pwv-ink);
   /* 共享壳内的文字与中性钮消费 --bz-* 组件 token（core/styles.css 的 #__shared_confirm_* 段），
-     整组映射到本域口径：标题 .pop2 .card h3 / 正文 .msg / 取消钮 .pop2 .cancel。
+     整组映射到本域口径：标题 .pop2 .card h3 / 正文取原自绘确认框 .msg 口径 / 取消钮 .pop2 .cancel。
      --bz-surface-hover 与 --bz-surface-2 同值——本域 chip 底（--pwv-surface2）无更深一档，
      hover 反馈由下方 opacity 承担（域内 .bz-password-vault-btn:hover 同法）。 */
   --bz-text-1: var(--pwv-ink);
@@ -13360,7 +13088,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 /* 标题：.pop2 .card h3 的 700 字重（字号留 core 的 18px 标题档）；
-   正文字号/行高取 .pop2 .card .msg 的 1.6 档（core 的 leading-normal 同类，显式对齐域口径）。 */
+   正文字号/行高取原自绘确认框 .msg 的 1.6 档（该规则已随收编删除，取值保留在此）。 */
 #__shared_confirm_popup__.bz-pwv-flow-dialog h4 { font-weight: 700; }
 #__shared_confirm_popup__.bz-pwv-flow-dialog p { line-height: 1.6; }
 
@@ -13369,14 +13097,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #__shared_confirm_popup__.bz-pwv-flow-dialog #__shared_confirm_cancel__ { font-weight: 600; }
 #__shared_confirm_popup__.bz-pwv-flow-dialog #__shared_confirm_cancel__:hover { opacity: 0.82; }
 
-/* 金色主钮 = .bz-password-vault-pop2 .ok / .bz-password-vault-btn.gold 的取值：
-   --pwv-gold-soft 渐变实底 + #fff 字 + 金色投影（与色值逐项同源）。
+/* 金色主钮 = .bz-password-vault-btn.gold 的取值（原自绘 .pop2 .ok 同源同值，规则已随
+   收编删除）：--pwv-gold-soft 渐变实底 + #fff 字 + 金色投影。
    守卫 :not(.bz-flow-dialog--danger)：危险主动作时 core 的 bz-flow-dialog--danger 把主钮
    降级成中性底 + 红字（设计手册 §9/§10 既定口径），域规则不得把它盖回金色 ——
    本条在危险态下直接不匹配，危险语义与配色原样保留。
    本域两处确认框的分工（issue 291 评审补）：「设置主密码」是风险告知门、主动作是首设正向路径，
    **不标 danger** → 走本条金色主钮；「仍要重设」是破坏性重设（旧数据永久不可恢复），**已标 danger**
-   → 本条不匹配、落到 core 中性档。 */
+   → 本条不匹配、落到 core 中性档。issue 365 收编的删除类 askConfirm 同理走 danger 档（红字主钮）。 */
 #__shared_confirm_popup__.bz-pwv-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__ {
   background: var(--pwv-gold-soft);
   color: #fff;
@@ -13387,6 +13115,21 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--pwv-gold-soft);
   opacity: 0.82; /* 同 .bz-password-vault-btn:hover */
 }
+
+/* ---------- 快速取密选择器（bz-password-vault-gen「快速取密」命令，ADR-0158 统一流）。
+   挂 body（createOverlay 弹层，不落 .bz-password-vault 根内），与原 encrypt 侧
+   .bz-encrypt-pwqp 同构迁移：候选行/空态/搜索框基线走样式库 .bz-popover-item(.is-on) /
+   .bz-popover-empty / .bz-input；域内只留弹窗壳、滚动列表与行内两行文案
+   （平台名继承行色，is-on 时随品牌色）。层级走 ADR-0067 动态发号。 ---------- */
+.bz-password-vault-qp { background: var(--bz-surface-2, var(--background-secondary)); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); flex-direction: column; overflow: hidden; }
+.bz-password-vault-qp-head { padding: 14px var(--bz-space-lg) 0; }
+.bz-password-vault-qp-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--bz-text-1, var(--text-normal)); }
+.bz-password-vault-qp-search { margin: 10px var(--bz-space-lg); width: calc(100% - 32px); box-sizing: border-box; }
+.bz-password-vault-qp-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 var(--bz-space-sm) 10px; }
+.bz-password-vault-qp .bz-popover-item .mid { flex: 1; min-width: 0; }
+.bz-password-vault-qp .bz-popover-item .pl { font-size: var(--bz-font-body); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bz-password-vault-qp .bz-popover-item .ac { font-size: var(--bz-font-meta); color: var(--bz-text-2, var(--text-muted)); font-family: var(--bz-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.bz-password-vault-qp .bz-popover-item .key { font-size: var(--bz-font-caption); color: var(--bz-text-3, var(--text-faint)); flex-shrink: 0; }
 /* ==================== 设置面板域样式（settings-panel，ADR-0080） ====================
  * 拍板重设计（2026-09-07，原型 .zcode/ui-prototypes/settings-5/p1-full.html 定稿）：
  * 布局 = P1 系统面板（顶栏面包屑+搜索 / 左侧四组域导航带项数徽标 / 右侧域页头 + 分组卡行式表单）；
@@ -15003,9 +14746,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* ---- 空态（组件库 uiEmpty 工厂 → .bz-empty，token 覆盖自动纸面化） ---- */
 
 /* ---- 详情弹窗（P20 桌面点卡）：纸面 + 墨框 + 硬阴影 + 四态流转条 ----
-   遮罩 z 由 openBelDetail 经 topifyZ 动态发号（ADR-0067，恒压主面板） */
-.bz-bel-detail {
-  width: 520px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
+   壳已收编 core uiModal（issue 365 第 5 项）：遮罩/z 发号（allocZ）随壳归 core 单源，
+   域内只保留海报卡皮（.bz-overlay-popup.bz-bel-detail 提特异性压过共享壳默认卡面） */
+.bz-overlay-popup.bz-bel-detail {
+  width: 520px; max-width: calc(100vw - 32px);
   background: var(--bz-bel-paper); color: var(--bz-bel-ink);
   border: 2px solid var(--bz-bel-ink); border-radius: 0;
   box-shadow: 10px 10px 0 var(--bz-bel-shadow-strong);
@@ -15057,15 +14801,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bel-sheet-head { display: flex; align-items: flex-start; gap: 10px; }
 .bz-bel-sheet-info { flex: 1; min-width: 0; }
 
-/* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；状态 = p20 .choice 平铺四格）----
-   表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档；
+/* ---- 表单（弹窗壳已收编 core uiModal，issue 365 第 5 项；状态 = p20 .choice 平铺四格）----
+   遮罩/z 发号/遮罩点击关/ESC 关全归 .bz-overlay-mask 单源；限高滚动走 core popup 82vh；
    分类候选浮层（.bz-popover）锚定所在 .bz-field 下方 */
-.bz-bel-form {
+.bz-overlay-popup.bz-bel-form {
   background: var(--bz-bel-paper); color: var(--bz-bel-ink);
   border-radius: 0;
   border: 2px solid var(--bz-bel-ink); box-shadow: 10px 10px 0 var(--bz-bel-shadow-strong);
-  width: 480px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
-  padding: var(--bz-space-lg); display: flex; flex-direction: column;
+  width: 480px; max-width: calc(100vw - 32px);
+  padding: var(--bz-space-lg);
 }
 .bz-bel-form .bz-field { position: relative; }
 .bz-bel-form .bz-input { border-color: var(--bz-bel-ink); background: transparent; }
@@ -15245,20 +14989,18 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 /* ---- 移动端（≤768px = p20 手机壳）----
-   容器查询基座：面板与浮层遮罩各为容器（原型评审壳 .demo-mob 396px 由此触发移动端样式，
-   单源双端）。真实端语义与原 @media(max-width:768px) 等价：移动全屏面板宽 = 100vw、
-   详情遮罩 inset:0 宽 = 100vw，均恰在 ≤768 时命中。面板自身尺寸规则仍走 @media
-   （容器查询不能命中容器自己）。 */
+   容器查询基座：面板与年度报告遮罩各为容器（原型评审壳 .demo-mob 396px 由此触发移动端样式，
+   单源双端）。表单/详情遮罩容器档已随壳收编 uiModal 退役——其内容无容器查询规则（此前为陪跑挂名）。
+   真实端语义与原 @media(max-width:768px) 等价：移动全屏面板宽 = 100vw、报告页全屏。
+   面板自身尺寸规则仍走 @media（容器查询不能命中容器自己）。 */
 .bz-bel-panel,
-.bz-bel-form-mask,
-.bz-bel-detail-mask,
 .bz-bel-report-mask { container-type: inline-size; }
 @media (max-width: 768px) {
   .bz-bel-panel {
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
-  .bz-bel-detail { width: 100vw; max-width: none; border-left: none; border-right: none; }
+  .bz-overlay-popup.bz-bel-detail { width: 100vw; max-width: none; border-left: none; border-right: none; }
   .bz-bel-report {
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border: none;
@@ -17315,13 +17057,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --red: #c4523d;
 }
 
-/* ===== 遮罩 / 主窗 ===== */
-.bz-kb-mask {
-  position: fixed;
-  inset: 0;
-  background: var(--bz-overlay);
-  backdrop-filter: blur(var(--bz-overlay-blur));
-}
+/* ===== 遮罩 / 主窗 =====
+   .bz-kb-mask 三件套（fixed/inset/--bz-overlay 底/token blur）已收编 .bz-overlay-mask 单源
+   （issue 365）；类名保留为 DOM 语义钩子（mount-canvas 挂 bz-overlay-mask bz-kb-mask bz-kb-mt-mask） */
 
 .bz-kb-window {
   position: fixed;
