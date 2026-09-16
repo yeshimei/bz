@@ -39,7 +39,6 @@ const SOURCES = [
   "src/diary/styles.css",
   "src/diary/styles.css",
   "src/home/styles.css",
-  "src/recap/styles.css",
   "src/memo/styles.css",
   "src/clipbook/styles.css",
   "src/favorites/styles.css",

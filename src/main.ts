@@ -63,8 +63,8 @@ import { openEncrypt, encryptCurrentNote, copyVaultPassword, lockEncrypt, unload
 import { openPasswordVault, unloadPasswordVault, copyGeneratedPassword, lockPasswordVault } from './password-vault';
 // 内容首页（home 域，ticket 177；旧入口页 launcher 已退役删除，ADR-0093）
 import { openHome, unloadHome } from './home';
-// 今日回顾（recap 域，方向一 R2）：当天五域痕迹聚合只读面板
-import { openRecap, unloadRecap } from './recap';
+// recap 域面板已退役（ADR-0154）：「生成今日总结」迁 home 时间线卡动作行，
+// collectRecap/summarize 纯函数库留 src/recap 供 home 消费，main 不再接线
 import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
 // ai-agent 域解散：引用同步拆入 memo/favorites 域无条件常驻（原 ensureAIAgent/unloadAIAgent 换线）
 // 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴；AI 走 bz core/ai，数据单 json smartcat.json）
@@ -80,8 +80,6 @@ import { openDataCheckup, unloadDataCheckup } from './checkup';
 const COMMANDS: { id: string; name: string; icon: string; callback: () => void }[] = [
   // 内容首页（home 域，ticket 177）
   { id: 'bz-home-open', name: '内容首页', icon: DOMAIN_ICONS.home, callback: () => openHome(getApp()) },
-  // 今日回顾（recap 域，方向一 R2：当天日记/影视/读书/备忘录/番茄痕迹聚合面板）
-  { id: 'bz-recap-today', name: '今日回顾', icon: DOMAIN_ICONS.recap, callback: () => openRecap(getApp()) },
   // 备忘录（memo 域，ADR-0092 起为 memo.json 唯一属主）
   { id: 'bz-memo-open', name: '备忘录', icon: DOMAIN_ICONS.memo, callback: () => openMemoPanel(getApp()) },
   { id: 'bz-memo-add', name: '加备忘录', icon: 'clipboard-list', callback: () => addMemoItem(getApp()) },
@@ -332,7 +330,9 @@ export default class BzPlugin extends Plugin {
     unloadKnowledgeFileSync();
     unloadClipbookFileSync();
     unloadHome();
-    unloadRecap();
+    // recap 面板退役（ADR-0154）：原 unloadRecap 只清面板 DOM/ESC（随面板一并消失）；
+    // 迁入 home 的「生成今日总结」无在途作废句柄，unloadHome（resetHomeState）复位生成标志，
+    // 在途流程收口时按钮已随 DOM 摘除（aiButton 为 null）自然 no-op，通知由 cleanupNotices 统一清
     unloadEncrypt();
     unloadPasswordVault();
     unloadSmartCat();

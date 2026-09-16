@@ -39,6 +39,12 @@ export interface HomeState {
    * 导致的非预期渲染；显式保留 DOM 后重开显示旧渲染成为预期，该前提不再成立。
    */
   riverView: string | null;
+  /**
+   * 「生成今日总结」进行中（ADR-0154 自 recap 面板迁入；AI 请求+写盘期间再点直接忽略）。
+   * **必须挂在 H 里**：在途请求无作废句柄，unloadHome（resetHomeState）复位标志后
+   * 收口 sync 的按钮探测自然落定——插件重载不残留「生成中」卡死态。
+   */
+  aiGenerating: boolean;
 }
 
 export const H: HomeState = {
@@ -50,6 +56,7 @@ export const H: HomeState = {
   order: { version: 3, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] },
   pomodoroPhase: 'idle',
   riverView: null,
+  aiGenerating: false,
 };
 
 /** 测试/重建用：整体重置模块状态 */
@@ -62,4 +69,5 @@ export function resetHomeState(): void {
   H.order = { version: 3, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] };
   H.pomodoroPhase = 'idle';
   H.riverView = null;
+  H.aiGenerating = false;
 }

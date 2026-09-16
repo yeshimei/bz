@@ -14,14 +14,15 @@
  *    读 ./state.H.pomodoroPhase → shared.pomodoroMenuAction）；`keepHome` 的即时类动作不关面板。
  *  - 入口顺序 / 显隐：**本页不做任何编辑交互**，统一由「设置 → 首页入口」弹窗打理
  *    （顺序两端各一套 + 隐藏域，存 home.json，见 ./order）；本页只按序渲染可见域。
- *  - 时间线：recap 五域痕迹流 + 规则点评（✦ 域内自算，非 AI 调用）
+ *  - 时间线：小橘行为流痕迹 + 规则点评（✦ 域内自算，非 AI 调用）；
+ *    今天视图的动作行「生成今日总结」（ADR-0154 自 recap 面板迁入，AI 总结写日记走 recap 链路）
  *  - 明天预告：复习/剪藏/日记三张规则卡，点击直达
  * markup 单源（ADR-0104）：面板骨架/周历/入口行/河卡/预告卡 HTML 全部出自 ./render
  * （渲染纯层，与原型壳消费同一份）；本文件只剩行为层——生命周期/事件绑定/ESC/命令直达。
  */
 import type { IconName } from 'obsidian';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
-import { notice } from '../core/notice';
+import { notify, notice, notifyActionError, notifySaveError } from '../core/notice';
 import { mountIcons, uiEmpty, uiBtn } from '../core/ui';
 import { topifyZ } from '../core/dom';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
@@ -36,6 +37,17 @@ import type { PomodoroPhase } from '../core/pomodoro-phase';
 import { isFocusingPhase } from '../core/pomodoro-phase';
 import { collectRiver, type RiverData } from './river';
 import { loadHomeOrder } from './order';
+// 「生成今日总结」（ADR-0154 自 recap 面板迁入）：数据采集与 AI 写日记链路仍是 recap 域
+// 纯函数库（home ← recap 单向，recap/aggregate → home/weekly 无环）。
+import { collectRecap } from '../recap/aggregate';
+import type { RecapData } from '../recap/aggregate';
+import {
+  entryTextWithoutMarker,
+  findRecapEntryPath,
+  generateRecapContent,
+  hasRecapEntry,
+  writeRecapEntry,
+} from '../recap/summarize';
 import {
   headDateText, panelFrameHtml, loadingEntriesHtml, loadingFlowHtml,
   weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml, sheetHeadHtml, menuHeadHtml, type FlowOpts,
@@ -196,6 +208,11 @@ function bindEvents(overlay: HTMLElement, app: any): void {
       closeOverlay();
       return;
     }
+    // 「生成今日总结」（ADR-0154）：时间线河卡今天的动作行（render 层只出按钮，行为在此）
+    if (t.closest('[data-home-ai]')) {
+      void onGenerateClick(app);
+      return;
+    }
     const go = t.closest('[data-home-go]') as HTMLElement | null;
     if (go) {
       const id = go.dataset.homeGo || '';
@@ -214,6 +231,7 @@ function bindEvents(overlay: HTMLElement, app: any): void {
         if (flow) {
           flow.innerHTML = flowHtml(H.river!, H.riverView ?? '', readHomeSettings().flow);
           mountIcons(flow);
+          void syncHomeAiButton(H.appRef); // 切回今天：动作行重新渲染（disabled），探测后恢复
         }
       }
     }
@@ -318,6 +336,130 @@ function mountRowInteractions(overlay: HTMLElement, app: any, river: RiverData):
   if (tiles) for (const el of rowEls(tiles)) attachRowMenu(el, app, river);
 }
 
+/* ---------- 「生成今日总结」（ADR-0154 自 recap 面板迁入，链路/通知语义原样保留） ----------
+ * 挂点 = 时间线河卡（今天视图）动作行按钮（markup 出自 layouts/river/render.ts flowHtml）。
+ * 流程：loading 防重复 → 点击时现场采集当天五域痕迹（collectRecap）→ AI 总结自动写入日记
+ *（同日替换不叠条）；AI 未配置/失败 → 降级数字模板，弹通知给「写入日记/复制」动作；
+ * 同日已写过按钮变「重新生成」。与原面板的差别只有两处：
+ *  - 数据输入从「打开面板时的快照」改为「点击时现场采集」——home 面板 DOM 常驻，
+ *    面板里看到的可能是陈旧快照，点击瞬间采集才是当下口径（collectRiver 同源函数）；
+ *  - 「面板已关」的判定从 currentOverlay 换成 btn.isConnected——home 关闭只是隐藏保留 DOM，
+ *    卸载（unloadHome）才真摘除，生成中的收口探测在隐藏态照常落定。
+ */
+
+/** 「生成今日总结」按钮（时间线河卡今天的动作行；无则面板还没渲染到今天卡） */
+function aiButton(): HTMLButtonElement | null {
+  return (H.currentOverlay?.querySelector('[data-home-ai]') as HTMLButtonElement | null) ?? null;
+}
+
+/** 按钮态同步（只读探测当天是否已有回顾条目）：
+ *  生成中（H.aiGenerating）保持现状（disabled），等 onGenerateClick 收口再 sync；
+ *  生成中面板被关闭/重开时，新渲染的按钮由完成后的 sync 接管启用，不会卡死在 disabled。 */
+async function syncHomeAiButton(app?: any): Promise<void> {
+  const btn = aiButton();
+  if (!btn) return;
+  const written = await hasRecapEntry(H.appRef ?? app);
+  if (!btn.isConnected || H.aiGenerating) return; // 面板已卸载 / 生成中（按钮态由生成流程收口）
+  setAiButton(btn, written ? '重新生成' : '生成今日总结', false);
+}
+
+function setAiButton(btn: HTMLButtonElement, label: string, loading: boolean): void {
+  btn.disabled = loading;
+  if (loading) {
+    btn.innerHTML = `<span class="bz-spinner bz-spinner--sm"></span>生成中…`;
+    btn.title = '';
+  } else {
+    btn.textContent = label;
+    btn.title = label === '重新生成' ? '替换今天已有的「今日回顾」条目' : '把今天的痕迹写成一段总结，写进日记';
+  }
+}
+
+/** 成功通知：写入成功 + 「查看」打开今天的「今日回顾」条目文件（ADR-0130 一目一文件） */
+function notifyWritten(app: any): void {
+  notify('今日总结已写入日记', {
+    type: 'success',
+    action: {
+      label: '查看',
+      onClick: () => {
+        try {
+          void findRecapEntryPath(H.appRef ?? app).then((p) => {
+            if (!p) return;
+            void (H.appRef ?? app).workspace.openLinkText(p.replace(/\.md$/, ''), '', false, { active: true });
+          });
+        } catch {
+          /* 打开失败静默：日记内容已写好 */
+        }
+      },
+    },
+  });
+}
+
+/** 降级模板通知：「写入日记/复制」双动作（不自动写盘，用户拍板去向） */
+function notifyTemplateFallback(app: any, reason: string, content: string): void {
+  notify(reason, {
+    type: 'warning',
+    duration: 10000,
+    actions: [
+      {
+        label: '写入日记',
+        onClick: () => {
+          writeRecapEntry(content)
+            .then(() => {
+              notifyWritten(H.appRef ?? app);
+              void syncHomeAiButton(H.appRef ?? app); // 写入成功 → 按钮变「重新生成」
+            })
+            .catch((e) => notifySaveError(e, '写入日记'));
+        },
+      },
+      {
+        label: '复制',
+        onClick: () => {
+          navigator.clipboard
+            .writeText(entryTextWithoutMarker(content))
+            .then(() => notify('已复制今日总结', { type: 'success' }))
+            .catch((e) => notifyActionError(e, '复制'));
+        },
+      },
+    ],
+  });
+}
+
+/** 生成按钮点击：loading 防重复 → AI 总结自动写入；未配置/失败 → 模板 + 通知动作 */
+async function onGenerateClick(app: any): Promise<void> {
+  if (H.aiGenerating) return; // 防重复点击（AI 请求+写盘期间忽略再点）
+  const btn = aiButton();
+  if (!btn) return;
+  H.aiGenerating = true;
+  setAiButton(btn, '', true);
+  try {
+    // 点击时现场采集当天痕迹（各源独立容错；collectRiver 摘要数字同源）
+    let data: RecapData;
+    try {
+      data = await collectRecap(H.appRef ?? app);
+    } catch {
+      notify('今天的数据暂时读不到，请稍后再试', { type: 'warning' });
+      return;
+    }
+    const result = await generateRecapContent(data);
+    if (!result.ok) {
+      notify(result.degradeReason || '暂时生成不了今日总结，请稍后再试', { type: 'warning' });
+      return;
+    }
+    if (result.mode === 'ai') {
+      await writeRecapEntry(result.content);
+      notifyWritten(H.appRef ?? app);
+    } else {
+      // 降级：模板不自动写盘，弹通知给「写入日记/复制」
+      notifyTemplateFallback(H.appRef ?? app, result.degradeReason || '已生成数字模板总结', result.content);
+    }
+  } catch (e) {
+    notifyActionError(e, '生成今日总结');
+  } finally {
+    H.aiGenerating = false;
+    void syncHomeAiButton(H.appRef ?? app); // 统一收口：按最新探测结果恢复/刷新按钮（面板已卸载则 no-op）
+  }
+}
+
 /* ---------- 渲染（胶水：把单源 markup 灌进骨架数据区） ---------- */
 
 function renderAll(): void {
@@ -385,6 +527,8 @@ function renderAll(): void {
   mountIcons(next);
   mountIcons(tiles);
   mountRowInteractions(overlay, H.appRef, river);
+  // 「生成今日总结」按钮就绪：渲染完成后探测当天是否已有回顾条目（启用 / 变「重新生成」）
+  void syncHomeAiButton(H.appRef);
 }
 
 /* ---------- ESC / 通知 ---------- */
