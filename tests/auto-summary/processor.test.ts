@@ -487,3 +487,71 @@ describe('processFile force 与「查看」/quiet（enh-autosum 包）', () => {
     expect(msgs.some((m) => m.includes('安静摘要'))).toBe(true); // 完成通知照常
   });
 });
+
+describe('processFile 改名与全库双链联动（issue 335）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetAIProviderCache();
+    setAISettingsProvider(() => ({})); // 默认未配 AI：失败原因走「未配置」文案
+    document.body.innerHTML = '';
+    vault = new MockVault();
+  });
+
+  /** 复刻真实 Obsidian 语义：fileManager.renameFile 搬文件并联动改写全库指向旧路径的双链
+   *  （[[旧|…]]/[[旧]]/[[旧#…]]，frontmatter 引号字符串内同享）；vault.rename 裸搬不改引用。
+   *  旧实现走 vault.rename → 本组测试红（知识盒来源断链复现）；修复后走 fileManager → 绿。 */
+  function makeAppWithLinks(v: MockVault) {
+    return {
+      vault: v,
+      metadataCache: {},
+      workspace: {},
+      fileManager: {
+        renameFile: vi.fn(async (file: any, newPath: string) => {
+          const oldPath = file.path;
+          await v.rename(file, newPath);
+          for (const [p, content] of [...v.files]) {
+            let next = content;
+            for (const suffix of ['|', ']]', '#']) {
+              next = next.split(`[[${oldPath}${suffix}`).join(`[[${newPath}${suffix}`);
+            }
+            if (next !== content) v.files.set(p, next);
+          }
+        }),
+      },
+    } as any;
+  }
+
+  it('AI 起标题改名走 fileManager.renameFile：知识盒 frontmatter source 与正文双链联动更新', async () => {
+    vault.files.set('归档/网页剪藏/旧标题.md', `---\nurl: "https://x.com/old"\n---\n\n${LONG_BODY}`);
+    vault.files.set(
+      '文献盒/菲尔兹奖.md',
+      [
+        '---',
+        'title: "菲尔兹奖"',
+        'type: term',
+        'source: "[[归档/网页剪藏/旧标题.md|旧标题]]"',
+        '---',
+        '',
+        '简介正文，另附裸双链 [[归档/网页剪藏/旧标题.md]]。',
+      ].join('\n')
+    );
+
+    const app = makeAppWithLinks(vault);
+    await processFile(app, makeAI('{"title":"新标题"}'), vault.file('归档/网页剪藏/旧标题.md'));
+
+    expect(app.fileManager.renameFile).toHaveBeenCalledTimes(1); // 走 fileManager（联动改链的唯一入口）
+    expect(vault.files.has('归档/网页剪藏/新标题.md')).toBe(true);
+    const card = vault.files.get('文献盒/菲尔兹奖.md')!;
+    expect(card).toContain('source: "[[归档/网页剪藏/新标题.md|旧标题]]"'); // 路径更新、别名保留
+    expect(card).toContain('[[归档/网页剪藏/新标题.md]]'); // 正文双链同享
+    expect(card).not.toContain('旧标题.md');
+  });
+
+  it('无 fileManager 的宿主回退 vault.rename：文件照常搬（老环境兼容）', async () => {
+    vault.files.set('归档/网页剪藏/旧标题.md', `---\nurl: "https://x.com/old"\n---\n\n${LONG_BODY}`);
+    await processFile(makeApp(vault), makeAI('{"title":"新标题"}'), vault.file('归档/网页剪藏/旧标题.md'));
+    expect(vault.files.has('归档/网页剪藏/新标题.md')).toBe(true);
+  });
+});
