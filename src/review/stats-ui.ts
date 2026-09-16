@@ -127,6 +127,7 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], 
   closeStatsModal();
   statsMask = document.createElement('div');
   statsMask.id = 'review-stats-mask';
+  statsMask.className = 'bz-overlay-mask'; // issue 347：遮罩底/blur 收编 core 单源（弹窗 fixed 自居中不受 flex/padding 影响）
   statsMask.style.display = 'block';
   statsMask.style.zIndex = String(allocZ());
   statsMask.onclick = closeStatsModal;
@@ -266,6 +267,7 @@ export async function showTimeline(app: App, dm: ReviewDataManager, item: Review
 
   histMask = document.createElement('div');
   histMask.id = 'review-history-mask';
+  histMask.className = 'bz-overlay-mask'; // issue 347：遮罩底/blur 收编 core 单源
   histMask.style.display = 'block';
   histMask.style.zIndex = String(allocZ());
   histMask.onclick = closeTimeline;

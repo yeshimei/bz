@@ -13,7 +13,7 @@ import { requestUrl } from 'obsidian';
 import { httpGetText, requestUrlAsFetch } from '../core/http';
 import { notice } from '../core/notice';
 import { readNewsData, writeNewsDataMerged, normalizeFetchIntervalMin, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN, type NewsSources, type NewsWriteIntent, type RssFeed } from './news-data';
-import { articleKeyOf } from './constants';
+import { articleKeyOf, localDatetime } from './constants';
 import { enqueueNewsWrite } from './write-queue';
 
 // ---------- 常量（对齐守护） ----------
@@ -101,11 +101,7 @@ export function defaultFetchStore(): FetchStoreDeps {
 // ---------- 通用纯函数（照搬守护） ----------
 
 /** 本地时间串 YYYY-MM-DD HH:mm:ss（news 条目 date/fetchedAt 统一口径，避免 UTC 偏移落错日） */
-export function localDatetime(ts: number = Date.now()): string {
-  const d = new Date(ts);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
+export { localDatetime }; // issue 347 收编：原手写与 constants.localDatetime 逐字等价（导出路径保留）
 
 /** HTML → Markdown（照搬守护正则版；知乎 detail body / 果壳 INITIAL_STORE content / RSS content 共用） */
 export function htmlToMarkdown(html: string): string {

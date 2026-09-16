@@ -8,13 +8,8 @@
   box-shadow: var(--bz-shadow-lg);
   flex-direction: column;
 }
-/* 主密码弹窗（铁律 9 收敛：视觉样式一律在此，JS 仅留功能性 zIndex/display——动态发号见 topifyZ） */
-.bz-encrypt-dialog-mask {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: var(--bz-overlay);
-  backdrop-filter: blur(var(--bz-overlay-blur));
-  align-items: center; justify-content: center;
-}
+/* 主密码弹窗（铁律 9 收敛：视觉样式一律在此，JS 仅留功能性 zIndex/display——动态发号见 topifyZ）；
+   旧 .bz-encrypt-dialog-mask 已死（主密码弹窗走 createMask → .bz-overlay-mask 单源，TS 零引用，issue 347 清偿） */
 .bz-encrypt-dialog-box {
   background: var(--bz-surface-2); border-radius: var(--bz-radius-md);
   padding: 28px; max-width: 420px; width: 90%;
@@ -115,11 +110,9 @@
   #bz-encrypt-popup { width: 95%; max-height: 90vh; }
 }
 /* 体检弹窗（右上角体检按钮替换原清理扫把：先报告后勾选清理） */
-.bz-encrypt-health-mask {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: var(--bz-overlay);
-  backdrop-filter: blur(var(--bz-overlay-blur));
-  align-items: center; justify-content: center;
+/* 遮罩三件套已收编 .bz-overlay-mask 单源（issue 347）；padding 归零对齐原可用区（92% 宽依赖视口全宽） */
+.bz-encrypt-health-mask.bz-overlay-mask {
+  padding: 0;
 }
 .bz-encrypt-health-box {
   background: var(--bz-surface-2); border-radius: var(--bz-radius-md);

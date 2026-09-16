@@ -9,6 +9,7 @@
  * 纯度契约（tests/core/render-purity.test.ts）：import 图仅限本域 + 零模块级可变状态；
  * 禁 obsidian/moment/core 服务。日期一律「now 参数注入」——可测、可评审壳重放。
  */
+import { emptyHtmlStr } from '../core/ui/str';
 import type { ReviewItem } from './data';
 import { FSRS, DEFAULT_W, TOTAL_STAGES } from './fsrs';
 import { partitionQueue, isEarlyDue } from './queue';
@@ -356,7 +357,7 @@ export function sprintAsideHtml(entries: Array<{ name: string; state: string }>)
     .join('');
   return `
       <div class="bz-sq-head"><b>本轮队列</b></div>
-      <div class="bz-sq-list">${rows || '<div class="bz-empty"><div class="bz-empty-title">队列完毕</div></div>'}</div>`;
+      <div class="bz-sq-list">${rows || emptyHtmlStr('', '队列完毕')}</div>`;
 }
 
 /** 冲刺主体壳（左内容 + 右本轮队列） */

@@ -25,7 +25,7 @@ import {
   type ItemAction,
   type ItemActionsOptions,
 } from '../core/item-actions';
-import {  escapeHtml, formatRelativeTime , cancelClipboardClear, copySensitiveWithFallback } from '../core/utils';
+import {  debounce, escapeHtml, formatRelativeTime , cancelClipboardClear, copySensitiveWithFallback } from '../core/utils';
 import { uiEmpty, uiProgress } from '../core/ui';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -483,8 +483,8 @@ export class UIManager {
   private unlockFailStreak = 0;
   /** 当前冷却截止时间戳（ms）；早于此的尝试被拒绝并提示剩余等待 */
   private unlockCooldownUntil = 0;
-  /** 搜索防抖计时器 */
-  searchTimer: ReturnType<typeof setTimeout> | null = null;
+  /** 搜索防抖（180ms 尾触；issue 347 收编 core debounce，原手写无 teardown 取消路径） */
+  searchDebounced = debounce(() => this.renderAll(), 180);
 
   // ---------- 密码数据层（ADR-0155：仅共享锁/统计用途，视图归 password-vault 域） ----------
   /**
@@ -701,8 +701,7 @@ export class UIManager {
       } else {
         this.mob.search.value = v; // 桌面输入 → 同步移动端框
       }
-      if (this.searchTimer) clearTimeout(this.searchTimer);
-      this.searchTimer = setTimeout(() => this.renderAll(), 180);
+      this.searchDebounced();
     });
   }
 
@@ -837,7 +836,7 @@ export class UIManager {
   private ensureHealthElements() {
     const mask = document.createElement('div');
     mask.id = 'bz-encrypt-health-mask';
-    mask.className = 'bz-encrypt-health-mask';
+    mask.className = 'bz-overlay-mask bz-encrypt-health-mask'; // issue 347：底/blur 归 core 单源，域类仅覆写 padding
     mask.style.display = 'none';
     const popup = document.createElement('div');
     popup.id = 'bz-encrypt-health-popup';

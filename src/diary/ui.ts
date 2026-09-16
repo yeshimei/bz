@@ -35,7 +35,7 @@ import { topifyZ, longPress } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
 import { uiIcon, uiSearch } from '../core/ui';
 import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
-import { escapeHtml, hash31, localDayKey, stripMdExt } from '../core/utils';
+import { debounce, escapeHtml, hash31, localDayKey, stripMdExt } from '../core/utils';
 import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
@@ -189,7 +189,12 @@ export class DiaryAppController {
   private railObservers: Record<'desk' | 'mob', IntersectionObserver | null> = { desk: null, mob: null };
   private rafCleanups: Record<'desk' | 'mob', (() => void) | null> = { desk: null, mob: null };
   private sheetEntry: WallEntry | null = null;
-  private _searchTimer: ReturnType<typeof setTimeout> | null = null;
+  /** 搜索防抖（250ms 尾触；issue 347 收编 core debounce。实例唯一槽：desk/mob 双搜索框共享，
+   *  与原共享 _searchTimer 槽语义一致；原手写无 teardown 取消路径，此处同样不设） */
+  private _searchDebounced = debounce((v: string) => {
+    this.searchKeyword = v;
+    this.renderAll();
+  }, SEARCH_DEBOUNCE_MS);
   /** 日期筛选弹窗元素（null = 未打开） */
   private _dateFilterEl: HTMLElement | null = null;
   /** 当前渲染条目列表（右键委托按 dataset.widx 反查条目；renderWall 时重建） */
@@ -351,14 +356,7 @@ export class DiaryAppController {
       this.scrollToMonth(item.dataset.month || '', ui.wall);
     });
     // 搜索输入：防抖过滤
-    ui.searchBox.addEventListener('input', () => {
-      if (this._searchTimer) clearTimeout(this._searchTimer);
-      this._searchTimer = setTimeout(() => {
-        this._searchTimer = null;
-        this.searchKeyword = ui.searchBox.value;
-        this.renderAll();
-      }, SEARCH_DEBOUNCE_MS);
-    });
+    ui.searchBox.addEventListener('input', () => this._searchDebounced(ui.searchBox.value));
     // ESC 在搜索框内：只清空/失焦（不关面板）
     ui.searchBox.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {

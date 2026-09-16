@@ -454,7 +454,7 @@ function buildShell(): CanvasState | null {
   if (typeof document === 'undefined') return null;
   const mask = document.createElement('div');
   mask.id = MASK_ID;
-  mask.className = 'bz-kb-mask bz-kb-mt-mask';
+  mask.className = 'bz-overlay-mask bz-kb-mask bz-kb-mt-mask'; // issue 347：底/blur 归 core 单源
   mask.style.display = 'none';
   mask.addEventListener('click', () => closeMountTree());
 

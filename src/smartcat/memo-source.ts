@@ -10,6 +10,7 @@
  * P2b（ticket 123）：新增 buildMemoStructured / buildMemoDueScanStructured——
  * 构造 StructuredMeta 供 addObservation(source, { structured }) 路由到行为流。
  */
+import { pad2 } from '../core/ui/str';
 import type { StructuredMeta } from './types';
 export type MemoPriority = 'important' | 'minor';
 
@@ -173,9 +174,8 @@ export interface MemoDueLike {
  *  dueDate == 今天 且 dueNorm > now）且未完成；条目 ≤5 截断，多出「等 N 个」；N=0 返回 null。
  *  now 可注入（测试跨天用）；排序保持 memo.json 原序。 */
 export function memoDueObservation(items: MemoDueLike[] | null | undefined, now: Date = new Date()): string | null {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  const nowStr = `${today} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const today = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+  const nowStr = `${today} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
   const dueToday = (items || []).filter((it) => {
     if (!it || it.completed) return false;
     const due = normalizeDue(it.due);

@@ -27,6 +27,7 @@ import { topifyZ } from '../core/z-order';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
+import { debounce } from '../core/utils';
 import { longPress } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
@@ -336,15 +337,13 @@ async function openPanelInner(): Promise<void> {
   // 搜索（B3：防抖定时器在面板关闭后仍会触发——首行守卫 overlay 存活；渲染序列含 hero，
   // 副题「N 件在列」计数随搜索刷新）
   const bindSearch = (inp: HTMLInputElement) => {
-    let deb: ReturnType<typeof setTimeout> | undefined;
-    inp.addEventListener('input', () => {
-      clearTimeout(deb);
-      deb = setTimeout(() => {
-        if (!M.overlay) return;
-        M.q = inp.value.trim();
-        renderAll();
-      }, SEARCH_DEBOUNCE_MS);
-    });
+    // issue 347 收编 core debounce（尾触防抖 + overlay 存活守卫原样保留）
+    const debounced = debounce(() => {
+      if (!M.overlay) return;
+      M.q = inp.value.trim();
+      renderAll();
+    }, SEARCH_DEBOUNCE_MS);
+    inp.addEventListener('input', () => debounced());
   };
   bindSearch(overlay.querySelector('[data-bel-search]') as HTMLInputElement);
 
