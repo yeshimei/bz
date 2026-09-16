@@ -1,5 +1,5 @@
-/* 源指纹 67eeeec5521b2848 · 仓内输入 20 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
+/* 源指纹 bcd1406a99a8eadc · 仓内输入 21 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
   var __create = Object.create;
@@ -4978,10 +4978,16 @@ var BZW_pomodoro = (() => {
     }
   });
 
-  // src/core/utils.ts
+  // src/core/ui/str.ts
   function pad2(n) {
     return String(n).padStart(2, "0");
   }
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+    }
+  });
+
+  // src/core/utils.ts
   function localDayKey(ts = Date.now()) {
     const d = ts instanceof Date ? ts : new Date(ts);
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -4992,6 +4998,7 @@ var BZW_pomodoro = (() => {
       import_moment2 = __toESM(require_moment());
       init_fake_obsidian();
       init_app();
+      init_str();
     }
   });
 
@@ -5781,6 +5788,7 @@ var BZW_pomodoro = (() => {
     var _a;
     const mask = document.createElement("div");
     mask.id = "pomodoro-mask";
+    mask.className = "bz-overlay-mask";
     mask.innerHTML = popupShellHtml();
     mask.style.zIndex = String(allocZ());
     document.body.appendChild(mask);

@@ -1,4 +1,4 @@
-/* 源指纹 5463c1c5c44941ef · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 194c229e99a43c5a · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -4549,6 +4549,63 @@ var BZW_belongings = (() => {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
   }
 
+  // src/core/utils.ts
+  var import_moment = __toESM(require_moment());
+
+  // src/core/ui/str.ts
+  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function emptyHtmlStr(icon, title, desc) {
+    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+
+  // src/core/utils.ts
+  function escapeHtml2(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function debounce(fn, ms) {
+    let t;
+    const wrapped = (...args) => {
+      if (t !== void 0) clearTimeout(t);
+      t = setTimeout(() => {
+        t = void 0;
+        fn(...args);
+      }, ms);
+    };
+    wrapped.cancel = () => {
+      if (t !== void 0) {
+        clearTimeout(t);
+        t = void 0;
+      }
+    };
+    return wrapped;
+  }
+  function yieldToMainThread(timeoutMs = 200) {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined") {
+        resolve();
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === "function") ric(() => resolve(), { timeout: timeoutMs });
+      else window.setTimeout(resolve, 0);
+    });
+  }
+
   // src/core/dom.ts
   function longPress(el, cb, dur, filter) {
     if (!dur) dur = 500;
@@ -4612,29 +4669,6 @@ var BZW_belongings = (() => {
     el.addEventListener("click", onClick, true);
   }
 
-  // src/core/utils.ts
-  var import_moment = __toESM(require_moment());
-  function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function yieldToMainThread(timeoutMs = 200) {
-    return new Promise((resolve) => {
-      if (typeof window === "undefined") {
-        resolve();
-        return;
-      }
-      const ric = window.requestIdleCallback;
-      if (typeof ric === "function") ric(() => resolve(), { timeout: timeoutMs });
-      else window.setTimeout(resolve, 0);
-    });
-  }
-
   // src/core/flow-dialog.ts
   var FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
   var FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
@@ -4655,9 +4689,9 @@ var BZW_belongings = (() => {
     }
     const ctaIdx = actions.findIndex((a) => a.cta);
     const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
     }).join("") + "</div>";
     return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
@@ -4946,6 +4980,54 @@ var BZW_belongings = (() => {
         close();
       }
     };
+  }
+
+  // src/core/ui/modal.ts
+  function uiModal(opts) {
+    const mask = document.createElement("div");
+    mask.className = "bz-overlay-mask";
+    mask.style.zIndex = String(allocZ());
+    const popup = document.createElement("div");
+    popup.className = "bz-overlay-popup" + (opts.className ? " " + opts.className : "");
+    if (opts.maxWidth) popup.style.maxWidth = `min(${opts.maxWidth}px, calc(100vw - 32px))`;
+    if (opts.head) {
+      const head = document.createElement("div");
+      head.className = "bz-dialog-head";
+      const title = document.createElement("span");
+      title.className = "bz-dialog-title";
+      title.textContent = opts.title || "";
+      head.appendChild(title);
+      popup.appendChild(head);
+    }
+    const body = document.createElement("div");
+    body.className = "bz-dialog-body";
+    if (typeof opts.content === "string") body.innerHTML = opts.content;
+    else body.appendChild(opts.content);
+    popup.appendChild(body);
+    mask.appendChild(popup);
+    let closed = false;
+    let escHandle = null;
+    function close() {
+      var _a;
+      if (closed) return;
+      closed = true;
+      mask.remove();
+      escHandle == null ? void 0 : escHandle.unregister();
+      (_a = opts.onClose) == null ? void 0 : _a.call(opts);
+    }
+    const attemptClose = () => {
+      if (opts.requestClose) opts.requestClose();
+      else close();
+    };
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) attemptClose();
+    });
+    escHandle = escManager.register("bz-modal", {
+      isVisible: () => mask.isConnected,
+      close: attemptClose
+    });
+    document.body.appendChild(mask);
+    return { mask, popup, close };
   }
 
   // src/core/item-actions.ts
@@ -6037,18 +6119,6 @@ var BZW_belongings = (() => {
     await enqueueFileTask(getDataFilePath(), () => jsonFileStore(getDataFilePath()).write(saveData));
   }
 
-  // src/core/ui/str.ts
-  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  function escapeHtml2(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml2(String(s != null ? s : ""));
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
-
   // src/core/chart-palette.ts
   var CHART_PASTEL_SERIES = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
   var CHART_RANK_BADGES = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
@@ -6877,7 +6947,11 @@ var BZW_belongings = (() => {
     return `投入 ${moneyShort(totalAssets(items), unit)} · 日均 ${moneyWith(avgDailyCost(items).toFixed(2), unit)}`;
   }
   function emptyHtml(noMatch) {
-    return `<div class="bz-empty">${iconSpan(ICON.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
+    return emptyHtmlStr(
+      ICON.empty,
+      noMatch ? "没有符合条件的物品" : "这里还没有物品",
+      noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"
+    );
   }
   function cellHtml(it, idx, unit = "cny") {
     var _a;
@@ -7760,15 +7834,13 @@ var BZW_belongings = (() => {
     if (mainEscRegistered) return;
     mainEscRegistered = true;
     escManager.register("bz-bel", {
-      isVisible: () => !!M.overlay || !!document.querySelector(".bz-bel-form-mask") || !!document.querySelector(".bz-bel-detail-mask") || !!document.querySelector(".bz-bel-report-mask"),
+      isVisible: () => !!M.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       close: () => {
-        const form = document.querySelector(".bz-bel-form-mask");
-        if (form) {
-          requestCloseBelForm(form);
+        if (document.querySelector(".bz-bel-form")) {
+          requestCloseBelForm();
           return;
         }
-        const detail = document.querySelector(".bz-bel-detail-mask");
-        if (detail) {
+        if (document.querySelector(".bz-bel-detail")) {
           closeBelDetail();
           return;
         }
@@ -7885,15 +7957,12 @@ var BZW_belongings = (() => {
       }
     });
     const bindSearch = (inp) => {
-      let deb;
-      inp.addEventListener("input", () => {
-        clearTimeout(deb);
-        deb = setTimeout(() => {
-          if (!M.overlay) return;
-          M.q = inp.value.trim();
-          renderAll();
-        }, SEARCH_DEBOUNCE_MS);
-      });
+      const debounced = debounce(() => {
+        if (!M.overlay) return;
+        M.q = inp.value.trim();
+        renderAll();
+      }, SEARCH_DEBOUNCE_MS);
+      inp.addEventListener("input", () => debounced());
     };
     bindSearch(overlay.querySelector("[data-bel-search]"));
     const content = overlay.querySelector("[data-bel-content]");
@@ -8036,20 +8105,27 @@ var BZW_belongings = (() => {
       void openForm(null);
     } });
   }
+  var belDetailClose = null;
   function closeBelDetail() {
-    var _a;
-    (_a = document.querySelector(".bz-bel-detail-mask")) == null ? void 0 : _a.remove();
+    belDetailClose == null ? void 0 : belDetailClose();
+    belDetailClose = null;
   }
   function openBelDetail(it) {
     var _a, _b;
     closeBelDetail();
-    const mask = document.createElement("div");
-    mask.className = "bz-overlay-mask bz-bel-detail-mask";
-    mask.innerHTML = belDetailHtml(it, currencyUnit());
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    mountIcons(mask);
+    const host = document.createElement("div");
+    host.innerHTML = belDetailHtml(it, currencyUnit());
     ensureBelongingsEsc();
+    const { mask, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-bel-detail",
+      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-detail），内容规则照旧
+      onClose: () => {
+        belDetailClose = null;
+      }
+    });
+    belDetailClose = close;
+    mountIcons(mask);
     const acts = mask.querySelector("[data-bd-acts]");
     const drawActs = () => {
       const cur = itemById(it.id);
@@ -8074,9 +8150,6 @@ var BZW_belongings = (() => {
         }
         openBelDetail(now);
       })();
-    });
-    mask.addEventListener("mousedown", (e) => {
-      if (e.target === mask) closeBelDetail();
     });
     (_a = mask.querySelector("[data-bd-edit]")) == null ? void 0 : _a.addEventListener("click", () => {
       const cur = itemById(it.id);
@@ -8241,27 +8314,31 @@ var BZW_belongings = (() => {
   }
   function belFormDirty() {
     if (!_belBaseline) return false;
-    const mask = document.querySelector(".bz-bel-form-mask");
-    if (!mask) return false;
+    const pop = document.querySelector(".bz-bel-form");
+    if (!pop) return false;
     const g = (id) => {
       var _a, _b;
-      return (_b = (_a = mask.querySelector(id)) == null ? void 0 : _a.value) != null ? _b : "";
+      return (_b = (_a = pop.querySelector(id)) == null ? void 0 : _a.value) != null ? _b : "";
     };
-    return g("#bm-name") !== _belBaseline.name || g("#bm-cat") !== _belBaseline.cat || g("#bm-price") !== _belBaseline.price || g("#bm-date") !== _belBaseline.date || g("#bm-desc") !== _belBaseline.desc || g("#bm-exitdate") !== _belBaseline.exitDate || g("#bm-soldprice") !== _belBaseline.soldPrice || belFormStatusNow(mask) !== _belBaseline.status;
+    return g("#bm-name") !== _belBaseline.name || g("#bm-cat") !== _belBaseline.cat || g("#bm-price") !== _belBaseline.price || g("#bm-date") !== _belBaseline.date || g("#bm-desc") !== _belBaseline.desc || g("#bm-exitdate") !== _belBaseline.exitDate || g("#bm-soldprice") !== _belBaseline.soldPrice || belFormStatusNow(pop) !== _belBaseline.status;
   }
-  function closeBelForm(mask) {
+  var belFormClose = null;
+  var belFormMask = null;
+  function closeBelForm() {
     _belBaseline = null;
     _belFormTargetId = null;
-    unregisterSheetCompanion(mask);
-    mask.remove();
+    if (belFormMask) unregisterSheetCompanion(belFormMask);
+    belFormMask = null;
+    belFormClose == null ? void 0 : belFormClose();
+    belFormClose = null;
   }
-  function requestCloseBelForm(mask) {
-    if (belFormDirty()) confirmDiscard(() => closeBelForm(mask), void 0, "bz-bel-flow-dialog");
-    else closeBelForm(mask);
+  function requestCloseBelForm() {
+    if (belFormDirty()) confirmDiscard(() => closeBelForm(), void 0, "bz-bel-flow-dialog");
+    else closeBelForm();
   }
   function openForm(it) {
     var _a, _b, _c, _d, _e;
-    const existing = document.querySelector(".bz-bel-form-mask");
+    const existing = document.querySelector(".bz-bel-form");
     if (existing) {
       const targetId = (_a = it == null ? void 0 : it.id) != null ? _a : null;
       if (_belFormTargetId === targetId) {
@@ -8282,14 +8359,22 @@ var BZW_belongings = (() => {
       return;
     }
     const init = belFormInit(it);
-    const mask = document.createElement("div");
-    mask.className = "bz-overlay-mask bz-bel-form-mask";
-    mask.innerHTML = belFormHtml(it, currencyUnit());
-    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    mountIcons(mask);
     ensureBelongingsEsc();
+    const host = document.createElement("div");
+    host.innerHTML = belFormHtml(it, currencyUnit());
+    const { mask, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-bel-form",
+      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-form），内容规则照旧
+      requestClose: () => requestCloseBelForm(),
+      onClose: () => {
+        belFormClose = null;
+      }
+    });
+    belFormClose = close;
+    belFormMask = mask;
+    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
+    mountIcons(mask);
     const sheetOpen = !!document.querySelector(".bz-item-sheet-mask");
     if (it && sheetOpen) registerSheetCompanion(mask);
     _belBaseline = {
@@ -8385,10 +8470,7 @@ var BZW_belongings = (() => {
         }
       })();
     });
-    mask.addEventListener("mousedown", (e) => {
-      if (e.target === mask) requestCloseBelForm(mask);
-    });
-    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm(mask));
+    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm());
     saveBtn.addEventListener("click", () => {
       if (saving) return;
       const name = mask.querySelector("#bm-name").value.trim();
@@ -8439,10 +8521,8 @@ var BZW_belongings = (() => {
             const cur = itemById(it.id);
             if (!cur) {
               notice("该物品已被外部变更删除，本次保存未写入", "warning");
-              unregisterSheetCompanion(mask);
               closeItemMenu();
-              _belFormTargetId = null;
-              mask.remove();
+              closeBelForm();
               return;
             }
             const snapshot = { ...cur };
@@ -8485,7 +8565,8 @@ var BZW_belongings = (() => {
           _belFormTargetId = null;
           unregisterSheetCompanion(mask);
           closeItemMenu();
-          mask.remove();
+          belFormClose == null ? void 0 : belFormClose();
+          belFormClose = null;
         } catch (e) {
           notice(`保存失败：${(e == null ? void 0 : e.message) || "未知错误"}`, "error");
           saving = false;

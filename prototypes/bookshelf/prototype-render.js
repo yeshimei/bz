@@ -1,4 +1,4 @@
-/* 源指纹 5f846ee00d4f25d7 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 39b1ee24f68fc6e6 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/bookshelf/constants.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/bookshelf/render.ts → window.BZR_bookshelf（评审壳预览包，ADR-0104） */
 var BZR_bookshelf = (() => {
@@ -54,6 +54,9 @@ var BZR_bookshelf = (() => {
   }
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
+  }
+  function emptyHtmlStr(icon, title, desc) {
+    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
   }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
@@ -280,15 +283,12 @@ var BZR_bookshelf = (() => {
     }
     zone = null;
   }
-  function bzEmptyHtml(icon, title, desc) {
-    return `<div class="bz-empty">${iconSpan(icon, "bz-empty-ic")}<div class="bz-empty-title">${esc(title)}</div><div class="bz-empty-desc">${esc(desc)}</div></div>`;
-  }
   function wallEmptyHTML(itemsTotal, q, folder, tag) {
     const cfg = !itemsTotal ? { icon: EMPTY_BOOKS_ICON, title: "书库还是空的", desc: `把书籍笔记放进「${folder}」文件夹，并在 frontmatter 添加 tags: ${tag} 标签` } : q ? { icon: EMPTY_SEARCH_ICON, title: "没有找到相关的书", desc: "试试其他关键词，或换一个筛选" } : { icon: EMPTY_FILTER_ICON, title: "这个筛选下还没有书", desc: "换一个状态或分类标签，或用搜索找找" };
-    return `<div class="bz-bs-wall-empty">${bzEmptyHtml(cfg.icon, cfg.title, cfg.desc)}</div>`;
+    return `<div class="bz-bs-wall-empty">${emptyHtmlStr(cfg.icon, cfg.title, cfg.desc)}</div>`;
   }
   function wallLoadingHTML() {
-    return `<div class="bz-bs-wall-empty">${bzEmptyHtml("loader", "正在整理书架…", "")}</div>`;
+    return `<div class="bz-bs-wall-empty">${emptyHtmlStr("loader", "正在整理书架…", "")}</div>`;
   }
   function labelsHtml(items, side, catFilter) {
     const statusDefs = [

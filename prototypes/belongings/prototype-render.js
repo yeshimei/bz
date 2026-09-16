@@ -1,4 +1,4 @@
-/* 源指纹 ee7dc64e53d9eab1 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 02bdc0c606a6f180 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/belongings/render.ts → window.BZR_belongings（评审壳预览包，ADR-0104） */
 var BZR_belongings = (() => {
@@ -88,6 +88,9 @@ var BZR_belongings = (() => {
   }
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
+  }
+  function emptyHtmlStr(icon, title, desc) {
+    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
   }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
@@ -929,7 +932,11 @@ var BZR_belongings = (() => {
     return `投入 ${moneyShort(totalAssets(items), unit)} · 日均 ${moneyWith(avgDailyCost(items).toFixed(2), unit)}`;
   }
   function emptyHtml(noMatch) {
-    return `<div class="bz-empty">${iconSpan(ICON.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
+    return emptyHtmlStr(
+      ICON.empty,
+      noMatch ? "没有符合条件的物品" : "这里还没有物品",
+      noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"
+    );
   }
   function cellHtml(it, idx, unit = "cny") {
     var _a;

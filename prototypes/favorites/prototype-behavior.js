@@ -1,5 +1,5 @@
-/* 源指纹 45ca491a4c24b630 · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
+/* 源指纹 13b11b973934997c · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
   var __create = Object.create;
@@ -4838,6 +4838,26 @@ var BZW_favorites = (() => {
     }
   };
 
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+
   // src/core/model-limits.ts
   var MODEL_LIMITS = [
     // ---- DeepSeek 官方（2026-09-16 核对官方「模型 & 价格」页：上下文 1M / 最大输出 384K，在售模型同档）
@@ -5473,13 +5493,14 @@ var BZW_favorites = (() => {
       let fetched = false;
       for (let attempt = 0; attempt < 2 && !fetched; attempt++) {
         try {
-          const resp = await this._requestUrlWithTimeout(
-            {
+          const resp = await withTimeout(
+            requestUrl({
               url: `https://api.github.com/repos/${owner}/${repo}`,
               method: "GET",
               headers: { Accept: "application/vnd.github+json", "User-Agent": "obsidian-bz" }
-            },
-            8e3
+            }),
+            8e3,
+            "GitHub API"
           );
           if (resp.status && resp.status >= 400) throw new Error(`HTTP ${resp.status}`);
           const data = JSON.parse(resp.text || "{}");
@@ -5491,16 +5512,6 @@ var BZW_favorites = (() => {
         }
       }
       return { title, description, fetched };
-    }
-    /** requestUrl 包超时（避免 api.github.com 长时间挂起） */
-    _requestUrlWithTimeout(opts, timeoutMs) {
-      let timer = null;
-      const timeout = new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Error("GitHub API 请求超时")), timeoutMs);
-      });
-      return Promise.race([requestUrl(opts), timeout]).finally(() => {
-        if (timer) clearTimeout(timer);
-      });
     }
   };
 
@@ -5619,7 +5630,28 @@ var BZW_favorites = (() => {
 
   // src/core/utils.ts
   var import_moment = __toESM(require_moment());
-  function escapeHtml(str) {
+
+  // src/core/ui/str.ts
+  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localNow() {
+    const d = /* @__PURE__ */ new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+
+  // src/core/utils.ts
+  function escapeHtml2(str) {
     return str.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
       if (m === "<") return "&lt;";
@@ -5649,9 +5681,9 @@ var BZW_favorites = (() => {
     }
     const ctaIdx = actions.findIndex((a) => a.cta);
     const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
     }).join("") + "</div>";
     return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
@@ -6077,6 +6109,54 @@ var BZW_favorites = (() => {
     });
   }
 
+  // src/core/ui/modal.ts
+  function uiModal(opts) {
+    const mask = document.createElement("div");
+    mask.className = "bz-overlay-mask";
+    mask.style.zIndex = String(allocZ());
+    const popup = document.createElement("div");
+    popup.className = "bz-overlay-popup" + (opts.className ? " " + opts.className : "");
+    if (opts.maxWidth) popup.style.maxWidth = `min(${opts.maxWidth}px, calc(100vw - 32px))`;
+    if (opts.head) {
+      const head = document.createElement("div");
+      head.className = "bz-dialog-head";
+      const title = document.createElement("span");
+      title.className = "bz-dialog-title";
+      title.textContent = opts.title || "";
+      head.appendChild(title);
+      popup.appendChild(head);
+    }
+    const body = document.createElement("div");
+    body.className = "bz-dialog-body";
+    if (typeof opts.content === "string") body.innerHTML = opts.content;
+    else body.appendChild(opts.content);
+    popup.appendChild(body);
+    mask.appendChild(popup);
+    let closed = false;
+    let escHandle = null;
+    function close() {
+      var _a;
+      if (closed) return;
+      closed = true;
+      mask.remove();
+      escHandle == null ? void 0 : escHandle.unregister();
+      (_a = opts.onClose) == null ? void 0 : _a.call(opts);
+    }
+    const attemptClose = () => {
+      if (opts.requestClose) opts.requestClose();
+      else close();
+    };
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) attemptClose();
+    });
+    escHandle = escManager.register("bz-modal", {
+      isVisible: () => mask.isConnected,
+      close: attemptClose
+    });
+    document.body.appendChild(mask);
+    return { mask, popup, close };
+  }
+
   // src/core/domain-bus.ts
   var channels = /* @__PURE__ */ new Map();
   function emitDomainEvent(channel, evt) {
@@ -6099,23 +6179,6 @@ var BZW_favorites = (() => {
     if ((oldItem.url || "").trim() !== (nextItem.url || "").trim()) changes.push("改了链接");
     if ((oldItem.tags || []).join(",") !== (nextItem.tags || []).join(",")) changes.push("改了分类");
     return changes;
-  }
-
-  // src/core/ui/str.ts
-  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  function escapeHtml2(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml2(String(s != null ? s : ""));
-  }
-  function localNow() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
 
   // src/favorites/shared.ts
@@ -6144,8 +6207,7 @@ var BZW_favorites = (() => {
     if (diff < h) return Math.floor(diff / m) + " 分钟前";
     if (diff < day) return Math.floor(diff / h) + " 小时前";
     if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getMonth() + 1}-${p(d.getDate())}`;
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
   }
   function hueOf(label) {
     const m = {
@@ -6318,8 +6380,7 @@ var BZW_favorites = (() => {
       isVisible: () => !!M.overlay || !!document.querySelector(".bz-fav-form"),
       close: () => {
         closeItemMenu();
-        const form = document.querySelector(".bz-fav-form");
-        if (form) requestCloseForm(form);
+        if (document.querySelector(".bz-fav-form")) requestCloseForm();
         else closePanel();
       }
     });
@@ -6628,6 +6689,7 @@ var BZW_favorites = (() => {
   }
   var _saving = false;
   var _baseline = null;
+  var _formClose = null;
   function formTagsNow(popup) {
     return [...popup.querySelectorAll("#fz-tags [data-tag].bz-fav-on")].map((b) => b.dataset.tag || "").sort().join("|");
   }
@@ -6641,19 +6703,19 @@ var BZW_favorites = (() => {
     if (!popup) return false;
     return inputVal(popup, "#fz-title") !== _baseline.title || inputVal(popup, "#fz-url") !== _baseline.url || inputVal(popup, "#fz-desc") !== _baseline.desc || formPinNow(popup) !== _baseline.pinned || formTagsNow(popup) !== _baseline.tags;
   }
-  function requestCloseForm(popup) {
+  function requestCloseForm() {
     if (formDirty()) {
-      confirmDiscard(() => closeForm(popup), void 0, "bz-fav-flow-dialog bz-fav-scope");
+      confirmDiscard(() => closeForm(), void 0, "bz-fav-flow-dialog bz-fav-scope");
     } else {
-      closeForm(popup);
+      closeForm();
     }
   }
-  function closeForm(popup) {
-    var _a;
+  function closeForm() {
     _baseline = null;
     _saving = false;
     closeItemMenu();
-    ((_a = popup.closest(".bz-fav-form-mask")) != null ? _a : popup).remove();
+    _formClose == null ? void 0 : _formClose();
+    _formClose = null;
   }
   function inputVal(popup, id) {
     var _a, _b;
@@ -6662,16 +6724,22 @@ var BZW_favorites = (() => {
   function openForm(item) {
     var _a, _b, _c;
     ensureFavoritesEsc();
-    const existing = document.querySelector(".bz-fav-form");
-    if (existing) closeForm(existing);
+    if (document.querySelector(".bz-fav-form")) closeForm();
     const it = item;
-    const mask = document.createElement("div");
-    mask.className = "bz-fav-form-mask bz-fav-scope";
-    mask.innerHTML = formHtml(it);
-    document.body.appendChild(mask);
-    topifyZ(mask);
+    const host = document.createElement("div");
+    host.innerHTML = formHtml(it);
+    const { mask, popup, close } = uiModal({
+      content: host.firstElementChild,
+      // 弹窗壳只挂 scope（token 域）；bz-fav-form 类由单源 markup 内容根携带（F15 教训：
+      // 壳与内容同挂一类会双计单例守卫），亚麻卡几何锚 .bz-overlay-popup.bz-fav-scope
+      className: "bz-fav-scope",
+      requestClose: () => requestCloseForm(),
+      onClose: () => {
+        _formClose = null;
+      }
+    });
+    _formClose = close;
     mountIcons(mask);
-    const popup = mask.querySelector(".bz-fav-form");
     _baseline = {
       title: (it == null ? void 0 : it.title) || "",
       url: (it == null ? void 0 : it.url) || "",
@@ -6706,10 +6774,7 @@ var BZW_favorites = (() => {
     const pinEl = popup.querySelector("#fz-pin");
     pinEl.addEventListener("click", () => pinEl.classList.toggle("bz-fav-on"));
     const errEl = popup.querySelector("#fz-err");
-    mask.addEventListener("mousedown", (e) => {
-      if (e.target === mask) requestCloseForm(popup);
-    });
-    (_a = popup.querySelector("[data-fz-cancel]")) == null ? void 0 : _a.addEventListener("click", () => requestCloseForm(popup));
+    (_a = popup.querySelector("[data-fz-cancel]")) == null ? void 0 : _a.addEventListener("click", () => requestCloseForm());
     (_b = popup.querySelector("#fz-ai")) == null ? void 0 : _b.addEventListener("click", () => void runAiFill(popup, sel, drawPick, errEl));
     (_c = popup.querySelector("#fz-save")) == null ? void 0 : _c.addEventListener("click", () => void saveForm(popup, it, sel, errEl));
     setTimeout(() => {
@@ -6868,7 +6933,7 @@ GitHub 仓库：${ghInfo.title}
         await dm.add(data);
         emitDomainEvent("favorites", { kind: "add", item: data });
       }
-      closeForm(popup);
+      closeForm();
       await reload();
     } catch (e) {
       notice(`保存失败：${(e == null ? void 0 : e.message) || "未知错误"}`, "error");

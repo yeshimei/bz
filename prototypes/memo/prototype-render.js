@@ -1,4 +1,4 @@
-/* 源指纹 e0f8367fdc9129a3 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a239c32ba7a1d88c · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {

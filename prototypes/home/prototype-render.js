@@ -1,4 +1,4 @@
-/* 源指纹 2f3c8714c11f3fe4 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 75e0774f88ec5173 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -32,7 +32,6 @@ var BZR_home = (() => {
     DOMAIN_MENU: () => DOMAIN_MENU,
     EMPTY_COUNTS: () => EMPTY_COUNTS,
     EMPTY_SUMMARY: () => EMPTY_SUMMARY,
-    TIMELINE_KIND_LABEL: () => TIMELINE_KIND_LABEL,
     applyOrder: () => applyOrder,
     buildDots: () => buildDots,
     buildNotes: () => buildNotes,
@@ -73,6 +72,9 @@ var BZR_home = (() => {
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
   }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
@@ -86,7 +88,6 @@ var BZR_home = (() => {
     ai: "sparkles",
     // 域入口命令与面板导航共用
     home: "layout-grid",
-    recap: "calendar-heart",
     memo: "check-square",
     belongings: "package",
     clipping: "scissors",
@@ -140,7 +141,6 @@ var BZR_home = (() => {
   var DOMAIN_DOT = {
     diary: "#e67341",
     memo: "#e8590c",
-    recap: "#d64d8f",
     cinema: "#e6951d",
     review: "#7c5cd6",
     pomodoro: "#e5534b",
@@ -245,12 +245,14 @@ var BZR_home = (() => {
     ],
     belongings: [{ label: "加物品", commandId: "bz-belongings-add", icon: "archive" }],
     // 保险库：此前是空菜单（无域快捷动作）；锁定是唯一「不开面板」的一步动作
-    // （加密当前笔记 / 快速取密虽已有命令，但属「作用于当前笔记」，不在本次采纳范围）
+    // （加密当前笔记虽已有命令，但属「作用于当前笔记」，不在本次采纳范围；
+    //   快速取密已随 ADR-0158 归并密码本域——bz-encrypt-copy-password 退役）
     encrypt: [
       { label: "锁定保险库", commandId: "bz-encrypt-lock-vault", icon: "lock", keepHome: true }
     ],
     vault: [
-      { label: "快速生成密码", commandId: "bz-password-vault-gen", icon: "key" },
+      // ADR-0158 统一快速取密：fuzzy 列现有密码 + 顶部「生成新」，同 id 承接旧「快速生成密码」
+      { label: "快速取密", commandId: "bz-password-vault-gen", icon: "key" },
       // 与保险库同库同锁（一把主密码）：文案按本域名口径，行为是同一个 lockSafe
       { label: "锁定密码本", commandId: "bz-password-vault-lock", icon: "lock", keepHome: true }
     ]
@@ -293,12 +295,6 @@ var BZR_home = (() => {
     pomodoros: 0,
     pomodoroMinutes: 0
   };
-  var TIMELINE_KIND_LABEL = {
-    produce: "产出",
-    progress: "状态推进",
-    note: "点评 ✦",
-    skipped: "已跳过"
-  };
   var DEFAULT_TIMELINE_FILTER = {
     produce: true,
     progress: true,
@@ -333,21 +329,18 @@ var BZR_home = (() => {
   function filterEvents(events, filter) {
     return events.filter((e) => eventVisible(e, filter));
   }
-  function p2(n) {
-    return String(n).padStart(2, "0");
-  }
   function dateStrOf(anchor) {
     const d = new Date(anchor);
-    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
   function fmtHm(t) {
     const d = new Date(t);
-    return `${p2(d.getHours())}:${p2(d.getMinutes())}`;
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   }
   function headDateText(now = Date.now()) {
     const d = new Date(now);
     const wd = "日一二三四五六"[d.getDay()];
-    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} 周${wd} · ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} 周${wd} · ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   }
   function dayOffsetMs(t) {
     const d = new Date(t);
@@ -488,9 +481,10 @@ var BZR_home = (() => {
     const filter = (_a = opts.filter) != null ? _a : DEFAULT_TIMELINE_FILTER;
     const showTime = opts.showTime !== false;
     const size = (_b = opts.size) != null ? _b : "normal";
-    const wrap = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + "</div>";
     const day = (_c = data.days.find((d) => d.dateStr === view)) != null ? _c : data.today;
     const isToday = day.dateStr === data.today.dateStr;
+    const aiRow = isToday ? '<div class="bz-home-ai-row"><button type="button" class="bz-btn bz-home-ai" data-home-ai disabled title="把今天的痕迹写成一段总结，写进日记">生成今日总结</button></div>' : "";
+    const wrap = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + aiRow + "</div>";
     const notes = isToday && filter.notes ? buildNotes(data) : [];
     const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => eventVisible(e, filter));
     const body = kept.map(({ e, i }) => {

@@ -1,5 +1,5 @@
-/* 源指纹 9bed9bc13fd853da · 仓内输入 100 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 bf0b3745d5df5a77 · 仓内输入 102 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -4777,8 +4777,32 @@ var BZW_clipbook = (() => {
     }
   });
 
+  // src/core/ui/str.ts
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localNow() {
+    const d = /* @__PURE__ */ new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  var ESC_MAP;
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    }
+  });
+
   // src/core/utils.ts
-  function escapeHtml(str2) {
+  function escapeHtml2(str2) {
     return str2.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
       if (m === "<") return "&lt;";
@@ -4786,9 +4810,6 @@ var BZW_clipbook = (() => {
       if (m === '"') return "&quot;";
       return "&#39;";
     });
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
   }
   function generateId(prefix) {
     prefix = prefix || "item";
@@ -4876,6 +4897,23 @@ var BZW_clipbook = (() => {
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return h >>> 0;
   }
+  function debounce(fn, ms) {
+    let t;
+    const wrapped = (...args) => {
+      if (t !== void 0) clearTimeout(t);
+      t = setTimeout(() => {
+        t = void 0;
+        fn(...args);
+      }, ms);
+    };
+    wrapped.cancel = () => {
+      if (t !== void 0) {
+        clearTimeout(t);
+        t = void 0;
+      }
+    };
+    return wrapped;
+  }
   function yieldToMainThread(timeoutMs = 200) {
     return new Promise((resolve2) => {
       if (typeof window === "undefined") {
@@ -4893,6 +4931,7 @@ var BZW_clipbook = (() => {
       import_moment = __toESM(require_moment());
       init_fake_obsidian();
       init_app();
+      init_str();
     }
   });
 
@@ -4914,9 +4953,9 @@ var BZW_clipbook = (() => {
     }
     const ctaIdx = actions.findIndex((a) => a.cta);
     const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
     }).join("") + "</div>";
     return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
@@ -5183,14 +5222,10 @@ var BZW_clipbook = (() => {
     if (!s) return "";
     return s.length > max ? s.slice(0, max) + "…" : s;
   }
-  function localDayKey2(ts = Date.now()) {
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${pad22(d.getMonth() + 1)}-${pad22(d.getDate())}`;
-  }
   function localDatetime(ts = Date.now()) {
     const d = new Date(ts);
-    const hms = `${pad22(d.getHours())}:${pad22(d.getMinutes())}:${pad22(d.getSeconds())}`;
-    return `${localDayKey2(ts)} ${hms}`;
+    const hms = `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+    return `${localDayKey(ts)} ${hms}`;
   }
   function toDatetime(dateStr) {
     try {
@@ -5201,11 +5236,10 @@ var BZW_clipbook = (() => {
       return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
     }
   }
-  function pad22(n) {
-    return String(n).padStart(2, "0");
-  }
   var init_constants = __esm({
     "src/clipbook/constants.ts"() {
+      init_str();
+      init_utils();
     }
   });
 
@@ -5479,6 +5513,48 @@ var BZW_clipbook = (() => {
     }
   });
 
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve2, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve2(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+  async function httpGetText(url, opts) {
+    const fetchImpl = opts.fetchImpl || ((u, init) => globalThis.fetch(u, init));
+    try {
+      const resp = await withTimeout(fetchImpl(url, { headers: opts.headers }), opts.timeoutMs, url);
+      if (!resp || !resp.ok) return null;
+      return await resp.text();
+    } catch (e) {
+      return null;
+    }
+  }
+  function requestUrlAsFetch() {
+    return async (url, init) => {
+      const resp = await requestUrl({ url, method: "GET", headers: init == null ? void 0 : init.headers, throw: false });
+      const status = resp.status;
+      return { ok: status >= 200 && status < 300, status, text: () => Promise.resolve(resp.text) };
+    };
+  }
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
   // src/clipbook/write-queue.ts
   function enqueueNewsWrite(op) {
     return enqueueFileTask(getNewsFilePath(), op);
@@ -5492,19 +5568,12 @@ var BZW_clipbook = (() => {
 
   // src/clipbook/news-fetcher.ts
   function requestUrlHttpGet() {
-    return async (url, headers) => {
-      try {
-        const req = requestUrl({ url, method: "GET", headers: { ...HEADERS, ...headers || {} }, throw: false }).then((resp) => {
-          return resp.status >= 200 && resp.status < 300 ? resp.text : null;
-        });
-        req.catch(() => {
-        });
-        const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), FETCH_TIMEOUT_MS));
-        return await Promise.race([req, timer]);
-      } catch (e) {
-        return null;
-      }
-    };
+    const impl = requestUrlAsFetch();
+    return (url, headers) => httpGetText(url, {
+      timeoutMs: FETCH_TIMEOUT_MS,
+      headers: { ...HEADERS, ...headers || {} },
+      fetchImpl: impl
+    });
   }
   function defaultFetchStore() {
     return {
@@ -5529,11 +5598,6 @@ var BZW_clipbook = (() => {
         await writeNewsDataMerged(intent);
       })
     };
-  }
-  function localDatetime2(ts = Date.now()) {
-    const d = new Date(ts);
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   }
   function htmlToMarkdown(html) {
     let md = html;
@@ -5665,7 +5729,7 @@ ${c.trim()}
     let date = "";
     if (it.pubDate) {
       const d = new Date(it.pubDate);
-      if (!isNaN(d.getTime())) date = localDatetime2(d.getTime());
+      if (!isNaN(d.getTime())) date = localDatetime(d.getTime());
     }
     return { platform: feedName, title, url, author: feedName, date, body };
   }
@@ -5709,7 +5773,7 @@ ${c.trim()}
 ` : "",
       `🔗 观看：[${String(archive.title)}](${url})${archive.duration_text ? `（时长 ${archive.duration_text}）` : ""}`
     ].join("").trim();
-    const date = localDatetime2(pubTs * 1e3);
+    const date = localDatetime(pubTs * 1e3);
     return { platform: "B站", title: String(archive.title), url, author: String(author.name || ""), date, body };
   }
   function extractUpInfo(items) {
@@ -5981,7 +6045,7 @@ ${c.trim()}
       newArticles = newArticles.filter((a) => !rssPrunedSet.has(a.url));
     }
     const rssTitlePatches = rssRes && Object.keys(rssRes.titleUpdates).length > 0 ? rssRes.titleUpdates : void 0;
-    const fetchedAt = localDatetime2(now());
+    const fetchedAt = localDatetime(now());
     for (const a of newArticles) a.fetchedAt = fetchedAt;
     const attempted = [guokrP, zhihuP, biliP, rssP].filter((p) => p !== null).length;
     const allFailed = attempted > 0 && failedSources.length >= attempted;
@@ -6063,6 +6127,7 @@ ${c.trim()}
   var init_news_fetcher = __esm({
     "src/clipbook/news-fetcher.ts"() {
       init_fake_obsidian();
+      init_http();
       init_notice();
       init_news_data();
       init_constants();
@@ -6372,7 +6437,6 @@ ${c.trim()}
   var init_anchor = __esm({
     "src/clipbook/anchor.ts"() {
       init_data();
-      init_constants();
     }
   });
 
@@ -6756,8 +6820,7 @@ ${c.trim()}
     const h = Math.floor(s / 3600);
     const m = Math.floor(s % 3600 / 60);
     const ss = s % 60;
-    const pad = (n) => String(n).padStart(2, "0");
-    return h > 0 ? `${h}:${pad(m)}:${pad(ss)}` : `${m}:${pad(ss)}`;
+    return h > 0 ? `${h}:${pad2(m)}:${pad2(ss)}` : `${m}:${pad2(ss)}`;
   }
   function timeTextToSec(t) {
     const canon = normalizeLooseTime(t);
@@ -6775,6 +6838,7 @@ ${c.trim()}
       init_storage();
       init_settings_provider();
       init_utils();
+      init_str();
       init_app();
       init_source();
       TIME_RE = /^\d{1,3}:\d{1,2}(:\d{1,2}(\.\d{1,3})?)?$/;
@@ -7967,23 +8031,6 @@ ${c.trim()}
     }
   });
 
-  // src/core/ui/str.ts
-  function escapeHtml2(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml2(String(s != null ? s : ""));
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
-  var ESC_MAP;
-  var init_str = __esm({
-    "src/core/ui/str.ts"() {
-      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-    }
-  });
-
   // src/core/ui/icons.ts
   function uiIconSpan(name, extraClass = "") {
     const i = document.createElement("span");
@@ -8698,9 +8745,9 @@ ${c.trim()}
     const root = await rootNode(rootPath, scan);
     nodes.set(root.id, root);
     order.push(root.id);
-    const queue3 = [root.id];
-    while (queue3.length) {
-      const node = nodes.get(queue3.shift());
+    const queue = [root.id];
+    while (queue.length) {
+      const node = nodes.get(queue.shift());
       if (node.kind !== "card" || node.missing) continue;
       const sameNote = await findSameNameNote(node.path, ctx);
       if (sameNote && !nodes.has(sameNote)) {
@@ -8741,7 +8788,7 @@ ${c.trim()}
             edges.push({ from: node.id, to: child.id, suggested: false });
           }
         }
-        if (fresh && child.kind === "card" && !child.missing) queue3.push(child.id);
+        if (fresh && child.kind === "card" && !child.missing) queue.push(child.id);
       }
     }
     const firstIdx = new Map(order.map((id, i) => [id, i]));
@@ -8936,24 +8983,7 @@ ${c.trim()}
     return `"domain": "从以下领域选一个最贴近的：${list.join("、")}；都不贴切可写一个新的中文领域词"`;
   }
   function nowStamp() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve2, reject) => {
-      const timer = setTimeout(() => reject(new Error(`AI 请求超时（${label}，${ms}ms）`)), ms);
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve2(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
+    return localNow();
   }
   async function writeUniqueNote(dir, baseName2, content) {
     const app = getApp();
@@ -9362,6 +9392,8 @@ ${sample}`
   var init_note_gen = __esm({
     "src/knowledge/note-gen.ts"() {
       init_ai();
+      init_str();
+      init_http();
       init_app();
       init_settings_provider();
       init_partial_json();
@@ -9420,14 +9452,13 @@ ${sample}`
     return s.trim();
   }
   function nowTs() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    return localNow();
   }
   var INSTALL_HINT, STEP_RE, RESULT_RE, PROGRESS_RE, INFO_RE, AI_STEP_TEXT, NOTE_STEP_TEXT, BatchRunner;
   var init_processor = __esm({
     "src/knowledge/processor.ts"() {
       init_notice();
+      init_str();
       init_domain_bus();
       init_settings_provider();
       init_app();
@@ -11820,7 +11851,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (typeof document === "undefined") return null;
     const mask = document.createElement("div");
     mask.id = MASK_ID;
-    mask.className = "bz-kb-mask bz-kb-mt-mask";
+    mask.className = "bz-overlay-mask bz-kb-mask bz-kb-mt-mask";
     mask.style.display = "none";
     mask.addEventListener("click", () => closeMountTree());
     const win = document.createElement("div");
@@ -12299,10 +12330,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const chain = crumbs.length ? crumbs : rootNode2 ? [rootNode2] : [];
     st.win.querySelector("#bz-kb-mt-crumbs").innerHTML = chain.map((n, i) => {
       const last = i === chain.length - 1;
-      const label = escapeHtml(displayTitle(n));
+      const label = escapeHtml2(displayTitle(n));
       const sep = i === 0 ? "" : '<span class="bz-kb-mt-sep">›</span>';
       if (last && !st.selected) return `${sep}<span class="bz-kb-mt-crumb is-cur">${label}</span>`;
-      return `${sep}<button class="bz-kb-mt-crumb bz-touch-target" data-mt-act="crumb" data-path="${escapeHtml(n.path)}" data-id="${escapeHtml(n.id)}" title="以《${label}》为主卡重开">${label}</button>`;
+      return `${sep}<button class="bz-kb-mt-crumb bz-touch-target" data-mt-act="crumb" data-path="${escapeHtml2(n.path)}" data-id="${escapeHtml2(n.id)}" title="以《${label}》为主卡重开">${label}</button>`;
     }).join("");
     const dirEl = st.win.querySelector("#bz-kb-mt-dir");
     dirEl.textContent = st.direction === "upstream" ? "上游 · 谁挂了我" : "下游 · 我挂了谁";
@@ -12315,7 +12346,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     else if (st.run) text = mountStatusText(st.run.status);
     else text = "本卡建议未跑（自动建议已关闭）";
     if (!st.loading && culled > 0) extra = `<span class="bz-kb-mt-kind">· 图大，已按 ${LAYOUT_PARAMS.MAX_NODES} 张封顶</span>`;
-    statusEl.innerHTML = `<span class="bz-kb-mt-status-t">${escapeHtml(text)}</span>${extra}${!st.loading && ((_c = st.run) == null ? void 0 : _c.status) === "no-index" ? '<button class="bz-kb-mt-btn is-mini" data-mt-act="build-index" title="打开第二大脑重建索引（绝不自动建）">去建索引</button>' : ""}`;
+    statusEl.innerHTML = `<span class="bz-kb-mt-status-t">${escapeHtml2(text)}</span>${extra}${!st.loading && ((_c = st.run) == null ? void 0 : _c.status) === "no-index" ? '<button class="bz-kb-mt-btn is-mini" data-mt-act="build-index" title="打开第二大脑重建索引（绝不自动建）">去建索引</button>' : ""}`;
     const hint = st.win.querySelector("#bz-kb-mt-hint");
     hint.textContent = isMobileEnv() ? "点卡片血缘高亮 · 长按卡片出菜单 · 双指缩放 · 单指拖拽平移" : "点卡片血缘高亮（再点取消）· 右键菜单 · 拖拽平移 · 滚轮缩放 · 点标题折/展";
   }
@@ -12512,7 +12543,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       return;
     }
     if (node.kind === "image" || node.kind === "video") {
-      bodyEl2.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml(node.path)}</div>`;
+      bodyEl2.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml2(node.path)}</div>`;
       return;
     }
     const app = (_a = st.ctx.app) != null ? _a : getApp();
@@ -13167,32 +13198,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const m = String(input != null ? input : "").match(BVID_RE);
     return m ? m[0] : null;
   }
-  function withTimeout2(p, ms) {
-    let timer = null;
-    const timeout = new Promise((resolve2) => {
-      timer = setTimeout(() => resolve2(null), ms);
-    });
-    const done = () => {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    };
-    return Promise.race([p, timeout]).then(
-      (v) => {
-        done();
-        return v === null ? null : v;
-      },
-      (e) => {
-        done();
-        throw e;
-      }
-    );
-  }
-  function parseJson(resp) {
-    if (!resp || resp.status < 200 || resp.status >= 300) return null;
+  function parseJsonText(text) {
+    if (!text) return null;
     try {
-      return JSON.parse(resp.text);
+      return JSON.parse(text);
     } catch (e) {
       return null;
     }
@@ -13282,7 +13291,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   async function fetchFromViewApi(bvid) {
     try {
-      const json = parseJson(await withTimeout2(requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: "GET" }), VIEW_TIMEOUT_MS));
+      const json = parseJsonText(await httpGetText(
+        `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`,
+        { timeoutMs: VIEW_TIMEOUT_MS, fetchImpl: httpImpl }
+      ));
       if (!json || json.code !== 0 || !json.data) return null;
       return metaFromVideoData(json.data);
     } catch (e) {
@@ -13291,14 +13303,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   async function fetchFromPage(url) {
     var _a;
-    let html = "";
-    try {
-      const resp = await withTimeout2(requestUrl({ url, method: "GET", headers: { ...PAGE_HEADERS } }), VIEW_TIMEOUT_MS);
-      if (!resp || resp.status < 200 || resp.status >= 300) return null;
-      html = String((_a = resp.text) != null ? _a : "");
-    } catch (e) {
-      return null;
-    }
+    const html = String((_a = await httpGetText(url, { timeoutMs: VIEW_TIMEOUT_MS, headers: { ...PAGE_HEADERS }, fetchImpl: httpImpl })) != null ? _a : "");
     if (!html) return null;
     const state2 = extractInitialState(html);
     const videoData = videoDataFromState(state2);
@@ -13344,9 +13349,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const c = String(cookie != null ? cookie : "").trim();
     if (!c) return false;
     try {
-      const json = parseJson(await withTimeout2(
-        requestUrl({ url: "https://api.bilibili.com/x/web-interface/nav", method: "GET", headers: { Cookie: c } }),
-        NAV_TIMEOUT_MS
+      const json = parseJsonText(await httpGetText(
+        "https://api.bilibili.com/x/web-interface/nav",
+        { timeoutMs: NAV_TIMEOUT_MS, headers: { Cookie: c }, fetchImpl: httpImpl }
       ));
       return !!(json && json.code === 0 && json.data && json.data.isLogin === true);
     } catch (e) {
@@ -13358,9 +13363,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (!c || !bvid || !posInt(cid)) return null;
     try {
       const url = `https://api.bilibili.com/x/player/playurl?bvid=${bvid}&cid=${posInt(cid)}&qn=127&fnval=4048&fourk=1`;
-      const json = parseJson(await withTimeout2(
-        requestUrl({ url, method: "GET", headers: { Cookie: c } }),
-        QUALITY_TIMEOUT_MS
+      const json = parseJsonText(await httpGetText(
+        url,
+        { timeoutMs: QUALITY_TIMEOUT_MS, headers: { Cookie: c }, fetchImpl: httpImpl }
       ));
       const videos = json && json.code === 0 && json.data && json.data.dash ? json.data.dash.video : null;
       if (!Array.isArray(videos)) return null;
@@ -13385,10 +13390,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const qualities = bvid && sel && sel.cid ? await fetchCheckedQualities(bvid, sel.cid, cookie) : null;
     return { meta, qualities };
   }
-  var BVID_RE, BVID_EXACT_RE, BILI_HOST_RE, VIEW_TIMEOUT_MS, QUALITY_TIMEOUT_MS, NAV_TIMEOUT_MS, PAGE_HEADERS;
+  var BVID_RE, BVID_EXACT_RE, BILI_HOST_RE, VIEW_TIMEOUT_MS, QUALITY_TIMEOUT_MS, NAV_TIMEOUT_MS, httpImpl, PAGE_HEADERS;
   var init_video_meta = __esm({
     "src/knowledge/video-meta.ts"() {
-      init_fake_obsidian();
+      init_http();
       init_source();
       BVID_RE = /BV[0-9A-Za-z]{10}/;
       BVID_EXACT_RE = /^BV[0-9A-Za-z]{10}$/;
@@ -13396,6 +13401,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       VIEW_TIMEOUT_MS = 1e4;
       QUALITY_TIMEOUT_MS = 1e4;
       NAV_TIMEOUT_MS = 1e4;
+      httpImpl = requestUrlAsFetch();
       PAGE_HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         Referer: "https://www.bilibili.com/"
@@ -13554,7 +13560,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return out;
   }
   function esc2(s) {
-    return escapeHtml(String(s != null ? s : ""));
+    return escapeHtml2(String(s != null ? s : ""));
   }
   function shortNoteName(path) {
     const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
@@ -13627,9 +13633,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return url.length > 28 ? url.slice(0, 28) + "…" : url;
   }
   function dateStamp() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    return localNow();
   }
   function litDirOf(s) {
     return getKnowledgeBoxes(s || {}).lit;
@@ -13657,6 +13661,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     "src/knowledge/ui.ts"() {
       init_fake_obsidian();
       init_ai();
+      init_str();
       init_mobile();
       init_settings_provider();
       init_knowledge_boxes();
@@ -16836,6 +16841,130 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   });
 
+  // src/core/file-sync.ts
+  function createFileSync(config) {
+    let initialized4 = false;
+    let _refs = [];
+    let _cancelled = false;
+    let _flushers = [];
+    let queue = Promise.resolve();
+    function enqueue(task) {
+      queue = queue.then(() => {
+        if (_cancelled) return;
+        return task();
+      }).catch((e) => {
+        console.error(config.logTag, e);
+        notify(config.failNotice, { type: "error", dedupeKey: config.failDedupeKey });
+      });
+    }
+    function debounceDelay() {
+      const s = tryGetSettings();
+      return Number(s && s.DEBOUNCE_DELAY) || 300;
+    }
+    function createBatchFlusher(run) {
+      let pending = [];
+      let timer = null;
+      const flush = () => {
+        timer = null;
+        if (_cancelled) {
+          pending = [];
+          return;
+        }
+        const batch = pending;
+        pending = [];
+        enqueue(() => run(batch));
+      };
+      const push = (ev) => {
+        if (_cancelled) return;
+        pending.push(ev);
+        if (timer !== null) clearTimeout(timer);
+        timer = setTimeout(flush, debounceDelay());
+      };
+      return Object.assign(push, {
+        cancel() {
+          if (timer !== null) {
+            clearTimeout(timer);
+            timer = null;
+          }
+          pending = [];
+        }
+      });
+    }
+    function inFolders(path, folders) {
+      return folders.some((f) => path.startsWith(f + "/") || path === f);
+    }
+    function createAgent(app) {
+      var _a;
+      const isMd = (file) => file && file.extension === "md" && inFolders(file.path, config.watchedFolders());
+      const pseudoFile = (path) => ({
+        path,
+        basename: stripMdExt(path.split("/").pop() || ""),
+        extension: "md"
+      });
+      const buildRenameEvent = (_a = config.buildRenameEvent) != null ? _a : (evt) => evt;
+      const flushRenames = createBatchFlusher(async (batch) => {
+        for (const ev of batch) {
+          await config.commit((data) => config.applyRename(data, ev));
+        }
+      });
+      _flushers.push(flushRenames);
+      _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
+        const file = pseudoFile(evt.newPath);
+        void (async () => {
+          if (!(isMd(file) || await config.referencedBy(evt.oldPath) || await config.referencedBy(evt.newPath))) return;
+          flushRenames(buildRenameEvent(evt, file.basename));
+        })();
+      }));
+      _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
+        const file = pseudoFile(evt.path);
+        void (async () => {
+          if (isMd(file) || await config.referencedBy(evt.path)) {
+            enqueue(() => config.commit((data) => config.applyDelete(data, evt.path)));
+          }
+          if (config.onMdDeleted) await config.onMdDeleted(app, evt.path);
+        })();
+      }));
+    }
+    return {
+      /** 幂等初始化（main.ts onLayoutReady 调用；ADR-0003 同款幂等） */
+      ensure(app) {
+        if (initialized4) return;
+        initialized4 = true;
+        _cancelled = false;
+        createAgent(app);
+      },
+      /** 卸载清理：置位 _cancelled 使积压任务首行短路并丢弃去抖窗口内未回放的事件，
+       *  退订全部监听（总线退订幂等，重复卸载无双清风险）后重置模块状态。 */
+      unload() {
+        _cancelled = true;
+        for (const f of _flushers) {
+          try {
+            f.cancel();
+          } catch (e) {
+          }
+        }
+        _flushers = [];
+        for (const off of _refs) {
+          try {
+            off();
+          } catch (e) {
+          }
+        }
+        _refs = [];
+        initialized4 = false;
+        queue = Promise.resolve();
+      }
+    };
+  }
+  var init_file_sync = __esm({
+    "src/core/file-sync.ts"() {
+      init_utils();
+      init_notice();
+      init_settings_provider();
+      init_domain_bus();
+    }
+  });
+
   // src/knowledge/file-sync.ts
   function syncRename(tasks, { oldPath, newPath }) {
     let changed = false;
@@ -16865,144 +16994,56 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     return changed;
   }
-  function inFolders(path, folders) {
-    return folders.some((f) => path.startsWith(f + "/") || path === f);
-  }
   function getKnowledgePath() {
     if (KnowledgeData.filePath) return KnowledgeData.filePath;
     return storageFile("knowledge.json", tryGetSettings().storagePath || "CONFIG/STORAGE");
   }
-  async function syncTasks(fn, ...args) {
+  async function syncTasks(apply) {
     const path = getKnowledgePath();
     await enqueueFileTask(path, async () => {
       const tasks = await KnowledgeData.read();
-      if (fn(tasks, ...args)) await KnowledgeData.write(tasks);
+      if (apply(tasks)) await KnowledgeData.write(tasks);
     });
   }
   function getWatchedFolders() {
     return [knowledgeDirOf()];
   }
-  function enqueue(task) {
-    queue = queue.then(() => {
-      if (_cancelled) return;
-      return task();
-    }).catch((e) => {
-      console.error("[knowledge-file-sync]", e);
-      notify("知识盒同步失败，数据可能不一致", { type: "error", dedupeKey: "knowledge-file-sync" });
-    });
-  }
-  function debounceDelay() {
-    const s = tryGetSettings();
-    return Number(s && s.DEBOUNCE_DELAY) || 300;
-  }
-  function createBatchFlusher(run) {
-    let pending = [];
-    let timer = null;
-    const flush = () => {
-      timer = null;
-      if (_cancelled) {
-        pending = [];
-        return;
-      }
-      const batch = pending;
-      pending = [];
-      enqueue(() => run(batch));
-    };
-    const push = (ev) => {
-      if (_cancelled) return;
-      pending.push(ev);
-      if (timer !== null) clearTimeout(timer);
-      timer = setTimeout(flush, debounceDelay());
-    };
-    return Object.assign(push, {
-      cancel() {
-        if (timer !== null) {
-          clearTimeout(timer);
-          timer = null;
-        }
-        pending = [];
-      }
-    });
-  }
-  function createFileSyncAgent(app) {
-    const referencedByTasks = async (path) => {
-      if (!path) return false;
-      try {
-        const tasks = await KnowledgeData.read();
-        return tasks.some((t) => (t == null ? void 0 : t.notePath) === path || (t == null ? void 0 : t.videoPath) === path);
-      } catch (e) {
-        return false;
-      }
-    };
-    const isMd = (file) => file && file.extension === "md" && inFolders(file.path, getWatchedFolders());
-    const pseudoFile = (path) => ({
-      path,
-      basename: stripMdExt(path.split("/").pop() || ""),
-      extension: "md"
-    });
-    const flushRenames = createBatchFlusher(async (batch) => {
-      for (const ev of batch) {
-        await syncTasks(syncRename, ev);
-      }
-    });
-    _flushers.push(flushRenames);
-    _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
-      const file = pseudoFile(evt.newPath);
-      void (async () => {
-        if (!(isMd(file) || await referencedByTasks(evt.oldPath) || await referencedByTasks(evt.newPath))) return;
-        flushRenames({ oldPath: evt.oldPath, newPath: evt.newPath });
-      })();
-    }));
-    _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
-      const file = pseudoFile(evt.path);
-      void (async () => {
-        if (isMd(file) || await referencedByTasks(evt.path)) {
-          enqueue(() => syncTasks(syncDelete, evt.path));
-        }
-        await retireSourcesOnMdDeleted(app, evt.path);
-      })();
-    }));
+  async function referencedByTasks(path) {
+    if (!path) return false;
+    try {
+      const tasks = await KnowledgeData.read();
+      return tasks.some((t) => (t == null ? void 0 : t.notePath) === path || (t == null ? void 0 : t.videoPath) === path);
+    } catch (e) {
+      return false;
+    }
   }
   function ensureFileSync(app) {
-    if (initialized) return;
-    initialized = true;
-    _cancelled = false;
-    createFileSyncAgent(app);
+    agent.ensure(app);
   }
   function unloadFileSync() {
-    _cancelled = true;
-    for (const f of _flushers) {
-      try {
-        f.cancel();
-      } catch (e) {
-      }
-    }
-    _flushers = [];
-    for (const off of _refs) {
-      try {
-        off();
-      } catch (e) {
-      }
-    }
-    _refs = [];
-    initialized = false;
-    queue = Promise.resolve();
+    agent.unload();
   }
-  var initialized, _refs, _cancelled, _flushers, queue;
-  var init_file_sync = __esm({
+  var agent;
+  var init_file_sync2 = __esm({
     "src/knowledge/file-sync.ts"() {
-      init_utils();
-      init_notice();
       init_settings_provider();
-      init_domain_bus();
       init_storage();
+      init_file_sync();
       init_data2();
       init_source_retire();
-      initialized = false;
-      _refs = [];
-      _cancelled = false;
-      _flushers = [];
-      queue = Promise.resolve();
+      agent = createFileSync({
+        logTag: "[knowledge-file-sync]",
+        failNotice: "知识盒同步失败，数据可能不一致",
+        failDedupeKey: "knowledge-file-sync",
+        watchedFolders: getWatchedFolders,
+        commit: (apply) => syncTasks(apply),
+        referencedBy: referencedByTasks,
+        applyRename: syncRename,
+        applyDelete: syncDelete,
+        /** source 退役消费者（ADR-0149 决策 2）：卡片 source 可指向任意笔记（不限目录），
+         *  任何被删 md 都过一遍 metadataCache 预筛；已降级卡片天然幂等跳过 */
+        onMdDeleted: (app, path) => retireSourcesOnMdDeleted(app, path)
+      });
     }
   });
 
@@ -17031,11 +17072,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function ensureKnowledge(app) {
     var _a;
-    if (initialized2) return;
+    if (initialized) return;
     try {
       KnowledgeData.init({ storagePath: (_a = tryGetSettings()) == null ? void 0 : _a.storagePath });
       uiManager = new UIManager(app);
-      initialized2 = true;
+      initialized = true;
     } catch (e) {
       console.error("bz: 文献盒初始化失败（下次打开命令将自动重试）", e);
       uiManager = null;
@@ -17175,9 +17216,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function unloadKnowledge() {
     uiManager == null ? void 0 : uiManager.destroy();
     uiManager = null;
-    initialized2 = false;
+    initialized = false;
   }
-  var initialized2, uiManager;
+  var initialized, uiManager;
   var init_knowledge = __esm({
     "src/knowledge/index.ts"() {
       init_fake_obsidian();
@@ -17188,8 +17229,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_ui();
       init_note_gen();
       init_source_retire();
-      init_file_sync();
-      initialized2 = false;
+      init_file_sync2();
+      initialized = false;
       uiManager = null;
     }
   });
@@ -17440,7 +17481,7 @@ ${body}`;
   function markHandledAndBump(raw, action) {
     const key = articleKeyOf(raw);
     const platform = raw.platform || "未知";
-    const today = localDayKey2();
+    const today = localDayKey();
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return NO_BUMP;
@@ -17530,7 +17571,7 @@ ${body}`;
     await enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
-      const today = localDayKey2();
+      const today = localDayKey();
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       let bumped = 0;
       const list = (res.data.articles || []).map((a) => {
@@ -17565,7 +17606,7 @@ ${body}`;
           else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
           const platform = a.platform || "未知";
           s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
-          const day = localDayKey2();
+          const day = localDayKey();
           s.byDate[day] = Math.max(0, (Number(s.byDate[day]) || 0) - 1);
         }
         const restored = { ...a };
@@ -19516,17 +19557,17 @@ ${bodyText.substring(0, 6e3)}`;
     }, 2e3);
   }
   function ensureAutoSummary(app) {
-    if (initialized3) {
+    if (initialized2) {
       if (!registerTimer && !fileListenerRef) scheduleRegister(app);
       return;
     }
-    initialized3 = true;
+    initialized2 = true;
     vaultRef = app.vault;
     workspaceRef = app.workspace;
     scheduleRegister(app);
   }
   function isAutoSummaryInitialized() {
-    return initialized3;
+    return initialized2;
   }
   function stopAutoSummary() {
     if (registerTimer) {
@@ -19564,18 +19605,18 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function unloadAutoSummary() {
     stopAutoSummary();
-    initialized3 = false;
+    initialized2 = false;
     vaultRef = null;
     workspaceRef = null;
   }
-  var initialized3, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
+  var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
   var init_auto_summary = __esm({
     "src/auto-summary/index.ts"() {
       init_ai();
       init_settings_provider();
       init_notice();
       init_processor2();
-      initialized3 = false;
+      initialized2 = false;
       vaultRef = null;
       workspaceRef = null;
       fileListenerRef = null;
@@ -20495,7 +20536,7 @@ ${bodyText.substring(0, 6e3)}`;
     const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
     const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
     const intervalDesc = () => {
-      const t = box.lastFetchAt > 0 ? localDatetime2(box.lastFetchAt) : "还没有抓取过";
+      const t = box.lastFetchAt > 0 ? localDatetime(box.lastFetchAt) : "还没有抓取过";
       return `打开插件或剪藏本时超过该间隔自动抓取，上次抓取 ${t}`;
     };
     return [
@@ -20740,19 +20781,9 @@ ${bodyText.substring(0, 6e3)}`;
     handle = handleReg;
   }
   async function fetchRssFeedTitle(url) {
-    try {
-      const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), 1e4));
-      const req = requestUrl({ url, method: "GET" }).then((resp) => {
-        if (resp.status < 200 || resp.status >= 300) return null;
-        if (!looksLikeFeedXml(resp.text)) return null;
-        return extractFeedTitleFromXml(resp.text);
-      });
-      req.catch(() => {
-      });
-      return await Promise.race([req, timer]);
-    } catch (e) {
-      return null;
-    }
+    const xml = await httpGetText(url, { timeoutMs: 1e4, fetchImpl: requestUrlAsFetch() });
+    if (!xml || !looksLikeFeedXml(xml)) return null;
+    return extractFeedTitleFromXml(xml);
   }
   function rssManagerSettingsSchema(opts) {
     const box = {
@@ -20895,7 +20926,7 @@ ${bodyText.substring(0, 6e3)}`;
   var upManagerOpen, rssManagerOpen;
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
-      init_fake_obsidian();
+      init_http();
       init_notice();
       init_settings_common();
       init_dom();
@@ -21978,10 +22009,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
     selSnap = null;
     imgSnap = null;
-    if (searchDebounceTimer !== null) {
-      clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = null;
-    }
+    searchDebounced.cancel();
     if (panelResizeDetach) {
       panelResizeDetach.detach();
       panelResizeDetach = null;
@@ -22051,15 +22079,7 @@ ${bodyText.substring(0, 6e3)}`;
       if (!row) return;
       toggleSource(JSON.parse(row.dataset.src || "null"));
     });
-    deskSearchEl.addEventListener("input", () => {
-      if (searchDebounceTimer !== null) clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = setTimeout(() => {
-        searchDebounceTimer = null;
-        setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : "");
-        renderList();
-        renderRail();
-      }, SEARCH_DEBOUNCE_MS);
-    });
+    deskSearchEl.addEventListener("input", () => searchDebounced());
     readPaneEl.addEventListener("click", (e) => {
       const t = e.target;
       const ext = t.closest("a[data-clip-ext]");
@@ -23454,7 +23474,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
     });
   }
-  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -23506,7 +23526,11 @@ ${bodyText.substring(0, 6e3)}`;
       PANEL_MAX_W = 1600;
       PANEL_MAX_H = 1e3;
       clipBodyCache = /* @__PURE__ */ new Map();
-      searchDebounceTimer = null;
+      searchDebounced = debounce(() => {
+        setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : "");
+        renderList();
+        renderRail();
+      }, SEARCH_DEBOUNCE_MS);
       panelResizeDetach = null;
       panelSplit = null;
       SPLIT_MIN_MID = 220;
@@ -23687,19 +23711,97 @@ ${bodyText.substring(0, 6e3)}`;
   init_report_ui();
 
   // src/clipbook/file-sync.ts
-  init_utils();
-  init_notice();
   init_settings_provider();
-  init_domain_bus();
+  init_file_sync();
   init_data();
-  var queue2 = Promise.resolve();
+  function syncRename2(data, { oldPath, newPath }) {
+    let changed = false;
+    for (const key of Object.keys(data.marks)) {
+      const list = data.marks[key];
+      if (!Array.isArray(list)) continue;
+      for (const mk of list) {
+        if (mk && mk.notePath === oldPath) {
+          mk.notePath = newPath;
+          changed = true;
+        }
+      }
+    }
+    for (const key of Object.keys(data.pendingSource)) {
+      const list = data.pendingSource[key];
+      if (!Array.isArray(list)) continue;
+      for (let i = 0; i < list.length; i++) {
+        if (list[i] === oldPath) {
+          list[i] = newPath;
+          changed = true;
+        }
+      }
+    }
+    return changed;
+  }
+  function syncDelete2(data, path) {
+    let changed = false;
+    const marks = {};
+    for (const key of Object.keys(data.marks)) {
+      const list = data.marks[key];
+      if (!Array.isArray(list)) continue;
+      const kept = list.filter((mk) => !(mk && mk.notePath === path));
+      if (kept.length !== list.length) changed = true;
+      if (kept.length) marks[key] = kept;
+    }
+    const pendingSource = {};
+    for (const key of Object.keys(data.pendingSource)) {
+      const list = data.pendingSource[key];
+      if (!Array.isArray(list)) continue;
+      const kept = list.filter((p) => p !== path);
+      if (kept.length !== list.length) changed = true;
+      if (kept.length) pendingSource[key] = kept;
+    }
+    if (!changed) return false;
+    data.marks = marks;
+    data.pendingSource = pendingSource;
+    return true;
+  }
+  function clipDirOf2() {
+    const s = tryGetSettings();
+    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
+  }
+  function getWatchedFolders2() {
+    const s = tryGetSettings();
+    const kb = String(s && s.knowledgeDirectory || "文献盒").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
+    return [kb, clipDirOf2()];
+  }
+  async function referencedByClipbook(path) {
+    if (!path) return false;
+    try {
+      const data = await readClipbookData();
+      const markHit = Object.values(data.marks).some((list) => list.some((mk) => mk && mk.notePath === path));
+      const pendingHit = Object.values(data.pendingSource).some((list) => list.includes(path));
+      return markHit || pendingHit;
+    } catch (e) {
+      return false;
+    }
+  }
+  var agent2 = createFileSync({
+    logTag: "[clipbook-file-sync]",
+    failNotice: "剪藏本同步失败，数据可能不一致",
+    failDedupeKey: "clipbook-file-sync",
+    watchedFolders: getWatchedFolders2,
+    /** clipbook.json 读改写事务（updateClipbookData 自带 per-path 串行队列与 D2 写契约） */
+    commit: (apply) => updateClipbookData((cur) => {
+      apply(cur);
+      return cur;
+    }),
+    referencedBy: referencedByClipbook,
+    applyRename: syncRename2,
+    applyDelete: syncDelete2
+  });
 
   // src/clipbook/index.ts
-  var initialized4 = false;
+  var initialized3 = false;
   var autoRefreshRegistered = false;
   function openClipbook(app) {
-    if (!initialized4) {
-      initialized4 = true;
+    if (!initialized3) {
+      initialized3 = true;
       registerAutoRefresh(app);
       setNewsFetchDoneListener(() => reloadIfOpen());
       initPanel(app, true);
@@ -23710,8 +23812,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function unloadClipbook() {
     unloadClipbookReport();
-    if (!initialized4) return;
-    initialized4 = false;
+    if (!initialized3) return;
+    initialized3 = false;
     unloadPanel();
     autoRefreshRegistered = false;
   }

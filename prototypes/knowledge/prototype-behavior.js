@@ -1,5 +1,5 @@
-/* 源指纹 bf93d6800f4f5a6f · 仓内输入 37 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
+/* 源指纹 860a62966a7f740b · 仓内输入 38 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
   var __create = Object.create;
@@ -5787,6 +5787,20 @@ var BZW_knowledge = (() => {
 
   // src/core/utils.ts
   var import_moment2 = __toESM(require_moment());
+
+  // src/core/ui/str.ts
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localNow() {
+    const d = /* @__PURE__ */ new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+
+  // src/core/utils.ts
   function escapeHtml(str2) {
     return str2.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
@@ -5981,8 +5995,7 @@ var BZW_knowledge = (() => {
     const h = Math.floor(s / 3600);
     const m = Math.floor(s % 3600 / 60);
     const ss = s % 60;
-    const pad = (n) => String(n).padStart(2, "0");
-    return h > 0 ? `${h}:${pad(m)}:${pad(ss)}` : `${m}:${pad(ss)}`;
+    return h > 0 ? `${h}:${pad2(m)}:${pad2(ss)}` : `${m}:${pad2(ss)}`;
   }
   function timeTextToSec(t) {
     const canon = normalizeLooseTime(t);
@@ -6714,11 +6727,6 @@ var BZW_knowledge = (() => {
     }).then((v) => {
       if (v === "ok") proceed();
     });
-  }
-
-  // src/core/ui/str.ts
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
 
   // src/core/ui/icons.ts
@@ -7543,6 +7551,43 @@ var BZW_knowledge = (() => {
     return out.sort();
   }
 
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+  async function httpGetText(url, opts) {
+    const fetchImpl = opts.fetchImpl || ((u, init) => globalThis.fetch(u, init));
+    try {
+      const resp = await withTimeout(fetchImpl(url, { headers: opts.headers }), opts.timeoutMs, url);
+      if (!resp || !resp.ok) return null;
+      return await resp.text();
+    } catch (e) {
+      return null;
+    }
+  }
+  function requestUrlAsFetch() {
+    return async (url, init) => {
+      const resp = await requestUrl({ url, method: "GET", headers: init == null ? void 0 : init.headers, throw: false });
+      const status = resp.status;
+      return { ok: status >= 200 && status < 300, status, text: () => Promise.resolve(resp.text) };
+    };
+  }
+
   // src/knowledge/partial-json.ts
   var ESCAPE_CHARS = {
     n: "\n",
@@ -7683,26 +7728,9 @@ var BZW_knowledge = (() => {
     return `"domain": "从以下领域选一个最贴近的：${list.join("、")}；都不贴切可写一个新的中文领域词"`;
   }
   function nowStamp() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    return localNow();
   }
   var BACKFILL_AI_TIMEOUT_MS = 25e3;
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error(`AI 请求超时（${label}，${ms}ms）`)), ms);
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
-  }
   async function writeUniqueNote(dir, baseName2, content) {
     const app = getApp();
     const folder = String(dir || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
@@ -8147,9 +8175,7 @@ ${sample}`
     return s.trim();
   }
   function nowTs() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    return localNow();
   }
   var BatchRunner = {
     running: false,
@@ -10547,7 +10573,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (typeof document === "undefined") return null;
     const mask = document.createElement("div");
     mask.id = MASK_ID;
-    mask.className = "bz-kb-mask bz-kb-mt-mask";
+    mask.className = "bz-overlay-mask bz-kb-mask bz-kb-mt-mask";
     mask.style.display = "none";
     mask.addEventListener("click", () => closeMountTree());
     const win = document.createElement("div");
@@ -11825,32 +11851,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
   var VIEW_TIMEOUT_MS = 1e4;
   var QUALITY_TIMEOUT_MS = 1e4;
   var NAV_TIMEOUT_MS = 1e4;
-  function withTimeout2(p, ms) {
-    let timer = null;
-    const timeout = new Promise((resolve) => {
-      timer = setTimeout(() => resolve(null), ms);
-    });
-    const done = () => {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    };
-    return Promise.race([p, timeout]).then(
-      (v) => {
-        done();
-        return v === null ? null : v;
-      },
-      (e) => {
-        done();
-        throw e;
-      }
-    );
-  }
-  function parseJson(resp) {
-    if (!resp || resp.status < 200 || resp.status >= 300) return null;
+  var httpImpl = requestUrlAsFetch();
+  function parseJsonText(text) {
+    if (!text) return null;
     try {
-      return JSON.parse(resp.text);
+      return JSON.parse(text);
     } catch (e) {
       return null;
     }
@@ -11940,7 +11945,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   async function fetchFromViewApi(bvid) {
     try {
-      const json = parseJson(await withTimeout2(requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: "GET" }), VIEW_TIMEOUT_MS));
+      const json = parseJsonText(await httpGetText(
+        `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`,
+        { timeoutMs: VIEW_TIMEOUT_MS, fetchImpl: httpImpl }
+      ));
       if (!json || json.code !== 0 || !json.data) return null;
       return metaFromVideoData(json.data);
     } catch (e) {
@@ -11953,14 +11961,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   };
   async function fetchFromPage(url) {
     var _a;
-    let html = "";
-    try {
-      const resp = await withTimeout2(requestUrl({ url, method: "GET", headers: { ...PAGE_HEADERS } }), VIEW_TIMEOUT_MS);
-      if (!resp || resp.status < 200 || resp.status >= 300) return null;
-      html = String((_a = resp.text) != null ? _a : "");
-    } catch (e) {
-      return null;
-    }
+    const html = String((_a = await httpGetText(url, { timeoutMs: VIEW_TIMEOUT_MS, headers: { ...PAGE_HEADERS }, fetchImpl: httpImpl })) != null ? _a : "");
     if (!html) return null;
     const state2 = extractInitialState(html);
     const videoData = videoDataFromState(state2);
@@ -12006,9 +12007,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const c = String(cookie != null ? cookie : "").trim();
     if (!c) return false;
     try {
-      const json = parseJson(await withTimeout2(
-        requestUrl({ url: "https://api.bilibili.com/x/web-interface/nav", method: "GET", headers: { Cookie: c } }),
-        NAV_TIMEOUT_MS
+      const json = parseJsonText(await httpGetText(
+        "https://api.bilibili.com/x/web-interface/nav",
+        { timeoutMs: NAV_TIMEOUT_MS, headers: { Cookie: c }, fetchImpl: httpImpl }
       ));
       return !!(json && json.code === 0 && json.data && json.data.isLogin === true);
     } catch (e) {
@@ -12020,9 +12021,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (!c || !bvid || !posInt(cid)) return null;
     try {
       const url = `https://api.bilibili.com/x/player/playurl?bvid=${bvid}&cid=${posInt(cid)}&qn=127&fnval=4048&fourk=1`;
-      const json = parseJson(await withTimeout2(
-        requestUrl({ url, method: "GET", headers: { Cookie: c } }),
-        QUALITY_TIMEOUT_MS
+      const json = parseJsonText(await httpGetText(
+        url,
+        { timeoutMs: QUALITY_TIMEOUT_MS, headers: { Cookie: c }, fetchImpl: httpImpl }
       ));
       const videos = json && json.code === 0 && json.data && json.data.dash ? json.data.dash.video : null;
       if (!Array.isArray(videos)) return null;
@@ -12285,9 +12286,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return h > 0 ? `${h}:${String(m % 60).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}` : `${m}:${String(s % 60).padStart(2, "0")}`;
   };
   function dateStamp() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    return localNow();
   }
   function litDirOf(s) {
     return getKnowledgeBoxes(s || {}).lit;

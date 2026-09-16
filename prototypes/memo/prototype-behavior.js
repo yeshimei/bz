@@ -1,5 +1,5 @@
-/* 源指纹 f6658751bbbee892 · 仓内输入 224 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 af98809353451125 · 仓内输入 224 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -4349,8 +4349,35 @@ var BZW_memo = (() => {
     }
   });
 
+  // src/core/ui/str.ts
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localNow() {
+    const d = /* @__PURE__ */ new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
+  function emptyHtmlStr(icon2, title, desc) {
+    return `<div class="bz-empty">${icon2 ? iconSpan(icon2, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  var ESC_MAP;
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    }
+  });
+
   // src/core/utils.ts
-  function escapeHtml(str2) {
+  function escapeHtml2(str2) {
     return str2.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
       if (m === "<") return "&lt;";
@@ -4358,9 +4385,6 @@ var BZW_memo = (() => {
       if (m === '"') return "&quot;";
       return "&#39;";
     });
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
   }
   function generateId(prefix) {
     prefix = prefix || "item";
@@ -4472,6 +4496,23 @@ var BZW_memo = (() => {
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return h >>> 0;
   }
+  function debounce(fn, ms) {
+    let t;
+    const wrapped = (...args) => {
+      if (t !== void 0) clearTimeout(t);
+      t = setTimeout(() => {
+        t = void 0;
+        fn(...args);
+      }, ms);
+    };
+    wrapped.cancel = () => {
+      if (t !== void 0) {
+        clearTimeout(t);
+        t = void 0;
+      }
+    };
+    return wrapped;
+  }
   function yieldToMainThread(timeoutMs = 200) {
     return new Promise((resolve2) => {
       if (typeof window === "undefined") {
@@ -4482,21 +4523,6 @@ var BZW_memo = (() => {
       if (typeof ric === "function") ric(() => resolve2(), { timeout: timeoutMs });
       else window.setTimeout(resolve2, 0);
     });
-  }
-  function secureRandomPassword(length, charset) {
-    const n = charset.length;
-    if (!(length > 0) || n === 0) return "";
-    const LIMIT2 = Math.floor(4294967296 / n) * n;
-    let pwd = "";
-    while (pwd.length < length) {
-      const buf = new Uint32Array(length - pwd.length);
-      crypto.getRandomValues(buf);
-      for (let i = 0; i < buf.length && pwd.length < length; i++) {
-        if (buf[i] >= LIMIT2) continue;
-        pwd += charset.charAt(buf[i] % n);
-      }
-    }
-    return pwd;
   }
   function cancelClipboardClear() {
     if (clipboardClearTimer !== null) {
@@ -4522,12 +4548,33 @@ var BZW_memo = (() => {
       return Promise.reject(e);
     }
   }
+  async function copySensitiveWithFallback(text) {
+    try {
+      await copySensitiveText(text);
+      return true;
+    } catch (e) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        if (ok) armClipboardClear();
+        return ok;
+      } catch (e2) {
+        return false;
+      }
+    }
+  }
   var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
   var init_utils = __esm({
     "src/core/utils.ts"() {
       import_moment2 = __toESM(require_moment());
       init_fake_obsidian();
       init_app();
+      init_str();
       CLIPBOARD_CLEAR_DELAY_MS = 6e4;
       clipboardClearTimer = null;
     }
@@ -5134,6 +5181,130 @@ var BZW_memo = (() => {
     }
   });
 
+  // src/core/file-sync.ts
+  function createFileSync(config) {
+    let initialized6 = false;
+    let _refs = [];
+    let _cancelled = false;
+    let _flushers = [];
+    let queue = Promise.resolve();
+    function enqueue2(task) {
+      queue = queue.then(() => {
+        if (_cancelled) return;
+        return task();
+      }).catch((e) => {
+        console.error(config.logTag, e);
+        notify(config.failNotice, { type: "error", dedupeKey: config.failDedupeKey });
+      });
+    }
+    function debounceDelay() {
+      const s = tryGetSettings();
+      return Number(s && s.DEBOUNCE_DELAY) || 300;
+    }
+    function createBatchFlusher(run) {
+      let pending = [];
+      let timer = null;
+      const flush = () => {
+        timer = null;
+        if (_cancelled) {
+          pending = [];
+          return;
+        }
+        const batch = pending;
+        pending = [];
+        enqueue2(() => run(batch));
+      };
+      const push = (ev) => {
+        if (_cancelled) return;
+        pending.push(ev);
+        if (timer !== null) clearTimeout(timer);
+        timer = setTimeout(flush, debounceDelay());
+      };
+      return Object.assign(push, {
+        cancel() {
+          if (timer !== null) {
+            clearTimeout(timer);
+            timer = null;
+          }
+          pending = [];
+        }
+      });
+    }
+    function inFolders(path, folders) {
+      return folders.some((f) => path.startsWith(f + "/") || path === f);
+    }
+    function createAgent(app) {
+      var _a2;
+      const isMd = (file) => file && file.extension === "md" && inFolders(file.path, config.watchedFolders());
+      const pseudoFile = (path) => ({
+        path,
+        basename: stripMdExt(path.split("/").pop() || ""),
+        extension: "md"
+      });
+      const buildRenameEvent = (_a2 = config.buildRenameEvent) != null ? _a2 : (evt) => evt;
+      const flushRenames = createBatchFlusher(async (batch) => {
+        for (const ev of batch) {
+          await config.commit((data) => config.applyRename(data, ev));
+        }
+      });
+      _flushers.push(flushRenames);
+      _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
+        const file = pseudoFile(evt.newPath);
+        void (async () => {
+          if (!(isMd(file) || await config.referencedBy(evt.oldPath) || await config.referencedBy(evt.newPath))) return;
+          flushRenames(buildRenameEvent(evt, file.basename));
+        })();
+      }));
+      _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
+        const file = pseudoFile(evt.path);
+        void (async () => {
+          if (isMd(file) || await config.referencedBy(evt.path)) {
+            enqueue2(() => config.commit((data) => config.applyDelete(data, evt.path)));
+          }
+          if (config.onMdDeleted) await config.onMdDeleted(app, evt.path);
+        })();
+      }));
+    }
+    return {
+      /** 幂等初始化（main.ts onLayoutReady 调用；ADR-0003 同款幂等） */
+      ensure(app) {
+        if (initialized6) return;
+        initialized6 = true;
+        _cancelled = false;
+        createAgent(app);
+      },
+      /** 卸载清理：置位 _cancelled 使积压任务首行短路并丢弃去抖窗口内未回放的事件，
+       *  退订全部监听（总线退订幂等，重复卸载无双清风险）后重置模块状态。 */
+      unload() {
+        _cancelled = true;
+        for (const f of _flushers) {
+          try {
+            f.cancel();
+          } catch (e) {
+          }
+        }
+        _flushers = [];
+        for (const off of _refs) {
+          try {
+            off();
+          } catch (e) {
+          }
+        }
+        _refs = [];
+        initialized6 = false;
+        queue = Promise.resolve();
+      }
+    };
+  }
+  var init_file_sync = __esm({
+    "src/core/file-sync.ts"() {
+      init_utils();
+      init_notice();
+      init_settings_provider();
+      init_domain_bus();
+    }
+  });
+
   // src/core/json-store.ts
   function jsonStore(filePath) {
     return jsonFileStore(filePath);
@@ -5595,47 +5766,6 @@ var BZW_memo = (() => {
     document.addEventListener("click", swallow, true);
     document.addEventListener("mousedown", disarm, { capture: true, once: true });
   }
-  function createSiteIcon(domain, size = 16) {
-    if (!domain) return null;
-    const mappedDomain = DOMAIN_MAP[domain] || domain;
-    const cacheKey = `favicon_v2_${mappedDomain}_${size}`;
-    const img = document.createElement("img");
-    img.className = "bz-site-icon";
-    img.style.cssText = `width:${size}px; height:${size}px;`;
-    img.alt = "";
-    img.crossOrigin = "anonymous";
-    try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        img.src = cached;
-        return img;
-      }
-    } catch (e) {
-    }
-    const networkUrl = `https://favicon.yandex.net/favicon/v2/${mappedDomain}?size=${size}`;
-    img.src = networkUrl;
-    img.onload = function() {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-        const dataUrl = canvas.toDataURL("image/png");
-        try {
-          localStorage.setItem(cacheKey, dataUrl);
-        } catch (e) {
-        }
-      } catch (e) {
-      }
-      img.onload = null;
-    };
-    img.onerror = function() {
-      img.style.display = "none";
-      img.onerror = null;
-    };
-    return img;
-  }
   function createOverlay(opts) {
     const mask = document.createElement("div");
     mask.id = opts.maskId;
@@ -5653,15 +5783,10 @@ var BZW_memo = (() => {
     topifyZ(mask, popup);
     return { mask, popup, topify: () => topifyZ(mask, popup) };
   }
-  var DOMAIN_MAP;
   var init_dom = __esm({
     "src/core/dom.ts"() {
       init_notice();
       init_z_order();
-      DOMAIN_MAP = {
-        "guokrapp.guokr.com": "guokr.com",
-        "daily.zhihu.com": "zhihu.com"
-      };
     }
   });
 
@@ -7044,12 +7169,16 @@ var BZW_memo = (() => {
       escHandle6 == null ? void 0 : escHandle6.unregister();
       (_a2 = opts.onClose) == null ? void 0 : _a2.call(opts);
     }
+    const attemptClose = () => {
+      if (opts.requestClose) opts.requestClose();
+      else close();
+    };
     mask.addEventListener("click", (e) => {
-      if (e.target === mask) close();
+      if (e.target === mask) attemptClose();
     });
     escHandle6 = escManager.register("bz-modal", {
       isVisible: () => mask.isConnected,
-      close
+      close: attemptClose
     });
     document.body.appendChild(mask);
     return { mask, popup, close };
@@ -7393,9 +7522,9 @@ var BZW_memo = (() => {
     }
     const ctaIdx = actions.findIndex((a) => a.cta);
     const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
     }).join("") + "</div>";
     return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
   }
@@ -7872,49 +8001,6 @@ var BZW_memo = (() => {
     }
   });
 
-  // src/core/ui/str.ts
-  function escapeHtml2(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml2(String(s != null ? s : ""));
-  }
-  function localNow() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
-  function escAttr(s) {
-    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-  function colorOf(platform) {
-    const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
-    if (k) return PLATFORM_COLOR_MAP[k];
-    let h = 0;
-    const t = platform || "?";
-    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
-    return PALETTE[h % PALETTE.length];
-  }
-  var ESC_MAP, PLATFORM_COLOR_MAP, PALETTE;
-  var init_str = __esm({
-    "src/core/ui/str.ts"() {
-      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-      PLATFORM_COLOR_MAP = {
-        github: "#5a5f73",
-        微信: "#3eb575",
-        支付宝: "#4f7cf7",
-        notion: "#111111",
-        哔哩哔哩: "#fb7299",
-        招商银行: "#d43d3d",
-        豆瓣: "#3fa34d"
-      };
-      PALETTE = ["#7c6bd6", "#3e8e5a", "#c98a1e", "#4f7cf7", "#d43d3d", "#2a9d8f", "#b4551d", "#5a5f73"];
-    }
-  });
-
   // src/memo/render.ts
   function sceneDot(scene) {
     return SCENE_DOTS[scene] || "#8b8f9a";
@@ -7937,7 +8023,7 @@ var BZW_memo = (() => {
     const pseudo = SCENE_PSEUDO_ICONS[o.scene];
     if (pseudo) return iconSpan(pseudo.icon, (_a2 = pseudo.cls) != null ? _a2 : "");
     const emo = (_b2 = o.scene.match(LEADING_EMOJI_RE)) == null ? void 0 : _b2[1];
-    if (emo) return `<span class="bz-rail-emoji">${escapeHtml2(emo)}</span>`;
+    if (emo) return `<span class="bz-rail-emoji">${escapeHtml(emo)}</span>`;
     if (!o.dot) return "";
     return `<span class="${dotCls}" style="--bz-rail-tint:${o.dot}"></span>`;
   }
@@ -7945,13 +8031,13 @@ var BZW_memo = (() => {
     return `· <span class="bz-memo-cnt-num">${total}</span> 项 · <span class="bz-memo-cnt-num">${undone}</span> 未完成`;
   }
   function navBtnHtml(o, active2, count) {
-    return `<button class="bz-rail-item${active2 ? " on" : ""}" data-memo-scene="${escapeHtml2(o.scene)}">${sceneLeadHtml(o, "bz-rail-dot")}<span class="bz-rail-name">${escapeHtml2(sceneLabel(o.scene))}</span><span class="bz-rail-count">${count}</span></button>`;
+    return `<button class="bz-rail-item${active2 ? " on" : ""}" data-memo-scene="${escapeHtml(o.scene)}">${sceneLeadHtml(o, "bz-rail-dot")}<span class="bz-rail-name">${escapeHtml(sceneLabel(o.scene))}</span><span class="bz-rail-count">${count}</span></button>`;
   }
   function mobChipHtml(o, active2) {
-    return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-memo-scene="${escapeHtml2(o.scene)}">${sceneLeadHtml(o, "bz-mobstrip-dot")}${escapeHtml2(sceneLabel(o.scene))}</button>`;
+    return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-memo-scene="${escapeHtml(o.scene)}">${sceneLeadHtml(o, "bz-mobstrip-dot")}${escapeHtml(sceneLabel(o.scene))}</button>`;
   }
   function mobAddSceneChipHtml() {
-    return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan(MEMO_ICONS.addScene)}${escapeHtml2("添加场景")}</button>`;
+    return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan(MEMO_ICONS.addScene)}${escapeHtml("添加场景")}</button>`;
   }
   function panelShellHtml() {
     return `
@@ -7998,13 +8084,13 @@ var BZW_memo = (() => {
       </div>
     </div>`;
   }
-  function metaTagsHtml(it, due, relTime4, recurText = "", checkProgress2 = "") {
+  function metaTagsHtml(it, due, relTime3, recurText = "", checkProgress2 = "") {
     const tags = [];
     if (it.scene === "公开课" && it.courseName) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml2(it.courseName.replace(/^《|》$/g, ""))}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml(it.courseName.replace(/^《|》$/g, ""))}</span>`);
     }
     if (it.scene === "代码" && it.scriptName) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${escapeHtml2(it.scriptName)}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${escapeHtml(it.scriptName)}</span>`);
     }
     if (it.url) {
       let host = "链接";
@@ -8012,28 +8098,28 @@ var BZW_memo = (() => {
         host = new URL(it.url).hostname.replace(/^www\./, "");
       } catch (e) {
       }
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml2(it.url)}">${iconSpan(MEMO_ICONS.url)} ${escapeHtml2(host)}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml(it.url)}">${iconSpan(MEMO_ICONS.url)} ${escapeHtml(host)}</span>`);
     }
     if (it.notePath) {
       const name = it.notePath.split("/").pop().replace(/\.md$/i, "");
       const isCourseSame = it.scene === "公开课" && it.courseName && it.courseName.replace(/^《|》$/g, "") === name;
       if (!isCourseSame) {
-        tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml2(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${escapeHtml2(name)}</span>`);
+        tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${escapeHtml(name)}</span>`);
       }
     }
     const imp = it.priority === "important" ? " bz-memo-tag-important" : "";
-    tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${escapeHtml2(it.scene)}</span>`);
+    tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${escapeHtml(it.scene)}</span>`);
     if (recurText) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-recur" title="周期重复：完成后自动生成下一期">${iconSpan(MEMO_ICONS.recur)} ${escapeHtml2(recurText)}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-recur" title="周期重复：完成后自动生成下一期">${iconSpan(MEMO_ICONS.recur)} ${escapeHtml(recurText)}</span>`);
     }
     if (checkProgress2) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-check" title="子任务进度">${iconSpan(MEMO_ICONS.clist)} ${escapeHtml2(checkProgress2)}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-check" title="子任务进度">${iconSpan(MEMO_ICONS.clist)} ${escapeHtml(checkProgress2)}</span>`);
     }
     if (due) {
-      tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml2(due.text)}</span>`);
+      tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml(due.text)}</span>`);
     }
-    if (it.created && relTime4) {
-      tags.push(`<span class="bz-memo-time">${escapeHtml2(relTime4)}</span>`);
+    if (it.created && relTime3) {
+      tags.push(`<span class="bz-memo-time">${escapeHtml(relTime3)}</span>`);
     }
     return tags.join("");
   }
@@ -8044,23 +8130,23 @@ var BZW_memo = (() => {
     const cl = it.checklist || [];
     if (!cl.length) return "";
     const rows = cl.map(
-      (c, i) => `<div class="bz-memo-cl-row${c.done ? " is-done" : ""}" data-memo-cl="${escapeHtml2(it.id)}:${i}">
+      (c, i) => `<div class="bz-memo-cl-row${c.done ? " is-done" : ""}" data-memo-cl="${escapeHtml(it.id)}:${i}">
         <span class="bz-memo-cl-box${c.done ? " bz-memo-cl-on" : ""}"></span>
-        <span class="bz-memo-cl-text">${escapeHtml2(c.text)}</span>
+        <span class="bz-memo-cl-text">${escapeHtml(c.text)}</span>
       </div>`
     ).join("");
     return `<div class="bz-memo-cl${it.completed ? " bz-memo-cl-dim" : ""}">${rows}</div>`;
   }
-  function cardHtml(it, due, relTime4, recurText = "", checkProgress2 = "") {
+  function cardHtml(it, due, relTime3, recurText = "", checkProgress2 = "") {
     const titleCls = it.completed ? " bz-memo-done" : "";
     const clickable = !!(it.linkedNote || it.url);
-    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml2(it.id)}">${escapeHtml2(it.title)}</a>` : escapeHtml2(it.title);
-    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml2(it.id)}">
+    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
+    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}">
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
         ${checklistHtml(it)}
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime4, recurText, checkProgress2)}</div>
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime3, recurText, checkProgress2)}</div>
       </div>
     </div>`;
   }
@@ -8077,17 +8163,17 @@ var BZW_memo = (() => {
   function calHeadHtml(monthLabel2) {
     return `<div class="bz-memo-cal-head">
       <button class="bz-icon-btn" data-memo-cal-prev title="上个月">${iconSpan("chevron-left")}</button>
-      <div class="bz-memo-cal-title">${escapeHtml2(monthLabel2)}</div>
+      <div class="bz-memo-cal-title">${escapeHtml(monthLabel2)}</div>
       <button class="bz-icon-btn" data-memo-cal-next title="下个月">${iconSpan("chevron-right")}</button>
       <button class="bz-btn bz-btn--sm bz-memo-cal-today" data-memo-cal-today>回到今天</button>
     </div>`;
   }
   function calGridHtml(cells) {
-    const wds = CAL_WEEKDAYS.map((w) => `<div class="bz-memo-cal-wd">${escapeHtml2(w)}</div>`).join("");
+    const wds = CAL_WEEKDAYS.map((w) => `<div class="bz-memo-cal-wd">${escapeHtml(w)}</div>`).join("");
     const grid = cells.map((c) => {
       if (c.blank) return `<div class="bz-memo-cal-cell is-blank"></div>`;
       const chips = c.chips.map(
-        (ch) => ch.id ? `<div class="bz-memo-cal-chip ${ch.cls}" data-memo-cal-item="${escapeHtml2(ch.id)}" title="${escapeHtml2(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml2(ch.title)}</span></div>` : `<div class="bz-memo-cal-chip ${ch.cls}" title="${escapeHtml2(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml2(ch.title)}</span></div>`
+        (ch) => ch.id ? `<div class="bz-memo-cal-chip ${ch.cls}" data-memo-cal-item="${escapeHtml(ch.id)}" title="${escapeHtml(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml(ch.title)}</span></div>` : `<div class="bz-memo-cal-chip ${ch.cls}" title="${escapeHtml(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml(ch.title)}</span></div>`
       ).join("");
       return `<div class="bz-memo-cal-cell${c.today ? " is-today" : ""}${c.selected ? " is-selected" : ""}" data-memo-cal-day="${c.day}">
         <div class="bz-memo-cal-day">${c.day}</div>
@@ -9209,6 +9295,7 @@ var BZW_memo = (() => {
     var _a2;
     const mask = document.createElement("div");
     mask.id = "pomodoro-mask";
+    mask.className = "bz-overlay-mask";
     mask.innerHTML = popupShellHtml();
     mask.style.zIndex = String(allocZ());
     document.body.appendChild(mask);
@@ -9428,7 +9515,6 @@ var BZW_memo = (() => {
         ai: "sparkles",
         // 域入口命令与面板导航共用
         home: "layout-grid",
-        recap: "calendar-heart",
         memo: "check-square",
         belongings: "package",
         clipping: "scissors",
@@ -9735,13 +9821,13 @@ var BZW_memo = (() => {
       listEl2.innerHTML = "";
       const q2 = state3.q.trim().toLowerCase();
       const exact = !!q2 && state3.folders.includes(q2);
-      const LIMIT2 = 300;
+      const LIMIT = 300;
       let n = 0;
       let total = 0;
       for (const folder of orderedList()) {
         if (q2 && !exact && !folder.toLowerCase().includes(q2)) continue;
         total++;
-        if (n >= LIMIT2) continue;
+        if (n >= LIMIT) continue;
         n++;
         const on = selected.has(folder);
         const row = document.createElement("div");
@@ -9777,10 +9863,10 @@ var BZW_memo = (() => {
         empty.className = "bz-path-picker-empty";
         empty.textContent = "没有匹配的目录";
         listEl2.appendChild(empty);
-      } else if (total > LIMIT2) {
+      } else if (total > LIMIT) {
         const more = document.createElement("div");
         more.className = "bz-path-picker-empty";
-        more.textContent = `已显示前 ${LIMIT2} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
+        more.textContent = `已显示前 ${LIMIT} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
         listEl2.appendChild(more);
       }
     }
@@ -14270,7 +14356,7 @@ ${countsToText(s.missing)}
     var _a2;
     return (_a2 = DOMAIN_DOT[id]) != null ? _a2 : "#8a8f99";
   }
-  var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP2, DOMAIN_DOT, ALL_DOMAIN_IDS;
+  var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS;
   var init_shared3 = __esm({
     "src/home/shared.ts"() {
       init_str();
@@ -14302,11 +14388,10 @@ ${countsToText(s.missing)}
         { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
         { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
       ];
-      DOMAIN_MAP2 = new Map(DOMAINS.map((d) => [d.id, d]));
+      DOMAIN_MAP = new Map(DOMAINS.map((d) => [d.id, d]));
       DOMAIN_DOT = {
         diary: "#e67341",
         memo: "#e8590c",
-        recap: "#d64d8f",
         cinema: "#e6951d",
         review: "#7c5cd6",
         pomodoro: "#e5534b",
@@ -16665,7 +16750,11 @@ ${countsToText(s.missing)}
     return `投入 ${moneyShort(totalAssets(items), unit)} · 日均 ${moneyWith(avgDailyCost(items).toFixed(2), unit)}`;
   }
   function emptyHtml(noMatch) {
-    return `<div class="bz-empty">${iconSpan(ICON2.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
+    return emptyHtmlStr(
+      ICON2.empty,
+      noMatch ? "没有符合条件的物品" : "这里还没有物品",
+      noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"
+    );
   }
   function cellHtml(it, idx, unit = "cny") {
     var _a2;
@@ -17055,15 +17144,13 @@ ${countsToText(s.missing)}
     if (mainEscRegistered) return;
     mainEscRegistered = true;
     escManager.register("bz-bel", {
-      isVisible: () => !!M4.overlay || !!document.querySelector(".bz-bel-form-mask") || !!document.querySelector(".bz-bel-detail-mask") || !!document.querySelector(".bz-bel-report-mask"),
+      isVisible: () => !!M4.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       close: () => {
-        const form = document.querySelector(".bz-bel-form-mask");
-        if (form) {
-          requestCloseBelForm(form);
+        if (document.querySelector(".bz-bel-form")) {
+          requestCloseBelForm();
           return;
         }
-        const detail = document.querySelector(".bz-bel-detail-mask");
-        if (detail) {
+        if (document.querySelector(".bz-bel-detail")) {
           closeBelDetail();
           return;
         }
@@ -17176,15 +17263,12 @@ ${countsToText(s.missing)}
       }
     });
     const bindSearch = (inp) => {
-      let deb;
-      inp.addEventListener("input", () => {
-        clearTimeout(deb);
-        deb = setTimeout(() => {
-          if (!M4.overlay) return;
-          M4.q = inp.value.trim();
-          renderAll();
-        }, SEARCH_DEBOUNCE_MS);
-      });
+      const debounced = debounce(() => {
+        if (!M4.overlay) return;
+        M4.q = inp.value.trim();
+        renderAll();
+      }, SEARCH_DEBOUNCE_MS);
+      inp.addEventListener("input", () => debounced());
     };
     bindSearch(overlay2.querySelector("[data-bel-search]"));
     const content = overlay2.querySelector("[data-bel-content]");
@@ -17337,19 +17421,25 @@ ${countsToText(s.missing)}
     } });
   }
   function closeBelDetail() {
-    var _a2;
-    (_a2 = document.querySelector(".bz-bel-detail-mask")) == null ? void 0 : _a2.remove();
+    belDetailClose == null ? void 0 : belDetailClose();
+    belDetailClose = null;
   }
   function openBelDetail(it) {
     var _a2, _b2;
     closeBelDetail();
-    const mask = document.createElement("div");
-    mask.className = "bz-overlay-mask bz-bel-detail-mask";
-    mask.innerHTML = belDetailHtml(it, currencyUnit());
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    mountIcons(mask);
+    const host = document.createElement("div");
+    host.innerHTML = belDetailHtml(it, currencyUnit());
     ensureBelongingsEsc();
+    const { mask, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-bel-detail",
+      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-detail），内容规则照旧
+      onClose: () => {
+        belDetailClose = null;
+      }
+    });
+    belDetailClose = close;
+    mountIcons(mask);
     const acts = mask.querySelector("[data-bd-acts]");
     const drawActs = () => {
       const cur = itemById(it.id);
@@ -17374,9 +17464,6 @@ ${countsToText(s.missing)}
         }
         openBelDetail(now);
       })();
-    });
-    mask.addEventListener("mousedown", (e) => {
-      if (e.target === mask) closeBelDetail();
     });
     (_a2 = mask.querySelector("[data-bd-edit]")) == null ? void 0 : _a2.addEventListener("click", () => {
       const cur = itemById(it.id);
@@ -17539,27 +17626,29 @@ ${countsToText(s.missing)}
   }
   function belFormDirty() {
     if (!_belBaseline) return false;
-    const mask = document.querySelector(".bz-bel-form-mask");
-    if (!mask) return false;
+    const pop = document.querySelector(".bz-bel-form");
+    if (!pop) return false;
     const g = (id) => {
       var _a2, _b2;
-      return (_b2 = (_a2 = mask.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
+      return (_b2 = (_a2 = pop.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
     };
-    return g("#bm-name") !== _belBaseline.name || g("#bm-cat") !== _belBaseline.cat || g("#bm-price") !== _belBaseline.price || g("#bm-date") !== _belBaseline.date || g("#bm-desc") !== _belBaseline.desc || g("#bm-exitdate") !== _belBaseline.exitDate || g("#bm-soldprice") !== _belBaseline.soldPrice || belFormStatusNow(mask) !== _belBaseline.status;
+    return g("#bm-name") !== _belBaseline.name || g("#bm-cat") !== _belBaseline.cat || g("#bm-price") !== _belBaseline.price || g("#bm-date") !== _belBaseline.date || g("#bm-desc") !== _belBaseline.desc || g("#bm-exitdate") !== _belBaseline.exitDate || g("#bm-soldprice") !== _belBaseline.soldPrice || belFormStatusNow(pop) !== _belBaseline.status;
   }
-  function closeBelForm(mask) {
+  function closeBelForm() {
     _belBaseline = null;
     _belFormTargetId = null;
-    unregisterSheetCompanion(mask);
-    mask.remove();
+    if (belFormMask) unregisterSheetCompanion(belFormMask);
+    belFormMask = null;
+    belFormClose == null ? void 0 : belFormClose();
+    belFormClose = null;
   }
-  function requestCloseBelForm(mask) {
-    if (belFormDirty()) confirmDiscard(() => closeBelForm(mask), void 0, "bz-bel-flow-dialog");
-    else closeBelForm(mask);
+  function requestCloseBelForm() {
+    if (belFormDirty()) confirmDiscard(() => closeBelForm(), void 0, "bz-bel-flow-dialog");
+    else closeBelForm();
   }
   function openForm(it) {
     var _a2, _b2, _c, _d, _e;
-    const existing = document.querySelector(".bz-bel-form-mask");
+    const existing = document.querySelector(".bz-bel-form");
     if (existing) {
       const targetId = (_a2 = it == null ? void 0 : it.id) != null ? _a2 : null;
       if (_belFormTargetId === targetId) {
@@ -17580,14 +17669,22 @@ ${countsToText(s.missing)}
       return;
     }
     const init = belFormInit(it);
-    const mask = document.createElement("div");
-    mask.className = "bz-overlay-mask bz-bel-form-mask";
-    mask.innerHTML = belFormHtml(it, currencyUnit());
-    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    mountIcons(mask);
     ensureBelongingsEsc();
+    const host = document.createElement("div");
+    host.innerHTML = belFormHtml(it, currencyUnit());
+    const { mask, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-bel-form",
+      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-form），内容规则照旧
+      requestClose: () => requestCloseBelForm(),
+      onClose: () => {
+        belFormClose = null;
+      }
+    });
+    belFormClose = close;
+    belFormMask = mask;
+    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
+    mountIcons(mask);
     const sheetOpen = !!document.querySelector(".bz-item-sheet-mask");
     if (it && sheetOpen) registerSheetCompanion(mask);
     _belBaseline = {
@@ -17683,10 +17780,7 @@ ${countsToText(s.missing)}
         }
       })();
     });
-    mask.addEventListener("mousedown", (e) => {
-      if (e.target === mask) requestCloseBelForm(mask);
-    });
-    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm(mask));
+    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm());
     saveBtn.addEventListener("click", () => {
       if (saving) return;
       const name = mask.querySelector("#bm-name").value.trim();
@@ -17737,10 +17831,8 @@ ${countsToText(s.missing)}
             const cur = itemById(it.id);
             if (!cur) {
               notice("该物品已被外部变更删除，本次保存未写入", "warning");
-              unregisterSheetCompanion(mask);
               closeItemMenu();
-              _belFormTargetId = null;
-              mask.remove();
+              closeBelForm();
               return;
             }
             const snapshot2 = { ...cur };
@@ -17783,7 +17875,8 @@ ${countsToText(s.missing)}
           _belFormTargetId = null;
           unregisterSheetCompanion(mask);
           closeItemMenu();
-          mask.remove();
+          belFormClose == null ? void 0 : belFormClose();
+          belFormClose = null;
         } catch (e) {
           notice(`保存失败：${(e == null ? void 0 : e.message) || "未知错误"}`, "error");
           saving = false;
@@ -17797,7 +17890,7 @@ ${countsToText(s.missing)}
       return (_a3 = mask.querySelector("#bm-name")) == null ? void 0 : _a3.focus();
     }, 100);
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, mainEscRegistered, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, _belBaseline, _belFormTargetId;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, mainEscRegistered, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
   var init_ui4 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -17805,6 +17898,7 @@ ${countsToText(s.missing)}
       init_app();
       init_esc_manager();
       init_mobile();
+      init_utils();
       init_dom();
       init_settings_provider();
       init_flow_dialog();
@@ -17834,8 +17928,11 @@ ${countsToText(s.missing)}
       selfWritePending = false;
       bodyThemeObserver = null;
       opening = false;
+      belDetailClose = null;
       _belBaseline = null;
       _belFormTargetId = null;
+      belFormClose = null;
+      belFormMask = null;
     }
   });
 
@@ -17849,14 +17946,10 @@ ${countsToText(s.missing)}
     if (!s) return "";
     return s.length > max ? s.slice(0, max) + "…" : s;
   }
-  function localDayKey2(ts = Date.now()) {
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${pad22(d.getMonth() + 1)}-${pad22(d.getDate())}`;
-  }
   function localDatetime(ts = Date.now()) {
     const d = new Date(ts);
-    const hms = `${pad22(d.getHours())}:${pad22(d.getMinutes())}:${pad22(d.getSeconds())}`;
-    return `${localDayKey2(ts)} ${hms}`;
+    const hms = `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+    return `${localDayKey(ts)} ${hms}`;
   }
   function toDatetime(dateStr) {
     try {
@@ -17867,11 +17960,10 @@ ${countsToText(s.missing)}
       return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
     }
   }
-  function pad22(n) {
-    return String(n).padStart(2, "0");
-  }
   var init_constants3 = __esm({
     "src/clipbook/constants.ts"() {
+      init_str();
+      init_utils();
     }
   });
 
@@ -18691,17 +18783,17 @@ ${bodyText.substring(0, 6e3)}`;
     }, 2e3);
   }
   function ensureAutoSummary(app) {
-    if (initialized2) {
+    if (initialized) {
       if (!registerTimer && !fileListenerRef) scheduleRegister(app);
       return;
     }
-    initialized2 = true;
+    initialized = true;
     vaultRef = app.vault;
     workspaceRef = app.workspace;
     scheduleRegister(app);
   }
   function isAutoSummaryInitialized() {
-    return initialized2;
+    return initialized;
   }
   function stopAutoSummary() {
     if (registerTimer) {
@@ -18739,18 +18831,18 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function unloadAutoSummary() {
     stopAutoSummary();
-    initialized2 = false;
+    initialized = false;
     vaultRef = null;
     workspaceRef = null;
   }
-  var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
+  var initialized, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
   var init_auto_summary = __esm({
     "src/auto-summary/index.ts"() {
       init_ai();
       init_settings_provider();
       init_notice();
       init_processor();
-      initialized2 = false;
+      initialized = false;
       vaultRef = null;
       workspaceRef = null;
       fileListenerRef = null;
@@ -18767,21 +18859,56 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve2, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve2(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+  async function httpGetText(url, opts) {
+    const fetchImpl = opts.fetchImpl || ((u, init) => globalThis.fetch(u, init));
+    try {
+      const resp = await withTimeout(fetchImpl(url, { headers: opts.headers }), opts.timeoutMs, url);
+      if (!resp || !resp.ok) return null;
+      return await resp.text();
+    } catch (e) {
+      return null;
+    }
+  }
+  function requestUrlAsFetch() {
+    return async (url, init) => {
+      const resp = await requestUrl({ url, method: "GET", headers: init == null ? void 0 : init.headers, throw: false });
+      const status = resp.status;
+      return { ok: status >= 200 && status < 300, status, text: () => Promise.resolve(resp.text) };
+    };
+  }
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
   // src/clipbook/news-fetcher.ts
   function requestUrlHttpGet() {
-    return async (url, headers) => {
-      try {
-        const req = requestUrl({ url, method: "GET", headers: { ...HEADERS, ...headers || {} }, throw: false }).then((resp) => {
-          return resp.status >= 200 && resp.status < 300 ? resp.text : null;
-        });
-        req.catch(() => {
-        });
-        const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), FETCH_TIMEOUT_MS));
-        return await Promise.race([req, timer]);
-      } catch (e) {
-        return null;
-      }
-    };
+    const impl = requestUrlAsFetch();
+    return (url, headers) => httpGetText(url, {
+      timeoutMs: FETCH_TIMEOUT_MS,
+      headers: { ...HEADERS, ...headers || {} },
+      fetchImpl: impl
+    });
   }
   function defaultFetchStore() {
     return {
@@ -18806,11 +18933,6 @@ ${bodyText.substring(0, 6e3)}`;
         await writeNewsDataMerged(intent);
       })
     };
-  }
-  function localDatetime2(ts = Date.now()) {
-    const d = new Date(ts);
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   }
   function htmlToMarkdown(html) {
     let md = html;
@@ -18942,7 +19064,7 @@ ${c.trim()}
     let date = "";
     if (it.pubDate) {
       const d = new Date(it.pubDate);
-      if (!isNaN(d.getTime())) date = localDatetime2(d.getTime());
+      if (!isNaN(d.getTime())) date = localDatetime(d.getTime());
     }
     return { platform: feedName, title, url, author: feedName, date, body };
   }
@@ -18986,7 +19108,7 @@ ${c.trim()}
 ` : "",
       `🔗 观看：[${String(archive.title)}](${url})${archive.duration_text ? `（时长 ${archive.duration_text}）` : ""}`
     ].join("").trim();
-    const date = localDatetime2(pubTs * 1e3);
+    const date = localDatetime(pubTs * 1e3);
     return { platform: "B站", title: String(archive.title), url, author: String(author.name || ""), date, body };
   }
   function extractUpInfo(items) {
@@ -19258,7 +19380,7 @@ ${c.trim()}
       newArticles = newArticles.filter((a) => !rssPrunedSet.has(a.url));
     }
     const rssTitlePatches = rssRes && Object.keys(rssRes.titleUpdates).length > 0 ? rssRes.titleUpdates : void 0;
-    const fetchedAt = localDatetime2(now());
+    const fetchedAt = localDatetime(now());
     for (const a of newArticles) a.fetchedAt = fetchedAt;
     const attempted = [guokrP, zhihuP, biliP, rssP].filter((p) => p !== null).length;
     const allFailed = attempted > 0 && failedSources.length >= attempted;
@@ -19327,6 +19449,7 @@ ${c.trim()}
   var init_news_fetcher = __esm({
     "src/clipbook/news-fetcher.ts"() {
       init_fake_obsidian();
+      init_http();
       init_notice();
       init_news_data();
       init_constants3();
@@ -19366,7 +19489,7 @@ ${c.trim()}
     const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
     const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
     const intervalDesc = () => {
-      const t = box.lastFetchAt > 0 ? localDatetime2(box.lastFetchAt) : "还没有抓取过";
+      const t = box.lastFetchAt > 0 ? localDatetime(box.lastFetchAt) : "还没有抓取过";
       return `打开插件或剪藏本时超过该间隔自动抓取，上次抓取 ${t}`;
     };
     return [
@@ -19611,19 +19734,9 @@ ${c.trim()}
     handle = handleReg;
   }
   async function fetchRssFeedTitle(url) {
-    try {
-      const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), 1e4));
-      const req = requestUrl({ url, method: "GET" }).then((resp) => {
-        if (resp.status < 200 || resp.status >= 300) return null;
-        if (!looksLikeFeedXml(resp.text)) return null;
-        return extractFeedTitleFromXml(resp.text);
-      });
-      req.catch(() => {
-      });
-      return await Promise.race([req, timer]);
-    } catch (e) {
-      return null;
-    }
+    const xml = await httpGetText(url, { timeoutMs: 1e4, fetchImpl: requestUrlAsFetch() });
+    if (!xml || !looksLikeFeedXml(xml)) return null;
+    return extractFeedTitleFromXml(xml);
   }
   function rssManagerSettingsSchema(opts) {
     const box = {
@@ -19766,7 +19879,7 @@ ${c.trim()}
   var upManagerOpen, rssManagerOpen;
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
-      init_fake_obsidian();
+      init_http();
       init_notice();
       init_settings_common();
       init_dom();
@@ -20615,7 +20728,6 @@ ${c.trim()}
   var init_anchor = __esm({
     "src/clipbook/anchor.ts"() {
       init_data6();
-      init_constants3();
     }
   });
 
@@ -21193,8 +21305,7 @@ ${c.trim()}
     const h = Math.floor(s / 3600);
     const m = Math.floor(s % 3600 / 60);
     const ss = s % 60;
-    const pad = (n) => String(n).padStart(2, "0");
-    return h > 0 ? `${h}:${pad(m)}:${pad(ss)}` : `${m}:${pad(ss)}`;
+    return h > 0 ? `${h}:${pad2(m)}:${pad2(ss)}` : `${m}:${pad2(ss)}`;
   }
   function timeTextToSec(t) {
     const canon = normalizeLooseTime(t);
@@ -21212,6 +21323,7 @@ ${c.trim()}
       init_storage();
       init_settings_provider();
       init_utils();
+      init_str();
       init_app();
       init_source();
       TIME_RE = /^\d{1,3}:\d{1,2}(:\d{1,2}(\.\d{1,3})?)?$/;
@@ -21920,9 +22032,9 @@ ${c.trim()}
     const root = await rootNode(rootPath, scan);
     nodes.set(root.id, root);
     order.push(root.id);
-    const queue3 = [root.id];
-    while (queue3.length) {
-      const node = nodes.get(queue3.shift());
+    const queue = [root.id];
+    while (queue.length) {
+      const node = nodes.get(queue.shift());
       if (node.kind !== "card" || node.missing) continue;
       const sameNote = await findSameNameNote(node.path, ctx);
       if (sameNote && !nodes.has(sameNote)) {
@@ -21963,7 +22075,7 @@ ${c.trim()}
             edges.push({ from: node.id, to: child.id, suggested: false });
           }
         }
-        if (fresh && child.kind === "card" && !child.missing) queue3.push(child.id);
+        if (fresh && child.kind === "card" && !child.missing) queue.push(child.id);
       }
     }
     const firstIdx = new Map(order.map((id, i) => [id, i]));
@@ -22158,24 +22270,7 @@ ${c.trim()}
     return `"domain": "从以下领域选一个最贴近的：${list.join("、")}；都不贴切可写一个新的中文领域词"`;
   }
   function nowStamp() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve2, reject) => {
-      const timer = setTimeout(() => reject(new Error(`AI 请求超时（${label}，${ms}ms）`)), ms);
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve2(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
+    return localNow();
   }
   async function writeUniqueNote(dir, baseName2, content) {
     const app = getApp();
@@ -22584,6 +22679,8 @@ ${sample}`
   var init_note_gen = __esm({
     "src/knowledge/note-gen.ts"() {
       init_ai();
+      init_str();
+      init_http();
       init_app();
       init_settings_provider();
       init_partial_json();
@@ -22642,14 +22739,13 @@ ${sample}`
     return s.trim();
   }
   function nowTs() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    return localNow();
   }
   var INSTALL_HINT, STEP_RE, RESULT_RE, PROGRESS_RE, INFO_RE, AI_STEP_TEXT, NOTE_STEP_TEXT, BatchRunner;
   var init_processor2 = __esm({
     "src/knowledge/processor.ts"() {
       init_notice();
+      init_str();
       init_domain_bus();
       init_settings_provider();
       init_app();
@@ -23869,7 +23965,6 @@ ${sample}`
     splitAnchors: () => splitAnchors,
     stripFrontmatter: () => stripFrontmatter2,
     suggestKey: () => suggestKey,
-    suggestKindOf: () => suggestKindOf,
     suggestProgressLabel: () => suggestProgressLabel,
     suggestProgressPercent: () => suggestProgressPercent,
     suggestionId: () => suggestionId,
@@ -24827,9 +24922,6 @@ ${String(blockText != null ? blockText : "").trim()}`);
       subpath
     };
   }
-  function suggestKindOf(path, ctx, unit) {
-    return kindOfTarget(path, ctx, unit === "heading" || unit === "paragraph" ? unit : "whole");
-  }
   function mergeSuggestions(tree, run) {
     var _a2;
     const nodes = Array.isArray(tree == null ? void 0 : tree.nodes) ? tree.nodes : [];
@@ -25123,7 +25215,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (typeof document === "undefined") return null;
     const mask = document.createElement("div");
     mask.id = MASK_ID;
-    mask.className = "bz-kb-mask bz-kb-mt-mask";
+    mask.className = "bz-overlay-mask bz-kb-mask bz-kb-mt-mask";
     mask.style.display = "none";
     mask.addEventListener("click", () => closeMountTree());
     const win = document.createElement("div");
@@ -25602,10 +25694,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const chain2 = crumbs.length ? crumbs : rootNode2 ? [rootNode2] : [];
     st.win.querySelector("#bz-kb-mt-crumbs").innerHTML = chain2.map((n, i) => {
       const last = i === chain2.length - 1;
-      const label = escapeHtml(displayTitle(n));
+      const label = escapeHtml2(displayTitle(n));
       const sep = i === 0 ? "" : '<span class="bz-kb-mt-sep">›</span>';
       if (last && !st.selected) return `${sep}<span class="bz-kb-mt-crumb is-cur">${label}</span>`;
-      return `${sep}<button class="bz-kb-mt-crumb bz-touch-target" data-mt-act="crumb" data-path="${escapeHtml(n.path)}" data-id="${escapeHtml(n.id)}" title="以《${label}》为主卡重开">${label}</button>`;
+      return `${sep}<button class="bz-kb-mt-crumb bz-touch-target" data-mt-act="crumb" data-path="${escapeHtml2(n.path)}" data-id="${escapeHtml2(n.id)}" title="以《${label}》为主卡重开">${label}</button>`;
     }).join("");
     const dirEl = st.win.querySelector("#bz-kb-mt-dir");
     dirEl.textContent = st.direction === "upstream" ? "上游 · 谁挂了我" : "下游 · 我挂了谁";
@@ -25618,7 +25710,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     else if (st.run) text = mountStatusText(st.run.status);
     else text = "本卡建议未跑（自动建议已关闭）";
     if (!st.loading && culled > 0) extra = `<span class="bz-kb-mt-kind">· 图大，已按 ${LAYOUT_PARAMS.MAX_NODES} 张封顶</span>`;
-    statusEl2.innerHTML = `<span class="bz-kb-mt-status-t">${escapeHtml(text)}</span>${extra}${!st.loading && ((_c = st.run) == null ? void 0 : _c.status) === "no-index" ? '<button class="bz-kb-mt-btn is-mini" data-mt-act="build-index" title="打开第二大脑重建索引（绝不自动建）">去建索引</button>' : ""}`;
+    statusEl2.innerHTML = `<span class="bz-kb-mt-status-t">${escapeHtml2(text)}</span>${extra}${!st.loading && ((_c = st.run) == null ? void 0 : _c.status) === "no-index" ? '<button class="bz-kb-mt-btn is-mini" data-mt-act="build-index" title="打开第二大脑重建索引（绝不自动建）">去建索引</button>' : ""}`;
     const hint = st.win.querySelector("#bz-kb-mt-hint");
     hint.textContent = isMobileEnv() ? "点卡片血缘高亮 · 长按卡片出菜单 · 双指缩放 · 单指拖拽平移" : "点卡片血缘高亮（再点取消）· 右键菜单 · 拖拽平移 · 滚轮缩放 · 点标题折/展";
   }
@@ -25815,7 +25907,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       return;
     }
     if (node.kind === "image" || node.kind === "video") {
-      bodyEl3.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml(node.path)}</div>`;
+      bodyEl3.innerHTML = `<div class="bz-kb-mt-ph">${escapeHtml2(node.path)}</div>`;
       return;
     }
     const app = (_a2 = st.ctx.app) != null ? _a2 : getApp();
@@ -26470,32 +26562,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const m = String(input != null ? input : "").match(BVID_RE);
     return m ? m[0] : null;
   }
-  function withTimeout2(p, ms) {
-    let timer = null;
-    const timeout = new Promise((resolve2) => {
-      timer = setTimeout(() => resolve2(null), ms);
-    });
-    const done = () => {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    };
-    return Promise.race([p, timeout]).then(
-      (v) => {
-        done();
-        return v === null ? null : v;
-      },
-      (e) => {
-        done();
-        throw e;
-      }
-    );
-  }
-  function parseJson(resp) {
-    if (!resp || resp.status < 200 || resp.status >= 300) return null;
+  function parseJsonText(text) {
+    if (!text) return null;
     try {
-      return JSON.parse(resp.text);
+      return JSON.parse(text);
     } catch (e) {
       return null;
     }
@@ -26585,7 +26655,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   async function fetchFromViewApi(bvid) {
     try {
-      const json = parseJson(await withTimeout2(requestUrl({ url: `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, method: "GET" }), VIEW_TIMEOUT_MS));
+      const json = parseJsonText(await httpGetText(
+        `https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`,
+        { timeoutMs: VIEW_TIMEOUT_MS, fetchImpl: httpImpl }
+      ));
       if (!json || json.code !== 0 || !json.data) return null;
       return metaFromVideoData(json.data);
     } catch (e) {
@@ -26594,14 +26667,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   async function fetchFromPage(url) {
     var _a2;
-    let html = "";
-    try {
-      const resp = await withTimeout2(requestUrl({ url, method: "GET", headers: { ...PAGE_HEADERS } }), VIEW_TIMEOUT_MS);
-      if (!resp || resp.status < 200 || resp.status >= 300) return null;
-      html = String((_a2 = resp.text) != null ? _a2 : "");
-    } catch (e) {
-      return null;
-    }
+    const html = String((_a2 = await httpGetText(url, { timeoutMs: VIEW_TIMEOUT_MS, headers: { ...PAGE_HEADERS }, fetchImpl: httpImpl })) != null ? _a2 : "");
     if (!html) return null;
     const state3 = extractInitialState(html);
     const videoData = videoDataFromState(state3);
@@ -26647,9 +26713,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const c = String(cookie != null ? cookie : "").trim();
     if (!c) return false;
     try {
-      const json = parseJson(await withTimeout2(
-        requestUrl({ url: "https://api.bilibili.com/x/web-interface/nav", method: "GET", headers: { Cookie: c } }),
-        NAV_TIMEOUT_MS
+      const json = parseJsonText(await httpGetText(
+        "https://api.bilibili.com/x/web-interface/nav",
+        { timeoutMs: NAV_TIMEOUT_MS, headers: { Cookie: c }, fetchImpl: httpImpl }
       ));
       return !!(json && json.code === 0 && json.data && json.data.isLogin === true);
     } catch (e) {
@@ -26661,9 +26727,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (!c || !bvid || !posInt(cid)) return null;
     try {
       const url = `https://api.bilibili.com/x/player/playurl?bvid=${bvid}&cid=${posInt(cid)}&qn=127&fnval=4048&fourk=1`;
-      const json = parseJson(await withTimeout2(
-        requestUrl({ url, method: "GET", headers: { Cookie: c } }),
-        QUALITY_TIMEOUT_MS
+      const json = parseJsonText(await httpGetText(
+        url,
+        { timeoutMs: QUALITY_TIMEOUT_MS, headers: { Cookie: c }, fetchImpl: httpImpl }
       ));
       const videos = json && json.code === 0 && json.data && json.data.dash ? json.data.dash.video : null;
       if (!Array.isArray(videos)) return null;
@@ -26688,10 +26754,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const qualities = bvid && sel && sel.cid ? await fetchCheckedQualities(bvid, sel.cid, cookie) : null;
     return { meta, qualities };
   }
-  var BVID_RE, BVID_EXACT_RE, BILI_HOST_RE, VIEW_TIMEOUT_MS, QUALITY_TIMEOUT_MS, NAV_TIMEOUT_MS, PAGE_HEADERS;
+  var BVID_RE, BVID_EXACT_RE, BILI_HOST_RE, VIEW_TIMEOUT_MS, QUALITY_TIMEOUT_MS, NAV_TIMEOUT_MS, httpImpl, PAGE_HEADERS;
   var init_video_meta = __esm({
     "src/knowledge/video-meta.ts"() {
-      init_fake_obsidian();
+      init_http();
       init_source();
       BVID_RE = /BV[0-9A-Za-z]{10}/;
       BVID_EXACT_RE = /^BV[0-9A-Za-z]{10}$/;
@@ -26699,6 +26765,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       VIEW_TIMEOUT_MS = 1e4;
       QUALITY_TIMEOUT_MS = 1e4;
       NAV_TIMEOUT_MS = 1e4;
+      httpImpl = requestUrlAsFetch();
       PAGE_HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         Referer: "https://www.bilibili.com/"
@@ -26864,7 +26931,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return out;
   }
   function esc2(s) {
-    return escapeHtml(String(s != null ? s : ""));
+    return escapeHtml2(String(s != null ? s : ""));
   }
   function shortNoteName(path) {
     const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
@@ -26937,9 +27004,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return url.length > 28 ? url.slice(0, 28) + "…" : url;
   }
   function dateStamp() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    return localNow();
   }
   function litDirOf(s) {
     return getKnowledgeBoxes(s || {}).lit;
@@ -27135,6 +27200,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     "src/knowledge/ui.ts"() {
       init_fake_obsidian();
       init_ai();
+      init_str();
       init_mobile();
       init_settings_provider();
       init_knowledge_boxes();
@@ -30343,144 +30409,56 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     return changed;
   }
-  function inFolders2(path, folders) {
-    return folders.some((f) => path.startsWith(f + "/") || path === f);
-  }
   function getKnowledgePath() {
     if (KnowledgeData.filePath) return KnowledgeData.filePath;
     return storageFile("knowledge.json", tryGetSettings().storagePath || "CONFIG/STORAGE");
   }
-  async function syncTasks(fn, ...args) {
+  async function syncTasks(apply) {
     const path = getKnowledgePath();
     await enqueueFileTask(path, async () => {
       const tasks = await KnowledgeData.read();
-      if (fn(tasks, ...args)) await KnowledgeData.write(tasks);
+      if (apply(tasks)) await KnowledgeData.write(tasks);
     });
   }
   function getWatchedFolders2() {
     return [knowledgeDirOf()];
   }
-  function enqueue2(task) {
-    queue2 = queue2.then(() => {
-      if (_cancelled2) return;
-      return task();
-    }).catch((e) => {
-      console.error("[knowledge-file-sync]", e);
-      notify("知识盒同步失败，数据可能不一致", { type: "error", dedupeKey: "knowledge-file-sync" });
-    });
-  }
-  function debounceDelay2() {
-    const s = tryGetSettings();
-    return Number(s && s.DEBOUNCE_DELAY) || 300;
-  }
-  function createBatchFlusher2(run) {
-    let pending = [];
-    let timer = null;
-    const flush = () => {
-      timer = null;
-      if (_cancelled2) {
-        pending = [];
-        return;
-      }
-      const batch = pending;
-      pending = [];
-      enqueue2(() => run(batch));
-    };
-    const push = (ev) => {
-      if (_cancelled2) return;
-      pending.push(ev);
-      if (timer !== null) clearTimeout(timer);
-      timer = setTimeout(flush, debounceDelay2());
-    };
-    return Object.assign(push, {
-      cancel() {
-        if (timer !== null) {
-          clearTimeout(timer);
-          timer = null;
-        }
-        pending = [];
-      }
-    });
-  }
-  function createFileSyncAgent2(app) {
-    const referencedByTasks = async (path) => {
-      if (!path) return false;
-      try {
-        const tasks = await KnowledgeData.read();
-        return tasks.some((t) => (t == null ? void 0 : t.notePath) === path || (t == null ? void 0 : t.videoPath) === path);
-      } catch (e) {
-        return false;
-      }
-    };
-    const isMd = (file) => file && file.extension === "md" && inFolders2(file.path, getWatchedFolders2());
-    const pseudoFile = (path) => ({
-      path,
-      basename: stripMdExt(path.split("/").pop() || ""),
-      extension: "md"
-    });
-    const flushRenames = createBatchFlusher2(async (batch) => {
-      for (const ev of batch) {
-        await syncTasks(syncRename2, ev);
-      }
-    });
-    _flushers2.push(flushRenames);
-    _refs2.push(onDomainEvent("vault:md-renamed", (evt) => {
-      const file = pseudoFile(evt.newPath);
-      void (async () => {
-        if (!(isMd(file) || await referencedByTasks(evt.oldPath) || await referencedByTasks(evt.newPath))) return;
-        flushRenames({ oldPath: evt.oldPath, newPath: evt.newPath });
-      })();
-    }));
-    _refs2.push(onDomainEvent("vault:md-deleted", (evt) => {
-      const file = pseudoFile(evt.path);
-      void (async () => {
-        if (isMd(file) || await referencedByTasks(evt.path)) {
-          enqueue2(() => syncTasks(syncDelete2, evt.path));
-        }
-        await retireSourcesOnMdDeleted(app, evt.path);
-      })();
-    }));
+  async function referencedByTasks(path) {
+    if (!path) return false;
+    try {
+      const tasks = await KnowledgeData.read();
+      return tasks.some((t) => (t == null ? void 0 : t.notePath) === path || (t == null ? void 0 : t.videoPath) === path);
+    } catch (e) {
+      return false;
+    }
   }
   function ensureFileSync2(app) {
-    if (initialized3) return;
-    initialized3 = true;
-    _cancelled2 = false;
-    createFileSyncAgent2(app);
+    agent2.ensure(app);
   }
   function unloadFileSync() {
-    _cancelled2 = true;
-    for (const f of _flushers2) {
-      try {
-        f.cancel();
-      } catch (e) {
-      }
-    }
-    _flushers2 = [];
-    for (const off of _refs2) {
-      try {
-        off();
-      } catch (e) {
-      }
-    }
-    _refs2 = [];
-    initialized3 = false;
-    queue2 = Promise.resolve();
+    agent2.unload();
   }
-  var initialized3, _refs2, _cancelled2, _flushers2, queue2;
-  var init_file_sync = __esm({
+  var agent2;
+  var init_file_sync2 = __esm({
     "src/knowledge/file-sync.ts"() {
-      init_utils();
-      init_notice();
       init_settings_provider();
-      init_domain_bus();
       init_storage();
+      init_file_sync();
       init_data7();
       init_source_retire();
-      initialized3 = false;
-      _refs2 = [];
-      _cancelled2 = false;
-      _flushers2 = [];
-      queue2 = Promise.resolve();
+      agent2 = createFileSync({
+        logTag: "[knowledge-file-sync]",
+        failNotice: "知识盒同步失败，数据可能不一致",
+        failDedupeKey: "knowledge-file-sync",
+        watchedFolders: getWatchedFolders2,
+        commit: (apply) => syncTasks(apply),
+        referencedBy: referencedByTasks,
+        applyRename: syncRename2,
+        applyDelete: syncDelete2,
+        /** source 退役消费者（ADR-0149 决策 2）：卡片 source 可指向任意笔记（不限目录），
+         *  任何被删 md 都过一遍 metadataCache 预筛；已降级卡片天然幂等跳过 */
+        onMdDeleted: (app, path) => retireSourcesOnMdDeleted(app, path)
+      });
     }
   });
 
@@ -30509,11 +30487,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function ensureKnowledge(app) {
     var _a2;
-    if (initialized4) return;
+    if (initialized2) return;
     try {
       KnowledgeData.init({ storagePath: (_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath });
       uiManager = new UIManager(app);
-      initialized4 = true;
+      initialized2 = true;
     } catch (e) {
       console.error("bz: 文献盒初始化失败（下次打开命令将自动重试）", e);
       uiManager = null;
@@ -30653,9 +30631,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function unloadKnowledge() {
     uiManager == null ? void 0 : uiManager.destroy();
     uiManager = null;
-    initialized4 = false;
+    initialized2 = false;
   }
-  var initialized4, uiManager;
+  var initialized2, uiManager;
   var init_knowledge = __esm({
     "src/knowledge/index.ts"() {
       init_fake_obsidian();
@@ -30666,8 +30644,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_ui5();
       init_note_gen();
       init_source_retire();
-      init_file_sync();
-      initialized4 = false;
+      init_file_sync2();
+      initialized2 = false;
       uiManager = null;
     }
   });
@@ -30918,7 +30896,7 @@ ${body}`;
   function markHandledAndBump(raw, action) {
     const key = articleKeyOf(raw);
     const platform = raw.platform || "未知";
-    const today = localDayKey2();
+    const today = localDayKey();
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return NO_BUMP;
@@ -31008,7 +30986,7 @@ ${body}`;
     await enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
-      const today = localDayKey2();
+      const today = localDayKey();
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       let bumped = 0;
       const list = (res.data.articles || []).map((a) => {
@@ -31043,7 +31021,7 @@ ${body}`;
           else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
           const platform = a.platform || "未知";
           s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
-          const day = localDayKey2();
+          const day = localDayKey();
           s.byDate[day] = Math.max(0, (Number(s.byDate[day]) || 0) - 1);
         }
         const restored = { ...a };
@@ -31349,10 +31327,7 @@ ${body}`;
     }
     selSnap = null;
     imgSnap = null;
-    if (searchDebounceTimer !== null) {
-      clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = null;
-    }
+    searchDebounced.cancel();
     if (panelResizeDetach) {
       panelResizeDetach.detach();
       panelResizeDetach = null;
@@ -31422,15 +31397,7 @@ ${body}`;
       if (!row) return;
       toggleSource(JSON.parse(row.dataset.src || "null"));
     });
-    deskSearchEl.addEventListener("input", () => {
-      if (searchDebounceTimer !== null) clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = setTimeout(() => {
-        searchDebounceTimer = null;
-        setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : "");
-        renderList();
-        renderRail();
-      }, SEARCH_DEBOUNCE_MS2);
-    });
+    deskSearchEl.addEventListener("input", () => searchDebounced());
     readPaneEl.addEventListener("click", (e) => {
       const t = e.target;
       const ext = t.closest("a[data-clip-ext]");
@@ -32825,7 +32792,7 @@ ${body}`;
       }
     });
   }
-  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle4, loading, dirty, loaded2, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle4, loading, dirty, loaded2, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui6 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -32877,7 +32844,11 @@ ${body}`;
       PANEL_MAX_W = 1600;
       PANEL_MAX_H = 1e3;
       clipBodyCache = /* @__PURE__ */ new Map();
-      searchDebounceTimer = null;
+      searchDebounced = debounce(() => {
+        setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : "");
+        renderList();
+        renderRail();
+      }, SEARCH_DEBOUNCE_MS2);
       panelResizeDetach = null;
       panelSplit = null;
       SPLIT_MIN_MID = 220;
@@ -32930,8 +32901,7 @@ ${body}`;
     if (diff < h) return Math.floor(diff / m) + " 分钟前";
     if (diff < day) return Math.floor(diff / h) + " 小时前";
     if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getMonth() + 1}-${p(d.getDate())}`;
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
   }
   function hueOf(label) {
     const m = {
@@ -33305,8 +33275,7 @@ ${body}`;
       isVisible: () => !!M6.overlay || !!document.querySelector(".bz-fav-form"),
       close: () => {
         closeItemMenu();
-        const form = document.querySelector(".bz-fav-form");
-        if (form) requestCloseForm(form);
+        if (document.querySelector(".bz-fav-form")) requestCloseForm();
         else closePanel3();
       }
     });
@@ -33628,19 +33597,19 @@ ${body}`;
     if (!popup) return false;
     return inputVal(popup, "#fz-title") !== _baseline.title || inputVal(popup, "#fz-url") !== _baseline.url || inputVal(popup, "#fz-desc") !== _baseline.desc || formPinNow(popup) !== _baseline.pinned || formTagsNow(popup) !== _baseline.tags;
   }
-  function requestCloseForm(popup) {
+  function requestCloseForm() {
     if (formDirty()) {
-      confirmDiscard(() => closeForm(popup), void 0, "bz-fav-flow-dialog bz-fav-scope");
+      confirmDiscard(() => closeForm(), void 0, "bz-fav-flow-dialog bz-fav-scope");
     } else {
-      closeForm(popup);
+      closeForm();
     }
   }
-  function closeForm(popup) {
-    var _a2;
+  function closeForm() {
     _baseline = null;
     _saving = false;
     closeItemMenu();
-    ((_a2 = popup.closest(".bz-fav-form-mask")) != null ? _a2 : popup).remove();
+    _formClose == null ? void 0 : _formClose();
+    _formClose = null;
   }
   function inputVal(popup, id) {
     var _a2, _b2;
@@ -33649,16 +33618,22 @@ ${body}`;
   function openForm2(item) {
     var _a2, _b2, _c;
     ensureFavoritesEsc();
-    const existing = document.querySelector(".bz-fav-form");
-    if (existing) closeForm(existing);
+    if (document.querySelector(".bz-fav-form")) closeForm();
     const it = item;
-    const mask = document.createElement("div");
-    mask.className = "bz-fav-form-mask bz-fav-scope";
-    mask.innerHTML = formHtml(it);
-    document.body.appendChild(mask);
-    topifyZ(mask);
+    const host = document.createElement("div");
+    host.innerHTML = formHtml(it);
+    const { mask, popup, close } = uiModal({
+      content: host.firstElementChild,
+      // 弹窗壳只挂 scope（token 域）；bz-fav-form 类由单源 markup 内容根携带（F15 教训：
+      // 壳与内容同挂一类会双计单例守卫），亚麻卡几何锚 .bz-overlay-popup.bz-fav-scope
+      className: "bz-fav-scope",
+      requestClose: () => requestCloseForm(),
+      onClose: () => {
+        _formClose = null;
+      }
+    });
+    _formClose = close;
     mountIcons(mask);
-    const popup = mask.querySelector(".bz-fav-form");
     _baseline = {
       title: (it == null ? void 0 : it.title) || "",
       url: (it == null ? void 0 : it.url) || "",
@@ -33693,10 +33668,7 @@ ${body}`;
     const pinEl = popup.querySelector("#fz-pin");
     pinEl.addEventListener("click", () => pinEl.classList.toggle("bz-fav-on"));
     const errEl = popup.querySelector("#fz-err");
-    mask.addEventListener("mousedown", (e) => {
-      if (e.target === mask) requestCloseForm(popup);
-    });
-    (_a2 = popup.querySelector("[data-fz-cancel]")) == null ? void 0 : _a2.addEventListener("click", () => requestCloseForm(popup));
+    (_a2 = popup.querySelector("[data-fz-cancel]")) == null ? void 0 : _a2.addEventListener("click", () => requestCloseForm());
     (_b2 = popup.querySelector("#fz-ai")) == null ? void 0 : _b2.addEventListener("click", () => void runAiFill(popup, sel, drawPick, errEl));
     (_c = popup.querySelector("#fz-save")) == null ? void 0 : _c.addEventListener("click", () => void saveForm(popup, it, sel, errEl));
     setTimeout(() => {
@@ -33855,7 +33827,7 @@ GitHub 仓库：${ghInfo.title}
         await dm.add(data);
         emitDomainEvent("favorites", { kind: "add", item: data });
       }
-      closeForm(popup);
+      closeForm();
       await reload2();
     } catch (e) {
       notice(`保存失败：${(e == null ? void 0 : e.message) || "未知错误"}`, "error");
@@ -33935,30 +33907,23 @@ GitHub 仓库：${ghInfo.title}
   }
   function openTagEditor(dm, existing, redraw) {
     var _a2, _b2;
-    const mask = document.createElement("div");
-    mask.className = "bz-fav-form-mask bz-fav-scope";
-    const popup = document.createElement("div");
-    popup.className = "bz-fav-form bz-fav-tageditor";
-    popup.innerHTML = `
+    const host = document.createElement("div");
+    host.innerHTML = `
+    <div class="bz-fav-form bz-fav-tageditor">
     <h2>${existing ? "编辑标签" : "添加标签"}</h2>
     <div class="bz-fav-fld"><label>名称</label><input id="fz-tag-name" value="${esc((existing == null ? void 0 : existing.label) || "")}" placeholder="如：装修灵感"></div>
     <div class="bz-fav-fld"><label>图标</label><div class="bz-fav-tageditor-ics" id="fz-tag-ics"></div></div>
     <div class="bz-fav-btns">
       <button type="button" data-fz-tag-cancel>取消</button>
       <button type="button" id="fz-tag-save" class="bz-fav-pri">${existing ? "保存" : "添加"}</button>
+    </div>
     </div>`;
-    mask.appendChild(popup);
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    mountIcons(popup);
-    const escHandle6 = escManager.register("bz-fav-tageditor", {
-      isVisible: () => mask.isConnected,
-      close: () => close()
+    const { popup, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-fav-scope",
+      maxWidth: 380
     });
-    const close = () => {
-      escHandle6.unregister();
-      mask.remove();
-    };
+    mountIcons(popup);
     const input = popup.querySelector("#fz-tag-name");
     let picked = (existing == null ? void 0 : existing.ic) || "tag";
     const icPick = popup.querySelector("#fz-tag-ics");
@@ -34011,9 +33976,6 @@ GitHub 仓库：${ghInfo.title}
     };
     (_a2 = popup.querySelector("[data-fz-tag-cancel]")) == null ? void 0 : _a2.addEventListener("click", () => close());
     (_b2 = popup.querySelector("#fz-tag-save")) == null ? void 0 : _b2.addEventListener("click", () => void doSave2());
-    mask.addEventListener("mousedown", (e) => {
-      if (e.target === mask) close();
-    });
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -34057,7 +34019,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M6, mainEscRegistered2, _dm, _ai, _app2, _saving, _baseline, TAG_ICON_CHOICES;
+  var M6, mainEscRegistered2, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui7 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -34089,6 +34051,7 @@ GitHub 仓库：${ghInfo.title}
       _app2 = null;
       _saving = false;
       _baseline = null;
+      _formClose = null;
       TAG_ICON_CHOICES = [
         "tag",
         "bookmark",
@@ -35533,7 +35496,7 @@ ${n.content.slice(0, 2e3)}
             const btn = document.createElement("button");
             btn.className = "quiz-option-btn";
             const cleanText = cleanOptionText(opt);
-            btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml(cleanText)}</span><span class="check-mark">✔️</span>`;
+            btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml2(cleanText)}</span><span class="check-mark">✔️</span>`;
             btn.dataset.index = String(idx);
             btn.onclick = () => {
               if (answeredRef.value) return;
@@ -35727,8 +35690,8 @@ ${n.content.slice(0, 2e3)}
     quizUpdate: () => quizUpdate
   });
   function ensureQuiz(app) {
-    if (initialized5) return;
-    initialized5 = true;
+    if (initialized3) return;
+    initialized3 = true;
     QuizMasterUI.ai = createAI();
     quizUI.ai = QuizMasterUI.ai;
     QuizMasterUI.settings = getSettings();
@@ -35737,13 +35700,13 @@ ${n.content.slice(0, 2e3)}
     ensureQuiz(app);
     await quizUI.updateQuiz();
   }
-  var initialized5;
+  var initialized3;
   var init_quiz_core = __esm({
     "src/review/quiz-core/index.ts"() {
       init_ai();
       init_settings_provider();
       init_session();
-      initialized5 = false;
+      initialized3 = false;
     }
   });
 
@@ -36223,7 +36186,7 @@ ${n.content.slice(0, 2e3)}
     }).join("");
     return `
       <div class="bz-sq-head"><b>本轮队列</b></div>
-      <div class="bz-sq-list">${rows || '<div class="bz-empty"><div class="bz-empty-title">队列完毕</div></div>'}</div>`;
+      <div class="bz-sq-list">${rows || emptyHtmlStr("", "队列完毕")}</div>`;
   }
   function sprintBodyHtml(mainHtml, entries) {
     return `
@@ -36343,6 +36306,7 @@ ${n.content.slice(0, 2e3)}
   var ESC, QUIZ_PRACTICE_SCOPES, QUIZ_PRACTICE_BATCHES;
   var init_render12 = __esm({
     "src/review/render.ts"() {
+      init_str();
       init_fsrs();
       init_queue();
       init_stats3();
@@ -37062,7 +37026,7 @@ ${n.content.slice(0, 2e3)}
       const rank = i < 3 ? `<span class="bz-stats-rank-badge" style="background:${badges[i]};">${i + 1}</span>` : `<span class="bz-stats-rank-plain">${i + 1}</span>`;
       return `<div class="bz-review-stats-tl-row" data-idx="${i}">
       ${rank}
-      <span class="bz-stats-rank-name">${escapeHtml(it.name)}</span>
+      <span class="bz-stats-rank-name">${escapeHtml2(it.name)}</span>
       ${it.sub ? `<span class="bz-stats-rank-sub">${it.sub}</span>` : ""}
       <span class="bz-stats-rank-meta">${it.meta}</span>
     </div>`;
@@ -37086,6 +37050,7 @@ ${n.content.slice(0, 2e3)}
     closeStatsModal();
     statsMask = document.createElement("div");
     statsMask.id = "review-stats-mask";
+    statsMask.className = "bz-overlay-mask";
     statsMask.style.display = "block";
     statsMask.style.zIndex = String(allocZ());
     statsMask.onclick = closeStatsModal;
@@ -37205,6 +37170,7 @@ ${n.content.slice(0, 2e3)}
     const history2 = historyOf(item);
     histMask = document.createElement("div");
     histMask.id = "review-history-mask";
+    histMask.className = "bz-overlay-mask";
     histMask.style.display = "block";
     histMask.style.zIndex = String(allocZ());
     histMask.onclick = closeTimeline;
@@ -37231,7 +37197,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     status.innerHTML = `
-    <div class="bz-review-history-name">${escapeHtml(stripTitleMarks(item.name))}</div>
+    <div class="bz-review-history-name">${escapeHtml2(stripTitleMarks(item.name))}</div>
     <div class="bz-review-history-sub">${stageText} · 共 ${history2.length} 次复习${curR || ""}</div>
   `;
     body.appendChild(status);
@@ -38074,8 +38040,8 @@ ${n.content.slice(0, 2e3)}
     return { path, basename: stripMdExt(base), extension: "md" };
   }
   function ensureReview(app) {
-    if (initialized6) return;
-    initialized6 = true;
+    if (initialized4) return;
+    initialized4 = true;
     reviewApp.ensure(app);
     dataManager2 = new ReviewDataManager(app);
     uiManager2 = new UIManager2(app, dataManager2);
@@ -38230,7 +38196,7 @@ ${n.content.slice(0, 2e3)}
     await reviewApp.applyReviewStyles(app);
   }
   function unloadReview() {
-    initialized6 = false;
+    initialized4 = false;
     if (firstCheckTimer) {
       clearTimeout(firstCheckTimer);
       firstCheckTimer = null;
@@ -38255,7 +38221,7 @@ ${n.content.slice(0, 2e3)}
     reviewWatcher == null ? void 0 : reviewWatcher.destroy();
     reviewWatcher = null;
   }
-  var initialized6, dataManager2, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
+  var initialized4, dataManager2, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
   var init_review = __esm({
     "src/review/index.ts"() {
       init_utils();
@@ -38267,7 +38233,7 @@ ${n.content.slice(0, 2e3)}
       init_ui9();
       init_app2();
       init_quiz_panel();
-      initialized6 = false;
+      initialized4 = false;
       dataManager2 = null;
       uiManager2 = null;
       reviewWatcher = null;
@@ -39234,7 +39200,7 @@ ${n.content.slice(0, 2e3)}
     }
     return true;
   }
-  function enqueue3(fn) {
+  function enqueue(fn) {
     const run = chain.then(fn, fn);
     chain = run.then(
       () => void 0,
@@ -39265,12 +39231,12 @@ ${n.content.slice(0, 2e3)}
     const meta = { ...priMeta, notes };
     let panel2 = primary.panel;
     if (conflict.panel && (!panel2 || conflict.panel.generatedAt > panel2.generatedAt)) panel2 = conflict.panel;
-    const queue3 = [...primary.link.queue];
-    const seen = new Set(queue3.map((q2) => q2.path));
+    const queue = [...primary.link.queue];
+    const seen = new Set(queue.map((q2) => q2.path));
     for (const q2 of conflict.link.queue) {
       if (!seen.has(q2.path)) {
         seen.add(q2.path);
-        queue3.push(q2);
+        queue.push(q2);
       }
     }
     const state3 = { ...primary.link.state };
@@ -39290,7 +39256,7 @@ ${n.content.slice(0, 2e3)}
     const chatTrimmed = chatHistory.slice(-CHAT_HISTORY_LIMIT);
     let weekly = primary.weekly;
     if (conflict.weekly && (!weekly || conflict.weekly.lastRunAt > weekly.lastRunAt)) weekly = conflict.weekly;
-    return { version: primary.version, meta, panel: panel2, link: { queue: queue3, state: state3 }, chatHistory: chatTrimmed, weekly };
+    return { version: primary.version, meta, panel: panel2, link: { queue, state: state3 }, chatHistory: chatTrimmed, weekly };
   }
   function buildRowOffsets(meta) {
     const map = /* @__PURE__ */ new Map();
@@ -39543,7 +39509,7 @@ ${n.content.slice(0, 2e3)}
     await adapter.write(getSecondBrainStorePath(), next);
   }
   async function loadStore(app) {
-    return enqueue3(() => readStoreRaw(app));
+    return enqueue(() => readStoreRaw(app));
   }
   var STORE_VERSION, CHAT_HISTORY_LIMIT, LEGACY_FILES, LEGACY_VEC, chain;
   var init_store_file = __esm({
@@ -39797,12 +39763,12 @@ ${n.content.slice(0, 2e3)}
       return `<div class="bz-sb-trend-col${i === 11 ? " bz-sb-trend-col--last" : ""}" title="${weeksAgo === 0 ? "本周" : `${weeksAgo} 周前`}：${n} 篇" aria-label="${n} 篇"><div class="bz-sb-trend-bar" style="height:${Math.max(2, Math.round(n / max * 62))}px"></div><span>${label}</span></div>`;
     }).join("");
   }
-  function panelDistHtml(nodes, expanded, colorOf2, maxChunks, depth = 0) {
+  function panelDistHtml(nodes, expanded, colorOf, maxChunks, depth = 0) {
     return nodes.map((node) => {
       const hasChildren = node.children.length > 0;
       const open = expanded.has(node.path);
-      const row = `<div class="bz-sb-dist-row${hasChildren ? " bz-sb-dist-row--dir" : ""}" data-path="${escapeHtml3(node.path)}" style="padding-left:${10 + depth * 16}px"><span class="bz-sb-dist-caret${hasChildren ? "" : " bz-sb-dist-caret--leaf"}">${hasChildren ? ic("chevron-right", 12) : ""}</span><span class="bz-sb-dist-name">${escapeHtml3(node.name)}</span><span class="bz-sb-dist-bar"><span class="bz-sb-dist-fill" style="width:${Math.round(node.chunks / maxChunks * 100)}%;background:${colorOf2(node.name)}"></span></span><span class="bz-sb-dist-num">${node.notes} 篇 / ${node.chunks} 段</span></div>`;
-      const kids = hasChildren && open ? panelDistHtml(node.children, expanded, colorOf2, maxChunks, depth + 1) : "";
+      const row = `<div class="bz-sb-dist-row${hasChildren ? " bz-sb-dist-row--dir" : ""}" data-path="${escapeHtml3(node.path)}" style="padding-left:${10 + depth * 16}px"><span class="bz-sb-dist-caret${hasChildren ? "" : " bz-sb-dist-caret--leaf"}">${hasChildren ? ic("chevron-right", 12) : ""}</span><span class="bz-sb-dist-name">${escapeHtml3(node.name)}</span><span class="bz-sb-dist-bar"><span class="bz-sb-dist-fill" style="width:${Math.round(node.chunks / maxChunks * 100)}%;background:${colorOf(node.name)}"></span></span><span class="bz-sb-dist-num">${node.notes} 篇 / ${node.chunks} 段</span></div>`;
+      const kids = hasChildren && open ? panelDistHtml(node.children, expanded, colorOf, maxChunks, depth + 1) : "";
       return row + kids;
     }).join("");
   }
@@ -40580,7 +40546,7 @@ ${n.content.slice(0, 2e3)}
           const healthy = vecRows === 0 || vecRows === stats.chunkCount;
           const fmtBytes = (n) => n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
           const order = new Map(stats.bySource.map((s, i) => [s.name, i]));
-          const colorOf2 = (name) => sbSourceColor(name, order);
+          const colorOf = (name) => sbSourceColor(name, order);
           const cnt = popup.querySelector("#bz-sb-cnt");
           if (cnt) cnt.textContent = `${fmtCompact(stats.noteCount)} 篇 · ${fmtCompact(stats.chunkCount)} 段已入脑`;
           const pill = popup.querySelector("#bz-sb-pill-txt");
@@ -40612,7 +40578,7 @@ ${n.content.slice(0, 2e3)}
                 name: r.path.split("/").pop() || r.path,
                 chunks: r.chunks,
                 when: formatRelativeTime(r.mtime),
-                color: colorOf2(topLevelName(r.path))
+                color: colorOf(topLevelName(r.path))
               }))
             );
             const recentN = popup.querySelector("#bz-sb-recent-n");
@@ -40636,9 +40602,9 @@ ${n.content.slice(0, 2e3)}
           if (!popup || !dist) return;
           const tree = buildSourceTree(this.store.meta);
           const order = new Map(computeStats2(this.store.meta).bySource.map((s, i) => [s.name, i]));
-          const colorOf2 = (name) => sbSourceColor(name, order);
+          const colorOf = (name) => sbSourceColor(name, order);
           const rootMax = Math.max(1, ...tree.map((n) => n.chunks));
-          dist.innerHTML = panelDistHtml(tree, this.expandedDirs, colorOf2, rootMax);
+          dist.innerHTML = panelDistHtml(tree, this.expandedDirs, colorOf, rootMax);
           const distN = popup.querySelector("#bz-sb-dist-n");
           if (distN) distN.textContent = `${tree.length} 个来源`;
           mountIcons(dist);
@@ -41951,21 +41917,6 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
   }
-  function withTimeout3(promise, timeoutMs, label) {
-    return new Promise((resolve2, reject) => {
-      const timer = setTimeout(() => reject(new Error(label + " 超时")), timeoutMs);
-      promise.then(
-        () => {
-          clearTimeout(timer);
-          resolve2();
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
-  }
   function isEmptySrc(src) {
     return !src || !src.trim();
   }
@@ -41979,7 +41930,7 @@ ${n.content.slice(0, 2e3)}
       img.src = src;
     });
     try {
-      await withTimeout3(loaded3, PREVIEW_TIMEOUT_MS, "图片加载");
+      await withTimeout(loaded3, PREVIEW_TIMEOUT_MS, "图片加载");
     } catch (e) {
       return null;
     }
@@ -42007,7 +41958,7 @@ ${n.content.slice(0, 2e3)}
       video.src = src;
     });
     try {
-      await withTimeout3(meta, PREVIEW_TIMEOUT_MS, "视频元数据加载");
+      await withTimeout(meta, PREVIEW_TIMEOUT_MS, "视频元数据加载");
     } catch (e) {
       return null;
     }
@@ -42022,7 +41973,7 @@ ${n.content.slice(0, 2e3)}
       }
     });
     try {
-      await withTimeout3(seek, PREVIEW_TIMEOUT_MS, "视频抽帧");
+      await withTimeout(seek, PREVIEW_TIMEOUT_MS, "视频抽帧");
     } catch (e) {
       return null;
     }
@@ -42043,24 +41994,26 @@ ${n.content.slice(0, 2e3)}
   var PREVIEW_TIMEOUT_MS, PREVIEW_OMIT_SIZE, PREVIEW_OMIT_QUALITY;
   var init_preview = __esm({
     "src/encrypt/preview.ts"() {
+      init_http();
       PREVIEW_TIMEOUT_MS = 5e3;
       PREVIEW_OMIT_SIZE = 384;
       PREVIEW_OMIT_QUALITY = 0.5;
     }
   });
 
-  // src/encrypt/vault-data.ts
-  var PASSWORD_VAULT_CHANNEL, ENCRYPT_CHANGED_CHANNEL2, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
-  var init_vault_data = __esm({
-    "src/encrypt/vault-data.ts"() {
+  // src/password-vault/data.ts
+  var PASSWORD_VAULT_CHANNEL, ENCRYPT_CHANGED_CHANNEL2, DEFAULT_PW_CHARSET, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
+  var init_data12 = __esm({
+    "src/password-vault/data.ts"() {
       init_domain_bus();
       PASSWORD_VAULT_CHANNEL = "password-vault:changed";
       ENCRYPT_CHANGED_CHANNEL2 = "encrypt:changed";
+      DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
       VAULT_KIND = "password-vault";
       VAULT_PATH = "CONFIG/.ENCRYPT/passwords";
       VAULT_TITLE = "密码本";
       PasswordVaultDataManager = class {
-        /** 显式注入 SafeManager（ADR-0085：encrypt Controller 装配同一单例，避免域内循环依赖默认取单例） */
+        /** 显式注入 SafeManager（与保险库面板同一单例，共享解锁态/清单） */
         constructor(safe) {
           this.pwData = [];
           /** load 缓存（ticket 43 同款）：清单条目 + 原始密文字节；密文未变不重解密 */
@@ -42298,672 +42251,9 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
-  // src/encrypt/vault-pw-view.ts
-  function relTime3(iso) {
-    if (!iso) return "";
-    return formatRelativeTime(iso);
-  }
-  function dots(p) {
-    return "•".repeat(Math.min((p || "").length, 18));
-  }
-  function avatarHTML(platform, url, cls = "bz-pwv-avatar") {
-    const ch = (platform || "?").slice(0, 1);
-    return `<div class="${cls}" style="background:${colorOf(platform)}" data-pwv-avatar="1" data-url="${escAttr(url || "")}"><span>${escAttr(ch)}</span></div>`;
-  }
-  function hydratePwAvatars(scope) {
-    scope.querySelectorAll("[data-pwv-avatar]").forEach((box) => {
-      if (box.querySelector("img")) return;
-      const url = box.getAttribute("data-url");
-      let domain = null;
-      try {
-        domain = url ? new URL(url).hostname : null;
-      } catch (e) {
-        domain = null;
-      }
-      const img = createSiteIcon(domain, 64);
-      if (img) {
-        img.className = "bz-pwv-favicon";
-        img.removeAttribute("style");
-        img.addEventListener("load", () => {
-          const ch = box.querySelector("span");
-          if (ch) ch.style.display = "none";
-        });
-        box.appendChild(img);
-      }
-    });
-  }
-  var DEFAULT_PW_STATE, PW_REVEAL_AUTO_MASK_MS, DEFAULT_PW_CHARSET, VaultPwView, ICON_PATHS;
-  var init_vault_pw_view = __esm({
-    "src/encrypt/vault-pw-view.ts"() {
-      init_dom();
-      init_item_actions();
-      init_utils();
-      init_str();
-      init_ui();
-      DEFAULT_PW_STATE = {
-        asset: "pw",
-        view: "all",
-        searchKw: "",
-        selPlatform: null,
-        selAccount: null,
-        shownIds: {}
-      };
-      PW_REVEAL_AUTO_MASK_MS = 15e3;
-      DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
-      VaultPwView = class {
-        constructor(dm, host, cfg) {
-          /** 明文自动回遮计时器（按条目 id；手动隐藏/上锁即撤） */
-          this.revealTimers = {};
-          this.dm = dm;
-          this.host = host;
-          this.charset = cfg.charset || DEFAULT_PW_CHARSET;
-          this.length = parseInt(String(cfg.length)) || 16;
-        }
-        /** 收藏星内联图标（替代 ★ 文本符号；图标一律 lucide——ui-kit 手册铁律） */
-        starIc() {
-          return `<span class="star">${this.ic("star", 11)}</span>`;
-        }
-        /** 撤销单条明文自动回遮计时 */
-        clearRevealTimer(id) {
-          if (this.revealTimers[id]) {
-            clearTimeout(this.revealTimers[id]);
-            delete this.revealTimers[id];
-          }
-        }
-        /** 卸载清理：撤销全部明文自动回遮计时器（防插件禁用后定时器仍触发改 UI） */
-        disposeRevealTimers() {
-          for (const id of Object.keys(this.revealTimers)) {
-            clearTimeout(this.revealTimers[id]);
-            delete this.revealTimers[id];
-          }
-        }
-        // ---------- 桌面列表 ----------
-        /**
-         * 渲染密码资产桌面列表（平台聚合行 / 搜索展平行）到 container。
-         * row 点击 → onPick(platform 或 account)；右键/长按 → 统一抽屉（平台/账号动作）。
-         */
-        renderDeskList(container, st, onPick) {
-          var _a2;
-          container.innerHTML = "";
-          const kw = st.searchKw;
-          if (kw) {
-            const hits = this.dm.search(kw).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || "") * -1);
-            if (!hits.length) {
-              container.replaceChildren(this.emptyState("没有匹配的条目", "换个关键词，或清空搜索"));
-              return;
-            }
-            for (const d of hits) {
-              const r = document.createElement("div");
-              r.className = "bz-pwv-row" + (d.id === st.selAccount ? " on" : "");
-              r.innerHTML = `${avatarHTML(d.platform, d.url)}
-          <div class="mid"><div class="pl">${this.esc(d.platform)}${d.fav ? " " + this.starIc() : ""}</div><div class="ac">${this.esc(d.account || "(无账号)")}</div></div>
-          <div class="tm">${relTime3(d.createdAt)}</div>`;
-              r.addEventListener("click", () => onPick(d.platform, d.id));
-              this.attachAccountActions(r, d);
-              container.appendChild(r);
-            }
-            hydratePwAvatars(container);
-            return;
-          }
-          let plats = this.dm.platforms();
-          if (st.view === "fav") plats = plats.filter((p) => this.dm.hasFav(p.platform));
-          if (!plats.length) {
-            if (st.view === "fav") {
-              container.replaceChildren(this.emptyState("还没有收藏", "右键或长按条目可收藏，常用账号一目了然"));
-            } else {
-              container.replaceChildren(this.emptyState("保险库还没有密码", "收录第一条账号开始使用", { add: true }));
-              (_a2 = container.querySelector('[data-pwv="empty-add"]')) == null ? void 0 : _a2.addEventListener("click", () => this.host.openPwEntryDialog());
-            }
-            return;
-          }
-          for (const p of plats) {
-            const r = document.createElement("div");
-            r.className = "bz-pwv-plrow" + (p.platform === st.selPlatform ? " on" : "");
-            const recent2 = p.accounts[0];
-            const favStar = this.dm.hasFav(p.platform) ? " " + this.starIc() : "";
-            const countBadge = p.accounts.length > 1 ? `<span class="bz-pwv-cnt">${p.accounts.length}</span>` : "";
-            r.innerHTML = `${avatarHTML(p.platform, recent2 == null ? void 0 : recent2.url)}
-        <div class="mid"><div class="pl">${this.esc(p.platform)}${favStar}${countBadge}</div><div class="ac">${recent2 ? this.esc(recent2.account || "(无账号)") : ""}</div></div>
-        <div class="tm">${relTime3(recent2 && recent2.createdAt)}</div>`;
-            r.addEventListener("click", () => onPick(p.platform, null));
-            this.attachPlatformActions(r, p.platform);
-            container.appendChild(r);
-          }
-          hydratePwAvatars(container);
-        }
-        /** 渲染密码资产桌面详情区（平台账号卡流 / 搜索态单卡） */
-        renderDeskDetail(container, st) {
-          var _a2, _b2;
-          container.innerHTML = "";
-          const kw = st.searchKw;
-          let d;
-          if (kw) {
-            d = this.dm.pwData.find((x) => x.id === st.selAccount);
-            if (!d) {
-              container.replaceChildren(this.emptyState("选择一条结果", "点击左侧结果查看详情"));
-              return;
-            }
-          } else if (st.selPlatform) {
-            const accs = this.dm.accountsOf(st.selPlatform);
-            const filtered2 = st.view === "fav" ? accs.filter((x) => x.fav) : accs;
-            const first = accs[0];
-            const favStar = this.dm.hasFav(st.selPlatform) ? " " + this.starIc() : "";
-            container.innerHTML = `<div class="bz-pwv-dhead">
-        <div class="av big">${avatarHTML(st.selPlatform, first == null ? void 0 : first.url, "bz-pwv-avatar big")}</div>
-        <div class="ttl"><h2>${this.esc(st.selPlatform)}${favStar}</h2>
-          ${first && first.url ? `<a class="url" href="${this.esc(first.url)}" target="_blank" rel="noopener">${this.esc(first.url)} ↗</a>` : '<div class="url faint">无链接</div>'}</div>
-        <div class="acts">
-          <button class="bz-pwv-ic" data-pwv="plat-edit" title="编辑平台信息">${this.ic("pencil")}</button>
-        </div>
-      </div>
-      <div class="bz-pwv-accthead">
-        <div class="t">${filtered2.length} 个账号</div>
-        <button class="bz-pwv-addacct" data-pwv="plat-add">${this.ic("plus", 12)} 在该平台新增账号</button>
-      </div>
-      <div class="bz-pwv-accts"></div>`;
-            const acctsEl = container.querySelector(".bz-pwv-accts");
-            if (!filtered2.length) {
-              acctsEl.replaceChildren(this.emptyState("该平台暂无账号", "点上方「在该平台新增账号」录入"));
-            } else {
-              for (const x of filtered2) acctsEl.appendChild(this.buildAccountCard(x, st));
-            }
-            (_a2 = container.querySelector('[data-pwv="plat-edit"]')) == null ? void 0 : _a2.addEventListener("click", () => this.host.openPwPlatformEdit(st.selPlatform));
-            (_b2 = container.querySelector('[data-pwv="plat-add"]')) == null ? void 0 : _b2.addEventListener(
-              "click",
-              () => this.host.openPwEntryDialog(null, { platform: st.selPlatform || "", url: (first == null ? void 0 : first.url) || "" })
-            );
-            return;
-          } else {
-            container.replaceChildren(this.emptyState("选择一个平台", "左侧选择平台后，这里显示其全部账号", { icon: "key" }));
-            return;
-          }
-          container.appendChild(this.buildAccountCard(d, st, true));
-        }
-        /** 单张账号卡（详情区复用）：复制账号常驻 + 密码行（显隐/复制）+ 备注 + 创建时间 */
-        buildAccountCard(d, st, withHead = false) {
-          const card = document.createElement("div");
-          card.className = "bz-pwv-acctcard";
-          const shown = !!st.shownIds[d.id];
-          const accMeta = withHead ? `${this.esc(d.platform)}${d.fav ? " " + this.starIc() : ""}` : `${this.esc(d.account || "(无账号)")}${d.fav ? " " + this.starIc() : ""}`;
-          card.innerHTML = `<div class="accrow">
-      <div class="name">${accMeta}</div>
-      <button class="copyac bz-touch-target--lg" data-pwv="copy-ac">${this.ic("copy")} 复制账号</button>
-    </div>
-    <div class="pwrow">
-      <div class="pw ${shown ? "" : "mask"}">${shown ? this.esc(d.password) : dots(d.password)}</div>
-      <button class="mini" data-pwv="eye" title="${shown ? "隐藏密码" : "显示密码"}">${shown ? this.ic("eye-off") : this.ic("eye")}</button>
-      <button class="mini" data-pwv="copy-pw" title="复制密码">${this.ic("copy")}</button>
-    </div>
-    ${d.note ? `<div class="note">${this.esc(d.note)}</div>` : ""}
-    <div class="meta">创建于 ${this.esc(new Date(d.createdAt).toLocaleDateString("zh-CN"))}${d.url ? ' · <a href="' + this.esc(d.url) + '" target="_blank" rel="noopener">' + this.esc(d.url.replace("https://", "")) + " ↗</a>" : ""}</div>`;
-          card.querySelectorAll("[data-pwv]").forEach(
-            (b) => b.addEventListener("click", (e) => {
-              e.stopPropagation();
-              this.dispatchAccountAction(d, b.dataset.pwv, st);
-            })
-          );
-          this.attachAccountActions(card, d);
-          return card;
-        }
-        /** 账号动作分发（卡片按钮 + 抽屉共用） */
-        dispatchAccountAction(d, act, st) {
-          var _a2, _b2;
-          const t = (m, err = false) => this.host.toast(m, err);
-          if (act === "copy-ac") {
-            void this.host.copySensitive(d.account || "").then((ok) => ok ? t("账号已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true), () => t("复制失败，请手动复制", true));
-          } else if (act === "copy-pw") {
-            void this.host.copySensitive(d.password || "").then((ok) => ok ? t("密码已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true), () => t("复制失败，请手动复制", true));
-          } else if (act === "eye") {
-            const showing = !st.shownIds[d.id];
-            st.shownIds[d.id] = showing;
-            if (showing) {
-              this.clearRevealTimer(d.id);
-              this.revealTimers[d.id] = setTimeout(() => {
-                var _a3, _b3;
-                delete this.revealTimers[d.id];
-                if (st.shownIds[d.id]) {
-                  delete st.shownIds[d.id];
-                  (_b3 = (_a3 = this.host).onPwChanged) == null ? void 0 : _b3.call(_a3);
-                }
-              }, PW_REVEAL_AUTO_MASK_MS);
-            } else {
-              this.clearRevealTimer(d.id);
-            }
-            (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-          } else if (act === "edit") {
-            this.host.openPwEntryDialog(d);
-          } else if (act === "fav") {
-            void this.dm.toggleFav(d.id).then(() => {
-              var _a3, _b3;
-              return (_b3 = (_a3 = this.host).onPwChanged) == null ? void 0 : _b3.call(_a3);
-            }).catch((e) => this.failToast(e));
-          } else if (act === "del") {
-            this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", true, () => {
-              void this.dm.deleteItem(d.id).then(() => {
-                var _a3, _b3;
-                if (st.selAccount === d.id) st.selAccount = null;
-                (_b3 = (_a3 = this.host).onPwChanged) == null ? void 0 : _b3.call(_a3);
-                t(`已删除账号「${d.account}」`);
-              }).catch((e) => this.failToast(e));
-            });
-          }
-        }
-        /** E2：写动作失败统一提示 + 重渲染（数据层已回滚内存，按真实状态收敛） */
-        failToast(e) {
-          var _a2, _b2;
-          this.host.toast(`保存失败：${(e == null ? void 0 : e.message) || e}`, true);
-          (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-        }
-        /** 账号动作集（行卡右键/长按与移动账号详情页 ⋮ 共用） */
-        accountActions(d) {
-          return [
-            {
-              icon: "copy",
-              label: "复制账号",
-              onClick: () => void this.host.copySensitive(d.account || "").then((ok) => this.host.toast(ok ? "账号已复制（60 秒后自动清空）" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-            },
-            {
-              icon: "key",
-              label: "复制密码",
-              onClick: () => void this.host.copySensitive(d.password || "").then((ok) => this.host.toast(ok ? "密码已复制（60 秒后自动清空）" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-            },
-            {
-              icon: "star",
-              label: d.fav ? "取消收藏" : "收藏",
-              onClick: () => void this.dm.toggleFav(d.id).then(() => {
-                var _a2, _b2;
-                return (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-              }).catch((e) => this.failToast(e))
-            },
-            {
-              icon: "external-link",
-              label: "打开链接",
-              onClick: () => d.url ? this.host.openExternal(d.url) : this.host.toast("该条目没有链接", true)
-            },
-            { icon: "pencil", label: "编辑", onClick: () => this.host.openPwEntryDialog(d) },
-            {
-              icon: "trash-2",
-              label: "删除",
-              kind: "danger",
-              onClick: () => this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", true, () => {
-                void this.dm.deleteItem(d.id).then(() => {
-                  var _a2, _b2;
-                  (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-                  this.host.toast(`已删除账号「${d.account}」`);
-                }).catch((e) => this.failToast(e));
-              })
-            }
-          ];
-        }
-        attachAccountActions(el, d) {
-          attachItemActions(el, this.accountActions(d), { sheetHead: this.buildSheetHead(d) });
-        }
-        /** 移动端账号详情页 ⋮：直接开底部抽屉（抽屉手势挂行卡上，详情页按钮触达不了——E6） */
-        openAccountSheet(d) {
-          openItemSheet(this.accountActions(d), { sheetHead: this.buildSheetHead(d) });
-        }
-        /** 平台动作集（行卡右键/长按与移动平台详情页 ⋮ 共用） */
-        platformActions(platform) {
-          const accs = this.dm.accountsOf(platform);
-          const recent2 = accs[0];
-          const count = accs.length;
-          const actions = [
-            {
-              icon: "plus",
-              label: "在该平台新增账号",
-              onClick: () => this.host.openPwEntryDialog(null, { platform, url: (recent2 == null ? void 0 : recent2.url) || "" })
-            }
-          ];
-          if (recent2) {
-            actions.push({
-              icon: "copy",
-              label: "复制最近账号",
-              onClick: () => void this.host.copySensitive(recent2.account || "").then((ok) => this.host.toast(ok ? "最近账号已复制" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-            });
-            actions.push({
-              icon: "key",
-              label: "复制最近密码",
-              onClick: () => void this.host.copySensitive(recent2.password || "").then((ok) => this.host.toast(ok ? "最近密码已复制" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-            });
-          }
-          actions.push({ icon: "pencil", label: "编辑平台信息", onClick: () => this.host.openPwPlatformEdit(platform) });
-          actions.push({
-            icon: "trash-2",
-            label: "删除整个平台",
-            kind: "danger",
-            onClick: () => this.host.askConfirm("删除整个平台", `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, "删除", true, () => {
-              void this.dm.removePlatform(platform).then(() => {
-                var _a2, _b2;
-                (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-                this.host.toast(`已删除平台与 ${count} 个账号`);
-              }).catch((e) => this.failToast(e));
-            })
-          });
-          return actions;
-        }
-        platformSheetOpts(platform) {
-          const recent2 = this.dm.accountsOf(platform)[0];
-          return { sheetHead: this.buildSheetHead(recent2 != null ? recent2 : { account: platform, platform, createdAt: "" }) };
-        }
-        attachPlatformActions(el, platform) {
-          attachItemActions(el, this.platformActions(platform), this.platformSheetOpts(platform));
-        }
-        /** 移动端平台详情页 ⋮：直接开底部抽屉（E6 同款） */
-        openPlatformSheet(platform) {
-          openItemSheet(this.platformActions(platform), this.platformSheetOpts(platform));
-        }
-        // ---------- 移动端卡流 ----------
-        /** 渲染移动端密码卡流（平台卡；fav 过滤 view 由调用方传入 st） */
-        renderMobList(container, st, onOpenPlatform) {
-          var _a2;
-          container.innerHTML = "";
-          const kw = st.searchKw;
-          if (kw) {
-            const hits = this.dm.search(kw).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || "") * -1);
-            if (!hits.length) {
-              container.replaceChildren(this.emptyState("没有匹配的条目", "换个关键词试试"));
-              return;
-            }
-            for (const d of hits) {
-              const c = document.createElement("div");
-              c.className = "bz-pwv-mobcard";
-              c.innerHTML = `${avatarHTML(d.platform, d.url, "bz-pwv-avatar av")}
-          <div class="mid"><div class="a">${this.esc(d.platform)}${d.fav ? " " + this.starIc() : ""}</div><div class="b">${this.esc(d.account || "(无账号)")}</div></div>
-          <span class="go">${this.ic("chevron-right")}</span>`;
-              c.addEventListener("click", () => {
-                var _a3, _b2;
-                return (_b2 = (_a3 = this.host).openPwAccountPage) == null ? void 0 : _b2.call(_a3, d, st);
-              });
-              this.attachAccountActions(c, d);
-              container.appendChild(c);
-            }
-            hydratePwAvatars(container);
-            return;
-          }
-          let plats = this.dm.platforms();
-          if (st.view === "fav") plats = plats.filter((p) => this.dm.hasFav(p.platform));
-          if (!plats.length) {
-            if (st.view === "fav") {
-              container.replaceChildren(this.emptyState("还没有收藏", "右键或长按条目可收藏，常用账号一目了然"));
-            } else {
-              container.replaceChildren(this.emptyState("保险库还没有密码", "收录第一条账号开始使用", { add: true }));
-              (_a2 = container.querySelector('[data-pwv="empty-add"]')) == null ? void 0 : _a2.addEventListener("click", () => this.host.openPwEntryDialog());
-            }
-            return;
-          }
-          for (const p of plats) {
-            const recent2 = p.accounts[0];
-            const c = document.createElement("div");
-            c.className = "bz-pwv-mobcard";
-            const favStar = this.dm.hasFav(p.platform) ? " " + this.starIc() : "";
-            const cnt = p.accounts.length > 1 ? `<span class="cnt">${p.accounts.length}</span>` : "";
-            c.innerHTML = `${avatarHTML(p.platform, recent2 == null ? void 0 : recent2.url, "bz-pwv-avatar av")}
-        <div class="mid"><div class="a">${this.esc(p.platform)}${favStar}${cnt}</div><div class="b">${recent2 ? this.esc(recent2.account || "(无账号)") : ""}</div></div>
-        <span class="go">${this.ic("chevron-right")}</span>`;
-            c.addEventListener("click", () => onOpenPlatform(p));
-            this.attachPlatformActions(c, p.platform);
-            container.appendChild(c);
-          }
-          hydratePwAvatars(container);
-        }
-        /** 平台详情页（移动）HTML 注入 body；含账号卡与操作 */
-        renderMobPlatformPage(body, p, st) {
-          var _a2;
-          const accs = p.accounts;
-          const first = accs[0];
-          const favStar = this.dm.hasFav(p.platform) ? ' <span class="star">★</span>' : "";
-          body.innerHTML = `<div class="bz-pwv-mobplathead">
-      <div class="av big">${avatarHTML(p.platform, first == null ? void 0 : first.url, "bz-pwv-avatar big")}</div>
-      <div><div class="nm">${this.esc(p.platform)}${favStar}</div>
-        ${first && first.url ? `<a class="url" href="${this.esc(first.url)}" target="_blank" rel="noopener">${this.esc(first.url)} ↗</a>` : '<div class="url faint">无链接</div>'}</div>
-      <button class="bz-pwv-btn gold" data-pwv="plat-add">${this.ic("plus", 12)} 新增账号</button>
-    </div>
-    <div class="bz-pwv-accts"></div>`;
-          const acctsEl = body.querySelector(".bz-pwv-accts");
-          if (!accs.length) {
-            acctsEl.replaceChildren(this.emptyState("该平台暂无账号", "点上方「在该平台新增账号」录入"));
-          } else {
-            for (const d of accs) acctsEl.appendChild(this.buildAccountCard(d, st));
-          }
-          (_a2 = body.querySelector('[data-pwv="plat-add"]')) == null ? void 0 : _a2.addEventListener(
-            "click",
-            () => this.host.openPwEntryDialog(null, { platform: p.platform, url: (first == null ? void 0 : first.url) || "" })
-          );
-        }
-        // ---------- 抽屉头 ----------
-        buildSheetHead(d) {
-          const head = document.createElement("div");
-          head.className = "bz-item-sheet-entry";
-          const body = document.createElement("div");
-          body.style.cssText = "display:flex; align-items:flex-start; gap:10px;";
-          const emoji = document.createElement("span");
-          emoji.className = "bz-item-sheet-emoji";
-          emoji.textContent = "🔑";
-          body.appendChild(emoji);
-          const info = document.createElement("div");
-          info.style.cssText = "flex:1; min-width:0;";
-          const t = document.createElement("div");
-          t.className = "bz-item-sheet-title";
-          t.textContent = d.account || d.platform;
-          info.appendChild(t);
-          const s = document.createElement("div");
-          s.className = "bz-item-sheet-sub";
-          s.textContent = `${d.platform}${d.platform ? " · " : ""}${relTime3(d.createdAt)}`;
-          info.appendChild(s);
-          body.appendChild(info);
-          head.appendChild(body);
-          return head;
-        }
-        // ---------- lucide 图标 ----------
-        ic(name, size = 14) {
-          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
-        }
-        /** 空态（组件库 uiEmpty = .bz-empty 基线）；add = 附「新增密码」金色 CTA（金库主题色，域内样式） */
-        emptyState(title, desc, opts) {
-          const empty = uiEmpty((opts == null ? void 0 : opts.icon) ? { icon: opts.icon, title, desc } : { title, desc });
-          if (opts == null ? void 0 : opts.add) {
-            const add = document.createElement("button");
-            add.className = "bz-pwv-empty-add bz-touch-target--lg";
-            add.setAttribute("data-pwv", "empty-add");
-            add.innerHTML = `${this.ic("plus")} 新增密码`;
-            empty.appendChild(add);
-          }
-          return empty;
-        }
-        esc(s) {
-          return escapeHtml(String(s != null ? s : ""));
-        }
-      };
-      ICON_PATHS = {
-        copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-        key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3z"/>',
-        star: '<path d="M12 2 15 9l7 .8-5.3 4.7 1.6 6.9L12 17.8 5.7 21.4l1.6-6.9L2 9.8 9 9z"/>',
-        "external-link": '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
-        pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
-        "trash-2": '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>',
-        eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
-        "eye-off": '<path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 8 10 8a13.2 13.2 0 0 1-1.67 2.68M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 8 10 8a9.7 9.7 0 0 0 5.39-1.61M2 2l20 20"/>',
-        plus: '<path d="M12 5v14M5 12h14"/>',
-        "chevron-right": '<path d="m9 18 6-6-6-6"/>'
-      };
-    }
-  });
-
-  // src/encrypt/pw-picker.ts
-  function fuzzyScore(hay, query) {
-    if (!query) return 0;
-    const h = (hay || "").toLowerCase();
-    const q2 = query.toLowerCase();
-    const idx = h.indexOf(q2);
-    if (idx >= 0) return 1e3 - idx;
-    let hi = 0;
-    for (let qi = 0; qi < q2.length; qi++) {
-      hi = h.indexOf(q2[qi], hi);
-      if (hi === -1) return -1;
-      hi++;
-    }
-    return 100;
-  }
-  function fuzzyFilterEntries(entries, query) {
-    const hits = [];
-    for (const e of entries) {
-      const score = Math.max(
-        fuzzyScore(e.platform || "", query),
-        fuzzyScore(e.account || "", query),
-        fuzzyScore(e.note || "", query)
-      );
-      if (score >= 0) hits.push({ e, score });
-    }
-    hits.sort((a, b) => b.score - a.score || (b.e.createdAt || "").localeCompare(a.e.createdAt || ""));
-    return hits.map((h) => h.e);
-  }
-  function closePasswordQuickPicker() {
-    if (currentMask2) {
-      currentMask2.remove();
-      currentMask2 = null;
-    }
-    if (currentPopup2) {
-      currentPopup2.remove();
-      currentPopup2 = null;
-    }
-    if (currentHandle2) {
-      currentHandle2.unregister();
-      currentHandle2 = null;
-    }
-    if (focusTimer2 !== null) {
-      window.clearTimeout(focusTimer2);
-      focusTimer2 = null;
-    }
-  }
-  function openPasswordQuickPicker(entries, onPick) {
-    closePasswordQuickPicker();
-    const { mask, popup } = createOverlay({
-      maskId: "bz-encrypt-pw-picker-mask",
-      popupId: "bz-encrypt-pw-picker-popup",
-      width: "min(calc(100vw - 32px), 420px)",
-      maxWidth: 420,
-      onMaskClick: () => closePasswordQuickPicker()
-    });
-    currentMask2 = mask;
-    currentPopup2 = popup;
-    popup.classList.add("bz-encrypt-pwqp");
-    popup.style.height = "min(420px, 72vh)";
-    const head = document.createElement("div");
-    head.className = "bz-encrypt-pwqp-head";
-    const title = document.createElement("h3");
-    title.className = "bz-encrypt-pwqp-title";
-    title.textContent = "快速复制密码";
-    head.appendChild(title);
-    const search = document.createElement("input");
-    search.type = "text";
-    search.className = "bz-input bz-encrypt-pwqp-search";
-    search.placeholder = "搜索平台 / 账号…";
-    search.spellcheck = false;
-    search.setAttribute("aria-label", "搜索密码条目");
-    const listEl2 = document.createElement("div");
-    listEl2.className = "bz-encrypt-pwqp-list";
-    const state3 = { hits: [], active: 0 };
-    const setActive = (i) => {
-      var _a2;
-      if (!state3.hits.length) return;
-      state3.active = Math.max(0, Math.min(state3.hits.length - 1, i));
-      listEl2.querySelectorAll(".bz-popover-item").forEach((el, k) => {
-        el.classList.toggle("is-on", k === state3.active);
-      });
-      (_a2 = listEl2.querySelector(".bz-popover-item.is-on")) == null ? void 0 : _a2.scrollIntoView({ block: "nearest" });
-    };
-    const renderList2 = () => {
-      listEl2.innerHTML = "";
-      state3.hits = fuzzyFilterEntries(entries, search.value.trim());
-      state3.active = 0;
-      if (!state3.hits.length) {
-        const empty = document.createElement("div");
-        empty.className = "bz-popover-empty";
-        empty.textContent = "没有匹配的密码条目";
-        listEl2.appendChild(empty);
-        return;
-      }
-      const shown = state3.hits.slice(0, LIMIT);
-      shown.forEach((d, i) => {
-        const row = document.createElement("div");
-        row.className = "bz-popover-item" + (i === 0 ? " is-on" : "");
-        row.setAttribute("role", "option");
-        const mid = document.createElement("div");
-        mid.className = "mid";
-        const pl = document.createElement("div");
-        pl.className = "pl";
-        pl.textContent = d.platform || "(无平台)";
-        const ac = document.createElement("div");
-        ac.className = "ac";
-        ac.textContent = d.account || "(无账号)";
-        mid.appendChild(pl);
-        mid.appendChild(ac);
-        const key = document.createElement("span");
-        key.className = "key";
-        key.textContent = "Enter 复制";
-        row.appendChild(mid);
-        row.appendChild(key);
-        row.addEventListener("click", () => {
-          closePasswordQuickPicker();
-          onPick(d);
-        });
-        listEl2.appendChild(row);
-      });
-      if (state3.hits.length > LIMIT) {
-        const more = document.createElement("div");
-        more.className = "bz-popover-empty";
-        more.textContent = `已显示前 ${LIMIT} 条（共 ${state3.hits.length} 条命中），请输入关键词缩小范围`;
-        listEl2.appendChild(more);
-      }
-    };
-    search.addEventListener("input", () => renderList2());
-    search.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setActive(state3.active + 1);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setActive(state3.active - 1);
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        const d = state3.hits[state3.active];
-        if (d) {
-          closePasswordQuickPicker();
-          onPick(d);
-        }
-      }
-    });
-    popup.append(head, search, listEl2);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    currentHandle2 = escManager.register("bz-encrypt-pw-picker", {
-      isVisible: () => !!currentMask2,
-      close: () => closePasswordQuickPicker()
-    });
-    renderList2();
-    focusTimer2 = window.setTimeout(() => {
-      focusTimer2 = null;
-      if (mask.isConnected) search.focus();
-    }, 30);
-  }
-  var LIMIT, currentMask2, currentPopup2, currentHandle2, focusTimer2;
-  var init_pw_picker = __esm({
-    "src/encrypt/pw-picker.ts"() {
-      init_dom();
-      init_esc_manager();
-      LIMIT = 100;
-      currentMask2 = null;
-      currentPopup2 = null;
-      currentHandle2 = null;
-      focusTimer2 = null;
-    }
-  });
-
   // src/encrypt/vault-assets-view.ts
   function vIc(name, size = 14) {
-    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS2[name] || ""}</svg>`;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
   }
   function overviewHTML(stats) {
     const { counts, attachments, attBytes, recent: recent2, health } = stats;
@@ -42972,10 +42262,10 @@ ${n.content.slice(0, 2e3)}
     const recentRows = recent2.length ? recent2.map((r) => {
       const color = r.kind === "note" ? ASSET_COLOR.note : ASSET_COLOR.diary;
       const iconName = r.kind === "note" ? "file-lock" : "book-lock";
-      return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml(r.id)}"` : ""}>
+      return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
-            <div class="mid"><div class="a">${escapeHtml(r.title)}</div><div class="b">${escapeHtml(r.sub)}</div></div>
-            <span class="tm">${escapeHtml(r.time)}</span></div>`;
+            <div class="mid"><div class="a">${escapeHtml2(r.title)}</div><div class="b">${escapeHtml2(r.sub)}</div></div>
+            <span class="tm">${escapeHtml2(r.time)}</span></div>`;
     }).join("") : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc("lock", 28) + '</span><div class="bz-empty-title">还没有动态</div><div class="bz-empty-desc">笔记或日记入库后，最近动态在这里显示</div></div>';
     return `
   <div class="bz-vault-hero">
@@ -43019,19 +42309,19 @@ ${n.content.slice(0, 2e3)}
   function noteRowHTML(note, kind, active2) {
     const color = ASSET_COLOR[kind];
     const iconName = kind === "note" ? "file-lock" : "book-lock";
-    const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
+    const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml2(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
     return `
-    <div class="bz-vault-row ${active2 ? "on" : ""}" data-noteid="${escapeHtml(note.id)}" data-kind="${kind}">
+    <div class="bz-vault-row ${active2 ? "on" : ""}" data-noteid="${escapeHtml2(note.id)}" data-kind="${kind}">
       <span class="av" style="background:${color}">${vIc(iconName, 16)}</span>
-      <div class="mid"><div class="t1">${escapeHtml(note.title)}</div><div class="t2">${sub}</div></div>
-      <span class="tm">${escapeHtml(formatRelativeTime(note.createdAt))}</span>
+      <div class="mid"><div class="t1">${escapeHtml2(note.title)}</div><div class="t2">${sub}</div></div>
+      <span class="tm">${escapeHtml2(formatRelativeTime(note.createdAt))}</span>
     </div>`;
   }
   function noteDetailHTML(note, kind, plainPreview) {
     const color = ASSET_COLOR[kind];
     const iconName = kind === "note" ? "file-lock" : "book-lock";
-    const attLine = note.attachments.length ? `<span class="val" title="${escapeHtml(note.attachments.map((a) => a.path.split("/").pop() || a.path).join("、"))}">${note.attachments.length} 个</span>` : '<span class="val">无附件</span>';
-    const pathLine = kind === "note" ? `${escapeHtml(note.path)} · 已移出` : `${escapeHtml(note.path)} · 已还原该段`;
+    const attLine = note.attachments.length ? `<span class="val" title="${escapeHtml2(note.attachments.map((a) => a.path.split("/").pop() || a.path).join("、"))}">${note.attachments.length} 个</span>` : '<span class="val">无附件</span>';
+    const pathLine = kind === "note" ? `${escapeHtml2(note.path)} · 已移出` : `${escapeHtml2(note.path)} · 已还原该段`;
     const created = new Date(note.createdAt).toLocaleString("zh-CN", { hour12: false });
     const actionBtns = kind === "note" ? `<button class="bbtn teal" data-detail="preview">${vIc("eye", 14)} 解密预览</button>
          <button class="bbtn" data-detail="restore">${vIc("download", 14)} 取出还原</button>
@@ -43041,26 +42331,25 @@ ${n.content.slice(0, 2e3)}
     return `
     <div class="bz-vault-dhead">
       <span class="big" style="background:${color}">${vIc(iconName, 21)}</span>
-      <div class="ttl"><h2>${escapeHtml(note.title)}</h2><div class="url">${pathLine}</div></div>
+      <div class="ttl"><h2>${escapeHtml2(note.title)}</h2><div class="url">${pathLine}</div></div>
     </div>
     <div class="bz-vault-dcontent">
       ${kind === "note" ? `<div class="field"><div class="lab">附件镜像</div><div class="valrow">${attLine}</div></div>
-           <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>
-           <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>` : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml(plainPreview).replace(/\n/g, "<br>") : "（未解密预览）"}</div></div>
-           <div class="field"><div class="lab">加密于</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>`}
+           <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml2(created)}</span></div></div>
+           <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>` : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml2(plainPreview).replace(/\n/g, "<br>") : "（未解密预览）"}</div></div>
+           <div class="field"><div class="lab">加密于</div><div class="valrow"><span class="val">${escapeHtml2(created)}</span></div></div>`}
       <div class="bigbtns">${actionBtns}</div>
     </div>`;
   }
-  var ASSET_COLOR, ICON_PATHS2;
+  var ASSET_COLOR, ICON_PATHS;
   var init_vault_assets_view = __esm({
     "src/encrypt/vault-assets-view.ts"() {
       init_utils();
       ASSET_COLOR = {
-        pw: "var(--bz-brand)",
         note: "#2e7d68",
         diary: "#5a63a8"
       };
-      ICON_PATHS2 = {
+      ICON_PATHS = {
         lock: '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
         "lock-open": '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 7.9-.9"/>',
         key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3z"/>',
@@ -43291,25 +42580,10 @@ ${n.content.slice(0, 2e3)}
     findSharedAttachmentPaths: () => findSharedAttachmentPaths,
     kindOf: () => kindOf,
     mimeOf: () => mimeOf,
-    passwordStrength: () => passwordStrength,
-    pwStrengthLabel: () => pwStrengthLabel,
     truncateName: () => truncateName
   });
   function statusbarHtml(unlocked) {
     return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
-  }
-  function passwordStrength(pw) {
-    if (!pw) return "weak";
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (pw.length >= 12) score++;
-    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
-    if (/\d/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-    return score <= 2 ? "weak" : score <= 4 ? "mid" : "strong";
-  }
-  function pwStrengthLabel(s) {
-    return s === "weak" ? "弱" : s === "mid" ? "中" : "强";
   }
   function collectNoteAttachments(content, embedLinks, vaultFiles) {
     const refs = /* @__PURE__ */ new Set();
@@ -43479,7 +42753,7 @@ ${n.content.slice(0, 2e3)}
   }
   function mediaHtml(a, dataUrl) {
     if (!a) return "";
-    const alt = escapeHtml(a.path || "");
+    const alt = escapeHtml2(a.path || "");
     const key = encodeURIComponent(a.path);
     const kindLabel = a.kind === "video" ? "视频" : "图";
     let inner;
@@ -43602,9 +42876,7 @@ ${n.content.slice(0, 2e3)}
       init_settings_common();
       init_data11();
       init_preview();
-      init_vault_data();
-      init_vault_pw_view();
-      init_pw_picker();
+      init_data12();
       init_vault_assets_view();
       init_lock_screen();
       init_lock_stats();
@@ -43664,11 +42936,11 @@ ${n.content.slice(0, 2e3)}
           this.unlockFailStreak = 0;
           /** 当前冷却截止时间戳（ms）；早于此的尝试被拒绝并提示剩余等待 */
           this.unlockCooldownUntil = 0;
-          /** 搜索防抖计时器 */
-          this.searchTimer = null;
-          /** 密码资产状态（列表筛选/选中/显隐） */
-          this.pwState = { ...DEFAULT_PW_STATE };
-          /** 当前资产视图（概览/密码/笔记/日记） */
+          /** 搜索防抖（180ms 尾触；issue 365 收编 core debounce，原手写无 teardown 取消路径） */
+          this.searchDebounced = debounce(() => this.renderAll(), 180);
+          /** 列表搜索关键词（笔记列表头搜索框 / 移动端常驻框共用；防抖后触发重绘） */
+          this.searchKw = "";
+          /** 当前资产视图（概览/笔记/日记） */
           this.asset = "overview";
           /** 加密日记详情临时明文缓存（渲染详情时惰性解密） */
           this._diaryPlain = {};
@@ -43685,32 +42957,9 @@ ${n.content.slice(0, 2e3)}
           /** 解锁屏统计快照（会话内缓存；冷启动回落 lock-stats.json 上次快照，见 core/lock-stats） */
           this.lockStatsCache = {};
           this._selNoteId = null;
-          this._pwEditingId = null;
-          /** 同平台+账号查重命中后的放行标志（同一弹窗会话内再点一次保存即放行） */
-          this._pwDupConfirmed = false;
-          /** 弹窗内联动刷新（强度提示等）；ensurePwDialog 首建时注入 */
-          this.pwDlgSyncUi = null;
-          this.pwDlg = null;
-          /** 密码添加/编辑弹窗的 ESC 层（E7：弹窗可见时 ESC 只关弹窗，不穿透关掉主面板） */
-          this.pwDlgEsc = null;
           this.dataManager = dataManager3;
           this.config = config;
           this.pwDataManager = pwDataManager || new PasswordVaultDataManager(dataManager3);
-          this.pwView = new VaultPwView(
-            this.pwDataManager,
-            {
-              toast: (m, err) => this.toast(m, err),
-              openPwEntryDialog: (edit, prefill) => this.openPwEntryDialog(edit, prefill),
-              openPwPlatformEdit: (p) => this.openPwPlatformEdit(p),
-              askConfirm: (t, m, okLabel, danger, cb) => this.askConfirm(t, m, okLabel, danger, cb),
-              copySensitive: (t) => this.copySensitive(t),
-              openExternal: (u) => this.openExternal(u),
-              onPwChanged: () => this.renderAll(),
-              openPwAccountPage: (d, st) => this.openPwAccountPage(d, st)
-            },
-            { charset: config.pwCharset, length: config.pwLength }
-          );
-          this.pwDataManager.onExternalChange = () => this.renderAll();
         }
         /** 解锁成功后复位节流状态 */
         resetUnlockThrottle() {
@@ -43725,8 +42974,8 @@ ${n.content.slice(0, 2e3)}
           return delaySec;
         }
         /**
-         * 桌面搜索框（评审 2026-09-12：从顶栏下移到「全部加密笔记 N 项」之上）——它现在随
-         * 列表头一起渲染，故不再缓存引用而按需现取；null = 当前资产没有列表头（概览 / 密码）。
+         * 桌面搜索框（评审 2026-09-12：从顶栏下移到列表头里）——它现在随
+         * 列表头一起渲染，故不再缓存引用而按需现取；null = 当前资产没有列表头（概览）。
          */
         get deskSearch() {
           var _a2, _b2;
@@ -43814,7 +43063,7 @@ ${n.content.slice(0, 2e3)}
             if (a === "pw" || a === "diary") a = "note";
             this.asset = a;
             lastVisitedAsset = a;
-            this.pwState.searchKw = "";
+            this.searchKw = "";
             const headSearch = this.deskSearch;
             if (headSearch) headSearch.value = "";
             this.mob.search.value = "";
@@ -43856,15 +43105,14 @@ ${n.content.slice(0, 2e3)}
               this.asset = "note";
               lastVisitedAsset = "note";
             }
-            this.pwState.searchKw = v;
+            this.searchKw = v;
             if (isMob) {
               const deskSearch = this.deskSearch;
               if (deskSearch) deskSearch.value = v;
             } else {
               this.mob.search.value = v;
             }
-            if (this.searchTimer) clearTimeout(this.searchTimer);
-            this.searchTimer = setTimeout(() => this.renderAll(), 180);
+            this.searchDebounced();
           });
         }
         createMask(id) {
@@ -43898,7 +43146,6 @@ ${n.content.slice(0, 2e3)}
           if (this.isSecurityMode()) {
             this.dataManager.lock();
             this.pwDataManager.lock();
-            this.pwState = { ...DEFAULT_PW_STATE };
             this._selNoteId = null;
             this._diaryPlain = {};
             if (!suppressAutoLockNotice) this.noticeAutoLock();
@@ -43984,7 +43231,7 @@ ${n.content.slice(0, 2e3)}
         ensureHealthElements() {
           const mask = document.createElement("div");
           mask.id = "bz-encrypt-health-mask";
-          mask.className = "bz-encrypt-health-mask";
+          mask.className = "bz-overlay-mask bz-encrypt-health-mask";
           mask.style.display = "none";
           const popup = document.createElement("div");
           popup.id = "bz-encrypt-health-popup";
@@ -44390,7 +43637,6 @@ ${n.content.slice(0, 2e3)}
         counts() {
           const notes = this.dataManager.manifest.notes;
           return {
-            pw: this.pwDataManager.pwData.length,
             note: notes.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault").length,
             diary: notes.filter((n) => n.kind === "diary-entry").length
           };
@@ -44493,21 +43739,13 @@ ${n.content.slice(0, 2e3)}
         }
         /** 桌面区渲染（中列表 + 右详情按资产分发） */
         renderDesktop() {
-          var _a2;
           const keepHead = this._lastRenderedAsset === this.asset && (this.asset === "note" || this.asset === "diary");
           if (!keepHead) this.desk.list.innerHTML = "";
           this.desk.detail.innerHTML = "";
-          if (this.asset !== "pw") {
-            (_a2 = this.popup.querySelector('.bz-vault-bar [data-act="pw-fav"]')) == null ? void 0 : _a2.remove();
-          }
           this.setOverviewSpan(this.asset === "overview");
           this._lastRenderedAsset = this.asset;
           if (this.asset === "overview") {
             this.renderDeskOverview();
-            return;
-          }
-          if (this.asset === "pw") {
-            this.renderDeskPw();
             return;
           }
           const kind = this.asset;
@@ -44551,47 +43789,6 @@ ${n.content.slice(0, 2e3)}
           );
           detail.appendChild(area);
         }
-        /** 桌面密码资产：平台列表 + 账号详情 + 顶栏收藏切换钮 */
-        renderDeskPw() {
-          var _a2;
-          const list = this.desk.list;
-          const detail = this.desk.detail;
-          const kw = this.pwState.searchKw;
-          this.setVaultHead("密码");
-          const barActs = this.popup.querySelector(".bz-vault-bar");
-          const favBtn = barActs.querySelector('[data-act="pw-fav"]');
-          const favIcon = vIc(this.pwState.view === "fav" ? "star" : "star-outline", 15);
-          const favTitle = this.pwState.view === "fav" ? "全部平台" : "只看收藏";
-          if (!favBtn) {
-            const btn = document.createElement("button");
-            btn.className = "bz-vault-ic";
-            btn.dataset.act = "pw-fav";
-            btn.title = favTitle;
-            btn.innerHTML = favIcon;
-            barActs.appendChild(btn);
-            btn.addEventListener("click", () => {
-              this.pwState.view = this.pwState.view === "fav" ? "all" : "fav";
-              this.renderAll();
-            });
-          } else {
-            favBtn.title = favTitle;
-            favBtn.innerHTML = favIcon;
-          }
-          const listHead = document.createElement("div");
-          listHead.className = "bz-vault-lc-head";
-          listHead.innerHTML = `<div class="t">平台</div><button class="lc-add" data-lc-add="pw" title="新增密码">${vIc("plus", 13)} 新增密码</button>`;
-          (_a2 = listHead.querySelector('[data-lc-add="pw"]')) == null ? void 0 : _a2.addEventListener("click", () => this.openPwEntryDialog());
-          const listBody = document.createElement("div");
-          listBody.className = "bz-vault-lc-body";
-          list.appendChild(listHead);
-          list.appendChild(listBody);
-          this.pwView.renderDeskList(listBody, this.pwState, (p, a) => {
-            this.pwState.selPlatform = p;
-            this.pwState.selAccount = a;
-            this.renderDesktop();
-          });
-          this.pwView.renderDeskDetail(detail, this.pwState);
-        }
         /** 桌面加密笔记/日记：列表 + 详情（异步解密日记正文预览） */
         /**
          * 桌面加密笔记/日记：列表 + 详情。
@@ -44601,7 +43798,7 @@ ${n.content.slice(0, 2e3)}
         renderDeskNotes(kind, keepHead = false) {
           const list = this.desk.list;
           const detail = this.desk.detail;
-          const kw = this.pwState.searchKw;
+          const kw = this.searchKw;
           let notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
           this.setVaultHead(kind === "note" ? "笔记" : "加密日记");
           if (kw) {
@@ -44753,231 +43950,15 @@ ${n.content.slice(0, 2e3)}
           head.appendChild(body);
           return head;
         }
-        // ---------- 密码条目弹窗（添加/编辑/平台编辑/确认/toast） ----------
-        /** 密码添加/编辑弹窗（移动端复用桌面弹窗 DOM；双端共享 pwDataManager） */
-        openPwEntryDialog(edit, prefill) {
-          var _a2;
-          if (!this.dataManager.unlocked) {
-            notice("请先解锁保险库");
-            return;
-          }
-          this._pwEditingId = edit ? edit.id : null;
-          this._pwDupConfirmed = false;
-          const dlg = this.ensurePwDialog();
-          const title = dlg.querySelector(".bz-vault-dlg h3");
-          title.textContent = edit ? "编辑密码条目" : "添加密码条目";
-          const fields = ["platform", "url", "account", "password", "note"];
-          fields.forEach((f) => {
-            const input = dlg.querySelector(`[data-f="${f}"]`);
-            input.value = edit ? edit[f] || "" : prefill && f !== "password" ? prefill[f] || "" : "";
-          });
-          const pw = edit ? edit.password : this.generatePassword();
-          const pwInput = dlg.querySelector('[data-f="password"]');
-          pwInput.value = pw;
-          pwInput.type = "password";
-          const eyeBtn = dlg.querySelector('[data-pwv-dlg="eye"]');
-          if (eyeBtn) {
-            eyeBtn.title = "显示密码";
-            eyeBtn.innerHTML = vIc("eye", 14);
-          }
-          dlg.querySelector("[data-f-err]").textContent = "";
-          (_a2 = this.pwDlgSyncUi) == null ? void 0 : _a2.call(this);
-          this.openPwDialogOverlay(true);
-          const first = dlg.querySelector('[data-f="platform"]');
-          first == null ? void 0 : first.focus();
-        }
-        ensurePwDialog() {
-          var _a2, _b2, _c, _d, _e;
-          if (this.pwDlg && document.body.contains(this.pwDlg)) return this.pwDlg;
-          const dlg = document.createElement("div");
-          dlg.className = "bz-vault-dlg-mask";
-          dlg.innerHTML = `
-      <div class="bz-vault-dlg">
-        <h3>添加密码条目</h3>
-        <div class="sub">带 * 为必填 · 平台与账号密码不可为空</div>
-        <label>平台 *</label><input data-f="platform" placeholder="如 GitHub">
-        <label>链接（可选）</label><input data-f="url" placeholder="https://…">
-        <label>账号 *</label><input data-f="account" placeholder="登录账号 / 邮箱 / 手机号">
-        <label>密码 *</label>
-        <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="gen" data-pwv-dlg="gen">生成</button><button class="mini" data-pwv-dlg="eye" type="button" title="显示密码">${vIc("eye", 14)}</button></div>
-        <div class="pwstrength" data-pw-strength></div>
-        <label>备注（可选）</label><input data-f="note" placeholder="备用信息…">
-        <div class="err" data-f-err></div>
-        <div class="btns"><button class="cancel" data-pwv-dlg="cancel">取消</button><button class="save" data-pwv-dlg="save">保存</button></div>
-      </div>`;
-          const errEl = dlg.querySelector("[data-f-err]");
-          const get = (f) => dlg.querySelector(`[data-f="${f}"]`).value.trim();
-          (_a2 = dlg.querySelector('[data-pwv-dlg="eye"]')) == null ? void 0 : _a2.addEventListener("click", () => {
-            const input = dlg.querySelector('[data-f="password"]');
-            const show = input.type === "password";
-            input.type = show ? "text" : "password";
-            const eye = dlg.querySelector('[data-pwv-dlg="eye"]');
-            eye.title = show ? "隐藏密码" : "显示密码";
-            eye.innerHTML = vIc(show ? "eye-off" : "eye", 14);
-            input.focus();
-          });
-          const strengthEl = dlg.querySelector("[data-pw-strength]");
-          const syncStrength = () => {
-            const v = dlg.querySelector('[data-f="password"]').value;
-            if (!v) {
-              strengthEl.textContent = "";
-              delete strengthEl.dataset.level;
-              return;
-            }
-            const s = passwordStrength(v);
-            strengthEl.textContent = "强度：" + pwStrengthLabel(s);
-            strengthEl.dataset.level = s;
-          };
-          this.pwDlgSyncUi = syncStrength;
-          dlg.querySelector('[data-f="password"]').addEventListener("input", syncStrength);
-          const flow = [
-            ["platform", "url"],
-            ["url", "account"],
-            ["account", "password"],
-            ["password", "note"],
-            ["note", null]
-          ];
-          for (const [f, next] of flow) {
-            (_b2 = dlg.querySelector(`[data-f="${f}"]`)) == null ? void 0 : _b2.addEventListener("keydown", (e) => {
-              var _a3, _b3;
-              if (e.key !== "Enter") return;
-              e.preventDefault();
-              if (next) (_a3 = dlg.querySelector(`[data-f="${next}"]`)) == null ? void 0 : _a3.focus();
-              else (_b3 = dlg.querySelector('[data-pwv-dlg="save"]')) == null ? void 0 : _b3.click();
-            });
-          }
-          dlg.addEventListener("click", (e) => {
-            if (e.target === dlg) this.openPwDialogOverlay(false);
-          });
-          (_c = dlg.querySelector('[data-pwv-dlg="gen"]')) == null ? void 0 : _c.addEventListener("click", () => {
-            dlg.querySelector('[data-f="password"]').value = this.generatePassword();
-            syncStrength();
-            this.toast("已生成新密码");
-          });
-          (_d = dlg.querySelector('[data-pwv-dlg="cancel"]')) == null ? void 0 : _d.addEventListener("click", () => this.openPwDialogOverlay(false));
-          (_e = dlg.querySelector('[data-pwv-dlg="save"]')) == null ? void 0 : _e.addEventListener("click", async () => {
-            var _a3, _b3;
-            const platform = get("platform");
-            if (!platform) {
-              errEl.textContent = "平台不能为空";
-              return;
-            }
-            if (!get("account") || !get("password")) {
-              errEl.textContent = "账号和密码不能为空";
-              return;
-            }
-            const account = get("account");
-            const dup = this.pwDataManager.pwData.find(
-              (d) => d.id !== this._pwEditingId && (d.platform || "").trim() === platform && (d.account || "").trim() === account
-            );
-            if (dup && !this._pwDupConfirmed) {
-              this._pwDupConfirmed = true;
-              errEl.textContent = `该平台已有同名账号（${dup.account || account}），再次点击保存将放行`;
-              return;
-            }
-            const item = { platform, url: get("url"), account, password: get("password"), note: get("note") };
-            try {
-              if (this._pwEditingId) {
-                await this.pwDataManager.updateItem(this._pwEditingId, item);
-                this.pwState.selPlatform = item.platform;
-                this.pwState.selAccount = this._pwEditingId;
-              } else {
-                await this.pwDataManager.addItem(item);
-                this.pwState.selPlatform = item.platform;
-                this.pwState.selAccount = (_b3 = (_a3 = this.pwDataManager.pwData[0]) == null ? void 0 : _a3.id) != null ? _b3 : null;
-              }
-              this.openPwDialogOverlay(false);
-              this.renderAll();
-              this.toast("已保存");
-            } catch (e) {
-              errEl.textContent = "保存失败：" + e.message;
-            }
-          });
-          document.body.appendChild(dlg);
-          this.pwDlg = dlg;
-          return dlg;
-        }
-        openPwDialogOverlay(open) {
-          var _a2;
-          if (!this.pwDlg) return;
-          if (open) {
-            topifyZ(this.pwDlg);
-            if (!this.pwDlgEsc) {
-              this.pwDlgEsc = escManager.register("bz-vault-pw-dlg", {
-                isVisible: () => !!this.pwDlg && this.pwDlg.style.display !== "none" && document.body.contains(this.pwDlg),
-                close: () => this.openPwDialogOverlay(false)
-              });
-            }
-          } else {
-            (_a2 = this.pwDlgEsc) == null ? void 0 : _a2.unregister();
-            this.pwDlgEsc = null;
-          }
-          this.pwDlg.style.display = open ? "flex" : "none";
-        }
-        /** 卸载辅助：关密码弹窗（注销 ESC 层）并移除 body 上无 id 的弹窗遮罩（G：cleanup 此前不清） */
+        /** 卸载辅助：移除 body 上无 id 的弹窗遮罩（平台编辑等一次性弹层；G：cleanup 此前不清） */
         closeAllDialogs() {
-          this.openPwDialogOverlay(false);
           document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el) => el.remove());
         }
-        /** 平台信息编辑弹窗（独立自绘） */
-        openPwPlatformEdit(platform) {
-          var _a2, _b2;
-          const accs = this.pwDataManager.accountsOf(platform);
-          const d = accs[0];
-          const mask = document.createElement("div");
-          mask.className = "bz-vault-dlg-mask";
-          topifyZ(mask);
-          mask.style.display = "flex";
-          mask.innerHTML = `
-      <div class="bz-vault-dlg">
-        <h3>编辑平台 · ${escapeHtml(platform)}</h3>
-        <div class="sub">改名/改链接将应用到该平台全部账号</div>
-        <label>平台名 *</label><input data-pf="platform" value="${escapeHtml(platform === "(无平台)" ? "" : platform)}">
-        <label>链接（可选）</label><input data-pf="url" value="${escapeHtml((d == null ? void 0 : d.url) || "")}">
-        <div class="err" data-pf-err></div>
-        <div class="btns"><button class="cancel" data-pf-act="cancel">取消</button><button class="save" data-pf-act="save">保存</button></div>
-      </div>`;
-          const errEl = mask.querySelector("[data-pf-err]");
-          let escH = null;
-          const closePf = () => {
-            escH == null ? void 0 : escH.unregister();
-            escH = null;
-            mask.remove();
-          };
-          escH = escManager.register("bz-vault-pw-platform-edit", {
-            isVisible: () => mask.isConnected,
-            close: closePf
-          });
-          mask.addEventListener("click", (e) => {
-            if (e.target === mask) closePf();
-          });
-          (_a2 = mask.querySelector('[data-pf-act="cancel"]')) == null ? void 0 : _a2.addEventListener("click", () => closePf());
-          (_b2 = mask.querySelector('[data-pf-act="save"]')) == null ? void 0 : _b2.addEventListener("click", async () => {
-            const name = mask.querySelector('[data-pf="platform"]').value.trim();
-            if (!name) {
-              errEl.textContent = "平台名不能为空";
-              return;
-            }
-            const url = mask.querySelector('[data-pf="url"]').value;
-            try {
-              await this.pwDataManager.updatePlatform(platform, { platform: name, url });
-              this.pwState.selPlatform = name;
-              this.pwState.selAccount = null;
-              closePf();
-              this.renderAll();
-              this.toast("平台信息已更新");
-            } catch (e) {
-              errEl.textContent = "保存失败：" + e.message;
-            }
-          });
-          document.body.appendChild(mask);
-        }
         /**
-         * 流程确认框（取消 / 确认 cta）：密码资产与笔记/日记动作共用。
+         * 流程确认框（取消 / 确认 cta）：笔记/日记动作共用。
          * `danger`（issue 291 评审补）= 主动作是删除/销毁类 → 弹窗挂 `.bz-flow-dialog--danger`，
          * 主按钮降为中性底 + 红字（设计手册 §9/§10）。默认 false（还原等非破坏动作保持高亮）。
-         * 注意与 password-vault 的 `askConfirm` 区别：那个是域内自绘确认（自带 .danger 按钮样式），
-         * 本方法走 core 流程框，危险语义必须显式传进来。
+         * password-vault 的 `askConfirm` 已随 issue 365 一并收编同一 core 流程框（两域同源）。
          */
         askConfirm(title, message, okLabel, danger, onYes) {
           void openFlowDialog({
@@ -44991,54 +43972,8 @@ ${n.content.slice(0, 2e3)}
             if (v === "ok") onYes();
           });
         }
-        /** 敏感文本复制 + 60s 自动清空（密码资产与日记共用） */
-        async copySensitive(text) {
-          try {
-            await copySensitiveText(text);
-            return true;
-          } catch (e) {
-            try {
-              const ta = document.createElement("textarea");
-              ta.value = text;
-              ta.style.cssText = "position:fixed;opacity:0";
-              document.body.appendChild(ta);
-              ta.select();
-              const ok = document.execCommand("copy");
-              ta.remove();
-              if (ok) armClipboardClear();
-              return ok;
-            } catch (e2) {
-              return false;
-            }
-          }
-        }
-        openExternal(url) {
-          try {
-            const w = window;
-            const electron = w.require && w.require("electron");
-            if (electron && electron.shell) {
-              electron.shell.openExternal(url);
-              return;
-            }
-          } catch (e) {
-          }
-          window.open(url, "_blank");
-        }
-        generatePassword() {
-          const length = parseInt(this.config.pwLength || "") || 16;
-          const charset = this.config.pwCharset || DEFAULT_PW_CHARSET;
-          return secureRandomPassword(length, charset);
-        }
-        genAndToast() {
-          if (!this.dataManager.unlocked) {
-            notice("请先解锁保险库");
-            return;
-          }
-          void this.copySensitive(this.generatePassword()).then((ok) => {
-            if (ok) this.toast("新密码已生成并复制（60 秒后自动清空），可「新增密码」粘贴使用");
-            else this.toast("生成失败，请重试", true);
-          });
-        }
+        // 敏感文本复制（含降级兜底）+ 60s 自动清空：收口 core/utils copySensitiveWithFallback
+        // （issue 365：与 password-vault 两份逐字雷同的兜底实现一并删除，两域消费同一实现）。
         setAssetFromNav(a) {
           if (a === "pw" || a === "diary") a = "note";
           this.asset = a;
@@ -45077,10 +44012,8 @@ ${n.content.slice(0, 2e3)}
         lockNow(silent = false) {
           this.dataManager.lock();
           this.pwDataManager.lock();
-          this.pwState = { ...DEFAULT_PW_STATE };
           this._selNoteId = null;
           this._diaryPlain = {};
-          this._pwEditingId = null;
           this.asset = "overview";
           this.lastHealth = null;
           this.unlockedAt = null;
@@ -45115,16 +44048,9 @@ ${n.content.slice(0, 2e3)}
             body.appendChild(area);
             return;
           }
-          if (this.asset === "pw") {
-            const card = document.createElement("div");
-            card.className = "bz-vault-mob-pwlist";
-            this.pwView.renderMobList(card, this.pwState, (p) => this.openPwMobPage(p));
-            body.appendChild(card);
-            return;
-          }
           const kind = this.asset;
           const notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-          const kw = this.pwState.searchKw;
+          const kw = this.searchKw;
           const filtered2 = kw ? notes.filter((n) => (n.title || "").toLowerCase().includes(kw.toLowerCase()) || (n.path || "").toLowerCase().includes(kw.toLowerCase())) : notes;
           if (!filtered2.length) {
             body.replaceChildren(
@@ -45179,26 +44105,10 @@ ${n.content.slice(0, 2e3)}
           if (kind === "diary") {
             void this.dataManager.decryptNoteBody(note).then((t) => {
               const pre = body.querySelector(".note.pre");
-              if (pre && t !== null) pre.innerHTML = escapeHtml(t).replace(/\n/g, "<br>");
+              if (pre && t !== null) pre.innerHTML = escapeHtml2(t).replace(/\n/g, "<br>");
             }).catch(() => {
             });
           }
-        }
-        openPwMobPage(p) {
-          var _a2, _b2;
-          const { page } = this.createMobPage(escapeHtml(p.platform));
-          this.pwView.renderMobPlatformPage(page.querySelector(".body"), p, this.pwState);
-          (_a2 = page.querySelector("[data-mob-back]")) == null ? void 0 : _a2.addEventListener("click", () => page.remove());
-          (_b2 = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b2.addEventListener("click", () => this.pwView.openPlatformSheet(p.platform));
-          this.mob.body.appendChild(page);
-        }
-        openPwAccountPage(d, st) {
-          var _a2, _b2;
-          const { page, body } = this.createMobPage(escapeHtml(d.platform));
-          this.pwView.renderDeskDetail(body, { ...st, selPlatform: d.platform, selAccount: d.id });
-          (_a2 = page.querySelector("[data-mob-back]")) == null ? void 0 : _a2.addEventListener("click", () => page.remove());
-          (_b2 = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b2.addEventListener("click", () => this.pwView.openAccountSheet(d));
-          this.mob.body.appendChild(page);
         }
         /** 轻量 toast（保险库窗口内） */
         toast(msg, isErr = false) {
@@ -45317,7 +44227,7 @@ ${n.content.slice(0, 2e3)}
               this.toast("正文解密失败", true);
               return;
             }
-            void this.copySensitive(t).then((ok) => this.toast(ok ? "正文已复制（60 秒后自动清空）" : "复制失败", !ok));
+            void copySensitiveWithFallback(t).then((ok) => this.toast(ok ? "正文已复制（60 秒后自动清空）" : "复制失败", !ok));
           }).catch(() => this.toast("正文解密失败", true));
         }
         confirmDestroyDiary(note) {
@@ -45535,7 +44445,7 @@ ${n.content.slice(0, 2e3)}
             } else if (missing) {
               const im = document.createElement("img");
               im.className = "bz-encrypt-preview-media";
-              im.alt = escapeHtml(a.path || "");
+              im.alt = escapeHtml2(a.path || "");
               im.src = url;
               missing.replaceWith(im);
             }
@@ -45635,7 +44545,7 @@ ${n.content.slice(0, 2e3)}
           this.uiManager.ensureElements();
           this._initialized = true;
         }
-        /** 打开保险库主面板：解锁成功直落密码资产并聚焦搜索（快速取密路径）；
+        /** 打开保险库主面板：解锁成功直落加密笔记资产并聚焦搜索；
          *  已解锁直接打开则恢复上次停留资产（会话级记忆）。 */
         async openManager() {
           if (!this.dataManager.unlocked) {
@@ -45648,33 +44558,6 @@ ${n.content.slice(0, 2e3)}
             this.uiManager.show();
             this.uiManager.restoreLastAsset();
           }
-        }
-        /**
-         * 快速复制密码（命令 bz-encrypt-copy-password；不打开主面板）：
-         * 未解锁先弹主密码 → 轻量 fuzzy 选择器选条目 → 复制到剪贴板（60s 自动清空）。
-         */
-        async quickCopyPassword() {
-          if (!this.dataManager.unlocked) {
-            const ok = await this.uiManager.showPasswordDialog();
-            if (!ok) return;
-          }
-          try {
-            await this.uiManager.pwDataManager.load();
-          } catch (e) {
-          }
-          const entries = this.uiManager.pwDataManager.pwData;
-          if (!entries.length) {
-            notice("保险库还没有密码，打开面板后可新增");
-            return;
-          }
-          void openPasswordQuickPicker(entries, (d) => {
-            void this.uiManager.copySensitive(d.password).then((ok) => {
-              notice(
-                ok ? `已复制「${d.platform}」${d.account ? `（${d.account}）` : ""}的密码，60 秒后自动清空` : "复制失败，请手动复制",
-                ok ? "success" : "error"
-              );
-            });
-          });
         }
         /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始；共享附件原件保留（issue 338） */
         async confirmLockProceed(file, attCount, sharedCount = 0) {
@@ -45798,7 +44681,6 @@ ${n.content.slice(0, 2e3)}
           this.uiManager.closeAllDialogs();
           cancelClipboardClear();
           this.uiManager.stopSessionTimers();
-          this.uiManager.pwView.disposeRevealTimers();
           this.uiManager.pwDataManager.destroy();
           this.uiManager.mask = null;
           this.uiManager.popup = null;
@@ -46185,7 +45067,7 @@ ${n.content.slice(0, 2e3)}
     await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app }).write(data);
   }
   var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS2;
-  var init_data12 = __esm({
+  var init_data13 = __esm({
     "src/smartcat/data.ts"() {
       init_storage();
       init_config5();
@@ -46570,7 +45452,8 @@ ${n.content.slice(0, 2e3)}
     DEFAULT_SETTINGS: () => DEFAULT_SETTINGS,
     migrateAutoLinkSettings: () => migrateAutoLinkSettings,
     migrateMemoSettingKeys: () => migrateMemoSettingKeys,
-    migrateRetiredAIKeys: () => migrateRetiredAIKeys
+    migrateRetiredAIKeys: () => migrateRetiredAIKeys,
+    migrateRetiredFavoritesSortKey: () => migrateRetiredFavoritesSortKey
   });
   function migrateMemoSettingKeys(raw) {
     if (!raw || typeof raw !== "object") return false;
@@ -46590,6 +45473,13 @@ ${n.content.slice(0, 2e3)}
     const rec = raw;
     if (rec.aiContextOverrides === void 0) return false;
     delete rec.aiContextOverrides;
+    return true;
+  }
+  function migrateRetiredFavoritesSortKey(raw) {
+    if (!raw || typeof raw !== "object") return false;
+    const rec = raw;
+    if (rec.favoritesSortKey === void 0) return false;
+    delete rec.favoritesSortKey;
     return true;
   }
   function migrateAutoLinkSettings(raw) {
@@ -46819,7 +45709,6 @@ ${n.content.slice(0, 2e3)}
         homeDefaultDay: "today",
         homeTimelineTime: true,
         homeNextCards: true,
-        favoritesSortKey: "created",
         favoritesOpenFilter: "",
         favoritesLastFilter: "",
         favoritesDefaultSort: "new",
@@ -46994,12 +45883,12 @@ ${n.content.slice(0, 2e3)}
           });
         },
         smartcat: async () => {
-          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data12(), data_exports));
+          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data13(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui11(), ui_exports9));
           const app = getApp();
           const data = await loadSmartCatData2(app);
           const saveConfig = async (config) => {
-            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data12(), data_exports));
+            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data13(), data_exports));
             data.config = config;
             await saveSmartCatData2(app, data);
           };
@@ -47518,8 +46407,8 @@ ${n.content.slice(0, 2e3)}
     return ui;
   }
   async function ensureSettingsPanel(_app4) {
-    if (initialized7) return;
-    initialized7 = true;
+    if (initialized5) return;
+    initialized5 = true;
   }
   function openSettingsPanel(app, domainId) {
     void ensureSettingsPanel(app).then(() => getUI().open(domainId));
@@ -47527,13 +46416,13 @@ ${n.content.slice(0, 2e3)}
   function unloadSettingsPanel() {
     if (ui) ui.cleanup();
     ui = null;
-    initialized7 = false;
+    initialized5 = false;
   }
-  var initialized7, ui;
+  var initialized5, ui;
   var init_settings_panel = __esm({
     "src/settings-panel/index.ts"() {
       init_ui12();
-      initialized7 = false;
+      initialized5 = false;
       ui = null;
     }
   });
@@ -47860,14 +46749,7 @@ ${n.content.slice(0, 2e3)}
       })();
     });
     const searchInput = overlay2.querySelector("[data-memo-search]");
-    searchInput.addEventListener("input", () => {
-      if (searchDebounceTimer2 !== null) clearTimeout(searchDebounceTimer2);
-      searchDebounceTimer2 = setTimeout(() => {
-        searchDebounceTimer2 = null;
-        M.search = searchInput.value.trim();
-        renderAll4();
-      }, SEARCH_DEBOUNCE_MS3);
-    });
+    searchInput.addEventListener("input", () => searchDebounced2(searchInput.value.trim()));
     void (async () => {
       await loadData();
       if (opts == null ? void 0 : opts.notePath) {
@@ -47888,10 +46770,7 @@ ${n.content.slice(0, 2e3)}
       M.overlay.remove();
       M.overlay = null;
     }
-    if (searchDebounceTimer2 !== null) {
-      clearTimeout(searchDebounceTimer2);
-      searchDebounceTimer2 = null;
-    }
+    searchDebounced2.cancel();
     if (panelResizeDetach2) {
       panelResizeDetach2.detach();
       panelResizeDetach2 = null;
@@ -49048,7 +47927,7 @@ ${n.content.slice(0, 2e3)}
       console.error(e);
     }
   }
-  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, searchDebounceTimer2, clipTitleHint, panelResizeDetach2, sortSelectDetach, composerBusy;
+  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, searchDebounced2, clipTitleHint, panelResizeDetach2, sortSelectDetach, composerBusy;
   var init_ui13 = __esm({
     "src/memo/ui.ts"() {
       import_moment6 = __toESM(require_moment());
@@ -49068,7 +47947,10 @@ ${n.content.slice(0, 2e3)}
       init_state();
       PANEL = { MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
       SEARCH_DEBOUNCE_MS3 = 180;
-      searchDebounceTimer2 = null;
+      searchDebounced2 = debounce((v) => {
+        M.search = v;
+        renderAll4();
+      }, SEARCH_DEBOUNCE_MS3);
       clipTitleHint = null;
       panelResizeDetach2 = null;
       sortSelectDetach = null;
@@ -49201,11 +48083,10 @@ ${n.content.slice(0, 2e3)}
 
   // src/memo/file-sync.ts
   init_utils();
-  init_notice();
   init_settings_provider();
-  init_domain_bus();
   init_storage();
   init_settings_common();
+  init_file_sync();
   function syncRename(items, { oldPath, newPath, oldTitle, newTitle }) {
     let changed = false;
     for (const item of items) {
@@ -49241,124 +48122,53 @@ ${n.content.slice(0, 2e3)}
     }
     return changed;
   }
-  function inFolders(path, folders) {
-    return folders.some((f) => path.startsWith(f + "/") || path === f);
-  }
-  async function loadJSON(app, filePath) {
-    return jsonFileStore(filePath).read();
-  }
-  async function saveJSON(app, filePath, data) {
-    await jsonFileStore(filePath).write(data);
-  }
   function getMemoPath() {
     return storageFile("memo.json", tryGetSettings().storagePath || "CONFIG/STORAGE");
   }
   function getWatchedFolders() {
     return SYNC_WATCHED_FOLDERS.split(",").map((x) => x.trim()).filter(Boolean);
   }
-  var initialized = false;
-  var _refs = [];
-  var _cancelled = false;
-  var _flushers = [];
-  var queue = Promise.resolve();
-  function enqueue(task) {
-    queue = queue.then(() => {
-      if (_cancelled) return;
-      return task();
-    }).catch((e) => {
-      console.error("[memo-file-sync]", e);
-      notify("备忘录同步失败，数据可能不一致", { type: "error", dedupeKey: "memo-file-sync" });
-    });
-  }
-  function debounceDelay() {
-    const s = tryGetSettings();
-    return Number(s && s.DEBOUNCE_DELAY) || 300;
-  }
-  function createBatchFlusher(run) {
-    let pending = [];
-    let timer = null;
-    const flush = () => {
-      timer = null;
-      if (_cancelled) {
-        pending = [];
-        return;
-      }
-      const batch = pending;
-      pending = [];
-      enqueue(() => run(batch));
-    };
-    const push = (ev) => {
-      if (_cancelled) return;
-      pending.push(ev);
-      if (timer !== null) clearTimeout(timer);
-      timer = setTimeout(flush, debounceDelay());
-    };
-    return Object.assign(push, {
-      cancel() {
-        if (timer !== null) {
-          clearTimeout(timer);
-          timer = null;
-        }
-        pending = [];
-      }
-    });
-  }
-  function createFileSyncAgent(app) {
-    async function syncSource(fn, ...args) {
+  var agent = createFileSync({
+    logTag: "[memo-file-sync]",
+    failNotice: "备忘录同步失败，数据可能不一致",
+    failDedupeKey: "memo-file-sync",
+    watchedFolders: getWatchedFolders,
+    /** 对 memo.json 执行同步改写，有变化才写回。读改写整体入 per-path 串行队列：
+     *  与 memo UI 的 CRUD 同队列互斥，后台同步不得用陈旧基线覆盖面板刚写入的数据（写竞态收敛）。 */
+    commit: async (apply) => {
       const path = getMemoPath();
       await enqueueFileTask(path, async () => {
-        const items = await loadJSON(app, path);
-        if (fn(items, ...args)) await saveJSON(app, path, items);
+        const items = await jsonFileStore(path).read();
+        if (apply(items)) await jsonFileStore(path).write(items);
       });
-    }
-    const isMd = (file) => file && file.extension === "md" && inFolders(file.path, getWatchedFolders());
-    const referencedByMemo = async (path) => {
+    },
+    /** E22：范围外笔记只要被 memo.json 实际引用（notePath/linkedNote 命中）也放行同步——
+     *  notePath 可指向任意笔记（编辑器「定位到笔记」），监听范围只覆盖两个目录时，
+     *  范围外笔记 rename/delete 引用不同步（卡片「位置」tag 跳不存在的文件）。 */
+    referencedBy: async (path) => {
       if (!path) return false;
       try {
-        const items = await loadJSON(app, getMemoPath());
+        const items = await jsonFileStore(getMemoPath()).read();
         return items.some((it) => (it == null ? void 0 : it.linkedNote) === path || (it == null ? void 0 : it.notePath) === path);
       } catch (e) {
         return false;
       }
-    };
-    const pseudoFile = (path) => ({
-      path,
-      basename: stripMdExt(path.split("/").pop() || ""),
-      extension: "md"
-    });
-    const flushRenames = createBatchFlusher(async (batch) => {
-      for (const ev of batch) {
-        await syncSource(syncRename, ev);
-      }
-    });
-    _flushers.push(flushRenames);
-    _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
-      const file = pseudoFile(evt.newPath);
-      void (async () => {
-        var _a2;
-        if (!(isMd(file) || await referencedByMemo(evt.oldPath) || await referencedByMemo(evt.newPath))) return;
-        const oldTitle = stripMdExt(((_a2 = evt.oldPath) != null ? _a2 : "").split("/").pop());
-        flushRenames({
-          oldPath: evt.oldPath,
-          newPath: evt.newPath,
-          oldTitle,
-          newTitle: file.basename
-        });
-      })();
-    }));
-    _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
-      const file = pseudoFile(evt.path);
-      void (async () => {
-        if (!(isMd(file) || await referencedByMemo(evt.path))) return;
-        enqueue(() => syncSource(syncDelete, evt.path));
-      })();
-    }));
-  }
+    },
+    /** 标题联动载荷：oldTitle 自旧路径文件名提取，newTitle 即新路径 basename */
+    buildRenameEvent: (evt, newBasename) => {
+      var _a2;
+      return {
+        oldPath: evt.oldPath,
+        newPath: evt.newPath,
+        oldTitle: stripMdExt(((_a2 = evt.oldPath) != null ? _a2 : "").split("/").pop() || ""),
+        newTitle: newBasename
+      };
+    },
+    applyRename: syncRename,
+    applyDelete: syncDelete
+  });
   function ensureFileSync(app) {
-    if (initialized) return;
-    initialized = true;
-    _cancelled = false;
-    createFileSyncAgent(app);
+    agent.ensure(app);
   }
 
   // src/memo/reminder.ts

@@ -1,4 +1,4 @@
-/* 源指纹 21de58bf642544c0 · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 92bd6def75da0567 · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -4240,6 +4240,12 @@ var BZW_bookshelf = (() => {
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
   }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function emptyHtmlStr(icon, title, desc) {
+    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
@@ -4748,9 +4754,6 @@ var BZW_bookshelf = (() => {
       return "&#39;";
     });
   }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
   function localDayKey(ts = Date.now()) {
     const d = ts instanceof Date ? ts : new Date(ts);
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -4875,15 +4878,12 @@ var BZW_bookshelf = (() => {
     }
     zone = null;
   }
-  function bzEmptyHtml(icon, title, desc) {
-    return `<div class="bz-empty">${iconSpan(icon, "bz-empty-ic")}<div class="bz-empty-title">${esc(title)}</div><div class="bz-empty-desc">${esc(desc)}</div></div>`;
-  }
   function wallEmptyHTML(itemsTotal, q, folder, tag) {
     const cfg = !itemsTotal ? { icon: EMPTY_BOOKS_ICON, title: "书库还是空的", desc: `把书籍笔记放进「${folder}」文件夹，并在 frontmatter 添加 tags: ${tag} 标签` } : q ? { icon: EMPTY_SEARCH_ICON, title: "没有找到相关的书", desc: "试试其他关键词，或换一个筛选" } : { icon: EMPTY_FILTER_ICON, title: "这个筛选下还没有书", desc: "换一个状态或分类标签，或用搜索找找" };
-    return `<div class="bz-bs-wall-empty">${bzEmptyHtml(cfg.icon, cfg.title, cfg.desc)}</div>`;
+    return `<div class="bz-bs-wall-empty">${emptyHtmlStr(cfg.icon, cfg.title, cfg.desc)}</div>`;
   }
   function wallLoadingHTML() {
-    return `<div class="bz-bs-wall-empty">${bzEmptyHtml("loader", "正在整理书架…", "")}</div>`;
+    return `<div class="bz-bs-wall-empty">${emptyHtmlStr("loader", "正在整理书架…", "")}</div>`;
   }
   function labelsHtml(items, side, catFilter) {
     const statusDefs = [
@@ -5393,12 +5393,16 @@ var BZW_bookshelf = (() => {
       escHandle == null ? void 0 : escHandle.unregister();
       (_a = opts.onClose) == null ? void 0 : _a.call(opts);
     }
+    const attemptClose = () => {
+      if (opts.requestClose) opts.requestClose();
+      else close();
+    };
     mask.addEventListener("click", (e) => {
-      if (e.target === mask) close();
+      if (e.target === mask) attemptClose();
     });
     escHandle = escManager.register("bz-modal", {
       isVisible: () => mask.isConnected,
-      close
+      close: attemptClose
     });
     document.body.appendChild(mask);
     return { mask, popup, close };

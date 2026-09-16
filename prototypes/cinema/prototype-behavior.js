@@ -1,4 +1,4 @@
-/* 源指纹 9dc36e00d0a1580c · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 404b7b6e4c727021 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -6111,10 +6111,12 @@ var BZW_cinema = (() => {
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
   }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
   function localNow() {
     const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
   }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;

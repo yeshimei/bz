@@ -1,5 +1,5 @@
-/* 源指纹 8ab443ddcb4f29e4 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
+/* 源指纹 d84cc404070d58c0 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/encrypt/fake-sim.ts → window.BZW_encrypt（行为单源预览包，issue 245/ADR-0106） */
 var BZW_encrypt = (() => {
   var __create = Object.create;
@@ -4847,20 +4847,22 @@ var BZW_encrypt = (() => {
     }
     return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
   }
-  function secureRandomPassword(length, charset) {
-    const n = charset.length;
-    if (!(length > 0) || n === 0) return "";
-    const LIMIT2 = Math.floor(4294967296 / n) * n;
-    let pwd = "";
-    while (pwd.length < length) {
-      const buf = new Uint32Array(length - pwd.length);
-      crypto.getRandomValues(buf);
-      for (let i = 0; i < buf.length && pwd.length < length; i++) {
-        if (buf[i] >= LIMIT2) continue;
-        pwd += charset.charAt(buf[i] % n);
+  function debounce(fn, ms) {
+    let t;
+    const wrapped = (...args) => {
+      if (t !== void 0) clearTimeout(t);
+      t = setTimeout(() => {
+        t = void 0;
+        fn(...args);
+      }, ms);
+    };
+    wrapped.cancel = () => {
+      if (t !== void 0) {
+        clearTimeout(t);
+        t = void 0;
       }
-    }
-    return pwd;
+    };
+    return wrapped;
   }
   var CLIPBOARD_CLEAR_DELAY_MS = 6e4;
   var clipboardClearTimer = null;
@@ -4886,6 +4888,26 @@ var BZW_encrypt = (() => {
       return navigator.clipboard.writeText(text).then(() => armClipboardClear());
     } catch (e) {
       return Promise.reject(e);
+    }
+  }
+  async function copySensitiveWithFallback(text) {
+    try {
+      await copySensitiveText(text);
+      return true;
+    } catch (e) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        if (ok) armClipboardClear();
+        return ok;
+      } catch (e2) {
+        return false;
+      }
     }
   }
 
@@ -5031,51 +5053,6 @@ var BZW_encrypt = (() => {
     el.addEventListener("touchmove", move, { passive: true });
     el.addEventListener("touchcancel", endFromTouch);
     el.addEventListener("click", onClick, true);
-  }
-  var DOMAIN_MAP = {
-    "guokrapp.guokr.com": "guokr.com",
-    "daily.zhihu.com": "zhihu.com"
-  };
-  function createSiteIcon(domain, size = 16) {
-    if (!domain) return null;
-    const mappedDomain = DOMAIN_MAP[domain] || domain;
-    const cacheKey = `favicon_v2_${mappedDomain}_${size}`;
-    const img = document.createElement("img");
-    img.className = "bz-site-icon";
-    img.style.cssText = `width:${size}px; height:${size}px;`;
-    img.alt = "";
-    img.crossOrigin = "anonymous";
-    try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        img.src = cached;
-        return img;
-      }
-    } catch (e) {
-    }
-    const networkUrl = `https://favicon.yandex.net/favicon/v2/${mappedDomain}?size=${size}`;
-    img.src = networkUrl;
-    img.onload = function() {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-        const dataUrl = canvas.toDataURL("image/png");
-        try {
-          localStorage.setItem(cacheKey, dataUrl);
-        } catch (e) {
-        }
-      } catch (e) {
-      }
-      img.onload = null;
-    };
-    img.onerror = function() {
-      img.style.display = "none";
-      img.onerror = null;
-    };
-    return img;
   }
   function createOverlay(opts) {
     const mask = document.createElement("div");
@@ -5904,13 +5881,13 @@ var BZW_encrypt = (() => {
       listEl.innerHTML = "";
       const q = state.q.trim().toLowerCase();
       const exact = !!q && state.folders.includes(q);
-      const LIMIT2 = 300;
+      const LIMIT = 300;
       let n = 0;
       let total = 0;
       for (const folder of orderedList()) {
         if (q && !exact && !folder.toLowerCase().includes(q)) continue;
         total++;
-        if (n >= LIMIT2) continue;
+        if (n >= LIMIT) continue;
         n++;
         const on = selected.has(folder);
         const row = document.createElement("div");
@@ -5946,10 +5923,10 @@ var BZW_encrypt = (() => {
         empty.className = "bz-path-picker-empty";
         empty.textContent = "没有匹配的目录";
         listEl.appendChild(empty);
-      } else if (total > LIMIT2) {
+      } else if (total > LIMIT) {
         const more = document.createElement("div");
         more.className = "bz-path-picker-empty";
-        more.textContent = `已显示前 ${LIMIT2} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
+        more.textContent = `已显示前 ${LIMIT} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
         listEl.appendChild(more);
       }
     }
@@ -8080,6 +8057,26 @@ var BZW_encrypt = (() => {
     }
   };
 
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+
   // src/encrypt/preview.ts
   var PREVIEW_TIMEOUT_MS = 5e3;
   var PREVIEW_OMIT_SIZE = 384;
@@ -8091,21 +8088,6 @@ var BZW_encrypt = (() => {
     } catch (e) {
       return false;
     }
-  }
-  function withTimeout(promise, timeoutMs, label) {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error(label + " 超时")), timeoutMs);
-      promise.then(
-        () => {
-          clearTimeout(timer);
-          resolve();
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
   }
   function isEmptySrc(src) {
     return !src || !src.trim();
@@ -8182,14 +8164,14 @@ var BZW_encrypt = (() => {
     return { dataUrl, width: w, height: h };
   }
 
-  // src/encrypt/vault-data.ts
+  // src/password-vault/data.ts
   var PASSWORD_VAULT_CHANNEL = "password-vault:changed";
   var ENCRYPT_CHANGED_CHANNEL2 = "encrypt:changed";
   var VAULT_KIND = "password-vault";
   var VAULT_PATH = "CONFIG/.ENCRYPT/passwords";
   var VAULT_TITLE = "密码本";
   var PasswordVaultDataManager = class {
-    /** 显式注入 SafeManager（ADR-0085：encrypt Controller 装配同一单例，避免域内循环依赖默认取单例） */
+    /** 显式注入 SafeManager（与保险库面板同一单例，共享解锁态/清单） */
     constructor(safe) {
       this.pwData = [];
       /** load 缓存（ticket 43 同款）：清单条目 + 原始密文字节；密文未变不重解密 */
@@ -8425,683 +8407,13 @@ var BZW_encrypt = (() => {
     }
   };
 
-  // src/core/ui/str.ts
-  function escAttr(s) {
-    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-  var PLATFORM_COLOR_MAP = {
-    github: "#5a5f73",
-    微信: "#3eb575",
-    支付宝: "#4f7cf7",
-    notion: "#111111",
-    哔哩哔哩: "#fb7299",
-    招商银行: "#d43d3d",
-    豆瓣: "#3fa34d"
-  };
-  var PALETTE = ["#7c6bd6", "#3e8e5a", "#c98a1e", "#4f7cf7", "#d43d3d", "#2a9d8f", "#b4551d", "#5a5f73"];
-  function colorOf(platform) {
-    const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
-    if (k) return PLATFORM_COLOR_MAP[k];
-    let h = 0;
-    const t = platform || "?";
-    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
-    return PALETTE[h % PALETTE.length];
-  }
-
-  // src/encrypt/vault-pw-view.ts
-  function relTime(iso) {
-    if (!iso) return "";
-    return formatRelativeTime(iso);
-  }
-  function dots(p) {
-    return "•".repeat(Math.min((p || "").length, 18));
-  }
-  function avatarHTML(platform, url, cls = "bz-pwv-avatar") {
-    const ch = (platform || "?").slice(0, 1);
-    return `<div class="${cls}" style="background:${colorOf(platform)}" data-pwv-avatar="1" data-url="${escAttr(url || "")}"><span>${escAttr(ch)}</span></div>`;
-  }
-  function hydratePwAvatars(scope) {
-    scope.querySelectorAll("[data-pwv-avatar]").forEach((box) => {
-      if (box.querySelector("img")) return;
-      const url = box.getAttribute("data-url");
-      let domain = null;
-      try {
-        domain = url ? new URL(url).hostname : null;
-      } catch (e) {
-        domain = null;
-      }
-      const img = createSiteIcon(domain, 64);
-      if (img) {
-        img.className = "bz-pwv-favicon";
-        img.removeAttribute("style");
-        img.addEventListener("load", () => {
-          const ch = box.querySelector("span");
-          if (ch) ch.style.display = "none";
-        });
-        box.appendChild(img);
-      }
-    });
-  }
-  var DEFAULT_PW_STATE = {
-    asset: "pw",
-    view: "all",
-    searchKw: "",
-    selPlatform: null,
-    selAccount: null,
-    shownIds: {}
-  };
-  var PW_REVEAL_AUTO_MASK_MS = 15e3;
-  var DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
-  var VaultPwView = class {
-    constructor(dm, host, cfg) {
-      /** 明文自动回遮计时器（按条目 id；手动隐藏/上锁即撤） */
-      this.revealTimers = {};
-      this.dm = dm;
-      this.host = host;
-      this.charset = cfg.charset || DEFAULT_PW_CHARSET;
-      this.length = parseInt(String(cfg.length)) || 16;
-    }
-    /** 收藏星内联图标（替代 ★ 文本符号；图标一律 lucide——ui-kit 手册铁律） */
-    starIc() {
-      return `<span class="star">${this.ic("star", 11)}</span>`;
-    }
-    /** 撤销单条明文自动回遮计时 */
-    clearRevealTimer(id) {
-      if (this.revealTimers[id]) {
-        clearTimeout(this.revealTimers[id]);
-        delete this.revealTimers[id];
-      }
-    }
-    /** 卸载清理：撤销全部明文自动回遮计时器（防插件禁用后定时器仍触发改 UI） */
-    disposeRevealTimers() {
-      for (const id of Object.keys(this.revealTimers)) {
-        clearTimeout(this.revealTimers[id]);
-        delete this.revealTimers[id];
-      }
-    }
-    // ---------- 桌面列表 ----------
-    /**
-     * 渲染密码资产桌面列表（平台聚合行 / 搜索展平行）到 container。
-     * row 点击 → onPick(platform 或 account)；右键/长按 → 统一抽屉（平台/账号动作）。
-     */
-    renderDeskList(container, st, onPick) {
-      var _a;
-      container.innerHTML = "";
-      const kw = st.searchKw;
-      if (kw) {
-        const hits = this.dm.search(kw).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || "") * -1);
-        if (!hits.length) {
-          container.replaceChildren(this.emptyState("没有匹配的条目", "换个关键词，或清空搜索"));
-          return;
-        }
-        for (const d of hits) {
-          const r = document.createElement("div");
-          r.className = "bz-pwv-row" + (d.id === st.selAccount ? " on" : "");
-          r.innerHTML = `${avatarHTML(d.platform, d.url)}
-          <div class="mid"><div class="pl">${this.esc(d.platform)}${d.fav ? " " + this.starIc() : ""}</div><div class="ac">${this.esc(d.account || "(无账号)")}</div></div>
-          <div class="tm">${relTime(d.createdAt)}</div>`;
-          r.addEventListener("click", () => onPick(d.platform, d.id));
-          this.attachAccountActions(r, d);
-          container.appendChild(r);
-        }
-        hydratePwAvatars(container);
-        return;
-      }
-      let plats = this.dm.platforms();
-      if (st.view === "fav") plats = plats.filter((p) => this.dm.hasFav(p.platform));
-      if (!plats.length) {
-        if (st.view === "fav") {
-          container.replaceChildren(this.emptyState("还没有收藏", "右键或长按条目可收藏，常用账号一目了然"));
-        } else {
-          container.replaceChildren(this.emptyState("保险库还没有密码", "收录第一条账号开始使用", { add: true }));
-          (_a = container.querySelector('[data-pwv="empty-add"]')) == null ? void 0 : _a.addEventListener("click", () => this.host.openPwEntryDialog());
-        }
-        return;
-      }
-      for (const p of plats) {
-        const r = document.createElement("div");
-        r.className = "bz-pwv-plrow" + (p.platform === st.selPlatform ? " on" : "");
-        const recent2 = p.accounts[0];
-        const favStar = this.dm.hasFav(p.platform) ? " " + this.starIc() : "";
-        const countBadge = p.accounts.length > 1 ? `<span class="bz-pwv-cnt">${p.accounts.length}</span>` : "";
-        r.innerHTML = `${avatarHTML(p.platform, recent2 == null ? void 0 : recent2.url)}
-        <div class="mid"><div class="pl">${this.esc(p.platform)}${favStar}${countBadge}</div><div class="ac">${recent2 ? this.esc(recent2.account || "(无账号)") : ""}</div></div>
-        <div class="tm">${relTime(recent2 && recent2.createdAt)}</div>`;
-        r.addEventListener("click", () => onPick(p.platform, null));
-        this.attachPlatformActions(r, p.platform);
-        container.appendChild(r);
-      }
-      hydratePwAvatars(container);
-    }
-    /** 渲染密码资产桌面详情区（平台账号卡流 / 搜索态单卡） */
-    renderDeskDetail(container, st) {
-      var _a, _b;
-      container.innerHTML = "";
-      const kw = st.searchKw;
-      let d;
-      if (kw) {
-        d = this.dm.pwData.find((x) => x.id === st.selAccount);
-        if (!d) {
-          container.replaceChildren(this.emptyState("选择一条结果", "点击左侧结果查看详情"));
-          return;
-        }
-      } else if (st.selPlatform) {
-        const accs = this.dm.accountsOf(st.selPlatform);
-        const filtered = st.view === "fav" ? accs.filter((x) => x.fav) : accs;
-        const first = accs[0];
-        const favStar = this.dm.hasFav(st.selPlatform) ? " " + this.starIc() : "";
-        container.innerHTML = `<div class="bz-pwv-dhead">
-        <div class="av big">${avatarHTML(st.selPlatform, first == null ? void 0 : first.url, "bz-pwv-avatar big")}</div>
-        <div class="ttl"><h2>${this.esc(st.selPlatform)}${favStar}</h2>
-          ${first && first.url ? `<a class="url" href="${this.esc(first.url)}" target="_blank" rel="noopener">${this.esc(first.url)} ↗</a>` : '<div class="url faint">无链接</div>'}</div>
-        <div class="acts">
-          <button class="bz-pwv-ic" data-pwv="plat-edit" title="编辑平台信息">${this.ic("pencil")}</button>
-        </div>
-      </div>
-      <div class="bz-pwv-accthead">
-        <div class="t">${filtered.length} 个账号</div>
-        <button class="bz-pwv-addacct" data-pwv="plat-add">${this.ic("plus", 12)} 在该平台新增账号</button>
-      </div>
-      <div class="bz-pwv-accts"></div>`;
-        const acctsEl = container.querySelector(".bz-pwv-accts");
-        if (!filtered.length) {
-          acctsEl.replaceChildren(this.emptyState("该平台暂无账号", "点上方「在该平台新增账号」录入"));
-        } else {
-          for (const x of filtered) acctsEl.appendChild(this.buildAccountCard(x, st));
-        }
-        (_a = container.querySelector('[data-pwv="plat-edit"]')) == null ? void 0 : _a.addEventListener("click", () => this.host.openPwPlatformEdit(st.selPlatform));
-        (_b = container.querySelector('[data-pwv="plat-add"]')) == null ? void 0 : _b.addEventListener(
-          "click",
-          () => this.host.openPwEntryDialog(null, { platform: st.selPlatform || "", url: (first == null ? void 0 : first.url) || "" })
-        );
-        return;
-      } else {
-        container.replaceChildren(this.emptyState("选择一个平台", "左侧选择平台后，这里显示其全部账号", { icon: "key" }));
-        return;
-      }
-      container.appendChild(this.buildAccountCard(d, st, true));
-    }
-    /** 单张账号卡（详情区复用）：复制账号常驻 + 密码行（显隐/复制）+ 备注 + 创建时间 */
-    buildAccountCard(d, st, withHead = false) {
-      const card = document.createElement("div");
-      card.className = "bz-pwv-acctcard";
-      const shown = !!st.shownIds[d.id];
-      const accMeta = withHead ? `${this.esc(d.platform)}${d.fav ? " " + this.starIc() : ""}` : `${this.esc(d.account || "(无账号)")}${d.fav ? " " + this.starIc() : ""}`;
-      card.innerHTML = `<div class="accrow">
-      <div class="name">${accMeta}</div>
-      <button class="copyac bz-touch-target--lg" data-pwv="copy-ac">${this.ic("copy")} 复制账号</button>
-    </div>
-    <div class="pwrow">
-      <div class="pw ${shown ? "" : "mask"}">${shown ? this.esc(d.password) : dots(d.password)}</div>
-      <button class="mini" data-pwv="eye" title="${shown ? "隐藏密码" : "显示密码"}">${shown ? this.ic("eye-off") : this.ic("eye")}</button>
-      <button class="mini" data-pwv="copy-pw" title="复制密码">${this.ic("copy")}</button>
-    </div>
-    ${d.note ? `<div class="note">${this.esc(d.note)}</div>` : ""}
-    <div class="meta">创建于 ${this.esc(new Date(d.createdAt).toLocaleDateString("zh-CN"))}${d.url ? ' · <a href="' + this.esc(d.url) + '" target="_blank" rel="noopener">' + this.esc(d.url.replace("https://", "")) + " ↗</a>" : ""}</div>`;
-      card.querySelectorAll("[data-pwv]").forEach(
-        (b) => b.addEventListener("click", (e) => {
-          e.stopPropagation();
-          this.dispatchAccountAction(d, b.dataset.pwv, st);
-        })
-      );
-      this.attachAccountActions(card, d);
-      return card;
-    }
-    /** 账号动作分发（卡片按钮 + 抽屉共用） */
-    dispatchAccountAction(d, act, st) {
-      var _a, _b;
-      const t = (m, err = false) => this.host.toast(m, err);
-      if (act === "copy-ac") {
-        void this.host.copySensitive(d.account || "").then((ok) => ok ? t("账号已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true), () => t("复制失败，请手动复制", true));
-      } else if (act === "copy-pw") {
-        void this.host.copySensitive(d.password || "").then((ok) => ok ? t("密码已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true), () => t("复制失败，请手动复制", true));
-      } else if (act === "eye") {
-        const showing = !st.shownIds[d.id];
-        st.shownIds[d.id] = showing;
-        if (showing) {
-          this.clearRevealTimer(d.id);
-          this.revealTimers[d.id] = setTimeout(() => {
-            var _a2, _b2;
-            delete this.revealTimers[d.id];
-            if (st.shownIds[d.id]) {
-              delete st.shownIds[d.id];
-              (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-            }
-          }, PW_REVEAL_AUTO_MASK_MS);
-        } else {
-          this.clearRevealTimer(d.id);
-        }
-        (_b = (_a = this.host).onPwChanged) == null ? void 0 : _b.call(_a);
-      } else if (act === "edit") {
-        this.host.openPwEntryDialog(d);
-      } else if (act === "fav") {
-        void this.dm.toggleFav(d.id).then(() => {
-          var _a2, _b2;
-          return (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-        }).catch((e) => this.failToast(e));
-      } else if (act === "del") {
-        this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", true, () => {
-          void this.dm.deleteItem(d.id).then(() => {
-            var _a2, _b2;
-            if (st.selAccount === d.id) st.selAccount = null;
-            (_b2 = (_a2 = this.host).onPwChanged) == null ? void 0 : _b2.call(_a2);
-            t(`已删除账号「${d.account}」`);
-          }).catch((e) => this.failToast(e));
-        });
-      }
-    }
-    /** E2：写动作失败统一提示 + 重渲染（数据层已回滚内存，按真实状态收敛） */
-    failToast(e) {
-      var _a, _b;
-      this.host.toast(`保存失败：${(e == null ? void 0 : e.message) || e}`, true);
-      (_b = (_a = this.host).onPwChanged) == null ? void 0 : _b.call(_a);
-    }
-    /** 账号动作集（行卡右键/长按与移动账号详情页 ⋮ 共用） */
-    accountActions(d) {
-      return [
-        {
-          icon: "copy",
-          label: "复制账号",
-          onClick: () => void this.host.copySensitive(d.account || "").then((ok) => this.host.toast(ok ? "账号已复制（60 秒后自动清空）" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-        },
-        {
-          icon: "key",
-          label: "复制密码",
-          onClick: () => void this.host.copySensitive(d.password || "").then((ok) => this.host.toast(ok ? "密码已复制（60 秒后自动清空）" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-        },
-        {
-          icon: "star",
-          label: d.fav ? "取消收藏" : "收藏",
-          onClick: () => void this.dm.toggleFav(d.id).then(() => {
-            var _a, _b;
-            return (_b = (_a = this.host).onPwChanged) == null ? void 0 : _b.call(_a);
-          }).catch((e) => this.failToast(e))
-        },
-        {
-          icon: "external-link",
-          label: "打开链接",
-          onClick: () => d.url ? this.host.openExternal(d.url) : this.host.toast("该条目没有链接", true)
-        },
-        { icon: "pencil", label: "编辑", onClick: () => this.host.openPwEntryDialog(d) },
-        {
-          icon: "trash-2",
-          label: "删除",
-          kind: "danger",
-          onClick: () => this.host.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, "删除", true, () => {
-            void this.dm.deleteItem(d.id).then(() => {
-              var _a, _b;
-              (_b = (_a = this.host).onPwChanged) == null ? void 0 : _b.call(_a);
-              this.host.toast(`已删除账号「${d.account}」`);
-            }).catch((e) => this.failToast(e));
-          })
-        }
-      ];
-    }
-    attachAccountActions(el, d) {
-      attachItemActions(el, this.accountActions(d), { sheetHead: this.buildSheetHead(d) });
-    }
-    /** 移动端账号详情页 ⋮：直接开底部抽屉（抽屉手势挂行卡上，详情页按钮触达不了——E6） */
-    openAccountSheet(d) {
-      openItemSheet(this.accountActions(d), { sheetHead: this.buildSheetHead(d) });
-    }
-    /** 平台动作集（行卡右键/长按与移动平台详情页 ⋮ 共用） */
-    platformActions(platform) {
-      const accs = this.dm.accountsOf(platform);
-      const recent2 = accs[0];
-      const count = accs.length;
-      const actions = [
-        {
-          icon: "plus",
-          label: "在该平台新增账号",
-          onClick: () => this.host.openPwEntryDialog(null, { platform, url: (recent2 == null ? void 0 : recent2.url) || "" })
-        }
-      ];
-      if (recent2) {
-        actions.push({
-          icon: "copy",
-          label: "复制最近账号",
-          onClick: () => void this.host.copySensitive(recent2.account || "").then((ok) => this.host.toast(ok ? "最近账号已复制" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-        });
-        actions.push({
-          icon: "key",
-          label: "复制最近密码",
-          onClick: () => void this.host.copySensitive(recent2.password || "").then((ok) => this.host.toast(ok ? "最近密码已复制" : "复制失败", !ok), () => this.host.toast("复制失败", true))
-        });
-      }
-      actions.push({ icon: "pencil", label: "编辑平台信息", onClick: () => this.host.openPwPlatformEdit(platform) });
-      actions.push({
-        icon: "trash-2",
-        label: "删除整个平台",
-        kind: "danger",
-        onClick: () => this.host.askConfirm("删除整个平台", `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, "删除", true, () => {
-          void this.dm.removePlatform(platform).then(() => {
-            var _a, _b;
-            (_b = (_a = this.host).onPwChanged) == null ? void 0 : _b.call(_a);
-            this.host.toast(`已删除平台与 ${count} 个账号`);
-          }).catch((e) => this.failToast(e));
-        })
-      });
-      return actions;
-    }
-    platformSheetOpts(platform) {
-      const recent2 = this.dm.accountsOf(platform)[0];
-      return { sheetHead: this.buildSheetHead(recent2 != null ? recent2 : { account: platform, platform, createdAt: "" }) };
-    }
-    attachPlatformActions(el, platform) {
-      attachItemActions(el, this.platformActions(platform), this.platformSheetOpts(platform));
-    }
-    /** 移动端平台详情页 ⋮：直接开底部抽屉（E6 同款） */
-    openPlatformSheet(platform) {
-      openItemSheet(this.platformActions(platform), this.platformSheetOpts(platform));
-    }
-    // ---------- 移动端卡流 ----------
-    /** 渲染移动端密码卡流（平台卡；fav 过滤 view 由调用方传入 st） */
-    renderMobList(container, st, onOpenPlatform) {
-      var _a;
-      container.innerHTML = "";
-      const kw = st.searchKw;
-      if (kw) {
-        const hits = this.dm.search(kw).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || "") * -1);
-        if (!hits.length) {
-          container.replaceChildren(this.emptyState("没有匹配的条目", "换个关键词试试"));
-          return;
-        }
-        for (const d of hits) {
-          const c = document.createElement("div");
-          c.className = "bz-pwv-mobcard";
-          c.innerHTML = `${avatarHTML(d.platform, d.url, "bz-pwv-avatar av")}
-          <div class="mid"><div class="a">${this.esc(d.platform)}${d.fav ? " " + this.starIc() : ""}</div><div class="b">${this.esc(d.account || "(无账号)")}</div></div>
-          <span class="go">${this.ic("chevron-right")}</span>`;
-          c.addEventListener("click", () => {
-            var _a2, _b;
-            return (_b = (_a2 = this.host).openPwAccountPage) == null ? void 0 : _b.call(_a2, d, st);
-          });
-          this.attachAccountActions(c, d);
-          container.appendChild(c);
-        }
-        hydratePwAvatars(container);
-        return;
-      }
-      let plats = this.dm.platforms();
-      if (st.view === "fav") plats = plats.filter((p) => this.dm.hasFav(p.platform));
-      if (!plats.length) {
-        if (st.view === "fav") {
-          container.replaceChildren(this.emptyState("还没有收藏", "右键或长按条目可收藏，常用账号一目了然"));
-        } else {
-          container.replaceChildren(this.emptyState("保险库还没有密码", "收录第一条账号开始使用", { add: true }));
-          (_a = container.querySelector('[data-pwv="empty-add"]')) == null ? void 0 : _a.addEventListener("click", () => this.host.openPwEntryDialog());
-        }
-        return;
-      }
-      for (const p of plats) {
-        const recent2 = p.accounts[0];
-        const c = document.createElement("div");
-        c.className = "bz-pwv-mobcard";
-        const favStar = this.dm.hasFav(p.platform) ? " " + this.starIc() : "";
-        const cnt = p.accounts.length > 1 ? `<span class="cnt">${p.accounts.length}</span>` : "";
-        c.innerHTML = `${avatarHTML(p.platform, recent2 == null ? void 0 : recent2.url, "bz-pwv-avatar av")}
-        <div class="mid"><div class="a">${this.esc(p.platform)}${favStar}${cnt}</div><div class="b">${recent2 ? this.esc(recent2.account || "(无账号)") : ""}</div></div>
-        <span class="go">${this.ic("chevron-right")}</span>`;
-        c.addEventListener("click", () => onOpenPlatform(p));
-        this.attachPlatformActions(c, p.platform);
-        container.appendChild(c);
-      }
-      hydratePwAvatars(container);
-    }
-    /** 平台详情页（移动）HTML 注入 body；含账号卡与操作 */
-    renderMobPlatformPage(body, p, st) {
-      var _a;
-      const accs = p.accounts;
-      const first = accs[0];
-      const favStar = this.dm.hasFav(p.platform) ? ' <span class="star">★</span>' : "";
-      body.innerHTML = `<div class="bz-pwv-mobplathead">
-      <div class="av big">${avatarHTML(p.platform, first == null ? void 0 : first.url, "bz-pwv-avatar big")}</div>
-      <div><div class="nm">${this.esc(p.platform)}${favStar}</div>
-        ${first && first.url ? `<a class="url" href="${this.esc(first.url)}" target="_blank" rel="noopener">${this.esc(first.url)} ↗</a>` : '<div class="url faint">无链接</div>'}</div>
-      <button class="bz-pwv-btn gold" data-pwv="plat-add">${this.ic("plus", 12)} 新增账号</button>
-    </div>
-    <div class="bz-pwv-accts"></div>`;
-      const acctsEl = body.querySelector(".bz-pwv-accts");
-      if (!accs.length) {
-        acctsEl.replaceChildren(this.emptyState("该平台暂无账号", "点上方「在该平台新增账号」录入"));
-      } else {
-        for (const d of accs) acctsEl.appendChild(this.buildAccountCard(d, st));
-      }
-      (_a = body.querySelector('[data-pwv="plat-add"]')) == null ? void 0 : _a.addEventListener(
-        "click",
-        () => this.host.openPwEntryDialog(null, { platform: p.platform, url: (first == null ? void 0 : first.url) || "" })
-      );
-    }
-    // ---------- 抽屉头 ----------
-    buildSheetHead(d) {
-      const head = document.createElement("div");
-      head.className = "bz-item-sheet-entry";
-      const body = document.createElement("div");
-      body.style.cssText = "display:flex; align-items:flex-start; gap:10px;";
-      const emoji = document.createElement("span");
-      emoji.className = "bz-item-sheet-emoji";
-      emoji.textContent = "🔑";
-      body.appendChild(emoji);
-      const info = document.createElement("div");
-      info.style.cssText = "flex:1; min-width:0;";
-      const t = document.createElement("div");
-      t.className = "bz-item-sheet-title";
-      t.textContent = d.account || d.platform;
-      info.appendChild(t);
-      const s = document.createElement("div");
-      s.className = "bz-item-sheet-sub";
-      s.textContent = `${d.platform}${d.platform ? " · " : ""}${relTime(d.createdAt)}`;
-      info.appendChild(s);
-      body.appendChild(info);
-      head.appendChild(body);
-      return head;
-    }
-    // ---------- lucide 图标 ----------
-    ic(name, size = 14) {
-      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
-    }
-    /** 空态（组件库 uiEmpty = .bz-empty 基线）；add = 附「新增密码」金色 CTA（金库主题色，域内样式） */
-    emptyState(title, desc, opts) {
-      const empty = uiEmpty((opts == null ? void 0 : opts.icon) ? { icon: opts.icon, title, desc } : { title, desc });
-      if (opts == null ? void 0 : opts.add) {
-        const add = document.createElement("button");
-        add.className = "bz-pwv-empty-add bz-touch-target--lg";
-        add.setAttribute("data-pwv", "empty-add");
-        add.innerHTML = `${this.ic("plus")} 新增密码`;
-        empty.appendChild(add);
-      }
-      return empty;
-    }
-    esc(s) {
-      return escapeHtml2(String(s != null ? s : ""));
-    }
-  };
-  var ICON_PATHS = {
-    copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-    key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3z"/>',
-    star: '<path d="M12 2 15 9l7 .8-5.3 4.7 1.6 6.9L12 17.8 5.7 21.4l1.6-6.9L2 9.8 9 9z"/>',
-    "external-link": '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
-    pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
-    "trash-2": '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>',
-    eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
-    "eye-off": '<path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 8 10 8a13.2 13.2 0 0 1-1.67 2.68M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 8 10 8a9.7 9.7 0 0 0 5.39-1.61M2 2l20 20"/>',
-    plus: '<path d="M12 5v14M5 12h14"/>',
-    "chevron-right": '<path d="m9 18 6-6-6-6"/>'
-  };
-
-  // src/encrypt/pw-picker.ts
-  function fuzzyScore(hay, query) {
-    if (!query) return 0;
-    const h = (hay || "").toLowerCase();
-    const q = query.toLowerCase();
-    const idx = h.indexOf(q);
-    if (idx >= 0) return 1e3 - idx;
-    let hi = 0;
-    for (let qi = 0; qi < q.length; qi++) {
-      hi = h.indexOf(q[qi], hi);
-      if (hi === -1) return -1;
-      hi++;
-    }
-    return 100;
-  }
-  function fuzzyFilterEntries(entries, query) {
-    const hits = [];
-    for (const e of entries) {
-      const score = Math.max(
-        fuzzyScore(e.platform || "", query),
-        fuzzyScore(e.account || "", query),
-        fuzzyScore(e.note || "", query)
-      );
-      if (score >= 0) hits.push({ e, score });
-    }
-    hits.sort((a, b) => b.score - a.score || (b.e.createdAt || "").localeCompare(a.e.createdAt || ""));
-    return hits.map((h) => h.e);
-  }
-  var LIMIT = 100;
-  var currentMask2 = null;
-  var currentPopup2 = null;
-  var currentHandle2 = null;
-  var focusTimer2 = null;
-  function closePasswordQuickPicker() {
-    if (currentMask2) {
-      currentMask2.remove();
-      currentMask2 = null;
-    }
-    if (currentPopup2) {
-      currentPopup2.remove();
-      currentPopup2 = null;
-    }
-    if (currentHandle2) {
-      currentHandle2.unregister();
-      currentHandle2 = null;
-    }
-    if (focusTimer2 !== null) {
-      window.clearTimeout(focusTimer2);
-      focusTimer2 = null;
-    }
-  }
-  function openPasswordQuickPicker(entries, onPick) {
-    closePasswordQuickPicker();
-    const { mask, popup } = createOverlay({
-      maskId: "bz-encrypt-pw-picker-mask",
-      popupId: "bz-encrypt-pw-picker-popup",
-      width: "min(calc(100vw - 32px), 420px)",
-      maxWidth: 420,
-      onMaskClick: () => closePasswordQuickPicker()
-    });
-    currentMask2 = mask;
-    currentPopup2 = popup;
-    popup.classList.add("bz-encrypt-pwqp");
-    popup.style.height = "min(420px, 72vh)";
-    const head = document.createElement("div");
-    head.className = "bz-encrypt-pwqp-head";
-    const title = document.createElement("h3");
-    title.className = "bz-encrypt-pwqp-title";
-    title.textContent = "快速复制密码";
-    head.appendChild(title);
-    const search = document.createElement("input");
-    search.type = "text";
-    search.className = "bz-input bz-encrypt-pwqp-search";
-    search.placeholder = "搜索平台 / 账号…";
-    search.spellcheck = false;
-    search.setAttribute("aria-label", "搜索密码条目");
-    const listEl = document.createElement("div");
-    listEl.className = "bz-encrypt-pwqp-list";
-    const state = { hits: [], active: 0 };
-    const setActive = (i) => {
-      var _a;
-      if (!state.hits.length) return;
-      state.active = Math.max(0, Math.min(state.hits.length - 1, i));
-      listEl.querySelectorAll(".bz-popover-item").forEach((el, k) => {
-        el.classList.toggle("is-on", k === state.active);
-      });
-      (_a = listEl.querySelector(".bz-popover-item.is-on")) == null ? void 0 : _a.scrollIntoView({ block: "nearest" });
-    };
-    const renderList = () => {
-      listEl.innerHTML = "";
-      state.hits = fuzzyFilterEntries(entries, search.value.trim());
-      state.active = 0;
-      if (!state.hits.length) {
-        const empty = document.createElement("div");
-        empty.className = "bz-popover-empty";
-        empty.textContent = "没有匹配的密码条目";
-        listEl.appendChild(empty);
-        return;
-      }
-      const shown = state.hits.slice(0, LIMIT);
-      shown.forEach((d, i) => {
-        const row = document.createElement("div");
-        row.className = "bz-popover-item" + (i === 0 ? " is-on" : "");
-        row.setAttribute("role", "option");
-        const mid = document.createElement("div");
-        mid.className = "mid";
-        const pl = document.createElement("div");
-        pl.className = "pl";
-        pl.textContent = d.platform || "(无平台)";
-        const ac = document.createElement("div");
-        ac.className = "ac";
-        ac.textContent = d.account || "(无账号)";
-        mid.appendChild(pl);
-        mid.appendChild(ac);
-        const key = document.createElement("span");
-        key.className = "key";
-        key.textContent = "Enter 复制";
-        row.appendChild(mid);
-        row.appendChild(key);
-        row.addEventListener("click", () => {
-          closePasswordQuickPicker();
-          onPick(d);
-        });
-        listEl.appendChild(row);
-      });
-      if (state.hits.length > LIMIT) {
-        const more = document.createElement("div");
-        more.className = "bz-popover-empty";
-        more.textContent = `已显示前 ${LIMIT} 条（共 ${state.hits.length} 条命中），请输入关键词缩小范围`;
-        listEl.appendChild(more);
-      }
-    };
-    search.addEventListener("input", () => renderList());
-    search.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setActive(state.active + 1);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setActive(state.active - 1);
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        const d = state.hits[state.active];
-        if (d) {
-          closePasswordQuickPicker();
-          onPick(d);
-        }
-      }
-    });
-    popup.append(head, search, listEl);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    currentHandle2 = escManager.register("bz-encrypt-pw-picker", {
-      isVisible: () => !!currentMask2,
-      close: () => closePasswordQuickPicker()
-    });
-    renderList();
-    focusTimer2 = window.setTimeout(() => {
-      focusTimer2 = null;
-      if (mask.isConnected) search.focus();
-    }, 30);
-  }
-
   // src/encrypt/vault-assets-view.ts
   var ASSET_COLOR = {
-    pw: "var(--bz-brand)",
     note: "#2e7d68",
     diary: "#5a63a8"
   };
   function vIc(name, size = 14) {
-    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS2[name] || ""}</svg>`;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
   }
   function overviewHTML(stats) {
     const { counts, attachments, attBytes, recent: recent2, health } = stats;
@@ -9189,7 +8501,7 @@ var BZW_encrypt = (() => {
       <div class="bigbtns">${actionBtns}</div>
     </div>`;
   }
-  var ICON_PATHS2 = {
+  var ICON_PATHS = {
     lock: '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
     "lock-open": '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 7.9-.9"/>',
     key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3z"/>',
@@ -9430,19 +8742,6 @@ var BZW_encrypt = (() => {
   };
   function statusbarHtml(unlocked) {
     return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
-  }
-  function passwordStrength(pw) {
-    if (!pw) return "weak";
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (pw.length >= 12) score++;
-    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
-    if (/\d/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-    return score <= 2 ? "weak" : score <= 4 ? "mid" : "strong";
-  }
-  function pwStrengthLabel(s) {
-    return s === "weak" ? "弱" : s === "mid" ? "中" : "强";
   }
   var lastVisitedAsset = "note";
   function collectNoteAttachments(content, embedLinks, vaultFiles) {
@@ -9739,11 +9038,11 @@ var BZW_encrypt = (() => {
       this.unlockFailStreak = 0;
       /** 当前冷却截止时间戳（ms）；早于此的尝试被拒绝并提示剩余等待 */
       this.unlockCooldownUntil = 0;
-      /** 搜索防抖计时器 */
-      this.searchTimer = null;
-      /** 密码资产状态（列表筛选/选中/显隐） */
-      this.pwState = { ...DEFAULT_PW_STATE };
-      /** 当前资产视图（概览/密码/笔记/日记） */
+      /** 搜索防抖（180ms 尾触；issue 365 收编 core debounce，原手写无 teardown 取消路径） */
+      this.searchDebounced = debounce(() => this.renderAll(), 180);
+      /** 列表搜索关键词（笔记列表头搜索框 / 移动端常驻框共用；防抖后触发重绘） */
+      this.searchKw = "";
+      /** 当前资产视图（概览/笔记/日记） */
       this.asset = "overview";
       /** 加密日记详情临时明文缓存（渲染详情时惰性解密） */
       this._diaryPlain = {};
@@ -9760,32 +9059,9 @@ var BZW_encrypt = (() => {
       /** 解锁屏统计快照（会话内缓存；冷启动回落 lock-stats.json 上次快照，见 core/lock-stats） */
       this.lockStatsCache = {};
       this._selNoteId = null;
-      this._pwEditingId = null;
-      /** 同平台+账号查重命中后的放行标志（同一弹窗会话内再点一次保存即放行） */
-      this._pwDupConfirmed = false;
-      /** 弹窗内联动刷新（强度提示等）；ensurePwDialog 首建时注入 */
-      this.pwDlgSyncUi = null;
-      this.pwDlg = null;
-      /** 密码添加/编辑弹窗的 ESC 层（E7：弹窗可见时 ESC 只关弹窗，不穿透关掉主面板） */
-      this.pwDlgEsc = null;
       this.dataManager = dataManager;
       this.config = config;
       this.pwDataManager = pwDataManager || new PasswordVaultDataManager(dataManager);
-      this.pwView = new VaultPwView(
-        this.pwDataManager,
-        {
-          toast: (m, err) => this.toast(m, err),
-          openPwEntryDialog: (edit, prefill) => this.openPwEntryDialog(edit, prefill),
-          openPwPlatformEdit: (p) => this.openPwPlatformEdit(p),
-          askConfirm: (t, m, okLabel, danger, cb) => this.askConfirm(t, m, okLabel, danger, cb),
-          copySensitive: (t) => this.copySensitive(t),
-          openExternal: (u) => this.openExternal(u),
-          onPwChanged: () => this.renderAll(),
-          openPwAccountPage: (d, st) => this.openPwAccountPage(d, st)
-        },
-        { charset: config.pwCharset, length: config.pwLength }
-      );
-      this.pwDataManager.onExternalChange = () => this.renderAll();
     }
     /** 解锁成功后复位节流状态 */
     resetUnlockThrottle() {
@@ -9800,8 +9076,8 @@ var BZW_encrypt = (() => {
       return delaySec;
     }
     /**
-     * 桌面搜索框（评审 2026-09-12：从顶栏下移到「全部加密笔记 N 项」之上）——它现在随
-     * 列表头一起渲染，故不再缓存引用而按需现取；null = 当前资产没有列表头（概览 / 密码）。
+     * 桌面搜索框（评审 2026-09-12：从顶栏下移到列表头里）——它现在随
+     * 列表头一起渲染，故不再缓存引用而按需现取；null = 当前资产没有列表头（概览）。
      */
     get deskSearch() {
       var _a, _b;
@@ -9889,7 +9165,7 @@ var BZW_encrypt = (() => {
         if (a === "pw" || a === "diary") a = "note";
         this.asset = a;
         lastVisitedAsset = a;
-        this.pwState.searchKw = "";
+        this.searchKw = "";
         const headSearch = this.deskSearch;
         if (headSearch) headSearch.value = "";
         this.mob.search.value = "";
@@ -9931,15 +9207,14 @@ var BZW_encrypt = (() => {
           this.asset = "note";
           lastVisitedAsset = "note";
         }
-        this.pwState.searchKw = v;
+        this.searchKw = v;
         if (isMob) {
           const deskSearch = this.deskSearch;
           if (deskSearch) deskSearch.value = v;
         } else {
           this.mob.search.value = v;
         }
-        if (this.searchTimer) clearTimeout(this.searchTimer);
-        this.searchTimer = setTimeout(() => this.renderAll(), 180);
+        this.searchDebounced();
       });
     }
     createMask(id) {
@@ -9973,7 +9248,6 @@ var BZW_encrypt = (() => {
       if (this.isSecurityMode()) {
         this.dataManager.lock();
         this.pwDataManager.lock();
-        this.pwState = { ...DEFAULT_PW_STATE };
         this._selNoteId = null;
         this._diaryPlain = {};
         if (!suppressAutoLockNotice) this.noticeAutoLock();
@@ -10059,7 +9333,7 @@ var BZW_encrypt = (() => {
     ensureHealthElements() {
       const mask = document.createElement("div");
       mask.id = "bz-encrypt-health-mask";
-      mask.className = "bz-encrypt-health-mask";
+      mask.className = "bz-overlay-mask bz-encrypt-health-mask";
       mask.style.display = "none";
       const popup = document.createElement("div");
       popup.id = "bz-encrypt-health-popup";
@@ -10465,7 +9739,6 @@ var BZW_encrypt = (() => {
     counts() {
       const notes = this.dataManager.manifest.notes;
       return {
-        pw: this.pwDataManager.pwData.length,
         note: notes.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault").length,
         diary: notes.filter((n) => n.kind === "diary-entry").length
       };
@@ -10568,21 +9841,13 @@ var BZW_encrypt = (() => {
     }
     /** 桌面区渲染（中列表 + 右详情按资产分发） */
     renderDesktop() {
-      var _a;
       const keepHead = this._lastRenderedAsset === this.asset && (this.asset === "note" || this.asset === "diary");
       if (!keepHead) this.desk.list.innerHTML = "";
       this.desk.detail.innerHTML = "";
-      if (this.asset !== "pw") {
-        (_a = this.popup.querySelector('.bz-vault-bar [data-act="pw-fav"]')) == null ? void 0 : _a.remove();
-      }
       this.setOverviewSpan(this.asset === "overview");
       this._lastRenderedAsset = this.asset;
       if (this.asset === "overview") {
         this.renderDeskOverview();
-        return;
-      }
-      if (this.asset === "pw") {
-        this.renderDeskPw();
         return;
       }
       const kind = this.asset;
@@ -10626,47 +9891,6 @@ var BZW_encrypt = (() => {
       );
       detail.appendChild(area);
     }
-    /** 桌面密码资产：平台列表 + 账号详情 + 顶栏收藏切换钮 */
-    renderDeskPw() {
-      var _a;
-      const list = this.desk.list;
-      const detail = this.desk.detail;
-      const kw = this.pwState.searchKw;
-      this.setVaultHead("密码");
-      const barActs = this.popup.querySelector(".bz-vault-bar");
-      const favBtn = barActs.querySelector('[data-act="pw-fav"]');
-      const favIcon = vIc(this.pwState.view === "fav" ? "star" : "star-outline", 15);
-      const favTitle = this.pwState.view === "fav" ? "全部平台" : "只看收藏";
-      if (!favBtn) {
-        const btn = document.createElement("button");
-        btn.className = "bz-vault-ic";
-        btn.dataset.act = "pw-fav";
-        btn.title = favTitle;
-        btn.innerHTML = favIcon;
-        barActs.appendChild(btn);
-        btn.addEventListener("click", () => {
-          this.pwState.view = this.pwState.view === "fav" ? "all" : "fav";
-          this.renderAll();
-        });
-      } else {
-        favBtn.title = favTitle;
-        favBtn.innerHTML = favIcon;
-      }
-      const listHead = document.createElement("div");
-      listHead.className = "bz-vault-lc-head";
-      listHead.innerHTML = `<div class="t">平台</div><button class="lc-add" data-lc-add="pw" title="新增密码">${vIc("plus", 13)} 新增密码</button>`;
-      (_a = listHead.querySelector('[data-lc-add="pw"]')) == null ? void 0 : _a.addEventListener("click", () => this.openPwEntryDialog());
-      const listBody = document.createElement("div");
-      listBody.className = "bz-vault-lc-body";
-      list.appendChild(listHead);
-      list.appendChild(listBody);
-      this.pwView.renderDeskList(listBody, this.pwState, (p, a) => {
-        this.pwState.selPlatform = p;
-        this.pwState.selAccount = a;
-        this.renderDesktop();
-      });
-      this.pwView.renderDeskDetail(detail, this.pwState);
-    }
     /** 桌面加密笔记/日记：列表 + 详情（异步解密日记正文预览） */
     /**
      * 桌面加密笔记/日记：列表 + 详情。
@@ -10676,7 +9900,7 @@ var BZW_encrypt = (() => {
     renderDeskNotes(kind, keepHead = false) {
       const list = this.desk.list;
       const detail = this.desk.detail;
-      const kw = this.pwState.searchKw;
+      const kw = this.searchKw;
       let notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
       this.setVaultHead(kind === "note" ? "笔记" : "加密日记");
       if (kw) {
@@ -10828,231 +10052,15 @@ var BZW_encrypt = (() => {
       head.appendChild(body);
       return head;
     }
-    // ---------- 密码条目弹窗（添加/编辑/平台编辑/确认/toast） ----------
-    /** 密码添加/编辑弹窗（移动端复用桌面弹窗 DOM；双端共享 pwDataManager） */
-    openPwEntryDialog(edit, prefill) {
-      var _a;
-      if (!this.dataManager.unlocked) {
-        notice("请先解锁保险库");
-        return;
-      }
-      this._pwEditingId = edit ? edit.id : null;
-      this._pwDupConfirmed = false;
-      const dlg = this.ensurePwDialog();
-      const title = dlg.querySelector(".bz-vault-dlg h3");
-      title.textContent = edit ? "编辑密码条目" : "添加密码条目";
-      const fields = ["platform", "url", "account", "password", "note"];
-      fields.forEach((f) => {
-        const input = dlg.querySelector(`[data-f="${f}"]`);
-        input.value = edit ? edit[f] || "" : prefill && f !== "password" ? prefill[f] || "" : "";
-      });
-      const pw = edit ? edit.password : this.generatePassword();
-      const pwInput = dlg.querySelector('[data-f="password"]');
-      pwInput.value = pw;
-      pwInput.type = "password";
-      const eyeBtn = dlg.querySelector('[data-pwv-dlg="eye"]');
-      if (eyeBtn) {
-        eyeBtn.title = "显示密码";
-        eyeBtn.innerHTML = vIc("eye", 14);
-      }
-      dlg.querySelector("[data-f-err]").textContent = "";
-      (_a = this.pwDlgSyncUi) == null ? void 0 : _a.call(this);
-      this.openPwDialogOverlay(true);
-      const first = dlg.querySelector('[data-f="platform"]');
-      first == null ? void 0 : first.focus();
-    }
-    ensurePwDialog() {
-      var _a, _b, _c, _d, _e;
-      if (this.pwDlg && document.body.contains(this.pwDlg)) return this.pwDlg;
-      const dlg = document.createElement("div");
-      dlg.className = "bz-vault-dlg-mask";
-      dlg.innerHTML = `
-      <div class="bz-vault-dlg">
-        <h3>添加密码条目</h3>
-        <div class="sub">带 * 为必填 · 平台与账号密码不可为空</div>
-        <label>平台 *</label><input data-f="platform" placeholder="如 GitHub">
-        <label>链接（可选）</label><input data-f="url" placeholder="https://…">
-        <label>账号 *</label><input data-f="account" placeholder="登录账号 / 邮箱 / 手机号">
-        <label>密码 *</label>
-        <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="gen" data-pwv-dlg="gen">生成</button><button class="mini" data-pwv-dlg="eye" type="button" title="显示密码">${vIc("eye", 14)}</button></div>
-        <div class="pwstrength" data-pw-strength></div>
-        <label>备注（可选）</label><input data-f="note" placeholder="备用信息…">
-        <div class="err" data-f-err></div>
-        <div class="btns"><button class="cancel" data-pwv-dlg="cancel">取消</button><button class="save" data-pwv-dlg="save">保存</button></div>
-      </div>`;
-      const errEl = dlg.querySelector("[data-f-err]");
-      const get = (f) => dlg.querySelector(`[data-f="${f}"]`).value.trim();
-      (_a = dlg.querySelector('[data-pwv-dlg="eye"]')) == null ? void 0 : _a.addEventListener("click", () => {
-        const input = dlg.querySelector('[data-f="password"]');
-        const show = input.type === "password";
-        input.type = show ? "text" : "password";
-        const eye = dlg.querySelector('[data-pwv-dlg="eye"]');
-        eye.title = show ? "隐藏密码" : "显示密码";
-        eye.innerHTML = vIc(show ? "eye-off" : "eye", 14);
-        input.focus();
-      });
-      const strengthEl = dlg.querySelector("[data-pw-strength]");
-      const syncStrength = () => {
-        const v = dlg.querySelector('[data-f="password"]').value;
-        if (!v) {
-          strengthEl.textContent = "";
-          delete strengthEl.dataset.level;
-          return;
-        }
-        const s = passwordStrength(v);
-        strengthEl.textContent = "强度：" + pwStrengthLabel(s);
-        strengthEl.dataset.level = s;
-      };
-      this.pwDlgSyncUi = syncStrength;
-      dlg.querySelector('[data-f="password"]').addEventListener("input", syncStrength);
-      const flow = [
-        ["platform", "url"],
-        ["url", "account"],
-        ["account", "password"],
-        ["password", "note"],
-        ["note", null]
-      ];
-      for (const [f, next] of flow) {
-        (_b = dlg.querySelector(`[data-f="${f}"]`)) == null ? void 0 : _b.addEventListener("keydown", (e) => {
-          var _a2, _b2;
-          if (e.key !== "Enter") return;
-          e.preventDefault();
-          if (next) (_a2 = dlg.querySelector(`[data-f="${next}"]`)) == null ? void 0 : _a2.focus();
-          else (_b2 = dlg.querySelector('[data-pwv-dlg="save"]')) == null ? void 0 : _b2.click();
-        });
-      }
-      dlg.addEventListener("click", (e) => {
-        if (e.target === dlg) this.openPwDialogOverlay(false);
-      });
-      (_c = dlg.querySelector('[data-pwv-dlg="gen"]')) == null ? void 0 : _c.addEventListener("click", () => {
-        dlg.querySelector('[data-f="password"]').value = this.generatePassword();
-        syncStrength();
-        this.toast("已生成新密码");
-      });
-      (_d = dlg.querySelector('[data-pwv-dlg="cancel"]')) == null ? void 0 : _d.addEventListener("click", () => this.openPwDialogOverlay(false));
-      (_e = dlg.querySelector('[data-pwv-dlg="save"]')) == null ? void 0 : _e.addEventListener("click", async () => {
-        var _a2, _b2;
-        const platform = get("platform");
-        if (!platform) {
-          errEl.textContent = "平台不能为空";
-          return;
-        }
-        if (!get("account") || !get("password")) {
-          errEl.textContent = "账号和密码不能为空";
-          return;
-        }
-        const account = get("account");
-        const dup = this.pwDataManager.pwData.find(
-          (d) => d.id !== this._pwEditingId && (d.platform || "").trim() === platform && (d.account || "").trim() === account
-        );
-        if (dup && !this._pwDupConfirmed) {
-          this._pwDupConfirmed = true;
-          errEl.textContent = `该平台已有同名账号（${dup.account || account}），再次点击保存将放行`;
-          return;
-        }
-        const item = { platform, url: get("url"), account, password: get("password"), note: get("note") };
-        try {
-          if (this._pwEditingId) {
-            await this.pwDataManager.updateItem(this._pwEditingId, item);
-            this.pwState.selPlatform = item.platform;
-            this.pwState.selAccount = this._pwEditingId;
-          } else {
-            await this.pwDataManager.addItem(item);
-            this.pwState.selPlatform = item.platform;
-            this.pwState.selAccount = (_b2 = (_a2 = this.pwDataManager.pwData[0]) == null ? void 0 : _a2.id) != null ? _b2 : null;
-          }
-          this.openPwDialogOverlay(false);
-          this.renderAll();
-          this.toast("已保存");
-        } catch (e) {
-          errEl.textContent = "保存失败：" + e.message;
-        }
-      });
-      document.body.appendChild(dlg);
-      this.pwDlg = dlg;
-      return dlg;
-    }
-    openPwDialogOverlay(open) {
-      var _a;
-      if (!this.pwDlg) return;
-      if (open) {
-        topifyZ(this.pwDlg);
-        if (!this.pwDlgEsc) {
-          this.pwDlgEsc = escManager.register("bz-vault-pw-dlg", {
-            isVisible: () => !!this.pwDlg && this.pwDlg.style.display !== "none" && document.body.contains(this.pwDlg),
-            close: () => this.openPwDialogOverlay(false)
-          });
-        }
-      } else {
-        (_a = this.pwDlgEsc) == null ? void 0 : _a.unregister();
-        this.pwDlgEsc = null;
-      }
-      this.pwDlg.style.display = open ? "flex" : "none";
-    }
-    /** 卸载辅助：关密码弹窗（注销 ESC 层）并移除 body 上无 id 的弹窗遮罩（G：cleanup 此前不清） */
+    /** 卸载辅助：移除 body 上无 id 的弹窗遮罩（平台编辑等一次性弹层；G：cleanup 此前不清） */
     closeAllDialogs() {
-      this.openPwDialogOverlay(false);
       document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el) => el.remove());
     }
-    /** 平台信息编辑弹窗（独立自绘） */
-    openPwPlatformEdit(platform) {
-      var _a, _b;
-      const accs = this.pwDataManager.accountsOf(platform);
-      const d = accs[0];
-      const mask = document.createElement("div");
-      mask.className = "bz-vault-dlg-mask";
-      topifyZ(mask);
-      mask.style.display = "flex";
-      mask.innerHTML = `
-      <div class="bz-vault-dlg">
-        <h3>编辑平台 · ${escapeHtml2(platform)}</h3>
-        <div class="sub">改名/改链接将应用到该平台全部账号</div>
-        <label>平台名 *</label><input data-pf="platform" value="${escapeHtml2(platform === "(无平台)" ? "" : platform)}">
-        <label>链接（可选）</label><input data-pf="url" value="${escapeHtml2((d == null ? void 0 : d.url) || "")}">
-        <div class="err" data-pf-err></div>
-        <div class="btns"><button class="cancel" data-pf-act="cancel">取消</button><button class="save" data-pf-act="save">保存</button></div>
-      </div>`;
-      const errEl = mask.querySelector("[data-pf-err]");
-      let escH = null;
-      const closePf = () => {
-        escH == null ? void 0 : escH.unregister();
-        escH = null;
-        mask.remove();
-      };
-      escH = escManager.register("bz-vault-pw-platform-edit", {
-        isVisible: () => mask.isConnected,
-        close: closePf
-      });
-      mask.addEventListener("click", (e) => {
-        if (e.target === mask) closePf();
-      });
-      (_a = mask.querySelector('[data-pf-act="cancel"]')) == null ? void 0 : _a.addEventListener("click", () => closePf());
-      (_b = mask.querySelector('[data-pf-act="save"]')) == null ? void 0 : _b.addEventListener("click", async () => {
-        const name = mask.querySelector('[data-pf="platform"]').value.trim();
-        if (!name) {
-          errEl.textContent = "平台名不能为空";
-          return;
-        }
-        const url = mask.querySelector('[data-pf="url"]').value;
-        try {
-          await this.pwDataManager.updatePlatform(platform, { platform: name, url });
-          this.pwState.selPlatform = name;
-          this.pwState.selAccount = null;
-          closePf();
-          this.renderAll();
-          this.toast("平台信息已更新");
-        } catch (e) {
-          errEl.textContent = "保存失败：" + e.message;
-        }
-      });
-      document.body.appendChild(mask);
-    }
     /**
-     * 流程确认框（取消 / 确认 cta）：密码资产与笔记/日记动作共用。
+     * 流程确认框（取消 / 确认 cta）：笔记/日记动作共用。
      * `danger`（issue 291 评审补）= 主动作是删除/销毁类 → 弹窗挂 `.bz-flow-dialog--danger`，
      * 主按钮降为中性底 + 红字（设计手册 §9/§10）。默认 false（还原等非破坏动作保持高亮）。
-     * 注意与 password-vault 的 `askConfirm` 区别：那个是域内自绘确认（自带 .danger 按钮样式），
-     * 本方法走 core 流程框，危险语义必须显式传进来。
+     * password-vault 的 `askConfirm` 已随 issue 365 一并收编同一 core 流程框（两域同源）。
      */
     askConfirm(title, message, okLabel, danger, onYes) {
       void openFlowDialog({
@@ -11066,54 +10074,8 @@ var BZW_encrypt = (() => {
         if (v === "ok") onYes();
       });
     }
-    /** 敏感文本复制 + 60s 自动清空（密码资产与日记共用） */
-    async copySensitive(text) {
-      try {
-        await copySensitiveText(text);
-        return true;
-      } catch (e) {
-        try {
-          const ta = document.createElement("textarea");
-          ta.value = text;
-          ta.style.cssText = "position:fixed;opacity:0";
-          document.body.appendChild(ta);
-          ta.select();
-          const ok = document.execCommand("copy");
-          ta.remove();
-          if (ok) armClipboardClear();
-          return ok;
-        } catch (e2) {
-          return false;
-        }
-      }
-    }
-    openExternal(url) {
-      try {
-        const w = window;
-        const electron = w.require && w.require("electron");
-        if (electron && electron.shell) {
-          electron.shell.openExternal(url);
-          return;
-        }
-      } catch (e) {
-      }
-      window.open(url, "_blank");
-    }
-    generatePassword() {
-      const length = parseInt(this.config.pwLength || "") || 16;
-      const charset = this.config.pwCharset || DEFAULT_PW_CHARSET;
-      return secureRandomPassword(length, charset);
-    }
-    genAndToast() {
-      if (!this.dataManager.unlocked) {
-        notice("请先解锁保险库");
-        return;
-      }
-      void this.copySensitive(this.generatePassword()).then((ok) => {
-        if (ok) this.toast("新密码已生成并复制（60 秒后自动清空），可「新增密码」粘贴使用");
-        else this.toast("生成失败，请重试", true);
-      });
-    }
+    // 敏感文本复制（含降级兜底）+ 60s 自动清空：收口 core/utils copySensitiveWithFallback
+    // （issue 365：与 password-vault 两份逐字雷同的兜底实现一并删除，两域消费同一实现）。
     setAssetFromNav(a) {
       if (a === "pw" || a === "diary") a = "note";
       this.asset = a;
@@ -11152,10 +10114,8 @@ var BZW_encrypt = (() => {
     lockNow(silent = false) {
       this.dataManager.lock();
       this.pwDataManager.lock();
-      this.pwState = { ...DEFAULT_PW_STATE };
       this._selNoteId = null;
       this._diaryPlain = {};
-      this._pwEditingId = null;
       this.asset = "overview";
       this.lastHealth = null;
       this.unlockedAt = null;
@@ -11190,16 +10150,9 @@ var BZW_encrypt = (() => {
         body.appendChild(area);
         return;
       }
-      if (this.asset === "pw") {
-        const card = document.createElement("div");
-        card.className = "bz-vault-mob-pwlist";
-        this.pwView.renderMobList(card, this.pwState, (p) => this.openPwMobPage(p));
-        body.appendChild(card);
-        return;
-      }
       const kind = this.asset;
       const notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-      const kw = this.pwState.searchKw;
+      const kw = this.searchKw;
       const filtered = kw ? notes.filter((n) => (n.title || "").toLowerCase().includes(kw.toLowerCase()) || (n.path || "").toLowerCase().includes(kw.toLowerCase())) : notes;
       if (!filtered.length) {
         body.replaceChildren(
@@ -11258,22 +10211,6 @@ var BZW_encrypt = (() => {
         }).catch(() => {
         });
       }
-    }
-    openPwMobPage(p) {
-      var _a, _b;
-      const { page } = this.createMobPage(escapeHtml2(p.platform));
-      this.pwView.renderMobPlatformPage(page.querySelector(".body"), p, this.pwState);
-      (_a = page.querySelector("[data-mob-back]")) == null ? void 0 : _a.addEventListener("click", () => page.remove());
-      (_b = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b.addEventListener("click", () => this.pwView.openPlatformSheet(p.platform));
-      this.mob.body.appendChild(page);
-    }
-    openPwAccountPage(d, st) {
-      var _a, _b;
-      const { page, body } = this.createMobPage(escapeHtml2(d.platform));
-      this.pwView.renderDeskDetail(body, { ...st, selPlatform: d.platform, selAccount: d.id });
-      (_a = page.querySelector("[data-mob-back]")) == null ? void 0 : _a.addEventListener("click", () => page.remove());
-      (_b = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b.addEventListener("click", () => this.pwView.openAccountSheet(d));
-      this.mob.body.appendChild(page);
     }
     /** 轻量 toast（保险库窗口内） */
     toast(msg, isErr = false) {
@@ -11392,7 +10329,7 @@ var BZW_encrypt = (() => {
           this.toast("正文解密失败", true);
           return;
         }
-        void this.copySensitive(t).then((ok) => this.toast(ok ? "正文已复制（60 秒后自动清空）" : "复制失败", !ok));
+        void copySensitiveWithFallback(t).then((ok) => this.toast(ok ? "正文已复制（60 秒后自动清空）" : "复制失败", !ok));
       }).catch(() => this.toast("正文解密失败", true));
     }
     confirmDestroyDiary(note) {
@@ -11710,7 +10647,7 @@ var BZW_encrypt = (() => {
       this.uiManager.ensureElements();
       this._initialized = true;
     }
-    /** 打开保险库主面板：解锁成功直落密码资产并聚焦搜索（快速取密路径）；
+    /** 打开保险库主面板：解锁成功直落加密笔记资产并聚焦搜索；
      *  已解锁直接打开则恢复上次停留资产（会话级记忆）。 */
     async openManager() {
       if (!this.dataManager.unlocked) {
@@ -11723,33 +10660,6 @@ var BZW_encrypt = (() => {
         this.uiManager.show();
         this.uiManager.restoreLastAsset();
       }
-    }
-    /**
-     * 快速复制密码（命令 bz-encrypt-copy-password；不打开主面板）：
-     * 未解锁先弹主密码 → 轻量 fuzzy 选择器选条目 → 复制到剪贴板（60s 自动清空）。
-     */
-    async quickCopyPassword() {
-      if (!this.dataManager.unlocked) {
-        const ok = await this.uiManager.showPasswordDialog();
-        if (!ok) return;
-      }
-      try {
-        await this.uiManager.pwDataManager.load();
-      } catch (e) {
-      }
-      const entries = this.uiManager.pwDataManager.pwData;
-      if (!entries.length) {
-        notice("保险库还没有密码，打开面板后可新增");
-        return;
-      }
-      void openPasswordQuickPicker(entries, (d) => {
-        void this.uiManager.copySensitive(d.password).then((ok) => {
-          notice(
-            ok ? `已复制「${d.platform}」${d.account ? `（${d.account}）` : ""}的密码，60 秒后自动清空` : "复制失败，请手动复制",
-            ok ? "success" : "error"
-          );
-        });
-      });
     }
     /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始；共享附件原件保留（issue 338） */
     async confirmLockProceed(file, attCount, sharedCount = 0) {
@@ -11873,7 +10783,6 @@ var BZW_encrypt = (() => {
       this.uiManager.closeAllDialogs();
       cancelClipboardClear();
       this.uiManager.stopSessionTimers();
-      this.uiManager.pwView.disposeRevealTimers();
       this.uiManager.pwDataManager.destroy();
       this.uiManager.mask = null;
       this.uiManager.popup = null;
@@ -11902,10 +10811,7 @@ var BZW_encrypt = (() => {
         previewSize: parseInt(s.encryptPreviewSize) || 384,
         previewQuality: parseFloat(s.encryptPreviewQuality) || 0.5,
         autoLoadOriginal: !!s.encryptAutoLoadOriginal,
-        securityMode: !!s.encryptSecurityMode,
-        // ADR-0085：密码资产并入保险库；生成器沿用全局键（旧密码本同源）
-        pwCharset: s.passwordCharset || DEFAULT_PW_CHARSET,
-        pwLength: String(parseInt(s.passwordLength) || 16)
+        securityMode: !!s.encryptSecurityMode
       };
       controller = EncryptAppController.getInstance(config);
     }
