@@ -743,6 +743,9 @@ describe('反思（Reflection）', () => {
     const insightCount = data.memory.memoryStream.filter((x) => x.type === 'insight').length;
     expect(insightCount).toBe(1);
     // 第二次反思：补两条新观察（ticket 162：证据池只含上次反思以来的新增），evidence 应只含 observation，不含 insight
+    // 毫秒隔离：created（ISO 毫秒）与 lastReflectAt 同毫秒时被窗口严格 `>` 排除——mock 环境下 r1 整轮
+    // 常在 1ms 内跑完，不隔一拍这两条新观察会落进同一毫秒而被前置闸早退（无 AI 调用 → 断言取空）
+    await new Promise((r) => setTimeout(r, 2));
     await m.addObservation('用户说：新增观察一', { importance: 0.8 });
     await m.addObservation('用户说：新增观察二', { importance: 0.8 });
     const r2 = routedFetch({ insights: [{ text: '再总结', evidence: [1] }] });
