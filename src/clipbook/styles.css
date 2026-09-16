@@ -218,6 +218,11 @@
 .bz-clip-mob-detail {
   user-select: text;
   -webkit-user-select: text;
+  /* issue 341：移动端长按选区的原生菜单（iOS Callout「拷贝/查询/共享」、Android 选择工具条）
+     是系统 UI 不是 DOM——iOS 侧唯一可用开关即这条属性（WKWebView 另认 contextmenu，见 ui.ts
+     的 onReaderContextMenu）。user-select:text 必须保住：收回选择豁免连选区都没了，
+     划选工具框拿不到文本。 */
+  -webkit-touch-callout: none;
 }
 .bz-clip-read-scroll { flex: 1; overflow-y: auto; padding: 28px 44px 40px; }
 .bz-clip-read-body { max-width: 560px; margin: 0 auto; }
