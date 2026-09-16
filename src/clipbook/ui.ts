@@ -1144,7 +1144,9 @@ async function undoDeleteNews(rawBefore: any): Promise<void> {
   await refreshAfterAction();
 }
 
-async function deleteClipNote(a: ClipArticle): Promise<void> {
+/** 删除剪藏笔记（enh 包 5 确认流 + issue 336/ADR-0149 trash 前 source 降级）。
+ *  导出仅供删除流集成测试复用（真实入口 = 条目动作菜单的删除项）。 */
+export async function deleteClipNote(a: ClipArticle): Promise<void> {
   const ok = await openFlowDialog({
     className: 'bz-clip-dialog-editorial',
     title: '删除剪藏',
@@ -1162,6 +1164,17 @@ async function deleteClipNote(a: ClipArticle): Promise<void> {
       const path = a.notePath || note.path || '';
       let content = '';
       try { content = await getApp().vault.cachedRead(note.file); } catch (e) { /* 快照失败也继续删 */ }
+      // issue 336 / ADR-0149 决策 1：trash 前把知识盒卡片里指向本剪藏的 source 降级回外链
+      // （无 url 剪藏 → 改调摘除；trash 后 md-deleted 消费者对已退役卡片天然幂等跳过）。
+      // 降级失败不阻断删除（同 materializeTracking 接受口径）；走跨域门面动态 import（ADR-0002）。
+      try {
+        const mod: any = await import('../knowledge');
+        if (typeof mod.retireKnowledgeSourcesForClip === 'function') {
+          await mod.retireKnowledgeSourcesForClip(getApp(), path, a.url || '');
+        }
+      } catch (e) {
+        console.warn('[剪藏本] 知识卡片来源回退失败（接受，静默）', e);
+      }
       await getApp().vault.trash(note.file, true); // 系统回收站（enh 包 5：替代硬删除）
       clipBodyCache.delete(path);
       void clearArticleTracking(a.id).catch(() => { /* 侧写残留无害，不阻断删除 */ });

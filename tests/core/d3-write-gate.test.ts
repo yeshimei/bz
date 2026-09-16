@@ -55,6 +55,10 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     reason: '文献/笔记类用户文档写：视频转文献笔记生成与 frontmatter 回填（md 用户笔记，非插件私有数据）',
   },
   {
+    file: /^src\/knowledge\/source-retire\.ts$/,
+    reason: '知识盒卡片 md 用户文档写（issue 336/ADR-0149 source 退役：删除降级/摘除行级手术，同 note-gen upgradeNoteSourceInFile 口径——一次性读改写用户笔记，无插件私有数据竞态面）',
+  },
+  {
     file: /^src\/knowledge\/ui\.ts$/,
     reason: '知识盒提炼成卡（ADR-0112）：卡片盒 md 用户笔记写 + 源文献 frontmatter related 互链（用户文档写，一次性追加无读改写竞态面）',
   },
