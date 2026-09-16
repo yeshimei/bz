@@ -58,8 +58,11 @@ describe('PasswordVaultUIManager', () => {
     expect(document.querySelector('.bz-password-vault-moblist')).toBeTruthy();
     expect(document.querySelectorAll('.bz-password-vault-lock').length).toBe(2);
     expect(document.querySelectorAll('.bz-password-vault-modal').length).toBe(2);
-    expect(document.querySelectorAll('.bz-password-vault-pop2').length).toBe(4); // 2 confirm + 2 platEdit
-    expect(document.querySelectorAll('.bz-password-vault-toast').length).toBe(2);
+    // 确认框已收编 core 流程框（issue 347）：pop2 仅余平台编辑弹窗（双实例）
+    expect(document.querySelectorAll('.bz-password-vault-pop2').length).toBe(2);
+    expect(document.querySelectorAll('.bz-password-vault-platedit').length).toBe(2);
+    // 提示收编 core 全局通知（issue 347）：域内不再出 toast 元素
+    expect(document.querySelectorAll('.bz-password-vault-toast').length).toBe(0);
     // 标题改为「密码本」；无 cmenu/sheet/lockstate（右键菜单/抽屉走 bz item-actions）
     expect(document.querySelector('.bz-password-vault-logo .name')!.textContent).toContain('密码本');
     expect(document.querySelectorAll('.bz-password-vault-cmenu').length).toBe(0);

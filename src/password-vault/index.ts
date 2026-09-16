@@ -7,9 +7,10 @@
 import type { App } from 'obsidian';
 import { getSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
+import { copySensitiveWithFallback } from '../core/utils';
 import { lockSafe, ensureSafeUnlocked } from '../encrypt';
 import { PasswordVaultAppController } from './ui';
-import { openPasswordQuickPicker, copySensitiveWithFallback, closePasswordQuickPicker } from './quick-pick';
+import { openPasswordQuickPicker, closePasswordQuickPicker } from './quick-pick';
 
 let initialized = false;
 let controller: PasswordVaultAppController | null = null;

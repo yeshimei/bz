@@ -1,7 +1,8 @@
 /**
  * 保险库（password-vault）UI — 原型 v1「保险库」一比一移植
  * 桌面三栏工作台（导航+列表+详情）+ 移动端（列表卡+详情页+FAB）+ 原型自绘
- * 右键菜单 / 底部抽屉 / 确认框 / toast / 解锁屏（金色印章 + 安全机制嵌入）。
+ * 右键菜单 / 底部抽屉 / 解锁屏（金色印章 + 安全机制嵌入）；
+ * 确认框走 core 流程框（openFlowDialog）、提示走 core 全局通知（issue 347 收编）。
  * 数据经 PasswordVaultDataManager（保险箱 password-vault SafeNote 共享）；
  * 解锁底层走保险箱 SafeManager（同一主密码），原型锁屏仅作视觉壳，
  * 安全机制（首设风险确认/失败冷却/损坏重设/自愈提示）完整保留（Q13）。
@@ -9,7 +10,7 @@
  * markup 单源（issue 251/ADR-0110）：全部 HTML 出自 ./render.ts（本文件零模板串）。
  */
 import { escManager } from '../core/esc-manager';
-import { secureRandomPassword, armClipboardClear, copySensitiveText, cancelClipboardClear } from '../core/utils';
+import { secureRandomPassword, copySensitiveWithFallback, cancelClipboardClear } from '../core/utils';
 import { getSafeManager } from '../encrypt';
 import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
 import { onDomainEvent } from '../core/domain-bus';
@@ -55,7 +56,7 @@ interface LockSecurity {
 const DEFAULT_CHARSET =
   '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+';
 
-// secureRandomPassword / armClipboardClear / copySensitiveText 收口 core/utils（批次 G 单源）
+// secureRandomPassword / copySensitiveWithFallback / cancelClipboardClear 收口 core/utils（批次 G 单源 + issue 347 剪贴板兜底单源）
 
 /**
  * 给容器内所有 [data-avatar] 注入真实 favicon 图标（域名从 url 解析）：
@@ -111,7 +112,6 @@ export class PasswordVaultUIManager {
   security: LockSecurity = { unlockFailStreak: 0, unlockCooldownUntil: 0 };
   // 计时器
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
-  private toastTimer: ReturnType<typeof setTimeout> | null = null;
   private escUnregister: { unregister: () => void } | null = null;
   /** 共锁订阅（E2）：encrypt:unlock-changed 退订句柄（show 挂 / hide+cleanup 摘） */
   private unlockOff: (() => void) | null = null;
@@ -124,9 +124,7 @@ export class PasswordVaultUIManager {
     count: HTMLElement;
     title: HTMLElement;
     lock: HTMLElement;
-    toast: HTMLElement;
     modal: HTMLElement;
-    confirm: HTMLElement;
     platEdit: HTMLElement;
   };
   // DOM 引用（移动）
@@ -137,9 +135,7 @@ export class PasswordVaultUIManager {
     pageBody: HTMLElement;
     pageTitle: HTMLElement;
     lock: HTMLElement;
-    toast: HTMLElement;
     modal: HTMLElement;
-    confirm: HTMLElement;
     platEdit: HTMLElement;
   };
 
@@ -171,9 +167,7 @@ export class PasswordVaultUIManager {
       count: desk.querySelector('.bz-password-vault-count')!,
       title: desk.querySelector('.bz-password-vault-listhead h1')!,
       lock: desk.querySelector('.bz-password-vault-lock')!,
-      toast: desk.querySelector('.bz-password-vault-toast')!,
       modal: desk.querySelector('.bz-password-vault-modal')!,
-      confirm: desk.querySelector('.bz-password-vault-pop2')!,
       platEdit: desk.querySelector('.bz-password-vault-platedit')!,
     };
     // 移动实例
@@ -188,9 +182,7 @@ export class PasswordVaultUIManager {
       pageBody: mob.querySelector('.bz-password-vault-mobbody')!,
       pageTitle: mob.querySelector('.bz-password-vault-mobpage .head .t')!,
       lock: mob.querySelector('.bz-password-vault-lock')!,
-      toast: mob.querySelector('.bz-password-vault-toast')!,
       modal: mob.querySelector('.bz-password-vault-modal')!,
-      confirm: mob.querySelector('.bz-password-vault-pop2')!,
       platEdit: mob.querySelector('.bz-password-vault-platedit')!,
     };
 
@@ -569,9 +561,9 @@ export class PasswordVaultUIManager {
   private async handleAccountAction(d: PasswordVaultEntry, act: string) {
     const t = (m: string, err = false) => this.toast(m, err);
     if (act === 'copy-ac') {
-      (await this.copy(d.account || '')) ? t('账号已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
+      (await copySensitiveWithFallback(d.account || '')) ? t('账号已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
     } else if (act === 'copy-pw') {
-      (await this.copy(d.password || '')) ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
+      (await copySensitiveWithFallback(d.password || '')) ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
     } else if (act === 'eye') {
       this.shownIds[d.id] = !this.shownIds[d.id];
       this.renderAll();
@@ -810,7 +802,7 @@ export class PasswordVaultUIManager {
         label: '复制账号',
         onClick: () => {
           void (async () => {
-            (await this.copy(d.account || '')) ? t('账号已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
+            (await copySensitiveWithFallback(d.account || '')) ? t('账号已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
           })();
         },
       },
@@ -819,7 +811,7 @@ export class PasswordVaultUIManager {
         label: '复制密码',
         onClick: () => {
           void (async () => {
-            (await this.copy(d.password || '')) ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
+            (await copySensitiveWithFallback(d.password || '')) ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
           })();
         },
       },
@@ -888,7 +880,7 @@ export class PasswordVaultUIManager {
         label: '复制最近账号',
         onClick: () => {
           void (async () => {
-            (await this.copy(recent.account || '')) ? t('最近账号已复制（60 秒后自动清空）') : t('复制失败', true);
+            (await copySensitiveWithFallback(recent.account || '')) ? t('最近账号已复制（60 秒后自动清空）') : t('复制失败', true);
           })();
         },
       });
@@ -897,7 +889,7 @@ export class PasswordVaultUIManager {
         label: '复制最近密码',
         onClick: () => {
           void (async () => {
-            (await this.copy(recent.password || '')) ? t('最近密码已复制（60 秒后自动清空）') : t('复制失败', true);
+            (await copySensitiveWithFallback(recent.password || '')) ? t('最近密码已复制（60 秒后自动清空）') : t('复制失败', true);
           })();
         },
       });
@@ -981,79 +973,42 @@ export class PasswordVaultUIManager {
     });
   }
 
-  // ---------- 确认框（原型自绘，双实例同步） ----------
-  /** 当前确认回调（E1）：监听器只在首绑时挂一次，回调每次 askConfirm 覆写——
-   *  此前每次调用都给 .ok 叠加监听器：第一次取消后第二次确认会先命中旧监听器，
-   *  执行的是上一次的动作（删错条目）；首次已确认过则旧监听器抢先消费 pending。 */
-  private confirmYes: (() => void) | null = null;
-
+  // ---------- 确认框（core 流程框单源，issue 347 收编） ----------
+  /**
+   * 确认框：原 E1 时代为域内自绘双实例同步弹层（回调覆写 + pending 消费，曾因确定按钮
+   * 监听器逐次叠加而删错条目）；现收编 core openFlowDialog——每次新建 DOM、取消按钮 /
+   * ESC / 遮罩点击一律按取消语义 resolve undefined，仅 value==='ok' 执行 onYes，
+   * 监听器叠加隐患随自绘 DOM 一并消失。danger 时确认钮文案「删除」并挂危险修饰
+   * （bz-flow-dialog--danger：主钮中性底 + 红字，对齐原 .ok.danger 语义）；
+   * 域皮类 bz-pwv-flow-dialog 让金色材质随行（弹窗挂 document.body，见域 CSS 说明）。
+   */
   askConfirm(title: string, message: string, danger: boolean, onYes: () => void) {
-    this.confirmYes = onYes;
-    this.root!.querySelectorAll('.bz-password-vault-pop2:not(.bz-password-vault-platedit)').forEach((node) => {
-      const pop = node as HTMLElement;
-      const card = pop.querySelector('.card')!;
-      card.querySelector('h3')!.textContent = title;
-      card.querySelector('.msg')!.textContent = message;
-      const ok = card.querySelector('.ok') as HTMLButtonElement;
-      ok.textContent = danger ? '删除' : '确定';
-      ok.classList.toggle('danger', !!danger);
-      pop.classList.add('open');
-      (pop as HTMLElement).dataset.confirmCb = 'pending';
-      // 遮罩与确定按钮均一次性绑定（E1：确定按钮此前每次调用叠加监听器）
-      if (!(pop as HTMLElement).dataset.maskBound) {
-        (pop as HTMLElement).dataset.maskBound = '1';
-        // 点击遮罩（非弹窗本体）关闭
-        pop.addEventListener('click', (e) => {
-          if (e.target === pop) {
-            pop.classList.remove('open');
-            (pop as HTMLElement).dataset.confirmCb = '';
-          }
-        });
-        ok.addEventListener('click', () => {
-          pop.classList.remove('open');
-          if (pop.dataset.confirmCb === 'pending') {
-            pop.dataset.confirmCb = '';
-            this.confirmYes?.();
-          }
-        });
-      }
+    void openFlowDialog({
+      title,
+      message,
+      className: 'bz-pwv-flow-dialog',
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: danger ? '删除' : '确定', value: 'ok', cta: true, danger },
+      ],
+    }).then((v) => {
+      if (v === 'ok') onYes();
     });
-  }
-  // ---------- toast（原型自绘） ----------
-  toast(msg: string, isErr = false) {
-    this.root!.querySelectorAll('.bz-password-vault-toast').forEach((el) => {
-      el.textContent = msg;
-      el.classList.toggle('err', !!isErr);
-      el.classList.add('show');
-    });
-    if (this.toastTimer) clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => {
-      this.root!.querySelectorAll('.bz-password-vault-toast').forEach((el) => el.classList.remove('show'));
-    }, 1800);
   }
 
-  // ---------- 复制 ----------
-  private async copy(text: string): Promise<boolean> {
-    try {
-      await copySensitiveText(text);
-      return true;
-    } catch (e) {
-      // 降级：textarea 选中法
-      try {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.cssText = 'position:fixed;opacity:0';
-        document.body.appendChild(ta);
-        ta.select();
-        const ok = document.execCommand('copy');
-        ta.remove();
-        if (ok) armClipboardClear();
-        return ok;
-      } catch (e2) {
-        return false;
-      }
-    }
+  // ---------- 提示（core 全局通知单源，issue 347 收编） ----------
+  /**
+   * 提示：原为面板内自绘 toast（双实例同步 + 1800ms 定时器），收编 core 全局通知——
+   * 面板最小化/隐藏时提示仍可见（E15 同款教训），文案逐字保留；isErr → error（❌），
+   * 否则按结果语义走 success（✅，与 index.ts 快速取密通知同口径）。
+   */
+  toast(msg: string, isErr = false) {
+    notice(msg, isErr ? 'error' : 'success');
   }
+
+  // ---------- 复制（core 剪贴板兜底单源，issue 347 收编） ----------
+  // 复制链路（copySensitiveText 失败 → textarea+execCommand 兜底 + 60s 自动清空）
+  // 收口 core/utils 的 copySensitiveWithFallback；本域 encrypt 双域消费同一实现。
 
   /** 打开外链（electron shell 优先，Obsidian 环境） */
   private openExternal(url: string): void {
@@ -1406,10 +1361,11 @@ export class PasswordVaultUIManager {
           this.closeEntryDialog();
           return;
         }
-        const openConfirm = this.root!.querySelector('.bz-password-vault-pop2.open');
-        if (openConfirm) {
-          openConfirm.classList.remove('open');
-          (openConfirm as HTMLElement).dataset.confirmCb = ''; // E1：ESC 关闭同步作废挂起回调
+        // 平台编辑弹窗（原 pop2 确认框分支随收编 core 流程框消失：确认框的 ESC
+        // 由 openFlowDialog 自带的 'q3-confirm' 层处理，且层级更新、天然优先本面板）
+        const openPlatEdit = this.root!.querySelector('.bz-password-vault-platedit.open');
+        if (openPlatEdit) {
+          openPlatEdit.classList.remove('open');
           return;
         }
         this.hide();
@@ -1424,10 +1380,6 @@ export class PasswordVaultUIManager {
     if (this.searchTimer !== null) {
       clearTimeout(this.searchTimer);
       this.searchTimer = null;
-    }
-    if (this.toastTimer !== null) {
-      clearTimeout(this.toastTimer);
-      this.toastTimer = null;
     }
     this.escUnregister?.unregister();
     this.escUnregister = null;
