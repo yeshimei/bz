@@ -1,4 +1,4 @@
-/* 源指纹 6b6b9dd24f22eb1b · 仓内输入 231 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f461ff99c5f4da4f · 仓内输入 231 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -15733,7 +15733,8 @@ ${countsToText(s.missing)}
         "courseName",
         "coursePath",
         "linkedNote",
-        "url"
+        "url",
+        "recur"
       ];
       FAVORITES_ITEM_FIELDS = [
         "id",
@@ -16018,6 +16019,33 @@ ${countsToText(s.missing)}
     const tags = (_a2 = cache.frontmatter) == null ? void 0 : _a2.tags;
     return !!tags && tags.includes("公开课");
   }
+  function normalizeRecur(v) {
+    if (!v || typeof v !== "object") return null;
+    const kind = v.kind;
+    if (kind === "weekly" || kind === "monthly" || kind === "yearly") return { kind };
+    if (kind === "days") {
+      const n = Number(v.interval);
+      return { kind: "days", interval: Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1 };
+    }
+    return null;
+  }
+  function nextRecurDue(recur, base, nowStr) {
+    const fmt2 = "YYYY-MM-DD HH:mm:ss";
+    const norm = (s) => s.replace("T", " ");
+    let anchor = (0, import_moment3.default)(norm(base || nowStr || (0, import_moment3.default)().format(fmt2)), fmt2);
+    if (!anchor.isValid()) anchor = (0, import_moment3.default)();
+    const now = nowStr ? (0, import_moment3.default)(norm(nowStr), fmt2) : (0, import_moment3.default)();
+    const unit = recur.kind === "weekly" ? "weeks" : recur.kind === "monthly" ? "months" : recur.kind === "yearly" ? "years" : "days";
+    const amount = unit === "days" ? recur.interval && recur.interval >= 1 ? Math.floor(recur.interval) : 1 : 1;
+    let n = 1;
+    let cur = anchor.clone().add(n * amount, unit);
+    let guard = 0;
+    while (cur.valueOf() <= now.valueOf() && guard++ < 366) {
+      n++;
+      cur = anchor.clone().add(n * amount, unit);
+    }
+    return cur.format(fmt2);
+  }
   function normalizeItem(item) {
     return {
       id: item.id,
@@ -16033,7 +16061,8 @@ ${countsToText(s.missing)}
       courseName: item.courseName || null,
       coursePath: item.coursePath || null,
       linkedNote: item.linkedNote || null,
-      url: item.url || null
+      url: item.url || null,
+      recur: normalizeRecur(item.recur)
     };
   }
   var import_moment3, DEFAULT_SCENARIOS, MemoData;
@@ -16119,9 +16148,39 @@ ${countsToText(s.missing)}
             await this.write(data);
           });
         },
+        /**
+         * 完成条目（issue 353 扩展）：标记 completed；周期条目（recur）自动生成下一期——
+         * 全字段克隆（场景/优先级/关联笔记/子任务等保留），新 id/created，completed 清空，
+         * due 顺延到下一周期（nextRecurDue，无 due 则锚定完成时刻起算）。
+         * 返回 { next }：非周期条目 next = null；已完成条目幂等短路（不重复生成）。
+         * 整个「读→改→写（含生成）」在同一个串行队列任务内原子完成——队列不可重入，
+         * 任务内不得再走 updateItem/addItem（同路径会死锁）。
+         */
         async completeItem(id) {
-          const now = (0, import_moment3.default)().format("YYYY-MM-DD HH:mm:ss");
-          await this.updateItem(id, { completed: now });
+          return enqueueFileTask(this.memoFilePath, async () => {
+            const data = await this.read();
+            const item = data.find((d) => d.id === id);
+            if (!item) throw new Error("条目不存在");
+            if (item.completed) return { next: null };
+            const now = (0, import_moment3.default)().format("YYYY-MM-DD HH:mm:ss");
+            item.completed = now;
+            const recur = normalizeRecur(item.recur);
+            let next = null;
+            if (recur) {
+              const due = nextRecurDue(recur, item.due || now, now);
+              next = normalizeItem({
+                ...item,
+                notePosition: item.notePosition ? { ...item.notePosition } : null,
+                id: generateId(),
+                created: now,
+                completed: null,
+                due
+              });
+              data.unshift(next);
+            }
+            await this.write(data);
+            return { next };
+          });
         },
         /** 删除条目；返回被删条目的原索引（未找到返回 -1），供撤销时插回原位 */
         async deleteItem(id) {
@@ -17695,6 +17754,7 @@ ${countsToText(s.missing)}
         overdue: "circle-alert",
         clock: "clock",
         calendar: "calendar",
+        recur: "repeat",
         doneFold: "chevron-down",
         sceneAll: "layers",
         sceneToday: "sun"
