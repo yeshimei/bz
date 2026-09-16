@@ -376,6 +376,11 @@ function buildDom(app: any): void {
   if (mobBodyScrollEl) mobBodyScrollEl.addEventListener('scroll', hideSelBar, { passive: true });
   document.addEventListener('selectionchange', onSelectionChanged);
   document.addEventListener('mousedown', onDocMouseDown, true);
+  // issue 341：移动端正文划选——原生长按菜单（剪切/复制/粘贴）与划选工具框同位抢位，
+  // 正文容器内拦下 contextmenu（Android WebView 认 preventDefault 的那条路径；iOS 走 styles.css
+  // 的 -webkit-touch-callout）。capture：先于 Obsidian 自己的正文监听。作用域只到正文容器
+  // （[data-clip-md]/[data-clip-mob-md]）——列表卡片右键菜单、桌面右键均不受影响。
+  overlayEl.addEventListener('contextmenu', onReaderContextMenu, true);
 
   // ESC（C19：详情屏开着时第一层收详情返回列表，再按一次才关面板）
   escKey = 'bz-clipbook';
@@ -1509,7 +1514,9 @@ function armSelBarEsc(): void {
 }
 
 /** 移动端系统选择菜单让位高度（px）：原生复制/选择菜单贴着选区上方弹出，
- *  浮框原位（选区上 8px）与之同位被盖——移动端定位统一再让出该高度 */
+ *  浮框原位（选区上 8px）与之同位被盖——移动端定位统一再让出该高度。
+ *  issue 341 起保留为兜底：菜单屏蔽是 best-effort（Android 选择 ActionMode 未必认
+ *  preventDefault），拦不住时仍靠这 48px 让位。 */
 const MOBILE_SYS_BAR_CLEARANCE = 48;
 
 /** 浮框定位：光标（选区/图片）上方，放不下翻下方，视口内钳制（jsdom 零尺寸走估算兜底）。
@@ -1614,6 +1621,16 @@ function onReaderMouseUp(): void {
     selChangeTimer = null;
   }
   checkTextSelection();
+}
+
+/** 移动端正文容器内拦下 contextmenu（issue 341）：原生长按菜单与划选工具框同位抢位。
+ *  只拦 [data-clip-md]/[data-clip-mob-md] 内的目标——列表卡片右键菜单（item-actions）、
+ *  桌面右键（鼠标惯用件）照旧；选区本身不受影响，工具框仍由 selectionchange 驱动。 */
+function onReaderContextMenu(ev: MouseEvent): void {
+  if (!isMobileEnv()) return;
+  const t = ev.target as HTMLElement | null;
+  if (!t || typeof t.closest !== 'function') return;
+  if (t.closest('[data-clip-md],[data-clip-mob-md]')) ev.preventDefault();
 }
 
 /** 点工具框外即收（document 捕获层；工具框内按下不收） */
