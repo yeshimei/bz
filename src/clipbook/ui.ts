@@ -1806,12 +1806,12 @@ function knowledgeDir(): string {
 }
 
 /** internal-link href → vault 内实际路径（去 heading 锚点、补 .md、判存在）；缺失返回 null（不拦）。
- *  三级解析（issue 329 Bug 3 / issue 336 修正）：全路径直查（含补 .md）→ 裸 basename 先按
+ *  三级解析（issue 329 Bug 3 / issue 340 修正）：全路径直查（含补 .md）→ 裸 basename 先按
  *  「知识盒内同名笔记」直查（锚定别名双链 `[[basename|文字]]` 必指盒内笔记，vault 存在性判定
  *  即可解析，不依赖 metadataCache）→ 再退 metadataCache.getFirstLinkpathDest 全库解析。
  *  不得用 getFirstLinkfileDest：该 API 在 Obsidian 1.12/1.13 实装中不存在（d.ts 亦无），
  *  typeof 守卫静默空转 → 拦截恒失效 → 原生导航（桌面笔记开在全屏面板后=无反应；移动端 webview
- *  直接导航=OB 重启，issue 336 实测）。 */
+ *  直接导航=OB 重启，issue 340 实测）。 */
 function resolveInternalTarget(href: string): string | null {
   const app = getApp();
   let p = String(href || '').split('#')[0].trim().replace(/\\/g, '/');
