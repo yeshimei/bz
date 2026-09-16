@@ -268,6 +268,7 @@ export function groupByMonth(entries: WallEntry[]): Map<string, WallEntry[]> {
  * - 口径：`entry.date.slice(5) === today.slice(5)`（月-日逐字比较，跨年命中）；
  * - 排除当年（今天写的日记不属于「那年」，避免首屏与今日内容重复）；
  * - 不做加密过滤——入参传已过滤后的可见条目集（未解锁加密条目本就不在墙上）；
+ * - 不筛媒体：纯文字条目与媒体条目一并命中（issue 352 放开，媒体/文字卡分流在 UI 层 mkMemories）；
  * - today 非 YYYY-MM-DD 形状（slice(5) 为空）返回空数组（无命中不渲染由调用方保证）。
  */
 export function pickOnThisDay(entries: WallEntry[], today: string): WallEntry[] {
