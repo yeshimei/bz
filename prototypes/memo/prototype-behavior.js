@@ -1,4 +1,4 @@
-/* 源指纹 a5a321bdb6e2af46 · 仓内输入 209 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a2af4adb69b63224 · 仓内输入 209 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -8134,6 +8134,138 @@ var BZW_memo = (() => {
     }
   });
 
+  // src/pomodoro/stats.ts
+  function dayKey(ts) {
+    return localDayKey(ts);
+  }
+  function todayCount(history2, now) {
+    const today = dayKey(now);
+    return history2.filter((h) => dayKey(h.ts) === today).length;
+  }
+  function todayMinutes(history2, now) {
+    const today = dayKey(now);
+    return Math.round(history2.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
+  }
+  function last7Days(history2, now) {
+    const counts = /* @__PURE__ */ new Map();
+    const minutes = /* @__PURE__ */ new Map();
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    for (let i = 6; i >= 0; i--) {
+      const day = new Date(d);
+      day.setDate(day.getDate() - i);
+      const key = dayKey(day.getTime());
+      counts.set(key, 0);
+      minutes.set(key, 0);
+    }
+    for (const h of history2) {
+      const key = dayKey(h.ts);
+      if (counts.has(key)) {
+        counts.set(key, counts.get(key) + 1);
+        minutes.set(key, minutes.get(key) + h.duration / 60);
+      }
+    }
+    return Array.from(counts.entries()).map(([date, count]) => ({
+      date,
+      count,
+      minutes: Math.round(minutes.get(date) || 0)
+    }));
+  }
+  function weekKeyOf(ts) {
+    const d = new Date(ts);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    return localDayKey(d.getTime());
+  }
+  function byWeek(a, b) {
+    return a.week < b.week ? -1 : a.week > b.week ? 1 : 0;
+  }
+  function aggregateWeeks(entries) {
+    const acc = /* @__PURE__ */ new Map();
+    for (const h of entries) {
+      const wk = weekKeyOf(h.ts);
+      let row = acc.get(wk);
+      if (!row) {
+        row = { count: 0, sec: 0, tasks: /* @__PURE__ */ new Map() };
+        acc.set(wk, row);
+      }
+      row.count += 1;
+      row.sec += h.duration;
+      if (h.task) row.tasks.set(h.task, (row.tasks.get(h.task) || 0) + h.duration / 60);
+    }
+    return Array.from(acc.entries()).map(([week, r]) => ({
+      week,
+      count: r.count,
+      minutes: Math.round(r.sec / 60),
+      ...r.tasks.size ? {
+        tasks: Object.fromEntries(
+          Array.from(r.tasks.entries()).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([t, m]) => [t, Math.round(m)])
+        )
+      } : {}
+    })).sort(byWeek);
+  }
+  function mergeArchived(existing, incoming) {
+    const merged = /* @__PURE__ */ new Map();
+    for (const row of existing != null ? existing : []) merged.set(row.week, { ...row });
+    for (const row of incoming) {
+      const cur = merged.get(row.week);
+      if (!cur) {
+        merged.set(row.week, { ...row });
+        continue;
+      }
+      const tasks = { ...cur.tasks || {} };
+      for (const [t, m] of Object.entries(row.tasks || {})) {
+        tasks[t] = Math.round((tasks[t] || 0) + m);
+      }
+      merged.set(row.week, {
+        week: row.week,
+        count: cur.count + row.count,
+        minutes: cur.minutes + row.minutes,
+        ...Object.keys(tasks).length ? { tasks } : {}
+      });
+    }
+    return Array.from(merged.values()).sort(byWeek);
+  }
+  function lastNMonths(archived2, history2, now, n = TREND_MONTHS) {
+    const base = new Date(now);
+    base.setDate(1);
+    base.setHours(0, 0, 0, 0);
+    const buckets = /* @__PURE__ */ new Map();
+    const order = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const m = new Date(base);
+      m.setMonth(m.getMonth() - i);
+      const key = `${m.getFullYear()}-${pad2(m.getMonth() + 1)}`;
+      buckets.set(key, { count: 0, sec: 0 });
+      order.push(key);
+    }
+    for (const row of archived2 != null ? archived2 : []) {
+      const b = buckets.get(row.week.slice(0, 7));
+      if (b) {
+        b.count += row.count;
+        b.sec += row.minutes * 60;
+      }
+    }
+    for (const h of history2) {
+      const b = buckets.get(localDayKey(h.ts).slice(0, 7));
+      if (b) {
+        b.count += 1;
+        b.sec += h.duration;
+      }
+    }
+    return order.map((month) => {
+      const b = buckets.get(month);
+      return { month, count: b.count, minutes: Math.round(b.sec / 60) };
+    });
+  }
+  var TREND_MONTHS;
+  var init_stats = __esm({
+    "src/pomodoro/stats.ts"() {
+      init_utils();
+      TREND_MONTHS = 6;
+    }
+  });
+
   // src/pomodoro/data.ts
   function getPomodoroFilePath() {
     var _a2;
@@ -8142,12 +8274,17 @@ var BZW_memo = (() => {
   function defaultPomodoroData() {
     return { version: 1, state: createInitialState(), history: [] };
   }
-  function trimHistory(history2, now) {
+  function retentionFloor(now) {
     const floor = new Date(now);
     floor.setHours(0, 0, 0, 0);
     floor.setDate(floor.getDate() - 6);
-    const t = floor.getTime();
-    return history2.filter((h) => h.ts >= t);
+    return floor.getTime();
+  }
+  function trimWithArchive(history2, archived2, now) {
+    const floor = retentionFloor(now);
+    const removed = history2.filter((h) => h.ts < floor);
+    const kept = removed.length ? history2.filter((h) => h.ts >= floor) : history2;
+    return { history: kept, archived: removed.length ? mergeArchived(archived2, aggregateWeeks(removed)) : archived2 != null ? archived2 : [] };
   }
   function normalizeData(raw) {
     const def = defaultPomodoroData();
@@ -8158,7 +8295,27 @@ var BZW_memo = (() => {
       duration: h.duration,
       ...typeof h.task === "string" && h.task ? { task: h.task } : {}
     })) : [];
-    return { version: 1, state: state3, history: history2 };
+    const archived2 = normalizeArchived(raw.archived);
+    return { version: 1, state: state3, history: history2, ...archived2.length ? { archived: archived2 } : {} };
+  }
+  function normalizeArchived(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(
+      (r) => r && typeof r.week === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.week) && typeof r.count === "number" && r.count >= 0 && typeof r.minutes === "number" && r.minutes >= 0
+    ).map((r) => {
+      const tasks = {};
+      if (r.tasks && typeof r.tasks === "object" && !Array.isArray(r.tasks)) {
+        for (const [t, m] of Object.entries(r.tasks)) {
+          if (typeof m === "number" && Number.isFinite(m) && m >= 0) tasks[t] = m;
+        }
+      }
+      return {
+        week: r.week,
+        count: r.count,
+        minutes: r.minutes,
+        ...Object.keys(tasks).length ? { tasks } : {}
+      };
+    });
   }
   function normalizeState(raw) {
     const def = createInitialState();
@@ -8181,6 +8338,7 @@ var BZW_memo = (() => {
       init_settings_provider();
       init_storage();
       init_state2();
+      init_stats();
       PomodoroDataManager = class {
         constructor(app) {
           this.app = app;
@@ -8241,7 +8399,12 @@ var BZW_memo = (() => {
       </div>
       <div class="pomodoro-stats">
         <div id="pomodoro-today"></div>
+        <div class="pomodoro-stat-tabs">
+          <button id="pomodoro-stat-tab-week" class="pomodoro-stat-tab" type="button">近 7 天</button>
+          <button id="pomodoro-stat-tab-month" class="pomodoro-stat-tab" type="button">近 6 月</button>
+        </div>
         <div id="pomodoro-week" class="pomodoro-week"></div>
+        <div id="pomodoro-months" class="pomodoro-week" hidden></div>
       </div>`;
   }
   function popupShellHtml() {
@@ -8335,49 +8498,6 @@ var BZW_memo = (() => {
       init_utils();
       statusEl = null;
       textSpan = null;
-    }
-  });
-
-  // src/pomodoro/stats.ts
-  function dayKey(ts) {
-    return localDayKey(ts);
-  }
-  function todayCount(history2, now) {
-    const today = dayKey(now);
-    return history2.filter((h) => dayKey(h.ts) === today).length;
-  }
-  function todayMinutes(history2, now) {
-    const today = dayKey(now);
-    return Math.round(history2.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
-  }
-  function last7Days(history2, now) {
-    const counts = /* @__PURE__ */ new Map();
-    const minutes = /* @__PURE__ */ new Map();
-    const d = new Date(now);
-    d.setHours(0, 0, 0, 0);
-    for (let i = 6; i >= 0; i--) {
-      const day = new Date(d);
-      day.setDate(day.getDate() - i);
-      const key = dayKey(day.getTime());
-      counts.set(key, 0);
-      minutes.set(key, 0);
-    }
-    for (const h of history2) {
-      const key = dayKey(h.ts);
-      if (counts.has(key)) {
-        counts.set(key, counts.get(key) + 1);
-        minutes.set(key, minutes.get(key) + h.duration / 60);
-      }
-    }
-    return Array.from(counts.entries()).map(([date, count]) => ({
-      date,
-      count,
-      minutes: Math.round(minutes.get(date) || 0)
-    }));
-  }
-  var init_stats = __esm({
-    "src/pomodoro/stats.ts"() {
-      init_utils();
     }
   });
 
@@ -8531,35 +8651,76 @@ var BZW_memo = (() => {
     const s = sec % 60;
     return `${pad2(m)}:${pad2(s)}`;
   }
+  function buildStatBars(container, rows) {
+    const max = Math.max(1, ...rows.map((r) => r.count));
+    container.innerHTML = "";
+    for (const r of rows) {
+      const bar = document.createElement("div");
+      bar.className = "pomodoro-stat-day";
+      bar.title = r.title;
+      const col = document.createElement("div");
+      col.className = "pomodoro-stat-col";
+      const h = document.createElement("div");
+      h.className = "pomodoro-stat-bar";
+      h.style.height = `${Math.max(2, Math.round(r.count / max * 40))}px`;
+      col.appendChild(h);
+      const label = document.createElement("span");
+      label.className = "pomodoro-stat-label";
+      label.textContent = r.label;
+      col.appendChild(label);
+      bar.appendChild(col);
+      container.appendChild(bar);
+    }
+  }
   function renderStats() {
     const now = Date.now();
     const todayEl = document.getElementById("pomodoro-today");
     if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
     const weekEl = document.getElementById("pomodoro-week");
-    if (!weekEl) return;
+    const monthsEl = document.getElementById("pomodoro-months");
+    if (!weekEl || !monthsEl) return;
+    const tabWeek = document.getElementById("pomodoro-stat-tab-week");
+    const tabMonth = document.getElementById("pomodoro-stat-tab-month");
+    tabWeek == null ? void 0 : tabWeek.classList.toggle("pomodoro-stat-tab-on", statMode === "week");
+    tabMonth == null ? void 0 : tabMonth.classList.toggle("pomodoro-stat-tab-on", statMode === "month");
+    if (statMode === "month") {
+      weekEl.hidden = true;
+      monthsEl.hidden = false;
+      const months = lastNMonths(archived, history, now, TREND_MONTHS);
+      const key2 = "m:" + months.map((m) => `${m.month}:${m.count}:${m.minutes}`).join(",") + `#${archived.length}`;
+      if (key2 === lastStatsKey) return;
+      lastStatsKey = key2;
+      buildStatBars(
+        monthsEl,
+        months.map((m) => ({
+          label: `${parseInt(m.month.slice(5, 7), 10)}月`,
+          title: `${m.month}：${m.count} 个 · ${m.minutes} 分钟`,
+          count: m.count
+        }))
+      );
+      return;
+    }
+    weekEl.hidden = false;
+    monthsEl.hidden = true;
     const days = last7Days(history, now);
-    const key = days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
+    const key = "w:" + days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
     if (key === lastStatsKey) return;
     lastStatsKey = key;
-    const max = Math.max(1, ...days.map((d) => d.count));
-    weekEl.innerHTML = "";
-    for (const d of days) {
-      const bar = document.createElement("div");
-      bar.className = "pomodoro-stat-day";
-      bar.title = `${d.date}：${d.count} 个 · ${d.minutes} 分钟`;
-      const col = document.createElement("div");
-      col.className = "pomodoro-stat-col";
-      const h = document.createElement("div");
-      h.className = "pomodoro-stat-bar";
-      h.style.height = `${Math.max(2, Math.round(d.count / max * 40))}px`;
-      col.appendChild(h);
-      const label = document.createElement("span");
-      label.className = "pomodoro-stat-label";
-      label.textContent = d.date.slice(8);
-      col.appendChild(label);
-      bar.appendChild(col);
-      weekEl.appendChild(bar);
-    }
+    buildStatBars(
+      weekEl,
+      days.map((d) => ({
+        label: d.date.slice(8),
+        // DD（完整日期在 title；窄面板不折行）
+        title: `${d.date}：${d.count} 个 · ${d.minutes} 分钟`,
+        count: d.count
+      }))
+    );
+  }
+  function setStatMode(mode) {
+    if (statMode === mode) return;
+    statMode = mode;
+    lastStatsKey = "";
+    render();
   }
   function render() {
     const d = durations();
@@ -8724,16 +8885,22 @@ var BZW_memo = (() => {
     }
   }
   async function save() {
-    history = trimHistory(history, Date.now());
-    if (dataManager) await dataManager.save({ version: 1, state, history });
+    const t = trimWithArchive(history, archived, Date.now());
+    history = t.history;
+    archived = t.archived;
+    if (dataManager) await dataManager.save({ version: 1, state, history, ...archived.length ? { archived } : {} });
   }
   async function initData() {
+    var _a2;
     const data = await dataManager.load();
     const r = recover(data.state, data.history, Date.now(), durations(), options());
     state = r.state;
-    history = trimHistory(r.history, Date.now());
+    const t = trimWithArchive(r.history, data.archived, Date.now());
+    history = t.history;
+    archived = t.archived;
     const mainChanged = data.state.endTime !== null && r.state.endTime === null;
-    if (mainChanged) await dataManager.save({ version: 1, state, history });
+    const archivedChanged = JSON.stringify((_a2 = data.archived) != null ? _a2 : []) !== JSON.stringify(archived);
+    if (mainChanged || archivedChanged) await dataManager.save({ version: 1, state, history, ...archived.length ? { archived } : {} });
     loaded = true;
   }
   function pomodoroSettingsSchema() {
@@ -8881,10 +9048,13 @@ var BZW_memo = (() => {
     };
   }
   function bindEvents() {
+    var _a2, _b2;
     const startBtn = document.getElementById("pomodoro-btn-start");
     startBtn.addEventListener("click", () => applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start"));
     document.getElementById("pomodoro-btn-reset").addEventListener("click", () => applyAction("reset"));
     document.getElementById("pomodoro-btn-skip").addEventListener("click", () => applyAction("skip"));
+    (_a2 = document.getElementById("pomodoro-stat-tab-week")) == null ? void 0 : _a2.addEventListener("click", () => setStatMode("week"));
+    (_b2 = document.getElementById("pomodoro-stat-tab-month")) == null ? void 0 : _b2.addEventListener("click", () => setStatMode("month"));
     const popup = document.getElementById("pomodoro-popup");
     popup.addEventListener("keydown", (e) => {
       if (e.key !== " ") return;
@@ -9041,12 +9211,14 @@ var BZW_memo = (() => {
     closePomodoro();
     state = createInitialState();
     history = [];
+    archived = [];
+    statMode = "week";
     lastStatsKey = "";
     dataManager = null;
     appRef = null;
     loaded = false;
   }
-  var dataManager, state, history, loaded, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var dataManager, state, history, archived, loaded, statMode, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
   var init_ui2 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -9069,7 +9241,9 @@ var BZW_memo = (() => {
       dataManager = null;
       state = createInitialState();
       history = [];
+      archived = [];
       loaded = false;
+      statMode = "week";
       maskEl = null;
       escHandle = null;
       timerId = null;
@@ -18914,9 +19088,9 @@ ${c.trim()}
     const key = articleKeyOf(a);
     const platform = platformOf(a);
     const newsSaved = a.state === "saved";
-    const archived = savedKeys.has(String(a.url || ""));
+    const archived2 = savedKeys.has(String(a.url || ""));
     const clipped = !!a.url && clipByUrl.has(String(a.url));
-    const saved = newsSaved || archived || clipped;
+    const saved = newsSaved || archived2 || clipped;
     const title = String(a.title || "(无标题)");
     const body = cleanBody(a.body);
     const isBili = platform === "B站";

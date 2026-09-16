@@ -1,4 +1,4 @@
-/* 源指纹 41dfedc3e930f942 · 仓内输入 101 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 195b977bc496c7c3 · 仓内输入 101 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -7430,6 +7430,138 @@ var BZW_home = (() => {
     }
   });
 
+  // src/pomodoro/stats.ts
+  function dayKey(ts) {
+    return localDayKey(ts);
+  }
+  function todayCount(history2, now) {
+    const today = dayKey(now);
+    return history2.filter((h) => dayKey(h.ts) === today).length;
+  }
+  function todayMinutes(history2, now) {
+    const today = dayKey(now);
+    return Math.round(history2.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
+  }
+  function last7Days(history2, now) {
+    const counts = /* @__PURE__ */ new Map();
+    const minutes = /* @__PURE__ */ new Map();
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    for (let i = 6; i >= 0; i--) {
+      const day = new Date(d);
+      day.setDate(day.getDate() - i);
+      const key = dayKey(day.getTime());
+      counts.set(key, 0);
+      minutes.set(key, 0);
+    }
+    for (const h of history2) {
+      const key = dayKey(h.ts);
+      if (counts.has(key)) {
+        counts.set(key, counts.get(key) + 1);
+        minutes.set(key, minutes.get(key) + h.duration / 60);
+      }
+    }
+    return Array.from(counts.entries()).map(([date, count]) => ({
+      date,
+      count,
+      minutes: Math.round(minutes.get(date) || 0)
+    }));
+  }
+  function weekKeyOf(ts) {
+    const d = new Date(ts);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    return localDayKey(d.getTime());
+  }
+  function byWeek(a, b) {
+    return a.week < b.week ? -1 : a.week > b.week ? 1 : 0;
+  }
+  function aggregateWeeks(entries) {
+    const acc = /* @__PURE__ */ new Map();
+    for (const h of entries) {
+      const wk = weekKeyOf(h.ts);
+      let row = acc.get(wk);
+      if (!row) {
+        row = { count: 0, sec: 0, tasks: /* @__PURE__ */ new Map() };
+        acc.set(wk, row);
+      }
+      row.count += 1;
+      row.sec += h.duration;
+      if (h.task) row.tasks.set(h.task, (row.tasks.get(h.task) || 0) + h.duration / 60);
+    }
+    return Array.from(acc.entries()).map(([week, r]) => ({
+      week,
+      count: r.count,
+      minutes: Math.round(r.sec / 60),
+      ...r.tasks.size ? {
+        tasks: Object.fromEntries(
+          Array.from(r.tasks.entries()).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([t, m]) => [t, Math.round(m)])
+        )
+      } : {}
+    })).sort(byWeek);
+  }
+  function mergeArchived(existing, incoming) {
+    const merged = /* @__PURE__ */ new Map();
+    for (const row of existing != null ? existing : []) merged.set(row.week, { ...row });
+    for (const row of incoming) {
+      const cur = merged.get(row.week);
+      if (!cur) {
+        merged.set(row.week, { ...row });
+        continue;
+      }
+      const tasks = { ...cur.tasks || {} };
+      for (const [t, m] of Object.entries(row.tasks || {})) {
+        tasks[t] = Math.round((tasks[t] || 0) + m);
+      }
+      merged.set(row.week, {
+        week: row.week,
+        count: cur.count + row.count,
+        minutes: cur.minutes + row.minutes,
+        ...Object.keys(tasks).length ? { tasks } : {}
+      });
+    }
+    return Array.from(merged.values()).sort(byWeek);
+  }
+  function lastNMonths(archived2, history2, now, n = TREND_MONTHS) {
+    const base = new Date(now);
+    base.setDate(1);
+    base.setHours(0, 0, 0, 0);
+    const buckets = /* @__PURE__ */ new Map();
+    const order = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const m = new Date(base);
+      m.setMonth(m.getMonth() - i);
+      const key = `${m.getFullYear()}-${pad2(m.getMonth() + 1)}`;
+      buckets.set(key, { count: 0, sec: 0 });
+      order.push(key);
+    }
+    for (const row of archived2 != null ? archived2 : []) {
+      const b = buckets.get(row.week.slice(0, 7));
+      if (b) {
+        b.count += row.count;
+        b.sec += row.minutes * 60;
+      }
+    }
+    for (const h of history2) {
+      const b = buckets.get(localDayKey(h.ts).slice(0, 7));
+      if (b) {
+        b.count += 1;
+        b.sec += h.duration;
+      }
+    }
+    return order.map((month) => {
+      const b = buckets.get(month);
+      return { month, count: b.count, minutes: Math.round(b.sec / 60) };
+    });
+  }
+  var TREND_MONTHS;
+  var init_stats = __esm({
+    "src/pomodoro/stats.ts"() {
+      init_utils();
+      TREND_MONTHS = 6;
+    }
+  });
+
   // src/pomodoro/data.ts
   function getPomodoroFilePath() {
     var _a;
@@ -7438,12 +7570,17 @@ var BZW_home = (() => {
   function defaultPomodoroData() {
     return { version: 1, state: createInitialState(), history: [] };
   }
-  function trimHistory(history2, now) {
+  function retentionFloor(now) {
     const floor = new Date(now);
     floor.setHours(0, 0, 0, 0);
     floor.setDate(floor.getDate() - 6);
-    const t = floor.getTime();
-    return history2.filter((h) => h.ts >= t);
+    return floor.getTime();
+  }
+  function trimWithArchive(history2, archived2, now) {
+    const floor = retentionFloor(now);
+    const removed = history2.filter((h) => h.ts < floor);
+    const kept = removed.length ? history2.filter((h) => h.ts >= floor) : history2;
+    return { history: kept, archived: removed.length ? mergeArchived(archived2, aggregateWeeks(removed)) : archived2 != null ? archived2 : [] };
   }
   function normalizeData(raw) {
     const def = defaultPomodoroData();
@@ -7454,7 +7591,27 @@ var BZW_home = (() => {
       duration: h.duration,
       ...typeof h.task === "string" && h.task ? { task: h.task } : {}
     })) : [];
-    return { version: 1, state: state2, history: history2 };
+    const archived2 = normalizeArchived(raw.archived);
+    return { version: 1, state: state2, history: history2, ...archived2.length ? { archived: archived2 } : {} };
+  }
+  function normalizeArchived(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(
+      (r) => r && typeof r.week === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.week) && typeof r.count === "number" && r.count >= 0 && typeof r.minutes === "number" && r.minutes >= 0
+    ).map((r) => {
+      const tasks = {};
+      if (r.tasks && typeof r.tasks === "object" && !Array.isArray(r.tasks)) {
+        for (const [t, m] of Object.entries(r.tasks)) {
+          if (typeof m === "number" && Number.isFinite(m) && m >= 0) tasks[t] = m;
+        }
+      }
+      return {
+        week: r.week,
+        count: r.count,
+        minutes: r.minutes,
+        ...Object.keys(tasks).length ? { tasks } : {}
+      };
+    });
   }
   function normalizeState(raw) {
     const def = createInitialState();
@@ -7477,6 +7634,7 @@ var BZW_home = (() => {
       init_settings_provider();
       init_storage();
       init_state();
+      init_stats();
       PomodoroDataManager = class {
         constructor(app) {
           this.app = app;
@@ -8022,7 +8180,7 @@ var BZW_home = (() => {
     return out;
   }
   var RATING_NAMES, RATING_COLORS;
-  var init_stats = __esm({
+  var init_stats2 = __esm({
     "src/review/stats.ts"() {
       init_fsrs();
       RATING_NAMES = { again: "忘了", hard: "困难", good: "一般", easy: "简单" };
@@ -8072,7 +8230,7 @@ var BZW_home = (() => {
   var init_queue = __esm({
     "src/review/queue.ts"() {
       init_fsrs();
-      init_stats();
+      init_stats2();
       DEFAULT_R_THRESHOLD = 0.9;
     }
   });
@@ -10021,7 +10179,7 @@ ${n.content.slice(0, 2e3)}
     "src/review/render.ts"() {
       init_fsrs();
       init_queue();
-      init_stats();
+      init_stats2();
       ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
     }
   });
@@ -10951,7 +11109,7 @@ ${n.content.slice(0, 2e3)}
       init_z_order();
       init_esc_manager();
       init_utils();
-      init_stats();
+      init_stats2();
       init_fsrs();
       statsMask = null;
       statsPopup = null;
@@ -11621,7 +11779,7 @@ ${n.content.slice(0, 2e3)}
       init_fit();
       init_fsrs();
       init_queue();
-      init_stats();
+      init_stats2();
       init_domain_bus();
       REVIEW_AWAY_GRACE_MS = 12e4;
       reviewApp = {
@@ -12347,7 +12505,12 @@ ${n.content.slice(0, 2e3)}
       </div>
       <div class="pomodoro-stats">
         <div id="pomodoro-today"></div>
+        <div class="pomodoro-stat-tabs">
+          <button id="pomodoro-stat-tab-week" class="pomodoro-stat-tab" type="button">近 7 天</button>
+          <button id="pomodoro-stat-tab-month" class="pomodoro-stat-tab" type="button">近 6 月</button>
+        </div>
         <div id="pomodoro-week" class="pomodoro-week"></div>
+        <div id="pomodoro-months" class="pomodoro-week" hidden></div>
       </div>`;
   }
   function popupShellHtml() {
@@ -12441,49 +12604,6 @@ ${n.content.slice(0, 2e3)}
       init_utils();
       statusEl = null;
       textSpan = null;
-    }
-  });
-
-  // src/pomodoro/stats.ts
-  function dayKey(ts) {
-    return localDayKey(ts);
-  }
-  function todayCount(history2, now) {
-    const today = dayKey(now);
-    return history2.filter((h) => dayKey(h.ts) === today).length;
-  }
-  function todayMinutes(history2, now) {
-    const today = dayKey(now);
-    return Math.round(history2.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
-  }
-  function last7Days(history2, now) {
-    const counts = /* @__PURE__ */ new Map();
-    const minutes = /* @__PURE__ */ new Map();
-    const d = new Date(now);
-    d.setHours(0, 0, 0, 0);
-    for (let i = 6; i >= 0; i--) {
-      const day = new Date(d);
-      day.setDate(day.getDate() - i);
-      const key = dayKey(day.getTime());
-      counts.set(key, 0);
-      minutes.set(key, 0);
-    }
-    for (const h of history2) {
-      const key = dayKey(h.ts);
-      if (counts.has(key)) {
-        counts.set(key, counts.get(key) + 1);
-        minutes.set(key, minutes.get(key) + h.duration / 60);
-      }
-    }
-    return Array.from(counts.entries()).map(([date, count]) => ({
-      date,
-      count,
-      minutes: Math.round(minutes.get(date) || 0)
-    }));
-  }
-  var init_stats2 = __esm({
-    "src/pomodoro/stats.ts"() {
-      init_utils();
     }
   });
 
@@ -12613,35 +12733,76 @@ ${n.content.slice(0, 2e3)}
     const s = sec % 60;
     return `${pad2(m)}:${pad2(s)}`;
   }
+  function buildStatBars(container, rows) {
+    const max = Math.max(1, ...rows.map((r) => r.count));
+    container.innerHTML = "";
+    for (const r of rows) {
+      const bar = document.createElement("div");
+      bar.className = "pomodoro-stat-day";
+      bar.title = r.title;
+      const col = document.createElement("div");
+      col.className = "pomodoro-stat-col";
+      const h = document.createElement("div");
+      h.className = "pomodoro-stat-bar";
+      h.style.height = `${Math.max(2, Math.round(r.count / max * 40))}px`;
+      col.appendChild(h);
+      const label = document.createElement("span");
+      label.className = "pomodoro-stat-label";
+      label.textContent = r.label;
+      col.appendChild(label);
+      bar.appendChild(col);
+      container.appendChild(bar);
+    }
+  }
   function renderStats() {
     const now = Date.now();
     const todayEl = document.getElementById("pomodoro-today");
     if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
     const weekEl = document.getElementById("pomodoro-week");
-    if (!weekEl) return;
+    const monthsEl = document.getElementById("pomodoro-months");
+    if (!weekEl || !monthsEl) return;
+    const tabWeek = document.getElementById("pomodoro-stat-tab-week");
+    const tabMonth = document.getElementById("pomodoro-stat-tab-month");
+    tabWeek == null ? void 0 : tabWeek.classList.toggle("pomodoro-stat-tab-on", statMode === "week");
+    tabMonth == null ? void 0 : tabMonth.classList.toggle("pomodoro-stat-tab-on", statMode === "month");
+    if (statMode === "month") {
+      weekEl.hidden = true;
+      monthsEl.hidden = false;
+      const months = lastNMonths(archived, history, now, TREND_MONTHS);
+      const key2 = "m:" + months.map((m) => `${m.month}:${m.count}:${m.minutes}`).join(",") + `#${archived.length}`;
+      if (key2 === lastStatsKey) return;
+      lastStatsKey = key2;
+      buildStatBars(
+        monthsEl,
+        months.map((m) => ({
+          label: `${parseInt(m.month.slice(5, 7), 10)}月`,
+          title: `${m.month}：${m.count} 个 · ${m.minutes} 分钟`,
+          count: m.count
+        }))
+      );
+      return;
+    }
+    weekEl.hidden = false;
+    monthsEl.hidden = true;
     const days = last7Days(history, now);
-    const key = days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
+    const key = "w:" + days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
     if (key === lastStatsKey) return;
     lastStatsKey = key;
-    const max = Math.max(1, ...days.map((d) => d.count));
-    weekEl.innerHTML = "";
-    for (const d of days) {
-      const bar = document.createElement("div");
-      bar.className = "pomodoro-stat-day";
-      bar.title = `${d.date}：${d.count} 个 · ${d.minutes} 分钟`;
-      const col = document.createElement("div");
-      col.className = "pomodoro-stat-col";
-      const h = document.createElement("div");
-      h.className = "pomodoro-stat-bar";
-      h.style.height = `${Math.max(2, Math.round(d.count / max * 40))}px`;
-      col.appendChild(h);
-      const label = document.createElement("span");
-      label.className = "pomodoro-stat-label";
-      label.textContent = d.date.slice(8);
-      col.appendChild(label);
-      bar.appendChild(col);
-      weekEl.appendChild(bar);
-    }
+    buildStatBars(
+      weekEl,
+      days.map((d) => ({
+        label: d.date.slice(8),
+        // DD（完整日期在 title；窄面板不折行）
+        title: `${d.date}：${d.count} 个 · ${d.minutes} 分钟`,
+        count: d.count
+      }))
+    );
+  }
+  function setStatMode(mode) {
+    if (statMode === mode) return;
+    statMode = mode;
+    lastStatsKey = "";
+    render();
   }
   function render() {
     const d = durations();
@@ -12806,23 +12967,32 @@ ${n.content.slice(0, 2e3)}
     }
   }
   async function save() {
-    history = trimHistory(history, Date.now());
-    if (dataManager2) await dataManager2.save({ version: 1, state, history });
+    const t = trimWithArchive(history, archived, Date.now());
+    history = t.history;
+    archived = t.archived;
+    if (dataManager2) await dataManager2.save({ version: 1, state, history, ...archived.length ? { archived } : {} });
   }
   async function initData() {
+    var _a;
     const data = await dataManager2.load();
     const r = recover(data.state, data.history, Date.now(), durations(), options());
     state = r.state;
-    history = trimHistory(r.history, Date.now());
+    const t = trimWithArchive(r.history, data.archived, Date.now());
+    history = t.history;
+    archived = t.archived;
     const mainChanged = data.state.endTime !== null && r.state.endTime === null;
-    if (mainChanged) await dataManager2.save({ version: 1, state, history });
+    const archivedChanged = JSON.stringify((_a = data.archived) != null ? _a : []) !== JSON.stringify(archived);
+    if (mainChanged || archivedChanged) await dataManager2.save({ version: 1, state, history, ...archived.length ? { archived } : {} });
     loaded = true;
   }
   function bindEvents() {
+    var _a, _b;
     const startBtn = document.getElementById("pomodoro-btn-start");
     startBtn.addEventListener("click", () => applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start"));
     document.getElementById("pomodoro-btn-reset").addEventListener("click", () => applyAction("reset"));
     document.getElementById("pomodoro-btn-skip").addEventListener("click", () => applyAction("skip"));
+    (_a = document.getElementById("pomodoro-stat-tab-week")) == null ? void 0 : _a.addEventListener("click", () => setStatMode("week"));
+    (_b = document.getElementById("pomodoro-stat-tab-month")) == null ? void 0 : _b.addEventListener("click", () => setStatMode("month"));
     const popup = document.getElementById("pomodoro-popup");
     popup.addEventListener("keydown", (e) => {
       if (e.key !== " ") return;
@@ -12979,12 +13149,14 @@ ${n.content.slice(0, 2e3)}
     closePomodoro();
     state = createInitialState();
     history = [];
+    archived = [];
+    statMode = "week";
     lastStatsKey = "";
     dataManager2 = null;
     appRef = null;
     loaded = false;
   }
-  var dataManager2, state, history, loaded, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var dataManager2, state, history, archived, loaded, statMode, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
   var init_ui3 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -12998,7 +13170,7 @@ ${n.content.slice(0, 2e3)}
       init_render2();
       init_sound();
       init_statusbar();
-      init_stats2();
+      init_stats();
       init_config();
       init_state();
       init_pomodoro_phase();
@@ -13007,7 +13179,9 @@ ${n.content.slice(0, 2e3)}
       dataManager2 = null;
       state = createInitialState();
       history = [];
+      archived = [];
       loaded = false;
+      statMode = "week";
       maskEl = null;
       escHandle = null;
       timerId = null;
