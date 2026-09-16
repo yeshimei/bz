@@ -139,6 +139,8 @@
 .bz-memo-tag.bz-memo-tag-overdue { background: color-mix(in srgb, var(--bz-danger) 14%, transparent); color: var(--bz-danger); }
 .bz-memo-tag.bz-memo-tag-today { background: color-mix(in srgb, var(--bz-brand) 14%, transparent); color: var(--bz-brand); }
 .bz-memo-tag.bz-memo-tag-future { background: color-mix(in srgb, var(--bz-success) 12%, transparent); color: var(--bz-success); }
+/* 周期重复标记（issue 353）：品牌软底色字——「这条会自己回来」的语义强调 */
+.bz-memo-tag.bz-memo-tag-recur { background: var(--bz-brand-soft); color: var(--bz-brand); }
 .bz-memo-time { font-size: var(--bz-font-caption); line-height: 18px; color: var(--bz-text-3); flex-shrink: 0; }
 
 /* 空态：组件库 .bz-empty 三件套（图标 + 一句话 + 动作按钮），域内不再自留空态样式 */
@@ -515,6 +517,11 @@
 .bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-future {
   background: color-mix(in srgb, var(--bz-success) 12%, transparent);
   color: var(--bz-success);
+}
+/* 周期重复标记（issue 353）：纸感下通用 tag 已被压成无框色字，语义 tag 保留软底（同逾期/今日/未来口径） */
+.bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-recur {
+  background: var(--bz-brand-soft);
+  color: var(--bz-brand);
 }
 
 /* 已完成条 + 录入行 + 弹窗标题 */

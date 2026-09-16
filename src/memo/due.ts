@@ -7,6 +7,7 @@
  */
 import moment from 'moment';
 import { localDayKey } from '../core/utils';
+import type { MemoRecur } from './types';
 
 /** 当前时刻（'YYYY-MM-DD HH:mm'，getDueStatus 内部用） */
 function getNowStr(): string {
@@ -50,4 +51,13 @@ export function formatDueText(due: string): string {
   const days = moment(dueDate).diff(moment(today), 'days');
   if (days === 1) return `明天 ${timeStr} 到期`;
   return `${dateStr} ${timeStr} 到期`;
+}
+
+/** 周期重复标签文案（issue 353）：列表 meta「重复」标记与通知共用一份口径 */
+export function recurLabel(recur: MemoRecur): string {
+  if (recur.kind === 'weekly') return '每周';
+  if (recur.kind === 'monthly') return '每月';
+  if (recur.kind === 'yearly') return '每年';
+  const n = recur.interval && recur.interval >= 1 ? Math.floor(recur.interval) : 1;
+  return `每 ${n} 天`;
 }

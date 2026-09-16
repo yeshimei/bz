@@ -1,4 +1,4 @@
-/* 源指纹 a0c43053974c14da · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b809e8c0bbdbc76c · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {
@@ -73,6 +73,7 @@ var BZR_memo = (() => {
     overdue: "circle-alert",
     clock: "clock",
     calendar: "calendar",
+    recur: "repeat",
     doneFold: "chevron-down",
     sceneAll: "layers",
     sceneToday: "sun"
@@ -169,7 +170,7 @@ var BZR_memo = (() => {
       </div>
     </div>`;
   }
-  function metaTagsHtml(it, due, relTime) {
+  function metaTagsHtml(it, due, relTime, recurText = "") {
     const tags = [];
     if (it.scene === "公开课" && it.courseName) {
       tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml(it.courseName.replace(/^《|》$/g, ""))}</span>`);
@@ -194,6 +195,9 @@ var BZR_memo = (() => {
     }
     const imp = it.priority === "important" ? " bz-memo-tag-important" : "";
     tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${escapeHtml(it.scene)}</span>`);
+    if (recurText) {
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-recur" title="周期重复：完成后自动生成下一期">${iconSpan(MEMO_ICONS.recur)} ${escapeHtml(recurText)}</span>`);
+    }
     if (due) {
       tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml(due.text)}</span>`);
     }
@@ -205,7 +209,7 @@ var BZR_memo = (() => {
   function checkHtml(it) {
     return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
   }
-  function cardHtml(it, due, relTime) {
+  function cardHtml(it, due, relTime, recurText = "") {
     const titleCls = it.completed ? " bz-memo-done" : "";
     const clickable = !!(it.linkedNote || it.url);
     const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
@@ -213,7 +217,7 @@ var BZR_memo = (() => {
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime)}</div>
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime, recurText)}</div>
       </div>
     </div>`;
   }

@@ -78,11 +78,11 @@ describe('MemoData 构建', () => {
       created: '2026-08-01 10:00:00', completed: null, due: '2026-09-03 18:00:00',
       notePath: '我的/日记/2026-09-03.md', notePosition: { line: 12, ch: 3 },
       scriptName: null, courseName: null, coursePath: null,
-      linkedNote: '归档/网页剪藏/文章.md', url: 'https://example.com/a',
+      linkedNote: '归档/网页剪藏/文章.md', url: 'https://example.com/a', recur: null,
     };
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([legacy], null, 2));
     const items = await MemoData.loadItems();
-    expect(items[0]).toEqual(legacy);
+    expect(items[0]).toEqual(legacy); // 归一含 issue 353 recur 补 null
   });
 });
 

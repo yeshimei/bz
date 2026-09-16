@@ -397,9 +397,9 @@ describe('memo 编辑器', () => {
       expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
     const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
-    // 场景 + 优先级两组浮岛 segmented（各含 1 枚白卡指示器节点）
-    expect(editor.querySelectorAll('.bz-choice--float').length).toBe(2);
-    expect(editor.querySelectorAll('.bz-choice--float > .bz-choice-seg').length).toBe(2);
+    // 场景 + 优先级 + 重复（issue 353）三组浮岛 segmented（各含 1 枚白卡指示器节点）
+    expect(editor.querySelectorAll('.bz-choice--float').length).toBe(3);
+    expect(editor.querySelectorAll('.bz-choice--float > .bz-choice-seg').length).toBe(3);
     // 定位钮 = 组件库 chip 档：.bz-btn--chip > .bz-btn-chip 内 pin 图标 + 独立文字 span
     const posBtn = editor.querySelector('.bz-btn--chip') as HTMLElement;
     expect(posBtn).toBeTruthy();

@@ -473,3 +473,23 @@ describe('复习拟合全参放开（issue 361 冒烟）', () => {
     expect(FIT_PARAMS_VERSION.FULL).toBe(2);
   });
 });
+
+describe('备忘录周期重复（issue 353 冒烟）', () => {
+  it('completeItem：周期条目完成后数据层自动生成下一期（全字段保留，非周期不生成）', async () => {
+    const { MockVault } = await import('./mock-vault');
+    const { setApp } = await import('../src/core/app');
+    const { MemoData } = await import('../src/memo/data');
+    const vault = new MockVault();
+    setApp({ vault, workspace: { getActiveFile: () => null }, metadataCache: { getFileCache: () => null } } as any);
+    MemoData.init({ storagePath: 'CONFIG/STORAGE' });
+    await MemoData.addItem({ id: 'smoke-r', title: '每周五交周报', scene: '工作', priority: 'minor', created: '2026-01-01 09:00:00', recur: { kind: 'weekly' } } as any);
+    const { next } = await MemoData.completeItem('smoke-r');
+    expect(next).not.toBeNull();
+    expect(next!.completed).toBeNull();
+    expect(next!.recur).toEqual({ kind: 'weekly' });
+    expect(next!.title).toBe('每周五交周报');
+    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(raw).toHaveLength(2);
+    expect(raw.find((i: any) => i.id === 'smoke-r').completed).toBeTruthy();
+  });
+});

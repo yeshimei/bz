@@ -15,7 +15,7 @@ import type { MemoItem } from '../../src/memo/types';
 const item = (extra: Partial<MemoItem> = {}): MemoItem => ({
   id: 't1', title: '写周报', scene: '工作', priority: 'minor', created: '2026-09-10 09:00:00',
   completed: null, due: null, notePath: null, notePosition: null, scriptName: null,
-  courseName: null, coursePath: null, linkedNote: null, url: null, ...extra,
+  courseName: null, coursePath: null, linkedNote: null, url: null, recur: null, ...extra,
 });
 
 describe('memo render 纯层（markup 口径冻结）', () => {

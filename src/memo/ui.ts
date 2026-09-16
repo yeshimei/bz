@@ -47,13 +47,13 @@ import {
   generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
 } from '../core/utils';
 import { MemoData, DEFAULT_SCENARIOS } from './data';
-import { getDueStatus, formatDueText } from './due';
+import { getDueStatus, formatDueText, recurLabel } from './due';
 import {
   MEMO_ICONS as ICON, iconSpan, sceneDot, sceneLabel, mainCountHtml,
   navBtnHtml, mobChipHtml, mobAddSceneChipHtml, panelShellHtml, metaTagsHtml,
   cardHtml as renderCard, checkHtml, sectionLabelHtml, doneBarHtml, doneMoreHtml, type MetaDue,
 } from './render';
-import type { MemoItem } from './types';
+import type { MemoItem, MemoRecur } from './types';
 import { M } from './state';
 
 /** 备忘录主面板缩放钳制（ADR-0084：最小/硬上限，实际另受视口 92% 约束；默认 720×580 走域内 CSS） */
@@ -611,9 +611,9 @@ function metaDueOf(it: MemoItem): MetaDue {
   return { status: st, text: formatDueText(it.due) };
 }
 
-/** 卡片 meta 行（纯层 metaTagsHtml 的行为侧封装：注入 due 包与相对时间） */
+/** 卡片 meta 行（纯层 metaTagsHtml 的行为侧封装：注入 due 包与相对时间；recur 文案单源 due.recurLabel） */
 function metaTags(it: MemoItem): string {
-  return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '');
+  return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', it.recur ? recurLabel(it.recur) : '');
 }
 
 function renderContent(): void {
@@ -637,7 +637,7 @@ function renderContent(): void {
   const urgent = active.filter((i) => dueRank(i) <= 1);
   const normal = active.filter((i) => dueRank(i) > 1);
 
-  const cardHtml = (it: MemoItem) => renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '');
+  const cardHtml = (it: MemoItem) => renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', it.recur ? recurLabel(it.recur) : '');
 
   const sections: string[] = [];
   if (urgent.length) {
@@ -789,10 +789,27 @@ function toggleCheck(it: MemoItem): void {
 
 async function completeItem(it: MemoItem): Promise<void> {
   try {
-    await MemoData.completeItem(it.id);
+    const { next } = await MemoData.completeItem(it.id);
     emitDomainEvent('memo', { kind: 'completed', title: it.title });
+    // 周期重复（issue 353）：下一期已由数据层生成——轻提示新到期日 + 补一条 added 行为流
+    if (next) {
+      notice(next.due ? `下一期已排到 ${moment(next.due).format('MM/DD HH:mm')}` : '下一期已生成', 'success');
+      emitDomainEvent('memo', { kind: 'added', title: next.title, scene: next.scene, priority: next.priority, due: next.due });
+    }
   } catch (e) {
     notifySaveError(e, '标记完成');
+    console.error(e);
+  }
+  await refresh();
+}
+
+/** 停止周期重复（issue 353）：recur 清空，之后完成不再生成下一期 */
+async function stopRecur(id: string): Promise<void> {
+  try {
+    await MemoData.updateItem(id, { recur: null });
+    notice('已停止重复，完成后不再生成下一期', 'success');
+  } catch (e) {
+    notifySaveError(e, '停止重复');
     console.error(e);
   }
   await refresh();
@@ -920,6 +937,14 @@ function buildCardActions(it: MemoItem): ItemAction[] {
     actions.push({ icon: 'clock', label: '延后 1 天', title: '延后 1 天', sub: `→ ${postponeSub(1)}`, onClick: async () => { await postponeItem(it.id, 1); } });
     actions.push({ icon: 'clock', label: '延后 3 天', title: '延后 3 天', sub: `→ ${postponeSub(3)}`, onClick: async () => { await postponeItem(it.id, 3); } });
   }
+  // 周期重复（issue 353）：可随时停止——recur 清空后完成不再生成下一期
+  if (it.recur && !it.completed) {
+    actions.push({
+      icon: 'repeat', label: '停止重复', title: '停止周期重复',
+      sub: recurLabel(it.recur),
+      onClick: async () => { await stopRecur(it.id); },
+    });
+  }
   const isImportant = it.priority === 'important';
   actions.push({
     icon: 'star', label: isImportant ? '转为次要' : '转为重要', title: '切换优先级',
@@ -990,6 +1015,7 @@ function addFromComposer(): void {
       created: moment().format('YYYY-MM-DD HH:mm:ss'),
       completed: null,
       due: null,
+      recur: null, // composer 快速录入不带周期（编辑弹窗可补）
       notePath: null,
       notePosition: null,
       scriptName: null,
@@ -1198,6 +1224,28 @@ export function openEditor(
   dueField.append(dueLabel, dueRow);
   form.appendChild(dueField);
 
+  // 周期重复（issue 353）：不重复/每周/每月/每年；自定义 N 天间隔数据结构已预留，UI 一期不暴露
+  const recurField = document.createElement('div');
+  recurField.className = 'bz-field';
+  const recurLabelEl = document.createElement('span');
+  recurLabelEl.className = 'bz-field-label';
+  recurLabelEl.textContent = '重复';
+  recurField.appendChild(recurLabelEl);
+  const recurChoice = uiChoice<string>({
+    options: [
+      { value: 'none', label: '不重复' },
+      { value: 'weekly', label: '每周' },
+      { value: 'monthly', label: '每月' },
+      { value: 'yearly', label: '每年' },
+    ],
+    value: editing?.recur ? editing.recur.kind : 'none',
+    float: true, // 浮岛 segmented（与场景/优先级同范式）
+    label: '重复',
+    onChange: () => { /* 值由保存时读取 */ },
+  });
+  recurField.appendChild(recurChoice.el);
+  form.appendChild(recurField);
+
   // 📌 定位（F 款已入组件库 .bz-btn--chip，issue 200；真实读取当前笔记与光标，绑定后转品牌色）
   const posRow = document.createElement('div');
   posRow.className = 'bz-memo-pos-row';
@@ -1269,6 +1317,10 @@ export function openEditor(
     if (sceneBtnOn) scene = (sceneBtnOn as HTMLElement).dataset.value || scene;
     const prioBtnOn = prioChoice.el.querySelector('.is-on');
     const priority: string = prioBtnOn ? (prioBtnOn as HTMLElement).dataset.value || 'minor' : 'minor';
+    // 周期重复（issue 353）：'none' 归一 null；days 自定义间隔一期不出 UI，保存口径只产三基础周期
+    const recurBtnOn = recurChoice.el.querySelector('.is-on');
+    const recurKind = (recurBtnOn ? (recurBtnOn as HTMLElement).dataset.value || 'none' : 'none') as MemoRecur['kind'] | 'none';
+    const recur: MemoRecur | null = recurKind === 'weekly' || recurKind === 'monthly' || recurKind === 'yearly' ? { kind: recurKind } : null;
     const dueVal = dueInput.value;
     const due = dueVal ? dueVal.replace('T', ' ') : null;
     let titleVal = titleInput.value.trim();
@@ -1304,6 +1356,7 @@ export function openEditor(
             scene,
             priority,
             due,
+            recur,
             notePath: posState.notePath,
             notePosition: posState.notePosition,
             scriptName,
@@ -1321,6 +1374,7 @@ export function openEditor(
             created: moment().format('YYYY-MM-DD HH:mm:ss'),
             completed: null,
             due,
+            recur,
             notePath: posState.notePath,
             notePosition: posState.notePosition,
             scriptName,
