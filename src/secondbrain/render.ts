@@ -230,6 +230,10 @@ export function panelShellHtml(): string {
             <div class="bz-sb-ct bz-sb-ai-ct">${ic('sparkles', 13)}库摘要<span class="bz-sb-ct-n" id="bz-sb-ai-when"></span></div>
             <div class="bz-sb-ai-txt" id="bz-sb-ai-txt"></div>
           </div>
+          <div class="bz-sb-section bz-sb-weekly-card" id="bz-sb-weekly-card" style="display:none" role="button" tabindex="0" title="本周知识动态">
+            <div class="bz-sb-ct bz-sb-ai-ct">${ic('calendar-days', 13)}近期动态<span class="bz-sb-ct-n" id="bz-sb-weekly-range"></span></div>
+            <div class="bz-sb-weekly-card-txt" id="bz-sb-weekly-card-txt"></div>
+          </div>
         </div>
       </div>
       <div class="bz-sb-foot">
@@ -319,6 +323,79 @@ export function panelLogHtml(parts: Array<{ text: string; warn?: boolean }>): st
   return parts
     .map((p) => `<span class="bz-sb-log-item${p.warn ? ' bz-sb-log-item--warn' : ''}">${escapeHtml(p.text)}</span>`)
     .join('<span class="bz-sb-log-sep">·</span>');
+}
+
+// ==================== 每周知识动态 markup（issue 360） ====================
+
+/** 摘要弹层骨架：头行（区间徽标 + 关闭）+ 三段列表容器（行为层按内容逐段注入） */
+export function weeklyShellHtml(range: string): string {
+  return `
+  <div class="bz-sb-weekly-head">
+    <div class="bz-sb-glyph">${ic('calendar-days', 17)}</div>
+    <div class="bz-sb-head-title">
+      <h3>本周知识动态</h3>
+      <div class="bz-sb-cnt" id="bz-sb-weekly-range-head">${escapeHtml(range)}</div>
+    </div>
+    <div class="bz-sb-head-sp"></div>
+    <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-weekly-close" aria-label="关闭" title="关闭">${ic('x', 14)}</button>
+  </div>
+  <div class="bz-sb-weekly-body bz-sb-scroll-y" id="bz-sb-weekly-body"></div>`;
+}
+
+/** 概要行（AI 文案或计数总览；文本由行为层 textContent 填充的容器壳） */
+export function weeklySummaryHtml(withAI: boolean): string {
+  return withAI
+    ? `<div class="bz-sb-weekly-summary" id="bz-sb-weekly-summary"><div class="bz-sb-weekly-summary-text" id="bz-sb-weekly-summary-text"></div></div>`
+    : `<div class="bz-sb-weekly-stats" id="bz-sb-weekly-stats"></div>`;
+}
+
+/** 计数总览（三枚计数 chip；无 AI 文案时的概要形态） */
+export function weeklyStatsHtml(notes: number, links: number, collisions: number): string {
+  const chip = (v: number, k: string, warn = false) =>
+    `<span class="bz-sb-weekly-chip${warn && v > 0 ? ' bz-sb-weekly-chip--warn' : ''}"><b>${v}</b>${k}</span>`;
+  return chip(notes, ' 篇新增笔记') + chip(links, ' 条新增关联') + chip(collisions, ' 处主题撞车', true);
+}
+
+/** 列表分节壳（节题 + 行容器；rows 为行 markup，空列表时整节不渲染） */
+export function weeklySectionHtml(id: string, icon: string, title: string, count: number, rows: string, emptyText = ''): string {
+  if (count <= 0) return emptyText ? `<div class="bz-sb-weekly-empty">${escapeHtml(emptyText)}</div>` : '';
+  return `
+  <div class="bz-sb-weekly-section" id="${id}">
+    <div class="bz-sb-ct">${ic(icon, 13)}${escapeHtml(title)}<span class="bz-sb-ct-n">${count}</span></div>
+    <div class="bz-sb-weekly-rows">${rows}</div>
+  </div>`;
+}
+
+/** 新增笔记行 / 新增关联行（data-path 供行为层委托跳转；时间串由行为层注入） */
+export function weeklyNoteRowHtml(path: string, name: string, when: string): string {
+  return (
+    `<div class="bz-sb-weekly-row" data-path="${escapeHtml(path)}" role="button" tabindex="0">` +
+    `<span class="bz-sb-weekly-row-dot"></span>` +
+    `<span class="bz-sb-weekly-row-name">${escapeHtml(name)}</span>` +
+    `<span class="bz-sb-weekly-row-time">${escapeHtml(when)}</span></div>`
+  );
+}
+
+/** 撞车提示卡行：新笔记 → 既有笔记（双跳转）+ 相似度 */
+export function weeklyCollisionRowHtml(path: string, name: string, targetPath: string, targetName: string, pct: number): string {
+  return (
+    `<div class="bz-sb-weekly-row bz-sb-weekly-row--hit" data-path="${escapeHtml(path)}" role="button" tabindex="0">` +
+    `<span class="bz-sb-weekly-row-dot bz-sb-weekly-row-dot--warn"></span>` +
+    `<span class="bz-sb-weekly-row-name">${escapeHtml(name)}</span>` +
+    `<span class="bz-sb-weekly-row-hit-arrow">${ic('arrow-right', 12)}</span>` +
+    `<span class="bz-sb-weekly-row-name bz-sb-weekly-row-name--target" data-path="${escapeHtml(targetPath)}">${escapeHtml(targetName)}</span>` +
+    `<span class="bz-sb-weekly-row-pct">${pct}%</span></div>`
+  );
+}
+
+/** 弹层空态（本轮无新内容：静默零打扰的手动触发兜底文案） */
+export function weeklyEmptyHtml(): string {
+  return `<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">最近一周没有新入脑的笔记与关联，一切安静。</div>`;
+}
+
+/** 弹层聚合中态（命令直开且正在重算时先垫一句） */
+export function weeklyLoadingHtml(): string {
+  return `<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">正在聚合本周动态…</div>`;
 }
 
 // ==================== AI 对话 markup ====================

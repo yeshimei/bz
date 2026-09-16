@@ -13,7 +13,11 @@
  * - issue 309：文献笔记建链改走显式通道——getLinkBridge() 给知识盒录入面板三段能力：
  *   preview（AI 出内容即起跑预演，草稿未落盘也能算）/ apply（落盘后写预演结果）/ now（兜底单篇管线）/ backfill（批量补链），
  *   面板内 loading → 完成后就地显示关联；原「生成即跑」的 'knowledge:tasks' 订阅已删除；
- * - unload 全量清理：定时器、订阅、面板 DOM、link agent（AI 通道无持久资源，issue 359 起单例已退役）。
+ * - issue 360：每周知识动态——启动后延迟调度静默聚合（weekly-ui.scheduleWeeklyDigest，
+ *   周界判定 lastRunAt 滚动 7 天，无新内容零打扰，有内容通知挂「查看详情」）；
+ *   命令 bz-secondbrain-weekly（本周知识动态）随时手动重聚并开详情弹层；
+ * - unload 全量清理：定时器、订阅、面板 DOM、link agent、每周动态弹层与调度
+ *   （AI 通道无持久资源，issue 359 起单例已退役）。
  */
 import type { App } from 'obsidian';
 import { onDomainEvent } from '../core/domain-bus';
@@ -28,6 +32,7 @@ import { ChatPanel } from './chat-panel';
 import { MobilePanel } from './mobile-panel';
 import { LinkAgent } from './link-agent/pipeline';
 import { LinkAgentWatcher, createLinkBridge, startQueueConsumption, startStartupBackfill } from './link-agent/watch';
+import { scheduleWeeklyDigest, unloadWeeklyDigest, runWeeklyManual } from './weekly-ui';
 
 let appRef: App | null = null;
 let store: VectorStore | null = null;
@@ -114,6 +119,8 @@ export function ensureSecondBrain(app: App): void {
   } catch (e) {
     console.warn('[secondbrain] 自动关联初始化失败', e);
   }
+  // issue 360：每周知识动态——启动后延迟调度（错开队列消费与存量补链），到周界且有实质内容才通知
+  scheduleWeeklyDigest(app, s, s.initialLoad);
 }
 
 /** 卸载清理（main.onunload 调用） */
@@ -136,6 +143,7 @@ export function unloadSecondBrain(): void {
   linkWatcher = null;
   linkAgent = null;
   setLinkBridge(null);
+  unloadWeeklyDigest(); // issue 360：每周动态调度定时器 + 详情弹层 DOM/ESC 句柄一并清理
   store = null;
   setVectorSearchSource(null); // issue 318：卸载即撤销只读检索桥（未初始化/已卸载取到 null）
   appRef = null;
@@ -241,6 +249,20 @@ export function openSecondBrainChat(app: App): void {
     return;
   }
   openChatInternal();
+}
+
+/**
+ * 命令 bz-secondbrain-weekly（issue 360 本周知识动态）：随时手动触发——打开详情弹层并
+ * 强制重聚一轮（不等周界；force 下首轮无基线也只立基线，弹层如实呈空态）。
+ * 索引未就绪（空库引导态）转开主面板：无索引数据时无动态可聚合。
+ */
+export function openSecondBrainWeekly(app: App): void {
+  ensureSecondBrain(app);
+  if (!store?.isIndexReady()) {
+    openSecondBrainPanel(app);
+    return;
+  }
+  void runWeeklyManual(app, store);
 }
 
 /** 命令 bz-secondbrain-open：参考侧边栏（移动端为底部抽屉参考 tab）；空库统一转开主面板引导 */

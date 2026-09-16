@@ -45,6 +45,7 @@ import {
   openSecondBrainPanel,
   openSecondBrainReference,
   openSecondBrainChat,
+  openSecondBrainWeekly,
   rebuildSecondBrainIndex,
   unloadSecondBrain,
   ensureSecondBrain,
@@ -155,6 +156,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 重建索引（2026-09-11 首页入口菜单）：全库重建向量索引（函数早已存在，此前无命令入口）
   // 留第二大脑——它是检索本体，不是关联（ADR-0141 §1）
   { id: 'bz-secondbrain-rebuild-index', name: '重建索引', icon: 'refresh-cw', callback: () => rebuildSecondBrainIndex(getApp()) },
+  // 本周知识动态（issue 360）：每周知识摘要手动入口——打开详情弹层并强制重聚一轮；
+  // 自动路径为启动后延迟静默聚合（无新内容零打扰）。calendar-days 与 review 的 calendar-check 错开
+  { id: 'bz-secondbrain-weekly', name: '本周知识动态', icon: 'calendar-days', callback: () => openSecondBrainWeekly(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, callback: () => openPomodoro(getApp()) },
   // 开始/停止专注（2026-09-10：首页入口菜单联动，一把切换，等价面板「开始 / 重置」两颗钮）

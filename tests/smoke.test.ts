@@ -91,6 +91,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat',
   // 重建索引（2026-09-11 首页入口菜单；函数早已存在、此前无命令入口）
   'bz-secondbrain-rebuild-index',
+  // 本周知识动态（issue 360：每周知识摘要，启动静默聚合 + 手动重聚详情弹层）
+  'bz-secondbrain-weekly',
   'bz-pomodoro-open',
   // 开始/停止专注（2026-09-10：首页入口菜单联动）
   'bz-pomodoro-focus-toggle',
@@ -201,6 +203,10 @@ describe('bz 骨架冒烟', () => {
     // f7：第二大脑面板与第二大脑参考区分（不再与功能名歧义）
     expect(byId('bz-secondbrain-panel').name).toBe('第二大脑面板');
     expect(byId('bz-secondbrain-open').name).toBe('第二大脑参考');
+    // issue 360：本周知识动态（图标 calendar-days，与复习报告 calendar-check 错开）
+    expect(byId('bz-secondbrain-weekly').name).toBe('本周知识动态');
+    expect(byId('bz-secondbrain-weekly').icon).toBe('calendar-days');
+    expect(byId('bz-secondbrain-weekly').icon).not.toBe(byId('bz-review-report').icon);
     // f7：重复图标去重——message-circle 各只出现一次（clapperboard 随 movie-add 退役已无）
     const icons = registeredCommands.map((c: any) => c.icon);
     expect(icons.filter((i: string) => i === 'message-circle')).toHaveLength(1);
