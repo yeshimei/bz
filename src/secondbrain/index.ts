@@ -13,7 +13,7 @@
  * - issue 309：文献笔记建链改走显式通道——getLinkBridge() 给知识盒录入面板三段能力：
  *   preview（AI 出内容即起跑预演，草稿未落盘也能算）/ apply（落盘后写预演结果）/ now（兜底单篇管线）/ backfill（批量补链），
  *   面板内 loading → 完成后就地显示关联；原「生成即跑」的 'knowledge:tasks' 订阅已删除；
- * - unload 全量清理：定时器、订阅、面板 DOM、DeepSeek 服务、link agent。
+ * - unload 全量清理：定时器、订阅、面板 DOM、link agent（AI 通道无持久资源，issue 359 起单例已退役）。
  */
 import type { App } from 'obsidian';
 import { onDomainEvent } from '../core/domain-bus';
@@ -22,7 +22,6 @@ import { tryGetSettings } from '../core/settings-provider';
 import { IS_MOBILE } from './config';
 import { VectorStore } from './vector-store';
 import { setVectorSearchSource } from './readonly';
-import { resetDeepseekAI } from './ai';
 import { SecondBrainPanel, confirmFullRebuild } from './panel';
 import { ReferencePanel } from './reference-panel';
 import { ChatPanel } from './chat-panel';
@@ -141,7 +140,6 @@ export function unloadSecondBrain(): void {
   setVectorSearchSource(null); // issue 318：卸载即撤销只读检索桥（未初始化/已卸载取到 null）
   appRef = null;
   initialized = false;
-  resetDeepseekAI();
 }
 
 /** 只读检索面（issue 318）：类型出口留在 index（对外 API 不破）；实现与取用走叶子模块 readonly.ts */

@@ -354,3 +354,71 @@ describe('第二大脑：AI 生成概括移除（ticket 141）', () => {
     expect(chat.rows.map((r: any) => r.name)).toEqual(['最大历史记录']);
   });
 });
+
+describe('第二大脑对话：引用卡（ADR-0110 §4；issue 359 随 AI 通道改造补回归锚）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    makeEnv();
+  });
+
+  /** 带检索命中与 workspace.getLeaf 假体的面板（引用卡点击链路用） */
+  async function makeChatWithHits(hits: unknown[], vault: MockVault, app: any) {
+    const openFile = vi.fn();
+    (app.workspace as any).getLeaf = () => ({ openFile });
+    const store = {
+      search: vi.fn(async () => hits),
+      meta: { notes: {} }, // citeRows 经 computeStats 取来源色板序；空库即空序
+    };
+    const { ChatPanel } = await import('../../src/secondbrain/chat-panel');
+    const chat = new ChatPanel(store as any, app);
+    return { chat, openFile };
+  }
+
+  it('检索命中渲染引用卡；点击打开对应笔记', async () => {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    vault.files.set('日记/2026-09-16.md', '命中内容');
+    const { chat, openFile } = await makeChatWithHits(
+      [{ path: '日记/2026-09-16.md', score: 0.8, chunk: '相关片段' }],
+      vault,
+      app
+    );
+    vi.spyOn(AI, 'ask').mockResolvedValue('引用回答');
+
+    chat.input.value = '引用问题';
+    await chat.sendChatMessage();
+    await until(() => chat.messagesDiv.querySelectorAll('.bz-sb-chat-cite').length === 1);
+
+    const cite = chat.messagesDiv.querySelector('.bz-sb-chat-cite') as HTMLElement;
+    expect(cite.dataset.path).toBe('日记/2026-09-16.md');
+    expect(cite.textContent).toContain('80%'); // 分数百分比上卡
+
+    cite.click();
+    expect(openFile).toHaveBeenCalledTimes(1);
+    expect((openFile.mock.calls[0][0] as any).path).toBe('日记/2026-09-16.md');
+    chat.destroy();
+  });
+
+  it('引用卡指向已不存在的文件：就地提示，不抛错不开叶', async () => {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    const { chat, openFile } = await makeChatWithHits(
+      [{ path: '已删除/笔记.md', score: 0.6, chunk: '失效片段' }],
+      vault,
+      app
+    );
+    vi.spyOn(AI, 'ask').mockResolvedValue('失效引用回答');
+
+    chat.input.value = '失效引用问题';
+    await chat.sendChatMessage();
+    await until(() => chat.messagesDiv.querySelectorAll('.bz-sb-chat-cite').length === 1);
+
+    (chat.messagesDiv.querySelector('.bz-sb-chat-cite') as HTMLElement).click();
+    expect(openFile).not.toHaveBeenCalled();
+    await until(() => chat.messagesDiv.textContent!.includes('文件不存在或已被移动'));
+    chat.destroy();
+  });
+});
