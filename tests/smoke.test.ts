@@ -81,7 +81,7 @@ const EXPECTED_COMMAND_IDS = [
   // 继续在读（2026-09-11 首页入口菜单；开书架墙落「在读」分栏）
   'bz-bookshelf-continue',
   'bz-review-open', 'bz-review-report', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
-  'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
+  // 评级四命令（bz-review-again/hard/good/easy）已裁（issue 346）：热键时代遗产不可达，难度弹窗为唯一面板外评级入口
   'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat',
   // 重建索引（2026-09-11 首页入口菜单；函数早已存在、此前无命令入口）
   'bz-secondbrain-rebuild-index',
@@ -181,11 +181,6 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-memo-add').name).toBe('加备忘录');
     // t2：四套叫法统一「阅读分析报告」（走查批 D；home 磁贴保留短名「阅读报告」）
     expect(byId('bz-reading-report-open').name).toBe('阅读分析报告');
-    // f3：评级四命令去英文后缀、统一「复习（X）」标点
-    expect(byId('bz-review-again').name).toBe('复习（忘了）');
-    expect(byId('bz-review-hard').name).toBe('复习（困难）');
-    expect(byId('bz-review-good').name).toBe('复习（一般）');
-    expect(byId('bz-review-easy').name).toBe('复习（简单）');
     // f7：第二大脑面板与第二大脑参考区分（不再与功能名歧义）
     expect(byId('bz-secondbrain-panel').name).toBe('第二大脑面板');
     expect(byId('bz-secondbrain-open').name).toBe('第二大脑参考');
