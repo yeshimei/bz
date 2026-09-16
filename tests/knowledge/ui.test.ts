@@ -1014,7 +1014,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
   it('术语面板完整版契约：词典皮标题栏（✕ 退役 issue 271）/ 术语来源同款行内标签（无说明行无试试）；预填自动生成 + 属性卡内容卡', async () => {
     ui.showTermEntry('松果体');
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
-    await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('松果体'));
+    await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('松果体', expect.anything()));
     await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex'));
     const popup = document.getElementById('knowledge-term-popup')!;
     // 词典皮：衬线标题栏（✕ 已退役 issue 271）；术语/来源同款行内标签（快改批：统一排版，试试示例与说明行已删）
@@ -1042,6 +1042,157 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
     ui.hideTermEntry();
     expect(popup.style.display).toBe('none');
+  });
+
+  // ==================== 录入草稿流式成形（ADR-0152 / issue 343） ====================
+
+  it('点下即开界面：预览区立刻展开，属性行「分析中…」、正文区「正在生成…」，总结与写入禁用（ADR-0152 决策 4）', async () => {
+    let release: (v: any) => void = () => {};
+    noteGen.generateTermDraft.mockReturnValueOnce(new Promise<any>((res) => { release = res; }));
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '量子纠缠';
+    (document.getElementById('lit-term-generate') as HTMLElement).click();
+    // 不等 AI 返回：界面已在位
+    expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex');
+    expect(document.getElementById('lit-term-meta-term')!.textContent).toBe('量子纠缠'); // 用户输入侧先给值
+    expect(document.getElementById('lit-term-meta-date')!.textContent).not.toBe(''); // 日期同理
+    expect(document.getElementById('lit-term-meta-domain')!.textContent).toBe('分析中…'); // AI 产出侧挂占位
+    expect(document.getElementById('lit-term-content')!.textContent).toBe('正在生成…');
+    expect(document.getElementById('lit-term-content')!.classList.contains('bz-lit-term-pending')).toBe(true);
+    // 忙态只锁总结与写入；生成键保持可点（再点 = 中止重开，决策 7）
+    expect((document.getElementById('lit-term-save') as HTMLButtonElement).disabled).toBe(true);
+    expect((document.getElementById('lit-term-regenerate') as HTMLButtonElement).disabled).toBe(true);
+    expect((document.getElementById('lit-term-generate') as HTMLButtonElement).disabled).toBe(false);
+    release({ summary: '量子纠缠是物理现象', domain: '物理' });
+    await vi.waitFor(() => expect(document.getElementById('lit-term-content')!.textContent).toBe('量子纠缠是物理现象'));
+    expect(document.getElementById('lit-term-meta-domain')!.textContent).toBe('物理');
+    expect(document.getElementById('lit-term-content')!.classList.contains('bz-lit-term-pending')).toBe(false);
+    expect((document.getElementById('lit-term-save') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('逐字追加：字段到达即刷新（领域先落、正文一位位长出），收尾与草稿一致（ADR-0152 决策 3）', async () => {
+    const summary = '量子纠缠是一种物理现象';
+    const onScreen: string[] = [];
+    noteGen.generateTermDraft.mockImplementationOnce(async (_term: string, hooks: any) => {
+      hooks?.onProgress?.({ title: null, domain: null, summary: null }); // 什么都没到
+      hooks?.onProgress?.({ title: null, domain: '物理', summary: null }); // 领域先落地
+      expect(document.getElementById('lit-term-meta-domain')!.textContent).toBe('物理');
+      for (let i = 1; i <= summary.length; i++) {
+        hooks?.onProgress?.({ title: null, domain: '物理', summary: summary.slice(0, i) });
+        onScreen.push(document.getElementById('lit-term-content')!.textContent ?? '');
+      }
+      return { summary, domain: '物理' };
+    });
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '量子纠缠';
+    (document.getElementById('lit-term-generate') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('lit-term-content')!.textContent).toBe(summary));
+    // 每一帧都是终值的前缀（只可能少字），且第一个字符到达即上屏
+    expect(onScreen[0]).toBe(summary.slice(0, 1));
+    for (const s of onScreen) expect(summary.startsWith(s)).toBe(true);
+    expect(onScreen[onScreen.length - 1]).toBe(summary);
+  });
+
+  it('再点生成：abort 在途流 + 正文立刻回到「正在生成…」（ADR-0152 决策 7 / 决策 4）', async () => {
+    const signals: AbortSignal[] = [];
+    noteGen.generateTermDraft.mockImplementation((_term: string, hooks: any) => {
+      signals.push(hooks.signal);
+      return new Promise((_res, rej) => {
+        hooks.signal.addEventListener('abort', () => {
+          const e: any = new Error('请求已取消');
+          e.name = 'AbortError';
+          rej(e);
+        });
+      });
+    });
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '量子纠缠';
+    const gen = document.getElementById('lit-term-generate') as HTMLElement;
+    gen.click();
+    expect(signals).toHaveLength(1);
+    expect(signals[0].aborted).toBe(false);
+    gen.click(); // 再点：中止并重开
+    expect(signals).toHaveLength(2);
+    expect(signals[0].aborted).toBe(true); // 旧流被中止
+    expect(signals[1].aborted).toBe(false);
+    expect(document.getElementById('lit-term-content')!.textContent).toBe('正在生成…'); // 旧正文不留在屏上
+    expect(document.getElementById('lit-term-content')!.classList.contains('bz-lit-term-pending')).toBe(true);
+    expect(document.getElementById('lit-term-generate')!.textContent).toBe('生成中…'); // 新一轮仍在跑
+    await vi.waitFor(() => expect(getNoticeMessages().join('\n')).not.toContain('生成中断')); // 主动中止不报中断
+  });
+
+  it('中断收场：已流入的正文保留 + 报「生成中断」+ 确认写入保持禁用（ADR-0152 决策 6）', async () => {
+    noteGen.generateTermDraft.mockImplementationOnce(async (_term: string, hooks: any) => {
+      hooks?.onProgress?.({ title: null, domain: '物理', summary: '量子纠缠是一种' }); // 半篇已上屏
+      throw new Error('网络中断');
+    });
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '量子纠缠';
+    (document.getElementById('lit-term-generate') as HTMLElement).click();
+    await vi.waitFor(() => expect(getNoticeMessages().join('\n')).toContain('生成中断'));
+    expect(document.getElementById('lit-term-content')!.textContent).toBe('量子纠缠是一种'); // 文字不白丢
+    expect((document.getElementById('lit-term-save') as HTMLButtonElement).disabled).toBe(true);
+    expect((document.getElementById('lit-term-regenerate') as HTMLButtonElement).disabled).toBe(true); // 半篇不给总结
+    // 按钮之外还有一道守卫：绕过界面直接写也被拦
+    await (ui as any).onTermConfirm();
+    expect(noteGen.generateTermNote).not.toHaveBeenCalled();
+    // 重新生成成功 → 放行写入
+    noteGen.generateTermDraft.mockResolvedValueOnce({ summary: '完整正文', domain: '物理' });
+    await (ui as any).onTermGenerate();
+    await vi.waitFor(() => expect(document.getElementById('lit-term-content')!.textContent).toBe('完整正文'));
+    expect((document.getElementById('lit-term-save') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('非流式降级：不喂增量时界面契约不变（照旧立即展开，正文整段填入）（ADR-0152 决策 5）', async () => {
+    noteGen.generateTermDraft.mockResolvedValueOnce({ summary: '整段正文', domain: '心理' });
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '松果体';
+    (document.getElementById('lit-term-generate') as HTMLElement).click();
+    // 降级路径没有增量可喂：界面照旧立即展开，正文区挂占位到整段回来
+    expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex');
+    expect(document.getElementById('lit-term-content')!.textContent).toBe('正在生成…');
+    await vi.waitFor(() => expect(document.getElementById('lit-term-content')!.textContent).toBe('整段正文'));
+    expect(document.getElementById('lit-term-meta-domain')!.textContent).toBe('心理');
+  });
+
+  it('关窗二次确认：取消关闭时在途生成不被中止，确认后才中止（ADR-0152 决策 7）', async () => {
+    const signals: AbortSignal[] = [];
+    noteGen.generateTermDraft.mockImplementation((_term: string, hooks: any) => {
+      signals.push(hooks.signal);
+      return new Promise(() => {}); // 一直挂着
+    });
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '量子纠缠';
+    (document.getElementById('lit-term-generate') as HTMLElement).click();
+    expect(signals[0].aborted).toBe(false);
+    // 用户取消关闭 → 请求继续跑下去
+    flowDialog.openFlowDialog.mockResolvedValueOnce('cancel');
+    (document.getElementById('knowledge-term-mask') as HTMLElement).click();
+    await Promise.resolve();
+    expect(signals[0].aborted).toBe(false);
+    expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex');
+    // 确认关闭（默认 ok）→ 才中止
+    (document.getElementById('knowledge-term-mask') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('none'));
+    expect(signals[0].aborted).toBe(true);
+  });
+
+  it('标题行只读（ADR-0152 决策 9）：属性首行是展示行不是输入框，落盘取 AI 标题', async () => {
+    ui.showPassageEntry('一段关于城市化的文字。');
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    await (ui as any).onTermGenerate();
+    const titleEl = document.getElementById('lit-entry-meta-title')!;
+    expect(titleEl.tagName).toBe('SPAN');
+    expect(titleEl.textContent).toBe('自动标题');
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(noteGen.generatePassageNote).toHaveBeenCalled());
+    expect(noteGen.generatePassageNote).toHaveBeenCalledWith({ title: '自动标题', summary: '整理正文', domain: '社会', source: null });
   });
 
   it('确认写入：按预览值落盘一次 + term-generated 事件 + 关联落库后直接关窗', async () => {
@@ -1186,20 +1337,19 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(getNoticeMessages().join('\n')).toContain('请粘贴要整理的段落');
     (document.getElementById('lit-passage-input') as HTMLTextAreaElement).value = '  一段关于城市化的文字。  ';
     await (ui as any).onTermGenerate();
-    expect(noteGen.generatePassageDraft).toHaveBeenCalledWith('一段关于城市化的文字。'); // 首尾空白已裁
-    // 标题自动填入属性卡（可改）
-    expect((document.getElementById('lit-entry-meta-title') as HTMLInputElement).value).toBe('自动标题');
-    // 改写标题后落盘（所见即所得：不重跑 AI）
-    (document.getElementById('lit-entry-meta-title') as HTMLInputElement).value = '城市化的三种动力';
+    expect(noteGen.generatePassageDraft).toHaveBeenCalledWith('一段关于城市化的文字。', expect.anything()); // 首尾空白已裁
+    // 标题自动填入属性卡（只读展示行，ADR-0152 决策 9：AI 产出不给编辑出口）
+    expect(document.getElementById('lit-entry-meta-title')!.textContent).toBe('自动标题');
+    // 确认写入：标题直接取草稿里的 AI 标题（属性行无编辑出口 → 不存在「用户改 vs AI 回填」的覆盖冲突）
     (document.getElementById('lit-term-save') as HTMLElement).click();
     await vi.waitFor(() => expect(noteGen.generatePassageNote).toHaveBeenCalled());
     expect(noteGen.generatePassageNote).toHaveBeenCalledWith({
-      title: '城市化的三种动力',
+      title: '自动标题',
       summary: '整理正文',
       domain: '社会',
       source: null,
     });
-    await vi.waitFor(() => expect(seen.map((e) => e.title)).toEqual(['城市化的三种动力']));
+    await vi.waitFor(() => expect(seen.map((e) => e.title)).toEqual(['自动标题']));
   });
 
   // ==================== 图版录入（issue 312；多图 issue 313） ====================
@@ -1244,9 +1394,9 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(thumbs()).toHaveLength(3);
     // 读图：AI 拿到的是**全部** data URL（issue 329 起 descs 随行，无描述 = 空串数组，prompt 无图注节）；此刻一个文件都没落盘（图只在内存）
     await (ui as any).onTermGenerate();
-    expect(noteGen.generateImageDraft).toHaveBeenCalledWith(thumbs().map((t) => t.src), ['', '', '']);
+    expect(noteGen.generateImageDraft).toHaveBeenCalledWith(thumbs().map((t) => t.src), ['', '', ''], expect.anything());
     expect(noteGen.generateImageNote).not.toHaveBeenCalled();
-    expect((document.getElementById('lit-entry-meta-title') as HTMLInputElement).value).toBe('自动图题');
+    expect(document.getElementById('lit-entry-meta-title')!.textContent).toBe('自动图题');
     expect(document.getElementById('lit-term-content')!.textContent).toBe('读图解读');
     expect(document.getElementById('lit-term-meta-domain')!.textContent).toBe('艺术');
     // 确认写入：三张图的本体 + 笔记一并落盘（bytes 与扩展名交给 note-gen，顺序 = 放入顺序）
@@ -1295,10 +1445,11 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(document.getElementById('lit-image-hint')!.textContent).toContain('拖入图片');
     (document.getElementById('lit-term-generate') as HTMLElement).click();
     expect(getNoticeMessages().join('\n')).toContain('请先拖入或粘贴图片');
-    // 标题被清空 → 拒写（图版必须有标题；属性卡标题是它落盘的文件名）
+    // 标题为空 → 拒写（图版必须有标题；属性卡标题是它落盘的文件名）。
+    // ADR-0152 决策 9 后标题行只读、用户清不掉它——空标题只可能来自 AI，故让 AI 返回空标题来构造。
     await (ui as any).acceptImageFiles([pngFile('c.png')]);
+    noteGen.generateImageDraft.mockResolvedValueOnce({ title: '', summary: '读图解读', domain: '艺术' });
     await (ui as any).onTermGenerate();
-    (document.getElementById('lit-entry-meta-title') as HTMLInputElement).value = '';
     (document.getElementById('lit-term-save') as HTMLElement).click();
     expect(getNoticeMessages().join('\n')).toContain('标题不能为空');
     expect(noteGen.generateImageNote).not.toHaveBeenCalled();
@@ -1728,7 +1879,7 @@ describe('录入面板关闭二次确认 + 生成后开笔记（issue 326）', (
     expect((ui as any).entryImages[1].desc).toBe('');
     // 读图：描述列表按位随 data URL 一起投给 AI
     await (ui as any).onTermGenerate();
-    expect(noteGen.generateImageDraft).toHaveBeenCalledWith(expect.any(Array), ['窗外的树', '']);
+    expect(noteGen.generateImageDraft).toHaveBeenCalledWith(expect.any(Array), ['窗外的树', ''], expect.anything());
     // 确认写入：desc 原样交给 note-gen（语法分叉由 note-gen 负责）
     (document.getElementById('lit-term-save') as HTMLElement).click();
     await vi.waitFor(() => expect(noteGen.generateImageNote).toHaveBeenCalled());

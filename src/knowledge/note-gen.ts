@@ -14,6 +14,7 @@ import { createAI } from '../core/ai';
 import { getApp } from '../core/app';
 import { tryGetSettings } from '../core/settings-provider';
 import type { App } from 'obsidian';
+import { partialStringField } from './partial-json';
 import { quoteYaml, serializeTermSource, upgradeSourceLine, type TermSource } from './source';
 
 /** 领域词表解析（逗号/顿号分隔、去空、去重）；空 → [] = AI 自由写 */
@@ -53,6 +54,53 @@ export function parseAiJson(raw: string): any {
   const m = cleaned.match(/\{[\s\S]*\}/);
   if (m) { try { return JSON.parse(m[0]); } catch { /* 抛错 */ } }
   throw new Error('AI 返回的不是 JSON：' + cleaned.slice(0, 120));
+}
+
+/** 流式进度快照（ADR-0152）：每次 delta 到达后回调一次，值 = 当前已能解出的字段，未到达 = null */
+export interface DraftFields {
+  title: string | null;
+  domain: string | null;
+  summary: string | null;
+}
+
+/** 草稿生成的调用方钩子（ADR-0152）：onProgress 逐字刷新预览；signal 中止在途请求（关窗 / 再点生成） */
+export interface DraftHooks {
+  onProgress?: (fields: DraftFields) => void;
+  signal?: AbortSignal;
+}
+
+/**
+ * 组装 `ai.json()` 的流式选项（ADR-0152）：core/ai 的 `onDelta` 只给「增量片段」，
+ * 这里自己累积全文，每帧拿累积前缀重算三个字段——累积文本在任意时刻都是最终 JSON 的前缀，
+ * 故抽取器无需状态机（见 partial-json.ts）。
+ * 不传 onProgress 时不接 `onDelta`：请求退回纯非流式形态，连每帧扫描的开销都不付
+ * （非流式降级路径同样没有 `onDelta` 可喂，界面契约由 UI 侧统一收口）。
+ */
+function draftAiOptions(hooks?: DraftHooks): { onDelta?: (delta: string) => void; signal?: AbortSignal } {
+  const onProgress = hooks?.onProgress;
+  let onDelta: ((delta: string) => void) | undefined;
+  if (onProgress) {
+    let acc = '';
+    onDelta = (delta: string) => {
+      acc += delta;
+      onProgress({
+        title: partialStringField(acc, 'title'),
+        domain: partialStringField(acc, 'domain'),
+        summary: partialStringField(acc, 'summary'),
+      });
+    };
+  }
+  return { onDelta, signal: hooks?.signal };
+}
+
+/**
+ * 正文空值守卫（ADR-0152 决策 6）：空正文不得成为草稿——否则「半篇 / 空篇」能一路走到确认写入。
+ * 与「截断」互补：JSON 被截断时 parseAiJson 先抛错，JSON 完整但正文空时由这里拦下。
+ */
+function requireSummary(v: unknown): string {
+  const s = String(v ?? '').trim();
+  if (!s) throw new Error('AI 未返回正文');
+  return s;
 }
 
 /** 领域判定指令：有词表从词表选（可自定义），空词表自由写 */
@@ -179,27 +227,30 @@ ${c}`,
   return writeUniqueNote(String(s.knowledgeDirectory || '文献盒'), sanitizeMdTitle(title), body);
 }
 
-/** 术语 AI 简介提示词（预览/落盘共用同一指令，领域词表一致） */
+/** 术语 AI 简介提示词（预览/落盘共用同一指令，领域词表一致）。
+ *  字段顺序（ADR-0152 决策 10）：domain 在前、summary 在后——领域是短字段、正文是长字段，
+ *  让属性区的领域行早早落值、正文随后逐字长出，与「界面立刻在位、内容依次到位」一致。 */
 function termPrompt(term: string, list: string[]): string {
   return `你是百科知识整理助手。为术语「${term}」生成一篇文献笔记。只输出 JSON，不要任何解释：
-{"summary":"一段关于该术语的简明介绍（百科总结式，150-300字简体中文，连贯成文，涵盖定义、核心要点与必要背景）","domain": ${domainInstruction(list)}}`;
+{${domainInstruction(list)},"summary":"一段关于该术语的简明介绍（百科总结式，150-300字简体中文，连贯成文，涵盖定义、核心要点与必要背景）"}`;
 }
 
 /**
  * 术语 AI 预览（纯生成、不落盘，ticket 138 §2.1 契约变更）：
  * 只调 AI 返回 {summary, domain}，供术语面板预览（领域/正文纯内存可编辑）；
  * 确认写入才调 generateTermNote 落盘——预览阶段文献目录不出现任何文件。
+ * hooks（ADR-0152）：onProgress 逐字刷新预览、signal 中止在途请求；不传 = 行为与旧版一致。
  */
-export async function generateTermDraft(term: string): Promise<{ summary: string; domain: string }> {
+export async function generateTermDraft(term: string, hooks?: DraftHooks): Promise<{ summary: string; domain: string }> {
   const ai = createAI();
   const s = tryGetSettings();
   const list = parseDomainList(s.knowledgeDomainList);
   const t = String(term || '').trim();
   if (!t) throw new Error('术语为空');
-  const raw = await ai.json(termPrompt(t, list));
+  const raw = await ai.json(termPrompt(t, list), draftAiOptions(hooks));
   const meta = parseAiJson(raw);
   return {
-    summary: String(meta?.summary || '').trim(),
+    summary: requireSummary(meta?.summary),
     domain: String(meta?.domain || '').trim(),
   };
 }
@@ -266,10 +317,11 @@ export async function generateTermNote(opts: {
   return writeUniqueNote(String(s.knowledgeDirectory || '文献盒'), sanitizeMdTitle(term), body);
 }
 
-/** 段落 AI 整理提示词（预览/落盘共用；issue 309） */
+/** 段落 AI 整理提示词（预览/落盘共用；issue 309）。
+ *  字段顺序（ADR-0152 决策 10）：domain → title → summary，短字段在前，正文最后流出。 */
 function passagePrompt(text: string, list: string[]): string {
   return `你是文献整理助手。把下方这段文字整理成一篇文献笔记。只输出 JSON，不要任何解释：
-{"title":"15-30字的中文完整陈述句，概括这段文字在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"整理后的正文（保留原文的全部事实与要点，删去口水话、重复表述，可分自然段）","domain": ${domainInstruction(list)}}
+{${domainInstruction(list)},"title":"15-30字的中文完整陈述句，概括这段文字在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"整理后的正文（保留原文的全部事实与要点，删去口水话、重复表述，可分自然段）"}
 硬约束：正文只能来自原文，不得添加原文没有的事实、数字或结论，不得写成读后感。所有字段一律使用简体中文。
 
 【原文】
@@ -280,18 +332,19 @@ ${text}`;
  * 段落 AI 草稿（issue 309，纯生成不落盘）：一段文字 → 自动标题 + 领域 + 整理正文，
  * 供段落面板预览（三项纯内存可改）；确认写入才调 generatePassageNote 落盘。
  * 上限 30 万字拒收由面板负责，此处只做空值校验。
+ * hooks（ADR-0152）：onProgress 逐字刷新预览（领域 / 标题 / 正文依次到位）、signal 中止在途请求。
  */
-export async function generatePassageDraft(text: string): Promise<{ title: string; summary: string; domain: string }> {
+export async function generatePassageDraft(text: string, hooks?: DraftHooks): Promise<{ title: string; summary: string; domain: string }> {
   const ai = createAI();
   const s = tryGetSettings();
   const list = parseDomainList(s.knowledgeDomainList);
   const t = String(text || '').trim();
   if (!t) throw new Error('段落为空');
-  const raw = await ai.json(passagePrompt(t, list));
+  const raw = await ai.json(passagePrompt(t, list), draftAiOptions(hooks));
   const meta = parseAiJson(raw);
   return {
     title: String(meta?.title || '').trim(),
-    summary: String(meta?.summary || '').trim(),
+    summary: requireSummary(meta?.summary),
     domain: String(meta?.domain || '').trim(),
   };
 }
@@ -361,7 +414,7 @@ function imagePrompt(list: string[], count: number, descs?: string[]): string {
     ? '对这组图的整理说明（150-300字简体中文，连贯成文）：先说这组图共同在讲什么，再按图交代各自可见的内容与信息，图中含文字则整理其要点'
     : '对这张图的整理说明（150-300字简体中文，连贯成文）：图中含文字则整理其要点，是照片、示意图或图表则客观描述其可见内容与信息';
   let prompt = `你是文献整理助手。${scope}。只输出 JSON，不要任何解释：
-{"title":"15-30字的中文完整陈述句，概括${multi ? '这组图' : '这张图'}在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"${bodyAsk}","domain": ${domainInstruction(list)}}
+{${domainInstruction(list)},"title":"15-30字的中文完整陈述句，概括${multi ? '这组图' : '这张图'}在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"${bodyAsk}"}
 硬约束：只能写图中确实能看到的内容，不得臆测、不得补充图中没有的事实与数字、不得写成观后感。所有字段一律使用简体中文。`;
   const notes = (Array.isArray(descs) ? descs : [])
     .map((d, i) => ({ n: i + 1, d: String(d ?? '').trim() }))
@@ -377,8 +430,9 @@ function imagePrompt(list: string[], count: number, descs?: string[]): string {
  * 领域 + 解读正文，供图版面板预览（三项纯内存可改）；确认写入才调 generateImageNote 落盘。
  * 可选 descs（issue 329 / ADR-0145）：与 imageUrls 按位对应的用户图注，进入「用户图注」节
  * 作为读图上下文（全空无节）。走 core/ai 的多模态通道（issue 311：content 数组 + image_url）。
+ * hooks（ADR-0152）：onProgress 逐字刷新预览、signal 中止在途请求；不传 = 行为与旧版一致。
  */
-export async function generateImageDraft(imageUrls: string[], descs?: string[]): Promise<{ title: string; summary: string; domain: string }> {
+export async function generateImageDraft(imageUrls: string[], descs?: string[], hooks?: DraftHooks): Promise<{ title: string; summary: string; domain: string }> {
   const ai = createAI();
   const s = tryGetSettings();
   const list = parseDomainList(s.knowledgeDomainList);
@@ -391,11 +445,12 @@ export async function generateImageDraft(imageUrls: string[], descs?: string[]):
   if (!valid.length) throw new Error('图片为空');
   const raw = await ai.json(
     { text: imagePrompt(list, valid.length, valid.map((p) => p.desc)), images: valid.map((p) => p.url) },
+    draftAiOptions(hooks),
   );
   const meta = parseAiJson(raw);
   return {
     title: String(meta?.title || '').trim(),
-    summary: String(meta?.summary || '').trim(),
+    summary: requireSummary(meta?.summary),
     domain: String(meta?.domain || '').trim(),
   };
 }

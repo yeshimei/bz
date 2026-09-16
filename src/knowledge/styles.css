@@ -1029,21 +1029,11 @@
 }
 .bz-lit-term-dialog .bz-lit-term-row textarea:focus { border-color: var(--accent); }
 .bz-lit-term-dialog .bz-lit-term-row textarea::placeholder { color: var(--ink3); }
-/* 属性首行「标题」（段落 / 图版共用，AI 自动生成、预览态可改）——行内裸输入：下划线样式，不加框 */
-#lit-entry-meta-title {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  border-bottom: 1px dashed var(--line);
-  border-radius: 0;
-  background: none;
-  color: var(--ink);
-  font-family: inherit;
-  font-size: var(--bz-font-meta);
-  padding: 0 0 2px;
-  height: auto;
-}
-#lit-entry-meta-title:focus { outline: none; box-shadow: none; border-bottom-color: var(--accent); }
+/* 属性首行「标题」（段落 / 图版共用）：AI 产出、**只读**展示（ADR-0152 决策 9）——
+   与领域行同构；早先是可编辑的行内输入，那条下划线样式随编辑出口一并退役 */
+#lit-entry-meta-title { flex: 1; min-width: 0; }
+/* 属性行占位（ADR-0152 决策 4）：领域 / 标题这类 AI 产出行的值未到达时的灰字 */
+.bz-lit-meta-pending { color: var(--ink3); }
 /* 关联行（issue 309）：待写入 = 灰；已建立 = 墨色；失败 = 朱红；
    loading = 一条滑动的墨色小条 + 「分析中…」——建链要跑近邻检索与 AI 裁判，过程必须看得见 */
 .bz-lit-rel-idle { color: var(--ink3); }
@@ -1082,6 +1072,9 @@
   text-align: justify;
   white-space: pre-wrap;
 }
+/* 正文区占位（ADR-0152 决策 4）：第一个正文字符到达前显示「正在生成…」，
+   与属性行的「分析中…」同色同语气；正文一到即被整段替掉 */
+.bz-lit-term-content.bz-lit-term-pending { color: var(--ink3); }
 
 .bz-lit-term-actions { display: flex; gap: 10px; justify-content: flex-end; }
 .bz-lit-term-actions button:not(.bz-lit-accent-btn) {
