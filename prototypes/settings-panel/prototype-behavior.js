@@ -1,4 +1,4 @@
-/* 源指纹 d830d478d715abbf · 仓内输入 201 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5f63666fb64e5d09 · 仓内输入 201 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/config.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -18141,152 +18141,6 @@ ${c.trim()}
     }
   });
 
-  // src/clipbook/scan.ts
-  function defaultCache(f) {
-    var _a2;
-    try {
-      const app = getApp();
-      if (app && typeof ((_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) === "function") {
-        return app.metadataCache.getFileCache(f);
-      }
-    } catch (e) {
-    }
-    return f && f.frontmatter;
-  }
-  function parseClipFile(file, getCache, getBacklinks) {
-    const cache = (getCache || defaultCache)(file);
-    const fm = cache && cache.frontmatter;
-    if (!fm) return null;
-    if (!fm.url || !fm.created) return null;
-    const title = file.basename || stripMdExt(String(file.name || ""));
-    let created = new Date(fm.created).valueOf();
-    if (isNaN(created)) created = Date.now();
-    let backlinkNames = [];
-    try {
-      const bl = (getBacklinks || (() => null))(file);
-      if (bl && bl.data && typeof bl.data.size === "number" && bl.data.size > 0) {
-        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => stripTitleMarks(stripMdExt(n)));
-      }
-    } catch (e) {
-    }
-    let domain = "";
-    try {
-      if (fm.url) domain = new URL(String(fm.url)).hostname;
-    } catch (e) {
-    }
-    return {
-      path: file.path,
-      file,
-      url: String(fm.url),
-      author: fm.author ? String(fm.author) : "",
-      site: fm.site ? String(fm.site) : "未知",
-      summary: fm.summary ? String(fm.summary) : "",
-      tags: Array.isArray(fm.tags) ? fm.tags.map(String) : fm.tags ? [String(fm.tags)] : [],
-      title,
-      created,
-      backlinkNames,
-      domain
-    };
-  }
-  async function scanClipDirectory(dirPath, deps) {
-    const dir = deps.vault.getAbstractFileByPath(dirPath);
-    if (!dir || !Array.isArray(dir.children)) return null;
-    const mdFiles2 = dir.children.filter((f) => f && f.extension === "md");
-    const parse = deps.parse || ((f) => parseClipFile(f));
-    const notes = [];
-    for (const f of mdFiles2) {
-      try {
-        const n = parse(f);
-        if (n) notes.push(n);
-      } catch (e) {
-      }
-    }
-    notes.sort((a, b) => b.created - a.created);
-    return notes;
-  }
-  var init_scan = __esm({
-    "src/clipbook/scan.ts"() {
-      init_utils();
-      init_app();
-    }
-  });
-
-  // src/clipbook/loader.ts
-  function clipDir() {
-    const s = tryGetSettings();
-    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-  }
-  async function readNewsAndSidecar() {
-    var _a2;
-    const res = await readNewsData();
-    if (res.missing) {
-      M5.articles = [];
-      M5.clipNotes = null;
-      M5.clipUrls = /* @__PURE__ */ new Set();
-      M5.sidecar = emptySidecar();
-      M5.upInfo = {};
-      return { status: "missing", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
-    }
-    if (!res.ok) {
-      M5.articles = [];
-      M5.clipNotes = null;
-      M5.clipUrls = /* @__PURE__ */ new Set();
-      M5.sidecar = emptySidecar();
-      M5.upInfo = {};
-      return { status: "corrupt", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
-    }
-    const s = tryGetSettings();
-    const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
-    let data = res.data;
-    const cleaned = applyRetention(data.articles, days, days);
-    const retentionChanged = cleaned.length !== data.articles.length;
-    let removedKeys = [];
-    if (retentionChanged) {
-      const kept = new Set(cleaned.map((a) => articleKeyOf(a)));
-      removedKeys = (data.articles || []).map((a) => articleKeyOf(a)).filter((k) => !kept.has(k));
-      data = { ...data, articles: cleaned };
-    }
-    let statsChanged = false;
-    if (!statsHasData(data.stats)) {
-      const migrated = await migrateLegacyStats(data);
-      if (statsHasData(migrated.stats)) {
-        data = migrated;
-        statsChanged = true;
-      }
-    }
-    if (retentionChanged || statsChanged) {
-      const set = {};
-      if (retentionChanged) set.articles = data.articles;
-      if (statsChanged) set.stats = data.stats;
-      await enqueueNewsWrite(() => writeNewsDataMerged({ set, removeArticleKeys: removedKeys }));
-    }
-    const sidecar = await readClipbookData();
-    const clipNotes = await scanClipDirectory(clipDir(), {
-      vault: getApp().vault
-    });
-    const clipUrls = clipUrlSet2(clipNotes || []);
-    M5.articles = data.articles;
-    M5.stats = data.stats;
-    M5.sidecar = sidecar;
-    M5.clipNotes = clipNotes;
-    M5.clipUrls = clipUrls;
-    M5.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M5.upInfo };
-  }
-  var init_loader = __esm({
-    "src/clipbook/loader.ts"() {
-      init_news_data();
-      init_data5();
-      init_scan();
-      init_store();
-      init_constants3();
-      init_settings_provider();
-      init_app();
-      init_state4();
-      init_write_queue();
-    }
-  });
-
   // src/clipbook/anchor.ts
   function escapeRe(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -18421,6 +18275,200 @@ ${c.trim()}
     "src/clipbook/anchor.ts"() {
       init_data5();
       init_constants3();
+    }
+  });
+
+  // src/clipbook/scan.ts
+  function defaultCache(f) {
+    var _a2;
+    try {
+      const app = getApp();
+      if (app && typeof ((_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) === "function") {
+        return app.metadataCache.getFileCache(f);
+      }
+    } catch (e) {
+    }
+    return f && f.frontmatter;
+  }
+  function parseClipFile(file, getCache, getBacklinks) {
+    const cache = (getCache || defaultCache)(file);
+    const fm = cache && cache.frontmatter;
+    if (!fm) return null;
+    if (!fm.url || !fm.created) return null;
+    const title = file.basename || stripMdExt(String(file.name || ""));
+    let created = new Date(fm.created).valueOf();
+    if (isNaN(created)) created = Date.now();
+    let backlinkNames = [];
+    try {
+      const bl = (getBacklinks || (() => null))(file);
+      if (bl && bl.data && typeof bl.data.size === "number" && bl.data.size > 0) {
+        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => stripTitleMarks(stripMdExt(n)));
+      }
+    } catch (e) {
+    }
+    let domain = "";
+    try {
+      if (fm.url) domain = new URL(String(fm.url)).hostname;
+    } catch (e) {
+    }
+    return {
+      path: file.path,
+      file,
+      url: String(fm.url),
+      author: fm.author ? String(fm.author) : "",
+      site: fm.site ? String(fm.site) : "未知",
+      summary: fm.summary ? String(fm.summary) : "",
+      tags: Array.isArray(fm.tags) ? fm.tags.map(String) : fm.tags ? [String(fm.tags)] : [],
+      title,
+      created,
+      backlinkNames,
+      domain
+    };
+  }
+  async function scanClipDirectory(dirPath, deps) {
+    const dir = deps.vault.getAbstractFileByPath(dirPath);
+    if (!dir || !Array.isArray(dir.children)) return null;
+    const mdFiles2 = dir.children.filter((f) => f && f.extension === "md");
+    const parse = deps.parse || ((f) => parseClipFile(f));
+    const notes = [];
+    for (const f of mdFiles2) {
+      try {
+        const n = parse(f);
+        if (n) notes.push(n);
+      } catch (e) {
+      }
+    }
+    notes.sort((a, b) => b.created - a.created);
+    return notes;
+  }
+  var init_scan = __esm({
+    "src/clipbook/scan.ts"() {
+      init_utils();
+      init_app();
+    }
+  });
+
+  // src/clipbook/loader.ts
+  function clipDir() {
+    const s = tryGetSettings();
+    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
+  }
+  async function readNewsAndSidecar() {
+    var _a2;
+    const res = await readNewsData();
+    if (res.missing) {
+      M5.articles = [];
+      M5.clipNotes = null;
+      M5.clipUrls = /* @__PURE__ */ new Set();
+      M5.sidecar = emptySidecar();
+      M5.upInfo = {};
+      return { status: "missing", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
+    }
+    if (!res.ok) {
+      M5.articles = [];
+      M5.clipNotes = null;
+      M5.clipUrls = /* @__PURE__ */ new Set();
+      M5.sidecar = emptySidecar();
+      M5.upInfo = {};
+      return { status: "corrupt", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
+    }
+    const s = tryGetSettings();
+    const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
+    let data = res.data;
+    const cleaned = applyRetention(data.articles, days, days);
+    const retentionChanged = cleaned.length !== data.articles.length;
+    let removedKeys = [];
+    if (retentionChanged) {
+      const kept = new Set(cleaned.map((a) => articleKeyOf(a)));
+      removedKeys = (data.articles || []).map((a) => articleKeyOf(a)).filter((k) => !kept.has(k));
+      data = { ...data, articles: cleaned };
+      for (const k of removedKeys) void clearArticleTracking(k).catch(() => {
+      });
+    }
+    let statsChanged = false;
+    if (!statsHasData(data.stats)) {
+      const migrated = await migrateLegacyStats(data);
+      if (statsHasData(migrated.stats)) {
+        data = migrated;
+        statsChanged = true;
+      }
+    }
+    if (retentionChanged || statsChanged) {
+      const set = {};
+      if (retentionChanged) set.articles = data.articles;
+      if (statsChanged) set.stats = data.stats;
+      await enqueueNewsWrite(() => writeNewsDataMerged({ set, removeArticleKeys: removedKeys }));
+    }
+    const sidecar = await readClipbookData();
+    const clipNotes = await scanClipDirectory(clipDir(), {
+      vault: getApp().vault
+    });
+    const clipUrls = clipUrlSet2(clipNotes || []);
+    M5.articles = data.articles;
+    M5.stats = data.stats;
+    M5.sidecar = sidecar;
+    M5.clipNotes = clipNotes;
+    M5.clipUrls = clipUrls;
+    M5.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M5.upInfo };
+  }
+  var init_loader = __esm({
+    "src/clipbook/loader.ts"() {
+      init_news_data();
+      init_data5();
+      init_anchor();
+      init_scan();
+      init_store();
+      init_constants3();
+      init_settings_provider();
+      init_app();
+      init_state4();
+      init_write_queue();
+    }
+  });
+
+  // src/core/knowledge-boxes.ts
+  function normalizeBoxDir(raw, fallback) {
+    const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
+    return s || fallback;
+  }
+  function parseDirList(raw) {
+    const out = [];
+    for (const part of String(raw != null ? raw : "").split(",")) {
+      const d = normalizeBoxDir(part, "");
+      if (d && !out.includes(d)) out.push(d);
+    }
+    return out;
+  }
+  function getKnowledgeBoxes(s) {
+    var _a2;
+    const st = (_a2 = s != null ? s : tryGetSettings()) != null ? _a2 : {};
+    return {
+      lit: normalizeBoxDir(st.knowledgeDirectory, DEFAULT_LIT_DIR),
+      cardbox: normalizeBoxDir(st.knowledgeCardboxDirectory, DEFAULT_CARDBOX_DIR),
+      topic: normalizeBoxDir(st.knowledgeTopicDirectory, DEFAULT_TOPIC_DIR)
+    };
+  }
+  function boxDirs(boxes) {
+    const b = boxes != null ? boxes : getKnowledgeBoxes();
+    const out = [];
+    for (const d of [b.lit, b.cardbox, b.topic]) {
+      if (d && !out.includes(d)) out.push(d);
+    }
+    return out;
+  }
+  function isBoxDir(dir, boxes) {
+    const d = normalizeBoxDir(dir, "");
+    return !!d && boxDirs(boxes).includes(d);
+  }
+  var DEFAULT_LIT_DIR, DEFAULT_CARDBOX_DIR, DEFAULT_TOPIC_DIR;
+  var init_knowledge_boxes = __esm({
+    "src/core/knowledge-boxes.ts"() {
+      init_utils();
+      init_settings_provider();
+      DEFAULT_LIT_DIR = "文献盒";
+      DEFAULT_CARDBOX_DIR = "卡片盒";
+      DEFAULT_TOPIC_DIR = "主题盒";
     }
   });
 
@@ -18927,51 +18975,6 @@ ${c.trim()}
           });
         }
       };
-    }
-  });
-
-  // src/core/knowledge-boxes.ts
-  function normalizeBoxDir(raw, fallback) {
-    const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
-    return s || fallback;
-  }
-  function parseDirList(raw) {
-    const out = [];
-    for (const part of String(raw != null ? raw : "").split(",")) {
-      const d = normalizeBoxDir(part, "");
-      if (d && !out.includes(d)) out.push(d);
-    }
-    return out;
-  }
-  function getKnowledgeBoxes(s) {
-    var _a2;
-    const st = (_a2 = s != null ? s : tryGetSettings()) != null ? _a2 : {};
-    return {
-      lit: normalizeBoxDir(st.knowledgeDirectory, DEFAULT_LIT_DIR),
-      cardbox: normalizeBoxDir(st.knowledgeCardboxDirectory, DEFAULT_CARDBOX_DIR),
-      topic: normalizeBoxDir(st.knowledgeTopicDirectory, DEFAULT_TOPIC_DIR)
-    };
-  }
-  function boxDirs(boxes) {
-    const b = boxes != null ? boxes : getKnowledgeBoxes();
-    const out = [];
-    for (const d of [b.lit, b.cardbox, b.topic]) {
-      if (d && !out.includes(d)) out.push(d);
-    }
-    return out;
-  }
-  function isBoxDir(dir, boxes) {
-    const d = normalizeBoxDir(dir, "");
-    return !!d && boxDirs(boxes).includes(d);
-  }
-  var DEFAULT_LIT_DIR, DEFAULT_CARDBOX_DIR, DEFAULT_TOPIC_DIR;
-  var init_knowledge_boxes = __esm({
-    "src/core/knowledge-boxes.ts"() {
-      init_utils();
-      init_settings_provider();
-      DEFAULT_LIT_DIR = "文献盒";
-      DEFAULT_CARDBOX_DIR = "卡片盒";
-      DEFAULT_TOPIC_DIR = "主题盒";
     }
   });
 
@@ -27806,7 +27809,9 @@ ${body}`;
       });
       const partial = res.failed > 0 ? `，${res.failed} 张失败保留外链` : "";
       if (res.swaps.length > 0) {
-        const msg = `已本地化 ${res.swaps.length} 张图片${partial}`;
+        const reused = res.swaps.length - res.localized;
+        const reusedTxt = reused > 0 ? `（复用 ${reused} 张）` : "";
+        const msg = `已本地化 ${res.swaps.length} 张图片${reusedTxt}${partial}`;
         if (ph) {
           ph.setType("success");
           ph.setMessage(msg);
@@ -27997,14 +28002,7 @@ ${body}`;
   async function flowSave(article) {
     const raw = article && article.raw;
     if (!raw) return false;
-    const isBili = raw.platform === "B站" && !!String(raw.url || "").trim();
-    if (isBili) {
-      const { openKnowledgeAddTask: openKnowledgeAddTask2 } = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
-      openKnowledgeAddTask2(getApp(), { url: raw.url, title: raw.title || null, uploader: raw.author || null });
-      await markHandledAndBump(raw, "saved");
-      notice("已转入文献盒", "success");
-      return true;
-    }
+    if (raw.platform === "B站") return false;
     pauseReadingSession();
     try {
       const ok = await writeClipNote(raw);
@@ -28115,8 +28113,6 @@ ${body}`;
   var curKey, openedAt, accumMs, NO_BUMP;
   var init_flow = __esm({
     "src/clipbook/flow.ts"() {
-      init_app();
-      init_notice();
       init_domain_bus();
       init_settings_provider();
       init_news_data();
@@ -28324,6 +28320,7 @@ ${body}`;
       const ilink = t.closest("a.internal-link");
       if (ilink && interceptKnowledgeLink(ilink)) {
         e.preventDefault();
+        e.stopPropagation();
         return;
       }
       const img = t.closest("img");
@@ -28333,7 +28330,7 @@ ${body}`;
         return;
       }
       if (t.closest("[data-clip-open-note]") && M5.cur) openNote(M5.cur);
-    });
+    }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft" || e.key === "k") {
         e.preventDefault();
@@ -28374,6 +28371,8 @@ ${body}`;
     });
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
+      var _a2;
+      if (((_a2 = M5.cur) == null ? void 0 : _a2.st) === "saved") return;
       void doSave(M5.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
@@ -28390,6 +28389,7 @@ ${body}`;
       const ilink = t.closest("a.internal-link");
       if (ilink && interceptKnowledgeLink(ilink)) {
         e.preventDefault();
+        e.stopPropagation();
         return;
       }
       const img = t.closest("img");
@@ -28404,7 +28404,7 @@ ${body}`;
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
-    });
+    }, true);
     mobDetailEl.addEventListener("mouseup", onReaderMouseUp);
     const mobBodyScrollEl = overlayEl.querySelector("[data-clip-mob-detail-body]");
     if (mobBodyScrollEl) mobBodyScrollEl.addEventListener("scroll", hideSelBar, { passive: true });
@@ -28738,6 +28738,7 @@ ${body}`;
     });
   }
   function buildItemActions(a) {
+    var _a2;
     const out = [];
     if (a.origin === "clip") {
       out.push(
@@ -28758,7 +28759,7 @@ ${body}`;
       }
       return out;
     }
-    if (a.st !== "saved") {
+    if (a.st !== "saved" && ((_a2 = a.raw) == null ? void 0 : _a2.platform) !== "B站") {
       out.push({ icon: "download", label: "保存到剪藏本", title: "保存为正式剪藏", onClick: () => void doSave(a) });
     }
     out.push({ icon: "link", label: "复制原文链接", onClick: () => void copyText(a.url, "原文链接已复制") });
@@ -29210,14 +29211,16 @@ ${body}`;
     });
   }
   function renderMobDetail() {
+    var _a2;
     if (!mobDetailEl || !M5.cur) return;
     const a = M5.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
       const saved = a.st === "saved";
-      mobSaveBtnEl.style.display = a.origin !== "news" ? "none" : "";
+      mobSaveBtnEl.style.display = a.origin !== "news" || ((_a2 = a.raw) == null ? void 0 : _a2.platform) === "B站" ? "none" : "";
       mobSaveBtnEl.classList.toggle("saved", saved);
+      mobSaveBtnEl.classList.toggle("disabled", saved);
       mobSaveBtnEl.textContent = saved ? "已存" : "存为剪藏";
     }
     let mdBody = "";
@@ -29535,8 +29538,7 @@ ${body}`;
     }
   }
   function knowledgeDir() {
-    const s = tryGetSettings();
-    return String(s && s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    return getKnowledgeBoxes(tryGetSettings()).lit;
   }
   function resolveInternalTarget(href) {
     const app = getApp();
@@ -29705,6 +29707,7 @@ ${body}`;
       init_state4();
       init_loader();
       init_news_data();
+      init_knowledge_boxes();
       init_anchor();
       init_image_save();
       init_flow();
