@@ -52,6 +52,7 @@ import {
   MEMO_ICONS as ICON, iconSpan, sceneDot, sceneLabel, mainCountHtml,
   navBtnHtml, mobChipHtml, mobAddSceneChipHtml, panelShellHtml, metaTagsHtml,
   cardHtml as renderCard, checkHtml, sectionLabelHtml, doneBarHtml, doneMoreHtml, type MetaDue,
+  calHeadHtml, calGridHtml, CAL_WEEKDAYS, type CalCell, type CalChip,
 } from './render';
 import type { MemoItem, MemoRecur, MemoCheckItem } from './types';
 import { M } from './state';
@@ -322,6 +323,9 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   // 打开默认场景（memoOpenScene）：提醒 notePath 定位恒「全部」——定位靠搜索过滤，场景过滤会把目标条目挡掉
   M.activeScene = opts?.notePath ? '全部' : resolveOpenScene();
   M.showEarlierDone = false; // 「更早 N 条」每次打开重新收起
+  M.view = 'list'; // 视图每次打开回列表（issue 355）
+  M.calMonth = moment().format('YYYY-MM');
+  M.calSelected = null;
   M.pinnedNewId = null;
   M.search = ''; // E8：搜索词跨开合残留——输入框是新的但列表仍被旧关键词过滤（notePath 定位在 loadData 后另行覆写）
 
@@ -410,6 +414,14 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
       renderAll();
       return;
     }
+    // 视图切换（issue 355）：列表 / 月历（工具行页签，桌面与移动同源）
+    const viewBtn = t.closest('[data-memo-view]') as HTMLElement | null;
+    if (viewBtn) {
+      const v = viewBtn.dataset.memoView;
+      if (v === 'list' || v === 'calendar') M.view = v;
+      renderAll();
+      return;
+    }
     const addScene = t.closest('[data-memo-addscene]');
     if (addScene) { openAddSceneDialog(); return; }
     // 主头行「新建备忘录」按钮 → 打开创建编辑器
@@ -437,6 +449,35 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   // 行内勾选（完成/恢复；300ms 防抖对齐 memo 卡片）——切换逻辑抽 toggleCheck，与移动抽屉头共用
   const content = overlay.querySelector('[data-memo-content]') as HTMLElement;
   content.addEventListener('click', (e) => {
+    // 月历（issue 355）：翻页/回到今天/点日选中/点事件开编辑
+    const calNav = (e.target as HTMLElement).closest('[data-memo-cal-prev],[data-memo-cal-next],[data-memo-cal-today]') as HTMLElement | null;
+    if (calNav) {
+      const cur = moment(`${M.calMonth}-01`, 'YYYY-MM-DD');
+      if (calNav.hasAttribute('data-memo-cal-prev')) M.calMonth = cur.subtract(1, 'month').format('YYYY-MM');
+      else if (calNav.hasAttribute('data-memo-cal-next')) M.calMonth = cur.add(1, 'month').format('YYYY-MM');
+      else M.calMonth = moment().format('YYYY-MM');
+      M.calSelected = null; // 换月不保留选中日（当日清单随视图重置）
+      renderAll();
+      return;
+    }
+    const calChip = (e.target as HTMLElement).closest('[data-memo-cal-item]') as HTMLElement | null;
+    if (calChip) {
+      const it = M.items.find((i) => i.id === calChip.dataset.memoCalItem);
+      if (it) {
+        e.stopPropagation();
+        openEditor(it);
+      }
+      return;
+    }
+    const dayCell = (e.target as HTMLElement).closest('[data-memo-cal-day]') as HTMLElement | null;
+    if (dayCell) {
+      const d = Number(dayCell.dataset.memoCalDay);
+      if (Number.isInteger(d)) {
+        M.calSelected = `${M.calMonth}-${String(d).padStart(2, '0')}`;
+        renderAll();
+      }
+      return;
+    }
     // 清单子任务勾选（issue 354）：行内即时落盘，全勾完父项自动完成
     const clRow = (e.target as HTMLElement).closest('[data-memo-cl]') as HTMLElement | null;
     if (clRow) {
@@ -554,7 +595,17 @@ function renderAll(): void {
   renderNav();
   renderMobScenes();
   renderMainHead();
+  renderViewToggle();
   renderContent();
+}
+
+/** 视图页签态（issue 355）：list/calendar 两钮 is-on 随 M.view */
+function renderViewToggle(): void {
+  const wrap = M.overlay!.querySelector('[data-memo-viewtoggle]');
+  if (!wrap) return;
+  wrap.querySelectorAll<HTMLElement>('[data-memo-view]').forEach((b) => {
+    b.classList.toggle('is-on', b.dataset.memoView === M.view);
+  });
 }
 
 /** 主头行（原型 p1-main-head）：当前场景标题 + “· N 项 · M 未完成” + 右侧新建按钮 */
@@ -644,54 +695,20 @@ function metaTags(it: MemoItem): string {
 function renderContent(): void {
   const content = M.overlay!.querySelector('[data-memo-content]') as HTMLElement;
   if (!content) return;
-  const items = getVisibleItems();
-  if (items.length === 0) {
-    // 空态三件套（组件库 .bz-empty：图标 + 一句话 + 「新建备忘录」动作按钮）
-    content.innerHTML = '';
-    content.appendChild(uiEmpty({
-      icon: ICON.empty,
-      title: M.search ? '没有匹配的备忘录' : '这里还没有备忘录',
-      desc: M.search ? '试试其他关键词，或清除搜索' : '随手记一条，别让它溜走',
-      actions: uiBtnRow([uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) })], { center: true }),
-    }));
+  if (M.view === 'calendar') {
+    renderCalendar(content);
     return;
   }
-  // 分组：到期优先（overdue/today）→ 其他 → 已完成（折叠条）
-  const active = items.filter((i) => !i.completed);
-  const done = items.filter((i) => i.completed);
-  const urgent = active.filter((i) => dueRank(i) <= 1);
-  const normal = active.filter((i) => dueRank(i) > 1);
+  renderListContent(content);
+}
 
-  const cardHtml = (it: MemoItem) => renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', it.recur ? recurLabel(it.recur) : '', checkProgress(it));
+/** 卡片 markup（列表 / 月历当日清单共用：recur/进度文案单源注入） */
+function cardHtmlOf(it: MemoItem): string {
+  return renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', it.recur ? recurLabel(it.recur) : '', checkProgress(it));
+}
 
-  const sections: string[] = [];
-  if (urgent.length) {
-    sections.push(sectionLabelHtml('到期优先', urgent.length));
-    sections.push(...urgent.map((it) => cardHtml(it)));
-  }
-  if (normal.length) {
-    sections.push(sectionLabelHtml('其他', normal.length));
-    sections.push(...normal.map((it) => cardHtml(it)));
-  }
-  if (done.length) {
-    const open = M.showDone;
-    // 时间界（设置 memoDoneWindow）：展开默认只列时间窗内完成的，更早的收进尾部「更早 N 条」（点开放全；全部=不收）
-    const win = doneWindowDays();
-    const cutoff = win === null ? null : moment().subtract(win, 'days').format('YYYY-MM-DD HH:mm:ss');
-    const recent = cutoff === null ? done : done.filter((i) => (i.completed as string) >= cutoff);
-    const earlier = done.length - recent.length;
-    const listed = !open || M.showEarlierDone ? done : recent;
-    sections.push(doneBarHtml(open, done.length));
-    if (open) {
-      sections.push(...listed.map((it) => cardHtml(it)));
-      if (earlier > 0 && !M.showEarlierDone) {
-        sections.push(doneMoreHtml(earlier));
-      }
-    }
-  }
-  content.innerHTML = sections.join('');
-  mountIcons(content);
-
+/** 卡片行为接线（列表 / 月历当日清单共用）：链接打开/位置跳转/右键菜单与长按抽屉 */
+function wireCards(content: HTMLElement): void {
   // 链接点击：打开关联内容（内部笔记 / 外部 URL），不走浏览器默认
   content.querySelectorAll('[data-memo-openitem]').forEach((el) => {
     el.addEventListener('click', (e) => {
@@ -721,6 +738,106 @@ function renderContent(): void {
       sheetHead: buildSheetHead(it),
     });
   });
+}
+
+function renderListContent(content: HTMLElement): void {
+  const items = getVisibleItems();
+  if (items.length === 0) {
+    // 空态三件套（组件库 .bz-empty：图标 + 一句话 + 「新建备忘录」动作按钮）
+    content.innerHTML = '';
+    content.appendChild(uiEmpty({
+      icon: ICON.empty,
+      title: M.search ? '没有匹配的备忘录' : '这里还没有备忘录',
+      desc: M.search ? '试试其他关键词，或清除搜索' : '随手记一条，别让它溜走',
+      actions: uiBtnRow([uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) })], { center: true }),
+    }));
+    return;
+  }
+  // 分组：到期优先（overdue/today）→ 其他 → 已完成（折叠条）
+  const active = items.filter((i) => !i.completed);
+  const done = items.filter((i) => i.completed);
+  const urgent = active.filter((i) => dueRank(i) <= 1);
+  const normal = active.filter((i) => dueRank(i) > 1);
+
+  const sections: string[] = [];
+  if (urgent.length) {
+    sections.push(sectionLabelHtml('到期优先', urgent.length));
+    sections.push(...urgent.map((it) => cardHtmlOf(it)));
+  }
+  if (normal.length) {
+    sections.push(sectionLabelHtml('其他', normal.length));
+    sections.push(...normal.map((it) => cardHtmlOf(it)));
+  }
+  if (done.length) {
+    const open = M.showDone;
+    // 时间界（设置 memoDoneWindow）：展开默认只列时间窗内完成的，更早的收进尾部「更早 N 条」（点开放全；全部=不收）
+    const win = doneWindowDays();
+    const cutoff = win === null ? null : moment().subtract(win, 'days').format('YYYY-MM-DD HH:mm:ss');
+    const recent = cutoff === null ? done : done.filter((i) => (i.completed as string) >= cutoff);
+    const earlier = done.length - recent.length;
+    const listed = !open || M.showEarlierDone ? done : recent;
+    sections.push(doneBarHtml(open, done.length));
+    if (open) {
+      sections.push(...listed.map((it) => cardHtmlOf(it)));
+      if (earlier > 0 && !M.showEarlierDone) {
+        sections.push(doneMoreHtml(earlier));
+      }
+    }
+  }
+  content.innerHTML = sections.join('');
+  mountIcons(content);
+  wireCards(content);
+}
+
+/**
+ * 月历视图（issue 355）：当前月网格 + 到期事件 chip（overdue/today/future 状态色沿用现有口径）
+ * + 点日查看当日清单（含当日到期的已完成条目，卡片淡显）。
+ * 场景筛选与搜索照常生效（getVisibleItems 口径）；菜单顺延走卡片动作「延后 1/3 天」。
+ */
+function renderCalendar(content: HTMLElement): void {
+  let monthMoment = moment(`${M.calMonth}-01`, 'YYYY-MM-DD', true);
+  if (!monthMoment.isValid()) {
+    // 防御：非法月份（手改内存态等）回当月
+    M.calMonth = moment().format('YYYY-MM');
+    M.calSelected = null;
+    monthMoment = moment(`${M.calMonth}-01`, 'YYYY-MM-DD', true);
+  }
+  const visible = getVisibleItems();
+  const undone = visible.filter((i) => !i.completed && i.due);
+  const byDay = new Map<string, MemoItem[]>();
+  for (const it of undone) {
+    const key = it.due!.slice(0, 10);
+    const bucket = byDay.get(key);
+    if (bucket) bucket.push(it);
+    else byDay.set(key, [it]);
+  }
+  const today = localDayKey();
+  const cells: CalCell[] = [];
+  const lead = (monthMoment.day() + 6) % 7; // 周一首列的月首补位
+  for (let i = 0; i < lead; i++) cells.push({ day: 0, blank: true, chips: [] });
+  const daysInMonth = monthMoment.daysInMonth();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${M.calMonth}-${String(d).padStart(2, '0')}`;
+    const list = byDay.get(key) || [];
+    // 每格最多 3 条 chip，多出折「还有 N 条」（格子本身可点看全量）
+    const chips: CalChip[] = list.slice(0, 3).map((it) => {
+      const st = getDueStatus(it.due!);
+      return { id: it.id, title: it.title, cls: st === 'overdue' ? 'is-overdue' : st === 'today' ? 'is-today' : 'is-future' };
+    });
+    if (list.length > 3) chips.push({ id: '', title: `还有 ${list.length - 3} 条`, cls: 'is-more' });
+    cells.push({ day: d, today: key === today, selected: M.calSelected === key, chips });
+  }
+  const sections: string[] = [calHeadHtml(monthMoment.format('YYYY年M月')), calGridHtml(cells)];
+  // 当日清单：点日期展开（完成态条目同列，卡片淡显划线）
+  if (M.calSelected) {
+    const dayItems = visible.filter((i) => (i.due || '').slice(0, 10) === M.calSelected);
+    const label = `${moment(M.calSelected).format('M月D日')} · ${dayItems.length} 项`;
+    const cards = dayItems.length ? dayItems.map((it) => cardHtmlOf(it)).join('') : '<div class="bz-memo-cal-noday">这一天没有备忘录</div>';
+    sections.push(`<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, dayItems.length)}${cards}</div>`);
+  }
+  content.innerHTML = sections.join('');
+  mountIcons(content);
+  wireCards(content);
 }
 
 /** 移动抽屉顶部信息说明（与列表卡同源 markup——勾选圈走 checkHtml 单源（ADR-0104），
@@ -894,6 +1011,23 @@ async function postponeItem(id: string, days: number): Promise<void> {
   await refresh();
 }
 
+/** 移到指定日期（issue 355 月历改期）：保留原时刻只换日期，日历上把事项直接挪到别的日子 */
+async function moveToDay(id: string, day: string): Promise<void> {
+  const it = M.items.find((i) => i.id === id);
+  if (!it || !it.due) return;
+  const time = it.due.replace('T', ' ').slice(11) || '09:00';
+  const next = `${day} ${time}`;
+  try {
+    await MemoData.updateItem(id, { due: next });
+    emitDomainEvent('memo', { kind: 'postponed', title: it.title, due: next });
+    notice(`已移到 ${moment(day).format('MM/DD')}`, 'success');
+  } catch (e) {
+    notifySaveError(e, '改期备忘录');
+    console.error(e);
+  }
+  await refresh();
+}
+
 async function togglePrio(id: string): Promise<void> {
   const it = M.items.find((i) => i.id === id);
   if (!it) return;
@@ -987,6 +1121,15 @@ function buildCardActions(it: MemoItem): ItemAction[] {
     };
     actions.push({ icon: 'clock', label: '延后 1 天', title: '延后 1 天', sub: `→ ${postponeSub(1)}`, onClick: async () => { await postponeItem(it.id, 1); } });
     actions.push({ icon: 'clock', label: '延后 3 天', title: '延后 3 天', sub: `→ ${postponeSub(3)}`, onClick: async () => { await postponeItem(it.id, 3); } });
+    // 月历选中日（issue 355）：≠ 到期日时给「移到选中日期」——先在月历点目标日，
+    // 再（切回列表或在该日清单之外）对任意事项右键/长按直接改期
+    if (M.calSelected && it.due.slice(0, 10) !== M.calSelected) {
+      actions.push({
+        icon: 'calendar', label: '移到选中日期', title: '移到月历选中的日期',
+        sub: `→ ${moment(M.calSelected).format('MM-DD')}`,
+        onClick: async () => { await moveToDay(it.id, M.calSelected!); },
+      });
+    }
   }
   // 周期重复（issue 353）：可随时停止——recur 清空后完成不再生成下一期
   if (it.recur && !it.completed) {

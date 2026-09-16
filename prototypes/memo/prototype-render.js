@@ -1,4 +1,4 @@
-/* 源指纹 03af07a8307a449a · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e0f8367fdc9129a3 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {
@@ -23,9 +23,12 @@ var BZR_memo = (() => {
   // src/memo/render.ts
   var render_exports = {};
   __export(render_exports, {
+    CAL_WEEKDAYS: () => CAL_WEEKDAYS,
     MEMO_ICONS: () => MEMO_ICONS,
     SCENE_DOTS: () => SCENE_DOTS,
     SCENE_PSEUDO_ICONS: () => SCENE_PSEUDO_ICONS,
+    calGridHtml: () => calGridHtml,
+    calHeadHtml: () => calHeadHtml,
     cardHtml: () => cardHtml,
     checkHtml: () => checkHtml,
     checklistHtml: () => checklistHtml,
@@ -76,6 +79,7 @@ var BZR_memo = (() => {
     calendar: "calendar",
     recur: "repeat",
     clist: "list-checks",
+    list: "list",
     doneFold: "chevron-down",
     sceneAll: "layers",
     sceneToday: "sun"
@@ -161,6 +165,10 @@ var BZR_memo = (() => {
           <div class="bz-toolrow">
             <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"></div>
             <div class="bz-memo-sort" data-memo-sort></div>
+            <div class="bz-memo-viewtoggle" data-memo-viewtoggle role="tablist" aria-label="视图切换">
+              <button class="bz-memo-viewbtn is-on" data-memo-view="list" title="列表视图" aria-label="列表视图">${iconSpan(MEMO_ICONS.list)}</button>
+              <button class="bz-memo-viewbtn" data-memo-view="calendar" title="月历视图" aria-label="月历视图">${iconSpan(MEMO_ICONS.calendar)}</button>
+            </div>
           </div>
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
           <div class="bz-memo-content" data-memo-content></div>
@@ -247,6 +255,29 @@ var BZR_memo = (() => {
   }
   function doneMoreHtml(n) {
     return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
+  }
+  var CAL_WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
+  function calHeadHtml(monthLabel) {
+    return `<div class="bz-memo-cal-head">
+      <button class="bz-icon-btn" data-memo-cal-prev title="上个月">${iconSpan("chevron-left")}</button>
+      <div class="bz-memo-cal-title">${escapeHtml(monthLabel)}</div>
+      <button class="bz-icon-btn" data-memo-cal-next title="下个月">${iconSpan("chevron-right")}</button>
+      <button class="bz-btn bz-btn--sm bz-memo-cal-today" data-memo-cal-today>回到今天</button>
+    </div>`;
+  }
+  function calGridHtml(cells) {
+    const wds = CAL_WEEKDAYS.map((w) => `<div class="bz-memo-cal-wd">${escapeHtml(w)}</div>`).join("");
+    const grid = cells.map((c) => {
+      if (c.blank) return `<div class="bz-memo-cal-cell is-blank"></div>`;
+      const chips = c.chips.map(
+        (ch) => ch.id ? `<div class="bz-memo-cal-chip ${ch.cls}" data-memo-cal-item="${escapeHtml(ch.id)}" title="${escapeHtml(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml(ch.title)}</span></div>` : `<div class="bz-memo-cal-chip ${ch.cls}" title="${escapeHtml(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml(ch.title)}</span></div>`
+      ).join("");
+      return `<div class="bz-memo-cal-cell${c.today ? " is-today" : ""}${c.selected ? " is-selected" : ""}" data-memo-cal-day="${c.day}">
+        <div class="bz-memo-cal-day">${c.day}</div>
+        <div class="bz-memo-cal-chips">${chips}</div>
+      </div>`;
+    }).join("");
+    return `<div class="bz-memo-cal-grid">${wds}${grid}</div>`;
   }
   return __toCommonJS(render_exports);
 })();
