@@ -1,4 +1,4 @@
-/* 源指纹 1591dd96a473baee · 仓内输入 224 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f6658751bbbee892 · 仓内输入 224 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -5462,6 +5462,9 @@ var BZW_memo = (() => {
         search: "",
         showDone: false,
         showEarlierDone: false,
+        view: "list",
+        calMonth: "",
+        calSelected: null,
         pinnedNewId: null,
         completeTimers: /* @__PURE__ */ new Map(),
         renderFn: null
@@ -7980,6 +7983,10 @@ var BZW_memo = (() => {
           <div class="bz-toolrow">
             <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"></div>
             <div class="bz-memo-sort" data-memo-sort></div>
+            <div class="bz-memo-viewtoggle" data-memo-viewtoggle role="tablist" aria-label="视图切换">
+              <button class="bz-memo-viewbtn is-on" data-memo-view="list" title="列表视图" aria-label="列表视图">${iconSpan(MEMO_ICONS.list)}</button>
+              <button class="bz-memo-viewbtn" data-memo-view="calendar" title="月历视图" aria-label="月历视图">${iconSpan(MEMO_ICONS.calendar)}</button>
+            </div>
           </div>
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
           <div class="bz-memo-content" data-memo-content></div>
@@ -8067,7 +8074,29 @@ var BZW_memo = (() => {
   function doneMoreHtml(n) {
     return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
   }
-  var MEMO_ICONS, SCENE_DOTS, SCENE_PSEUDO_ICONS, LEADING_EMOJI_RE;
+  function calHeadHtml(monthLabel2) {
+    return `<div class="bz-memo-cal-head">
+      <button class="bz-icon-btn" data-memo-cal-prev title="上个月">${iconSpan("chevron-left")}</button>
+      <div class="bz-memo-cal-title">${escapeHtml2(monthLabel2)}</div>
+      <button class="bz-icon-btn" data-memo-cal-next title="下个月">${iconSpan("chevron-right")}</button>
+      <button class="bz-btn bz-btn--sm bz-memo-cal-today" data-memo-cal-today>回到今天</button>
+    </div>`;
+  }
+  function calGridHtml(cells) {
+    const wds = CAL_WEEKDAYS.map((w) => `<div class="bz-memo-cal-wd">${escapeHtml2(w)}</div>`).join("");
+    const grid = cells.map((c) => {
+      if (c.blank) return `<div class="bz-memo-cal-cell is-blank"></div>`;
+      const chips = c.chips.map(
+        (ch) => ch.id ? `<div class="bz-memo-cal-chip ${ch.cls}" data-memo-cal-item="${escapeHtml2(ch.id)}" title="${escapeHtml2(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml2(ch.title)}</span></div>` : `<div class="bz-memo-cal-chip ${ch.cls}" title="${escapeHtml2(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml2(ch.title)}</span></div>`
+      ).join("");
+      return `<div class="bz-memo-cal-cell${c.today ? " is-today" : ""}${c.selected ? " is-selected" : ""}" data-memo-cal-day="${c.day}">
+        <div class="bz-memo-cal-day">${c.day}</div>
+        <div class="bz-memo-cal-chips">${chips}</div>
+      </div>`;
+    }).join("");
+    return `<div class="bz-memo-cal-grid">${wds}${grid}</div>`;
+  }
+  var MEMO_ICONS, SCENE_DOTS, SCENE_PSEUDO_ICONS, LEADING_EMOJI_RE, CAL_WEEKDAYS;
   var init_render = __esm({
     "src/memo/render.ts"() {
       init_str();
@@ -8091,6 +8120,7 @@ var BZW_memo = (() => {
         calendar: "calendar",
         recur: "repeat",
         clist: "list-checks",
+        list: "list",
         doneFold: "chevron-down",
         sceneAll: "layers",
         sceneToday: "sun"
@@ -8109,6 +8139,7 @@ var BZW_memo = (() => {
         重要: { icon: MEMO_ICONS.star, cls: "bz-ic--warning" }
       };
       LEADING_EMOJI_RE = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)\s*/u;
+      CAL_WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
     }
   });
 
@@ -47645,6 +47676,9 @@ ${n.content.slice(0, 2e3)}
     M.showDone = tryGetSettings().memoShowArchivedByDefault === true;
     M.activeScene = (opts == null ? void 0 : opts.notePath) ? "全部" : resolveOpenScene();
     M.showEarlierDone = false;
+    M.view = "list";
+    M.calMonth = (0, import_moment6.default)().format("YYYY-MM");
+    M.calSelected = null;
     M.pinnedNewId = null;
     M.search = "";
     const overlay2 = document.createElement("div");
@@ -47723,6 +47757,13 @@ ${n.content.slice(0, 2e3)}
         renderAll4();
         return;
       }
+      const viewBtn = t.closest("[data-memo-view]");
+      if (viewBtn) {
+        const v = viewBtn.dataset.memoView;
+        if (v === "list" || v === "calendar") M.view = v;
+        renderAll4();
+        return;
+      }
       const addScene = t.closest("[data-memo-addscene]");
       if (addScene) {
         openAddSceneDialog();
@@ -47754,6 +47795,34 @@ ${n.content.slice(0, 2e3)}
     const content = overlay2.querySelector("[data-memo-content]");
     content.addEventListener("click", (e) => {
       var _a2;
+      const calNav = e.target.closest("[data-memo-cal-prev],[data-memo-cal-next],[data-memo-cal-today]");
+      if (calNav) {
+        const cur = (0, import_moment6.default)(`${M.calMonth}-01`, "YYYY-MM-DD");
+        if (calNav.hasAttribute("data-memo-cal-prev")) M.calMonth = cur.subtract(1, "month").format("YYYY-MM");
+        else if (calNav.hasAttribute("data-memo-cal-next")) M.calMonth = cur.add(1, "month").format("YYYY-MM");
+        else M.calMonth = (0, import_moment6.default)().format("YYYY-MM");
+        M.calSelected = null;
+        renderAll4();
+        return;
+      }
+      const calChip = e.target.closest("[data-memo-cal-item]");
+      if (calChip) {
+        const it2 = M.items.find((i) => i.id === calChip.dataset.memoCalItem);
+        if (it2) {
+          e.stopPropagation();
+          openEditor(it2);
+        }
+        return;
+      }
+      const dayCell = e.target.closest("[data-memo-cal-day]");
+      if (dayCell) {
+        const d = Number(dayCell.dataset.memoCalDay);
+        if (Number.isInteger(d)) {
+          M.calSelected = `${M.calMonth}-${String(d).padStart(2, "0")}`;
+          renderAll4();
+        }
+        return;
+      }
       const clRow = e.target.closest("[data-memo-cl]");
       if (clRow) {
         const card2 = clRow.closest(".bz-memo-card");
@@ -47842,7 +47911,15 @@ ${n.content.slice(0, 2e3)}
     renderNav();
     renderMobScenes();
     renderMainHead();
+    renderViewToggle();
     renderContent();
+  }
+  function renderViewToggle() {
+    const wrap = M.overlay.querySelector("[data-memo-viewtoggle]");
+    if (!wrap) return;
+    wrap.querySelectorAll("[data-memo-view]").forEach((b) => {
+      b.classList.toggle("is-on", b.dataset.memoView === M.view);
+    });
   }
   function renderMainHead() {
     const overlay2 = M.overlay;
@@ -47907,48 +47984,16 @@ ${n.content.slice(0, 2e3)}
   function renderContent() {
     const content = M.overlay.querySelector("[data-memo-content]");
     if (!content) return;
-    const items = getVisibleItems();
-    if (items.length === 0) {
-      content.innerHTML = "";
-      content.appendChild(uiEmpty({
-        icon: MEMO_ICONS.empty,
-        title: M.search ? "没有匹配的备忘录" : "这里还没有备忘录",
-        desc: M.search ? "试试其他关键词，或清除搜索" : "随手记一条，别让它溜走",
-        actions: uiBtnRow([uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })], { center: true })
-      }));
+    if (M.view === "calendar") {
+      renderCalendar(content);
       return;
     }
-    const active2 = items.filter((i) => !i.completed);
-    const done = items.filter((i) => i.completed);
-    const urgent = active2.filter((i) => dueRank(i) <= 1);
-    const normal = active2.filter((i) => dueRank(i) > 1);
-    const cardHtml4 = (it) => cardHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", it.recur ? recurLabel(it.recur) : "", checkProgress(it));
-    const sections = [];
-    if (urgent.length) {
-      sections.push(sectionLabelHtml("到期优先", urgent.length));
-      sections.push(...urgent.map((it) => cardHtml4(it)));
-    }
-    if (normal.length) {
-      sections.push(sectionLabelHtml("其他", normal.length));
-      sections.push(...normal.map((it) => cardHtml4(it)));
-    }
-    if (done.length) {
-      const open = M.showDone;
-      const win = doneWindowDays();
-      const cutoff = win === null ? null : (0, import_moment6.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
-      const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
-      const earlier = done.length - recent2.length;
-      const listed = !open || M.showEarlierDone ? done : recent2;
-      sections.push(doneBarHtml(open, done.length));
-      if (open) {
-        sections.push(...listed.map((it) => cardHtml4(it)));
-        if (earlier > 0 && !M.showEarlierDone) {
-          sections.push(doneMoreHtml(earlier));
-        }
-      }
-    }
-    content.innerHTML = sections.join("");
-    mountIcons(content);
+    renderListContent(content);
+  }
+  function cardHtmlOf(it) {
+    return cardHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", it.recur ? recurLabel(it.recur) : "", checkProgress(it));
+  }
+  function wireCards(content) {
     content.querySelectorAll("[data-memo-openitem]").forEach((el) => {
       el.addEventListener("click", (e) => {
         e.preventDefault();
@@ -47975,6 +48020,92 @@ ${n.content.slice(0, 2e3)}
         sheetHead: buildSheetHead(it)
       });
     });
+  }
+  function renderListContent(content) {
+    const items = getVisibleItems();
+    if (items.length === 0) {
+      content.innerHTML = "";
+      content.appendChild(uiEmpty({
+        icon: MEMO_ICONS.empty,
+        title: M.search ? "没有匹配的备忘录" : "这里还没有备忘录",
+        desc: M.search ? "试试其他关键词，或清除搜索" : "随手记一条，别让它溜走",
+        actions: uiBtnRow([uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })], { center: true })
+      }));
+      return;
+    }
+    const active2 = items.filter((i) => !i.completed);
+    const done = items.filter((i) => i.completed);
+    const urgent = active2.filter((i) => dueRank(i) <= 1);
+    const normal = active2.filter((i) => dueRank(i) > 1);
+    const sections = [];
+    if (urgent.length) {
+      sections.push(sectionLabelHtml("到期优先", urgent.length));
+      sections.push(...urgent.map((it) => cardHtmlOf(it)));
+    }
+    if (normal.length) {
+      sections.push(sectionLabelHtml("其他", normal.length));
+      sections.push(...normal.map((it) => cardHtmlOf(it)));
+    }
+    if (done.length) {
+      const open = M.showDone;
+      const win = doneWindowDays();
+      const cutoff = win === null ? null : (0, import_moment6.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
+      const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
+      const earlier = done.length - recent2.length;
+      const listed = !open || M.showEarlierDone ? done : recent2;
+      sections.push(doneBarHtml(open, done.length));
+      if (open) {
+        sections.push(...listed.map((it) => cardHtmlOf(it)));
+        if (earlier > 0 && !M.showEarlierDone) {
+          sections.push(doneMoreHtml(earlier));
+        }
+      }
+    }
+    content.innerHTML = sections.join("");
+    mountIcons(content);
+    wireCards(content);
+  }
+  function renderCalendar(content) {
+    let monthMoment = (0, import_moment6.default)(`${M.calMonth}-01`, "YYYY-MM-DD", true);
+    if (!monthMoment.isValid()) {
+      M.calMonth = (0, import_moment6.default)().format("YYYY-MM");
+      M.calSelected = null;
+      monthMoment = (0, import_moment6.default)(`${M.calMonth}-01`, "YYYY-MM-DD", true);
+    }
+    const visible = getVisibleItems();
+    const undone = visible.filter((i) => !i.completed && i.due);
+    const byDay = /* @__PURE__ */ new Map();
+    for (const it of undone) {
+      const key = it.due.slice(0, 10);
+      const bucket = byDay.get(key);
+      if (bucket) bucket.push(it);
+      else byDay.set(key, [it]);
+    }
+    const today = localDayKey();
+    const cells = [];
+    const lead = (monthMoment.day() + 6) % 7;
+    for (let i = 0; i < lead; i++) cells.push({ day: 0, blank: true, chips: [] });
+    const daysInMonth = monthMoment.daysInMonth();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = `${M.calMonth}-${String(d).padStart(2, "0")}`;
+      const list = byDay.get(key) || [];
+      const chips = list.slice(0, 3).map((it) => {
+        const st = getDueStatus(it.due);
+        return { id: it.id, title: it.title, cls: st === "overdue" ? "is-overdue" : st === "today" ? "is-today" : "is-future" };
+      });
+      if (list.length > 3) chips.push({ id: "", title: `还有 ${list.length - 3} 条`, cls: "is-more" });
+      cells.push({ day: d, today: key === today, selected: M.calSelected === key, chips });
+    }
+    const sections = [calHeadHtml(monthMoment.format("YYYY年M月")), calGridHtml(cells)];
+    if (M.calSelected) {
+      const dayItems = visible.filter((i) => (i.due || "").slice(0, 10) === M.calSelected);
+      const label = `${(0, import_moment6.default)(M.calSelected).format("M月D日")} · ${dayItems.length} 项`;
+      const cards = dayItems.length ? dayItems.map((it) => cardHtmlOf(it)).join("") : '<div class="bz-memo-cal-noday">这一天没有备忘录</div>';
+      sections.push(`<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, dayItems.length)}${cards}</div>`);
+    }
+    content.innerHTML = sections.join("");
+    mountIcons(content);
+    wireCards(content);
   }
   function buildSheetHead(it) {
     var _a2;
@@ -48123,6 +48254,21 @@ ${n.content.slice(0, 2e3)}
     }
     await refresh();
   }
+  async function moveToDay(id, day) {
+    const it = M.items.find((i) => i.id === id);
+    if (!it || !it.due) return;
+    const time = it.due.replace("T", " ").slice(11) || "09:00";
+    const next = `${day} ${time}`;
+    try {
+      await MemoData.updateItem(id, { due: next });
+      emitDomainEvent("memo", { kind: "postponed", title: it.title, due: next });
+      notice(`已移到 ${(0, import_moment6.default)(day).format("MM/DD")}`, "success");
+    } catch (e) {
+      notifySaveError(e, "改期备忘录");
+      console.error(e);
+    }
+    await refresh();
+  }
   async function togglePrio(id) {
     const it = M.items.find((i) => i.id === id);
     if (!it) return;
@@ -48224,6 +48370,17 @@ ${n.content.slice(0, 2e3)}
       actions.push({ icon: "clock", label: "延后 3 天", title: "延后 3 天", sub: `→ ${postponeSub(3)}`, onClick: async () => {
         await postponeItem(it.id, 3);
       } });
+      if (M.calSelected && it.due.slice(0, 10) !== M.calSelected) {
+        actions.push({
+          icon: "calendar",
+          label: "移到选中日期",
+          title: "移到月历选中的日期",
+          sub: `→ ${(0, import_moment6.default)(M.calSelected).format("MM-DD")}`,
+          onClick: async () => {
+            await moveToDay(it.id, M.calSelected);
+          }
+        });
+      }
     }
     if (it.recur && !it.completed) {
       actions.push({
