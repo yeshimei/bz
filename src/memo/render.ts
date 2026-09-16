@@ -26,6 +26,7 @@ export const MEMO_ICONS = {
 	overdue: 'circle-alert',
 	clock: 'clock',
 	calendar: 'calendar',
+	recur: 'repeat',
 	doneFold: 'chevron-down',
 	sceneAll: 'layers',
 	sceneToday: 'sun',
@@ -160,8 +161,9 @@ export function panelShellHtml(): string {
 /** meta 行 due 注入包（状态/文案由调用方按当下时刻算好） */
 export type MetaDue = { status: 'overdue' | 'today' | 'future'; text: string } | null;
 
-/** 卡片 meta 行（顺序对齐 memo buildMeta：课程→脚本→链接→位置→场景→截止→时间） */
-export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string): string {
+/** 卡片 meta 行（顺序对齐 memo buildMeta：课程→脚本→链接→位置→场景→重复→截止→时间；
+ *  due/recur 文案由调用方按当下时刻算好注入——纯层不算时间） */
+export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string, recurText = ''): string {
 	const tags: string[] = [];
 	// 1. 课程（公开课）
 	if (it.scene === '公开课' && it.courseName) {
@@ -188,6 +190,10 @@ export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string): strin
 	// 5. 场景（重要红底）
 	const imp = it.priority === 'important' ? ' bz-memo-tag-important' : '';
 	tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${esc(it.scene)}</span>`);
+	// 5.5 周期重复（issue 353：recur 条目可视标记，文案调用方注入）
+	if (recurText) {
+		tags.push(`<span class="bz-memo-tag bz-memo-tag-recur" title="周期重复：完成后自动生成下一期">${iconSpan(MEMO_ICONS.recur)} ${esc(recurText)}</span>`);
+	}
 	// 6. 截止（未完成；due 包由调用方注入）
 	if (due) {
 		tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${esc(due.text)}</span>`);
@@ -206,7 +212,7 @@ export function checkHtml(it: MemoItem): string {
 }
 
 /** 条目卡（勾选/标题/meta；标题带 linkedNote/url 时为可点链接，点击行为接线在 ui.ts） */
-export function cardHtml(it: MemoItem, due: MetaDue, relTime: string): string {
+export function cardHtml(it: MemoItem, due: MetaDue, relTime: string, recurText = ''): string {
 	const titleCls = it.completed ? ' bz-memo-done' : '';
 	const clickable = !!(it.linkedNote || it.url);
 	const titleHtml = clickable
@@ -216,7 +222,7 @@ export function cardHtml(it: MemoItem, due: MetaDue, relTime: string): string {
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime)}</div>
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime, recurText)}</div>
       </div>
     </div>`;
 }

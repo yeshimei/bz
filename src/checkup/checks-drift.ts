@@ -10,10 +10,11 @@ import type { App } from 'obsidian';
 import type { CheckIssue, CheckOpts, CheckResult, CheckSection } from './types';
 import { readRawJson, jsonScanTargets } from './files';
 
-/** 备忘录条目约定字段（memo/data.ts normalizeItem 同款 14 字段） */
+/** 备忘录条目约定字段（memo/data.ts normalizeItem 同款；issue 353 起叠加可选字段 recur） */
 export const MEMO_ITEM_FIELDS = [
   'id', 'title', 'scene', 'priority', 'created', 'completed', 'due',
   'notePath', 'notePosition', 'scriptName', 'courseName', 'coursePath', 'linkedNote', 'url',
+  'recur',
 ];
 
 /** 收藏条目约定字段（favorites/types.ts 13 字段 + ADR-0074 archived/archivedAt） */
