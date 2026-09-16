@@ -78,7 +78,7 @@ describe('AIService', () => {
     const body = JSON.parse(opts.body);
     expect(body.model).toBe('deepseek-v4-flash');
     expect(body.messages).toEqual([{ role: 'user', content: '请回答' }]);
-    expect(body.max_tokens).toBe(8192); // deepseek 注册表 defaultMaxTokens（ticket 172 默认最大值）
+    expect(body.max_tokens).toBe(393216); // deepseek 兜底默认 = 端点在售模型最大档（issue 342/ADR-0151）
     expect(body.stream).toBe(true);
   });
 
@@ -260,12 +260,12 @@ describe('AIService', () => {
       body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
     });
     const ai = new AIService({}, 'deepseek-v4-flash');
-    // deepseek 注册表默认 8192；调用方传 200 一律忽略
+    // deepseek 兜底默认 393216（issue 342 注册表最大档）；调用方传 200 一律忽略
     await ai.prompt('q', 'm', { modelOptions: { max_tokens: 200 } });
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.max_tokens).toBe(8192);
+    expect(body.max_tokens).toBe(393216);
 
-    // per-provider 覆盖生效：设置「最大输出 token」压过注册表默认
+    // per-provider 覆盖生效：设置「最大输出 token」压过默认档
     setAISettingsProvider(() => ({
       ...DEFAULT_SETTINGS,
       aiMaxTokensOverrides: { deepseek: 16384 },
@@ -300,7 +300,43 @@ describe('AIService', () => {
     expect(body.messages).toHaveLength(4);
     expect(body.messages[0]).toEqual({ role: 'system', content: '你是小橘' });
     expect(body.messages[3]).toEqual({ role: 'user', content: '继续' });
-    expect(body.max_tokens).toBe(8192);
+    expect(body.max_tokens).toBe(393216);
+  });
+
+  it('默认档位按「当前模型名」解析（issue 342/ADR-0151）：命中取官方最大档，未收录回落服务商默认', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
+    });
+    const ai = new AIService({}, 'deepseek-v4-flash');
+    // 命中：openai 服务商下挂 deepseek-flash（聚合平台常见）→ 取该模型官方档 384K，
+    // 而非 openai 注册表默认 16K（证明查表优先于注册表默认）
+    setAISettingsProvider(() => ({
+      ...DEFAULT_SETTINGS,
+      aiProvider: 'openai',
+      openaiApiKey: 'sk-openai-test',
+      aiModelOverrides: { openai: 'deepseek-flash' },
+    }));
+    resetAIProviderCache();
+    await ai.prompt('q');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).max_tokens).toBe(393216);
+
+    // 未收录：回落该服务商注册表默认，不猜大数（防填超真实上限被服务端拒绝）
+    setAISettingsProvider(() => ({
+      ...DEFAULT_SETTINGS,
+      aiProvider: 'openai',
+      openaiApiKey: 'sk-openai-test',
+      aiModelOverrides: { openai: 'some-unknown-model' },
+    }));
+    resetAIProviderCache();
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
+    });
+    await ai.prompt('q2');
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).max_tokens).toBe(16384);
   });
 
   it('fallback 也失败 → 抛出组合错误', async () => {    fetchMock.mockRejectedValue(new Error('fetch 崩'));
@@ -489,7 +525,7 @@ describe('createAI', () => {
     resetAIProviderCache();
   });
 
-  it('工厂创建实例（defaultMaxTokens 8192 生效）', async () => {
+  it('工厂创建实例（默认档位生效：deepseek 兜底 393216）', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -500,7 +536,7 @@ describe('createAI', () => {
     const ai = createAI({}, 'deepseek-v4-flash');
     await ai.prompt('q');
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.max_tokens).toBe(8192);
+    expect(body.max_tokens).toBe(393216);
     delete (global as any).fetch;
   });
 });

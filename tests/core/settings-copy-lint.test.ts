@@ -78,7 +78,7 @@ describe('全量 schema 文案 lint（注册表：LINT_TARGETS）', () => {
     const rows = schema.groups.flatMap((g) => g.rows) as Array<{ name: string; desc?: string }>;
     // 键名/行为不动，标题可改（ticket 100 ④）；ticket 170 新增自定义三行 + max token；
     // ticket 171 注册表扩展为全部提供商各一行密钥（标题取自注册表 apiKeyLabel）；
-    // ticket 172 per-provider 三行（模型名称/上下文窗口/最大输出 token）
+    // ticket 172 per-provider 行（模型名称/最大输出 token；「上下文窗口」行已删——issue 342 后续）
     const names = rows.map((r) => r.name);
     expect(names[0]).toBe('AI 服务商');
     expect(names).toContain('DeepSeek 密钥');
@@ -88,18 +88,19 @@ describe('全量 schema 文案 lint（注册表：LINT_TARGETS）', () => {
     expect(names).toContain('自定义 API 地址');
     expect(names).toContain('自定义 API 密钥');
     expect(names).toContain('模型名称');
-    expect(names).toContain('上下文窗口');
     expect(names).toContain('最大输出 token');
+    expect(names).not.toContain('上下文窗口');
     const deepseekRow = rows.find((r) => r.name === 'DeepSeek 密钥')!;
     const opencodeRow = rows.find((r) => r.name === 'OpenCode 密钥')!;
     const customEndpoint = rows.find((r) => r.name === '自定义 API 地址')!;
     const modelRow = rows.find((r) => r.name === '模型名称')!;
-    const ctxRow = rows.find((r) => r.name === '上下文窗口')!;
     expect(deepseekRow.desc).toBe('留空则自动回退读取外部配置密钥');
     expect(opencodeRow.desc).toBe('在订阅官网获取后填入这里');
     expect(customEndpoint.desc).toBe('OpenAI 兼容服务的完整接口地址');
     expect(modelRow.desc).toBe('留空用该服务商默认模型');
-    expect(ctxRow.desc).toBe('留空用该服务商默认窗口');
+    // issue 342/ADR-0151：未填覆盖时按当前模型查官方最大档
+    const maxTokensRow = rows.find((r) => r.name === '最大输出 token')!;
+    expect(maxTokensRow.desc).toBe('留空时取该模型官方上限');
     // 组索引随 AI 域组数浮动（ticket 172+），按行名查找替代硬索引
     const storageRow = schema.groups.flatMap((g) => g.rows).find((r) => (r as { name?: string }).name === '数据存储路径') as { name: string; desc?: string };
     expect(storageRow).toBeTruthy();

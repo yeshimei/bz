@@ -19,7 +19,7 @@ import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-ad
 import { renderSettingsInto } from './core/settings-schema';
 import { mainSettingsSchema } from './core/settings-main-schema';
 
-import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings } from './settings';
+import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys } from './settings';
 
 // 备忘录（memo 域，ADR-0092 旧备忘录域退役后 memo.json 唯一属主，ADR-0117 正名：UI/交互/写盘/引用同步归本域；
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
@@ -234,8 +234,10 @@ export default class BzPlugin extends Plugin {
     const memoKeysMigrated = migrateMemoSettingKeys(loaded);
     // ADR-0141 迁移：自动关联范围键退役（恒为三盒）+ 索引白名单里的三盒条目剔除
     const autoLinkMigrated = migrateAutoLinkSettings(loaded);
+    // issue 342 后续：「上下文窗口」设置行删除（模型固有属性、零消费点），aiContextOverrides 键退役
+    const retiredAIKeysMigrated = migrateRetiredAIKeys(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
-    if (memoKeysMigrated || autoLinkMigrated) {
+    if (memoKeysMigrated || autoLinkMigrated || retiredAIKeysMigrated) {
       void this.saveSettings().catch((e) => console.error('[bz] 设置键迁移落盘失败:', e));
     }
     setApp(this.app);

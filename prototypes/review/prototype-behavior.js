@@ -1,5 +1,5 @@
-/* 源指纹 2250500fca0ec963 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
+/* 源指纹 79ee37b3d21f57f3 · 仓内输入 59 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
   var __create = Object.create;
@@ -5654,6 +5654,53 @@ var BZW_review = (() => {
     }
   });
 
+  // src/core/model-limits.ts
+  function normalizeModelId(model) {
+    return String(model || "").trim().toLowerCase().split(":")[0].split("/").pop().trim();
+  }
+  function resolveModelLimits(model) {
+    const key = normalizeModelId(model || "");
+    if (!key) return null;
+    let best = null;
+    for (const entry of MODEL_LIMITS) {
+      for (const k of [entry.id, ...entry.aliases || []]) {
+        if (key === k) return { maxOutput: entry.maxOutput, contextWindow: entry.contextWindow };
+        if (key.includes(k) && (!best || k.length > best.len)) best = { entry, len: k.length };
+      }
+    }
+    return best ? { maxOutput: best.entry.maxOutput, contextWindow: best.entry.contextWindow } : null;
+  }
+  var MODEL_LIMITS;
+  var init_model_limits = __esm({
+    "src/core/model-limits.ts"() {
+      MODEL_LIMITS = [
+        // ---- DeepSeek 官方（2026-09-16 核对官方「模型 & 价格」页：上下文 1M / 最大输出 384K，在售模型同档）
+        {
+          id: "deepseek-flash",
+          aliases: ["deepseek-v4-flash", "deepseek-v4-flash-vision-exp", "deepseek-flash-latest", "deepseek-v4.1-flash"],
+          maxOutput: 393216,
+          contextWindow: 1048576
+        },
+        {
+          id: "deepseek-v4-pro",
+          aliases: ["deepseek-pro", "deepseek-pro-latest"],
+          maxOutput: 393216,
+          contextWindow: 1048576
+        },
+        // ---- 阿里云百炼 Qwen3.7 系（2026-09-16 核对官方帮助中心；qwen-plus / qwen-max 等短名指向当前主力版本）
+        { id: "qwen3.7-plus", aliases: ["qwen-plus"], maxOutput: 131072, contextWindow: 1e6 },
+        { id: "qwen3.7-max", aliases: ["qwen-max"], maxOutput: 65536, contextWindow: 1e6 },
+        { id: "qwen3.7-flash", aliases: ["qwen-flash", "qwen-turbo"], maxOutput: 16384, contextWindow: 1e6 },
+        // ---- 以下条目沿用注册表既有口径（未二次核对官方文档，数值与注册表默认一致，勿据此调大）
+        { id: "claude-sonnet-4-5", aliases: ["claude-sonnet-4.5"], maxOutput: 64e3, contextWindow: 2e5 },
+        { id: "gpt-4o-mini", maxOutput: 16384, contextWindow: 128e3 },
+        { id: "gemini-2.0-flash", maxOutput: 8192, contextWindow: 1048576 },
+        { id: "kimi-k2-0711-preview", aliases: ["kimi-k2"], maxOutput: 131072, contextWindow: 131072 },
+        { id: "glm-4-flash", maxOutput: 8192, contextWindow: 131072 }
+      ];
+    }
+  });
+
   // src/core/ai.ts
   function getQ3Settings() {
     return _settingsProvider ? _settingsProvider() : {};
@@ -5691,7 +5738,6 @@ var BZW_review = (() => {
         apiKey: override.apiKey,
         model: override.model || void 0,
         extraHeaders: override.extraHeaders || void 0,
-        contextWindow: override.contextWindow,
         defaultMaxTokens: override.defaultMaxTokens
       };
     }
@@ -5702,14 +5748,14 @@ var BZW_review = (() => {
       if (!endpoint || !s.aiCustomApiKey) {
         throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
       }
+      const customLimits = resolveModelLimits(s.aiCustomModel || "");
       return cachePut({
         id: "custom",
         endpoint,
         apiKey: s.aiCustomApiKey,
         model: s.aiCustomModel || void 0,
         extraHeaders: desc.extraHeaders,
-        contextWindow: desc.defaultContextWindow,
-        defaultMaxTokens: desc.defaultMaxTokens
+        defaultMaxTokens: ((_a = s.aiMaxTokensOverrides) == null ? void 0 : _a["custom"]) || (customLimits == null ? void 0 : customLimits.maxOutput) || desc.defaultMaxTokens
       });
     }
     const key = s[desc.apiKeyKey];
@@ -5723,7 +5769,6 @@ var BZW_review = (() => {
             id: "deepseek",
             endpoint: String(provider.endpoint).replace(/\/+$/, ""),
             apiKey: provider.apiKey,
-            contextWindow: desc.defaultContextWindow,
             defaultMaxTokens: desc.defaultMaxTokens
           });
         }
@@ -5733,9 +5778,9 @@ var BZW_review = (() => {
     if (!key && name !== "ollama") {
       throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
     }
-    const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
-    const overrideContext = (_b = s.aiContextOverrides) == null ? void 0 : _b[name];
+    const overrideModel = (_b = s.aiModelOverrides) == null ? void 0 : _b[name];
     const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
+    const limits = resolveModelLimits(overrideModel || desc.model || "");
     return cachePut({
       id: name,
       endpoint: desc.endpoint,
@@ -5743,8 +5788,7 @@ var BZW_review = (() => {
       model: overrideModel || desc.model || void 0,
       noCors: desc.noCors,
       extraHeaders: desc.extraHeaders,
-      contextWindow: overrideContext || desc.defaultContextWindow,
-      defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens
+      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
     });
   }
   function abortError() {
@@ -5909,6 +5953,7 @@ var BZW_review = (() => {
     "src/core/ai.ts"() {
       init_fake_obsidian();
       init_app();
+      init_model_limits();
       _settingsProvider = null;
       AI_PROVIDER_REGISTRY = [
         {
@@ -5917,8 +5962,9 @@ var BZW_review = (() => {
           endpoint: "https://api.deepseek.com",
           model: "",
           // 空 = 沿用调用方默认模型（原行为：deepseek 不强制模型）
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 65536,
+          // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
+          // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
+          defaultMaxTokens: 393216,
           apiKeyKey: "deepseekApiKey",
           apiKeyLabel: "DeepSeek 密钥",
           apiKeyDesc: "留空则自动回退读取外部配置密钥"
@@ -5928,8 +5974,8 @@ var BZW_review = (() => {
           label: "OpenCode Go",
           endpoint: "https://opencode.ai/zen/go/v1",
           model: "deepseek-v4-flash",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
+          // deepseek-v4-flash 是官方 deepseek-flash 的旧名（同档：1M 窗口 / 384K 输出）
+          defaultMaxTokens: 393216,
           apiKeyKey: "opencodeGoApiKey",
           apiKeyLabel: "OpenCode 密钥",
           apiKeyDesc: "在订阅官网获取后填入这里",
@@ -5941,7 +5987,6 @@ var BZW_review = (() => {
           endpoint: "https://api.openai.com/v1",
           model: "gpt-4o-mini",
           defaultMaxTokens: 16384,
-          defaultContextWindow: 128e3,
           apiKeyKey: "openaiApiKey",
           apiKeyLabel: "OpenAI 密钥",
           apiKeyDesc: "在 OpenAI 官网获取后填入这里"
@@ -5953,7 +5998,6 @@ var BZW_review = (() => {
           model: "claude-sonnet-4-5",
           defaultMaxTokens: 64e3,
           // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
-          defaultContextWindow: 2e5,
           apiKeyKey: "anthropicApiKey",
           apiKeyLabel: "Anthropic 密钥",
           apiKeyDesc: "在 Anthropic 官网获取后填入这里",
@@ -5965,7 +6009,6 @@ var BZW_review = (() => {
           endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
           model: "gemini-2.0-flash",
           defaultMaxTokens: 8192,
-          defaultContextWindow: 1048576,
           apiKeyKey: "googleApiKey",
           apiKeyLabel: "Gemini 密钥",
           apiKeyDesc: "在 Google AI Studio 获取后填入这里"
@@ -5977,7 +6020,6 @@ var BZW_review = (() => {
           model: "kimi-k2-0711-preview",
           defaultMaxTokens: 131072,
           // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
-          defaultContextWindow: 131072,
           apiKeyKey: "moonshotApiKey",
           apiKeyLabel: "Kimi 密钥",
           apiKeyDesc: "在 Moonshot 开放平台获取后填入这里"
@@ -5988,7 +6030,6 @@ var BZW_review = (() => {
           endpoint: "https://open.bigmodel.cn/api/paas/v4",
           model: "glm-4-flash",
           defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
           apiKeyKey: "zhipuApiKey",
           apiKeyLabel: "智谱密钥",
           apiKeyDesc: "在智谱开放平台获取后填入这里"
@@ -6000,7 +6041,6 @@ var BZW_review = (() => {
           endpoint: "https://open.bigmodel.cn/api/coding/paas/v4",
           model: "glm-5.3-flash",
           defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
           apiKeyKey: "zhipuPlanApiKey",
           apiKeyLabel: "智谱 Plan 密钥",
           apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同"
@@ -6010,8 +6050,8 @@ var BZW_review = (() => {
           label: "阿里云百炼（通义）",
           endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
           model: "qwen-plus",
-          defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
+          // qwen-plus 指向当前主力版本（Qwen3.7-Plus：1M 窗口 / 131K 输出）
+          defaultMaxTokens: 131072,
           apiKeyKey: "dashscopeApiKey",
           apiKeyLabel: "百炼密钥",
           apiKeyDesc: "在阿里云百炼获取 API Key 后填入这里"
@@ -6022,7 +6062,6 @@ var BZW_review = (() => {
           endpoint: "https://api.siliconflow.cn/v1",
           model: "deepseek-ai/DeepSeek-V3",
           defaultMaxTokens: 8192,
-          defaultContextWindow: 65536,
           apiKeyKey: "siliconflowApiKey",
           apiKeyLabel: "硅基流动密钥",
           apiKeyDesc: "在硅基流动官网获取后填入这里"
@@ -6033,7 +6072,6 @@ var BZW_review = (() => {
           endpoint: "https://openrouter.ai/api/v1",
           model: "deepseek/deepseek-chat",
           defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
           apiKeyKey: "openrouterApiKey",
           apiKeyLabel: "OpenRouter 密钥",
           apiKeyDesc: "在 OpenRouter 官网获取后填入这里"
@@ -6044,7 +6082,6 @@ var BZW_review = (() => {
           endpoint: "https://api.x.ai/v1",
           model: "grok-2-latest",
           defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
           apiKeyKey: "xaiApiKey",
           apiKeyLabel: "xAI 密钥",
           apiKeyDesc: "在 xAI 控制台获取后填入这里"
@@ -6055,7 +6092,6 @@ var BZW_review = (() => {
           endpoint: "https://api.groq.com/openai/v1",
           model: "llama-3.3-70b-versatile",
           defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
           apiKeyKey: "groqApiKey",
           apiKeyLabel: "Groq 密钥",
           apiKeyDesc: "在 Groq 控制台获取后填入这里"
@@ -6066,7 +6102,6 @@ var BZW_review = (() => {
           endpoint: "https://api.mistral.ai/v1",
           model: "mistral-large-latest",
           defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
           apiKeyKey: "mistralApiKey",
           apiKeyLabel: "Mistral 密钥",
           apiKeyDesc: "在 Mistral 控制台获取后填入这里"
@@ -6077,7 +6112,6 @@ var BZW_review = (() => {
           endpoint: "https://api.together.xyz/v1",
           model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
           defaultMaxTokens: 8192,
-          defaultContextWindow: 131072,
           apiKeyKey: "togetherApiKey",
           apiKeyLabel: "Together 密钥",
           apiKeyDesc: "在 Together AI 官网获取后填入这里"
@@ -6088,7 +6122,6 @@ var BZW_review = (() => {
           endpoint: "http://localhost:11434/v1",
           model: "llama3.1",
           defaultMaxTokens: 8192,
-          defaultContextWindow: 32768,
           apiKeyKey: "ollamaApiKey",
           apiKeyLabel: "Ollama 密钥",
           apiKeyDesc: "本地服务无需密钥，留空即可"
@@ -6099,7 +6132,6 @@ var BZW_review = (() => {
           endpoint: "",
           model: "",
           defaultMaxTokens: 8192,
-          defaultContextWindow: 32768,
           apiKeyKey: "aiCustomApiKey",
           apiKeyLabel: "自定义 API 密钥",
           apiKeyDesc: "在服务官网获取后填入这里"

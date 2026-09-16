@@ -101,7 +101,7 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[0]).toBe('3'); // 通用：外观 2 卡（原「设置」域并入）+ 数据存储路径 1 项（体检为按钮行不计）
     expect(badges[1]).toBe('4'); // 通知：4 个 select（issue 297 建的组，2026-09-12 自通用域拆出独立成一页）
     expect(badges[2]).toBe('12'); // 首页：外观 2 卡 + 时间线 4 + 内容过滤 4（issue 305 已跳过回归）+ 预告栏 1 + 入口内联编辑器 1 行
-    expect(badges[3]).toBe('8'); // AI 页（issue 331 拆三组）：服务商+模型名称+上下文+最大输出+思考（issue 330）+ B站 Cookie/ApiZero Key/豆瓣 Cookie（密钥行门控隐藏）
+    expect(badges[3]).toBe('7'); // AI 页（issue 331 拆三组）：服务商+模型名称+最大输出+思考（issue 330）+ B站 Cookie/ApiZero Key/豆瓣 Cookie（密钥行门控隐藏）；上下文窗口行已删（issue 342 后续）
     expect(badges[5]).toBe('5'); // 日记本：ADR-0115 升格后 = 外观 2 + 目录 2 + 显示 1（维护组为按钮行，不计设置项）
     expect(badges[6]).toBe('11'); // 备忘录（todo→memo 正名沿用待办 schema）：11 项（issue 293 增打开默认场景/已完成显示范围；issue 292 退役「到期时间格式」）
     expect(badges[7]).toBe('6'); // 归物本：外观 2 卡 + 显示 3（默认状态筛选/默认排序/金额单位）+ 记一笔 1（issue 294）
@@ -176,7 +176,7 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('桌面端：AI 域 per-provider 上下文窗口/最大输出 token 渲染为组件库 number 输入（无原生 Setting 嵌套）', async () => {
+  it('桌面端：AI 域 per-provider 最大输出 token 渲染为组件库 number 输入（无原生 Setting 嵌套；上下文窗口行已删）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
@@ -187,23 +187,22 @@ describe('设置面板（settings-panel）', () => {
     ) as HTMLElement;
     aiItem.click();
     await waitGroups(popup, 1);
-    // 找「上下文窗口」行：自绘行 .bz-sp-set-name 文本匹配
+    // 找「最大输出 token」行：自绘行 .bz-sp-set-name 文本匹配
     const rows = [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')];
-    const ctxRow = rows.find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '上下文窗口');
     const maxRow = rows.find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '最大输出 token');
-    expect(ctxRow, '上下文窗口行存在').toBeTruthy();
     expect(maxRow, '最大输出 token 行存在').toBeTruthy();
-    for (const rowEl of [ctxRow!, maxRow!]) {
-      const input = rowEl.querySelector<HTMLInputElement>('input.bz-input');
-      expect(input, '行内组件库输入框存在').toBeTruthy();
-      expect(input!.type).toBe('number');
-      expect(input!.classList.contains('num'), '数字行宽度修饰').toBe(true);
-      expect(rowEl.querySelector('.setting-item'), '无原生 Setting 嵌套').toBeFalsy();
-    }
+    expect(rows.some((r) => r.querySelector('.bz-sp-set-name')?.textContent === '上下文窗口'),
+      '上下文窗口行已删（issue 342 后续）').toBe(false);
+    const rowEl = maxRow!;
+    const input = rowEl.querySelector<HTMLInputElement>('input.bz-input');
+    expect(input, '行内组件库输入框存在').toBeTruthy();
+    expect(input!.type).toBe('number');
+    expect(input!.classList.contains('num'), '数字行宽度修饰').toBe(true);
+    expect(rowEl.querySelector('.setting-item'), '无原生 Setting 嵌套').toBeFalsy();
     ui.cleanup();
   });
 
-  it('桌面端：切 AI 服务商 → 上下文窗口/最大输出 token 输入值联动刷新（refreshKey）', async () => {
+  it('桌面端：切 AI 服务商 → 最大输出 token 输入值联动刷新（refreshKey）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
@@ -214,21 +213,21 @@ describe('设置面板（settings-panel）', () => {
     ) as HTMLElement;
     aiItem.click();
     await waitGroups(popup, 1);
-    const ctxInput = () => {
+    const maxTokensInput = () => {
       const rows = [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')];
-      const row = rows.find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '上下文窗口')!;
+      const row = rows.find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '最大输出 token')!;
       return row.querySelector<HTMLInputElement>('input.bz-input')!;
     };
-    // 初始 = 未设置回落 opencode-go（ctx 131072）；下拉初始空值无高亮
+    // 初始 = 未设置回落 opencode-go（deepseek-v4-flash 官方档 393216）；下拉初始空值无高亮
     const sel = popup.querySelector('.bz-select')!; // AI 服务商下拉（组内首个下拉）
-    const before = ctxInput().value;
-    expect(before).toBe('131072');
-    // 切 deepseek（注册表第 1 项，ctx 默认 65536）→ ctx 输入值应联动刷新
+    const before = maxTokensInput().value;
+    expect(before).toBe('393216');
+    // 切 openai（注册表第 3 项，gpt-4o-mini 档 16384，档位不同）→ 输入值应联动刷新
     sel.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    const opt = popup.querySelectorAll('.bz-select-item')[0] as HTMLElement; // deepseek
+    const opt = popup.querySelectorAll('.bz-select-item')[2] as HTMLElement; // openai
     opt.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     // refreshKey 联动写回输入框（渲染器 valueRefreshes）
-    const after = ctxInput().value;
+    const after = maxTokensInput().value;
     expect(after).not.toBe(before);
     expect(Number(after)).toBeGreaterThan(0);
     ui.cleanup();

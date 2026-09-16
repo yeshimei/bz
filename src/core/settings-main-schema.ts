@@ -9,9 +9,12 @@
  *   「自定义模型」行退役（模型统一走「模型名称」行，setProviderValue 特判 custom → aiCustomModel）；
  *   ticket 171 起全部注册表提供商各生成一行密钥（apiKeyLabel 标题、apiKeyDesc 描述）——行列表由
  *   AI_PROVIDER_REGISTRY 驱动，新增提供商零 schema 改动；
- * - ticket 172 per-provider 配置三行（模型/上下文/max token）：模型行 custom（内嵌「获取模型名」
- *   按钮，行级联动 onRefresh）；上下文/最大输出 token 为标准 number 行（三函数 binding +
+ * - ticket 172 per-provider 配置（模型/max token）：模型行 custom（内嵌「获取模型名」
+ *   按钮，行级联动 onRefresh）；最大输出 token 为标准 number 行（三函数 binding +
  *   refreshKey 随「AI 服务商」切换联动刷新，不再走 custom 套原生 Setting——统一两渲染器视觉）；
+ *   issue 342/ADR-0151 起，未填覆盖时按「当前模型名」查官方最大档（core/model-limits）；
+ *   「上下文窗口」行 issue 342 后续删除——模型固有属性、插件零消费点，非可调参数
+ *   （aiContextOverrides 设置键一并退役）；
  * - issue 187 曾新增「采样参数」组，2026-09-08 拍板整体退役（UI 组 + 请求透传 + 设置键一并移除）；
  * - issue 331 重新分组：「AI 与凭据」单组（ADR-0133）拆为「服务商」「模型配置」「数据源凭据」
  *   三组；B站 Cookie / 豆瓣 Cookie 行由单行输入框改 textarea（Cookie 串长，便于粘贴检查），
@@ -23,6 +26,7 @@
  */
 
 import { AI_PROVIDER_REGISTRY, getProviderDescriptor } from './ai';
+import { resolveModelLimits } from './model-limits';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
 import { fetchProviderModels, providerDescriptorOf } from './ai-models';
@@ -60,8 +64,8 @@ function importCliBilibiliCookie(): void {
   }
 }
 
-/** per-provider 覆盖 map 键集合（ticket 172） */
-type OverrideMapKey = 'aiModelOverrides' | 'aiContextOverrides' | 'aiMaxTokensOverrides';
+/** per-provider 覆盖 map 键集合（ticket 172；issue 342 后续：aiContextOverrides 随「上下文窗口」行退役） */
+type OverrideMapKey = 'aiModelOverrides' | 'aiMaxTokensOverrides';
 
 /** 当前 provider id（设置未显式时默认 opencode-go） */
 function currentProviderId(): string {
@@ -69,18 +73,19 @@ function currentProviderId(): string {
   return s.aiProvider || 'opencode-go';
 }
 
-/** 读当前 provider 的值（覆盖 > 注册表默认；custom 模型用 aiCustomModel） */
-function providerValue(kind: 'model' | 'context' | 'maxTokens'): string {
+/** 读当前 provider 的值（覆盖 > 按当前模型查官方档位 > 注册表默认；custom 模型用 aiCustomModel） */
+function providerValue(kind: 'model' | 'maxTokens'): string {
   const id = currentProviderId();
   const s = tryGetSettings() as any;
   if (id === 'custom' && kind === 'model') return String(s.aiCustomModel || '');
-  const mapKey: OverrideMapKey =
-    kind === 'model' ? 'aiModelOverrides' : kind === 'context' ? 'aiContextOverrides' : 'aiMaxTokensOverrides';
+  const mapKey: OverrideMapKey = kind === 'model' ? 'aiModelOverrides' : 'aiMaxTokensOverrides';
   const over = s[mapKey]?.[id];
   if (over !== undefined && over !== null && over !== '') return String(over);
   const d = getProviderDescriptor(id);
   if (kind === 'model') return d.model || '';
-  return String(kind === 'context' ? d.defaultContextWindow : d.defaultMaxTokens);
+  // 未填覆盖：按「当前模型名」取官方最大档（issue 342/ADR-0151 单一事实源，与 ai.ts 解析同源）
+  const model = id === 'custom' ? String(s.aiCustomModel || '') : String(d.model || '');
+  return String(resolveModelLimits(model)?.maxOutput ?? d.defaultMaxTokens);
 }
 
 /** 写当前 provider 的覆盖值（空 = 清除覆盖，回落注册表默认）。
@@ -154,34 +159,33 @@ function providerModelCustomRow(): SettingsRow {
 }
 
 /**
- * 「上下文窗口 / 最大输出 token」per-provider 行（ticket 172）：标准 number 行（不再走 custom
- * 套原生 Setting——统一 core / settings-panel 两渲染器的视觉与交互）。三函数 binding 读写当前
- * provider 的覆盖值（未填回落注册表默认）；refreshKey 随「AI 服务商」切换联动刷新显示值。
+ * 「最大输出 token」per-provider 行（ticket 172）：标准 number 行（不再走 custom 套原生
+ * Setting——统一 core / settings-panel 两渲染器的视觉与交互）。三函数 binding 读写当前
+ * provider 的覆盖值（未填时按「当前模型名」取官方最大档，issue 342/ADR-0151；未收录才回落
+ * 注册表默认）；refreshKey 随「AI 服务商」切换联动刷新显示值。
+ * 「上下文窗口」行已删（issue 342 后续，2026-09-16 用户拍板）：上下文窗口是模型固有属性、
+ * 插件全链零消费点（纯展示），不是可调参数——aiContextOverrides 键一并退役。
  * issue 331 起归「模型配置」组——refreshKey 联动链是全 schema 级的，跨组不受影响。
  */
-function providerNumberConfigRow(kind: 'context' | 'maxTokens'): NumberRow {
-  const mapKey: OverrideMapKey = kind === 'context' ? 'aiContextOverrides' : 'aiMaxTokensOverrides';
-  const label = kind === 'context' ? '上下文窗口' : '最大输出 token';
-  const desc = kind === 'context' ? '留空用该服务商默认窗口' : '留空用该服务商默认上限';
-  const placeholder = kind === 'context' ? '默认窗口' : '默认上限';
+function providerMaxTokensRow(): NumberRow {
   return {
     type: 'number',
-    name: label,
-    desc,
+    name: '最大输出 token',
+    desc: '留空时取该模型官方上限',
     binding: {
       // 读当前 provider 的值：覆盖 > 注册表默认（providerValue 恒返回数字字符串；NaN 兜底 0）
       get: () => {
-        const n = Number(providerValue(kind));
+        const n = Number(providerValue('maxTokens'));
         return Number.isFinite(n) ? n : 0;
       },
       // 写当前 provider 的覆盖（0 = 清除覆盖回落默认，与 setProviderValue 删键语义一致）
       set: (v: number) => {
-        setProviderValue(mapKey, String(v));
+        setProviderValue('aiMaxTokensOverrides', String(v));
       },
       save: () => saveSettings(),
     },
-    refreshKey: () => providerValue(kind),
-    placeholder,
+    refreshKey: () => providerValue('maxTokens'),
+    placeholder: '默认上限',
   };
 }
 
@@ -233,14 +237,14 @@ function providerGroupRows(): SettingsRow[] {
   return rows;
 }
 
-/** 「模型配置」组行（issue 331 拆组）：ticket 172 per-provider 三行——模型行 custom
- *  （内嵌「获取模型名」按钮）+ 上下文/最大输出 token 标准 number 行
- *  （refreshKey 随服务商切换联动，跨组生效）+ 思考档位（issue 330 并入本组）。 */
+/** 「模型配置」组行（issue 331 拆组）：ticket 172 per-provider 两行——模型行 custom
+ *  （内嵌「获取模型名」按钮）+ 最大输出 token 标准 number 行
+ *  （refreshKey 随服务商切换联动，跨组生效）+ 思考档位（issue 330 并入本组）。
+ *  「上下文窗口」行已删（issue 342 后续）：模型固有属性、零消费点，非可调参数。 */
 function modelGroupRows(): SettingsRow[] {
   return [
     providerModelCustomRow(),
-    providerNumberConfigRow('context'),
-    providerNumberConfigRow('maxTokens'),
+    providerMaxTokensRow(),
     // 思考档位（issue 330/ADR-0146）：全局单值，请求时按 provider 静态映射翻译各家参数；
     // 「关闭」对 effort 家族无法用参数关思考（如实说明），enable/zhipu 家族发显式关闭键
     {

@@ -44,7 +44,7 @@ describe('callChat（core AIService 单通道）', () => {
       })
     );
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.max_tokens).toBe(8192); // 面板独裁：deepseek 注册表默认，不私传 300
+    expect(body.max_tokens).toBe(393216); // 面板独裁：deepseek 兜底最大档（issue 342），不私传 300
     expect(body.temperature).toBe(0.7); // 任务语义保留
     expect(body.messages.length).toBe(2);
     expect(body.messages[0].role).toBe('system');

@@ -13,10 +13,13 @@
  * 只收公网 https 或 base64，格式限 JPEG/PNG/GIF/WebP）。纯文本调用报文与旧版逐字节一致。
  * 参数单源（issue 334/ADR-0148）：输出上限 max_tokens 面板独裁——唯一权威 = provider 解析结果
  * （设置「最大输出 token」per-provider 覆盖 > 注册表默认），调用方/工厂传值一律忽略；
+ * 默认档位（issue 342/ADR-0151）：未填覆盖时按「当前模型名」查官方最大档（core/model-limits），
+ * 未收录才回退注册表默认——上限只是封顶、不是目标消耗，正常短输出成本不变；
  * `prompt` 也收 `{messages}` 多轮报文（smartcat 行为流），temperature 等任务语义仍由调用方传。
  */
 import { requestUrl } from 'obsidian';
 import { getApp } from './app';
+import { resolveModelLimits } from './model-limits';
 
 export interface AISettingsLike {
   aiProvider?: string;
@@ -41,8 +44,6 @@ export interface AISettingsLike {
   aiCustomApiKey?: string;
   /** 每提供商模型覆盖（键 = provider id；未填用注册表默认） */
   aiModelOverrides?: Record<string, string>;
-  /** 每提供商上下文窗口覆盖（键 = provider id；未填用注册表 defaultContextWindow） */
-  aiContextOverrides?: Record<string, number>;
   /** 每提供商最大输出 token 覆盖（键 = provider id；未填用注册表 defaultMaxTokens） */
   aiMaxTokensOverrides?: Record<string, number>;
   /** AI 思考档位（issue 330/ADR-0146）：auto（缺省）/ off / low / medium / high */
@@ -71,10 +72,10 @@ export interface AIProviderDescriptor {
   endpoint: string;
   /** 默认模型（custom 为 ''，运行时用 aiCustomModel） */
   model: string;
-  /** 注册表默认 max_tokens（输出上限唯一权威链的兜底档：设置 per-provider 覆盖 > 此默认） */
+  /** 注册表默认 max_tokens（兜底档：设置 per-provider 覆盖 > 模型查表 > 此默认）。
+   *  上限只是封顶、不是目标消耗（ADR-0148）；填超模型真实上限会被服务端拒绝，
+   *  故此处只放「该服务商在售主力模型的官方最大档」，其余留给 model-limits 按模型名解析 */
   defaultMaxTokens: number;
-  /** 默认请求上下文窗口（token 数；设置页提示用） */
-  defaultContextWindow: number;
   /** 密钥在 AISettingsLike 的键名（custom 为 aiCustomApiKey） */
   apiKeyKey: keyof AISettingsLike;
   /** 设置页密钥行标题（注册表驱动生成密钥行；ticket 171 策略模式完整化） */
@@ -94,8 +95,9 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     label: 'DeepSeek',
     endpoint: 'https://api.deepseek.com',
     model: '', // 空 = 沿用调用方默认模型（原行为：deepseek 不强制模型）
-    defaultMaxTokens: 8192,
-    defaultContextWindow: 65536,
+    // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
+    // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
+    defaultMaxTokens: 393216,
     apiKeyKey: 'deepseekApiKey',
     apiKeyLabel: 'DeepSeek 密钥',
     apiKeyDesc: '留空则自动回退读取外部配置密钥',
@@ -105,8 +107,8 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     label: 'OpenCode Go',
     endpoint: 'https://opencode.ai/zen/go/v1',
     model: 'deepseek-v4-flash',
-    defaultMaxTokens: 8192,
-    defaultContextWindow: 131072,
+    // deepseek-v4-flash 是官方 deepseek-flash 的旧名（同档：1M 窗口 / 384K 输出）
+    defaultMaxTokens: 393216,
     apiKeyKey: 'opencodeGoApiKey',
     apiKeyLabel: 'OpenCode 密钥',
     apiKeyDesc: '在订阅官网获取后填入这里',
@@ -118,7 +120,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://api.openai.com/v1',
     model: 'gpt-4o-mini',
     defaultMaxTokens: 16384,
-    defaultContextWindow: 128000,
     apiKeyKey: 'openaiApiKey',
     apiKeyLabel: 'OpenAI 密钥',
     apiKeyDesc: '在 OpenAI 官网获取后填入这里',
@@ -129,7 +130,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://api.anthropic.com/v1',
     model: 'claude-sonnet-4-5',
     defaultMaxTokens: 64000, // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
-    defaultContextWindow: 200000,
     apiKeyKey: 'anthropicApiKey',
     apiKeyLabel: 'Anthropic 密钥',
     apiKeyDesc: '在 Anthropic 官网获取后填入这里',
@@ -141,7 +141,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai',
     model: 'gemini-2.0-flash',
     defaultMaxTokens: 8192,
-    defaultContextWindow: 1048576,
     apiKeyKey: 'googleApiKey',
     apiKeyLabel: 'Gemini 密钥',
     apiKeyDesc: '在 Google AI Studio 获取后填入这里',
@@ -152,7 +151,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://api.moonshot.cn/v1',
     model: 'kimi-k2-0711-preview',
     defaultMaxTokens: 131072, // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
-    defaultContextWindow: 131072,
     apiKeyKey: 'moonshotApiKey',
     apiKeyLabel: 'Kimi 密钥',
     apiKeyDesc: '在 Moonshot 开放平台获取后填入这里',
@@ -163,7 +161,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://open.bigmodel.cn/api/paas/v4',
     model: 'glm-4-flash',
     defaultMaxTokens: 8192,
-    defaultContextWindow: 131072,
     apiKeyKey: 'zhipuApiKey',
     apiKeyLabel: '智谱密钥',
     apiKeyDesc: '在智谱开放平台获取后填入这里',
@@ -175,7 +172,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://open.bigmodel.cn/api/coding/paas/v4',
     model: 'glm-5.3-flash',
     defaultMaxTokens: 8192,
-    defaultContextWindow: 131072,
     apiKeyKey: 'zhipuPlanApiKey',
     apiKeyLabel: '智谱 Plan 密钥',
     apiKeyDesc: '智谱 Coding 套餐专用端点，密钥与智谱开放平台相同',
@@ -185,8 +181,8 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     label: '阿里云百炼（通义）',
     endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     model: 'qwen-plus',
-    defaultMaxTokens: 8192,
-    defaultContextWindow: 131072,
+    // qwen-plus 指向当前主力版本（Qwen3.7-Plus：1M 窗口 / 131K 输出）
+    defaultMaxTokens: 131072,
     apiKeyKey: 'dashscopeApiKey',
     apiKeyLabel: '百炼密钥',
     apiKeyDesc: '在阿里云百炼获取 API Key 后填入这里',
@@ -197,7 +193,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://api.siliconflow.cn/v1',
     model: 'deepseek-ai/DeepSeek-V3',
     defaultMaxTokens: 8192,
-    defaultContextWindow: 65536,
     apiKeyKey: 'siliconflowApiKey',
     apiKeyLabel: '硅基流动密钥',
     apiKeyDesc: '在硅基流动官网获取后填入这里',
@@ -208,7 +203,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://openrouter.ai/api/v1',
     model: 'deepseek/deepseek-chat',
     defaultMaxTokens: 8192,
-    defaultContextWindow: 131072,
     apiKeyKey: 'openrouterApiKey',
     apiKeyLabel: 'OpenRouter 密钥',
     apiKeyDesc: '在 OpenRouter 官网获取后填入这里',
@@ -219,7 +213,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://api.x.ai/v1',
     model: 'grok-2-latest',
     defaultMaxTokens: 8192,
-    defaultContextWindow: 131072,
     apiKeyKey: 'xaiApiKey',
     apiKeyLabel: 'xAI 密钥',
     apiKeyDesc: '在 xAI 控制台获取后填入这里',
@@ -230,7 +223,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://api.groq.com/openai/v1',
     model: 'llama-3.3-70b-versatile',
     defaultMaxTokens: 8192,
-    defaultContextWindow: 131072,
     apiKeyKey: 'groqApiKey',
     apiKeyLabel: 'Groq 密钥',
     apiKeyDesc: '在 Groq 控制台获取后填入这里',
@@ -241,7 +233,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://api.mistral.ai/v1',
     model: 'mistral-large-latest',
     defaultMaxTokens: 8192,
-    defaultContextWindow: 131072,
     apiKeyKey: 'mistralApiKey',
     apiKeyLabel: 'Mistral 密钥',
     apiKeyDesc: '在 Mistral 控制台获取后填入这里',
@@ -252,7 +243,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'https://api.together.xyz/v1',
     model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
     defaultMaxTokens: 8192,
-    defaultContextWindow: 131072,
     apiKeyKey: 'togetherApiKey',
     apiKeyLabel: 'Together 密钥',
     apiKeyDesc: '在 Together AI 官网获取后填入这里',
@@ -263,7 +253,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'http://localhost:11434/v1',
     model: 'llama3.1',
     defaultMaxTokens: 8192,
-    defaultContextWindow: 32768,
     apiKeyKey: 'ollamaApiKey',
     apiKeyLabel: 'Ollama 密钥',
     apiKeyDesc: '本地服务无需密钥，留空即可',
@@ -274,7 +263,6 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: '',
     model: '',
     defaultMaxTokens: 8192,
-    defaultContextWindow: 32768,
     apiKeyKey: 'aiCustomApiKey',
     apiKeyLabel: '自定义 API 密钥',
     apiKeyDesc: '在服务官网获取后填入这里',
@@ -349,8 +337,6 @@ interface AIProvider {
   model?: string;
   noCors?: boolean;
   extraHeaders?: Record<string, string>;
-  /** 注册表默认上下文窗口（token 数；设置页未覆盖时用） */
-  contextWindow?: number;
   /** 注册表默认 max_tokens（设置 per-provider 覆盖缺省时的兜底档） */
   defaultMaxTokens?: number;
 }
@@ -368,7 +354,6 @@ interface AIOverrideObject {
   apiKey?: string;
   model?: string;
   extraHeaders?: Record<string, string>;
-  contextWindow?: number;
   defaultMaxTokens?: number;
 }
 
@@ -390,7 +375,6 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
       apiKey: override.apiKey,
       model: override.model || undefined,
       extraHeaders: override.extraHeaders || undefined,
-      contextWindow: override.contextWindow,
       defaultMaxTokens: override.defaultMaxTokens,
     };
   }
@@ -402,14 +386,14 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
     if (!endpoint || !s.aiCustomApiKey) {
       throw new Error('未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）');
     }
+    const customLimits = resolveModelLimits(s.aiCustomModel || '');
     return cachePut({
       id: 'custom',
       endpoint,
       apiKey: s.aiCustomApiKey,
       model: s.aiCustomModel || undefined,
       extraHeaders: desc.extraHeaders,
-      contextWindow: desc.defaultContextWindow,
-      defaultMaxTokens: desc.defaultMaxTokens,
+      defaultMaxTokens: s.aiMaxTokensOverrides?.['custom'] || customLimits?.maxOutput || desc.defaultMaxTokens,
     });
   }
   const key = s[desc.apiKeyKey];
@@ -424,7 +408,6 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
           id: 'deepseek',
           endpoint: String(provider.endpoint).replace(/\/+$/, ''),
           apiKey: provider.apiKey,
-          contextWindow: desc.defaultContextWindow,
           defaultMaxTokens: desc.defaultMaxTokens,
         });
       }
@@ -434,10 +417,13 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
   if (!key && name !== 'ollama') {
     throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
   }
-  // ticket 172 per-provider 覆盖：用户设置的模型/上下文/max token 优先于注册表默认
+  // ticket 172 per-provider 覆盖：用户设置的模型/上下文/max token 优先于注册表默认；
+  // issue 342/ADR-0151 起，中间插入「按当前模型名查官方档位」（model-limits 单一事实源）——
+  // 覆盖 > 查表 > 注册表默认。查表输入只用面板可见的模型名（覆盖 > 注册表默认），
+  // 调用点临时传的模型名不参与（ADR-0148 面板独裁）
   const overrideModel = s.aiModelOverrides?.[name];
-  const overrideContext = s.aiContextOverrides?.[name];
   const overrideMaxTokens = s.aiMaxTokensOverrides?.[name];
+  const limits = resolveModelLimits(overrideModel || desc.model || '');
   return cachePut({
     id: name,
     endpoint: desc.endpoint,
@@ -445,8 +431,7 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
     model: overrideModel || desc.model || undefined,
     noCors: desc.noCors,
     extraHeaders: desc.extraHeaders,
-    contextWindow: overrideContext || desc.defaultContextWindow,
-    defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens,
+    defaultMaxTokens: overrideMaxTokens || limits?.maxOutput || desc.defaultMaxTokens,
   });
 }
 

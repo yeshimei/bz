@@ -52,9 +52,9 @@ export default interface BzSettings {
   aiCustomApiKey: string;
   /** 🧠 每提供商模型覆盖（ticket 172，键 = provider id）：未填用注册表默认模型 */
   aiModelOverrides: Record<string, string>;
-  /** 📏 每提供商上下文窗口覆盖（token 数，键 = provider id）：未填用注册表 defaultContextWindow */
-  aiContextOverrides: Record<string, number>;
-  /** 📏 每提供商最大输出 token 覆盖（键 = provider id）：未填用注册表 defaultMaxTokens（=模型最大输出） */
+  /** 📏 每提供商最大输出 token 覆盖（键 = provider id）：未填按当前模型查官方最大档
+   *  （issue 342/ADR-0151 core/model-limits），未收录回落注册表 defaultMaxTokens。
+   *  原 aiContextOverrides（上下文窗口覆盖）已退役——模型固有属性、插件零消费点（issue 342 后续） */
   aiMaxTokensOverrides: Record<string, number>;
   /** 🧠 AI 思考档位（issue 330/ADR-0146）：auto=跟随模型默认（不注入参数，缺省）/ off=关闭 /
    *  low|medium|high=思考强度。请求时按 provider 静态映射翻译成各家思考参数（ADR-0146）；
@@ -525,6 +525,19 @@ export function migrateMemoSettingKeys(raw: unknown): boolean {
  * 幂等：无旧键 / 无冗余条目即不改动，调用方据此决定要不要落盘（同 migrateMemoSettingKeys 的 C16 口径）。
  * 三盒目录从**同一份原始设置**解析（此时还没合并 DEFAULT_SETTINGS，故显式传入 rec）。
  */
+/**
+ * issue 342 后续一次性迁移：「上下文窗口」per-provider 设置行删除——上下文窗口是模型固有属性、
+ * 插件全链零消费点（纯展示），不是可调参数；aiContextOverrides 键退役，旧值不迁移直接丢。
+ * 幂等：无旧键即不改动，调用方据此决定要不要落盘（同 migrateMemoSettingKeys 的 C16 口径）。
+ */
+export function migrateRetiredAIKeys(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const rec = raw as Record<string, unknown>;
+  if (rec.aiContextOverrides === undefined) return false;
+  delete rec.aiContextOverrides;
+  return true;
+}
+
 export function migrateAutoLinkSettings(raw: unknown): boolean {
   if (!raw || typeof raw !== 'object') return false;
   const rec = raw as Record<string, unknown>;
@@ -570,7 +583,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   aiCustomModel: '',
   aiCustomApiKey: '',
   aiModelOverrides: {},
-  aiContextOverrides: {},
   aiMaxTokensOverrides: {},
   // AI 思考档位（issue 330/ADR-0146）：auto = 跟随模型默认，不注入思考参数
   aiThinking: 'auto',

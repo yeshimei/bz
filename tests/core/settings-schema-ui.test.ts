@@ -454,17 +454,19 @@ describe('主设置页 AI per-provider 配置三行（ticket 172）', () => {
     renderSettingsInto(container, { groups: schema.groups.slice(0, 3) });
   }
 
-  it('模型名称/上下文窗口/最大输出 token 三行渲染，初始值 = 当前 provider 注册表默认', () => {
+  it('模型名称/最大输出 token 两行渲染，初始值 = 当前模型官方最大档（issue 342/ADR-0151）', () => {
     state.aiProvider = 'opencode-go';
     const container = document.createElement('div');
     renderProviderRows(container);
     const modelRow = findRow(container, '模型名称');
-    const ctxRow = findRow(container, '上下文窗口');
     const maxTokensRow = findRow(container, '最大输出 token');
-    // 初始 = 注册表默认（opencode-go: model deepseek-v4-flash / ctx 131072 / max 8192）
+    // 初始 = 按模型名查官方档（opencode-go: model deepseek-v4-flash → 384K 输出）；
+    // 「上下文窗口」行已删（issue 342 后续：模型固有属性、零消费点）
     expect(textControlOf(modelRow).value).toBe('deepseek-v4-flash');
-    expect(textControlOf(ctxRow).value).toBe('131072');
-    expect(textControlOf(maxTokensRow).value).toBe('8192');
+    expect([...container.querySelectorAll('.setting-item')].some(
+      (s) => (s as HTMLElement).dataset.name === '上下文窗口'
+    )).toBe(false);
+    expect(textControlOf(maxTokensRow).value).toBe('393216');
   });
 
   it('输入覆盖值写入 per-provider map；清空回落注册表默认', () => {
@@ -480,10 +482,9 @@ describe('主设置页 AI per-provider 配置三行（ticket 172）', () => {
     expect(state.aiModelOverrides?.openai).toBeUndefined(); // 清空 = 回落默认
   });
 
-  it('切换 provider 后三行值联动刷新（onRefresh）', () => {
+  it('切换 provider 后两行值联动刷新（onRefresh）', () => {
     state.aiProvider = 'deepseek';
     state.aiModelOverrides = {};
-    state.aiContextOverrides = {};
     state.aiMaxTokensOverrides = {};
     const container = document.createElement('div');
     renderProviderRows(container);
@@ -493,13 +494,11 @@ describe('主设置页 AI per-provider 配置三行（ticket 172）', () => {
     dd.trigger('openai');
     // 触发 reevaluate（select onChange 后渲染器自动 reevaluate → custom onRefresh 刷新）
     expect(textControlOf(findRow(container, '模型名称')).value).toBe('gpt-4o-mini');
-    expect(textControlOf(findRow(container, '上下文窗口')).value).toBe('128000');
     expect(textControlOf(findRow(container, '最大输出 token')).value).toBe('16384');
-    // 再切 deepseek
+    // 再切 deepseek（注册表 model 为空 → 兜底档 = 端点在售模型官方最大档）
     dd.trigger('deepseek');
     expect(textControlOf(findRow(container, '模型名称')).value).toBe(''); // deepseek 注册表 model 为空
-    expect(textControlOf(findRow(container, '上下文窗口')).value).toBe('65536');
-    expect(textControlOf(findRow(container, '最大输出 token')).value).toBe('8192');
+    expect(textControlOf(findRow(container, '最大输出 token')).value).toBe('393216');
   });
 });
 
