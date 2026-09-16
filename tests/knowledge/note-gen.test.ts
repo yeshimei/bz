@@ -19,6 +19,7 @@ import {
   injectFrontmatter,
   generateVideoNote,
   generateTermDraft,
+  generatePassageDraft,
   summarizeTermSummary,
   generateTermNote,
   findDuplicateTermNote,
@@ -26,11 +27,13 @@ import {
   generateImageNote,
   resolveImageDir,
   backfillNotes,
+  type DraftFields,
 } from '../../src/knowledge/note-gen';
 
-// AI 打桩：createAI 返回固定 json/chat（元数据一次 JSON、分块润色逐块 chat，各可计数断言）
+// AI 打桩：createAI 返回固定 json/chat（元数据一次 JSON、分块润色逐块 chat，各可计数断言）。
+// json 的第二参是调用方选项（signal / onDelta）——ADR-0152 起调用方会带上，桩留出该形参供断言与流式模拟。
 const aiStub = vi.hoisted(() => ({
-  json: vi.fn(async (_prompt: string) => '{"title":"T","tags":["a"],"summary":"s","domain":"心理"}'),
+  json: vi.fn(async (_prompt: string, _opts?: any): Promise<string> => '{"title":"T","tags":["a"],"summary":"s","domain":"心理"}'),
   chat: vi.fn(async (_prompt: string) => '润色'),
 }));
 vi.mock('../../src/core/ai', () => ({
@@ -229,6 +232,96 @@ describe('generateTermDraft（纯 AI 预览，不落盘；ticket 138 §2.1 契�
     await expect(generateTermDraft('  ')).rejects.toThrow('术语为空');
     await expect(generateTermDraft('')).rejects.toThrow('术语为空');
     expect(vault.getMarkdownFiles()).toHaveLength(0);
+  });
+});
+
+describe('草稿流式（ADR-0152 / issue 343：onProgress 增量 + 空正文守卫 + prompt 字段顺序）', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // 一次性返回值（Once）不随 clearAllMocks 清空——某例中途失败残留的 Once 会污染下一例，
+    // 这里显式重置并重设默认实现，保证每例从干净的桩开始
+    aiStub.json.mockReset();
+    aiStub.json.mockImplementation(async (_prompt: string) => '{"title":"T","tags":["a"],"summary":"s","domain":"心理"}');
+    aiStub.chat.mockReset();
+    aiStub.chat.mockImplementation(async (_prompt: string) => '润色');
+    setApp({ vault: new MockVault() } as any);
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeDomainList: '心理, 计算机' }) as any);
+  });
+
+  afterEach(() => {
+    setSettingsProvider(() => ({}) as any);
+  });
+
+  /** 把完整 JSON 按 1 字符切片喂给 ai.json 的 onDelta，模拟 SSE 逐段到达（返回整段文本 = 收尾解析的输入） */
+  function streamOnce(full: string): void {
+    aiStub.json.mockImplementationOnce(async (_input: any, opts: any) => {
+      for (const ch of full) opts?.onDelta?.(ch);
+      return full;
+    });
+  }
+
+  it('onProgress：每段到达回调一次，正文逐字长出、领域先落地，终值与返回值一致', async () => {
+    streamOnce('{"domain":"心理","summary":"量子纠缠是物理现象"}');
+    const frames: DraftFields[] = [];
+    const draft = await generateTermDraft('量子纠缠', { onProgress: (f) => frames.push(f) });
+    expect(draft).toEqual({ summary: '量子纠缠是物理现象', domain: '心理' });
+    // 终值 = 收尾 parseAiJson 的结果（预览与落盘同源，ADR-0152「后果」）
+    expect(frames[frames.length - 1]).toEqual({ title: null, domain: '心理', summary: '量子纠缠是物理现象' });
+    // 领域是短字段且排在 summary 之前 → 存在「领域已落地、正文还没开始」的帧
+    expect(frames.some((f) => f.domain === '心理' && f.summary === null)).toBe(true);
+    // 正文逐字增长：出现过单字帧，且相邻帧是前缀关系（只可能变长）
+    const sums = frames.map((f) => f.summary).filter((s): s is string => s !== null);
+    expect(sums.some((s) => s.length === 1)).toBe(true);
+    for (let i = 1; i < sums.length; i++) expect(sums[i].startsWith(sums[i - 1])).toBe(true);
+  });
+
+  it('不传 onProgress → 不接 onDelta、不带 signal（纯非流式形态，零额外汇总开销）', async () => {
+    await generateTermDraft('量子纠缠');
+    const opts = aiStub.json.mock.calls[0][1] as any;
+    expect(opts?.onDelta).toBeUndefined();
+    expect(opts?.signal).toBeUndefined();
+  });
+
+  it('signal 原样透传给 ai.json（关窗 / 再点生成据此中止在途请求）', async () => {
+    const ac = new AbortController();
+    await generateTermDraft('量子纠缠', { signal: ac.signal });
+    expect((aiStub.json.mock.calls[0][1] as any)?.signal).toBe(ac.signal);
+  });
+
+  it('空正文守卫：空 / 纯空白 summary → 抛错，不得成为草稿（ADR-0152 决策 6）', async () => {
+    aiStub.json.mockResolvedValueOnce('{"domain":"心理","summary":""}');
+    await expect(generateTermDraft('量子纠缠')).rejects.toThrow('AI 未返回正文');
+    aiStub.json.mockResolvedValueOnce('{"domain":"心理","summary":"   "}');
+    await expect(generateTermDraft('量子纠缠')).rejects.toThrow('AI 未返回正文');
+  });
+
+  it('段落 / 图版：空正文同样被守卫拦下', async () => {
+    aiStub.json.mockResolvedValueOnce('{"domain":"社会","title":"标题","summary":""}');
+    await expect(generatePassageDraft('一段文字')).rejects.toThrow('AI 未返回正文');
+    aiStub.json.mockResolvedValueOnce('{"domain":"艺术","title":"图题","summary":""}');
+    await expect(generateImageDraft(['data:image/png;base64,AAAA'])).rejects.toThrow('AI 未返回正文');
+  });
+
+  it('截断的 JSON 走既有报错路径（parseAiJson 抛错，不静默落半篇）', async () => {
+    aiStub.json.mockResolvedValueOnce('{"domain":"心理","summary":"被截断的正');
+    await expect(generateTermDraft('量子纠缠')).rejects.toThrow();
+  });
+
+  it('prompt 字段顺序：三态都是 domain 在前、正文最后（ADR-0152 决策 10）', async () => {
+    await generateTermDraft('量子纠缠');
+    const tp = String(aiStub.json.mock.calls[0][0]);
+    expect(tp.indexOf('"domain"')).toBeGreaterThan(-1);
+    expect(tp.indexOf('"domain"')).toBeLessThan(tp.indexOf('"summary"'));
+    aiStub.json.mockClear();
+    await generatePassageDraft('一段文字');
+    const pp = String(aiStub.json.mock.calls[0][0]);
+    expect(pp.indexOf('"domain"')).toBeLessThan(pp.indexOf('"title"'));
+    expect(pp.indexOf('"title"')).toBeLessThan(pp.indexOf('"summary"'));
+    aiStub.json.mockClear();
+    await generateImageDraft(['data:image/png;base64,AAAA']);
+    const ip = String((aiStub.json.mock.calls[0][0] as any).text);
+    expect(ip.indexOf('"domain"')).toBeLessThan(ip.indexOf('"title"'));
+    expect(ip.indexOf('"title"')).toBeLessThan(ip.indexOf('"summary"'));
   });
 });
 

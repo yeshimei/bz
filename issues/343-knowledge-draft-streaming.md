@@ -1,6 +1,6 @@
 # Issue 343 — 知识盒录入草稿流式成形（点下即开界面 + 正文逐字长出）
 
-**状态：设计已定稿（共识达成，ADR-0152），未实现**（2026-09-16）
+**状态：已实现，待合并**（2026-09-16；分支 `feat/kb-draft-streaming`，门禁 test + tsc + 自审 + diff 审查全绿）
 
 ## 用户诉求
 
@@ -43,6 +43,27 @@
 | 7 | **标题行改只读**（推翻 issue 309「属性行可改标题」）：`#lit-entry-meta-title` 由 input 改展示行；`onTermConfirm` 标题改读草稿（空标题守卫保留） | `ui.ts:2435 / 3153 / 3183-3184` |
 | 8 | 三态录入 prompt 字段顺序调成 `{"domain":…,"summary":…}`（领域行早早出值） | `note-gen.ts::termPrompt / passagePrompt / imagePrompt` |
 | 9 | title 走同一抽取器、到达即填（段落/图版只读属性行） | 同 #1/#2 |
+
+## 落地记录（2026-09-16）
+
+- **抽取器单独成模块** `src/knowledge/partial-json.ts`（不塞进 note-gen）：纯函数、无依赖，单测 12 项
+  （转义跨段自愈、`\uXXXX` 逐片、代理对、字段顺序、围栏前言、键未出现、截断、值不回退、终值同源）。
+  已知边界：只取**扁平结构**的顶层同名键，若模型输出嵌套同名键会取到内层——三态 prompt 均要求扁平 JSON。
+- **三态生成函数加 `DraftHooks { onProgress, signal }`**（`note-gen.ts`）：`draftAiOptions` 把 core/ai 的
+  `onDelta` 增量累积成前缀，每帧抽 `title/domain/summary` 三字段回调；不传 hooks 时连 `onDelta` 都不接。
+  新增 `requireSummary` 守卫（空 / 纯空白正文一律抛错）。三态 prompt 字段顺序统一为 domain → title → summary。
+- **UI 三段切开**（`ui.ts`）：`beginTermPreview`（点下即开：属性行占位 + 正文「正在生成…」）→
+  `applyDraftFields`（字段到达即填，值没变不动 DOM）→ `finishTermPreview`（终值落定 + 起关联预演）；
+  失败走 `handleTermGenFailure`（有半篇 → 记中断；一个字没到 → 常规报错）。
+- **忙态拆成三份**：`termGenerating`（生成流）/ `termSaving`（落盘）/ `termSummarizing`（总结），
+  `termBusy` 三者合一；按钮文案与 disabled 的**唯一出口**是 `refreshTermActions`（原 `setTermGenLoading` 退役）。
+  生成期间「生成」键**保持可点**（再点 = 中止重开），只锁「总结」「确认写入」。
+- **中止与作废**：`termGenAbort` 句柄 + `this.termGenAbort !== ac` 守卫——被新一轮取代或被主动中止的那股流，
+  结果与收尾一律丢弃，不会解错忙态、也不会误报「生成中断」。关窗仍走二次确认，**确认之后**才 abort。
+- **标题行改只读**：DOM 由 `input` 改 `<span>`；`entryHeadTitle` 与 `onTermConfirm` 都改从草稿取标题，
+  空标题守卫保留。
+- 新增测试 26 项（抽取器 12 + note-gen 7 + ui 7），知识盒全域 508 项全绿。
+- **未做**（本次范围外）：「总结」按钮的流式化、视频转写链路。
 
 ## 测试要点
 

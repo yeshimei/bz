@@ -118,7 +118,7 @@ describe('openTermNote（bz-knowledge-note-term 命令：MarkdownView 类右值 
     expect(app.workspace.getActiveViewOfType).toHaveBeenCalledWith(MarkdownView); // 类右值（1.1 根因修复）
     expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('黑洞');
     // ticket 155：带词入口自动触发生成
-    await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('黑洞'));
+    await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('黑洞', expect.anything()));
   });
 
   it('显式 term 优先：不读选区；选区为空白 → 空输入框', async () => {
@@ -129,7 +129,7 @@ describe('openTermNote（bz-knowledge-note-term 命令：MarkdownView 类右值 
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     expect(app.workspace.getActiveViewOfType).not.toHaveBeenCalled();
     expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('贝叶斯定理');
-    await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('贝叶斯定理'));
+    await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('贝叶斯定理', expect.anything()));
   });
 
   it('无激活视图（getActiveViewOfType 返回 null）→ 空输入框手填，不抛错、不自动生成', async () => {

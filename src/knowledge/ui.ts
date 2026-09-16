@@ -41,7 +41,7 @@ import { mountCtx, orphanCards, refCounts } from './mount-data';
 import type { KnowledgeTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
 import { openMountTree } from './mount-canvas';
-import { backfillNotes, findDuplicateTermNote, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, resolveImageDir, summarizeTermSummary } from './note-gen';
+import { backfillNotes, findDuplicateTermNote, generateImageDraft, generateImageNote, generatePassageDraft, generatePassageNote, generateTermDraft, generateTermNote, resolveImageDir, summarizeTermSummary, type DraftFields, type DraftHooks } from './note-gen';
 import { canonicalVideoUrl, cleanSourceTitle, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, type TermSource } from './source';
 import { fetchCheckedQualities, fetchVideoMeta, needsBvidRepair, parseBvid, resolveVideo, type ResolvedVideo, type VideoMeta } from './video-meta';
 import { RangeBar } from './range-bar';
@@ -555,9 +555,18 @@ export class UIManager {
   /** 当前录入态：term = 一个词（名词）/ passage = 一段文字（段落）/ image = 一张图（图版） */
   private entryMode: 'term' | 'passage' | 'image' = 'term';
   private termPreview: { domain: string; body: string; title?: string } | null = null;
+  /** 生成流在途（ADR-0152/issue 343）：与 termSaving 分开——「是否正在生成」与「是否正在落盘」是两件事 */
   private termGenerating = false;
+  /** 确认写入的落盘过程在途（承接原 termGenerating 的写入语义）：期间不接生成 / 总结 / 再次写入 */
+  private termSaving = false;
   private termSummarizing = false;
   private termHasDraft = false;
+  /** 草稿中断标记（ADR-0152 决策 6）：流断在半个 JSON 上 → 已流入的正文保留可见，但**不可写** */
+  private termDraftBroken = false;
+  /** 在途生成流的中断器（ADR-0152 决策 7）：再点生成 = abort 重开；关窗二次确认**之后**才 abort */
+  private termGenAbort: AbortController | null = null;
+  /** 已流入正文区的正文（空串 = 还没有正文字符到达）：中断收场据此判断「有没有半篇要保留」 */
+  private termStreamBody = '';
   private termSource: TermSource | null = null; // 来源（名词/段落/图版共用行，ADR-0116；null = 未填）
   /**
    * 图版待落盘图片（issue 312；多图 issue 313）：拖入/粘贴/选择后**只留在内存**
@@ -2397,8 +2406,10 @@ export class UIManager {
     body.className = 'bz-lit-term-body';
     // 词典皮（issue 258/快改批 + issue 309/312 同壳三态）：标题栏+✕ 已退役 / 输入行与来源行同款
     // 标签行 / 生成；预览态：属性卡（含「关联」行）+ 内容卡 + 总结/确认写入。
-    // 三态只差第一行控件（单行 input / 多行 textarea / 图片拖入区）与属性首行（名词文本 vs 可改标题），
+    // 三态只差第一行控件（单行 input / 多行 textarea / 图片拖入区）与属性首行（名词文本 vs 只读标题），
     // 由 popup 上的 data-lit-entry 切换 `.bz-lit-term-only` / `.bz-lit-passage-only` / `.bz-lit-image-only`。
+    // 属性行的编辑出口（ADR-0152 决策 9）：规则统一为「用户输入可编辑、AI 产出只读」——
+    // 名词/段落文本/来源照旧可改，标题（原 input）与领域一样只读展示。
     body.innerHTML = `
       <div class="bz-lit-sheet-head">
         <span class="bz-lit-sheet-title" id="lit-entry-title">名词</span>
@@ -2432,7 +2443,7 @@ export class UIManager {
         <div class="bz-lit-term-card">
           <div class="bz-lit-term-meta">
             <div class="bz-lit-term-meta-row bz-lit-term-only"><span class="bz-lit-term-meta-k">名词</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
-            <div class="bz-lit-term-meta-row bz-lit-titled-only"><span class="bz-lit-term-meta-k">标题</span><input id="lit-entry-meta-title" type="text" autocomplete="off"></div>
+            <div class="bz-lit-term-meta-row bz-lit-titled-only"><span class="bz-lit-term-meta-k">标题</span><span id="lit-entry-meta-title" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
@@ -2596,6 +2607,14 @@ export class UIManager {
   private showEntry(mode: 'term' | 'passage' | 'image', text?: string, src?: TermSource | null, opts?: EntryPrefill): void {
     if (!this.termPopup || !this.termMask) return;
     this.entryMode = mode;
+    // 全新态：上一次的草稿、忙态、在途生成流与中断标记全部归零
+    // （abort 在途流——它的结果不得写进这次新开的面板）
+    this.abortTermGenerate();
+    this.termGenerating = false;
+    this.termSaving = false;
+    this.termSummarizing = false;
+    this.termDraftBroken = false;
+    this.termStreamBody = '';
     this.termPreview = null;
     this.termHasDraft = false;
     this.entryOnCreated = opts?.onCreated ?? null;
@@ -2612,7 +2631,8 @@ export class UIManager {
     this.termSrcReset(q<HTMLInputElement>(this.termPopup, '#lit-term-src'));
     if (src) this.termSrcSet(src, q<HTMLInputElement>(this.termPopup, '#lit-term-src'));
     this.setTermPreviewVisible(false);
-    this.setTermGenLoading(false);
+    this.setTermContent('', false); // 清掉上一次留下的正文 / 占位文字
+    this.refreshTermActions();
     topifyZ(this.termMask, this.termPopup);
     this.termMask.style.display = 'block';
     this.termPopup.style.display = 'flex';
@@ -2653,7 +2673,7 @@ export class UIManager {
    */
   private async acceptImageFiles(files: File[]): Promise<void> {
     if (!this.termPopup || this.entryMode !== 'image' || !files.length) return;
-    if (this.termGenerating) return; // 正在读图：等它出结果，避免半途改图造成错配
+    if (this.termBusy) return; // 读图 / 落盘中：等它出结果，避免半途改图造成错配
     this.syncImageDescsFromDom(); // 加图前同步描述（尾部追加，既有索引不变，已输入的描述跨重绘保留）
     let hitLimit = false;
     let added = 0;
@@ -2713,7 +2733,7 @@ export class UIManager {
   /** 删掉第 i 张（缩略图上的 ✕）：同样作废已有草稿（图组变了） */
   private removeEntryImage(i: number): void {
     if (!Number.isInteger(i) || i < 0 || i >= this.entryImages.length) return;
-    if (this.termGenerating) return; // 读图中不删，避免图文错配
+    if (this.termBusy) return; // 读图 / 落盘中不删，避免图文错配
     this.entryImages.splice(i, 1);
     this.renderEntryImage();
     this.draftInvalidate();
@@ -2721,10 +2741,14 @@ export class UIManager {
 
   /** 草稿失效（图组 / 输入变了）：预览收起、生成按钮复位、关联行归位到「待写入」 */
   private draftInvalidate(): void {
+    this.abortTermGenerate(); // 在途生成流同样作废：内容依据已变，它的结果不再对应屏幕上的输入
+    this.termGenerating = false;
+    this.termDraftBroken = false;
+    this.termStreamBody = '';
     this.termPreview = null;
     this.termHasDraft = false;
     this.setTermPreviewVisible(false);
-    this.setTermGenLoading(false);
+    this.refreshTermActions();
     this.resetEntryRel();
   }
 
@@ -2864,15 +2888,60 @@ export class UIManager {
     if (p) p.style.display = v ? 'flex' : 'none';
   }
 
-  private setTermGenLoading(loading: boolean): void {
+  /** 面板忙态：生成流在途 / 正在总结 / 正在落盘——三者期间都不接受新的生成、总结、写入与图片改动 */
+  private get termBusy(): boolean {
+    return this.termGenerating || this.termSummarizing || this.termSaving;
+  }
+
+  /**
+   * 底部三键可用性的**唯一刷新出口**（ADR-0152）：改完忙态调它，不要在别处直接动 disabled。
+   * - 「生成」：生成流在途时**保持可点**——再点 = 中止重开（决策 7）；只有落盘 / 总结期间才禁用。
+   * - 「总结」「确认写入」：忙态与**中断草稿**下都禁用——中断的半篇不允许落库（决策 6）。
+   * issue 327：关联分析不锁任何按钮（setEntryRelBusy 已退役），忙态只锁这三个键自己。
+   */
+  private refreshTermActions(): void {
     if (!this.termPopup) return;
     const gen = q<HTMLButtonElement>(this.termPopup, '#lit-term-generate');
-    if (gen) { gen.disabled = loading; gen.textContent = loading ? '生成中…' : (this.termHasDraft ? '重新生成' : '生成'); }
+    if (gen) {
+      gen.disabled = this.termSaving || this.termSummarizing;
+      gen.textContent = this.termGenerating ? '生成中…' : (this.termHasDraft ? '重新生成' : '生成');
+    }
+    const blocked = this.termBusy || this.termDraftBroken;
     const regen = q<HTMLButtonElement>(this.termPopup, '#lit-term-regenerate');
-    if (regen) regen.disabled = loading;
+    if (regen) regen.disabled = blocked;
     const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
-    if (save) save.disabled = loading;
-    // issue 327：关联分析不再锁定按钮（setEntryRelBusy 整套退役）——生成/总结的忙态只锁操作自身
+    if (save) save.disabled = blocked;
+  }
+
+  /**
+   * 正文区渲染：占位灰字 / 已流入正文共用同一个容器（textContent 单源）。
+   * 值没变就不动 DOM——每帧都写会让流式期间的排版反复重排。
+   */
+  private setTermContent(text: string, pending: boolean): void {
+    const el = this.termPopup ? q<HTMLElement>(this.termPopup, '#lit-term-content') : null;
+    if (!el) return;
+    if (el.textContent === text && el.classList.contains('bz-lit-term-pending') === pending) return;
+    el.classList.toggle('bz-lit-term-pending', pending);
+    el.textContent = text;
+  }
+
+  /**
+   * 属性行的「分析中…」占位（ADR-0152 决策 4）：领域 / 标题这类 AI 产出的行，
+   * 在值到达之前统一挂这一句灰字，与正文区的「正在生成…」同语气。
+   */
+  private setTermMetaPending(sel: string, text = '分析中…'): void {
+    const el = this.termPopup ? q<HTMLElement>(this.termPopup, sel) : null;
+    if (!el) return;
+    el.textContent = text;
+    el.classList.add('bz-lit-meta-pending');
+  }
+
+  /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰 */
+  private setTermMetaValue(sel: string, text: string): void {
+    const el = this.termPopup ? q<HTMLElement>(this.termPopup, sel) : null;
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove('bz-lit-meta-pending');
   }
 
   /**
@@ -3038,26 +3107,25 @@ export class UIManager {
     }
   }
 
+  /** 总结忙态（文案 + 三键可用性一并随状态走）：字段与界面只有一个入口，见 refreshTermActions */
   private setTermSummarizing(s: boolean): void {
+    this.termSummarizing = s;
     if (!this.termPopup) return;
     const regen = q<HTMLButtonElement>(this.termPopup, '#lit-term-regenerate');
-    if (regen) { regen.disabled = s; regen.textContent = s ? '总结中…' : '总结'; }
-    const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
-    if (save) save.disabled = s;
-    const gen = q<HTMLButtonElement>(this.termPopup, '#lit-term-generate');
-    if (gen) gen.disabled = s;
-    // issue 327：关联分析不再锁定按钮（原「总结结束但关联随即重跑 → 继续禁用」分支随 setEntryRelBusy 退役）
+    if (regen) regen.textContent = s ? '总结中…' : '总结';
+    this.refreshTermActions();
   }
 
-  /** 当前录入的头部标题：段落取属性卡里（可改）的标题，名词取输入框的词 */
+  /** 当前录入的头部标题：段落 / 图版取草稿里的 AI 标题（属性行已只读，无 DOM 来源），名词取输入框的词 */
   private entryHeadTitle(): string {
     if (!this.termPopup) return '';
     return this.entryTitled
-      ? (q<HTMLInputElement>(this.termPopup, '#lit-entry-meta-title')?.value ?? '').trim()
+      ? String(this.termPreview?.title ?? '').trim()
       : (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
   }
 
-  /** 属性首行是否「可改标题」态（段落 / 图版共用；名词的属性首行是只读的名词文本） */
+  /** 属性首行是否为「标题行」态（段落 / 图版用；名词的属性首行是只读的名词文本）。
+   *  ADR-0152 决策 9 后本判定不再表示「可改标题」，仅表示该态要不要显示标题行。 */
   private get entryTitled(): boolean {
     return this.entryMode === 'passage' || this.entryMode === 'image';
   }
@@ -3072,106 +3140,186 @@ export class UIManager {
   }
 
   private async onTermGenerate(): Promise<void> {
-    if (!this.termPopup || this.termGenerating) return;
+    if (!this.termPopup) return;
     const mode = this.entryMode;
     if (mode === 'image') { await this.onImageGenerate(); return; }
+    if (this.termSaving || this.termSummarizing) return; // 落盘 / 总结期间不重开生成
     const passage = mode === 'passage';
     const text = passage
       ? (q<HTMLTextAreaElement>(this.termPopup, '#lit-passage-input')?.value ?? '').trim()
       : (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
     if (!text) { notice(passage ? '请粘贴要整理的段落' : '请输入名词', 'error'); return; }
+    // 再点生成（含流式途中）= 中止在途请求并重开（ADR-0152 决策 7）：正文区立刻回到「正在生成…」，
+    // 旧草稿不留在屏上等新一轮结果——否则用户会把上一轮的半篇误读成本轮输出。
+    this.abortTermGenerate();
     this.resetEntryRel(); // issue 327：点下即断在途预演（行归「—」），新内容回来再分析
+    const ac = new AbortController();
+    this.termGenAbort = ac;
     this.termGenerating = true;
-    this.setTermGenLoading(true);
+    this.beginTermPreview();
     try {
+      const hooks: DraftHooks = { signal: ac.signal, onProgress: (f) => this.applyDraftFields(f) };
       const draft: { summary: string; domain: string; title?: string } = passage
-        ? await generatePassageDraft(text)
-        : await generateTermDraft(text);
-      this.presentTermPreview(draft);
+        ? await generatePassageDraft(text, hooks)
+        : await generateTermDraft(text, hooks);
+      if (this.termGenAbort !== ac) return; // 已被新一轮取代 / 用户已中止：这份结果作废
+      this.finishTermPreview(draft);
       // 生成出内容即起关联预演（issue 309）：**不 await** —— 面板先回到可操作态，
       // 属性区「关联」行自己走 loading → 完成显示；分析期间按钮不锁（issue 327）。
       this.runEntryRelPreview(draft.summary, this.entryHeadTitle() || text);
     } catch (e) {
-      this.noticeTermError(e);
+      if (this.termGenAbort !== ac) return; // 主动中止：静默——收场由触发方（重开 / 关窗）负责
+      this.handleTermGenFailure(e);
     } finally {
-      this.termGenerating = false;
-      this.setTermGenLoading(false);
+      // 只有仍是「当前这一股流」才复位忙态：被取代的那股不得把新一轮的忙态提前解开
+      if (this.termGenAbort === ac) {
+        this.termGenAbort = null;
+        this.termGenerating = false;
+        this.refreshTermActions();
+      }
     }
   }
 
   /**
    * 图版读图（issue 312；多图 issue 313）：图片 data URL 列表一次投给多模态模型
    * （core/ai 的 `{text, images}` 通道），出标题 / 领域 / 解读正文后与其余两态走同一套预览 + 关联预演。
+   * 流式成形与再点重开口径与名词/段落一致（ADR-0152）：点下即展开骨架，再点 = 中止在途读图并重开。
    */
   private async onImageGenerate(): Promise<void> {
-    if (!this.termPopup || this.termGenerating) return;
+    if (!this.termPopup) return;
+    if (this.termSaving || this.termSummarizing) return; // 落盘 / 总结期间不重开生成
     this.syncImageDescsFromDom(); // 描述框现值先进内存（ADR-0145：图注随读图请求喂 AI）
     const images = this.entryImages;
     if (!images.length) { notice('请先拖入或粘贴图片', 'error'); return; }
+    this.abortTermGenerate();
     this.resetEntryRel(); // issue 327：点下即断在途预演（行归「—」），新内容回来再分析
+    const ac = new AbortController();
+    this.termGenAbort = ac;
     this.termGenerating = true;
-    this.setTermGenLoading(true);
+    this.beginTermPreview();
     try {
-      const draft = await generateImageDraft(images.map((im) => im.dataUrl), images.map((im) => im.desc));
-      this.presentTermPreview(draft);
+      const hooks: DraftHooks = { signal: ac.signal, onProgress: (f) => this.applyDraftFields(f) };
+      const draft = await generateImageDraft(images.map((im) => im.dataUrl), images.map((im) => im.desc), hooks);
+      if (this.termGenAbort !== ac) return; // 已被新一轮取代 / 用户已中止：这份结果作废
+      this.finishTermPreview(draft);
       this.runEntryRelPreview(draft.summary, this.entryHeadTitle());
     } catch (e) {
-      this.noticeTermError(e);
+      if (this.termGenAbort !== ac) return; // 主动中止：静默
+      this.handleTermGenFailure(e);
     } finally {
-      this.termGenerating = false;
-      this.setTermGenLoading(false);
+      if (this.termGenAbort === ac) {
+        this.termGenAbort = null;
+        this.termGenerating = false;
+        this.refreshTermActions();
+      }
     }
   }
 
   private async onTermSummarize(): Promise<void> {
-    if (!this.termPopup || this.termSummarizing || this.termGenerating) return;
+    // 忙态（生成流 / 总结 / 落盘）与**中断草稿**都不接总结：半篇没有可精简的完整语义（ADR-0152 决策 6）
+    if (!this.termPopup || this.termBusy || this.termDraftBroken) return;
     if (!this.termPreview || !this.termPreview.body.trim()) { notice('请先生成简介', 'info'); return; }
     this.resetEntryRel(); // issue 327：点下即断在途预演（行归「—」），新内容回来再分析
-    this.termSummarizing = true;
     this.setTermSummarizing(true);
     try {
       const summarized = await summarizeTermSummary(this.termPreview.body);
       this.termPreview.body = summarized;
-      const contentEl = q<HTMLElement>(this.termPopup, '#lit-term-content');
-      if (contentEl) contentEl.textContent = summarized;
+      this.termStreamBody = summarized;
+      this.setTermContent(summarized, false);
       // 正文变了 → 关联重新分析（issue 309：重新生成 / 总结都要重跑预演）
       this.runEntryRelPreview(summarized, this.entryHeadTitle());
     } catch (e) {
       this.noticeTermError(e);
     } finally {
-      this.termSummarizing = false;
       this.setTermSummarizing(false);
     }
   }
 
-  private presentTermPreview(draft: { summary: string; domain: string; title?: string }): void {
-    this.termPreview = { domain: draft.domain, body: draft.summary, title: draft.title };
-    this.termHasDraft = true;
+  /** 中止在途生成流（ADR-0152 决策 7）：先置空句柄再 abort——它的收尾据此被序号守卫拦掉，
+   *  不会把「用户自己关的窗 / 自己触发的重生成」误报成「生成中断」。 */
+  private abortTermGenerate(): void {
+    const ac = this.termGenAbort;
+    this.termGenAbort = null;
+    ac?.abort();
+  }
+
+  /**
+   * 点下即开界面（ADR-0152 决策 4）：预览区立刻展开，属性行先给「用户输入侧」的值（名词 / 日期），
+   * AI 产出侧（领域 / 标题）挂「分析中…」，正文区挂「正在生成…」。
+   * 生成期间界面必须在位——这是「界面立刻在位、内容依次到位」的前半句。
+   * 注意这里**不设** termPreview：草稿仍以收尾的 parseAiJson 结果为准，界面提前展开不等于草稿提前成立。
+   */
+  private beginTermPreview(): void {
     if (!this.termPopup) return;
+    this.termStreamBody = '';
+    this.termDraftBroken = false;
     if (this.entryTitled) {
-      // 段落 / 图版：AI 自动标题写进属性首行（可改）
-      const titleInput = q<HTMLInputElement>(this.termPopup, '#lit-entry-meta-title');
-      if (titleInput) titleInput.value = draft.title || '';
+      this.setTermMetaPending('#lit-entry-meta-title');
     } else {
       const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
-      const termEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-term');
-      if (termEl) termEl.textContent = term || '—';
+      this.setTermMetaValue('#lit-term-meta-term', term || '—');
     }
-    const domainEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-domain');
-    if (domainEl) domainEl.textContent = draft.domain || '—';
-    const dateEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-date');
-    if (dateEl) dateEl.textContent = dateStamp();
-    const contentEl = q<HTMLElement>(this.termPopup, '#lit-term-content');
-    if (contentEl) contentEl.textContent = draft.summary;
+    this.setTermMetaPending('#lit-term-meta-domain');
+    this.setTermMetaValue('#lit-term-meta-date', dateStamp());
+    this.setTermContent('正在生成…', true);
+    this.setTermPreviewVisible(true);
+    this.refreshTermActions();
+    // 展开时滚一次（ADR-0152 决策 8：流式期间不自动跟随，否则会抢走用户自己的滚动位置）
+    const prev = q<HTMLElement>(this.termPopup, '#lit-term-preview');
+    prev?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  /**
+   * 流式字段到达（ADR-0152 决策 3/11）：正文逐字写，领域与标题到达即填。
+   * 抽取器对「还没到的字段」给 null、对「到了但是空」给空串——两者不可混为一谈，故都按 null 判定。
+   */
+  private applyDraftFields(f: DraftFields): void {
+    if (!this.termPopup) return;
+    if (f.domain !== null) this.setTermMetaValue('#lit-term-meta-domain', f.domain || '—');
+    if (this.entryTitled && f.title !== null) this.setTermMetaValue('#lit-entry-meta-title', f.title || '—');
+    if (f.summary !== null) {
+      this.termStreamBody = f.summary;
+      this.setTermContent(f.summary, false);
+    }
+  }
+
+  /**
+   * 草稿收尾：流式只作用于渲染，草稿对象仍由收尾结果落定（保证「预览所见 == 落盘所写」）。
+   * 这里用终值再填一遍——流式路径下大多早已到位，非流式降级路径下这才是唯一一次填充。
+   */
+  private finishTermPreview(draft: { summary: string; domain: string; title?: string }): void {
+    this.termPreview = { domain: draft.domain, body: draft.summary, title: draft.title };
+    this.termHasDraft = true;
+    this.termStreamBody = draft.summary;
+    this.termDraftBroken = false;
+    if (!this.termPopup) return;
+    if (this.entryTitled) this.setTermMetaValue('#lit-entry-meta-title', draft.title || '—');
+    this.setTermMetaValue('#lit-term-meta-domain', draft.domain || '—');
+    this.setTermContent(draft.summary, false);
     // 新草稿 = 关联行回到起点，上一次的写入出口与在途预演一并作废
     this.resetEntryRel();
-    this.setTermPreviewVisible(true);
-    const prev = q<HTMLElement>(this.termPopup, '#lit-term-preview');
-    prev?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' }); // 移动端软键盘下让预览进入视口
+    this.refreshTermActions();
+  }
+
+  /**
+   * 生成失败分流（ADR-0152 决策 6）：已经流进正文 → 算「中断」——文字保留可见、草稿标记为不可写；
+   * 一个字都没到 → 常规生成失败报错（骨架留在已展开态，可直接再点生成）。
+   * 用户主动中止不会走到这里（由调用方的句柄守卫拦掉）。
+   */
+  private handleTermGenFailure(e: unknown): void {
+    if (this.termStreamBody) {
+      this.termDraftBroken = true;
+      notice('生成中断：已保留收到的内容，请重新生成后再写入', 'error');
+    } else {
+      this.noticeTermError(e);
+    }
+    this.refreshTermActions();
   }
 
   private async onTermConfirm(): Promise<void> {
-    if (!this.termPopup || this.termGenerating) return;
+    if (!this.termPopup || this.termBusy) return;
+    // 中断草稿不可写（ADR-0152 决策 6）：半篇正文宁可留在屏上，也不落进文献盒
+    if (this.termDraftBroken) { notice('生成中断：请重新生成后再写入', 'error'); return; }
     const mode = this.entryMode;
     const source = this.termSource; // 来源随确认时刻的值落库（ADR-0116）
     if (!this.termPreview) { notice('请先点击「生成」获取预览', 'info'); return; }
@@ -3180,7 +3328,8 @@ export class UIManager {
     let term = '';
     let title = '';
     if (this.entryTitled) {
-      title = (q<HTMLInputElement>(this.termPopup, '#lit-entry-meta-title')?.value ?? '').trim();
+      // 标题行已只读（ADR-0152 决策 9）：值只从草稿取，不再回读 DOM
+      title = String(this.termPreview.title ?? '').trim();
       if (!title) { notice('标题不能为空', 'error'); return; }
     } else {
       term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
@@ -3195,8 +3344,8 @@ export class UIManager {
     const images = this.entryImages;
     if (mode === 'image' && !images.length) { notice('图片已丢失，请重新拖入', 'error'); return; }
     const onCreated = this.entryOnCreated; // await 前捕获（hideTermEntry 会复位回调）
-    this.termGenerating = true;
-    this.setTermGenLoading(true);
+    this.termSaving = true;
+    this.refreshTermActions();
     const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
     if (save) save.textContent = '写入中…';
     try {
@@ -3248,13 +3397,21 @@ export class UIManager {
     } catch (e) {
       this.noticeTermError(e);
     } finally {
-      this.termGenerating = false;
+      this.termSaving = false;
       if (save) save.textContent = '确认写入';
-      this.setTermGenLoading(false);
+      this.refreshTermActions();
     }
   }
 
   hideTermEntry(): void {
+    // 面板一关即在途生成流中止（ADR-0152 决策 7：关窗走二次确认，**用户确认之后**才走到这里；
+    // 取消关闭 ⇒ 请求继续跑）。忙态一并归零——之后到达的那股流由句柄守卫丢弃，不改任何状态。
+    this.abortTermGenerate();
+    this.termGenerating = false;
+    this.termSaving = false;
+    this.termSummarizing = false;
+    this.termDraftBroken = false;
+    this.termStreamBody = '';
     this.termPreview = null;
     this.entryOnCreated = null;
     this.resetEntryRel();
@@ -3273,7 +3430,7 @@ export class UIManager {
    */
   private entryDirty(): boolean {
     if (!this.termPopup) return false;
-    if (this.termGenerating || this.termPreview) return true;
+    if (this.termBusy || this.termPreview || this.termDraftBroken) return true;
     if (this.entryMode === 'image') return this.entryImages.length > 0;
     const el = this.entryMode === 'passage'
       ? q<HTMLTextAreaElement>(this.termPopup, '#lit-passage-input')
@@ -3327,6 +3484,7 @@ export class UIManager {
   }
 
   destroy(): void {
+    this.abortTermGenerate(); // 在途生成流随面板销毁中止
     this.clearRunTimer();
     this.runState.clear();
     if (this.termSrcTimer) { clearTimeout(this.termSrcTimer); this.termSrcTimer = null; }
