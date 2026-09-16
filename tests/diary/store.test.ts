@@ -12,6 +12,8 @@ import {
   setDiaryDataMap,
   isDiaryReadFailure,
   DiaryFileReadError,
+  rekeyDiaryMapPath,
+  dropDiaryMapPath,
 } from '../../src/diary/store';
 import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -283,5 +285,51 @@ describe('子目录落点（opts.filePath 只取其目录）', () => {
     await addEntry(DATE, '09:00', ['日记'], '新条目', { filePath: NESTED });
     expect(vault.files.get('我的/日记/旧/2401010900.md')).toContain('新条目');
     expect(vault.files.has(E2)).toBe(false);
+  });
+});
+
+describe('内存路径同步（issue 339：vault:md-renamed / vault:md-deleted 纯内存口）', () => {
+  /** 预置 map 快照：oldPath 一条 + 无关路径一条 */
+  function seedMap() {
+    const mk = (path: string, content: string): any => ({
+      date: DATE, time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖',
+      content, filename: path, filePath: path, lineNumber: 0,
+    });
+    const entries = [mk(E1, '命中'), mk('我的/日记/2401020800.md', '无关')];
+    setDiaryDataMap(new Map([[E1, [entries[0]]], ['我的/日记/2401020800.md', [entries[1]]]]));
+    return entries;
+  }
+
+  it('rekeyDiaryMapPath：键迁移 + 条目 filePath/filename 重定向；无关键不动；返回是否改动', () => {
+    const entries = seedMap();
+    const next = '我的/日记/2401010930.md';
+    expect(rekeyDiaryMapPath(E1, next)).toBe(true);
+    expect(diaryDataMap!.has(E1)).toBe(false);
+    expect(diaryDataMap!.get(next)![0]).toBe(entries[0]);
+    expect(entries[0].filePath).toBe(next);
+    expect(entries[0].filename).toBe(next);
+    expect(diaryDataMap!.has('我的/日记/2401020800.md')).toBe(true); // 无关键原样
+    expect(entries[1].filePath).toBe('我的/日记/2401020800.md');
+  });
+
+  it('rekeyDiaryMapPath：无 map / 无命中键 / 同路径 → 空转返回 false，不误建键', () => {
+    setDiaryDataMap(null);
+    expect(rekeyDiaryMapPath(E1, E2)).toBe(false); // 无 map
+    seedMap();
+    expect(rekeyDiaryMapPath('我的/日记/不存在.md', E2)).toBe(false); // 无命中键
+    expect(rekeyDiaryMapPath(E1, E1)).toBe(false); // 同路径
+    expect(diaryDataMap!.has(E2)).toBe(false);
+    expect(diaryDataMap!.has(E1)).toBe(true);
+  });
+
+  it('dropDiaryMapPath：命中键移除返回 true；无 map/无命中返回 false', () => {
+    setDiaryDataMap(null);
+    expect(dropDiaryMapPath(E1)).toBe(false); // 无 map
+    seedMap();
+    expect(dropDiaryMapPath(E1)).toBe(true);
+    expect(diaryDataMap!.has(E1)).toBe(false);
+    expect(diaryDataMap!.size).toBe(1); // 无关键保留
+    expect(dropDiaryMapPath(E1)).toBe(false); // 已移除
+    expect(dropDiaryMapPath('')).toBe(false); // 空路径
   });
 });
