@@ -46,7 +46,7 @@ import { railThumbKey, railThumbKeepKeys, pruneRailThumbs, getRailThumb, putRail
 import { wallPanelHTML, ACT_ICON, KIND_ICON, mimeOfMediaName, dayStats, statHtml, lbCaption, lbSubText, mediaCapHtml, WEEK } from './render';
 import { openAddDialog, showTagPicker } from './ui/dialogs';
 import { jumpToDiaryEntry, copyDiaryLink, showConfirm } from './ui/entry-actions';
-import { findDiaryEntry, removeDiaryEntries, isUnparsedRefusal, isDiaryReadFailure } from './store';
+import { findDiaryEntry, removeDiaryEntries, isUnparsedRefusal, isDiaryReadFailure, rekeyDiaryMapPath, dropDiaryMapPath } from './store';
 import { isUnlocked, loadEncryptedEntries, encryptEntry, reclassifyEntry, deleteEncryptedEntry } from './encrypt';
 
 /** 右键菜单/抽屉动作 → lucide 图标名（增强包 #4/#7；ItemAction.icon 走 Obsidian IconName；
@@ -219,6 +219,8 @@ export class DiaryAppController {
   private _unlockOff: (() => void) | null = null;
   /** 写链路事件订阅退订（show 挂 / hide+cleanup 摘；entry-added 等 diary 域事件防抖回刷） */
   private _writeOff: (() => void) | null = null;
+  /** 引用同步订阅退订（issue 339：vault:md-renamed/deleted 内存路径同步；show 挂 / hide+cleanup 摘） */
+  private _refSyncOff: (() => void) | null = null;
   /** 增强 #11：跳走前捕获的墙视图状态（回墙恢复；一次性消费） */
   private _restore: WallViewState | null = null;
   /** 增强 #8：加密媒体解密结果缓存（noteId|kind|name → dataURL promise；失败也缓存避免重复解密风暴） */
@@ -2123,6 +2125,7 @@ export class DiaryAppController {
     this.subscribeVaultModify();
     this.subscribeUnlockEvents(); // 增强 #9：上锁实时归位
     this.subscribeWriteEvents(); // 写链路域事件防抖回刷（含整文件删除等 vault delete 无 modify 的路径）
+    this.subscribeRefSync(); // issue 339：改名/删除内存路径同步
     // 增强 #11：loadAndRender 完成后一次性恢复跳走前的筛选与滚动位置
     void this.loadAndRender().then(() => this.applyRestore());
   }
@@ -2138,6 +2141,7 @@ export class DiaryAppController {
     this.unsubscribeVaultModify();
     this.unsubscribeUnlockEvents();
     this.unsubscribeWriteEvents();
+    this.unsubscribeRefSync(); // issue 339：摘引用同步订阅
   }
 
   /**
@@ -2193,6 +2197,59 @@ export class DiaryAppController {
     if (this._unlockOff) {
       this._unlockOff();
       this._unlockOff = null;
+    }
+  }
+
+  /**
+   * 引用同步（issue 339）：墙开着时条目文件改名/删除 → 内存条目与 diaryDataMap 键同步（不落盘，
+   * 快照回写机制不动；重开全量重读自愈兜底不变）。改名后 filePath/filename 指向新路径——
+   * 跳转与媒体解析不再 stale；删除条目移出内存，墙自动反映。改出墙目录按删除口径移出
+   * （条目不再是墙内容，与 obsidian-adapter movedOut 同语义）。
+   */
+  private subscribeRefSync(): void {
+    if (this._refSyncOff) return;
+    const inWallDirs = (p: string) =>
+      [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()].some(
+        (d) => p.startsWith(d + '/') || p === d + '.md'
+      );
+    const offRename = onDomainEvent<{ oldPath: string; newPath: string }>('vault:md-renamed', (evt) => {
+      const oldPath = (evt as { oldPath?: string } | null)?.oldPath || '';
+      const newPath = (evt as { newPath?: string } | null)?.newPath || '';
+      if (!oldPath || !newPath || oldPath === newPath) return;
+      if (this.root?.style.display !== 'flex' || !inWallDirs(oldPath)) return;
+      const movedOut = !inWallDirs(newPath);
+      if (movedOut) dropDiaryMapPath(oldPath);
+      else rekeyDiaryMapPath(oldPath, newPath);
+      let touched = false;
+      for (const e of this.entries) {
+        if (e.filePath !== oldPath) continue;
+        touched = true;
+        if (movedOut) continue; // 移出墙目录：条目留待下方统一剔除
+        e.filePath = newPath;
+        if (e.filename === oldPath) e.filename = newPath;
+      }
+      if (movedOut) this.entries = this.entries.filter((e) => e.filePath !== oldPath);
+      if (movedOut || touched) this.renderAll();
+    });
+    const offDelete = onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => {
+      const path = (evt as { path?: string } | null)?.path || '';
+      if (!path) return;
+      if (this.root?.style.display !== 'flex' || !inWallDirs(path)) return;
+      const hadMap = dropDiaryMapPath(path);
+      const before = this.entries.length;
+      this.entries = this.entries.filter((e) => e.filePath !== path);
+      if (hadMap || this.entries.length !== before) this.renderAll();
+    });
+    this._refSyncOff = () => {
+      offRename();
+      offDelete();
+    };
+  }
+
+  private unsubscribeRefSync(): void {
+    if (this._refSyncOff) {
+      this._refSyncOff();
+      this._refSyncOff = null;
     }
   }
 
@@ -2477,6 +2534,7 @@ export class DiaryAppController {
     this.unsubscribeVaultModify(); // DW3：摘 modify 订阅
     this.unsubscribeUnlockEvents(); // 增强 #9：摘解锁状态订阅
     this.unsubscribeWriteEvents(); // 写链路域事件：摘防抖回刷订阅
+    this.unsubscribeRefSync(); // issue 339：摘引用同步订阅
     document.removeEventListener('keydown', this._onLbKeydown); // 增强 #1：摘方向键连看
     if (this._mql && this._onMqChange) {
       this._mql.removeEventListener('change', this._onMqChange); // issue 217 F3：摘断点切换
