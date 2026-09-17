@@ -11,7 +11,7 @@ import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-p
 import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { MemoData } from '../../src/memo/data';
-import { CAL_WEEKDAYS, calHeadHtml, calGridHtml, panelShellHtml, type CalCell } from '../../src/memo/render';
+import { CAL_WEEKDAYS, calEmptyHtml, calHeadHtml, calGridHtml, calStatsHtml, panelShellHtml, type CalCell } from '../../src/memo/render';
 import { M, resetMemoState } from '../../src/memo/state';
 import { openMemoPanel, closeMemoPanel } from '../../src/memo/ui';
 
@@ -59,6 +59,21 @@ describe('issue 355 · 月历纯层 markup 口径', () => {
     expect(h).toContain('data-memo-view="list"');
     expect(h).toContain('data-memo-view="calendar"');
   });
+
+  it('calStatsHtml：月度概览统计行 markup（issue 355 真机回归）', () => {
+    const h = calStatsHtml(3, 1);
+    expect(h).toContain('bz-memo-cal-stats');
+    expect(h).toContain('本月到期');
+    expect(h).toContain('3');
+    expect(h).toContain('今日');
+    expect(h).toContain('1');
+  });
+
+  it('calEmptyHtml：空月人话提示 markup（issue 355 真机回归）', () => {
+    const h = calEmptyHtml();
+    expect(h).toContain('bz-memo-cal-empt');
+    expect(h).toContain('本月没有到期事项');
+  });
 });
 
 // ---------- UI 层 ----------
@@ -74,8 +89,12 @@ const SETTINGS = {
   cinemaFolderPath: '我的/影视',
 };
 
-describe('issue 355 · UI（页签切换/到期标记/点日清单/改期）', () => {
+describe('issue 355 · UI（页签切换/到期标记/点日清单/改期/统计与空月）', () => {
   let vault: MockVault;
+
+  // 假时钟钉在当月 15 日 12:00：消除三类时敏翻车（今日条目 due 时刻已过翻 overdue 档、
+  // 月初跑 ov=-3d 跨月、月末跑 ft=+5d 跨月）。只 fake Date，setTimeout/vi.waitFor 走真计时。
+  const FIXED_NOW = moment().startOf('month').date(15).hour(12).minute(0).second(0).millisecond(0).toDate();
 
   function seed(items: Record<string, unknown>[]): { app: ReturnType<typeof mockAppWithVault> } {
     vault = new MockVault();
@@ -94,11 +113,13 @@ describe('issue 355 · UI（页签切换/到期标记/点日清单/改期）', (
     resetMemoState();
     document.body.innerHTML = '';
     MockPlatform.isMobile = false;
+    vi.useFakeTimers({ toFake: ['Date'], now: FIXED_NOW });
   });
   afterEach(() => {
     closeMemoPanel();
     MockPlatform.isMobile = false;
     document.body.innerHTML = '';
+    vi.useRealTimers();
   });
 
   function at(dayOffset: number, hm: string): string {
@@ -108,7 +129,8 @@ describe('issue 355 · UI（页签切换/到期标记/点日清单/改期）', (
   function seedEvents(): { app: ReturnType<typeof mockAppWithVault> } {
     return seed([
       { id: 'ov', title: '逾期事项', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: null, due: at(-3, '09:00') },
-      { id: 'td', title: '今日事项', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: null, due: at(0, '09:00') },
+      // 今日条目时刻取 18:00（> 假时钟 12:00）→ today 档稳定成立
+      { id: 'td', title: '今日事项', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: null, due: at(0, '18:00') },
       { id: 'ft', title: '未来事项', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: null, due: at(5, '09:00') },
       // 已完成（不出 chip）+ 无 due（不进月历）
       { id: 'dn', title: '已完成事项', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: at(-1, '10:00'), due: at(0, '08:00') },
@@ -219,7 +241,7 @@ describe('issue 355 · UI（页签切换/到期标记/点日清单/改期）', (
       const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
       const td = raw.find((i: any) => i.id === 'td');
       expect(td.due.slice(0, 10)).toBe(futureKey);
-      expect(td.due.slice(11)).toBe('09:00:00'); // 时刻保留
+      expect(td.due.slice(11)).toBe('18:00:00'); // 时刻保留
     });
   });
 
@@ -254,5 +276,70 @@ describe('issue 355 · UI（页签切换/到期标记/点日清单/改期）', (
     } finally {
       MockPlatform.isMobile = false;
     }
+  });
+
+  // ---------- 统计行与空月提示（issue 355 真机回归：格子全空且无解释） ----------
+
+  it('月度概览统计行：口径与格子 chip 同源（完成/无 due 不计入），有条目月不出空态', async () => {
+    const { app } = seedEvents();
+    openCal(app);
+    await vi.waitFor(() => {
+      expect(M.items.length).toBe(5);
+    });
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-cal-stats')).toBeTruthy();
+    });
+    const stats = document.querySelector('.bz-memo-cal-stats')!.textContent!;
+    expect(stats).toContain('本月到期 3 条'); // ov + td + ft
+    expect(stats).toContain('今日 1 条'); // 仅 td
+    // 有条目月不出现空态提示
+    expect(document.querySelector('.bz-memo-cal-empt')).toBeNull();
+  });
+
+  it('空月人话提示：全库无 due 条目时格子全空但有统计与解释，翻月仍成立', async () => {
+    // 真机复现场景：多数备忘录随手记不设截止 → 修复前月历一片空白且无任何解释
+    const { app } = seed([
+      { id: 'nd1', title: '无截止一', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: null, due: null },
+      { id: 'nd2', title: '无截止二', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: null, due: null },
+    ]);
+    openCal(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-cal-grid')).toBeTruthy();
+    });
+    // 格子确无 chip（无 due 不进月历——口径本身正确，缺的是解释）
+    expect(document.querySelector('[data-memo-cal-item]')).toBeNull();
+    const stats = document.querySelector('.bz-memo-cal-stats')!.textContent!;
+    expect(stats).toContain('本月到期 0 条');
+    expect(stats).toContain('今日 0 条');
+    // 空态人话提示
+    expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('本月没有到期事项');
+    // 翻下月（也无条目）→ 空态与零统计仍在
+    (document.querySelector('[data-memo-cal-next]') as HTMLElement).click();
+    expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('本月没有到期事项');
+    expect(document.querySelector('.bz-memo-cal-stats')?.textContent).toContain('本月到期 0 条');
+  });
+
+  it('跨月统计联动：下月条目不进当月格（当月出空态），翻月后 chip 与统计齐现', async () => {
+    const nextMonthDay = moment().add(1, 'month').date(10).format('YYYY-MM-DD 09:00:00');
+    const { app } = seed([
+      { id: 'nm', title: '下月事项', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: null, due: nextMonthDay },
+    ]);
+    openCal(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-cal-grid')).toBeTruthy();
+    });
+    // 当月：零条目 → 空态 + 统计 0（含今日 0）
+    expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('本月没有到期事项');
+    expect(document.querySelector('.bz-memo-cal-stats')?.textContent).toContain('本月到期 0 条');
+    expect(document.querySelector('[data-memo-cal-item="nm"]')).toBeNull();
+    // 翻下月：chip 出现 + 统计联动为 1，空态退场
+    (document.querySelector('[data-memo-cal-next]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-cal-item="nm"]')).toBeTruthy();
+    });
+    expect((document.querySelector('[data-memo-cal-item="nm"]') as HTMLElement).className).toContain('is-future');
+    expect(document.querySelector('.bz-memo-cal-stats')?.textContent).toContain('本月到期 1 条');
+    expect(document.querySelector('.bz-memo-cal-stats')?.textContent).toContain('今日 0 条');
+    expect(document.querySelector('.bz-memo-cal-empt')).toBeNull();
   });
 });

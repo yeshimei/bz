@@ -1,4 +1,4 @@
-/* 源指纹 a239c32ba7a1d88c · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 07cf60080bfbf0a4 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {
@@ -27,8 +27,10 @@ var BZR_memo = (() => {
     MEMO_ICONS: () => MEMO_ICONS,
     SCENE_DOTS: () => SCENE_DOTS,
     SCENE_PSEUDO_ICONS: () => SCENE_PSEUDO_ICONS,
+    calEmptyHtml: () => calEmptyHtml,
     calGridHtml: () => calGridHtml,
     calHeadHtml: () => calHeadHtml,
+    calStatsHtml: () => calStatsHtml,
     cardHtml: () => cardHtml,
     checkHtml: () => checkHtml,
     checklistHtml: () => checklistHtml,
@@ -278,6 +280,12 @@ var BZR_memo = (() => {
       </div>`;
     }).join("");
     return `<div class="bz-memo-cal-grid">${wds}${grid}</div>`;
+  }
+  function calStatsHtml(monthCount, todayCount) {
+    return `<div class="bz-memo-cal-stats">本月到期 <span class="bz-memo-cal-stats-n">${monthCount}</span> 条 · 今日 <span class="bz-memo-cal-stats-n">${todayCount}</span> 条</div>`;
+  }
+  function calEmptyHtml() {
+    return `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">本月没有到期事项</div><div class="bz-memo-cal-empt-d">设了截止时间的备忘录才会出现在月历上</div></div>`;
   }
   return __toCommonJS(render_exports);
 })();
