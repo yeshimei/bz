@@ -59,13 +59,15 @@ describe('范围解析（issue 362）', () => {
     expect(notesInFolders(app, [])).toEqual([]);
   });
 
-  it('resolveScopeNotes：note 范围空路径 = 空清单；有路径 = 单篇', () => {
+  it('resolveScopeNotes：note 范围空路径 = 空清单；有路径 = 单篇；不存在的路径过滤为空（审查修复）', () => {
     const vault = new MockVault();
     vault.files.set('A.md', 'x');
     vault.files.set('sub/B.md', 'x');
     const app = mockAppWithVault(vault);
     expect(resolveScopeNotes(app, 'note', [], '')).toEqual([]);
     expect(resolveScopeNotes(app, 'note', [], 'sub/B.md')).toEqual(['sub/B.md']);
+    // 手输路径不存在（被移动/改名/拼错）→ 过滤为空清单，由面板给人话提示
+    expect(resolveScopeNotes(app, 'note', [], 'GHOST.md')).toEqual([]);
     expect(resolveScopeNotes(app, 'all', [], '')).toEqual(['A.md', 'sub/B.md']);
   });
 });
@@ -106,7 +108,7 @@ describe('范围题库读取（collectQuestionsForNotes）', () => {
     setSettingsProvider(() => ({} as any));
   });
 
-  it('只读范围内笔记的题，带 notePath 供会话出库定位', async () => {
+  it('只读范围内笔记的题，带 notePath 供会话出库定位（题库整本入参——循环外一次读盘）', async () => {
     const vault = new MockVault();
     const app = mockAppWithVault(vault);
     setApp(app);
@@ -115,11 +117,13 @@ describe('范围题库读取（collectQuestionsForNotes）', () => {
     await qm.saveQuestionsForNote(app, 'B.md', [q('B1')]);
     expect(vault.files.get(QUIZ_FILE_PATH)).toBeTruthy();
 
-    const out = await collectQuestionsForNotes(app, qm, ['A.md']);
+    // 审查修复：调用方 loadQuiz 一次传入整本题库，函数内零 IO
+    const bank = await qm.loadQuiz(app);
+    const out = await collectQuestionsForNotes(bank, ['A.md']);
     expect(out.map((x) => x.question)).toEqual(['A1?', 'A2?']);
     expect(out.every((x) => x.notePath === 'A.md')).toBe(true);
 
-    const none = await collectQuestionsForNotes(app, qm, ['C.md']);
+    const none = await collectQuestionsForNotes(bank, ['C.md']);
     expect(none).toEqual([]);
   });
 });

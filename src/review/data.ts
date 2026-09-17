@@ -11,6 +11,7 @@ import type { App, TFile } from 'obsidian';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import { FSRS_FIRST_INTERVALS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
+import { clipWToBounds } from './fit';
 
 export const REVIEW_FILE_PATH = 'CONFIG/STORAGE/review.json';
 
@@ -229,7 +230,10 @@ export async function loadFittedParams(app: App): Promise<FittedParams | null> {
   if (!data || !Array.isArray(data.w) || data.w.length < 8) return null;
   // 全参契约完整性：声称 v2 但权重不足 19 维 → 视为字段不齐（null 回退默认，与 w<8 同口径）
   if (data.version === FIT_PARAMS_VERSION.FULL && data.w.length < 19) return null;
-  return data as FittedParams;
+  // 脏值防御（审查修复）：任一维非有限数 → 整文件视为坏档（null 回退默认，防 markReview RangeError /
+  // NaN 毒化记忆曲线）；有限值逐维钳进 W_BOUNDS（与拟合落盘同界——手改文件越界值不再直灌调度）
+  if (!data.w.every((x: unknown) => Number.isFinite(x))) return null;
+  return { ...(data as FittedParams), w: clipWToBounds(data.w) };
 }
 
 export async function saveFittedParams(app: App, fit: FittedParams): Promise<void> {

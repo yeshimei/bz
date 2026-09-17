@@ -129,29 +129,42 @@ describe('统计弹窗拟合档位标注（issue 361）', () => {
     closeStatsModal();
   });
 
-  it('全参拟合档（version 2）→「全参拟合」+ 样本量人话标注', async () => {
+  it('全参拟合档（version 2）→ 人话「按你的记录定制」+ title 悬浮注解 + 样本量', async () => {
     const { reviewApp } = await import('../../src/review/app');
     reviewApp._fitMeta = { w: [], fitAt: new Date(Date.now() - 2 * 86400e3).toISOString(), fitCount: 356, full: true, version: 2 };
     await showStatsModal({ vault: { getAbstractFileByPath: () => null } } as any, dm);
-    const text = document.getElementById('review-stats-body')!.textContent || '';
-    expect(text).toContain('全参拟合');
+    const body = document.getElementById('review-stats-body')!;
+    const text = body.textContent || '';
+    expect(text).toContain('记忆曲线：按你的记录定制'); // 人话档位（审查体验修复：不再「全参拟合」天书）
     expect(text).toContain('样本 356 条');
-    expect(text).not.toContain('基础拟合');
+    expect(text).not.toContain('简化版');
+    expect(text).not.toContain('全参拟合');
+    // title 悬浮注解挂在档位 chip 上
+    const chip = [...body.querySelectorAll('.bz-stats-inline-chip')].find((el) =>
+      (el.textContent || '').includes('按你的记录定制')
+    ) as HTMLElement;
+    expect(chip?.title).toContain('19 个记忆参数');
   });
 
-  it('基础八参档 →「基础拟合」', async () => {
+  it('基础八参档 → 人话「简化版」+ title 注解', async () => {
     const { reviewApp } = await import('../../src/review/app');
     reviewApp._fitMeta = { w: [], fitAt: new Date().toISOString(), fitCount: 150, full: false, version: 1 };
     await showStatsModal({ vault: { getAbstractFileByPath: () => null } } as any, dm);
     const text = document.getElementById('review-stats-body')!.textContent || '';
-    expect(text).toContain('基础拟合');
-    expect(text).not.toContain('全参拟合');
+    expect(text).toContain('记忆曲线：简化版');
+    expect(text).not.toContain('按你的记录定制');
+    expect(text).not.toContain('基础拟合');
   });
 
-  it('无拟合文件 →「默认参数」兜底文案', async () => {
+  it('无拟合文件 →「默认参数」兜底文案（带自动拟合预告 title）', async () => {
     await showStatsModal({ vault: { getAbstractFileByPath: () => null } } as any, dm);
-    const text = document.getElementById('review-stats-body')!.textContent || '';
+    const body = document.getElementById('review-stats-body')!;
+    const text = body.textContent || '';
     expect(text).toContain('默认参数');
-    expect(text).not.toContain('全参拟合');
+    expect(text).not.toContain('按你的记录定制');
+    const chip = [...body.querySelectorAll('.bz-stats-inline-chip')].find((el) =>
+      (el.textContent || '').includes('默认参数')
+    ) as HTMLElement;
+    expect(chip?.title).toContain('自动拟合');
   });
 });

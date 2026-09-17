@@ -197,19 +197,40 @@ describe('replayLogLikelihood', () => {
     expect(Math.abs(grad[2])).toBeGreaterThan(0); // good 初始稳定性有信号
     expect(Math.abs(grad[8])).toBeGreaterThan(0); // 成功演化有信号
   });
+
+  it('拟合-调度一致（审查修复回归）：回放起点 S0/D0 与推进式同构于调度 enteringFsrs/nextInterval，w[4]=4.93 全链不被钳', () => {
+    const w = [...DEFAULT_W]; // w[4] = 4.93（旧 W_BOUNDS[4]=[0,1] 会钳——既有缺陷回归锚）
+    const fsrs = new FSRS(w);
+    // again 进入 FSRS：D0 = w[4]，与调度 scheduleNext enteringFsrs 存盘口径同源（FSRS.initD 单源）
+    expect(fsrs.initD('again')).toBe(4.93);
+    expect(fsrs.initD('good')).toBe(0.3);
+    const series: ReplaySeries[] = [{ initRating: 0, pairs: [{ t: 5, rating: 3 }, { t: 12, rating: 0 }] }];
+    // 按调度链同式（initS → initD → R → nextInterval 推进）手推累计对数似然，与回放逐位一致
+    let S = fsrs.initS('again');
+    let D = fsrs.initD('again');
+    let ll = 0;
+    for (const p of series[0].pairs) {
+      const R = fsrs.R(p.t, S);
+      ll += Math.log(Math.max(1e-9, Math.min(1 - 1e-9, p.rating >= 2 ? R : 1 - R)));
+      const next = fsrs.nextInterval(S, D, NAMES[p.rating], R);
+      S = next.S;
+      D = next.D;
+    }
+    expect(replayLogLikelihood(w, series)).toBeCloseTo(ll, 10);
+  });
 });
 
 // ==================== fitFSRSParams：收敛 / 不劣化 / 护栏 ====================
 
 describe('fitFSRSParams（合成数据收敛质量，issue 361）', () => {
-  it('19 维收敛：全参拟合显著改善似然、不劣化、贴近真模型、迭代有上限', () => {
+  it('19 维收敛：全参拟合显著改善似然、不劣化、贴近真模型、迭代有上限', async () => {
     const items = synthItems(42, W_TRUE, { items: 60, reviews: 6 }); // 360 对 ≥300
     const series = buildReplaySeriesFromItems(items);
     const initLL = replayLogLikelihood([...DEFAULT_W], series);
     const trueLL = replayLogLikelihood(W_TRUE, series);
 
     const t0 = Date.now();
-    const res = fitFSRSParams(series, { full: true });
+    const res = await fitFSRSParams(series, { full: true });
     const ms = Date.now() - t0;
     console.info(`[issue 361] 全参拟合（360 对）：${ms}ms，${res.iterations} 轮，LL ${initLL.toFixed(1)} → ${res.logLikelihood.toFixed(1)}（真模型 ${trueLL.toFixed(1)}）`);
 
@@ -229,13 +250,13 @@ describe('fitFSRSParams（合成数据收敛质量，issue 361）', () => {
     for (const i of [7, 15, 16, 18]) expect(res.w[i]).toBe(DEFAULT_W[i]);
   });
 
-  it('不同规模：基础档（120 对）/ 全参档（840 对）都不劣化，全参档贴真模型', () => {
+  it('不同规模：基础档（120 对）/ 全参档（840 对）都不劣化，全参档贴真模型', async () => {
     for (const [seed, n, reviews] of [[11, 20, 6], [13, 120, 7]] as const) {
       const series = buildReplaySeriesFromItems(synthItems(seed, W_TRUE, { items: n, reviews }));
       const pairs = series.reduce((a, s) => a + s.pairs.length, 0);
       const initLL = replayLogLikelihood([...DEFAULT_W], series);
       const t0 = Date.now();
-      const res = fitFSRSParams(series, { full: pairs >= 300 });
+      const res = await fitFSRSParams(series, { full: pairs >= 300 });
       const ms = Date.now() - t0;
       if (pairs >= 300) console.info(`[issue 361] 全参拟合（${pairs} 对）：${ms}ms，${res.iterations} 轮`);
       expect(res.logLikelihood).toBeGreaterThanOrEqual(initLL - 1e-6); // 不劣化
@@ -246,32 +267,32 @@ describe('fitFSRSParams（合成数据收敛质量，issue 361）', () => {
     }
   });
 
-  it('噪声鲁棒：10% 评级翻转下拟合仍不劣化', () => {
+  it('噪声鲁棒：10% 评级翻转下拟合仍不劣化', async () => {
     const series = buildReplaySeriesFromItems(synthItems(99, W_TRUE, { items: 60, reviews: 6, flipRate: 0.1 }));
     const initLL = replayLogLikelihood([...DEFAULT_W], series);
-    const res = fitFSRSParams(series, { full: true });
+    const res = await fitFSRSParams(series, { full: true });
     expect(res.logLikelihood).toBeGreaterThanOrEqual(initLL - 1e-6);
   });
 
-  it('基础八参档：只动 w[0..7]，w[8..18] 保持默认；w[7] 梯度恒零不动', () => {
+  it('基础八参档：只动 w[0..7]，w[8..18] 保持默认；w[7] 梯度恒零不动', async () => {
     const series = buildReplaySeriesFromItems(synthItems(21, W_TRUE, { items: 20, reviews: 6 })); // 120 对
     const initLL = replayLogLikelihood([...DEFAULT_W], series);
-    const res = fitFSRSParams(series, { full: false });
+    const res = await fitFSRSParams(series, { full: false });
     expect(res.full).toBe(false);
     expect(res.logLikelihood).toBeGreaterThanOrEqual(initLL - 1e-6);
     for (let i = 8; i < 19; i++) expect(res.w[i]).toBe(DEFAULT_W[i]);
     expect(res.w[7]).toBe(DEFAULT_W[7]); // 不参与遗忘曲线（d 固定），似然对其梯度恒零
   });
 
-  it('护栏：停滞早停提前收轮；墙钟时限截断不收敛也不拖死', () => {
+  it('护栏：停滞早停提前收轮；墙钟时限截断不收敛也不拖死', async () => {
     // 停滞早停：空序列似然恒 0 → 连续 stallRounds=2 轮零改进即停（远小于上限）
-    const stalled = fitFSRSParams([], { iterations: 50, stallRounds: 2 });
+    const stalled = await fitFSRSParams([], { iterations: 50, stallRounds: 2 });
     expect(stalled.iterations).toBeLessThan(10);
     expect(stalled.logLikelihood).toBe(0);
     // 墙钟：360 对 × 19 维单轮 ~毫秒级，50ms 时限必然在 100000 轮上限前截断
     const series = buildReplaySeriesFromItems(synthItems(42, W_TRUE, { items: 60, reviews: 6 }));
     const t0 = Date.now();
-    const guarded = fitFSRSParams(series, { full: true, iterations: 100000, maxMs: 50 });
+    const guarded = await fitFSRSParams(series, { full: true, iterations: 100000, maxMs: 50 });
     const ms = Date.now() - t0;
     expect(guarded.iterations).toBeLessThan(100000); // 未跑满上限
     expect(ms).toBeLessThan(5000); // 且整体很快收住
@@ -282,7 +303,7 @@ describe('fitFSRSParams（合成数据收敛质量，issue 361）', () => {
 // ==================== fitFromItems：门槛 + 降级档位 ====================
 
 describe('fitFromItems', () => {
-  it('<100 对样本 → null（跳过拟合）', () => {
+  it('<100 对样本 → null（跳过拟合）', async () => {
     const items = [
       {
         reviewHistory: Array.from({ length: 50 }, (_, i) => ({
@@ -294,10 +315,10 @@ describe('fitFromItems', () => {
         })),
       },
     ];
-    expect(fitFromItems(items)).toBeNull();
+    expect(await fitFromItems(items)).toBeNull();
   });
 
-  it('降级档位：100~299 对 → 基础八参（full=false）；≥300 对 → 全参（full=true）', () => {
+  it('降级档位：100~299 对 → 基础八参（full=false）；≥300 对 → 全参（full=true）', async () => {
     const mkItems = (n: number) => [
       {
         reviewHistory: Array.from({ length: n }, (_, i) => ({
@@ -309,26 +330,26 @@ describe('fitFromItems', () => {
         })),
       },
     ];
-    const subset = fitFromItems(mkItems(150))!; // 149 对
+    const subset = (await fitFromItems(mkItems(150)))!; // 149 对
     expect(subset.count).toBeGreaterThanOrEqual(100);
     expect(subset.fit.full).toBe(false);
     expect(subset.fit.w).toHaveLength(DEFAULT_W.length);
-    const full = fitFromItems(mkItems(350))!; // 349 对
+    const full = (await fitFromItems(mkItems(350)))!; // 349 对
     expect(full.count).toBeGreaterThanOrEqual(300);
     expect(full.fit.full).toBe(true);
   });
 
-  it('按条目分别构样：不同笔记的历史不跨条目配对（假样本回归）', () => {
+  it('按条目分别构样：不同笔记的历史不跨条目配对（假样本回归）', async () => {
     const items = Array.from({ length: 150 }, (_, i) => ({
       difficulty: 0.3,
       reviewHistory: [
         { timestamp: new Date(2026, 0, 1 + i).toISOString(), stage: 10, rating: i % 2 ? 'good' : 'easy', stability: 5, difficulty: 0.3 },
       ],
     }));
-    expect(fitFromItems(items)).toBeNull();
+    expect(await fitFromItems(items)).toBeNull();
   });
 
-  it('生产旧数据形态（FSRS 记录只含 stability 无 difficulty）可回放构样', () => {
+  it('生产旧数据形态（FSRS 记录只含 stability 无 difficulty）可回放构样', async () => {
     const items = [
       {
         reviewHistory: Array.from({ length: 120 }, (_, i) => ({
@@ -339,7 +360,7 @@ describe('fitFromItems', () => {
         })),
       },
     ];
-    const res = fitFromItems(items)!;
+    const res = (await fitFromItems(items))!;
     expect(res.count).toBe(119);
     expect(res.fit.full).toBe(false); // 119 对 <300 → 基础档
   });
@@ -405,5 +426,30 @@ describe('review-fit.json 契约版本', () => {
     const raw = JSON.parse(vault.files.get(FIT_PATH)!);
     expect(raw.version).toBe(2);
     expect((await loadFittedParams({ vault } as any))!.version).toBe(2);
+  });
+
+  it('起点不被钳（审查修复回归）：DEFAULT_W（w[4]=4.93）起步，零学习率一轮后 w[4] 保持原值不被 W_BOUNDS 削到 1', async () => {
+    // 旧缺陷：W_BOUNDS[4]=[0,1]，clipW 起点即把 4.93 钳到 1——拟合 D0 系统性偏低、似然够不到真值
+    const series = buildReplaySeriesFromItems(synthItems(7, W_TRUE, { items: 10, reviews: 6 }));
+    const res = await fitFSRSParams(series, { initW: [...DEFAULT_W], iterations: 1, lr: 0, full: true });
+    expect(res.w[4]).toBe(DEFAULT_W[4]); // 4.93 全须全尾
+  });
+
+  it('载入脏值防御（审查修复回归）：非有限权重 → null 回退默认；越界有限值逐维钳进 W_BOUNDS（w[4]=4.93 不误钳）', async () => {
+    const vault = setup();
+    const dirty = { w: [...DEFAULT_W], fitAt: '2026-09-03T00:00:00.000Z', fitCount: 200, full: true, version: 2 };
+    dirty.w[2] = NaN;
+    vault.files.set(FIT_PATH, JSON.stringify(dirty));
+    expect(await loadFittedParams({ vault } as any)).toBeNull(); // NaN 毒化整档 → 回退默认
+
+    const over = { ...dirty, w: [...DEFAULT_W] };
+    over.w[2] = 9999; // 超 w2 上界 240
+    over.w[5] = -99; // 超 w5 下界 -1.5
+    vault.files.set(FIT_PATH, JSON.stringify(over));
+    const fit = await loadFittedParams({ vault } as any);
+    expect(fit).not.toBeNull();
+    expect(fit!.w[2]).toBe(240);
+    expect(fit!.w[5]).toBe(-1.5);
+    expect(fit!.w[4]).toBe(4.93); // 新上界 10 恒含默认值
   });
 });

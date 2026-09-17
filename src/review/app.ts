@@ -101,7 +101,7 @@ export const reviewApp = {
     }
   },
 
-  /** issue 361：当前拟合档位元数据（无拟合 → null；stats-ui 人话标注「基础拟合/全参拟合」） */
+  /** issue 361：当前拟合档位元数据（无拟合 → null；stats-ui 人话标注「按你的记录定制/简化版」） */
   fitMeta(): FittedParams | null {
     return this._fitMeta;
   },
@@ -122,7 +122,8 @@ export const reviewApp = {
     try {
       const dm = this.dataManager!;
       const items = await dm.loadItems();
-      const result = fitFromItems(items);
+      // fitFSRSParams 按迭代分片让出主线程（审查修复），await 不再长冻结；本函数仍 fire-and-forget
+      const result = await fitFromItems(items);
       if (result) {
         // issue 361：契约版本落盘（1=基础八参 / 2=全 19 参数）；
         // full 以拟合结果档位为准（旧口径 w.length>=19 恒真，分档失真——回归修正）

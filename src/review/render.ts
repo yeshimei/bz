@@ -465,12 +465,16 @@ export function quizPracticeSetupHtml(ctx: QuizPracticeSetupCtx): string {
   } else {
     detail = `<div class="bz-qp-note-field"><input type="text" class="bz-input bz-qp-note-input" data-role="note-input" placeholder="输入笔记名筛选，点选确定" value="${esc(ctx.notePath)}"></div>`;
   }
+  // 题库 meta（体验修复）：folder 范围未选文件夹时给引导文案（原先显示「还没有题目」
+  // 与上方「还没选文件夹」矛盾）；null = 统计中/未统计，meta 行占位空
   const meta =
-    ctx.bankCount === null
-      ? ''
-      : ctx.bankCount > 0
-        ? `当前范围现有 <b>${ctx.bankCount}</b> 题`
-        : '当前范围还没有题目，开始后会自动出题';
+    ctx.scope === 'folder' && !ctx.folders.length
+      ? '先选择文件夹再看题量'
+      : ctx.bankCount === null
+        ? ''
+        : ctx.bankCount > 0
+          ? `当前范围现有 <b>${ctx.bankCount}</b> 题`
+          : '当前范围还没有题目，开始后会自动出题';
   return `
     <div class="bz-qp-view">
       <div class="bz-panel-head">
@@ -498,8 +502,11 @@ export function quizPracticeSetupHtml(ctx: QuizPracticeSetupCtx): string {
     </div>`;
 }
 
-/** 做题练习成绩小结（对/错/跳过、正确率 + 再来一轮；跳过 = 备题数 − 已答数） */
+/** 做题练习成绩小结（对/错/跳过 + 正确率 + 再来一轮；跳过 = 备题数 − 已答数）。
+ *  体验修复：小字交代错题去向（「答错的题留在题库，下轮再见」）；中途放弃（答对+答错=0）
+ *  不弹「正确率 0%」像考砸，改「本轮未答题已保留」。 */
 export function quizPracticeSummaryHtml(r: { correct: number; wrong: number; skipped: number; accuracy: number }): string {
+  const answered = r.correct + r.wrong;
   return `
     <div class="bz-summary">
       <div class="bz-summary-title">本轮刷题小结</div>
@@ -508,9 +515,10 @@ export function quizPracticeSummaryHtml(r: { correct: number; wrong: number; ski
         <div class="st ${r.wrong ? 'warn' : ''}"><b>${r.wrong}</b><span>答错</span></div>
         <div class="st"><b>${r.skipped}</b><span>跳过</span></div>
       </div>
-      <div class="bz-qp-acc">正确率 <b>${r.accuracy}%</b></div>
+      ${answered > 0 ? `<div class="bz-qp-acc">正确率 <b>${r.accuracy}%</b></div>` : `<div class="bz-qp-acc">本轮未答题已保留</div>`}
       <button class="bz-btn bz-btn--primary bz-btn--block" data-act="again">再来一轮</button>
       <button class="bz-btn bz-btn--ghost bz-btn--block" data-act="finish">收工</button>
+      <div class="bz-qp-foot">答错的题留在题库，下轮再见。</div>
     </div>`;
 }
 

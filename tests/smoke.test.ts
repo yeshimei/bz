@@ -467,11 +467,11 @@ describe('复习拟合全参放开（issue 361 冒烟）', () => {
         })),
       },
     ];
-    const basic = fitFromItems(mk(150))!; // 149 对 → 基础档
+    const basic = (await fitFromItems(mk(150)))!; // 149 对 → 基础档
     expect(basic.fit.full).toBe(false);
     expect(basic.fit.w).toHaveLength(19);
     for (let i = 8; i < 19; i++) expect(basic.fit.w[i]).toBe(DEFAULT_W[i]); // 基础档不越界
-    const full = fitFromItems(mk(350))!; // 349 对 → 全参档
+    const full = (await fitFromItems(mk(350)))!; // 349 对 → 全参档
     expect(full.fit.full).toBe(true);
     expect(full.fit.w).toHaveLength(19);
     expect(Number.isFinite(full.fit.logLikelihood)).toBe(true);

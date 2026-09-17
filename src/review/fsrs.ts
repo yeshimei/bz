@@ -27,6 +27,15 @@ export class FSRS {
     return this.w[map[rating]] || 1;
   }
 
+  /**
+   * 初始难度 D0（进入 FSRS：again→w[4]，其余 0.3）。
+   * 调度（scheduleNext enteringFsrs）与拟合回放（fit.ts replayLogLikelihood 起点）共用此单源——
+   * 防两处字面量漂移再造 w[4] 口径分叉（审查修复：D0 同口径；后续轮次两侧均经 nextDiff 钳制）。
+   */
+  initD(rating: Rating): number {
+    return rating === 'again' ? this.w[4] : 0.3;
+  }
+
   /** 下一难度 */
   nextDiff(D: number, rating: Rating): number {
     let newD: number;
@@ -113,9 +122,9 @@ export function scheduleNext(state: ScheduleState, rating: Rating, now: Date, w:
     else target = state.stage + 2; // easy
     target = Math.max(0, Math.min(target, LADDER_MAX));
     if (target >= LADDER_MAX) {
-      // 进入 FSRS：按本次评分初始化记忆参数（对齐既有语义：again→w[4]，其余 0.3）
+      // 进入 FSRS：按本次评分初始化记忆参数（D0 走 FSRS.initD 单源，对齐拟合回放起点）
       const S = fsrs.initS(rating);
-      const D = rating === 'again' ? fsrs.w[4] : 0.3;
+      const D = fsrs.initD(rating);
       const rS = Math.round(S * 100) / 100;
       const rD = Math.round(D * 100) / 100;
       return {
