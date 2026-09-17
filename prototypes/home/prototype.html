@@ -86,6 +86,13 @@
   const mobFrame = () => document.querySelector('#mobHost iframe');
   const dtDoc = () => dtFrame().contentDocument;
   const mobDoc = () => mobFrame().contentDocument;
+  /**
+   * 元素还「看得见」吗（issue 290 起首页面板关闭 = 隐藏保留 DOM、重开复用，真销毁只有卸载）
+   * → 判「关没关」要看**有没有盒模型**，不能看节点在不在，也不能看它自己的 display：
+   *   `.bz-home-panel` 是被隐藏的 overlay 的子节点，祖先 display:none 时子节点自己的
+   *   computed display 仍是 block（只有 getClientRects 会是空的）。
+   */
+  const shown = (el) => !!el && el.getClientRects().length > 0;
   // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
   // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
   const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
@@ -166,7 +173,9 @@
         t('桌面隐藏域不在入口列', ![...dtRows()].some((r) => r.dataset.homeGo === 'vault'));
         t('备忘录行计数=2条待办', [...dtRows()].find((r) => r.dataset.homeGo === 'memo').querySelector('.bz-home-ect').textContent === '2 条待办');
         t('复习行计数=9张逾期1', [...dtRows()].find((r) => r.dataset.homeGo === 'review').querySelector('.bz-home-ect').textContent === '9 张 · 逾期 1');
-        t('日记行计数=518篇', [...dtRows()].find((r) => r.dataset.homeGo === 'diary').querySelector('.bz-home-ect').textContent === '518 篇');
+        // 日记计数取真实 vault（会随你写日记变化：518 → 519），只钉「N 篇」口径，不钉死数字
+        t('日记行计数=数字篇（' + [...dtRows()].find((r) => r.dataset.homeGo === 'diary').querySelector('.bz-home-ect').textContent + '）',
+          /^\d+ 篇$/.test([...dtRows()].find((r) => r.dataset.homeGo === 'diary').querySelector('.bz-home-ect').textContent));
         t('书库行计数=在读9读完4', [...dtRows()].find((r) => r.dataset.homeGo === 'bookshelf').querySelector('.bz-home-ect').textContent === '在读 9 · 读完 4');
         t('剪藏行计数=未读12', [...dtRows()].find((r) => r.dataset.homeGo === 'clipping').querySelector('.bz-home-ect').textContent === '未读 12 篇');
         t('归物行计数=登记12件', [...dtRows()].find((r) => r.dataset.homeGo === 'belongings').querySelector('.bz-home-ect').textContent === '登记 12 件');
@@ -196,7 +205,7 @@
         // ESC 关闭（桌面，真 escManager 层）→ 重开（壳经 iframe contentWindow 调真 openHome）
         dd.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         await sleep(60);
-        t('ESC 关闭面板', !dt('.bz-home-panel'));
+        t('ESC 关闭面板（issue 290：隐藏保留 DOM，判 display）', !shown(dt('.bz-home-panel')));
         dtFrame().contentWindow.BZW_home.openHome();
         await waitFrame(dtDoc, '.bz-home-entries .bz-home-erow');
         t('重开面板（活动河重采）', !!dt('.bz-home-panel') && dtRows().length === 14);
@@ -204,7 +213,7 @@
         // 入口点击降级（桌面）：FakeApp 无 commands → openDomain 捕获走真 notice，不崩、面板关
         [...dtRows()].find((r) => r.dataset.homeGo === 'review').click();
         await sleep(80);
-        t('入口点击：面板关闭（域命令直达语义）', !dt('.bz-home-panel'));
+        t('入口点击：面板关闭（域命令直达语义）', !shown(dt('.bz-home-panel')));
         t('入口点击：降级通知弹出不崩', !!dt('.bz-notice') && dt('.bz-notice').textContent.indexOf('暂时不可用') >= 0);
         dtFrame().contentWindow.BZW_home.openHome();
         await waitFrame(dtDoc, '.bz-home-entries .bz-home-erow');
@@ -269,11 +278,22 @@
         await MW.BZW_home.toggleFocusSim();
         md.querySelector('.bz-home-head [data-home-close]').click();
         await sleep(100);
-        t('移动端关闭钮关掉面板（抽屉同关）', !md.querySelector('.bz-home-panel') && !md.querySelector('.bz-item-sheet'));
+        t('移动端关闭钮关掉面板（抽屉同关）', !shown(md.querySelector('.bz-home-panel')) && !md.querySelector('.bz-item-sheet'));
         MW.BZW_home.openHome();
         await waitFrame(mobDoc, '.bz-home-m-tile');
-        await longPressTile('pomodoro');
-        t('停止专注后文案翻成「开始专注」（相位回落 idle，单条）', sheetLabels().join('|') === '开始专注');
+        // 相位是刷新回调里**异步**写回 H.pomodoroPhase 的：DOM 常驻（issue 290）后 waitFrame
+        // 会立刻返回，直接长按会读到上一轮的「继续专注」→ 轮询等文案翻面（最多约 3s）。
+        let flipped = false;
+        for (let i = 0; i < 20 && !flipped; i++) {
+          await longPressTile('pomodoro');
+          flipped = sheetLabels().join('|') === '开始专注';
+          if (!flipped) {
+            const maskNow = md.querySelector('.bz-item-sheet-mask');
+            if (maskNow) maskNow.click();
+            await sleep(150);
+          }
+        }
+        t('停止专注后文案翻成「开始专注」（相位回落 idle，单条）', flipped);
 
         md.querySelector('.bz-item-sheet-mask').click();
         await sleep(80);
@@ -360,7 +380,8 @@
         openMenu(rowOf('knowledge'), 200);
         await sleep(80);
         const kbLabels = menuLabelsNow();
-        t('知识盒菜单=术语+视频生成文献笔记', kbLabels.length === 2 && kbLabels[1] === '视频生成文献笔记');
+        // issue 326 后知识盒四入口（名词/段落/图版/影像），不再只有「术语 + 视频」两条
+        t('知识盒菜单=名词+段落+图版+影像', kbLabels.length === 4 && kbLabels[3] === '影像生成文献笔记');
         openMenu(rowOf('bookshelf'), 200);
         await sleep(80);
         const bsLabels = menuLabelsNow();
