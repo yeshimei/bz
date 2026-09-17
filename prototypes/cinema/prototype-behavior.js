@@ -1,4 +1,4 @@
-/* 源指纹 404b7b6e4c727021 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 aa0f473623c2fde5 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -6248,20 +6248,27 @@ var BZW_cinema = (() => {
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].match(/^\s+- /)) insertIdx = i + 1;
     }
-    const existingKeys = /* @__PURE__ */ new Set();
+    const existingKeys = /* @__PURE__ */ new Map();
     for (const line of lines) {
       const m = line.match(/^([^:]+):/);
-      if (m) existingKeys.add(m[1].trim());
+      if (m) existingKeys.set(m[1].trim(), m[1]);
     }
+    const lineValue = (key) => {
+      const m = lines.map((l) => l.match(new RegExp(`^${key}:[ \\t]*(.*)$`, "m"))).find(Boolean);
+      if (!m) return null;
+      const v = m[1].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1").trim();
+      return v || null;
+    };
     const newLines = [];
     for (const [key, spec] of Object.entries(fields)) {
       const val = typeof spec === "string" ? spec : spec.value;
       if (!val || val === "") continue;
       if (existingKeys.has(key)) {
-        if (typeof spec !== "string" && spec.ifMissing) continue;
+        if (typeof spec !== "string" && spec.ifMissing && lineValue(key)) continue;
+        const lineKey = existingKeys.get(key);
         for (let i = 0; i < lines.length; i++) {
-          if (lines[i].match(new RegExp(`^${key}:`))) {
-            lines[i] = `${key}: ${formatYamlValue(val)}`;
+          if (lines[i].match(new RegExp(`^${lineKey}:`))) {
+            lines[i] = `${lineKey}: ${formatYamlValue(val)}`;
             break;
           }
         }
@@ -6299,7 +6306,7 @@ var BZW_cinema = (() => {
     return v || null;
   }
   async function fetchNoteDouban(app, file, deps) {
-    var _a;
+    var _a, _b;
     const name = extractMovieName(file.name);
     let content;
     try {
@@ -6325,6 +6332,7 @@ var BZW_cinema = (() => {
     const first = results[0];
     const sid = extractSid(first.detailUrl);
     if (!sid) return { ok: false, reason: "notfound" };
+    const posterFolder = ((_a = deps.posterFolder) == null ? void 0 : _a.trim()) || POSTER_FOLDER;
     let posterRelative = fieldValue(content, "海报");
     if (!hasPoster && first.posterUrl) {
       let buf;
@@ -6335,11 +6343,11 @@ var BZW_cinema = (() => {
       }
       if (!buf) return { ok: false, reason: "network" };
       try {
-        await deps.mkdir(POSTER_FOLDER);
-        const ext = ((_a = first.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)) == null ? void 0 : _a[1]) || "jpg";
+        await deps.mkdir(posterFolder);
+        const ext = ((_b = first.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)) == null ? void 0 : _b[1]) || "jpg";
         const safeName = name.replace(/[/\\:*?"<>|]/g, "_");
         const fileName = `${safeName}_${(deps.now || Date.now)()}.${ext}`;
-        posterRelative = `${POSTER_FOLDER}/${fileName}`;
+        posterRelative = `${posterFolder}/${fileName}`;
         await deps.writeBinary(posterRelative, buf);
       } catch (e) {
         return { ok: false, reason: "write" };
@@ -6433,7 +6441,8 @@ var BZW_cinema = (() => {
         await ((_a2 = adapter == null ? void 0 : adapter.mkdir) == null ? void 0 : _a2.call(adapter, path));
       },
       apizeroKey: typeof s.cinemaApizeroKey === "string" ? s.cinemaApizeroKey.trim() : "",
-      doubanCookie: typeof s.cinemaDoubanCookie === "string" ? s.cinemaDoubanCookie.trim() : ""
+      doubanCookie: typeof s.cinemaDoubanCookie === "string" ? s.cinemaDoubanCookie.trim() : "",
+      posterFolder: typeof s.cinemaPosterFolder === "string" ? s.cinemaPosterFolder.trim() : ""
     };
   }
   function isFetching(path) {
