@@ -202,6 +202,7 @@ export function panelShellHtml(): string {
     <div class="bz-sb-pill"><i class="bz-sb-pill-dot"></i><span id="bz-sb-pill-txt">索引健康</span></div>
     <div class="bz-sb-head-sp"></div>
     <div class="bz-sb-panel-btns">
+      <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-weekly-open" aria-label="本周知识动态" title="本周知识动态">${ic('calendar-days', 14)}</button>
       <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-chat" aria-label="AI 对话" title="AI 对话">${ic('message-square', 14)}</button>
       <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-ref" aria-label="灵感参考" title="灵感参考">${ic('radar', 14)}</button>
       <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-panel-close" aria-label="关闭" title="关闭">${ic('x', 14)}</button>

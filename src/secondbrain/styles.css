@@ -1767,6 +1767,25 @@
 .theme-dark .bz-sb-weekly-modal {
   box-shadow: 0 24px 60px #00000080; /* 暗色壳影加深：与 .theme-dark .bz-sb-panel 同值 */
 }
+/* —— 移动端（issue 360 真机回归）：真全屏 + .bz-panel-mtop 44px 顶距，对齐 .bz-sb-panel
+      移动范式（panel.ts:311）；桌面保持 560px 居中不动。createOverlay 以内联样式设宽，
+      移动端窄视口须同级 !important 覆写（.bz-sb-chat-modal 同注）；padding 归零吃掉
+      .bz-overlay-popup 基线 16px 内边距，顶距由 .bz-panel-mtop !important 接管 —— */
+@media (max-width: 768px) {
+  .bz-sb-weekly-modal {
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100vw !important;
+    max-width: none !important;
+    height: var(--bz-vvh, 100vh);
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+}
 .bz-sb-weekly-head {
   flex: none;
   display: flex;

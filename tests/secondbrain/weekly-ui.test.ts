@@ -8,6 +8,7 @@
  * - 启动调度 scheduleWeeklyDigest：延迟到点静默聚合落盘，cancelWeeklySchedule 摘定时器。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 import { __resetNoticeForTests } from '../../src/core/notice';
@@ -26,6 +27,7 @@ import {
   unloadWeeklyDigest,
   __setWeeklyScheduleDelayMsForTests,
 } from '../../src/secondbrain/weekly-ui';
+import { SecondBrainPanel } from '../../src/secondbrain/panel';
 import { panelShellHtml } from '../../src/secondbrain/render';
 
 const T0 = Date.parse('2026-09-08T08:00:00');
@@ -296,6 +298,82 @@ describe('命令路径 runWeeklyManual（bz-secondbrain-weekly：强制重聚 + 
     await runWeeklyManual(app, store as any, { probe: async () => true, now: T0 });
     expect(weeklyPanel().style.display).toBe('flex');
     expect(weeklyPanel().textContent).toContain('读取动态数据失败');
+  });
+});
+
+describe('主面板头行入口 bz-sb-weekly-open（issue 360 真机回归）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    __resetNoticeForTests();
+    clearNotices();
+    document.body.innerHTML = '';
+  });
+
+  afterEach(() => {
+    unloadWeeklyDigest();
+    document.body.innerHTML = '';
+  });
+
+  /** 就绪库 fake store（panel-close-reset.test.ts 同款：内容态直接进统计） */
+  function makeReadyStore(): any {
+    return {
+      initialLoad: Promise.resolve(),
+      isIndexReady: () => true,
+      hasPendingChanges: () => false,
+      isRefreshing: () => false,
+      refresh: async () => {},
+      meta: {
+        notes: {
+          '我的/日记/A.md': { mtime: 1, chunks: [{ text: '甲' }] },
+          '卡片盒/B.md': { mtime: 2, chunks: [{ text: '乙' }] },
+        },
+        _dim: 2,
+      },
+      vectors: [],
+    };
+  }
+
+  it('头行右侧有「本周知识动态」图标钮，点击打开详情弹层且主面板保持打开（只读挂入口）', async () => {
+    const { app } = makeEnv(true); // 周报摘要已落盘：弹层打开即渲染结果
+    const panel = new SecondBrainPanel(app, makeReadyStore(), { onOpenReference: () => {}, onOpenChat: () => {} });
+    await panel.open();
+    await vi.waitFor(() => expect(document.getElementById('bz-sb-weekly-open')).toBeTruthy());
+    const openBtn = document.getElementById('bz-sb-weekly-open') as HTMLElement;
+    expect(openBtn.getAttribute('aria-label')).toBe('本周知识动态');
+    expect(openBtn.classList.contains('bz-sb-panel-func')).toBe(true); // 图标钮形制随头行既有钮
+    openBtn.click();
+    await vi.waitFor(() => expect(weeklyPanel().style.display).toBe('flex'));
+    await vi.waitFor(() => expect(weeklyPanel().textContent).toContain('费曼学习法'));
+    // 只读入口：主面板不被关（区别于对话/参考的 close→跳转语义）
+    expect((document.querySelector('.bz-sb-panel') as HTMLElement).style.display).toBe('flex');
+    panel.destroy();
+  });
+
+  it('详情弹层规范锚：popup 挂 .bz-panel-mtop（移动全屏 + 44px 顶距）；遮罩点击与 #bz-sb-weekly-close 双收口；样式源 ≤768px 真全屏', async () => {
+    const { app } = makeEnv(true);
+    openWeeklyDigest(app);
+    await vi.waitFor(() => expect(weeklyPanel().style.display).toBe('flex'));
+    // 移动范式类挂 popup 根（panel.ts:311 同款）；桌面 560px 形制不受影响
+    expect(weeklyPanel().classList.contains('bz-panel-mtop')).toBe(true);
+    expect(weeklyPanel().classList.contains('bz-overlay-popup')).toBe(true);
+    expect(document.getElementById('bz-sb-weekly-close')).toBeTruthy(); // 既有关闭钮保留
+    // 样式锚：≤768px 真全屏（!important 覆写 createOverlay 内联宽）+ 44px 顶距归 .bz-panel-mtop
+    const css = readFileSync('src/secondbrain/styles.css', 'utf8');
+    const mediaIdx = css.lastIndexOf('@media (max-width: 768px)');
+    expect(mediaIdx).toBeGreaterThan(-1);
+    const ruleIdx = css.indexOf('.bz-sb-weekly-modal', mediaIdx);
+    const rule = css.slice(ruleIdx, css.indexOf('}', ruleIdx));
+    expect(rule).toContain('width: 100vw !important');
+    expect(rule).toContain('max-width: none !important');
+    expect(rule).toContain('transform: none');
+    expect(rule).toContain('height: var(--bz-vvh, 100vh)');
+    // 桌面基准仍在：560px 高度 / 居中位移原样保留
+    expect(css).toMatch(/\.bz-sb-weekly-modal\s*\{[^}]*height:\s*560px/);
+    expect(css).toMatch(/\.bz-sb-weekly-modal\s*\{[^}]*transform:\s*translate\(-50%, -50%\)/);
+    // 桌面遮罩点击关闭（onMaskClick 委托）
+    (document.getElementById('bz-sb-weekly-mask') as HTMLElement)
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(weeklyPanel().style.display).toBe('none');
   });
 });
 
