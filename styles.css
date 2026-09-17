@@ -15550,10 +15550,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    ==================================================================== */
 .bz-cinema--midnight .pw-fetch{position:absolute;inset:0;z-index:3;display:grid;place-items:center;background:#0006}
 .bz-cinema--midnight .pw-spin{width:20px;height:20px;border:3px solid var(--chip);border-top-color:var(--gold);border-radius:50%;animation:cn-spin .8s linear infinite}
-/* ==================== 游戏架域样式（src/gameshelf/styles.css） ====================
-   全部视觉消费 core/ui token（--bz-*，亮暗随 .theme-dark 自动跟随，零固定色）；
-   面板挂 body：遮罩/弹层自带全部所需变量（不依赖面板作用域 token 继承）；
-   滚动条不自造（core 单源，ADR-0122）；无入场动效（用户拍板）。 */
+/* ==================== 游戏架域样式（src/gameshelf/styles.css）v2 ====================
+   视觉对齐 bz 组件库：头行/页签/统计卡/空态直接复用 core 组件（.bz-main-head/
+   .bz-segmented/.bz-stat/.bz-empty，样式出自 core/ui），本文件只写域内布局与细节。
+   全部消费 --bz token（亮暗自动跟随，零固定色）；无入场动效；滚动条不自造。 */
 
 /* ---------- 遮罩（对齐 core .bz-overlay-mask 语义，域内独立类防跨域牵连） ---------- */
 .bz-gs-mask {
@@ -15569,8 +15569,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(920px, 94vw);
-  height: min(80vh, 720px);
+  width: min(960px, 94vw);
+  height: min(82vh, 760px);
   display: flex;
   flex-direction: column;
   background: var(--bz-surface-1);
@@ -15583,102 +15583,32 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   z-index: 1;
 }
 
-/* 头行：标题 + 视图页签 + 动作（影院式整宽头行） */
-.bz-gs-head {
+/* 头行：uiMainHead 出基座；关闭钮贴右、页签占 spacer 位（createUI 组装） */
+.bz-gs-panel .bz-main-head {
   flex: none;
-  display: flex;
-  align-items: center;
-  gap: var(--bz-space-lg);
-  height: var(--bz-head-h);
   padding: 0 var(--bz-space-lg);
   border-bottom: 1px solid var(--bz-border);
+  height: var(--bz-head-h);
 }
-.bz-gs-title {
-  font-size: var(--bz-font-emphasis);
-  font-weight: var(--bz-weight-semibold);
+.bz-gs-panel .bz-main-head .bz-segmented {
+  flex: none;
 }
-.bz-gs-tabs {
-  display: flex;
-  gap: 2px;
-  background: var(--bz-surface-2);
-  border-radius: var(--bz-radius-full);
-  padding: 2px;
-}
-.bz-gs-tab {
-  border: none;
+.bz-gs-panel .bz-main-head .bz-gs-close {
+  box-shadow: none !important;
+  border: none !important;
   background: transparent;
   color: var(--bz-text-2);
-  font-size: var(--bz-font-label);
-  line-height: var(--bz-leading-tight);
-  padding: 4px 12px;
-  border-radius: var(--bz-radius-full);
-  cursor: pointer;
 }
-.bz-gs-tab.is-active {
-  background: var(--bz-surface-4);
-  color: var(--bz-text-1);
-}
-.bz-gs-head-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: var(--bz-space-sm);
-}
-.bz-gs-close {
-  border: none;
-  background: transparent;
-  color: var(--bz-text-2);
-  width: var(--bz-icon-btn-w);
-  height: var(--bz-icon-btn-h);
-  border-radius: var(--bz-radius-xs);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.bz-gs-close:hover {
+.bz-gs-panel .bz-main-head .bz-gs-close:hover {
   background: var(--bz-surface-hover);
   color: var(--bz-text-1);
 }
 
-/* 按钮（同步 / 引导态两键） */
-.bz-gs-btn {
-  border: 1px solid var(--bz-border);
-  background: var(--bz-surface-2);
-  color: var(--bz-text-1);
-  font-size: var(--bz-font-label);
-  height: var(--bz-control-h);
-  padding: 0 var(--bz-space-md);
-  border-radius: var(--bz-radius-sm);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.bz-gs-btn:hover {
-  background: var(--bz-surface-hover);
-}
-.bz-gs-btn--primary {
-  background: var(--bz-brand);
-  border-color: var(--bz-brand);
-  color: var(--bz-on-brand);
-}
-.bz-gs-btn--primary:hover {
-  background: var(--bz-brand-hover);
-}
-.bz-gs-btn--sync {
-  height: var(--bz-control-h-md);
-}
-.bz-gs-btn:disabled {
-  opacity: var(--bz-state-disabled-content);
-  cursor: default;
-}
-
-/* 状态行（同步时刻 / 进行中 / 结果摘要） */
+/* 状态行（同步时刻 / 进行中 / 结果摘要；空则隐藏） */
 .bz-gs-status {
   flex: none;
-  min-height: 28px;
-  padding: 4px var(--bz-space-lg);
+  min-height: 26px;
+  padding: 3px var(--bz-space-lg);
   color: var(--bz-text-2);
   font-size: var(--bz-font-meta);
   border-bottom: 1px solid var(--bz-border);
@@ -15695,36 +15625,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   padding: var(--bz-space-lg);
 }
 
-/* ---------- 引导态 ---------- */
-.bz-gs-guide {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--bz-space-md);
-  text-align: center;
-}
-.bz-gs-guide-icon {
-  width: 44px;
-  height: 44px;
-  color: var(--bz-text-3);
-}
-.bz-gs-guide-title {
-  font-size: var(--bz-font-title);
-  font-weight: var(--bz-weight-semibold);
-}
-.bz-gs-guide-desc {
-  max-width: 420px;
-  color: var(--bz-text-2);
-  line-height: var(--bz-leading-normal);
-}
-.bz-gs-guide-actions {
-  display: flex;
-  gap: var(--bz-space-sm);
-  margin-top: var(--bz-space-sm);
-}
-
 /* ---------- 游戏墙 ---------- */
 .bz-gs-empty {
   height: 100%;
@@ -15735,7 +15635,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-gs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
   gap: var(--bz-space-md);
 }
 .bz-gs-card {
@@ -15743,15 +15643,26 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--bz-surface-2);
   border-radius: var(--bz-radius-md);
   overflow: hidden;
-  cursor: default;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  display: block;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  transition: border-color var(--bz-dur-fast) var(--bz-ease-out), box-shadow var(--bz-dur-fast) var(--bz-ease-out);
+}
+.bz-gs-card:hover {
+  border-color: var(--bz-border-strong);
+  box-shadow: var(--bz-shadow-sm);
 }
 .bz-gs-cover {
   position: relative;
-  aspect-ratio: 92 / 43; /* Steam header.jpg 原始比例 */
-  background: var(--bz-surface-3);
   display: flex;
   align-items: center;
   justify-content: center;
+  aspect-ratio: 92 / 43; /* Steam header.jpg 原始比例 */
+  background: var(--bz-surface-3);
   color: var(--bz-text-3);
 }
 .bz-gs-cover img {
@@ -15760,25 +15671,34 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   object-fit: cover;
   display: block;
 }
+.bz-gs-cardbar {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+  padding: var(--bz-space-sm) var(--bz-space-sm);
+  min-width: 0;
+}
 .bz-gs-name {
-  padding: var(--bz-space-sm) var(--bz-space-sm) 2px;
+  flex: 1;
+  min-width: 0;
   font-size: var(--bz-font-label);
   font-weight: var(--bz-weight-medium);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.bz-gs-meta {
-  padding: 0 var(--bz-space-sm) var(--bz-space-sm);
+.bz-gs-hours {
+  flex: none;
   color: var(--bz-text-2);
   font-size: var(--bz-font-meta);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
 }
 /* 下架保留：置灰 + 角标（不删语义的可视化） */
 .bz-gs-card--off {
   opacity: 0.55;
+}
+.bz-gs-card--off .bz-gs-cover img {
+  filter: grayscale(0.8);
 }
 .bz-gs-off-badge {
   position: absolute;
@@ -15793,32 +15713,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: var(--bz-radius-xs);
 }
 
-/* ---------- 报告 ---------- */
+/* ---------- 报告（统计卡 = core .bz-stat；下方区块为域内细节） ---------- */
 .bz-gs-stats {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: var(--bz-space-md);
-  flex-wrap: wrap;
-}
-.bz-gs-stat {
-  flex: 1;
-  min-width: 120px;
-  background: var(--bz-surface-2);
-  border: 1px solid var(--bz-border);
-  border-radius: var(--bz-radius-md);
-  padding: var(--bz-space-md) var(--bz-space-lg);
-}
-.bz-gs-statnum {
-  font-size: var(--bz-font-display);
-  font-weight: var(--bz-weight-bold);
-  font-variant-numeric: tabular-nums;
-}
-.bz-gs-statlabel {
-  color: var(--bz-text-2);
-  font-size: var(--bz-font-meta);
-  margin-top: 2px;
+  margin-bottom: var(--bz-space-md);
 }
 .bz-gs-caveat {
-  margin: var(--bz-space-md) 0;
+  margin: var(--bz-space-sm) 0 var(--bz-space-lg);
   padding: var(--bz-space-sm) var(--bz-space-md);
   border: 1px dashed var(--bz-border-strong);
   border-radius: var(--bz-radius-sm);
@@ -15882,6 +15785,49 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- 引导态（uiEmpty 出基座，此处只管动作行间距） ---------- */
+.bz-gs-guide-actions {
+  display: flex;
+  gap: var(--bz-space-sm);
+  justify-content: center;
+  margin-top: var(--bz-space-md);
+}
+
+/* ---------- 详情弹窗（core uiModal 基座；成就/游戏资料按需拉取） ---------- */
+.bz-gs-detail-modal .bz-dialog-body {
+  padding: var(--bz-space-lg);
+  overflow-y: auto;
+}
+.bz-gs-detail-cover img {
+  width: 100%;
+  aspect-ratio: 92 / 43;
+  object-fit: cover;
+  border-radius: var(--bz-radius-sm);
+  display: block;
+  background: var(--bz-surface-2);
+}
+.bz-gs-detail-line {
+  margin: var(--bz-space-sm) 0 var(--bz-space-md);
+  color: var(--bz-text-2);
+  font-size: var(--bz-font-meta);
+}
+.bz-gs-detail-sec {
+  margin-top: var(--bz-space-md);
+}
+.bz-gs-detailline {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+  padding: 3px 0;
+  min-width: 0;
+}
+.bz-gs-detail-label {
+  flex: none;
+  width: 72px;
+  color: var(--bz-text-3);
+  font-size: var(--bz-font-meta);
+}
+
 /* ---------- 移动端真全屏（issue 272 范式；顶距 44px 由 .bz-panel-mtop 出） ---------- */
 @media (max-width: 768px) {
   .bz-gs-panel {
@@ -15898,9 +15844,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
   .bz-gs-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--bz-space-sm);
   }
   .bz-gs-topname {
     width: 128px;
+  }
+  /* 头行移动端收窄：页签与主钮同行可容（计数隐藏由组件空值天然处理） */
+  .bz-gs-panel .bz-main-head {
+    gap: var(--bz-space-sm);
+    padding: 0 var(--bz-space-md);
   }
 }
 /* ==================== 书库域样式（src/bookshelf/styles.css） ====================
