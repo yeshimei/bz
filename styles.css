@@ -8102,6 +8102,17 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 当日清单（点日期展开）：复用列表卡片；空日轻提示 */
 .bz-memo-cal-daypanel { padding-top: var(--bz-space-sm); }
 .bz-memo-cal-noday { padding: var(--bz-space-md) var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); text-align: center; }
+/* 月度概览统计行（issue 355 真机回归）：头行与网格之间的口径说明行 */
+.bz-memo-cal-stats { padding: 0 var(--bz-space-xs) var(--bz-space-sm); font-size: var(--bz-font-meta); color: var(--bz-text-2); }
+.bz-memo-cal-stats .bz-memo-cal-stats-n { color: var(--bz-text-1); font-weight: var(--bz-weight-semibold); }
+/* 空月提示（issue 355 真机回归）：整月零条目时的人话解释，不一片空白 */
+.bz-memo-cal-empt {
+  margin-top: var(--bz-space-sm); padding: var(--bz-space-lg) var(--bz-space-md);
+  border: 1px dashed var(--bz-border-strong); border-radius: var(--bz-radius-sm);
+  text-align: center;
+}
+.bz-memo-cal-empt-t { font-size: var(--bz-font-body); color: var(--bz-text-1); }
+.bz-memo-cal-empt-d { margin-top: var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 
 /* ---- 列表 ---- */
 .bz-memo-content { flex: 1; overflow-y: auto; padding: var(--bz-space-xs) var(--bz-space-md) var(--bz-space-md); display: flex; flex-direction: column; min-height: 0; }
@@ -8618,6 +8629,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-recur {
   background: var(--bz-brand-soft);
   color: var(--bz-brand);
+}
+/* 清单进度标记（issue 354 两肤自检补缺）：纸感同把 tag-check 压成无框色字，中性次底保留（n/N 弱信息徽标） */
+.bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-check {
+  background: var(--bz-surface-3);
+  color: var(--bz-text-2);
 }
 
 /* 已完成条 + 录入行 + 弹窗标题 */
@@ -9797,6 +9813,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ---- 空态人话 ---- */
 .bz-clp-rep-empty { text-align: center; padding: 72px 24px; color: var(--clip-dim); }
+/* 空态图标钉成方块（issue 358 真机回归）：本容器非 flex，兑现后的 .bz-ic span 保持
+   UA 行内态——宽高声明（.bz-ic--lg 24px !important）对行内盒不生效，内层 svg 的
+   100%×100%（core .bz-ic svg）不取行内父级而取最近块容器（报告体内容盒）→ 图标
+   被拉满整屏。display:inline-block 让尺寸档生效并仍随 text-align 居中。 */
+.bz-clp-rep-empty .bz-ic { display: inline-block; }
 .bz-clp-rep-empty-t {
   margin-top: 12px;
   font-size: 1.1em;
@@ -14852,8 +14873,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ---- 年度资产报告页（issue 356，body 级 mask；材质与 .bz-bel-detail 同语言） ----
    遮罩 z 由 openBelReport 经 topifyZ 动态发号（ADR-0067）。
-   图表配色 = core/chart-palette（粉彩底 + 深墨字，内联取色）；此处只管版式，全部消费 token；
-   滚动条不自造（core 单源隐藏，ADR-0122）。 */
+   移动端面板规范：popup 挂 .bz-panel-mtop（core 统一 44px 顶部避让 + 移动全屏，桌面不生效；
+   issue 356 真机回归批，挂法对照 secondbrain/panel 与域内主面板），头行顶距恢复见文末 @media 段。
+   图表配色 = core/chart-palette：粉彩底 + 深墨字 CHART_INK 内联成对、两主题同值（契约见该
+   模块头注；粉彩底上的文字不走壳墨 token——暗色壳墨翻米白会看不清，issue 356 真机回归批）；
+   此处只管版式，全部消费 token；滚动条不自造（core 单源隐藏，ADR-0122）。 */
 .bz-bel-report {
   display: flex; flex-direction: column;
   width: 680px; max-width: calc(100vw - 32px); height: 640px; max-height: 92vh;
@@ -14895,7 +14919,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-belr-sec-title { font-size: var(--bz-font-label); font-weight: 800; letter-spacing: 1px; color: var(--bz-bel-ink); }
 .bz-belr-sec-note { font-size: var(--bz-font-caption); color: var(--bz-text-3); text-align: right; }
 
-/* 概览四卡（底色 = chart-palette 粉彩内联；字 = 海报墨） */
+/* 概览四卡（底色 = chart-palette 粉彩内联；字色 = 同一条内联里的 CHART_INK，与底色成对、
+   两主题一致——不继承壳墨：暗色壳墨翻米白，粉彩底上看不清，issue 356 真机回归批） */
 .bz-belr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--bz-space-sm); }
 .bz-belr-hero { padding: 14px 12px; text-align: center; }
 .bz-belr-hero b { display: block; font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
@@ -15005,6 +15030,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border: none;
   }
+  /* 报告头行 = popup 首子元素：core .bz-panel-mtop > div:first-child（防避让双份）会把
+     padding-top 归零，但报告头行的 12px 是内部版式呼吸感、非避让垫顶 → 照备忘录先例
+     （.bz-memo-panel.bz-panel-mtop .bz-panel-head）以 (0,3,0)+!important 压回设计值
+     （与上方容器查询档 12px 同源）。44px 避让仍由根节点 mtop 统一接管。 */
+  .bz-bel-report.bz-panel-mtop .bz-bel-report-head { padding-top: 12px !important; }
 }
 @container (max-width: 768px) {
   /* 年度报告页手机档：头行收紧 + 概览四卡 2×2（issue 356） */
@@ -20412,6 +20442,25 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .theme-dark .bz-sb-weekly-modal {
   box-shadow: 0 24px 60px #00000080; /* 暗色壳影加深：与 .theme-dark .bz-sb-panel 同值 */
+}
+/* —— 移动端（issue 360 真机回归）：真全屏 + .bz-panel-mtop 44px 顶距，对齐 .bz-sb-panel
+      移动范式（panel.ts:311）；桌面保持 560px 居中不动。createOverlay 以内联样式设宽，
+      移动端窄视口须同级 !important 覆写（.bz-sb-chat-modal 同注）；padding 归零吃掉
+      .bz-overlay-popup 基线 16px 内边距，顶距由 .bz-panel-mtop !important 接管 —— */
+@media (max-width: 768px) {
+  .bz-sb-weekly-modal {
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100vw !important;
+    max-width: none !important;
+    height: var(--bz-vvh, 100vh);
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+  }
 }
 .bz-sb-weekly-head {
   flex: none;
