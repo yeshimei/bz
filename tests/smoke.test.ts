@@ -427,19 +427,23 @@ ${failures.join('\n')}`).toEqual([]);
   });
 });
 
-describe('收藏本标签自定义数据契约（issue 363 冒烟）', () => {
-  it('favorites.json 纯数组根契约不动；标签定义走同目录伴生文件 favorites.tags.json，缺省回退内置 9 类', async () => {
+describe('收藏本标签自定义数据契约（issue 363 修订冒烟）', () => {
+  it('favorites.json 纯数组根契约不动；标签定义走 data.json 设置键 favoriteTags，缺省回退内置 9 类', async () => {
     const { DataManager } = await import('../src/favorites/data');
-    const { getTags, resetTagsState } = await import('../src/favorites/config');
+    const { getTags, resetTagsState, DEFAULT_TAGS } = await import('../src/favorites/config');
+    const { DEFAULT_SETTINGS } = await import('../src/settings');
     resetTagsState();
-    // 未载入/文件缺失 = 内置 9 类 seed（零迁移）
+    // 设置键缺省 []（seed 不预落盘）→ 未自定义 = 内置 9 类 seed 运行时回退
+    expect(DEFAULT_SETTINGS.favoriteTags).toEqual([]);
     expect(getTags().map((t) => t.id)).toEqual(
       ['github', 'desktop', 'web', 'llm', 'pi', 'claude', 'skills', 'pub', 'dsh']
     );
-    // 标签定义伴生文件与 favorites.json 同目录（favorites.json 顶层保持纯条目数组：
-    // 主页.js 读 favorites.length、checkup 字段漂移检查依赖纯数组根，不因标签自定义破坏）
+    expect(getTags()).toBe(DEFAULT_TAGS);
+    // favorites.json 顶层保持纯条目数组（主页.js 读 favorites.length、checkup 纯数组漂移检查
+    // 零扰动）；DataManager 不再持有伴生文件路径/store——定义本体在 data.json 设置键
     const dm = new DataManager('CONFIG/STORAGE/favorites.json');
-    expect(dm.tagsPath).toBe('CONFIG/STORAGE/favorites.tags.json');
+    expect((dm as any).tagsPath).toBeUndefined();
+    expect((dm as any).tagsStore).toBeUndefined();
     resetTagsState();
   });
 });

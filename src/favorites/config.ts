@@ -3,11 +3,13 @@
  * 9 类固定标签（顺序即 UI 顺序）：数据 tags[] 存 label（如 'GitHub'）。
  * 归档冷存（ADR-0074）为数据层字段扩展，见 types.ts。
  *
- * issue 363 标签自定义：9 类降为内置 seed（DEFAULT_TAGS），定义本体搬进 favorites.tags.json
- * （伴生文件——favorites.json 顶层纯条目数组契约不动：主页.js 读 favorites.length、checkup
- * 字段漂移检查依赖纯数组根）。运行时状态收口本模块（diary/config.ts PRIMARY_TAGS_CONFIG
- * 同款范式）：未载入/文件缺失回退 seed，零迁移；UI 与渲染纯层统一 getTags() 消费。
+ * issue 363 标签自定义：9 类降为内置 seed（DEFAULT_TAGS），定义本体存 data.json 设置键
+ * favoriteTags（issue 363 修订，2026-09-16 拍板：伴生文件 favorites.tags.json 退役——
+ * favorites.json 顶层纯条目数组契约不动：主页.js 读 favorites.length、checkup 字段漂移
+ * 检查依赖纯数组根）。getTags 读设置层即时生效（无键/空/坏回退 seed，不落盘）；
+ * setTags 写设置层（持久化由 data.saveTags / 旧文件迁移任务收口，首次改动才落盘）。
  */
+import { tryGetSettings } from '../core/settings-provider';
 import type { FavTag } from './types';
 
 export const CONFIG = {
@@ -15,8 +17,8 @@ export const CONFIG = {
   DEFAULT_STORAGE_PATH: 'CONFIG/STORAGE',
   /** 数据文件名（固定，不允许用户修改） */
   STORAGE_FILE: 'favorites.json',
-  /** 标签定义文件（issue 363 伴生文件，与 favorites.json 同目录、跟随 storagePath 设置） */
-  TAGS_FILE: 'favorites.tags.json',
+  /** 标签定义设置键（data.json；旧伴生文件 favorites.tags.json 仅迁移期识别，见 data.ts） */
+  TAGS_SETTINGS_KEY: 'favoriteTags',
 };
 
 /**
@@ -35,20 +37,34 @@ export const DEFAULT_TAGS: FavTag[] = [
   { id: 'dsh', label: 'DeepSeek Harness', ic: 'waypoints' },
 ];
 
-/** 运行时标签集（null = 未载入，getTags() 回落 seed；data.loadTags 注入磁盘值） */
+/** 运行时标签集（null = 未载入，getTags() 首次访问自设置键播种；setTags 写键时同步注入） */
 let currentTags: FavTag[] | null = null;
 
-/** 当前生效标签定义（未载入/文件缺失 = 内置 9 类；顺序即磁贴行与表单顺序） */
-export function getTags(): FavTag[] {
-  return currentTags ?? DEFAULT_TAGS;
+/** 设置键现值归一化（坏行剔除/缺 id 补，data.json 手改防御）：无键/空/坏 → []，由调用方回退 seed */
+function tagsFromSettings(): FavTag[] {
+  return normalizeTags((tryGetSettings() as any)?.[CONFIG.TAGS_SETTINGS_KEY]);
 }
 
-/** 注入运行时标签集（loadTags 载入 / 管理界面保存后调用；归一化防线见 data.loadTags） */
+/** 当前生效标签定义（设置键优先，无键/空/坏回退内置 9 类 seed；顺序即磁贴行与表单顺序） */
+export function getTags(): FavTag[] {
+  if (!currentTags) {
+    const tags = tagsFromSettings();
+    currentTags = tags.length ? tags : DEFAULT_TAGS;
+  }
+  return currentTags;
+}
+
+/**
+ * 注入标签定义到设置层（归一化后写 data.json 设置键 favoriteTags + 运行时即时生效）。
+ * 注意：只写不落盘——持久化由 data.saveTags（管理界面唯一落盘点）与旧伴生文件迁移任务
+ * 经 saveSettings 收口；seed 回退不写键（首次改动才落盘）。
+ */
 export function setTags(tags: FavTag[]): void {
   currentTags = tags;
+  (tryGetSettings() as any)[CONFIG.TAGS_SETTINGS_KEY] = tags;
 }
 
-/** 测试/卸载重置（回退 seed） */
+/** 测试/卸载重置（丢弃运行时集，下次 getTags 自设置键重播种——设置键即真理） */
 export function resetTagsState(): void {
   currentTags = null;
 }
@@ -56,14 +72,6 @@ export function resetTagsState(): void {
 /** 按稳定 id 取标签定义（GitHub 特判等内部引用单源；不存在返回 null） */
 export function getTagById(id: string): FavTag | null {
   return getTags().find((t) => t.id === id) ?? null;
-}
-
-/** 标签定义文件路径（与 favorites.json 同目录、文件名固定） */
-export function getTagsPath(storagePath: string): string {
-  // storagePath 已是 DataManager 构造用的完整 favorites.json 路径，取同目录换固定文件名
-  const idx = storagePath.lastIndexOf('/');
-  const dir = idx >= 0 ? storagePath.slice(0, idx) : '';
-  return (dir || CONFIG.DEFAULT_STORAGE_PATH) + '/' + CONFIG.TAGS_FILE;
 }
 
 /** 新增标签 id（'t' + 时间戳36进制；id 一经生成不再变化） */

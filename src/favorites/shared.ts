@@ -202,7 +202,7 @@ export function actionSpecs(it: FavoritesItem): FavActionSpec[] {
 // ==================== 表单（添加 / 编辑共用骨架） ====================
 
 /** 表单标签多选 chips（.bz-fav-pick 内部；sel = 当前选中集，重绘由调用方触发）。
- *  issue 363：标签集 = getTags() 动态（内置 seed / favorites.tags.json） */
+ *  issue 363：标签集 = getTags() 动态（内置 seed / data.json 设置键 favoriteTags） */
 export function pickChipsHtml(sel: Set<string>): string {
   return getTags().map((t) =>
     `<button type="button" class="${sel.has(t.label) ? 'bz-fav-on' : ''}" data-tag="${esc(t.label)}">${iconSpan(t.ic, 'bz-ic--xs')}<span>${esc(t.label)}</span></button>`

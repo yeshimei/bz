@@ -29,7 +29,8 @@ export class FavoritesApp {
     this.dataManager = new DataManager(storagePath);
     this.aiService = new FavoritesAIService();
     this.initialized = true;
-    // 标签定义载入（issue 363）：favorites.tags.json → config 单源；缺失回退内置 9 类（零迁移）
+    // 标签定义收口（issue 363 修订）：旧伴生文件一次性迁移 → data.json 设置键 favoriteTags；
+    // 无键/空/坏回退内置 9 类 seed（seed 不落盘，首次改动才写键）
     try {
       await this.dataManager.loadTags();
     } catch (e) {

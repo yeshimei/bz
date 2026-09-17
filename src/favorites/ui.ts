@@ -120,7 +120,7 @@ export function favoritesSettingsSchema(): SettingsSchema {
         ],
       },
       {
-        // 标签管理（issue 363 标签自定义）：增删改排序，定义落 favorites.tags.json（config 单源注入）。
+        // 标签管理（issue 363 标签自定义）：增删改排序，定义落 data.json 设置键 favoriteTags（config 单源）。
         // custom 行 = 域内自绘管理列表（行内文案不经设置文案 lint，与其他管理弹窗同惯例）
         icon: 'tags',
         name: '标签管理',
@@ -282,7 +282,7 @@ export function closePanel(): void {
 export function unloadFavoritesUI(): void {
   closePanel();
   resetFavoritesState();
-  resetTagsState(); // issue 363：标签运行时集一并回退 seed（下次 init 由 loadTags 重注磁盘值）
+  resetTagsState(); // issue 363：标签运行时集一并丢弃（设置键即真理，下次 getTags 自键重播种）
 }
 
 async function loadItems(): Promise<void> {
@@ -822,9 +822,9 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
 }
 
 // ==================== 标签管理（issue 363：设置面板「标签管理」组 custom 行） ====================
-// 定义本体 favorites.tags.json（data.saveTags 落盘 + config 单源注入）；改名/删除时存量条目
-// 经 updateTagLabelBulk 批量跟随（范式 = memo updateSceneBulk）；行内文案不经设置文案 lint
-// （custom 插槽惯例）。挂 .bz-fav-scope 取域私有 token（flow-dialog 同款通道）。
+// 定义本体 data.json 设置键 favoriteTags（data.saveTags → config.setTags 写设置层 + saveSettings
+// 持久化）；改名/删除时存量条目经 updateTagLabelBulk 批量跟随（范式 = memo updateSceneBulk）；
+// 行内文案不经设置文案 lint（custom 插槽惯例）。挂 .bz-fav-scope 取域私有 token（flow-dialog 同款通道）。
 // UI 全域内自绘（ADR-0101 拍板：favorites 不引组件库按钮，review-fix-b 守卫）——按钮/输入框
 // 自建 DOM + `data-lucide` 占位经 mountIcons 兑现；编辑弹窗壳收编 core uiModal（同 openForm
 // 口径），内容根复用 .bz-fav-form / .bz-fav-btns，与「添加·编辑收藏」同皮。
@@ -836,13 +836,13 @@ const TAG_ICON_CHOICES = [
   'gamepad-2', 'package', 'briefcase', 'graduation-cap', 'link', 'folder',
 ];
 
-/** 管理用数据管理器（按当前存储设置现构造；loadTags 幂等注入 config 单源） */
+/** 管理用数据管理器（按当前存储设置现构造；loadTags 幂等迁移旧伴生文件 + 返回生效集） */
 function tagManagerDm(): DataManager {
   const s = tryGetSettings() as any;
   return new DataManager(getStoragePath(s?.storagePath));
 }
 
-/** 管理列表渲染（custom 行 render 入口）：先画当前生效集，磁盘载入完成后重画 */
+/** 管理列表渲染（custom 行 render 入口）：先画当前生效集，loadTags（含旧文件迁移）完成后重画 */
 function renderTagManager(body: HTMLElement, _ctx: { rowEl: HTMLElement; refreshVisibility: () => void }): void {
   const dm = tagManagerDm();
   const wrap = document.createElement('div');
@@ -897,7 +897,7 @@ function drawTagManager(wrap: HTMLElement, dm: DataManager, redraw: () => void):
   mountIcons(wrap);
 }
 
-/** 排序调整（上移/下移）：交换后整体落盘（saveTags 注入单源即时生效） */
+/** 排序调整（上移/下移）：交换后整体落盘（saveTags 写设置键 + saveSettings 即时生效） */
 async function moveTag(dm: DataManager, idx: number, delta: number, redraw: () => void): Promise<void> {
   const tags = [...getTags()];
   const j = idx + delta;
