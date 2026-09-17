@@ -15550,6 +15550,359 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    ==================================================================== */
 .bz-cinema--midnight .pw-fetch{position:absolute;inset:0;z-index:3;display:grid;place-items:center;background:#0006}
 .bz-cinema--midnight .pw-spin{width:20px;height:20px;border:3px solid var(--chip);border-top-color:var(--gold);border-radius:50%;animation:cn-spin .8s linear infinite}
+/* ==================== 游戏架域样式（src/gameshelf/styles.css） ====================
+   全部视觉消费 core/ui token（--bz-*，亮暗随 .theme-dark 自动跟随，零固定色）；
+   面板挂 body：遮罩/弹层自带全部所需变量（不依赖面板作用域 token 继承）；
+   滚动条不自造（core 单源，ADR-0122）；无入场动效（用户拍板）。 */
+
+/* ---------- 遮罩（对齐 core .bz-overlay-mask 语义，域内独立类防跨域牵连） ---------- */
+.bz-gs-mask {
+  position: fixed;
+  inset: 0;
+  background: var(--background-modifier-cover);
+  z-index: 1; /* 实际层级由 topifyZ 动态写 */
+}
+
+/* ---------- 面板壳 ---------- */
+.bz-gs-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(920px, 94vw);
+  height: min(80vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bz-surface-1);
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-lg);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.12);
+  color: var(--bz-text-1);
+  font-size: var(--bz-font-body);
+  font-family: var(--bz-font-ui);
+  z-index: 1;
+}
+
+/* 头行：标题 + 视图页签 + 动作（影院式整宽头行） */
+.bz-gs-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-lg);
+  height: var(--bz-head-h);
+  padding: 0 var(--bz-space-lg);
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-gs-title {
+  font-size: var(--bz-font-emphasis);
+  font-weight: var(--bz-weight-semibold);
+}
+.bz-gs-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bz-surface-2);
+  border-radius: var(--bz-radius-full);
+  padding: 2px;
+}
+.bz-gs-tab {
+  border: none;
+  background: transparent;
+  color: var(--bz-text-2);
+  font-size: var(--bz-font-label);
+  line-height: var(--bz-leading-tight);
+  padding: 4px 12px;
+  border-radius: var(--bz-radius-full);
+  cursor: pointer;
+}
+.bz-gs-tab.is-active {
+  background: var(--bz-surface-4);
+  color: var(--bz-text-1);
+}
+.bz-gs-head-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+}
+.bz-gs-close {
+  border: none;
+  background: transparent;
+  color: var(--bz-text-2);
+  width: var(--bz-icon-btn-w);
+  height: var(--bz-icon-btn-h);
+  border-radius: var(--bz-radius-xs);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-gs-close:hover {
+  background: var(--bz-surface-hover);
+  color: var(--bz-text-1);
+}
+
+/* 按钮（同步 / 引导态两键） */
+.bz-gs-btn {
+  border: 1px solid var(--bz-border);
+  background: var(--bz-surface-2);
+  color: var(--bz-text-1);
+  font-size: var(--bz-font-label);
+  height: var(--bz-control-h);
+  padding: 0 var(--bz-space-md);
+  border-radius: var(--bz-radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.bz-gs-btn:hover {
+  background: var(--bz-surface-hover);
+}
+.bz-gs-btn--primary {
+  background: var(--bz-brand);
+  border-color: var(--bz-brand);
+  color: var(--bz-on-brand);
+}
+.bz-gs-btn--primary:hover {
+  background: var(--bz-brand-hover);
+}
+.bz-gs-btn--sync {
+  height: var(--bz-control-h-md);
+}
+.bz-gs-btn:disabled {
+  opacity: var(--bz-state-disabled-content);
+  cursor: default;
+}
+
+/* 状态行（同步时刻 / 进行中 / 结果摘要） */
+.bz-gs-status {
+  flex: none;
+  min-height: 28px;
+  padding: 4px var(--bz-space-lg);
+  color: var(--bz-text-2);
+  font-size: var(--bz-font-meta);
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-gs-status:empty {
+  display: none;
+}
+
+/* 内容区：唯一滚动容器 */
+.bz-gs-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--bz-space-lg);
+}
+
+/* ---------- 引导态 ---------- */
+.bz-gs-guide {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--bz-space-md);
+  text-align: center;
+}
+.bz-gs-guide-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--bz-text-3);
+}
+.bz-gs-guide-title {
+  font-size: var(--bz-font-title);
+  font-weight: var(--bz-weight-semibold);
+}
+.bz-gs-guide-desc {
+  max-width: 420px;
+  color: var(--bz-text-2);
+  line-height: var(--bz-leading-normal);
+}
+.bz-gs-guide-actions {
+  display: flex;
+  gap: var(--bz-space-sm);
+  margin-top: var(--bz-space-sm);
+}
+
+/* ---------- 游戏墙 ---------- */
+.bz-gs-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bz-text-3);
+}
+.bz-gs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+  gap: var(--bz-space-md);
+}
+.bz-gs-card {
+  border: 1px solid var(--bz-border);
+  background: var(--bz-surface-2);
+  border-radius: var(--bz-radius-md);
+  overflow: hidden;
+  cursor: default;
+}
+.bz-gs-cover {
+  position: relative;
+  aspect-ratio: 92 / 43; /* Steam header.jpg 原始比例 */
+  background: var(--bz-surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bz-text-3);
+}
+.bz-gs-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bz-gs-name {
+  padding: var(--bz-space-sm) var(--bz-space-sm) 2px;
+  font-size: var(--bz-font-label);
+  font-weight: var(--bz-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bz-gs-meta {
+  padding: 0 var(--bz-space-sm) var(--bz-space-sm);
+  color: var(--bz-text-2);
+  font-size: var(--bz-font-meta);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 下架保留：置灰 + 角标（不删语义的可视化） */
+.bz-gs-card--off {
+  opacity: 0.55;
+}
+.bz-gs-off-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--bz-surface-4);
+  color: var(--bz-text-1);
+  border: 1px solid var(--bz-border-strong);
+  font-size: var(--bz-font-caption);
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: var(--bz-radius-xs);
+}
+
+/* ---------- 报告 ---------- */
+.bz-gs-stats {
+  display: flex;
+  gap: var(--bz-space-md);
+  flex-wrap: wrap;
+}
+.bz-gs-stat {
+  flex: 1;
+  min-width: 120px;
+  background: var(--bz-surface-2);
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-md);
+  padding: var(--bz-space-md) var(--bz-space-lg);
+}
+.bz-gs-statnum {
+  font-size: var(--bz-font-display);
+  font-weight: var(--bz-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+.bz-gs-statlabel {
+  color: var(--bz-text-2);
+  font-size: var(--bz-font-meta);
+  margin-top: 2px;
+}
+.bz-gs-caveat {
+  margin: var(--bz-space-md) 0;
+  padding: var(--bz-space-sm) var(--bz-space-md);
+  border: 1px dashed var(--bz-border-strong);
+  border-radius: var(--bz-radius-sm);
+  color: var(--bz-text-2);
+  font-size: var(--bz-font-meta);
+  line-height: var(--bz-leading-normal);
+}
+.bz-gs-section {
+  margin-top: var(--bz-space-lg);
+}
+.bz-gs-sectitle {
+  font-size: var(--bz-font-emphasis);
+  font-weight: var(--bz-weight-semibold);
+  margin-bottom: var(--bz-space-sm);
+}
+.bz-gs-toprow,
+.bz-gs-recentrow,
+.bz-gs-monthrow {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+  padding: 3px 0;
+}
+.bz-gs-toprank {
+  width: 20px;
+  color: var(--bz-text-3);
+  font-size: var(--bz-font-meta);
+  font-variant-numeric: tabular-nums;
+}
+.bz-gs-topname {
+  flex: none;
+  width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bz-gs-recentrow .bz-gs-topname {
+  width: auto;
+  flex: 1;
+}
+.bz-gs-topbar {
+  flex: 1;
+  height: 8px;
+  border-radius: var(--bz-radius-full);
+  background: var(--bz-surface-2);
+  overflow: hidden;
+}
+.bz-gs-topbar > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--bz-radius-full);
+  background: var(--bz-brand);
+  opacity: 0.75;
+}
+.bz-gs-tophours {
+  flex: none;
+  min-width: 56px;
+  text-align: right;
+  color: var(--bz-text-2);
+  font-size: var(--bz-font-meta);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 移动端真全屏（issue 272 范式；顶距 44px 由 .bz-panel-mtop 出） ---------- */
+@media (max-width: 768px) {
+  .bz-gs-panel {
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100vw;
+    max-width: none;
+    height: var(--bz-vvh, 100vh);
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .bz-gs-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  .bz-gs-topname {
+    width: 128px;
+  }
+}
 /* ==================== 书库域样式（src/bookshelf/styles.css） ====================
    书脊墙 1:1 复刻（issue 218；原型 .zcode/ui-prototypes/bookshelf-10/p4-full.html）：
    小号木匾「书库 · LIBRARY」+ 纸质统计标签行（同行居左；issue 226 匾额复位+逐肤换脸）
