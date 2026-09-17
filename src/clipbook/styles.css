@@ -655,21 +655,11 @@
 .bz-clp-rep-error { text-align: center; padding: 48px 24px; color: var(--clip-dim); }
 .bz-clp-rep-error-t { font-size: 1.2em; margin-bottom: 8px; color: var(--clip-ink-2); }
 
-/* ---- 空态人话 ---- */
-.bz-clp-rep-empty { text-align: center; padding: 72px 24px; color: var(--clip-dim); }
-/* 空态图标钉成方块（issue 358 真机回归）：本容器非 flex，兑现后的 .bz-ic span 保持
-   UA 行内态——宽高声明（.bz-ic--lg 24px !important）对行内盒不生效，内层 svg 的
-   100%×100%（core .bz-ic svg）不取行内父级而取最近块容器（报告体内容盒）→ 图标
-   被拉满整屏。display:inline-block 让尺寸档生效并仍随 text-align 居中。 */
-.bz-clp-rep-empty .bz-ic { display: inline-block; }
-.bz-clp-rep-empty-t {
-  margin-top: 12px;
-  font-size: 1.1em;
-  color: var(--clip-ink-2);
-  font-family: var(--clip-serif);
-  letter-spacing: 1px;
-}
-.bz-clp-rep-empty-d { margin-top: 8px; font-size: var(--bz-font-caption); }
+/* ---- 空态（审查修复批 体验⑩）：markup/样式走 core uiEmpty 标准件（.bz-empty，手册 §8.3），
+   域内只补弹层语境的留白与衬线字——不再自造 empty 结构（上次图标失控根因），域内禁
+   .bz-empty 子件改形（图标盒形态等由 core 单源承担） ---- */
+.bz-clp-rep-body .bz-empty { padding: 72px 24px; color: var(--clip-dim); }
+.bz-clp-rep-body .bz-empty-title { font-family: var(--clip-serif); letter-spacing: 1px; font-size: 1.1em; color: var(--clip-ink-2); }
 
 /* ---- 段（编辑部小标：衬线 + 点线拖尾） ---- */
 .bz-clp-rep-sec { margin-bottom: var(--bz-space-xl, 24px); }

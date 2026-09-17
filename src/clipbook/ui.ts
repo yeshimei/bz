@@ -179,7 +179,7 @@ export async function revealClipArticle(notePath: string): Promise<void> {
 export function closePanel(): void {
   pauseReadingSession();
   // issue 358：关面板前把本段阅读会话封存入账侧写 readLog（时长不因关面板丢失）
-  flushReadingSession();
+  void flushReadingSession();
   panelResizeDetach?.flush(); // 关面板即落盘面板尺寸（review P2：恢复旧 flushPendingSize 语义）
   panelSplit?.flush(); // 关面板即落盘分割线宽度（同上语义）
   M.open = false;
@@ -192,7 +192,7 @@ export function closePanel(): void {
 /** 卸载（main.ts onunload） */
 export function unloadPanel(): void {
   pauseReadingSession();
-  flushReadingSession(); // issue 358：卸载同样封存阅读会话入账
+  void flushReadingSession(); // issue 358：卸载同样封存阅读会话入账
   closeItemMenu();
   if (escHandle) {
     try { escHandle.unregister(); } catch (e) { /* 忽略 */ }
@@ -283,6 +283,14 @@ function buildDom(app: any): void {
   // rail 脚注·阅读报告入口（issue 358）：「我读了什么」弹层（剪藏本自有报告，非书库深链）
   railFootEl!.addEventListener('click', (e) => {
     if ((e.target as HTMLElement).closest('[data-clp-rep-entry]')) openClipbookReport(app);
+  });
+  // 审查修复批 P3⑦：入口 role=button tabindex=0 补 Enter/Space（假可达修复，与弹层关闭钮同款）
+  railFootEl!.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if ((e.target as HTMLElement).closest('[data-clp-rep-entry]')) {
+      e.preventDefault();
+      openClipbookReport(app);
+    }
   });
   // 移动头行「报告」文字钮（issue 358）：同一弹层
   const mobReportBtn = overlayEl.querySelector('[data-clip-mob-report]');
@@ -479,8 +487,11 @@ function renderAll(): void {
   }
 }
 
-/** 移动详情屏 → 返回列表（返回钮与 ESC 第一层共用；C19） */
+/** 移动详情屏 → 返回列表（返回钮与 ESC 第一层共用；C19）。
+ *  审查修复批 P2②：详情动线接入会话计时（与桌面同套）——返回目录 = 详情段封存入账。 */
 function closeMobDetail(): void {
+  pauseReadingSession();
+  void flushReadingSession();
   M.mobDetailOpen = false;
   if (mobDetailEl) mobDetailEl.style.display = 'none';
   renderAll();
@@ -659,6 +670,7 @@ function renderRail(): void {
   // + 阅读报告入口（issue 358「我读了什么」；行为委托 buildDom 里 data-clp-rep-entry）
   if (railFootEl) {
     railFootEl.innerHTML = railFootHtml(M.stats?.byDate?.[localDayKey()] || 0) + clipReportEntryHtml();
+    mountIcons(railFootEl); // 审查修复批 P3⑥：入口 chevron-right 图标兑现（innerHTML 后必须补挂）
   }
   // rail 源行动作（enh 包 4）：右键/长按出「全部标为已读」等源级批量操作——
   // rail 是导航层，动作挂在源行而非条目卡，中栏「列表零操作」拍板不被破坏
@@ -1394,6 +1406,10 @@ function openMobDetail(id: string): void {
   if (!a) return;
   M.cur = a;
   M.mobDetailOpen = true;
+  // 审查修复批 P2②：进详情 = 开始阅读该篇（与桌面 renderReader 同套会话计时）——
+  // 此前移动详情完全不计时，readLog 近乎恒空。「读下一则」换篇走同一入口，
+  // setReadingSession 换 key 时自动封存旧篇；返回目录由 closeMobDetail 封存。
+  setReadingSession(a.id, { title: a.title, src: a.srcName });
   renderMobDetail();
   if (mobDetailEl) mobDetailEl.style.display = 'flex';
   const body = mobDetailEl ? (mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement | null) : null;
@@ -1410,7 +1426,9 @@ function markReadOnOpen(a: ClipArticle): void {
   const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
   if (!raw || raw.read === true) return;
   raw.read = true; // 同步内存位（防重入 + 即时视觉/计数）
-  void flowMarkRead(a).then((res) => {
+  // keepSession（审查修复批 P1①）：打开即已读本篇仍在阅读——不 pause/不尾置 flush，
+  // 异步落盘不再清零该篇刚开的计时器；时长由切篇/关面板既有封存点入账
+  void flowMarkRead(a, { keepSession: true }).then((res) => {
     // C17：rail 脚注「今日已读」取内存镜像 M.stats.byDate——静默打开即读的 +1 只在磁盘，
     // 不刷新时脚注停留旧值（到下次装载才追上）。回写落盘声明的统计快照（与磁盘同一口径）。
     if (res && res.changed && res.stats) M.stats = res.stats;

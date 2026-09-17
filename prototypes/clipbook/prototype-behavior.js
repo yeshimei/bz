@@ -1,4 +1,4 @@
-/* 源指纹 5a0835972393b64d · 仓内输入 102 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4914e756ba5df239 · 仓内输入 102 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -17420,7 +17420,7 @@ ${body}`;
   // src/clipbook/flow.ts
   function setReadingSession(key, meta) {
     if (key !== curKey) {
-      flushReadingSession();
+      void flushReadingSession();
       curKey = key;
       curMeta = meta || null;
       accumMs = 0;
@@ -17442,12 +17442,12 @@ ${body}`;
     return Math.max(1, Math.round(total / 6e4));
   }
   function flushReadingSession() {
-    if (!curKey) return;
+    if (!curKey) return Promise.resolve();
     const now = Date.now();
     const total = (openedAt ? now - openedAt : 0) + accumMs;
     openedAt = 0;
     accumMs = 0;
-    if (total < 6e4) return;
+    if (total < 6e4) return Promise.resolve();
     const entry = {
       key: curKey,
       title: (curMeta == null ? void 0 : curMeta.title) || "",
@@ -17455,12 +17455,22 @@ ${body}`;
       minutes: Math.max(1, Math.round(total / 6e4)),
       ts: now
     };
-    void appendReadLog(entry).catch((e) => console.error("[剪藏本] 阅读时长入账失败", e));
+    return appendReadLog(entry).catch((e) => console.error("[剪藏本] 阅读时长入账失败", e));
   }
   async function appendReadLog(entry) {
-    await updateClipbookData((cur) => {
-      return { ...cur, readLog: trimReadLog([...cur.readLog || [], entry], entry.ts) };
-    });
+    const batch = [...pendingReadLog, entry];
+    try {
+      await updateClipbookData((cur) => {
+        return { ...cur, readLog: trimReadLog([...cur.readLog || [], ...batch], entry.ts) };
+      });
+      pendingReadLog.length = 0;
+    } catch (e) {
+      pendingReadLog.push(entry);
+      if (pendingReadLog.length > PENDING_READ_LOG_MAX) {
+        pendingReadLog.splice(0, pendingReadLog.length - PENDING_READ_LOG_MAX);
+      }
+      throw e;
+    }
   }
   function trimReadLog(list, now) {
     const floor = now - READ_LOG_RETENTION_MS;
@@ -17535,20 +17545,21 @@ ${body}`;
       const evt = buildReadEvt(raw, "saved");
       if (bump.changed) emitDomainEvent("news", { kind: "read", evt });
       emitDomainEvent("news", { kind: "saved", evt, clipPath: `${dirOf()}/${String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim()}.md` });
-      flushReadingSession();
+      void flushReadingSession();
       return true;
     } catch (e) {
       console.error("[剪藏本] 保存失败", e);
       return false;
     }
   }
-  async function flowMarkRead(article) {
+  async function flowMarkRead(article, opts) {
     const raw = article && article.raw;
     if (!raw) return NO_BUMP;
-    pauseReadingSession();
+    const keepSession = !!(opts == null ? void 0 : opts.keepSession);
+    if (!keepSession) pauseReadingSession();
     const res = await markHandledAndBump(raw, "skipped");
     if (res.changed) emitReadEvt(raw, "skipped");
-    flushReadingSession();
+    if (!keepSession) void flushReadingSession();
     return res;
   }
   async function flowDeleteNews(article) {
@@ -17636,7 +17647,7 @@ ${body}`;
     const s = tryGetSettings();
     return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
   }
-  var curKey, curMeta, openedAt, accumMs, READ_LOG_RETENTION_MS, READ_LOG_MAX_ENTRIES, NO_BUMP;
+  var curKey, curMeta, openedAt, accumMs, PENDING_READ_LOG_MAX, pendingReadLog, READ_LOG_RETENTION_MS, READ_LOG_MAX_ENTRIES, NO_BUMP;
   var init_flow = __esm({
     "src/clipbook/flow.ts"() {
       init_domain_bus();
@@ -17651,6 +17662,8 @@ ${body}`;
       curMeta = null;
       openedAt = 0;
       accumMs = 0;
+      PENDING_READ_LOG_MAX = 500;
+      pendingReadLog = [];
       READ_LOG_RETENTION_MS = 180 * 24 * 60 * 60 * 1e3;
       READ_LOG_MAX_ENTRIES = 5e3;
       NO_BUMP = { changed: false, upgraded: false, stats: null };
@@ -17671,6 +17684,45 @@ ${body}`;
   });
 
   // src/core/ui/button.ts
+  function uiBtn(opts) {
+    const b = document.createElement("button");
+    b.type = "button";
+    const cls = ["bz-btn"];
+    if (opts.tone && opts.tone !== "default") cls.push(`bz-btn--${opts.tone}`);
+    if (opts.size && opts.size !== "md") cls.push(`bz-btn--${opts.size}`);
+    if (opts.chip) cls.push("bz-btn--chip");
+    if (opts.on) cls.push("is-on");
+    if (opts.className) cls.push(opts.className);
+    b.className = cls.join(" ");
+    if (opts.title) b.title = opts.title;
+    if (opts.disabled) b.disabled = true;
+    if (opts.icon) {
+      if (opts.chip) {
+        const chip2 = document.createElement("span");
+        chip2.className = "bz-btn-chip";
+        chip2.appendChild(uiIcon(opts.icon));
+        b.appendChild(chip2);
+      } else {
+        b.appendChild(uiIcon(opts.icon));
+      }
+    }
+    if (opts.label) {
+      const span = document.createElement("span");
+      span.textContent = opts.label;
+      b.appendChild(span);
+    }
+    if (opts.onClick) b.addEventListener("click", opts.onClick);
+    return b;
+  }
+  function uiBtnRow(buttons, opts) {
+    const row = document.createElement("div");
+    const cls = ["bz-btn-row"];
+    if (opts == null ? void 0 : opts.center) cls.push("bz-btn-row--center");
+    if (opts == null ? void 0 : opts.grow) cls.push("bz-btn-row--grow");
+    row.className = cls.join(" ");
+    buttons.forEach((x) => row.appendChild(x));
+    return row;
+  }
   var init_button = __esm({
     "src/core/ui/button.ts"() {
       init_icon();
@@ -21447,14 +21499,6 @@ ${bodyText.substring(0, 6e3)}`;
   function clipReportSkeletonHtml() {
     return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
   }
-  function clipReportEmptyHtml() {
-    return `
-    <div class="bz-clp-rep-empty">
-      ${iconSpan(ICO.book, "bz-ic--lg")}
-      <div class="bz-clp-rep-empty-t">还没有阅读记录</div>
-      <div class="bz-clp-rep-empty-d">在剪藏本里打开文章阅读，停留满一分钟就会自动记到这里</div>
-    </div>`;
-  }
   function buildClipReportSections(d) {
     return [
       { key: "overview", label: "统计概览", generate: () => clipReportOverviewHtml(d) },
@@ -21744,12 +21788,14 @@ ${bodyText.substring(0, 6e3)}`;
   function bodyEl() {
     return overlayEl ? overlayEl.querySelector("[data-clp-rep-body]") : null;
   }
-  function openClipbookReport(_app2) {
-    flushReadingSession();
+  async function openClipbookReport(_app2) {
+    reportApp = _app2 || null;
+    await flushReadingSession();
+    releaseProgress();
     if (!overlayEl) buildDom();
     syncPeriodSeg();
     overlayEl.style.display = "flex";
-    void renderBody(true);
+    await renderBody(true);
   }
   function syncPeriodSeg() {
     const seg = overlayEl == null ? void 0 : overlayEl.querySelector("[data-clp-rep-period]");
@@ -21766,6 +21812,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function unloadClipbookReport() {
     closeClipbookReport();
+    period = "week";
     if (escHandle) {
       try {
         escHandle.unregister();
@@ -21822,32 +21869,61 @@ ${bodyText.substring(0, 6e3)}`;
     syncPeriodSeg();
     void renderBody(false);
   }
+  function buildClipReportEmpty(kind, switchTo) {
+    if (kind === "period") {
+      const curLabel = period === "week" ? "本周" : "本月";
+      const otherLabel = switchTo === "week" ? "本周" : switchTo === "month" ? "本月" : "";
+      return uiEmpty({
+        icon: "book-open",
+        title: `${curLabel}还没读过`,
+        desc: otherLabel ? "阅读记录还在，换个周期看看" : "阅读记录还不在这两个周期里",
+        actions: otherLabel ? uiBtnRow([uiBtn({ label: `切到${otherLabel}看看`, icon: "calendar", onClick: () => setPeriod(switchTo) })], { center: true }) : void 0
+      });
+    }
+    return uiEmpty({
+      icon: "book-open",
+      title: "还没有阅读记录",
+      desc: "在剪藏本里打开文章阅读，停留满一分钟就会自动记到这里",
+      actions: uiBtnRow([uiBtn({
+        label: "去剪藏本读几篇",
+        icon: "scissors",
+        tone: "primary",
+        onClick: () => {
+          closeClipbookReport();
+          openClipbook(reportApp || getApp());
+        }
+      })], { center: true })
+    });
+  }
+  function renderEmptyState(body, empty) {
+    body.innerHTML = "";
+    body.appendChild(empty);
+    mountIcons(body);
+  }
   async function renderBody(withToast) {
     const body = bodyEl();
     if (!body) return;
     const seq = ++renderSeq;
     const alive = () => seq === renderSeq && !!overlayEl && overlayEl.style.display !== "none" && body.isConnected;
     body.innerHTML = clipReportSkeletonHtml();
-    const progress = withToast ? notify("正在统计剪藏阅读数据…", { type: "progress", duration: 0, dedupeKey: `bz-clipbook-report-progress-${++progressToastSeq}` }) : null;
-    if (progress) activeProgress = progress;
-    const finishAbort = () => {
-      if (progress && activeProgress === progress) {
-        progress.hide();
-        activeProgress = null;
-      }
-    };
     try {
       if (!logCache) {
-        progress == null ? void 0 : progress.setMessage("正在读取阅读记录…");
         await yieldToMainThread(YIELD_MS);
-        if (!alive()) return finishAbort();
+        if (!alive()) return;
         const sidecar = await readClipbookData();
-        if (!alive()) return finishAbort();
+        if (!alive()) return;
         logCache = sidecar.readLog || [];
       }
+      const progress = withToast && logCache.length >= QUIET_TOAST_MIN_ENTRIES ? notify("正在统计剪藏阅读数据…", { type: "progress", duration: 0, dedupeKey: `bz-clipbook-report-progress-${++progressToastSeq}` }) : null;
+      if (progress) activeProgress = progress;
+      const finishAbort = () => {
+        if (progress && activeProgress === progress) {
+          progress.hide();
+          activeProgress = null;
+        }
+      };
       if (!logCache.length) {
-        body.innerHTML = clipReportEmptyHtml();
-        mountIcons(body);
+        renderEmptyState(body, buildClipReportEmpty("never"));
         if (progress && activeProgress === progress) {
           progress.hide();
           activeProgress = null;
@@ -21859,8 +21935,10 @@ ${bodyText.substring(0, 6e3)}`;
       if (!alive()) return finishAbort();
       const data = buildClipReport(logCache, period, /* @__PURE__ */ new Date());
       if (!data.articles && !data.totalMinutes) {
-        body.innerHTML = clipReportEmptyHtml();
-        mountIcons(body);
+        const other = period === "week" ? "month" : "week";
+        const otherData = buildClipReport(logCache, other, /* @__PURE__ */ new Date());
+        const switchTo = otherData.articles || otherData.totalMinutes ? other : void 0;
+        renderEmptyState(body, buildClipReportEmpty("period", switchTo));
         if (progress && activeProgress === progress) {
           progress.hide();
           activeProgress = null;
@@ -21891,17 +21969,19 @@ ${bodyText.substring(0, 6e3)}`;
       if (alive()) body.innerHTML = ERROR_HTML;
     }
   }
-  var overlayEl, escHandle, period, logCache, renderSeq, progressToastSeq, activeProgress, YIELD_MS, ERROR_HTML;
+  var overlayEl, escHandle, period, logCache, renderSeq, progressToastSeq, activeProgress, reportApp, YIELD_MS, QUIET_TOAST_MIN_ENTRIES, ERROR_HTML;
   var init_report_ui = __esm({
     "src/clipbook/report-ui.ts"() {
       init_notice();
       init_ui2();
+      init_app();
       init_utils();
       init_esc_manager();
       init_data();
       init_flow();
       init_report_stats();
       init_render3();
+      init_clipbook();
       overlayEl = null;
       escHandle = null;
       period = "week";
@@ -21909,7 +21989,9 @@ ${bodyText.substring(0, 6e3)}`;
       renderSeq = 0;
       progressToastSeq = 0;
       activeProgress = null;
+      reportApp = null;
       YIELD_MS = 50;
+      QUIET_TOAST_MIN_ENTRIES = 500;
       ERROR_HTML = `<div class="bz-clp-rep-error">
   <div class="bz-clp-rep-error-t">统计失败</div>
   <div>读取阅读记录时出错，请重新打开；若反复出现请查看控制台</div>
@@ -21989,7 +22071,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function closePanel() {
     pauseReadingSession();
-    flushReadingSession();
+    void flushReadingSession();
     panelResizeDetach == null ? void 0 : panelResizeDetach.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     M.open = false;
@@ -21999,7 +22081,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function unloadPanel() {
     pauseReadingSession();
-    flushReadingSession();
+    void flushReadingSession();
     closeItemMenu();
     if (escHandle2) {
       try {
@@ -22083,6 +22165,13 @@ ${bodyText.substring(0, 6e3)}`;
     });
     railFootEl.addEventListener("click", (e) => {
       if (e.target.closest("[data-clp-rep-entry]")) openClipbookReport(app);
+    });
+    railFootEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      if (e.target.closest("[data-clp-rep-entry]")) {
+        e.preventDefault();
+        openClipbookReport(app);
+      }
     });
     const mobReportBtn = overlayEl2.querySelector("[data-clip-mob-report]");
     mobReportBtn.addEventListener("click", () => openClipbookReport(app));
@@ -22274,6 +22363,8 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function closeMobDetail() {
+    pauseReadingSession();
+    void flushReadingSession();
     M.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     renderAll();
@@ -22388,6 +22479,7 @@ ${bodyText.substring(0, 6e3)}`;
     mountIcons(railListEl);
     if (railFootEl) {
       railFootEl.innerHTML = railFootHtml(((_d = (_c = M.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
+      mountIcons(railFootEl);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
     rows.forEach((row) => {
@@ -22984,6 +23076,7 @@ ${bodyText.substring(0, 6e3)}`;
     if (!a) return;
     M.cur = a;
     M.mobDetailOpen = true;
+    setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
     if (mobDetailEl) mobDetailEl.style.display = "flex";
     const body = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
@@ -22996,7 +23089,7 @@ ${bodyText.substring(0, 6e3)}`;
     const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
-    void flowMarkRead(a).then((res) => {
+    void flowMarkRead(a, { keepSession: true }).then((res) => {
       if (res && res.changed && res.stats) M.stats = res.stats;
       if (M.open && !M.mobDetailOpen) {
         renderList();
@@ -23567,6 +23660,158 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
+  // src/clipbook/file-sync.ts
+  function syncRename2(data, { oldPath, newPath }) {
+    let changed = false;
+    for (const key of Object.keys(data.marks)) {
+      const list = data.marks[key];
+      if (!Array.isArray(list)) continue;
+      for (const mk of list) {
+        if (mk && mk.notePath === oldPath) {
+          mk.notePath = newPath;
+          changed = true;
+        }
+      }
+    }
+    for (const key of Object.keys(data.pendingSource)) {
+      const list = data.pendingSource[key];
+      if (!Array.isArray(list)) continue;
+      for (let i = 0; i < list.length; i++) {
+        if (list[i] === oldPath) {
+          list[i] = newPath;
+          changed = true;
+        }
+      }
+    }
+    return changed;
+  }
+  function syncDelete2(data, path) {
+    let changed = false;
+    const marks = {};
+    for (const key of Object.keys(data.marks)) {
+      const list = data.marks[key];
+      if (!Array.isArray(list)) continue;
+      const kept = list.filter((mk) => !(mk && mk.notePath === path));
+      if (kept.length !== list.length) changed = true;
+      if (kept.length) marks[key] = kept;
+    }
+    const pendingSource = {};
+    for (const key of Object.keys(data.pendingSource)) {
+      const list = data.pendingSource[key];
+      if (!Array.isArray(list)) continue;
+      const kept = list.filter((p) => p !== path);
+      if (kept.length !== list.length) changed = true;
+      if (kept.length) pendingSource[key] = kept;
+    }
+    if (!changed) return false;
+    data.marks = marks;
+    data.pendingSource = pendingSource;
+    return true;
+  }
+  function clipDirOf2() {
+    const s = tryGetSettings();
+    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
+  }
+  function getWatchedFolders2() {
+    const s = tryGetSettings();
+    const kb = String(s && s.knowledgeDirectory || "文献盒").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
+    return [kb, clipDirOf2()];
+  }
+  async function referencedByClipbook(path) {
+    if (!path) return false;
+    try {
+      const data = await readClipbookData();
+      const markHit = Object.values(data.marks).some((list) => list.some((mk) => mk && mk.notePath === path));
+      const pendingHit = Object.values(data.pendingSource).some((list) => list.includes(path));
+      return markHit || pendingHit;
+    } catch (e) {
+      return false;
+    }
+  }
+  var agent2;
+  var init_file_sync3 = __esm({
+    "src/clipbook/file-sync.ts"() {
+      init_settings_provider();
+      init_file_sync();
+      init_data();
+      agent2 = createFileSync({
+        logTag: "[clipbook-file-sync]",
+        failNotice: "剪藏本同步失败，数据可能不一致",
+        failDedupeKey: "clipbook-file-sync",
+        watchedFolders: getWatchedFolders2,
+        /** clipbook.json 读改写事务（updateClipbookData 自带 per-path 串行队列与 D2 写契约） */
+        commit: (apply) => updateClipbookData((cur) => {
+          apply(cur);
+          return cur;
+        }),
+        referencedBy: referencedByClipbook,
+        applyRename: syncRename2,
+        applyDelete: syncDelete2
+      });
+    }
+  });
+
+  // src/clipbook/index.ts
+  function openClipbook(app) {
+    if (!initialized3) {
+      initialized3 = true;
+      registerAutoRefresh(app);
+      setNewsFetchDoneListener(() => reloadIfOpen());
+      initPanel(app, true);
+    } else {
+      showPanel();
+    }
+    void maybeFetchNews();
+  }
+  function unloadClipbook() {
+    unloadClipbookReport();
+    if (!initialized3) return;
+    initialized3 = false;
+    unloadPanel();
+    autoRefreshRegistered = false;
+  }
+  function registerAutoRefresh(app) {
+    if (autoRefreshRegistered) return;
+    autoRefreshRegistered = true;
+    let timer = null;
+    const dir = () => {
+      const s = tryGetSettings();
+      return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
+    };
+    const schedule = (path, stalePath) => {
+      if (path) invalidateClipBodyCache(path);
+      if (stalePath) invalidateClipBodyCache(stalePath);
+      const d = dir();
+      const inDir2 = (p) => !!p && p.startsWith(d + "/");
+      if (path && !inDir2(path) && !inDir2(stalePath)) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        void reloadIfOpen();
+      }, 300);
+    };
+    onDomainEvent("clipping:file-created", (e) => schedule(e && e.path));
+    onDomainEvent("clipping:file-modified", (e) => schedule(e && e.path));
+    onDomainEvent("clipping:file-deleted", (e) => schedule(e && e.path));
+    onDomainEvent("clipping:file-renamed", (e) => schedule(e && e.newPath, e && e.oldPath));
+  }
+  var initialized3, autoRefreshRegistered;
+  var init_clipbook = __esm({
+    "src/clipbook/index.ts"() {
+      init_settings_provider();
+      init_domain_bus();
+      init_notice();
+      init_flow_dialog();
+      init_news_data();
+      init_news_fetcher();
+      init_flow();
+      init_ui3();
+      init_report_ui();
+      init_file_sync3();
+      initialized3 = false;
+      autoRefreshRegistered = false;
+    }
+  });
+
   // prototypes/clipbook/fake-sim.ts
   var fake_sim_exports = {};
   __export(fake_sim_exports, {
@@ -23711,150 +23956,8 @@ ${bodyText.substring(0, 6e3)}`;
     subscribe("rename", (file, oldPath) => dispatchRename(file, oldPath));
   }
 
-  // src/clipbook/index.ts
-  init_settings_provider();
-  init_domain_bus();
-  init_notice();
-  init_flow_dialog();
-  init_news_data();
-  init_news_fetcher();
-  init_flow();
-  init_ui3();
-  init_report_ui();
-
-  // src/clipbook/file-sync.ts
-  init_settings_provider();
-  init_file_sync();
-  init_data();
-  function syncRename2(data, { oldPath, newPath }) {
-    let changed = false;
-    for (const key of Object.keys(data.marks)) {
-      const list = data.marks[key];
-      if (!Array.isArray(list)) continue;
-      for (const mk of list) {
-        if (mk && mk.notePath === oldPath) {
-          mk.notePath = newPath;
-          changed = true;
-        }
-      }
-    }
-    for (const key of Object.keys(data.pendingSource)) {
-      const list = data.pendingSource[key];
-      if (!Array.isArray(list)) continue;
-      for (let i = 0; i < list.length; i++) {
-        if (list[i] === oldPath) {
-          list[i] = newPath;
-          changed = true;
-        }
-      }
-    }
-    return changed;
-  }
-  function syncDelete2(data, path) {
-    let changed = false;
-    const marks = {};
-    for (const key of Object.keys(data.marks)) {
-      const list = data.marks[key];
-      if (!Array.isArray(list)) continue;
-      const kept = list.filter((mk) => !(mk && mk.notePath === path));
-      if (kept.length !== list.length) changed = true;
-      if (kept.length) marks[key] = kept;
-    }
-    const pendingSource = {};
-    for (const key of Object.keys(data.pendingSource)) {
-      const list = data.pendingSource[key];
-      if (!Array.isArray(list)) continue;
-      const kept = list.filter((p) => p !== path);
-      if (kept.length !== list.length) changed = true;
-      if (kept.length) pendingSource[key] = kept;
-    }
-    if (!changed) return false;
-    data.marks = marks;
-    data.pendingSource = pendingSource;
-    return true;
-  }
-  function clipDirOf2() {
-    const s = tryGetSettings();
-    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-  }
-  function getWatchedFolders2() {
-    const s = tryGetSettings();
-    const kb = String(s && s.knowledgeDirectory || "文献盒").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
-    return [kb, clipDirOf2()];
-  }
-  async function referencedByClipbook(path) {
-    if (!path) return false;
-    try {
-      const data = await readClipbookData();
-      const markHit = Object.values(data.marks).some((list) => list.some((mk) => mk && mk.notePath === path));
-      const pendingHit = Object.values(data.pendingSource).some((list) => list.includes(path));
-      return markHit || pendingHit;
-    } catch (e) {
-      return false;
-    }
-  }
-  var agent2 = createFileSync({
-    logTag: "[clipbook-file-sync]",
-    failNotice: "剪藏本同步失败，数据可能不一致",
-    failDedupeKey: "clipbook-file-sync",
-    watchedFolders: getWatchedFolders2,
-    /** clipbook.json 读改写事务（updateClipbookData 自带 per-path 串行队列与 D2 写契约） */
-    commit: (apply) => updateClipbookData((cur) => {
-      apply(cur);
-      return cur;
-    }),
-    referencedBy: referencedByClipbook,
-    applyRename: syncRename2,
-    applyDelete: syncDelete2
-  });
-
-  // src/clipbook/index.ts
-  var initialized3 = false;
-  var autoRefreshRegistered = false;
-  function openClipbook(app) {
-    if (!initialized3) {
-      initialized3 = true;
-      registerAutoRefresh(app);
-      setNewsFetchDoneListener(() => reloadIfOpen());
-      initPanel(app, true);
-    } else {
-      showPanel();
-    }
-    void maybeFetchNews();
-  }
-  function unloadClipbook() {
-    unloadClipbookReport();
-    if (!initialized3) return;
-    initialized3 = false;
-    unloadPanel();
-    autoRefreshRegistered = false;
-  }
-  function registerAutoRefresh(app) {
-    if (autoRefreshRegistered) return;
-    autoRefreshRegistered = true;
-    let timer = null;
-    const dir = () => {
-      const s = tryGetSettings();
-      return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-    };
-    const schedule = (path, stalePath) => {
-      if (path) invalidateClipBodyCache(path);
-      if (stalePath) invalidateClipBodyCache(stalePath);
-      const d = dir();
-      const inDir2 = (p) => !!p && p.startsWith(d + "/");
-      if (path && !inDir2(path) && !inDir2(stalePath)) return;
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        void reloadIfOpen();
-      }, 300);
-    };
-    onDomainEvent("clipping:file-created", (e) => schedule(e && e.path));
-    onDomainEvent("clipping:file-modified", (e) => schedule(e && e.path));
-    onDomainEvent("clipping:file-deleted", (e) => schedule(e && e.path));
-    onDomainEvent("clipping:file-renamed", (e) => schedule(e && e.newPath, e && e.oldPath));
-  }
-
   // prototypes/clipbook/fake-sim.ts
+  init_clipbook();
   init_ui3();
   var CLIP_DIR = "归档/网页剪藏";
   var SEED_MARK = "bz-sim:__clipbook-seed-v3";
