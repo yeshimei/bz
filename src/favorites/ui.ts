@@ -34,7 +34,7 @@ import { emitDomainEvent } from '../core/domain-bus';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
 import type { SettingsSchema } from '../core/settings-schema';
-import { getTags, getTagById, newTagId, resetTagsState, getStoragePath, normalizeUrl, isUrlLike } from './config';
+import { getTags, getTagById, newTagId, resetTagsState, setTags, getStoragePath, normalizeUrl, isUrlLike } from './config';
 import {
   actionSpecs, formHtml, pickChipsHtml, hueOf, relTime,
   panelHtml, renderPanelView, localNow, normalizeFavSort, esc,
@@ -955,12 +955,17 @@ function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => v
     if (!label) { notice('请输入标签名称'); return; }
     if (getTags().some((t) => t.label === label && t.id !== existing?.id)) { notice('已有同名标签'); return; }
     const next = [...getTags()];
+    const prevTags = [...getTags()]; // 改动前定义快照（落盘失败回滚用）
+    let bulkDone = false; // 是否已迁移条目（决定失败时是否反向回滚）
     try {
       if (existing) {
         const idx = next.findIndex((t) => t.id === existing.id);
         if (idx === -1) { notice('标签不存在，请重试', 'error'); return; }
         // 改名存量跟随（issue 363）：先批量迁移条目 tags[]+type，成功后才写新定义——防条目与定义脱钩
-        if (next[idx].label !== label) await dm.updateTagLabelBulk(next[idx].label, label);
+        if (next[idx].label !== label) {
+          await dm.updateTagLabelBulk(next[idx].label, label);
+          bulkDone = true;
+        }
         next[idx] = { ...next[idx], label, ic: picked };
       } else {
         next.push({ id: newTagId(), label, ic: picked });
@@ -970,6 +975,16 @@ function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => v
       close();
       redraw();
     } catch (e) {
+      // 审查修复：定义落盘失败时条目可能已被 bulk 迁走——反向 bulk 迁回 + 内存定义回旧值，
+      // 条目/定义不再脱钩（磁盘设置键未被本次污染，回滚后三方一致；反向迁移失败留痕下次改名可纠）
+      if (bulkDone && existing) {
+        try {
+          await dm.updateTagLabelBulk(label, existing.label);
+        } catch (e2) {
+          console.error('[favorites-tags] 改名回滚失败（条目暂挂新名）:', e2);
+        }
+      }
+      setTags(prevTags);
       notifySaveError(e, '保存标签');
     }
   };
@@ -981,8 +996,10 @@ function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => v
   setTimeout(() => input.focus(), 30);
 }
 
-/** 删除标签：至少留一个；带条目时确认迁入「网站」（id 'web'，已删则取剩余第一个） */
+/** 删除标签：至少留一个；带条目时确认迁入「网站」（id 'web'，已删则取剩余第一个）。
+ *  审查修复：与改名同形态——bulk 迁完条目后定义落盘失败，反向 bulk 迁回 + 内存定义回快照。 */
 async function deleteTagFlow(dm: DataManager, tag: FavTag, redraw: () => void): Promise<void> {
+  const prevTags = [...getTags()]; // 改动前定义快照（落盘失败回滚用）
   const rest = getTags().filter((t) => t.id !== tag.id);
   if (!rest.length) { notice('至少保留一个标签'); return; }
   const fallback = rest.find((t) => t.id === 'web') ?? rest[0];
@@ -1003,12 +1020,24 @@ async function deleteTagFlow(dm: DataManager, tag: FavTag, redraw: () => void): 
     ],
   });
   if (ok !== 'del') return;
+  let bulkDone = false;
   try {
-    if (count > 0) await dm.updateTagLabelBulk(tag.label, fallback.label);
+    if (count > 0) {
+      await dm.updateTagLabelBulk(tag.label, fallback.label);
+      bulkDone = true;
+    }
     await dm.saveTags(rest);
     notice(`已删除标签「${tag.label}」`, 'success');
     redraw();
   } catch (e) {
+    if (bulkDone) {
+      try {
+        await dm.updateTagLabelBulk(fallback.label, tag.label);
+      } catch (e2) {
+        console.error('[favorites-tags] 删除回滚失败（条目暂挂兜底标签）:', e2);
+      }
+    }
+    setTags(prevTags);
     notifySaveError(e, '删除标签');
   }
 }

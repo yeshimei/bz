@@ -85,8 +85,10 @@ export function relTime(s: string | undefined): string {
  * 首标签 → 磁圆点/徽记色相（原型 hueOf 逐字）。issue 363 标签自定义延伸：
  * 内置 9 类原名映射保留（未改名数据视觉不变）；未命中（自定义/改名标签）回落
  * 字符串 hash 色相带（同一 label 恒定、不同标签分散，不再一律兜底蓝）。
+ * 审查修复：空 label（无标签条目）不再 hash 到 0 恒红，返回中性蓝 210。
  */
 export function hueOf(label: string): number {
+  if (!label) return 210;
   const m: Record<string, number> = {
     GitHub: 215, 桌面软件: 160, 网站: 30, 大模型: 265, pi: 100, Claude: 20, skills: 50, 酒馆: 330, 'DeepSeek Harness': 195,
   };

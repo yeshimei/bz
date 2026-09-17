@@ -45,7 +45,12 @@ function tagsFromSettings(): FavTag[] {
   return normalizeTags((tryGetSettings() as any)?.[CONFIG.TAGS_SETTINGS_KEY]);
 }
 
-/** 当前生效标签定义（设置键优先，无键/空/坏回退内置 9 类 seed；顺序即磁贴行与表单顺序） */
+/**
+ * 当前生效标签定义（设置键优先，无键/空/坏回退内置 9 类 seed；顺序即磁贴行与表单顺序）。
+ * 缓存语义（审查修复注明）：本运行时缓存只在「未播种/setTags 写入」时读设置键，之后不再
+ * 回读——外部直接改 data.json 的 favoriteTags 在本次会话内不感知，需重载插件（resetTagsState）
+ * 或走任一 saveTags/迁移写入路径才会刷新；正常链路都经 setTags 单点写，缓存即最新。
+ */
 export function getTags(): FavTag[] {
   if (!currentTags) {
     const tags = tagsFromSettings();
@@ -74,9 +79,12 @@ export function getTagById(id: string): FavTag | null {
   return getTags().find((t) => t.id === id) ?? null;
 }
 
-/** 新增标签 id（'t' + 时间戳36进制；id 一经生成不再变化） */
+/** 新增标签 id（'t' + 时间戳36进制 + 同毫秒递增序；id 一经生成不再变化）。
+ *  审查修复：纯时间戳同毫秒批量新增/归一化多行会撞 id，追加毫秒内计数器保证唯一。 */
+let tagIdSeq = 0;
 export function newTagId(): string {
-  return 't' + Date.now().toString(36);
+  tagIdSeq = (tagIdSeq + 1) % 1679616; // 36^4 循环（单毫秒内不可能耗尽，跨毫秒回绕也无碰撞面）
+  return 't' + Date.now().toString(36) + tagIdSeq.toString(36);
 }
 
 /** 标签定义归一化：坏行剔除、缺 id 补（旧手改文件防御）、缺图标回落 tag、名称去空白 */

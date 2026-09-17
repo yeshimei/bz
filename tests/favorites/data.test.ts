@@ -285,3 +285,23 @@ describe('isUrlLike（ticket 188 贴链自动搬家判定）', () => {
   });
 });
 
+
+describe('审查修复批（issue 363）：标签链路健壮性', () => {
+  it('newTagId：同一毫秒内连续调用不碰撞（序号后缀）', async () => {
+    const { newTagId } = await import('../../src/favorites/config');
+    const ids = Array.from({ length: 50 }, () => newTagId());
+    expect(new Set(ids).size).toBe(50);
+  });
+
+  it('normalizeTags：同批坏数据补 id 互不相同', async () => {
+    const out = normalizeTags([{ label: '甲' }, { label: '乙' }, { label: '丙' }] as any);
+    expect(out).toHaveLength(3);
+    expect(new Set(out.map((t) => t.id)).size).toBe(3);
+  });
+
+  it('hueOf：空标签名回落中性色相 210（不再恒红）', async () => {
+    const { hueOf } = await import('../../src/favorites/shared');
+    expect(hueOf('')).toBe(210);
+    expect(hueOf('已删除的标签')).toBeGreaterThanOrEqual(0);
+  });
+});
