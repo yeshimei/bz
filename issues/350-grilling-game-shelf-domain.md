@@ -1,6 +1,6 @@
 # 350 · 拍板：游戏架域方案（59）
 
-> labels: wayfinder:grilling ｜ map: 346 ｜ status: open ｜ assignee: — ｜ blocked-by: 347
+> labels: wayfinder:grilling ｜ map: 346 ｜ status: closed ｜ assignee: dev ｜ blocked-by: 347
 
 ## Question
 
@@ -18,4 +18,4 @@
 
 ## Resolution
 
-（过票后填写）
+2026-09-17 用户逐项拍板（AskUserQuestion）：Steam **直连自动拉库**；定位**纯走 Steam 数据、零心智负担（用户原话「类似小黑盒」）**——推翻影院式状态机+评分方案，数据全自动、用户唯一动作=首次配 key；存储 `我的/游戏/*.md`；报告**不照搬影院，做游戏自己的全量数据分析**（时长排行/最近在玩/库总览；成就列二版）。实现票 368。
