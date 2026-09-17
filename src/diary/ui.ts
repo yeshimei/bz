@@ -109,7 +109,10 @@ const MEMORY_EXCERPT_MAX_CHARS = 64;
 export function memoryExcerpt(text: string): string {
   const flat = (text || '').replace(/\s+/g, ' ').trim();
   if (!flat) return '（无正文）';
-  return flat.length > MEMORY_EXCERPT_MAX_CHARS ? `${flat.slice(0, MEMORY_EXCERPT_MAX_CHARS)}…` : flat;
+  // 审查修复批（issue 352）：String.slice 按 UTF-16 码元截断，emoji 代理对跨 63/64 位会截出
+  // 半只乱码——改按 Unicode 码点切分（[...flat]），截断永远落在完整字符边界上
+  const chars = [...flat];
+  return chars.length > MEMORY_EXCERPT_MAX_CHARS ? `${chars.slice(0, MEMORY_EXCERPT_MAX_CHARS).join('')}…` : flat;
 }
 
 /**
@@ -1070,6 +1073,12 @@ export class DiaryAppController {
       // issue 352：纯文字条目——文字块卡（emoji 垫头 + 摘要截断），点击跳原文
       if (!e.media.length) {
         cell.classList.add('bz-diary-memory--text');
+        const encHidden = this.isEncHidden(e);
+        // 审查修复批（issue 352）：title 由「日期 时刻」拼摘要 + 「跳转原文」提示（点击跳走的
+        // 语义可预期）；加密锁定态不泄漏正文，只注「（已加密）」
+        cell.title = encHidden
+          ? `${e.date} ${e.time} · （已加密）`
+          : `${e.date} ${e.time} · ${memoryExcerpt(e.text)} · 跳转原文`;
         const block = document.createElement('div');
         block.className = 'bz-diary-memory-text';
         const em = document.createElement('span');
@@ -1078,7 +1087,7 @@ export class DiaryAppController {
         const tx = document.createElement('span');
         tx.className = 'bz-diary-memory-text-tx';
         // 加密未解锁不漏正文（同墙内文字卡口径）；摘要纯文本预览（抽屉头同款：markdown 标记不渲染）
-        tx.textContent = this.isEncHidden(e) ? '（已加密）' : memoryExcerpt(e.text);
+        tx.textContent = encHidden ? '（已加密）' : memoryExcerpt(e.text);
         block.append(em, tx);
         cell.append(block, year);
         cell.addEventListener('click', () => {

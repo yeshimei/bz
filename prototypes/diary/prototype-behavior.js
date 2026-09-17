@@ -1,4 +1,4 @@
-/* 源指纹 ffe8deb1f08982d9 · 仓内输入 76 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ce19b017cad85d62 · 仓内输入 76 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -13711,7 +13711,8 @@ ${entry.content.trim()}`;
   function memoryExcerpt(text) {
     const flat = (text || "").replace(/\s+/g, " ").trim();
     if (!flat) return "（无正文）";
-    return flat.length > MEMORY_EXCERPT_MAX_CHARS ? `${flat.slice(0, MEMORY_EXCERPT_MAX_CHARS)}…` : flat;
+    const chars = [...flat];
+    return chars.length > MEMORY_EXCERPT_MAX_CHARS ? `${chars.slice(0, MEMORY_EXCERPT_MAX_CHARS).join("")}…` : flat;
   }
   function pickCurrentMonth(heads) {
     let current = null;
@@ -14493,6 +14494,8 @@ ${entry.content.trim()}`;
         year.textContent = e.date.slice(0, 4);
         if (!e.media.length) {
           cell.classList.add("bz-diary-memory--text");
+          const encHidden = this.isEncHidden(e);
+          cell.title = encHidden ? `${e.date} ${e.time} · （已加密）` : `${e.date} ${e.time} · ${memoryExcerpt(e.text)} · 跳转原文`;
           const block = document.createElement("div");
           block.className = "bz-diary-memory-text";
           const em = document.createElement("span");
@@ -14500,7 +14503,7 @@ ${entry.content.trim()}`;
           em.textContent = e.emoji;
           const tx = document.createElement("span");
           tx.className = "bz-diary-memory-text-tx";
-          tx.textContent = this.isEncHidden(e) ? "（已加密）" : memoryExcerpt(e.text);
+          tx.textContent = encHidden ? "（已加密）" : memoryExcerpt(e.text);
           block.append(em, tx);
           cell.append(block, year);
           cell.addEventListener("click", () => {

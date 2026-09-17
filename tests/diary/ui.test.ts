@@ -1204,6 +1204,9 @@ describe('回忆墙 UI', () => {
     expect(textCard).toBeTruthy();
     expect(textCard.querySelector('.bz-diary-memory-year')!.textContent).toBe(String(lastYear));
     expect(textCard.querySelector('.bz-diary-memory-text-tx')!.textContent).toContain('纯文字日记也该进回顾流');
+    // 审查修复批（issue 352）：title 由「日期 时刻」拼摘要全文 + 跳转原文提示
+    expect(textCard.title).toContain('纯文字日记也该进回顾流');
+    expect(textCard.title).toContain('跳转原文');
     // 两卡混排：媒体缩略卡 1 + 文字块卡 1
     expect(memories.querySelectorAll('.bz-diary-memory').length).toBe(2);
     expect(memories.querySelectorAll('.bz-diary-memory-thumb').length).toBe(1);
@@ -1211,6 +1214,41 @@ describe('回忆墙 UI', () => {
     textCard.click();
     expect(mocks.jumpToEntry).toHaveBeenCalledTimes(1);
     expect(document.querySelector('.bz-diary-lb--show')).toBeNull();
+  });
+
+  it('审查修复批：时光条文字卡加密分支直测——锁定态显「（已加密）」不泄漏正文，点击不跳转', async () => {
+    await openAndWait();
+    const now = new Date();
+    const lastYear = now.getFullYear() - 1;
+    const day = `${lastYear}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const SECRET = '机密正文绝不能出现在时光条卡面上';
+    const base = {
+      date: day,
+      time: '09:30',
+      emoji: '📖',
+      content: SECRET,
+      text: SECRET,
+      tags: ['日记'],
+      filename: 'x.md',
+      filePath: '我的/日记/x.md',
+      lineNumber: 1,
+      id: 'memx',
+      noteId: '',
+      encrypted: false,
+      kind: 'diary',
+      media: [],
+    };
+    // 加密锁定分支（tags 含「加密」+ lockedVisible=false → isEncHidden）：卡面与 title 都不泄漏正文
+    const controller: any = DiaryAppController.instance!;
+    const encCard = (controller.mkMemories([{ ...base, tags: ['加密'] }] as any) as HTMLElement).querySelector('.bz-diary-memory--text') as HTMLElement;
+    expect(encCard.querySelector('.bz-diary-memory-text-tx')!.textContent).toBe('（已加密）');
+    expect(encCard.title).toContain('（已加密）');
+    expect(encCard.title).not.toContain('机密正文');
+    encCard.click();
+    expect(mocks.jumpToEntry).not.toHaveBeenCalled(); // 锁定态点击不跳转不泄文
+    // 对照：非加密文字卡 title 拼摘要全文 + 跳转提示
+    const plainCard = (controller.mkMemories([{ ...base, id: 'mem2' }] as any) as HTMLElement).querySelector('.bz-diary-memory--text') as HTMLElement;
+    expect(plainCard.title).toBe(`${day} 09:30 · ${SECRET} · 跳转原文`);
   });
 
   it('issue 352：时光条文字卡摘要 memoryExcerpt——压平空白、超长截断补省略号、空正文占位', () => {

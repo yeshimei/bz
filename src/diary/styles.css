@@ -480,7 +480,10 @@
   border-radius: var(--bz-radius-full);
 }
 /* 纯文字条目卡（issue 352）：与媒体缩略卡同形（4/3 面块 + 年份角标）不同貌——
-   无图面垫 hover 色，emoji 垫头 + 摘要多行截断，一眼可辨「这是文字不是图」 */
+   无图面垫 hover 色，emoji 垫头 + 摘要多行截断，一眼可辨「这是文字不是图」。
+   审查修复批（issue 352）：摘要原 3 行满高溢出被卡裁半、且左下年份角标叠在字上——
+   底部 padding 让开角标（角标 bottom 4 + 行高 1.3 ≈ 18px）、摘要降 2 行，空间不足时
+   摘要块 flex 收缩裁剪，永不压角标 */
 .bz-diary .bz-diary-memory--text {
   background: var(--dw-hover);
 }
@@ -490,13 +493,14 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
-  padding: 8px 9px;
+  gap: 3px;
+  padding: 6px 9px 18px;
   text-align: left;
 }
 .bz-diary-memory-text-em {
   font-size: var(--bz-font-meta);
   line-height: 1.2;
+  flex-shrink: 0;
 }
 .bz-diary-memory-text-tx {
   font-size: var(--bz-font-caption);
@@ -504,8 +508,15 @@
   color: var(--dw-ink);
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+/* 文字卡年份角标：左下略收紧（bottom 4 + 行高 1.3），为摘要腾出净空（媒体卡角标不受影响） */
+.bz-diary-memory--text .bz-diary-memory-year {
+  bottom: 4px;
+  line-height: 1.3;
 }
 /* 日期节头（sticky：滚动时吸顶显示日期 + 周几 + 统计） */
 .bz-diary-day-head {
