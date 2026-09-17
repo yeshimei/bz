@@ -66,8 +66,10 @@ import { openEncrypt, encryptCurrentNote, lockEncrypt, unloadEncrypt, mountEncry
 import { openPasswordVault, unloadPasswordVault, copyGeneratedPassword, lockPasswordVault } from './password-vault';
 // 内容首页（home 域，ticket 177；旧入口页 launcher 已退役删除，ADR-0093）
 import { openHome, unloadHome } from './home';
-// recap 域面板已退役（ADR-0157）：「生成今日总结」迁 home 时间线卡动作行，
-// collectRecap/summarize 纯函数库留 src/recap 供 home 消费，main 不再接线
+// recap 域面板已退役（ADR-0157）：总结链路一度迁 home 时间线卡动作行，
+// 该入口 2026-09-17 也已去掉（用户点名：首页不留「生成今日总结」）。
+// 纯函数库留 src/recap：collectRecap 仍供 home/river 摘要数字，summarize（AI 总结写日记）
+// 有全套单测、暂无 UI 出口，main 不再接线
 import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
 // ai-agent 域解散：引用同步拆入 memo/favorites 域无条件常驻（原 ensureAIAgent/unloadAIAgent 换线）
 // 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴；AI 走 bz core/ai，数据单 json smartcat.json）
@@ -355,9 +357,6 @@ export default class BzPlugin extends Plugin {
     unloadKnowledgeFileSync();
     unloadClipbookFileSync();
     unloadHome();
-    // recap 面板退役（ADR-0157）：原 unloadRecap 只清面板 DOM/ESC（随面板一并消失）；
-    // 迁入 home 的「生成今日总结」无在途作废句柄，unloadHome（resetHomeState）复位生成标志，
-    // 在途流程收口时按钮已随 DOM 摘除（aiButton 为 null）自然 no-op，通知由 cleanupNotices 统一清
     unloadEncrypt();
     unloadPasswordVault();
     unloadSmartCat();

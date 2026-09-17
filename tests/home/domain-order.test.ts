@@ -6,7 +6,7 @@
  * 插到它在 DOMAINS 里声明的前驱之后**。本文件是那条口径的回归守卫（含真实 vault 的现场快照）。
  */
 import { describe, it, expect } from 'vitest';
-import { applyOrder, reorderTo, visibleDomains, DOMAINS, type HomeDomain } from '../../src/home/shared';
+import { applyOrder, reorderTo, visibleDomains, DOMAINS, ALL_DOMAIN_IDS, type HomeDomain } from '../../src/home/shared';
 
 const d = (id: string): HomeDomain => ({ id, commandId: `c-${id}`, name: id, sub: '', icon: 'x' });
 const ids = (list: HomeDomain[]): string[] => list.map((x) => x.id);
@@ -75,5 +75,17 @@ describe('visibleDomains / reorderTo 与新域插位共存', () => {
     expect(all).toHaveLength(DOMAINS.length);
     expect(all).toContain('gameshelf');
     expect(all.indexOf('diary')).toBe(3);
+  });
+});
+
+/**
+ * 退役守卫：recap（今日回顾）先退独立面板（ADR-0157）、后退自家域身份，
+ * 它的能力留在纯函数库给 home 消费（聚合走 collectRecap，「生成今日总结」入口 2026-09-17 摘除）。
+ * 别让某个域 id 悄悄回到首页入口清单里。
+ */
+describe('recap 不是首页域（ADR-0157 退役后）', () => {
+  it('recap 不在 DOMAINS / ALL_DOMAIN_IDS 里', () => {
+    expect(DOMAINS.some((d) => d.id === 'recap')).toBe(false);
+    expect(ALL_DOMAIN_IDS).not.toContain('recap');
   });
 });

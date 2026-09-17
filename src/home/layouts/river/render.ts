@@ -98,9 +98,9 @@ export interface FlowOpts {
  * 判据 = shared.eventVisible（事件直带 kind 优先，见 issue 305 / ADR-0132）。
  * 过滤后当天为空 + 原本有痕迹 → 给「被过滤掉了」的专属空态，别让用户以为数据丢了。
  *
- * 「生成今日总结」动作行（ADR-0157 自 recap 面板迁入）：只在**今天**视图出现
- * （总结写的是「今天」，翻昨天/前天没有意义）；按钮初始 disabled，
- * 点击行为与「已写过 → 重新生成」态由 ui.ts 行为层接管（本层只出 markup）。
+ * 排序：**新 → 旧**（2026-09-17 用户点名）——翻转只在渲染层做：
+ * 数据层 days[].events 仍保持升序（buildNotes 的点评锚点 index 是升序下标，
+ * firstTs / summary 派生也按升序写），在数据层 reverse 会把点评挂错行。
  */
 export function flowHtml(data: RiverData, view: string, opts: FlowOpts = {}): string {
   const filter = opts.filter ?? DEFAULT_TIMELINE_FILTER;
@@ -108,26 +108,26 @@ export function flowHtml(data: RiverData, view: string, opts: FlowOpts = {}): st
   const size = opts.size ?? 'normal';
   const day = data.days.find((d) => d.dateStr === view) ?? data.today;
   const isToday = day.dateStr === data.today.dateStr;
-  const aiRow = isToday
-    ? '<div class="bz-home-ai-row"><button type="button" class="bz-btn bz-home-ai" data-home-ai disabled'
-      + ' title="把今天的痕迹写成一段总结，写进日记">生成今日总结</button></div>'
-    : '';
   const wrap = (inner: string): string =>
-    '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? '1' : '0') + '">' + inner + aiRow + '</div>';
+    '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? '1' : '0') + '">' + inner + '</div>';
   // 点评开关：关掉就整条不生成（而不是生成后不渲染——省得下面 find 拿到空）
   const notes = isToday && filter.notes ? buildNotes(data) : [];
-  // 点评的 index 指向**过滤前**的事件下标，故过滤前先把 index 带上，过滤后再丢弃
+  // 点评的 index 指向**过滤前**的事件下标，故过滤前先把 index 带上；
+  // 过滤后整列翻转 = 时间线新到旧（最新那笔在顶，往下才有「动手那一笔」）
   const kept = day.events
     .map((e, i) => ({ e, i }))
-    .filter(({ e }) => eventVisible(e, filter));
+    .filter(({ e }) => eventVisible(e, filter))
+    .reverse();
   const body = kept.map(({ e, i }) => {
     const note = notes.find((n) => n.index === i);
-    const lastDiary = i === kept[kept.length - 1]?.i && note && note.text.indexOf('日记') >= 0 ? ' bz-home-ev--warn' : '';
+    // 挂着「日记还空着」提醒的那条染琥珀点：只认它带没带这条点评，不认它在列的哪一端
+    // （排序以后可能再翻，写死「末条」会跟着走势走错）
+    const warn = note && note.text.indexOf('日记') >= 0 ? ' bz-home-ev--warn' : '';
     const memoId = e.domain;
     const dmColor = domainColor(memoId);
     const dmName = DOMAIN_MAP.get(memoId)?.name ?? e.domain;
     const dmIcon = DOMAIN_MAP.get(memoId)?.icon ?? '';
-    return '<div class="bz-home-ev' + lastDiary + '">'
+    return '<div class="bz-home-ev' + warn + '">'
       + (showTime ? '<span class="bz-home-ev-tm">' + esc(e.timeLabel) + '</span>' : '')
       + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx">'
       + '<span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + '</span>'

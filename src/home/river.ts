@@ -16,7 +16,9 @@
  *  - 时间线所在天的摘要 summary 仍由 recap collectRecap（五域文件统计）供给，anchor 天然支持任意天；
  *  - 计数复用各域既有口径：cinema 评分三分（同 snapshot）、bookshelf md+EPUB 状态三分
  *    （同 bookshelf 域）、review 到期/逾期（同 snapshot reviewApp.loadItems）、
- *    clipping 未读 = news.json !read 计数、favorites/belongings 同 snapshot；
+ *    clipping 未读 = news.json !read 计数、favorites/belongings 同 snapshot、
+ *    游戏库 = rebuildItems 款数/时长（同 gameshelf 域）、知识盒 = 三盒目录 md 计数、
+ *    第二大脑 = json+vec 字节数、番茄 = history+周归档（2026-09-18 用户点名四项）；
  *  - 日记连击：日记目录「YYMMDDHHmm(-N).md」条目题目日期，从今天往回连续存在的天数
  *    （今天未写不断签；ADR-0130 一目一文件口径）。
  */
@@ -35,6 +37,9 @@ import { scanMarkdownBooks, loadEpubItems } from '../bookshelf/data';
 import { loadDatabase as loadBelongings } from '../belongings/data';
 import { DataManager as FavoritesDataManager } from '../favorites/data';
 import { getStoragePath as getFavoritesPath } from '../favorites/config';
+import { rebuildItems } from '../gameshelf/notes';
+import { getKnowledgeBoxes } from '../core/knowledge-boxes';
+import { getPomodoroFilePath } from '../pomodoro/data';
 import { EMPTY_COUNTS, EMPTY_SUMMARY, dateStrOf } from './shared';
 import type { RiverData, RiverDay, RiverCounts, RiverStreak, RiverSummary, RiverWeekDay } from './shared';
 
@@ -171,6 +176,51 @@ async function collectMemoCounts(app: App, c: RiverCounts): Promise<void> {
   c.memoUrgentOpen = open.filter((m) => m?.priority === 'important').length;
 }
 
+/** 游戏库：款数 + 总时长（2026-09-18 用户点名）。rebuildItems 单源口径（AppID 合法笔记，含已下架；
+ *  metadataCache 零 IO）；顺手刷新 gameshelf 内存缓存无害——面板打开时本就整体重建。 */
+function collectGameshelfCounts(app: App, c: RiverCounts): void {
+  const items = rebuildItems(app);
+  c.gameshelfTotal = items.length;
+  c.gameshelfMinutes = items.reduce((s, it) => s + (it.playtimeMin || 0), 0);
+}
+
+/** 知识盒：文献/卡片/主题三盒各自笔记数（2026-09-18 用户点名；目录前缀 md 计数，盒目录实时读设置） */
+function collectKnowledgeCounts(app: App, c: RiverCounts): void {
+  const boxes = getKnowledgeBoxes();
+  const files = app.vault.getMarkdownFiles();
+  const countIn = (dir: string): number => (dir ? files.filter((f) => f.path.startsWith(dir + '/')).length : 0);
+  c.knowledgeLit = countIn(boxes.lit);
+  c.knowledgeCards = countIn(boxes.cardbox);
+  c.knowledgeTopics = countIn(boxes.topic);
+}
+
+/** 第二大脑：存储占用（2026-09-18 用户点名）= secondbrain.json + secondbrain.vec 字节数；
+ *  只 stat 不读内容，文件缺失跳过（json+vec 可能只存在其一）。 */
+function collectSecondbrainBytes(app: App, c: RiverCounts): void {
+  for (const p of [storageFile('secondbrain.json'), storageFile('secondbrain.vec')]) {
+    try {
+      const f = app.vault.getAbstractFileByPath(p) as TFile | null;
+      if (f && f.stat && typeof f.stat.size === 'number') c.secondbrainBytes += f.stat.size;
+    } catch {
+      /* 单文件失败不拖垮 */
+    }
+  }
+}
+
+/** 番茄钟：累计专注轮数（2026-09-18 用户点名）= history 明细条数 + 周归档 count 合计。
+ *  trimWithArchive 落账口径：明细与归档按日恒不交（issue 357），两段相加不双计；
+ *  pomodoro.json 同源直读（getPomodoroFilePath 跟随 storagePath），缺失/坏数据回落 0。 */
+async function collectPomodoroTotal(app: App, c: RiverCounts): Promise<void> {
+  const raw = await readJsonIfExists(app, getPomodoroFilePath());
+  if (!raw || typeof raw !== 'object') return;
+  const d = raw as { history?: unknown[]; archived?: Array<{ count?: unknown }> };
+  c.pomodoroTotal =
+    (Array.isArray(d.history) ? d.history.length : 0)
+    + (Array.isArray(d.archived)
+      ? d.archived.reduce((s, r) => s + (r && typeof r.count === 'number' && r.count > 0 ? r.count : 0), 0)
+      : 0);
+}
+
 /** 番茄钟是否正在专注（计时中或暂停中；item-1789106079981 彩点 warn 条件）——
  *  跨域**只读**：isFocusing 无副作用（不加载、不恢复、不通知），动态 import 遵守 ADR-0002；
  *  失败回落 false（同 ui.ts readPomodoroFocusing 先例；ensure 兜底留给 ui 层，本层不触发恢复副作用）。 */
@@ -239,6 +289,10 @@ export async function collectRiver(app: App, now: number = Date.now()): Promise<
         () => collectFavoritesCounts(app, counts),
         () => collectBelongingsCounts(app, counts),
         () => collectMemoCounts(app, counts),
+        () => collectGameshelfCounts(app, counts),
+        () => collectKnowledgeCounts(app, counts),
+        () => collectSecondbrainBytes(app, counts),
+        () => collectPomodoroTotal(app, counts),
       ].map(safe)
     ),
     collectFocusing(),

@@ -29,3 +29,18 @@ recap（今日回顾）面板 = 当天摘要 + 当天时间轴 + AI 总结写日
 + 「生成今日总结」落到用户每天真的会打开的 home 上，功能不退役只搬家。
 − 习惯命令面板直达今日回顾的用户失去独立入口（摘要信息 home 已覆盖）。
 − recap 作为「域」名义仍存（数据库），域清单语境应按「home 的当日数据源」表述。
+
+## 后续（2026-09-17）：迁入的那行动作也退役
+
+用户点名「去掉生成今日总结」——迁入 home 时间线卡后的这行动作一并摘除
+（render 层不再出动作行按钮，ui.ts 的生成/通知/按钮态同步与 `H.aiGenerating` 全部删掉，
+`tests/home/summary-action.test.ts` 随之退役，其中「recap 不是首页域」的守卫挪到
+`tests/home/domain-order.test.ts`）。
+
+取舍沿用 issue 343 对 `summarizeTermSummary` 的处理：**只拆 UI 出口，不动数据层**——
+`src/recap/summarize.ts`（generateRecapContent / writeRecapEntry / hasRecapEntry…）保留纯函数
+与全套单测，日后要再挂入口不必重写。`collectRecap` 仍是 home 摘要数字/周历/连击的数据源。
+
+同时（另一条用户点名）首页时间线改**新 → 旧**排序：翻转只在 render 层
+（`layouts/river/render.ts::flowHtml`），数据层 `days[].events` 保持升序——
+`buildNotes` 的点评锚点 index、`firstTs`、`summary` 派生都按升序写，动数据层会把点评挂错行。

@@ -233,7 +233,7 @@ export async function writeRecapEntry(content: string, now: number = Date.now())
   return hadOld ? 'replaced' : 'written';
 }
 
-/** 今天是否已写过「今日回顾」条目（头行按钮「生成今日总结/重新生成」的判定依据；只读） */
+/** 今天是否已写过「今日回顾」条目（只读；原 home 动作行按钮文案判定依据，该入口 2026-09-17 已摘） */
 export async function hasRecapEntry(app: App, now: number = Date.now()): Promise<boolean> {
   return (await findRecapEntryPath(app, now)) !== null;
 }

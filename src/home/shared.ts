@@ -385,6 +385,20 @@ export interface RiverCounts {
   clippingUnread: number;
   favoritesTotal: number;
   belongingsTotal: number;
+  /** 游戏库：游戏款数（游戏目录 AppID 合法笔记数，含已下架；采集走 gameshelf rebuildItems 单源口径） */
+  gameshelfTotal: number;
+  /** 游戏库：总游玩分钟（「游玩分钟/playtimeMin」合计；入口行换算成小时展示） */
+  gameshelfMinutes: number;
+  /** 知识盒：文献盒笔记数（目录前缀 md 计数） */
+  knowledgeLit: number;
+  /** 知识盒：卡片盒笔记数 */
+  knowledgeCards: number;
+  /** 知识盒：主题盒笔记数 */
+  knowledgeTopics: number;
+  /** 第二大脑：存储占用字节数（secondbrain.json + secondbrain.vec；文件缺失跳过） */
+  secondbrainBytes: number;
+  /** 番茄钟：累计专注轮数（pomodoro.json history 明细 + 周归档 count 合计） */
+  pomodoroTotal: number;
 }
 
 export const EMPTY_COUNTS: RiverCounts = {
@@ -401,6 +415,13 @@ export const EMPTY_COUNTS: RiverCounts = {
   clippingUnread: 0,
   favoritesTotal: 0,
   belongingsTotal: 0,
+  gameshelfTotal: 0,
+  gameshelfMinutes: 0,
+  knowledgeLit: 0,
+  knowledgeCards: 0,
+  knowledgeTopics: 0,
+  secondbrainBytes: 0,
+  pomodoroTotal: 0,
 };
 
 /** 时间线摘要（recap RecapSummary + memoCreated：彩点规则的需要） */
@@ -538,6 +559,16 @@ function fmtHm(t: number): string {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
+/** 字节数 → 人读尺寸（入口行第二大脑「存储占用」用；1 位小数且整数不带小数点） */
+function fmtSize(bytes: number): string {
+  const n = Number.isFinite(bytes) && bytes > 0 ? bytes : 0;
+  const trim1 = (v: number): string => String(Math.round(v * 10) / 10);
+  if (n >= 1073741824) return trim1(n / 1073741824) + ' GB';
+  if (n >= 1048576) return trim1(n / 1048576) + ' MB';
+  if (n >= 1024) return trim1(n / 1024) + ' KB';
+  return `${Math.floor(n)} B`;
+}
+
 /** 头行日期文案：'YYYY-MM-DD 周X · HH:mm'（打开时刻现取，非模块级状态） */
 export function headDateText(now: number = Date.now()): string {
   const d = new Date(now);
@@ -673,8 +704,20 @@ export function riverCountText(id: string, data: RiverData): string | null {
       return `${c.favoritesTotal} 条`;
     case 'belongings':
       return `登记 ${c.belongingsTotal} 件`;
+    // 游戏库（2026-09-18 用户点名）：款数 + 总时长（分钟换算小时取整）
+    case 'gameshelf':
+      return `${c.gameshelfTotal} 款 · ${Math.round((c.gameshelfMinutes || 0) / 60)} 小时`;
+    // 知识盒（2026-09-18 用户点名）：文献/卡片/主题三盒各自笔记总数
+    case 'knowledge':
+      return `文献 ${c.knowledgeLit} · 卡片 ${c.knowledgeCards} · 主题 ${c.knowledgeTopics}`;
+    // 第二大脑（2026-09-18 用户点名）：存储占用（json + 向量二进制）
+    case 'secondbrain':
+      return fmtSize(c.secondbrainBytes);
+    // 番茄钟（2026-09-18 用户点名）：专注过的番茄总数（明细 + 周归档）
+    case 'pomodoro':
+      return `累计 ${c.pomodoroTotal} 轮`;
     default:
-      return null; // literature/reading-report/attach/encrypt/vault/smartcat/settings/pomodoro 走域副题
+      return null; // attach/encrypt/vault/smartcat/settings/wall 走域副题
   }
 }
 

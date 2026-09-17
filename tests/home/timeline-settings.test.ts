@@ -5,7 +5,7 @@
  *  - filterEvents / eventVisible：按勾选剔除整条（四类：产出 / 状态推进 / 点评 / 已跳过）。
  *  - timelineRangeDays：范围档 → 天数。
  *  - flowHtml：过滤后空态要给「被挡掉了」的专属文案，不能让用户以为数据丢了；
- *    时刻列开关 / 字号档要落到 data 属性上（样式在 CSS 里）。
+ *    时刻列开关 / 字号档要落到 data 属性上（样式在 CSS 里）；**痕迹新 → 旧**（2026-09-17）。
  *  - nextHtml：关掉返回空串（ui 层据此连第三栏一起收敛）。
  */
 import { describe, it, expect } from 'vitest';
@@ -147,6 +147,22 @@ describe('首页时间线设置（issue 287）', () => {
     const off = flowHtml(data, '2026-09-11', { filter: F({ notes: false }) });
     expect(off).not.toContain('bz-home-ev-note');
     expect(off).toContain('bz-home-ev'); // 行还在
+  });
+
+  it('flowHtml：痕迹新 → 旧（最新那笔在顶）；点评仍锚在升序下标那条（2026-09-17 用户点名）', () => {
+    const data = river([ev('甲写字', '07:42'), ev('乙读书', '21:30'), ev('丙跑步', '23:10')]);
+    data.today.firstTs = new Date(2026, 8, 11, 7, 42).getTime();
+    data.yesterday.firstTs = new Date(2026, 8, 10, 9, 0).getTime();
+    const html = flowHtml(data, '2026-09-11', { filter: F() });
+    // 列内顺序 = 时刻倒序（丙 23:10 → 乙 21:30 → 甲 07:42）；数据层 day.events 没被就地翻转
+    expect(html.indexOf('丙跑步')).toBeLessThan(html.indexOf('乙读书'));
+    expect(html.indexOf('乙读书')).toBeLessThan(html.indexOf('甲写字'));
+    expect(data.today.events.map((e) => e.timeLabel)).toEqual(['07:42', '21:30', '23:10']);
+    // 「动手早晚」点评 index = 0 = **最早**那笔 → 翻转后它挂在列底（不是跑到顶上去）
+    expect(html).toContain('早了 78 分钟');
+    const lastNoteIdx = html.lastIndexOf('bz-home-ev-note');
+    expect(lastNoteIdx).toBeGreaterThan(html.indexOf('乙读书'));
+    expect(html.indexOf('早了 78 分钟')).toBeGreaterThan(html.indexOf('乙读书'));
   });
 
   it('nextHtml：开关关掉返回空串（ui 层据此把第三栏整个 display:none）', () => {

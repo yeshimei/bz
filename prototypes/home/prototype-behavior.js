@@ -1,5 +1,5 @@
-/* 源指纹 f7248c0bfb13a8b4 · 仓内输入 237 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/store.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/recap/summarize.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 abf428cbdfca2a23 · 仓内输入 239 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_home = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M7, s, ms) {
+        function createDate(y, m, d, h, M8, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M7, s, ms);
+            date = new Date(y + 400, m, d, h, M8, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M7, s, ms);
+            date = new Date(y, m, d, h, M8, s, ms);
           }
           return date;
         }
@@ -5039,7 +5039,7 @@ var BZW_home = (() => {
             basename: dot > 0 ? base.slice(0, dot) : base,
             extension: dot > 0 ? base.slice(dot + 1) : "",
             name: base,
-            stat: { ctime: ct, mtime: mt },
+            stat: { ctime: ct, mtime: mt, size: new TextEncoder().encode(content).length },
             content
           };
         }
@@ -6586,7 +6586,7 @@ var BZW_home = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M7 = 10;
+    const M8 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -6613,7 +6613,7 @@ var BZW_home = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M7 || Math.abs(t.clientY - sy) > M7) {
+      if (Math.abs(t.clientX - sx) > M8 || Math.abs(t.clientY - sy) > M8) {
         moved = true;
         cancel();
       }
@@ -7527,6 +7527,14 @@ var BZW_home = (() => {
     const d = new Date(t);
     return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   }
+  function fmtSize(bytes) {
+    const n = Number.isFinite(bytes) && bytes > 0 ? bytes : 0;
+    const trim1 = (v) => String(Math.round(v * 10) / 10);
+    if (n >= 1073741824) return trim1(n / 1073741824) + " GB";
+    if (n >= 1048576) return trim1(n / 1048576) + " MB";
+    if (n >= 1024) return trim1(n / 1024) + " KB";
+    return `${Math.floor(n)} B`;
+  }
   function headDateText(now = Date.now()) {
     const d = new Date(now);
     const wd = "日一二三四五六"[d.getDay()];
@@ -7621,6 +7629,14 @@ var BZW_home = (() => {
         return `${c.favoritesTotal} 条`;
       case "belongings":
         return `登记 ${c.belongingsTotal} 件`;
+      case "gameshelf":
+        return `${c.gameshelfTotal} 款 · ${Math.round((c.gameshelfMinutes || 0) / 60)} 小时`;
+      case "knowledge":
+        return `文献 ${c.knowledgeLit} · 卡片 ${c.knowledgeCards} · 主题 ${c.knowledgeTopics}`;
+      case "secondbrain":
+        return fmtSize(c.secondbrainBytes);
+      case "pomodoro":
+        return `累计 ${c.pomodoroTotal} 轮`;
       default:
         return null;
     }
@@ -7764,7 +7780,14 @@ var BZW_home = (() => {
         bookshelfFinished: 0,
         clippingUnread: 0,
         favoritesTotal: 0,
-        belongingsTotal: 0
+        belongingsTotal: 0,
+        gameshelfTotal: 0,
+        gameshelfMinutes: 0,
+        knowledgeLit: 0,
+        knowledgeCards: 0,
+        knowledgeTopics: 0,
+        secondbrainBytes: 0,
+        pomodoroTotal: 0
       };
       EMPTY_SUMMARY = {
         diary: 0,
@@ -8981,36 +9004,6 @@ var BZW_home = (() => {
       tagToEmojiMap = {};
       emojiToTagMap = {};
       buildTagMaps();
-    }
-  });
-
-  // src/diary/parser.ts
-  function isEncryptedEntry(entry) {
-    return typeof entry.content === "string" && entry.content.includes("🔐");
-  }
-  function parseEntryFile(content, filePath) {
-    const parsed = parseDiaryEntryFile(content);
-    const meta = resolveDiaryEntryMeta(filePath, parsed);
-    if (!meta) return null;
-    const [h = 0, min = 0] = meta.time.split(":").map(Number);
-    const tags = parsed.tags.length > 0 ? parsed.tags : ["日记"];
-    return {
-      date: meta.date,
-      time: meta.time,
-      timeValue: h * 100 + min,
-      tags,
-      emoji: tags.map((tag) => getTagEmoji(tag)).join(""),
-      content: parsed.body.trim(),
-      filename: filePath,
-      filePath,
-      lineNumber: 0
-    };
-  }
-  var init_parser = __esm({
-    "src/diary/parser.ts"() {
-      init_fake_obsidian();
-      init_diary_format();
-      init_config();
     }
   });
 
@@ -23612,7 +23605,7 @@ ${countsToText(s.missing)}
     return body.replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, "").trim();
   }
   var KEY_LINE_RE, LIST_ITEM_RE, BLOCK_SCALAR_RE;
-  var init_parser2 = __esm({
+  var init_parser = __esm({
     "src/auto-summary/parser.ts"() {
       KEY_LINE_RE = /^([^\s:#-][^:]*):(.*)$/;
       LIST_ITEM_RE = /^[ \t]*-[ \t]+(.*)$/;
@@ -23786,7 +23779,7 @@ ${bodyText.substring(0, 6e3)}`;
   var attemptSeq, FIELD_DEFS, SUMMARY_LENGTH_RULES;
   var init_processor = __esm({
     "src/auto-summary/processor.ts"() {
-      init_parser2();
+      init_parser();
       init_notice();
       init_ai();
       init_settings_provider();
@@ -32541,7 +32534,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (this.mask && this.mask.isConnected || this.popup && this.popup.isConnected) return;
           const mask = document.createElement("div");
           mask.id = "knowledge-mask";
-          mask.className = "bz-kb-mask";
+          mask.className = "bz-overlay-mask bz-kb-mask";
           mask.style.display = "none";
           mask.onclick = () => this.hideMain();
           const popup = document.createElement("div");
@@ -33178,7 +33171,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         createVideoUI() {
           const mask = document.createElement("div");
           mask.id = "knowledge-video-mask";
-          mask.className = "bz-kb-mask";
+          mask.className = "bz-overlay-mask bz-kb-mask";
           mask.style.display = "none";
           mask.onclick = () => this.hideVideo();
           const popup = document.createElement("div");
@@ -33576,7 +33569,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           var _a2, _b2;
           const addMask = document.createElement("div");
           addMask.id = "knowledge-add-mask";
-          addMask.className = "bz-kb-mask";
+          addMask.className = "bz-overlay-mask bz-kb-mask";
           addMask.style.display = "none";
           addMask.onclick = () => this.requestAddClose();
           const popup = document.createElement("div");
@@ -34210,7 +34203,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           var _a2, _b2, _c, _d, _e;
           const mask = document.createElement("div");
           mask.id = "knowledge-term-mask";
-          mask.className = "bz-kb-mask";
+          mask.className = "bz-overlay-mask bz-kb-mask";
           mask.style.display = "none";
           mask.onclick = () => this.requestTermClose();
           const popup = document.createElement("div");
@@ -48725,242 +48718,6 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
-  // src/diary/store.ts
-  var store_exports = {};
-  __export(store_exports, {
-    DiaryFileReadError: () => DiaryFileReadError,
-    UnparsedLineError: () => UnparsedLineError,
-    addEntry: () => addEntry,
-    diaryDataMap: () => diaryDataMap,
-    dropDiaryMapPath: () => dropDiaryMapPath,
-    findDiaryEntry: () => findDiaryEntry,
-    isDiaryReadFailure: () => isDiaryReadFailure,
-    isUnparsedRefusal: () => isUnparsedRefusal,
-    listDateEntries: () => listDateEntries,
-    rekeyDiaryMapPath: () => rekeyDiaryMapPath,
-    removeDiaryEntries: () => removeDiaryEntries,
-    setDiaryDataMap: () => setDiaryDataMap,
-    updateDiaryTags: () => updateDiaryTags
-  });
-  function setDiaryDataMap(map) {
-    diaryDataMap = map;
-  }
-  function warnUnparsed(msg, dedupeKey) {
-    try {
-      notify(msg, { type: "warning", dedupeKey });
-    } catch (e) {
-    }
-  }
-  function warnReadFailed(msg, dedupeKey) {
-    try {
-      notify(msg, { type: "error", dedupeKey });
-    } catch (e) {
-    }
-  }
-  function isDiaryReadFailure(e) {
-    return e instanceof DiaryFileReadError;
-  }
-  function listDateEntryPaths(dateStr) {
-    var _a2, _b2;
-    const dirPrefix = `${DIARY_DIRECTORY}/`;
-    return (((_b2 = (_a2 = getApp().vault).getMarkdownFiles) == null ? void 0 : _b2.call(_a2)) || []).map((f) => f.path).filter((p) => {
-      var _a3;
-      return p.startsWith(dirPrefix) && ((_a3 = diaryMetaFromEntryPath(p)) == null ? void 0 : _a3.date) === dateStr;
-    });
-  }
-  async function readEntryCtxInQueue(filePath) {
-    const file = getApp().vault.getAbstractFileByPath(filePath);
-    let content = "";
-    if (file) {
-      try {
-        content = await getApp().vault.read(file);
-      } catch (e) {
-        warnReadFailed(
-          `「${filePath.split("/").pop()}」日记读取失败，本次修改没有执行（直接写会覆盖整篇日记）。请稍后重试。`,
-          `diary-read-failed-${filePath}`
-        );
-        throw new DiaryFileReadError(filePath, e);
-      }
-    }
-    const entry = file ? parseEntryFile(content, filePath) : null;
-    if (file && !entry) {
-      warnUnparsed(
-        `「${filePath.split("/").pop()}」无法解析为日记条目（文件名非条目形状或日期非法），本次修改没有执行。请先在日记本设置中运行「日记格式体检」排查。`,
-        `diary-write-refused-${filePath}`
-      );
-      throw new UnparsedLineError(filePath.split("/").pop() || filePath, 1);
-    }
-    if (!diaryDataMap) setDiaryDataMap(/* @__PURE__ */ new Map());
-    if (file && entry) diaryDataMap.set(filePath, [entry]);
-    else diaryDataMap.delete(filePath);
-    return { file, content, entry };
-  }
-  async function withEntryFile(filePath, task) {
-    return enqueueFileTask(filePath, async () => task(await readEntryCtxInQueue(filePath)));
-  }
-  async function listDateEntries(dateStr, opts) {
-    if (opts == null ? void 0 : opts.filePath) {
-      return withEntryFile(opts.filePath, ({ entry }) => entry ? [{ ...entry }] : []);
-    }
-    const out = [];
-    for (const p of listDateEntryPaths(dateStr)) {
-      try {
-        const es = await withEntryFile(p, ({ entry }) => entry ? [{ ...entry }] : []);
-        out.push(...es);
-      } catch (e) {
-        if (isDiaryReadFailure(e) || e instanceof UnparsedLineError) continue;
-        throw e;
-      }
-    }
-    out.sort((a, b) => a.timeValue - b.timeValue);
-    return out;
-  }
-  async function addEntry(dateStr, timeStr, tagsArray, content, opts) {
-    const [hours = 0, minutes = 0] = timeStr.split(":").map(Number);
-    const timeValue = hours * 100 + minutes;
-    const dir = (opts == null ? void 0 : opts.filePath) ? opts.filePath.split("/").slice(0, -1).join("/") : DIARY_DIRECTORY;
-    const addKey = `${dir}/${dateStr}`;
-    const created = await enqueueFileTask(addKey, async () => {
-      let seq = 1;
-      let filePath = diaryEntryPath(dir, dateStr, timeStr, seq);
-      while (getApp().vault.getAbstractFileByPath(filePath)) {
-        seq += 1;
-        filePath = diaryEntryPath(dir, dateStr, timeStr, seq);
-      }
-      const finalContent = serializeDiaryEntryFile({ date: dateStr, time: timeStr }, tagsArray, content.trim());
-      try {
-        await getApp().vault.create(filePath, finalContent);
-      } catch (error) {
-        console.error(`创建条目文件 ${filePath} 失败:`, error);
-        throw error;
-      }
-      const entry = {
-        date: dateStr,
-        time: timeStr,
-        timeValue,
-        tags: tagsArray,
-        emoji: tagsArray.map((tag) => getTagEmoji(tag)).join(""),
-        content: content.trim(),
-        filename: filePath,
-        filePath,
-        lineNumber: 0,
-        id: `${dateStr}-${timeStr.replace(/:/g, "-")}-${Date.now()}`
-      };
-      if (!diaryDataMap) setDiaryDataMap(/* @__PURE__ */ new Map());
-      diaryDataMap.set(filePath, [entry]);
-      return entry;
-    });
-    emitDomainEvent("diary:entry-added", { date: dateStr, time: timeStr, tags: tagsArray, content: content.trim() });
-    return created;
-  }
-  async function removeDiaryEntries(dateStr, match, opts) {
-    const paths = (opts == null ? void 0 : opts.filePath) ? [opts.filePath] : listDateEntryPaths(dateStr);
-    let removed = 0;
-    for (const p of paths) {
-      try {
-        const del = await enqueueFileTask(p, async () => {
-          const { file, entry } = await readEntryCtxInQueue(p);
-          if (!file || !entry || !match(entry)) return false;
-          await getApp().vault.delete(file);
-          if (diaryDataMap) diaryDataMap.delete(p);
-          return true;
-        });
-        if (del) removed += 1;
-      } catch (e) {
-        if (isDiaryReadFailure(e) || e instanceof UnparsedLineError) continue;
-        throw e;
-      }
-    }
-    return removed;
-  }
-  async function updateDiaryTags(dateStr, match, newTags, opts) {
-    const paths = (opts == null ? void 0 : opts.filePath) ? [opts.filePath] : listDateEntryPaths(dateStr);
-    for (const p of paths) {
-      let hit = null;
-      try {
-        hit = await enqueueFileTask(p, async () => {
-          const { file, content, entry } = await readEntryCtxInQueue(p);
-          if (!file || !entry || !match(entry)) return null;
-          const changed = !(entry.tags.length === newTags.length && entry.tags.every((t) => newTags.includes(t)));
-          if (!changed) return { entry, from: [...entry.tags], changed: false };
-          const body = parseDiaryEntryFile(content).body;
-          await getApp().vault.modify(file, serializeDiaryEntryFile({ date: entry.date, time: entry.time }, newTags, body));
-          const from = [...entry.tags];
-          entry.tags = [...newTags];
-          entry.emoji = newTags.map((tag) => getTagEmoji(tag)).join("");
-          if (diaryDataMap) diaryDataMap.set(p, [entry]);
-          return { entry, from, changed: true };
-        });
-      } catch (e) {
-        if (isDiaryReadFailure(e) || e instanceof UnparsedLineError) continue;
-        throw e;
-      }
-      if (hit) {
-        if (hit.changed) {
-          emitDomainEvent("diary:tags-changed", { date: hit.entry.date, time: hit.entry.time, from: hit.from, to: newTags });
-        }
-        return hit.entry;
-      }
-    }
-    return null;
-  }
-  async function findDiaryEntry(filename) {
-    if (!filename || !filename.includes("/")) return null;
-    try {
-      return await withEntryFile(filename, ({ entry }) => entry ? { ...entry } : null);
-    } catch (e) {
-      return null;
-    }
-  }
-  function isUnparsedRefusal(e) {
-    return e instanceof UnparsedLineError;
-  }
-  function rekeyDiaryMapPath(oldPath, newPath) {
-    if (!diaryDataMap || !oldPath || !newPath || oldPath === newPath) return false;
-    const entries = diaryDataMap.get(oldPath);
-    if (!entries) return false;
-    diaryDataMap.delete(oldPath);
-    for (const e of entries) {
-      if (e.filePath === oldPath) e.filePath = newPath;
-      if (e.filename === oldPath) e.filename = newPath;
-    }
-    diaryDataMap.set(newPath, entries);
-    return true;
-  }
-  function dropDiaryMapPath(path) {
-    if (!diaryDataMap || !path) return false;
-    return diaryDataMap.delete(path);
-  }
-  var diaryDataMap, UnparsedLineError, DiaryFileReadError;
-  var init_store2 = __esm({
-    "src/diary/store.ts"() {
-      init_app();
-      init_notice();
-      init_domain_bus();
-      init_storage();
-      init_diary_format();
-      init_config();
-      init_parser();
-      diaryDataMap = null;
-      UnparsedLineError = class extends Error {
-        constructor(dateStr, count) {
-          super(`「${dateStr}」无法解析为日记条目，已拒绝处理`);
-          this.dateStr = dateStr;
-          this.count = count;
-          this.name = "UnparsedLineError";
-        }
-      };
-      DiaryFileReadError = class extends Error {
-        constructor(filePath, cause_) {
-          super(`日记文件读取失败：${filePath}`);
-          this.filePath = filePath;
-          this.cause_ = cause_;
-          this.name = "DiaryFileReadError";
-        }
-      };
-    }
-  });
-
   // prototypes/home/fake-sim.ts
   var fake_sim_exports = {};
   __export(fake_sim_exports, {
@@ -48982,8 +48739,7 @@ GitHub 仓库：${ghInfo.title}
     riverFailed: false,
     order: { version: 3, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] },
     pomodoroPhase: "idle",
-    riverView: null,
-    aiGenerating: false
+    riverView: null
   };
 
   // src/home/ui.ts
@@ -49024,8 +48780,33 @@ GitHub 仓库：${ghInfo.title}
     return new Date(y, mo - 1, d).getTime();
   }
 
+  // src/diary/parser.ts
+  init_fake_obsidian();
+  init_diary_format();
+  init_config();
+  function isEncryptedEntry(entry) {
+    return typeof entry.content === "string" && entry.content.includes("🔐");
+  }
+  function parseEntryFile(content, filePath) {
+    const parsed = parseDiaryEntryFile(content);
+    const meta = resolveDiaryEntryMeta(filePath, parsed);
+    if (!meta) return null;
+    const [h = 0, min = 0] = meta.time.split(":").map(Number);
+    const tags = parsed.tags.length > 0 ? parsed.tags : ["日记"];
+    return {
+      date: meta.date,
+      time: meta.time,
+      timeValue: h * 100 + min,
+      tags,
+      emoji: tags.map((tag) => getTagEmoji(tag)).join(""),
+      content: parsed.body.trim(),
+      filename: filePath,
+      filePath,
+      lineNumber: 0
+    };
+  }
+
   // src/recap/aggregate.ts
-  init_parser();
   init_diary_format();
   init_data();
   init_constants();
@@ -49402,6 +49183,91 @@ GitHub 仓库：${ghInfo.title}
   init_data6();
   init_data9();
   init_config2();
+
+  // src/gameshelf/state.ts
+  init_settings_provider();
+  var DEFAULT_FOLDER = "我的/游戏";
+  function resolveGameshelfFolderPath() {
+    try {
+      const s = tryGetSettings();
+      return typeof s.gameshelfFolderPath === "string" && s.gameshelfFolderPath.trim() ? s.gameshelfFolderPath : DEFAULT_FOLDER;
+    } catch (e) {
+      return DEFAULT_FOLDER;
+    }
+  }
+  var M7 = {
+    currentOverlay: null,
+    items: [],
+    view: "shelf",
+    query: "",
+    bucket: "all",
+    sort: "hours",
+    syncing: false,
+    statusMsg: "",
+    appRef: null,
+    folderPath: DEFAULT_FOLDER,
+    renderFn: null
+  };
+
+  // src/gameshelf/steam.ts
+  init_fake_obsidian();
+  init_http();
+  function steamCoverUrl(appid) {
+    return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/header.jpg`;
+  }
+
+  // src/gameshelf/notes.ts
+  function readVal(fm2, cn, legacy) {
+    return fm2[cn] !== void 0 ? fm2[cn] : fm2[legacy];
+  }
+  function intOf(v) {
+    return Number.isFinite(Number(v)) ? Math.max(0, Math.floor(Number(v))) : 0;
+  }
+  function strOf(v) {
+    return typeof v === "string" && v.trim() ? v.trim() : null;
+  }
+  function rebuildItems2(app) {
+    var _a2;
+    const folder = resolveGameshelfFolderPath();
+    const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
+    const items = [];
+    for (const file of files) {
+      const fm2 = (_a2 = app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter;
+      const appid = Number(readVal(fm2 != null ? fm2 : {}, "AppID", "appid"));
+      if (!fm2 || !Number.isFinite(appid) || appid <= 0) continue;
+      const icon2 = readVal(fm2, "图标", "");
+      const zh = fm2["中文名"];
+      const coverRaw = readVal(fm2, "封面", "cover");
+      const iconSrc = fm2["图标源"];
+      const coverSrc = fm2["封面源"];
+      items.push({
+        file,
+        appid,
+        name: file.basename.replace(/^《/, "").replace(/》$/, "").trim() || `App ${appid}`,
+        zhName: typeof zh === "string" && zh.trim() ? zh.trim() : null,
+        playtimeMin: intOf(readVal(fm2, "游玩分钟", "playtimeMin")),
+        lastPlayed: typeof readVal(fm2, "最后游玩", "lastPlayed") === "string" ? String(readVal(fm2, "最后游玩", "lastPlayed")) : "",
+        // 封面/图标：既可能是本地 vault 路径（媒体队列写过），也可能是远端地址（没本地化过）
+        cover: strOf(coverRaw) || steamCoverUrl(appid),
+        coverSrc: strOf(coverSrc) || steamCoverUrl(appid),
+        icon: strOf(icon2),
+        iconSrc: strOf(iconSrc),
+        windowsMin: intOf(fm2["Windows分钟"]),
+        deckMin: intOf(fm2["SteamDeck分钟"]),
+        macMin: intOf(fm2["Mac分钟"]),
+        linuxMin: intOf(fm2["Linux分钟"]),
+        hasAch: fm2["有成就"] === true,
+        offShelf: readVal(fm2, "已下架", "offShelf") === true,
+        syncedAt: typeof readVal(fm2, "同步时间", "syncedAt") === "string" ? String(readVal(fm2, "同步时间", "syncedAt")) : null
+      });
+    }
+    M7.items = items;
+    return items;
+  }
+
+  // src/home/river.ts
+  init_knowledge_boxes();
+  init_data3();
   init_shared();
   init_shared();
   var DAY_MS4 = 864e5;
@@ -49496,6 +49362,34 @@ GitHub 仓库：${ghInfo.title}
     c.memoOpen = open.length;
     c.memoUrgentOpen = open.filter((m) => (m == null ? void 0 : m.priority) === "important").length;
   }
+  function collectGameshelfCounts(app, c) {
+    const items = rebuildItems2(app);
+    c.gameshelfTotal = items.length;
+    c.gameshelfMinutes = items.reduce((s, it) => s + (it.playtimeMin || 0), 0);
+  }
+  function collectKnowledgeCounts(app, c) {
+    const boxes = getKnowledgeBoxes();
+    const files = app.vault.getMarkdownFiles();
+    const countIn = (dir) => dir ? files.filter((f) => f.path.startsWith(dir + "/")).length : 0;
+    c.knowledgeLit = countIn(boxes.lit);
+    c.knowledgeCards = countIn(boxes.cardbox);
+    c.knowledgeTopics = countIn(boxes.topic);
+  }
+  function collectSecondbrainBytes(app, c) {
+    for (const p of [storageFile("secondbrain.json"), storageFile("secondbrain.vec")]) {
+      try {
+        const f = app.vault.getAbstractFileByPath(p);
+        if (f && f.stat && typeof f.stat.size === "number") c.secondbrainBytes += f.stat.size;
+      } catch (e) {
+      }
+    }
+  }
+  async function collectPomodoroTotal(app, c) {
+    const raw = await readJsonIfExists3(app, getPomodoroFilePath());
+    if (!raw || typeof raw !== "object") return;
+    const d = raw;
+    c.pomodoroTotal = (Array.isArray(d.history) ? d.history.length : 0) + (Array.isArray(d.archived) ? d.archived.reduce((s, r) => s + (r && typeof r.count === "number" && r.count > 0 ? r.count : 0), 0) : 0);
+  }
   async function collectFocusing() {
     try {
       const m = await Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports));
@@ -49541,7 +49435,11 @@ GitHub 仓库：${ghInfo.title}
           () => collectClippingCounts(app, counts),
           () => collectFavoritesCounts(app, counts),
           () => collectBelongingsCounts(app, counts),
-          () => collectMemoCounts(app, counts)
+          () => collectMemoCounts(app, counts),
+          () => collectGameshelfCounts(app, counts),
+          () => collectKnowledgeCounts(app, counts),
+          () => collectSecondbrainBytes(app, counts),
+          () => collectPomodoroTotal(app, counts)
         ].map(safe)
       ),
       collectFocusing()
@@ -49575,138 +49473,6 @@ GitHub 仓库：${ghInfo.title}
 
   // src/home/ui.ts
   init_order();
-
-  // src/recap/summarize.ts
-  init_ai();
-  init_diary_format();
-  var RECAP_MARKER = "【今日回顾】";
-  function numbersSegments(summary, failed) {
-    const segs = [];
-    if (!failed.includes("diary")) segs.push(`日记 ${summary.diary} 条`);
-    if (!failed.includes("cinema")) segs.push(`影视 ${summary.movies} 部`);
-    if (!failed.includes("bookshelf")) segs.push(`读完 ${summary.books} 本`);
-    if (!failed.includes("memo")) segs.push(`完成 ${summary.memoDone} 个备忘录`);
-    if (!failed.includes("pomodoro")) segs.push(`番茄 ${summary.pomodoros} 个 ${summary.pomodoroMinutes} 分钟`);
-    return segs;
-  }
-  function numbersLine(summary, failed) {
-    const segs = numbersSegments(summary, failed);
-    return segs.length ? `今日数字：${segs.join(" · ")}` : "";
-  }
-  function templateSummary(summary, failed) {
-    const segs = numbersSegments(summary, failed);
-    return segs.length ? `今天：${segs.join("、")}` : "今天：暂时没有可用的记录";
-  }
-  function buildRecapDigest(data) {
-    const lines = [];
-    const nums = numbersSegments(data.summary, data.failed);
-    if (nums.length) lines.push(`【今日数字】${nums.join("、")}`);
-    if (data.items.length) {
-      lines.push("【今日痕迹】");
-      for (const it of data.items) lines.push(`- ${it.timeLabel} ${it.text}`);
-    }
-    return lines.join("\n");
-  }
-  function buildSummaryPrompt(digest) {
-    return [
-      "你是用户的私人日记助手「包仔」。根据下面这位用户今天的生活记录，写一段今日总结，直接说给用户本人听：",
-      "- 口语化，像朋友聊天一样自然，温暖不油腻",
-      "- 全程用第二人称「你」",
-      "- 150~300 字：可以点名今天看过的影视、读过的书、完成的备忘录、专注的时段，结尾给一句轻松的观察或祝愿",
-      "- 只输出总结正文：不要标题、不要列表、不要「以下是总结」之类的说明",
-      "",
-      digest
-    ].join("\n");
-  }
-  function sanitizeSummaryText(text) {
-    return String(text || "").trim();
-  }
-  function buildEntryContent(body, summary, failed, opts) {
-    const parts = [RECAP_MARKER, body.trim()];
-    if (opts.withNumbers) {
-      const nums = numbersLine(summary, failed);
-      if (nums) parts.push("", nums);
-    }
-    return parts.join("\n");
-  }
-  function isRecapEntry(e) {
-    return isRecapMarkedText(e.content);
-  }
-  function isRecapMarkedText(text) {
-    return typeof text === "string" && text.trimStart().startsWith(RECAP_MARKER);
-  }
-  function entryTextWithoutMarker(content) {
-    const lines = content.split("\n");
-    if (lines.length && lines[0].trim() === RECAP_MARKER) return lines.slice(1).join("\n").trim();
-    return content.trim();
-  }
-  async function aiUnavailableReason() {
-    try {
-      await getAIProvider();
-      return null;
-    } catch (e) {
-      return e instanceof Error ? e.message : String(e);
-    }
-  }
-  async function generateRecapContent(data) {
-    const summary = data.summary;
-    const failed = data.failed;
-    if (failed.length >= 5) {
-      return { ok: false, mode: "template", content: "", degradeReason: "今天的数据暂时读不到，请稍后再试" };
-    }
-    const template = () => templateSummary(summary, failed);
-    const unavailable = await aiUnavailableReason();
-    if (unavailable) {
-      return { ok: true, mode: "template", content: buildEntryContent(template(), summary, failed, { withNumbers: false }), degradeReason: `未配置 AI 服务（${unavailable}），已生成数字模板总结` };
-    }
-    try {
-      const ai = createAI();
-      const raw = await ai.chat(buildSummaryPrompt(buildRecapDigest(data)));
-      const text = sanitizeSummaryText(String(raw || ""));
-      if (!text) {
-        return { ok: true, mode: "template", content: buildEntryContent(template(), summary, failed, { withNumbers: false }), degradeReason: "AI 返回了空内容，已生成数字模板总结" };
-      }
-      return { ok: true, mode: "ai", content: buildEntryContent(text, summary, failed, { withNumbers: true }), degradeReason: null };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.warn("[recap] AI 总结生成失败，降级数字模板:", e);
-      return { ok: true, mode: "template", content: buildEntryContent(template(), summary, failed, { withNumbers: false }), degradeReason: `AI 调用失败（${msg}），已生成数字模板总结` };
-    }
-  }
-  async function findRecapEntryPath(app, now = Date.now()) {
-    var _a2, _b2;
-    try {
-      const dir = settingDir(["diaryDirectory"], "我的/日记");
-      const dateStr = localDayStr(now);
-      const files = ((_b2 = (_a2 = app.vault).getMarkdownFiles) == null ? void 0 : _b2.call(_a2)) || [];
-      const candidates = files.map((f) => f.path).filter((p) => p.startsWith(`${dir}/`) && diaryDateFromEntryPath(p) === dateStr);
-      for (const p of candidates) {
-        const f = app.vault.getAbstractFileByPath(p);
-        if (!f) continue;
-        const parsed = parseDiaryEntryFile(await app.vault.read(f));
-        if (isRecapMarkedText(parsed.body)) return p;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-  async function writeRecapEntry(content, now = Date.now()) {
-    const dateStr = localDayStr(now);
-    const store2 = await Promise.resolve().then(() => (init_store2(), store_exports));
-    const timeStr = fmtHM(now);
-    const hadOld = (await store2.listDateEntries(dateStr).catch(() => [])).some(isRecapEntry);
-    await store2.addEntry(dateStr, timeStr, ["日记"], content);
-    try {
-      await store2.removeDiaryEntries(dateStr, (e) => isRecapEntry(e) && !(e.time === timeStr && e.content === content.trim()));
-    } catch (e) {
-      console.warn("[recap] 清理旧「今日回顾」条目失败（下次生成会重试清理）:", e);
-    }
-    return hadOld ? "replaced" : "written";
-  }
-  async function hasRecapEntry(app, now = Date.now()) {
-    return await findRecapEntryPath(app, now) !== null;
-  }
 
   // src/home/render.ts
   init_shared();
@@ -49759,19 +49525,18 @@ GitHub 仓库：${ghInfo.title}
     const size = (_b2 = opts.size) != null ? _b2 : "normal";
     const day = (_c = data.days.find((d) => d.dateStr === view)) != null ? _c : data.today;
     const isToday = day.dateStr === data.today.dateStr;
-    const aiRow = isToday ? '<div class="bz-home-ai-row"><button type="button" class="bz-btn bz-home-ai" data-home-ai disabled title="把今天的痕迹写成一段总结，写进日记">生成今日总结</button></div>' : "";
-    const wrap2 = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + aiRow + "</div>";
+    const wrap2 = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + "</div>";
     const notes = isToday && filter.notes ? buildNotes(data) : [];
-    const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => eventVisible(e, filter));
+    const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => eventVisible(e, filter)).reverse();
     const body = kept.map(({ e, i }) => {
-      var _a3, _b3, _c2, _d, _e;
+      var _a3, _b3, _c2, _d;
       const note = notes.find((n) => n.index === i);
-      const lastDiary = i === ((_a3 = kept[kept.length - 1]) == null ? void 0 : _a3.i) && note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
+      const warn = note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
       const memoId = e.domain;
       const dmColor = domainColor(memoId);
-      const dmName = (_c2 = (_b3 = DOMAIN_MAP.get(memoId)) == null ? void 0 : _b3.name) != null ? _c2 : e.domain;
-      const dmIcon = (_e = (_d = DOMAIN_MAP.get(memoId)) == null ? void 0 : _d.icon) != null ? _e : "";
-      return '<div class="bz-home-ev' + lastDiary + '">' + (showTime ? '<span class="bz-home-ev-tm">' + esc(e.timeLabel) + "</span>" : "") + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
+      const dmName = (_b3 = (_a3 = DOMAIN_MAP.get(memoId)) == null ? void 0 : _a3.name) != null ? _b3 : e.domain;
+      const dmIcon = (_d = (_c2 = DOMAIN_MAP.get(memoId)) == null ? void 0 : _c2.icon) != null ? _d : "";
+      return '<div class="bz-home-ev' + warn + '">' + (showTime ? '<span class="bz-home-ev-tm">' + esc(e.timeLabel) + "</span>" : "") + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
     }).join("");
     if (kept.length) return wrap2(body);
     if (day.events.length) {
@@ -49904,10 +49669,6 @@ GitHub 仓库：${ghInfo.title}
         closeOverlay();
         return;
       }
-      if (t.closest("[data-home-ai]")) {
-        void onGenerateClick(app);
-        return;
-      }
       const go = t.closest("[data-home-go]");
       if (go) {
         const id = go.dataset.homeGo || "";
@@ -49924,7 +49685,6 @@ GitHub 仓库：${ghInfo.title}
           if (flow) {
             flow.innerHTML = flowHtml(H.river, (_a2 = H.riverView) != null ? _a2 : "", readHomeSettings().flow);
             mountIcons(flow);
-            void syncHomeAiButton(H.appRef);
           }
         }
       }
@@ -49998,104 +49758,6 @@ GitHub 仓库：${ghInfo.title}
     const tiles = overlay2.querySelector("[data-home-tiles]");
     if (tiles) for (const el of rowEls(tiles)) attachRowMenu(el, app, river);
   }
-  function aiButton() {
-    var _a2, _b2;
-    return (_b2 = (_a2 = H.currentOverlay) == null ? void 0 : _a2.querySelector("[data-home-ai]")) != null ? _b2 : null;
-  }
-  async function syncHomeAiButton(app) {
-    var _a2;
-    const btn = aiButton();
-    if (!btn) return;
-    const written = await hasRecapEntry((_a2 = H.appRef) != null ? _a2 : app);
-    if (!btn.isConnected || H.aiGenerating) return;
-    setAiButton(btn, written ? "重新生成" : "生成今日总结", false);
-  }
-  function setAiButton(btn, label, loading2) {
-    btn.disabled = loading2;
-    if (loading2) {
-      btn.innerHTML = `<span class="bz-spinner bz-spinner--sm"></span>生成中…`;
-      btn.title = "";
-    } else {
-      btn.textContent = label;
-      btn.title = label === "重新生成" ? "替换今天已有的「今日回顾」条目" : "把今天的痕迹写成一段总结，写进日记";
-    }
-  }
-  function notifyWritten(app) {
-    notify("今日总结已写入日记", {
-      type: "success",
-      action: {
-        label: "查看",
-        onClick: () => {
-          var _a2;
-          try {
-            void findRecapEntryPath((_a2 = H.appRef) != null ? _a2 : app).then((p) => {
-              var _a3;
-              if (!p) return;
-              void ((_a3 = H.appRef) != null ? _a3 : app).workspace.openLinkText(p.replace(/\.md$/, ""), "", false, { active: true });
-            });
-          } catch (e) {
-          }
-        }
-      }
-    });
-  }
-  function notifyTemplateFallback(app, reason, content) {
-    notify(reason, {
-      type: "warning",
-      duration: 1e4,
-      actions: [
-        {
-          label: "写入日记",
-          onClick: () => {
-            writeRecapEntry(content).then(() => {
-              var _a2, _b2;
-              notifyWritten((_a2 = H.appRef) != null ? _a2 : app);
-              void syncHomeAiButton((_b2 = H.appRef) != null ? _b2 : app);
-            }).catch((e) => notifySaveError(e, "写入日记"));
-          }
-        },
-        {
-          label: "复制",
-          onClick: () => {
-            navigator.clipboard.writeText(entryTextWithoutMarker(content)).then(() => notify("已复制今日总结", { type: "success" })).catch((e) => notifyActionError(e, "复制"));
-          }
-        }
-      ]
-    });
-  }
-  async function onGenerateClick(app) {
-    var _a2, _b2, _c, _d;
-    if (H.aiGenerating) return;
-    const btn = aiButton();
-    if (!btn) return;
-    H.aiGenerating = true;
-    setAiButton(btn, "", true);
-    try {
-      let data;
-      try {
-        data = await collectRecap((_a2 = H.appRef) != null ? _a2 : app);
-      } catch (e) {
-        notify("今天的数据暂时读不到，请稍后再试", { type: "warning" });
-        return;
-      }
-      const result = await generateRecapContent(data);
-      if (!result.ok) {
-        notify(result.degradeReason || "暂时生成不了今日总结，请稍后再试", { type: "warning" });
-        return;
-      }
-      if (result.mode === "ai") {
-        await writeRecapEntry(result.content);
-        notifyWritten((_b2 = H.appRef) != null ? _b2 : app);
-      } else {
-        notifyTemplateFallback((_c = H.appRef) != null ? _c : app, result.degradeReason || "已生成数字模板总结", result.content);
-      }
-    } catch (e) {
-      notifyActionError(e, "生成今日总结");
-    } finally {
-      H.aiGenerating = false;
-      void syncHomeAiButton((_d = H.appRef) != null ? _d : app);
-    }
-  }
   function renderAll5() {
     const overlay2 = H.currentOverlay;
     if (!overlay2) return;
@@ -50156,7 +49818,6 @@ GitHub 仓库：${ghInfo.title}
     mountIcons(next);
     mountIcons(tiles);
     mountRowInteractions(overlay2, H.appRef, river);
-    void syncHomeAiButton(H.appRef);
   }
   function registerEscapeHandler() {
     registerPanelEsc("bz-home", () => !!H.currentOverlay && H.overlayVisible, closeOverlay);
@@ -50184,7 +49845,7 @@ GitHub 仓库：${ghInfo.title}
   }
 
   // prototypes/home/fake-sim.ts
-  var SEED_REV = 7;
+  var SEED_REV = 8;
   var SEED_MARK = "bz-sim:__home_seed";
   var KEY_PREFIX2 = "bz-sim:";
   var p2 = (n) => String(n).padStart(2, "0");
@@ -50485,6 +50146,39 @@ type:
       content: JSON.stringify({ version: 1, lastUpdated: new Date(at(0, "21:05")).toISOString(), items }, null, 2)
     });
   }
+  function seedGameshelf(out) {
+    const game = (name, appid, playtimeMin) => {
+      out.push({
+        path: `我的/游戏/${name}.md`,
+        content: fm({ AppID: appid, 中文名: name, 游玩分钟: playtimeMin }) + `${name} 的游戏笔记。
+`
+      });
+    };
+    game("艾尔登法环", 1245620, 5400);
+    game("塞尔达传说 旷野之息", 1245621, 3600);
+    game("星露谷物语", 1245622, 1200);
+    game("空洞骑士", 1245623, 600);
+  }
+  function seedKnowledgeBoxes(out) {
+    ["间隔重复", "主动回忆", "费曼技巧"].forEach(
+      (n) => out.push({ path: `文献盒/${n}.md`, content: `---
+domain: 学习
+---
+
+${n} 的文献笔记。
+` })
+    );
+    ["渐进总结", "常青笔记"].forEach((n) => out.push({ path: `卡片盒/${n}.md`, content: `${n}。
+` }));
+    out.push({ path: "主题盒/学习科学.md", content: "学习科学主题笔记。\n" });
+  }
+  function seedSecondbrain(out) {
+    out.push({
+      path: "CONFIG/STORAGE/secondbrain.json",
+      content: JSON.stringify({ version: 9, meta: { notes: {} }, vectors: [], chatHistory: [] }, null, 2)
+    });
+    out.push({ path: "CONFIG/STORAGE/secondbrain.vec", content: "bz-vec-fake ".repeat(187) });
+  }
   function buildSeedFiles() {
     const out = [];
     seedDiary(out);
@@ -50498,6 +50192,9 @@ type:
     seedMemo(out);
     seedPomodoro(out);
     seedBehavior(out);
+    seedGameshelf(out);
+    seedKnowledgeBoxes(out);
+    seedSecondbrain(out);
     return out;
   }
   function wipeSimKeys() {

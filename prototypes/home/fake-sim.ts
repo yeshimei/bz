@@ -14,6 +14,8 @@
  * 种子口径对照（自检断言依赖，改种子先改壳断言）：
  *   日记 518 篇（连击 3、今日未写）· 影院 想看 8 / 在看 2 · 书库 在读 9 / 读完 4
  *   复习 9 张（逾期 1、明天到期 0）· 剪藏未读 12 · 收藏在册 18 · 归物 12 件
+ *   游戏库 4 款 · 180 小时 · 知识盒 文献 3 / 卡片 2 / 主题 1 · 第二大脑 KB 级占用 · 番茄累计 3 轮
+ *   （后四项 = 2026-09-18 用户点名的入口行灰字新口径）
  *   今日时间线 9 条（剪藏保存 07:42 → 影院已看 21:05；另 3 条 news skipped 默认过滤），
  *   昨日 5 条（备忘录 09:00 → 完成 20:44）——痕迹源 = 小橘行为流（issue 305 / ADR-0132）
  *   规则点评 2 条：首条「早了 78 分钟」（今日首动 07:42 vs 昨日首动 09:00）+ 末条日记连击提醒
@@ -26,7 +28,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openHome as openHomeReal } from '../../src/home/index';
 
 /** 种子版本（种子形状变化时 +1，触发重灌） */
-const SEED_REV = 7;
+const SEED_REV = 8;
 const SEED_MARK = 'bz-sim:__home_seed';
 const KEY_PREFIX = 'bz-sim:';
 
@@ -372,6 +374,38 @@ function seedBehavior(out: SeedFile[]): void {
   });
 }
 
+/** 游戏库（我的/游戏，gameshelf rebuildItems 口径：AppID 合法即算一款）：4 款 + 总时长 180 小时 */
+function seedGameshelf(out: SeedFile[]): void {
+  const game = (name: string, appid: number, playtimeMin: number): void => {
+    out.push({
+      path: `我的/游戏/${name}.md`,
+      content: fm({ AppID: appid, 中文名: name, 游玩分钟: playtimeMin }) + `${name} 的游戏笔记。\n`,
+    });
+  };
+  game('艾尔登法环', 1245620, 5400);
+  game('塞尔达传说 旷野之息', 1245621, 3600);
+  game('星露谷物语', 1245622, 1200);
+  game('空洞骑士', 1245623, 600);
+}
+
+/** 知识盒三盒（缺省目录 文献盒/卡片盒/主题盒）：文献 3 / 卡片 2 / 主题 1 */
+function seedKnowledgeBoxes(out: SeedFile[]): void {
+  ['间隔重复', '主动回忆', '费曼技巧'].forEach((n) =>
+    out.push({ path: `文献盒/${n}.md`, content: `---\ndomain: 学习\n---\n\n${n} 的文献笔记。\n` })
+  );
+  ['渐进总结', '常青笔记'].forEach((n) => out.push({ path: `卡片盒/${n}.md`, content: `${n}。\n` }));
+  out.push({ path: '主题盒/学习科学.md', content: '学习科学主题笔记。\n' });
+}
+
+/** 第二大脑存储占用：secondbrain.json（JSON 段）+ secondbrain.vec（向量二进制假体，纯文本凑字节） */
+function seedSecondbrain(out: SeedFile[]): void {
+  out.push({
+    path: 'CONFIG/STORAGE/secondbrain.json',
+    content: JSON.stringify({ version: 9, meta: { notes: {} }, vectors: [], chatHistory: [] }, null, 2),
+  });
+  out.push({ path: 'CONFIG/STORAGE/secondbrain.vec', content: 'bz-vec-fake '.repeat(187) });
+}
+
 function buildSeedFiles(): SeedFile[] {
   const out: SeedFile[] = [];
   seedDiary(out);
@@ -385,6 +419,9 @@ function buildSeedFiles(): SeedFile[] {
   seedMemo(out);
   seedPomodoro(out);
   seedBehavior(out);
+  seedGameshelf(out);
+  seedKnowledgeBoxes(out);
+  seedSecondbrain(out);
   return out;
 }
 
