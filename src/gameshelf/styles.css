@@ -159,7 +159,7 @@
 .bz-gs-hero--bare .bz-gs-hero-side span { color: var(--bz-text-3); }
 .bz-gs-hero--bare .bz-gs-hero-tag { color: var(--bz-on-brand); }
 
-/* ---------- 工具行（吸顶：筛选与搜索滚不走） ---------- */
+/* ---------- 工具行（桌面吸顶：门面之下、筛选与搜索滚不走） ---------- */
 .bz-gs-tools {
   position: sticky;
   top: 0;
@@ -659,18 +659,29 @@
   .bz-gs-panel .bz-main-head .bz-btn { padding: 0 10px; }
   .bz-gs-panel .bz-main-head .bz-btn > span:not(.bz-ic) { display: none; }
   .bz-gs-body { padding: 0 var(--bz-space-md) var(--bz-space-md); }
-  .bz-gs-hero {
-    height: clamp(132px, 21vh, 172px);
-    margin: var(--bz-space-md) calc(-1 * var(--bz-space-md)) 0;
-    padding: 0 var(--bz-space-md);
+  /* 移动端去掉门面（海报头）：窄屏不给整块封面 banner 留高度，进面板就是搜索与网格 */
+  .bz-gs-hero { display: none; }
+  /* 搜索行「固定」而不是「吸顶」（用户 2026-09-17）：窄屏把**滚动权交给网格本身**——
+     工具行与头行同层、不在滚动流里，滚动列表时它天然不动，不需要 sticky。
+     只作用于游戏墙（data-view=shelf）：统计页仍是整页滚动，引导态同。 */
+  .bz-gs-body[data-view='shelf'] {
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
   }
-  .bz-gs-hero-in { padding-bottom: var(--bz-space-md); }
-  .bz-gs-hero-side { display: none; }
+  .bz-gs-body[data-view='shelf'] .bz-gs-wall {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
   /* 工具行一行放下：搜索 + 档位下拉 + 排序下拉（6 个 chip 与三档分段窄屏放不下）。
-     上内边距归零：工具行是吸顶元素，8px 的上垫在吸住时会变成「搜索框上方一道空隙」
-     （实测工具行 top 与滚动容器顶边齐平，但搜索框 top 还要再低 8px）——用户点名要贴死。 */
+     上内边距归零：工具行是「贴住头行的一行」，垫了上边距就会在搜索框上方留一道缝。 */
   .bz-gs-tools {
-    margin: 0 calc(-1 * var(--bz-space-md));
+    position: static;
+    flex: none;
+    margin: 0;
     padding: 0 var(--bz-space-md) var(--bz-space-sm);
     flex-wrap: nowrap;
   }
@@ -684,6 +695,16 @@
   .bz-gs-sel .bz-select { min-width: 0; padding: 0 8px; gap: 4px; }
   .bz-gs-sel .bz-select-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bz-gs-grid { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: var(--bz-space-sm); padding-top: var(--bz-space-md); }
+  /* 网格宿主 = 移动端游戏墙唯一的滚动容器（工具行因此恒定不动）：内边距自己带，
+     横向与底部内边距都落在滚动区里，最后一行不会贴着屏幕底。
+     ⚠️ 认的是 `#bz-gs-grid` 宿主（.bz-gs-gridhost），不是里面那层卡片网格——宿主默认
+     是普通块（min-height:auto），不给它 flex 约束就永远长到内容高，滚不动。 */
+  .bz-gs-body[data-view='shelf'] .bz-gs-gridhost {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 var(--bz-space-md) var(--bz-space-md);
+  }
   .bz-gs-hint { opacity: 1; }           /* 触屏没有 hover：时长/日期常显 */
   .bz-gs-card:hover { transform: none; }
   .bz-gs-card:hover .bz-gs-cover img { transform: none; }
