@@ -81,7 +81,10 @@ export interface WeeklyDigest {
 export interface WeeklyStoreSection {
   /** 上次聚合时刻（ms；周界判定基准——距今 ≥ 7 天才再聚） */
   lastRunAt: number;
-  /** 上次聚合时的索引键快照（新增笔记 = 当前键 − 快照键） */
+  /**
+   * 上次聚合时的索引键快照（新增笔记 = 当前键 − 快照键）。
+   * 容量注（审查修复补记）：随库线性增长属预期——它与索引同数量级，是差分判定所必需，不设上限。
+   */
   knownPaths: string[];
   /** 最近一次非空摘要（空轮不写，面板入口卡/弹层回放读它） */
   digest: WeeklyDigest | null;
@@ -141,11 +144,13 @@ function normalizeChatHistory(raw: unknown): ChatHistoryEntry[] {
   return valid.slice(-CHAT_HISTORY_LIMIT);
 }
 
-/** weekly 段校验（issue 360 加法扩展）：缺失/畸形 → null；lastRunAt 非有限数 / knownPaths 非数组 → null（按冷启动重立基线） */
+/** weekly 段校验（issue 360 加法扩展）：缺失/畸形 → null；lastRunAt 非有限数或 ≤0 / knownPaths 非数组 → null
+ *  （≤0 按冷启动重立基线——审查修复：脏值 0 会让 isWeeklyRunDue 永假，自动聚合永久 not-due） */
 function normalizeWeekly(raw: unknown): WeeklyStoreSection | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const r = raw as Record<string, unknown>;
-  if (typeof r.lastRunAt !== 'number' || !isFinite(r.lastRunAt) || !Array.isArray(r.knownPaths)) return null;
+  if (typeof r.lastRunAt !== 'number' || !isFinite(r.lastRunAt) || r.lastRunAt <= 0 || !Array.isArray(r.knownPaths))
+    return null;
   const digest =
     r.digest && typeof r.digest === 'object' && !Array.isArray(r.digest) ? (r.digest as WeeklyStoreSection['digest']) : null;
   return {
@@ -350,9 +355,18 @@ export function mergeStoreWithConflict(primary: SecondBrainStore, conflict: Seco
   }
   const chatTrimmed = chatHistory.slice(-CHAT_HISTORY_LIMIT);
 
-  // weekly（issue 360）：取 lastRunAt 大者（后聚合的设备状态更新；null 视为旧）
+  // weekly（issue 360）：取 lastRunAt 大者（后聚合的设备状态更新；null 视为旧）；
+  // knownPaths 取两侧并集（审查修复）——败侧独有存量并入获胜侧快照，否则下轮差分把它们误报「新增」
   let weekly = primary.weekly;
   if (conflict.weekly && (!weekly || conflict.weekly.lastRunAt > weekly.lastRunAt)) weekly = conflict.weekly;
+  if (weekly) {
+    const union = new Set([
+      ...weekly.knownPaths,
+      ...(primary.weekly?.knownPaths ?? []),
+      ...(conflict.weekly?.knownPaths ?? []),
+    ]);
+    weekly = { ...weekly, knownPaths: [...union] };
+  }
 
   return { version: primary.version, meta, panel, link: { queue, state }, chatHistory: chatTrimmed, weekly };
 }

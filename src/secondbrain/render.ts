@@ -377,14 +377,15 @@ export function weeklyNoteRowHtml(path: string, name: string, when: string): str
   );
 }
 
-/** 撞车提示卡行：新笔记 → 既有笔记（双跳转）+ 相似度 */
+/** 撞车提示卡行：新笔记 → 既有笔记 + 相似度。data-path 只落两段名字段（行容器不带——
+ *  整行不跳转与委托行为一致，审查修复；点行其余处不动，键盘 Enter/Space 经名字段可达） */
 export function weeklyCollisionRowHtml(path: string, name: string, targetPath: string, targetName: string, pct: number): string {
   return (
-    `<div class="bz-sb-weekly-row bz-sb-weekly-row--hit" data-path="${escapeHtml(path)}" role="button" tabindex="0">` +
+    `<div class="bz-sb-weekly-row bz-sb-weekly-row--hit">` +
     `<span class="bz-sb-weekly-row-dot bz-sb-weekly-row-dot--warn"></span>` +
-    `<span class="bz-sb-weekly-row-name">${escapeHtml(name)}</span>` +
+    `<span class="bz-sb-weekly-row-name" data-path="${escapeHtml(path)}" role="button" tabindex="0">${escapeHtml(name)}</span>` +
     `<span class="bz-sb-weekly-row-hit-arrow">${ic('arrow-right', 12)}</span>` +
-    `<span class="bz-sb-weekly-row-name bz-sb-weekly-row-name--target" data-path="${escapeHtml(targetPath)}">${escapeHtml(targetName)}</span>` +
+    `<span class="bz-sb-weekly-row-name bz-sb-weekly-row-name--target" data-path="${escapeHtml(targetPath)}" role="button" tabindex="0">${escapeHtml(targetName)}</span>` +
     `<span class="bz-sb-weekly-row-pct">${pct}%</span></div>`
   );
 }

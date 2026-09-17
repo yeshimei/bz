@@ -49,8 +49,8 @@ function makeEnv() {
   return { vault, app };
 }
 
-/** 假向量库：meta.notes 可变；vectorSearch 可编程（默认无命中） */
-function makeStore(notes: Record<string, string>, vectorSearch?: any): WeeklyStoreLike & { vectorSearch: any } {
+/** 假向量库：meta.notes 可变；vectorSearch 可编程（默认无命中）；isIndexReady 可显式注入（缺省按 notes 是否为空兜底） */
+function makeStore(notes: Record<string, string>, vectorSearch?: any, isIndexReady?: () => boolean): WeeklyStoreLike & { vectorSearch: any } {
   return {
     meta: {
       notes: Object.fromEntries(
@@ -58,6 +58,7 @@ function makeStore(notes: Record<string, string>, vectorSearch?: any): WeeklySto
       ),
     },
     vectorSearch: vectorSearch ?? (vi.fn().mockResolvedValue([])),
+    ...(isIndexReady ? { isIndexReady } : {}),
   };
 }
 
@@ -190,6 +191,20 @@ describe('聚合编排 runWeeklyDigest（首轮基线 / 周界 / 产出 / 空轮
     expect(s.weekly?.digest).toBeNull();
   });
 
+  it('空索引首轮：延迟立基线——本次跳过不写 lastRunAt，防首次向量化后全库误报「新增」', async () => {
+    // 空库（无 isIndexReady 时按 notes 为空兜底）：跳过，weekly 段保持 null
+    const r = await runWeeklyDigest(makeStore({}), { now: T0, probe: async () => true });
+    expect(r.status).toBe('baseline');
+    expect((await loadStore()).weekly).toBeNull();
+    // 显式 isIndexReady=false（meta 有残留但向量未装载的损坏态同理跳过）
+    const r2 = await runWeeklyDigest(makeStore({ '盒/a.md': '甲' }, undefined, () => false), {
+      now: T0,
+      probe: async () => true,
+    });
+    expect(r2.status).toBe('baseline');
+    expect((await loadStore()).weekly).toBeNull();
+  });
+
   it('未到周界（force=false）：不聚合，返回上一份摘要', async () => {
     await seedWeekly(T0, ['盒/a.md']);
     const store = makeStore({ '盒/a.md': '甲', '盒/新.md': '乙' });
@@ -261,6 +276,16 @@ describe('聚合编排 runWeeklyDigest（首轮基线 / 周界 / 产出 / 空轮
     });
     expect(r.status).toBe('done');
     expect(r.digest?.aiSummary).toBe('本周新增一篇卡片，节奏平稳。');
+  });
+
+  it('时钟回拨（lastRunAt 在未来，force 路径可触发）：since 收敛到 now，区间不倒置', async () => {
+    await seedWeekly(T0 + 3 * DAY, ['盒/a.md']); // 上次聚合时刻「在未来」
+    const store = makeStore({ '盒/a.md': '甲', '盒/新.md': '乙' });
+    const r = await runWeeklyDigest(store, { force: true, now: T0, probe: async () => true });
+    expect(r.status).toBe('done');
+    expect(r.digest!.since).toBe(T0); // min(lastRunAt, now)
+    expect(r.digest!.until).toBe(T0);
+    expect(r.digest!.since).toBeLessThanOrEqual(r.digest!.until);
   });
 
   it('AI 文案失败（未配置/网络错误）：降级纯列表，不阻塞产出', async () => {
@@ -360,14 +385,23 @@ describe('weekly 段落盘与 Syncthing 冲突合并', () => {
     expect(bad.weekly).toBeNull();
   });
 
-  it('冲突合并：weekly 取 lastRunAt 大者（后聚合的设备权威）', () => {
+  it('normalizeWeekly：lastRunAt ≤ 0 按冷启动处理（读回 null 重立基线），防自动聚合永久 not-due', async () => {
+    for (const badAt of [0, -5]) {
+      await mutateStore((st) => {
+        (st as any).weekly = { lastRunAt: badAt, knownPaths: ['盒/a.md'], digest: null };
+      });
+      expect((await loadStore()).weekly).toBeNull();
+    }
+  });
+
+  it('冲突合并：weekly 取 lastRunAt 大者（后聚合的设备权威），knownPaths 取两侧并集（败侧独有存量不丢）', () => {
     const base = {
       version: 1,
       meta: {},
       panel: null,
       link: { queue: [], state: {} },
       chatHistory: [],
-      weekly: { lastRunAt: 100, knownPaths: ['a.md'], digest: null },
+      weekly: { lastRunAt: 100, knownPaths: ['a.md', 'c.md'], digest: null },
     } as any;
     const conflict = {
       version: 1,
@@ -383,5 +417,10 @@ describe('weekly 段落盘与 Syncthing 冲突合并', () => {
     const noWeekly = { ...base, weekly: null };
     expect(mergeStoreWithConflict(noWeekly, conflict).weekly?.lastRunAt).toBe(200);
     expect(mergeStoreWithConflict(conflict, noWeekly).weekly?.lastRunAt).toBe(200);
+    // knownPaths 并集：获胜侧（200，b.md）+ 败侧独有（c.md）都保留——否则下轮差分把 c.md 误报「新增」
+    const merged = mergeStoreWithConflict(conflict, base);
+    expect(merged.weekly?.knownPaths.slice().sort()).toEqual(['a.md', 'b.md', 'c.md']);
+    const mergedFlip = mergeStoreWithConflict(base, conflict); // 换主冲突方向，并集不变
+    expect(mergedFlip.weekly?.knownPaths.slice().sort()).toEqual(['a.md', 'b.md', 'c.md']);
   });
 });

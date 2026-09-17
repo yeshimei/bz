@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 import { __resetNoticeForTests } from '../../src/core/notice';
+import { topifyZ } from '../../src/core/dom';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
@@ -22,6 +23,7 @@ import {
   notifyWeeklyDigest,
   openWeeklyDigest,
   renderPanelWeeklyCard,
+  runWeeklyIfDue,
   runWeeklyManual,
   scheduleWeeklyDigest,
   unloadWeeklyDigest,
@@ -123,10 +125,11 @@ describe('详情弹层 openWeeklyDigest（issue 360）', () => {
     expect(counts).toEqual(['1', '2', '1']);
   });
 
-  it('行跳转：新增笔记行点击 → workspace.openFile 打开对应文件；撞车行名字段各跳各的', async () => {
+  it('行跳转：新增笔记行点击 → workspace.openFile 打开对应文件；撞车行仅两段名字段各跳各的（行容器不带 data-path）', async () => {
     const { vault, app, openFile } = makeEnv(true);
     vault.files.set('文献盒/费曼学习法.md', '正文');
     vault.files.set('文献盒/旧番茄笔记.md', '旧正文'); // 撞车目标也在库内
+    vault.files.set('卡片盒/番茄钟实践.md', '撞车新笔记正文'); // 撞车行新笔记名字段也在库内
     openWeeklyDigest(app);
     await vi.waitFor(() => expect(weeklyPanel().querySelector('#bz-sb-weekly-body')!.innerHTML).toContain('主题撞车提示'));
 
@@ -136,11 +139,23 @@ describe('详情弹层 openWeeklyDigest（issue 360）', () => {
     expect(openFile.mock.calls[0][0].path).toBe('文献盒/费曼学习法.md');
     openFile.mockClear();
 
-    // 撞车行：点目标名字段跳目标（整行 default 态不跳，跳转落字段）
+    // 撞车行：目标名字段跳目标
     const hitRow = weeklyPanel().querySelector('#bz-sb-weekly-hits .bz-sb-weekly-row') as HTMLElement;
     (hitRow.querySelector('[data-path="文献盒/旧番茄笔记.md"]') as HTMLElement).click();
     await vi.waitFor(() => expect(openFile).toHaveBeenCalled());
     expect(openFile.mock.calls[0][0].path).toBe('文献盒/旧番茄笔记.md');
+    openFile.mockClear();
+    // 新笔记名字段跳新笔记（data-path 收敛到名字段，审查修复⑪）
+    (hitRow.querySelector('[data-path="卡片盒/番茄钟实践.md"]') as HTMLElement).click();
+    await vi.waitFor(() => expect(openFile).toHaveBeenCalled());
+    expect(openFile.mock.calls[0][0].path).toBe('卡片盒/番茄钟实践.md');
+    openFile.mockClear();
+    // 行容器已摘 data-path/role：点行其余处（箭头、百分比）不再跳转
+    expect(hitRow.hasAttribute('data-path')).toBe(false);
+    expect(hitRow.getAttribute('role')).toBeNull();
+    (hitRow.querySelector('.bz-sb-weekly-row-hit-arrow') as HTMLElement).click();
+    hitRow.click();
+    expect(openFile).not.toHaveBeenCalled();
   });
 
   it('跳转目标文件已删：给「文件不存在」人话提示，不抛错', async () => {
@@ -170,6 +185,56 @@ describe('详情弹层 openWeeklyDigest（issue 360）', () => {
     await vi.waitFor(() => expect(weeklyPanel().style.display).toBe('flex'));
     expect(weeklyPanel().textContent).toContain('费曼学习法');
   });
+
+  it('遮罩随弹层显隐（开 block / 关 none）：遮罩真实可见，点弹层外落在遮罩上可关闭（P1①）', async () => {
+    const { app } = makeEnv(true);
+    openWeeklyDigest(app);
+    await vi.waitFor(() => expect(weeklyPanel().style.display).toBe('flex'));
+    const mask = document.getElementById('bz-sb-weekly-mask') as HTMLElement;
+    expect(mask).toBeTruthy();
+    expect(mask.style.display).toBe('block'); // 显示即显遮罩（此前永不显示，遮罩点击是死代码）
+    mask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(mask.style.display).toBe('none');
+    expect(weeklyPanel().style.display).toBe('none');
+  });
+
+  it('复用重开统一重发 z 号：后开面板盖过旧弹层时，重开弹层与遮罩重新抬顶（P1②）', async () => {
+    const { app } = makeEnv(true);
+    openWeeklyDigest(app);
+    await vi.waitFor(() => expect(weeklyPanel().style.display).toBe('flex'));
+    (weeklyPanel().querySelector('#bz-sb-weekly-close') as HTMLElement).click();
+    expect(weeklyPanel().style.display).toBe('none');
+
+    // 模拟主面板后开（panel.open 每次显示 topifyZ 重发号，panel.ts:112 同款）：此刻它压过早先的周报弹层
+    const { createOverlay } = await import('../../src/core/dom');
+    const later = createOverlay({ maskId: 'bz-test-later-mask', popupId: 'bz-test-later-popup' });
+    document.body.appendChild(later.mask);
+    document.body.appendChild(later.popup);
+    topifyZ(later.mask, later.popup);
+
+    openWeeklyDigest(app); // 复用重开：必须重新发号压回后开面板之上（否则「点了没反应」）
+    await vi.waitFor(() => expect(weeklyPanel().style.display).toBe('flex'));
+    const mask = document.getElementById('bz-sb-weekly-mask') as HTMLElement;
+    expect(mask.style.display).toBe('block');
+    expect(Number(mask.style.zIndex)).toBeGreaterThan(Number(later.popup.style.zIndex));
+    expect(Number(weeklyPanel().style.zIndex)).toBeGreaterThan(Number(mask.style.zIndex)); // 本体紧贴遮罩之上（成对发号）
+    later.mask.remove();
+    later.popup.remove();
+  });
+
+  it('列表超 30 条：只显最近 30 条并补人话脚注（撞车节脚注同范式，审查修复⑩）', async () => {
+    const { vault, app } = makeEnv(false);
+    const d = makeDigest();
+    d.aiSummary = undefined; // 计数总览形态
+    d.newNotes = Array.from({ length: 35 }, (_, i) => ({ path: `盒/n${String(i).padStart(2, '0')}.md`, mtime: T0 - i }));
+    await seedDigestOnly(vault, d);
+    openWeeklyDigest(app);
+    await vi.waitFor(() => expect(weeklyPanel().querySelector('#bz-sb-weekly-notes')).toBeTruthy());
+    expect(weeklyPanel().querySelectorAll('#bz-sb-weekly-notes .bz-sb-weekly-row')).toHaveLength(30);
+    expect(weeklyPanel().textContent).toContain('新增笔记较多，仅显示最近 30 条');
+    // 未超限的关联节不出现脚注
+    expect(weeklyPanel().textContent).not.toContain('新增关联较多');
+  });
 });
 
 describe('通知入口 notifyWeeklyDigest（有实质内容才弹，动作开详情）', () => {
@@ -185,14 +250,13 @@ describe('通知入口 notifyWeeklyDigest（有实质内容才弹，动作开详
     document.body.innerHTML = '';
   });
 
-  it('正文 = 计数（撞车附加），不带 emoji；「查看详情」动作打开详情弹层', async () => {
+  it('正文 = 一句自然句（不用「·」拼串，文案规范③）；「查看详情」动作打开详情弹层', async () => {
     const { app } = makeEnv(true);
     notifyWeeklyDigest(makeDigest());
     const msgs = getNoticeMessages();
     expect(msgs).toHaveLength(1);
-    expect(msgs[0]).toContain('新增笔记 2 篇');
-    expect(msgs[0]).toContain('新增关联 1 条');
-    expect(msgs[0]).toContain('1 篇与既有内容高度重合');
+    expect(msgs[0]).toBe('本周新增笔记 2 篇，新增关联 1 条，1 篇与既有内容高度重合。');
+    expect(msgs[0]).not.toContain('·'); // 「·」符号串退役（审查修复⑨）
     expect(msgs[0]).not.toMatch(/[\u{1F300}-\u{1FAFF}\u{2700}-\u{27BF}\u{2600}-\u{26FF}]/u); // 正文无 emoji
     // 动作出口：openWeeklyDigest 注入 appRef 后，关掉的弹层可从通知动作重新打开
     openWeeklyDigest(app);
@@ -231,12 +295,13 @@ describe('主面板入口卡 renderPanelWeeklyCard（最小侵入：右栏一枚
     return host;
   }
 
-  it('有摘要：卡片显示计数一行 + 区间，点击打开详情弹层', async () => {
+  it('有摘要：卡片显示计数一行 + 「最近一份」区间（回放旧摘要不冒充当周，审查修复⑫），点击打开详情弹层', async () => {
     const { app } = makeEnv(true); // 摘要落盘：卡片点击后的弹层读盘渲染
     const popup = makePopup();
     renderPanelWeeklyCard(popup, app, makeDigest());
     const card = popup.querySelector('#bz-sb-weekly-card') as HTMLElement;
     expect(card.style.display).not.toBe('none');
+    expect((popup.querySelector('#bz-sb-weekly-range') as HTMLElement).textContent).toContain('最近一份');
     expect(card.textContent).toContain('2 篇新增');
     expect(card.textContent).toContain('1 条关联');
     expect(card.textContent).toContain('1 处撞车');
@@ -298,6 +363,49 @@ describe('命令路径 runWeeklyManual（bz-secondbrain-weekly：强制重聚 + 
     await runWeeklyManual(app, store as any, { probe: async () => true, now: T0 });
     expect(weeklyPanel().style.display).toBe('flex');
     expect(weeklyPanel().textContent).toContain('读取动态数据失败');
+  });
+});
+
+describe('卸载与在途聚合（generation 旗标，审查修复⑧）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    __resetNoticeForTests();
+    clearNotices();
+    document.body.innerHTML = '';
+  });
+
+  afterEach(() => {
+    unloadWeeklyDigest();
+    document.body.innerHTML = '';
+  });
+
+  it('聚合在途时卸载：完成回调检查代际后静默丢弃，不弹通知', async () => {
+    const { app } = makeEnv(true); // knownPaths=[]：任意新笔记差分即 done 语义
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const store = {
+      meta: { notes: { '文献盒/新.md': { mtime: T0, chunks: [{ text: '新' }] } } },
+      vectorSearch: vi.fn().mockResolvedValue([]),
+    };
+    const run = runWeeklyIfDue(app, store as any, {
+      now: T0 + 8 * DAY, // 距基线 T0 已超 7 天：到期
+      probe: () => gate.then(() => true), // 用探针挂起聚合，制造「在途」窗口
+    });
+    await Promise.resolve(); // 让 runWeeklyIfDue 进入在途 await
+    unloadWeeklyDigest(); // 卸载发生在聚合期间
+    release();
+    await run;
+    expect(getNoticeMessages()).toHaveLength(0); // 卸载后不再打扰
+  });
+
+  it('未卸载的对照：同场景正常弹通知（generation 未变）', async () => {
+    const { app } = makeEnv(true);
+    const store = {
+      meta: { notes: { '文献盒/新.md': { mtime: T0, chunks: [{ text: '新' }] } } },
+      vectorSearch: vi.fn().mockResolvedValue([]),
+    };
+    await runWeeklyIfDue(app, store as any, { now: T0 + 8 * DAY, probe: async () => true });
+    expect(getNoticeMessages().some((m) => m.startsWith('本周新增笔记'))).toBe(true);
   });
 });
 
