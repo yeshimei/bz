@@ -79,6 +79,10 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     reason: '游戏笔记 md 用户文档写（issue 368：建《名》.md + fileManager.processFrontMatter 管辖键 upsert，Obsidian 内建语义，口径同 cinema/ui）',
   },
   {
+    file: /^src\/gameshelf\/posters\.ts$/,
+    reason: '游戏海报图片二进制附件写（issue 368 增补：adapter.writeBinary 至海报文件夹 CONFIG/游戏海报，用户附件非插件私有数据，同 cinema/douban-queue 先例）',
+  },
+  {
     file: /^src\/cinema\/recommend\.ts$/,
     reason: '影视笔记 md 用户文档写（AI 推荐一键想看建条，含防重名前置拦截）',
   },
