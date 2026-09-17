@@ -17,6 +17,7 @@
 - 执行票建议开发顺序（互相独立，可并行 worktree）：352 / 356 / 357 / 361 / 362（小活先行）→ 353 / 354 / 355（备忘录三连，动同一 schema 建议串行）→ 358 / 359 / 360 / 363。
 
 ## Decisions so far
+- [拍板：小橘主动化路线](351-grilling-smartcat-proactive.md) — 统一「主动话题引擎」：域动静=Bandit 新话题臂；素材池=行为流产出类五族；频率不加量；话术=邀请话题；总开关默认开。实现票 [369](369-smartcat-proactive-engine.md) 已开；月度对话/年度故事入 fog。
 - [拍板：游戏架域方案](350-grilling-game-shelf-domain.md) — 纯走 Steam 数据零心智负担（小黑盒式，直连拉库无状态机无评分）；存 `我的/游戏/*.md`；报告做游戏自己的全量分析。实现票 [368](368-gameshelf-implementation.md) 已开。
 - [拍板：账本域方案](349-grilling-ledger-domain.md) — 识图为主（首屏发截图+确认卡，手记兜底）；分类内置+自定义（data.json 键）；首版全量报表；归物联动首版不做。用户追加催生 CSV 回补通道（研究票 367），三通道设计。实现票 [366](366-ledger-implementation.md) 已开（CSV 细节待 367）。
 

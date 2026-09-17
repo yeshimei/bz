@@ -1,6 +1,6 @@
 # 351 · 拍板：小橘主动化路线（62 + 49 第一步）
 
-> labels: wayfinder:grilling ｜ map: 346 ｜ status: open ｜ assignee: — ｜ blocked-by: —
+> labels: wayfinder:grilling ｜ map: 346 ｜ status: closed ｜ assignee: dev ｜ blocked-by: —
 
 ## Question
 
@@ -16,4 +16,4 @@
 
 ## Resolution
 
-（过票后填写）
+2026-09-17 用户「全按推荐」六条拍板：统一「主动话题引擎」（域动静=Bandit 新话题臂，不并行两套）；首版素材池=行为流产出类五族（读书完/复习里程碑/番茄累计/日记 streak/剪藏里程碑）；频率不加量（沿用每周 1-2 次+门控）；话术=邀请话题、人格+心情调制、拿不准不说；设置总开关默认开；62 后续=月度对话→年度故事（记 fog）。实现票 369。
