@@ -5,29 +5,34 @@
  * （file-sync）并发写同文件不再互踩；坏文件由 jsonFileStore 留档降级（原语 3）。
  * read/getAll 仍为无锁读；write 保留整段覆盖原义（供既有调用方，队列内勿重入）。
  *
- * issue 363 标签自定义：标签定义存伴生文件 favorites.tags.json（favorites.json 根结构
- * 不动），本类扩展 loadTags/saveTags（经 config.setTags 单源注入）与 updateTagLabelBulk
- * （改名/删除时条目 tags[]+type 批量跟随，范式 = memo updateSceneBulk）。
+ * issue 363 标签自定义（修订）：标签定义存 data.json 设置键 favoriteTags（config
+ * getTags/setTags 设置层单源），本类保留 saveTags（写键 + saveSettings 唯一落盘点）与
+ * updateTagLabelBulk（改名/删除时条目 tags[]+type 批量跟随，范式 = memo updateSceneBulk）；
+ * loadTags 收口为旧伴生文件 favorites.tags.json 的一次性迁移（幂等：存在且非空 → 迁入
+ * 设置键 → 旧文件进系统回收站；缺失/空/坏直接跳过或仅退役）。
  */
 import { jsonStore } from '../core/json-store';
 import { enqueueFileTask } from '../core/storage';
 import { getApp } from '../core/app';
-import { DEFAULT_TAGS, getTagsPath, normalizeTags, setTags } from './config';
+import { saveSettings, tryGetSettings } from '../core/settings-provider';
+import { CONFIG, getTags, normalizeTags, setTags } from './config';
 import type { FavTag, FavoritesItem } from './types';
+
+/** 旧伴生文件路径（issue 363 已退役存量；仅迁移期识别用，不再新建） */
+function legacyTagsPath(favoritesPath: string): string {
+  const idx = favoritesPath.lastIndexOf('/');
+  const dir = idx >= 0 ? favoritesPath.slice(0, idx) : '';
+  return (dir || CONFIG.DEFAULT_STORAGE_PATH) + '/favorites.tags.json';
+}
 
 export class DataManager {
   store: ReturnType<typeof jsonStore>;
   /** 数据文件路径（per-path 串行队列键；与 store 同路径） */
   filePath: string;
-  /** 标签定义文件路径（issue 363 伴生文件，与 favorites.json 同目录）与独立 store */
-  tagsPath: string;
-  tagsStore: ReturnType<typeof jsonStore>;
 
   constructor(storagePath: string) {
     this.store = jsonStore(storagePath);
     this.filePath = storagePath;
-    this.tagsPath = getTagsPath(storagePath);
-    this.tagsStore = jsonStore(this.tagsPath);
   }
 
   async read(): Promise<FavoritesItem[]> {
@@ -83,35 +88,62 @@ export class DataManager {
     return await this.read();
   }
 
-  // ==================== 标签定义（issue 363：favorites.tags.json） ====================
+  // ==================== 标签定义（issue 363 修订：data.json 设置键 favoriteTags） ====================
 
   /**
-   * 载入标签定义并注入 config 单源（app.init 时调用）：文件缺失 → 回退内置 9 类 seed
-   * （零迁移，不建文件不写盘）；文件在 → 归一化（坏行剔除/缺 id 补）后生效；空数组/坏
-   * JSON（jsonStore 留档降级为 []）同样走 seed 回退。
+   * 标签定义收口（app.init / 设置面板标签管理载入时调用）：
+   * 1) 旧伴生文件一次性迁移（幂等）——文件缺失直接跳过；存在 → 读出归一化（坏 JSON 由
+   *    jsonStore 原样留档 CONFIG/.CORRUPT 后降级 []），设置键尚无自定义值且旧件有有效行
+   *    → setTags 迁入 data.json 并落盘（落盘失败保留旧文件，下次载入重试）；最后旧文件
+   *    进系统回收站退役（可反悔；删除失败不阻塞，下次载入重试）。
+   * 2) 返回当前生效集（getTags：设置键优先，无键/空/坏回退内置 9 类 seed，seed 不落盘）。
    */
   async loadTags(): Promise<FavTag[]> {
-    let raw: unknown = null;
-    // 存在探测在前：jsonStore.read 对缺失文件会自建 [] 文件，seed 回退语义下不应落盘
+    await this.migrateLegacyTagsFile();
+    return getTags();
+  }
+
+  /** 保存标签定义（管理界面增删改排序的唯一落盘点）：config.setTags 写设置层 + saveSettings 持久化 */
+  async saveTags(tags: FavTag[]): Promise<void> {
+    setTags(tags);
+    await saveSettings();
+  }
+
+  /**
+   * 旧伴生文件 favorites.tags.json 一次性迁移（issue 363 修订；幂等可重入）。
+   * 设置键已有自定义值（新真源更新）时不回写旧件内容，只退役旧文件。
+   */
+  private async migrateLegacyTagsFile(): Promise<void> {
+    const path = legacyTagsPath(this.filePath);
+    let file: any = null;
     try {
-      if (getApp().vault.getAbstractFileByPath(this.tagsPath)) {
-        raw = await this.tagsStore.read();
-      }
+      file = getApp().vault.getAbstractFileByPath(path);
+    } catch {
+      return; // app 未就绪：跳过（下次载入重试）
+    }
+    if (!file) return; // 幂等：旧文件不存在直接跳过
+    let raw: unknown = null;
+    try {
+      raw = await jsonStore(path).read();
     } catch {
       raw = null;
     }
-    const tags = normalizeTags(raw);
-    const next = tags.length ? tags : DEFAULT_TAGS;
-    setTags(next);
-    return next;
-  }
-
-  /** 保存标签定义（管理界面增删改排序的唯一落盘点）：写盘 + 注入单源即时生效 */
-  async saveTags(tags: FavTag[]): Promise<void> {
-    await enqueueFileTask(this.tagsPath, async () => {
-      await this.tagsStore.write(tags);
-    });
-    setTags(tags);
+    const legacy = normalizeTags(raw);
+    const existing = normalizeTags((tryGetSettings() as any)?.[CONFIG.TAGS_SETTINGS_KEY]);
+    if (legacy.length && !existing.length) {
+      setTags(legacy);
+      try {
+        await saveSettings();
+      } catch (e) {
+        console.error('[favorites-tags-migrate] 设置键落盘失败，保留旧文件待重试:', e);
+        return; // 先保数据后退役：落盘不成不删旧文件
+      }
+    }
+    try {
+      await getApp().vault.trash(file, true); // 系统回收站，可反悔
+    } catch (e) {
+      console.error('[favorites-tags-migrate] 旧伴生文件退役失败（下次载入重试）:', e);
+    }
   }
 
   /**

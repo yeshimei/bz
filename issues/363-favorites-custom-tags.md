@@ -24,3 +24,9 @@
 ## Resolution
 
 ✅ 已交付：commit `6d949e90`（2026-09-17，全量门禁绿，随 2b2fdbbc 部署）。
+
+### 修订（2026-09-16 用户拍板：不要伴生文件）
+
+标签定义改存插件 data.json 设置键 `favoriteTags`（同 favoritesOpenFilter 等域键范式），伴生文件
+`favorites.tags.json` 退役：载入时一次性迁移（旧件存在且非空 → 迁入设置键 → 旧件进系统回收站；
+缺失/空/坏跳过或仅退役，幂等可重入；favorites.json 顶层纯数组拍板继续有效）。

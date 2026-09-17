@@ -1324,6 +1324,9 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > 违反「顶层纯数组」成文拍板（外部统计脚本依赖 length），改伴生文件 `favorites.tags.json`（同目录随
 > storagePath，checkup 清单零扰动）；DEFAULT_TAGS 运行时回退不预落盘，删标签走 updateTagLabelBulk
 > 迁移（范式 updateSceneBulk），GitHub 强标签特判改 `getTagById('github')` 按名解耦（6d949e90）。
+> **363 修订（2026-09-16 用户拍板）**：伴生文件退役，标签定义迁 data.json 设置键 `favoriteTags`
+> （getTags/setTags 走设置层，seed 回退不落盘、首次改动才写键；loadTags 收口一次性迁移——旧件
+> 存在且非空迁入设置键后进系统回收站，缺失/空/坏跳过或仅退役，幂等）。
 > 原型产物重出随合并批 chore(preview) 提交（settings-panel 行为包内联全域 schema 闭包，任一域改
 > schema 均连带）。第二波进行中：353/354/355 备忘录三连、360 本周知识动态、361 拟合 19 参数、362 做题家面板。
 

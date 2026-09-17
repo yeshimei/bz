@@ -1,4 +1,4 @@
-/* 源指纹 13b11b973934997c · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 da20b6a46a5838a6 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -4146,8 +4146,8 @@ var BZW_favorites = (() => {
     DEFAULT_STORAGE_PATH: "CONFIG/STORAGE",
     /** 数据文件名（固定，不允许用户修改） */
     STORAGE_FILE: "favorites.json",
-    /** 标签定义文件（issue 363 伴生文件，与 favorites.json 同目录、跟随 storagePath 设置） */
-    TAGS_FILE: "favorites.tags.json"
+    /** 标签定义设置键（data.json；旧伴生文件 favorites.tags.json 仅迁移期识别，见 data.ts） */
+    TAGS_SETTINGS_KEY: "favoriteTags"
   };
   var DEFAULT_TAGS = [
     { id: "github", label: "GitHub", ic: "github" },
@@ -4161,20 +4161,24 @@ var BZW_favorites = (() => {
     { id: "dsh", label: "DeepSeek Harness", ic: "waypoints" }
   ];
   var currentTags = null;
+  function tagsFromSettings() {
+    var _a;
+    return normalizeTags((_a = tryGetSettings()) == null ? void 0 : _a[CONFIG.TAGS_SETTINGS_KEY]);
+  }
   function getTags() {
-    return currentTags != null ? currentTags : DEFAULT_TAGS;
+    if (!currentTags) {
+      const tags = tagsFromSettings();
+      currentTags = tags.length ? tags : DEFAULT_TAGS;
+    }
+    return currentTags;
   }
   function setTags(tags) {
     currentTags = tags;
+    tryGetSettings()[CONFIG.TAGS_SETTINGS_KEY] = tags;
   }
   function getTagById(id) {
     var _a;
     return (_a = getTags().find((t) => t.id === id)) != null ? _a : null;
-  }
-  function getTagsPath(storagePath) {
-    const idx = storagePath.lastIndexOf("/");
-    const dir = idx >= 0 ? storagePath.slice(0, idx) : "";
-    return (dir || CONFIG.DEFAULT_STORAGE_PATH) + "/" + CONFIG.TAGS_FILE;
   }
   function newTagId() {
     return "t" + Date.now().toString(36);
@@ -4737,12 +4741,15 @@ var BZW_favorites = (() => {
   }
 
   // src/favorites/data.ts
+  function legacyTagsPath(favoritesPath) {
+    const idx = favoritesPath.lastIndexOf("/");
+    const dir = idx >= 0 ? favoritesPath.slice(0, idx) : "";
+    return (dir || CONFIG.DEFAULT_STORAGE_PATH) + "/favorites.tags.json";
+  }
   var DataManager = class {
     constructor(storagePath) {
       this.store = jsonStore(storagePath);
       this.filePath = storagePath;
-      this.tagsPath = getTagsPath(storagePath);
-      this.tagsStore = jsonStore(this.tagsPath);
     }
     async read() {
       return this.store.read();
@@ -4789,32 +4796,60 @@ var BZW_favorites = (() => {
     async getAll() {
       return await this.read();
     }
-    // ==================== 标签定义（issue 363：favorites.tags.json） ====================
+    // ==================== 标签定义（issue 363 修订：data.json 设置键 favoriteTags） ====================
     /**
-     * 载入标签定义并注入 config 单源（app.init 时调用）：文件缺失 → 回退内置 9 类 seed
-     * （零迁移，不建文件不写盘）；文件在 → 归一化（坏行剔除/缺 id 补）后生效；空数组/坏
-     * JSON（jsonStore 留档降级为 []）同样走 seed 回退。
+     * 标签定义收口（app.init / 设置面板标签管理载入时调用）：
+     * 1) 旧伴生文件一次性迁移（幂等）——文件缺失直接跳过；存在 → 读出归一化（坏 JSON 由
+     *    jsonStore 原样留档 CONFIG/.CORRUPT 后降级 []），设置键尚无自定义值且旧件有有效行
+     *    → setTags 迁入 data.json 并落盘（落盘失败保留旧文件，下次载入重试）；最后旧文件
+     *    进系统回收站退役（可反悔；删除失败不阻塞，下次载入重试）。
+     * 2) 返回当前生效集（getTags：设置键优先，无键/空/坏回退内置 9 类 seed，seed 不落盘）。
      */
     async loadTags() {
+      await this.migrateLegacyTagsFile();
+      return getTags();
+    }
+    /** 保存标签定义（管理界面增删改排序的唯一落盘点）：config.setTags 写设置层 + saveSettings 持久化 */
+    async saveTags(tags) {
+      setTags(tags);
+      await saveSettings();
+    }
+    /**
+     * 旧伴生文件 favorites.tags.json 一次性迁移（issue 363 修订；幂等可重入）。
+     * 设置键已有自定义值（新真源更新）时不回写旧件内容，只退役旧文件。
+     */
+    async migrateLegacyTagsFile() {
+      var _a;
+      const path = legacyTagsPath(this.filePath);
+      let file = null;
+      try {
+        file = getApp().vault.getAbstractFileByPath(path);
+      } catch (e) {
+        return;
+      }
+      if (!file) return;
       let raw = null;
       try {
-        if (getApp().vault.getAbstractFileByPath(this.tagsPath)) {
-          raw = await this.tagsStore.read();
-        }
+        raw = await jsonStore(path).read();
       } catch (e) {
         raw = null;
       }
-      const tags = normalizeTags(raw);
-      const next = tags.length ? tags : DEFAULT_TAGS;
-      setTags(next);
-      return next;
-    }
-    /** 保存标签定义（管理界面增删改排序的唯一落盘点）：写盘 + 注入单源即时生效 */
-    async saveTags(tags) {
-      await enqueueFileTask(this.tagsPath, async () => {
-        await this.tagsStore.write(tags);
-      });
-      setTags(tags);
+      const legacy = normalizeTags(raw);
+      const existing = normalizeTags((_a = tryGetSettings()) == null ? void 0 : _a[CONFIG.TAGS_SETTINGS_KEY]);
+      if (legacy.length && !existing.length) {
+        setTags(legacy);
+        try {
+          await saveSettings();
+        } catch (e) {
+          console.error("[favorites-tags-migrate] 设置键落盘失败，保留旧文件待重试:", e);
+          return;
+        }
+      }
+      try {
+        await getApp().vault.trash(file, true);
+      } catch (e) {
+        console.error("[favorites-tags-migrate] 旧伴生文件退役失败（下次载入重试）:", e);
+      }
     }
     /**
      * 条目标签批量跟随（改名/删除迁移；范式 = memo updateSceneBulk）：tags[] 内 from → to

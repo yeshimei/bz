@@ -4,9 +4,10 @@
  */
 
 /**
- * 标签定义（issue 363 标签自定义）：名称 + 图标 + 稳定 id，定义本体存 favorites.tags.json
- * （伴生文件，favorites.json 顶层纯条目数组契约不动——主页.js 读 favorites.length、checkup
- * 字段漂移检查均依赖纯数组根）。id 稳定不随改名变化：内置 9 类固定 id（seed），新增 =
+ * 标签定义（issue 363 标签自定义）：名称 + 图标 + 稳定 id，定义本体存 data.json 设置键
+ * favoriteTags（issue 363 修订：伴生文件 favorites.tags.json 退役——favorites.json 顶层
+ * 纯条目数组契约不动：主页.js 读 favorites.length、checkup 字段漂移检查均依赖纯数组根）。
+ * id 稳定不随改名变化：内置 9 类固定 id（seed），新增 =
  * 't' + 时间戳；GitHub 强标签等内部特判按 id 取当前 label，改名不失效。
  * 条目 tags[] 仍存 label（旧数据零迁移），改名经 updateTagLabelBulk 批量跟随。
  */

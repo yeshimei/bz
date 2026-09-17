@@ -1,10 +1,12 @@
 // @vitest-environment node
 /**
  * 收藏本 DataManager 测试（ticket 11）：CRUD + 排序。
- * issue 363：标签定义 favorites.tags.json 读写 + 改名/删除条目批量跟随（updateTagLabelBulk）。
+ * issue 363 修订：标签定义 data.json 设置键 favoriteTags 读写 / seed 回退 / 旧伴生文件
+ * favorites.tags.json 一次性迁移（幂等）+ 改名/删除条目批量跟随（updateTagLabelBulk）。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { DataManager } from '../../src/favorites/data';
 import { getStorageDir, getStoragePath, isUrlLike, DEFAULT_TAGS, getTags, resetTagsState, normalizeTags } from '../../src/favorites/config';
 import { MockVault } from '../mock-vault';
@@ -128,55 +130,108 @@ describe('存储路径解析（文件名固定 favorites.json）', () => {
   });
 });
 
-describe('标签定义 favorites.tags.json（issue 363）', () => {
+describe('标签定义 data.json 设置键 favoriteTags（issue 363 修订）', () => {
   let vault: MockVault;
   let dm: DataManager;
+  let state: Record<string, unknown>;
+  let saves: number;
 
   beforeEach(() => {
     vault = new MockVault();
     setApp(makeApp(vault));
+    state = {};
+    saves = 0;
+    setSettingsProvider(() => state as any);
+    setSettingsSaver(async () => { saves++; });
     dm = new DataManager('CONFIG/STORAGE/favorites.json');
     resetTagsState();
   });
 
-  it('loadTags：文件缺失 → 回退内置 9 类 seed（零迁移，不建文件不写盘）', async () => {
+  it('loadTags：设置键缺失 → 回退内置 9 类 seed（不写键不落盘，首次改动才落盘）', async () => {
     const tags = await dm.loadTags();
     expect(tags.map((t) => t.label)).toEqual(['GitHub', '桌面软件', '网站', '大模型', 'pi', 'Claude', 'skills', '酒馆', 'DeepSeek Harness']);
     expect(tags.every((t) => t.id && t.ic)).toBe(true);
-    expect(getTags()).toBe(tags); // config 单源注入生效
+    expect(getTags()).toBe(tags); // config 单源生效
+    expect(state.favoriteTags).toBeUndefined(); // seed 回退不写键
+    expect(saves).toBe(0);
     expect(vault.files.has('CONFIG/STORAGE/favorites.tags.json')).toBe(false);
   });
 
-  it('loadTags：文件在自定义目录也按 storagePath 定位（同 favorites.json 目录）', async () => {
+  it('saveTags：写设置键 + saveSettings 持久化 + 运行时即时生效；重载后自键重播种', async () => {
+    const next = [{ id: 't1', label: '育儿', ic: 'heart' }, { id: 'web', label: '网站', ic: 'globe' }];
+    await dm.saveTags(next);
+    expect(state.favoriteTags).toEqual(next); // 落 data.json 设置键（不再写伴生文件）
+    expect(saves).toBe(1);
+    expect(getTags().map((t) => t.label)).toEqual(['育儿', '网站']);
+    expect(vault.files.has('CONFIG/STORAGE/favorites.tags.json')).toBe(false);
+    // 模拟插件重载：运行时集清空，getTags 自设置键重播种（设置键即真理）
+    resetTagsState();
+    expect(getTags().map((t) => t.label)).toEqual(['育儿', '网站']);
+  });
+
+  it('一次性迁移：旧伴生文件非空 → 内容迁入设置键并落盘 + 旧文件进系统回收站', async () => {
+    const legacy = [{ id: 't1', label: '育儿', ic: 'heart' }, { id: 'github', label: 'GitHub', ic: 'github' }];
+    vault.files.set('CONFIG/STORAGE/favorites.tags.json', JSON.stringify(legacy));
+    const tags = await dm.loadTags();
+    expect(state.favoriteTags).toEqual(legacy); // 迁入 data.json 键
+    expect(saves).toBe(1);
+    expect(tags.map((t) => t.id)).toEqual(['t1', 'github']);
+    expect(vault.files.has('CONFIG/STORAGE/favorites.tags.json')).toBe(false); // 旧文件退役
+    const trashRec = vault.trashed.find((t) => t.path === 'CONFIG/STORAGE/favorites.tags.json');
+    expect(trashRec?.system).toBe(true); // 系统回收站，可反悔
+  });
+
+  it('迁移幂等：旧文件不存在 → 直接跳过（不写键不落盘不删文件）', async () => {
+    await dm.loadTags();
+    await dm.loadTags();
+    expect(saves).toBe(0);
+    expect(state.favoriteTags).toBeUndefined();
+    expect(vault.trashed).toHaveLength(0);
+  });
+
+  it('迁移不回写：设置键已有自定义值（新真源更新）→ 保留键值只退役旧文件', async () => {
+    state.favoriteTags = [{ id: 't9', label: '新真源', ic: 'star' }];
+    vault.files.set('CONFIG/STORAGE/favorites.tags.json', JSON.stringify([{ id: 't1', label: '旧件值', ic: 'heart' }]));
+    const tags = await dm.loadTags();
+    expect(state.favoriteTags).toEqual([{ id: 't9', label: '新真源', ic: 'star' }]); // 新值不被旧件覆盖
+    expect(saves).toBe(0);
+    expect(tags.map((t) => t.label)).toEqual(['新真源']);
+    expect(vault.files.has('CONFIG/STORAGE/favorites.tags.json')).toBe(false);
+  });
+
+  it('迁移空/坏旧件：空数组或坏 JSON 不迁（seed 回退），旧文件仍退役删除', async () => {
+    vault.files.set('CONFIG/STORAGE/favorites.tags.json', '[]');
+    expect((await dm.loadTags()).length).toBe(DEFAULT_TAGS.length);
+    expect(state.favoriteTags).toBeUndefined();
+    expect(vault.files.has('CONFIG/STORAGE/favorites.tags.json')).toBe(false);
+    // 坏 JSON：jsonStore 原文件留档 CONFIG/.CORRUPT 后降级 []，同样只退役不迁
+    resetTagsState();
+    vault.files.set('CONFIG/STORAGE/favorites.tags.json', '{oops');
+    expect((await dm.loadTags()).length).toBe(DEFAULT_TAGS.length);
+    expect([...vault.files.keys()].some((p) => p.startsWith('CONFIG/.CORRUPT/'))).toBe(true);
+    expect(vault.files.has('CONFIG/STORAGE/favorites.tags.json')).toBe(false);
+  });
+
+  it('坏键回退：设置键非数组/空数组/全坏行 → seed 回退；部分有效行归一化生效且不改写键', async () => {
+    state.favoriteTags = 'nope';
+    expect(getTags()).toEqual(DEFAULT_TAGS);
+    resetTagsState();
+    state.favoriteTags = [];
+    expect(getTags().length).toBe(DEFAULT_TAGS.length);
+    resetTagsState();
+    state.favoriteTags = [null, 42, { label: '  ' }, { label: '有效', ic: 'star' }];
+    expect(getTags().map((t) => t.label)).toEqual(['有效']);
+    expect(state.favoriteTags).toEqual([null, 42, { label: '  ' }, { label: '有效', ic: 'star' }]); // 坏键只读时回退，不主动改写
+    expect(saves).toBe(0);
+  });
+
+  it('favorites.json 本体不动：迁移只碰旧伴生文件，favorites.json 不建不改', async () => {
     const dm2 = new DataManager('我的/数据/favorites.json');
     vault.files.set('我的/数据/favorites.tags.json', JSON.stringify([{ id: 'x', label: '装修灵感', ic: 'heart' }]));
     const tags = await dm2.loadTags();
-    expect(tags.map((t) => t.label)).toEqual(['装修灵感']);
-  });
-
-  it('loadTags：文件为数组（含自定义标签）→ 定义生效且顺序保留', async () => {
-    vault.files.set('CONFIG/STORAGE/favorites.tags.json', JSON.stringify([
-      { id: 't1', label: '育儿', ic: 'heart' },
-      { id: 'github', label: 'GitHub', ic: 'github' },
-    ]));
-    const tags = await dm.loadTags();
-    expect(tags.map((t) => t.id)).toEqual(['t1', 'github']);
-    expect(getTags().map((t) => t.label)).toEqual(['育儿', 'GitHub']);
-  });
-
-  it('loadTags：空数组 / 坏行 → seed 回退（坏 JSON 由 jsonStore 留档降级为 []，同路径）', async () => {
-    vault.files.set('CONFIG/STORAGE/favorites.tags.json', '[]');
-    expect((await dm.loadTags()).length).toBe(DEFAULT_TAGS.length);
-    vault.files.set('CONFIG/STORAGE/favorites.tags.json', JSON.stringify([null, 42, { label: '  ' }, { label: '有效', ic: 'star' }]));
-    const tags = await dm.loadTags();
-    expect(tags.map((t) => t.label)).toEqual(['有效']);
-  });
-
-  it('saveTags：写盘（裸数组 JSON）+ config 单源即时生效', async () => {
-    const next = [{ id: 't1', label: '育儿', ic: 'heart' }, { id: 'web', label: '网站', ic: 'globe' }];
-    await dm.saveTags(next);
-    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.tags.json')!)).toEqual(next);
-    expect(getTags().map((t) => t.label)).toEqual(['育儿', '网站']);
+    expect(tags.map((t) => t.label)).toEqual(['装修灵感']); // 旧文件在自定义目录也随 storagePath 定位
+    expect(vault.files.has('我的/数据/favorites.tags.json')).toBe(false);
+    expect(vault.files.has('我的/数据/favorites.json')).toBe(false); // 顶层纯数组契约零扰动
   });
 
   it('updateTagLabelBulk：条目 tags[] 与 type 批量跟随（updateSceneBulk 范式），返回迁移条数', async () => {

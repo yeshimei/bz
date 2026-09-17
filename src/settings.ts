@@ -394,6 +394,11 @@ export default interface BzSettings {
   /** 收藏本：默认排序（issue 296）：new=最新收藏 / old=最早收藏 / title=按标题；置顶恒最前不变；
    *  非法值回落 new。只管「打开面板时是什么序」，与已退役的排序循环钮无涉 */
   favoritesDefaultSort: string;
+  /** 收藏本：标签定义（issue 363 修订：定义本体迁入 data.json 设置键，伴生文件 favorites.tags.json
+   *  退役——favorites.json 顶层纯条目数组契约不动）。形状 = favorites/types.ts FavTag（id/label/ic），
+   *  条目 tags[] 仍存 label 零迁移。默认 [] = 未自定义，运行时回退内置 9 类 seed（seed 不预落盘，
+   *  首次改动才写键）；坏值/空数组同样回退 seed */
+  favoriteTags: Array<{ id: string; label: string; ic: string }>;
   /** 影院：移动端默认全屏（默认开——原 JS 内联强制全屏；ADR-0087 起影视报告同控此键） */
   /** 复习计划：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   /** 番茄钟：移动端默认全屏（默认关——原移动端 320px 居中卡） */
@@ -789,6 +794,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   favoritesOpenFilter: '',
   favoritesLastFilter: '',
   favoritesDefaultSort: 'new',
+  // 收藏本标签定义（issue 363 修订）：空 = 未自定义（运行时回退内置 9 类 seed），首次改动才落盘
+  favoriteTags: [],
   // 文献盒处理设置（键名随域更名 literature*；ticket 136 默认值=既存行为不动，零迁移）
   knowledgeProgressDetail: true,
   knowledgeKeepVideo: true,
