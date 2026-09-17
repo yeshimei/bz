@@ -173,6 +173,8 @@ export function addIcon(_id?: string, _svg?: string): void {}
 export interface FakeStat {
   ctime: number;
   mtime: number;
+  /** 字节数（Obsidian TFile.stat.size 契约；home 活动河「第二大脑存储占用」等消费） */
+  size: number;
 }
 
 /** 文件对象：recap/cinema/bookshelf 真实现消费的 TFile 读取面（path/basename/stat） */
@@ -292,7 +294,7 @@ export class FakeVault {
       basename: dot > 0 ? base.slice(0, dot) : base,
       extension: dot > 0 ? base.slice(dot + 1) : '',
       name: base,
-      stat: { ctime: ct, mtime: mt },
+      stat: { ctime: ct, mtime: mt, size: new TextEncoder().encode(content).length },
       content,
     };
   }

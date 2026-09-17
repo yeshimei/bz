@@ -115,7 +115,14 @@ export class MockVault {
       extension: path.includes('.') ? path.split('.').pop() : '',
       name: path.split('/').pop()!,
       parent: { path: parentPath },
-      stat: Promise.resolve({ ctime: Date.UTC(2024, 0, 1, 12, 0), birthtime: Date.UTC(2024, 0, 1, 12, 0) }),
+      // 同步 FileStats 形状（与真机一致；await 普通对象无害，diary/parser 等两读法都兼容）
+      stat: {
+        ctime: Date.UTC(2024, 0, 1, 12, 0),
+        birthtime: Date.UTC(2024, 0, 1, 12, 0),
+        mtime: Date.UTC(2024, 0, 1, 12, 0),
+        // 字节数（Obsidian FileStats 契约；home 活动河「第二大脑存储占用」消费）
+        size: new TextEncoder().encode(content ?? '').length,
+      },
       content,
     };
   }

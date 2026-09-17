@@ -228,10 +228,26 @@ describe('buildDots / riverCountText（入口行彩点与计数文案）', () =>
     expect(riverCountText('clipping', d)).toBe('未读 55 篇');
     expect(riverCountText('favorites', d)).toBe('48 条');
     expect(riverCountText('belongings', d)).toBe('登记 65 件');
+    // 2026-09-18 用户点名四项：游戏库（款数+总时长）/ 知识盒（三盒各自）/ 第二大脑（存储占用）/ 番茄（累计轮数）
+    d.counts.gameshelfTotal = 42;
+    d.counts.gameshelfMinutes = 5430; // 90.5h → 四舍五入 91
+    expect(riverCountText('gameshelf', d)).toBe('42 款 · 91 小时');
+    d.counts.knowledgeLit = 528;
+    d.counts.knowledgeCards = 96;
+    d.counts.knowledgeTopics = 12;
+    expect(riverCountText('knowledge', d)).toBe('文献 528 · 卡片 96 · 主题 12');
+    d.counts.secondbrainBytes = 2621440;
+    expect(riverCountText('secondbrain', d)).toBe('2.5 MB');
+    d.counts.pomodoroTotal = 317;
+    expect(riverCountText('pomodoro', d)).toBe('累计 317 轮');
+    // 缺数据回落 0 口径（不 NaN）
+    expect(riverCountText('gameshelf', emptyRiver())).toBe('0 款 · 0 小时');
+    expect(riverCountText('knowledge', emptyRiver())).toBe('文献 0 · 卡片 0 · 主题 0');
+    expect(riverCountText('secondbrain', emptyRiver())).toBe('0 B');
+    expect(riverCountText('pomodoro', emptyRiver())).toBe('累计 0 轮');
     // ADR-0115：回忆墙磁贴随升格并入日记本，'wall' id 退役 → 回落 null（与未接数域同口径）
     expect(riverCountText('wall', d)).toBeNull();
     expect(riverCountText('settings', d)).toBeNull();
-    expect(riverCountText('pomodoro', d)).toBeNull();
   });
 });
 
@@ -357,5 +373,40 @@ describe('collectRiver（只读采集集成）', () => {
     const data = await collectRiver(mockAppWithVault(vault) as any, NOW);
     expect(data.counts.memoOpen).toBe(3); // 未完成全量（urgent open + 普通待办 + 高优待办）
     expect(data.counts.memoUrgentOpen).toBe(1); // 只剩重要且未完成
+  });
+
+  it('计数接通（2026-09-18 四项）：游戏库款数+时长 / 知识盒三盒 / 第二大脑字节 / 番茄累计', async () => {
+    vault.files.set('我的/游戏/艾尔登法环.md', '---\nAppID: 1245620\n游玩分钟: 5400\n---\n');
+    vault.files.set('我的/游戏/星露谷物语.md', '---\nAppID: 1245622\n游玩分钟: 600\n---\n');
+    vault.files.set('我的/游戏/无主笔记.md', '没有 AppID 的普通笔记（不数）\n');
+    vault.files.set('文献盒/间隔重复.md', 'x');
+    vault.files.set('文献盒/主动回忆.md', 'x');
+    vault.files.set('卡片盒/渐进总结.md', 'x');
+    vault.files.set('主题盒/学习科学.md', 'x');
+    vault.files.set('CONFIG/STORAGE/pomodoro.json', JSON.stringify({
+      version: 1,
+      state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+      history: [{ ts: 1, duration: 1500 }, { ts: 2, duration: 1500 }],
+      // 明细 + 周归档相加 = 累计（trimWithArchive 落账口径：按日恒不交，不双计）
+      archived: [{ week: '2026-08-03', count: 5, minutes: 125 }],
+    }));
+    vault.files.set('CONFIG/STORAGE/secondbrain.json', JSON.stringify({ version: 9, meta: { notes: {} } }));
+    const data = await collectRiver(mockAppWithVault(vault) as any, NOW);
+    expect(data.counts.gameshelfTotal).toBe(2);
+    expect(data.counts.gameshelfMinutes).toBe(6000);
+    expect(data.counts.knowledgeLit).toBe(2);
+    expect(data.counts.knowledgeCards).toBe(1);
+    expect(data.counts.knowledgeTopics).toBe(1);
+    expect(data.counts.pomodoroTotal).toBe(7);
+    expect(data.counts.secondbrainBytes).toBeGreaterThan(0);
+  });
+
+  it('四项计数的空/坏数据容错：文件缺失或 JSON 坏掉回落 0，不拖垮整面板', async () => {
+    vault.files.set('CONFIG/STORAGE/pomodoro.json', '{{{bad json');
+    const data = await collectRiver(mockAppWithVault(vault) as any, NOW);
+    expect(data.counts.gameshelfTotal).toBe(0);
+    expect(data.counts.knowledgeLit).toBe(0);
+    expect(data.counts.secondbrainBytes).toBe(0);
+    expect(data.counts.pomodoroTotal).toBe(0);
   });
 });

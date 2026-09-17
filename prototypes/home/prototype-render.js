@@ -1,4 +1,4 @@
-/* 源指纹 8457c4dcaa6dbdd9 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 74bdab5972ae18c0 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -305,7 +305,14 @@ var BZR_home = (() => {
     bookshelfFinished: 0,
     clippingUnread: 0,
     favoritesTotal: 0,
-    belongingsTotal: 0
+    belongingsTotal: 0,
+    gameshelfTotal: 0,
+    gameshelfMinutes: 0,
+    knowledgeLit: 0,
+    knowledgeCards: 0,
+    knowledgeTopics: 0,
+    secondbrainBytes: 0,
+    pomodoroTotal: 0
   };
   var EMPTY_SUMMARY = {
     diary: 0,
@@ -357,6 +364,14 @@ var BZR_home = (() => {
   function fmtHm(t) {
     const d = new Date(t);
     return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
+  function fmtSize(bytes) {
+    const n = Number.isFinite(bytes) && bytes > 0 ? bytes : 0;
+    const trim1 = (v) => String(Math.round(v * 10) / 10);
+    if (n >= 1073741824) return trim1(n / 1073741824) + " GB";
+    if (n >= 1048576) return trim1(n / 1048576) + " MB";
+    if (n >= 1024) return trim1(n / 1024) + " KB";
+    return `${Math.floor(n)} B`;
   }
   function headDateText(now = Date.now()) {
     const d = new Date(now);
@@ -452,6 +467,14 @@ var BZR_home = (() => {
         return `${c.favoritesTotal} 条`;
       case "belongings":
         return `登记 ${c.belongingsTotal} 件`;
+      case "gameshelf":
+        return `${c.gameshelfTotal} 款 · ${Math.round((c.gameshelfMinutes || 0) / 60)} 小时`;
+      case "knowledge":
+        return `文献 ${c.knowledgeLit} · 卡片 ${c.knowledgeCards} · 主题 ${c.knowledgeTopics}`;
+      case "secondbrain":
+        return fmtSize(c.secondbrainBytes);
+      case "pomodoro":
+        return `累计 ${c.pomodoroTotal} 轮`;
       default:
         return null;
     }
@@ -504,19 +527,18 @@ var BZR_home = (() => {
     const size = (_b = opts.size) != null ? _b : "normal";
     const day = (_c = data.days.find((d) => d.dateStr === view)) != null ? _c : data.today;
     const isToday = day.dateStr === data.today.dateStr;
-    const aiRow = isToday ? '<div class="bz-home-ai-row"><button type="button" class="bz-btn bz-home-ai" data-home-ai disabled title="把今天的痕迹写成一段总结，写进日记">生成今日总结</button></div>' : "";
-    const wrap = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + aiRow + "</div>";
+    const wrap = (inner) => '<div class="bz-home-timeline" data-tl-size="' + size + '" data-tl-time="' + (showTime ? "1" : "0") + '">' + inner + "</div>";
     const notes = isToday && filter.notes ? buildNotes(data) : [];
-    const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => eventVisible(e, filter));
+    const kept = day.events.map((e, i) => ({ e, i })).filter(({ e }) => eventVisible(e, filter)).reverse();
     const body = kept.map(({ e, i }) => {
-      var _a2, _b2, _c2, _d, _e;
+      var _a2, _b2, _c2, _d;
       const note = notes.find((n) => n.index === i);
-      const lastDiary = i === ((_a2 = kept[kept.length - 1]) == null ? void 0 : _a2.i) && note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
+      const warn = note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
       const memoId = e.domain;
       const dmColor = domainColor(memoId);
-      const dmName = (_c2 = (_b2 = DOMAIN_MAP.get(memoId)) == null ? void 0 : _b2.name) != null ? _c2 : e.domain;
-      const dmIcon = (_e = (_d = DOMAIN_MAP.get(memoId)) == null ? void 0 : _d.icon) != null ? _e : "";
-      return '<div class="bz-home-ev' + lastDiary + '">' + (showTime ? '<span class="bz-home-ev-tm">' + esc(e.timeLabel) + "</span>" : "") + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
+      const dmName = (_b2 = (_a2 = DOMAIN_MAP.get(memoId)) == null ? void 0 : _a2.name) != null ? _b2 : e.domain;
+      const dmIcon = (_d = (_c2 = DOMAIN_MAP.get(memoId)) == null ? void 0 : _c2.icon) != null ? _d : "";
+      return '<div class="bz-home-ev' + warn + '">' + (showTime ? '<span class="bz-home-ev-tm">' + esc(e.timeLabel) + "</span>" : "") + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
     }).join("");
     if (kept.length) return wrap(body);
     if (day.events.length) {

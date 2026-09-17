@@ -146,7 +146,7 @@
         let mark = null;
         try { mark = JSON.parse(localStorage.getItem('bz-sim:__home_seed') || 'null'); } catch { mark = null; }
         const today = (() => { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; })();
-        if (!mark || mark.seededOn !== today || mark.rev !== 7) {
+        if (!mark || mark.seededOn !== today || mark.rev !== 8) {
           if (!location.search.includes('reset=1')) {
             B.resetHomeSim();
             location.search = '?selftest=1&reset=1';
@@ -179,10 +179,20 @@
         t('书库行计数=在读9读完4', [...dtRows()].find((r) => r.dataset.homeGo === 'bookshelf').querySelector('.bz-home-ect').textContent === '在读 9 · 读完 4');
         t('剪藏行计数=未读12', [...dtRows()].find((r) => r.dataset.homeGo === 'clipping').querySelector('.bz-home-ect').textContent === '未读 12 篇');
         t('归物行计数=登记12件', [...dtRows()].find((r) => r.dataset.homeGo === 'belongings').querySelector('.bz-home-ect').textContent === '登记 12 件');
+        // 2026-09-18 用户点名四项灰字：游戏库款数+总时长 / 知识盒三盒各自 / 第二大脑存储占用 / 番茄累计轮数
+        t('游戏库行计数=4款180小时', [...dtRows()].find((r) => r.dataset.homeGo === 'gameshelf')?.querySelector('.bz-home-ect').textContent === '4 款 · 180 小时');
+        t('知识盒行计数=文献3卡片2主题1', [...dtRows()].find((r) => r.dataset.homeGo === 'knowledge')?.querySelector('.bz-home-ect').textContent === '文献 3 · 卡片 2 · 主题 1');
+        t('第二大脑行计数=KB级占用', /^\d+(\.\d)? KB$/.test([...dtRows()].find((r) => r.dataset.homeGo === 'secondbrain')?.querySelector('.bz-home-ect').textContent || ''));
+        t('番茄行计数=累计3轮', [...dtRows()].find((r) => r.dataset.homeGo === 'pomodoro')?.querySelector('.bz-home-ect').textContent === '累计 3 轮');
         t('时间线9条痕迹', dtEvs().length === 9);
         t('规则点评2条', dd.querySelectorAll('.bz-home-ev-note').length === 2);
-        t('首条点评=比昨天早了78分钟（今日首动07:42 vs 昨日首动09:00）', dt('.bz-home-ev-note').textContent.indexOf('早了 78 分钟') >= 0);
-        t('末条挂连击提醒+warn行', [...dtEvs()].pop().className.indexOf('bz-home-ev--warn') >= 0);
+        // 新 → 旧（2026-09-17 用户点名）：最新那笔在列顶、最早那笔在列底
+        const evTms = () => [...dtEvs()].map((e) => (e.querySelector('.bz-home-ev-tm') || {}).textContent || '');
+        t('时间线新→旧（列顶时刻晚于列底）', evTms().length > 1 && evTms()[0] >= evTms()[evTms().length - 1]);
+        t('末条点评=比昨天早了78分钟（今日首动07:42 vs 昨日首动09:00，锚点跟着最早那笔下底）', [...dtEvs()].pop().textContent.indexOf('早了 78 分钟') >= 0);
+        t('列顶=最新那笔：挂连击提醒+warn点', dtEvs()[0].className.indexOf('bz-home-ev--warn') >= 0
+          && dtEvs()[0].querySelector('.bz-home-ev-note').textContent.indexOf('连击在等你') >= 0);
+        t('生成今日总结按钮已退役（不再有动作行）', !dt('[data-home-ai]') && !dd.querySelector('.bz-home-ai-row'));
         t('预告3卡', dd.querySelectorAll('.bz-home-pr').length === 3);
         t('预告首卡=逾期卡', dt('.bz-home-pr-h').textContent === '还有 1 张逾期卡');
         t('彩点 warn/hot/ok 各在其位', dt('.bz-home-erow .bz-home-dot--warn') && dt('.bz-home-erow .bz-home-dot--hot') && dt('.bz-home-erow .bz-home-dot--ok'));
