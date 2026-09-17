@@ -10,6 +10,7 @@ import { notice } from '../core/notice';
 import { M, resetGameshelfState, resolveGameshelfFolderPath } from './state';
 import { rebuildItems } from './notes';
 import { ensurePosters, mediaItemsOf, unloadPosters } from './posters';
+import { ensureBackfill, unloadBackfill } from './backfill';
 import { ensureZhNames, unloadZhNames } from './names';
 import { closePanel, openPanel, renderAll } from './ui';
 
@@ -30,6 +31,9 @@ function afterOpen(app: App): void {
     renderAll(app);
     ensurePosters(app, mediaItemsOf(M.items));
     ensureZhNames(app, M.items);
+    // 后台全量回填商店资料 + 成就三键（2026-09-18 用户拍板：数据全在笔记属性，
+    // 不等逐款点开；只补缺「详情时间」的，幂等）
+    ensureBackfill(app, M.items);
   });
 }
 
@@ -74,6 +78,7 @@ export async function syncGameshelf(app: App): Promise<void> {
     // （两条队列都幂等：已齐的项 needsWork=false 直接跳过，不会重复下载）
     ensurePosters(app, mediaItemsOf(M.items));
     ensureZhNames(app, M.items);
+    ensureBackfill(app, M.items);
     if (r.added + r.updated + r.offShelf === 0) notice('已同步，暂无变化', 'success');
     return;
   }
@@ -87,5 +92,6 @@ export function unloadGameshelf(): void {
   closePanel();
   unloadPosters();
   unloadZhNames();
+  unloadBackfill();
   resetGameshelfState();
 }

@@ -210,6 +210,17 @@
         };
         t('view页CSS链生效', cssAlive(dd) && cssAlive(md));
         t('桌面 147 卡', cards(dd) === DATA.length);
+        // 回归钉（2026-09-18 真机截图：宿主裸 button 基线 inline-flex + align/justify-center
+        // + height:30px 把卡片压扁、标题居中、时长条挤出可视区）——样式必须整组显式覆盖
+        {
+          const c0 = dt('.bz-gs-card');
+          const cs = getComputedStyle(c0);
+          t('卡片样式自足：左上对齐', cs.alignItems === 'stretch' && cs.justifyContent === 'flex-start' && (cs.textAlign === 'left' || cs.textAlign === 'start'));
+          t('卡片高度未被基线压扁 h=' + Math.round(c0.getBoundingClientRect().height), c0.getBoundingClientRect().height > 100);
+          const strip = c0.querySelector('.bz-gs-strip');
+          const fillW = strip ? strip.querySelector('i').getBoundingClientRect().width : 0;
+          t('时长条在卡底可见 w=' + Math.round(fillW), !!strip && strip.getBoundingClientRect().height >= 2 && fillW > 0);
+        }
         t('移动 147 卡', cards(md) === DATA.length);
         // 展示名口径 = 中文名优先（种子里的 zh 来自真实 appdetails 的本地化名）
         const dn = (g) => (g.zh && g.zh.trim()) || g.name;
@@ -280,6 +291,16 @@
         await sleep(600);
         const modal = dt('.bz-gs-detail-modal');
         t('详情弹窗开', !!modal && modal.textContent.includes(dn(first)));
+        // 后台全量回填（backfill.ts）：首位游戏种子故意缺「详情时间」→ 队列用真实罐头
+        // 走真解析真写盘（外层键 = appid 字符串那条路径），落「详情时间」幂等标记
+        let filled = false;
+        for (let i = 0; i < 25 && !filled; i++) {
+          await sleep(200);
+          for (const k of Object.keys(localStorage)) {
+            if (k.includes('Deep Rock Galactic') && (localStorage.getItem(k) || '').includes('详情时间')) { filled = true; break; }
+          }
+        }
+        t('后台回填落 详情时间（首位游戏）', filled);
         t('详情含我的游玩数据', !!dt('.bz-gs-mine-num') && !!dt('.bz-gs-detail-appid'));
         const gsMask = dt('.bz-gs-detail-mask');
         t('弹窗遮罩用毛玻璃', !!gsMask && getComputedStyle(gsMask).backdropFilter.includes('blur'));

@@ -27,7 +27,7 @@ import { closePanel } from '../../src/gameshelf/ui';
 const FOLDER = '我的/游戏';
 /** 种子标记：存在 = 已种子过（用户在壳里的改动保留，不被覆盖）。
  *  ⚠️ 改种子内容必须同一次把版本号 +1——否则浏览器老 localStorage 里的旧种子不会重播。 */
-const SEED_MARK = 'bz-sim:__gameshelf-seed-v2';
+const SEED_MARK = 'bz-sim:__gameshelf-seed-v3';
 /** 设置持久键 */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -52,6 +52,9 @@ function mdOf(g: SeedGame): string {
   ];
   // 中文名：有才写（与真机一致——没回填过的笔记就没有这个键，names.ts 队列会去补）
   if (g.zh) lines.push(`中文名: ${g.zh}`);
+  // 详情时间：除首位游戏外都预置（模拟「全量回填已完成」的库）——backfill.ts 的入队
+  // 判定看它；首位留空让壳自检能验证回填链（罐头回放 → 属性落 详情时间）
+  if (g.appid !== window.GAMESHELF_DATA?.[0]?.appid) lines.push(`详情时间: "2026-09-18T00:00:00.000Z"`);
   lines.push(
     `图标: ${g.icon || '""'}`,
     `Windows分钟: ${g.win}`,
