@@ -13,3 +13,5 @@
 ## Resolution
 
 **取消（2026-09-17 用户两次收紧后拍板不需要）**：先砍支付宝，随即整票停掉——CSV 账单导入通道整体不做了，账本通道定为「识图为主 + 手记兜底」两条（366 已同步）。按 wayfinder 规则记入 map 的 Out of scope。
+
+> 调研产物留存（2026-09-17 research-subagent）：微信 CSV 调研已完成并沉淀于 [.scratch/memo-suite-plugin/research/367-bill-export.md](../.scratch/memo-suite-plugin/research/367-bill-export.md)（微信-only 口径，含入口/交付形态/11 列结构/UTF-8/解析要点与坑），供将来若重开导入通道直接取用，不影响本票取消结论。
