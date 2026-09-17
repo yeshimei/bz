@@ -4,6 +4,7 @@
  */
 import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
+import { POSTER_FOLDER } from './douban-fetcher';
 
 export function cinemaSettingsSchema(): SettingsSchema {
   return {
@@ -38,6 +39,7 @@ export function cinemaSettingsSchema(): SettingsSchema {
         name: '目录',
         rows: [
           { type: 'path', mode: 'single', name: '影视文件夹', desc: '影院读取的影视文件夹，日记本也从这里读影视', binding: { key: 'cinemaFolderPath' } },
+          { type: 'path', mode: 'single', name: '海报文件夹', desc: '豆瓣抓取的海报图片保存位置，留空用默认目录', binding: { key: 'cinemaPosterFolder' }, fallbackValue: () => POSTER_FOLDER },
           // 旧「每批加载数量」（cinemaPageSize）已删除：全仓无消费点（列表一次全量渲染），属死配置
         ],
       },

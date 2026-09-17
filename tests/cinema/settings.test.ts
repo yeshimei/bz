@@ -14,10 +14,16 @@ describe('cinema 设置 schema', () => {
     const rows = schema.groups.flatMap((g) => g.rows);
     expect(rows.some((r: any) => (r.binding as any)?.key === 'cinemaPageSize')).toBe(false);
     expect(rows.some((r: any) => r.name === '每批加载数量')).toBe(false);
-    // 目录组仅剩影视文件夹路径行
+    // 目录组两行：影视文件夹 + 海报文件夹（cinemaPosterFolder，空回落 CONFIG/MOVIE POSTER）
     const folderGroup = schema.groups.find((g) => g.name === '目录')!;
-    expect(folderGroup.rows).toHaveLength(1);
+    expect(folderGroup.rows).toHaveLength(2);
     expect((folderGroup.rows[0] as any).binding.key).toBe('cinemaFolderPath');
+    const posterRow = folderGroup.rows[1] as any;
+    expect(posterRow.type).toBe('path');
+    expect(posterRow.mode).toBe('single');
+    expect(posterRow.binding.key).toBe('cinemaPosterFolder');
+    expect(posterRow.fallbackValue()).toBe('CONFIG/MOVIE POSTER');
+    expect(DEFAULT_SETTINGS.cinemaPosterFolder).toBe('');
   });
 
   it('DEFAULT_SETTINGS 不再声明 cinemaPageSize 默认值', () => {

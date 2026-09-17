@@ -90,6 +90,7 @@ function fetchDepsFromSettings(app: App): DoubanFetchDeps {
     },
     apizeroKey: typeof s.cinemaApizeroKey === 'string' ? s.cinemaApizeroKey.trim() : '',
     doubanCookie: typeof s.cinemaDoubanCookie === 'string' ? s.cinemaDoubanCookie.trim() : '',
+    posterFolder: typeof s.cinemaPosterFolder === 'string' ? s.cinemaPosterFolder.trim() : '',
   };
 }
 

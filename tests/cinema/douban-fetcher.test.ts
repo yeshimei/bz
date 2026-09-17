@@ -138,6 +138,20 @@ describe('updateFrontmatterFields / insertPosterEmbed（note-processor 口径）
     expect(next).toContain('导演: 郭帆');       // 缺失则写入
   });
 
+  it('空值键视为缺失照写（回归：模板预置空 `海报:` 堵死回填 → 队列反复重抓）', () => {
+    // 现场形态：frontmatter 已有 `海报:` 空键，ifMissing 写入不被跳过
+    const content = '---\ntags: [电影]\n海报:\n豆瓣链接: ""\n---\n正文';
+    const next = updateFrontmatterFields(content, {
+      '海报': { value: 'CONFIG/MOVIE POSTER/a.jpg', ifMissing: true },
+      '豆瓣评分': { value: '9.2', ifMissing: true },
+    });
+    expect(next).toMatch(/^海报: "CONFIG\/MOVIE POSTER\/a\.jpg"$/m); // 空键回填
+    expect(parseFrontmatter(next)?.['海报']).toBe('CONFIG/MOVIE POSTER/a.jpg');
+    // 已有非空值仍不覆盖（C8 语义不变）
+    const again = updateFrontmatterFields(next, { '海报': { value: 'x.jpg', ifMissing: true } });
+    expect(again).toMatch(/^海报: "CONFIG\/MOVIE POSTER\/a\.jpg"$/m);
+  });
+
   it('insertPosterEmbed 插到 frontmatter 后；已存在跳过', () => {
     const content = '---\ntags: [电影]\n---\n正文';
     expect(insertPosterEmbed(content, 'CONFIG/MOVIE POSTER/a.jpg')).toBe('---\ntags: [电影]\n---\n![[CONFIG/MOVIE POSTER/a.jpg]]\n正文');
@@ -189,6 +203,7 @@ function makeDeps(over: {
   vault?: MockVault;
   apizeroKey?: string;
   posterBytes?: ArrayBuffer | null;
+  posterFolder?: string;
 } = {}): { deps: DoubanFetchDeps; vault: MockVault } {
   const vault = over.vault ?? new MockVault();
   const app = mockAppWithVault(vault);
@@ -216,6 +231,7 @@ function makeDeps(over: {
     writeBinary: async (p, d) => { vault.binaryFiles.set(p, new Uint8Array(d)); },
     mkdir: async (p) => { vault.dirs.add(p); },
     apizeroKey: over.apizeroKey,
+    posterFolder: over.posterFolder,
     now: () => 1700000000000,
   };
   return { deps, vault };
@@ -259,6 +275,27 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     // ApiZero 有导演/主演 → 不调 rexxar，无编剧字段
     expect(content).not.toContain('编剧');
     expect(vault.binaryFiles.get(`${POSTER_FOLDER}/流浪地球2_1700000000000.jpg`)?.length).toBe(1024);
+  });
+
+  it('自定义海报文件夹（cinemaPosterFolder）：mkdir/写盘/海报键/embed 全走该目录；空白回落默认', async () => {
+    const vault = new MockVault();
+    vault.files.set(FILE_PATH, '---\ntags:\n  - 电影\n评分: -1\n---');
+    const { deps } = makeDeps({ vault, apizeroKey: 'sk_test', posterBytes: new ArrayBuffer(8), posterFolder: '我的/海报墙' });
+    const r = await runOn(vault, deps);
+    expect(r).toEqual({ ok: true });
+    const content = vault.files.get(FILE_PATH)!;
+    expect(content).toContain('海报: 我的/海报墙/流浪地球2_1700000000000.jpg'); // 无空格不加引号
+    expect(content).toContain('![[我的/海报墙/流浪地球2_1700000000000.jpg]]');
+    expect(vault.dirs.has('我的/海报墙')).toBe(true);
+    expect(vault.binaryFiles.has('我的/海报墙/流浪地球2_1700000000000.jpg')).toBe(true);
+    expect(vault.binaryFiles.has(`${POSTER_FOLDER}/流浪地球2_1700000000000.jpg`)).toBe(false);
+
+    // 空白串 → 回落默认目录
+    const vault2 = new MockVault();
+    vault2.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    const { deps: deps2 } = makeDeps({ vault: vault2, posterBytes: new ArrayBuffer(8), posterFolder: '   ' });
+    await runOn(vault2, deps2);
+    expect(vault2.files.get(FILE_PATH)).toContain(`海报: "${POSTER_FOLDER}/流浪地球2_1700000000000.jpg"`);
   });
 
   it('无 key：字段落 rexxar 兜底（导演/编剧/主演），无评分', async () => {
