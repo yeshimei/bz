@@ -38,6 +38,11 @@ export function isSyncDue(syncedAts: string[], now = Date.now()): boolean {
   return now - lastSyncedAt(syncedAts) >= AUTO_SYNC_INTERVAL_MS;
 }
 
+/** Steam 配置读取（详情按需拉取与同步共用；无配置 → 空串） */
+export function readSteamConfig(): { steamId: string; apiKey: string } {
+  return readConfig();
+}
+
 function readConfig(): { steamId: string; apiKey: string } {
   const s = tryGetSettings() as Record<string, unknown>;
   return {

@@ -110,13 +110,13 @@ describe('runSync 同步链路（issue 368）', () => {
     const path = `${DEFAULT_FOLDER}/《Deep Rock Galactic》.md`;
     expect(vault.files.has(path)).toBe(true);
     const fm = parseFm(path);
-    expect(fm.appid).toBe(548430);
-    expect(fm.playtimeMin).toBe(65214);
-    expect(fm.lastPlayed).toBe('2026-02-24');
-    expect(fm.cover).toContain('steam/apps/548430/header.jpg');
-    expect(fm.offShelf).toBe(false);
+    expect(fm["AppID"]).toBe(548430);
+    expect(fm["游玩分钟"]).toBe(65214);
+    expect(fm["最后游玩"]).toBe("2026-02-24");
+    expect(fm["封面"]).toContain("steam/apps/548430/header.jpg");
+    expect(fm["已下架"]).toBe(false);
     expect(fm.tags).toContain('游戏');
-    expect(fm.syncedAt).toBeTruthy();
+    expect(fm["同步时间"]).toBeTruthy();
   });
 
   it('再次同步：用户正文与自定义 frontmatter 零覆盖，仅管辖键刷新', async () => {
@@ -135,7 +135,7 @@ describe('runSync 同步链路（issue 368）', () => {
     expect(content).toContain('我的感想随便写。');
     expect(content).toContain('myNote');
     const fm = parseFm(path);
-    expect(fm.playtimeMin).toBe(120);
+    expect(fm["游玩分钟"]).toBe(120);
   });
 
   it('Steam 消失的游戏 → offShelf: true 且文件保留；重新出现 → 恢复 false', async () => {
@@ -147,12 +147,12 @@ describe('runSync 同步链路（issue 368）', () => {
     expect(r2.offShelf).toBe(1);
     const path = `${DEFAULT_FOLDER}/《A》.md`;
     expect(vault.files.has(path)).toBe(true);
-    expect(parseFm(path).offShelf).toBe(true);
+    expect(parseFm(path)["已下架"]).toBe(true);
     mockSteam([{ appid: 1, name: 'A', playtime_forever: 20 }]);
     const r3 = await runSync(makeApp(), { force: true });
     expect(r3.updated).toBe(1);
-    expect(parseFm(path).offShelf).toBe(false);
-    expect(parseFm(path).playtimeMin).toBe(20);
+    expect(parseFm(path)["已下架"]).toBe(false);
+    expect(parseFm(path)["游玩分钟"]).toBe(20);
   });
 
   it('未配置 → reason=config 且零请求；密钥错 → reason=auth 人话报错', async () => {
@@ -198,12 +198,12 @@ describe('面板 UI（overlay 范式 + 引导态 + 报告）', () => {
     expect(document.querySelector('.bz-gs-panel')!.className).toContain('bz-panel-mtop');
     expect(document.querySelector('#bz-gs-guide-config')).toBeTruthy();
     expect(document.querySelector('#bz-gs-guide-recheck')).toBeTruthy();
-    expect((document.querySelector('#bz-gs-sync') as HTMLButtonElement).disabled).toBe(true);
+    expect((document.querySelector('.bz-btn--primary') as HTMLButtonElement).disabled).toBe(true);
     closePanel();
     expect(document.querySelector('.bz-gs-panel')).toBeNull();
   });
 
-  it('已配置：游戏墙渲染名与时长，offShelf 挂已下架角标', () => {
+  it('已配置：游戏墙渲染名与时长，已下架挂角标', () => {
     setup(CONFIG);
     const app = makeApp();
     mockSteam([{ appid: 1, name: 'A', playtime_forever: 60 }]);
