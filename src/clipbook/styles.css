@@ -657,6 +657,11 @@
 
 /* ---- 空态人话 ---- */
 .bz-clp-rep-empty { text-align: center; padding: 72px 24px; color: var(--clip-dim); }
+/* 空态图标钉成方块（issue 358 真机回归）：本容器非 flex，兑现后的 .bz-ic span 保持
+   UA 行内态——宽高声明（.bz-ic--lg 24px !important）对行内盒不生效，内层 svg 的
+   100%×100%（core .bz-ic svg）不取行内父级而取最近块容器（报告体内容盒）→ 图标
+   被拉满整屏。display:inline-block 让尺寸档生效并仍随 text-align 居中。 */
+.bz-clp-rep-empty .bz-ic { display: inline-block; }
 .bz-clp-rep-empty-t {
   margin-top: 12px;
   font-size: 1.1em;
