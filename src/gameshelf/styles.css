@@ -189,13 +189,23 @@
 /* ---------- 封面网格 ---------- */
 .bz-gs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
   gap: var(--bz-space-md);
   padding-top: var(--bz-space-lg);
 }
 .bz-gs-card {
   display: flex;
   flex-direction: column;
+  /* ⚠️ 下面三条 + height/width 是对宿主裸 button 基线的**整组显式覆盖**（host-base.css
+     逐条搬自 obsidian asar：inline-flex + align/justify-center + height:30px）——
+     漏一条真机就中招：height 没覆盖 → 整卡被压成 30px（内容溢出、进度条出视区）；
+     align/justify 没覆盖 → 标题居中、时长条错位（2026-09-18 用户截图，壳里看着正常
+     是因为壳只载 host-base 而真机 app.css 的层叠另有先后，别指望壳替你兜住，每条都写） */
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  min-width: 0;
   gap: 7px;
   padding: 0;
   border: 0;
@@ -694,7 +704,7 @@
   /* 下拉窄屏压缩：core .bz-select 的 min-width 160px 会让三件同行放不下 */
   .bz-gs-sel .bz-select { min-width: 0; padding: 0 8px; gap: 4px; }
   .bz-gs-sel .bz-select-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bz-gs-grid { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: var(--bz-space-sm); padding-top: var(--bz-space-md); }
+  .bz-gs-grid { grid-template-columns: repeat(auto-fill, minmax(min(148px, 100%), 1fr)); gap: var(--bz-space-sm); padding-top: var(--bz-space-md); }
   /* 网格宿主 = 移动端游戏墙唯一的滚动容器（工具行因此恒定不动）：内边距自己带，
      横向与底部内边距都落在滚动区里，最后一行不会贴着屏幕底。
      ⚠️ 认的是 `#bz-gs-grid` 宿主（.bz-gs-gridhost），不是里面那层卡片网格——宿主默认

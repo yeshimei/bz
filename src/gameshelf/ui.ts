@@ -24,6 +24,7 @@ import {
   type AchSection, type StoreSection,
 } from './detail';
 import { ensureZhNames, unloadZhNames } from './names';
+import { unloadBackfill } from './backfill';
 import { coverDisplayUrl, iconDisplayUrl } from './posters';
 
 const ESC_ID = 'gameshelf';
@@ -951,4 +952,7 @@ export function closePanel(): void {
   lastReport = null;
   clearDetailCache();
   unloadZhNames();
+  // 后台回填（商店资料/成就三键）也随面板关闭停止：别在用户眼皮外继续改笔记，
+  // 下次打开面板幂等续跑
+  unloadBackfill();
 }
