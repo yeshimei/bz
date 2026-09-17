@@ -1,4 +1,4 @@
-/* 源指纹 054cc32cc81db305 · 仓内输入 224 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b900f4087ba242df · 仓内输入 224 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -12483,11 +12483,20 @@ var BZW_memo = (() => {
   });
 
   // src/favorites/config.ts
+  function tagsFromSettings() {
+    var _a2;
+    return normalizeTags((_a2 = tryGetSettings()) == null ? void 0 : _a2[CONFIG.TAGS_SETTINGS_KEY]);
+  }
   function getTags() {
-    return currentTags != null ? currentTags : DEFAULT_TAGS;
+    if (!currentTags) {
+      const tags = tagsFromSettings();
+      currentTags = tags.length ? tags : DEFAULT_TAGS;
+    }
+    return currentTags;
   }
   function setTags(tags) {
     currentTags = tags;
+    tryGetSettings()[CONFIG.TAGS_SETTINGS_KEY] = tags;
   }
   function resetTagsState() {
     currentTags = null;
@@ -12495,11 +12504,6 @@ var BZW_memo = (() => {
   function getTagById(id) {
     var _a2;
     return (_a2 = getTags().find((t) => t.id === id)) != null ? _a2 : null;
-  }
-  function getTagsPath(storagePath) {
-    const idx = storagePath.lastIndexOf("/");
-    const dir = idx >= 0 ? storagePath.slice(0, idx) : "";
-    return (dir || CONFIG.DEFAULT_STORAGE_PATH) + "/" + CONFIG.TAGS_FILE;
   }
   function newTagId() {
     return "t" + Date.now().toString(36);
@@ -12542,13 +12546,14 @@ var BZW_memo = (() => {
   var CONFIG, DEFAULT_TAGS, currentTags;
   var init_config2 = __esm({
     "src/favorites/config.ts"() {
+      init_settings_provider();
       CONFIG = {
         /** 默认存储目录（文件名固定 favorites.json，设置只允许改目录） */
         DEFAULT_STORAGE_PATH: "CONFIG/STORAGE",
         /** 数据文件名（固定，不允许用户修改） */
         STORAGE_FILE: "favorites.json",
-        /** 标签定义文件（issue 363 伴生文件，与 favorites.json 同目录、跟随 storagePath 设置） */
-        TAGS_FILE: "favorites.tags.json"
+        /** 标签定义设置键（data.json；旧伴生文件 favorites.tags.json 仅迁移期识别，见 data.ts） */
+        TAGS_SETTINGS_KEY: "favoriteTags"
       };
       DEFAULT_TAGS = [
         { id: "github", label: "GitHub", ic: "github" },
@@ -33079,19 +33084,23 @@ ${body}`;
   });
 
   // src/favorites/data.ts
+  function legacyTagsPath(favoritesPath) {
+    const idx = favoritesPath.lastIndexOf("/");
+    const dir = idx >= 0 ? favoritesPath.slice(0, idx) : "";
+    return (dir || CONFIG.DEFAULT_STORAGE_PATH) + "/favorites.tags.json";
+  }
   var DataManager;
   var init_data8 = __esm({
     "src/favorites/data.ts"() {
       init_json_store();
       init_storage();
       init_app();
+      init_settings_provider();
       init_config2();
       DataManager = class {
         constructor(storagePath) {
           this.store = jsonStore(storagePath);
           this.filePath = storagePath;
-          this.tagsPath = getTagsPath(storagePath);
-          this.tagsStore = jsonStore(this.tagsPath);
         }
         async read() {
           return this.store.read();
@@ -33138,32 +33147,60 @@ ${body}`;
         async getAll() {
           return await this.read();
         }
-        // ==================== 标签定义（issue 363：favorites.tags.json） ====================
+        // ==================== 标签定义（issue 363 修订：data.json 设置键 favoriteTags） ====================
         /**
-         * 载入标签定义并注入 config 单源（app.init 时调用）：文件缺失 → 回退内置 9 类 seed
-         * （零迁移，不建文件不写盘）；文件在 → 归一化（坏行剔除/缺 id 补）后生效；空数组/坏
-         * JSON（jsonStore 留档降级为 []）同样走 seed 回退。
+         * 标签定义收口（app.init / 设置面板标签管理载入时调用）：
+         * 1) 旧伴生文件一次性迁移（幂等）——文件缺失直接跳过；存在 → 读出归一化（坏 JSON 由
+         *    jsonStore 原样留档 CONFIG/.CORRUPT 后降级 []），设置键尚无自定义值且旧件有有效行
+         *    → setTags 迁入 data.json 并落盘（落盘失败保留旧文件，下次载入重试）；最后旧文件
+         *    进系统回收站退役（可反悔；删除失败不阻塞，下次载入重试）。
+         * 2) 返回当前生效集（getTags：设置键优先，无键/空/坏回退内置 9 类 seed，seed 不落盘）。
          */
         async loadTags() {
+          await this.migrateLegacyTagsFile();
+          return getTags();
+        }
+        /** 保存标签定义（管理界面增删改排序的唯一落盘点）：config.setTags 写设置层 + saveSettings 持久化 */
+        async saveTags(tags) {
+          setTags(tags);
+          await saveSettings();
+        }
+        /**
+         * 旧伴生文件 favorites.tags.json 一次性迁移（issue 363 修订；幂等可重入）。
+         * 设置键已有自定义值（新真源更新）时不回写旧件内容，只退役旧文件。
+         */
+        async migrateLegacyTagsFile() {
+          var _a2;
+          const path = legacyTagsPath(this.filePath);
+          let file = null;
+          try {
+            file = getApp().vault.getAbstractFileByPath(path);
+          } catch (e) {
+            return;
+          }
+          if (!file) return;
           let raw = null;
           try {
-            if (getApp().vault.getAbstractFileByPath(this.tagsPath)) {
-              raw = await this.tagsStore.read();
-            }
+            raw = await jsonStore(path).read();
           } catch (e) {
             raw = null;
           }
-          const tags = normalizeTags(raw);
-          const next = tags.length ? tags : DEFAULT_TAGS;
-          setTags(next);
-          return next;
-        }
-        /** 保存标签定义（管理界面增删改排序的唯一落盘点）：写盘 + 注入单源即时生效 */
-        async saveTags(tags) {
-          await enqueueFileTask(this.tagsPath, async () => {
-            await this.tagsStore.write(tags);
-          });
-          setTags(tags);
+          const legacy = normalizeTags(raw);
+          const existing = normalizeTags((_a2 = tryGetSettings()) == null ? void 0 : _a2[CONFIG.TAGS_SETTINGS_KEY]);
+          if (legacy.length && !existing.length) {
+            setTags(legacy);
+            try {
+              await saveSettings();
+            } catch (e) {
+              console.error("[favorites-tags-migrate] 设置键落盘失败，保留旧文件待重试:", e);
+              return;
+            }
+          }
+          try {
+            await getApp().vault.trash(file, true);
+          } catch (e) {
+            console.error("[favorites-tags-migrate] 旧伴生文件退役失败（下次载入重试）:", e);
+          }
         }
         /**
          * 条目标签批量跟随（改名/删除迁移；范式 = memo updateSceneBulk）：tags[] 内 from → to
@@ -33248,7 +33285,7 @@ ${body}`;
           ]
         },
         {
-          // 标签管理（issue 363 标签自定义）：增删改排序，定义落 favorites.tags.json（config 单源注入）。
+          // 标签管理（issue 363 标签自定义）：增删改排序，定义落 data.json 设置键 favoriteTags（config 单源）。
           // custom 行 = 域内自绘管理列表（行内文案不经设置文案 lint，与其他管理弹窗同惯例）
           icon: "tags",
           name: "标签管理",
@@ -45718,6 +45755,8 @@ ${n.content.slice(0, 2e3)}
         favoritesOpenFilter: "",
         favoritesLastFilter: "",
         favoritesDefaultSort: "new",
+        // 收藏本标签定义（issue 363 修订）：空 = 未自定义（运行时回退内置 9 类 seed），首次改动才落盘
+        favoriteTags: [],
         // 文献盒处理设置（键名随域更名 literature*；ticket 136 默认值=既存行为不动，零迁移）
         knowledgeProgressDetail: true,
         knowledgeKeepVideo: true,
