@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { buildSyncPlan, sanitizeFileName, notePathFor, lastPlayedStr, mergeTags, managedFm, migrateLegacyKeys, GAME_TAG } from '../../src/gameshelf/reconcile';
-import { parseOwnedGames, parseRecentGames, steamCoverUrl, steamIconUrl, isValidSteamId, parseAchievementSummary, parseStoreMeta, parseReviews } from '../../src/gameshelf/steam';
+import { parseOwnedGames, parseRecentGames, steamCoverUrl, steamIconUrl, isValidSteamId, parseAchievementSummary, parseStoreMeta, parseReviews, parseZhName } from '../../src/gameshelf/steam';
 import { isSyncDue, lastSyncedAt, AUTO_SYNC_INTERVAL_MS } from '../../src/gameshelf/sync';
 
 const g = (appid: number, name: string, playtimeMin: number, lastPlayedTs = 0) => ({
@@ -194,6 +194,18 @@ describe('中文化迁移与详情解析（2026-09-17 增补）', () => {
     } }])!;
     expect(meta).toMatchObject({ genres: '动作、独立', developers: 'Ghost Ship Studios', releaseDate: '2020 年 5 月 13 日', zhSupported: true });
     expect(parseStoreMeta([{}])).toBeNull();
+    // 回归钉（2026-09-17 真机「商店数据拉到了但解析不出 / 没有中文名」）：
+    // 真实 Steam 的 appdetails 外层键是 **appid 字符串**，不是数组下标 0 —— 旧实现只认
+    // `raw[0].data`，对象形态下恒 undefined，商店资料与中文名因此双双落空。
+    const real = parseStoreMeta({ '548430': { success: true, data: {
+      name: '深岩银河',
+      developers: ['Ghost Ship Studios'],
+      release_date: { date: '2020 年 5 月 13 日' },
+    } } }, 548430)!;
+    expect(real).toMatchObject({ name: '深岩银河', developers: 'Ghost Ship Studios', releaseDate: '2020 年 5 月 13 日' });
+    // success:false = Steam 明确说查不到（下架/地区限制）→ 同样解析不出，但文案要区分
+    expect(parseStoreMeta({ '548430': { success: false } }, 548430)).toBeNull();
+    expect(parseZhName({ '548430': { success: true, data: { name: '深岩银河' } } }, 548430)).toBe('深岩银河');
     const r = parseReviews({ query_summary: { review_score_desc: '特别好评', total_reviews: 123456 } });
     expect(r).toMatchObject({ reviewDesc: '特别好评', reviewsTotal: 123456 });
     expect(parseReviews({}).reviewsTotal).toBeNull();
