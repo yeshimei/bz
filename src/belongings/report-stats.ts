@@ -121,6 +121,8 @@ export interface YearReportStats {
   dailyCostTrend: DailyCostCol[];
   /** 陪伴最久榜（截至所选年末与今天取早；Top N） */
   companions: CompanionRow[];
+  /** 陪伴榜截止口径（审查修复批，issue 356）：'today' = 当年截至今日；'yearEnd' = 往年截至年末 */
+  companionAsOf: 'today' | 'yearEnd';
   /** 当年是否有任何购入/离场记录（空年空态判定） */
   hasYearData: boolean;
 }
@@ -243,6 +245,9 @@ export function computeYearReport(
     categoryShare,
     dailyCostTrend,
     companions,
+    // 审查修复批（issue 356）：段注口径随真实截止点走——当年（now 未到年末）陪伴榜实际截至今日，
+    // 旧文案写死「截至年末」与数据不符；往年 cutoff = yearEnd 才是「年末」
+    companionAsOf: companionCutoff < yearEnd ? 'today' : 'yearEnd',
     hasYearData: purchased.length > 0 || exitedInYear.length > 0,
   };
 }
