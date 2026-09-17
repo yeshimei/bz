@@ -21,6 +21,8 @@ export interface NoteSnapshot {
   appid: number;
   playtimeMin: number | null;
   offShelf: boolean;
+  /** frontmatter 还是旧英文键（中文化迁移待做）→ 归入 toUpdate 顺带迁移 */
+  legacy: boolean;
 }
 
 export interface SyncPlan {
@@ -53,7 +55,7 @@ export function buildSyncPlan(owned: SteamOwnedGame[], notes: NoteSnapshot[]): S
       continue;
     }
     const valueChanged = note.playtimeMin === null || note.playtimeMin !== game.playtimeMin;
-    if (valueChanged || note.offShelf) plan.toUpdate.push({ game, note });
+    if (valueChanged || note.offShelf || note.legacy) plan.toUpdate.push({ game, note });
     else plan.unchanged += 1;
   }
   for (const note of notes) {
@@ -75,16 +77,48 @@ export function notePathFor(folder: string, game: SteamOwnedGame, takenPaths: Se
   return `${folder}/${base} ${game.appid}.md`;
 }
 
-/** 管辖 frontmatter 归一（同步时刻 nowIso 由调用方注入，纯函数可测） */
+/**
+ * 管辖 frontmatter 归一（键全中文，与 vault 中文属性习惯一致；tags 为 Obsidian 核心约定保留英文）。
+ * 同步时刻 nowIso 由调用方注入，纯函数可测。
+ */
 export function managedFm(game: SteamOwnedGame, nowIso: string): Record<string, unknown> {
   return {
-    appid: game.appid,
-    playtimeMin: game.playtimeMin,
-    lastPlayed: lastPlayedStr(game.lastPlayedTs),
-    cover: steamCoverUrl(game.appid),
-    syncedAt: nowIso,
-    offShelf: false,
+    AppID: game.appid,
+    游玩分钟: game.playtimeMin,
+    最后游玩: lastPlayedStr(game.lastPlayedTs),
+    封面: steamCoverUrl(game.appid),
+    同步时间: nowIso,
+    已下架: false,
+    图标: game.iconUrl ?? '',
+    Windows分钟: game.windowsMin,
+    SteamDeck分钟: game.deckMin,
+    Mac分钟: game.macMin,
+    Linux分钟: game.linuxMin,
+    有成就: game.hasAchievements,
   };
+}
+
+/** 旧英文键 → 中文键（2026-09-17 首版部署后中文化，迁移在下次同步 upsert 时顺带完成） */
+export const LEGACY_KEY_MAP: Record<string, string> = {
+  appid: 'AppID',
+  playtimeMin: '游玩分钟',
+  lastPlayed: '最后游玩',
+  cover: '封面',
+  syncedAt: '同步时间',
+  offShelf: '已下架',
+};
+
+/** 就地迁移：旧英文键值搬到中文键（中文键已在则以中文键为准，删旧键），返回是否发生迁移 */
+export function migrateLegacyKeys(fm: Record<string, unknown>): boolean {
+  let migrated = false;
+  for (const [oldKey, newKey] of Object.entries(LEGACY_KEY_MAP)) {
+    if (oldKey in fm) {
+      if (fm[newKey] === undefined) fm[newKey] = fm[oldKey];
+      delete fm[oldKey];
+      migrated = true;
+    }
+  }
+  return migrated;
 }
 
 /** lastPlayed 落盘格式 YYYY-MM-DD（本地时区；从未玩 → 空串，frontmatter 写空则省略键） */
