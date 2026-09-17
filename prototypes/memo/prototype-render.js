@@ -1,4 +1,4 @@
-/* 源指纹 07cf60080bfbf0a4 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3c20be2cf753fdb8 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {
@@ -175,7 +175,7 @@ var BZR_memo = (() => {
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
           <div class="bz-memo-content" data-memo-content></div>
           <div class="bz-memo-composer">
-            <input class="bz-input" type="text" data-memo-composer-input placeholder="输入内容，Enter 保存…">
+            <input class="bz-input" type="text" data-memo-composer-input placeholder="输入内容，Enter 保存；/词条 建子任务…">
             <button class="bz-btn bz-btn--primary" data-memo-composer-add>${iconSpan(MEMO_ICONS.add, "bz-ic--sm")} 添加</button>
           </div>
         </div>
@@ -282,10 +282,11 @@ var BZR_memo = (() => {
     return `<div class="bz-memo-cal-grid">${wds}${grid}</div>`;
   }
   function calStatsHtml(monthCount, todayCount) {
-    return `<div class="bz-memo-cal-stats">本月到期 <span class="bz-memo-cal-stats-n">${monthCount}</span> 条 · 今日 <span class="bz-memo-cal-stats-n">${todayCount}</span> 条</div>`;
+    const todaySeg = todayCount === null ? "" : ` · 今日 <span class="bz-memo-cal-stats-n">${todayCount}</span> 条`;
+    return `<div class="bz-memo-cal-stats">本月到期 <span class="bz-memo-cal-stats-n">${monthCount}</span> 条${todaySeg}</div>`;
   }
-  function calEmptyHtml() {
-    return `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">本月没有到期事项</div><div class="bz-memo-cal-empt-d">设了截止时间的备忘录才会出现在月历上</div></div>`;
+  function calEmptyHtml(filtered) {
+    return filtered ? `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">当前筛选下本月没有到期事项</div><div class="bz-memo-cal-empt-d">试试清除搜索或切换场景；设了截止时间的备忘录才会出现在月历上</div></div>` : `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">本月没有到期事项</div><div class="bz-memo-cal-empt-d">设了截止时间的备忘录才会出现在月历上</div></div>`;
   }
   return __toCommonJS(render_exports);
 })();

@@ -156,7 +156,7 @@ export function panelShellHtml(): string {
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
           <div class="bz-memo-content" data-memo-content></div>
           <div class="bz-memo-composer">
-            <input class="bz-input" type="text" data-memo-composer-input placeholder="输入内容，Enter 保存…">
+            <input class="bz-input" type="text" data-memo-composer-input placeholder="输入内容，Enter 保存；/词条 建子任务…">
             <button class="bz-btn bz-btn--primary" data-memo-composer-add>${iconSpan(MEMO_ICONS.add, 'bz-ic--sm')} 添加</button>
           </div>
         </div>
@@ -314,12 +314,18 @@ export function calGridHtml(cells: CalCell[]): string {
 	return `<div class="bz-memo-cal-grid">${wds}${grid}</div>`;
 }
 
-/** 月度概览统计行（issue 355 真机回归）：口径与格子 chip 同源——当月未完成且有 due 条目数 / 今日到期数 */
-export function calStatsHtml(monthCount: number, todayCount: number): string {
-	return `<div class="bz-memo-cal-stats">本月到期 <span class="bz-memo-cal-stats-n">${monthCount}</span> 条 · 今日 <span class="bz-memo-cal-stats-n">${todayCount}</span> 条</div>`;
+/** 月度概览统计行（issue 355 真机回归）：口径与格子 chip 同源——当月未完成且有 due 条目数；
+ *  todayCount = null 时（非当月，审查 P2 修复批）不显「今日 N 条」段——今日不在该月格中，计数无所指 */
+export function calStatsHtml(monthCount: number, todayCount: number | null): string {
+  const todaySeg = todayCount === null ? '' : ` · 今日 <span class="bz-memo-cal-stats-n">${todayCount}</span> 条`;
+  return `<div class="bz-memo-cal-stats">本月到期 <span class="bz-memo-cal-stats-n">${monthCount}</span> 条${todaySeg}</div>`;
 }
 
-/** 空月提示（issue 355 真机回归）：当前月零条目时给「本月没有到期事项」人话解释，不再一片空白 */
-export function calEmptyHtml(): string {
-	return `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">本月没有到期事项</div><div class="bz-memo-cal-empt-d">设了截止时间的备忘录才会出现在月历上</div></div>`;
+/** 空月提示（issue 355 真机回归）：当前月零条目时给「本月没有到期事项」人话解释，不再一片空白；
+ *  filtered = 搜索/场景筛选在生效（审查 P2 修复批）——滤空时文案附筛选上下文，不再把「被筛掉」
+ *  说成「没有到期」 */
+export function calEmptyHtml(filtered: boolean): string {
+  return filtered
+    ? `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">当前筛选下本月没有到期事项</div><div class="bz-memo-cal-empt-d">试试清除搜索或切换场景；设了截止时间的备忘录才会出现在月历上</div></div>`
+    : `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">本月没有到期事项</div><div class="bz-memo-cal-empt-d">设了截止时间的备忘录才会出现在月历上</div></div>`;
 }

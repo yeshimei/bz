@@ -17,6 +17,9 @@ export interface MemoRecur {
   kind: 'weekly' | 'monthly' | 'yearly' | 'days';
   /** 自定义间隔天数（kind='days' 时生效；≥1 整数，非法按 1 处理） */
   interval?: number;
+  /** 月/年锚定日（kind='monthly'|'yearly' 时生效；1-31 整数）：月末钳制不漂移的原始锚——
+   *  「每月 31 号」逐代恒取 31 号（无 31 号的月钳到月末），钳制后的 due 不回写锚（审查 P1 修复批） */
+  anchorDay?: number;
 }
 
 /** 清单子项（issue 354）：一条备忘可挂多个勾选项 */
