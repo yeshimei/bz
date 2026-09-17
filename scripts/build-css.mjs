@@ -50,6 +50,7 @@ const SOURCES = [
   "src/settings-panel/styles.css",
   "src/belongings/styles.css",
   "src/cinema/styles.css",
+  "src/gameshelf/styles.css",
   "src/bookshelf/styles.css",
   "src/reading-report/styles.css",
   "src/knowledge/styles.css",
