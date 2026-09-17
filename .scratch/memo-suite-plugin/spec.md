@@ -1348,3 +1348,17 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > 多选/单篇联想）+ 题量档，quiz-core 引擎零改动只做壳，AI 未配置人话引导去设置不出题不崩。
 > 合并纪律：同域票（memo 三连）串行 pick，main.ts/smoke.test.ts 冲突双侧保留，原型产物冲突一律
 > ours + build-preview 定稿（chore(preview) 随批）。最终门禁 tsc 零错 + 5544/5544 全绿。
+
+### 368 游戏架域（2026-09-17）
+
+> 主会话直写（后台代理实验半程后由用户叫停转直写）。定位=纯走 Steam 数据零心智负担（拍板票 350）：
+> GetOwnedGames/GetRecentlyPlayedGames 直连拉库（真机实测口径落 `research/347-steam-live-test.md`：
+> api.steampowered.com 直连被墙需系统代理、封面 CDN 独立可达、无 img_logo_url 走 header.jpg 直拼、
+> 空库/空最近在玩均 games 缺省）；存储=`我的/游戏/*.md` 一作一笔记（影院范式，appid 为笔记身份，
+> 管辖字段 appid/playtimeMin/lastPlayed/cover/syncedAt/offShelf upsert，用户正文与自定义 fm 零覆盖，
+> 库中消失标 offShelf:true 保留）；对账纯函数 reconcile.ts 可测，节律仿 clipbook fetch（打开面板
+> 30min 间隔判定 + 手动立即同步 + gameshelfAutoSync 开关）；同步完成发 gameshelf 域事件（smartcat
+> 行为流观察口）；报告口径诚实（Steam 无逐日史，库总览/时长 Top10/两周内在玩/lastPlayed 月份分布）；
+> 面板 overlay 范式 + 未配置引导态两键（设置面板深链 gameshelf 页，不自动弹设置）；网络错误三级
+> 人话（auth/http/network，network 文案明示查代理）。接线：bz-gameshelf-open、DOMAIN_ICONS.gameshelf=
+> gamepad-2、设置面板/首页磁贴、ADR-0161；无 json 数据文件，checkup 清单零扰动。

@@ -1,0 +1,52 @@
+/**
+ * 游戏架（gameshelf）域设置 schema（接入设置面板；面板内无设置按钮，收敛进设置面板域页）。
+ * Steam 组 = 票 368 两键（SteamID64 / Web API 密钥）+ 自动同步开关；文案守 copy-lint 规范
+ * （标题 4-8 字零符号、描述自然句不带符号花样）。
+ */
+import type { SettingsSchema } from '../core/settings-schema';
+
+export function gameshelfSettingsSchema(): SettingsSchema {
+  return {
+    groups: [
+      {
+        icon: 'folder-open',
+        name: '目录',
+        rows: [
+          {
+            type: 'path',
+            mode: 'single',
+            name: '游戏文件夹',
+            desc: '游戏架读取的游戏笔记文件夹',
+            binding: { key: 'gameshelfFolderPath' },
+          },
+        ],
+      },
+      {
+        icon: 'gamepad-2',
+        name: 'Steam',
+        rows: [
+          {
+            type: 'text',
+            name: 'SteamID64',
+            desc: 'Steam 数字账号的唯一标识，17 位数字',
+            binding: { key: 'gameshelfSteamId' },
+            placeholder: '76561198000000000',
+          },
+          {
+            type: 'text',
+            name: 'Web API 密钥',
+            desc: '在 Steam 官网开发者页免费申请',
+            binding: { key: 'gameshelfSteamApiKey' },
+            placeholder: '32 位十六进制串',
+          },
+          {
+            type: 'toggle',
+            name: '自动同步',
+            desc: '打开面板时数据过期即自动拉取',
+            binding: { key: 'gameshelfAutoSync' },
+          },
+        ],
+      },
+    ],
+  };
+}

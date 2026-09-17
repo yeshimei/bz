@@ -100,6 +100,7 @@ _Avoid_: 与 markdown 读书笔记（读 `我的/读书笔记` 笔记文件建�
 _Avoid_: 把「想法编辑」当成 bz 直写的一般能力——只此两处写入口，其余仍只读
 
 **影院 (Cinema, ADR-0087 接管影视)**: `src/cinema/` 域，命令 `bz-cinema-open`/`bz-cinema-add`/`bz-cinema-analysis`（影视分析报告，ADR-0090 直达影院面板分析页）。目录 = cinemaFolderPath（显式配置）→ 回落「我的/影视」；frontmatter 契约（tags 类型 / 评分 -1 想看 0 在看 >0 已看 / 观影日期 / 影评 / 海报 / 豆瓣字段 / 片长 / 季集）与旧 movie 域及外部 douban-poster watcher 完全一致。**ADR-0087 承接**：找同类 AI（详情弹窗按钮 → 页内结果）、补发 `movie:` 域事件（created/status/rated/review/deleted，smartcat 行为流观察依赖，载荷对齐 MovieActionEvent 契约）。AI 页标题由 M.aiTitle 区分「AI 荐片」与「找同类 ·《X》」。设置收敛设置面板「影院」tab。
+**游戏架 (Gameshelf)**: `src/gameshelf/` 域（issue 368 / ADR-0161，2026-09-17 建域），命令 `bz-gameshelf-open`「游戏架」——Steam 直连自动拉库的游戏收藏墙：用户只填 SteamID64 + Web API 密钥（设置面板「游戏架」页），库存/时长/最后游玩全部自动同步，零手动登记；数据 = `我的/游戏/*.md` 一作一笔记（影院范式，frontmatter 管辖字段 `appid/playtimeMin/lastPlayed/cover/syncedAt/offShelf`，appid 为笔记身份，正文用户自由）；同步对账 upsert（用户数据零覆盖、库中消失标 `offShelf: true` 保留不删）；报告口径诚实（Steam 无逐日游玩史，库总览/时长排行/两周内在玩/月份分布）；国内网络 `api.steampowered.com` 需系统代理（requestUrl 跟随，报错文案分级指引），封面 CDN 独立可达。
 
 **海报抓取 (Douban Fetcher, ADR-0129)**: 影院海报与豆瓣信息抓取内置于插件（`src/cinema/douban-fetcher.ts`，ADR-0129 自 tools/obsidian-douban-poster 移植）——内存队列串行泵（15s 间隔、单条 3 分钟超时、卡片 loading、失败聚合通知、会话首轮补抓），**桌面/移动同源**。字段链：搜索豆瓣（搜索页正则解析，Cookie 设置项注入）→ **ApiZero 豆瓣电影信息接口**（评分/导演/主演/类型/地区/片长，key 设置项，缺导演/主演或需编剧时 rexxar 演职员兜底）→ 海报豆瓣 CDN（搜索页提 URL + upgradePosterUrl 高清 + writeBinary 写 CONFIG/MOVIE POSTER）。字段契约收缩：语言/又名/IMDb/简介/上映日期不再抓取（存量不动）。_Avoid_: spawn CLI（已退役）、守护进程（已退役）
 

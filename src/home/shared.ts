@@ -52,6 +52,8 @@ export const DOMAINS: HomeDomain[] = [
   { id: 'knowledge', commandId: 'bz-knowledge-open', name: '知识盒', sub: '文献录入 · 卡片 · 主题', icon: iconOf('knowledge') },
   // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
   { id: 'bookshelf', commandId: 'bz-bookshelf-open', name: '书库', sub: '藏书与读书笔记', icon: iconOf('bookshelf') },
+  // 游戏架（gameshelf 域，issue 368）：Steam 自动拉库，无手动登记
+  { id: 'gameshelf', commandId: 'bz-gameshelf-open', name: '游戏架', sub: 'Steam 库存与时长', icon: iconOf('gameshelf') },
   // 第二大脑（secondbrain 域，issue 251）：主面板统一入口（检索/对话/灵感参考都从面板进）
   { id: 'secondbrain', commandId: 'bz-secondbrain-panel', name: '第二大脑', sub: '笔记检索与问答', icon: iconOf('secondbrain') },
   { id: 'belongings', commandId: 'bz-belongings-open', name: '归物本', sub: '物品登记', icon: iconOf('belongings') },

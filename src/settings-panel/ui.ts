@@ -80,6 +80,7 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   },
   favorites: async () => (await import('../favorites/ui')).favoritesSettingsSchema(),
   cinema: async () => (await import('../cinema/settings')).cinemaSettingsSchema(),
+  gameshelf: async () => (await import('../gameshelf/settings')).gameshelfSettingsSchema(),
   bookshelf: async () => (await import('../bookshelf/settings')).bookshelfSettingsSchema(),
   review: async () => {
     const { reviewApp } = await import('../review/app');
@@ -139,6 +140,7 @@ export const DOMAINS: DomainDef[] = [
   { id: 'reading-report', name: '阅读报告', icon: DOMAIN_ICONS['reading-report'], desc: '阅读统计', noSettings: true },
 
   { id: 'cinema', name: '影院', icon: DOMAIN_ICONS.cinema, desc: '影视目录与海报', schemaLoader: schemaLoaders.cinema },
+  { id: 'gameshelf', name: '游戏架', icon: DOMAIN_ICONS.gameshelf, desc: 'Steam 游戏库同步与统计', schemaLoader: schemaLoaders.gameshelf },
   { id: 'bookshelf', name: '书库', icon: DOMAIN_ICONS.bookshelf, desc: '藏书封面墙、读书笔记与阅读报告', schemaLoader: schemaLoaders.bookshelf },
   { id: 'review', name: '复习计划', icon: DOMAIN_ICONS.review, desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
   { id: 'secondbrain', name: '第二大脑', icon: DOMAIN_ICONS.secondbrain, desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },

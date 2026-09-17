@@ -20,4 +20,26 @@
 
 ## Resolution
 
-（完成后填写）
+（主会话直写，2026-09-17 完成；ADR-0161）
+
+- **域文件**：`src/gameshelf/`（steam 拉库与响应归一 / reconcile 对账纯函数 / notes vault 读写 /
+  sync 编排 / state / report 纯函数 / ui 面板 / settings schema / styles.css / index）。
+- **接线**：`bz-gameshelf-open`「游戏架」（DOMAIN_ICONS.gameshelf=gamepad-2）；smoke 命令清单、
+  设置面板「游戏架」域页（目录组 + SteamID64/Web API 密钥/自动同步开关）、home 磁贴、
+  settings.ts 四键（gameshelfFolderPath/SteamId/SteamApiKey/AutoSync）；gameshelf 域事件
+  （kind: synced）供 smartcat 行为流；无 json 数据文件，checkup 清单零扰动。
+- **对账与覆盖取舍**（票面要求必写）：笔记身份取 appid 而非文件名——游戏名可改、文件名保持
+  首次创建稳定（防改名误伤用户正文路径）；upsert 只碰六管辖键 + tags 保底「游戏」，用户正文与
+  自定义 frontmatter 零覆盖；库中消失标 `offShelf: true` 保留不删、重新出现自动恢复在架并归入
+  toUpdate。自动同步间隔 30 分钟（全库 syncedAt 取 max 判定；无笔记必过期 → 首开必拉），
+  `gameshelfAutoSync` 关闭回落纯手动。
+- **实测固化的口径**（347-steam-live-test）：错误三级分道（auth=密钥无效 / http=接口异常 /
+  network=文案明示查系统代理——api.steampowered.com 国内直连被墙、requestUrl 跟随系统代理）；
+  空库与空「最近在玩」的 response.games 均缺省兜底；无 img_logo_url，封面 header.jpg CDN 直拼
+  （该 CDN 不走代理也可达）；playtime_forever=分钟、rtime_last_played=unix 秒。
+- **测试**：`tests/gameshelf/reconcile.test.ts`（node，对账四分支+恢复在架+清洗消歧+响应归一+节律）
+  + `tests/gameshelf/sync.test.ts`（jsdom，runSync 全链路 mock requestUrl + 用户数据零覆盖 +
+  offShelf 往返 + 引导态/游戏墙/报告视图 + busy 防重入）；smoke 命令清单同步；
+  settings-panel 域导航 18→19、home iconOf 计数 14→15 两处既有断言随域扩容更新。
+- 门禁：tsc --noEmit 零错误；全量 vitest 仅 preview-freshness 环境性伪差异红（worktree 检出
+  CRLF 假红，判据=主仓同守卫绿），本域相关全绿。

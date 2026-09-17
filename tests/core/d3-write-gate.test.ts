@@ -75,6 +75,10 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     reason: '影视笔记 md 用户文档写（建《片名》.md + fileManager.processFrontMatter 写 frontmatter，Obsidian 内建语义）',
   },
   {
+    file: /^src\/gameshelf\/notes\.ts$/,
+    reason: '游戏笔记 md 用户文档写（issue 368：建《名》.md + fileManager.processFrontMatter 管辖键 upsert，Obsidian 内建语义，口径同 cinema/ui）',
+  },
+  {
     file: /^src\/cinema\/recommend\.ts$/,
     reason: '影视笔记 md 用户文档写（AI 推荐一键想看建条，含防重名前置拦截）',
   },
