@@ -38,7 +38,7 @@ import { belongingsEditChanges } from '../smartcat/belongings-source';
 import type { SettingsSchema } from '../core/settings-schema';
 import { loadDatabase, saveDatabase, getDataFilePath } from './data';
 import {
-  openBelReport, closeBelReport, unloadBelReport,
+  openBelReport, closeBelReport, unloadBelReport, isBelReportOpen,
 } from './report';
 import {
   renderPanelView, panelHtml,
@@ -1009,6 +1009,8 @@ export function openForm(it: BelongingsItem | null): void {
           else if (cur.sold_price != null) cur.sold_price = null; // 丢弃/在用态无售价语义
           cur.last_updated = new Date().toISOString();
           await saveAndRender();
+          // 审查修复批（issue 356）：报告持一次性快照，开着时保存后就地重开刷新（openBelReport 重入语义）
+          if (isBelReportOpen()) void openBelongingsReportView();
           emitDomainEvent('belongings', { kind: 'edit', title: name, changes: belongingsEditChanges(snapshot, cur) });
         } else {
           if (!M.db) throw new Error('数据库未加载');
@@ -1029,6 +1031,8 @@ export function openForm(it: BelongingsItem | null): void {
           };
           M.db.items[newItem.id] = newItem; // 用当前库（外部 modify 换新后旧 db 引用会丢写）
           await saveAndRender();
+          // 审查修复批（issue 356）：报告开着时空态「记一笔」保存后就地刷新（旧快照仍显示空）
+          if (isBelReportOpen()) void openBelongingsReportView();
           emitDomainEvent('belongings', { kind: 'add', item: newItem });
         }
         _belBaseline = null;

@@ -1,4 +1,4 @@
-/* 源指纹 34c3b655e56a20af · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9508eb0cb029550f · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -6527,6 +6527,9 @@ var BZW_belongings = (() => {
       categoryShare,
       dailyCostTrend,
       companions,
+      // 审查修复批（issue 356）：段注口径随真实截止点走——当年（now 未到年末）陪伴榜实际截至今日，
+      // 旧文案写死「截至年末」与数据不符；往年 cutoff = yearEnd 才是「年末」
+      companionAsOf: companionCutoff < yearEnd ? "today" : "yearEnd",
       hasYearData: purchased.length > 0 || exitedInYear.length > 0
     };
   }
@@ -6549,6 +6552,9 @@ var BZW_belongings = (() => {
   var IDLE_CALLBACK_TIMEOUT_MS = 50;
   function yieldToMainThread2() {
     return yieldToMainThread(IDLE_CALLBACK_TIMEOUT_MS);
+  }
+  function isBelReportOpen() {
+    return !!maskEl;
   }
   function openBelReport(items, unit, opts = {}) {
     var _a;
@@ -6626,7 +6632,7 @@ var BZW_belongings = (() => {
     if (next < 0 || next >= ctxYears.length) return;
     ctxYear = ctxYears[next];
     paintYearNav();
-    startReport();
+    startReport(true);
   }
   function paintYearNav() {
     if (!maskEl) return;
@@ -6638,7 +6644,7 @@ var BZW_belongings = (() => {
     if (prev) prev.disabled = idx < 0 || idx >= ctxYears.length - 1;
     if (next) next.disabled = idx < 0 || idx <= 0;
   }
-  function startReport() {
+  function startReport(quiet = false) {
     const body = maskEl == null ? void 0 : maskEl.querySelector("[data-belr-body]");
     if (!body) return;
     cancelBelReport();
@@ -6658,9 +6664,9 @@ var BZW_belongings = (() => {
       progress.hide();
       if (activeProgress === progress) activeProgress = null;
     };
-    const finishDone = (quiet) => {
+    const finishDone = (quiet2) => {
       if (activeProgress === progress) activeProgress = null;
-      if (quiet) progress.hide();
+      if (quiet2) progress.hide();
       else {
         progress.setType("success");
         progress.setMessage("年度报告完成");
@@ -6698,7 +6704,7 @@ var BZW_belongings = (() => {
       }
       if (alive()) {
         mountIcons(body);
-        finishDone(false);
+        finishDone(quiet);
       } else {
         finishAbort();
       }
@@ -6783,6 +6789,12 @@ var BZW_belongings = (() => {
   </div>`;
   }
   function monthlyHtml(stats) {
+    if (stats.purchasedAmount === 0) {
+      return `<div class="bz-belr-sec">
+    ${secHead("月度花销走势", "当年无购入")}
+    <p class="bz-belr-none">这一年没有购入记录，只有出离——月度花销无可绘制</p>
+    </div>`;
+    }
     const maxAmount = Math.max(0, ...stats.monthlySpend.map((m) => m.amount));
     const cols = stats.monthlySpend.map((m) => ({
       label: m.label,
@@ -6797,6 +6809,12 @@ var BZW_belongings = (() => {
   </div>`;
   }
   function categoriesHtml(stats) {
+    if (stats.purchasedAmount === 0) {
+      return `<div class="bz-belr-sec">
+    ${secHead("分类占比", "当年无购入")}
+    <p class="bz-belr-none">当年无购入 · 只有出离记录，分类占比无可统计</p>
+    </div>`;
+    }
     const MAX_ROWS = 8;
     const rows = stats.categoryShare.slice(0, MAX_ROWS);
     const rest = stats.categoryShare.slice(MAX_ROWS);
@@ -6838,6 +6856,9 @@ var BZW_belongings = (() => {
   function trimNum(n) {
     return n.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
   }
+  function trimNumThousands(n) {
+    return (Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
+  }
   function companionsHtml(stats) {
     if (stats.companions.length === 0) {
       return `<div class="bz-belr-sec">
@@ -6845,21 +6866,22 @@ var BZW_belongings = (() => {
     <p class="bz-belr-none">暂无可统计的物品</p>
     </div>`;
     }
+    const asOf = stats.companionAsOf === "today" ? "截至今日" : `截至 ${stats.year} 年末`;
     const line = (row, i) => {
       const it = row.item;
       const price = Number(it.purchase_price) || 0;
-      const daily = row.days > 0 ? price / row.days : price;
+      const daily = row.days > 0 ? moneyWith(trimNumThousands(price / row.days), ctxUnit) : "—";
       const badge = i < CHART_RANK_BADGES.length ? ` style="background:${CHART_RANK_BADGES[i]};color:${CHART_INK}"` : "";
       const goneYear = it.exit_date ? String(it.exit_date).slice(0, 4) : "";
       return `<div class="bz-belr-comp">
       <span class="bz-belr-comp-rank"${badge}>${i + 1}</span>
       <span class="bz-belr-comp-name" title="${esc(it.name)}">${esc(it.name)}</span>
-      <span class="bz-belr-comp-meta">${esc(String(it.purchase_date || "").slice(0, 4) || "—")} 年购入${goneYear ? ` · ${esc(goneYear)} 年离场` : ""} · 日均 ${esc(moneyWith(trimNum(daily), ctxUnit))}</span>
+      <span class="bz-belr-comp-meta">${esc(String(it.purchase_date || "").slice(0, 4) || "—")} 年购入${goneYear ? ` · ${esc(goneYear)} 年离场` : ""} · 日均 ${esc(daily)}</span>
       <b class="bz-belr-comp-days">${row.days.toLocaleString("zh-CN")} 天</b>
     </div>`;
     };
     return `<div class="bz-belr-sec">
-  ${secHead("陪伴最久榜", `截至 ${stats.year} 年末 · Top ${stats.companions.length}`)}
+  ${secHead("陪伴最久榜", `${asOf} · Top ${stats.companions.length}`)}
   <div class="bz-belr-comps">${stats.companions.map(line).join("")}</div>
   </div>`;
   }
@@ -8539,6 +8561,7 @@ var BZW_belongings = (() => {
             else if (cur.sold_price != null) cur.sold_price = null;
             cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
             await saveAndRender();
+            if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot, cur) });
           } else {
             if (!M.db) throw new Error("数据库未加载");
@@ -8559,6 +8582,7 @@ var BZW_belongings = (() => {
             };
             M.db.items[newItem.id] = newItem;
             await saveAndRender();
+            if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "add", item: newItem });
           }
           _belBaseline = null;

@@ -179,3 +179,33 @@ describe('computeYearReport：陪伴最久榜', () => {
     expect(r.hasYearData).toBe(true);
   });
 });
+
+describe('computeYearReport：审查修复批（issue 356）', () => {
+  it('纯离场年（当年零购入 + 有出离）→ hasYearData true、categoryShare 空段（UI 据此人话空态）', () => {
+    const items = [
+      makeItem({ id: 'gone', name: '旧椅', purchase_date: '2023-01-01', current_status: '已丢弃', exit_date: '2025-04-01' }),
+    ];
+    const r = computeYearReport(items, '2025', NOW);
+    expect(r.purchasedCount).toBe(0);
+    expect(r.purchasedAmount).toBe(0);
+    expect(r.exitedCount).toBe(1);
+    expect(r.hasYearData).toBe(true); // 不落「空年」空态，走报告渲染
+    expect(r.categoryShare).toEqual([]); // 分类占比无可统计
+  });
+
+  it('companionAsOf：当年截至今日（now < 年末）、往年截至年末', () => {
+    expect(computeYearReport(seed(), '2025', NOW).companionAsOf).toBe('today');
+    expect(computeYearReport(seed(), '2024', NOW).companionAsOf).toBe('yearEnd');
+    expect(computeYearReport(seed(), '2023', NOW).companionAsOf).toBe('yearEnd');
+  });
+
+  it('购入日=出离日 → days=0 行仍入榜（验证：旧版日均回退全价；修复后 UI 层显示 —）', () => {
+    const items = [
+      makeItem({ id: 'sameday', name: '闪卖', purchase_date: '2025-03-01', current_status: '已转卖', exit_date: '2025-03-01', sold_price: 90 }),
+    ];
+    const r = computeYearReport(items, '2025', NOW);
+    expect(r.hasYearData).toBe(true);
+    expect(r.companions).toHaveLength(1);
+    expect(r.companions[0].days).toBe(0); // 日历日口径同天 = 0 天，无「日均」语义
+  });
+});

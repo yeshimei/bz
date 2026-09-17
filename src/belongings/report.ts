@@ -156,7 +156,8 @@ export function unloadBelReport(): void {
 
 // ==================== 年份切换 ====================
 
-/** ‹ = 更早一年 / › = 更晚一年；ctxYears 降序（0 = 最新）→ ‹ 向 index+1、› 向 index-1；越界空操作 */
+/** ‹ = 更早一年 / › = 更晚一年；ctxYears 降序（0 = 最新）→ ‹ 向 index+1、› 向 index-1；越界空操作。
+ *  翻年走 quiet 渲染（完成不弹 toast，审查修复批 issue 356） */
 function stepYear(dir: number): void {
   const idx = ctxYears.indexOf(ctxYear);
   if (idx < 0) return;
@@ -164,7 +165,7 @@ function stepYear(dir: number): void {
   if (next < 0 || next >= ctxYears.length) return;
   ctxYear = ctxYears[next];
   paintYearNav();
-  startReport();
+  startReport(true);
 }
 
 /** 头部导航同步（年份标签 + 两按钮边界禁用） */
@@ -184,8 +185,9 @@ function paintYearNav(): void {
 /**
  * 启动（或重启）报告内容渲染：作废在途 → 骨架 → progress toast → 分片计算渲染。
  * 渲染期间遮罩/内容区被移除 → 立即中止，不写已摘除的 DOM。
+ * quiet = 静默完成（翻年切换用，审查修复批 issue 356：连翻数年不再连闪「年度报告完成」toast）
  */
-function startReport(): void {
+function startReport(quiet = false): void {
   const body = maskEl?.querySelector('[data-belr-body]') as HTMLElement | null;
   if (!body) return;
   cancelBelReport();
@@ -261,7 +263,7 @@ function startReport(): void {
 
     if (alive()) {
       mountIcons(body);
-      finishDone(false);
+      finishDone(quiet);
     } else {
       finishAbort();
     }
@@ -391,8 +393,15 @@ function columnsHtml(cols: ColSpec[]): string {
   </div>`;
 }
 
-/** 月度花销走势（当年购入按月；峰值月强调） */
+/** 月度花销走势（当年购入按月；峰值月强调）。
+ *  纯离场年（当年零购入，审查修复批 issue 356）：12 根零柱像渲染坏了 → 换人话空态 */
 function monthlyHtml(stats: YearReportStats): string {
+  if (stats.purchasedAmount === 0) {
+    return `<div class="bz-belr-sec">
+    ${secHead('月度花销走势', '当年无购入')}
+    <p class="bz-belr-none">这一年没有购入记录，只有出离——月度花销无可绘制</p>
+    </div>`;
+  }
   const maxAmount = Math.max(0, ...stats.monthlySpend.map((m) => m.amount));
   const cols: ColSpec[] = stats.monthlySpend.map((m) => ({
     label: m.label,
@@ -407,8 +416,15 @@ function monthlyHtml(stats: YearReportStats): string {
   </div>`;
 }
 
-/** 分类占比（当年购入金额份额；Top 8 + 其余合并「其他」） */
+/** 分类占比（当年购入金额份额；Top 8 + 其余合并「其他」）。
+ *  纯离场年（当年零购入，审查修复批 issue 356）：「共 0 类」+ 空行区像渲染坏了 → 换人话空态 */
 function categoriesHtml(stats: YearReportStats): string {
+  if (stats.purchasedAmount === 0) {
+    return `<div class="bz-belr-sec">
+    ${secHead('分类占比', '当年无购入')}
+    <p class="bz-belr-none">当年无购入 · 只有出离记录，分类占比无可统计</p>
+    </div>`;
+  }
   const MAX_ROWS = 8;
   const rows = stats.categoryShare.slice(0, MAX_ROWS);
   const rest = stats.categoryShare.slice(MAX_ROWS);
@@ -457,7 +473,12 @@ function trimNum(n: number): string {
   return n.toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
 }
 
-/** 陪伴最久榜（Top N；截至所选年末，出离封口出离日） */
+/** 千分位日均数值文本（审查修复批 issue 356）：整数部分与其他金额一致走 zh-CN 千分位（1,234.5） */
+function trimNumThousands(n: number): string {
+  return (Number(n) || 0).toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+}
+
+/** 陪伴最久榜（Top N；截止口径随 companionAsOf——当年截至今日 / 往年截至年末，审查修复批 issue 356） */
 function companionsHtml(stats: YearReportStats): string {
   if (stats.companions.length === 0) {
     return `<div class="bz-belr-sec">
@@ -465,10 +486,12 @@ function companionsHtml(stats: YearReportStats): string {
     <p class="bz-belr-none">暂无可统计的物品</p>
     </div>`;
   }
+  const asOf = stats.companionAsOf === 'today' ? '截至今日' : `截至 ${stats.year} 年末`;
   const line = (row: { item: BelongingsItem; days: number }, i: number) => {
     const it = row.item;
     const price = Number(it.purchase_price) || 0;
-    const daily = row.days > 0 ? price / row.days : price;
+    // days=0（购入日出离日同天）无「日均」语义：显示 '—' 而非回退全价（审查修复批 issue 356）
+    const daily = row.days > 0 ? moneyWith(trimNumThousands(price / row.days), ctxUnit) : '—';
     const badge =
       i < CHART_RANK_BADGES.length
         ? ` style="background:${CHART_RANK_BADGES[i]};color:${CHART_INK}"`
@@ -477,12 +500,12 @@ function companionsHtml(stats: YearReportStats): string {
     return `<div class="bz-belr-comp">
       <span class="bz-belr-comp-rank"${badge}>${i + 1}</span>
       <span class="bz-belr-comp-name" title="${esc(it.name)}">${esc(it.name)}</span>
-      <span class="bz-belr-comp-meta">${esc(String(it.purchase_date || '').slice(0, 4) || '—')} 年购入${goneYear ? ` · ${esc(goneYear)} 年离场` : ''} · 日均 ${esc(moneyWith(trimNum(daily), ctxUnit))}</span>
+      <span class="bz-belr-comp-meta">${esc(String(it.purchase_date || '').slice(0, 4) || '—')} 年购入${goneYear ? ` · ${esc(goneYear)} 年离场` : ''} · 日均 ${esc(daily)}</span>
       <b class="bz-belr-comp-days">${row.days.toLocaleString('zh-CN')} 天</b>
     </div>`;
   };
   return `<div class="bz-belr-sec">
-  ${secHead('陪伴最久榜', `截至 ${stats.year} 年末 · Top ${stats.companions.length}`)}
+  ${secHead('陪伴最久榜', `${asOf} · Top ${stats.companions.length}`)}
   <div class="bz-belr-comps">${stats.companions.map(line).join('')}</div>
   </div>`;
 }
