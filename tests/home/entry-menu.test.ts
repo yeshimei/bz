@@ -102,6 +102,22 @@ describe('DOMAIN_MENU 形状', () => {
     // 番茄钟的「跳过休息 / 暂停·继续」不进表：它们是相位派发的结果（见下个 describe）
     expect(byId('pomodoro', 'bz-pomodoro-skip')).toBeUndefined();
   });
+
+  it('2026-09-17 游戏库：立即同步（即时类，不关首页）+ 数据统计（开面板落统计页）', () => {
+    const list = DOMAIN_MENU.gameshelf;
+    expect(list.length).toBe(2);
+    // 顺序：即时类在前（与影院/书库的「先动作后报告」一致）
+    expect(list[0].label).toBe('立即同步');
+    expect(list[0].commandId).toBe('bz-gameshelf-sync');
+    expect(list[0].keepHome).toBe(true); // 拉库要好几秒，关掉首页就看不到结果了
+    expect(list[1].label).toBe('数据统计');
+    expect(list[1].commandId).toBe('bz-gameshelf-stats');
+    expect(list[1].keepHome).toBeUndefined(); // 开别域面板类 → 关首页再执行
+    // 图标错开：统计类不与「阅读分析报告」的 bar-chart-3 重名（enh-sweep-a 惯例）
+    expect(list[1].icon).not.toBe(DOMAIN_MENU.bookshelf[0].icon);
+    // 菜单项不许叫「打开游戏库」（入口本身就是打开）
+    expect(list.some((a) => a.label.startsWith('打开'))).toBe(false);
+  });
 });
 
 describe('pomodoroMenuAction（相位敏感的单个动作）', () => {

@@ -12,7 +12,7 @@ import { requestUrl } from 'obsidian';
 import { runSync, isSyncDue } from '../../src/gameshelf/sync';
 import { rebuildItems } from '../../src/gameshelf/notes';
 import { M, resetGameshelfState, DEFAULT_FOLDER } from '../../src/gameshelf/state';
-import { openGameshelf, unloadGameshelf } from '../../src/gameshelf';
+import { openGameshelf, openGameshelfStats, syncGameshelf, unloadGameshelf } from '../../src/gameshelf';
 import { closePanel, renderAll } from '../../src/gameshelf/ui';
 
 /* ---------- 测试专用 mock 组装 ---------- */
@@ -286,5 +286,56 @@ describe('面板 UI（core 面板壳 + 引导态 + 游戏墙）', () => {
     expect(p2.reason).toBe('busy');
     release();
     await p1;
+  });
+});
+
+describe('命令入口（2026-09-17 首页右键菜单 / 长按抽屉）：立即同步 + 数据统计', () => {
+  it('立即同步：不开面板也能拉库落盘（面板全程未挂）', async () => {
+    setup(CONFIG);
+    mockSteam([{ appid: 548430, name: 'Deep Rock Galactic', playtime_forever: 65214 }]);
+    await syncGameshelf(makeApp());
+    expect(vault.files.has(`${DEFAULT_FOLDER}/《Deep Rock Galactic》.md`)).toBe(true);
+    expect(M.currentOverlay).toBeNull();
+    expect([...document.querySelectorAll('.bz-notice')].some((n) => n.textContent.includes('游戏库已同步'))).toBe(true);
+  });
+
+  it('立即同步：库内无变化 → 「已同步，暂无变化」（命令是显式意图，不能静默）', async () => {
+    setup(CONFIG);
+    mockSteam([{ appid: 1, name: 'A', playtime_forever: 60 }]);
+    const app = makeApp();
+    await syncGameshelf(app);
+    document.querySelectorAll('.bz-notice').forEach((n) => n.remove());
+    await syncGameshelf(app);
+    expect([...document.querySelectorAll('.bz-notice')].some((n) => n.textContent.includes('暂无变化'))).toBe(true);
+  });
+
+  it('立即同步：未配置 → 指引一条；进行中 → busy 明话（不重复拉）', async () => {
+    setup({});
+    await syncGameshelf(makeApp());
+    expect([...document.querySelectorAll('.bz-notice')].some((n) => n.textContent.includes('尚未配置'))).toBe(true);
+    document.querySelectorAll('.bz-notice').forEach((n) => n.remove());
+    setup(CONFIG);
+    M.syncing = true; // 模拟同步在途（面板「立即同步」已防重入，命令路径靠 runSync 兜底）
+    await syncGameshelf(makeApp());
+    expect([...document.querySelectorAll('.bz-notice')].some((n) => n.textContent.includes('同步已在进行中'))).toBe(true);
+  });
+
+  it('数据统计：直开面板落统计页；已开时就地切页不重开；缺省打开仍落游戏墙', async () => {
+    setup(CONFIG);
+    const app = makeApp();
+    mockSteam([{ appid: 1, name: 'AAA', playtime_forever: 6000 }]);
+    await syncGameshelf(app); // 库里得有一篇笔记，rebuildItems 才读得到
+    openGameshelfStats(app);
+    expect(document.querySelectorAll('.bz-gs-panel').length).toBe(1);
+    expect(M.view).toBe('stats');
+    expect(document.body.textContent).toContain('时长排行');
+    expect(document.body.querySelectorAll('.bz-stat').length).toBe(5);
+    openGameshelfStats(app); // 已开 → 就地切页（面板不重建、不叠加）
+    expect(document.querySelectorAll('.bz-gs-panel').length).toBe(1);
+    expect(M.view).toBe('stats');
+    closePanel();
+    openGameshelf(app); // openPanel 的 view 参数缺省 = 游戏墙
+    expect(M.view).toBe('shelf');
+    unloadGameshelf();
   });
 });

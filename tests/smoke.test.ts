@@ -81,6 +81,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-cinema-random-pick',
   // 游戏架（gameshelf 域，issue 368：Steam 直连自动拉库）
   'bz-gameshelf-open',
+  // 立即同步 / 数据统计（2026-09-17 首页入口菜单：前者不开面板直接拉，后者开面板落统计页）
+  'bz-gameshelf-sync', 'bz-gameshelf-stats',
   // 书架墙（bookshelf 域，新域与书库并存）
   'bz-bookshelf-open',
   // 继续在读（2026-09-11 首页入口菜单；开书架墙落「在读」分栏）

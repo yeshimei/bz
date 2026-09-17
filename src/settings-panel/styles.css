@@ -255,6 +255,13 @@
     linear-gradient(90deg, #f0e6d2 0 50%, #1d1a14 50% 100%);
   border-radius: 3px;
 }
+/* 游戏库·墨黑（2026-09-17 补外观组）：暗蓝黑双块 + 中性亮点，与他域主题预览同构图异色 */
+.bz-sp-mini.bz-sp-prev-ink {
+  background:
+    radial-gradient(circle at 50% 50%, #9aa0ab 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #2a2c34 0 50%, #111218 50% 100%);
+  border-radius: 3px;
+}
 /* ── 番茄钟 10 套皮肤预览（2026-09-11 同构图异色：左亮块/右暗块 + 域色圆点；
       色值引用 src/pomodoro/styles.css :root 的 --pz-<id>-* 表（同聚合进根 styles.css），
       本文件不持有番茄钟色值——加皮/改色只在 pomodoro 侧改表） ── */

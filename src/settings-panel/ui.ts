@@ -140,8 +140,9 @@ export const DOMAINS: DomainDef[] = [
   { id: 'reading-report', name: '阅读报告', icon: DOMAIN_ICONS['reading-report'], desc: '阅读统计', noSettings: true },
 
   { id: 'cinema', name: '影院', icon: DOMAIN_ICONS.cinema, desc: '影视目录与海报', schemaLoader: schemaLoaders.cinema },
-  { id: 'gameshelf', name: '游戏库', icon: DOMAIN_ICONS.gameshelf, desc: 'Steam 游戏库同步与统计', schemaLoader: schemaLoaders.gameshelf },
   { id: 'bookshelf', name: '书库', icon: DOMAIN_ICONS.bookshelf, desc: '藏书封面墙、读书笔记与阅读报告', schemaLoader: schemaLoaders.bookshelf },
+  // 游戏库（2026-09-17）：声明在书库之后（与首页入口同序：影院 → 书库 → 游戏库）
+  { id: 'gameshelf', name: '游戏库', icon: DOMAIN_ICONS.gameshelf, desc: 'Steam 游戏库同步与统计', schemaLoader: schemaLoaders.gameshelf },
   { id: 'review', name: '复习计划', icon: DOMAIN_ICONS.review, desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
   { id: 'secondbrain', name: '第二大脑', icon: DOMAIN_ICONS.secondbrain, desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
   { id: 'auto-summary', name: '自动摘要', icon: DOMAIN_ICONS['auto-summary'], desc: '剪藏自动摘要', noSettings: true },
@@ -155,13 +156,14 @@ export const DOMAINS: DomainDef[] = [
 ];
 
 /** 导航语义分组（拍板原型 P1：基础/记录/媒体与知识/工具 四组；不在表内的域归「其他」尾组）。
- *  id 口径 = DOMAINS 的 id（剪藏本在 DOMAINS 里叫 clipping）。导出供回归测试断言。 */
+ *  id 口径 = DOMAINS 的 id（剪藏本在 DOMAINS 里叫 clipping）。导出供回归测试断言。
+ *  2026-09-17：游戏库归「媒体与阅读」（此前不在表内 → 落「其他」尾组，用户点名要按语义归位）。 */
 export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
   { title: '基础', ids: ['global', 'notice', 'home'] },
   { title: '智能', ids: ['ai', 'secondbrain'] },
   { title: '记录', ids: ['diary', 'memo', 'belongings'] },
   { title: '收集', ids: ['clipping', 'favorites'] },
-  { title: '媒体与阅读', ids: ['cinema', 'bookshelf', 'review', 'knowledge'] },
+  { title: '媒体与阅读', ids: ['cinema', 'bookshelf', 'gameshelf', 'review', 'knowledge'] },
   { title: '工具', ids: ['pomodoro', 'smartcat'] },
   { title: '安全', ids: ['encrypt', 'password-vault'] },
 ];
